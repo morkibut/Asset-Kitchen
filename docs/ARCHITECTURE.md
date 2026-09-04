@@ -272,6 +272,19 @@ chose si on l'ignore. La plus coûteuse est la dernière du milieu : un fichier 
 la mesure d'image lève « illisible », et le rattrapage enregistre alors un échec **à zéro
 dollar** — un clip payé qui disparaît du journal du projet.
 
+**Depuis A11, le port animateur a deux adaptateurs, et c'est le premier port du produit qui en
+a plusieurs à la fois.** L'un parle à un fournisseur payant, l'autre à une application ouverte
+sur la machine de l'auteur. Deux conséquences, et la première est un piège :
+
+- **Ce qui manque à un fournisseur ne dit rien de l'autre.** Avec un seul adaptateur, *ce qui
+  manque au fournisseur* pouvait griser tous les modèles sans conséquence. Avec deux, la même
+  formule griserait **le seul modèle qui ne dépense rien** parce qu'une clé manque ailleurs. Le
+  routage se fait donc **par le nom du fournisseur**, déjà porté par chaque modèle — pas par un
+  second registre, qui finirait par ne plus s'accorder avec le premier.
+- **Un adaptateur peut n'avoir aucun secret**, et le produit doit le supporter sans cas
+  particulier : `secrets()` rend un tuple vide, le tiroir n'affiche rien pour lui, et rien ne le
+  grise pour une clé qu'il ne demande pas.
+
 **`mcp/` est le voisin de `api/`, pas son client.** Les deux appellent `services/`, aucune ne
 réimplémente rien. C'est ce qui garantit que ce qu'un agent peut faire est exactement ce que
 l'écran peut faire.

@@ -28,13 +28,13 @@ points.
 | **V2.2** — `F0` à `F6` | D'autres fournisseurs, dont un qui ne demande ni compte ni clé | **close à 5 sur 6** — reste `F4`, qui attend un compte Cloudflare que ce dépôt n'a pas |
 | **Reprises** — `R6` à `R9` | La planche de travers, le texte qui part en trois parties, la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** |
 | **V2.3** — `D1` à `D5` | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** |
-| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9` et `A10` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. Restent `A11`, `A12`, `A13`, `A4`, `A5`, `A7`, et **aucune n'en bloque une autre** |
+| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9`, `A10` et `A11` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. Restent `A12`, `A13`, `A4`, `A5`, `A7`, et **aucune n'en bloque une autre** |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 303 essais de
-serveur et 658 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 353 essais de
+serveur et 672 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
 et **aucun ne coûte un centime**.
 
-### Ce qu'il faut savoir avant de toucher au code — neuf points, et pas un de plus
+### Ce qu'il faut savoir avant de toucher au code — dix points, et pas un de plus
 
 Ce sont les endroits où une règle a changé de forme sans changer de nom. Les découvrir en
 cours de route coûte cher ; les lire ici coûte deux minutes.
@@ -77,6 +77,14 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
    qu'on ferme l'atelier se repaie. Ce qui revient n'est pas une image, et **la dépense s'écrit
    avant toute mesure de fichier** : un fichier vidéo lève « illisible » dans la chaîne
    d'images, et le rattrapage enregistrait alors un échec à zéro dollar.
+8ter. **Un modèle vidéo peut ne rien coûter, et zéro n'est pas « inconnu ».** Depuis `A11`, un
+   des modèles de la liste tourne sur la carte graphique de la machine. Deux règles en
+   découlent, et elles se cassent facilement. La première : *ce qui manque au fournisseur* grise
+   ses modèles à lui — **pas tous** ; une clé absente chez le payant ne dit rien du local, et le
+   routage se fait par le nom du fournisseur, celui qui voyage déjà sur chaque modèle. La
+   seconde : l'invariant *rien ne part sans que ce que ça coûte soit annoncé* **change d'unité**
+   au lieu de disparaître — le bouton porte un temps, mesuré et non deviné. ⚠️ Ce temps **ne se
+   multiplie pas** pour un lot : le premier tirage charge le modèle en mémoire, les suivants non.
 
 8. **Une planche coûte le prix d'un appel, quel que soit ce qu'elle porte.** Mesuré le 31 août
    2026 sur trois appels payés : trois cases et six cases ont coûté exactement le même prix, et
@@ -86,7 +94,7 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
 
 ### Le seul bloc ouvert, et ce qui a été fermé devant lui
 
-**La V3 reste seule ouverte** — onze tranches `A0` à `A10`, ouvertes le 2 septembre 2026. Les
+**La V3 reste seule ouverte** — onze tranches `A0` à `A13`, ouvertes le 2 septembre 2026. Les
 deux choses qui passaient devant elle sont closes depuis le 3 septembre 2026, et le tableau
 plus haut le dit : les quatre reprises hors version `R6` à `R9`, et la **V2.3** entière — un
 réglage de départ par nature d'image, la vraie taille de bloc retrouvée, le fond devenu réglage

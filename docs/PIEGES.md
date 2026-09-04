@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent cinquante-quatre pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent cinquante-huit pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1307,3 +1307,42 @@ la prochaine réécriture retrouvera.
   déplaçait la boîte entière, à taille constante. Le symptôme trompe, parce que quelque chose
   bouge : on cherche l'erreur dans le calcul de la taille, jamais dans le fait qu'un second geste
   a démarré. Payé le 4 septembre 2026, en même temps que le précédent et sur le même rectangle.
+
+- **Une liste rendue par ComfyUI arrive sous deux formes, dans la même version.** `GET
+  /object_info/<classe>` décrit chaque entrée d'un nœud, et la liste des fichiers installés est
+  tantôt le **premier élément** du descripteur, tantôt sous une clé `options` plus loin dedans.
+  Les deux coexistent dans une seule installation, d'un chargeur à l'autre. N'en lire qu'une rend
+  une famille **vide** — donc *tous ses fichiers manquants* — sur une machine où tout est en
+  place, et le produit propose alors un téléchargement de plusieurs gigaoctets pour rien. Rien ne
+  lève : une liste vide est une réponse valide. **Un double d'essai qui n'emploierait qu'une forme
+  ne verrait pas l'oubli** ; celui d'`A11` alterne exprès. Payé le 4 septembre 2026.
+
+- **Un chargeur absent n'est pas un fichier présent.** Un fichier de modèle posé dans un dossier
+  que ComfyUI ne lit pas **est un fichier absent**, et regarder le disque dirait le contraire. Le
+  cas concret est le greffon `ComfyUI-GGUF` non installé : le nœud qui charge ces fichiers
+  n'existe pas, `object_info` rend 404, et les deux moitiés du moteur ne sont chargeables par
+  rien — bien qu'elles soient là, à leur place, entières. **La seule preuve qu'un fichier est
+  utilisable est que l'application le liste** ; l'existence sur le disque n'en est pas une. Payé
+  le 4 septembre 2026.
+
+- **Une fabrique qui reconstruit son adaptateur à chaque appel efface tout ce qu'il retient — et
+  rien ne le signale.** Le dépôt refabrique ses adaptateurs à chaque demande, pour une bonne
+  raison : ils relisent leur clé sur le disque, et on doit pouvoir la déposer sans redémarrer.
+  L'adaptateur du moteur local n'a pas de clé, mais il retient deux choses qui n'ont de sens que
+  dans la durée — *ce que la dernière visite a vu*, d'où sort le grisé, et *un clip est-il déjà
+  parti*, d'où sort l'attente annoncée. Reconstruit à chaque appel, il repartait sans mémoire :
+  **le modèle ne se grisait plus jamais**, application éteinte comprise, et l'absence se
+  découvrait en cliquant sur le bouton qui envoie au lieu de se lire avant. ⚠️ **Aucun essai ne
+  pouvait le voir** : chacun tient sa propre instance et la garde, ce qui est exactement la
+  situation corrigée. Il a fallu monter l'atelier réel et lire ce qu'il répondait. La correction
+  est de garder l'objet — garder l'objet ne garde pas sa réponse, puisque chaque relecture du
+  catalogue et chaque peinture d'écran le font revisiter. Payé le 4 septembre 2026.
+
+- **Deux traducteurs pour un même objet finissent toujours par diverger, et l'écart ne lève
+  jamais.** La même structure — un modèle vidéo — était mise en JSON à deux endroits, l'un dans le
+  service, l'autre dans les routes. Les champs ajoutés d'un côté n'existaient pas de l'autre : le
+  flux les envoyait, l'écran des modèles ne les recevait pas, et une clé absente d'un objet JSON
+  ne fait rien du tout — pas d'erreur de compilation, pas d'exception, juste un champ qui vaut
+  `undefined` là où l'écran l'attendait. ⚠️ Ce qui rend le cas durable est que **rien ne le
+  signale au moment où on duplique** : c'est plus tard, en ajoutant un champ, qu'on paie. La
+  duplication elle-même est le piège, pas l'oubli. Payé le 4 septembre 2026.

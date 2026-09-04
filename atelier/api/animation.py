@@ -22,7 +22,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Query, Request, Response
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel
 
 from atelier.domaine.animation import (
@@ -37,6 +37,16 @@ from atelier.domaine.bande import Cadre
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.recette import Recette
 from atelier.services import Atelier
+
+# **Un seul endroit qui met un modèle vidéo en JSON**, et c'est le service.
+#
+# ⚠️ Il y en avait deux, l'un ici et l'autre là-bas, et ils avaient déjà divergé :
+# les champs ajoutés par `A11` — la carte de la maison, la durée conseillée, le
+# nombre d'images réel — n'existaient que du côté du service, si bien que le flux
+# les envoyait et que l'écran des modèles ne les recevait pas. Un modèle qui se
+# décrit de deux façons selon la porte par laquelle on le demande est une panne
+# qui ne se voit qu'à l'usage.
+from atelier.services.animation import _modele_en_json
 
 routeur = APIRouter()
 
@@ -216,6 +226,12 @@ async def modeles_video(
                 # écrire « environ » avant et le chiffre exact après.
                 "prix": prix.en_json(),
                 "grise": atelier.animation.grise(modele, demande),
+                # **Ce que ça coûte en temps, quand c'est du temps que ça
+                # coûte** (A11). `null` chez un payant : ce qu'il coûte est de
+                # l'argent, et une attente inventée serait pire qu'aucune.
+                "attente": _attente_en_json(
+                    atelier.animation.attente(modele, demande)
+                ),
             }
         )
     return {
@@ -223,6 +239,9 @@ async def modeles_video(
         "recu_le": etat["recu_le"],
         "raison": etat["raison"],
         "manque": etat["manque"],
+        # L'état de chaque animateur, séparément — une clé absente chez l'un ne
+        # dit rien de l'autre (A11).
+        "moteurs": etat["moteurs"],
         "decodeur": etat["decodeur"],
         "demande": {
             "secondes": secondes,
@@ -232,10 +251,68 @@ async def modeles_video(
     }
 
 
+def _attente_en_json(attente: Any) -> dict[str, Any] | None:
+    return attente.en_json() if attente is not None else None
+
+
 @routeur.post("/clips/models/refresh")
 async def rafraichir_modeles_video(requete: Request) -> dict[str, Any]:
     await _atelier(requete).animation.rafraichir()
     return _atelier(requete).animation.etat()
+
+
+# ── Le moteur de la maison (A11) ─────────────────────────────────────────────
+#
+# **Deux routes, et la seconde est la seule du produit qui télécharge.** Elle est
+# ici et pas dans les réglages parce que ce qu'elle rapatrie ne sert qu'à animer :
+# la mettre ailleurs obligerait à sortir de l'écran qui pose la question.
+
+
+@routeur.get("/clips/engine")
+async def etat_du_moteur(requete: Request) -> dict[str, Any]:
+    """Ce que la carte de la maison peut faire aujourd'hui, **en trois absences**.
+
+    Le relevé se refait à chaque appel, et c'est délibéré : l'auteur qui vient
+    d'ouvrir ComfyUI doit voir le grisé tomber sans redémarrer son atelier. Rien
+    ici ne coûte — ni argent, ni calcul : on demande à une application locale ce
+    qu'elle a sur son disque.
+    """
+    moteur = _moteur(requete)
+    return (await moteur.visiter()).en_json()
+
+
+@routeur.post("/clips/engine/download")
+async def telecharger_les_modeles(requete: Request) -> dict[str, Any]:
+    """Rapatrie les fichiers qui manquent. **Un geste que l'auteur demande.**
+
+    Il n'y a pas de version automatique : vingt-six gigaoctets ne se descendent
+    pas dans le dos de quelqu'un, et la liste avec les tailles et les licences
+    est affichée avant. ⚠️ Un téléchargement coupé se reprend au même appel — un
+    fichier tronqué ressemble à un fichier absent, et c'est ce qui a coûté deux
+    téléchargements le 3 septembre 2026.
+    """
+    moteur = _moteur(requete)
+    descendus = await moteur.telecharger()
+    return {"descendus": descendus, **(await moteur.visiter()).en_json()}
+
+
+def _moteur(requete: Request) -> Any:
+    """Le moteur de la maison parmi les animateurs, ou un refus qui le dit.
+
+    On le retrouve par son nom plutôt que par sa place : l'ordre de la liste est
+    une décision d'affichage, et une route qui en dépendrait casserait le jour où
+    l'on changerait cet ordre.
+    """
+    from atelier.fournisseur.maison import NOM as NOM_MAISON
+
+    for fabrique in _atelier(requete).animation.fabriques():
+        porte = fabrique()
+        if getattr(porte, "nom", "") == NOM_MAISON:
+            return porte
+    raise HTTPException(
+        status_code=404,
+        detail={"raison": "cet atelier n'a pas de moteur de la maison"},
+    )
 
 
 class CorpsClip(BaseModel):
@@ -682,16 +759,3 @@ def _clip(requete: Request, identifiant: str):
     return generation
 
 
-def _modele_en_json(modele) -> dict[str, Any]:
-    return {
-        "identifiant": modele.identifiant,
-        "nom": modele.nom,
-        "fournisseur": modele.fournisseur,
-        "durees": list(modele.durees),
-        "resolutions": list(modele.resolutions),
-        "proportions": list(modele.proportions),
-        # **Ce que ce dépôt a mesuré, et rien d'autre** (US-440). Vide veut dire
-        # « on n'en sait rien », et l'écran l'écrit plutôt que de laisser croire
-        # qu'un modèle proposé a été éprouvé.
-        "mesure": modele.mesure,
-    }

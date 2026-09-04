@@ -20,6 +20,7 @@ from typing import Any, Callable
 
 from atelier.depot import Base, Fichiers
 from atelier.fournisseur import OpenRouter, Pollinations, PortFournisseur
+from atelier.fournisseur.maison import MoteurDeLaMaison
 from atelier.fournisseur.openrouter_video import OpenRouterVideo
 from atelier.fournisseur.port import PortAnimateur
 from atelier.fournisseur.openrouter import CLE
@@ -161,6 +162,39 @@ def _openrouter_video() -> PortAnimateur:
     return OpenRouterVideo(lire_secret(CLE.nom))
 
 
+_LA_MAISON: MoteurDeLaMaison | None = None
+
+
+def _maison() -> PortAnimateur:
+    """Le moteur de la maison, arrivé en A11. **Le seul sans compte ni clé.**
+
+    ⚠️ **C'est le seul adaptateur du dépôt qui se garde**, et il le faut. Les
+    autres se refabriquent à chaque appel pour relire leur clé sur le disque ;
+    celui-ci n'a pas de clé, et il retient deux choses qui n'ont de sens que dans
+    la durée : *ce que la dernière visite a vu*, d'où sort le grisé, et *un clip
+    est-il déjà parti*, d'où sort l'attente annoncée. Sur une instance jetée
+    après chaque appel, les deux valent leur défaut pour toujours — le modèle
+    **ne se grise plus jamais**, moteur éteint compris, et l'auteur découvre
+    l'absence en cliquant sur *Commander* au lieu de la lire avant.
+
+    Garder l'objet ne garde pas sa réponse : `catalogue_video` revisite à chaque
+    relecture du catalogue, et la route de l'écran revisite à chaque peinture.
+    L'auteur qui vient d'allumer ComfyUI voit donc le grisé tomber.
+    """
+    global _LA_MAISON
+    if _LA_MAISON is None:
+        _LA_MAISON = MoteurDeLaMaison()
+    return _LA_MAISON
+
+
+# **Les deux animateurs, dans l'ordre où l'écran les montre.** Le payant
+# d'abord, et c'est la même raison qu'aux fournisseurs d'images : c'est lui qui a
+# été mesuré sur treize clips, et le local est arrivé après. L'ordre n'a rien
+# d'un jugement — le local est meilleur sur les deux lignes qui décident du
+# détourage —, il dit seulement ce que ce dépôt connaît le mieux.
+ANIMATEURS: list[Callable[[], PortAnimateur]] = [_openrouter_video, _maison]
+
+
 # **L'ordre est celui de la liste des modèles à l'écran, et il est délibéré** :
 # le payant d'abord, parce que c'est lui qui porte les univers et que le gratuit
 # est un brouillon (`docs/PLAN.md` § V2.2 — *ce qui n'est pas une raison*). Il
@@ -181,6 +215,11 @@ class Atelier:
         # Un essai qui n'en donne pas monte l'atelier avec le vrai, qui ne part
         # jamais tout seul — aucun appel ne se fait sans un geste de l'auteur.
         fabrique_animateur: Callable[[], PortAnimateur] | None = None,
+        # **Le pluriel, arrivé en A11**, exactement pour la raison écrite plus bas
+        # sur les fournisseurs : le singulier monte un atelier sur un animateur
+        # unique — c'est ce que font tous les essais d'`A9` et d'`A10` — tandis
+        # que le produit en a deux, le payant et celui de la maison.
+        fabriques_animateurs: list[Callable[[], PortAnimateur]] | None = None,
     ) -> None:
         self.fichiers = Fichiers(racine)
         self.fichiers.preparer()
@@ -358,10 +397,15 @@ class Atelier:
         # à des ports différents, et faire transiter un appel vidéo par le
         # chemin des images rendrait la mesure de fichier obligatoire — très
         # exactement le défaut qui faisait disparaître un clip payé du journal.
+        # **Un animateur donné remplace les deux, et c'est voulu.** Un essai qui
+        # fournit son double veut un atelier dont il connaît toutes les réponses ;
+        # lui laisser le moteur de la maison en plus ferait dépendre son résultat
+        # d'une fenêtre ComfyUI ouverte ou non sur la machine qui le fait tourner.
         self.animation = ServiceAnimation(
             self.base,
             self.fichiers,
-            fabrique_animateur or _openrouter_video,
+            fabriques_animateurs
+            or ([fabrique_animateur] if fabrique_animateur else ANIMATEURS),
             self.diffusion,
         )
         # **Le montage, monté juste après l'animation** (A10), et il ne reçoit

@@ -30,10 +30,11 @@ import asyncio
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Sequence
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.animation import (
+    Attente,
     Clip,
     DemandeClip,
     ModeleVideo,
@@ -79,7 +80,7 @@ class ServiceAnimation:
         self,
         base: Base,
         fichiers: Fichiers,
-        animateur: Fabrique,
+        animateur: Fabrique | Sequence[Fabrique],
         diffusion: Diffusion | None = None,
     ) -> None:
         self._base = base
@@ -87,7 +88,14 @@ class ServiceAnimation:
         # **Une fabrique, pas une instance** — la règle de T1, telle quelle : la
         # clé se relit à chaque appel, jamais au démarrage, pour qu'on puisse la
         # déposer sans redémarrer le serveur.
-        self._animateur = animateur
+        #
+        # **Plusieurs fabriques depuis `A11`**, et une seule reste acceptée : le
+        # moteur de la maison est un animateur de plus, pas un cas particulier.
+        # Ce qui le distingue d'un payant tient dans son adaptateur — il ne
+        # facture rien et ce qui lui manque se répare —, pas ici.
+        self._fabriques: tuple[Fabrique, ...] = (
+            (animateur,) if callable(animateur) else tuple(animateur)
+        )
         self._diffusion = diffusion or Diffusion()
         self._modeles: list[ModeleVideo] = []
         self._recu_le: float = 0.0
@@ -104,12 +112,23 @@ class ServiceAnimation:
         s'affiche à côté ; sans liste du tout, la liste est vide et dit pourquoi.
         L'atelier s'ouvre dans tous les cas.
         """
-        try:
-            self._modeles = await self._animateur().catalogue_video()
+        # **Un animateur qui tombe n'emporte pas les autres.** C'est la
+        # différence qu'`A11` introduit : la clé d'OpenRouter peut manquer sans
+        # que la carte de la maison cesse d'exister, et l'inverse est vrai aussi.
+        # Une seule liste, plusieurs sources, et chacune répond de soi.
+        trouves: list[ModeleVideo] = []
+        raisons: list[str] = []
+        for fabrique in self._fabriques:
+            try:
+                trouves.extend(await fabrique().catalogue_video())
+            except ErreurAtelier as erreur:
+                raisons.append(erreur.raison)
+        if trouves or not raisons:
+            self._modeles = trouves
             self._recu_le = time.time()
-            self._raison = None
-        except ErreurAtelier as erreur:
-            self._raison = erreur.raison
+            self._raison = " · ".join(raisons) or None
+        else:
+            self._raison = " · ".join(raisons)
         return self._modeles
 
     async def a_jour(self) -> list[ModeleVideo]:
@@ -141,13 +160,65 @@ class ServiceAnimation:
                 return modele
         raise ModeleInconnu(identifiant)
 
+    # ── Quel animateur pour quel modèle ──────────────────────────────────────
+
+    def fabriques(self) -> tuple[Fabrique, ...]:
+        """Les animateurs montés, pour qui a besoin de l'un d'eux en particulier.
+
+        Une seule route s'en sert — celle du moteur de la maison, qui a des
+        gestes à lui que le port ne porte pas : dire ce qui manque, et le
+        rapatrier. Les faire remonter jusqu'ici aurait mis dans le port commun
+        deux questions qui n'ont aucun sens pour un fournisseur payant.
+        """
+        return self._fabriques
+
+    def _animateur(self) -> PortAnimateur:
+        """Le premier, et il reste le seul quand il n'y en a qu'un.
+
+        Gardé pour ce qui ne parle d'aucun modèle en particulier — il n'y a rien
+        de tel aujourd'hui hors des essais, et c'est très bien ainsi.
+        """
+        return self._fabriques[0]()
+
+    def _pour(self, modele: ModeleVideo | str) -> PortAnimateur:
+        """L'animateur qui possède ce modèle, **par son nom de fournisseur**.
+
+        Le nom voyage déjà sur chaque modèle depuis `A9` — c'est lui qui fait que
+        `OpenRouter:bytedance/seedance-2.0-mini` se relit des mois plus tard. Le
+        réemployer ici évite d'inventer un second registre qui finirait par ne
+        plus s'accorder avec le premier.
+
+        **Sans correspondance, on rend le premier plutôt que de lever.** Un clip
+        commandé hier par un fournisseur retiré depuis doit pouvoir dire pourquoi
+        il ne se récupère pas, et une exception ici le remplacerait par une page
+        cassée.
+        """
+        nom = modele.fournisseur if isinstance(modele, ModeleVideo) else ""
+        if not nom and isinstance(modele, str):
+            connu = next((m for m in self._modeles if m.identifiant == modele), None)
+            nom = connu.fournisseur if connu else ""
+        for fabrique in self._fabriques:
+            porte = fabrique()
+            if getattr(porte, "nom", "") == nom:
+                return porte
+        return self._fabriques[0]()
+
+    def _pour_la_generation(self, generation: Generation) -> PortAnimateur:
+        return self._pour(generation.modele or "")
+
     def etat(self) -> dict[str, Any]:
         """De quoi peindre l'écran : les modèles, la date de la photo, la panne."""
         return {
             "modeles": [_modele_en_json(m) for m in self.modeles()],
             "recu_le": self._recu_le,
             "raison": self._raison,
+            # **Ce qui manque au premier animateur**, gardé sous ce nom parce que
+            # c'est celui du fournisseur payant et que l'écran d'`A9` le lit là.
             "manque": indisponible_de(self._animateur()),
+            # **Ce qui manque à chacun, séparément** (A11). Une clé absente chez
+            # l'un ne dit rien de l'autre, et une seule phrase pour les deux
+            # ferait chercher la panne du mauvais côté.
+            "moteurs": self.moteurs(),
             # **Le décodeur est un fait de l'installation, pas du fournisseur.**
             # Il vaut la peine d'être ici : sans lui, un clip s'achète et se
             # garde, mais ses images attendent, et l'écran doit le dire avant
@@ -155,14 +226,42 @@ class ServiceAnimation:
             "decodeur": decodeur.indisponible(),
         }
 
+    def moteurs(self) -> list[dict[str, Any]]:
+        """L'état de chaque animateur, **sans rien lui redemander**.
+
+        Ce que chacun sait de lui-même au dernier rafraîchissement. Un animateur
+        qui a plus à dire que *disponible ou non* le dit par `etat_du_moteur` —
+        c'est le cas du moteur de la maison, dont les trois absences ne sont pas
+        la même chose et ne se réparent pas de la même façon.
+        """
+        dits: list[dict[str, Any]] = []
+        for fabrique in self._fabriques:
+            porte = fabrique()
+            fiche: dict[str, Any] = {
+                "nom": getattr(porte, "nom", ""),
+                "manque": indisponible_de(porte),
+            }
+            detail = getattr(porte, "etat_du_moteur", None)
+            if callable(detail):
+                fiche["moteur"] = detail().en_json()
+            dits.append(fiche)
+        return dits
+
     def grise(self, modele: ModeleVideo, demande: DemandeClip) -> str | None:
         """Pourquoi ce modèle ne peut pas partir maintenant, ou `None`.
 
-        Deux sources et elles ne se recouvrent pas : ce qui manque au
-        fournisseur — sa clé —, et ce que le modèle ne sait pas faire. La
-        première grise tous ses modèles, la seconde celui-là seulement.
+        Deux sources et elles ne se recouvrent pas : ce qui manque **à son**
+        fournisseur — sa clé, ou une fenêtre ComfyUI éteinte —, et ce que le
+        modèle ne sait pas faire. La première grise tous les modèles de ce
+        fournisseur-là, la seconde celui-là seulement.
+
+        ⚠️ **Depuis `A11`, « son » est le mot qui compte.** Avec un seul animateur
+        la distinction ne se voyait pas ; avec deux, griser le moteur de la
+        maison parce qu'une clé OpenRouter manque serait exactement le défaut que
+        la tranche existe pour éviter — *griser le seul modèle qui ne dépense
+        rien*.
         """
-        manque = indisponible_de(self._animateur())
+        manque = indisponible_de(self._pour(modele))
         if manque:
             return manque
         return modele.refus(demande, self.annonce(modele, demande))
@@ -175,6 +274,19 @@ class ServiceAnimation:
         « environ », et ce qui s'enregistre après est ce que la réponse a dit.
         """
         return modele.prix(demande, releve_le=_date_de(self._recu_le))
+
+    def attente(self, modele: ModeleVideo, demande: DemandeClip) -> Attente | None:
+        """Ce que ce clip prendra de **temps**, ou `None` si ce n'est pas la question.
+
+        `None` chez un payant, et ce n'est pas un trou : ce qu'il coûte est de
+        l'argent, et annoncer une attente qu'on n'a pas mesurée serait pire que
+        de n'en annoncer aucune. Chez le local c'est l'inverse, et l'invariant du
+        produit tient tel quel — *rien ne part sans que ce que ça coûte soit
+        annoncé* —, il a seulement changé d'unité.
+        """
+        porte = self._pour(modele)
+        premier = bool(getattr(porte, "premier_tirage", True))
+        return modele.attente(demande, premier=premier)
 
     # ── L'image de départ ────────────────────────────────────────────────────
 
@@ -241,7 +353,7 @@ class ServiceAnimation:
         # le fournisseur — où le refus se paierait peut-être.
         await self.a_jour()
         modele = self.modele(identifiant_modele)
-        manque = indisponible_de(self._animateur())
+        manque = indisponible_de(self._pour(modele))
         if manque:
             raise SansCle(manque)
         refus = modele.refus(demande, self.annonce(modele, demande))
@@ -290,7 +402,7 @@ class ServiceAnimation:
         emplacement.duree_attendue_s = self.attente_estimee(modele.identifiant)
         self._sauver(generation)
 
-        animateur = self._animateur()
+        animateur = self._pour(modele)
         try:
             travail = await animateur.soumettre(modele, demande)
         except ErreurAtelier as erreur:
@@ -319,6 +431,12 @@ class ServiceAnimation:
         l'appel serait gratuit, parce que l'auteur doit rester celui qui décide
         quand son atelier parle à l'extérieur.
         """
+        # **Le catalogue avant, et pour une seule raison** : c'est lui qui dit
+        # quel animateur possède ce modèle. Depuis `A11` il y en a deux, et aller
+        # chercher un clip de la maison chez le fournisseur payant rendrait un
+        # refus qui parle de la mauvaise chose. L'appel est gratuit et déjà en
+        # cache la seconde fois.
+        await self.a_jour()
         generation = self._base.lire(identifiant)
         if generation is None:
             raise GenerationInconnue(identifiant)
@@ -420,10 +538,10 @@ class ServiceAnimation:
 
     async def _attendre(self, identifiant: str) -> None:
         """Regarde où en est le travail, jusqu'à ce qu'il aboutisse ou trop tarde."""
-        animateur = self._animateur()
         generation = self._base.lire(identifiant)
         if generation is None or generation.clip is None:  # pragma: no cover
             return
+        animateur = self._pour_la_generation(generation)
         travail = generation.clip.travail
         reste = ATTENTE_MAX
         while True:
@@ -462,7 +580,7 @@ class ServiceAnimation:
         """
         emplacement = generation.emplacements[0]
         depart = emplacement.demarre_le or time.time()
-        animateur = self._animateur()
+        animateur = self._pour_la_generation(generation)
         try:
             produit = await animateur.recuperer(generation.clip.travail)
         except ErreurAtelier as erreur:
@@ -612,6 +730,25 @@ def _modele_en_json(modele: ModeleVideo) -> dict[str, Any]:
         # **Ce que ce dépôt a mesuré, et rien d'autre.** Vide veut dire « on n'en
         # sait rien », et l'écran l'écrit plutôt que de laisser croire.
         "mesure": modele.mesure,
+        # ── Ce qu'`A11` ajoute, et qui vaut zéro chez un payant ──────────────
+        #
+        # Écrit pour tous plutôt que pour le seul local : un champ qui n'existe
+        # que sur certains modèles oblige l'écran à savoir lesquels, et c'est un
+        # savoir qui se périme. Zéro ou vide se lit « la question ne se pose pas
+        # pour celui-ci ».
+        "de_la_maison": modele.de_la_maison,
+        "images_par_seconde": modele.images_par_seconde,
+        "duree_conseillee": modele.duree_conseillee,
+        "raison_de_la_duree": modele.raison_de_la_duree,
+        # Le compte réel pour chaque durée proposée. **Calculé au serveur**, parce
+        # que la règle `4n + 1` est une contrainte du modèle et n'a rien à faire
+        # dans une interface — et que deux endroits qui la calculent finiraient
+        # par ne plus donner le même nombre.
+        "images_par_duree": {
+            str(duree): modele.images_reelles(duree) for duree in modele.durees
+        }
+        if modele.images_par_seconde
+        else {},
     }
 
 

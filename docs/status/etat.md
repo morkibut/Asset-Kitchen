@@ -11,6 +11,133 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A11 — le moteur de la maison, et le prix qui tombe à zéro — 4 septembre 2026
+
+**Le même clip, la même chaîne, la même bande — sur la carte graphique de l'atelier au lieu du
+compte d'un fournisseur.** Rien de ce qu'`A9` et `A10` ont construit ne change : le clip revient,
+ses images se tirent, il se découpe. Ce qui change est ce qui s'affiche à côté du bouton.
+
+### Un prix de zéro n'est pas un prix inconnu, et le code confondait les deux
+
+C'est la décision qui a demandé le plus de soin, et elle corrige une règle qui se serait retournée
+contre le produit. Depuis `A9`, un modèle dont le tarif n'a pas pu être relu chez le fournisseur
+est **grisé**, avec sa raison. La règle est bonne : elle interdit d'engager l'auteur sans savoir
+ce qu'il engage.
+
+Mais un moteur qui tourne sur la machine n'a **aucun tarif chez personne**, et son montant est
+pourtant parfaitement connu — il vaut zéro. Appliquée telle quelle, la règle qui protège de la
+dépense aurait grisé **le seul modèle qui n'en fait aucune**. Il a donc fallu une troisième
+valeur : un genre de tarif de plus, un montant de zéro, et une formule qui dit *gratuit, la carte
+de la maison* au lieu de multiplier quelque chose par zéro.
+
+> **La leçon générale**, et elle vaut au-delà de cette tranche : *une absence de donnée et une
+> donnée qui vaut zéro sont deux choses différentes, et un produit qui les représente pareil finit
+> par refuser exactement ce qu'il devrait offrir.*
+
+### L'invariant n'a pas été affaibli, il a changé d'unité
+
+*Rien ne part sans que ce que ça coûte soit annoncé* était formulé en argent. Le tenir ici
+demandait de le reformuler sans le desserrer : le bouton porte **un temps**, mesuré sur cette
+machine et non deviné, et il le porte au même endroit et de la même façon qu'un montant.
+
+Deux choses ont demandé plus qu'une conversion :
+
+- **Le premier tirage n'a pas le même prix que les suivants.** Le modèle reste chargé en mémoire
+  d'un clip à l'autre : le premier paie le chargement — relevé ≈ 7,6 s par image contre ≈ 4,7 s
+  ensuite. Annoncer la seconde valeur pour le premier clip ferait attendre le double de ce qui a
+  été promis, et **c'est exactement la même faute que d'annoncer un prix trop bas**.
+- **Un lot ne se multiplie donc pas.** Quatre clips, ce n'est pas quatre fois le premier ; c'est
+  le premier plus trois suivants. L'écran ne peut pas le déduire — ce sont deux mesures, pas un
+  rapport —, et les deux voyagent ensemble jusqu'à lui pour cette raison.
+
+### Les trois absences, et pourquoi elles ne peuvent pas se confondre
+
+L'application du moteur peut ne pas être ouverte, ses fichiers peuvent ne pas être descendus, un
+greffon peut manquer. Le réflexe serait une seule phrase — *le moteur n'est pas prêt*. Elle aurait
+été fausse trois fois :
+
+| Ce qui manque | Ce qu'on peut faire | Donc |
+|---|---|---|
+| L'application n'est pas ouverte | rien, depuis l'atelier | **le modèle est grisé** — l'atelier ne sait pas ouvrir une fenêtre à la place de quelqu'un |
+| Des fichiers manquent | les rapatrier, d'ici | **le modèle reste choisissable**, et l'atelier propose. Refuser obligerait à sortir pour un téléchargement qu'il sait faire |
+| Le greffon des gros pixels manque | rien, et ce n'est pas grave | **un avertissement** : le clip sortira, il sortira lissé. Un clip lissé se juge ; un refus ne se juge pas |
+
+### Ce que la tranche a appris sur le fait d'avoir deux fournisseurs
+
+Le produit n'avait jamais eu **deux animateurs**. Avec un seul, *ce qui manque au fournisseur*
+grisait tous les modèles, et la formule ne portait pas à conséquence. Avec deux, elle aurait grisé
+le moteur de la maison parce qu'une clé manque **ailleurs**.
+
+Le routage se fait par le nom du fournisseur, qui voyage déjà sur chaque modèle depuis `A9` —
+c'est lui qui permet de relire un clip payé des mois plus tard. Réemployer une donnée qui existe
+plutôt que d'inventer un second registre est ce qui empêche les deux de diverger : **deux tables
+qui disent la même chose finissent toujours par ne plus la dire pareil.** Le même raisonnement a
+fait supprimer, dans cette tranche, le second traducteur de modèle en JSON qui vivait du côté des
+routes : il avait *déjà* divergé, et l'écran des modèles ne recevait pas des champs que le flux
+envoyait.
+
+### Comment on éprouve une application qu'on ne peut pas démarrer
+
+ComfyUI est une application tierce. On ne peut ni la lancer dans un essai, ni compter sur sa
+présence, ni faire tourner une carte graphique quarante-neuf fois. Le double se branche donc à
+**un seul endroit**, celui où l'adaptateur ouvre ses requêtes, et tout le reste du fichier est
+exercé pour de vrai : la construction du montage, la lecture des listes de fichiers installés, le
+tri des trois absences, la reprise d'un téléchargement coupé.
+
+⚠️ **Le double rend les listes de fichiers sous les deux formes que ComfyUI emploie**, en
+alternance. Les deux coexistent dans la même version de l'application ; n'en lire qu'une rend une
+famille vide — donc *tous ses fichiers manquants* — sur une installation complète. Un double qui
+n'aurait employé qu'une forme aurait laissé passer ça.
+
+### Ce que les essais ne peuvent pas voir, et qui reste vrai
+
+> ⚠️ **Plus le clip est long, plus la bande se dégrade — et aucune mesure automatique ne le voit.**
+> Écart de taille, uniformité du fond, dérive de luminosité : les trois longueurs donnent les mêmes
+> chiffres. Seul l'œil voit la lanterne se dédoubler et la cape fusionner avec le corps. C'est la
+> **troisième fois** que ce dépôt le constate, après le banc des planches et le classement calculé
+> qui avait été rejeté. La règle tient : *la mesure propose, l'auteur juge.*
+>
+> Ce que le produit en fait : il **recommande une seconde, et écrit la raison là où l'on choisit**
+> plutôt que dans un document que personne n'ouvrira au moment de décider.
+
+### Le geste de la vérification, et ce qu'il fallait pouvoir cliquer sans conséquence
+
+La leçon d'`A10` — *les essais ne demandent jamais ce qu'un bouton fait* — a commandé la forme de
+l'atelier jetable : **quatre décors sur quatre ports**, un par absence, plutôt qu'un seul dont on
+aurait deviné le reste. Le bouton qui télécharge se clique pour de vrai dans le décor où il manque
+des fichiers, avec un hébergeur doublé qui rend trois octets et un dossier de modèles jetable :
+**tout le chemin du téléchargement s'exécute, et rien ne descend.** Le vrai bouton, lui, rapatrie
+vingt-six gigaoctets dans le dossier du vrai ComfyUI — ce n'est pas une vérification, c'est un
+geste que l'auteur décide.
+
+Et une chose n'a été vue qu'à l'écran, comme toujours : les tailles s'écrivaient avec un point
+décimal (« 8.9 Go ») juste sous une phrase du serveur qui disait « 8,9 Go ». Rien ne casse ; on
+doute simplement que les deux parlent du même chiffre.
+
+> ### ⚠️ Le défaut que seul l'atelier réel pouvait montrer
+>
+> Cinquante essais passaient, l'atelier jetable montrait les trois absences, et **le modèle ne se
+> grisait jamais en production** — application éteinte comprise. L'auteur l'aurait découvert en
+> cliquant sur *Commander*, c'est-à-dire à l'endroit exact où le produit promet de ne jamais
+> proposer pour rejeter ensuite.
+>
+> La cause est une bonne habitude appliquée là où elle ne valait plus. Le dépôt refabrique ses
+> adaptateurs à chaque appel, pour relire leur clé sur le disque sans redémarrer. Celui-ci n'a pas
+> de clé, et il retient deux choses qui n'ont de sens que dans la durée : ce que la dernière visite
+> a vu, et si un clip est déjà parti. Reconstruit à chaque appel, **il repartait sans mémoire**, et
+> les deux valeurs restaient à leur défaut pour toujours.
+>
+> **Aucun essai ne pouvait le voir, et c'est le point.** Chaque essai construit son adaptateur et
+> le garde — c'est-à-dire exactement la situation qu'il fallait corriger. Le double ne pouvait pas
+> mentir sur ce point-là : il était, par construction, du bon côté. Ce qui l'a montré est d'avoir
+> monté le vrai `Atelier` et lu ce qu'il répondait — trois lignes, hors de tout essai.
+>
+> La leçon rejoint celle d'`A9` et d'`A10` par un autre chemin : *ce qu'un double ne peut pas
+> jouer, personne ne le vérifie.* Là où les deux tranches précédentes butaient sur ce qu'un essai
+> d'écran ne rend pas — une couleur, un temps de rendu, un geste rapide —, celle-ci bute sur ce
+> qu'un essai **construit lui-même** : la fabrique. L'essai ajouté monte donc la vraie fabrique du
+> produit, et c'est le seul de tout le fichier dans ce cas.
+
 ## A10 — le montage, où un clip payé devient plusieurs animations — 4 septembre 2026
 
 **Un clip de cinq secondes porte plus qu'une animation, et c'est tout le sujet de cette

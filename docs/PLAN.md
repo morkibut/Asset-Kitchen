@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9` et `A10` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. Les cinq tranches qui l'attendaient — `A12`, `A13`, `A4`, `A5`, `A7` — sont libres | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10` et `A11` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faudra couvrir une matrice entière. Les cinq tranches qui restent — `A12`, `A13`, `A4`, `A5`, `A7` — sont libres | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -247,8 +247,8 @@ V3    A6  le mouvement, dit une fois pour toutes
        │                                      │
        │                                      │
        ├──► A11  le moteur de la maison       │
-       │         ne bloque rien, mais c'est   │
-       ▼         lui qui rend A12 tenable     │
+       │         ← close le 4 septembre 2026  │
+       ▼         c'est lui qui rend A12 tenable
       A10 le montage — le cœur de la version ◄┘
        │   ← close le 4 septembre 2026
        ├──► A12  toutes les poses, en animation   ← l'objectif de la version
@@ -2892,7 +2892,7 @@ propositions étayées, pas un arbitrage clos, et l'écran doit le dire.
 |---|---|---|---|---|
 | `bytedance/seedance-2.0-mini` | **plusieurs poses dans un clip** — il suit un minutage écrit seconde par seconde | **0,056 à 0,067 $** selon la durée | 118 s en moyenne, **138 s au pire** | 5 clips relus, 2 notés bons sur 2 ; le seul dont un tirage ait été noté bon |
 | `bytedance/seedance-1-5-pro` | **une pose simple** | **0,048 $** | 107 s en moyenne, **301 s au pire** | 2 clips relus, aucun noté bon : un moyen dont l'échec est *le personnage se retourne*, l'autre non noté |
-| **`maison/wan-2.2-pixel`** — la carte graphique de l'atelier | **une pose simple, en clips courts et en quantité** — il ne facture rien, donc on en tire autant qu'on veut | **0,00 $** | **130 s** pour une seconde | 3 clips, fond plus propre que le payant ; **la bande se dégrade quand le clip s'allonge**. Détail en `A11` |
+| **`maison/wan-2.2-i2v-14b-pixel`** — la carte graphique de l'atelier | **une pose simple, en clips courts et en quantité** — il ne facture rien, donc on en tire autant qu'on veut | **0,00 $** | **130 s** pour une seconde | 3 clips, fond plus propre que le payant ; **la bande se dégrade quand le clip s'allonge**. Détail en `A11` |
 
 *Montants **relus chez le fournisseur**, pas estimés — `essais/resultats_video/mesures.json`, le
 champ `cout_usd` de chaque clip. **Un montant n'est pas une constante** : le même modèle passe de
@@ -2901,10 +2901,9 @@ relit et ne s'écrit jamais en dur. Les deux payants se tiennent à un centime p
 **régularité de l'attente** qui les sépare — elle va à 2.0 mini. Pour mémoire, les trois modèles
 écartés coûtent de 0,20 $ à 0,25 $ le clip, quatre fois plus.*
 
-> **Le troisième arrive avec `A11`**, et il figure ici pour que la liste de l'écran soit complète
-> dès qu'on la dessine. Il **change ce que l'écran doit savoir afficher** : une attente au lieu
-> d'un prix, un compte d'images au lieu d'une durée ronde, et un coût de zéro qui ne doit pas se
-> confondre avec un prix inconnu. Ces trois conséquences sont écrites en `A11`.
+> **Le troisième est arrivé avec `A11`, close le 4 septembre 2026.** Il a **changé ce que l'écran
+> sait afficher** : une attente au lieu d'un prix, un compte d'images au lieu d'une durée ronde, et
+> un coût de zéro qui ne se confond pas avec un prix inconnu.
 
 **Le prix, et pourquoi il ne peut pas s'écrire en dur.** Un modèle vidéo se facture soit à la
 seconde, soit au **jeton vidéo** — hauteur × largeur × images par seconde × durée. Le prix se
@@ -3128,7 +3127,7 @@ machine ont une réponse connue d'avance.
 
 ---
 
-### A11 · Le moteur de la maison — animer sans payer
+### A11 · Le moteur de la maison — animer sans payer — ✅ **livrée le 4 septembre 2026**
 *8 US (454–461)* · **la seule tranche qui amène le prix d'un clip à zéro**
 
 **Ce qu'on livre.** L'atelier sait fabriquer un clip **sur la carte graphique de la maison**. Le
@@ -3211,7 +3210,7 @@ Motif déjà écrit et éprouvé dans le dépôt — `etat_des_silhouettes` pour
 | Ce qui manque | Ce que l'écran dit | Le modèle est |
 |---|---|---|
 | ComfyUI n'est pas lancé | *le moteur de la maison n'est pas allumé — ouvrez ComfyUI* | **grisé**, avec sa raison |
-| ComfyUI est lancé, les fichiers ne sont pas descendus | *il manque 26,7 Go de modèles* — et **la liste de ce qui manque, avec sa taille** | **choisissable**, et il dit ce qu'il va rapatrier |
+| ComfyUI est lancé, les fichiers ne sont pas descendus | *il manque 26,5 Go de modèles* — et **la liste de ce qui manque, avec sa taille** | **choisissable**, et il dit ce qu'il va rapatrier |
 | Les fichiers sont là, un greffon manque | *le greffon pixel art est absent : le clip sortira lissé* | **choisissable**, avec l'avertissement |
 
 **Confondre les trois obligerait à sortir de l'atelier pour un téléchargement que l'atelier sait
@@ -3244,19 +3243,65 @@ où l'auteur voudra ses propres montages, ce sera une autre tranche et elle se d
 
 **Critères d'acceptation**
 
-- [ ] Le moteur de la maison apparaît **dans la même liste** que les modèles payants, avec le même geste pour le choisir
-- [ ] Son coût affiché est **une attente, pas un prix**, et l'écran dit si c'est le premier tirage — modèle à charger — ou un suivant
-- [ ] **Un clip local enregistre une dépense de zéro, et zéro n'est pas « inconnu »** : le journal des dépenses le distingue d'un montant qui n'a pas pu être relu
-- [ ] Les durées de **1, 2 et 3 secondes** sont proposées, et l'écran annonce **le nombre d'images réel** — 17, 33, 49 — jamais celui demandé
-- [ ] L'écran **recommande la durée courte** et dit pourquoi en une phrase, avec le fait mesuré derrière
-- [ ] ComfyUI éteint, modèles absents et greffon absent donnent **trois phrases différentes**, et seule la première grise le modèle
-- [ ] Ce qu'il faut télécharger est **listé avec sa taille et sa licence** avant que l'auteur lance quoi que ce soit
-- [ ] Un téléchargement interrompu se **détecte et se reprend** : la taille obtenue se compare à celle annoncée
-- [ ] Le produit **ne modifie jamais l'installation de ComfyUI** — ni paquet, ni réglage, ni nœud
-- [ ] Un clip local suit **exactement le même chemin** qu'un clip payé une fois revenu : mêmes images extraites, même entrée en bibliothèque, même écran de montage
-- [ ] **La file d'`A9` marche sur le local**, et c'est là qu'elle prend son sens : lancer quatre clips ne coûte que du temps
-- [ ] Une panne de ComfyUI en cours de calcul rend **une phrase française qui dit quoi faire**, et le clip raté ne coûte rien à personne
-- [ ] Le montage envoyé est **écrit par le produit**, pas importé d'un fichier que l'auteur devrait maintenir
+- [x] Le moteur de la maison apparaît **dans la même liste** que les modèles payants, avec le même geste pour le choisir
+- [x] Son coût affiché est **une attente, pas un prix**, et l'écran dit si c'est le premier tirage — modèle à charger — ou un suivant
+- [x] **Un clip local enregistre une dépense de zéro, et zéro n'est pas « inconnu »** : le journal des dépenses le distingue d'un montant qui n'a pas pu être relu
+- [x] Les durées de **1, 2 et 3 secondes** sont proposées, et l'écran annonce **le nombre d'images réel** — 17, 33, 49 — jamais celui demandé
+- [x] L'écran **recommande la durée courte** et dit pourquoi en une phrase, avec le fait mesuré derrière
+- [x] ComfyUI éteint, modèles absents et greffon absent donnent **trois phrases différentes**, et seule la première grise le modèle
+- [x] Ce qu'il faut télécharger est **listé avec sa taille et sa licence** avant que l'auteur lance quoi que ce soit
+- [x] Un téléchargement interrompu se **détecte et se reprend** : la taille obtenue se compare à celle annoncée
+- [x] Le produit **ne modifie jamais l'installation de ComfyUI** — ni paquet, ni réglage, ni nœud
+- [x] Un clip local suit **exactement le même chemin** qu'un clip payé une fois revenu : mêmes images extraites, même entrée en bibliothèque, même écran de montage
+- [x] **La file d'`A9` marche sur le local**, et c'est là qu'elle prend son sens : lancer quatre clips ne coûte que du temps
+- [x] Une panne de ComfyUI en cours de calcul rend **une phrase française qui dit quoi faire**, et le clip raté ne coûte rien à personne
+- [x] Le montage envoyé est **écrit par le produit**, pas importé d'un fichier que l'auteur devrait maintenir
+
+**Ce qui a été livré, le 4 septembre 2026.** Cinquante essais côté atelier, quatorze côté
+écran, **aucun appel payant et aucune seconde de carte graphique**. ComfyUI est une application
+tierce : on ne peut ni la démarrer dans un essai, ni compter sur sa présence. Le double se branche
+donc à l'endroit exact où l'adaptateur ouvre ses requêtes, et tout le reste — la construction du
+montage, la lecture de ce qui est installé, le tri des trois absences, la reprise d'un
+téléchargement coupé — est exercé pour de vrai.
+
+| Ce qui est arrivé | Où | Ce que ça tient |
+|---|---|---|
+| Le moteur, comme n'importe quel fournisseur | `atelier/fournisseur/maison.py` | les quatre gestes du port sur une carte graphique au lieu d'un compte. **Le seul fournisseur du produit sans secret** : rien à déposer, rien à renouveler, rien à fuiter |
+| Le montage que le produit écrit lui-même | `atelier/fournisseur/montage_maison.py` | dix-neuf étapes, **une seule vidéo en sortie** — le banc enregistrait aussi les images pour les regarder ; le produit n'en veut qu'une, parce que c'est ce qu'un clip payé rend et que tout ce qui suit est déjà écrit pour ça |
+| Un coût qui n'est pas de l'argent | `atelier/domaine/animation.py` § `Attente` | le troisième genre de tarif, **et un temps qui ne s'additionne pas** : le premier tirage charge le modèle, les suivants non, et les deux mesures voyagent ensemble pour que l'écran chiffre un lot sans inventer le rapport |
+| Plusieurs animateurs dans une seule liste | `atelier/services/animation.py` | le routage **par nom de fournisseur**, celui qui voyage déjà sur chaque modèle depuis `A9`. Un second registre aurait fini par ne plus s'accorder avec le premier |
+| Ce que la machine peut faire aujourd'hui | `GET /clips/engine`, `POST /clips/engine/download` | le relevé **refait à chaque appel**, pour que le grisé tombe quand l'auteur ouvre ComfyUI sans redémarrer son atelier |
+| Le panneau de la carte | `interface/src/composants/Clip.tsx` § `PanneauDuMoteur` | les trois absences, la liste avec les tailles et les licences, et **le seul bouton du produit qui télécharge** |
+| Où ComfyUI range ses modèles | `atelier/fournisseur/maison.py` § `dossier_des_modeles` | **aucun chemin en dur** : la réponse vient de l'application qui sait, par ses propres arguments de démarrage |
+| L'atelier jetable | `essais/atelier_jetable_a11.py` | quatre décors sur quatre ports — le vrai moteur, éteint, à qui il manque des fichiers, sans son greffon. ⚠️ Et **le bouton qui télécharge se clique dans le décor « manque »** sans que rien ne descende pour de vrai |
+
+> ⚠️ **Un défaut que ni les cinquante essais ni l'atelier jetable ne pouvaient voir**, et il valait
+> la tranche : **le modèle ne se grisait jamais en production**, application éteinte comprise. Le
+> grisé sort de ce que la dernière visite a vu ; or l'adaptateur était refabriqué à chaque appel,
+> comme tous ses voisins qui relisent leur clé sur le disque, et il repartait donc sans mémoire.
+> Aucun essai ne pouvait le montrer parce que chaque essai construit son adaptateur **et le
+> garde** — c'est-à-dire exactement la situation qu'il fallait corriger. Ce qui l'a montré est
+> d'avoir monté le vrai `Atelier` et lu ce qu'il répondait. L'essai ajouté monte donc la vraie
+> fabrique du produit, et c'est le seul du fichier dans ce cas.
+
+**Deux choix faits seuls, et voici pourquoi.**
+
+1. **Le routage se fait par le nom du fournisseur, pas par un second registre.** Ce nom voyage
+   déjà sur chaque modèle depuis `A9` — c'est lui qui fait qu'un clip payé se relit des mois plus
+   tard. Le réemployer ici évite d'inventer une seconde table qui finirait par ne plus s'accorder
+   avec la première. ⚠️ **C'est ce qui empêche le défaut que la tranche existe pour éviter** :
+   avec un seul animateur, *ce qui manque au fournisseur* grisait tous les modèles ; appliquée
+   telle quelle à deux, cette règle aurait grisé **le seul modèle qui ne dépense rien** parce
+   qu'une clé manque ailleurs.
+2. **Le panneau de la carte est sur l'écran du clip, pas dans les Réglages.** Ce qu'il rapatrie ne
+   sert qu'à animer : le mettre ailleurs obligerait à quitter l'écran qui pose la question.
+
+> **Le critère *ne jamais modifier l'installation de ComfyUI*, et ce qu'il couvre exactement.**
+> Le produit n'installe aucun paquet, ne change aucun réglage, n'ajoute aucun nœud. Il écrit à
+> deux endroits, et les deux sont des usages ordinaires de l'application : l'image de départ,
+> déposée **par la porte d'entrée de ComfyUI lui-même** et toujours sous le même nom, en écrasant —
+> un nom unique par clip remplirait son dossier d'entrée de nos brouillons ; et les fichiers de
+> modèles, quand l'auteur clique dessus, dans le dossier que ComfyUI a lui-même désigné.
 
 **Bloquée par** — `A9`, dont elle reprend le port, la demande de clip et l'objet clip. **Elle ne
 bloque rien**, mais elle rend `A12` supportable.

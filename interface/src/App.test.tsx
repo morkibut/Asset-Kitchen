@@ -60,6 +60,7 @@ import type {
   Etiquette,
   BaseMouvements,
   BaseModelesVideo,
+  EtatDuMoteur,
   ImageDeDepart,
   ApercuDeBande,
   Bande,
@@ -873,10 +874,24 @@ function trouverAsset(
 
 // ── Le catalogue vidéo, et ce qu'un clip rend (A9) ───────────────────────────
 //
-// **Deux modèles, dont un grisé.** Ce que l'écran doit prouver est qu'il en
-// propose un avec son prix *et sa formule*, qu'il refuse l'autre **avec sa
-// raison** plutôt que de le cacher, et qu'il écrit à côté de chacun ce que ce
-// dépôt a mesuré de lui — vide compris.
+// **Trois modèles, dont un grisé et un local.** Ce que l'écran doit prouver est
+// qu'il en propose un avec son prix *et sa formule*, qu'il refuse l'autre **avec
+// sa raison** plutôt que de le cacher, qu'il écrit à côté de chacun ce que ce
+// dépôt a mesuré de lui — vide compris —, et depuis `A11` qu'il annonce **un
+// temps là où le modèle ne coûte pas d'argent**.
+
+/** Ce que vaut zéro chez un modèle payant. **Écrit une fois** : les champs
+ *  d'`A11` existent sur tous les modèles, précisément pour que l'écran n'ait pas
+ *  à savoir lesquels les portent. */
+const SANS_MOTEUR_LOCAL = {
+  de_la_maison: false,
+  images_par_seconde: 0,
+  duree_conseillee: 0,
+  raison_de_la_duree: "",
+  images_par_duree: {},
+  attente: null,
+} as const
+
 const MODELES_VIDEO: BaseModelesVideo = {
   modeles: [
     {
@@ -896,6 +911,7 @@ const MODELES_VIDEO: BaseModelesVideo = {
         releve_le: null,
       },
       grise: null,
+      ...SANS_MOTEUR_LOCAL,
     },
     {
       identifiant: "essai/sans-tarif",
@@ -908,13 +924,78 @@ const MODELES_VIDEO: BaseModelesVideo = {
       prix: { montant: null, formule: "aucun tarif reconnu", nature: "estimation", releve_le: null },
       grise:
         "son prix n'a pas pu être relu chez le fournisseur — aucun tarif reconnu",
+      ...SANS_MOTEUR_LOCAL,
+    },
+    {
+      // **Le moteur de la maison, dans la même liste et pas ailleurs** (A11).
+      // Son prix vaut zéro *et il le sait* : ce n'est pas un tarif illisible,
+      // c'est une machine qui ne facture rien.
+      identifiant: "maison/wan-2.2-i2v-14b-pixel",
+      nom: "Wan 2.2 · sur votre machine",
+      fournisseur: "Maison",
+      durees: [1, 2, 3],
+      resolutions: ["480p"],
+      proportions: ["1:1", "16:9", "9:16"],
+      mesure: "Mesuré le 3 septembre 2026 sur une RTX 3080 Laptop bridée à 100 W.",
+      prix: {
+        montant: 0,
+        formule: "gratuit — la carte de la maison",
+        nature: "certain",
+        releve_le: null,
+      },
+      grise: null,
+      de_la_maison: true,
+      images_par_seconde: 16,
+      duree_conseillee: 1,
+      raison_de_la_duree:
+        "Une seconde donne une bande nettement plus propre que deux. ⚠️ Aucune " +
+        "mesure automatique ne voit cette dégradation — seul l'œil la voit.",
+      images_par_duree: { "1": 17, "2": 33, "3": 49 },
+      attente: {
+        secondes: 129,
+        secondes_suivant: 80,
+        premier: true,
+        images: 17,
+        mesure: "7,6 s par image — premier tirage, le modèle se charge",
+        nature: "attente",
+      },
     },
   ],
   recu_le: 1_787_800_000,
   raison: null,
   manque: null,
   decodeur: null,
+  moteurs: [
+    { nom: "openrouter", manque: null },
+    {
+      nom: "Maison",
+      manque: null,
+      moteur: {
+        allume: true,
+        grise: null,
+        manquants: [],
+        go_a_telecharger: 0,
+        greffon_absent: false,
+        carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU",
+        memoire_libre_go: 6.7,
+        phrase: "",
+      },
+    },
+  ],
   demande: { secondes: 5, resolution: "480p", proportions: "1:1" },
+}
+
+/** La machine en ordre : tout est là, il n'y a rien à dire — et **rien à dire
+ *  est une réponse**, pas un trou. */
+const MOTEUR_EN_ORDRE: EtatDuMoteur = {
+  allume: true,
+  grise: null,
+  manquants: [],
+  go_a_telecharger: 0,
+  greffon_absent: false,
+  carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU",
+  memoire_libre_go: 6.7,
+  phrase: "",
 }
 
 /** Ce que le serveur propose comme image de départ. **Le portrait**, parce que
@@ -1198,6 +1279,13 @@ function serveurDouble(options: {
    *  l'un des deux grisé** : ce que l'écran doit prouver est qu'il propose
    *  l'un, refuse l'autre avec sa raison, et n'en cache aucun. */
   modelesVideo?: BaseModelesVideo
+  /** Ce que la carte de la maison peut faire (A11). **En ordre par défaut** :
+   *  les trois absences se posent par cette porte, parce qu'elles ne dépendent
+   *  d'aucune fenêtre ouverte sur la machine qui fait tourner les essais. */
+  moteur?: EtatDuMoteur
+  /** Ce que le moteur dit **après** le téléchargement. Sans lui le double rend
+   *  le même état qu'avant, ce qui est ce qu'on veut la plupart du temps. */
+  apresTelechargement?: EtatDuMoteur
   /** Ce que le serveur propose comme image de départ, et pourquoi celle-là. Le
    *  double le rend, comme le vrai serveur le déciderait sur la bibliothèque :
    *  la règle est **au serveur**, et le prouver demande qu'elle ne soit pas
@@ -1726,6 +1814,15 @@ function serveurDouble(options: {
     // `tests/test_a9.py`, sur le vrai service et sur le disque.
     if (url.startsWith("/api/clips/models"))
       return rendre(options.modelesVideo ?? MODELES_VIDEO)
+    // Le moteur de la maison (A11). **Le relevé se refait à chaque appel** dans
+    // le produit ; ici il rend ce que l'essai a posé, ce qui permet d'écrire les
+    // trois absences sans dépendre d'une fenêtre ouverte sur la machine.
+    if (url === "/api/clips/engine")
+      return rendre(options.moteur ?? MOTEUR_EN_ORDRE)
+    if (url === "/api/clips/engine/download") {
+      appels.push({ url, corps })
+      return rendre({ ...(options.apresTelechargement ?? MOTEUR_EN_ORDRE), descendus: [] })
+    }
     if (url.startsWith("/api/clips/start-image"))
       return rendre(options.imageDeDepart ?? DEPART_PROPOSE)
     if (url === "/api/clips/keep") {
@@ -21330,5 +21427,324 @@ describe("A10 — découper un clip en bandes", () => {
     // Le reste de l'écran, lui, se rejoint : le bouton qui garde est atteignable
     // dès la tabulation suivante.
     expect(panneau.getByRole("button", { name: /^Garder « / })).toBeTruthy()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  A11 — animer sans payer, sur la machine de l'auteur
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// **Ce que ces essais mesurent.** Ce que l'écran montre et ce qu'il envoie quand
+// un des modèles de la liste tourne sur la machine : un temps à la place d'un
+// montant, les trois absences qui ne se ressemblent pas, la liste de ce qu'il y
+// a à rapatrier avec sa taille et sa licence, et le téléchargement qui part
+// **quand on clique dessus et pas avant**.
+//
+// ⚠️ **Et surtout : ils cliquent.** C'est la leçon qu'`A10` a écrite dans
+// `docs/status/etat.md` — *les essais ne demandent jamais ce qu'un bouton fait ;
+// ils vérifient qu'il paraît, qu'il porte le bon mot, qu'il est allumé*. C'est
+// ainsi qu'un mode entier avait pu s'afficher sans rien ouvrir. Ici le bouton du
+// téléchargement est cliqué, et ce qui est vérifié est l'appel qui en sort.
+//
+// Ce qu'ils ne mesurent pas : rien de ce qui se passe côté machine. Le montage
+// envoyé, les trois absences relevées sur un vrai disque, un téléchargement
+// repris après une coupure — tout ça est tenu par `tests/test_a11.py`, sur
+// l'adaptateur réel et un serveur doublé.
+
+describe("A11 — le moteur de la maison", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Le même chemin qu'`A9` : on anime une case, et c'est la seule porte. */
+  const ouvrirLeClip = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({
+      personnages: [personnage("Le nain", { description: "un forgeron nain" })],
+      ...options,
+    })
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLEtabli()
+    fireEvent.click(ecran.getByRole("button", { name: "Animer marche" }))
+    const panneau = await waitFor(() => {
+      const cadre = document.querySelector("[data-clip]")
+      if (!cadre) throw new Error("l'écran du clip ne s'est pas ouvert")
+      return cadre as HTMLElement
+    })
+    return { ...double, panneau: within(panneau) }
+  }
+
+  /** Le catalogue avec le seul modèle local — c'est celui-là qui est choisi
+   *  d'office, et l'écran bascule donc en entier sur le temps. */
+  const SEUL_LE_LOCAL: BaseModelesVideo = {
+    ...MODELES_VIDEO,
+    modeles: MODELES_VIDEO.modeles.filter((m) => m.de_la_maison),
+  }
+
+  // ── « Dans la même liste, avec le même geste » ────────────────────────────
+
+  test("le modèle local est une carte de la même liste, pas un réglage à part", async () => {
+    const { panneau } = await ouvrirLeClip()
+
+    // Trois cartes, dans un seul endroit : celles qui coûtent et celle qui ne
+    // coûte pas. Une liste séparée en aurait fait une option.
+    expect(await panneau.findByText("Seedance 2.0 Mini")).toBeTruthy()
+    expect(panneau.getByText("Wan 2.2 · sur votre machine")).toBeTruthy()
+  })
+
+  // ── « Le coût affiché est une attente, pas un prix » ──────────────────────
+
+  test("le modèle local annonce un temps mesuré, et jamais un montant", async () => {
+    const { panneau } = await ouvrirLeClip()
+
+    const carte = await panneau.findByRole("button", { name: /Wan 2\.2/ })
+    const dedans = within(carte)
+    // Un temps, avec le mot qui dit que c'en est un coût — « ≈ 2 min » tout
+    // seul se lirait comme un délai de livraison.
+    expect(dedans.getByText(/≈ 2 min/)).toBeTruthy()
+    expect(dedans.getByText(/sur votre carte · gratuit/)).toBeTruthy()
+    // Et aucun dollar sur cette carte-là : zéro dollar affiché « ≈ $0,0000 »
+    // serait exact et illisible.
+    expect(carte.textContent).not.toMatch(/\$/)
+  })
+
+  test("le bouton porte l'attente là où il portait le montant", async () => {
+    const { panneau } = await ouvrirLeClip({ modelesVideo: SEUL_LE_LOCAL })
+
+    expect(
+      await panneau.findByRole("button", { name: /Commander ce clip · ≈ 2 min/ }),
+    ).toBeTruthy()
+    // **L'invariant n'a pas changé, il a changé d'unité** : rien ne part sans
+    // que ce que ça coûte soit écrit sur le bouton qui l'envoie.
+    expect(panneau.queryByRole("button", { name: /Commander ce clip · ≈ \$/ })).toBeNull()
+  })
+
+  test("un lot n'additionne pas la même attente : le premier charge le modèle, pas les suivants", async () => {
+    const { panneau } = await ouvrirLeClip({ modelesVideo: SEUL_LE_LOCAL })
+
+    await panneau.findByRole("button", { name: /Commander ce clip · ≈ 2 min/ })
+    fireEvent.click(panneau.getByRole("button", { name: "4" }))
+
+    // 129 s pour le premier, 80 s pour chacun des trois suivants = 369 s.
+    // Multiplier le premier par quatre aurait annoncé 9 minutes : c'est la même
+    // faute que d'annoncer un prix trop bas, dans l'autre sens.
+    expect(
+      await panneau.findByRole("button", { name: /Commander ces 4 clips · ≈ 6 min/ }),
+    ).toBeTruthy()
+  })
+
+  test("le temps se dit aussi là où l'écran décrit ce qui va se passer", async () => {
+    const { panneau } = await ouvrirLeClip({ modelesVideo: SEUL_LE_LOCAL })
+
+    // ⚠️ Et il ne recopie pas la phrase du payant : un clip payé se fabrique
+    // ailleurs, celui-ci se fabrique ici. Laisser « vous pouvez fermer
+    // l'atelier » sans dire quelle fenêtre travaille serait mentir.
+    expect(await panneau.findByText(/dans la fenêtre du moteur/)).toBeTruthy()
+    expect(panneau.getByText(/le reste de l'ordinateur rame/)).toBeTruthy()
+  })
+
+  // ── « L'écran annonce le nombre d'images réel » ───────────────────────────
+
+  test("l'écran écrit le nombre d'images que le moteur rendra, pas celui qu'on a demandé", async () => {
+    const { panneau } = await ouvrirLeClip({ modelesVideo: SEUL_LE_LOCAL })
+
+    // Une seconde à seize images par seconde ne fait pas seize images : le
+    // moteur n'accepte que certains comptes, et il prend celui du dessus.
+    fireEvent.click(await panneau.findByRole("button", { name: "1 s" }))
+    expect(await panneau.findByText("17 images")).toBeTruthy()
+    fireEvent.click(panneau.getByRole("button", { name: "2 s" }))
+    expect(await panneau.findByText("33 images")).toBeTruthy()
+  })
+
+  test("la durée conseillée se lit là où l'on choisit, avec la raison qui va avec", async () => {
+    const { panneau } = await ouvrirLeClip()
+
+    // ⚠️ Ce que cette raison dit — la bande se dégrade au-delà d'une seconde, et
+    // aucune mesure automatique ne le voit — se perdrait dans un document.
+    expect(await panneau.findByText(/conseillé : 1 seconde/)).toBeTruthy()
+    expect(panneau.getByText(/seul l'œil la voit/)).toBeTruthy()
+  })
+
+  // ── « Trois absences, trois phrases, et une seule grise » ─────────────────
+
+  test("la machine en ordre ne dit rien, et n'écrit aucun panneau d'alerte", async () => {
+    await ouvrirLeClip()
+
+    const moteur = await waitFor(() => {
+      const trouve = document.querySelector("[data-moteur]")
+      if (!trouve) throw new Error("le panneau du moteur ne s'est pas affiché")
+      return trouve as HTMLElement
+    })
+    // Il dit ce qu'est la carte — une attente sans sa machine ne veut rien dire.
+    expect(within(moteur).getByText(/RTX 3080/)).toBeTruthy()
+    // Et rien d'autre : **rien à dire est une réponse**.
+    expect(moteur.querySelector("[data-moteur-phrase]")).toBeNull()
+    expect(within(moteur).queryByRole("button", { name: /Télécharger/ })).toBeNull()
+  })
+
+  test("l'application éteinte grise le modèle et dit d'ouvrir la fenêtre", async () => {
+    const { panneau } = await ouvrirLeClip({
+      moteur: {
+        ...MOTEUR_EN_ORDRE,
+        allume: false,
+        carte: "",
+        memoire_libre_go: 0,
+        grise: "ComfyUI n'est pas allumé",
+        phrase:
+          "ComfyUI n'est pas allumé. Ouvrez-le, puis revenez : le grisé tombera " +
+          "tout seul.",
+      },
+      modelesVideo: {
+        ...MODELES_VIDEO,
+        modeles: MODELES_VIDEO.modeles.map((m) =>
+          m.de_la_maison ? { ...m, grise: "ComfyUI n'est pas allumé" } : m,
+        ),
+      },
+    })
+
+    // La seule des trois qui empêche : l'atelier ne sait pas ouvrir une fenêtre
+    // à la place de l'auteur, et rien ne peut partir.
+    const carte = await panneau.findByRole("button", { name: /Wan 2\.2/ })
+    expect((carte as HTMLButtonElement).disabled).toBe(true)
+    expect(await panneau.findByText(/le grisé tombera tout seul/)).toBeTruthy()
+  })
+
+  test("des fichiers manquants ne grisent rien, et se lisent avec leur taille et leur licence", async () => {
+    const { panneau } = await ouvrirLeClip({
+      moteur: {
+        ...MOTEUR_EN_ORDRE,
+        manquants: [
+          {
+            nom: "wan_2.1_vae.safetensors",
+            famille: "vae",
+            go: 0.3,
+            licence: "Apache 2.0",
+            obligatoire: true,
+          },
+        ],
+        go_a_telecharger: 0.3,
+        phrase: "il manque 1 fichier au moteur, soit 0,3 Go à télécharger.",
+      },
+    })
+
+    // **Le modèle reste choisissable** : refuser obligerait à sortir de
+    // l'atelier pour un téléchargement que l'atelier sait faire.
+    const carte = await panneau.findByRole("button", { name: /Wan 2\.2/ })
+    expect((carte as HTMLButtonElement).disabled).toBe(false)
+
+    // Et la liste est là **avant** le bouton : la licence est une question qu'on
+    // se pose avant de télécharger, jamais après.
+    expect(await panneau.findByText("wan_2.1_vae.safetensors")).toBeTruthy()
+    expect(panneau.getByText(/0,3 Go · Apache 2\.0/)).toBeTruthy()
+  })
+
+  test("le greffon absent avertit sans empêcher, et dit ce que le clip perdra", async () => {
+    const { panneau } = await ouvrirLeClip({
+      moteur: {
+        ...MOTEUR_EN_ORDRE,
+        greffon_absent: true,
+        phrase:
+          "le greffon des gros pixels manque : le clip sortira, il sortira lissé.",
+      },
+    })
+
+    const carte = await panneau.findByRole("button", { name: /Wan 2\.2/ })
+    expect((carte as HTMLButtonElement).disabled).toBe(false)
+    expect(await panneau.findByText(/il sortira lissé/)).toBeTruthy()
+    // Un avertissement n'ouvre pas de téléchargement : ce greffon n'est pas
+    // obligatoire, et le proposer avec les fichiers obligatoires mélangerait
+    // « il manque » et « ce serait mieux ».
+    expect(panneau.queryByRole("button", { name: /Télécharger/ })).toBeNull()
+  })
+
+  // ── « Le téléchargement part d'un geste, jamais tout seul » ───────────────
+
+  test("rien ne se télécharge tant que personne n'a cliqué, et le clic envoie l'appel", async () => {
+    const { panneau, appels } = await ouvrirLeClip({
+      moteur: {
+        ...MOTEUR_EN_ORDRE,
+        manquants: [
+          {
+            nom: "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf",
+            famille: "diffusion_models",
+            go: 9.1,
+            licence: "Apache 2.0",
+            obligatoire: true,
+          },
+        ],
+        go_a_telecharger: 9.1,
+        phrase: "il manque 1 fichier au moteur, soit 9,1 Go à télécharger.",
+      },
+    })
+
+    const bouton = await panneau.findByRole("button", { name: /Télécharger · 9,1 Go/ })
+    // **Rien n'est parti** : neuf gigaoctets ne se descendent pas dans le dos de
+    // quelqu'un, et il n'existe aucune version automatique de ce geste.
+    expect(appels.some((a) => a.url === "/api/clips/engine/download")).toBe(false)
+
+    // ⚠️ Et on clique. Un essai qui s'arrêterait à « le bouton est là » laisserait
+    // passer un bouton qui n'appelle rien — c'est exactement ce qui est arrivé
+    // à un mode entier en `A10`.
+    fireEvent.click(bouton)
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/clips/engine/download")).toBe(true),
+    )
+  })
+
+  test("ce qui vient d'arriver fait relire le catalogue, sans que personne le demande", async () => {
+    const { panneau, appels } = await ouvrirLeClip({
+      moteur: {
+        ...MOTEUR_EN_ORDRE,
+        manquants: [
+          {
+            nom: "wan_2.1_vae.safetensors",
+            famille: "vae",
+            go: 0.3,
+            licence: "Apache 2.0",
+            obligatoire: true,
+          },
+        ],
+        go_a_telecharger: 0.3,
+        phrase: "il manque 1 fichier au moteur, soit 0,3 Go à télécharger.",
+      },
+    })
+
+    fireEvent.click(await panneau.findByRole("button", { name: /Télécharger/ }))
+    // Ce qui vient d'arriver peut faire tomber le grisé. L'auteur ne devrait pas
+    // avoir à changer de durée pour s'en apercevoir.
+    await waitFor(() =>
+      expect(
+        appels.filter((a) => a.url.startsWith("/api/clips/models")).length,
+      ).toBeGreaterThan(1),
+    )
+    // Et la liste disparaît quand il n'y a plus rien à descendre.
+    await waitFor(() =>
+      expect(panneau.queryByText("wan_2.1_vae.safetensors")).toBeNull(),
+    )
+  })
+
+  test("un atelier sans moteur local n'affiche pas le panneau du tout", async () => {
+    const { panneau } = await ouvrirLeClip({
+      modelesVideo: {
+        ...MODELES_VIDEO,
+        modeles: MODELES_VIDEO.modeles.filter((m) => !m.de_la_maison),
+        moteurs: [{ nom: "openrouter", manque: null }],
+      },
+    })
+
+    await panneau.findByText("Seedance 2.0 Mini")
+    // Un panneau vide qui parlerait d'une carte graphique absente serait pire
+    // qu'aucun panneau.
+    expect(document.querySelector("[data-moteur]")).toBeNull()
   })
 })

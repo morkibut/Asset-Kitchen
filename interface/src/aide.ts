@@ -1468,7 +1468,17 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Rien à ce qui part. C'est une **borne haute** affichée avant l'envoi : ce qui s'enregistre après est le montant que le fournisseur a facturé, et l'écart mesuré sur treize clips va de quatre pour cent de plus à cinquante-huit pour cent de moins.",
     origine: "relu chez le fournisseur, à chaque changement de format",
-    long: "La formule est là parce qu'un prix vidéo se **calcule** au lieu de se lire dans une grille : sans elle, le montant serait à croire sur parole. Elle dit le tarif, la surface, la cadence facturée et la durée — de quoi refaire le calcul et le vérifier sur la page du modèle.\n\nUn modèle dont le tarif n'a pas pu être relu est grisé avec sa raison. Ce n'est pas du zèle : un clip se fait attendre deux minutes, et proposer sans savoir ce qu'on engage serait proposer à l'aveugle.",
+    long: "La formule est là parce qu'un prix vidéo se **calcule** au lieu de se lire dans une grille : sans elle, le montant serait à croire sur parole. Elle dit le tarif, la surface, la cadence facturée et la durée — de quoi refaire le calcul et le vérifier sur la page du modèle.\n\nUn modèle dont le tarif n'a pas pu être relu est grisé avec sa raison. Ce n'est pas du zèle : un clip se fait attendre deux minutes, et proposer sans savoir ce qu'on engage serait proposer à l'aveugle.\n\n**Un des modèles de la liste ne coûte rien** : il tourne sur la carte graphique de cette machine. Ce qu'il coûte est du temps, et le bouton l'annonce à la place du montant — la règle *rien ne part sans que ce que ça coûte soit annoncé* ne disparaît pas, elle change d'unité. Ce temps ne se multiplie pas comme un prix : le premier clip charge le modèle en mémoire, les suivants sont plus courts.",
+  },
+
+  "clip.moteur": {
+    nom: "La carte de cette machine",
+    ou: "etabli",
+    quoi: "Ce que ton ordinateur peut faire lui-même, et ce qu'il lui manque pour ça.",
+    change:
+      "Rien à ce qui part. Ce panneau ne dépense jamais d'argent — il regarde ce que l'application du moteur a sur son disque, et il te dit si le modèle gratuit est utilisable maintenant.",
+    origine: "relu à chaque ouverture de cet écran",
+    long: "Trois choses peuvent manquer, et elles ne se réparent pas de la même façon.\n\n**L'application du moteur n'est pas ouverte.** C'est la seule des trois qui empêche : rien ne peut partir, et l'atelier ne sait pas ouvrir une fenêtre à ta place. Ouvre-la, reviens ici, le grisé tombe tout seul — le relevé se refait à chaque fois.\n\n**Des fichiers manquent.** Le modèle reste choisissable : l'atelier sait les rapatrier, et il te dit lesquels, combien ils pèsent et sous quelle licence **avant** que tu lances quoi que ce soit. C'est une question qu'on se pose avant, jamais après : ce qui descend là finira dans un jeu que tu vends.\n\n**Le greffon qui garde les gros pixels manque.** Simple avertissement — le clip sortira, il sortira lissé. Un clip lissé se juge à l'œil ; un refus ne se juge pas.\n\nUn téléchargement coupé se reprend là où il s'est arrêté : relance, rien n'est perdu.",
   },
 
   "clip.mesure": {

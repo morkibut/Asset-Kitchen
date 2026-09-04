@@ -77,14 +77,29 @@ class Tarification:
     vidéo** — hauteur × largeur × images par seconde × durée / 1024. Le produit
     doit connaître laquelle, sinon il ne peut ni calculer, ni écrire la formule.
 
+    **Un troisième genre est arrivé en `A11`, et il a fallu l'inventer pour une
+    raison précise.** `refus` grise tout modèle dont le tarif n'a pas pu être
+    relu, et c'est une bonne règle : elle interdit d'engager l'auteur sans savoir
+    ce qu'il engage. Mais un moteur qui tourne sur la carte de la maison n'a
+    **aucun tarif chez aucun fournisseur**, et son montant est pourtant
+    parfaitement connu — il vaut zéro. Sans `MAISON`, la règle qui protège de la
+    dépense griserait le seul modèle qui n'en fait aucune. *Un prix de zéro n'est
+    pas un prix inconnu*, et les confondre était le défaut à éviter.
+
     `libelle` est le nom du tarif **chez le fournisseur**. C'est la seule chose
     d'opaque ici, et elle est là pour une raison : sans elle, un auteur qui veut
     vérifier le prix sur la page du modèle ne saurait pas quelle ligne regarder.
     """
 
-    genre: str  # "seconde" | "jeton"
+    genre: str  # "seconde" | "jeton" | "maison"
     montant: float
     libelle: str = ""
+
+
+# Les trois genres de tarif, nommés une fois. `MAISON` vaut toujours zéro.
+A_LA_SECONDE = "seconde"
+AU_JETON = "jeton"
+MAISON = "maison"
 
 
 # Les côtés d'image, en pixels, pour une résolution et un rapport donnés. Ils
@@ -163,6 +178,11 @@ class Prix:
     montant: float | None
     formule: str = ""
     releve_le: str = ""
+    # **Une estimation, sauf quand le montant est certain.** Le seul cas certain
+    # est celui du moteur de la maison, dont le montant est zéro et le restera :
+    # écrire *estimation* à côté d'un zéro exact laisserait croire qu'il pourrait
+    # être autre chose (`A11`).
+    nature: str = "estimation"
 
     @property
     def connu(self) -> bool:
@@ -176,7 +196,63 @@ class Prix:
             # **Écrit noir sur blanc, à chaque fois.** Le critère de A9 demande
             # que l'écran distingue une estimation d'un montant relu ; il ne le
             # peut que si le mot voyage avec le chiffre.
-            "nature": "estimation",
+            "nature": self.nature,
+        }
+
+
+# ── Ce qui coûte du temps au lieu de l'argent (A11) ──────────────────────────
+
+
+@dataclass(frozen=True, slots=True)
+class Attente:
+    """Ce qu'un clip de la maison coûte : **du temps, et il s'annonce pareil**.
+
+    L'invariant du produit — *rien ne part sans que le prix soit annoncé* — ne
+    disparaît pas quand le prix vaut zéro, il **change d'unité**. Ce que l'auteur
+    engage en lançant un clip local est trois minutes de sa machine, et il a le
+    droit de le savoir avant, exactement comme il a le droit de savoir qu'un clip
+    payé coûte sept centimes.
+
+    **`premier` n'est pas un détail d'affichage.** Le modèle reste chargé en
+    mémoire d'un tirage à l'autre : le premier paie le chargement, les suivants
+    non. Relevé le 3 septembre 2026 sur cette machine — ≈ 7,6 s par image au
+    premier tirage, ≈ 4,7 s ensuite. Annoncer la seconde valeur pour le premier
+    clip ferait attendre le double de ce qui a été promis, et c'est la même faute
+    que d'annoncer un prix trop bas.
+    """
+
+    secondes: float
+    premier: bool
+    images: int = 0
+    # D'où viennent les deux cadences, pour que la phrase puisse le dire.
+    mesure: str = ""
+    # **Ce que prendra chacun des clips d'après**, modèle déjà chargé.
+    #
+    # Il est ici parce qu'on peut en lancer plusieurs d'un coup : annoncer la
+    # valeur du premier pour un lot de quatre annoncerait le tiers de l'attente
+    # réelle. L'écran ne peut pas la déduire — les deux cadences sont deux
+    # mesures, pas un rapport qui se calcule.
+    secondes_suivant: float = 0.0
+
+    @property
+    def minutes(self) -> float:
+        return self.secondes / 60.0
+
+    def lot(self, nombre: int) -> float:
+        """Ce que prendra un lot de `nombre` clips : le premier paie le
+        chargement du modèle, les suivants non."""
+        if nombre <= 1:
+            return self.secondes
+        return self.secondes + (nombre - 1) * (self.secondes_suivant or self.secondes)
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "secondes": round(self.secondes),
+            "secondes_suivant": round(self.secondes_suivant),
+            "premier": self.premier,
+            "images": self.images,
+            "mesure": self.mesure,
+            "nature": "attente",
         }
 
 
@@ -227,6 +303,83 @@ class ModeleVideo:
     # écrire une phrase de grisé qui dise *quoi* regarder.
     tarifs_declares: tuple[str, ...] = ()
 
+    # ── Ce qu'`A11` ajoute, et qui ne concerne que le moteur de la maison ────
+    #
+    # Un modèle payant n'en a rien à faire : le fournisseur rend le nombre
+    # d'images qu'il veut et facture à la seconde. Le local, lui, **n'accepte
+    # pas n'importe quel compte d'images**, et l'écran doit dire le vrai.
+    #
+    # `images_par_seconde` est la cadence à laquelle le moteur rend, et
+    # `pas_d_images` la forme que le compte doit avoir : `4` veut dire `4n + 1`,
+    # la contrainte de Wan 2.2 — relevée le 2 septembre 2026 dans le code
+    # installé, `((length - 1) // 4) + 1`. Zéro dans les deux cas veut dire *ce
+    # modèle n'a pas de contrainte de ce genre*, et c'est le cas de tous les
+    # payants.
+    images_par_seconde: int = 0
+    pas_d_images: int = 0
+    # Le temps par image, **premier tirage puis les suivants**. Deux valeurs
+    # parce que le modèle reste chargé entre deux clips : relevé ≈ 7,6 s puis
+    # ≈ 4,7 s le 3 septembre 2026 sur cette machine. Vide chez un payant.
+    secondes_par_image: tuple[float, ...] = ()
+    # La durée que l'écran met en avant, et **pourquoi**. Mesuré : plus le clip
+    # est long, plus la bande se dégrade — le greffon a été entraîné par paquets
+    # de 8 à 32 images, et au-delà il travaille hors de son terrain. Vide chez un
+    # payant, où rien de tel n'a été mesuré.
+    duree_conseillee: int = 0
+    raison_de_la_duree: str = ""
+
+    @property
+    def de_la_maison(self) -> bool:
+        """Vrai quand ce modèle tourne ici et ne facture rien."""
+        return self.tarification is not None and self.tarification.genre == MAISON
+
+    def images_reelles(self, secondes: float) -> int:
+        """Le nombre d'images que ce modèle rendra **vraiment**.
+
+        Le produit convertit et **annonce le compte réel** plutôt que celui qu'on
+        a demandé : c'est la règle qui vaut partout ailleurs — *ce qui est
+        enregistré est ce qui s'est passé*. À seize images par seconde et au pas
+        de quatre, une seconde fait 17 images, deux 33, trois 49.
+
+        ⚠️ **49 est un calcul, pas une mesure.** Le banc du 3 septembre 2026 n'est
+        jamais monté jusqu'à trois secondes pleines : son plus long tirage faisait
+        45 images, soit 2,8 s. L'écran ne doit pas présenter les 49 autrement.
+        """
+        if self.images_par_seconde <= 0:
+            return 0
+        brut = max(1, round(secondes * self.images_par_seconde))
+        if self.pas_d_images <= 0:
+            return brut
+        pas = self.pas_d_images
+        # **On arrondit vers le haut, jamais vers le bas.** Seize images à seize
+        # par seconde ne sont pas un compte acceptable ; le plus proche en
+        # dessous est quinze — treize, en réalité —, et rendrait un clip *plus
+        # court que demandé*. Un clip trop court est une seconde d'animation
+        # qu'on n'a pas, et le geste entier est à refaire.
+        crans = -((-(brut - 1)) // pas)
+        return max(pas + 1, crans * pas + 1)
+
+    def attente(self, demande: DemandeClip, premier: bool = True) -> Attente | None:
+        """Ce que ce clip prendra de temps, ou `None` si ce n'est pas la question.
+
+        `None` chez un payant : ce qu'il coûte est de l'argent, et l'annoncer en
+        secondes ferait croire qu'on a mesuré une attente qu'on n'a pas mesurée.
+        """
+        if not self.secondes_par_image:
+            return None
+        images = self.images_reelles(demande.secondes)
+        par_image = self.secondes_par_image[0 if premier else -1]
+        return Attente(
+            secondes=images * par_image,
+            premier=premier,
+            images=images,
+            mesure=(
+                f"{_lisible(par_image)} s par image"
+                + (" — premier tirage, le modèle se charge" if premier else "")
+            ),
+            secondes_suivant=images * self.secondes_par_image[-1],
+        )
+
     @property
     def envoi(self) -> str:
         """Le nom que l'adaptateur écrit dans l'appel. Jamais l'identifiant."""
@@ -259,7 +412,17 @@ class ModeleVideo:
                 formule=f"aucun tarif reconnu ; le fournisseur déclare : {declares}",
                 releve_le=releve_le,
             )
-        if tarif.genre == "seconde":
+        if tarif.genre == MAISON:
+            # **Zéro, et une phrase au lieu d'une multiplication.** Écrire
+            # « 0 $ la seconde × 2 s » serait exact et ne dirait rien ; ce que
+            # l'auteur a besoin de lire est *pourquoi* c'est gratuit.
+            return Prix(
+                montant=0.0,
+                formule=tarif.libelle or "gratuit — la carte de la maison",
+                releve_le=releve_le,
+                nature="certain",
+            )
+        if tarif.genre == A_LA_SECONDE:
             montant = tarif.montant * demande.secondes
             formule = (
                 f"{_lisible(tarif.montant)} $ la seconde ({tarif.libelle}) "

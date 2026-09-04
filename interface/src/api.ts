@@ -565,6 +565,31 @@ export type PrixVideo = {
   releve_le: number | null
 }
 
+/** Ce que coûte un clip quand ce qu'il coûte n'est pas de l'argent, mais du
+ *  temps sur la carte graphique de la maison (A11).
+ *
+ *  **Ce n'est pas un prix déguisé en secondes.** Un prix s'additionne, se
+ *  compare à un budget, se retrouve dans le journal des dépenses ; une attente
+ *  ne fait rien de tout ça. Lui donner sa propre forme empêche l'écran de la
+ *  traiter comme un montant par accident. */
+export type AttenteVideo = {
+  secondes: number
+  /** Ce que prendra **chacun des clips d'après**, modèle déjà chargé. Il est là
+   *  parce qu'on peut en lancer plusieurs d'un coup : annoncer la valeur du
+   *  premier pour un lot de quatre annoncerait le tiers de l'attente réelle, et
+   *  l'écran ne peut pas la déduire — ce sont deux mesures, pas un rapport. */
+  secondes_suivant: number
+  /** Le premier clip charge le modèle en mémoire, les suivants non — et l'écart
+   *  se compte en minutes. Annoncer la valeur des suivants au premier ferait
+   *  attendre le double de ce qui a été promis. */
+  premier: boolean
+  images: number
+  /** Sur quelle machine ç'a été mesuré. Une attente sans sa machine ne veut
+   *  rien dire : une autre carte ne donnera pas ce chiffre. */
+  mesure: string
+  nature: string
+}
+
 /** Un modèle vidéo au catalogue, tel que l'écran de commande le montre. */
 export type ModeleVideo = {
   identifiant: string
@@ -573,16 +598,78 @@ export type ModeleVideo = {
   durees: number[]
   resolutions: string[]
   proportions: string[]
+  // ── Ce qu'`A11` ajoute, et qui vaut zéro ou vide chez un modèle payant ─────
+  //
+  // Écrit pour tous plutôt que pour le seul moteur de la maison : un champ qui
+  // n'existe que sur certains modèles oblige l'écran à savoir lesquels, et c'est
+  // un savoir qui se périme.
+  /** Vrai pour le moteur qui tourne sur la machine de l'auteur. Ce qu'il change
+   *  à l'écran : un temps à la place d'un prix, et un panneau qui dit ce qui
+   *  manque au lieu d'une clé à déposer. */
+  de_la_maison: boolean
+  images_par_seconde: number
+  /** La durée que ce dépôt conseille, et **la raison qui va avec**. Zéro veut
+   *  dire *la question ne se pose pas pour celui-ci*. */
+  duree_conseillee: number
+  raison_de_la_duree: string
+  /** Le nombre d'images réel pour chaque durée offerte, **calculé au serveur**.
+   *  Le moteur n'accepte que certains comptes ; la règle est une contrainte du
+   *  modèle et n'a rien à faire dans une interface — deux endroits qui la
+   *  calculent finiraient par ne plus donner le même nombre. */
+  images_par_duree: Record<string, number>
   /** **Ce que ce dépôt a mesuré de lui, et rien d'autre.** Vide veut dire *on
    *  n'en sait rien*, et l'écran l'écrit plutôt que de laisser croire qu'un
    *  modèle proposé a été éprouvé. Aucun des trois n'atteint la barre des huit
    *  tirages : ce sont des propositions étayées, pas un arbitrage clos. */
   mesure: string
   prix: PrixVideo
+  /** L'attente annoncée, ou `null` chez un payant — et `null` n'est pas un
+   *  trou : ce qu'un modèle payant coûte est de l'argent, et une attente
+   *  inventée serait pire qu'aucune. */
+  attente: AttenteVideo | null
   /** La phrase qui dit pourquoi ce modèle ne peut pas honorer la demande
    *  courante, ou `null`. **Le produit ne propose jamais pour rejeter
    *  ensuite** : ce qui est impossible se voit avant d'être choisi. */
   grise: string | null
+}
+
+/** Ce qui manque à la machine pour animer sans payer, **avec sa taille et sa
+ *  licence**, avant que rien ne parte. Vingt-six gigaoctets ne se descendent pas
+ *  dans le dos de quelqu'un. */
+export type FichierDeModele = {
+  nom: string
+  famille: string
+  go: number
+  licence: string
+  obligatoire: boolean
+}
+
+/** Ce que la carte de la maison peut faire aujourd'hui — **en trois absences
+ *  qui ne se ressemblent pas** (A11).
+ *
+ *  1. L'application qui fait tourner le moteur n'est pas ouverte : le modèle est
+ *     grisé, parce que rien ne peut partir.
+ *  2. Des fichiers manquent : le modèle **reste choisissable**, et l'atelier
+ *     propose de les rapatrier. Refuser obligerait à sortir pour un
+ *     téléchargement que l'atelier sait faire.
+ *  3. Le greffon qui garde les gros pixels manque : simple avertissement — le
+ *     clip sortira, il sortira lissé. Un clip lissé se juge ; un refus non. */
+export type EtatDuMoteur = {
+  allume: boolean
+  /** La phrase qui grise le modèle, ou `null`. **Seule la première absence la
+   *  remplit** : les deux autres se disent sans empêcher. */
+  grise: string | null
+  /** Ce qu'il faut rapatrier, ou vide. */
+  manquants: FichierDeModele[]
+  go_a_telecharger: number
+  greffon_absent: boolean
+  /** La carte graphique telle qu'elle se nomme, et ce qui lui reste de mémoire
+   *  libre. Vide quand l'application n'est pas ouverte. */
+  carte: string
+  memoire_libre_go: number
+  /** Ce qu'il y a à dire, déjà écrit — ou la chaîne vide quand il n'y a rien à
+   *  dire. Rien à dire est une réponse. */
+  phrase: string
 }
 
 /** Le catalogue vidéo pour un réglage donné. Le prix dépend de ce qu'on
@@ -596,6 +683,17 @@ export type BaseModelesVideo = {
    *  décodeur est là. Un clip s'achète quand même sans lui — il ne se découpe
    *  pas, et il reste payé. */
   decodeur: string | null
+  /** Ce qui manque à **chaque** animateur, séparément (A11). Une clé absente
+   *  chez le payant ne dit rien du moteur de la maison, et une seule phrase pour
+   *  les deux ferait chercher la panne du mauvais côté. */
+  moteurs: {
+    nom: string
+    manque: string | null
+    /** Rempli par les animateurs qui ont plus à dire que *disponible ou non*.
+     *  C'est le cas du moteur de la maison, dont les trois absences ne se
+     *  réparent pas de la même façon. */
+    moteur?: EtatDuMoteur
+  }[]
   demande: { secondes: number; resolution: string; proportions: string }
 }
 
@@ -3849,6 +3947,25 @@ export const api = {
         `&resolution=${encodeURIComponent(resolution)}` +
         `&proportions=${encodeURIComponent(proportions)}`,
     ),
+
+  /** Ce que la carte de la maison peut faire aujourd'hui (A11).
+   *
+   *  **Le relevé se refait à chaque appel**, et c'est délibéré : l'auteur qui
+   *  vient d'ouvrir l'application du moteur doit voir le grisé tomber sans
+   *  redémarrer son atelier. Rien ici ne coûte — on demande à une application
+   *  locale ce qu'elle a sur son disque. */
+  etatDuMoteur: () => appeler<EtatDuMoteur>("/clips/engine"),
+
+  /** Rapatrie les fichiers qui manquent au moteur de la maison.
+   *
+   *  **La seule route du produit qui télécharge**, et il n'y en a pas de version
+   *  automatique : c'est un geste que l'auteur demande, après avoir lu la liste
+   *  avec les tailles et les licences. ⚠️ Un téléchargement coupé se reprend au
+   *  même appel — un fichier tronqué ressemble à un fichier absent. */
+  telechargerLesModeles: () =>
+    appeler<EtatDuMoteur & { descendus: string[] }>("/clips/engine/download", {
+      method: "POST",
+    }),
 
   /** Ce qu'un clip prendrait au départ, **et pourquoi celle-là**. Une
    *  proposition : l'écran la montre, l'auteur en change d'un clic. */

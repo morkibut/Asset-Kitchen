@@ -143,6 +143,41 @@
         "essais/atelier_jetable_a10.py"
       ],
       "port": 8432
+    },
+    {
+      "name": "atelier-jetable-a11",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_a11.py"
+      ],
+      "port": 8433
+    },
+    {
+      "name": "atelier-jetable-a11-eteint",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_a11.py",
+        "eteint"
+      ],
+      "port": 8434
+    },
+    {
+      "name": "atelier-jetable-a11-manque",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_a11.py",
+        "manque"
+      ],
+      "port": 8435
+    },
+    {
+      "name": "atelier-jetable-a11-greffon",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_a11.py",
+        "greffon"
+      ],
+      "port": 8436
     }
   ]
 }

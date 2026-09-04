@@ -29,13 +29,26 @@
 //    n'atteint la barre des huit tirages : ce sont des propositions étayées,
 //    pas un arbitrage clos, et l'écran le dit à l'endroit où l'on choisit
 //    plutôt que de faire passer une hypothèse pour un résultat.
+//
+// ── Ce qu'A11 y ajoute, et l'invariant qu'il ne casse pas ──────────────────
+//
+// Un des modèles de la liste tourne sur la machine de l'auteur et ne coûte pas
+// d'argent. **L'invariant tient tel quel — rien ne part sans que ce que ça coûte
+// soit annoncé —, il change seulement d'unité** : le bouton porte un temps au
+// lieu d'un montant, et ce temps est mesuré, pas deviné.
+//
+// Ce modèle-là est dans la même liste que les autres, avec le même geste pour le
+// choisir. Une liste à part en ferait une option de réglages, et ce n'en est
+// pas une : c'est une façon de produire un clip parmi trois.
 
 import { useCallback, useEffect, useState } from "react"
 import {
   api,
   dollars,
   type Asset,
+  type AttenteVideo,
   type BaseModelesVideo,
+  type EtatDuMoteur,
   type Generation,
   type ImageDeDepart,
   type ModeleVideo,
@@ -71,6 +84,39 @@ const RESOLUTIONS = [
 /** Combien de clips d'un coup. **Un est le défaut, et le produit n'impose
  *  jamais un lot** : c'est tout ce qui reste de l'ancienne tranche `A3`. */
 const LOTS = [1, 2, 4, 8] as const
+
+/** Une taille de fichier telle qu'elle s'écrit en français. **La virgule n'est
+ *  pas un détail** : le serveur écrit « 8,9 Go » dans sa phrase, et un bouton
+ *  qui dirait « 8.9 Go » juste au-dessous ferait douter que les deux parlent du
+ *  même chiffre. */
+function gigas(valeur: number): string {
+  return `${valeur.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} Go`
+}
+
+/** Ce qu'un lot de `nombre` clips prendra de temps, **et il ne se multiplie pas
+ *  comme un prix** : le premier tirage charge le modèle en mémoire, les suivants
+ *  non. Le serveur envoie les deux mesures — le rapport entre elles ne se
+ *  calcule pas, il se mesure.
+ *
+ *  ⚠️ **Un seul endroit le calcule**, et c'est délibéré : le bouton d'envoi et la
+ *  carte du modèle affichent le même nombre, et deux formules pour un seul
+ *  chiffre finissent toujours par ne plus donner le même. */
+function attenteDeLot(attente: AttenteVideo | null, nombre: number): number | null {
+  if (!attente) return null
+  if (nombre <= 1) return attente.secondes
+  return attente.secondes + (nombre - 1) * (attente.secondes_suivant || attente.secondes)
+}
+
+/** Une durée en toutes lettres. **Jamais un nombre de secondes nu** au-delà de
+ *  la minute : « 442 s » ne se lit pas, « 7 min » se lit. */
+export function duree(secondes: number): string {
+  if (secondes < 60) return `${Math.round(secondes)} s`
+  const minutes = Math.round(secondes / 60)
+  if (minutes < 60) return `${minutes} min`
+  const heures = Math.floor(minutes / 60)
+  const reste = minutes % 60
+  return reste ? `${heures} h ${reste} min` : `${heures} h`
+}
 
 export function EcranClip({
   cible,
@@ -222,6 +268,19 @@ export function EcranClip({
       ? choisi.prix.montant * nombre
       : null
 
+  const attente = choisi?.attente ?? null
+  const attenteDuLot = attenteDeLot(attente, nombre)
+
+  // **Ce qui va s'écrire sur le bouton, en une seule décision.** Un modèle
+  // coûte de l'argent ou du temps, jamais les deux, et jamais rien : l'écran
+  // écrit ce qu'il a plutôt que de choisir entre deux formules à trois endroits.
+  const cout =
+    attenteDuLot !== null
+      ? `≈ ${duree(attenteDuLot)}`
+      : montant !== null
+        ? `≈ ${dollars(montant)}`
+        : null
+
   const empeche = !image
     ? "un clip part toujours d'une image : choisissez-en une"
     : !texte
@@ -367,6 +426,21 @@ export function EcranClip({
             <tr>
               <td className="py-1 align-top text-texte">Ses images</td>
               <td className="py-1">
+                {/* **Le compte réel, quand le modèle en impose un.** Celui de la
+                    maison n'accepte que certains nombres d'images et arrondit
+                    vers le haut ; il est calculé au serveur, parce que la règle
+                    est une contrainte du moteur et que deux endroits qui la
+                    calculent finiraient par ne plus donner le même nombre. */}
+                {choisi?.images_par_duree?.[String(secondes)] ? (
+                  <>
+                    <strong className="text-texte">
+                      {choisi.images_par_duree[String(secondes)]} images
+                    </strong>{" "}
+                    — le moteur n'accepte que certains comptes et prend celui du
+                    dessus, jamais celui du dessous : un clip plus court que
+                    demandé serait un geste à refaire. Elles sont{" "}
+                  </>
+                ) : null}
                 tirées à l'arrivée, une fois, et rangées à côté du clip.
                 {catalogue?.decodeur && (
                   <>
@@ -381,9 +455,31 @@ export function EcranClip({
             <tr>
               <td className="py-1 align-top text-texte">L'attente</td>
               <td className="py-1">
-                deux minutes environ. <strong className="text-texte">Vous
-                pouvez fermer l'atelier</strong> : le clip continue de se
-                fabriquer, et vous le retrouverez.
+                {attenteDuLot === null ? (
+                  <>
+                    deux minutes environ. <strong className="text-texte">Vous
+                    pouvez fermer l'atelier</strong> : le clip continue de se
+                    fabriquer chez le fournisseur, et vous le retrouverez.
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-texte">
+                      {duree(attenteDuLot)}
+                    </strong>{" "}
+                    {nombre > 1 ? "pour les " + nombre + " ensemble" : "environ"}.{" "}
+                    {/* ⚠️ **Ce qui change par rapport à un clip payé, et qui se
+                        dit ici plutôt que d'être découvert.** Un clip payé se
+                        fabrique ailleurs ; celui-ci se fabrique sur cette
+                        machine. L'atelier peut se fermer — c'est l'autre
+                        fenêtre qui travaille —, mais la carte graphique est
+                        prise, et laisser la phrase d'à côté le passerait sous
+                        silence. */}
+                    Il se fabrique <strong className="text-texte">sur cette
+                    machine</strong>, dans la fenêtre du moteur. Vous pouvez
+                    fermer l'atelier ; ne fermez pas celle-là, et attendez-vous à
+                    ce que le reste de l'ordinateur rame pendant ce temps.
+                  </>
+                )}
               </td>
             </tr>
           </tbody>
@@ -462,6 +558,18 @@ export function EcranClip({
           />
         ))}
 
+        {/* **Le panneau du moteur de la maison**, sous les cartes et pas
+            ailleurs : ce qu'il rapatrie ne sert qu'à animer, et le mettre dans
+            les Réglages obligerait à quitter l'écran qui pose la question. Il ne
+            paraît que si cet atelier a un moteur local. */}
+        {catalogue?.moteurs.some((m) => m.moteur) && (
+          <PanneauDuMoteur
+            onChange={() => {
+              relireLeCatalogue()
+            }}
+          />
+        )}
+
         <div className="mt-3 flex flex-col gap-2 border-t border-bord pt-3">
           <Bouton
             principal
@@ -472,16 +580,30 @@ export function EcranClip({
               enVol
                 ? "il part…"
                 : `Commander ${nombre > 1 ? `ces ${nombre} clips` : "ce clip"}` +
-                  (montant === null ? "" : ` · ≈ ${dollars(montant)}`)
+                  (cout === null ? "" : ` · ${cout}`)
             }
           />
           <Raison texte={empeche} />
           <Raison texte={refus} />
-          <p className="mesure text-[10px] leading-4 text-texte-3">
-            Ce montant est une <strong className="text-texte-2">estimation
-            haute</strong>. Ce qui sera enregistré est ce que la facture dira, et
-            l'écart mesuré va jusqu'à moitié moins.
-          </p>
+          {attente ? (
+            <p className="mesure text-[10px] leading-4 text-texte-3">
+              Ce clip ne coûte rien : il se fabrique sur votre machine.{" "}
+              <strong className="text-texte-2">
+                Ce qu'il coûte est ce temps-là
+              </strong>
+              , et pendant qu'il tourne la carte graphique est prise.{" "}
+              {attente.premier
+                ? "Ce premier tirage charge le modèle en mémoire ; les suivants seront plus courts."
+                : "Le modèle est déjà chargé — c'est la cadence de croisière."}{" "}
+              {attente.mesure}.
+            </p>
+          ) : (
+            <p className="mesure text-[10px] leading-4 text-texte-3">
+              Ce montant est une <strong className="text-texte-2">estimation
+              haute</strong>. Ce qui sera enregistré est ce que la facture dira, et
+              l'écart mesuré va jusqu'à moitié moins.
+            </p>
+          )}
         </div>
       </aside>
     </div>
@@ -592,6 +714,7 @@ function CarteModele({
   onChoisir: () => void
 }) {
   const grise = modele.grise !== null
+  const attente = modele.attente
   return (
     <button
       type="button"
@@ -613,6 +736,22 @@ function CarteModele({
         <span className="mesure text-[10px] leading-4 text-texte-3">
           {modele.grise}
         </span>
+      ) : attente ? (
+        // **Un temps à la place d'un montant, et le mot « gratuit » avec.**
+        // Écrire « ≈ 4 min » tout seul se lirait comme un délai de livraison ;
+        // c'est un coût, et l'unité seule ne le dit pas.
+        <>
+          <span className="mesure text-[11.5px] text-texte">
+            ≈ {duree(attenteDeLot(attente, nombre) ?? 0)}
+            <span className="ml-1.5 text-[9.5px] text-texte-3">
+              sur votre carte · gratuit
+              {nombre > 1 ? ` · ${nombre} clips` : ""}
+            </span>
+          </span>
+          <span className="mesure text-[9.5px] leading-4 text-texte-3">
+            {attente.images} images à {attente.mesure}
+          </span>
+        </>
       ) : (
         <>
           <span className="mesure text-[11.5px] text-texte">
@@ -630,6 +769,17 @@ function CarteModele({
         </>
       )}
 
+      {/* **La durée conseillée, avec sa raison, là où on choisit.** ⚠️ Ce que
+          cette raison dit — que la bande se dégrade au-delà d'une seconde et
+          qu'aucune mesure automatique ne le voit — est le genre de fait qui se
+          perd dans un document et qui se lit ici. */}
+      {modele.duree_conseillee > 0 && (
+        <span className="mesure text-[9.5px] leading-4 text-epingle">
+          conseillé : {modele.duree_conseillee} seconde
+          {modele.duree_conseillee > 1 ? "s" : ""} — {modele.raison_de_la_duree}
+        </span>
+      )}
+
       {/* **Ce que ce dépôt a mesuré, et rien d'autre.** Vide veut dire *on n'en
           sait rien*, et l'écrire vaut mieux que de laisser croire qu'un modèle
           proposé a été éprouvé. */}
@@ -638,6 +788,128 @@ function CarteModele({
           "ce dépôt n'a encore rien mesuré de ce modèle — proposé, jamais éprouvé"}
       </span>
     </button>
+  )
+}
+
+/** Ce que la carte de la maison peut faire aujourd'hui — **et les trois
+ *  absences ne se ressemblent pas** (A11).
+ *
+ *  1. L'application du moteur n'est pas ouverte : le modèle est grisé, parce que
+ *     rien ne peut partir et que l'atelier ne sait pas ouvrir une fenêtre à la
+ *     place de l'auteur.
+ *  2. Des fichiers manquent : le modèle **reste choisissable**, et ce panneau
+ *     propose de les rapatrier. Refuser obligerait à sortir de l'atelier pour un
+ *     téléchargement que l'atelier sait faire.
+ *  3. Le greffon qui garde les gros pixels manque : simple avertissement. Le
+ *     clip sortira, il sortira lissé — et un clip lissé se juge, alors qu'un
+ *     refus ne se juge pas.
+ *
+ *  Les confondre ferait sortir de l'atelier pour rien, ou laisserait tomber une
+ *  attente de plusieurs minutes sur un geste annoncé comme immédiat. */
+function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
+  const [etat, setEtat] = useState<EtatDuMoteur | null>(null)
+  const [enCours, setEnCours] = useState(false)
+  const [refus, setRefus] = useState<string | null>(null)
+
+  const relire = useCallback(() => {
+    api
+      .etatDuMoteur()
+      .then(setEtat)
+      .catch(() => setEtat(null))
+  }, [])
+
+  useEffect(relire, [relire])
+
+  if (!etat) return null
+
+  const rapatrier = async () => {
+    setRefus(null)
+    setEnCours(true)
+    try {
+      setEtat(await api.telechargerLesModeles())
+      // Le catalogue se relit : ce qui vient d'arriver peut faire tomber le
+      // grisé, et l'auteur ne devrait pas avoir à s'en occuper.
+      onChange()
+    } catch (erreur) {
+      setRefus(
+        erreur instanceof Error ? erreur.message : "le téléchargement s'est arrêté",
+      )
+    } finally {
+      setEnCours(false)
+    }
+  }
+
+  return (
+    <div
+      data-moteur
+      className="mt-2 flex flex-col gap-2 rounded-[2px] border border-bord bg-fond-2 p-2"
+    >
+      <div className="flex items-baseline gap-2">
+        <Libelle aide="clip.moteur">la carte de cette machine</Libelle>
+        <button
+          type="button"
+          onClick={relire}
+          className="mesure ml-auto text-[9.5px] text-texte-3 hover:text-texte"
+        >
+          revoir
+        </button>
+      </div>
+
+      {/* Ce qu'elle est, quand elle répond. Une attente sans sa machine ne veut
+          rien dire — la même mesure sur une autre carte donnerait autre chose. */}
+      {etat.carte && (
+        <span className="mesure text-[9.5px] leading-4 text-texte-3">
+          {etat.carte} · {gigas(etat.memoire_libre_go)} libres
+        </span>
+      )}
+
+      {/* La phrase du moment, déjà écrite au serveur. **Vide veut dire qu'il n'y
+          a rien à dire**, et rien à dire est une réponse. */}
+      {etat.phrase && (
+        <p
+          data-moteur-phrase
+          className="mesure text-[10px] leading-4 text-texte-2"
+        >
+          {etat.phrase}
+        </p>
+      )}
+
+      {etat.manquants.length > 0 && (
+        <>
+          {/* **La liste avec les tailles et les licences, avant le bouton.**
+              Vingt-six gigaoctets ne se descendent pas dans le dos de quelqu'un,
+              et la licence est une question qu'on se pose avant, jamais après :
+              ce qui descend ici finira dans un jeu vendu. */}
+          <ul className="mesure flex flex-col gap-0.5 text-[9.5px] leading-4 text-texte-3">
+            {etat.manquants.map((fichier) => (
+              <li key={fichier.nom} className="flex gap-2">
+                <span className="truncate" title={fichier.nom}>
+                  {fichier.nom}
+                </span>
+                <span className="ml-auto whitespace-nowrap">
+                  {gigas(fichier.go)} · {fichier.licence}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Bouton
+            inactif={enCours}
+            onClick={() => void rapatrier()}
+            enfants={
+              enCours
+                ? "ça descend…"
+                : `Télécharger · ${gigas(etat.go_a_telecharger)}`
+            }
+          />
+          <p className="mesure text-[9.5px] leading-4 text-texte-3">
+            Une seule fois, puis plus jamais. Un téléchargement coupé se reprend
+            là où il s'est arrêté : relancez, rien n'est perdu.
+          </p>
+        </>
+      )}
+
+      <Raison texte={refus} />
+    </div>
   )
 }
 

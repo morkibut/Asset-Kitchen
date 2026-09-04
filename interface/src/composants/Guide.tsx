@@ -422,9 +422,31 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               nom de l'onglet.
             </P>
             <P>
-              C'est l'un des deux seuls endroits d'où l'argent part. Sa matrice arme, la barre
-              tire : cliquer <I>Fabriquer</I> sur une case remplit le champ et rend la main, il
-              n'y a jamais qu'un endroit qui dépense.
+              C'est l'un des rares endroits d'où l'argent part. Sa matrice arme, la barre tire :
+              cliquer <I>Fabriquer</I> sur une case remplit le champ et rend la main, il n'y a
+              jamais qu'un endroit qui dépense.
+            </P>
+            <P>
+              <I>Animer</I> ouvre le troisième, et c'est un écran entier :{" "}
+              <B>on n'y commande pas une image, on y commande une vidéo</B> — une durée, un
+              format, une image de départ obligatoire, et le bouton porte ce que ça coûte. Tu
+              découperas le clip ensuite, autant de fois que tu veux, sans repayer.
+            </P>
+            <P>
+              <B>Un des modèles proposés ne coûte rien</B> : il tourne sur la carte graphique de
+              cette machine. Le bouton porte alors <B>un temps</B> à la place d'un montant — la
+              règle ne change pas, elle change d'unité : rien ne part sans que tu saches ce que
+              ça te prend. Ce temps ne se multiplie pas comme un prix ; le premier clip charge
+              le modèle en mémoire, les suivants sont plus courts. Et le panneau sous les
+              modèles te dit ce qui manque à ta machine, s'il manque quelque chose : il le liste
+              avec sa taille et sa licence, et il sait aller le chercher.
+            </P>
+            <P>
+              Ce modèle-là veut des <B>clips courts</B> — une seconde plutôt que trois —, et
+              l'écran le dit à l'endroit où tu choisis. La raison est mesurée : plus le clip est
+              long, plus l'animation qu'on en tire se dégrade, et <B>aucune mesure automatique
+              ne le voit</B>. Comme il ne coûte rien, la bonne façon de s'en servir est d'en
+              lancer plusieurs courts et de garder le meilleur.
             </P>
             <P>
               La découpe, elle, n'est plus un lieu : c'est une table parmi les autres, sur la
