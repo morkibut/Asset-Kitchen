@@ -11,6 +11,84 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## M5 — la référence qui manque s'ajoute sans rien perdre — 4 septembre 2026
+
+**Le défaut n'était l'oubli de personne : trois décisions justes se rencontraient.** Aucune n'est
+fautive prise seule, et c'est ce qui l'a rendu invisible pendant deux versions. La fenêtre de
+confirmation **recouvre tout le produit** — c'est ce qui en fait le seul endroit d'où l'argent part,
+et c'est un invariant. Le geste qui fait repartir une image **va où son effet se voit**, donc il
+change d'onglet. Et le tri — ce qu'on vient d'éteindre, d'allumer ou de réécrire — **repartait de
+rien à chaque ouverture**, y compris après un changement d'onglet.
+
+**Leur rencontre mettait l'auteur devant un choix que personne n'avait voulu lui imposer** : garder
+ses corrections, ou ajouter l'image dont il venait de voir qu'elle manquait. Au pire moment — cette
+fenêtre est le seul endroit du produit qui montre **quelles** références partent, donc le seul où
+l'on s'aperçoit qu'il en manque une. On pouvait y décocher une image jointe ; on ne pouvait jamais
+en ajouter une.
+
+**La règle du tri est révisée par écrit, pas contournée.** Elle visait un vrai danger — un réglage
+qui traînerait d'un appel au suivant — et elle reste. Ce qui change est **ce qu'elle appelle un
+autre appel** : sortir chercher une image et revenir n'en est pas un. C'est le motif du dépôt, celui
+de `G6`, `G7` et `G8` : on rouvre la décision à l'endroit où elle est écrite, avec sa nouvelle
+raison.
+
+**« Le même appel », et il fallait le dire.** Douze choses le décrivent, et ce sont exactement
+celles qu'on choisit avant de payer : le texte écrit à la main, l'interdiction écrite à la main, le
+modèle, le barème du projet, le nombre de variations, le projet ouvert, le fait d'avoir repris le
+texte tel qu'il part, la chose du jeu visée, sa pièce d'équipement, sa direction, ses poses, ses
+angles. **Deux absences sont délibérées**, et elles portent tout le sens de la tranche :
+
+- **les images jointes n'y sont pas.** C'est le geste que la tranche rend possible ; les y mettre
+  aurait vidé les corrections au moment précis de s'en servir.
+- **la bible du jeu n'y est pas non plus.** Elle change *ce qui part*, elle ne change pas *ce qu'on
+  demande*. Une ligne réécrite pour cet appel-ci reste sa correction, même si le monde a bougé.
+
+L'appel qui **a** changé, lui, repart d'un tri vide comme avant, et un essai tient les deux cas —
+c'était un critère à part entière, parce qu'une révision qui n'emporterait que le cas neuf laisserait
+la moitié ancienne sans preuve.
+
+**La surface de choix n'a pas été inventée.** L'invariant du produit dit *une seule grille d'assets
+dans tout l'atelier* : celle qui s'ouvre par-dessus la confirmation **est** celle-là, avec ses
+tuiles, son dépôt de fichier, son filtre. Elle arrive donc avec la recherche de la galerie, la même —
+pas une seconde. C'était la contrainte principale de cette moitié, et c'est ce qui en fait un
+réemploi plutôt qu'une neuvième façon de choisir une image.
+
+**Elle se pose par-dessus, elle ne remplace pas.** La fenêtre de confirmation reste montée derrière,
+et c'est très exactement ce qui fait que les corrections en cours ne bougent pas d'un caractère
+pendant l'ajout : il n'y a rien à préserver, puisque rien n'est démonté. Un clic joint l'image, la
+grille se retire, et l'effet est sous les yeux — la ligne entre dans la liste qu'on était en train de
+lire, le compte monte, le prix suit. C'est ce qui rend le changement d'onglet inutile ici, sans avoir
+à toucher à la règle qui l'impose ailleurs.
+
+> ### ⚠️ *Arrêter la propagation* n'arrête pas ce qui écoute au même endroit
+>
+> L'aperçu et la grille de choix écoutent Échap **sur la même fenêtre**. Arrêter la propagation ne
+> fait rien entre deux écouteurs posés là — les deux se déclenchent —, et une seule pression
+> refermait l'image en grand **et** la grille. Ce qui les départage est la marque que le premier
+> laisse : une touche déjà consommée ne se reprend pas.
+>
+> **Le code se lisait comme on l'avait pensé**, et c'est l'essai qui a trouvé, en demandant à trois
+> surfaces empilées de se défaire une par une. C'est le piège déjà payé de la case qui ne change
+> rien, sous une autre forme.
+
+> ### ⚠️ Un second défaut, trouvé en vérifiant : la grille survivait à la sortie
+>
+> La grille de choix est un état **de la fenêtre de confirmation**, pas du produit. Sortir en la
+> laissant ouverte — par l'onglet, qui remonte de toute profondeur — la reposait par-dessus la
+> confirmation **suivante**, devant un appel qui n'avait rien demandé. Les quatre façons de sortir
+> passent désormais par le même endroit.
+>
+> Et sa première version **recouvrait la barre du haut et celle du bas**, que même la fenêtre de
+> confirmation laisse en place. Vu au navigateur, pas dans le code : une surface qui les efface dit
+> qu'on a quitté l'atelier, au milieu d'un geste qui n'en sort pas.
+
+**Ce que la tranche n'a pas fait, et c'était écrit d'avance.** Elle n'empêche pas *réinjecter* de
+changer d'onglet depuis la fiche d'une image. Ç'aurait été utile s'il fallait continuer à sortir ;
+on ne sort plus. La question se rouvrira si le geste court venait à disparaître.
+
+**Aucun appel, aucun centime** — et c'est vrai des deux moitiés : choisir une image de référence n'a
+jamais rien dépensé.
+
 ## M4 — la planche cesse d'être mal décrite — 4 septembre 2026
 
 **Deux remarques écrites le même jour, sur le même écran, sans se ressembler.** *« Le gabarit qu'on

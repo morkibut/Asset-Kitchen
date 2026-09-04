@@ -170,3 +170,33 @@ doit être écrite dans la décision qu'elle révise — pas devinée en constru
 - **La règle du tri**, si `B` est retenue, est une décision écrite à réviser — comme `G6`, `G7` et
   `G8` en révisent trois autres. Le dépôt a un motif pour ça : on rouvre la décision plutôt que de
   la contourner.
+
+---
+
+## Ce que la tranche a livré — 4 septembre 2026
+
+**Livrée en `M5`, les deux moitiés, dans l'ordre annoncé.**
+
+**`B` — les corrections survivent à l'aller-retour.** La règle du tri est révisée à l'endroit où
+elle est écrite, avec sa nouvelle raison : il repart de rien quand **l'appel** change, pas quand
+l'écran s'ouvre. *Ce qui reste ouvert* le disait — il fallait savoir dire ce qu'est « le même
+appel » —, et c'est écrit : douze choses le décrivent, celles qu'on choisit avant de payer. **Deux
+absences sont délibérées** : les images jointes n'y sont pas, sans quoi ajouter une image aurait
+vidé les corrections au moment de s'en servir ; la bible du jeu non plus, parce qu'elle change *ce
+qui part* et non *ce qu'on demande*. L'appel qui a changé, lui, repart d'un tri vide comme avant.
+
+**`A` — ajouter une référence sans refermer.** Le geste *ajouter une référence ›* vit dans la
+section des images jointes, et il pose par-dessus la fenêtre **la grille du produit**, celle de la
+galerie, réemployée telle quelle — avec sa recherche, la même. C'était la borne de la piste, et elle
+tient : aucune surface neuve, aucune neuvième façon de choisir une image. La confirmation reste
+montée derrière, ce qui rend la préservation des corrections **structurelle** — il n'y a rien à
+préserver, puisque rien n'est démonté.
+
+**`C` reste absorbée, comme prévu.** *Réinjecter* change toujours d'onglet depuis la fiche d'une
+image : on n'a plus à sortir, donc la règle qui l'impose ailleurs n'a pas été touchée.
+
+**Aucun appel, aucun centime.**
+
+*Le détail de ce que la construction a appris — dont deux défauts trouvés en chemin — est dans
+`docs/status/etat.md`, à l'entrée du 4 septembre 2026 ; les critères d'acceptation tenus sont dans
+`docs/PLAN.md`.*

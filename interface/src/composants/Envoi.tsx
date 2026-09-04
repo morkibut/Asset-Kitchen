@@ -100,6 +100,7 @@ export function EcranEnvoi({
   onReprendre,
   refus,
   plancheJointe,
+  onAjouterUneReference,
 }: {
   /** Ce que le serveur rend, `null` tant qu'il n'a pas répondu. L'écran dit
    *  alors qu'il ne sait pas encore, jamais un texte deviné. */
@@ -143,6 +144,11 @@ export function EcranEnvoi({
    *  de l'appel : cet écran-ci ne les a pas, et les lui donner pour qu'il
    *  refasse l'adresse aurait été un second endroit où elle s'écrit. */
   plancheJointe: string | null
+  /** **Le geste qui manquait ici** (M5) : ouvrir la grille du produit pour
+   *  joindre une image de plus, sans refermer ce qu'on est en train de lire.
+   *  Cet écran ne sait pas ouvrir une grille et n'a pas à l'apprendre — il dit
+   *  seulement qu'on le demande, et l'atelier pose la grille par-dessus. */
+  onAjouterUneReference: () => void
 }) {
   useEffect(() => {
     const touche = (evenement: KeyboardEvent) => {
@@ -398,6 +404,21 @@ export function EcranEnvoi({
                 {envoi.images.places > 0 &&
                   ` · ${envoi.images.places} places sur ce modèle`}
               </span>
+              {/* **Le geste est ici parce que le manque se voit ici** (M5).
+                  C'est en lisant cette liste, juste avant de payer, qu'on
+                  s'aperçoit qu'une image manque ; jusqu'ici il fallait fermer
+                  l'écran, aller la chercher dans la galerie, et retrouver ses
+                  corrections effacées. Il ne part rien de ce bouton : il ouvre
+                  une grille, et la grille ne paie jamais. */}
+              <button
+                type="button"
+                onClick={onAjouterUneReference}
+                data-ajouter-reference
+                title="Choisir une image dans la galerie, sans quitter cet écran"
+                className="mesure ml-auto shrink-0 rounded-[2px] border border-bord px-1.5 py-0.5 text-[9.5px] text-texte-2 hover:border-texte-3 hover:text-texte"
+              >
+                ajouter une référence ›
+              </button>
             </div>
             {envoi.images.lignes.length === 0 &&
             !envoi.images.gabarit &&

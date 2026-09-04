@@ -31,7 +31,7 @@
 | **R7** | Le texte qui part s'organise en trois parties | **close le 3 septembre 2026, hors version** — construite *pour la relisibilité seule*, contre une mesure qui disait non | ci-dessous, `docs/tranches/R7.md` |
 | **R8**, **R9** | Deux écrans qui ne disaient pas à quoi ils servaient : la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** | ci-dessous, `docs/tranches/R8.md` et `R9.md` |
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
-| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, cinq closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3` et `M4` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** | ci-dessous |
+| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, six closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
@@ -213,10 +213,10 @@ V2.3  ┌ D1  le réglage de départ  ✔ close ┐  ✅ close, cinq sur cinq,
  │
  ▼
 V2.4  ┌ M1  le découpage du coin ✔ close   ┐  ouverte le 4 septembre 2026,
-      │ M2  la maquette du coin ✔ dessinée │  cinq closes sur sept.
+      │ M2  la maquette du coin ✔ dessinée │  six closes sur sept.
       │ M3  l'écran ne fige plus ✔ close   │  Aucune n'en bloque une autre.
       │ M4  la planche dit vrai ✔ close    │  M2 dessine, les autres réparent.
-      ├ M5  la référence qui manque ───────┤  La tranche qui bâtit l'écran de
+      │ M5  la référence retrouvée ✔ close │  La tranche qui bâtit l'écran de
       ├ M6  laquelle part      ✔ close     │  M2 ne s'écrit qu'après elle.
       └ M7  le détourage complet ──────────┘
            ▲ après M4, qui refait la
@@ -2040,7 +2040,7 @@ caractère près** à celui d'avant. C'est le prix écrit avant de commencer, et
 
 ---
 
-### M5 · Une référence s'ajoute sans perdre ses corrections
+### M5 · Une référence s'ajoute sans perdre ses corrections — ✅ **livrée le 4 septembre 2026**
 
 *Aucune US neuve — elle tient `US-126` et `US-160`, et **révise une décision écrite**, celle du tri
 qui repart de rien*
@@ -2095,21 +2095,78 @@ tarder, la question se rouvre.*
 
 **Critères d'acceptation**
 
-- [ ] Sortir de la fenêtre de confirmation et y revenir **pour le même appel** rend les corrections
+- [x] Sortir de la fenêtre de confirmation et y revenir **pour le même appel** rend les corrections
       intactes — chaque ligne éteinte, allumée ou réécrite est comme on l'avait laissée
-- [ ] Un appel qui a changé repart d'un tri vide, comme aujourd'hui — **et un essai tient les deux
+- [x] Un appel qui a changé repart d'un tri vide, comme aujourd'hui — **et un essai tient les deux
       cas**, pas seulement le nouveau
-- [ ] La décision écrite est **réécrite avec sa nouvelle raison**, et dit ce qu'est « le même
+- [x] La décision écrite est **réécrite avec sa nouvelle raison**, et dit ce qu'est « le même
       appel »
-- [ ] Un geste *ajouter une référence ›* vit dans la section des images jointes
-- [ ] Il ouvre **la grille d'assets du produit**, pas une surface neuve — l'invariant ne bouge pas
-- [ ] L'image choisie entre dans la liste, avec son rôle, **sans que la fenêtre se referme**
-- [ ] Les corrections en cours ne bougent pas d'un caractère pendant l'ajout
-- [ ] Aucun appel au fournisseur, aucun centime
+- [x] Un geste *ajouter une référence ›* vit dans la section des images jointes
+- [x] Il ouvre **la grille d'assets du produit**, pas une surface neuve — l'invariant ne bouge pas
+- [x] L'image choisie entre dans la liste, avec son rôle, **sans que la fenêtre se referme**
+- [x] Les corrections en cours ne bougent pas d'un caractère pendant l'ajout
+- [x] Aucun appel au fournisseur, aucun centime
 
 **Bloquée par** — aucune. *Elle touche le même écran que `M3` et `M4`, et pas les mêmes endroits.
 `M4` refait la section des images jointes, où le geste de celle-ci vient se poser : **les faire dans
 cet ordre évite de dessiner deux fois la même liste.***
+
+#### Ce que la construction a appris, et ce qu'elle a tranché
+
+**« Le même appel », écrit noir sur blanc.** Douze choses le décrivent, et ce sont celles qu'on
+choisit avant de payer : le texte écrit à la main, l'interdiction écrite à la main, le modèle, le
+barème du projet, le nombre de variations, le projet ouvert, le fait qu'on ait repris le texte tel
+qu'il part, la chose du jeu visée, sa pièce d'équipement, sa direction, ses poses, ses angles. Deux
+absences sont **délibérées et dites** :
+
+- **les images jointes n'y sont pas** — c'est tout le geste que la tranche rend possible, et les y
+  mettre aurait vidé les corrections au moment précis de s'en servir ;
+- **la bible du jeu n'y est pas non plus** — elle change *ce qui part*, elle ne change pas *ce qu'on
+  demande*. Une ligne réécrite pour cet appel-ci reste la correction de cet appel-là, même si le
+  monde a bougé entre-temps.
+
+**Ce qui referme, et dans quel ordre.** Échap ferme d'abord l'image ouverte en grand, puis la grille
+de choix, puis la fenêtre de confirmation — trois surfaces empilées, une pression chacune. Sans
+cette règle, une seule pression aurait ramené l'auteur devant son prompt alors qu'il renonçait
+seulement à joindre une image.
+
+> #### ⚠️ *Arrêter la propagation* n'arrête pas ce qui écoute au même endroit
+>
+> L'aperçu et la grille de choix écoutent Échap **sur la même fenêtre**, et arrêter la propagation
+> ne fait rien entre deux écouteurs posés là : les deux se déclenchaient, et une seule pression
+> refermait l'image en grand **et** la grille. Ce qui les départage est la marque que le premier
+> laisse — une touche déjà consommée ne se reprend pas. L'essai a trouvé ce que la lecture du code
+> disait tenu ; il est écrit et il reste.
+
+**La grille du produit arrive avec son filtre, et c'est voulu.** La recherche qui trie les tuiles
+est *celle de la galerie*, la même — pas une seconde. C'est la contrainte que la tranche s'était
+donnée : une grille réemployée telle quelle, ou bien une neuvième façon de choisir une image. Ce
+qu'on cherche ici reste donc cherché en revenant à la galerie, et la galerie le dit déjà, comme
+pour tout filtre posé.
+
+> #### ⚠️ Un défaut trouvé en vérifiant, et qu'aucun essai n'aurait cherché
+>
+> La grille de choix est un état **de la fenêtre de confirmation**, pas du produit. Sortir en la
+> laissant ouverte — par l'onglet, qui remonte de toute profondeur — la reposait par-dessus la
+> confirmation **suivante**, devant un appel qui n'avait rien demandé. Les quatre sorties passent
+> désormais par le même endroit, et un essai tient le cas.
+>
+> Vu **au navigateur**, pas dans le code : la première version de la surface recouvrait aussi la
+> barre du haut et celle du bas, que même la fenêtre de confirmation laisse en place. Une surface
+> qui les efface dit qu'on a quitté l'atelier, au milieu d'un geste qui n'en sort pas.
+
+> #### Vérifié au navigateur, sur l'atelier jetable en 8428
+>
+> Éteindre une ligne du jeu et réécrire le sujet, sortir par *revenir sans rien dépenser*, puis
+> **Générer** de nouveau : la ligne est **encore barrée**, le sujet **encore réécrit**, et l'écran
+> compte toujours *1 correction pour cet appel*. Changer le sujet dans le champ, en revanche, repart
+> bien d'un tri vide.
+>
+> Le geste *ajouter une référence ›* pose la grille du produit entre les deux barres, avec ses
+> quatre images et sa recherche — qui filtre. Un clic joint l'image : la grille se retire, la
+> confirmation est toujours là, la ligne du jeu toujours barrée, et la partie *les références* du
+> texte qui part vient d'apparaître avec sa légende. **Aucun appel n'est parti**, et le journal du
+> serveur le montre : rien après les quatre images du montage.
 
 ---
 

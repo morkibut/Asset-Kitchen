@@ -16239,6 +16239,184 @@ describe("l'écran de confirmation", () => {
     const concept = ecran.getByText("concept art").closest("li")!
     expect(concept.textContent).not.toContain("Image ")
   })
+
+  // ── M5 · Les corrections survivent à la sortie, et l'on joint sans sortir ──
+  //
+  // **Deux moitiés d'un seul geste.** L'auteur lit ce qui part, s'aperçoit
+  // qu'une image manque, va la chercher — et retrouvait ses corrections
+  // effacées. Réparer la perte sans donner le chemin court aurait laissé le
+  // détour ; donner le chemin court sans réparer la perte l'aurait rendu
+  // inutile. Les deux essais qui suivent tiennent la charnière : ce qui compte
+  // comme *le même appel*, et ce qu'un ajout n'a pas le droit de bouger.
+
+  /** Fermer la fenêtre de confirmation par son bouton, et attendre qu'elle
+   *  soit vraiment partie — sans quoi l'ouverture suivante retrouverait celle
+   *  d'avant et l'essai passerait sans rien avoir mesuré. */
+  const revenirSansPayer = async () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: "Revenir sans rien dépenser" }),
+    )
+    await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
+  }
+
+  /** Éteindre le monde et réécrire le sujet — **les deux sortes d'écart**, une
+   *  ligne qui ne part plus et une ligne qui part autrement. Un essai qui n'en
+   *  tiendrait qu'une laisserait l'autre libre de se perdre. */
+  const corrigerDeuxFois = async (ecran: ReturnType<typeof within>) => {
+    fireEvent.click(await ecran.findByLabelText("Éteindre monde"))
+    await ecran.findByLabelText("Allumer monde")
+    const ligne = ecran.getByText("sujet").closest("li")!
+    fireEvent.click(within(ligne).getByText("corriger"))
+    fireEvent.change(ecran.getByLabelText("Corriger sujet"), {
+      target: { value: "un forgeron nain, barbe tressée" },
+    })
+    await ecran.findByDisplayValue("un forgeron nain, barbe tressée")
+  }
+
+  test("sortir et revenir pour le même appel rend les corrections intactes", async () => {
+    // ⚠️ **Le geste que la règle d'avant rendait impossible.** *Le tri repart
+    // de rien à chaque ouverture* (E14) ne distinguait pas l'appel suivant de
+    // l'appel qu'on venait de quitter : sortir chercher une image effaçait, en
+    // silence, tout ce qu'on venait de régler.
+    const { ecran } = await ouvrir()
+    await corrigerDeuxFois(ecran)
+
+    await revenirSansPayer()
+    const revenu = await relire()
+
+    // Éteinte comme on l'avait laissée, réécrite comme on l'avait réécrite —
+    // et c'est le serveur qui le rend, depuis le tri qu'on lui renvoie.
+    expect(await revenu.findByLabelText("Allumer monde")).toBeTruthy()
+    const sujet = revenu.getByText("sujet").closest("li")!
+    expect(sujet.textContent).toContain("un forgeron nain, barbe tressée")
+    // Et le texte assemblé, en haut, dit la même chose que la ligne : c'est la
+    // promesse de l'écran, et elle vaut aussi au retour.
+    expect(revenu.getAllByText(/barbe tressée/).length).toBeGreaterThan(1)
+  })
+
+  test("un appel qui a changé repart d'un tri vide", async () => {
+    // **L'autre moitié de la charnière**, et elle vaut autant : un réglage qui
+    // traînerait d'un appel au suivant est le danger que la règle d'avant
+    // visait, et il n'est pas levé. Changer le sujet fait un autre appel.
+    const { ecran } = await ouvrir()
+    await corrigerDeuxFois(ecran)
+    await revenirSansPayer()
+
+    const champ = await champDePrompt()
+    fireEvent.change(champ, { target: { value: "un forgeron gobelin" } })
+
+    const revenu = await relire()
+    expect(await revenu.findByLabelText("Éteindre monde")).toBeTruthy()
+    expect(revenu.queryAllByText(/barbe tressée/)).toEqual([])
+  })
+
+  test("ajouter une référence joint l'image sans rien bouger de ce qu'on corrige", async () => {
+    // **C'est la grille du produit qui s'ouvre, et elle se pose par-dessus.**
+    // L'invariant dit *une seule grille d'assets dans tout l'atelier* ; la
+    // confirmation reste montée derrière, ce qui est précisément ce qui garde
+    // les corrections en place.
+    const { ecran, appels } = await ouvrir({
+      assets: [asset("tonneau-0", "un tonneau"), asset("lanterne-0", "une lanterne")],
+    })
+    await corrigerDeuxFois(ecran)
+
+    fireEvent.click(ecran.getByRole("button", { name: /ajouter une référence/ }))
+    const choix = within(
+      document.querySelector("[data-choix-reference]") as HTMLElement,
+    )
+    expect(document.querySelector("[data-envoi]")).toBeTruthy()
+    const tuiles = await choix.findAllByRole("button", { name: "Ouvrir la fiche" })
+    expect(tuiles.length).toBe(2)
+
+    fireEvent.click(tuiles[0])
+
+    // L'image entre avec son rôle, **et le tri part avec elle inchangé** : même
+    // ligne éteinte, même texte réécrit, dans la même demande.
+    await waitFor(() => {
+      const dernier = appels.filter((a) => a.url === "/api/outgoing").at(-1)!
+      const corps = JSON.stringify(dernier.corps)
+      expect(corps).toContain('"role":"reference"')
+      expect(corps).toContain('"eteints":["jeu.monde"]')
+      expect(corps).toContain("un forgeron nain, barbe tressée")
+    })
+
+    // Le choix se referme sur ce qu'on lisait — l'effet est là, sous les yeux.
+    expect(document.querySelector("[data-choix-reference]")).toBeNull()
+    expect(document.querySelector("[data-envoi]")).toBeTruthy()
+    expect(ecran.getByLabelText("Allumer monde")).toBeTruthy()
+
+    // **Aucun appel au fournisseur, aucun centime** : choisir une image n'a
+    // jamais rien dépensé, et ce chemin-ci ne fait pas exception.
+    expect(appels.filter((a) => a.url === "/api/generations")).toEqual([])
+  })
+
+  test("Échap referme le choix, et lui seul", async () => {
+    // Sans le garde, une seule pression refermait les deux : l'auteur
+    // renonçait à joindre une image et se retrouvait devant son prompt.
+    const { ecran } = await ouvrir({ assets: [asset("tonneau-0", "un tonneau")] })
+
+    fireEvent.click(ecran.getByRole("button", { name: /ajouter une référence/ }))
+    expect(document.querySelector("[data-choix-reference]")).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() =>
+      expect(document.querySelector("[data-choix-reference]")).toBeNull(),
+    )
+    expect(document.querySelector("[data-envoi]")).toBeTruthy()
+
+    // Et la seconde pression, elle, revient bien au prompt.
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
+  })
+
+  test("l'aperçu passe avant la grille, et la grille avant la confirmation", async () => {
+    // **Trois surfaces empilées, et Échap n'en prend qu'une à la fois.** On
+    // regarde une image en grand *avant* de la choisir : c'est l'aperçu qui
+    // sert à ça, et il doit donc se refermer le premier.
+    const { ecran } = await ouvrir({ assets: [asset("tonneau-0", "un tonneau")] })
+    fireEvent.click(ecran.getByRole("button", { name: /ajouter une référence/ }))
+    const choix = document.querySelector("[data-choix-reference]") as HTMLElement
+
+    const tuile = await within(choix).findByRole("button", {
+      name: "Ouvrir la fiche",
+    })
+    fireEvent.pointerOver(tuile)
+    fireEvent.keyDown(window, { key: " ", code: "Space" })
+    expect(screen.getByRole("dialog", { name: "Aperçu" })).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Aperçu" })).toBeNull(),
+    )
+    // La grille est encore là — l'aperçu seul est parti.
+    expect(document.querySelector("[data-choix-reference]")).toBeTruthy()
+    expect(document.querySelector("[data-envoi]")).toBeTruthy()
+  })
+
+  test("sortir la grille ouverte ne la rouvre pas à l'appel suivant", async () => {
+    // **Le choix est un état de cette fenêtre-là, pas du produit.** Sortir en
+    // le laissant derrière aurait posé la grille par-dessus la confirmation
+    // suivante, devant un appel qui n'a rien demandé.
+    const { ecran } = await ouvrir({ assets: [asset("tonneau-0", "un tonneau")] })
+    fireEvent.click(await ecran.findByLabelText("Éteindre monde"))
+    await ecran.findByLabelText("Allumer monde")
+
+    fireEvent.click(ecran.getByRole("button", { name: /ajouter une référence/ }))
+    expect(document.querySelector("[data-choix-reference]")).toBeTruthy()
+
+    // On sort par l'onglet, qui est la sortie qu'aucun des deux écrans ne voit
+    // venir — celle qui remonte de toute profondeur.
+    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+    await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
+
+    await champDePrompt()
+    const revenu = await relire()
+    expect(document.querySelector("[data-choix-reference]")).toBeNull()
+    // L'onglet non plus n'est pas un autre appel : le tri traverse aussi cette
+    // sortie-là, qui est celle que l'auteur prenait pour aller chercher son
+    // image.
+    expect(await revenu.findByLabelText("Allumer monde")).toBeTruthy()
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────

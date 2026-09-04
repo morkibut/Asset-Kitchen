@@ -73,7 +73,14 @@ import {
   type Segment,
 } from "./composants/BarreChassis"
 import { BarreOutils, type Annulation } from "./composants/BarreOutils"
-import { CRANS, Point, usePli, ZOOMS, type Zoom } from "./composants/chassis"
+import {
+  CRANS,
+  Libelle,
+  Point,
+  usePli,
+  ZOOMS,
+  type Zoom,
+} from "./composants/chassis"
 import { ChampPrompt, type EnVol } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranDepenses } from "./composants/Depenses"
@@ -371,6 +378,31 @@ export function App() {
   // s'enregistre nulle part : une correction faite ici vaut pour cet appel
   // seulement, et le prochain repart des réglages.
   const [tri, setTri] = useState<Tri>(TRI_VIDE)
+  // **De quel appel ces corrections-là sont les corrections** (M5).
+  //
+  // La règle disait *le tri repart de rien à chaque ouverture*, et elle visait
+  // un vrai danger : un réglage qui traînerait d'un appel au suivant. Elle
+  // reste. Ce qui change est **ce qu'elle appelle un autre appel** — sortir
+  // chercher une image et revenir n'en est pas un.
+  //
+  // Le défaut n'était l'oubli de personne : trois décisions justes se
+  // rencontraient. La fenêtre de confirmation recouvre tout le produit, donc il
+  // n'existe aucun chemin vers une image sans la refermer ; *réinjecter* va où
+  // son effet se voit, donc ajouter une référence force un changement d'onglet ;
+  // et le tri repartait de rien à chaque ouverture. L'auteur se retrouvait
+  // devant un choix que personne n'avait voulu lui imposer — garder ses
+  // corrections, ou ajouter l'image dont il venait de voir qu'elle manquait — au
+  // seul endroit du produit qui montre quelles références partent, donc le seul
+  // où l'on s'aperçoit qu'il en manque une.
+  //
+  // `null` veut dire « aucune correction en réserve ».
+  const [triDe, setTriDe] = useState<string | null>(null)
+  // **La grille du produit, ouverte par-dessus la fenêtre de confirmation**
+  // (M5). Dans cette fenêtre on pouvait *décocher* une image jointe ; on ne
+  // pouvait jamais en ajouter une — et c'est pourtant le seul endroit du produit
+  // qui montre lesquelles partent, donc le seul où l'on s'aperçoit qu'il en
+  // manque une.
+  const [choixDeReference, setChoixDeReference] = useState(false)
   // **La série qu'on a choisi de ne plus relire.** Une chose et une pose : dès
   // qu'on change de l'une ou de l'autre, l'écran revient. Il n'existe aucune
   // case « pour toujours » — on la cocherait le premier jour, quand on ne sait
@@ -1095,6 +1127,38 @@ export function App() {
     setOptions((precedentes) => ({ ...defaut.options, ...precedentes }))
   }, [defaut, modeleChoisi])
 
+  // **Ce qui fait qu'un appel est le même, et rien de plus** (M5).
+  //
+  // Ce que l'auteur **vise et écrit** : le texte, ce qu'il interdit, le modèle,
+  // l'échelle, le nombre de variations, le jeu, et la case du monde qu'il
+  // remplit. Changer l'un de ceux-là, c'est demander autre chose — et les
+  // corrections de la demande d'avant n'ont plus de sens.
+  //
+  // **Ce qui n'y entre pas est aussi une décision.** Les images jointes n'y sont
+  // pas : en ajouter une, ou en décocher une, est une correction *de cet
+  // appel-ci* et non un appel neuf — c'est très exactement le geste que la
+  // tranche rend possible, et l'y mettre viderait le tri au moment de s'en
+  // servir. La bible du jeu n'y est pas non plus : elle change ce qui part, elle
+  // ne change pas ce qu'on demande.
+  //
+  // Le séparateur est un caractère qu'aucun de ces champs ne peut porter : sans
+  // lui, deux repères mis bout à bout feraient deux appels différents lus comme
+  // un seul.
+  const signatureDeLAppel = [
+    prompt,
+    promptNegatif,
+    modele?.identifiant ?? "",
+    echelle,
+    String(variations),
+    bibliotheque.courant ?? "",
+    String(repris),
+    cible?.personnage ?? "",
+    cible?.piece ?? "",
+    cible?.direction ?? "",
+    posesCible.map((p) => p.identifiant).join("·"),
+    directionsCible.join("·"),
+  ].join("␟")
+
   // ── Ce que la grille montre ───────────────────────────────────────────────
 
   const entrees = useMemo<Entree[]>(() => {
@@ -1314,6 +1378,18 @@ export function App() {
     return intention.current.identifiant
   }
 
+  /** Refermer la fenêtre de confirmation, **et ce qui s'est posé par-dessus**
+   *  (M5).
+   *
+   *  Le choix d'une référence est un état de cette fenêtre-là, pas du produit :
+   *  le laisser derrière rouvrirait la grille à la prochaine ouverture, devant
+   *  un appel qui n'a rien demandé. Les quatre façons de sortir passent donc
+   *  ici — le bouton, Échap, l'onglet, et reprendre le texte à la main. */
+  const fermerCeQuiPart = () => {
+    setEnvoiOuvert(false)
+    setChoixDeReference(false)
+  }
+
   const generer = () => {
     if (refus || !modele) return
     // L'échec d'avant appartenait à l'appel d'avant.
@@ -1326,10 +1402,17 @@ export function App() {
       void payer()
       return
     }
-    // **Le tri repart de rien à chaque ouverture.** Ce qu'on a éteint la fois
-    // d'avant ne vaut que pour l'appel d'avant : c'est la règle de l'écran, et
-    // la garder en mémoire ici l'aurait démentie en silence.
-    setTri(TRI_VIDE)
+    // **Le tri repart de rien dès que l'appel change** (M5, révisant E14).
+    //
+    // La règle disait *à chaque ouverture*, et elle visait un vrai danger : un
+    // réglage qui traînerait d'un appel au suivant. Elle reste. Ce qui change
+    // est **ce qu'elle appelle un autre appel** — sortir chercher une image et
+    // revenir n'en est pas un. Ce qu'on a éteint pour *cet* appel-ci vaut
+    // encore pour lui ; ce qu'on avait éteint pour un autre ne le suit pas.
+    if (triDe !== signatureDeLAppel) {
+      setTri(TRI_VIDE)
+      setTriDe(signatureDeLAppel)
+    }
     setEnvoiOuvert(true)
   }
 
@@ -1420,9 +1503,12 @@ export function App() {
       // reprend aux portées durables, comme au premier prompt de la séance.
       setEcarteesGeneration(null)
       // L'écran de confirmation se referme avec l'appel qu'il a relu, et le tri
-      // part avec lui.
-      setEnvoiOuvert(false)
+      // part avec lui. **Ici il part pour de bon** (M5) : l'appel est parti,
+      // donc il n'y a plus d'appel dont ces corrections-là seraient les
+      // corrections. C'est la différence avec un aller-retour.
+      fermerCeQuiPart()
       setTri(TRI_VIDE)
+      setTriDe(null)
       // **La cible se désarme dès que l'appel est parti.** C'est une intention
       // qui vaut pour *cette* génération : la garder enverrait l'image suivante
       // — un tonneau, un décor — dans la case d'un personnage, sans que rien
@@ -1775,6 +1861,53 @@ export function App() {
       { asset, role },
     ])
     setOnglet("codex")
+  }
+
+  /** **Échap referme le choix, et lui seul** (M5).
+   *
+   *  La fenêtre de confirmation écoute Échap pour se fermer, et elle reste
+   *  montée derrière : sans ce garde, une seule pression aurait refermé les
+   *  deux, ramenant l'auteur au prompt alors qu'il renonçait seulement à
+   *  joindre une image. En capture, et il arrête ce qu'il consomme.
+   *
+   *  ⚠️ **Et il rend la main à ce qui est encore au-dessus.** L'aperçu écoute
+   *  Échap de la même façon, sur la même fenêtre : *arrêter la propagation* ne
+   *  suffit pas entre deux écouteurs posés sur le même endroit — les deux se
+   *  déclenchent, et une seule pression refermait l'image en grand **et** la
+   *  grille. La marque qu'il laisse, elle, se voit : une touche déjà consommée
+   *  ne se reprend pas. On regarde une image en grand avant de la choisir ; ce
+   *  qu'on referme d'abord est donc l'image. */
+  useEffect(() => {
+    if (!choixDeReference) return
+    const touche = (evenement: KeyboardEvent) => {
+      if (evenement.key !== "Escape" || evenement.defaultPrevented) return
+      evenement.stopPropagation()
+      setChoixDeReference(false)
+    }
+    window.addEventListener("keydown", touche, true)
+    return () => window.removeEventListener("keydown", touche, true)
+  }, [choixDeReference])
+
+  /** **Ajouter une référence sans quitter la fenêtre de confirmation** (M5).
+   *
+   *  C'est `reinjecter` **moins le changement d'onglet**, et l'écart tient à la
+   *  règle qui l'avait imposé : *le geste va où son effet se voit*. Depuis la
+   *  fiche d'une image de la galerie, l'effet est ailleurs — d'où le
+   *  déplacement. Ici, l'effet est **sous les yeux** : l'image entre dans la
+   *  liste des images jointes qu'on est en train de lire, le compte monte d'une,
+   *  et le prix suit. Il n'y a rien à aller voir.
+   *
+   *  **Elle entre en *référence***, c'est-à-dire *le même sujet, déjà dessiné* :
+   *  c'est ce qu'on veut dans le cas qui a fait la tranche — on lit ce qui part,
+   *  on s'aperçoit qu'une image manque. Le rôle se change là où il se change
+   *  déjà, dans la bande *Repart avec* au pied du codex, et ce détour-là ne
+   *  coûte plus rien depuis que les corrections survivent à la sortie. */
+  const ajouterUneReference = (asset: string) => {
+    setReinjections((deja) => [
+      ...deja.filter((r) => r.asset !== asset),
+      { asset, role: "reference" as Role },
+    ])
+    setChoixDeReference(false)
   }
 
   /** Le quatrième rôle : reprendre les réglages, sans envoyer d'image.
@@ -2183,14 +2316,18 @@ export function App() {
           //
           // **L'écran de confirmation manquait à la liste** (U1). Cliquer
           // *Galerie* changeait le fil d'Ariane et le laissait en place : on
-          // était enfermé dans un écran qu'aucun onglet ne pouvait fermer. Le
-          // tri part avec lui, comme il part quand on revient par *Échap* — il
-          // ne vaut que pour l'appel qu'on vient d'abandonner.
+          // était enfermé dans un écran qu'aucun onglet ne pouvait fermer.
+          //
+          // **Le tri, lui, ne part plus avec lui** (M5). Il partait, et c'est ce
+          // qui mettait l'auteur devant un choix que personne n'avait voulu lui
+          // imposer : garder ses corrections, ou sortir chercher l'image dont il
+          // venait de voir qu'elle manquait. Sortir n'est pas demander autre
+          // chose — c'est `signatureDeLAppel` qui dit ce qu'est un autre appel,
+          // et elle est relue à la réouverture.
           setDecoupeOuverte(null)
           setCarteDecoupee(null)
           setDepensesOuvertes(false)
-          setEnvoiOuvert(false)
-          setTri(TRI_VIDE)
+          fermerCeQuiPart()
           setChoseOuverte(null)
           setCaseOuverte(null)
           setTablesOuvertes(null)
@@ -2293,7 +2430,7 @@ export function App() {
              il ne grise pas le bouton : ce qu'on veut faire d'un appel raté est
              le refaire. */
           echec={echecDuPaiement}
-          onFermer={() => setEnvoiOuvert(false)}
+          onFermer={fermerCeQuiPart}
           onGarder={(ligne) => void garderLeTexte(ligne)}
           onSauter={
             serie === null
@@ -2307,7 +2444,7 @@ export function App() {
           onReprendre={(texte) => {
             setPrompt(texte)
             setRepris(true)
-            setEnvoiOuvert(false)
+            fermerCeQuiPart()
           }}
           refus={refus?.texte ?? null}
           /* **L'adresse de l'image que la planche joint** (M4). Elle se compose
@@ -2333,7 +2470,89 @@ export function App() {
                 })
               : null
           }
+          /* **Ajouter une référence sans refermer** (M5). Le geste vit dans la
+             section des images jointes, là où l'on vient de voir qu'il en
+             manquait une. */
+          onAjouterUneReference={() => setChoixDeReference(true)}
         />
+      )}
+
+      {/* ── Choisir une image de référence, par-dessus la confirmation ──────
+          **C'est la grille du produit, réemployée telle quelle.** L'invariant
+          dit *une seule grille d'assets dans tout l'atelier* : celle qui s'ouvre
+          ici **est** celle-là, avec ses tuiles, son dépôt de fichier et son
+          filtre. En dessiner une neuvième aurait été une neuvième façon de
+          choisir une image.
+
+          **Elle se pose par-dessus, elle ne remplace pas.** La fenêtre de
+          confirmation reste montée derrière — c'est ce qui fait que les
+          corrections en cours ne bougent pas d'un caractère pendant l'ajout, et
+          c'est tout le sujet de la tranche.
+
+          Sous l'aperçu, jamais au-dessus : on regarde une image en grand
+          **avant** de la choisir, et l'aperçu est ce qui sert à ça. */}
+      {envoiOuvert && choixDeReference && (
+        <div
+          data-choix-reference
+          role="dialog"
+          aria-label="Choisir une image de référence"
+          /* **Dans le cadre, pas par-dessus le cadre.** La barre du châssis en
+             haut et la barre d'état en bas appartiennent au produit entier et
+             ne s'effacent nulle part — la fenêtre de confirmation elle-même les
+             laisse. Une surface qui les recouvrirait dirait qu'on a quitté
+             l'atelier, alors qu'on est au milieu d'un geste. */
+          className="fixed inset-x-0 bottom-[26px] top-[44px] z-40 flex flex-col bg-fond-0"
+        >
+          <div className="flex items-baseline gap-3 border-b border-bord px-4 py-3">
+            <Libelle>choisir une image de référence</Libelle>
+            <span className="mesure text-[9.5px] leading-4 text-texte-3">
+              elle entre en <span className="text-texte-2">référence</span> —
+              *le même sujet, déjà dessiné* — et rien de ce que tu viens de
+              corriger ne bouge. Aucun appel ne part d'ici.
+            </span>
+            {/* **Le seul réglage de cette surface, et c'est celui de la
+                galerie** : la recherche du filtre, la même. Sans elle, choisir
+                dans une bibliothèque de deux cents images reviendrait à faire
+                défiler ; avec un second filtre à elle, la surface cesserait
+                d'être la grille du produit. */}
+            <input
+              value={filtre.recherche}
+              onChange={(e) =>
+                setFiltre((f) => ({ ...f, recherche: e.target.value }))
+              }
+              aria-label="Chercher une image à joindre"
+              placeholder="Chercher"
+              className="mesure ml-auto h-[24px] w-[220px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte placeholder:text-texte-3"
+            />
+            <button
+              type="button"
+              onClick={() => setChoixDeReference(false)}
+              title="Échap revient à ce qui part"
+              className="mesure px-1 text-[10px] text-texte-3 hover:text-texte"
+            >
+              ‹ revenir
+            </button>
+          </div>
+          <Grille
+            entrees={entrees}
+            selection={selection}
+            filtre={filtre}
+            zoom={zoomRendu}
+            entree={entree}
+            onRelancer={relancer}
+            onChoisir={(generation, rang) => setDepliage({ generation, rang })}
+            /* **Un clic choisit, il n'ouvre pas de fiche.** C'est le seul
+               endroit où la grille sert à désigner plutôt qu'à juger, et une
+               entrée qui n'est pas encore une image n'a rien à joindre : le
+               clic ne fait alors rien, plutôt que de joindre un identifiant
+               d'emplacement que le serveur ne saurait pas relire. */
+            onOuvrir={(identifiant) => {
+              if (grille.some((a) => a.identifiant === identifiant))
+                ajouterUneReference(identifiant)
+            }}
+            onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
+          />
+        </div>
       )}
 
       {/* **Les tables, à la profondeur de la galerie.** Une image qui
