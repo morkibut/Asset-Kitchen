@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.4, le coin du calque</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  h3{font-family:var(--serif);font-size:25px;font-weight:400;line-height:1.15;margin:0 0 14px}
+  h4{font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--texte-3);margin:26px 0 10px}
+  p{margin:0 0 12px;max-width:80ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:80ch;margin-bottom:22px}
+  ul{margin:0 0 12px;padding-left:18px;max-width:80ch;color:var(--texte-2)}
+  li{margin-bottom:6px}
+  li b{color:var(--texte);font-weight:600}
+
+  .verdict{border-left:2px solid var(--signal);padding:2px 0 2px 16px;margin:0 0 20px;
+    max-width:80ch}
+  .verdict .t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--signal);margin-bottom:5px}
+  .verdict p{margin:0;color:var(--texte-2)}
+  .garde{border:1px solid var(--epingle);border-radius:2px;background:rgba(200,160,60,.07);
+    padding:13px 15px;margin:0 0 20px;max-width:80ch}
+  .garde .t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--epingle);margin-bottom:6px}
+  .garde p{margin:0 0 8px;color:var(--texte-2)}
+  .garde p:last-child{margin:0}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin:0 0 20px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;
+    border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  td .non{color:var(--texte-3)}
+  td .oui{color:var(--ok)}
+  .defile{overflow-x:auto}
+
+  /* ── le banc : une colonne d'écran, et ses annotations ─────────────────── */
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .colonne.large{width:352px}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    gap:8px;padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .enpan .dj{margin-left:auto;text-transform:none;letter-spacing:0}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:12px}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);display:flex;align-items:center}
+  .col-t .dr{margin-left:auto;text-transform:none;letter-spacing:0}
+  .col-t.neuf{color:var(--signal)}
+  .sepbloc{height:1px;background:var(--bord);margin:2px 0}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .raison.neuf{color:var(--signal)}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+
+  .segs{display:flex;gap:4px}
+  .sg{height:24px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11.5px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+
+  .rg{display:flex;align-items:center;gap:7px;height:24px}
+  .rg .lb{font-size:11px;color:var(--texte-2);width:64px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .champ{width:62px;flex:none;height:22px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-1);display:flex;align-items:center;justify-content:flex-end;
+    padding:0 6px;font-family:var(--mono);font-size:10px;color:var(--texte)}
+
+  .duo{display:flex;flex-direction:column;gap:3px}
+  .op{height:38px;display:flex;align-items:center;gap:8px;padding:0 7px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+  .op.dessus{border-color:var(--lumiere)}
+  .op.impose{border-style:dashed;border-color:var(--bord-fort)}
+  .vg{width:26px;height:26px;flex:none;border:1px solid var(--bord);position:relative;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/6px 6px}
+  .vg i{position:absolute;background:var(--fond-3);border:1px solid var(--bord-fort)}
+  .vg u{position:absolute;background:var(--bord-fort);text-decoration:none}
+  .op .col{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .op .nm{font-size:11.5px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .op .rl{font-family:var(--mono);font-size:8.5px;color:var(--texte-3);letter-spacing:.06em;
+    white-space:nowrap}
+  .op .go{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--signal);flex:none}
+  .op .fixe{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--texte-3);flex:none}
+
+  .act{height:26px;border:1px solid var(--signal);border-radius:2px;background:var(--signal-sourd);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    font-size:11.5px;color:var(--signal-clair)}
+  .act.pale{border-color:var(--bord-fort);background:var(--fond-1);color:var(--texte)}
+  .pied-col{margin-top:auto;border-top:1px solid var(--bord);display:flex;flex-direction:column}
+  .pied-col .l{height:30px;display:flex;align-items:center;padding:0 11px;
+    font-size:11.5px;color:var(--signal)}
+  .pied-col .l.gris{height:24px;font-family:var(--mono);font-size:10px;color:var(--texte-3);
+    border-top:1px solid var(--bord)}
+
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px;white-space:nowrap}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5;max-width:62ch}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.deja .k{color:var(--texte-3)}
+  .an.att .k{color:var(--epingle)}
+
+  /* ── le cadre de travail ───────────────────────────────────────────────── */
+  .cadre{overflow-x:auto;margin-bottom:10px}
+  .toile{border:1px solid var(--bord);border-radius:2px;position:relative;height:320px;
+    width:520px;overflow:hidden;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/16px 16px}
+  .barreoutil{height:30px;border:1px solid var(--bord);border-bottom:none;border-radius:2px 2px 0 0;
+    background:var(--fond-1);display:flex;align-items:center;gap:5px;padding:0 9px;width:520px}
+  .barreoutil .ot{height:20px;padding:0 8px;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-2);display:flex;align-items:center;gap:5px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-2)}
+  .barreoutil .ot.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .barreoutil .zm{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);
+    display:flex;align-items:center;gap:9px}
+  .toile.attachee{border-radius:0 0 2px 2px}
+  /* **L'ordre du DOM peint, et aucun z-index sur les blocs** : un z-index posé
+     sur un bloc absolu ouvre un contexte d'empilement, et son étiquette ne peut
+     alors plus passer au-dessus du voile. Seules les étiquettes en portent un. */
+  .corpsbas{position:absolute;background:var(--fond-3);border:1px solid var(--bord-fort)}
+  .corpsbas .et{position:absolute;left:-1px;bottom:-15px;font-family:var(--mono);font-size:9px;
+    color:var(--texte-2);white-space:nowrap;z-index:5}
+  .casehaut{position:absolute;border:1px solid var(--lumiere);background:rgba(30,36,43,.55)}
+  .casehaut .et{position:absolute;left:-1px;top:-15px;font-family:var(--mono);font-size:9px;
+    color:var(--lumiere);white-space:nowrap;z-index:5}
+  .piece{position:absolute;background:var(--bord-fort);border:1px solid var(--texte-3)}
+  .rect{position:absolute;border:1px dashed var(--epingle)}
+  .rect .et{position:absolute;right:-1px;bottom:-15px;font-family:var(--mono);font-size:9px;
+    color:var(--epingle);white-space:nowrap;z-index:5}
+  .voile{position:absolute;background:rgba(11,13,16,.62)}
+  .brosse{position:absolute;border:1px solid var(--signal);border-radius:9999px;
+    background:rgba(73,179,206,.14)}
+  .brosse .et{position:absolute;left:100%;top:50%;margin-left:7px;transform:translateY(-50%);
+    font-family:var(--mono);font-size:9px;color:var(--signal);white-space:nowrap}
+  .legende{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:9.5px;
+    color:var(--texte-3);margin-bottom:18px}
+  .legende b{color:var(--texte-2);font-weight:500}
+
+  .portes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:20px}
+  @media(max-width:900px){.portes{grid-template-columns:1fr}}
+  .porte{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:13px 15px}
+  .porte .de{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);margin-bottom:7px}
+  .porte .quoi{font-size:13px;color:var(--texte);margin-bottom:7px}
+  .porte .det{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  .porte .det b{color:var(--texte-2);font-weight:500}
+
+  .pied{border-top:1px solid var(--bord);margin-top:52px;padding-top:20px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3);letter-spacing:.06em;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="chapeau">
+  <div class="kicker">Asset Kitchen · V2.4 · tranche M2 · maquette · 4 septembre 2026</div>
+  <h1>Le coin du <em>calque</em>, redessiné</h1>
+  <p><strong>De quoi on parle.</strong> Quand on met un casque sur un personnage, l'atelier ne
+  range pas « le personnage casqué » : il range <strong>le casque seul</strong>, découpé, prêt à
+  être reposé ailleurs. C'est ce que le produit appelle un <em>calque</em>. Trois endroits
+  différents en fabriquent ou en réparent un aujourd'hui, et aucun ne ressemble aux autres —
+  c'est le mot de l'auteur : <em>« ce n'est pas trop logique ni bien organisé cette partie du
+  workflow »</em>.</p>
+  <p><strong>Cette page ne construit rien.</strong> Elle décide ce qui remplace les trois
+  surfaces, et elle tranche les quatre questions que la tranche lui pose. La tranche qui bâtira
+  l'écran ne s'écrit qu'une fois cette maquette arbitrée — c'est la règle du dépôt, et elle vaut
+  ici plus qu'ailleurs, puisqu'on ne savait pas en commençant s'il fallait un écran ou deux.</p>
+  <p class="sourd">Elle s'ouvre d'un double-clic, sans serveur. Rien n'y est calculé : les
+  croquis sont dessinés à la main en HTML, aux dimensions et aux couleurs du produit.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ 1 ── -->
+<section>
+  <div class="entete"><span class="num">1</span><h2>Ce que la maquette tranche</h2></div>
+  <h3>Quatre questions, quatre réponses, et ce que chacune écarte</h3>
+  <p class="intro">Elles sont en tête plutôt qu'en conclusion : le reste de la page ne fait que
+  les montrer. Chaque réponse porte la raison qui la tient, et la solution écartée porte la
+  sienne — une décision sans son contraire écrit se rediscute tous les mois.</p>
+
+  <div class="defile">
+  <table>
+    <thead>
+      <tr><th style="width:24%">La question</th><th style="width:30%">La réponse</th>
+      <th style="width:46%">Pourquoi celle-là, et pas l'autre</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="k">Un écran ou deux ?</td>
+        <td><strong>Un seul</strong> — la superposition, élargie. Elle prend le grossissement et
+        la main, et devient le seul endroit où un calque se fabrique ou se reprend.</td>
+        <td>Les deux sortes de calque — celui qu'une planche a produit, celui qu'une
+        superposition fabrique — <strong>ne diffèrent que sur un point</strong> : l'image du
+        dessous est imposée dans le premier cas, choisie dans le second. Deux écrans pour un
+        seul écart, ce serait deux vérités sur le même calque, et la première divergence
+        arriverait le jour où l'un des deux gagnerait un réglage.</td>
+      </tr>
+      <tr>
+        <td class="k">Que devient la carte d'un vêtement ?</td>
+        <td><strong>Elle reste, et se réduit à ce qu'elle est</strong> : une fiche qui montre le
+        calque sur son corps, ses cinq mesures, et une porte <em>reprendre ce calque ›</em>. Ses
+        trois outils — zone, affinage, retouche — s'en vont dans l'écran unique.</td>
+        <td>La faire disparaître obligerait à ouvrir un écran entier pour <em>regarder</em> un
+        calque, ce qu'on fait dix fois plus souvent qu'on ne le retouche. La garder avec ses
+        outils ferait exactement ce que la tranche répare. <strong>Ses trois outils ne se
+        perdent pas</strong> : la zone <em>est</em> le rectangle de la superposition, l'affinage
+        et la retouche <em>sont</em> les deux couches de la main. Le déménagement est exact, il
+        n'invente rien.</td>
+      </tr>
+      <tr>
+        <td class="k">Tracer un rectangle, ou attraper l'image ?</td>
+        <td><strong>L'outil décide, pas le geste.</strong> Une barre de quatre outils au-dessus
+        du cadre : <em>déplacer</em> (le défaut), <em>rectangle</em>, <em>ôter</em>,
+        <em>remettre</em>. La molette grossit toujours, quel que soit l'outil.</td>
+        <td>Le produit a déjà tranché ce conflit ailleurs par un <strong>seuil de trois
+        pixels</strong> entre un clic et un glissement. Il ne s'applique pas ici :
+        <strong>les deux gestes sont des glissements</strong> de même longueur, et aucun seuil
+        ne les sépare. Le choix d'outil, lui, est déjà le motif de la carte d'un vêtement — on
+        le reprend au lieu d'en inventer un troisième.</td>
+      </tr>
+      <tr>
+        <td class="k">Où va la main ?</td>
+        <td><strong>Sur le même cadre que le calage</strong>, et après lui dans l'ordre de
+        lecture de la colonne : les deux images, le calage, ce qu'on garde, <strong>la
+        main</strong>, ce qu'on en sort.</td>
+        <td>C'est l'ordre du calcul : la main <strong>tranche après la mesure</strong> — elle
+        ôte ce que la comparaison a gardé de trop et ramène ce qu'elle n'a pas vu. Un second
+        cadre, sur un moment d'après, aurait donné deux vues de la même image, qu'il aurait
+        fallu tenir d'accord. C'est la règle de la carte d'un vêtement, mot pour mot :
+        <em>« trois outils, une seule surface »</em>.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="garde">
+    <div class="t">⚠️ Ce que la maquette ne tranche pas, et le dit</div>
+    <p><strong>Elle ne dit pas si l'écran change de nom.</strong> « Superposition » décrit ce
+    qu'il faisait — poser une image sur une autre — et non ce qu'il fera. Un nom se choisit une
+    fois qu'on a vu l'écran, pas avant, et le renommer coûterait aussi la ligne du guide, la puce
+    des tables et deux essais. <em>À l'auteur.</em></p>
+    <p><strong>Elle ne compte pas ce que la construction coûte.</strong> Ce n'est pas son
+    travail : le plan le fera en écrivant la tranche, et il saura alors s'il s'agit d'une
+    tranche ou de deux.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ 2 ── -->
+<section>
+  <div class="entete"><span class="num">2</span><h2>Où l'on entre</h2></div>
+  <h3>Quatre portes, et chacune dit ce qu'elle impose</h3>
+  <p class="intro">Un écran unique n'a de sens que si l'on sait d'où l'on y arrive. Les quatre
+  portes existent déjà — aucune n'est à créer —, mais deux d'entre elles ne menaient nulle part.
+  Ce qui est neuf est <strong>ce que l'écran affiche en arrivant</strong> : la porte qu'on a
+  prise décide de ce qui est déjà rempli, et de ce qu'on n'a plus le droit de changer.</p>
+
+  <div class="portes">
+    <div class="porte">
+      <div class="de">porte 1 · existe</div>
+      <div class="quoi">Depuis une image, par la puce <em>superposition</em> des tables</div>
+      <div class="det">Rien n'est imposé. <b>Les deux images se choisissent</b>, et le dessous
+      est prérempli quand l'image ouverte en désigne un — la superposition qui l'a fabriquée,
+      ou le corps dont ce calque est né.</div>
+    </div>
+    <div class="porte">
+      <div class="de">porte 2 · neuve</div>
+      <div class="quoi">Depuis la carte d'un vêtement, par <em>reprendre ce calque ›</em></div>
+      <div class="det"><b>Le dessous est imposé</b> : c'est le corps de la pose sur laquelle ce
+      calque se repose, et en changer ferait un calque qui ne se repose plus sur rien. Le dessus
+      part de <b>la case telle qu'elle est arrivée du modèle</b> — jamais du calque déjà
+      découpé, qui reviendrait à repartir du résultat qu'on veut défaire.</div>
+    </div>
+    <div class="porte">
+      <div class="de">porte 3 · neuve</div>
+      <div class="quoi">Depuis la matrice d'un personnage, sur la vignette du calque retenu</div>
+      <div class="det">Même chose que la porte 2, et c'est voulu : la matrice est l'endroit d'où
+      l'on voit qu'un calque est raté, <b>elle doit mener à l'endroit où on le répare</b>. La
+      pose et la pièce sont connues, donc le dessous l'est aussi.</div>
+    </div>
+    <div class="porte">
+      <div class="de">porte 4 · existe, inchangée</div>
+      <div class="quoi">La planche d'équipement — on commande, l'atelier déduit</div>
+      <div class="det">Elle <b>ne mène pas à cet écran</b> et ne doit pas y mener : c'est le
+      chemin qui <b>paie</b>, et il fabrique les calques tout seul. L'écran unique est ce qu'on
+      ouvre <b>après</b>, quand ce qui est revenu ne va pas.</div>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <div class="t">Ce que l'écran écrit en arrivant</div>
+    <p>Une ligne, sous les deux images, qui dit ce que la porte a décidé :
+    <em class="mesure sourd">le corps de la pose « repos » est imposé — c'est sur lui que ce
+    calque se repose</em>. Sans elle, une image grisée qu'on ne peut pas changer est un refus
+    sans raison, et le produit n'en a pas.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ 3 ── -->
+<section>
+  <div class="entete"><span class="num">3</span><h2>L'écran</h2></div>
+  <h3>Trois panneaux, et le troisième ne change pas</h3>
+  <p class="intro">La disposition d'aujourd'hui tient : à gauche ce qu'on règle, au milieu le
+  travail, à droite ce qui sortira. <strong>Rien ne s'ajoute en largeur</strong> — la colonne
+  fait 380, comme partout ailleurs dans le produit. Ce qui change est ce que la colonne de gauche
+  contient, et ce que le cadre du milieu permet.</p>
+
+  <div class="banc">
+    <div class="colonne">
+      <div class="enpan">superposition <span class="dj">380</span></div>
+      <div class="cgcorps">
+
+        <div class="bloc">
+          <div class="col-t">les deux images</div>
+          <div class="duo">
+            <div class="op dessus">
+              <span class="vg"><i style="left:6px;top:4px;width:14px;height:18px"></i>
+              <u style="left:5px;top:2px;width:16px;height:5px"></u></span>
+              <span class="col"><span class="nm">helmet · repos</span>
+              <span class="rl">DESSUS · TEL QU'IL EST ARRIVÉ</span></span>
+              <span class="go">changer ›</span>
+            </div>
+            <div class="segs">
+              <span class="sg on mono">telle qu'arrivée</span>
+              <span class="sg mono">telle que rangée</span>
+            </div>
+            <div class="op impose">
+              <span class="vg"><i style="left:6px;top:4px;width:14px;height:18px"></i></span>
+              <span class="col"><span class="nm">balthazar-2 · repos</span>
+              <span class="rl">DESSOUS · IMPOSÉ PAR LA POSE</span></span>
+              <span class="fixe">imposé</span>
+            </div>
+          </div>
+          <div class="raison neuf">le corps de la pose « repos » est imposé — c'est sur lui que
+          ce calque se repose</div>
+        </div>
+
+        <div class="sepbloc"></div>
+        <div class="bloc">
+          <div class="col-t">le calage du dessus</div>
+          <div class="raison" style="color:var(--epingle)">le dessus a été ramené au cadre —
+          1024×1024 réduit à 25 % pour y entrer entier</div>
+          <div class="act pale">Recaler</div>
+          <div class="rg"><span class="lb">échelle</span>
+            <span class="rail"><i style="left:46%"></i></span>
+            <span class="champ">0.780</span></div>
+          <div class="rg"><span class="lb">horizontal</span>
+            <span class="rail"><i style="left:51%"></i></span>
+            <span class="champ">+1 px</span></div>
+          <div class="rg"><span class="lb">vertical</span>
+            <span class="rail"><i style="left:43%"></i></span>
+            <span class="champ">−16 px</span></div>
+        </div>
+
+        <div class="sepbloc"></div>
+        <div class="bloc">
+          <div class="col-t">ce qu'on garde du dessus</div>
+          <div class="rg"><span class="lb">seuil</span>
+            <span class="rail"><i style="left:13%"></i></span>
+            <span class="champ">32</span></div>
+          <div class="raison">de combien une couleur doit changer pour compter comme changée</div>
+          <div class="raison" style="color:var(--epingle)">× le rectangle — 118×74</div>
+        </div>
+
+        <div class="sepbloc"></div>
+        <div class="bloc">
+          <div class="col-t neuf">la main · neuf</div>
+          <div class="segs">
+            <span class="sg on mono">ôter</span>
+            <span class="sg mono">remettre</span>
+          </div>
+          <div class="rg"><span class="lb">largeur</span>
+            <span class="rail"><i style="left:34%"></i></span>
+            <span class="champ">5 px</span></div>
+          <div class="raison neuf">elle ôte ce que la comparaison a gardé de trop, et ramène ce
+          qu'elle n'a pas vu — un casque sombre sur des cheveux sombres, qu'aucun seuil ne
+          distingue</div>
+          <div class="raison">14 passages · défaire le dernier ›</div>
+        </div>
+
+        <div class="sepbloc"></div>
+        <div class="bloc">
+          <div class="col-t">ce qu'on en sort</div>
+          <div class="raison">☑ calque · ce que le dessus ajoute · va au vestiaire</div>
+          <div class="raison">☐ aplat · les deux fondues · un asset ordinaire</div>
+        </div>
+
+      </div>
+      <div class="pied-col">
+        <div class="l">Fabriquer — 1 image ›</div>
+        <div class="l gris">Tout défaire ›</div>
+      </div>
+    </div>
+
+    <div class="annot">
+      <div class="an deja"><span class="k">tel quel</span><span class="t">
+        <b>Les deux images, le calage, le seuil, le rectangle, les sorties.</b> Rien n'y bouge :
+        ce sont les blocs d'aujourd'hui, dans l'ordre d'aujourd'hui. Une refonte qui déplace ce
+        qui marchait fait payer deux fois — une fois à la construction, une fois à
+        l'apprentissage.</span></div>
+      <div class="an att"><span class="k">déjà livré</span><span class="t">
+        <b>La phrase du ramené au cadre</b> vient de <span class="mesure">M1</span>, livrée le
+        4 septembre 2026. Elle est dessinée ici parce qu'elle est <b>voisine de l'échelle</b> et
+        que la refonte ne doit pas la perdre de vue : c'est elle qui dit d'où part le
+        1,000.</span></div>
+      <div class="an"><span class="k">neuf</span><span class="t">
+        <b>La main.</b> Deux mots — <em>ôter</em>, <em>remettre</em> —, une largeur de trait, et
+        le compte des passages avec de quoi défaire le dernier. <b>C'est exactement le bloc de
+        la carte d'un vêtement</b>, déménagé sans un mot de plus. Le champ qui reçoit les
+        passages, la route qui les transporte et le calcul qui les applique
+        <b>existent depuis C4</b> : il ne manquait que ceci.</span></div>
+      <div class="an"><span class="k">neuf</span><span class="t">
+        <b>La ligne qui dit ce que la porte impose.</b> Elle n'existe que sur les portes 2 et 3,
+        et elle porte la raison à la place du réglage — le motif du produit pour tout ce qui est
+        grisé.</span></div>
+      <div class="an deja"><span class="k">inchangé</span><span class="t">
+        <b>Le pied.</b> <em>Fabriquer</em> compte ce qui sortira, <em>Tout défaire</em> remet le
+        calage, le rectangle et la main à zéro — et cesse d'être un mensonge, puisqu'il y aura
+        enfin une main à défaire.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ 4 ── -->
+<section>
+  <div class="entete"><span class="num">4</span><h2>Le cadre de travail</h2></div>
+  <h3>Grossir, déplacer, tracer, retoucher — une seule surface</h3>
+  <p class="intro">C'est ici que tout se joue, et c'est ici qu'il ne se passait rien : le cadre
+  d'aujourd'hui montre les deux images ajustées à la place disponible, <strong>et pas un pixel de
+  plus</strong>. Sur un sprite de 64 pixels de côté, découper proprement à la main y est
+  impossible. Le grossissement libre existe déjà dans le produit, sur l'écran « voir en grand »
+  de la galerie ; on le reprend tel quel.</p>
+
+  <div class="cadre">
+    <div class="barreoutil">
+      <span class="ot">✥ déplacer</span>
+      <span class="ot">▭ rectangle</span>
+      <span class="ot on">◐ ôter</span>
+      <span class="ot">◑ remettre</span>
+      <span class="zm"><span>molette · zoom</span><span>× 6,4</span><span>ajuster</span></span>
+    </div>
+    <div class="toile attachee">
+      <div class="corpsbas" style="left:186px;top:64px;width:148px;height:222px">
+        <span class="et">le corps — le cadre fait loi</span>
+      </div>
+      <div class="casehaut" style="left:156px;top:30px;width:208px;height:262px">
+        <span class="et">la case arrivée, ramenée au cadre</span>
+      </div>
+      <div class="piece" style="left:200px;top:44px;width:120px;height:50px"></div>
+      <div class="rect" style="left:180px;top:32px;width:160px;height:88px">
+        <span class="et">le rectangle · 118×74</span>
+      </div>
+      <div class="voile" style="left:0;top:0;right:0;height:32px"></div>
+      <div class="voile" style="left:0;top:120px;right:0;bottom:0"></div>
+      <div class="voile" style="left:0;top:32px;width:180px;height:88px"></div>
+      <div class="voile" style="left:340px;top:32px;right:0;height:88px"></div>
+      <div class="brosse" style="left:290px;top:52px;width:26px;height:26px">
+        <span class="et">la main · 5 px</span>
+      </div>
+    </div>
+  </div>
+  <div class="legende">
+    <span><b>trait clair</b> le dessus, à l'échelle et au décalage réglés</span>
+    <span><b>bloc plein</b> le corps du dessous</span>
+    <span><b>pointillé doré</b> le rectangle gardé</span>
+    <span><b>voile sombre</b> ce que le rectangle laisse dehors</span>
+    <span><b>cercle cyan</b> la brosse, à sa vraie largeur</span>
+  </div>
+
+  <h4>Ce que chaque geste fait, et il n'y en a que quatre</h4>
+  <div class="defile">
+  <table>
+    <thead>
+      <tr><th style="width:20%">Le geste</th><th style="width:24%">Ce qu'il fait</th>
+      <th style="width:56%">D'où il vient</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="k">la molette</td>
+        <td>grossit, <span class="m">jusqu'à 16 fois l'ajustement</span></td>
+        <td><strong>Repris de l'écran « voir en grand »</strong>, avec sa raison écrite :
+        <em>seize fois suffit à compter les pixels d'un sprite</em>. Elle grossit
+        <strong>quel que soit l'outil</strong> — ce n'est pas la même main que le glissement, et
+        rien ne l'oblige à changer de sens.</td>
+      </tr>
+      <tr>
+        <td class="k">glisser · outil <em>déplacer</em></td>
+        <td>attrape l'image et la déplace</td>
+        <td>Même écran, même mécanisme. <strong>C'est l'outil par défaut</strong> : on arrive
+        pour regarder avant de faire, et un écran qui dessine dès le premier glissement est un
+        écran qui abîme avant d'être compris.</td>
+      </tr>
+      <tr>
+        <td class="k">glisser · outil <em>rectangle</em></td>
+        <td>trace la zone gardée</td>
+        <td>Le geste d'aujourd'hui, inchangé. Le rectangle <strong>continue de se compter en
+        pixels de l'image du dessous</strong> : le grossissement ne change que l'affichage, et
+        un rectangle qui changerait de taille en zoomant serait un rectangle qu'on ne peut pas
+        régler.</td>
+      </tr>
+      <tr>
+        <td class="k">glisser · outils <em>ôter</em> / <em>remettre</em></td>
+        <td>passe la brosse</td>
+        <td><strong>Repris de la carte d'un vêtement</strong>, où les deux mots existent déjà —
+        <em>affinage</em> devient <em>ôter</em>, <em>retouche</em> devient <em>remettre</em>,
+        parce que ces deux mots-là disent ce qu'ils font. Trois largeurs, dont
+        <strong>le pixel seul</strong> : <em>à main levée, puis au pixel</em>, les deux bouts
+        d'un seul réglage.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="garde">
+    <div class="t">⚠️ Le seuil de trois pixels ne s'applique pas ici, et il faut l'écrire</div>
+    <p>Le produit sépare ailleurs un clic d'un glissement par <strong>trois pixels de
+    déplacement</strong> — sur l'aperçu en grand, et sur la bande d'un îlot de la toile. Le
+    réflexe serait de le reprendre. <strong>Il ne peut pas marcher :</strong> tracer un rectangle
+    et attraper l'image sont <em>tous les deux</em> des glissements, souvent de la même longueur
+    et au même endroit. Un seuil sépare deux gestes de longueurs différentes ; il ne sépare pas
+    deux intentions.</p>
+    <p>D'où le choix d'outil — <strong>qui n'est pas une invention</strong> : la carte d'un
+    vêtement porte déjà exactement ce sélecteur, avec trois outils au lieu de quatre. On lui en
+    ajoute un, on ne fabrique pas un mécanisme de plus.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ 5 ── -->
+<section>
+  <div class="entete"><span class="num">5</span><h2>La carte d'un vêtement</h2></div>
+  <h3>Ce qu'elle perd, ce qu'elle garde, et ce qu'elle gagne</h3>
+  <p class="intro">C'est la question à laquelle la tranche demande une réponse écrite. La voici,
+  ligne par ligne. <strong>Elle ne disparaît pas</strong> : on regarde un calque dix fois plus
+  souvent qu'on ne le retouche, et ouvrir un atelier entier pour jeter un œil serait un recul.</p>
+
+  <div class="defile">
+  <table>
+    <thead>
+      <tr><th style="width:26%">Ce qu'elle porte aujourd'hui</th><th style="width:16%">Après</th>
+      <th style="width:58%">Pourquoi</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="k">le calque posé sur son corps</td><td><span class="oui">reste</span></td>
+      <td>C'est la seule chose qui répond à <em>« est-ce que ça tient ? »</em>, et
+      <em>« on juge à l'œil, pas au chiffre »</em> est la phrase qui a décidé de cette carte.</td></tr>
+      <tr><td class="k">les cinq mesures, à côté</td><td><span class="oui">restent</span></td>
+      <td>À côté, jamais à la place. Aucune ne refuse quoi que ce soit ; elles servent à ranger
+      les calques d'un vestiaire dans l'ordre où il faut les regarder.</td></tr>
+      <tr><td class="k">« ◤ favori » et « Supprimer cette image »</td><td><span class="oui">restent</span></td>
+      <td>Livrés en <span class="mesure">M6</span> le 4 septembre 2026, sous la phrase qui dit
+      lequel des deux calques part dans le jeu. Juger, c'est marquer favori ou supprimer, et
+      c'est ici qu'on juge.</td></tr>
+      <tr><td class="k">l'outil <em>zone</em></td><td><span class="non">part</span></td>
+      <td>C'est <strong>le rectangle</strong> de l'écran unique, sous un autre nom. Deux noms
+      pour une notion, c'était déjà un de trop.</td></tr>
+      <tr><td class="k">les outils <em>affinage</em> et <em>retouche</em></td><td><span class="non">partent</span></td>
+      <td>Ce sont <strong>les deux couches de la main</strong>, celles que l'écran unique appelle
+      <em>ôter</em> et <em>remettre</em>. Le domaine les nomme déjà pareil des deux côtés — il
+      n'y a rien à traduire.</td></tr>
+      <tr><td class="k">— <em>rien de tel aujourd'hui</em></td>
+      <td><span style="color:var(--signal)">gagne</span></td>
+      <td><strong>Une porte : <em>reprendre ce calque ›</em></strong>. Elle ouvre l'écran unique,
+      dessous imposé, dessus sur la case telle qu'elle est arrivée. C'est le geste qui manquait,
+      et l'auteur le faisait à la main en retrouvant ses images dans un autre écran.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="verdict">
+    <div class="t">La règle qui en sort, et elle vaut au-delà de cet écran</div>
+    <p><strong>Une fiche montre et renvoie ; un atelier règle.</strong> La carte d'un vêtement
+    était les deux à la fois, et c'est de là que venait le désordre — pas d'un manque
+    d'outils.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ 6 ── -->
+<section>
+  <div class="entete"><span class="num">6</span><h2>Ce qui est réemployé</h2></div>
+  <h3>Aucun troisième mécanisme pour un geste qui existe deux fois</h3>
+  <p class="intro">C'est la contrainte principale de la maquette, et elle se vérifie ligne par
+  ligne. <strong>Rien de ce que l'écran gagne n'est neuf en dessous</strong> : tout est déjà
+  écrit quelque part dans le dépôt, et souvent jusqu'au calcul.</p>
+
+  <div class="defile">
+  <table>
+    <thead>
+      <tr><th style="width:22%">Ce que l'écran gagne</th><th style="width:30%">Ce qui existe déjà</th>
+      <th style="width:48%">Ce qui reste à construire</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="k">le grossissement</td>
+        <td>l'écran « voir en grand » de la galerie : molette, image qu'on attrape, jusqu'à
+        16 fois, et sa raison écrite</td>
+        <td><strong>Le poser sur le cadre de travail</strong>, et faire que le rectangle et la
+        brosse comptent toujours en pixels de l'image du dessous. Le mécanisme ne se réécrit
+        pas.</td>
+      </tr>
+      <tr>
+        <td class="k">la main</td>
+        <td><strong>tout, sauf l'écran</strong> — le champ dans la définition d'une
+        superposition, la route qui l'accepte et le valide, le calcul qui l'applique, et jusqu'à
+        sa raison écrite</td>
+        <td><strong>La surface où tracer</strong>, et le bloc de la colonne de gauche. Le seul
+        endroit du produit qui prononçait le mot était le bouton <em>Tout défaire</em>, qui
+        proposait d'annuler un geste impossible à faire.</td>
+      </tr>
+      <tr>
+        <td class="k">le choix d'outil</td>
+        <td>la carte d'un vêtement, avec ses trois outils sur une seule surface</td>
+        <td><strong>Un quatrième outil</strong> — <em>déplacer</em> —, et rien d'autre.</td>
+      </tr>
+      <tr>
+        <td class="k">les portes 2 et 3</td>
+        <td>la case telle qu'elle est arrivée, livrée en <span class="mesure">G16</span> ; la
+        matrice qui désigne le calque retenu, livrée en <span class="mesure">M6</span></td>
+        <td><strong>Deux liens</strong>, et la ligne qui dit ce que la porte impose.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>Ce que la construction devra au guide</h4>
+  <p>La règle du dépôt : <strong>quand un écran ou un réglage naît, il doit une ligne au recueil
+  d'explications</strong>, et rien ne le rappelle tout seul. Une explication ne se recopie jamais
+  dans l'écran — elle s'y <em>lit</em>. Voici ce que cette maquette met à la charge de la tranche
+  qui la construira.</p>
+  <ul>
+    <li><b>le grossissement du cadre</b> — ce que la molette fait, jusqu'où, et pourquoi seize
+    fois ; que le rectangle et la brosse ne changent pas de taille quand on zoome.</li>
+    <li><b>la main</b> — ce que <em>ôter</em> et <em>remettre</em> changent, à quel moment du
+    calcul elle passe, et le fait qu'elle ne modifie <b>jamais</b> l'image du dessus.</li>
+    <li><b>l'outil du cadre</b> — quel geste la main fait dans le cadre, et pourquoi c'est
+    l'outil qui décide et non le geste.</li>
+    <li><b>le dessous imposé</b> — pourquoi il l'est quand on entre par une pose, et ce qu'on
+    perdrait à en changer.</li>
+    <li class="sourd">Trois entrées existantes se relisent au passage plutôt que de se
+    dédoubler : <b>le calage</b>, <b>ce qu'on garde du dessus</b> — le rectangle y est déjà
+    décrit — et <b>ce qu'on en sort</b>.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ 7 ── -->
+<section>
+  <div class="entete"><span class="num">7</span><h2>Ce que la maquette ne fait pas</h2></div>
+  <h3>Trois choses, et les trois sont volontaires</h3>
+  <ul>
+    <li><b>Elle ne code rien.</b> Aucun fichier de l'interface ni du serveur n'est touché par la
+    tranche <span class="mesure">M2</span> — c'est un de ses critères d'acceptation.</li>
+    <li><b>Elle ne réunit pas la planche d'équipement aux deux autres.</b> Le chemin qui paie
+    reste où il est : il ne règle rien, il commande. Les fondre reviendrait à mettre un bouton
+    qui dépense au milieu d'un atelier qui ne dépense jamais — et
+    <em>« aucun appel ne part d'ici »</em> est ce que cet écran promet en bas à droite.</li>
+    <li><b>Elle ne touche pas au défaut voisin</b> — un calque né d'une superposition s'annonce
+    <em>« corps habillé »</em>, parce que sa recette est vide et que c'est la recette qui
+    départage les deux. Relevé le 4 septembre 2026, cohérent avec la règle qui l'a produit, faux
+    à l'usage. Il attend son tour.</li>
+  </ul>
+
+  <div class="verdict">
+    <div class="t">Ce qu'il reste à trancher, et c'est à l'auteur</div>
+    <p><strong>Une seule chose est vraiment ouverte : le nom de l'écran.</strong> Tout le reste
+    est décidé ici, avec sa raison. La tranche qui construit s'écrira une fois cette page lue —
+    et elle saura alors, en comptant, s'il s'agit d'une tranche ou de deux.</p>
+  </div>
+</section>
+
+<div class="pied">
+  Asset Kitchen · V2.4 · M2 · maquette seule, elle ne construit rien<br>
+  Les décisions qu'elle prend font foi pour la tranche qui bâtira l'écran ;
+  ce qu'elles écartent est écrit à côté d'elles, avec sa raison.<br>
+  Elle s'ouvre sans serveur, et rien n'y est calculé.
+</div>
+
+</div>
+</body>
+</html>

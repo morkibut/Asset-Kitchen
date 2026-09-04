@@ -31,7 +31,7 @@
 | **R7** | Le texte qui part s'organise en trois parties | **close le 3 septembre 2026, hors version** — construite *pour la relisibilité seule*, contre une mesure qui disait non | ci-dessous, `docs/tranches/R7.md` |
 | **R8**, **R9** | Deux écrans qui ne disaient pas à quoi ils servaient : la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** | ci-dessous, `docs/tranches/R8.md` et `R9.md` |
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
-| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, deux closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux | ci-dessous |
+| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, trois closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
@@ -212,13 +212,13 @@ V2.3  ┌ D1  le réglage de départ  ✔ close ┐  ✅ close, cinq sur cinq,
       └ D5  les tailles          ✔ close  ┘  D4 attendait D2, qui était close
  │
  ▼
-V2.4  ┌ M1  le découpage du coin ✔ close ┐  ouverte le 4 septembre 2026,
-      │ M2  la maquette du coin entier   │  deux closes sur sept.
-      │ M3  l'écran cesse de figer       │  Aucune n'en bloque une autre.
-      │ M4  la planche dit enfin vrai    │  M2 dessine, les autres réparent.
-      ├ M5  la référence qui manque ─────┤  La tranche qui bâtit l'écran de
-      ├ M6  laquelle part      ✔ close   │  M2 ne s'écrit qu'après elle.
-      └ M7  le détourage complet ────────┘
+V2.4  ┌ M1  le découpage du coin ✔ close   ┐  ouverte le 4 septembre 2026,
+      │ M2  la maquette du coin ✔ dessinée │  trois closes sur sept.
+      │ M3  l'écran cesse de figer         │  Aucune n'en bloque une autre.
+      │ M4  la planche dit enfin vrai      │  M2 dessine, les autres réparent.
+      ├ M5  la référence qui manque ───────┤  La tranche qui bâtit l'écran de
+      ├ M6  laquelle part      ✔ close     │  M2 ne s'écrit qu'après elle.
+      └ M7  le détourage complet ──────────┘
            ▲ après M4, qui refait la
              liste où son geste se pose    M3, M4 et M5 sont le même écran,
                                            pris par trois bouts : ce qu'il
@@ -1599,10 +1599,14 @@ rendent donc toutes le calque d'avant la tranche, au pixel près, ce que le banc
 
 ---
 
-### M2 · Le coin du parcours se redessine — maquette seule
+### M2 · Le coin du parcours se redessine — maquette seule — ✅ **dessinée le 4 septembre 2026**
 
 *Aucune US neuve — une maquette n'a pas d'utilisateur qui la demande ; c'est le cas d'`E0`, `F0` et
 `A0`*
+
+> **Elle est dans `docs/maquettes-v2.4/01-le-coin-du-calque.html`**, et elle s'ouvre d'un
+> double-clic. **Elle attend l'arbitrage de l'auteur** : ce qu'elle tranche fait foi pour la
+> tranche qui bâtira l'écran, et cette tranche-là ne s'écrit pas avant.
 
 **Ce qu'on livre.** Une maquette, et rien d'autre. **Elle ne construit rien et ne se code pas.**
 
@@ -1643,19 +1647,45 @@ organisé cette partie du workflow »*.
 
 **Critères d'acceptation**
 
-- [ ] La maquette existe dans `docs/maquettes-v2.4/`, ouvrable seule, sans serveur
-- [ ] Elle montre le parcours entier — entrer, choisir, caler, grossir, retoucher, fabriquer — et
+- [x] La maquette existe dans `docs/maquettes-v2.4/`, ouvrable seule, sans serveur
+- [x] Elle montre le parcours entier — entrer, choisir, caler, grossir, retoucher, fabriquer — et
       dit d'où l'on y entre
-- [ ] Elle tranche ce que devient la carte d'un vêtement, et l'écrit
-- [ ] Elle tranche le partage entre tracer et déplacer, et l'écrit
-- [ ] Elle réemploie le grossissement de l'aperçu et la main du calque : **aucun troisième
+- [x] Elle tranche ce que devient la carte d'un vêtement, et l'écrit
+- [x] Elle tranche le partage entre tracer et déplacer, et l'écrit
+- [x] Elle réemploie le grossissement de l'aperçu et la main du calque : **aucun troisième
       mécanisme** pour un geste qui existe deux fois
-- [ ] Elle doit sa ligne au guide pour tout écran ou réglage qu'elle ajoute — la règle du dépôt
-- [ ] **Elle ne code rien** : aucun fichier de l'interface ni du serveur n'est touché par cette
+- [x] Elle doit sa ligne au guide pour tout écran ou réglage qu'elle ajoute — la règle du dépôt
+- [x] **Elle ne code rien** : aucun fichier de l'interface ni du serveur n'est touché par cette
       tranche
 
 **Bloquée par** — aucune. *`M1` peut se construire avant, pendant ou après : elles ne se touchent
 pas.*
+
+#### Les quatre réponses, et ce qu'elles écartent
+
+*Elles font foi pour la tranche qui bâtira l'écran. Le détail, les croquis et les raisons vivent
+dans la maquette ; ce qui suit en est le verdict, pour qu'on n'ait pas à l'ouvrir pour le
+connaître.*
+
+| La question | La réponse | Ce qu'elle écarte, et pourquoi |
+|---|---|---|
+| **Un écran ou deux ?** | **Un seul** — la superposition élargie, qui prend le grossissement et la main | Les deux sortes de calque ne diffèrent que sur un point : **le dessous est imposé** quand on vient d'une pose, **choisi** quand on vient d'une image. Deux écrans pour un seul écart seraient deux vérités sur le même calque |
+| **Que devient la carte d'un vêtement ?** | **Elle reste, et se réduit à une fiche qui montre et qui renvoie** : le calque sur son corps, ses cinq mesures, *◤ favori*, *Supprimer cette image*, et une porte neuve *reprendre ce calque ›* | Ses trois outils partent, et **ils ne se perdent pas** : la *zone* **est** le rectangle, l'*affinage* et la *retouche* **sont** les deux couches de la main. La faire disparaître obligerait à ouvrir un atelier pour regarder un calque, ce qu'on fait dix fois plus souvent qu'on ne le retouche |
+| **Tracer contre déplacer ?** | **L'outil décide, pas le geste** — quatre outils au-dessus du cadre : *déplacer* (le défaut), *rectangle*, *ôter*, *remettre*. La molette grossit toujours | **Le seuil de trois pixels ne s'applique pas** : les deux gestes sont des glissements de même longueur au même endroit, et un seuil sépare des longueurs, pas des intentions. Le choix d'outil est déjà le motif de la carte d'un vêtement — on lui ajoute un outil, on n'invente pas un mécanisme |
+| **Où va la main ?** | **Sur le même cadre que le calage**, et après lui dans l'ordre de lecture de la colonne | C'est l'ordre du calcul — la main tranche **après** la mesure. Un second cadre aurait donné deux vues de la même image à tenir d'accord ; *« trois outils, une seule surface »* est déjà la règle de la carte d'un vêtement |
+
+**Les quatre portes**, dont deux sont neuves : la puce *superposition* d'une image *(existe)*, la
+carte d'un vêtement *(neuve)*, la matrice d'un personnage sur la vignette du calque retenu
+*(neuve)*, et la planche d'équipement — qui **n'y mène pas et ne doit pas y mener** : c'est le
+chemin qui paie, et l'écran unique promet qu'aucun appel n'en part.
+
+**Ce que la construction devra au guide**, et la maquette le nomme : le grossissement du cadre, la
+main, l'outil du cadre, le dessous imposé. Trois entrées existantes se relisent au passage plutôt
+que de se dédoubler.
+
+**Ce que la maquette laisse ouvert, et à l'auteur** — **le nom de l'écran.** *« Superposition »*
+décrit ce qu'il faisait, pas ce qu'il fera ; un nom se choisit une fois l'écran vu, et le changer
+coûte aussi la ligne du guide, la puce des tables et deux essais.
 
 ---
 

@@ -11,6 +11,53 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## M2 — le coin du calque, dessiné avant d'être bâti — 4 septembre 2026
+
+**Une maquette qui ne construit rien, et c'est son critère.** Elle est là pour trancher, pas pour
+livrer : `docs/maquettes-v2.4/01-le-coin-du-calque.html` s'ouvre d'un double-clic, sans serveur,
+et **aucun fichier de l'interface ni du serveur n'a été touché** par la tranche. Ses croquis sont
+dessinés à la main en HTML, aux couleurs et aux dimensions du produit ; rien n'y est calculé.
+
+**Quatre questions étaient ouvertes, quatre réponses les ferment, et chacune écrit ce qu'elle
+écarte.** Un écran plutôt que deux — les deux sortes de calque ne diffèrent que sur un point,
+*l'image du dessous est imposée dans un cas, choisie dans l'autre*, et deux écrans pour un seul
+écart, ce sont deux vérités qui divergent le jour où l'une gagne un réglage. La carte d'un
+vêtement reste, réduite à une fiche qui **montre et qui renvoie** — la faire disparaître
+obligerait à ouvrir un écran entier pour *regarder* un calque, ce qu'on fait dix fois plus souvent
+qu'on ne le retouche. **C'est l'outil qui décide, pas le geste** : le seuil de trois pixels qui
+sépare ailleurs un clic d'un glissement ne s'applique pas ici, parce que **les deux gestes sont
+des glissements** de même longueur. Et la main se pose **sur le même cadre que le calage**, après
+lui dans l'ordre de lecture, parce que c'est l'ordre du calcul — elle ôte ce que la comparaison a
+gardé de trop.
+
+> ### Rien de ce que l'écran gagne n'est neuf en dessous
+>
+> C'est la contrainte que la maquette s'est donnée, et elle se vérifie ligne par ligne. Le
+> grossissement existe déjà — *voir en grand*, molette, image qu'on attrape, seize fois, avec sa
+> raison écrite ; il reste à le poser sur le cadre. La main existe **en entier sauf l'écran** :
+> le champ dans la définition d'une superposition, la route qui l'accepte, le calcul qui
+> l'applique. Le choix d'outil est le motif de la carte d'un vêtement, à un quatrième outil près.
+> Les deux portes nouvelles s'ouvrent sur ce que `G16` et `M6` ont déjà livré. **Ce qui reste à
+> bâtir tient dans une surface où tracer, un bloc de colonne et deux liens.**
+
+**La dette du guide est écrite maintenant, parce que rien ne la rappelle ensuite.** La règle du
+dépôt veut qu'un écran ou un réglage neuf doive une ligne au recueil d'explications ; la maquette
+en nomme quatre à écrire — le grossissement, la main, l'outil du cadre, le dessous imposé — et
+trois à relire plutôt qu'à dédoubler.
+
+**Une seule chose reste ouverte, et c'est à l'auteur : le nom de l'écran.** *Superposition* décrit
+ce qu'il faisait, pas ce qu'il fera ; un nom se choisit une fois l'écran vu, et le renommer coûte
+aussi la ligne du guide, la puce des tables et deux essais. La maquette ne chiffre pas non plus ce
+que la construction coûte — **ce n'est pas son travail** : la tranche qui bâtira l'écran le comptera
+en s'écrivant, et saura alors s'il s'agit d'une tranche ou de deux.
+
+**Deux pièges de fabrication, tous deux dans le HTML de la page.** Un croquis en `min-width` s'est
+étiré à toute la largeur de la colonne en laissant son dessin tassé à gauche — une largeur fixe le
+règle. Et les blocs posés en absolu portaient un ordre d'empilement qui **créait un contexte
+d'empilement** : leurs étiquettes se retrouvaient prisonnières sous le voile, invisibles quelle que
+soit leur propre valeur. L'ordre est retiré des blocs, gardé sur les seules étiquettes, avec la
+raison en commentaire dans la feuille de style.
+
 ## M1 — le découpage du coin, réparé — 4 septembre 2026
 
 **Un contrat sain, une image huit fois trop grande, et personne entre les deux.** Le serveur ne
