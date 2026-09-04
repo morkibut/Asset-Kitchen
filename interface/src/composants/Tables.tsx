@@ -26,8 +26,16 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
   api,
+  NOM_DE_LA_NATURE,
+  NOM_FAMILLE,
+  Refus,
   type Asset,
+  type DefautDetourage,
   type EtatTraitement,
+  type Famille,
+  type Impose,
+  type Nature,
+  type Passe,
   type Place,
   type Recette,
   type TachesDeLAsset,
@@ -35,12 +43,19 @@ import {
   type Univers,
 } from "../api"
 import { sujetAsset, useVisee } from "./Apercu"
-import { EnTetePanneau, Raison, rectangleDeLImage, Segments } from "./chassis"
+import {
+  EnTetePanneau,
+  Libelle,
+  Raison,
+  rectangleDeLImage,
+  Segments,
+} from "./chassis"
 import { PANNEAU } from "./Infobulle"
 import { EcranSuperposition } from "./Superposition"
 import {
   avecPassage,
   mainDe,
+  MOTEUR,
   OPACITE,
   PanneauBords,
   PanneauContours,
@@ -1034,6 +1049,7 @@ export function EcranTables({
   onSoeur,
   decoupe,
   onErreur,
+  onUnivers,
   BlocPasse,
 }: {
   asset: Asset
@@ -1050,6 +1066,11 @@ export function EcranTables({
    *  ailleurs. « On ne le cherche plus : il est là quand il sert. » */
   decoupe: React.ReactNode
   onErreur: (raison: string) => void
+  /** **Le dossier du jeu vient de changer** (M7) — promouvoir un détourage en
+   *  défaut du projet l'écrit, et l'atelier doit en tenir compte sans recharger.
+   *  Absent, le geste se fait quand même : c'est l'écran d'à côté qui montrerait
+   *  l'ancien réglage jusqu'au prochain aller-retour. */
+  onUnivers?: (univers: Univers) => void
   /** Le bloc d'une passe de détourage, rendu par la fiche depuis T2. Passé en
    *  paramètre plutôt qu'importé : il vit encore dans la fiche, et E4 le fera
    *  descendre ici avec le reste. */
@@ -1529,6 +1550,15 @@ export function EcranTables({
                 BlocPasse={BlocPasse}
                 visee={visee}
                 onViser={setViseeArmee}
+                promotion={
+                  <PromouvoirLeDetourage
+                    asset={asset}
+                    recette={recette}
+                    univers={univers}
+                    onUnivers={onUnivers}
+                    onErreur={onErreur}
+                  />
+                }
               />
             ) : ouverte === "recadrage" ? (
               <PanneauRecadrage {...reglages} />
@@ -1767,6 +1797,205 @@ export function EcranTables({
         </aside>
       </div>
       )}
+    </div>
+  )
+}
+
+// ── Promouvoir un détourage en défaut du projet (M7) ────────────────────────
+//
+// **Le geste inverse de l'étape des réglages, et c'est le sens naturel.**
+// L'étape *Le détourage de départ* est la onzième des douze de l'univers : on la
+// traverse en réglant son jeu, donc **avant d'avoir fabriqué la moindre image**,
+// alors qu'on ne sait quel détourage convient qu'après en avoir vu quelques-unes.
+// La réparation n'a pas été de déplacer l'étape — son rangement est juste, elle
+// décide de ce qui arrive au retour — mais de laisser régler une image, puis de
+// dire *garde ça* depuis l'image elle-même.
+//
+// **Une portée se choisit, elle ne se devine pas.** Le produit en connaît deux
+// pour un détourage : la nature de l'image — venue seule, ou découpée d'une
+// planche — et la famille de ce qu'elle montre. Les deux sont proposées, jamais
+// l'une supposée : promouvoir dans la mauvaise portée se voit à la dixième image
+// et pas à la première.
+
+/** Ce qu'un défaut retient d'une passe posée sur une image.
+ *
+ *  **Le point de la pipette et le tracé n'en sont pas**, et c'est le domaine qui
+ *  le décide : un défaut n'a pas d'image où viser. Les reconstruire ici serait
+ *  une seconde vérité sur ce qu'est un détourage par défaut. */
+function defautDeLaPasse(passe: Passe): DefautDetourage {
+  return {
+    moteur: passe.moteur,
+    tolerance: passe.tolerance,
+    seuil_alpha: passe.seuil_alpha,
+    durcissement: passe.durcissement,
+    modele: passe.modele,
+  }
+}
+
+function PromouvoirLeDetourage({
+  asset,
+  recette,
+  univers,
+  onUnivers,
+  onErreur,
+}: {
+  asset: Asset
+  recette: Recette
+  univers: Univers
+  onUnivers?: (univers: Univers) => void
+  onErreur: (raison: string) => void
+}) {
+  /** **La nature de l'image et sa famille viennent du serveur**, qui est le seul
+   *  à les savoir : la famille se lit dans le barème du jeu, jamais sur l'image,
+   *  et deux endroits qui la déduiraient finiraient par ranger un meuble dans
+   *  les décors. C'est la même route que la fiche interroge, et rien n'en part
+   *  de la machine. */
+  const [impose, setImpose] = useState<Impose | null>(null)
+  const [ouvert, setOuvert] = useState(false)
+  const [pose, setPose] = useState<string | null>(null)
+
+  useEffect(() => {
+    let vivant = true
+    setImpose(null)
+    setOuvert(false)
+    setPose(null)
+    void api
+      .imposeSurAsset(asset.identifiant)
+      .then((recu) => {
+        if (vivant) setImpose(recu)
+      })
+      .catch(() => {
+        if (vivant) setImpose(null)
+      })
+    return () => {
+      vivant = false
+    }
+  }, [asset.identifiant])
+
+  // **La première passe, et c'est structurel, pas arbitraire.** Un défaut ne
+  // porte qu'une passe : c'est celle qui s'applique à une image que personne n'a
+  // encore touchée, donc la première. Les suivantes corrigent *cette* image-là,
+  // sur ce que la première a déjà retiré.
+  const premiere = recette.passes[0] ?? null
+  const famille = (impose?.detourage?.famille ?? "") as Famille | ""
+  const nature = impose?.nature ?? ""
+
+  if (!premiere || nature === "") return null
+
+  const poser = async (quoi: "nature" | "famille") => {
+    const defaut = defautDeLaPasse(premiere)
+    try {
+      const recu = await api.reglerUnivers(
+        quoi === "nature"
+          ? nature === "planche"
+            ? { detourage_planche: defaut }
+            : { detourage_image: defaut }
+          : {
+              // **Le dictionnaire entier repart**, pas seulement la case qu'on
+              // change : le serveur lit ce champ comme la liste complète des
+              // familles réglées, et n'envoyer que la nouvelle effacerait les
+              // autres. C'est la convention des modèles par famille.
+              detourages: {
+                ...Object.fromEntries(
+                  Object.entries(univers.detourages).map(([f, p]) => [
+                    f,
+                    defautDeLaPasse(p),
+                  ]),
+                ),
+                [famille as Famille]: defaut,
+              },
+            },
+      )
+      onUnivers?.(recu.univers)
+      setOuvert(false)
+      setPose(
+        quoi === "nature"
+          ? NOM_DE_LA_NATURE[nature as Nature]
+          : `tout ce que tu ranges dans ${NOM_FAMILLE[famille as Famille]}`,
+      )
+    } catch (erreur) {
+      onErreur(erreur instanceof Refus ? erreur.message : "réglage refusé")
+    }
+  }
+
+  const resume =
+    `${MOTEUR[premiere.moteur]} · tolérance ${premiere.tolerance}` +
+    ` · seuil ${premiere.seuil_alpha}` +
+    ` · ${premiere.durcissement} px rongé${premiere.durcissement > 1 ? "s" : ""}`
+
+  if (!ouvert)
+    return (
+      <div className="mt-2 flex flex-col gap-1 border-t border-bord pt-2">
+        <button
+          type="button"
+          data-promouvoir-detourage
+          onClick={() => {
+            setPose(null)
+            setOuvert(true)
+          }}
+          className="mesure self-start text-left text-[10px] text-signal hover:text-signal-clair"
+        >
+          enregistrer ce réglage comme défaut du projet ›
+        </button>
+        {/* **Ce qui vient d'être posé se dit ici, et dit où le relire.** Un
+            geste dont l'effet vit dans un autre écran doit nommer cet écran :
+            sans quoi on ne sait ni si ça a marché, ni où aller le vérifier. */}
+        {pose && (
+          <p role="status" className="mesure text-[10px] leading-4 text-signal">
+            c'est fait — {pose} partira désormais de ce détourage. Ça se relit
+            dans Univers › réglages › Le détourage de départ.
+          </p>
+        )}
+      </div>
+    )
+
+  return (
+    <div
+      data-portee-du-defaut
+      className="mt-2 flex flex-col gap-1.5 border-t border-bord pt-2"
+    >
+      <Libelle>en faire un défaut du projet</Libelle>
+      <p className="mesure text-[10px] leading-4 text-texte-2">{resume}</p>
+      {/* **Deux portées, nommées par ce qu'elles couvrent** — jamais par le mot
+          du dépôt. *Les images venues seules* se comprend ; *la nature* demande
+          d'avoir lu ailleurs ce que le mot recouvre. */}
+      <button
+        type="button"
+        onClick={() => void poser("nature")}
+        className="mesure self-start text-left text-[10px] text-signal hover:text-signal-clair"
+      >
+        pour {NOM_DE_LA_NATURE[nature as Nature]} ›
+      </button>
+      {famille && famille !== "tous" ? (
+        <button
+          type="button"
+          onClick={() => void poser("famille")}
+          className="mesure self-start text-left text-[10px] text-signal hover:text-signal-clair"
+        >
+          pour tout ce que tu ranges dans {NOM_FAMILLE[famille]} ›
+        </button>
+      ) : (
+        /* **Sans famille, on ne propose pas une portée vide.** Une image dont le
+           barème du jeu ne nommait pas la famille n'a pas de famille où
+           promouvoir, et un bouton grisé demanderait de comprendre pourquoi. */
+        <Raison texte="cette image n'a pas de famille — ce que tu fabriquais ne la nommait pas" />
+      )}
+      <Raison texte="aucune image déjà faite n'est retouchée : un défaut vaut pour ce qui arrivera" />
+      {recette.passes.length > 1 && (
+        <Raison
+          texte={`la passe 1 seule — un défaut n'en porte qu'une, et les ${recette.passes.length - 1} suivantes corrigent cette image-ci`}
+        />
+      )}
+      {(premiere.moteur === "couleur" || premiere.moteur === "trace") && (
+        <Raison texte="ce que tu as visé dans l'image ne part pas avec — un défaut n'a pas d'image où viser" />
+      )}
+      <button
+        type="button"
+        onClick={() => setOuvert(false)}
+        className="mesure self-start text-[10px] text-texte-3 hover:text-texte"
+      >
+        annuler
+      </button>
     </div>
   )
 }

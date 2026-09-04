@@ -111,6 +111,14 @@
         "essais/atelier_jetable_m5.py"
       ],
       "port": 8428
+    },
+    {
+      "name": "atelier-jetable-m7",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_m7.py"
+      ],
+      "port": 8429
     }
   ]
 }

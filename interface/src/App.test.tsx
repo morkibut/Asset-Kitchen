@@ -9145,9 +9145,13 @@ describe("le châssis des tables", () => {
   const ouvrirUneTable = async (
     options: Parameters<typeof serveurDouble>[0] = {},
     images = [asset("bbbb2222-0", "le nain, au repos")],
+    /** Le cadre que le flux annonce. Il ne sert qu'aux essais qui regardent ce
+     *  que le jeu **avait déjà** posé — promouvoir un détourage renvoie le
+     *  dossier entier, et un dossier vide ne prouverait pas qu'il le renvoie. */
+    etat: Etat = ETAT,
   ) => {
     const double = serveurDouble({ personnages: [AVEC_IMAGE(images)], ...options })
-    await monter(double.fetchDouble)
+    await monter(double.fetchDouble, etat)
     await ouvrirLEtabli("Le nain")
     fireEvent.click(
       await screen.findByRole("button", {
@@ -9194,6 +9198,218 @@ describe("le châssis des tables", () => {
 
   const puce = (cadre: ReturnType<typeof within>, nom: string) =>
     cadre.getByRole("button", { name: new RegExp(`^${nom}`) })
+
+  // ── M7 · Promouvoir un détourage en défaut du projet ──────────────────────
+  //
+  // **Le geste inverse de l'étape des réglages du jeu.** Celle-ci demande de
+  // choisir un détourage de départ **avant d'avoir fabriqué la moindre image**,
+  // alors qu'on ne sait ce qui convient qu'après en avoir vu quelques-unes. Ici
+  // on règle, on regarde le résultat, et l'on dit *garde ça* — l'étape devient
+  // la relecture de ce qu'on a promu.
+
+  /** Une image qui porte déjà un détourage : sans passe, il n'y a rien à
+   *  promouvoir, et le geste ne se propose pas. */
+  const PASSE_POSEE = {
+    moteur: "modele" as const,
+    tolerance: 28,
+    seuil_alpha: 128,
+    durcissement: 2,
+    point: null,
+    portee: "tache" as const,
+    masquee: false,
+    trace: [],
+    modele: "",
+  }
+
+  const imageDetouree = (label = "le nain, au repos") => {
+    const image = asset("bbbb2222-0", label)
+    return { ...image, recette: { ...image.recette, passes: [PASSE_POSEE] } }
+  }
+
+  test("le détourage d'une image se promeut en défaut, et la portée se choisit", async () => {
+    const { cadre, appels } = await ouvrirUneTable(
+      {
+        impose: {
+          impose: null,
+          echelle: "personnage",
+          nature: "image",
+          detourage: {
+            passe: PASSE_POSEE,
+            origine: "produit",
+            famille: "personnages",
+          },
+        },
+      },
+      [imageDetouree()],
+    )
+
+    fireEvent.click(
+      await cadre.findByRole("button", {
+        name: /enregistrer ce réglage comme défaut du projet/,
+      }),
+    )
+
+    // **Les deux portées que le produit connaît, nommées par ce qu'elles
+    // couvrent** — et aucune supposée : promouvoir dans la mauvaise se voit à
+    // la dixième image, pas à la première.
+    expect(cadre.getByRole("button", { name: /pour une image seule/ })).toBeTruthy()
+    const parFamille = cadre.getByRole("button", {
+      name: /pour tout ce que tu ranges dans personnages/,
+    })
+
+    // **Et ce que le geste ne fait pas est écrit avant de le faire.**
+    expect(cadre.getByText(/aucune image déjà faite n'est retouchée/)).toBeTruthy()
+
+    fireEvent.click(parFamille)
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      expect(pose).toBeTruthy()
+      const envoyees = (pose!.corps as Record<string, Record<string, unknown>>)
+        .detourages
+      // Le point visé et le tracé ne partent pas : un défaut n'a pas d'image où
+      // viser, et c'est le domaine qui le décide.
+      expect(envoyees.personnages).toEqual({
+        moteur: "modele",
+        tolerance: 28,
+        seuil_alpha: 128,
+        durcissement: 2,
+        modele: "",
+      })
+    })
+
+    // **Le geste dit où relire son effet** : il vit dans un autre écran, et un
+    // geste dont l'effet est ailleurs doit nommer cet ailleurs.
+    expect(
+      await cadre.findByText(/Le détourage de départ/),
+    ).toBeTruthy()
+  })
+
+  test("promouvoir par nature écrit la nature, pas la famille", async () => {
+    const { cadre, appels } = await ouvrirUneTable({}, [imageDetouree()])
+
+    fireEvent.click(
+      await cadre.findByRole("button", {
+        name: /enregistrer ce réglage comme défaut du projet/,
+      }),
+    )
+    fireEvent.click(cadre.getByRole("button", { name: /pour une image seule/ }))
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      expect((pose!.corps as Record<string, unknown>).detourage_image).toEqual({
+        moteur: "modele",
+        tolerance: 28,
+        seuil_alpha: 128,
+        durcissement: 2,
+        modele: "",
+      })
+    })
+  })
+
+  test("sans famille, la portée par famille n'est pas proposée", async () => {
+    // **Pas un bouton grisé** : une image dont le barème du jeu ne nommait pas
+    // la famille n'a pas de famille où promouvoir, et un grisé demanderait de
+    // comprendre pourquoi. Le double rend une image sans famille, comme le
+    // serveur le fait pour un texte écrit à la main.
+    const { cadre } = await ouvrirUneTable({}, [imageDetouree()])
+
+    fireEvent.click(
+      await cadre.findByRole("button", {
+        name: /enregistrer ce réglage comme défaut du projet/,
+      }),
+    )
+
+    expect(cadre.queryByRole("button", { name: /pour tout ce que tu ranges/ })).toBeNull()
+    expect(cadre.getByText(/cette image n'a pas de famille/)).toBeTruthy()
+  })
+
+  test("sans détourage posé, il n'y a rien à promouvoir", async () => {
+    // Le geste ne se propose pas plutôt que de proposer de promouvoir le vide :
+    // « pas de contrôle » vaut mieux qu'un contrôle qui ne fait rien.
+    const { cadre } = await ouvrirUneTable()
+
+    await cadre.findByRole("button", { name: "+ une passe" })
+    expect(
+      cadre.queryByRole("button", {
+        name: /enregistrer ce réglage comme défaut du projet/,
+      }),
+    ).toBeNull()
+  })
+
+  test("promouvoir pour une famille ne perd pas les familles déjà réglées", async () => {
+    // ⚠️ **Le serveur lit ce champ comme la liste complète des familles
+    // réglées.** N'envoyer que celle qu'on vient de poser effacerait les
+    // autres, sans un mot, et le jeu perdrait un réglage à chaque promotion.
+    // C'est la convention des modèles par famille, et elle vaut ici.
+    const deja = {
+      moteur: "bord" as const,
+      tolerance: 40,
+      seuil_alpha: 90,
+      durcissement: 0,
+      point: null,
+      portee: "tache" as const,
+      masquee: false,
+      trace: [],
+      modele: "",
+    }
+    const { cadre, appels } = await ouvrirUneTable(
+      {
+        impose: {
+          impose: null,
+          echelle: "personnage",
+          nature: "image",
+          detourage: {
+            passe: PASSE_POSEE,
+            origine: "produit",
+            famille: "personnages",
+          },
+        },
+      },
+      [imageDetouree()],
+      { ...ETAT, univers: { ...UNIVERS, detourages: { objets: deja } } },
+    )
+
+    fireEvent.click(
+      await cadre.findByRole("button", {
+        name: /enregistrer ce réglage comme défaut du projet/,
+      }),
+    )
+    fireEvent.click(
+      cadre.getByRole("button", { name: /pour tout ce que tu ranges dans personnages/ }),
+    )
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      const envoyees = (pose!.corps as Record<string, Record<string, unknown>>)
+        .detourages
+      expect(Object.keys(envoyees).sort()).toEqual(["objets", "personnages"])
+      // Celle d'avant repart telle quelle, réduite à ce qu'un défaut retient.
+      expect(envoyees.objets).toEqual({
+        moteur: "bord",
+        tolerance: 40,
+        seuil_alpha: 90,
+        durcissement: 0,
+        modele: "",
+      })
+    })
+  })
+
+  test("promouvoir ne fait partir aucun appel au fournisseur", async () => {
+    const { cadre, appels } = await ouvrirUneTable({}, [imageDetouree()])
+
+    fireEvent.click(
+      await cadre.findByRole("button", {
+        name: /enregistrer ce réglage comme défaut du projet/,
+      }),
+    )
+    fireEvent.click(cadre.getByRole("button", { name: /pour une image seule/ }))
+
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/universe" && a.corps)).toBe(true),
+    )
+    expect(appels.filter((a) => a.url === "/api/generations")).toEqual([])
+  })
 
   // ── « La barre montre les sept places dans l'ordre où elles s'appliquent, et
   //     l'ordre ne se change pas » et « le trait sépare les sept places des deux
@@ -11503,6 +11719,153 @@ describe("l'assistant de démarrage", () => {
         modele: "",
       })
     })
+  })
+
+  // ── M7 · Les quatre réglages reviennent, et la ligne vide dit ce qu'elle cache
+  //
+  // ⚠️ **Deux des quatre avaient été écartés sur un comptage, et le comptage ne
+  // se retrouve pas.** *« Tu les laisses à leur valeur livrée 96 fois sur 100 »*
+  // ne vaut, sur les 147 détourages du dépôt, que pour la tolérance — déplacée
+  // une fois sur onze. Le seuil de transparence, lui, l'a été près d'une fois
+  // sur quatre, dans cinq jeux sur six. Un réglage déplacé une fois sur quatre
+  // n'est pas un réglage que personne ne touche.
+
+  /** Une passe posée sur la nature *image seule* — de quoi que la ligne montre
+   *  ses trois nombres, qui n'apparaissent qu'une fois le moteur choisi. */
+  const AVEC_UN_DEFAUT: Univers = {
+    ...UNIVERS,
+    detourage_image: {
+      moteur: "modele",
+      tolerance: 28,
+      seuil_alpha: 128,
+      durcissement: 2,
+      point: null,
+      portee: "tache",
+      masquee: false,
+      trace: [],
+      modele: "",
+    },
+  }
+
+  test("une ligne réglée porte les quatre réglages, et pas deux", async () => {
+    await ouvrirLAssistant({}, AVEC_UN_DEFAUT)
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+
+    await screen.findByLabelText("Moteur de détourage pour image seule")
+    expect(screen.getByLabelText("tolérance pour image seule")).toBeTruthy()
+    expect(
+      screen.getByLabelText("seuil de transparence pour image seule"),
+    ).toBeTruthy()
+    expect(screen.getByLabelText("bord rongé pour image seule")).toBeTruthy()
+
+    // **Le cinquième n'y est pas, et c'est tranché** : le modèle de silhouette
+    // attend qu'on ait réparé celui qui ne détoure rien.
+    expect(screen.queryByLabelText(/modèle .* image seule/)).toBeNull()
+  })
+
+  test("déplacer le seuil de transparence pose le défaut entier", async () => {
+    const { appels } = await ouvrirLAssistant({}, AVEC_UN_DEFAUT)
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+
+    fireEvent.change(
+      await screen.findByLabelText("seuil de transparence pour image seule"),
+      { target: { value: "200" } },
+    )
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      // **Les quatre repartent ensemble**, et le moteur avec : un défaut est
+      // une passe entière, pas le champ qu'on vient de toucher.
+      expect((pose!.corps as Record<string, unknown>).detourage_image).toEqual({
+        moteur: "modele",
+        tolerance: 28,
+        seuil_alpha: 200,
+        durcissement: 2,
+        modele: "",
+      })
+    })
+  })
+
+  test("vider un nombre ne le remplit pas sous les doigts", async () => {
+    // ⚠️ **Trouvé en construisant, et c'est le champ le plus étroit qui l'a
+    // révélé.** Le seuil de transparence a un pour plus petite valeur : borner
+    // à chaque frappe y posait `1` dès qu'on vidait le champ, et taper `200`
+    // ensuite donnait `1200`, donc le maximum. La valeur qu'on visait devenait
+    // inatteignable autrement qu'en corrigeant chiffre par chiffre.
+    const { appels } = await ouvrirLAssistant({}, AVEC_UN_DEFAUT)
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+
+    const champ = (await screen.findByLabelText(
+      "seuil de transparence pour image seule",
+    )) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "" } })
+    // Le champ reste vide : c'est ce qu'on a écrit, et il appartient à celui
+    // qui écrit tant qu'il écrit.
+    expect(champ.value).toBe("")
+
+    fireEvent.change(champ, { target: { value: "200" } })
+    expect(champ.value).toBe("200")
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      expect(
+        (pose!.corps as Record<string, Record<string, unknown>>).detourage_image
+          .seuil_alpha,
+      ).toBe(200)
+    })
+  })
+
+  test("quitter le champ le remet dans ses bornes", async () => {
+    // Et le champ ne garde jamais un état que le jeu n'a pas : ce qui dépasse
+    // se borne en le quittant, ce qui n'est pas un nombre rend la valeur posée.
+    const { appels } = await ouvrirLAssistant({}, AVEC_UN_DEFAUT)
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+
+    const champ = (await screen.findByLabelText(
+      "tolérance pour image seule",
+    )) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "900" } })
+    fireEvent.blur(champ)
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      expect(
+        (pose!.corps as Record<string, Record<string, unknown>>).detourage_image
+          .tolerance,
+      ).toBe(120)
+    })
+    expect(champ.value).toBe("120")
+  })
+
+  test("une ligne sans moteur dit ce qu'elle cache", async () => {
+    // ⚠️ **C'est ce qui a fait lire le bord rongé comme absent du produit.**
+    // La ligne affichait « — » et rien d'autre : les trois nombres n'existent
+    // qu'une fois le moteur choisi, et personne ne le disait.
+    await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+    await screen.findByText("selon comment l'image est venue")
+
+    // Six lignes vides — deux natures et quatre familles —, six fois la phrase.
+    expect(
+      screen.getAllByText(/choisis un moteur pour régler la tolérance/),
+    ).toHaveLength(6)
+  })
+
+  test("la décision qui avait caché deux réglages est réécrite avec le bon chiffre", async () => {
+    // **Elle est réécrite là où elle était écrite**, pas contournée en silence :
+    // c'est elle que l'auteur avait lue, et elle disait un chiffre.
+    await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+    await screen.findByText("selon comment l'image est venue")
+
+    expect(screen.getByText(/147 détourages/)).toBeTruthy()
+    expect(screen.getByText(/une fois sur onze/)).toBeTruthy()
+    expect(screen.getByText(/près d'une fois sur quatre/)).toBeTruthy()
+    // Et l'étape dit d'où viendront vraiment ces valeurs : de l'image, pas
+    // d'une devinette faite avant d'en avoir fabriqué une seule.
+    expect(
+      screen.getByText(/enregistre ce réglage comme défaut du projet/),
+    ).toBeTruthy()
   })
 
   test("la fiche dit d'où vient le détourage qui s'est appliqué", async () => {

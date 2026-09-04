@@ -31,7 +31,7 @@
 | **R7** | Le texte qui part s'organise en trois parties | **close le 3 septembre 2026, hors version** — construite *pour la relisibilité seule*, contre une mesure qui disait non | ci-dessous, `docs/tranches/R7.md` |
 | **R8**, **R9** | Deux écrans qui ne disaient pas à quoi ils servaient : la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** | ci-dessous, `docs/tranches/R8.md` et `R9.md` |
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
-| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, six closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** | ci-dessous |
+| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
@@ -159,7 +159,7 @@ Le détail par tranche des versions tenues est dans l'archive.
 | **R7** | **431 à 433** | **3** |
 | **R8** *(la fiche d'une chose)* | **462 à 468** | **7** |
 | **R9** *(le calibrage)* | **469 à 475** | **7** |
-| **V2.4 — M1 à M7** *(ce qui est cassé, et le coin redessiné)* | `US-504`, `US-505` | **2** *(les deux sont de `M6`, close. Les cinq autres n'en ouvrent aucune : `M1` rend son sens à `US-503`, écrite pour `G16` ; `M3` tient `US-296`, `M4` et `M5` tiennent `US-126`, et `M4` ferme une phrase du genre de `G1` ; `M2` est une maquette, et une maquette n'a pas d'utilisateur qui la demande — c'est le cas d'`E0`, `F0` et `A0`)* |
+| **V2.4 — M1 à M7** *(ce qui est cassé, et le coin redessiné)* | `US-504`, `US-505` | **2** *(les deux sont de `M6`. Les six autres n'en ouvrent aucune : `M1` rend son sens à `US-503`, écrite pour `G16` ; `M3` tient `US-296`, `M4` et `M5` tiennent `US-126`, `M7` tient `US-407` à `US-412` — écrites pour `D1` —, et `M4` ferme une phrase du genre de `G1` ; `M2` est une maquette, et une maquette n'a pas d'utilisateur qui la demande — c'est le cas d'`E0`, `F0` et `A0`)* |
 | **V2.5 — N1…** *(le design reprend la main)* | **aucune** | **0** *(`N1` est un relevé, comme `E0`, `F0` et `A0`)* |
 | **V3 — A2, A4 à A7, A9 à A13** *(l'animation)* | **376, 379 à 388, 390 à 400, 434 à 461, 482 à 490** | **59** |
 | **V3.1 — G1 à G16** *(l'atelier tient ce qu'il dit)* | **495 à 501**, plus **369** *(reprise à `P1`)* et **502, 503** | **10** *(les quarante-trois autres changements tiennent des stories déjà écrites)* |
@@ -212,14 +212,14 @@ V2.3  ┌ D1  le réglage de départ  ✔ close ┐  ✅ close, cinq sur cinq,
       └ D5  les tailles          ✔ close  ┘  D4 attendait D2, qui était close
  │
  ▼
-V2.4  ┌ M1  le découpage du coin ✔ close   ┐  ouverte le 4 septembre 2026,
-      │ M2  la maquette du coin ✔ dessinée │  six closes sur sept.
-      │ M3  l'écran ne fige plus ✔ close   │  Aucune n'en bloque une autre.
-      │ M4  la planche dit vrai ✔ close    │  M2 dessine, les autres réparent.
+V2.4  ┌ M1  le découpage du coin ✔ close   ┐  ✅ close, sept sur sept, ouverte
+      │ M2  la maquette du coin ✔ dessinée │  et close le 4 septembre 2026.
+      │ M3  l'écran ne fige plus ✔ close   │  M2 dessine, les autres réparent,
+      │ M4  la planche dit vrai ✔ close    │  et aucune n'en bloquait une autre.
       │ M5  la référence retrouvée ✔ close │  La tranche qui bâtit l'écran de
-      ├ M6  laquelle part      ✔ close     │  M2 ne s'écrit qu'après elle.
-      └ M7  le détourage complet ──────────┘
-           ▲ après M4, qui refait la
+      │ M6  laquelle part      ✔ close     │  M2 ne s'écrit qu'après elle.
+      └ M7  le détourage complet ✔ close   ┘
+           ▲ M5 après M4, qui refait la
              liste où son geste se pose    M3, M4 et M5 sont le même écran,
                                            pris par trois bouts : ce qu'il
                                            fait, ce qu'il dit, ce qu'il perd.
@@ -2253,7 +2253,7 @@ superposition (`M1`, `M2`) : elle vit dans la matrice de la fiche, où aucune de
 
 ---
 
-### M7 · Le détourage de départ redevient complet, et se règle depuis l'image
+### M7 · Le détourage de départ redevient complet, et se règle depuis l'image — ✅ **livrée le 4 septembre 2026**
 
 *Aucune US neuve — elle tient `US-407` à `US-412`, écrites pour `D1`*
 
@@ -2311,24 +2311,80 @@ l'offrir.
 
 **Critères d'acceptation**
 
-- [ ] L'étape montre **quatre réglages par ligne** : le moteur, la tolérance, le seuil de
+- [x] L'étape montre **quatre réglages par ligne** : le moteur, la tolérance, le seuil de
       transparence, le bord rongé
-- [ ] **Le modèle de silhouette n'y est pas**, et la raison est écrite dans la tranche : il attend
+- [x] **Le modèle de silhouette n'y est pas**, et la raison est écrite dans la tranche : il attend
       `G13`
-- [ ] Une ligne sans moteur **dit ce qu'elle cache** — *choisis un moteur pour régler le reste* — au
+- [x] Une ligne sans moteur **dit ce qu'elle cache** — *choisis un moteur pour régler le reste* — au
       lieu de n'afficher que « — » : c'est ce qui a fait lire le bord rongé comme absent
-- [ ] La décision de `D1` qui avait écarté deux réglages est **réécrite avec le bon chiffre**, et
+- [x] La décision de `D1` qui avait écarté deux réglages est **réécrite avec le bon chiffre**, et
       dit lequel des deux reste discutable
-- [ ] La table de détourage d'une image porte un lien **enregistrer ce réglage comme défaut du
+- [x] La table de détourage d'une image porte un lien **enregistrer ce réglage comme défaut du
       projet**
-- [ ] Le lien dit **pour quoi** le défaut vaudra — la nature de l'image, ou sa famille — et laisse
+- [x] Le lien dit **pour quoi** le défaut vaudra — la nature de l'image, ou sa famille — et laisse
       choisir
-- [ ] Il dit aussi ce qu'il ne fait pas : **aucune image déjà faite n'est retouchée**, la règle de
+- [x] Il dit aussi ce qu'il ne fait pas : **aucune image déjà faite n'est retouchée**, la règle de
       `D1` ne bouge pas
-- [ ] Aucun appel au fournisseur, aucun centime
+- [x] Aucun appel au fournisseur, aucun centime
 
 **Bloquée par** — aucune. *`G8` replie l'étape de son côté et ne la vide pas ; les deux tranches
 peuvent se faire dans n'importe quel ordre.*
+
+#### Ce que la construction a appris, et ce qu'elle a tranché
+
+**Ce qui restait ouvert est tranché, et l'un des deux points l'a été par le domaine, pas par un
+choix.** *Ce qu'on promeut exactement* n'était pas une préférence : **un défaut ne porte qu'une
+passe**. Le domaine le dit depuis `D1`, et il retire au passage ce qu'une passe a de propre à une
+image — le point de la pipette, le tracé à main levée. Le geste promeut donc **la première passe**,
+et ce n'est pas un choix arbitraire : c'est celle qui s'applique à une image que personne n'a encore
+touchée, les suivantes corrigeant *cette* image-là sur ce que la première a déjà retiré. Quand il y
+en a plusieurs, l'écran le dit ; quand la première vise un point dans l'image, il dit que le point
+ne part pas.
+
+**La portée par défaut, elle, n'existe pas — et c'est la réponse.** Les deux sont proposées côte à
+côte, la nature de l'image et sa famille, et aucune n'est présélectionnée : promouvoir dans la
+mauvaise se voit à la dixième image, pas à la première. Une image dont le barème du jeu ne nommait
+pas la famille n'en propose qu'une, sans bouton grisé — *ce qui n'existe pas ne se grise pas*.
+
+> #### ⚠️ Le dictionnaire des familles repart entier, ou une famille se perd
+>
+> La route qui pose les défauts lit ce champ comme **la liste complète des familles réglées** :
+> n'envoyer que celle qu'on vient de promouvoir effacerait les autres, sans un mot. C'est la
+> convention des modèles par famille, et un essai la tient — promouvoir pour les personnages sur un
+> jeu qui avait déjà réglé les objets doit renvoyer les deux.
+
+**Le chiffre de `D1` est réécrit là où il était écrit**, dans l'étape elle-même et dans le code qui
+la porte, et il dit lequel des deux réglages restait discutable : la tolérance, déplacée une fois
+sur onze — la remarque tenait pour elle, de justesse. Le seuil de transparence, déplacé près d'une
+fois sur quatre dans cinq jeux sur six, n'aurait jamais dû être caché.
+
+**Et l'étape dit maintenant d'où viennent vraiment ces valeurs.** Un dernier paragraphe renvoie au
+geste inverse : régler une image, puis promouvoir. Sans lui, l'écran resterait l'endroit où l'on
+devine à froid — c'était le vrai reproche, et le réparer sans le dire l'aurait laissé entier pour
+qui n'a pas lu le plan.
+
+> #### ⚠️ Un champ de nombre borné à chaque frappe se réécrit sous les doigts
+>
+> Le seuil de transparence a **un** pour plus petite valeur. Le borner à chaque frappe y posait `1`
+> dès qu'on vidait le champ, et taper `200` ensuite donnait `1200`, donc le maximum : la valeur
+> qu'on visait devenait inatteignable autrement qu'en corrigeant chiffre par chiffre. Le champ garde
+> désormais ce qu'on tape jusqu'à ce qu'on le quitte — le motif du champ de correction de `M3`, pour
+> la même raison. Le défaut ne se voyait pas sur l'unique champ d'avant : *le bord rongé* va de zéro
+> à quatre, un seul chiffre, et vider un champ dont le plus petit est zéro ne réécrit rien.
+
+> #### Vérifié au navigateur, sur l'atelier jetable en 8429
+>
+> L'étape montre la ligne *image seule* avec ses **quatre réglages** — modèle, tolérance 28, seuil
+> de transparence 128, bord rongé 2 px — au-dessus de cinq lignes vides qui disent toutes *choisis
+> un moteur pour régler la tolérance, le seuil et le bord rongé*.
+>
+> Sur la table de détourage d'une image de personnage réglée à *bord · tolérance 55 · seuil 200 ·
+> 3 px rongés* : le lien ouvre le choix, qui résume ce qu'il promeut, propose les deux portées, et
+> écrit qu'aucune image déjà faite n'est retouchée. Un clic sur *pour tout ce que tu ranges dans
+> personnages* rend la phrase *c'est fait*, avec l'endroit où le relire — et la ligne
+> **personnages** de l'étape porte alors exactement ces quatre valeurs, l'étape comptant *2 posés*.
+>
+> Aucun appel n'est parti : le journal du serveur ne montre que la génération du montage.
 
 ---
 

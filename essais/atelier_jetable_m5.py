@@ -78,7 +78,9 @@ def _attendre(client, identifiant: str) -> dict:
     raise AssertionError("la génération n'a pas fini")
 
 
-def peupler(atelier: Atelier, double: FournisseurDouble) -> list[str]:
+def peupler(
+    atelier: Atelier, double: FournisseurDouble
+) -> list[tuple[str, str]]:
     """Un jeu qui a quelque chose à dire, et quatre images déjà faites."""
     with TestClient(creer_application(atelier)) as client:
         client.put(
@@ -95,20 +97,27 @@ def peupler(atelier: Atelier, double: FournisseurDouble) -> list[str]:
             },
         )
 
-        faites: list[str] = []
         for sujet, bloc in SUJETS:
             double.rendre = lambda bloc=bloc: image_sujet(bloc=bloc, toile=24)
             faite = client.post(
                 "/api/generations", json={"modele": MODELE, "prompt": sujet}
             )
-            generation = _attendre(client, faite.json()["identifiant"])
-            faites.extend(
-                emplacement["asset"]
-                for emplacement in generation["emplacements"]
-                if emplacement.get("asset")
-            )
+            _attendre(client, faite.json()["identifiant"])
         double.rendre = None
-        return faites
+
+        # **Les images se relisent dans la bibliothèque, pas dans la
+        # génération** : l'emplacement dit ce qui est arrivé du modèle, l'asset
+        # est ce que l'atelier en a rangé — et c'est lui qui a un identifiant à
+        # montrer. Le banc les listait depuis l'emplacement et n'en imprimait
+        # aucune, sans se plaindre.
+        #
+        # Le libellé vient de l'image elle-même, jamais de la liste des sujets
+        # rapprochée par le rang : la bibliothèque rend les plus récentes
+        # d'abord, et les deux listes ne sont pas dans le même ordre.
+        return [
+            (image["identifiant"], image["label"])
+            for image in client.get("/api/assets").json()["assets"]
+        ]
 
 
 def principal() -> int:
@@ -125,8 +134,8 @@ def principal() -> int:
 
     print()
     print(f"  {len(images)} images dans la bibliothèque, à joindre depuis la fenêtre :")
-    for (sujet, _), identifiant in zip(SUJETS, images):
-        print(f"    {identifiant}  —  {sujet}")
+    for identifiant, label in images:
+        print(f"    {identifiant}  —  {label}")
     print()
     print(f"Atelier jetable sur http://127.0.0.1:{PORT} — Ctrl-C pour arrêter")
     print("(celui de l'auteur, sur 8420, n'a pas été touché)")

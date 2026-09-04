@@ -340,8 +340,17 @@ export function PanneauDetourage({
   BlocPasse,
   visee,
   onViser,
+  promotion,
 }: Reglages & {
   BlocPasse: React.ComponentType<any>
+  /** **Le geste qui promeut ce détourage en défaut du projet** (M7), ou rien
+   *  quand la place est rendue ailleurs qu'à sa table — dans la fiche, par
+   *  exemple, qui n'a pas la largeur d'un choix de portée.
+   *
+   *  Rendu ici en nœud, comme la fabrique du découpage l'est dans les tables :
+   *  le geste a besoin de la famille de l'image et du dossier du jeu, que ce
+   *  panneau-ci n'a pas et n'a pas à apprendre. */
+  promotion?: React.ReactNode
   /** Le rang de la passe qui attend son clic dans l'image, ou `null`.
    *
    *  **L'état vit au-dessus des deux colonnes**, dans l'écran des tables : la
@@ -396,6 +405,14 @@ export function PanneauDetourage({
       >
         + une passe
       </button>
+
+      {/* **Le geste inverse, et il vient là où l'on voit ce qu'on promeut**
+          (M7). L'étape des réglages du jeu demande ces mêmes valeurs *avant*
+          d'avoir fabriqué la moindre image — on ne sait quel détourage convient
+          qu'après en avoir vu quelques-unes. D'ici, on règle, on regarde, et
+          l'on dit « garde ça ». L'étape devient la relecture de ce qu'on a
+          promu, au lieu de l'endroit où l'on devine à froid. */}
+      {promotion}
 
       {/* **Les poches de fond enfermées par le sujet.** Un détourage par
           tolérance de bord efface le fond qu'il atteint depuis les bords ; ce

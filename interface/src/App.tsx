@@ -2585,6 +2585,7 @@ export function App() {
             />
           }
           onErreur={setPanne}
+          onUnivers={setUnivers}
           BlocPasse={BlocPasse}
         />
       )}
@@ -2961,6 +2962,7 @@ export function App() {
                   />
                 }
                 onErreur={setPanne}
+                onUnivers={setUnivers}
                 BlocPasse={BlocPasse}
               />
             ) : null

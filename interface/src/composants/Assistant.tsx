@@ -2823,19 +2823,30 @@ function LesIA({
 
 /** L'étape « Le détourage de départ » — par nature d'image puis par famille (D1).
  *
- *  ── Ce que la mesure a trouvé, et pourquoi cet écran n'a que deux colonnes ──
+ *  ── ⚠️ La mesure qui avait caché deux réglages, refaite (M7) ───────────────
  *
- *  Comptées le 3 septembre 2026 sur les 123 passes de détourage écrites à la
- *  main dans ce dépôt : **la tolérance est restée à sa valeur livrée 96 fois
- *  sur 100** avec le moteur du bord, et le seuil de transparence aussi. Ce que
- *  l'auteur déplace vraiment, c'est le moteur et le bord rongé — et le second
- *  suit le premier de si près qu'il n'a même pas à être posé (voir
- *  `DURCISSEMENT_LIVRE` dans le domaine).
+ *  `D1` n'offrait ici que le moteur et le bord rongé, et l'écartement des deux
+ *  autres était **écrit et chiffré** : *« comptées sur les 123 passes écrites à
+ *  la main, la tolérance est restée à sa valeur livrée 96 fois sur 100, et le
+ *  seuil de transparence aussi »*.
  *
- *  Les deux autres réglages ne sont donc **pas** ici, et c'est un choix, pas un
- *  oubli : ils se posent sur une image, là où l'on voit ce qu'ils font. Un écran
- *  de défauts qui montre quatre curseurs dont deux ne bougent jamais fait perdre
- *  du temps sur les deux qui comptent. */
+ *  **Recompté le 4 septembre 2026 sur les 147 passes du dépôt, le chiffre ne se
+ *  retrouve que pour l'un des deux.** La tolérance a été déplacée 13 fois — une
+ *  sur onze, et la décision tient encore pour elle, de justesse. Le seuil de
+ *  transparence, lui, l'a été **34 fois, près d'une sur quatre**, dans cinq
+ *  projets sur six, et vingt-deux de ces trente-quatre fois avec le moteur du
+ *  modèle. Un réglage déplacé une fois sur quatre n'est pas un réglage que
+ *  personne ne touche.
+ *
+ *  Les quatre reviennent donc, **visibles et non repliés** : le nombre de
+ *  contrôles se règle par le repli de l'étape entière (`G8`), pas par le repli
+ *  de chacun de ses réglages.
+ *
+ *  **Le modèle de silhouette n'y revient pas**, et c'est tranché : celui qui
+ *  s'annonce comme lourd ne détoure rien du tout aujourd'hui — la bibliothèque
+ *  ne connaît pas ce nom-là et retombe en silence sur le rapide. Offrir un choix
+ *  dont un des termes ne fait rien serait pire que de ne pas l'offrir. Il attend
+ *  `G13`. */
 function LeDetourage({
   univers,
   onRegler,
@@ -2908,12 +2919,43 @@ function LeDetourage({
           ))}
         </Rangees>
 
+        {/* **Les quatre réglages sont nommés en clair, une fois, sous le
+            tableau** — et pas en survol de chaque case : on les lit avant de
+            toucher au premier, et non un par un en cherchant lequel fait quoi. */}
         <p className="max-w-[66ch] text-[11.5px] leading-relaxed text-texte-3">
-          La tolérance et le seuil de transparence ne se règlent pas ici, et ce
-          n'est pas un oubli : comptés sur tes propres recettes, tu les as laissés
-          à leur valeur livrée <strong className="text-texte-2">96 fois sur 100</strong>.
-          Ils se posent sur une image, dans sa table de détourage, là où tu vois ce
-          qu'ils font.
+          La <strong className="text-texte-2">tolérance</strong> dit jusqu'où une
+          couleur compte encore comme du fond ; le{" "}
+          <strong className="text-texte-2">seuil de transparence</strong>, à partir
+          de quand un pixel est traité comme transparent ; le{" "}
+          <strong className="text-texte-2">bord rongé</strong>, combien de pixels
+          on mange au contour pour retirer le liseré que le fond y laisse.
+        </p>
+        {/* ⚠️ **La décision de D1 est réécrite ici avec le bon chiffre**, et
+            elle est réécrite là où elle était écrite. Elle ne disparaît pas en
+            silence : c'est elle qui avait caché les deux réglages, et l'auteur
+            l'avait lue. */}
+        <p className="max-w-[66ch] text-[11.5px] leading-relaxed text-texte-3">
+          Deux d'entre eux manquaient ici, écartés sur un comptage —{" "}
+          <em>tu les laisses à leur valeur livrée 96 fois sur 100</em>. Recompté
+          sur tes <strong className="text-texte-2">147 détourages</strong>, ce
+          n'est vrai que de la tolérance, déplacée{" "}
+          <strong className="text-texte-2">une fois sur onze</strong> : pour elle
+          la remarque tenait, de justesse. Le seuil de transparence, lui, tu l'as
+          déplacé <strong className="text-texte-2">près d'une fois sur quatre</strong>,
+          dans cinq de tes six jeux.
+        </p>
+        <p className="max-w-[66ch] text-[11.5px] leading-relaxed text-texte-3">
+          Le choix du modèle de silhouette n'est pas ici, et ce n'est pas un
+          oubli : celui qui s'annonce comme lourd ne retire aucun fond
+          aujourd'hui. Offrir un choix dont un des termes ne fait rien serait pire
+          que de ne pas l'offrir — il reviendra quand ce sera réparé.
+        </p>
+        <p className="max-w-[66ch] text-[11.5px] leading-relaxed text-texte-3">
+          Tu n'as pas à deviner ces valeurs à froid : règle une image dans sa
+          table de détourage, et quand le résultat te convient,{" "}
+          <em>enregistre ce réglage comme défaut du projet</em> depuis l'image
+          elle-même. Cet écran-ci devient alors la relecture de ce que tu as
+          promu.
         </p>
       </div>
     </EtapeOuverte>
@@ -2925,7 +2967,7 @@ function LeDetourage({
  *  seul tableau les aurait fait passer pour une même liste. */
 function Rangees({ titre, children }: { titre: string; children: ReactNode }) {
   return (
-    <div className="flex max-w-[560px] flex-col gap-1">
+    <div className="flex max-w-[700px] flex-col gap-1">
       <Libelle>{titre}</Libelle>
       <ul className="flex flex-col rounded-[2px] border border-bord">{children}</ul>
     </div>
@@ -2953,8 +2995,20 @@ function RangeeDetourage({
   herite: string
   onPoser: (defaut: DefautDetourage | null) => void
 }) {
+  /** Ce que la ligne porte aujourd'hui, réduit à ce qu'un défaut retient. Une
+   *  passe posée sur une image porte en plus son point de pipette et son tracé,
+   *  qui n'ont aucun sens sans image où viser : le domaine les retire à
+   *  l'entrée, et les reconstruire ici en ferait une seconde vérité. */
+  const defaut = (): DefautDetourage => ({
+    moteur: passe!.moteur,
+    tolerance: passe!.tolerance,
+    seuil_alpha: passe!.seuil_alpha,
+    durcissement: passe!.durcissement,
+    modele: passe!.modele,
+  })
+
   return (
-    <li className="flex items-center gap-2 border-b border-bord px-2 py-1.5 last:border-b-0">
+    <li className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-bord px-2 py-1.5 last:border-b-0">
       <span className="w-[130px] shrink-0 text-[11px] text-texte-2" title={quand}>
         {nom}
       </span>
@@ -2974,35 +3028,133 @@ function RangeeDetourage({
         ))}
       </select>
       {passe ? (
-        <label className="mesure flex items-center gap-1 text-[9.5px] text-texte-3">
-          bord rongé
-          <input
-            type="number"
+        /* **Les quatre réglages de la ligne, et non deux** (M7). Le moteur
+           décide de la façon de chercher le fond ; les trois nombres décident
+           de ce qu'on en retire. Ils reviennent visibles, parce que le chiffre
+           qui les avait cachés ne se retrouve pas — voir la mesure au-dessus. */
+        <>
+          <ChampDuDetourage
+            libelle="tolérance"
+            propos="jusqu'où une couleur compte encore comme du fond"
+            nom={nom}
+            valeur={passe.tolerance}
+            min={0}
+            max={120}
+            onPoser={(tolerance) => onPoser({ ...defaut(), tolerance })}
+          />
+          <ChampDuDetourage
+            libelle="seuil de transparence"
+            propos="à partir de quand un pixel est traité comme transparent"
+            nom={nom}
+            valeur={passe.seuil_alpha}
+            min={1}
+            max={255}
+            onPoser={(seuil_alpha) => onPoser({ ...defaut(), seuil_alpha })}
+          />
+          <ChampDuDetourage
+            libelle="bord rongé"
+            propos="combien de pixels on mange au contour, pour retirer le liseré du fond"
+            nom={nom}
+            valeur={passe.durcissement}
             min={0}
             max={4}
-            value={passe.durcissement}
-            aria-label={`Bord rongé pour ${nom}`}
-            onChange={(e) =>
-              onPoser({
-                ...defautPourMoteur(passe.moteur),
-                tolerance: passe.tolerance,
-                seuil_alpha: passe.seuil_alpha,
-                modele: passe.modele,
-                durcissement: Math.max(0, Math.min(4, Number(e.target.value) || 0)),
-              })
-            }
-            className="mesure h-[26px] w-[42px] rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+            unite="px"
+            onPoser={(durcissement) => onPoser({ ...defaut(), durcissement })}
           />
-          px
-        </label>
+        </>
       ) : (
         /* **Une ligne vide dit ce qui décidera à sa place**, comme la liste des
-           IA juste avant : on apprend la règle en lisant le réglage. */
+           IA juste avant : on apprend la règle en lisant le réglage.
+           **Et depuis M7 elle dit aussi ce qu'elle cache** : les trois nombres
+           n'apparaissent qu'une fois le moteur choisi, et rien ne le disait —
+           l'auteur a lu le bord rongé comme absent du produit. */
         <span className="mesure shrink-0 text-[9.5px] text-texte-3">
-          aucun réglage — {herite}
+          aucun réglage — {herite} · choisis un moteur pour régler la tolérance,
+          le seuil et le bord rongé
         </span>
       )}
     </li>
+  )
+}
+
+/** Un des trois nombres d'une ligne de détourage — son nom, son champ, son
+ *  unité s'il en a une.
+ *
+ *  **Le nom est écrit, jamais deviné du contexte** : trois champs de nombre
+ *  côte à côte sans étiquette seraient trois cases à essayer. Le propos, lui,
+ *  vit en survol — la phrase entière sur chacun ferait une ligne illisible, et
+ *  les quatre sont dits en clair sous le tableau.
+ *
+ *  ⚠️ **Le champ garde ce qu'on tape jusqu'à ce qu'on le quitte**, et c'est ce
+ *  qui le rend utilisable au clavier. Sans ce brouillon, borner à chaque frappe
+ *  réécrit le champ sous les doigts : vider le seuil de transparence, dont le
+ *  plus petit est un, y posait `1` sur-le-champ, et taper `200` ensuite donnait
+ *  `1200` puis le maximum. On ne pouvait plus atteindre la valeur qu'on visait
+ *  autrement qu'en corrigeant chiffre par chiffre. Le même motif que le champ
+ *  de correction de l'écran de confirmation (`M3`), pour la même raison : ce
+ *  qu'on écrit appartient à celui qui écrit tant qu'il écrit. */
+function ChampDuDetourage({
+  libelle,
+  propos,
+  nom,
+  valeur,
+  min,
+  max,
+  unite,
+  onPoser,
+}: {
+  libelle: string
+  propos: string
+  /** Ce que la ligne règle — il entre dans le nom du champ, sans quoi vingt-huit
+   *  champs du même écran porteraient le même. */
+  nom: string
+  valeur: number
+  min: number
+  max: number
+  unite?: string
+  onPoser: (valeur: number) => void
+}) {
+  const [brouillon, setBrouillon] = useState<string | null>(null)
+  return (
+    <label
+      className="mesure flex shrink-0 items-center gap-1 text-[9.5px] text-texte-3"
+      title={propos}
+    >
+      {libelle}
+      <input
+        type="number"
+        min={min}
+        max={max}
+        value={brouillon ?? String(valeur)}
+        aria-label={`${libelle} pour ${nom}`}
+        onChange={(e) => {
+          const texte = e.target.value
+          setBrouillon(texte)
+          // **Ce qui est déjà dans les bornes part tout de suite** : le réglage
+          // suit la frappe, comme les autres contrôles de l'étape. Ce qui n'y
+          // est pas encore attend la fin de la saisie, sans rien effacer.
+          const nombre = Number(texte)
+          if (texte !== "" && Number.isFinite(nombre) && nombre >= min && nombre <= max)
+            onPoser(nombre)
+        }}
+        onBlur={() => {
+          // **Quitter le champ le remet dans ses bornes** — ou rend la valeur
+          // posée quand ce qui reste n'est pas un nombre. Le champ ne garde
+          // jamais un état que le jeu n'a pas.
+          if (brouillon !== null) {
+            const nombre = Number(brouillon)
+            const borne =
+              brouillon !== "" && Number.isFinite(nombre)
+                ? Math.max(min, Math.min(max, nombre))
+                : valeur
+            if (borne !== valeur) onPoser(borne)
+          }
+          setBrouillon(null)
+        }}
+        className="mesure h-[26px] w-[46px] rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+      />
+      {unite}
+    </label>
   )
 }
 

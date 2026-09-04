@@ -11,6 +11,94 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## M7 — le détourage de départ redevient complet, et se règle depuis l'image — 4 septembre 2026
+
+**Une remarque en deux moitiés, et la seconde était le vrai reproche.** L'étape *Le détourage de
+départ* n'offrait que deux des quatre réglages qu'elle commande ; et elle est la onzième des douze
+étapes de l'univers, c'est-à-dire un endroit qu'on traverse **en réglant son jeu, donc avant d'avoir
+fabriqué la moindre image** — alors qu'on ne sait quel détourage convient qu'après en avoir vu
+quelques-unes.
+
+> ### ⚠️ Le chiffre qui avait servi à cacher deux réglages ne se retrouve pas
+>
+> `D1` les avait écartés **délibérément et par écrit**, sur un comptage : *« comptées sur les 123
+> passes écrites à la main, la tolérance est restée à sa valeur livrée 96 fois sur 100, et le seuil
+> de transparence aussi »*. L'intention était juste — ne pas assommer avec ce que personne ne
+> touche.
+>
+> **Recompté sur les 147 passes du dépôt, le chiffre ne vaut que pour l'un des deux.** La tolérance
+> a été déplacée 13 fois, soit une sur onze : pour elle la décision tenait, de justesse. Le seuil de
+> transparence l'a été **34 fois, près d'une sur quatre**, dans cinq projets sur six, et vingt-deux
+> de ces trente-quatre fois avec le moteur du modèle — précisément celui dont l'écran ne laisse pas
+> non plus choisir le modèle.
+>
+> **La sélection était juste pour un des quatre** : le réglage le plus déplacé de tous — le bord
+> rongé, une fois sur deux — est bien celui que l'écran offrait. Les trois autres étaient écartés à
+> tort, et le plus employé des trois l'était sur un chiffre faux.
+>
+> La leçon n'est pas *« ne pas mesurer »* — c'est l'inverse. Une mesure faite sur un sous-ensemble
+> qu'on ne nomme pas décide comme si elle valait pour tout, et personne ne peut la relire. Celle-ci
+> a décidé de ce qu'un écran montre pendant un jour entier.
+
+**Les quatre reviennent visibles, et non repliés.** *Tranché par l'auteur.* Le nombre de contrôles
+d'un écran d'assistant se règle par le repli de **l'étape entière** — c'est ce que `G8` fera —, pas
+par le repli de chacun de ses réglages : un réglage replié dans un bloc replié est un réglage que
+personne ne verra jamais.
+
+**Le modèle de silhouette n'y revient pas.** *Tranché par l'auteur.* Celui qui s'annonce comme lourd
+ne détoure rien du tout aujourd'hui : la bibliothèque ne connaît pas ce nom-là et retombe en silence
+sur le rapide. Offrir un choix dont un des termes ne fait rien serait pire que de ne pas l'offrir.
+Il attend `G13`.
+
+**La ligne vide dit enfin ce qu'elle cache.** Tant qu'aucun moteur n'est choisi, il n'y a rien à
+régler — et rien ne le disait : l'auteur a lu le bord rongé comme **absent du produit**. Elle dit
+maintenant *choisis un moteur pour régler la tolérance, le seuil et le bord rongé*, à la suite de ce
+qui décidera à sa place.
+
+### Le mauvais moment se répare par l'autre bout
+
+**On ne déplace pas l'étape.** Son rangement est juste : elle décide de ce que l'atelier fait de
+l'image **au retour**, comme les emplacements et les modèles. C'est le geste qui manquait, pas la
+place de l'étape. Depuis la table de détourage d'une image, *enregistrer ce réglage comme défaut du
+projet* fait de ce qu'on vient de régler — et de voir — le défaut du jeu. L'étape devient la
+**relecture de ce qu'on a promu**, et elle le dit.
+
+**Ce qui restait ouvert est tranché, et le domaine en avait déjà décidé une moitié.** *Ce qu'on
+promeut exactement* n'était pas une préférence : **un défaut ne porte qu'une passe**, et le domaine
+retire au passage ce qu'une passe a de propre à une image — le point de la pipette, le tracé à main
+levée. Le geste promeut donc **la première passe**, et ce n'est pas arbitraire : c'est celle qui
+s'applique à une image que personne n'a encore touchée, les suivantes corrigeant *cette* image-là
+sur ce que la première a déjà retiré. L'écran le dit quand il y en a plusieurs, et il dit que le
+point visé ne part pas quand la première en a un.
+
+**La portée par défaut n'existe pas, et c'est la réponse à l'autre moitié.** Les deux que le produit
+connaît sont proposées côte à côte — la nature de l'image, sa famille — et aucune n'est
+présélectionnée : promouvoir dans la mauvaise se voit à la dixième image, pas à la première. Une
+image dont le barème du jeu ne nommait pas la famille n'en propose qu'une, **sans bouton grisé** :
+ce qui n'existe pas ne se grise pas.
+
+> ### ⚠️ Le dictionnaire des familles repart entier, ou une famille se perd
+>
+> La route qui pose les défauts lit ce champ comme **la liste complète des familles réglées** — une
+> famille absente du message est retirée. N'envoyer que celle qu'on vient de promouvoir effacerait
+> les autres, sans un mot, et le jeu perdrait un réglage à chaque promotion. C'est la convention des
+> modèles par famille ; un essai la tient désormais, parce que le défaut est invisible tant qu'une
+> seule famille est réglée.
+
+> ### ⚠️ Un champ de nombre borné à chaque frappe se réécrit sous les doigts
+>
+> Le seuil de transparence a **un** pour plus petite valeur. Le borner à chaque frappe y posait `1`
+> dès qu'on vidait le champ, et taper `200` ensuite donnait `1200`, donc le maximum : la valeur
+> qu'on visait devenait inatteignable autrement qu'en corrigeant chiffre par chiffre. Le champ garde
+> désormais ce qu'on tape jusqu'à ce qu'on le quitte — le motif du champ de correction de `M3`, pour
+> la même raison. Le défaut ne se voyait pas sur l'unique champ d'avant : *le bord rongé* va de zéro
+> à quatre, un seul chiffre, et vider un champ dont le plus petit est zéro ne réécrit rien.
+
+**Et le geste dit où relire son effet.** Il vit dans un autre écran que celui où on le fait : sans la
+phrase qui nomme cet écran, on ne saurait ni si ça a marché, ni où aller vérifier.
+
+**Aucun appel, aucun centime** : promouvoir un réglage n'appelle personne.
+
 ## M5 — la référence qui manque s'ajoute sans rien perdre — 4 septembre 2026
 
 **Le défaut n'était l'oubli de personne : trois décisions justes se rencontraient.** Aucune n'est

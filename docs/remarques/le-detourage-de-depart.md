@@ -200,3 +200,45 @@ construisant `M7`.*
   par décision de l'auteur.
 - **La remarque sur la charge de l'interface**, partie en `V2.5`. Le repli demandé par `B` est
   exactement le mécanisme dont elle discute.
+
+---
+
+## Ce que la tranche a livré — 4 septembre 2026
+
+**Livrée en `M7`, les deux moitiés, comme l'auteur les avait tranchées.**
+
+**Les quatre réglages sont là, visibles.** Chaque ligne de l'étape porte le moteur, la tolérance, le
+seuil de transparence et le bord rongé. Les quatre sont nommés en clair sous le tableau, une fois —
+pas en survol de chaque case : on les lit avant de toucher au premier, et non un par un en cherchant
+lequel fait quoi.
+
+**La décision de `D1` est réécrite là où elle était écrite**, dans l'étape et dans le code qui la
+porte, avec le comptage refait — et elle dit lequel des deux réglages restait discutable : la
+tolérance, déplacée une fois sur onze. Le seuil de transparence, déplacé près d'une fois sur quatre
+dans cinq jeux sur six, n'aurait jamais dû être caché.
+
+**Le modèle de silhouette n'y revient pas**, comme tranché : il attend `G13`.
+
+**La ligne vide dit ce qu'elle cache** — *choisis un moteur pour régler la tolérance, le seuil et le
+bord rongé* — à la suite de ce qui décidera à sa place. C'est le plus petit des correctifs, et c'est
+lui qui répare la lecture qui a ouvert cette remarque.
+
+**Et le geste inverse existe.** Depuis la table de détourage d'une image, *enregistrer ce réglage
+comme défaut du projet ›* propose les deux portées que le produit connaît — la nature de l'image, sa
+famille —, résume ce qu'il promeut, et écrit qu'aucune image déjà faite n'est retouchée. L'étape de
+l'univers dit désormais qu'elle est la relecture de ce qu'on a promu.
+
+### Ce qui restait ouvert, et comment ça s'est tranché
+
+**Ce qu'on promeut exactement** : la **première passe**, et le domaine l'imposait — un défaut n'en
+porte qu'une, et il retire ce qu'une passe a de propre à une image. Ce n'est pas arbitraire : la
+première est celle qui s'applique à une image que personne n'a touchée ; les suivantes corrigent
+*cette* image-là. L'écran le dit quand il y en a plusieurs, et il dit que le point visé ne part pas.
+
+**Pour quelle portée par défaut** : aucune. Les deux sont proposées côte à côte, sans
+présélection — promouvoir dans la mauvaise se voit à la dixième image, pas à la première.
+
+**Aucun appel, aucun centime.**
+
+*Le détail de ce que la construction a appris est dans `docs/status/etat.md`, à l'entrée du
+4 septembre 2026 ; les critères d'acceptation tenus sont dans `docs/PLAN.md`.*
