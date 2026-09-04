@@ -1,0 +1,262 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .c { width: 68px; height: 68px; background: #b3b2af; display: flex; align-items: center; justify-content: center; }
+    .cv { width: 68px; height: 68px; border: 1px dashed #b9b1a3; display: block; }
+    .ilot { border: 1px solid #d3cabb; border-radius: 8px; background: rgba(255,253,250,0.62); padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .seg { height: 30px; display: flex; align-items: center; padding: 0 12px; border-radius: 5px; font-size: 12.5px; color: #4e483f; white-space: nowrap; }
+    .seg-on { background: #fffdfa; color: #221f1b; font-weight: 600; border: 1px solid #ddd5c8; }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr); background: #f7f3ec; overflow: hidden">
+
+  <!-- ══════ LE CARNET ══════ -->
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div class="serif" style="font-size: 25px; line-height: 1.1">Le Marais du Vieux Moulin</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e">41 images · 12 poses sur 18</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
+      <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+      <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
+      <div class="rl"><span>Son nom et son dossier</span></div>
+      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+      <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
+      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+      <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
+      <div class="rl"><span>Son détourage de départ</span></div>
+      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+      <div class="rl"><span>Les dépenses</span><span class="num">$1,53</span></div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 14px 10px 0; display: flex; flex-direction: column; gap: 9px">
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Cliquer une ligne centre le plan sur cette chose. Déplacer le plan surligne la ligne. Les deux disent toujours la même chose.</div>
+      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
+        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ LA TOILE ══════ -->
+  <div style="position: relative; overflow: hidden; background:
+       radial-gradient(circle at 1px 1px, #ddd5c6 1px, transparent 0) 0 0 / 26px 26px, #ece7dc">
+
+    <!-- barre de la surface -->
+    <div style="position: absolute; left: 22px; right: 22px; top: 18px; display: flex; align-items: center; justify-content: space-between; z-index: 2">
+      <div style="display: flex; gap: 3px; background: rgba(255,253,250,0.9); border: 1px solid #ddd5c8; border-radius: 7px; padding: 3px">
+        <div class="seg seg-on">le plan du jeu</div><div class="seg">le tableau d'inspiration</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <div style="height: 30px; display: flex; align-items: center; padding: 0 11px; border: 1px solid #ddd5c8; border-radius: 6px; background: rgba(255,253,250,0.9); font-size: 12.5px">tout voir</div>
+        <div style="display: flex; gap: 2px; background: rgba(255,253,250,0.9); border: 1px solid #ddd5c8; border-radius: 6px; padding: 3px">
+          <div class="seg mono" style="font-size: 11.5px">25 %</div><div class="seg seg-on mono" style="font-size: 11.5px">50 %</div><div class="seg mono" style="font-size: 11.5px">100 %</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Le plan -->
+    <div style="position: absolute; left: 34px; top: 74px; right: 34px; display: flex; flex-direction: column; gap: 22px">
+
+      <div style="display: flex; gap: 22px; align-items: flex-start">
+        <!-- îlot : Le pélerin -->
+        <div class="ilot" style="border: 2px solid #a8492c; background: rgba(255,253,250,0.86)">
+          <div style="display: flex; align-items: baseline; gap: 10px">
+            <div style="font-size: 16px; font-weight: 600">Le pélerin</div>
+            <div class="num">6 images · 0 animation · 2 pièces</div>
+          </div>
+          <div style="display: flex; gap: 7px">
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="3" y="10" width="2" height="6" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="3" height="5" fill="#5a3f28"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="2" y="11" width="3" height="5" fill="#d8bb95"/><rect x="3" y="17" width="4" height="5" fill="#5a3f28"/><rect x="10" y="17" width="4" height="4" fill="#5a3f28"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="8" fill="#2f4a35"/><rect x="1" y="10" width="4" height="4" fill="#d8bb95"/><rect x="2" y="16" width="5" height="5" fill="#5a3f28"/><rect x="10" y="15" width="5" height="4" fill="#5a3f28"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="12" y="4" width="4" height="3" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="4" height="5" fill="#5a3f28"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="4" y="3" width="7" height="6" fill="#2f4a35"/><rect x="5" y="6" width="4" height="4" fill="#d8bb95"/><rect x="3" y="9" width="9" height="8" fill="#2f4a35"/><rect x="1" y="8" width="3" height="5" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="3" height="5" fill="#5a3f28"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="2" y="14" width="12" height="5" fill="#2f4a35"/><rect x="3" y="12" width="4" height="4" fill="#d8bb95"/><rect x="9" y="16" width="5" height="3" fill="#c9b48c"/></svg></div>
+          </div>
+          <div style="display: flex; gap: 7px; align-items: center">
+            <span class="num" style="width: 78px">l'épée</span>
+            <div style="width: 30px; height: 30px; background: #b3b2af"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+          </div>
+          <div style="display: flex; gap: 7px; align-items: center">
+            <span class="num" style="width: 78px">le sac</span>
+            <div style="width: 30px; height: 30px; background: #b3b2af"></div>
+            <div style="width: 30px; height: 30px; background: #b3b2af"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+          </div>
+          <div style="display: flex; gap: 7px; align-items: center">
+            <span class="num" style="width: 78px">animé</span>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
+          </div>
+        </div>
+
+        <!-- îlot : Le garde -->
+        <div class="ilot">
+          <div style="display: flex; align-items: baseline; gap: 10px">
+            <div style="font-size: 16px; font-weight: 600">Le garde du moulin</div>
+            <div class="num">6 images</div>
+          </div>
+          <div style="display: flex; gap: 7px">
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="5" fill="#7d8a92"/><rect x="6" y="4" width="4" height="3" fill="#c9a583"/><rect x="4" y="7" width="8" height="9" fill="#6c7a83"/><rect x="1" y="9" width="4" height="4" fill="#5a4a34"/><rect x="12" y="2" width="1" height="16" fill="#7a5a34"/><rect x="5" y="16" width="2" height="6" fill="#4a4238"/><rect x="9" y="16" width="2" height="6" fill="#4a4238"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="5" fill="#7d8a92"/><rect x="6" y="4" width="4" height="3" fill="#c9a583"/><rect x="4" y="7" width="8" height="9" fill="#6c7a83"/><rect x="1" y="10" width="4" height="4" fill="#5a4a34"/><rect x="12" y="2" width="1" height="16" fill="#7a5a34"/><rect x="3" y="16" width="3" height="6" fill="#4a4238"/><rect x="10" y="16" width="3" height="5" fill="#4a4238"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="5" fill="#7d8a92"/><rect x="6" y="4" width="4" height="3" fill="#c9a583"/><rect x="4" y="7" width="8" height="8" fill="#6c7a83"/><rect x="0" y="9" width="4" height="4" fill="#5a4a34"/><rect x="12" y="1" width="1" height="15" fill="#7a5a34"/><rect x="2" y="15" width="4" height="6" fill="#4a4238"/><rect x="10" y="15" width="4" height="5" fill="#4a4238"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="5" fill="#7d8a92"/><rect x="6" y="4" width="4" height="3" fill="#c9a583"/><rect x="4" y="7" width="8" height="9" fill="#6c7a83"/><rect x="13" y="6" width="3" height="3" fill="#c9a583"/><rect x="14" y="1" width="1" height="7" fill="#7a5a34"/><rect x="5" y="16" width="2" height="6" fill="#4a4238"/><rect x="9" y="16" width="3" height="6" fill="#4a4238"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="4" y="3" width="6" height="5" fill="#7d8a92"/><rect x="5" y="5" width="4" height="3" fill="#c9a583"/><rect x="3" y="8" width="8" height="9" fill="#6c7a83"/><rect x="0" y="8" width="3" height="4" fill="#5a4a34"/><rect x="5" y="17" width="2" height="5" fill="#4a4238"/><rect x="8" y="17" width="2" height="5" fill="#4a4238"/></svg></div>
+            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="2" y="14" width="12" height="5" fill="#6c7a83"/><rect x="3" y="12" width="4" height="4" fill="#c9a583"/><rect x="1" y="19" width="13" height="1" fill="#4a4238"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 22px; align-items: flex-start">
+        <!-- îlot : La grenouille -->
+        <div class="ilot" style="background: rgba(255,253,250,0.4)">
+          <div style="display: flex; align-items: baseline; gap: 10px">
+            <div style="font-size: 16px; font-weight: 600; color: #4e483f">La grenouille des tourbières</div>
+            <div class="num">2 concept arts, aucune image</div>
+          </div>
+          <div style="display: flex; gap: 7px">
+            <div class="cv"></div><div class="cv"></div><div class="cv"></div><div class="cv"></div><div class="cv"></div><div class="cv"></div>
+          </div>
+        </div>
+
+        <!-- îlot : les choses -->
+        <div class="ilot" style="background: rgba(255,253,250,0.4)">
+          <div style="display: flex; align-items: baseline; gap: 10px">
+            <div style="font-size: 16px; font-weight: 600; color: #4e483f">Coffre</div>
+            <div class="num">meuble · 3 cases</div>
+          </div>
+          <div style="display: flex; gap: 7px"><div class="cv"></div><div class="cv"></div><div class="cv"></div></div>
+        </div>
+
+        <div class="ilot" style="background: rgba(255,253,250,0.4)">
+          <div style="display: flex; align-items: baseline; gap: 10px">
+            <div style="font-size: 16px; font-weight: 600; color: #4e483f">Ecran titre</div>
+            <div class="num">interface · 4 cases</div>
+          </div>
+          <div style="display: flex; gap: 7px"><div class="cv"></div><div class="cv"></div><div class="cv"></div><div class="cv"></div></div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 22px; align-items: flex-start">
+        <!-- îlot : le décor -->
+        <div class="ilot" style="background: rgba(255,253,250,0.4)">
+          <div style="display: flex; align-items: baseline; gap: 10px">
+            <div style="font-size: 16px; font-weight: 600; color: #4e483f">fôret</div>
+            <div class="num">décor · une seule image, pas de poses</div>
+          </div>
+          <div style="display: flex; gap: 7px; align-items: center">
+            <div class="cv" style="width: 148px"></div>
+            <div style="font-size: 12px; color: #948c80; max-width: 15em; line-height: 1.4">Un décor n'a pas de poses : une seule image, large.</div>
+          </div>
+        </div>
+
+        <!-- l'invitation : poser une chose -->
+        <div style="border: 1px dashed #c3b8a6; border-radius: 8px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; align-self: stretch; justify-content: center">
+          <div style="font-size: 14px; color: #6d675e">Écrire un nom ici pose une chose sur le plan</div>
+          <div style="height: 34px; border: 1px solid #ddd5c8; border-radius: 6px; background: rgba(255,253,250,0.72); display: flex; align-items: center; padding: 0 11px; font-size: 13px; color: #a49a8b; min-width: 250px">un nom, et rien d'autre</div>
+        </div>
+      </div>
+
+      <!-- la réserve -->
+      <div style="margin-top: 8px; border-top: 1px solid #ddd5c8; padding-top: 14px; display: flex; flex-direction: column; gap: 9px">
+        <div style="display: flex; align-items: baseline; gap: 12px">
+          <div class="rt" style="color: #8b8376">La réserve — les images que le plan ne montre pas</div>
+          <div style="font-size: 12.5px; color: #6d675e"><strong style="font-weight: 600">41 images</strong> dans la galerie, <strong style="font-weight: 600">12 posées</strong> dans une case. Les autres sont des essais écartés, des concept arts et des rendus.</div>
+        </div>
+        <div style="display: flex; gap: 7px; align-items: center">
+          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
+          <div style="width: 46px; height: 46px; background: #bcbbb8"></div>
+          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
+          <div style="width: 46px; height: 46px; background: #b6b5b2"></div>
+          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
+          <div style="width: 46px; height: 46px; background: #bcbbb8"></div>
+          <div style="width: 46px; height: 46px; background: #b6b5b2"></div>
+          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
+          <div style="width: 46px; height: 46px; background: #bcbbb8"></div>
+          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
+          <div style="margin-left: 6px; font-size: 12.5px; color: #948c80; max-width: 20em; line-height: 1.45">Glisse-les sur une chose pour les ranger. Ce n'est pas obligatoire.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Explication de la vue -->
+    <div style="position: absolute; left: 34px; bottom: 22px; max-width: 640px; background: rgba(255,253,250,0.94); border: 1px solid #ddd5c8; border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 14px; font-weight: 600">À quoi sert le plan, si le carnet dit déjà tout</div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #6d675e">
+        Le carnet répond à <em>où est cette chose ?</em>. Le plan répond à <em>à quoi ressemble ce jeu, en entier ?</em> — les liens entre les choses, les trous, ce qui est fini à côté de ce qui ne l'est pas.
+        <strong style="font-weight: 600; color: #4e483f">C'est la même donnée, deux fois.</strong> Ce qui manque n'est pas colorié en rouge : c'est un carré vide dans une rangée pleine, et ça se voit de loin.
+      </div>
+    </div>
+
+    <!-- carte + zoom -->
+    <div style="position: absolute; right: 22px; bottom: 22px; display: flex; flex-direction: column; gap: 9px; align-items: flex-end">
+      <div style="width: 190px; height: 118px; border: 1px solid #ddd5c8; border-radius: 6px; background: rgba(255,253,250,0.9); position: relative; overflow: hidden">
+        <div style="position: absolute; left: 12px; top: 14px; display: flex; gap: 3px">
+          <div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div>
+        </div>
+        <div style="position: absolute; left: 108px; top: 14px; display: flex; gap: 3px">
+          <div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div>
+        </div>
+        <div style="position: absolute; left: 12px; top: 56px; display: flex; gap: 3px">
+          <div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div><div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div><div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div><div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div>
+        </div>
+        <div style="position: absolute; left: 108px; top: 56px; display: flex; gap: 3px">
+          <div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div><div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div>
+        </div>
+        <div style="position: absolute; left: 6px; top: 8px; width: 122px; height: 74px; border: 1.5px solid #a8492c; border-radius: 2px"></div>
+      </div>
+      <div style="font-size: 12px; color: #6d675e; background: rgba(255,253,250,0.9); border: 1px solid #ddd5c8; border-radius: 6px; padding: 6px 10px">tout le jeu en petit — <strong style="font-weight: 600">6 choses</strong>, le cadre dit où tu es</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

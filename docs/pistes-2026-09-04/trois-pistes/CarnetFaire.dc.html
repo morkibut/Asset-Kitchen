@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .carnet * { box-sizing: border-box; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rail-t { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rail-l { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px; font-size: 14px; color: #3d382f; }
+  </style>
+</helmet>
+
+<div class="carnet" style="width: 1440px; height: 900px; display: grid; grid-template-columns: 286px minmax(0, 1fr) 306px; background: #f7f3ec;
+     font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; overflow: hidden">
+
+  <!-- ── Le sommaire du jeu ──────────────────────────────────────────── -->
+  <div style="border-right: 1px solid #e2dbd0; padding: 26px 20px; display: flex; flex-direction: column; gap: 24px; background: #f2ede4">
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="serif" style="font-size: 28px; line-height: 1.1">Les marais de fer</div>
+      <div style="font-size: 13px; color: #6d675e">19 images · 7 cases vides · $0,4655 dépensés</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="rail-t" style="margin-bottom: 4px">Ce que le monde contient</div>
+      <div class="rail-l"><span>Le monde</span><span class="mono" style="font-size: 12px; color: #948c80">5 lignes</span></div>
+      <div class="rail-l" style="background: #e6dfd2; font-weight: 600">
+        <span>Les gens</span>
+        <span style="display: flex; align-items: center; gap: 7px">
+          <span style="display: flex; gap: 2px"><i style="width: 5px; height: 12px; background: #5c7a52; display: block"></i><i style="width: 5px; height: 12px; background: #5c7a52; display: block"></i><i style="width: 5px; height: 12px; background: #5c7a52; display: block"></i><i style="width: 5px; height: 12px; background: #d6cdbd; display: block"></i><i style="width: 5px; height: 12px; background: #d6cdbd; display: block"></i></span>
+          <span class="mono" style="font-size: 12px; color: #6d675e">3</span>
+        </span>
+      </div>
+      <div class="rail-l"><span>Les choses</span><span class="mono" style="font-size: 12px; color: #948c80">9</span></div>
+      <div class="rail-l"><span style="color: #948c80">Les décors</span><span class="mono" style="font-size: 12px; color: #a8492c">à ouvrir</span></div>
+      <div class="rail-l"><span>L'interface</span><span class="mono" style="font-size: 12px; color: #948c80">2</span></div>
+      <div class="rail-l"><span style="color: #948c80">L'équipement</span><span class="mono" style="font-size: 12px; color: #948c80">0</span></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="rail-t" style="margin-bottom: 4px">Ce qui s'applique à tout</div>
+      <div class="rail-l"><span>Son style et ses couleurs</span></div>
+      <div class="rail-l"><span>Son plan de poses</span><span class="mono" style="font-size: 12px; color: #948c80">4</span></div>
+      <div class="rail-l"><span>Ses réglages</span><span class="mono" style="font-size: 12px; color: #a8492c">9 sur 12</span></div>
+      <div class="rail-l"><span>Son tableau d'inspiration</span><span class="mono" style="font-size: 12px; color: #948c80">vide</span></div>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 9px; border-top: 1px solid #e2dbd0; padding-top: 16px">
+      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #6d675e">
+        <span>1 fournisseur prêt</span>
+        <span style="display: flex; align-items: center; gap: 6px"><i style="width: 7px; height: 7px; border-radius: 999px; background: #5c7a52; display: block"></i>en ligne</span>
+      </div>
+      <div style="font-size: 13px; color: #6d675e">Le guide de l'atelier — 134 entrées</div>
+    </div>
+  </div>
+
+  <!-- ── La page de la chose ─────────────────────────────────────────── -->
+  <div style="padding: 30px 40px; display: flex; flex-direction: column; gap: 22px; overflow: hidden">
+
+    <div style="display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: #948c80">
+      <span>Les gens</span><span>›</span><span style="color: #3d382f">La ferronnière</span>
+    </div>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <h1 class="serif" style="margin: 0; font-size: 52px; line-height: 1; letter-spacing: -0.01em">La ferronnière</h1>
+        <div style="font-size: 16px; color: #4e483f; max-width: 34em">une forgeronne des marais, tablier de cuir, cheveux relevés</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="font-size: 13.5px; color: #6d675e; border: 1px solid #ddd5c8; border-radius: 6px; padding: 8px 13px; background: #fffdfa; white-space: nowrap">Son texte</div>
+        <div style="font-size: 13.5px; color: #6d675e; border: 1px solid #ddd5c8; border-radius: 6px; padding: 8px 13px; background: #fffdfa; white-space: nowrap">Sa calibration</div>
+        <div style="font-size: 13.5px; color: #6d675e; border: 1px solid #ddd5c8; border-radius: 6px; padding: 8px 13px; background: #fffdfa; white-space: nowrap">Sortir vers le jeu</div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid #e2dbd0; padding-bottom: 12px">
+      <div class="serif" style="font-size: 25px">Ses quatre attitudes</div>
+      <div style="font-size: 14px; color: #6d675e">deux sont faites, deux manquent</div>
+    </div>
+
+    <!-- Les quatre cases -->
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="height: 300px; background: #a8a7a4; display: flex; align-items: center; justify-content: center">
+          <svg viewBox="0 0 16 24" width="196" height="196" shape-rendering="crispEdges" style="display:block">
+            <rect x="5" y="2" width="6" height="4" fill="#8a5a2a"/><rect x="6" y="4" width="4" height="4" fill="#e0b48c"/>
+            <rect x="4" y="8" width="8" height="8" fill="#6b4326"/><rect x="5" y="10" width="6" height="4" fill="#8d5c33"/>
+            <rect x="2" y="9" width="2" height="6" fill="#e0b48c"/><rect x="12" y="9" width="2" height="6" fill="#e0b48c"/>
+            <rect x="5" y="16" width="2" height="6" fill="#3f4a3a"/><rect x="9" y="16" width="2" height="6" fill="#3f4a3a"/>
+            <rect x="4" y="22" width="3" height="2" fill="#2a2420"/><rect x="9" y="22" width="3" height="2" fill="#2a2420"/>
+          </svg>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <div style="font-size: 16px; font-weight: 600">repos</div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #5c7a52"><i style="width: 6px; height: 6px; border-radius: 999px; background: #5c7a52; display: block"></i>gardée</div>
+        </div>
+        <div class="mono" style="font-size: 12px; color: #948c80">64 × 64 · $0,0245</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="height: 300px; background: #a8a7a4; display: flex; align-items: center; justify-content: center">
+          <svg viewBox="0 0 16 24" width="196" height="196" shape-rendering="crispEdges" style="display:block">
+            <rect x="5" y="2" width="6" height="4" fill="#8a5a2a"/><rect x="6" y="4" width="4" height="4" fill="#e0b48c"/>
+            <rect x="4" y="8" width="8" height="8" fill="#6b4326"/><rect x="5" y="10" width="6" height="4" fill="#8d5c33"/>
+            <rect x="1" y="10" width="3" height="5" fill="#e0b48c"/><rect x="12" y="8" width="3" height="5" fill="#e0b48c"/>
+            <rect x="3" y="16" width="3" height="6" fill="#3f4a3a"/><rect x="10" y="16" width="3" height="5" fill="#3f4a3a"/>
+            <rect x="2" y="22" width="4" height="2" fill="#2a2420"/><rect x="10" y="21" width="4" height="2" fill="#2a2420"/>
+          </svg>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <div style="font-size: 16px; font-weight: 600">marche</div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #5c7a52"><i style="width: 6px; height: 6px; border-radius: 999px; background: #5c7a52; display: block"></i>gardée</div>
+        </div>
+        <div class="mono" style="font-size: 12px; color: #948c80">64 × 64 · $0,0245</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="height: 300px; border: 1px dashed #c9a58e; background: #fbf5ef; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; padding: 0 16px; text-align: center">
+          <div style="font-size: 14px; line-height: 1.45; color: #7a5240">Elle ne court pas encore.<br>Une image, et c'est fait.</div>
+          <button style="font-family: inherit; font-size: 13.5px; font-weight: 600; color: #fffdfa; background: #a8492c; border: none; border-radius: 6px; padding: 9px 15px; cursor: pointer">Fabriquer — $0,0245</button>
+        </div>
+        <div style="font-size: 16px; font-weight: 600">course</div>
+        <div class="mono" style="font-size: 12px; color: #948c80">vide</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="height: 300px; border: 1px dashed #c9a58e; background: #fbf5ef; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; padding: 0 16px; text-align: center">
+          <div style="font-size: 14px; line-height: 1.45; color: #7a5240">Elle ne frappe pas encore.<br>Une image, et c'est fait.</div>
+          <button style="font-family: inherit; font-size: 13.5px; font-weight: 600; color: #fffdfa; background: #a8492c; border: none; border-radius: 6px; padding: 9px 15px; cursor: pointer">Fabriquer — $0,0245</button>
+        </div>
+        <div style="font-size: 16px; font-weight: 600">attaque</div>
+        <div class="mono" style="font-size: 12px; color: #948c80">vide</div>
+      </div>
+
+    </div>
+
+    <!-- La grande action -->
+    <div style="margin-top: auto; background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 10px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 26px">
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="font-size: 16.5px; font-weight: 600">Les deux cases qui manquent peuvent partir ensemble</div>
+        <div style="font-size: 13.5px; color: #6d675e; line-height: 1.45">
+          Pliées dans une seule image, elles coûtent <strong style="font-weight: 600">un appel au lieu de deux</strong> — et partagent la même grille de pixel, puisqu'elles sont peintes ensemble.
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; white-space: nowrap">
+        <a href="#" style="font-size: 13.5px; text-decoration: none">Relire ce qui part ›</a>
+        <button style="font-family: inherit; font-size: 15.5px; font-weight: 600; color: #fffdfa; background: #a8492c; border: none; border-radius: 8px; padding: 13px 22px; cursor: pointer">Payer et lancer — $0,0245</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Le journal du jour ──────────────────────────────────────────── -->
+  <div style="border-left: 1px solid #e2dbd0; padding: 26px 22px; display: flex; flex-direction: column; gap: 22px; background: #f2ede4">
+
+    <div class="rail-t">Aujourd'hui</div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: grid; grid-template-columns: 46px minmax(0,1fr); gap: 12px">
+        <div class="mono" style="font-size: 12px; color: #948c80; padding-top: 2px">14:02</div>
+        <div style="font-size: 13.5px; line-height: 1.45">Quatre images sont revenues, pliées en un appel. <span style="color: #6d675e">Deux gardées, deux jetées.</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 46px minmax(0,1fr); gap: 12px">
+        <div class="mono" style="font-size: 12px; color: #948c80; padding-top: 2px">13:47</div>
+        <div style="font-size: 13.5px; line-height: 1.45">La palette du jeu est passée à 32 couleurs. <span style="color: #6d675e">Dix-neuf images réappliquées, sans un appel.</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 46px minmax(0,1fr); gap: 12px">
+        <div class="mono" style="font-size: 12px; color: #948c80; padding-top: 2px">11:20</div>
+        <div style="font-size: 13.5px; line-height: 1.45">L'agent qui code le jeu a demandé <span style="color: #6d675e">un seau de rivets, et l'a posé dans le dossier.</span></div>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid #e2dbd0; padding-top: 18px; display: flex; flex-direction: column; gap: 12px">
+      <div class="rail-t">Ce mois</div>
+      <div style="display: flex; align-items: baseline; gap: 8px">
+        <div class="serif" style="font-size: 34px">$0,4655</div>
+        <div style="font-size: 13px; color: #6d675e">en 19 appels</div>
+      </div>
+      <div style="display: flex; gap: 3px; height: 26px; align-items: flex-end">
+        <i style="width: 12px; height: 8px; background: #cfc4b2; display: block"></i>
+        <i style="width: 12px; height: 15px; background: #cfc4b2; display: block"></i>
+        <i style="width: 12px; height: 11px; background: #cfc4b2; display: block"></i>
+        <i style="width: 12px; height: 22px; background: #cfc4b2; display: block"></i>
+        <i style="width: 12px; height: 6px; background: #cfc4b2; display: block"></i>
+        <i style="width: 12px; height: 18px; background: #cfc4b2; display: block"></i>
+        <i style="width: 12px; height: 26px; background: #a8492c; display: block"></i>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e; line-height: 1.45">Le détail par appel, avec ce qui est parti — <a href="#" style="text-decoration: none">les dépenses ›</a></div>
+    </div>
+
+    <div style="margin-top: auto; border: 1px solid #e2dbd0; border-radius: 8px; padding: 14px; background: #fffdfa; display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 13.5px; font-weight: 600">Rien ne part sans être montré</div>
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Chaque texte et chaque image qui partent ont leur ligne, leur interrupteur, et se corrigent avant la dépense.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

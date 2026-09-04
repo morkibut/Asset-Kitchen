@@ -1,0 +1,291 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .bt { height: 36px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border-radius: 7px; font-size: 13.5px; }
+    .bt-p { background: #a8492c; color: #fff8f4; font-weight: 500; }
+    .bt-s { background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .puce { height: 25px; display: inline-flex; align-items: center; gap: 5px; padding: 0 8px; border-radius: 4px; border: 1px solid #e2dbd0; background: #fffdfa; font-size: 12px; color: #4e483f; }
+    .chip-x { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 3px; background: #ece6db; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #6d675e; }
+    .vide { border: 1px dashed #c9c2b6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; color: #a49a8b; }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <!-- ══════ LE CARNET ══════ -->
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div class="serif" style="font-size: 25px; line-height: 1.1">Le Marais du Vieux Moulin</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e">41 images · 12 poses sur 18</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
+      <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+      <div class="rl" style="font-weight: 600"><span>Les terrains</span><span class="num">4</span></div>
+      <div class="rl-sub" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>L'herbe du marais</span><span class="num" style="color: #a8492c">1 / 4</span></div>
+      <div class="rl-sub"><span>La vase</span><span class="num">vide</span></div>
+      <div class="rl-sub"><span>L'eau stagnante</span><span class="num">vide</span></div>
+      <div class="rl-sub"><span>Les planches</span><span class="num">vide</span></div>
+      <div class="rl-sub" style="color: #a49a8b"><span>+ Nouveau terrain</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+      <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
+      <div class="rl"><span>Son nom et son dossier</span></div>
+      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+      <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
+      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+      <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
+      <div class="rl"><span>Son détourage de départ</span></div>
+      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+      <div class="rl"><span>Les dépenses</span><span class="num">$1,53</span></div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 14px 10px 0; display: flex; flex-direction: column; gap: 9px">
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Un terrain est une matière du sol. Chacun tient dans un carré qui se répète.</div>
+      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
+        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ LA TUILE ET SON RACCORD ══════ -->
+  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 15px">
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80">
+          <span>Les terrains</span><span>›</span><span style="color: #3d382f">L'herbe du marais</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 12px">
+          <h1 class="serif" style="margin: 0; font-size: 40px; line-height: 1">L'herbe du marais</h1>
+          <span class="mono" style="font-size: 12.5px; color: #6d675e">32 px · 1 carré sur 4</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 9px">
+        <div class="bt bt-s">Ouvrir dans l'atelier</div>
+        <div class="bt bt-p">Fabriquer les 3 qui manquent</div>
+      </div>
+    </div>
+
+    <!-- LA TUILE + LE CHAMP -->
+    <div style="display: grid; grid-template-columns: 244px minmax(0, 1fr); gap: 18px">
+
+      <!-- le carré seul -->
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Le carré</div>
+        <div style="width: 244px; height: 244px; background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 24px 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd5c8">
+          <svg viewBox="0 0 32 32" width="224" height="224" shape-rendering="crispEdges">
+            <rect width="32" height="32" fill="#4d6b3f"/>
+            <rect x="3" y="4" width="1" height="3" fill="#3d5732"/><rect x="9" y="2" width="1" height="4" fill="#61814f"/>
+            <rect x="14" y="6" width="1" height="3" fill="#3d5732"/><rect x="21" y="3" width="1" height="4" fill="#61814f"/>
+            <rect x="26" y="7" width="1" height="3" fill="#3d5732"/><rect x="5" y="12" width="1" height="4" fill="#61814f"/>
+            <rect x="12" y="14" width="1" height="3" fill="#3d5732"/><rect x="18" y="11" width="1" height="4" fill="#61814f"/>
+            <rect x="24" y="15" width="1" height="3" fill="#3d5732"/><rect x="29" y="12" width="1" height="4" fill="#61814f"/>
+            <rect x="2" y="21" width="1" height="3" fill="#61814f"/><rect x="8" y="24" width="1" height="4" fill="#3d5732"/>
+            <rect x="15" y="22" width="1" height="3" fill="#61814f"/><rect x="20" y="26" width="1" height="3" fill="#3d5732"/>
+            <rect x="27" y="23" width="1" height="4" fill="#61814f"/><rect x="11" y="19" width="1" height="2" fill="#3d5732"/>
+            <rect x="6" y="8" width="2" height="1" fill="#3d5732"/><rect x="17" y="28" width="2" height="1" fill="#61814f"/>
+          </svg>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 5px">
+          <span class="puce">32 × 32 px</span><span class="puce">réduit de 1024</span>
+        </div>
+      </div>
+
+      <!-- le champ -->
+      <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <div class="rt">Répété, comme dans le jeu</div>
+          <div style="display: flex; gap: 5px">
+            <span class="puce" style="background: #ece6db">8 × 8</span><span class="puce">16 × 16</span><span class="puce">avec le pélerin</span>
+          </div>
+        </div>
+        <div style="position: relative; height: 244px; border-radius: 6px; overflow: hidden; border: 1px solid #ddd5c8">
+          <svg width="100%" height="244" preserveAspectRatio="none" viewBox="0 0 256 128" shape-rendering="crispEdges" style="display: block">
+            <defs>
+              <pattern id="herbe" width="32" height="32" patternUnits="userSpaceOnUse">
+                <rect width="32" height="32" fill="#4d6b3f"/>
+                <rect x="3" y="4" width="1" height="3" fill="#3d5732"/><rect x="9" y="2" width="1" height="4" fill="#61814f"/>
+                <rect x="14" y="6" width="1" height="3" fill="#3d5732"/><rect x="21" y="3" width="1" height="4" fill="#61814f"/>
+                <rect x="26" y="7" width="1" height="3" fill="#3d5732"/><rect x="5" y="12" width="1" height="4" fill="#61814f"/>
+                <rect x="12" y="14" width="1" height="3" fill="#3d5732"/><rect x="18" y="11" width="1" height="4" fill="#61814f"/>
+                <rect x="24" y="15" width="1" height="3" fill="#3d5732"/><rect x="29" y="12" width="1" height="4" fill="#61814f"/>
+                <rect x="2" y="21" width="1" height="3" fill="#61814f"/><rect x="8" y="24" width="1" height="4" fill="#3d5732"/>
+                <rect x="15" y="22" width="1" height="3" fill="#61814f"/><rect x="20" y="26" width="1" height="3" fill="#3d5732"/>
+                <rect x="27" y="23" width="1" height="4" fill="#61814f"/><rect x="11" y="19" width="1" height="2" fill="#3d5732"/>
+                <rect x="6" y="8" width="2" height="1" fill="#3d5732"/><rect x="17" y="28" width="2" height="1" fill="#61814f"/>
+              </pattern>
+            </defs>
+            <rect width="256" height="128" fill="url(#herbe)"/>
+          </svg>
+          <!-- le défaut de raccord, montré -->
+          <div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none">
+            <div style="position: absolute; left: 25%; top: 0; bottom: 0; width: 2px; background: rgba(168,73,44,.85)"></div>
+            <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(168,73,44,.85)"></div>
+            <div style="position: absolute; left: 75%; top: 0; bottom: 0; width: 2px; background: rgba(168,73,44,.85)"></div>
+            <div style="position: absolute; left: 50%; top: 10px; transform: translateX(-50%); background: #a8492c; color: #fff8f4; font-size: 11.5px; padding: 3px 9px; border-radius: 4px">les bords gauche et droit ne se rejoignent pas</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #4e483f">
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 2px; background: #5c7a52"></span>haut et bas : rejoints</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 2px; background: #a8492c"></span>gauche et droite : 3 lignes de pixels d'écart</span>
+          <a href="#" style="text-decoration: none; margin-left: auto">Recoudre les bords ›</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- LES VARIANTES -->
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <div class="rt">Les variantes — pour qu'un champ ne soit pas quadrillé</div>
+        <div style="font-size: 12px; color: #948c80">le jeu tire une variante au hasard sur chaque case</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+        <div style="border: 2px solid #a8492c; border-radius: 6px; background: #faf3ee; padding: 8px; display: flex; gap: 10px; align-items: center">
+          <div style="width: 56px; height: 56px; border-radius: 3px; flex-shrink: 0; overflow: hidden">
+            <svg viewBox="0 0 32 32" width="56" height="56" shape-rendering="crispEdges"><rect width="32" height="32" fill="#4d6b3f"/><rect x="9" y="2" width="1" height="4" fill="#61814f"/><rect x="21" y="3" width="1" height="4" fill="#61814f"/><rect x="5" y="12" width="1" height="4" fill="#61814f"/><rect x="18" y="11" width="1" height="4" fill="#61814f"/><rect x="8" y="24" width="1" height="4" fill="#3d5732"/><rect x="27" y="23" width="1" height="4" fill="#61814f"/></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0">
+            <div style="font-size: 13px; font-weight: 600">Herbe simple</div>
+            <div style="font-size: 11.5px; color: #6d675e">faite le 27 août</div>
+          </div>
+        </div>
+        <div class="vide" style="height: 74px; flex-direction: column; gap: 3px"><span>Herbe fleurie</span><span class="chip-x">à fabriquer</span></div>
+        <div class="vide" style="height: 74px; flex-direction: column; gap: 3px"><span>Herbe pelée</span><span class="chip-x">à fabriquer</span></div>
+        <div class="vide" style="height: 74px; flex-direction: column; gap: 3px"><span>Herbe avec un caillou</span><span class="chip-x">à fabriquer</span></div>
+      </div>
+    </div>
+
+    <!-- LES BORDS -->
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <div class="rt">Les bords — là où l'herbe rencontre un autre terrain</div>
+        <div style="font-size: 12px; color: #948c80"><span class="chip-x">l'atelier ne sait pas encore les faire</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 18px; align-items: start">
+
+        <!-- le 3x3 -->
+        <div style="display: grid; grid-template-columns: repeat(3, 66px); grid-template-rows: repeat(3, 66px); gap: 3px">
+          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><path d="M12 32 L12 20 Q12 12 20 12 L32 12 L32 32 Z" fill="#4d6b3f"/></svg>
+          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><rect x="0" y="12" width="32" height="20" fill="#4d6b3f"/></svg>
+          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><path d="M0 12 L12 12 Q20 12 20 20 L20 32 L0 32 Z" fill="#4d6b3f"/></svg>
+          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><rect x="12" y="0" width="20" height="32" fill="#4d6b3f"/></svg>
+          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#4d6b3f"/><rect x="9" y="2" width="1" height="4" fill="#61814f"/><rect x="21" y="14" width="1" height="4" fill="#3d5732"/><rect x="8" y="24" width="1" height="4" fill="#61814f"/></svg>
+          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><rect x="0" y="0" width="20" height="32" fill="#4d6b3f"/></svg>
+          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><path d="M12 0 L12 12 Q12 20 20 20 L32 20 L32 0 Z" fill="#4d6b3f"/></svg>
+          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><rect x="0" y="0" width="32" height="20" fill="#4d6b3f"/></svg>
+          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><path d="M0 0 L20 0 L20 12 Q20 20 12 20 L0 20 Z" fill="#4d6b3f"/></svg>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 9px">
+          <div style="font-size: 13.5px; line-height: 1.5; color: #4e483f">Quand une flaque d'herbe s'arrête au milieu du sable, il faut un carré pour chaque façon de s'arrêter : le coin en haut à gauche, le bord du haut, le coin en haut à droite, et ainsi de suite. <strong style="font-weight: 600">Neuf carrés pour une rencontre simple. Quarante-sept si on veut aussi les diagonales.</strong></div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+            <div style="border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px">
+              <div style="font-size: 12.5px; font-weight: 600">herbe → vase</div><div style="font-size: 11.5px; color: #6d675e">0 sur 9</div>
+            </div>
+            <div style="border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px">
+              <div style="font-size: 12.5px; font-weight: 600">herbe → eau</div><div style="font-size: 11.5px; color: #6d675e">0 sur 9</div>
+            </div>
+            <div style="border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px">
+              <div style="font-size: 12.5px; font-weight: 600">herbe → planches</div><div style="font-size: 11.5px; color: #6d675e">0 sur 9</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ CE QUI MANQUE DANS LE CODE ══════ -->
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 15px; overflow: hidden">
+
+    <div style="display: flex; flex-direction: column; gap: 5px">
+      <div class="rt">Ce que l'atelier sait déjà faire</div>
+      <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 3px">
+        <div style="display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45"><span style="color: #5c7a52; flex-shrink: 0">✓</span><span style="color: #4e483f">Fabriquer un carré de terrain comme n'importe quelle image, avec le style du jeu.</span></div>
+        <div style="display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45"><span style="color: #5c7a52; flex-shrink: 0">✓</span><span style="color: #4e483f">Le réduire à 32 pixels avec les tables de traitement.</span></div>
+        <div style="display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45"><span style="color: #5c7a52; flex-shrink: 0">✓</span><span style="color: #4e483f">Le ranger dans le jeu, sans pose ni direction — un terrain n'en a pas.</span></div>
+      </div>
+    </div>
+
+    <div style="border: 1px solid #ddd5c8; border-radius: 9px; background: #f4ece2; padding: 13px 14px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 14px; font-weight: 600">Ce qu'il faudrait ajouter</div>
+
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">1 · Voir le carré répété</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Aujourd'hui on regarde le carré seul. Un défaut de raccord ne se voit qu'une fois posé dans le jeu.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">2 · Recoudre les bords</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Un traitement qui décale l'image d'un demi-carré et efface la couture au milieu. Gratuit, aucun appel à l'IA. C'est une table de plus dans l'atelier.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">3 · La notion de terrain</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le code range les tuiles à plat, une par une. Il n'a pas de mot pour dire « ces quatre carrés sont la même herbe » ni « ces neuf-là sont sa rencontre avec le sable ».</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">4 · La grille</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le jeu sort ses personnages à 64 pixels. Ses terrains, souvent, à 32 ou 16. Ce nombre-là n'existe nulle part dans les réglages.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">5 · Ne plus demander un fond à détourer</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le texte envoyé au modèle réclame un fond plat et un sujet centré, sans savoir qu'il s'agit d'un terrain. Une tuile doit remplir son carré bord à bord : on lui demande aujourd'hui l'inverse.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div class="rt">Le compte, si on va au bout</div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 62px 74px; row-gap: 6px; column-gap: 8px; font-size: 12.5px; align-items: center">
+        <div style="color: #4e483f">4 terrains × 4 variantes</div><div class="mono" style="color: #6d675e">16</div><div class="mono" style="text-align: right; color: #6d675e">$0,30</div>
+        <div style="color: #4e483f">6 rencontres × 9 bords</div><div class="mono" style="color: #6d675e">54</div><div class="mono" style="text-align: right; color: #6d675e">$1,02</div>
+        <div style="border-top: 1px solid #ddd5c8; padding-top: 6px; font-weight: 600">Le sol entier du marais</div>
+        <div class="mono" style="border-top: 1px solid #ddd5c8; padding-top: 6px; color: #221f1b">70</div>
+        <div class="mono" style="border-top: 1px solid #ddd5c8; padding-top: 6px; text-align: right; color: #a8492c; font-weight: 500">$1,32</div>
+      </div>
+      <div style="font-size: 12px; line-height: 1.45; color: #948c80">Autant que tout ce que tu as dépensé depuis le début, tous jeux confondus. Les bords se fabriquent aussi à la main dans l'atelier, en découpant deux terrains l'un sur l'autre — gratuit, plus long.</div>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+      <div class="bt bt-s">Voir les 4 terrains ensemble</div>
+      <div style="font-size: 12px; color: #948c80; text-align: center">Une matrice : les terrains en lignes, les variantes en colonnes.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

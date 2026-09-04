@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #0b0b0c; }
+    a { color: #f0603d; } a:hover { color: #ff8168; }
+    .barre * { box-sizing: border-box; }
+    .k { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #b9b7bb; border: 1px solid #33333a; border-radius: 4px; padding: 3px 6px; background: #17171a; }
+    .ligne { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 16px; align-items: center; padding: 13px 18px; border-radius: 9px; }
+  </style>
+</helmet>
+
+<div class="barre" style="width: 1440px; height: 900px; position: relative; overflow: hidden; background: #0b0b0c;
+     font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif; color: #f2f0ee">
+
+  <!-- ── La ligne d'état : tout ce qui reste affiché en permanence ────── -->
+  <div style="position: absolute; left: 30px; right: 30px; top: 22px; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: #75747a">
+    <div style="display: flex; align-items: center; gap: 14px">
+      <span style="color: #b9b7bb">Les marais de fer</span>
+      <span style="color: #3a3a40">|</span>
+      <span>7 cases vides</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px">
+      <span>1 fournisseur prêt</span>
+      <span style="color: #3a3a40">|</span>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #b9b7bb">$0,4655</span>
+      <span>dépensés ce mois</span>
+    </div>
+  </div>
+
+  <!-- ── La barre ────────────────────────────────────────────────────── -->
+  <div style="position: absolute; left: 50%; top: 128px; transform: translateX(-50%); width: 892px; display: flex; flex-direction: column; gap: 12px">
+
+    <div style="background: #141416; border: 1px solid #2e2e34; border-radius: 14px; overflow: hidden">
+
+      <!-- ce qu'on tape -->
+      <div style="display: flex; align-items: center; gap: 16px; padding: 22px 24px; border-bottom: 1px solid #232328">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#75747a" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.5-4.5"/></svg>
+        <div style="font-family: 'Bricolage Grotesque', 'Archivo', 'Helvetica Neue', Arial, sans-serif; font-size: 29px; font-weight: 400; letter-spacing: -0.015em; display: flex; align-items: center">
+          ferronnière marche<span style="display: inline-block; width: 2px; height: 30px; background: #f0603d; margin-left: 3px"></span>
+        </div>
+      </div>
+
+      <!-- ce que l'atelier en fait -->
+      <div style="padding: 8px; display: flex; flex-direction: column; gap: 2px">
+
+        <div class="ligne" style="background: #1e1e22; border: 1px solid #35353c">
+          <div style="width: 34px; height: 34px; background: #d6d4d0; display: flex; align-items: center; justify-content: center">
+            <svg viewBox="0 0 16 24" width="24" height="24" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="4" fill="#8a5a2a"/><rect x="6" y="4" width="4" height="4" fill="#e0b48c"/><rect x="4" y="8" width="8" height="8" fill="#6b4326"/><rect x="1" y="10" width="3" height="5" fill="#e0b48c"/><rect x="12" y="8" width="3" height="5" fill="#e0b48c"/><rect x="3" y="16" width="3" height="6" fill="#3f4a3a"/><rect x="10" y="16" width="3" height="5" fill="#3f4a3a"/></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px">
+            <div style="font-size: 16px; font-weight: 600">Fabriquer la case <span style="color: #f0603d">marche</span> de La ferronnière</div>
+            <div style="font-size: 12.5px; color: #8b8a8e">part avec : ce qu'est le jeu · son style, 3 textes · la pose marche · 2 images jointes</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <a href="#" style="font-size: 12.5px; text-decoration: none; white-space: nowrap">relire mot pour mot <span class="k" style="margin-left: 4px">⇥</span></a>
+            <button style="font-family: inherit; font-size: 14.5px; font-weight: 600; color: #ffffff; background: #d94a30; border: none; border-radius: 8px; padding: 11px 18px; cursor: pointer; white-space: nowrap">Payer et lancer — $0,0245</button>
+          </div>
+        </div>
+
+        <div class="ligne">
+          <div style="width: 34px; height: 34px; border: 1px dashed #4a4a52; display: flex; align-items: center; justify-content: center; color: #75747a; font-size: 17px; font-weight: 300">+</div>
+          <div style="display: flex; flex-direction: column; gap: 3px">
+            <div style="font-size: 16px; font-weight: 500">Fabriquer les <span style="color: #f0603d">3 cases</span> qui lui manquent</div>
+            <div style="font-size: 12.5px; color: #8b8a8e">pliées dans une seule image, un seul appel — elles partagent alors la même grille</div>
+          </div>
+          <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; color: #b9b7bb">$0,0245</div>
+        </div>
+
+        <div class="ligne">
+          <div style="width: 34px; height: 34px; border: 1px solid #33333a; display: flex; align-items: center; justify-content: center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8b8a8e" stroke-width="2" stroke-linecap="square"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px">
+            <div style="font-size: 16px; font-weight: 500">Ouvrir l'établi de La ferronnière</div>
+            <div style="font-size: 12.5px; color: #8b8a8e">2 cases sur 4 · son texte, sa calibration, sa sortie vers le jeu</div>
+          </div>
+          <div style="font-size: 12.5px; color: #75747a">gratuit</div>
+        </div>
+
+        <div class="ligne">
+          <div style="width: 34px; height: 34px; border: 1px solid #33333a; display: flex; align-items: center; justify-content: center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8b8a8e" stroke-width="2" stroke-linecap="square"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.5-4.5"/></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px">
+            <div style="font-size: 16px; font-weight: 500">Chercher « marche » dans la galerie</div>
+            <div style="font-size: 12.5px; color: #8b8a8e">aucune image encore — la première viendra de la case ci-dessus</div>
+          </div>
+          <div style="font-size: 12.5px; color: #75747a">0 image</div>
+        </div>
+
+      </div>
+
+      <!-- le pied de la barre -->
+      <div style="border-top: 1px solid #232328; padding: 11px 18px; display: flex; align-items: center; justify-content: space-between; background: #101012">
+        <div style="display: flex; align-items: center; gap: 16px; font-size: 12px; color: #75747a">
+          <span><span class="k">↵</span> lancer</span>
+          <span><span class="k">⇥</span> relire ce qui part</span>
+          <span><span class="k">↑</span><span class="k" style="margin-left: 3px">↓</span> choisir</span>
+          <span><span class="k">esc</span> refermer</span>
+        </div>
+        <div style="font-size: 12px; color: #75747a">La barre s'ouvre partout — <span class="k">⌘</span> <span class="k">K</span></div>
+      </div>
+    </div>
+
+    <div style="font-size: 12.5px; color: #5f5e64; text-align: center">
+      Rien n'est encore parti. Le prix est celui d'un appel, pas d'une case : trois cases pliées coûtent le même appel qu'une.
+    </div>
+  </div>
+
+  <!-- ── Ce que le jeu réclame — visible tant que la barre est ouverte ── -->
+  <div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 96px; width: 800px; display: flex; flex-direction: column; gap: 14px">
+    <div style="font-size: 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace; letter-spacing: 0.14em; text-transform: uppercase; color: #5f5e64">Ce que le jeu réclame encore</div>
+    <div style="display: flex; gap: 10px">
+      <div style="flex-grow: 1; border: 1px solid #26262a; border-radius: 9px; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14.5px; font-weight: 600">La ferronnière</div>
+        <div style="display: flex; gap: 5px">
+          <div style="width: 22px; height: 22px; background: #4a4a52"></div><div style="width: 22px; height: 22px; background: #4a4a52"></div>
+          <div style="width: 22px; height: 22px; border: 1px solid #f0603d"></div><div style="width: 22px; height: 22px; border: 1px solid #f0603d"></div>
+        </div>
+      </div>
+      <div style="flex-grow: 1; border: 1px solid #26262a; border-radius: 9px; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14.5px; font-weight: 600">Le passeur</div>
+        <div style="display: flex; gap: 5px">
+          <div style="width: 22px; height: 22px; background: #4a4a52"></div><div style="width: 22px; height: 22px; border: 1px solid #f0603d"></div>
+          <div style="width: 22px; height: 22px; border: 1px solid #f0603d"></div><div style="width: 22px; height: 22px; border: 1px solid #f0603d"></div>
+        </div>
+      </div>
+      <div style="flex-grow: 1; border: 1px solid #26262a; border-radius: 9px; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14.5px; font-weight: 600">L'enfant des roseaux</div>
+        <div style="display: flex; gap: 5px">
+          <div style="width: 22px; height: 22px; border: 1px solid #f0603d"></div><div style="width: 22px; height: 22px; border: 1px solid #f0603d"></div>
+          <div style="width: 22px; height: 22px; border: 1px solid #f0603d"></div><div style="width: 22px; height: 22px; border: 1px solid #f0603d"></div>
+        </div>
+      </div>
+      <div style="flex-grow: 1; border: 1px dashed #33333a; border-radius: 9px; padding: 13px 15px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 14.5px; font-weight: 600; color: #8b8a8e">Les décors</div>
+        <div style="font-size: 12.5px; color: #75747a; line-height: 1.4">Aucun encore. Tape un nom, il existera.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 30px; bottom: 26px; display: flex; flex-direction: column; gap: 3px">
+    <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5f5e64">Direction B · La barre</div>
+    <div style="font-size: 14px; color: #8b8a8e">Faire — on nomme, l'atelier propose, le prix est dans le bouton</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

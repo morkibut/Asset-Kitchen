@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le carnet — sommaire</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: #f7f3ec; color: #221f1b; font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; }
+  a { color: #a8492c; }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  .rt { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: #948c80; }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 46px 40px 90px; }
+
+  .tete { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+  h1 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 48px; line-height: 1.03; margin: 6px 0 8px; }
+  .sous { font-size: 14.5px; color: #4e483f; line-height: 1.55; max-width: 620px; }
+
+  .jauge { width: 300px; flex-shrink: 0; }
+  .jauge .bar { height: 7px; border-radius: 4px; background: #e2dbd0; overflow: hidden; display: flex; }
+  .jauge .bar i { height: 100%; display: block; }
+  .jauge .leg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 12px; color: #6d675e; }
+  .jauge .leg span b { font-weight: 500; color: #221f1b; }
+  .pt { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+
+  /* ── l'ordre de travail ── */
+  .ordre { margin: 30px 0 0; border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 16px 20px 18px; }
+  .ordre h2 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 22px; margin: 0 0 3px; }
+  .ordre .oi { font-size: 13px; color: #6d675e; margin-bottom: 13px; }
+  .ordre ol { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px 30px; counter-reset: o; }
+  .ordre li { counter-increment: o; display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: baseline; font-size: 13.5px; padding: 4px 0; border-bottom: 1px solid #f2ede4; }
+  .ordre li::before { content: counter(o); font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #948c80; }
+  .ordre li .é { font-size: 11.5px; color: #948c80; }
+  .ordre li.fait { color: #6d675e; }
+  .ordre li.fait .é { color: #5c7a52; }
+  .ordre li.ici { font-weight: 600; }
+  .ordre li.ici::before { color: #a8492c; }
+  .ordre li.ici .é { color: #a8492c; }
+
+  .filtres { display: flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; margin: 30px 0 0; width: fit-content; }
+  .filtres button { height: 30px; padding: 0 13px; border: 1px solid transparent; border-radius: 7px; background: transparent; font: inherit; font-size: 13px; color: #6d675e; cursor: pointer; }
+  .filtres button.on { background: #fffdfa; border-color: #ddd5c8; color: #221f1b; font-weight: 500; }
+  .filtres button .n { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #948c80; margin-left: 6px; }
+
+  .grp { margin-top: 38px; }
+  .grp > .gt { display: flex; align-items: baseline; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid #ddd5c8; }
+  .grp > .gt h2 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 26px; margin: 0; }
+  .grp > .gt .gd { font-size: 13px; color: #6d675e; }
+  .grp > .gt .gn { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #948c80; }
+
+  .li { border-bottom: 1px solid #ece6db; }
+  .li .hd { display: grid; grid-template-columns: 14px 206px minmax(0,1fr) 92px 76px; align-items: center; gap: 14px; padding: 13px 8px; cursor: pointer; }
+  .li .hd:hover { background: #f2ede4; }
+  .li.ouv .hd { background: #f2ede4; }
+  .li .nm { font-size: 14.5px; font-weight: 500; }
+  .li .de { font-size: 13px; color: #4e483f; line-height: 1.4; }
+  .li .ét { font-size: 12px; color: #6d675e; text-align: right; }
+  .li .ln { font-size: 12.5px; text-align: right; text-decoration: none; }
+  .li .ln:hover { text-decoration: underline; }
+  .li .mk { font-size: 11.5px; color: #a8492c; }
+
+  .ed { display: none; padding: 4px 8px 20px 42px; }
+  .li.ouv .ed { display: block; }
+  .rep { max-width: 700px; border-left: 2px solid #a8492c; background: #f4ece2; border-radius: 0 8px 8px 0; padding: 10px 14px; margin-bottom: 12px; }
+  .rep .rl { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: #a8492c; margin-bottom: 4px; }
+  .rep p { margin: 0; font-size: 13px; line-height: 1.55; color: #3d382f; }
+  .ed .btr { display: flex; gap: 7px; margin-bottom: 10px; flex-wrap: wrap; }
+  .ed .btr button { height: 31px; padding: 0 13px; border-radius: 7px; border: 1px solid #ddd5c8; background: #fffdfa; font: inherit; font-size: 12.5px; color: #3d382f; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+  .ed .btr button:hover { border-color: #c4bcae; }
+  .ed .btr button.on { border-color: #a8492c; box-shadow: 0 0 0 3px rgba(168,73,44,.12); font-weight: 500; }
+  .ed textarea { width: 100%; max-width: 700px; min-height: 74px; resize: vertical; padding: 10px 12px; border: 1px solid #ddd5c8; border-radius: 8px; background: #fffdfa; font: inherit; font-size: 13.5px; line-height: 1.5; color: #221f1b; }
+  .ed textarea:focus { outline: none; border-color: #a8492c; box-shadow: 0 0 0 3px rgba(168,73,44,.12); }
+  .ed .aide { font-size: 12px; color: #948c80; margin-top: 7px; }
+
+  .pied { position: sticky; bottom: 0; margin-top: 46px; background: rgba(247,243,236,.93); backdrop-filter: blur(6px); border-top: 1px solid #ddd5c8; padding: 14px 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pied button { height: 36px; padding: 0 15px; border-radius: 8px; border: 1px solid #ddd5c8; background: #fffdfa; font: inherit; font-size: 13px; color: #3d382f; cursor: pointer; }
+  .pied button.p { background: #a8492c; border-color: #a8492c; color: #fff8f4; font-weight: 500; }
+  .pied .msg { font-size: 12.5px; color: #5c7a52; }
+  .pied .fin { margin-left: auto; font-size: 12.5px; color: #948c80; }
+
+  dialog { border: 1px solid #ddd5c8; border-radius: 12px; padding: 0; background: #fffdfa; max-width: 760px; width: 90vw; }
+  dialog::backdrop { background: rgba(34,31,27,.36); }
+  dialog .dh { padding: 18px 22px 12px; border-bottom: 1px solid #ece6db; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  dialog .dh h3 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 24px; margin: 0; }
+  dialog textarea { width: 100%; height: 46vh; border: 0; padding: 16px 22px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.6; resize: none; background: transparent; color: #221f1b; }
+  dialog textarea:focus { outline: none; }
+  dialog .df { padding: 12px 22px 16px; border-top: 1px solid #ece6db; display: flex; gap: 10px; align-items: center; }
+  dialog .df button { height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid #ddd5c8; background: #f7f3ec; font: inherit; font-size: 13px; cursor: pointer; }
+  dialog .df button.p { background: #a8492c; border-color: #a8492c; color: #fff8f4; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="tete">
+    <div>
+      <div class="rt">Refonte de l'atelier · piste du carnet</div>
+      <h1>Ce qui est dessiné, ce qui reste</h1>
+      <div class="sous">Clique une ligne pour la marquer et laisser une remarque. Là où tu m'as déjà écrit, ma réponse est dans l'encadré. Le bouton du bas rassemble tes notes pour me les renvoyer.</div>
+    </div>
+    <div class="jauge">
+      <div class="bar" id="bar"></div>
+      <div class="leg" id="leg"></div>
+    </div>
+  </div>
+
+  <div class="ordre">
+    <h2>L'ordre de travail</h2>
+    <div class="oi">Décidé ensemble le 4 septembre. Chaque étape débloque la suivante.</div>
+    <ol id="ordre"></ol>
+  </div>
+
+  <div class="filtres" id="filtres"></div>
+
+  <div id="corps"></div>
+
+  <div class="pied">
+    <button class="p" id="btn-copier">Rassembler mes remarques</button>
+    <button id="btn-vider">Tout remettre à blanc</button>
+    <span class="msg" id="msg"></span>
+    <span class="fin" id="fin"></span>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dh"><h3>Tes remarques</h3><span style="font-size:12.5px;color:#6d675e">copie ce texte et renvoie-le moi</span></div>
+  <textarea id="dlg-txt" readonly></textarea>
+  <div class="df"><button class="p" id="dlg-copier">Copier</button><button id="dlg-fermer">Fermer</button><span id="dlg-msg" style="font-size:12.5px;color:#5c7a52"></span></div>
+</dialog>
+
+<script>
+const CLE = 'carnet-sommaire-v1';
+
+const ETATS = {
+  'a-voir':   { nom: 'à voir',   court: 'à voir',   couleur: '#c4bcae' },
+  'valide':   { nom: 'validé',   court: 'validé',   couleur: '#5c7a52' },
+  'revoir':   { nom: 'à revoir', court: 'à revoir', couleur: '#a8492c' },
+  'question': { nom: 'question', court: 'question', couleur: '#c08a2e' },
+  'a-faire':  { nom: 'à faire',  court: 'à faire',  couleur: '#ddd5c8' },
+};
+
+const ORDRE = [
+  { n: 'Le vocabulaire',        é: 'fait',   c: 'fait' },
+  { n: 'Le carnet à l\'échelle', é: 'en cours', c: 'ici' },
+  { n: 'Les familles et leurs collections', é: '' },
+  { n: 'La page d\'un sujet, en quatre', é: '' },
+  { n: 'Les équipements et leurs emplois', é: '' },
+  { n: 'L\'animation, fusionnée', é: '' },
+  { n: 'L\'ouverture, les réglages, le nouveau jeu', é: '' },
+  { n: 'Les parcours, au pluriel', é: '' },
+];
+
+const GROUPES = [
+  {
+    titre: 'Le socle',
+    desc: 'ce avec quoi tout le reste est bâti — ce ne sont pas des écrans',
+    items: [
+      { k: 'Main.dc.html',        f: 'Main.dc.html',        n: 'L\'idée',       d: 'Le carnet en une page : à quoi ça sert, et pourquoi trois onglets ne suffisaient pas.' },
+      { k: 'Vocabulaire.dc.html', f: 'Vocabulaire.dc.html', n: 'Les mots',      d: 'Famille, collection, sujet, image, calque, emploi. Les définitions, les six familles et leurs outils, et les mots qu\'on s\'interdit.',
+        rep: 'Écrite après ta remarque sur « chose ». Le mot retenu est <strong>un sujet</strong>. Une famille est le type, fixe, et elle apporte ses outils ; une collection est le groupe que tu crées. Un équipement n\'a pas d\'images à lui : il a des emplois.' },
+      { k: 'Systeme.dc.html',     f: 'Systeme.dc.html',     n: 'Le système',    d: 'Couleurs, caractères, grille, les onze pièces, six règles, les durées.' },
+      { k: 'Navigation.dc.html',  f: 'Navigation.dc.html',  n: 'La navigation', d: 'Les lignes du carnet et où chacune mène, la barre ⌘K en entier, les menus au clic droit, les touches.',
+        rep: 'À refaire, étape 2. Une ligne du carnet ne dépliera plus des noms : elle ouvrira l\'écran de la famille, qui encaisse les 250 objets avec ses collections à gauche, une recherche et une grille. Le carnet ne gardera en sous-lignes que les cinq derniers ouverts. Et j\'ajoute les chemins qui manquaient : les réglages de l\'atelier et le retour à l\'ouverture, tous deux sous le nom du jeu.' },
+      { k: 'Carte.dc.html',       f: 'Carte.dc.html',       n: 'La carte',      d: 'Les vingt-deux écrans d\'aujourd\'hui, ce qu\'ils deviennent, et les manques.' },
+      { k: 'Parcours.dc.html',    f: 'Parcours.dc.html',    n: 'Le parcours',   d: 'De rien à un sprite dans le jeu, sans sauter une étape.',
+        rep: 'Tu as raison, il y en a plusieurs. Étape 8 : un parcours par manière de travailler — fabriquer un personnage, habiller un équipement, bâtir un terrain, et la toile d\'inspiration avant de commencer.' },
+    ]
+  },
+  {
+    titre: 'Ouvrir l\'atelier',
+    desc: 'avant d\'être dans un jeu, et le tableau de bord une fois dedans',
+    items: [
+      { k: 'Ouverture.dc.html', f: 'Ouverture.dc.html', n: 'L\'ouverture', d: 'Sur quel jeu travaille-t-on. Le seul écran qui prend toute la fenêtre.',
+        rep: 'Réponses : le nom du jeu en haut du carnet s\'ouvre et contient la liste des jeux, « Commencer un jeu » et « Les réglages de l\'atelier » (aussi ⌘J et ⌘⌥,). Les réglages du jeu sont la deuxième section du carnet, visible en permanence (⌘,). Je le montrerai à l\'étape 7.' },
+      { k: 'Accueil.dc.html',   f: 'Accueil.dc.html',   n: 'Le jeu ouvert', d: 'Ce qu\'on voit en arrivant dans un jeu.',
+        rep: 'À refaire avec un récapitulatif par famille et par collection — 5 personnages, 32 terrains, 28 objets — au lieu des sujets un par un. Étape 3.' },
+      { k: 'Barre.dc.html',     f: 'Barre.dc.html',     n: 'La barre',      d: '⌘K en action : chercher un sujet, ou lancer un geste qui n\'est nulle part à l\'écran.' },
+      { k: 'neuf/nouveau-jeu',  f: '',                  n: 'Le nouveau jeu', afaire: true, d: 'Le wizard : nommer le jeu, choisir son allure, écrire sa bible, poser ses clés. N\'existe nulle part aujourd\'hui.' },
+      { k: 'Ce qui reste à faire/Les réglages de l\'atelier', f: '', n: 'Les réglages de l\'atelier', afaire: true, d: 'Les clés, le dossier de travail, le catalogue des modèles. Pas le jeu : l\'application.' },
+      { k: 'Ce qui reste à faire/Le guide', f: '', n: 'Le guide', afaire: true, d: 'Ce qu\'on lit la première fois, et où on revient quand on est bloqué.' },
+    ]
+  },
+  {
+    titre: 'Les sujets, et leurs familles',
+    desc: 'l\'échelle : comment on tient 30 personnages, 250 objets, 100 terrains',
+    items: [
+      { k: 'Famille.dc.html', f: 'Famille.dc.html', n: 'Une famille', d: 'Les sujets en lignes, les six poses en colonnes. On voit les trous d\'un coup.',
+        rep: 'À refaire. Une colonne de collections à gauche (Tous 54 · Héros 3 · PNJ 20 · Boss 10 · Vilains 5 · Monstres 16), qu\'on crée et où l\'on range. Et une variante par famille, parce qu\'un terrain et un personnage ne se regardent pas pareil. Étape 3.' },
+      { k: 'neuf/collections', f: '', n: 'Ranger dans des collections', afaire: true, d: 'Créer une collection, y glisser des sujets, en retirer. Un sujet peut être dans plusieurs.' },
+      { k: 'Ce qui reste à faire/Un objet', f: '', n: 'Un objet', afaire: true, d: 'La page d\'un sujet sans poses ni équipement — la plus simple des six familles.' },
+      { k: 'Ce qui reste à faire/L\'interface du jeu', f: '', n: 'L\'interface du jeu', afaire: true, d: 'Les boutons et cadres du jeu lui-même, et leurs états : au repos, survolé, appuyé, éteint.' },
+    ]
+  },
+  {
+    titre: 'Un personnage',
+    desc: 'sa page se découpe en quatre, plus deux écrans que tu as demandés',
+    items: [
+      { k: 'Personnage.dc.html', f: 'Personnage.dc.html', n: 'Sa page, aujourd\'hui', d: 'Quatre onglets sur un seul écran : sa fiche, ses poses, son vestiaire, son aperçu.',
+        rep: 'Elle sert de plan d\'ensemble ; je dessine les quatre parties une par une, ci-dessous. Étape 4.' },
+      { k: 'neuf/sa-fiche',     f: '', n: 'Sa fiche',      afaire: true, d: 'Qui il est : son nom, sa description, sa collection, son échelle, ce qui manque.' },
+      { k: 'neuf/ses-images',   f: '', n: 'Ses images',    afaire: true, d: 'Toutes ses images : par pose, par direction, avec les variantes et les écartées.' },
+      { k: 'neuf/ses-animations', f: '', n: 'Ses animations', afaire: true, d: 'Ce qui bouge : les suites d\'images, leur tempo, et ce qui manque pour qu\'elles tournent.' },
+      { k: 'neuf/l-essai',      f: '', n: 'L\'essai',       afaire: true, d: 'Le voir en mouvement sur un vrai fond, avec son équipement, à la taille du jeu.' },
+      { k: 'neuf/dans-la-grille', f: '', n: 'Dans la grille du jeu', afaire: true, d: 'Le poser sur un terrain, à l\'échelle, pour juger s\'il tient la route.' },
+      { k: 'neuf/comparer',     f: '', n: 'Comparer deux sujets', afaire: true, d: 'Deux personnages côte à côte : même taille, même trait, même palette ?' },
+      { k: 'Ce qui reste à faire/Les quatre directions', f: '', n: 'Les quatre directions', afaire: true, d: 'Une matrice poses × directions. Un autre jeu a vingt-quatre cases par personnage.' },
+    ]
+  },
+  {
+    titre: 'Les équipements',
+    desc: 'ils n\'ont pas d\'images à eux : ils ont des emplois',
+    items: [
+      { k: 'Equipement.dc.html', f: 'Equipement.dc.html', n: 'Une pièce, aujourd\'hui', d: 'L\'épée, ses porteurs, et le calque par pose.',
+        rep: 'Il manque une étape entière, tu as raison. Une épée portée par trois héros, ce sont trois jeux de calques complètement différents — plus l\'objet posé au sol, plus l\'icône d\'inventaire, plus les mises en scène. Je dessine d\'abord la liste des emplois, puis un emploi en détail : c\'est la seule façon de ne pas noyer l\'écran sous des centaines de cases. Étape 5.' },
+      { k: 'neuf/ses-emplois', f: '', n: 'Ses emplois', afaire: true, d: 'Qui la porte et à quel emplacement, posée au sol, son icône, ses mises en scène. Une ligne par emploi, avec ce qui existe et ce qui manque.' },
+      { k: 'neuf/un-emploi',   f: '', n: 'Un emploi en détail', afaire: true, d: 'Portée par Le goliath, en main droite : la matrice poses × directions, et le calque posé sur le personnage.' },
+      { k: 'neuf/le-corps',    f: '', n: 'Le corps', afaire: true, d: 'Les emplacements où un équipement s\'accroche, dessinés sur une silhouette.', kAlias: 'Ce qui reste à faire/Le corps' },
+    ]
+  },
+  {
+    titre: 'Ce qui bouge',
+    desc: 'à fusionner : deux planches pour une seule fonctionnalité',
+    items: [
+      { k: 'Mouvements.dc.html', f: 'Mouvements.dc.html', n: 'Ses mouvements', d: 'La suite d\'images, le tempo, la boucle.',
+        rep: 'Je fusionne avec Le montage : un seul écran « l\'animation », avec deux entrées — des images qu\'on met en ordre, ou une animation qui revient et qu\'on découpe. Et je le cale sur ce que l\'atelier sait vraiment faire avant de le redessiner. Étape 6.' },
+      { k: 'Montage.dc.html',    f: 'Montage.dc.html',    n: 'Le montage',     d: 'Découper une animation revenue en bandes.',
+        rep: 'Tu as raison, la distinction ne tient pas. Cette planche disparaît dans la précédente.' },
+    ]
+  },
+  {
+    titre: 'Le reste du jeu',
+    desc: 'décors et terrains, qui n\'ont ni poses ni équipement',
+    items: [
+      { k: 'Decors.dc.html', f: 'Decors.dc.html', n: 'Un décor',   d: 'Le moulin à l\'échelle, son point d\'accroche, sa zone bloquée, devant et derrière.' },
+      { k: 'Tuiles.dc.html', f: 'Tuiles.dc.html', n: 'Un terrain', d: 'Le carreau et sa jointure, vérifiée en le répétant.' },
+      { k: 'Toile.dc.html',  f: 'Toile.dc.html',  n: 'Le plan',    d: 'Tout le jeu sur une toile, et la réserve des images que le plan ne montre pas.' },
+      { k: 'neuf/une-carte', f: '', n: 'Bâtir une carte', afaire: true, d: 'Poser des carreaux de terrain les uns à côté des autres et voir les coutures — l\'outil propre à cette famille.' },
+    ]
+  },
+  {
+    titre: 'Les images',
+    desc: 'les fabriquer, les trouver, les reprendre, les sortir',
+    items: [
+      { k: 'Envoi.dc.html',    f: 'Envoi.dc.html',    n: 'L\'envoi',    d: 'Ce qui part vraiment au modèle, ce que ça coûte, avant de cliquer.' },
+      { k: 'Planche.dc.html',  f: 'Planche.dc.html',  n: 'La feuille',  d: 'Plusieurs cases revenues en une seule image, et la découpe.',
+        rep: 'On y arrive juste après un envoi, quand la réponse contient plusieurs cases — jamais autrement. Elle vaut pour toutes les familles, pas seulement les personnages. Je le rendrai visible dans le fil, et j\'ajouterai une variante terrain.' },
+      { k: 'Galerie.dc.html',  f: 'Galerie.dc.html',  n: 'La galerie',  d: 'Toutes les images du jeu : chercher, filtrer, choisir, agir en lot.' },
+      { k: 'Retouche.dc.html', f: 'Retouche.dc.html', n: 'La retouche', d: 'Détourer, recadrer, réduire, changer la palette. Une pile de passes qu\'on retire dans n\'importe quel ordre.' },
+      { k: 'Ce qui reste à faire/La sortie', f: '', n: 'La sortie', afaire: true, d: 'Exporter vers le moteur de jeu : quels fichiers, quel rangement, quel format.' },
+    ]
+  },
+  {
+    titre: 'Les réglages du jeu',
+    desc: 'ce qui s\'applique à tous les sujets, une fois pour toutes',
+    items: [
+      { k: 'Univers.dc.html',  f: 'Univers.dc.html',  n: 'Le monde et son trait', d: 'Les sept lignes de la bible. La septième est vide.' },
+      { k: 'Allure.dc.html',   f: 'Allure.dc.html',   n: 'Son allure',            d: 'Style, taille, pixelisation, couleurs — illustrés, pas décrits.' },
+      { k: 'Reglages.dc.html', f: 'Reglages.dc.html', n: 'Sa vue',                d: 'D\'où on regarde le jeu : les huit vues dessinées, et le texte exact qui part.' },
+      { k: 'Tables.dc.html',   f: 'Tables.dc.html',   n: 'Son détourage',         d: 'Le détourage de départ, réglé sur une vraie image plutôt que dans le vide.' },
+      { k: 'Ce qui reste à faire/Le plan de poses',   f: '', n: 'Le plan de poses',   afaire: true, d: 'La table des poses et de leur consigne, qu\'on modifie.' },
+      { k: 'Ce qui reste à faire/Les huit échelles',  f: '', n: 'Les huit échelles',  afaire: true, d: 'La table des types de sujets et de la place qu\'ils prennent dans leur image.' },
+      { k: 'Ce qui reste à faire/Les IA et les clés', f: '', n: 'Les IA et les clés', afaire: true, d: 'La table des modèles, leur prix, ce qui manque pour s\'en servir.' },
+    ]
+  },
+  {
+    titre: 'Les comptes, et quand ça rate',
+    desc: 'l\'argent et les cas moches',
+    items: [
+      { k: 'Depenses.dc.html', f: 'Depenses.dc.html', n: 'Les dépenses', d: 'Appel par appel, par jeu, par modèle. Les ratés nommés.' },
+      { k: 'Etats.dc.html',    f: 'Etats.dc.html',    n: 'Les états',    d: 'Huit cas moches : l\'attente, le refus, la clé absente, la liste tronquée, le jeu vide.' },
+    ]
+  },
+];
+
+let etat = {};
+try { etat = JSON.parse(localStorage.getItem(CLE) || '{}'); } catch (e) { etat = {}; }
+let filtre = 'tout';
+
+function fiche(it) {
+  if (etat[it.k]) return etat[it.k];
+  if (it.kAlias && etat[it.kAlias]) return etat[it.kAlias];
+  return { e: null, note: '' };
+}
+function ranger() { try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (e) {} }
+function etatDe(it) { const f = fiche(it); return f.e || (it.afaire ? 'a-faire' : 'a-voir'); }
+
+function comptes() {
+  const c = { total: 0, 'a-voir': 0, valide: 0, revoir: 0, question: 0, 'a-faire': 0, notes: 0 };
+  GROUPES.forEach(g => g.items.forEach(it => {
+    c.total++; c[etatDe(it)]++;
+    if ((fiche(it).note || '').trim()) c.notes++;
+  }));
+  return c;
+}
+
+function dessinerOrdre() {
+  document.getElementById('ordre').innerHTML = ORDRE
+    .map(o => `<li class="${o.c || ''}"><span>${o.n}</span><span class="é">${o.é}</span></li>`).join('');
+}
+
+function dessinerJauge() {
+  const c = comptes();
+  const ordre = ['valide', 'revoir', 'question', 'a-voir', 'a-faire'];
+  document.getElementById('bar').innerHTML = ordre.filter(e => c[e] > 0)
+    .map(e => `<i style="width:${(c[e] / c.total * 100).toFixed(2)}%;background:${ETATS[e].couleur}"></i>`).join('');
+  document.getElementById('leg').innerHTML = ordre
+    .map(e => `<span><span class="pt" style="background:${ETATS[e].couleur}"></span>${ETATS[e].nom} <b>${c[e]}</b></span>`).join('');
+  document.getElementById('fin').textContent =
+    c.notes ? `${c.notes} remarque${c.notes > 1 ? 's' : ''} écrite${c.notes > 1 ? 's' : ''}` : 'aucune remarque pour l\'instant';
+}
+
+function dessinerFiltres() {
+  const c = comptes();
+  const l = [['tout', 'Tout', c.total], ['a-voir', 'À voir', c['a-voir']], ['valide', 'Validé', c.valide],
+             ['revoir', 'À revoir', c.revoir], ['question', 'Question', c.question], ['a-faire', 'À faire', c['a-faire']]];
+  document.getElementById('filtres').innerHTML = l
+    .map(([k, n, v]) => `<button data-f="${k}" class="${filtre === k ? 'on' : ''}">${n}<span class="n">${v}</span></button>`).join('');
+}
+
+function dessinerCorps() {
+  const html = GROUPES.map(g => {
+    const items = g.items.filter(it => filtre === 'tout' || etatDe(it) === filtre);
+    if (!items.length) return '';
+    const lignes = items.map(it => {
+      const f = fiche(it), e = etatDe(it);
+      const lien = it.f ? `<a class="ln" href="${it.f}" target="_blank" rel="noopener">ouvrir ↗</a>`
+                        : `<span class="ln" style="color:#948c80">pas encore</span>`;
+      return `<div class="li" data-k="${encodeURIComponent(it.k)}">
+        <div class="hd">
+          <span class="pt" style="background:${ETATS[e].couleur};margin:0"></span>
+          <span class="nm">${it.n}</span>
+          <span class="de">${it.d}</span>
+          <span class="ét">${ETATS[e].court}${(f.note || '').trim() ? ' <span class="mk">•</span>' : ''}</span>
+          ${lien}
+        </div>
+        <div class="ed">
+          ${it.rep ? `<div class="rep"><div class="rl">Ce que j'en fais</div><p>${it.rep}</p></div>` : ''}
+          <div class="btr">
+            ${['valide', 'revoir', 'question', 'a-voir'].map(x =>
+              `<button data-e="${x}" class="${f.e === x ? 'on' : ''}"><span class="pt" style="background:${ETATS[x].couleur};margin:0"></span>${ETATS[x].nom}</button>`).join('')}
+          </div>
+          <textarea placeholder="Ce qui va, ce qui ne va pas, ce qui manque…">${(f.note || '').replace(/</g, '&lt;')}</textarea>
+          <div class="aide">Enregistré au fur et à mesure, dans ce navigateur.</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="grp">
+      <div class="gt"><h2>${g.titre}</h2><span class="gd">${g.desc}</span><span class="gn">${items.length}</span></div>
+      ${lignes}
+    </div>`;
+  }).join('');
+  document.getElementById('corps').innerHTML = html || '<div class="grp" style="color:#6d675e;font-size:14px">Rien dans ce filtre.</div>';
+}
+
+function tout() { dessinerJauge(); dessinerFiltres(); dessinerCorps(); }
+
+function parCle(k) {
+  for (const g of GROUPES) for (const it of g.items) if (it.k === k) return it;
+  return null;
+}
+
+document.getElementById('filtres').addEventListener('click', ev => {
+  const b = ev.target.closest('button'); if (!b) return;
+  filtre = b.dataset.f; tout();
+});
+
+document.getElementById('corps').addEventListener('click', ev => {
+  if (ev.target.closest('a')) return;
+  const li = ev.target.closest('.li'); if (!li) return;
+  const k = decodeURIComponent(li.dataset.k), it = parCle(k); if (!it) return;
+  const bt = ev.target.closest('.btr button');
+  if (bt) {
+    const f = fiche(it);
+    etat[k] = { e: f.e === bt.dataset.e ? null : bt.dataset.e, note: f.note || '' };
+    ranger();
+    const ouvert = li.classList.contains('ouv');
+    tout();
+    if (ouvert) { const n = document.querySelector(`.li[data-k="${li.dataset.k}"]`); if (n) n.classList.add('ouv'); }
+    return;
+  }
+  if (ev.target.closest('.ed')) return;
+  li.classList.toggle('ouv');
+  if (li.classList.contains('ouv')) { const t = li.querySelector('textarea'); if (t) t.focus(); }
+});
+
+document.getElementById('corps').addEventListener('input', ev => {
+  if (ev.target.tagName !== 'TEXTAREA') return;
+  const li = ev.target.closest('.li'); if (!li) return;
+  const k = decodeURIComponent(li.dataset.k), it = parCle(k); if (!it) return;
+  const f = fiche(it);
+  etat[k] = { e: f.e || null, note: ev.target.value };
+  ranger(); dessinerJauge(); dessinerFiltres();
+  const ét = li.querySelector('.ét');
+  if (ét && !ét.querySelector('.mk') && ev.target.value.trim()) ét.insertAdjacentHTML('beforeend', ' <span class="mk">•</span>');
+});
+
+document.getElementById('btn-copier').addEventListener('click', () => {
+  const l = [];
+  GROUPES.forEach(g => {
+    const dedans = g.items.filter(it => { const f = fiche(it); return f.e || (f.note || '').trim(); });
+    if (!dedans.length) return;
+    l.push('## ' + g.titre);
+    dedans.forEach(it => {
+      const f = fiche(it);
+      l.push(`- ${it.n}${it.f ? ' (' + it.f + ')' : ''} — ${ETATS[f.e || (it.afaire ? 'a-faire' : 'a-voir')].nom}`);
+      if ((f.note || '').trim()) f.note.trim().split('\n').forEach(x => l.push('    ' + x));
+    });
+    l.push('');
+  });
+  const txt = l.length ? l.join('\n') : 'Rien de marqué pour l\'instant.';
+  document.getElementById('dlg-txt').value = txt;
+  document.getElementById('dlg-msg').textContent = '';
+  document.getElementById('dlg').showModal();
+});
+
+document.getElementById('dlg-copier').addEventListener('click', async () => {
+  const t = document.getElementById('dlg-txt');
+  try { await navigator.clipboard.writeText(t.value); }
+  catch (e) { t.removeAttribute('readonly'); t.select(); document.execCommand('copy'); t.setAttribute('readonly', ''); }
+  document.getElementById('dlg-msg').textContent = 'copié';
+});
+document.getElementById('dlg-fermer').addEventListener('click', () => document.getElementById('dlg').close());
+
+document.getElementById('btn-vider').addEventListener('click', () => {
+  if (!confirm('Effacer toutes tes marques et tes remarques ?')) return;
+  etat = {}; ranger(); tout();
+  document.getElementById('msg').textContent = 'remis à blanc';
+  setTimeout(() => document.getElementById('msg').textContent = '', 2200);
+});
+
+dessinerOrdre();
+tout();
+</script>
+</body>
+</html>

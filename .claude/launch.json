@@ -178,6 +178,18 @@
         "greffon"
       ],
       "port": 8436
+    },
+    {
+      "name": "maquettes-carnet",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8933",
+        "--directory",
+        "docs/pistes-2026-09-04/carnet"
+      ],
+      "port": 8933
     }
   ]
 }

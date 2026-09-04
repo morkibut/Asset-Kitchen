@@ -1,0 +1,309 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .bt { height: 36px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border-radius: 7px; font-size: 13.5px; }
+    .bt-p { background: #a8492c; color: #fff8f4; font-weight: 500; }
+    .bt-s { background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .puce { height: 26px; display: inline-flex; align-items: center; gap: 6px; padding: 0 9px; border-radius: 5px; border: 1px solid #e2dbd0; background: #fffdfa; font-size: 12.5px; color: #4e483f; }
+    .puce-on { background: #ece6db; border-color: #ddd5c8; color: #221f1b; font-weight: 500; }
+    .chip-x { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 3px; background: #ece6db; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #6d675e; }
+    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
+    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <!-- ══════ LE CARNET ══════ -->
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div class="serif" style="font-size: 25px; line-height: 1.1">Le Marais du Vieux Moulin</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e">41 images · 12 poses sur 18</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
+      <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+      <div class="rl" style="font-weight: 600"><span>Les décors</span><span class="num">1</span></div>
+      <div class="rl-sub" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le vieux moulin</span></div>
+      <div class="rl-sub" style="color: #a49a8b"><span>+ Nouveau décor</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">4</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+      <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
+      <div class="rl"><span>Son nom et son dossier</span></div>
+      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+      <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
+      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+      <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
+      <div class="rl"><span>Son détourage de départ</span></div>
+      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+      <div class="rl"><span>Les dépenses</span><span class="num">$1,53</span></div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 14px 10px 0; display: flex; flex-direction: column; gap: 9px">
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Un décor est une pièce unique posée sur le sol : un moulin, un arbre, un rocher. Il ne se répète pas.</div>
+      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
+        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ LA SCÈNE ══════ -->
+  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 14px">
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80">
+          <span>Les décors</span><span>›</span><span style="color: #3d382f">Le vieux moulin</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 12px">
+          <h1 class="serif" style="margin: 0; font-size: 40px; line-height: 1">Le vieux moulin</h1>
+          <span class="mono" style="font-size: 12.5px; color: #6d675e">192 × 256 px · 3 carrés de large</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 9px">
+        <div class="bt bt-s">Ouvrir dans l'atelier</div>
+        <div class="bt bt-s">Refaire l'image</div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 7px">
+      <span class="puce puce-on">Posé sur l'herbe</span>
+      <span class="puce">Le carré seul</span>
+      <span class="puce">Avec le pélerin</span>
+      <span style="margin-left: auto; display: flex; gap: 7px">
+        <span class="puce puce-on">Le point d'appui</span>
+        <span class="puce puce-on">La zone bloquée</span>
+        <span class="puce">La grille</span>
+      </span>
+    </div>
+
+    <!-- LA SCÈNE -->
+    <div style="position: relative; flex: 1; min-height: 0; border-radius: 8px; border: 1px solid #ddd5c8; overflow: hidden">
+      <svg width="100%" height="100%" viewBox="0 0 430 320" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges" style="display: block">
+        <defs>
+          <pattern id="sol" width="32" height="32" patternUnits="userSpaceOnUse">
+            <rect width="32" height="32" fill="#4d6b3f"/>
+            <rect x="3" y="4" width="1" height="3" fill="#3d5732"/><rect x="9" y="2" width="1" height="4" fill="#61814f"/>
+            <rect x="14" y="6" width="1" height="3" fill="#3d5732"/><rect x="21" y="3" width="1" height="4" fill="#61814f"/>
+            <rect x="26" y="7" width="1" height="3" fill="#3d5732"/><rect x="5" y="12" width="1" height="4" fill="#61814f"/>
+            <rect x="12" y="14" width="1" height="3" fill="#3d5732"/><rect x="18" y="11" width="1" height="4" fill="#61814f"/>
+            <rect x="24" y="15" width="1" height="3" fill="#3d5732"/><rect x="29" y="12" width="1" height="4" fill="#61814f"/>
+            <rect x="2" y="21" width="1" height="3" fill="#61814f"/><rect x="8" y="24" width="1" height="4" fill="#3d5732"/>
+            <rect x="15" y="22" width="1" height="3" fill="#61814f"/><rect x="20" y="26" width="1" height="3" fill="#3d5732"/>
+            <rect x="27" y="23" width="1" height="4" fill="#61814f"/><rect x="11" y="19" width="1" height="2" fill="#3d5732"/>
+          </pattern>
+        </defs>
+        <rect width="430" height="320" fill="url(#sol)"/>
+
+        <!-- l'ombre portée -->
+        <ellipse cx="215" cy="278" rx="56" ry="13" fill="#2c3f26" opacity=".38"/>
+
+        <!-- le moulin -->
+        <g>
+          <!-- la tour -->
+          <polygon points="182,278 190,150 240,150 248,278" fill="#8a8378"/>
+          <polygon points="182,278 190,150 200,150 194,278" fill="#9d968a"/>
+          <polygon points="234,150 240,150 248,278 238,278" fill="#6e685f"/>
+          <rect x="190" y="180" width="50" height="2" fill="#767066"/>
+          <rect x="187" y="214" width="56" height="2" fill="#767066"/>
+          <rect x="184" y="248" width="62" height="2" fill="#767066"/>
+          <!-- la porte -->
+          <rect x="204" y="246" width="22" height="32" fill="#4a3421"/>
+          <rect x="206" y="248" width="18" height="30" fill="#5e442c"/>
+          <rect x="220" y="262" width="2" height="2" fill="#c9b48c"/>
+          <!-- la fenêtre -->
+          <rect x="207" y="192" width="16" height="16" fill="#2c2a26"/>
+          <rect x="209" y="194" width="12" height="12" fill="#46433c"/>
+          <!-- le toit -->
+          <polygon points="184,150 215,110 246,150" fill="#6b4a2e"/>
+          <polygon points="184,150 215,110 215,150" fill="#7d5836"/>
+          <rect x="180" y="148" width="70" height="5" fill="#523822"/>
+          <!-- l'axe -->
+          <rect x="211" y="126" width="8" height="8" fill="#3d3126"/>
+          <!-- les ailes -->
+          <g stroke="#5e442c" stroke-width="4" fill="none">
+            <path d="M215 130 L215 46"/><path d="M215 130 L299 130"/><path d="M215 130 L215 214"/><path d="M215 130 L131 130"/>
+          </g>
+          <g fill="#c9b48c" opacity=".55">
+            <rect x="205" y="50" width="9" height="72"/><rect x="223" y="122" width="72" height="9"/>
+            <rect x="216" y="138" width="9" height="72"/><rect x="135" y="129" width="72" height="9"/>
+          </g>
+        </g>
+
+        <!-- le pélerin, à l'échelle -->
+        <g transform="translate(306,214) scale(4)">
+          <rect x="5" y="2" width="6" height="2" fill="#2f4a35"/><rect x="6" y="4" width="4" height="3" fill="#d8bb95"/>
+          <rect x="6" y="5" width="1" height="1" fill="#3a2f22"/><rect x="9" y="5" width="1" height="1" fill="#3a2f22"/>
+          <rect x="4" y="7" width="8" height="6" fill="#2f4a35"/><rect x="6" y="9" width="4" height="4" fill="#c9b48c"/>
+          <rect x="3" y="8" width="1" height="4" fill="#2f4a35"/><rect x="12" y="8" width="1" height="4" fill="#2f4a35"/>
+          <rect x="5" y="13" width="2" height="3" fill="#5a3f28"/><rect x="9" y="13" width="2" height="3" fill="#5a3f28"/>
+        </g>
+        <ellipse cx="338" cy="279" rx="18" ry="5" fill="#2c3f26" opacity=".38"/>
+
+        <!-- la zone bloquée -->
+        <rect x="176" y="252" width="78" height="30" fill="#a8492c" opacity=".28"/>
+        <rect x="176" y="252" width="78" height="30" fill="none" stroke="#a8492c" stroke-width="2" stroke-dasharray="6 4"/>
+
+        <!-- le point d'appui -->
+        <g stroke="#a8492c" stroke-width="2">
+          <path d="M215 268 L215 288"/><path d="M205 278 L225 278"/>
+        </g>
+        <circle cx="215" cy="278" r="4" fill="#fffdfa" stroke="#a8492c" stroke-width="2"/>
+      </svg>
+
+      <div style="position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 16px; background: rgba(34,31,27,.82); border-radius: 7px; padding: 8px 14px; color: #f2ede4; font-size: 12px">
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 50%; border: 2px solid #e08c6d; background: #f2ede4"></span>le point d'appui — là où le moulin touche le sol</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 12px; height: 9px; background: rgba(224,140,109,.5); border: 1px dashed #e08c6d"></span>la zone bloquée — le pélerin ne passe pas</span>
+      </div>
+
+      <div style="position: absolute; right: 14px; top: 14px; background: rgba(34,31,27,.82); border-radius: 7px; padding: 8px 12px; color: #f2ede4; font-size: 12px; line-height: 1.5">
+        Le moulin fait <strong style="font-weight: 600">4 fois</strong> la hauteur du pélerin.<br>
+        Le pélerin passe <strong style="font-weight: 600">derrière</strong> le toit et <strong style="font-weight: 600">devant</strong> la porte.
+      </div>
+    </div>
+
+    <!-- LES AUTRES DÉCORS -->
+    <div style="display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <div class="rt">Les autres décors du marais</div>
+        <div style="font-size: 12px; color: #948c80">rangés par hauteur, du plus petit au plus grand</div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: flex-end">
+        <div style="width: 74px; display: flex; flex-direction: column; gap: 5px; align-items: center">
+          <div style="width: 74px; height: 48px; border: 1px dashed #c9c2b6; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #a49a8b; text-align: center; line-height: 1.25">Roseaux</div>
+          <div class="mono" style="font-size: 10.5px; color: #948c80">32 px</div>
+        </div>
+        <div style="width: 74px; display: flex; flex-direction: column; gap: 5px; align-items: center">
+          <div style="width: 74px; height: 62px; border: 1px dashed #c9c2b6; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #a49a8b; text-align: center; line-height: 1.25">Souche</div>
+          <div class="mono" style="font-size: 10.5px; color: #948c80">48 px</div>
+        </div>
+        <div style="width: 74px; display: flex; flex-direction: column; gap: 5px; align-items: center">
+          <div style="width: 74px; height: 82px; border: 1px dashed #c9c2b6; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #a49a8b; text-align: center; line-height: 1.25">Barque<br>échouée</div>
+          <div class="mono" style="font-size: 10.5px; color: #948c80">64 px</div>
+        </div>
+        <div style="width: 74px; display: flex; flex-direction: column; gap: 5px; align-items: center">
+          <div style="width: 74px; height: 104px; border: 1px dashed #c9c2b6; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #a49a8b; text-align: center; line-height: 1.25">Saule<br>mort</div>
+          <div class="mono" style="font-size: 10.5px; color: #948c80">128 px</div>
+        </div>
+        <div style="width: 74px; display: flex; flex-direction: column; gap: 5px; align-items: center">
+          <div style="width: 74px; height: 128px; border: 2px solid #a8492c; border-radius: 5px; background: #faf3ee; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; overflow: hidden">
+            <svg viewBox="0 0 96 128" width="66" height="118"><polygon points="38,124 41,58 55,58 58,124" fill="#8a8378"/><polygon points="34,58 48,36 62,58" fill="#6b4a2e"/><g stroke="#5e442c" stroke-width="3" fill="none"><path d="M48 46 L48 12"/><path d="M48 46 L82 46"/><path d="M48 46 L48 80"/><path d="M48 46 L14 46"/></g><rect x="44" y="106" width="8" height="18" fill="#5e442c"/></svg>
+          </div>
+          <div class="mono" style="font-size: 10.5px; color: #a8492c">256 px · fait</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 7px; margin-left: 12px; padding-left: 16px; border-left: 1px solid #e2dbd0; align-self: stretch; justify-content: center">
+          <div style="font-size: 13px; line-height: 1.5; color: #4e483f; max-width: 300px">Un décor se mesure en hauteur de personnage, pas en pixels. Le pélerin fait 64. Le saule en fait deux, le moulin quatre.</div>
+          <div style="display: flex; gap: 8px"><div class="bt bt-p" style="height: 32px">Fabriquer les 4 qui manquent</div><span style="align-self: center" class="mono" style="font-size: 12px; color: #a8492c">$0,076</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ LES TROIS RÉGLAGES DU DÉCOR ══════ -->
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 15px; overflow: hidden">
+
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div class="rt">Ce qui se règle sur un décor</div>
+      <div style="font-size: 13px; line-height: 1.45; color: #4e483f">Trois choses, qu'aucune image ne porte toute seule.</div>
+    </div>
+
+    <!-- le point d'appui -->
+    <div style="border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 9px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <div style="font-size: 13.5px; font-weight: 600">Le point d'appui</div>
+        <div class="mono" style="font-size: 11px; color: #6d675e">96 · 250</div>
+      </div>
+      <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le pixel qui touche le sol. Sans lui, le moulin flotte ou s'enfonce dès qu'on le pose sur une case.</div>
+      <div style="display: flex; align-items: center; gap: 9px">
+        <span style="font-size: 12px; color: #6d675e; width: 52px">hauteur</span>
+        <div class="glis" style="flex: 1"><i style="left: 78%"></i></div>
+        <span class="mono" style="font-size: 11px; color: #6d675e; width: 34px; text-align: right">98 %</span>
+      </div>
+      <div style="font-size: 11.5px; color: #948c80">Trouvé tout seul : le bas de la silhouette découpée.</div>
+    </div>
+
+    <!-- la zone bloquée -->
+    <div style="border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 9px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <div style="font-size: 13.5px; font-weight: 600">La zone bloquée</div>
+        <div class="mono" style="font-size: 11px; color: #6d675e">78 × 30 px</div>
+      </div>
+      <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le rectangle où le pélerin ne passe pas. Plus petit que le moulin : on marche sous les ailes, pas dans la tour.</div>
+      <div style="display: flex; gap: 7px">
+        <span class="puce" style="font-size: 11.5px">Le bas de l'image</span>
+        <span class="puce puce-on" style="font-size: 11.5px">Dessiné à la main</span>
+        <span class="puce" style="font-size: 11.5px">Aucune</span>
+      </div>
+    </div>
+
+    <!-- le passage -->
+    <div style="border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 9px">
+      <div style="font-size: 13.5px; font-weight: 600">Devant ou derrière</div>
+      <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Quand le pélerin monte au-dessus du point d'appui, il passe derrière le moulin. En dessous, devant. C'est la règle de tous les jeux vus de dessus.</div>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <div style="flex: 1; height: 54px; border-radius: 5px; background: #6c6c6c; position: relative; overflow: hidden">
+          <svg viewBox="0 0 60 34" width="100%" height="54" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges">
+            <polygon points="22,30 24,10 36,10 38,30" fill="#8a8378"/><polygon points="20,10 30,2 40,10" fill="#6b4a2e"/>
+            <rect x="26" y="14" width="8" height="10" fill="#2f4a35"/><rect x="27" y="12" width="6" height="3" fill="#d8bb95"/>
+          </svg>
+          <div style="position: absolute; left: 6px; bottom: 4px; font-size: 10.5px; color: #f2ede4">devant</div>
+        </div>
+        <div style="flex: 1; height: 54px; border-radius: 5px; background: #6c6c6c; position: relative; overflow: hidden">
+          <svg viewBox="0 0 60 34" width="100%" height="54" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges">
+            <rect x="26" y="4" width="8" height="10" fill="#2f4a35"/><rect x="27" y="2" width="6" height="3" fill="#d8bb95"/>
+            <polygon points="22,30 24,10 36,10 38,30" fill="#8a8378"/><polygon points="20,10 30,2 40,10" fill="#6b4a2e"/>
+          </svg>
+          <div style="position: absolute; left: 6px; bottom: 4px; font-size: 10.5px; color: #f2ede4">derrière</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border: 1px solid #ddd5c8; border-radius: 8px; background: #f4ece2; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <div style="font-size: 13.5px; font-weight: 600">Aucun des trois n'existe dans le code</div>
+        <span class="chip-x">à construire</span>
+      </div>
+      <div style="font-size: 12px; line-height: 1.45; color: #4e483f">L'atelier range un décor comme une image parmi d'autres : sans pose, sans direction, et sans savoir où il pose ses pieds. Ces trois réglages tiendraient dans la fiche du décor.</div>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+      <div class="bt bt-s">Poser le moulin sur une carte</div>
+      <div style="font-size: 12px; line-height: 1.45; color: #948c80; text-align: center">L'éditeur de carte n'existe pas non plus. Il viendrait après les terrains et les décors, jamais avant.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

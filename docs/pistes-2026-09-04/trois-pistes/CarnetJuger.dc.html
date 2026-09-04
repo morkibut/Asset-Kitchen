@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .carnet * { box-sizing: border-box; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rail-t { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rail-l { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px; font-size: 14px; color: #3d382f; }
+    .tuile { aspect-ratio: 1; background: #bcbbb8; display: flex; align-items: center; justify-content: center; }
+    .seg { font-size: 13px; padding: 7px 13px; border-radius: 6px; color: #4e483f; white-space: nowrap; }
+    .seg-on { background: #221f1b; color: #f7f3ec; font-weight: 600; }
+  </style>
+</helmet>
+
+<div class="carnet" style="width: 1440px; height: 900px; display: grid; grid-template-columns: 286px minmax(0, 1fr) 340px; background: #f7f3ec;
+     font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; overflow: hidden">
+
+  <!-- ── Le même sommaire, à sa place ────────────────────────────────── -->
+  <div style="border-right: 1px solid #e2dbd0; padding: 26px 20px; display: flex; flex-direction: column; gap: 24px; background: #f2ede4">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="serif" style="font-size: 28px; line-height: 1.1">Les marais de fer</div>
+      <div style="font-size: 13px; color: #6d675e">19 images · 7 cases vides · $0,4655 dépensés</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="rail-t" style="margin-bottom: 4px">Ce que le monde contient</div>
+      <div class="rail-l"><span>Le monde</span><span class="mono" style="font-size: 12px; color: #948c80">5 lignes</span></div>
+      <div class="rail-l"><span>Les gens</span><span class="mono" style="font-size: 12px; color: #948c80">3</span></div>
+      <div class="rail-l"><span>Les choses</span><span class="mono" style="font-size: 12px; color: #948c80">9</span></div>
+      <div class="rail-l"><span style="color: #948c80">Les décors</span><span class="mono" style="font-size: 12px; color: #a8492c">à ouvrir</span></div>
+      <div class="rail-l"><span>L'interface</span><span class="mono" style="font-size: 12px; color: #948c80">2</span></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="rail-t" style="margin-bottom: 4px">Toutes les images</div>
+      <div class="rail-l" style="background: #e6dfd2; font-weight: 600"><span>La galerie</span><span class="mono" style="font-size: 12px; color: #6d675e">19</span></div>
+      <div class="rail-l"><span>Les favorites</span><span class="mono" style="font-size: 12px; color: #948c80">5</span></div>
+      <div class="rail-l"><span>La corbeille</span><span class="mono" style="font-size: 12px; color: #948c80">2</span></div>
+      <div class="rail-l"><span>Les recettes nommées</span><span class="mono" style="font-size: 12px; color: #948c80">3</span></div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 16px; font-size: 13px; color: #6d675e; line-height: 1.5">
+      Cette page ne dépense jamais rien. On paie depuis une chose du jeu, jamais depuis ses images.
+    </div>
+  </div>
+
+  <!-- ── La planche contact ──────────────────────────────────────────── -->
+  <div style="padding: 30px 32px 24px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <h1 class="serif" style="margin: 0; font-size: 44px; line-height: 1">La galerie</h1>
+        <div style="font-size: 14.5px; color: #6d675e">tout ce qui a été produit, gardé ou non</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <div style="display: flex; gap: 2px; background: #ece6db; border-radius: 8px; padding: 3px">
+          <div class="seg seg-on">1×</div><div class="seg">2×</div><div class="seg">4×</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div style="flex-grow: 1; border: 1px solid #ddd5c8; border-radius: 8px; background: #fffdfa; padding: 10px 14px; font-size: 14px; color: #948c80; white-space: nowrap">Chercher un sujet, un texte…</div>
+      <div style="display: flex; gap: 2px; background: #ece6db; border-radius: 8px; padding: 3px">
+        <div class="seg seg-on">toutes</div><div class="seg">les gens</div><div class="seg">les choses</div><div class="seg">les décors</div><div class="seg">l'interface</div>
+      </div>
+      <div style="font-size: 13px; color: #4e483f; border: 1px solid #ddd5c8; border-radius: 8px; padding: 9px 13px; background: #fffdfa">Favorites</div>
+    </div>
+
+    <!-- La plaque de lumière neutre, posée dans la page -->
+    <div style="flex-grow: 1; background: #a8a7a4; border-radius: 10px; padding: 16px; overflow: hidden">
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile" style="outline: 2px solid #a8492c; outline-offset: 2px">
+            <svg viewBox="0 0 16 24" width="76" height="76" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="4" fill="#8a5a2a"/><rect x="6" y="4" width="4" height="4" fill="#e0b48c"/><rect x="4" y="8" width="8" height="8" fill="#6b4326"/><rect x="2" y="9" width="2" height="6" fill="#e0b48c"/><rect x="12" y="9" width="2" height="6" fill="#e0b48c"/><rect x="5" y="16" width="2" height="6" fill="#3f4a3a"/><rect x="9" y="16" width="2" height="6" fill="#3f4a3a"/></svg>
+          </div>
+          <div style="font-size: 12px; color: #f2efe9">la ferronnière, au repos</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 24" width="76" height="76" shape-rendering="crispEdges"><rect x="6" y="2" width="4" height="3" fill="#b8b2a6"/><rect x="6" y="4" width="4" height="4" fill="#d6b899"/><rect x="5" y="8" width="6" height="9" fill="#3f5b45"/><rect x="3" y="9" width="2" height="7" fill="#d6b899"/><rect x="11" y="9" width="2" height="7" fill="#d6b899"/><rect x="12" y="2" width="1" height="20" fill="#7a6a4e"/><rect x="6" y="17" width="2" height="5" fill="#3a3a34"/><rect x="9" y="17" width="2" height="5" fill="#3a3a34"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">le passeur, au repos</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="3" y="3" width="10" height="4" fill="#6b6f74"/><rect x="4" y="4" width="8" height="2" fill="#8c9096"/><rect x="7" y="7" width="2" height="8" fill="#7a5a34"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">un marteau de ferronnier</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="2" fill="#6b6f74"/><rect x="4" y="4" width="8" height="8" fill="#e0b45c"/><rect x="5" y="5" width="6" height="6" fill="#f5d98c"/><rect x="4" y="12" width="8" height="2" fill="#6b6f74"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">une lanterne à huile</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="4" y="3" width="8" height="10" fill="#8a6136"/><rect x="4" y="5" width="8" height="1" fill="#5c4021"/><rect x="4" y="10" width="8" height="1" fill="#5c4021"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">un coffre à outils cerclé</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="3" y="6" width="10" height="6" fill="#7a7f85"/><rect x="4" y="7" width="8" height="4" fill="#9aa0a6"/><rect x="6" y="3" width="4" height="3" fill="#5c6167"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">un seau de rivets</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 24" width="76" height="76" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="4" fill="#8a5a2a"/><rect x="6" y="4" width="4" height="4" fill="#e0b48c"/><rect x="4" y="8" width="8" height="8" fill="#6b4326"/><rect x="1" y="10" width="3" height="5" fill="#e0b48c"/><rect x="12" y="8" width="3" height="5" fill="#e0b48c"/><rect x="3" y="16" width="3" height="6" fill="#3f4a3a"/><rect x="10" y="16" width="3" height="5" fill="#3f4a3a"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">la ferronnière, en marche</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="2" y="8" width="12" height="5" fill="#6e6350"/><rect x="2" y="8" width="12" height="1" fill="#8c7f68"/><rect x="3" y="13" width="2" height="3" fill="#4e4638"/><rect x="11" y="13" width="2" height="3" fill="#4e4638"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">un ponton de planches</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="2" y="2" width="12" height="12" fill="#6b7a52"/><rect x="4" y="4" width="3" height="3" fill="#84955f"/><rect x="9" y="6" width="4" height="4" fill="#84955f"/><rect x="5" y="10" width="3" height="2" fill="#84955f"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">des roseaux couchés</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="2" y="2" width="12" height="12" fill="#8a7358"/><rect x="3" y="5" width="4" height="1" fill="#6b573f"/><rect x="8" y="9" width="5" height="1" fill="#6b573f"/><rect x="5" y="11" width="3" height="1" fill="#6b573f"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">de la vase craquelée</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="2" y="3" width="12" height="10" fill="#5d5a55"/><rect x="3" y="4" width="10" height="8" fill="#7e7a73"/><rect x="4" y="5" width="2" height="2" fill="#5d5a55"/><rect x="10" y="9" width="2" height="2" fill="#5d5a55"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">un cadre de fenêtre</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 24" width="76" height="76" shape-rendering="crispEdges"><rect x="5" y="3" width="6" height="4" fill="#6d5c48"/><rect x="6" y="5" width="4" height="4" fill="#dcc0a0"/><rect x="4" y="9" width="8" height="7" fill="#7d8f6a"/><rect x="3" y="10" width="2" height="5" fill="#dcc0a0"/><rect x="11" y="10" width="2" height="5" fill="#dcc0a0"/><rect x="5" y="16" width="2" height="5" fill="#4a4a40"/><rect x="9" y="16" width="2" height="5" fill="#4a4a40"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">l'enfant des roseaux</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="4" y="4" width="8" height="8" fill="#6b6f74"/><rect x="5" y="5" width="6" height="6" fill="#4b4f54"/><rect x="6" y="6" width="4" height="4" fill="#8c9096"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">un bouton d'inventaire</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="6" y="2" width="4" height="10" fill="#7a5a34"/><rect x="5" y="12" width="6" height="3" fill="#5c6167"/><rect x="7" y="1" width="2" height="2" fill="#9aa0a6"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">une gaffe de passeur</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="3" y="5" width="10" height="3" fill="#6b6f74"/><rect x="4" y="8" width="3" height="5" fill="#8c9096"/><rect x="9" y="8" width="3" height="5" fill="#8c9096"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">une pince coudée</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="3" y="4" width="10" height="7" fill="#7a6a52"/><rect x="4" y="11" width="2" height="3" fill="#5c4f3c"/><rect x="10" y="11" width="2" height="3" fill="#5c4f3c"/><rect x="5" y="2" width="6" height="2" fill="#8c9096"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">un établi de forge</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="2" y="7" width="12" height="3" fill="#4f5f4a"/><rect x="3" y="6" width="3" height="2" fill="#63764c"/><rect x="10" y="6" width="4" height="2" fill="#63764c"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">une anguille des vasières</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="tuile"><svg viewBox="0 0 16 16" width="76" height="76" shape-rendering="crispEdges"><rect x="5" y="3" width="4" height="8" fill="#7d8a90"/><rect x="9" y="5" width="4" height="2" fill="#5c6167"/><rect x="4" y="11" width="6" height="2" fill="#5c6167"/><rect x="6" y="1" width="2" height="2" fill="#9aa0a6"/></svg></div>
+          <div style="font-size: 12px; color: #f2efe9">un héron de fer</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="font-size: 13px; color: #6d675e">Aucun appel ne part d'ici — regarder, ranger, retoucher et exporter sont gratuits.</div>
+  </div>
+
+  <!-- ── La fiche de l'image choisie ─────────────────────────────────── -->
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 26px 22px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+
+    <div style="height: 260px; background: #a8a7a4; display: flex; align-items: center; justify-content: center">
+      <svg viewBox="0 0 16 24" width="170" height="170" shape-rendering="crispEdges" style="display:block">
+        <rect x="5" y="2" width="6" height="4" fill="#8a5a2a"/><rect x="6" y="4" width="4" height="4" fill="#e0b48c"/>
+        <rect x="4" y="8" width="8" height="8" fill="#6b4326"/><rect x="5" y="10" width="6" height="4" fill="#8d5c33"/>
+        <rect x="2" y="9" width="2" height="6" fill="#e0b48c"/><rect x="12" y="9" width="2" height="6" fill="#e0b48c"/>
+        <rect x="5" y="16" width="2" height="6" fill="#3f4a3a"/><rect x="9" y="16" width="2" height="6" fill="#3f4a3a"/>
+        <rect x="4" y="22" width="3" height="2" fill="#2a2420"/><rect x="9" y="22" width="3" height="2" fill="#2a2420"/>
+      </svg>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 5px">
+      <div class="serif" style="font-size: 25px; line-height: 1.15">la ferronnière, au repos</div>
+      <div class="mono" style="font-size: 12px; color: #948c80">64 × 64 · gpt-image-2 · $0,0245 · gardée</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <div class="rail-t">Sa recette — rejouable, annulable</div>
+      <div style="display: flex; flex-direction: column; gap: 1px; border: 1px solid #ddd5c8; border-radius: 8px; overflow: hidden; background: #fffdfa">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 13px; border-bottom: 1px solid #ece6db">
+          <span style="font-size: 13.5px">détourage</span>
+          <span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 12px; color: #6d675e">bord · 28</span><span style="width: 26px; height: 15px; border-radius: 999px; background: #a8492c; position: relative"><i style="position: absolute; right: 2px; top: 2px; width: 11px; height: 11px; border-radius: 999px; background: #fffdfa; display: block"></i></span></span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 13px; border-bottom: 1px solid #ece6db">
+          <span style="font-size: 13.5px">recadrage</span>
+          <span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 12px; color: #6d675e">marge 0 px</span><span style="width: 26px; height: 15px; border-radius: 999px; background: #a8492c; position: relative"><i style="position: absolute; right: 2px; top: 2px; width: 11px; height: 11px; border-radius: 999px; background: #fffdfa; display: block"></i></span></span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 13px; border-bottom: 1px solid #ece6db">
+          <span style="font-size: 13.5px">grille</span>
+          <span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 12px; color: #6d675e">64 px · 100 %</span><span style="width: 26px; height: 15px; border-radius: 999px; background: #a8492c; position: relative"><i style="position: absolute; right: 2px; top: 2px; width: 11px; height: 11px; border-radius: 999px; background: #fffdfa; display: block"></i></span></span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 13px">
+          <span style="font-size: 13.5px; color: #948c80">couleurs</span>
+          <span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 12px; color: #948c80">32 couleurs</span><span style="width: 26px; height: 15px; border-radius: 999px; background: #d6cdbd; position: relative"><i style="position: absolute; left: 2px; top: 2px; width: 11px; height: 11px; border-radius: 999px; background: #fffdfa; display: block"></i></span></span>
+        </div>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e; line-height: 1.45">Éteinte, une place garde ce qu'on y avait posé — on rallume, on retrouve.</div>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 9px">
+      <button style="font-family: inherit; font-size: 14.5px; font-weight: 600; color: #fffdfa; background: #221f1b; border: none; border-radius: 8px; padding: 12px 16px; cursor: pointer">Ouvrir les tables</button>
+      <button style="font-family: inherit; font-size: 14.5px; color: #3d382f; background: #fffdfa; border: 1px solid #ddd5c8; border-radius: 8px; padding: 12px 16px; cursor: pointer">Sortir vers le jeu — PNG</button>
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <div style="font-size: 14.5px; color: #aaa298; background: #efe9df; border: 1px solid #e2dbd0; border-radius: 8px; padding: 12px 16px; text-align: center">Découper en sprites</div>
+        <div style="font-size: 12px; color: #948c80; text-align: center">cette image porte un seul sujet — il n'y a rien à découper</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

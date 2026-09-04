@@ -1,0 +1,264 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .seg { height: 30px; display: flex; align-items: center; padding: 0 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f; white-space: nowrap; }
+    .seg-on { background: #fffdfa; color: #221f1b; font-weight: 600; border: 1px solid #ddd5c8; }
+    .im { width: 22px; height: 56px; background: #b6b5b2; display: block; }
+    .im-prise { background: #221f1b; }
+    .im-laissee { background: #cfceca; }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <!-- ══════ LE CARNET ══════ -->
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div class="serif" style="font-size: 25px; line-height: 1.1">Le Marais du Vieux Moulin</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e">41 images · 12 poses sur 18</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
+      <div class="rl" style="font-weight: 600"><span>Les personnages</span><span class="num">3</span></div>
+      <div class="rl-sub" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le pélerin</span><span class="num" style="color: #a8492c">6 / 6</span></div>
+      <div class="rl-sub"><span>Le garde du moulin</span><span class="num">6 / 6</span></div>
+      <div class="rl-sub"><span>La grenouille des tourbières</span><span class="num">0 / 6</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+      <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
+      <div class="rl"><span>Son nom et son dossier</span></div>
+      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+      <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
+      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+      <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
+      <div class="rl"><span>Son détourage de départ</span></div>
+      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+      <div class="rl"><span>Les dépenses</span><span class="num">$1,53</span></div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 14px 10px 0; display: flex; flex-direction: column; gap: 9px">
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Ce jeu n'a encore aucun mouvement enregistré. Celui-ci est le premier.</div>
+      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
+        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ LA TABLE DE MONTAGE ══════ -->
+  <div style="display: flex; flex-direction: column; overflow: hidden">
+
+    <div style="padding: 24px 30px 0; display: flex; flex-direction: column; gap: 16px; flex-grow: 1; overflow: hidden">
+
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: baseline; gap: 9px; font-size: 13px; color: #948c80">
+            <span>Le pélerin</span><span>›</span><span>marche</span><span>›</span><span style="color: #3d382f">le clip</span>
+          </div>
+          <h1 class="serif" style="margin: 0; font-size: 38px; line-height: 1">Découper le clip en bandes</h1>
+        </div>
+        <div style="font-size: 13px; color: #6d675e; text-align: right; line-height: 1.45">
+          Le clip est payé et il est sur le disque.<br><strong style="font-weight: 600; color: #4e483f">Rien sur cet écran n'engage une dépense.</strong>
+        </div>
+      </div>
+
+      <!-- Les deux boucles, un seul métronome -->
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between">
+            <div style="font-size: 14.5px; font-weight: 600">Ce que le modèle a rendu</div>
+            <div style="font-size: 12.5px; color: #6d675e">le mouvement est-il bon ?</div>
+          </div>
+          <div style="height: 244px; background: #5e6a58; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden">
+            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, #6b7a62 0%, #4d5849 100%)"></div>
+            <svg viewBox="0 0 16 24" width="176" height="176" shape-rendering="crispEdges" style="position: relative">
+              <rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/>
+              <rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="6" y="10" width="5" height="6" fill="#c9b48c"/>
+              <rect x="2" y="11" width="3" height="5" fill="#d8bb95"/><rect x="13" y="5" width="1" height="12" fill="#7a5a34"/><rect x="12" y="2" width="3" height="4" fill="#c98a3a"/>
+              <rect x="3" y="17" width="4" height="5" fill="#5a3f28"/><rect x="10" y="17" width="4" height="4" fill="#5a3f28"/>
+            </svg>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between">
+            <div style="font-size: 14.5px; font-weight: 600">Passé par la chaîne du jeu</div>
+            <div style="font-size: 12.5px; color: #6d675e">la bande est-elle bonne ?</div>
+          </div>
+          <div style="height: 244px; display: flex; align-items: center; justify-content: center;
+               background-color: #a8a7a4;
+               background-image: linear-gradient(45deg, #9a9996 25%, transparent 25%, transparent 75%, #9a9996 75%), linear-gradient(45deg, #9a9996 25%, transparent 25%, transparent 75%, #9a9996 75%);
+               background-size: 22px 22px; background-position: 0 0, 11px 11px">
+            <svg viewBox="0 0 16 24" width="176" height="176" shape-rendering="crispEdges">
+              <rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/>
+              <rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="6" y="10" width="5" height="6" fill="#c9b48c"/>
+              <rect x="2" y="11" width="3" height="5" fill="#d8bb95"/><rect x="13" y="5" width="1" height="12" fill="#7a5a34"/><rect x="12" y="2" width="3" height="4" fill="#c98a3a"/>
+              <rect x="3" y="17" width="4" height="5" fill="#5a3f28"/><rect x="10" y="17" width="4" height="4" fill="#5a3f28"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e; margin-top: -6px">Les deux vues tournent à la même vitesse et démarrent ensemble. <strong style="font-weight: 600">À gauche, le mouvement est-il bon. À droite, le découpage est-il bon.</strong></div>
+
+      <!-- La pellicule -->
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <div style="font-size: 14.5px; font-weight: 600">La pellicule <span style="font-weight: 400; color: #948c80">· 40 images · un clic prend ou laisse</span></div>
+          <div style="display: flex; align-items: center; gap: 14px; font-size: 12.5px; color: #6d675e">
+            <span style="display: flex; align-items: center; gap: 6px"><i style="width: 10px; height: 10px; background: #221f1b; display: block"></i>retenue</span>
+            <span style="display: flex; align-items: center; gap: 6px"><i style="width: 10px; height: 10px; background: #cfceca; display: block"></i>laissée</span>
+          </div>
+        </div>
+        <div style="position: relative; background: #a8a7a4; border-radius: 6px; padding: 10px 12px">
+          <div style="display: flex; gap: 2px">
+            <i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i>
+            <i class="im im-prise"></i><i class="im im-prise"></i><i class="im im-laissee"></i><i class="im im-laissee"></i>
+            <i class="im im-prise"></i><i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-prise"></i>
+            <i class="im im-prise"></i><i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i>
+            <i class="im im-prise"></i><i class="im im-prise"></i><i class="im im-laissee"></i><i class="im im-laissee"></i>
+            <i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i>
+            <i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i>
+            <i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i>
+            <i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i>
+            <i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i><i class="im im-laissee"></i>
+          </div>
+          <div style="position: absolute; left: 106px; top: 4px; bottom: 4px; width: 306px; border: 2px solid #a8492c; border-radius: 3px; pointer-events: none"></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 22px; font-size: 12px; color: #6d675e">
+          <span>La fenêtre <strong style="font-weight: 600">enjambe</strong> les images retenues. Elles n'ont pas besoin d'être régulièrement espacées.</span>
+          <span style="display: flex; align-items: center; gap: 7px"><i style="width: 22px; height: 2px; background: #948c80; display: block"></i>proposé : c'est ici que le clip boucle le mieux</span>
+          <span style="display: flex; align-items: center; gap: 7px"><i style="width: 22px; height: 2px; background: #c3b8a6; display: block"></i>et voici les moments calmes</span>
+        </div>
+      </div>
+
+      <!-- Les images retenues -->
+      <div style="display: flex; flex-direction: column; gap: 9px; margin-top: auto; padding-bottom: 6px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <div style="font-size: 14.5px; font-weight: 600">Les six images retenues, dans l'ordre</div>
+          <div style="font-size: 12.5px; color: #6d675e">chacune se retire d'ici aussi</div>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <div style="width: 92px; height: 92px; background: #bcbbb8; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 16 24" width="70" height="70" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="3" y="10" width="2" height="6" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="3" height="5" fill="#5a3f28"/></svg></div>
+          <div style="width: 92px; height: 92px; background: #bcbbb8; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 16 24" width="70" height="70" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="2" y="11" width="3" height="5" fill="#d8bb95"/><rect x="4" y="17" width="4" height="5" fill="#5a3f28"/><rect x="9" y="17" width="4" height="4" fill="#5a3f28"/></svg></div>
+          <div style="width: 92px; height: 92px; background: #bcbbb8; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 16 24" width="70" height="70" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="8" fill="#2f4a35"/><rect x="1" y="10" width="4" height="4" fill="#d8bb95"/><rect x="3" y="16" width="4" height="6" fill="#5a3f28"/><rect x="10" y="16" width="4" height="5" fill="#5a3f28"/></svg></div>
+          <div style="width: 92px; height: 92px; background: #bcbbb8; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 16 24" width="70" height="70" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="12" y="10" width="3" height="5" fill="#d8bb95"/><rect x="5" y="17" width="4" height="5" fill="#5a3f28"/><rect x="10" y="17" width="3" height="5" fill="#5a3f28"/></svg></div>
+          <div style="width: 92px; height: 92px; background: #bcbbb8; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 16 24" width="70" height="70" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="11" y="11" width="4" height="5" fill="#d8bb95"/><rect x="6" y="17" width="4" height="5" fill="#5a3f28"/><rect x="10" y="16" width="4" height="5" fill="#5a3f28"/></svg></div>
+          <div style="width: 92px; height: 92px; background: #bcbbb8; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 16 24" width="70" height="70" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="3" y="10" width="2" height="6" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="3" height="5" fill="#5a3f28"/></svg></div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 5px; padding-left: 10px">
+            <div style="font-size: 13px; line-height: 1.45; color: #4e483f">Un pas de marche demande <strong style="font-weight: 600">deux images serrées au contact</strong> et une seule pendant la glisse. D'où le choix image par image.</div>
+            <div style="font-size: 12.5px; color: #948c80">Toutes les images sont recadrées sur la même fenêtre. Sinon le personnage grandirait de 10 % en se mettant à marcher.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Le pied — garder la bande. Aucune dépense. -->
+    <div style="border-top: 1px solid #ddd5c8; background: #efe9de; padding: 13px 30px; display: flex; align-items: center; justify-content: space-between; gap: 20px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="height: 34px; display: flex; align-items: center; border: 1px solid #ddd5c8; border-radius: 6px; background: #fffdfa; padding: 0 13px; font-size: 13.5px; width: 210px">marche · nord</div>
+        <div style="font-size: 12.5px; color: #6d675e">remplit la case</div>
+        <div style="height: 34px; display: flex; align-items: center; border: 1px solid #ddd5c8; border-radius: 6px; background: #fffdfa; padding: 0 13px; font-size: 13.5px">marche ▾</div>
+        <div style="font-size: 12.5px; color: #948c80">sans case choisie, la bande reste un brouillon</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <a href="#" style="font-size: 13px; text-decoration: none">mettre une image de côté ›</a>
+        <button style="height: 38px; font-family: inherit; font-size: 14.5px; font-weight: 600; color: #fffdfa; background: #221f1b; border: none; border-radius: 7px; padding: 0 20px; cursor: pointer">Garder cette bande</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ LE PUPITRE ══════ -->
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 20px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">Le cadre</div>
+      <div style="display: flex; gap: 12px; align-items: flex-start">
+        <div style="width: 96px; height: 96px; background: #a8a7a4; display: flex; align-items: center; justify-content: center; position: relative">
+          <svg viewBox="0 0 16 24" width="72" height="72" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="3" y="10" width="2" height="6" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="3" height="5" fill="#5a3f28"/></svg>
+          <div style="position: absolute; left: 14px; top: 10px; right: 14px; bottom: 8px; border: 1.5px solid #a8492c"></div>
+        </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 7px">
+          <div style="display: flex; gap: 3px; background: #ece6db; border-radius: 6px; padding: 3px">
+            <div class="seg seg-on">du clip</div><div class="seg">de la bande</div><div class="seg">à la main</div>
+          </div>
+          <div style="font-size: 12px; line-height: 1.45; color: #6d675e">Le cadre est calculé sur le clip entier, et partagé par toutes ses bandes.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 9px; border-top: 1px solid #e2dbd0; padding-top: 15px">
+      <div class="rt">La recette du découpage</div>
+      <div style="display: flex; flex-direction: column; gap: 1px; border: 1px solid #e2dbd0; border-radius: 7px; overflow: hidden; background: #fffdfa">
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 32px; padding: 0 12px; border-bottom: 1px solid #ece6db; font-size: 13px"><span>taille du pixel</span><span class="mono" style="font-size: 12.5px; color: #4e483f">64 px</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 32px; padding: 0 12px; border-bottom: 1px solid #ece6db; font-size: 13px"><span>couleurs</span><span class="mono" style="font-size: 12.5px; color: #a8492c">32</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 32px; padding: 0 12px; font-size: 13px"><span>détourage</span><span class="mono" style="font-size: 12.5px; color: #4e483f">modèle · isnet</span></div>
+      </div>
+      <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Elle reprend les réglages du jeu, et se modifie. <strong style="font-weight: 600; color: #4e483f">Un écart avec les réglages du jeu : 32 couleurs au lieu de 24.</strong> Corrige-le, ou garde-le : c'est signalé, pas interdit.</div>
+      <div style="font-size: 12px; line-height: 1.5; color: #948c80">L'ordre est fixe : taches, détourage, boîtes, cadre commun, grille, palette. Mesurer le cadre avant le nettoyage ferait compter l'ombre sous les pieds.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #e2dbd0; padding-top: 15px">
+      <div class="rt">Le pupitre</div>
+      <div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13.5px">vitesse</span><span class="mono" style="font-size: 12.5px; color: #a8492c">8 images/s</span></div>
+      <div style="height: 4px; background: #ddd5c8; border-radius: 3px; position: relative">
+        <div style="width: 46%; height: 100%; background: #a8492c; border-radius: 3px"></div>
+        <div style="position: absolute; left: 46%; top: -6px; width: 15px; height: 15px; border-radius: 999px; background: #fffdfa; border: 1px solid #c3b8a6; transform: translateX(-50%)"></div>
+      </div>
+      <div style="display: flex; gap: 3px; background: #ece6db; border-radius: 6px; padding: 3px">
+        <div class="seg seg-on">en boucle</div><div class="seg">aller-retour</div>
+      </div>
+      <div style="font-size: 12px; line-height: 1.45; color: #948c80">Un seul curseur : celui-ci règle l'aperçu <em>et</em> c'est la vitesse écrite dans le fichier exporté. Le nombre d'images, lui, dépend de ce que tu as retenu.</div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 15px; display: flex; flex-direction: column; gap: 10px">
+      <div class="rt">Ce clip a déjà donné</div>
+      <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; padding: 8px 11px">
+        <div style="width: 34px; height: 34px; background: #a8a7a4"></div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+          <div style="font-size: 13px; font-weight: 600">repos · nord</div>
+          <div style="font-size: 11.5px; color: #6d675e">4 images · remplit la case repos</div>
+        </div>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #6d675e">
+        Ce clip a coûté <strong style="font-weight: 600">4 minutes de carte graphique</strong> et rien à payer.
+        Une bande gardée, une seconde en cours : <strong style="font-weight: 600">2 minutes par bande utilisable</strong>.
+      </div>
+      <div style="font-size: 12px; line-height: 1.45; color: #948c80">Avec un modèle payant, cette ligne afficherait le prix par bande.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

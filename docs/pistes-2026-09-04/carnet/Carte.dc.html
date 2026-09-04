@@ -1,0 +1,393 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .doc, .doc * { box-sizing: border-box; }
+    .doc { width: 1240px; background: #f7f3ec; font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; padding: 56px 64px 72px; display: flex; flex-direction: column; gap: 46px; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    h2 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 30px; line-height: 1.12; margin: 0; }
+    .sub { font-size: 14.5px; line-height: 1.55; color: #4e483f; max-width: 78ch; margin: 0; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; line-height: 1.5; }
+    th { text-align: left; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: #948c80; font-weight: 400; padding: 0 12px 9px; border-bottom: 1px solid #ddd5c8; }
+    td { padding: 9px 12px; border-bottom: 1px solid #ece6db; vertical-align: top; color: #4e483f; }
+    td:first-child { color: #221f1b; }
+    .tag { display: inline-block; font-size: 10.5px; line-height: 17px; font-weight: 500; padding: 0 8px; border-radius: 9px; border: 1px solid #ddd5c8; color: #6d675e; white-space: nowrap; background: #fffdfa; }
+    .t-fondu { border-color: #a7bcc4; color: #4a6a76; background: #eef4f6; }
+    .t-depl  { border-color: #d3bd82; color: #7a6220; background: #f7f0dd; }
+    .t-garde { border-color: #a9c2a0; color: #3f5638; background: #eef4ec; }
+    .t-mort  { border-color: #d8ada4; color: #8a3f33; background: #f8ecea; }
+    .t-neuf  { border-color: #cfa38f; color: #8f3d1f; background: #f7ece5; }
+    .carte { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 18px 20px; display: flex; flex-direction: column; gap: 9px; }
+    .chiffre { font-family: 'Instrument Serif', Georgia, serif; font-size: 46px; line-height: 1; }
+    .pres { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+  </style>
+</helmet>
+
+<div class="doc">
+
+  <!-- ══════ EN-TÊTE ══════ -->
+  <div style="display: flex; flex-direction: column; gap: 14px">
+    <div class="rt">La carte des écrans · 4 septembre 2026</div>
+    <h1 class="serif" style="margin: 0; font-size: 54px; line-height: 1.02; letter-spacing: -0.01em">Ceux qui existent,<br>ceux qui manquent,<br>et combien il en reste</h1>
+    <p class="sub" style="font-size: 16px; max-width: 74ch">Le dépôt a déjà été relevé et compté par une autre session. Ce document ne recommence pas ce travail : il reprend ses chiffres, place chaque écran dans le carnet, et vérifie une seule chose — que rien ne se perde et que le compte descende.</p>
+    <p style="font-size: 13px; line-height: 1.5; color: #6d675e; max-width: 88ch; margin: 0">Les chiffres viennent de <span class="mono" style="font-size: 12px">docs/parcours.html</span> et <span class="mono" style="font-size: 12px">docs/releves/2026-09-04-carte-des-ecrans.md</span>. Leur définition d'un écran est reprise telle quelle : <em>ce qui prend la fenêtre et dont il faut savoir sortir</em>. Ni colonne, ni panneau, ni bandeau.</p>
+
+    <div style="border-left: 3px solid #a8492c; background: #f4ece2; padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; margin-top: 4px">
+      <div style="font-size: 14px; font-weight: 600">Cette piste travaille à côté</div>
+      <div style="font-size: 13px; line-height: 1.55; color: #4e483f; max-width: 92ch">Elle ne modifie ni le code, ni le système de design, ni le plan de l'application, qui continuent leur route de leur côté. Là où elle s'écarte de ce qui est écrit dans le dépôt, elle s'en écarte <strong style="font-weight: 600">exprès</strong> : c'est une proposition qu'on regarde, pas un amendement qu'on applique. Les trois écarts sont nommés plus bas.</div>
+    </div>
+  </div>
+
+  <!-- ══════ LES QUATRE COMPTES ══════ -->
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+    <div class="carte" style="gap: 6px">
+      <div class="chiffre" style="color: #6d675e">41</div>
+      <div style="font-size: 13px; font-weight: 600">surfaces relevées</div>
+      <div style="font-size: 12px; line-height: 1.45; color: #6d675e">Barres, colonnes et panneaux compris. Le relevé complet du code.</div>
+    </div>
+    <div class="carte" style="gap: 6px">
+      <div class="chiffre" style="color: #6d675e">22</div>
+      <div style="font-size: 13px; font-weight: 600">prennent la fenêtre</div>
+      <div style="font-size: 12px; line-height: 1.45; color: #6d675e">Dont une où personne ne peut aller, et une dont on ne peut pas sortir.</div>
+    </div>
+    <div class="carte" style="gap: 6px">
+      <div class="chiffre" style="color: #6d675e">11</div>
+      <div style="font-size: 13px; font-weight: 600">visées par l'autre session</div>
+      <div style="font-size: 12px; line-height: 1.45; color: #6d675e">Neuf gardés, deux neufs : l'accueil et Les Règles du jeu.</div>
+    </div>
+    <div class="carte" style="gap: 6px; border: 2px solid #a8492c; background: #faf3ee; padding: 17px 19px">
+      <div class="chiffre" style="color: #a8492c">7</div>
+      <div style="font-size: 13px; font-weight: 600; color: #a8492c">dans le carnet</div>
+      <div style="font-size: 12px; line-height: 1.45; color: #4e483f">L'ouverture, quatre présentations, l'envoi, le guide. Le carnet et la barre ne comptent pas : ils ne prennent jamais la fenêtre.</div>
+    </div>
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 10px; background: #f4ece2; padding: 18px 22px; display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 15px; font-weight: 600">Pourquoi le compte descend encore</div>
+    <div style="font-size: 13.5px; line-height: 1.6; color: #4e483f; max-width: 92ch">Sur les onze visés, cinq sont le <strong style="font-weight: 600">même</strong> objet vu de la même façon : une page qui décrit une chose. La fiche d'un personnage, la page d'un jeu, les règles du jeu, les réglages de l'atelier et le journal des dépenses sont des pages. Dans le carnet, elles ne sont plus cinq écrans mais cinq contenus d'une présentation. Le Codex, lui, disparaît complètement : c'est le carnet.</div>
+  </div>
+
+  <!-- ══════ LES 22, UN PAR UN ══════ -->
+  <div style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div class="rt">Section 1</div>
+      <h2>Les vingt-deux écrans d'aujourd'hui, aucun omis</h2>
+      <p class="sub">Un écran qui disparaît doit dire où il va, sinon on perd des choses sans s'en apercevoir — c'est le reproche qui a fait rejeter la première carte. Voici les vingt-deux, avec leur destination.</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th style="width: 25%">L'écran d'aujourd'hui</th><th style="width: 11%">Verdict</th><th style="width: 20%">Où il arrive dans le carnet</th><th>Ce qu'on garde de lui</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>La Galerie</td><td><span class="tag t-fondu">fondu</span></td><td>Une matrice — « Tout »</td><td>Ce n'est pas un troisième outil, c'est une vue. Elle devient la ligne « Tout » du carnet, et le filtre du jeu ne saute plus quand on clique une collection.</td></tr>
+        <tr><td>La vitrine du monde entier</td><td><span class="tag t-fondu">fondu</span></td><td>Une matrice, au zoom le plus large</td><td>Le fond que la bible décrit. Elle cesse d'être atteinte par un lien de 10 pixels.</td></tr>
+        <tr><td>La vitrine d'une chose</td><td><span class="tag t-fondu">fondu</span></td><td>Une page, au zoom le plus large</td><td>Trois portes vers un même écran deviennent un cran de zoom.</td></tr>
+        <tr><td>Le dépliage d'une planche</td><td><span class="tag t-fondu">fondu</span></td><td>Une planche</td><td>Ce n'est pas une retouche, c'est la fin de l'achat. Il reste là où la planche arrive.</td></tr>
+        <tr><td>Les tables, sur une image de la Galerie</td><td><span class="tag t-fondu">fondu</span></td><td>Une table</td><td>La seconde porte, celle qui sauve les images importées et les orphelines.</td></tr>
+        <tr><td>La planche d'une pose</td><td><span class="tag t-fondu">fondu</span></td><td>Une planche</td><td>Un état, pas un écran : « cette pose part en une seule feuille de N cases ». N'existe qu'à partir de deux directions.</td></tr>
+        <tr><td>Le calibrage</td><td><span class="tag t-fondu">fondu</span></td><td>Une table</td><td>Mettre les poses à la même hauteur est une retouche. Elle rejoint les autres passes.</td></tr>
+        <tr><td>Univers › découper une carte</td><td><span class="tag t-fondu">fondu</span></td><td>Une table</td><td>Découper une image d'inspiration en morceaux, c'est un traitement. Même outil, même écran.</td></tr>
+        <tr><td>Choisir une image de référence</td><td><span class="tag t-fondu">fondu</span></td><td>L'envoi</td><td>Des interrupteurs. On n'ajoute pas des images, on éteint celles qui ne doivent pas partir.</td></tr>
+        <tr><td>Univers › Réglages — l'assistant en 12 étapes</td><td><span class="tag t-depl">déplacé</span></td><td>Une page — les réglages du jeu</td><td>Le contenu est conservé entier ; c'est le lieu qui change. Un jeu déclare une fois comment il regarde le monde.</td></tr>
+        <tr><td>Univers › Ambiances et couleurs</td><td><span class="tag t-depl">déplacé</span></td><td>Une page — les réglages du jeu</td><td>Une ambiance est une contrainte, pas une inspiration.</td></tr>
+        <tr><td>Découpe atteinte depuis la Galerie</td><td><span class="tag t-mort">supprimé</span></td><td>—</td><td>Code mort : les sept appels qui l'ouvrent la laissent vide. Personne ne peut y aller aujourd'hui.</td></tr>
+        <tr><td>L'Univers (l'onglet)</td><td><span class="tag t-fondu">fondu</span></td><td>Une planche — la toile du jeu</td><td>Il perd ses deux côtés étrangers. Ce qui reste — la toile et ses cartes d'inspiration — est une planche : des morceaux posés côte à côte qu'on déplace et qu'on découpe.</td></tr>
+        <tr><td>Le Codex (l'onglet)</td><td><span class="tag t-mort">disparaît</span></td><td>Le carnet lui-même</td><td>Sa colonne de gauche est exactement le carnet : les familles, les choses, ce qui manque. Le carnet étant toujours là, le Codex n'a plus de fenêtre à prendre.</td></tr>
+        <tr><td>La fiche plein cadre d'une chose</td><td><span class="tag t-garde">gardé</span></td><td>Une page</td><td>Promue. Elle n'est plus derrière un lien de 10 pixels : c'est là qu'on arrive en cliquant un nom.</td></tr>
+        <tr><td>L'établi d'une chose</td><td><span class="tag t-garde">gardé</span></td><td>Une matrice</td><td>Son unité est la case — une pose sous un angle. C'est le seul endroit qui dit case par case ce qui manque.</td></tr>
+        <tr><td>Les tables, sur une image de case</td><td><span class="tag t-garde">gardé</span></td><td>Une table</td><td>Il gagne enfin une sortie : aujourd'hui il n'a ni bouton fermer ni touche Échap.</td></tr>
+        <tr><td>L'écran de confirmation « Ce qui part »</td><td><span class="tag t-garde">gardé</span></td><td>L'envoi</td><td>Le seul seuil payant, et il le reste. C'est le seul écran qui a le droit d'interrompre.</td></tr>
+        <tr><td>Les dépenses</td><td><span class="tag t-fondu">fondu</span></td><td>Une page</td><td>Le journal absorbe enfin celui des ratés de la colonne « Projet » — il avait été écrit pour ça et les deux coexistaient.</td></tr>
+        <tr><td>Les réglages de l'atelier</td><td><span class="tag t-fondu">fondu</span></td><td>Une page</td><td>Les clés, le dossier, le catalogue. Ce n'est pas un réglage du jeu, c'est l'outil — mais c'est quand même une page.</td></tr>
+        <tr><td>Le Guide</td><td><span class="tag t-garde">gardé</span></td><td>Le guide</td><td>Reste un écran à part, à la touche « ? ». Il a le droit de recouvrir : on le lit, on ne travaille pas dedans.</td></tr>
+        <tr><td>L'aperçu (espace maintenu)</td><td><span class="tag t-garde">gardé</span></td><td>Un geste</td><td>Ce n'est pas un écran et il ne compte nulle part. Il faut seulement l'écrire quelque part : aujourd'hui il n'est signalé sur aucune surface.</td></tr>
+      </tbody>
+    </table>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 4px">
+      <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 15px 17px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 13.5px; font-weight: 600">Deux écarts avec l'autre session, assumés</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f"><strong style="font-weight: 600">Le Codex disparaît</strong> au lieu d'être gardé : sa colonne de gauche est le carnet, et un carnet toujours visible ne prend jamais la fenêtre.<br><strong style="font-weight: 600">Les dépenses et les réglages de l'atelier</strong> deviennent des pages parmi d'autres au lieu de rester deux écrans : ce sont des listes qu'on lit, exactement comme la fiche d'un personnage.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 15px 17px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 13.5px; font-weight: 600">Une chose qu'aucune des deux cartes ne règle</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">L'aperçu à la barre d'espace n'est signalé nulle part dans le produit. Ni l'une ni l'autre carte n'ajoute l'endroit où on l'apprend. Dans le carnet, il aurait sa place dans la barre de recherche, avec les autres gestes sans bouton.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ CE QUI MANQUE ══════ -->
+  <div style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div class="rt">Section 2</div>
+      <h2>Ce qui manque — quatorze choses que le produit ne sait pas faire</h2>
+      <p class="sub">Quatre viennent de tes questions, six sont sorties en dessinant les maquettes, et quatre d'une relecture du code faite pour attaquer ces maquettes. Chacune dit ce que l'atelier fait aujourd'hui, et ce qui lui manque exactement.</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th style="width: 22%">Ce qui manque</th><th style="width: 30%">Ce que fait le code aujourd'hui</th><th style="width: 32%">Ce qu'il faudrait</th><th style="width: 16%">Où ça se pose</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>L'écran d'ouverture</td>
+          <td>Le choix du jeu vit dans une colonne d'un seul des trois onglets, sous le mot « Projets ». Une fois un jeu ouvert on ne peut plus revenir à aucun jeu.</td>
+          <td>Une page au démarrage : les six jeux avec leur palette, leurs images et leur coût. Une fois dedans, le nom du jeu en haut du carnet rouvre cette liste.</td>
+          <td><span class="tag t-neuf">l'ouverture</span></td>
+        </tr>
+        <tr>
+          <td>Les réglages du jeu, illustrés</td>
+          <td>Un assistant en douze étapes, en texte. Les huit vues, les dix tailles et les quatre méthodes de pixelisation sont des lignes de menu.</td>
+          <td>Chaque choix graphique montre ce qu'il fait : les huit vues dessinées, les tailles côte à côte, les quatre pixelisations sur le même bord.</td>
+          <td><span class="tag">une page</span></td>
+        </tr>
+        <tr>
+          <td>Le vestiaire d'un personnage</td>
+          <td>Une pièce d'équipement appartient au jeu et se pose sur n'importe quel personnage. Rien ne dit que l'épée est au pélerin et pas au garde.</td>
+          <td>Quatre emplacements de corps sur la fiche du personnage, avec les pièces cochées. Décocher ne supprime rien.</td>
+          <td><span class="tag">une page</span></td>
+        </tr>
+        <tr>
+          <td>Le terrain d'essai</td>
+          <td>Rien. On ne peut pas voir un personnage bouger, ni lui mettre une pièce pour regarder si ça tient.</td>
+          <td>Un onglet de la fiche : le personnage sur un décor, à l'échelle, qu'on déplace et qu'on habille. Rien ne s'y fabrique ni ne s'y paie.</td>
+          <td><span class="tag">une page</span></td>
+        </tr>
+        <tr>
+          <td>L'animation d'une pièce</td>
+          <td>Le fichier des animations ne connaît pas le mot « pièce ». Un casque ne suit aucune pose animée.</td>
+          <td>Une ligne de plus dans la matrice de la pièce : pour chaque pose animée d'un personnage, les images du casque, dans le même ordre.</td>
+          <td><span class="tag">une matrice</span></td>
+        </tr>
+        <tr>
+          <td>Voir une tuile répétée</td>
+          <td>On regarde le carré tout seul. Un défaut de raccord ne se voit qu'une fois le jeu lancé.</td>
+          <td>Le carré répété huit fois sur huit, à côté de lui, en permanence.</td>
+          <td><span class="tag">une page</span></td>
+        </tr>
+        <tr>
+          <td>Recoudre les bords d'une tuile</td>
+          <td>Rien. Aucun mot du code ne parle de raccord, de couture ni de bord.</td>
+          <td>Une passe de plus dans les tables : décaler l'image d'un demi-carré, effacer la couture au milieu. Gratuit, aucun appel à l'IA.</td>
+          <td><span class="tag">une table</span></td>
+        </tr>
+        <tr>
+          <td>La notion de terrain</td>
+          <td>Les tuiles sont rangées à plat, une par une, sans pose ni direction.</td>
+          <td>Un mot pour dire « ces quatre carrés sont la même herbe » et « ces neuf-là sont sa rencontre avec le sable ».</td>
+          <td><span class="tag">le carnet</span></td>
+        </tr>
+        <tr>
+          <td>Les trois réglages d'un décor</td>
+          <td>Un décor est une image comme une autre. On ne sait pas où il pose ses pieds, ce qu'il bloque, ni quand on passe derrière.</td>
+          <td>Le point d'appui, la zone bloquée et la règle devant / derrière, sur la page du décor.</td>
+          <td><span class="tag">une page</span></td>
+        </tr>
+        <tr>
+          <td>La grille des terrains</td>
+          <td>Le jeu a une taille de personnage — 64 pixels. Il n'a pas de taille de case de sol.</td>
+          <td>Un nombre de plus dans les réglages du jeu : 16, 32 ou 64.</td>
+          <td><span class="tag">une page</span></td>
+        </tr>
+        <tr>
+          <td>Les clips déjà payés qui attendent</td>
+          <td>Le serveur sait fabriquer des clips depuis le 4 septembre : sept adresses, dont une qui liste les clips payés en attente et une qui les récupère sans repayer. L'interface ne prononce jamais le mot.</td>
+          <td>Ces clips-là sont de l'argent déjà parti qui réclame un geste. Leur seule place possible est le journal des dépenses — ce qui rouvre la règle « rien ne se paie ni ne s'efface depuis cet écran ».</td>
+          <td><span class="tag">une page</span></td>
+        </tr>
+        <tr>
+          <td>Les directions d'une pièce d'équipement</td>
+          <td>Une image porte à la fois sa direction et sa pièce, mais le serveur range les calques par pose et par pièce seulement — jamais par direction. Les dix calques déjà payés n'en ont aucune.</td>
+          <td>Un troisième axe dans la matrice de la pièce. Sans lui, dans un jeu à quatre directions, l'écran dira « fait » alors que trois angles sur quatre manquent.</td>
+          <td><span class="tag">une matrice</span></td>
+        </tr>
+        <tr>
+          <td>L'import d'une image</td>
+          <td>Il existe depuis le 29 août, avec deux gestes — un bouton et le glisser-déposer — et un refus fichier par fichier. Aucune des maquettes ne le montre.</td>
+          <td>Un geste permanent de la matrice « Tout ». Et deux réponses à écrire : où atterrit une image importée quand aucun jeu n'est ouvert, et où se lisent douze refus pour douze fichiers déposés.</td>
+          <td><span class="tag">une matrice</span></td>
+        </tr>
+        <tr>
+          <td>Le fond du jeu, sur une tuile</td>
+          <td>Le fond demandé au modèle, la couleur interdite et le cadrage sont écrits sans savoir ce qu'on fabrique. Une tuile part donc avec la consigne d'un fond plat à détourer, alors qu'elle doit remplir son carré bord à bord.</td>
+          <td>Ces trois consignes doivent connaître le type du sujet. Le code sait déjà les distinguer — un décor et une tuile sont les deux seules échelles sans silhouette.</td>
+          <td><span class="tag">une page</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════ AUCUN MANQUE N'AJOUTE D'ÉCRAN ══════ -->
+  <div style="border: 1px solid #ddd5c8; border-radius: 10px; background: #f4ece2; padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
+    <h2 style="font-size: 26px">Quatorze manques comblés, un seul écran de plus</h2>
+    <p style="font-size: 14px; line-height: 1.6; color: #4e483f; max-width: 88ch; margin: 0">C'est le test que la première carte n'a pas passé : elle répondait au manque de liens en ajoutant des écrans. Ici, treize des quatorze manques sont du <strong style="font-weight: 600">contenu</strong> dans une présentation qui existe déjà. Le seul écran neuf est l'ouverture — et il n'a pas de carnet, puisque rien n'est encore ouvert.</p>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 4px">
+      <div style="background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 5px"><div class="mono" style="font-size: 20px; color: #a8492c">8</div><div style="font-size: 12.5px; line-height: 1.4">manques qui deviennent du contenu d'<strong style="font-weight: 600">une page</strong></div></div>
+      <div style="background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 5px"><div class="mono" style="font-size: 20px; color: #a8492c">3</div><div style="font-size: 12.5px; line-height: 1.4">un axe ou un geste de plus dans <strong style="font-weight: 600">une matrice</strong></div></div>
+      <div style="background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 5px"><div class="mono" style="font-size: 20px; color: #a8492c">1</div><div style="font-size: 12.5px; line-height: 1.4">une passe de plus dans <strong style="font-weight: 600">une table</strong></div></div>
+      <div style="background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 5px"><div class="mono" style="font-size: 20px; color: #a8492c">1</div><div style="font-size: 12.5px; line-height: 1.4">un rang de plus dans <strong style="font-weight: 600">le carnet</strong></div></div>
+      <div style="background: #fffdfa; border: 2px solid #a8492c; border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 5px"><div class="mono" style="font-size: 20px; color: #a8492c">1</div><div style="font-size: 12.5px; line-height: 1.4">un écran neuf : <strong style="font-weight: 600">l'ouverture</strong></div></div>
+    </div>
+    <div style="font-size: 12.5px; line-height: 1.55; color: #6d675e; border-top: 1px solid #ddd5c8; padding-top: 10px; margin-top: 2px">Un manque ne se comble pas en dessinant : sept des quatorze demandent d'abord une décision côté serveur — la direction d'un calque, la notion de terrain, le type du sujet dans la consigne envoyée au modèle. Les maquettes disent à quoi ça ressemblerait ; elles ne disent pas que c'est écrit.</div>
+  </div>
+
+  <!-- ══════ LES QUATRE PRÉSENTATIONS ══════ -->
+  <div style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div class="rt">Section 3</div>
+      <h2>Les quatre présentations, et tout ce que chacune porte</h2>
+      <p class="sub">La surface — tout ce qui n'est pas le carnet — n'a que quatre formes. On reconnaît laquelle en un coup d'œil, et on sait tout de suite ce qu'on peut y faire.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px">
+
+      <div class="pres">
+        <div style="display: flex; align-items: baseline; gap: 10px">
+          <div class="serif" style="font-size: 24px">Une page</div>
+          <div class="mono" style="font-size: 11px; color: #948c80">on lit et on décide</div>
+        </div>
+        <div style="height: 62px; border-radius: 6px; background: #f2ede4; border: 1px solid #ece6db; display: flex; padding: 8px; gap: 6px">
+          <div style="width: 34%; background: #ddd5c8; border-radius: 3px"></div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><div style="height: 8px; background: #ddd5c8; border-radius: 2px"></div><div style="height: 6px; width: 78%; background: #e6dfd2; border-radius: 2px"></div><div style="height: 6px; width: 62%; background: #e6dfd2; border-radius: 2px"></div><div style="height: 6px; width: 70%; background: #e6dfd2; border-radius: 2px"></div></div>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">La fiche d'un personnage · la page d'un jeu · un objet · une pièce d'équipement · un décor · un terrain · les réglages du jeu · les réglages de l'atelier · les dépenses · l'écran d'ouverture</div>
+        <div style="font-size: 12px; color: #948c80; border-top: 1px solid #ece6db; padding-top: 8px">Dix contenus, une seule forme. Sur les onze écrans visés par l'autre session, cinq sont ici.</div>
+      </div>
+
+      <div class="pres">
+        <div style="display: flex; align-items: baseline; gap: 10px">
+          <div class="serif" style="font-size: 24px">Une matrice</div>
+          <div class="mono" style="font-size: 11px; color: #948c80">on voit ce qui manque</div>
+        </div>
+        <div style="height: 62px; border-radius: 6px; background: #f2ede4; border: 1px solid #ece6db; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; padding: 8px">
+          <div style="background: #ddd5c8; border-radius: 2px"></div><div style="background: #ddd5c8; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="background: #ddd5c8; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div>
+          <div style="background: #ddd5c8; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="background: #ddd5c8; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div>
+          <div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div><div style="border: 1px dashed #c9c2b6; border-radius: 2px"></div>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Les poses × les directions d'un personnage · une pièce d'équipement suivie personnage par personnage · les terrains × leurs variantes · « Tout » — la bibliothèque du jeu</div>
+        <div style="font-size: 12px; color: #948c80; border-top: 1px solid #ece6db; padding-top: 8px">Une case pleine ou une case vide. C'est la seule forme qui dit ce qui reste à faire.</div>
+      </div>
+
+      <div class="pres">
+        <div style="display: flex; align-items: baseline; gap: 10px">
+          <div class="serif" style="font-size: 24px">Une planche</div>
+          <div class="mono" style="font-size: 11px; color: #948c80">on découpe et on déplace</div>
+        </div>
+        <div style="height: 62px; border-radius: 6px; background: #f2ede4; border: 1px solid #ece6db; display: flex; align-items: center; gap: 5px; padding: 8px">
+          <div style="flex: 1; height: 100%; background: #ddd5c8; border-radius: 3px"></div><div style="width: 2px; height: 100%; background: #a8492c; opacity: .5"></div>
+          <div style="flex: 1; height: 100%; background: #ddd5c8; border-radius: 3px"></div><div style="width: 2px; height: 100%; background: #a8492c; opacity: .5"></div>
+          <div style="flex: 1; height: 100%; background: #ddd5c8; border-radius: 3px"></div><div style="width: 2px; height: 100%; background: #a8492c; opacity: .5"></div>
+          <div style="flex: 1; height: 100%; background: #ddd5c8; border-radius: 3px"></div>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">La feuille qui revient de l'IA, à déplier · les images d'une animation, en ligne · la toile du jeu et ses cartes d'inspiration · le montage d'un clip</div>
+        <div style="font-size: 12px; color: #948c80; border-top: 1px solid #ece6db; padding-top: 8px">Des morceaux côte à côte, avec des traits de coupe entre eux. C'est la fin de l'achat, pas une retouche.</div>
+      </div>
+
+      <div class="pres">
+        <div style="display: flex; align-items: baseline; gap: 10px">
+          <div class="serif" style="font-size: 24px">Une table</div>
+          <div class="mono" style="font-size: 11px; color: #948c80">on corrige, et rien ne coûte</div>
+        </div>
+        <div style="height: 62px; border-radius: 6px; background: #f2ede4; border: 1px solid #ece6db; display: flex; padding: 8px; gap: 6px">
+          <div style="width: 26%; display: flex; flex-direction: column; gap: 4px"><div style="height: 7px; background: #ddd5c8; border-radius: 2px"></div><div style="height: 7px; background: #ddd5c8; border-radius: 2px"></div><div style="height: 7px; background: #e6dfd2; border-radius: 2px"></div><div style="height: 7px; background: #e6dfd2; border-radius: 2px"></div></div>
+          <div style="flex: 1; background: #6c6c6c; border-radius: 3px"></div>
+          <div style="width: 18%; display: flex; flex-direction: column; gap: 4px"><div style="flex: 1; background: #ddd5c8; border-radius: 2px"></div><div style="flex: 1; background: #e6dfd2; border-radius: 2px"></div></div>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Les neuf passes de traitement · le calibrage des poses · le découpage d'une carte d'inspiration · le détourage d'un calque d'équipement · recoudre les bords d'une tuile</div>
+        <div style="font-size: 12px; color: #948c80; border-top: 1px solid #ece6db; padding-top: 8px">Toujours gratuit. Aucune table n'a jamais rappelé l'IA — elle repart de la grande image gardée sur le disque.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ LE COMPTE FINAL ══════ -->
+  <div style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div class="rt">Section 4</div>
+      <h2>Les sept, et pourquoi il n'y en a pas huit</h2>
+    </div>
+    <table>
+      <thead><tr><th style="width: 20%">L'écran</th><th style="width: 16%">Ce qui l'ouvre</th><th style="width: 16%">Ce qui le ferme</th><th>Pourquoi il a le droit de prendre la fenêtre</th></tr></thead>
+      <tbody>
+        <tr><td>L'ouverture</td><td>On allume l'atelier</td><td>On choisit un jeu</td><td>Il n'y a pas encore de jeu ouvert, donc pas de carnet à afficher. Sautée s'il n'y a qu'un jeu.</td></tr>
+        <tr><td>Une page</td><td>Un clic sur un nom, dans le carnet</td><td>Un autre clic dans le carnet</td><td>C'est l'état par défaut. Il n'y a rien à en sortir : on passe d'une page à une autre.</td></tr>
+        <tr><td>Une matrice</td><td>Un onglet de la page</td><td>Un autre onglet</td><td>Même chose : ce n'est pas une profondeur, c'est une autre façon de regarder la même chose.</td></tr>
+        <tr><td>Une planche</td><td>Une image qui revient de l'IA, ou la toile du jeu</td><td>« Ranger les morceaux », ou Échap</td><td>Une planche est un travail qu'on finit. Tant qu'elle n'est pas découpée, les images n'existent pas encore.</td></tr>
+        <tr><td>Une table</td><td>« Corriger » sur n'importe quelle image</td><td>« Enregistrer », « Tout annuler », ou Échap</td><td>Neuf réglages et une image qui change en direct. C'est le seul endroit qui a besoin de toute la largeur.</td></tr>
+        <tr><td>L'envoi</td><td>« Fabriquer », d'où qu'on parte</td><td>« Envoyer » ou Échap</td><td>Le seul seuil payant. Il doit interrompre : on n'y arrive jamais par accident et on n'en sort jamais sans le savoir.</td></tr>
+        <tr><td>Le guide</td><td>La touche « ? »</td><td>Échap</td><td>On le lit, on n'y travaille pas. Il a le droit de recouvrir le reste sans rien perdre.</td></tr>
+      </tbody>
+    </table>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 4px">
+      <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 15px 17px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Le carnet n'est pas un écran</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">300 pixels à gauche, toujours là, jamais recouverts — même pendant l'envoi. On ne peut pas en sortir puisqu'on n'y entre jamais.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 15px 17px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">La barre non plus</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Elle s'ouvre au clavier, se ferme à Échap, et ne fabrique jamais rien elle-même. Cliquer un résultat ouvre l'écran d'envoi, déjà rempli.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 15px 17px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">L'aperçu non plus</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Barre d'espace maintenue sur une image. Un geste, pas un écran — mais il faut enfin l'écrire quelque part, et sa place est dans la barre.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ CE QUI RESTE OUVERT ══════ -->
+  <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+    <h2 style="font-size: 26px">Trois écarts assumés, trois questions ouvertes</h2>
+    <p class="sub" style="margin: -4px 0 0">Les trois premiers sont des choix faits en connaissance de cause, et le dépôt n'en bouge pas. Les trois suivants n'ont pas de réponse pour l'instant.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div class="tag t-garde" style="align-self: flex-start">écart assumé</div>
+        <div style="font-size: 13.5px; font-weight: 600">Le papier clair</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le système de design de l'application est un châssis chaud et sombre, et il dit « mode clair — il n'y en a pas ». Cette piste reste en clair. Le document de l'application ne change pas : les deux avancent en parallèle, et c'est plus tard qu'on décide si l'un rejoint l'autre.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div class="tag t-garde" style="align-self: flex-start">écart assumé</div>
+        <div style="font-size: 13.5px; font-weight: 600">Pas de barre d'onglets</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">L'application garde ses trois onglets — Univers, Codex, Galerie — et ses grilles de colonnes ; c'est écrit et reconduit. Cette piste les remplace par un carnet toujours visible. Rien n'est amendé dans le dépôt : c'est une autre façon de faire, posée à côté pour être regardée.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div class="tag t-garde" style="align-self: flex-start">écart assumé</div>
+        <div style="font-size: 13.5px; font-weight: 600">Les réglages hors de l'image</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Une règle écrite veut qu'un contrôle se tienne dans la même colonne que ce qu'il modifie. La table de traitement, ici, met les neuf passes à gauche et l'image au milieu — parce qu'une image qui change en direct a besoin de toute la largeur, et qu'on la regarde plus qu'on ne la règle.</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; border-top: 1px solid #ece6db; padding-top: 16px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div class="tag t-neuf" style="align-self: flex-start">sans réponse</div>
+        <div style="font-size: 13.5px; font-weight: 600">Le carnet n'est pas mesuré</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Je compte sept écrans contre onze, mais je n'ai jamais chiffré ce que le carnet occupe. Sur ces maquettes il porte une vingtaine de lignes en permanence, là où une barre d'onglets en porte trois. Moins d'écrans ne veut pas dire plus simple tant que ce chiffre n'est pas donné — ni ce qu'il devient avec deux cents choses dans un jeu.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div class="tag t-neuf" style="align-self: flex-start">sans réponse</div>
+        <div style="font-size: 13.5px; font-weight: 600">Le mot « planche » sert deux fois</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Dans l'application, une planche est la feuille qui revient de l'IA, et une règle dit qu'elle ne porte qu'une seule chose du jeu. Ici, « une planche » nomme aussi l'une des quatre présentations, et j'y ai rangé la toile — qui porte tout. Tant que cette piste vit à côté, ça ne gêne personne ; le jour où elle se rapproche, il faudra un autre mot.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div class="tag t-neuf" style="align-self: flex-start">sans réponse</div>
+        <div style="font-size: 13.5px; font-weight: 600">Les deux vues jumelles</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">« De côté — plateforme » et « de côté — défilement » écrivent exactement le même texte au modèle, mot pour mot. Seul leur nom diffère. Ou l'une des deux disparaît, ou leurs consignes doivent différer pour de bon — et c'est une question de produit, pas de dessin.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

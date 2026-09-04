@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .ligne { display: grid; grid-template-columns: 26px minmax(0,1fr) 76px; gap: 14px; align-items: start; padding: 5px 0; border-top: 1px solid #ece6db; }
+    .inter { width: 26px; height: 15px; border-radius: 999px; background: #221f1b; position: relative; margin-top: 3px; }
+    .inter i { position: absolute; right: 2px; top: 2px; width: 11px; height: 11px; border-radius: 999px; background: #fffdfa; display: block; }
+    .inter-off { background: #d6cdbd; }
+    .inter-off i { left: 2px; right: auto; }
+    .part { font-size: 14px; line-height: 1.4; color: #221f1b; }
+    .nom { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #948c80; }
+    .past { width: 15px; height: 15px; border-radius: 2px; }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <!-- ══════ LE CARNET ══════ -->
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+    <div style="opacity: .42; display: flex; flex-direction: column; gap: 18px">
+    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div class="serif" style="font-size: 25px; line-height: 1.1">Le Marais du Vieux Moulin</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e">41 images · 12 poses sur 18</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
+      <div class="rl" style="font-weight: 600"><span>Les personnages</span><span class="num">3</span></div>
+      <div class="rl-sub" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le pélerin</span><span class="num" style="color: #a8492c">6 / 6</span></div>
+      <div class="rl-sub"><span>Le garde du moulin</span><span class="num">6 / 6</span></div>
+      <div class="rl-sub"><span>La grenouille des tourbières</span><span class="num">0 / 6</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+      <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
+      <div class="rl"><span>Son nom et son dossier</span></div>
+      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+      <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
+      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+      <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
+      <div class="rl"><span>Son détourage de départ</span></div>
+      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+      <div class="rl"><span>Les dépenses</span><span class="num">$1,53</span></div>
+    </div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 14px 10px 0; display: flex; flex-direction: column; gap: 9px">
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Le carnet reste là pendant qu'on paie, en retrait. Aujourd'hui : $0,0352 · 2 appels. Depuis le début : $1,53 · 72 appels.</div>
+      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
+        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ CE QU'ON ENVOIE ══════ -->
+  <div style="display: flex; flex-direction: column; overflow: hidden">
+    <div style="padding: 20px 32px 0; display: flex; flex-direction: column; gap: 12px; flex-grow: 1; overflow: hidden">
+
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <h1 class="serif" style="margin: 0; font-size: 40px; line-height: 1">Ce qu'on envoie à l'IA</h1>
+          <div style="font-size: 14.5px; color: #4e483f">L'épée sur 5 poses du pélerin · 1 image à générer · 1 appel</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 22px; font-size: 12.5px; color: #6d675e">
+          <span>11 lignes</span><span>·</span><span>2 images jointes</span><span>·</span><span>1 189 signes</span>
+        </div>
+      </div>
+
+      <div style="font-size: 13px; line-height: 1.5; color: #6d675e; border-left: 2px solid #d6cdbd; padding-left: 12px; max-width: 68em">
+        <strong style="font-weight: 600; color: #4e483f">Modifier pour cette génération uniquement.</strong> Pour changer le texte durablement, va sur la fiche de l'épée.
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; flex-grow: 1; overflow: hidden">
+
+        <!-- Colonne gauche -->
+        <div style="display: flex; flex-direction: column; gap: 10px">
+
+          <div style="display: flex; flex-direction: column">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 8px">
+              <div class="serif" style="font-size: 22px">Le style du jeu</div>
+              <div class="num">6 lignes envoyées sur 7</div>
+            </div>
+            <div class="ligne">
+              <div class="inter"><i></i></div>
+              <div><div class="nom">monde</div><div class="part">Royaume de tourbe et de fer, marais au nord, vieux chemins boueux, ruines médiévales</div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div class="ligne">
+              <div class="inter"><i></i></div>
+              <div><div class="nom">époque</div><div class="part">Haut Moyen Âge, avant la poudre</div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div class="ligne">
+              <div class="inter"><i></i></div>
+              <div><div class="nom">trait</div><div class="part">Rendering: crisp pixel art, hard-edged 1-pixel dark brown outline, flat color fills, discrete pixel clusters, no gradients, no anti-aliasing, no soft edges</div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div class="ligne">
+              <div class="inter"><i></i></div>
+              <div><div class="nom">éclairage</div><div class="part">Lumière rasante, ambiance sombre, ombres portées courtes</div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div class="ligne">
+              <div class="inter"><i></i></div>
+              <div><div class="nom">vue</div><div class="part">Camera: strict 90-degree top-down view, directly overhead, zero perspective, zero camera elevation, no 3/4 view</div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div class="ligne">
+              <div class="inter inter-off"><i></i></div>
+              <div><div class="nom">technique</div><div class="part" style="color: #aaa298">Sprite isolé sur fond plat, grille stricte 64×64 px, pas de perspective</div></div>
+              <div style="text-align: right"><span style="font-size: 12px; color: #948c80">non envoyée</span></div>
+            </div>
+            <div style="border-top: 1px solid #ece6db; padding-top: 9px; font-size: 12.5px; color: #948c80">
+              Une ligne décochée n'est pas envoyée, mais son texte est conservé.
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 5px">
+              <div class="serif" style="font-size: 22px">Les images jointes</div>
+              <div class="num">2 sur 14 places</div>
+            </div>
+            <div class="ligne" style="grid-template-columns: 26px 62px minmax(0,1fr) 76px">
+              <div class="inter"><i></i></div>
+              <div style="width: 62px; height: 62px; background: #a8a7a4; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 16 24" width="48" height="48" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="3" y="10" width="2" height="6" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="3" height="5" fill="#5a3f28"/></svg></div>
+              <div><div class="nom">à copier — la planche des corps</div><div class="part" style="font-size: 13px">« la même planche, avec l'épée dans les mains, ne touche à rien d'autre »</div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div class="ligne" style="grid-template-columns: 26px 62px minmax(0,1fr) 76px">
+              <div class="inter"><i></i></div>
+              <div style="width: 62px; height: 62px; background: #a8a7a4; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 16 16" width="48" height="48" shape-rendering="crispEdges"><rect x="2" y="2" width="12" height="12" fill="#6b6357"/><rect x="5" y="4" width="6" height="8" fill="#2f4a35"/><rect x="6" y="5" width="4" height="3" fill="#d8bb95"/></svg></div>
+              <div><div class="nom">style seulement — concept art</div><div class="part" style="font-size: 13px">le concept art du pélerin</div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div style="border-top: 1px solid #ece6db; padding-top: 9px; font-size: 12.5px; color: #948c80">
+              L'étiquette dit au modèle quoi faire de l'image : la copier, ou en prendre le style.
+            </div>
+          </div>
+        </div>
+
+        <!-- Colonne droite -->
+        <div style="display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; flex-direction: column">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 8px">
+              <div class="serif" style="font-size: 22px">La demande</div>
+              <div class="num">3 lignes</div>
+            </div>
+            <div class="ligne">
+              <div class="inter"><i></i></div>
+              <div><div class="nom">le sujet</div><div class="part">A classic one hand sword</div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div class="ligne">
+              <div class="inter"><i></i></div>
+              <div><div class="nom">où la poser</div><div class="part">held in the hands, contained within the existing silhouette; do not change the body, the pose, the colors or the background</div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div class="ligne">
+              <div class="inter"><i></i></div>
+              <div><div class="nom">la grille de la planche</div><div class="part">Render this as a sprite sheet of 5 sprites of the SAME subject. Exactly 3 columns and 2 rows, 5 cells total, one single sprite per cell, evenly spaced on a regular grid, in reading order: 1. walking; 2. running; 3. attacking; 4. hurt; 5. dead. <a href="#" style="text-decoration: none">voir les 372 signes restants ›</a></div></div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">modifier</a></div>
+            </div>
+            <div style="border-top: 1px solid #ece6db; padding-top: 9px; font-size: 12.5px; color: #948c80">
+              L'atelier connaît la position de chaque case : au retour, le découpage en 5 images est automatique.
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 8px">
+              <div class="serif" style="font-size: 22px">Les options</div>
+              <div class="num">2</div>
+            </div>
+            <div class="ligne">
+              <div class="inter inter-off"><i></i></div>
+              <div>
+                <div class="nom">joindre la palette du jeu</div>
+                <div style="display: flex; gap: 3px; margin: 5px 0 6px; opacity: 0.4">
+                  <div class="past" style="background: #2f4a35"></div><div class="past" style="background: #46614a"></div><div class="past" style="background: #6b7d5c"></div><div class="past" style="background: #a8a06f"></div>
+                  <div class="past" style="background: #d8bb95"></div><div class="past" style="background: #a87a4e"></div><div class="past" style="background: #7a5a34"></div><div class="past" style="background: #5a3f28"></div>
+                  <div class="past" style="background: #6b6357"></div><div class="past" style="background: #9a938a"></div><div class="past" style="background: #3a3630"></div><div class="past" style="background: #221f1b"></div>
+                </div>
+                <div style="font-size: 12px; color: #948c80">Indisponible — ce jeu n'a pas encore de palette. <a href="#" style="text-decoration: none">Créer une palette ›</a></div>
+              </div>
+              <div></div>
+            </div>
+            <div class="ligne">
+              <div class="inter"><i></i></div>
+              <div>
+                <div class="nom">imposer une couleur de fond</div>
+                <div style="display: flex; align-items: center; gap: 9px; margin-top: 4px">
+                  <div style="width: 20px; height: 20px; border-radius: 3px; border: 1px dashed #c9c2b6"></div>
+                  <div class="part">aucune — le modèle choisit son fond</div>
+                </div>
+                <div style="font-size: 12px; color: #948c80; margin-top: 4px">Une couleur imposée est interdite sur le sujet : le détourage devient net.</div>
+              </div>
+              <div style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">choisir</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Le pied qui paie -->
+    <div style="border-top: 1px solid #ddd5c8; background: #efe9de; padding: 12px 32px 14px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 5px; min-width: 0">
+        <div class="rt">Le détail</div>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 74px 84px; gap: 0 18px; font-size: 12.5px; color: #4e483f; max-width: 34em">
+          <div>1 planche de 5 cases</div><div class="mono" style="color: #6d675e">1 appel</div><div class="mono" style="text-align: right">$0,0189</div>
+          <div style="border-top: 1px solid #ddd5c8; padding-top: 4px; margin-top: 3px; font-weight: 600">Total</div>
+          <div style="border-top: 1px solid #ddd5c8; padding-top: 4px; margin-top: 3px"></div>
+          <div class="mono" style="border-top: 1px solid #ddd5c8; padding-top: 4px; margin-top: 3px; text-align: right; font-weight: 500; color: #a8492c">$0,0189</div>
+        </div>
+        <div style="font-size: 12px; color: #948c80; max-width: 42em">Les 5 cases arrivent dans une seule image, donc un seul appel. Demander plusieurs versions du même sujet lance autant d'appels, et le total est multiplié d'autant.</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px">
+        <a href="#" style="font-size: 13.5px; text-decoration: none; white-space: nowrap">Annuler</a>
+        <button style="height: 44px; font-family: inherit; font-size: 15.5px; font-weight: 600; color: #fffdfa; background: #a8492c; border: none; border-radius: 8px; padding: 0 24px; cursor: pointer; white-space: nowrap">Payer et lancer — $0,0189</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ LE TEXTE FINAL ══════ -->
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 20px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div class="rt">Le texte final</div>
+      <div style="font-size: 13px; line-height: 1.45; color: #4e483f">Tel qu'il sera envoyé, avec les 2 images jointes.</div>
+    </div>
+    <div style="flex-grow: 1; border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 14px; overflow: hidden">
+      <div class="mono" style="font-size: 11.5px; line-height: 1.6; color: #3d382f; white-space: pre-line">CONTEXT
+World: Royaume de tourbe et de fer, marais au nord, vieux chemins boueux, ruines médiévales
+Era: Haut Moyen Âge, avant la poudre
+Rendering: crisp pixel art, hard-edged 1-pixel dark brown outline, flat color fills, discrete pixel clusters, no gradients, no anti-aliasing, no soft edges
+Lighting: Lumière rasante, ambiance sombre, ombres portées courtes
+Camera: strict 90-degree top-down view, directly overhead, zero perspective, zero camera elevation, no 3/4 view
+
+REFERENCES
+Image 1 — the body sheet, 5 cells. Keep every body exactly as it is.
+Image 2 — style guide only. Do not copy its framing.
+
+REQUEST
+A classic one hand sword, held in the hands, contained within the existing silhouette; do not change the body, the pose, the colors or the background.
+
+Render this as a sprite sheet of 5 sprites of the SAME subject. Exactly 3 columns and 2 rows…</div>
+    </div>
+    <a href="#" style="font-size: 13.5px; text-decoration: none">Éditer ce texte ›</a>
+    <div style="font-size: 12px; line-height: 1.45; color: #948c80">Si tu l'édites, c'est exactement ce texte qui part. L'atelier n'ajoute plus rien avant ni après.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

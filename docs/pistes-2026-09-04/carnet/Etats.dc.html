@@ -1,0 +1,202 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: #948c80; }
+    .fiche { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 14px 15px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+    .ft { font-size: 15px; font-weight: 600; line-height: 1.2; }
+    .fd { font-size: 12px; line-height: 1.5; color: #4e483f; }
+    .regle { font-size: 11.5px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 9px; margin-top: auto; }
+    .demo { background: #f2ede4; border: 1px solid #e6dfd2; border-radius: 7px; padding: 11px; display: flex; flex-direction: column; gap: 8px; }
+    .bt { height: 34px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 6px; font-size: 12.5px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
+    .bt-off { background: #ece6db; border-color: #ddd5c8; color: #a49a8b; }
+    .case { height: 64px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; }
+    .vide { border: 1px dashed #c9c2b6; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #b8b0a3; }
+    .lgn { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 8px; border-radius: 4px; font-size: 12.5px; color: #3d382f; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #948c80; }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; background: #f7f3ec; padding: 30px 46px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+
+  <!-- ══════ EN-TÊTE ══════ -->
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="rt">Les huit états que les autres planches ne montrent pas</div>
+      <h1 class="serif" style="margin: 0; font-size: 40px; line-height: 1">Quand ça tourne, quand ça rate,<br>et quand il n'y a rien</h1>
+    </div>
+    <div style="max-width: 620px; display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 13.5px; line-height: 1.55; color: #4e483f">Les douze autres planches dessinent le cas heureux : tout est rempli, rien ne tourne, rien ne rate. Voici les huit qui manquent, avec les phrases exactes que le produit écrit déjà.</div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #6d675e; border-left: 3px solid #ddd5c8; padding-left: 11px">Deux règles sont déjà écrites dans le code, et les huit états les suivent : <strong style="font-weight: 600">un bouton éteint porte sa raison, jamais une infobulle</strong>, et <strong style="font-weight: 600">l'échec ne survient qu'au moment où l'on fabrique, jamais à l'ouverture.</strong></div>
+    </div>
+  </div>
+
+  <!-- ══════ LES HUIT ÉTATS ══════ -->
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 20px">
+
+    <!-- 1 · pendant que ça tourne -->
+    <div class="fiche">
+      <div class="ft">Pendant que ça tourne</div>
+      <div class="demo">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px">
+          <div class="case"><svg viewBox="0 0 16 16" width="40" height="40" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="2" fill="#2f4a35"/><rect x="6" y="3" width="4" height="3" fill="#d8bb95"/><rect x="4" y="6" width="8" height="6" fill="#2f4a35"/><rect x="6" y="8" width="4" height="4" fill="#c9b48c"/><rect x="5" y="12" width="2" height="3" fill="#5a3f28"/><rect x="9" y="12" width="2" height="3" fill="#5a3f28"/></svg></div>
+          <div style="height: 64px; border-radius: 5px; background: #ece6db; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 1px solid #ddd5c8">
+            <div style="width: 46px; height: 3px; border-radius: 2px; background: #ddd5c8; overflow: hidden"><div style="width: 62%; height: 3px; background: #a8492c"></div></div>
+            <div class="mono" style="font-size: 9.5px; color: #6d675e">14 s</div>
+          </div>
+          <div class="vide" style="height: 64px">vide</div>
+        </div>
+        <div style="font-size: 11.5px; color: #4e483f">La case de <strong style="font-weight: 600">marche</strong> attend son image. Le reste de l'atelier reste utilisable.</div>
+      </div>
+      <div class="fd">Le prix est déjà retenu : la case affiche <span class="mono" style="font-size: 11px">$0,0189</span> avant même que l'image arrive.</div>
+      <div class="regle">On peut changer d'écran, ouvrir un autre personnage, retoucher une image. Le travail continue et la case se remplit toute seule.</div>
+    </div>
+
+    <!-- 2 · quand ça rate -->
+    <div class="fiche">
+      <div class="ft">Quand le modèle refuse</div>
+      <div class="demo" style="border-color: #dcbcb2; background: #f8ece9">
+        <div style="display: flex; gap: 8px; align-items: flex-start">
+          <div style="width: 64px; height: 64px; border: 1px dashed #dcbcb2; border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8695a" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px; min-width: 0">
+            <div style="font-size: 12px; font-weight: 600; color: #8a3f33">L'appel a été refusé</div>
+            <div class="mono" style="font-size: 10px; line-height: 1.45; color: #6d675e">Your request was rejected by the safety system.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px"><div class="bt" style="height: 28px; font-size: 11.5px">Reformuler</div><div class="bt" style="height: 28px; font-size: 11.5px">Relancer</div></div>
+      </div>
+      <div class="fd">Rien n'a été facturé. C'est arrivé <strong style="font-weight: 600">1 fois sur 72</strong> depuis le 27 août.</div>
+      <div class="regle">Le refus reste dans la case, avec sa raison en toutes lettres. Il ne part pas au bout de trois secondes et il se retrouve dans le journal des dépenses.</div>
+    </div>
+
+    <!-- 3 · aucune clé -->
+    <div class="fiche">
+      <div class="ft">Quand la clé manque</div>
+      <div class="demo">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px">
+            <span style="color: #6d675e">Le modèle</span><span>seedream-5-0-pro</span>
+          </div>
+          <div class="bt bt-off" style="justify-content: space-between; padding: 0 11px"><span>Envoyer</span><span class="mono" style="font-size: 11px">$0,0189</span></div>
+          <div style="font-size: 11.5px; color: #8a3f33">aucune clé pour ce fournisseur</div>
+          <a href="#" style="font-size: 11.5px; text-decoration: none">Ouvrir « Ses IA et ses clés » ›</a>
+        </div>
+      </div>
+      <div class="fd">Un seul des deux fournisseurs a une clé. Les 49 modèles ne sont pas tous utilisables.</div>
+      <div class="regle">Le bouton éteint écrit pourquoi, juste en dessous, et dit où aller. Jamais d'infobulle : une raison qu'il faut survoler est une raison cachée.</div>
+    </div>
+
+    <!-- 4 · l'atelier ne répond pas -->
+    <div class="fiche">
+      <div class="ft">Quand l'atelier ne répond pas</div>
+      <div class="demo">
+        <div style="display: flex; align-items: center; gap: 8px; background: #fffdfa; border: 1px solid #ddd5c8; border-radius: 5px; padding: 8px 10px">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #b8695a; flex-shrink: 0"></span>
+          <span style="font-size: 12px; color: #3d382f">l'atelier ne répond pas</span>
+          <a href="#" style="margin-left: auto; font-size: 11.5px; text-decoration: none">Réessayer</a>
+        </div>
+        <div style="font-size: 11.5px; color: #4e483f">Les 41 images déjà chargées restent affichées et se retouchent normalement.</div>
+      </div>
+      <div class="fd">Trois phrases distinctes selon ce qui ne répond pas : l'atelier, la bibliothèque, ou les personnages.</div>
+      <div class="regle">Rien ne s'éteint à l'ouverture. Le refus n'arrive qu'au moment où l'on essaie de fabriquer — c'est là qu'il compte.</div>
+    </div>
+
+    <!-- 5 · un jeu tout neuf -->
+    <div class="fiche">
+      <div class="ft">Un jeu qui vient de naître</div>
+      <div class="demo" style="padding: 0; overflow: hidden">
+        <div style="display: grid; grid-template-columns: 118px minmax(0, 1fr); height: 148px">
+          <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 9px 6px; display: flex; flex-direction: column; gap: 1px">
+            <div class="mono" style="font-size: 8.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #a49a8b; padding: 0 6px 4px">Ce qu'il contient</div>
+            <div class="lgn" style="height: 19px; font-size: 11px"><span>Les personnages</span><span class="num" style="font-size: 10px">0</span></div>
+            <div class="lgn" style="height: 19px; font-size: 11px"><span>Les objets</span><span class="num" style="font-size: 10px">0</span></div>
+            <div class="lgn" style="height: 19px; font-size: 11px"><span>Les décors</span><span class="num" style="font-size: 10px">0</span></div>
+            <div class="lgn" style="height: 19px; font-size: 11px"><span>Les terrains</span><span class="num" style="font-size: 10px">0</span></div>
+            <div class="lgn" style="height: 19px; font-size: 11px"><span>L'équipement</span><span class="num" style="font-size: 10px">0</span></div>
+          </div>
+          <div style="background: #fffdfa; padding: 12px; display: flex; flex-direction: column; gap: 8px; justify-content: center">
+            <div style="font-size: 12.5px; font-weight: 600">Il manque tout, et c'est normal</div>
+            <div style="font-size: 11px; line-height: 1.45; color: #4e483f">Commence par dire comment ce jeu regarde le monde : sa vue, sa taille, son trait.</div>
+            <div class="bt bt-p" style="height: 27px; font-size: 11.5px">Régler son allure</div>
+          </div>
+        </div>
+      </div>
+      <div class="fd">Trois de tes six jeux sont dans cet état : ils ont un nom et rien d'autre.</div>
+      <div class="regle">Un carnet vide n'est pas un carnet cassé. Il montre les mêmes lignes, toutes à zéro, et une seule chose à faire ensuite.</div>
+    </div>
+
+    <!-- 6 · le catalogue -->
+    <div class="fiche">
+      <div class="ft">Quand le catalogue manque</div>
+      <div class="demo">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px">
+            <span style="color: #6d675e">Le modèle</span><span style="color: #a49a8b">—</span>
+          </div>
+          <div class="bt bt-off" style="justify-content: space-between; padding: 0 11px"><span>Envoyer</span><span class="mono" style="font-size: 11px; color: #b8b0a3">—</span></div>
+          <div style="font-size: 11.5px; color: #8a3f33">le catalogue n'a jamais été reçu</div>
+          <div class="bt" style="height: 28px; font-size: 11.5px">Réessayer</div>
+        </div>
+      </div>
+      <div class="fd">Le catalogue des 49 modèles a été reçu le 3 septembre à 20 h. Sans lui, aucun prix ne peut être annoncé.</div>
+      <div class="regle">Pas de prix, pas de bouton. L'atelier ne fabrique jamais quelque chose dont il ne sait pas dire le coût à l'avance.</div>
+    </div>
+
+    <!-- 7 · la grille tronquée -->
+    <div class="fiche">
+      <div class="ft">Quand il y a trop d'images</div>
+      <div class="demo">
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px">
+          <div style="height: 26px; border-radius: 3px; background: #c4bcae"></div><div style="height: 26px; border-radius: 3px; background: #c4bcae"></div><div style="height: 26px; border-radius: 3px; background: #c4bcae"></div><div style="height: 26px; border-radius: 3px; background: #c4bcae"></div><div style="height: 26px; border-radius: 3px; background: #c4bcae"></div>
+          <div style="height: 26px; border-radius: 3px; background: #d5cec2"></div><div style="height: 26px; border-radius: 3px; background: #d5cec2"></div><div style="height: 26px; border-radius: 3px; background: #e2dbd0"></div><div style="height: 26px; border-radius: 3px; background: #ece6db"></div><div style="height: 26px; border-radius: 3px; background: #f2ede4"></div>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 11.5px; color: #4e483f">200 images montrées sur 486</span>
+          <a href="#" style="font-size: 11.5px; text-decoration: none">Charger la suite ›</a>
+        </div>
+      </div>
+      <div class="fd">Aujourd'hui la grille s'arrête à 200 <strong style="font-weight: 600">sans le dire</strong>. On croit avoir tout vu.</div>
+      <div class="regle">Une liste coupée doit dire qu'elle est coupée, et combien il en reste. Un silence qui ressemble à une réponse complète est un mensonge.</div>
+    </div>
+
+    <!-- 8 · l'import -->
+    <div class="fiche">
+      <div class="ft">Douze fichiers déposés, trois refusés</div>
+      <div class="demo">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11.5px"><span style="color: #3d382f">9 images sont entrées</span><span style="color: #5c7a52">✓</span></div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; background: #f8ece9; border: 1px solid #e6cfc8; border-radius: 4px; padding: 5px 7px"><span style="color: #8a3f33; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">notes.pdf</span><span style="color: #8a3f33; flex-shrink: 0">pas une image</span></div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; background: #f8ece9; border: 1px solid #e6cfc8; border-radius: 4px; padding: 5px 7px"><span style="color: #8a3f33; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">planche-4k.png</span><span style="color: #8a3f33; flex-shrink: 0">trop lourde</span></div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; background: #f8ece9; border: 1px solid #e6cfc8; border-radius: 4px; padding: 5px 7px"><span style="color: #8a3f33; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">reference-de-pose.png</span><span style="color: #8a3f33; flex-shrink: 0">déjà là</span></div>
+        </div>
+      </div>
+      <div class="fd">Trois images apportées se sont perdues depuis le 27 août, sans qu'aucun écran ne le dise.</div>
+      <div class="regle">Douze fichiers déposés font douze réponses. Un import ne paie jamais — mais il peut rater, et alors il faut savoir lequel.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 12.5px; color: #6d675e">
+    <span>Aucun de ces huit états n'ajoute d'écran : ce sont des moments d'écrans qui existent déjà.</span>
+    <span class="mono" style="color: #948c80">les phrases en gris sont celles que le code écrit aujourd'hui</span>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .sec { padding: 0 60px; }
+    .bloc { border-top: 1px solid #e2dbd0; padding-top: 26px; margin-top: 34px }
+    .tt { font-family: 'Instrument Serif', Georgia, serif; font-size: 31px; line-height: 1.1; margin: 0 0 4px }
+    .st { font-size: 13.5px; color: #4e483f; line-height: 1.5; max-width: 830px; margin: 0 0 20px }
+    .carte { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; }
+    table.sp { border-collapse: collapse; width: 100% }
+    table.sp td, table.sp th { text-align: left; font-size: 12.5px; line-height: 1.45; padding: 9px 16px 9px 0; border-bottom: 1px solid #ece6db; vertical-align: top }
+    table.sp th { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: #948c80; font-weight: 400; border-bottom-color: #ddd5c8 }
+    table.sp td.m { font-size: 14px; font-weight: 600; white-space: nowrap }
+    table.sp td.x { color: #6d675e }
+    .niv { border-left: 2px solid #ddd5c8; margin-left: 13px; padding-left: 22px; position: relative }
+    .niv::before { content: ''; position: absolute; left: -2px; top: 21px; width: 20px; height: 2px; background: #ddd5c8 }
+    .bo { display: inline-flex; flex-direction: column; gap: 2px; border: 1px solid #ddd5c8; border-radius: 9px; background: #fffdfa; padding: 9px 15px; margin: 8px 0 }
+    .bo b { font-size: 14.5px; font-weight: 600 }
+    .bo span { font-size: 12.5px; color: #6d675e }
+    .bo em { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: #948c80 }
+    .no { display: grid; grid-template-columns: 168px minmax(0,1fr); gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #ece6db; font-size: 12.5px }
+    .no b { font-weight: 500; color: #8a3f33; text-decoration: line-through; text-decoration-color: #dcbcb2 }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1240px; background: #f7f3ec; padding: 0 0 70px">
+
+  <div style="padding: 54px 60px 0">
+    <div class="rt" style="margin-bottom: 12px">Le carnet — les mots</div>
+    <h1 class="serif" style="margin: 0 0 8px; font-size: 52px; line-height: 1.02">Comment on appelle les choses</h1>
+    <div style="font-size: 15px; color: #4e483f; line-height: 1.55; max-width: 830px">Un mot pour une chose, et le même partout : à l'écran, dans les menus, dans le guide, et dans ce qu'on écrit à propos de l'atelier. Ce qui n'est pas dans cette page ne s'écrit pas.</div>
+  </div>
+
+  <!-- ═══ 1. L'EMBOÎTEMENT ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Comment ça s'emboîte</h2>
+    <p class="st">Cinq niveaux, du plus grand au plus petit. Un seul est libre : les collections, qu'on crée soi-même. Les autres sont posés par l'atelier.</p>
+
+    <div style="display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 40px; align-items: start">
+      <div>
+        <div class="bo"><em>le jeu</em><b>Le Marais du Vieux Moulin</b><span>un dossier, une bible, une allure, des clés</span></div>
+        <div class="niv">
+          <div class="bo"><em>une famille — six, fixes</em><b>Les personnages</b><span>elle décide des outils qu'on aura</span></div>
+          <div class="niv">
+            <div class="bo" style="border-color: #a8492c"><em>une collection — libre, on la crée</em><b>Les héros</b><span>3 sujets · sert à ranger, à rien d'autre</span></div>
+            <div class="niv">
+              <div class="bo"><em>un sujet</em><b>Le pélerin</b><span>un nom, une description, ce qui existe déjà de lui</span></div>
+              <div class="niv">
+                <div class="bo"><em>une image</em><b>Le pélerin, au repos, vu de face</b><span>64 × 64, détourée, 24 couleurs</span></div>
+                <div class="niv">
+                  <div class="bo"><em>un calque</em><b>L'épée dans sa main</b><span>se pose par-dessus, se retire</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="carte" style="padding: 17px 19px">
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 7px">Un équipement s'emboîte autrement</div>
+        <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5; margin-bottom: 14px">Il n'a pas d'images à lui. Il a des <strong>emplois</strong>, et chaque emploi a les siennes.</div>
+        <div class="bo" style="margin-top: 0"><em>un sujet · famille équipements</em><b>Epée</b><span>« A classic one hand sword »</span></div>
+        <div class="niv">
+          <div class="bo"><em>un emploi</em><b>Portée par Le goliath, en main droite</b><span>6 poses × 4 directions · 24 calques</span></div>
+          <div class="bo"><em>un emploi</em><b>Portée par Le minus, dans le dos</b><span>24 calques, redessinés</span></div>
+          <div class="bo"><em>un emploi</em><b>Posée au sol</b><span>1 image · échelle « objet posé »</span></div>
+          <div class="bo"><em>un emploi</em><b>Son icône d'inventaire</b><span>1 image · échelle « élément d'interface »</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 2. LES MOTS ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Les mots, un par un</h2>
+    <p class="st">Quatre colonnes : le mot, ce qu'il désigne, un exemple pris dans le marais, et le mot avec lequel on le confond.</p>
+
+    <div class="rt" style="margin: 22px 0 8px">Ce que le jeu contient</div>
+    <table class="sp">
+      <tr><th style="width: 168px">Le mot</th><th style="width: 330px">Ce que c'est</th><th style="width: 250px">Dans le marais</th><th>À ne pas confondre avec</th></tr>
+      <tr><td class="m">un jeu</td><td>Un dossier, une bible, une allure, des clés. Tout ce qui suit lui appartient.</td><td class="x">Le Marais du Vieux Moulin</td><td class="x">le jeu qu'on fabrique dans un moteur — l'atelier n'en sait rien</td></tr>
+      <tr><td class="m">une famille</td><td>Le type. Six, posées par l'atelier, jamais modifiables. Elle décide des outils qu'on aura.</td><td class="x">Les personnages</td><td class="x">une collection, qu'on crée soi-même</td></tr>
+      <tr><td class="m">une collection</td><td>Un groupe qu'on crée pour ranger. Un sujet peut être dans plusieurs.</td><td class="x">Les héros · Les monstres du marais</td><td class="x">une famille, qui est fixe</td></tr>
+      <tr><td class="m">un sujet</td><td>Une chose du jeu. Un nom, une description, et des images qui viennent avec le temps.</td><td class="x">Le pélerin · Epée · Le vieux moulin</td><td class="x">une image, qui n'est qu'une de ses faces</td></tr>
+    </table>
+
+    <div class="rt" style="margin: 30px 0 8px">Ce qui sort de l'atelier</div>
+    <table class="sp">
+      <tr><th style="width: 168px">Le mot</th><th style="width: 330px">Ce que c'est</th><th style="width: 250px">Dans le marais</th><th>À ne pas confondre avec</th></tr>
+      <tr><td class="m">une image</td><td>Un fichier. Elle appartient à un sujet, ou à personne tant qu'on ne l'a pas rangée.</td><td class="x">Le pélerin, au repos</td><td class="x">un sujet, qui en a plusieurs</td></tr>
+      <tr><td class="m">une feuille</td><td>Une image qui contient plusieurs cases, revenue d'un seul appel. Elle se découpe.</td><td class="x">six poses en 1536 × 256</td><td class="x">une image ordinaire — tant qu'elle n'est pas découpée, ses cases n'existent pas</td></tr>
+      <tr><td class="m">une case</td><td>Un morceau d'une feuille, une fois coupé.</td><td class="x">la case « attaque »</td><td class="x">une case de tableau à l'écran</td></tr>
+      <tr><td class="m">un calque</td><td>Une image qui se pose par-dessus une autre, et se retire.</td><td class="x">le sac de voyage sur le pélerin qui marche</td><td class="x">une passe, qui modifie l'image elle-même</td></tr>
+      <tr><td class="m">une passe</td><td>Une retouche posée sur une image. Elles s'empilent et se retirent dans n'importe quel ordre.</td><td class="x">détourage · réduction à 64 px · 24 couleurs</td><td class="x">un calque, qui reste une image à part</td></tr>
+      <tr><td class="m">une vignette</td><td>Une image montrée en petit dans une grille.</td><td class="x">les 41 de la galerie</td><td class="x">l'icône d'inventaire, qui est une vraie image du jeu</td></tr>
+    </table>
+
+    <div class="rt" style="margin: 30px 0 8px">Ce qui décrit un sujet</div>
+    <table class="sp">
+      <tr><th style="width: 168px">Le mot</th><th style="width: 330px">Ce que c'est</th><th style="width: 250px">Dans le marais</th><th>À ne pas confondre avec</th></tr>
+      <tr><td class="m">une description</td><td>Ce que l'auteur écrit du sujet, et qui part au modèle à chaque demande.</td><td class="x">« A classic one hand sword »</td><td class="x">la bible, qui vaut pour tout le jeu</td></tr>
+      <tr><td class="m">une pose</td><td>Un moment du sujet. Les mêmes pour tous les personnages d'un jeu.</td><td class="x">repos · marche · course · attaque · dégâts · mort</td><td class="x">une direction, qui dit d'où on le voit</td></tr>
+      <tr><td class="m">une direction</td><td>D'où on voit le sujet. Le marais n'en a qu'une ; d'autres jeux en ont quatre.</td><td class="x">une seule</td><td class="x">la vue, qui est un réglage du jeu entier</td></tr>
+      <tr><td class="m">un emplacement</td><td>Un endroit du corps où un équipement s'accroche.</td><td class="x">le dos · les mains · la tête</td><td class="x">un emploi, qui est plus large</td></tr>
+      <tr><td class="m">un emploi</td><td>Une façon dont un équipement sert. Chacun a ses propres images.</td><td class="x">portée en main droite · posée au sol · son icône</td><td class="x">un emplacement, qui ne dit que l'endroit</td></tr>
+      <tr><td class="m">une animation</td><td>Des images dans un ordre, avec un tempo et une boucle.</td><td class="x">aucune pour l'instant</td><td class="x">une feuille, qui est une image et pas une durée</td></tr>
+    </table>
+
+    <div class="rt" style="margin: 30px 0 8px">Ce qui s'applique à tout le jeu</div>
+    <table class="sp">
+      <tr><th style="width: 168px">Le mot</th><th style="width: 330px">Ce que c'est</th><th style="width: 250px">Dans le marais</th><th>À ne pas confondre avec</th></tr>
+      <tr><td class="m">la bible</td><td>Sept lignes sur le monde et le trait, envoyées avec chaque demande.</td><td class="x">six remplies, la septième vide</td><td class="x">la description d'un sujet</td></tr>
+      <tr><td class="m">l'allure</td><td>Style, taille, pixelisation, couleurs. Quatre réglages sur cinq.</td><td class="x">pixel · 64 px · au plus proche · 24 couleurs</td><td class="x">la vue, réglée à part</td></tr>
+      <tr><td class="m">la vue</td><td>D'où la caméra regarde. Huit possibles, une par jeu.</td><td class="x">vue de dessus, à la verticale</td><td class="x">une direction, qui appartient au sujet</td></tr>
+      <tr><td class="m">une échelle</td><td>La place qu'un type de sujet prend dans son image.</td><td class="x">un objet tenu occupe 40 %</td><td class="x">la taille en pixels, qui est un réglage d'allure</td></tr>
+      <tr><td class="m">le détourage</td><td>Enlever le fond. Un réglage de départ pour le jeu, ajustable image par image.</td><td class="x">fond magenta, tolérance 18</td><td class="x">le recadrage, qui coupe les bords</td></tr>
+    </table>
+
+    <div class="rt" style="margin: 30px 0 8px">Ce qui coûte, et l'écran</div>
+    <table class="sp">
+      <tr><th style="width: 168px">Le mot</th><th style="width: 330px">Ce que c'est</th><th style="width: 250px">Dans le marais</th><th>À ne pas confondre avec</th></tr>
+      <tr><td class="m">un modèle</td><td>Une IA à qui on demande une image. Le mot ne sert qu'à ça.</td><td class="x">49 disponibles, 11 déjà employés</td><td class="x">un sujet — jamais</td></tr>
+      <tr><td class="m">un appel</td><td>Une demande envoyée, payée qu'elle réussisse ou non.</td><td class="x">72 appels, $1,55</td><td class="x">une image : un appel peut en rendre six</td></tr>
+      <tr><td class="m">l'atelier</td><td>L'application. Elle tourne sur ta machine.</td><td class="x">—</td><td class="x">le jeu, qui est ce qu'elle contient</td></tr>
+      <tr><td class="m">le carnet</td><td>La colonne de gauche, toujours là. Elle sert à aller quelque part.</td><td class="x">17 lignes fermé</td><td class="x">la barre, qui sert à faire</td></tr>
+      <tr><td class="m">la surface</td><td>Le milieu de l'écran, là où le travail se fait.</td><td class="x">une page, une matrice, une planche, une table</td><td class="x">le volet, qui est la colonne de droite</td></tr>
+      <tr><td class="m">la barre</td><td>⌘K. Elle cherche, et elle fait ce qui n'est nulle part à l'écran.</td><td class="x">—</td><td class="x">le carnet, qui ne fait qu'ouvrir</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══ 3. LES FAMILLES ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Ce que chaque famille apporte</h2>
+    <p class="st">C'est la famille qui décide de ce qu'un sujet possède et des outils qu'on trouve sur sa page. Un personnage et un terrain n'ouvrent pas le même écran.</p>
+
+    <table class="sp">
+      <tr><th style="width: 168px">La famille</th><th style="width: 360px">Ce qu'un sujet y possède</th><th>Les outils qu'elle apporte</th></tr>
+      <tr><td class="m">Les personnages</td><td>des poses, des directions, des animations, des emplacements de corps, de l'équipement porté</td><td class="x">le plan de poses · le vestiaire · l'essai en mouvement · la comparaison avec un autre</td></tr>
+      <tr><td class="m">Les objets</td><td>une image, parfois quelques variantes ; une échelle qui dit s'il est posé, tenu, ou meuble</td><td class="x">le choix de l'échelle · la mise en regard avec un personnage</td></tr>
+      <tr><td class="m">Les décors</td><td>un point d'accroche, une zone où l'on ne marche pas, un devant et un derrière</td><td class="x">la mise à l'échelle sur une silhouette · le réglage du passage</td></tr>
+      <tr><td class="m">Les terrains</td><td>des carreaux qui se répètent sans qu'on voie la jointure</td><td class="x">la vérification de couture · la construction d'une carte</td></tr>
+      <tr><td class="m">Les équipements</td><td>aucune image en propre — des emplois, et les images de chaque emploi</td><td class="x">le tableau des porteurs · les calques par pose et par direction · l'icône</td></tr>
+      <tr><td class="m">L'interface</td><td>des états : au repos, survolé, appuyé, éteint</td><td class="x">la planche des états · l'essai sur un fond de jeu</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══ 4. CE QU'ON N'ÉCRIT PAS ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Ce qu'on n'écrit pas</h2>
+    <p class="st">À gauche, les mots qui traînent dans les outils de jeu et dans le code. À droite, ce qu'on écrit à la place. Aucun mot anglais n'apparaît à l'écran.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 46px">
+      <div>
+        <div class="no"><b>asset</b><span>un sujet, ou une image, selon ce qu'on désigne</span></div>
+        <div class="no"><b>sprite</b><span>une image</span></div>
+        <div class="no"><b>tile · tileset</b><span>un carreau · un terrain</span></div>
+        <div class="no"><b>layer</b><span>un calque</span></div>
+        <div class="no"><b>prompt</b><span>ce qui part au modèle</span></div>
+        <div class="no"><b>batch</b><span>un lot</span></div>
+        <div class="no"><b>canvas</b><span>la toile</span></div>
+        <div class="no"><b>item · entity</b><span>un sujet</span></div>
+      </div>
+      <div>
+        <div class="no"><b>composant</b><span>un sujet</span></div>
+        <div class="no"><b>chose</b><span>un sujet — le mot a servi, il ne sert plus</span></div>
+        <div class="no"><b>projet</b><span>un jeu</span></div>
+        <div class="no"><b>catégorie · dossier · tag</b><span>une collection</span></div>
+        <div class="no"><b>frame</b><span>une image de l'animation</span></div>
+        <div class="no"><b>slot</b><span>un emplacement</span></div>
+        <div class="no"><b>génération</b><span>un appel</span></div>
+        <div class="no"><b>upscale · downscale</b><span>agrandir · réduire</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 5. LES RÈGLES ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Quatre règles</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px">
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Un mot, une chose</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Jamais deux mots pour la même chose, jamais le même mot pour deux. Si un écran a besoin d'un mot qui n'est pas ici, c'est cette page qu'on modifie d'abord.</div></div>
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">On dit la famille quand on peut</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">« Ajouter un personnage », pas « ajouter un sujet ». Le mot <strong>sujet</strong> ne sort que lorsqu'on mélange les familles : une recherche, un compte total, une définition.</div></div>
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Les familles restent au pluriel</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Dans le carnet et dans les menus, on écrit « Les personnages », « Les terrains ». Au singulier, on parle d'un sujet précis.</div></div>
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Ce qui ne s'affiche pas ne se définit pas</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Cette page ne liste que les mots qu'un utilisateur voit. Ce qui n'existe que dans le code n'a pas à porter un nom pour lui.</div></div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

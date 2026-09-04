@@ -1,0 +1,18 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1180, "h": 2620, "title": "Trois ateliers possibles", "print": "flow" },
+    { "file": "ToileFaire.dc.html", "x": 0, "y": 2780, "w": 1440, "h": 900, "title": "A · La toile — faire" },
+    { "file": "ToileJuger.dc.html", "x": 1560, "y": 2780, "w": 1440, "h": 900, "title": "A · La toile — juger" },
+    { "file": "BarreFaire.dc.html", "x": 0, "y": 3840, "w": 1440, "h": 900, "title": "B · La barre — faire" },
+    { "file": "BarreJuger.dc.html", "x": 1560, "y": 3840, "w": 1440, "h": 900, "title": "B · La barre — juger" },
+    { "file": "CarnetFaire.dc.html", "x": 0, "y": 4900, "w": 1440, "h": 900, "title": "C · Le carnet — faire" },
+    { "file": "CarnetJuger.dc.html", "x": 1560, "y": 4900, "w": 1440, "h": 900, "title": "C · Le carnet — juger" }
+  ],
+  "annotations": [
+    { "id": "lecture", "x": -360, "y": 0, "w": 280, "text": "Commence ici.\n\nCe qu'on voit en ouvrant l'atelier aujourd'hui, ce que les trois directions gardent quoi qu'il arrive, et le résumé des trois.\n\nRien de tout ça ne touche à la refonte en cours." },
+    { "id": "direction-a", "x": -360, "y": 2780, "w": 280, "text": "A · La toile\n\nPlus d'écrans du tout : le jeu entier tient sur un plan qu'on déplace et qu'on zoome.\n\nÀ regarder : les cases vides — ce sont des trous qu'on voit, pas des chiffres qu'on lit." },
+    { "id": "direction-b", "x": -360, "y": 3840, "w": 280, "text": "B · La barre\n\nL'écran est l'image. Tout le reste se convoque au clavier et repart.\n\nÀ regarder : juger devient deux touches, et le prix reste dans le bouton." },
+    { "id": "direction-c", "x": -360, "y": 4900, "w": 280, "text": "C · Le carnet\n\nLe jeu devient un document clair. L'action est toujours à côté du trou.\n\nÀ regarder : la lumière neutre est devenue une plaque posée dans la page, au lieu d'être la couleur de tout l'écran." }
+  ],
+  "launch": { "view": "canvas" }
+}

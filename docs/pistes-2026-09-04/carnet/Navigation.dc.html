@@ -1,0 +1,304 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .sec { padding: 0 60px; }
+    .bloc { border-top: 1px solid #e2dbd0; padding-top: 26px; margin-top: 34px }
+    .tt { font-family: 'Instrument Serif', Georgia, serif; font-size: 31px; line-height: 1.1; margin: 0 0 4px }
+    .st { font-size: 13.5px; color: #4e483f; line-height: 1.5; max-width: 820px; margin: 0 0 20px }
+    .carte { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 11px; border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 6px; background: #fffdfa; color: #4e483f; white-space: nowrap }
+    .cmd { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; align-items: center; gap: 10px; height: 32px; padding: 0 11px; border-radius: 6px; font-size: 13.5px }
+    .cmd-on { background: #e6dfd2 }
+    .ct { position: absolute; border: 1px solid #ddd5c8; border-radius: 9px; background: #fffdfa; box-shadow: 0 12px 28px rgba(34,31,27,.13); padding: 5px; width: 224px }
+    .ci { height: 29px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-radius: 5px; font-size: 13px; color: #3d382f }
+    .ci-r { color: #8a3f33 }
+    .ci-off { color: #b0a89b }
+    .cs { height: 1px; background: #ece6db; margin: 4px 8px }
+    table.sp { border-collapse: collapse; width: 100% }
+    table.sp td, table.sp th { text-align: left; font-size: 12.5px; padding: 8px 14px 8px 0; border-bottom: 1px solid #ece6db; vertical-align: top }
+    table.sp th { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: #948c80; font-weight: 400; border-bottom-color: #ddd5c8 }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1240px; background: #f7f3ec; padding: 0 0 70px">
+
+  <div style="padding: 54px 60px 0">
+    <div class="rt" style="margin-bottom: 12px">Le carnet — se diriger</div>
+    <h1 class="serif" style="margin: 0 0 8px; font-size: 52px; line-height: 1.02">Tout ce qui s'ouvre, et par où</h1>
+    <div style="font-size: 15px; color: #4e483f; line-height: 1.55; max-width: 820px">Trois entrées seulement : le carnet pour aller quelque part, la barre pour faire quelque chose, le clic droit pour agir sur ce qu'on a sous le doigt. Aucun menu déroulant en haut de fenêtre.</div>
+  </div>
+
+  <!-- ═══ 1. LE CARNET ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Le carnet, fermé</h2>
+    <p class="st">Dix-sept lignes. C'est l'état au repos : trois sections, et une seule ligne ouverte à la fois. En ouvrir une referme la précédente.</p>
+
+    <div style="display: grid; grid-template-columns: 300px minmax(0,1fr); gap: 40px; align-items: start">
+      <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 16px 12px; display: flex; flex-direction: column; gap: 16px">
+        <div style="padding: 0 10px">
+          <div class="serif" style="font-size: 22px">Le Marais du Vieux Moulin</div>
+          <div style="font-size: 12px; color: #6d675e">41 images · 12 poses sur 18</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="rt" style="padding: 0 10px 5px">Ce que le jeu contient</div>
+          <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
+          <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+          <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+          <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+          <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+          <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="rt" style="padding: 0 10px 5px">Ce qui s'applique à tout</div>
+          <div class="rl"><span>Son nom et son dossier</span></div>
+          <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+          <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+          <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
+          <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+          <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+          <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
+          <div class="rl"><span>Son détourage de départ</span></div>
+          <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="rt" style="padding: 0 10px 5px">Toutes les images</div>
+          <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+          <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
+        </div>
+      </div>
+
+      <div>
+        <table class="sp">
+          <tr><th style="width: 220px">La ligne</th><th style="width: 150px">Ce qu'elle ouvre</th><th>Sur quel écran on arrive</th></tr>
+          <tr><td>Les personnages</td><td>ses trois noms</td><td><strong>Une matrice</strong> — les choses en lignes, les six poses en colonnes</td></tr>
+          <tr><td style="padding-left: 18px; color: #6d675e">↳ un nom</td><td>—</td><td><strong>Une page</strong> — sa fiche, ses poses, son vestiaire, son aperçu</td></tr>
+          <tr><td>Les objets · Les décors</td><td>ses noms</td><td><strong>Une matrice</strong>, puis <strong>une page</strong> par chose</td></tr>
+          <tr><td>Les terrains</td><td>ses noms</td><td><strong>Une planche</strong> — le carreau et sa jointure</td></tr>
+          <tr><td>L'interface</td><td>ses noms</td><td><strong>Une matrice</strong> — les boutons et leurs états</td></tr>
+          <tr><td>L'équipement</td><td>ses deux pièces</td><td><strong>Une matrice</strong> — les pièces en lignes, les porteurs en colonnes</td></tr>
+          <tr><td>Son nom et son dossier</td><td>—</td><td><strong>Une page</strong> de réglages</td></tr>
+          <tr><td>Son allure</td><td>—</td><td><strong>Une page</strong> illustrée — style, taille, pixelisation, couleurs</td></tr>
+          <tr><td>Le monde et son trait</td><td>—</td><td><strong>Une page</strong> — les sept lignes de la bible</td></tr>
+          <tr><td>Ses types d'objets</td><td>—</td><td><strong>Une table</strong> — les huit échelles</td></tr>
+          <tr><td>Son plan de poses</td><td>—</td><td><strong>Une table</strong> — les six poses et leur consigne</td></tr>
+          <tr><td>Ses emplacements de corps</td><td>—</td><td><strong>Une page</strong> — le corps, et ce qu'on y accroche</td></tr>
+          <tr><td>Ses mouvements</td><td>—</td><td><strong>Une planche</strong> — les images qui s'enchaînent</td></tr>
+          <tr><td>Son détourage de départ</td><td>—</td><td><strong>Une planche</strong> — réglé sur une vraie image</td></tr>
+          <tr><td>Ses IA et ses clés</td><td>—</td><td><strong>Une table</strong> — 49 modèles, leur prix, leur clé</td></tr>
+          <tr><td>La galerie</td><td>—</td><td><strong>Une matrice</strong> — les 41 images du jeu</td></tr>
+          <tr><td>Les dépenses</td><td>—</td><td><strong>Une table</strong> — appel par appel, ou par jeu, ou par modèle</td></tr>
+        </table>
+        <div style="font-size: 12.5px; color: #6d675e; margin-top: 14px; line-height: 1.5">Le nom du jeu, en haut, est la dix-huitième ligne : il ouvre la liste des six jeux et le bouton pour en commencer un.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 2. LA BARRE ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">La barre</h2>
+    <p class="st"><span class="kb">⌘K</span> depuis n'importe où. Elle cherche dans ce qui existe, et elle fait ce qui ne se trouve nulle part dans l'écran. Un seul verbe par ligne.</p>
+
+    <div style="display: grid; grid-template-columns: 500px minmax(0,1fr); gap: 40px; align-items: start">
+
+      <div class="carte" style="padding: 0; overflow: hidden; box-shadow: 0 18px 40px rgba(34,31,27,.12)">
+        <div style="display: flex; align-items: center; gap: 11px; padding: 15px 17px; border-bottom: 1px solid #ece6db">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#948c80" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <span style="font-size: 15px; color: #221f1b">grenouille</span><span style="width:1px;height:17px;background:#a8492c"></span>
+        </div>
+        <div style="padding: 7px 6px">
+          <div class="rt" style="padding: 5px 11px 6px">Dans ce jeu</div>
+          <div class="cmd cmd-on"><span style="color:#948c80">▣</span><span>La grenouille des tourbières</span><span class="num">0 / 6</span></div>
+          <div class="cmd"><span style="color:#948c80">▣</span><span>La vase <span style="color:#948c80">— un terrain</span></span><span class="num">vide</span></div>
+          <div class="rt" style="padding: 11px 11px 6px">Faire</div>
+          <div class="cmd"><span style="color:#a8492c">◆</span><span>Générer les 6 poses de la grenouille</span><span class="mono" style="font-size:11px;color:#a8492c">≈ $0,02</span></div>
+          <div class="cmd"><span style="color:#6d675e">◇</span><span>Lui écrire sa description</span><span class="kb">↵</span></div>
+          <div class="cmd"><span style="color:#6d675e">◇</span><span>Ajouter un personnage</span><span class="kb">⌘N</span></div>
+          <div class="rt" style="padding: 11px 11px 6px">Aller</div>
+          <div class="cmd"><span style="color:#6d675e">→</span><span>Son allure</span><span style="font-size:12px;color:#948c80">réglages</span></div>
+          <div class="cmd"><span style="color:#6d675e">→</span><span>Les dépenses</span><span style="font-size:12px;color:#948c80">$1,55</span></div>
+        </div>
+        <div style="border-top: 1px solid #ece6db; padding: 9px 15px; display: flex; gap: 16px; font-size: 11.5px; color: #948c80">
+          <span><span class="kb">↑↓</span> parcourir</span><span><span class="kb">↵</span> ouvrir</span><span><span class="kb">esc</span> fermer</span>
+          <span style="margin-left: auto">un losange plein coûte</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="rt" style="margin-bottom: 10px">Ce qu'elle sait faire, en entier</div>
+        <table class="sp">
+          <tr><th style="width: 132px">Groupe</th><th>Les verbes</th></tr>
+          <tr><td>Aller</td><td>ouvrir un jeu · un personnage · un objet · un décor · un terrain · une pièce d'équipement · un réglage · la galerie · les dépenses · le guide</td></tr>
+          <tr><td>Créer</td><td>un jeu · un personnage · un objet · un décor · un terrain · une pièce d'équipement · une pose · un emplacement de corps · un mouvement</td></tr>
+          <tr><td style="color: #a8492c">Générer</td><td style="color: #a8492c">une image · une pose · les poses manquantes · une planche pliée · une variante · un calque d'équipement · un carreau de terrain</td></tr>
+          <tr><td>Travailler</td><td>découper une planche · détourer · recadrer · réduire · changer la palette · renommer · dupliquer · écarter · restaurer</td></tr>
+          <tr><td>Sortir</td><td>exporter la sélection · exporter un personnage · exporter un terrain · ouvrir le dossier du jeu</td></tr>
+          <tr><td>Régler</td><td>changer de modèle · saisir une clé · changer le dossier de travail · rafraîchir le catalogue</td></tr>
+        </table>
+        <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: #4e483f; line-height: 1.5">
+          <div>Une ligne qui coûte porte son prix estimé à droite, et son losange est plein. Aucune autre ligne n'en a.</div>
+          <div>Ce qui ne peut pas se faire ne s'affiche pas grisé : la barre ne le propose pas du tout, et l'écran d'où l'on vient dit pourquoi.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 3. LES MENUS CONTEXTUELS ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Sous le doigt</h2>
+    <p class="st">Clic droit. Trois menus seulement, selon ce qu'on touche. Le premier item est toujours le geste le plus courant, le dernier toujours celui qui retire.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px">
+
+      <div>
+        <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 3px">Sur une image</div>
+        <div style="font-size: 12.5px; color: #6d675e; margin-bottom: 12px">dans une grille, une matrice, une planche</div>
+        <div style="position: relative; height: 322px">
+          <div class="ct" style="left: 0; top: 0">
+            <div class="ci">Ouvrir en grand<span class="kb">espace</span></div>
+            <div class="ci">La retoucher<span class="kb">⌘E</span></div>
+            <div class="cs"></div>
+            <div class="ci" style="color:#a8492c">En regénérer une autre<span class="mono" style="font-size:11px">$0,019</span></div>
+            <div class="ci" style="color:#a8492c">En faire une variante<span class="mono" style="font-size:11px">$0,019</span></div>
+            <div class="cs"></div>
+            <div class="ci">La mettre en favori</div>
+            <div class="ci">L'attacher à un personnage</div>
+            <div class="ci">La dupliquer</div>
+            <div class="cs"></div>
+            <div class="ci">L'exporter…</div>
+            <div class="ci">Ouvrir son fichier</div>
+            <div class="ci">Copier son prompt</div>
+            <div class="cs"></div>
+            <div class="ci ci-r">L'écarter<span class="kb">⌫</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 3px">Sur une chose du jeu</div>
+        <div style="font-size: 12.5px; color: #6d675e; margin-bottom: 12px">un personnage, un objet, un décor, un terrain</div>
+        <div style="position: relative; height: 322px">
+          <div class="ct" style="left: 0; top: 0">
+            <div class="ci">Ouvrir sa page<span class="kb">↵</span></div>
+            <div class="cs"></div>
+            <div class="ci" style="color:#a8492c">Générer ses poses manquantes<span class="mono" style="font-size:11px">6</span></div>
+            <div class="ci" style="color:#a8492c">Générer une planche pliée</div>
+            <div class="cs"></div>
+            <div class="ci">Lui écrire sa description</div>
+            <div class="ci">Lui donner de l'équipement</div>
+            <div class="ci">Changer sa famille</div>
+            <div class="ci">La renommer<span class="kb">F2</span></div>
+            <div class="ci">La dupliquer avec ses réglages</div>
+            <div class="cs"></div>
+            <div class="ci">L'exporter pour le moteur…</div>
+            <div class="ci ci-off">Voir ses mouvements</div>
+            <div class="cs"></div>
+            <div class="ci ci-r">La retirer du jeu</div>
+          </div>
+        </div>
+        <div style="font-size: 12px; color: #6d675e; line-height: 1.45; margin-top: -8px">« Voir ses mouvements » est éteint : ce jeu n'en a aucun. La ligne reste visible pour qu'on sache qu'elle existe.</div>
+      </div>
+
+      <div>
+        <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 3px">Sur plusieurs images</div>
+        <div style="font-size: 12.5px; color: #6d675e; margin-bottom: 12px">après une sélection au rectangle ou au ⇧clic</div>
+        <div style="position: relative; height: 322px">
+          <div class="ct" style="left: 0; top: 0">
+            <div style="padding: 7px 10px 3px; font-size: 12px; color: #948c80">14 images choisies</div>
+            <div class="ci">Les exporter…<span class="kb">⌘⇧E</span></div>
+            <div class="ci">Les détourer d'un coup</div>
+            <div class="ci">Les réduire à 64 px</div>
+            <div class="ci">Leur appliquer une palette</div>
+            <div class="cs"></div>
+            <div class="ci">Les attacher à un personnage</div>
+            <div class="ci">Les mettre en favori</div>
+            <div class="cs"></div>
+            <div class="ci">Tout choisir<span class="kb">⌘A</span></div>
+            <div class="ci">Ne rien choisir<span class="kb">esc</span></div>
+            <div class="cs"></div>
+            <div class="ci ci-r">Les écarter<span class="kb">⌫</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 4. LES RACCOURCIS ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Les touches</h2>
+    <p class="st">Aucune n'est obligatoire : tout ce qui suit se fait aussi à la souris. Elles sont écrites à droite de chaque geste, là où le geste se trouve.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px">
+      <div>
+        <div class="rt" style="margin-bottom: 10px">Partout</div>
+        <table class="sp">
+          <tr><td style="width: 88px"><span class="kb">⌘K</span></td><td>la barre</td></tr>
+          <tr><td><span class="kb">⌘J</span></td><td>changer de jeu</td></tr>
+          <tr><td><span class="kb">⌘N</span></td><td>ajouter une chose ici</td></tr>
+          <tr><td><span class="kb">⌘,</span></td><td>les réglages du jeu</td></tr>
+          <tr><td><span class="kb">⌘⌥,</span></td><td>les réglages de l'atelier</td></tr>
+          <tr><td><span class="kb">⌘B</span></td><td>replier le carnet</td></tr>
+          <tr><td><span class="kb">⌘I</span></td><td>ouvrir ou fermer le volet</td></tr>
+          <tr><td><span class="kb">?</span></td><td>le guide</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="rt" style="margin-bottom: 10px">Sur des images</div>
+        <table class="sp">
+          <tr><td style="width: 88px"><span class="kb">espace</span></td><td>voir en grand</td></tr>
+          <tr><td><span class="kb">⌘E</span></td><td>retoucher</td></tr>
+          <tr><td><span class="kb">⌘A</span></td><td>tout choisir</td></tr>
+          <tr><td><span class="kb">⇧clic</span></td><td>choisir une suite</td></tr>
+          <tr><td><span class="kb">⌫</span></td><td>écarter</td></tr>
+          <tr><td><span class="kb">⌘Z</span></td><td>défaire</td></tr>
+          <tr><td><span class="kb">1 2 4</span></td><td>zoom ×1, ×2, ×4</td></tr>
+          <tr><td><span class="kb">F</span></td><td>favori</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="rt" style="margin-bottom: 10px">Dans une liste ou une matrice</div>
+        <table class="sp">
+          <tr><td style="width: 88px"><span class="kb">↑ ↓</span></td><td>de ligne en ligne</td></tr>
+          <tr><td><span class="kb">← →</span></td><td>de colonne en colonne</td></tr>
+          <tr><td><span class="kb">↵</span></td><td>ouvrir</td></tr>
+          <tr><td><span class="kb">F2</span></td><td>renommer sur place</td></tr>
+          <tr><td><span class="kb">esc</span></td><td>revenir en arrière</td></tr>
+          <tr><td><span class="kb">/</span></td><td>filtrer la liste</td></tr>
+        </table>
+        <div style="font-size: 12.5px; color: #6d675e; line-height: 1.5; margin-top: 14px">Sur Windows, <span class="kb">⌘</span> se lit <span class="kb">Ctrl</span>. L'atelier l'écrit selon la machine.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 5. OÙ L'ON REVIENT ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Où l'on revient</h2>
+    <p class="st">On n'est jamais à plus de deux clics d'où que ce soit, et jamais coincé : le carnet reste à l'écran même pendant une génération.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px">
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Le fil, en haut de la surface</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Trois niveaux au plus : <span style="color:#948c80">Les personnages › La grenouille des tourbières ›</span> La feuille qui vient d'arriver. Chaque bout se clique.</div></div>
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Le carnet ne se ferme pas tout seul</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Aucun écran ne prend toute la fenêtre. Même pendant une génération, on peut aller voir autre chose et revenir.</div></div>
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Le seul écran qui prend tout</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">L'ouverture, quand aucun jeu n'est choisi. Dès qu'un jeu est ouvert, on ne la revoit plus qu'en la demandant.</div></div>
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Une image en grand se ferme sur place</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5"><span class="kb">espace</span> l'ouvre par-dessus, <span class="kb">espace</span> la referme, et on est resté exactement où on était.</div></div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

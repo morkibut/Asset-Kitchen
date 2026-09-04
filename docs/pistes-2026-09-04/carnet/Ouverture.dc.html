@@ -1,0 +1,204 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .jeu { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; }
+    .jeu-ouvert { border: 2px solid #a8492c; }
+    .bande { height: 56px; display: flex; }
+    .bande i { flex: 1 1 0; display: block; }
+    .corps { padding: 13px 15px 14px; display: flex; flex-direction: column; gap: 7px; flex-grow: 1; }
+    .nom { font-family: 'Instrument Serif', Georgia, serif; font-size: 23px; line-height: 1.1; }
+    .chiffres { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #6d675e; }
+    .puces { display: flex; flex-wrap: wrap; gap: 5px; }
+    .puce { font-size: 11.5px; color: #4e483f; border: 1px solid #e2dbd0; border-radius: 4px; padding: 2px 7px; background: #f7f3ec; white-space: nowrap; }
+    .puce-vide { color: #a49a8b; border-style: dashed; }
+    .bas { margin-top: auto; padding-top: 8px; border-top: 1px solid #ece6db; display: flex; align-items: baseline; justify-content: space-between; font-size: 11.5px; color: #948c80; }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; background: #f7f3ec; padding: 44px 60px 40px; display: flex; flex-direction: column; gap: 22px; overflow: hidden">
+
+  <!-- ══ En-tête ══ -->
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; border-bottom: 2px solid #221f1b; padding-bottom: 16px">
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">Asset Kitchen</div>
+      <h1 class="serif" style="margin: 0; font-size: 52px; line-height: 1">Sur quel jeu travaille-t-on&nbsp;?</h1>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div style="height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 13px; border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13.5px; color: #6d675e; min-width: 260px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2" stroke-linecap="square"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.5-4.5"/></svg>
+        chercher un jeu
+      </div>
+      <div style="height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-radius: 7px; background: #a8492c; color: #fffdfa; font-size: 14px; font-weight: 600">
+        <span style="font-size: 17px; font-weight: 300">+</span> Commencer un jeu
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Les six jeux ══ -->
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 26px; align-items: stretch">
+
+    <!-- Le Marais du Vieux Moulin — le dernier ouvert -->
+    <div class="jeu jeu-ouvert">
+      <div class="bande" style="background: #efeae1; border-bottom: 1px dashed #d3cabb; align-items: center; justify-content: center">
+        <div style="font-size: 11.5px; color: #a49a8b">pas encore de palette</div>
+      </div>
+      <div class="corps">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <div class="nom">Le Marais du Vieux Moulin</div>
+        </div>
+        <div class="chiffres">41 images · 12 poses sur 18 · $0,20</div>
+        <div class="puces">
+          <div class="puce">pixel art</div><div class="puce">64 px</div><div class="puce">24 couleurs</div>
+        </div>
+        <div class="puces">
+          <div class="puce">de dessus, verticale</div>
+        </div>
+        <div style="font-size: 12px; color: #6d675e; line-height: 1.4">3 personnages · 2 pièces d'équipement · style écrit sur 6 lignes</div>
+        <div class="bas"><span style="color: #a8492c; font-weight: 600">ouvert la dernière fois</span><span>1ᵉʳ sept.</span></div>
+      </div>
+    </div>
+
+    <!-- Essai animation -->
+    <div class="jeu">
+      <div class="bande"><i style="background:#b8bf9d"></i><i style="background:#a1a082"></i><i style="background:#a68b69"></i><i style="background:#5f8986"></i><i style="background:#9a7149"></i><i style="background:#706e64"></i><i style="background:#446c6c"></i><i style="background:#80502d"></i><i style="background:#5d4f3f"></i><i style="background:#4e5250"></i><i style="background:#4b4236"></i><i style="background:#2f5357"></i><i style="background:#2a3f41"></i><i style="background:#4f311d"></i><i style="background:#3d2e21"></i><i style="background:#34332f"></i><i style="background:#33251a"></i><i style="background:#2a2c29"></i><i style="background:#282018"></i><i style="background:#19353a"></i><i style="background:#162a2e"></i><i style="background:#1a2120"></i><i style="background:#181916"></i><i style="background:#13110e"></i></div>
+      <div class="corps">
+        <div class="nom">Essai animation</div>
+        <div class="chiffres">38 images · $0,08</div>
+        <div class="puces">
+          <div class="puce">pixel art</div><div class="puce">64 px</div><div class="puce">24 couleurs</div>
+        </div>
+        <div class="puces">
+          <div class="puce">de côté — plateforme</div><div class="puce">1 direction</div>
+        </div>
+        <div style="font-size: 12px; color: #6d675e; line-height: 1.4">9 poses au lieu de 6 · 6 emplacements de corps</div>
+        <div class="bas"><span>palette de 24</span><span>1ᵉʳ sept.</span></div>
+      </div>
+    </div>
+
+    <!-- vignettes -->
+    <div class="jeu">
+      <div class="bande" style="background: #efeae1; border-bottom: 1px dashed #d3cabb; align-items: center; justify-content: center">
+        <div style="font-size: 11.5px; color: #a49a8b">pas encore de palette</div>
+      </div>
+      <div class="corps">
+        <div class="nom">vignettes</div>
+        <div class="chiffres">27 images · $0,89</div>
+        <div class="puces">
+          <div class="puce" style="border-color: #c9b8a0; background: #f4ece2">dessin</div><div class="puce">finesse 512</div><div class="puce">24 couleurs</div>
+        </div>
+        <div class="puces">
+          <div class="puce puce-vide">aucune vue choisie</div>
+        </div>
+        <div style="font-size: 12px; color: #6d675e; line-height: 1.4">Le seul jeu en dessin. Sans grille de pixels, la taille devient une finesse.</div>
+        <div class="bas"><span>le plus cher des six</span><span>31 août</span></div>
+      </div>
+    </div>
+
+    <!-- coeur de pierre - 01 -->
+    <div class="jeu">
+      <div class="bande"><i style="background:#c6b9a8"></i><i style="background:#a9a18c"></i><i style="background:#a18c79"></i><i style="background:#9a7a67"></i><i style="background:#956a5b"></i><i style="background:#6e6a63"></i><i style="background:#815447"></i><i style="background:#6f5044"></i><i style="background:#665348"></i><i style="background:#644840"></i><i style="background:#57534f"></i><i style="background:#554945"></i><i style="background:#3c4b53"></i><i style="background:#693f39"></i><i style="background:#5a3e39"></i><i style="background:#523c3d"></i><i style="background:#523933"></i><i style="background:#464143"></i><i style="background:#483741"></i><i style="background:#493533"></i><i style="background:#3b4048"></i><i style="background:#3b3c3f"></i><i style="background:#39363a"></i><i style="background:#2f3d49"></i><i style="background:#2f363f"></i><i style="background:#2f333b"></i><i style="background:#512e31"></i><i style="background:#412d32"></i><i style="background:#3b2d31"></i><i style="background:#3a262f"></i><i style="background:#31303a"></i><i style="background:#322d31"></i><i style="background:#32242d"></i><i style="background:#2b2f38"></i><i style="background:#2b2c36"></i><i style="background:#2a2b31"></i><i style="background:#29262f"></i><i style="background:#2a1e28"></i><i style="background:#252832"></i><i style="background:#212833"></i><i style="background:#23242d"></i><i style="background:#23222a"></i><i style="background:#1e2129"></i><i style="background:#201d29"></i><i style="background:#1a1c27"></i><i style="background:#1d1b21"></i><i style="background:#1a1622"></i><i style="background:#150f1b"></i></div>
+      <div class="corps">
+        <div class="nom">coeur de pierre — 01</div>
+        <div class="chiffres">39 images · $0,27</div>
+        <div class="puces">
+          <div class="puce">pixel art</div><div class="puce">128 px</div><div class="puce">48 couleurs</div>
+        </div>
+        <div class="puces">
+          <div class="puce">de dessus, 3/4</div><div class="puce">4 directions</div>
+        </div>
+        <div style="font-size: 12px; color: #6d675e; line-height: 1.4">Le seul jeu au style entièrement écrit (7 lignes sur 7) · casque et hache de guerre</div>
+        <div class="bas"><span>palette de 48</span><span>28 août</span></div>
+      </div>
+    </div>
+
+    <!-- Bac à sable -->
+    <div class="jeu">
+      <div class="bande"><i style="background:#af8c5d"></i><i style="background:#8d6842"></i><i style="background:#955825"></i><i style="background:#675540"></i><i style="background:#834d23"></i><i style="background:#774b25"></i><i style="background:#714825"></i><i style="background:#474843"></i><i style="background:#734120"></i><i style="background:#674020"></i><i style="background:#623e21"></i><i style="background:#5c3d24"></i><i style="background:#5b3920"></i><i style="background:#363c3c"></i><i style="background:#62331b"></i><i style="background:#55341c"></i><i style="background:#4f341f"></i><i style="background:#4e2f19"></i><i style="background:#473221"></i><i style="background:#472e1b"></i><i style="background:#452b18"></i><i style="background:#3e2f24"></i><i style="background:#3c2b1e"></i><i style="background:#3c291a"></i><i style="background:#2a2c2c"></i><i style="background:#0d2e41"></i><i style="background:#442414"></i><i style="background:#3a2415"></i><i style="background:#362518"></i><i style="background:#362113"></i><i style="background:#31251d"></i><i style="background:#312317"></i><i style="background:#311f13"></i><i style="background:#2b241f"></i><i style="background:#29211c"></i><i style="background:#2b2017"></i><i style="background:#2a1e15"></i><i style="background:#2a1a11"></i><i style="background:#232322"></i><i style="background:#231f1c"></i><i style="background:#221d1b"></i><i style="background:#241d16"></i><i style="background:#192125"></i><i style="background:#0b212f"></i><i style="background:#231a14"></i><i style="background:#181a1c"></i><i style="background:#1b1614"></i><i style="background:#100e0d"></i></div>
+      <div class="corps">
+        <div class="nom">Bac à sable</div>
+        <div class="chiffres">21 images · $0,05</div>
+        <div class="puces">
+          <div class="puce">pixel art</div><div class="puce">128 px</div><div class="puce">48 couleurs</div>
+        </div>
+        <div class="puces">
+          <div class="puce puce-vide">aucune vue choisie</div>
+        </div>
+        <div style="font-size: 12px; color: #6d675e; line-height: 1.4">Aucun texte de style. Un décor y remplit 36 % de sa case au lieu de 100.</div>
+        <div class="bas"><span>palette de 48</span><span>27 août</span></div>
+      </div>
+    </div>
+
+    <!-- Coeur de pierre -->
+    <div class="jeu">
+      <div class="bande"><i style="background:#d6b196"></i><i style="background:#dea386"></i><i style="background:#da8b67"></i><i style="background:#8c8b87"></i><i style="background:#bc6c40"></i><i style="background:#6f6964"></i><i style="background:#9b4f30"></i><i style="background:#804b35"></i><i style="background:#764731"></i><i style="background:#74422d"></i><i style="background:#69483a"></i><i style="background:#3c4653"></i><i style="background:#8e3618"></i><i style="background:#6b3424"></i><i style="background:#631f1a"></i><i style="background:#50191b"></i><i style="background:#482a25"></i><i style="background:#482823"></i><i style="background:#472220"></i><i style="background:#34282c"></i><i style="background:#150b0c"></i><i style="background:#010001"></i><i style="background:#000002"></i><i style="background:#000000"></i></div>
+      <div class="corps">
+        <div class="nom">Coeur de pierre</div>
+        <div class="chiffres">aucune image · rien dépensé</div>
+        <div class="puces">
+          <div class="puce">pixel art</div><div class="puce">64 px</div><div class="puce">24 couleurs</div>
+        </div>
+        <div class="puces">
+          <div class="puce puce-vide">aucune vue choisie</div>
+        </div>
+        <div style="font-size: 12px; color: #6d675e; line-height: 1.4">Réglé puis laissé de côté : il a une palette et pas une seule image.</div>
+        <div class="bas"><span>palette de 24</span><span>27 août</span></div>
+      </div>
+    </div>
+
+    <!-- Commencer un jeu -->
+    <div style="border: 1px dashed #c9c2b6; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; padding: 24px; text-align: center">
+      <div style="width: 40px; height: 40px; border-radius: 999px; border: 1px solid #c9c2b6; display: flex; align-items: center; justify-content: center; font-size: 21px; color: #a49a8b; font-weight: 300">+</div>
+      <div style="font-size: 15px; font-weight: 600; color: #4e483f">Commencer un jeu</div>
+      <div style="font-size: 12.5px; line-height: 1.45; color: #948c80">Un nom suffit. Les réglages se posent après, et rien n'est obligatoire.</div>
+    </div>
+
+    <!-- Comment revenir ici -->
+    <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4; padding: 15px 16px; display: flex; flex-direction: column; gap: 11px">
+      <div class="rt">Changer de jeu, une fois dedans</div>
+      <div style="border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; padding: 9px 11px; display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div style="min-width: 0">
+          <div class="serif" style="font-size: 16px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Le Marais du Vieux Moulin</div>
+          <div style="font-size: 11px; color: #948c80">41 images · 12 poses sur 18</div>
+        </div>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a8492c" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">
+        Le nom du jeu, en haut du carnet, ouvre cette liste. C'est le seul endroit où l'on change de jeu.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Le pied ══ -->
+  <div style="margin-top: auto; border-top: 1px solid #ddd5c8; padding-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 30px">
+    <div style="display: flex; align-items: center; gap: 26px; font-size: 13px; color: #4e483f">
+      <span><strong style="font-weight: 600">6 jeux</strong> · 166 images · <span class="mono">$1,53</span> dépensés en tout</span>
+      <span style="width: 1px; height: 15px; background: #ddd5c8"></span>
+      <span style="color: #6d675e">7 images n'appartiennent à aucun jeu <span class="mono">$0,04</span> · <a href="#" style="text-decoration: none">les ranger ›</a></span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 22px; font-size: 12.5px; color: #6d675e">
+      <span>OpenRouter · 49 modèles</span>
+      <span style="display: flex; align-items: center; gap: 6px"><i style="width: 7px; height: 7px; border-radius: 999px; background: #5c7a52; display: block"></i>l'atelier répond</span>
+      <a href="#" style="text-decoration: none">Réglages de l'atelier ›</a>
+      <a href="#" style="text-decoration: none">Guide ›</a>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

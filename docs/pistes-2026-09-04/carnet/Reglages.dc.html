@@ -1,0 +1,255 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .vue { border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 10px 11px 11px; display: flex; flex-direction: column; gap: 7px; cursor: pointer; }
+    .vue-on { border: 2px solid #a8492c; background: #faf3ee; padding: 9px 10px 10px; }
+    .cadre { height: 92px; border-radius: 5px; background: #6c6c6c; position: relative; overflow: hidden; }
+    .cadre .fig { position: absolute; left: 50%; transform: translateX(-50%); }
+    .sol { position: absolute; left: 0; right: 0; bottom: 0; }
+    .titre { font-size: 14px; font-weight: 600; line-height: 1.2; }
+    .ref { font-size: 11.5px; color: #6d675e; line-height: 1.35; }
+    .dir { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; color: #948c80; }
+    .seg { height: 30px; display: flex; align-items: center; padding: 0 12px; border-radius: 5px; font-size: 13px; color: #4e483f; white-space: nowrap; }
+    .seg-on { background: #fffdfa; color: #221f1b; font-weight: 600; border: 1px solid #ddd5c8; }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <!-- ══════ LE CARNET ══════ -->
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div class="serif" style="font-size: 25px; line-height: 1.1">Le Marais du Vieux Moulin</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e">41 images · 12 poses sur 18</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
+      <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+      <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
+      <div class="rl"><span>Son nom et son dossier</span></div>
+      <div class="rl" style="background: #e6dfd2; font-weight: 600; color: #221f1b"><span>Son allure</span><span class="num" style="color: #a8492c">4 sur 5</span></div>
+      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+      <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
+      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+      <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
+      <div class="rl"><span>Son détourage de départ</span></div>
+      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+      <div class="rl"><span>Les dépenses</span><span class="num">$1,53</span></div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 14px 10px 0; display: flex; flex-direction: column; gap: 9px">
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Une seule ligne s'ouvre à la fois. Le carnet ne dépasse jamais vingt lignes.</div>
+      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
+        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ LA VUE, EN IMAGES ══════ -->
+  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 26px 30px 0">
+
+    <div style="display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: #948c80; margin-bottom: 14px">
+      <span>Ce qui s'applique à tout</span><span>›</span><span>Son allure</span><span>›</span><span style="color: #3d382f">La vue</span>
+    </div>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 14px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h1 class="serif" style="margin: 0; font-size: 42px; line-height: 1">D'où on regarde le jeu</h1>
+        <div style="font-size: 14.5px; color: #4e483f">Choisi une fois. Chaque image générée part avec cette consigne de caméra.</div>
+      </div>
+      <div style="display: flex; gap: 3px; background: #ece6db; border-radius: 7px; padding: 3px">
+        <div class="seg seg-on">La vue</div><div class="seg">Le style et la taille</div><div class="seg">Les couleurs</div>
+      </div>
+    </div>
+
+    <!-- Les huit vues -->
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-content: start">
+
+      <!-- 1 · De face, fixe -->
+      <div class="vue">
+        <div class="cadre">
+          <div class="sol" style="height: 16px; background: #5a5a5a"></div>
+          <svg class="fig" style="bottom: 14px" viewBox="0 0 16 14" width="42" height="37" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#2f4a35"/><rect x="6" y="2" width="4" height="3" fill="#d8bb95"/><rect x="6" y="3" width="1" height="1" fill="#2a231a"/><rect x="9" y="3" width="1" height="1" fill="#2a231a"/><rect x="4" y="5" width="8" height="6" fill="#2f4a35"/><rect x="6" y="7" width="4" height="4" fill="#c9b48c"/><rect x="3" y="6" width="1" height="4" fill="#2f4a35"/><rect x="12" y="6" width="1" height="4" fill="#2f4a35"/><rect x="5" y="11" width="2" height="3" fill="#5a3f28"/><rect x="9" y="11" width="2" height="3" fill="#5a3f28"/></svg>
+        </div>
+        <div class="titre">De face, fixe</div>
+        <div class="ref">les écrans de combat au tour par tour</div>
+        <div class="dir">1 direction</div>
+      </div>
+
+      <!-- 2 · De dessus, verticale — CHOISIE -->
+      <div class="vue vue-on">
+        <div class="cadre" style="background: #4d6b3f">
+          <svg class="fig" style="bottom: 32px" viewBox="0 0 16 9" width="42" height="24" shape-rendering="crispEdges"><rect x="4" y="3" width="8" height="6" fill="#25392a"/><rect x="3" y="4" width="1" height="4" fill="#25392a"/><rect x="12" y="4" width="1" height="4" fill="#25392a"/><rect x="6" y="0" width="4" height="5" fill="#2f4a35"/><rect x="5" y="1" width="6" height="3" fill="#2f4a35"/><rect x="7" y="1" width="2" height="2" fill="#43684d"/></svg>
+        </div>
+        <div class="titre" style="color: #a8492c">De dessus, verticale</div>
+        <div class="ref">les jeux de tir à défilement vertical</div>
+        <div class="dir" style="color: #a8492c">1 direction · choisie</div>
+      </div>
+
+      <!-- 3 · De côté — plateforme -->
+      <div class="vue">
+        <div class="cadre">
+          <div class="sol" style="height: 24px; background: #4d6b3f"></div>
+          <svg class="fig" style="bottom: 21px" viewBox="0 0 16 14" width="42" height="37" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#2f4a35"/><rect x="6" y="2" width="4" height="3" fill="#d8bb95"/><rect x="10" y="3" width="1" height="1" fill="#d8bb95"/><rect x="7" y="3" width="1" height="1" fill="#2a231a"/><rect x="5" y="5" width="6" height="6" fill="#2f4a35"/><rect x="6" y="7" width="3" height="4" fill="#c9b48c"/><rect x="9" y="6" width="3" height="1" fill="#2f4a35"/><rect x="4" y="11" width="3" height="3" fill="#5a3f28"/><rect x="8" y="11" width="3" height="3" fill="#463019"/></svg>
+        </div>
+        <div class="titre">De côté — plateforme</div>
+        <div class="ref">Mario, Celeste, Hollow Knight</div>
+        <div class="dir">2 directions</div>
+      </div>
+
+      <!-- 4 · De côté — défilement -->
+      <div class="vue">
+        <div class="cadre">
+          <div class="sol" style="height: 24px; background: #4d6b3f"></div>
+          <svg class="fig" style="bottom: 21px" viewBox="0 0 16 14" width="42" height="37" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#2f4a35"/><rect x="6" y="2" width="4" height="3" fill="#d8bb95"/><rect x="10" y="3" width="1" height="1" fill="#d8bb95"/><rect x="7" y="3" width="1" height="1" fill="#2a231a"/><rect x="5" y="5" width="6" height="6" fill="#2f4a35"/><rect x="6" y="7" width="3" height="4" fill="#c9b48c"/><rect x="9" y="6" width="3" height="1" fill="#2f4a35"/><rect x="4" y="11" width="3" height="3" fill="#5a3f28"/><rect x="8" y="11" width="3" height="3" fill="#463019"/></svg>
+        </div>
+        <div class="titre">De côté — défilement</div>
+        <div class="ref">les jeux de baston de rue</div>
+        <div class="dir">2 directions</div>
+      </div>
+
+      <!-- 5 · De dessus, stricte -->
+      <div class="vue">
+        <div class="cadre" style="background: #4d6b3f">
+          <div style="position: absolute; left: 0; right: 0; top: 0; height: 9px; background: #446038"></div>
+          <svg class="fig" style="bottom: 28px" viewBox="0 0 16 10" width="42" height="26" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="4" fill="#2f4a35"/><rect x="5" y="1" width="6" height="3" fill="#2f4a35"/><rect x="7" y="1" width="2" height="1" fill="#43684d"/><rect x="6" y="4" width="4" height="1" fill="#d8bb95"/><rect x="4" y="5" width="8" height="5" fill="#25392a"/><rect x="6" y="6" width="4" height="4" fill="#9e8c67"/><rect x="3" y="6" width="1" height="3" fill="#25392a"/><rect x="12" y="6" width="1" height="3" fill="#25392a"/></svg>
+        </div>
+        <div class="titre">De dessus, stricte</div>
+        <div class="ref">le premier Zelda, Hotline Miami</div>
+        <div class="dir">4 directions</div>
+      </div>
+
+      <!-- 6 · De dessus, 3/4 -->
+      <div class="vue">
+        <div class="cadre" style="background: #4d6b3f">
+          <div style="position: absolute; left: 0; right: 0; top: 0; height: 18px; background: #41573a"></div>
+          <svg class="fig" style="bottom: 20px" viewBox="0 0 16 15" width="42" height="39" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#43684d"/><rect x="5" y="2" width="6" height="1" fill="#2f4a35"/><rect x="6" y="3" width="4" height="3" fill="#d8bb95"/><rect x="6" y="4" width="1" height="1" fill="#2a231a"/><rect x="9" y="4" width="1" height="1" fill="#2a231a"/><rect x="4" y="6" width="8" height="6" fill="#2f4a35"/><rect x="6" y="8" width="4" height="4" fill="#c9b48c"/><rect x="3" y="7" width="1" height="4" fill="#2f4a35"/><rect x="12" y="7" width="1" height="4" fill="#2f4a35"/><rect x="5" y="12" width="2" height="3" fill="#5a3f28"/><rect x="9" y="12" width="2" height="3" fill="#5a3f28"/></svg>
+        </div>
+        <div class="titre">De dessus, 3/4</div>
+        <div class="ref">Zelda A Link to the Past, Stardew Valley</div>
+        <div class="dir">4 directions</div>
+      </div>
+
+      <!-- 7 · Oblique (cavalière) -->
+      <div class="vue">
+        <div class="cadre">
+          <svg class="sol" style="height: 62px; width: 100%" viewBox="0 0 100 62" preserveAspectRatio="none"><polygon points="0,62 24,0 100,0 76,62" fill="#4d6b3f"/><g stroke="#3d5732" stroke-width="1.2" opacity=".65"><path d="M12 31 L88 31"/><path d="M18 0 L-6 62"/><path d="M56 0 L32 62"/><path d="M94 0 L70 62"/></g></svg>
+          <svg class="fig" style="bottom: 18px" viewBox="0 0 20 16" width="52" height="42" shape-rendering="crispEdges"><rect x="8" y="0" width="6" height="1" fill="#43684d"/><rect x="7" y="1" width="6" height="1" fill="#43684d"/><rect x="5" y="2" width="6" height="2" fill="#2f4a35"/><rect x="6" y="4" width="4" height="3" fill="#d8bb95"/><rect x="6" y="5" width="1" height="1" fill="#2a231a"/><rect x="9" y="5" width="1" height="1" fill="#2a231a"/><rect x="4" y="7" width="8" height="6" fill="#2f4a35"/><rect x="6" y="9" width="4" height="4" fill="#c9b48c"/><rect x="3" y="8" width="1" height="4" fill="#2f4a35"/><rect x="12" y="8" width="1" height="4" fill="#2f4a35"/><rect x="5" y="13" width="2" height="3" fill="#5a3f28"/><rect x="9" y="13" width="2" height="3" fill="#5a3f28"/></svg>
+        </div>
+        <div class="titre">Oblique (cavalière)</div>
+        <div class="ref">Ultima, EarthBound</div>
+        <div class="dir">4 directions</div>
+      </div>
+
+      <!-- 8 · Isométrique -->
+      <div class="vue">
+        <div class="cadre">
+          <svg class="sol" style="height: 74px; width: 100%" viewBox="0 0 100 74" preserveAspectRatio="none"><polygon points="50,0 100,37 50,74 0,37" fill="#4d6b3f"/><g stroke="#3d5732" stroke-width="1.2" opacity=".65"><path d="M25 18.5 L75 55.5"/><path d="M75 18.5 L25 55.5"/></g><ellipse cx="50" cy="49" rx="13" ry="4.5" fill="#2c3f26" opacity=".4"/></svg>
+          <svg class="fig" style="bottom: 26px" viewBox="0 0 16 15" width="40" height="37" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#43684d"/><rect x="5" y="2" width="6" height="1" fill="#2f4a35"/><rect x="6" y="3" width="4" height="3" fill="#d8bb95"/><rect x="6" y="4" width="1" height="1" fill="#2a231a"/><rect x="9" y="4" width="1" height="1" fill="#2a231a"/><rect x="4" y="6" width="8" height="6" fill="#2f4a35"/><rect x="6" y="8" width="4" height="4" fill="#c9b48c"/><rect x="3" y="7" width="1" height="4" fill="#2f4a35"/><rect x="12" y="7" width="1" height="4" fill="#2f4a35"/><rect x="5" y="12" width="2" height="3" fill="#5a3f28"/><rect x="9" y="12" width="2" height="3" fill="#5a3f28"/></svg>
+        </div>
+        <div class="titre">Isométrique</div>
+        <div class="ref">Diablo 2, Age of Empires 2</div>
+        <div class="dir">4 directions</div>
+      </div>
+    </div>
+
+    <!-- Ce que ça change ailleurs -->
+    <div style="margin-top: auto; margin-bottom: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+      <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14px; font-weight: 600">Changer la vue change le nombre de directions</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">
+          Passer de <em>de dessus, verticale</em> à <em>de dessus, 3/4</em> fait passer chaque personnage de 6 cases à 24 — quatre directions par pose.
+          <strong style="font-weight: 600">Les images déjà faites restent</strong>, et les nouvelles cases apparaissent vides.
+        </div>
+      </div>
+      <div style="border: 1px solid #ddd5c8; border-radius: 9px; background: #f4ece2; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14px; font-weight: 600">Deux vues envoient exactement le même texte</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">
+          <em>De côté — plateforme</em> et <em>de côté — défilement</em> écrivent la même consigne de caméra, mot pour mot.
+          Seul le nom change. <a href="#" style="text-decoration: none">Les comparer ›</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ CE QUE CE CHOIX ÉCRIT ══════ -->
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div class="rt">Ce que ce choix écrit</div>
+      <div style="font-size: 13px; line-height: 1.45; color: #4e483f">Le texte exact ajouté à chaque génération de ce jeu.</div>
+    </div>
+
+    <div style="border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 13px; overflow: hidden">
+      <div class="mono" style="font-size: 11px; line-height: 1.6; color: #3d382f; white-space: pre-line">CAMERA — this overrides everything above. The camera is directly overhead, looking straight down at the ground at 90 degrees. Not a side view, not a three-quarter view, not a front view. No horizon line, no perspective, no vanishing point.
+
+You are looking down onto the subject's upper surface: its top face is what fills the sprite, and nothing that faces forwards or sideways is visible.
+
+On a character, that means the top of the head and the shoulders, never the face, and the feet stay hidden under the body.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 13.5px; font-weight: 600">Sur un personnage, concrètement</div>
+      <div style="display: flex; gap: 10px; align-items: center">
+        <div style="width: 84px; height: 84px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; border-radius: 4px; flex-shrink: 0">
+          <svg viewBox="0 0 16 16" width="64" height="64" shape-rendering="crispEdges"><rect x="4" y="5" width="8" height="7" fill="#2f4a35"/><rect x="6" y="3" width="4" height="4" fill="#2f4a35"/><rect x="3" y="6" width="1" height="5" fill="#2f4a35"/><rect x="12" y="6" width="1" height="5" fill="#2f4a35"/></svg>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le dessus de la tête et les épaules. Jamais le visage. Les pieds restent cachés sous le corps.</div>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid #e2dbd0; padding-top: 13px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">Les cinq autres jeux</div>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12.5px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px"><span style="color: #4e483f">coeur de pierre — 01</span><span style="color: #6d675e">de dessus, 3/4</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px"><span style="color: #4e483f">Essai animation</span><span style="color: #6d675e">de côté — plateforme</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px"><span style="color: #4e483f">Bac à sable</span><span style="color: #a49a8b">aucune vue</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px"><span style="color: #4e483f">Coeur de pierre</span><span style="color: #a49a8b">aucune vue</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px"><span style="color: #4e483f">vignettes</span><span style="color: #a49a8b">aucune vue</span></div>
+      </div>
+      <div style="font-size: 12px; line-height: 1.45; color: #948c80">Sans vue choisie, l'atelier n'écrit rien sur la caméra et le modèle décide seul.</div>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+      <div style="height: 36px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #4e483f; background: #fffdfa; border: 1px solid #ddd5c8; border-radius: 7px">Voir le texte complet d'un envoi</div>
+      <div style="font-size: 12px; color: #948c80; text-align: center">Gratuit — rien ne part à l'IA depuis cet écran.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

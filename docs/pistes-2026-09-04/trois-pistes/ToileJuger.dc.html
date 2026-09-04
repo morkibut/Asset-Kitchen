@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #191713; }
+    a { color: #e3a552; } a:hover { color: #f2be74; }
+    .toile * { box-sizing: border-box; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .panneau { background: rgba(34,30,25,0.96); border: 1px solid #4a4239; border-radius: 10px; }
+    .seg { font-size: 12.5px; padding: 6px 11px; border-radius: 5px; color: #a0968a; }
+    .seg-on { background: #cfc5b6; color: #191713; font-weight: 600; }
+    .passe { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid #4a4239; border-radius: 6px; background: #221e19; font-size: 12.5px; color: #cfc5b6; white-space: nowrap; }
+    .pastille { width: 7px; height: 7px; border-radius: 999px; background: #e3a552; }
+  </style>
+</helmet>
+
+<div class="toile" style="width: 1440px; height: 900px; position: relative; overflow: hidden; background:
+     radial-gradient(circle at 1px 1px, #2c2822 1px, transparent 0) 0 0 / 28px 28px, #191713;
+     font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; color: #efe9df">
+
+  <!-- ── Les voisines, restées à leur place sur le plan ───────────────── -->
+  <div style="position: absolute; left: -46px; top: 150px; display: flex; flex-direction: column; gap: 14px; opacity: 0.4">
+    <div style="width: 128px; height: 128px; background: #d6d4d0; border: 1px solid #35302a"></div>
+    <div style="width: 128px; height: 128px; background: #d6d4d0; border: 1px solid #35302a"></div>
+    <div style="width: 128px; height: 128px; border: 1px dashed #7a6136"></div>
+  </div>
+  <div style="position: absolute; right: -46px; top: 210px; display: flex; flex-direction: column; gap: 14px; opacity: 0.4">
+    <div style="width: 128px; height: 128px; background: #d6d4d0; border: 1px solid #35302a"></div>
+    <div style="width: 128px; height: 128px; border: 1px dashed #7a6136"></div>
+  </div>
+
+  <!-- ── L'image, en pleine lumière neutre ───────────────────────────── -->
+  <div style="position: absolute; left: 50%; top: 118px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 16px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <div style="font-size: 19px; font-weight: 600">La ferronnière · repos</div>
+      <div class="mono" style="font-size: 12px; color: #8d8378">64 × 64 · $0,0245 · il y a 4 minutes</div>
+    </div>
+
+    <div style="width: 452px; height: 452px; display: flex; align-items: center; justify-content: center; border: 1px solid #4a4239;
+         background-color: #d6d4d0;
+         background-image: linear-gradient(45deg, #c2c0bc 25%, transparent 25%, transparent 75%, #c2c0bc 75%), linear-gradient(45deg, #c2c0bc 25%, transparent 25%, transparent 75%, #c2c0bc 75%);
+         background-size: 24px 24px; background-position: 0 0, 12px 12px">
+      <svg viewBox="0 0 16 24" width="290" height="290" shape-rendering="crispEdges" style="display:block">
+        <rect x="5" y="2" width="6" height="4" fill="#8a5a2a"/><rect x="6" y="4" width="4" height="4" fill="#e0b48c"/>
+        <rect x="4" y="8" width="8" height="8" fill="#6b4326"/><rect x="5" y="10" width="6" height="4" fill="#8d5c33"/>
+        <rect x="2" y="9" width="2" height="6" fill="#e0b48c"/><rect x="12" y="9" width="2" height="6" fill="#e0b48c"/>
+        <rect x="5" y="16" width="2" height="6" fill="#3f4a3a"/><rect x="9" y="16" width="2" height="6" fill="#3f4a3a"/>
+        <rect x="4" y="22" width="3" height="2" fill="#2a2420"/><rect x="9" y="22" width="3" height="2" fill="#2a2420"/>
+      </svg>
+    </div>
+
+    <!-- La recette, lue de gauche à droite -->
+    <div style="display: flex; align-items: center; gap: 7px">
+      <div class="passe" style="border-color: #e3a552; background: rgba(227,165,82,0.1)"><span class="pastille"></span>détourage · bord 28</div>
+      <div class="mono" style="color: #5c554c; font-size: 12px">›</div>
+      <div class="passe"><span class="pastille"></span>recadrage</div>
+      <div class="mono" style="color: #5c554c; font-size: 12px">›</div>
+      <div class="passe"><span class="pastille"></span>grille · 64 px</div>
+      <div class="mono" style="color: #5c554c; font-size: 12px">›</div>
+      <div class="passe" style="opacity: 0.5"><span class="pastille" style="background: #4a4239"></span>32 couleurs</div>
+      <div class="mono" style="color: #5c554c; font-size: 12px">›</div>
+      <div class="passe" style="border-style: dashed; color: #8d8378">+ une passe</div>
+    </div>
+    <div style="font-size: 12.5px; color: #6f665c">Une place éteinte garde ce qu'on y avait posé — on rallume, on retrouve.</div>
+  </div>
+
+  <!-- ── À gauche : la passe qu'on règle ─────────────────────────────── -->
+  <div class="panneau" style="position: absolute; left: 26px; top: 118px; width: 300px; padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <div style="font-size: 16px; font-weight: 600">Le détourage</div>
+      <a href="#" style="font-size: 12.5px; text-decoration: none">masquer</a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 12.5px; color: #8d8378">Comment on désigne ce qu'on retire</div>
+      <div style="display: flex; gap: 3px; background: #1c1915; border: 1px solid #4a4239; border-radius: 7px; padding: 3px">
+        <div class="seg seg-on">bord</div><div class="seg">pipette</div><div class="seg">sélection</div><div class="seg">modèle</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <div style="font-size: 13px; color: #cfc5b6">tolérance</div><div class="mono" style="font-size: 12.5px; color: #e3a552">28</div>
+      </div>
+      <div style="height: 4px; background: #3a342b; border-radius: 3px; position: relative">
+        <div style="width: 34%; height: 100%; background: #e3a552; border-radius: 3px"></div>
+        <div style="position: absolute; left: 34%; top: -5px; width: 14px; height: 14px; border-radius: 999px; background: #efe9df; transform: translateX(-50%)"></div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <div style="font-size: 13px; color: #cfc5b6">seuil de transparence</div><div class="mono" style="font-size: 12.5px; color: #e3a552">128</div>
+      </div>
+      <div style="height: 4px; background: #3a342b; border-radius: 3px; position: relative">
+        <div style="width: 50%; height: 100%; background: #e3a552; border-radius: 3px"></div>
+        <div style="position: absolute; left: 50%; top: -5px; width: 14px; height: 14px; border-radius: 999px; background: #efe9df; transform: translateX(-50%)"></div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 13px; color: #cfc5b6">bord rongé</div>
+      <div style="display: flex; gap: 3px; background: #1c1915; border: 1px solid #4a4239; border-radius: 7px; padding: 3px">
+        <div class="seg">0</div><div class="seg">1</div><div class="seg seg-on">2</div><div class="seg">3</div><div class="seg">4</div>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid #35302a; padding-top: 13px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; gap: 9px">
+        <div style="width: 15px; height: 15px; background: #0d0d0d; border: 1px solid #4a4239"></div>
+        <div class="mono" style="font-size: 12px; color: #cfc5b6">#0D0D0D</div>
+        <div style="font-size: 12.5px; color: #8d8378">le fond, tel qu'il est revenu</div>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #8d8378">
+        Aucun pixel à demi transparent — le bord est franc sur ses 168 pixels de pourtour.
+        <strong style="color: #cfc5b6; font-weight: 600">32 % du sujet sont encore à la couleur du fond :</strong>
+        un cran de tolérance de plus les emporterait.
+      </div>
+    </div>
+
+    <a href="#" style="font-size: 13px; text-decoration: none">enregistrer ce réglage comme défaut du projet ›</a>
+  </div>
+
+  <!-- ── À droite : sa fiche ─────────────────────────────────────────── -->
+  <div class="panneau" style="position: absolute; right: 26px; top: 118px; width: 322px; padding: 18px; display: flex; flex-direction: column; gap: 15px">
+    <div style="font-size: 16px; font-weight: 600">Sa fiche</div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="mono" style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6f665c">le texte qui l'a faite</div>
+      <div style="font-size: 13px; line-height: 1.5; color: #cfc5b6; border-left: 2px solid #4a4239; padding-left: 11px">
+        une forgeronne des marais, tablier de cuir, cheveux relevés
+      </div>
+      <a href="#" style="font-size: 12.5px; text-decoration: none">voir les trois parties, mot pour mot ›</a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="mono" style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6f665c">ce que le projet a imposé</div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #8d8378">bord · 64 px · 100 % · votre palette de 32 couleurs</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div class="mono" style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6f665c">la renvoyer comme</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px">
+        <div class="passe">référence</div><div class="passe">source d'édition</div>
+        <div class="passe">guide de style</div><div class="passe">jeu de réglages</div>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid #35302a; padding-top: 14px; display: flex; flex-direction: column; gap: 9px">
+      <button style="font-family: inherit; font-size: 14px; font-weight: 600; color: #191713; background: #cfc5b6; border: none; border-radius: 7px; padding: 10px 14px; cursor: pointer">Sortir vers le jeu — PNG</button>
+      <div style="font-size: 12px; line-height: 1.45; color: #6f665c">Se pose dans <span class="mono">C:\Jeux\mon-jeu\assets</span>, dans le dossier de sa famille.</div>
+    </div>
+  </div>
+
+  <!-- ── Le socle du jugement ────────────────────────────────────────── -->
+  <div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 26px; display: flex; align-items: center; gap: 12px; background: #221e19; border: 1px solid #4a4239; border-radius: 10px; padding: 11px 14px">
+    <button style="font-family: inherit; font-size: 14px; font-weight: 600; color: #191713; background: #e3a552; border: none; border-radius: 7px; padding: 9px 18px; cursor: pointer">Garder</button>
+    <button style="font-family: inherit; font-size: 14px; color: #cfc5b6; background: transparent; border: 1px solid #4a4239; border-radius: 7px; padding: 9px 16px; cursor: pointer">Favori</button>
+    <button style="font-family: inherit; font-size: 14px; color: #cfc5b6; background: transparent; border: 1px solid #4a4239; border-radius: 7px; padding: 9px 16px; cursor: pointer">Jeter</button>
+    <div style="width: 1px; height: 20px; background: #4a4239; margin: 0 3px"></div>
+    <div style="font-size: 12.5px; color: #6f665c">Aucun appel ne part d'ici — retoucher ne coûte rien, et l'image d'origine reste entière.</div>
+  </div>
+
+  <!-- ── Barre du haut ───────────────────────────────────────────────── -->
+  <div style="position: absolute; left: 24px; right: 24px; top: 20px; display: flex; align-items: center; justify-content: space-between">
+    <div style="display: flex; align-items: center; gap: 10px; background: rgba(33,30,25,0.92); border: 1px solid #35302a; border-radius: 8px; padding: 8px 14px">
+      <div style="font-size: 15px; font-weight: 600">Les marais de fer</div>
+      <div style="width: 1px; height: 14px; background: #4a4239"></div>
+      <div style="font-size: 13px; color: #8d8378">La ferronnière</div>
+      <div style="width: 1px; height: 14px; background: #4a4239"></div>
+      <div style="font-size: 13px; color: #e3a552">repos</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; background: rgba(33,30,25,0.92); border: 1px solid #35302a; border-radius: 8px; padding: 7px 10px 7px 14px">
+      <div class="mono" style="font-size: 13px; color: #cfc5b6">$0,4655</div>
+      <div style="font-size: 12.5px; color: #6f665c">dépensés</div>
+      <div style="width: 1px; height: 14px; background: #4a4239; margin: 0 4px"></div>
+      <div style="font-size: 13px; border: 1px solid #4a4239; border-radius: 5px; padding: 5px 11px; color: #cfc5b6">L'univers</div>
+      <div style="font-size: 13px; border: 1px solid #4a4239; border-radius: 5px; padding: 5px 11px; color: #cfc5b6">Le guide</div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 26px; bottom: 26px; display: flex; flex-direction: column; gap: 3px">
+    <div class="mono" style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6f665c">Direction A · La toile</div>
+    <div style="font-size: 14px; color: #a0968a">Juger — on zoome, on ne change pas d&#39;écran</div>
+  </div>
+
+  <div style="position: absolute; right: 26px; bottom: 26px; display: flex; gap: 2px; background: #221e19; border: 1px solid #35302a; border-radius: 6px; padding: 3px">
+    <div class="mono" style="font-size: 11.5px; color: #8d8378; padding: 5px 9px">25%</div>
+    <div class="mono" style="font-size: 11.5px; color: #8d8378; padding: 5px 9px">100%</div>
+    <div class="mono" style="font-size: 11.5px; color: #191713; background: #cfc5b6; border-radius: 4px; padding: 5px 9px">400%</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

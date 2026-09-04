@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — la refonte proposée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..700;1,62..125,400..700&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   LES QUATRE PROFONDEURS DE FOND.
+   Chaque jeu est résolu, pas choisi à l'œil : chaque valeur atteint une cible
+   de contraste mesurée (voir le tableau de vérification en bas de page).
+   Teinte du châssis : OKLCH 60° — un brun chaud. Chroma plafonnée à 0,013,
+   soit huit fois moins que la plus sourde des couleurs qui disent quelque chose.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root,
+:root[data-niveau="bois"] {
+  --fond-0:#201b18; --fond-1:#35302c; --fond-2:#48413c; --fond-3:#58514b;
+  --trait:#69615b; --contour:#958b83; --contour-fort:#b7aca3;
+  --texte:#f4f0ee; --texte-2:#d5d0cc; --texte-3:#b6b1ad;
+  --signal:#5ec8e4; --signal-plein:#87e5ff;
+  --ok:#81cb91; --epingle:#deb653; --echec:#ffa29a;
+}
+:root[data-niveau="ombre"] {
+  --fond-0:#0d0a09; --fond-1:#27211d; --fond-2:#3b342f; --fond-3:#4c443e;
+  --trait:#5c544f; --contour:#867d75; --contour-fort:#a79b93;
+  --texte:#edeae7; --texte-2:#cecac6; --texte-3:#afaaa6;
+  --signal:#56c1dd; --signal-plein:#76dffb;
+  --ok:#7bc48a; --epingle:#d6af4c; --echec:#fc9890;
+}
+:root[data-niveau="sable"] {
+  --fond-0:#302b28; --fond-1:#433d39; --fond-2:#554e49; --fond-3:#655e58;
+  --trait:#776f68; --contour:#a59c94; --contour-fort:#cabfb6;
+  --texte:#fbf7f5; --texte-2:#dcd8d4; --texte-3:#beb9b5;
+  --signal:#66d0ec; --signal-plein:#a0eaff;
+  --ok:#89d399; --epingle:#e6bd5b; --echec:#ffaea6;
+}
+:root[data-niveau="lin"] {
+  --fond-0:#45403d; --fond-1:#57514d; --fond-2:#69625c; --fond-3:#7b736c;
+  --trait:#8d857e; --contour:#c0b6ae; --contour-fort:#e9ded4;
+  --texte:#fffdfb; --texte-2:#e8e4e0; --texte-3:#ccc6c2;
+  --signal:#75ddfa; --signal-plein:#c7f2ff;
+  --ok:#96e0a5; --epingle:#f3cb69; --echec:#ffc0ba;
+}
+
+:root {
+  /* Le pourtour de jugement — neutre, sans une trace de teinte, à 15 % de
+     réflectance. C'est la seule surface du produit qui ne suit PAS le niveau
+     de fond : une image se juge toujours dans la même lumière. */
+  --pourtour:#6c6c6c; --damier-a:#686868; --damier-b:#707070;
+
+  /* Les dix teintes de rangement — le seul endroit où une couleur ne veut
+     rien dire. Toutes au même contraste perçu, toutes sous les sémantiques. */
+  --ardoise:#90aecc; --pervenche:#9eaacf; --iris:#aba7cd; --lavande:#b6a4c8;
+  --prune:#c0a1c0; --mauve:#c7a0b5; --bruyere:#cc9fa6;
+  --paille:#b2ac84; --mousse:#a3b089; --lichen:#96b292;
+
+  --r-sm:3px; --r-md:5px; --r-lg:8px;
+  --serif:"Fraunces",Georgia,"Times New Roman",serif;
+  --sans:"Archivo","Segoe UI",Tahoma,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--fond-0); color:var(--texte);
+  font-family:var(--sans); font-size:13px; line-height:18px; font-weight:500;
+  font-variation-settings:"wdth" 100;
+  -webkit-font-smoothing:antialiased;
+  transition:background 160ms cubic-bezier(.2,0,0,1), color 160ms cubic-bezier(.2,0,0,1);
+}
+.mesure{font-family:var(--mono); font-variant-numeric:tabular-nums; font-weight:400}
+
+/* ── la barre de tête, collante ─────────────────────────────────────────── */
+.tete{
+  position:sticky; top:0; z-index:50; height:48px;
+  display:flex; align-items:center; gap:24px; padding:0 24px;
+  background:var(--fond-1); border-bottom:1px solid var(--trait);
+}
+.tete h1{font-family:var(--serif); font-size:19px; font-weight:400; margin:0; font-variation-settings:"opsz" 40,"SOFT" 0}
+.tete .quoi{color:var(--texte-3); font-size:12px}
+.niveaux{margin-left:auto; display:flex; align-items:center; gap:8px}
+.niveaux .lab{color:var(--texte-3); font-size:12px}
+.niveaux button{
+  height:30px; padding:0 12px; border-radius:var(--r-sm); cursor:pointer;
+  font-family:var(--sans); font-size:13px; font-weight:500;
+  background:var(--fond-2); color:var(--texte-2); border:1px solid var(--contour);
+  transition:background 80ms,color 80ms,border-color 80ms;
+}
+.niveaux button:hover{background:var(--fond-3); color:var(--texte)}
+.niveaux button[aria-pressed="true"]{background:var(--signal-plein); color:var(--fond-0); border-color:var(--signal-plein)}
+
+/* ── structure de page ──────────────────────────────────────────────────── */
+main{max-width:1280px; margin:0 auto; padding:0 24px 96px}
+section{padding-top:64px}
+h2{
+  font-family:var(--serif); font-weight:400; font-size:28px; line-height:34px;
+  margin:0 0 8px; font-variation-settings:"opsz" 100,"SOFT" 20;
+}
+h3{font-size:13px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+   color:var(--texte-3); margin:40px 0 12px}
+.chapo{color:var(--texte-2); font-size:15px; line-height:24px; max-width:38em; margin:0 0 24px}
+.note{color:var(--texte-3); font-size:12px; line-height:18px; max-width:40em; margin:12px 0 0}
+.carte{background:var(--fond-1); border:1px solid var(--trait); border-radius:var(--r-lg); padding:24px}
+.grille{display:grid; gap:24px}
+hr{border:0; border-top:1px solid var(--trait); margin:64px 0 0}
+
+/* ── les quatre familles fermées de contrôle ────────────────────────────── */
+.b{
+  display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 16px;
+  border-radius:var(--r-sm); font-family:var(--sans); font-size:13px; font-weight:500;
+  cursor:pointer; border:1px solid transparent; white-space:nowrap;
+  transition:background 80ms,border-color 80ms,color 80ms;
+}
+.b svg{width:16px;height:16px;flex:none}
+.b-plein{background:var(--signal-plein); color:var(--fond-0); border-color:var(--signal-plein); font-weight:600}
+.b-plein:hover{filter:brightness(1.08)}
+.b-cadre{background:var(--fond-2); color:var(--texte); border-color:var(--contour)}
+.b-cadre:hover{background:var(--fond-3); border-color:var(--contour-fort)}
+.b-lien{background:none; color:var(--signal); border:0; padding:0 2px; height:auto;
+        text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px}
+.b-lien:hover{color:var(--texte)}
+.b-eteint{background:var(--fond-2); color:var(--texte-3); border-color:var(--trait);
+          border-style:dashed; cursor:not-allowed}
+.b:focus-visible{outline:2px solid var(--signal-plein); outline-offset:2px}
+.inerte{color:var(--texte-2)}
+
+.raison{display:block; color:var(--texte-3); font-size:12px; margin-top:6px; max-width:24em}
+.rangee-b{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+
+/* ── champs ─────────────────────────────────────────────────────────────── */
+.champ{
+  height:36px; width:100%; padding:0 12px; border-radius:var(--r-sm);
+  background:var(--fond-2); border:1px solid var(--contour); color:var(--texte);
+  font-family:var(--sans); font-size:13px; font-weight:500;
+}
+.champ::placeholder{color:var(--texte-3)}
+.champ:focus{outline:2px solid var(--signal-plein); outline-offset:1px; border-color:var(--signal-plein)}
+.champ.faux{border-color:var(--echec)}
+label{display:block; color:var(--texte-2); font-size:13px; margin-bottom:6px}
+
+/* ── segments ───────────────────────────────────────────────────────────── */
+.segments{display:inline-flex; border:1px solid var(--contour); border-radius:var(--r-sm); overflow:hidden}
+.segments button{
+  height:30px; padding:0 14px; border:0; border-right:1px solid var(--trait); cursor:pointer;
+  background:var(--fond-2); color:var(--texte-2); font-family:var(--sans); font-size:13px; font-weight:500;
+}
+.segments button:last-child{border-right:0}
+.segments button[aria-pressed="true"]{background:var(--fond-0); color:var(--signal); font-weight:600; box-shadow:inset 0 -2px 0 var(--signal)}
+
+/* ── pastilles et messages ──────────────────────────────────────────────── */
+.past{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--texte-2)}
+.past i{width:8px;height:8px;border-radius:999px;display:block}
+.msg{display:flex; gap:12px; padding:12px 16px; border-radius:var(--r-md);
+     background:var(--fond-2); border-left:3px solid var(--trait); align-items:flex-start}
+.msg svg{width:16px;height:16px;flex:none;margin-top:1px}
+.msg p{margin:0; font-size:13px; line-height:20px; color:var(--texte-2)}
+.msg strong{color:var(--texte); font-weight:600}
+.msg.ok{border-left-color:var(--ok)} .msg.ok svg{color:var(--ok)}
+.msg.ep{border-left-color:var(--epingle)} .msg.ep svg{color:var(--epingle)}
+.msg.ko{border-left-color:var(--echec)} .msg.ko svg{color:var(--echec)}
+.msg.inf{border-left-color:var(--signal)} .msg.inf svg{color:var(--signal)}
+
+/* ── échantillons de couleur ────────────────────────────────────────────── */
+.swatches{display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:12px}
+.sw{border:1px solid var(--trait); border-radius:var(--r-md); overflow:hidden; background:var(--fond-1)}
+.sw .bloc{height:56px}
+.sw .txt{padding:8px 10px}
+.sw b{display:block; font-size:12px; font-weight:600}
+.sw span{display:block; font-size:11px; color:var(--texte-3)}
+
+/* ── le pourtour de jugement ────────────────────────────────────────────── */
+.comparo{display:grid; grid-template-columns:1fr 1fr; gap:24px}
+.scene{border-radius:var(--r-md); padding:40px; display:flex; align-items:center; justify-content:center; min-height:220px}
+.scene.chassis{background:var(--fond-0); border:1px solid var(--trait)}
+.scene.lampe{background:var(--pourtour)}
+.scene figcaption{font-size:12px}
+figure{margin:0}
+figure > figcaption{margin-top:8px; color:var(--texte-3); font-size:12px; line-height:18px}
+.damier{
+  background-image:
+    linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%),
+    linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%);
+  background-color:var(--damier-b); background-size:16px 16px; background-position:0 0,8px 8px;
+}
+
+/* ── la maquette d'écran ────────────────────────────────────────────────── */
+.maquette{border:1px solid var(--trait); border-radius:var(--r-lg); overflow:hidden; background:var(--fond-0)}
+.mq-tete{height:48px; display:flex; align-items:center; gap:16px; padding:0 16px;
+         background:var(--fond-1); border-bottom:1px solid var(--trait)}
+.mq-nom{font-family:var(--serif); font-size:17px; font-weight:400; font-variation-settings:"opsz" 30}
+.mq-onglets{display:flex; gap:4px; margin-left:8px}
+.mq-onglets button{height:32px; padding:0 14px; border-radius:var(--r-sm); border:1px solid transparent;
+  background:none; color:var(--texte-2); font-family:var(--sans); font-size:13px; font-weight:500; cursor:pointer;
+  display:inline-flex; align-items:center; gap:7px}
+.mq-onglets button svg{width:16px;height:16px}
+.mq-onglets button:hover{background:var(--fond-2); color:var(--texte)}
+.mq-onglets button[aria-current="page"]{background:var(--fond-0); color:var(--texte); border-color:var(--contour); font-weight:600}
+.mq-corps{display:grid; grid-template-columns:240px minmax(0,1fr) 380px; min-height:520px}
+.mq-col{border-right:1px solid var(--trait); background:var(--fond-1); display:flex; flex-direction:column}
+.mq-col:last-child{border-right:0; border-left:1px solid var(--trait)}
+.mq-entete{height:30px; display:flex; align-items:center; justify-content:space-between; padding:0 12px;
+  font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--texte-3)}
+.mq-rangee{height:30px; display:flex; align-items:center; gap:8px; padding:0 12px; cursor:pointer;
+  color:var(--texte-2); border-radius:var(--r-sm); margin:0 6px}
+.mq-rangee svg{width:16px;height:16px;color:var(--texte-3);flex:none}
+.mq-rangee:hover{background:var(--fond-2); color:var(--texte)}
+.mq-rangee[aria-current="true"]{background:var(--fond-3); color:var(--texte); font-weight:600}
+.mq-rangee[aria-current="true"] svg{color:var(--signal)}
+.mq-rangee .n{margin-left:auto; font-size:11px; color:var(--texte-3)}
+.mq-scene{background:var(--fond-0); display:flex; flex-direction:column}
+.mq-barre{height:40px; display:flex; align-items:center; gap:8px; padding:0 12px;
+  border-bottom:1px solid var(--trait); background:var(--fond-1)}
+.mq-grille{padding:16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(128px,1fr)); gap:12px; flex:1; align-content:start}
+.tuile{border:1px solid var(--trait); border-radius:var(--r-sm); overflow:hidden; background:var(--fond-1); cursor:pointer}
+.tuile:hover{border-color:var(--contour)}
+.tuile[aria-selected="true"]{border-color:var(--signal-plein); box-shadow:0 0 0 1px var(--signal-plein)}
+.tuile .img{aspect-ratio:1; display:flex; align-items:center; justify-content:center}
+.tuile .pied{padding:7px 9px; display:flex; justify-content:space-between; align-items:baseline; gap:6px}
+.tuile .pied b{font-size:12px; font-weight:500; color:var(--texte); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.tuile .pied span{font-size:11px; color:var(--texte-2)}
+.mq-action{height:48px; display:flex; align-items:center; gap:12px; padding:0 12px;
+  border-top:1px solid var(--trait); background:var(--fond-1)}
+.mq-action .etat{color:var(--texte-3); font-size:12px}
+.mq-fiche{padding:16px; display:flex; flex-direction:column; gap:16px}
+.champ-mesure{display:flex; justify-content:space-between; gap:12px; font-size:13px}
+.champ-mesure b{color:var(--texte-2); font-weight:500}
+.repli{border:1px solid var(--trait); border-radius:var(--r-sm); background:var(--fond-2)}
+.repli summary{height:30px; display:flex; align-items:center; gap:8px; padding:0 10px; cursor:pointer;
+  font-size:13px; font-weight:500; list-style:none}
+.repli summary::-webkit-details-marker{display:none}
+.repli summary .v{margin-left:auto; color:var(--texte-2); font-size:12px}
+.repli summary svg{width:16px;height:16px;color:var(--texte-3);transition:transform 160ms}
+.repli[open] summary svg{transform:rotate(90deg)}
+.repli .dedans{padding:0 10px 10px; border-top:1px solid var(--trait); padding-top:10px; margin-top:0}
+
+/* ── tableau de vérification ────────────────────────────────────────────── */
+table{width:100%; border-collapse:collapse; font-size:13px}
+th{text-align:left; font-size:12px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+   color:var(--texte-3); padding:0 12px 8px; border-bottom:1px solid var(--trait)}
+td{padding:7px 12px; border-bottom:1px solid var(--fond-2); color:var(--texte-2)}
+td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right; color:var(--texte)}
+tr:hover td{background:var(--fond-1)}
+code{font-family:var(--mono); font-size:12px; background:var(--fond-2); padding:1px 5px; border-radius:var(--r-sm); color:var(--texte)}
+pre{font-family:var(--mono); font-size:12px; line-height:20px; background:var(--fond-1);
+    border:1px solid var(--trait); border-radius:var(--r-md); padding:16px; overflow:auto; margin:0}
+pre .c{color:var(--texte-3)} pre .k{color:var(--signal)} pre .s{color:var(--ok)}
+
+.avant{background:#0B0D10; color:#98A2AC; border:1px solid #252B33; border-radius:2px; padding:16px}
+.avant .b-mort{background:none;border:0;color:#98A2AC;font:500 11px/1 var(--sans);cursor:pointer;padding:0}
+
+@media (max-width:1100px){
+  .mq-corps{grid-template-columns:200px minmax(0,1fr)}
+  .mq-corps > .mq-col:last-child{display:none}
+  .comparo{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="tete">
+  <h1>Asset&nbsp;Kitchen</h1>
+  <span class="quoi">la refonte proposée — 4 septembre 2026</span>
+  <div class="niveaux">
+    <span class="lab">Profondeur du fond&nbsp;:</span>
+    <button data-n="ombre">Ombre</button>
+    <button data-n="bois" aria-pressed="true">Bois</button>
+    <button data-n="sable">Sable</button>
+    <button data-n="lin">Lin</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Le fond se choisit ici, en regardant</h2>
+  <p class="chapo">
+    Quatre profondeurs, du plus sombre au plus clair. <b>Lin est volontairement trop clair</b> — il
+    est là pour borner, pas pour être choisi&nbsp;: si le juste milieu est entre Sable et Lin, on le
+    saura parce que Lin sera de trop. Toute la page change avec le bouton, y compris la maquette
+    d'écran en bas. Regarde-la deux minutes à chaque cran plutôt qu'une seconde.
+  </p>
+  <p class="note">
+    Une seule surface ne bouge jamais&nbsp;: le pourtour où l'on juge une image. C'est la
+    proposition centrale de cette refonte, et elle est démontrée plus bas.
+  </p>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Quatre formes, et rien d'autre</h2>
+  <p class="chapo">
+    Le relevé a compté <b>108 apparences différentes pour 259 boutons</b>, dont 71 qui n'existent
+    qu'une seule fois — et <b>231 qui ne portent, au repos, aucun trait ni aucun fond visible</b>.
+    C'est de là que vient «&nbsp;on ne sait pas ce qui est cliquable&nbsp;». La réponse n'est pas
+    d'ajouter des icônes&nbsp;: c'est de fermer la liste à quatre formes, chacune avec un métier,
+    et d'interdire la cinquième.
+  </p>
+
+  <div class="grille" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+    <div class="carte">
+      <h3 style="margin-top:0">Le geste qui fait avancer — un seul par écran</h3>
+      <div class="rangee-b">
+        <button class="b b-plein">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Payer et lancer — <span class="mesure">$0,067</span>
+        </button>
+      </div>
+      <span class="raison">Fond plein, texte sombre, le seul de l'écran. Le prix est dans le libellé, jamais à côté.</span>
+    </div>
+
+    <div class="carte">
+      <h3 style="margin-top:0">Le geste ordinaire — cadre visible au repos</h3>
+      <div class="rangee-b">
+        <button class="b b-cadre">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+          Exporter
+        </button>
+        <button class="b b-cadre">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+          Supprimer
+        </button>
+      </div>
+      <span class="raison">Cadre à 3,0&nbsp;:&nbsp;1 contre son fond — le seuil au-dessous duquel l'œil ne voit plus de bord.</span>
+    </div>
+
+    <div class="carte">
+      <h3 style="margin-top:0">Ce qui mène ailleurs — souligné</h3>
+      <p style="margin:0 0 4px" class="inerte">
+        Cette image vient de <button class="b b-lien">la planche du 2 septembre</button>, et son
+        réglage est hérité de <button class="b b-lien">Grumm le forgeron</button>.
+      </p>
+      <span class="raison">Le soulignement change de camp&nbsp;: il marque aujourd'hui 109 mots <em>non</em> cliquables et un seul cliquable.</span>
+    </div>
+
+    <div class="carte">
+      <h3 style="margin-top:0">Ce qui est éteint — et qui dit pourquoi</h3>
+      <div class="rangee-b">
+        <button class="b b-eteint" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="4" y="11" width="16" height="9"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+          Animer
+        </button>
+      </div>
+      <span class="raison">Trait pointillé + gris. La raison s'écrit en clair, sous le contrôle, jamais dans une bulle&nbsp;: <em>il faut d'abord une pose de départ détourée.</em></span>
+    </div>
+  </div>
+
+  <h3>La cinquième forme, celle qui est interdite</h3>
+  <div class="grille" style="grid-template-columns:1fr 1fr">
+    <figure>
+      <div class="avant">
+        <div style="font:500 11px/1.5 var(--sans);margin-bottom:10px">passe 1 <span style="border-bottom:1px dotted #5E6771">détourage</span></div>
+        <button class="b-mort" style="color:#49B3CE">masquer</button>
+        &nbsp;&nbsp;
+        <button class="b-mort">retirer</button>
+        &nbsp;&nbsp;
+        <span style="font:500 11px/1 var(--sans);color:#5E6771">non appliqué</span>
+      </div>
+      <figcaption>
+        Aujourd'hui, dans la fiche. Trois mots à trois centimètres&nbsp;: le seul souligné est
+        le seul qui ne se clique pas, et les deux boutons n'ont aucune marque. Le quatrième est
+        du texte mort, écrit comme les autres.
+      </figcaption>
+    </figure>
+    <figure>
+      <div class="carte" style="padding:16px">
+        <div style="margin-bottom:10px" class="inerte">passe 1 — détourage</div>
+        <div class="rangee-b">
+          <button class="b b-cadre" style="height:30px;padding:0 12px">Masquer</button>
+          <button class="b b-cadre" style="height:30px;padding:0 12px">Retirer</button>
+          <span class="past"><i style="background:var(--texte-3)"></i> non appliqué</span>
+        </div>
+      </div>
+      <figcaption>
+        Après. Deux boutons qui se voient sans la souris, un état qui se lit comme un état.
+        Rien n'a été ajouté&nbsp;: le mot souligné est redevenu un mot.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Le trait qui range n'est pas le trait qui se clique</h2>
+  <p class="chapo">
+    Le produit dessine aujourd'hui <b>427 lignes</b>, dont 84&nbsp;% sont à moins de la moitié du
+    seuil où l'œil perçoit un trait. Assez pour salir l'image, pas assez pour qu'une seule serve de
+    repère. Deux traits les remplacent, et un seul est fort.
+  </p>
+  <div class="grille" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+    <div class="carte">
+      <div style="height:2px;background:var(--trait);margin-bottom:12px"></div>
+      <b style="font-size:13px">Le trait qui range</b>
+      <p class="note" style="margin-top:4px">
+        1,65&nbsp;:&nbsp;1. Il sépare, il n'annonce rien. Réservé au cadre extérieur d'un panneau
+        et aux bandes. <b>À l'intérieur d'un panneau, on groupe par le vide, pas par des lignes.</b>
+      </p>
+    </div>
+    <div class="carte">
+      <div style="height:2px;background:var(--contour);margin-bottom:12px"></div>
+      <b style="font-size:13px">Le contour qui se clique</b>
+      <p class="note" style="margin-top:4px">
+        3,0&nbsp;:&nbsp;1. Il ne se pose que sur ce qui réagit. Le voir, c'est savoir qu'on peut
+        cliquer — sans passer la souris, sur une capture immobile.
+      </p>
+    </div>
+    <div class="carte">
+      <div style="height:2px;background:var(--contour-fort);margin-bottom:12px"></div>
+      <b style="font-size:13px">Le contour du focus</b>
+      <p class="note" style="margin-top:4px">
+        4,5&nbsp;:&nbsp;1, plus l'anneau d'accent. Le clavier voit ce que la souris voit&nbsp;:
+        deux contrôles du produit sont aujourd'hui inatteignables sans souris.
+      </p>
+    </div>
+  </div>
+
+  <h3>Le palier de repos, qui n'existe nulle part aujourd'hui</h3>
+  <p class="chapo" style="margin-bottom:16px">
+    92&nbsp;% des 495 écarts du produit sont tassés entre 4 et 12&nbsp;px, et il existe
+    <b>un seul écart de 40&nbsp;px dans 35&nbsp;751 lignes de code</b>. Il n'y a donc littéralement
+    aucun endroit où l'œil se pose — c'est ça, «&nbsp;des allers-retours avec les yeux&nbsp;».
+  </p>
+  <div class="carte" style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+    <div style="text-align:center"><div style="width:4px;height:44px;background:var(--signal)"></div><span class="mesure" style="font-size:11px">4</span></div>
+    <div style="text-align:center"><div style="width:8px;height:44px;background:var(--signal)"></div><span class="mesure" style="font-size:11px">8</span></div>
+    <div style="text-align:center"><div style="width:12px;height:44px;background:var(--signal)"></div><span class="mesure" style="font-size:11px">12</span></div>
+    <div style="text-align:center"><div style="width:24px;height:44px;background:var(--signal)"></div><span class="mesure" style="font-size:11px">24</span></div>
+    <div style="text-align:center"><div style="width:40px;height:44px;background:var(--signal-plein)"></div><span class="mesure" style="font-size:11px">40</span></div>
+    <p class="note" style="flex:1;min-width:220px;margin:0">
+      Cinq crans, et le dernier est très supérieur aux autres — c'est lui qui remplace les traits.
+      <b>Deux blocs séparés de 40&nbsp;px n'ont besoin d'aucune ligne entre eux</b>, et c'est ce qui
+      finance la suppression des 427 lignes.
+    </p>
+  </div>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Le châssis se réchauffe, et l'image en sort</h2>
+  <p class="chapo">
+    C'est la décision structurelle de cette refonte, et c'est elle qui permet de rouvrir le refus du
+    26&nbsp;août. Le vieux document disait&nbsp;: <em>un fond clair fausse le contraste perçu d'un
+    sprite</em>. Trois relevés disent l'inverse — c'est l'entourage <b>sombre</b> qui abaisse le
+    contraste perçu. Le damier de l'atelier est à <span class="mesure">1,08&nbsp;%</span> de
+    réflectance quand la norme de jugement d'image en demande <span class="mesure">10 à 20&nbsp;%</span>.
+    <b>L'atelier pousse donc aujourd'hui à surcontraster ses sprites</b> — le défaut même que la
+    phrase croyait prévenir.
+  </p>
+  <p class="chapo">
+    L'autre moitié de la phrase, elle, reste vraie&nbsp;: un châssis chaud entre bien en concurrence
+    avec les verts, les bruns et les ors du pixel art. Le produit confondait deux choses. La sortie
+    n'est pas de choisir un camp&nbsp;: <b>c'est de séparer le châssis du pourtour de l'image.</b>
+  </p>
+
+  <div class="comparo">
+    <figure>
+      <div class="scene chassis">
+        <svg width="128" height="128" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="sprite d'exemple : un coffre">
+          <rect x="2" y="6" width="12" height="7" fill="#7a4a22"/>
+          <rect x="2" y="4" width="12" height="3" fill="#8f5a2a"/>
+          <rect x="3" y="7" width="10" height="5" fill="#a06a34"/>
+          <rect x="2" y="6" width="12" height="1" fill="#c8a03c"/>
+          <rect x="7" y="7" width="2" height="3" fill="#c8a03c"/>
+          <rect x="7" y="8" width="2" height="1" fill="#5c3418"/>
+          <rect x="2" y="12" width="12" height="1" fill="#5c3418"/>
+          <rect x="4" y="4" width="1" height="3" fill="#c8a03c"/>
+          <rect x="11" y="4" width="1" height="3" fill="#c8a03c"/>
+        </svg>
+      </div>
+      <figcaption>
+        <b style="color:var(--texte)">Aujourd'hui</b> — le sprite est jugé sur le fond de l'outil,
+        à <span class="mesure">1&nbsp;%</span> de réflectance. Les ors du coffre paraissent plus
+        vifs qu'ils ne le sont&nbsp;; on les corrige vers le bas, et l'image sort trop dure dans le jeu.
+      </figcaption>
+    </figure>
+    <figure>
+      <div class="scene lampe">
+        <svg width="128" height="128" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="le même sprite dans la lumière neutre">
+          <rect x="2" y="6" width="12" height="7" fill="#7a4a22"/>
+          <rect x="2" y="4" width="12" height="3" fill="#8f5a2a"/>
+          <rect x="3" y="7" width="10" height="5" fill="#a06a34"/>
+          <rect x="2" y="6" width="12" height="1" fill="#c8a03c"/>
+          <rect x="7" y="7" width="2" height="3" fill="#c8a03c"/>
+          <rect x="7" y="8" width="2" height="1" fill="#5c3418"/>
+          <rect x="2" y="12" width="12" height="1" fill="#5c3418"/>
+          <rect x="4" y="4" width="1" height="3" fill="#c8a03c"/>
+          <rect x="11" y="4" width="1" height="3" fill="#c8a03c"/>
+        </svg>
+      </div>
+      <figcaption>
+        <b style="color:var(--texte)">La lampe</b> — gris strictement neutre à
+        <span class="mesure">15&nbsp;%</span> de réflectance, <code>#6C6C6C</code>, la valeur de
+        la norme. <b>Cette surface ne change jamais</b>, quel que soit le fond choisi en haut de page&nbsp;:
+        une image se juge toujours dans la même lumière.
+      </figcaption>
+    </figure>
+  </div>
+
+  <h3>Et le damier reste ce qu'il est</h3>
+  <div class="comparo">
+    <figure>
+      <div class="scene damier" style="min-height:160px">
+        <svg width="96" height="96" viewBox="0 0 16 16" shape-rendering="crispEdges">
+          <rect x="5" y="3" width="6" height="2" fill="#5ea0c8"/>
+          <rect x="6" y="5" width="4" height="7" fill="#7ec0e4"/>
+          <rect x="7" y="6" width="2" height="5" fill="#bfe6f7"/>
+          <rect x="5" y="11" width="6" height="2" fill="#3f7a9c"/>
+        </svg>
+      </div>
+      <figcaption>
+        Le damier dit <b>«&nbsp;il n'y a rien ici&nbsp;»</b>, pas «&nbsp;voici la lumière de
+        jugement&nbsp;». Ce sont deux surfaces différentes et elles ne se confondent pas&nbsp;: il
+        garde son écart volontairement faible entre les deux carreaux — assez pour se lire, trop peu
+        pour que l'œil suive le motif — et il devient neutre, comme le pourtour.
+      </figcaption>
+    </figure>
+    <figure>
+      <div class="scene chassis" style="min-height:160px;flex-direction:column;gap:12px">
+        <div class="segments">
+          <button aria-pressed="true">La lampe</button>
+          <button>Damier</button>
+        </div>
+        <p class="note" style="text-align:center;max-width:26em">
+          Deux fonds de jugement, et ils ne disent pas la même chose&nbsp;: <b>la lampe</b> est la
+          lumière dans laquelle on juge une couleur, <b>le damier</b> dit qu'il n'y a rien ici.
+        </p>
+      </div>
+      <figcaption>
+        <b style="color:var(--texte)">Teindre l'interface aux couleurs du jeu&nbsp;: abandonné</b>,
+        par son auteur, le 4 septembre 2026. Un châssis teint à la couleur du jeu fait paraître les
+        sprites de ce jeu <span class="mesure">10 à 41&nbsp;%</span> moins colorés qu'ils ne sont —
+        c'est exactement le jugement que l'atelier sert à porter, faussé dans le sens qui trompe.
+        La vitrine, qui propose déjà trois couleurs du jeu comme fonds de jugement, reste ce
+        qu'elle est.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Trois familles, trois métiers</h2>
+  <p class="chapo">
+    Le relevé a mesuré <b>20 tailles de texte distinctes</b>, dont 526 déclarations sur 732 à
+    10&nbsp;px ou moins — 94&nbsp;% du texte tassé dans une bande de 4,5&nbsp;px découpée en dix
+    valeurs. À cette taille, aucune nuance de gris et aucun liseré ne peut porter la différence
+    entre un mot et un bouton. <b>Cinq tailles remplacent les vingt, et le plancher passe à 13&nbsp;px.</b>
+  </p>
+
+  <div class="carte">
+    <p style="font-family:var(--serif);font-size:52px;line-height:60px;margin:0 0 8px;font-variation-settings:'opsz' 144,'SOFT' 30;font-weight:300">
+      Ta bibliothèque est vide. <em>Écris.</em>
+    </p>
+    <p class="note" style="margin:0">
+      <b>Fraunces</b>, la police du titre. Elle remplace Instrument Serif pour une raison de
+      métier&nbsp;: celle-là n'existe qu'en un seul poids, sans gras, et le produit s'en est déjà
+      trouvé bloqué. Fraunces est variable, chaude, avec un axe d'<em>optique</em> qui l'épaissit
+      quand elle rapetisse. Elle ne descend jamais sous 19&nbsp;px et n'entre jamais dans un contrôle.
+    </p>
+  </div>
+
+  <div class="carte" style="margin-top:16px">
+    <p style="font-size:15px;line-height:24px;margin:0 0 12px;max-width:38em">
+      L'atelier garde l'univers d'un jeu à un seul endroit, et l'applique à chaque image sans qu'on
+      ait à le réécrire. Quand une génération part, ce qui l'accompagne se lit ligne par ligne&nbsp;:
+      le sujet, les sept textes du jeu, les trois de l'ambiance, et chaque image de référence — avec
+      un interrupteur sur chacune. Rien ne part sans avoir été montré, et le prix s'affiche dans le
+      bouton qui le dépense.
+    </p>
+    <p class="note" style="margin:0">
+      <b>Archivo</b>, la police du corps et de tous les contrôles. Trois raisons mesurées, pas de
+      goût&nbsp;: la hauteur d'œil la plus haute des grotesques pratiques, ce qui l'autorise à
+      composer plus petit à lisibilité égale&nbsp;; <b>5,8&nbsp;% de français en plus par ligne</b>
+      qu'Instrument Sans&nbsp;; et le plus faible débord d'accent mesuré — le É ne dépasse le H que
+      de 0,18&nbsp;em, ce qui compte énormément en français, où ce sont les capitales accentuées
+      qu'une rangée serrée rogne en premier. Elle a en plus un axe de <em>chasse</em>&nbsp;:
+      condenser à 90&nbsp;% rend 8,3&nbsp;% de largeur sans toucher ni à la taille ni au contraste.
+    </p>
+  </div>
+
+  <div class="carte" style="margin-top:16px">
+    <table>
+      <thead><tr><th>Image</th><th>Modèle</th><th style="text-align:right">Taille</th><th style="text-align:right">Coût</th><th style="text-align:right">Durée</th></tr></thead>
+      <tbody>
+        <tr><td>Grumm — face fixe</td><td>gpt-image-2</td><td class="num">64×64</td><td class="num">$0,0670</td><td class="num">18,4 s</td></tr>
+        <tr><td>Grumm — marche gauche</td><td>gpt-image-2</td><td class="num">64×64</td><td class="num">$0,0670</td><td class="num">21,0 s</td></tr>
+        <tr><td>Coffre de la crypte</td><td>flux-pixel</td><td class="num">32×32</td><td class="num">$0,0120</td><td class="num">6,8 s</td></tr>
+        <tr><td>Mousse — raccord</td><td>local · SDXL</td><td class="num">128×128</td><td class="num">gratuit</td><td class="num">94,2 s</td></tr>
+      </tbody>
+    </table>
+    <p class="note">
+      <b>JetBrains Mono</b> ne porte plus que les mesures — et <b>toutes</b> les mesures. C'est la
+      correction dans l'autre sens&nbsp;: aujourd'hui, 313 de ses 604 emplois sont des boutons et de
+      la prose, si bien que les explications du produit sont rendues en chasse fixe à 10&nbsp;px.
+      C'est très exactement ce que tu décris comme «&nbsp;une interface qui assomme d'infos
+      techniques&nbsp;». La chasse fixe garde les chiffres, elle perd les phrases. Une seule
+      exception, et elle dit la même chose qu'un nombre&nbsp;: <span class="mesure">gratuit</span>,
+      chez un fournisseur qui ne facture pas.
+    </p>
+  </div>
+
+  <div class="carte" style="margin-top:16px">
+<pre><span class="c">// ce que l'agent reçoit quand il demande une image</span>
+{ <span class="k">"sujet"</span>: <span class="s">"un coffre de la crypte, fermé"</span>,
+  <span class="k">"jeu"</span>:   <span class="s">"les-mines-de-grumm"</span>,
+  <span class="k">"taille"</span>: <span class="s">"32x32"</span> }</pre>
+  </div>
+
+  <h3>Les cinq tailles, et rien entre</h3>
+  <div class="carte">
+    <table>
+      <thead><tr><th style="width:70px;text-align:right">Taille</th><th style="width:110px">Interligne</th><th>Ce qu'elle porte</th></tr></thead>
+      <tbody>
+        <tr><td class="num">11 px</td><td class="mesure">16 px</td><td>ce qui n'est jamais porteur de sens tout seul — unité, en-tête de colonne, méta d'une tuile</td></tr>
+        <tr><td class="num">13 px</td><td class="mesure">18 px</td><td><b>le plancher</b> — tout contrôle, tout libellé, toute rangée, tout tableau</td></tr>
+        <tr><td class="num">15 px</td><td class="mesure">24 px</td><td>la prose qu'on lit vraiment, le nom en fiche</td></tr>
+        <tr><td class="num">19 px</td><td class="mesure">26 px</td><td>titre de section</td></tr>
+        <tr><td class="num">28 px</td><td class="mesure">34 px</td><td>titre d'écran, état vide — en Fraunces</td></tr>
+      </tbody>
+    </table>
+    <p class="note">
+      Le poids par défaut passe de 400 à <b>500</b>&nbsp;: cela abaisse d'un cran entier l'exigence
+      de contraste pour environ 1&nbsp;% de largeur en plus. Et chaque taille porte son interligne
+      écrit, au lieu du 1,5 hérité par accident sur 89&nbsp;% des éléments.
+    </p>
+  </div>
+
+  <h3>Ce que le plancher coûte, et il faut le payer</h3>
+  <div class="msg ep" style="margin-top:0">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M12 9v5M12 17h.01M10.3 4l-8 14h19.4l-8-14a2 2 0 00-3.4 0z"/></svg>
+    <p>
+      <strong>Remonter 526 déclarations de 10 à 13&nbsp;px augmente la surface de texte d'environ un
+      tiers</strong>, sur un produit dont tu dis qu'il est surchargé de texte. La police condensée en
+      rend 8&nbsp;% et le gain de chasse 5,8&nbsp;% — <b>ça ne couvre pas la moitié</b>. Le reste se
+      paie en enlevant des contrôles et des mots, écran par écran, avec un budget chiffré. Sans ce
+      calcul, la refonte rend un écran plus lisible mot par mot et plus lourd d'ensemble.
+    </p>
+  </div>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>La palette</h2>
+
+  <h3>Le châssis — huit surfaces, chacune à sa marche</h3>
+  <div class="swatches" id="sw-chassis"></div>
+  <p class="note">
+    Chaque marche entre deux surfaces voisines vaut <b>1,30&nbsp;:&nbsp;1</b>, contre 1,05 à 1,10
+    aujourd'hui — c'est-à-dire que deux surfaces voisines ne se distinguaient pas. La teinte est à
+    <span class="mesure">60°</span> en OKLCH, un brun chaud, et sa <em>chroma</em> est plafonnée à
+    <span class="mesure">0,013</span>&nbsp;: <b>huit fois moins que la plus sourde des couleurs qui
+    disent quelque chose.</b> C'est ce plafond qui permet de chauffer sans entrer en concurrence avec
+    l'ambre de «&nbsp;réglé à la main&nbsp;» — à cette saturation, la teinte ne se lit plus comme une
+    couleur, elle se lit comme une matière.
+  </p>
+
+  <h3>Ce qui dit quelque chose — quatre couleurs, et pas une de plus</h3>
+  <div class="swatches" id="sw-sem"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;max-width:52em">
+    <div class="msg ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M20 6L9 17l-5-5"/></svg><p><strong>Posé dans le dossier du jeu.</strong> Quatre fichiers écrits, la grille du jeu retrouvée sur les quatre.</p></div>
+    <div class="msg ep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M12 17v5M9 2h6l-1 8 4 3H6l4-3-1-8z"/></svg><p><strong>Réglé à la main.</strong> Le seuil de détourage vient de toi, pas du réglage de départ — il ne bougera plus si le jeu change d'ambiance.</p></div>
+    <div class="msg ko"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg><p><strong>L'appel n'est pas parti.</strong> La clé du fournisseur manque. <span class="mesure">Rien n'a été facturé.</span></p></div>
+    <div class="msg inf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M12 16v-5M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg><p>Trois images arrivent. <span class="mesure">La deuxième sur trois, 12 s</span> — <button class="b b-lien">tout arrêter</button>.</p></div>
+  </div>
+
+  <h3>Ce qui ne dit rien — les dix teintes de rangement</h3>
+  <div class="swatches" id="sw-ilots"></div>
+  <p class="note">
+    Liste fermée, toutes au même contraste perçu, toutes <b>sous</b> les quatre sémantiques. C'est le
+    seul endroit du produit où une couleur ne veut rien dire — un îlot en porte une parce que tu l'as
+    choisie, jamais parce qu'un état la commande. Elles ne dérivent d'aucune palette de jeu&nbsp;:
+    leur discipline tient précisément à cette égalité.
+  </p>
+
+  <h3>La lumière — la surface qui ne change jamais</h3>
+  <div class="swatches" id="sw-lum"></div>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Un écran, en entier</h2>
+  <p class="chapo">
+    La galerie&nbsp;: où ça se range · la planche contact · l'image choisie. Tout ce qui précède y
+    est appliqué — les quatre formes, les deux traits, les cinq tailles, le palier de repos, la
+    lumière neutre sous l'image, et <b>un seul geste dominant, en bas, toujours au même endroit</b>.
+  </p>
+
+  <div class="maquette">
+    <div class="mq-tete">
+      <span class="mq-nom">Asset Kitchen</span>
+      <nav class="mq-onglets">
+        <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18"/></svg>Univers</button>
+        <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M4 4h11a2 2 0 012 2v14H6a2 2 0 01-2-2V4zM17 8h3v12H6"/></svg>Codex</button>
+        <button aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>Galerie</button>
+      </nav>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:16px">
+        <span class="past"><i style="background:var(--ok)"></i> 2 fournisseurs en ligne</span>
+        <button class="b b-lien" style="font-size:13px">ce jeu <span class="mesure">$2,140</span></button>
+      </div>
+    </div>
+
+    <div class="mq-corps">
+      <!-- où ça se range -->
+      <aside class="mq-col">
+        <div class="mq-entete">Les mines de Grumm</div>
+        <div class="mq-rangee" aria-current="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>
+          Tout <span class="n mesure">116</span>
+        </div>
+        <div class="mq-rangee">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+          Personnages <span class="n mesure">42</span>
+        </div>
+        <div class="mq-rangee">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/></svg>
+          Objets <span class="n mesure">31</span>
+        </div>
+        <div class="mq-rangee">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M3 19l6-8 4 5 3-4 5 7H3z"/><circle cx="8" cy="7" r="2"/></svg>
+          Décors <span class="n mesure">27</span>
+        </div>
+        <div class="mq-rangee">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M5 3v18l7-5 7 5V3z"/></svg>
+          Favoris <span class="n mesure">16</span>
+        </div>
+        <div style="margin-top:40px" class="mq-entete">Les dépenses</div>
+        <div style="padding:0 12px">
+          <div class="champ-mesure"><b>ce jeu</b><span class="mesure">$2,140</span></div>
+          <div class="champ-mesure" style="margin-top:6px"><b>toutes séances</b><span class="mesure">$8,905</span></div>
+          <button class="b b-lien" style="margin-top:12px;font-size:13px">voir le détail</button>
+        </div>
+      </aside>
+
+      <!-- la planche contact -->
+      <div class="mq-scene">
+        <div class="mq-barre">
+          <div class="segments">
+            <button aria-pressed="true">1×</button><button>2×</button><button>4×</button>
+          </div>
+          <input class="champ" style="width:200px;height:30px" placeholder="Chercher une image…">
+          <span class="mesure" style="margin-left:auto;font-size:11px;color:var(--texte-3)">116 images · 42 favorites</span>
+        </div>
+        <div class="mq-grille">
+          <div class="tuile" aria-selected="true">
+            <div class="img" style="background:var(--pourtour)">
+              <svg width="72" height="72" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="4" fill="#c08a4a"/><rect x="6" y="3" width="4" height="2" fill="#e8c07a"/><rect x="4" y="6" width="8" height="6" fill="#6d5030"/><rect x="5" y="7" width="6" height="4" fill="#8f6a40"/><rect x="6" y="12" width="4" height="2" fill="#4a3520"/></svg>
+            </div>
+            <div class="pied"><b>Grumm — face</b><span class="mesure">$0,067</span></div>
+          </div>
+          <div class="tuile">
+            <div class="img" style="background:var(--pourtour)">
+              <svg width="72" height="72" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="6" width="12" height="7" fill="#7a4a22"/><rect x="2" y="4" width="12" height="3" fill="#8f5a2a"/><rect x="2" y="6" width="12" height="1" fill="#c8a03c"/><rect x="7" y="7" width="2" height="3" fill="#c8a03c"/></svg>
+            </div>
+            <div class="pied"><b>Coffre</b><span class="mesure">$0,012</span></div>
+          </div>
+          <div class="tuile">
+            <div class="img damier"></div>
+            <div class="pied"><b>Champignon</b><span class="mesure">$0,012</span></div>
+          </div>
+          <div class="tuile">
+            <div class="img" style="background:var(--pourtour)">
+              <svg width="72" height="72" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="2" width="4" height="9" fill="#9aa6b0"/><rect x="7" y="2" width="2" height="9" fill="#d3dde4"/><rect x="4" y="11" width="8" height="2" fill="#7a5a30"/><rect x="7" y="13" width="2" height="2" fill="#5c4020"/></svg>
+            </div>
+            <div class="pied"><b>Épée courte</b><span class="mesure">$0,012</span></div>
+          </div>
+          <div class="tuile">
+            <div class="img" style="background:var(--pourtour)">
+              <svg width="72" height="72" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="9" width="10" height="5" fill="#3f6b4a"/><rect x="4" y="7" width="8" height="3" fill="#4f8259"/><rect x="6" y="5" width="4" height="3" fill="#5e9668"/></svg>
+            </div>
+            <div class="pied"><b>Mousse — raccord</b><span class="mesure">gratuit</span></div>
+          </div>
+          <div class="tuile">
+            <div class="img" style="background:var(--fond-1);display:flex;flex-direction:column;gap:6px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--echec)" stroke-width="2" stroke-linecap="square" style="width:22px;height:22px"><path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+              <span style="font-size:11px;color:var(--texte-3)">clé absente</span>
+            </div>
+            <div class="pied"><b>Torche</b><span class="mesure" style="color:var(--texte-3)">$0,000</span></div>
+          </div>
+        </div>
+        <div class="mq-action">
+          <span class="etat">Une image choisie — <span class="mesure">64×64</span>, détourée</span>
+          <div style="margin-left:auto;display:flex;gap:12px;align-items:center">
+            <button class="b b-cadre" style="height:32px;padding:0 12px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+              Exporter
+            </button>
+            <button class="b b-plein" style="height:32px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M3 8V5a2 2 0 012-2h3M16 3h3a2 2 0 012 2v3M21 16v3a2 2 0 01-2 2h-3M8 21H5a2 2 0 01-2-2v-3"/></svg>
+              Ouvrir son établi
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- l'image choisie -->
+      <aside class="mq-col">
+        <div class="mq-entete">
+          L'image choisie
+          <button class="b" style="height:24px;width:24px;padding:0;color:var(--texte-3)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="mq-fiche">
+          <div style="background:var(--pourtour);border-radius:var(--r-sm);padding:24px;display:flex;justify-content:center">
+            <svg width="140" height="140" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="4" fill="#c08a4a"/><rect x="6" y="3" width="4" height="2" fill="#e8c07a"/><rect x="4" y="6" width="8" height="6" fill="#6d5030"/><rect x="5" y="7" width="6" height="4" fill="#8f6a40"/><rect x="6" y="12" width="4" height="2" fill="#4a3520"/></svg>
+          </div>
+          <div>
+            <p style="font-size:15px;margin:0 0 2px;font-weight:600">Grumm — face fixe</p>
+            <p style="margin:0" class="note">le forgeron, vu de face, bras le long du corps</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="champ-mesure"><b>Dimensions</b><span class="mesure">64×64</span></div>
+            <div class="champ-mesure"><b>Taille du pixel</b><span class="mesure">4 px</span></div>
+            <div class="champ-mesure"><b>Coût réel</b><span class="mesure">$0,0670</span></div>
+            <div class="champ-mesure"><b>Fabriquée le</b><span class="mesure">2 sept. · 14:31</span></div>
+          </div>
+          <details class="repli">
+            <summary>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M9 6l6 6-6 6"/></svg>
+              Traitement <span class="v">3 passes · <span class="mesure" style="color:var(--epingle)">1 à la main</span></span>
+            </summary>
+            <div class="dedans">
+              <p class="note" style="margin:0 0 8px">Un bloc replié porte toujours sa valeur à droite de son titre&nbsp;: sans elle, le repli cacherait au lieu de résumer.</p>
+              <div class="rangee-b">
+                <button class="b b-cadre" style="height:30px;padding:0 12px">Rouvrir la découpe</button>
+              </div>
+            </div>
+          </details>
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+            <button class="b b-cadre" style="justify-content:center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M5 3v18l7-5 7 5V3z"/></svg>
+              Mettre en favori
+            </button>
+            <button class="b b-eteint" style="justify-content:center" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="2" y="5" width="14" height="14" rx="1"/><path d="M16 10l6-3v10l-6-3"/></svg>
+              Animer
+            </button>
+            <span class="raison" style="text-align:center;margin:0 auto">L'animation attend la V3 — cette image sera l'une de ses poses de départ.</span>
+            <p class="note" style="margin-top:8px;text-align:center">
+              <b>Aucun bouton plein ici</b>, et c'est une règle du produit qu'on garde&nbsp;: la
+              galerie ne paie jamais. Le seul dominant de l'écran est en bas, et il mène là où l'on paie.
+            </p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Ce que chaque valeur a dû atteindre</h2>
+  <p class="chapo">
+    Aucune couleur de cette page n'a été choisie à l'œil. Chacune est le résultat d'une recherche
+    sur sa clarté, à teinte et saturation fixées, jusqu'à atteindre sa cible. Les contrastes sont
+    donnés deux fois&nbsp;: en rapport classique <em>(WCAG)</em>, et en contraste réellement perçu
+    <em>(APCA)</em> — parce que sur fond sombre le premier délivre des certificats de conformité à
+    des textes illisibles. Le gris secondaire d'aujourd'hui affiche 7,12&nbsp;:&nbsp;1, le meilleur
+    niveau, pour un contraste perçu de 50 quand il en faut 75.
+  </p>
+  <div class="carte">
+    <table id="verif">
+      <thead><tr><th>Jeton</th><th>Ce qu'il doit atteindre</th><th style="text-align:right">Valeur</th><th style="text-align:right">WCAG</th><th style="text-align:right">APCA</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<hr>
+
+<section>
+  <h2>Ce qui n'est pas encore décidé</h2>
+  <p class="chapo">
+    Cette page tranche la peau. Elle ne tranche pas trois choses, et elles sont dans le message qui
+    l'accompagne&nbsp;: <b>la profondeur du fond</b> (le bouton en haut de page), <b>le geste
+    dominant de l'établi</b>, et <b>le renommage des verbes</b> — sept mots disent aujourd'hui
+    «&nbsp;dépenser pour obtenir une image&nbsp;», neuf disent «&nbsp;faire disparaître&nbsp;», douze
+    disent «&nbsp;quitter&nbsp;». Fermer ce vocabulaire est le préalable de toute icône&nbsp;: poser
+    des pictogrammes sur sept verbes qui désignent le même geste fabriquerait sept icônes pour un geste.
+  </p>
+</section>
+
+</main>
+
+<script>
+/* ── la bascule de profondeur ───────────────────────────────────────────── */
+const boutons = document.querySelectorAll('.niveaux button');
+boutons.forEach(b => b.addEventListener('click', () => {
+  document.documentElement.dataset.niveau = b.dataset.n;
+  boutons.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  peindre();
+}));
+document.documentElement.dataset.niveau = 'bois';
+
+/* ── mesure du contraste, calculée dans la page sur les valeurs réelles ─── */
+const lire = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const rgb = h => { h = h.replace('#',''); return [0,2,4].map(i => parseInt(h.slice(i,i+2),16)); };
+const relY = c => { const f = v => { v/=255; return v<=.04045 ? v/12.92 : ((v+.055)/1.055)**2.4 };
+  return .2126*f(c[0]) + .7152*f(c[1]) + .0722*f(c[2]) };
+const wcag = (a,b) => { const A=relY(a), B=relY(b), [h,l] = A>B?[A,B]:[B,A]; return (h+.05)/(l+.05) };
+const sY = c => { const s = v => Math.pow(v/255, 2.4); return .2126729*s(c[0]) + .7151522*s(c[1]) + .0721750*s(c[2]) };
+function apca(t,b){
+  const Bt=.022, Be=1.414, W=1.14, Wo=.027;
+  const cl = Y => Y>Bt ? Y : Y + Math.pow(Bt-Y, Be);
+  const T=cl(sY(t)), B=cl(sY(b));
+  if (Math.abs(B-T) < .0005) return 0;
+  let S,o;
+  if (B>T){ S=(Math.pow(B,.56)-Math.pow(T,.57))*W; o = S<.001?0:S-Wo }
+  else    { S=(Math.pow(B,.65)-Math.pow(T,.62))*W; o = S>-.001?0:S+Wo }
+  return Math.round(o*1000)/10;
+}
+
+const CHASSIS = [
+  ['fond-0','la table, le plus profond'], ['fond-1','panneaux, barres'],
+  ['fond-2','cartes, champs, tuiles'], ['fond-3','survol, rangée active'],
+  ['trait','le trait qui range'], ['contour','le contour qui se clique'],
+  ['contour-fort','le focus'],
+  ['texte','le contenu'], ['texte-2','libellés, secondaire'], ['texte-3','méta, raison']
+];
+const SEM = [['signal','l’accent — marque et texte'],['signal-plein','le fond du bouton dominant'],
+  ['ok','réussi, en ligne, posé'],['epingle','réglé à la main, interrompu'],['echec','raté, refusé, supprimé']];
+const ILOTS = ['ardoise','pervenche','iris','lavande','prune','mauve','bruyere','paille','mousse','lichen'];
+const LUM = [['pourtour','la lumière de jugement — 15 % de réflectance'],
+  ['damier-a','damier, carreau sombre'],['damier-b','damier, carreau clair']];
+
+const CIBLES = {
+  'fond-1':'1,30 : 1 sous fond-2', 'fond-0':'1,30 : 1 sous fond-1', 'fond-3':'1,28 : 1 sur fond-2',
+  'trait':'1,65 : 1 — visible, jamais une affordance', 'contour':'3,00 : 1 — le seuil du bord perçu',
+  'contour-fort':'4,50 : 1', 'texte':'APCA 88 — la lecture longue',
+  'texte-2':'APCA 68 — les libellés', 'texte-3':'APCA 50 — la méta, jamais seule porteuse',
+  'signal':'APCA 55', 'ok':'APCA 55', 'epingle':'APCA 55', 'echec':'APCA 55',
+  'signal-plein':'APCA 72 — et 80 avec le texte sombre par-dessus'
+};
+
+function carte(nom, quoi, val, f2){
+  const c = rgb(val);
+  const w = f2 ? wcag(c, f2).toFixed(2) : '—';
+  const a = f2 ? apca(c, f2).toFixed(0) : '—';
+  return '<div class="sw"><div class="bloc" style="background:'+val+'"></div>' +
+    '<div class="txt"><b>--'+nom+'</b><span class="mesure">'+val.toUpperCase()+'</span>' +
+    '<span>'+quoi+'</span>' +
+    (f2 ? '<span class="mesure" style="margin-top:4px">'+w+' : 1 · APCA '+a+'</span>' : '') +
+    '</div></div>';
+}
+
+function peindre(){
+  const f2 = rgb(lire('--fond-2'));
+  document.getElementById('sw-chassis').innerHTML =
+    CHASSIS.map(([n,q]) => carte(n, q, lire('--'+n), n === 'fond-2' ? null : f2)).join('');
+  document.getElementById('sw-sem').innerHTML =
+    SEM.map(([n,q]) => carte(n, q, lire('--'+n), f2)).join('');
+  document.getElementById('sw-ilots').innerHTML =
+    ILOTS.map(n => carte(n, 'un rangement, pas un état', lire('--'+n), f2)).join('');
+  document.getElementById('sw-lum').innerHTML =
+    LUM.map(([n,q]) => carte(n, q, lire('--'+n), null)).join('');
+
+  const corps = document.querySelector('#verif tbody');
+  corps.innerHTML = Object.entries(CIBLES).map(([n, cible]) => {
+    const v = lire('--'+n), c = rgb(v);
+    return '<tr><td><code>--'+n+'</code></td><td>'+cible+'</td>' +
+      '<td class="num">'+v.toUpperCase()+'</td>' +
+      '<td class="num">'+wcag(c,f2).toFixed(2)+'</td>' +
+      '<td class="num">'+apca(c,f2).toFixed(0)+'</td></tr>';
+  }).join('');
+}
+peindre();
+</script>
+</body>
+</html>

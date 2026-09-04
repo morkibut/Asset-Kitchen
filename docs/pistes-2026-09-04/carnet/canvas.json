@@ -1,0 +1,36 @@
+{
+  "pages": [
+    { "id": "modele", "name": "Le modèle" },
+    { "id": "ecrans", "name": "Les écrans" },
+    { "id": "melange", "name": "Le mélange" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "page": "modele", "x": 0, "y": 0, "w": 1240, "h": 5800, "title": "Le modèle, et ce qu'il couvre", "print": "flow" },
+    { "file": "Carte.dc.html", "page": "modele", "x": 1400, "y": 0, "w": 1240, "h": 6200, "title": "Les écrans — ceux qui existent, ceux qui manquent", "print": "flow" },
+
+    { "file": "Ouverture.dc.html",  "page": "ecrans", "x": 0,    "y": 0,    "w": 1600, "h": 1000, "title": "Sur quel jeu travaille-t-on" },
+    { "file": "Accueil.dc.html",    "page": "ecrans", "x": 1720, "y": 0,    "w": 1600, "h": 1000, "title": "Le jeu, en une page" },
+    { "file": "Personnage.dc.html", "page": "ecrans", "x": 3440, "y": 0,    "w": 1600, "h": 1000, "title": "Un personnage — son essai et son vestiaire" },
+    { "file": "Equipement.dc.html", "page": "ecrans", "x": 5160, "y": 0,    "w": 1600, "h": 1000, "title": "Une pièce d'équipement, personnage par personnage" },
+
+    { "file": "Univers.dc.html",    "page": "ecrans", "x": 0,    "y": 1160, "w": 1600, "h": 1000, "title": "Les réglages du jeu — la page entière" },
+    { "file": "Reglages.dc.html",   "page": "ecrans", "x": 1720, "y": 1160, "w": 1600, "h": 1000, "title": "D'où on regarde le jeu — les huit vues" },
+    { "file": "Allure.dc.html",     "page": "ecrans", "x": 3440, "y": 1160, "w": 1600, "h": 1000, "title": "Le style, la taille, la pixelisation" },
+    { "file": "Tables.dc.html",     "page": "ecrans", "x": 5160, "y": 1160, "w": 1600, "h": 1000, "title": "Les tables de traitement" },
+
+    { "file": "Tuiles.dc.html",     "page": "ecrans", "x": 0,    "y": 2320, "w": 1600, "h": 1000, "title": "Un terrain, et son raccord" },
+    { "file": "Decors.dc.html",     "page": "ecrans", "x": 1720, "y": 2320, "w": 1600, "h": 1000, "title": "Un décor, et où il pose ses pieds" },
+    { "file": "Montage.dc.html",    "page": "ecrans", "x": 3440, "y": 2320, "w": 1600, "h": 1000, "title": "Le montage d'un clip" },
+    { "file": "Envoi.dc.html",      "page": "ecrans", "x": 5160, "y": 2320, "w": 1600, "h": 1000, "title": "Ce qu'on envoie à l'IA" },
+
+    { "file": "Toile.dc.html",    "page": "melange", "x": 0,    "y": 0,    "w": 1600, "h": 1000, "title": "Le plan du jeu, piloté par le carnet" },
+    { "file": "Barre.dc.html",    "page": "melange", "x": 1720, "y": 0,    "w": 1600, "h": 1000, "title": "La barre de recherche" },
+    { "file": "Parcours.dc.html", "page": "melange", "x": 0,    "y": 1160, "w": 1600, "h": 1000, "title": "Le parcours entier, de rien à un sprite" }
+  ],
+  "annotations": [
+    { "id": "commencer", "page": "modele", "x": -380, "y": 0, "w": 290, "text": "Commence par la gauche.\n\nLe modèle en trois parties, les neuf règles de ton plan qu'il touche, les vingt-huit fonctions de l'atelier et où chacune se range, puis les manques repérés dans le code.\n\nÀ droite, le compte des écrans : les vingt-deux d'aujourd'hui, où chacun arrive, et les dix choses que le produit ne sait pas encore faire." },
+    { "id": "les-ecrans", "page": "ecrans", "x": -380, "y": 0, "w": 290, "text": "Douze écrans, dans l'ordre où on les rencontre.\n\nPremière ligne : on allume l'atelier, on choisit un jeu, on ouvre un personnage.\n\nDeuxième ligne : les réglages du jeu, avec les huit vues et les quatre pixelisations dessinées.\n\nTroisième ligne : les terrains et les décors — tout ce que l'atelier ne sait pas encore faire — puis le montage et le seul écran qui paie." },
+    { "id": "le-melange", "page": "melange", "x": -380, "y": 0, "w": 290, "text": "Le mélange que tu proposes.\n\nLe plan du jeu est piloté par le carnet. La barre de recherche lance les actions qui n'ont pas de bouton, et cliquer n'y déclenche jamais de paiement.\n\nEn dessous, le parcours complet : douze étapes, deux qui coûtent de l'argent." }
+  ],
+  "launch": { "view": "canvas", "page": "ecrans" }
+}

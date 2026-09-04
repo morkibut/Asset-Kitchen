@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le parcours — Asset Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#201B18; --fond-1:#35302C; --fond-2:#48413C; --fond-3:#58514B;
+    --trait:#69615B; --contour:#958B83; --contour-fort:#B7ACA3;
+    --texte:#F4F0EE; --texte-2:#D5D0CC; --texte-3:#B6B1AD;
+    --signal:#5EC8E4; --epingle:#DEB653; --ok:#81CB91; --echec:#FFA29A;
+    --display:"Fraunces",Georgia,serif;
+    --corps:"Archivo",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fond-0);color:var(--texte);font-family:var(--corps);font-size:15px;line-height:24px;font-weight:400}
+  .page{max-width:1720px;margin:0 auto;padding:40px 40px 96px}
+  h1{font-family:var(--display);font-weight:600;font-size:28px;line-height:34px;margin:0 0 4px;letter-spacing:-0.01em}
+  .chapo{color:var(--texte-2);max-width:78ch;margin:0 0 8px}
+  .source{color:var(--texte-3);font-size:13px;line-height:20px;max-width:92ch;margin:0 0 40px}
+  svg{display:block;width:100%;height:auto;margin-bottom:40px}
+
+  h2{font-family:var(--display);font-weight:600;font-size:19px;line-height:26px;margin:40px 0 4px}
+  h2 + p{color:var(--texte-2);margin:0 0 24px;max-width:82ch}
+
+  table{border-collapse:collapse;width:100%;font-size:13px;line-height:20px}
+  th{text-align:left;font-weight:600;color:var(--texte-3);font-size:11px;line-height:16px;
+     text-transform:uppercase;letter-spacing:0.06em;padding:0 12px 8px;border-bottom:1px solid var(--trait)}
+  td{padding:8px 12px;border-bottom:1px solid var(--fond-2);vertical-align:top;color:var(--texte-2)}
+  td:first-child{color:var(--texte);width:26%}
+  td:nth-child(2){width:11%}
+  tr:hover td{background:var(--fond-1)}
+  .m{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;color:var(--texte-3)}
+
+  .tag{display:inline-block;font-size:11px;line-height:16px;font-weight:600;padding:1px 8px;
+       border-radius:9999px;border:1px solid var(--trait);color:var(--texte-3);white-space:nowrap}
+  .tag.fondu{border-color:#4C6B78;color:#9FD4E4}
+  .tag.deplace{border-color:#6E5C2E;color:var(--epingle)}
+  .tag.garde{border-color:#3F6248;color:var(--ok)}
+  .tag.mort{border-color:#6E4340;color:var(--echec)}
+
+  .notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:24px;margin-top:24px}
+  .note{background:var(--fond-1);border:1px solid var(--trait);border-radius:6px;padding:24px}
+  .note h3{font-family:var(--display);font-weight:600;font-size:15px;line-height:24px;margin:0 0 8px;color:var(--epingle)}
+  .note p{margin:0 0 8px;color:var(--texte-2);font-size:13px;line-height:20px}
+  .note p:last-child{margin:0}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Le parcours, en une image</h1>
+  <p class="chapo">Trois lieux, trois profondeurs, un seul chemin qui paie — et le compte d’écrans qui va avec.</p>
+  <p class="source"><strong>Deuxième version.</strong> La première a été mise à l’épreuve par cinq tâches réelles, le gardien du PRD et un audit du comptage : elle allongeait quatre parcours sur cinq et cassait quatre règles écrites. Ce qui a changé est en bas de page. Établi sur <span class="m">docs/releves/2026-09-04-carte-des-ecrans.md</span> et sur la visite de l’auteur, <span class="m">docs/releves/2026-09-04-le-parcours-voulu.md</span>. Ce dessin propose ; il ne fait pas foi.</p>
+
+<svg viewBox="0 0 1640 1080" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Le parcours de travail d’Asset Kitchen : trois lieux et trois profondeurs">
+  <defs>
+    <marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#958B83"/>
+    </marker>
+    <marker id="flor" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#DEB653"/>
+    </marker>
+    <marker id="flg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#69615B"/>
+    </marker>
+    <marker id="flc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5EC8E4"/>
+    </marker>
+    <style>
+      .t   {font-family:"Archivo",system-ui,sans-serif}
+      .d   {font-family:"Fraunces",Georgia,serif;font-weight:600}
+      .nom {font-size:19px;fill:#F4F0EE}
+      .grd {font-size:28px;fill:#F4F0EE}
+      .cor {font-size:13px;fill:#D5D0CC}
+      .pet {font-size:11px;fill:#B6B1AD}
+      .lab {font-size:11px;fill:#B6B1AD;letter-spacing:0.08em;font-weight:600}
+      .or  {fill:#DEB653}
+      .cy  {fill:#5EC8E4}
+    </style>
+  </defs>
+
+  <!-- ===================== DÉPART ===================== -->
+  <rect x="460" y="24" width="200" height="28" rx="14" fill="#35302C" stroke="#69615B"/>
+  <text class="t pet" x="560" y="43" text-anchor="middle">on allume l’atelier</text>
+  <line x1="560" y1="52" x2="560" y2="70" stroke="#958B83" stroke-width="1.5" marker-end="url(#fl)"/>
+
+  <rect x="400" y="74" width="320" height="70" rx="6" fill="#35302C" stroke="#5EC8E4" stroke-width="1.5"/>
+  <text class="d nom" x="424" y="108">Choisir un jeu</text>
+  <text class="t pet" x="424" y="128">sauté quand il n’y a rien à choisir</text>
+  <rect x="640" y="88" width="56" height="20" rx="10" fill="none" stroke="#5EC8E4"/>
+  <text class="t pet cy" x="668" y="102" text-anchor="middle">NEUF</text>
+
+  <line x1="560" y1="144" x2="560" y2="172" stroke="#958B83" stroke-width="1.5"/>
+  <line x1="200" y1="172" x2="920" y2="172" stroke="#958B83" stroke-width="1.5"/>
+  <line x1="200" y1="172" x2="200" y2="192" stroke="#958B83" stroke-width="1.5" marker-end="url(#fl)"/>
+  <line x1="560" y1="172" x2="560" y2="192" stroke="#958B83" stroke-width="1.5" marker-end="url(#fl)"/>
+  <line x1="920" y1="172" x2="920" y2="192" stroke="#958B83" stroke-width="1.5" marker-end="url(#fl)"/>
+
+  <!-- ===================== LES TROIS LIEUX ===================== -->
+  <text class="t lab" x="40" y="188">LES TROIS LIEUX</text>
+
+  <rect x="40" y="196" width="320" height="154" rx="6" fill="#35302C" stroke="#69615B"/>
+  <text class="d nom" x="64" y="232">L’Univers</text>
+  <text class="t cor" x="64" y="256">ce que le jeu <tspan font-style="italic">est</tspan></text>
+  <text class="t pet" x="64" y="280">la toile, les cartes d’inspiration,</text>
+  <text class="t pet" x="64" y="296">leur découpe. On y rêve.</text>
+  <line x1="64" y1="312" x2="336" y2="312" stroke="#48413C"/>
+  <text class="t pet" x="64" y="332">rien n’y coûte un centime</text>
+
+  <rect x="400" y="196" width="320" height="154" rx="6" fill="#48413C" stroke="#958B83" stroke-width="1.5"/>
+  <text class="d nom" x="424" y="232">Le Codex</text>
+  <text class="t cor" x="424" y="256">ce qu’on <tspan font-style="italic">fabrique</tspan></text>
+  <text class="t pet" x="424" y="280">les familles, les choses, les établis.</text>
+  <text class="t pet" x="424" y="296">On y travaille tous les jours.</text>
+  <line x1="424" y1="312" x2="696" y2="312" stroke="#69615B"/>
+  <text class="t pet or" x="424" y="332">le seul lieu qui paie</text>
+
+  <rect x="760" y="196" width="320" height="154" rx="6" fill="#35302C" stroke="#69615B" stroke-dasharray="5 4"/>
+  <text class="d nom" x="784" y="232">Les Règles du jeu</text>
+  <text class="t cor" x="784" y="256">ce que le jeu <tspan font-style="italic">impose</tspan></text>
+  <text class="t pet" x="784" y="280">directions, poses réclamées, taille du</text>
+  <text class="t pet" x="784" y="296">pixel, emplacements, modèle par famille.</text>
+  <line x1="784" y1="312" x2="1056" y2="312" stroke="#48413C"/>
+  <text class="t pet" x="784" y="332">on les pose ici — on les lit ailleurs</text>
+  <rect x="1000" y="208" width="56" height="20" rx="10" fill="none" stroke="#5EC8E4"/>
+  <text class="t pet cy" x="1028" y="222" text-anchor="middle">NEUF</text>
+
+  <line x1="560" y1="350" x2="560" y2="378" stroke="#958B83" stroke-width="1.5" marker-end="url(#fl)"/>
+  <text class="t lab" x="380" y="372">LES TROIS PROFONDEURS DU CODEX</text>
+
+  <!-- ===================== PROFONDEUR 1 ===================== -->
+  <rect x="380" y="382" width="360" height="120" rx="6" fill="#35302C" stroke="#69615B"/>
+  <circle cx="380" cy="442" r="15" fill="#48413C" stroke="#958B83"/>
+  <text class="d cor" x="380" y="447" text-anchor="middle" fill="#F4F0EE">1</text>
+  <text class="d nom" x="412" y="416">La famille</text>
+  <text class="t pet" x="412" y="438">une grille de <tspan fill="#F4F0EE">choses</tspan> : vignette ou case vide, un nom,</text>
+  <text class="t pet" x="412" y="454">et un seul chiffre — ce qui lui manque.</text>
+  <text class="t pet" x="412" y="474">Personnages · Décors · Objets · Interface · Équipement</text>
+  <text class="t pet" x="412" y="490">plus « Tout » : la bibliothèque du jeu, pas une famille.</text>
+
+  <line x1="560" y1="502" x2="560" y2="524" stroke="#958B83" stroke-width="1.5" marker-end="url(#fl)"/>
+  <text class="t pet" x="576" y="518">on clique une chose</text>
+
+  <!-- raccourci de création -->
+  <path d="M 470 502 C 330 545, 322 655, 366 686" fill="none" stroke="#5EC8E4" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#flc)"/>
+
+  <!-- ===================== PROFONDEUR 2 ===================== -->
+  <rect x="380" y="528" width="360" height="90" rx="6" fill="#35302C" stroke="#69615B"/>
+  <circle cx="380" cy="573" r="15" fill="#48413C" stroke="#958B83"/>
+  <text class="d cor" x="380" y="578" text-anchor="middle" fill="#F4F0EE">2</text>
+  <text class="d nom" x="412" y="562">La chose</text>
+  <text class="t pet" x="412" y="584">sa fiche : ce qu’elle est, ce qu’elle porte,</text>
+  <text class="t pet" x="412" y="602">ce qui existe déjà d’elle. On y décide.</text>
+
+  <line x1="560" y1="618" x2="560" y2="650" stroke="#958B83" stroke-width="1.5" marker-end="url(#fl)"/>
+  <text class="t pet" x="576" y="642">on décide de fabriquer</text>
+
+  <!-- ===================== PROFONDEUR 3 ===================== -->
+  <rect x="380" y="654" width="360" height="136" rx="6" fill="#35302C" stroke="#69615B"/>
+  <circle cx="380" cy="722" r="15" fill="#48413C" stroke="#958B83"/>
+  <text class="d cor" x="380" y="727" text-anchor="middle" fill="#F4F0EE">3</text>
+  <text class="d nom" x="412" y="686">L’établi</text>
+  <text class="t pet" x="412" y="706">un seul travail, plein écran, une sortie.</text>
+  <line x1="560" y1="716" x2="560" y2="782" stroke="#48413C"/>
+  <text class="t cor" x="470" y="736" text-anchor="middle">fabriquer</text>
+  <text class="t pet" x="470" y="754" text-anchor="middle">une case : une pose,</text>
+  <text class="t pet" x="470" y="770" text-anchor="middle">sous un angle</text>
+  <text class="t cor" x="650" y="736" text-anchor="middle">retoucher</text>
+  <text class="t pet" x="650" y="754" text-anchor="middle">une image, d’où</text>
+  <text class="t pet" x="650" y="770" text-anchor="middle">qu’elle vienne</text>
+
+  <!-- ===================== L'ENVOI ===================== -->
+  <line x1="470" y1="790" x2="470" y2="822" stroke="#DEB653" stroke-width="1.5" marker-end="url(#flor)"/>
+  <rect x="400" y="826" width="320" height="80" rx="6" fill="#35302C" stroke="#DEB653" stroke-width="1.5"/>
+  <text class="d nom or" x="424" y="858">L’envoi</text>
+  <text class="t pet" x="424" y="878">on éteint ce qui ne doit pas partir, et on voit</text>
+  <text class="t pet" x="424" y="894">le prix. Le seul seuil payant du produit.</text>
+
+  <line x1="560" y1="906" x2="560" y2="926" stroke="#69615B" stroke-width="1.5" marker-end="url(#flg)"/>
+  <rect x="410" y="930" width="300" height="30" rx="15" fill="#2B2623" stroke="#48413C"/>
+  <text class="t pet" x="560" y="949" text-anchor="middle">l’image revient et entre en bibliothèque</text>
+  <path d="M 410 945 C 200 945, 190 480, 368 480" fill="none" stroke="#69615B" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#flg)"/>
+  <text class="t pet" x="214" y="740" text-anchor="middle" transform="rotate(-90 214 740)">elle réapparaît chez sa chose, et dans « Tout »</text>
+
+  <!-- ===================== LES DEUX GESTES (gauche) ===================== -->
+  <rect x="40" y="382" width="252" height="164" rx="6" fill="#2B2623" stroke="#48413C"/>
+  <text class="t lab" x="64" y="410">LES DEUX GESTES</text>
+  <line x1="64" y1="422" x2="268" y2="422" stroke="#48413C"/>
+  <text class="t cor cy" x="64" y="448">on écrit un nom</text>
+  <text class="t pet" x="64" y="466">→ la chose entre, et son établi</text>
+  <text class="t pet" x="64" y="482">s’ouvre. Rien n’est payé. PRD:320</text>
+  <text class="t cor" x="64" y="510">on clique une chose</text>
+  <text class="t pet" x="64" y="528">→ sa fiche s’ouvre.</text>
+
+  <!-- ===================== LES TROIS VERBES (droite) ===================== -->
+  <rect x="760" y="382" width="320" height="218" rx="6" fill="#2B2623" stroke="#48413C"/>
+  <text class="t lab" x="784" y="410">LES TROIS VERBES DU RÉGLAGE</text>
+  <line x1="784" y1="422" x2="1056" y2="422" stroke="#48413C"/>
+  <text class="t cor" x="784" y="448">il se <tspan fill="#F4F0EE">règle</tspan> — dans Les Règles du jeu</text>
+  <text class="t cor" x="784" y="474">il se <tspan fill="#F4F0EE">lit</tspan>, avec son origine — à l’établi</text>
+  <text class="t cor" x="784" y="500">il se <tspan fill="#F4F0EE">corrige</tspan> pour un appel — à l’envoi</text>
+  <text class="t pet" x="784" y="530">Garder la correction est un second geste,</text>
+  <text class="t pet" x="784" y="546">et il dit où aller la relire.</text>
+  <text class="t pet" x="784" y="576">PRD:325 · Tables.tsx:1938</text>
+
+  <!-- ===================== PANNEAUX (droite) ===================== -->
+  <rect x="760" y="620" width="320" height="190" rx="6" fill="#2B2623" stroke="#48413C"/>
+  <text class="t lab" x="784" y="648">DES PANNEAUX, PAS DES ÉCRANS</text>
+  <line x1="784" y1="660" x2="1056" y2="660" stroke="#48413C"/>
+  <text class="t cor" x="784" y="686">La fiche d’une image</text>
+  <text class="t pet" x="784" y="704">→ partout où une image est montrée</text>
+  <text class="t cor" x="784" y="734">La réserve de l’Univers</text>
+  <text class="t pet" x="784" y="752">→ un tiroir de la toile</text>
+  <text class="t cor" x="784" y="782">Le bandeau qui paie</text>
+  <text class="t pet" x="784" y="800">→ à l’établi seulement</text>
+
+  <!-- ===================== BARRE DU HAUT (droite) ===================== -->
+  <rect x="760" y="830" width="320" height="180" rx="6" fill="#2B2623" stroke="#48413C"/>
+  <text class="t lab" x="784" y="858">TOUJOURS DANS LA BARRE DU HAUT</text>
+  <line x1="784" y1="870" x2="1056" y2="870" stroke="#48413C"/>
+  <rect x="784" y="886" width="272" height="30" rx="6" fill="#35302C" stroke="#69615B"/>
+  <text class="t cor" x="800" y="906">Le journal des dépenses</text>
+  <rect x="784" y="924" width="272" height="30" rx="6" fill="#35302C" stroke="#69615B"/>
+  <text class="t cor" x="800" y="944">Les réglages de l’atelier</text>
+  <rect x="784" y="962" width="272" height="30" rx="6" fill="#35302C" stroke="#69615B"/>
+  <text class="t cor" x="800" y="982">Le Guide — touche « ? »</text>
+
+  <!-- ===================== PANNEAU : LA RÈGLE ===================== -->
+  <rect x="1120" y="24" width="480" height="476" rx="6" fill="#35302C" stroke="#958B83" stroke-width="1.5"/>
+  <text class="t lab" x="1148" y="56">LA RÈGLE DE LECTURE</text>
+  <text class="d grd" x="1148" y="98">Une famille,</text>
+  <text class="d grd" x="1148" y="132">une chose, un établi.</text>
+  <text class="t cor" x="1148" y="164">Un clic descend d’un cran, jamais deux.</text>
+  <text class="t cor" x="1148" y="188">Créer n’est pas descendre : écrire un nom</text>
+  <text class="t cor" x="1148" y="208">ouvre l’établi.</text>
+  <line x1="1148" y1="230" x2="1572" y2="230" stroke="#69615B"/>
+
+  <text class="t cor" x="1148" y="258" fill="#F4F0EE">Elle décide les huit reproches du 4 septembre :</text>
+
+  <circle cx="1160" cy="286" r="4" fill="#958B83"/>
+  <text class="t cor" x="1180" y="291">Cliquer un nom ouvre sa <tspan fill="#F4F0EE">fiche</tspan>, jamais sa</text>
+  <text class="t cor" x="1180" y="311">chaîne de production.</text>
+  <text class="t pet" x="1180" y="329">→ « au lieu de voir les infos du pèlerin,</text>
+  <text class="t pet" x="1180" y="345">j’ai des poses et beaucoup de vide »</text>
+
+  <circle cx="1160" cy="376" r="4" fill="#958B83"/>
+  <text class="t cor" x="1180" y="381">Un réglage se règle ailleurs, mais se lit et</text>
+  <text class="t cor" x="1180" y="401">se corrige là où l’on paie.</text>
+  <text class="t pet" x="1180" y="419">→ « les directions et les poses, qu’est-ce</text>
+  <text class="t pet" x="1180" y="435">que ça vient polluer une colonne entière ? »</text>
+
+  <circle cx="1160" cy="466" r="4" fill="#958B83"/>
+  <text class="t cor" x="1180" y="471">Une mesure ne se montre que quand ça rate.</text>
+  <text class="t pet" x="1180" y="491">→ « ressemblance 0.37 · dérive 1.00× »</text>
+
+  <!-- ===================== PANNEAU : LE BUDGET ===================== -->
+  <rect x="1120" y="520" width="480" height="550" rx="6" fill="#35302C" stroke="#958B83" stroke-width="1.5"/>
+  <text class="t lab" x="1148" y="552">LE BUDGET D’ÉCRANS</text>
+  <text class="t pet" x="1148" y="576">Un écran = ce qui prend la fenêtre et dont il faut</text>
+  <text class="t pet" x="1148" y="592">savoir sortir. Ni colonne, ni panneau, ni bandeau.</text>
+  <line x1="1148" y1="612" x2="1572" y2="612" stroke="#69615B"/>
+
+  <text class="t cor" x="1148" y="644">surfaces relevées au code</text>
+  <text class="d grd" x="1572" y="648" text-anchor="end">41</text>
+  <text class="t pet" x="1148" y="662">barres, colonnes et panneaux compris</text>
+
+  <text class="t cor" x="1148" y="706">qui prennent la fenêtre</text>
+  <text class="d grd" x="1572" y="710" text-anchor="end">22</text>
+  <rect x="1148" y="722" width="424" height="14" rx="3" fill="#58514B"/>
+  <text class="t pet" x="1148" y="756">dont une injoignable, et une sans sortie</text>
+
+  <text class="t cor cy" x="1148" y="800">visées</text>
+  <text class="d grd cy" x="1572" y="804" text-anchor="end">11</text>
+  <rect x="1148" y="816" width="212" height="14" rx="3" fill="#5EC8E4"/>
+  <rect x="1360" y="816" width="212" height="14" rx="3" fill="#2B2623" stroke="#48413C"/>
+
+  <line x1="1148" y1="856" x2="1572" y2="856" stroke="#69615B"/>
+  <text class="t cor" x="1148" y="884" fill="#F4F0EE">Comment on passe de 22 à 11</text>
+
+  <text class="d cor" x="1148" y="918" fill="#9FD4E4" font-size="19">9</text>
+  <text class="t cor" x="1180" y="918">fondus dans un écran qui existe</text>
+  <text class="d cor" x="1148" y="946" fill="#DEB653" font-size="19">2</text>
+  <text class="t cor" x="1180" y="946">déplacés vers Les Règles du jeu</text>
+  <text class="d cor" x="1148" y="974" fill="#FFA29A" font-size="19">1</text>
+  <text class="t cor" x="1180" y="974">supprimé — il était déjà mort</text>
+  <text class="d cor" x="1148" y="1002" fill="#5EC8E4" font-size="19">2</text>
+  <text class="t cor" x="1180" y="1002">neufs — l’accueil et Les Règles</text>
+  <text class="t pet" x="1148" y="1036">et l’aperçu (espace maintenu) reste un geste,</text>
+  <text class="t pet" x="1148" y="1052">pas un écran.</text>
+</svg>
+
+  <h2>Le compte, écran par écran</h2>
+  <p>Vingt-deux lignes, aucune omise. Un écran qui disparaît doit dire où il va — sinon on perd des choses sans s’en apercevoir, et c’est le reproche qui a tué la première carte. Le relevé porte 41 titres de surface ; 22 prennent la fenêtre, les 19 autres sont des barres, des colonnes ou des panneaux.</p>
+
+  <table>
+    <thead>
+      <tr><th>L’écran d’aujourd’hui</th><th>Ce qu’il devient</th><th>Où il va, et ce qu’on garde de lui</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>La Galerie</td><td><span class="tag fondu">fondu</span></td><td>Elle n’est pas un troisième outil, c’est une <strong>vue</strong> — elle devient « Tout », la bibliothèque du jeu, dans la colonne des familles. Le filtre du jeu ne saute plus quand on clique une collection.</td></tr>
+      <tr><td>La vitrine du monde entier</td><td><span class="tag fondu">fondu</span></td><td>Le cran de zoom le plus large de « Tout », sur le fond que la bible décrit. Elle cesse d’être atteinte par un lien de 10 px.</td></tr>
+      <tr><td>La vitrine d’une chose</td><td><span class="tag fondu">fondu</span></td><td>Le cran le plus large de <strong>sa fiche</strong> — pas de « Tout ». Trois portes vers un même écran deviennent un cran de zoom.</td></tr>
+      <tr><td>Le dépliage d’une planche</td><td><span class="tag fondu">fondu</span></td><td>Il reste là où la planche arrive : sur la tuile, en profondeur 1. Ce n’est pas une retouche, c’est <strong>la fin de l’achat</strong>.</td></tr>
+      <tr><td>Les tables, sur une image de la Galerie</td><td><span class="tag fondu">fondu</span></td><td>L’établi › retoucher, atteint par l’image. C’est la seconde porte, celle qui sauve les images importées et orphelines.</td></tr>
+      <tr><td>La planche d’une pose</td><td><span class="tag fondu">fondu</span></td><td>Un <strong>état</strong> de l’établi › fabriquer, pas un écran : « cette pose part en une seule feuille de N cases ». Elle n’existe qu’à partir de deux directions <span class="m">Personnages.tsx:2124</span>.</td></tr>
+      <tr><td>Le calibrage</td><td><span class="tag fondu">fondu</span></td><td>Un outil de l’établi › retoucher — mettre les poses à la même hauteur est une retouche.</td></tr>
+      <tr><td>Univers › découpe d’une carte</td><td><span class="tag fondu">fondu</span></td><td>Un outil de l’Univers, appelé sur une carte.</td></tr>
+      <tr><td>Choisir une image de référence</td><td><span class="tag fondu">fondu</span></td><td>Les interrupteurs de L’envoi. Le PRD écarte la sélection manuelle : <em>« c’est l’application qui choisit, sur la famille »</em> — on <strong>éteint</strong> ce qui ne doit pas partir.</td></tr>
+      <tr><td>Univers › Réglages (l’assistant en 12 étapes)</td><td><span class="tag deplace">déplacé</span></td><td>Les Règles du jeu. Le contenu est conservé entier ; c’est le <em>lieu</em> qui change. <span class="m">PRD:319</span> : un jeu déclare une fois comment il regarde le monde.</td></tr>
+      <tr><td>Univers › Ambiances et couleurs</td><td><span class="tag deplace">déplacé</span></td><td>Les Règles du jeu. Une ambiance est une contrainte, pas une inspiration.</td></tr>
+      <tr><td>Découpe atteinte depuis la Galerie</td><td><span class="tag mort">supprimé</span></td><td>Code mort : les sept appels qui l’ouvrent la laissent vide. Personne ne peut y aller aujourd’hui.</td></tr>
+      <tr><td>L’Univers (l’onglet)</td><td><span class="tag garde">gardé</span></td><td>Il perd ses deux côtés étrangers et devient un seul écran : la toile, avec sa réserve en tiroir.</td></tr>
+      <tr><td>Le Codex (l’onglet)</td><td><span class="tag garde">gardé</span></td><td>Il devient la profondeur 1 — <strong>cinq</strong> familles, Équipement compris, plus « Tout ». Sa colonne de gauche perd les directions et les poses.</td></tr>
+      <tr><td>La fiche plein cadre d’une chose</td><td><span class="tag garde">gardé</span></td><td><strong>Promue.</strong> Elle n’est plus derrière un lien de 10 px : c’est là qu’on arrive en cliquant un nom. C’est la profondeur 2.</td></tr>
+      <tr><td>L’établi d’une chose</td><td><span class="tag garde">gardé</span></td><td>Il devient l’établi › fabriquer, et son unité est <strong>la case</strong> — une pose sous un angle. La matrice pose × direction y reste : c’est le seul écran qui dit case par case ce qui manque.</td></tr>
+      <tr><td>Les tables, sur une image de case</td><td><span class="tag garde">gardé</span></td><td>Il devient l’établi › retoucher. Il gagne enfin une sortie : aujourd’hui il n’a ni bouton fermer ni Échap.</td></tr>
+      <tr><td>L’écran de confirmation « Ce qui part »</td><td><span class="tag garde">gardé</span></td><td>L’envoi. Le seul seuil payant, et il le reste — sous réserve de <em>Relancer</em>, ci-dessous.</td></tr>
+      <tr><td>Les dépenses</td><td><span class="tag garde">gardé</span></td><td>Le journal, qui absorbe enfin le journal des ratés de la colonne « Projet » — il avait été écrit pour ça et les deux coexistaient.</td></tr>
+      <tr><td>Les réglages de l’atelier</td><td><span class="tag garde">gardé</span></td><td>Inchangé. Les clés, le dossier, le catalogue : ce n’est pas un réglage du jeu, c’est l’outil.</td></tr>
+      <tr><td>Le Guide</td><td><span class="tag garde">gardé</span></td><td>Reste un écran, à la touche « ? ». Le mode d’aide à bascule a été écarté le 27 août 2026 — je l’avais rouvert par erreur.</td></tr>
+      <tr><td>L’aperçu (espace maintenu)</td><td><span class="tag garde">gardé</span></td><td>Ce n’est pas un écran, c’est un geste — il ne compte pas dans les 11. Il faut seulement l’écrire quelque part : aujourd’hui il n’est signalé nulle part.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Ce que la première version cassait</h2>
+  <p>Cinq tâches réelles, le gardien du PRD et un audit du comptage l’ont attaquée. Quatre parcours sur cinq coûtaient <strong>plus</strong> de clics qu’aujourd’hui. Voilà ce qui a changé, et pourquoi.</p>
+
+  <table>
+    <thead>
+      <tr><th>Ce que disait la v1</th><th>Ce qu’elle cassait</th><th>Ce que dit la v2</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>« La famille : une grille d’<strong>images</strong>, rien d’autre »</td><td>Une famille liste des <em>choses</em>, et une chose neuve n’a pas d’image. Cette ligne supprimait le champ qui nomme — le point d’entrée du produit — et « ce qui manque », mission déclarée du codex.</td><td>Une grille de <strong>choses</strong> : vignette ou case vide, un nom, un seul chiffre — ce qui lui manque. <span class="m">PRD:321</span></td></tr>
+      <tr><td>« On descend d’un cran à la fois, jamais deux »</td><td><span class="m">PRD:320</span> exige qu’écrire un nom ouvre l’établi sur-le-champ, sans formulaire. La règle l’interdisait.</td><td>La règle vaut pour le <strong>clic</strong>. <strong>Créer n’est pas descendre</strong> — on vient de décider de fabriquer, on est déjà au travail.</td></tr>
+      <tr><td>L’établi › fabriquer = « la planche d’une pose »</td><td>La planche n’existe qu’à partir de deux directions. Sur un jeu de face, l’unique écran autorisé à dépenser n’existait pour aucune pose.</td><td>L’unité est <strong>la case</strong> — une pose sous un angle. La planche est un état de cet écran quand plusieurs directions partent ensemble. <span class="m">PRD:322</span></td></tr>
+      <tr><td>« Un réglage posé une fois ne descend jamais »</td><td>Un interdit d’écriture : il annulait « enregistrer ce réglage comme défaut du projet › » <span class="m">Tables.tsx:1938</span> et contredisait <span class="m">PRD:325</span>. Trois tâches y perdaient six crans d’aller-retour.</td><td><strong>Trois verbes</strong> : il se règle dans Les Règles, se lit avec son origine à l’établi, se corrige pour un appel à l’envoi.</td></tr>
+      <tr><td>La fiche d’une image, jamais mentionnée</td><td>C’est le seul endroit qui dit <em>pourquoi</em> une image est ratée et <em>d’où</em> elle vient. Sans elle, comprendre → corriger → refaire n’a plus ni diagnostic ni reprise.</td><td>C’est un <strong>panneau</strong>, pas un écran : attaché à l’image, partout où une image est montrée.</td></tr>
+      <tr><td>« L’aide sur place, touche ? »</td><td>Un mode d’aide à bascule a été écarté le 27 août 2026, avec sa raison. Je rouvrais une décision sans l’écrire.</td><td>Le Guide reste un écran, à la touche « ? » — comme aujourd’hui. Le budget passe de 10 à <strong>11</strong>.</td></tr>
+      <tr><td>« 42 surfaces, 25 plein cadre, 11/4/1/2 »</td><td>Deux rubriques de colonne comptées comme des écrans, deux vrais écrans oubliés : les erreurs se compensaient et le total tombait juste par accident.</td><td><strong>41 · 22 · 11</strong>, recompté ligne à ligne, avec la définition écrite au-dessus du chiffre.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Ce que le dessin ne tranche pas</h2>
+  <p>Trois choses restent ouvertes, et aucune ne se règle au dessin.</p>
+
+  <div class="notes">
+    <div class="note">
+      <h3>Une pièce d’équipement appartient-elle à quelqu’un ?</h3>
+      <p>La profondeur 2 promet « ce qu’elle porte » sur la fiche d’un personnage. <strong>Cette relation n’existe pas dans le modèle</strong> — une pièce n’a aucun champ qui désigne un personnage, et le vestiaire se demande par projet.</p>
+      <p>C’est le seul endroit où le dessin promet ce que les données ne savent pas dire. À trancher avant de maquetter la fiche. Voir <span class="m">2026-09-04-modele-equipement.md</span>.</p>
+    </div>
+    <div class="note">
+      <h3>Que devient <em>Relancer</em> ?</h3>
+      <p>Il refacture aujourd’hui <strong>sans passer par l’écran de confirmation</strong>, depuis une tuile et depuis le journal des ratés. Ou il passe par L’envoi, ou l’invariant « un seul seuil payant » est faux.</p>
+      <p>Une phrase d’invariant fausse est pire que pas d’invariant : elle fait baisser la garde à l’endroit exact où l’argent part.</p>
+    </div>
+    <div class="note">
+      <h3>L’unité d’achat : la case, ou la planche ?</h3>
+      <p>Le dessin dit « une case ». Mais quatre directions d’une pose partent sur <strong>une seule</strong> planche <span class="m">PRD:322</span>. Viser une direction nommée coûte-t-il une image, ou quatre dont on en veut une ?</p>
+      <p>Question de produit, pas de dessin — mais elle décide ce que le bouton affiche et ce que le prix annonce.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

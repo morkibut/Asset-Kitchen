@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; } a:hover { color: #7d3319; }
+    .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .kk { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #6d675e; border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 6px; background: #f7f3ec; }
+    .res { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 15px; align-items: center; padding: 10px 16px; border-radius: 8px; }
+    .titre { font-size: 15px; font-weight: 500; }
+    .sous { font-size: 12.5px; color: #6d675e; line-height: 1.4; }
+    .grp { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; padding: 12px 16px 5px; }
+    .ic { width: 34px; height: 34px; border: 1px solid #e2dbd0; border-radius: 5px; display: flex; align-items: center; justify-content: center; background: #f7f3ec; }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; position: relative; background: #f7f3ec; overflow: hidden">
+
+  <!-- ══ Ce qu'il y avait derrière ══ -->
+  <div style="position: absolute; inset: 0; display: grid; grid-template-columns: 300px minmax(0,1fr) 380px">
+    <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px">
+      <div class="serif" style="font-size: 25px; line-height: 1.1; color: #221f1b">Le Marais du Vieux Moulin</div>
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <div style="height: 6px; width: 130px; background: #ddd5c8; border-radius: 3px"></div>
+        <div style="height: 6px; width: 168px; background: #e4ddd1; border-radius: 3px"></div>
+        <div style="height: 6px; width: 148px; background: #e4ddd1; border-radius: 3px"></div>
+        <div style="height: 6px; width: 176px; background: #e4ddd1; border-radius: 3px"></div>
+        <div style="height: 6px; width: 120px; background: #e4ddd1; border-radius: 3px"></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px; margin-top: 14px">
+        <div style="height: 6px; width: 150px; background: #ddd5c8; border-radius: 3px"></div>
+        <div style="height: 6px; width: 132px; background: #e4ddd1; border-radius: 3px"></div>
+        <div style="height: 6px; width: 158px; background: #e4ddd1; border-radius: 3px"></div>
+      </div>
+    </div>
+    <div style="padding: 30px 36px; display: flex; flex-direction: column; gap: 20px">
+      <div class="serif" style="font-size: 48px; line-height: 1; color: #221f1b">Le pélerin</div>
+      <div style="display: flex; gap: 14px">
+        <div style="width: 156px; height: 176px; background: #ccc9c4"></div>
+        <div style="width: 156px; height: 176px; background: #ccc9c4"></div>
+        <div style="width: 156px; height: 176px; background: #ccc9c4"></div>
+        <div style="width: 156px; height: 176px; background: #ccc9c4"></div>
+      </div>
+    </div>
+    <div style="border-left: 1px solid #e2dbd0; background: #f2ede4"></div>
+  </div>
+
+  <!-- ══ Le voile ══ -->
+  <div style="position: absolute; inset: 0; background: rgba(247,243,236,0.86)"></div>
+
+  <!-- ══ LA BARRE ══ -->
+  <div style="position: absolute; left: 50%; transform: translateX(-50%); top: 96px; width: 880px; background: #fffdfa; border: 1px solid #ddd5c8; border-radius: 14px; overflow: hidden">
+
+    <!-- ce qu'on tape -->
+    <div style="display: flex; align-items: center; gap: 15px; padding: 20px 22px; border-bottom: 1px solid #ece6db">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#948c80" stroke-width="2" stroke-linecap="square"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.5-4.5"/></svg>
+      <div class="serif" style="font-size: 32px; line-height: 1; display: flex; align-items: center">épée<span style="display: inline-block; width: 2px; height: 30px; background: #a8492c; margin-left: 3px"></span></div>
+    </div>
+
+    <div style="max-height: 600px; overflow: hidden; padding-bottom: 6px">
+
+      <div class="grp">Aller à</div>
+      <div class="res" style="background: #f4ece5; margin: 0 6px">
+        <div class="ic"><svg viewBox="0 0 16 16" width="22" height="22" shape-rendering="crispEdges"><rect x="7" y="1" width="2" height="10" fill="#b7bfc6"/><rect x="5" y="11" width="6" height="1" fill="#6c5a3e"/><rect x="7" y="12" width="2" height="3" fill="#5a4530"/></svg></div>
+        <div><div class="titre">La pièce <strong style="font-weight: 600">Epée</strong></div><div class="sous">dans les mains · 1 calque sur 6 poses · sur Le pélerin</div></div>
+        <div class="kk">↵</div>
+      </div>
+      <div class="res" style="margin: 0 6px">
+        <div class="ic"><div style="width: 20px; height: 20px; background: #a8a7a4"></div></div>
+        <div><div class="titre">L'image <strong style="font-weight: 600">Epée · repos</strong></div><div class="sous">le calque, sur le corps de repos · 64 × 64 · gardée</div></div>
+        <div style="font-size: 12.5px; color: #948c80">gratuit</div>
+      </div>
+      <div class="res" style="margin: 0 6px">
+        <div class="ic"><div style="width: 20px; height: 20px; border: 1px solid #c3b8a6"></div></div>
+        <div><div class="titre">L'appel qui l'a fabriquée</div><div class="sous">hier · $0,0189 · OpenRouter · gpt-image-2</div></div>
+        <div style="font-size: 12.5px; color: #948c80">gratuit</div>
+      </div>
+
+      <div class="grp">Générer — à confirmer sur l'écran suivant</div>
+      <div class="res" style="margin: 0 6px">
+        <div class="ic"><span style="font-size: 17px; color: #948c80; font-weight: 300">+</span></div>
+        <div>
+          <div class="titre">Poser l'épée sur les <strong style="font-weight: 600">5 poses qui manquent</strong></div>
+          <div class="sous">Ouvre l'écran d'envoi, déjà rempli. Rien n'est lancé ni payé ici.</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <div class="mono" style="font-size: 13px; color: #4e483f">$0,0189</div>
+          <div style="font-size: 12px; color: #a8492c; border: 1px solid #e3c9bc; border-radius: 5px; padding: 3px 8px; background: #faf3ee">à confirmer</div>
+        </div>
+      </div>
+      <div class="res" style="margin: 0 6px">
+        <div class="ic"><span style="font-size: 17px; color: #948c80; font-weight: 300">+</span></div>
+        <div>
+          <div class="titre">Poser l'épée sur <strong style="font-weight: 600">Le garde du moulin</strong></div>
+          <div class="sous">Ses 6 poses existent · 1 image à générer · 1 appel</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <div class="mono" style="font-size: 13px; color: #4e483f">$0,0189</div>
+          <div style="font-size: 12px; color: #a8492c; border: 1px solid #e3c9bc; border-radius: 5px; padding: 3px 8px; background: #faf3ee">à confirmer</div>
+        </div>
+      </div>
+
+      <div class="grp">Actions sans bouton dans l'interface</div>
+      <div class="res" style="margin: 0 6px">
+        <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#948c80" stroke-width="2" stroke-linecap="square"><path d="M4 12a8 8 0 1 1 3 6"/><path d="M4 6v6h6"/></svg></div>
+        <div><div class="titre">Recalculer le rendu des 41 images de ce jeu</div><div class="sous">Refait l'affichage des 41 images. Les originaux ne sont pas touchés.</div></div>
+        <div style="font-size: 12.5px; color: #948c80">gratuit · ~40 s</div>
+      </div>
+      <div class="res" style="margin: 0 6px">
+        <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#948c80" stroke-width="2" stroke-linecap="square"><rect x="3" y="4" width="18" height="6"/><rect x="3" y="14" width="18" height="6"/></svg></div>
+        <div><div class="titre">Reconstruire l'index de la bibliothèque</div><div class="sous">Relit tous les fichiers du disque et refait la base. Aucune image ne peut être perdue.</div></div>
+        <div style="font-size: 12.5px; color: #948c80">gratuit</div>
+      </div>
+      <div class="res" style="margin: 0 6px">
+        <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#948c80" stroke-width="2" stroke-linecap="square"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg></div>
+        <div><div class="titre">Sortir les 6 poses du pélerin vers le dossier du jeu</div><div class="sous">Écrit une planche PNG et son fichier de description dans le dossier du jeu.</div></div>
+        <div style="font-size: 12.5px; color: #948c80">gratuit</div>
+      </div>
+      <div class="res" style="margin: 0 6px">
+        <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#948c80" stroke-width="2" stroke-linecap="square"><path d="M12 4v16"/><path d="M4 12h16"/></svg></div>
+        <div><div class="titre">Relire le catalogue chez OpenRouter</div><div class="sous">49 modèles · relu il y a 2 heures</div></div>
+        <div style="font-size: 12.5px; color: #948c80">gratuit</div>
+      </div>
+    </div>
+
+    <!-- pied -->
+    <div style="border-top: 1px solid #ece6db; background: #f7f3ec; padding: 11px 18px; display: flex; align-items: center; justify-content: space-between">
+      <div style="display: flex; align-items: center; gap: 16px; font-size: 12px; color: #6d675e">
+        <span><span class="kk">↵</span> y aller</span>
+        <span><span class="kk">↑</span> <span class="kk">↓</span> choisir</span>
+        <span><span class="kk">esc</span> refermer</span>
+      </div>
+      <div style="font-size: 12px; color: #6d675e">16 actions disponibles</div>
+    </div>
+  </div>
+
+  <!-- ══ La règle, sous la barre ══ -->
+  <div style="position: absolute; left: 50%; transform: translateX(-50%); top: 845px; width: 880px; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 7px; border-top: 2px solid #221f1b; padding-top: 13px">
+      <div style="font-size: 15px; font-weight: 600">Rien n'est lancé depuis la barre</div>
+      <div style="font-size: 13px; line-height: 1.5; color: #4e483f"><strong style="font-weight: 600">Cliquer ne déclenche pas le paiement ni la fabrication.</strong> La barre ouvre l'écran d'envoi, déjà rempli. C'est là qu'on confirme.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 7px; border-top: 2px solid #221f1b; padding-top: 13px">
+      <div style="font-size: 15px; font-weight: 600">On ne tape pas de prompt ici</div>
+      <div style="font-size: 13px; line-height: 1.5; color: #4e483f">La barre cherche des <strong style="font-weight: 600">noms</strong> : personnages, objets, images, actions. Le texte envoyé à l'IA s'écrit sur l'écran d'envoi.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 7px; border-top: 2px solid #221f1b; padding-top: 13px">
+      <div style="font-size: 15px; font-weight: 600">La liste se remplit toute seule</div>
+      <div style="font-size: 13px; line-height: 1.5; color: #4e483f">Elle affiche les actions que le serveur sait faire — <strong style="font-weight: 600">les mêmes que celles de l'agent qui code le jeu</strong>. Une action ajoutée apparaît ici sans qu'on dessine un bouton.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

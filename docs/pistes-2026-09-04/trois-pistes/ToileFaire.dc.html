@@ -1,0 +1,250 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #191713; }
+    a { color: #e3a552; } a:hover { color: #f2be74; }
+    .toile * { box-sizing: border-box; }
+    .cell { width: 118px; height: 118px; border: 1px solid #35302a; background: #d6d4d0; display: flex; align-items: center; justify-content: center; position: relative; }
+    .ghost { background: transparent; border: 1px dashed #7a6136; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+    .lbl { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; color: #8d8378; padding-top: 7px; }
+    .chip { font-size: 12.5px; padding: 4px 9px; border: 1px solid #4a4239; border-radius: 5px; color: #cfc5b6; background: #241f1a; display: inline-flex; align-items: center; gap: 6px; }
+  </style>
+</helmet>
+
+<div class="toile" style="width: 1440px; height: 900px; position: relative; overflow: hidden; background:
+     radial-gradient(circle at 1px 1px, #2c2822 1px, transparent 0) 0 0 / 28px 28px, #191713;
+     font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; color: #efe9df">
+
+  <!-- ── Le plan ─────────────────────────────────────────────────────── -->
+  <div style="position: absolute; left: 56px; top: 88px; display: flex; flex-direction: column; gap: 34px">
+
+    <!-- Groupe : La ferronnière -->
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <div style="font-size: 19px; font-weight: 600; letter-spacing: -0.01em">La ferronnière</div>
+        <div style="font-size: 13.5px; color: #8d8378">une forgeronne des marais, tablier de cuir</div>
+        <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #e3a552; margin-left: 4px">2 sur 4</div>
+      </div>
+      <div style="display: flex; gap: 14px">
+
+        <div style="display: flex; flex-direction: column">
+          <div class="cell">
+            <svg viewBox="0 0 16 24" width="88" height="88" shape-rendering="crispEdges" style="display:block">
+              <rect x="5" y="2" width="6" height="4" fill="#8a5a2a"/><rect x="6" y="4" width="4" height="4" fill="#e0b48c"/>
+              <rect x="4" y="8" width="8" height="8" fill="#6b4326"/><rect x="5" y="10" width="6" height="4" fill="#8d5c33"/>
+              <rect x="2" y="9" width="2" height="6" fill="#e0b48c"/><rect x="12" y="9" width="2" height="6" fill="#e0b48c"/>
+              <rect x="5" y="16" width="2" height="6" fill="#3f4a3a"/><rect x="9" y="16" width="2" height="6" fill="#3f4a3a"/>
+              <rect x="4" y="22" width="3" height="2" fill="#2a2420"/><rect x="9" y="22" width="3" height="2" fill="#2a2420"/>
+            </svg>
+          </div>
+          <div class="lbl">repos</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column">
+          <div class="cell">
+            <svg viewBox="0 0 16 24" width="88" height="88" shape-rendering="crispEdges" style="display:block">
+              <rect x="5" y="2" width="6" height="4" fill="#8a5a2a"/><rect x="6" y="4" width="4" height="4" fill="#e0b48c"/>
+              <rect x="4" y="8" width="8" height="8" fill="#6b4326"/><rect x="5" y="10" width="6" height="4" fill="#8d5c33"/>
+              <rect x="1" y="10" width="3" height="5" fill="#e0b48c"/><rect x="12" y="8" width="3" height="5" fill="#e0b48c"/>
+              <rect x="3" y="16" width="3" height="6" fill="#3f4a3a"/><rect x="10" y="16" width="3" height="5" fill="#3f4a3a"/>
+              <rect x="2" y="22" width="4" height="2" fill="#2a2420"/><rect x="10" y="21" width="4" height="2" fill="#2a2420"/>
+            </svg>
+          </div>
+          <div class="lbl">marche</div>
+        </div>
+
+        <!-- La case choisie -->
+        <div style="display: flex; flex-direction: column">
+          <div class="cell ghost" style="border: 2px solid #e3a552; background: rgba(227,165,82,0.06)">
+            <div style="font-size: 26px; color: #e3a552; line-height: 1; font-weight: 300">+</div>
+            <div style="font-size: 12.5px; color: #e3a552">à fabriquer</div>
+          </div>
+          <div class="lbl" style="color: #e3a552">course</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column">
+          <div class="cell ghost">
+            <div style="font-size: 26px; color: #7a6136; line-height: 1; font-weight: 300">+</div>
+          </div>
+          <div class="lbl">attaque</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; justify-content: center; padding-left: 8px">
+          <div style="font-size: 13px; color: #6f665c; line-height: 1.5; max-width: 15em">Deux cases vides côte à côte : elles peuvent partir <strong style="color:#a0968a; font-weight:600">pliées en un seul appel</strong>.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Groupe : Le passeur -->
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <div style="font-size: 19px; font-weight: 600; letter-spacing: -0.01em">Le passeur</div>
+        <div style="font-size: 13.5px; color: #8d8378">un vieil homme maigre, longue gaffe, ciré vert</div>
+        <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #e3a552; margin-left: 4px">1 sur 4</div>
+      </div>
+      <div style="display: flex; gap: 14px">
+
+        <div style="display: flex; flex-direction: column">
+          <div class="cell">
+            <svg viewBox="0 0 16 24" width="88" height="88" shape-rendering="crispEdges" style="display:block">
+              <rect x="6" y="2" width="4" height="3" fill="#b8b2a6"/><rect x="6" y="4" width="4" height="4" fill="#d6b899"/>
+              <rect x="5" y="8" width="6" height="9" fill="#3f5b45"/><rect x="6" y="10" width="4" height="5" fill="#4c6c52"/>
+              <rect x="3" y="9" width="2" height="7" fill="#d6b899"/><rect x="11" y="9" width="2" height="7" fill="#d6b899"/>
+              <rect x="12" y="2" width="1" height="20" fill="#7a6a4e"/>
+              <rect x="6" y="17" width="2" height="5" fill="#3a3a34"/><rect x="9" y="17" width="2" height="5" fill="#3a3a34"/>
+              <rect x="5" y="22" width="3" height="2" fill="#26221e"/><rect x="9" y="22" width="3" height="2" fill="#26221e"/>
+            </svg>
+          </div>
+          <div class="lbl">repos</div>
+        </div>
+
+        <!-- Une case en route -->
+        <div style="display: flex; flex-direction: column">
+          <div class="cell" style="background: #241f1a; border: 1px solid #4a4239; flex-direction: column; gap: 10px">
+            <div style="font-size: 12.5px; color: #a0968a">en route</div>
+            <div style="width: 76px; height: 3px; background: #3a342b; border-radius: 2px; overflow: hidden">
+              <div style="width: 62%; height: 100%; background: #e3a552"></div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #6f665c">14 s</div>
+          </div>
+          <div class="lbl">marche</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column">
+          <div class="cell ghost"><div style="font-size: 26px; color: #7a6136; line-height: 1; font-weight: 300">+</div></div>
+          <div class="lbl">course</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column">
+          <div class="cell ghost"><div style="font-size: 26px; color: #7a6136; line-height: 1; font-weight: 300">+</div></div>
+          <div class="lbl">attaque</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Groupe : Les choses -->
+    <div style="display: flex; gap: 44px; align-items: flex-start">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; gap: 12px">
+          <div style="font-size: 19px; font-weight: 600; letter-spacing: -0.01em">Les choses</div>
+          <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #8d8378">9 images</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(5, 74px); gap: 10px">
+          <div class="cell" style="width: 74px; height: 74px">
+            <svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="3" y="3" width="10" height="4" fill="#6b6f74"/><rect x="4" y="4" width="8" height="2" fill="#8c9096"/><rect x="7" y="7" width="2" height="8" fill="#7a5a34"/></svg>
+          </div>
+          <div class="cell" style="width: 74px; height: 74px">
+            <svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="2" fill="#6b6f74"/><rect x="4" y="4" width="8" height="8" fill="#e0b45c"/><rect x="5" y="5" width="6" height="6" fill="#f5d98c"/><rect x="4" y="12" width="8" height="2" fill="#6b6f74"/></svg>
+          </div>
+          <div class="cell" style="width: 74px; height: 74px">
+            <svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="4" y="3" width="8" height="10" fill="#8a6136"/><rect x="4" y="5" width="8" height="1" fill="#5c4021"/><rect x="4" y="10" width="8" height="1" fill="#5c4021"/></svg>
+          </div>
+          <div class="cell" style="width: 74px; height: 74px">
+            <svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="3" y="6" width="10" height="6" fill="#7a7f85"/><rect x="4" y="7" width="8" height="4" fill="#9aa0a6"/><rect x="6" y="3" width="4" height="3" fill="#5c6167"/></svg>
+          </div>
+          <div class="cell ghost" style="width: 74px; height: 74px"><div style="font-size: 22px; color: #7a6136; line-height: 1; font-weight: 300">+</div></div>
+        </div>
+      </div>
+
+      <!-- État vide, écrit comme une invitation -->
+      <div style="border: 1px dashed #3f3931; border-radius: 8px; padding: 20px 22px; width: 290px; display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.012)">
+        <div style="font-size: 17px; font-weight: 600">Les décors</div>
+        <div style="font-size: 13.5px; line-height: 1.5; color: #8d8378">Ce jeu n'a encore aucun décor. Le premier posera la lumière de tous les autres.</div>
+        <button style="align-self: flex-start; font-family: inherit; font-size: 13.5px; font-weight: 500; color: #191713; background: #e3a552; border: none; border-radius: 5px; padding: 8px 14px; cursor: pointer">Nommer le premier décor</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Barre du haut, flottante ────────────────────────────────────── -->
+  <div style="position: absolute; left: 24px; right: 24px; top: 20px; display: flex; align-items: center; justify-content: space-between; pointer-events: none">
+    <div style="display: flex; align-items: center; gap: 10px; background: rgba(33,30,25,0.92); border: 1px solid #35302a; border-radius: 8px; padding: 8px 14px">
+      <div style="font-size: 15px; font-weight: 600">Les marais de fer</div>
+      <div style="width: 1px; height: 14px; background: #4a4239"></div>
+      <div style="font-size: 13px; color: #8d8378">3 personnages · 9 choses · 0 décor</div>
+      <div style="font-size: 13px; color: #e3a552; margin-left: 4px">7 cases vides</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; background: rgba(33,30,25,0.92); border: 1px solid #35302a; border-radius: 8px; padding: 7px 10px 7px 14px">
+      <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #cfc5b6">$0,4655</div>
+      <div style="font-size: 12.5px; color: #6f665c">dépensés</div>
+      <div style="width: 1px; height: 14px; background: #4a4239; margin: 0 4px"></div>
+      <div style="font-size: 12.5px; color: #8d8378">1 fournisseur prêt</div>
+      <div style="font-size: 13px; border: 1px solid #4a4239; border-radius: 5px; padding: 5px 11px; color: #cfc5b6">L'univers</div>
+      <div style="font-size: 13px; border: 1px solid #4a4239; border-radius: 5px; padding: 5px 11px; color: #cfc5b6">Le guide</div>
+    </div>
+  </div>
+
+  <!-- ── Le socle : il suit là où l'on est ───────────────────────────── -->
+  <div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 26px; width: 860px; background: #221e19; border: 1px solid #4a4239; border-radius: 10px; padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 13px">
+
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+      <div style="font-size: 12.5px; color: #6f665c; margin-right: 2px">part avec</div>
+      <span class="chip"><span style="width: 6px; height: 6px; border-radius: 999px; background: #7fa7cf"></span>ce qu'est le jeu</span>
+      <span class="chip"><span style="width: 6px; height: 6px; border-radius: 999px; background: #7fa7cf"></span>son style · 3 textes</span>
+      <span class="chip"><span style="width: 6px; height: 6px; border-radius: 999px; background: #e3a552"></span>la case <strong style="font-weight: 600; color: #efe9df">course</strong></span>
+      <span class="chip"><span style="width: 6px; height: 6px; border-radius: 999px; background: #e3a552"></span>2 images jointes</span>
+      <a href="#" style="font-size: 12.5px; text-decoration: none; margin-left: 2px">relire ce qui part, mot pour mot ›</a>
+    </div>
+
+    <div style="border: 1px solid #4a4239; border-radius: 7px; background: #1c1915; padding: 12px 14px; font-size: 15px; line-height: 1.45; color: #efe9df">
+      une forgeronne des marais, tablier de cuir, cheveux relevés<span style="display: inline-block; width: 1px; height: 17px; background: #e3a552; vertical-align: -3px; margin-left: 2px"></span>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span class="chip">OpenRouter · gpt-image-2</span>
+        <span class="chip">1:1</span>
+        <span class="chip">1 variation</span>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 12.5px; color: #5c554c; border: 1px solid #322d27; border-radius: 5px; padding: 4px 9px">plier en une planche</span>
+          <span style="font-size: 11px; color: #5c554c">il faut deux cases choisies</span>
+        </div>
+      </div>
+      <button style="font-family: inherit; font-size: 15px; font-weight: 600; color: #191713; background: #e3a552; border: none; border-radius: 7px; padding: 11px 20px; cursor: pointer; white-space: nowrap">Payer et lancer — $0,0245</button>
+    </div>
+  </div>
+
+  <!-- ── Zoom et carte, en bas à droite ──────────────────────────────── -->
+  <div style="position: absolute; right: 24px; bottom: 26px; display: flex; flex-direction: column; gap: 10px; align-items: flex-end">
+    <div style="width: 168px; height: 106px; border: 1px solid #35302a; border-radius: 6px; background: #1c1915; position: relative; overflow: hidden">
+      <div style="position: absolute; left: 12px; top: 14px; display: flex; gap: 4px">
+        <div style="width: 14px; height: 14px; background: #4a4239"></div><div style="width: 14px; height: 14px; background: #4a4239"></div>
+        <div style="width: 14px; height: 14px; border: 1px solid #7a6136"></div><div style="width: 14px; height: 14px; border: 1px solid #7a6136"></div>
+      </div>
+      <div style="position: absolute; left: 12px; top: 40px; display: flex; gap: 4px">
+        <div style="width: 14px; height: 14px; background: #4a4239"></div><div style="width: 14px; height: 14px; border: 1px solid #7a6136"></div>
+        <div style="width: 14px; height: 14px; border: 1px solid #7a6136"></div><div style="width: 14px; height: 14px; border: 1px solid #7a6136"></div>
+      </div>
+      <div style="position: absolute; left: 12px; top: 66px; display: grid; grid-template-columns: repeat(5, 9px); gap: 3px">
+        <div style="width: 9px; height: 9px; background: #3a342b"></div><div style="width: 9px; height: 9px; background: #3a342b"></div><div style="width: 9px; height: 9px; background: #3a342b"></div><div style="width: 9px; height: 9px; background: #3a342b"></div><div style="width: 9px; height: 9px; border: 1px solid #4a4239"></div>
+      </div>
+      <div style="position: absolute; left: 6px; top: 8px; width: 96px; height: 62px; border: 1px solid #e3a552; border-radius: 2px"></div>
+    </div>
+    <div style="display: flex; gap: 2px; background: #221e19; border: 1px solid #35302a; border-radius: 6px; padding: 3px">
+      <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #8d8378; padding: 5px 9px">25%</div>
+      <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #8d8378; padding: 5px 9px">50%</div>
+      <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #191713; background: #cfc5b6; border-radius: 4px; padding: 5px 9px">100%</div>
+      <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #8d8378; padding: 5px 9px">200%</div>
+    </div>
+  </div>
+
+  <!-- ── Nom de la direction ─────────────────────────────────────────── -->
+  <div style="position: absolute; left: 24px; bottom: 26px; display: flex; flex-direction: column; gap: 3px">
+    <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6f665c">Direction A · La toile</div>
+    <div style="font-size: 14px; color: #a0968a">Faire — le manque est un trou</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
