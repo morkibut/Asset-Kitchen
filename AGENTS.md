@@ -28,10 +28,10 @@ points.
 | **V2.2** — `F0` à `F6` | D'autres fournisseurs, dont un qui ne demande ni compte ni clé | **close à 5 sur 6** — reste `F4`, qui attend un compte Cloudflare que ce dépôt n'a pas |
 | **Reprises** — `R6` à `R9` | La planche de travers, le texte qui part en trois parties, la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** |
 | **V2.3** — `D1` à `D5` | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** |
-| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9`, `A10` et `A11` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. Restent `A12`, `A13`, `A4`, `A5`, `A7`, et **aucune n'en bloque une autre** |
+| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. **`A12` est l'objectif de la version, et il est atteint** : la matrice d'un personnage se lit sur deux calques — images fixes, animations —, chacun avec sa jauge. Restent `A13`, `A4`, `A5`, `A7`, et **aucune n'en bloque une autre** |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 353 essais de
-serveur et 672 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 370 essais de
+serveur et 680 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
 et **aucun ne coûte un centime**.
 
 ### Ce qu'il faut savoir avant de toucher au code — dix points, et pas un de plus
@@ -85,6 +85,14 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
    seconde : l'invariant *rien ne part sans que ce que ça coûte soit annoncé* **change d'unité**
    au lieu de disparaître — le bouton porte un temps, mesuré et non deviné. ⚠️ Ce temps **ne se
    multiplie pas** pour un lot : le premier tirage charge le modèle en mémoire, les suivants non.
+8quater. **La matrice d'un personnage a deux calques, et ils ne se comptent pas pareil.**
+   Depuis `A12` : les images fixes, et les animations. ⚠️ **Ils ne se mêlent pas** — une case qui
+   porterait les deux serait pleine dès qu'elle a l'une des deux, et une animation manquante se
+   cacherait derrière une image présente. L'invariant *une case est prise dès qu'une image la
+   porte* n'est pas tordu : il vaut deux fois, une fois par calque. ⚠️ Et le second compte **ne
+   se multiplie pas** comme le premier : une marche demande huit images *par direction* pour être
+   dessinée et **une seule bande** par direction pour être animée — la bande porte déjà ses huit
+   images dedans.
 
 8. **Une planche coûte le prix d'un appel, quel que soit ce qu'elle porte.** Mesuré le 31 août
    2026 sur trois appels payés : trois cases et six cases ont coûté exactement le même prix, et
@@ -527,7 +535,7 @@ deux vivent côte à côte.
 
 ## Pièges connus → `docs/PIEGES.md`
 
-Cent cinquante et un pièges payés une fois chacun — encodage Windows, lots payants,
+Cent cinquante-neuf pièges payés une fois chacun — encodage Windows, lots payants,
 `ResizeObserver`, onglet d'arrière-plan, SQLite, montages FastAPI et Starlette, transport
 MCP, mise en page CSS, préparation cachée d'une bibliothèque de vision — vivent dans
 **`docs/PIEGES.md`**, que le code cite là où chacun mord.

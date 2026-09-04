@@ -1088,6 +1088,20 @@ export function App() {
         setEmplacements(recu.emplacements)
         setPieces(recu.pieces)
       },
+      // **Une bande a bougé, et une case du calque animé change avec** (A12).
+      //
+      // On ne pose pas la bande ici : ce que l'écran lit sont les **cases**, et
+      // c'est le serveur qui les compose — recopier la bande dans la bonne case
+      // à la main serait un second calcul de la matrice, celui-là même que le
+      // dépôt refuse partout ailleurs. On redemande donc le plan, comme les
+      // directions le font juste au-dessus et pour la même raison.
+      //
+      // **Une bande sans personnage ne concerne aucune matrice** : un brouillon
+      // gardé dans la galerie n'a pas à faire travailler le codex.
+      bande: (recu) => {
+        if (!recu.personnage) return
+        void vivant.current.relireProduction()
+      },
       // Un seul message pour un lot entier : palette recalculée, réglage posé,
       // ou balayage terminé. La grille se redemande alors — c'est le troisième
       // et dernier appel que l'interface refait d'elle-même, et il porte sur des
@@ -3031,6 +3045,15 @@ export function App() {
           // porte pas le champ qui dépense.
           barreQuiPaie={imageOuverte ? null : barreQuiPaie}
           onOuvrirCase={setCaseOuverte}
+          /* **Une case animée se remonte jusqu'à son clip** (A12), et le clip
+             se découpe dans la galerie : deux gestes en un, comme la
+             superposition juste en dessous. C'est écrit ici parce que seul
+             `App` sait qu'il existe des onglets — la matrice, elle, ne fait
+             que nommer un clip. */
+          onMonterLaBande={(clip) => {
+            setOnglet("galerie")
+            setMontageOuvert(clip)
+          }}
           // **Deux gestes en un, et l'ordre compte** (G16) : l'image s'ouvre
           // dans les tables, et la table ouverte est la superposition. Écrit
           // ici parce que la table ouverte est un état de l'établi — la

@@ -647,6 +647,12 @@ const VIDE_C3: Omit<Case, "pose" | "demandees" | "images"> = {
   directions: [],
   directions_rangees: [],
   sans_direction: [],
+  // **Et le calque animé, vide** (A12) — l'état d'un jeu qui n'a encore rien
+  // animé, c'est-à-dire l'immense majorité des essais. `bandes_demandees` vaut
+  // un et non `demandees` : une attitude réclame **une animation par
+  // direction**, pas autant d'animations que d'images.
+  bandes: [],
+  bandes_demandees: 1,
 }
 
 /** Une palette du double : quatre couleurs, chacune sachant d'où elle vient.
@@ -1864,6 +1870,15 @@ function serveurDouble(options: {
       )
     if (url.startsWith("/api/strips/") && init?.method === "DELETE")
       return rendre(bandeRendue("effacee", []))
+    // **La case d'une bande** (A12) — affectée, ou rendue au brouillon quand les
+    // deux champs sont vides. Le double rend la bande, comme le serveur : ce que
+    // l'écran en fait est de redemander le plan, sur l'annonce du flux.
+    if (url.endsWith("/case") && init?.method === "PUT")
+      return rendre({
+        ...bandeRendue("detachee", []),
+        pose: (corps?.pose ?? null) as string | null,
+        direction: (corps?.direction ?? null) as string | null,
+      })
     if (url === "/api/clips" && init?.method === "POST") {
       const combien = Number(corps?.nombre ?? 1)
       return rendre({
@@ -7723,6 +7738,8 @@ describe("l'écran des personnages — la pièce et le calque", () => {
         directions: [],
         directions_rangees: [],
         sans_direction: [],
+        bandes: [],
+        bandes_demandees: 1,
       })),
     })
 
@@ -8513,6 +8530,8 @@ describe("l'écran des personnages — la pièce et le calque", () => {
             directions: [],
             directions_rangees: [],
             sans_direction: [],
+            bandes: [],
+            bandes_demandees: 1,
           })),
         }),
       ],
@@ -12910,11 +12929,15 @@ describe("la vue du jeu et ses directions", () => {
         demandees: p.images * Math.max(1, tenues.length),
         images: faites[p.identifiant] ?? [],
         ...VIDE_C3,
+        // **Une animation par direction, jamais autant que d'images** (A12) :
+        // la bande porte déjà ses images dedans.
+        bandes_demandees: Math.max(1, tenues.length),
         directions: tenues.map((d, rang) => ({
           ...d,
           demandees: p.images,
           images: rang === 0 ? (faites[p.identifiant] ?? []) : [],
           a_confirmer: rang === 0 ? (faites[p.identifiant] ?? []).length : 0,
+          bandes: [],
         })),
         directions_rangees: QUATRE.filter((d) =>
           (rangees[p.identifiant] ?? []).includes(d.identifiant),
@@ -15434,6 +15457,7 @@ describe("la planche d'une pose", () => {
               images: [],
               demandees: 1,
               a_confirmer: 0,
+              bandes: [],
             }))
           : [],
     })),
@@ -21746,5 +21770,255 @@ describe("A11 — le moteur de la maison", () => {
     // Un panneau vide qui parlerait d'une carte graphique absente serait pire
     // qu'aucun panneau.
     expect(document.querySelector("[data-moteur]")).toBeNull()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  A12 — toutes les poses, en animation
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// **Ce que ces essais mesurent.** La matrice sur deux calques : la bascule qui
+// porte les deux jauges, ce qu'une case animée montre, ce qu'elle dit de son
+// clip, et les deux gestes qui la remplissent et la vident.
+//
+// ⚠️ **Ils cliquent**, comme ceux d'`A11` — c'est la leçon qu'`A10` a écrite
+// dans `docs/status/etat.md` : un essai qui demande si un bouton *paraît* laisse
+// passer un mode entier qui s'affiche sans rien ouvrir. Le retrait d'une bande
+// est cliqué et c'est l'appel qui en sort qui est vérifié ; le retour au clip
+// est cliqué et c'est l'écran de montage qui est cherché.
+//
+// Ce qu'ils ne mesurent pas : la composition des cases, qui est le travail du
+// serveur, et qui est tenue par `tests/test_a12.py`.
+
+describe("A12 — la matrice sur deux calques", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Une bande rangée dans une case, telle que le serveur la compose. */
+  const uneBande = (nom: string, pose: string, direction: string | null = null) => ({
+    ...bandeRendue(nom, [0, 2, 4, 6]),
+    pose,
+    direction,
+    brouillon: false,
+  })
+
+  /** Une chose du jeu **dessinée sur une pose et animée sur une autre** — le
+   *  seul décor où l'écart entre les deux calques se lit. */
+  const LE_NAIN = personnage("Le nain", {
+    cases: PLAN.map((p) => ({
+      pose: p.identifiant,
+      demandees: p.images,
+      images:
+        p.identifiant === "repos" ? [asset("bbbb2222-0", "le nain, au repos")] : [],
+      ...VIDE_C3,
+      bandes: p.identifiant === "marche" ? [uneBande("marche", "marche")] : [],
+    })),
+  })
+
+  const ouvrirLaMatrice = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({ personnages: [LE_NAIN], ...options })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Le nain")
+    return { ...double, etabli }
+  }
+
+  /** Passer sur le calque animé — **un geste**, et c'est le critère. */
+  const surLeCalqueAnime = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const rendu = await ouvrirLaMatrice(options)
+    fireEvent.click(
+      await rendu.etabli.findByRole("button", { name: /^animations / }),
+    )
+    return rendu
+  }
+
+  // ── « On passe de l'un à l'autre d'un geste, et chacun porte sa jauge » ───
+
+  test("les deux calques portent chacun sa jauge, et un clic passe de l'un à l'autre", async () => {
+    const { etabli } = await ouvrirLaMatrice()
+
+    // Une pose dessinée sur six, une pose animée sur six : **c'est l'écart que
+    // la tranche existe pour montrer**, et il se lit sans changer d'écran.
+    expect(await etabli.findByRole("button", { name: "images 1 / 6" })).toBeTruthy()
+    expect(etabli.getByRole("button", { name: "animations 1 / 6" })).toBeTruthy()
+
+    // Le calque des images est celui qu'on ouvre : un projet qui n'a jamais rien
+    // animé retrouve son écran d'avant.
+    expect(etabli.getAllByRole("button", { name: /^Fabriquer / }).length).toBeGreaterThan(0)
+    expect(etabli.getByText(/dont toutes les images sont faites/)).toBeTruthy()
+
+    fireEvent.click(etabli.getByRole("button", { name: "animations 1 / 6" }))
+
+    // Et de l'autre côté, plus aucun bouton de fabrication : on ne dessine pas
+    // sur le calque animé.
+    expect(etabli.queryAllByRole("button", { name: /^Fabriquer / })).toHaveLength(0)
+    expect(etabli.getByText(/une animation par direction/)).toBeTruthy()
+  })
+
+  test("une image faite ne remplit pas la case du calque animé", async () => {
+    // ⚠️ **La décision de la tranche.** Le repos est dessiné, la marche est
+    // animée : sur le calque animé, le repos doit se lire comme vide.
+    const { etabli } = await surLeCalqueAnime()
+
+    const lignes = etabli.getAllByRole("listitem")
+    const repos = lignes.find((l) => within(l).queryByText("repos"))
+    expect(repos).toBeTruthy()
+    expect(within(repos!).getByText("rien ne bouge encore")).toBeTruthy()
+    expect(within(repos!).getByText("0 / 1")).toBeTruthy()
+  })
+
+  // ── « Une bande affectée s'y voit en train de tourner » ───────────────────
+
+  test("la bande d'une case tourne à la taille de la vignette, sur sa propre planche", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await surLeCalqueAnime()
+
+    const vignette = await waitFor(() => {
+      const trouve = document.querySelector("[data-bande-qui-tourne]")
+      if (!trouve) throw new Error("aucune bande ne tourne dans la matrice")
+      return trouve as HTMLElement
+    })
+    expect(vignette.getAttribute("data-bande-qui-tourne")).toBe("bande-marche")
+
+    // **La planche entière est chargée une fois et décalée** — jamais une image
+    // par cran : c'est le même geste que l'écran de montage, donc exactement les
+    // pixels que l'export écrira. Quatre cases de 64, donc une planche de 256.
+    const defile = vignette.querySelector("span") as HTMLElement
+    expect(defile.style.backgroundImage).toContain("/api/strips/bande-marche/sheet")
+    expect(defile.style.backgroundSize).toBe("256px 64px")
+    const depart = defile.style.backgroundPosition
+
+    // ⚠️ **Et elle tourne pour de vrai.** Une vignette figée montrerait la
+    // première image et rien d'autre : on ne verrait pas la différence entre une
+    // animation juste et une dont l'ordre des images est faux — ce qu'on vient
+    // précisément regarder ici. Huit images par seconde : un cran à 130 ms.
+    await act(async () => {
+      vi.advanceTimersByTime(130)
+    })
+    expect(defile.style.backgroundPosition).not.toBe(depart)
+    vi.useRealTimers()
+  })
+
+  // ── « Une case animée dit de quel clip sa bande vient, et s'y remonte » ───
+
+  test("le nom de la bande remonte au clip qui l'a fournie, dans son écran de montage", async () => {
+    const { etabli } = await surLeCalqueAnime()
+
+    fireEvent.click(
+      await etabli.findByRole("button", { name: "Ouvrir le clip dont vient marche" }),
+    )
+
+    await waitFor(() => {
+      const montage = document.querySelector("[data-montage]")
+      if (!montage) throw new Error("le montage du clip ne s'est pas ouvert")
+      return montage
+    })
+    // Et c'est bien **ce clip-là** qu'on est allé chercher.
+    expect(screen.getByRole("tab", { name: /^Galerie/ }).getAttribute("aria-selected")).toBe("true")
+  })
+
+  // ── « Retirer une bande ne supprime ni la bande, ni le clip » ─────────────
+
+  test("retirer une bande de sa case vide la case, et rien d'autre", async () => {
+    const { etabli, appels } = await surLeCalqueAnime()
+
+    fireEvent.click(
+      await etabli.findByRole("button", {
+        name: "Retirer cette animation de la case marche",
+      }),
+    )
+
+    // **Les deux champs vides**, et rien d'autre : c'est la désignation qu'on
+    // défait. Aucun DELETE ne part — ni sur la bande, ni sur le clip.
+    await waitFor(() => {
+      const appel = appels.find((a) => a.url === "/api/strips/bande-marche/case")
+      expect(appel?.corps).toEqual({ pose: null, direction: null })
+    })
+    // La route qui **efface** une bande est `/api/strips/{id}`, sans suffixe :
+    // elle n'a pas été appelée, et c'est ça qu'on vient vérifier.
+    expect(appels.some((a) => a.url === "/api/strips/bande-marche")).toBe(false)
+    expect(appels.some((a) => a.url.startsWith("/api/clips/clip-a/delete"))).toBe(false)
+  })
+
+  // ── « Commander le clip qui la remplira est un geste » ────────────────────
+
+  test("une case vide du calque animé commande son clip, sans passer par la barre qui paie", async () => {
+    const { etabli } = await surLeCalqueAnime()
+
+    const lignes = etabli.getAllByRole("listitem")
+    const repos = lignes.find((l) => within(l).queryByText("repos"))!
+    fireEvent.click(within(repos).getByRole("button", { name: "Animer repos" }))
+
+    const cadre = await waitFor(() => {
+      const trouve = document.querySelector("[data-clip]")
+      if (!trouve) throw new Error("l'écran du clip ne s'est pas ouvert")
+      return trouve as HTMLElement
+    })
+    // Et l'image de départ y est **déjà proposée** — c'est `A9` qui la pose, et
+    // le calque animé ne fait que désigner la case.
+    expect(await within(cadre).findByText(/la première image qu'il montre de lui/)).toBeTruthy()
+  })
+
+  // ── « Une pose écartée n'apparaît sur aucun des deux calques » ────────────
+
+  test("une pose écartée ne paraît sur aucun des deux calques", async () => {
+    const { etabli } = await ouvrirLaMatrice({
+      personnages: [
+        personnage("Le nain", {
+          ecartees: ["mort"],
+          cases: PLAN.filter((p) => p.identifiant !== "mort").map((p) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: [],
+            ...VIDE_C3,
+          })),
+        }),
+      ],
+    })
+
+    // **Les deux jauges comptent cinq attitudes**, pas six : ce qui est écarté
+    // ne compte nulle part.
+    expect(await etabli.findByRole("button", { name: "images 0 / 5" })).toBeTruthy()
+    expect(etabli.getByRole("button", { name: "animations 0 / 5" })).toBeTruthy()
+
+    // Elle n'a de rangée sur aucun des deux. Elle reste montrée **sous le
+    // trait**, barrée, comme E9 la relègue — un clic la rend, et c'est vrai des
+    // deux côtés puisque la ligne du plan est la même.
+    const rangees = () =>
+      etabli
+        .getAllByRole("listitem")
+        .filter((l) => within(l).queryByText("mort"))
+    expect(rangees()).toHaveLength(0)
+    expect(etabli.getByRole("button", { name: "mort" })).toBeTruthy()
+
+    fireEvent.click(etabli.getByRole("button", { name: "animations 0 / 5" }))
+    expect(rangees()).toHaveLength(0)
+  })
+
+  // ── « Un projet sans aucune animation se comporte comme aujourd'hui » ─────
+
+  test("sans une seule animation, le calque animé le dit — et celui des images ne bouge pas", async () => {
+    const { etabli } = await ouvrirLaMatrice({
+      personnages: [personnage("Le nain")],
+    })
+
+    expect(await etabli.findByRole("button", { name: "animations 0 / 6" })).toBeTruthy()
+    fireEvent.click(etabli.getByRole("button", { name: "animations 0 / 6" }))
+
+    expect(etabli.getAllByText("rien ne bouge encore")).toHaveLength(6)
+    expect(document.querySelector("[data-bande-qui-tourne]")).toBeNull()
   })
 })

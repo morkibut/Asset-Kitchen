@@ -31,7 +31,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react"
-import { api, type Asset, type Carte } from "../api"
+import { api, type Asset, type Bande, type Carte } from "../api"
 
 /** Ce qu'un aperçu montre. Une image, son nom, et ses dimensions **mesurées**. */
 export type Sujet = {
@@ -105,6 +105,99 @@ export const sujetAsset = (asset: Asset, brut = false): Sujet => ({
   hauteur: asset.traite && !brut ? asset.rendu_hauteur : asset.hauteur,
   pixelise: true,
 })
+
+/** Une animation qui tourne, à la taille qu'on lui donne (A12).
+ *
+ *  **La planche entière est chargée une fois et décalée**, jamais une image par
+ *  cran. C'est le même geste que l'écran de montage, et il a la même vertu : on
+ *  regarde exactement l'image que l'export écrira, puisqu'on regarde *cette
+ *  image-là*. Une seconde façon d'assembler finirait par ne plus rendre les
+ *  mêmes pixels, et c'est l'auteur qui découvrirait l'écart.
+ *
+ *  Elle vit ici, à côté des adresses d'images, parce que c'est la même question
+ *  posée d'un cran plus loin : *quelle adresse, pour quel emploi*.
+ *
+ *  ⚠️ **Le métronome est à elle**, contrairement à celui de l'écran de montage
+ *  qui commande deux boucles à la fois. Ici les vignettes sont indépendantes —
+ *  une par case —, et rien ne demande qu'elles soient en phase : ce qu'on
+ *  compare est *ce qui est fait et ce qui manque*, pas deux versions d'un même
+ *  mouvement. Un métronome partagé ferait battre à la cadence de la première
+ *  bande une bande réglée sur une autre. */
+export function BandeQuiTourne({
+  bande,
+  cote,
+  titre,
+}: {
+  bande: Bande
+  /** Le côté de la vignette, en pixels d'écran. */
+  cote: number
+  titre?: string
+}) {
+  const [pas, setPas] = useState(0)
+  const compte = bande.compte
+  const cadence = bande.cadence
+
+  useEffect(() => {
+    if (compte < 2 || cadence <= 0) return
+    const minuteur = window.setInterval(() => setPas((p) => p + 1), 1000 / cadence)
+    return () => window.clearInterval(minuteur)
+  }, [compte, cadence])
+
+  // Sans planche calculée, il n'y a rien à montrer — et le dire vaut mieux
+  // qu'un cadre vide qui passerait pour un chargement qui n'arrive pas.
+  if (!bande.case_largeur || !bande.case_hauteur || compte === 0) {
+    return (
+      <span
+        className="mesure flex items-center justify-center border border-bord bg-fond-2 text-[9px] text-texte-3"
+        style={{ width: cote, height: cote }}
+        title={titre}
+      >
+        …
+      </span>
+    )
+  }
+
+  const rang = rangDeLaBande(pas, compte, bande.sens)
+  // **Au plus proche voisin, et à facteur entier** : un sprite lissé n'est plus
+  // un sprite, et un facteur fractionnaire déforme ses pixels carrés.
+  const facteur = Math.max(
+    1,
+    Math.floor(Math.min(cote / bande.case_hauteur, cote / bande.case_largeur)),
+  )
+  return (
+    <span
+      data-bande-qui-tourne={bande.identifiant}
+      title={titre}
+      className="inline-flex shrink-0 items-center justify-center overflow-hidden border border-bord bg-fond-2"
+      style={{ width: cote, height: cote }}
+    >
+      <span
+        style={{
+          display: "block",
+          width: bande.case_largeur * facteur,
+          height: bande.case_hauteur * facteur,
+          backgroundImage: `url(${api.plancheDeLaBande(bande.identifiant)})`,
+          backgroundSize: `${bande.case_largeur * compte * facteur}px ${
+            bande.case_hauteur * facteur
+          }px`,
+          backgroundPosition: `-${rang * bande.case_largeur * facteur}px 0`,
+          imageRendering: "pixelated",
+        }}
+      />
+    </span>
+  )
+}
+
+/** À quelle image du cycle on en est. **La même règle que l'écran de montage**,
+ *  et elle y est écrite aussi parce que les deux écrans ne partagent rien
+ *  d'autre — ⚠️ si elle change, elle change aux deux endroits. */
+function rangDeLaBande(pas: number, compte: number, sens: string): number {
+  if (compte <= 1) return 0
+  if (sens !== "aller-retour") return pas % compte
+  const cycle = (compte - 1) * 2
+  const place = pas % cycle
+  return place < compte ? place : cycle - place
+}
 
 /** Combien de mots un texte porte. **Compté, jamais estimé** : c'est le chiffre
  *  que le pied d'une carte de texte annonce, et un chiffre affiché est un

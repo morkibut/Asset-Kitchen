@@ -42,6 +42,7 @@ import {
   NOM_DE_CE_QU_ON_PREND,
   type AmbianceDuJeu,
   type Asset,
+  type Bande,
   type Case,
   type CaseDirection,
   type EmplacementCorps,
@@ -55,7 +56,7 @@ import {
   type Vestiaire,
 } from "../api"
 import type { Fente } from "./BarreChassis"
-import { sujetAsset, useVisee } from "./Apercu"
+import { BandeQuiTourne, sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
 import { Bouton, Libelle, Segments, ZoneTexte } from "./chassis"
 import { PANNEAU } from "./Infobulle"
@@ -80,6 +81,42 @@ export function faitesDeLaCase(case_: Case | undefined): number {
     return case_.directions.reduce((somme, a) => somme + a.images.length, 0)
   return case_.images.length
 }
+
+/** **Les deux calques de la matrice** (A12) : les images fixes, et les
+ *  animations.
+ *
+ *  ⚠️ **Ils ne se mêlent pas, et c'est la décision de la tranche.** Une case qui
+ *  porterait les deux serait « remplie » dès qu'elle a l'une des deux, et une
+ *  animation manquante se cacherait derrière une image présente — très
+ *  exactement ce que l'auteur veut voir. L'invariant *une case est prise dès
+ *  qu'une image la porte* n'est pas tordu, il vaut **deux fois**, une fois par
+ *  calque. */
+export type CalqueDeLaMatrice = "images" | "animations"
+
+/** Ce qui remplit le **calque animé** d'une case — le pendant exact de
+ *  `faitesDeLaCase`, et écrit juste à côté d'elle pour la même raison : deux
+ *  calculs auraient fini par donner deux chiffres pour la même case.
+ *
+ *  Le repli sur la première direction est déjà fait par le serveur : une bande
+ *  gardée avant que le jeu ne déclare ses angles s'y range, et on ne la compte
+ *  donc qu'une fois. */
+export function animeesDeLaCase(case_: Case | undefined): number {
+  if (!case_) return 0
+  if (case_.directions.length + case_.directions_rangees.length > 1)
+    return case_.directions.reduce((somme, a) => somme + a.bandes.length, 0)
+  return case_.bandes.length
+}
+
+/** Combien d'animations une case demande — **une par direction, jamais autant
+ *  que d'images**.
+ *
+ *  C'est là que les deux calques cessent de se ressembler : une marche demande
+ *  huit images *par direction* pour être dessinée, et **une seule bande par
+ *  direction** pour être animée — la bande porte déjà ses huit images dedans.
+ *  Le serveur le calcule, cette fonction ne fait que le rendre lisible avec son
+ *  repli pour les cases qu'il n'a pas encore composées. */
+export const animeesDemandees = (case_: Case | undefined): number =>
+  case_?.bandes_demandees ?? 1
 
 /** Les poses qu'un personnage tient, dans l'ordre du plan.
  *
@@ -158,6 +195,7 @@ export function EcranEtabli({
   onFente,
   barreQuiPaie,
   onOuvrirCase,
+  onMonterLaBande,
   onSuperposition,
   onSupprimer,
   outil,
@@ -233,6 +271,12 @@ export function EcranEtabli({
   /** **Tenu par `App`**, comme la chose ouverte : c'est un étage du fil
    *  d'Ariane, et le fil vit dans le châssis. */
   onOuvrirCase: (identifiant: string) => void
+  /** **Remonter d'une case animée jusqu'au clip qui l'a remplie** (A12).
+   *
+   *  Tenu par `App` comme les deux gestes voisins, et pour la même raison : le
+   *  montage d'un clip vit dans la galerie, et cet écran-ci n'a pas à savoir
+   *  qu'il existe des onglets. Il désigne un clip ; `App` décide où l'ouvrir. */
+  onMonterLaBande: (clip: string) => void
   /** **Refaire le calage d'un vêtement à la main** (G16) : ouvre l'image dans
    *  les tables, sur la superposition. Deux gestes en un, et c'est pour ça
    *  qu'il vit dans le châssis plutôt qu'ici — la table ouverte est un état de
@@ -409,6 +453,7 @@ export function EcranEtabli({
           }}
           onCalque={setCalque}
           onOuvrirCase={onOuvrirCase}
+          onMonterLaBande={onMonterLaBande}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
           onAnimer={onAnimer}
@@ -961,6 +1006,7 @@ function Fiche({
   onColonne,
   onCalque,
   onOuvrirCase,
+  onMonterLaBande,
   onPersonnage,
   onArmer,
   onAnimer,
@@ -1004,6 +1050,9 @@ function Fiche({
   onVitrine: () => void
   /** Et le calibrage (E17), qui les empile dans la même case. */
   onCalibrage: () => void
+  /** **Remonter d'une case animée jusqu'à son clip** (A12). Portée par la fiche
+   *  pour la même raison que la planche : c'est sa matrice qui la déclenche. */
+  onMonterLaBande: (clip: string) => void
   /** **Ouvrir la planche d'une pose** (E13). Portée par la fiche parce que
    *  c'est sa matrice qui la déclenche, ligne par ligne. */
   onPlanche: (pose: string) => void
@@ -1071,6 +1120,7 @@ function Fiche({
           piece={pieces.find((p) => p.identifiant === colonne) ?? null}
           onCalque={onCalque}
           onOuvrirCase={onOuvrirCase}
+          onMonterLaBande={onMonterLaBande}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
           onAnimer={onAnimer}
@@ -1555,6 +1605,7 @@ function Cases({
   piece,
   onCalque,
   onOuvrirCase,
+  onMonterLaBande,
   onPersonnage,
   onArmer,
   onAnimer,
@@ -1587,6 +1638,11 @@ function Cases({
   ) => void
   /** Ouvrir l'outil d'une case pleine, en plein cadre (E2). */
   onOuvrirCase: (identifiant: string) => void
+  /** **Remonter d'une case animée jusqu'au clip qui l'a remplie** (A12). La
+   *  bande vient d'un clip payé, et l'écran qui la découpe est celui du
+   *  montage : ce geste y ramène, et la matrice n'a pas à savoir que cet écran
+   *  vit dans la galerie — c'est `App` qui l'ouvre. */
+  onMonterLaBande: (clip: string) => void
   /** **Ouvrir la planche d'une pose** (E13) — voir ce qu'on achète avant de
    *  payer. Une ligne de la matrice y mène, et c'est la porte que la maquette
    *  décrit : on y entre en cliquant une pose, on en sort par Échap. */
@@ -1617,12 +1673,37 @@ function Cases({
   // l'onglet, comme les attitudes cochées : c'est une façon de lire, pas un
   // état du jeu, et l'enregistrer en ferait un réglage de plus à tenir.
   const [ordre, setOrdre] = useState<Ordre>("attitude")
+  // **Le calque qu'on regarde** (A12) — les images fixes, ou les animations. Il
+  // vit dans l'onglet comme l'ordre et les attitudes cochées, et pour la même
+  // raison : c'est une façon de lire, pas un état du jeu.
+  //
+  // **Le défaut est le calque des images**, et c'est ce qui tient « un projet
+  // sans aucune animation se comporte comme aujourd'hui » : on ouvre sur
+  // l'écran d'avant, au pixel près, et la seule chose qui s'ajoute est la
+  // bascule — sans quoi le calque animé serait inatteignable.
+  const [calqueMatrice, setCalqueMatrice] = useState<CalqueDeLaMatrice>("images")
   // Une pose décochée du plan, ou retirée au personnage, sort d'elle-même : on
   // ne retient que des identifiants, et on les relit dans le plan vivant.
   const lot = tenues.filter((p) => cochees.includes(p.identifiant))
   // Les cases viennent du **serveur** : elles se déduisent des assets, que cet
   // écran ne tient pas. Rangées par pose pour être lues ligne à ligne.
   const cases = Object.fromEntries(personnage.cases.map((c) => [c.pose, c]))
+
+  // **Une jauge par calque** (A12), et chacune compte des **cases faites**, pas
+  // des images : c'est la définition que la matrice emploie déjà partout, et
+  // c'est celle qui répond à la question qu'on vient poser — *combien de poses
+  // sont couvertes*. Les deux se lisent côte à côte parce que leur écart est le
+  // sujet même de la tranche : quatre poses dessinées, une seule animée.
+  const jaugeImages = tenues.filter(
+    (p) =>
+      faitesDeLaCase(cases[p.identifiant]) >=
+      (cases[p.identifiant]?.demandees ?? p.images),
+  ).length
+  const jaugeAnimations = tenues.filter(
+    (p) =>
+      animeesDeLaCase(cases[p.identifiant]) >=
+      animeesDemandees(cases[p.identifiant]),
+  ).length
 
   /** Retirer une image de sa case. L'image reste en bibliothèque — c'est la
    *  désignation qu'on défait, pas l'image qu'on jette.
@@ -1635,6 +1716,26 @@ function Cases({
       await api.designer(asset, null, null)
     } catch (erreur) {
       onErreur(erreur, "désignation refusée")
+    }
+  }
+
+  /** **Retirer une bande de sa case** (A12) — et rien de plus.
+   *
+   *  ⚠️ **Ni la bande, ni le clip ne s'en vont.** C'est la désignation qu'on
+   *  défait, exactement comme `designer` juste au-dessus le fait pour une image :
+   *  la bande redevient un brouillon, elle reste dans son clip, elle se
+   *  réaffecte. Le clip, lui, a été payé — il n'existe aucun geste de cet
+   *  écran-ci qui puisse le perdre.
+   *
+   *  **Rien à recharger ici** non plus : le serveur annonce la bande, `App`
+   *  redemande le plan, et les cases reviennent recomposées. C'est ce que le
+   *  genre `bande` du flux est venu apporter dans cette tranche — sans lui, la
+   *  matrice serait restée juste jusqu'au prochain changement de projet. */
+  const detacher = async (bande: string) => {
+    try {
+      await api.affecterLaBande(bande, null, null)
+    } catch (erreur) {
+      onErreur(erreur, "retrait refusé")
     }
   }
 
@@ -1752,7 +1853,44 @@ function Cases({
             />
           </div>
         )}
+        {/* **Les deux calques, et leurs deux jauges au même endroit** (A12).
+            La bascule *est* la jauge : chaque calque porte son compte sur le
+            segment qui l'ouvre, et l'on passe de l'un à l'autre d'un geste sans
+            aller lire un total ailleurs. Deux commandes séparées auraient donné
+            un chiffre qu'on lit ici et un calque qu'on change là.
+
+            Absent sur une colonne de pièce : on y habille des corps, et une
+            animation ne s'habille pas. */}
+        {!piece && reclame.length > 0 && (
+          <div className="ml-auto">
+            <Segments<CalqueDeLaMatrice>
+              valeurs={["images", "animations"] as const}
+              valeur={calqueMatrice}
+              onChange={setCalqueMatrice}
+              libelles={{
+                images: `images ${jaugeImages} / ${tenues.length}`,
+                animations: `animations ${jaugeAnimations} / ${tenues.length}`,
+              }}
+            />
+          </div>
+        )}
       </div>
+
+      {/* **L'écran dit de quoi chaque jauge est le total** (A12) — sans cette
+          phrase, deux nombres différents sur deux boutons se lisent comme une
+          contradiction plutôt que comme la mesure qu'ils sont. Une pose est
+          *dessinée* quand elle a toutes ses images, *animée* quand chacune de
+          ses directions porte une bande : ce ne sont pas les mêmes comptes, et
+          leur écart est très exactement ce qu'on vient voir. */}
+      {!piece && reclame.length > 0 && (
+        <p className="mesure text-[9.5px] leading-4 text-texte-3">
+          {calqueMatrice === "images"
+            ? "des attitudes dont toutes les images sont faites — une animation "
+              + "manquante ne s'y voit pas, elle se lit sur l'autre calque"
+            : "des attitudes qui portent une animation par direction — une "
+              + "bande suffit, elle porte déjà ses images dedans"}
+        </p>
+      )}
 
       {reclame.length === 0 ? (
         // **Une tuile n'a pas de rangée de poses du tout** (E9) — pas une
@@ -1785,6 +1923,25 @@ function Cases({
               onOuvrir={onCalque}
               onFavori={(asset) => void basculerFavori(asset)}
               onArmer={() => onArmer(personnage, [pose], piece)}
+            />
+          ))}
+        </ul>
+      ) : calqueMatrice === "animations" ? (
+        // **Le calque animé** (A12) — les mêmes attitudes, ce qui les anime, et
+        // le geste qui commande le clip qui manque. Une pose écartée n'y est pas
+        // plus que sur l'autre calque : les deux lisent `tenues`.
+        <ul className="flex flex-col gap-px">
+          {tenues.map((pose) => (
+            <LigneAnimee
+              key={pose.identifiant}
+              pose={pose}
+              case_={cases[pose.identifiant]}
+              onAnimer={() => onAnimer(personnage, pose)}
+              onAnimerDirection={(direction, nom) =>
+                onAnimer(personnage, pose, { identifiant: direction, nom })
+              }
+              onMonter={onMonterLaBande}
+              onDetacher={(bande) => void detacher(bande)}
             />
           ))}
         </ul>
@@ -1856,7 +2013,13 @@ function Cases({
           que le produit sait déjà demander. Habiller une pose seule, si : il n'y
           a pas d'autre chemin vers un calque, et ce qui part n'est pas un
           gabarit vide mais le corps lui-même. */}
-      {(piece ? lot.length >= 1 && lot.every((p) => cases[p.identifiant]?.corps) : lot.length >= 2) && (
+      {/* **Et il n'existe pas sur le calque animé** (A12) : ce qui se plie est
+          une planche d'images, et une animation ne se plie pas — un clip se
+          commande case par case, avec son image de départ à lui. Les attitudes
+          cochées survivent pourtant à la bascule, et c'est voulu : on revient
+          sur le calque des images et le lot est resté armé. */}
+      {calqueMatrice === "images" &&
+        (piece ? lot.length >= 1 && lot.every((p) => cases[p.identifiant]?.corps) : lot.length >= 2) && (
         <div className="flex items-center gap-2 pt-1">
           <span className="mesure text-[10px] text-texte-3">
             {lot.length} {lot.length > 1 ? "attitudes" : "attitude"}, un seul appel
@@ -2427,6 +2590,259 @@ function SousLigneDirection({
         ×
       </button>
     </li>
+  )
+}
+
+
+/** Une attitude sur **le calque animé** (A12) : ce qui l'anime, ce qui manque,
+ *  et le geste qui commande le clip.
+ *
+ *  **C'est la même ligne que `LigneCase`, avec un autre contenu de case** — et
+ *  c'est délibéré : l'auteur passe de l'un à l'autre d'un geste, et une seconde
+ *  disposition lui aurait fait relire l'écran à chaque bascule. Ce qui change
+ *  est ce qui remplit la case, ce qu'on y compte, et ce qu'on peut en faire.
+ *
+ *  **Ce qui n'y est pas, et pourquoi.** Pas de case à cocher : ce qui se coche
+ *  part en une planche d'images, et une animation ne se plie pas. Pas de croix
+ *  sur la ligne : retirer une attitude au personnage est un geste du plan, il
+ *  vaut pour les deux calques, et il vit déjà sur l'autre — deux chemins vers
+ *  la même décision auraient fini par se contredire. */
+function LigneAnimee({
+  pose,
+  case_,
+  onAnimer,
+  onAnimerDirection,
+  onMonter,
+  onDetacher,
+}: {
+  pose: Pose
+  case_: Case | undefined
+  /** **Commander le clip qui remplira cette case** (A9). Il ne dépense rien :
+   *  il ouvre l'écran du clip, où l'image de départ est déjà proposée. */
+  onAnimer: () => void
+  onAnimerDirection: (direction: string, nom: string) => void
+  /** Remonter jusqu'au clip dont cette bande est tirée. */
+  onMonter: (clip: string) => void
+  /** Retirer la bande de sa case — **sans perdre ni la bande, ni le clip**. */
+  onDetacher: (bande: string) => void
+}) {
+  const bandes = case_?.bandes ?? []
+  const faites = animeesDeLaCase(case_)
+  const demandees = animeesDemandees(case_)
+  const faite = faites >= demandees
+
+  // **Les mêmes directions que sur l'autre calque**, lues au même endroit : le
+  // jeu qui n'en déclare aucune ne voit pas le mot paraître ici non plus.
+  const angles = case_?.directions ?? []
+  const rangees = case_?.directions_rangees ?? []
+  const aDesDirections = angles.length + rangees.length > 1
+  const vides = angles.filter((a) => a.bandes.length === 0)
+
+  return (
+    <li className="flex flex-col border-b border-bord">
+      <div className="flex min-h-[52px] items-center gap-3 px-1 py-1">
+        {/* La place de la coche de l'autre calque, tenue vide : les deux
+            calques se superposent au pixel près quand on bascule, et le nom des
+            attitudes ne saute pas d'un cran. */}
+        <span aria-hidden className="w-[13px] shrink-0" />
+        <span className="flex w-[110px] shrink-0 flex-col justify-center">
+          <span className="truncate text-[11.5px] text-texte-2">{pose.nom}</span>
+        </span>
+
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          {aDesDirections ? (
+            <span className="mesure text-[10px] leading-4 text-texte-3">
+              {angles.length === 0
+                ? "aucune direction — tout est rangé"
+                : vides.length > 0
+                  ? `pas encore animée vers ${vides.map((a) => a.nom).join(", ")}`
+                  : "toutes ses directions sont animées"}
+            </span>
+          ) : (
+            <>
+              {bandes.map((bande) => (
+                <VignetteDeBande
+                  key={bande.identifiant}
+                  bande={bande}
+                  pose={pose.nom}
+                  onMonter={onMonter}
+                  onDetacher={onDetacher}
+                />
+              ))}
+              {bandes.length === 0 && (
+                <span className="mesure text-[10px] text-texte-3">
+                  rien ne bouge encore
+                </span>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* **Une par direction, jamais autant que d'images** : c'est le chiffre
+            qui dit que les deux calques ne se comptent pas pareil. Une marche
+            demande huit images pour être dessinée et **une bande** pour être
+            animée — la bande porte ses huit images dedans. */}
+        <span
+          className={[
+            "mesure shrink-0 text-[9.5px]",
+            faite ? "text-ok" : "text-texte-3",
+          ].join(" ")}
+          title={
+            aDesDirections
+              ? `une animation par direction — ${angles.length} au total`
+              : "une animation suffit : elle porte déjà ses images dedans"
+          }
+        >
+          {faites} / {demandees}
+        </span>
+
+        <button
+          type="button"
+          onClick={onAnimer}
+          aria-label={`Animer ${pose.nom}`}
+          title="ouvre l'écran qui commande un clip — l'image de départ y est déjà proposée"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        >
+          Animer ›
+        </button>
+      </div>
+
+      {/* ── Une case par direction, sur le calque animé aussi (A12) ────────
+          Même découpe que les images, et pour la même raison exactement : sans
+          elle on ne saurait pas dire qu'il manque la marche vers le nord. */}
+      {aDesDirections && (
+        <ul className="flex flex-col border-t border-bord/60 bg-fond-1/40">
+          {angles.map((angle) => (
+            <SousLigneAnimee
+              key={angle.identifiant}
+              pose={pose}
+              angle={angle}
+              onAnimer={() => onAnimerDirection(angle.identifiant, angle.nom)}
+              onMonter={onMonter}
+              onDetacher={onDetacher}
+            />
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+}
+
+/** Une case animée : **une pose dans une direction**, et ce qui la fait bouger.
+ *
+ *  Le pendant exact de `SousLigneDirection`, sans le rangement ni la
+ *  confirmation d'angle : ranger une direction vaut pour la pose entière, les
+ *  deux calques compris, et le geste vit sur celui des images. */
+function SousLigneAnimee({
+  pose,
+  angle,
+  onAnimer,
+  onMonter,
+  onDetacher,
+}: {
+  pose: Pose
+  angle: CaseDirection
+  onAnimer: () => void
+  onMonter: (clip: string) => void
+  onDetacher: (bande: string) => void
+}) {
+  // **Une seule bande remplit une case**, quel que soit le nombre d'images de
+  // la pose : c'est la règle du calque, et elle est écrite là où elle se lit.
+  const faite = angle.bandes.length >= 1
+
+  return (
+    <li className="flex min-h-[52px] items-center gap-3 border-t border-bord/40 px-1 py-1 pl-[26px]">
+      <span className="w-[92px] shrink-0 truncate text-[11px] text-texte-3">
+        {angle.nom}
+      </span>
+
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+        {angle.bandes.map((bande) => (
+          <VignetteDeBande
+            key={bande.identifiant}
+            bande={bande}
+            pose={`${pose.nom} — ${angle.nom}`}
+            onMonter={onMonter}
+            onDetacher={onDetacher}
+          />
+        ))}
+        {angle.bandes.length === 0 && (
+          <span className="mesure text-[10px] text-texte-3">
+            rien ne bouge encore
+          </span>
+        )}
+      </div>
+
+      <span
+        className={[
+          "mesure shrink-0 text-[9.5px]",
+          faite ? "text-ok" : "text-texte-3",
+        ].join(" ")}
+      >
+        {angle.bandes.length} / 1
+      </span>
+
+      <button
+        type="button"
+        onClick={onAnimer}
+        aria-label={`Animer ${pose.nom} vers ${angle.nom}`}
+        title="ouvre l'écran qui commande un clip — l'attitude et l'angle sont déjà visés"
+        className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+      >
+        Animer ›
+      </button>
+    </li>
+  )
+}
+
+/** Une animation dans une case de la matrice — **elle y tourne**, elle dit d'où
+ *  elle vient, et elle se retire sans rien perdre (A12).
+ *
+ *  **Elle tourne pour de vrai, à la taille de la vignette.** Une image figée
+ *  aurait montré la première pose de la bande et rien d'autre : on n'aurait pas
+ *  vu la différence entre une animation juste et une animation dont l'ordre des
+ *  images est faux. C'est très exactement ce qu'on vient voir ici.
+ *
+ *  **Le clip est nommé, et il est à un clic.** Une bande vient d'un clip qui a
+ *  été payé une fois ; savoir lequel est ce qui permet d'en tirer une seconde
+ *  bande plutôt que d'en commander un autre. */
+function VignetteDeBande({
+  bande,
+  pose,
+  onMonter,
+  onDetacher,
+}: {
+  bande: Bande
+  pose: string
+  onMonter: (clip: string) => void
+  onDetacher: (bande: string) => void
+}) {
+  return (
+    <span className="group relative flex flex-col items-center gap-0.5">
+      <BandeQuiTourne
+        bande={bande}
+        cote={44}
+        titre={`${bande.nom} — ${bande.compte} images, ${bande.cadence} par seconde`}
+      />
+      <button
+        type="button"
+        onClick={() => onMonter(bande.clip)}
+        aria-label={`Ouvrir le clip dont vient ${bande.nom}`}
+        title="remonte au clip qui l'a fournie — il est payé, et il peut en donner d'autres"
+        className="mesure w-[52px] truncate text-center text-[8.5px] text-texte-3 hover:text-signal"
+      >
+        {bande.nom}
+      </button>
+      <button
+        type="button"
+        onClick={() => onDetacher(bande.identifiant)}
+        aria-label={`Retirer cette animation de la case ${pose}`}
+        title="la bande et son clip restent — c'est la case qu'on vide"
+        className="mesure absolute top-0 right-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-echec"
+      >
+        ×
+      </button>
+    </span>
   )
 }
 

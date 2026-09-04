@@ -424,6 +424,7 @@ class ServiceMontage:
         bande = self.bande(identifiant)
         self._base.oublier_bande(identifiant)
         self._fichiers.oublier_bande(bande.clip, identifiant)
+        self._annoncer(bande, oubliee=True)
         return bande
 
     def planche(self, identifiant: str) -> bytes:
@@ -752,3 +753,23 @@ class ServiceMontage:
         """Le fichier d'abord, l'index ensuite. **Les fichiers font foi.**"""
         self._fichiers.ecrire_bande(bande.clip, bande.identifiant, bande.en_json())
         self._base.enregistrer_bande(bande)
+        self._annoncer(bande)
+
+    def _annoncer(self, bande: Bande, oubliee: bool = False) -> None:
+        """Dire qu'une bande a bougé — **et c'est `A12` qui l'a rendu nécessaire**.
+
+        Avant cette tranche, une bande ne se voyait que sur l'écran de montage,
+        celui-là même qui venait de l'écrire : personne d'autre n'avait à
+        l'apprendre. Le calque animé de la matrice change ça — on découpe un clip
+        dans la galerie, et la case d'un personnage se remplit dans le codex,
+        **deux écrans plus loin**. Sans cette annonce, la matrice serait restée
+        juste jusqu'au prochain changement de projet.
+
+        La charge porte la bande **entière**, comme une carte ou un asset ; et
+        `oubliee` marque celle qui s'en va, exactement comme `oubliee` sur une
+        carte et `coupe` sur un lien. L'écran ne rejoue jamais la règle : il lit
+        le drapeau que le serveur pose.
+        """
+        if self._diffusion is None:
+            return
+        self._diffusion.publier("bande", {**bande.en_json(), "oubliee": oubliee})

@@ -31,6 +31,7 @@ from typing import Any, Sequence
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset
+from atelier.domaine.bande import Bande
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.ambiance import CE_QU_ON_PREND, TEXTES, prises_du_mode
@@ -1778,6 +1779,24 @@ class ServiceProduction:
             else:
                 corps.setdefault(asset.pose, []).append(asset)
 
+        # **Le troisième axe, arrivé en A12 : les animations.**
+        #
+        # Rangées ici et pas ailleurs, par la même règle que les deux autres :
+        # *c'est ce qui remplit la case qui dit laquelle*. Une bande porte sa
+        # pose et sa direction depuis `A10` ; en tirer la matrice ne demande donc
+        # aucun état de plus, et oublier une bande vide sa case toute seule.
+        #
+        # ⚠️ **Elles ne se mêlent pas aux images, et c'est la décision de la
+        # tranche.** Une case qui porterait les deux serait « remplie » dès
+        # qu'elle a l'une des deux, et une animation manquante se cacherait
+        # derrière une image présente — très exactement ce que l'auteur veut
+        # voir. Deux calques gardent l'invariant intact au lieu de le tordre : il
+        # vaut deux fois, une fois par calque.
+        animations: dict[str, list[Bande]] = {}
+        for bande in self._base.bandes_du_personnage(personnage.identifiant):
+            if bande.pose:
+                animations.setdefault(bande.pose, []).append(bande)
+
         # **Les directions du jeu, lues une fois pour toutes les lignes.** Vide
         # est un état normal — un jeu vu de face n'en a pas —, et le mot ne
         # paraît alors nulle part : chaque ligne rend `directions: []` et la
@@ -1788,6 +1807,7 @@ class ServiceProduction:
 
         for pose in personnage.tenues(self.plan_de(projet, personnage)):
             siennes = corps.get(pose.identifiant, [])
+            ses_bandes = animations.get(pose.identifiant, [])
             tenues = personnage.directions_tenues(pose, toutes)
             premiere = tenues[0].identifiant if tenues else ""
             # Une image sans direction ne connaît pas la sienne : elle se range
@@ -1814,6 +1834,21 @@ class ServiceProduction:
                         "a_confirmer": (
                             len(anciennes) if direction.identifiant == premiere else 0
                         ),
+                        # **Les animations de cette direction-là** (A12), rangées
+                        # comme les images le sont juste au-dessus — y compris le
+                        # repli d'une bande sans direction sur la première, parce
+                        # qu'un jeu peut déclarer ses directions après avoir gardé
+                        # des bandes, exactement comme il le fait après avoir
+                        # fabriqué des images.
+                        "bandes": [
+                            b.en_json()
+                            for b in ses_bandes
+                            if b.direction == direction.identifiant
+                            or (
+                                not b.direction
+                                and direction.identifiant == premiere
+                            )
+                        ],
                     }
                 )
 
@@ -1828,6 +1863,17 @@ class ServiceProduction:
                     # facteur, et rien ne change pour un jeu qui n'en a pas.
                     "demandees": pose.images * max(1, len(tenues)),
                     "images": [a.en_json() for a in siennes],
+                    # ── Le calque animé (A12) ────────────────────────────────
+                    #
+                    # **Une animation par direction, jamais autant que d'images.**
+                    # C'est là que les deux calques cessent de se ressembler :
+                    # une pose de marche demande huit images *par direction* pour
+                    # être dessinée, et **une seule bande par direction** pour
+                    # être animée — la bande porte déjà ses huit images dedans.
+                    # Multiplier par `pose.images` ici demanderait huit animations
+                    # de marche vers la gauche, ce qui n'a aucun sens.
+                    "bandes": [b.en_json() for b in ses_bandes],
+                    "bandes_demandees": max(1, len(tenues)),
                     # ── Le second axe de la case (E10) ───────────────────────
                     #
                     # Une entrée par direction tenue, avec ce qui la remplit.

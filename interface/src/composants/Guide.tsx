@@ -449,6 +449,25 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               lancer plusieurs courts et de garder le meilleur.
             </P>
             <P>
+              Sa matrice se lit sur <B>deux calques</B> : les images fixes, et les animations. La
+              bascule est en haut à droite, et <B>elle porte les deux comptes</B> — tu vois d'un
+              coup d'œil qu'une chose est dessinée sur six poses et animée sur une seule. Les deux
+              ne se mélangent jamais, et c'est le point : une case qui porterait l'image{" "}
+              <I>et</I> l'animation aurait l'air pleine dès qu'elle a l'une des deux, et il te
+              manquerait une animation sans que rien ne le dise.
+            </P>
+            <P>
+              Sur le calque animé, une case remplie <B>tourne</B> — pas une image figée,
+              l'animation elle-même à la taille de la vignette. Le nom sous elle te ramène au clip
+              dont elle vient, qui est payé et peut en donner d'autres. Et la croix sur la
+              vignette <B>ne jette rien</B> : elle vide la case, l'animation reste, le clip aussi.
+            </P>
+            <P>
+              Compte-y <B>une animation par direction</B>, pas une par image. Une marche vue sous
+              quatre angles demande beaucoup d'images pour être dessinée et quatre animations pour
+              être animée : une animation porte déjà ses images dedans.
+            </P>
+            <P>
               La découpe, elle, n'est plus un lieu : c'est une table parmi les autres, sur la
               barre des tables d'une image, à droite du trait — la première des deux fabriques.
               Les tables ne se visitent pas non plus : elles s'ouvrent sur une image, et ce

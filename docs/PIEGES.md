@@ -1346,3 +1346,16 @@ la prochaine réécriture retrouvera.
   `undefined` là où l'écran l'attendait. ⚠️ Ce qui rend le cas durable est que **rien ne le
   signale au moment où on duplique** : c'est plus tard, en ajoutant un champ, qu'on paie. La
   duplication elle-même est le piège, pas l'oubli. Payé le 4 septembre 2026.
+
+
+- **Un écran qui lit ce qu'un autre écrit a raison par accident, tant que personne ne le lui
+  redit.** Les bandes d'un clip ne s'annonçaient pas sur le flux, et c'était juste : elles ne se
+  voyaient que sur l'écran de montage, celui-là même qui venait de les écrire. Le jour où un
+  second écran les a montrées — le calque animé de la matrice, **deux onglets plus loin** —, la
+  même absence est devenue un défaut : on découpe un clip dans la galerie, et la case du
+  personnage ne se remplit pas. ⚠️ **Aucun essai d'écran ne pouvait le dire**, parce qu'ils
+  montent un serveur doublé qui répond déjà la bonne chose : la question n'est pas *que répond le
+  serveur*, mais *qui le lui redemande, et quand*. Il a fallu cliquer dans l'atelier jetable et
+  regarder la jauge ne pas bouger. La règle qui en sort : **quand une donnée gagne un second
+  lecteur, elle a besoin d'une annonce**, et le moment où on l'ajoute est celui où on écrit le
+  second lecteur — jamais plus tard. Payé le 4 septembre 2026.

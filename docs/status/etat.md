@@ -11,6 +11,89 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A12 — la matrice sur deux calques, et l'objectif de la version atteint — 4 septembre 2026
+
+**« Il manque la mort du nain » devient lisible en deux versions : l'image, ou l'animation.** La
+matrice d'un personnage se lit désormais sur deux calques — les images fixes, et les animations —,
+chacun avec sa jauge, et l'on passe de l'un à l'autre d'un geste.
+
+### Pourquoi un calque, et pas un contenu de plus dans la case
+
+C'est la décision de la tranche, et tout en découle. Si une case portait l'image fixe **et**
+l'animation, elle serait « remplie » dès qu'elle a l'une des deux : une pose animée manquante se
+cacherait derrière une pose fixe présente — très exactement ce que l'auteur vient voir.
+
+Deux calques gardent aussi l'invariant d'`E2` intact au lieu de le tordre : *une case est prise
+dès qu'une image la porte* ne devient pas *dès qu'une image **ou** une bande la porte*, il vaut
+**deux fois**, une fois par calque.
+
+> **La leçon générale** : quand deux choses différentes remplissent le même trou, les fondre fait
+> disparaître celle qui manque derrière celle qui est là. Ce n'est pas une question d'affichage,
+> c'est le compte lui-même qui devient faux.
+
+### Le compte qui ne se multiplie pas, et c'est le seul du produit
+
+Le calque des images compte **le produit de deux facteurs** : *tant d'images dans tant de
+directions*. Une marche à huit images sur quatre angles en demande trente-deux, et c'est juste.
+
+Le calque animé ne se compte pas ainsi, et c'est le seul endroit du produit où les deux divergent.
+**Une bande porte déjà ses huit images dedans** : il en faut une par direction, pas une par image.
+Rejouer la multiplication aurait demandé trente-deux animations pour une marche, et la jauge
+aurait plafonné à un huitième pour toujours — sans que rien ne lève, et sans que le chiffre ait
+l'air faux.
+
+### Ce que seule la vraie chaîne pouvait montrer : une bande ne s'annonçait pas
+
+⚠️ Tant que les bandes ne se voyaient que sur l'écran de montage — celui-là même qui venait de les
+écrire —, personne d'autre n'avait à l'apprendre, et le flux n'en portait rien. C'était juste, et
+ça a cessé de l'être au moment précis où le calque animé est né : **on découpe un clip dans la
+galerie, et la case d'un personnage se remplit dans le codex, deux écrans plus loin.**
+
+Sans annonce, la matrice aurait eu raison **jusqu'au prochain changement de projet**. Aucun essai
+d'écran ne pouvait le dire : ils montent un serveur doublé qui répond déjà la bonne chose, et la
+question n'est pas *que répond le serveur* mais *qui le lui redemande, et quand*. Ce qui l'a
+montré est d'avoir cliqué la croix dans l'atelier jetable et regardé la jauge ne pas bouger.
+
+> **La leçon, et elle a un jumeau dans `A11`** : un écran qui lit ce qu'un autre écrit a besoin
+> d'une annonce, sinon il a raison **par accident** — parce qu'il vient d'être ouvert. Le jumeau
+> d'`A11` disait la même chose de l'autre côté : un adaptateur refabriqué à chaque appel repart
+> sans mémoire, et l'essai qui le garde ne le voit pas.
+
+### La bascule *est* la jauge
+
+Le critère demandait deux choses : passer d'un calque à l'autre d'un geste, et lire le total de
+chacun. Les fondre en un seul objet — deux segments, chacun portant son compte — évite l'écran où
+l'on lit un chiffre à un endroit et où l'on change de calque à un autre. Et ça met les deux totaux
+**côte à côte** : *une pose dessinée sur six, une pose animée sur six*, leur écart est le sujet
+même de la tranche.
+
+Le calque des images reste le défaut, et c'est ce qui tient *un projet sans aucune animation se
+comporte comme aujourd'hui* : on ouvre sur l'écran d'avant. La bascule, elle, est là même sans une
+seule animation — sans quoi le calque animé serait inatteignable, et l'on ne pourrait jamais
+commander le premier clip.
+
+### Ce que la rangée animée n'a pas, et pourquoi
+
+Pas de case à cocher : ce qui se coche part en **une planche d'images**, et une animation ne se
+plie pas — un clip se commande case par case, avec son image de départ à lui. Pas de croix sur la
+ligne : retirer une attitude au personnage est un geste du plan, il vaut pour les deux calques, et
+il vit déjà sur celui des images. **Deux chemins vers la même décision finissent par se
+contredire.**
+
+La croix qui existe est ailleurs, sur la vignette, et elle ne défait qu'une désignation : la bande
+redevient un brouillon, elle reste dans son clip, elle se réaffecte. Le clip, lui, a été payé une
+fois — **aucun geste de la matrice ne peut le perdre**.
+
+### Comment on éprouve une matrice animée sans payer un clip
+
+Les animations de l'atelier jetable sont **écrites directement dans le dépôt**, avec leur planche
+de sprites : quatre carrés de couleurs franches. Aucun clip n'est commandé, aucune vidéo n'est
+décodée, et le décodeur vidéo cesse d'être une condition pour regarder une matrice. Ce qu'on
+vérifie au navigateur est *que ça tourne* — quatre positions distinctes qui se suivent, lues au
+script parce qu'une capture d'écran n'attrape pas un métronome.
+
+---
+
 ## A11 — le moteur de la maison, et le prix qui tombe à zéro — 4 septembre 2026
 
 **Le même clip, la même chaîne, la même bande — sur la carte graphique de l'atelier au lieu du

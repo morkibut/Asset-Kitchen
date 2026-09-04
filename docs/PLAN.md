@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10` et `A11` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faudra couvrir une matrice entière. Les cinq tranches qui restent — `A12`, `A13`, `A4`, `A5`, `A7` — sont libres | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. Les quatre tranches qui restent — `A13`, `A4`, `A5`, `A7` — sont libres | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -252,6 +252,7 @@ V3    A6  le mouvement, dit une fois pour toutes
       A10 le montage — le cœur de la version ◄┘
        │   ← close le 4 septembre 2026
        ├──► A12  toutes les poses, en animation   ← l'objectif de la version
+       │         ← close le 4 septembre 2026
        ├──► A13  l'image attrapée au vol
        ├──► A4   la bande sort de l'atelier
        ├──► A5   le contour qui ne bout pas       (D2 l'attendait, elle est close)
@@ -2573,8 +2574,10 @@ ces points n'empêche d'ouvrir la version** ; chacun est une dette, et chacun a 
 - **L'image envoyée n'était pas un sprite de la bibliothèque** mais une image préparée à 1024 px.
   Ce que rend un sprite de 64 px agrandi n'est pas mesuré, et c'est `A9` qui le verra en premier.
 - **Une seule direction a été essayée.** Les clips partent tous du profil. Ce que rend une
-  demande d'animation sur une pose vue de face ou de dos n'est pas mesuré, et c'est `A12` qui
-  s'en apercevra en couvrant la matrice.
+  demande d'animation sur une pose vue de face ou de dos n'est pas mesuré. ⚠️ **`A12` a livré
+  l'endroit d'où on le verra, pas la mesure** : la tranche s'est construite sans une seconde de
+  carte graphique, et la matrice qu'elle montre est vide d'animations tant que l'auteur n'en a
+  pas commandé. Le fait viendra de l'usage, et il n'est pas encore là.
 - ~~**Le montant réellement facturé n'a jamais été relu.**~~ **Levé le 2 septembre 2026** : il se
   lit dans la réponse du travail, sous `usage.cost`. Treize clips relus : le facturé dépasse
   l'estimation de **20 %** au total, mais le modèle rapide coûte **0,056 à 0,067 $ et non 0,134 $** —
@@ -3308,7 +3311,7 @@ bloque rien**, mais elle rend `A12` supportable.
 
 ---
 
-### A12 · Toutes les poses, en animation
+### A12 · Toutes les poses, en animation — ✅ **livrée le 4 septembre 2026**
 *5 US (482–486)* · **c'est ici que l'objectif de la version se vérifie**
 
 **Ce qu'on livre.** La matrice d'un personnage se lit **sur deux calques** : les images fixes, et
@@ -3333,24 +3336,70 @@ l'image de départ est proposée, le mouvement est déduit de la pose par `A6` �
 le découpe en `A10`, on affecte la bande à la case, la case se remplit. **Et le même clip peut en
 remplir plusieurs.**
 
-**Ce qui n'est pas encore mesuré, et se verra ici.** Tous les clips du banc partent du profil.
-**Ce que rend une demande d'animation sur une pose vue de face ou de dos est inconnu.** Cette
-tranche est la première qui l'exerce à l'échelle, et c'est elle qui rapportera le fait.
+**Ce qui n'est toujours pas mesuré, et se verra ici.** Tous les clips du banc partent du profil.
+**Ce que rend une demande d'animation sur une pose vue de face ou de dos est inconnu.** ⚠️ **La
+tranche a livré l'endroit d'où on le verra, pas le fait** : elle s'est construite sans une seconde
+de carte graphique, et la matrice qu'elle montre est vide d'animations tant que l'auteur n'en a
+pas commandé. Ce qu'elle change est qu'un manque par direction s'écrit maintenant en clair —
+*pas encore animée vers est, ouest* —, donc que le fait se ramassera en travaillant, et non en
+montant un banc de plus.
 
 **Critères d'acceptation**
 
-- [ ] La matrice d'un personnage se lit **sur deux calques** — images fixes, animations —, et l'on passe de l'un à l'autre d'un geste
-- [ ] Chaque calque porte **sa propre jauge**, et l'écran dit de quoi chacune est le total
-- [ ] Une case du calque animé est prise **dès qu'une bande la porte**, pas parce que la bande est bonne — même règle que pour les images
-- [ ] Depuis une case vide du calque animé, **commander le clip qui la remplira est un geste**, et l'image de départ est déjà proposée
-- [ ] Une bande affectée à une case s'y voit en train de tourner, à la taille de la vignette
-- [ ] Une case animée dit **de quel clip** sa bande vient, et se remonte jusqu'à lui
-- [ ] Retirer une bande d'une case ne supprime ni la bande, ni le clip
-- [ ] Une pose écartée par le personnage n'apparaît sur aucun des deux calques
-- [ ] Un projet sans aucune animation se comporte exactement comme aujourd'hui
-- [ ] Tout fonctionne réseau coupé, sauf commander
+- [x] La matrice d'un personnage se lit **sur deux calques** — images fixes, animations —, et l'on passe de l'un à l'autre d'un geste
+- [x] Chaque calque porte **sa propre jauge**, et l'écran dit de quoi chacune est le total
+- [x] Une case du calque animé est prise **dès qu'une bande la porte**, pas parce que la bande est bonne — même règle que pour les images
+- [x] Depuis une case vide du calque animé, **commander le clip qui la remplira est un geste**, et l'image de départ est déjà proposée
+- [x] Une bande affectée à une case s'y voit en train de tourner, à la taille de la vignette
+- [x] Une case animée dit **de quel clip** sa bande vient, et se remonte jusqu'à lui
+- [x] Retirer une bande d'une case ne supprime ni la bande, ni le clip
+- [x] Une pose écartée par le personnage n'apparaît sur aucun des deux calques
+- [x] Un projet sans aucune animation se comporte exactement comme aujourd'hui
+- [x] Tout fonctionne réseau coupé, sauf commander
 
-**Bloquée par** — `A10`, qui produit les bandes à ranger.
+**Ce qui a été livré, le 4 septembre 2026.** Dix-sept essais côté atelier, huit côté écran,
+**aucun appel payant et aucune seconde de carte graphique**. Le serveur savait déjà presque tout
+faire : `A10` avait donné à la bande sa pose, sa direction et la route qui l'y range, et le
+service qui compose la matrice avait même déjà la règle écrite dans un commentaire. Ce qui
+manquait était de la porter dans la case, et de la montrer.
+
+| Ce qui est arrivé | Où | Ce que ça tient |
+|---|---|---|
+| Le calque animé dans la case | `atelier/services/production.py` § `cases` | les bandes du personnage, rangées par pose **et par direction**, avec le même repli sur la première direction que les images faites avant la déclaration |
+| Le compte qui ne se multiplie pas | `Case.bandes_demandees` | ⚠️ **une animation par direction, jamais autant que d'images.** Une marche demande huit images par angle pour être dessinée et **une bande** par angle pour être animée : la bande porte déjà ses huit images dedans. Multiplier comme le calque des images l'aurait plafonnée à un huitième pour toujours |
+| La bascule, qui **est** la jauge | `interface/src/composants/Personnages.tsx` § `Cases` | chaque calque porte son compte sur le segment qui l'ouvre. Deux commandes séparées auraient donné un chiffre qu'on lit ici et un calque qu'on change là |
+| La vignette qui tourne | `interface/src/composants/Apercu.tsx` § `BandeQuiTourne` | **la planche entière chargée une fois et décalée**, jamais une image par cran : le même geste que l'écran de montage, donc exactement les pixels que l'export écrira. Le métronome est à chaque vignette, parce que rien ne demande que deux cases soient en phase |
+| La rangée animée | `Personnages.tsx` § `LigneAnimee` | la même disposition que la ligne des images, un autre contenu : on bascule d'un geste, et l'écran ne se relit pas |
+| Le retour au clip | `VignetteDeBande` → `App` | la matrice **nomme** un clip ; c'est `App` qui sait qu'il se découpe dans la galerie. L'écran des cases n'a jamais eu à connaître les onglets |
+| L'annonce d'une bande | `atelier/services/montage.py` § `_annoncer`, genre `bande` | ce qui relie les deux écrans. On découpe dans la galerie, la case se remplit dans le codex — **deux écrans plus loin** |
+| L'atelier jetable | `essais/atelier_jetable_a12.py` | deux décors sur deux ports — un jeu vu de face, un jeu à quatre angles. Les animations y sont écrites à la main avec leur planche : **aucun clip n'est payé, aucune vidéo n'est décodée** |
+
+> ⚠️ **Le trou que seule la vraie chaîne pouvait montrer : une bande ne s'annonçait pas.** Tant
+> que les bandes ne se voyaient que sur l'écran de montage — celui-là même qui venait de les
+> écrire —, personne d'autre n'avait à l'apprendre, et le flux n'en portait rien. Le calque animé
+> change ça : on découpe un clip dans la galerie et la case d'un personnage se remplit dans le
+> codex. Sans annonce, la matrice aurait été juste **jusqu'au prochain changement de projet**, et
+> aucun essai d'écran ne l'aurait dit — les essais montent un serveur qui répond déjà la bonne
+> chose. Ce qui l'a montré est d'avoir cliqué la croix dans l'atelier jetable et regardé la jauge
+> ne pas bouger.
+
+**Trois choix faits seuls, et voici pourquoi.**
+
+1. **La bascule porte les jauges au lieu d'être à côté d'elles.** Le critère demande deux choses —
+   passer d'un calque à l'autre d'un geste, et lire le total de chacun. Les fondre en un seul
+   objet évite l'écran où l'on lit un chiffre à un endroit et où l'on change de calque à un autre,
+   et met les deux totaux **côte à côte** : leur écart est le sujet même de la tranche.
+2. **Le calque des images reste le défaut, et la bascule s'ajoute.** C'est ce qui tient *un projet
+   sans aucune animation se comporte comme aujourd'hui* : on ouvre sur l'écran d'avant, au pixel
+   près. La bascule, elle, est là même sans une seule animation — sans quoi le calque animé serait
+   inatteignable, et l'on ne pourrait jamais commander le premier clip.
+3. **Pas de coche et pas de croix sur la rangée animée.** Ce qui se coche part en **une planche
+   d'images**, et une animation ne se plie pas : un clip se commande case par case, avec son image
+   de départ à lui. Et retirer une attitude au personnage est un geste du plan, qui vaut pour les
+   deux calques : il vit sur celui des images, et un second chemin vers la même décision aurait
+   fini par se contredire.
+
+**Bloquée par** — `A10`, qui produit les bandes à ranger. **Elle ne bloque rien.**
 
 ---
 
@@ -4518,5 +4567,8 @@ baisser à chaque bande gardée, si bien que le chiffre se prend à l'usage. Tou
 **Et un second risque s'ouvre avec le recadrage, qu'il faut nommer** : *une seule direction a été
 essayée.* Tous les clips mesurés partent du profil, et l'objectif de la version est d'animer
 **toutes** les cases d'une matrice — donc aussi la face et le dos. Rien ne dit ce qu'un modèle
-vidéo fait d'un sprite vu de face. **`A12` est la tranche qui s'en apercevra**, et c'est délibéré :
-la question ne se mesure qu'en couvrant une matrice, pas en tirant un clip de plus.
+vidéo fait d'un sprite vu de face. **`A12` a livré l'endroit d'où on le verra, et pas la réponse** :
+la matrice se lit désormais case par case sur son calque animé — *pas encore animée vers est,
+ouest* s'y écrit —, mais la tranche s'est construite sans une seconde de carte graphique. ⚠️ **Le
+risque reste entier**, et c'est délibéré : la question ne se mesure qu'en couvrant une matrice à
+l'usage, pas en tirant un clip de plus ni en écrivant un écran.

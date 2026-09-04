@@ -1446,6 +1446,10 @@ export type CaseDirection = Direction & {
    *  Elles se rangent dans la première, et la marque dit que c'est un rangement
    *  et non une déduction (US-242). */
   a_confirmer: number
+  /** **Les animations de cette direction** (A12), rangées comme les images le
+   *  sont — repli d'une bande sans direction sur la première compris, parce
+   *  qu'un jeu peut déclarer ses directions après avoir gardé des bandes. */
+  bandes: Bande[]
 }
 
 /** Une case de la matrice : ce qu'une attitude demande, et ce qui la remplit.
@@ -1467,6 +1471,21 @@ export type Case = {
    *  Un calque en porte une, et il est rangé plus bas — sans ce partage, un
    *  casque posé sur six poses ferait paraître six corps de plus. */
   images: Asset[]
+  /** **Le calque animé** (A12) : les animations que cette attitude porte, toutes
+   *  directions confondues — le pendant exact de `images`, et rangé de la même
+   *  façon.
+   *
+   *  ⚠️ **Elles ne se mêlent pas aux images, et c'est la décision de la
+   *  tranche.** Une case qui porterait les deux serait « remplie » dès qu'elle a
+   *  l'une des deux, et une animation manquante se cacherait derrière une image
+   *  présente. Deux calques gardent l'invariant intact au lieu de le tordre : il
+   *  vaut deux fois, une fois par calque. */
+  bandes: Bande[]
+  /** **Une animation par direction, jamais autant que d'images.** C'est là que
+   *  les deux calques cessent de se ressembler : une marche demande huit images
+   *  *par direction* pour être dessinée, et **une seule bande par direction**
+   *  pour être animée — la bande porte déjà ses huit images dedans. */
+  bandes_demandees: number
   /** **Le second axe** (C3, US-140), pièce par pièce. Calques ou corps
    *  habillés : c'est `recette.difference` qui les distingue, jamais un drapeau
    *  de plus. Vide pour l'immense majorité des cases. */
@@ -5203,6 +5222,16 @@ export type Ecoute = {
    *  plan et pour les mêmes raisons : elles sont courtes, et un retrait ne se
    *  devinerait pas d'un message qui ne porterait que les ajouts. */
   vestiaire: (charge: Vestiaire) => void
+  /** Une bande a été gardée, renommée, affectée à une case — ou elle est
+   *  partie, et elle porte alors `oubliee`. La charge est la bande entière,
+   *  comme pour une carte.
+   *
+   *  **Son propre genre, et c'est `A12` qui l'a rendu nécessaire.** Tant que les
+   *  bandes ne se voyaient que sur l'écran de montage — celui-là même qui venait
+   *  de les écrire —, personne d'autre n'avait à l'apprendre. Le calque animé de
+   *  la matrice change ça : on découpe un clip dans la galerie, et la case d'un
+   *  personnage se remplit dans le codex, **deux écrans plus loin**. */
+  bande: (bande: Bande & { oubliee?: boolean }) => void
   /** Le cadre de l'agent ou sa consommation a changé (US-90, US-91). Un
    *  garde-fou posé depuis un autre onglet arrive par là, et le compteur bouge
    *  au moment où l'agent dépense — l'auteur n'a rien à recharger. */
@@ -5232,6 +5261,7 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<Parameters<Ecoute["directions"]>[0]>("directions", ecoute.directions)
   lire<Parameters<Ecoute["references"]>[0]>("references", ecoute.references)
   lire<Vestiaire>("vestiaire", ecoute.vestiaire)
+  lire<Bande & { oubliee?: boolean }>("bande", ecoute.bande)
   lire<EtatAgent>("agent", ecoute.agent)
 
   source.onopen = () => ecoute.liaison(true)
