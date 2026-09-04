@@ -11,6 +11,64 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A2 — le cadre qui ne dérive pas — 4 septembre 2026
+
+**Le commentaire du code disait l'inverse de ce que la ligne faisait.** Il affirmait que la case
+carrée *fait que deux images d'un même personnage se superposent au lieu de flotter*. La ligne
+juste en dessous calculait l'échelle sur la boîte de **l'image courante** — donc sur ce que
+*cette* image occupe, et rien d'autre. Le code connaissait la dérive horizontale : `E17` lui a
+donné un décalage à rattraper à la main. Il ne connaissait pas la dérive d'échelle, qui est la
+fatale — on peut recentrer un personnage à la main, on ne peut pas le redimensionner case par
+case.
+
+> ### ⚠️ Le pire cas n'est pas celui que la tranche annonçait
+>
+> Le plan disait *un bras tendu agrandit la boîte, donc réduit tout le personnage*. C'est vrai, et
+> **c'est le petit cas** : sur les quatre clips mesurés, un bras tendu coûte 1 à 5 %, parce que la
+> hauteur reste le côté long et que l'échelle se prend dessus.
+>
+> **Le gros cas est l'accroupi, et personne ne l'avait vu venir.** Un personnage qui s'accroupit a
+> une boîte plus *courte* ; l'échelle la ramène à la case, donc elle le **grossit**. Mesuré sur
+> `melange-lanterne-accroupi` : **17,2 % d'écart entre deux images du même clip**. C'est-à-dire un
+> personnage qui enfle d'un sixième en se baissant.
+>
+> *La dérive la plus violente vient de ce qui raccourcit le sujet, pas de ce qui l'élargit.*
+
+**La méthode de mesure a dû être corrigée avant la mesure.** Le chiffre du 3 septembre — *37 px de
+large au repos, 41 en marchant, il grandit de 10 %* — mesurait la **largeur du sprite rendu**. Or
+un personnage qui marche *est* plus large qu'un personnage au repos : ce chiffre-là mélangeait une
+différence de pose et une dérive de cadrage, et il n'était donc pas relisible. Ce qui se mesure
+maintenant est **le facteur appliqué** — le nombre par lequel chaque image est réduite. Il doit
+être constant dans un clip ; tout ce qui l'en écarte est de la dérive, et rien d'autre.
+`essais/mesures_fenetre_commune.json` porte les quatre clips.
+
+**La réparation tient en un argument facultatif, et c'est ce qui la rend sûre.** `sur_grille`
+accepte une `fenetre` ; sans elle, **rien ne change d'un cheveu** — une image déjà faite rend
+exactement les octets qu'elle rendait, et un essai le tient au byte près. Une correction de cadrage
+qui aurait retouché toutes les images du dépôt aurait été une régression, pas une réparation.
+
+**Le corollaire d'ordre a demandé une conversion qui n'était pas prévue.** Le nettoyage des taches
+doit précéder le calcul des boîtes — sinon une ombre isolée sous les pieds soulève le personnage,
+puisque l'ancrage pose le bas de la boîte sur le bas de la case. Mais `Bords.aire_min` compte des
+pixels **de la case du projet**, 64 carrés de côté, parce que le nettoyage s'y fait *après* la
+réduction. Appliqué tel quel à une image de 480 px, il n'écarte rien : une ombre de deux carrés y
+pèse quelques centaines de pixels. Le seuil se convertit donc par le carré du facteur de réduction
+— une surface se convertit au carré d'une longueur. Sur `melange-lanterne-accroupi`, **2 814 taches
+écartées** ; sur le moonwalk, 10.
+
+**Et l'assise commune se paie, ce qui n'était pas dit.** La fenêtre du clip doit contenir tous les
+extrêmes : le sujet sort à 56 px au lieu de 60 sur le clip le plus agité — 7 % de moins. C'est le
+prix d'une taille qui ne bouge jamais, et c'est exactement pourquoi `A10` garde deux autres cadres,
+la bande et la main.
+
+**Ce que la tranche n'a pas fait, volontairement.** Aucune route pour la fenêtre d'un clip :
+l'écran de montage dira ce qu'il lui faut, et bâtir la route avant l'écran serait bâtir la
+mauvaise. ⚠️ **Un chiffre pour celui qui la posera** : détourer et mesurer les 121 images d'un clip
+prend une vingtaine de secondes. Acceptable une fois, insupportable à chaque cran de curseur — la
+fenêtre devra se garder.
+
+---
+
 ## A6 — le mouvement, dit une fois pour toutes — 4 septembre 2026
 
 **La V3 s'ouvre, et par sa plus petite tranche.** *« On ne commande pas un clip sans nommer ce

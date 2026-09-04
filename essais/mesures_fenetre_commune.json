@@ -1,0 +1,290 @@
+{
+  "wan-3.0/clip1": {
+    "_recette": {
+      "cible": 64,
+      "occupation": 100,
+      "aire_min": 4,
+      "detourage": "bord, tolérance 28"
+    },
+    "images": 60,
+    "cadence": 30.0,
+    "hauteur_de_reference": 346.0,
+    "boites": {
+      "largeur": {
+        "min": 200,
+        "max": 215
+      },
+      "hauteur": {
+        "min": 344,
+        "max": 348
+      }
+    },
+    "chaque_image": {
+      "facteur_min": 0.1839080459770115,
+      "facteur_max": 0.18604651162790697,
+      "derive": 0.011627906976744207
+    },
+    "par_bande": {
+      "première moitié": {
+        "fenetre": {
+          "gauche": 154,
+          "sommet": 63,
+          "droite": 519,
+          "bas": 410,
+          "largeur": 366,
+          "hauteur": 348,
+          "images": 30,
+          "taches_ecartees": 6
+        },
+        "facteur": 0.17486338797814208,
+        "hauteur_rendue": 60.50273224043716
+      },
+      "seconde moitié": {
+        "fenetre": {
+          "gauche": 157,
+          "sommet": 62,
+          "droite": 521,
+          "bas": 410,
+          "largeur": 365,
+          "hauteur": 349,
+          "images": 30,
+          "taches_ecartees": 4
+        },
+        "facteur": 0.17534246575342466,
+        "hauteur_rendue": 60.66849315068493
+      }
+    },
+    "derive_entre_bandes": 0.00273972602739736,
+    "par_clip": {
+      "fenetre": {
+        "gauche": 154,
+        "sommet": 62,
+        "droite": 521,
+        "bas": 410,
+        "largeur": 368,
+        "hauteur": 349,
+        "images": 60,
+        "taches_ecartees": 10
+      },
+      "facteur": 0.17391304347826086,
+      "hauteur_rendue": 60.17391304347826,
+      "derive": 0.0
+    }
+  },
+  "melange-repos-marche/clip1": {
+    "_recette": {
+      "cible": 64,
+      "occupation": 100,
+      "aire_min": 4,
+      "detourage": "bord, tolérance 28"
+    },
+    "images": 121,
+    "cadence": 24.0,
+    "hauteur_de_reference": 380,
+    "boites": {
+      "largeur": {
+        "min": 162,
+        "max": 241
+      },
+      "hauteur": {
+        "min": 368,
+        "max": 388
+      }
+    },
+    "chaque_image": {
+      "facteur_min": 0.16494845360824742,
+      "facteur_max": 0.17391304347826086,
+      "derive": 0.05434782608695654
+    },
+    "par_bande": {
+      "première moitié": {
+        "fenetre": {
+          "gauche": 210,
+          "sommet": 127,
+          "droite": 457,
+          "bas": 508,
+          "largeur": 248,
+          "hauteur": 382,
+          "images": 60,
+          "taches_ecartees": 37
+        },
+        "facteur": 0.16753926701570682,
+        "hauteur_rendue": 63.66492146596859
+      },
+      "seconde moitié": {
+        "fenetre": {
+          "gauche": 203,
+          "sommet": 118,
+          "droite": 480,
+          "bas": 510,
+          "largeur": 278,
+          "hauteur": 393,
+          "images": 61,
+          "taches_ecartees": 25
+        },
+        "facteur": 0.1628498727735369,
+        "hauteur_rendue": 61.882951653944026
+      }
+    },
+    "derive_entre_bandes": 0.028795811518324665,
+    "par_clip": {
+      "fenetre": {
+        "gauche": 203,
+        "sommet": 118,
+        "droite": 480,
+        "bas": 510,
+        "largeur": 278,
+        "hauteur": 393,
+        "images": 121,
+        "taches_ecartees": 62
+      },
+      "facteur": 0.1628498727735369,
+      "hauteur_rendue": 61.882951653944026,
+      "derive": 0.0
+    }
+  },
+  "melange-lanterne-accroupi/clip1": {
+    "_recette": {
+      "cible": 64,
+      "occupation": 100,
+      "aire_min": 4,
+      "detourage": "bord, tolérance 28"
+    },
+    "images": 121,
+    "cadence": 24.0,
+    "hauteur_de_reference": 377,
+    "boites": {
+      "largeur": {
+        "min": 161,
+        "max": 373
+      },
+      "hauteur": {
+        "min": 309,
+        "max": 395
+      }
+    },
+    "chaque_image": {
+      "facteur_min": 0.1620253164556962,
+      "facteur_max": 0.18991097922848665,
+      "derive": 0.17210682492581597
+    },
+    "par_bande": {
+      "première moitié": {
+        "fenetre": {
+          "gauche": 105,
+          "sommet": 125,
+          "droite": 510,
+          "bas": 507,
+          "largeur": 406,
+          "hauteur": 383,
+          "images": 60,
+          "taches_ecartees": 901
+        },
+        "facteur": 0.15763546798029557,
+        "hauteur_rendue": 59.42857142857143
+      },
+      "seconde moitié": {
+        "fenetre": {
+          "gauche": 82,
+          "sommet": 125,
+          "droite": 455,
+          "bas": 523,
+          "largeur": 374,
+          "hauteur": 399,
+          "images": 61,
+          "taches_ecartees": 1913
+        },
+        "facteur": 0.16040100250626566,
+        "hauteur_rendue": 60.47117794486215
+      }
+    },
+    "derive_entre_bandes": 0.01754385964912264,
+    "par_clip": {
+      "fenetre": {
+        "gauche": 82,
+        "sommet": 125,
+        "droite": 510,
+        "bas": 523,
+        "largeur": 429,
+        "hauteur": 399,
+        "images": 121,
+        "taches_ecartees": 2814
+      },
+      "facteur": 0.14918414918414918,
+      "hauteur_rendue": 56.24242424242424,
+      "derive": 0.0
+    }
+  },
+  "seedance-2.0-mini/clip2": {
+    "_recette": {
+      "cible": 64,
+      "occupation": 100,
+      "aire_min": 4,
+      "detourage": "bord, tolérance 28"
+    },
+    "images": 97,
+    "cadence": 24.0,
+    "hauteur_de_reference": 367,
+    "boites": {
+      "largeur": {
+        "min": 195,
+        "max": 213
+      },
+      "hauteur": {
+        "min": 360,
+        "max": 371
+      }
+    },
+    "chaque_image": {
+      "facteur_min": 0.1725067385444744,
+      "facteur_max": 0.17777777777777778,
+      "derive": 0.030555555555555447
+    },
+    "par_bande": {
+      "première moitié": {
+        "fenetre": {
+          "gauche": 320,
+          "sommet": 61,
+          "droite": 537,
+          "bas": 431,
+          "largeur": 218,
+          "hauteur": 371,
+          "images": 48,
+          "taches_ecartees": 187
+        },
+        "facteur": 0.1725067385444744,
+        "hauteur_rendue": 63.309973045822105
+      },
+      "seconde moitié": {
+        "fenetre": {
+          "gauche": 320,
+          "sommet": 61,
+          "droite": 537,
+          "bas": 430,
+          "largeur": 218,
+          "hauteur": 370,
+          "images": 49,
+          "taches_ecartees": 266
+        },
+        "facteur": 0.17297297297297298,
+        "hauteur_rendue": 63.481081081081086
+      }
+    },
+    "derive_entre_bandes": 0.002702702702702675,
+    "par_clip": {
+      "fenetre": {
+        "gauche": 320,
+        "sommet": 61,
+        "droite": 537,
+        "bas": 431,
+        "largeur": 218,
+        "hauteur": 371,
+        "images": 97,
+        "taches_ecartees": 453
+      },
+      "facteur": 0.1725067385444744,
+      "hauteur_rendue": 63.309973045822105,
+      "derive": 0.0
+    }
+  }
+}

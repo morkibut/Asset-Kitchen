@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6` close le jour de l'ouverture, le serveur d'`A9` écrit et éprouvé | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6` et `A2` closes le jour de l'ouverture, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -2732,7 +2732,7 @@ qui n'est pas un cycle, qui est **ce qui permet de découper deux animations dan
 
 ---
 
-### A2 · Le cadre qui ne dérive pas
+### A2 · Le cadre qui ne dérive pas — ✅ **livrée le 4 septembre 2026**
 *2 US (376, 379)* · **une correction de cinq lignes, pas une fonctionnalité**
 
 **Ce qu'on livre.** Les images d'une bande cessent de se recadrer chacune sur sa propre boîte.
@@ -2780,16 +2780,63 @@ mouvement et juger le découpage sont deux métiers.**
 
 **Critères d'acceptation**
 
-- [ ] Toutes les images d'une bande partagent une fenêtre unique, calculée sur ce qu'elles occupent ensemble
-- [ ] **Sur un clip, cette fenêtre se prend sur les images du clip entier**, pas sur les seules images gardées — sinon deux bandes du même clip n'ont plus la même échelle, mesuré à 10 % le 3 septembre 2026
-- [ ] Deux images de tailles différentes ne produisent jamais deux sorties de tailles différentes
-- [ ] Le nettoyage des taches précède le calcul des boîtes
-- [ ] L'aperçu brut est monté sur les images du modèle : aucun détourage entre le clip et l'œil
-- [ ] Le commentaire fautif du code est corrigé en même temps que la ligne, faute de quoi la prochaine lecture le croira
-- [ ] Vérifié sur le clip que l'auteur décrit comme « il avance de gauche à droite puis repart en arrière en moonwalk »
-- [ ] Aucun invariant du traitement ne bouge : non destructif, sans carte graphique, sans appel au fournisseur
+- [x] Toutes les images d'une bande partagent une fenêtre unique, calculée sur ce qu'elles occupent ensemble
+- [x] **Sur un clip, cette fenêtre se prend sur les images du clip entier**, pas sur les seules images gardées — sinon deux bandes du même clip n'ont plus la même échelle, mesuré à 10 % le 3 septembre 2026
+- [x] Deux images de tailles différentes ne produisent jamais deux sorties de tailles différentes
+- [x] Le nettoyage des taches précède le calcul des boîtes
+- [x] L'aperçu brut est monté sur les images du modèle : aucun détourage entre le clip et l'œil
+- [x] Le commentaire fautif du code est corrigé en même temps que la ligne, faute de quoi la prochaine lecture le croira
+- [x] Vérifié sur le clip que l'auteur décrit comme « il avance de gauche à droite puis repart en arrière en moonwalk »
+- [x] Aucun invariant du traitement ne bouge : non destructif, sans carte graphique, sans appel au fournisseur
 
 **Bloquée par** — aucune. *Elle peut se faire en même temps qu'`A6`.*
+
+> ### ⚠️ Le chiffre de la tranche a été refait, et le défaut est plus gros que ce qu'on disait
+>
+> `essais/essai_fenetre_commune.py`, sur **quatre clips déjà payés, gratuitement** — relevé
+> versionné dans `essais/mesures_fenetre_commune.json`.
+>
+> **Ce qui se mesure n'est plus la taille du sprite rendu, et c'est la correction de méthode.**
+> Un personnage qui marche *est* plus large qu'un personnage au repos : mesurer sa largeur fait
+> passer une différence de pose pour une dérive de cadrage, et c'est ce que faisait le « 37 px
+> au repos, 41 en marchant » du 3 septembre. Ce qui se mesure ici est **le facteur appliqué** —
+> le nombre par lequel chaque image est réduite. Il doit être le même partout dans un clip ;
+> tout ce qui l'en écarte est de la dérive, et rien d'autre.
+>
+> | Le clip | Images | Dérive d'une image à l'autre | Dérive d'une bande à l'autre |
+> |---|---:|---:|---:|
+> | `wan-3.0` — le moonwalk | 60 | **1,2 %** | 0,3 % |
+> | `seedance-2.0-mini` — repos + marche | 97 | **3,1 %** | 0,3 % |
+> | `melange-repos-marche` | 121 | **5,4 %** | 2,9 % |
+> | `melange-lanterne-accroupi` | 121 | **17,2 %** | 1,8 % |
+>
+> **Le pire cas n'est pas le bras tendu, c'est l'accroupi** — et il n'était pas prévu. Un
+> personnage qui s'accroupit a une boîte **plus courte** ; l'échelle la ramène à la case, donc
+> elle le **grossit** de 17 %. Le bras tendu ne coûte que 1 à 5 %, parce que la hauteur reste le
+> côté long. *La dérive la plus violente vient de ce qui raccourcit le sujet, pas de ce qui
+> l'élargit.*
+>
+> **Et l'assise commune se paie, un peu.** La fenêtre du clip doit contenir tous les extrêmes :
+> sur `melange-lanterne-accroupi`, le sujet sort à 56 px au lieu de 60 — 7 % de moins. C'est le
+> prix d'une taille qui ne bouge jamais, et c'est exactement pourquoi `A10` garde deux autres
+> cadres, la bande et la main.
+
+**Ce que la tranche a livré.**
+
+| Ce qui est écrit | Où | Ce que ça tient |
+|---|---|---|
+| La fenêtre, en argument facultatif | `atelier/image/traitement.py` (`sur_grille`) | sans elle, **rien ne change d'un cheveu** — une image seule rend exactement ce qu'elle rendait |
+| La bande — plusieurs images, une fenêtre | `atelier/image/bande.py` | le seul endroit du traitement qui regarde plusieurs images à la fois |
+| Le préfixe de la chaîne, rendu public | `avant_la_grille` | la fenêtre vit dans **ces** coordonnées-là ; le recalculer ailleurs les ferait diverger |
+| Les essais | `tests/test_a2.py` | 13 essais, **aucun centime** |
+| Le banc | `essais/essai_fenetre_commune.py` | gratuit, sur des clips déjà payés |
+
+**Ce que la tranche ne fait pas, et ce n'est pas un oubli.** Il n'y a **aucune route** pour la
+fenêtre d'un clip : c'est l'écran de montage qui dira ce qu'il lui faut — le cadre du clip, celui
+de la bande, ou celui de la main —, et bâtir la route avant l'écran serait bâtir la mauvaise.
+`A10` la pose. ⚠️ **Et elle devra la garder** : mesuré ici, détourer et mesurer les 121 images
+d'un clip prend une vingtaine de secondes, ce qui est acceptable une fois et insupportable à
+chaque cran de curseur.
 
 ---
 

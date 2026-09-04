@@ -1661,7 +1661,13 @@ def _reduire(image: Image.Image, taille: tuple[int, int], methode: str) -> Image
     return Image.fromarray(np.dstack([couleurs, alpha]), mode="RGBA")
 
 
-def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
+def sur_grille(
+    rgba: np.ndarray,
+    grille: Grille,
+    *,
+    case: bool,
+    fenetre: tuple[int, int, int, int] | None = None,
+) -> np.ndarray:
     """Le sujet, ramené à la taille de bloc demandée.
 
     **La cible est demandée, jamais déduite de l'image reçue** (US-61). C'est
@@ -1672,8 +1678,7 @@ def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
     Deux formes de sortie, et `case` tranche :
 
     - **une case carrée** de `cible` côté, où le sujet est centré
-      horizontalement et posé selon `ancrage`. C'est la case qui fait que deux
-      frames d'un même personnage se superposent au lieu de flotter.
+      horizontalement et posé selon `ancrage`.
     - **une homothétie** : le côté long ramené à `cible`, les proportions
       gardées. Enfermer un décor 16:9 dans une case carrée ajouterait des bandes
       que personne n'a demandées.
@@ -1683,6 +1688,34 @@ def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
     transparent, et la déduction rendrait une case pour les uns et pas pour les
     autres selon qu'ils ont été recadrés. Elle se déduit de la *recette* — avoir
     demandé un détourage, c'est avoir dit que ce qu'on traite a une silhouette.
+
+    > ### ⚠️ La case ne suffit pas à superposer deux images, et le commentaire
+    > ### d'ici affirmait le contraire (corrigé en `A2`, 4 septembre 2026)
+    >
+    > Il disait : *c'est la case qui fait que deux frames d'un même personnage se
+    > superposent au lieu de flotter.* **C'est faux, et c'est la ligne du dessous
+    > qui le dément** : sans `fenetre`, l'échelle se calcule sur la boîte de
+    > **l'image courante**. Un bras tendu agrandit cette boîte, donc réduit tout
+    > le personnage — mesuré sur un clip : 37 px de large au repos, 41 en
+    > marchant, soit **10 % de plus en se mettant à marcher**.
+    >
+    > Le code connaissait la dérive *horizontale* — `decalage` la rattrape à la
+    > main depuis `E17` — mais **pas la dérive d'échelle**, qui est la fatale :
+    > on peut recentrer un personnage à la main, on ne peut pas le redimensionner
+    > case par case.
+
+    `fenetre` est la réparation, et c'est **une boîte commune à plusieurs
+    images**, dans les coordonnées de `rgba` — donc après le recadrage, tel que
+    `avant_la_grille` le rend. Passée, elle remplace la boîte de l'image
+    courante : le sujet est découpé dessus, mis à l'échelle dessus et centré
+    dessus. Toutes les images qui la partagent ressortent alors à la même
+    échelle et à la même place, quoi que chacune contienne. Comment elle se
+    calcule est dans `atelier/image/bande.py` ; **elle se prend sur le clip
+    entier, jamais sur la seule bande qu'on garde**, sans quoi deux bandes du
+    même clip n'ont plus la même assise.
+
+    Elle ne vaut que pour une case : sans case, la sortie est une homothétie de
+    l'image entière, et toutes les images d'un clip ont déjà la même taille.
     """
     cible = max(1, grille.cible)
     hauteur, largeur = rgba.shape[:2]
@@ -1693,7 +1726,7 @@ def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
         taille = (max(1, round(largeur * facteur)), max(1, round(hauteur * facteur)))
         return np.asarray(_reduire(image, taille, grille.methode))
 
-    boite = boite_opaque(rgba[:, :, 3])
+    boite = fenetre or boite_opaque(rgba[:, :, 3])
     if boite is None:
         return rgba  # le détourage a tout mangé : ça se voit, ça ne se répare pas ici
     x0, y0, x1, y1 = boite
@@ -1717,11 +1750,15 @@ def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
     toile = Image.new("RGBA", (cote, cote), (0, 0, 0, 0))
     # **Centré sur sa boîte, puis décalé — et jamais hors de la case** (E17). Le
     # centrage horizontal se fait sur la boîte du sujet ; un bras tendu déplace
-    # donc le corps sans que la taille ait bougé, et le décalage est ce qui
-    # rattrape cette dérive. Il est borné à ce qui reste de place : sortir de la
-    # case couperait le sprite en silence, et une case existe justement pour que
-    # rien n'en sorte. Aux bords, les boutons cessent d'avoir un effet — ce qui
-    # se voit, et c'est mieux qu'une image rognée.
+    # donc le corps, **et le réduit** — les deux à la fois, contrairement à ce
+    # que ce commentaire affirmait jusqu'en `A2` (« sans que la taille ait
+    # bougé »). Le décalage rattrape la première moitié à la main ; la seconde ne
+    # se rattrape pas ainsi, et c'est `fenetre` qui la ferme.
+    #
+    # Il est borné à ce qui reste de place : sortir de la case couperait le
+    # sprite en silence, et une case existe justement pour que rien n'en sorte.
+    # Aux bords, les boutons cessent d'avoir un effet — ce qui se voit, et c'est
+    # mieux qu'une image rognée.
     x = (cote - reduit.width) // 2
     if grille.decalage:
         x = max(0, min(cote - reduit.width, x + grille.decalage))
@@ -1934,14 +1971,37 @@ def sans_moteur(recette: Recette) -> list[str]:
     ]
 
 
-def finir(rgba: np.ndarray, recette: Recette) -> Rendu:
+def finir(
+    rgba: np.ndarray,
+    recette: Recette,
+    fenetre: tuple[int, int, int, int] | None = None,
+) -> Rendu:
     """Les places 2 à 7, puis le PNG et ses dimensions."""
-    fini = queue(rgba, recette)
+    fini = queue(rgba, recette, fenetre)
     hauteur, largeur = fini.shape[:2]
     return Rendu(octets=_en_png(fini), largeur=largeur, hauteur=hauteur)
 
 
-def queue(rgba: np.ndarray, recette: Recette) -> np.ndarray:
+def avant_la_grille(rgba: np.ndarray, recette: Recette) -> np.ndarray:
+    """L'image **telle que `sur_grille` la verra** : détourée, puis recadrée si
+    la recette le demande.
+
+    Publique depuis `A2`, et pour une raison précise : la fenêtre commune d'une
+    bande est une boîte **dans ces coordonnées-là**. Refaire ce préfixe ailleurs
+    ferait deux façons de le calculer, et deux façons de recadrer finiraient par
+    donner deux systèmes de coordonnées — la fenêtre tomberait alors à côté sans
+    que rien ne lève.
+    """
+    if recette.recadrage is not None and not recette.dort(RECADRAGE):
+        return _recadrer(rgba, recette.recadrage)
+    return rgba
+
+
+def queue(
+    rgba: np.ndarray,
+    recette: Recette,
+    fenetre: tuple[int, int, int, int] | None = None,
+) -> np.ndarray:
     """Les places 2 à 7, sur une image déjà détourée. Dans l'ordre, toujours.
 
     **Séparée de `finir` le 31 août 2026, et pour une raison qui n'est pas
@@ -1958,8 +2018,7 @@ def queue(rgba: np.ndarray, recette: Recette) -> np.ndarray:
     # promis en échange est mesuré par un essai : *une image traitée avec une
     # place en veille sort identique au pixel près à la même sans cette place du
     # tout.*
-    if recette.recadrage is not None and not recette.dort(RECADRAGE):
-        rgba = _recadrer(rgba, recette.recadrage)
+    rgba = avant_la_grille(rgba, recette)
 
     if recette.grille is not None and not recette.dort(GRILLE):
         # La case suit le détourage : avoir demandé une silhouette, c'est avoir
@@ -1978,7 +2037,10 @@ def queue(rgba: np.ndarray, recette: Recette) -> np.ndarray:
         # passes sont écrites » plutôt que « des passes agissent » aurait gardé
         # la case pendant qu'on masque la dernière.
         detoure = bool(recette.passes_vives())
-        rgba = sur_grille(rgba, recette.grille, case=detoure)
+        # **La fenêtre commune, quand une bande la fournit** (A2). Sans elle,
+        # rien ne change d'un cheveu : l'échelle et le centrage se reprennent sur
+        # la boîte de l'image, comme depuis T2.
+        rgba = sur_grille(rgba, recette.grille, case=detoure, fenetre=fenetre)
 
     if recette.quantification is not None and not recette.dort(QUANTIFICATION):
         rgba = quantifier(rgba, recette.quantification)
@@ -2007,15 +2069,22 @@ def queue(rgba: np.ndarray, recette: Recette) -> np.ndarray:
     return rgba
 
 
-def appliquer(recette: Recette, octets: bytes) -> Rendu:
+def appliquer(
+    recette: Recette,
+    octets: bytes,
+    fenetre: tuple[int, int, int, int] | None = None,
+) -> Rendu:
     """La recette, du début à la fin, dans l'ordre qui ne se négocie pas.
 
     Ne lève pas quand le détourage a tout mangé : elle rend l'image vide telle
     quelle. « Un détourage qui a mangé le sujet se voit immédiatement et se
     reprend avec d'autres réglages » (`docs/archive/plan-versions-tenues.md`, T2) — se voir suppose
     d'être rendu, pas d'être refusé.
+
+    `fenetre` n'est jamais posée par le traitement d'une image seule : elle vient
+    d'une **bande**, qui sait ce que ses images occupent ensemble (`A2`).
     """
-    return finir(detourer(recette, octets), recette)
+    return finir(detourer(recette, octets), recette, fenetre)
 
 
 # ── Le diagnostic ────────────────────────────────────────────────────────────

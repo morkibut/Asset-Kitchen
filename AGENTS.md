@@ -180,6 +180,15 @@ py essais/maquette_v3.py             les images de la maquette de la V3, refaite
                                      par `?fige` ou la barre d'espace : sans ça elle ne se
                                      laisse pas photographier (`docs/PIEGES.md`)
 py essais/essai_pixel.py             brut contre traité, sur les images déjà là, gratuit
+py essais/essai_fenetre_commune.py   la dérive de cadrage d'un clip à l'autre — A2. GRATUIT :
+                                     il lit un clip déjà payé et n'en commande aucun. Il ne
+                                     mesure **pas** la taille du sprite rendu — un personnage
+                                     qui marche est plus large qu'un personnage au repos, et
+                                     ce chiffre-là mélangerait la pose et le cadrage — mais
+                                     **le facteur appliqué**, qui doit être constant dans un
+                                     clip. `--clip <chemin>` pour un autre que le moonwalk.
+                                     Sortie : `essais/mesures_fenetre_commune.json`, qui
+                                     s'accumule par clip au lieu de s'écraser
 py essais/essai_superposition_cadre.py   ce que le découpage du coin gardait, et ce qu'il
                                      jetait — sur les pièces d'équipement du dépôt. GRATUIT,
                                      et **en lecture seule sur `donnees/`** : l'atelier de
