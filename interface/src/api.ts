@@ -915,6 +915,37 @@ export type ApercuDeBande = {
    *  au serveur**, parce que la même règle décide du rectangle qu'on tire et de
    *  la bande qui en sortira — la poser deux fois les ferait dériver. */
   ancrage?: string
+  /** Ce qui bouge entre les images alors que le sujet n'a pas bougé (`A5`).
+   *  Absent sur une bande d'une seule image : il n'y a aucune paire à comparer. */
+  stabilite?: Stabilite | null
+}
+
+/** Les trois chiffres d'`A5` — **et aucun n'est un seuil**. Le produit n'en tire
+ *  aucun refus et n'en grise rien : ils s'affichent à côté de l'aperçu, et c'est
+ *  l'auteur qui regarde son animation tourner en face du chiffre.
+ *
+ *  `part_des_allers_retours` est celui qui nomme le grésillement : *un pixel que
+ *  le sujet traverse s'allume une fois ; ce qui s'allume, s'éteint et se rallume
+ *  est revenu en arrière.* C'est celui qu'on montre.
+ *
+ *  ⚠️ `part_du_contour` **compte aussi le vrai mouvement**, et rien ici ne sait
+ *  distinguer un bord qui grésille d'un bras qui se lève : sur le banc d'`A5` il
+ *  ne bouge que de 6 % là où le premier baisse d'un tiers. Il voyage pour qui
+ *  compare deux réglages, mais **il ne s'affiche pas** — un chiffre à l'écran
+ *  qui ne sait pas répondre est pire qu'un chiffre absent.
+ *
+ *  `couleurs_d_une_image` est le plus propre des trois : une couleur qui ne dure
+ *  qu'un huitième de seconde n'est pas une nuance, c'est un scintillement. */
+export type Stabilite = {
+  images: number
+  contour: number
+  contour_mesure: number
+  part_du_contour: number
+  allers_retours: number
+  part_des_allers_retours: number
+  couleurs: number
+  couleurs_d_une_image: number
+  part_des_couleurs: number
 }
 
 /** Ce qu'un changement de réglage casserait, **avec les vrais chiffres**.

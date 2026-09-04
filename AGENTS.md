@@ -28,10 +28,10 @@ points.
 | **V2.2** — `F0` à `F6` | D'autres fournisseurs, dont un qui ne demande ni compte ni clé | **close à 5 sur 6** — reste `F4`, qui attend un compte Cloudflare que ce dépôt n'a pas |
 | **Reprises** — `R6` à `R9` | La planche de travers, le texte qui part en trois parties, la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** |
 | **V2.3** — `D1` à `D5` | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** |
-| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9`, `A10`, `A11`, `A12` et `A13` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. **`A12` est l'objectif de la version, et il est atteint** : la matrice d'un personnage se lit sur deux calques — images fixes, animations —, chacun avec sa jauge. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée sort en planche de sprites, avec le fichier d'accompagnement que les moteurs lisent et une image qui tourne toute seule. Restent `A5` et `A7`, et **aucune n'en bloque une autre** |
+| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9`, `A10`, `A11`, `A12` et `A13` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. **`A12` est l'objectif de la version, et il est atteint** : la matrice d'un personnage se lit sur deux calques — images fixes, animations —, chacun avec sa jauge. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée sort en planche de sprites, avec le fichier d'accompagnement que les moteurs lisent et une image qui tourne toute seule. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande, et l'écran dit ce qui bouge entre deux images — la première mesure du produit qui en regarde deux ensemble. Reste `A7`, et **rien ne la bloque** |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 402 essais de
-serveur et 693 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 420 essais de
+serveur et 698 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
 et **aucun ne coûte un centime**.
 
 ### Ce qu'il faut savoir avant de toucher au code — dix points, et pas un de plus
@@ -103,6 +103,17 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
    quelle recette, quel appel payé — va dans le descriptif maison, **à côté**. Et l'image animée
    est **découpée dans la planche exportée** : les deux fichiers ne peuvent pas diverger parce
    que l'un est fait de l'autre.
+8sexies. **Une mesure trop large ne dit pas « il n'y a rien » : elle dit « je ne sais pas
+   regarder ».** Payé sur `A5`, et c'est ce que la tranche a coûté de plus cher. Le plan écrivait
+   la mesure du contour qui bout en toutes lettres — *la part du bord qui change d'une image à
+   l'autre* —, et elle compte **le grésil et le vrai mouvement ensemble** : le mouvement pèse
+   tellement plus lourd qu'il l'enterre, et trois bancs de suite ont annoncé un gain nul sur une
+   correction qui marchait. ⚠️ **Le réflexe a été, chaque fois, de corriger le sujet d'essai
+   jusqu'à ce que le chiffre bouge.** La bonne mesure tenait dans une phrase : *un pixel que le
+   sujet traverse s'allume une fois et reste allumé ; un pixel qui s'allume, s'éteint et se
+   rallume est revenu sur ses pas.* Avant de fabriquer un banc, écrire **en une phrase et sans
+   chiffre ce que la mesure sépare de quoi** — et si le banc reste muet, suspecter la mesure
+   avant le sujet, et le sujet avant le code.
 
 8. **Une planche coûte le prix d'un appel, quel que soit ce qu'elle porte.** Mesuré le 31 août
    2026 sur trois appels payés : trois cases et six cases ont coûté exactement le même prix, et

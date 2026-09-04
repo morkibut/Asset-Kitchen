@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée devient une planche de sprites, son fichier d'accompagnement dans le format que les moteurs lisent, et une image qui tourne toute seule — jusque-là, une bande ne servait qu'à être regardée dans l'atelier. Les deux tranches qui restent — `A5`, `A7` — sont libres | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée devient une planche de sprites, son fichier d'accompagnement dans le format que les moteurs lisent, et une image qui tourne toute seule — jusque-là, une bande ne servait qu'à être regardée dans l'atelier. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande, et l'écran dit enfin ce qui bouge entre deux images — c'est la première mesure du produit qui regarde deux images ensemble. La tranche qui reste — `A7` — est libre | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -258,6 +258,7 @@ V3    A6  le mouvement, dit une fois pour toutes
        ├──► A4   la bande sort de l'atelier       ← la version devient livrable
        │         ← close le 4 septembre 2026
        ├──► A5   le contour qui ne bout pas       (D2 l'attendait, elle est close)
+       │         ← close le 4 septembre 2026
        └──► A7   reprendre une image sans refaire la bande
 
       A0  clos le 2 septembre 2026 — son verdict est plus haut
@@ -3556,8 +3557,8 @@ et ils sont accompagnés du descriptif de l'atelier, celui qui existe depuis `T6
 
 ---
 
-### A5 · Le contour qui ne bout pas
-*2 US (390, 391)*
+### A5 · Le contour qui ne bout pas — ✅ **livrée le 4 septembre 2026**
+*2 US (390, 391)* · **la tranche où la mesure a coûté plus cher que la correction**
 
 **Ce qu'on livre.** Le contour cesse de grésiller quand la bande tourne. Aujourd'hui la réduction
 sur la grille de pixels prend **un pixel par bloc** ; d'une image à l'autre ce tirage change
@@ -3574,18 +3575,57 @@ images ensemble.
 pixels de contour qui changent d'état alors que le sujet n'a pas bougé d'un pixel entier. C'est
 elle qui dit si la tranche a servi.
 
+> ⚠️ **Cette phrase-là était fausse, et c'est ce que la tranche a coûté de plus cher.** La mesure
+> qu'elle décrit compte *tout* ce qui change au bord — donc le vrai mouvement autant que le
+> grésil —, et le mouvement pèse tellement plus lourd qu'il l'enterre. Écrite ainsi, elle a rendu
+> **trois fois de suite un gain nul** sur une correction qui marchait. La bonne mesure est
+> ailleurs, et elle tient dans une phrase : *un pixel que le sujet traverse s'allume une fois et
+> reste allumé ; un pixel qui s'allume, s'éteint et se rallume est revenu sur ses pas.* Sur le même
+> banc, le même réglage fait **−6 % sur la mesure large et −33 % sur la juste**. Une mesure trop
+> large ne dit pas « il n'y a rien » : elle dit « je ne sais pas regarder ».
+
 **Ce qu'elle ne traite pas, et qui est ailleurs.** Le bord *juste* — le halo contre le sprite qui
 maigrit — est le sujet de `D4`, et il se règle sur une image seule. Ici il ne s'agit que de la
 **stabilité entre deux images**.
 
 **Critères d'acceptation**
 
-- [ ] La stabilité d'une bande se mesure, et le chiffre s'affiche à côté de l'aperçu
-- [ ] La réduction d'une bande décide la silhouette de la même façon sur toutes ses images
-- [ ] La palette d'une bande est calculée une fois pour la bande, jamais par image
-- [ ] Le contour retracé, s'il existe, l'est identiquement sur toutes les images
-- [ ] Comparé avant/après sur une bande du banc, avec le chiffre écrit
-- [ ] Aucun invariant du traitement ne bouge : non destructif, sans carte graphique, sans appel au fournisseur
+- [x] La stabilité d'une bande se mesure, et le chiffre s'affiche à côté de l'aperçu
+- [x] La réduction d'une bande décide la silhouette de la même façon sur toutes ses images
+- [x] La palette d'une bande est calculée une fois pour la bande, jamais par image
+- [x] Le contour retracé, s'il existe, l'est identiquement sur toutes les images
+- [x] Comparé avant/après sur une bande du banc, avec le chiffre écrit
+- [x] Aucun invariant du traitement ne bouge : non destructif, sans carte graphique, sans appel au fournisseur
+
+**Ce qui a été livré, le 4 septembre 2026.** Dix-huit essais côté atelier, cinq côté écran. Deux
+décisions qui étaient *de l'image* deviennent *de la bande*, et une mesure arrive avec elles.
+
+| Ce qui est arrivé | Où | Ce que ça tient |
+|---|---|---|
+| La mesure | `atelier/image/stabilite.py` | trois chiffres, et **un seul s'affiche**. Le module ne retouche rien, ne décide rien et **ne connaît pas la recette** : c'est ce qui permet de mesurer l'avant et l'après avec le même instrument, et un instrument qui connaîtrait le réglage qu'il juge ne serait plus un instrument |
+| La palette de la bande | `atelier/image/bande.py` § `_avec_la_palette_de_la_bande` | la coupe médiane se fait **une fois, sur les pixels opaques de toutes les images mises bout à bout**, puis s'impose à chacune. Elle ne se déclenche pas quand le jeu déclare déjà sa palette — il n'a jamais eu le défaut —, ni sur une image seule, qui ne peut scintiller contre personne |
+| La silhouette de la bande | `atelier/image/traitement.py` § `silhouette_stable` | la **silhouette** passe au vote de majorité, la **couleur** reste au plus proche voisin : seule la forme se calme, le parti pris de style ne bouge pas. ⚠️ Le drapeau ne se lève **que pour une bande**, et le signal est la fenêtre commune, qui *est* déjà la marque d'une bande — aucun réglage de plus à tenir |
+| Les deux fonctions réunies | même fichier, § `_rendre` | `monter` et `assembler` partageaient déjà tout et se recopiaient ; à la première décision *de bande*, elles auraient divergé, et l'auteur l'aurait découvert par l'écart entre son aperçu et son export |
+| L'*avant*, joué par le produit | `assembler(..., stabiliser=False)` | ⚠️ **deux appelants, le banc et un essai.** Un banc qui recopierait l'ancienne chaîne mesurerait sa propre copie, et il continuerait d'annoncer un gain longtemps après que le produit aurait changé |
+| Le banc | `essais/essai_stabilite_bande.py` | un sujet **rigide qui glisse**, pour que tout ce qui change au-delà du glissement soit du grésil et rien d'autre |
+| L'atelier jetable | `essais/atelier_jetable_a5.py` | il écrit **les deux images animées côte à côte** avant d'ouvrir : un défaut qui ne se voit qu'en mouvement ne se montre pas autrement |
+
+> ⚠️ **Trois bancs pour comprendre que le sujet d'essai décidait du résultat.** Le premier sujet
+> était un rectangle : rien mesuré. Le deuxième, une forme ronde à bord net : rien mesuré. Le
+> troisième, la même avec un bord adouci : rien mesuré non plus. La raison est de la géométrie
+> pure, et elle est jolie — *une droite qui passe par le centre d'un carré le coupe toujours en
+> deux moitiés égales*. Donc **partout où le bord est droit à l'échelle d'un bloc, « le pixel du
+> centre » et « la majorité du bloc » répondent exactement la même chose.** Les deux chaînes ne
+> peuvent différer que là où le bord n'est pas droit : les pointes, les traits fins, et les
+> irrégularités au pixel près. Un sujet tracé par une équation n'en a aucune ; un découpage réel en
+> est plein, parce que la compression vidéo laisse le long de chaque bord un écho de quelques
+> dizaines de niveaux, redessiné à chaque image. Le quatrième sujet porte cet écho, et il mesure.
+
+> ⚠️ **Sur le clip d'`A10`, la moitié « silhouette » de la tranche ne change rien**, et l'atelier
+> jetable l'imprime au lieu de le taire : ce clip est dessiné à la main, ses bords sont nets et
+> droits. Ce qui s'y voit très bien, en revanche, c'est la palette — quarante-quatre couleurs dont
+> neuf ne duraient qu'une image, contre quinze dont aucune. **Les deux moitiés de la tranche n'ont
+> pas la même portée, et il fallait le dire plutôt que d'annoncer un gain global.**
 
 **Bloquée par** — `A10` seule. *(`D2` était l'autre blocage — *une réduction stable suppose une
 grille juste* — et elle est close le 3 septembre 2026.)*

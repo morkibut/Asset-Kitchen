@@ -1,0 +1,32 @@
+{
+  "quand": "2026-09-04 21:29",
+  "images": 9,
+  "cible": 64,
+  "couleurs_demandees": 16,
+  "mesures": {
+    "avant": {
+      "images": 9,
+      "contour": 585,
+      "contour_mesure": 1982,
+      "part_du_contour": 0.2952,
+      "allers_retours": 115,
+      "part_des_allers_retours": 0.1966,
+      "couleurs": 90,
+      "couleurs_d_une_image": 84,
+      "part_des_couleurs": 0.9333,
+      "secondes": 0.03
+    },
+    "apres": {
+      "images": 9,
+      "contour": 531,
+      "contour_mesure": 1913,
+      "part_du_contour": 0.2776,
+      "allers_retours": 70,
+      "part_des_allers_retours": 0.1318,
+      "couleurs": 16,
+      "couleurs_d_une_image": 0,
+      "part_des_couleurs": 0.0,
+      "secondes": 0.08
+    }
+  }
+}

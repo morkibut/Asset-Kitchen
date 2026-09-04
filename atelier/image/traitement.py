@@ -1643,7 +1643,13 @@ def _par_pixeloe(rgb: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
 _REDUCTIONS = {VOTE: _par_vote, LANCZOS: _par_lanczos, PIXELOE: _par_pixeloe}
 
 
-def _reduire(image: Image.Image, taille: tuple[int, int], methode: str) -> Image.Image:
+def _reduire(
+    image: Image.Image,
+    taille: tuple[int, int],
+    methode: str,
+    *,
+    silhouette_stable: bool = False,
+) -> Image.Image:
     """L'image RGBA ramenée à `taille`, par la méthode demandée.
 
     **`proche` passe par le chemin d'avant, aux quatre canaux d'un coup.** Ce
@@ -1651,9 +1657,47 @@ def _reduire(image: Image.Image, taille: tuple[int, int], methode: str) -> Image
     rend exactement la même image qu'avant. Les trois autres séparent la couleur
     de l'alpha, parce qu'elles moyennent — et moyenner l'alpha rendrait des
     bords translucides que la chaîne prendrait ensuite pour du sujet.
+
+    > ### `silhouette_stable` — le contour cessait de tenir en place (A5)
+    >
+    > *Au plus proche* prend **un pixel par bloc** : celui qui tombe sur le
+    > centre. Sur une image seule c'est un parti pris de style, et il est juste.
+    > Sur une bande, ce seul pixel décide pour ses cinquante voisins et il le
+    > redécide à chaque image — donc **le moindre pixel accidenté du découpage
+    > devient un bloc entier qui clignote**. C'est le contour qui bout, et il ne
+    > se voit qu'en regardant l'animation tourner.
+    >
+    > Levé, ce drapeau fait décider la **silhouette** par le vote de majorité de
+    > `_alpha_reduit` — celui que les trois autres méthodes emploient déjà — et
+    > laisse la **couleur** au plus proche voisin. Il faut alors la moitié du
+    > bloc pour le faire basculer, et un pixel accidenté n'y pèse plus qu'un
+    > cinquantième.
+    >
+    > ⚠️ **Sur un bord droit, les deux répondent exactement la même chose**, et
+    > ce n'est pas une approximation : *une droite qui passe par le centre d'un
+    > carré le coupe toujours en deux moitiés égales*, donc « le pixel du
+    > centre » et « la majorité du bloc » basculent au même instant. Ce drapeau
+    > ne gagne donc rien là où le contour est lisse. Il gagne aux pointes, aux
+    > traits fins, et sur les irrégularités au pixel près que laisse tout
+    > découpage d'une image réelle — et c'est mesuré, pas supposé :
+    > `essais/essai_stabilite_bande.py`.
+    >
+    > ⚠️ **Il ne se lève que pour une bande**, et jamais pour une image seule :
+    > une recette nommée doit rendre exactement la même image qu'avant `A5`. Le
+    > signal est la fenêtre commune, qui *est* déjà la marque d'une bande
+    > (`traiter`, § `fenetre`) — il n'y a donc aucun réglage de plus à tenir.
     """
     if methode == AU_PLUS_PROCHE or methode not in _REDUCTIONS:
-        return image.resize(taille, Image.Resampling.NEAREST)
+        if not silhouette_stable:
+            return image.resize(taille, Image.Resampling.NEAREST)
+        rgba = np.asarray(image.convert("RGBA"))
+        couleurs = np.asarray(
+            Image.fromarray(np.ascontiguousarray(rgba[:, :, :3]), mode="RGB").resize(
+                taille, Image.Resampling.NEAREST
+            )
+        )
+        alpha = _alpha_reduit(np.ascontiguousarray(rgba[:, :, 3]), taille)
+        return Image.fromarray(np.dstack([couleurs, alpha]), mode="RGBA")
 
     rgba = np.asarray(image.convert("RGBA"))
     couleurs = _REDUCTIONS[methode](np.ascontiguousarray(rgba[:, :, :3]), taille)
@@ -1667,6 +1711,7 @@ def sur_grille(
     *,
     case: bool,
     fenetre: tuple[int, int, int, int] | None = None,
+    silhouette_stable: bool | None = None,
 ) -> np.ndarray:
     """Le sujet, ramené à la taille de bloc demandée.
 
@@ -1721,10 +1766,23 @@ def sur_grille(
     hauteur, largeur = rgba.shape[:2]
     image = Image.fromarray(rgba, mode="RGBA")
 
+    # **Une fenêtre veut dire « cette image est une d'un groupe »** (A5), et
+    # c'est le seul signal dont la réduction ait besoin pour cesser de tirer sa
+    # silhouette au sort image par image. Rien de nouveau n'est déclaré : la
+    # fenêtre porte déjà ce sens depuis `A2`, et une image seule n'en reçoit
+    # jamais.
+    #
+    # `silhouette_stable` posé à la main **n'a qu'un seul appelant, et c'est le
+    # banc** : mesurer ce qu'`A5` a gagné demande de pouvoir rejouer l'*avant*,
+    # et un banc qui recopierait la chaîne d'avant mesurerait sa propre copie.
+    stable = fenetre is not None if silhouette_stable is None else silhouette_stable
+
     if not case:
         facteur = cible / max(largeur, hauteur)
         taille = (max(1, round(largeur * facteur)), max(1, round(hauteur * facteur)))
-        return np.asarray(_reduire(image, taille, grille.methode))
+        return np.asarray(
+            _reduire(image, taille, grille.methode, silhouette_stable=stable)
+        )
 
     boite = fenetre or boite_opaque(rgba[:, :, 3])
     if boite is None:
@@ -1745,7 +1803,7 @@ def sur_grille(
         max(1, min(cote, round(sujet.width * facteur))),
         max(1, min(cote, round(sujet.height * facteur))),
     )
-    reduit = _reduire(sujet, taille, grille.methode)
+    reduit = _reduire(sujet, taille, grille.methode, silhouette_stable=stable)
 
     toile = Image.new("RGBA", (cote, cote), (0, 0, 0, 0))
     # **Centré sur sa boîte, puis décalé — et jamais hors de la case** (E17). Le
@@ -2001,6 +2059,8 @@ def queue(
     rgba: np.ndarray,
     recette: Recette,
     fenetre: tuple[int, int, int, int] | None = None,
+    *,
+    silhouette_stable: bool | None = None,
 ) -> np.ndarray:
     """Les places 2 à 7, sur une image déjà détourée. Dans l'ordre, toujours.
 
@@ -2040,7 +2100,13 @@ def queue(
         # **La fenêtre commune, quand une bande la fournit** (A2). Sans elle,
         # rien ne change d'un cheveu : l'échelle et le centrage se reprennent sur
         # la boîte de l'image, comme depuis T2.
-        rgba = sur_grille(rgba, recette.grille, case=detoure, fenetre=fenetre)
+        rgba = sur_grille(
+            rgba,
+            recette.grille,
+            case=detoure,
+            fenetre=fenetre,
+            silhouette_stable=silhouette_stable,
+        )
 
     if recette.quantification is not None and not recette.dort(QUANTIFICATION):
         rgba = quantifier(rgba, recette.quantification)

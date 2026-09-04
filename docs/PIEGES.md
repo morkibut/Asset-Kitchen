@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent cinquante-huit pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent soixante-quatre pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1392,3 +1392,30 @@ la prochaine réécriture retrouvera.
   d'autres, c'est-à-dire comparer le **jeu de clés exact**. Ce qui appartient à l'atelier — d'où
   vient l'animation, ce qui a été payé, quelle recette — se met **à côté**, dans le descriptif
   maison, jamais dedans. Payé le 4 septembre 2026.
+
+
+- **Une mesure trop large ne dit pas « il n'y a rien » : elle dit « je ne sais pas regarder ».**
+  Une correction du contour d'une animation devait se juger sur *la part du bord qui change d'une
+  image à l'autre*. Ce chiffre compte **le grésil et le vrai mouvement ensemble**, et le mouvement
+  pèse tellement plus lourd qu'il l'enterre : trois bancs de suite ont annoncé un gain nul sur une
+  correction qui marchait. ⚠️ **Le réflexe, chaque fois, a été de corriger le sujet d'essai jusqu'à
+  ce que le chiffre bouge** — et c'est le chiffre qu'il fallait corriger. La bonne mesure tenait
+  dans une phrase : *un pixel que le sujet traverse s'allume une fois et reste allumé ; un pixel
+  qui s'allume, s'éteint et se rallume est revenu sur ses pas.* Sur le même banc, le même réglage
+  fait −6 % sur la mesure large et −33 % sur la juste. La règle : **quand un banc dit trois fois
+  « aucun écart », on suspecte la mesure avant le sujet, et le sujet avant le code** — et on
+  s'oblige à écrire, en une phrase et sans chiffre, *ce que la mesure sépare de quoi*. Une mesure
+  qui ne sépare rien ne mesure rien. Payé le 4 septembre 2026.
+
+
+- **Une droite qui passe par le centre d'un carré le coupe toujours en deux moitiés égales.** Deux
+  façons de réduire une image qui semblent très différentes — prendre *le pixel du centre* d'un
+  bloc, ou prendre *la majorité* du bloc — donnent **exactement la même réponse** partout où le
+  bord est droit à l'échelle du bloc. Elles ne peuvent différer qu'aux pointes, aux traits fins, et
+  sur les irrégularités au pixel près. ⚠️ **Un sujet d'essai tracé par une équation n'en a aucune**,
+  donc il ne sépare jamais les deux — et l'on conclut que le réglage ne sert à rien. Un découpage
+  réel en est plein : la compression vidéo laisse le long de chaque bord un **écho** de quelques
+  dizaines de niveaux, redessiné à chaque image, qui fait entrer et sortir des pixels du découpage.
+  La règle : **avant de fabriquer un sujet d'essai, écrire ce que les deux chaînes font
+  différemment, et vérifier que le sujet contient ce cas-là.** Un rectangle propre est le pire
+  sujet possible pour juger d'une réduction. Payé le 4 septembre 2026.

@@ -63,6 +63,7 @@ import type {
   EtatDuMoteur,
   ImageDeDepart,
   ApercuDeBande,
+  Stabilite,
   Bande,
   Montage,
   FondPropose,
@@ -1153,6 +1154,19 @@ const APERCU_RENDU: ApercuDeBande = {
   sujet_largeur: 200,
   sujet_hauteur: 340,
   ancrage: "bas",
+  // Ce qui bouge entre les images (A5). Le chiffre qui compte est celui des
+  // allers-retours : sur tout ce qui bouge, ce qui est revenu en arrière.
+  stabilite: {
+    images: 8,
+    contour: 585,
+    contour_mesure: 1982,
+    part_du_contour: 0.295,
+    allers_retours: 117,
+    part_des_allers_retours: 0.2,
+    couleurs: 24,
+    couleurs_d_une_image: 3,
+    part_des_couleurs: 0.125,
+  },
 }
 
 function bandeRendue(nom: string, images: number[]): Bande {
@@ -1292,6 +1306,10 @@ function serveurDouble(options: {
   /** Ce que le moteur dit **après** le téléchargement. Sans lui le double rend
    *  le même état qu'avant, ce qui est ce qu'on veut la plupart du temps. */
   apresTelechargement?: EtatDuMoteur
+  /** Ce qui bouge entre les images de la bande montée (A5). Posé à `undefined`
+   *  explicitement, il écrit le cas d'une bande qui n'a rien à mesurer — une
+   *  seule image, donc aucune paire. */
+  stabilite?: Stabilite
   /** Ce que le serveur propose comme image de départ, et pourquoi celle-là. Le
    *  double le rend, comme le vrai serveur le déciderait sur la bibliothèque :
    *  la règle est **au serveur**, et le prouver demande qu'elle ne soit pas
@@ -1872,6 +1890,11 @@ function serveurDouble(options: {
         ...APERCU_RENDU,
         compte: ((corps?.images ?? []) as number[]).length,
         largeur: APERCU_RENDU.case_largeur * ((corps?.images ?? []) as number[]).length,
+        // La mesure d'`A5` se pose par essai : c'est un chiffre, et un chiffre
+        // se lit sur un cas précis. Le `undefined` explicite existe pour écrire
+        // le cas d'une bande qui n'en a pas.
+        stabilite:
+          "stabilite" in options ? options.stabilite : APERCU_RENDU.stabilite,
       })
     if (url.startsWith("/api/montage/") && url.endsWith("/frame"))
       return rendre({
@@ -21486,6 +21509,94 @@ describe("A10 — découper un clip en bandes", () => {
     // Le reste de l'écran, lui, se rejoint : le bouton qui garde est atteignable
     // dès la tabulation suivante.
     expect(panneau.getByRole("button", { name: /^Garder « / })).toBeTruthy()
+  })
+
+  // ── A5 : ce qui bouge entre les images ───────────────────────────────────
+  //
+  // **Ces essais vivent dans le montage et pas dans un bloc à eux**, parce que
+  // la mesure n'a pas d'écran : elle se pose à côté de l'aperçu qui tourne, et
+  // c'est cet aperçu-là qu'ils ouvrent. Ce qu'ils tiennent est **le chiffre qui
+  // paraît** — un seul des trois, et il a été choisi cher : voir
+  // `atelier/image/stabilite.py`.
+
+  test("le montage dit ce qui bouge entre les images, à côté de l'aperçu", async () => {
+    const { panneau } = await ouvrirLeMontage()
+
+    const mesure = await waitFor(() => {
+      const trouvee = document.querySelector("[data-stabilite]")
+      if (!trouvee) throw new Error("la mesure ne s'est pas affichée")
+      return trouvee as HTMLElement
+    })
+    expect(mesure.textContent).toContain("20 % revient sur ses pas")
+    expect(mesure.textContent).toContain("3 de ses 24 couleurs")
+    expect(panneau.getByText(/Ce qui bouge entre les images/)).toBeTruthy()
+  })
+
+  test("le chiffre du bord qui change ne s'affiche pas, lui", async () => {
+    // ⚠️ Il vaut 29,5 % dans le double, et il **mélange le grésil au vrai
+    // mouvement** : un bras qui se lève y pèse autant qu'un contour qui bout.
+    // Le mettre à l'écran ferait croire à une mesure du défaut. Cet essai est là
+    // pour que le rebrancher se voie.
+    await ouvrirLeMontage()
+
+    const mesure = await waitFor(() => {
+      const trouvee = document.querySelector("[data-stabilite]")
+      if (!trouvee) throw new Error("la mesure ne s'est pas affichée")
+      return trouvee as HTMLElement
+    })
+    expect(mesure.textContent).not.toContain("30 %")
+    expect(mesure.textContent).not.toContain("du bord change")
+  })
+
+  test("la phrase dit qu'un aller-retour peut être un balancement", async () => {
+    // Sur une marche, un bras qui balance revient vraiment sur ses pas. Le
+    // chiffre ne sait pas les distinguer, donc **la phrase le dit** plutôt que
+    // de laisser l'auteur croire à un verdict.
+    const { panneau } = await ouvrirLeMontage()
+
+    await waitFor(() => {
+      if (!document.querySelector("[data-stabilite]"))
+        throw new Error("la mesure ne s'est pas affichée")
+    })
+    expect(panneau.getByText(/un balancement — ou du grésil/)).toBeTruthy()
+    expect(panneau.getByText(/en comparant deux réglages/)).toBeTruthy()
+  })
+
+  test("une bande d'une seule image n'affiche aucun chiffre", async () => {
+    // Aucune paire à comparer : rien n'est écrit, plutôt qu'un zéro qui
+    // passerait pour une mesure.
+    const { panneau } = await ouvrirLeMontage({
+      stabilite: {
+        images: 1,
+        contour: 0,
+        contour_mesure: 0,
+        part_du_contour: 0,
+        allers_retours: 0,
+        part_des_allers_retours: 0,
+        couleurs: 12,
+        couleurs_d_une_image: 0,
+        part_des_couleurs: 0,
+      },
+    })
+
+    await waitFor(() => {
+      if (!document.querySelector("[data-case-de-la-planche]"))
+        throw new Error("l'aperçu ne s'est pas affiché")
+    })
+    expect(document.querySelector("[data-stabilite]")).toBeNull()
+    expect(panneau.queryByText(/Ce qui bouge entre les images/)).toBeNull()
+  })
+
+  test("une bande sans mesure du tout n'écrit rien non plus", async () => {
+    // Un serveur d'avant `A5` ne renvoie pas le champ. L'écran doit s'en passer
+    // sans rien casser, parce que l'auteur peut avoir un onglet resté ouvert.
+    await ouvrirLeMontage({ stabilite: undefined })
+
+    await waitFor(() => {
+      if (!document.querySelector("[data-case-de-la-planche]"))
+        throw new Error("l'aperçu ne s'est pas affiché")
+    })
+    expect(document.querySelector("[data-stabilite]")).toBeNull()
   })
 })
 

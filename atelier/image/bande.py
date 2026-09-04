@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """La bande — **plusieurs images traitées ensemble, sur une fenêtre commune**.
 
-Arrivée en A2 (V3). C'est le seul endroit du traitement qui regarde **plusieurs
-images à la fois**, et c'est ce qui le rend nécessaire : tout le reste de
-`atelier/image/` travaille sur une image et n'a aucune raison de savoir qu'il
-en existe d'autres.
+Arrivée en A2 (V3). C'est le **premier des trois** modules du traitement qui
+regardent **plusieurs images à la fois**, et c'est ce qui le rend nécessaire :
+tout le reste de `atelier/image/` travaille sur une image et n'a aucune raison
+de savoir qu'il en existe d'autres. Les deux autres sont venus après, et ils
+regardent autre chose — `rythme.py` ce que le clip *fait dans le temps* (A10),
+`stabilite.py` ce qui *bouge alors que le sujet n'a pas bougé* (A5).
 
 **Le défaut qu'elle ferme.** Sans elle, chaque image se recadre sur sa propre
 boîte : l'échelle et le centrage se calculent sur ce que *cette* image occupe.
@@ -46,14 +48,20 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-from atelier.domaine.recette import CENTRE, RECADRAGE, Recette, cote_du_sujet
+from atelier.domaine.recette import (
+    CENTRE,
+    QUANTIFICATION,
+    RECADRAGE,
+    Recette,
+    cote_du_sujet,
+)
+from atelier.image.stabilite import Stabilite, mesurer as mesurer_la_stabilite
 from atelier.image.traitement import (
     Rendu,
     avant_la_grille,
     boite_opaque,
     composantes,
     detourer,
-    finir,
     queue,
 )
 
@@ -175,16 +183,140 @@ def monter(
     une seule chaîne, un seul rendu. Deux façons de monter une bande finiraient
     par ne plus donner les mêmes pixels, et c'est l'auteur qui découvrirait
     l'écart à l'export.
+
+    ⚠️ **Elle et `assembler` partagent maintenant le même corps** (`A5`), et
+    c'était devenu nécessaire : la stabilité d'une bande se décide *pour la
+    bande*, et deux endroits qui la décideraient auraient fini par la décider
+    autrement. Elles ne se distinguent plus que par ce qu'elles rendent — des
+    fichiers d'un côté, une planche de l'autre.
     """
-    if fenetre is None or not a_recadre(recette):
-        cadre = fenetre.en_tuple() if fenetre else None
-        return [finir(image, recette, cadre) for image in preparees]
-    cadre = (0, 0, fenetre.largeur - 1, fenetre.hauteur - 1)
-    suite = _sans_recadrer(recette)
     return [
-        finir(poser_dans(image, fenetre, recette), suite, cadre)
+        Rendu(octets=en_png(image), largeur=image.shape[1], hauteur=image.shape[0])
+        for image in _rendre(list(preparees), recette, fenetre)
+    ]
+
+
+def _rendre(
+    preparees: Sequence[np.ndarray],
+    recette: Recette,
+    fenetre: Fenetre | None,
+    *,
+    stabiliser: bool = True,
+) -> list[np.ndarray]:
+    """La chaîne du jeu sur toutes les images d'une bande — **et une seule écriture**.
+
+    Trois décisions y vivent, et les trois sont *de la bande* et non *de l'image* :
+    d'où l'on découpe, avec quelle recette on finit, et **quelle palette**.
+
+    `stabiliser` à `False` rejoue la chaîne **d'avant `A5`** : silhouette tirée
+    au sort image par image, palette recalculée à chaque image. ⚠️ Elle n'a
+    qu'un appelant, et c'est le banc — mesurer ce que la tranche a gagné demande
+    un *avant*, et un banc qui recopierait l'ancienne chaîne mesurerait sa propre
+    copie plutôt que le produit.
+    """
+    pose = fenetre is not None and a_recadre(recette)
+    cadre = (
+        (0, 0, fenetre.largeur - 1, fenetre.hauteur - 1)
+        if pose and fenetre is not None
+        else (fenetre.en_tuple() if fenetre else None)
+    )
+    entrees = [
+        poser_dans(image, fenetre, recette) if pose and fenetre is not None else image
         for image in preparees
     ]
+    suite = _sans_recadrer(recette) if pose else recette
+    if stabiliser:
+        suite = _avec_la_palette_de_la_bande(entrees, suite, cadre)
+    return [
+        queue(image, suite, cadre, silhouette_stable=None if stabiliser else False)
+        for image in entrees
+    ]
+
+
+def _avec_la_palette_de_la_bande(
+    entrees: Sequence[np.ndarray],
+    recette: Recette,
+    cadre: tuple[int, int, int, int] | None,
+) -> Recette:
+    """La même recette, **sa palette décidée une fois pour toute la bande** (A5).
+
+    ⚠️ **Sans ça, la palette se recalcule à chaque image.** La coupe médiane est
+    déterministe — deux fois la même image donnent deux fois la même palette —,
+    mais deux images *différentes* d'un même mouvement n'ont pas le même
+    histogramme de couleurs, donc pas la même palette : un aplat de peau passe
+    d'un brun à son voisin d'une image à l'autre, et le personnage scintille sans
+    avoir bougé. Ça ne se voit pas sur une image, et ça ne se voit que sur une
+    animation qui tourne.
+
+    **Rien ne se passe dans trois cas, et le premier est le plus fréquent :**
+
+    1. le jeu déclare déjà sa palette — elle est alors imposée à tout ce qui
+       entre, la bande comprise, et le défaut n'existe pas ;
+    2. la recette ne réduit pas les couleurs, ou sa place dort ;
+    3. il n'y a qu'une image, qui ne peut scintiller contre personne.
+
+    **La palette se prend sur les images réduites, pas sur les originales**, et
+    c'est le seul ordre juste : la réduction fond des couleurs voisines, et une
+    palette choisie avant elle dépenserait ses places sur des nuances qui
+    n'existeront plus. C'est aussi ce qui coûte — la géométrie est jouée deux
+    fois — et c'est le prix assumé : une réduction est un redimensionnement,
+    quand le détourage qui la précède est déjà payé et gardé.
+
+    **Et seulement sur les pixels qu'on voit.** Sous un pixel transparent il
+    reste une couleur (`AGENTS.md`, point 5) ; lui donner une place de la palette
+    dépenserait une couleur du jeu pour quelque chose que personne ne regarde.
+    """
+    quantification = recette.quantification
+    if (
+        quantification is None
+        or quantification.palette
+        or recette.dort(QUANTIFICATION)
+        or len(entrees) < 2
+    ):
+        return recette
+
+    # La géométrie seule : ce que la quantification verra, et rien de ce qui
+    # vient après elle. Écrit en retirant des places plutôt qu'en rejouant la
+    # chaîne à la main — `queue` reste le seul endroit qui connaisse l'ordre.
+    geometrie = replace(
+        recette, quantification=None, bords=None, contours=None, main=None
+    )
+    reduites = [queue(image, geometrie, cadre) for image in entrees]
+    palette = _palette_mediane(reduites, quantification.couleurs)
+    if not palette:
+        return recette
+    return replace(
+        recette, quantification=replace(quantification, palette=palette)
+    )
+
+
+def _palette_mediane(
+    images: Sequence[np.ndarray], couleurs: int
+) -> tuple[str, ...]:
+    """La coupe médiane, jouée **une fois sur toutes les images ensemble**.
+
+    Le même algorithme que celui d'une image seule (`quantifier`), sur un autre
+    corpus : les pixels visibles de toutes les images, mis bout à bout. Rien
+    n'est inventé — c'est très exactement *la palette que la bande aurait eue si
+    elle avait été une seule image*.
+    """
+    from PIL import Image
+
+    visibles = [image[:, :, :3][image[:, :, 3] > 0] for image in images]
+    pixels = np.concatenate([v for v in visibles if v.size]) if visibles else None
+    if pixels is None or pixels.size == 0:
+        return ()
+
+    bande = Image.fromarray(
+        np.ascontiguousarray(pixels.reshape(1, -1, 3)), mode="RGB"
+    )
+    indexee = bande.quantize(
+        colors=max(2, min(256, couleurs)), method=Image.Quantize.MEDIANCUT
+    )
+    choisies = np.unique(
+        np.asarray(indexee.convert("RGB")).reshape(-1, 3), axis=0
+    )
+    return tuple(f"#{r:02x}{g:02x}{b:02x}" for r, g, b in choisies)
 
 
 def a_recadre(recette: Recette) -> bool:
@@ -281,6 +413,10 @@ class Planche:
     case_largeur: int
     case_hauteur: int
     compte: int
+    # **Ce qui bouge entre les images** (A5). Mesuré ici parce que c'est ici
+    # qu'on tient les images rendues, toutes ensemble et à la même taille —
+    # les redemander ailleurs ferait rejouer la chaîne pour rien.
+    stabilite: Stabilite | None = None
 
     @property
     def largeur(self) -> int:
@@ -293,11 +429,16 @@ class Planche:
             "compte": self.compte,
             "largeur": self.largeur,
             "hauteur": self.case_hauteur,
+            "stabilite": self.stabilite.en_json() if self.stabilite else None,
         }
 
 
 def assembler(
-    preparees: Sequence[np.ndarray], recette: Recette, fenetre: Fenetre | None
+    preparees: Sequence[np.ndarray],
+    recette: Recette,
+    fenetre: Fenetre | None,
+    *,
+    stabiliser: bool = True,
 ) -> Planche:
     """La planche de sprites de cette bande, dans l'ordre donné (A10).
 
@@ -313,18 +454,16 @@ def assembler(
     différer, et une planche à cases inégales n'est lisible par aucun moteur.
     Le bas plutôt que le milieu, parce que c'est l'ancrage du produit : un
     personnage se pose sur ses pieds.
+
+    **Elle partage son corps avec `monter` depuis `A5`** : ce qui se décide pour
+    la bande — la fenêtre, la recette de finition, la palette — se décide à un
+    seul endroit, et les deux fonctions ne se distinguent plus que par ce
+    qu'elles rendent.
+
+    `stabiliser` à `False` rejoue la chaîne d'avant `A5` — **le banc, et lui
+    seul** : il lui faut un *avant* à mesurer.
     """
-    pose = fenetre is not None and a_recadre(recette)
-    cadre = (
-        (0, 0, fenetre.largeur - 1, fenetre.hauteur - 1)
-        if pose
-        else (fenetre.en_tuple() if fenetre else None)
-    )
-    suite = _sans_recadrer(recette) if pose else recette
-    rendus = [
-        queue(poser_dans(image, fenetre, recette) if pose else image, suite, cadre)
-        for image in preparees
-    ]
+    rendus = _rendre(preparees, recette, fenetre, stabiliser=stabiliser)
     if not rendus:
         return Planche(octets=b"", case_largeur=0, case_hauteur=0, compte=0)
 
@@ -342,6 +481,10 @@ def assembler(
         case_largeur=largeur,
         case_hauteur=hauteur,
         compte=len(rendus),
+        # **Sur les images, pas sur la planche** (A5) : la mesure compare deux
+        # images voisines, et la planche les a déjà mises bout à bout — la
+        # frontière entre deux cases y passerait pour un bord de sujet.
+        stabilite=mesurer_la_stabilite(rendus),
     )
 
 

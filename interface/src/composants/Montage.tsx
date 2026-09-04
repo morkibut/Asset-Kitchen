@@ -43,6 +43,7 @@ import {
   type Mouvement,
   type PropositionDeRythme,
   type Recette,
+  type Stabilite,
 } from "../api"
 import { Bouton, Curseur, Libelle, Raison, Segments } from "./chassis"
 
@@ -458,6 +459,8 @@ export function EcranMontage({
           un au jugé.
         </p>
 
+        <CeQuiBouge stabilite={apercu?.stabilite ?? null} />
+
         <Pellicule
           clip={clip}
           contact={montage.contact}
@@ -794,6 +797,59 @@ export function EcranMontage({
 }
 
 // ── Les pièces de l'écran ───────────────────────────────────────────────────
+
+/** **Ce qui bouge entre les images alors que le sujet n'a pas bougé** (A5).
+ *
+ *  ⚠️ **Ni seuil, ni verdict, ni grisé.** Le produit ne refuse rien sur ces
+ *  chiffres-là : ils se posent à côté de l'aperçu qui tourne, et c'est l'auteur
+ *  qui regarde son animation en face du nombre. Un défaut fixe est un défaut ;
+ *  un défaut animé est un défaut qu'on regarde, et la seule chose que l'écran
+ *  puisse faire est de le mettre là où on le regarde.
+ *
+ *  Les deux ne se lisent pas de la même façon, et la phrase le dit :
+ *
+ *  - **le bord qui revient sur ses pas** est celui qui nomme le grésillement :
+ *    un pixel que le sujet traverse s'allume une fois et reste allumé. Ce qui
+ *    s'allume, s'éteint et se rallume est soit un vrai va-et-vient — un bras qui
+ *    balance —, soit du grésil ; c'est pour ça que la phrase dit les deux ;
+ *  - **les couleurs d'une seule image** ne mentent presque pas : une couleur qui
+ *    ne dure qu'un huitième de seconde n'est pas une nuance, c'est un
+ *    scintillement.
+ *
+ *  ⚠️ **Le troisième chiffre existe et ne s'affiche pas** — la part du bord qui
+ *  change d'une image à l'autre. Il mélange le grésil au mouvement, et le
+ *  mouvement l'écrase : sur le banc de la tranche, un réglage qui enlève un
+ *  tiers du grésil ne le fait bouger que de six pour cent. Il voyage dans
+ *  l'aperçu pour qui compare deux réglages, mais **un chiffre à l'écran qui ne
+ *  sait pas répondre est pire qu'un chiffre absent**. */
+function CeQuiBouge({ stabilite }: { stabilite: Stabilite | null }) {
+  // Une bande d'une seule image ne peut pas grésiller contre personne : rien
+  // n'est écrit plutôt qu'un zéro qui passerait pour une mesure.
+  if (!stabilite || stabilite.images < 2) return null
+  const revient = Math.round(stabilite.part_des_allers_retours * 100)
+  const seules = stabilite.couleurs_d_une_image
+  return (
+    <p
+      data-stabilite
+      className="mesure max-w-[70ch] text-[10px] leading-4 text-texte-3"
+    >
+      <b className="text-texte-2">Ce qui bouge entre les images</b> — sur tout ce
+      qui bouge, {revient} % revient sur ses pas
+      {stabilite.couleurs > 0 && (
+        <>
+          , et {seules === 0 ? "aucune" : seules} de ses {stabilite.couleurs}{" "}
+          couleur{stabilite.couleurs > 1 ? "s" : ""} n
+          {seules === 0 ? "'apparaît" : "'apparaissent"} que dans une seule image
+        </>
+      )}
+      . Revenir sur ses pas, c'est un balancement — ou du grésil : ce
+      premier-là se lit{" "}
+      <b className="text-texte-2">en comparant deux réglages</b> de la même
+      bande. Le second, non — une couleur qui ne dure qu'une image est un
+      scintillement.
+    </p>
+  )
+}
 
 function Boucle({
   titre,

@@ -11,6 +11,79 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A5 — le contour qui ne bout pas : la mesure a coûté plus cher que la correction — 4 septembre 2026
+
+**Deux décisions qui étaient *de l'image* deviennent *de la bande*** : la silhouette et la palette.
+Et une mesure arrive avec elles — la première du produit qui regarde **deux images ensemble**.
+
+### La leçon de la tranche n'est pas dans la correction, elle est dans la mesure
+
+La correction tenait en une page : décider la silhouette au vote de majorité plutôt qu'au tirage
+d'un pixel, et calculer la palette une fois pour la bande plutôt qu'à chaque image. Ce qui a pris
+la tranche entière, c'est de **savoir dire si ça avait servi**.
+
+Le plan écrivait la mesure en toutes lettres, et elle était fausse : *compter les pixels de contour
+qui changent d'état d'une image à l'autre*. Ça compte **le vrai mouvement autant que le grésil**,
+et le mouvement pèse tellement plus lourd qu'il l'enterre. Trois bancs de suite ont rendu un gain
+nul sur une correction qui marchait.
+
+La bonne mesure tient dans une phrase : **un pixel que le sujet traverse s'allume une fois et reste
+allumé ; un pixel qui s'allume, s'éteint et se rallume est revenu sur ses pas.** Sur le même banc,
+le même réglage fait **−6 % sur la mesure large et −33 % sur la juste**.
+
+> ⚠️ **Une mesure trop large ne dit pas « il n'y a rien ». Elle dit « je ne sais pas regarder ».**
+> C'est la phrase à retenir de cette tranche, et elle vaut bien au-delà d'elle : trois fois de
+> suite, le réflexe a été de corriger le *sujet d'essai* jusqu'à ce que le chiffre bouge. C'est le
+> chiffre qu'il fallait corriger.
+
+### Une droite qui passe par le centre d'un carré le coupe en deux moitiés égales
+
+C'est de la géométrie de collège, et c'est ce qui explique les bancs muets. Réduire une image en
+prenant **le pixel du centre d'un bloc** et la réduire en prenant **la majorité du bloc** donnent
+exactement la même réponse partout où le bord est droit à l'échelle du bloc — puisque la droite qui
+passe par le centre le partage en deux.
+
+Les deux chaînes ne peuvent donc différer que là où le bord **n'est pas droit** : les pointes, les
+traits fins, et surtout les irrégularités au pixel près. Un sujet tracé par une équation n'en a
+aucune. Un découpage réel en est plein, parce que la compression vidéo laisse le long de chaque
+bord un **écho** de quelques dizaines de niveaux, redessiné à chaque image — et c'est cet écho qui
+fait entrer et sortir des pixels du découpage. Le quatrième sujet du banc le porte, et il mesure.
+
+### Les deux moitiés de la tranche n'ont pas la même portée, et il fallait le dire
+
+Sur le clip d'`A10` — dessiné à la main, bords nets et droits —, la moitié « silhouette » ne change
+**rien du tout** : neuf cent vingt-cinq allers-retours des deux côtés. L'atelier jetable l'imprime
+au lieu de le taire. Ce qui s'y voit très bien, en revanche, c'est la palette : quarante-quatre
+couleurs dont neuf ne duraient qu'une image, contre quinze dont aucune — et les deux images animées
+ne pèsent même pas le même poids.
+
+Annoncer un gain global aurait été plus flatteur et faux. **La silhouette gagne sur les images de
+modèle vidéo ; la palette gagne partout.**
+
+### Trois chiffres calculés, un seul affiché
+
+L'écran ne montre que celui des allers-retours et celui des couleurs. Celui du bord qui change
+voyage dans l'aperçu — il sert à qui compare deux réglages — mais **il ne s'affiche pas**, et un
+essai d'écran est là pour que le rebrancher se voie. *Un chiffre à l'écran qui ne sait pas répondre
+est pire qu'un chiffre absent.*
+
+Aucun des trois n'est un seuil : le produit n'en tire aucun refus et n'en grise rien. Et la phrase
+dit à l'auteur ce que le chiffre ne sait pas — revenir sur ses pas, sur une marche, **c'est
+peut-être simplement un bras qui balance**.
+
+### Ce que la tranche a réuni au passage
+
+`monter` et `assembler` faisaient la même chose par deux chemins. Tant qu'aucune décision n'était
+*de la bande*, ça tenait ; à la première — la palette —, les deux auraient divergé, et l'auteur
+l'aurait découvert par l'écart entre son aperçu et son export. Elles partagent maintenant `_rendre`,
+et ne se distinguent plus que par ce qu'elles rendent.
+
+L'*avant* que le banc mesure est **joué par le produit lui-même**, par un drapeau que seuls le banc
+et un essai posent. Un banc qui recopierait l'ancienne chaîne mesurerait sa propre copie, et il
+continuerait d'annoncer un gain longtemps après que le produit aurait changé.
+
+---
+
 ## A4 — la bande sort de l'atelier : la version devient livrable — 4 septembre 2026
 
 **Une animation gardée devient trois fichiers** : une planche de sprites, le fichier

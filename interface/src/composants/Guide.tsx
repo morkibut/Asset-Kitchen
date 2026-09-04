@@ -497,6 +497,22 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               fichier à part : on n'ajoute rien dans le format des autres.
             </P>
             <P>
+              <B>Sous l'aperçu qui tourne, une phrase dit ce qui bouge entre les images.</B> Deux
+              choses y sont comptées. La part de ce qui bouge <B>qui revient sur ses pas</B> :
+              un point que le personnage traverse s'allume une fois et reste allumé, alors qu'un
+              point qui s'allume, s'éteint et se rallume est revenu en arrière. Et le nombre de
+              couleurs <B>qui n'apparaissent que dans une seule image</B>.
+            </P>
+            <P>
+              Le premier ne tranche pas tout seul : sur une marche, un bras qui balance revient
+              vraiment sur ses pas, et c'est du mouvement, pas un défaut. Il se lit <B>en comparant
+              deux réglages de la même animation</B> — change la taille du pixel ou le nombre de
+              couleurs, et regarde le chiffre. Le second est plus net : une couleur qui ne dure
+              qu'un huitième de seconde n'est pas une nuance, c'est un scintillement. Aucun des
+              deux ne bloque quoi que ce soit — ils sont là pour que tu regardes ton animation
+              tourner en face du chiffre.
+            </P>
+            <P>
               La découpe, elle, n'est plus un lieu : c'est une table parmi les autres, sur la
               barre des tables d'une image, à droite du trait — la première des deux fabriques.
               Les tables ne se visitent pas non plus : elles s'ouvrent sur une image, et ce
