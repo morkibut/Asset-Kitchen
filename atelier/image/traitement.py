@@ -75,6 +75,7 @@ from atelier.domaine.recette import (
     Recadrage,
     Recette,
     Trait,
+    parts_de,
     cote_du_canevas,
     cote_du_sujet,
 )
@@ -1817,10 +1818,16 @@ def sur_grille(
     # sprite en silence, et une case existe justement pour que rien n'en sorte.
     # Aux bords, les boutons cessent d'avoir un effet — ce qui se voit, et c'est
     # mieux qu'une image rognée.
-    x = (cote - reduit.width) // 2
+    #
+    # **Les deux parts viennent de la table des neuf ancrages** (A7), et pas
+    # d'une condition écrite ici : deux endroits posent une image, et deux
+    # lectures différentes de « bas » finiraient par ne plus poser au même
+    # pixel. `bas` et `centre` y valent exactement ce qu'ils valaient avant.
+    part_verticale, part_horizontale = parts_de(grille.ancrage)
+    x = round((cote - reduit.width) * part_horizontale)
     if grille.decalage:
         x = max(0, min(cote - reduit.width, x + grille.decalage))
-    y = cote - reduit.height if grille.ancrage == BAS else (cote - reduit.height) // 2
+    y = round((cote - reduit.height) * part_verticale)
     toile.paste(reduit, (x, y))
     return np.asarray(toile)
 

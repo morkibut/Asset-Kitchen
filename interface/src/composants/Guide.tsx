@@ -513,6 +513,34 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               tourner en face du chiffre.
             </P>
             <P>
+              <B>Une animation gardée se rouvre, et c'est là qu'on la corrige.</B> Dans le codex,
+              sur la ligne d'une pose, clique <B>la vignette</B> de l'animation : son atelier
+              s'ouvre avec les réglages que tu y avais mis — pas ceux du jeu. Son <I>nom</I>, sous
+              la vignette, fait autre chose : il remonte au clip qui l'a fournie. Deux portes, et
+              elles ne mènent pas au même endroit.
+            </P>
+            <P>
+              Là, une image se corrige toute seule. Les flèches la déplacent d'un point, Maj de
+              cinq, et la souris la fait glisser. <B>Aux bords, les flèches cessent d'avoir un
+              effet</B> plutôt que de rogner l'image : une correction qui mangerait un bras ne se
+              verrait pas ici, elle se verrait dans ton jeu. Le curseur sous l'image montre{" "}
+              <B>l'image d'avant en transparence</B> dessous — c'est ce qui permet de juger un
+              déplacement au lieu de le deviner.
+            </P>
+            <P>
+              On peut aussi <B>remplacer une image par une autre</B>, du même clip ou d'un autre
+              clip du même personnage : le clip est déjà payé, en reprendre une image ne coûte
+              rien. C'est ce qu'on fait quand deux clips sont chacun bons à moitié. L'animation
+              dit alors de quel clip vient chacune de ses images.
+            </P>
+            <P>
+              <B>Rien n'est écrit tant que tu n'as pas enregistré</B>, et <I>Annuler</I> ramène
+              exactement ce qu'il y avait à l'ouverture. Une seule exception, et elle est dite à
+              l'écran : <I>Reprendre la fenêtre</I>. Elle remesure toutes les images, prend une
+              vingtaine de secondes, et écrit tout de suite — c'est pourquoi elle est fermée tant
+              que des corrections attendent.
+            </P>
+            <P>
               La découpe, elle, n'est plus un lieu : c'est une table parmi les autres, sur la
               barre des tables d'une image, à droite du trait — la première des deux fabriques.
               Les tables ne se visitent pas non plus : elles s'ouvrent sur une image, et ce

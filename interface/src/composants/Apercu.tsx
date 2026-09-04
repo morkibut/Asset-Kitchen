@@ -190,8 +190,12 @@ export function BandeQuiTourne({
 
 /** À quelle image du cycle on en est. **La même règle que l'écran de montage**,
  *  et elle y est écrite aussi parce que les deux écrans ne partagent rien
- *  d'autre — ⚠️ si elle change, elle change aux deux endroits. */
-function rangDeLaBande(pas: number, compte: number, sens: string): number {
+ *  d'autre — ⚠️ si elle change, elle change aux deux endroits.
+ *
+ *  Exportée depuis `A7`, où un troisième écran en a eu besoin : trois copies
+ *  d'une règle de cycle, c'est une de trop pour espérer qu'elles restent
+ *  d'accord. Le montage garde la sienne le temps qu'on l'y branche. */
+export function rangDeLaBande(pas: number, compte: number, sens: string): number {
   if (compte <= 1) return 0
   if (sens !== "aller-retour") return pas % compte
   const cycle = (compte - 1) * 2

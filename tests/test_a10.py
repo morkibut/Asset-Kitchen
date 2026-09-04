@@ -30,7 +30,7 @@ import io
 import numpy as np
 import pytest
 
-from atelier.domaine.bande import ALLER_RETOUR, BOUCLE, Bande, Cadre
+from atelier.domaine.bande import ALLER_RETOUR, BOUCLE, Bande, Cadre, Prise
 from atelier.domaine.recette import Grille, Passe, Recette
 from atelier.image import clip as decodeur
 from atelier.image.rythme import empreintes, lire as lire_le_rythme
@@ -862,7 +862,7 @@ def test_une_bande_relue_du_json_rend_le_meme_json():
         identifiant="b1",
         clip="c1",
         nom="marche",
-        images=(3, 1, 4),
+        prises=tuple(Prise(numero=n) for n in (3, 1, 4)),
         cadence=11.0,
         sens=BOUCLE,
         cadre=Cadre(choix="main", gauche=2, sommet=3, droite=40, bas=60),

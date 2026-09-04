@@ -143,6 +143,72 @@ class Cadre:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class Prise:
+    """Une image retenue : **d'où elle vient, et de combien on l'a poussée** (A7).
+
+    Jusqu'à `A7`, une bande ne retenait que des **numéros**. Ça suffisait tant
+    que toutes ses images venaient du même clip et qu'aucune ne se corrigeait —
+    et les deux hypothèses tombent en même temps ici : on va chercher une image
+    dans un autre clip, et on pousse au pixel celle qui tombe à côté.
+
+    `clip` vide veut dire **le clip de la bande**, et ce n'est pas une
+    commodité : c'est ce qui fait qu'une bande d'`A10` se relit sans être
+    réécrite, et qu'une bande qui n'a jamais quitté son clip ne répète pas cent
+    fois le même identifiant. La question *de quel clip vient cette image* a
+    donc toujours une réponse — `clip_ou`, plus bas — sans qu'on ait eu à
+    migrer quoi que ce soit.
+
+    `dx` et `dy` sont **en pixels de l'image rendue**, comme l'épaisseur d'un
+    contour : une fois la grille posée, un pixel d'image *est* un bloc du
+    sprite. Pousser d'un bloc est le geste qu'on veut, et l'écrire en pixels de
+    la vidéo d'origine ferait dépendre la correction de la taille du clip.
+
+    ⚠️ **Elle ne porte aucun pixel**, et la règle 5 de l'architecture tient sans
+    exception : une prise est une intention de plus, la planche reste un cache
+    qu'on peut effacer.
+    """
+
+    numero: int
+    clip: str = ""
+    dx: int = 0
+    dy: int = 0
+
+    @property
+    def poussee(self) -> bool:
+        """A-t-elle été corrigée ? Ce qui n'a pas bougé ne s'annonce pas."""
+        return self.dx != 0 or self.dy != 0
+
+    def clip_ou(self, defaut: str) -> str:
+        """Le clip dont elle vient — celui de la bande si elle n'en nomme aucun."""
+        return self.clip or defaut
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "numero": self.numero,
+            "clip": self.clip,
+            "dx": self.dx,
+            "dy": self.dy,
+        }
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any] | int | float) -> "Prise":
+        """Une prise, **ou un simple numéro** — c'est ce qui relit les bandes d'A10.
+
+        Les bandes déjà gardées écrivent une liste d'entiers. Les relire comme
+        des prises sans clip ni poussée est exactement ce qu'elles voulaient
+        dire, et ça évite de réécrire une table pour ajouter deux zéros.
+        """
+        if isinstance(d, (int, float)):
+            return Prise(numero=int(d))
+        return Prise(
+            numero=int(d.get("numero", 0)),
+            clip=str(d.get("clip") or ""),
+            dx=int(d.get("dx", 0)),
+            dy=int(d.get("dy", 0)),
+        )
+
+
 @dataclass(slots=True)
 class Bande:
     """Une animation gardée : d'où elle vient, ce qu'elle retient, comment elle tourne.
@@ -157,10 +223,15 @@ class Bande:
     clip: str  # la génération dont elle est tirée
     nom: str = ""
 
-    # Les numéros d'image du clip, **dans l'ordre où ils se jouent**. Rien
-    # n'oblige à ce qu'ils soient régulièrement espacés : un pas de marche
-    # demande deux images serrées au contact et une seule pendant la glisse.
-    images: tuple[int, ...] = ()
+    # Les images retenues, **dans l'ordre où elles se jouent**. Rien n'oblige à
+    # ce qu'elles soient régulièrement espacées : un pas de marche demande deux
+    # images serrées au contact et une seule pendant la glisse.
+    #
+    # **C'était une liste de numéros jusqu'à `A7`**, et c'est devenu une liste
+    # de prises — chacune sachant de quel clip elle vient et de combien elle a
+    # été poussée. `images` reste lisible juste en dessous : tout ce qui ne veut
+    # que les numéros continue de les demander comme avant.
+    prises: tuple[Prise, ...] = ()
 
     cadence: float = CADENCE_PAR_DEFAUT
     sens: str = BOUCLE
@@ -193,8 +264,39 @@ class Bande:
         return not (self.personnage and self.pose)
 
     @property
+    def images(self) -> tuple[int, ...]:
+        """Les numéros seuls, dans l'ordre — ce que la bande retenait avant `A7`.
+
+        Gardé lisible parce que la moitié du produit ne veut que ça : compter
+        les images, les redemander au disque, les écrire dans un descriptif. En
+        faire une lecture plutôt qu'un second champ est ce qui empêche les deux
+        de se contredire.
+        """
+        return tuple(prise.numero for prise in self.prises)
+
+    @property
+    def clips(self) -> tuple[str, ...]:
+        """Les clips dont la bande tire ses images, **dans l'ordre d'apparition**.
+
+        Un seul, presque toujours. Plusieurs depuis `A7`, quand deux clips sont
+        chacun bons à moitié — et l'écran le dit alors image par image, comme
+        une image dit de quel clip elle vient.
+        """
+        vus: list[str] = []
+        for prise in self.prises:
+            venue = prise.clip_ou(self.clip)
+            if venue and venue not in vus:
+                vus.append(venue)
+        return tuple(vus)
+
+    @property
+    def melangee(self) -> bool:
+        """Ses images viennent-elles de plusieurs clips ?"""
+        return len(self.clips) > 1
+
+    @property
     def compte(self) -> int:
-        return len(self.images)
+        return len(self.prises)
 
     @property
     def secondes(self) -> float:
@@ -226,7 +328,14 @@ class Bande:
             "identifiant": self.identifiant,
             "clip": self.clip,
             "nom": self.nom,
+            # **Les deux, et ce n'est pas une redite.** `images` est ce que
+            # lisent l'export, la matrice et tout ce qui ne veut que compter ;
+            # `prises` est ce que l'écran de montage corrige. La première se
+            # calcule à partir de la seconde, donc elles ne peuvent pas diverger.
             "images": list(self.images),
+            "prises": [prise.en_json() for prise in self.prises],
+            "clips": list(self.clips),
+            "melangee": self.melangee,
             "cadence": self.cadence,
             "sens": self.sens,
             "cadre": self.cadre.en_json(),
@@ -251,7 +360,13 @@ class Bande:
             identifiant=str(d["identifiant"]),
             clip=str(d.get("clip") or ""),
             nom=str(d.get("nom") or ""),
-            images=tuple(int(n) for n in d.get("images") or ()),
+            # **`prises` d'abord, `images` à défaut.** Une bande gardée avant
+            # `A7` n'écrit que la seconde, et la relire ainsi est exactement ce
+            # qu'elle voulait dire — aucune migration, aucune table réécrite.
+            prises=tuple(
+                Prise.depuis_json(p)
+                for p in (d.get("prises") or d.get("images") or ())
+            ),
             cadence=float(d.get("cadence") or CADENCE_PAR_DEFAUT),
             sens=sens if sens in SENS else BOUCLE,
             cadre=Cadre.depuis_json(d.get("cadre")),

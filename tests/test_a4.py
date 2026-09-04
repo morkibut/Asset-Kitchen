@@ -40,7 +40,7 @@ import zipfile
 import numpy as np
 import pytest
 
-from atelier.domaine.bande import ALLER_RETOUR, BOUCLE, Bande, Cadre
+from atelier.domaine.bande import ALLER_RETOUR, BOUCLE, Bande, Cadre, Prise
 from atelier.image import clip as decodeur
 from atelier.image.bande import en_png
 
@@ -109,7 +109,7 @@ def _bande(
         identifiant=identifiant,
         clip=clip,
         nom=nom,
-        images=tuple(range(cases)),
+        prises=tuple(Prise(numero=n) for n in range(cases)),
         cadence=cadence,
         sens=sens,
         cadre=Cadre(gauche=0, sommet=0, droite=LARGEUR - 1, bas=HAUTEUR - 1),

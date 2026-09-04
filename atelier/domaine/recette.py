@@ -588,9 +588,48 @@ class Recadrage:
 # Où le sujet se pose dans sa case quand il ne la remplit pas dans les deux sens.
 # Le bas par défaut : un personnage se tient debout sur le bord bas de sa case,
 # et deux frames posées au centre flotteraient l'une par rapport à l'autre.
+#
+# **Neuf points depuis `A7`, et les deux anciens n'ont pas changé de sens.** Le
+# produit n'en connaissait que deux, et ils suffisaient tant que l'ancrage
+# n'était qu'un réglage de recette. Une animation en demande plus : un
+# personnage tient au sol par ses pieds, mais une bannière tient par son
+# **haut**, une porte par son **côté**. Les deux anciens noms sont gardés tels
+# quels — `bas` et `centre` —, donc aucune recette déjà écrite ne change de
+# rendu.
 BAS = "bas"
 CENTRE = "centre"
-ANCRAGES = (BAS, CENTRE)
+HAUT = "haut"
+GAUCHE = "gauche"
+DROITE = "droite"
+HAUT_GAUCHE = "haut-gauche"
+HAUT_DROITE = "haut-droite"
+BAS_GAUCHE = "bas-gauche"
+BAS_DROITE = "bas-droite"
+ANCRAGES = (
+    HAUT_GAUCHE, HAUT, HAUT_DROITE,
+    GAUCHE, CENTRE, DROITE,
+    BAS_GAUCHE, BAS, BAS_DROITE,
+)
+
+# Ce que chaque point veut dire, en deux parts de zéro à un : la verticale
+# d'abord, l'horizontale ensuite. **Une table plutôt que des conditions**, parce
+# que neuf points écrits en `if` se contredisent au premier endroit oublié — et
+# il y a deux endroits qui posent une image, `sur_grille` et `poser_dans`.
+PARTS_DE_L_ANCRAGE: dict[str, tuple[float, float]] = {
+    HAUT_GAUCHE: (0.0, 0.0), HAUT: (0.0, 0.5), HAUT_DROITE: (0.0, 1.0),
+    GAUCHE: (0.5, 0.0), CENTRE: (0.5, 0.5), DROITE: (0.5, 1.0),
+    BAS_GAUCHE: (1.0, 0.0), BAS: (1.0, 0.5), BAS_DROITE: (1.0, 1.0),
+}
+
+
+def parts_de(ancrage: str) -> tuple[float, float]:
+    """Les deux parts d'un ancrage — **le bas centré si le nom est inconnu**.
+
+    Un nom inconnu vient d'une recette écrite à la main, ou d'un réglage arrivé
+    d'une version plus récente. Répondre le défaut du produit plutôt que lever
+    est ce qui empêche une image de refuser de se rendre pour un mot mal tapé.
+    """
+    return PARTS_DE_L_ANCRAGE.get(ancrage, PARTS_DE_L_ANCRAGE[BAS])
 
 # Les deux tramages, et il n'y en a pas d'autre. **Deux valeurs déclarées, deux
 # valeurs implémentées** : `bayer` a été écrit ici puis retiré le jour même, faute

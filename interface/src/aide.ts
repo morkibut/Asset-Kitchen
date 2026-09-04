@@ -589,6 +589,17 @@ export const AIDE: Record<string, Explication> = {
     origine: "les images faites, comptées par le serveur",
   },
 
+  "codex.bande.image": {
+    nom: "L'image choisie",
+    ou: "codex",
+    quoi: "Une image de l'animation, et ce qu'on lui a fait à elle seule : de combien elle a été poussée, et de quel clip elle vient.",
+    change:
+      "Cette image-là, et aucune autre. C'est toute la différence avec les réglages de gauche : ceux-là valent pour l'animation entière, celui-ci ne corrige qu'une pose qui tombe à côté.",
+    origine: "prise dans le clip · poussée à la main",
+    long:
+      "Les flèches la déplacent d'un pixel du sprite ; avec Maj, de cinq. On peut aussi la faire glisser à la souris.\n\nAux bords, les flèches cessent d'avoir un effet plutôt que de rogner l'image. C'est voulu : une correction qui mangerait un bras ne se verrait pas ici, et se découvrirait dans le jeu.\n\nLa remplacer par une autre image du clip ne coûte rien : le clip est déjà payé, et il porte toutes ses images. Une bande peut ainsi prendre ses images dans deux clips différents — chaque image dit alors d'où elle vient.\n\nL'image d'avant, montrée en transparence sous celle-ci, est ce qui permet de juger un déplacement au lieu de le deviner.",
+  },
+
   // ── L'établi — ce qu'on touche à chaque génération ────────────────────────
 
   "reglages.modele": {
@@ -1002,12 +1013,12 @@ export const AIDE: Record<string, Explication> = {
   "grille.ancrage": {
     nom: "ancrage",
     ou: "tables",
-    quoi: "Où le sujet se pose dans sa case quand il ne la remplit pas dans les deux sens — en bas ou au centre.",
+    quoi: "Le point de la case par lequel le sujet est accroché, quand il ne la remplit pas entièrement. Neuf au choix : les quatre coins, les quatre milieux de bord, et le centre.",
     change:
       "Décide de l'alignement entre deux frames du même personnage. En bas par défaut, parce qu'un personnage se tient debout sur le bord bas de sa case.",
     origine: "défaut du produit · bas",
     long:
-      "Deux frames d'une même animation posées au centre flotteraient l'une par rapport à l'autre : le personnage semblerait monter et descendre entre deux images. Le bas est le bon défaut pour tout ce qui pose au sol.\n\nLe centre sert à ce qui n'a pas de sol — une icône, un objet d'inventaire, un effet.",
+      "Deux frames d'une même animation posées au centre flotteraient l'une par rapport à l'autre : le personnage semblerait monter et descendre entre deux images. Le bas est le bon défaut pour tout ce qui pose au sol.\n\nLes huit autres existent pour ce qui ne se tient pas debout. Une icône ou un objet d'inventaire tient par son centre ; une flamme au bout d'une torche et une bannière suspendue tiennent par leur haut ; une porte qui pivote tient par son côté.\n\nIl n'y en avait que deux avant le 4 septembre 2026, le bas et le centre, et c'était assez tant qu'on posait des images isolées. Une animation, elle, a un point fixe, et ce point n'est pas toujours au milieu d'un bord.",
   },
 
   "grille.methode": {

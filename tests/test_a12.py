@@ -38,7 +38,7 @@ import itertools
 
 import pytest
 
-from atelier.domaine.bande import Bande, Cadre
+from atelier.domaine.bande import Bande, Cadre, Prise
 
 from tests.conftest import image_sujet
 
@@ -105,7 +105,7 @@ def _poser_une_bande(
         identifiant=f"bande-{next(_DISTINCTES)}",
         clip=clip,
         nom=nom,
-        images=(0, 2, 4, 6),
+        prises=tuple(Prise(numero=n) for n in (0, 2, 4, 6)),
         cadence=8.0,
         # **Nommés, et pas posés dans l'ordre** : le premier champ d'un cadre
         # est *d'où il vient*, pas son bord gauche. Sans les noms, la bande

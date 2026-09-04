@@ -96,6 +96,7 @@ import { EcranReglages } from "./composants/EcranReglages"
 import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
 import { EcranTables, TABLES, type Table } from "./composants/Tables"
 import { EcranDepliage } from "./composants/Depliage"
+import { EcranAtelierDeBande } from "./composants/AtelierDeBande"
 import { EcranMontage } from "./composants/Montage"
 import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
@@ -277,6 +278,10 @@ export function App() {
    *  dépense rien : le clip est déjà payé, et découper se refait autant de fois
    *  qu'on veut. */
   const [montageOuvert, setMontageOuvert] = useState<string | null>(null)
+  // **L'atelier d'une animation gardée** (A7). Il prend la place de la
+  // matrice, comme le montage prend celle de la galerie : on y entre depuis
+  // la vignette de l'animation, et rien n'y dépense.
+  const [bandeOuverte, setBandeOuverte] = useState<string | null>(null)
 
   // **Chaque écran replie ses colonnes, et les nomme.** Une seule table pour
   // les trois : c'est la barre du châssis qui rend les bascules, et elle ne
@@ -3024,7 +3029,23 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && (
+      {/* **L'atelier d'une animation gardée** (A7) — il passe avant la
+          matrice pour la raison du montage : les deux ne peuvent pas être
+          ouverts ensemble, on ne corrige pas une animation depuis un écran
+          qui en montre douze. */}
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && bandeOuverte ? (
+        <EcranAtelierDeBande
+          identifiant={bandeOuverte}
+          onFermer={() => setBandeOuverte(null)}
+          onErreur={(raison) => setPanne(raison)}
+          // La planche a changé sur le disque, et la matrice l'affiche
+          // aussi : une vignette qui montrerait l'ancienne serait un
+          // mensonge silencieux.
+          onChangee={() => void relireProduction()}
+        />
+      ) : null}
+
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && !bandeOuverte && (
         <EcranEtabli
           ouvert={choseOuverte}
           plan={plan}
@@ -3054,6 +3075,9 @@ export function App() {
             setOnglet("galerie")
             setMontageOuvert(clip)
           }}
+          /* **Et la vignette, elle, ouvre l'animation** (A7) — sans changer
+             d'onglet : on la retravaille là où on la regarde. */
+          onOuvrirLaBande={setBandeOuverte}
           // **Deux gestes en un, et l'ordre compte** (G16) : l'image s'ouvre
           // dans les tables, et la table ouverte est la superposition. Écrit
           // ici parce que la table ouverte est un état de l'établi — la

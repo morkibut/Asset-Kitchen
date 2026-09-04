@@ -33,7 +33,7 @@ from atelier.domaine.animation import (
 )
 from atelier.domaine.bande import BOUCLE
 from atelier.domaine.bande import CADENCE_PAR_DEFAUT as CADENCE_DE_BANDE
-from atelier.domaine.bande import Cadre
+from atelier.domaine.bande import Cadre, Prise
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.recette import Recette
 from atelier.api.routes import reponse_archive
@@ -630,6 +630,10 @@ class CorpsApercuBande(BaseModel):
     images: list[int] = []
     recette: dict[str, Any] | None = None
     cadre: dict[str, Any] | None = None
+    # **La forme riche d'une image retenue** (A7) : d'où elle vient, de combien
+    # elle est poussée. Absente, l'écran ne parle que de numéros — c'est le cas
+    # du montage, qui taille dans un seul clip et ne corrige rien.
+    prises: list[dict[str, Any]] | None = None
 
 
 class CorpsBande(CorpsApercuBande):
@@ -642,6 +646,34 @@ class CorpsBande(CorpsApercuBande):
     sens: str = ""
     pose: str | None = None
     direction: str | None = None
+
+
+class CorpsCorrection(BaseModel):
+    """Ce qu'on corrige sur une bande gardée (A7) — **et rien n'est obligatoire**.
+
+    Un champ absent veut dire *« ne touche pas à ça »*. C'est ce qui permet à
+    l'écran de pousser une image d'un pixel sans renvoyer la recette entière, et
+    c'est aussi ce qui rend l'annulation exacte : on renvoie l'état d'avant du
+    seul champ qu'on avait changé.
+    """
+
+    prises: list[dict[str, Any]] | None = None
+    recette: dict[str, Any] | None = None
+    cadence: float | None = None
+    sens: str | None = None
+    cadre: dict[str, Any] | None = None
+
+
+def _prises(donnees: list[dict[str, Any]] | None) -> list[Prise] | None:
+    """Les prises d'un corps de requête, **ou rien du tout**.
+
+    `None` et une liste vide ne veulent pas dire la même chose : le premier est
+    « je ne parle pas des images », le second serait « une bande sans image » —
+    que le service refuse, et c'est lui qui doit le dire, pas ce traducteur.
+    """
+    if donnees is None:
+        return None
+    return [Prise.depuis_json(d) for d in donnees]
 
 
 class CorpsCase(BaseModel):
@@ -672,6 +704,7 @@ async def apercu_de_la_bande(
         corps.images,
         _recette(corps.recette),
         Cadre.depuis_json(corps.cadre),
+        prises=_prises(corps.prises),
     )
 
 
@@ -796,6 +829,63 @@ async def renommer_une_bande(
 async def oublier_une_bande(requete: Request, identifiant: str) -> dict[str, Any]:
     """La bande s'en va, le clip et ses images restent."""
     return _atelier(requete).montage.oublier(identifiant).en_json()
+
+
+@routeur.get("/strips/{identifiant}")
+async def ouvrir_une_bande(requete: Request, identifiant: str) -> dict[str, Any]:
+    """Une animation gardée, **rouverte avec tous ses réglages** (A7).
+
+    ⚠️ **Elle est déclarée après `/strips/export` et avant `/strips/{id}/sheet`**,
+    et l'ordre compte deux fois : un chemin fixe posé après un chemin à trou se
+    fait manger par lui — le piège des routes à segments, payé au serveur et
+    rejoué depuis dans trois tranches.
+
+    Ce qu'elle répare : la vignette d'une animation remontait au **clip**, donc
+    l'écran repartait des réglages du jeu et l'auteur devait tout refaire de
+    mémoire pour corriger une virgule. Un objet qu'on sait écrire et qu'on ne
+    sait pas relire n'est pas fini.
+    """
+    return _atelier(requete).montage.ouvrir_la_bande(identifiant)
+
+
+@routeur.put("/strips/{identifiant}")
+async def corriger_une_bande(
+    requete: Request, identifiant: str, corps: CorpsCorrection
+) -> dict[str, Any]:
+    """Une correction posée sur une animation gardée. **Rien n'est dépensé.**
+
+    Chaque champ absent veut dire *« ne touche pas à ça »*, et c'est ce qui rend
+    le geste annulable : l'écran renvoie l'état d'avant, la bande y revient
+    exactement, planche comprise.
+    """
+    bande = _atelier(requete).montage.corriger(
+        identifiant,
+        prises=_prises(corps.prises),
+        recette=_recette(corps.recette),
+        cadence=corps.cadence if corps.cadence and corps.cadence > 0 else None,
+        sens=corps.sens or None,
+        cadre=Cadre.depuis_json(corps.cadre) if corps.cadre is not None else None,
+    )
+    return bande.en_json()
+
+
+@routeur.post("/strips/{identifiant}/frame")
+async def reprendre_le_cadre_de_la_bande(
+    requete: Request, identifiant: str
+) -> dict[str, Any]:
+    """La fenêtre d'une animation gardée, remesurée **sur ses images à elle** (A7).
+
+    Elle ne se remesure pas sur le clip : une bande peut prendre ses images dans
+    deux clips, et elle n'a alors de fenêtre dans ni l'un ni l'autre.
+
+    Le rectangle et la planche sont refaits dans le même geste — la bande ne
+    passe jamais par un état où l'un est neuf et l'autre d'avant. C'est un geste
+    que l'auteur demande, jamais un rattrapage automatique : il coûte une
+    vingtaine de secondes, et rien ici ne dépense d'argent.
+    """
+    return _atelier(requete).montage.reprendre_le_cadre_de_la_bande(
+        identifiant
+    ).en_json()
 
 
 @routeur.get("/strips/{identifiant}/sheet")

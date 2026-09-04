@@ -49,11 +49,12 @@ from typing import Any, Iterable, Sequence
 import numpy as np
 
 from atelier.domaine.recette import (
-    CENTRE,
+    BAS,
     QUANTIFICATION,
     RECADRAGE,
     Recette,
     cote_du_sujet,
+    parts_de,
 )
 from atelier.image.stabilite import Stabilite, mesurer as mesurer_la_stabilite
 from atelier.image.traitement import (
@@ -100,6 +101,29 @@ class Fenetre:
 
     def en_tuple(self) -> tuple[int, int, int, int]:
         return self.gauche, self.sommet, self.droite, self.bas
+
+    def avec(self, autre: "Fenetre | None") -> "Fenetre":
+        """La plus petite fenêtre qui contient les deux.
+
+        Elle sert à une seule chose, et `A7` l'a rendue nécessaire : une bande
+        qui prend ses images dans deux clips n'a de fenêtre **dans ni l'un ni
+        l'autre**. Prendre celle du clip principal recadrerait les images
+        empruntées sur un rectangle mesuré sans elles — et ce qui dépasse ne se
+        verrait pas ici, mais dans le jeu.
+
+        Le compte d'images s'additionne ; les taches écartées aussi, parce que
+        les deux mesures ont chacune fait son ménage.
+        """
+        if autre is None:
+            return self
+        return Fenetre(
+            gauche=min(self.gauche, autre.gauche),
+            sommet=min(self.sommet, autre.sommet),
+            droite=max(self.droite, autre.droite),
+            bas=max(self.bas, autre.bas),
+            images=self.images + autre.images,
+            taches_ecartees=self.taches_ecartees + autre.taches_ecartees,
+        )
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -202,11 +226,17 @@ def _rendre(
     fenetre: Fenetre | None,
     *,
     stabiliser: bool = True,
+    poussees: Sequence[tuple[int, int]] | None = None,
 ) -> list[np.ndarray]:
     """La chaîne du jeu sur toutes les images d'une bande — **et une seule écriture**.
 
     Trois décisions y vivent, et les trois sont *de la bande* et non *de l'image* :
     d'où l'on découpe, avec quelle recette on finit, et **quelle palette**.
+
+    `poussees` porte la correction d'`A7`, une par image, **appliquée en tout
+    dernier** : après la réduction, donc en pixels du sprite. C'est aussi après
+    la palette, et il le faut — décaler une image ne change aucune de ses
+    couleurs, donc la palette de la bande reste celle qu'on a calculée.
 
     `stabiliser` à `False` rejoue la chaîne **d'avant `A5`** : silhouette tirée
     au sort image par image, palette recalculée à chaque image. ⚠️ Elle n'a
@@ -227,10 +257,61 @@ def _rendre(
     suite = _sans_recadrer(recette) if pose else recette
     if stabiliser:
         suite = _avec_la_palette_de_la_bande(entrees, suite, cadre)
-    return [
+    rendues = [
         queue(image, suite, cadre, silhouette_stable=None if stabiliser else False)
         for image in entrees
     ]
+    if not poussees:
+        return rendues
+    # Une poussée manquante vaut zéro : la liste des corrections peut être plus
+    # courte que la bande sans que rien ne casse — c'est le cas d'une bande à
+    # laquelle on vient d'ajouter une image.
+    return [
+        pousser(image, *(poussees[rang] if rang < len(poussees) else (0, 0)))
+        for rang, image in enumerate(rendues)
+    ]
+
+
+def pousser(image: np.ndarray, dx: int, dy: int) -> np.ndarray:
+    """L'image rendue, **décalée dans sa propre case** de `dx` et `dy` (A7).
+
+    C'est le geste de la correction au pixel, et il se pose **après la
+    réduction** — donc un appui déplace le sujet d'**un pixel du sprite**, ce
+    qui est ce que l'auteur voit et ce qu'il vise. L'écrire avant la grille
+    l'aurait exprimé en pixels de la vidéo : le même réglage aurait déplacé de
+    trois blocs sur un clip et d'un seul sur un autre, sans que rien ne le dise.
+
+    ⚠️ **Il borne au lieu de rogner**, et c'est la règle déjà écrite pour le
+    décalage de `sur_grille` : *aux bords, les boutons cessent d'avoir un effet
+    — ce qui se voit, et c'est mieux qu'une image rognée.* Le sujet peut donc
+    aller jusqu'à toucher le bord de sa case, jamais au-delà. Une correction qui
+    mangerait un bras serait invisible sur l'image qu'on corrige et se
+    découvrirait dans le jeu.
+
+    Une image dont le détourage n'a rien laissé n'a pas de sujet à pousser : on
+    la rend telle quelle plutôt que de deviner.
+    """
+    if not dx and not dy:
+        return image
+    boite = boite_opaque(image[:, :, 3] > 0)
+    if boite is None:
+        return image
+    gauche, sommet, droite, bas = boite
+    hauteur, largeur = image.shape[:2]
+    dx = max(-gauche, min(largeur - 1 - droite, int(dx)))
+    dy = max(-sommet, min(hauteur - 1 - bas, int(dy)))
+    if not dx and not dy:
+        return image
+
+    pousse = np.zeros_like(image)
+    depart_y, depart_x = max(0, dy), max(0, dx)
+    prise_y, prise_x = max(0, -dy), max(0, -dx)
+    haut = hauteur - abs(dy)
+    large = largeur - abs(dx)
+    pousse[depart_y : depart_y + haut, depart_x : depart_x + large] = image[
+        prise_y : prise_y + haut, prise_x : prise_x + large
+    ]
+    return pousse
 
 
 def _avec_la_palette_de_la_bande(
@@ -383,12 +464,15 @@ def poser_dans(
     """
     hauteur, largeur = preparee.shape[:2]
     cadre = np.zeros((fenetre.hauteur, fenetre.largeur, 4), dtype=preparee.dtype)
-    x = max(0, (fenetre.largeur - largeur) // 2)
-    y = (
-        max(0, (fenetre.hauteur - hauteur) // 2)
-        if recette.grille is not None and recette.grille.ancrage == CENTRE
-        else max(0, fenetre.hauteur - hauteur)
+    # **Les neuf ancrages, lus dans la table du domaine** (A7) — la même que
+    # `sur_grille`, et c'est voulu : deux lectures de « bas » finiraient par ne
+    # plus poser au même pixel, et l'écart se verrait sous la forme d'une bande
+    # qui saute d'un pixel à l'export.
+    part_verticale, part_horizontale = parts_de(
+        recette.grille.ancrage if recette.grille is not None else BAS
     )
+    x = max(0, round((fenetre.largeur - largeur) * part_horizontale))
+    y = max(0, round((fenetre.hauteur - hauteur) * part_verticale))
     # Une image plus grande que la fenêtre ne peut pas arriver — la fenêtre est
     # l'union des boîtes —, mais un cadre posé à la main le peut : on garde
     # alors ce qui tient, plutôt que de lever sur un rectangle que l'auteur a
@@ -439,6 +523,7 @@ def assembler(
     fenetre: Fenetre | None,
     *,
     stabiliser: bool = True,
+    poussees: Sequence[tuple[int, int]] | None = None,
 ) -> Planche:
     """La planche de sprites de cette bande, dans l'ordre donné (A10).
 
@@ -463,7 +548,9 @@ def assembler(
     `stabiliser` à `False` rejoue la chaîne d'avant `A5` — **le banc, et lui
     seul** : il lui faut un *avant* à mesurer.
     """
-    rendus = _rendre(preparees, recette, fenetre, stabiliser=stabiliser)
+    rendus = _rendre(
+        preparees, recette, fenetre, stabiliser=stabiliser, poussees=poussees
+    )
     if not rendus:
         return Planche(octets=b"", case_largeur=0, case_hauteur=0, compte=0)
 

@@ -818,14 +818,36 @@ export type PropositionDeRythme = {
  *  **Ce qu'elle garde est une intention, pas des pixels** : les numéros
  *  d'image, la fenêtre et la recette. Sa planche de sprites se recalcule à
  *  partir de ça, et le fichier n'est qu'un cache. */
+/** Une image retenue : **d'où elle vient, et de combien on l'a poussée** (A7).
+ *
+ *  `clip` vide veut dire *le clip de la bande*, et ce n'est pas une commodité :
+ *  c'est ce qui fait qu'une animation gardée avant `A7` se relit sans avoir été
+ *  réécrite. `dx` et `dy` sont **en pixels du sprite**, pas de la vidéo — un
+ *  appui déplace d'un bloc, quelle que soit la taille du clip. */
+export type Prise = {
+  numero: number
+  clip: string
+  dx: number
+  dy: number
+}
+
 export type Bande = {
   identifiant: string
   clip: string
   nom: string
   /** Dans l'ordre où elles se jouent. **Rien n'oblige à ce qu'elles soient
    *  régulièrement espacées** — un pas de marche demande deux images serrées au
-   *  contact et une seule pendant la glisse. */
+   *  contact et une seule pendant la glisse.
+   *
+   *  Les numéros seuls ; `prises` en dit plus. Les deux ne peuvent pas diverger,
+   *  la première se calculant de la seconde. */
   images: number[]
+  /** Ce que `images` ne dit pas : la provenance et la correction (A7). */
+  prises: Prise[]
+  /** Les clips dont elle tire ses images, dans l'ordre d'apparition. */
+  clips: string[]
+  /** Ses images viennent-elles de plusieurs clips ? */
+  melangee: boolean
   cadence: number
   sens: "boucle" | "aller-retour"
   cadre: Cadre
@@ -842,6 +864,37 @@ export type Bande = {
   secondes: number
   /** Aucune case visée. Elle existe, elle sert, **elle ne bloque rien**. */
   brouillon: boolean
+}
+
+/** Tout ce qu'il faut pour **retravailler** une animation gardée (A7).
+ *
+ *  `images_par_clip` borne le choix quand on remplace une image : l'écran ne
+ *  peut pas deviner combien d'images un clip porte, et le lui faire demander
+ *  clip par clip ferait un aller-retour de plus à chaque ouverture. */
+export type AtelierDeBande = {
+  bande: Bande
+  /** La planche en `data:` — l'écran s'ouvre en tournant déjà. */
+  planche: string
+  clips: Record<string, Generation>
+  images_par_clip: Record<string, number>
+  /** L'état de la fenêtre commune. `a_jour` faux veut dire *mesurée avec un
+   *  autre détourage* — pas fausse, **d'avant**. La reprendre coûte une
+   *  vingtaine de secondes, qu'on ne fait payer à personne sans raison. */
+  cadre: {
+    choix: string
+    a_jour: boolean
+    mesuree_le: number | null
+  }
+  /** Les clips où cette animation a le droit d'aller chercher une image :
+   *  **ceux du même personnage**, et pas plus large. Le clip d'un autre
+   *  personnage donnerait une animation où le sujet change au milieu. */
+  clips_voisins: {
+    identifiant: string
+    mouvement: string
+    images: number
+    /** L'animation y prend déjà au moins une image. */
+    sien: boolean
+  }[]
 }
 
 /** Tout ce que l'écran de montage reçoit à l'ouverture, **en une seule fois**.
@@ -992,10 +1045,27 @@ export type Main = { opacite: Trait[]; calques: CalqueDessin[] }
 export type Couche = "affinage" | "retouche"
 
 export type Recadrage = { marge: number; boite: number[] | null }
+/** Les neuf points par lesquels une chose tient dans sa case (A7).
+ *
+ *  Deux jusque-là — `bas` et `centre` —, et ils gardent exactement leur sens :
+ *  aucune recette déjà écrite ne change de rendu. Une animation en demande
+ *  plus : un personnage tient par ses pieds, une bannière par son haut, une
+ *  porte par son côté. */
+export type Ancrage =
+  | "haut-gauche"
+  | "haut"
+  | "haut-droite"
+  | "gauche"
+  | "centre"
+  | "droite"
+  | "bas-gauche"
+  | "bas"
+  | "bas-droite"
+
 export type Grille = {
   cible: number
   occupation: number
-  ancrage: "bas" | "centre"
+  ancrage: Ancrage
   /** Le décalage horizontal, en pixels de la case (E17). **Une coordonnée, pas
    *  un réglage** : il rattrape la dérive de *cette* silhouette dans sa case, il
    *  est écrit par le calibrage seul, et il ne part pas dans une recette nommée
@@ -4109,7 +4179,10 @@ export const api = {
    *  obligerait à ranger un brouillon — donc à le nettoyer. */
   apercuDeBande: (corps: {
     clip: string
-    images: number[]
+    images?: number[]
+    /** La forme riche (A7). Envoyée, elle passe avant `images` : elle seule
+     *  sait dire d'où vient chaque image et de combien elle est poussée. */
+    prises?: Prise[]
     recette?: Recette | null
     cadre?: CadrePose | null
   }) =>
@@ -4135,6 +4208,46 @@ export const api = {
 
   bandesDuClip: (clip: string) =>
     appeler<{ bandes: Bande[] }>(`/strips?clip=${encodeURIComponent(clip)}`),
+
+  /** Une animation gardée, **rouverte avec tous ses réglages** (A7).
+   *
+   *  ⚠️ Ça n'existait pas : le produit savait garder une animation et **pas la
+   *  rouvrir**. La vignette de la matrice remontait au clip, donc l'écran
+   *  repartait des réglages du jeu, et corriger une virgule demandait de tout
+   *  refaire de mémoire. Sa planche part avec, en `data:` — un écran qui
+   *  s'ouvre en tournant déjà n'a pas le temps de poser deux questions. */
+  ouvrirLaBande: (identifiant: string) =>
+    appeler<AtelierDeBande>(`/strips/${identifiant}`),
+
+  /** Une correction posée sur une animation gardée (A7). **Rien n'est dépensé.**
+   *
+   *  Chaque champ absent veut dire *« ne touche pas à ça »*, et c'est ce qui
+   *  rend l'annulation exacte : on renvoie l'état d'avant du seul champ qu'on
+   *  avait changé. */
+  corrigerLaBande: (
+    identifiant: string,
+    corps: {
+      prises?: Prise[]
+      recette?: Recette | null
+      cadence?: number
+      sens?: string
+      cadre?: CadrePose | null
+    },
+  ) =>
+    appeler<Bande>(`/strips/${identifiant}`, {
+      method: "PUT",
+      body: JSON.stringify(corps),
+    }),
+
+  /** La fenêtre d'une animation gardée, remesurée **sur ses images à elle** (A7).
+   *
+   *  Pas sur celles du clip : une bande peut prendre ses images dans deux
+   *  clips, et elle n'a alors de fenêtre dans ni l'un ni l'autre. Le rectangle
+   *  et la planche sont refaits dans le même geste — jamais l'un sans l'autre.
+   *
+   *  Une vingtaine de secondes, et **rien n'est dépensé**. */
+  reprendreLeCadreDeLaBande: (identifiant: string) =>
+    appeler<Bande>(`/strips/${identifiant}/frame`, { method: "POST" }),
 
   /** Une bande de plus, taillée dans ce clip. **Rien n'est dépensé.** */
   garderLaBande: (corps: {

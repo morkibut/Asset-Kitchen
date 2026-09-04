@@ -11,6 +11,124 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A7 — reprendre une image sans refaire la bande : le vrai sujet n'était pas dans le plan — 5 septembre 2026
+
+La dernière tranche de la V3, et **son sujet principal n'était écrit nulle part**. Le plan
+promettait trois gestes de retouche ; ce qui manquait d'abord était l'écran où les faire.
+
+### Une animation gardée était un cul-de-sac
+
+Le produit savait garder une animation avec tous ses réglages — le cadre, la recette, la vitesse,
+le sens, ses images — et **ne savait pas la rouvrir**. La vignette de la matrice remontait au
+*clip* : l'écran repartait donc des réglages du jeu, et corriger une virgule demandait de tout
+refaire de mémoire.
+
+Trouvé par l'auteur à l'usage, dans les heures qui ont suivi la livraison d'`A4`. Une phrase de son
+carnet : *« si je veux juste modifier un élément de détourage ou autre… je peux pas. »*
+
+> ⚠️ **Aucun essai ne pouvait le voir**, et c'est la leçon de la tranche. Ils gardaient une bande
+> puis vérifiaient ce qu'ils venaient d'écrire — la réponse du `POST`. Personne ne la rouvrait.
+>
+> **Un objet qu'on sait écrire et qu'on ne sait pas relire n'est pas fini**, et l'essai qui le dit
+> est celui qui **referme l'écran avant de regarder**. Les trente-deux essais de la tranche le font
+> tous : ils lisent ce qui revient d'un `GET`, jamais ce qu'ils viennent d'envoyer.
+
+### L'écran, et pourquoi il n'est pas le montage
+
+Le montage *taille un clip en animations* : on y choisit des images sur une pellicule. L'atelier
+d'une animation *retravaille une bande gardée* : on y corrige une image à la fois. Deux écrans
+parce que ce sont deux moments — **on ne taille pas et on ne corrige pas avec la même main**.
+
+La grammaire est celle des tables : le réglage à gauche, la chose en grand au milieu, ses voisines
+à droite. Ici les voisines sont les images de l'animation, et le lecteur — jouer, arrêter, la
+vitesse — est sous elles, là où on les regarde.
+
+**La vignette de la matrice ouvre l'atelier, son nom remonte au clip.** Deux portes, et elles ne
+mènent pas au même endroit : l'une retravaille ce qui est gardé, l'autre retourne à la matière qui
+l'a fournie. Avant la tranche il n'y avait que la seconde, et c'était tout le défaut.
+
+### Le second défaut, trouvé au navigateur et par rien d'autre
+
+L'animation tourne à l'ouverture. La première flèche arrive donc pendant que les images défilent —
+et elle poussait la **première** image de la bande, celle que l'auteur ne regardait pas.
+L'animation s'arrêtait ailleurs, et la correction se voyait sur une pose au hasard.
+
+> **Les essais d'écran ne pouvaient pas le voir non plus, et il faut dire pourquoi** : leur premier
+> geste était d'arrêter le lecteur, parce qu'une image qui change onze fois par seconde rend la
+> suite illisible. Or arrêté, l'image regardée **est** l'image choisie : le défaut ne peut pas se
+> produire. L'essai qui le tient est celui qui laisse tourner, à deux images par seconde pour avoir
+> la marge — et il a été vérifié en défaisant le correctif.
+
+**On corrige l'image qu'on regarde.** Une ligne de code, et il a fallu l'écrire exprès.
+
+### « Jamais à moitié », une fois qu'il a fallu l'écrire
+
+Le critère était court et le sens n'était pas donné. Ce qu'il a voulu dire :
+
+1. **Le rectangle et la planche sont refaits dans le même geste.** Écrire l'un et laisser l'autre
+   pour plus tard donnerait une bande dont la fenêtre est neuve et les pixels d'avant, sans que
+   rien ne le signale.
+2. **La fenêtre d'une animation se remesure sur ses images à elle, pas sur celles d'un clip.**
+   Depuis cette tranche une bande peut puiser dans deux clips, et elle n'a alors de fenêtre dans ni
+   l'un ni l'autre. Prendre celle du clip principal recadrerait les images empruntées sur un
+   rectangle mesuré sans elles — et **ce qui dépasse ne se verrait pas dans l'atelier, il se
+   verrait dans le jeu**.
+
+Et ce qu'il ne veut pas dire : *à chaque changement* n'est pas *automatiquement*. Remesurer coûte
+une vingtaine de secondes, donc c'est un bouton. Une fenêtre mesurée avec un autre détourage n'est
+pas fausse, elle est **d'avant** — l'écran le dit dans ces mots-là, et personne ne paie les vingt
+secondes sans raison.
+
+### Une forme neuve qui relit l'ancienne sans migration
+
+Une bande portait des numéros d'image ; elle porte maintenant des **prises** — un numéro, un clip,
+un décalage. Deux décisions rendent la migration inutile :
+
+- **Un clip vide veut dire « le clip de la bande ».** Une bande d'`A10` n'a donc rien à écrire.
+- **La relecture accepte un entier aussi bien qu'un objet.** Les fichiers d'avant se rouvrent tels
+  quels, et se réécrivent dans la forme neuve à la première correction.
+
+Et `images` n'est plus un champ : c'est une **propriété dérivée** des prises. Deux champs à tenir
+d'accord finissent toujours par diverger, et c'est l'auteur qui découvre l'écart.
+
+### Ce que la poussée fait aux bords, et pourquoi
+
+**Elle borne au lieu de rogner** — c'est la règle déjà posée pour le décalage de grille, reprise
+ici : *aux bords, les boutons cessent d'avoir un effet.* Une correction qui mangerait un bras ne se
+verrait pas sur l'image qu'on corrige, et se découvrirait dans le jeu.
+
+Elle s'applique **après la réduction**, donc une pression de flèche vaut un pixel du sprite, pas un
+pixel de la vidéo. Sans quoi le geste serait imprévisible : un pixel de vidéo ne se voit pas sur un
+sprite de 48 px de haut.
+
+### Les neuf ancrages, et ce qu'ils rendent possible
+
+Deux jusqu'ici — le bas et le centre —, et ils suffisaient tant que l'ancrage n'était qu'un réglage
+d'image isolée. Une animation a un point fixe, et ce point n'est pas toujours au milieu d'un bord :
+une flamme au bout d'une torche tient par son haut, une porte qui pivote tient par son côté.
+
+Les deux anciens valent exactement ce qu'ils valaient — un essai le tient, parce que changer la
+valeur d'un défaut sous les bandes déjà livrées serait un dégât silencieux.
+
+### Ce que l'écran offre comme clips, et ce qu'il n'offre pas
+
+Aller chercher une image dans un autre clip est ce qui reste de l'ancienne `A3` : *quand deux clips
+sont chacun bons à moitié, prendre une image dans l'un et une dans l'autre*. L'écran ne propose que
+les clips **du même personnage**. Deux clips du même personnage ont la même silhouette, donc leurs
+images se montent ensemble ; le clip d'un autre personnage donnerait une animation où le sujet
+change au milieu, et l'offrir serait tendre un piège.
+
+Ils portent leur repère court à côté de leur mouvement, parce que deux tirages de la même marche
+portent le même mot et que la liste les rendrait indiscernables.
+
+### Ce que la tranche n'a pas réparé, et qui a été vu au passage
+
+Les curseurs de recette — taille du pixel, couleurs, tolérance — **n'affichent pas leur nom**. Le
+composant reçoit le libellé et ne s'en sert que pour l'étiquette du champ de valeur. On lit donc
+trois nombres à la file et il faut deviner lequel règle quoi. C'est vrai du montage depuis `A10`,
+donc antérieur à cette tranche et hors de son périmètre — mais c'est écrit ici pour que la prochaine
+personne qui ouvre cet écran ne croie pas l'avoir introduit.
+
 ## A5 — le contour qui ne bout pas : la mesure a coûté plus cher que la correction — 4 septembre 2026
 
 **Deux décisions qui étaient *de l'image* deviennent *de la bande*** : la silhouette et la palette.

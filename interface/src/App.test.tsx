@@ -63,6 +63,8 @@ import type {
   EtatDuMoteur,
   ImageDeDepart,
   ApercuDeBande,
+  AtelierDeBande,
+  Prise,
   Stabilite,
   Bande,
   Montage,
@@ -1169,12 +1171,20 @@ const APERCU_RENDU: ApercuDeBande = {
   },
 }
 
-function bandeRendue(nom: string, images: number[]): Bande {
+function bandeRendue(nom: string, images: number[], prises?: Prise[]): Bande {
+  // Sans correction, une prise n'est qu'un numéro — c'est très exactement ce
+  // que les bandes d'`A10` voulaient dire, et ce que le serveur relit d'elles.
+  const retenues =
+    prises ?? images.map((numero) => ({ numero, clip: "", dx: 0, dy: 0 }))
+  const venus = [...new Set(retenues.map((p) => p.clip || "clip-a"))]
   return {
     identifiant: `bande-${nom}`,
     clip: "clip-a",
     nom,
     images,
+    prises: retenues,
+    clips: venus,
+    melangee: venus.length > 1,
     cadence: 8,
     sens: "boucle",
     cadre: APERCU_RENDU.cadre,
@@ -1193,6 +1203,34 @@ function bandeRendue(nom: string, images: number[]): Bande {
   }
 }
 
+/** L'animation que le double rend quand on rouvre (A7), et le rectangle qu'une
+ *  remesure lui donne. Deux constantes plutôt que des nombres au fil des essais :
+ *  ce qui compte est **qu'ils diffèrent**, et le dire une fois l'écrit une fois. */
+const GARDEE_A7: Bande = {
+  ...bandeRendue("marche", [12, 14, 16, 18]),
+  cadence: 11,
+  sens: "aller-retour",
+}
+
+/** Les clips où l'animation a le droit d'aller chercher une image — ceux du
+ *  même personnage. Deux, parce qu'un seul ne serait pas un choix et que
+ *  l'écran ne montre alors pas de liste. */
+const VOISINS_A7 = [
+  { identifiant: "clip-a", mouvement: "marche", images: 22, sien: true },
+  { identifiant: "clip-b", mouvement: "course", images: 18, sien: false },
+]
+
+const CADRE_REMESURE = {
+  ...APERCU_RENDU.cadre,
+  choix: "clip" as const,
+  gauche: 2,
+  sommet: 2,
+  droite: 61,
+  bas: 61,
+  largeur: 60,
+  hauteur: 60,
+}
+
 function serveurDouble(options: {
   assets?: Asset[]
   cartes?: Carte[]
@@ -1205,6 +1243,9 @@ function serveurDouble(options: {
   /** Un catalogue à plusieurs modèles — ce qu'il faut pour qu'un filtre ait
    *  quelque chose à écarter. Par défaut, ceux du `CATALOGUE`. */
   modeles?: Modele[]
+  /** L'animation que rend `GET /strips/{id}` (A7). Le double la garde ensuite
+   *  entre deux appels : une correction enregistrée se relit. */
+  atelierDeBande?: AtelierDeBande
   aPublier?: () => Generation
   /** Ce que la détection propose de découper. Le test le décide, comme le vrai
    *  serveur le déciderait sur l'image : c'est ce que l'écran affiche, et c'est
@@ -1396,6 +1437,18 @@ function serveurDouble(options: {
   }
 
   const appels: { url: string; corps: unknown }[] = []
+
+  // **L'animation qu'on rouvre** (A7), et elle vit entre deux appels. Le défaut
+  // de la tranche était qu'une bande gardée ne se relisait pas : un double qui
+  // rendrait toujours la bande de départ referait l'erreur sans la voir.
+  let atelierEnCours: AtelierDeBande = options.atelierDeBande ?? {
+    bande: GARDEE_A7,
+    planche: "data:image/png;base64,AAAA",
+    clips: { "clip-a": clipRendu("clip-a", false) },
+    images_par_clip: { "clip-a": 22 },
+    cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
+    clips_voisins: VOISINS_A7,
+  }
 
   const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
     const url = String(chemin)
@@ -1912,6 +1965,39 @@ function serveurDouble(options: {
       )
     if (url.startsWith("/api/strips/") && init?.method === "DELETE")
       return rendre(bandeRendue("effacee", []))
+    // ── Rouvrir et corriger une animation gardée (A7) ──────────────────────
+    //
+    // Le double **garde l'état entre deux appels**, et ce n'est pas du zèle :
+    // le défaut de la tranche était qu'une animation gardée ne se relisait pas.
+    // Un double qui rendrait toujours la même bande de départ referait
+    // exactement l'erreur que ces essais cherchent, et passerait sans rien voir.
+    if (url.startsWith("/api/strips/") && url.endsWith("/frame")) {
+      atelierEnCours = {
+        ...atelierEnCours,
+        bande: { ...atelierEnCours.bande, cadre: CADRE_REMESURE },
+        cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_900 },
+      }
+      return rendre(atelierEnCours.bande)
+    }
+    if (url.startsWith("/api/strips/") && init?.method === "PUT") {
+      const bande = { ...atelierEnCours.bande }
+      if (corps?.prises) bande.prises = corps.prises as Prise[]
+      if (corps?.recette) bande.recette = corps.recette as Recette
+      if (corps?.cadence) bande.cadence = Number(corps.cadence)
+      if (corps?.sens) bande.sens = String(corps.sens) as Bande["sens"]
+      bande.images = bande.prises.map((p) => p.numero)
+      atelierEnCours = {
+        ...atelierEnCours,
+        bande,
+        // Un détourage changé périme la fenêtre : c'est le serveur qui le dit,
+        // et l'écran ne doit pas continuer à l'annoncer à jour.
+        cadre: corps?.recette
+          ? { ...atelierEnCours.cadre, a_jour: false }
+          : atelierEnCours.cadre,
+      }
+      return rendre(bande)
+    }
+    if (/^\/api\/strips\/[^/]+$/.test(url)) return rendre(atelierEnCours)
     // **La case d'une bande** (A12) — affectée, ou rendue au brouillon quand les
     // deux champs sont vides. Le double rend la bande, comme le serveur : ce que
     // l'écran en fait est de redemander le plan, sur l'annonce du flux.
@@ -22574,5 +22660,375 @@ describe("A4 — la bande sort de l'atelier", () => {
     expect(
       etabli.queryByRole("button", { name: "Sortir ses animations ›" }),
     ).toBeNull()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// A7 · L'atelier d'une animation gardée
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ⚠️ **Le défaut de la tranche, et il a été trouvé à l'usage.** Le produit
+// savait garder une animation avec tous ses réglages et **ne savait pas la
+// rouvrir** : la vignette de la matrice remontait au clip, l'écran repartait
+// des réglages du jeu, et corriger une virgule demandait de tout refaire de
+// mémoire.
+//
+// *Un objet qu'on sait écrire et qu'on ne sait pas relire n'est pas fini*, et
+// l'essai qui l'aurait vu est celui qui **referme avant de regarder**. Ceux
+// d'ici le font tous : ils ouvrent l'atelier et lisent ce qui s'y affiche,
+// jamais ce qu'ils viennent d'envoyer.
+
+describe("A7 · l'atelier d'une animation", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Un personnage dont la marche porte une animation gardée. */
+  const AVEC_UNE_MARCHE = personnage("Le nain", {
+    cases: PLAN.map((p) => ({
+      pose: p.identifiant,
+      demandees: p.images,
+      images: [],
+      ...VIDE_C3,
+      bandes:
+        p.identifiant === "marche"
+          ? [{ ...GARDEE_A7, pose: "marche", direction: null, brouillon: false }]
+          : [],
+    })),
+  })
+
+  /** Ouvrir l'atelier **par la porte de l'auteur** : le codex, le calque animé,
+   *  la vignette. C'est le chemin qui manquait — un essai qui monterait l'écran
+   *  à la main ne tiendrait pas ce que la tranche répare.
+   *
+   *  Le lecteur est arrêté d'emblée : il tourne à l'ouverture, et une image qui
+   *  change onze fois par seconde rend la suite illisible. */
+  const ouvrirLAtelier = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    arreter = true,
+  ) => {
+    const double = serveurDouble({ personnages: [AVEC_UNE_MARCHE], ...options })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Le nain")
+    fireEvent.click(await etabli.findByRole("button", { name: /^animations / }))
+    fireEvent.click(
+      await etabli.findByRole("button", {
+        name: "Retravailler l'animation marche",
+      }),
+    )
+    const cadre = await waitFor(() => {
+      const trouve = document.querySelector("[data-atelier-de-bande]")
+      if (!trouve) throw new Error("l'atelier de l'animation ne s'est pas ouvert")
+      return trouve as HTMLElement
+    })
+    const atelier = within(cadre)
+    if (arreter)
+      fireEvent.click(
+        await atelier.findByRole("button", { name: "arrêter l'animation" }),
+      )
+    return { ...double, atelier, cadre }
+  }
+
+  /** Pousser l'image choisie d'un pixel, par la porte du clavier. */
+  const pousserDUnPixel = (cadre: HTMLElement) => {
+    const toile = cadre.querySelector("[data-case-en-grand]") as HTMLElement
+    toile.focus()
+    fireEvent.keyDown(window, { key: "ArrowRight" })
+  }
+
+  test("rouvrir une animation rend les réglages qu'on y avait mis", async () => {
+    // ⚠️ **L'essai qui aurait vu le défaut.** La bande gardée tourne à onze
+    // images par seconde en aller-retour ; le jeu, lui, dit huit et boucle. Ce
+    // qui s'affiche doit être celui de la bande.
+    const { atelier } = await ouvrirLAtelier()
+
+    expect(await atelier.findByText(/11 par seconde/)).toBeTruthy()
+    expect(
+      atelier
+        .getByRole("button", { name: "aller-retour" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true")
+  })
+
+  test("la vignette ouvre l'animation, son nom remonte au clip", async () => {
+    // **Deux portes, et elles ne mènent pas au même endroit.** Avant `A7` il n'y
+    // avait que la seconde, et c'était tout le défaut.
+    const { atelier } = await ouvrirLAtelier()
+
+    fireEvent.click(atelier.getByRole("button", { name: "‹ fermer" }))
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-atelier-de-bande]")).toBeNull(),
+    )
+  })
+
+  test("une image se pousse au clavier, et rien n'est écrit avant d'enregistrer", async () => {
+    const { atelier, cadre, appels } = await ouvrirLAtelier()
+
+    pousserDUnPixel(cadre)
+
+    expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
+    // *Rien n'est écrit tant qu'on n'a pas enregistré* — la phrase de l'écran
+    // est vraie, et c'est le compte des envois qui le dit.
+    expect(
+      appels.some((a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps)),
+    ).toBe(false)
+  })
+
+  test("la poussée se voit sur l'image choisie, en pixels du sprite", async () => {
+    const { atelier, cadre } = await ouvrirLAtelier()
+
+    pousserDUnPixel(cadre)
+
+    // Le chiffre plutôt qu'un état invisible : une correction au pixel ne se
+    // lit pas sur une vignette de 64 px, elle se lit écrite.
+    expect(
+      await atelier.findByText(/remettre cette image droite/),
+    ).toBeTruthy()
+  })
+
+  test("les flèches corrigent l'image qu'on regarde, pas la première", async () => {
+    // ⚠️ **Trouvé à l'écran le 5 septembre 2026, et pas par un essai.**
+    // L'animation tourne à l'ouverture : la première flèche arrive donc
+    // pendant que les images défilent. Elle poussait la *première* image de la
+    // bande — celle que l'auteur ne regardait pas —, l'animation s'arrêtait
+    // ailleurs, et la correction se voyait sur une pose au hasard.
+    //
+    // **Le lecteur doit tourner pour que l'essai tienne quelque chose** :
+    // arrêté, l'image regardée est déjà l'image choisie, et le défaut ne peut
+    // pas se produire. Deux images par seconde laissent la marge qu'il faut
+    // entre la lecture de la ligne et la flèche.
+    const { atelier, cadre } = await ouvrirLAtelier(
+      {
+        atelierDeBande: {
+          bande: { ...GARDEE_A7, cadence: 2, sens: "boucle" },
+          planche: "data:image/png;base64,AAAA",
+          clips: { "clip-a": clipRendu("clip-a", false) },
+          images_par_clip: { "clip-a": 22 },
+          cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
+          clips_voisins: VOISINS_A7,
+        },
+      },
+      false,
+    )
+    await waitFor(
+      () => expect(atelier.getByText(/image 2 sur 4/)).toBeTruthy(),
+      { timeout: 3000 },
+    )
+
+    pousserDUnPixel(cadre)
+
+    // La deuxième, et elle seule : celle qui était à l'écran.
+    expect(
+      cadre.querySelectorAll("[data-poussee]"),
+    ).toHaveLength(1)
+    expect(
+      cadre.querySelector('[data-image-de-la-bande="1"] [data-poussee]'),
+    ).toBeTruthy()
+  })
+
+  test("une image se prend dans un autre clip, sans quitter l'écran", async () => {
+    // C'est ce qui reste de l'ancienne `A3` : **quand deux clips sont chacun
+    // bons à moitié**, on prend une image dans l'un et une dans l'autre. La
+    // liste ne montre que les clips du même personnage — un clip d'ailleurs
+    // donnerait une animation où le sujet change au milieu.
+    const { atelier, cadre, appels } = await ouvrirLAtelier()
+
+    const choix = await atelier.findByLabelText(
+      "prendre cette image dans un autre clip",
+    )
+    fireEvent.change(choix, { target: { value: "clip-b" } })
+
+    expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
+    fireEvent.click(atelier.getByRole("button", { name: "Enregistrer ›" }))
+    await waitFor(() =>
+      expect(atelier.queryByText(/des corrections attendent/)).toBeNull(),
+    )
+    const envoi = appels.find(
+      (a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps),
+    )
+    expect(
+      (envoi?.corps as { prises: Prise[] }).prises.some(
+        (p) => p.clip === "clip-b",
+      ),
+    ).toBe(true)
+    // **Rien n'a été commandé** : le clip est payé, en reprendre une image ne
+    // coûte rien. C'est toute la différence avec l'autre moitié de l'atelier.
+    expect(appels.some((a) => a.url === "/api/clips" && Boolean(a.corps))).toBe(
+      false,
+    )
+    expect(cadre).toBeTruthy()
+  })
+
+  test("un seul clip ne montre aucune liste de clips", async () => {
+    // **Un menu à un seul choix n'est pas un choix**, et il ferait croire qu'il
+    // y a quelque part un autre clip à trouver.
+    const { atelier } = await ouvrirLAtelier({
+      atelierDeBande: {
+        bande: GARDEE_A7,
+        planche: "data:image/png;base64,AAAA",
+        clips: { "clip-a": clipRendu("clip-a", false) },
+        images_par_clip: { "clip-a": 22 },
+        cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
+        clips_voisins: [VOISINS_A7[0]],
+      },
+    })
+
+    await atelier.findByText(/en pixels du sprite/)
+    expect(
+      atelier.queryByLabelText("prendre cette image dans un autre clip"),
+    ).toBeNull()
+  })
+
+  test("annuler ramène exactement l'état d'ouverture", async () => {
+    const { atelier, cadre } = await ouvrirLAtelier()
+    pousserDUnPixel(cadre)
+    pousserDUnPixel(cadre)
+    expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
+
+    fireEvent.click(atelier.getByRole("button", { name: "Annuler" }))
+
+    // **Comparé au départ, jamais compté au fil de l'eau** : ce qui revient à
+    // l'état d'ouverture ne laisse rien à enregistrer, et la ligne s'en va.
+    await waitFor(() =>
+      expect(atelier.queryByText(/des corrections attendent/)).toBeNull(),
+    )
+  })
+
+  test("enregistrer relit ce que le serveur a vraiment écrit", async () => {
+    const { atelier, cadre, appels } = await ouvrirLAtelier()
+    pousserDUnPixel(cadre)
+    await atelier.findByText(/des corrections attendent/)
+
+    fireEvent.click(atelier.getByRole("button", { name: "Enregistrer ›" }))
+
+    await waitFor(() =>
+      expect(atelier.queryByText(/des corrections attendent/)).toBeNull(),
+    )
+    const surLaBande = appels.filter((a) => a.url === "/api/strips/bande-marche")
+    expect(surLaBande.some((a) => Boolean(a.corps))).toBe(true)
+    // **Une relecture derrière l'écriture** : on repart de ce que le serveur a
+    // écrit, pas de ce qu'on croyait envoyer — la poussée est bornée là-bas, et
+    // une correction poussée hors de la case revient corrigée.
+    expect(surLaBande.filter((a) => !a.corps).length).toBeGreaterThan(1)
+  })
+
+  test("la pelure d'oignon est éteinte au départ", async () => {
+    // Allumée d'office, elle ferait croire à un défaut de rendu sur la première
+    // ouverture : on verrait deux personnages là où il n'y en a qu'un.
+    const { atelier, cadre } = await ouvrirLAtelier()
+
+    const champ = (await atelier.findByLabelText(
+      /L'image d'avant, en transparence, en chiffres/,
+    )) as HTMLInputElement
+    expect(champ.value).toBe("0 %")
+    expect(cadre.querySelector("[data-pelure]")).toBeNull()
+  })
+
+  test("le lecteur s'arrête dès qu'on touche une image", async () => {
+    // Une animation qui continuerait de tourner pendant qu'on corrige une pose
+    // rendrait la correction invisible : on ne verrait jamais l'image visée.
+    const { atelier, cadre } = await ouvrirLAtelier()
+    fireEvent.click(
+      atelier.getByRole("button", { name: "faire tourner l'animation" }),
+    )
+
+    pousserDUnPixel(cadre)
+
+    expect(
+      await atelier.findByRole("button", { name: "faire tourner l'animation" }),
+    ).toBeTruthy()
+  })
+
+  test("les neuf points d'ancrage sont là, et un seul est pris", async () => {
+    const { atelier } = await ouvrirLAtelier()
+
+    const points = await atelier.findAllByRole("radio")
+    expect(points).toHaveLength(9)
+    expect(
+      points.filter((p) => p.getAttribute("aria-checked") === "true"),
+    ).toHaveLength(1)
+  })
+
+  test("une fenêtre mesurée avec un autre détourage se dit d'avant", async () => {
+    // *Elle n'est pas fausse, elle est d'avant* — et c'est cette nuance-là qui
+    // décide de qui paie les vingt secondes de la remesure.
+    const { atelier, cadre } = await ouvrirLAtelier()
+    expect(cadre.querySelector("[data-fenetre-davant]")).toBeNull()
+
+    const tolerance = await atelier.findByLabelText(
+      /Détourage, tolérance, en chiffres/,
+    )
+    fireEvent.change(tolerance, { target: { value: "42" } })
+    fireEvent.keyDown(tolerance, { key: "Enter" })
+    fireEvent.click(await atelier.findByRole("button", { name: "Enregistrer ›" }))
+
+    await waitFor(() =>
+      expect(cadre.querySelector("[data-fenetre-davant]")).toBeTruthy(),
+    )
+  })
+
+  test("reprendre la fenêtre est fermé tant que des corrections attendent", async () => {
+    // **Le seul geste de cet écran qui écrit sans passer par « Enregistrer ».**
+    // Mesurer avec la recette du disque puis écrire par-dessus des réglages en
+    // cours laisserait la bande à moitié neuve — ce que le critère interdit.
+    const { atelier, cadre } = await ouvrirLAtelier()
+    const bouton = await atelier.findByRole("button", {
+      name: "Reprendre la fenêtre",
+    })
+    expect(bouton.hasAttribute("disabled")).toBe(false)
+
+    pousserDUnPixel(cadre)
+
+    await waitFor(() => expect(bouton.hasAttribute("disabled")).toBe(true))
+    expect(await atelier.findByText(/Enregistrez d'abord/)).toBeTruthy()
+  })
+
+  test("reprendre la fenêtre refait le rectangle et la planche d'un seul geste", async () => {
+    const { atelier, appels } = await ouvrirLAtelier()
+
+    fireEvent.click(
+      await atelier.findByRole("button", { name: "Reprendre la fenêtre" }),
+    )
+
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/strips/bande-marche/frame")).toBe(
+        true,
+      ),
+    )
+    // La relecture qui suit est ce qui empêche l'écran de montrer un rectangle
+    // neuf sur des pixels d'avant.
+    await waitFor(() =>
+      expect(
+        appels.filter((a) => a.url === "/api/strips/bande-marche" && !a.corps)
+          .length,
+      ).toBeGreaterThan(1),
+    )
+  })
+
+  test("rien de cet écran ne commande de clip", async () => {
+    // *Rien ici ne dépense* — le dernier critère, compté plutôt que supposé.
+    const { atelier, cadre, appels } = await ouvrirLAtelier()
+    pousserDUnPixel(cadre)
+    fireEvent.click(await atelier.findByRole("button", { name: "Enregistrer ›" }))
+
+    await waitFor(() =>
+      expect(atelier.queryByText(/des corrections attendent/)).toBeNull(),
+    )
+    expect(appels.some((a) => a.url === "/api/clips" && Boolean(a.corps))).toBe(
+      false,
+    )
+    expect(
+      appels.some((a) => a.url === "/api/generations" && Boolean(a.corps)),
+    ).toBe(false)
   })
 })

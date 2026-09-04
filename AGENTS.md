@@ -114,6 +114,22 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
    rallume est revenu sur ses pas.* Avant de fabriquer un banc, écrire **en une phrase et sans
    chiffre ce que la mesure sépare de quoi** — et si le banc reste muet, suspecter la mesure
    avant le sujet, et le sujet avant le code.
+8septies. **Un objet qu'on sait écrire et qu'on ne sait pas relire n'est pas fini.** Payé sur
+   `A7`, et trouvé par l'auteur à l'usage — pas par un essai. Le produit gardait une animation
+   avec tous ses réglages et **ne savait pas la rouvrir** : l'écran repartait des réglages du
+   jeu, et corriger une virgule demandait de tout refaire de mémoire. ⚠️ **Aucun essai ne pouvait
+   le voir, et c'est leur forme qui l'expliquait** : ils gardaient puis vérifiaient la réponse du
+   `POST`, c'est-à-dire ce qu'ils venaient d'envoyer. Pour tout objet que le produit garde, un
+   essai le **referme et le rouvre**, et il garde avec des réglages qui ne sont pas ceux du
+   défaut — sinon la relecture passe par accident.
+8octies. **Un essai d'écran qui met les choses au calme avant d'agir supprime le défaut qu'il
+   cherche.** Payé sur `A7` aussi, et vu au navigateur. L'atelier d'une animation s'ouvre en
+   jouant ; les essais commençaient donc par arrêter le lecteur, pour pouvoir lire l'écran — or
+   **arrêté, le défaut ne peut pas se produire**. Le vrai geste arrive pendant que ça tourne.
+   Quand un essai neutralise un état pour observer, se demander si le défaut vit dans l'état
+   neutralisé, et en écrire un qui le laisse en marche — **ralenti plutôt qu'arrêté**. Et
+   vérifier qu'il tombe **en défaisant le correctif** : un essai écrit après coup passe souvent
+   des deux côtés.
 
 8. **Une planche coûte le prix d'un appel, quel que soit ce qu'elle porte.** Mesuré le 31 août
    2026 sur trois appels payés : trois cases et six cases ont coûté exactement le même prix, et

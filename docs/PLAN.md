@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée devient une planche de sprites, son fichier d'accompagnement dans le format que les moteurs lisent, et une image qui tourne toute seule — jusque-là, une bande ne servait qu'à être regardée dans l'atelier. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande, et l'écran dit enfin ce qui bouge entre deux images — c'est la première mesure du produit qui regarde deux images ensemble. La tranche qui reste — `A7` — est libre | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée devient une planche de sprites, son fichier d'accompagnement dans le format que les moteurs lisent, et une image qui tourne toute seule — jusque-là, une bande ne servait qu'à être regardée dans l'atelier. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande, et l'écran dit enfin ce qui bouge entre deux images — c'est la première mesure du produit qui regarde deux images ensemble. **`A7` ferme la version, et son vrai sujet n'était pas dans son plan** : une animation gardée ne se rouvrait par aucun chemin — la vignette remontait au clip, donc l'écran repartait des réglages du jeu et corriger une virgule demandait de tout refaire de mémoire. Elle apporte l'écran qui manquait, *l'atelier d'une animation*, et les gestes du plan par-dessus : la pelure d'oignon, la poussée au pixel, les neuf ancrages, une image prise dans un autre clip. **La version est close** | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -260,6 +260,7 @@ V3    A6  le mouvement, dit une fois pour toutes
        ├──► A5   le contour qui ne bout pas       (D2 l'attendait, elle est close)
        │         ← close le 4 septembre 2026
        └──► A7   reprendre une image sans refaire la bande
+                 ← close le 5 septembre 2026 — la dernière de la version
 
       A0  clos le 2 septembre 2026 — son verdict est plus haut
 
@@ -3632,13 +3633,43 @@ grille juste* — et elle est close le 3 septembre 2026.)*
 
 ---
 
-### A7 · Reprendre une image sans refaire la bande
+### A7 · Reprendre une image sans refaire la bande — ✅ **livrée le 5 septembre 2026**
 *6 US (384, 396–400)* · **rétrécie le 3 septembre 2026 : choisir les images, c'est `A10`**
+· **la tranche dont le vrai sujet n'était pas dans son plan**
 
 **Ce qu'on livre.** Les trois gestes qui manquent à l'écran de montage une fois la bande gardée :
 voir l'image précédente en transparence sous celle qu'on corrige, pousser une image au pixel dans
 sa fenêtre, et ancrer la bande par l'un de ses neuf points pour que le personnage tienne au sol
 plutôt qu'au cadre. **Et remplacer une image par une autre — du même clip, ou d'un autre.**
+
+> ### ⚠️ Le vrai sujet de la tranche, et il n'était pas écrit ici
+>
+> Le produit savait garder une animation avec tous ses réglages — le cadre, la recette, la
+> vitesse, le sens, ses images — et **ne savait pas la rouvrir**. La vignette de la matrice
+> remontait au *clip* : l'écran repartait donc des réglages du jeu, et corriger une virgule
+> demandait de tout refaire de mémoire. Trouvé par l'auteur à l'usage le 4 septembre 2026, dans
+> les heures qui ont suivi la livraison d'`A4`.
+>
+> **Aucun essai ne pouvait le voir**, et c'est la leçon à garder : ils gardaient une bande puis
+> vérifiaient ce qu'ils venaient d'écrire. Personne ne la rouvrait. *Un objet qu'on sait écrire
+> et qu'on ne sait pas relire n'est pas fini* — et l'essai qui le dit est celui qui **referme
+> l'écran avant de regarder**.
+>
+> Les trois gestes du plan supposaient tous cet écran-là. Il fallait donc le bâtir avant eux, et
+> il porte leur nom : **l'atelier d'une animation**, ouvert par la vignette de la matrice.
+
+**L'écran, et pourquoi il n'est pas le montage.** Le montage *taille un clip en animations* : on y
+choisit des images sur une pellicule. Celui-ci *retravaille une animation gardée* : on y corrige
+une image à la fois. Deux écrans parce que ce sont deux moments — on ne taille pas et on ne corrige
+pas avec la même main. La grammaire est celle des tables : le réglage à gauche, la chose en grand
+au milieu, ses voisines à droite. Ici les voisines sont **les images de l'animation**, et le
+lecteur — jouer, arrêter, la vitesse — est sous elles.
+
+> **Un second défaut, trouvé au navigateur celui-là.** L'animation tourne à l'ouverture. La
+> première flèche arrive donc pendant que les images défilent — et elle poussait la *première*
+> image de la bande, celle que l'auteur ne regardait pas. Les essais d'écran ne pouvaient pas le
+> voir non plus : ils arrêtaient le lecteur avant de corriger, et l'image regardée était alors
+> déjà l'image choisie. **On corrige l'image qu'on regarde**, et il a fallu l'écrire exprès.
 
 > **Ce que la refonte lui a retiré, et il faut le dire.** Cette tranche promettait de *remplacer
 > une image par un nouveau tirage*, et son économie était celle de la planche : *« on repaie une
@@ -3653,16 +3684,33 @@ clip vient chaque image**, comme une image dit de quel clip elle vient.
 
 **Critères d'acceptation**
 
-- [ ] L'image précédente s'affiche en transparence sous l'image courante, et l'intensité se règle
-- [ ] Une image se déplace au pixel, au clavier comme à la souris
-- [ ] Une image se remplace par une autre du même clip, **ou d'un autre clip**, sans quitter l'écran
-- [ ] Une bande composée de plusieurs clips dit **de quel clip vient chaque image**
-- [ ] La fenêtre commune se recalcule à chaque changement, et jamais à moitié
-- [ ] L'ancrage se choisit parmi neuf points, et la bande entière le respecte
-- [ ] Chaque correction est annulable, et la bande d'origine reste lisible
-- [ ] Rien ici ne dépense
+- [x] L'image précédente s'affiche en transparence sous l'image courante, et l'intensité se règle
+- [x] Une image se déplace au pixel, au clavier comme à la souris
+- [x] Une image se remplace par une autre du même clip, **ou d'un autre clip**, sans quitter l'écran
+- [x] Une bande composée de plusieurs clips dit **de quel clip vient chaque image**
+- [x] La fenêtre commune se recalcule à chaque changement, et jamais à moitié
+- [x] L'ancrage se choisit parmi neuf points, et la bande entière le respecte
+- [x] Chaque correction est annulable, et la bande d'origine reste lisible
+- [x] Rien ici ne dépense
 
-**Bloquée par** — `A10`.
+**Ce que « jamais à moitié » a voulu dire, une fois écrit.** Le rectangle et la planche sont refaits
+dans le même geste — la bande ne passe jamais par un état où l'un est neuf et l'autre d'avant. Et
+la fenêtre d'une animation se remesure **sur ses images à elle**, pas sur celles d'un clip : depuis
+cette tranche une bande peut puiser dans deux clips, et elle n'a alors de fenêtre dans ni l'un ni
+l'autre. Prendre celle du clip principal recadrerait les images empruntées sur un rectangle mesuré
+sans elles, et ce qui dépasse ne se verrait pas dans l'atelier — il se verrait dans le jeu.
+
+**Ce qui n'est pas automatique, et pourquoi.** Reprendre la fenêtre coûte une vingtaine de secondes,
+donc c'est un bouton. Une fenêtre mesurée avec un autre détourage n'est pas fausse : elle est
+*d'avant*, l'écran le dit dans ces mots-là, et personne ne paie les vingt secondes sans raison.
+
+**Ce qui n'a demandé aucune migration.** Une bande gardée avant la tranche portait des numéros
+d'image ; elle en porte maintenant des *prises* — un numéro, un clip, un décalage. Une prise dont
+le clip est vide veut dire « le clip de la bande », et la relecture accepte un entier aussi bien
+qu'un objet. Les bandes d'`A10` se rouvrent donc telles quelles, et se réécrivent dans la forme
+neuve sans que rien n'ait à passer dessus.
+
+**Bloquée par** — `A10`. **Elle ne bloque rien** : c'est la dernière tranche de la version.
 
 ---
 

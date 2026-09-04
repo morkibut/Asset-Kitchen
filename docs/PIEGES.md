@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent soixante-quatre pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent soixante-neuf pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1419,3 +1419,57 @@ la prochaine réécriture retrouvera.
   La règle : **avant de fabriquer un sujet d'essai, écrire ce que les deux chaînes font
   différemment, et vérifier que le sujet contient ce cas-là.** Un rectangle propre est le pire
   sujet possible pour juger d'une réduction. Payé le 4 septembre 2026.
+
+- **Un objet qu'on sait écrire et qu'on ne sait pas relire n'est pas fini.** Le produit gardait une
+  animation avec tous ses réglages — cadre, recette, vitesse, sens, images — et **ne savait pas la
+  rouvrir** : la vignette remontait au clip, donc l'écran repartait des réglages du jeu et corriger
+  une virgule demandait de tout refaire de mémoire. ⚠️ **Aucun des essais ne pouvait le voir, et
+  c'est leur forme qui l'expliquait** : ils gardaient une bande puis vérifiaient la réponse du
+  `POST` — ce qu'ils venaient d'envoyer. Personne ne relisait. La règle : **pour tout objet que le
+  produit garde, un essai le referme et le rouvre**, et il vérifie que ce qui revient est ce qu'on
+  y avait mis — pas ce que le défaut du système dirait. Le repère qui rend l'essai probant :
+  **garder avec des réglages qui ne sont pas ceux du défaut**, sinon la relecture passe par
+  accident. Trouvé par l'auteur à l'usage le 4 septembre 2026, quelques heures après la livraison
+  de la tranche voisine.
+
+
+- **Un essai d'écran qui « met les choses au calme » avant d'agir supprime le défaut qu'il cherche.**
+  L'atelier d'une animation s'ouvre en jouant. Les essais commençaient donc par arrêter le lecteur,
+  parce qu'une image qui change onze fois par seconde rend la suite illisible — et **arrêté, le
+  défaut ne peut pas se produire** : l'image regardée est déjà l'image choisie. Le vrai geste, lui,
+  arrive pendant que ça tourne, et il poussait la première image de la bande au lieu de celle qu'on
+  regardait. ⚠️ Le défaut a été vu **au navigateur**, jamais par un essai. La règle : **quand
+  l'essai neutralise un état pour pouvoir observer, se demander si le défaut vit dans l'état
+  neutralisé** — et en écrire un qui le laisse en marche, ralenti plutôt qu'arrêté. Et vérifier
+  qu'il tombe **en défaisant le correctif** : un essai écrit après coup passe souvent des deux
+  côtés. Payé le 5 septembre 2026.
+
+
+- **Une fenêtre commune mesurée sur un clip ne couvre pas une bande qui puise dans deux.** Dès
+  qu'une animation peut prendre une image ailleurs, elle n'a de fenêtre **dans ni l'un ni l'autre**
+  clip. Recadrer les images empruntées sur le rectangle du clip principal les rogne d'un côté — et
+  **ce qui dépasse ne se voit pas dans l'atelier, il se voit dans le jeu**, des semaines plus tard.
+  La règle : **une mesure d'ensemble se reprend sur l'ensemble qu'elle décrit, pas sur celui qui
+  l'a fournie** ; quand la composition d'un objet s'élargit, relire chaque mesure qui portait sur
+  l'ancien périmètre. Payé le 5 septembre 2026.
+
+
+- **Une valeur périmée n'est pas une valeur fausse, et l'écran ne doit pas les traiter pareil.** La
+  fenêtre commune d'une animation reste juste tant que le détourage ne change pas ; après, elle est
+  *d'avant*. La remesurer coûte une vingtaine de secondes. Les deux réflexes sont mauvais :
+  recalculer d'office fait payer les vingt secondes à chaque cran de curseur, et donner la valeur
+  pour à jour laisse dépasser un bras sans rien dire. La règle : **garder l'empreinte des réglages
+  avec la mesure**, et faire dire à l'écran *« mesurée avec un autre détourage »* plutôt que de
+  choisir à la place de l'auteur. Le mot compte : « d'avant », pas « fausse ». Payé le 5 septembre
+  2026.
+
+
+- **Deux champs qui disent la même chose finissent par ne plus la dire.** Une bande portait
+  `images` (des numéros) et devait porter `prises` (numéro, clip, décalage). Les garder tous les
+  deux aurait demandé de les tenir d'accord à chaque écriture — et c'est l'auteur qui aurait
+  découvert l'écart, dans une animation exportée. La règle : **le second est une propriété dérivée
+  du premier, jamais un champ**. Il s'écrit quand même dans le JSON, parce que les écrans le lisent
+  et qu'un format ne se réécrit pas pour une commodité interne. Corollaire de relecture, qui a
+  évité toute migration : **une forme neuve accepte l'ancienne à la lecture** — un entier vaut une
+  prise sans décalage — et **un champ vide veut dire « celui de l'objet qui me porte »**, ici le
+  clip de la bande. Payé le 5 septembre 2026.

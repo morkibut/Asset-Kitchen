@@ -197,6 +197,7 @@ export function EcranEtabli({
   barreQuiPaie,
   onOuvrirCase,
   onMonterLaBande,
+  onOuvrirLaBande,
   onSuperposition,
   onSupprimer,
   outil,
@@ -278,6 +279,10 @@ export function EcranEtabli({
    *  montage d'un clip vit dans la galerie, et cet écran-ci n'a pas à savoir
    *  qu'il existe des onglets. Il désigne un clip ; `App` décide où l'ouvrir. */
   onMonterLaBande: (clip: string) => void
+  /** **Retravailler une animation gardée** (A7) — l'autre porte de la
+   *  vignette : celle-ci rouvre ce qui est gardé, `onMonterLaBande`
+   *  retourne à la matière qui l'a fourni. */
+  onOuvrirLaBande: (bande: string) => void
   /** **Refaire le calage d'un vêtement à la main** (G16) : ouvre l'image dans
    *  les tables, sur la superposition. Deux gestes en un, et c'est pour ça
    *  qu'il vit dans le châssis plutôt qu'ici — la table ouverte est un état de
@@ -455,6 +460,7 @@ export function EcranEtabli({
           onCalque={setCalque}
           onOuvrirCase={onOuvrirCase}
           onMonterLaBande={onMonterLaBande}
+          onOuvrirLaBande={onOuvrirLaBande}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
           onAnimer={onAnimer}
@@ -1008,6 +1014,7 @@ function Fiche({
   onCalque,
   onOuvrirCase,
   onMonterLaBande,
+  onOuvrirLaBande,
   onPersonnage,
   onArmer,
   onAnimer,
@@ -1054,6 +1061,10 @@ function Fiche({
   /** **Remonter d'une case animée jusqu'à son clip** (A12). Portée par la fiche
    *  pour la même raison que la planche : c'est sa matrice qui la déclenche. */
   onMonterLaBande: (clip: string) => void
+  /** **Retravailler une animation gardée** (A7) — l'autre porte de la
+   *  vignette : celle-ci rouvre ce qui est gardé, `onMonterLaBande`
+   *  retourne à la matière qui l'a fourni. */
+  onOuvrirLaBande: (bande: string) => void
   /** **Ouvrir la planche d'une pose** (E13). Portée par la fiche parce que
    *  c'est sa matrice qui la déclenche, ligne par ligne. */
   onPlanche: (pose: string) => void
@@ -1122,6 +1133,7 @@ function Fiche({
           onCalque={onCalque}
           onOuvrirCase={onOuvrirCase}
           onMonterLaBande={onMonterLaBande}
+          onOuvrirLaBande={onOuvrirLaBande}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
           onAnimer={onAnimer}
@@ -1607,6 +1619,7 @@ function Cases({
   onCalque,
   onOuvrirCase,
   onMonterLaBande,
+  onOuvrirLaBande,
   onPersonnage,
   onArmer,
   onAnimer,
@@ -1644,6 +1657,10 @@ function Cases({
    *  montage : ce geste y ramène, et la matrice n'a pas à savoir que cet écran
    *  vit dans la galerie — c'est `App` qui l'ouvre. */
   onMonterLaBande: (clip: string) => void
+  /** **Retravailler une animation gardée** (A7) — l'autre porte de la
+   *  vignette : celle-ci rouvre ce qui est gardé, `onMonterLaBande`
+   *  retourne à la matière qui l'a fourni. */
+  onOuvrirLaBande: (bande: string) => void
   /** **Ouvrir la planche d'une pose** (E13) — voir ce qu'on achète avant de
    *  payer. Une ligne de la matrice y mène, et c'est la porte que la maquette
    *  décrit : on y entre en cliquant une pose, on en sort par Échap. */
@@ -1968,6 +1985,7 @@ function Cases({
                 onAnimer(personnage, pose, { identifiant: direction, nom })
               }
               onMonter={onMonterLaBande}
+              onOuvrir={onOuvrirLaBande}
               onDetacher={(bande) => void detacher(bande)}
             />
           ))}
@@ -2664,6 +2682,7 @@ function LigneAnimee({
   onAnimer,
   onAnimerDirection,
   onMonter,
+  onOuvrir,
   onDetacher,
 }: {
   pose: Pose
@@ -2674,6 +2693,7 @@ function LigneAnimee({
   onAnimerDirection: (direction: string, nom: string) => void
   /** Remonter jusqu'au clip dont cette bande est tirée. */
   onMonter: (clip: string) => void
+  onOuvrir: (bande: string) => void
   /** Retirer la bande de sa case — **sans perdre ni la bande, ni le clip**. */
   onDetacher: (bande: string) => void
 }) {
@@ -2717,6 +2737,7 @@ function LigneAnimee({
                   bande={bande}
                   pose={pose.nom}
                   onMonter={onMonter}
+                  onOuvrir={onOuvrir}
                   onDetacher={onDetacher}
                 />
               ))}
@@ -2770,6 +2791,7 @@ function LigneAnimee({
               angle={angle}
               onAnimer={() => onAnimerDirection(angle.identifiant, angle.nom)}
               onMonter={onMonter}
+              onOuvrir={onOuvrir}
               onDetacher={onDetacher}
             />
           ))}
@@ -2789,12 +2811,14 @@ function SousLigneAnimee({
   angle,
   onAnimer,
   onMonter,
+  onOuvrir,
   onDetacher,
 }: {
   pose: Pose
   angle: CaseDirection
   onAnimer: () => void
   onMonter: (clip: string) => void
+  onOuvrir: (bande: string) => void
   onDetacher: (bande: string) => void
 }) {
   // **Une seule bande remplit une case**, quel que soit le nombre d'images de
@@ -2814,6 +2838,7 @@ function SousLigneAnimee({
             bande={bande}
             pose={`${pose.nom} — ${angle.nom}`}
             onMonter={onMonter}
+            onOuvrir={onOuvrir}
             onDetacher={onDetacher}
           />
         ))}
@@ -2861,20 +2886,37 @@ function VignetteDeBande({
   bande,
   pose,
   onMonter,
+  onOuvrir,
   onDetacher,
 }: {
   bande: Bande
   pose: string
   onMonter: (clip: string) => void
+  /** **Retravailler l'animation elle-même** (A7). */
+  onOuvrir: (bande: string) => void
   onDetacher: (bande: string) => void
 }) {
   return (
     <span className="group relative flex flex-col items-center gap-0.5">
-      <BandeQuiTourne
-        bande={bande}
-        cote={44}
-        titre={`${bande.nom} — ${bande.compte} images, ${bande.cadence} par seconde`}
-      />
+      {/* **La vignette ouvre l'animation, son nom remonte au clip** (A7).
+          Deux portes, et elles ne mènent pas au même endroit : l'une
+          retravaille ce qui est gardé, l'autre retourne à la matière qui l'a
+          fournie. ⚠️ Avant `A7` il n'y avait que la seconde, et c'était le
+          défaut — une animation gardée ne se rouvrait par aucun chemin, si bien
+          que corriger une virgule demandait de tout refaire de mémoire. */}
+      <button
+        type="button"
+        onClick={() => onOuvrir(bande.identifiant)}
+        aria-label={`Retravailler l'animation ${bande.nom}`}
+        title="ouvre son atelier — ses images une par une, avec tous ses réglages"
+        className="border border-transparent hover:border-signal"
+      >
+        <BandeQuiTourne
+          bande={bande}
+          cote={44}
+          titre={`${bande.nom} — ${bande.compte} images, ${bande.cadence} par seconde`}
+        />
+      </button>
       <button
         type="button"
         onClick={() => onMonter(bande.clip)}

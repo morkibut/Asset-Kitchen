@@ -67,7 +67,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from PIL import Image  # noqa: E402
 
 from atelier.api.app import creer_application  # noqa: E402
-from atelier.domaine.bande import Bande, Cadre  # noqa: E402
+from atelier.domaine.bande import Bande, Cadre, Prise  # noqa: E402
 from atelier.services import Atelier  # noqa: E402
 from conftest import FournisseurDouble, image_sujet  # noqa: E402
 from test_a9 import MELE, AnimateurDouble  # noqa: E402
@@ -147,7 +147,7 @@ def _une_bande(
         identifiant=identifiant,
         clip=clip,
         nom=nom,
-        images=tuple(range(IMAGES)),
+        prises=tuple(Prise(numero=n) for n in range(IMAGES)),
         cadence=4.0,
         # Nommés : le premier champ d'un cadre est *d'où il vient*, pas son
         # bord gauche (vu en `A4`).

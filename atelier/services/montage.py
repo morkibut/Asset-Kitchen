@@ -44,9 +44,11 @@ from atelier.domaine.bande import (
     BOUCLE,
     CADENCE_PAR_DEFAUT,
     DE_LA_BANDE,
+    DU_CLIP,
     SENS,
     Bande,
     Cadre,
+    Prise,
 )
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.generation import Generation
@@ -55,6 +57,7 @@ from atelier.domaine.recette import Recette
 from atelier.image import clip as decodeur
 from atelier.image.bande import (
     Fenetre,
+    Planche,
     assembler,
     en_png,
     fenetre_commune,
@@ -256,8 +259,14 @@ class ServiceMontage:
         images: Sequence[int],
         recette: Recette | None = None,
         cadre: Cadre | None = None,
+        prises: Sequence[Prise] | None = None,
     ) -> dict[str, Any]:
         """La bande montée, **sans rien écrire** : ce que la droite de l'écran montre.
+
+        `prises` passe avant `images` depuis `A7` : c'est la forme riche, celle
+        qui sait d'où vient chaque image et de combien elle est poussée. Les deux
+        cohabitent parce que l'écran de montage, lui, ne connaît que des numéros
+        — il taille dans un seul clip et ne corrige rien.
 
         Elle repart en `data:` plutôt que par une adresse, pour la raison déjà
         écrite de l'aperçu de superposition : un aperçu n'existe nulle part sur
@@ -272,13 +281,23 @@ class ServiceMontage:
         generation = self._clip(identifiant)
         recette = recette if recette is not None else self.recette_du_jeu(generation)
         cadre = cadre or Cadre()
-        retenues = self._retenues(identifiant, images)
+        gardees = (
+            list(prises)
+            if prises is not None
+            else [Prise(numero=int(n)) for n in images]
+        )
+        retenues = self._fichiers_des_prises(identifiant, gardees)
 
         preparees = [
             preparer(fichier.read_bytes(), recette) for fichier in retenues
         ]
         fenetre = self._fenetre(generation, recette, cadre, preparees)
-        planche = assembler(preparees, recette, fenetre)
+        planche = assembler(
+            preparees,
+            recette,
+            fenetre,
+            poussees=[(p.dx, p.dy) for p in gardees],
+        )
 
         return {
             "planche": "data:image/png;base64,"
@@ -362,7 +381,10 @@ class ServiceMontage:
             identifiant=uuid.uuid4().hex[:12],
             clip=identifiant,
             nom=propre,
-            images=tuple(int(n) for n in images),
+            # Toutes du clip qu'on découpe, et aucune poussée : c'est le geste
+            # d'`A10`, inchangé. Ce qu'`A7` ajoute se pose **après**, sur la
+            # bande gardée, et jamais au moment où on la taille.
+            prises=tuple(Prise(numero=int(n)) for n in images),
             cadence=float(cadence),
             sens=sens,
             cadre=self._cadre_pose(cadre, fenetre),
@@ -499,16 +521,7 @@ class ServiceMontage:
         bande = self.bande(identifiant)
         if bande.planche and self._fichiers.existe(bande.planche):
             return self._fichiers.lire(bande.planche)
-        retenues = self._retenues(bande.clip, bande.images)
-        preparees = [
-            preparer(fichier.read_bytes(), bande.recette) for fichier in retenues
-        ]
-        fenetre = (
-            None
-            if bande.cadre.vide
-            else Fenetre(*bande.cadre.en_tuple(), images=len(bande.images))
-        )
-        planche = assembler(preparees, bande.recette, fenetre)
+        planche = self._planche_de(bande)
         bande.planche = self._fichiers.ecrire_planche_de_bande(
             bande.clip, identifiant, planche.octets
         )
@@ -516,6 +529,240 @@ class ServiceMontage:
         bande.case_hauteur = planche.case_hauteur
         self._sauver(bande)
         return planche.octets
+
+    def _planche_de(self, bande: Bande) -> Planche:
+        """La planche d'une bande gardée, **refaite à partir de sa seule fiche**.
+
+        Un seul endroit, parce qu'`A7` en a désormais trois usages : rebâtir un
+        cache effacé, rouvrir une animation, et rejouer une correction. Trois
+        écritures de la même chaîne finiraient par ne plus rendre les mêmes
+        pixels, et c'est l'auteur qui découvrirait l'écart entre ce qu'il corrige
+        et ce qu'il exporte.
+        """
+        retenues = self._fichiers_des_prises(bande.clip, bande.prises)
+        preparees = [
+            preparer(fichier.read_bytes(), bande.recette) for fichier in retenues
+        ]
+        fenetre = (
+            None
+            if bande.cadre.vide
+            else Fenetre(*bande.cadre.en_tuple(), images=bande.compte)
+        )
+        return assembler(
+            preparees,
+            bande.recette,
+            fenetre,
+            poussees=[(p.dx, p.dy) for p in bande.prises],
+        )
+
+    # ── Rouvrir et corriger une animation gardée (A7) ────────────────────────
+
+    def ouvrir_la_bande(self, identifiant: str) -> dict[str, Any]:
+        """Tout ce qu'il faut pour **retravailler** une animation déjà gardée.
+
+        > ### ⚠️ Une animation gardée était un cul-de-sac (réparé ici, `A7`)
+        >
+        > Le produit savait garder une bande avec tous ses réglages — le cadre,
+        > la recette, la vitesse, le sens, ses images — et **ne savait pas la
+        > rouvrir**. La vignette de la matrice remontait au *clip*, donc l'écran
+        > repartait des réglages du jeu : corriger une virgule demandait de tout
+        > refaire de mémoire. Trouvé à l'usage par l'auteur le 4 septembre 2026,
+        > et c'est le préalable de toute la tranche — on ne reprend pas une image
+        > d'une bande qu'on ne sait pas ouvrir.
+        >
+        > Ce que ça dit de plus général : **un objet qu'on sait écrire et pas
+        > relire n'est pas fini**, et l'essai qui l'aurait vu est celui qui garde
+        > puis rouvre, jamais celui qui garde et vérifie ce qu'il vient d'écrire.
+
+        Elle rend la bande **et sa planche en `data:`**, pour la même raison que
+        l'aperçu du montage : un écran qui s'ouvre en tournant déjà n'a pas le
+        temps de poser deux questions.
+        """
+        bande = self.bande(identifiant)
+        octets = self.planche(identifiant)
+        clips = {
+            venue: self._clip(venue).en_json()
+            for venue in bande.clips
+            if self._base.lire(venue) is not None
+        }
+        return {
+            "bande": bande.en_json(),
+            "planche": "data:image/png;base64,"
+            + base64.b64encode(octets).decode("ascii"),
+            "clips": clips,
+            # Combien d'images chaque clip porte : c'est ce qui borne le choix
+            # quand on remplace une image, et l'écran ne peut pas le deviner.
+            "images_par_clip": {
+                venue: len(self._images(venue)) for venue in clips
+            },
+            "cadre": self._etat_du_cadre(bande),
+            "clips_voisins": self._clips_voisins(bande),
+        }
+
+    def _clips_voisins(self, bande: Bande) -> list[dict[str, Any]]:
+        """Les clips où cette animation a le droit d'aller chercher une image.
+
+        **Ceux du même personnage, et rien de plus large.** Le geste que la
+        tranche rend possible est précis : *deux clips sont chacun bons à moitié,
+        on prend une image dans l'un et une dans l'autre*. Deux clips du même
+        personnage ont la même silhouette, donc leurs images se montent ensemble ;
+        le clip d'un autre personnage donnerait une animation où le sujet change
+        au milieu, et l'offrir serait tendre un piège.
+
+        Ils partent avec l'animation plutôt qu'à la demande, pour la raison déjà
+        écrite au-dessus : un écran qui s'ouvre en tournant déjà n'a pas le temps
+        de poser deux questions.
+        """
+        siens = set(bande.clips)
+        voisins: list[dict[str, Any]] = []
+        for generation in self._base.recentes(200):
+            clip = generation.clip
+            if clip is None or clip.jete or not clip.images:
+                continue
+            sien = generation.identifiant in siens
+            if not sien and generation.personnage != bande.personnage:
+                continue
+            voisins.append(
+                {
+                    "identifiant": generation.identifiant,
+                    "mouvement": str(generation.demande.get("mouvement") or ""),
+                    "images": clip.images,
+                    # Ce que l'écran met en tête de sa liste. Le calculer ici
+                    # plutôt qu'à l'écran : « les clips de cette animation » est
+                    # une notion du serveur, et deux définitions divergeraient.
+                    "sien": sien,
+                }
+            )
+        return voisins
+
+    def _etat_du_cadre(self, bande: Bande) -> dict[str, Any]:
+        """Ce que l'écran doit savoir dire de la fenêtre gardée — **et rien de plus**.
+
+        Une fenêtre mesurée avec un autre détourage n'est pas fausse : elle est
+        *d'avant*. La différence compte, parce que la reprendre coûte une
+        vingtaine de secondes et que personne ne doit les payer sans raison.
+
+        Trois cas, et ils ne se traitent pas pareil :
+
+        - **posée à la main**, ce sont les quatre nombres de l'auteur, et rien ne
+          les périme ;
+        - **prise sur la bande**, elle se remesure sur ses seules images ;
+        - **prise sur le clip**, elle se compare à l'étude du clip — celle-ci
+          porte l'empreinte de la recette avec laquelle elle a été mesurée.
+
+        Une bande à deux clips a besoin des deux études : il suffit qu'**une**
+        soit d'avant pour que la fenêtre le soit.
+        """
+        if bande.cadre.choix == A_LA_MAIN:
+            return {"choix": bande.cadre.choix, "a_jour": True, "mesuree_le": None}
+        empreinte = bande.recette.empreinte()
+        etudes = [self._lire_etude(venue) or {} for venue in bande.clips]
+        dates = [e.get("mesuree_le") for e in etudes if e.get("mesuree_le")]
+        return {
+            "choix": bande.cadre.choix,
+            # Sans étude, on ne sait pas : on ne réclame pas vingt secondes pour
+            # une fenêtre peut-être juste. C'est le même arbitrage que `_fenetre`.
+            "a_jour": all(
+                e.get("empreinte", empreinte) == empreinte for e in etudes
+            ),
+            "mesuree_le": max(dates) if dates else None,
+        }
+
+    def reprendre_le_cadre_de_la_bande(self, identifiant: str) -> Bande:
+        """La fenêtre d'une animation gardée, remesurée **sur ses images à elle**.
+
+        Pas sur celles du clip, et c'est le point de la méthode : depuis `A7`,
+        une bande peut prendre ses images dans deux clips, et elle n'a alors de
+        fenêtre dans ni l'un ni l'autre. Recadrer les images empruntées sur un
+        rectangle mesuré sans elles laisserait dépasser un bras — invisible ici,
+        visible dans le jeu.
+
+        C'est ce que veut dire *jamais à moitié* : le rectangle et la planche
+        sont refaits dans le même geste, et la bande ne passe jamais par un état
+        où l'un est neuf et l'autre d'avant.
+
+        Le cadre posé à la main n'est pas repris — ce sont les quatre nombres de
+        l'auteur, et les remesurer serait les effacer.
+        """
+        bande = self.bande(identifiant)
+        if bande.cadre.choix == A_LA_MAIN:
+            raise ErreurAtelier(
+                "ce cadre a été posé à la main — le remesurer l'effacerait"
+            )
+
+        fenetre: Fenetre | None = None
+        if bande.cadre.choix == DU_CLIP:
+            # « Du clip » veut dire *toutes les bandes de ce clip ont la même
+            # assise* : on remesure donc l'étude, pour que les autres bandes en
+            # profitent, et on réunit les clips que celle-ci emprunte.
+            for venue in bande.clips:
+                etude = self._mesurer(
+                    self._clip(venue), bande.recette, self._images(venue)
+                )
+                self._ecrire_etude(venue, etude)
+                du_clip = Fenetre.depuis_json(etude.get("fenetre"))
+                fenetre = du_clip if fenetre is None else fenetre.avec(du_clip)
+        else:
+            fichiers = self._fichiers_des_prises(bande.clip, bande.prises)
+            preparees = [
+                preparer(fichier.read_bytes(), bande.recette) for fichier in fichiers
+            ]
+            fenetre = fenetre_commune(preparees, bande.recette)
+
+        return self.corriger(
+            identifiant, cadre=self._cadre_pose(bande.cadre, fenetre)
+        )
+
+    def corriger(
+        self,
+        identifiant: str,
+        *,
+        prises: Sequence[Prise] | None = None,
+        recette: Recette | None = None,
+        cadence: float | None = None,
+        sens: str | None = None,
+        cadre: Cadre | None = None,
+    ) -> Bande:
+        """Une correction posée sur une bande gardée — **et rien d'autre ne bouge**.
+
+        Chaque champ vaut *« ne touche pas à ça »* quand il est absent, et c'est
+        ce qui rend le geste annulable au sens du critère : l'écran renvoie l'état
+        d'avant, et la bande y revient exactement, y compris sa planche.
+
+        ⚠️ **La planche est refaite ici, pas invalidée.** L'effacer et attendre
+        que quelqu'un la redemande aurait marché, mais l'écran de la matrice
+        affiche la vignette d'une bande sans passer par le montage : il l'aurait
+        trouvée absente et l'aurait rebâtie lui-même, une fois par vignette.
+        """
+        bande = self.bande(identifiant)
+        if sens is not None and sens not in SENS:
+            raise ErreurAtelier(f"sens inconnu : {sens}")
+        if cadence is not None and cadence <= 0:
+            raise ErreurAtelier("une vitesse se compte en images par seconde")
+
+        if prises is not None:
+            # Le contrôle se fait **avant** d'écrire quoi que ce soit : une
+            # correction refusée doit laisser la bande exactement comme elle
+            # était, planche comprise.
+            self._fichiers_des_prises(bande.clip, prises)
+            bande.prises = tuple(prises)
+        if recette is not None:
+            bande.recette = recette
+        if cadence is not None:
+            bande.cadence = float(cadence)
+        if sens is not None:
+            bande.sens = sens
+        if cadre is not None:
+            bande.cadre = cadre
+
+        planche = self._planche_de(bande)
+        bande.planche = self._fichiers.ecrire_planche_de_bande(
+            bande.clip, bande.identifiant, planche.octets
+        )
+        bande.case_largeur = planche.case_largeur
+        bande.case_hauteur = planche.case_hauteur
+        self._sauver(bande)
+        return bande
 
     # ── Reprendre le cadre sur tout le clip ──────────────────────────────────
 
@@ -771,31 +1018,59 @@ class ServiceMontage:
             return 0, 0
 
     def _retenues(self, clip: str, images: Sequence[int]) -> list[Path]:
-        """Les fichiers des images retenues, **dans l'ordre donné**.
+        """Les fichiers des images retenues d'**un seul** clip, dans l'ordre donné.
 
         L'ordre est celui de l'auteur et non celui du disque : une bande peut
         remonter le temps — un aller-retour écrit à la main —, et trier ici
         casserait le seul geste que la pellicule permet et qu'aucun réglage ne
         remplace.
         """
-        toutes = self._images(clip)
-        if not images:
+        return self._fichiers_des_prises(
+            clip, [Prise(numero=int(n)) for n in images]
+        )
+
+    def _fichiers_des_prises(self, clip: str, prises: Sequence[Prise]) -> list[Path]:
+        """Les fichiers des prises, **chacune allant chercher dans son clip** (A7).
+
+        C'est le seul endroit du produit où une bande cesse d'appartenir à un
+        clip unique, et c'est voulu : composer avec deux clips à moitié bons est
+        le geste qu'`A7` rend possible. Une prise sans clip nommé prend celui de
+        la bande — c'est ce qui fait qu'une bande d'`A10` se relit sans avoir été
+        réécrite.
+
+        ⚠️ **Les images de chaque clip sont listées une fois**, pas une fois par
+        prise : une bande de vingt images sur deux clips ferait sinon vingt
+        parcours de dossier là où deux suffisent, et ça se paierait à chaque
+        frappe de l'auteur sur la correction au pixel.
+        """
+        if not prises:
             raise ErreurAtelier(
                 "une bande garde au moins une image — prenez-en sur la pellicule"
             )
-        if len(images) > IMAGES_MAX:
+        if len(prises) > IMAGES_MAX:
             raise ErreurAtelier(
                 f"une bande porte au plus {IMAGES_MAX} images ; "
-                f"celle-ci en demande {len(images)}"
+                f"celle-ci en demande {len(prises)}"
             )
+
+        connues: dict[str, list[Path]] = {}
         retenues: list[Path] = []
-        for numero in images:
-            if not 0 <= int(numero) < len(toutes):
+        for prise in prises:
+            venue = prise.clip_ou(clip)
+            if venue not in connues:
+                # Un clip nommé par une prise doit exister : sans ce contrôle,
+                # un identifiant mal tapé rendrait une liste vide, et l'erreur
+                # parlerait d'un numéro d'image au lieu du clip introuvable.
+                self._clip(venue)
+                connues[venue] = self._images(venue)
+            toutes = connues[venue]
+            if not 0 <= prise.numero < len(toutes):
+                ou = "ce clip" if venue == clip else f"le clip {venue}"
                 raise ErreurAtelier(
-                    f"ce clip ne porte pas d'image numéro {numero} — "
+                    f"{ou} ne porte pas d'image numéro {prise.numero} — "
                     f"il en a {len(toutes)}"
                 )
-            retenues.append(toutes[int(numero)])
+            retenues.append(toutes[prise.numero])
         return retenues
 
     # ── Le clip lui-même ─────────────────────────────────────────────────────
