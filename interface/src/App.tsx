@@ -3106,9 +3106,17 @@ export function App() {
           matrice pour la raison du montage : les deux ne peuvent pas être
           ouverts ensemble, on ne corrige pas une animation depuis un écran
           qui en montre douze. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && bandeOuverte ? (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && bandeOuverte && etat ? (
         <EcranAtelierDeBande
           identifiant={bandeOuverte}
+          // **Les tables de l'établi, posées sur une frame** (V3.03.1). Elles
+          // ont besoin de ce que l'établi leur donne : la palette du jeu, et ce
+          // que la machine sait faire — quels moteurs de détourage répondent,
+          // quelles réductions sont disponibles. Les deux vivent déjà ici, et
+          // les redemander depuis l'atelier serait un second état de la même
+          // chose, qui finirait par griser autre chose que l'établi.
+          univers={univers}
+          traitement={etat.traitement}
           onFermer={() => setBandeOuverte(null)}
           onErreur={(raison) => setPanne(raison)}
           // La planche a changé sur le disque, et la matrice l'affiche

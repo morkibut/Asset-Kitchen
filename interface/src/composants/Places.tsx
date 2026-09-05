@@ -372,7 +372,13 @@ export function PanneauDetourage({
           silhouettes={traitement.silhouettes ?? []}
           visee={mesures?.visees?.[rang] ?? null}
           enVisee={visee === rang}
-          onViser={(arme: boolean) => onViser?.(arme ? rang : null)}
+          // **L'absence du geste voyage**, elle ne se remplace pas par une
+          // fonction qui ne fait rien : un écran sans image brute — l'atelier
+          // d'une animation — ne peut pas viser, et le bloc doit pouvoir le
+          // dire plutôt qu'offrir un bouton inerte (`AGENTS.md`, 8nonies).
+          onViser={
+            onViser ? (arme: boolean) => onViser(arme ? rang : null) : undefined
+          }
           onChange={(suivante: Passe) =>
             regler({
               ...recette,
@@ -717,7 +723,19 @@ export function PanneauGrille({
   poser,
   mesures,
   traitement,
-}: Reglages) {
+  sansAncrage = false,
+}: Reglages & {
+  /** **Retirer l'ancrage de cette table** (V3.03.1), parce qu'il appartient à
+   *  autre chose là où on s'en sert.
+   *
+   *  Sur un asset, l'ancrage est un réglage de la grille comme un autre. Sur
+   *  une **animation**, il appartient à la bande entière : il décide par où le
+   *  sujet tient dans sa case, et un ancrage par image ferait sauter le
+   *  personnage d'une frame à l'autre. L'atelier d'une animation le rend donc
+   *  avec la vitesse et le sens, et il serait ici une seconde commande du même
+   *  réglage — à une portée différente, ce qui est pire que deux fois la même. */
+  sansAncrage?: boolean
+}) {
   /** **Le curseur ne s'arrête que là où l'image change.** Quatre-vingt-onze
    *  positions pour une trentaine de tailles possibles : deux crans voisins
    *  rendaient la même image, et la main croyait régler quelque chose. */
@@ -799,18 +817,20 @@ export function PanneauGrille({
           texte={`${crans.length} crans changent l'image, sur les ${plafond - 10 + 1} du curseur`}
         />
       )}
-      <Reglage libelle="ancrage" aide="grille.ancrage">
-        <Segments
-          valeurs={["bas", "centre"] as const}
-          valeur={recette.grille?.ancrage ?? "bas"}
-          onChange={(ancrage) =>
-            poser({
-              ...recette,
-              grille: { ...(recette.grille ?? defautGrille()), ancrage },
-            })
-          }
-        />
-      </Reglage>
+      {!sansAncrage && (
+        <Reglage libelle="ancrage" aide="grille.ancrage">
+          <Segments
+            valeurs={["bas", "centre"] as const}
+            valeur={recette.grille?.ancrage ?? "bas"}
+            onChange={(ancrage) =>
+              poser({
+                ...recette,
+                grille: { ...(recette.grille ?? defautGrille()), ancrage },
+              })
+            }
+          />
+        </Reglage>
+      )}
       {/* **La façon de réduire, image par image** (D2). Le projet donne le
           départ ; ici on en change pour *cette* image, parce que les quatre
           méthodes rendent des sprites franchement différents et que le choix

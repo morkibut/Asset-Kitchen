@@ -32,18 +32,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
   api,
-  PASSE_PAR_DEFAUT,
   type Ancrage,
   type AtelierDeBande as AtelierRecu,
   type CadrePose,
-  type Passe,
+  type EtatTraitement,
   type Prise,
   type Recette,
+  type Univers,
 } from "../api"
 import { rangDeLaBande } from "./Apercu"
 import { Curseur, EnTetePanneau, Libelle } from "./chassis"
+import { BlocPasse } from "./Fiche"
 import { PANNEAU } from "./Infobulle"
-import { DURCISSEMENT_LIVRE, MOTEUR } from "./Places"
+import {
+  PanneauBords,
+  PanneauContours,
+  PanneauDetourage,
+  PanneauGrille,
+  PanneauQuantification,
+  PanneauRecadrage,
+  type Reglages,
+} from "./Places"
 
 /** Les neuf points, **dans l'ordre où ils se dessinent** — trois par rangée.
  *  Les mots sont ceux du serveur, à la lettre : deux vocabulaires pour la même
@@ -80,11 +89,20 @@ const MOT_DU_CADRE: Record<string, string> = {
 
 export function EcranAtelierDeBande({
   identifiant,
+  univers,
+  traitement,
   onFermer,
   onErreur,
   onChangee,
 }: {
   identifiant: string
+  /** La palette du jeu et ses couleurs nommées — ce que la quantification et
+   *  les contours lisent pour proposer autre chose qu'un nuancier vide. */
+  univers: Univers
+  /** Ce que la machine sait faire : quels moteurs de détourage répondent,
+   *  quelles réductions sont disponibles, et **la raison de chaque grisé**.
+   *  Il vient de l'écran d'accueil, comme pour l'établi. */
+  traitement: EtatTraitement
   onFermer: () => void
   onErreur: (raison: string) => void
   /** L'animation a changé sur le disque — la matrice et la galerie l'affichent
@@ -113,6 +131,18 @@ export function EcranAtelierDeBande({
   const [ecarts, setEcarts] = useState<
     { places: string[]; fenetre_davant: boolean }[]
   >([])
+  /** **Le zoom de la frame** (V3.03.1). `null` veut dire *ajusté* — le facteur
+   *  qui fait tenir la pose entière —, et c'est l'état d'ouverture : on regarde
+   *  d'abord la pose, on s'en approche ensuite.
+   *
+   *  ⚠️ **Il compte en facteurs entiers, pas en pour cent**, et il ne réemploie
+   *  donc pas la commande des tables. Deux raisons, et elles vont ensemble :
+   *  la règle de cet écran est *au plus proche voisin et à facteur entier* —
+   *  un sprite à 1,5× rend des pixels de deux tailles, ce que personne n'a
+   *  dessiné —, et l'échelle des tables s'arrête à 250 %, où une case de 64 px
+   *  ferait 160 px de large : plus petit que ce que l'écran montre déjà. Le
+   *  même geste, la même barre, une échelle qui convient à ce qu'on regarde. */
+  const [zoom, setZoom] = useState<number | null>(null)
   const toile = useRef<HTMLDivElement | null>(null)
 
   // **Dire une panne ne doit pas relancer l'aperçu.** L'écran d'accueil passe
@@ -279,28 +309,81 @@ export function EcranAtelierDeBande({
   // raison : *on corrige l'image qu'on regarde*. Régler pendant que l'animation
   // tourne poserait sinon le réglage sur une pose au hasard.
 
-  /** La recette qu'on est en train de régler : **celle de la frame quand elle
-   *  en a une, celle de la bande sinon**. C'est aussi ce qui fait de la
-   *  naissance une copie — le premier réglage part de ce qui était affiché. */
-  const reglee = prises[rang]?.recette ?? recette
+  /** **La frame que les tables règlent : celle qu'on a choisie**, et non celle
+   *  qui passe.
+   *
+   *  > ### ⚠️ Un panneau qui clignote onze fois par seconde
+   *  >
+   *  > Les tables ont d'abord suivi l'image *affichée*, par analogie avec les
+   *  > flèches. Lecteur en marche, le titre, la phrase d'écart et le bouton
+   *  > « reprendre la recette » apparaissaient et disparaissaient à la cadence
+   *  > de l'animation — onze fois par seconde sur cette bande-ci. On ne clique
+   *  > pas un bouton qui s'en va, et on ne lit pas un panneau qui bat. Vu au
+   *  > navigateur le 5 septembre 2026, sur une bande dont une seule frame
+   *  > s'écartait ; aucun essai ne pouvait le voir, ils lisent un instant.
+   *
+   *  **Les deux gestes n'ont pas le même temps, et c'est ce qui les sépare.**
+   *  Une flèche est instantanée : on regarde l'image, on pousse, ça tombe là où
+   *  l'œil était — c'est la règle d'`A7`, et elle ne bouge pas. Une table se
+   *  *lit* avant d'être touchée, et lire prend plus longtemps qu'une image de
+   *  l'animation. Elle suit donc la frame **choisie** — le mot du plan —, qui ne
+   *  change que sur un clic dans le ruban, lequel arrête le lecteur. */
+  const choisie = Math.min(courante, Math.max(0, prises.length - 1))
+  const reglee = prises[choisie]?.recette ?? recette
 
   const laFrameAAuMine = useCallback(
     (index: number) => Boolean(prises[index]?.recette),
     [prises],
   )
 
+  /** Poser un réglage sur la frame choisie. Il arrête le lecteur comme les
+   *  autres gestes : ce qu'on vient de régler doit rester sous les yeux. */
+  const reglerLaChoisie = useCallback(
+    (change: (prise: Prise) => Prise) => {
+      setJoue(false)
+      setPrises((avant) =>
+        avant.map((prise, index) => (index === choisie ? change(prise) : prise)),
+      )
+    },
+    [choisie],
+  )
+
   const toucherLaFrame = useCallback(
     (suivante: Recette) =>
-      corriger((prise) => ({ ...prise, recette: suivante })),
-    [corriger],
+      reglerLaChoisie((prise) => ({ ...prise, recette: suivante })),
+    [reglerLaChoisie],
   )
 
   /** Rendre la frame au défaut. **Un geste annulable comme les autres** : il
    *  n'écrit rien, il repose `null`, et « Annuler » ramène ce qu'il y avait. */
   const retirerLaRecetteDeLaFrame = useCallback(
-    () => corriger((prise) => ({ ...prise, recette: null })),
-    [corriger],
+    () => reglerLaChoisie((prise) => ({ ...prise, recette: null })),
+    [reglerLaChoisie],
   )
+
+  /** Ce que les tables de l'établi attendent pour se rendre sur cette frame.
+   *
+   *  ⚠️ **`regler` et `poser` font ici la même chose**, et c'est la seule
+   *  différence de fond avec l'établi. Là-bas, `regler` bouge la valeur à
+   *  l'écran et `poser` l'envoie au serveur ; ici **rien ne part avant
+   *  « Enregistrer »**, donc les deux posent dans l'état local et l'aperçu se
+   *  refait tout seul. Une table qui écrirait en passant serait le seul geste
+   *  de l'écran à ne pas s'annuler.
+   *
+   *  `mesures` est `null` et le reste : les taches et les poches se mesurent
+   *  sur **un asset**, et une frame de bande n'en est pas un. Les places sont
+   *  écrites pour ce cas — *on ne grise pas sur une ignorance* —, et elles se
+   *  taisent alors sur ce qu'elles ne savent pas au lieu de l'inventer. */
+  const reglages: Reglages | null = reglee
+    ? {
+        recette: reglee,
+        univers,
+        traitement,
+        regler: toucherLaFrame,
+        poser: toucherLaFrame,
+        mesures: null,
+      }
+    : null
 
   const annuler = useCallback(() => {
     if (!recu) return
@@ -403,14 +486,15 @@ export function EcranAtelierDeBande({
   const haut = bande.case_hauteur || 64
   // Au plus proche voisin et à facteur entier : un sprite lissé n'est plus un
   // sprite, et un facteur fractionnaire déforme ses pixels carrés.
-  const facteur = Math.max(1, Math.floor(Math.min(420 / haut, 420 / large)))
+  const ajuste = Math.max(1, Math.floor(Math.min(420 / haut, 420 / large)))
+  const facteur = zoom ?? ajuste
 
   return (
     <div
       data-atelier-de-bande={bande.identifiant}
-      className="grid h-full min-h-0 grid-cols-[300px_minmax(0,1fr)_240px]"
+      className="grid h-full min-h-0 grid-cols-[340px_minmax(0,1fr)_280px]"
     >
-      {/* ── Ce qu'on règle pour toute l'animation ────────────────────────── */}
+      {/* ── Les tables de la frame choisie ───────────────────────────────── */}
       <aside
         {...PANNEAU}
         className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-r border-bord bg-fond-1 p-3"
@@ -429,16 +513,16 @@ export function EcranAtelierDeBande({
         <p className="mesure text-[10px] leading-4 text-texte-3">
           {compte} image{compte > 1 ? "s" : ""}, {cadence} par seconde —{" "}
           {bande.secondes} s par tour.{" "}
-          {laFrameAAuMine(rang) ? (
+          {laFrameAAuMine(choisie) ? (
             <>
-              L'image {rang + 1} a <b className="text-texte-2">sa recette à
+              L'image {choisie + 1} a <b className="text-texte-2">sa recette à
               elle</b> : ce qui se règle ici ne vaut que pour elle.
             </>
           ) : (
             <>
               Ce qui se règle ici vaut pour{" "}
               <b className="text-texte-2">toute l'animation</b> ; toucher un
-              réglage donne à l'image {rang + 1} sa recette à elle.
+              réglage donne à l'image {choisie + 1} sa recette à elle.
             </>
           )}
         </p>
@@ -446,37 +530,10 @@ export function EcranAtelierDeBande({
         <RecetteEnregistree recettes={recettes} onRecette={setRecette} />
 
         <ReglagesDeLaFrame
-          recette={reglee}
-          onRecette={toucherLaFrame}
-          sienne={laFrameAAuMine(rang)}
-          ecart={ecarts[rang]}
+          reglages={reglages}
+          sienne={laFrameAAuMine(choisie)}
+          ecart={ecarts[choisie]}
           onReprendre={retirerLaRecetteDeLaFrame}
-        />
-
-        <ReglagesDeLaBande
-          cadence={cadence}
-          onCadence={setCadence}
-          sens={sens}
-          onSens={setSens}
-        />
-
-        <ChoixDeLAncrage
-          ancrage={recette?.grille?.ancrage ?? "bas"}
-          onAncrage={(point) =>
-            setRecette((avant) =>
-              avant?.grille
-                ? { ...avant, grille: { ...avant.grille, ancrage: point } }
-                : avant,
-            )
-          }
-        />
-
-        <FenetreDeLaBande
-          cadre={bande.cadre}
-          etat={recu.cadre}
-          enCours={remesure}
-          bloquee={change}
-          onReprendre={() => void reprendreLeCadre()}
         />
 
         {change && (
@@ -506,8 +563,15 @@ export function EcranAtelierDeBande({
         )}
       </aside>
 
-      {/* ── L'image qu'on corrige, en grand ──────────────────────────────── */}
+      {/* ── La frame en grand, avec le zoom des tables ───────────────────── */}
       <div className="flex min-h-0 flex-col items-center justify-center gap-3 p-4">
+        <ZoomDeLaFrame
+          facteur={facteur}
+          ajuste={ajuste}
+          surMesure={zoom !== null}
+          onZoom={setZoom}
+        />
+
         <CaseEnGrand
           ref={toile}
           planche={planche}
@@ -569,6 +633,35 @@ export function EcranAtelierDeBande({
           rang={rang}
           compte={compte}
         />
+
+        {/* **Les réglages de l'animation restent avec jouer et pause** —
+            tranché avec l'auteur le 5 septembre 2026. La vitesse, le sens, la
+            fenêtre et l'ancrage décrivent la bande entière, pas l'image qu'on
+            corrige : les laisser à gauche, sous un titre qui dit « la recette
+            de cette image », aurait fait croire qu'on règle une pose alors
+            qu'on règle les douze. */}
+        <div className="defile flex shrink-0 flex-col gap-3 overflow-y-auto border-t border-bord p-2">
+          <ReglagesDeLaBande sens={sens} onSens={setSens} />
+
+          <ChoixDeLAncrage
+            ancrage={recette?.grille?.ancrage ?? "bas"}
+            onAncrage={(point) =>
+              setRecette((avant) =>
+                avant?.grille
+                  ? { ...avant, grille: { ...avant.grille, ancrage: point } }
+                  : avant,
+              )
+            }
+          />
+
+          <FenetreDeLaBande
+            cadre={bande.cadre}
+            etat={recu.cadre}
+            enCours={remesure}
+            bloquee={change}
+            onReprendre={() => void reprendreLeCadre()}
+          />
+        </div>
       </aside>
     </div>
   )
@@ -904,6 +997,72 @@ function ImageDeLaBande({
   )
 }
 
+/** Les arrêts du zoom de la frame, **en facteurs entiers**. Serrés là où l'on
+ *  corrige au pixel, lâches là où l'on regarde la pose : personne ne travaille
+ *  à 7× plutôt qu'à 8×, et un pas de un demanderait quinze clics pour traverser
+ *  la plage. */
+const ARRETS_DU_ZOOM = [1, 2, 3, 4, 6, 8, 12, 16, 24] as const
+
+/** Le zoom de la frame — reculer, avancer, revenir à l'ajusté.
+ *
+ *  **`ajusté` n'est pas un arrêt** : c'est le facteur qui fait tenir la pose
+ *  entière, et il change avec la taille de la case. C'est l'état d'ouverture, et
+ *  le bouton qui y revient le dit plutôt que d'obliger à retrouver le chiffre. */
+function ZoomDeLaFrame({
+  facteur,
+  ajuste,
+  surMesure,
+  onZoom,
+}: {
+  facteur: number
+  ajuste: number
+  /** L'auteur a-t-il posé un facteur, ou regarde-t-il l'ajusté ? */
+  surMesure: boolean
+  onZoom: (facteur: number | null) => void
+}) {
+  const reculer = [...ARRETS_DU_ZOOM].reverse().find((a) => a < facteur)
+  const avancer = ARRETS_DU_ZOOM.find((a) => a > facteur)
+  return (
+    <div
+      data-zoom-de-la-frame={facteur}
+      className="mesure flex w-full shrink-0 items-center justify-end gap-1 text-[10px] text-texte-3"
+    >
+      <button
+        type="button"
+        aria-label="Reculer"
+        title="Reculer"
+        disabled={reculer === undefined}
+        onClick={() => reculer !== undefined && onZoom(reculer)}
+        className="h-[22px] w-[22px] border border-bord text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3"
+      >
+        −
+      </button>
+      <span aria-live="polite" className="w-[52px] text-center text-texte-2">
+        {facteur}×{surMesure ? "" : " ajusté"}
+      </span>
+      <button
+        type="button"
+        aria-label="Avancer"
+        title="Avancer"
+        disabled={avancer === undefined}
+        onClick={() => avancer !== undefined && onZoom(avancer)}
+        className="h-[22px] w-[22px] border border-bord text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        onClick={() => onZoom(null)}
+        disabled={!surMesure}
+        title={`revenir au facteur qui fait tenir la pose entière — ${ajuste}×`}
+        className="border border-bord px-1.5 py-0.5 hover:text-texte-1 disabled:opacity-40"
+      >
+        ajuster
+      </button>
+    </div>
+  )
+}
+
 /** Le lecteur — **sous les images, pas ailleurs**. C'est là qu'on les regarde,
  *  donc c'est là qu'on les met en marche. */
 function Lecteur({
@@ -953,6 +1112,27 @@ function Lecteur({
   )
 }
 
+/** Une table dans la colonne, avec son nom. **Le nom est ce qui les sépare** :
+ *  six panneaux à la file sans titre feraient une seule longue liste de
+ *  réglages, ce que la refonte des tables avait justement défait. */
+function TableDeLaFrame({
+  nom,
+  children,
+}: {
+  nom: string
+  children: React.ReactNode
+}) {
+  return (
+    <section
+      data-table-de-la-frame={nom}
+      className="flex flex-col gap-2 border-t border-bord pt-2"
+    >
+      <EnTetePanneau>{nom}</EnTetePanneau>
+      {children}
+    </section>
+  )
+}
+
 /** **La recette de l'image qu'on regarde** (V3.03.1) — celle de la frame quand
  *  elle en a une, celle de la bande sinon.
  *
@@ -966,65 +1146,35 @@ function Lecteur({
  *  recette ont déjà un mot français ailleurs ; les réécrire donnerait deux
  *  vocabulaires de la même chose, et celui de l'écran finirait par mentir. */
 function ReglagesDeLaFrame({
-  recette,
-  onRecette,
+  reglages,
   sienne,
   ecart,
   onReprendre,
 }: {
-  recette: Recette | null
-  onRecette: (r: Recette) => void
+  /** Ce que les tables attendent, ou rien tant que la recette n'est pas lue. */
+  reglages: Reglages | null
   /** L'image a-t-elle sa recette à elle ? Le titre et le bouton en dépendent. */
   sienne: boolean
   ecart?: { places: string[]; fenetre_davant: boolean }
   onReprendre: () => void
 }) {
-  if (!recette) return null
+  if (!reglages) return null
   return (
     <div
       data-recette-de-la-frame={sienne ? "sienne" : "de-la-bande"}
-      className="flex flex-col gap-1 border-t border-bord pt-2"
+      className="flex flex-col gap-3 border-t border-bord pt-2"
     >
       <Libelle aide="bande.recette">
         {sienne ? "la recette de cette image" : "la recette de l'animation"}
       </Libelle>
 
-      {recette.grille && (
-        <Curseur
-          libelle="Taille du pixel"
-          valeur={recette.grille.cible}
-          min={16}
-          max={128}
-          pas={4}
-          unite=" px de haut"
-          onChange={(v) =>
-            onRecette({
-              ...recette,
-              grille: recette.grille ? { ...recette.grille, cible: v } : null,
-            })
-          }
-        />
-      )}
-      {recette.quantification && (
-        <Curseur
-          libelle="Couleurs"
-          valeur={recette.quantification.couleurs}
-          min={4}
-          max={64}
-          onChange={(v) =>
-            onRecette({
-              ...recette,
-              quantification: recette.quantification
-                ? { ...recette.quantification, couleurs: v }
-                : null,
-            })
-          }
-        />
-      )}
-      <Detourage recette={recette} onRecette={onRecette} sienne={sienne} />
-
+      {/* **Ce qui parle de la frame entière est au-dessus des tables**, pas
+          sous elles. Six panneaux empilés font une colonne qui défile sur deux
+          écrans : l'écart et le bouton qui rend la frame au défaut se seraient
+          trouvés là où personne ne descend, alors qu'ils disent ce qu'il faut
+          savoir *avant* de toucher un réglage. */}
       {sienne && (
-        <>
+        <div className="flex flex-col gap-1.5">
           {ecart && ecart.places.length > 0 && (
             <p
               data-ecart-de-la-frame
@@ -1058,29 +1208,78 @@ function ReglagesDeLaFrame({
           >
             Reprendre la recette de l'animation
           </button>
-        </>
+        </div>
       )}
+
+      {/* **Les tables, dans l'ordre du traitement.** C'est le même ordre
+          qu'`TABLES` tient pour l'établi, et il n'est pas décoratif : trois des
+          places n'ont pas de sens avant celle qui les précède. Elles sont
+          empilées plutôt que rangées derrière une barre — tranché avec l'auteur
+          le 5 septembre 2026 : on corrige une pose en regardant deux réglages à
+          la fois, et une barre en cacherait toujours l'un des deux.
+
+          **La main n'y est pas** : elle arrive en V3.03.4. Une table vide qui
+          annoncerait sa place ferait attendre un geste qui n'existe pas. */}
+      <TableDeLaFrame nom="détourage">
+        {/* ⚠️ **Une recette de jeu peut n'avoir aucune passe**, et l'écran
+            n'offrait alors aucun moyen d'en ajouter : le fond restait, et il
+            n'y avait rien à régler. Signalé par l'auteur le 4 septembre 2026.
+            Le bouton « + une passe » du panneau y répond ; la phrase dit
+            pourquoi il est seul, ce qu'un panneau vide ne dit pas. */}
+        {reglages.recette.passes.length === 0 && (
+          <p className="mesure text-[10px] leading-4 text-texte-3">
+            Cette animation ne détoure rien : le fond du clip part dans les
+            sprites tel quel.
+          </p>
+        )}
+        <PanneauDetourage {...reglages} BlocPasse={BlocPasse} />
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          {sienne
+            ? "Ce qui change ici ne vaut que pour l'image regardée."
+            : "Ce qui change ici vaut pour toutes les images de l'animation."}
+        </p>
+      </TableDeLaFrame>
+      <TableDeLaFrame nom="recadrage">
+        <PanneauRecadrage {...reglages} />
+      </TableDeLaFrame>
+      <TableDeLaFrame nom="grille">
+        {/* L'ancrage est rendu à droite, avec la vitesse et le sens : il tient
+            de la bande entière, et un ancrage par image ferait sauter le sujet
+            d'une frame à l'autre. */}
+        <PanneauGrille {...reglages} sansAncrage />
+      </TableDeLaFrame>
+      <TableDeLaFrame nom="quantification">
+        <PanneauQuantification {...reglages} />
+      </TableDeLaFrame>
+      <TableDeLaFrame nom="bords">
+        <PanneauBords {...reglages} />
+      </TableDeLaFrame>
+      <TableDeLaFrame nom="contours">
+        <PanneauContours {...reglages} />
+      </TableDeLaFrame>
     </div>
   )
 }
 
-/** **Ce qui appartient à l'animation entière, et à rien d'autre** : la vitesse
- *  et le sens de lecture.
+/** **Ce qui appartient à l'animation entière, et à rien d'autre** : le sens de
+ *  lecture.
  *
  *  ⚠️ La recette n'y est plus (V3.03.1). Elle a longtemps vécu ici parce qu'une
  *  bande n'avait qu'une recette pour toutes ses images ; depuis que chaque frame
  *  peut porter la sienne, laisser les curseurs de recette sous le titre *« la
  *  recette de l'animation »* aurait fait croire qu'on règle les douze images
  *  alors qu'on n'en règle qu'une. Ils sont passés dans `ReglagesDeLaFrame`, qui
- *  dit de quoi il parle. */
+ *  dit de quoi il parle.
+ *
+ *  ⚠️ **La vitesse n'y est plus non plus**, et c'est la mise en page qui l'a
+ *  décidé : le lecteur en porte déjà une, et les deux se sont retrouvées à trois
+ *  centimètres l'une de l'autre en passant à droite. Deux curseurs voisins qui
+ *  règlent le même chiffre se lisent comme deux réglages différents, et l'un des
+ *  deux paraît cassé dès qu'on bouge l'autre. Vu à l'écran le 5 septembre 2026. */
 function ReglagesDeLaBande({
-  cadence,
-  onCadence,
   sens,
   onSens,
 }: {
-  cadence: number
-  onCadence: (v: number) => void
   sens: "boucle" | "aller-retour"
   onSens: (v: "boucle" | "aller-retour") => void
 }) {
@@ -1105,14 +1304,6 @@ function ReglagesDeLaBande({
           </button>
         ))}
       </div>
-      <Curseur
-        libelle="Vitesse"
-        valeur={cadence}
-        min={1}
-        max={30}
-        unite=" par seconde"
-        onChange={onCadence}
-      />
     </div>
   )
 }
@@ -1180,143 +1371,6 @@ function FenetreDeLaBande({
         {bloquee
           ? "Enregistrez d'abord : reprendre la fenêtre écrit sur l'animation, et le faire par-dessus des réglages en cours la laisserait à moitié neuve."
           : "Une vingtaine de secondes — toutes les images sont redétourées et remesurées. Rien n'est dépensé."}
-      </p>
-    </div>
-  )
-}
-
-/** Le détourage de l'animation, **réglé finement** — pas seulement sa tolérance.
- *
- *  ⚠️ **L'écran n'offrait qu'un curseur de tolérance**, et il ne servait à rien
- *  sur trois moteurs sur quatre : la pipette vise un point, le modèle ne lit
- *  aucune tolérance, la sélection suit un tracé. Demandé par l'auteur le
- *  4 septembre 2026, après avoir découpé son pèlerin.
- *
- *  **Le durcissement suit le moteur quand on en change**, comme partout ailleurs
- *  dans le produit : le bord ne produit aucun pixel à demi transparent et n'a
- *  donc pas de frange à ronger, le modèle en produit sur presque tout le sujet.
- *  Laisser le durcissement du moteur d'avant est ce que l'auteur a dû retaper
- *  trente-neuf fois sur quarante (`D1`).
- *
- *  Les deux moteurs qui demandent un geste sur l'image — la pipette vise un
- *  pixel, la sélection se dessine — **ne se posent pas ici** : cet écran n'a pas
- *  l'image brute sous la main, seulement la planche déjà réduite. Ils restent
- *  offerts, et la ligne dessous dit ce qu'ils attendent. */
-function Detourage({
-  recette,
-  onRecette,
-  sienne = false,
-}: {
-  recette: Recette
-  onRecette: (r: Recette) => void
-  /** L'image regardée a-t-elle sa recette à elle (V3.03.1) ? **La dernière
-   *  ligne du panneau en dépend**, et elle disait le contraire du titre au
-   *  premier essai au navigateur : *ce qui change ici vaut pour toutes les
-   *  images* sous un titre qui venait d'annoncer « la recette de cette image ».
-   *  Deux phrases voisines qui se contredisent valent moins que pas de phrase. */
-  sienne?: boolean
-}) {
-  const passe = recette.passes[0]
-
-  if (!passe) {
-    // ⚠️ **Une recette de jeu peut n'avoir aucune passe**, et l'écran n'offrait
-    // alors aucun moyen d'en ajouter une : le fond restait, et il n'y avait
-    // rien à régler. Signalé par l'auteur le 4 septembre 2026.
-    return (
-      <div className="flex flex-col gap-1 border-t border-bord pt-2">
-        <Libelle aide="detourage.moteur">le détourage</Libelle>
-        <p className="mesure text-[10px] leading-4 text-texte-3">
-          Cette animation ne détoure rien : le fond du clip part dans les
-          sprites tel quel.
-        </p>
-        <button
-          type="button"
-          onClick={() =>
-            onRecette({
-              ...recette,
-              passes: [{ ...PASSE_PAR_DEFAUT, moteur: "bord" }],
-            })
-          }
-          className="mesure self-start border border-bord px-2 py-1 text-[10px] text-signal hover:bg-signal hover:text-fond-0"
-        >
-          Ajouter un détourage
-        </button>
-      </div>
-    )
-  }
-
-  const changer = (quoi: Partial<Passe>) =>
-    onRecette({
-      ...recette,
-      passes: recette.passes.map((p, rang) =>
-        rang === 0 ? { ...p, ...quoi } : p,
-      ),
-    })
-
-  const litLaTolerance = passe.moteur === "bord" || passe.moteur === "couleur"
-  return (
-    <div className="flex flex-col gap-1.5 border-t border-bord pt-2">
-      <div className="flex items-baseline gap-2">
-        <Libelle aide="detourage.moteur">le détourage</Libelle>
-        {recette.passes.length > 1 && (
-          <span className="mesure ml-auto text-[10px] text-texte-3">
-            {recette.passes.length} passes — la première se règle ici
-          </span>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-1">
-        {(Object.keys(MOTEUR) as Passe["moteur"][]).map((nom) => (
-          <button
-            key={nom}
-            type="button"
-            aria-pressed={passe.moteur === nom}
-            onClick={() =>
-              changer({ moteur: nom, durcissement: DURCISSEMENT_LIVRE[nom] })
-            }
-            className={`mesure border px-1.5 py-0.5 text-[10px] ${
-              passe.moteur === nom
-                ? "border-signal text-signal"
-                : "border-bord text-texte-3 hover:text-texte-1"
-            }`}
-          >
-            {MOTEUR[nom]}
-          </button>
-        ))}
-      </div>
-
-      {litLaTolerance ? (
-        <Curseur
-          libelle="Tolérance"
-          valeur={passe.tolerance}
-          min={4}
-          max={80}
-          onChange={(v) => changer({ tolerance: v })}
-        />
-      ) : (
-        <p className="mesure text-[10px] leading-4 text-texte-3">
-          {passe.moteur === "modele"
-            ? "Le modèle décide seul de la silhouette : il n'y a pas de tolérance à régler."
-            : "La sélection suit le tracé fait sur l'image brute, dans la table de découpe."}
-        </p>
-      )}
-
-      <Curseur
-        libelle="Ronger le bord"
-        valeur={passe.durcissement}
-        min={0}
-        max={4}
-        unite=" px"
-        onChange={(v) => changer({ durcissement: v })}
-      />
-      <p className="mesure text-[10px] leading-4 text-texte-3">
-        {passe.moteur === "couleur" && !passe.point
-          ? "La pipette n'a pas de point visé : elle se pose sur l'image brute, dans la table de découpe. Ici elle n'agit pas."
-          : passe.moteur === "trace" && passe.trace.length === 0
-            ? "Aucun tracé : la sélection se dessine sur l'image brute, dans la table de découpe. Ici elle n'agit pas."
-            : sienne
-              ? "Ce qui change ici ne vaut que pour l'image regardée."
-              : "Ce qui change ici vaut pour toutes les images de l'animation."}
       </p>
     </div>
   )

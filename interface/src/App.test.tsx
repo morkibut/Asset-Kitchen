@@ -2051,9 +2051,19 @@ function serveurDouble(options: {
         ecarts: ecartsDesPrises(bande.prises, bande.recette),
         // Un détourage changé périme la fenêtre : c'est le serveur qui le dit,
         // et l'écran ne doit pas continuer à l'annoncer à jour.
-        cadre: corps?.recette
-          ? { ...atelierEnCours.cadre, a_jour: false }
-          : atelierEnCours.cadre,
+        //
+        // ⚠️ **Celle de la bande, pas celle d'une frame** (V3.03.1). La fenêtre
+        // commune reste mesurée avec la recette de la bande : une frame qui
+        // s'en écarte peut déborder — et c'est son propre `fenetre_davant` qui
+        // le dit —, mais elle ne périme pas le rectangle des autres. Le double
+        // comparait avant l'ancienne recette à rien du tout, et rendait donc la
+        // fenêtre périmée dès qu'on touchait une seule image.
+        cadre:
+          corps?.recette &&
+          JSON.stringify(corps.recette) !==
+            JSON.stringify(atelierEnCours.bande.recette)
+            ? { ...atelierEnCours.cadre, a_jour: false }
+            : atelierEnCours.cadre,
       }
       return rendre(bande)
     }
@@ -23105,36 +23115,66 @@ describe("A7 · l'atelier d'une animation", () => {
     })
     expect(moteurs).toHaveLength(4)
     // La tolérance est là tant que le moteur la lit.
-    expect(atelier.getByLabelText(/Tolérance, en chiffres/)).toBeTruthy()
+    expect(atelier.getByLabelText(/tolérance, en chiffres/)).toBeTruthy()
 
     fireEvent.click(atelier.getByRole("button", { name: "modèle" }))
 
     // **Le modèle ne lit aucune tolérance**, et l'écran le dit plutôt que de
-    // laisser un curseur qui ne fait rien.
+    // laisser un curseur qui ne fait rien — ou, ce qui revient au même, de le
+    // faire disparaître sans un mot (`AGENTS.md`, 8nonies).
     await waitFor(() =>
-      expect(atelier.queryByLabelText(/Tolérance, en chiffres/)).toBeNull(),
+      expect(atelier.queryByLabelText(/tolérance, en chiffres/)).toBeNull(),
     )
     expect(await atelier.findByText(/pas de tolérance à régler/)).toBeTruthy()
+  })
+
+  test("la pipette et la sélection disent où elles se posent", async () => {
+    // ⚠️ **Deux moteurs demandent un geste sur l'image brute**, et cet écran-ci
+    // ne l'a pas : il montre la planche déjà traitée. La table de détourage de
+    // l'établi offre un bouton « viser dans l'image » — ici il ne ferait rien,
+    // ce qui ne se distingue pas d'un bouton cassé. Le moteur reste offert, le
+    // bouton s'en va, et une phrase dit où le geste se fait.
+    const { atelier } = await ouvrirLAtelier()
+
+    fireEvent.click(await atelier.findByRole("button", { name: "pipette" }))
+    await waitFor(() =>
+      expect(atelier.queryByRole("button", { name: /viser dans l'image/ })).toBeNull(),
+    )
+    expect(await atelier.findByText(/la pipette se pose sur l'image brute/)).toBeTruthy()
+
+    fireEvent.click(atelier.getByRole("button", { name: "sélection" }))
+    await waitFor(() =>
+      expect(
+        atelier.queryByRole("button", { name: /entourer dans l'image/ }),
+      ).toBeNull(),
+    )
+    expect(
+      await atelier.findByText(/la sélection se dessine sur l'image brute/),
+    ).toBeTruthy()
   })
 
   test("changer de moteur emporte son durcissement", async () => {
     // C'est la mesure de `D1` : à moteur égal la nature de l'image ne décide
     // presque rien, et laisser le durcissement du moteur d'avant est ce que
     // l'auteur a dû retaper trente-neuf fois sur quarante.
-    const { atelier } = await ouvrirLAtelier()
-    const ronge = (await atelier.findByLabelText(
-      /Ronger le bord, en chiffres/,
-    )) as HTMLInputElement
-    expect(ronge.value).toBe("0 px")
+    // **Ce qui est vérifié est ce qui part**, pas ce qui s'affiche : le
+    // durcissement se choisit désormais par segments, et un segment ne porte
+    // que sa valeur — le lire obligerait à interroger une classe CSS. L'aperçu,
+    // lui, repart à chaque geste avec la recette entière.
+    const { atelier, appels } = await ouvrirLAtelier()
+    await atelier.findByLabelText(/tolérance, en chiffres/)
 
     fireEvent.click(atelier.getByRole("button", { name: "modèle" }))
 
-    await waitFor(() =>
-      expect(
-        (atelier.getByLabelText(/Ronger le bord, en chiffres/) as HTMLInputElement)
-          .value,
-      ).toBe("2 px"),
-    )
+    await waitFor(() => {
+      const dernier = [...appels]
+        .reverse()
+        .find((a) => a.url === "/api/montage/preview")
+      const prises = (dernier?.corps as { prises?: Prise[] })?.prises ?? []
+      const ecartee = prises.find((p) => p.recette)
+      expect(ecartee?.recette?.passes[0]?.moteur).toBe("modele")
+      expect(ecartee?.recette?.passes[0]?.durcissement).toBe(2)
+    })
   })
 
   test("une recette de jeu sans passe se voit, et on peut en ajouter une", async () => {
@@ -23157,9 +23197,9 @@ describe("A7 · l'atelier d'une animation", () => {
     })
 
     expect(await atelier.findByText(/ne détoure rien/)).toBeTruthy()
-    fireEvent.click(atelier.getByRole("button", { name: "Ajouter un détourage" }))
+    fireEvent.click(atelier.getByRole("button", { name: "+ une passe" }))
 
-    expect(await atelier.findByLabelText(/Tolérance, en chiffres/)).toBeTruthy()
+    expect(await atelier.findByLabelText(/tolérance, en chiffres/)).toBeTruthy()
     expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
   })
 
@@ -23183,7 +23223,7 @@ describe("A7 · l'atelier d'une animation", () => {
     // s'annule pas.
     expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
     expect(
-      (atelier.getByLabelText(/Tolérance, en chiffres/) as HTMLInputElement).value,
+      (atelier.getByLabelText(/tolérance, en chiffres/) as HTMLInputElement).value,
     ).toBe("61")
     expect(
       appels.some((a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps)),
@@ -23275,12 +23315,29 @@ describe("A7 · l'atelier d'une animation", () => {
   test("une fenêtre mesurée avec un autre détourage se dit d'avant", async () => {
     // *Elle n'est pas fausse, elle est d'avant* — et c'est cette nuance-là qui
     // décide de qui paie les vingt secondes de la remesure.
-    const { atelier, cadre } = await ouvrirLAtelier()
+    //
+    // ⚠️ **Ce qui périme la fenêtre est la recette de la bande** (V3.03.1), et
+    // c'est ce que l'essai pose ici : une recette nommée remplace celle de
+    // l'animation entière. Régler la tolérance ne le ferait plus — depuis la
+    // tranche, ce geste-là écarte *une frame*, et la fenêtre commune reste
+    // mesurée avec la recette de la bande. Sa phrase à elle est vérifiée par
+    // « une frame qui s'écarte dit que la fenêtre commune est d'avant ».
+    const { atelier, cadre } = await ouvrirLAtelier({
+      recettes: {
+        "mon pixel art": {
+          ...RECETTE_VIDE,
+          passes: [{ ...PASSE_PAR_DEFAUT, tolerance: 61 }],
+        },
+      },
+    })
     expect(cadre.querySelector("[data-fenetre-davant]")).toBeNull()
 
-    const tolerance = await atelier.findByLabelText(/Tolérance, en chiffres/)
-    fireEvent.change(tolerance, { target: { value: "42" } })
-    fireEvent.keyDown(tolerance, { key: "Enter" })
+    fireEvent.change(
+      await atelier.findByLabelText(
+        "appliquer une recette enregistrée à cette animation",
+      ),
+      { target: { value: "mon pixel art" } },
+    )
     fireEvent.click(await atelier.findByRole("button", { name: "Enregistrer ›" }))
 
     await waitFor(() =>
@@ -23353,13 +23410,18 @@ describe("A7 · l'atelier d'une animation", () => {
   // partent tous d'une bande sans aucune recette individuelle et **la font
   // naître par l'écran**.
 
-  /** Régler les couleurs de l'image regardée, par le champ où le chiffre
-   *  s'écrit. C'est le geste le plus court qui donne à une frame sa recette. */
-  const reglerLesCouleurs = async (
+  /** Régler la tolérance du détourage de l'image regardée, par le champ où le
+   *  chiffre s'écrit.
+   *
+   *  **C'est le geste le plus court qui donne à une frame sa recette**, et il
+   *  passe par la table de détourage — celle de l'établi depuis la V3.03.1, pas
+   *  les trois curseurs sans nom d'avant. La place qui s'écarte s'appelle donc
+   *  « détourage », et c'est le serveur qui la nomme. */
+  const reglerLaTolerance = async (
     atelier: ReturnType<typeof within>,
     valeur: number,
   ) => {
-    const champ = await atelier.findByLabelText("Couleurs, en chiffres")
+    const champ = await atelier.findByLabelText(/tolérance, en chiffres/)
     fireEvent.change(champ, { target: { value: String(valeur) } })
     fireEvent.keyDown(champ, { key: "Enter" })
   }
@@ -23380,10 +23442,10 @@ describe("A7 · l'atelier d'une animation", () => {
   })
 
   test("toucher un réglage donne à l'image sa recette, copiée de la bande", async () => {
-    const { atelier, cadre } = await ouvrirLAtelier()
+    const { atelier, cadre, appels } = await ouvrirLAtelier()
     await atelier.findByText(/en pixels du sprite/)
 
-    await reglerLesCouleurs(atelier, 12)
+    await reglerLaTolerance(atelier, 61)
 
     // Le panneau change de titre : c'est ce qui distingue *je règle les quatre
     // images* de *je règle celle-ci*.
@@ -23394,24 +23456,30 @@ describe("A7 · l'atelier d'une animation", () => {
           ?.getAttribute("data-recette-de-la-frame"),
       ).toBe("sienne"),
     )
-    // **Une copie, pas une remise à zéro** : la taille du pixel de la bande est
-    // encore là. Sans ça, écarter une frame sur les couleurs lui ferait perdre
-    // en silence tout le reste de la recette.
-    expect(
-      (
-        (await atelier.findByLabelText(
-          "Taille du pixel, en chiffres",
-        )) as HTMLInputElement
-      ).value,
-    ).toBe("64 px de haut")
+    // **Une copie, pas une remise à zéro** — et c'est ce qui part qu'on
+    // vérifie, pas ce qui s'affiche : la grille et les couleurs se choisissent
+    // par segments, qui ne portent que leur valeur. La recette de la frame doit
+    // être celle de la bande **plus** le réglage touché ; sans la copie,
+    // écarter une frame sur son détourage lui ferait perdre tout le reste en
+    // silence.
+    await waitFor(() => {
+      const dernier = [...appels]
+        .reverse()
+        .find((a) => a.url === "/api/montage/preview")
+      const prises = (dernier?.corps as { prises?: Prise[] })?.prises ?? []
+      const sienne = prises[0]?.recette
+      expect(sienne?.passes[0]?.tolerance).toBe(61)
+      expect(sienne?.grille).toEqual(GARDEE_A7.recette?.grille)
+      expect(sienne?.quantification).toEqual(GARDEE_A7.recette?.quantification)
+    })
     // Et le ruban l'écrit, avec les mots du serveur.
     await waitFor(() =>
       expect(
         cadre.querySelector('[data-image-de-la-bande="0"][data-secarte]'),
       ).toBeTruthy(),
     )
-    expect(await atelier.findByText(/S'écarte de l'animation/)).toBeTruthy()
-    expect(await atelier.findByText(/quantification/)).toBeTruthy()
+    const dit = await atelier.findByText(/S'écarte de l'animation/)
+    expect(dit.textContent).toContain("détourage")
   })
 
   test("une frame qui s'écarte dit que la fenêtre commune est d'avant", async () => {
@@ -23421,7 +23489,7 @@ describe("A7 · l'atelier d'une animation", () => {
     const { atelier, cadre } = await ouvrirLAtelier()
     await atelier.findByText(/en pixels du sprite/)
 
-    await reglerLesCouleurs(atelier, 12)
+    await reglerLaTolerance(atelier, 61)
 
     await waitFor(() =>
       expect(
@@ -23433,7 +23501,7 @@ describe("A7 · l'atelier d'une animation", () => {
   test("« reprendre la recette de l'animation » rend la frame au défaut", async () => {
     const { atelier, cadre } = await ouvrirLAtelier()
     await atelier.findByText(/en pixels du sprite/)
-    await reglerLesCouleurs(atelier, 12)
+    await reglerLaTolerance(atelier, 61)
     await waitFor(() =>
       expect(cadre.querySelector("[data-secarte]")).toBeTruthy(),
     )
@@ -23466,7 +23534,7 @@ describe("A7 · l'atelier d'une animation", () => {
     // prises, et « Annuler » les repose telles qu'elles étaient.
     const { atelier, cadre } = await ouvrirLAtelier()
     await atelier.findByText(/en pixels du sprite/)
-    await reglerLesCouleurs(atelier, 12)
+    await reglerLaTolerance(atelier, 61)
     expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
     // **On vérifie d'abord que la frame s'est bien écartée**, sinon l'essai
     // passerait aussi bien sur un réglage posé sur la bande entière : « Annuler »
@@ -23485,12 +23553,83 @@ describe("A7 · l'atelier d'une animation", () => {
     )
   })
 
-  test("on règle l'image qu'on regarde, lecteur en marche", async () => {
+  test("les tables ne battent pas quand le lecteur tourne", async () => {
     // ⚠️ **L'essai qui met les choses au calme supprime le défaut qu'il
-    // cherche** (`AGENTS.md`, 8octies). Arrêté, l'image regardée est déjà
-    // l'image choisie : le réglage ne peut pas tomber ailleurs. Le lecteur
-    // tourne donc, **ralenti** — deux images par seconde —, et c'est la
-    // deuxième image qui doit recevoir la recette, pas la première.
+    // cherche** (`AGENTS.md`, 8octies) : arrêté, le panneau ne peut pas battre.
+    // Le lecteur tourne donc, **ralenti**.
+    //
+    // > Le défaut, vu au navigateur le 5 septembre 2026 : les tables suivaient
+    // > l'image *affichée*, et le titre, la phrase d'écart et le bouton
+    // > « reprendre la recette » clignotaient à la cadence de l'animation. On
+    // > ne clique pas un bouton qui s'en va.
+    //
+    // Les tables suivent donc la frame **choisie** — le mot du plan —, qui ne
+    // change que sur un clic dans le ruban. Les flèches, elles, continuent de
+    // corriger l'image qu'on regarde : c'est la règle d'`A7`, et son essai est
+    // « les flèches corrigent l'image qu'on regarde, pas la première ».
+    // ⚠️ **La deuxième image porte déjà sa recette.** Sans une frame qui
+    // s'écarte, il n'y a rien qui *puisse* clignoter et l'essai passerait sur
+    // un écran cassé — c'est la moitié du travail de cet essai-ci.
+    const prisesEcartees = GARDEE_A7.prises.map((prise, rang) =>
+      rang === 1
+        ? {
+            ...prise,
+            recette: {
+              ...GARDEE_A7.recette,
+              passes: [{ ...PASSE_PAR_DEFAUT, tolerance: 61 }],
+            },
+          }
+        : prise,
+    )
+    const bandeEcartee = {
+      ...GARDEE_A7,
+      cadence: 2,
+      sens: "boucle" as const,
+      prises: prisesEcartees,
+    }
+    const { atelier, cadre } = await ouvrirLAtelier(
+      {
+        atelierDeBande: {
+          bande: bandeEcartee,
+          planche: "data:image/png;base64,AAAA",
+          clips: { "clip-a": clipRendu("clip-a", false) },
+          images_par_clip: { "clip-a": 22 },
+          cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
+          clips_voisins: VOISINS_A7,
+          ecarts: ecartsDesPrises(prisesEcartees, GARDEE_A7.recette),
+        },
+      },
+      false,
+    )
+    await waitFor(
+      () => expect(atelier.getByText(/image 2 sur 4/)).toBeTruthy(),
+      { timeout: 3000 },
+    )
+    // L'écart existe bien : le ruban le porte.
+    expect(cadre.querySelector('[data-image-de-la-bande="1"][data-secarte]')).toBeTruthy()
+
+    // Le lecteur tourne : on relit le panneau plusieurs fois de suite, à cheval
+    // sur au moins un tour complet. Il doit dire la même chose à chaque fois.
+    const lu = new Set<string>()
+    for (let i = 0; i < 8; i += 1) {
+      lu.add(
+        String(
+          cadre
+            .querySelector("[data-recette-de-la-frame]")
+            ?.getAttribute("data-recette-de-la-frame"),
+        ),
+      )
+      await new Promise((tenir) => setTimeout(tenir, 120))
+    }
+    expect(atelier.getByRole("button", { name: "arrêter l'animation" })).toBeTruthy()
+    expect([...lu]).toEqual(["de-la-bande"])
+  })
+
+  test("un réglage tombe sur la frame choisie, lecteur en marche", async () => {
+    // Le pendant du précédent : le panneau ne bat pas **et** ce qu'on règle va
+    // bien là où le panneau le dit. On choisit la deuxième image dans le ruban
+    // — ce qui arrête le lecteur —, on le relance, puis on règle : c'est la
+    // deuxième qui reçoit la recette, pas celle qui passe à l'écran.
     const { atelier, cadre } = await ouvrirLAtelier(
       {
         atelierDeBande: {
@@ -23513,14 +23652,29 @@ describe("A7 · l'atelier d'une animation", () => {
       { timeout: 3000 },
     )
 
-    await reglerLesCouleurs(atelier, 12)
+    // On choisit la troisième dans le ruban — le clic arrête le lecteur —, puis
+    // on le relance. Le panneau reste sur la troisième pendant que les images
+    // défilent, et c'est elle que le réglage doit trouver.
+    fireEvent.click(
+      atelier.getByRole("button", { name: /l'image 16, 3ᵉ de l'animation/ }),
+    )
+    fireEvent.click(
+      await atelier.findByRole("button", { name: "faire tourner l'animation" }),
+    )
+    await waitFor(
+      () => expect(atelier.getByText(/image 1 sur 4/)).toBeTruthy(),
+      { timeout: 3000 },
+    )
 
-    // La deuxième, et elle seule : celle qui était à l'écran.
+    await reglerLaTolerance(atelier, 61)
+
+    // La troisième, et elle seule — celle qu'on avait choisie, pas celle qui
+    // passait à l'écran au moment du geste.
     await waitFor(() =>
       expect(cadre.querySelectorAll("[data-secarte]")).toHaveLength(1),
     )
     expect(
-      cadre.querySelector('[data-image-de-la-bande="1"][data-secarte]'),
+      cadre.querySelector('[data-image-de-la-bande="2"][data-secarte]'),
     ).toBeTruthy()
   })
 
@@ -23533,7 +23687,7 @@ describe("A7 · l'atelier d'une animation", () => {
     // celui du défaut : 12 couleurs là où le jeu en dit 24.
     const { atelier, cadre, appels } = await ouvrirLAtelier()
     await atelier.findByText(/en pixels du sprite/)
-    await reglerLesCouleurs(atelier, 12)
+    await reglerLaTolerance(atelier, 61)
     await waitFor(() =>
       expect(cadre.querySelector("[data-secarte]")).toBeTruthy(),
     )
@@ -23548,7 +23702,7 @@ describe("A7 · l'atelier d'une animation", () => {
       (a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps),
     )
     const envoyees = (ecrit?.corps as { prises: Prise[] }).prises
-    expect(envoyees[0].recette?.quantification?.couleurs).toBe(12)
+    expect(envoyees[0].recette?.passes[0]?.tolerance).toBe(61)
     expect(envoyees[1].recette ?? null).toBeNull()
     // Et l'écran rouvert la porte encore : c'est la relecture qui compte.
     await waitFor(() =>
@@ -23558,9 +23712,9 @@ describe("A7 · l'atelier d'une animation", () => {
     )
     expect(
       (
-        (await atelier.findByLabelText("Couleurs, en chiffres")) as HTMLInputElement
+        (await atelier.findByLabelText(/tolérance, en chiffres/)) as HTMLInputElement
       ).value,
-    ).toBe("12")
+    ).toBe("61")
   })
 })
 

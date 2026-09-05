@@ -45,7 +45,7 @@ import {
 } from "./chassis"
 import { PANNEAU, POINTILLE, useInfobulle } from "./Infobulle"
 import { posesTenues } from "./Personnages"
-import { MOTEUR, RESUME } from "./Places"
+import { DURCISSEMENT_LIVRE, MOTEUR, RESUME } from "./Places"
 
 /** Le modèle qui a produit une image, tel qu'il se lit (US-123).
  *
@@ -1143,6 +1143,16 @@ export function BlocPasse({
 }) {
   const pipette = passe.moteur === "couleur"
   const selection = passe.moteur === "trace"
+  /** **Cet écran-ci ne peut pas viser dans l'image** (V3.03.1).
+   *
+   *  Deux moteurs demandent un geste *sur l'image brute* — la pipette vise un
+   *  pixel, la sélection se dessine autour du sujet —, et l'atelier d'une
+   *  animation n'a pas l'image brute sous la main : il montre la planche déjà
+   *  traitée. Sans `onViser`, le bouton *« viser dans l'image »* était donc là
+   *  et ne faisait rien, ce qui ne se distingue pas d'un bouton cassé
+   *  (`AGENTS.md`, 8nonies). L'absence du geste **le dit** et retire le bouton :
+   *  le moteur reste offert, et la phrase renvoie là où il se règle. */
+  const sansGeste = onViser === undefined
   /** Le modèle de cette passe. **Vide veut dire le défaut du produit**, et
    *  c'est le serveur qui dit lequel — l'écran ne choisit pas de défaut. */
   const choisi =
@@ -1239,7 +1249,17 @@ export function BlocPasse({
             valeur={passe.moteur}
             plusieursRangees
             onChange={(moteur) => {
-              fini({ ...passe, moteur })
+              // **Le durcissement suit le moteur** (`D1`). Le bord ne produit
+              // aucun pixel à demi transparent et n'a donc pas de frange à
+              // ronger ; le modèle en produit sur presque tout le sujet. Laisser
+              // le durcissement du moteur d'avant est ce que l'auteur a dû
+              // retaper **trente-neuf fois sur quarante** — mesuré, pas supposé.
+              // La même table qu'au serveur (`atelier/domaine/recette.py`).
+              fini({
+                ...passe,
+                moteur,
+                durcissement: DURCISSEMENT_LIVRE[moteur],
+              })
               // **Choisir la pipette, c'est demander à viser.** Le réglage n'a
               // aucune valeur tant qu'aucun point n'est posé ; obliger à un
               // second clic sur un bouton pour avoir le droit de faire le seul
@@ -1324,18 +1344,29 @@ export function BlocPasse({
         {selection && (
           <>
             <Reglage libelle="forme entourée" aide="detourage.trace">
-              <button
-                type="button"
-                onClick={() => onViser?.(!enVisee)}
-                className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
-              >
-                {enVisee
-                  ? "entoure le sujet dans l'image"
-                  : passe.trace.length
-                    ? `${passe.trace.length} points · entourer à nouveau ›`
-                    : "entourer dans l'image ›"}
-              </button>
+              {sansGeste ? (
+                <span className="mesure text-[10px] leading-4 text-texte-3">
+                  {passe.trace.length
+                    ? `${passe.trace.length} points, tracés ailleurs`
+                    : "aucune forme entourée"}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onViser?.(!enVisee)}
+                  className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+                >
+                  {enVisee
+                    ? "entoure le sujet dans l'image"
+                    : passe.trace.length
+                      ? `${passe.trace.length} points · entourer à nouveau ›`
+                      : "entourer dans l'image ›"}
+                </button>
+              )}
             </Reglage>
+            {sansGeste && (
+              <Raison texte="la sélection se dessine sur l'image brute, dans la table de découpe — cet écran n'a que l'image déjà traitée" />
+            )}
             {/* **Une sélection sans forme ne retire rien**, et le dire vaut
                 mieux que de laisser croire à une passe qui ne marche pas —
                 même phrase que la pipette non visée, même raison. */}
@@ -1357,7 +1388,11 @@ export function BlocPasse({
         {pipette && (
           <>
             <Reglage libelle="couleur visée" aide="detourage.couleur">
-              {passe.point && visee ? (
+              {sansGeste ? (
+                <span className="mesure text-[10px] leading-4 text-texte-3">
+                  {passe.point ? "un point est posé, visé ailleurs" : "aucun point visé"}
+                </span>
+              ) : passe.point && visee ? (
                 <span className="flex items-center gap-2">
                   <span
                     aria-hidden
@@ -1385,8 +1420,11 @@ export function BlocPasse({
             </Reglage>
             {/* **Une pipette non visée ne retire rien**, et le dire vaut mieux que
                 de laisser croire à une passe qui ne marche pas. */}
-            {!passe.point && (
+            {!passe.point && !sansGeste && (
               <Raison texte="tant qu'aucun point n'est posé, cette passe ne retire rien" />
+            )}
+            {sansGeste && (
+              <Raison texte="la pipette se pose sur l'image brute, dans la table de découpe — cet écran n'a que l'image déjà traitée" />
             )}
             <Reglage libelle="portée" aide="detourage.portee">
               <Segments
@@ -1403,7 +1441,7 @@ export function BlocPasse({
             et c'est le même écart par canal : le bord part des bordures, la
             pipette part du point, la sélection part du liseré de ce qu'on a
             entouré. Ce qui les sépare est l'amorce, pas le seuil. */}
-        {(passe.moteur === "bord" || pipette || selection) && (
+        {passe.moteur === "bord" || pipette || selection ? (
           <Reglage libelle="tolérance" aide="detourage.tolerance">
             <Curseur
               valeur={passe.tolerance}
@@ -1413,6 +1451,12 @@ export function BlocPasse({
               onFini={(tolerance) => fini({ ...passe, tolerance })}
             />
           </Reglage>
+        ) : (
+          // **Un réglage qui disparaît laisse une phrase à sa place** (8nonies).
+          // Le modèle décide seul de la silhouette et ne lit aucun seuil ; sans
+          // cette ligne, la tolérance s'évanouissait en changeant de moteur et
+          // l'on cherchait ce qu'on avait cassé.
+          <Raison texte="le modèle décide seul de la silhouette : il n'y a pas de tolérance à régler" />
         )}
         <Reglage libelle="seuil alpha" aide="detourage.seuil_alpha">
           <Curseur
