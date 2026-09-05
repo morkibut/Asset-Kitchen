@@ -105,6 +105,14 @@ export function EcranAtelierDeBande({
   const [enregistre, setEnregistre] = useState(false)
   const [remesure, setRemesure] = useState(false)
   const [recettes, setRecettes] = useState<Record<string, Recette>>({})
+  /** **Ce que chaque frame écarte de la bande, à l'instant qu'on regarde**
+   *  (V3.03.1). Il vient de l'aperçu et non de l'ouverture : l'ouverture dit
+   *  l'état du disque, et entre deux enregistrements le ruban doit suivre ce
+   *  qu'on vient de régler. Les mots des places sont ceux du serveur — deux
+   *  vocabulaires des mêmes places finiraient par ne plus les nommer pareil. */
+  const [ecarts, setEcarts] = useState<
+    { places: string[]; fenetre_davant: boolean }[]
+  >([])
   const toile = useRef<HTMLDivElement | null>(null)
 
   // **Dire une panne ne doit pas relancer l'aperçu.** L'écran d'accueil passe
@@ -128,6 +136,7 @@ export function EcranAtelierDeBande({
         setCadence(ouvert.bande.cadence)
         setSens(ouvert.bande.sens)
         setPlanche(ouvert.planche)
+        setEcarts(ouvert.ecarts ?? [])
       } catch (erreur) {
         if (vivant) direPanne.current((erreur as Error).message)
       }
@@ -187,7 +196,11 @@ export function EcranAtelierDeBande({
             recette,
             cadre: recu.bande.cadre,
           })
-          if (vivant) setPlanche(apercu.planche)
+          if (!vivant) return
+          setPlanche(apercu.planche)
+          // Le ruban suit ce qu'on vient de régler, pas ce qui est sur le
+          // disque : l'aperçu est le seul appel qui reparte à chaque geste.
+          if (apercu.ecarts_des_frames) setEcarts(apercu.ecarts_des_frames)
         } catch (erreur) {
           if (vivant) direPanne.current((erreur as Error).message)
         }
@@ -256,6 +269,39 @@ export function EcranAtelierDeBande({
     [corriger],
   )
 
+  // ── La recette d'une frame (V3.03.1) ──────────────────────────────────────
+  //
+  // **Elle naît au premier réglage touché**, et pas avant : tant que personne
+  // n'a rien changé sur cette image-là, elle suit la bande — c'est ce qui fait
+  // qu'une bande d'avant la tranche se rouvre sans que rien ne migre.
+  //
+  // Elle passe par `corriger`, comme la poussée au pixel, et pour la même
+  // raison : *on corrige l'image qu'on regarde*. Régler pendant que l'animation
+  // tourne poserait sinon le réglage sur une pose au hasard.
+
+  /** La recette qu'on est en train de régler : **celle de la frame quand elle
+   *  en a une, celle de la bande sinon**. C'est aussi ce qui fait de la
+   *  naissance une copie — le premier réglage part de ce qui était affiché. */
+  const reglee = prises[rang]?.recette ?? recette
+
+  const laFrameAAuMine = useCallback(
+    (index: number) => Boolean(prises[index]?.recette),
+    [prises],
+  )
+
+  const toucherLaFrame = useCallback(
+    (suivante: Recette) =>
+      corriger((prise) => ({ ...prise, recette: suivante })),
+    [corriger],
+  )
+
+  /** Rendre la frame au défaut. **Un geste annulable comme les autres** : il
+   *  n'écrit rien, il repose `null`, et « Annuler » ramène ce qu'il y avait. */
+  const retirerLaRecetteDeLaFrame = useCallback(
+    () => corriger((prise) => ({ ...prise, recette: null })),
+    [corriger],
+  )
+
   const annuler = useCallback(() => {
     if (!recu) return
     setPrises(recu.bande.prises)
@@ -285,6 +331,7 @@ export function EcranAtelierDeBande({
       setRecu(ouvert)
       setPrises(ouvert.bande.prises)
       setPlanche(ouvert.planche)
+      setEcarts(ouvert.ecarts ?? [])
       onChangee?.()
     } catch (erreur) {
       onErreur((erreur as Error).message)
@@ -308,6 +355,7 @@ export function EcranAtelierDeBande({
       setRecu(ouvert)
       setPrises(ouvert.bande.prises)
       setPlanche(ouvert.planche)
+      setEcarts(ouvert.ecarts ?? [])
       onChangee?.()
     } catch (erreur) {
       onErreur((erreur as Error).message)
@@ -380,16 +428,32 @@ export function EcranAtelierDeBande({
 
         <p className="mesure text-[10px] leading-4 text-texte-3">
           {compte} image{compte > 1 ? "s" : ""}, {cadence} par seconde —{" "}
-          {bande.secondes} s par tour. Ce qui se règle ici vaut pour{" "}
-          <b className="text-texte-2">toute l'animation</b> ; ce qui se corrige
-          au milieu ne vaut que pour l'image choisie.
+          {bande.secondes} s par tour.{" "}
+          {laFrameAAuMine(rang) ? (
+            <>
+              L'image {rang + 1} a <b className="text-texte-2">sa recette à
+              elle</b> : ce qui se règle ici ne vaut que pour elle.
+            </>
+          ) : (
+            <>
+              Ce qui se règle ici vaut pour{" "}
+              <b className="text-texte-2">toute l'animation</b> ; toucher un
+              réglage donne à l'image {rang + 1} sa recette à elle.
+            </>
+          )}
         </p>
 
         <RecetteEnregistree recettes={recettes} onRecette={setRecette} />
 
+        <ReglagesDeLaFrame
+          recette={reglee}
+          onRecette={toucherLaFrame}
+          sienne={laFrameAAuMine(rang)}
+          ecart={ecarts[rang]}
+          onReprendre={retirerLaRecetteDeLaFrame}
+        />
+
         <ReglagesDeLaBande
-          recette={recette}
-          onRecette={setRecette}
           cadence={cadence}
           onCadence={setCadence}
           sens={sens}
@@ -488,6 +552,7 @@ export function EcranAtelierDeBande({
               compte={compte}
               courante={index === rang}
               venueDAilleurs={Boolean(prise.clip) && prise.clip !== bande.clip}
+              ecart={ecarts[index]}
               onChoisir={() => {
                 setJoue(false)
                 setCourante(index)
@@ -751,6 +816,7 @@ function ImageDeLaBande({
   compte,
   courante,
   venueDAilleurs,
+  ecart,
   onChoisir,
 }: {
   prise: Prise
@@ -761,22 +827,33 @@ function ImageDeLaBande({
   compte: number
   courante: boolean
   venueDAilleurs: boolean
+  /** Ce que cette image change à la recette de l'animation, ou rien (V3.03.1).
+   *  **Les places sont nommées par le serveur** — voir `ReglagesDeLaFrame`. */
+  ecart?: { places: string[]; fenetre_davant: boolean }
   onChoisir: () => void
 }) {
   const cote = 64
   const facteur = Math.max(1, Math.floor(Math.min(cote / haut, cote / large)))
+  // **Une recette égale à celle de la bande ne s'annonce pas** : le serveur rend
+  // une liste de places vide, et un liseré posé là dirait qu'il s'est passé
+  // quelque chose alors que rien n'a changé.
+  const secarte = Boolean(ecart && ecart.places.length > 0)
+  const dit = secarte
+    ? `image ${prise.numero} — s'écarte de l'animation : ${ecart!.places.join(", ")}`
+    : venueDAilleurs
+      ? `image ${prise.numero}, prise dans un autre clip`
+      : `image ${prise.numero}`
   return (
     <button
       type="button"
       onClick={onChoisir}
       data-image-de-la-bande={index}
-      aria-label={`l'image ${prise.numero}, ${index + 1}ᵉ de l'animation`}
+      data-secarte={secarte ? "" : undefined}
+      aria-label={`l'image ${prise.numero}, ${index + 1}ᵉ de l'animation${
+        secarte ? ` — s'écarte de l'animation : ${ecart!.places.join(", ")}` : ""
+      }`}
       aria-current={courante}
-      title={
-        venueDAilleurs
-          ? `image ${prise.numero}, prise dans un autre clip`
-          : `image ${prise.numero}`
-      }
+      title={dit}
       className={`relative flex items-center justify-center overflow-hidden border bg-fond-2 ${
         courante ? "border-signal" : "border-bord hover:border-texte-3"
       }`}
@@ -799,6 +876,18 @@ function ImageDeLaBande({
           aria-hidden
           title="prise dans un autre clip"
           className="absolute right-0 top-0 h-1.5 w-1.5 bg-signal"
+        />
+      )}
+      {/* **Le liseré de ce qui s'écarte** (V3.03.1). Sur le bord gauche et non
+          en pastille : il doit se lire d'un coup d'œil sur un ruban de trente
+          vignettes, et une pastille de six pixels s'y perd. C'est le même
+          liseré que la V3.03.2 reprendra pour dire ce qu'une recette posée en
+          lot va écraser. */}
+      {secarte && (
+        <span
+          data-liser-ecart
+          aria-hidden
+          className="absolute inset-y-0 left-0 w-[3px] bg-texte-2"
         />
       )}
       {(prise.dx !== 0 || prise.dy !== 0) && (
@@ -864,29 +953,42 @@ function Lecteur({
   )
 }
 
-/** Les réglages qui valent pour toute l'animation. Ce sont **ceux du montage**,
- *  et volontairement les mêmes : deux écrans qui régleraient la même recette
- *  avec deux jeux de curseurs différents finiraient par ne plus rendre la même
- *  image. */
-function ReglagesDeLaBande({
+/** **La recette de l'image qu'on regarde** (V3.03.1) — celle de la frame quand
+ *  elle en a une, celle de la bande sinon.
+ *
+ *  Le titre dit lequel des deux, et c'est tout ce qui sépare les deux états :
+ *  les mêmes curseurs règlent l'une ou l'autre, et le premier geste fait passer
+ *  de la seconde à la première. Une recette individuelle **part d'une copie de
+ *  celle de la bande** à cet instant — rien ne se remet à zéro, on continue de
+ *  régler ce qu'on avait sous les yeux.
+ *
+ *  ⚠️ **Ce qui s'écarte est nommé par le serveur, pas ici.** Les places d'une
+ *  recette ont déjà un mot français ailleurs ; les réécrire donnerait deux
+ *  vocabulaires de la même chose, et celui de l'écran finirait par mentir. */
+function ReglagesDeLaFrame({
   recette,
   onRecette,
-  cadence,
-  onCadence,
-  sens,
-  onSens,
+  sienne,
+  ecart,
+  onReprendre,
 }: {
   recette: Recette | null
   onRecette: (r: Recette) => void
-  cadence: number
-  onCadence: (v: number) => void
-  sens: "boucle" | "aller-retour"
-  onSens: (v: "boucle" | "aller-retour") => void
+  /** L'image a-t-elle sa recette à elle ? Le titre et le bouton en dépendent. */
+  sienne: boolean
+  ecart?: { places: string[]; fenetre_davant: boolean }
+  onReprendre: () => void
 }) {
   if (!recette) return null
   return (
-    <div className="flex flex-col gap-1 border-t border-bord pt-2">
-      <Libelle aide="bande.recette">la recette de l'animation</Libelle>
+    <div
+      data-recette-de-la-frame={sienne ? "sienne" : "de-la-bande"}
+      className="flex flex-col gap-1 border-t border-bord pt-2"
+    >
+      <Libelle aide="bande.recette">
+        {sienne ? "la recette de cette image" : "la recette de l'animation"}
+      </Libelle>
+
       {recette.grille && (
         <Curseur
           libelle="Taille du pixel"
@@ -919,7 +1021,72 @@ function ReglagesDeLaBande({
           }
         />
       )}
-      <Detourage recette={recette} onRecette={onRecette} />
+      <Detourage recette={recette} onRecette={onRecette} sienne={sienne} />
+
+      {sienne && (
+        <>
+          {ecart && ecart.places.length > 0 && (
+            <p
+              data-ecart-de-la-frame
+              className="mesure text-[10px] leading-4 text-texte-3"
+            >
+              S'écarte de l'animation :{" "}
+              <b className="text-texte-2">{ecart.places.join(", ")}</b>.
+            </p>
+          )}
+
+          {/* ⚠️ **La fenêtre commune est mesurée avec la recette de la bande**,
+              et ne se remesure pas frame par frame : les vingt secondes ne se
+              paient pas à chaque cran de curseur. Une frame qui s'en écarte peut
+              donc déborder, et c'est la phrase « d'avant » qui le dit — la même
+              que sous la fenêtre elle-même, parce que c'est le même fait. */}
+          {ecart?.fenetre_davant && (
+            <p
+              data-fenetre-davant-sur-la-frame
+              className="mesure text-[10px] leading-4 text-signal"
+            >
+              La fenêtre commune a été mesurée avec la recette de l'animation.
+              Elle n'est pas fausse, elle est d'avant : cette image peut dépasser
+              d'un côté.
+            </p>
+          )}
+
+          <button
+            type="button"
+            onClick={onReprendre}
+            className="mesure self-start border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-texte-1"
+          >
+            Reprendre la recette de l'animation
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+/** **Ce qui appartient à l'animation entière, et à rien d'autre** : la vitesse
+ *  et le sens de lecture.
+ *
+ *  ⚠️ La recette n'y est plus (V3.03.1). Elle a longtemps vécu ici parce qu'une
+ *  bande n'avait qu'une recette pour toutes ses images ; depuis que chaque frame
+ *  peut porter la sienne, laisser les curseurs de recette sous le titre *« la
+ *  recette de l'animation »* aurait fait croire qu'on règle les douze images
+ *  alors qu'on n'en règle qu'une. Ils sont passés dans `ReglagesDeLaFrame`, qui
+ *  dit de quoi il parle. */
+function ReglagesDeLaBande({
+  cadence,
+  onCadence,
+  sens,
+  onSens,
+}: {
+  cadence: number
+  onCadence: (v: number) => void
+  sens: "boucle" | "aller-retour"
+  onSens: (v: "boucle" | "aller-retour") => void
+}) {
+  return (
+    <div className="flex flex-col gap-1 border-t border-bord pt-2">
+      <Libelle aide="bande.recette">ce qui vaut pour l'animation</Libelle>
       <div className="mt-1 flex items-center gap-2">
         <span className="mesure text-[10px] text-texte-3">sens de lecture</span>
         {(["boucle", "aller-retour"] as const).map((choix) => (
@@ -1038,9 +1205,16 @@ function FenetreDeLaBande({
 function Detourage({
   recette,
   onRecette,
+  sienne = false,
 }: {
   recette: Recette
   onRecette: (r: Recette) => void
+  /** L'image regardée a-t-elle sa recette à elle (V3.03.1) ? **La dernière
+   *  ligne du panneau en dépend**, et elle disait le contraire du titre au
+   *  premier essai au navigateur : *ce qui change ici vaut pour toutes les
+   *  images* sous un titre qui venait d'annoncer « la recette de cette image ».
+   *  Deux phrases voisines qui se contredisent valent moins que pas de phrase. */
+  sienne?: boolean
 }) {
   const passe = recette.passes[0]
 
@@ -1140,7 +1314,9 @@ function Detourage({
           ? "La pipette n'a pas de point visé : elle se pose sur l'image brute, dans la table de découpe. Ici elle n'agit pas."
           : passe.moteur === "trace" && passe.trace.length === 0
             ? "Aucun tracé : la sélection se dessine sur l'image brute, dans la table de découpe. Ici elle n'agit pas."
-            : "Ce qui change ici vaut pour toutes les images de l'animation."}
+            : sienne
+              ? "Ce qui change ici ne vaut que pour l'image regardée."
+              : "Ce qui change ici vaut pour toutes les images de l'animation."}
       </p>
     </div>
   )

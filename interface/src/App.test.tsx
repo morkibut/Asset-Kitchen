@@ -1236,6 +1236,37 @@ const VOISINS_A7 = [
   { identifiant: "clip-b", mouvement: "course", images: 18, sien: false },
 ]
 
+/** Ce que chaque frame écarte de la recette de la bande (V3.03.1).
+ *
+ *  **Le double rejoue la règle du serveur, mots compris** —
+ *  `ServiceMontage._ecarts_des_prises`. Un double qui rendrait une liste vide
+ *  laisserait passer l'écran qui n'annonce rien, c'est-à-dire exactement le
+ *  défaut que ces essais cherchent. Les vrais mots et le vrai partage vivent
+ *  dans `tests/test_v303.py`, sur la vraie chaîne. */
+const PLACES_DE_LA_RECETTE: readonly (readonly [keyof Recette, string])[] = [
+  ["passes", "détourage"],
+  ["recadrage", "recadrage"],
+  ["grille", "grille"],
+  ["quantification", "quantification"],
+  ["bords", "bords"],
+  ["contours", "contours"],
+  ["main", "la main"],
+]
+
+function ecartsDesPrises(prises: Prise[], defaut: Recette | null) {
+  return prises.map((prise) => {
+    if (!prise.recette) return { places: [], fenetre_davant: false }
+    const places = PLACES_DE_LA_RECETTE.filter(
+      ([cle]) =>
+        JSON.stringify(prise.recette?.[cle] ?? null) !==
+        JSON.stringify(defaut?.[cle] ?? null),
+    ).map(([, mot]) => mot)
+    // Une recette individuelle égale à celle de la bande ne s'annonce pas :
+    // rien n'a changé, et une phrase dirait le contraire.
+    return { places, fenetre_davant: places.length > 0 }
+  })
+}
+
 const CADRE_REMESURE = {
   ...APERCU_RENDU.cadre,
   choix: "clip" as const,
@@ -1464,6 +1495,7 @@ function serveurDouble(options: {
     images_par_clip: { "clip-a": 22 },
     cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
     clips_voisins: VOISINS_A7,
+    ecarts: GARDEE_A7.prises.map(() => ({ places: [], fenetre_davant: false })),
   }
 
   const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
@@ -1959,6 +1991,13 @@ function serveurDouble(options: {
         ...APERCU_RENDU,
         compte: ((corps?.images ?? []) as number[]).length,
         largeur: APERCU_RENDU.case_largeur * ((corps?.images ?? []) as number[]).length,
+        // **L'aperçu dit les écarts** (V3.03.1) : c'est le seul appel qui
+        // reparte à chaque geste, donc le seul qui puisse tenir le ruban à jour
+        // entre deux enregistrements.
+        ecarts_des_frames: ecartsDesPrises(
+          (corps?.prises ?? []) as Prise[],
+          (corps?.recette ?? null) as Recette | null,
+        ),
         // La mesure d'`A5` se pose par essai : c'est un chiffre, et un chiffre
         // se lit sur un cas précis. Le `undefined` explicite existe pour écrire
         // le cas d'une bande qui n'en a pas.
@@ -2005,6 +2044,11 @@ function serveurDouble(options: {
       atelierEnCours = {
         ...atelierEnCours,
         bande,
+        // **Les écarts se recalculent à l'écriture** (V3.03.1), comme au
+        // serveur : les garder tels quels ferait relire une animation dont le
+        // ruban annoncerait l'état d'avant l'enregistrement — c'est-à-dire le
+        // cul-de-sac d'`A7` déplacé d'un cran.
+        ecarts: ecartsDesPrises(bande.prises, bande.recette),
         // Un détourage changé périme la fenêtre : c'est le serveur qui le dit,
         // et l'écran ne doit pas continuer à l'annoncer à jour.
         cadre: corps?.recette
@@ -22969,6 +23013,10 @@ describe("A7 · l'atelier d'une animation", () => {
           images_par_clip: { "clip-a": 22 },
           cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
           clips_voisins: VOISINS_A7,
+          ecarts: GARDEE_A7.prises.map(() => ({
+            places: [],
+            fenetre_davant: false,
+          })),
         },
       },
       false,
@@ -23033,6 +23081,10 @@ describe("A7 · l'atelier d'une animation", () => {
         images_par_clip: { "clip-a": 22 },
         cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
         clips_voisins: [VOISINS_A7[0]],
+        ecarts: GARDEE_A7.prises.map(() => ({
+          places: [],
+          fenetre_davant: false,
+        })),
       },
     })
 
@@ -23097,6 +23149,10 @@ describe("A7 · l'atelier d'une animation", () => {
         images_par_clip: { "clip-a": 22 },
         cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
         clips_voisins: VOISINS_A7,
+        ecarts: GARDEE_A7.prises.map(() => ({
+          places: [],
+          fenetre_davant: false,
+        })),
       },
     })
 
@@ -23285,6 +23341,226 @@ describe("A7 · l'atelier d'une animation", () => {
     expect(
       appels.some((a) => a.url === "/api/generations" && Boolean(a.corps)),
     ).toBe(false)
+  })
+
+  // ── V3.03.1 · chaque frame porte sa recette ──────────────────────────────
+  //
+  // **Le défaut de forme que ces essais évitent.** Une bande n'avait qu'une
+  // recette pour toutes ses images ; depuis la V3.03.1 chaque frame peut porter
+  // la sienne, et le geste qui la fait naître est *toucher un réglage*. Un essai
+  // qui poserait la recette dans l'état de départ du double ne verrait donc
+  // jamais la naissance — c'est-à-dire tout ce que la tranche ajoute. Ceux d'ici
+  // partent tous d'une bande sans aucune recette individuelle et **la font
+  // naître par l'écran**.
+
+  /** Régler les couleurs de l'image regardée, par le champ où le chiffre
+   *  s'écrit. C'est le geste le plus court qui donne à une frame sa recette. */
+  const reglerLesCouleurs = async (
+    atelier: ReturnType<typeof within>,
+    valeur: number,
+  ) => {
+    const champ = await atelier.findByLabelText("Couleurs, en chiffres")
+    fireEvent.change(champ, { target: { value: String(valeur) } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+  }
+
+  test("une bande d'avant se rouvre telle quelle — rien ne migre", async () => {
+    // Le premier critère de la tranche, et le seul qui se casserait en silence :
+    // une migration qui donnerait sa recette à chaque frame rendrait la même
+    // image, et ne se verrait qu'au moment de vouloir en écarter une seule.
+    const { atelier, cadre } = await ouvrirLAtelier()
+
+    await atelier.findByText(/en pixels du sprite/)
+    expect(cadre.querySelectorAll("[data-secarte]")).toHaveLength(0)
+    expect(
+      cadre.querySelector("[data-recette-de-la-frame]")?.getAttribute(
+        "data-recette-de-la-frame",
+      ),
+    ).toBe("de-la-bande")
+  })
+
+  test("toucher un réglage donne à l'image sa recette, copiée de la bande", async () => {
+    const { atelier, cadre } = await ouvrirLAtelier()
+    await atelier.findByText(/en pixels du sprite/)
+
+    await reglerLesCouleurs(atelier, 12)
+
+    // Le panneau change de titre : c'est ce qui distingue *je règle les quatre
+    // images* de *je règle celle-ci*.
+    await waitFor(() =>
+      expect(
+        cadre
+          .querySelector("[data-recette-de-la-frame]")
+          ?.getAttribute("data-recette-de-la-frame"),
+      ).toBe("sienne"),
+    )
+    // **Une copie, pas une remise à zéro** : la taille du pixel de la bande est
+    // encore là. Sans ça, écarter une frame sur les couleurs lui ferait perdre
+    // en silence tout le reste de la recette.
+    expect(
+      (
+        (await atelier.findByLabelText(
+          "Taille du pixel, en chiffres",
+        )) as HTMLInputElement
+      ).value,
+    ).toBe("64 px de haut")
+    // Et le ruban l'écrit, avec les mots du serveur.
+    await waitFor(() =>
+      expect(
+        cadre.querySelector('[data-image-de-la-bande="0"][data-secarte]'),
+      ).toBeTruthy(),
+    )
+    expect(await atelier.findByText(/S'écarte de l'animation/)).toBeTruthy()
+    expect(await atelier.findByText(/quantification/)).toBeTruthy()
+  })
+
+  test("une frame qui s'écarte dit que la fenêtre commune est d'avant", async () => {
+    // La fenêtre ne change pas de camp : elle reste mesurée avec la recette de
+    // la bande, et les vingt secondes de remesure ne se paient pas à chaque
+    // cran de curseur. Ce qui reste à faire est de le **dire**.
+    const { atelier, cadre } = await ouvrirLAtelier()
+    await atelier.findByText(/en pixels du sprite/)
+
+    await reglerLesCouleurs(atelier, 12)
+
+    await waitFor(() =>
+      expect(
+        cadre.querySelector("[data-fenetre-davant-sur-la-frame]"),
+      ).toBeTruthy(),
+    )
+  })
+
+  test("« reprendre la recette de l'animation » rend la frame au défaut", async () => {
+    const { atelier, cadre } = await ouvrirLAtelier()
+    await atelier.findByText(/en pixels du sprite/)
+    await reglerLesCouleurs(atelier, 12)
+    await waitFor(() =>
+      expect(cadre.querySelector("[data-secarte]")).toBeTruthy(),
+    )
+
+    fireEvent.click(
+      await atelier.findByRole("button", {
+        name: "Reprendre la recette de l'animation",
+      }),
+    )
+
+    await waitFor(() =>
+      expect(
+        cadre
+          .querySelector("[data-recette-de-la-frame]")
+          ?.getAttribute("data-recette-de-la-frame"),
+      ).toBe("de-la-bande"),
+    )
+    // **Le ruban suit l'aperçu, pas le clic** : le liseré s'en va quand l'image
+    // refaite arrive, pas avant. Les deux bougent ensemble, et c'est voulu —
+    // un liseré qui partirait avant que l'image ne change dirait que c'est fait
+    // alors qu'on regarde encore l'ancien rendu.
+    await waitFor(() =>
+      expect(cadre.querySelectorAll("[data-secarte]")).toHaveLength(0),
+    )
+  })
+
+  test("écarter une frame puis annuler ramène l'état d'ouverture", async () => {
+    // *C'est un geste annulable comme les autres* — le critère le demande, et
+    // rien ne le rendrait vrai tout seul : la recette d'une frame vit dans les
+    // prises, et « Annuler » les repose telles qu'elles étaient.
+    const { atelier, cadre } = await ouvrirLAtelier()
+    await atelier.findByText(/en pixels du sprite/)
+    await reglerLesCouleurs(atelier, 12)
+    expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
+    // **On vérifie d'abord que la frame s'est bien écartée**, sinon l'essai
+    // passerait aussi bien sur un réglage posé sur la bande entière : « Annuler »
+    // efface les deux, et l'essai ne dirait alors rien de la tranche.
+    await waitFor(() =>
+      expect(cadre.querySelector("[data-secarte]")).toBeTruthy(),
+    )
+
+    fireEvent.click(atelier.getByRole("button", { name: "Annuler" }))
+
+    await waitFor(() =>
+      expect(atelier.queryByText(/des corrections attendent/)).toBeNull(),
+    )
+    await waitFor(() =>
+      expect(cadre.querySelectorAll("[data-secarte]")).toHaveLength(0),
+    )
+  })
+
+  test("on règle l'image qu'on regarde, lecteur en marche", async () => {
+    // ⚠️ **L'essai qui met les choses au calme supprime le défaut qu'il
+    // cherche** (`AGENTS.md`, 8octies). Arrêté, l'image regardée est déjà
+    // l'image choisie : le réglage ne peut pas tomber ailleurs. Le lecteur
+    // tourne donc, **ralenti** — deux images par seconde —, et c'est la
+    // deuxième image qui doit recevoir la recette, pas la première.
+    const { atelier, cadre } = await ouvrirLAtelier(
+      {
+        atelierDeBande: {
+          bande: { ...GARDEE_A7, cadence: 2, sens: "boucle" },
+          planche: "data:image/png;base64,AAAA",
+          clips: { "clip-a": clipRendu("clip-a", false) },
+          images_par_clip: { "clip-a": 22 },
+          cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
+          clips_voisins: VOISINS_A7,
+          ecarts: GARDEE_A7.prises.map(() => ({
+            places: [],
+            fenetre_davant: false,
+          })),
+        },
+      },
+      false,
+    )
+    await waitFor(
+      () => expect(atelier.getByText(/image 2 sur 4/)).toBeTruthy(),
+      { timeout: 3000 },
+    )
+
+    await reglerLesCouleurs(atelier, 12)
+
+    // La deuxième, et elle seule : celle qui était à l'écran.
+    await waitFor(() =>
+      expect(cadre.querySelectorAll("[data-secarte]")).toHaveLength(1),
+    )
+    expect(
+      cadre.querySelector('[data-image-de-la-bande="1"][data-secarte]'),
+    ).toBeTruthy()
+  })
+
+  test("une garde se referme et se rouvre avec ses recettes individuelles", async () => {
+    // ⚠️ **Le piège d'`A7`, un cran plus loin** (`AGENTS.md`, 8septies) : les
+    // essais gardaient puis vérifiaient la réponse du `POST`, c'est-à-dire ce
+    // qu'ils venaient d'envoyer. Celui-ci **relit l'écran** après que
+    // l'enregistrement a rouvert l'animation — ce que le serveur a écrit, pas
+    // ce qu'on croyait lui dire. Et il garde avec un réglage qui n'est pas
+    // celui du défaut : 12 couleurs là où le jeu en dit 24.
+    const { atelier, cadre, appels } = await ouvrirLAtelier()
+    await atelier.findByText(/en pixels du sprite/)
+    await reglerLesCouleurs(atelier, 12)
+    await waitFor(() =>
+      expect(cadre.querySelector("[data-secarte]")).toBeTruthy(),
+    )
+
+    fireEvent.click(await atelier.findByRole("button", { name: "Enregistrer ›" }))
+
+    await waitFor(() =>
+      expect(atelier.queryByText(/des corrections attendent/)).toBeNull(),
+    )
+    // La recette est partie sur la prise, et pas sur la bande.
+    const ecrit = appels.find(
+      (a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps),
+    )
+    const envoyees = (ecrit?.corps as { prises: Prise[] }).prises
+    expect(envoyees[0].recette?.quantification?.couleurs).toBe(12)
+    expect(envoyees[1].recette ?? null).toBeNull()
+    // Et l'écran rouvert la porte encore : c'est la relecture qui compte.
+    await waitFor(() =>
+      expect(
+        cadre.querySelector('[data-image-de-la-bande="0"][data-secarte]'),
+      ).toBeTruthy(),
+    )
+    expect(
+      (
+        (await atelier.findByLabelText("Couleurs, en chiffres")) as HTMLInputElement
+      ).value,
+    ).toBe("12")
   })
 })
 

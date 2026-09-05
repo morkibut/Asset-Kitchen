@@ -838,6 +838,10 @@ export type Prise = {
   clip: string
   dx: number
   dy: number
+  /** **La recette individuelle de cette frame, quand elle en a une**
+   *  (V3.03.1). `null` veut dire *la recette de la bande* — le défaut, et
+   *  c'est ce qui relit inchangées les bandes d'avant. */
+  recette?: Recette | null
 }
 
 export type Bande = {
@@ -904,6 +908,15 @@ export type AtelierDeBande = {
     /** L'animation y prend déjà au moins une image. */
     sien: boolean
   }[]
+  /** **Ce que chaque frame change à la recette de la bande** (V3.03.1), au
+   *  même rang que les prises. `places` est vide quand la frame n'a pas de
+   *  recette à elle, ou quand la sienne est égale à celle de la bande ;
+   *  `fenetre_davant` dit que la fenêtre commune a été mesurée avec la recette
+   *  de la bande et que cette frame, qui s'en écarte, peut déborder. */
+  ecarts: {
+    places: string[]
+    fenetre_davant: boolean
+  }[]
 }
 
 /** Tout ce que l'écran de montage reçoit à l'ouverture, **en une seule fois**.
@@ -965,6 +978,15 @@ export type ApercuDeBande = {
   /** Ce que cette recette change à celle du jeu, **une phrase par réglage**.
    *  Vide quand la bande n'a rien changé. */
   ecarts: string[]
+  /** ⚠️ **À ne pas confondre avec `ecarts` ci-dessus** : celui-là compare la
+   *  recette de la bande à celle du *jeu*, celui-ci compare chaque *frame* à
+   *  celle de la bande (V3.03.1), au même rang que les prises envoyées.
+   *
+   *  Il est ici parce que l'aperçu est le seul appel qui reparte à chaque
+   *  geste : entre deux enregistrements, c'est lui qui tient le ruban à jour
+   *  sur ce qui s'écarte — et les mots des places viennent du serveur, jamais
+   *  de l'écran. */
+  ecarts_des_frames?: { places: string[]; fenetre_davant: boolean }[]
   /** La **première image seule**, détourée, sans cadre autour d'elle, en
    *  `data:`. Elle sert à ce que la planche ne peut pas faire : montrer le
    *  cadre **pendant qu'on le tire**. Avec le sujet en main, l'écran repose

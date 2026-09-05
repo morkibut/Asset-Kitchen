@@ -288,15 +288,27 @@ class ServiceMontage:
         )
         retenues = self._fichiers_des_prises(identifiant, gardees)
 
+        # **Chaque frame est préparée avec sa recette à elle** (V3.03.1), comme
+        # sur le chemin enregistré : c'est ici que l'atelier d'une animation
+        # regarde ce qu'il règle, et une frame préparée avec la recette de la
+        # bande ne montrerait jamais le réglage qu'on vient de poser dessus.
+        recettes, individuelles = self._recettes_des_prises(gardees, recette)
         preparees = [
-            preparer(fichier.read_bytes(), recette) for fichier in retenues
+            preparer(fichier.read_bytes(), recette_la)
+            for fichier, recette_la in zip(retenues, recettes)
         ]
+        # ⚠️ **La fenêtre commune reste mesurée avec la recette de la bande**, et
+        # ne change pas de camp : c'est ce qui fait qu'une frame qui s'écarte
+        # peut déborder — l'écran le dit avec la phrase « d'avant » plutôt que
+        # de remesurer vingt secondes à chaque cran de curseur.
         fenetre = self._fenetre(generation, recette, cadre, preparees)
         planche = assembler(
             preparees,
             recette,
             fenetre,
             poussees=[(p.dx, p.dy) for p in gardees],
+            recettes=recettes,
+            individuelles=individuelles,
         )
 
         return {
@@ -306,6 +318,17 @@ class ServiceMontage:
             "fenetre": fenetre.en_json() if fenetre else None,
             "cadre": cadre.en_json(),
             "ecarts": self._ecarts(generation, recette),
+            # ⚠️ **Deux « écarts » dans la même réponse, et ils ne parlent pas de
+            # la même chose.** Celui du dessus dit ce que la recette de la bande
+            # change à celle du *jeu* ; celui-ci dit ce que chaque *frame* change
+            # à celle de la bande (V3.03.1). Le nom court était pris ; le second
+            # porte donc le sien en entier plutôt que de se faire passer pour
+            # l'autre.
+            #
+            # Il est ici parce que l'aperçu est le seul appel qui reparte à
+            # chaque geste : entre deux enregistrements, c'est lui qui tient le
+            # ruban à jour sur ce qui s'écarte, et avec les mots du serveur.
+            "ecarts_des_frames": self._ecarts_des_prises(gardees, recette),
             **self._sujet(preparees, recette),
         }
 
@@ -564,22 +587,42 @@ class ServiceMontage:
             individuelles=individuelles,
         )
 
-    def _recettes_de(self, bande: Bande) -> tuple[list[Recette], list[bool]]:
+    @staticmethod
+    def _recettes_des_prises(
+        prises: Sequence[Prise], defaut: Recette
+    ) -> tuple[list[Recette], list[bool]]:
         """La recette de chaque frame, et **si elle en a une à elle** (V3.03.1).
 
         Le défaut est la recette de la bande — c'est ce qui rend une bande
         d'avant identique à elle-même. Le second membre est ce qui décide de la
         palette de la bande : une frame individuelle en sort, et retoucher
         ensuite *cette* frame ne rebouge plus la palette des autres.
+
+        ⚠️ **Écrite une seule fois pour les deux chemins de la planche** — celui
+        qu'on enregistre et celui qu'on regarde. Ils ont divergé pendant une
+        demi-tranche : l'enregistré appliquait les recettes individuelles, et
+        l'aperçu les jetait. Un curseur bougeait alors sans que l'image change,
+        ce qui ne se distingue pas d'un curseur cassé (`AGENTS.md`, 8nonies).
         """
         recettes: list[Recette] = []
         individuelles: list[bool] = []
-        for prise in bande.prises:
+        for prise in prises:
             individuelles.append(prise.recette is not None)
-            recettes.append(prise.recette or bande.recette)
+            recettes.append(prise.recette or defaut)
         return recettes, individuelles
 
+    def _recettes_de(self, bande: Bande) -> tuple[list[Recette], list[bool]]:
+        """Les recettes d'une bande gardée — le même partage, depuis sa fiche."""
+        return self._recettes_des_prises(bande.prises, bande.recette)
+
     def _ecarts_de(self, bande: Bande) -> list[dict[str, Any]]:
+        """Les écarts d'une bande gardée — le même calcul, depuis sa fiche."""
+        return self._ecarts_des_prises(bande.prises, bande.recette)
+
+    @staticmethod
+    def _ecarts_des_prises(
+        prises: Sequence[Prise], defaut: Recette
+    ) -> list[dict[str, Any]]:
         """Ce que chaque frame change à la recette de la bande, ou rien (V3.03.1).
 
         Une frame sans recette individuelle n'a rien à dire. Une frame qui en a
@@ -591,7 +634,11 @@ class ServiceMontage:
         s'annonce pas : rien n'a changé, et une phrase dirait le contraire.
 
         Les mots viennent d'ici, pas de l'écran : deux endroits qui nommeraient
-        les places de la recette finiraient par ne plus les nommer pareil.
+        les places de la recette finiraient par ne plus les nommer pareil. C'est
+        aussi pourquoi **l'aperçu les recalcule** au lieu de laisser l'écran le
+        faire : entre deux enregistrements, ce que le ruban annonce doit suivre
+        ce qu'on vient de régler, et un écran qui nommerait les places lui-même
+        serait le second vocabulaire que cette méthode existe pour éviter.
         """
         # Les places dans l'ordre du traitement, et leur mot français.
         places = (
@@ -604,12 +651,12 @@ class ServiceMontage:
             ("main", "la main"),
         )
         ecarts: list[dict[str, Any]] = []
-        for prise in bande.prises:
+        for prise in prises:
             if prise.recette is None:
                 ecarts.append({"places": (), "fenetre_davant": False})
                 continue
             une = prise.recette.en_json()
-            autre = bande.recette.en_json()
+            autre = defaut.en_json()
             differents = tuple(mot for cle, mot in places if une.get(cle) != autre.get(cle))
             ecarts.append(
                 {"places": differents, "fenetre_davant": bool(differents)}

@@ -18,6 +18,7 @@ au brut — vit dans `interface/src/App.test.tsx`.
 
 from __future__ import annotations
 
+import base64
 import io
 
 import numpy as np
@@ -229,3 +230,122 @@ def test_la_fenetre_commune_reste_celle_de_la_bande(client_video, clip):
     assert relue["cadre"] == cadre
     ouverte = client_video.get(f"/api/strips/{bande['identifiant']}").json()
     assert ouverte["ecarts"][0]["fenetre_davant"] is True
+
+
+# ── Ce qu'on regarde est ce qu'on règle ─────────────────────────────────────
+
+
+def _planche_apercue(client, corps):
+    """La planche d'un aperçu, décodée — elle repart en `data:`, pas en fichier."""
+    reponse = client.post("/api/montage/preview", json=corps)
+    assert reponse.status_code == 200, reponse.text
+    recu = reponse.json()
+    _, base = recu["planche"].split(",", 1)
+    with Image.open(io.BytesIO(base64.b64decode(base))) as ouverte:
+        return np.asarray(ouverte.convert("RGBA")), recu
+
+
+def test_l_apercu_rend_chaque_frame_avec_sa_recette(client_video, clip):
+    """**L'aperçu applique les recettes individuelles, comme la planche gardée.**
+
+    > ### ⚠️ Les deux chemins de la planche avaient divergé
+    >
+    > La planche *enregistrée* appliquait la recette de chaque frame ; l'aperçu
+    > — celui que l'atelier d'une animation refait à chaque geste — préparait
+    > toutes les images avec la recette de la bande et jetait les autres. Le
+    > réglage posé sur une frame ne se voyait donc **qu'après avoir
+    > enregistré** : on tirait un curseur et l'image ne bougeait pas, ce qui ne
+    > se distingue pas d'un curseur cassé (`AGENTS.md`, 8nonies).
+
+    L'essai compare deux aperçus des **mêmes** images : l'un où la frame 1 porte
+    sa recette, l'autre où personne n'en porte. La frame 1 doit changer.
+
+    ⚠️ **Il ne demande pas que les voisines ne bougent pas**, et c'était la
+    première version de cet essai : une frame qui prend sa recette **sort du
+    pool** qui décide de la palette de la bande, donc les voisines rejouent leur
+    chaîne sur une palette d'un membre en moins. C'est le comportement voulu, et
+    `test_la_premiere_frame_ecartee_change_et_la_bande_reste_elle_meme` le tient
+    déjà. Ce qui ne doit pas bouger, c'est la *décision* — la recette de la
+    bande —, pas les pixels des voisines.
+    """
+    bande = _garder(client_video, clip)
+    nues = [dict(prise, recette=None) for prise in bande["prises"]]
+    ecartee = [dict(prise) for prise in nues]
+    ecartee[1]["recette"] = _recette_qui_change_les_couleurs(bande)
+
+    corps = {"clip": clip, "recette": bande["recette"], "cadre": bande["cadre"]}
+    sans, recu = _planche_apercue(client_video, {**corps, "prises": nues})
+    avec, _ = _planche_apercue(client_video, {**corps, "prises": ecartee})
+
+    largeur = recu["case_largeur"]
+    cases_sans, cases_avec = _cases(sans, largeur), _cases(avec, largeur)
+    assert not np.array_equal(cases_sans[1], cases_avec[1]), (
+        "la frame qui porte sa recette doit changer dans l'aperçu, "
+        "sans quoi le réglage ne se voit qu'après enregistrement"
+    )
+
+
+def test_l_apercu_dit_les_ecarts_avant_tout_enregistrement(client_video, clip):
+    """**Le ruban suit ce qu'on règle, pas ce qui est sur le disque.**
+
+    L'écart d'une frame — *« s'écarte de la bande : quantification »* — se lit
+    à l'ouverture de l'animation. Entre deux enregistrements, rien ne le
+    rafraîchirait : on pose un détourage sur une frame, et le ruban continuerait
+    d'annoncer l'état d'avant. L'aperçu, qui repart à chaque geste, le dit donc
+    aussi — et avec **les mots du serveur**, pour qu'il n'y ait jamais deux
+    vocabulaires des mêmes places.
+
+    L'essai ne fait rien enregistrer : la bande sur le disque n'a aucun écart, et
+    c'est l'aperçu seul qui en annonce un.
+    """
+    bande = _garder(client_video, clip)
+    prises = [dict(prise, recette=None) for prise in bande["prises"]]
+    prises[2]["recette"] = _recette_qui_change_les_couleurs(bande)
+
+    _, recu = _planche_apercue(
+        client_video,
+        {
+            "clip": clip,
+            "prises": prises,
+            "recette": bande["recette"],
+            "cadre": bande["cadre"],
+        },
+    )
+
+    ecarts = recu["ecarts_des_frames"]
+    assert [bool(e["places"]) for e in ecarts] == [False, False, True, False]
+    assert ecarts[2]["places"] == ["quantification"]
+    assert ecarts[2]["fenetre_davant"] is True
+
+    # Et rien n'a été écrit : la bande gardée, elle, ne s'écarte de rien.
+    sur_le_disque = client_video.get(f"/api/strips/{bande['identifiant']}").json()
+    assert all(not e["places"] for e in sur_le_disque["ecarts"])
+
+
+def test_l_apercu_et_la_planche_gardee_rendent_les_memes_pixels(
+    client_video, clip
+):
+    """*Ce qui sort est exactement ce que l'aperçu montrait*, **frame par frame**.
+
+    Le critère d'A10 vaut toujours, et c'est ici qu'il se casserait : deux
+    chemins qui composent la planche, un seul qui lit les recettes
+    individuelles, et l'auteur découvre l'écart en exportant. On règle une frame,
+    on regarde l'aperçu, on enregistre — et les pixels gardés sont les mêmes.
+    """
+    bande = _garder(client_video, clip)
+    prises = [dict(prise) for prise in bande["prises"]]
+    prises[2]["recette"] = _recette_qui_change_les_couleurs(bande)
+
+    apercue, _ = _planche_apercue(
+        client_video,
+        {
+            "clip": clip,
+            "prises": prises,
+            "recette": bande["recette"],
+            "cadre": bande["cadre"],
+        },
+    )
+    relue = _corriger(client_video, bande["identifiant"], prises)
+    gardee = _planche(client_video, relue["identifiant"])
+
+    assert np.array_equal(apercue, gardee)
