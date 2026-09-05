@@ -9,197 +9,244 @@
 <helmet>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <style>
-    body { margin: 0; background: #f7f3ec; }
-    a { color: #a8492c; }
-    .k, .k * { box-sizing: border-box; }
-    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
-    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
-    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
-    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
-    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
-    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
-    .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
-    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
-    .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
-    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
-    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
-    .ong { height: 30px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 7px; font-size: 13px; color: #6d675e; }
-    .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
-    .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 16px 16px; }
-    .pas { display: grid; grid-template-columns: 17px minmax(0,1fr) auto; align-items: center; gap: 9px; height: 32px; padding: 0 9px; border-radius: 6px; font-size: 12.5px }
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .img { background: #6c6c6c; border-radius: 8px; position: relative; overflow: hidden;
+           display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+
   </style>
 </helmet>
 
-<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+<div class="k" style="width: 1600px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 28px">
 
-  <!-- ══════ LE CARNET ══════ -->
-  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
-    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
-        <div class="serif" style="font-size: 25px; line-height: 1.15">Le Marais du Vieux Moulin</div>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1020px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › au repos › Retoucher</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">La retouche, vue d’ensemble</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">Une image reçue du modèle passe par une suite d’étapes, toujours dans le même ordre. Chacune se règle, s’endort, et se rejoue sans rien coûter : un rendu n’est jamais gardé, il se recalcule.</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">toute la chaîne</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuite</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 200px">rien ne sort de la machine, rien ne se paie, tout marche réseau coupé</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">La chaîne, dans son ordre</span> <span style="font-size: 13.5px; color: #6d675e">— sept étapes, cinq dessinées</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">L’ordre est fixe. On peut endormir n’importe laquelle : ses réglages sont gardés.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 11px">
+      <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span class="mono" style="font-size: 11px; color: #948c80">1</span><span class="puce p-ok">dessiné</span>
+        </div>
+        <div style="font-size: 14px; font-weight: 600">Détourer</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le fond part, le sujet reste.</div>
       </div>
-      <div style="font-size: 12.5px; color: #6d675e">41 images · 12 poses sur 18</div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span class="mono" style="font-size: 11px; color: #948c80">2</span><span class="puce p-ok">dessiné</span>
+        </div>
+        <div style="font-size: 14px; font-weight: 600">Recadrer</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Les bords vides sautent.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span class="mono" style="font-size: 11px; color: #948c80">3</span><span class="puce p-ok">dessiné</span>
+        </div>
+        <div style="font-size: 14px; font-weight: 600">Réduire</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le sujet entre dans la case du jeu.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span class="mono" style="font-size: 11px; color: #948c80">4</span><span class="puce p-ok">dessiné</span>
+        </div>
+        <div style="font-size: 14px; font-weight: 600">Couleurs</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">La palette du monde s’impose.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span class="mono" style="font-size: 11px; color: #948c80">5</span><span class="puce p-ok">dessiné</span>
+        </div>
+        <div style="font-size: 14px; font-weight: 600">Nettoyer</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Les taches détachées s’effacent.</div>
+      </div>
+      <div style="border: 1px solid #c9c2b6; border-style: dashed; border-radius: 9px; background: #faf7f1; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span class="mono" style="font-size: 11px; color: #948c80">6</span><span class="puce p-a">jamais relevé</span>
+        </div>
+        <div style="font-size: 14px; font-weight: 600">Le contour</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Un trait se retrace autour du sujet.</div>
+      </div>
+      <div style="border: 1px solid #c9c2b6; border-style: dashed; border-radius: 9px; background: #faf7f1; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span class="mono" style="font-size: 11px; color: #948c80">7</span><span class="puce p-a">jamais relevé</span>
+        </div>
+        <div style="font-size: 14px; font-weight: 600">La main</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">On repeint soi-même, par-dessus.</div>
+      </div>
     </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
-      <div class="rl" style="font-weight: 600"><span>Les personnages</span><span class="num">3</span></div>
-      <div class="rl-sub" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le pélerin</span><span class="num">6 / 6</span></div>
-      <div class="rl-sub"><span>Le garde du moulin</span><span class="num">6 / 6</span></div>
-      <div class="rl-sub"><span>La grenouille des tourbières</span><span class="num">0 / 6</span></div>
-      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
-      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
-      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
-      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
-      <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
-      <div class="rl"><span>Son nom et son dossier</span></div>
-      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
-      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
-      <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
-      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
-      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
-      <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
-      <div class="rl"><span>Son détourage de départ</span></div>
-      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
-      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
-      <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
-    </div>
-    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 14px 10px 0; display: flex; flex-direction: column; gap: 9px">
-      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Retoucher ne coûte rien et ne remplace rien : l'image d'origine reste dans la galerie.</div>
-      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
-        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 13px; margin-top: 3px">
+      <div style="border: 1px dashed #c9c2b6; border-radius: 9px; background: #faf7f1; padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 9px">
+          <span style="font-size: 14px; font-weight: 600">La différence — à part de la chaîne</span>
+          <span class="puce p-a">jamais relevée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Elle ne s’applique pas à une image : elle en prend deux et en fabrique une troisième. C’est par elle qu’un calque se fait — la neige sur le toit du moulin, l’armure sur le garde. Elle porte ses propres réglages : un seuil de couleur, un rectangle, un calage.</div>
+      </div>
+      <div style="border: 1px dashed #a8492c; border-radius: 9px; background: #fffdfa; padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 9px">
+          <span style="font-size: 14px; font-weight: 600">Retourner — à ajouter à la chaîne</span>
+          <span class="puce p-a">n’existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Sa place est décidable : avant le recadrage, pour que la case et le cadre soient calculés sur l’image retournée. En faire un bouton d’export au lieu d’une étape reviendrait à cadrer la mauvaise image.</div>
       </div>
     </div>
   </div>
 
-  <!-- ══════ LA SURFACE ══════ -->
-  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 14px">
-
-    <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80">
-      <span>Les personnages</span><span>›</span><span>Le pélerin</span><span>›</span><span>Repos</span><span>›</span><span style="color: #3d382f">La retouche</span>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Neuf traitements qui n’existent nulle part</span> <span style="font-size: 13.5px; color: #6d675e">— relevés dans le code, pas devinés</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Cinq d’entre eux sont gratuits et remplacent des générations payées.</div>
     </div>
-
-    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
-      <div style="display: flex; flex-direction: column; gap: 4px">
-        <h1 class="serif" style="margin: 0; font-size: 38px; line-height: 1.05">Le pélerin, au repos</h1>
-        <div style="font-size: 13.5px; color: #4e483f">Trois passes posées sur l'image d'origine. <strong style="font-weight: 600">Aucune n'est définitive</strong> — on les retire dans n'importe quel ordre.</div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 9px; flex-shrink: 0">
-        <div class="bt bt-x">Tout retirer</div>
-        <div class="bt bt-p" style="height: 40px; padding: 0 18px">Garder cette image</div>
-      </div>
-    </div>
-
-    <!-- LA BARRE D'OUTILS -->
-    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
-      <div style="display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px">
-        <div class="ong ong-on"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#221f1b" stroke-width="1.9"><path d="M4 4l16 16M20 4L4 20"/></svg>Détourer</div>
-        <div class="ong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9"><path d="M7 3v14h14M3 7h14v14"/></svg>Recadrer</div>
-        <div class="ong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9"><rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M3 9h18"/></svg>Réduire</div>
-        <div class="ong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/></svg>Couleurs</div>
-        <div class="ong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9"><path d="M4 20l7-7 4 4-7 7zM13 5l6 6"/></svg>Nettoyer</div>
-        <div class="ong"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9"><path d="M12 3v18M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg>Retourner</div>
-      </div>
-      <div style="display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px">
-        <div class="ong">×1</div><div class="ong">×2</div><div class="ong ong-on">×4</div><div class="ong">×8</div>
-      </div>
-    </div>
-
-    <!-- LE PLAN DE TRAVAIL -->
-    <div style="flex: 1; min-height: 0; border: 1px solid #ddd5c8; border-radius: 10px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; position: relative">
-      <!-- avant -->
-      <div style="background: #6c6c6c; display: flex; align-items: center; justify-content: center; position: relative; border-right: 1px solid #4f4f4f">
-        <div style="position: absolute; left: 12px; top: 11px; background: rgba(34,31,27,.72); color: #f2ede4; font-size: 11px; border-radius: 4px; padding: 3px 8px">telle qu'elle est revenue · 1024 px</div>
-        <div style="width: 232px; height: 232px; background: #d94ad9; display: flex; align-items: center; justify-content: center">
-          <svg viewBox="0 0 16 16" width="200" height="200" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="3" fill="#7a6a52"/><rect x="6" y="4" width="4" height="2" fill="#d8bb95"/><rect x="4" y="6" width="8" height="6" fill="#6b5a44"/><rect x="5" y="7" width="6" height="4" fill="#8a7458"/><rect x="3" y="7" width="2" height="4" fill="#5c4d3a"/><rect x="11" y="7" width="2" height="4" fill="#5c4d3a"/><rect x="4" y="12" width="3" height="3" fill="#4a3f30"/><rect x="9" y="12" width="3" height="3" fill="#4a3f30"/></svg>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le retournement — l'image en miroir</div>
+          <span class="puce p-a">n’existe pas</span>
         </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Vérifié : le mot n'existe nulle part dans atelier/. Aucune fonction ne retourne une image, ni de gauche à droite, ni de haut en bas. Or le jeu connaît quatre directions (atelier/domaine/direction.py) et le pèlerin qui marche vers l'ouest est, dans neuf jeux sur dix, l'exact miroir de celui qui marche vers l'est. C'est gratuit, instantané, et ça divise par deux la facture d'un personnage à quatre directions : huit frames de marche payées au lieu de seize. Il faut que ce soit une place de la recette et non un bouton d'export, sinon le recadrage et la case sont calculés sur l'image d'avant.</div>
       </div>
-      <!-- après -->
-      <div class="damier" style="display: flex; align-items: center; justify-content: center; position: relative">
-        <div style="position: absolute; left: 12px; top: 11px; background: rgba(34,31,27,.72); color: #f2ede4; font-size: 11px; border-radius: 4px; padding: 3px 8px">après les trois passes · 64 px</div>
-        <svg viewBox="0 0 16 16" width="232" height="232" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="3" fill="#7a6a52"/><rect x="6" y="4" width="4" height="2" fill="#d8bb95"/><rect x="4" y="6" width="8" height="6" fill="#6b5a44"/><rect x="5" y="7" width="6" height="4" fill="#8a7458"/><rect x="3" y="7" width="2" height="4" fill="#5c4d3a"/><rect x="11" y="7" width="2" height="4" fill="#5c4d3a"/><rect x="4" y="12" width="3" height="3" fill="#4a3f30"/><rect x="9" y="12" width="3" height="3" fill="#4a3f30"/></svg>
-        <div style="position: absolute; right: 12px; bottom: 11px; display: flex; gap: 7px">
-          <div class="bt" style="height: 28px; font-size: 12px">Voir le masque</div>
-          <div class="bt" style="height: 28px; font-size: 12px">Voir la grille</div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le nettoyage du pixel de couleur, et de l'escalier</div>
+          <span class="puce p-a">n’existe pas</span>
         </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Vérifié : nettoyer() dans atelier/image/traitement.py:1094 n'efface que des taches détachées, et seulement sur la transparence — une tache est une zone d'un seul tenant du masque, jugée sur son aire. Un pixel resté vert vif au milieu de la robe brune, lui, est bien accroché au sujet : rien ne le voit. Idem pour les marches doubles que la réduction laisse sur une diagonale — deux pixels côte à côte là où il en fallait un. C'est le premier geste de tout atelier de pixel art, et c'est le seul défaut qui se voit à 64 carreaux sans qu'on le cherche.</div>
       </div>
-      <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; background: #f7f3ec; transform: translateX(-1.5px)"></div>
-      <div style="position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; border-radius: 50%; background: #f7f3ec; border: 1px solid #ddd5c8; transform: translate(-13px,-13px); display: flex; align-items: center; justify-content: center">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="2"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></svg>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le lit de couleur sous la transparence</div>
+          <span class="puce p-a">n’existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Vérifié : _detourer écrit sortie[:,:,3] = alpha et laisse les trois autres canaux tels quels ; quantifier met l'alpha de côté et le remet, sans jamais toucher à la couleur des pixels devenus transparents. Le fichier qui sort porte donc encore du magenta #FF00FF sous chaque pixel vide. Tant que le jeu affiche au pixel près, on ne le voit pas. Dès qu'une image est rangée dans une planche, réduite de moitié, tournée, ou affichée dans le style dessin, le magenta remonte en liseré autour du sujet. Le geste manquant est d'étaler la couleur du bord vers l'extérieur sur deux ou trois pixels.</div>
       </div>
-    </div>
-
-    <div style="margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 12.5px; color: #6d675e">
-      <span>Garder cette image en crée une nouvelle à côté de l'originale. Rien n'est écrasé, jamais.</span>
-      <a href="#" style="text-decoration: none; white-space: nowrap">En faire le détourage de départ du jeu ›</a>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le réglage de couleur avant la réduction</div>
+          <span class="puce p-a">n’existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Vérifié : aucune trace de luminosité, contraste, saturation ou décalage de teinte dans atelier/. Le seul contrôle de couleur du produit est « combien de couleurs » et « quelle palette ». Un tirage revenu trop sombre ou trop délavé part donc à la quantification tel quel, et les 24 couleurs du jeu sont dépensées à décrire une image mal exposée. Deux curseurs posés juste avant la quantification épargneraient une génération à $0,019 chaque fois.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">L'échange de couleurs</div>
+          <span class="puce p-a">n’existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Vérifié : rien ne remplace une couleur par une autre. La quantification impose une palette, elle ne fait pas correspondre le brun de la robe au bleu. Trois pèlerins — cape brune, cape bleue, cape verte — coûtent aujourd'hui trois générations, soit $0,057, là où c'est une table de correspondance sur une image déjà finie : gratuit, instantané, et les trois sont au pixel près la même silhouette, ce qu'une génération ne rend jamais.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le raccord de tuile</div>
+          <span class="puce p-a">n’existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le relevé des terrains le nomme, mais comme un outil de famille. C'est un traitement, et sa place dans la suite est décidable : après la case et avant la main. Décaler l'image d'un demi-carreau ramène les quatre bords en croix au milieu ; on peint la couture, on remet en place. Vérifié : les huit places de la recette n'en ont aucune qui déplace les pixels de l'image, seulement des places qui en enlèvent ou en repeignent.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le contour — le trait de bord retracé</div>
+          <span class="puce p-a">n’existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Ce n'est pas un manque de l'atelier, c'est un manque du relevé : la table existe et personne ne l'a décrite. atelier/domaine/recette.py:975 et interface/src/composants/Places.tsx:1051. Elle porte quatre réglages, dont un qui change les dimensions du rendu sans qu'on l'ait demandé. La barre de l'écran compte sept tables ; six ont été relevées.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La différence — deux images, et une troisième qui en sort</div>
+          <span class="puce p-a">n’existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Autre table absente du relevé. Elle vit à droite du trait dans la barre (atelier/domaine/superposition.py), elle nomme deux images en entrée, et c'est par elle qu'un calque se fabrique — la neige sur le toit du moulin, l'armure sur le garde. Elle porte ses propres réglages : un seuil de couleur à 32, un rectangle, un calage, et les deux couches de la main. Le relevé des décors réclame la superposition comme un manque ; elle est là.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">L'ombre portée</div>
+          <span class="puce p-a">n’existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le relevé des décors la range en outil de famille. C'est un traitement : elle se calcule depuis la transparence que le détourage vient de poser, elle ne demande rien à personne, et elle vaut pour un tonneau et un garde autant que pour un moulin. Aplatir à 35 %, pencher selon la lumière, poser à 40 % d'opacité — trois nombres, et le calcul est déjà écrit ailleurs dans le même fichier (étendre, restreindre, peindre).</div>
+      </div>
     </div>
   </div>
 
-  <!-- ══════ LE VOLET ══════ -->
-  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
-
-    <div style="display: flex; flex-direction: column; gap: 4px">
-      <div class="rt">Détourer</div>
-      <div style="font-size: 13px; line-height: 1.45; color: #4e483f">Enlever le fond pour ne garder que le sujet.</div>
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 480px; gap: 28px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce que le premier relevé s’est raconté</span>
+      <div style="font-size: 12.5px; color: #6d675e; margin-top: -4px">Six contradictions trouvées en relisant les six fiches les unes contre les autres, et contre le code. Elles sont corrigées dans les planches.</div>
+      <div style="display: flex; flex-direction: column; gap: 13px; margin-top: 3px">
+      <div style="border-left: 3px solid #a8492c; padding: 2px 0 2px 13px; font-size: 12.5px; line-height: 1.55; color: #4e483f">Six traitements d'un côté, huit tables de l'autre. Le relevé des terrains écrit deux fois « les huit tables de retouche existantes » et « il y en a huit dans les tables ». La commande, elle, en annonce six. Vérifié : la barre de l'écran en montre sept — détourage, recadrage, grille, quantification, bords, contours, la main — et une huitième vit à droite du trait, la différence. Deux tables n'ont donc été relevées par personne.</div>
+      <div style="border-left: 3px solid #a8492c; padding: 2px 0 2px 13px; font-size: 12.5px; line-height: 1.55; color: #4e483f">Peut-on annuler un calcul ? Le relevé du détourage dit non, celui du recadrage dit oui. C'est la même route et la même fonction d'envoi. Vérifié : aucun AbortController dans interface/src/api.ts, aucun moyen d'interrompre quoi que ce soit. Le relevé du recadrage confond « annuler un calcul » avec « effacer le rectangle qu'on vient de tracer ».</div>
+      <div style="border-left: 3px solid #a8492c; padding: 2px 0 2px 13px; font-size: 12.5px; line-height: 1.55; color: #4e483f">La marge, dans le relevé du recadrage, se contredit elle-même à deux paragraphes d'écart : la liste des réglages dit « elle est grisée dès qu'une case est posée », les ratés disent « le réglage doit être grisé avec sa raison, pas laissé actif à faire croire qu'il règle quelque chose ». Le code donne raison à la seconde moitié : le curseur reste pleinement actif, seule une phrase paraît en dessous.</div>
+      <div style="border-left: 3px solid #a8492c; padding: 2px 0 2px 13px; font-size: 12.5px; line-height: 1.55; color: #4e483f">Ce qui n'a pas voyagé quand on colle des réglages. Le relevé du détourage dit que « l'écran liste ce qui a été laissé en route » ; celui du recadrage dit que « le serveur renvoie déjà la liste — l'écran doit l'afficher ». Vérifié : l'écran l'affiche déjà, pour le collage comme pour une recette nommée. C'est le relevé du recadrage qui a tort.</div>
+      <div style="border-left: 3px solid #a8492c; padding: 2px 0 2px 13px; font-size: 12.5px; line-height: 1.55; color: #4e483f">Un décor a-t-il un contour ? Le relevé du recadrage range décor et tuile ensemble sous « plein cadre, aucun recadrage — il n'y a pas de silhouette à cadrer ». Le relevé des décors dit l'inverse, et dit que c'est un défaut : « une tuile remplit son carré, un moulin non, ce sont deux types qui partagent un réglage et ne devraient pas ». Les deux décrivent la même ligne de code, et l'un l'approuve pendant que l'autre la dénonce.</div>
+      <div style="border-left: 3px solid #a8492c; padding: 2px 0 2px 13px; font-size: 12.5px; line-height: 1.55; color: #4e483f">La couleur de fond du jeu et le détourage. Le relevé du détourage tient les deux affirmations à la fois : « le magenta est écrit dans les réglages du jeu, il part dans le prompt, et le détourage ne s'en sert pas », et, dans la liste des moteurs, « la couleur déclarée du jeu » présentée comme un moteur qui reste à faire. Vérifié, c'est la première qui est exacte : atelier/domaine/fond.py n'est importé que par le projet, la vue, la production et les univers — jamais par recette.py ni par traitement.py.</div>
+      </div>
     </div>
 
-    <div style="border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 11px">
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px">
-        <span style="color: #6d675e">La couleur trouvée</span>
-        <span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 15px; height: 15px; border-radius: 4px; background: #d94ad9; border: 1px solid #ddd5c8"></span><span class="mono" style="font-size: 11px">#d94ad9</span></span>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <span class="h2">Ce que ces manques coûtent</span>
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 11px">
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 96px; row-gap: 10px; font-size: 12.5px; align-items: baseline">
+          <span style="color: #4e483f">Les quatre directions des trois personnages du marais, faute de miroir</span><span class="mono" style="text-align: right; color: #a8492c">$0,23</span>
+          <span style="color: #4e483f">Trois pélerins qui ne diffèrent que par la couleur de leur cape, faute d’échange de couleurs</span><span class="mono" style="text-align: right; color: #a8492c">$0,057</span>
+          <span style="color: #4e483f">Chaque tirage revenu trop sombre et regénéré, faute de deux curseurs</span><span class="mono" style="text-align: right; color: #a8492c">$0,019</span>
+          <span style="border-top: 1px solid #ddd5c8; padding-top: 10px; color: #221f1b; font-weight: 600">Sur les 84 générations du marais</span><span class="mono" style="border-top: 1px solid #ddd5c8; padding-top: 10px; text-align: right; color: #a8492c; font-weight: 600">≈ $0,31</span>
+        </div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #6d675e">Ce n’est pas l’argent qui compte à cette échelle : c’est que le miroir rend le <em>même</em> pélerin, au pixel près, là où une génération en rend un autre. Un personnage qui change de robe en se retournant, aucune somme ne le répare.</div>
       </div>
-      <div style="font-size: 11.5px; line-height: 1.45; color: #948c80">Prise aux quatre coins. Clique dans l'image pour en désigner une autre.</div>
-      <div style="display: flex; align-items: center; gap: 9px">
-        <span style="font-size: 12px; color: #6d675e; width: 62px">tolérance</span>
-        <div class="glis" style="flex: 1"><i style="left: 40%"></i></div>
-        <span class="mono" style="font-size: 11px; color: #6d675e; width: 26px; text-align: right">18</span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 9px">
-        <span style="font-size: 12px; color: #6d675e; width: 62px">le bord</span>
-        <div class="glis" style="flex: 1"><i style="left: 8%"></i></div>
-        <span class="mono" style="font-size: 11px; color: #6d675e; width: 26px; text-align: right">net</span>
-      </div>
-      <div style="font-size: 11.5px; line-height: 1.45; color: #948c80">En pixel, le bord reste net : adoucir invente des demi-pixels que la grille ne sait pas montrer.</div>
-    </div>
 
-    <!-- LA PILE -->
-    <div style="display: flex; flex-direction: column; gap: 7px">
-      <div style="display: flex; align-items: baseline; justify-content: space-between">
-        <div class="rt">Ce qui est posé, dans l'ordre</div>
-        <span style="font-size: 12px; color: #6d675e">3 sur 9</span>
+      <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 9px; padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-size: 14px; font-weight: 600; color: #8a3f33">Le magenta est encore là, sous la transparence</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le détourage met les pixels du fond à zéro d’opacité, mais ne touche pas à leur couleur : chaque pixel vide du fichier porte encore du <span class="mono">#FF00FF</span>. Tant que le jeu affiche au pixel près, ça ne se voit pas. Dès qu’une image est réduite de moitié, tournée, ou rangée dans une planche, le magenta remonte en liseré autour du sujet.</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #dcbcb2; padding-top: 9px">Le geste qui manque : étaler la couleur du bord vers l’extérieur sur deux ou trois pixels, juste après le détourage.</div>
       </div>
-      <div style="border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 6px; display: flex; flex-direction: column; gap: 2px">
-        <div class="pas" style="background: #e6dfd2; font-weight: 600"><span style="color:#a8492c">1</span><span>Détourage · #d94ad9, tolérance 18</span><span style="color:#948c80">✕</span></div>
-        <div class="pas"><span style="color:#948c80">2</span><span>Réduction à 64 px · au plus proche</span><span style="color:#948c80">✕</span></div>
-        <div class="pas"><span style="color:#948c80">3</span><span>24 couleurs · palette du jeu</span><span style="color:#948c80">✕</span></div>
-        <div style="height: 1px; background: #ece6db; margin: 4px 6px"></div>
-        <div class="pas" style="color: #948c80"><span>+</span><span>Recadrer sur le sujet</span><span></span></div>
-        <div class="pas" style="color: #948c80"><span>+</span><span>Nettoyer les pixels isolés</span><span></span></div>
-        <div class="pas" style="color: #948c80"><span>+</span><span>Retourner à l'horizontale</span><span></span></div>
-      </div>
-      <div style="font-size: 11.5px; line-height: 1.45; color: #948c80">Retirer la première refait les deux autres toutes seules. Rien n'est recalculé côté IA.</div>
-    </div>
 
-    <div style="border: 1px solid #ddd5c8; border-radius: 8px; background: #f4ece2; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
-      <div style="font-size: 13px; font-weight: 600">Il reste du fond dans un creux</div>
-      <div style="font-size: 12px; line-height: 1.5; color: #4e483f">Entre le bras et le corps, un îlot rose n'a pas été touché : il ne rejoint aucun bord.</div>
-      <div style="display: flex; gap: 7px"><div class="bt" style="height: 30px; font-size: 12.5px">L'enlever aussi</div><div class="bt" style="height: 30px; font-size: 12.5px">Le garder</div></div>
-    </div>
-
-    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 9px">
-      <div style="display: grid; grid-template-columns: minmax(0,1fr) 84px; row-gap: 5px; font-size: 12.5px; align-items: baseline">
-        <div style="color: #4e483f">Ce que la retouche coûte</div><div class="mono" style="text-align: right; color: #5c7a52">rien</div>
-        <div style="color: #4e483f">Taille d'arrivée</div><div class="mono" style="text-align: right">64 × 64</div>
-        <div style="color: #4e483f">Couleurs restantes</div><div class="mono" style="text-align: right">21 sur 24</div>
+      <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 9px; padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-size: 14px; font-weight: 600; color: #8a3f33">Un jeu en style « dessin » ne peut rien retoucher</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">En dessin, la finesse monte à 1024 ou 2048. Le service l’accepte, la route HTTP la refuse au-dessus de 512, et l’écran ne propose que la liste du pixel art. Un tel jeu voit donc une rangée de boutons où aucun n’est retenu, et toute retouche est refusée avant même d’être calculée.</div>
       </div>
-      <div class="bt bt-p" style="height: 38px">Garder cette image</div>
     </div>
   </div>
 

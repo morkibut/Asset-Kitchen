@@ -1,0 +1,217 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .rl-sub2 { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 34px; border-radius: 5px; font-size: 12.5px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
+    .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
+    .ong { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 7px; font-size: 13.5px; color: #6d675e; }
+    .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .seg { display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; }
+    .sg { height: 29px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; color: #6d675e; }
+    .sg-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .ch { height: 34px; display: flex; align-items: center; padding: 0 11px; border-radius: 7px; background: #fffdfa; border: 1px solid #ddd5c8; font-size: 13px; color: #221f1b; }
+    .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
+    .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 14px 14px; }
+    .vide { border: 1px dashed #c9c2b6; border-radius: 8px; }
+    .col { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 12.5px; background: #ece6db; color: #4e483f; }
+    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
+    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
+    .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
+    .lame::before { content: none }
+    .lame { border-radius: 1px 1px 2px 2px; box-shadow: inset 0 6px 0 var(--b) }
+
+
+    .fr { border: 1px solid #ddd5c8; border-radius: 8px; background: #fffdfa; padding: 7px; display: flex; flex-direction: column; gap: 6px }
+    .lg-an { display: grid; grid-template-columns: 150px 96px minmax(0,1fr) 92px; gap: 14px; align-items: center; padding: 9px 11px; border-radius: 7px; font-size: 13px }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div class="serif" style="font-size: 25px; line-height: 1.15">Le Marais du Vieux Moulin</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e">45 images · 12 poses sur 18</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
+      <div class="rl" style="background: #e6dfd2; font-weight: 600"><span>Les personnages</span><span class="num" style="color: #a8492c">3</span></div>
+      <div class="rl-sub" style="background: #ece6db; color: #221f1b; font-weight: 600"><span>Tous</span><span class="num">3</span></div>
+      <div class="rl-sub2" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le pélerin</span><span class="num" style="color: #a8492c">6 / 6</span></div>
+      <div class="rl-sub2"><span>Le garde du moulin</span><span class="num">6 / 6</span></div>
+      <div class="rl-sub2"><span>La grenouille des tourbières</span><span class="num">0 / 6</span></div>
+      <div class="rl-sub" style="color: #948c80"><span>+ Nouvelle collection</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+      <div class="rl"><span>Les équipements</span><span class="num">2</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
+      <div class="rl"><span>Son nom et son dossier</span></div>
+      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+      <div class="rl"><span>Ses types de sujets</span><span class="num">8 échelles</span></div>
+      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+      <div class="rl"><span>Son détourage de départ</span></div>
+      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>La galerie</span><span class="num">45</span></div>
+      <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
+    </div>
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 13px 10px 0; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Ces quatre onglets sont le même écran. Le carnet ne bouge pas quand on passe de l'un à l'autre.</div>
+      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
+        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 13px">
+    <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80"><span>Les personnages</span><span>›</span><span>Tous</span><span>›</span><span style="color: #3d382f">Le pélerin</span></div>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <h1 class="serif" style="margin: 0; font-size: 36px; line-height: 1.05">Le pélerin</h1>
+        <div style="font-size: 13px; color: #4e483f">Une animation met des images dans un ordre et leur donne un tempo. Elle ne fabrique aucune image.</div>
+      </div>
+      <div class="bt bt-p" style="height: 38px; padding: 0 16px; flex-shrink: 0">Nouvelle animation</div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+      <div class="seg" style="padding: 3px"><div class="ong">Sa fiche</div><div class="ong">Ses images</div><div class="ong ong-on">Ses animations</div><div class="ong">L'essai</div></div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div class="seg">
+        <div class="sg sg-on">Depuis ses images</div>
+        <div class="sg">Depuis une animation reçue</div>
+      </div>
+      <span style="font-size: 12.5px; color: #6d675e">la deuxième découpe en frames une animation qui revient du modèle</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="rt">Ses trois animations</div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 5px">
+        <div class="lg-an" style="background: #e6dfd2; font-weight: 600"><span>La marche</span><span class="mono" style="font-size:11.5px;color:#a8492c">1 / 4 frames</span><span style="font-weight:400;color:#6d675e;font-size:12.5px">8 im/s · en boucle · sac de voyage</span><span class="mono" style="font-size:11.5px;text-align:right;color:#a8492c">incomplète</span></div>
+        <div class="lg-an"><span>La course</span><span class="mono" style="font-size:11.5px;color:#948c80">0 / 6 frames</span><span style="color:#6d675e;font-size:12.5px">12 im/s · en boucle</span><span class="mono" style="font-size:11.5px;text-align:right;color:#948c80">vide</span></div>
+        <div class="lg-an"><span>L'attaque</span><span class="mono" style="font-size:11.5px;color:#948c80">0 / 3 frames</span><span style="color:#6d675e;font-size:12.5px">10 im/s · une fois</span><span class="mono" style="font-size:11.5px;text-align:right;color:#948c80">vide</span></div>
+      </div>
+    </div>
+
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) 286px; gap: 14px">
+
+      <div style="display: flex; flex-direction: column; gap: 10px; min-height: 0">
+        <div class="damier" style="flex: 1; min-height: 0; border: 1px solid #ddd5c8; border-radius: 9px; position: relative; display: flex; align-items: center; justify-content: center">
+          <i class="fig" style="--a:#6b5a44;--b:#8a7458; width: 62px; height: 84px"></i>
+          <div style="position: absolute; left: 12px; top: 11px; font-size: 11.5px; color: #6d675e">frame 1 sur 4 · la seule qui existe</div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 11px 13px; display: flex; align-items: center; gap: 11px">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #a8492c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff8f4"><path d="M7 4l13 8-13 8z"/></svg></div>
+            <div style="flex: 1; height: 5px; border-radius: 3px; background: rgba(255,253,250,.85); position: relative"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 25%; border-radius: 3px; background: #a8492c"></div></div>
+            <span class="mono" style="font-size: 11.5px; color: #4e483f">0,50 s</span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px">
+          <div class="fr"><div class="damier" style="height: 82px; border-radius: 5px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width: 22px; height: 30px"></i></div><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 12px; font-weight: 600">1</span><span class="mono" style="font-size: 10.5px; color: #6d675e">125 ms</span></div></div>
+          <div class="vide" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px"><span style="font-size: 12px; color: #6d675e">2</span><span style="font-size: 11.5px; color: #948c80">vide</span></div>
+          <div class="vide" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px"><span style="font-size: 12px; color: #6d675e">3</span><span style="font-size: 11.5px; color: #948c80">vide</span></div>
+          <div class="vide" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px"><span style="font-size: 12px; color: #6d675e">4</span><span style="font-size: 11.5px; color: #948c80">vide</span></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; min-height: 0">
+        <div class="rt">Ce qu'on peut y glisser</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <div class="damier" style="position:relative;width:62px;height:62px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:62px;height:62px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#71604a;--b:#907c60;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:62px;height:62px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#655440;--b:#836d52;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:62px;height:62px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#6d5c46;--b:#8c765a;width:20px;height:28px"></i></div>
+        </div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">Ce sont ses quatre images de marche — mais trois ont été écartées parce qu'elles se ressemblaient trop. Pour une marche, il en faut quatre <em>différentes</em> : pied posé, pied levé, et l'inverse.</div>
+        <div class="carte" style="padding: 11px 12px; display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+          <div style="font-size: 12.5px; font-weight: 600">Le sac suit l'animation</div>
+          <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Chaque frame porte son propre calque de sac. Trois manquent, comme les frames.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 9px 0 15px; border-top: 1px solid #e2dbd0; display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 12.5px; color: #6d675e">
+      <span>Une animation se garde incomplète. Elle ne s'exporte pas tant qu'il reste une frame vide.</span>
+      <a href="#" style="text-decoration: none; white-space: nowrap">La voir en situation dans l'essai ›</a>
+    </div>
+  </div>
+
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 13px; overflow: hidden">
+    <div style="border: 1px solid #dcbcb2; border-radius: 8px; background: #f8ece9; padding: 12px 13px; display: flex; flex-direction: column; gap: 9px">
+      <div style="font-size: 13px; font-weight: 600; color: #8a3f33">Il manque trois frames</div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une marche qui tourne demande quatre moments : pied posé, pied levé, pied posé de l'autre côté, pied levé.</div>
+      <div class="bt bt-p" style="height: 34px; justify-content: space-between; padding: 0 13px"><span>Générer les 3 qui manquent</span><span class="mono" style="font-size: 11.5px">≈ $0,057</span></div>
+      <div style="font-size: 11.5px; color: #948c80; line-height: 1.45">Elles partiront en une seule feuille de trois cases, avec la même description et la même pose.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div class="rt">Comment elle se joue</div>
+    </div>
+
+    <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 11px">
+      <div style="display: flex; align-items: center; gap: 9px">
+        <span style="font-size: 12px; color: #6d675e; width: 62px">le tempo</span>
+        <div class="glis" style="flex: 1"><i style="left: 46%"></i></div>
+        <span class="mono" style="font-size: 11px; color: #6d675e; width: 42px; text-align: right">8 im/s</span>
+      </div>
+      <div style="font-size: 11.5px; line-height: 1.45; color: #948c80">8 images par seconde : le pas courant du pixel art. Au-delà de 12, l'œil ne suit plus les quatre poses.</div>
+      <div style="height: 1px; background: #ece6db"></div>
+      <div style="font-size: 12.5px; color: #6d675e">Le sens</div>
+      <div class="seg"><div class="sg sg-on">En boucle</div><div class="sg">Aller-retour</div><div class="sg">Une fois</div></div>
+    </div>
+
+    <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 13px; font-weight: 600">Ce qui sortira</div>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f">Une bande de 4 cases en 256 × 64, un fichier de description pour le moteur, et une bande séparée par équipement porté.</div>
+      <div style="font-size: 11.5px; line-height: 1.45; color: #948c80">Le fichier de description donne l'ordre des cases, la durée de chacune, et le point d'accroche.</div>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px">
+      <div style="display: grid; grid-template-columns: minmax(0,1fr) 80px; row-gap: 5px; font-size: 12.5px; align-items: baseline">
+        <div style="color: #4e483f">Durée d'un tour</div><div class="mono" style="text-align: right">0,50 s</div>
+        <div style="color: #4e483f">Ce que l'animation coûte</div><div class="mono" style="text-align: right; color: #5c7a52">rien</div>
+      </div>
+      <div class="bt" style="height: 33px">Enregistrer l'animation</div>
+      <div style="font-size: 11.5px; color: #948c80; text-align: center">elle restera à trois frames vides</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

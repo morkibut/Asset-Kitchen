@@ -1,0 +1,291 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .rl-sub2 { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 34px; border-radius: 5px; font-size: 12.5px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
+    .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
+    .ong { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 7px; font-size: 13.5px; color: #6d675e; }
+    .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .seg { display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; }
+    .sg { height: 29px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; color: #6d675e; }
+    .sg-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .ch { height: 34px; display: flex; align-items: center; padding: 0 11px; border-radius: 7px; background: #fffdfa; border: 1px solid #ddd5c8; font-size: 13px; color: #221f1b; }
+    .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
+    .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 14px 14px; }
+    .vide { border: 1px dashed #c9c2b6; border-radius: 8px; }
+    .col { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 12.5px; background: #ece6db; color: #4e483f; }
+    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
+    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
+    .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
+    .lame::before { content: none }
+    .lame { border-radius: 1px 1px 2px 2px; box-shadow: inset 0 6px 0 var(--b) }
+
+
+    .gt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: #948c80; }
+    .ge { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 5px 8px; border-radius: 5px; font-size: 13px; color: #3d382f; }
+    .tch { display: flex; align-items: baseline; gap: 9px; padding: 3px 8px; font-size: 12.5px; color: #4e483f; }
+    .tch b { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 400; font-size: 11px; color: #221f1b; background: #fffdfa; border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; min-width: 46px; text-align: center; flex-shrink: 0; }
+    .lien { color: #a8492c; text-decoration: none; }
+    table.g { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+    table.g th { text-align: left; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: #948c80; font-weight: 400; padding: 0 12px 7px 0; border-bottom: 1px solid #ddd5c8; }
+    table.g td { padding: 8px 12px 8px 0; border-bottom: 1px solid #ece6db; color: #4e483f; line-height: 1.45; vertical-align: top; }
+    table.g td strong { color: #221f1b; font-weight: 600; }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div class="serif" style="font-size: 25px; line-height: 1.15">Le Marais du Vieux Moulin</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e">45 images · 12 poses sur 18</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
+      <div class="rl" style="background: #e6dfd2; font-weight: 600"><span>Les personnages</span><span class="num" style="color: #a8492c">3</span></div>
+      <div class="rl-sub" style="background: #ece6db; color: #221f1b; font-weight: 600"><span>Tous</span><span class="num">3</span></div>
+      <div class="rl-sub2" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le pélerin</span><span class="num" style="color: #a8492c">6 / 6</span></div>
+      <div class="rl-sub2"><span>Le garde du moulin</span><span class="num">6 / 6</span></div>
+      <div class="rl-sub2"><span>La grenouille des tourbières</span><span class="num">0 / 6</span></div>
+      <div class="rl-sub" style="color: #948c80"><span>+ Nouvelle collection</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+      <div class="rl"><span>Les équipements</span><span class="num">2</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
+      <div class="rl"><span>Son nom et son dossier</span></div>
+      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+      <div class="rl"><span>Ses types de sujets</span><span class="num">8 échelles</span></div>
+      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+      <div class="rl"><span>Son détourage de départ</span></div>
+      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>La galerie</span><span class="num">45</span></div>
+      <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
+    </div>
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 13px 10px 0; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Ces quatre onglets sont le même écran. Le carnet ne bouge pas quand on passe de l'un à l'autre.</div>
+      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
+        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px; background: #e6dfd2; margin: -3px -7px; padding: 3px 7px; border-radius: 5px; font-weight: 600; color: #221f1b"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 13px">
+    <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80"><span>Les personnages</span><span>›</span><span>Tous</span><span>›</span><span style="color: #3d382f">Le pélerin</span></div>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <h1 class="serif" style="margin: 0; font-size: 36px; line-height: 1.05">Le pélerin</h1>
+        <div style="font-size: 13px; color: #4e483f">Un héros. Six poses faites, deux pièces d'équipement, aucune animation.</div>
+      </div>
+      <div class="bt bt-p" style="height: 38px; padding: 0 16px; flex-shrink: 0">Demander une image</div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+      <div class="seg" style="padding: 3px"><div class="ong ong-on">Sa fiche</div><div class="ong">Ses images</div><div class="ong">Ses animations</div><div class="ong">L'essai</div></div>
+    </div>
+
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 268px minmax(0,1fr); gap: 26px; align-content: start">
+
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">Son image de référence</div>
+        <div style="height: 268px; border-radius: 9px; background: #6c6c6c; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 34px; position: relative">
+          <i class="fig" style="--a:#6b5a44;--b:#8a7458; width: 78px; height: 104px"></i>
+          <div style="position: absolute; left: 10px; bottom: 9px; font-size: 11px; color: #d8d2c6">1024 px · 4 sept</div>
+        </div>
+        <div style="display: flex; gap: 7px">
+          <div class="bt" style="flex: 1; font-size: 12.5px">En choisir une autre</div>
+          <div class="bt" style="font-size: 12.5px">Recadrer</div>
+        </div>
+        <div style="font-size: 11.5px; line-height: 1.45; color: #948c80">C'est elle qui part au modèle quand on demande une nouvelle pose. Tout le reste s'y compare.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 15px">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div class="rt">Son nom</div>
+            <div class="ch">Le pélerin</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div class="rt">Son dossier</div>
+            <div class="ch mono" style="background: #f2ede4; color: #948c80; font-size: 12.5px">le-pelerin</div>
+          </div>
+        </div>
+        <div style="font-size: 11.5px; color: #948c80; margin-top: -9px">Le dossier est fixé à la création : le renommer casserait les images déjà sur le disque.</div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between">
+            <div class="rt">Sa description</div>
+            <span style="font-size: 11.5px; color: #948c80">elle part avec chaque génération</span>
+          </div>
+          <div style="border: 1px solid #ddd5c8; border-radius: 8px; background: #fffdfa; padding: 11px 13px; font-size: 13.5px; line-height: 1.55; color: #221f1b; min-height: 84px">A weathered pilgrim in a hooded brown robe, leather straps, a walking staff, worn boots.</div>
+          <div style="font-size: 11.5px; color: #948c80">En anglais : les modèles la comprennent mieux. Le reste du prompt vient du jeu.</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+          <div style="display: flex; flex-direction: column; gap: 7px">
+            <div class="rt">Ses collections</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap">
+              <span class="col">Les héros <span style="color:#948c80">✕</span></span>
+              <span class="col" style="background: transparent; color: #948c80; border: 1px solid #ddd5c8">+ ranger</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 7px">
+            <div class="rt">Son type</div>
+            <div style="display: flex; align-items: center; gap: 11px">
+              <div style="width: 42px; height: 42px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 1px; flex-shrink: 0"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width: 12px; height: 28px"></i></div>
+              <div><div style="font-size: 13px; font-weight: 500">personnage</div><div style="font-size: 11.5px; color: #6d675e">il occupe 100 % de la hauteur</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid #e2dbd0; padding-top: 14px; display: flex; flex-direction: column; gap: 9px">
+          <div class="rt">Ce qui existe de lui</div>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px">
+            <div class="carte" style="padding: 11px 13px"><div class="mono" style="font-size: 21px; color: #5c7a52">6 / 6</div><div style="font-size: 12.5px; color: #6d675e; margin-top: 2px">poses</div></div>
+            <div class="carte" style="padding: 11px 13px"><div class="mono" style="font-size: 21px">18</div><div style="font-size: 12.5px; color: #6d675e; margin-top: 2px">images</div></div>
+            <div class="carte" style="padding: 11px 13px"><div class="mono" style="font-size: 21px">2</div><div style="font-size: 12.5px; color: #6d675e; margin-top: 2px">équipements portés</div></div>
+            <div class="carte" style="padding: 11px 13px"><div class="mono" style="font-size: 21px; color: #a8492c">0</div><div style="font-size: 12.5px; color: #6d675e; margin-top: 2px">animation</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 10px 0 16px; border-top: 1px solid #e2dbd0; display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 12.5px; color: #6d675e">
+      <span>Rien de ce qui est ici ne coûte quoi que ce soit. Seul le bouton rouille dépense.</span>
+      <a href="#" style="text-decoration: none; white-space: nowrap">Le comparer à un autre personnage ›</a>
+    </div>
+  </div>
+
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 13px; overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+      <div class="serif" style="font-size: 25px; line-height: 1">Le guide</div>
+      <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 6px; background: #fffdfa; font-size: 11px; color: #6d675e">esc</span>
+    </div>
+
+    <div class="ch" style="color: #948c80">chercher un réglage, ou un geste</div>
+
+    <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="gt" style="padding: 4px 8px 6px">Sur cet écran — la fiche d'un sujet</div>
+      <div class="ge"><span>Écrire un nom</span></div>
+      <div style="background: #fffdfa; border: 1px solid #ddd5c8; border-radius: 7px; padding: 10px 11px; margin: 3px 0">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px">Ce qu&rsquo;il est</div>
+        <div style="font-size: 12px; color: #4e483f; line-height: 1.45">Le texte qui redit à la machine de qui il s'agit, et qui repart avec chaque image qu'on demande de cette chose.</div>
+        <div style="font-size: 12px; color: #4e483f; line-height: 1.45; margin-top: 6px"><span style="color: #948c80">Ce que ça change&nbsp;:</span> Il part dans le texte de chaque génération de cette chose, avant le reste. Sans lui, l'appel ne dit pas de quoi il s'agit et la machine invente.</div>
+        <div class="mono" style="font-size: 11px; color: #948c80; margin-top: 6px">toi · vide au départ</div>
+      </div>
+      <div class="ge"><span>Ce qui l&rsquo;habille</span></div>
+      <div class="ge"><span>Ses images d&rsquo;exemple</span></div>
+      <div class="ge"><span>Ce que le jeu réclame</span></div>
+      <div style="padding: 4px 8px"><a href="#" class="lien" style="font-size: 12.5px">Les 10 entrées de ce lieu ›</a></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="gt" style="padding: 8px 8px 6px">Les touches, ici</div>
+      <div class="tch"><b>Ctrl&nbsp;+&nbsp;&crarr;</b><span>lancer la génération</span></div>
+      <div class="tch"><b>&crarr;</b><span>valider le nom qu&rsquo;on tape</span></div>
+      <div class="tch"><b>esc</b><span>annuler la saisie</span></div>
+      <div class="tch"><b>double-clic</b><span style="color: #948c80">ouvrir un atelier sur l&rsquo;image</span></div>
+      <div class="tch"><b>&#8984;&#8593;</b><span style="color: #948c80">remonter à la collection</span></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="gt" style="padding: 8px 8px 6px">Partout</div>
+      <div class="tch"><b>&#8984;K</b><span style="color: #948c80">chercher, ou faire</span></div>
+      <div class="tch"><b>?</b><span>ce guide</span></div>
+      <div class="tch"><b>esc</b><span>refermer ce qui est ouvert</span></div>
+      <div class="tch"><b>Ctrl&nbsp;+&nbsp;Z</b><span>défaire la dernière saisie</span></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div class="gt" style="padding: 8px 8px 0">Au clic droit</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 8px"><span class="col" style="height: 24px; font-size: 12px">sur un sujet</span><span class="col" style="height: 24px; font-size: 12px">sur une image</span><span class="col" style="height: 24px; font-size: 12px">sur une collection</span></div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 13px 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px">
+      <a href="#" class="lien">Toutes les touches ›</a>
+      <a href="#" class="lien">Les 150 entrées ›</a>
+    </div>
+  </div>
+
+</div>
+
+  <div class="k" style="width: 1600px; background: #f7f3ec; padding: 34px 40px 44px; box-sizing: border-box; display: flex; flex-direction: column; gap: 26px">
+
+    <div style="display: flex; align-items: center; gap: 14px; padding: 13px 16px; border: 1px solid #ddd5c8; background: #f4ece2; border-radius: 9px">
+      <div style="font-size: 13px; font-weight: 600; white-space: nowrap">Ce qui existe déjà</div>
+      <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Le produit a un guide, et il est bon&nbsp;: <span class="mono">interface/src/aide.ts</span>, <strong>150 entrées</strong>, un seul texte rendu trois fois — la bulle au survol, la ligne écrite sous un titre de section, et l'écran Guide. Chaque entrée dit ce que c'est, ce que ça change, d'où ça sort. Il s'ouvre à <span class="mono">?</span> et par un bouton dans la barre du haut. <strong>Il ne dit pas un mot des touches</strong>, il recouvre l'écran qu'on lisait, et ses neuf lieux portent les noms d'écrans de la V1 qui n'existent plus.</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0,1fr) 400px; gap: 34px; align-items: start">
+      <div>
+        <div class="gt" style="margin-bottom: 10px">Les neuf lieux du corpus, et où ils tombent dans le carnet</div>
+        <table class="g">
+          <tr><th style="width: 108px">Le lieu</th><th style="width: 44px">Entrées</th><th style="width: 250px">Sa place dans le carnet</th><th style="width: 330px">Ce qu'il contient</th><th>Ce qu'il faut en faire</th></tr>
+        <tr><td style="width: 108px"><span class="mono" style="color: #6d675e">tables</span></td><td style="width: 44px" class="mono">42</td><td style="width: 250px"><strong>Les ateliers de retouche</strong></td><td style="width: 330px; color: #6d675e">Détourage, moteur, tolérance, seuil alpha, recadrage, marge…</td><td>Le carnet n&rsquo;a pas de ligne « tables ». Ces 42 entrées se répartissent entre les huit ateliers et la ligne « Son détourage de départ ».</td></tr>
+        <tr><td style="width: 108px"><span class="mono" style="color: #6d675e">jeu</span></td><td style="width: 44px" class="mono">24</td><td style="width: 250px"><strong>Le monde et son trait · Son allure · Ses types de sujets</strong></td><td style="width: 330px; color: #6d675e">Bible et ses sept champs, taille de pixel, barème d&rsquo;échelles, modèle par famille</td><td>Un seul lieu pour trois lignes du carnet : à couper en trois.</td></tr>
+        <tr><td style="width: 108px"><span class="mono" style="color: #6d675e">etabli</span></td><td style="width: 44px" class="mono">19</td><td style="width: 250px"><strong>La feuille</strong></td><td style="width: 330px; color: #6d675e">modèle, proportions, variations, sujet, calibrage, décalage, ce qui partira</td><td>« L&rsquo;établi » est un écran de la V1 qui n&rsquo;existe plus. C&rsquo;est la feuille, aujourd&rsquo;hui.</td></tr>
+        <tr><td style="width: 108px"><span class="mono" style="color: #6d675e">fabriques</span></td><td style="width: 44px" class="mono">17</td><td style="width: 250px"><strong>Les équipements, et le calage</strong></td><td style="width: 330px; color: #6d675e">la planche de poses, la superposition, le calage, échelle et décalage du dessus</td><td>Tout l&rsquo;atelier de calage d&rsquo;un équipement est déjà décrit ici, et n&rsquo;est dessiné nulle part.</td></tr>
+        <tr><td style="width: 108px"><span class="mono" style="color: #6d675e">inspiration</span></td><td style="width: 44px" class="mono">15</td><td style="width: 250px"><strong>La toile de l&rsquo;univers</strong></td><td style="width: 330px; color: #6d675e">concept art, note, provenance, découper une carte, pointe, teinte d&rsquo;une note</td><td>Le lieu correspond à la toile, et à elle seule.</td></tr>
+        <tr><td style="width: 108px"><span class="mono" style="color: #6d675e">codex</span></td><td style="width: 44px" class="mono">10</td><td style="width: 250px"><strong>Un sujet, sa fiche</strong></td><td style="width: 330px; color: #6d675e">écrire un nom, la vitrine, ce qu&rsquo;il est, ce qui l&rsquo;habille, sa matrice</td><td>« Le codex » est l&rsquo;ancien nom de la grille d&rsquo;une famille.</td></tr>
+        <tr><td style="width: 108px"><span class="mono" style="color: #6d675e">galerie</span></td><td style="width: 44px" class="mono">10</td><td style="width: 250px"><strong>Ses animations</strong></td><td style="width: 330px; color: #6d675e">le nom de l&rsquo;animation, le cadre de la bande, la vitesse de la bande, les bandes de ce clip</td><td>Malgré son nom, ce lieu ne parle pas de la galerie mais des clips et des bandes.</td></tr>
+        <tr><td style="width: 108px"><span class="mono" style="color: #6d675e">reglages</span></td><td style="width: 44px" class="mono">9</td><td style="width: 250px"><strong>Les réglages de l&rsquo;atelier</strong></td><td style="width: 330px; color: #6d675e">fournisseurs, dépenses, cadence, plafond de la séance, dossier du jeu</td><td>Le seul lieu qui tombe juste du premier coup.</td></tr>
+        <tr><td style="width: 108px"><span class="mono" style="color: #6d675e">ambiances</span></td><td style="width: 44px" class="mono">4</td><td style="width: 250px"><strong>Les couleurs du jeu</strong></td><td style="width: 330px; color: #6d675e">une palette, couleurs demandées, le fond du jeu, une ambiance</td><td><strong>L&rsquo;écran qui les porterait n&rsquo;est pas dessiné.</strong> Ces quatre entrées décrivent exactement ce qui manque à « Son allure ».</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="gt" style="margin-bottom: 10px">Les règles qui le tiennent</div>
+        <ul style="margin: 0; padding-left: 18px; font-size: 12.5px; color: #4e483f; line-height: 1.55">
+        <li style="margin-bottom: 8px">Le guide prend le volet, jamais l&rsquo;écran. On lit à côté de ce dont il parle. <em>C&rsquo;est un changement&nbsp;: aujourd&rsquo;hui l&rsquo;écran Guide recouvre tout.</em></li>
+        <li style="margin-bottom: 8px">Il s&rsquo;ouvre sur le lieu où l&rsquo;on est, pas sur un sommaire. Les entrées des huit autres lieux sont derrière un lien, pas devant les yeux.</li>
+        <li style="margin-bottom: 8px">Une touche qui ne marche pas sur cet écran n&rsquo;y est pas écrite. Une liste de trente raccourcis dont vingt sont gris ne s&rsquo;apprend pas.</li>
+        <li style="margin-bottom: 8px">Le corpus ne bouge pas&nbsp;: 150 entrées, un texte, trois rendus — la bulle au survol, la ligne sous un titre de section, et ce volet. Une explication recopiée diverge.</li>
+        <li style="margin-bottom: 8px">Une entrée dit toujours les trois mêmes choses&nbsp;: <strong>ce que c&rsquo;est</strong>, <strong>ce que ça change</strong>, <strong>d&rsquo;où ça sort</strong>. Jamais une raison de refus&nbsp;: ça, c&rsquo;est écrit sous le bouton grisé.</li>
+        <li style="margin-bottom: 8px">Rien n&rsquo;y coûte un centime. Le guide ne demande rien au serveur et n&rsquo;appelle aucune IA.</li>
+        </ul>
+        <div style="margin-top: 16px; display: flex; align-items: flex-start; gap: 13px; padding: 12px 15px; border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 9px">
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5"><strong style="color: #8a3f33">Les touches en gris n'existent pas.</strong> Sur les neuf écrites dans le volet, cinq marchent aujourd'hui&nbsp;: <span class="mono">?</span>, <span class="mono">esc</span>, <span class="mono">Ctrl+↵</span>, <span class="mono">Ctrl+Z</span> et <span class="mono">↵</span> dans un champ de nom. Les autres sont des propositions, et le volet les écrirait en gris tant qu'elles ne répondent pas.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</x-dc>
+</body>
+</html>

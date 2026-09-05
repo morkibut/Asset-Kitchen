@@ -1,0 +1,563 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .img { background: #6c6c6c; border-radius: 8px; position: relative; overflow: hidden;
+           display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3050px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1000px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › au repos › Retoucher</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">Détourer</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5"></div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 210px">Gratuit, toujours.</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1180px">
+    Enlever le fond d'une image pour ne garder que le sujet, avec du vide autour de lui — le pèlerin sans son carré magenta, prêt à être posé sur n'importe quel décor du jeu.
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
+
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
+      <div class="rt" style="padding: 0 9px">La chaîne</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="background: #e6dfd2; font-weight: 600; flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Détourer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le fond magenta part</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Recadrer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les bords vides sautent</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Réduire</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Couleurs</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la palette du monde</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Nettoyer</span><span style="color: #b0a89b; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les pixels isolés</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Le contour</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le trait de bord retracé</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>La main</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">ce qu’on repeint soi-même</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Retourner</span><span style="color: #a8492c; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les autres directions</div>
+        </div>
+      </div>
+      <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: #6d675e">
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #5c7a52; font-size: 15px; line-height: 1">●</span> posée, elle agit</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #b0a89b; font-size: 15px; line-height: 1">●</span> endormie, réglages gardés</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #c9c2b6; font-size: 15px; line-height: 1">●</span> rien à faire ici</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #a8492c; font-size: 15px; line-height: 1">●</span> n’existe pas encore</div>
+      </div>
+    </div>
+
+    <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="font-size: 15px; font-weight: 600">Le pélerin, au repos — le fond magenta</div>
+        <div class="seg"><div class="sg">Avant</div><div class="sg sg-on">Les deux</div><div class="sg">Après</div></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 330px">
+        <div class="img" style="background: #ff00ff">
+          <i class="fig" style="width: 74px; height: 190px"></i>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #e8e2d6">ce qui est arrivé du modèle · 1024 × 1024</span>
+        </div>
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7">
+          <i class="fig" style="width: 74px; height: 190px"></i>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #4e483f">après détourage · le fond a sauté</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">130 ms</span><span style="color: #948c80">la première fois</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">28</span><span style="color: #948c80">tolérance</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">312 × 824</span><span style="color: #948c80">ce qui reste d’opaque</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">0</span><span style="color: #948c80">trou dans le sujet</span></span>
+      </div>
+      <div style="font-size: 12px; color: #6d675e; line-height: 1.45">Le détourage est le seul maillon qui peut coûter du temps : 130 ms de calcul local, ou 0,65 à 1,33 s si on demande la silhouette à un modèle. Tout ce qui suit dans la chaîne se rejoue derrière lui.</div>
+    </div>
+
+    <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Le moteur</div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">Le bord</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">part des quatre coins et gagne de proche en proche</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">La pipette</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">on désigne la couleur à faire partir</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">La sélection</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">on entoure ce qu’on garde</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Le modèle</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">cinq finesses, de 0,65 s à 1,33 s</span>
+        </span>
+      </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Cinq autres moteurs manquent — ils sont listés plus bas.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #221f1b">tolérance</span>
+          <span class="mono" style="font-size: 12px; color: #221f1b">28</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 23%; background: #a8492c; border-radius: 2px"></i>
+          <i style="position: absolute; left: 23%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #a8492c"></i>
+        </div>
+        <div style="font-size: 11px; color: #948c80; line-height: 1.4">Plus haut, plus de magenta part — et la robe brune finit par partir avec.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #221f1b">seuil alpha</span>
+          <span class="mono" style="font-size: 12px; color: #221f1b">128</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 50%; background: #a8492c; border-radius: 2px"></i>
+          <i style="position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #a8492c"></i>
+        </div>
+        
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>bord rongé</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">0</div><div class="sg" style="padding: 3px 8px">1</div><div class="sg" style="padding: 3px 8px">2</div><div class="sg" style="padding: 3px 8px">3</div></div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>portée</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">cette tache</div><div class="sg" style="padding: 3px 8px">partout</div></div>
+      </div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 12.5px; font-weight: 600">La couleur de fond du jeu</div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <i style="width: 20px; height: 20px; border-radius: 4px; background: #ff00ff; border: 1px solid #ddd5c8"></i>
+          <span class="mono" style="font-size: 12px">#FF00FF</span>
+          <span style="font-size: 11.5px; color: #6d675e">magenta</span>
+        </div>
+        <div style="font-size: 11.5px; line-height: 1.45; color: #4e483f">Elle est demandée au modèle dans chaque prompt et reprise ici comme couleur à faire partir. Tant que personne ne la choisit, elle n’est demandée nulle part et chaque image revient avec un fond différent.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les moteurs</span> <span style="font-size: 13.5px; color: #6d675e">— 8 sont là, 5 restent à ajouter</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Un seul agit à la fois. Changer de moteur ne perd pas les réglages de l’autre.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le bord</div><span class="puce p-ok">posé d’emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le magenta s'en va depuis les quatre bords et s'arrête net au premier pixel du pèlerin. Le contour est franc, sans demi-teinte : un pixel y est ou il n'y est pas. Ce qui a la couleur du fond mais se trouve enfermé dans le sujet — la lueur entre le bras et le flanc, l'intérieur de l'anneau d'une lanterne — ne bouge pas, parce qu'aucun chemin n'y mène depuis un bord. Sur les douze images d'essai du 27 août 2026, douze silhouettes propres, y compris un squelette blanc sur fond gris clair.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Presque toujours, pour tout ce que l'atelier fabrique lui-même : l'image revient sur un fond d'une seule couleur, et c'est le cas de toutes les images du Marais si le jeu a choisi son magenta.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La pipette</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On clique dans la flaque, elle disparaît. En « cette tache », rien d'autre ne bouge dans l'image. En « partout », toutes les zones de cette teinte s'en vont d'un coup, y compris celles qui touchent le sujet — l'œil de la grenouille, une dent, un reflet peuvent partir avec.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand il reste une flaque de fond que le bord ne peut pas atteindre : elle est entourée de sujet, et monter la tolérance ne l'enlèvera jamais, à aucune valeur. C'est le seul cas pour lequel elle a été admise.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La sélection (on entoure)</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le trait tremblant qu'on fait ne devient jamais le contour de l'image. L'atelier part du liseré de ce qu'on a entouré — ce sont des pixels de fond, puisqu'on a entouré large — et remplit vers l'intérieur jusqu'à buter sur l'armure. Le bord qui sort est celui des pixels, pas celui de la main. On peut entourer un bras, puis l'autre.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand le fond n'est pas d'une seule couleur, ou quand on ne veut traiter qu'un morceau : on entoure largement le garde en armure, et rien ne bouge au-dehors du trait.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le modèle · intermédiaire</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Il calcule à 1 024 carreaux et n'agrandit rien : l'ajouré est trouvé — l'espace entre le bras et le torse, une boucle de ceinture, la frange d'une capuche. 3,8 creux trouvés par image, 1,5 s. Son contour sort mou : presque tout le pourtour du sujet ressort à demi transparent, et c'est le seuil alpha qui le tranche ensuite. 179 Mo à descendre la première fois.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Pour une image qui n'a pas été fabriquée ici : une photo de référence, un dessin récupéré, une image sans fond plat. C'est ce qu'on obtient quand on choisit « modèle » sans rien préciser.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le modèle · rapide</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">0,9 s au lieu de 1,5. Mais il travaille sur une vignette de 320 carreaux puis étire son résultat trois fois : sur une image de 1 024, tout ce qui est plus fin que trois pixels s'efface — un doigt, une antenne, le bâton du pèlerin. Les angles s'arrondissent, et l'étirement fabrique des pixels à demi transparents jusqu'à l'intérieur du sujet. 176 Mo.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Pour voir vite si un modèle s'en sort, sur une image où le détail fin ne compte pas.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le modèle · léger</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">4,8 creux trouvés par image contre 3,8 au défaut — mesuré le 3 septembre 2026. En échange, douze secondes par image au lieu d'une et demie. 224 Mo.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand le sujet est ajouré et qu'on accepte d'attendre : c'est celui qui trouve le plus de creux des cinq.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le modèle · dessin</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Il a appris à découper un personnage d'un seul tenant, donc il bouche : 2,2 creux trouvés là où les autres en trouvent 3 à 5. L'espace entre le bras et le flanc du pèlerin ressort rempli. C'est aussi celui dont le résultat s'écarte le plus de tous les autres. 1,6 s, 176 Mo.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Presque jamais, et c'est l'inverse de ce qu'on croit : c'est le seul entraîné sur du dessin, et c'est le plus mauvais des cinq sur l'ajouré.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le modèle · lourd</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Vingt-deux secondes par image et 973 Mo sur le disque, pour moins de creux trouvés que le léger qui pèse un quart de son poids. On ne voit pas la différence, on voit l'attente.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Gardé pour que la comparaison reste refaisable, pas pour travailler.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La couleur déclarée du jeu</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Rien ne change tant que le fond est propre. Tout change quand le sujet touche les bords : aujourd'hui l'atelier prend la couleur médiane des quatre bordures, et un moulin qui occupe plus de la moitié d'un bord tire cette médiane vers le brun de ses planches — le détourage se met alors à chercher du brun, et il mange le moulin. Viser la couleur écrite ferme ce cas.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Dès que le jeu a choisi un fond — le magenta #FF00FF du Marais. On vise cette couleur-là exactement, au lieu de laisser l'atelier deviner la couleur du fond en regardant les bordures.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La teinte plutôt que la valeur</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Aujourd'hui la tolérance mesure un écart sur le rouge, le vert et le bleu séparément : pour attraper un magenta assombri il faut monter à 60, et à 60 on attrape aussi le rose de la joue du pèlerin. Viser la teinte prend le magenta clair et le magenta sombre d'un coup, et laisse le rose tranquille.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand le fond est bien magenta mais pas d'un magenta égal : le modèle y a posé une ombre, un dégradé, un grain de compression.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Tout ce qui n'est pas dans la palette du jeu</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le fond part même quand il est sale — grain, halo, dégradé — et rien de ce qui appartient au jeu ne peut être mangé. C'est le seul moteur qui ne peut pas entamer le sujet, par construction : le vert de la grenouille est dans la palette, donc il est intouchable.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand les 24 couleurs du Marais sont déposées : un pixel qui n'est aucune d'elles et qui touche un bord est du fond, sans discussion possible.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le pinceau, pendant le détourage</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On ôte et on ramène à la main, au pixel. L'atelier sait déjà le faire, mais tout à la fin, dans une autre table : ce qu'on efface là arrive après le recadrage et après la mise à l'échelle, donc la case a déjà été calculée sur un sujet qui n'était pas le bon. Le même geste, mais posé pendant le détourage, recalcule la case avec.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Pour les trois ou quatre pixels que rien n'attrape : un fil d'herbe de marais, le coin d'une pale du moulin.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La même passe sur toutes les frames</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Aujourd'hui le point de la pipette et la forme entourée ne voyagent pas d'une image à l'autre — c'est écrit et c'est voulu, une silhouette entourée sur une attitude tomberait sur le bras au lieu du casque à l'attitude d'à côté. Résultat : huit clics pour la même flaque, et un contour qui peut trembler d'une frame à la suivante. Ce qu'il manque est un entre-deux : le même geste rejoué sur les frames voisines, avec un aperçu des huit avant d'accepter.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand les huit frames d'une marche portent la même flaque de fond enfermée au même endroit.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les réglages</span> <span style="font-size: 13.5px; color: #6d675e">— 19 en tout</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Les lignes sur fond clair n’existent pas encore.</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 210px 330px 240px minmax(0,1fr)">
+      <div class="ent">le réglage</div><div class="ent">ce qu’il règle</div><div class="ent">sa plage</div><div class="ent">ce qu’on voit changer</div>
+        <div><span style="font-weight: 600">moteur</span> </div>
+        <div style="color: #4e483f">Comment le fond est trouvé.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">bord · pipette · sélection · modèle<br><span style="color: #948c80">par défaut : bord</span></div>
+        <div style="color: #4e483f">Rien d'autre ne bouge, sauf le bord rongé, qui suit tout seul le moteur choisi tant que l'auteur ne l'a jamais posé de sa main. Sans ça, changer de moteur laissait le réglage du moteur d'avant, et il fallait le retaper — 39 fois sur 40 dans les images du dépôt.</div>
+        <div><span style="font-weight: 600">modèle</span> </div>
+        <div style="color: #4e483f">Lequel des cinq modèles va chercher la silhouette. Ne paraît que si le moteur est « modèle ».</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">dessin · léger · rapide · intermédiaire · lourd<br><span style="color: #948c80">par défaut : intermédiaire</span></div>
+        <div style="color: #4e483f">De 0,9 s à 22 s par image, et de 2,2 à 4,8 creux ajourés trouvés. L'écran dit sous chacun à quelle finesse il calcule, ce qu'il pèse, et — la première fois — combien il va descendre avant de partir.</div>
+        <div><span style="font-weight: 600">tolérance</span> </div>
+        <div style="color: #4e483f">De combien une couleur peut s'écarter du fond et compter quand même comme du fond. Sert au bord, à la pipette et à la sélection.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 120 à l'écran (0 à 255 accepté par le serveur)<br><span style="color: #948c80">par défaut : 28</span></div>
+        <div style="color: #4e483f">Monter mange le sujet par les bords : la robe brune commence à s'effriter. Descendre laisse un anneau de magenta autour du pèlerin. La valeur suit la main tout de suite ; le rendu attend qu'on lâche, parce que chaque cran relance le calcul entier.</div>
+        <div><span style="font-weight: 600">seuil alpha</span> </div>
+        <div style="color: #4e483f">À partir de quelle opacité un pixel est déclaré du sujet plutôt que du fond.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">1 à 255<br><span style="color: #948c80">par défaut : 128</span></div>
+        <div style="color: #4e483f">C'est lui qui fabrique le liseré rose, et lui seul. Un pixel de contour à peine visible, dont la couleur est déjà celle du fond, passe le seuil et ressort franchement opaque — rose vif. Le baisser l'efface. Toucher au nombre de couleurs ne changera jamais rien à ce liseré.</div>
+        <div><span style="font-weight: 600">bord rongé</span> </div>
+        <div style="color: #4e483f">Combien de pixels sont retirés au contour, après le seuil, quand ils ressemblent plus au fond qu'à leur voisin de l'intérieur.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0, 1, 2, 3, 4<br><span style="color: #948c80">par défaut : 0 avec le bord et la sélection, 1 avec la pipette, 2 avec le modèle</span></div>
+        <div style="color: #4e483f">Chaque cran retire un rang de pixels roses au bord de la robe. Un trait d'un pixel d'épaisseur — le bâton du pèlerin, une antenne, la pointe d'une lame — n'est jamais rongé, parce qu'il n'a aucun voisin franchement intérieur à qui se comparer. Mesuré : il épargne 0,7 à 3,7 % du sujet par rapport au rognage aveugle d'avant.</div>
+        <div><span style="font-weight: 600">portée</span> </div>
+        <div style="color: #4e483f">Ce que la pipette retire depuis le point cliqué.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">cette tache · partout<br><span style="color: #948c80">par défaut : cette tache</span></div>
+        <div style="color: #4e483f">« Cette tache » ne retire que la flaque qu'on voit, et elle ne traverse jamais ce qu'une passe précédente a déjà enlevé. « Partout » retire toutes les zones de cette teinte dans l'image, y compris celles qui touchent le sujet.</div>
+        <div><span style="font-weight: 600">couleur visée</span> </div>
+        <div style="color: #4e483f">Le pixel qu'on désigne du doigt dans l'image, et la couleur qu'il y a dessous.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">un pixel de l'image d'origine, avant tout traitement<br><span style="color: #948c80">par défaut : aucun</span></div>
+        <div style="color: #4e483f">Tant qu'aucun point n'est posé, la passe ne retire rien, et l'écran le dit. Une pastille et son code montrent la couleur trouvée dessous — elle se lit à chaque calcul, elle n'est jamais rangée. Recliquer ailleurs déplace le point de cette passe, ça n'en crée pas une seconde.</div>
+        <div><span style="font-weight: 600">forme entourée</span> </div>
+        <div style="color: #4e483f">La forme tracée à main levée autour de ce qu'on veut garder. Elle se referme toute seule.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">3 points minimum, 4 000 maximum<br><span style="color: #948c80">par défaut : aucune</span></div>
+        <div style="color: #4e483f">Rien tant qu'elle est vide. Une fois tracée, le bord est cherché à l'intérieur et rien ne bouge au-dehors. Retracer remplace la forme de cette passe. Elle ne se recopie pas sur une autre image : c'est une coordonnée, pas un réglage.</div>
+        <div><span style="font-weight: 600">masquer / montrer</span> </div>
+        <div style="color: #4e483f">Retirer cette passe du calcul le temps de regarder, sans perdre un seul de ses réglages.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">visible · masquée<br><span style="color: #948c80">par défaut : visible</span></div>
+        <div style="color: #4e483f">L'image se refait sans elle : on voit enfin ce qu'elle mangeait. Le bloc devient grisé, le titre est barré, et les réglages restent réglables — toucher l'un d'eux la remontre, parce que poser une valeur veut dire qu'on veut cette passe.</div>
+        <div><span style="font-weight: 600">les passes</span> </div>
+        <div style="color: #4e483f">Combien de détourages s'enchaînent. Chacun travaille sur ce que le précédent a laissé.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">1, et autant qu'on veut<br><span style="color: #948c80">par défaut : 1</span></div>
+        <div style="color: #4e483f">Une première passe large enlève le magenta, une seconde à la pipette va chercher la flaque enfermée. La transparence ne se rend jamais : chaque passe ne peut que serrer ce que la précédente a laissé.</div>
+        <div><span style="font-weight: 600">la table de détourage, allumée ou endormie</span> </div>
+        <div style="color: #4e483f">Éteindre l'étape entière sans effacer ce qu'on y a réglé.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">allumée · endormie<br><span style="color: #948c80">par défaut : allumée</span></div>
+        <div style="color: #4e483f">L'image revient avec son fond, et tout le reste du traitement continue de s'appliquer. Toucher un réglage la rallume, et l'écran le dit.</div>
+        <div><span style="font-weight: 600">couleur de fond du jeu</span> </div>
+        <div style="color: #4e483f">Sur quelle couleur les images du Marais seront demandées. C'est le réglage qui décide de la qualité de tous les détourages.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">magenta #FF00FF · cyan · rose vif · vert pur · violet · orange vif, ou une couleur tapée à la main<br><span style="color: #948c80">par défaut : aucune — tant que personne n'a choisi, le fond n'est pas demandé</span></div>
+        <div style="color: #4e483f">L'atelier calcule la distance de chaque candidat à la palette du jeu et propose le premier qui est assez loin, en montrant la couleur du jeu la plus proche et de combien elle l'est. Sur un jeu de marais, le vert pur est refusé — il est partout dans l'herbe — et le magenta passe largement. Il faut 84 d'écart pour être sûr. Si aucun ne passe, l'atelier le dit et ne choisit pas à la place de l'auteur.</div>
+        <div><span style="font-weight: 600">garder ce détourage comme départ</span> </div>
+        <div style="color: #4e483f">Promouvoir les réglages de la passe qu'on vient d'ajuster en défaut du jeu, pour les images qui arrivent ensuite.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">pour les images seules · pour les planches · pour cette famille (personnages, décors, terrains…)<br><span style="color: #948c80">par défaut : rien de promu — le défaut du produit s'applique : bord, 28, seuil 128, bord rongé 0</span></div>
+        <div style="color: #4e483f">Les images suivantes arrivent déjà détourées comme celle-ci. La fiche d'une image dit toujours d'où vient son détourage : de sa famille, de sa nature, ou du produit.</div>
+        <div><span style="font-weight: 600">ce qu'on travaille</span> </div>
+        <div style="color: #4e483f">L'image sur laquelle on règle : celle qui est revenue, ou celle qu'on a fabriquée.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">brut · rendu<br><span style="color: #948c80">par défaut : rendu</span></div>
+        <div style="color: #4e483f">En « brut » on voit le magenta et on peut viser dedans à la pipette ; en « rendu » on voit le résultat sur le damier gris. Écrit en ambre dès que ce n'est pas le rendu, pour qu'on ne l'oublie pas.</div>
+        <div><span style="font-weight: 600">témoin</span> </div>
+        <div style="color: #4e483f">Ce qu'on met à côté pour comparer.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">aucun · à côté · par-dessus<br><span style="color: #948c80">par défaut : aucun</span></div>
+        <div style="color: #4e483f">« À côté » coupe l'écran en deux, avant à gauche, après à droite. « Par-dessus » superpose les deux et donne un curseur d'opacité — c'est le geste qui montre le mieux ce que trois crans de tolérance ont mangé.</div>
+        <div><span style="font-weight: 600">opacité du témoin</span> </div>
+        <div style="color: #4e483f">À quel point l'image témoin transparaît par-dessus l'image travaillée.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 100<br><span style="color: #948c80">par défaut : 50</span></div>
+        <div style="color: #4e483f">À 50, les deux contours se voient ensemble et l'écart saute aux yeux ; on va aux deux bouts pour trancher lequel des deux on préfère.</div>
+        <div><span style="font-weight: 600">montrer ce qui part (à ajouter)</span> </div>
+        <div style="color: #4e483f">Teinter en rouge ce que la passe va enlever, avant qu'elle l'enlève.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">oui · non<br><span style="color: #948c80">par défaut : non</span></div>
+        <div style="color: #4e483f">Aujourd'hui on ne voit le résultat qu'une fois le calcul fini, et il faut deviner ce qui a changé entre deux crans de tolérance. Avec ça, on voit le magenta se teinter de rouge et gagner un pixel sur la robe pendant qu'on fait glisser le curseur — sans attendre.</div>
+        <div><span style="font-weight: 600">loupe sur le contour (à ajouter)</span> </div>
+        <div style="color: #4e483f">Un carré de seize pixels agrandi, sous le pointeur.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">oui · non<br><span style="color: #948c80">par défaut : non</span></div>
+        <div style="color: #4e483f">À 64 carreaux, un liseré fait un pixel : à l'échelle de l'écran on ne le voit pas, on le découvre dans le jeu. La loupe montre le rang de pixels roses avant qu'il ne parte dans le rendu final.</div>
+        <div><span style="font-weight: 600">appliquer aux frames voisines (à ajouter)</span> </div>
+        <div style="color: #4e483f">Rejouer le geste qu'on vient de faire sur les autres frames de la même animation.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">cette image seule · toute l'animation<br><span style="color: #948c80">par défaut : cette image seule</span></div>
+        <div style="color: #4e483f">Une planche de huit frames de marche montre ses huit vignettes détourées, et on accepte ou on reprend celles qui ont raté. Aujourd'hui le geste se refait huit fois à la main.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span class="h2">Pendant le calcul</span>
+    <div style="display: grid; grid-template-columns: 340px minmax(0,1fr) 250px; gap: 16px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">combien de temps</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Avec le moteur du bord — celui de tous les jours — environ une seconde et demie entre le moment où l'on lâche le curseur et l'image refaite, sur une image de 1 024 carreaux : le détourage lui-même prend 130 ms, le reste est l'aller-retour et l'écriture du fichier. Avec le moteur par modèle : 0,9 s pour le rapide, 1,5 s pour l'intermédiaire, 1,6 s pour celui du dessin, 12 s pour le léger, 22 s pour le lourd. La toute première fois qu'on choisit un modèle, l'atelier descend un fichier de 176 à 973 Mo : plusieurs minutes, et pendant ce temps-là rien ne bouge. Tous les autres réglages du traitement — la case, les couleurs, les miettes — répondent en 30 ms, parce que le détourage déjà fait est gardé et qu'on ne repaie que la fin.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">ce qu’on montre à l’écran</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Aujourd'hui : rien. L'écran garde l'image d'avant, sans un signe, jusqu'à ce que la nouvelle arrive — et on ne sait pas si on a lâché le curseur trop tôt, si ça travaille, ou si rien n'est parti. La barre qu'il faudrait existe pourtant déjà dans l'atelier : deux pixels de haut, elle apprend toute seule combien la dernière opération du même genre a mis, elle avance vers cette durée puis ralentit sans jamais atteindre le bout — parce qu'elle ne sait pas quand ça finira —, et elle ne paraît pas du tout sous 240 ms, pour ne pas clignoter sur un geste court. Elle est calculée à chaque retouche, mais l'écran des tables ne la lit pas. Ce que la maquette doit porter : cette barre sous l'image ; l'image d'avant qui reste visible et se voile un peu au lieu de disparaître ; une ligne en clair qui dit ce qui travaille — « le bord, tolérance 34 » ou « le modèle intermédiaire, 1,5 s la dernière fois » ; et, la première fois qu'un modèle sert, « l'atelier descend ce modèle — 179 Mo » avec sa propre barre, parce que ces minutes-là ne ressemblent en rien à une seconde et demie.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt">peut-on annuler</div>
+        <div style="font-size: 20px; color: #8a3f33">Non, aucun calcul</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Vérifié dans le code : rien n’interrompt un calcul en route. Ce qu’on peut défaire, c’est un réglage — Échap efface le geste, Ctrl+Z revient en arrière. Sur des calculs de 30 à 160 ms ça ne se remarque pas ; sur une silhouette demandée à un modèle, 1 à 2 s, ça se remarque.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">12 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s’est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu’on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le fond demandé au modèle est un gris clair, ou une couleur que le jeu contient — l'état d'avant que le fond devienne un réglage.</div>
+        <div style="color: #8a3f33">Le détourage perce le sujet : la joue du pèlerin, l'os d'un squelette, l'armure grise du garde s'en vont avec le fond, et il reste un trou en plein milieu. Ou l'inverse : un anneau de gris reste collé autour de la robe.</div>
+        <div style="color: #4e483f">Choisir une couleur de fond franche dans les réglages du jeu — l'atelier propose le magenta en premier — et redemander l'image. La mesure « pixels du sujet encore à la couleur du fond » passe alors à zéro, et elle est écrite sous le curseur.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Une flaque de fond est complètement entourée par le sujet : entre le bras du pèlerin et son flanc, dans l'anneau d'une roue de moulin, entre deux pales.</div>
+        <div style="color: #8a3f33">Un carré de magenta reste au milieu de l'image, et monter la tolérance ne l'enlève jamais — à aucune valeur, parce qu'aucun chemin n'y mène depuis un bord.</div>
+        <div style="color: #4e483f">L'écran les compte et propose les huit plus grandes, chacune avec sa pastille de couleur et sa taille. Cliquer « la retirer › » ajoute une passe pipette déjà visée dessus. L'atelier n'en efface jamais aucune tout seul : une flaque est parfois de la matière — un cabochon de lanterne, un vitrail — et rien dans les pixels ne le dit.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le contour du sujet est mou : le modèle a posé des pixels à demi transparents entre la robe et le fond.</div>
+        <div style="color: #8a3f33">Un liseré rose vif tout autour du pèlerin dans le jeu, qu'on ne voyait pas à l'écran de l'atelier parce qu'il fait un pixel.</div>
+        <div style="color: #4e483f">Baisser le seuil alpha, ou monter le bord rongé d'un cran. La mesure sous le curseur dit combien de pixels sont encore à demi transparents et sur combien de pixels de pourtour — « 312 sur 4 100 » se lit, « 312 » tout seul ne veut rien dire.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le bord rongé est monté à 3 ou 4 sur un sujet qui a des parties fines.</div>
+        <div style="color: #8a3f33">La lame de l'épée du garde maigrit, un doigt disparaît, la tige d'un roseau se coupe en morceaux.</div>
+        <div style="color: #4e483f">Redescendre à 1 ou 2. Depuis le 3 septembre 2026, un trait d'un seul pixel d'épaisseur n'est plus rongé du tout — mais quand la passe n'a rien enlevé du tout, l'atelier retombe sur l'ancien rognage aveugle, qui, lui, mange tout.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le sujet touche largement un bord de l'image — un moulin qui occupe la moitié de la hauteur, une bande d'herbe de marais posée d'un bord à l'autre.</div>
+        <div style="color: #8a3f33">Le détourage se met à chercher la mauvaise couleur : il prend la couleur médiane des bordures, qui n'est plus celle du fond mais celle du moulin, et il mange le moulin au lieu du fond.</div>
+        <div style="color: #4e483f">Passer sur la sélection et entourer le sujet, ou viser le fond à la pipette. À terme : viser directement la couleur déclarée du jeu, ce que l'atelier ne sait pas encore faire.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le sujet est légitimement de la couleur du fond : une grenouille verte sur un fond vert pur.</div>
+        <div style="color: #8a3f33">La grenouille part avec le fond, ou il ne reste que ses yeux.</div>
+        <div style="color: #4e483f">Changer la couleur de fond du jeu. L'atelier place le vert pur en quatrième position et pas en première pour cette raison exacte : c'est la couleur la plus courante d'un jeu — feuillage, herbe, potion, cape. Le magenta, lui, n'existe presque jamais dans un décor ni sur une peau.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On choisit le modèle « dessin » en croyant que c'est celui qu'il faut pour du pixel art.</div>
+        <div style="color: #8a3f33">L'espace entre le bras et le flanc du pèlerin ressort rempli, la boucle de la ceinture est bouchée, la silhouette est un bloc.</div>
+        <div style="color: #4e483f">Passer sur « intermédiaire » ou « léger ». Le modèle du dessin a appris à découper un personnage d'un seul tenant, ce qui est exactement le contraire de garder l'ajouré.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On choisit le modèle « rapide » sur une image de 1 024 carreaux avec des détails fins.</div>
+        <div style="color: #8a3f33">Les angles s'arrondissent, le bâton du pèlerin disparaît, les doigts fondent en moufle — et il reste des pixels à demi transparents jusque dans le ventre du sujet.</div>
+        <div style="color: #4e483f">Prendre « intermédiaire », qui calcule à la taille de l'image au lieu de calculer sur une vignette de 320 puis de l'étirer. L'écran écrit cette finesse de calcul à côté de chaque modèle.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On ajoute une seconde passe et on ne comprend plus ce qui a mangé quoi.</div>
+        <div style="color: #8a3f33">Il manque un morceau de sujet, et on ne sait pas laquelle des deux passes l'a pris.</div>
+        <div style="color: #4e483f">« Masquer » l'une des deux : elle sort du calcul, l'image se refait sans elle, et ses réglages restent intacts. « Montrer » rend exactement l'image d'avant.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On pose un détourage sur une tuile d'herbe de marais ou sur un décor.</div>
+        <div style="color: #8a3f33">Des plaques d'herbe s'en vont, et la tuile ne se raccorde plus à sa voisine.</div>
+        <div style="color: #4e483f">Ne pas poser de passe du tout : un décor ou un terrain n'a pas de silhouette. C'est le jeu qui le décide famille par famille, et endormir la table de détourage rend la tuile entière.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le moteur par modèle n'est pas installé sur la machine, ou une recette venue d'ailleurs nomme un modèle inconnu.</div>
+        <div style="color: #8a3f33">Le bouton « modèle » est grisé et écrit pourquoi. Une image dont la recette nomme un modèle absent sort quand même, avec toutes ses autres étapes, mais sans son détourage.</div>
+        <div style="color: #4e483f">Rien à réparer dans l'image : on choisit un autre moteur. Ce qui manque est dit, jamais tu — c'est la règle de la maison.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On colle les réglages d'une image sur une autre, ou on rappelle un détourage enregistré sous un nom.</div>
+        <div style="color: #8a3f33">La passe arrive sans son point de pipette et sans sa forme entourée : elle ne retire rien, et l'écran liste ce qui a été laissé en route.</div>
+        <div style="color: #4e483f">Reviser le point sur la nouvelle image. Un réglage voyage — une tolérance de 28 dit la même chose partout — mais une coordonnée ne voyage pas : la flaque de l'attitude d'à côté n'est pas au même endroit.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd’hui</span>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px">
+        <li style="margin-bottom: 6px">Aucun retour visuel pendant le calcul. La barre existe dans l'atelier, elle apprend même la durée de la dernière opération du même genre — et l'écran des tables ne la lit pas. Une seconde et demie sans un signe, sur le geste qu'on répète le plus, c'est le manque le plus voyant.</li>
+        <li style="margin-bottom: 6px">Impossible d'annuler un calcul lancé. Un modèle lourd, c'est vingt-deux secondes pendant lesquelles l'atelier ne répond plus, sans issue.</li>
+        <li style="margin-bottom: 6px">Rien ne montre ce qui va partir avant que ça parte. Un aperçu du fond teinté en rouge, qui suit le curseur de tolérance sans attendre le calcul complet, changerait tout le réglage : aujourd'hui on avance à l'aveugle, un cran à la fois, une seconde et demie par cran.</li>
+        <li style="margin-bottom: 6px">Pas de loupe au pixel. À 64 carreaux, un liseré fait un pixel : on ne le voit pas dans l'atelier, on le découvre dans le jeu.</li>
+        <li style="margin-bottom: 6px">Pas de pinceau pendant le détourage. Il existe, mais tout à la fin du traitement, donc ce qu'on y efface n'est plus vu par le recadrage ni par la mise à l'échelle — la case est calculée sur un sujet qui n'est plus le bon.</li>
+        <li style="margin-bottom: 6px">Pas de geste sur toute une animation. Huit frames de marche avec la même flaque de fond, c'est huit clics ; et rien ne garantit que le contour ne tremblera pas d'une frame à la suivante.</li>
+        <li style="margin-bottom: 6px">L'atelier devine la couleur du fond au lieu de lire celle que le jeu a déclarée. Le magenta est écrit dans les réglages du jeu, il part dans le prompt, et le détourage ne s'en sert pas : il reprend la couleur médiane des bordures. Un sujet qui déborde sur un bord fait basculer cette médiane.</li>
+        <li style="margin-bottom: 6px">La tolérance mesure un écart sur le rouge, le vert et le bleu séparément. Sur un fond dégradé ou grainé, il faut la monter, et la monter mange le sujet. Viser la teinte fermerait ce compromis.</li>
+        <li style="margin-bottom: 6px">La palette du jeu n'est pas utilisée pour protéger le sujet. Les 24 couleurs sont déposées, elles servent à quantifier — mais rien n'interdit au détourage de manger une couleur qui est dans la palette.</li>
+        <li style="margin-bottom: 6px">Aucune façon d'annoncer un raté. Une image dont le détourage a mangé la moitié du sujet sort quand même, entre dans la bibliothèque, et rien ne la signale : les mesures existent (les pixels encore à la couleur du fond, la frange), elles s'affichent, mais personne n'est prévenu.</li>
+        <li style="margin-bottom: 6px">Le téléchargement d'un modèle est annoncé avant, jamais pendant. On lit « 179 Mo à descendre », on clique, et on attend plusieurs minutes devant un écran qui ne dit plus rien.</li>
+        <li style="margin-bottom: 6px">Rien ne compare deux moteurs sur la même image, côte à côte. Le témoin compare l'avant et l'après ; il ne compare pas « le bord à 28 » et « le modèle intermédiaire ». C'est pourtant la question qu'on se pose sur toute image importée.</li>
+      </ul>
+    </div>
+    <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">avant / après</div>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Le pèlerin en robe brune du Marais du Vieux Moulin, en trois volets sur la maquette.
+
+**Volet 1 — avant.** L'image telle qu'elle revient : 1 024 carreaux, le pèlerin de trois quarts vu de dessus, posé au centre d'un fond magenta #FF00FF plein. Deux repères sur l'image : une flèche sur l'anneau de magenta délavé qui borde la robe (un pixel, c'est l'anti-crénelage du modèle), une seconde flèche sur la flaque de magenta enfermée entre le bras droit et le flanc.
+
+**Volet 2 — après.** Le même pèlerin sur le damier gris, ramené à 64 carreaux, 24 couleurs. Contour franc, aucun pixel intermédiaire, l'anneau parti, la flaque partie. Sous l'image, la recette en une ligne — « bord · 28 » puis « pipette · cette tache » — et les deux mesures que le serveur rend déjà, écrites telles quelles : « aucun pixel à demi transparent — le bord est franc sur ses 312 px de pourtour » et « aucun pixel du sujet n'est encore à la couleur du fond ».
+
+**Volet 3 — la démonstration du réglage de fond, avec la grenouille verte.** La même grenouille demandée deux fois : à gauche sur le gris clair d'autrefois, à droite sur le magenta. Sur le gris, le détourage lui mange le ventre — le gris du ventre est à moins de 28 du gris du fond — et il reste un trou ; sur le magenta, rien ne bouge, et la mesure dit « 0 px ». Ce n'est pas une illustration inventée : c'est la raison pour laquelle la liste des couleurs de fond met le magenta en premier et le vert pur en quatrième, un jeu de marais étant plein de vert.
+
+Trois vignettes en pied de page, toutes prises dans le même jeu, pour montrer que le geste change avec le sujet : le garde en armure (le bord suffit), le moulin qui touche trois bords de l'image (le bord se trompe de couleur, il faut entourer), la tuile d'herbe de marais (aucun détourage, la table est endormie).</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

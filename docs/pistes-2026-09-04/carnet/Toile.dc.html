@@ -9,253 +9,592 @@
 <helmet>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <style>
-    body { margin: 0; background: #f7f3ec; }
-    a { color: #a8492c; } a:hover { color: #7d3319; }
-    .k * { box-sizing: border-box; }
-    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
-    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
-    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
-    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
-    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
-    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
-    .c { width: 68px; height: 68px; background: #b3b2af; display: flex; align-items: center; justify-content: center; }
-    .cv { width: 68px; height: 68px; border: 1px dashed #b9b1a3; display: block; }
-    .ilot { border: 1px solid #d3cabb; border-radius: 8px; background: rgba(255,253,250,0.62); padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
-    .seg { height: 30px; display: flex; align-items: center; padding: 0 12px; border-radius: 5px; font-size: 12.5px; color: #4e483f; white-space: nowrap; }
-    .seg-on { background: #fffdfa; color: #221f1b; font-weight: 600; border: 1px solid #ddd5c8; }
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .img { background: #6c6c6c; border-radius: 8px; position: relative; overflow: hidden;
+           display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+
   </style>
 </helmet>
 
-<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr); background: #f7f3ec; overflow: hidden">
+<div class="k" style="width: 1600px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
 
-  <!-- ══════ LE CARNET ══════ -->
-  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
-    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
-        <div class="serif" style="font-size: 25px; line-height: 1.1">Le Marais du Vieux Moulin</div>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1020px">
+      <div style="font-size: 12.5px; color: #948c80">La toile</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">La toile de l’univers</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">Avant de fabriquer quoi que ce soit : on ramasse ce qu’on aime, on trie, et chaque tas retenu décide quelque chose dans le jeu — une ligne de la bible, une palette, les images qui partent avec chaque génération.</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">le parcours</div>
+      <div class="serif" style="font-size: 30px"><span style="color: #5c7a52">8</span><span style="color: #b0a89b"> / 20</span></div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 200px">étapes que l’atelier sait faire aujourd’hui</div>
+    </div>
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
+      <div class="rt" style="padding: 0 9px">Les îlots de la toile</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc"><span>Tout</span><span class="mono" style="font-size: 11.5px">27</span></div>
+        <div class="plc"><span>Le monde</span><span class="mono" style="font-size: 11.5px">9</span></div>
+        <div class="plc" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le trait</span><span class="mono" style="font-size: 11.5px" style="color: #a8492c">6</span></div>
+        <div class="plc"><span>Les couleurs</span><span class="mono" style="font-size: 11.5px">7</span></div>
+        <div class="plc"><span>L’échelle</span><span class="mono" style="font-size: 11.5px">1</span></div>
+        <div class="plc"><span>Ce qu’on ne veut pas</span><span class="mono" style="font-size: 11.5px">4</span></div>
+        <div class="plc" style="color: #948c80"><span>+ Nouvelle collection</span></div>
       </div>
-      <div style="font-size: 12.5px; color: #6d675e">41 images · 12 poses sur 18</div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
-      <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
-      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
-      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
-      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
-      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
-      <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
-      <div class="rl"><span>Son nom et son dossier</span></div>
-      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
-      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
-      <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
-      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
-      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
-      <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
-      <div class="rl"><span>Son détourage de départ</span></div>
-      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
-      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
-      <div class="rl"><span>Les dépenses</span><span class="num">$1,53</span></div>
-    </div>
-
-    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 14px 10px 0; display: flex; flex-direction: column; gap: 9px">
-      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Cliquer une ligne centre le plan sur cette chose. Déplacer le plan surligne la ligne. Les deux disent toujours la même chose.</div>
+      <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 11.5px; line-height: 1.5; color: #6d675e">Un îlot n’est pas un dossier : il décide quelque chose dans le jeu. S’il ne décide rien, c’est une réserve d’images.</div>
       <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
         <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
       </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      </div>
+      </div>
+    </div>
+    <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="font-size: 15px; font-weight: 600">La toile — cinq îlots, et ce que chacun décide</div>
+        <div class="seg"><div class="sg sg-on">Retenu</div><div class="sg">À voir</div><div class="sg">Écarté</div></div>
+      </div>
+      <div style="flex: 1; min-height: 400px; border-radius: 8px; position: relative; overflow: hidden; background-color: #f0ede7; background-image: radial-gradient(#d5cfc3 1px, transparent 1px);background-size: 16px 16px; border: 1px solid #e2dbd0">
+        <div style="position: absolute; left: 24px; top: 22px; width: 210px; border: 1px solid #ddd5c8; border-radius: 9px; background: #fffdfa; padding: 10px 11px; display: flex; flex-direction: column; gap: 7px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+            <span style="font-size: 12.5px; font-weight: 600">Le monde</span><span class="mono" style="font-size: 10.5px; color: #948c80">9</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px"><i style="width: 34px; height: 32px; background: #55606e; opacity: 0.55; border-radius: 3px"></i><i style="width: 26px; height: 26px; background: #55606e; opacity: 0.67; border-radius: 3px"></i><i style="width: 26px; height: 32px; background: #55606e; opacity: 0.79; border-radius: 3px"></i><i style="width: 34px; height: 26px; background: #55606e; opacity: 0.91; border-radius: 3px"></i><i style="width: 26px; height: 32px; background: #55606e; opacity: 0.55; border-radius: 3px"></i><i style="width: 26px; height: 26px; background: #55606e; opacity: 0.67; border-radius: 3px"></i><i style="width: 34px; height: 32px; background: #55606e; opacity: 0.79; border-radius: 3px"></i><i style="width: 26px; height: 26px; background: #55606e; opacity: 0.91; border-radius: 3px"></i><i style="width: 26px; height: 32px; background: #55606e; opacity: 0.55; border-radius: 3px"></i></div>
+          <div style="font-size: 10.5px; line-height: 1.4; color: #6d675e">remplit deux lignes de la bible</div>
+        </div>
+        <div style="position: absolute; left: 262px; top: 46px; width: 190px; border: 1px solid #a8492c; box-shadow: 0 0 0 3px rgba(168,73,44,.14); border-radius: 9px; background: #fffdfa; padding: 10px 11px; display: flex; flex-direction: column; gap: 7px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+            <span style="font-size: 12.5px; font-weight: 600">Le trait</span><span class="mono" style="font-size: 10.5px; color: #948c80">6</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px"><i style="width: 34px; height: 32px; background: #6d7a4a; opacity: 0.55; border-radius: 3px"></i><i style="width: 26px; height: 26px; background: #6d7a4a; opacity: 0.67; border-radius: 3px"></i><i style="width: 26px; height: 32px; background: #6d7a4a; opacity: 0.79; border-radius: 3px"></i><i style="width: 34px; height: 26px; background: #6d7a4a; opacity: 0.91; border-radius: 3px"></i><i style="width: 26px; height: 32px; background: #6d7a4a; opacity: 0.55; border-radius: 3px"></i><i style="width: 26px; height: 26px; background: #6d7a4a; opacity: 0.67; border-radius: 3px"></i></div>
+          <div style="font-size: 10.5px; line-height: 1.4; color: #a8492c">remplit la ligne « trait »</div>
+        </div>
+        <div style="position: absolute; left: 486px; top: 20px; width: 200px; border: 1px solid #ddd5c8; border-radius: 9px; background: #fffdfa; padding: 10px 11px; display: flex; flex-direction: column; gap: 7px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+            <span style="font-size: 12.5px; font-weight: 600">Les couleurs</span><span class="mono" style="font-size: 10.5px; color: #948c80">7</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px"><i style="width: 34px; height: 32px; background: #7a6a9c; opacity: 0.55; border-radius: 3px"></i><i style="width: 26px; height: 26px; background: #7a6a9c; opacity: 0.67; border-radius: 3px"></i><i style="width: 26px; height: 32px; background: #7a6a9c; opacity: 0.79; border-radius: 3px"></i><i style="width: 34px; height: 26px; background: #7a6a9c; opacity: 0.91; border-radius: 3px"></i><i style="width: 26px; height: 32px; background: #7a6a9c; opacity: 0.55; border-radius: 3px"></i><i style="width: 26px; height: 26px; background: #7a6a9c; opacity: 0.67; border-radius: 3px"></i><i style="width: 34px; height: 32px; background: #7a6a9c; opacity: 0.79; border-radius: 3px"></i></div>
+          <div style="font-size: 10.5px; line-height: 1.4; color: #6d675e">donne la palette du jeu</div>
+        </div>
+        <div style="position: absolute; left: 268px; top: 236px; width: 260px; border: 1px solid #ddd5c8; border-radius: 9px; background: #fffdfa; padding: 10px 11px; display: flex; flex-direction: column; gap: 7px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+            <span style="font-size: 12.5px; font-weight: 600">L’échelle</span><span class="mono" style="font-size: 10.5px; color: #948c80">4</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px"><i style="width: 34px; height: 32px; background: #8a7458; opacity: 0.55; border-radius: 3px"></i><i style="width: 26px; height: 26px; background: #8a7458; opacity: 0.67; border-radius: 3px"></i><i style="width: 26px; height: 32px; background: #8a7458; opacity: 0.79; border-radius: 3px"></i><i style="width: 34px; height: 26px; background: #8a7458; opacity: 0.91; border-radius: 3px"></i></div>
+          <div style="font-size: 10.5px; line-height: 1.4; color: #6d675e">ne décide rien pour l’instant</div>
+        </div>
+        <div style="position: absolute; left: 566px; top: 232px; width: 190px; border: 1px solid #ddd5c8; border-radius: 9px; background: #fffdfa; padding: 10px 11px; display: flex; flex-direction: column; gap: 7px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+            <span style="font-size: 12.5px; font-weight: 600">Ce qu’on ne veut pas</span><span class="mono" style="font-size: 10.5px; color: #948c80">4</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px"><i style="width: 34px; height: 32px; background: #948c80; opacity: 0.55; border-radius: 3px"></i><i style="width: 26px; height: 26px; background: #948c80; opacity: 0.67; border-radius: 3px"></i><i style="width: 26px; height: 32px; background: #948c80; opacity: 0.79; border-radius: 3px"></i><i style="width: 34px; height: 26px; background: #948c80; opacity: 0.91; border-radius: 3px"></i></div>
+          <div style="font-size: 10.5px; line-height: 1.4; color: #6d675e">écrit la ligne négative</div>
+        </div>
+        <span style="position: absolute; left: 14px; bottom: 12px; font-size: 11.5px; color: #6d675e">on pose les images où on veut ; rien ne s’aligne tout seul</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">27</span><span style="color: #948c80">images collées</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">4</span><span style="color: #948c80">îlots qui décident quelque chose</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #a8492c">1</span><span style="color: #948c80">qui ne décide rien</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">$0,00</span><span style="color: #948c80">la toile ne coûte rien</span></span>
+      </div>
+      <div style="font-size: 12px; color: #6d675e; line-height: 1.45">Coller ne coûte rien, trier ne coûte rien, et tout ce qui est retenu part ensuite dans les prompts sans qu’on ait à le retaper. Un seul geste se paie ici : éprouver la direction sur un sujet inventé.</div>
+    </div>
+    <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div class="rt">L’îlot choisi</div>
+        <div style="font-size: 16px; font-weight: 600">Le trait</div>
+        <div style="font-size: 12.5px; color: #6d675e">6 gros plans sur des pixels, collés depuis quatre jeux différents.</div>
+      </div>
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 11px">
+        <div class="rt">Ce qu’il décide</div>
+        <div style="display: flex; gap: 9px; align-items: flex-start">
+          <i style="flex-shrink: 0; margin-top: 2px; width: 30px; height: 17px; border-radius: 9px; background: #5c7a52; position: relative"><i style="position: absolute; right: 2px; top: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fffdfa"></i></i>
+          <div style="display: flex; flex-direction: column; gap: 5px; min-width: 0">
+            <span style="font-size: 12.5px; font-weight: 600">Il remplit une ligne de la bible</span>
+            <div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">le trait</div><div class="sg" style="padding: 3px 8px">la vue</div><div class="sg" style="padding: 3px 8px">…</div></div>
+            <div class="mono" style="border: 1px solid #ddd5c8; border-radius: 5px; background: #f2ede4; padding: 7px 9px; font-size: 11px; line-height: 1.5; color: #4e483f">crisp pixel art, hard-edged 1-pixel dark brown outline, flat color fills, no anti-aliasing</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 9px; align-items: flex-start; border-top: 1px solid #ece6db; padding-top: 11px">
+          <i style="flex-shrink: 0; margin-top: 2px; width: 30px; height: 17px; border-radius: 9px; background: #5c7a52; position: relative"><i style="position: absolute; right: 2px; top: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fffdfa"></i></i>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12.5px; font-weight: 600">Deux de ses images partent avec chaque génération</span>
+            <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">Pour les personnages et les décors. Ce sont elles qui font que le pont ressemble au moulin.</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 9px; align-items: flex-start; border-top: 1px solid #ece6db; padding-top: 11px">
+          <i style="flex-shrink: 0; margin-top: 2px; width: 30px; height: 17px; border-radius: 9px; background: #ddd5c8; position: relative"><i style="position: absolute; left: 2px; top: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fffdfa"></i></i>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12.5px">Sa palette devient celle du jeu</span>
+            <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">Éteint : c’est l’îlot « Les couleurs » qui la donne.</span>
+          </div>
+        </div>
+      </div>
+      <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 12.5px; font-weight: 600">« L’échelle » ne décide rien</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Quatre images posées côte à côte, et rien n’en sort. Soit on lui donne un rôle — la charte d’échelle du jeu — soit c’est une réserve, et l’écran doit le dire.</div>
+      </div>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px">
+        <div class="bt bt-p" style="height: 34px; justify-content: space-between; padding: 0 12px"><span>Éprouver cette direction</span><span class="mono" style="font-size: 11px">$0,019</span></div>
+        <div style="font-size: 11px; color: #6d675e; line-height: 1.45">Une seule génération, sur un sujet inventé pour l’occasion — un villageois au repos — qui n’entre pas dans le jeu. C’est le seul geste payant de toute la toile.</div>
+      </div>
     </div>
   </div>
 
-  <!-- ══════ LA TOILE ══════ -->
-  <div style="position: relative; overflow: hidden; background:
-       radial-gradient(circle at 1px 1px, #ddd5c6 1px, transparent 0) 0 0 / 26px 26px, #ece7dc">
-
-    <!-- barre de la surface -->
-    <div style="position: absolute; left: 22px; right: 22px; top: 18px; display: flex; align-items: center; justify-content: space-between; z-index: 2">
-      <div style="display: flex; gap: 3px; background: rgba(255,253,250,0.9); border: 1px solid #ddd5c8; border-radius: 7px; padding: 3px">
-        <div class="seg seg-on">le plan du jeu</div><div class="seg">le tableau d'inspiration</div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Le parcours, de bout en bout</span> <span style="font-size: 13.5px; color: #6d675e">— 20 étapes, 8 existent</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">On peut s’arrêter à n’importe laquelle : rien n’oblige à aller au bout.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; padding: 8px 13px; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0"></div>
+        <div class="ent" style="background: none; padding: 0">l’étape</div>
+        <div class="ent" style="background: none; padding: 0">ce qu’on y fait</div>
+        <div class="ent" style="background: none; padding: 0; text-align: right">aujourd’hui</div>
       </div>
-      <div style="display: flex; align-items: center; gap: 8px">
-        <div style="height: 30px; display: flex; align-items: center; padding: 0 11px; border: 1px solid #ddd5c8; border-radius: 6px; background: rgba(255,253,250,0.9); font-size: 12.5px">tout voir</div>
-        <div style="display: flex; gap: 2px; background: rgba(255,253,250,0.9); border: 1px solid #ddd5c8; border-radius: 6px; padding: 3px">
-          <div class="seg mono" style="font-size: 11.5px">25 %</div><div class="seg seg-on mono" style="font-size: 11.5px">50 %</div><div class="seg mono" style="font-size: 11.5px">100 %</div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">01</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">1 · Tomber sur une toile vide qui dit quoi y mettre</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On ouvre un jeu neuf. La toile est vide et le dit : « Colle ce que tu aimes. Une trentaine d'images suffit. Rien ici ne coûte, et rien ne part encore. » Trois cadres pointillés nomment les trois premiers tas à remplir : le monde, le trait, les couleurs.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">02</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">2 · Ramasser</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On colle des images, on colle des adresses qui paraissent tout de suite et se remplissent ensuite, on colle du texte qui devient une note. L'atelier devine lequel des trois et le dit. Une image déjà collée se signale sans bloquer.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">03</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">3 · Étaler, sans encore rien classer</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On pose les cartes côte à côte, on en agrandit une pour la regarder, on en met trois ensemble pour voir si elles vont ensemble. Rien ne se réaligne tout seul, rien ne reflue quand une carte arrive.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">04</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">4 · Découper ce qu'on n'a pas trouvé seul</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On tire une grande image dans une table de découpe et on en sort le moulin seul, la porte seule, le muret. Trois cartes au lieu d'une.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">05</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">5 · Trancher — retenu, à voir, écarté</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Sur les 61 images ramassées, on en retient 27, on en écarte 11, on en laisse 23 à voir. Écarter ne supprime rien : les 11 restent derrière leur compte et reviennent d'un clic. C'est le geste qui manque le plus.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">06</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">6 · Faire des îlots, et les relier</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On entoure un tas, on le nomme « Le trait », on lui donne une teinte, et on tire un trait vers « Ce qu'on ne veut pas » avec le mot « le contraire ». Six ou sept îlots suffisent à décrire un jeu.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">07</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">7 · Dire ce que chaque îlot décide</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Sous le nom de l'îlot, une ligne dit ce qu'il met dans le jeu : « → la ligne trait, et la référence des personnages ». Un îlot qui ne décide rien l'écrit. C'est ce qui transforme un tas d'images en direction artistique.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">08</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">8 · Lire les couleurs d'un îlot, et les nommer</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'atelier lit 24 couleurs sur les images de l'îlot, on les nomme « Les couleurs du marais », on retire les trois qui viennent d'un reflet, on dose entre cette palette et une autre. La palette se recalcule si une image entre ou sort.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">09</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">9 · Ranger les couleurs en dégradés</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les 24 couleurs se rangent en 5 dégradés de 5 valeurs — la tourbe, la pierre, l'eau, la peau, le métal —, chacun du sombre au clair. C'est avec ça qu'on dessine en pixels ; une liste à plat ne sert pas.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">10</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">10 · Écrire les sept lignes en regardant les images</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les sept lignes du monde et du trait se saisissent dans le volet de droite, avec les images de l'îlot à trente centimètres. Aujourd'hui elles se saisissent sur une page de réglages, loin de tout, de mémoire.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">11</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">11 · Promouvoir les images de référence, une par famille</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une image par famille est promue : elle partira toute seule avec chaque génération de cette famille, sans rien à sélectionner au moment de payer. L'îlot du trait, non figuratif, sert de référence à toutes.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">12</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">12 · Tirer le prompt négatif du mur de ce qu'on ne veut pas</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'îlot gris des contre-exemples s'écrit tout seul en une ligne de prompt négatif : soft gradients, anti-aliasing, glow, painterly. Le champ existe dans le code et part déjà avec chaque génération ; rien ne l'écrit.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">13</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">13 · Lire ce qui part, famille par famille, sans rien envoyer</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une table à six colonnes montre, famille par famille, les images qui partent, les couleurs, les sept lignes et ce que la famille ajoute. Le calcul existe déjà côté serveur, marche réseau coupé, et n'est montré qu'au moment de payer.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">14</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">14 · Payer l'épreuve de direction</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une génération sur un sujet inventé — « un villageois au repos, les mains vides » — qui n'entre dans aucune case et n'appartient à aucun sujet. La route l'autorise déjà ; aucun écran ne la propose, et l'image reviendrait dans la galerie sans qu'on sache que c'était un essai.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">$0,019 — une image, une seule fois</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">15</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">15 · Confronter, et mesurer l'écart</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'épreuve à côté de la référence qui l'a produite, même hauteur, fond neutre. Quatre écarts mesurés sur la machine : 7 couleurs sur 24 hors palette, contour à 2 px au lieu d'un, silhouette à 58 px sur 64, fond propre. Puis l'épreuve réduite à 32 px et en forme noire : lisible, lisible, illisible.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">16</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">16 · Corriger ce qui se corrige sans repayer</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Trois écarts sur quatre se réparent par une passe qui existe déjà — ramener aux 24 couleurs, amincir le contour, recaler la hauteur. Le quatrième est une ligne de la bible à réécrire, et on la réécrit là, dans le volet.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">17</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">17 · Refaire l'épreuve jusqu'à ce que ça tienne</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une seconde épreuve avec la ligne corrigée. Deux ou trois suffisent. Au bout de trois, la direction a coûté $0,057 — la moitié d'un personnage.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">$0,019 par épreuve</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">18</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">18 · Geler la direction, et la dater</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">La direction est datée : « Gelée le 5 septembre · 3 épreuves · $0,057 ». Après le gel, une image fabriquée avec une direction plus ancienne porte une marque dans la galerie et se compte dans le carnet.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">19</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">19 · Fabriquer le premier vrai sujet, sans rien retaper</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On ouvre la famille personnages, on écrit « Le pélerin », on décrit le sujet en une phrase — et les six lignes du jeu, les 24 couleurs, les deux images de référence et le prompt négatif partent avec, sans qu'on retape rien. C'est le moment où la toile disparaît et travaille.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">$0,019 par génération</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">20</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">20 · Quand la direction bouge, savoir ce qui périme</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On corrige une ligne trois semaines plus tard. Le produit dit « 12 images ont été fabriquées avec l'ancienne ligne », et propose deux gestes gratuits : les réaligner, ou les marquer sans rien refaire. Le réalignement existe et ne coûte rien ; ce qui manque, c'est de savoir quoi réaligner.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
         </div>
       </div>
     </div>
-
-    <!-- Le plan -->
-    <div style="position: absolute; left: 34px; top: 74px; right: 34px; display: flex; flex-direction: column; gap: 22px">
-
-      <div style="display: flex; gap: 22px; align-items: flex-start">
-        <!-- îlot : Le pélerin -->
-        <div class="ilot" style="border: 2px solid #a8492c; background: rgba(255,253,250,0.86)">
-          <div style="display: flex; align-items: baseline; gap: 10px">
-            <div style="font-size: 16px; font-weight: 600">Le pélerin</div>
-            <div class="num">6 images · 0 animation · 2 pièces</div>
-          </div>
-          <div style="display: flex; gap: 7px">
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="3" y="10" width="2" height="6" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="3" height="5" fill="#5a3f28"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="2" y="11" width="3" height="5" fill="#d8bb95"/><rect x="3" y="17" width="4" height="5" fill="#5a3f28"/><rect x="10" y="17" width="4" height="4" fill="#5a3f28"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="8" fill="#2f4a35"/><rect x="1" y="10" width="4" height="4" fill="#d8bb95"/><rect x="2" y="16" width="5" height="5" fill="#5a3f28"/><rect x="10" y="15" width="5" height="4" fill="#5a3f28"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="7" height="6" fill="#2f4a35"/><rect x="6" y="5" width="4" height="4" fill="#d8bb95"/><rect x="4" y="8" width="9" height="9" fill="#2f4a35"/><rect x="12" y="4" width="4" height="3" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="4" height="5" fill="#5a3f28"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="4" y="3" width="7" height="6" fill="#2f4a35"/><rect x="5" y="6" width="4" height="4" fill="#d8bb95"/><rect x="3" y="9" width="9" height="8" fill="#2f4a35"/><rect x="1" y="8" width="3" height="5" fill="#d8bb95"/><rect x="5" y="17" width="3" height="5" fill="#5a3f28"/><rect x="9" y="17" width="3" height="5" fill="#5a3f28"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="2" y="14" width="12" height="5" fill="#2f4a35"/><rect x="3" y="12" width="4" height="4" fill="#d8bb95"/><rect x="9" y="16" width="5" height="3" fill="#c9b48c"/></svg></div>
-          </div>
-          <div style="display: flex; gap: 7px; align-items: center">
-            <span class="num" style="width: 78px">l'épée</span>
-            <div style="width: 30px; height: 30px; background: #b3b2af"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-          </div>
-          <div style="display: flex; gap: 7px; align-items: center">
-            <span class="num" style="width: 78px">le sac</span>
-            <div style="width: 30px; height: 30px; background: #b3b2af"></div>
-            <div style="width: 30px; height: 30px; background: #b3b2af"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-          </div>
-          <div style="display: flex; gap: 7px; align-items: center">
-            <span class="num" style="width: 78px">animé</span>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-            <div style="width: 30px; height: 30px; border: 1px dashed #b9b1a3"></div>
-          </div>
-        </div>
-
-        <!-- îlot : Le garde -->
-        <div class="ilot">
-          <div style="display: flex; align-items: baseline; gap: 10px">
-            <div style="font-size: 16px; font-weight: 600">Le garde du moulin</div>
-            <div class="num">6 images</div>
-          </div>
-          <div style="display: flex; gap: 7px">
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="5" fill="#7d8a92"/><rect x="6" y="4" width="4" height="3" fill="#c9a583"/><rect x="4" y="7" width="8" height="9" fill="#6c7a83"/><rect x="1" y="9" width="4" height="4" fill="#5a4a34"/><rect x="12" y="2" width="1" height="16" fill="#7a5a34"/><rect x="5" y="16" width="2" height="6" fill="#4a4238"/><rect x="9" y="16" width="2" height="6" fill="#4a4238"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="5" fill="#7d8a92"/><rect x="6" y="4" width="4" height="3" fill="#c9a583"/><rect x="4" y="7" width="8" height="9" fill="#6c7a83"/><rect x="1" y="10" width="4" height="4" fill="#5a4a34"/><rect x="12" y="2" width="1" height="16" fill="#7a5a34"/><rect x="3" y="16" width="3" height="6" fill="#4a4238"/><rect x="10" y="16" width="3" height="5" fill="#4a4238"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="5" fill="#7d8a92"/><rect x="6" y="4" width="4" height="3" fill="#c9a583"/><rect x="4" y="7" width="8" height="8" fill="#6c7a83"/><rect x="0" y="9" width="4" height="4" fill="#5a4a34"/><rect x="12" y="1" width="1" height="15" fill="#7a5a34"/><rect x="2" y="15" width="4" height="6" fill="#4a4238"/><rect x="10" y="15" width="4" height="5" fill="#4a4238"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="5" y="2" width="6" height="5" fill="#7d8a92"/><rect x="6" y="4" width="4" height="3" fill="#c9a583"/><rect x="4" y="7" width="8" height="9" fill="#6c7a83"/><rect x="13" y="6" width="3" height="3" fill="#c9a583"/><rect x="14" y="1" width="1" height="7" fill="#7a5a34"/><rect x="5" y="16" width="2" height="6" fill="#4a4238"/><rect x="9" y="16" width="3" height="6" fill="#4a4238"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="4" y="3" width="6" height="5" fill="#7d8a92"/><rect x="5" y="5" width="4" height="3" fill="#c9a583"/><rect x="3" y="8" width="8" height="9" fill="#6c7a83"/><rect x="0" y="8" width="3" height="4" fill="#5a4a34"/><rect x="5" y="17" width="2" height="5" fill="#4a4238"/><rect x="8" y="17" width="2" height="5" fill="#4a4238"/></svg></div>
-            <div class="c"><svg viewBox="0 0 16 24" width="54" height="54" shape-rendering="crispEdges"><rect x="2" y="14" width="12" height="5" fill="#6c7a83"/><rect x="3" y="12" width="4" height="4" fill="#c9a583"/><rect x="1" y="19" width="13" height="1" fill="#4a4238"/></svg></div>
-          </div>
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 22px; align-items: flex-start">
-        <!-- îlot : La grenouille -->
-        <div class="ilot" style="background: rgba(255,253,250,0.4)">
-          <div style="display: flex; align-items: baseline; gap: 10px">
-            <div style="font-size: 16px; font-weight: 600; color: #4e483f">La grenouille des tourbières</div>
-            <div class="num">2 concept arts, aucune image</div>
-          </div>
-          <div style="display: flex; gap: 7px">
-            <div class="cv"></div><div class="cv"></div><div class="cv"></div><div class="cv"></div><div class="cv"></div><div class="cv"></div>
-          </div>
-        </div>
-
-        <!-- îlot : les choses -->
-        <div class="ilot" style="background: rgba(255,253,250,0.4)">
-          <div style="display: flex; align-items: baseline; gap: 10px">
-            <div style="font-size: 16px; font-weight: 600; color: #4e483f">Coffre</div>
-            <div class="num">meuble · 3 cases</div>
-          </div>
-          <div style="display: flex; gap: 7px"><div class="cv"></div><div class="cv"></div><div class="cv"></div></div>
-        </div>
-
-        <div class="ilot" style="background: rgba(255,253,250,0.4)">
-          <div style="display: flex; align-items: baseline; gap: 10px">
-            <div style="font-size: 16px; font-weight: 600; color: #4e483f">Ecran titre</div>
-            <div class="num">interface · 4 cases</div>
-          </div>
-          <div style="display: flex; gap: 7px"><div class="cv"></div><div class="cv"></div><div class="cv"></div><div class="cv"></div></div>
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 22px; align-items: flex-start">
-        <!-- îlot : le décor -->
-        <div class="ilot" style="background: rgba(255,253,250,0.4)">
-          <div style="display: flex; align-items: baseline; gap: 10px">
-            <div style="font-size: 16px; font-weight: 600; color: #4e483f">fôret</div>
-            <div class="num">décor · une seule image, pas de poses</div>
-          </div>
-          <div style="display: flex; gap: 7px; align-items: center">
-            <div class="cv" style="width: 148px"></div>
-            <div style="font-size: 12px; color: #948c80; max-width: 15em; line-height: 1.4">Un décor n'a pas de poses : une seule image, large.</div>
-          </div>
-        </div>
-
-        <!-- l'invitation : poser une chose -->
-        <div style="border: 1px dashed #c3b8a6; border-radius: 8px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; align-self: stretch; justify-content: center">
-          <div style="font-size: 14px; color: #6d675e">Écrire un nom ici pose une chose sur le plan</div>
-          <div style="height: 34px; border: 1px solid #ddd5c8; border-radius: 6px; background: rgba(255,253,250,0.72); display: flex; align-items: center; padding: 0 11px; font-size: 13px; color: #a49a8b; min-width: 250px">un nom, et rien d'autre</div>
-        </div>
-      </div>
-
-      <!-- la réserve -->
-      <div style="margin-top: 8px; border-top: 1px solid #ddd5c8; padding-top: 14px; display: flex; flex-direction: column; gap: 9px">
-        <div style="display: flex; align-items: baseline; gap: 12px">
-          <div class="rt" style="color: #8b8376">La réserve — les images que le plan ne montre pas</div>
-          <div style="font-size: 12.5px; color: #6d675e"><strong style="font-weight: 600">41 images</strong> dans la galerie, <strong style="font-weight: 600">12 posées</strong> dans une case. Les autres sont des essais écartés, des concept arts et des rendus.</div>
-        </div>
-        <div style="display: flex; gap: 7px; align-items: center">
-          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
-          <div style="width: 46px; height: 46px; background: #bcbbb8"></div>
-          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
-          <div style="width: 46px; height: 46px; background: #b6b5b2"></div>
-          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
-          <div style="width: 46px; height: 46px; background: #bcbbb8"></div>
-          <div style="width: 46px; height: 46px; background: #b6b5b2"></div>
-          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
-          <div style="width: 46px; height: 46px; background: #bcbbb8"></div>
-          <div style="width: 46px; height: 46px; background: #c4c3c0"></div>
-          <div style="margin-left: 6px; font-size: 12.5px; color: #948c80; max-width: 20em; line-height: 1.45">Glisse-les sur une chose pour les ranger. Ce n'est pas obligatoire.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Explication de la vue -->
-    <div style="position: absolute; left: 34px; bottom: 22px; max-width: 640px; background: rgba(255,253,250,0.94); border: 1px solid #ddd5c8; border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px">
-      <div style="font-size: 14px; font-weight: 600">À quoi sert le plan, si le carnet dit déjà tout</div>
-      <div style="font-size: 12.5px; line-height: 1.5; color: #6d675e">
-        Le carnet répond à <em>où est cette chose ?</em>. Le plan répond à <em>à quoi ressemble ce jeu, en entier ?</em> — les liens entre les choses, les trous, ce qui est fini à côté de ce qui ne l'est pas.
-        <strong style="font-weight: 600; color: #4e483f">C'est la même donnée, deux fois.</strong> Ce qui manque n'est pas colorié en rouge : c'est un carré vide dans une rangée pleine, et ça se voit de loin.
-      </div>
-    </div>
-
-    <!-- carte + zoom -->
-    <div style="position: absolute; right: 22px; bottom: 22px; display: flex; flex-direction: column; gap: 9px; align-items: flex-end">
-      <div style="width: 190px; height: 118px; border: 1px solid #ddd5c8; border-radius: 6px; background: rgba(255,253,250,0.9); position: relative; overflow: hidden">
-        <div style="position: absolute; left: 12px; top: 14px; display: flex; gap: 3px">
-          <div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div>
-        </div>
-        <div style="position: absolute; left: 108px; top: 14px; display: flex; gap: 3px">
-          <div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div><div style="width: 11px; height: 11px; background: #b3b2af"></div>
-        </div>
-        <div style="position: absolute; left: 12px; top: 56px; display: flex; gap: 3px">
-          <div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div><div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div><div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div><div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div>
-        </div>
-        <div style="position: absolute; left: 108px; top: 56px; display: flex; gap: 3px">
-          <div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div><div style="width: 11px; height: 11px; border: 1px solid #c9c2b6"></div>
-        </div>
-        <div style="position: absolute; left: 6px; top: 8px; width: 122px; height: 74px; border: 1.5px solid #a8492c; border-radius: 2px"></div>
-      </div>
-      <div style="font-size: 12px; color: #6d675e; background: rgba(255,253,250,0.9); border: 1px solid #ddd5c8; border-radius: 6px; padding: 6px 10px">tout le jeu en petit — <strong style="font-weight: 600">6 choses</strong>, le cadre dit où tu es</div>
-    </div>
-
   </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les collections qu’on veut pouvoir créer</span> <span style="font-size: 13.5px; color: #6d675e">— 12 propositions</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Elles vivent dans le carnet, sous la famille. Un sujet peut être dans plusieurs.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px">
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Le monde</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">les paysages, les matières, l'architecture. Ce que l'endroit est. Dans le marais : tourbe, planches pourries, brume basse, ruines de pierre. 9 images, c'est assez.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Le trait</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">des gros plans sur les pixels : épaisseur du contour, tramage, marches d'escalier sur une diagonale. Aucune figure entière, exprès : un îlot figuratif déteint sur les sujets suivants. C'est cet îlot-là qui remplit la ligne trait et qui sert de référence à toutes les familles.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">La lumière et l'heure</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">le même endroit à l'aube, à midi, à la torche. Trois images suffisent à trancher la ligne éclairage.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Les couleurs</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">des images prises pour leurs couleurs seules, pas pour leur sujet. C'est de cet îlot que sort la palette nommée du jeu.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Les silhouettes</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">des personnages réduits à une forme noire. Sert à répondre à une seule question : est-ce qu'on reconnaît le pélerin à 32 px ?</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">L'échelle</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">une bande unique où l'on pose un personnage, une porte, un arbre, un tonneau et un carré de terrain à la même taille. C'est l'image que le tableau des huit échelles ne montre jamais.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Ce qu'on ne veut pas</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">les contre-exemples, teinte grise. Trop lisse, trop de dégradés, contours doux, couleurs saturées. C'est cet îlot qui écrit le prompt négatif.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Les jeux voisins</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">trois ou quatre jeux nommés, avec pour chacun une note : ce qu'on prend, ce qu'on laisse. Ce sont des notes autant que des images.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Les têtes d'affiche</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">les 3 images qui sont le jeu. Celles qu'on montrerait à quelqu'un qui ne sait rien. Si l'îlot en compte plus de 5, la direction n'est pas tranchée.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">L'interface</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">cadres, boutons, curseurs, chiffres. Une famille du jeu a besoin d'un îlot à elle, parce que rien de ce qui décide un marais ne décide un bouton.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Les épreuves</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">les images payées pour vérifier la direction, chacune posée à côté de la référence qu'elle devait suivre. L'îlot où l'on voit si ça tient.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Les coins qui s'écartent</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">un îlot par ambiance. Le marais plus gris, les monstres de l'ombre plus froids. Chacun donne sa palette et ses trois lignes.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les outils propres à cette famille</span> <span style="font-size: 13.5px; color: #6d675e">— 3 sur 13 existent</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Aucun autre famille n’en a besoin. C’est ce qui fait qu’une famille n’est pas qu’un dossier.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le tri en trois tas</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Trois tas et un seul geste pour passer de l'un à l'autre : retenu, à voir, écarté. Écarter ne supprime rien — l'image reste, rangée derrière un compte qu'on rouvre d'un clic. Sur 61 images ramassées, on finit à 6 qui décident.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> C'est la seule famille où l'on ramasse dix fois plus que ce qu'on garde. Partout ailleurs on fabrique ce dont on a besoin ; ici on cherche, donc on se trompe, et il faut un endroit où poser ses erreurs sans les jeter.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">L'îlot qui décide quelque chose</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Sous le nom de chaque îlot, une ligne dit ce qu'il met dans le jeu : une ligne de la bible, une palette, l'image de référence d'une famille, le prompt négatif. Un îlot qui ne décide rien l'écrit noir sur blanc.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Un îlot de la toile est le seul rangement du produit qui ne range pas des images fabriquées mais des intentions. Sans cette ligne, la toile est un tas joli ; avec elle, c'est la source de tout ce qui part.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Les couleurs rangées en dégradés</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les 24 couleurs lues sur un îlot, rangées en 5 dégradés de 5 valeurs au lieu d'une liste à plat : la tourbe du sombre au clair, la pierre, l'eau, la peau, le métal. Chaque dégradé se nomme.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Une palette lue sur des images est une matière brute ; c'est ici qu'on la travaille. Ailleurs dans l'atelier la palette n'est qu'une contrainte qu'on applique — ici c'est ce qu'on fabrique.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le mur de ce qu'on ne veut pas</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un îlot teinté gris où l'on pose ce qu'on refuse. Ce qu'il contient s'écrit tout seul en une ligne de prompt négatif qui part avec chaque génération, toutes familles confondues, et qui reste corrigeable à la main.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Aucune autre famille n'a d'endroit pour dire non. Un personnage se décrit par ce qu'il est ; une direction artistique se tient autant par ce qu'elle refuse.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le test de silhouette</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une image ramenée à 32 px, puis à une forme noire pleine, côte à côte avec l'originale. Trois mots dessous : lisible, lisible, illisible. Gratuit, c'est une passe de plus.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> C'est la question que seule la direction artistique pose : est-ce que ce style survit à la taille du jeu ? Une fois répondue ici, elle n'a plus à être reposée sur chaque sujet.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La charte d'échelle</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une bande unique où l'on pose côte à côte, à la même taille, un personnage de 64 px, une porte, un arbre, un tonneau et un carré de terrain de 32 px. On voit d'un coup si le tonneau est plus grand que le pélerin.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Le tableau des huit échelles dit 100 %, 50 %, 40 % — des nombres. La toile est le seul endroit où l'on peut en faire une image, et une image est ce qui empêche l'erreur.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La lecture de ce qui part, famille par famille</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">La direction complète, lue famille par famille sans rien envoyer : les images qui partent, les couleurs, les sept lignes, ce que chaque famille ajoute. Marche réseau coupé.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> La toile est la seule famille dont le résultat n'est pas une image : c'est ce qui part avec toutes les autres. Il lui faut donc un endroit où voir son propre produit — et le calcul existe déjà côté serveur, gratuit.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">L'épreuve de direction</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une génération payée sur un sujet inventé pour l'occasion — un villageois au repos, un pot en terre, un carré d'herbe — qui n'entre dans aucune case et n'appartient à aucun sujet du jeu. $0,019 pour savoir si la direction tient.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Partout ailleurs on paie pour obtenir une image dont on a besoin. Ici on paie pour obtenir une réponse. Le produit n'a pas encore ce genre de dépense-là, et c'est la moins chère qu'il puisse offrir.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La confrontation, et ses quatre mesures</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'image fabriquée posée contre la référence qui l'a produite, à la même hauteur, avec quatre écarts mesurés : couleurs hors palette, épaisseur du contour, hauteur de la silhouette, propreté du fond. Trois des quatre se corrigent gratuitement par une passe.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> L'écran Comparer met deux images fabriquées côte à côte. Seule la toile détient l'autre moitié : ce à quoi ça devait ressembler. C'est le seul endroit du produit où l'intention et le résultat se touchent.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le gel de la direction</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">La direction est datée. Après le gel, une image plus vieille que la direction porte une marque dans la galerie, le carnet en donne le compte, et le réalignement — qui existe et ne coûte rien — sait enfin quoi réaligner.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Une bible qui bouge en cours de route est le seul réglage du jeu qui périme du travail déjà payé. C'est à la toile de porter la date, puisque c'est elle qui décide.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le collage qui devine</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On colle une image, une adresse ou du texte, et l'atelier devine lequel des trois. Une adresse paraît tout de suite et se remplit ensuite ; un doublon se signale sans rien bloquer.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> C'est déjà le geste principal de la toile, et il n'a pas d'équivalent ailleurs : partout ailleurs une image se fabrique ou s'importe, ici elle se ramasse.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La promotion en image de référence</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une image promue devient la référence d'une famille et part toute seule avec chaque génération de cette famille. Rien à sélectionner au moment de payer.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> C'est le tuyau qui fait de la toile autre chose qu'un album : ce qu'on y décide sort tout seul. Il existe déjà et personne ne le voit — il faut le montrer, pas le construire.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le découpage d'une carte</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une grande image d'inspiration se découpe en morceaux : le moulin seul, la porte seule, le muret. Chaque morceau devient une carte à part.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> On ramasse rarement l'image exacte qu'on voulait ; on ramasse une image qui contient ce qu'on voulait. Aucune autre famille n'a ce problème.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 460px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Les autres écrans à dessiner</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 13px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La toile — ramasser, trancher, et dire ce que chaque tas décide</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e"><span class="rt" style="font-size: 9.5px">on y arrive</span> C'est le premier écran d'un jeu neuf, avant tout le reste. Ensuite, par une ligne du carnet placée en tête de « Ce qui s'applique à tout » : « Sa direction — 5 îlots, 61 images ». Elle remplace la ligne « Le monde et son trait », qui devient le volet de droite de cet écran.</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">au milieu</span> La toile elle-même, en grand, sur le fond piqué. Cinq îlots posés à la main, jamais alignés par la machine. « Le monde » 9 images, teinte ardoise. « Le trait » 6 gros plans sur des pixels, teinte olive. « Les couleurs » 7 images, teinte iris. « L'échelle » une bande unique. « Ce qu'on ne veut pas » 4 images, teinte grise, barrées d'un trait. Sous le nom de chaque îlot, une seconde ligne en petit, et c'est la nouveauté : ce qu'il décide. « → la ligne trait, et la référence des personnages » ; « → la palette du marais, 24 couleurs » ; « → le prompt négatif ». Un îlot qui ne décide rien l'écrit : « ne décide rien encore ». Deux traits relient « Le monde » à « Les couleurs » avec le mot « la palette vient d'ici », et « Ce qu'on ne veut pas » à « Le trait » avec le mot « le contraire ». Une note jaune posée seule : « la brume ne doit jamais manger les silhouettes ». Tout en bas, une bande de 120 px sur toute la largeur : LE TAS — 23 cartes en rang, celles qu'on n'a pas encore triées. On les tire dans un îlot, ou on les jette dans « écarté », qui garde son compte à droite : « retenu 27 · à voir 23 · écarté 11 ». Les écartées ne disparaissent pas ; elles reviennent d'un clic sur leur compte.</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f"><span class="rt" style="font-size: 9.5px">à droite</span> L'îlot choisi, « Le trait », 6 images, teinte olive. Puis la seule chose qui compte : CE QU'IL DÉCIDE, en trois interrupteurs éteignables. — Il remplit une ligne du monde et du trait : un menu à sept entrées, ligne « trait » choisie, et dessous une case de texte de 4 lignes déjà remplie — crisp pixel art, hard-edged 1-pixel dark brown outline, flat color fills, no gradients — qu'on corrige avec les 6 images sous les yeux, à 30 cm. — Il donne une palette : 24 pastilles lues à l'instant sur les 6 images, avec un bouton gris « Nommer cette palette ». — Il fournit l'image de référence d'une famille : six pastilles de famille, « personnages » allumée, et la vignette de l'image promue cerclée. Sous les trois interrupteurs, une ligne de compte : « Cet îlot met 1 image, 24 couleurs et 1 ligne dans chaque génération de personnage. » Tout en bas, la carte survolée : son adresse d'origine, sa date, et « déjà collée le 28 août » si c'est un doublon. Un lien gris ferme le volet : « Voir ce qui part › ».</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #8a5a2c; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">ce qui coûte</span> Aucun. C'est un écran sans bouton rouille, et c'est ce qu'il faut dire : ramasser, trancher, nommer, lire des couleurs et écrire la bible ne coûtent rien, ne sortent pas de la machine et marchent réseau coupé. Le seul chiffre d'argent visible est en bas du carnet, comme partout.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Ce qui part — la direction du jeu en une page, et l'épreuve qui la vérifie</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e"><span class="rt" style="font-size: 9.5px">on y arrive</span> Depuis le lien gris en bas du volet de la toile. Automatiquement aussi la première fois qu'on s'apprête à payer dans un jeu neuf : c'est le dernier écran avant la première dépense. Et par le carnet : « Sa direction › Ce qui part ».</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">au milieu</span> Une table à six colonnes — les six familles — et quatre rangées. C'est un contrat, et ça se lit comme un contrat. Rangée 1, LES IMAGES QUI PARTENT : sous personnages, 2 vignettes cerclées ; sous objets, 1 ; sous terrains, la case est vide et le dit — « aucune image ne part sur cette famille, le jeu se décrit en mots seuls ». Rangée 2, LES COULEURS : la même bande de 24 pastilles répétée sous chaque famille, sauf sous décors où une autre bande la remplace, marquée « ambiance Le marais gris ». Rangée 3, LES SEPT LIGNES : sept petits rubans empilés par colonne, les six remplis en noir, le septième barré et pâle — « rendu : vide, cette ligne ne part pas ». Rangée 4, CE QUE LA FAMILLE AJOUTE : « personnage · 100 % de la case », « objet posé · 50 % », « tuile · bord à bord, pas de fond à détourer ». Sous la table, sur toute la largeur, LE MUR DE CE QU'ON NE VEUT PAS : les 4 contre-exemples en vignettes, et dessous la ligne qu'ils écrivent, corrigeable — soft gradients, anti-aliasing, glow, painterly — avec la mention « part avec chaque génération, toutes familles ». Tout en haut, une seule phrase de compte : « 6 lignes, 24 couleurs et 2 images partent sans que tu aies rien à retaper. »</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f"><span class="rt" style="font-size: 9.5px">à droite</span> L'ÉPREUVE. Six pastilles de famille, « personnages » allumée. Dessous, le sujet d'essai que l'atelier propose — « un villageois au repos, les mains vides » — dans une case corrigeable ; il n'appartient à aucun sujet du jeu et n'entrera dans aucune case. Le modèle : OpenRouter · gpt-image-2, 14 places d'image, $0,019. Puis LE TEXTE EXACT qui partira, en mono 11 px, dans une boîte qui défile, replié en groupes qu'on peut éteindre un par un : LE JEU 6 lignes · LE SUJET 1 · CE QUI EST JOINT 2 · LA CAMÉRA 1. Sous le texte, LES IMAGES QUI PARTENT : 3 vignettes, « 3 places sur 14 utilisées », chacune avec un interrupteur pour l'éteindre pour cette fois. Enfin la ligne de prix, seule sur son rang : « 1 image · $0,019 · ta 73ᵉ génération ». Le bouton rouille dessous.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #8a5a2c; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">ce qui coûte</span> Payer l'épreuve — $0,019. Une seule image, sur un sujet qui n'existe pas dans le jeu, uniquement pour voir si la direction tient. Tout le reste de l'écran — lire, éteindre une ligne, corriger le texte, changer de famille — est gratuit et ne sort pas de la machine.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.3">L'épreuve, à côté de ce qu'elle devait ressembler</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e"><span class="rt" style="font-size: 9.5px">on y arrive</span> Tout seul, dès que l'épreuve revient : c'est la suite immédiate du bouton rouille de l'écran précédent. Et à tout moment depuis l'îlot « Les épreuves » de la toile, ou depuis la galerie sur n'importe quelle image marquée épreuve.</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">au milieu</span> Deux images côte à côte sur un fond gris neutre, à la même hauteur, séparées par une règle verticale. À gauche, LA RÉFÉRENCE : l'image promue de la famille personnages, celle qui est partie avec l'appel. À droite, L'ÉPREUVE qui vient de revenir, à la taille du jeu ×4, avec la grille de 64 px par-dessus. Sous les deux, une table de quatre écarts, chacun mesuré sur la machine : « Couleurs hors palette — 7 sur 24 », avec les 7 pastilles fautives affichées ; « Épaisseur du contour — 2 px, la bible en demande 1 » ; « Hauteur de la silhouette — 58 px sur 64, le villageois flotte » ; « Fond — propre, aucune frange ». Trois des quatre lignes portent un lien gris « Corriger — gratuit », parce que ce sont des passes qui existent déjà. Tout en bas, une bande de vérification qui ne coûte rien : la même épreuve répétée trois fois — en couleurs, réduite à 32 px, et en forme noire — avec sous chacune un mot : « lisible · lisible · illisible ». Et un verdict en une phrase, en gros : « La direction tient sur les couleurs. Elle ne tient pas sur le contour. »</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f"><span class="rt" style="font-size: 9.5px">à droite</span> CE QUI A PRODUIT ÇA. Le texte parti, replié en quatre groupes. Chaque ligne se clique et s'ouvre sur place en une case de 3 lignes : corriger « trait » ici corrige la bible du jeu, pas seulement cette épreuve. Sous la ligne corrigée paraît tout de suite le compte de ce que ça touche : « 12 images ont été fabriquées avec l'ancienne ligne », et deux boutons gris — « Réaligner les 12 · gratuit » et « Les marquer, ne rien refaire ». En dessous, LE GEL : une ligne datée, « Direction gelée le 5 septembre · 3 épreuves · $0,057 », et une phrase de conséquence : après le gel, une image plus vieille que la direction porte une marque dans la galerie, et le carnet en donne le compte. Le bouton rouille ferme le volet.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #8a5a2c; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">ce qui coûte</span> Refaire l'épreuve avec la ligne corrigée — $0,019. Le seul bouton rouille de l'écran. Tout ce qui précède — mesurer les écarts, corriger une passe, réduire à 32 px, réaligner les 12 images, geler la direction — est gratuit.</div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque dans l’app</span>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f">
+        <li style="margin-bottom: 7px">Trancher. Une carte collée reste là pour toujours ou disparaît. Il n'y a pas de tas « écarté » : rien ne permet de passer de 60 images ramassées aux 6 qui décident, en gardant les 54 autres visibles mais rangées derrière.</li>
+        <li style="margin-bottom: 7px">Dire ce qu'un îlot décide. Un îlot porte un nom, une teinte, des membres — et rien qui dise « c'est lui qui donne la palette », « c'est lui qui remplit la ligne trait ». Le lien entre ce qu'on a ramassé et ce qui part existe dans le code (image promue, palette nommée, ambiance) mais jamais depuis l'îlot.</li>
+        <li style="margin-bottom: 7px">Écrire la bible en regardant les images. Les sept lignes du monde et du trait se saisissent sur une page de réglages, loin de la toile. On décrit de mémoire ce qui est à trois écrans de là.</li>
+        <li style="margin-bottom: 7px">Ranger les couleurs en dégradés. La lecture d'un îlot rend 24 couleurs à plat. Un dessin en pixels se fait avec des dégradés — 5 nuances qui vont du sombre au clair pour une même matière. Le produit n'a pas ce mot-là.</li>
+        <li style="margin-bottom: 7px">Le mur de ce qu'on ne veut pas. Le champ prompt négatif existe dans le code et part avec chaque génération ; rien dans le produit ne l'écrit. Les contre-exemples ramassés sur la toile ne servent à rien.</li>
+        <li style="margin-bottom: 7px">Voir ce qui part sans payer, famille par famille. La route qui calcule « ce qui part » est gratuite, marche réseau coupé, et n'est montrée qu'au moment de payer une vraie génération. On ne peut pas lire la direction du jeu comme un contrat.</li>
+        <li style="margin-bottom: 7px">L'épreuve de direction. Une génération qui n'est le sujet de personne — juste pour voir si la direction tient — est permise par la route mais offerte par aucun écran, et l'image revient dans la galerie sans qu'on sache que c'était un essai.</li>
+        <li style="margin-bottom: 7px">Confronter une image fabriquée à la référence qui l'a produite. L'écran Comparer met deux images fabriquées côte à côte. Jamais l'inspiration en face du résultat.</li>
+        <li style="margin-bottom: 7px">Mesurer l'écart. Aucun chiffre ne dit « 7 couleurs sur 24 sont hors palette », « le contour fait 2 px au lieu d'un », « la silhouette fait 58 px sur 64 ». Ces trois mesures se calculent sur la machine, sans un centime.</li>
+        <li style="margin-bottom: 7px">Le test de silhouette. Réduire une image à 32 px et à une forme noire pour voir si elle se lit encore. Gratuit, une passe de plus, absent.</li>
+        <li style="margin-bottom: 7px">La charte d'échelle. Les huit échelles sont un tableau de pourcentages. Personne ne voit jamais un personnage, une porte, un arbre et une tuile posés à la même taille sur une même bande.</li>
+        <li style="margin-bottom: 7px">Geler la direction, et dater. Rien ne distingue une image fabriquée avant un changement de bible d'une image fabriquée après. Le réalignement existe et est gratuit, mais on ne sait pas quoi réaligner.</li>
+        <li style="margin-bottom: 7px">Faire entrer une image fabriquée dans la toile. Une carte se colle, jamais ne se génère, et rien ne passe de la galerie vers la toile. L'épreuve payée ne peut pas être posée à côté de ce qui l'a inspirée.</li>
+        <li style="margin-bottom: 7px">L'état vide. Un jeu neuf ouvre sur une toile vide qui ne dit ni quoi y mettre, ni combien il en faut, ni ce que ça débloquera plus loin.</li>
+      </ul>
+    </div>
+  </div>
+
 </div>
 </x-dc>
 </body>

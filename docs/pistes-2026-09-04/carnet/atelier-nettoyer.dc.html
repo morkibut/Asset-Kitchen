@@ -1,0 +1,486 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .img { background: #6c6c6c; border-radius: 8px; position: relative; overflow: hidden;
+           display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 2850px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1000px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › au repos › Retoucher</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">Nettoyer</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5"></div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 210px">gratuit — aucune génération, aucun réseau, aucun argent.</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1180px">
+    Une fois l'image ramenée à sa taille finale — 64 px de côté —, il reste presque toujours des miettes autour du sujet : des pixels isolés, des éclats de fond qui ont survécu au détourage, un bout de contour décroché. Nettoyer les efface. Aujourd'hui on ne peut faire que ça : effacer des taches détachées, en dessous d'une taille qu'on choisit. Aucun trou ne se bouche, aucun contour ne se lisse.
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
+
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
+      <div class="rt" style="padding: 0 9px">La chaîne</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Détourer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le fond magenta part</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Recadrer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les bords vides sautent</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Réduire</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Couleurs</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la palette du monde</div>
+        </div>
+        <div class="plc" style="background: #e6dfd2; font-weight: 600; flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Nettoyer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les pixels isolés</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Le contour</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le trait de bord retracé</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>La main</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">ce qu’on repeint soi-même</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Retourner</span><span style="color: #a8492c; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les autres directions</div>
+        </div>
+      </div>
+      <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: #6d675e">
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #5c7a52; font-size: 15px; line-height: 1">●</span> posée, elle agit</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #b0a89b; font-size: 15px; line-height: 1">●</span> endormie, réglages gardés</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #c9c2b6; font-size: 15px; line-height: 1">●</span> rien à faire ici</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #a8492c; font-size: 15px; line-height: 1">●</span> n’existe pas encore</div>
+      </div>
+    </div>
+
+    <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="font-size: 15px; font-weight: 600">Le pélerin, au repos — les miettes</div>
+        <div class="seg"><div class="sg">Avant</div><div class="sg sg-on">Les deux</div><div class="sg">Après</div></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 330px">
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7">
+          <i class="fig" style="width: 88px; height: 224px"></i><i style="position:absolute;left:18%;top:22%;width:4px;height:4px;background:#6b5a44;box-shadow:0 0 0 2px #a8492c"></i><i style="position:absolute;left:74%;top:31%;width:3px;height:3px;background:#6b5a44;box-shadow:0 0 0 2px #a8492c"></i><i style="position:absolute;left:26%;top:68%;width:5px;height:5px;background:#6b5a44;box-shadow:0 0 0 2px #a8492c"></i><i style="position:absolute;left:81%;top:74%;width:3px;height:3px;background:#6b5a44;box-shadow:0 0 0 2px #a8492c"></i><i style="position:absolute;left:63%;top:15%;width:4px;height:4px;background:#6b5a44;box-shadow:0 0 0 2px #a8492c"></i><i style="position:absolute;left:13%;top:52%;width:3px;height:3px;background:#6b5a44;box-shadow:0 0 0 2px #a8492c"></i>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #4e483f">avant · 14 taches détachées du sujet</span>
+        </div>
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7">
+          <i class="fig" style="width: 88px; height: 224px"></i>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #4e483f">après · 9 px effacés, la robe intacte</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">14</span><span style="color: #948c80">taches trouvées</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">9 px</span><span style="color: #948c80">effacés</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">1</span><span style="color: #948c80">amas gardé</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">0 ms</span><span style="color: #948c80">sur une image de 64</span></span>
+      </div>
+      <div style="font-size: 12px; color: #6d675e; line-height: 1.45">Nettoyer passe après réduire : c’est la réduction qui fabrique les pixels isolés, en faisant voter des carrés à cheval sur le contour.</div>
+    </div>
+
+    <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">La méthode</div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">Les petites taches</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">efface tout amas plus petit que N pixels</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Effacer par la couleur</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">on désigne une couleur, elle part partout</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Garder le sujet seul <span class="puce p-a">à ajouter</span></span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">ne garde que le plus gros amas</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Boucher les trous <span class="puce p-a">à ajouter</span></span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">referme les percées dans la silhouette</span>
+        </span>
+      </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Neuf des onze moteurs manquent. C’est l’atelier le plus dépourvu de la chaîne.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #221f1b">tache minimale</span>
+          <span class="mono" style="font-size: 12px; color: #221f1b">3 px</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 5%; background: #a8492c; border-radius: 2px"></i>
+          <i style="position: absolute; left: 5%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #a8492c"></i>
+        </div>
+        <div style="font-size: 11px; color: #948c80; line-height: 1.4">L’écran affiche 3, mais tant qu’on n’a pas touché le curseur c’est 0 qui est posé : rien n’est nettoyé.</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>ce qu’on nettoie</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">la silhouette</div><div class="sg" style="padding: 3px 8px">les couleurs</div></div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>les diagonales comptent</span><div class="seg" style="padding: 1px"><div class="sg" style="padding: 3px 8px">oui</div><div class="sg sg-on" style="padding: 3px 8px">non</div></div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>montrer ce qui va partir</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">oui</div><div class="sg" style="padding: 3px 8px">non</div></div>
+      </div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e2dbd0; background: #fffdfa; border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600">Les six taches cerclées de rouge vont partir</div>
+        <div style="font-size: 11.5px; line-height: 1.45; color: #4e483f">Cliquer l’une d’elles la garde. Cliquer un pixel du sujet l’efface. C’est le seul endroit de la chaîne où on désigne au pixel près.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les moteurs</span> <span style="font-size: 13.5px; color: #6d675e">— 2 sont là, 9 restent à ajouter</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Un seul agit à la fois. Changer de moteur ne perd pas les réglages de l’autre.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Les petites taches</div><span class="puce p-ok">posé d’emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les éclats qui flottent autour du sujet disparaissent d'un coup, du plus petit au plus gros, à mesure qu'on monte le seuil. Ce qui touche le sujet ne bouge jamais, pas même d'un pixel.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Le cas ordinaire, et le seul que l'atelier sache faire aujourd'hui. Après la mise sur grille, quand des éclats détachés flottent autour du sujet.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Garder le sujet seul</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Tout ce qui n'est pas relié au bloc principal s'en va, un éclat de 40 px comme un pixel seul. Un clic au lieu d'un curseur. On peut demander à garder les 2 ou 3 plus grandes pour un sujet en deux morceaux — une épée à côté d'une main.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand on sait qu'il ne doit rester qu'une seule pièce — une grenouille, un tonneau, un moulin — et qu'on ne veut pas chercher le bon chiffre.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Effacer par la couleur (pipette)</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On clique une miette, toutes celles de sa couleur partent en même temps, où qu'elles soient — y compris celles collées au sujet, que le seuil de taille ne peut pas atteindre.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand les miettes ont toutes la même couleur : un reste de magenta, une poussière de la même teinte semée partout.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Boucher les trous</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les points transparents enfermés à l'intérieur du sujet se remplissent avec la couleur qui les entoure. Le pourtour extérieur ne bouge pas d'un pixel. Trop fort, la boucle d'une ceinture ou l'anneau d'une anse se remplit aussi et devient un disque plein.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand la réduction a percé la silhouette : un point de jour au milieu d'une armure, une fente qui n'existe pas dans le dessin.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Reboucher les poches de fond</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les taches de magenta enfermées deviennent transparentes d'un coup. Le risque se voit tout de suite : un cabochon de lanterne ou un vitrail est, vu des pixels, exactement la même chose — il partirait aussi.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand du fond est resté enfermé — entre un bras et un torse, dans l'anse d'un seau — et qu'il y en a trop pour les viser une par une. L'atelier les compte déjà : 43 par image en médiane sur les 60 images du dépôt.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Ronger puis regonfler</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les excroissances plus fines que le réglage disparaissent, le corps garde exactement sa taille. Trop fort, la hampe de la lance du garde et les pattes fines de la grenouille partent avec.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand la crasse est collée au sujet : un cheveu d'un pixel de large, une bavure, un fil qui pend. Le seuil de taille ne peut rien, puisque tout est d'un seul tenant.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Regonfler puis ronger</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les creux du bord se comblent, le sujet garde sa taille. Un contour tremblant redevient franc. Trop fort, deux doigts se collent en une moufle.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand le bord est mangé aux mites : des dents d'un pixel, une entaille dans une épaule, une fissure au milieu d'un mur de moulin.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Vote des voisins</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Chaque pixel prend l'avis de ses huit voisins et suit la majorité. Les dents isolées rentrent dans le rang, une diagonale devient un escalier régulier. À deux ou trois passes, les petits détails s'arrondissent — c'est le prix, et il se voit sur un visage de 8 px.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand l'escalier des diagonales est irrégulier et que le bord accroche l'œil sans qu'on sache dire pourquoi.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Médiane des couleurs</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les pixels dont la couleur ne ressemble à aucun de leurs voisins prennent la teinte d'à côté. Les aplats redeviennent des aplats et les bords restent nets — c'est ce qui la distingue d'un flou.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand la poussière n'est pas de la transparence mais de la couleur : un pixel vert vif au milieu d'une robe brune, ce que le tramage fabrique. Aujourd'hui aucun réglage de l'atelier ne l'atteint.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Décrocher les pixels de coin</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les petites dents en diagonale au bord de la silhouette s'en vont une par une. La forme reste reconnaissable au pixel près, le bord cesse d'être hérissé.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Le geste classique du pixel art, et le plus fin : un pixel qui ne tient au sujet que par un coin, jamais par un côté.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">À la main, une miette à la fois</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On clique la miette dans l'image, ou sa ligne dans la liste, et elle part. Rien d'autre ne bouge. Le geste existe déjà pour les poches de fond, dans la table du détourage — pas ici.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand trois pixels résistent et qu'aucun réglage ne les atteint sans manger autre chose.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les réglages</span> <span style="font-size: 13.5px; color: #6d675e">— 12 en tout</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Les lignes sur fond clair n’existent pas encore.</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 210px 330px 240px minmax(0,1fr)">
+      <div class="ent">le réglage</div><div class="ent">ce qu’il règle</div><div class="ent">sa plage</div><div class="ent">ce qu’on voit changer</div>
+        <div><span style="font-weight: 600">méthode</span> </div>
+        <div style="color: #4e483f">Laquelle des onze manières de nettoyer s'applique. C'est le réglage qui manque le plus : l'écran n'en propose aucune, il en impose une.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">les onze moteurs ci-dessus<br><span style="color: #948c80">par défaut : Les petites taches</span></div>
+        <div style="color: #4e483f">Les curseurs en dessous changent : chaque méthode n'en porte qu'un ou deux, et les autres s'effacent au lieu de rester grisés.</div>
+        <div><span style="font-weight: 600">tache minimale</span> </div>
+        <div style="color: #4e483f">En dessous de cette taille, en pixels, une tache détachée est effacée. C'est le seul réglage qui existe aujourd'hui.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 64 px, par pas de 1<br><span style="color: #948c80">par défaut : 3 px affichés à l'écran, 0 réellement posé tant qu'on n'a pas touché le curseur</span></div>
+        <div style="color: #4e483f">La liste dessous est triée de la plus petite tache à la plus grande, avec un trait bleu là où le curseur tombe : au-dessus du trait ce qui part, en dessous ce qui reste. Dans l'image, les éclats s'éteignent au relâchement.</div>
+        <div><span style="font-weight: 600">les diagonales comptent</span> </div>
+        <div style="color: #4e483f">Deux pixels qui ne se touchent que par un coin sont-ils la même tache, ou deux taches ? Aujourd'hui l'atelier répond « deux » sans le dire nulle part.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">oui / non<br><span style="color: #948c80">par défaut : non — les côtés seuls</span></div>
+        <div style="color: #4e483f">Le compte de taches de la liste change d'un coup : une poussière en escalier de six pixels passe de six lignes d'1 px à une seule ligne de 6 px, et ne s'efface plus au même seuil.</div>
+        <div><span style="font-weight: 600">ce qu'on nettoie</span> </div>
+        <div style="color: #4e483f">La silhouette (ce qui est là ou pas), les couleurs (les pixels de la mauvaise teinte), ou les deux. Aujourd'hui : la silhouette seule, toujours.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">la silhouette / les couleurs / les deux<br><span style="color: #948c80">par défaut : la silhouette</span></div>
+        <div style="color: #4e483f">En « couleurs », un pixel vert vif au milieu de la robe brune du pélerin disparaît — chose qu'aucune valeur du curseur de taille n'a jamais pu faire.</div>
+        <div><span style="font-weight: 600">garder les plus grandes</span> </div>
+        <div style="color: #4e483f">Combien de morceaux on garde, quand on choisit le moteur « Garder le sujet seul ».</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">1 à 8<br><span style="color: #948c80">par défaut : 1</span></div>
+        <div style="color: #4e483f">À 1, il ne reste que la grenouille. À 2, la grenouille et le nénuphar détaché sous elle.</div>
+        <div><span style="font-weight: 600">boucher les trous jusqu'à</span> </div>
+        <div style="color: #4e483f">La taille au-dessus de laquelle un trou de la silhouette est laissé tel quel. En dessous, il se remplit.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 64 px<br><span style="color: #948c80">par défaut : 0 px — rien ne se bouche</span></div>
+        <div style="color: #4e483f">Les points de jour à l'intérieur de l'armure du garde se referment un par un, du plus petit au plus grand. L'atelier connaît déjà ces trous : il les compte pour la table des contours.</div>
+        <div><span style="font-weight: 600">reboucher les poches de fond jusqu'à</span> </div>
+        <div style="color: #4e483f">La taille au-dessus de laquelle une poche de fond enfermée est laissée. En dessous, elle devient transparente.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 64 px<br><span style="color: #948c80">par défaut : 0 px — aucune poche n'est touchée</span></div>
+        <div style="color: #4e483f">Le magenta coincé entre le bras du pélerin et sa robe s'ouvre. Une ligne dit combien de poches partent et combien restent, comme la liste des taches le fait déjà.</div>
+        <div><span style="font-weight: 600">lissage</span> </div>
+        <div style="color: #4e483f">Combien de fois on repasse sur les bords — vote des voisins, ou décrochage des pixels de coin.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 3 passes<br><span style="color: #948c80">par défaut : 0 — aucun lissage</span></div>
+        <div style="color: #4e483f">À 1, les dents isolées du bord rentrent. À 3, le sujet s'arrondit et perd ses angles vifs : sur un visage de 8 px, le nez disparaît.</div>
+        <div><span style="font-weight: 600">épargner les traits fins</span> </div>
+        <div style="color: #4e483f">Interdit aux moteurs qui rongent de toucher ce qui n'a qu'un pixel d'épaisseur.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">oui / non<br><span style="color: #948c80">par défaut : oui</span></div>
+        <div style="color: #4e483f">La hampe de la lance du garde et les brins d'herbe de marais survivent au rongement, au lieu de disparaître en entier. Le détourage tient déjà cette promesse ailleurs dans l'atelier ; le nettoyage, non.</div>
+        <div><span style="font-weight: 600">la pipette</span> </div>
+        <div style="color: #4e483f">Désigner une couleur dans l'image, et effacer toutes les miettes qui la portent.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">armée / désarmée, puis un clic dans l'image<br><span style="color: #948c80">par défaut : désarmée</span></div>
+        <div style="color: #4e483f">Une pastille montre la couleur prise et son code. Toutes les miettes de cette teinte s'éteignent ensemble, y compris celles collées au sujet.</div>
+        <div><span style="font-weight: 600">cliquer une tache dans l'image</span> </div>
+        <div style="color: #4e483f">Effacer, ou protéger, une miette précise — celle que le seuil n'attrape pas, ou celle qu'il attrape à tort.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">effacer / garder toujours<br><span style="color: #948c80">par défaut : rien de désigné</span></div>
+        <div style="color: #4e483f">La miette visée s'éteint, ou reçoit un anneau qui dit qu'aucun seuil ne la prendra. Le geste existe déjà pour les poches de fond du détourage ; ici la liste n'est pas cliquable.</div>
+        <div><span style="font-weight: 600">montrer ce qui va partir</span> </div>
+        <div style="color: #4e483f">Surligner dans l'image, avant d'effacer, ce que le réglage courant emporte.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">oui / non<br><span style="color: #948c80">par défaut : oui</span></div>
+        <div style="color: #4e483f">Les miettes condamnées clignotent en rouge sur l'image agrandie pendant qu'on bouge le curseur. Aujourd'hui on n'a que des chiffres dans une liste, et il faut relâcher pour voir.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span class="h2">Pendant le calcul</span>
+    <div style="display: grid; grid-template-columns: 340px minmax(0,1fr) 250px; gap: 16px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">combien de temps</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">30 à 80 ms au relâchement du curseur. Le détourage déjà fait est conservé, seules les places suivantes sont refaites — 28 ms mesurées dans le code. Le rafraîchissement de la liste des taches suit derrière et coûte un peu plus : deux balayages complets de la case de 64 px. À comparer avec un cran de tolérance du détourage, qui coûte 1 492 ms, et le moteur par modèle, 2 255 ms.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">ce qu’on montre à l’écran</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Aujourd'hui : rien. Le code de l'écran calcule bien une attente en vol, avec la durée qu'a mise la dernière retouche du même genre — mais l'écran des tables ne la lit pas, et rien ne s'affiche. Pire, la liste des taches se vide à chaque relâchement puis réapparaît, sans qu'aucun mot ne dise qu'elle se recalcule. Ce qu'il faut montrer : la jauge fine que l'atelier possède déjà (deux pixels de haut, sous l'image, avec le temps écoulé et l'attente), la liste des taches gardée à l'écran en grisé au lieu d'être effacée, et surtout le surlignage rouge des miettes condamnées pendant qu'on bouge le curseur — le calcul est assez court pour qu'il vaille mieux montrer le résultat en direct que le montrer après.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt">peut-on annuler</div>
+        <div style="font-size: 20px; color: #8a3f33">Non, aucun calcul</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Vérifié dans le code : rien n’interrompt un calcul en route. Ce qu’on peut défaire, c’est un réglage — Échap efface le geste, Ctrl+Z revient en arrière. Sur des calculs de 30 à 160 ms ça ne se remarque pas ; sur une silhouette demandée à un modèle, 1 à 2 s, ça se remarque.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">8 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s’est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu’on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On ouvre la table sans y toucher.</div>
+        <div style="color: #8a3f33">Le curseur affiche 3 px et la liste annonce « 4 taches effacées sur 11 » — alors que l'image n'a pas bougé d'un pixel et que le carré de la table, dans la barre, est resté creux. La table des contours, elle, lit la même valeur comme un 0. Deux écrans du même atelier ne sont pas d'accord sur ce que « rien de posé » veut dire.</div>
+        <div style="color: #4e483f">Toucher le curseur, même pour le remettre sur 3, et le relâcher. Tant qu'on ne l'a pas lâché, la table ne porte rien.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le seuil monte au-delà d'un détail détaché.</div>
+        <div style="color: #8a3f33">La pointe de la lance du garde, une étincelle, un éclat de magie disparaissent en même temps que les miettes — et rien ne prévient, puisqu'ils sont dans la même liste.</div>
+        <div style="color: #4e483f">Redescendre juste sous l'aire de la plus petite tache qu'on veut garder : la liste donne le chiffre. Ou marquer ce détail « garder toujours » — geste qui n'existe pas encore.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Les miettes touchent le sujet.</div>
+        <div style="color: #8a3f33">Le curseur monte jusqu'à 64 px sans rien enlever, et la liste ne montre qu'une seule tache. Sur les huit images mesurées du dépôt, six sont dans ce cas.</div>
+        <div style="color: #4e483f">Aucun réglage de cette table ne les atteint. Il faut la pipette du détourage, ou repasser à la main.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Un détail ne tient au sujet que par un coin — une étincelle, la flamme d'une torche.</div>
+        <div style="color: #8a3f33">Il s'efface alors qu'à l'œil il touche le sujet : l'atelier ne compte que les côtés, jamais les diagonales, et rien à l'écran ne le dit.</div>
+        <div style="color: #4e483f">Descendre le seuil sous l'aire du détail, ou le reposer à la main. Le vrai remède est la case « les diagonales comptent », qui n'existe pas.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">L'image porte des milliers de miettes — un fond bruité mal détouré.</div>
+        <div style="color: #8a3f33">La liste s'arrête à 200 lignes et une phrase dit combien ne sont pas montrées. On ne peut plus juger au chiffre.</div>
+        <div style="color: #4e483f">Remonter au détourage plutôt que d'insister ici : les miettes viennent de là, et un seuil qui en efface deux mille cache un mauvais détourage au lieu de le réparer.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">La poussière est de couleur et non de transparence.</div>
+        <div style="color: #8a3f33">Un pixel vert vif au milieu de la robe brune du pélerin. Le curseur ne l'atteint jamais, quelle que soit sa valeur — il ne regarde que ce qui est là ou pas, jamais la teinte.</div>
+        <div style="color: #4e483f">Aucun geste dans cette table aujourd'hui. Baisser le nombre de couleurs, couper le tramage, ou repeindre le pixel à la main.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On nettoie une bande d'animation.</div>
+        <div style="color: #8a3f33">Le même seuil n'efface pas les mêmes miettes d'une frame à l'autre — une étincelle qui pèse 3 px sur une frame et 2 px sur la suivante clignote une fois sur deux.</div>
+        <div style="color: #4e483f">Descendre le seuil sous la plus petite valeur que la miette prend sur toute la bande, ou l'effacer à la main sur les frames concernées.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Juste après chaque relâchement de curseur.</div>
+        <div style="color: #8a3f33">La liste des taches disparaît une fraction de seconde puis revient. Rien ne dit qu'elle se recalcule, et sur une image lourde on croit l'avoir perdue.</div>
+        <div style="color: #4e483f">Attendre. C'est un défaut de l'écran, pas du calcul — la jauge de l'atelier existe et n'est simplement pas branchée ici.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd’hui</span>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px">
+        <li style="margin-bottom: 6px">Le choix de la méthode. Un atelier sérieux propose au moins six manières de nettoyer ; celui-ci en impose une, sans jamais la nommer.</li>
+        <li style="margin-bottom: 6px">Le nettoyage des couleurs. Un pixel de la mauvaise teinte au milieu d'un aplat est le défaut le plus courant du pixel art réduit, et aucun réglage de l'atelier ne l'atteint — le banc de mesure sait pourtant les compter depuis le début.</li>
+        <li style="margin-bottom: 6px">Boucher les trous. L'atelier trouve déjà les trous de la silhouette et les compte pour la table des contours ; il ne sait pas les remplir.</li>
+        <li style="margin-bottom: 6px">Lisser les contours. Rien, à aucun degré : ni vote des voisins, ni décrochage des pixels de coin. Les briques du calcul existent dans le code — elles ne servent qu'au tracé du contour et au pinceau.</li>
+        <li style="margin-bottom: 6px">Reboucher les poches de fond en série. L'atelier en trouve 43 par image en médiane, en propose 40 à la fois, et n'en efface qu'une par clic.</li>
+        <li style="margin-bottom: 6px">Le voisinage. Deux pixels qui se touchent par un coin sont comptés comme deux taches, en silence. C'est un choix de méthode, il devrait être une case.</li>
+        <li style="margin-bottom: 6px">Le retour visuel pendant le calcul. La jauge de l'atelier existe, l'attente en vol est calculée, et l'écran des tables ne branche ni l'une ni l'autre.</li>
+        <li style="margin-bottom: 6px">Le surlignage de ce qui va partir. On lit des chiffres dans une liste au lieu de voir clignoter les miettes condamnées sur l'image agrandie.</li>
+        <li style="margin-bottom: 6px">La liste cliquable. On voit les onze taches, leur couleur, leur taille et leur position — et on ne peut en effacer aucune du doigt. Le geste existe pourtant deux tables plus haut, pour les poches de fond.</li>
+        <li style="margin-bottom: 6px">Protéger une tache. Aucun moyen de dire « cette étincelle-là, jamais, quel que soit le seuil ». Il faut baisser le curseur et laisser revenir toutes les miettes avec.</li>
+        <li style="margin-bottom: 6px">Une seule vérité sur la valeur de départ. La table du nettoyage lit 3 px quand rien n'est posé, la table des contours lit 0 pour la même image.</li>
+        <li style="margin-bottom: 6px">L'annulation. Un calcul de 30 ms n'a pas besoin d'un bouton d'annulation, mais il n'y a pas non plus de Ctrl+Z propre à la table : on remonte le curseur à la main et on espère retrouver le chiffre.</li>
+        <li style="margin-bottom: 6px">Un réglage stable sur une bande. Le seuil s'applique frame par frame, ce qui fait clignoter les détails limites au lieu de trancher une fois pour toute l'animation.</li>
+        <li style="margin-bottom: 6px">L'accès depuis l'agent. La table n'est exposée nulle part à l'assistant : elle ne se règle qu'à la main, image par image.</li>
+      </ul>
+    </div>
+    <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">avant / après</div>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Le garde en armure du Marais du Vieux Moulin, 64 px, 24 couleurs, vue de dessus, sorti du fond magenta. Deux volets côte à côte, tous les deux agrandis huit fois, avec la vraie image en petit dessous pour l'échelle.
+
+À GAUCHE, « avant » : le garde entier, et onze taches. Chaque miette est cerclée d'un anneau bleu avec son aire écrite à côté — quatre points de magenta survivants d'1 px le long du casque, deux de 2 px sur l'épaulière, une bavure de 3 px près de la botte, la pointe de la lance détachée qui pèse 5 px, et deux éclats de 8 et 14 px qui sont en fait des brins d'herbe de marais.
+
+À DROITE, « après », seuil à 3 px : les sept miettes de 1, 2 et 3 px ont disparu. La pointe de la lance est toujours là. Les deux brins d'herbe aussi. Sous l'image, une ligne : « 7 taches effacées sur 11 · la plus petite gardée fait 5 px — la pointe de la lance ».
+
+Et sous les deux volets, une vignette plus petite qui montre le raté, parce que c'est elle qui apprend le réglage : le même garde à seuil 8 px, la pointe de la lance envolée, avec la légende « 8 px : la lance part avec les miettes ». Un curseur sous les trois images permet de balayer 0 → 3 → 8 et de voir les trois états s'enchaîner.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

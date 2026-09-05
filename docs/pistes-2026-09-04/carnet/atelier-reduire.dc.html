@@ -1,0 +1,482 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .img { background: #6c6c6c; border-radius: 8px; position: relative; overflow: hidden;
+           display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 2950px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1000px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › au repos › Retoucher</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">Réduire</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">ramener une grande image à la taille du jeu</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 210px">gratuit — tout se calcule sur la machine, rien ne sort, aucune génération n'est payée.</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1180px">
+    Prendre l'image que le modèle a rendue — 1254 pixels de côté sur les deux images du dépôt — et la ramener aux 64 carrés du jeu, en choisissant ce qu'on garde et ce qu'on jette, puisqu'on jette quatre-vingt-dix-neuf pixels sur cent.
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
+
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
+      <div class="rt" style="padding: 0 9px">La chaîne</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Détourer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le fond magenta part</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Recadrer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les bords vides sautent</div>
+        </div>
+        <div class="plc" style="background: #e6dfd2; font-weight: 600; flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Réduire</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Couleurs</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la palette du monde</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Nettoyer</span><span style="color: #b0a89b; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les pixels isolés</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Le contour</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le trait de bord retracé</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>La main</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">ce qu’on repeint soi-même</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Retourner</span><span style="color: #a8492c; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les autres directions</div>
+        </div>
+      </div>
+      <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: #6d675e">
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #5c7a52; font-size: 15px; line-height: 1">●</span> posée, elle agit</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #b0a89b; font-size: 15px; line-height: 1">●</span> endormie, réglages gardés</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #c9c2b6; font-size: 15px; line-height: 1">●</span> rien à faire ici</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #a8492c; font-size: 15px; line-height: 1">●</span> n’existe pas encore</div>
+      </div>
+    </div>
+
+    <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="font-size: 15px; font-weight: 600">Le pélerin, au repos — la case du jeu</div>
+        <div class="seg"><div class="sg">Avant</div><div class="sg sg-on">Les deux</div><div class="sg">Après</div></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 330px">
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7">
+          <i class="fig" style="width: 84px; height: 214px"></i>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #4e483f">l’image cadrée · 312 × 740</span>
+        </div>
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7;background-image: linear-gradient(#8a8a8a 1px, transparent 1px),linear-gradient(90deg,#8a8a8a 1px, transparent 1px); background-size: 26px 26px">
+          <i class="fig" style="width: 60px; height: 152px; image-rendering: pixelated; border-radius: 0; box-shadow: inset 0 0 0 1px #3f3428"></i>
+          <div style="position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); width: 78px; height: 78px; border: 1px solid #a8492c"></div>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #4e483f">dans la case du jeu · 64 px, vue ×4</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">312 × 740 → 64 × 64</span><span style="color: #948c80">ce qui sort</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">58</span><span style="color: #948c80">carrés de haut</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">21</span><span style="color: #948c80">couleurs restantes</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">28 ms</span><span style="color: #948c80">la chaîne entière</span></span>
+      </div>
+      <div style="font-size: 12px; color: #6d675e; line-height: 1.45">C’est l’étape la plus visible de la chaîne : elle décide de la finesse de tout le jeu. Elle refait sa propre recherche du sujet, et avale donc la marge posée au recadrage.</div>
+    </div>
+
+    <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">La façon de réduire</div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">Vote en deux temps</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">chaque carré prend la couleur la plus représentée</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Traits épaissis</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">garde le contour d’un pixel lisible</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Réduction douce</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">mélange les couleurs, floute les traits</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Au plus proche</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">prend un pixel sur N, sans réfléchir</span>
+        </span>
+      </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Une image réglée avant le 3 septembre rouvre sur « au plus proche » — c’est ce qui était posé à l’époque.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>taille de case</span><div class="seg" style="padding: 1px"><div class="sg" style="padding: 3px 7px">32</div><div class="sg sg-on" style="padding: 3px 7px">64</div><div class="sg" style="padding: 3px 7px">128</div></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #221f1b">hauteur</span>
+          <span class="mono" style="font-size: 12px; color: #221f1b">100 %</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 12%; background: #a8492c; border-radius: 2px"></i>
+          <i style="position: absolute; left: 12%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #a8492c"></i>
+        </div>
+        <div style="font-size: 11px; color: #948c80; line-height: 1.4">La grenouille à 20 % fait 13 carrés dans la case du pélerin ; le moulin à 300 % en fait trois de haut.</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>ancrage</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">bas</div><div class="sg" style="padding: 3px 8px">centre</div></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #221f1b">décalage</span>
+          <span class="mono" style="font-size: 12px; color: #221f1b">0 carré</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 50%; background: #a8492c; border-radius: 2px"></i>
+          <i style="position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #a8492c"></i>
+        </div>
+        
+      </div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #8a3f33">Le décalage n’est pas perdu de vue : il est perdu</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">L’écran l’envoie, le serveur ne l’accepte pas, et il est relu à zéro. Toucher « hauteur » efface donc en silence le calage horizontal que le calibrage venait de poser.</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f; border-top: 1px solid #dcbcb2; padding-top: 6px">Trois autres réglages agissent sans être montrés : l’épaisseur des traits (2), les teintes de travail du vote (32) et la façon de trancher la silhouette.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les moteurs</span> <span style="font-size: 13.5px; color: #6d675e">— 4 sont là, 4 restent à ajouter</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Un seul agit à la fois. Changer de moteur ne perd pas les réglages de l’autre.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Vote en deux temps</div><span class="puce p-ok">posé d’emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le contour reste franc et l'intérieur garde ses nuances : la robe brune du pèlerin reste dégradée, son bord ne bave pas. C'est l'image la plus calme des quatre — rien ne cligne, rien ne fond.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Le départ, et le bon choix pour presque tout ce qui a une silhouette : le pèlerin, le garde, la grenouille, un tonneau. C'est ce que le jeu propose par défaut depuis le 3 septembre.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Traits épaissis</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">La hampe reste un trait continu au lieu de se casser en pointillé. En échange le contour est plus agité, un peu tremblé sur les courbes.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand le sujet porte un trait d'un pixel qui disparaît : la hampe de la lance du garde, une antenne, un fil, le manche d'un outil.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Réduction douce</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">La silhouette est la plus lisse des quatre, l'intérieur est mou : on dirait une photo rapetissée, pas un dessin fait de carrés. L'herbe du marais devient une purée verte.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Pour un jeu en dessin, ou un décor qu'on regarde de loin. Jamais pour un sujet posé sur le fond du jeu.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Au plus proche</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Franc et dur : un pixel sur vingt est gardé, les dix-neuf autres jetés sans être regardés. Un trait fin a une chance sur vingt de survivre, et les bords fondus laissent des points de la couleur du fond au milieu du contour.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand l'image arrive déjà faite de gros carrés et qu'on divise par un nombre entier — et pour retrouver au carré près une image réglée avant le 3 septembre.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Sur les carrés du modèle</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les couleurs « ni fond ni sujet » disparaissent — mesuré par la revue du 2 septembre : 29 % au plus proche, 15 % au vote, 0 % ici. Et sur une animation, le contour cesse de bouillonner : 57 % des carrés changeaient d'une frame à l'autre, plus aucun.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand l'écran annonce « le modèle a peint des carrés de 9 pixels ». On réduit alors sur ces carrés-là, pas sur un nombre rond décidé d'avance.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Couleur dominante de case</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les aplats restent des aplats. Le vote en deux temps peint la case avec une moyenne, donc il invente des teintes intermédiaires ; celui-ci n'en invente aucune, au prix d'un intérieur plus plat.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand on veut que chaque carré porte une couleur qui existe déjà dans l'image — parce que la palette du jeu est courte et qu'on refuse d'en fabriquer de nouvelles.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Médiane de case</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le grain disparaît sans que le bord bave. Les tout petits détails disparaissent avec : un œil d'un pixel peut y passer.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand l'image arrive piquée de grain ou de points isolés — une planche revenue compressée, un rendu bruité.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Réduction douce en lumière juste</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Mêmes contours lisses, mais l'image ne se salit plus : l'herbe claire du marais reste claire au lieu de virer olive, et un damier noir et blanc reste gris moyen au lieu de gris sale.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand la réduction douce assombrit visiblement les zones contrastées et qu'on veut la même douceur sans la perte.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les réglages</span> <span style="font-size: 13.5px; color: #6d675e">— 15 en tout</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Les lignes sur fond clair n’existent pas encore.</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 210px 330px 240px minmax(0,1fr)">
+      <div class="ent">le réglage</div><div class="ent">ce qu’il règle</div><div class="ent">sa plage</div><div class="ent">ce qu’on voit changer</div>
+        <div><span style="font-weight: 600">façon de réduire</span> </div>
+        <div style="color: #4e483f">Ce qu'on garde et ce qu'on jette en passant de 1254 pixels à 64 carrés.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">vote en deux temps · traits épaissis · réduction douce · au plus proche<br><span style="color: #948c80">par défaut : vote en deux temps — sauf sur une image réglée avant le 3 septembre, qui rouvre sur « au plus proche »</span></div>
+        <div style="color: #4e483f">L'image se refait sous les yeux. Entre « vote » et « au plus proche », le contour du garde passe de net à criblé de points clairs.</div>
+        <div><span style="font-weight: 600">taille de case</span> </div>
+        <div style="color: #4e483f">Le nombre de carrés qui composent le sujet.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">8 · 16 · 24 · 32 · 48 · 64 · 96 · 128 · 256 · 512<br><span style="color: #948c80">par défaut : 64</span></div>
+        <div style="color: #4e483f">À 32, la torche du pèlerin n'est plus qu'un point orange. À 128, on voit les plis de la robe. Ce n'est pas la même image en deux tailles : ce sont deux dessins.</div>
+        <div><span style="font-weight: 600">hauteur</span> </div>
+        <div style="color: #4e483f">La hauteur du sujet, comptée en personnages : 100 % en fait un, 300 % en fait trois.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">10 % à 800 % ; le plafond descend quand la case monte — 400 % à 512 carrés<br><span style="color: #948c80">par défaut : 100 %</span></div>
+        <div style="color: #4e483f">Le moulin à 300 % revient sur une case trois fois plus haute au lieu d'être rogné. La grenouille à 40 % occupe 26 carrés dans une case de 64. Le curseur ne s'arrête qu'aux valeurs qui changent vraiment l'image, et l'écran dit combien il en reste.</div>
+        <div><span style="font-weight: 600">ancrage</span> </div>
+        <div style="color: #4e483f">Où le sujet se pose dans sa case quand il ne la remplit pas dans les deux sens.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">bas · centre<br><span style="color: #948c80">par défaut : bas</span></div>
+        <div style="color: #4e483f">En bas, le pèlerin est debout sur le bord bas de sa case et deux frames d'une marche s'alignent au pixel. Au centre, il flotte.</div>
+        <div><span style="font-weight: 600">décalage</span> </div>
+        <div style="color: #4e483f">Recentre le sujet quand un bras tendu l'a poussé sur le côté.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">en carrés, borné à ce qui reste de place dans la case<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">Le corps glisse d'un carré à la fois. Arrivé au bord, le bouton cesse d'agir plutôt que de couper le sujet.</div>
+        <div><span style="font-weight: 600">sujet dans une case / image entière</span> </div>
+        <div style="color: #4e483f">Si le résultat est une case carrée où le sujet est posé, ou l'image entière ramenée aux mêmes proportions.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">case carrée · image entière<br><span style="color: #948c80">par défaut : déduit aujourd'hui du détourage, jamais dit à l'écran</span></div>
+        <div style="color: #4e483f">Un décor large sort large au lieu de recevoir deux bandes vides sur les côtés.</div>
+        <div><span style="font-weight: 600">étape allumée</span> </div>
+        <div style="color: #4e483f">Éteint la réduction sans perdre ses réglages.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">allumée · éteinte<br><span style="color: #948c80">par défaut : allumée</span></div>
+        <div style="color: #4e483f">Éteinte, l'image revient à 1254 pixels : la comparaison montre d'un coup ce que la réduction coûte.</div>
+        <div><span style="font-weight: 600">brut / rendu</span> </div>
+        <div style="color: #4e483f">Ce que le grand aperçu montre.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">brut · rendu<br><span style="color: #948c80">par défaut : rendu</span></div>
+        <div style="color: #4e483f">L'autre image reste visible en petit à côté, en témoin — on n'a jamais à se souvenir de ce qu'on vient de quitter.</div>
+        <div><span style="font-weight: 600">zoom de l'aperçu</span> </div>
+        <div style="color: #4e483f">L'agrandissement de l'image réduite, à carrés nets.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">1× · 2× · 4× · 8×<br><span style="color: #948c80">par défaut : le plus grand qui tient dans le cadre</span></div>
+        <div style="color: #4e483f">À 8×, un carré de 64 fait huit points d'écran : on compte les carrés du contour au lieu de les deviner.</div>
+        <div><span style="font-weight: 600">montrer les carrés</span> </div>
+        <div style="color: #4e483f">Pose une trame par-dessus l'aperçu, calée sur les carrés que le modèle a peints.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">oui · non<br><span style="color: #948c80">par défaut : non</span></div>
+        <div style="color: #4e483f">On voit tout de suite si la taille demandée tombe juste sur ce que le modèle a peint, ou à cheval dessus. Le pas et son départ sont déjà mesurés ; rien ne les dessine.</div>
+        <div><span style="font-weight: 600">épaisseur des traits</span> </div>
+        <div style="color: #4e483f">De combien « traits épaissis » grossit un trait fin avant de réduire.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">1 à 4<br><span style="color: #948c80">par défaut : 2 — figé dans le code aujourd'hui, aucun écran ne le porte</span></div>
+        <div style="color: #4e483f">À 1, la hampe de la lance se casse encore. À 4, elle survit mais le garde a l'air dessiné au feutre.</div>
+        <div><span style="font-weight: 600">teintes de travail du vote</span> </div>
+        <div style="color: #4e483f">Combien de teintes le vote en deux temps se donne pour décider la forme de chaque carré.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">8 à 64<br><span style="color: #948c80">par défaut : 32 — figé dans le code aujourd'hui, aucun écran ne le porte</span></div>
+        <div style="color: #4e483f">À 8, les formes se simplifient et l'armure devient trois aplats. À 64, le contour se découpe plus fin et l'intérieur redevient bavard.</div>
+        <div><span style="font-weight: 600">silhouette</span> </div>
+        <div style="color: #4e483f">Comment le bord du sujet est décidé : par la majorité du carré, ou par le seul pixel qui tombe au centre.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">vote de majorité · pixel du centre<br><span style="color: #948c80">par défaut : majorité dans une animation, pixel du centre sur une image seule — décidé dans le code, jamais montré</span></div>
+        <div style="color: #4e483f">Sur une animation, le contour cesse de bouillir : un pixel accidenté ne pèse plus qu'un cinquantième au lieu de décider pour ses cinquante voisins.</div>
+        <div><span style="font-weight: 600">coller au multiple entier</span> </div>
+        <div style="color: #4e483f">Force le facteur de réduction à un nombre entier de pixels par carré.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">oui · non<br><span style="color: #948c80">par défaut : non</span></div>
+        <div style="color: #4e483f">Aucun carré n'est plus large qu'un autre. La case sort à 62 carrés au lieu de 64, et c'est le prix à payer.</div>
+        <div><span style="font-weight: 600">la couleur du fond</span> </div>
+        <div style="color: #4e483f">Sert au détourage qui précède, mais elle se règle ici parce que c'est ici qu'on en voit le résultat.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">un point sur l'image d'origine<br><span style="color: #948c80">par défaut : le magenta déclaré par le jeu</span></div>
+        <div style="color: #4e483f">Le liseré magenta qui survit à la réduction disparaît. Sans lui, un carré de contour sur quatre reste rose.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span class="h2">Pendant le calcul</span>
+    <div style="display: grid; grid-template-columns: 340px minmax(0,1fr) 250px; gap: 16px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">combien de temps</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Mesuré le 4 septembre sur les deux images du dépôt — le pèlerin et le garde du moulin, 1254 pixels de côté ramenés à 64 carrés : au plus proche 6 à 8 ms, réduction douce 22 ms, vote en deux temps 240 à 300 ms, traits épaissis près d'une seconde. À la toute première ouverture il faut y ajouter le détourage, 0,5 à 0,7 s, qui n'est ensuite plus repayé. Sur une case de 256 carrés, le vote monte à 1,2 s. Bout à bout, l'attente va de 0,8 à 2,3 s au premier contact et retombe sous le quart de seconde une fois l'image sur sa case.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">ce qu’on montre à l’écran</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Aujourd'hui : rien. L'image d'avant reste affichée, puis se remplace d'un coup — la barre d'attente a été posée le 27 août puis perdue le 31 en changeant d'écran, et elle n'est pas revenue. Ce que la maquette doit porter : l'image d'avant qui tient sa place, une barre fine en pleine largeur au-dessus des réglages, le nom de la méthode en cours et le temps qu'elle a mis la dernière fois sur cette machine. Deux réglages posés coup sur coup font une seule attente, pas deux, et rien ne se verrouille pendant ce temps.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt">peut-on annuler</div>
+        <div style="font-size: 20px; color: #8a3f33">Non, aucun calcul</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Vérifié dans le code : rien n’interrompt un calcul en route. Ce qu’on peut défaire, c’est un réglage — Échap efface le geste, Ctrl+Z revient en arrière. Sur des calculs de 30 à 160 ms ça ne se remarque pas ; sur une silhouette demandée à un modèle, 1 à 2 s, ça se remarque.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">9 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s’est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu’on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le vote en deux temps sur une image à peine plus grande que la case — 96 pixels ramenés à 64 carrés.</div>
+        <div style="color: #8a3f33">L'image sort molle, exactement comme la réduction douce, et l'écran affiche pourtant « vote en deux temps ».</div>
+        <div style="color: #4e483f">Redemander l'image en plus grand, ou descendre la taille de case. En dessous de deux pixels par carré, le vote n'a rien à faire voter et bascule tout seul sur la réduction douce — sans le dire.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Un trait d'un pixel qui couvre moins de la moitié d'un carré : la hampe de la lance du garde, une antenne, une corde.</div>
+        <div style="color: #8a3f33">Le trait se casse en pointillé, ou disparaît entièrement. Le bord du sujet se décide à la majorité du carré : il faut la moitié du carré pour le faire exister.</div>
+        <div style="color: #4e483f">Passer sur « traits épaissis », ou monter la case de 64 à 96 carrés.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">« Traits épaissis » n'est pas installée — c'est le cas sur cette machine, vérifié le 4 septembre.</div>
+        <div style="color: #8a3f33">La méthode ne figure pas dans les segments, et une ligne dessous dit « la méthode traits épaissis n'est pas installée ».</div>
+        <div style="color: #4e483f">L'installer une fois. Elle est déclarée à part parce qu'elle tire une grosse bibliothèque de calcul avec elle ; les trois autres suffisent en attendant.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le modèle a peint sur ses propres carrés — 9 ou 13 pixels — et on réduit à 64.</div>
+        <div style="color: #8a3f33">Des carrés inégaux, certains larges, certains étroits, et des couleurs qui ne sont ni celles du fond ni celles du sujet : 29 % au plus proche, 15 % au vote. Sur une animation, plus de la moitié des carrés changent d'une frame à l'autre — le contour bout.</div>
+        <div style="color: #4e483f">Aucun aujourd'hui : l'atelier mesure ce pas et l'affiche au-dessus du réglage de taille, il ne sait pas encore réduire dessus. En attendant, poser une case qui tombe juste sur ce pas, ou redemander l'image.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Les bords fondus de l'image d'origine, réduits « au plus proche ».</div>
+        <div style="color: #8a3f33">Un carré de contour sur quatre prend une couleur intermédiaire, plus proche du fond que du trait : le contour se met à clignoter d'une frame à l'autre.</div>
+        <div style="color: #4e483f">Monter le durcissement du détourage d'un cran, ou passer au vote en deux temps, qui ne tire plus un pixel au sort.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le détourage a mangé le sujet avant que la réduction commence.</div>
+        <div style="color: #8a3f33">Une case vide, ou l'image d'origine rendue telle quelle à sa taille de départ, comme si la réduction n'avait pas eu lieu.</div>
+        <div style="color: #4e483f">Ce n'est pas ici que ça se répare : baisser la tolérance du détourage, ou masquer la passe qui a tout pris.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On rouvre une image réglée avant le 3 septembre.</div>
+        <div style="color: #8a3f33">Elle affiche « au plus proche » alors que le jeu est réglé sur « vote en deux temps », et la fiche marque le réglage comme posé à la main.</div>
+        <div style="color: #4e483f">Choisir la méthode du jeu sur cette image ; elle se recalcule sur-le-champ, sans rien payer.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On change la façon de réduire du jeu entier.</div>
+        <div style="color: #8a3f33">Rien ne bouge : les images déjà rendues gardent la leur, et seules les prochaines partiront sur la nouvelle.</div>
+        <div style="color: #4e483f">Reposer la méthode image par image, ou rappeler la recette du jeu sur celles qu'on veut réaligner.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On glisse la hauteur d'un pour cent.</div>
+        <div style="color: #8a3f33">L'image ne change pas du tout, et la main croit avoir réglé quelque chose.</div>
+        <div style="color: #4e483f">Rien à réparer : le curseur ne s'arrête plus qu'aux valeurs qui changent l'image, et l'écran dit combien il en reste sur le total.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd’hui</span>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px">
+        <li style="margin-bottom: 6px">Voir les quatre méthodes côte à côte sur la même image, avant de choisir. Le banc du 3 septembre le fait dans une page à part, gratuitement ; l'écran, lui, oblige à essayer l'une après l'autre en oubliant la précédente.</li>
+        <li style="margin-bottom: 6px">Un vrai retour pendant le calcul. Aujourd'hui, rien ne paraît : ni barre, ni temps, ni nom de la méthode en cours — alors que l'attente va de 0,8 à 2,3 s au premier contact.</li>
+        <li style="margin-bottom: 6px">Annuler un calcul lancé. Rien ne le permet ; on attend qu'il finisse.</li>
+        <li style="margin-bottom: 6px">Réduire sur les carrés que le modèle a peints. Le pas et l'endroit où il commence sont mesurés depuis le 3 septembre et affichés à l'écran, et rien ne s'en sert — c'est pourtant le gain que la revue du 2 septembre place devant tous les autres.</li>
+        <li style="margin-bottom: 6px">Un zoom à carrés nets, avec la trame du modèle par-dessus. Sans lui, on juge une image de 64 carrés à la taille d'un timbre.</li>
+        <li style="margin-bottom: 6px">Le réglage des traits épaissis : l'épaisseur est figée à 2 dans le code, et le nombre de teintes du vote figé à 32. Deux boutons qui existent déjà, qu'aucun écran ne montre.</li>
+        <li style="margin-bottom: 6px">Le choix de la silhouette — majorité du carré ou pixel du centre. Il existe, il ne se lève que pour une animation, et il n'apparaît nulle part.</li>
+        <li style="margin-bottom: 6px">Coller au multiple entier, pour que tous les carrés fassent la même largeur.</li>
+        <li style="margin-bottom: 6px">Réduire en lumière juste : les moyennes se font sur les valeurs telles quelles, donc une zone contrastée s'assombrit en passant à 64 carrés.</li>
+        <li style="margin-bottom: 6px">Essayer une méthode sans écrire les réglages : aujourd'hui, chaque essai remplace la recette de l'image.</li>
+        <li style="margin-bottom: 6px">Poser la même méthode sur une collection entière en un geste.</li>
+        <li style="margin-bottom: 6px">Dire à l'écran si le résultat sort en case carrée ou en image entière. C'est déduit du détourage, et jamais annoncé.</li>
+        <li style="margin-bottom: 6px">Signaler que le vote a basculé tout seul sur la réduction douce, faute d'assez de pixels par carré. Il le fait en silence.</li>
+      </ul>
+    </div>
+    <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">avant / après</div>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Le garde du moulin, en armure avec sa lance, sur fond magenta : à gauche l'image telle qu'elle est arrivée, 1254 pixels de côté, la hampe de la lance fine comme un cheveu. À droite, la même à 64 carrés, en quatre vignettes agrandies 6× à carrés nets, dans l'ordre du plus brut au plus soigné : « au plus proche » (la hampe en pointillé, des points clairs semés dans le contour), « réduction douce » (tout est lisse et mou, l'armure a fondu), « vote en deux temps » (contour franc, armure encore nuancée — la vignette du milieu, celle qu'on regarde), « traits épaissis » (la hampe entière d'un bout à l'autre, le bord un peu tremblé). Sous chaque vignette, un seul chiffre : 8 ms · 22 ms · 300 ms · ≈ 1 s. En dessous, une seconde ligne beaucoup plus courte avec la grenouille verte à 32 carrés, où les quatre vignettes se ressemblent presque — c'est ce qui fait comprendre que le choix compte d'autant plus que le sujet est grand.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

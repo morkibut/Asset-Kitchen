@@ -1,0 +1,581 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .img { background: #6c6c6c; border-radius: 8px; position: relative; overflow: hidden;
+           display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3000px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1000px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › au repos › Retoucher</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">Couleurs</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5"></div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 210px">gratuit — rien ne part chez le fournisseur, tout se calcule sur la machine, et ça marche réseau coupé.</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1180px">
+    Elle ramène une image à un petit nombre de couleurs — celles du jeu, ou celles qu'elle trouve dans l'image — pour que le pèlerin, le garde et le moulin aient l'air d'appartenir au même jeu.
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
+
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
+      <div class="rt" style="padding: 0 9px">La chaîne</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Détourer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le fond magenta part</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Recadrer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les bords vides sautent</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Réduire</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
+        </div>
+        <div class="plc" style="background: #e6dfd2; font-weight: 600; flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Couleurs</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la palette du monde</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Nettoyer</span><span style="color: #b0a89b; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les pixels isolés</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Le contour</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le trait de bord retracé</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>La main</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">ce qu’on repeint soi-même</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Retourner</span><span style="color: #a8492c; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les autres directions</div>
+        </div>
+      </div>
+      <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: #6d675e">
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #5c7a52; font-size: 15px; line-height: 1">●</span> posée, elle agit</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #b0a89b; font-size: 15px; line-height: 1">●</span> endormie, réglages gardés</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #c9c2b6; font-size: 15px; line-height: 1">●</span> rien à faire ici</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #a8492c; font-size: 15px; line-height: 1">●</span> n’existe pas encore</div>
+      </div>
+    </div>
+
+    <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="font-size: 15px; font-weight: 600">Le pélerin, au repos — la palette du monde</div>
+        <div class="seg"><div class="sg">Avant</div><div class="sg sg-on">Les deux</div><div class="sg">Après</div></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 270px">
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7">
+          <i class="fig" style="width: 88px; height: 224px"></i>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #4e483f">avant · 4 812 couleurs différentes</span>
+        </div>
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7">
+          <i class="fig" style="width: 88px; height: 224px; image-rendering: pixelated; box-shadow: inset 0 0 0 1px #3f3428"></i>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #4e483f">après · 14 couleurs, prises dans la palette du jeu</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <div style="font-size: 11.5px; color: #6d675e">la palette du jeu · 24 couleurs</div>
+          <div style="display:flex;height:17px;border-radius:3px;overflow:hidden"><i style="flex:1;background:#1a1410;"></i><i style="flex:1;background:#3f3428;"></i><i style="flex:1;background:#5c4d3a;"></i><i style="flex:1;background:#6b5a44;"></i><i style="flex:1;background:#8a7458;"></i><i style="flex:1;background:#a89170;"></i><i style="flex:1;background:#d8bb95;"></i><i style="flex:1;background:#f0e2c8;"></i><i style="flex:1;background:#2b3a2a;"></i><i style="flex:1;background:#41563c;"></i><i style="flex:1;background:#5c7a52;"></i><i style="flex:1;background:#84a074;"></i><i style="flex:1;background:#3a3f4a;"></i><i style="flex:1;background:#55606e;"></i><i style="flex:1;background:#8a8f96;"></i><i style="flex:1;background:#c4c9ce;"></i><i style="flex:1;background:#5a2018;"></i><i style="flex:1;background:#8a3f33;"></i><i style="flex:1;background:#a8492c;"></i><i style="flex:1;background:#c96a45;"></i><i style="flex:1;background:#4a3f30;"></i><i style="flex:1;background:#7a6a52;"></i><i style="flex:1;background:#9c8a6a;"></i><i style="flex:1;background:#c0ae8c;"></i></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <div style="font-size: 11.5px; color: #6d675e">celles que cette image utilise · <span style="color: #a8492c">14</span></div>
+          <div style="display:flex;height:17px;border-radius:3px;overflow:hidden"><i style="flex:1;background:#1a1410;"></i><i style="flex:1;background:#3f3428;"></i><i style="flex:1;background:#5c4d3a;"></i><i style="flex:1;background:#6b5a44;"></i><i style="flex:1;background:#8a7458;"></i><i style="flex:1;background:#a89170;"></i><i style="flex:1;background:#d8bb95;"></i><i style="flex:1;background:#f0e2c8;"></i><i style="flex:1;background:#2b3a2a;"></i><i style="flex:1;background:#41563c;"></i><i style="flex:1;background:#5c7a52;"></i><i style="flex:1;background:#84a074;"></i><i style="flex:1;background:#3a3f4a;"></i><i style="flex:1;background:#55606e;"></i></div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">4 812 → 14</span><span style="color: #948c80">couleurs</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">24</span><span style="color: #948c80">disponibles dans le jeu</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">aucun</span><span style="color: #948c80">tramage</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">12 ms</span><span style="color: #948c80">le temps que ça prend</span></span>
+      </div>
+      <div style="font-size: 12px; color: #6d675e; line-height: 1.45">La palette du jeu vaut pour tous les sujets : c’est elle qui fait que la grenouille, le moulin et le pélerin ont l’air du même monde. La changer rejoue toutes les images du jeu.</div>
+    </div>
+
+    <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Où on prend les couleurs</div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">Imposer la palette du jeu</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">chaque pixel prend la couleur du jeu la plus proche</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Les trouver dans l’image</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">coupe médiane, sans regarder le jeu</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Fusionner les deux</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">garde les couleurs du jeu, attire le reste</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Ranger la palette en rampes d’ombre <span class="puce p-a">à ajouter</span></span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">du plus sombre au plus clair, par teinte</span>
+        </span>
+      </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">La palette du jeu est lue sur ses images officielles. Six autres moteurs manquent.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>couleurs</span><div class="seg" style="padding: 1px"><div class="sg" style="padding: 3px 7px">16</div><div class="sg sg-on" style="padding: 3px 7px">24</div><div class="sg" style="padding: 3px 7px">32</div><div class="sg" style="padding: 3px 7px">64</div></div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>tramage</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">aucun</div><div class="sg" style="padding: 3px 8px">diffusion</div><div class="sg" style="padding: 3px 8px">trame</div></div>
+      </div>
+      <div style="font-size: 11px; color: #8a5a2c; margin-top: -4px">la trame régulière est à ajouter — c’est celle qui convient au pixel art</div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #b0a89b">force du tramage</span>
+          <span class="mono" style="font-size: 12px; color: #b0a89b">0 %</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: #ddd5c8; border-radius: 2px"></i>
+          <i style="position: absolute; left: 0%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #ddd5c8"></i>
+        </div>
+        <div style="font-size: 11px; color: #948c80; line-height: 1.4">Grisée : aucun tramage n’est choisi.</div>
+      </div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600">24 demandées, 14 obtenues</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Le pélerin n’a pas de vert ni de gris : ces couleurs du jeu ne servent à rien sur lui. Ce n’est pas une erreur — mais quand un sujet n’en obtient que 6 sur 24, c’est qu’il est plus pauvre que le reste du jeu.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les moteurs</span> <span style="font-size: 13.5px; color: #6d675e">— 7 sont là, 9 restent à ajouter</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Un seul agit à la fois. Changer de moteur ne perd pas les réglages de l’autre.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Trouver les couleurs dans l'image elle-même (coupe médiane)</div><span class="puce p-ok">posé d’emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le brun de la robe reste exactement ce brun-là, en moins de nuances. Mais le pèlerin et le garde, réduits chacun de son côté, ne partagent aucun brun : côte à côte, les deux ne parlent pas la même langue de couleur.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand le jeu n'a pas encore d'image officielle, ou quand on veut garder les teintes de cette image-ci plutôt que celles du jeu.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Imposer la palette du jeu</div><span class="puce p-ok">posé d’emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Chaque pixel saute sur le brun, le vert ou le gris le plus proche parmi les 24 du jeu. La robe change un peu de brun, l'herbe prend le vert du moulin. Mesuré sur huit images : le pixel moyen se déplace de 14 à 17 points sur 255, et le pire de 104 — c'est visible sur les aplats larges, invisible sur les détails.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Dès que le Marais du Vieux Moulin a deux ou trois images officielles. C'est ce qui fait que tout se ressemble.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Approcher par la couleur la plus proche (sans tramage)</div><span class="puce p-ok">posé d’emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un dégradé se pose en bandes franches. Sur le ciel du marais, on compte les marches.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Par défaut, et sur tout ce qui doit rester net : un visage de 12 pixels, une arme, un chiffre.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Tramage en diffusion (Floyd-Steinberg)</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les bandes se cassent en un semis de points, et l'œil recompose le dégradé. Mesuré sur une case de 64 : 38 à 62 % des pixels visibles changent. C'est énorme, et ça se voit tout de suite.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Sur les grandes surfaces qui dégradent — le ciel, l'eau du marais, un mur de moulin éclairé de biais.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Tramage à trame régulière (2×2, 4×4, 8×8)</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le même semis de points, mais toujours aux mêmes endroits. L'herbe du marais garde son motif de frame en frame, au lieu de grésiller. Le semis de Floyd, lui, se recalcule à chaque frame — c'est le seul tramage disponible aujourd'hui, et c'est le mauvais pour ce qui bouge. Il avait été écrit dans le code puis retiré le jour même, faute d'être rendu par la bibliothèque employée ; il tient en une quinzaine de lignes.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Sur une animation, et partout où l'on veut le grain du pixel art d'époque.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Force du tramage réglable</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">À 30 %, seuls les grands dégradés reçoivent des points ; les aplats restent propres. Aujourd'hui c'est tout ou rien.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand le semis est juste sur le ciel mais trop bruyant sur la robe.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">k-moyennes, avec sa graine écrite dans les réglages</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les couleurs se répartissent selon ce que l'image contient vraiment, au lieu d'être obtenues en coupant l'espace en deux, puis en deux, puis en deux. La grenouille garde son vert franc au lieu de virer olive. Condition : la graine doit être enregistrée avec les réglages, sinon deux fois la même demande ne rendent pas la même image — et le produit tient à ce que la même recette rende toujours le même pixel.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand la coupe médiane noie une couleur rare mais importante — le vert de la grenouille au milieu d'une image de bruns et de gris.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Découpe en huit (octree)</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Elle sature moins vite que la coupe médiane : sur une image très bariolée, elle rend un nombre de couleurs plus proche de celui qu'on a demandé. Sur une image simple, la différence ne se voit pas.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand on demande 32 couleurs et qu'on en obtient 14.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Mesurer la distance des couleurs à l'œil, pas au calcul brut</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Aujourd'hui, « la plus proche » se cherche en comptant le rouge, le vert et le bleu à parts égales, ce que l'œil ne fait pas. Le vert vif de la grenouille peut partir sur un gris-vert terne parce qu'il en est proche au calcul. Avec une distance à l'œil, il part sur le vert du jeu, et les gris restent des gris.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Toujours, dès qu'une palette est imposée ou que deux palettes se rapprochent.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Une seule palette pour toute une animation</div><span class="puce p-ok">posé d’emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Sans elle, la robe du pèlerin change de brun d'une frame à l'autre et le personnage scintille sans avoir bougé. Ça ne se voit pas sur une image posée, seulement quand l'animation tourne. L'atelier compte déjà « les couleurs qui ne durent qu'une frame » : c'est ce chiffre-là qui le dit.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Dès qu'on traite plus d'une frame. C'est fait tout seul aujourd'hui, et ça ne se voit nulle part à l'écran.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Ne compter que les pixels qu'on voit</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le magenta qu'on vient de retirer est encore là, sous la transparence, et il entre dans le compte : demander 8 couleurs en rend 7 visibles (vérifié en lançant le traitement). Une animation le fait déjà correctement ; une image seule, non. À l'œil, on perd une nuance de robe pour une couleur que personne ne regarde.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Toujours, sur une image détourée.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Lire la palette du jeu sur ses images officielles</div><span class="puce p-ok">posé d’emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le fond est retiré avant la lecture, donc la palette dit les couleurs des sujets et pas celles du fond. Sans ce détourage préalable, mesuré : 20 gris sur 24, et la palette ne disait plus rien du jeu. Chaque image officielle pèse le même poids, qu'elle fasse 256 ou 2048 pixels.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Pour fabriquer les 24 couleurs du Marais : on promeut deux ou trois images en officielles, et la palette se lit dessus.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Fusionner deux palettes : en prendre du jeu, attirer le reste</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Deux curseurs. Le premier dit combien des 24 viennent du jeu tel quel. Le second tire les autres vers les plus proches du jeu : à 0 le crépuscule garde ses violets, à 100 % il devient le jeu et il n'y a plus de crépuscule. Chaque couleur du résultat est marquée « du jeu » ou « de l'ambiance », et chacune est authentiquement une couleur d'une des deux sources — jamais une moyenne inventée.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Pour une variante — un marais au crépuscule qui reste le marais du jeu.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Corriger la teinte, la saturation, la luminosité, le contraste</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Toute l'image tourne sur la roue des couleurs, ou se sature, ou s'éclaircit — avant que les couleurs ne soient réduites, sinon la réduction refait le travail à l'envers. Rien de tout cela n'existe aujourd'hui : il n'y a pas une ligne de correction de teinte dans le traitement d'image.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Pour faire une version de nuit du moulin sans repayer une génération, ou pour rattraper une image que le modèle a rendue trop grise.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Ranger la palette en rampes d'ombre</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les 24 couleurs se rangent en six rampes de quatre — une lumière, deux milieux, une ombre —, et l'ombre du brun tire vers le violet plutôt que vers le noir. C'est ce qui distingue du pixel art fait à la main du pixel art réduit à la machine. Aujourd'hui les 24 couleurs sont une liste plate, sans aucun groupe.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand on veut que toutes les ombres du jeu tirent vers la même teinte.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Remplacer une couleur par une autre sur l'image</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On pique le magenta resté sur la capuche, on désigne le brun de la robe, il s'en va. Ce geste existe déjà, mais seulement sur une palette nommée — jamais sur une image.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand une couleur précise est fausse et qu'on sait laquelle mettre à la place.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les réglages</span> <span style="font-size: 13.5px; color: #6d675e">— 22 en tout</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Les lignes sur fond clair n’existent pas encore.</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 210px 330px 240px minmax(0,1fr)">
+      <div class="ent">le réglage</div><div class="ent">ce qu’il règle</div><div class="ent">sa plage</div><div class="ent">ce qu’on voit changer</div>
+        <div><span style="font-weight: 600">Couleurs de</span> </div>
+        <div style="color: #4e483f">D'où viennent les couleurs : de la palette du jeu, ou de l'image elle-même.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">le jeu · l'image<br><span style="color: #948c80">par défaut : le jeu, si le jeu a une palette ; sinon l'image, et le seul choix disponible</span></div>
+        <div style="color: #4e483f">Sur « le jeu », la robe du pèlerin prend un des bruns du Marais. Sur « l'image », elle garde le sien. Bascule d'un à l'autre et l'écart saute aux yeux sur les grands aplats.</div>
+        <div><span style="font-weight: 600">Couleurs</span> </div>
+        <div style="color: #4e483f">Sur combien de couleurs l'image est ramenée.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">4 · 8 · 16 · 32 · 64 sur l'écran de l'image ; 8 à 256 sur l'écran du jeu, plafonné au côté de la case ; un curseur de 4 à 64 sur l'écran des animations ; le serveur accepte 2 à 256<br><span style="color: #948c80">par défaut : 32</span></div>
+        <div style="color: #4e483f">À 8, le pèlerin perd ses plis et devient une silhouette de trois bruns. À 24, il retrouve ses volumes. Au-delà de 24 sur une case de 64, plus rien ne change : l'image n'a plus assez de teintes différentes à donner.</div>
+        <div><span style="font-weight: 600">Palette du jeu</span> </div>
+        <div style="color: #4e483f">Rien — c'est une lecture. Les 24 pastilles du Marais, montrées telles quelles.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">24 pastilles, en lecture seule<br><span style="color: #948c80">par défaut : les couleurs lues sur les images officielles</span></div>
+        <div style="color: #4e483f">On voit les couleurs auxquelles l'image va être ramenée. Il manque le point sous celles que cette image emploie vraiment.</div>
+        <div><span style="font-weight: 600">Tramage</span> </div>
+        <div style="color: #4e483f">Comment une couleur absente de la palette est approchée : par la plus proche, ou par un mélange de points.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">aucun · Floyd<br><span style="color: #948c80">par défaut : aucun</span></div>
+        <div style="color: #4e483f">Sur l'herbe du marais, « aucun » pose trois bandes de vert franches ; « Floyd » les mêle en un semis. Mesuré : 38 à 62 % des pixels visibles changent d'une valeur à l'autre.</div>
+        <div><span style="font-weight: 600">Table allumée / éteinte</span> </div>
+        <div style="color: #4e483f">Éteindre les couleurs sans perdre les réglages.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">allumée · éteinte<br><span style="color: #948c80">par défaut : allumée</span></div>
+        <div style="color: #4e483f">Éteinte, l'image ressort avec ses milliers de teintes d'origine. Les réglages restent lisibles et grisés à moitié ; les toucher rallume la table.</div>
+        <div><span style="font-weight: 600">Témoin</span> </div>
+        <div style="color: #4e483f">Comment voir l'avant et l'après.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">aucun · à côté · dessus<br><span style="color: #948c80">par défaut : aucun</span></div>
+        <div style="color: #4e483f">« à côté » met l'image d'origine à gauche et le résultat à droite. Il existe déjà, mais il est commun à toutes les tables et rien ne rappelle qu'il est là quand on règle les couleurs.</div>
+        <div style="background: #faf7f1"><span style="font-weight: 600">24 demandées, 14 obtenues</span> <span class="puce p-a">à ajouter</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Rien — c'est une lecture, et elle manque aujourd'hui.</div>
+        <div style="background: #faf7f1" class="mono" style="font-size: 11.5px; color: #6d675e">deux nombres<br><span style="color: #948c80">par défaut : recalculée à chaque réglage</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">C'est le seul chiffre qui explique pourquoi monter le réglage ne change plus rien. Mesuré sur six images : demander 16 en rend 9 à 15, demander 32 en rend 14 à 28, demander 64 en rend 28 à 52.</div>
+        <div><span style="font-weight: 600">Force du tramage</span> </div>
+        <div style="color: #4e483f">Combien de points le semis pose.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 100 %<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">À 25 %, seuls les grands dégradés reçoivent des points et les aplats restent propres. À 100 %, c'est le semis complet d'aujourd'hui.</div>
+        <div><span style="font-weight: 600">Distance des couleurs</span> </div>
+        <div style="color: #4e483f">Comment on décide quelle couleur du jeu est « la plus proche ».</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">à l'œil · brute<br><span style="color: #948c80">par défaut : à l'œil</span></div>
+        <div style="color: #4e483f">Sur la grenouille, « brute » peut envoyer le vert vif vers un gris-vert du jeu ; « à l'œil » le garde vert. Sur les bruns et les gris, les deux donnent la même image.</div>
+        <div><span style="font-weight: 600">Ne compter que ce qu'on voit</span> </div>
+        <div style="color: #4e483f">Si la couleur cachée sous la transparence entre dans le compte.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">oui · non<br><span style="color: #948c80">par défaut : oui</span></div>
+        <div style="color: #4e483f">Décochée, on demande 8 couleurs et on en obtient 7 sur le pèlerin : une place est partie au magenta détouré. Cochée, les 8 sont pour le sujet.</div>
+        <div><span style="font-weight: 600">Couleurs gardées</span> </div>
+        <div style="color: #4e483f">Les couleurs qui ne doivent jamais être fondues avec une voisine.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">de 0 à 6 couleurs, prises à la pipette sur l'image<br><span style="color: #948c80">par défaut : aucune</span></div>
+        <div style="color: #4e483f">On pique le noir du contour et le vert de la grenouille : à 8 couleurs, le contour reste noir au lieu de virer brun foncé, et la grenouille reste verte au milieu d'une image de bruns.</div>
+        <div><span style="font-weight: 600">Remplacer</span> </div>
+        <div style="color: #4e483f">Une couleur de l'image échangée contre une autre.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">autant de remplacements qu'on veut, chacun : une couleur piquée, une couleur choisie<br><span style="color: #948c80">par défaut : aucun</span></div>
+        <div style="color: #4e483f">On pique le magenta resté sur la capuche, on désigne le brun de la robe : le liseré disparaît sans toucher au reste.</div>
+        <div><span style="font-weight: 600">Teinte</span> </div>
+        <div style="color: #4e483f">La rotation de toutes les couleurs sur la roue.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">−180° à +180°<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">À −30°, le marais vire au bleu-nuit et la robe brune au prune : la version de nuit du moulin, sans repayer une génération.</div>
+        <div><span style="font-weight: 600">Saturation</span> </div>
+        <div style="color: #4e483f">La force des couleurs.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">−100 à +100<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">À −60, l'image passe en presque gris — utile pour une version « souvenir ». À +40, la grenouille redevient franchement verte quand le modèle l'a rendue kaki.</div>
+        <div><span style="font-weight: 600">Luminosité</span> </div>
+        <div style="color: #4e483f">Si l'image est claire ou sombre.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">−100 à +100<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">À −25, l'armure du garde cesse de brûler et retrouve ses gris.</div>
+        <div><span style="font-weight: 600">Contraste</span> </div>
+        <div style="color: #4e483f">L'écart entre les clairs et les sombres.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">−100 à +100<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">À +30 avant la réduction, les plis de la robe survivent à 16 couleurs au lieu de se fondre en un seul brun.</div>
+        <div><span style="font-weight: 600">Même palette pour toute l'animation</span> </div>
+        <div style="color: #4e483f">Si les huit frames de la marche partagent une seule palette.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">oui · non<br><span style="color: #948c80">par défaut : oui</span></div>
+        <div style="color: #4e483f">Décochée, la robe change de brun d'une frame à l'autre et le pèlerin scintille sur place. C'est déjà fait tout seul aujourd'hui, mais rien ne le dit et rien ne permet de le voir.</div>
+        <div><span style="font-weight: 600">Couleurs demandées (écran du jeu)</span> </div>
+        <div style="color: #4e483f">Combien de couleurs le jeu emploie — le nombre lu sur les images officielles, et celui posé d'office sur chaque image neuve.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">8 · 16 · 32 · 64 · 128 · 256, plafonné au côté de la case<br><span style="color: #948c80">par défaut : 32 pour un jeu neuf, 24 pour un jeu ouvert avant ce réglage</span></div>
+        <div style="color: #4e483f">Sur une case de 64, la liste s'arrête à 64 et une phrase dit pourquoi. Changer ce nombre recalcule la palette du jeu et, si on le demande, remet toutes les images dessus.</div>
+        <div><span style="font-weight: 600">La proportion (palette nommée)</span> </div>
+        <div style="color: #4e483f">Combien de couleurs de la palette d'ambiance viennent du jeu tel quel.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 au nombre total de couleurs<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">À 0, le crépuscule est entièrement lui-même. À 24 sur 24, c'est le jeu, et il n'y a plus de crépuscule — l'attraction se grise alors avec sa raison.</div>
+        <div><span style="font-weight: 600">L'attraction (palette nommée)</span> </div>
+        <div style="color: #4e483f">De combien les couleurs de l'ambiance se rapprochent des plus proches du jeu.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 100 %<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">À 40 %, le violet du crépuscule garde son caractère mais respire l'air du Marais. Croisé avec la proportion sur six images et cinq valeurs chacun : 21 résultats différents sur 25 combinaisons — les deux curseurs ne font pas le même travail.</div>
+        <div><span style="font-weight: 600">Couleurs (palette nommée)</span> </div>
+        <div style="color: #4e483f">Combien de couleurs la palette d'ambiance rend.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">4 à 64<br><span style="color: #948c80">par défaut : 24</span></div>
+        <div style="color: #4e483f">Aux fortes attractions, le compte rendu est plus court que demandé : deux couleurs tombent sur la même, et le produit l'affiche au lieu de le taire.</div>
+        <div><span style="font-weight: 600">Retouches (palette nommée)</span> </div>
+        <div style="color: #4e483f">Retirer, ajouter ou remplacer une couleur, geste par geste.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">trois gestes, empilés, chacun défaisable seul<br><span style="color: #948c80">par défaut : aucune</span></div>
+        <div style="color: #4e483f">Chaque geste reste rangé à part et se rejoue si une source change. Une retouche qui vise une couleur disparue ne fait rien et attend son retour.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span class="h2">Pendant le calcul</span>
+    <div style="display: grid; grid-template-columns: 340px minmax(0,1fr) 250px; gap: 16px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">combien de temps</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Une image seule : 5 à 25 millisecondes. Sur une case de 64 carrés, mesuré à l'instant, 8 ms sans palette et 21 ms avec la palette du jeu. Toute la suite de la recette après le détourage a été mesurée à 28 ms sur une image de 1024 pixels. On ne voit rien passer. Une animation de huit frames : une demi-seconde à une seconde, parce que la géométrie est rejouée une fois de plus sur chaque frame pour décider la palette commune. Remettre tout le jeu sur sa palette : le balayage lui-même est instantané, il ne refait aucune image ; ce sont les images qu'on regarde ensuite qui se recalculent une par une, environ 160 ms chacune.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">ce qu’on montre à l’écran</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Aujourd'hui : rien. L'écran envoie les réglages, attend la réponse, et l'image se remplace d'un coup. Pas de sablier, pas de barre, pas de trace du travail. Ce qu'il faut montrer à la place, et qui tient dans les durées réelles : (1) sous l'image, la bande des 24 pastilles du jeu, celles que l'image emploie vraiment allumées, les autres éteintes, et le compte « 24 demandées · 14 obtenues » qui se réécrit à chaque cran — c'est ce qui donne l'impression que quelque chose travaille, et c'est vrai ; (2) pendant qu'on glisse un curseur, l'image d'avant reste affichée en dessous et la nouvelle se pose par-dessus, sans clignotement blanc ; (3) sur une animation, une rangée de huit vignettes qui se remplissent une par une, de gauche à droite, avec le compte des frames faites ; (4) sur « remettre tout le jeu sur sa palette », la phrase du serveur telle qu'elle arrive : « 12 remises à jour, 3 conservées », et la liste de celles qui ont été laissées de côté parce qu'elles étaient épinglées.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt">peut-on annuler</div>
+        <div style="font-size: 20px; color: #8a3f33">Non, aucun calcul</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Vérifié dans le code : rien n’interrompt un calcul en route. Ce qu’on peut défaire, c’est un réglage — Échap efface le geste, Ctrl+Z revient en arrière. Sur des calculs de 30 à 160 ms ça ne se remarque pas ; sur une silhouette demandée à un modèle, 1 à 2 s, ça se remarque.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">10 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s’est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu’on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">La palette du jeu est posée et l'auteur bouge le nombre de couleurs.</div>
+        <div style="color: #8a3f33">L'image ne change pas d'un pixel. Mesuré sur les huit images du banc : à 2, 8, 24 et 256 couleurs, le fichier rendu est identique à l'octet près, sur les huit. Le réglage est là, il est actif, il ne fait rien.</div>
+        <div style="color: #4e483f">Basculer « couleurs de » sur « l'image ». Ou bien griser le réglage avec sa raison — « la palette du jeu décide seule du nombre » — comme l'écran des ambiances grise déjà son curseur d'attraction quand il n'a plus rien à tirer.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On demande 32 couleurs sur une image de 64 carrés.</div>
+        <div style="color: #8a3f33">On en obtient 14. Demander 64 en rend 28 à 52, demander 16 en rend 9 à 15. Rien à l'écran ne dit l'écart, donc l'auteur monte le réglage en croyant gagner du détail.</div>
+        <div style="color: #4e483f">Afficher le compte obtenu à côté du compte demandé. Et, quand il n'y a plus de gain, le dire : « au-delà de 24, cette image n'a plus de teintes différentes à donner ».</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Une image détourée sur fond magenta est réduite sur ses propres couleurs.</div>
+        <div style="color: #8a3f33">Une place de la palette part au magenta caché sous la transparence : demander 8 couleurs en rend 7 visibles — vérifié en lançant le traitement. Une nuance de robe manque, et rien ne l'explique. L'animation, elle, ne compte déjà que les pixels qu'on voit ; l'image seule, non.</div>
+        <div style="color: #4e483f">Ne compter que les pixels visibles, comme le fait déjà l'animation. En attendant : demander une couleur de plus.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Un liseré clair ou rose reste sur le contour du pèlerin après réduction.</div>
+        <div style="color: #8a3f33">Un cerne d'un pixel, de la couleur du fond, tout autour de la capuche. L'auteur accuse les couleurs — à tort : la réduction des couleurs ne touche jamais la transparence.</div>
+        <div style="color: #4e483f">Ça se répare dans le détourage, jamais ici : baisser le seuil de transparence, ou ronger un pixel de plus. L'écran doit le dire à cet endroit-là, parce que c'est là que l'auteur regarde.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le tramage Floyd est posé sur une animation de marche.</div>
+        <div style="color: #8a3f33">L'herbe et la robe grésillent : le semis de points se recalcule à chaque frame et redanse. Sur une image posée, c'est joli ; dès que ça bouge, c'est du bruit.</div>
+        <div style="color: #4e483f">Repasser sur « aucun ». Il faudrait un tramage à trame régulière, qui pose ses points toujours au même endroit — il n'existe pas encore.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le jeu n'a pas encore d'image officielle.</div>
+        <div style="color: #8a3f33">Chaque image se réduit sur ses propres couleurs. Le pèlerin, le garde et la grenouille sortent sur trois vocabulaires voisins mais différents ; posés dans la même scène, ça se voit. L'écran le dit en une ligne mais ne propose rien.</div>
+        <div style="color: #4e483f">Promouvoir deux ou trois images du tableau d'inspiration en images officielles : la palette des 24 se lit dessus, et « couleurs de : le jeu » devient disponible. Le bouton devrait être sous la phrase.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On réduit à 8 couleurs une image qui a un contour noir.</div>
+        <div style="color: #8a3f33">Le noir du contour se fond dans le brun foncé de la robe : le pèlerin perd sa découpe et devient une tache.</div>
+        <div style="color: #4e483f">Aujourd'hui : remonter à 16 couleurs, ou retracer le contour après — la place Contours vient après les couleurs, donc sa couleur est exacte. Demain : verrouiller le noir à la pipette.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le jeu est réglé à 128 couleurs et l'auteur ouvre les couleurs sur une image.</div>
+        <div style="color: #8a3f33">L'écran de l'image n'offre que 4, 8, 16, 32 et 64 ; l'écran des animations un curseur de 4 à 64 ; l'écran du jeu monte à 256. Toucher le réglage sur l'image redescend silencieusement à 64.</div>
+        <div style="color: #4e483f">Aligner les trois écrans sur la même liste — celle du jeu, plafonnée au côté de la case. En attendant : régler sur l'écran du jeu, puis « tout réaligner ».</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">L'auteur pose une couleur à la main après les couleurs — un contour, un trait sur un calque.</div>
+        <div style="color: #8a3f33">La couleur sort telle quelle, hors palette. Le produit l'écrit — « hors palette » — mais ne la rattrape pas, parce que la réduction est déjà passée.</div>
+        <div style="color: #4e483f">Prendre la couleur dans la rangée de pastilles montrée juste à côté du champ : elle est là pour ça.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Une couleur très saturée doit rejoindre une palette où elle n'a pas d'équivalent.</div>
+        <div style="color: #8a3f33">Le vert de la grenouille part sur un gris-vert terne. La distance se compte en rouge-vert-bleu à parts égales, ce qui n'est pas ce que l'œil fait.</div>
+        <div style="color: #4e483f">Aujourd'hui : ajouter la couleur à la palette du jeu, ou promouvoir une image officielle où elle figure. Demain : mesurer la distance à l'œil.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd’hui</span>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px">
+        <li style="margin-bottom: 6px">Aucune correction de teinte, de saturation, de luminosité ni de contraste — le titre de la demande le promet, et il n'y en a pas une ligne dans le traitement d'image.</li>
+        <li style="margin-bottom: 6px">Un seul tramage, en diffusion, et c'est celui qui grésille sur une animation. Le tramage à trame régulière a été écrit puis retiré le jour même ; il n'est jamais revenu.</li>
+        <li style="margin-bottom: 6px">Le tramage est tout ou rien : pas de force réglable.</li>
+        <li style="margin-bottom: 6px">Une seule méthode pour trouver les couleurs — la coupe médiane. Ni k-moyennes, ni découpe en huit, alors que l'atelier propose déjà quatre méthodes de réduction de taille au choix, en assumant que c'est un parti pris de style.</li>
+        <li style="margin-bottom: 6px">La distance entre couleurs se compte en rouge-vert-bleu, jamais à l'œil. C'est vrai pour la palette imposée comme pour l'attraction entre deux palettes.</li>
+        <li style="margin-bottom: 6px">Aucune couleur ne peut être verrouillée : le noir du contour, la peau, le vert de la grenouille sont fondus comme les autres.</li>
+        <li style="margin-bottom: 6px">Aucun remplacement de couleur sur une image. Le geste existe, mais seulement sur une palette nommée.</li>
+        <li style="margin-bottom: 6px">Aucune rampe : les 24 couleurs sont une liste plate, sans lumière, milieu ni ombre, et sans décalage de teinte dans les ombres.</li>
+        <li style="margin-bottom: 6px">Sur une image seule, la couleur cachée sous la transparence entre dans le compte. L'animation et la palette du jeu ont déjà résolu ça, chacune de son côté.</li>
+        <li style="margin-bottom: 6px">Le nombre de couleurs obtenues n'est affiché nulle part, alors que c'est le seul chiffre qui explique pourquoi le réglage cesse d'agir.</li>
+        <li style="margin-bottom: 6px">Rien ne signale que le réglage du nombre ne fait rien quand une palette est posée — alors que le produit sait faire exactement ça ailleurs : griser un curseur inerte avec sa raison.</li>
+        <li style="margin-bottom: 6px">Les couleurs employées par l'image ne sont pas marquées sur la bande de pastilles du jeu. On ne peut donc pas voir qu'une palette de 24 n'en emploie que 14, ni lesquelles ne servent jamais — l'écran des ambiances, lui, le dit déjà pour ses palettes.</li>
+        <li style="margin-bottom: 6px">Aucun retour visuel pendant le travail : ni sur une image, ni sur une animation de huit frames, ni sur la remise à jour de tout le jeu.</li>
+        <li style="margin-bottom: 6px">Rien à annuler : sur une animation ou un balayage, la seule sortie est d'attendre.</li>
+        <li style="margin-bottom: 6px">Trois écrans proposent trois listes de nombres différentes pour le même réglage, et le serveur en accepte une quatrième.</li>
+        <li style="margin-bottom: 6px">Pas de comparaison à plusieurs : impossible de voir 8, 16, 24 et 32 couleurs côte à côte sur la même image pour trancher. Le témoin avant/après existe, mais il ne compare que deux états.</li>
+        <li style="margin-bottom: 6px">La palette ne peut pas être prise sur une autre image que celle qu'on regarde, ni sur une palette nommée : le choix se limite à « le jeu » ou « l'image ».</li>
+      </ul>
+    </div>
+    <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">avant / après</div>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Le pèlerin en robe brune, une frame de marche, en deux temps. À gauche, tel qu'il arrive du modèle : 64 carrés de côté, un dégradé continu sur la robe, un halo magenta d'un pixel autour de la capuche, et près de neuf mille teintes différentes. À droite, ramené aux 24 couleurs du Marais du Vieux Moulin. Sous les deux images, la bande des 24 pastilles du jeu : les 14 que cette image emploie vraiment allumées, les 10 autres éteintes, et la phrase « 24 demandées · 14 obtenues ». Puis, en dessous, deux rangées qui montrent ce que les réglages font, sur les sujets du jeu : la première rangée, le même pèlerin à 8, 16, 24 et 64 couleurs — on voit les plis disparaître à 8, revenir à 24, et plus rien bouger entre 24 et 64 ; la seconde rangée, un carré d'herbe de marais sans tramage puis avec, où 38 à 62 % des pixels changent et où les trois bandes de vert se cassent en semis. Enfin, en marge, la grenouille verte seule, deux fois : envoyée sur la palette avec la distance brute d'aujourd'hui — elle vire olive — et avec une distance à l'œil — elle reste verte. C'est le seul endroit où le choix de la méthode se voit sans explication.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

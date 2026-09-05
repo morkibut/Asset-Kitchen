@@ -9,279 +9,448 @@
 <helmet>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <style>
-    body { margin: 0; background: #f7f3ec; }
-    a { color: #a8492c; } a:hover { color: #7d3319; }
-    .k, .k * { box-sizing: border-box; }
-    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
-    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
-    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
-    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
-    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
-    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
-    .bt { height: 36px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border-radius: 7px; font-size: 13.5px; }
-    .bt-p { background: #a8492c; color: #fff8f4; font-weight: 500; }
-    .bt-s { background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
-    .puce { height: 25px; display: inline-flex; align-items: center; gap: 5px; padding: 0 8px; border-radius: 4px; border: 1px solid #e2dbd0; background: #fffdfa; font-size: 12px; color: #4e483f; }
-    .chip-x { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 3px; background: #ece6db; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #6d675e; }
-    .vide { border: 1px dashed #c9c2b6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; color: #a49a8b; }
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .img { background: #6c6c6c; border-radius: 8px; position: relative; overflow: hidden;
+           display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+
   </style>
 </helmet>
 
-<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+<div class="k" style="width: 1600px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
 
-  <!-- ══════ LE CARNET ══════ -->
-  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
-    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
-        <div class="serif" style="font-size: 25px; line-height: 1.1">Le Marais du Vieux Moulin</div>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1020px">
+      <div style="font-size: 12.5px; color: #948c80">Les terrains › Le sol qu’on foule › L’herbe du marais</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">Un terrain</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">Un terrain n’est pas une image : c’est une tuile qu’on répète des centaines de fois. Tout le travail consiste à faire qu’on ne voie pas où elle se répète, et à fabriquer les bords qui la rejoignent aux autres.</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">le parcours</div>
+      <div class="serif" style="font-size: 30px"><span style="color: #5c7a52">3</span><span style="color: #b0a89b"> / 11</span></div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 200px">étapes que l’atelier sait faire aujourd’hui</div>
+    </div>
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
+      <div class="rt" style="padding: 0 9px">Les terrains</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc"><span>Tous</span><span class="mono" style="font-size: 11.5px">aucun</span></div>
+        <div class="plc" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le sol qu’on foule</span><span class="mono" style="font-size: 11.5px" style="color: #a8492c">—</span></div>
+        <div class="plc"><span>L’eau</span><span class="mono" style="font-size: 11.5px">—</span></div>
+        <div class="plc"><span>Ce qui bloque le pas</span><span class="mono" style="font-size: 11.5px">—</span></div>
+        <div class="plc"><span>Les bords entre deux</span><span class="mono" style="font-size: 11.5px">—</span></div>
+        <div class="plc"><span>Ce qui bouge</span><span class="mono" style="font-size: 11.5px">—</span></div>
+        <div class="plc" style="color: #948c80"><span>+ Nouvelle collection</span></div>
       </div>
-      <div style="font-size: 12.5px; color: #6d675e">41 images · 12 poses sur 18</div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
-      <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
-      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
-      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
-      <div class="rl" style="font-weight: 600"><span>Les terrains</span><span class="num">4</span></div>
-      <div class="rl-sub" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>L'herbe du marais</span><span class="num" style="color: #a8492c">1 / 4</span></div>
-      <div class="rl-sub"><span>La vase</span><span class="num">vide</span></div>
-      <div class="rl-sub"><span>L'eau stagnante</span><span class="num">vide</span></div>
-      <div class="rl-sub"><span>Les planches</span><span class="num">vide</span></div>
-      <div class="rl-sub" style="color: #a49a8b"><span>+ Nouveau terrain</span></div>
-      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
-      <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
-      <div class="rl"><span>Son nom et son dossier</span></div>
-      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
-      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
-      <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
-      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
-      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
-      <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
-      <div class="rl"><span>Son détourage de départ</span></div>
-      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
-      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
-      <div class="rl"><span>Les dépenses</span><span class="num">$1,53</span></div>
-    </div>
-
-    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 14px 10px 0; display: flex; flex-direction: column; gap: 9px">
-      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Un terrain est une matière du sol. Chacun tient dans un carré qui se répète.</div>
+      <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 11.5px; line-height: 1.5; color: #6d675e">La famille n’existe pas encore dans l’app : les tuiles sont rangées avec les objets. C’est le premier manque de cette page.</div>
       <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
         <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
       </div>
-    </div>
-  </div>
-
-  <!-- ══════ LA TUILE ET SON RACCORD ══════ -->
-  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 15px">
-
-    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
-      <div style="display: flex; flex-direction: column; gap: 5px">
-        <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80">
-          <span>Les terrains</span><span>›</span><span style="color: #3d382f">L'herbe du marais</span>
-        </div>
-        <div style="display: flex; align-items: baseline; gap: 12px">
-          <h1 class="serif" style="margin: 0; font-size: 40px; line-height: 1">L'herbe du marais</h1>
-          <span class="mono" style="font-size: 12.5px; color: #6d675e">32 px · 1 carré sur 4</span>
-        </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
       </div>
-      <div style="display: flex; gap: 9px">
-        <div class="bt bt-s">Ouvrir dans l'atelier</div>
-        <div class="bt bt-p">Fabriquer les 3 qui manquent</div>
       </div>
     </div>
-
-    <!-- LA TUILE + LE CHAMP -->
-    <div style="display: grid; grid-template-columns: 244px minmax(0, 1fr); gap: 18px">
-
-      <!-- le carré seul -->
+    <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="font-size: 15px; font-weight: 600">Recoudre — la couture de l’herbe du marais</div>
+        
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+        <div class="seg"><div class="sg">La tuile telle quelle</div><div class="sg sg-on">Décalée d’un demi-carré</div><div class="sg">Le mur 8 × 8</div></div>
+        <div style="flex: 1"></div>
+        <div class="seg"><div class="sg">×2</div><div class="sg sg-on">×4</div><div class="sg">×8</div></div>
+      </div>
+      <div style="flex: 1; min-height: 348px; border-radius: 8px; position: relative; overflow: hidden; background-color: #5c7a52; background-image:radial-gradient(circle at 22% 30%, #6d8a5e 4px, transparent 5px),radial-gradient(circle at 68% 62%, #4d6644 5px, transparent 6px),radial-gradient(circle at 44% 84%, #6d8a5e 3px, transparent 4px);background-size: 58px 58px">
+        <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; background: #2b3a2a; transform: translateX(-50%)"></div>
+        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 3px; background: #2b3a2a; transform: translateY(-50%)"></div>
+        <span style="position: absolute; left: 50%; top: 16px; transform: translateX(-50%); background: #f8ece9; border: 1px solid #dcbcb2; color: #8a3f33; border-radius: 4px; padding: 3px 9px; font-size: 11.5px">la couture verticale saute aux yeux</span>
+        <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); background: #eef1ea; border: 1px solid #cfd9c8; color: #4c6644; border-radius: 4px; padding: 3px 9px; font-size: 11.5px">haut et bas se rejoignent</span>
+        <span style="position: absolute; left: 12px; bottom: 11px; font-size: 11.5px; color: #f0e2c8">l’herbe du marais, décalée d’un demi-carré : les quatre bords se retrouvent en croix au milieu</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">64 px</span><span style="color: #948c80">la tuile</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">haut / bas</span><span style="color: #948c80">se rejoignent</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #a8492c">gauche / droite</span><span style="color: #948c80">3 lignes qui ne suivent pas</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #a8492c">1</span><span style="color: #948c80">tuile sur les 47 d’une rencontre</span></span>
+      </div>
+      <div style="font-size: 12px; color: #6d675e; line-height: 1.45">La tuile est décalée d’un demi-carré : ses quatre bords d’origine se retrouvent en croix au milieu, et la couture devient visible. C’est le seul moyen de la voir sans peindre une carte entière.</div>
+    </div>
+    <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
       <div style="display: flex; flex-direction: column; gap: 8px">
-        <div class="rt">Le carré</div>
-        <div style="width: 244px; height: 244px; background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 24px 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd5c8">
-          <svg viewBox="0 0 32 32" width="224" height="224" shape-rendering="crispEdges">
-            <rect width="32" height="32" fill="#4d6b3f"/>
-            <rect x="3" y="4" width="1" height="3" fill="#3d5732"/><rect x="9" y="2" width="1" height="4" fill="#61814f"/>
-            <rect x="14" y="6" width="1" height="3" fill="#3d5732"/><rect x="21" y="3" width="1" height="4" fill="#61814f"/>
-            <rect x="26" y="7" width="1" height="3" fill="#3d5732"/><rect x="5" y="12" width="1" height="4" fill="#61814f"/>
-            <rect x="12" y="14" width="1" height="3" fill="#3d5732"/><rect x="18" y="11" width="1" height="4" fill="#61814f"/>
-            <rect x="24" y="15" width="1" height="3" fill="#3d5732"/><rect x="29" y="12" width="1" height="4" fill="#61814f"/>
-            <rect x="2" y="21" width="1" height="3" fill="#61814f"/><rect x="8" y="24" width="1" height="4" fill="#3d5732"/>
-            <rect x="15" y="22" width="1" height="3" fill="#61814f"/><rect x="20" y="26" width="1" height="3" fill="#3d5732"/>
-            <rect x="27" y="23" width="1" height="4" fill="#61814f"/><rect x="11" y="19" width="1" height="2" fill="#3d5732"/>
-            <rect x="6" y="8" width="2" height="1" fill="#3d5732"/><rect x="17" y="28" width="2" height="1" fill="#61814f"/>
-          </svg>
+        <div class="rt">Ce que la couture coûte</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <div style="height: 84px; border-radius: 5px; background: #5c7a52; background-image: linear-gradient(#2b3a2a 2px, transparent 2px), linear-gradient(90deg,#2b3a2a 2px, transparent 2px); background-size: 21px 21px"></div>
+          <span style="font-size: 11px; color: #8a3f33">16 × 16 cases, aujourd’hui</span>
         </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 5px">
-          <span class="puce">32 × 32 px</span><span class="puce">réduit de 1024</span>
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <div style="height: 84px; border-radius: 5px; background: #5c7a52"></div>
+          <span style="font-size: 11px; color: #5c7a52">la même, recousue</span>
         </div>
       </div>
-
-      <!-- le champ -->
-      <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
-        <div style="display: flex; align-items: baseline; justify-content: space-between">
-          <div class="rt">Répété, comme dans le jeu</div>
-          <div style="display: flex; gap: 5px">
-            <span class="puce" style="background: #ece6db">8 × 8</span><span class="puce">16 × 16</span><span class="puce">avec le pélerin</span>
-          </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Un quadrillage régulier se voit à dix mètres. C’est le seul défaut de terrain que personne ne rate.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les trois façons de recoudre</div>
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 9px 11px; display: flex; gap: 9px; align-items: flex-start">
+          <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+          <span style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 12.5px; font-weight: 600">Le miroir</span>
+            <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">La moitié droite devient le reflet de la gauche. Instantané, gratuit, mais l’herbe devient symétrique et ça se voit sur les grandes surfaces.</span>
+          </span>
         </div>
-        <div style="position: relative; height: 244px; border-radius: 6px; overflow: hidden; border: 1px solid #ddd5c8">
-          <svg width="100%" height="244" preserveAspectRatio="none" viewBox="0 0 256 128" shape-rendering="crispEdges" style="display: block">
-            <defs>
-              <pattern id="herbe" width="32" height="32" patternUnits="userSpaceOnUse">
-                <rect width="32" height="32" fill="#4d6b3f"/>
-                <rect x="3" y="4" width="1" height="3" fill="#3d5732"/><rect x="9" y="2" width="1" height="4" fill="#61814f"/>
-                <rect x="14" y="6" width="1" height="3" fill="#3d5732"/><rect x="21" y="3" width="1" height="4" fill="#61814f"/>
-                <rect x="26" y="7" width="1" height="3" fill="#3d5732"/><rect x="5" y="12" width="1" height="4" fill="#61814f"/>
-                <rect x="12" y="14" width="1" height="3" fill="#3d5732"/><rect x="18" y="11" width="1" height="4" fill="#61814f"/>
-                <rect x="24" y="15" width="1" height="3" fill="#3d5732"/><rect x="29" y="12" width="1" height="4" fill="#61814f"/>
-                <rect x="2" y="21" width="1" height="3" fill="#61814f"/><rect x="8" y="24" width="1" height="4" fill="#3d5732"/>
-                <rect x="15" y="22" width="1" height="3" fill="#61814f"/><rect x="20" y="26" width="1" height="3" fill="#3d5732"/>
-                <rect x="27" y="23" width="1" height="4" fill="#61814f"/><rect x="11" y="19" width="1" height="2" fill="#3d5732"/>
-                <rect x="6" y="8" width="2" height="1" fill="#3d5732"/><rect x="17" y="28" width="2" height="1" fill="#61814f"/>
-              </pattern>
-            </defs>
-            <rect width="256" height="128" fill="url(#herbe)"/>
-          </svg>
-          <!-- le défaut de raccord, montré -->
-          <div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none">
-            <div style="position: absolute; left: 25%; top: 0; bottom: 0; width: 2px; background: rgba(168,73,44,.85)"></div>
-            <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(168,73,44,.85)"></div>
-            <div style="position: absolute; left: 75%; top: 0; bottom: 0; width: 2px; background: rgba(168,73,44,.85)"></div>
-            <div style="position: absolute; left: 50%; top: 10px; transform: translateX(-50%); background: #a8492c; color: #fff8f4; font-size: 11.5px; padding: 3px 9px; border-radius: 4px">les bords gauche et droit ne se rejoignent pas</div>
-          </div>
+        <div style="border-radius: 7px; padding: 9px 11px; display: flex; gap: 9px; align-items: flex-start">
+          <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa"></span>
+          <span style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 12.5px">Retoucher au pinceau</span>
+            <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">Sur l’image décalée, on répare la croix au milieu. Le résultat est parfait et il faut cinq minutes.</span>
+          </span>
         </div>
-        <div style="display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #4e483f">
-          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 2px; background: #5c7a52"></span>haut et bas : rejoints</span>
-          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 2px; background: #a8492c"></span>gauche et droite : 3 lignes de pixels d'écart</span>
-          <a href="#" style="text-decoration: none; margin-left: auto">Recoudre les bords ›</a>
+        <div style="border-radius: 7px; padding: 9px 11px; display: flex; gap: 9px; align-items: flex-start">
+          <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa"></span>
+          <span style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 12.5px">La redemander au modèle</span>
+            <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">Avec « seamless tile » dans le prompt. Ça marche une fois sur trois, et ça se paie à chaque essai.</span>
+          </span>
         </div>
+      </div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 12.5px; font-weight: 600">Une rencontre demande 47 tuiles</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Pour que l’herbe rejoigne la vase proprement : les quatre bords, les quatre coins sortants, les quatre rentrants, et le reste des combinaisons. Le pinceau de bord les fabrique gratuitement en découpant une tuile sur l’autre.</div>
+        <div class="bt" style="height: 31px; font-size: 12.5px">Fabriquer les 46 manquantes</div>
       </div>
     </div>
+  </div>
 
-    <!-- LES VARIANTES -->
-    <div style="display: flex; flex-direction: column; gap: 8px">
-      <div style="display: flex; align-items: baseline; justify-content: space-between">
-        <div class="rt">Les variantes — pour qu'un champ ne soit pas quadrillé</div>
-        <div style="font-size: 12px; color: #948c80">le jeu tire une variante au hasard sur chaque case</div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
-        <div style="border: 2px solid #a8492c; border-radius: 6px; background: #faf3ee; padding: 8px; display: flex; gap: 10px; align-items: center">
-          <div style="width: 56px; height: 56px; border-radius: 3px; flex-shrink: 0; overflow: hidden">
-            <svg viewBox="0 0 32 32" width="56" height="56" shape-rendering="crispEdges"><rect width="32" height="32" fill="#4d6b3f"/><rect x="9" y="2" width="1" height="4" fill="#61814f"/><rect x="21" y="3" width="1" height="4" fill="#61814f"/><rect x="5" y="12" width="1" height="4" fill="#61814f"/><rect x="18" y="11" width="1" height="4" fill="#61814f"/><rect x="8" y="24" width="1" height="4" fill="#3d5732"/><rect x="27" y="23" width="1" height="4" fill="#61814f"/></svg>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0">
-            <div style="font-size: 13px; font-weight: 600">Herbe simple</div>
-            <div style="font-size: 11.5px; color: #6d675e">faite le 27 août</div>
-          </div>
-        </div>
-        <div class="vide" style="height: 74px; flex-direction: column; gap: 3px"><span>Herbe fleurie</span><span class="chip-x">à fabriquer</span></div>
-        <div class="vide" style="height: 74px; flex-direction: column; gap: 3px"><span>Herbe pelée</span><span class="chip-x">à fabriquer</span></div>
-        <div class="vide" style="height: 74px; flex-direction: column; gap: 3px"><span>Herbe avec un caillou</span><span class="chip-x">à fabriquer</span></div>
-      </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Le parcours, de bout en bout</span> <span style="font-size: 13.5px; color: #6d675e">— 11 étapes, 3 existent</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">On peut s’arrêter à n’importe laquelle : rien n’oblige à aller au bout.</div>
     </div>
-
-    <!-- LES BORDS -->
-    <div style="display: flex; flex-direction: column; gap: 8px">
-      <div style="display: flex; align-items: baseline; justify-content: space-between">
-        <div class="rt">Les bords — là où l'herbe rencontre un autre terrain</div>
-        <div style="font-size: 12px; color: #948c80"><span class="chip-x">l'atelier ne sait pas encore les faire</span></div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; padding: 8px 13px; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0"></div>
+        <div class="ent" style="background: none; padding: 0">l’étape</div>
+        <div class="ent" style="background: none; padding: 0">ce qu’on y fait</div>
+        <div class="ent" style="background: none; padding: 0; text-align: right">aujourd’hui</div>
       </div>
-      <div style="display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 18px; align-items: start">
-
-        <!-- le 3x3 -->
-        <div style="display: grid; grid-template-columns: repeat(3, 66px); grid-template-rows: repeat(3, 66px); gap: 3px">
-          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><path d="M12 32 L12 20 Q12 12 20 12 L32 12 L32 32 Z" fill="#4d6b3f"/></svg>
-          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><rect x="0" y="12" width="32" height="20" fill="#4d6b3f"/></svg>
-          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><path d="M0 12 L12 12 Q20 12 20 20 L20 32 L0 32 Z" fill="#4d6b3f"/></svg>
-          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><rect x="12" y="0" width="20" height="32" fill="#4d6b3f"/></svg>
-          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#4d6b3f"/><rect x="9" y="2" width="1" height="4" fill="#61814f"/><rect x="21" y="14" width="1" height="4" fill="#3d5732"/><rect x="8" y="24" width="1" height="4" fill="#61814f"/></svg>
-          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><rect x="0" y="0" width="20" height="32" fill="#4d6b3f"/></svg>
-          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><path d="M12 0 L12 12 Q12 20 20 20 L32 20 L32 0 Z" fill="#4d6b3f"/></svg>
-          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><rect x="0" y="0" width="32" height="20" fill="#4d6b3f"/></svg>
-          <svg viewBox="0 0 32 32" width="66" height="66" shape-rendering="crispEdges"><rect width="32" height="32" fill="#b8a377"/><path d="M0 0 L20 0 L20 12 Q20 20 12 20 L0 20 Z" fill="#4d6b3f"/></svg>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">01</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">1 · Ramasser des matières</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Coller sur la toile d'inspiration des photos d'herbe, de vase, de planches mouillées. C'est ce qui décide de la matière avant qu'on écrive une ligne. Une image collée peut être promue en référence du jeu, et elle part alors avec chaque demande.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
         </div>
-
-        <div style="display: flex; flex-direction: column; gap: 9px">
-          <div style="font-size: 13.5px; line-height: 1.5; color: #4e483f">Quand une flaque d'herbe s'arrête au milieu du sable, il faut un carré pour chaque façon de s'arrêter : le coin en haut à gauche, le bord du haut, le coin en haut à droite, et ainsi de suite. <strong style="font-weight: 600">Neuf carrés pour une rencontre simple. Quarante-sept si on veut aussi les diagonales.</strong></div>
-          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
-            <div style="border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px">
-              <div style="font-size: 12.5px; font-weight: 600">herbe → vase</div><div style="font-size: 11.5px; color: #6d675e">0 sur 9</div>
-            </div>
-            <div style="border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px">
-              <div style="font-size: 12.5px; font-weight: 600">herbe → eau</div><div style="font-size: 11.5px; color: #6d675e">0 sur 9</div>
-            </div>
-            <div style="border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px">
-              <div style="font-size: 12.5px; font-weight: 600">herbe → planches</div><div style="font-size: 11.5px; color: #6d675e">0 sur 9</div>
-            </div>
-          </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">02</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">2 · Décider la taille de la tuile</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le pélerin fait 64 px. Le sol du marais se dessine bien mieux en 32 : deux cases de sol sous ses pieds, quatre fois moins de surface à raccorder. Aujourd'hui le jeu ne déclare qu'une seule taille de pixel, imposée à tout ce qui rentre — un terrain à 32 ne se demande pas, il faut le régler image par image dans les tables.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">03</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">3 · Nommer le terrain</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">« L'herbe du marais », et deux lignes qui la décrivent — touffes courtes, terre noire dessous, quelques joncs. La description repart avec chaque demande, on ne la retape jamais. Le type « tuile » est déjà là et il sait qu'un terrain n'a pas de poses : il ne bouge pas, il se raccorde.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">04</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">4 · Demander la première tuile</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'atelier sait envoyer une demande et ranger l'image qui revient. Mais le texte qui part réclame « un seul sujet isolé sur un fond plat », « le sujet est centré et remplit la plus grande partie de l'image », « pas de sol ». C'est mot pour mot l'inverse de ce qu'une tuile doit être : remplir son carré bord à bord, sans sujet, sans centre, sans fond à enlever.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">$0,019 la tuile</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #5c7a52">05</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">5 · La ramener à sa taille et à la palette du jeu</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les tables de retouche font déjà tout : réduire 1024 px en 32, ramener à 24 couleurs, nettoyer les pixels isolés. Un réglage est à changer à la main — le détourage, posé d'emblée sur tout ce qui rentre, n'a rien à faire sur une tuile qui remplit son cadre.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-ok">l’app le fait</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">06</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">6 · La regarder répétée</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Poser la tuile 8 × 8 et voir si le bord gauche rejoint le bord droit. Aujourd'hui on regarde le carré seul, et une couture ne se voit qu'une fois le sol posé dans le jeu — c'est-à-dire trop tard, après avoir payé les quatre variantes.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">07</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">7 · Recoudre les bords</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Décaler l'image d'un demi-carré : les quatre bords se retrouvent en croix au milieu, la couture devient visible, on la peint, on remet en place. Aucune demande ne part au modèle. Les huit tables de retouche existantes ne font pas ce décalage.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">08</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">8 · Fabriquer trois variantes</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Herbe simple, herbe fleurie, herbe pelée, herbe avec un caillou. Sans elles, un champ de vingt cases dessine un quadrillage qu'on voit à trois mètres de l'écran. L'atelier sait redemander une image ; rien ne dit ensuite que ces quatre-là sont interchangeables, ni laquelle sort le plus souvent.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">$0,057 les trois</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">09</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">9 · Fabriquer les bords avec chaque terrain voisin</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Quand une flaque d'herbe s'arrête au milieu de la vase, il faut une tuile pour chaque façon de s'arrêter : quatre coins, quatre côtés, le plein. Neuf pour une rencontre simple, quarante-sept si on veut aussi les diagonales et les flaques qui se touchent. L'atelier n'a aucun mot pour dire « ces neuf tuiles sont la rencontre de l'herbe et de la vase ».</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">$0,17 les neuf · $0,89 les quarante-sept · gratuit si on les découpe à la main</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">10</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">10 · Bâtir une carte d'essai</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Poser les tuiles côte à côte sur vingt-quatre cases de large, mettre le pélerin dessus pour juger l'échelle, et regarder les coutures en vrai. C'est le seul endroit où l'on découvre qu'il manque quatre coins et que l'eau clignote. Rien de tel n'existe : on vérifie une tuile seule, jamais un ensemble.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
+        <div class="mono" style="font-size: 12px; color: #a8492c">11</div>
+        <div style="font-size: 13px; font-weight: 600; line-height: 1.35">11 · Sortir le terrain pour le moteur</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'export pose aujourd'hui les fichiers à plat, un par un, avec une fiche qui dit d'où chacun vient. Un moteur attend autre chose : une planche rangée, les seize tuiles dans l'ordre convenu, et la table qui dit laquelle est le coin haut-gauche. Sans elle, il faut replacer seize images à la main, et recommencer à chaque tuile refaite.</div>
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
+          <span class="puce p-a">à ajouter</span>
+          <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ══════ CE QUI MANQUE DANS LE CODE ══════ -->
-  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 15px; overflow: hidden">
-
-    <div style="display: flex; flex-direction: column; gap: 5px">
-      <div class="rt">Ce que l'atelier sait déjà faire</div>
-      <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 3px">
-        <div style="display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45"><span style="color: #5c7a52; flex-shrink: 0">✓</span><span style="color: #4e483f">Fabriquer un carré de terrain comme n'importe quelle image, avec le style du jeu.</span></div>
-        <div style="display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45"><span style="color: #5c7a52; flex-shrink: 0">✓</span><span style="color: #4e483f">Le réduire à 32 pixels avec les tables de traitement.</span></div>
-        <div style="display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45"><span style="color: #5c7a52; flex-shrink: 0">✓</span><span style="color: #4e483f">Le ranger dans le jeu, sans pose ni direction — un terrain n'en a pas.</span></div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les collections qu’on veut pouvoir créer</span> <span style="font-size: 13.5px; color: #6d675e">— 8 propositions</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Elles vivent dans le carnet, sous la famille. Un sujet peut être dans plusieurs.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px">
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Le sol qu'on foule</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">herbe, vase, terre battue, planches : ce sur quoi le pélerin marche</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">L'eau</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">mare stagnante, courant, boue liquide : ce qui bouge et ce qui ralentit</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Ce qui bloque</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">murs, falaises, rochers : les terrains qui ont un dessus et une face</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Les chemins</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">sentier, rails, pont de bois : ce qui se pose par-dessus un autre terrain</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">L'intérieur du moulin</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">le sol des salles fermées, qui ne rencontre jamais l'extérieur</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Les rencontres faites</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">les paires de terrains dont les neuf bords existent</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Le marais sous la neige</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">les mêmes terrains, une seconde fois, avec une autre palette</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; ; border-radius: 9px; background: #fffdfa; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">Ce qui ne raccorde pas encore</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">les tuiles dont la couture se voit, à recoudre avant de payer leurs variantes</div>
       </div>
     </div>
+  </div>
 
-    <div style="border: 1px solid #ddd5c8; border-radius: 9px; background: #f4ece2; padding: 13px 14px; display: flex; flex-direction: column; gap: 10px">
-      <div style="font-size: 14px; font-weight: 600">Ce qu'il faudrait ajouter</div>
-
-      <div style="display: flex; flex-direction: column; gap: 4px">
-        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">1 · Voir le carré répété</div>
-        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Aujourd'hui on regarde le carré seul. Un défaut de raccord ne se voit qu'une fois posé dans le jeu.</div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les outils propres à cette famille</span> <span style="font-size: 13.5px; color: #6d675e">— 0 sur 10 existent</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Aucun autre famille n’en a besoin. C’est ce qui fait qu’une famille n’est pas qu’un dossier.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le mur</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Pose la tuile 8 × 8 et 16 × 16, avec le pélerin dessus pour l'échelle. Trois crans, et le mur se refait à chaque coup de pinceau.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> C'est la seule famille dont une image ne se juge pas seule. Un personnage se regarde ; une tuile ne veut rien dire tant qu'elle n'est pas répétée.</div>
       </div>
-
-      <div style="display: flex; flex-direction: column; gap: 4px">
-        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">2 · Recoudre les bords</div>
-        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Un traitement qui décale l'image d'un demi-carré et efface la couture au milieu. Gratuit, aucun appel à l'IA. C'est une table de plus dans l'atelier.</div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le rapport de couture</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Compare la colonne de gauche à celle de droite, la ligne du haut à celle du bas, et écrit ce qu'il trouve : « haut et bas rejoints · gauche et droite, 3 lignes de pixels d'écart, 14 couleurs qui ne se suivent pas ». Il surligne les traits fautifs dans l'image.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Nulle part ailleurs les deux bords opposés d'une image doivent être la même chose. Sur un personnage la question n'a aucun sens.</div>
       </div>
-
-      <div style="display: flex; flex-direction: column; gap: 4px">
-        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">3 · La notion de terrain</div>
-        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le code range les tuiles à plat, une par une. Il n'a pas de mot pour dire « ces quatre carrés sont la même herbe » ni « ces neuf-là sont sa rencontre avec le sable ».</div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le recousage</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une retouche de plus dans les tables : elle décale l'image d'un demi-carré, ce qui ramène les quatre bords en croix au milieu, laisse peindre la couture, puis remet tout en place. Rien ne part au modèle.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Les huit retouches existantes travaillent au bord de l'image ou au milieu. Celle-ci travaille sur ce qui se passe entre deux exemplaires de la même image — une idée qui n'existe que pour un terrain.</div>
       </div>
-
-      <div style="display: flex; flex-direction: column; gap: 4px">
-        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">4 · La grille</div>
-        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le jeu sort ses personnages à 64 pixels. Ses terrains, souvent, à 32 ou 16. Ce nombre-là n'existe nulle part dans les réglages.</div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La rencontre</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Tient ensemble les neuf, treize ou quarante-sept tuiles qui font se rejoindre deux terrains, et sait dire lesquelles manquent. « L'herbe rencontre la vase : 0 sur 9 ».</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Deux personnages ne se rencontrent pas. Deux terrains, si — et il faut une tuile par façon de s'arrêter. C'est l'objet qui manque le plus dans le code, qui range les tuiles à plat, une par une.</div>
       </div>
-
-      <div style="display: flex; flex-direction: column; gap: 4px">
-        <div style="font-size: 12.5px; font-weight: 600; color: #a8492c">5 · Ne plus demander un fond à détourer</div>
-        <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le texte envoyé au modèle réclame un fond plat et un sujet centré, sans savoir qu'il s'agit d'un terrain. Une tuile doit remplir son carré bord à bord : on lui demande aujourd'hui l'inverse.</div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le pinceau de bord</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Fabrique un bord gratuitement : il pose la tuile d'herbe sur la tuile de vase et la découpe avec une forme de coin. Trois formes — franche, dentelée, touffue — et un curseur de désordre de 0 à 12 px.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> C'est la seule famille où l'on peut fabriquer une image neuve sans rien payer, parce que les deux matières existent déjà et qu'il ne reste qu'à décider où l'une s'arrête. L'atelier sait déjà peindre un masque, l'élargir et le rétrécir — rien ne le propose à l'écran.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le tirage des variantes</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Dit que quatre tuiles valent pour la même case, et à quelle fréquence chacune sort — 60 %, 25 %, 10 %, 5 %. Un interrupteur les éteint pour montrer le quadrillage qu'on obtiendrait sans elles.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Ailleurs, deux images d'un même sujet sont concurrentes : on en retient une, on écarte l'autre. Ici elles servent toutes en même temps, et c'est justement ce qui casse la répétition.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La carte d'essai</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un damier de vingt-quatre cases sur seize où l'on peint des terrains à la main, où les bords se posent tout seuls quand ils existent, où les cases sans bord sont barrées, et où le pélerin se promène pour juger l'échelle.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Un personnage est fini quand ses six poses sont là. Un terrain n'est jamais fini tout seul : il est fini quand il tient à côté des trois autres. Il n'y a que là qu'on peut le voir.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La taille de tuile</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un nombre par terrain — 32 quand le jeu dessine ses personnages à 64 — et le rappel de ce que ça donne : le pélerin fait deux cases de haut.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> C'est la seule famille qui a besoin de sa propre finesse. Le carré ne change jamais de taille dans une scène, mais le sol se découpe en carreaux plus petits que les personnages qui marchent dessus — et ce nombre-là n'existe nulle part dans les réglages.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La planche de sortie</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Range les seize tuiles d'un terrain dans une seule image, dans l'ordre que les moteurs attendent, avec la table qui dit laquelle est le coin haut-gauche et laquelle est le plein.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> L'export pose les fichiers à plat, ce qui convient à tout le reste : une image de personnage se suffit. Seize tuiles à plat, non — il faut savoir laquelle va où, sinon il faut les replacer à la main, et recommencer à chaque tuile refaite.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La boucle lente</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Quatre frames en boucle pour l'eau stagnante, la lave, les hautes herbes : le raccord doit tenir dans les quatre, et les quatre doivent boucler sans à-coup.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">pourquoi ici</span> Le serveur sait déjà fabriquer des frames et les monter en bande, mais l'écran ne le propose qu'aux personnages. Un terrain animé est le seul cas où une animation doit aussi raccorder sur ses bords.</div>
       </div>
     </div>
+  </div>
 
-    <div style="display: flex; flex-direction: column; gap: 8px">
-      <div class="rt">Le compte, si on va au bout</div>
-      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 62px 74px; row-gap: 6px; column-gap: 8px; font-size: 12.5px; align-items: center">
-        <div style="color: #4e483f">4 terrains × 4 variantes</div><div class="mono" style="color: #6d675e">16</div><div class="mono" style="text-align: right; color: #6d675e">$0,30</div>
-        <div style="color: #4e483f">6 rencontres × 9 bords</div><div class="mono" style="color: #6d675e">54</div><div class="mono" style="text-align: right; color: #6d675e">$1,02</div>
-        <div style="border-top: 1px solid #ddd5c8; padding-top: 6px; font-weight: 600">Le sol entier du marais</div>
-        <div class="mono" style="border-top: 1px solid #ddd5c8; padding-top: 6px; color: #221f1b">70</div>
-        <div class="mono" style="border-top: 1px solid #ddd5c8; padding-top: 6px; text-align: right; color: #a8492c; font-weight: 500">$1,32</div>
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 460px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Les autres écrans à dessiner</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 13px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Recoudre — la couture de l'herbe du marais</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e"><span class="rt" style="font-size: 9.5px">on y arrive</span> Depuis la page du terrain, dès la première tuile revenue — aucune image de modèle ne raccorde toute seule. Et à chaque fois que le mur montre un quadrillage.</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">au milieu</span> Fil : Les terrains › L'herbe du marais › Recoudre. Le grand cadre montre la tuile décalée d'un demi-carré : les quatre bords d'origine se retrouvent en croix au milieu de l'image, et la couture saute aux yeux — un trait vertical net qui coupe l'herbe en deux, avec trois lignes de pixels qui ne se suivent pas. Trois onglets au-dessus du cadre : « La tuile telle quelle · Décalée · Le mur 8 × 8 ». Le mur se refait à chaque coup de pinceau : on corrige la croix au milieu, le quadrillage disparaît sur le mur d'à côté. Sous le cadre, la mesure en clair — « haut et bas : rejoints · gauche et droite : 3 lignes d'écart » — et les deux traits fautifs surlignés dans l'image. Trois outils sous la mesure : un pinceau de 2 px, un compte-gouttes qui prend la couleur du pixel voisin, et « Copier la bande d'en face », qui recopie quatre pixels du bord opposé par-dessus la couture. En pied, en gris : « Gratuit. Rien ne part au modèle, tout se calcule ici. » et le compteur qui descend, 3 lignes restantes, puis 0.</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f"><span class="rt" style="font-size: 9.5px">à droite</span> En haut, ce que la couture coûte au jeu : deux vignettes de 16 × 16 cases, avant et après, la première quadrillée, la seconde unie. Puis les trois façons de recoudre, à choisir, chacune avec son échantillon et sa phrase de quand : le miroir (la moitié droite est le reflet de la gauche, instantané, mais l'herbe devient symétrique et ça se voit) ; le fondu de bord (les huit pixels du bord gauche se fondent dans les huit du bord droit — bon sur la vase et le sable, mauvais sur des planches qui ont un sens) ; à la main (le décalage d'un demi-carré, le seul qui marche sur les planches). Ensuite, ce que ça garde : la tuile d'origine reste, le recousage est une retouche posée par-dessus, qui se retire. Puis la taille de tuile — 32 px, le jeu est à 64, le pélerin fera deux cases de haut. Tout en bas, le seul bouton rouille de l'écran.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #8a5a2c; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">ce qui coûte</span> « Refaire la tuile, sans couture · $0,019 ». Renvoie la même demande au modèle en ajoutant la consigne de raccord, pour le cas où recoudre à la main ne suffit pas. C'est le seul bouton de l'écran qui dépense.</div>
       </div>
-      <div style="font-size: 12px; line-height: 1.45; color: #948c80">Autant que tout ce que tu as dépensé depuis le début, tous jeux confondus. Les bords se fabriquent aussi à la main dans l'atelier, en découpant deux terrains l'un sur l'autre — gratuit, plus long.</div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La rencontre — l'herbe du marais et la vase</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e"><span class="rt" style="font-size: 9.5px">on y arrive</span> Depuis la page d'un terrain, ligne « Les bords — là où l'herbe rencontre un autre terrain ». Et depuis la carte d'essai, en cliquant une case barrée.</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">au milieu</span> En haut, les deux terrains face à face, reliés par une flèche, avec un bouton pour retourner la rencontre. Au cœur de l'écran, les neuf tuiles ne sont pas rangées en tableau mais dessinées comme ce qu'elles font : un îlot d'herbe de trois cases sur trois, posé au milieu de la vase — coin haut-gauche, bord du haut, coin haut-droit, bord gauche, le plein, bord droit, les trois du bas. Chaque case se clique ; celles qui n'existent pas sont en pointillés, et il y en a neuf sur neuf. À droite de l'îlot, l'aperçu vivant : un morceau de carte de dix cases sur huit où l'herbe s'avance dans la vase avec ce qui existe, les cases manquantes barrées d'un damier rose. On voit tout de suite que sans les quatre coins, la flaque a des angles carrés. Sous l'aperçu, trois nombres à choisir, et sous chacun ce qu'il achète : 9 tuiles — une flaque à angles droits ; 13 — une flaque arrondie ; 47 — deux flaques qui se touchent et des langues d'une case de large. Une ligne d'état ferme la surface : « 0 sur 9 · l'atelier ne sait pas encore les faire ».</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f"><span class="rt" style="font-size: 9.5px">à droite</span> Deux façons de fabriquer un bord, l'une sous l'autre, chacune avec sa vignette. Le découpage : gratuit, on pose l'herbe sur la vase et on la coupe avec la forme du coin — net, un peu mécanique, le bord est le même partout, bon pour la pierre, moyen pour l'herbe. La génération : $0,019 la tuile, on demande au modèle le coin de l'herbe qui s'arrête dans la vase, avec les deux tuiles en référence — le bord est irrégulier, des touffes dépassent. Puis le pinceau de bord, avec ses trois formes en échantillon — franche, dentelée, touffue — et un curseur de désordre de 0 à 12 px. Puis le compte, écrit en toutes lettres : 9 tuiles, 0 faites, $0,17 — ou 47 tuiles, $0,89. Ensuite les autres rencontres de l'herbe, une ligne chacune : herbe → eau 0 sur 9, herbe → planches 0 sur 9. Enfin, ce que le jeu recevra : une planche de quatre tuiles sur quatre, dans l'ordre que les moteurs attendent, et la table qui dit laquelle est quel coin.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #8a5a2c; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">ce qui coûte</span> « Fabriquer les 9 bords · $0,17 ». Il n'y a pas de second bouton rouille : le découpage à la main est gratuit et se lance depuis sa vignette.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La carte d'essai — poser le sol et voir les coutures</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e"><span class="rt" style="font-size: 9.5px">on y arrive</span> Depuis la ligne « Les terrains » du carnet, dès qu'il y a deux terrains dans le jeu. C'est l'écran où l'on revient après chaque fournée, et celui qui dit quand le sol est fini.</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">au milieu</span> Une carte de vingt-quatre cases sur seize, en 32 px, montrée à 100 % — le marais : une langue d'herbe, une mare d'eau stagnante, un chemin de planches, de la vase autour. On choisit un terrain dans le volet et on peint à la souris. Les bords se posent tout seuls là où deux terrains se touchent, quand ils existent ; là où le bord manque, la case est barrée d'un damier rose et le compteur du bas monte : « 14 cases n'ont pas leur bord ». Quatre interrupteurs sous la carte : Les coutures, qui surligne en rouille tous les traits où deux tuiles voisines ne se rejoignent pas ; La grille, qui montre le quadrillage de 32 ; Le pélerin, une silhouette de 64 px qu'on déplace pour juger l'échelle — l'herbe fait-elle des touffes trop grosses sous ses pieds ; Les variantes, qui, éteint, ne laisse que la première tuile de chaque terrain et fait apparaître le quadrillage qu'on aurait sans elles. En pied : « Cette carte ne sort pas de l'atelier. Elle sert à voir. »</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f"><span class="rt" style="font-size: 9.5px">à droite</span> La palette des quatre terrains du marais, en pastilles, avec le nom et le compte de variantes : herbe 1 sur 4, vase 1 sur 4, eau 1 sur 4, planches 1 sur 4. Cliquer choisit le pinceau ; une cinquième pastille est la gomme. En dessous, ce qui manque — et la liste est faite par la carte, pas par un compte théorique : « 9 bords herbe → vase, 14 cases barrées », « 4 bords eau → vase, 3 cases », « 3 variantes d'herbe, le champ du haut est quadrillé ». Chaque ligne se clique et ouvre la rencontre ou le terrain. Puis le rapport de couture : « 3 traits visibles sur 96 · tous sur l'eau stagnante », avec un bouton « Aller les recoudre », gratuit. Puis la taille de tuile : 32 px, le pélerin fait deux cases de haut. Puis « Garder cette carte », gratuit, qui la pose comme image dans le tableau d'inspiration pour la comparer à la suivante. Tout en bas, le bouton rouille.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #8a5a2c; border-top: 1px solid #ece6db; padding-top: 9px"><span class="rt" style="font-size: 9.5px">ce qui coûte</span> « Fabriquer les 16 tuiles qui manquent · $0,30 ». Ce sont exactement celles que la carte vient de nommer — les cases barrées et les variantes du champ quadrillé —, pas une liste théorique.</div>
+      </div>
+      </div>
     </div>
-
-    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
-      <div class="bt bt-s">Voir les 4 terrains ensemble</div>
-      <div style="font-size: 12px; color: #948c80; text-align: center">Une matrice : les terrains en lignes, les variantes en colonnes.</div>
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque dans l’app</span>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f">
+        <li style="margin-bottom: 7px">La famille n'existe pas. Le code en connaît cinq — personnages, objets, décors, interface, et un fourre-tout — là où le carnet en compte six. Un terrain arrive donc en « décor », et hérite du modèle par défaut et du détourage de départ d'un décor.</li>
+        <li style="margin-bottom: 7px">Le mot « terrain » n'existe nulle part. Il y a un type de sujet « tuile », ajouté en cours de route, qui range une image à plat, une par une. Rien ne dit « ces quatre tuiles sont la même herbe », ni « ces neuf-là sont sa rencontre avec la vase ».</li>
+        <li style="margin-bottom: 7px">Le texte envoyé au modèle demande l'inverse de ce qu'une tuile doit être : « un seul sujet isolé sur un fond plat », « le sujet est centré et remplit la plus grande partie de l'image », « pas de sol, pas de décor ». Une tuile remplit son carré bord à bord, n'a pas de sujet, pas de centre, et pas de fond à enlever.</li>
+        <li style="margin-bottom: 7px">La taille de tuile n'existe pas. Le jeu déclare une seule finesse de pixel, 64, imposée à tout ce qui rentre. Le sol se dessine couramment en 32 ou 16, et ce nombre-là n'a aucun endroit où s'écrire.</li>
+        <li style="margin-bottom: 7px">Rien ne montre une tuile répétée. On regarde le carré seul ; le défaut de raccord ne se voit qu'une fois le sol posé dans le jeu, c'est-à-dire après avoir payé les variantes.</li>
+        <li style="margin-bottom: 7px">Aucune retouche ne décale l'image d'un demi-carré. Il y en a huit dans les tables — détourage, différence, recadrage, grille, couleurs, bords, contours, dessin à la main — et pas une ne travaille sur ce qui se passe entre deux exemplaires de la même image.</li>
+        <li style="margin-bottom: 7px">Rien ne mesure une couture. L'atelier sait déjà retrouver le pas d'une image et dire si elle tombe bien sur ses carreaux ; personne ne compare la colonne de gauche à la colonne de droite.</li>
+        <li style="margin-bottom: 7px">Les variantes n'existent que comme images concurrentes d'une même demande : on en retient une, on écarte les autres. Pour un terrain elles servent toutes en même temps, et rien ne dit laquelle sort le plus souvent.</li>
+        <li style="margin-bottom: 7px">Le détourage est posé d'emblée sur tout ce qui entre dans la bibliothèque. Une tuile n'a pas de fond à enlever ; il faut aujourd'hui l'éteindre à la main, image par image.</li>
+        <li style="margin-bottom: 7px">L'export pose les fichiers à plat, un par un, avec une fiche qui dit d'où chacun vient. Un moteur attend une planche rangée dans un ordre précis et la table des coins ; sans elle, il faut replacer seize images à la main et recommencer à chaque tuile refaite.</li>
+        <li style="margin-bottom: 7px">L'animation ne se propose qu'aux personnages, alors que le serveur sait fabriquer des frames et les monter en bande. L'eau qui bouge n'a nulle part où se demander — et c'est le seul cas où une animation doit aussi raccorder sur ses bords.</li>
+        <li style="margin-bottom: 7px">Découper une planche de seize tuiles en seize images fonctionne déjà, en grille régulière, avec le reste de la division réparti pour que la dernière case aille bien jusqu'au dernier pixel. C'est le seul morceau du parcours qui soit complet aujourd'hui.</li>
+      </ul>
     </div>
   </div>
 

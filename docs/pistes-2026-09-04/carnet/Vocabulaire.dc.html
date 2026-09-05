@@ -34,6 +34,15 @@
     .bo em { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: #948c80 }
     .no { display: grid; grid-template-columns: 168px minmax(0,1fr); gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #ece6db; font-size: 12.5px }
     .no b { font-weight: 500; color: #8a3f33; text-decoration: line-through; text-decoration-color: #dcbcb2 }
+    table.mx { border-collapse: collapse; width: 100% }
+    table.mx th { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: #948c80; font-weight: 400; text-align: center; padding: 0 6px 9px; border-bottom: 1px solid #ddd5c8 }
+    table.mx th:first-child { text-align: left }
+    table.mx td { font-size: 12.5px; padding: 8px 6px; border-bottom: 1px solid #ece6db; text-align: center; color: #221f1b }
+    table.mx td:first-child { text-align: left; color: #3d382f }
+    table.mx td.d { color: #a8492c; font-size: 15px }
+    table.mx td.p { color: #7d8f74; font-size: 15px }
+    table.mx td.s { color: #c4bcae; font-size: 15px }
+    table.mx tr:hover td { background: #f2ede4 }
   </style>
 </helmet>
 
@@ -72,9 +81,10 @@
 
       <div class="carte" style="padding: 17px 19px">
         <div style="font-size: 14px; font-weight: 600; margin-bottom: 7px">Un équipement s'emboîte autrement</div>
-        <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5; margin-bottom: 14px">Il n'a pas d'images à lui. Il a des <strong>emplois</strong>, et chaque emploi a les siennes.</div>
+        <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5; margin-bottom: 14px">Il a son image de référence, comme tout sujet. Mais ce qui sert dans le jeu, ce sont ses <strong>emplois</strong> — et chacun a ses propres images.</div>
         <div class="bo" style="margin-top: 0"><em>un sujet · famille équipements</em><b>Epée</b><span>« A classic one hand sword »</span></div>
         <div class="niv">
+          <div class="bo"><em>son image de référence</em><b>L'épée seule, de face</b><span>ce à quoi tous les emplois ressemblent</span></div>
           <div class="bo"><em>un emploi</em><b>Portée par Le goliath, en main droite</b><span>6 poses × 4 directions · 24 calques</span></div>
           <div class="bo"><em>un emploi</em><b>Portée par Le minus, dans le dos</b><span>24 calques, redessinés</span></div>
           <div class="bo"><em>un emploi</em><b>Posée au sol</b><span>1 image · échelle « objet posé »</span></div>
@@ -102,7 +112,8 @@
     <table class="sp">
       <tr><th style="width: 168px">Le mot</th><th style="width: 330px">Ce que c'est</th><th style="width: 250px">Dans le marais</th><th>À ne pas confondre avec</th></tr>
       <tr><td class="m">une image</td><td>Un fichier. Elle appartient à un sujet, ou à personne tant qu'on ne l'a pas rangée.</td><td class="x">Le pélerin, au repos</td><td class="x">un sujet, qui en a plusieurs</td></tr>
-      <tr><td class="m">une feuille</td><td>Une image qui contient plusieurs cases, revenue d'un seul appel. Elle se découpe.</td><td class="x">six poses en 1536 × 256</td><td class="x">une image ordinaire — tant qu'elle n'est pas découpée, ses cases n'existent pas</td></tr>
+      <tr><td class="m">l'image de référence</td><td>Celle qui dit à quoi le sujet ressemble. Tout sujet en a une, et tout le reste s'y compare.</td><td class="x">l'épée seule, de face</td><td class="x">une image ordinaire — il n'y a qu'une référence à la fois</td></tr>
+      <tr><td class="m">une feuille</td><td>Une image qui contient plusieurs cases, revenue d'une seule génération. Elle se découpe.</td><td class="x">six poses en 1536 × 256</td><td class="x">une image ordinaire — tant qu'elle n'est pas découpée, ses cases n'existent pas</td></tr>
       <tr><td class="m">une case</td><td>Un morceau d'une feuille, une fois coupé.</td><td class="x">la case « attaque »</td><td class="x">une case de tableau à l'écran</td></tr>
       <tr><td class="m">un calque</td><td>Une image qui se pose par-dessus une autre, et se retire.</td><td class="x">le sac de voyage sur le pélerin qui marche</td><td class="x">une passe, qui modifie l'image elle-même</td></tr>
       <tr><td class="m">une passe</td><td>Une retouche posée sur une image. Elles s'empilent et se retirent dans n'importe quel ordre.</td><td class="x">détourage · réduction à 64 px · 24 couleurs</td><td class="x">un calque, qui reste une image à part</td></tr>
@@ -117,7 +128,8 @@
       <tr><td class="m">une direction</td><td>D'où on voit le sujet. Le marais n'en a qu'une ; d'autres jeux en ont quatre.</td><td class="x">une seule</td><td class="x">la vue, qui est un réglage du jeu entier</td></tr>
       <tr><td class="m">un emplacement</td><td>Un endroit du corps où un équipement s'accroche.</td><td class="x">le dos · les mains · la tête</td><td class="x">un emploi, qui est plus large</td></tr>
       <tr><td class="m">un emploi</td><td>Une façon dont un équipement sert. Chacun a ses propres images.</td><td class="x">portée en main droite · posée au sol · son icône</td><td class="x">un emplacement, qui ne dit que l'endroit</td></tr>
-      <tr><td class="m">une animation</td><td>Des images dans un ordre, avec un tempo et une boucle.</td><td class="x">aucune pour l'instant</td><td class="x">une feuille, qui est une image et pas une durée</td></tr>
+      <tr><td class="m">une animation</td><td>Des frames dans un ordre, avec un tempo et une boucle.</td><td class="x">aucune pour l'instant</td><td class="x">une feuille, qui est une image et pas une durée</td></tr>
+      <tr><td class="m">une frame</td><td>Une image prise à un moment d'une animation. Elle a sa durée à elle.</td><td class="x">la 2ᵉ des 4 frames de la marche</td><td class="x">une pose, qui est un moment du sujet et pas du mouvement</td></tr>
     </table>
 
     <div class="rt" style="margin: 30px 0 8px">Ce qui s'applique à tout le jeu</div>
@@ -134,7 +146,8 @@
     <table class="sp">
       <tr><th style="width: 168px">Le mot</th><th style="width: 330px">Ce que c'est</th><th style="width: 250px">Dans le marais</th><th>À ne pas confondre avec</th></tr>
       <tr><td class="m">un modèle</td><td>Une IA à qui on demande une image. Le mot ne sert qu'à ça.</td><td class="x">49 disponibles, 11 déjà employés</td><td class="x">un sujet — jamais</td></tr>
-      <tr><td class="m">un appel</td><td>Une demande envoyée, payée qu'elle réussisse ou non.</td><td class="x">72 appels, $1,55</td><td class="x">une image : un appel peut en rendre six</td></tr>
+      <tr><td class="m">un prompt</td><td>Le texte assemblé qui part au modèle : la bible du jeu, la description du sujet, la consigne de la pose, l'allure.</td><td class="x">SUJET · CASES · MONDE · TRAIT · CAMÉRA</td><td class="x">la description, qui n'en est qu'un morceau</td></tr>
+      <tr><td class="m">une génération</td><td>Un prompt envoyé, payé qu'il réussisse ou non.</td><td class="x">84 générations, $1,55</td><td class="x">une image : une génération peut en rendre six</td></tr>
       <tr><td class="m">l'atelier</td><td>L'application. Elle tourne sur ta machine.</td><td class="x">—</td><td class="x">le jeu, qui est ce qu'elle contient</td></tr>
       <tr><td class="m">le carnet</td><td>La colonne de gauche, toujours là. Elle sert à aller quelque part.</td><td class="x">17 lignes fermé</td><td class="x">la barre, qui sert à faire</td></tr>
       <tr><td class="m">la surface</td><td>Le milieu de l'écran, là où le travail se fait.</td><td class="x">une page, une matrice, une planche, une table</td><td class="x">le volet, qui est la colonne de droite</td></tr>
@@ -142,34 +155,63 @@
     </table>
   </div>
 
-  <!-- ═══ 3. LES FAMILLES ═══ -->
+  <!-- ═══ 3. CE QU'UN SUJET PEUT AVOIR ═══ -->
   <div class="sec bloc">
-    <h2 class="tt">Ce que chaque famille apporte</h2>
-    <p class="st">C'est la famille qui décide de ce qu'un sujet possède et des outils qu'on trouve sur sa page. Un personnage et un terrain n'ouvrent pas le même écran.</p>
+    <h2 class="tt">Ce qu'un sujet peut avoir</h2>
+    <p class="st">La famille ne limite pas : elle propose. Un objet peut avoir des poses et une animation — un feu de camp en a. Un terrain peut bouger. Un décor peut tourner. Ce tableau dit ce qui est proposé d'emblée, et ce qu'on peut ajouter à n'importe quel sujet.</p>
 
+    <table class="mx">
+      <tr><th style="width: 250px"></th><th>Personnages</th><th>Objets</th><th>Décors</th><th>Terrains</th><th>Équipements</th><th>Interface</th></tr>
+      <tr><td>Une description</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td></tr>
+      <tr><td>Une image de référence</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td></tr>
+      <tr><td>Des variantes</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td></tr>
+      <tr><td>Une échelle</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="d">●</td></tr>
+      <tr><td>Des poses — ses états</td><td class="d">●</td><td class="p">○</td><td class="p">○</td><td class="p">○</td><td class="d">●</td><td class="d">●</td></tr>
+      <tr><td>Des directions</td><td class="d">●</td><td class="p">○</td><td class="p">○</td><td class="p">○</td><td class="d">●</td><td class="s">·</td></tr>
+      <tr><td>Des animations</td><td class="d">●</td><td class="p">○</td><td class="p">○</td><td class="p">○</td><td class="p">○</td><td class="p">○</td></tr>
+      <tr><td>Des calques posés dessus</td><td class="d">●</td><td class="p">○</td><td class="p">○</td><td class="s">·</td><td class="s">·</td><td class="s">·</td></tr>
+      <tr><td>Un point d'accroche</td><td class="d">●</td><td class="d">●</td><td class="d">●</td><td class="s">·</td><td class="p">○</td><td class="s">·</td></tr>
+      <tr><td>Une zone qui bloque le passage</td><td class="p">○</td><td class="p">○</td><td class="d">●</td><td class="p">○</td><td class="s">·</td><td class="s">·</td></tr>
+      <tr><td>Se répète sans couture</td><td class="s">·</td><td class="s">·</td><td class="p">○</td><td class="d">●</td><td class="s">·</td><td class="p">○</td></tr>
+      <tr><td>Des emplois</td><td class="s">·</td><td class="p">○</td><td class="s">·</td><td class="s">·</td><td class="d">●</td><td class="s">·</td></tr>
+    </table>
+
+    <div style="display: flex; gap: 26px; margin: 14px 0 26px; font-size: 12.5px; color: #6d675e; flex-wrap: wrap">
+      <span><span style="color:#a8492c">●</span> proposé d'emblée</span>
+      <span><span style="color:#7d8f74">○</span> on peut l'ajouter</span>
+      <span><span style="color:#c4bcae">·</span> sans objet</span>
+      <span style="color: #4e483f">Rien n'est interdit par la famille : elle décide seulement de ce qu'on trouve sans le chercher.</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px">
+      <div class="carte" style="padding: 13px 15px"><div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Un feu de camp</div><div style="font-size: 12.5px; color: #6d675e; line-height: 1.45">Un objet, avec trois poses — éteint, braises, flamme — et une animation de six frames.</div></div>
+      <div class="carte" style="padding: 13px 15px"><div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">L'eau stagnante</div><div style="font-size: 12.5px; color: #6d675e; line-height: 1.45">Un terrain qui se répète sans couture, et qui bouge : quatre frames en boucle lente.</div></div>
+      <div class="carte" style="padding: 13px 15px"><div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Le vieux moulin</div><div style="font-size: 12.5px; color: #6d675e; line-height: 1.45">Un décor avec une zone qui bloque, un devant, un derrière — et des ailes qui tournent.</div></div>
+      <div class="carte" style="padding: 13px 15px"><div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Un bouton</div><div style="font-size: 12.5px; color: #6d675e; line-height: 1.45">Quatre poses — repos, survolé, appuyé, éteint — pas de direction, et des bords qui s'étirent.</div></div>
+    </div>
+
+    <div class="rt" style="margin-bottom: 10px">Les outils que ça réclame, et qui n'existent nulle part</div>
     <table class="sp">
-      <tr><th style="width: 168px">La famille</th><th style="width: 360px">Ce qu'un sujet y possède</th><th>Les outils qu'elle apporte</th></tr>
-      <tr><td class="m">Les personnages</td><td>des poses, des directions, des animations, des emplacements de corps, de l'équipement porté</td><td class="x">le plan de poses · le vestiaire · l'essai en mouvement · la comparaison avec un autre</td></tr>
-      <tr><td class="m">Les objets</td><td>une image, parfois quelques variantes ; une échelle qui dit s'il est posé, tenu, ou meuble</td><td class="x">le choix de l'échelle · la mise en regard avec un personnage</td></tr>
-      <tr><td class="m">Les décors</td><td>un point d'accroche, une zone où l'on ne marche pas, un devant et un derrière</td><td class="x">la mise à l'échelle sur une silhouette · le réglage du passage</td></tr>
-      <tr><td class="m">Les terrains</td><td>des carreaux qui se répètent sans qu'on voie la jointure</td><td class="x">la vérification de couture · la construction d'une carte</td></tr>
-      <tr><td class="m">Les équipements</td><td>aucune image en propre — des emplois, et les images de chaque emploi</td><td class="x">le tableau des porteurs · les calques par pose et par direction · l'icône</td></tr>
-      <tr><td class="m">L'interface</td><td>des états : au repos, survolé, appuyé, éteint</td><td class="x">la planche des états · l'essai sur un fond de jeu</td></tr>
+      <tr><th style="width: 250px">L'outil</th><th style="width: 300px">Pour quoi</th><th>Aujourd'hui</th></tr>
+      <tr><td class="m">Ajouter des poses à un sujet</td><td>un feu de camp, une porte, un coffre — trois états, pas six</td><td class="x">le plan de poses vaut pour tout le jeu, on ne peut pas en donner à un seul sujet</td></tr>
+      <tr><td class="m">Animer autre chose qu'un personnage</td><td>l'eau, le feu, les ailes du moulin, une icône qui clignote</td><td class="x">rien ne l'empêche côté serveur, aucun écran ne le propose</td></tr>
+      <tr><td class="m">Poser un calque sur un décor</td><td>la neige sur le moulin, la mousse sur une pierre</td><td class="x">les calques sont réservés à l'équipement porté</td></tr>
+      <tr><td class="m">Étirer les bords d'un élément d'interface</td><td>un cadre de dialogue qui s'adapte au texte</td><td class="x">n'existe pas</td></tr>
+      <tr><td class="m">Bâtir une carte de terrain</td><td>poser des tuiles côte à côte et voir les coutures</td><td class="x">on vérifie une tuile seule, jamais un ensemble</td></tr>
     </table>
   </div>
 
   <!-- ═══ 4. CE QU'ON N'ÉCRIT PAS ═══ -->
   <div class="sec bloc">
     <h2 class="tt">Ce qu'on n'écrit pas</h2>
-    <p class="st">À gauche, les mots qui traînent dans les outils de jeu et dans le code. À droite, ce qu'on écrit à la place. Aucun mot anglais n'apparaît à l'écran.</p>
+    <p class="st">À gauche, les mots qui traînent dans les outils de jeu et dans le code. À droite, ce qu'on écrit à la place.</p>
 
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 46px">
       <div>
         <div class="no"><b>asset</b><span>un sujet, ou une image, selon ce qu'on désigne</span></div>
         <div class="no"><b>sprite</b><span>une image</span></div>
-        <div class="no"><b>tile · tileset</b><span>un carreau · un terrain</span></div>
+        <div class="no"><b>tileset</b><span>un terrain</span></div>
         <div class="no"><b>layer</b><span>un calque</span></div>
-        <div class="no"><b>prompt</b><span>ce qui part au modèle</span></div>
         <div class="no"><b>batch</b><span>un lot</span></div>
         <div class="no"><b>canvas</b><span>la toile</span></div>
         <div class="no"><b>item · entity</b><span>un sujet</span></div>
@@ -179,11 +221,15 @@
         <div class="no"><b>chose</b><span>un sujet — le mot a servi, il ne sert plus</span></div>
         <div class="no"><b>projet</b><span>un jeu</span></div>
         <div class="no"><b>catégorie · dossier · tag</b><span>une collection</span></div>
-        <div class="no"><b>frame</b><span>une image de l'animation</span></div>
+        <div class="no"><b>appel · requête</b><span>une génération</span></div>
         <div class="no"><b>slot</b><span>un emplacement</span></div>
-        <div class="no"><b>génération</b><span>un appel</span></div>
         <div class="no"><b>upscale · downscale</b><span>agrandir · réduire</span></div>
       </div>
+    </div>
+
+    <div class="carte" style="margin-top: 22px; padding: 15px 18px; max-width: 820px">
+      <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px">Les deux mots anglais qu'on garde</div>
+      <div style="font-size: 12.5px; color: #4e483f; line-height: 1.55"><strong>prompt</strong> et <strong>frame</strong>. Ils sont courts, tout le monde les comprend, et leur traduction française est plus longue et moins claire — « ce qui part au modèle », « une image de l'animation ». Ce sont les seules exceptions, et on ne les élargit pas.</div>
     </div>
   </div>
 

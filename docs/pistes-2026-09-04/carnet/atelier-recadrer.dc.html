@@ -1,0 +1,516 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .img { background: #6c6c6c; border-radius: 8px; position: relative; overflow: hidden;
+           display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3200px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1000px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › au repos › Retoucher</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">Recadrer</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">couper les bords, centrer le sujet, changer le cadre</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 210px">Gratuit.</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1180px">
+    Le modèle rend le pélerin tout petit au milieu d'une image de 1024 sur 1024 : les trois quarts du fichier ne contiennent rien. Recadrer coupe ce vide et ramène le pélerin contre les bords de sa propre image. C'est ce qui permet à l'étape suivante de le mettre à la bonne taille : sans ce geste, un pélerin cadré large et un garde cadré serré sortiraient à deux échelles différentes dans le même jeu.
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
+
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
+      <div class="rt" style="padding: 0 9px">La chaîne</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Détourer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le fond magenta part</div>
+        </div>
+        <div class="plc" style="background: #e6dfd2; font-weight: 600; flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Recadrer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les bords vides sautent</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Réduire</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Couleurs</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la palette du monde</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Nettoyer</span><span style="color: #b0a89b; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les pixels isolés</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Le contour</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le trait de bord retracé</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>La main</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">ce qu’on repeint soi-même</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Retourner</span><span style="color: #a8492c; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les autres directions</div>
+        </div>
+      </div>
+      <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: #6d675e">
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #5c7a52; font-size: 15px; line-height: 1">●</span> posée, elle agit</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #b0a89b; font-size: 15px; line-height: 1">●</span> endormie, réglages gardés</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #c9c2b6; font-size: 15px; line-height: 1">●</span> rien à faire ici</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #a8492c; font-size: 15px; line-height: 1">●</span> n’existe pas encore</div>
+      </div>
+    </div>
+
+    <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="font-size: 15px; font-weight: 600">Le pélerin, au repos — le cadre</div>
+        <div class="seg"><div class="sg">Avant</div><div class="sg sg-on">Les deux</div><div class="sg">Après</div></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 330px">
+        <div class="img" style="background: #ff00ff">
+          <i class="fig" style="width: 62px; height: 158px"></i>
+          <i style="position: absolute; left: 50%; bottom: 27%; transform: translateX(-50%); width: 108px; height: 26px; border-radius: 50%; background: #4a3f30; opacity: .85"></i>
+          <div style="position: absolute; left: 27%; top: 14%; right: 27%; bottom: 30%; border: 1px solid rgba(255,253,250,.95); box-shadow: 0 0 0 999px rgba(0,0,0,.42)"></div>
+          <div style="position: absolute; left: 27%; top: 14%; right: 27%; bottom: 30%; margin: -6px; border: 1px dashed rgba(255,253,250,.5)"></div>
+          <i style="position: absolute; left: 27%; top: 14%; width: 7px; height: 7px; background: #fffdfa; transform: translate(-50%,-50%)"></i>
+          <i style="position: absolute; right: 27%; top: 14%; width: 7px; height: 7px; background: #fffdfa; transform: translate(50%,-50%)"></i>
+          <i style="position: absolute; left: 27%; bottom: 30%; width: 7px; height: 7px; background: #fffdfa; transform: translate(-50%,50%)"></i>
+          <i style="position: absolute; right: 27%; bottom: 30%; width: 7px; height: 7px; background: #fffdfa; transform: translate(50%,50%)"></i>
+          <span style="position: absolute; right: 12px; bottom: 30%; margin-bottom: 6px; background: #fffdfa; border-radius: 4px; padding: 2px 7px; font-size: 11px">l’ombre reste dehors</span>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #e8e2d6">ce qui est arrivé · 76 % de vide</span>
+        </div>
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7">
+          <i class="fig" style="width: 96px; height: 244px"></i>
+          <span style="position: absolute; left: 10px; top: 9px; font-size: 11.5px; color: #4e483f">le cadre tracé · 312 × 740</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">312 × 740</span><span style="color: #948c80">ce qui sort</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">76 %</span><span style="color: #948c80">jeté</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #a8492c">84 px</span><span style="color: #948c80">coupés en bas</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">58</span><span style="color: #948c80">carrés de haut au lieu de 41</span></span>
+      </div>
+      <div style="font-size: 12px; color: #6d675e; line-height: 1.45">Pendant qu’on tire le rectangle, rien n’est demandé au serveur : le rectangle, les bandes assombries et les trois nombres sont dessinés à l’écran. Le calcul ne part qu’au relâchement.</div>
+    </div>
+
+    <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Ce qu’on garde</div>
+      <div class="seg" style="width: 100%"><div class="sg" style="flex: 1; text-align: center">la boîte du sujet</div><div class="sg sg-on" style="flex: 1; text-align: center">une boîte tracée</div></div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Le second ne se choisit pas au clic : on trace sur l’image et il bascule au relâchement.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #b0a89b">marge</span>
+          <span class="mono" style="font-size: 12px; color: #b0a89b">0 px</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: #ddd5c8; border-radius: 2px"></i>
+          <i style="position: absolute; left: 0%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #ddd5c8"></i>
+        </div>
+        <div style="font-size: 11px; color: #948c80; line-height: 1.4">Grisée : une case de 64 est posée. Mesuré le 30 août — marge 0 et marge 40 rendent le même fichier à l’octet près. C’est « hauteur » qui donne l’air autour du sujet.</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
+        <span>format</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">libre</div><div class="sg" style="padding: 3px 8px">carré</div><div class="sg" style="padding: 3px 8px">2:1</div></div>
+      </div>
+      <div style="font-size: 11px; color: #8a5a2c; margin-top: -4px">à ajouter — aujourd’hui le rectangle part en losange</div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #8a3f33">Ce rectangle a été tracé avant la dernière retouche du détourage</div>
+        <div style="font-size: 11.5px; line-height: 1.45; color: #4e483f">Il est figé dans l’image d’origine et ne suit pas la silhouette. Il tombe peut-être à côté.</div>
+        <div class="bt" style="height: 30px; font-size: 12px">Le retracer</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les moteurs</span> <span style="font-size: 13.5px; color: #6d675e">— 7 sont là, 6 restent à ajouter</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Un seul agit à la fois. Changer de moteur ne perd pas les réglages de l’autre.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La boîte du sujet</div><span class="puce p-ok">posé d’emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le calcul cherche le plus petit rectangle qui contient tout ce qui n'est pas transparent, et coupe dessus. Le pélerin touche alors les quatre bords de sa propre image : plus une seule bande vide autour de lui. Le rectangle se recalcule à chaque fois qu'on retouche le détourage — corriger le fond magenta déplace le cadrage aussitôt.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Presque toujours. C'est ce que l'écran pose tout seul dès qu'un pélerin, un garde ou une grenouille entre dans la bibliothèque.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Une boîte tracée à la main</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On appuie sur l'image, on tire, on relâche : un rectangle clair apparaît, tout ce qui part est assombri sans être caché — on voit ce qu'on coupe. Sur le pélerin, arrêter le rectangle au-dessus de l'ombre le fait remonter de 84 px et il ressort 40 % plus grand dans sa case. Le rectangle est figé dans l'image d'origine : il ne bouge plus, même si le détourage change.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand le calcul garde quelque chose qu'on ne veut pas — l'ombre portée sous le pélerin, l'auréole d'une lanterne — ou qu'on veut garder du fond que rien ne rend opaque.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La case du jeu</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le sujet est reposé au milieu d'une case carrée de 64 px, centré à gauche-droite et posé sur le bord bas. C'est ce moteur-là qui met la grenouille et le moulin à la même finesse de pixel. Attention : il refait le calcul de la boîte pour son compte, donc il avale la marge du recadrage — c'est mesuré, marge 0 et marge 40 rendent le même fichier à l'octet près.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Dès qu'une taille de pixel est déclarée. C'est l'étape juste après, et c'est elle qui décide vraiment du cadre final.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Plein cadre — aucun recadrage</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Rien n'est coupé. L'image entière est simplement ramenée à la bonne taille en gardant ses proportions. Enfermer une berge 16:9 dans une case carrée lui ajouterait des bandes vides que personne n'a demandées.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Pour une tuile de terrain : l'herbe de marais remplit son image de bord à bord, il n'y a pas de silhouette à cadrer.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le cadre commun à toutes les frames</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un seul rectangle, calculé sur toutes les frames à la fois, sert à chacune. Sans lui, le garde fait 37 px de large au repos et 41 en marchant : il grandit et rapetisse de 10 % en se mettant à marcher, et on le voit respirer. Avec lui, il ne bouge plus d'un pixel.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Dès qu'on cadre plusieurs frames d'une même marche, ou les six attitudes du garde. Existe dans le code mais uniquement dans l'écran de montage — l'écran Recadrer ne l'offre pas.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Les zones trouvées toutes seules</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le calcul entoure chaque forme d'un seul tenant et propose un rectangle par sujet, numérotés dans l'ordre de lecture. Deux morceaux séparés de moins de 2 px — un bâton détaché de la main — sont recollés en un seul sujet.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Sur une planche où le modèle a rendu le pélerin, le garde et la grenouille côte à côte sur le même fond magenta. Existe dans le code, mais seulement dans l'écran Découpage.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La grille régulière</div><span class="puce p-ok">existe</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'image est coupée en colonnes × lignes égales. Le reste de la division se répartit au lieu de se perdre : une planche de 1000 px en 3 colonnes donne 334, 333 et 333, et la dernière case va bien jusqu'au dernier pixel.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Sur une planche bien rangée dont les sujets se touchent, ou qui a des cases volontairement vides.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Un cadre de taille imposée</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On tape la taille de sortie et le sujet vient se loger dedans, agrandi ou réduit pour tenir. Toutes les images de la famille sortent au même format sans qu'on ait à surveiller quoi que ce soit.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand on veut exactement 64 × 64, ou 32 × 48, quoi que contienne l'image. Manque aujourd'hui.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le format verrouillé</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Pendant qu'on tire le rectangle, il refuse de sortir du format choisi : il glisse et s'ajuste au lieu de partir en losange. On cadre à la vue sans jamais rattraper deux pixels après coup.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand on trace à la main mais qu'on veut un carré parfait, ou du 2 pour 1 pour une bannière. Manque aujourd'hui.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le cadre calé sur un multiple</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les bords du rectangle sautent de 16 en 16 pendant qu'on tire : impossible de rendre une tuile de 63 px qui décalerait tout le sol du marais d'un pixel.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Pour les tuiles d'herbe de marais, qui doivent tomber sur des carreaux de 16 ou 32. Manque aujourd'hui.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Centré sur la masse du sujet</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Aujourd'hui le centrage se fait sur le rectangle, donc la hallebarde tire le corps de six pixels sur le côté dans une case de soixante-quatre. Centré sur la masse, c'est le corps qui reste au milieu et la hallebarde qui dépasse — comme l'œil s'y attend.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Sur un garde qui tend sa hallebarde loin sur le côté. Manque aujourd'hui.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Calé sur la ligne de pied</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On désigne une fois la ligne où les pieds touchent le sol, et chaque frame se cale dessus. Le pélerin cesse de flotter d'un pixel au-dessus de l'herbe quand il change d'attitude.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Sur tous les personnages du marais, dès qu'ils doivent marcher sur le même sol. Manque aujourd'hui.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Rogner un bord de couleur unie</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le liseré de couleur unie disparaît sans qu'on ait besoin de détourer d'abord. Aujourd'hui, sur une image sans transparence, l'écran est grisé et affiche qu'il n'y a rien à cadrer.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Sur une image importée qui n'a jamais été détourée et qui porte une bordure magenta ou blanche. Manque aujourd'hui.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les réglages</span> <span style="font-size: 13.5px; color: #6d675e">— 16 en tout</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Les lignes sur fond clair n’existent pas encore.</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 210px 330px 240px minmax(0,1fr)">
+      <div class="ent">le réglage</div><div class="ent">ce qu’il règle</div><div class="ent">sa plage</div><div class="ent">ce qu’on voit changer</div>
+        <div><span style="font-weight: 600">ce qu'on garde</span> </div>
+        <div style="color: #4e483f">Deux valeurs : la boîte du sujet, qui est mesurée, ou une boîte tracée, qui est posée à la main. Une seule agit.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">la boîte du sujet · une boîte tracée<br><span style="color: #948c80">par défaut : la boîte du sujet</span></div>
+        <div style="color: #4e483f">Le second segment ne se choisit pas au clic : on trace sur l'image et il bascule tout seul au relâchement. Revenir au premier jette le rectangle et rend le calcul.</div>
+        <div><span style="font-weight: 600">le rectangle, sur l'image</span> </div>
+        <div style="color: #4e483f">Les quatre bords de ce qu'on garde, tracés directement sur l'image d'origine.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">n'importe où dans l'image · sous 3 px de côté le geste efface au lieu de poser<br><span style="color: #948c80">par défaut : aucun rectangle</span></div>
+        <div style="color: #4e483f">Un rectangle clair avec quatre poignées de coin, et tout ce qui part assombri sans être masqué : on voit l'ombre du pélerin qu'on est en train de couper. Tracer un second rectangle remplace le premier, il ne s'ajoute pas.</div>
+        <div><span style="font-weight: 600">marge</span> </div>
+        <div style="color: #4e483f">Combien de pixels de l'image d'origine sont gardés autour de ce qu'on garde.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 64 px<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">Un liseré tireté s'écarte du rectangle. Elle est rognée aux bords de l'image : un pélerin à 3 px du haut avec une marge de 12 rend 3 px en haut et 12 en bas — il n'est plus au centre. Et elle devrait être grisée dès qu'une case est posée : aujourd'hui le curseur reste actif et n'a aucun effet : mesuré le 30 août, marge 0 et marge 40 rendent le même fichier à l'octet près.</div>
+        <div style="background: #faf7f1"><span style="font-weight: 600">marge par côté</span> <span class="puce p-a">à ajouter</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Quatre nombres au lieu d'un : haut, bas, gauche, droite.</div>
+        <div style="background: #faf7f1" class="mono" style="font-size: 11.5px; color: #6d675e">0 à 64 px chacun<br><span style="color: #948c80">par défaut : 0 partout, liés entre eux</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">On donne de l'air sous les pieds du pélerin sans en donner au-dessus de son capuchon.</div>
+        <div style="background: #faf7f1"><span style="font-weight: 600">marge en part du sujet</span> <span class="puce p-a">à ajouter</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">La marge exprimée en pourcentage du côté du sujet plutôt qu'en pixels de l'image reçue.</div>
+        <div style="background: #faf7f1" class="mono" style="font-size: 11.5px; color: #6d675e">0 à 25 %<br><span style="color: #948c80">par défaut : 0 %</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Douze pixels ne veulent pas dire la même chose sur une image de 512 et sur une de 2048 ; dix pour cent, si. La même valeur donne le même air autour du pélerin quelle que soit la taille rendue par le modèle.</div>
+        <div style="background: #faf7f1"><span style="font-weight: 600">format</span> <span class="puce p-a">à ajouter</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Le rapport largeur/hauteur imposé pendant qu'on trace.</div>
+        <div style="background: #faf7f1" class="mono" style="font-size: 11.5px; color: #6d675e">libre · carré · 2 pour 1 · 3 pour 4<br><span style="color: #948c80">par défaut : libre</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Le rectangle refuse de sortir du format : il glisse le long de l'image au lieu de s'allonger.</div>
+        <div style="background: #faf7f1"><span style="font-weight: 600">caler sur un multiple</span> <span class="puce p-a">à ajouter</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Les bords du rectangle sautent de N en N.</div>
+        <div style="background: #faf7f1" class="mono" style="font-size: 11.5px; color: #6d675e">aucun · 8 · 16 · 32<br><span style="color: #948c80">par défaut : aucun</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Pour l'herbe de marais : impossible de rendre une tuile de 63 px qui décalerait tout le sol d'un pixel.</div>
+        <div><span style="font-weight: 600">cible</span> </div>
+        <div style="color: #4e483f">Le côté de la case, en pixels — la finesse de tout le jeu.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">8 · 16 · 24 · 32 · 48 · 64 · 96 · 128 · 256 · 512<br><span style="color: #948c80">par défaut : 64</span></div>
+        <div style="color: #4e483f">Le pélerin passe de 32 carrés bien lisibles à 128 carrés où l'on distingue les plis de sa robe. C'est le réglage le plus visible de la chaîne.</div>
+        <div><span style="font-weight: 600">hauteur</span> </div>
+        <div style="color: #4e483f">La part de la case que le sujet remplit — c'est ce qui donne l'air autour de lui, et l'échelle relative entre sujets.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">10 % à 800 % sur une case de 64 · le plafond descend à 400 % sur une case de 512<br><span style="color: #948c80">par défaut : 100 %</span></div>
+        <div style="color: #4e483f">La grenouille à 20 % fait 13 carrés dans la case du pélerin ; le moulin à 300 % en fait trois de haut. Le curseur ne s'arrête qu'aux crans qui changent vraiment l'image — une trentaine des positions du curseur.</div>
+        <div><span style="font-weight: 600">ancrage</span> </div>
+        <div style="color: #4e483f">Où le sujet se pose dans sa case quand il ne la remplit pas dans les deux sens.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">bas · centre<br><span style="color: #948c80">par défaut : bas</span></div>
+        <div style="color: #4e483f">Sur « bas », le pélerin se tient debout sur le bord bas — deux frames posées au centre flotteraient l'une par rapport à l'autre. Sur « centre », il est à mi-hauteur, ce qui convient à un objet qui vole ou à une tuile.</div>
+        <div style="background: #faf7f1"><span style="font-weight: 600">ancrage sur les quatre côtés</span> <span class="puce p-a">à ajouter</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Haut, gauche et droite en plus de bas et centre.</div>
+        <div style="background: #faf7f1" class="mono" style="font-size: 11.5px; color: #6d675e">haut · bas · gauche · droite · centre<br><span style="color: #948c80">par défaut : bas</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Un panneau d'interface accroché en haut à gauche de son cadre, sans qu'on ait à décaler à la main.</div>
+        <div><span style="font-weight: 600">décalage</span> </div>
+        <div style="color: #4e483f">Pousser le sujet à gauche ou à droite dans sa case, en pixels de la case. Existe dans la recette mais n'est écrit que par le calibrage — aucun écran ne le montre.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">borné à ce qui reste de place dans la case<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="color: #4e483f">Rattrape la dérive du garde dont la hallebarde tirait le corps de six pixels sur le côté. Aux bords, le curseur cesse d'avoir un effet plutôt que de couper l'image en silence.</div>
+        <div style="background: #faf7f1"><span style="font-weight: 600">décalage vertical</span> <span class="puce p-a">à ajouter</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">La même chose de haut en bas.</div>
+        <div style="background: #faf7f1" class="mono" style="font-size: 11.5px; color: #6d675e">borné à ce qui reste de place<br><span style="color: #948c80">par défaut : 0</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Le pélerin descend d'un ou deux pixels pour que ses pieds tombent exactement sur la ligne du sol.</div>
+        <div style="background: #faf7f1"><span style="font-weight: 600">la ligne de pied</span> <span class="puce p-a">à ajouter</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">La hauteur où les pieds touchent le sol, désignée sur l'image.</div>
+        <div style="background: #faf7f1" class="mono" style="font-size: 11.5px; color: #6d675e">n'importe quelle ligne de l'image<br><span style="color: #948c80">par défaut : non posée</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Un trait horizontal apparaît sur l'image ; toutes les frames viennent se caler dessus. Le pélerin ne flotte plus en changeant d'attitude.</div>
+        <div style="background: #faf7f1"><span style="font-weight: 600">appliquer à la collection</span> <span class="puce p-a">à ajouter</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Poser le même cadre sur toutes les images cochées.</div>
+        <div style="background: #faf7f1" class="mono" style="font-size: 11.5px; color: #6d675e">les images de la collection ouverte<br><span style="color: #948c80">par défaut : décoché</span></div>
+        <div style="background: #faf7f1" style="color: #4e483f">Les six attitudes du garde reçoivent le même rectangle d'un coup, au lieu de six tracés à la main. À manier avec une prévisualisation : un rectangle posé à l'aveugle coupe un bras sans qu'on le voie tout de suite.</div>
+        <div><span style="font-weight: 600">endormir cette place</span> </div>
+        <div style="color: #4e483f">Retirer le recadrage du calcul sans perdre ses réglages.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">posée · endormie<br><span style="color: #948c80">par défaut : posée</span></div>
+        <div style="color: #4e483f">L'image revient à son cadrage d'origine, magenta compris. Toucher n'importe quel réglage la rallume, et l'écran le dit au lieu de le faire en silence.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span class="h2">Pendant le calcul</span>
+    <div style="display: grid; grid-template-columns: 340px minmax(0,1fr) 250px; gap: 16px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">combien de temps</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le recadrage lui-même ne se mesure pas : couper un rectangle dans une image est instantané, moins d'un millième de seconde. Ce qu'on attend vraiment, c'est le reste de la chaîne qui se rejoue derrière — environ 30 ms quand le détourage est déjà en mémoire, environ 160 ms la première fois sur une image (130 ms de détourage, 28 ms pour les cinq autres étapes), et 1 à 2 secondes si le détourage doit repasser par un modèle de silhouette (0,65 s pour le plus rapide, 1,33 s pour le plus fin).</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">ce qu’on montre à l’écran</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Aujourd'hui : rien. L'image est simplement remplacée quand la réponse arrive. Ce qu'il faut montrer, dans cet ordre : pendant qu'on tire le rectangle, tout est dessiné à l'écran sans rien demander au serveur — le rectangle clair, les quatre bandes assombries sur ce qu'on jette, le liseré tireté de la marge, et les trois nombres qui changent en direct (344 × 740 · 76 % jeté · coupe le sujet, 84 px en bas). Au relâchement, l'image cadrée arrive presque toujours avant qu'on ait eu le temps de le remarquer ; si elle tarde plus de trois dixièmes de seconde, un mince trait de progression apparaît sous l'image, et l'ancienne image reste visible en attendant — jamais de vide, jamais de damier clignotant. Quand c'est le détourage qui doit repasser par un modèle, on le dit avec des mots : « on redemande la silhouette au modèle, 1 à 2 s », et la silhouette actuelle pulse doucement pour montrer que c'est elle qu'on recalcule.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt">peut-on annuler</div>
+        <div style="font-size: 20px; color: #8a3f33">Non, aucun calcul</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Vérifié dans le code : rien n’interrompt un calcul en route. Ce qu’on peut défaire, c’est un réglage — Échap efface le geste, Ctrl+Z revient en arrière. Sur des calculs de 30 à 160 ms ça ne se remarque pas ; sur une silhouette demandée à un modèle, 1 à 2 s, ça se remarque.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">11 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s’est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu’on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le détourage a mangé tout le sujet — tolérance trop haute sur un pélerin dont la robe brune est proche du magenta au bord.</div>
+        <div style="color: #8a3f33">L'image ne change pas du tout. Le recadrage refuse de rendre une image vide, donc il rend l'image entière et se tait. La ligne « % jeté » affiche 0 %.</div>
+        <div style="color: #4e483f">Remonter d'une table, dans Détourage, et redescendre la tolérance d'un ou deux crans. La boîte du sujet se remesure toute seule.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On bouge la marge de 0 à 40 alors qu'une case de 64 est posée — c'est-à-dire dans le cas normal.</div>
+        <div style="color: #8a3f33">Absolument rien. Le fichier qui sort est le même à l'octet près : la case refait elle-même la recherche du sujet et avale les pixels transparents que la marge avait gardés.</div>
+        <div style="color: #4e483f">Ne pas insister : c'est « hauteur » qui donne l'air autour du sujet quand une case est posée. Le réglage doit être grisé avec sa raison et un lien vers la bonne table, pas laissé actif à faire croire qu'il règle quelque chose.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On trace un rectangle plus large que le pélerin, pour « garder un peu de fond ».</div>
+        <div style="color: #8a3f33">Le rendu ne bouge pas. La ligne sous le rectangle dit : plus large que le sujet · sans effet sur le rendu.</div>
+        <div style="color: #4e483f">Accepter, ou tracer un rectangle qui coupe vraiment. Un cadre n'agit que quand il mord dans le sujet.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">L'ombre portée du pélerin est restée opaque après le détourage — le modèle l'a peinte, elle n'a aucune raison de partir.</div>
+        <div style="color: #8a3f33">Le cadrage descend 84 px trop bas. Une fois dans la case, le pélerin est réduit pour tenir avec son ombre : il fait 41 carrés de haut au lieu de 58, et il paraît petit et flou à côté du garde.</div>
+        <div style="color: #4e483f">Tracer une boîte qui s'arrête au-dessus de l'ombre. La zone assombrie montre l'ombre qu'on coupe pendant qu'on tire.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le modèle a peint le capuchon du pélerin contre le bord haut de l'image de 1024.</div>
+        <div style="color: #8a3f33">Une phrase sous le rectangle : le sujet touche le bord haut de l'image d'origine. La marge vaut zéro de ce côté-là, donc le pélerin n'est pas au centre de son image cadrée.</div>
+        <div style="color: #4e483f">Rien ne se répare ici : il faut relancer une génération. L'écran le dit tôt, avant qu'on ait bâti quatre attitudes sur cette image.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le rectangle tracé coupe la hallebarde du garde, sans qu'on l'ait vu au moment du geste.</div>
+        <div style="color: #8a3f33">Le garde ressort avec une arme sectionnée net, et rien ne le signale — le cadrage est parfaitement propre par ailleurs.</div>
+        <div style="color: #4e483f">Suppr, ou un simple clic dans l'image : la boîte du sujet revient et le segment rebascule.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On retouche le détourage après avoir tracé un rectangle.</div>
+        <div style="color: #8a3f33">Le rectangle ne bouge pas — il est figé dans les coordonnées de l'image d'origine — mais le sujet, lui, a changé de forme. Le cadrage tombe à côté.</div>
+        <div style="color: #4e483f">Retracer. L'écran prévient : « ce rectangle a été tracé avant la dernière retouche du détourage ».</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On applique au garde une recette nommée mise au point sur le pélerin, ou on colle les réglages d'une image sur une autre.</div>
+        <div style="color: #8a3f33">La marge suit, le rectangle tracé non. Le cadrage revient à la boîte du sujet sans qu'on l'ait demandé.</div>
+        <div style="color: #4e483f">C'est voulu : quatre coordonnées ne veulent rien dire sur une autre image. L'écran affiche déjà la liste de ce qui n'a pas voyagé : « le cadre tracé à la main est resté sur l'autre image ».</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On cadre les six attitudes du garde une par une, chacune sur sa propre boîte.</div>
+        <div style="color: #8a3f33">Le garde grandit et rapetisse en marchant : 37 px de large au repos, 41 en marchant, soit 10 % de plus. Vu en vignettes séparées, on ne voit rien ; vu en animation, il respire.</div>
+        <div style="color: #4e483f">Utiliser un cadre commun à toutes les frames, ou passer par le calibrage qui donne une hauteur commune à toutes les attitudes.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le rectangle tracé ne contient rien d'opaque — un clic parti dans le fond magenta.</div>
+        <div style="color: #8a3f33">Une image vide, aux dimensions du rectangle. Le calcul rend le vide plutôt que de refuser : l'erreur se voit tout de suite.</div>
+        <div style="color: #4e483f">Retracer sur le sujet.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On ouvre la table sur une image importée qui n'a jamais été détourée — un moulin trouvé ailleurs, sans transparence.</div>
+        <div style="color: #8a3f33">L'écran est grisé, avec sa raison : rien n'est transparent sur cette image, il n'y a pas de silhouette à cadrer.</div>
+        <div style="color: #4e483f">Détourer d'abord ; l'écran se rallume. Un rectangle tracé pendant qu'elle était grisée est toujours là, à ses coordonnées.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd’hui</span>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px">
+        <li style="margin-bottom: 6px">Aucune saisie des quatre coordonnées, aucune poignée de bord : le rectangle se retrace entièrement, il ne se rectifie pas au pixel. Deux pixels à reprendre à droite obligent à tout refaire.</li>
+        <li style="margin-bottom: 6px">La marge est un seul nombre pour les quatre côtés. On ne peut pas donner de l'air sous les pieds du pélerin sans en donner au-dessus de son capuchon.</li>
+        <li style="margin-bottom: 6px">La marge est en pixels de l'image reçue, jamais en part du sujet. Douze pixels ne veulent pas dire la même chose sur une image de 512 et sur une de 2048.</li>
+        <li style="margin-bottom: 6px">Aucun verrou de format pendant le tracé — ni carré, ni 2 pour 1. On rattrape à l'œil, ou on retrace.</li>
+        <li style="margin-bottom: 6px">Aucun calage sur un multiple de 8, 16 ou 32. Pour l'herbe de marais, rien n'empêche de rendre une tuile de 63 px qui décalera tout le sol d'un pixel.</li>
+        <li style="margin-bottom: 6px">Aucune taille de sortie imposée. On ne peut pas dire « je veux exactement 64 × 64 » : on décrit une part de case et on espère.</li>
+        <li style="margin-bottom: 6px">Le centrage se fait sur le rectangle, jamais sur la masse du sujet. La hallebarde du garde tire son corps de six pixels sur le côté, et on ne peut le rattraper qu'à la main, dans un autre écran.</li>
+        <li style="margin-bottom: 6px">Le décalage n'existe qu'à l'horizontale, et n'est écrit que par le calibrage : aucun écran ne le montre, on ne peut pas descendre le pélerin d'un pixel.</li>
+        <li style="margin-bottom: 6px">Pas de ligne de pied. Rien ne permet de dire « les pieds sont ici » et de caler toutes les attitudes dessus.</li>
+        <li style="margin-bottom: 6px">L'ancrage n'offre que bas et centre. Ni haut, ni gauche, ni droite — un panneau d'interface accroché en haut à gauche n'est pas cadrable.</li>
+        <li style="margin-bottom: 6px">Le cadre commun à plusieurs frames existe dans le code mais n'est offert que dans l'écran de montage. L'écran Recadrer, elle, cadre toujours une image seule.</li>
+        <li style="margin-bottom: 6px">Un cadre tracé ne s'applique jamais à plusieurs images. Six attitudes du garde demandent six tracés — c'est assumé dans le code, mais aucune prévisualisation multiple ne vient adoucir la note.</li>
+        <li style="margin-bottom: 6px">Ni rotation, ni redressement, ni miroir. Une image rendue de travers ne se redresse pas ici.</li>
+        <li style="margin-bottom: 6px">Aucun rognage d'un bord de couleur unie : sans transparence, la table est grisée. Une image importée avec une bordure blanche doit d'abord passer par le détourage.</li>
+        <li style="margin-bottom: 6px">Aucun retour visuel pendant le calcul : l'image est remplacée quand la réponse arrive, sans un trait de progression ni un mot sur ce qui se recalcule.</li>
+        <li style="margin-bottom: 6px">Aucune annulation. Le tracé ne s'interrompt pas à l'échappement, et il n'y a pas d'historique — seulement « revenir à la boîte du sujet », qui jette tout.</li>
+        <li style="margin-bottom: 6px">Rien ne prévient qu'un rectangle a été tracé avant la dernière retouche du détourage, alors qu'il tombe alors à côté.</li>
+        <li style="margin-bottom: 6px">Aucune comparaison avant/après dans la table elle-même : le comparateur est ailleurs, dans le cadre commun, et il ne montre pas les deux cadrages côte à côte.</li>
+      </ul>
+    </div>
+    <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">avant / après</div>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Le pélerin en robe brune, tel que le modèle l'a rendu, et tel qu'il entre dans le jeu. Trois vues côte à côte, une seule image, une seule histoire.
+
+À GAUCHE — ce qui arrive du modèle. 1024 × 1024, fond magenta uni. Le pélerin se tient debout au milieu, occupant une bande de 312 × 824 : 76 % du fichier ne contient rien. Le modèle a peint une ombre portée à ses pieds, et son capuchon touche le bord haut. On surimprime en fin liseré le rectangle mesuré sur l'alpha — 356, 0 → 667, 823 — et la mention « mesurée sur l'alpha ».
+
+AU MILIEU — le cadrage automatique. 312 × 824. Le magenta a disparu, le pélerin touche les quatre bords. Mais l'ombre est entrée dans le rectangle et l'a tiré 84 px vers le bas. Une fois posé dans sa case de 64, il ne fait que 41 carrés de haut. Étiquette : « la boîte du sujet · 41 carrés ».
+
+À DROITE — le cadrage tracé. Le même geste, avec un rectangle arrêté au-dessus de l'ombre : 312 × 740. Dans la même case de 64, le pélerin fait 58 carrés de haut — 40 % plus grand, plus net, et il tient enfin la même échelle que le garde en armure posé à côté de lui pour comparaison. Étiquette : « une boîte tracée · 58 carrés · coupe le sujet, 84 px en bas ».
+
+Et un bandeau sous les trois, qui dit pourquoi tout ça compte : la grenouille verte à 20 % de la case (13 carrés), le pélerin à 100 % (64 carrés), le moulin à 300 % (192 carrés) — les trois cadrés par la même table, alignés sur la même herbe de marais. Sans recadrage, les trois seraient sortis à trois échelles au hasard, selon la place que le modèle avait bien voulu leur donner dans son image de 1024.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

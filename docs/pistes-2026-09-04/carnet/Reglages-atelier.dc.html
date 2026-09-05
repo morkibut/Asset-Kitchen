@@ -1,0 +1,236 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .rl-sub2 { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 34px; border-radius: 5px; font-size: 12.5px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
+    .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
+    .ong { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 7px; font-size: 13.5px; color: #6d675e; }
+    .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .seg { display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; }
+    .sg { height: 29px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; color: #6d675e; }
+    .sg-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .ch { height: 34px; display: flex; align-items: center; padding: 0 11px; border-radius: 7px; background: #fffdfa; border: 1px solid #ddd5c8; font-size: 13px; color: #221f1b; }
+    .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
+    .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 14px 14px; }
+    .vide { border: 1px dashed #c9c2b6; border-radius: 8px; }
+    .col { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 12.5px; background: #ece6db; color: #4e483f; }
+    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
+    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
+    .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
+    .lame::before { content: none }
+    .lame { border-radius: 1px 1px 2px 2px; box-shadow: inset 0 6px 0 var(--b) }
+
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+        <div class="serif" style="font-size: 25px; line-height: 1.15">Le Marais du Vieux Moulin</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div style="font-size: 12.5px; color: #6d675e">45 images · 12 poses sur 18</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
+      <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
+      <div class="rl"><span>Les équipements</span><span class="num">2</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
+      <div class="rl" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Son nom et son dossier</span></div>
+      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+      <div class="rl"><span>Ses types de sujets</span><span class="num">8 échelles</span></div>
+      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+      <div class="rl"><span>Son détourage de départ</span></div>
+      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+      <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
+    </div>
+    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 13px 10px 0; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Les réglages de l’atelier ne sont pas dans le carnet d’un jeu : ils s’ouvrent par le nom du jeu, tout en haut.</div>
+      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
+        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 13px">
+    <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80"><span style="color: #3d382f">Les réglages de l’atelier</span></div>
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <h1 class="serif" style="margin: 0; font-size: 36px; line-height: 1.05">Les réglages de l’atelier</h1>
+        <div style="font-size: 13px; color: #4e483f">L’application, pas le jeu. Ce qui est ici vaut pour tous les jeux, y compris ceux qu’on n’a pas encore commencés.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">Les clés</div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+        <div style="display: grid; grid-template-columns: 150px minmax(0,1fr) 120px 90px; gap: 14px; align-items: center; padding: 12px 14px">
+          <span style="font-size: 13px; font-weight: 600">OpenRouter</span>
+          <span class="mono" style="font-size: 12px; color: #948c80">sk-or-v1-··················································4f2a</span>
+          <span style="font-size: 12.5px; color: #5c7a52">49 modèles</span>
+          <span style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">Remplacer</a></span>
+        </div>
+        <div style="display: grid; grid-template-columns: 150px minmax(0,1fr) 120px 90px; gap: 14px; align-items: center; padding: 12px 14px; border-top: 1px solid #ece6db; color: #948c80">
+          <span style="font-size: 13px">Replicate</span>
+          <span style="font-size: 12.5px">aucune clé posée</span>
+          <span style="font-size: 12.5px">—</span>
+          <span style="text-align: right"><a href="#" style="font-size: 12.5px; text-decoration: none">Poser</a></span>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #6d675e">Les clés restent sur cette machine, dans un fichier que l’atelier ne montre jamais en clair. Une clé retirée n’efface aucune image déjà faite.</div>
+    </div>
+
+    <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 9px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+        <div class="rt">Le catalogue des modèles</div>
+        <span style="font-size: 12px; color: #6d675e">49 disponibles · 5 utilisés dans ce jeu</span>
+      </div>
+      <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; padding: 8px 14px; background: #f7f3ec; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase; color: #948c80">
+          <span>le modèle</span><span>ce qu’il fait par défaut</span><span style="text-align: right">par image</span><span style="text-align: right">son état</span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+          <span class="mono" style="font-size: 12px">google/gemini-2.5-flash-image</span>
+          <span style="font-size: 12.5px; color: #4e483f">Les personnages, les objets, les décors</span>
+          <span class="mono" style="font-size: 12.5px; text-align: right">$0,019</span>
+          <span style="font-size: 12px; text-align: right; color: #a8492c">posé d’emblée</span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+          <span class="mono" style="font-size: 12px">black-forest-labs/flux-1.1-pro</span>
+          <span style="font-size: 12.5px; color: #4e483f">Les terrains</span>
+          <span class="mono" style="font-size: 12.5px; text-align: right">$0,040</span>
+          <span style="font-size: 12px; text-align: right; color: #6d675e">disponible</span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+          <span class="mono" style="font-size: 12px">stability/sd-3.5-large</span>
+          <span style="font-size: 12.5px; color: #b0a89b">—</span>
+          <span class="mono" style="font-size: 12.5px; text-align: right">$0,065</span>
+          <span style="font-size: 12px; text-align: right; color: #6d675e">disponible</span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+          <span class="mono" style="font-size: 12px">openai/gpt-image-1</span>
+          <span style="font-size: 12.5px; color: #b0a89b">—</span>
+          <span class="mono" style="font-size: 12.5px; text-align: right">$0,190</span>
+          <span style="font-size: 12px; text-align: right; color: #6d675e">disponible</span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+          <span class="mono" style="font-size: 12px">bria/remove-background</span>
+          <span style="font-size: 12.5px; color: #4e483f">Le détourage par modèle</span>
+          <span class="mono" style="font-size: 12.5px; text-align: right">$0,004</span>
+          <span style="font-size: 12px; text-align: right; color: #6d675e">disponible</span>
+        </div>
+        <div style="padding: 10px 14px; border-top: 1px solid #ece6db"><a href="#" style="font-size: 12.5px; text-decoration: none">Les 44 autres ›</a></div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">Le dossier de travail</div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <div class="mono" style="flex: 1; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 9px 12px; font-size: 12px; color: #6d675e">C:\STOCKAGE\PROJET\_DEV\gag2\donnees</div>
+        <div class="bt" style="flex-shrink: 0">Changer…</div>
+      </div>
+      <div style="font-size: 12px; color: #6d675e">Toutes les images et tous les jeux vivent ici. 45 images, 4,2 Mo. Le changer déplace le dossier, il ne le vide pas.</div>
+    </div>
+
+    <div style="padding: 9px 0 15px; border-top: 1px solid #e2dbd0; display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 12.5px; color: #6d675e">
+      <span>Rien ici n’est propre à un jeu. Pour le marais, c’est la deuxième section du carnet.</span>
+      <span class="mono" style="font-size: 11.5px; color: #948c80">⌘⌥,</span>
+    </div>
+  </div>
+
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 13px; overflow: hidden">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div class="rt">Les jeux ouverts sur cette machine</div>
+    </div>
+
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div style="padding: 11px 13px; display: flex; flex-direction: column; gap: 2px; background: #f2ede4">
+        <span style="font-size: 13px; font-weight: 600">Le Marais du Vieux Moulin</span>
+        <span style="font-size: 11.5px; color: #6d675e">45 images · $1,55 · ouvert</span>
+      </div>
+      <div style="padding: 11px 13px; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #ece6db">
+        <span style="font-size: 13px">coeur de pierre — 01</span>
+        <span style="font-size: 11.5px; color: #6d675e">39 images · $0,27 · touché le 28 août</span>
+      </div>
+      <div style="padding: 11px 13px; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #ece6db">
+        <span style="font-size: 13px">Coeur de pierre</span>
+        <span style="font-size: 11.5px; color: #6d675e">aucune image · réglé puis laissé de côté</span>
+      </div>
+      <div style="padding: 11px 13px; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #ece6db; color: #948c80">
+        <span style="font-size: 13px">et trois autres</span>
+        <span style="font-size: 11.5px">Essai animation · vignettes · Bac à sable</span>
+      </div>
+      <div style="padding: 11px 13px; border-top: 1px solid #ece6db">
+        <a href="#" style="font-size: 12.5px; text-decoration: none">Commencer un jeu ›</a>
+      </div>
+    </div>
+
+    <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 13px; font-weight: 600">Les rendus gardés de côté</div>
+      <div style="display: grid; grid-template-columns: minmax(0,1fr) 70px; row-gap: 5px; font-size: 12.5px; align-items: baseline">
+        <span style="color: #4e483f">Images d’origine</span><span class="mono" style="text-align: right">4,2 Mo</span>
+        <span style="color: #4e483f">Rendus recalculables</span><span class="mono" style="text-align: right">11,8 Mo</span>
+        <span style="color: #4e483f">Silhouettes</span><span class="mono" style="text-align: right">0,9 Mo</span>
+      </div>
+      <div style="font-size: 11.5px; line-height: 1.45; color: #6d675e">Les rendus se refont tout seuls. Les vider libère 12 Mo et fait attendre 130 ms la prochaine fois qu’on ouvre une image.</div>
+      <div class="bt" style="height: 31px; font-size: 12.5px">Vider les rendus</div>
+    </div>
+
+    <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 13px; font-weight: 600">L’atelier</div>
+      <div style="display: grid; grid-template-columns: minmax(0,1fr) 90px; row-gap: 5px; font-size: 12.5px; align-items: baseline">
+        <span style="color: #4e483f">Version</span><span class="mono" style="text-align: right">2.1.0</span>
+        <span style="color: #4e483f">Le serveur</span><span style="text-align: right; color: #5c7a52">en marche</span>
+        <span style="color: #4e483f">Le pont MCP</span><span style="text-align: right; color: #5c7a52">branché</span>
+      </div>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px">
+      <div class="bt" style="height: 33px; justify-content: flex-start">Ouvrir le dossier de travail</div>
+      <div class="bt" style="height: 33px; justify-content: flex-start">Le guide</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

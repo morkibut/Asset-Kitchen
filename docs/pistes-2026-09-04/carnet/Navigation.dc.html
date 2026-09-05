@@ -21,6 +21,7 @@
     .st { font-size: 13.5px; color: #4e483f; line-height: 1.5; max-width: 820px; margin: 0 0 20px }
     .carte { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; }
     .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
     .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
     .kb { font-family: 'IBM Plex Mono', monospace; font-size: 11px; border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 6px; background: #fffdfa; color: #4e483f; white-space: nowrap }
     .cmd { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; align-items: center; gap: 10px; height: 32px; padding: 0 11px; border-radius: 6px; font-size: 13.5px }
@@ -47,13 +48,16 @@
   <!-- ═══ 1. LE CARNET ═══ -->
   <div class="sec bloc">
     <h2 class="tt">Le carnet, fermé</h2>
-    <p class="st">Dix-sept lignes. C'est l'état au repos : trois sections, et une seule ligne ouverte à la fois. En ouvrir une referme la précédente.</p>
+    <p class="st">Dix-sept lignes en tout : le nom du jeu, puis seize — quel que soit le nombre de sujets. C'est l'état au repos : trois sections, et une seule ligne ouverte à la fois. En ouvrir une referme la précédente. Sous les trois sections, le pied&nbsp;: deux boutons qui ne dépendent d'aucun jeu.</p>
 
     <div style="display: grid; grid-template-columns: 300px minmax(0,1fr); gap: 40px; align-items: start">
       <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 16px 12px; display: flex; flex-direction: column; gap: 16px">
         <div style="padding: 0 10px">
-          <div class="serif" style="font-size: 22px">Le Marais du Vieux Moulin</div>
-          <div style="font-size: 12px; color: #6d675e">41 images · 12 poses sur 18</div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <div class="serif" style="font-size: 22px">Le Marais du Vieux Moulin</div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+          <div style="font-size: 12px; color: #6d675e">45 images · 12 poses sur 18</div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 2px">
           <div class="rt" style="padding: 0 10px 5px">Ce que le jeu contient</div>
@@ -62,50 +66,536 @@
           <div class="rl"><span>Les décors</span><span class="num">1</span></div>
           <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
           <div class="rl"><span>L'interface</span><span class="num">1</span></div>
-          <div class="rl"><span>L'équipement</span><span class="num">2</span></div>
+          <div class="rl"><span>Les équipements</span><span class="num">2</span></div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 2px">
           <div class="rt" style="padding: 0 10px 5px">Ce qui s'applique à tout</div>
           <div class="rl"><span>Son nom et son dossier</span></div>
           <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
           <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
-          <div class="rl"><span>Ses types d'objets</span><span class="num">8 échelles</span></div>
+          <div class="rl"><span>Ses types de sujets</span><span class="num">8 échelles</span></div>
           <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
           <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
-          <div class="rl"><span>Ses mouvements</span><span class="num">aucun</span></div>
           <div class="rl"><span>Son détourage de départ</span></div>
           <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 2px">
           <div class="rt" style="padding: 0 10px 5px">Toutes les images</div>
-          <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+          <div class="rl"><span>La galerie</span><span class="num">45</span></div>
           <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
         </div>
+        <!-- pied -->
+        <div style="border-top: 1px solid #e2dbd0; padding: 11px 10px 0; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80"><span class="kb">&#8984;K</span><span>chercher, ou faire</span></div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
+            <span style="display: flex; align-items: center; gap: 7px"><span class="kb">?</span>Le guide</span>
+            <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> R&eacute;glages</span>
+          </div>
+        </div>
+        <!-- /pied -->
       </div>
 
       <div>
         <table class="sp">
           <tr><th style="width: 220px">La ligne</th><th style="width: 150px">Ce qu'elle ouvre</th><th>Sur quel écran on arrive</th></tr>
-          <tr><td>Les personnages</td><td>ses trois noms</td><td><strong>Une matrice</strong> — les choses en lignes, les six poses en colonnes</td></tr>
-          <tr><td style="padding-left: 18px; color: #6d675e">↳ un nom</td><td>—</td><td><strong>Une page</strong> — sa fiche, ses poses, son vestiaire, son aperçu</td></tr>
-          <tr><td>Les objets · Les décors</td><td>ses noms</td><td><strong>Une matrice</strong>, puis <strong>une page</strong> par chose</td></tr>
-          <tr><td>Les terrains</td><td>ses noms</td><td><strong>Une planche</strong> — le carreau et sa jointure</td></tr>
-          <tr><td>L'interface</td><td>ses noms</td><td><strong>Une matrice</strong> — les boutons et leurs états</td></tr>
-          <tr><td>L'équipement</td><td>ses deux pièces</td><td><strong>Une matrice</strong> — les pièces en lignes, les porteurs en colonnes</td></tr>
+          <tr><td>Les personnages</td><td>ses collections</td><td><strong>Une grille</strong> — tous ses sujets, avec ce qui leur manque</td></tr>
+          <tr><td style="padding-left: 18px; color: #6d675e">↳ une collection</td><td>ses sujets, 8 au plus</td><td><strong>La même grille</strong>, réduite à cette collection</td></tr>
+          <tr><td style="padding-left: 32px; color: #6d675e">↳ un sujet</td><td>—</td><td><strong>Une page</strong> — sa fiche, ses images, ses animations, son essai</td></tr>
+          <tr><td>Les objets · Les décors</td><td>ses collections</td><td><strong>Une grille</strong>, puis <strong>une page</strong> par sujet</td></tr>
+          <tr><td>Les terrains</td><td>ses collections</td><td><strong>Une grille</strong>, puis <strong>une planche</strong> — la tuile et sa jointure</td></tr>
+          <tr><td>L'interface</td><td>ses collections</td><td><strong>Une grille</strong>, puis <strong>une matrice</strong> — les boutons et leurs états</td></tr>
+          <tr><td>Les équipements</td><td>ses collections</td><td><strong>Une grille</strong>, puis <strong>la liste de ses emplois</strong></td></tr>
           <tr><td>Son nom et son dossier</td><td>—</td><td><strong>Une page</strong> de réglages</td></tr>
           <tr><td>Son allure</td><td>—</td><td><strong>Une page</strong> illustrée — style, taille, pixelisation, couleurs</td></tr>
           <tr><td>Le monde et son trait</td><td>—</td><td><strong>Une page</strong> — les sept lignes de la bible</td></tr>
-          <tr><td>Ses types d'objets</td><td>—</td><td><strong>Une table</strong> — les huit échelles</td></tr>
+          <tr><td>Ses types de sujets</td><td>—</td><td><strong>Une table</strong> — les huit échelles</td></tr>
           <tr><td>Son plan de poses</td><td>—</td><td><strong>Une table</strong> — les six poses et leur consigne</td></tr>
           <tr><td>Ses emplacements de corps</td><td>—</td><td><strong>Une page</strong> — le corps, et ce qu'on y accroche</td></tr>
-          <tr><td>Ses mouvements</td><td>—</td><td><strong>Une planche</strong> — les images qui s'enchaînent</td></tr>
           <tr><td>Son détourage de départ</td><td>—</td><td><strong>Une planche</strong> — réglé sur une vraie image</td></tr>
           <tr><td>Ses IA et ses clés</td><td>—</td><td><strong>Une table</strong> — 49 modèles, leur prix, leur clé</td></tr>
-          <tr><td>La galerie</td><td>—</td><td><strong>Une matrice</strong> — les 41 images du jeu</td></tr>
-          <tr><td>Les dépenses</td><td>—</td><td><strong>Une table</strong> — appel par appel, ou par jeu, ou par modèle</td></tr>
+          <tr><td>La galerie</td><td>—</td><td><strong>Une matrice</strong> — les 45 images du jeu</td></tr>
+          <tr><td>Les dépenses</td><td>—</td><td><strong>Une table</strong> — génération par génération, ou par jeu, ou par modèle</td></tr>
         </table>
-        <div style="font-size: 12.5px; color: #6d675e; margin-top: 14px; line-height: 1.5">Le nom du jeu, en haut, est la dix-huitième ligne : il ouvre la liste des six jeux et le bouton pour en commencer un.</div>
+        <div style="font-size: 12.5px; color: #6d675e; margin-top: 14px; line-height: 1.5">Le nom du jeu, tout en haut, est la dix-septième ligne — la seule qui ne mène nulle part. Elle se déplie sur place : les autres jeux, les réglages de l'atelier, et les quatre gestes qui portent sur le jeu entier. C'est la section suivante.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══ 1ter. LE NOM DU JEU, DÉPLIÉ ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Le nom du jeu, d&eacute;pli&eacute;</h2>
+    <p class="st">La dix-septi&egrave;me ligne se d&eacute;plie sur place, dans le carnet, comme une famille d&eacute;plie ses collections. Ce n&rsquo;est pas un menu qui flotte&nbsp;: il n&rsquo;y en a pas en haut de la fen&ecirc;tre, et il n&rsquo;y a que trois menus au clic droit. Elle porte ce qui concerne le jeu <em>entier</em> &mdash; jamais ce qu&rsquo;il contient, qui est d&eacute;j&agrave; dans les trois sections en dessous, ni les r&eacute;glages de l&rsquo;atelier, qui ont leur bouton dans le pied.</p>
+
+    <div style="display: grid; grid-template-columns: 300px 300px minmax(0,1fr); gap: 34px; align-items: start">
+
+      <div>
+        <div class="rt" style="margin-bottom: 9px">Six jeux sur la machine</div>
+      <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 16px 12px">
+        <div style="padding: 5px 10px 6px; border-radius: 6px; background: #e6dfd2">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <div class="serif" style="font-size: 22px">Le Marais du Vieux Moulin</div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0; transform: rotate(180deg)"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+          <div style="font-size: 12px; color: #6d675e">45 images &middot; 12 poses sur 18</div>
+        </div>
+        <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 1px">
+          <div class="rt" style="padding: 9px 10px 4px">Les autres jeux</div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Essai animation</span>
+              <span style="font-size: 11.5px; color: #948c80">38 images &middot; 1<sup>er</sup> sept.</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">vignettes</span>
+              <span style="font-size: 11.5px; color: #948c80">27 images &middot; 1<sup>er</sup> sept.</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">coeur de pierre - 01</span>
+              <span style="font-size: 11.5px; color: #948c80">39 images &middot; 29 ao&ucirc;t</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Bac &agrave; sable</span>
+              <span style="font-size: 11.5px; color: #948c80">21 images &middot; 29 ao&ucirc;t</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #948c80">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Coeur de pierre</span>
+              <span style="font-size: 11.5px; color: #948c80">aucune image &middot; cr&eacute;&eacute; le 27 ao&ucirc;t</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Tous les jeux&hellip;</span>
+              <span style="font-size: 11.5px; color: #948c80">l&rsquo;&eacute;cran d&rsquo;ouverture, en grand</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">&#65291; Commencer un jeu</span>
+              <span style="font-size: 11.5px; color: #948c80">un nom suffit</span>
+            </span>
+          </div>
+          <div class="rt" style="padding: 9px 10px 4px">Ce jeu</div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Le dupliquer</span>
+              <span style="font-size: 11.5px; color: #948c80">ses r&eacute;glages, pas ses images</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Tout exporter&hellip;</span>
+              <span style="font-size: 11.5px; color: #948c80">les 45 images, avec leur descriptif</span>
+            </span>
+          </div>
+        </div>
+        <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 2px; opacity: .34">
+          <div class="rt" style="padding: 0 10px 5px">Ce que le jeu contient</div>
+          <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
+          <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+          <div class="rl"><span>Les d&eacute;cors</span><span class="num">1</span></div>
+          <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+        </div>
+        <div style="text-align: center; font-size: 11.5px; color: #b0a89b; padding-top: 7px">&hellip;</div>
+      </div>
+        <div style="font-size: 12.5px; color: #6d675e; line-height: 1.5; margin-top: 11px">Neuf lignes s&rsquo;ajoutent sous le nom, et les seize du carnet descendent&nbsp;: vingt-cinq en tout, sous le plafond de trente. &Ccedil;a tient parce qu&rsquo;ouvrir cette ligne referme la famille qui &eacute;tait ouverte &mdash; une seule &agrave; la fois, ici comme ailleurs.</div>
+      </div>
+
+      <div>
+        <div class="rt" style="margin-bottom: 9px">Vingt jeux &mdash; la m&ecirc;me hauteur</div>
+      <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 16px 12px">
+        <div style="padding: 5px 10px 6px; border-radius: 6px; background: #e6dfd2">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <div class="serif" style="font-size: 22px">Le Marais du Vieux Moulin</div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0; transform: rotate(180deg)"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+          <div style="font-size: 12px; color: #6d675e">45 images &middot; 12 poses sur 18</div>
+        </div>
+        <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 1px">
+          <div class="rt" style="padding: 9px 10px 4px">Les autres jeux</div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Essai animation</span>
+              <span style="font-size: 11.5px; color: #948c80">38 images &middot; 1<sup>er</sup> sept.</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">vignettes</span>
+              <span style="font-size: 11.5px; color: #948c80">27 images &middot; 1<sup>er</sup> sept.</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">coeur de pierre - 01</span>
+              <span style="font-size: 11.5px; color: #948c80">39 images &middot; 29 ao&ucirc;t</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Bac &agrave; sable</span>
+              <span style="font-size: 11.5px; color: #948c80">21 images &middot; 29 ao&ucirc;t</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #948c80">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Coeur de pierre</span>
+              <span style="font-size: 11.5px; color: #948c80">aucune image &middot; 27 ao&ucirc;t</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">Tous les jeux&hellip;</span>
+              <span style="font-size: 11.5px; color: #948c80">les quinze autres, en grand</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #3d382f">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">&#65291; Commencer un jeu</span>
+              <span style="font-size: 11.5px; color: #948c80">un nom suffit</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 5px 10px 5px 22px; border-radius: 5px; color: #948c80">
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-size: 13px">&hellip;</span>
+              <span style="font-size: 11.5px; color: #948c80">les deux lignes de &laquo;&nbsp;Ce jeu&nbsp;&raquo;, inchang&eacute;es</span>
+            </span>
+          </div>
+        </div>
+      </div>
+        <div style="font-size: 12.5px; color: #6d675e; line-height: 1.5; margin-top: 11px">Cinq jeux au plus, les cinq derniers travaill&eacute;s. Le reste est sur l&rsquo;&eacute;cran d&rsquo;ouverture, qui les montre en grand avec leur allure et leur palette, et qui a sa recherche. Aucun champ de recherche n&rsquo;appara&icirc;t ici.</div>
+      </div>
+
+      <div>
+        <div class="rt" style="margin-bottom: 10px">Les r&egrave;gles qui le tiennent</div>
+        <ul style="margin: 0; padding-left: 18px; font-size: 12.5px; color: #4e483f; line-height: 1.55">
+          <li style="margin-bottom: 8px">Cinq autres jeux au plus, les cinq derniers travaill&eacute;s. Au-del&agrave;, &laquo;&nbsp;Tous les jeux&hellip;&nbsp;&raquo; les montre tous. Le d&eacute;pli&eacute; ne d&eacute;passe jamais neuf lignes &mdash; avec deux jeux comme avec vingt.</li>
+          <li style="margin-bottom: 8px">L&rsquo;ordre est celui du dernier passage, jamais l&rsquo;alphabet. <span style="color:#8a5a2c">Le serveur ne sait sortir la liste que par date de cr&eacute;ation, et la date du dernier travail n&rsquo;est servie par aucune route&nbsp;: c&rsquo;est &agrave; &eacute;crire.</span></li>
+          <li style="margin-bottom: 8px">Le jeu ouvert n&rsquo;est pas dans la liste&nbsp;: c&rsquo;est la ligne qu&rsquo;on vient de cliquer, juste au-dessus, avec son compte. L&rsquo;y r&eacute;p&eacute;ter &eacute;crirait deux fois le m&ecirc;me nom.</li>
+          <li style="margin-bottom: 8px">Chaque jeu porte une deuxi&egrave;me ligne. Deux noms &agrave; une lettre pr&egrave;s, dans une colonne de 300&nbsp;px, ne se distinguent que par leur compte et leur date &mdash; ta machine en a d&eacute;j&agrave; le cas.</li>
+          <li style="margin-bottom: 8px">Rien n&rsquo;y co&ucirc;te un centime et rien n&rsquo;appelle une IA. Aucune ligne ne porte de prix, parce qu&rsquo;aucune n&rsquo;en a.</li>
+          <li style="margin-bottom: 8px">Rien n&rsquo;y est destructeur&nbsp;: dupliquer cr&eacute;e, exporter copie, changer de jeu laisse tout en place. C&rsquo;est pour &ccedil;a qu&rsquo;aucune ligne ne demande confirmation &mdash; et pour &ccedil;a que supprimer n&rsquo;y est pas.</li>
+          <li style="margin-bottom: 8px">Choisir un jeu referme le d&eacute;pli&eacute; et recharge tout le carnet. <span class="kb">esc</span>, ou un clic ailleurs, le referme sans rien changer.</li>
+        </ul>
+        <div style="margin-top: 12px; font-size: 12px; color: #6d675e; line-height: 1.5">Aucune ligne du d&eacute;pli&eacute; ne porte de raccourci&nbsp;: ce sont des gestes rares, et une touche de plus &agrave; conna&icirc;tre n&rsquo;aiderait personne. Les r&eacute;glages de l&rsquo;atelier ont quitt&eacute; ce menu &mdash; ils ont leur bouton dans le pied du carnet, section suivante.</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 30px">
+      <div class="rt" style="margin-bottom: 10px">Ce que chaque ligne fait</div>
+      <table class="sp">
+        <tr><th style="width: 196px">La ligne</th><th>Ce qu&rsquo;elle fait</th><th style="width: 286px">Dans l&rsquo;app aujourd&rsquo;hui</th></tr>
+          <tr><td style="width: 196px"><strong>Un des autres jeux</strong></td><td>Bascule dessus. Le carnet se recharge enti&egrave;rement et l&rsquo;&eacute;cran revient &agrave; son tableau de bord. Une g&eacute;n&eacute;ration en route n&rsquo;est pas annul&eacute;e&nbsp;: son image entre dans le jeu qui l&rsquo;a demand&eacute;e.</td><td style="width: 286px; color: #8a5a2c">existe, mais seulement dans la colonne de l&rsquo;onglet Galerie</td></tr>
+          <tr><td style="width: 196px" style="color: #6d675e"><strong>&middot; leur ordre</strong></td><td>Le dernier travaill&eacute; en premier. Sur ta machine&nbsp;: Essai animation, vignettes, coeur de pierre - 01, Bac &agrave; sable, puis Coeur de pierre qui n&rsquo;a jamais rien re&ccedil;u. Jamais l&rsquo;alphabet.</td><td style="width: 286px; color: #8a5a2c">le serveur ne sait sortir la liste que par date de <em>cr&eacute;ation</em></td></tr>
+          <tr><td style="width: 196px" style="color: #6d675e"><strong>&middot; leur deuxi&egrave;me ligne</strong></td><td>Le nombre d&rsquo;images et la date du dernier passage. Jamais le prix&nbsp;: on ne choisit pas un jeu sur ce qu&rsquo;il a co&ucirc;t&eacute;.</td><td style="width: 286px; color: #8a5a2c">le compte est servi&nbsp;; <strong>la date du dernier travail n&rsquo;existe nulle part</strong></td></tr>
+          <tr><td style="width: 196px"><strong>Tous les jeux&hellip;</strong></td><td>Ouvre l&rsquo;&eacute;cran d&rsquo;ouverture, qui montre les six en grand avec leur allure et leur palette, et qui a sa recherche. C&rsquo;est aussi la seule sortie&nbsp;: apr&egrave;s lui, plus aucun jeu n&rsquo;est ouvert.</td><td style="width: 286px; color: #8a5a2c">l&rsquo;&eacute;cran d&rsquo;ouverture reste &agrave; dessiner</td></tr>
+          <tr><td style="width: 196px"><strong>&#65291; Commencer un jeu</strong></td><td>Au bas de la liste des jeux et nulle part ailleurs &mdash; le m&ecirc;me motif que &laquo;&nbsp;&#65291; Nouvelle collection&nbsp;&raquo; sous une famille.</td><td style="width: 286px; color: #5c7a52">existe, dans la colonne de la Galerie</td></tr>
+          <tr><td style="width: 196px"><strong>Le dupliquer</strong></td><td>Copie la bible, la palette, l&rsquo;allure, le plan de poses, les emplacements et les &eacute;chelles. Aucune image. Le jeu copi&eacute; s&rsquo;ouvre aussit&ocirc;t.</td><td style="width: 286px; color: #8a5a2c">rien nulle part&nbsp;: ni route, ni service, ni outil</td></tr>
+          <tr><td style="width: 196px"><strong>Tout exporter&hellip;</strong></td><td>Le seul geste qui fait sortir le jeu entier. Les trois points annoncent la fen&ecirc;tre qui demande o&ugrave; et quoi.</td><td style="width: 286px; color: #8a5a2c">deux routes suffiraient&nbsp;; aucun bouton ne les encha&icirc;ne, et le plafond est de mille images</td></tr>
+      </table>
+    </div>
+
+    <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; padding: 12px 15px; border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 9px">
+      <div style="font-size: 13px; font-weight: 600; white-space: nowrap; color: #8a3f33">Un geste qui dispara&icirc;trait</div>
+      <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Supprimer un jeu se fait aujourd&rsquo;hui dans la colonne de gauche de la Galerie &mdash; celle que le carnet remplace. Or l&rsquo;&eacute;cran d&rsquo;ouverture, tel qu&rsquo;il est dessin&eacute;, n&rsquo;a aucun geste de suppression sur ses six cartes. <strong>Si personne ne l&rsquo;y ajoute, le geste quitte le produit.</strong> Il d&eacute;tache les images plut&ocirc;t que de les d&eacute;truire, efface le dossier du jeu, et il est refus&eacute; quand il ne reste qu&rsquo;un jeu.</div>
+    </div>
+
+    <div style="margin-top: 14px; display: flex; align-items: center; gap: 14px; padding: 12px 15px; border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 9px">
+      <div style="font-size: 13px; font-weight: 600; white-space: nowrap; color: #8a3f33">&Agrave; r&eacute;parer avant de brancher &ccedil;a</div>
+      <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Basculer de jeu recharge la biblioth&egrave;que mais <strong>pas l&rsquo;univers</strong>&nbsp;: la bible, la taille de pixel et ce qui est gris&eacute; restent ceux du jeu pr&eacute;c&eacute;dent jusqu&rsquo;&agrave; la reconnexion du flux. Et le chantier n&rsquo;est pas tri&eacute; par jeu, donc le lot du jeu pr&eacute;c&eacute;dent continue de s&rsquo;afficher. Un menu qui rend la bascule facile rendrait ces deux trous visibles tout le temps.</div>
+    </div>
+
+    <div style="margin-top: 14px; display: flex; align-items: center; gap: 14px; padding: 12px 15px; border: 1px solid #ddd5c8; background: #f4ece2; border-radius: 9px">
+      <div style="font-size: 13px; font-weight: 600; white-space: nowrap">Ce que le nom du jeu fait aujourd&rsquo;hui</div>
+      <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Dans la barre du haut, le nom du jeu et son total en argent forment un seul bouton, qui ouvre l&rsquo;&eacute;cran des d&eacute;penses de tout l&rsquo;atelier. Cliquer le nom ne propose donc rien &agrave; propos du jeu&nbsp;: &ccedil;a ouvre les comptes. C&rsquo;est ce qu&rsquo;il faudra d&eacute;placer.</div>
+    </div>
+
+    <div style="margin-top: 30px">
+      <div class="rt" style="margin-bottom: 12px">Ce que le d&eacute;pli&eacute; devient selon la situation</div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px">
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Aucune cl&eacute; pos&eacute;e</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">&laquo;&nbsp;Les r&eacute;glages de l&rsquo;atelier&nbsp;&raquo; passe en rouge brique et sa deuxi&egrave;me ligne devient &laquo;&nbsp;aucune cl&eacute; &mdash; aucune image ne peut &ecirc;tre demand&eacute;e&nbsp;&raquo;. Rien d&rsquo;autre ne bouge&nbsp;: changer de jeu, dupliquer et exporter ne demandent aucune cl&eacute;.</div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Une g&eacute;n&eacute;ration est en route</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Aucune ligne ne se grise. Changer de jeu n&rsquo;annule rien&nbsp;: l&rsquo;image entre dans le jeu qui l&rsquo;a demand&eacute;e. Le jeu concern&eacute; porte une deuxi&egrave;me ligne de plus, &laquo;&nbsp;6 images en route&nbsp;&raquo;. <span style="color:#8a5a2c">Aujourd&rsquo;hui le chantier n&rsquo;est pas tri&eacute; par jeu&nbsp;: apr&egrave;s une bascule, le lot du jeu pr&eacute;c&eacute;dent continue de s&rsquo;afficher dans le nouveau.</span></div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Un jeu r&eacute;gl&eacute;, jamais rempli</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">&laquo;&nbsp;aucune image &middot; cr&eacute;&eacute; le 27 ao&ucirc;t&nbsp;&raquo; au lieu d&rsquo;une date de passage, et il tombe au bas de la liste. Un jeu abandonn&eacute; est pr&eacute;cis&eacute;ment celui qu&rsquo;on cherche quand on y revient. C&rsquo;est &laquo;&nbsp;Coeur de pierre&nbsp;&raquo; sur ta machine.</div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Le dossier d&rsquo;un jeu a disparu du disque</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Il devrait rester en gris, ne plus s&rsquo;ouvrir, et une ligne s&rsquo;ajouter sous la liste&nbsp;: &laquo;&nbsp;Relire le dossier de travail&nbsp;&raquo;. <span style="color:#8a5a2c">Aujourd&rsquo;hui rien ne d&eacute;clenche cette relecture &mdash; la route existe, aucun bouton ne l&rsquo;appelle &mdash; donc un jeu au dossier effac&eacute; reste dans la liste pour toujours.</span></div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Deux jeux presque du m&ecirc;me nom</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">La deuxi&egrave;me ligne les s&eacute;pare&nbsp;: &laquo;&nbsp;Coeur de pierre &middot; aucune image&nbsp;&raquo; et &laquo;&nbsp;coeur de pierre - 01 &middot; 39 images&nbsp;&raquo;. Les deux existent sur ta machine, et le second est un recommencement du premier fait &agrave; la main &mdash; c&rsquo;est exactement ce que &laquo;&nbsp;Le dupliquer&nbsp;&raquo; remplacerait.</div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Un seul jeu sur la machine</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Le premier groupe perd son titre et ses lignes&nbsp;: il ne reste que &laquo;&nbsp;&#65291; Commencer un jeu&nbsp;&raquo;. &laquo;&nbsp;Tous les jeux&hellip;&nbsp;&raquo; dispara&icirc;t aussi, puisque l&rsquo;ouverture est saut&eacute;e quand il n&rsquo;y a qu&rsquo;un jeu. &laquo;&nbsp;Le dupliquer&nbsp;&raquo; reste&nbsp;: c&rsquo;est souvent par l&agrave; que le deuxi&egrave;me commence.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 30px">
+      <div class="rt" style="margin-bottom: 10px">Ce qu&rsquo;on n&rsquo;y met pas</div>
+      <table class="sp">
+          <tr><td style="width: 264px"><strong>Ouvrir son dossier</strong></td><td>La ligne serait utile, et elle est impossible&nbsp;: l&rsquo;interface est une page de navigateur &mdash; ni Electron, ni pont vers le syst&egrave;me &mdash; et le serveur n&rsquo;a aucune route qui ouvre l&rsquo;explorateur. Elle promettrait ce que la page ne peut pas faire.</td></tr>
+          <tr><td style="width: 264px"><strong>Le renommer</strong></td><td>Il a d&eacute;j&agrave; sa ligne dans le carnet, &laquo;&nbsp;Son nom et son dossier&nbsp;&raquo;, trois lignes plus bas et toujours visible. L&rsquo;&eacute;crire ici serait le m&ecirc;me geste deux fois &agrave; trois centim&egrave;tres d&rsquo;&eacute;cart.</td></tr>
+          <tr><td style="width: 264px"><strong>Les r&eacute;glages de l&rsquo;atelier</strong></td><td>Les cl&eacute;s, le d&eacute;p&ocirc;t, les mod&egrave;les ne dépendent d&rsquo;aucun jeu&nbsp;: leur bouton est dans le pied du carnet, sous les trois sections, l&agrave; o&ugrave; il ne bouge jamais. Section suivante.</td></tr>
+          <tr><td style="width: 264px"><strong>Les r&eacute;glages du jeu</strong></td><td>Son allure, son monde, ses types de sujets, son plan de poses, ses cl&eacute;s&nbsp;: deuxi&egrave;me section du carnet, toujours visible.</td></tr>
+          <tr><td style="width: 264px"><strong>Supprimer un jeu</strong></td><td>Le seul geste vraiment destructeur ne se clique pas depuis le titre du jeu o&ugrave; l&rsquo;on travaille. Sa place est l&rsquo;&eacute;cran d&rsquo;ouverture, o&ugrave; le jeu se voit &agrave; c&ocirc;t&eacute; des autres avant qu&rsquo;on le d&eacute;signe.</td></tr>
+          <tr><td style="width: 264px"><strong>Un champ de recherche</strong></td><td>L&rsquo;&eacute;cran d&rsquo;ouverture en a un, <span class="kb">&#8984;K</span> en a un. Un troisi&egrave;me, pour cinq lignes, serait deux de trop.</td></tr>
+          <tr><td style="width: 264px"><strong>La galerie et les d&eacute;penses</strong></td><td>Deux lignes permanentes du carnet, juste en dessous, avec leurs chiffres.</td></tr>
+          <tr><td style="width: 264px"><strong>Le guide</strong></td><td>Lui aussi est dans le pied du carnet, &agrave; c&ocirc;t&eacute; des r&eacute;glages, et il r&eacute;pond &agrave; <span class="kb">?</span> depuis n&rsquo;importe o&ugrave;. Il ne parle pas du jeu ouvert.</td></tr>
+          <tr><td style="width: 264px"><strong>&laquo;&nbsp;Ce qui n&rsquo;appartient &agrave; aucun jeu&nbsp;&raquo;</strong></td><td>Ce n&rsquo;est pas un jeu&nbsp;: &ccedil;a n&rsquo;a pas sa place dans une liste de jeux. L&rsquo;&eacute;cran d&rsquo;ouverture le montre, l&agrave; o&ugrave; on peut le ranger. Il y a $0,0381 d&eacute;pens&eacute;s hors de tout jeu aujourd&rsquo;hui, et aucune image d&eacute;tach&eacute;e.</td></tr>
+          <tr><td style="width: 264px"><strong>La version, l&rsquo;&eacute;tat du serveur, le pont MCP</strong></td><td>C&rsquo;est le bas de l&rsquo;&eacute;cran des r&eacute;glages de l&rsquo;atelier. Les redire ici ferait deux v&eacute;rit&eacute;s sur le m&ecirc;me &eacute;tat, et l&rsquo;une des deux finirait par mentir.</td></tr>
+          <tr><td style="width: 264px"><strong>Quitter l&rsquo;atelier</strong></td><td>Fermer la fen&ecirc;tre ne quitte rien&nbsp;: le serveur continue de tourner, lanc&eacute; &agrave; part. Il n&rsquo;y a donc rien &agrave; quitter depuis une ligne de menu.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ 1quater. LE PIED DU CARNET ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Le pied du carnet</h2>
+    <p class="st">Sous les trois sections, un trait, la ligne qui ouvre la barre, et deux boutons qui n&rsquo;appartiennent &agrave; aucun jeu&nbsp;: <strong>le guide</strong> et <strong>les r&eacute;glages de l&rsquo;atelier</strong>. Les trois sont l&agrave; sur tous les &eacute;crans, &agrave; la m&ecirc;me place, et chacun porte la touche qui l&rsquo;ouvre. Plus haut, le nom du jeu fait deux choses selon l&rsquo;endroit o&ugrave; on clique.</p>
+
+    <div style="display: grid; grid-template-columns: 300px 300px minmax(0,1fr); gap: 34px; align-items: start">
+
+      <div>
+        <div class="rt" style="margin-bottom: 9px">Le carnet entier, au repos</div>
+      <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 16px 12px; display: flex; flex-direction: column; gap: 16px">
+        <div style="padding: 0 10px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <div class="serif" style="font-size: 22px">Le Marais du Vieux Moulin</div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+          <div style="font-size: 12px; color: #6d675e">45 images &middot; 12 poses sur 18</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="rt" style="padding: 0 10px 5px">Ce que le jeu contient</div>
+          <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
+          <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+          <div class="rl"><span>Les d&eacute;cors</span><span class="num">1</span></div>
+          <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+          <div class="rl"><span>L&rsquo;interface</span><span class="num">1</span></div>
+          <div class="rl"><span>Les &eacute;quipements</span><span class="num">2</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="rt" style="padding: 0 10px 5px">Ce qui s&rsquo;applique &agrave; tout</div>
+          <div class="rl"><span>Son nom et son dossier</span></div>
+          <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
+          <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
+          <div class="rl"><span>Ses types de sujets</span><span class="num">8 &eacute;chelles</span></div>
+          <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
+          <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
+          <div class="rl"><span>Son d&eacute;tourage de d&eacute;part</span></div>
+          <div class="rl"><span>Ses IA et ses cl&eacute;s</span><span class="num">49</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="rt" style="padding: 0 10px 5px">Toutes les images</div>
+          <div class="rl"><span>La galerie</span><span class="num">45</span></div>
+          <div class="rl"><span>Les d&eacute;penses</span><span class="num">$1,55</span></div>
+        </div>
+        <!-- pied -->
+        <div style="border-top: 1px solid #e2dbd0; padding: 11px 10px 0; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80"><span class="kb">&#8984;K</span><span>chercher, ou faire</span></div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
+            <span style="display: flex; align-items: center; gap: 7px"><span class="kb">?</span>Le guide</span>
+            <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> R&eacute;glages</span>
+          </div>
+        </div>
+        <!-- /pied -->
+      </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 20px">
+        <div>
+          <div class="rt" style="margin-bottom: 9px">Deux cibles sur la ligne du nom</div>
+      <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 16px 12px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px">
+          <div style="flex: 1; min-width: 0; border: 1px dashed #a8492c; border-radius: 6px; padding: 4px 8px">
+            <div class="serif" style="font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Le Marais du Vieux Moulin</div>
+            <div style="font-size: 11.5px; color: #6d675e">45 images &middot; 12 poses sur 18</div>
+          </div>
+          <div style="border: 1px dashed #5c7a52; border-radius: 6px; padding: 9px 7px; display: flex"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 8px; margin-top: 7px; font-size: 11px; line-height: 1.35">
+          <span style="color: #a8492c; flex: 1">le tableau de bord du jeu</span>
+          <span style="color: #5c7a52; text-align: right; width: 96px">d&eacute;plier les<br>autres jeux</span>
+        </div>
+      </div>
+        </div>
+        <div>
+          <div class="rt" style="margin-bottom: 9px">Le pied, en vrai</div>
+      <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 12px">
+        <!-- pied -->
+        <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80"><span class="kb">&#8984;K</span><span>chercher, ou faire</span></div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
+            <span style="display: flex; align-items: center; gap: 7px"><span class="kb">?</span>Le guide</span>
+            <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> R&eacute;glages</span>
+          </div>
+        </div>
+        <!-- /pied -->
+      </div>
+        </div>
+        <div>
+          <div class="rt" style="margin-bottom: 9px">Quand quelque chose cloche</div>
+      <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 12px">
+        <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80"><span class="kb">&#8984;K</span><span>chercher, ou faire</span></div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
+            <span style="display: flex; align-items: center; gap: 7px"><span class="kb">?</span>Le guide</span>
+            <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> R&eacute;glages<i style="width: 6px; height: 6px; border-radius: 999px; background: #a8492c; display: block"></i></span>
+          </div>
+          <div style="padding: 5px 10px; border-radius: 5px; background: #f8ece9; font-size: 11.5px; color: #8a3f33; display: flex; align-items: center; justify-content: space-between; gap: 8px"><span>l&rsquo;atelier ne r&eacute;pond plus</span><span style="text-decoration: underline">r&eacute;essayer</span></div>
+        </div>
+      </div>
+          <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45; margin-top: 8px">Le point rouge&nbsp;: aucune cl&eacute; n&rsquo;est pos&eacute;e. La ligne du dessous est la seule que le pied s&rsquo;autorise &agrave; ajouter, et elle part d&egrave;s que le serveur r&eacute;pond.</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="rt" style="margin-bottom: 10px">Les r&egrave;gles qui le tiennent</div>
+        <ul style="margin: 0; padding-left: 18px; font-size: 12.5px; color: #4e483f; line-height: 1.55">
+          <li style="margin-bottom: 8px">Le pied ne compte pas dans les dix-sept lignes. Il est sous le trait, et il ne bouge pas quand une section s&rsquo;ouvre, quand une famille se d&eacute;plie, ou quand on change d&rsquo;&eacute;cran.</li>
+          <li style="margin-bottom: 8px">Deux boutons, jamais trois. Tout ce qui appartient &agrave; un jeu est au-dessus du trait&nbsp;; ce qui appartient &agrave; l&rsquo;atelier est en dessous.</li>
+          <li style="margin-bottom: 8px"><strong>Aucun raccourci n&rsquo;est le seul chemin.</strong> Tout ce qui a une touche a aussi un bouton ou une ligne de menu. Le <span class="kb">?</span> pos&eacute; sur le bouton du guide en est le premier exemple&nbsp;: le bouton apprend la touche.</li>
+          <li style="margin-bottom: 8px">Le guide s&rsquo;ouvre dans le volet, jamais par-dessus l&rsquo;&eacute;cran. On continue de voir ce qu&rsquo;on &eacute;tait en train de faire, et c&rsquo;est justement de &ccedil;a qu&rsquo;il parle.</li>
+          <li style="margin-bottom: 8px">Les r&eacute;glages de l&rsquo;atelier prennent la surface enti&egrave;re. On n&rsquo;y va pas en travaillant&nbsp;: on y va une fois, au d&eacute;but, et rarement ensuite.</li>
+          <li style="margin-bottom: 8px">Deux &eacute;crans prennent toute la fen&ecirc;tre et n&rsquo;ont pas de carnet&nbsp;: l&rsquo;ouverture, et le parcours qui commence un jeu. L&agrave;, les deux boutons sont dans leur barre du bas &mdash; c&rsquo;est le seul d&eacute;placement qu&rsquo;ils s&rsquo;autorisent.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="margin-top: 30px">
+      <div class="rt" style="margin-bottom: 10px">Ce que chaque bouton ouvre</div>
+      <table class="sp">
+        <tr><th style="width: 196px">Le bouton</th><th>Ce qu&rsquo;il ouvre</th><th style="width: 286px">Dans l&rsquo;app aujourd&rsquo;hui</th></tr>
+          <tr><td style="width: 196px"><strong>Le nom du jeu</strong></td><td>Le tableau de bord du jeu, sur la surface enti&egrave;re. C&rsquo;est le seul chemin de retour&nbsp;: partout ailleurs on descend dans le jeu, jamais on ne remonte.</td><td style="width: 286px; color: #8a5a2c">aucun retour&nbsp;: on y arrive au lancement, et plus jamais</td></tr>
+          <tr><td style="width: 196px"><strong>Le chevron, &agrave; sa droite</strong></td><td>Le d&eacute;pli&eacute; &mdash; les autres jeux, dupliquer, exporter. Section pr&eacute;c&eacute;dente.</td><td style="width: 286px; color: #948c80">&mdash;</td></tr>
+          <tr><td style="width: 196px"><strong><span class="kb">?</span> Le guide</strong></td><td>Le volet, 380&nbsp;px. Ce que fait l&rsquo;&eacute;cran ouvert, les touches qui marchent ici, les trois menus au clic droit. L&rsquo;&eacute;cran continue de travailler derri&egrave;re.</td><td style="width: 286px; color: #8a5a2c">rien&nbsp;: le produit n&rsquo;a aucun &eacute;cran d&rsquo;aide</td></tr>
+          <tr><td style="width: 196px"><strong>R&eacute;glages</strong></td><td>La surface enti&egrave;re. Les cl&eacute;s, le dossier de d&eacute;p&ocirc;t, le catalogue des mod&egrave;les, l&rsquo;&eacute;tat du serveur. Rien qui appartienne &agrave; un jeu.</td><td style="width: 286px; color: #5c7a52">existe &mdash; le mot &laquo;&nbsp;R&eacute;glages&nbsp;&raquo;, &agrave; droite de la barre du haut</td></tr>
+          <tr><td style="width: 196px"><strong><span class="kb">&#8984;K</span> chercher, ou faire</strong></td><td>La barre, au milieu de l&rsquo;&eacute;cran. Elle cherche un sujet et lance un geste. Elle a sa section plus bas.</td><td style="width: 286px; color: #8a5a2c">aucune barre de commande dans le produit</td></tr>
+      </table>
+    </div>
+
+    <div style="margin-top: 30px">
+      <div class="rt" style="margin-bottom: 12px">Comment on apprend les touches sans les avoir apprises</div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px">
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">&Agrave; c&ocirc;t&eacute; du geste</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">La touche est &eacute;crite &agrave; droite du bouton ou de la ligne de menu qu&rsquo;elle remplace, l&agrave; o&ugrave; le geste se trouve. On l&rsquo;apprend en faisant autre chose.</div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Dans le pied, toujours</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Deux touches y sont &eacute;crites en permanence&nbsp;: <span class="kb">&#8984;K</span> devant &laquo;&nbsp;chercher, ou faire&nbsp;&raquo;, <span class="kb">?</span> devant &laquo;&nbsp;Le guide&nbsp;&raquo;. C&rsquo;est le seul endroit du carnet qui ne bouge jamais&nbsp;: on finit par les savoir sans les avoir apprises.</div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Le guide lui-m&ecirc;me</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Il s&rsquo;ouvre sur l&rsquo;&eacute;cran o&ugrave; l&rsquo;on est, pas sur un sommaire. Les touches qui ne marchent pas ici n&rsquo;y sont pas &eacute;crites.</div>
+        </div>
+      </div>
+      <div style="margin-top: 14px; display: flex; align-items: center; gap: 14px; padding: 12px 15px; border: 1px solid #ddd5c8; background: #f4ece2; border-radius: 9px">
+        <div style="font-size: 13px; font-weight: 600; white-space: nowrap">Huit touches existent</div>
+        <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Le produit r&eacute;pond &agrave; <span class="kb">?</span>, <span class="kb">esc</span>, <span class="kb">espace</span>, <span class="kb">Ctrl+&crarr;</span>, <span class="kb">Ctrl+Z</span>, <span class="kb">&crarr;</span> dans un champ de nom, <span class="kb">&larr;&rarr;</span> dans un clip et <span class="kb">suppr</span> dans un d&eacute;coupage. Aucune n&rsquo;est &eacute;crite nulle part dans l&rsquo;interface&nbsp;: il faut les avoir lues dans le code. C&rsquo;est exactement le probl&egrave;me que le pied r&egrave;gle.</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 30px">
+      <div class="rt" style="margin-bottom: 12px">Ce que le pied devient selon la situation</div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px">
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">L&rsquo;atelier ne r&eacute;pond plus</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Une troisi&egrave;me ligne appara&icirc;t dans le pied, en rouge brique&nbsp;: &laquo;&nbsp;l&rsquo;atelier ne r&eacute;pond plus &middot; r&eacute;essayer&nbsp;&raquo;. Elle dispara&icirc;t d&egrave;s qu&rsquo;il r&eacute;pond. C&rsquo;est le seul cas o&ugrave; le pied grandit.</div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Aucune cl&eacute; pos&eacute;e</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Un point rouge brique sur le mot R&eacute;glages, et rien d&rsquo;autre. Pas de bandeau, pas de fen&ecirc;tre&nbsp;: le point suffit &agrave; dire o&ugrave; aller, et il s&rsquo;&eacute;teint quand la cl&eacute; est pos&eacute;e.</div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Le guide est ouvert</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Le bouton reste enfonc&eacute;. Le volet montre le guide &agrave; la place de ce qu&rsquo;il montrait. <span class="kb">esc</span>, un second clic sur le bouton, ou un clic dans la surface le referme et rend le volet.</div>
+        </div>
+        <div class="carte" style="padding: 14px 16px">
+          <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px">Aucun jeu n&rsquo;est ouvert</div>
+          <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">L&rsquo;&eacute;cran d&rsquo;ouverture prend toute la fen&ecirc;tre&nbsp;: il n&rsquo;y a pas de carnet, donc pas de pied. Le guide et les r&eacute;glages sont dans sa barre du bas, avec le compte des jeux et l&rsquo;&eacute;tat du serveur. <span class="kb">?</span> marche quand m&ecirc;me.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 30px">
+      <div class="rt" style="margin-bottom: 10px">Ce qu&rsquo;on n&rsquo;y met pas</div>
+      <table class="sp">
+          <tr><td style="width: 264px"><strong>La version et l&rsquo;&eacute;tat du serveur</strong></td><td>Ils sont en bas de l&rsquo;&eacute;cran des r&eacute;glages, qui est &agrave; un clic. Les &eacute;crire dans le pied les ferait lire mille fois pour rien.</td></tr>
+          <tr><td style="width: 264px"><strong>Le nombre d&rsquo;images en route</strong></td><td>C&rsquo;est le chantier, et il a sa place&nbsp;: la barre du haut, o&ugrave; il est d&eacute;j&agrave; compt&eacute;.</td></tr>
+          <tr><td style="width: 264px"><strong>Un lien vers le d&eacute;p&ocirc;t ou la documentation</strong></td><td>Le guide r&eacute;pond sur place. Un lien qui sort de l&rsquo;atelier fait perdre l&rsquo;&eacute;cran o&ugrave; l&rsquo;on travaillait.</td></tr>
+          <tr><td style="width: 264px"><strong>Quitter, ou fermer l&rsquo;atelier</strong></td><td>Fermer la fen&ecirc;tre ne quitte rien&nbsp;: le serveur tourne &agrave; part, lanc&eacute; avant elle.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ 1bis. QUAND LE JEU GROSSIT ═══ -->
+  <div class="sec bloc">
+    <h2 class="tt">Quand le jeu grossit</h2>
+    <p class="st">Trois personnages ou cinquante-quatre, deux cents objets ou un : le carnet garde la même hauteur. Ce qui change, c'est ce qu'une ligne déplie — jamais des noms, toujours des collections.</p>
+
+    <div style="display: grid; grid-template-columns: 268px 268px minmax(0,1fr); gap: 30px; align-items: start">
+
+      <div>
+        <div class="rt" style="margin-bottom: 9px">Un petit jeu — 46 sujets</div>
+        <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px">
+          <div class="rl" style="background: #e6dfd2; font-weight: 600"><span>Les personnages</span><span class="num">3</span></div>
+          <div class="rl-sub" style="padding-left: 22px"><span>Tous</span><span class="num">3</span></div>
+          <div class="rl-sub" style="padding-left: 22px; color: #948c80"><span>+ Nouvelle collection</span></div>
+          <div class="rl"><span>Les objets</span><span class="num">1</span></div>
+          <div class="rl"><span>Les décors</span><span class="num">1</span></div>
+          <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
+        </div>
+        <div style="font-size: 12.5px; color: #6d675e; line-height: 1.5; margin-top: 11px">Sans collection, une famille n'en déplie qu'une : « Tous ». La grille suffit à voir les trois.</div>
+      </div>
+
+      <div>
+        <div class="rt" style="margin-bottom: 9px">Un gros jeu — 550 sujets</div>
+        <div style="background: #f2ede4; border: 1px solid #e2dbd0; border-radius: 10px; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px">
+          <div class="rl" style="background: #e6dfd2; font-weight: 600"><span>Les personnages</span><span class="num">54</span></div>
+          <div class="rl-sub" style="padding-left: 22px"><span>Tous</span><span class="num">54</span></div>
+          <div class="rl-sub" style="padding-left: 22px"><span>Les héros</span><span class="num">3</span></div>
+          <div class="rl-sub" style="padding-left: 22px"><span>Les PNJ</span><span class="num">20</span></div>
+          <div class="rl-sub" style="padding-left: 22px"><span>Les boss</span><span class="num">10</span></div>
+          <div class="rl-sub" style="padding-left: 22px"><span>Les monstres</span><span class="num">16</span></div>
+          <div class="rl-sub" style="padding-left: 22px; color: #948c80"><span>+ Nouvelle collection</span></div>
+          <div class="rl"><span>Les objets</span><span class="num">250</span></div>
+          <div class="rl"><span>Les décors</span><span class="num">38</span></div>
+          <div class="rl"><span>Les terrains</span><span class="num">100</span></div>
+        </div>
+        <div style="font-size: 12.5px; color: #6d675e; line-height: 1.5; margin-top: 11px">Six collections au lieu de cinquante-quatre noms. Le rail a grandi de cinq lignes, pas de cinquante.</div>
+      </div>
+
+      <div>
+        <div class="rt" style="margin-bottom: 10px">Les trois règles qui tiennent l'échelle</div>
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <div class="carte" style="padding: 14px 16px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 4px">Une famille ne déplie jamais ses sujets</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Elle déplie ses collections. Les sujets, c'est la grille qui les montre — avec sa recherche, ses filtres et son tri.</div></div>
+          <div class="carte" style="padding: 14px 16px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 4px">Une collection s'arrête à huit</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Ouverte, elle montre ses huit premiers sujets puis « voir les 20 ». On n'a jamais vingt lignes qui poussent le reste hors de l'écran.</div></div>
+          <div class="carte" style="padding: 14px 16px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 4px">Le carnet ne dépasse jamais l'écran</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Dix-sept lignes fermé, trente au plus grand ouvert. Au-delà, c'est qu'une règle a été enfreinte, pas que le jeu est trop gros.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; padding: 12px 15px; border: 1px solid #ddd5c8; background: #f4ece2; border-radius: 9px">
+      <div style="font-size: 13px; font-weight: 600; white-space: nowrap">Ranger un sujet</div>
+      <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">On glisse un sujet — ou trente — de la grille sur une ligne de collection dans le carnet. Rien ne se déplace et rien ne s'efface : un sujet reste dans toutes les collections où on l'a mis. Le clic droit fait la même chose sans glisser.</div>
     </div>
   </div>
 
@@ -145,7 +635,7 @@
           <tr><th style="width: 132px">Groupe</th><th>Les verbes</th></tr>
           <tr><td>Aller</td><td>ouvrir un jeu · un personnage · un objet · un décor · un terrain · une pièce d'équipement · un réglage · la galerie · les dépenses · le guide</td></tr>
           <tr><td>Créer</td><td>un jeu · un personnage · un objet · un décor · un terrain · une pièce d'équipement · une pose · un emplacement de corps · un mouvement</td></tr>
-          <tr><td style="color: #a8492c">Générer</td><td style="color: #a8492c">une image · une pose · les poses manquantes · une planche pliée · une variante · un calque d'équipement · un carreau de terrain</td></tr>
+          <tr><td style="color: #a8492c">Générer</td><td style="color: #a8492c">une image · une pose · les poses manquantes · une planche pliée · une variante · un calque d'équipement · une tuile de terrain</td></tr>
           <tr><td>Travailler</td><td>découper une planche · détourer · recadrer · réduire · changer la palette · renommer · dupliquer · écarter · restaurer</td></tr>
           <tr><td>Sortir</td><td>exporter la sélection · exporter un personnage · exporter un terrain · ouvrir le dossier du jeu</td></tr>
           <tr><td>Régler</td><td>changer de modèle · saisir une clé · changer le dossier de travail · rafraîchir le catalogue</td></tr>
@@ -190,7 +680,7 @@
       </div>
 
       <div>
-        <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 3px">Sur une chose du jeu</div>
+        <div style="font-size: 13.5px; font-weight: 600; margin-bottom: 3px">Sur un sujet</div>
         <div style="font-size: 12.5px; color: #6d675e; margin-bottom: 12px">un personnage, un objet, un décor, un terrain</div>
         <div style="position: relative; height: 322px">
           <div class="ct" style="left: 0; top: 0">
@@ -206,12 +696,12 @@
             <div class="ci">La dupliquer avec ses réglages</div>
             <div class="cs"></div>
             <div class="ci">L'exporter pour le moteur…</div>
-            <div class="ci ci-off">Voir ses mouvements</div>
+            <div class="ci ci-off">Voir ses animations</div>
             <div class="cs"></div>
             <div class="ci ci-r">La retirer du jeu</div>
           </div>
         </div>
-        <div style="font-size: 12px; color: #6d675e; line-height: 1.45; margin-top: -8px">« Voir ses mouvements » est éteint : ce jeu n'en a aucun. La ligne reste visible pour qu'on sache qu'elle existe.</div>
+        <div style="font-size: 12px; color: #6d675e; line-height: 1.45; margin-top: -8px">« Voir ses animations » est éteint : ce sujet n'en a aucune. La ligne reste visible pour qu'on sache qu'elle existe.</div>
       </div>
 
       <div>
@@ -242,6 +732,10 @@
   <div class="sec bloc">
     <h2 class="tt">Les touches</h2>
     <p class="st">Aucune n'est obligatoire : tout ce qui suit se fait aussi à la souris. Elles sont écrites à droite de chaque geste, là où le geste se trouve.</p>
+    <div style="margin-bottom: 22px; display: flex; align-items: center; gap: 14px; padding: 12px 15px; border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 9px">
+      <div style="font-size: 13px; font-weight: 600; white-space: nowrap">Huit existent, le reste est à écrire</div>
+      <div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Le produit répond aujourd'hui à <span class="kb">?</span>, <span class="kb">esc</span>, <span class="kb">espace</span>, <span class="kb">Ctrl+&crarr;</span>, <span class="kb">Ctrl+Z</span>, <span class="kb">&crarr;</span> dans un champ de nom, <span class="kb">&larr;&rarr;</span> dans un clip et <span class="kb">suppr</span> dans un découpage. Pas une seule combinaison &#8984;&nbsp;+&nbsp;lettre. Tout le reste de ce tableau est une proposition.</div>
+    </div>
 
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px">
       <div>
@@ -249,7 +743,7 @@
         <table class="sp">
           <tr><td style="width: 88px"><span class="kb">⌘K</span></td><td>la barre</td></tr>
           <tr><td><span class="kb">⌘J</span></td><td>changer de jeu</td></tr>
-          <tr><td><span class="kb">⌘N</span></td><td>ajouter une chose ici</td></tr>
+          <tr><td><span class="kb">⌘N</span></td><td>ajouter un sujet ici</td></tr>
           <tr><td><span class="kb">⌘,</span></td><td>les réglages du jeu</td></tr>
           <tr><td><span class="kb">⌘⌥,</span></td><td>les réglages de l'atelier</td></tr>
           <tr><td><span class="kb">⌘B</span></td><td>replier le carnet</td></tr>
@@ -292,8 +786,8 @@
 
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px">
       <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Le fil, en haut de la surface</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Trois niveaux au plus : <span style="color:#948c80">Les personnages › La grenouille des tourbières ›</span> La feuille qui vient d'arriver. Chaque bout se clique.</div></div>
-      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Le carnet ne se ferme pas tout seul</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Aucun écran ne prend toute la fenêtre. Même pendant une génération, on peut aller voir autre chose et revenir.</div></div>
-      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Le seul écran qui prend tout</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">L'ouverture, quand aucun jeu n'est choisi. Dès qu'un jeu est ouvert, on ne la revoit plus qu'en la demandant.</div></div>
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Le carnet ne se ferme pas tout seul</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">Aucun écran de travail ne prend toute la fenêtre. Même pendant une génération, on peut aller voir ailleurs et revenir.</div></div>
+      <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Deux écrans prennent toute la fenêtre</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5">L'ouverture, quand aucun jeu n'est choisi, et le parcours qui commence un jeu. Les deux se demandent ; aucun ne s'impose.</div></div>
       <div class="carte" style="padding: 15px 17px"><div style="font-size: 14px; font-weight: 600; margin-bottom: 5px">Une image en grand se ferme sur place</div><div style="font-size: 12.5px; color: #4e483f; line-height: 1.5"><span class="kb">espace</span> l'ouvre par-dessus, <span class="kb">espace</span> la referme, et on est resté exactement où on était.</div></div>
     </div>
   </div>

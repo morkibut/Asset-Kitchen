@@ -17,6 +17,10 @@
   .tete { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
   h1 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 48px; line-height: 1.03; margin: 6px 0 8px; }
   .sous { font-size: 14.5px; color: #4e483f; line-height: 1.55; max-width: 620px; }
+  .raccourcis { display: flex; align-items: center; gap: 8px; margin-top: 13px; flex-wrap: wrap; }
+  .raccourcis a { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; text-decoration: none; color: #3d382f; }
+  .raccourcis a:hover { border-color: #a8492c; color: #a8492c; }
+  .raccourcis span { font-size: 12.5px; color: #948c80; margin-left: 4px; }
 
   .jauge { width: 300px; flex-shrink: 0; }
   .jauge .bar { height: 7px; border-radius: 4px; background: #e2dbd0; overflow: hidden; display: flex; }
@@ -99,6 +103,12 @@
       <div class="rt">Refonte de l'atelier · piste du carnet</div>
       <h1>Ce qui est dessiné, ce qui reste</h1>
       <div class="sous">Clique une ligne pour la marquer et laisser une remarque. Là où tu m'as déjà écrit, ma réponse est dans l'encadré. Le bouton du bas rassemble tes notes pour me les renvoyer.</div>
+      <div class="raccourcis">
+        <a href="Vocabulaire.dc.html" target="_blank" rel="noopener">Les mots ↗</a>
+        <a href="Systeme.dc.html" target="_blank" rel="noopener">Le système ↗</a>
+        <a href="Navigation.dc.html" target="_blank" rel="noopener">La navigation ↗</a>
+        <span>les trois pages qu'on rouvre tout le temps</span>
+      </div>
     </div>
     <div class="jauge">
       <div class="bar" id="bar"></div>
@@ -133,6 +143,158 @@
 <script>
 const CLE = 'carnet-sommaire-v1';
 
+// Le suivi de l'auteur, écrit dans le fichier pour qu'un navigateur vidé ne l'efface pas.
+// SEMENCE_TOUR change à chaque nouvelle liste de retours. Quand le navigateur porte un autre
+// tour, ce qu'il contenait part dans « carnet-sommaire-v1-avant-<tour> » — rien n'est perdu —
+// et le tour du fichier s'installe. Entre deux tours, tout ce qu'on écrit reste intact.
+const SEMENCE_TOUR = 'r2 · 5 septembre 2026';
+const SEMENCE = {
+  "Main.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Vocabulaire.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Systeme.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Navigation.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Etats.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Carte.dc.html": {
+    "e": "question",
+    "note": ""
+  },
+  "Parcours.dc.html": {
+    "e": "question",
+    "note": ""
+  },
+  "Ouverture.dc.html": {
+    "e": "valide",
+    "note": "ok. attention les raccorucis clavier c'est super, j'adore. mais il faut aussi que ce soit accessible de l'interface, car on ne connait pas les raccourcis par coeur quand on débute, on ne sait même pas qu'ils existe. Ajoute un bouton d'aidre visible de partout qui permette d'afficher les raccourcis."
+  },
+  "Accueil.dc.html": {
+    "e": "revoir",
+    "note": "ok c'est mieux, mais du coup, par rapport au carnet a gauche, comment arrive sur cette page autre que quand on ouvre le jeu au lancement de l'app ?\net le bouton \"générer ce qui manque\" est un peu utopique il me semble non ?\ncomme si on avait un process capable de déterminer tout ce qui manque et de lancer tout les appels etc... d'un coup... retire ce bouton"
+  },
+  "Barre.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "neuf/nouveau-jeu": {
+    "e": "revoir",
+    "note": "ok ben fait les 4 étapes entière du coup. Ou alors reclasse cette maquette ailleur car pas trop de rapport avec l'atelier en fait."
+  },
+  "Ce qui reste à faire/Les réglages de l'atelier": {
+    "e": "revoir",
+    "note": "pas mal, mais un peu austère, c'est une partie technique qui est générale a toute l'application et qu'on ne touche que rarement. donc je pense que ca devrait petre un bouton \"réglages\" a part en bas a gauche et générique a l'app entière non ?"
+  },
+  "Famille.dc.html": {
+    "e": "valide",
+    "note": "ok beaucoup mieux. par contre je comprend pas la bulle volante \"3 personnages\" ni le 10 + 3 dans la collection \"Les boss\", c'est peut-être parce que c'est statique et c'est pour montrer ce qu'on verrait de manière animé quand on attribut des personanges a une autre collection ?"
+  },
+  "Personnage.dc.html": {
+    "e": "question",
+    "note": "j'aimerai que tu me fasse une maquette pour chaque sous parti de cette \"page\" :\nSa fiche\nLes images\nLes animations\nL'essai\n\nnote également a faire les écran :\nVoir la grille du jeu\nComparer à un autre personnage"
+  },
+  "Fiche.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Images.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Animations.dc.html": {
+    "e": "revoir",
+    "note": "ca me parait pas complet.\nje comprend pas les menus \"Depuis ses images\" et \"Depuis une animation reçue\".\net comment ca se passe si je génère par exemple 4 fois l'animation de marche et que je veux en sélectionner une de \"bonne\"\nil ne faut pas oublier que l'outil permet de générer, mais aussi de juger, selectionner et ranger.\n\nbref affichage a réflechir en détail et retravailler encore. c'est pour moi une vue qui affiche la lsite des animatinos par pose et direction, qui permet de les voir et juger, mais pas de les modifier ou de voir les frames en détail, ca c'est le travail d'un atelier."
+  },
+  "Essai.dc.html": {
+    "e": "revoir",
+    "note": "l'essai doit permettre de controler avec son clavier le personnage (zqsd), d'equiper des equipements, et de choisir l'animation a tester (marcher, courrir, attaquer, mourrir etc...)"
+  },
+  "neuf/comparer": {
+    "e": "a-voir",
+    "note": "ok mais il me manque les options pour choisir les sujet que je compare. sinon c'est ok."
+  },
+  "Mouvements.dc.html": {
+    "e": "revoir",
+    "note": "sur le principe c'est bon mais a revoir par rapport a la fonctionnalité d'animation."
+  },
+  "Montage.dc.html": {
+    "e": "revoir",
+    "note": "je comprend pas la différence avec la maquette \"Ses mouvements\"."
+  },
+  "Emplois.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Emploi.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Equipement.dc.html": {
+    "e": "question",
+    "note": "ok poru les deux autres.\npar contre ajoute la vue poru les animations, et n'oubli pas l'atelier qui permet de caler tout ca."
+  },
+  "Retouche.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Tables.dc.html": {
+    "e": "revoir",
+    "note": "alors la, quel rapport avec les réglages du jeu ? ca c'est un afficahge de l'atelier"
+  },
+  "Decors.dc.html": {
+    "e": "revoir",
+    "note": "il me manque les étapes pour créer un nouveau décor etc... a revoir pour pouvoir créer des collection dans le carnet (biome etc...) je sais pas exactement ce qu'on va faire ici soit force de proposition poru que ca soit cohérent avec les besoni de décors d'un jeu."
+  },
+  "Tuiles.dc.html": {
+    "e": "revoir",
+    "note": ""
+  },
+  "Toile.dc.html": {
+    "e": "question",
+    "note": ""
+  },
+  "Envoi.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Planche.dc.html": {
+    "e": "question",
+    "note": "j'ai du mal a comprendre quelle est cette maquette : on y arrives par ou ? on l'ouvre et la voit quand ?\nelle est spécifiques a une demande de génération pour les personnages ? il faut la clarifier ou alors montrer ses variantes pour les autres \"choses\" du jeu."
+  },
+  "Galerie.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Univers.dc.html": {
+    "e": "revoir",
+    "note": "je comprend pas cet affichage qui reprend tout les autres : son allure, sa vue etc...\ncomment l'ouvre, est-ce uq'on règle les chose ici ? a quoi serven du coup les autres avec les visuels détaillés ?\nc'est une ancienne maquette non ?"
+  },
+  "Allure.dc.html": {
+    "e": "valide",
+    "note": "les étapes en haut \"La vue / Le style et la taille / Les couleur\" OK, il manque la maquette \"les couleurs du coup\""
+  },
+  "Reglages.dc.html": {
+    "e": "valide",
+    "note": ""
+  },
+  "Depenses.dc.html": {
+    "e": "valide",
+    "note": ""
+  }
+};
+
 const ETATS = {
   'a-voir':   { nom: 'à voir',   court: 'à voir',   couleur: '#c4bcae' },
   'valide':   { nom: 'validé',   court: 'validé',   couleur: '#5c7a52' },
@@ -142,14 +304,15 @@ const ETATS = {
 };
 
 const ORDRE = [
-  { n: 'Le vocabulaire',        é: 'fait',   c: 'fait' },
-  { n: 'Le carnet à l\'échelle', é: 'en cours', c: 'ici' },
-  { n: 'Les familles et leurs collections', é: '' },
-  { n: 'La page d\'un sujet, en quatre', é: '' },
-  { n: 'Les équipements et leurs emplois', é: '' },
-  { n: 'L\'animation, fusionnée', é: '' },
-  { n: 'L\'ouverture, les réglages, le nouveau jeu', é: '' },
-  { n: 'Les parcours, au pluriel', é: '' },
+  { n: 'Le vocabulaire',                     é: 'fait', c: 'fait' },
+  { n: 'Le carnet à l\'échelle',              é: 'fait', c: 'fait' },
+  { n: 'La page d\'un personnage, en quatre',  é: 'fait', c: 'fait' },
+  { n: 'Les équipements et leurs emplois',   é: 'fait', c: 'fait' },
+  { n: 'Les six ateliers de retouche',       é: 'fait', c: 'fait' },
+  { n: 'Décors, terrains, la toile',         é: 'fait', c: 'fait' },
+  { n: 'L\'ouverture, les réglages, le nouveau jeu', é: 'fait', c: 'fait' },
+  { n: 'La grille des autres familles',      é: 'à venir', c: 'ici' },
+  { n: 'Les parcours, au pluriel',           é: '' },
 ];
 
 const GROUPES = [
@@ -157,15 +320,18 @@ const GROUPES = [
     titre: 'Le socle',
     desc: 'ce avec quoi tout le reste est bâti — ce ne sont pas des écrans',
     items: [
-      { k: 'Main.dc.html',        f: 'Main.dc.html',        n: 'L\'idée',       d: 'Le carnet en une page : à quoi ça sert, et pourquoi trois onglets ne suffisaient pas.' },
-      { k: 'Vocabulaire.dc.html', f: 'Vocabulaire.dc.html', n: 'Les mots',      d: 'Famille, collection, sujet, image, calque, emploi. Les définitions, les six familles et leurs outils, et les mots qu\'on s\'interdit.',
-        rep: 'Écrite après ta remarque sur « chose ». Le mot retenu est <strong>un sujet</strong>. Une famille est le type, fixe, et elle apporte ses outils ; une collection est le groupe que tu crées. Un équipement n\'a pas d\'images à lui : il a des emplois.' },
-      { k: 'Systeme.dc.html',     f: 'Systeme.dc.html',     n: 'Le système',    d: 'Couleurs, caractères, grille, les onze pièces, six règles, les durées.' },
-      { k: 'Navigation.dc.html',  f: 'Navigation.dc.html',  n: 'La navigation', d: 'Les lignes du carnet et où chacune mène, la barre ⌘K en entier, les menus au clic droit, les touches.',
-        rep: 'À refaire, étape 2. Une ligne du carnet ne dépliera plus des noms : elle ouvrira l\'écran de la famille, qui encaisse les 250 objets avec ses collections à gauche, une recherche et une grille. Le carnet ne gardera en sous-lignes que les cinq derniers ouverts. Et j\'ajoute les chemins qui manquaient : les réglages de l\'atelier et le retour à l\'ouverture, tous deux sous le nom du jeu.' },
-      { k: 'Carte.dc.html',       f: 'Carte.dc.html',       n: 'La carte',      d: 'Les vingt-deux écrans d\'aujourd\'hui, ce qu\'ils deviennent, et les manques.' },
-      { k: 'Parcours.dc.html',    f: 'Parcours.dc.html',    n: 'Le parcours',   d: 'De rien à un sprite dans le jeu, sans sauter une étape.',
-        rep: 'Tu as raison, il y en a plusieurs. Étape 8 : un parcours par manière de travailler — fabriquer un personnage, habiller un équipement, bâtir un terrain, et la toile d\'inspiration avant de commencer.' },
+      { k: 'Main.dc.html', f: 'Main.dc.html', n: 'L\'idée', d: 'Le carnet en une page : à quoi ça sert, et pourquoi trois onglets ne suffisaient pas.' },
+      { k: 'Vocabulaire.dc.html', f: 'Vocabulaire.dc.html', n: 'Les mots', d: 'Famille, collection, sujet, image, calque, emploi, prompt, frame. Les six familles et ce que chacune peut porter.',
+        rep: 'Corrigée avec tes retours : l\'équipement a bien son image de référence, « tuile » remplace « carreau », et <strong>prompt</strong>, <strong>frame</strong> et <strong>génération</strong> sont adoptés. Le tableau des familles est devenu une matrice — un objet <em>peut</em> avoir des poses et une animation.' },
+      { k: 'Systeme.dc.html', f: 'Systeme.dc.html', n: 'Le système', d: 'Couleurs, caractères, grille, les onze pièces, six règles, les durées.' },
+      { k: 'Navigation.dc.html', f: 'Navigation.dc.html', n: 'La navigation', d: 'Les lignes du carnet et où chacune mène, le carnet à 550 sujets, la barre ⌘K, les menus au clic droit, les touches.',
+        rep: '<strong>Refaite, puis complétée.</strong> Section « Quand le jeu grossit » : le rail à 46 sujets et à 550, côte à côte. Une famille déplie ses collections, jamais des noms ; une collection s\'arrête à huit sujets ; le carnet ne dépasse jamais trente lignes.<br><br><strong>Nouvelle section « Le nom du jeu, déplié ».</strong> Il ne fait pas apparaître un menu qui flotte — ce serait un quatrième menu au clic droit, que cette page interdit : il <strong>se déplie sur place</strong>, comme une famille déplie ses collections. Douze lignes : les cinq derniers jeux touchés, « ＋ Commencer un jeu », les réglages de l\'atelier, et quatre gestes sur le jeu entier. Avec les seize du carnet : vingt-neuf, sous le plafond de trente. Six états, six règles, et huit choses qu\'on n\'y met pas avec la raison. Six écarts corrigés au passage dans le reste de la page.' },
+      { k: 'Etats.dc.html', f: 'Etats.dc.html', n: 'Les états', d: 'Huit cas moches : l\'attente, le refus, la clé absente, la liste tronquée, le jeu vide.',
+        rep: 'Déplacée dans le socle, comme tu le demandais : ce sont des pièces du système, pas un écran.' },
+      { k: 'Carte.dc.html', f: 'Carte.dc.html', n: 'La carte', d: 'Les vingt-deux écrans d\'aujourd\'hui, ce qu\'ils deviennent, et les manques.',
+        rep: 'À refaire en dernier : elle compte encore les écrans d\'avant les collections et les emplois. Je la reprends quand le reste sera stabilisé, sinon elle mentira à chaque planche ajoutée.' },
+      { k: 'Parcours.dc.html', f: 'Parcours.dc.html', n: 'Le parcours', d: 'De rien à un sprite dans le jeu, sans sauter une étape.',
+        rep: 'Tu as raison, il y en a plusieurs. Dernière étape : un parcours par manière de travailler — fabriquer un personnage, habiller un équipement, bâtir un terrain, et la toile d\'inspiration avant de commencer.' },
     ]
   },
   {
@@ -173,81 +339,107 @@ const GROUPES = [
     desc: 'avant d\'être dans un jeu, et le tableau de bord une fois dedans',
     items: [
       { k: 'Ouverture.dc.html', f: 'Ouverture.dc.html', n: 'L\'ouverture', d: 'Sur quel jeu travaille-t-on. Le seul écran qui prend toute la fenêtre.',
-        rep: 'Réponses : le nom du jeu en haut du carnet s\'ouvre et contient la liste des jeux, « Commencer un jeu » et « Les réglages de l\'atelier » (aussi ⌘J et ⌘⌥,). Les réglages du jeu sont la deuxième section du carnet, visible en permanence (⌘,). Je le montrerai à l\'étape 7.' },
-      { k: 'Accueil.dc.html',   f: 'Accueil.dc.html',   n: 'Le jeu ouvert', d: 'Ce qu\'on voit en arrivant dans un jeu.',
-        rep: 'À refaire avec un récapitulatif par famille et par collection — 5 personnages, 32 terrains, 28 objets — au lieu des sujets un par un. Étape 3.' },
-      { k: 'Barre.dc.html',     f: 'Barre.dc.html',     n: 'La barre',      d: '⌘K en action : chercher un sujet, ou lancer un geste qui n\'est nulle part à l\'écran.' },
-      { k: 'neuf/nouveau-jeu',  f: '',                  n: 'Le nouveau jeu', afaire: true, d: 'Le wizard : nommer le jeu, choisir son allure, écrire sa bible, poser ses clés. N\'existe nulle part aujourd\'hui.' },
-      { k: 'Ce qui reste à faire/Les réglages de l\'atelier', f: '', n: 'Les réglages de l\'atelier', afaire: true, d: 'Les clés, le dossier de travail, le catalogue des modèles. Pas le jeu : l\'application.' },
-      { k: 'Ce qui reste à faire/Le guide', f: '', n: 'Le guide', afaire: true, d: 'Ce qu\'on lit la première fois, et où on revient quand on est bloqué.' },
+        rep: 'Réponses : le nom du jeu en haut du carnet s\'ouvre et contient la liste des jeux, « Commencer un jeu » et « Les réglages de l\'atelier » (⌘J et ⌘⌥,). Les réglages du jeu sont la deuxième section du carnet, visible en permanence (⌘,). Écrans à dessiner ci-dessous.' },
+      { k: 'Accueil.dc.html', f: 'Accueil.dc.html', n: 'Le jeu ouvert', d: 'Six cartes, une par famille, avec ce qui est complet et ce qui ne l\'est pas. Puis ce qui manque le plus, et ce qui vient d\'être fait.',
+        rep: '<strong>Refait.</strong> Plus un seul sujet nommé un par un : on lit le jeu par famille. Le marais est presque vide et l\'écran le dit — aucun terrain n\'a d\'image, le bouton n\'existe qu\'au repos. Une ligne en bas rappelle que pour voir les sujets, on ouvre une famille dans le carnet.' },
+      { k: 'Barre.dc.html', f: 'Barre.dc.html', n: 'La barre', d: '⌘K en action : chercher un sujet, ou lancer un geste qui n\'est nulle part à l\'écran.' },
+      { k: 'neuf/nouveau-jeu', f: 'Nouveau-jeu.dc.html', n: 'Commencer un jeu', d: 'Quatre étapes — son nom, son allure, son monde, ses clés. Montrée à la deuxième.',
+        rep: 'Le seul autre écran qui prend toute la fenêtre, avec l\'ouverture. À droite, le jeu se dessine au fur et à mesure, et une carte dit ce qui est posé d\'avance : six poses, huit échelles, quatre emplacements, un détourage de départ. Rien n\'est payé pendant ce parcours.' },
+      { k: 'Ce qui reste à faire/Les réglages de l\'atelier', f: 'Reglages-atelier.dc.html', n: 'Les réglages de l\'atelier', d: 'Les clés, le catalogue des 49 modèles avec leur prix, le dossier de travail, les jeux ouverts sur la machine.',
+        rep: 'Réponse à ta question : on y arrive par le nom du jeu, tout en haut du carnet (⌘⌥,). Rien ici n\'est propre à un jeu — c\'est la différence avec la deuxième section du carnet, qui ne vaut que pour le marais.' },
+      { k: 'Ce qui reste à faire/Le guide', f: 'Guide.dc.html', n: 'Le guide', d: 'Ce qu\'on lit la première fois, et où on revient quand on est bloqué.' },
     ]
   },
   {
     titre: 'Les sujets, et leurs familles',
     desc: 'l\'échelle : comment on tient 30 personnages, 250 objets, 100 terrains',
     items: [
-      { k: 'Famille.dc.html', f: 'Famille.dc.html', n: 'Une famille', d: 'Les sujets en lignes, les six poses en colonnes. On voit les trous d\'un coup.',
-        rep: 'À refaire. Une colonne de collections à gauche (Tous 54 · Héros 3 · PNJ 20 · Boss 10 · Vilains 5 · Monstres 16), qu\'on crée et où l\'on range. Et une variante par famille, parce qu\'un terrain et un personnage ne se regardent pas pareil. Étape 3.' },
-      { k: 'neuf/collections', f: '', n: 'Ranger dans des collections', afaire: true, d: 'Créer une collection, y glisser des sujets, en retirer. Un sujet peut être dans plusieurs.' },
+      { k: 'Famille.dc.html', f: 'Famille.dc.html', n: 'Une famille', d: '54 personnages en grille, six collections dans le carnet, et trois sujets qu\'on glisse dans « Les boss ».',
+        rep: '<strong>Refaite.</strong> Les collections sont dans le carnet, sous la famille. La grille encaisse les 54 avec sa recherche, ses trois affichages et ses filtres. On range en glissant une sélection sur une ligne du carnet : rien ne se déplace, rien ne s\'efface.' },
+      { k: 'neuf/famille-variantes', f: '', n: 'La même, pour les autres familles', afaire: true, d: 'Un terrain, un objet et un élément d\'interface ne se regardent pas comme un personnage : la grille change de colonnes et d\'outils.' },
       { k: 'Ce qui reste à faire/Un objet', f: '', n: 'Un objet', afaire: true, d: 'La page d\'un sujet sans poses ni équipement — la plus simple des six familles.' },
       { k: 'Ce qui reste à faire/L\'interface du jeu', f: '', n: 'L\'interface du jeu', afaire: true, d: 'Les boutons et cadres du jeu lui-même, et leurs états : au repos, survolé, appuyé, éteint.' },
     ]
   },
   {
     titre: 'Un personnage',
-    desc: 'sa page se découpe en quatre, plus deux écrans que tu as demandés',
+    desc: 'sa page se découpe en quatre — les quatre sont dessinées',
     items: [
-      { k: 'Personnage.dc.html', f: 'Personnage.dc.html', n: 'Sa page, aujourd\'hui', d: 'Quatre onglets sur un seul écran : sa fiche, ses poses, son vestiaire, son aperçu.',
-        rep: 'Elle sert de plan d\'ensemble ; je dessine les quatre parties une par une, ci-dessous. Étape 4.' },
-      { k: 'neuf/sa-fiche',     f: '', n: 'Sa fiche',      afaire: true, d: 'Qui il est : son nom, sa description, sa collection, son échelle, ce qui manque.' },
-      { k: 'neuf/ses-images',   f: '', n: 'Ses images',    afaire: true, d: 'Toutes ses images : par pose, par direction, avec les variantes et les écartées.' },
-      { k: 'neuf/ses-animations', f: '', n: 'Ses animations', afaire: true, d: 'Ce qui bouge : les suites d\'images, leur tempo, et ce qui manque pour qu\'elles tournent.' },
-      { k: 'neuf/l-essai',      f: '', n: 'L\'essai',       afaire: true, d: 'Le voir en mouvement sur un vrai fond, avec son équipement, à la taille du jeu.' },
-      { k: 'neuf/dans-la-grille', f: '', n: 'Dans la grille du jeu', afaire: true, d: 'Le poser sur un terrain, à l\'échelle, pour juger s\'il tient la route.' },
-      { k: 'neuf/comparer',     f: '', n: 'Comparer deux sujets', afaire: true, d: 'Deux personnages côte à côte : même taille, même trait, même palette ?' },
+      { k: 'Personnage.dc.html', f: 'Personnage.dc.html', n: 'Sa page, le plan d\'ensemble', d: 'Les quatre onglets sur un seul écran.',
+        rep: 'Elle sert de plan d\'ensemble ; les quatre parties sont dessinées une par une ci-dessous. Le carnet est rigoureusement identique sur les quatre : passer d\'un onglet à l\'autre ne bouge rien à gauche.' },
+      { k: 'Fiche.dc.html', f: 'Fiche.dc.html', n: 'Sa fiche', d: 'Son image de référence, son nom, son dossier verrouillé, sa description, ses collections, son échelle, et les quatre compteurs de ce qui existe de lui.' },
+      { k: 'Images.dc.html', f: 'Images.dc.html', n: 'Ses images', d: 'Dix-huit images rangées par pose : la retenue cerclée de rouille, les variantes à côté, les écartées en transparence, et ses quatre calques.' },
+      { k: 'Animations.dc.html', f: 'Animations.dc.html', n: 'Ses animations', d: 'Ses trois animations, la bande de frames, le tempo, et ce qui manque pour qu\'elles tournent.',
+        rep: 'C\'est ici que <strong>Ses mouvements</strong> et <strong>Le montage</strong> fusionnent : deux entrées en haut — « depuis ses images » ou « depuis une animation reçue » — un seul écran.' },
+      { k: 'Essai.dc.html', f: 'Essai.dc.html', n: 'L\'essai', d: 'Le pélerin à la taille du jeu, sur la grille de 64 px, avec son sac, à côté du moulin. Quatre verdicts à droite.',
+        rep: '« Voir la grille du jeu » est un des trois fonds de cet écran, pas un écran à part : uni, la grille, ou une scène.' },
+      { k: 'neuf/comparer', f: 'Comparer.dc.html', n: 'Comparer deux sujets', d: 'Le pélerin et le garde côte à côte, même pose, même fond, même taille. Les écarts chiffrés dessous.',
+        rep: 'Deux écarts trouvés sur cinq mesures : le garde fait 66 px pour une tuile de 64, et son contour est de deux pixels noirs quand la bible du jeu demande un pixel brun. Les deux réparations sont proposées à droite, avec leur prix.' },
       { k: 'Ce qui reste à faire/Les quatre directions', f: '', n: 'Les quatre directions', afaire: true, d: 'Une matrice poses × directions. Un autre jeu a vingt-quatre cases par personnage.' },
+      { k: 'Mouvements.dc.html', f: '', n: 'Ses mouvements (fondu)', d: 'Absorbé par « Ses animations ». La planche n\'est plus tenue à jour.',
+        rep: 'Fondu dans <strong>Ses animations</strong>, comme tu le demandais.' },
+      { k: 'Montage.dc.html', f: '', n: 'Le montage (fondu)', d: 'Absorbé par « Ses animations », en deuxième entrée.',
+        rep: 'Tu avais raison : la distinction ne tenait pas. Devenu le segment « depuis une animation reçue ».' },
     ]
   },
   {
     titre: 'Les équipements',
     desc: 'ils n\'ont pas d\'images à eux : ils ont des emplois',
     items: [
-      { k: 'Equipement.dc.html', f: 'Equipement.dc.html', n: 'Une pièce, aujourd\'hui', d: 'L\'épée, ses porteurs, et le calque par pose.',
-        rep: 'Il manque une étape entière, tu as raison. Une épée portée par trois héros, ce sont trois jeux de calques complètement différents — plus l\'objet posé au sol, plus l\'icône d\'inventaire, plus les mises en scène. Je dessine d\'abord la liste des emplois, puis un emploi en détail : c\'est la seule façon de ne pas noyer l\'écran sous des centaines de cases. Étape 5.' },
-      { k: 'neuf/ses-emplois', f: '', n: 'Ses emplois', afaire: true, d: 'Qui la porte et à quel emplacement, posée au sol, son icône, ses mises en scène. Une ligne par emploi, avec ce qui existe et ce qui manque.' },
-      { k: 'neuf/un-emploi',   f: '', n: 'Un emploi en détail', afaire: true, d: 'Portée par Le goliath, en main droite : la matrice poses × directions, et le calque posé sur le personnage.' },
-      { k: 'neuf/le-corps',    f: '', n: 'Le corps', afaire: true, d: 'Les emplacements où un équipement s\'accroche, dessinés sur une silhouette.', kAlias: 'Ce qui reste à faire/Le corps' },
+      { k: 'Emplois.dc.html', f: 'Emplois.dc.html', n: 'Ses emplois', d: 'L\'épée et ses six emplois : trois porteurs, posée au sol, plantée dans un rocher, son icône. 31 images sur 75.',
+        rep: '<strong>C\'est l\'étape qui te manquait.</strong> On voit les emplois d\'abord, jamais les centaines de cases. Le volet compte le tout : 3 porteurs × 6 poses × 4 directions = 72, plus 3 images à part.' },
+      { k: 'Emploi.dc.html', f: 'Emploi.dc.html', n: 'Un emploi en détail', d: 'L\'épée du goliath en main droite : la matrice 6 poses × 4 directions, le calque posé sur le personnage, son décalage.' },
+      { k: 'Equipement.dc.html', f: 'Equipement.dc.html', n: 'Une pièce, l\'ancienne', d: 'La première version, avant les emplois.',
+        rep: 'Remplacée par les deux écrans ci-dessus. Je la garde tant que tu n\'as pas confirmé que le modèle des emplois te va.' },
+      { k: 'neuf/le-corps', kAlias: 'Ce qui reste à faire/Le corps', f: '', n: 'Le corps', afaire: true, d: 'Les emplacements où un équipement s\'accroche, dessinés sur une silhouette.' },
     ]
   },
   {
-    titre: 'Ce qui bouge',
-    desc: 'à fusionner : deux planches pour une seule fonctionnalité',
+    titre: 'Les ateliers de retouche',
+    desc: 'six traitements. Pour chacun : ses moteurs, ses réglages, ce qu\'on montre pendant le calcul, ce qu\'on fait quand ça rate',
     items: [
-      { k: 'Mouvements.dc.html', f: 'Mouvements.dc.html', n: 'Ses mouvements', d: 'La suite d\'images, le tempo, la boucle.',
-        rep: 'Je fusionne avec Le montage : un seul écran « l\'animation », avec deux entrées — des images qu\'on met en ordre, ou une animation qui revient et qu\'on découpe. Et je le cale sur ce que l\'atelier sait vraiment faire avant de le redessiner. Étape 6.' },
-      { k: 'Montage.dc.html',    f: 'Montage.dc.html',    n: 'Le montage',     d: 'Découper une animation revenue en bandes.',
-        rep: 'Tu as raison, la distinction ne tient pas. Cette planche disparaît dans la précédente.' },
+      { k: 'Retouche.dc.html', f: 'Retouche.dc.html', n: 'La retouche, vue d\'ensemble', d: 'La chaîne réelle — sept étapes, plus « la différence » à part. Puis neuf traitements qui n\'existent nulle part, et ce qu\'ils coûtent.',
+        rep: '<strong>Refaite après relecture croisée du code.</strong> Deux découvertes : la chaîne compte <strong>sept</strong> étapes et non six — « Le contour » et « La main » existent et personne ne les avait relevées — et une huitième table, <strong>« La différence »</strong>, prend deux images pour en fabriquer une troisième : c\'est par elle qu\'un calque se fait. Neuf traitements manquent en entier, dont cinq qui sont gratuits et remplacent des générations payées. Et le magenta reste dans le fichier sous la transparence : invisible tant qu\'on affiche au pixel près, visible dès qu\'on réduit ou qu\'on tourne.' },
+      { k: 'neuf/atelier-detourer', f: 'atelier-detourer.dc.html', n: 'Détourer', d: 'Le fond magenta part. Treize moteurs — le bord, la pipette, la sélection, cinq finesses de modèle — et cinq qui manquent.',
+        rep: 'Le seul maillon qui coûte du temps : 130 ms sur la machine, ou 0,65 à 1,33 s si on demande la silhouette à un modèle. Dix-neuf réglages relevés, douze cas de ratés.' },
+      { k: 'neuf/atelier-recadrer', f: 'atelier-recadrer.dc.html', n: 'Recadrer', d: 'Les bords vides sautent et le sujet touche ses quatre bords. Treize moteurs, dont six à ajouter.',
+        rep: 'Mesuré : sur le pélerin, arrêter le rectangle au-dessus de son ombre le fait ressortir 40 % plus grand dans sa case — 58 carrés au lieu de 41. Et la marge est grisée, avec sa raison : une fois la case posée, elle ne change rien.' },
+      { k: 'neuf/atelier-reduire', f: 'atelier-reduire.dc.html', n: 'Réduire', d: 'La case du jeu — le réglage le plus visible de la chaîne. Huit façons de réduire, quatre à ajouter.',
+        rep: 'Trois réglages agissent sans qu\'aucun écran ne les porte : l\'épaisseur des traits, les teintes de travail du vote, et la façon de trancher la silhouette.' },
+      { k: 'neuf/atelier-couleurs', f: 'atelier-couleurs.dc.html', n: 'Couleurs', d: 'La palette du monde, imposée ou trouvée dans l\'image. Quinze moteurs, six à ajouter.',
+        rep: 'Le tramage régulier — celui qui convient au pixel art — manque ; seule la diffusion existe. Et l\'écart entre couleurs demandées et obtenues est affiché : 24 disponibles, 14 utilisées.' },
+      { k: 'neuf/atelier-nettoyer', f: 'atelier-nettoyer.dc.html', n: 'Nettoyer', d: 'Les pixels isolés que la réduction a fabriqués. Onze moteurs, neuf à ajouter.',
+        rep: 'C\'est l\'atelier le plus dépourvu. Il efface des taches détachées, rien d\'autre : aucun trou ne se bouche, aucun contour ne se lisse. Et le curseur affiche 3 px alors que 0 est posé tant qu\'on ne l\'a pas touché.' },
+      { k: 'Tables.dc.html', f: 'Tables.dc.html', n: 'Le détourage de départ', d: 'Le réglage qui sert de point de départ à toutes les images du jeu, mis au point sur une vraie image.',
+        rep: 'Tu as raison, ça n\'avait rien à faire dans les réglages du jeu : c\'est un écran d\'atelier. Déplacé ici. Il reste dans la deuxième section du carnet parce qu\'il s\'applique à tout le jeu, mais il ouvre l\'atelier Détourer sur une image choisie.' },
+      { k: 'neuf/le-contour', f: '', n: 'Le contour', afaire: true, d: 'La sixième étape de la chaîne : un trait retracé autour du sujet. Quatre réglages, dont un qui change les dimensions du rendu sans qu\'on l\'ait demandé. Trouvée par la relecture.' },
+      { k: 'neuf/la-difference', f: '', n: 'La différence', afaire: true, d: 'Deux images en entrée, une troisième en sortie. C\'est par elle qu\'un calque se fabrique — la neige sur le toit, l\'armure sur le garde. Trouvée par la relecture.' },
+      { k: 'neuf/relecture-avant-livraison', f: '', n: 'La relecture avant livraison', afaire: true, d: 'Toutes les images du jeu rangées de la pire à la meilleure, sur deux mesures que l\'atelier calcule déjà et n\'affiche nulle part.' },
+      { k: 'neuf/atelier-retourner', f: 'atelier-retourner.dc.html', n: 'Retourner', d: 'Les autres directions, sans rien payer. Dix moteurs — et aucun n\'existe aujourd\'hui.',
+        rep: 'Le seul atelier qui manque en entier. Pour les trois personnages du marais, ça vaut $0,23 de générations inutiles — et des miroirs qui reviennent différents, donc un pélerin qui change de robe en se retournant.' },
     ]
   },
   {
     titre: 'Le reste du jeu',
-    desc: 'décors et terrains, qui n\'ont ni poses ni équipement',
+    desc: 'décors, terrains, et la toile d\'avant — trois familles avec leurs parcours, leurs collections et leurs outils',
     items: [
-      { k: 'Decors.dc.html', f: 'Decors.dc.html', n: 'Un décor',   d: 'Le moulin à l\'échelle, son point d\'accroche, sa zone bloquée, devant et derrière.' },
-      { k: 'Tuiles.dc.html', f: 'Tuiles.dc.html', n: 'Un terrain', d: 'Le carreau et sa jointure, vérifiée en le répétant.' },
-      { k: 'Toile.dc.html',  f: 'Toile.dc.html',  n: 'Le plan',    d: 'Tout le jeu sur une toile, et la réserve des images que le plan ne montre pas.' },
-      { k: 'neuf/une-carte', f: '', n: 'Bâtir une carte', afaire: true, d: 'Poser des carreaux de terrain les uns à côté des autres et voir les coutures — l\'outil propre à cette famille.' },
+      { k: 'Decors.dc.html', f: 'Decors.dc.html', n: 'Un décor', d: 'Le banc de pose — le moulin sur l\'herbe du marais, le pélerin qu\'on fait glisser devant et derrière. Puis le parcours en 14 étapes, 10 collections, 9 outils.',
+        rep: '<strong>Refaite en entier.</strong> Un décor a quatre mesures que personne d\'autre n\'a : où il touche le sol, ce qu\'il bloque, ce qui passe devant, et combien il fait de pélerins de haut. <strong>Aucune des quatre n\'existe dans l\'app</strong> — le PNG sort seul et le moteur de jeu doit tout redeviner. Les collections proposées : le biome (« Le marais »), le même biome en hiver, le remplissage, les repères, ce qui bloque, ce qui dépasse la tête, et « Bon pour le jeu » qui se remplit tout seul.' },
+      { k: 'Tuiles.dc.html', f: 'Tuiles.dc.html', n: 'Un terrain', d: 'Recoudre : la tuile décalée d\'un demi-carré, ses quatre bords en croix au milieu, et la couture qui saute aux yeux. Parcours en 11 étapes, 8 collections, 10 outils.',
+        rep: '<strong>Refaite en entier.</strong> Premier constat : <strong>la famille « terrains » n\'existe pas dans l\'app</strong> — les tuiles sont rangées avec les objets. Ensuite : une rencontre entre deux terrains demande 47 tuiles, et le pinceau de bord peut en fabriquer 46 gratuitement en découpant une tuile sur l\'autre. Les trois façons de recoudre sont chiffrées, avec ce que chacune coûte.' },
+      { k: 'Toile.dc.html', f: 'Toile.dc.html', n: 'La toile de l\'univers', d: 'Cinq îlots d\'images collées, et sous chacun une ligne qui dit ce qu\'il décide dans le jeu. Parcours en 20 étapes, 12 collections, 13 outils.',
+        rep: '<strong>Refaite en entier</strong>, dans le sens que tu voulais : la toile d\'inspiration, avant de fabriquer quoi que ce soit. La règle qui la sauve d\'être un mur d\'images : <strong>un îlot décide quelque chose</strong> — une ligne de la bible, la palette, les images qui partent avec chaque génération, ou la ligne négative. Un îlot qui ne décide rien est une réserve, et l\'écran le dit. Un seul geste s\'y paie : éprouver la direction sur un sujet inventé qui n\'entre pas dans le jeu.' },
+      { k: 'neuf/une-carte', f: '', n: 'Bâtir une carte', afaire: true, d: 'Poser des tuiles côte à côte et voir les coutures — l\'outil propre aux terrains.' },
     ]
   },
   {
     titre: 'Les images',
-    desc: 'les fabriquer, les trouver, les reprendre, les sortir',
+    desc: 'les fabriquer, les trouver, les sortir',
     items: [
-      { k: 'Envoi.dc.html',    f: 'Envoi.dc.html',    n: 'L\'envoi',    d: 'Ce qui part vraiment au modèle, ce que ça coûte, avant de cliquer.' },
-      { k: 'Planche.dc.html',  f: 'Planche.dc.html',  n: 'La feuille',  d: 'Plusieurs cases revenues en une seule image, et la découpe.',
-        rep: 'On y arrive juste après un envoi, quand la réponse contient plusieurs cases — jamais autrement. Elle vaut pour toutes les familles, pas seulement les personnages. Je le rendrai visible dans le fil, et j\'ajouterai une variante terrain.' },
-      { k: 'Galerie.dc.html',  f: 'Galerie.dc.html',  n: 'La galerie',  d: 'Toutes les images du jeu : chercher, filtrer, choisir, agir en lot.' },
-      { k: 'Retouche.dc.html', f: 'Retouche.dc.html', n: 'La retouche', d: 'Détourer, recadrer, réduire, changer la palette. Une pile de passes qu\'on retire dans n\'importe quel ordre.' },
+      { k: 'Envoi.dc.html', f: 'Envoi.dc.html', n: 'L\'envoi', d: 'Ce qui part vraiment au modèle, ce que ça coûte, avant de cliquer.' },
+      { k: 'Planche.dc.html', f: 'Planche.dc.html', n: 'La feuille', d: 'Plusieurs cases revenues en une seule image, et la découpe.',
+        rep: 'On y arrive juste après un envoi, quand la réponse contient plusieurs cases — jamais autrement. Elle vaut pour toutes les familles. À clarifier dans le fil, et à montrer en variante terrain.' },
+      { k: 'Galerie.dc.html', f: 'Galerie.dc.html', n: 'La galerie', d: 'Toutes les images du jeu : chercher, filtrer, choisir, agir en lot.' },
       { k: 'Ce qui reste à faire/La sortie', f: '', n: 'La sortie', afaire: true, d: 'Exporter vers le moteur de jeu : quels fichiers, quel rangement, quel format.' },
     ]
   },
@@ -255,27 +447,37 @@ const GROUPES = [
     titre: 'Les réglages du jeu',
     desc: 'ce qui s\'applique à tous les sujets, une fois pour toutes',
     items: [
-      { k: 'Univers.dc.html',  f: 'Univers.dc.html',  n: 'Le monde et son trait', d: 'Les sept lignes de la bible. La septième est vide.' },
-      { k: 'Allure.dc.html',   f: 'Allure.dc.html',   n: 'Son allure',            d: 'Style, taille, pixelisation, couleurs — illustrés, pas décrits.' },
-      { k: 'Reglages.dc.html', f: 'Reglages.dc.html', n: 'Sa vue',                d: 'D\'où on regarde le jeu : les huit vues dessinées, et le texte exact qui part.' },
-      { k: 'Tables.dc.html',   f: 'Tables.dc.html',   n: 'Son détourage',         d: 'Le détourage de départ, réglé sur une vraie image plutôt que dans le vide.' },
-      { k: 'Ce qui reste à faire/Le plan de poses',   f: '', n: 'Le plan de poses',   afaire: true, d: 'La table des poses et de leur consigne, qu\'on modifie.' },
-      { k: 'Ce qui reste à faire/Les huit échelles',  f: '', n: 'Les huit échelles',  afaire: true, d: 'La table des types de sujets et de la place qu\'ils prennent dans leur image.' },
+      { k: 'Univers.dc.html', f: 'Univers.dc.html', n: 'Le monde et son trait', d: 'Les sept lignes de la bible, avec leur texte réel. Une est vide. À droite, les sept autres réglages du jeu et leur valeur.',
+        rep: '<strong>Refaite.</strong> Tu avais raison, elle redoublait les autres. Elle ne règle plus qu\'une chose : les sept lignes de la bible. Tout le reste n\'est plus qu\'une liste de valeurs à droite, avec un lien vers l\'écran qui les règle. En bas, le texte tel qu\'il part au modèle, mis bout à bout — et « Le rendu », vide, se voit tout de suite.' },
+      { k: 'neuf/couleurs-du-jeu', f: 'Couleurs.dc.html', n: 'Les couleurs', d: 'Les vingt-quatre couleurs du jeu, rangées en rampes d\'ombre, et ce qu\'elles donnent sur trois sujets.',
+        rep: 'La troisième étape de « Son allure », qui manquait. Trois origines possibles : lues sur les images du jeu, posées à la main, ou prises dans une référence qu\'on dépose. La couleur de fond magenta est traitée à part — elle ne doit surtout pas être dans la palette.' },
+      { k: 'Allure.dc.html', f: 'Allure.dc.html', n: 'Son allure', d: 'Style, taille, pixelisation, couleurs — illustrés, pas décrits.' },
+      { k: 'neuf/style-et-finesse', f: '', n: 'Le style du jeu et sa finesse', afaire: true, d: 'Pixel art ou dessin. En dessin la finesse monte à 2048 — et un tel jeu ne peut aujourd\'hui poser aucune retouche : la route refuse au-dessus de 512. Trouvé par la relecture.' },
+      { k: 'Reglages.dc.html', f: 'Reglages.dc.html', n: 'Sa vue', d: 'D\'où on regarde le jeu : les huit vues dessinées, et le texte exact qui part.' },
+      { k: 'Ce qui reste à faire/Le plan de poses', f: '', n: 'Le plan de poses', afaire: true, d: 'La table des poses et de leur consigne, qu\'on modifie.' },
+      { k: 'Ce qui reste à faire/Les huit échelles', f: '', n: 'Les huit échelles', afaire: true, d: 'La table des types de sujets et de la place qu\'ils prennent dans leur image.' },
       { k: 'Ce qui reste à faire/Les IA et les clés', f: '', n: 'Les IA et les clés', afaire: true, d: 'La table des modèles, leur prix, ce qui manque pour s\'en servir.' },
     ]
   },
   {
     titre: 'Les comptes, et quand ça rate',
-    desc: 'l\'argent et les cas moches',
+    desc: 'ce que ça coûte, génération par génération',
     items: [
-      { k: 'Depenses.dc.html', f: 'Depenses.dc.html', n: 'Les dépenses', d: 'Appel par appel, par jeu, par modèle. Les ratés nommés.' },
-      { k: 'Etats.dc.html',    f: 'Etats.dc.html',    n: 'Les états',    d: 'Huit cas moches : l\'attente, le refus, la clé absente, la liste tronquée, le jeu vide.' },
+      { k: 'Depenses.dc.html', f: 'Depenses.dc.html', n: 'Les dépenses', d: 'Génération par génération, par jeu, par modèle. Les ratés nommés.' },
     ]
   },
 ];
 
 let etat = {};
 try { etat = JSON.parse(localStorage.getItem(CLE) || '{}'); } catch (e) { etat = {}; }
+if (etat.__tour !== SEMENCE_TOUR) {
+  const avait = Object.keys(etat).filter(k => k[0] !== '_').length;
+  if (avait) { try { localStorage.setItem(CLE + '-avant-' + SEMENCE_TOUR, JSON.stringify(etat)); } catch (e) {} }
+  for (const k in SEMENCE) etat[k] = { ...SEMENCE[k] };
+  delete etat.__vide;
+  etat.__tour = SEMENCE_TOUR;
+  try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (e) {}
+}
 let filtre = 'tout';
 
 function fiche(it) {
@@ -425,7 +627,7 @@ document.getElementById('dlg-fermer').addEventListener('click', () => document.g
 
 document.getElementById('btn-vider').addEventListener('click', () => {
   if (!confirm('Effacer toutes tes marques et tes remarques ?')) return;
-  etat = {}; ranger(); tout();
+  etat = { __vide: 1 }; ranger(); tout();
   document.getElementById('msg').textContent = 'remis à blanc';
   setTimeout(() => document.getElementById('msg').textContent = '', 2200);
 });

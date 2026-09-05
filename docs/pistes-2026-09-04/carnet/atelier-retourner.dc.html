@@ -1,0 +1,476 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 13px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .img { background: #6c6c6c; border-radius: 8px; position: relative; overflow: hidden;
+           display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 2750px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1000px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › au repos › Retoucher</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">Retourner</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">miroir horizontal ou vertical, quart de tour, pour fabriquer des directions</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 210px">Gratuit.</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1180px">
+    Ça renvoie l'image dans l'autre sens, comme dans une glace : le pèlerin qui marchait vers l'est marche vers l'ouest. Aucun pixel n'est réinventé — ce sont exactement les mêmes carrés de couleur, rangés dans l'autre ordre. C'est instantané, ça ne demande rien à l'IA, et ça ne coûte rien.
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
+
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
+      <div class="rt" style="padding: 0 9px">La chaîne</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Détourer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le fond magenta part</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Recadrer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les bords vides sautent</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Réduire</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Couleurs</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la palette du monde</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Nettoyer</span><span style="color: #b0a89b; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les pixels isolés</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Le contour</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le trait de bord retracé</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>La main</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">ce qu’on repeint soi-même</div>
+        </div>
+        <div class="plc" style="background: #e6dfd2; font-weight: 600; flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Retourner</span><span style="color: #a8492c; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les autres directions</div>
+        </div>
+      </div>
+      <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: #6d675e">
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #5c7a52; font-size: 15px; line-height: 1">●</span> posée, elle agit</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #b0a89b; font-size: 15px; line-height: 1">●</span> endormie, réglages gardés</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #c9c2b6; font-size: 15px; line-height: 1">●</span> rien à faire ici</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #a8492c; font-size: 15px; line-height: 1">●</span> n’existe pas encore</div>
+      </div>
+    </div>
+
+    <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="font-size: 15px; font-weight: 600">Le pélerin, au repos — les quatre directions</div>
+        <div class="seg"><div class="sg">Avant</div><div class="sg sg-on">Les deux</div><div class="sg">Après</div></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; height: 330px">
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7"><i class="fig" style="width: 60px; height: 152px"></i>
+          <span style="position: absolute; left: 9px; top: 8px; font-size: 11px; color: #4e483f">est · générée</span></div>
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7"><i class="fig" style="width: 60px; height: 152px; transform: scaleX(-1)"></i>
+          <span style="position: absolute; left: 9px; top: 8px; font-size: 11px; color: #a8492c">ouest · retournée</span>
+          <span style="position: absolute; right: 9px; bottom: 8px; font-size: 11px; color: #5c7a52">gratuit</span></div>
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7"><i class="fig" style="width: 60px; height: 152px; filter: brightness(.88)"></i>
+          <span style="position: absolute; left: 9px; top: 8px; font-size: 11px; color: #4e483f">sud · générée</span></div>
+        <div class="img" style="background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7; border: 1px dashed #c9c2b6"><span style="color: #948c80; font-size: 12px">nord</span>
+          <span style="position: absolute; left: 9px; top: 8px; font-size: 11px; color: #948c80">à générer · $0,019</span></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">12</span><span style="color: #948c80">images obtenues sans générer</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">$0,00</span><span style="color: #948c80">ce que ça coûte</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">0 ms</span><span style="color: #948c80">le temps que ça prend</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">exact</span><span style="color: #948c80">les mêmes pixels, dans l’autre ordre</span></span>
+      </div>
+      <div style="font-size: 12px; color: #6d675e; line-height: 1.45">Aucun pixel n’est réinventé : ce sont les mêmes carrés de couleur, rangés dans l’autre ordre. C’est instantané, ça ne demande rien au modèle, et ça ne coûte rien.</div>
+    </div>
+
+    <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Le sens</div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">Miroir gauche-droite <span class="puce p-a">à ajouter</span></span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">l’est devient l’ouest, pixel pour pixel</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Miroir haut-bas <span class="puce p-a">à ajouter</span></span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">pour une réflexion dans l’eau</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Quart de tour <span class="puce p-a">à ajouter</span></span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">à droite ou à gauche, pour une tuile</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Rotation libre, méthode pixel art <span class="puce p-a">à ajouter</span></span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">garde les traits nets là où une rotation ordinaire les hache</span>
+        </span>
+      </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Aucun de ces dix moteurs n’existe aujourd’hui. C’est le seul atelier de la chaîne qui manque en entier.</div>
+      </div>
+      <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 13px; font-weight: 600; color: #8a3f33">Ce que ça coûte de ne pas l’avoir</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">Le pélerin a six attitudes et quatre directions : 24 images. La moitié d’entre elles sont des miroirs exacts de l’autre moitié. Sans cet atelier, on les demande au modèle.</div>
+        <div style="display: flex; align-items: baseline; gap: 8px; padding-top: 3px; border-top: 1px solid #dcbcb2">
+          <span class="mono" style="font-size: 19px; color: #8a3f33">$0,23</span>
+          <span style="font-size: 11.5px; color: #4e483f">pour les trois personnages du marais — et les miroirs reviennent différents du modèle, donc le pélerin change de robe en se retournant.</span>
+        </div>
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e2dbd0; background: #fffdfa; border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600">Une exception à prévoir</div>
+        <div style="font-size: 11.5px; line-height: 1.45; color: #4e483f">Un pélerin qui porte son bâton à droite le porte à gauche une fois retourné. « Miroir, sauf ici » garde une zone désignée dans son sens d’origine.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les moteurs</span> <span style="font-size: 13.5px; color: #6d675e">— 0 sont là, 10 restent à ajouter</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Un seul agit à la fois. Changer de moteur ne perd pas les réglages de l’autre.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Miroir gauche-droite</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'image est exactement la même, retournée comme dans une glace. Le pèlerin garde sa robe brune, ses 24 couleurs, ses contours nets — mais son bâton est passé de l'autre main et sa besace a changé d'épaule.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Le cas de tous les jours : obtenir la marche vers l'ouest à partir de celle vers l'est, la grenouille qui saute à gauche à partir de celle qui saute à droite. Dans un jeu vu de côté, c'est la moitié des images qui ne se paie plus.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Miroir haut-bas</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le sujet se retrouve la tête en bas. Sur une texture d'herbe ou de pierre, personne ne le voit et la variété double. Sur le garde en armure, ça se voit tout de suite : il a les pieds en l'air.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Fabriquer une tuile de plafond à partir d'une tuile de sol, un reflet dans l'eau du marais, une stalactite à partir d'une stalagmite. Sur un personnage, c'est presque toujours faux.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Quart de tour à droite</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Rien ne se déforme, pas un pixel n'est inventé : l'image bascule d'un quart de tour. Une image large devient haute. Sur une case carrée de 64, rien ne change de taille.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Une bordure de chemin, une planche du moulin posée en travers, un rail, une clôture — tout ce qui longe et qu'il faut aussi dans l'autre sens.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Quart de tour à gauche</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Même bascule, dans l'autre sens. Avec les deux quarts de tour et le demi-tour, une seule tuile de coin d'herbe couvre les quatre coins du marais.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Le symétrique du précédent, pour compléter les quatre orientations d'une même tuile de bordure sans en générer quatre.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Demi-tour</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'image est posée tête-bêche. C'est le miroir gauche-droite et le miroir haut-bas appliqués ensemble : ce qui était en haut à gauche se retrouve en bas à droite.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Le coin bas-droit d'un cadre de fenêtre d'interface à partir du coin haut-gauche. Une flèche qui pointe dans l'autre sens.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Miroir sur la diagonale</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le sujet bascule autour de sa diagonale, comme une carte qu'on retournerait sur un coin. Sur une bordure d'herbe, le résultat est une bordure qui longe l'autre côté.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Compléter les huit orientations d'une tuile de terrain. Avec les cinq moteurs précédents on en atteint quatre ; celui-ci ouvre les quatre autres, et trois tuiles dessinées suffisent alors à couvrir tout le contour d'une mare.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Miroir sur soi (repli d'une moitié)</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On garde une moitié et on la recopie de l'autre côté. La roue du moulin cesse d'avoir une pale plus large que les autres. En échange, tout ce que le sujet avait d'unique d'un côté disparaît.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Un sujet qui doit être parfaitement régulier et que l'IA a rendu de travers : la roue du moulin, un blason, le bouclier du garde, une porte.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Miroir, sauf ici</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'image est retournée, puis les zones peintes par l'auteur reviennent à leur place d'origine. Le pèlerin regarde à gauche mais tient toujours son bâton du même côté du corps. C'est le seul moteur qui laisse une couture visible : deux ou trois pixels à reprendre au raccord.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Dès que le sujet a un côté obligatoire : le bâton du pèlerin dans la main droite, l'épée du garde, un œil borgne, un blason sur l'épaule gauche.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Rotation libre, au plus proche</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les diagonales deviennent des escaliers irréguliers et les contours se hachent. Sur du 64 px, un angle de 10° suffit à casser un visage. Sur l'image d'origine en 1024 px, ça ne se voit pas — c'est la règle déjà écrite dans le dépôt : déformer en grand, pixeliser à la fin.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Presque jamais sur une case de 64 px déjà finie. Utile sur la grande image d'origine, avant la remise sur grille : une pancarte du marais penchée de 12°, une planche de guingois.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Rotation libre, méthode pixel art (RotSprite)</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les contours restent lisibles au lieu de se hacher : les traits obliques gardent des marches régulières, les petits détails ne disparaissent pas. C'est ce que font les éditeurs de pixel art sérieux, et c'est la seule façon honnête de tourner autrement que par quart de tour.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Quand il faut vraiment tourner une petite image d'un angle quelconque et qu'on ne peut pas repartir de l'original : une roue de moulin en huit positions, une flèche, une clé qui tourne.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les réglages</span> <span style="font-size: 13.5px; color: #6d675e">— 15 en tout</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Les lignes sur fond clair n’existent pas encore.</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 210px 330px 240px minmax(0,1fr)">
+      <div class="ent">le réglage</div><div class="ent">ce qu’il règle</div><div class="ent">sa plage</div><div class="ent">ce qu’on voit changer</div>
+        <div><span style="font-weight: 600">Sens</span> </div>
+        <div style="color: #4e483f">Lequel des moteurs agit.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">gauche-droite · haut-bas · quart à droite · quart à gauche · demi-tour · diagonale · repli · angle libre<br><span style="color: #948c80">par défaut : gauche-droite</span></div>
+        <div style="color: #4e483f">L'image bascule sous les yeux, dans le sens choisi, en 160 ms. On n'a pas à imaginer ce que le mot veut dire : on le voit.</div>
+        <div><span style="font-weight: 600">Angle</span> </div>
+        <div style="color: #4e483f">De combien on tourne, quand on a choisi l'angle libre.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">−180° à +180°, par pas de 1°<br><span style="color: #948c80">par défaut : 0°</span></div>
+        <div style="color: #4e483f">Le sujet pivote dans sa case. Passé 5 à 10° sur du 64 px, les contours se hachent visiblement — c'est le moment de repasser sur la méthode pixel art.</div>
+        <div><span style="font-weight: 600">S'arrêter sur les quarts de tour</span> </div>
+        <div style="color: #4e483f">Le curseur d'angle ne s'immobilise que sur 0, 90, 180 et 270.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">cochée ou non<br><span style="color: #948c80">par défaut : cochée</span></div>
+        <div style="color: #4e483f">Le curseur claque d'un cran à l'autre au lieu de glisser. Décochée, il glisse librement et un avertissement paraît : au-delà des quarts de tour, des pixels se réinventent.</div>
+        <div><span style="font-weight: 600">Ce qu'on retourne</span> </div>
+        <div style="color: #4e483f">Toute l'image d'un bloc, ou chaque case de la planche séparément, ou le sujet seul dans sa case.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">l'image entière · chaque case · le sujet dans sa case<br><span style="color: #948c80">par défaut : l'image entière</span></div>
+        <div style="color: #4e483f">Sur une planche de huit cases de marche : « l'image entière » retourne la planche et met la dernière case en premier ; « chaque case » retourne les huit personnages et laisse l'ordre tranquille.</div>
+        <div><span style="font-weight: 600">Garder l'ordre des cases</span> </div>
+        <div style="color: #4e483f">Après un miroir gauche-droite sur une planche, les cases sont remises dans leur ordre de départ.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">cochée ou non<br><span style="color: #948c80">par défaut : cochée</span></div>
+        <div style="color: #4e483f">Décochée, la marche du pèlerin joue à l'envers : il recule. Cochée, il marche normalement, en regardant de l'autre côté.</div>
+        <div><span style="font-weight: 600">Garder l'appui au sol</span> </div>
+        <div style="color: #4e483f">Après un miroir haut-bas ou un demi-tour, le sujet est reposé sur le bas de sa case.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">cochée ou non<br><span style="color: #948c80">par défaut : cochée</span></div>
+        <div style="color: #4e483f">Décochée, la grenouille retournée flotte en haut de sa case et ne se superpose plus aux autres frames. Cochée, elle retombe pile à la même hauteur qu'avant.</div>
+        <div><span style="font-weight: 600">Ne pas retourner ici</span> </div>
+        <div style="color: #4e483f">Les zones qui reviennent telles quelles après le retournement — la main dominante, un blason, une cicatrice.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">un pinceau de 1 à 16 pixels de rayon, autant de zones qu'on veut<br><span style="color: #948c80">par défaut : aucune zone</span></div>
+        <div style="color: #4e483f">Ce qu'on peint reste en place pendant que le reste bascule. Le bâton du pèlerin ne change pas de main.</div>
+        <div><span style="font-weight: 600">Raccord autour de la zone</span> </div>
+        <div style="color: #4e483f">Combien de pixels sont adoucis à la couture entre la partie retournée et la partie protégée.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 4 pixels<br><span style="color: #948c80">par défaut : 1 pixel</span></div>
+        <div style="color: #4e483f">À 0, on voit un décrochement net à l'épaule du pèlerin. À 2, le raccord disparaît. À 4, la manche devient molle.</div>
+        <div><span style="font-weight: 600">Axe du repli</span> </div>
+        <div style="color: #4e483f">Où passe la ligne autour de laquelle on replie la moitié, dans le moteur « miroir sur soi ».</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">n'importe quelle colonne de l'image<br><span style="color: #948c80">par défaut : le milieu du sujet détouré</span></div>
+        <div style="color: #4e483f">Une ligne verticale se pose sur l'image et se glisse à la main. En la déplaçant sur la roue du moulin, on voit l'essieu se recentrer.</div>
+        <div><span style="font-weight: 600">Moitié gardée</span> </div>
+        <div style="color: #4e483f">Laquelle des deux moitiés est recopiée sur l'autre.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">gauche · droite<br><span style="color: #948c80">par défaut : gauche</span></div>
+        <div style="color: #4e483f">On bascule d'un côté à l'autre et on choisit celle qui était la mieux dessinée. Sur la roue du moulin, une des deux a des pales plus régulières.</div>
+        <div><span style="font-weight: 600">Couleur des coins</span> </div>
+        <div style="color: #4e483f">Ce qui apparaît dans les coins vidés par une rotation d'angle libre.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">transparent, ou une couleur prise dans l'image<br><span style="color: #948c80">par défaut : transparent</span></div>
+        <div style="color: #4e483f">Sur une tuile d'herbe, laisser transparent fait quatre coins troués ; prendre le vert du marais à la pipette les remplit.</div>
+        <div><span style="font-weight: 600">Repasser la palette du jeu</span> </div>
+        <div style="color: #4e483f">Après une rotation d'angle libre, les couleurs inventées au raccord sont ramenées sur les 24 du jeu.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">cochée ou non<br><span style="color: #948c80">par défaut : cochée dès que l'angle n'est pas un quart de tour</span></div>
+        <div style="color: #4e483f">Décochée, le compteur de couleurs monte de 24 à plus de 200 et on le lit sous l'image. Cochée, il revient à 24 exactement.</div>
+        <div><span style="font-weight: 600">Durcir le contour</span> </div>
+        <div style="color: #4e483f">Combien de pixels à demi transparents sont rognés au bord après une rotation d'angle libre.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 4 pixels<br><span style="color: #948c80">par défaut : 0 (1 dès qu'il y a rotation libre)</span></div>
+        <div style="color: #4e483f">À 0, un halo pâle borde le pèlerin. À 1, il disparaît. À 3, le pèlerin maigrit.</div>
+        <div><span style="font-weight: 600">Ça se range en</span> </div>
+        <div style="color: #4e483f">La direction sous laquelle l'image obtenue vient se poser dans le plan du jeu.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">le nom d'une direction du jeu, ou vide<br><span style="color: #948c80">par défaut : la direction opposée à celle de l'image de départ (« ouest » quand on part de « est »)</span></div>
+        <div style="color: #4e483f">La case vide « ouest » du tableau du pèlerin se remplit, marquée « obtenue au miroir » et non « générée » — on sait ce qui a été payé et ce qui ne l'a pas été.</div>
+        <div><span style="font-weight: 600">Appliquer à</span> </div>
+        <div style="color: #4e483f">Sur combien d'images le même retournement est posé d'un seul geste.</div>
+        <div class="mono" style="font-size: 11.5px; color: #6d675e">cette image · les 8 images de ce mouvement · toute la collection<br><span style="color: #948c80">par défaut : cette image</span></div>
+        <div style="color: #4e483f">Le compte est écrit sur le bouton avant de cliquer : « Retourner 8 images ». Après le clic, elles se retournent l'une après l'autre sous les yeux.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span class="h2">Pendant le calcul</span>
+    <div style="display: grid; grid-template-columns: 340px minmax(0,1fr) 250px; gap: 16px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">combien de temps</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Un miroir ou un quart de tour sur une case de 64 px : moins de 10 millisecondes — l'œil ne peut pas le voir arriver. Sur une planche de 1024 px : environ 30 ms, l'ordre de grandeur déjà mesuré au navigateur pour la fin de la recette (29 ms). Les 8 images d'une marche, d'un seul geste : autour d'un quart de seconde. Une rotation d'angle libre avec repassage de palette : 1 à 2 secondes, comme un cran de détourage (1 492 ms mesurés le 27 août 2026).</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">ce qu’on montre à l’écran</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">L'image ne se vide jamais, ne se grise jamais, ne clignote jamais. Elle reste à l'écran et ELLE BASCULE : 160 ms de pivot sur son axe, dans le sens demandé. Pour un calcul de 10 ms, c'est le geste lui-même qui est le retour visuel — une jauge qui apparaîtrait et disparaîtrait plus vite qu'un battement de cil serait pire que rien (le produit a déjà tranché : sous 240 ms, rien ne paraît). Pendant la bascule, l'image de départ reste posée à gauche en petit, avec son étiquette « générée · 0,013 $ · 14 s » ; la nouvelle prend la place de droite, étiquetée « miroir · gratuit · instantané ». Sur un lot, les cases se retournent l'une après l'autre de gauche à droite, avec le compte en petits chiffres sous l'image — 3 / 8 — de sorte qu'on voit lesquelles sont faites et lesquelles restent. Seule la rotation d'angle libre dépasse la seconde : là, et là seulement, la barre de 2 px du produit paraît au bas de l'image, exactement comme pour un cran de détourage. Ce qu'on ne montre jamais : un sablier plein cadre, un fondu au blanc, une image vide, un pourcentage.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt">peut-on annuler</div>
+        <div style="font-size: 20px; color: #8a3f33">Non, aucun calcul</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Vérifié dans le code : rien n’interrompt un calcul en route. Ce qu’on peut défaire, c’est un réglage — Échap efface le geste, Ctrl+Z revient en arrière. Sur des calculs de 30 à 160 ms ça ne se remarque pas ; sur une silhouette demandée à un modèle, 1 à 2 s, ça se remarque.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">10 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s’est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu’on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le sujet a un côté obligatoire : le pèlerin tient son bâton à droite, le garde porte son écu au bras gauche.</div>
+        <div style="color: #8a3f33">Le pèlerin retourné est devenu gaucher. Rien n'a l'air cassé, c'est ça le piège : on ne s'en aperçoit qu'en voyant les deux directions côte à côte dans le jeu, l'objet qui saute d'une main à l'autre à chaque demi-tour.</div>
+        <div style="color: #4e483f">Repasser en « Miroir, sauf ici » et peindre le bâton. Il revient à sa place, et le raccord se règle sur 1 ou 2 pixels.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On espère obtenir le nord à partir du sud en retournant l'image de haut en bas.</div>
+        <div style="color: #8a3f33">Un pèlerin la tête en bas qui marche toujours vers le sud. On voit son visage, jamais son dos — un miroir ne peut montrer que ce qui est déjà dessiné.</div>
+        <div style="color: #4e483f">Aucun réglage ne répare ça : le nord se génère. L'écran doit le dire avant le clic, pas après — le retournement haut-bas se grise sur un personnage et donne sa raison. C'est déjà écrit dans le dépôt : « un demi-tour, une main qui se retourne, non — les huit directions restent une affaire de génération ».</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On retourne toute une planche de marche d'un seul bloc au lieu de retourner chaque case.</div>
+        <div style="color: #8a3f33">Le pèlerin regarde bien vers l'ouest, mais il recule : la case 8 est passée en premier et la 1 en dernier, donc le cycle joue à l'envers.</div>
+        <div style="color: #4e483f">Cocher « Garder l'ordre des cases », ou choisir « chaque case » plutôt que « l'image entière ».</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On retourne un décor ou un bâtiment qui porte une ombre : le moulin, dont l'ombre tombe à gauche comme dans tout le jeu.</div>
+        <div style="color: #8a3f33">Le moulin retourné a son ombre à droite. Posé à côté d'un autre bâtiment, il donne l'impression de deux soleils.</div>
+        <div style="color: #4e483f">Peindre l'ombre en zone protégée, ou reprendre l'ombre à la main après coup. Sur les décors, la bonne réponse est souvent de ne pas retourner du tout.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On retourne une tuile d'herbe de marais qui porte un détail reconnaissable — une touffe claire, un caillou.</div>
+        <div style="color: #8a3f33">Posées côte à côte, les deux tuiles font apparaître un papillon : le même caillou en double, en symétrie parfaite. L'œil accroche dessus et le sol cesse de paraître naturel.</div>
+        <div style="color: #4e483f">Effacer le détail sur l'une des deux avec le pinceau, ou ne garder que le quart de tour, qui casse la symétrie au lieu de la créer.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On retourne une image de l'interface, ou tout ce qui porte du texte ou un chiffre.</div>
+        <div style="color: #8a3f33">Les lettres sont à l'envers, illisibles.</div>
+        <div style="color: #4e483f">Le retournement se grise sur la famille interface et dit pourquoi, plutôt que de laisser produire une image inutilisable.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On retourne haut-bas ou d'un demi-tour un personnage posé sur le bas de sa case.</div>
+        <div style="color: #8a3f33">La grenouille se retrouve collée en haut de la case, avec un grand vide sous elle. Dans le jeu, elle lévite.</div>
+        <div style="color: #4e483f">Cocher « Garder l'appui au sol ». Le sujet est reposé sur le bas de la case, à la hauteur exacte qu'il occupait.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On tourne d'un angle libre une case déjà réduite à 64 px.</div>
+        <div style="color: #8a3f33">Les contours se hachent, les diagonales deviennent des escaliers irréguliers, et le compteur de couleurs passe de 24 à plus de deux cents.</div>
+        <div style="color: #4e483f">Trois issues, dans cet ordre : passer sur la méthode pixel art ; cocher « Repasser la palette » et durcir le contour d'un pixel ; ou repartir de l'image d'origine en grand et tourner avant la remise sur grille — c'est la règle déjà écrite dans le dépôt, déformer en grand, pixeliser à la fin.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le retournement est enregistré dans une recette nommée qu'on repose ensuite sur une image déjà retournée.</div>
+        <div style="color: #8a3f33">L'image revient d'endroit sans que rien ne l'annonce. On croit avoir posé un réglage, on a annulé le précédent.</div>
+        <div style="color: #4e483f">Le retournement se range comme les autres réglages de la recette : il se lit à côté du titre quand le bloc est replié — « miroir gauche-droite » — et il s'éteint sans se perdre. L'écran dit toujours dans quel sens l'image est en ce moment.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On retourne une seule image d'une bande dont toutes les cases partagent un même cadrage commun.</div>
+        <div style="color: #8a3f33">Cette case-là ne se superpose plus aux autres : le personnage saute de deux ou trois pixels sur le côté quand l'animation passe dessus.</div>
+        <div style="color: #4e483f">Retourner la bande entière avec « les 8 images de ce mouvement » plutôt qu'une case toute seule — le cadrage commun est alors retourné avec elles.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd’hui</span>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px">
+        <li style="margin-bottom: 6px">Le retournement n'existe nulle part dans le produit. La recette d'une image a huit places — détourage, différence, recadrage, grille, quantification, nettoyage des bords, contour, main — et aucune ne retourne quoi que ce soit. Les seuls miroirs du dépôt sont dans deux scripts d'essai qui ne sont pas l'application.</li>
+        <li style="margin-bottom: 6px">L'atelier sait déjà qu'un jeu vu de côté a exactement deux directions, droite et gauche — c'est écrit dans la liste des vues — et il ne sait pas fabriquer la seconde à partir de la première. Il la fait payer.</li>
+        <li style="margin-bottom: 6px">Les huit orientations d'une tuile de terrain. Les moteurs de jeu les stockent depuis toujours en trois bits ; ici, chaque orientation demande sa propre image. Trois tuiles dessinées devraient suffire à couvrir tout le contour d'une mare.</li>
+        <li style="margin-bottom: 6px">Le retournement rangé comme une direction du jeu, et non comme un fichier de plus. La case « ouest » du plan du pèlerin devrait se remplir toute seule, marquée « obtenue au miroir de est » — pour qu'on sache d'un coup d'œil ce qui a été payé et ce qui ne l'a pas été.</li>
+        <li style="margin-bottom: 6px">Les zones protégées — dire que le bâton du pèlerin ou l'écu du garde ne suivent pas le miroir. Sans ça, tous les personnages qui tiennent quelque chose sont hors d'atteinte.</li>
+        <li style="margin-bottom: 6px">Le retournement d'un lot : les 8 images d'une marche, ou toute une collection, d'un seul geste et avec le compte annoncé avant le clic.</li>
+        <li style="margin-bottom: 6px">La rotation à la méthode pixel art (RotSprite). Sans elle, tourner autre chose qu'un quart de tour détruit l'image, et c'est le seul retournement qu'un atelier de pixel art ne peut pas se permettre de bâcler.</li>
+        <li style="margin-bottom: 6px">Le repli de symétrie sur soi-même, pour redresser une roue de moulin ou un blason que l'IA a rendus de travers.</li>
+        <li style="margin-bottom: 6px">Le refus argumenté : dire qu'un miroir haut-bas ne donnera jamais le dos d'un personnage, et griser le bouton avec sa raison au lieu de laisser produire une image inutilisable. Le dépôt a déjà écrit la phrase, il ne l'a jamais montrée à l'auteur.</li>
+        <li style="margin-bottom: 6px">L'aperçu côte à côte, avec les deux étiquettes de prix — « générée · 0,013 $ · 14 s » et « miroir · gratuit ». C'est ce qui fait comprendre en une seconde pourquoi on retourne plutôt qu'on ne génère.</li>
+        <li style="margin-bottom: 6px">L'annulation. Le produit n'a aucun historique de dessin — c'est écrit noir sur blanc et reporté à une version d'édition. Un retournement doit donc s'annuler autrement : en s'éteignant comme un réglage, et en remettant l'image au pixel près.</li>
+      </ul>
+    </div>
+    <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">avant / après</div>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Le pèlerin en robe brune du Marais du Vieux Moulin, vu de dessus, en marche — case de 64 px, 24 couleurs, fond magenta déjà détouré. À GAUCHE : la case telle que l'IA l'a rendue, marchant vers l'est, étiquetée « est — générée · 0,013 $ · 14 s d'attente ». À DROITE : la même passée au miroir gauche-droite, marchant vers l'ouest, étiquetée « ouest — miroir · gratuit · 8 ms ». Sous les deux images, la même bande de 24 pastilles de couleur, rigoureusement identique : c'est la preuve visuelle qu'aucun pixel n'a été réinventé. En dessous, deux petites vignettes qui montrent la suite de l'histoire. La première, le raté : agrandissement sur les mains, le bâton de marche est passé de droite à gauche ; à côté, la même avec la zone protégée peinte en pointillé sur le bâton, et le bâton est revenu à sa place. La seconde, le refus : la même case retournée haut-bas ne donne PAS le pèlerin de dos marchant vers le nord, elle donne un pèlerin la tête en bas qui marche toujours vers le sud — barré, avec la phrase « le nord se paie ». Et pour finir, une bande étroite de huit tuiles d'herbe de marais : trois dessinées, cinq obtenues par quart de tour et miroir de diagonale, marquées d'un point pour qu'on voie lesquelles ont coûté quelque chose.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
