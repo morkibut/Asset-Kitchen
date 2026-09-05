@@ -21506,43 +21506,41 @@ describe("A10 — découper un clip en bandes", () => {
     ).toHaveLength(1)
 
     // Et il tourne déjà : la première proposition est posée, donc huit images
-    // sont retenues avant le moindre clic.
+    // sont retenues avant le moindre clic. Le montage est brut depuis V3.03 :
+    // aucune demande d'aperçu traité ne part de lui.
     expect(await panneau.findByText("8 images retenues")).toBeTruthy()
-    await waitFor(() => {
-      const vu = appels.find((a) => a.url === "/api/montage/preview")?.corps as
-        | { images?: number[] }
-        | undefined
-      expect(vu?.images).toEqual([4, 5, 6, 7, 8, 9, 10, 11])
-    })
+    expect(appels.filter((a) => a.url === "/api/montage/preview")).toHaveLength(0)
   })
 
-  test("les deux boucles tournent côte à côte, et posent chacune sa question", async () => {
+  test("les deux boucles regardent le brut : le mouvement et les images retenues", async () => {
     const { panneau } = await ouvrirLeMontage()
     expect(await panneau.findByText("le mouvement est-il bon ?")).toBeTruthy()
-    expect(panneau.getByText("le découpage est-il bon ?")).toBeTruthy()
+    expect(panneau.getByText("sont-elles les bonnes ?")).toBeTruthy()
     // À gauche l'image telle que le modèle l'a rendue, fond compris ; à droite
-    // la planche déjà passée par la chaîne du jeu.
-    const brute = await panneau.findByAltText(/^Image \d+ du clip$/)
-    expect(brute.getAttribute("src")).toMatch(/^\/api\/clips\/clip-a\/frames\/\d+$/)
+    // la même — rien n'est traité dans le montage (V3.03).
+    const brutes = await panneau.findAllByAltText(/^Image \d+ du clip$/)
+    expect(brutes.length).toBe(2)
+    expect(brutes[0].getAttribute("src")).toMatch(
+      /^\/api\/clips\/clip-a\/frames\/\d+$/,
+    )
     await waitFor(() =>
-      expect(document.querySelector("[data-case-de-la-planche]")).toBeTruthy(),
+      expect(document.querySelector("[data-case-de-la-planche]")).toBeNull(),
     )
   })
 
   // ── « Les deux propositions ne décident de rien » ─────────────────────────
 
   test("les propositions s'affichent avec leur phrase, et posent un découpage sans le figer", async () => {
-    const { panneau, appels } = await ouvrirLeMontage()
+    const { panneau } = await ouvrirLeMontage()
 
     expect(await panneau.findByText(/il ne bouge presque pas/)).toBeTruthy()
     fireEvent.click(panneau.getByText(/la boucle se referme le mieux/))
 
-    await waitFor(() => {
-      const dernier = appels.filter((a) => a.url === "/api/montage/preview").at(-1)
-      expect((dernier?.corps as { images?: number[] })?.images).toEqual([
-        12, 14, 16, 18, 20, 22,
-      ])
-    })
+    // Ce que la proposition pose se lit sur la pellicule — et le montage ne
+    // demande aucune aperçu traité (V3.03).
+    await waitFor(() =>
+      expect(panneau.getAllByRole("button", { name: /— retenue$/ })).toHaveLength(6),
+    )
     expect(panneau.getByText(/Elles ne décident de rien/)).toBeTruthy()
   })
 
@@ -21556,38 +21554,30 @@ describe("A10 — découper un clip en bandes", () => {
   // ── « Chaque image se prend ou se laisse d'un clic » ──────────────────────
 
   test("un clic sur la pellicule prend une image, un second la laisse", async () => {
-    const { panneau, appels } = await ouvrirLeMontage()
+    const { panneau } = await ouvrirLeMontage()
     await panneau.findByText("8 images retenues")
 
-    // L'image 0 n'est pas dans la proposition : le clic l'ajoute.
+    // L'image 0 n'est pas dans la proposition : le clic l'ajoute. La sélection
+    // se lit sur la pellicule — le montage est brut, il ne demande pas d'aperçu.
     fireEvent.click(panneau.getByRole("button", { name: "Image 0" }))
-    await waitFor(() => {
-      const dernier = appels.filter((a) => a.url === "/api/montage/preview").at(-1)
-      expect((dernier?.corps as { images?: number[] })?.images).toEqual([
-        0, 4, 5, 6, 7, 8, 9, 10, 11,
-      ])
-    })
+    await waitFor(() =>
+      expect(panneau.getAllByRole("button", { name: /— retenue$/ })).toHaveLength(9),
+    )
 
     // Et l'image 4, qui y est, en sort.
     fireEvent.click(panneau.getByRole("button", { name: "Image 4 — retenue" }))
-    await waitFor(() => {
-      const dernier = appels.filter((a) => a.url === "/api/montage/preview").at(-1)
-      expect((dernier?.corps as { images?: number[] })?.images).toEqual([
-        0, 5, 6, 7, 8, 9, 10, 11,
-      ])
-    })
+    await waitFor(() =>
+      expect(panneau.getAllByRole("button", { name: /— retenue$/ })).toHaveLength(8),
+    )
   })
 
   test("les images retenues se voient dans l'ordre et se retirent de là", async () => {
-    const { panneau, appels } = await ouvrirLeMontage()
+    const { panneau } = await ouvrirLeMontage()
     await panneau.findByText("8 images retenues")
     fireEvent.click(await panneau.findByRole("button", { name: "Retirer l'image 6" }))
-    await waitFor(() => {
-      const dernier = appels.filter((a) => a.url === "/api/montage/preview").at(-1)
-      expect((dernier?.corps as { images?: number[] })?.images).toEqual([
-        4, 5, 7, 8, 9, 10, 11,
-      ])
-    })
+    await waitFor(() =>
+      expect(panneau.getAllByRole("button", { name: /— retenue$/ })).toHaveLength(7),
+    )
   })
 
   test("la pellicule et la loupe tiennent dans une seule image", async () => {
@@ -21633,15 +21623,20 @@ describe("A10 — découper un clip en bandes", () => {
 
   // ── « La recette part de celle du jeu, tout écart est écrit en clair » ────
 
-  test("la recette part du jeu, et l'écran dit où ce qu'on change s'écrit", async () => {
+  test("le traitement a quitté le montage : ni la boucle traitée, ni la recette", async () => {
     const { panneau } = await ouvrirLeMontage()
-    // Les trois réglages arrivent **déjà remplis de ceux du jeu** : 64 px de
-    // haut et 24 couleurs, qui sont ce que `recette_du_jeu` porte.
+    // La recette du découpage ne se règle plus ici — le montage taille le
+    // mouvement, et le traitement se règle dans l'atelier d'une animation,
+    // frame par frame (V3.03).
     expect(
-      await panneau.findByLabelText("Taille du pixel, en chiffres"),
-    ).toHaveValue("64 px de haut")
-    expect(panneau.getByLabelText("Couleurs, en chiffres")).toHaveValue("24")
-    expect(panneau.getByText(/Ce que vous changez ici s'écrit/)).toBeTruthy()
+      panneau.queryByLabelText("Taille du pixel, en chiffres"),
+    ).toBeNull()
+    expect(panneau.queryByText(/Ce que vous changez ici s'écrit/)).toBeNull()
+    // La vitesse réglée ici est **toujours** celle qui part dans le jeu.
+    const vitesse = panneau
+      .getAllByRole("slider")
+      .find((rail) => rail.getAttribute("max") === "24")
+    expect(vitesse).toBeTruthy()
   })
 
   test("la vitesse réglée ici est celle qui part", async () => {
@@ -21714,81 +21709,37 @@ describe("A10 — découper un clip en bandes", () => {
 
   /** **À la main veut dire à la main**, pas *noté et sans effet*.
    *
-   *  L'écran offrait les trois choix et disait lequel était en usage, mais *à la
-   *  main* n'ouvrait rien : le mode s'allumait, et le rectangle restait celui
-   *  que la machine avait mesuré. Trouvé en cliquant le bouton dans un vrai
-   *  navigateur le 4 septembre 2026 — les treize essais d'écran passaient tous,
-   *  parce qu'aucun ne demandait ce que le bouton *fait*. */
-  test("« à la main » ouvre le cadre, sème le rectangle en vigueur, et l'envoie", async () => {
+   *  Le montage a gardé les trois choix et dit lequel est en usage ; le
+   *  rectangle, lui, se dessine dans l'atelier d'une animation (V3.03) — le
+   *  montage envoie seulement **son mot et sa fenêtre en vigueur**, semée de la
+   *  mesure du clip. Le geste qui le réglerait n'a plus d'écran ici, et le
+   *  choix ne ment plus : c'est l'atelier qui le reprend. */
+  test("« à la main » reste un choix du montage, et la fenêtre du clip s'y sème", async () => {
     const { panneau, appels } = await ouvrirLeMontage()
-    await waitFor(() =>
-      expect(appels.some((a) => a.url === "/api/montage/preview")).toBe(true),
-    )
 
     fireEvent.click(panneau.getByRole("button", { name: "à la main" }))
 
-    // Le rectangle paraît, et il part de celui que la machine avait mesuré.
-    const boite = await waitFor(() => {
-      const trouve = document.querySelector("[data-cadre-a-la-main]")
-      if (!trouve) throw new Error("le cadre à la main ne s'est pas ouvert")
-      return trouve as HTMLElement
+    // **Aucun cadre n'est dessiné ici** — le montage est brut, et le rectangle
+    // vit dans l'atelier d'une animation.
+    expect(document.querySelector("[data-cadre-a-la-main]")).toBeNull()
+    // Ce que la bande gardera porte son choix à la main, avec la fenêtre du
+    // clip semée : c'est ce que l'atelier reprendra.
+    fireEvent.change(panneau.getByLabelText("Le nom de l'animation"), {
+      target: { value: "marche" },
     })
-    // Les quatre bords se tirent à la souris ; les deux nombres se règlent au
-    // clavier. Le geste se répète trois fois par clip, et une boîte qui ne se
-    // règle qu'à la souris n'est réglable que par ceux qui en ont une.
-    expect(boite.querySelectorAll("[data-bord]")).toHaveLength(4)
-    const largeur = panneau.getByLabelText("Largeur du cadre, en chiffres")
-    const hauteur = panneau.getByLabelText("Hauteur du cadre, en chiffres")
-    expect(largeur).toHaveValue("246 px")
-    expect(hauteur).toHaveValue("381 px")
-
-    // Et ce que l'auteur pose part **avec ses quatre nombres** : un cadre à la
-    // main qui n'enverrait que son mot ne cadrerait rien.
-    fireEvent.change(largeur, { target: { value: "300" } })
-    fireEvent.blur(largeur)
+    fireEvent.click(panneau.getByRole("button", { name: /Garder « marche »/ }))
     await waitFor(() => {
-      const vu = appels
-        .filter((a) => a.url === "/api/montage/preview")
+      const parti = appels
+        .filter((a) => a.url === "/api/strips")
         .at(-1)?.corps as { cadre?: Record<string, number | string> } | undefined
-      expect(vu?.cadre?.choix).toBe("main")
-      expect(vu?.cadre?.droite).toBe(299)
+      expect(parti?.cadre?.choix).toBe("main")
     })
   })
 
-  /** **Tirer un bord redimensionne ; il ne déplace pas.**
-   *
-   *  Le `mousedown` d'un bord remonte au rectangle qui le porte, et le rectangle
-   *  l'entend comme *déplacer*. Sans `stopPropagation`, les deux gestes se
-   *  déclenchaient l'un après l'autre et le dernier gagnait : tirer le bord
-   *  droit **déplaçait** la boîte entière, à largeur constante. Mesuré au
-   *  navigateur le 4 septembre 2026. */
-  test("tirer le bord droit élargit la boîte au lieu de la déplacer", async () => {
-    const { panneau, appels } = await ouvrirLeMontage()
-    await waitFor(() =>
-      expect(appels.some((a) => a.url === "/api/montage/preview")).toBe(true),
-    )
-    fireEvent.click(panneau.getByRole("button", { name: "à la main" }))
-    const bord = await waitFor(() => {
-      const trouve = document.querySelector('[data-cadre-a-la-main] [data-bord="droite"]')
-      if (!trouve) throw new Error("le bord droit ne s'est pas affiché")
-      return trouve as HTMLElement
-    })
-
-    fireEvent.mouseDown(bord, { clientX: 100, clientY: 200 })
-    fireEvent.mouseMove(window, { clientX: 180, clientY: 200 })
-    fireEvent.mouseUp(window, { clientX: 180, clientY: 200 })
-
-    await waitFor(() => {
-      const vu = appels
-        .filter((a) => a.url === "/api/montage/preview")
-        .at(-1)?.corps as { cadre?: Record<string, number | string> } | undefined
-      expect(vu?.cadre?.choix).toBe("main")
-      // Le bord gauche n'a pas bougé — c'est toute la différence entre
-      // redimensionner et déplacer.
-      expect(vu?.cadre?.gauche).toBe(0)
-      expect(vu?.cadre?.droite as number).toBeGreaterThan(245)
-    })
-  })
+  /** **Le montage ne dessine plus le cadre** (V3.03) — le test qui vérifiait
+   *  que tirer un bord redimensionne plutôt que déplace est parti avec lui.
+   *  Le geste vit dans l'atelier d'une animation, qui est le seul endroit où
+   *  un rectangle se dessine et se règle. */
 
   // ── Ce que seul le navigateur avait vu ────────────────────────────────────
 
@@ -21808,9 +21759,6 @@ describe("A10 — découper un clip en bandes", () => {
    *  thème déclare. */
   test("aucune couleur de l'écran ne cite un nom que le thème ne déclare pas", async () => {
     const { panneau } = await ouvrirLeMontage()
-    await waitFor(() =>
-      expect(document.querySelector("[data-case-de-la-planche]")).toBeTruthy(),
-    )
     const cadre = panneau.getByText("le mouvement est-il bon ?").closest("[data-montage]")
     const inventees: string[] = []
     for (const noeud of (cadre as HTMLElement).querySelectorAll<HTMLElement>(
@@ -21852,90 +21800,18 @@ describe("A10 — découper un clip en bandes", () => {
 
   // ── A5 : ce qui bouge entre les images ───────────────────────────────────
   //
-  // **Ces essais vivent dans le montage et pas dans un bloc à eux**, parce que
-  // la mesure n'a pas d'écran : elle se pose à côté de l'aperçu qui tourne, et
-  // c'est cet aperçu-là qu'ils ouvrent. Ce qu'ils tiennent est **le chiffre qui
-  // paraît** — un seul des trois, et il a été choisi cher : voir
-  // `atelier/image/stabilite.py`.
+  // **La mesure ne vit plus dans le montage** (V3.03) : avec le panneau de
+  // recette, la boucle traitée et le chiffre qui l'accompagnait sont partis —
+  // le montage juge le mouvement, le traitement (et la stabilité qui s'y
+  // mettait à côté de l'aperçu) vit dans l'atelier d'une animation. Ces essais
+  // gardent la forme du nom, et ils tiennent l'absence.
 
-  test("le montage dit ce qui bouge entre les images, à côté de l'aperçu", async () => {
+  test("aucune mesure de stabilité ne paraît plus dans le montage", async () => {
     const { panneau } = await ouvrirLeMontage()
-
-    const mesure = await waitFor(() => {
-      const trouvee = document.querySelector("[data-stabilite]")
-      if (!trouvee) throw new Error("la mesure ne s'est pas affichée")
-      return trouvee as HTMLElement
-    })
-    expect(mesure.textContent).toContain("20 % revient sur ses pas")
-    expect(mesure.textContent).toContain("3 de ses 24 couleurs")
-    expect(panneau.getByText(/Ce qui bouge entre les images/)).toBeTruthy()
-  })
-
-  test("le chiffre du bord qui change ne s'affiche pas, lui", async () => {
-    // ⚠️ Il vaut 29,5 % dans le double, et il **mélange le grésil au vrai
-    // mouvement** : un bras qui se lève y pèse autant qu'un contour qui bout.
-    // Le mettre à l'écran ferait croire à une mesure du défaut. Cet essai est là
-    // pour que le rebrancher se voie.
-    await ouvrirLeMontage()
-
-    const mesure = await waitFor(() => {
-      const trouvee = document.querySelector("[data-stabilite]")
-      if (!trouvee) throw new Error("la mesure ne s'est pas affichée")
-      return trouvee as HTMLElement
-    })
-    expect(mesure.textContent).not.toContain("30 %")
-    expect(mesure.textContent).not.toContain("du bord change")
-  })
-
-  test("la phrase dit qu'un aller-retour peut être un balancement", async () => {
-    // Sur une marche, un bras qui balance revient vraiment sur ses pas. Le
-    // chiffre ne sait pas les distinguer, donc **la phrase le dit** plutôt que
-    // de laisser l'auteur croire à un verdict.
-    const { panneau } = await ouvrirLeMontage()
-
-    await waitFor(() => {
-      if (!document.querySelector("[data-stabilite]"))
-        throw new Error("la mesure ne s'est pas affichée")
-    })
-    expect(panneau.getByText(/un balancement — ou du grésil/)).toBeTruthy()
-    expect(panneau.getByText(/en comparant deux réglages/)).toBeTruthy()
-  })
-
-  test("une bande d'une seule image n'affiche aucun chiffre", async () => {
-    // Aucune paire à comparer : rien n'est écrit, plutôt qu'un zéro qui
-    // passerait pour une mesure.
-    const { panneau } = await ouvrirLeMontage({
-      stabilite: {
-        images: 1,
-        contour: 0,
-        contour_mesure: 0,
-        part_du_contour: 0,
-        allers_retours: 0,
-        part_des_allers_retours: 0,
-        couleurs: 12,
-        couleurs_d_une_image: 0,
-        part_des_couleurs: 0,
-      },
-    })
-
-    await waitFor(() => {
-      if (!document.querySelector("[data-case-de-la-planche]"))
-        throw new Error("l'aperçu ne s'est pas affiché")
-    })
+    await panneau.findByText("8 images retenues")
     expect(document.querySelector("[data-stabilite]")).toBeNull()
     expect(panneau.queryByText(/Ce qui bouge entre les images/)).toBeNull()
-  })
-
-  test("une bande sans mesure du tout n'écrit rien non plus", async () => {
-    // Un serveur d'avant `A5` ne renvoie pas le champ. L'écran doit s'en passer
-    // sans rien casser, parce que l'auteur peut avoir un onglet resté ouvert.
-    await ouvrirLeMontage({ stabilite: undefined })
-
-    await waitFor(() => {
-      if (!document.querySelector("[data-case-de-la-planche]"))
-        throw new Error("l'aperçu ne s'est pas affiché")
-    })
-    expect(document.querySelector("[data-stabilite]")).toBeNull()
+    expect(panneau.queryByText(/un balancement — ou du grésil/)).toBeNull()
   })
 })
 
