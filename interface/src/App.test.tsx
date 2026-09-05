@@ -902,7 +902,45 @@ const SANS_MOTEUR_LOCAL = {
 } as const
 
 const MODELES_VIDEO: BaseModelesVideo = {
+  // **L'ordre est celui du serveur** (V3.01.2) : le moteur de la maison
+  // d'abord — celui qui ne coûte rien —, puis les payants par prix croissant
+  // pour la demande courante, et les modèles dont le prix n'a pas pu être relu
+  // en fin de liste. L'écran n'a pas de règle de tri à lui.
   modeles: [
+    {
+      // **Le moteur de la maison, en tête de liste et dans la même liste**
+      // (A11, V3.01.2). Son prix vaut zéro *et il le sait* : ce n'est pas un
+      // tarif illisible, c'est une machine qui ne facture rien.
+      identifiant: "maison/wan-2.2-i2v-14b-pixel",
+      nom: "Wan 2.2 · sur votre machine",
+      fournisseur: "Maison",
+      durees: [1, 2, 3],
+      resolutions: ["480p"],
+      proportions: ["1:1", "16:9", "9:16"],
+      mesure: "Mesuré le 3 septembre 2026 sur une RTX 3080 Laptop bridée à 100 W.",
+      prix: {
+        montant: 0,
+        formule: "gratuit — la carte de la maison",
+        nature: "certain",
+        releve_le: null,
+      },
+      grise: null,
+      de_la_maison: true,
+      images_par_seconde: 16,
+      duree_conseillee: 1,
+      raison_de_la_duree:
+        "Une seconde donne une bande nettement plus propre que deux. ⚠️ Aucune " +
+        "mesure automatique ne voit cette dégradation — seul l'œil la voit.",
+      images_par_duree: { "1": 17, "2": 33, "3": 49 },
+      attente: {
+        secondes: 129,
+        secondes_suivant: 80,
+        premier: true,
+        images: 17,
+        mesure: "7,6 s par image — premier tirage, le modèle se charge",
+        nature: "attente",
+      },
+    },
     {
       identifiant: "bytedance/seedance-2.0-mini",
       nom: "Seedance 2.0 Mini",
@@ -934,40 +972,6 @@ const MODELES_VIDEO: BaseModelesVideo = {
       grise:
         "son prix n'a pas pu être relu chez le fournisseur — aucun tarif reconnu",
       ...SANS_MOTEUR_LOCAL,
-    },
-    {
-      // **Le moteur de la maison, dans la même liste et pas ailleurs** (A11).
-      // Son prix vaut zéro *et il le sait* : ce n'est pas un tarif illisible,
-      // c'est une machine qui ne facture rien.
-      identifiant: "maison/wan-2.2-i2v-14b-pixel",
-      nom: "Wan 2.2 · sur votre machine",
-      fournisseur: "Maison",
-      durees: [1, 2, 3],
-      resolutions: ["480p"],
-      proportions: ["1:1", "16:9", "9:16"],
-      mesure: "Mesuré le 3 septembre 2026 sur une RTX 3080 Laptop bridée à 100 W.",
-      prix: {
-        montant: 0,
-        formule: "gratuit — la carte de la maison",
-        nature: "certain",
-        releve_le: null,
-      },
-      grise: null,
-      de_la_maison: true,
-      images_par_seconde: 16,
-      duree_conseillee: 1,
-      raison_de_la_duree:
-        "Une seconde donne une bande nettement plus propre que deux. ⚠️ Aucune " +
-        "mesure automatique ne voit cette dégradation — seul l'œil la voit.",
-      images_par_duree: { "1": 17, "2": 33, "3": 49 },
-      attente: {
-        secondes: 129,
-        secondes_suivant: 80,
-        premier: true,
-        images: 17,
-        mesure: "7,6 s par image — premier tirage, le modèle se charge",
-        nature: "attente",
-      },
     },
   ],
   recu_le: 1_787_800_000,
@@ -1021,12 +1025,23 @@ const DEPART_PROPOSE: ImageDeDepart = {
 /** Une génération de clip, telle que le serveur la rend. Elle est **réussie et
  *  arrivée** : c'est l'état où la galerie doit lui garder sa place et montrer
  *  une image prélevée dedans, jamais une tuile en erreur. */
-function clipRendu(identifiant: string, jete: boolean): Generation {
+function clipRendu(
+  identifiant: string,
+  jete: boolean,
+  sur: Partial<Generation> = {},
+): Generation {
   const gabarit = generation(identifiant, 1, "reussie")
   return {
     ...gabarit,
+    ...sur,
     modele: "bytedance/seedance-2.0-mini",
-    demande: { ...gabarit.demande, prompt: "walking cycle, walking in place" },
+    demande: {
+      ...gabarit.demande,
+      prompt: "walking cycle, walking in place",
+      // **Le mouvement inscrit à la commande** (A6, V3.01.1) : c'est lui que la
+      // fiche lit, et que le montage nomme pour ses bandes.
+      mouvement: "marche",
+    },
     cout_usd: 0.067,
     consomme: 0.067,
     emplacements: [{ ...gabarit.emplacements[0], statut: "reussie" }],
@@ -1044,6 +1059,7 @@ function clipRendu(identifiant: string, jete: boolean): Generation {
       recupere: false,
       jete,
       lot: "lot-1",
+      depart: "",
       montant_dit: "montant relu chez le fournisseur",
     },
   }
@@ -20937,8 +20953,22 @@ describe("A9 — commander un clip", () => {
     expect(await panneau.findByAltText("le nain, de profil")).toBeTruthy()
     expect(panneau.getByText(/la première image qu'il montre de lui/)).toBeTruthy()
 
-    // Les modèles, leur prix **et la formule qui le produit**.
-    expect(await panneau.findByText("Seedance 2.0 Mini")).toBeTruthy()
+    // Le modèle gratuit est en tête et présélectionné (V3.01.2) : le bouton
+    // porte son temps avant qu'on ait rien choisi.
+    expect(await panneau.findByText("Wan 2.2 · sur votre machine")).toBeTruthy()
+    expect(
+      panneau.getByRole("button", { name: /Commander ce clip · ≈ 2 min/ }),
+    ).toBeTruthy()
+
+    // Choisir un payant, et son prix **et la formule qui le produit** se
+    // déplient d'un geste à eux.
+    fireEvent.click(panneau.getByRole("button", { name: "Choisir Seedance 2.0 Mini" }))
+    fireEvent.click(
+      panneau.getByRole("button", {
+        name: "déplier ce qu'on sait de Seedance 2.0 Mini",
+      }),
+    )
+    await panneau.findByText("Seedance 2.0 Mini")
     expect(panneau.getByText(/27 000 jetons/)).toBeTruthy()
 
     // Et le bouton porte le montant, pas seulement le verbe.
@@ -20947,24 +20977,56 @@ describe("A9 — commander un clip", () => {
 
   // ── « Un modèle proposé sans avoir été assez mesuré le dit » (US-440) ─────
 
-  test("chaque modèle dit ce que ce dépôt a mesuré de lui, à l'endroit où on le choisit", async () => {
+  test("la mesure de chaque modèle se déplie là où on le choisit", async () => {
     const { panneau } = await ouvrirLeClip()
 
+    // La mesure de Seedance vit dans le pli de sa carte (V3.01.2) : repliée,
+    // la carte ne montre que le nom et l'estimation, et le pli se déplie d'un
+    // geste à lui — le même geste que partout ailleurs dans le produit.
+    fireEvent.click(
+      panneau.getByRole("button", {
+        name: "déplier ce qu'on sait de Seedance 2.0 Mini",
+      }),
+    )
     expect(
       await panneau.findByText(/Sous la barre des 8 tirages/),
     ).toBeTruthy()
-    // Et celui dont on ne sait rien l'écrit, plutôt que de laisser un blanc qui
-    // se lirait comme une absence de réserve.
+
+    // Et celui dont on ne sait rien l'écrit dans son pli aussi, plutôt que de
+    // laisser un blanc qui se lirait comme une absence de réserve. Il est
+    // grisé — donc masqué par le filtre, allumé par défaut — et il faut
+    // l'éteindre pour le revoir, avec sa raison.
+    fireEvent.click(panneau.getByRole("button", { name: /seulement ce qui peut partir/ }))
+    fireEvent.click(
+      panneau.getByRole("button", { name: "déplier ce qu'on sait de Aleph 2" }),
+    )
     expect(
       panneau.getByText(/ce dépôt n'a encore rien mesuré de ce modèle/),
     ).toBeTruthy()
   })
 
-  test("un modèle qui ne peut pas honorer la demande est grisé avec sa raison, jamais caché", async () => {
+  test("le filtre masque les modèles qui ne peuvent pas partir, et l'éteindre les rend à lire", async () => {
+    // **Le cas d'école du filtre** (V3.01.2) : un atelier sans clé a vingt-huit
+    // cartes grisées qui avalteraient la liste. Allumé, il ne montre que ce
+    // qui peut partir — rien de plus, et le compte des masqués se lit sur le
+    // bouton même.
     const { panneau } = await ouvrirLeClip()
 
-    const refuse = await panneau.findByRole("button", { name: /Aleph 2/ })
-    expect((refuse as HTMLButtonElement).disabled).toBe(true)
+    const filtre = panneau.getByRole("button", { name: /seulement ce qui peut partir/ })
+    expect(filtre.getAttribute("aria-pressed")).toBe("true")
+    expect(panneau.getByText(/1 masqué/)).toBeTruthy()
+    expect(panneau.queryByRole("button", { name: "Choisir Aleph 2" })).toBeNull()
+
+    // Éteint, il reparaît — **grisé, avec sa raison** : ce qui est impossible
+    // se voit avant d'être choisi, et le dépliage de sa carte est resté
+    // possible là où le choix est interdit.
+    fireEvent.click(filtre)
+    expect(filtre.getAttribute("aria-pressed")).toBe("false")
+    const aleph = panneau.getByRole("button", { name: "Choisir Aleph 2" })
+    expect((aleph as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(
+      panneau.getByRole("button", { name: "déplier ce qu'on sait de Aleph 2" }),
+    )
     expect(panneau.getByText(/son prix n'a pas pu être relu/)).toBeTruthy()
   })
 
@@ -20994,6 +21056,15 @@ describe("A9 — commander un clip", () => {
     fireEvent.click(
       panneau.getByRole("button", { name: /Commander ce clip/ }),
     )
+    // **Le tiroir de relecture s'intercale (V3.01.1).** C'est son bouton qui
+    // part, pas celui de l'écran de commande, et l'auteur le traverse comme
+    // l'écran de confirmation du début de l'atelier.
+    const tiroir = await waitFor(() => {
+      const cadre = document.querySelector("[data-confirmation-clip]")
+      if (!cadre) throw new Error("le tiroir ne s'est pas ouvert")
+      return within(cadre as HTMLElement)
+    })
+    fireEvent.click(tiroir.getByRole("button", { name: /Commander ce clip/ }))
 
     await waitFor(() => {
       const parti = appels.find((a) => a.url === "/api/clips")?.corps as
@@ -21015,19 +21086,37 @@ describe("A9 — commander un clip", () => {
   test("le prix annoncé est celui du lot, et le lot part en autant de clips", async () => {
     const { panneau, appels } = await ouvrirLeClip()
 
-    await panneau.findByText("Seedance 2.0 Mini")
+    // Le gratuit est présélectionné ; on choisit le payant pour lire le
+    // montant, comme l'auteur le ferait.
+    await panneau.findByText("Wan 2.2 · sur votre machine")
+    fireEvent.click(panneau.getByRole("button", { name: "Choisir Seedance 2.0 Mini" }))
     // Un par défaut, sans qu'on ait rien réglé.
-    expect(panneau.getByRole("button", { name: /Commander ce clip · ≈ \$0,0945/ })).toBeTruthy()
+    await waitFor(() =>
+      expect(
+        panneau.getByRole("button", { name: /Commander ce clip · ≈ \$0,0945/ }),
+      ).toBeTruthy(),
+    )
 
     fireEvent.click(panneau.getByRole("button", { name: "4" }))
 
-    // Quatre fois le prix, annoncé **avant** l'envoi.
+    // Quatre fois le prix, annoncé **avant** l'envoi — et le tiroir le
+    // re-dit, parce que c'est lui qui part.
     await waitFor(() =>
       expect(
         panneau.getByRole("button", { name: /Commander ces 4 clips · ≈ \$0,3780/ }),
       ).toBeTruthy(),
     )
     fireEvent.click(panneau.getByRole("button", { name: /Commander ces 4 clips/ }))
+    const tiroir = await waitFor(() => {
+      const cadre = document.querySelector("[data-confirmation-clip]")
+      if (!cadre) throw new Error("le tiroir ne s'est pas ouvert")
+      return within(cadre as HTMLElement)
+    })
+    expect(
+      tiroir.getByRole("button", { name: /Commander ces 4 clips · ≈ \$0,3780/ }),
+    ).toBeTruthy()
+    expect(tiroir.getByText(/chacun se paie/)).toBeTruthy()
+    fireEvent.click(tiroir.getByRole("button", { name: /Commander ces 4 clips/ }))
     await waitFor(() =>
       expect(
         (appels.find((a) => a.url === "/api/clips")?.corps as { nombre?: number })
@@ -21067,6 +21156,12 @@ describe("A9 — commander un clip", () => {
     expect(await panneau.findByText(/choisie à la main/)).toBeTruthy()
 
     fireEvent.click(panneau.getByRole("button", { name: /Commander ce clip/ }))
+    const tiroir = await waitFor(() => {
+      const cadre = document.querySelector("[data-confirmation-clip]")
+      if (!cadre) throw new Error("le tiroir ne s'est pas ouvert")
+      return within(cadre as HTMLElement)
+    })
+    fireEvent.click(tiroir.getByRole("button", { name: /Commander ce clip/ }))
     await waitFor(() =>
       expect(
         (appels.find((a) => a.url === "/api/clips")?.corps as { asset?: string })
@@ -21111,6 +21206,164 @@ describe("A9 — commander un clip", () => {
 
     fireEvent.keyDown(window, { key: "Escape" })
     await waitFor(() => expect(document.querySelector("[data-clip]")).toBeNull())
+    expect(appels.some((a) => a.url === "/api/clips")).toBe(false)
+  })
+
+  // ── V3.01.1 — le tiroir « ce qui part avec ce clip » ──────────────────────
+  //
+  // **Ce que ces essais mesurent, et ce qu'ils ne mesurent pas.** Ils mesurent
+  // l'entre-deux que la tranche instaure : le bouton de l'écran de commande
+  // n'envoie plus, le tiroir s'intercale, sa relecture montre ce qui part et
+  // permet de le corriger — et c'est son bouton qui paie. La résolution
+  // serveur — le texte corrigé prime, le mouvement reste inscrit — est tenue
+  // par `tests/test_v301.py`, sur le vrai service.
+
+  /** Ouvrir le tiroir depuis l'écran du clip, et y revenir. */
+  const ouvrirLeTiroir = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = await ouvrirLeClip(options)
+    const { panneau } = double
+    // Le gratuit est présélectionné ; on demande le payant pour que le tiroir
+    // porte un montant, et l'on revient sur une carte repliée.
+    await panneau.findByText("Wan 2.2 · sur votre machine")
+    fireEvent.click(panneau.getByRole("button", { name: "Choisir Seedance 2.0 Mini" }))
+    fireEvent.click(panneau.getByRole("button", { name: /Commander ce clip/ }))
+    const cadre = await waitFor(() => {
+      const trouve = document.querySelector("[data-confirmation-clip]")
+      if (!trouve) throw new Error("le tiroir ne s'est pas ouvert")
+      return trouve as HTMLElement
+    })
+    return { ...double, tiroir: within(cadre) }
+  }
+
+  test("le bouton ouvre le tiroir au lieu d'envoyer, et rien ne part dans l'attente", async () => {
+    const { panneau, appels } = await ouvrirLeClip()
+
+    await panneau.findByText("Wan 2.2 · sur votre machine")
+    const appelsAvant = appels.length
+    fireEvent.click(panneau.getByRole("button", { name: /Commander ce clip/ }))
+
+    // Le tiroir est là, l'écran de commande a cédé la place, et **aucun appel
+    // n'est parti** : c'est le bouton du tiroir qui paie, pas celui-ci.
+    const tiroir = await waitFor(() => {
+      const cadre = document.querySelector("[data-confirmation-clip]")
+      if (!cadre) throw new Error("le tiroir ne s'est pas ouvert")
+      return within(cadre as HTMLElement)
+    })
+    expect(document.querySelector("[data-clip]")).toBeNull()
+    // ⚠️ Et pas un seul appel nouveau, même sans dépenser : le tiroir est fait
+    // de ce que l'écran avait déjà relu — c'est la version *réseau coupé* de ce
+    // qui se vérifie ici.
+    expect(appels.length).toBe(appelsAvant)
+    // Le modèle présélectionné — le gratuit — porte son temps jusque dans le
+    // tiroir : la même annonce doit se lire au-dessus et ici.
+    expect(
+      tiroir.getByRole("button", { name: /Commander ce clip · ≈ 2 min/ }),
+    ).toBeTruthy()
+  })
+
+  test("le tiroir montre le texte mot pour mot, et l'image qui ne se retire pas", async () => {
+    const { tiroir } = await ouvrirLeTiroir()
+
+    // Le texte exact, mot pour mot — celui que le serveur enverra.
+    const pavé = tiroir.getByText(
+      "walking cycle, full body, walking in place, looping seamlessly",
+    )
+    expect(pavé).toBeTruthy()
+    // L'image de départ est là, avec la raison « obligatoire » en toutes
+    // lettres — et **aucun interrupteur pour la retirer** : un modèle vidéo
+    // n'en accepte qu'une, et proposer un interrupteur qui ne voudrait rien
+    // dire serait un mensonge de forme.
+    expect(tiroir.getByText(/elle est obligatoire et ne cède jamais/)).toBeTruthy()
+    expect(tiroir.queryByRole("button", { name: /Éteindre/ })).toBeNull()
+    expect(tiroir.queryByRole("button", { name: /ne pas l'envoyer/ })).toBeNull()
+    // Elle se change, en revanche, depuis le tiroir même.
+    expect(tiroir.getByRole("button", { name: "changer d'image ›" })).toBeTruthy()
+  })
+
+  test("corriger le texte vaut pour cet appel et rien d'autre", async () => {
+    const { tiroir, appels } = await ouvrirLeTiroir()
+
+    fireEvent.click(tiroir.getByRole("button", { name: "corriger" }))
+    const corrige =
+      "marcher sur place, en boucle, sans traverser le cadre — plus lentement."
+    fireEvent.change(tiroir.getByLabelText("Corriger le texte du clip, pour cet appel"), {
+      target: { value: corrige },
+    })
+    // Le tiroir le dit : la correction ne remonte nulle part.
+    expect(tiroir.getByText(/corrigé pour cet appel seulement/)).toBeTruthy()
+
+    fireEvent.click(tiroir.getByRole("button", { name: /Commander ce clip/ }))
+    await waitFor(() => {
+      const parti = appels.find((a) => a.url === "/api/clips")?.corps as
+        | { prompt?: string; mouvement?: string }
+        | undefined
+      // **Le texte corrigé part, et le mouvement avec** : le serveur inscrit
+      // la filiation que le montage lira, texte corrigé ou non.
+      expect(parti?.prompt).toBe(corrige)
+      expect(parti?.mouvement).toBe("marche")
+    })
+  })
+
+  test("remettre le texte du mouvement le redonne intact, et seul le mouvement part", async () => {
+    const { tiroir, appels } = await ouvrirLeTiroir()
+
+    fireEvent.click(tiroir.getByRole("button", { name: "corriger" }))
+    fireEvent.change(tiroir.getByLabelText("Corriger le texte du clip, pour cet appel"), {
+      target: { value: "un texte corrigé, qu'on rejette ensuite" },
+    })
+    fireEvent.click(tiroir.getByRole("button", { name: "remettre le texte du mouvement" }))
+
+    // Le pavé est revenu au texte de la bibliothèque — rien de la correction
+    // ne traîne.
+    expect(
+      tiroir.getByText("walking cycle, full body, walking in place, looping seamlessly"),
+    ).toBeTruthy()
+    expect(tiroir.queryByText(/corrigé pour cet appel/)).toBeNull()
+
+    fireEvent.click(tiroir.getByRole("button", { name: /Commander ce clip/ }))
+    await waitFor(() => {
+      const parti = appels.find((a) => a.url === "/api/clips")?.corps as
+        | { prompt?: string; mouvement?: string }
+        | undefined
+      // **Sans correction, le serveur relit le mouvement** (A6) : le texte
+      // anglais n'a qu'un seul endroit où il s'écrit.
+      expect(parti?.prompt).toBeUndefined()
+      expect(parti?.mouvement).toBe("marche")
+    })
+  })
+
+  test("vider la correction éteint le bouton du tiroir, avec sa raison", async () => {
+    const { tiroir, appels } = await ouvrirLeTiroir()
+
+    fireEvent.click(tiroir.getByRole("button", { name: "corriger" }))
+    fireEvent.change(tiroir.getByLabelText("Corriger le texte du clip, pour cet appel"), {
+      target: { value: "" },
+    })
+
+    await waitFor(() =>
+      expect(
+        (tiroir.getByRole("button", { name: /Commander ce clip/ }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(true),
+    )
+    // Et la raison est celle du produit : un clip part d'un texte.
+    expect(tiroir.getByText(/part d'un texte/)).toBeTruthy()
+    expect(appels.some((a) => a.url === "/api/clips")).toBe(false)
+  })
+
+  test("Échap referme le tiroir, rend l'écran de commande, et ne dépense rien", async () => {
+    const { tiroir, appels } = await ouvrirLeTiroir()
+
+    // Le tiroir est ouvert (le bouton qui part s'y trouve, pas dans l'écran
+    // de commande) avant qu'Échap ne le referme.
+    expect(tiroir.getByRole("button", { name: /Commander ce clip · ≈ \$0,0945/ })).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() => expect(document.querySelector("[data-confirmation-clip]")).toBeNull())
+    // L'écran de commande est revenu — Échap n'a refermé qu'un niveau.
+    expect(document.querySelector("[data-clip]")).toBeTruthy()
     expect(appels.some((a) => a.url === "/api/clips")).toBe(false)
   })
 
@@ -21763,7 +22016,9 @@ describe("A11 — le moteur de la maison", () => {
   test("le modèle local annonce un temps mesuré, et jamais un montant", async () => {
     const { panneau } = await ouvrirLeClip()
 
-    const carte = await panneau.findByRole("button", { name: /Wan 2\.2/ })
+    const carte = await panneau.findByRole("button", {
+      name: "Choisir Wan 2.2 · sur votre machine",
+    })
     const dedans = within(carte)
     // Un temps, avec le mot qui dit que c'en est un coût — « ≈ 2 min » tout
     // seul se lirait comme un délai de livraison.
@@ -21825,6 +22080,13 @@ describe("A11 — le moteur de la maison", () => {
   test("la durée conseillée se lit là où l'on choisit, avec la raison qui va avec", async () => {
     const { panneau } = await ouvrirLeClip()
 
+    // Elle vit dans le pli de la carte (V3.01.2) : repliée, on ne lit que le
+    // nom et l'estimation, et le pli se déplie d'un geste à lui.
+    fireEvent.click(
+      panneau.getByRole("button", {
+        name: "déplier ce qu'on sait de Wan 2.2 · sur votre machine",
+      }),
+    )
     // ⚠️ Ce que cette raison dit — la bande se dégrade au-delà d'une seconde, et
     // aucune mesure automatique ne le voit — se perdrait dans un document.
     expect(await panneau.findByText(/conseillé : 1 seconde/)).toBeTruthy()
@@ -21868,10 +22130,21 @@ describe("A11 — le moteur de la maison", () => {
       },
     })
 
-    // La seule des trois qui empêche : l'atelier ne sait pas ouvrir une fenêtre
-    // à la place de l'auteur, et rien ne peut partir.
-    const carte = await panneau.findByRole("button", { name: /Wan 2\.2/ })
+// La seule des trois qui empêche : l'atelier ne sait pas ouvrir une fenêtre
+    // à la place de l'auteur, et rien ne peut partir. **Le filtre allumé la
+    // masque** (V3.01.2) — le mot du grisé est fait pour être lu, pas la carte
+    // pleine de texte —, on l'éteint pour la revoir, et son pli porte la raison.
+    fireEvent.click(panneau.getByRole("button", { name: /seulement ce qui peut partir/ }))
+    const carte = await panneau.findByRole("button", {
+      name: "Choisir Wan 2.2 · sur votre machine",
+    })
     expect((carte as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(
+      panneau.getByRole("button", {
+        name: "déplier ce qu'on sait de Wan 2.2 · sur votre machine",
+      }),
+    )
+    expect(panneau.getByText("ComfyUI n'est pas allumé")).toBeTruthy()
     expect(await panneau.findByText(/le grisé tombera tout seul/)).toBeTruthy()
   })
 
@@ -21895,7 +22168,9 @@ describe("A11 — le moteur de la maison", () => {
 
     // **Le modèle reste choisissable** : refuser obligerait à sortir de
     // l'atelier pour un téléchargement que l'atelier sait faire.
-    const carte = await panneau.findByRole("button", { name: /Wan 2\.2/ })
+    const carte = await panneau.findByRole("button", {
+      name: "Choisir Wan 2.2 · sur votre machine",
+    })
     expect((carte as HTMLButtonElement).disabled).toBe(false)
 
     // Et la liste est là **avant** le bouton : la licence est une question qu'on
@@ -21914,7 +22189,9 @@ describe("A11 — le moteur de la maison", () => {
       },
     })
 
-    const carte = await panneau.findByRole("button", { name: /Wan 2\.2/ })
+    const carte = await panneau.findByRole("button", {
+      name: "Choisir Wan 2.2 · sur votre machine",
+    })
     expect((carte as HTMLButtonElement).disabled).toBe(false)
     expect(await panneau.findByText(/il sortira lissé/)).toBeTruthy()
     // Un avertissement n'ouvre pas de téléchargement : ce greffon n'est pas
@@ -23134,3 +23411,211 @@ describe("A7 · l'atelier d'une animation", () => {
     ).toBe(false)
   })
 })
+
+// ── V3.02 — la fiche d'un clip ──────────────────────────────────────────────
+//
+// « La vignette d'un clip ne s'ouvre nulle part — le bouton *Ouvrir la fiche*
+// est là, désactivé. » Depuis cette tranche, un clip se regarde comme une
+// image : un clic ouvre la même colonne de droite, la vidéo tourne en boucle
+// avec jeu et pause, ce que le clip porte et ce qu'il a produit se lisent, et
+// *Découper* reste la porte du montage.
+//
+// **Rien ici ne dépense**, et l'ouvrir ne réclame rien au serveur : la fiche se
+// bâtit de ce que la galerie avait déjà relu — la seule demande de l'ouverture
+// est la liste des bandes du clip, une énumération que la galerie ne tient pas.
+
+describe("V3.02 — la fiche d'un clip", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Ouvrir la fiche d'un clip arrivé, **la seule porte** : le clic de sa
+   *  vignette, exactement le geste qui ouvre la fiche d'une image. */
+  const ouvrirLeClip = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    etat: Partial<Etat> = {},
+  ) => {
+    const double = serveurDouble(options)
+    const flux = await monter(double.fetchDouble, {
+      ...ETAT,
+      generations: [clipRendu("clip-a", false)],
+      ...etat,
+    })
+    laGalerie()
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir la fiche" }))
+    const panneau = await waitFor(() => {
+      const cadre = document.querySelector("[data-fiche-clip]")
+      if (!cadre) throw new Error("la fiche du clip ne s'est pas ouverte")
+      return cadre as HTMLElement
+    })
+    return { ...double, flux, panneau: within(panneau) }
+  }
+
+  test("un clip s'ouvre comme une image : la vidéo tourne, ce qu'il porte se lit", async () => {
+    const { panneau, appels } = await ouvrirLeClip()
+
+    // **La vidéo, pas une image prélevée** : la vignette du clip, c'est la
+    // vidéo elle-même — son rythme, ses fondus — et la barre de lecture du
+    // lecteur se déplace parce que la route répond aux demandes de plage.
+    const video = document.querySelector("video")
+    expect(video?.getAttribute("src")).toBe("/api/clips/clip-a/video")
+    expect(video?.getAttribute("loop")).not.toBeNull()
+
+    // Ce qu'il porte, mesuré sur le fichier et jamais déduit.
+    expect(
+      panneau.getByText("121 images · 24 i/s · 5 s demandées · 1:1 · 480p"),
+    ).toBeTruthy()
+    // Le montant de la facture, et la phrase qui dit s'il a été relu.
+    expect(panneau.getByText("$0,0670")).toBeTruthy()
+    expect(panneau.getByText("montant relu chez le fournisseur")).toBeTruthy()
+    // Le texte qui l'a fait, mot pour mot — corrigé ou non par le tiroir.
+    expect(panneau.getByText("walking cycle, walking in place")).toBeTruthy()
+
+    // **Rien ici ne dépense**, et la phrase le dit comme au pied du montage.
+    expect(panneau.getByText(/rien ici ne dépense/)).toBeTruthy()
+    // La fiche n'a pas ouvert le montage : la seule demande de l'ouverture est
+    // la liste des bandes, et tout le reste venait déjà de la galerie.
+    expect(appels.some((a) => a.url.startsWith("/api/montage/"))).toBe(false)
+    expect(appels.some((a) => a.url.startsWith("/api/strips?"))).toBe(true)
+  })
+
+  test("la fiche nomme ce que le clip anime, et se ferme sur la grille où elle était", async () => {
+    const anime = clipRendu("clip-a", false, {
+      personnage: "le-nain",
+      pose: "marche",
+      direction: "sud",
+    })
+    const { panneau } = await ouvrirLeClip(
+      { personnages: [personnage("Le nain")] },
+      { generations: [anime] },
+    )
+
+    // La case résolue en noms — comme la fiche d'une image résout les siens —
+    // et le mouvement inscrit à la commande, que le montage relit aussi.
+    expect(panneau.getByText("Le nain · marche · sud")).toBeTruthy()
+    expect(panneau.getByText("mouvement : marche")).toBeTruthy()
+
+    fireEvent.click(panneau.getByLabelText("Fermer la fiche"))
+    await waitFor(() => expect(document.querySelector("[data-fiche-clip]")).toBeNull())
+    // La grille est toujours là, et la tuile du clip reste à découper.
+    expect(screen.getByRole("button", { name: "Découper ›" })).toBeTruthy()
+  })
+
+  test("les bandes du clip s'y listent, et chacune s'ouvre dans l'atelier d'une animation", async () => {
+    const { panneau, appels } = await ouvrirLeClip({
+      montage: {
+        ...MONTAGE_RENDU,
+        bandes: [bandeRendue("repos", [4, 5, 6])],
+      },
+    })
+
+    const bande = await panneau.findByRole("button", { name: /^repos/ })
+    expect(bande).toBeTruthy()
+    fireEvent.click(bande)
+
+    // **Chacune s'ouvre dans l'atelier d'une animation** (A7) — c'est l'autre
+    // porte d'un clip : on retravaille ce qui est gardé, on ne refait pas le
+    // montage, et la fiche se referme dans le voyage.
+    await waitFor(() => {
+      expect(document.querySelector("[data-atelier-de-bande]")).toBeTruthy()
+    })
+    expect(appels.some((a) => a.url === "/api/strips/bande-repos")).toBe(true)
+    expect(document.querySelector("[data-fiche-clip]")).toBeNull()
+  })
+
+  test("un clip qui n'a rien produit le dit simplement", async () => {
+    const { panneau } = await ouvrirLeClip()
+    expect(await panneau.findByText(/aucune bande gardée/)).toBeTruthy()
+  })
+
+  test("découper se prend depuis la fiche, et ouvre le montage", async () => {
+    const { panneau, appels } = await ouvrirLeClip()
+
+    fireEvent.click(panneau.getByRole("button", { name: "Découper ›" }))
+    await waitFor(() => {
+      expect(document.querySelector("[data-montage]")).toBeTruthy()
+    })
+    expect(appels.some((a) => a.url === "/api/montage/clip-a")).toBe(true)
+  })
+
+  test("le sprite dont le clip est parti se lit, et sa fiche s'ouvre comme une image", async () => {
+    const departeur = asset("effe-0", "le voyageur")
+    const avecDepart = clipRendu("clip-a", false)
+    avecDepart.clip = {
+      ...(avecDepart.clip as NonNullable<typeof avecDepart.clip>),
+      depart: "effe-0",
+    }
+    // Plus récent que l'image qu'il a animée : sa tuile vient en premier.
+    avecDepart.cree_le = 2_000_000_000
+
+    // **L'asset au double comme au flux** : la galerie relit sa grille au
+    // montage, et un double qui répondrait *il n'y a pas d'image* effacerait
+    // la tuile de l'asset sous la fiche — ce que le premier essai de la
+    // tranche a payé en course, avant de passer l'asset aux deux endroits.
+    const double = serveurDouble({ assets: [departeur] })
+    const flux = await monter(double.fetchDouble, {
+      ...ETAT,
+      generations: [avecDepart],
+      assets: [departeur],
+    })
+    laGalerie()
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("button", { name: "Ouvrir la fiche" }),
+      ).toHaveLength(2),
+    )
+    fireEvent.click(screen.getAllByRole("button", { name: "Ouvrir la fiche" })[0])
+    // Le sprite de départ se lit dans la fiche — par sa poignée unique, pas par
+    // son nom : le même nom vit aussi sur la tuile de l'image, côte à côte.
+    const depart = await screen.findByLabelText(
+      "le sprite dont ce clip est parti — ouvrir sa fiche",
+    )
+    expect(depart).toBeTruthy()
+    fireEvent.click(depart)
+
+    // La fiche du clip cède la place à celle de l'image — la même colonne, et
+    // la porte de l'établi qui n'appartient qu'aux images.
+    await waitFor(() => {
+      expect(document.querySelector("[data-fiche-clip]")).toBeNull()
+      expect(
+        screen.getByRole("button", { name: "Reprendre dans l'établi" }),
+      ).toBeTruthy()
+    })
+    void flux
+  })
+
+  test("un clip corrigé au tiroir se relit avec son texte, et un clip jeté referme la fiche", async () => {
+    const corrige = clipRendu("clip-a", false)
+    corrige.demande = {
+      ...corrige.demande,
+      prompt: "Marche lente, en place — corrigé dans le tiroir.",
+    }
+    const { panneau, flux } = await ouvrirLeClip({}, { generations: [corrige] })
+
+    // Le texte qui est parti, pas celui du mouvement — 8septies, refermé du
+    // disque avec son texte à lui.
+    expect(
+      panneau.getByText("Marche lente, en place — corrigé dans le tiroir."),
+    ).toBeTruthy()
+
+    // **Un clip jeté quitte la grille, et sa fiche se referme avec sa tuile.**
+    // Une colonne ouverte sur ce qui n'existe plus serait une porte sur un mur.
+    flux.emettre("generation", {
+      ...corrige,
+      clip: { ...(corrige.clip as NonNullable<typeof corrige.clip>), jete: true },
+    })
+    await waitFor(() => {
+      expect(document.querySelector("[data-fiche-clip]")).toBeNull()
+    })
+  })
+})
+

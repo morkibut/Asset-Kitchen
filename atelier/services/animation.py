@@ -342,6 +342,7 @@ class ServiceAnimation:
         lot: str = "",
         provenance: str = AUTEUR,
         attendre: bool = True,
+        depart: str | None = None,
     ) -> Generation:
         """Commande un clip et rend la génération **dès que le travail est écrit**.
 
@@ -391,6 +392,7 @@ class ServiceAnimation:
                 resolution=demande.resolution,
                 prix_annonce=prix.montant,
                 prix_formule=prix.formule,
+                depart=depart or "",
             ),
         )
         # **Enregistré avant de partir.** Une coupure entre l'écriture et l'appel

@@ -235,6 +235,24 @@ async def modeles_video(
                 ),
             }
         )
+    # **L'ordre dans lequel la liste se lit (V3.01.2), et il se décide ici.**
+    # Le moteur de la maison d'abord — celui qui ne coûte rien passe avant
+    # ceux qui coûtent —, puis les payants **par prix croissant pour la
+    # demande courante** : le prix change avec la durée, le format et la
+    # résolution, et le tri suit, au même endroit où le prix se calcule.
+    # L'écran n'a pas de règle de tri à lui : deux endroits qui trient
+    # finiraient par ne plus trier pareil. Un modèle dont le prix n'a pas pu
+    # être relu — montant `None` — reste en fin de liste, et c'est lui que le
+    # filtre de l'écran retirera ou intercalera avec sa raison.
+    lignes.sort(
+        key=lambda ligne: (
+            # Faux passe après vrai : la maison d'abord (zéro), les payants
+            # ensuite (un).
+            0 if ligne["de_la_maison"] else 1,
+            1 if ligne["prix"]["montant"] is None else 0,
+            ligne["prix"]["montant"] or 0.0,
+        )
+    )
     return {
         "modeles": lignes,
         "recu_le": etat["recu_le"],
@@ -329,8 +347,10 @@ class CorpsClip(BaseModel):
     asset: str
     # **Le texte, ou le mouvement qui l'écrit** — au moins l'un des deux. Un
     # écran passe le mouvement et ne retape rien ; un script passe le texte.
-    # Les deux mènent au même appel, et c'est le serveur qui traduit, pour que
-    # le texte anglais n'ait qu'un seul endroit où il s'écrit (A6).
+    # **Le prompt corrigé prime sur le mouvement** (V3.01.1) : une relecture
+    # d'avant l'envoi peut corriger le texte pour cet appel, et le serveur
+    # l'emploie alors tel quel. Le mouvement, lui, reste inscrit sur la
+    # génération — c'est lui que le montage lit pour nommer ses bandes.
     prompt: str = ""
     mouvement: str | None = None
     secondes: int = SECONDES_DEFAUT
@@ -381,17 +401,23 @@ async def commander_clip(requete: Request, corps: CorpsClip) -> dict[str, Any]:
             f"un lot va de 1 à {LOT_MAX} clips — {corps.nombre} demandés"
         )
 
-    # **Le texte s'écrit à un seul endroit** (A6). L'écran envoie le mouvement
-    # qu'on a choisi, pas le texte qu'il vient d'afficher : deux chemins vers
-    # le même texte finiraient par en envoyer un troisième.
-    texte = corps.prompt
+    # **Le texte s'écrit à un seul endroit (A6), avec une exception nommée.**
+    # Sans correction, l'écran envoie le mouvement qu'il a choisi, pas le texte
+    # qu'il vient d'afficher : deux chemins vers le même texte finiraient par
+    # en envoyer un troisième. Avec correction (V3.01.1), le prompt porté par
+    # l'écran **prime** — c'est une relecture de cet appel, comme sur l'écran
+    # des images —, et le mouvement reste inscrit pour la filiation que le
+    # montage d'`A10` lit. Un mouvement inconnu se refuse dans les deux cas :
+    # la filiation ne peut pas mentir, elle porterait une chose qu'il n'y a
+    # pas.
+    mouvement = None
     if corps.mouvement:
         mouvement = atelier.mouvements.lire(corps.mouvement)
         if mouvement is None:
             raise ErreurAtelier(
                 f"aucun mouvement « {corps.mouvement} » dans la bibliothèque"
             )
-        texte = mouvement.texte
+    texte = corps.prompt.strip() or (mouvement.texte if mouvement else "")
     if not texte.strip():
         raise ErreurAtelier(
             "un clip part d'un texte — choisissez un mouvement, ou écrivez-en un"
@@ -433,6 +459,7 @@ async def commander_clip(requete: Request, corps: CorpsClip) -> dict[str, Any]:
             direction=corps.direction,
             mouvement=corps.mouvement,
             lot=lot,
+            depart=corps.asset,
         )
         clips.append(generation.en_json())
     return {"clips": clips}

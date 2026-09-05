@@ -11,6 +11,120 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V3.02 — le clip a une fiche, comme une image — 5 septembre 2026
+
+Une tranche, écrite et livrée le même jour, sans un centime. La galerie traitait les clips comme
+des tuiles à découper : **le bouton « Ouvrir la fiche » était là, désactivé**. Un clic ouvre
+maintenant la même colonne de droite que pour une image — la vidéo en boucle avec jeu et pause,
+ce que le clip porte, ce qu'il a produit, et la porte du montage.
+
+### Le serveur n'a eu qu'un champ, et c'est le bon signe
+
+Tout le reste existait déjà : la route vidéo depuis `A9`, les demandes de plage depuis `A7` bis, la
+liste des bandes d'un clip depuis `A10`, le texte corrigé du tiroir depuis `V3.01.1`. La seule chose
+qu'aucun écran ne pouvait lire était **le sprite dont le clip est parti** : le fichier partait, la
+filiation restait muette. Un champ `depart` sur le clip, écrit à la commande, relu comme tout le
+reste — et les clips d'avant se relisent avec un départ vide, sans migration.
+
+C'est la règle 8nonies payée une fois de plus **à l'envers** : ce qui manquait n'était pas la
+chose, c'était l'écran qui l'emploie.
+
+### La fiche est un état à part, jamais une sélection
+
+Un clip ne sélectionne pas comme une image : les gestes de la barre d'outils — favori, supprimer,
+exporter — sont des gestes d'image, et une clé de clip qui s'y mêlerait ferait *supprimer* tenter
+d'effacer une vidéo payée. La fiche du clip tient donc un état à elle, et la colonne s'ouvre sur
+l'un ou sur l'autre. Elle se referme avec sa tuile : un clip jeté quitte la grille, et une colonne
+ouverte sur ce qui n'existe plus serait une porte sur un mur.
+
+### Les portes de la fiche
+
+- **Découper ›** ouvre le montage et referme la fiche : deux lecteurs du même clip ne luttent pas
+  pour l'œil.
+- **Une bande** du clip s'ouvre dans l'atelier d'une animation, par le codex — le passage inverse
+  de celui qu'`A12` tient déjà.
+- **Le sprite de départ** ouvre sa fiche d'image, qui remplace celle du clip : la colonne est une
+  porte, jamais deux panneaux empilés sur la même question.
+
+### Ce qu'un essai d'écran a payé, et qui aurait pu s'appeler flakiness
+
+Le premier jet demandait au double de servir l'asset de départ **au flux seulement**, pas à la
+route des assets. Or la galerie **relit sa grille au montage** : la route répondait « il n'y a pas
+d'image », et la tuile du sprite s'effaçait sous la fiche — d'un essai à l'autre, à un timing près.
+Le double doit passer l'état **aux deux endroits où le vrai serveur le tient**, et l'essai le
+raconte dans son code plutôt que de le laisser invérifiable.
+
+## V3.01 — la commande d'un clip se relit, et la liste de modèles se plie — 5 septembre 2026
+
+Deux séances, deux tranches, et les deux sont nées de la même phrase de l'auteur en regardant
+`EcranClip` : *« quand j'appuie sur commander ce clip, je n'ai à aucun moment la fenêtre de
+confirmation »*. Il avait raison, et le cadre d'`A9` disait pourtant l'inverse : *l'écran de
+commande **est** la confirmation*. L'usage a montré la limite du mot : l'écran de commande montre
+ce qui part — le texte se lit, l'image est là, le bouton porte le montant —, mais il est plein de
+réglages, et le texte ne se corrige pas.
+
+### La relecture manquait, et elle tenait en trois colonnes
+
+La première tranche (la 3.01.1) intercale un **tiroir** entre « Commander ce clip » et la
+dépense : ce qui part (l'image et le format), le texte mot pour mot, le modèle et le montant du
+lot. Le même contrat que l'écran des images, appliqué à un clip.
+
+Deux choses le distinguent, et toutes deux sont des décisions, pas des oublis :
+
+- **Le texte se corrige pour cet appel seulement.** La correction part, le mouvement de la
+  bibliothèque ne bouge pas, et « remettre le texte du mouvement » le redonne intact. C'est le
+  contrat de l'écran des images, rendu mot pour mot.
+- **L'image de départ est obligatoire, et le tiroir le dit en toutes lettres.** Un modèle vidéo
+  n'en accepte qu'une, et aucun plafond ne la fait céder (point 8bis) : proposer un interrupteur
+  qui ne voudrait rien dire aurait été un mensonge de forme. On la change, on ne la retire pas.
+
+Côté serveur, le changement tient en une résolution : le texte corrigé **prime** sur le
+mouvement, qui reste inscrit sur la génération pour que le montage d'`A10` nomme ses bandes comme
+avant. Sans correction, le comportement d'`A9` est intact — *le texte anglais n'a qu'un seul
+endroit où il s'écrit*.
+
+> ⚠️ **La garde refermée et rouverte.** La leçon d'`A7` — *un objet qu'on sait écrire et qu'on ne
+> sait pas relire n'est pas fini* — s'est appliquée ici sans qu'on ait à la redécouvrir : un essai
+> commande un clip au texte corrigé, **rouvre l'atelier**, et relit du disque son texte **et** son
+> mouvement. C'est la forme que prend la règle pour une dépense : la garde se fait avec un texte
+> retouché, jamais avec celui du défaut.
+
+### La liste de modèles ne se laissait pas lire
+
+La seconde tranche (la 3.01.2) répond aux trois demandes de l'auteur, et chacune a trouvé sa
+place naturelle :
+
+- **Le local gratuit en premier** — et la présélection a suivi sans une ligne changée : l'écran
+  prenait « le premier non grisé », et le tri l'a fait tomber sur le moteur de la maison quand il
+  est là.
+- **Le tri par prix** — calculé au serveur, **pour la demande courante** : le prix change avec la
+  durée, le format et la résolution, et le tri vit au même endroit que le calcul. L'essai le
+  prouve dans les deux sens : un modèle au jeton passe devant un modèle à la seconde en carré, et
+  derrière en 16:9.
+- **Les cartes repliées** — repliée, une carte ne montre que le nom et l'estimation : c'est tout
+  ce qu'il faut pour comparer. Le détail — formule, durée conseillée, mesure, raison du grisage —
+  se déplie d'un **chevron distinct du geste qui choisit**, et il reste vivant sur une carte
+  grisée : seul le choix est interdit, la lecture ne l'est jamais.
+
+Le filtre « seulement ce qui peut partir », allumé par défaut, est venu avec : un atelier sans
+clé a vingt-huit cartes grisées qui avaleraient la liste. Éteint, elles reparaissent, intercalées
+par prix, et chacune se déplie pour lire pourquoi.
+
+> ⚠️ **Le tri était inversé, et le serveur l'obéissait parfaitement.** La première clé mettait la
+> maison *en dernier* — `1 if de_la_maison` — et le banc a rendu cet ordre-là, fidèlement : un tri
+> faux et un serveur obéissant, sans aucune erreur. C'est l'essai qui **compare l'ordre rendu à
+> l'ordre déclaré** qui l'a vu, pas une relecture du code. La leçon est celle d'`A5` : une mesure
+> qu'on ne lit pas n'est pas une mesure — ici, un tri qu'on ne compare pas à son entrée ne trie
+> rien.
+
+### Ce que la tranche n'a pas demandé au cadre
+
+Deux choses que l'auteur aurait pu demander et n'a pas demandées, et il vaut la peine de noter
+pourquoi elles ne sont pas venues : **garder la correction** — elle ne remonte nulle part, et le
+mouvement se corrige dans les Réglages, comme avant —, et **l'option de joindre la bible au
+clip** — *ce clip n'hérite que de votre sprite*, la phrase d'`A9` reste vraie, et le tiroir ne la
+force pas.
+
 ## A7 bis — trois demandes, et aucune ne demandait un mécanisme neuf — 5 septembre 2026
 
 Trois remarques de l'auteur, nées du même usage : découper un clip du pèlerin, garder l'animation,

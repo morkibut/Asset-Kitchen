@@ -1502,6 +1502,36 @@ export const AIDE: Record<string, Explication> = {
     long: "Aucun fournisseur ne déclare ça, et un écran qui proposerait deux modèles sans le dire ferait passer une hypothèse pour un résultat.\n\nVide veut dire *on n'en sait rien*, et l'écran l'écrit plutôt que de laisser croire qu'un modèle proposé a été éprouvé.",
   },
 
+  "clip.liste": {
+    nom: "La liste de modèles",
+    ou: "etabli",
+    quoi: "L'ordre dans lequel les modèles se présentent, et le filtre qui range ce qui ne peut pas partir.",
+    change:
+      "Ce que tu lis d'abord, et à quel point la liste te laisse tranquille. **L'ordre vient du serveur** — le modèle gratuit en tête, puis les payants du moins cher au plus cher pour la demande courante — et l'interrupteur, allumé, ne montre que ce qui peut partir.",
+    origine: "le serveur trie · tu filtres",
+    long: "Le prix d'un clip change avec la durée, le format et la résolution : le tri suit cette demande-là, au même endroit où le prix se calcule, et il n'y a pas de règle de tri à l'écran — deux endroits qui trient finiraient par ne plus trier pareil.\n\nL'interrupteur *seulement ce qui peut partir* est allumé par défaut : dans un atelier sans clé, vingt-huit cartes grisées avaleraient la liste. Éteint, elles reparaissent, intercalées par prix, et chacune se déplie pour lire pourquoi elle ne peut pas partir.\n\nUne carte repliée ne montre que le nom et l'estimation — c'est tout ce qu'il faut pour comparer. Le détail, le pli l'ouvre d'un geste à lui, distinct du geste qui choisit, et il reste possible sur une carte grisée : seul le choix est interdit, la lecture ne l'est jamais.",
+  },
+
+  "clip.confirmation": {
+    nom: "Ce qui part avec le clip",
+    ou: "etabli",
+    quoi: "Le tiroir qui s'ouvre entre « Commander ce clip » et la dépense : la dernière relecture, corrigeable.",
+    change:
+      "Ce qui va partir. **Le texte, mot pour mot, et l'image de départ — rien d'autre.** Une correction faite ici vaut pour cet appel seulement, et ne touche jamais au mouvement de la bibliothèque.",
+    origine: "le mouvement choisi et l'image de départ · ta correction éventuelle",
+    long: "Un clip n'emporte qu'une image et un texte : un modèle vidéo n'en accepte qu'une, et aucun plafond ne la fait céder. L'image se **change**, jamais elle ne se retire — proposer un interrupteur qui ne voudrait rien dire serait un mensonge de forme, et le tiroir le dit en toutes lettres.\n\nLe texte se **corrige pour cet appel** : la correction part, le mouvement de la bibliothèque ne bouge pas, et *remettre le texte du mouvement* le redonne intact. Le corriger pour tous les clips suivants se fait dans les Réglages, là où il s'écrit — une correction durable est un second geste, comme partout dans le produit.\n\nLe bouton porte le montant du **lot** — chacun des N clips se paie, y compris ceux qu'on jettera —, ou le temps, chez le moteur de la maison. Rien n'est consommé tant qu'il n'est pas pressé.",
+  },
+
+  "clip.fiche": {
+    nom: "La fiche d'un clip",
+    ou: "galerie",
+    quoi: "La colonne de droite qui s'ouvre quand on clique sur la vignette d'un clip — comme la fiche d'une image, pour ce que la galerie garde sans que ce soit une image.",
+    change:
+      "**La vidéo du clip, en boucle** — son rythme, ses fondus, ce qu'il fait entre deux images —, ce qu'il a coûté, ce qu'il anime, ce qu'il a produit, et la porte du montage.",
+    origine: "le clip, tel qu'il est arrivé · les bandes qu'on en a déjà taillées",
+    long: "La fiche d'un clip est la fiche d'une image, adaptée à ce qu'un clip est : la vignette, c'est la **vidéo elle-même** — pas une image prélevée que l'écran rejoue à sa cadence —, avec jeu, pause et une barre de lecture qui se déplace.\n\nElle dit ce que le clip porte — le texte qui l'a fait, le modèle, combien il a coûté **et si ce montant a été relu chez le fournisseur** —, ce qu'il anime — le personnage, la pose, la direction —, et le sprite dont il est parti.\n\nCe qu'il a produit s'y lit dans l'autre sens : les bandes déjà gardées, chacune s'ouvrant dans l'atelier d'une animation. Et *Découper* y mène au montage, comme sur la tuile. **Rien ici ne dépense** : le clip est déjà payé, et garder ou jeter restent les gestes de la grille.",
+  },
+
   // ── Le montage : découper un clip en bandes (A10) ─────────────────────────
 
   "bande.nom": {

@@ -94,6 +94,7 @@ import {
 import { EcranEtabli } from "./composants/Personnages"
 import { EcranReglages } from "./composants/EcranReglages"
 import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
+import { FicheDuClip } from "./composants/FicheDuClip"
 import { EcranTables, TABLES, type Table } from "./composants/Tables"
 import { EcranDepliage } from "./composants/Depliage"
 import { EcranAtelierDeBande } from "./composants/AtelierDeBande"
@@ -278,6 +279,17 @@ export function App() {
    *  dépense rien : le clip est déjà payé, et découper se refait autant de fois
    *  qu'on veut. */
   const [montageOuvert, setMontageOuvert] = useState<string | null>(null)
+
+  /** **Le clip dont la fiche est ouverte** (V3.02) — l'identifiant de sa
+   *  génération, ou rien.
+   *
+   *  La même colonne que la fiche d'une image, pour ce que la galerie garde
+   *  sans que ce soit une image : un clip se regarde maintenant d'un clic,
+   *  comme elle — et le clic ne fait rien d'autre. C'est un état à part, et
+   *  non une sélection : les gestes de la barre d'outils — favori, supprimer,
+   *  exporter — sont des gestes d'image, et une clé de clip qui s'y mêlerait
+   *  ferait « supprimer » tenter d'effacer une vidéo payée. */
+  const [ficheClip, setFicheClip] = useState<string | null>(null)
   // **L'atelier d'une animation gardée** (A7). Il prend la place de la
   // matrice, comme le montage prend celle de la galerie : on y entre depuis
   // la vignette de l'animation, et rien n'y dépense.
@@ -2082,13 +2094,36 @@ export function App() {
   const colonnes = [
     `${replies.arbre ? 0 : 240}px`,
     "minmax(0,1fr)",
-    `${fiche ? 380 : 0}px`,
+    `${fiche || ficheClip ? 380 : 0}px`,
   ].join(" ")
 
   const ouverte = fiche ? grille.find((a) => a.identifiant === fiche) : undefined
   const planche = decoupeOuverte
     ? grille.find((a) => a.identifiant === decoupeOuverte)
     : undefined
+
+  /** **Le clip dont la fiche est ouverte**, relu dans ce que la galerie tient
+   *  déjà — jamais un aller-retour pour ouvrir : la fiche se bâtit de ce qui
+   *  est sous les yeux, comme la fiche d'une image. */
+  const clipEnFiche = ficheClip
+    ? entrees.find(
+        (e): e is Extract<Entree, { sorte: "emplacement" }> =>
+          e.sorte === "emplacement" &&
+          e.generation.identifiant === ficheClip &&
+          e.generation.clip != null,
+      )
+    : undefined
+  /** La fiche d'un clip disparaît avec sa tuile : un clip jeté quitte la
+   *  grille, et une colonne ouverte sur ce qui n'existe plus serait une porte
+   *  sur un mur. On referme alors, silencieusement, comme la fiche d'une image
+   *  supprimée. */
+  useEffect(() => {
+    if (!ficheClip) return
+    const presente = entrees.some(
+      (e) => e.sorte === "emplacement" && e.generation.identifiant === ficheClip,
+    )
+    if (!presente) setFicheClip(null)
+  }, [entrees, ficheClip])
 
   // **Un cran est indisponible quand la colonne est trop étroite pour lui**, et
   // c'est une largeur mesurée qui le dit — pas une soustraction refaite ici à
@@ -2881,6 +2916,7 @@ export function App() {
             onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
             onGarderLeClip={garderLeClip}
             onDecouperLeClip={setMontageOuvert}
+            onOuvrirLeClip={setFicheClip}
           />
           )}
 
@@ -2921,6 +2957,43 @@ export function App() {
               }}
               onOuvrirLesTables={() => setTablesOuvertes(ouverte.identifiant)}
               onOuvrir={(identifiant) => setSelection([identifiant])}
+            />
+          )}
+          {clipEnFiche && (
+            <FicheDuClip
+              generation={clipEnFiche.generation}
+              plan={plan}
+              personnages={personnages}
+              depart={
+                grille.find(
+                  (a) =>
+                    a.identifiant === (clipEnFiche.generation.clip?.depart ?? ""),
+                ) ?? null
+              }
+              onFermer={() => setFicheClip(null)}
+              /* **Découper se prend d'ici comme de la tuile** (V3.02), et il
+                 referme la fiche : le montage prend la place de la grille, et
+                 deux lecteurs du même clip ne luttent pas pour l'œil. */
+              onDecouper={() => {
+                setFicheClip(null)
+                setMontageOuvert(clipEnFiche.generation.identifiant)
+              }}
+              /* **Une bande du clip s'ouvre dans l'atelier d'une animation**
+                 (A7). C'est un autre onglet : la matrice vit au codex, et seul
+                 `App` sait qu'il existe des onglets — comme le passage inverse,
+                 qu'`A12` tient déjà. */
+              onOuvrirLaBande={(identifiant) => {
+                setFicheClip(null)
+                setOnglet("codex")
+                setBandeOuverte(identifiant)
+              }}
+              /* Le sprite de départ s'ouvre comme une image, **et sa fiche
+                 remplace celle du clip** : la colonne est une porte, jamais
+                 deux panneaux empilés sur la même question. */
+              onOuvrir={(identifiant) => {
+                setFicheClip(null)
+                setSelection([identifiant])
+              }}
             />
           )}
         </div>
@@ -3444,6 +3517,7 @@ function Grille({
   onRetirerFiltre,
   onGarderLeClip,
   onDecouperLeClip,
+  onOuvrirLeClip,
 }: {
   entrees: Entree[]
   selection: string[]
@@ -3467,6 +3541,9 @@ function Grille({
    *  geste d'au-dessus : une grille qui sert à désigner une image de référence
    *  n'a pas à ouvrir un écran de découpage. */
   onDecouperLeClip?: (generation: string) => void
+  /** **Ouvrir la fiche de ce clip** (V3.02), dans la même colonne que la fiche
+   *  d'une image. Absent là où la grille ne montre pas de clips. */
+  onOuvrirLeClip?: (generation: string) => void
 }) {
   // **La même mécanique de dépôt que le tableau d'inspiration**, réemployée
   // telle quelle : c'est le geste, pas la surface, qui décide de la forme. Un
@@ -3547,6 +3624,7 @@ function Grille({
             autresDuLot={autresDuLot(entrees, entree)}
             onGarderLeClip={onGarderLeClip}
             onDecouperLeClip={onDecouperLeClip}
+            onOuvrirLeClip={onOuvrirLeClip}
           />
         ))}
       </div>

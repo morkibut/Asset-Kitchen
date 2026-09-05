@@ -1,4 +1,4 @@
-# Asset Kitchen — Les 501 user stories
+# Asset Kitchen — Les 518 user stories
 
 Le catalogue, groupé comme il l'a été écrit — par geste, dans l'ordre où l'auteur les
 rencontre. **On l'ouvre par numéro** : un critère d'acceptation cite `US-65`, on vient
@@ -898,3 +898,35 @@ du 3 septembre 2026, et arbitrés le même jour.*
 
 - **US-504** — En tant qu'auteur, je veux voir dans la fiche du personnage laquelle de mes images part dans le jeu, et la choisir d'un clic, afin de ne plus avoir à deviner ce que l'atelier retiendrait ni à aller le décider dans un autre écran.
 - **US-505** — En tant qu'auteur, je veux jeter depuis la fiche le calque que je n'ai pas choisi, afin de ne pas garder côte à côte deux versions dont une seule sert.
+
+## La V3.02 — la fiche d'un clip
+
+### Un clip s'ouvre comme une image
+
+- **US-506** — En tant qu'auteur, je veux cliquer sur la vignette d'un clip de la galerie et lire sa fiche dans la colonne de droite, comme pour une image, afin que le clip soit une chose qu'on regarde et pas seulement une tuile à découper.
+- **US-507** — En tant qu'auteur, je veux revoir la vidéo du clip dans sa fiche, en boucle, avec jeu, pause et barre de lecture, afin de juger le mouvement tel que le modèle l'a rendu sans passer par le montage.
+- **US-508** — En tant qu'auteur, je veux relire dans la fiche ce que le clip a coûté, ce qu'il porte, d'où il vient et ce qu'il a déjà produit, afin de décider s'il me sert encore.
+- **US-509** — En tant qu'auteur, je veux découper un clip depuis sa fiche, afin que le chemin du clip à l'animation parte de là où je le regarde.
+
+## La V3.03 — l'atelier d'une animation au niveau des tables
+
+### Une frame se travaille avec les tables, et le montage redevient brut
+
+- **US-510** — En tant qu'auteur, je veux travailler une frame d'une animation une par une avec les tables de l'atelier — détourage complet, recadrage, grille, quantification, bords, contours — afin que l'édition d'une animation se fasse au niveau de l'édition d'une image.
+- **US-511** — En tant qu'auteur, je veux que chaque frame garde sa propre recette, qui part de celle de la bande, afin de corriger une frame sans refaire les autres et de savoir laquelle s'écarte.
+- **US-512** — En tant qu'auteur, je veux que le montage ne montre que la vidéo et le brut du clip, afin de juger le mouvement sans être distrait par un traitement que je ne peux pas encore régler.
+
+### La sélection : une frame, plusieurs, toutes
+
+- **US-513** — En tant qu'auteur, je veux appliquer les tables à une sélection de frames — une, plusieurs, toutes — afin que traiter l'animation entière tienne dans les mêmes gestes que traiter une image.
+- **US-514** — En tant qu'auteur, je veux poser une recette nommée sur une sélection de frames sans rien réécrire en silence, afin de régler l'animation d'un geste sans perdre ce que j'avais réglé à la main.
+
+### La bande se monte, et le clip se rouvre
+
+- **US-515** — En tant qu'auteur, je veux retirer, dupliquer et déplacer les frames d'une animation, afin qu'une bande gardée ne soit pas un tirage figé.
+- **US-516** — En tant qu'auteur, je veux mettre de côté des images du clip dans un chutier et les insérer ensuite où je veux dans l'animation, afin de composer avec des images qui ne se suivent pas dans le clip.
+- **US-517** — En tant qu'auteur, je veux reprendre le montage de ma bande avec les images déjà retenues et les réglages en place, afin de changer la sélection sans tout recomposer de mémoire.
+
+### La main sur une frame
+
+- **US-518** — En tant qu'auteur, je veux retoucher une frame à la main — retirer des pixels, en repeindre d'autres — comme sur une image de l'établi, afin qu'une frame ratée par le traitement se répare sans rien regénérer.

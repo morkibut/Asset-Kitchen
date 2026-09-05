@@ -115,6 +115,11 @@ export type Generation = {
     /** Ce prompt-là est celui que l'auteur a écrit, pas celui que l'atelier a
      *  composé (US-160). Absent des générations d'avant R2. */
     repris?: boolean
+    /** **Le mouvement que l'écran a fait choisir** (A6), par son identifiant.
+     *  Inscrit à la commande et jamais écrasé par une correction (V3.01.1) :
+     *  c'est lui que le montage lit pour nommer ses bandes. Présent
+     *  uniquement sur les appels vidéo. */
+    mouvement?: string
   }
   parametres_resolus: Record<string, unknown>
   ecartees: string[]
@@ -739,6 +744,10 @@ export type Clip = {
    *  et leur minute marcherait presque toujours, et se tromperait le jour où
    *  l'auteur relance exactement la même chose. Vide pour les clips d'avant. */
   lot: string
+  /** **Le sprite dont le clip est parti** (V3.02) — l'identifiant de l'asset
+   *  d'image de départ, écrit à la commande. Vide pour les clips d'avant ce
+   *  champ : la fiche ne montre alors rien plutôt que de deviner. */
+  depart: string
   /** La phrase que l'écran écrit à côté du montant. Écrite une fois, au
    *  serveur : deux rédactions finiraient par dire deux choses. */
   montant_dit: string

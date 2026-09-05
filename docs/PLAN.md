@@ -34,6 +34,9 @@
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée devient une planche de sprites, son fichier d'accompagnement dans le format que les moteurs lisent, et une image qui tourne toute seule — jusque-là, une bande ne servait qu'à être regardée dans l'atelier. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande, et l'écran dit enfin ce qui bouge entre deux images — c'est la première mesure du produit qui regarde deux images ensemble. **`A7` ferme la version, et son vrai sujet n'était pas dans son plan** : une animation gardée ne se rouvrait par aucun chemin — la vignette remontait au clip, donc l'écran repartait des réglages du jeu et corriger une virgule demandait de tout refaire de mémoire. Elle apporte l'écran qui manquait, *l'atelier d'une animation*, et les gestes du plan par-dessus : la pelure d'oignon, la poussée au pixel, les neuf ancrages, une image prise dans un autre clip. **La version est close** | ci-dessous |
+| **V3.01** — la commande d'un clip se relit avant de partir | Le tiroir qui montre ce qui part et le corrige pour cet appel ; la liste des modèles qui se plie et se filtre | **1 close sur 2 le 5 septembre 2026** — le tiroir ; la liste des modèles reste à construire | ci-dessous |
+| **V3.02** — le clip a une fiche, comme une image | La galerie s'ouvre sur un clip au clic : la vidéo se regarde en boucle dans la colonne de droite, ce que le clip porte et ce qu'il a produit se lisent, et il se découpe depuis sa fiche | **✅ close le 5 septembre 2026** — une tranche, livrée le jour de son écriture, sans un centime | ci-dessous |
+| **V3.03** — l'atelier d'une animation au niveau des tables | L'édition d'une animation devient l'édition d'images : le montage redevient brut, chaque frame porte sa recette et se travaille avec les tables, la bande se monte (retirer, dupliquer, déplacer, prendre au clip, chutier), et la main s'y pose | **ouverte le 5 septembre 2026, non close** | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -143,7 +146,7 @@ blanc, et la révision figure ici à la place de l'ancienne règle.
 
 ## Couverture des user stories
 
-**503 user stories écrites**, dont **493 portées par une tranche**, dans `docs/user-stories.md`.
+**518 user stories écrites**, dont **508 portées par une tranche**, dans `docs/user-stories.md`.
 Le détail par tranche des versions tenues est dans l'archive.
 
 | Bloc | User stories | Nombre |
@@ -164,9 +167,11 @@ Le détail par tranche des versions tenues est dans l'archive.
 | **V3 — A2, A4 à A7, A9 à A13** *(l'animation)* | **376, 379 à 388, 390 à 400, 434 à 461, 482 à 490** | **59** |
 | **V3.1 — G1 à G16** *(l'atelier tient ce qu'il dit)* | **495 à 501**, plus **369** *(reprise à `P1`)* et **502, 503** | **10** *(les quarante-trois autres changements tiennent des stories déjà écrites)* |
 | **V3.5 — P1, P2** *(le dépliage généralisé)* | **370 à 374, 491 à 494** | **9** *(`369` est partie en `G16` le 3 septembre 2026)* |
+| **V3.02 — V3.02.1** *(la fiche d'un clip)* | **506 à 509** | **4** |
+| **V3.03 — V3.03.1 à 4** *(l'atelier d'une animation au niveau des tables)* | **510 à 518** | **9** |
 | *Retirées le 3 septembre 2026, dépassées par l'écran de montage et par `D4`* | *375, 377, 378, 389* | *4* |
 | *Sorties du plan avec le pantin* | *401 à 406* | *6* |
-| | **Total écrit** | **505** |
+| | **Total écrit** | **518** |
 
 *Les numéros suivent le jour où la story a été écrite, jamais l'ordre de construction* : la
 V2.3 se construit avant la V3 et porte pourtant les numéros d'après. C'est déjà vrai des
@@ -263,6 +268,22 @@ V3    A6  le mouvement, dit une fois pour toutes
                  ← close le 5 septembre 2026 — la dernière de la version
 
       A0  clos le 2 septembre 2026 — son verdict est plus haut
+
+ │
+ ▼
+V3.01  ① le tiroir de la commande        ✔ close le 5 septembre 2026
+       ② la liste des modèles se plie    à construire
+
+ │
+ ▼
+V3.02  ① la fiche d'un clip — la galerie s'ouvre au clic    ✔ close le 5 septembre 2026
+
+ │
+ ▼
+V3.03  l'atelier d'une animation au niveau des tables       ouverte le 5 septembre 2026
+       ① le montage redevient brut, chaque frame a sa recette
+       ② les tables sur une sélection · ③ la bande se monte
+         au clip · ④ la main sur une frame
 
  │
  ▼
@@ -3747,6 +3768,400 @@ aux demandes de plage, sans quoi la barre de lecture ne marcherait pas.
 > quatre ignorent ; des recettes nommées existaient et ne se posaient que sur une image. **Ce qui
 > manquait était le chemin**, pas la chose — et c'est exactement la famille ② de la `V3.1`, *ce qui
 > est construit et jamais branché*, retrouvée trois fois de plus par l'usage.
+
+---
+
+## V3.01 — la commande d'un clip se relit avant de partir
+
+*Née de l'usage le 5 septembre 2026, sur la V3 livrée la veille. Deux constats de l'auteur en
+regardant `EcranClip` : l'argent part d'un écran où le texte se lit mais ne se corrige pas, et la
+liste des modèles ne se laisse ni filtrer ni lire d'un coup d'œil. Aucun des deux ne contredit le
+cadrage — `A9` disait que l'écran de commande *est* la confirmation, et c'est exactement ce qui
+change : ce qu'il tenait derrière sa règle — *un écran qui recouvre, montre ce qui part, et porte
+le montant sur son bouton* — tient toujours ; ce qui s'ajoute est la **relecture et la
+correction**, que l'écran de commande, plein de réglages, n'offre pas.*
+
+⚠️ **Le nom V3.1 est pris** — il désigne le bloc *l'atelier tient ce qu'il dit*, plus bas. La
+reprise de la V3 livrée s'appelle donc *V3.01*, et le chiffre ne dit rien de plus.
+
+### V3.01.1 · Le tiroir « ce qui part avec ce clip » — ✅ **livrée le 5 septembre 2026**
+
+**Ce qu'on livre.** Entre le bouton « Commander ce clip · ≈ X » et la dépense, un écran de
+confirmation s'intercale — le même geste que celui des images fixes, et la question qu'il
+tranche est la même : *qu'est-ce qui part, et puis-je le corriger avant que ça parte ?* Il
+recouvre l'atelier, montre le texte exact qui partira, mot pour mot, et l'image de départ avec
+sa filiation, et porte sur son bouton le montant du **lot** — ou le temps, pour le moteur de la
+maison, avec la même annonce qu'au-dessus.
+
+On y **corrige le texte pour cet appel** : la correction part, le mouvement de la bibliothèque
+ne bouge pas, et « reprendre le texte » le redonne intact — c'est le contrat de l'écran des
+images fixes, appliqué tel quel. Ce qui n'est **pas** débrayable : **l'image de départ**.
+Un modèle vidéo n'en accepte qu'une et aucun plafond ne la fait céder (`A9`, point 8bis) — le
+tiroir le dit en toutes lettres au lieu de proposer un interrupteur qui ne voudrait rien dire.
+Elle se change, depuis la bibliothèque, comme dans l'écran au-dessus. Et rien d'autre ne part :
+ni textes du jeu, ni images d'ambiance — la phrase *« ce clip n'hérite que de votre sprite »*
+reste vraie, et le tiroir ne la force pas.
+
+**Ce que ça change côté serveur, et c'est presque rien.** Le corps de `/api/clips` accepte déjà
+un texte et un mouvement, mais le mouvement **écrase** le texte. L'ordre s'inverse : le texte
+corrigé part, et le mouvement reste inscrit sur la génération — c'est lui que le montage d'`A10`
+lit pour nommer ses bandes, et une correction d'un appel ne doit pas casser la filiation. Si le
+texte relu vaut le texte du mouvement, on envoie seulement le mouvement, comme aujourd'hui : la
+bibliothèque d'`A6` reste le seul endroit où le texte anglais s'écrit, et une correction ne le
+duplique pas.
+
+**Critères d'acceptation**
+
+- [x] Le bouton « Commander ce clip · ≈ … » **ouvre la confirmation au lieu d'envoyer** ; rien ne part tant que le bouton du tiroir n'a pas été pressé, et Échap referme sans rien dépenser
+- [x] Le tiroir montre **le texte exact qui partira, mot pour mot**, et l'image de départ avec sa filiation — jamais réassemblés à l'écran
+- [x] Le texte se corrige **pour cet appel seulement** : il part corrigé, le mouvement de la bibliothèque ne bouge pas, et « reprendre le texte » le redonne intact
+- [x] Un lot se re-dit dans le tiroir : chacun des N clips se paie, et le bouton porte le même montant de lot — ou le même temps — que l'écran au-dessus
+- [x] L'image de départ est **obligatoire et le dit** : aucun interrupteur ne peut la retirer, seule la changer est possible
+- [x] La correction part, et **le mouvement d'origine reste inscrit sur la génération** : le montage d'`A10` nomme ses bandes comme avant, texte corrigé ou non
+- [x] Un clip commandé depuis le tiroir se relit après coup avec le texte corrigé — la garde se fait avec un texte retouché, pas avec celui du défaut
+- [x] Tout fonctionne réseau coupé : le tiroir s'ouvre sur ce que l'écran a déjà relu
+
+**Ce qui a été livré, le 5 septembre 2026.** Cinq essais de serveur, sept d'écran, et le
+pronostic du plan s'est vérifié : **côté serveur, c'était presque rien** — une résolution, le
+texte corrigé qui prime sur le mouvement —, **et côté écran, un composant entier**. Le tiroir
+est la moitié vidéo de l'écran de confirmation, monté sur le même contrat : ce qui part, mot
+pour mot, corrigeable pour cet appel seulement ; ce qui ne part jamais — l'image — nommé en
+toutes lettres.
+
+| Ce qui est arrivé | Où | Ce que ça tient |
+|---|---|---|
+| La résolution | `atelier/api/animation.py` § `commander_clip` | le prompt corrigé **prime** sur le mouvement, et le mouvement reste inscrit — sans correction, le serveur relit le mouvement comme en `A9`, et le texte anglais n'a qu'un seul endroit où il s'écrit (A6) |
+| Le tiroir | `interface/src/composants/Clip.tsx` § `ConfirmationClip` | trois colonnes — ce qui part (image et format), le texte mot pour mot, le modèle et le montant — et le bouton qui paie. Il est fait de ce que l'écran a déjà relu : **ouvrir ne demande rien au serveur**, et c'est la forme réseau coupé du critère |
+| Le texte corrigeable | même composant, `data-correction-clip` | le brouillon fait autorité pendant qu'on écrit (M3), « remettre le texte du mouvement » efface le brouillon avec la correction, et vider le texte éteint le bouton avec sa raison |
+| L'image qui ne se retire pas | même composant | **obligatoire et le dit** — un modèle vidéo n'en accepte qu'une, donc aucun interrupteur, seulement « changer d'image › » |
+| L'entrée du guide | `interface/src/aide.ts` § `clip.confirmation` | un écran qui naît doit une ligne au guide — c'est elle |
+| La garde, refermée et rouverte | `tests/test_v301.py` § la relecture | un clip au texte corrigé se relit du disque avec **son** texte et **son** mouvement — jamais avec le défaut |
+
+> ⚠️ **Un détail du refus, découvert en écrivant les essais.** Un prompt réduit à des
+> espaces n'est pas une correction : le serveur reprend le mouvement, comme si le prompt était
+> absent. C'est la même réserve que la route d'`A9` sur le prompt, appliquée à la relecture —
+> *des espaces ne sont pas un texte*.
+
+**Bloquée par** — aucune. **Elle ne bloque rien** : la 3.01.2, la liste de modèles, démarre
+indépendamment.
+
+### V3.01.2 · La liste de modèles se plie et se filtre — ✅ **livrée le 5 septembre 2026**
+
+**Ce qu'on livre.** La colonne des modèles se lit d'un coup d'œil : **le moteur de la maison en
+tête** — le modèle qui ne coûte rien passe avant ceux qui coûtent, et le premier de la liste,
+qui est aussi le premier que l'écran présélectionne, devient donc le local quand il est là —,
+puis les payants **par prix croissant pour la demande courante** (le prix change avec la durée,
+le format et la résolution choisis, et le tri suit, au même endroit où le prix se calcule : le
+serveur. **L'écran n'a pas de règle de tri à lui** — deux endroits qui trient finissent par ne
+plus trier pareil).
+
+Un **interrupteur « seulement ce qui peut partir »**, allumé par défaut, retire de la colonne
+les modèles grisés et leur bruit — le cas d'école étant un atelier sans clé, où vingt-huit
+cartes grisées mangent la liste. Éteint, ils reparaissent **intercalés par prix, avec leur
+raison**, pour celui qui veut savoir pourquoi rien ne part chez un fournisseur — et l'aller
+réparer. Dans les deux états, rien ne se propose pour être rejeté en 400 : la règle du
+catalogue est respectée, le grisé est seulement rangé.
+
+Et chaque carte **se plie** : repliée, elle ne montre que son nom et son estimation — le
+montant du lot, ou le temps pour le local — ; son détail — la formule, la durée conseillée et
+sa raison, ce que le dépôt a mesuré, la raison du grisage — se déplie d'un geste à lui, jamais
+confondu avec le geste qui choisit.
+
+**Critères d'acceptation**
+
+- [x] La liste arrive **triée du serveur**, et l'écran n'a pas de règle de tri à lui : le local gratuit en tête, puis les payants par prix croissant pour la demande courante
+- [x] Le modèle présélectionné est le premier qui peut partir — c'est donc le moteur de la maison quand il est présent
+- [x] L'interrupteur « seulement ce qui peut partir » est **allumé par défaut** ; éteint, les modèles qui ne peuvent pas partir reparaissent avec leur raison, intercalés par prix
+- [x] Une carte repliée ne montre que **son nom et son estimation** ; le détail se déplie d'un geste distinct du choix — et le geste qui déplie **reste possible sur une carte grisée**, seul le choix est interdit
+- [x] Une clé absente ne grise que les modèles de son fournisseur, et ne dit rien du moteur local — la règle d'`A11` tient telle quelle
+- [x] Tout fonctionne réseau coupé
+
+**Ce qui a été livré, le 5 septembre 2026.** Deux essais de serveur, huit d'écran, et le
+pronostic du plan s'est vérifié : **le tri était une ligne — l'écran n'a pas de règle de tri à
+lui —, et la carte s'est refaite autour de deux gestes qui ne se confondent pas.**
+
+| Ce qui est arrivé | Où | Ce que ça tient |
+|---|---|---|
+| Le tri | `atelier/api/animation.py` § `modeles_video` | la maison d'abord — son zéro est « certain » et le dit —, puis les payants par prix croissant **pour la demande courante**, calculé au même endroit que le prix. Un modèle au jeton passe devant un modèle à la seconde en carré et derrière en 16:9 : c'est ce que « pour la demande courante » veut dire, et l'essai le prouve dans les deux formats |
+| Le filtre | `interface/src/composants/Clip.tsx` § `seulementPossibles` | l'interrupteur carré du produit, allumé par défaut, avec le compte des masqués sur le bouton même ; éteint, les grisés reparaissent dans l'ordre du serveur, et chacune se déplie pour lire sa raison |
+| La carte à deux gestes | `Clip.tsx` § `CarteModele` | **choisir** est le bouton du nom et de l'estimation ; **déplier** est le chevron, à côté, vivant sur une carte grisée — seul le choix est interdit, la lecture ne l'est jamais. Le pli porte la formule, la durée conseillée, la mesure, et la raison du grisage en tête |
+| La présélection | déjà en place, sans une ligne changée | l'écran prenait « le premier non grisé » : avec la liste triée, c'est le local quand il est là — le critère est rempli *par le tri* et non par une règle neuve |
+| Le guide | `interface/src/aide.ts` § `clip.liste` | l'entrée du réglage nouveau — l'ordre vient du serveur, tu filtres |
+
+> ⚠️ **Le piège du tri était l'ordre de la clé, pas la clé.** La première version mettait la
+> maison *en dernier* — `1 if de_la_maison` — et le banc l'a rendu tel quel, fidèlement : un
+> tri faux et le serveur obéissant. C'est l'essai qui compare l'ordre rendu à l'ordre déclaré
+> qui l'a vu, pas une inspection du code. La leçon est celle de `A5` : une mesure qu'on ne
+> lit pas n'est pas une mesure — ici, un tri qu'on ne compare pas à son entrée ne trie rien.
+
+**Bloquée par** — aucune. **La 3.01.1 peut partir seule.**
+
+---
+
+## V3.02 — le clip a une fiche, comme une image
+
+*Demande de l'auteur le 5 septembre 2026, dans les heures qui ont suivi la clôture de la V3. Deux
+constats en regardant la galerie. Le premier : **la vignette d'un clip ne s'ouvre nulle part** — le
+bouton « Ouvrir la fiche » est là, désactivé ; ce qu'on peut faire tient dans la tuile (garder,
+jeter, découper). Le second : pour **regarder** un clip — le juger, revoir ce qu'il a coûté, ce
+qu'il a produit — le montage était la seule porte, alors que le montage est un écran qui *travaille*.
+Une image se regarde d'un clic, dans la colonne de droite ; un clip, non.*
+
+⚠️ **Le nom V3.1 est pris** — il désigne le bloc *l'atelier tient ce qu'il dit*, plus bas. Cette
+version s'appelle *V3.02*, à la suite de V3.01, et le chiffre ne dit rien de plus.
+
+**Ce que la version livre.** La galerie traite les clips comme elle traite les images : un clic ouvre
+la colonne de droite, et la fiche d'un clip montre le clip — *la vidéo*, pas une image prélevée — et
+porte les gestes qui lui sont propres.
+
+### V3.02.1 · La fiche d'un clip — ✅ **livrée le 5 septembre 2026**
+
+**Ce qu'on livre.** Un clip se regarde, se lit et se découpe depuis la même colonne où une image se
+regarde, se lit et se corrige.
+
+**La vidéo d'abord.** La vignette du clip, c'est la vidéo elle-même, en boucle, avec jeu, pause et
+une barre de lecture qui se déplace — pas une image prélevée que l'écran rejoue à sa cadence : la
+vidéo porte le rythme du modèle, ses fondus, ce qu'il fait entre deux images (A7 bis ③). ⚠️ **Ce que
+la fiche branche a déjà été payé** : la route sert le fichier depuis `A9`, les demandes de plage
+depuis `A7` bis — un navigateur qui ne peut pas demander « les octets 400 000 à 500 000 » ne sait
+pas se déplacer dans une vidéo. La fiche est le second écran qui s'en sert, et la règle 8nonies se
+paie une fois de plus à l'envers : la route existait, seule la porte manquait.
+
+**Ce que le clip porte.** Ce qu'il a coûté — **relu, dans l'unité du fournisseur**, jamais une
+estimation —, sa durée, sa cadence, le nombre de ses images, le mouvement et la case qu'il anime,
+son modèle, le sprite dont il part, et le texte qui l'a fait, avec sa filiation — comme la fiche
+d'une image lit « le texte qui l'a faite ». Une dépense ne s'efface jamais, et une fiche qui ne la
+montrerait pas serait une porte fermée sur le journal.
+
+**Ce qu'il a produit.** Les bandes déjà gardées de ce clip, chacune avec son nom et la case qu'elle
+remplit, et chacune s'ouvrant dans l'atelier d'une animation. Un clip qui n'a rien produit le dit
+simplement.
+
+**Les gestes.** « Découper › » — il rouvre le montage, et la tuile le garde aussi : la fiche n'interdit
+pas le chemin court. Garder et jeter restent les gestes de la grille : le chemin de suppression du
+produit est unique, et la fiche ne le contourne pas.
+
+**Critères d'acceptation**
+
+- [x] Cliquer la vignette d'un clip ouvre sa fiche dans la colonne de droite — même geste, même colonne, mêmes classes que les images — et le clic ne fait rien d'autre
+- [x] La vidéo du clip se lit en boucle dans la fiche : jeu, pause, barre de lecture déplaçable — les plages de la route servent
+- [x] La fiche dit ce que le clip porte : coût relu dans l'unité du fournisseur, durée, cadence, nombre d'images, mouvement, case visée, modèle, sprite de départ
+- [x] Le texte qui a fait le clip se lit avec sa filiation — corrigé ou non par le tiroir de V3.01.1, c'est le texte qui est parti qui s'affiche
+- [x] Les bandes gardées du clip s'y listent avec leur nom et leur case, et chacune s'ouvre dans l'atelier d'une animation
+- [x] « Découper › » se prend depuis la fiche et depuis la tuile ; garder et jeter ne se prennent que dans la grille
+- [x] Rien ici ne dépense, et une phrase le dit
+- [x] Tout fonctionne réseau coupé : la fiche se bâtit de ce que la galerie a déjà relu, et l'ouvrir n'appelle rien au serveur
+- [x] Le guide reçoit sa ligne
+- [x] Un essai referme et rouvre la fiche : un clip au texte corrigé se relit de la fiche avec **son** texte (8septies)
+
+**Ce qui a été livré, le 5 septembre 2026.** Deux essais côté serveur, sept côté écran, **aucun
+appel payant**. Le pronostic du plan s'est vérifié : **côté serveur, un champ** — le sprite de départ
+n'était inscrit nulle part, et c'est la seule chose qu'aucun écran ne pouvait lire —, **côté écran,
+un composant et une porte**. La fiche est la seconde moitié d'`A7` bis ③ : la route vidéo
+existait, les plages existaient, seul manquait l'écran qui les emploie — la règle 8nonies, une fois
+de plus, se paie à l'envers.
+
+| Ce qui est arrivé | Où | Ce que ça tient |
+|---|---|---|
+| La fiche d'un clip | `interface/src/composants/FicheDuClip.tsx` | la vidéo en boucle (jeu, pause, plages), ce que le clip porte et a coûté, sa case et son mouvement, le texte qui l'a fait, les bandes qu'il a produites — chacune s'ouvrant dans l'atelier d'une animation —, et « Découper › » |
+| La porte depuis la tuile | `interface/src/composants/Tuile.tsx` | le bouton « Ouvrir la fiche » existait, **désactivé** : un clip est désormais la seule chose de la grille qui s'ouvre comme une image. La fiche est un état à part, jamais une sélection — les gestes d'image de la barre d'outils ne s'appliquent pas à une vidéo payée |
+| Le champ `depart` | `atelier/domaine/animation.py`, écrit depuis la route `commander_clip` | le sprite dont le clip est parti, inscrit à la commande et relu comme tout le reste — vide et lu `""` pour les clips d'avant, sans migration |
+| Le voyage vers les autres écrans | `interface/src/App.tsx` | « Découper › » ouvre le montage et referme la fiche ; une bande s'ouvre dans l'atelier d'une animation en passant par le codex ; le sprite de départ ouvre sa fiche d'image — la colonne est une porte, jamais deux panneaux empilés ; une fiche referme quand sa tuile disparaît |
+| L'entrée du guide | `interface/src/aide.ts` § `clip.fiche` | un écran qui naît doit une ligne au guide — c'est elle |
+| La garde, refermée et rouverte | `tests/test_v302.py`, `interface/src/App.test.tsx` § V3.02 | le clip relit son départ et son texte corrigé ; la fiche se rouvre sur un clip au texte du tiroir, et se referme quand il est jeté |
+
+> ⚠️ **Un essai d'écran a payé une course avant de passer.** Le premier jet demandait au double de
+> servir l'asset de départ *au flux seulement*, pas à la route des assets : la galerie relit sa
+> grille au montage, la route répondait « il n'y a pas d'image », et la tuile du sprite s'effaçait
+> sous la fiche — à un timing près, d'un essai à l'autre. **Le double passe l'état aux deux
+> endroits où le vrai serveur le tient** — la règle est écrite dans l'essai lui-même, plutôt
+> qu'inventée une fois de trop.
+
+**Bloquée par** — aucune. **Elle ne bloque rien** : les routes, les plages et le montage existent, et
+la V3.01.2 démarre indépendamment.
+
+---
+
+## V3.03 — l'atelier d'une animation au niveau des tables
+
+*Demande de l'auteur le 5 septembre 2026. Deux moments, et l'écran d'aujourd'hui les confond :*
+***monter le clip*** *— « un écran dédié pour voir la vidéo, sélectionner les frames qu'on veut garder
+et voir l'animation sans traitement des frames, ni détourage ni traitement de couleur » — et*
+***éditer l'animation*** *— « traiter les frames une par une ou toutes à la fois ou juste une
+sélection, avec tous les outils classiques des tables de l'atelier (détourage, quantification, la
+main…), et en plus changer l'ordre des frames, ajouter, dupliquer, supprimer, et aller chercher une
+frame en plus depuis le clip ».*
+
+**Le partage qui commande la version.** Le montage s'arrête là où le traitement commence : il ne
+montre que le brut — la vidéo, la pellicule, les images retenues sans détourage ni réduction de
+couleurs — parce qu'on **juge le mouvement** sur un écran qui ne sait pas encore traiter. L'atelier
+d'une animation porte tout le reste : chaque frame y devient une image de l'établi, avec sa recette
+à elle, ses tables, la main, et la bande elle-même se monte. *« On ne taille pas et on ne corrige pas
+avec la même main »* — la phrase d'A7 — devient une séparation d'écrans, là où elle était deux
+colonnes d'un même écran.
+
+| Tranche | Ce qu'elle livre |
+|---|---|
+| **V3.03.1** | chaque frame porte sa recette, l'écran se refait dans la grammaire des tables, le montage redevient brut — le socle |
+| **V3.03.2** | les tables sur une sélection : une frame, plusieurs, toutes, et les recettes nommées |
+| **V3.03.3** | la bande se monte : retirer, dupliquer, déplacer, reprendre au clip, le chutier |
+| **V3.03.4** | la main sur une frame |
+
+### V3.03.1 · Chaque frame porte sa recette, et le montage redevient brut — **à construire**
+
+**Ce qu'on livre.** Trois choses, et la première porte les deux autres.
+
+**① Une frame est une image.** Chaque prise d'une bande porte désormais une **recette individuelle
+facultative**. Le défaut reste la recette de la bande — qui elle-même part de celle du jeu : une
+bande d'avant se relit telle quelle, et rien ne migre. La recette individuelle naît au premier
+réglage touché sur la frame, elle part d'une **copie** de la recette de la bande à cet instant, et
+l'écart s'écrit sur la frame du ruban : *« s'écarte de la bande : détourage »*. « Reprendre la
+recette de la bande » rend la frame au défaut, et c'est un geste annulable comme les autres.
+
+**La fenêtre commune ne change pas de camp.** Elle se mesure avec la recette de la bande, et **une
+frame qui s'en écarte peut déborder** : l'écran le dit avec la phrase du dossier « d'avant » — *elle
+n'est pas fausse, elle est mesurée avec un autre détourage* —, et « Reprendre la fenêtre » reste un
+bouton : les vingt secondes de remesure ne se paient pas sans raison.
+
+**② L'écran se refait dans la grammaire des tables.** Le réglage à gauche, la chose en grand au
+milieu, ses voisines à droite — la phrase d'A7 devient l'écran des tables : à gauche, les tables de
+la frame choisie — détourage complet (les quatre moteurs et toutes leurs valeurs : la tolérance, le
+durcissement, la sélection, et la phrase qui remplace une valeur que le moteur ne lit pas — `A7` bis
+①), puis recadrage, grille, quantification, bords, contours — ; au milieu, la frame en grand avec le
+zoom des tables ; à droite, le ruban des frames, le lecteur, et **les réglages de la bande** — la
+vitesse, le sens, la fenêtre, l'ancrage — qui restent avec les contrôles jeu et pause, tranché avec
+l'auteur le 5 septembre 2026.
+
+**Ce qui survit d'A7, et ce qui n'y revient pas.** La pelure d'oignon, la poussée au pixel bornée,
+les neuf ancrages, l'échange d'une image avec un autre clip du même personnage, l'annulation, et
+*on corrige l'image qu'on regarde* — le lecteur peut tourner pendant qu'on travaille. Ce qui ne
+revient pas : les curseurs de recette sans nom du panneau actuel — *trois nombres à la file et il
+faut deviner lequel règle quoi*, vu en A7 et jamais réparé —, que la grammaire des tables nomme pour
+de bon.
+
+**③ Le montage redevient brut.** La boucle traitée et le panneau de recette quittent le montage.
+Juger le mouvement et juger le découpage sont deux métiers — A10 le disait des deux boucles —, et
+montrer un traitement qu'on ne peut pas régler revient à faire juger une image qu'on ne peut pas
+corriger : *« une bande mal ramenée sur sa grille n'est pas jugeable du tout »*, et l'inverse est
+vrai du mouvement sous un détourage. L'aperçu traité vit désormais dans l'atelier d'une animation,
+frame par frame, là où le traitement se règle. La bande garde sa recette — elle part toujours de
+celle du jeu —, mais elle se règle dans l'atelier, pas au montage. *Ce qui sort est exactement ce
+que l'aperçu montrait* devient vrai frame par frame, là où on le regarde.
+
+**Critères d'acceptation**
+
+- [ ] Une bande gardée avant la tranche se rouvre telle quelle, la recette de la bande vaut pour chaque frame — rien ne migre
+- [ ] Toucher un réglage sur une frame lui donne sa recette individuelle, copie de la bande à cet instant, et le ruban écrit l'écart
+- [ ] « Reprendre la recette de la bande » rend la frame au défaut, et se défait
+- [ ] L'écran se lit comme les tables : panneau gauche (tables de la frame), frame en grand avec zoom au centre, ruban + lecteur + réglages de bande à droite
+- [ ] La table détourage d'une frame offre les quatre moteurs et toutes leurs valeurs, et la phrase qui remplace celle qu'un moteur ne lit pas
+- [ ] Le montage ne montre plus la boucle traitée ni le panneau de recette ; il n'évalue plus que le mouvement
+- [ ] Une frame qui s'écarte de la bande porte la phrase « d'avant » pour la fenêtre commune, et « Reprendre la fenêtre » reste un bouton
+- [ ] Les gestes d'A7 survivent : pelure d'oignon, poussée au pixel bornée, neuf ancrages, remplacement par une image d'un autre clip du même personnage
+- [ ] On corrige l'image qu'on regarde, lecteur en marche — l'essai laisse tourner, ralenti, et tombe en défaisant le correctif (8octies)
+- [ ] Une garde se referme et se rouvre avec ses recettes individuelles — gardée avec des réglages qui ne sont pas ceux du défaut (8septies)
+- [ ] Tout se fait au clavier autant qu'à la souris ; tout fonctionne réseau coupé ; le guide reçoit ses lignes
+
+**Bloquée par** — aucune. **Elle ne bloque rien** : les trois suivantes la prennent pour socle.
+
+### V3.03.2 · Les tables sur une sélection : une frame, plusieurs, toutes — **à construire**
+
+**Ce qu'on livre.** L'autre moitié de la demande : *« traiter les frames une par une ou toutes à la
+fois ou juste une sélection, avec tous les outils classiques des tables »*. Le ruban se sélectionne
+au clic, comme la colonne des sœurs de `G12` : c'est l'ensemble déjà sous les yeux, et l'amendement
+de la grille unique vaut pour lui. Les tables du panneau gauche s'appliquent à la sélection entière :
+une valeur que les frames n'ont pas en commun s'affiche « séparé » et se pose pour toutes en une
+passe.
+
+Une **recette nommée** se pose sur la sélection — elle remplace tout l'ensemble à la fois (`A7` bis
+②, *une recette est un ensemble, en prendre la moitié rendrait une image que personne n'a jamais
+jugée*) — et elle n'écrit rien avant « Enregistrer » : elle serait le seul geste de l'écran à ne pas
+s'annuler. « Remettre la recette de la bande » vaut aussi pour la sélection.
+
+> ⚠️ **Rien ne se réécrit en silence.** Une frame à recette individuelle l'est pour une raison, et
+> une recette posée par-dessus l'écrase. La règle de `G12` — le liseré sur ce qui va changer, et
+> *ce qui n'a pas voyagé se dit une fois pour le lot* — s'écrit ici pour le ruban : les frames à
+> recette individuelle portent leur liseré, l'écran dit combien il y en a et ce qui va être
+> remplacé, une fois, pas trente fois. La main, quand elle arrivera en 03.4, s'ajoute au liseré.
+> **`G12` ne bloque pas cette tranche** : elle agit sur une autre surface, la colonne des sœurs de
+> l'établi ; si elle se ferme avant, les deux chemins se partagent la même phrase, jamais deux
+> phrases différentes pour le même fait.
+
+**Et une table qui ne se sélectionne pas, et le dit.** La main ne s'applique qu'à une frame à la
+fois : peindre est un geste de pixels, une coordonnée ne voyage pas (lot U), et poser la même passe
+sur d'autres images serait faire des retouches à leur insu. Sur une sélection, la table s'éteint
+avec sa raison — comme toujours, *le grisé porte sa raison*.
+
+**Critères d'acceptation**
+
+- [ ] Le ruban se sélectionne au clic et s'étend ; la sélection porte un geste, elle n'est pas un état complet
+- [ ] Les tables s'appliquent à la sélection : une valeur « séparé » se pose pour toutes en une passe
+- [ ] Une recette nommée se pose sur la sélection, remplace tout l'ensemble, et n'écrit rien avant « Enregistrer »
+- [ ] « Remettre la recette de la bande » s'applique à la sélection
+- [ ] Un liseré marque les frames à recette individuelle ; ce qui va être écrasé se dit une fois pour le lot, et la phrase vaut aussi pour les retouches à la main quand elles existent
+- [ ] La main est grisée avec sa raison sur une sélection de plusieurs frames
+- [ ] Une route serveur prend une liste — pas trente appels pour trente frames
+- [ ] La garde se referme et se rouvre avec les recettes posées en lot (8septies)
+
+**Bloquée par** — `V3.03.1`.
+
+### V3.03.3 · La bande se monte : retirer, dupliquer, déplacer, et prendre au clip — **à construire**
+
+**Ce qu'on livre.** Une bande gardée n'est pas un tirage figé. Le ruban s'édite : **retirer** une
+frame, **dupliquer** — la recette individuelle de la source suit la copie, c'est la même image —,
+**déplacer** — glisser, ou flèches au clavier —, et l'ordre du ruban est l'ordre de l'export.
+
+**Et le clip rouvre sa porte.** *« Aller chercher une frame en plus depuis le clip si il m'en
+manque une »* : depuis l'atelier, « prendre des images dans le clip › » ouvre une vue de toute la
+pellicule du clip — comme le montage, sans le montage —, on y prend une ou plusieurs images, et
+elles entrent dans le **chutier**. Le chutier est la réserve de la bande : les images écartées du
+film mais pas encore posées. Depuis le chutier, chaque image s'insère à la position choisie — avant
+ou après la frame sélectionnée. Il se garde avec la bande et se relit avec elle : *un objet qu'on
+sait écrire et qu'on ne sait pas relire n'est pas fini*, et l'essai referme et rouvre (8septies).
+
+**Reprendre le montage de la bande.** Depuis l'atelier, « Reprendre le montage › » ouvre le montage
+**avec les images déjà retenues et les réglages en place** — le cadre, la vitesse, le sens — ; on y
+change la sélection, et refermer met la bande à jour. Aujourd'hui le montage repart toujours des
+réglages du jeu : c'est le cul-de-sac d'A7 raconté une fois de plus, par l'autre bout.
+
+> ⚠️ **Une recette individuelle voyage avec sa prise.** Remplacer la prise d'une frame par une
+> autre image — au montage comme à l'échange d'`A7` — ne transfère pas les retouches : c'est une
+> autre image, et la retouche mentirait dessus. La prise emportée garde sa recette avec elle, au
+> chutier si elle y va.
+
+**Critères d'acceptation**
+
+- [ ] Retirer, dupliquer, déplacer une frame : chaque geste est annulable, et l'ordre du ruban est l'ordre de l'export
+- [ ] La vue du clip montre toutes les images du clip d'origine ; on y prend une ou plusieurs images, d'un geste, vers le chutier
+- [ ] Le chutier liste les images mises de côté ; chaque image s'insère à la position choisie dans la bande
+- [ ] Le chutier se garde avec la bande et se rouvre — un essai referme et rouvre (8septies)
+- [ ] « Reprendre le montage › » ouvre le montage avec les images retenues, le cadre et la vitesse de la bande ; changer la sélection et refermer met la bande à jour
+- [ ] Remplacer la prise d'une frame ne transporte pas sa recette individuelle, et l'écran le dit
+- [ ] Tout se fait au clavier autant qu'à la souris ; tout fonctionne réseau coupé ; le guide reçoit ses lignes
+
+**Bloquée par** — `V3.03.1`.
+
+### V3.03.4 · La main sur une frame — **à construire**
+
+**Ce qu'on livre.** La table « la main » portée telle quelle à la frame choisie : le pinceau carré
+de côté impair, poser et ôter, la toile grossie, le zoom, l'annulation, les témoins avant et après.
+Retirer des pixels, en repeindre d'autres : c'est la table de l'établi, et ses règles viennent avec
+elle — les passages se gardent dans la **recette de la frame**, une coordonnée ne voyage pas, et la
+frame touchée porte le liseré de 03.2.
+
+**Elle ne s'applique qu'à une frame à la fois**, et la raison est écrite à la place des réglages
+quand plusieurs frames sont choisies : peindre est un geste de pixels, et dupliquer une passe de
+main sur d'autres images serait poser des retouches sans les avoir regardées.
+
+**Critères d'acceptation**
+
+- [ ] La table « la main » s'ouvre sur la frame choisie avec ses outils et ses témoins, comme sur une image de l'établi
+- [ ] Les passages se gardent dans la recette de la frame, et la garde se referme et se rouvre (8septies)
+- [ ] Une frame touchée à la main le dit sur le ruban, et le liseré de 03.2 la montre
+- [ ] Sur une sélection de plusieurs frames, la table s'éteint avec sa raison
+- [ ] Tout fonctionne réseau coupé ; le guide reçoit sa ligne
+
+**Bloquée par** — `V3.03.1`.
 
 ---
 

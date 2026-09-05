@@ -561,6 +561,14 @@ class Clip:
     # simple que la suppression d'une image, et c'est plus sûr.
     jete: bool = False
 
+    # ── Le sprite dont il part (V3.02) ───────────────────────────────────────
+    #
+    # **L'identifiant de l'asset qui a servi d'image de départ.** Rien ne le
+    # portait jusqu'ici : le fichier partait, la filiation restait muette, et la
+    # fiche d'un clip ne pouvait pas dire *de quoi* il était parti. Vide pour
+    # les clips d'avant ce champ, et c'est la vérité — ils ne le savaient pas.
+    depart: str = ""
+
     @property
     def montant_dit(self) -> str:
         """Ce que l'écran écrit à côté du chiffre. **Une phrase, pas un drapeau.**
@@ -598,6 +606,7 @@ class Clip:
             "recupere": self.recupere,
             "jete": self.jete,
             "lot": self.lot,
+            "depart": self.depart,
             # Déduit, écrit quand même : c'est la phrase que l'écran affiche à
             # côté du montant, et deux rédactions finiraient par dire deux
             # choses.
@@ -622,4 +631,5 @@ class Clip:
             recupere=bool(d.get("recupere", False)),
             jete=bool(d.get("jete", False)),
             lot=d.get("lot", ""),
+            depart=d.get("depart", ""),
         )

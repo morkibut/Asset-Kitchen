@@ -57,6 +57,7 @@ export function Tuile({
   autresDuLot = 0,
   onGarderLeClip,
   onDecouperLeClip,
+  onOuvrirLeClip,
 }: {
   entree: Entree
   selectionnee: boolean
@@ -87,6 +88,9 @@ export function Tuile({
    *  seule chose à savoir avant de le confier à une tuile, et c'est la même
    *  garantie que pour le choix d'une planche. */
   onDecouperLeClip?: (generation: string) => void
+  /** **Ouvrir la fiche de ce clip dans la colonne de droite** (V3.02) — le
+   *  même geste que celui qui ouvre la fiche d'une image, et rien d'autre. */
+  onOuvrirLeClip?: (generation: string) => void
 }) {
   const asset = entree.sorte === "asset" ? entree.asset : null
   const emplacement = entree.sorte === "emplacement" ? entree.emplacement : null
@@ -174,9 +178,20 @@ export function Tuile({
           introuvable. */}
       <button
         type="button"
-        disabled={!asset && !(attend && lot !== null && emplacement !== null)}
+        disabled={
+          !asset && !clipArrive && !(attend && lot !== null && emplacement !== null)
+        }
         onClick={(evenement) => {
           if (asset) return onOuvrir(asset.identifiant, evenement)
+          // **Un clip s'ouvre comme une image** (V3.02) : le clic ouvre sa
+          // fiche dans la colonne de droite — la vidéo, ce qu'il porte, ce
+          // qu'il a produit — et rien d'autre. Avant la tranche, ce bouton
+          // était là, désactivé : le clip était la seule chose de la galerie
+          // qui ne s'ouvrait pas.
+          if (clipArrive && lot) {
+            if (onOuvrirLeClip) return onOuvrirLeClip(lot.identifiant)
+            return
+          }
           // La planche entière est ce qu'on veut voir en grand pour choisir :
           // le clic mène là où le bouton du bas mène, et pas ailleurs.
           if (attend && lot && emplacement) onChoisir(lot.identifiant, emplacement.rang)
