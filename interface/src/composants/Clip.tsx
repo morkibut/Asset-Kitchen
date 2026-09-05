@@ -3,7 +3,7 @@
 // C'est le premier moment de `docs/maquettes-v3/01-du-sprite-a-la-bande.html` :
 // à gauche l'image de départ et le mouvement, au milieu ce qu'on va recevoir et
 // dans quel format, à droite les modèles avec leur prix et le bouton qui porte
-// le montant. **Rien ne part tant qu'on n'a pas appuyé sur ce bouton.**
+// le montant. **Rien ne part tant qu'on n'a pas appuyé sur le bouton du tiroir.**
 //
 // ── Ce qu'il change à une règle du produit, et pourquoi c'est assumé ────────
 //
@@ -30,6 +30,18 @@
 //    pas un arbitrage clos, et l'écran le dit à l'endroit où l'on choisit
 //    plutôt que de faire passer une hypothèse pour un résultat.
 //
+// ── V3.01.1 : la relecture avant la dépense ─────────────────────────────────
+//
+// L'usage a montré ce qui manquait : on lisait le texte du mouvement sur cet
+// écran, mais on ne pouvait pas le corriger, et l'argent partait d'un clic sur
+// un écran plein de réglages. Le bouton « Commander ce clip » ouvre donc un
+// **tiroir de relecture** entre lui et la dépense — la même place que l'écran
+// des images, et le même contrat : ce qui part, mot pour mot, corrigeable pour
+// cet appel seulement ; et ce qui ne part jamais, nommé — l'image de départ,
+// qui reste obligatoire et le dit. Rien ne part tant que le bouton du tiroir
+// n'a pas été pressé, et le mouvement de la bibliothèque ne bouge pas : une
+// correction est un geste pour cet appel, comme partout dans le produit.
+//
 // ── Ce qu'A11 y ajoute, et l'invariant qu'il ne casse pas ──────────────────
 //
 // Un des modèles de la liste tourne sur la machine de l'auteur et ne coûte pas
@@ -41,7 +53,7 @@
 // choisir. Une liste à part en ferait une option de réglages, et ce n'en est
 // pas une : c'est une façon de produire un clip parmi trois.
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   api,
   dollars,
@@ -142,6 +154,15 @@ export function EcranClip({
   const [mouvement, setMouvement] = useState<string | null>(null)
   const [catalogue, setCatalogue] = useState<BaseModelesVideo | null>(null)
 
+  // ── Le filtre de la liste (V3.01.2) ──────────────────────────────────────
+  //
+  // **Allumé par défaut** : la colonne ne montre que ce qui peut partir, et la
+  // liste reste courte — le cas d'école étant un atelier sans clé, où vingt-huit
+  // cartes grisées avaleraient tout. Éteint, elles reparaissent, intercalées
+  // par prix avec leur raison : le choix *n'est* pas possible, mais la lecture
+  // de ce qui manque l'est, à l'endroit où l'on choisit.
+  const [seulementPossibles, setSeulementPossibles] = useState(true)
+
   // ── L'état de l'écran ─────────────────────────────────────────────────────
   const [refus, setRefus] = useState<string | null>(null)
   const [enVol, setEnVol] = useState(false)
@@ -151,19 +172,34 @@ export function EcranClip({
    *  suivre la case quand on change de case. */
   const [choisie, setChoisie] = useState<Asset | null>(null)
 
+  // ── Le tiroir de relecture (V3.01.1) ──────────────────────────────────────
+  //
+  // Le bouton « Commander ce clip » l'ouvre au lieu d'envoyer, et c'est le
+  // bouton du tiroir qui part. **La correction vit ici et ne remonte nulle
+  // part** : `null` veut dire *rien corrigé* — le serveur relit alors le
+  // mouvement de la bibliothèque, et le texte anglais ne se duplique nulle
+  // part (A6).
+  const [confirmer, setConfirmer] = useState(false)
+  const [texteCorrige, setTexteCorrige] = useState<string | null>(null)
+
   const personnage = cible.personnage
   const pose = cible.pose
 
-  // **Échap revient sans rien dépenser** — la même touche que sur l'écran de
-  // confirmation, et pour la même raison : le dernier écran avant l'argent doit
-  // pouvoir se quitter sans chercher un bouton.
+  // **Échap referme le tiroir avant de refermer l'écran** — la même touche que
+  // sur l'écran de confirmation, et pour la même raison : le dernier écran
+  // avant l'argent doit pouvoir se quitter sans chercher un bouton. Deux
+  // niveaux, deux Échap : le tiroir rend la main à l'écran de commande, qui
+  // rend la main à l'établi.
   useEffect(() => {
     const touche = (evenement: KeyboardEvent) => {
-      if (evenement.key === "Escape" && !evenement.defaultPrevented) onFermer()
+      if (evenement.key === "Escape" && !evenement.defaultPrevented) {
+        if (confirmer) setConfirmer(false)
+        else onFermer()
+      }
     }
     window.addEventListener("keydown", touche)
     return () => window.removeEventListener("keydown", touche)
-  }, [onFermer])
+  }, [onFermer, confirmer])
 
   // ── La proposition d'image de départ ──────────────────────────────────────
   //
@@ -260,6 +296,14 @@ export function EcranClip({
   const texte = mouvements.find((m) => m.identifiant === mouvement)?.texte ?? ""
   const image = choisie ?? depart?.asset ?? null
 
+  // **Ce que la colonne montre : la liste triée du serveur, filtrée par le
+  // réglage du dessus.** L'écran ne trie rien — l'ordre arrive déjà fait, avec
+  // son prix —, il range seulement ce qui ne peut pas partir.
+  const modelesVisibles = (catalogue?.modeles ?? []).filter(
+    (m) => !seulementPossibles || m.grise === null,
+  )
+  const grisesMasquees = (catalogue?.modeles.length ?? 0) - modelesVisibles.length
+
   // **Le montant du lot, jamais celui d'un clip seul** : c'est ce qui va
   // partir, et l'annoncer à l'unité ferait payer quatre fois ce qu'on a lu une
   // fois. `null` quand le prix n'a pas pu être relu — le modèle est alors grisé.
@@ -289,14 +333,28 @@ export function EcranClip({
         ? "aucun modèle vidéo ne peut honorer cette demande"
         : (choisi.grise ?? null)
 
-  const commander = async () => {
-    if (empeche || !image || !choisi) return
+  // Le texte que le tiroir montre et envoie : la correction si elle existe,
+  // le texte du mouvement sinon. Le tiroir seul décide, et ce calcul n'existe
+  // nulle part ailleurs.
+  const texteFinal = (texteCorrige ?? texte).trim()
+
+  // **Le dernier geste — dans le tiroir, jamais ici.** `commander` au sens
+  // d'avant n'existe plus : le bouton de cet écran ouvre la relecture, et c'est
+  // le bouton du tiroir qui envoie. La correction part telle quelle, et le
+  // mouvement reste dans l'appel : le serveur l'inscrit sur la génération pour
+  // que le montage sache quoi tailler dans le clip.
+  const partir = async () => {
+    if (enVol || !image || !choisi || !texteFinal) return
     setRefus(null)
     setEnVol(true)
     try {
       const { clips } = await api.commanderClips({
         modele: choisi.identifiant,
         asset: image.identifiant,
+        // **La correction, et rien d'autre.** Sans correction, `prompt` reste
+        // absent et le serveur relit le mouvement (A6) : deux chemins vers le
+        // même texte partiraient en un troisième.
+        prompt: texteCorrige ?? undefined,
         mouvement,
         secondes,
         resolution,
@@ -313,6 +371,33 @@ export function EcranClip({
       setRefus(erreur instanceof Error ? erreur.message : "le clip n'est pas parti")
       setEnVol(false)
     }
+  }
+
+  if (confirmer && choisi) {
+    return (
+      <ConfirmationClip
+        texte={texte}
+        texteCorrige={texteCorrige}
+        onCorriger={setTexteCorrige}
+        onRemettre={() => setTexteCorrige(null)}
+        image={image}
+        onChangerImage={(asset) => setChoisie(asset)}
+        secondes={secondes}
+        proportions={proportions}
+        resolution={resolution}
+        nombre={nombre}
+        modele={choisi}
+        montant={montant}
+        attente={attente}
+        attenteDuLot={attenteDuLot}
+        cout={cout}
+        texteFinal={texteFinal}
+        enVol={enVol}
+        refus={refus}
+        onRevenir={() => setConfirmer(false)}
+        onPartir={() => void partir()}
+      />
+    )
   }
 
   const ou = cible.direction ? ` · ${cible.direction.nom}` : ""
@@ -544,19 +629,51 @@ export function EcranClip({
         {catalogue === null && (
           <p className="mesure text-[10px] text-texte-3">on demande…</p>
         )}
+        {/* ── Le filtre, puis les modèles, puis le bouton (V3.01.2) ──────────────── */}
+        {/* **L'interrupteur « seulement ce qui peut partir », allumé.**
+            Le carré est celui du produit — plein : ce qui reste se lit avec le
+            filtre ; creux : tout se lit, les grisés avec leur raison. */}
+        <button
+          type="button"
+          aria-pressed={seulementPossibles}
+          onClick={() => setSeulementPossibles((v) => !v)}
+          data-filtre-modeles
+          className="mesure flex items-center gap-2 rounded-[2px] border border-bord bg-fond-2 px-2 py-1.5 text-left text-[10px] text-texte-2 hover:border-bord-fort hover:text-texte"
+        >
+          <span
+            aria-hidden
+            className={[
+              "block h-[9px] w-[9px] rounded-[1px] border",
+              seulementPossibles ? "border-signal bg-signal" : "border-bord-fort",
+            ].join(" ")}
+          />
+          <span className="flex-1">seulement ce qui peut partir</span>
+          {grisesMasquees > 0 && (
+            <span className="text-texte-3">
+              {grisesMasquees} masqué{grisesMasquees > 1 ? "s" : ""}
+            </span>
+          )}
+        </button>
+
         {catalogue?.modeles.length === 0 && (
           <Raison texte={catalogue.raison ?? catalogue.manque ?? "aucun modèle vidéo"} />
         )}
 
-        {catalogue?.modeles.map((m) => (
-          <CarteModele
-            key={m.identifiant}
-            modele={m}
-            choisi={m.identifiant === modele}
-            nombre={nombre}
-            onChoisir={() => setModele(m.identifiant)}
-          />
-        ))}
+        {modelesVisibles.length === 0 && catalogue !== null && (
+          <Raison texte="aucun modèle ne peut partir — éteignez le filtre pour lire pourquoi" />
+        )}
+
+        <ul className="flex flex-col gap-2">
+          {modelesVisibles.map((m) => (
+            <CarteModele
+              key={m.identifiant}
+              modele={m}
+              choisi={m.identifiant === modele}
+              nombre={nombre}
+              onChoisir={() => setModele(m.identifiant)}
+            />
+          ))}
+        </ul>
 
         {/* **Le panneau du moteur de la maison**, sous les cartes et pas
             ailleurs : ce qu'il rapatrie ne sert qu'à animer, et le mettre dans
@@ -571,10 +688,16 @@ export function EcranClip({
         )}
 
         <div className="mt-3 flex flex-col gap-2 border-t border-bord pt-3">
+          {/* **Le bouton ouvre le tiroir de relecture (V3.01.1) au lieu
+              d'envoyer** : l'argent ne part plus d'un écran plein de réglages,
+              il part d'un écran qui ne montre que ce qui part. C'est le
+              bouton du tiroir qui porte le montant, et son libellé est le
+              même — on ne change pas de verbe pour passer de la commande à
+              sa confirmation. */}
           <Bouton
             principal
             inactif={empeche !== null || enVol}
-            onClick={() => void commander()}
+            onClick={() => setConfirmer(true)}
             titre={empeche ?? undefined}
             enfants={
               enVol
@@ -605,6 +728,321 @@ export function EcranClip({
             </p>
           )}
         </div>
+      </aside>
+    </div>
+  )
+}
+
+/** Le tiroir de relecture (V3.01.1) — entre « Commander ce clip » et la dépense.
+ *
+ *  **Le même contrat que l'écran des images fixes, appliqué à un clip.** Ce qui
+ *  part est peu et se tient en entier : une image — obligatoire, et le tiroir le
+ *  dit en toutes lettres, car un modèle vidéo n'en accepte qu'une et **aucun
+ *  plafond ne la fait céder** (A9) —, et un texte, mot pour mot, corrigeable
+ *  pour cet appel seulement. Rien d'autre ne part : ni textes du jeu, ni images
+ *  d'ambiance. La phrase *« ce clip n'hérite que de votre sprite »* reste vraie,
+ *  et ce tiroir ne la force pas.
+ *
+ *  **La correction ne remonte nulle part.** Elle part avec cet appel, le
+ *  mouvement de la bibliothèque ne bouge pas, et « remettre le texte du
+ *  mouvement » le redonne intact — c'est le contrat de l'écran des images,
+ *  repris tel quel. Corriger pour tous les clips suivants se fait dans la
+ *  bibliothèque de mouvements, comme avant.
+ *
+ *  **Le bouton porte le montant du lot** — ou le temps, chez le local — et ne
+ *  lèse personne : chacun des N clips se paie, et ce qui se lit ici est ce qui
+ *  s'est lu partout depuis le début de l'écran. */
+function ConfirmationClip({
+  texte,
+  texteCorrige,
+  onCorriger,
+  onRemettre,
+  image,
+  onChangerImage,
+  secondes,
+  proportions,
+  resolution,
+  nombre,
+  modele,
+  montant,
+  attente,
+  attenteDuLot,
+  cout,
+  texteFinal,
+  enVol,
+  refus,
+  onRevenir,
+  onPartir,
+}: {
+  /** Le texte du mouvement, celui de la bibliothèque (A6). */
+  texte: string
+  /** `null` veut dire *rien corrigé* — le serveur relit alors le mouvement. */
+  texteCorrige: string | null
+  onCorriger: (texte: string) => void
+  onRemettre: () => void
+  image: Asset | null
+  onChangerImage: (asset: Asset) => void
+  secondes: number
+  proportions: string
+  resolution: string
+  nombre: number
+  modele: ModeleVideo
+  montant: number | null
+  attente: AttenteVideo | null
+  attenteDuLot: number | null
+  cout: string | null
+  texteFinal: string
+  enVol: boolean
+  refus: string | null
+  onRevenir: () => void
+  onPartir: () => void
+}) {
+  const [champOuvert, setChampOuvert] = useState(false)
+  // **Le brouillon fait autorité pendant qu'on écrit** (M3) : il ne remplace
+  // rien, la correction part à chaque lettre, et c'est la *demande* qui attend
+  // que la frappe se pose. `null` veut dire « rien tapé ici », et le champ
+  // montre alors ce qui partirait.
+  const [brouillon, setBrouillon] = useState<string | null>(null)
+  const [choixOuvert, setChoixOuvert] = useState(false)
+  const champ = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (champOuvert) champ.current?.focus()
+  }, [champOuvert])
+
+  const corrigee = texteCorrige !== null
+  const montre = brouillon ?? (texteCorrige ?? texte)
+  const proportion = PROPORTIONS.find((p) => p.cle === proportions)?.nom ?? proportions
+  const taille = RESOLUTIONS.find((r) => r.cle === resolution)?.nom ?? resolution
+
+  return (
+    <div
+      data-confirmation-clip
+      className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_380px] bg-fond-0"
+    >
+      {/* ── Ce qui part : l'image, le format, le lot ──────────────────────── */}
+      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-bord p-4">
+        <div className="flex items-baseline gap-2">
+          <Libelle>ce qui part</Libelle>
+          <button
+            type="button"
+            onClick={onRevenir}
+            title="Échap revient sans rien dépenser"
+            className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-texte"
+          >
+            ‹ revenir
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Libelle aide="clip.depart">l'image de départ</Libelle>
+          <ImageDeDepartVue asset={image} />
+          {/* **Obligatoire, et ce n'est pas un détail qu'on replie.** Un
+              modèle vidéo n'accepte qu'une image, et aucun plafond ne la fait
+              céder : il n'y a donc rien à débrayer, et proposer un interrupteur
+              qui ne voudrait rien dire serait un mensonge de forme. La seule
+              question qui reste est laquelle — et « changer d'image » y
+              répond. */}
+          <p className="mesure text-[10px] leading-4 text-texte-2">
+            <strong className="text-texte">elle est obligatoire et ne cède
+            jamais</strong> — un modèle vidéo n'en accepte qu'une, et la retirer
+            ne veut rien dire. Vous pouvez seulement la changer.
+          </p>
+          <button
+            type="button"
+            onClick={() => setChoixOuvert((o) => !o)}
+            className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+          >
+            {choixOuvert ? "fermer la bibliothèque" : "changer d'image ›"}
+          </button>
+          {choixOuvert && (
+            <ChoixDansLaBibliotheque
+              onChoisir={(asset) => {
+                onChangerImage(asset)
+                setChoixOuvert(false)
+              }}
+            />
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1 border-t border-bord pt-4">
+          <Libelle>le format</Libelle>
+          <ul className="mesure flex flex-col gap-1 text-[10px] text-texte-2">
+            <li>
+              {secondes} seconde{secondes > 1 ? "s" : ""} · {proportion} ·{" "}
+              {taille}
+            </li>
+          </ul>
+        </div>
+
+        <div className="flex flex-col gap-1 border-t border-bord pt-4">
+          <Libelle>combien de clips</Libelle>
+          <ul className="mesure flex flex-col gap-1 text-[10px] text-texte-2">
+            <li>
+              {nombre} clip{nombre > 1 ? "s" : ""}
+              {nombre > 1 && (
+                <>
+                  {" "}
+                  — <strong className="text-texte">chacun se paie</strong>, y
+                  compris ceux qu'on jettera après
+                </>
+              )}
+            </li>
+          </ul>
+        </div>
+      </aside>
+
+      {/* ── Ce qui part, mot pour mot ─────────────────────────────────────── */}
+      <section className="defile flex min-h-0 flex-col gap-3 overflow-y-auto p-5">
+        <Libelle>ce qui part, mot pour mot</Libelle>
+
+        {champOuvert ? (
+          <textarea
+            ref={champ}
+            value={montre}
+            onChange={(e) => {
+              setBrouillon(e.target.value)
+              onCorriger(e.target.value)
+            }}
+            rows={6}
+            aria-label="Corriger le texte du clip, pour cet appel"
+            data-correction-clip
+            className="mesure min-h-[120px] resize-y rounded-[2px] border border-signal bg-fond-2 px-2 py-1 text-[10.5px] leading-[1.45] text-texte"
+          />
+        ) : (
+          <p
+            data-texte-confirme
+            className="mesure whitespace-pre-wrap rounded-[2px] border border-bord bg-fond-2 p-2 text-[10.5px] leading-[1.45] text-texte-2"
+          >
+            {texteFinal}
+          </p>
+        )}
+
+        <div className="flex items-baseline gap-2">
+          {corrigee && (
+            <span className="mesure text-[9.5px] leading-4 text-epingle">
+              corrigé pour cet appel seulement
+            </span>
+          )}
+          <span className="ml-auto flex items-center gap-2">
+            {corrigee && (
+              <button
+                type="button"
+                onClick={() => {
+                  // **Remettre efface le brouillon avec la correction.** Sans
+                  // ça, le champ continuerait de montrer ce qu'on vient de
+                  // reprendre alors que le texte qui part est revenu à
+                  // l'original — le champ mentirait sur ce qui part.
+                  setBrouillon(null)
+                  onRemettre()
+                  setChampOuvert(false)
+                }}
+                className="mesure text-[10px] text-signal hover:text-signal-clair"
+              >
+                remettre le texte du mouvement
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setBrouillon(null)
+                setChampOuvert((o) => !o)
+              }}
+              className="mesure text-[10px] text-signal hover:text-signal-clair"
+            >
+              {champOuvert ? "fermer" : "corriger"}
+            </button>
+          </span>
+        </div>
+        <p className="mesure text-[9.5px] leading-4 text-texte-3">
+          {corrigee
+            ? "la correction part avec ce clip — le mouvement de la bibliothèque ne bouge pas. Le corriger pour tous les clips suivants se fait dans les Réglages."
+            : "c'est le texte du mouvement, écrit une fois dans la bibliothèque et jamais retapé ici — ce qui est lu ici part mot pour mot."}
+        </p>
+      </section>
+
+      {/* ── Le modèle, le montant du lot, et le bouton qui part ───────────── */}
+      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-bord p-4">
+        <div className="flex flex-col gap-1">
+          <Libelle aide="clip.prix">le modèle</Libelle>
+          <span className="text-[12.5px] text-texte">{modele.nom}</span>
+          <span className="mesure text-[10px] text-texte-3">
+            {modele.fournisseur}
+          </span>
+        </div>
+
+        {attenteDuLot !== null ? (
+          <>
+            <span className="mesure text-[11.5px] text-texte">
+              ≈ {duree(attenteDuLot)}
+              <span className="ml-1.5 text-[9.5px] text-texte-3">
+                sur votre carte · gratuit{nombre > 1 ? ` · ${nombre} clips` : ""}
+              </span>
+            </span>
+            <p className="mesure text-[9.5px] leading-4 text-texte-3">
+              {attente?.images} images à {attente?.mesure} — et le premier clip
+              charge le modèle en mémoire, les suivants non
+              {attente?.premier
+                ? " : l'attente annoncée est celle du premier tirage."
+                : "."}
+            </p>
+          </>
+        ) : montant !== null ? (
+          <>
+            <span className="mesure text-[11.5px] text-texte">
+              ≈ {dollars(montant)}
+              <span className="ml-1.5 text-[9.5px] text-texte-3">
+                {modele.prix.nature}
+                {nombre > 1 ? ` · ${nombre} clips` : ""}
+              </span>
+            </span>
+            <p className="mesure text-[9.5px] leading-4 text-texte-3">
+              {modele.prix.formule}
+            </p>
+            <p className="mesure text-[9.5px] leading-4 text-texte-3">
+              {modele.mesure ||
+                "ce dépôt n'a encore rien mesuré de ce modèle — proposé, jamais éprouvé"}
+            </p>
+            <p className="mesure text-[9.5px] leading-4 text-texte-3">
+              estimation haute : ce qui s'enregistrera est ce que la facture
+              dira, et l'écart mesuré va jusqu'à moitié moins.
+            </p>
+          </>
+        ) : (
+          <p className="mesure text-[9.5px] leading-4 text-texte-3">
+            {modele.grise ?? "le prix n'a pas pu être relu"}
+          </p>
+        )}
+
+        <section className="mt-auto flex flex-col gap-2 border-t border-bord pt-3">
+          <Bouton
+            principal
+            inactif={Boolean(refus) || !texteFinal || enVol}
+            onClick={onPartir}
+            enfants={
+              refus
+                ? refus
+                : enVol
+                  ? "il part…"
+                  : `Commander ${nombre > 1 ? `ces ${nombre} clips` : "ce clip"}` +
+                    (cout === null ? "" : ` · ${cout}`)
+            }
+          />
+          <Raison texte={!texteFinal ? "un clip part d'un texte — écrivez-en un" : null} />
+          <button
+            type="button"
+            onClick={onRevenir}
+            disabled={enVol}
+            className="mesure h-[26px] text-[10px] text-texte-3 hover:text-texte-2 disabled:cursor-not-allowed"
+          >
+            {enVol
+              ? "l'appel est parti — il ne se rattrape plus"
+              : "Revenir sans rien dépenser"}
+          </button>
+          <p className="mesure text-[9.5px] leading-4 text-texte-3">
+            rien n'est consommé tant que ce bouton n'est pas pressé.
+          </p>
+        </section>
       </aside>
     </div>
   )
@@ -695,13 +1133,19 @@ function ChoixDansLaBibliotheque({
   )
 }
 
-/** Un modèle vidéo : ce à quoi il sert, ce qu'il coûte, **la formule qui produit
- *  ce prix**, et ce que ce dépôt a mesuré de lui.
+/** Un modèle vidéo, replié — **deux gestes qui ne se confondent pas** (V3.01.2).
  *
- *  Les deux dernières lignes sont ce qui distingue cette carte de tout ce que le
- *  produit affichait avant. Un prix vidéo se calcule : sans sa formule il serait
- *  à croire sur parole. Et un modèle proposé sans avoir été assez éprouvé doit
- *  le dire **là où on le choisit** — pas dans un document. */
+ *  Repliée, la carte ne montre que son nom et son estimation — le montant du
+ *  lot, ou le temps chez le local : c'est tout ce qu'il faut pour comparer
+ *  d'un coup d'œil, et la colonne cesse d'être un mur de texte. **Le geste qui
+ *  choisit** est le bouton du nom ; **le geste qui déplie** est le chevron, à
+ *  côté, et il reste vivant sur une carte grisée — seul le choix est interdit,
+ *  la raison se lit toujours.
+ *
+ *  Déplié, on retrouve ce que la carte entière montrait avant : la formule,
+ *  la durée conseillée et sa raison, ce que le dépôt a mesuré — et, sur une
+ *  carte grisée, la raison du grisage. Rien n'est résumé : c'est un pli qu'on
+ *  ouvre, comme le texte de l'écran de confirmation (U9). */
 function CarteModele({
   modele,
   choisi,
@@ -715,79 +1159,124 @@ function CarteModele({
 }) {
   const grise = modele.grise !== null
   const attente = modele.attente
+  const [deplie, setDeplie] = useState(false)
   return (
-    <button
-      type="button"
-      disabled={grise}
-      onClick={onChoisir}
-      aria-pressed={choisi}
+    <li
       className={[
-        "flex flex-col gap-1 rounded-[2px] border p-2 text-left transition-colors duration-[80ms]",
+        "flex flex-col gap-1 rounded-[2px] border p-2 transition-colors duration-[80ms]",
         grise
-          ? "cursor-not-allowed border-bord bg-fond-2 opacity-60"
+          ? "border-bord bg-fond-2 opacity-60"
           : choisi
             ? "border-signal bg-fond-2"
             : "border-bord bg-fond-2 hover:border-bord-fort",
       ].join(" ")}
     >
-      <span className="text-[12.5px] text-texte">{modele.nom}</span>
+      <div className="flex items-start gap-1.5">
+        {/* **Le geste qui choisit : le nom et ce que ça coûte, en un seul
+            bouton.** Sur une carte grisée, il est seul à s'éteindre. */}
+        <button
+          type="button"
+          disabled={grise}
+          onClick={onChoisir}
+          aria-pressed={choisi}
+          aria-label={`Choisir ${modele.nom}`}
+          className="flex min-w-0 flex-1 flex-col gap-1 rounded-[1px] text-left"
+        >
+          <span className="text-[12.5px] text-texte">{modele.nom}</span>
 
-      {grise ? (
-        <span className="mesure text-[10px] leading-4 text-texte-3">
-          {modele.grise}
-        </span>
-      ) : attente ? (
-        // **Un temps à la place d'un montant, et le mot « gratuit » avec.**
-        // Écrire « ≈ 4 min » tout seul se lirait comme un délai de livraison ;
-        // c'est un coût, et l'unité seule ne le dit pas.
-        <>
-          <span className="mesure text-[11.5px] text-texte">
-            ≈ {duree(attenteDeLot(attente, nombre) ?? 0)}
-            <span className="ml-1.5 text-[9.5px] text-texte-3">
-              sur votre carte · gratuit
-              {nombre > 1 ? ` · ${nombre} clips` : ""}
+          {attente ? (
+            // **Un temps à la place d'un montant, et le mot « gratuit » avec.**
+            // Écrire « ≈ 4 min » tout seul se lirait comme un délai de
+            // livraison ; c'est un coût, et l'unité seule ne le dit pas.
+            <span className="mesure text-[11.5px] text-texte">
+              ≈ {duree(attenteDeLot(attente, nombre) ?? 0)}
+              <span className="ml-1.5 text-[9.5px] text-texte-3">
+                sur votre carte · gratuit
+                {nombre > 1 ? ` · ${nombre} clips` : ""}
+              </span>
             </span>
-          </span>
-          <span className="mesure text-[9.5px] leading-4 text-texte-3">
-            {attente.images} images à {attente.mesure}
-          </span>
-        </>
-      ) : (
-        <>
-          <span className="mesure text-[11.5px] text-texte">
-            ≈ {dollars((modele.prix.montant ?? 0) * nombre)}
-            <span className="ml-1.5 text-[9.5px] text-texte-3">
-              {modele.prix.nature}
-              {nombre > 1 ? ` · ${nombre} clips` : ""}
+          ) : modele.prix.montant !== null ? (
+            <span className="mesure text-[11.5px] text-texte">
+              ≈ {dollars(modele.prix.montant * nombre)}
+              <span className="ml-1.5 text-[9.5px] text-texte-3">
+                {modele.prix.nature}
+                {nombre > 1 ? ` · ${nombre} clips` : ""}
+              </span>
             </span>
-          </span>
-          {/* **La formule, à côté du montant.** Un prix vidéo se calcule ; un
-              prix qu'on ne peut pas refaire de tête n'est pas vérifiable. */}
+          ) : (
+            // La carte est grisée : il n'y a pas d'estimation à montrer, et
+            // une phrase creuse vaudrait un prix. La raison est dans le pli.
+            <span className="mesure text-[10px] leading-4 text-texte-3">
+              ne peut pas partir — dépliez pour lire pourquoi
+            </span>
+          )}
+        </button>
+
+        {/* **Le geste qui déplie, distinct du choix** — et il reste vivant sur
+            une carte grisée : seul le choix est interdit, la lecture ne l'est
+            jamais. */}
+        <button
+          type="button"
+          aria-expanded={deplie}
+          aria-label={`${deplie ? "replier" : "déplier"} ce qu'on sait de ${modele.nom}`}
+          onClick={() => setDeplie((d) => !d)}
+          className="mesure mt-0.5 flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[2px] border border-bord text-[10px] text-texte-2 hover:border-bord-fort hover:text-texte"
+        >
+          {deplie ? "▴" : "▾"}
+        </button>
+      </div>
+
+      {deplie && (
+        <div className="flex flex-col gap-1 border-t border-bord pt-1.5">
+          {/* **La raison du grisage d'abord, quand il y en a une** : c'est
+              elle qu'on vient chercher en dépliant cette carte-là. */}
+          {grise && (
+            <span className="mesure text-[9.5px] leading-4 text-epingle">
+              {modele.grise}
+            </span>
+          )}
+
+          {!grise && attente && (
+            <span className="mesure text-[9.5px] leading-4 text-texte-3">
+              {attente.images} images à {attente.mesure}
+            </span>
+          )}
+          {!grise && !attente && modele.prix.formule && (
+            <>
+              {/* **La formule, sous le montant.** Un prix vidéo se calcule ; un
+                  prix qu'on ne peut pas refaire de tête n'est pas vérifiable. */}
+              <span className="mesure text-[9.5px] leading-4 text-texte-3">
+                {modele.prix.formule}
+              </span>
+              {modele.prix.montant === null && (
+                <span className="mesure text-[9.5px] leading-4 text-epingle">
+                  {modele.grise}
+                </span>
+              )}
+            </>
+          )}
+
+          {/* **La durée conseillée, avec sa raison, là où on choisit.** ⚠️ Ce
+              que cette raison dit — que la bande se dégrade au-delà d'une
+              seconde et qu'aucune mesure automatique ne le voit — est le genre
+              de fait qui se perd dans un document et qui se lit ici. */}
+          {modele.duree_conseillee > 0 && (
+            <span className="mesure text-[9.5px] leading-4 text-epingle">
+              conseillé : {modele.duree_conseillee} seconde
+              {modele.duree_conseillee > 1 ? "s" : ""} — {modele.raison_de_la_duree}
+            </span>
+          )}
+
+          {/* **Ce que ce dépôt a mesuré, et rien d'autre.** Vide veut dire *on
+              n'en sait rien*, et l'écrire vaut mieux que de laisser croire
+              qu'un modèle proposé a été éprouvé. */}
           <span className="mesure text-[9.5px] leading-4 text-texte-3">
-            {modele.prix.formule}
+            {modele.mesure ||
+              "ce dépôt n'a encore rien mesuré de ce modèle — proposé, jamais éprouvé"}
           </span>
-        </>
+        </div>
       )}
-
-      {/* **La durée conseillée, avec sa raison, là où on choisit.** ⚠️ Ce que
-          cette raison dit — que la bande se dégrade au-delà d'une seconde et
-          qu'aucune mesure automatique ne le voit — est le genre de fait qui se
-          perd dans un document et qui se lit ici. */}
-      {modele.duree_conseillee > 0 && (
-        <span className="mesure text-[9.5px] leading-4 text-epingle">
-          conseillé : {modele.duree_conseillee} seconde
-          {modele.duree_conseillee > 1 ? "s" : ""} — {modele.raison_de_la_duree}
-        </span>
-      )}
-
-      {/* **Ce que ce dépôt a mesuré, et rien d'autre.** Vide veut dire *on n'en
-          sait rien*, et l'écrire vaut mieux que de laisser croire qu'un modèle
-          proposé a été éprouvé. */}
-      <span className="mesure text-[9.5px] leading-4 text-texte-3">
-        {modele.mesure ||
-          "ce dépôt n'a encore rien mesuré de ce modèle — proposé, jamais éprouvé"}
-      </span>
-    </button>
+    </li>
   )
 }
 
