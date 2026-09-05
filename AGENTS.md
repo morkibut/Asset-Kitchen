@@ -28,10 +28,11 @@ points.
 | **V2.2** — `F0` à `F6` | D'autres fournisseurs, dont un qui ne demande ni compte ni clé | **close à 5 sur 6** — reste `F4`, qui attend un compte Cloudflare que ce dépôt n'a pas |
 | **Reprises** — `R6` à `R9` | La planche de travers, le texte qui part en trois parties, la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** |
 | **V2.3** — `D1` à `D5` | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** |
-| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9`, `A10`, `A11`, `A12` et `A13` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. **`A12` est l'objectif de la version, et il est atteint** : la matrice d'un personnage se lit sur deux calques — images fixes, animations —, chacun avec sa jauge. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée sort en planche de sprites, avec le fichier d'accompagnement que les moteurs lisent et une image qui tourne toute seule. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande, et l'écran dit ce qui bouge entre deux images — la première mesure du produit qui en regarde deux ensemble. Reste `A7`, et **rien ne la bloque** |
+| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **close le 5 septembre 2026**. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. **`A12` est l'objectif de la version, et il est atteint** : la matrice d'un personnage se lit sur deux calques — images fixes, animations —, chacun avec sa jauge. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée sort en planche de sprites, avec le fichier d'accompagnement que les moteurs lisent et une image qui tourne toute seule. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande. **`A7` ferme la version, et son vrai sujet n'était pas dans son plan** : une animation gardée **ne se rouvrait par aucun chemin** — la vignette remontait au clip, donc l'écran repartait des réglages du jeu |
+| **V3.01** à **V3.03** | Trois versions nées de l'usage, le 5 septembre 2026 : le tiroir qui relit ce qui part, la fiche d'un clip, et **l'atelier d'une animation au niveau des tables** | **ouvertes** — `V3.01` 1 sur 2 (reste la liste de modèles qui se plie), `V3.02` **close**, `V3.03` **2 sur 4**. `V3.03.1` donne à **chaque frame sa recette à elle** et refait l'écran dans la grammaire des tables ; `V3.03.2` pose ces tables **sur une sélection du ruban**, où *une valeur voyage seule quand une recette nommée remplace l'ensemble*. Restent `V3.03.3`, le montage de la bande, et `V3.03.4`, la main |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 420 essais de
-serveur et 698 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 480 essais de
+serveur et 747 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 5 septembre 2026,
 et **aucun ne coûte un centime**.
 
 ### Ce qu'il faut savoir avant de toucher au code — dix points, et pas un de plus
@@ -149,10 +150,15 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
    l'écart entre deux tailles de planche** — donc l'écran ne montre **aucun** prix par nombre de
    cases : un prix d'appel, multiplié par le nombre d'appels que chaque choix demande.
 
-### Le seul bloc ouvert, et ce qui a été fermé devant lui
+### Ce qui est ouvert, et ce qui a été fermé devant
 
-**La V3 reste seule ouverte** — onze tranches `A0` à `A13`, ouvertes le 2 septembre 2026. Les
-deux choses qui passaient devant elle sont closes depuis le 3 septembre 2026, et le tableau
+**La V3 est close, et trois versions nées de son usage l'ont remplacée** — `V3.01`, `V3.02` et
+`V3.03`, ouvertes le 5 septembre 2026 le jour même où `A7` fermait la V3. Elles ne sont pas un
+cadrage : chacune vient d'une séance où l'auteur s'est servi de ce qui venait d'être livré.
+**`V3.03` est celle qui reste à finir** — l'édition d'une animation devient l'édition d'images,
+et il en manque la moitié : le montage de la bande et la main.
+
+Les deux choses qui passaient devant la V3 sont closes depuis le 3 septembre 2026, et le tableau
 plus haut le dit : les quatre reprises hors version `R6` à `R9`, et la **V2.3** entière — un
 réglage de départ par nature d'image, la vraie taille de bloc retrouvée, le fond devenu réglage
 du jeu, une liste ouverte de moteurs de détourage, et le rendu qu'on voit avant de payer.
