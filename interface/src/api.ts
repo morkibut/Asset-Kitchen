@@ -790,6 +790,11 @@ export type CadrePose = {
   sommet?: number
   droite?: number
   bas?: number
+  /** **D'où le rectangle vient, en une phrase du serveur.** Absent d'un corps
+   *  de requête — c'est le serveur qui l'écrit —, et présent sur tout cadre
+   *  qu'il rend : le lire plutôt que de le réécrire à l'écran est ce qui
+   *  empêche deux vocabulaires pour la même mesure. */
+  mot?: string
 }
 
 /** La fenêtre commune, telle que le serveur l'a mesurée sur le clip entier. */
@@ -857,6 +862,14 @@ export type Bande = {
   images: number[]
   /** Ce que `images` ne dit pas : la provenance et la correction (A7). */
   prises: Prise[]
+  /** **La réserve de la bande** (V3.03.3) : les images retirées du ruban et
+   *  celles qu'on est allé chercher dans le clip, pas encore posées.
+   *
+   *  Des prises entières et non des numéros, parce qu'une image retirée
+   *  emporte sa recette avec elle — sans quoi « retirer puis remettre » serait
+   *  une façon silencieuse d'effacer un réglage. Elle n'entre dans aucune
+   *  planche : ce qui sort vers le jeu est le ruban, dans son ordre. */
+  chutier: Prise[]
   /** Les clips dont elle tire ses images, dans l'ordre d'apparition. */
   clips: string[]
   /** Ses images viennent-elles de plusieurs clips ? */
@@ -917,6 +930,14 @@ export type AtelierDeBande = {
     places: string[]
     fenetre_davant: boolean
   }[]
+  /** **La géométrie de la planche contact** (V3.03.3) — un côté de case et un
+   *  nombre de colonnes, de quoi dessiner la pellicule d'un clip sans ouvrir
+   *  l'écran de montage, dont l'ouverture mesure la fenêtre commune. Le nombre
+   *  de lignes se déduit de `images_par_clip`. */
+  contact: { cote: number; colonnes: number }
+  /** Ce qu'une bande porte au plus. **Il vient du serveur** : recopié ici, il
+   *  laisserait « dupliquer » ouvert jusqu'à un enregistrement refusé. */
+  images_max: number
 }
 
 /** Tout ce que l'écran de montage reçoit à l'ouverture, **en une seule fois**.
@@ -4259,6 +4280,10 @@ export const api = {
     identifiant: string,
     corps: {
       prises?: Prise[]
+      /** La réserve de la bande (V3.03.3). Absent veut dire *« ne touche pas
+       *  à ça »* ; une liste vide veut dire *« il est vide »*, et c'est un
+       *  état normal — on vient de tout reposer dans le ruban. */
+      chutier?: Prise[]
       recette?: Recette | null
       cadence?: number
       sens?: string

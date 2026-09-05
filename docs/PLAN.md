@@ -36,7 +36,7 @@
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée devient une planche de sprites, son fichier d'accompagnement dans le format que les moteurs lisent, et une image qui tourne toute seule — jusque-là, une bande ne servait qu'à être regardée dans l'atelier. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande, et l'écran dit enfin ce qui bouge entre deux images — c'est la première mesure du produit qui regarde deux images ensemble. **`A7` ferme la version, et son vrai sujet n'était pas dans son plan** : une animation gardée ne se rouvrait par aucun chemin — la vignette remontait au clip, donc l'écran repartait des réglages du jeu et corriger une virgule demandait de tout refaire de mémoire. Elle apporte l'écran qui manquait, *l'atelier d'une animation*, et les gestes du plan par-dessus : la pelure d'oignon, la poussée au pixel, les neuf ancrages, une image prise dans un autre clip. **La version est close** | ci-dessous |
 | **V3.01** — la commande d'un clip se relit avant de partir | Le tiroir qui montre ce qui part et le corrige pour cet appel ; la liste des modèles qui se plie et se filtre | **1 close sur 2 le 5 septembre 2026** — le tiroir ; la liste des modèles reste à construire | ci-dessous |
 | **V3.02** — le clip a une fiche, comme une image | La galerie s'ouvre sur un clip au clic : la vidéo se regarde en boucle dans la colonne de droite, ce que le clip porte et ce qu'il a produit se lisent, et il se découpe depuis sa fiche | **✅ close le 5 septembre 2026** — une tranche, livrée le jour de son écriture, sans un centime | ci-dessous |
-| **V3.03** — l'atelier d'une animation au niveau des tables | L'édition d'une animation devient l'édition d'images : le montage redevient brut, chaque frame porte sa recette et se travaille avec les tables, la bande se monte (retirer, dupliquer, déplacer, prendre au clip, chutier), et la main s'y pose | **ouverte le 5 septembre 2026, 2 closes sur 4** — `V3.03.1` a donné à chaque frame sa recette et refait l'écran dans la grammaire des tables ; `V3.03.2` pose les tables sur une sélection du ruban, **une valeur voyage seule quand une recette nommée remplace l'ensemble**. Restent `V3.03.3`, le montage de la bande, et `V3.03.4`, la main — qui reprend au passage le grisé de la main sur une sélection | ci-dessous |
+| **V3.03** — l'atelier d'une animation au niveau des tables | L'édition d'une animation devient l'édition d'images : le montage redevient brut, chaque frame porte sa recette et se travaille avec les tables, la bande se monte (retirer, dupliquer, déplacer, prendre au clip, chutier), et la main s'y pose | **ouverte le 5 septembre 2026, 3 closes sur 4** — `V3.03.1` a donné à chaque frame sa recette et refait l'écran dans la grammaire des tables ; `V3.03.2` pose les tables sur une sélection du ruban, **une valeur voyage seule quand une recette nommée remplace l'ensemble** ; `V3.03.3` monte la bande — retirer, dupliquer, déplacer, le chutier, et le montage se reprend. Reste `V3.03.4`, la main — qui reprend au passage le grisé de la main sur une sélection | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -280,10 +280,11 @@ V3.02  ① la fiche d'un clip — la galerie s'ouvre au clic    ✔ close le 5 s
 
  │
  ▼
-V3.03  l'atelier d'une animation au niveau des tables       ouverte, 2 closes sur 4
+V3.03  l'atelier d'une animation au niveau des tables       ouverte, 3 closes sur 4
        ① le montage redevient brut, chaque frame a sa recette  ✔ close
        ② les tables sur une sélection  ✔ close
-       ③ la bande se monte au clip · ④ la main sur une frame
+       ③ la bande se monte au clip  ✔ close
+       ④ la main sur une frame
 
  │
  ▼
@@ -4004,7 +4005,7 @@ colonnes d'un même écran.
 |---|---|
 | **V3.03.1** | chaque frame porte sa recette, l'écran se refait dans la grammaire des tables, le montage redevient brut — le socle. **Livrée** |
 | **V3.03.2** | les tables sur une sélection : une frame, plusieurs, toutes, et les recettes nommées. **Livrée**, moins le grisé de la main, qui part avec elle en `V3.03.4` |
-| **V3.03.3** | la bande se monte : retirer, dupliquer, déplacer, reprendre au clip, le chutier |
+| **V3.03.3** | la bande se monte : retirer, dupliquer, déplacer, reprendre au clip, le chutier. **Livrée**, et le cadre se montre à la reprise du montage sans s'y reprendre |
 | **V3.03.4** | la main sur une frame — **et son grisé sur une sélection**, repris de `V3.03.2` |
 
 ### V3.03.1 · Chaque frame porte sa recette, et le montage redevient brut — ✅ **livrée le 5 septembre 2026**
@@ -4135,7 +4136,7 @@ avec sa raison — comme toujours, *le grisé porte sa raison*.
 
 **Bloquée par** — `V3.03.1`.
 
-### V3.03.3 · La bande se monte : retirer, dupliquer, déplacer, et prendre au clip — **à construire**
+### V3.03.3 · La bande se monte : retirer, dupliquer, déplacer, et prendre au clip — ✅ **livrée le 5 septembre 2026**
 
 **Ce qu'on livre.** Une bande gardée n'est pas un tirage figé. Le ruban s'édite : **retirer** une
 frame, **dupliquer** — la recette individuelle de la source suit la copie, c'est la même image —,
@@ -4161,13 +4162,40 @@ réglages du jeu : c'est le cul-de-sac d'A7 raconté une fois de plus, par l'aut
 
 **Critères d'acceptation**
 
-- [ ] Retirer, dupliquer, déplacer une frame : chaque geste est annulable, et l'ordre du ruban est l'ordre de l'export
-- [ ] La vue du clip montre toutes les images du clip d'origine ; on y prend une ou plusieurs images, d'un geste, vers le chutier
-- [ ] Le chutier liste les images mises de côté ; chaque image s'insère à la position choisie dans la bande
-- [ ] Le chutier se garde avec la bande et se rouvre — un essai referme et rouvre (8septies)
-- [ ] « Reprendre le montage › » ouvre le montage avec les images retenues, le cadre et la vitesse de la bande ; changer la sélection et refermer met la bande à jour
-- [ ] Remplacer la prise d'une frame ne transporte pas sa recette individuelle, et l'écran le dit
-- [ ] Tout se fait au clavier autant qu'à la souris ; tout fonctionne réseau coupé ; le guide reçoit ses lignes
+- [x] Retirer, dupliquer, déplacer une frame : chaque geste est annulable, et l'ordre du ruban est l'ordre de l'export
+- [x] La vue du clip montre toutes les images du clip d'origine ; on y prend une ou plusieurs images, d'un geste, vers le chutier
+- [x] Le chutier liste les images mises de côté ; chaque image s'insère à la position choisie dans la bande
+- [x] Le chutier se garde avec la bande et se rouvre — un essai referme et rouvre (8septies)
+- [x] « Reprendre le montage › » ouvre le montage avec les images retenues **et la vitesse** de la bande ; changer la sélection et refermer met la bande à jour. **Le cadre s'y montre, il ne s'y reprend pas** — voir ① ci-dessous
+- [x] Remplacer la prise d'une frame ne transporte pas sa recette individuelle, et l'écran le dit
+- [x] Tout se fait au clavier autant qu'à la souris ; tout fonctionne réseau coupé ; le guide reçoit ses lignes
+
+> ### ⚠️ Trois choses que la construction a trouvées
+>
+> **① Le cadre se montre à la reprise, il ne s'y reprend pas.** Le critère
+> demandait que le montage rouvre « avec le cadre de la bande ». Il le montre —
+> mais il ne le renvoie pas, et c'est volontaire : le cadre d'une bande est un
+> **rectangle mesuré** sur les images retenues, et la correction ne remesure
+> rien. Lui repasser le choix du montage (« le cadre du clip ») remplacerait ce
+> rectangle par un autre, sans un mot, et l'auteur ne le verrait qu'à l'export.
+> La reprise renvoie donc les prises, le chutier, la vitesse et le sens ; le
+> cadre s'affiche en lecture avec sa raison, et se règle là où il se mesure —
+> dans l'atelier. *Le grisé porte sa raison* vaut aussi pour une valeur qu'on
+> lit sans pouvoir la toucher.
+>
+> **② Reprendre le montage d'une bande mêlée effacerait des images.** Une
+> bande peut emprunter des frames à un second clip (`A7`) ; le montage, lui, ne
+> connaît qu'un clip à la fois. Rouvrir dessus perdrait les empruntées en
+> silence. Le bouton s'éteint donc avec sa raison plutôt que de mentir
+> (`AGENTS.md`, 8nonies), et les gestes du ruban — eux — continuent de marcher
+> sur une bande mêlée.
+>
+> **③ Les gestes du ruban portent sur la sélection, pas sur l'image affichée.**
+> C'est la grammaire posée en `V3.03.2`, et la reprendre ici évite un piège :
+> l'image *affichée* change toute seule quand le lecteur tourne. Retirer,
+> dupliquer, déplacer et insérer visent ce que l'auteur a **choisi**, et un
+> essai le vérifie **lecteur en marche, ralenti** (`AGENTS.md`, 8octies) —
+> l'arrêter d'abord aurait effacé le défaut qu'il cherche.
 
 **Bloquée par** — `V3.03.1`.
 

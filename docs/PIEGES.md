@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent soixante-douze pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent soixante-quatorze pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1505,3 +1505,27 @@ la prochaine réécriture retrouvera.
   toutes envoyées en vrai : `bytes=100-199`, `bytes=10-` (jusqu'à la fin) et `bytes=-500` (les
   derniers). Une plage qui commence après la fin se refuse en **416 avec la taille**, pas en
   tranche vide : c'est ainsi que le lecteur apprend jusqu'où demander. Payé le 5 septembre 2026.
+
+
+- **Un panneau intitulé « l'image choisie » qui suit l'image qui passe.** Deuxième fois en deux
+  tranches, dans un panneau différent : la fiche de la frame prenait le chemin des flèches — *on
+  corrige l'image qu'on regarde*, la règle d'`A7` —, si bien qu'avec le lecteur en marche on
+  choisissait l'image 14, la fiche décrivait l'image 10, et taper un numéro remplaçait la 10. La
+  phrase « cette image a sa recette à elle » désignait elle aussi une image au hasard. ⚠️ **Les
+  765 essais d'écran n'en voyaient rien** : un essai lit un instant, et à l'arrêt l'image regardée
+  *est* l'image choisie — le défaut n'existe que pendant que ça tourne. Le partage à tenir :
+  **un geste instantané tombe sur ce qu'on regarde, un geste qu'on lit d'abord tombe sur ce qu'on
+  a choisi**, et la flèche emmène la sélection avec elle pour que les deux se rejoignent au
+  premier coup. Payé le 6 septembre 2026, vu au navigateur sur l'atelier jetable.
+
+
+- **Repasser par un écran plus pauvre remet son ordre à lui.** « Reprendre le montage » rouvrait
+  le montage sur une animation déjà montée ; le montage range les images retenues par numéro —
+  ce qui est juste quand il n'y a pas d'autre ordre —, et refermer rendait la bande **triée**,
+  déplacements et duplications perdus, pour avoir ajouté une seule image. Même trajet, même
+  famille : la réserve d'images mises de côté était ignorée à l'aller, donc une image reprise
+  revenait **neuve**, sans sa poussée ni sa recette, et restait dans la réserve par-dessus le
+  marché. ⚠️ **Un aller-retour entre deux écrans doit être relu dans le sens du retour** :
+  chaque chose que l'écran de départ savait et que l'écran d'arrivée ignore est une chose qu'il
+  faut lui rendre — l'ordre, la réserve, ce qu'une case ne sait pas montrer deux fois. Payé le
+  6 septembre 2026.

@@ -38,8 +38,14 @@ def _garder(client, clip, **reglages):
     return reponse.json()
 
 
-def _corriger(client, identifiant, prises):
-    reponse = client.put(f"/api/strips/{identifiant}", json={"prises": prises})
+def _corriger(client, identifiant, prises=None, **reste):
+    """Une correction posée par la vraie porte. **Un champ absent ne bouge pas** :
+    c'est la règle de la route, et les essais du chutier en dépendent — on écrit
+    une réserve sans toucher au ruban."""
+    corps = dict(reste)
+    if prises is not None:
+        corps["prises"] = prises
+    reponse = client.put(f"/api/strips/{identifiant}", json=corps)
     assert reponse.status_code == 200, reponse.text
     return reponse.json()
 
@@ -448,3 +454,181 @@ def test_les_places_portent_le_meme_nom_a_l_ecran_et_au_serveur():
     )
     ecrites = re.findall(r'\[\s*"([^"]+)",\s*"([^"]+)"\s*\]', bloc.group(1))
     assert tuple(ecrites) == PLACES_DE_LA_RECETTE
+
+# ── V3.03.3 · la bande se monte ─────────────────────────────────────────────
+#
+# **Ce que la tranche demande au serveur tient en deux choses**, et le reste est
+# de l'écran. Une bande porte désormais un **chutier** — la réserve des images
+# retirées du ruban et de celles qu'on est allé chercher dans le clip —, et
+# l'ordre du ruban est celui de la planche : retirer, dupliquer et déplacer sont
+# des gestes qui réécrivent la liste des prises, et c'est cette liste-là que
+# l'export lit.
+#
+# Les quatre gestes eux-mêmes vivent dans `interface/src/App.test.tsx` : ils
+# n'ont pas de route à eux, et n'en méritent pas — la route qui écrit une bande
+# prend la liste entière de ses prises depuis `A7`.
+
+
+def test_le_chutier_se_garde_et_se_rouvre(
+    atelier_video, client_video, clip, tmp_path, double, animateur
+):
+    """*Le chutier se garde avec la bande et se rouvre* (8septies).
+
+    ⚠️ **Ce qui se casserait ici est une réserve écrite et pas relue** — le
+    défaut d'`A7` déplacé d'un cran : on met trois images de côté, on ferme
+    l'atelier, et elles ont disparu. L'essai **rouvre depuis le disque** avec un
+    atelier neuf, pas depuis la réponse du `PUT` : un chutier qui partirait bien
+    et s'écrirait mal rendrait exactement la même réponse.
+
+    Et l'une des trois **porte une recette individuelle**, parce que c'est là
+    tout l'intérêt : une image retirée du ruban emporte ses réglages avec elle,
+    sans quoi *retirer puis remettre* serait une façon silencieuse de les
+    effacer.
+    """
+    from atelier.services import Atelier
+
+    bande = _garder(client_video, clip)
+    chutier = [
+        {"numero": 3, "clip": "", "dx": 0, "dy": 0},
+        {
+            "numero": 7,
+            "clip": "",
+            "dx": 0,
+            "dy": 0,
+            "recette": _recette_qui_change_les_couleurs(bande),
+        },
+        {"numero": 20, "clip": "", "dx": 0, "dy": 0},
+    ]
+
+    relue = _corriger(client_video, bande["identifiant"], chutier=chutier)
+    # **Le ruban n'a pas bougé** : un champ absent veut dire « ne touche pas à
+    # ça », et mettre une image de côté n'est pas la poser.
+    assert [p["numero"] for p in relue["prises"]] == [12, 14, 16, 18]
+    assert [p["numero"] for p in relue["chutier"]] == [3, 7, 20]
+
+    relu = Atelier(
+        racine=tmp_path,
+        fabrique_fournisseur=lambda: double,
+        fabrique_animateur=lambda: animateur,
+    )
+    gardee = relu.montage.bande(bande["identifiant"])
+    assert [p.numero for p in gardee.chutier] == [3, 7, 20]
+    assert gardee.chutier[0].recette is None
+    assert gardee.chutier[1].recette is not None
+    assert gardee.chutier[1].recette.quantification.couleurs == 12
+
+    # Et il repart avec l'animation qu'on rouvre, comme les prises.
+    ouverte = relu.montage.ouvrir_la_bande(bande["identifiant"])
+    assert [p["numero"] for p in ouverte["bande"]["chutier"]] == [3, 7, 20]
+
+    # **Reposer la dernière image vide la réserve**, et une liste vide n'est pas
+    # un champ absent : c'est un état, et il doit se relire.
+    videe = _corriger(client_video, bande["identifiant"], chutier=[])
+    assert videe["chutier"] == []
+    assert relu.montage.bande(bande["identifiant"]).chutier == ()
+
+
+def test_une_bande_d_avant_la_tranche_se_relit_avec_un_chutier_vide(
+    client_video, clip
+):
+    """Une bande gardée avant la V3.03.3 n'écrit aucun chutier, et se relit avec
+    une réserve vide : rien ne migre, aucune table n'est réécrite.
+
+    C'est le pendant exact de l'essai des recettes individuelles, et pour la
+    même raison — **absent veut dire vide**, pas *à deviner*.
+    """
+    bande = _garder(client_video, clip)
+    assert bande["chutier"] == []
+
+    ouverte = client_video.get(f"/api/strips/{bande['identifiant']}").json()
+    assert ouverte["bande"]["chutier"] == []
+    # Et l'écran reçoit de quoi dessiner la pellicule du clip sans ouvrir le
+    # montage, dont l'ouverture mesure la fenêtre commune.
+    assert ouverte["contact"]["cote"] > 0 and ouverte["contact"]["colonnes"] > 0
+    assert ouverte["images_max"] > 0
+
+
+def test_le_chutier_refuse_une_image_que_le_clip_ne_porte_pas(client_video, clip):
+    """Le même contrôle que le ruban, et il refuse **avant d'écrire**.
+
+    ⚠️ **Sans lui, la panne arriverait loin du geste qui l'a causée** : une
+    image qu'aucun clip ne porte s'écrirait sans lever, et le refus tomberait au
+    moment de la reposer dans la bande — en parlant du ruban.
+    """
+    bande = _garder(client_video, clip)
+
+    reponse = client_video.put(
+        f"/api/strips/{bande['identifiant']}",
+        json={"chutier": [{"numero": 999, "clip": "", "dx": 0, "dy": 0}]},
+    )
+    assert reponse.status_code == 400, reponse.text
+    assert "999" in reponse.text
+
+    # **Rien n'a été écrit** : une correction refusée laisse la bande exactement
+    # comme elle était.
+    apres = client_video.get(f"/api/strips/{bande['identifiant']}").json()
+    assert apres["bande"]["chutier"] == []
+
+
+def test_l_ordre_du_ruban_est_l_ordre_de_la_planche(client_video, clip):
+    """*L'ordre du ruban est l'ordre de l'export*, et ça se mesure sur les pixels.
+
+    Déplacer une image n'est pas un geste d'écran : c'est une liste de prises
+    réécrite, et c'est elle que la planche de sprites suit. L'essai retourne la
+    bande et compare **case pour case** — une planche qui trierait ses images
+    d'elle-même, ou qui garderait l'ordre du disque, rendrait la même image
+    qu'avant.
+    """
+    bande = _garder(client_video, clip)
+    largeur = bande["case_largeur"]
+    avant = _cases(_planche(client_video, bande["identifiant"]), largeur)
+    assert len(avant) == 4
+
+    relue = _corriger(client_video, bande["identifiant"], list(reversed(bande["prises"])))
+    assert [p["numero"] for p in relue["prises"]] == [18, 16, 14, 12]
+
+    apres = _cases(_planche(client_video, bande["identifiant"]), largeur)
+    for rang in range(4):
+        assert np.array_equal(apres[rang], avant[3 - rang]), (
+            f"la case {rang} n'est pas celle qu'on y a mise"
+        )
+
+
+def test_une_image_dupliquee_rend_deux_fois_les_memes_pixels(client_video, clip):
+    """*Dupliquer — la recette individuelle de la source suit la copie, c'est la
+    même image.*
+
+    Le geste est à l'écran ; ce qu'il suppose du serveur est ici, et ce n'était
+    pas acquis : une bande pouvait-elle porter **deux fois la même image**, et
+    la rendre deux fois avec la recette qu'on a posée dessus ? L'essai met le
+    numéro 12 trois fois — une fois à la recette de la bande, deux fois avec la
+    sienne — et vérifie que les deux copies sont identiques au pixel près, et
+    qu'elles diffèrent de celle qui suit la bande.
+
+    Sans quoi *dupliquer* rendrait une seconde image que personne n'a réglée.
+    """
+    bande = _garder(client_video, clip)
+    sienne = _recette_qui_change_les_couleurs(bande)
+    prises = [
+        {"numero": 12, "clip": "", "dx": 0, "dy": 0},
+        {"numero": 12, "clip": "", "dx": 0, "dy": 0, "recette": sienne},
+        {"numero": 12, "clip": "", "dx": 0, "dy": 0, "recette": sienne},
+        {"numero": 18, "clip": "", "dx": 0, "dy": 0},
+    ]
+
+    relue = _corriger(client_video, bande["identifiant"], prises)
+    assert [p["numero"] for p in relue["prises"]] == [12, 12, 12, 18]
+
+    cases = _cases(_planche(client_video, bande["identifiant"]), bande["case_largeur"])
+    assert np.array_equal(cases[1], cases[2]), (
+        "deux copies de la même image avec la même recette doivent rendre les "
+        "mêmes pixels"
+    )
+    assert not np.array_equal(cases[0], cases[1]), (
+        "la copie a sa recette à elle : elle ne peut pas rendre la même chose "
+        "que celle qui suit la bande"
+    )
+
+    # Et les écarts suivent, rang par rang : le ruban marque les deux copies.
+    ouverte = client_video.get(f"/api/strips/{bande['identifiant']}").json()
+    assert [bool(e["places"]) for e in ouverte["ecarts"]] == [False, True, True, False]

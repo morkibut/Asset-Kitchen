@@ -597,7 +597,7 @@ export const AIDE: Record<string, Explication> = {
       "Cette image-là, et aucune autre. C'est toute la différence avec les réglages de gauche : ceux-là valent pour l'animation entière, celui-ci ne corrige qu'une pose qui tombe à côté.",
     origine: "prise dans le clip · poussée à la main",
     long:
-      "Les flèches la déplacent d'un pixel du sprite ; avec Maj, de cinq. On peut aussi la faire glisser à la souris.\n\nAux bords, les flèches cessent d'avoir un effet plutôt que de rogner l'image. C'est voulu : une correction qui mangerait un bras ne se verrait pas ici, et se découvrirait dans le jeu.\n\nLa remplacer par une autre image du clip ne coûte rien : le clip est déjà payé, et il porte toutes ses images. Une bande peut ainsi prendre ses images dans deux clips différents — chaque image dit alors d'où elle vient.\n\nL'image d'avant, montrée en transparence sous celle-ci, est ce qui permet de juger un déplacement au lieu de le deviner.",
+      "Les flèches la déplacent d'un pixel du sprite ; avec Maj, de cinq. On peut aussi la faire glisser à la souris.\n\nAux bords, les flèches cessent d'avoir un effet plutôt que de rogner l'image. C'est voulu : une correction qui mangerait un bras ne se verrait pas ici, et se découvrirait dans le jeu.\n\nPendant que l'animation tourne, une flèche pousse l'image qui passe — et cette image devient aussitôt l'image choisie. Ce panneau, lui, ne bouge pas : il reste sur celle qu'on a choisie dans le ruban, parce qu'on le lit avant d'y toucher.\n\nLa remplacer par une autre image du clip ne coûte rien : le clip est déjà payé, et il porte toutes ses images. Une bande peut ainsi prendre ses images dans deux clips différents — chaque image dit alors d'où elle vient.\n\nL'image d'avant, montrée en transparence sous celle-ci, est ce qui permet de juger un déplacement au lieu de le deviner.",
   },
 
   // ── L'établi — ce qu'on touche à chaque génération ────────────────────────
@@ -1556,13 +1556,18 @@ export const AIDE: Record<string, Explication> = {
 
   "bande.recette": {
     nom: "La recette du découpage",
-    ou: "galerie",
+    // **Le codex, plus la galerie** : depuis la V3.03, le montage ne règle
+    // aucun traitement — il taille le mouvement —, et la recette d'une
+    // animation se règle dans son atelier, qui s'ouvre depuis la matrice d'un
+    // personnage. Le sommaire du guide envoyait encore chercher au mauvais
+    // endroit.
+    ou: "codex",
     quoi: "Ce qu'on fait aux images du clip pour en tirer des sprites : détourer, réduire, limiter les couleurs.",
     change:
       "L'aspect de la bande, et rien d'autre. **Elle part de celle du jeu et ne s'y substitue jamais** : ce que tu changes ici s'écrit sur cette bande-là, ton jeu ne bouge pas, et la bande suivante repart du jeu.",
     origine:
       "celle du jeu · celle de la bande · celle d'une image ou de plusieurs",
-    long: "La règle a changé le 3 septembre 2026 : le jeu est le **point de départ**, jamais une prison. Une bande a le droit de sortir plus fine ou avec moins de couleurs que le reste.\n\nCe qui reste de l'ancienne règle en est le fond : **une bande qui s'écarte de son jeu le dit**, en clair, sous les réglages, une phrase par écart.\n\nIl y a un cran de plus depuis le 5 septembre 2026 : **une image seule peut porter sa recette à elle**. Elle naît au premier réglage que tu touches sur cette image-là, copiée de celle de la bande à cet instant — rien ne se remet à zéro —, et le ruban marque d'un liseré les images qui s'écartent. « Reprendre la recette de l'animation » rend l'image au défaut, et se défait comme le reste.\n\n**Tu peux en choisir plusieurs.** Clique une image du ruban, puis maj-clique une autre pour prendre tout ce qui est entre les deux ; ctrl-clic en ajoute ou en retire une ; « toutes » et « une seule » font la même chose sans souris. Ce que tu règles ensuite se pose sur toutes les images choisies.\n\nDeux gestes, et ils ne font pas la même chose. **Un curseur ne déplace que la valeur que tu touches** : une image qui avait douze couleurs les garde, seule la tolérance que tu viens de bouger voyage. **Une recette enregistrée remplace tout** — c'est un ensemble, en prendre la moitié donnerait une image que personne n'a jamais jugée —, et l'écran te dit avant, en une phrase, combien d'images vont perdre la leur. Quand les images choisies ne sont pas d'accord, la table concernée porte le mot *séparé* et les curseurs montrent la valeur de l'image en cours.\n\nUne retouche à la main, elle, ne se remplace pas : une recette enregistrée n'en porte aucune — l'atelier la lui retire quand tu l'enregistres, parce qu'un point posé sur une pose tombe ailleurs sur la suivante — et poser cette recette laisse donc en place celle que l'image avait.\n\nUne animation d'avant ce jour-là se rouvre telle quelle : sans recette d'image, c'est celle de la bande qui vaut pour toutes, et rien n'a été migré.\n\nLa fenêtre commune, elle, reste mesurée avec la recette de la bande. Une image qui s'en écarte peut donc déborder d'un côté, et l'écran te le dit plutôt que de remesurer vingt secondes à chaque cran de curseur : c'est un bouton.",
+    long: "La règle a changé le 3 septembre 2026 : le jeu est le **point de départ**, jamais une prison. Une bande a le droit de sortir plus fine ou avec moins de couleurs que le reste.\n\nCe qui reste de l'ancienne règle en est le fond : **une bande qui s'écarte de son jeu le dit**, en clair, sous les réglages, une phrase par écart.\n\nIl y a un cran de plus depuis le 5 septembre 2026 : **une image seule peut porter sa recette à elle**. Elle naît au premier réglage que tu touches sur cette image-là, copiée de celle de la bande à cet instant — rien ne se remet à zéro —, et le ruban marque d'un liseré les images qui s'écartent. « Reprendre la recette de l'animation » rend l'image au défaut, et se défait comme le reste.\n\n**Tu peux en choisir plusieurs.** Clique une image du ruban, puis maj-clique une autre pour prendre tout ce qui est entre les deux ; ctrl-clic en ajoute ou en retire une ; « toutes » et « une seule » font la même chose sans souris. Ce que tu règles ensuite se pose sur toutes les images choisies.\n\nDeux gestes, et ils ne font pas la même chose. **Un curseur ne déplace que la valeur que tu touches** : une image qui avait douze couleurs les garde, seule la tolérance que tu viens de bouger voyage. **Une recette enregistrée remplace tout** — c'est un ensemble, en prendre la moitié donnerait une image que personne n'a jamais jugée —, et l'écran te dit avant, en une phrase, combien d'images vont perdre la leur. Quand les images choisies ne sont pas d'accord, la table concernée porte le mot *séparé* et les curseurs montrent la valeur de l'image en cours.\n\nUne retouche à la main, elle, ne se remplace pas : une recette enregistrée n'en porte aucune — l'atelier la lui retire quand tu l'enregistres, parce qu'un point posé sur une pose tombe ailleurs sur la suivante — et poser cette recette laisse donc en place celle que l'image avait.\n\n**Une recette d'image ne suit pas l'image qu'on remplace.** Si tu changes la 3ᵉ frame pour une autre image du clip, elle revient à la recette de l'animation, et l'écran te le dit avant : un point de pipette ou un cadre tracé désigne un endroit de *cette* image-là, et l'image d'à côté n'a pas le bras au même endroit. En revanche elle **voyage avec sa prise** : retirer une frame l'emmène au chutier avec sa recette, la dupliquer donne à la copie la même, et reprendre le montage rend à chaque image gardée la sienne.\n\nUne animation d'avant ce jour-là se rouvre telle quelle : sans recette d'image, c'est celle de la bande qui vaut pour toutes, et rien n'a été migré.\n\nLa fenêtre commune, elle, reste mesurée avec la recette de la bande. Une image qui s'en écarte peut donc déborder d'un côté, et l'écran te le dit plutôt que de remesurer vingt secondes à chaque cran de curseur : c'est un bouton.",
   },
 
   "bande.vitesse": {
@@ -1583,6 +1588,27 @@ export const AIDE: Record<string, Explication> = {
       "Le prix par animation, qui **baisse à chaque bande gardée**. Un clip de cinq secondes porte plus qu'un cycle de marche, et c'est ce compteur qui te dit ce que tu as vraiment payé pour une animation utilisable.",
     origine: "ce que tu as gardé",
     long: "Effacer une bande n'efface ni le clip ni ses images : un découpage raté ne coûte rien. C'est toute la différence avec l'autre moitié de l'atelier, où jeter une image est jeter de l'argent.\n\nLe prix par bande est le seul chiffre que la version ne connaissait pas d'avance : combien de clips faut-il pour une animation utilisable. Il se remplit à l'usage, ici.",
+  },
+
+  "bande.chutier": {
+    nom: "Le chutier",
+    ou: "codex",
+    quoi: "La réserve d'une animation : les images mises de côté, pas encore posées dans le ruban.",
+    change:
+      "Ce que tu retires du ruban y va **avec sa recette**, au lieu de disparaître. Retirer cesse d'être un geste qu'on hésite à faire : l'image est à côté, elle se repose où tu veux, et rien n'est perdu.",
+    origine:
+      "les images que tu retires du ruban · celles que tu vas chercher dans le clip",
+    long: "Deux chemins le remplissent. **Retirer** une ou plusieurs images du ruban les met ici. Et **« prendre des images dans le clip »** ouvre toute la pellicule du tirage : tu y prends ce qui te manque, d'un geste, et ça entre ici — le ruban ne bouge pas.\n\nPour reposer une image, deux boutons : *avant* et *après*. Ils la posent à côté de **l'image que les tables règlent**, pas de celle qui passe à l'écran — l'animation peut tourner pendant que tu travailles, et viser l'image affichée poserait ton image à un rang tiré au sort par le lecteur.\n\nUne image est **dans la bande ou au chutier, jamais dans les deux** : la poser l'en sort, la retirer l'y remet. Et la même image n'y entre qu'une fois.\n\nLe chutier **se garde avec l'animation** : ferme l'atelier, rouvre-le, il est là. C'est tout son intérêt — sinon il faudrait retrouver l'image dans la pellicule à chaque visite, c'est-à-dire refaire le geste qu'il évite.\n\nLa croix laisse tomber une image du chutier. Elle ne détruit rien : l'image est dans le clip, elle s'y reprend.",
+  },
+
+  "bande.montage": {
+    nom: "Reprendre le montage",
+    ou: "codex",
+    quoi: "Rouvrir la pellicule du clip sur une animation déjà gardée, pour en changer les images retenues.",
+    change:
+      "Ce que l'animation contient. Ce que tu gardes **retrouve ses réglages** — sa poussée au pixel, sa recette à elle — et ce que tu laisses tombe au chutier. Rien n'est perdu, et tu n'as rien à reposer de mémoire.",
+    origine: "l'animation telle qu'elle est gardée",
+    long: "Avant, le montage repartait toujours des réglages du jeu : ajouter une image à une animation demandait de la refaire entière. Il s'ouvre désormais sur **ton découpage** et **ta vitesse**.\n\nLe bouton du bas dit ce qu'il fait — *Reprendre « marche »* — et revenir sans le presser laisse l'animation telle qu'elle était.\n\nDeux cas où il est fermé, chacun avec sa raison. **Des corrections attendent** : le montage écrit sur l'animation, et le faire par-dessus des réglages en cours les perdrait — enregistre d'abord. **L'animation prend ses images dans plusieurs clips** : le montage n'en montre qu'un, et y reprendre le découpage laisserait tomber celles de l'autre.\n\nLe cadre s'y lit et ne s'y règle pas : la fenêtre commune se reprend dans l'atelier de l'animation, où l'écran dit les vingt secondes que ça coûte.",
   },
 
   "agent.plafond": {

@@ -750,6 +750,10 @@ class CorpsCorrection(BaseModel):
     """
 
     prises: list[dict[str, Any]] | None = None
+    # **Le chutier — la réserve de la bande** (V3.03.3). Absent veut dire *« ne
+    # touche pas à ça »*, comme partout ici ; une liste vide veut dire *« il est
+    # vide »*, et c'est un état normal — on vient de tout reposer dans le ruban.
+    chutier: list[dict[str, Any]] | None = None
     recette: dict[str, Any] | None = None
     cadence: float | None = None
     sens: str | None = None
@@ -762,6 +766,12 @@ def _prises(donnees: list[dict[str, Any]] | None) -> list[Prise] | None:
     `None` et une liste vide ne veulent pas dire la même chose : le premier est
     « je ne parle pas des images », le second serait « une bande sans image » —
     que le service refuse, et c'est lui qui doit le dire, pas ce traducteur.
+
+    ⚠️ **Le chutier passe par ici aussi, et sa liste vide est légitime**
+    (V3.03.3) : une réserve qu'on vient de vider en reposant tout dans le ruban
+    n'est pas une bande sans image. Le partage tient parce que ce traducteur ne
+    juge de rien — il traduit ; c'est `corriger` qui sait lequel des deux il
+    tient, et il ne refuse que le ruban.
     """
     if donnees is None:
         return None
@@ -953,6 +963,7 @@ async def corriger_une_bande(
     bande = _atelier(requete).montage.corriger(
         identifiant,
         prises=_prises(corps.prises),
+        chutier=_prises(corps.chutier),
         recette=_recette(corps.recette),
         cadence=corps.cadence if corps.cadence and corps.cadence > 0 else None,
         sens=corps.sens or None,

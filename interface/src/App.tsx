@@ -37,6 +37,7 @@ import {
   type Bibliotheque,
   type Etat,
   type Filtre,
+  type Bande,
   type Generation,
   type Modele,
   type Reinjection,
@@ -294,6 +295,24 @@ export function App() {
   // matrice, comme le montage prend celle de la galerie : on y entre depuis
   // la vignette de l'animation, et rien n'y dépense.
   const [bandeOuverte, setBandeOuverte] = useState<string | null>(null)
+  /** **Le montage rouvert sur une animation gardée** (V3.03.3) — pour en
+   *  changer les images retenues.
+   *
+   *  Il prend la place de l'atelier de l'animation, comme l'atelier prend celle
+   *  de la matrice : c'est la profondeur suivante du même endroit, et les deux
+   *  ne peuvent pas être à l'écran ensemble. L'animation entière est gardée ici
+   *  plutôt que son seul identifiant, parce que le montage a besoin de ses
+   *  prises — ce qu'on garde retrouve sa recette — et qu'un second aller-retour
+   *  au serveur pour ce qu'on vient de lire serait un état de plus à tenir. */
+  const [montageDeLaBande, setMontageDeLaBande] = useState<Bande | null>(null)
+  /** Ouvrir — ou refermer — l'atelier d'une animation. **Une seule porte**, et
+   *  elle referme le montage au passage : sans elle, ouvrir une seconde
+   *  animation pendant qu'on remonte la première montrerait le montage de
+   *  celle qu'on vient de quitter. */
+  const ouvrirLAtelierDeBande = useCallback((identifiant: string | null) => {
+    setMontageDeLaBande(null)
+    setBandeOuverte(identifiant)
+  }, [])
 
   // **Chaque écran replie ses colonnes, et les nomme.** Une seule table pour
   // les trois : c'est la barre du châssis qui rend les bascules, et elle ne
@@ -2985,7 +3004,7 @@ export function App() {
               onOuvrirLaBande={(identifiant) => {
                 setFicheClip(null)
                 setOnglet("codex")
-                setBandeOuverte(identifiant)
+                ouvrirLAtelierDeBande(identifiant)
               }}
               /* Le sprite de départ s'ouvre comme une image, **et sa fiche
                  remplace celle du clip** : la colonne est une porte, jamais
@@ -3107,6 +3126,26 @@ export function App() {
           ouverts ensemble, on ne corrige pas une animation depuis un écran
           qui en montre douze. */}
       {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && bandeOuverte && etat ? (
+        montageDeLaBande ? (
+        /* **Le montage rouvert sur cette animation** (V3.03.3). Il prend la
+           place de l'atelier, comme l'atelier prend celle de la matrice : ce
+           n'est pas une fenêtre par-dessus, c'est la profondeur suivante du
+           même endroit. Revenir refait naître l'atelier, qui relit donc
+           l'animation sur le disque — y compris ce que le montage vient d'y
+           écrire. */
+        <EcranMontage
+          clip={montageDeLaBande.clip}
+          reprise={{
+            bande: montageDeLaBande,
+            onRepris: () => {
+              setMontageDeLaBande(null)
+              void relireProduction()
+            },
+          }}
+          onFermer={() => setMontageDeLaBande(null)}
+          onErreur={(raison) => setPanne(raison)}
+        />
+        ) : (
         <EcranAtelierDeBande
           identifiant={bandeOuverte}
           // **Les tables de l'établi, posées sur une frame** (V3.03.1). Elles
@@ -3117,13 +3156,15 @@ export function App() {
           // chose, qui finirait par griser autre chose que l'établi.
           univers={univers}
           traitement={etat.traitement}
-          onFermer={() => setBandeOuverte(null)}
+          onFermer={() => ouvrirLAtelierDeBande(null)}
           onErreur={(raison) => setPanne(raison)}
           // La planche a changé sur le disque, et la matrice l'affiche
           // aussi : une vignette qui montrerait l'ancienne serait un
           // mensonge silencieux.
           onChangee={() => void relireProduction()}
+          onReprendreLeMontage={setMontageDeLaBande}
         />
+        )
       ) : null}
 
       {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && !bandeOuverte && (
@@ -3158,7 +3199,7 @@ export function App() {
           }}
           /* **Et la vignette, elle, ouvre l'animation** (A7) — sans changer
              d'onglet : on la retravaille là où on la regarde. */
-          onOuvrirLaBande={setBandeOuverte}
+          onOuvrirLaBande={ouvrirLAtelierDeBande}
           // **Deux gestes en un, et l'ordre compte** (G16) : l'image s'ouvre
           // dans les tables, et la table ouverte est la superposition. Écrit
           // ici parce que la table ouverte est un état de l'établi — la

@@ -42,6 +42,7 @@ import {
   type Mouvement,
   type PropositionDeRythme,
 } from "../api"
+import { remonterLaBande } from "./AtelierDeBande"
 import { Bouton, Curseur, Libelle, Raison, Segments } from "./chassis"
 
 /** La hauteur du ruban, et la largeur d'une tranche. **Sept pixels**, comme la
@@ -58,10 +59,30 @@ const ECHANTILLON_MAX = 12
 
 export function EcranMontage({
   clip,
+  reprise,
   onFermer,
   onErreur,
 }: {
   clip: string
+  /** **On remonte une animation déjà gardée** (V3.03.3), au lieu d'en tailler
+   *  une neuve.
+   *
+   *  > ### ⚠️ Le montage repartait toujours des réglages du jeu
+   *  >
+   *  > C'est le cul-de-sac d'`A7` par l'autre bout : on savait tailler une
+   *  > animation dans un clip et **pas revenir sur ce découpage**. Ajouter une
+   *  > image demandait de refaire la bande entière, donc de reposer de mémoire
+   *  > tous les réglages posés depuis.
+   *
+   *  L'écran s'ouvre alors sur **les images déjà retenues** et la vitesse de
+   *  l'animation, et le geste dominant n'est plus *garder une bande de plus*
+   *  mais *reprendre celle-ci*. Ce qu'on garde retrouve sa prise — sa poussée et
+   *  sa recette avec elle —, ce qu'on laisse tombe au chutier. */
+  reprise?: {
+    bande: Bande
+    /** L'animation est à jour : refermer et revenir à son atelier. */
+    onRepris: () => void
+  }
   onFermer: () => void
   onErreur: (raison: string) => void
 }) {
@@ -130,6 +151,13 @@ export function EcranMontage({
     doublon: Asset | null
   } | null>(null)
 
+  // **La reprise ne relance pas l'ouverture.** L'écran au-dessus passe un objet
+  // neuf à chaque rendu ; le laisser dans les dépendances ferait redemander le
+  // clip — et reposer le découpage de départ par-dessus celui qu'on est en train
+  // de corriger. Même remède que l'aperçu de l'atelier d'une animation.
+  const laReprise = useRef(reprise)
+  laReprise.current = reprise
+
   // **Échap referme**, comme partout ailleurs — et ici il ne renonce à rien :
   // les bandes gardées sont déjà sur le disque.
   useEffect(() => {
@@ -151,6 +179,23 @@ export function EcranMontage({
         setBandes(recu.bandes)
         setPose(recu.clip.pose)
         setDirection(recu.clip.direction)
+        // **On remonte une animation gardée** (V3.03.3) : ce qui s'ouvre est
+        // *son* découpage et *sa* vitesse, pas une proposition. Poser une
+        // proposition par-dessus reviendrait à effacer le travail au moment
+        // même où l'on vient le reprendre.
+        const remonte = laReprise.current
+        if (remonte) {
+          setRetenues(
+            remonte.bande.prises
+              .filter((prise) => !prise.clip || prise.clip === clip)
+              .map((prise) => prise.numero),
+          )
+          setNom(remonte.bande.nom)
+          setCadence(remonte.bande.cadence)
+          setSens(remonte.bande.sens)
+          setCadre(remonte.bande.cadre.choix as "clip" | "bande" | "main")
+          return
+        }
         // **Il s'ouvre déjà en train de tourner.** La première proposition
         // pose un découpage ; s'il n'y en a aucune — un clip où rien ne se
         // referme —, on prend un échantillon régulier plutôt que de laisser
@@ -185,6 +230,12 @@ export function EcranMontage({
   }, [])
 
   useEffect(() => {
+    // ⚠️ **Sauf quand on remonte une animation gardée** (V3.03.3) : elle a sa
+    // vitesse, réglée une fois par l'auteur, et la moyenne de son espèce n'a
+    // rien à lui apprendre. C'est le même partage qu'au-dessus — *une bande a
+    // le droit d'être plus lente que son mouvement*, et la reprise arriverait
+    // ici après coup pour la ramener à la moyenne, sans un mot.
+    if (laReprise.current) return
     const nomme = mouvements.find((m) => m.identifiant === montage?.clip.mouvement)
     if (nomme?.cadence) setCadence(nomme.cadence)
   }, [mouvements, montage?.clip.mouvement])
@@ -204,11 +255,28 @@ export function EcranMontage({
   const rang = useMemo(() => rangDuPas(pas, compte, sens), [pas, compte, sens])
 
   // ── Prendre et laisser une image ──────────────────────────────────────────
+  /** Prendre ou laisser une image du clip.
+   *
+   *  > ### ⚠️ Une reprise n'a pas le droit de retrier le ruban
+   *  >
+   *  > Sur un montage neuf, les images se rangent dans l'ordre du clip : il n'y
+   *  > a pas d'autre ordre, et le tri est ce qui rend la pellicule lisible. Sur
+   *  > une **reprise**, l'ordre vient de l'auteur — il a déplacé, dupliqué,
+   *  > inséré —, et *l'ordre du ruban est l'ordre de l'export*. Le tri le
+   *  > défaisait : une animation reprise pour y ajouter une seule image
+   *  > revenait rangée par numéro, montage perdu. Vu au navigateur le
+   *  > 5 septembre 2026, sur l'atelier jetable de la tranche.
+   *
+   *  Une image ajoutée à une reprise se pose donc **au bout**, et se déplace
+   *  ensuite dans l'atelier — c'est là que le ruban se monte. */
   const basculer = useCallback((numero: number) => {
+    const reprise = Boolean(laReprise.current)
     setRetenues((deja) =>
       deja.includes(numero)
         ? deja.filter((n) => n !== numero)
-        : [...deja, numero].sort((a, b) => a - b),
+        : reprise
+          ? [...deja, numero]
+          : [...deja, numero].sort((a, b) => a - b),
     )
   }, [])
 
@@ -296,6 +364,35 @@ export function EcranMontage({
       api.ouvrirLeMontage(clip).then((recu) => setMontage(recu)).catch(() => {})
     } catch (erreur) {
       setRefus(erreur instanceof Error ? erreur.message : "la bande n'est pas gardée")
+    }
+  }
+
+  /** **Reposer ce découpage sur l'animation qu'on remonte** (V3.03.3).
+   *
+   *  Ce qui part : les prises, le chutier, la vitesse et le sens.
+   *
+   *  ⚠️ **Ni le cadre, ni la recette.** Le montage est brut depuis la V3.03 — il
+   *  ne montre aucun traitement, donc il n'en règle aucun —, et le cadre gardé
+   *  porte quatre nombres mesurés que ce corps de requête ne saurait pas
+   *  refaire : les renvoyer avec le seul mot « du clip » effacerait le rectangle
+   *  et rendrait chaque image à son propre recadrage. La fenêtre se reprend dans
+   *  l'atelier de l'animation, où le bouton dit ce qu'elle coûte. */
+  const reprendre = async () => {
+    if (!reprise || retenues.length === 0) return
+    setRefus(null)
+    try {
+      const remonte = remonterLaBande(reprise.bande, clip, retenues)
+      await api.corrigerLaBande(reprise.bande.identifiant, {
+        prises: remonte.prises,
+        chutier: remonte.chutier,
+        cadence,
+        sens,
+      })
+      reprise.onRepris()
+    } catch (erreur) {
+      setRefus(
+        erreur instanceof Error ? erreur.message : "l'animation ne se reprend pas",
+      )
     }
   }
 
@@ -531,42 +628,84 @@ export function EcranMontage({
 
       {/* ── Ce qu'on garde ────────────────────────────────────────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-l border-bord p-4">
-        <Libelle aide="bande.nom">cette animation</Libelle>
-        <input
-          value={nom}
-          onChange={(e) => setNom(e.target.value)}
-          aria-label="Le nom de l'animation"
-          placeholder="repos, marche, attaque…"
-          className="h-[30px] rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[12px] text-texte"
-        />
+        {/* **Ce qu'on remonte, dit une fois** (V3.03.3). Le nom n'est pas un
+            champ ici : on ne baptise pas une animation qui en porte déjà un, et
+            un champ qui n'écrirait rien serait un contrôle mort. */}
+        {reprise ? (
+          <>
+            <Libelle aide="bande.nom">on remonte cette animation</Libelle>
+            <p data-on-remonte className="text-[13px] text-texte">
+              {reprise.bande.nom}
+            </p>
+            <p className="mesure text-[10px] leading-4 text-texte-3">
+              Elle en portait{" "}
+              <b className="text-texte-2">
+                {reprise.bande.compte} image
+                {reprise.bande.compte > 1 ? "s" : ""}
+              </b>
+              . Ce que vous gardez retrouve ses réglages ; ce que vous laissez
+              tombe au chutier, pas à la corbeille.
+            </p>
+          </>
+        ) : (
+          <>
+            <Libelle aide="bande.nom">cette animation</Libelle>
+            <input
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              aria-label="Le nom de l'animation"
+              placeholder="repos, marche, attaque…"
+              className="h-[30px] rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[12px] text-texte"
+            />
 
-        <div className="flex items-baseline justify-between">
-          <span className="mesure text-[10px] text-texte-3">Remplit la case</span>
-          <span className="mesure text-[10px] text-signal-clair">
-            {pose ? `${pose}${direction ? ` · ${direction}` : ""}` : "aucune — brouillon"}
-          </span>
-        </div>
-        <p className="mesure text-[10px] leading-4 text-texte-3">
-          {pose
-            ? "Elle remplira cette case du plan de poses."
-            : "Une bande sans case reste un brouillon, et un brouillon ne bloque rien : on garde d'abord, on range ensuite."}
-        </p>
-        {montage.clip.pose && (
-          <button
-            type="button"
-            onClick={() => {
-              setPose(pose ? null : montage.clip.pose)
-              setDirection(pose ? null : montage.clip.direction)
-            }}
-            className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
-          >
-            {pose ? "en faire un brouillon" : `viser ${montage.clip.pose} ›`}
-          </button>
+            <div className="flex items-baseline justify-between">
+              <span className="mesure text-[10px] text-texte-3">
+                Remplit la case
+              </span>
+              <span className="mesure text-[10px] text-signal-clair">
+                {pose
+                  ? `${pose}${direction ? ` · ${direction}` : ""}`
+                  : "aucune — brouillon"}
+              </span>
+            </div>
+            <p className="mesure text-[10px] leading-4 text-texte-3">
+              {pose
+                ? "Elle remplira cette case du plan de poses."
+                : "Une bande sans case reste un brouillon, et un brouillon ne bloque rien : on garde d'abord, on range ensuite."}
+            </p>
+            {montage.clip.pose && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPose(pose ? null : montage.clip.pose)
+                  setDirection(pose ? null : montage.clip.direction)
+                }}
+                className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+              >
+                {pose ? "en faire un brouillon" : `viser ${montage.clip.pose} ›`}
+              </button>
+            )}
+          </>
         )}
 
         <div className="mt-2 border-t border-bord pt-3">
           <Libelle aide="bande.cadre">le cadre — la fenêtre commune</Libelle>
         </div>
+        {/* ⚠️ **Sur une reprise, le cadre se lit et ne se règle pas.** Le
+            rectangle gardé porte quatre nombres mesurés ; le changer d'ici ne
+            les referait pas, et un choix qui ne change rien à l'image ne se
+            distingue pas d'un choix cassé. La fenêtre se reprend dans l'atelier
+            de l'animation, où le bouton dit ce qu'elle coûte. */}
+        {reprise ? (
+          <p data-cadre-en-lecture className="mesure text-[10px] leading-4 text-texte-3">
+            {/* La phrase vient du serveur, avec le cadre : deux vocabulaires de
+                la même mesure finiraient par ne plus dire la même chose. */}
+            {reprise.bande.cadre.mot ? <>{reprise.bande.cadre.mot}. </> : null}
+            Il ne se règle pas ici :{" "}
+            <b className="text-texte-2">la fenêtre se reprend dans l'atelier de
+            l'animation</b>, où l'écran dit les vingt secondes que ça coûte.
+          </p>
+        ) : (
         <Segments
           valeurs={["clip", "bande", "main"] as const}
           valeur={cadre}
@@ -582,37 +721,42 @@ export function EcranMontage({
           }}
           libelles={{ clip: "du clip", bande: "de la bande", main: "à la main" }}
         />
-        <p className="mesure text-[10px] leading-4 text-texte-3">
-          pris sur le clip entier — toutes ses bandes ont la même assise
-        </p>
-        {montage?.fenetre && (
-          <p className="mesure text-[10px] text-texte-2">
-            {montage.fenetre.largeur} × {montage.fenetre.hauteur}, pris sur{" "}
-            {montage.fenetre.images}{" "}
-            {montage.fenetre.images > 1 ? "images" : "image"}
-          </p>
         )}
-        {cadre === "main" && cadreMain && (
-          <p className="mesure text-[10px] leading-4 text-texte-3">
-            le rectangle se posera au montage de la bande — l'atelier d'une
-            animation le reprendra.
-          </p>
+        {!reprise && (
+          <>
+            <p className="mesure text-[10px] leading-4 text-texte-3">
+              pris sur le clip entier — toutes ses bandes ont la même assise
+            </p>
+            {montage?.fenetre && (
+              <p className="mesure text-[10px] text-texte-2">
+                {montage.fenetre.largeur} × {montage.fenetre.hauteur}, pris sur{" "}
+                {montage.fenetre.images}{" "}
+                {montage.fenetre.images > 1 ? "images" : "image"}
+              </p>
+            )}
+            {cadre === "main" && cadreMain && (
+              <p className="mesure text-[10px] leading-4 text-texte-3">
+                le rectangle se posera au montage de la bande — l'atelier d'une
+                animation le reprendra.
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={reprend}
+              onClick={reprendreLeCadre}
+              className="mesure self-start text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
+            >
+              {reprend
+                ? "il remesure les images du clip…"
+                : "reprendre le cadre sur tout le clip ›"}
+            </button>
+            <p className="mesure text-[10px] leading-4 text-texte-3">
+              Il remesure les {montage.clip.images} images une par une : comptez
+              une vingtaine de secondes sur un clip de cinq secondes. C'est pour
+              ça que c'est un bouton et pas un automatisme.
+            </p>
+          </>
         )}
-        <button
-          type="button"
-          disabled={reprend}
-          onClick={reprendreLeCadre}
-          className="mesure self-start text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
-        >
-          {reprend
-            ? "il remesure les images du clip…"
-            : "reprendre le cadre sur tout le clip ›"}
-        </button>
-        <p className="mesure text-[10px] leading-4 text-texte-3">
-          Il remesure les {montage.clip.images} images une par une : comptez une
-          vingtaine de secondes sur un clip de cinq secondes. C'est pour ça que
-          c'est un bouton et pas un automatisme.
-        </p>
 
         <div className="mt-2 border-t border-bord pt-3">
           <Libelle aide="bande.vitesse">le jeu</Libelle>
@@ -636,7 +780,11 @@ export function EcranMontage({
           jeu</b>. Un second réglage à l'export finirait par la contredire.
         </p>
 
-        {bandes.length > 0 && (
+        {/* **Ce qu'on a déjà tiré de ce clip n'a rien à faire dans une
+            reprise** (V3.03.3) : on est venu pour une animation, et la liste
+            des autres n'offre ici que des gestes — sortir, effacer — qui
+            appartiennent à l'écran d'où l'on vient. */}
+        {!reprise && bandes.length > 0 && (
           <>
             <div className="mt-2 border-t border-bord pt-3">
               <Libelle aide="bande.gardees">gardées de ce clip</Libelle>
@@ -680,39 +828,69 @@ export function EcranMontage({
           </>
         )}
 
-        <div className="mt-2 rounded-[2px] border border-bord bg-fond-2 p-3">
-          <p className="text-[15px] text-texte">
-            {dollars(montage.prix.par_bande)}
-          </p>
-          <p className="mesure text-[10px] leading-4 text-texte-3">
-            par animation gardée — le clip a coûté {dollars(montage.prix.clip)}, et{" "}
-            {montage.prix.bandes === 0
-              ? "aucune bande n'en est encore sortie"
-              : montage.prix.bandes === 1
-                ? "une bande en est sortie"
-                : `${montage.prix.bandes} bandes en sont sorties`}
-            . Une de plus ferait tomber ce prix à{" "}
-            {dollars(montage.prix.si_une_de_plus)}.
-          </p>
-        </div>
+        {/* **Le prix par bande compte les bandes qu'on garde**, et remonter
+            celle-ci n'en ajoute aucune : l'afficher ici ferait croire qu'on va
+            payer un cran de plus. */}
+        {!reprise && (
+          <div className="mt-2 rounded-[2px] border border-bord bg-fond-2 p-3">
+            <p className="text-[15px] text-texte">
+              {dollars(montage.prix.par_bande)}
+            </p>
+            <p className="mesure text-[10px] leading-4 text-texte-3">
+              par animation gardée — le clip a coûté {dollars(montage.prix.clip)},
+              et{" "}
+              {montage.prix.bandes === 0
+                ? "aucune bande n'en est encore sortie"
+                : montage.prix.bandes === 1
+                  ? "une bande en est sortie"
+                  : `${montage.prix.bandes} bandes en sont sorties`}
+              . Une de plus ferait tomber ce prix à{" "}
+              {dollars(montage.prix.si_une_de_plus)}.
+            </p>
+          </div>
+        )}
 
         <div className="mt-2 flex flex-col gap-2">
-          <Bouton
-            principal
-            inactif={retenues.length === 0 || !nom.trim()}
-            onClick={() => void garder()}
-            enfants={
-              retenues.length === 0
-                ? "prenez au moins une image"
-                : !nom.trim()
-                  ? "nommez cette animation"
-                  : `Garder « ${nom.trim()} » · ${retenues.length} images`
-            }
-          />
+          {/* **Le geste dominant dit lequel des deux écrans on tient.** Tailler
+              une animation neuve et remonter celle qu'on a : deux gestes, un
+              seul bouton, et son libellé nomme l'animation pour qu'aucun doute
+              ne subsiste au moment où on l'écrit. */}
+          {reprise ? (
+            <Bouton
+              principal
+              inactif={retenues.length === 0}
+              onClick={() => void reprendre()}
+              enfants={
+                retenues.length === 0
+                  ? "prenez au moins une image"
+                  : `Reprendre « ${reprise.bande.nom} » · ${retenues.length} images`
+              }
+            />
+          ) : (
+            <Bouton
+              principal
+              inactif={retenues.length === 0 || !nom.trim()}
+              onClick={() => void garder()}
+              enfants={
+                retenues.length === 0
+                  ? "prenez au moins une image"
+                  : !nom.trim()
+                    ? "nommez cette animation"
+                    : `Garder « ${nom.trim()} » · ${retenues.length} images`
+              }
+            />
+          )}
         </div>
         <p className="mesure text-[10px] leading-4 text-texte-3">
           <b className="text-texte-2">Rien sur cet écran ne dépense.</b> Le clip
           est payé. Découpez, recommencez, changez d'avis.
+          {reprise && (
+            <>
+              {" "}
+              <b className="text-texte-2">Revenir sans reprendre</b> laisse
+              l'animation telle qu'elle est.
+            </>
+          )}
         </p>
       </aside>
     </div>
@@ -884,15 +1062,22 @@ function Pellicule({
         {Array.from({ length: images }, (_, numero) => {
           const colonne = numero % contact.colonnes
           const ligne = Math.floor(numero / contact.colonnes)
-          const prise = retenues.includes(numero)
+          // **Combien de fois**, et pas seulement *si* : une image dupliquée
+          // dans l'atelier est retenue deux fois, la cellule n'a qu'un état, et
+          // le compte du bouton dirait alors une image de plus que la pellicule
+          // n'en montre. Le laisser cliquer la retire **toutes** — c'est un
+          // interrupteur, pas un compteur —, et le dire évite d'y voir un
+          // défaut.
+          const fois = retenues.filter((n) => n === numero).length
+          const prise = fois > 0
           const misee = prelevees.includes(numero)
           return (
             <button
               key={numero}
               type="button"
-              aria-label={`Image ${numero}${prise ? " — retenue" : ""}${
-                misee ? " — mise de côté" : ""
-              }`}
+              aria-label={`Image ${numero}${
+                fois > 1 ? ` — retenue ${fois} fois` : prise ? " — retenue" : ""
+              }${misee ? " — mise de côté" : ""}`}
               aria-pressed={prise}
               // **Une seule cellule dans l'ordre de tabulation : celle du
               // curseur.** Mesuré au navigateur : les cent vingt et une cellules

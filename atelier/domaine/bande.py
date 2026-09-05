@@ -252,6 +252,29 @@ class Bande:
     # que les numéros continue de les demander comme avant.
     prises: tuple[Prise, ...] = ()
 
+    # **Le chutier — la réserve de la bande** (V3.03.3).
+    #
+    # Les images mises de côté : celles qu'on a retirées du montage et celles
+    # qu'on est allé chercher dans le clip, et qui ne sont pas encore posées.
+    # Ce sont **des prises entières et non des numéros**, parce qu'une image
+    # retirée du ruban emporte sa recette individuelle avec elle : la reposer
+    # trois gestes plus loin doit la rendre telle qu'elle était, sans quoi
+    # « retirer puis remettre » serait une façon silencieuse d'effacer un
+    # réglage.
+    #
+    # ⚠️ **Une prise est dans le ruban, ou au chutier, jamais dans les deux.**
+    # Poser une image du chutier l'en sort ; retirer une image du ruban l'y
+    # met ; reprendre le montage cherche dans les deux et prend dans l'un.
+    # C'est une règle sur les *prises*, pas sur les numéros : une image
+    # dupliquée puis à demi retirée est légitimement au ruban **et** au
+    # chutier, parce que ce sont deux prises et que chacune porte sa recette.
+    #
+    # Il **n'entre pas dans la planche** : ce qui sort vers le jeu est le
+    # ruban, dans son ordre. Le chutier ne change donc aucun pixel, et une
+    # bande d'avant la tranche se relit avec un chutier vide sans qu'un seul
+    # fichier ait été réécrit.
+    chutier: tuple[Prise, ...] = ()
+
     cadence: float = CADENCE_PAR_DEFAUT
     sens: str = BOUCLE
     cadre: Cadre = field(default_factory=Cadre)
@@ -353,6 +376,7 @@ class Bande:
             # calcule à partir de la seconde, donc elles ne peuvent pas diverger.
             "images": list(self.images),
             "prises": [prise.en_json() for prise in self.prises],
+            "chutier": [prise.en_json() for prise in self.chutier],
             "clips": list(self.clips),
             "melangee": self.melangee,
             "cadence": self.cadence,
@@ -386,6 +410,10 @@ class Bande:
                 Prise.depuis_json(p)
                 for p in (d.get("prises") or d.get("images") or ())
             ),
+            # Absent veut dire **vide**, et c'est le cas de toutes les bandes
+            # d'avant la V3.03.3 : le chutier est une réserve, pas un état
+            # qu'il faudrait deviner.
+            chutier=tuple(Prise.depuis_json(p) for p in (d.get("chutier") or ())),
             cadence=float(d.get("cadence") or CADENCE_PAR_DEFAUT),
             sens=sens if sens in SENS else BOUCLE,
             cadre=Cadre.depuis_json(d.get("cadre")),

@@ -11,6 +11,60 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V3.03.3 — la bande se monte — 6 septembre 2026
+
+Une animation gardée cesse d'être un tirage figé. Le ruban **se retire, se duplique, se
+déplace** ; ce qu'on retire descend au **chutier** — la réserve de la bande, gardée avec elle
+et relue avec elle — d'où chaque image se repose à la place qu'on choisit. « Prendre des
+images dans le clip » rouvre la pellicule entière sans passer par le montage. Et
+« Reprendre le montage › » rouvre le découpage sur *cette* animation, avec ses images et sa
+vitesse : le cul-de-sac d'`A7` fermé par l'autre bout.
+
+Les gestes du ruban portent sur la **sélection** de la V3.03.2, pas sur l'image qui passe.
+Un essai le vérifie lecteur en marche, ralenti — l'arrêter d'abord effacerait le défaut avant
+de le chercher.
+
+### Le cadre se montre à la reprise, il ne s'y reprend pas
+
+Le critère demandait « le cadre de la bande ». Le montage le montre, et ne le renvoie pas.
+Un cadre de bande est un **rectangle mesuré** sur les images retenues ; la correction ne
+remesure rien, et lui repasser le choix du montage — « le cadre du clip » — remplacerait ce
+rectangle sans un mot. Il s'affiche donc en lecture, avec sa raison, et se règle là où il se
+mesure. Même raisonnement pour une **bande mêlée** : le montage ne connaît qu'un clip, y
+reprendre le découpage laisserait tomber les images empruntées, et le bouton s'éteint plutôt
+que de mentir.
+
+### Le chutier n'a pas demandé de migration
+
+Une bande est un objet JSON dans une colonne : ajouter une réserve n'a coûté aucun schéma.
+**Absent veut dire vide**, et c'est l'état de toutes les bandes d'avant — le chutier est une
+réserve, pas un état qu'il faudrait deviner. La règle qu'il tient est sur les *prises*, pas
+sur les numéros : une image dupliquée puis à demi retirée est légitimement au ruban **et** au
+chutier, parce que ce sont deux prises et que chacune porte sa recette.
+
+### Trois défauts que 765 essais d'écran ne voyaient pas
+
+**Ils lisent un instant.** L'atelier jetable de la tranche, lui, tourne.
+
+La fiche titrée « l'image choisie » suivait l'image *qui passe* : on choisissait l'image 14,
+la fiche décrivait la 10, et taper un numéro remplaçait la 10. Deuxième fois en deux tranches,
+dans un panneau différent — la V3.03.1 l'avait réparé pour les tables. Le partage qui tient :
+un geste **instantané** tombe sur ce qu'on regarde, un geste qu'on **lit d'abord** tombe sur
+ce qu'on a choisi ; et la flèche emmène désormais la sélection avec elle, si bien que les deux
+se rejoignent au premier coup.
+
+Les deux autres étaient sur le même trajet, celui du retour de montage. Le montage range les
+images par numéro — juste quand il n'y a pas d'autre ordre, faux sur une reprise : refermer
+rendait la bande **triée**, déplacements et duplications perdus, pour une seule image ajoutée.
+Et la reprise ignorait le chutier à l'aller : une image mise de côté revenait **neuve**, sans
+sa poussée ni sa recette, et restait dans la réserve par-dessus le marché. La leçon est dans
+`docs/PIEGES.md` : **un aller-retour entre deux écrans se relit dans le sens du retour**, et
+chaque chose que l'écran de départ savait et que l'écran d'arrivée ignore est une chose qu'il
+faut lui rendre.
+
+Les trois portent maintenant leur essai, et les trois essais tombent quand on défait le
+correctif.
+
 ## V3.03.1 et .2 — une image de l'animation devient une image de l'établi — 5 septembre 2026
 
 Deux tranches d'un coup, et la seconde ne tient que par la première. **Chaque frame d'une bande

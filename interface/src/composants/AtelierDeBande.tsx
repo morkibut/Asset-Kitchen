@@ -34,6 +34,7 @@ import {
   api,
   type Ancrage,
   type AtelierDeBande as AtelierRecu,
+  type Bande,
   type CadrePose,
   type EtatTraitement,
   type Prise,
@@ -190,6 +191,91 @@ export function placesSeparees(recettes: (Recette | null)[]): string[] {
 const sansToucherALaMain = (rendue: Recette, dOrigine: Recette | null): Recette =>
   ({ ...rendue, main: dOrigine?.main ?? null })
 
+/** Deux prises désignent-elles **la même image du même clip** ? Une prise sans
+ *  clip nommé prend celui de la bande — c'est la règle du serveur, et la
+ *  réécrire autrement ferait entrer deux fois la même image au chutier. */
+const memeImage = (une: Prise, autre: Prise, clipDeLaBande: string) =>
+  une.numero === autre.numero &&
+  (une.clip || clipDeLaBande) === (autre.clip || clipDeLaBande)
+
+/** **Mettre des images au chutier** (V3.03.3), sans jamais l'y écrire deux fois.
+ *
+ *  Le chutier est la réserve de la bande : les images retirées du ruban, et
+ *  celles qu'on est allé chercher dans le clip. Une prise y arrive **entière** —
+ *  sa recette individuelle comprise —, parce que la reposer trois gestes plus
+ *  loin doit la rendre telle qu'elle était : *retirer puis remettre* n'est pas
+ *  une façon d'effacer un réglage.
+ *
+ *  ⚠️ **Elle n'y entre qu'une fois.** La même image mise de côté deux fois
+ *  ferait deux vignettes identiques dans une réserve qu'on lit d'un coup d'œil,
+ *  et il faudrait choisir laquelle poser. La dernière venue gagne : c'est celle
+ *  dont on vient de décider, et elle porte les réglages les plus récents.
+ *
+ *  Écrite ici et employée aussi par le montage, qui repose un découpage sur une
+ *  animation gardée — **deux règles pour le même fait finiraient par ne pas
+ *  ranger pareil**. */
+export function auChutier(
+  chutier: Prise[],
+  emportees: Prise[],
+  clipDeLaBande: string,
+): Prise[] {
+  const rendu = [...chutier]
+  for (const prise of emportees) {
+    const deja = rendu.findIndex((une) => memeImage(une, prise, clipDeLaBande))
+    if (deja >= 0) rendu[deja] = prise
+    else rendu.push(prise)
+  }
+  return rendu
+}
+
+/** **Reposer un découpage sur une animation déjà gardée** (V3.03.3).
+ *
+ *  C'est ce que « Reprendre le montage » écrit au retour : le montage ne connaît
+ *  que des **numéros d'image**, l'animation porte des **prises** — d'où elles
+ *  viennent, de combien elles sont poussées, et leur recette à elles.
+ *
+ *  > ### ⚠️ Une recette individuelle voyage avec sa prise
+ *  >
+ *  > Une image qu'on garde retrouve **sa** prise, poussée et recette comprises :
+ *  > passer par le montage pour ajouter une image ne doit pas défaire les
+ *  > réglages posés sur les onze autres. Et une image que le nouveau découpage
+ *  > laisse tombe **au chutier** au lieu de disparaître — changer d'avis sur une
+ *  > image ne doit pas effacer ce qu'on avait réglé dessus.
+ *
+ *  Une image demandée deux fois — le geste *dupliquer* — reçoit la prise
+ *  d'origine une fois et une prise neuve ensuite : c'est la même image, et rien
+ *  ne dit que la seconde copie doit hériter d'une correction au pixel posée sur
+ *  la première.
+ *
+ *  > ### ⚠️ Le chutier est cherché lui aussi, et ce qu'on y prend en sort
+ *  >
+ *  > Une image mise de côté que le montage reprend revenait **neuve** : sans sa
+ *  > poussée, sans sa recette — et elle restait au chutier par-dessus le marché,
+ *  > si bien que le ruban la jouait pendant que la réserve proposait encore de
+ *  > la poser. C'est très exactement ce à quoi le chutier sert, et la reprise
+ *  > était le seul chemin qui le contournait. Vu au navigateur le 5 septembre
+ *  > 2026, sur l'atelier jetable de la tranche. */
+export function remonterLaBande(
+  bande: Bande,
+  clip: string,
+  retenues: number[],
+): { prises: Prise[]; chutier: Prise[] } {
+  const restantes = [...bande.prises]
+  const reserve = [...bande.chutier]
+  const chercher = (ou: Prise[], numero: number) => {
+    const la = ou.findIndex(
+      (prise) => prise.numero === numero && (prise.clip || bande.clip) === clip,
+    )
+    return la < 0 ? undefined : ou.splice(la, 1)[0]
+  }
+  const prises = retenues.map(
+    (numero) =>
+      chercher(restantes, numero) ??
+      chercher(reserve, numero) ?? { numero, clip: "", dx: 0, dy: 0 },
+  )
+  return { prises, chutier: auChutier(reserve, restantes, bande.clip) }
+}
+
 export function EcranAtelierDeBande({
   identifiant,
   univers,
@@ -197,6 +283,7 @@ export function EcranAtelierDeBande({
   onFermer,
   onErreur,
   onChangee,
+  onReprendreLeMontage,
 }: {
   identifiant: string
   /** La palette du jeu et ses couleurs nommées — ce que la quantification et
@@ -212,9 +299,28 @@ export function EcranAtelierDeBande({
    *  aussi, et une vignette qui montrerait l'ancienne planche serait un
    *  mensonge silencieux. */
   onChangee?: () => void
+  /** **Rouvrir le montage sur cette animation** (V3.03.3) — avec ses images
+   *  retenues et ses réglages, pour en changer la sélection.
+   *
+   *  L'atelier ne l'ouvre pas lui-même : le montage prend la place de cet
+   *  écran-ci, comme cet écran-ci prend celle de la matrice, et c'est celui qui
+   *  tient les deux qui décide lequel est à l'écran. Absent, le bouton ne
+   *  paraît pas. */
+  onReprendreLeMontage?: (bande: Bande) => void
 }) {
   const [recu, setRecu] = useState<AtelierRecu | null>(null)
   const [prises, setPrises] = useState<Prise[]>([])
+  /** **La réserve de la bande** (V3.03.3) : les images retirées du ruban et
+   *  celles qu'on est allé chercher dans le clip, pas encore posées.
+   *
+   *  ⚠️ **Elle se garde avec la bande**, à la différence de la sélection : ce
+   *  qu'on a mis de côté est une intention qui survit à la fermeture de
+   *  l'atelier — sans quoi il faudrait retrouver l'image dans la pellicule à
+   *  chaque visite, ce qui est très exactement le geste qu'elle évite. */
+  const [chutier, setChutier] = useState<Prise[]>([])
+  /** La pellicule du clip est-elle ouverte au milieu de l'écran ? Elle prend la
+   *  place de l'image en grand — *on ne pose pas un écran sur un écran*. */
+  const [auClip, setAuClip] = useState(false)
   const [recette, setRecette] = useState<Recette | null>(null)
   const [cadence, setCadence] = useState(8)
   const [sens, setSens] = useState<"boucle" | "aller-retour">("boucle")
@@ -275,6 +381,7 @@ export function EcranAtelierDeBande({
         if (!vivant) return
         setRecu(ouvert)
         setPrises(ouvert.bande.prises)
+        setChutier(ouvert.bande.chutier ?? [])
         setRecette(ouvert.bande.recette)
         setCadence(ouvert.bande.cadence)
         setSens(ouvert.bande.sens)
@@ -317,11 +424,12 @@ export function EcranAtelierDeBande({
     if (!recu) return false
     return (
       JSON.stringify(prises) !== JSON.stringify(recu.bande.prises) ||
+      JSON.stringify(chutier) !== JSON.stringify(recu.bande.chutier ?? []) ||
       JSON.stringify(recette) !== JSON.stringify(recu.bande.recette) ||
       cadence !== recu.bande.cadence ||
       sens !== recu.bande.sens
     )
-  }, [recu, prises, recette, cadence, sens])
+  }, [recu, prises, chutier, recette, cadence, sens])
 
   // ── L'aperçu, refait à chaque geste et **sans rien écrire** ───────────────
 
@@ -388,6 +496,13 @@ export function EcranAtelierDeBande({
       const cible = affichee.current
       setJoue(false)
       setCourante(cible)
+      // **Et le ruban suit la flèche.** Sans cette ligne, pousser une image
+      // pendant que l'animation tourne laissait la sélection là où elle était :
+      // les tables réglaient une frame, la fiche en montrait une deuxième et le
+      // liseré du ruban en marquait une troisième. Une flèche désigne une image
+      // aussi clairement qu'un clic — elle doit la choisir pareil. Vu au
+      // navigateur le 5 septembre 2026, sur l'atelier jetable de la tranche.
+      setSelection([cible])
       setPrises((avant) =>
         avant.map((prise, index) => (index === cible ? change(prise) : prise)),
       )
@@ -398,17 +513,6 @@ export function EcranAtelierDeBande({
   const pousser = useCallback(
     (dx: number, dy: number) =>
       corriger((prise) => ({ ...prise, dx: prise.dx + dx, dy: prise.dy + dy })),
-    [corriger],
-  )
-
-  const remettreDroit = useCallback(
-    () => corriger((prise) => ({ ...prise, dx: 0, dy: 0 })),
-    [corriger],
-  )
-
-  const remplacer = useCallback(
-    (numero: number, clip: string) =>
-      corriger((prise) => ({ ...prise, numero, clip })),
     [corriger],
   )
 
@@ -443,6 +547,64 @@ export function EcranAtelierDeBande({
    *  change que sur un clic dans le ruban, lequel arrête le lecteur. */
   const choisie = Math.min(courante, Math.max(0, prises.length - 1))
   const reglee = prises[choisie]?.recette ?? recette
+
+  /** Corriger **la frame choisie** — pour les gestes qu'on lit avant de les
+   *  faire.
+   *
+   *  > ### ⚠️ La fiche disait « l'image choisie » et en changeait une autre
+   *  >
+   *  > La fiche de la frame passait par `corriger`, comme les flèches : lecteur
+   *  > en marche, elle décrivait l'image *qui passe*. On choisissait l'image 14,
+   *  > la fiche montrait l'image 10, et taper un numéro remplaçait la 10. La
+   *  > phrase « cette image a sa recette à elle » désignait, elle aussi, une
+   *  > image au hasard. Vu au navigateur le 5 septembre 2026.
+   *
+   *  Le partage est celui des tables, et pour la même raison : **remplacer une
+   *  prise se lit d'abord** — quel clip, quel numéro, ce que la frame va perdre
+   *  — et lire prend plus longtemps qu'une image de l'animation. Les flèches,
+   *  elles, gardent la règle d'`A7` et tombent sur ce que l'œil regardait ;
+   *  elles emmènent le ruban avec elles, si bien qu'après la première poussée
+   *  les deux désignent la même image. */
+  const corrigerLaChoisie = useCallback(
+    (change: (prise: Prise) => Prise) => {
+      setJoue(false)
+      setPrises((avant) =>
+        avant.map((prise, index) => (index === choisie ? change(prise) : prise)),
+      )
+    },
+    [choisie],
+  )
+
+  const remettreDroit = useCallback(
+    () => corrigerLaChoisie((prise) => ({ ...prise, dx: 0, dy: 0 })),
+    [corrigerLaChoisie],
+  )
+
+  /** **Changer l'image d'une frame** — et sa recette individuelle ne suit pas
+   *  (V3.03.3).
+   *
+   *  > ### ⚠️ Une retouche mentirait sur une autre image
+   *  >
+   *  > Une recette individuelle a été posée *en regardant celle-là* : un point
+   *  > de pipette, un cadre tracé, un passage de la main désignent un endroit de
+   *  > cette image-ci, et l'image 22 n'a pas le bras au même endroit que la 21.
+   *  > La transporter donnerait un réglage que personne n'a jamais jugé, et il
+   *  > se verrait à l'export.
+   *
+   *  La frame revient donc à la recette de l'animation, et **l'écran le dit
+   *  avant** — sous le contrôle qui remplace, quand la frame en a une à perdre.
+   *  C'est la même règle que le lot `U` tient pour une recette qui voyage, prise
+   *  par l'autre bout : là-bas la recette change d'image, ici c'est l'image qui
+   *  change sous la recette. */
+  const remplacer = useCallback(
+    (numero: number, clip: string) =>
+      corrigerLaChoisie((prise) =>
+        prise.numero === numero && prise.clip === clip
+          ? prise
+          : { ...prise, numero, clip, recette: null },
+      ),
+    [corrigerLaChoisie],
+  )
 
   // ── Une image, plusieurs, ou toutes (V3.03.2) ─────────────────────────────
 
@@ -607,6 +769,191 @@ export function EcranAtelierDeBande({
     )
   }, [choisies])
 
+  // ── Le ruban se monte (V3.03.3) ───────────────────────────────────────────
+  //
+  // **Une bande gardée n'est pas un tirage figé** : on retire, on duplique, on
+  // déplace, on va chercher une image de plus dans le clip. Les quatre gestes
+  // passent par la même porte, et aucun n'écrit avant « Enregistrer ».
+
+  const clipDeLaBande = recu?.bande.clip ?? ""
+  const imagesMax = recu?.images_max ?? 64
+  const [premiereChoisie] = choisies
+
+  /** **La seule porte par laquelle l'ordre du ruban change.**
+   *
+   *  Elle prend le nouvel ordre sous la forme *d'où vient chaque image* —
+   *  `venu` est son rang d'avant, `-1` pour une image qui n'était pas dans la
+   *  bande — et elle emmène avec elle ce que le serveur avait dit de chaque
+   *  frame.
+   *
+   *  ⚠️ **Sans ce transport, les liserés glissent d'un cran.** Les écarts sont
+   *  indexés par rang ; retirer la deuxième image sans les déplacer ferait
+   *  porter à la troisième ce que la quatrième écartait, jusqu'à ce que
+   *  l'aperçu réponde — cent vingt millisecondes plus tard, et *pendant qu'on
+   *  regarde le résultat de son geste*. Une image neuve, elle, attend l'aperçu :
+   *  ce qu'elle écarte est une phrase, et **les mots des places viennent du
+   *  serveur** — les écrire ici serait le second vocabulaire que la V3.03.1
+   *  s'est employée à ne pas fabriquer. */
+  const remonterLeRuban = useCallback(
+    (
+      ordre: { prise: Prise; venu: number }[],
+      suite?: { chutier?: Prise[]; choix?: number[] },
+    ) => {
+      setJoue(false)
+      setPrises(ordre.map((o) => o.prise))
+      setEcarts((avant) =>
+        ordre.map(
+          (o) =>
+            (o.venu >= 0 ? avant[o.venu] : undefined) ?? {
+              places: [],
+              fenetre_davant: false,
+            },
+        ),
+      )
+      if (suite?.chutier) setChutier(suite.chutier)
+      if (suite?.choix?.length) {
+        setSelection(suite.choix)
+        setCourante(suite.choix[0])
+      }
+    },
+    [],
+  )
+
+  /** Retirer les images choisies — **elles vont au chutier, pas au néant**.
+   *
+   *  Fermé quand tout est choisi : une bande garde au moins une image, et le
+   *  serveur le refuserait de toute façon — le dire ici évite de découvrir le
+   *  refus après une minute de travail. */
+  const retirer = useCallback(() => {
+    if (choisies.length >= prises.length) return
+    const partent = new Set(choisies)
+    const ordre = prises
+      .map((prise, rang) => ({ prise, venu: rang }))
+      .filter((o) => !partent.has(o.venu))
+    const apres = Math.min(premiereChoisie, ordre.length - 1)
+    remonterLeRuban(ordre, {
+      chutier: auChutier(
+        chutier,
+        choisies.map((rang) => prises[rang]),
+        clipDeLaBande,
+      ),
+      choix: [Math.max(0, apres)],
+    })
+  }, [choisies, premiereChoisie, prises, chutier, clipDeLaBande, remonterLeRuban])
+
+  /** Dupliquer les images choisies — **la copie se pose juste après l'original**,
+   *  et elle emporte sa recette : c'est la même image.
+   *
+   *  Ce sont **les copies qui restent choisies**. Elles sont ce qu'on vient de
+   *  faire, et laisser le choix sur les originales ferait paraître le liseré
+   *  glisser d'un cran vers la gauche au moment précis où le ruban s'allonge. */
+  const dupliquer = useCallback(() => {
+    if (prises.length + choisies.length > imagesMax) return
+    const copiees = new Set(choisies)
+    const ordre: { prise: Prise; venu: number }[] = []
+    const neuves: number[] = []
+    prises.forEach((prise, rang) => {
+      ordre.push({ prise, venu: rang })
+      if (!copiees.has(rang)) return
+      neuves.push(ordre.length)
+      // `venu` reste celui de l'original : la copie porte la même recette, donc
+      // le même écart, et le liseré paraît avec elle plutôt qu'à l'aperçu
+      // suivant.
+      ordre.push({ prise: { ...prise }, venu: rang })
+    })
+    remonterLeRuban(ordre, { choix: neuves })
+  }, [choisies, prises, imagesMax, remonterLeRuban])
+
+  /** Sortir les images choisies et les reposer à la place `ou` **de ce qui
+   *  reste**.
+   *
+   *  Compter la place dans ce qui reste plutôt que dans le ruban entier est ce
+   *  qui rend le geste juste quand le choix n'est pas d'un seul tenant : les
+   *  images choisies se regroupent là où on les pose, ce qui est la seule
+   *  réponse qu'on puisse expliquer en une phrase. */
+  const deplacerVers = useCallback(
+    (ou: number) => {
+      const bougent = new Set(choisies)
+      const restants = prises
+        .map((prise, rang) => ({ prise, venu: rang }))
+        .filter((o) => !bougent.has(o.venu))
+      const partants = choisies.map((rang) => ({ prise: prises[rang], venu: rang }))
+      const place = Math.max(0, Math.min(restants.length, ou))
+      remonterLeRuban(
+        [...restants.slice(0, place), ...partants, ...restants.slice(place)],
+        { choix: partants.map((_, rang) => place + rang) },
+      )
+    },
+    [choisies, prises, remonterLeRuban],
+  )
+
+  /** Où les images choisies se tiennent **dans ce qui reste** — le point de
+   *  départ des deux boutons, et de rien d'autre. */
+  const placeDuChoix = useMemo(
+    () =>
+      prises.filter(
+        (_, rang) => rang < premiereChoisie && !choisies.includes(rang),
+      ).length,
+    [prises, premiereChoisie, choisies],
+  )
+
+  /** Déposer le choix **avant l'image sur laquelle on lâche**. Lâcher sur une
+   *  image choisie ne fait rien : on ne se dépose pas sur soi-même. */
+  const deposerSur = useCallback(
+    (rang: number) => {
+      if (choisies.includes(rang)) return
+      deplacerVers(prises.filter((_, r) => r < rang && !choisies.includes(r)).length)
+    },
+    [choisies, prises, deplacerVers],
+  )
+
+  /** Poser une image du chutier **avant ou après la frame choisie**, et l'en
+   *  sortir : une image est dans la bande ou au chutier, jamais dans les deux.
+   *
+   *  ⚠️ **Elle se pose à côté de la frame *choisie*, pas de celle qui passe.**
+   *  C'est la règle de la V3.03.1 reprise ici : le lecteur peut tourner pendant
+   *  qu'on travaille, et une insertion qui viserait l'image affichée tomberait
+   *  à un rang tiré au sort par le métronome. */
+  const insererDuChutier = useCallback(
+    (rang: number, ou: "avant" | "apres") => {
+      const prise = chutier[rang]
+      if (!prise) return
+      if (prises.length + 1 > imagesMax) return
+      const place = Math.min(prises.length, ou === "avant" ? choisie : choisie + 1)
+      const ordre = prises.map((une, r) => ({ prise: une, venu: r }))
+      ordre.splice(place, 0, { prise, venu: -1 })
+      remonterLeRuban(ordre, {
+        chutier: chutier.filter((_, r) => r !== rang),
+        choix: [place],
+      })
+    },
+    [chutier, prises, choisie, imagesMax, remonterLeRuban],
+  )
+
+  /** **Prendre des images dans le clip** — elles entrent au chutier, et rien du
+   *  ruban ne bouge. Le geste est celui du montage vu de l'autre côté : là-bas
+   *  on taille, ici on va chercher ce qui manque. */
+  const prendreAuClip = useCallback(
+    (numeros: number[]) => {
+      setChutier((avant) =>
+        auChutier(
+          avant,
+          numeros.map((numero) => ({ numero, clip: "", dx: 0, dy: 0 })),
+          clipDeLaBande,
+        ),
+      )
+      setAuClip(false)
+    },
+    [clipDeLaBande],
+  )
+
+  /** Ce que le chutier laisse tomber sans qu'on le repose. **Un geste qui ne
+   *  perd rien** : l'image est dans le clip, elle s'y reprend. */
+  const viderDuChutier = useCallback(
+    (rang: number) => setChutier((avant) => avant.filter((_, r) => r !== rang)),
+    [],
+  )
+
   /** Ce que les tables de l'établi attendent pour se rendre sur cette frame.
    *
    *  ⚠️ **`regler` et `poser` font ici la même chose**, et c'est la seule
@@ -634,6 +981,8 @@ export function EcranAtelierDeBande({
   const annuler = useCallback(() => {
     if (!recu) return
     setPrises(recu.bande.prises)
+    setChutier(recu.bande.chutier ?? [])
+    setEcarts(recu.ecarts ?? [])
     setRecette(recu.bande.recette)
     setCadence(recu.bande.cadence)
     setSens(recu.bande.sens)
@@ -645,6 +994,7 @@ export function EcranAtelierDeBande({
     try {
       await api.corrigerLaBande(recu.bande.identifiant, {
         prises,
+        chutier,
         recette,
         cadence,
         sens,
@@ -659,6 +1009,7 @@ export function EcranAtelierDeBande({
       const ouvert = await api.ouvrirLaBande(recu.bande.identifiant)
       setRecu(ouvert)
       setPrises(ouvert.bande.prises)
+      setChutier(ouvert.bande.chutier ?? [])
       setPlanche(ouvert.planche)
       setEcarts(ouvert.ecarts ?? [])
       onChangee?.()
@@ -667,7 +1018,7 @@ export function EcranAtelierDeBande({
     } finally {
       setEnregistre(false)
     }
-  }, [recu, prises, recette, cadence, sens, onChangee, onErreur])
+  }, [recu, prises, chutier, recette, cadence, sens, onChangee, onErreur])
 
   // ── Reprendre la fenêtre commune ──────────────────────────────────────────
   //
@@ -683,6 +1034,7 @@ export function EcranAtelierDeBande({
       const ouvert = await api.ouvrirLaBande(recu.bande.identifiant)
       setRecu(ouvert)
       setPrises(ouvert.bande.prises)
+      setChutier(ouvert.bande.chutier ?? [])
       setPlanche(ouvert.planche)
       setEcarts(ouvert.ecarts ?? [])
       onChangee?.()
@@ -837,7 +1189,25 @@ export function EcranAtelierDeBande({
         )}
       </aside>
 
-      {/* ── La frame en grand, avec le zoom des tables ───────────────────── */}
+      {/* ── La frame en grand, avec le zoom des tables ─────────────────────
+          … ou la pellicule du clip quand on va y chercher une image (V3.03.3).
+          **Elle prend la place, elle ne se pose pas dessus** : c'est la
+          profondeur suivante du même endroit, comme le montage prend celle de
+          la grille. Le ruban et le chutier restent visibles à droite —
+          justement ce qu'on regarde pendant qu'on choisit. */}
+      {auClip ? (
+        <PelliculeDuClip
+          clip={bande.clip}
+          images={recu.images_par_clip[bande.clip] ?? 0}
+          contact={recu.contact}
+          deja={[
+            ...prises.filter((p) => !p.clip || p.clip === bande.clip),
+            ...chutier.filter((p) => !p.clip || p.clip === bande.clip),
+          ].map((p) => p.numero)}
+          onPrendre={prendreAuClip}
+          onFermer={() => setAuClip(false)}
+        />
+      ) : (
       <div className="flex min-h-0 flex-col items-center justify-center gap-3 p-4">
         <ZoomDeLaFrame
           facteur={facteur}
@@ -860,7 +1230,7 @@ export function EcranAtelierDeBande({
         />
 
         <CorrectionDeLImage
-          prise={prises[rang]}
+          prise={prises[choisie]}
           clipDeLaBande={bande.clip}
           imagesParClip={recu.images_par_clip}
           voisins={recu.clips_voisins}
@@ -871,6 +1241,7 @@ export function EcranAtelierDeBande({
           onRemettreDroit={remettreDroit}
         />
       </div>
+      )}
 
       {/* ── Ses images, et le lecteur sous elles ─────────────────────────── */}
       <aside
@@ -903,6 +1274,23 @@ export function EcranAtelierDeBande({
             </button>
           )}
         </div>
+
+        {/* **Le montage du ruban** (V3.03.3) — une bande gardée n'est pas un
+            tirage figé. Les quatre gestes sont des boutons et pas seulement des
+            raccourcis : le glissement fait la même chose à la souris, mais
+            *tout se fait au clavier autant qu'à la souris* est un critère de la
+            version, et les flèches sont déjà prises par la poussée au pixel. */}
+        <MontageDuRuban
+          choisies={choisies.length}
+          compte={compte}
+          place={placeDuChoix}
+          restants={compte - choisies.length}
+          plafond={imagesMax}
+          onRetirer={retirer}
+          onDupliquer={dupliquer}
+          onDeplacer={deplacerVers}
+        />
+
         <div className="defile flex min-h-0 flex-1 flex-wrap content-start gap-1 overflow-y-auto p-2">
           {prises.map((prise, index) => (
             <ImageDeLaBande
@@ -924,9 +1312,25 @@ export function EcranAtelierDeBande({
                     ? basculerUne(index)
                     : choisirUne(index)
               }
+              onPrendreEnMain={() => {
+                if (!choisies.includes(index)) choisirUne(index)
+              }}
+              onDeposer={() => deposerSur(index)}
             />
           ))}
         </div>
+
+        <LeChutier
+          chutier={chutier}
+          clipDeLaBande={bande.clip}
+          contact={recu.contact}
+          imagesParClip={recu.images_par_clip}
+          ancre={choisie + 1}
+          plein={compte >= imagesMax}
+          onInserer={insererDuChutier}
+          onVider={viderDuChutier}
+          onAllerAuClip={() => setAuClip(true)}
+        />
 
         <Lecteur
           joue={joue}
@@ -944,6 +1348,14 @@ export function EcranAtelierDeBande({
             de cette image », aurait fait croire qu'on règle une pose alors
             qu'on règle les douze. */}
         <div className="defile flex shrink-0 flex-col gap-3 overflow-y-auto border-t border-bord p-2">
+          {onReprendreLeMontage && (
+            <RepriseDuMontage
+              melangee={bande.melangee}
+              bloquee={change}
+              onReprendre={() => onReprendreLeMontage(bande)}
+            />
+          )}
+
           <ReglagesDeLaBande sens={sens} onSens={setSens} />
 
           <ChoixDeLAncrage
@@ -1189,6 +1601,23 @@ function CorrectionDeLImage({
         </label>
       )}
 
+      {/* ⚠️ **Ce que remplacer coûte, dit avant de remplacer** (V3.03.3). Une
+          recette individuelle a été posée en regardant cette image-là : un
+          point de pipette, un cadre tracé, un passage de la main désignent un
+          endroit qui n'est pas au même endroit sur l'image d'à côté. Elle ne
+          suit donc pas — et *rien ne se réécrit en silence* veut dire que
+          l'écran le dit **avant**, sous le contrôle qui le fera. */}
+      {prise.recette && (
+        <p
+          data-recette-perdue-au-remplacement
+          className="mesure text-[10px] leading-4 text-signal"
+        >
+          Cette image a <b className="text-texte-2">sa recette à elle</b> : la
+          remplacer la rend à la recette de l'animation. C'est une autre image,
+          et un réglage posé en regardant celle-ci mentirait dessus.
+        </p>
+      )}
+
       <Curseur
         libelle="L'image d'avant, en transparence"
         valeur={pelure}
@@ -1220,6 +1649,8 @@ function ImageDeLaBande({
   venueDAilleurs,
   ecart,
   onChoisir,
+  onPrendreEnMain,
+  onDeposer,
 }: {
   prise: Prise
   index: number
@@ -1236,6 +1667,11 @@ function ImageDeLaBande({
    *  **Les places sont nommées par le serveur** — voir `ReglagesDeLaFrame`. */
   ecart?: { places: string[]; fenetre_davant: boolean }
   onChoisir: (comment: "seule" | "etendre" | "ajouter") => void
+  /** On commence à la glisser : si elle n'était pas choisie, elle le devient —
+   *  sans quoi le glissement déplacerait un choix qu'on ne regarde pas. */
+  onPrendreEnMain: () => void
+  /** On lâche le choix **avant celle-ci**. */
+  onDeposer: () => void
 }) {
   const cote = 64
   const facteur = Math.max(1, Math.floor(Math.min(cote / haut, cote / large)))
@@ -1265,6 +1701,16 @@ function ImageDeLaBande({
               : "seule",
         )
       }
+      // **Le glissement déplace, le clic choisit** (V3.03.3). Les deux vivent
+      // sur le même bouton parce que c'est la même chose qu'on manipule, et le
+      // navigateur les sépare tout seul : un glissement n'émet pas de clic.
+      draggable
+      onDragStart={onPrendreEnMain}
+      onDragOver={(evenement) => evenement.preventDefault()}
+      onDrop={(evenement) => {
+        evenement.preventDefault()
+        onDeposer()
+      }}
       data-image-de-la-bande={index}
       data-secarte={secarte ? "" : undefined}
       data-choisie={choisie ? "" : undefined}
@@ -1325,6 +1771,478 @@ function ImageDeLaBande({
         </span>
       )}
     </button>
+  )
+}
+
+/** **Les quatre gestes qui montent le ruban** (V3.03.3) : retirer, dupliquer,
+ *  et déplacer d'un cran dans un sens ou dans l'autre.
+ *
+ *  **Ils portent sur les images choisies**, comme les tables : un écran où
+ *  certains gestes visent la sélection et d'autres une seule image ferait
+ *  deviner lequel est lequel à chaque clic. C'est aussi ce qui les met à l'abri
+ *  du lecteur — la sélection ne bouge pas pendant que l'animation tourne, à la
+ *  différence de l'image affichée.
+ *
+ *  ⚠️ **Retirer se ferme quand tout est choisi**, et dupliquer quand le ruban
+ *  atteindrait le plafond du serveur. Les deux portent leur raison : un bouton
+ *  éteint sans raison se lit comme un bouton cassé. */
+function MontageDuRuban({
+  choisies,
+  compte,
+  place,
+  restants,
+  plafond,
+  onRetirer,
+  onDupliquer,
+  onDeplacer,
+}: {
+  /** Combien d'images les gestes emportent. */
+  choisies: number
+  /** Combien le ruban en porte. */
+  compte: number
+  /** Où les images choisies se tiennent dans ce qui resterait sans elles. */
+  place: number
+  /** Combien d'images resteraient — les bornes des deux flèches. */
+  restants: number
+  plafond: number
+  onRetirer: () => void
+  onDupliquer: () => void
+  onDeplacer: (ou: number) => void
+}) {
+  const tout = choisies >= compte
+  const deborde = compte + choisies > plafond
+  const mot = choisies > 1 ? `les ${choisies} images` : "cette image"
+  return (
+    <div
+      data-montage-du-ruban
+      className="flex flex-col gap-1 border-t border-bord px-2 pb-1 pt-1.5"
+    >
+      <div className="flex flex-wrap items-center gap-1">
+        <button
+          type="button"
+          onClick={onRetirer}
+          disabled={tout}
+          aria-label={`Retirer ${mot} du ruban`}
+          className="mesure border border-bord px-1.5 py-0.5 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          retirer
+        </button>
+        <button
+          type="button"
+          onClick={onDupliquer}
+          disabled={deborde}
+          aria-label={`Dupliquer ${mot}`}
+          className="mesure border border-bord px-1.5 py-0.5 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          dupliquer
+        </button>
+        <span className="mesure ml-auto text-[10px] text-texte-3">déplacer</span>
+        <button
+          type="button"
+          onClick={() => onDeplacer(place - 1)}
+          disabled={place <= 0}
+          aria-label={`Déplacer ${mot} vers la gauche`}
+          className="h-[22px] w-[22px] border border-bord text-[10px] text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          onClick={() => onDeplacer(place + 1)}
+          disabled={place >= restants}
+          aria-label={`Déplacer ${mot} vers la droite`}
+          className="h-[22px] w-[22px] border border-bord text-[10px] text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ›
+        </button>
+      </div>
+      <p className="mesure text-[10px] leading-4 text-texte-3">
+        {tout ? (
+          <>
+            Toutes les images sont choisies :{" "}
+            <b className="text-texte-2">une animation en garde au moins une</b>,
+            et il n'y a rien à retirer.
+          </>
+        ) : deborde ? (
+          <>
+            Une animation porte au plus{" "}
+            <b className="text-texte-2">{plafond} images</b> — dupliquer les{" "}
+            {choisies} ferait déborder ce ruban.
+          </>
+        ) : (
+          <>
+            L'ordre du ruban est{" "}
+            <b className="text-texte-2">l'ordre de l'export</b>. Une image
+            retirée part au chutier avec sa recette, une copie garde la sienne,
+            et rien n'est écrit tant que vous n'avez pas enregistré.
+          </>
+        )}
+      </p>
+    </div>
+  )
+}
+
+/** **Le chutier — la réserve de la bande** (V3.03.3).
+ *
+ *  Les images retirées du ruban et celles qu'on est allé chercher dans le clip,
+ *  pas encore posées. Chacune se remet dans la bande **avant ou après l'image
+ *  choisie** — deux boutons plutôt qu'un glissement, parce que la position doit
+ *  être dite et pas visée, et parce qu'un glissement ne se fait pas au clavier.
+ *
+ *  ⚠️ **Il se garde avec la bande.** Ce qu'on a mis de côté est une intention
+ *  qui survit à la fermeture de l'atelier : sans ça, il faudrait retrouver
+ *  l'image dans la pellicule à chaque visite — c'est-à-dire refaire le geste
+ *  qu'il existe pour éviter. */
+function LeChutier({
+  chutier,
+  clipDeLaBande,
+  contact,
+  imagesParClip,
+  ancre,
+  plein,
+  onInserer,
+  onVider,
+  onAllerAuClip,
+}: {
+  chutier: Prise[]
+  clipDeLaBande: string
+  contact: { cote: number; colonnes: number }
+  imagesParClip: Record<string, number>
+  /** Le rang, à partir de 1, de l'image auprès de laquelle on pose. */
+  ancre: number
+  /** Le ruban est au plafond : poser une image de plus le ferait déborder. */
+  plein: boolean
+  onInserer: (rang: number, ou: "avant" | "apres") => void
+  onVider: (rang: number) => void
+  onAllerAuClip: () => void
+}) {
+  return (
+    <div
+      data-chutier={chutier.length}
+      className="flex shrink-0 flex-col gap-1 border-t border-bord p-2"
+    >
+      <div className="flex items-baseline gap-2">
+        <Libelle aide="bande.chutier">le chutier</Libelle>
+        <button
+          type="button"
+          onClick={onAllerAuClip}
+          className="mesure ml-auto text-[10px] text-signal hover:text-texte-1"
+        >
+          prendre des images dans le clip ›
+        </button>
+      </div>
+
+      {chutier.length === 0 ? (
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          Vide. Ce que vous retirez du ruban vient ici, avec sa recette, et se
+          repose où vous voulez — <b className="text-texte-2">retirer n'est pas
+          jeter</b>.
+        </p>
+      ) : (
+        <>
+          <ul className="defile flex max-h-[132px] flex-col gap-1 overflow-y-auto">
+            {chutier.map((prise, rang) => {
+              const venue = prise.clip || clipDeLaBande
+              const combien = imagesParClip[venue] ?? 0
+              return (
+                <li
+                  key={`${venue}-${prise.numero}-${rang}`}
+                  data-au-chutier={prise.numero}
+                  className="flex items-center gap-1.5 border border-bord bg-fond-2 p-1"
+                >
+                  <CaseDuContact
+                    clip={venue}
+                    numero={prise.numero}
+                    images={combien}
+                    contact={contact}
+                    cote={32}
+                  />
+                  <span className="mesure text-[10px] text-texte-3">
+                    image {prise.numero}
+                    {prise.recette && (
+                      <b
+                        data-recette-au-chutier
+                        title="elle garde la recette qu'elle avait dans l'animation"
+                        className="ml-1 text-texte-2"
+                      >
+                        · sa recette
+                      </b>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onInserer(rang, "avant")}
+                    disabled={plein}
+                    aria-label={`Poser l'image ${prise.numero} avant l'image ${ancre}`}
+                    className="mesure ml-auto border border-bord px-1 py-0.5 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:opacity-40"
+                  >
+                    avant
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onInserer(rang, "apres")}
+                    disabled={plein}
+                    aria-label={`Poser l'image ${prise.numero} après l'image ${ancre}`}
+                    className="mesure border border-bord px-1 py-0.5 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:opacity-40"
+                  >
+                    après
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onVider(rang)}
+                    aria-label={`Laisser tomber l'image ${prise.numero} du chutier`}
+                    title="elle reste dans le clip, on peut la reprendre"
+                    className="mesure px-1 text-[10px] text-texte-3 hover:text-signal"
+                  >
+                    ×
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+          <p className="mesure text-[10px] leading-4 text-texte-3">
+            Elles se posent <b className="text-texte-2">avant ou après l'image{" "}
+            {ancre}</b>, celle que les tables règlent — pas celle qui passe à
+            l'écran.
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
+/** Une case de la planche contact d'un clip — **une seule image pour cent
+ *  vingt**.
+ *
+ *  Le serveur assemble toutes les images du clip en une grille et la garde ; on
+ *  n'en montre qu'une case en décalant le fond. Servir cent vingt images de
+ *  480 pixels pour dessiner des vignettes de trente-deux ferait payer vingt
+ *  mégaoctets à chaque ouverture. */
+function CaseDuContact({
+  clip,
+  numero,
+  images,
+  contact,
+  cote,
+}: {
+  clip: string
+  numero: number
+  images: number
+  contact: { cote: number; colonnes: number }
+  cote: number
+}) {
+  const facteur = cote / contact.cote
+  const lignes = Math.max(1, Math.ceil(images / contact.colonnes))
+  return (
+    <span
+      aria-hidden
+      className="block shrink-0 border border-bord bg-fond-1"
+      style={{
+        width: cote,
+        height: cote,
+        backgroundImage: `url(${api.contactDuClip(clip)})`,
+        backgroundSize: `${contact.colonnes * contact.cote * facteur}px ${
+          lignes * contact.cote * facteur
+        }px`,
+        backgroundPosition: `-${(numero % contact.colonnes) * cote}px -${
+          Math.floor(numero / contact.colonnes) * cote
+        }px`,
+        imageRendering: "pixelated",
+      }}
+    />
+  )
+}
+
+/** **Toute la pellicule du clip** (V3.03.3) — *comme le montage, sans le
+ *  montage*.
+ *
+ *  On y prend une ou plusieurs images d'un geste, et elles entrent au chutier.
+ *  Rien du ruban ne bouge : aller chercher une image n'est pas la poser.
+ *
+ *  ⚠️ **Elle ne rejoue pas le montage.** Pas de boucle, pas de propositions, pas
+ *  de fenêtre commune : ouvrir l'écran de montage mesure la fenêtre du clip et
+ *  coûte une vingtaine de secondes, pour répondre à une autre question. Ce qu'on
+ *  vient faire ici est *« il me manque une image »*, et ça se répond en la
+ *  regardant.
+ *
+ *  Les images que la bande porte déjà, et celles qui sont au chutier, sont
+ *  marquées : sans marque, on redemande deux fois la même. */
+function PelliculeDuClip({
+  clip,
+  images,
+  contact,
+  deja,
+  onPrendre,
+  onFermer,
+}: {
+  clip: string
+  images: number
+  contact: { cote: number; colonnes: number }
+  /** Les numéros déjà dans la bande ou au chutier. */
+  deja: number[]
+  onPrendre: (numeros: number[]) => void
+  onFermer: () => void
+}) {
+  const [choisies, setChoisies] = useState<number[]>([])
+  const basculer = (numero: number) =>
+    setChoisies((avant) =>
+      avant.includes(numero)
+        ? avant.filter((autre) => autre !== numero)
+        : [...avant, numero].sort((a, b) => a - b),
+    )
+  return (
+    <div
+      data-pellicule-du-clip={clip}
+      className="flex min-h-0 flex-col gap-3 p-4"
+    >
+      <div className="flex items-baseline gap-2">
+        <EnTetePanneau>les images du clip</EnTetePanneau>
+        <span className="mesure text-[10px] text-texte-3">
+          {images} images
+        </span>
+        <button
+          type="button"
+          onClick={onFermer}
+          className="mesure ml-auto text-[10px] text-texte-3 hover:text-signal"
+        >
+          ‹ revenir à l'image
+        </button>
+      </div>
+
+      <p className="mesure max-w-[70ch] text-[10px] leading-4 text-texte-3">
+        Prenez ce qui vous manque : les images choisies entrent{" "}
+        <b className="text-texte-2">au chutier</b>, et rien du ruban ne bouge.
+        Le clip est payé — en reprendre une image ne coûte rien.
+      </p>
+
+      <div className="defile flex min-h-0 flex-wrap content-start gap-1 overflow-y-auto">
+        {Array.from({ length: images }, (_, numero) => {
+          const dedans = deja.includes(numero)
+          const prise = choisies.includes(numero)
+          return (
+            <button
+              key={numero}
+              type="button"
+              onClick={() => basculer(numero)}
+              data-image-du-clip={numero}
+              data-prise={prise ? "" : undefined}
+              aria-pressed={prise}
+              aria-label={`l'image ${numero} du clip${
+                dedans ? ", déjà dans l'animation ou au chutier" : ""
+              }`}
+              title={
+                dedans
+                  ? `image ${numero} — déjà dans l'animation ou au chutier`
+                  : `image ${numero}`
+              }
+              className={`relative border ${
+                prise
+                  ? "border-signal"
+                  : "border-bord hover:border-texte-3"
+              } ${dedans ? "opacity-50" : ""}`}
+            >
+              <CaseDuContact
+                clip={clip}
+                numero={numero}
+                images={images}
+                contact={contact}
+                cote={48}
+              />
+              {dedans && (
+                <span
+                  data-deja-dedans
+                  aria-hidden
+                  className="absolute bottom-0 left-0 h-1 w-full bg-texte-3"
+                />
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={choisies.length === 0}
+          onClick={() => onPrendre(choisies)}
+          className="mesure border border-signal px-2 py-1 text-[10px] text-signal hover:bg-signal hover:text-fond-0 disabled:border-bord disabled:text-texte-3"
+        >
+          {choisies.length === 0
+            ? "choisissez au moins une image"
+            : `Prendre ${choisies.length} image${
+                choisies.length > 1 ? "s" : ""
+              } ›`}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** **Reprendre le montage de cette animation** (V3.03.3).
+ *
+ *  > ### ⚠️ Le montage repartait toujours des réglages du jeu
+ *  >
+ *  > C'est le cul-de-sac d'`A7` par l'autre bout : on savait tailler une
+ *  > animation dans un clip et **pas revenir sur ce découpage**. Ajouter une
+ *  > image demandait de refaire la bande entière, et de repayer de mémoire tous
+ *  > les réglages posés depuis.
+ *
+ *  Le bouton est **fermé sur une animation mêlée**, avec sa raison : le montage
+ *  ne montre qu'un clip, et y reprendre le découpage laisserait tomber les
+ *  images empruntées à l'autre. Il est fermé aussi tant que des corrections
+ *  attendent — le montage écrit sur la bande, et le faire par-dessus des
+ *  réglages en cours les perdrait. */
+function RepriseDuMontage({
+  melangee,
+  bloquee,
+  onReprendre,
+}: {
+  melangee: boolean
+  bloquee: boolean
+  onReprendre: () => void
+}) {
+  return (
+    <div data-reprise-du-montage className="flex flex-col gap-1">
+      <Libelle aide="bande.montage">le découpage</Libelle>
+      <button
+        type="button"
+        disabled={melangee || bloquee}
+        onClick={onReprendre}
+        className="mesure self-start border border-bord px-2 py-1 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Reprendre le montage ›
+      </button>
+      <p className="mesure text-[10px] leading-4 text-texte-3">
+        {melangee ? (
+          <>
+            Cette animation prend ses images dans{" "}
+            <b className="text-texte-2">plusieurs clips</b>, et le montage n'en
+            montre qu'un : y reprendre le découpage laisserait tomber celles de
+            l'autre.
+          </>
+        ) : bloquee ? (
+          /* ⚠️ **Deux gestes de cet écran écrivent sans passer par
+              « Enregistrer »** — celui-ci et « Reprendre la fenêtre » —, et les
+              deux se ferment tant que des corrections attendent. Leurs phrases
+              ne se recopient pas : elles nomment chacune **ce qu'on perdrait**,
+              et deux ouvertures identiques à trois centimètres l'une de l'autre
+              se lisent comme une seule répétée — le défaut trouvé au navigateur
+              le 5 septembre 2026, sur la V3.03.2. */
+          <>
+            <b className="text-texte-2">Des corrections attendent</b>, et le
+            montage écrit sur l'animation : les enregistrer d'abord évite de les
+            perdre en chemin.
+          </>
+        ) : (
+          <>
+            La pellicule du clip, avec{" "}
+            <b className="text-texte-2">les images déjà retenues</b> et la
+            vitesse de cette animation. Ce que vous gardez revient ici, recettes
+            comprises ; ce que vous laissez tombe au chutier.
+          </>
+        )}
+      </p>
+    </div>
   )
 }
 

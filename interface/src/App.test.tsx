@@ -1199,6 +1199,10 @@ function bandeRendue(nom: string, images: number[], prises?: Prise[]): Bande {
     nom,
     images,
     prises: retenues,
+    // **Le chutier naît vide** (V3.03.3), et c'est l'état de toute bande qu'on
+    // vient de tailler : la réserve se remplit de ce qu'on retire du ruban et
+    // de ce qu'on va chercher dans le clip.
+    chutier: [],
     clips: venus,
     melangee: venus.length > 1,
     cadence: 8,
@@ -1235,6 +1239,26 @@ const VOISINS_A7 = [
   { identifiant: "clip-a", mouvement: "marche", images: 22, sien: true },
   { identifiant: "clip-b", mouvement: "course", images: 18, sien: false },
 ]
+
+/** Ce que le serveur rend quand on rouvre une animation. **Une constante plutôt
+ *  qu'un littéral par essai** : la charge s'est allongée deux fois — les écarts
+ *  en V3.03.1, la planche contact et le plafond en V3.03.3 —, et chaque essai
+ *  qui l'écrivait en entier a dû être repris à chaque fois. Ce qu'un essai veut
+ *  poser, il le pose **par-dessus**. */
+const ATELIER_RENDU: AtelierDeBande = {
+  bande: GARDEE_A7,
+  planche: "data:image/png;base64,AAAA",
+  clips: { "clip-a": clipRendu("clip-a", false) },
+  images_par_clip: { "clip-a": 22 },
+  cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
+  clips_voisins: VOISINS_A7,
+  ecarts: GARDEE_A7.prises.map(() => ({ places: [], fenetre_davant: false })),
+  // La géométrie de la planche contact (V3.03.3) : elle vient du serveur, qui
+  // a écrit l'image avec — recopiée à l'écran, elle décalerait la pellicule
+  // d'une case le jour où l'une des deux changerait.
+  contact: { cote: 96, colonnes: 16 },
+  images_max: 64,
+}
 
 /** Ce que chaque frame écarte de la recette de la bande (V3.03.1).
  *
@@ -1488,15 +1512,7 @@ function serveurDouble(options: {
   // **L'animation qu'on rouvre** (A7), et elle vit entre deux appels. Le défaut
   // de la tranche était qu'une bande gardée ne se relisait pas : un double qui
   // rendrait toujours la bande de départ referait l'erreur sans la voir.
-  let atelierEnCours: AtelierDeBande = options.atelierDeBande ?? {
-    bande: GARDEE_A7,
-    planche: "data:image/png;base64,AAAA",
-    clips: { "clip-a": clipRendu("clip-a", false) },
-    images_par_clip: { "clip-a": 22 },
-    cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
-    clips_voisins: VOISINS_A7,
-    ecarts: GARDEE_A7.prises.map(() => ({ places: [], fenetre_davant: false })),
-  }
+  let atelierEnCours: AtelierDeBande = options.atelierDeBande ?? ATELIER_RENDU
 
   const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
     const url = String(chemin)
@@ -2037,6 +2053,10 @@ function serveurDouble(options: {
     if (url.startsWith("/api/strips/") && init?.method === "PUT") {
       const bande = { ...atelierEnCours.bande }
       if (corps?.prises) bande.prises = corps.prises as Prise[]
+      // **Une liste vide est un chutier vide, pas un champ absent** (V3.03.3) :
+      // on vient de reposer la dernière image dans le ruban, et un double qui
+      // l'ignorerait relirait une réserve que le serveur a effacée.
+      if (corps?.chutier !== undefined) bande.chutier = corps.chutier as Prise[]
       if (corps?.recette) bande.recette = corps.recette as Recette
       if (corps?.cadence) bande.cadence = Number(corps.cadence)
       if (corps?.sens) bande.sens = String(corps.sens) as Bande["sens"]
@@ -23017,16 +23037,8 @@ describe("A7 · l'atelier d'une animation", () => {
     const { atelier, cadre } = await ouvrirLAtelier(
       {
         atelierDeBande: {
+          ...ATELIER_RENDU,
           bande: { ...GARDEE_A7, cadence: 2, sens: "boucle" },
-          planche: "data:image/png;base64,AAAA",
-          clips: { "clip-a": clipRendu("clip-a", false) },
-          images_par_clip: { "clip-a": 22 },
-          cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
-          clips_voisins: VOISINS_A7,
-          ecarts: GARDEE_A7.prises.map(() => ({
-            places: [],
-            fenetre_davant: false,
-          })),
         },
       },
       false,
@@ -23084,18 +23096,7 @@ describe("A7 · l'atelier d'une animation", () => {
     // **Un menu à un seul choix n'est pas un choix**, et il ferait croire qu'il
     // y a quelque part un autre clip à trouver.
     const { atelier } = await ouvrirLAtelier({
-      atelierDeBande: {
-        bande: GARDEE_A7,
-        planche: "data:image/png;base64,AAAA",
-        clips: { "clip-a": clipRendu("clip-a", false) },
-        images_par_clip: { "clip-a": 22 },
-        cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
-        clips_voisins: [VOISINS_A7[0]],
-        ecarts: GARDEE_A7.prises.map(() => ({
-          places: [],
-          fenetre_davant: false,
-        })),
-      },
+      atelierDeBande: { ...ATELIER_RENDU, clips_voisins: [VOISINS_A7[0]] },
     })
 
     await atelier.findByText(/en pixels du sprite/)
@@ -23183,16 +23184,8 @@ describe("A7 · l'atelier d'une animation", () => {
     // régler.
     const { atelier } = await ouvrirLAtelier({
       atelierDeBande: {
+        ...ATELIER_RENDU,
         bande: { ...GARDEE_A7, recette: { ...GARDEE_A7.recette, passes: [] } },
-        planche: "data:image/png;base64,AAAA",
-        clips: { "clip-a": clipRendu("clip-a", false) },
-        images_par_clip: { "clip-a": 22 },
-        cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
-        clips_voisins: VOISINS_A7,
-        ecarts: GARDEE_A7.prises.map(() => ({
-          places: [],
-          fenetre_davant: false,
-        })),
       },
     })
 
@@ -23599,12 +23592,8 @@ describe("A7 · l'atelier d'une animation", () => {
     const { atelier, cadre } = await ouvrirLAtelier(
       {
         atelierDeBande: {
+          ...ATELIER_RENDU,
           bande: bandeEcartee,
-          planche: "data:image/png;base64,AAAA",
-          clips: { "clip-a": clipRendu("clip-a", false) },
-          images_par_clip: { "clip-a": 22 },
-          cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
-          clips_voisins: VOISINS_A7,
           ecarts: ecartsDesPrises(prisesEcartees, GARDEE_A7.recette),
         },
       },
@@ -23642,16 +23631,8 @@ describe("A7 · l'atelier d'une animation", () => {
     const { atelier, cadre } = await ouvrirLAtelier(
       {
         atelierDeBande: {
+          ...ATELIER_RENDU,
           bande: { ...GARDEE_A7, cadence: 2, sens: "boucle" },
-          planche: "data:image/png;base64,AAAA",
-          clips: { "clip-a": clipRendu("clip-a", false) },
-          images_par_clip: { "clip-a": 22 },
-          cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
-          clips_voisins: VOISINS_A7,
-          ecarts: GARDEE_A7.prises.map(() => ({
-            places: [],
-            fenetre_davant: false,
-          })),
         },
       },
       false,
@@ -23794,12 +23775,8 @@ describe("A7 · l'atelier d'une animation", () => {
     return ouvrirLAtelier({
       recettes: RECETTES_NOMMEES,
       atelierDeBande: {
+        ...ATELIER_RENDU,
         bande,
-        planche: "data:image/png;base64,AAAA",
-        clips: { "clip-a": clipRendu("clip-a", false) },
-        images_par_clip: { "clip-a": 22 },
-        cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
-        clips_voisins: VOISINS_A7,
         ecarts: ecartsDesPrises(prises, GARDEE_A7.recette),
       },
     })
@@ -24112,6 +24089,592 @@ describe("A7 · l'atelier d'une animation", () => {
         (await atelier.findByLabelText(/tolérance, en chiffres/)) as HTMLInputElement
       ).value,
     ).toBe("33")
+  })
+
+  // ── V3.03.3 · la bande se monte ─────────────────────────────────────────
+  //
+  // **Une bande gardée n'est pas un tirage figé.** On retire, on duplique, on
+  // déplace, on va chercher une image de plus dans le clip — et ce qu'on retire
+  // tombe au **chutier**, avec sa recette, au lieu de disparaître.
+  //
+  // ⚠️ **Le défaut de forme que ces essais cherchent est celui de la V3.03.1,
+  // d'un cran plus loin** : les gestes du ruban doivent porter sur l'image
+  // **choisie**, jamais sur celle qui passe. Le lecteur tourne pendant qu'on
+  // travaille, et une insertion qui viserait l'image affichée tomberait à un
+  // rang tiré au sort par le métronome. L'essai de l'insertion laisse donc
+  // l'animation **en marche, ralentie** (8octies).
+
+  /** Le chutier, entrée par entrée — les essais parlent du numéro d'image. */
+  const auChutier = (cadre: HTMLElement, numero: number) =>
+    cadre.querySelector(`[data-au-chutier="${numero}"]`) as HTMLElement | null
+
+  test("retirer une image la met au chutier, avec sa recette", async () => {
+    // **Retirer n'est pas jeter.** L'image part au chutier *entière* : sans ça,
+    // « retirer puis remettre » serait une façon silencieuse d'effacer les
+    // réglages posés dessus.
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    // La deuxième porte sa recette à elle — c'est celle qu'on retire.
+    fireEvent.click(vignette(cadre, 1))
+    fireEvent.click(atelier.getByRole("button", { name: /^Retirer / }))
+
+    await waitFor(() =>
+      expect(cadre.querySelectorAll("[data-image-de-la-bande]")).toHaveLength(3),
+    )
+    expect(auChutier(cadre, 14)).toBeTruthy()
+    expect(cadre.querySelector("[data-recette-au-chutier]")).toBeTruthy()
+
+    // Et ce qui part à l'aperçu est le ruban sans elle, dans l'ordre.
+    await waitFor(() =>
+      expect(dernieresPrises(appels).map((p) => p.numero)).toEqual([12, 16, 18]),
+    )
+  })
+
+  test("dupliquer pose la copie juste après, et elle emporte la même recette", async () => {
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 1))
+    fireEvent.click(atelier.getByRole("button", { name: /^Dupliquer / }))
+
+    // ⚠️ **Ici, et pas après le `waitFor`.** L'aperçu répond cent vingt
+    // millisecondes plus tard avec les écarts recalculés par le serveur, et il
+    // efface la trace de ce qu'on vérifie : que **l'écart voyage avec sa
+    // prise**. Sans ce transport, le liseré de la deuxième image glisse d'un
+    // cran pendant qu'on regarde le résultat de son geste — trois vignettes
+    // marquées deviennent deux, puis trois à nouveau. Une assertion posée après
+    // l'aperçu passe des deux côtés.
+    expect(cadre.querySelectorAll("[data-liser-ecart]")).toHaveLength(3)
+    // La copie est ce qu'on vient de faire : c'est elle qui reste choisie.
+    expect(vignette(cadre, 2).getAttribute("aria-pressed")).toBe("true")
+
+    await waitFor(() =>
+      expect(dernieresPrises(appels).map((p) => p.numero)).toEqual([
+        12, 14, 14, 16, 18,
+      ]),
+    )
+    const prises = dernieresPrises(appels)
+    // **C'est la même image** : la copie porte la recette de la source, sans
+    // quoi dupliquer rendrait une seconde image que personne n'a réglée.
+    expect(prises[2]?.recette?.passes[0]?.tolerance).toBe(61)
+    expect(prises[1]?.recette?.passes[0]?.tolerance).toBe(61)
+  })
+
+  test("déplacer une image change l'ordre, et c'est cet ordre qui part", async () => {
+    // *L'ordre du ruban est l'ordre de l'export* — vérifié sur ce qui part,
+    // pas sur ce qui s'affiche.
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 0))
+    fireEvent.click(
+      atelier.getByRole("button", { name: /^Déplacer .* vers la droite/ }),
+    )
+
+    await waitFor(() =>
+      expect(dernieresPrises(appels).map((p) => p.numero)).toEqual([
+        14, 12, 16, 18,
+      ]),
+    )
+    // Elle reste choisie là où elle est tombée — un choix qui resterait sur le
+    // rang d'avant désignerait l'image du voisin.
+    expect(vignette(cadre, 1).getAttribute("aria-pressed")).toBe("true")
+  })
+
+  test("une image se glisse à la place d'une autre", async () => {
+    // Le même geste à la souris. Il ne remplace pas les boutons : *tout se fait
+    // au clavier autant qu'à la souris*, et un glissement ne se fait pas au
+    // clavier.
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.dragStart(vignette(cadre, 3))
+    fireEvent.drop(vignette(cadre, 1))
+
+    await waitFor(() =>
+      expect(dernieresPrises(appels).map((p) => p.numero)).toEqual([
+        12, 18, 14, 16,
+      ]),
+    )
+  })
+
+  test("retirer se ferme avec sa raison quand toute la bande est choisie", async () => {
+    // **Une animation garde au moins une image**, et le serveur le refuserait
+    // de toute façon : le dire ici évite de découvrir le refus après une minute
+    // de travail. *Le grisé porte sa raison.*
+    const { atelier, cadre } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(atelier.getByRole("button", { name: "toutes" }))
+
+    await waitFor(() =>
+      expect(
+        atelier
+          .getByRole("button", { name: /^Retirer / })
+          .hasAttribute("disabled"),
+      ).toBe(true),
+    )
+    expect(await atelier.findByText(/en garde au moins une/)).toBeTruthy()
+    void cadre
+  })
+
+  test("on va chercher une image dans le clip, et elle entre au chutier", async () => {
+    // *« Aller chercher une frame en plus depuis le clip si il m'en manque
+    // une »* — la demande de l'auteur, mot pour mot. La pellicule prend la
+    // place de l'image en grand : c'est la profondeur suivante du même endroit.
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(
+      atelier.getByRole("button", { name: "prendre des images dans le clip ›" }),
+    )
+    const pellicule = await waitFor(() => {
+      const trouve = cadre.querySelector("[data-pellicule-du-clip]")
+      if (!trouve) throw new Error("la pellicule du clip ne s'est pas ouverte")
+      return trouve as HTMLElement
+    })
+
+    // Les images que la bande porte déjà sont marquées : sans marque, on
+    // redemande deux fois la même.
+    expect(
+      pellicule.querySelector('[data-image-du-clip="12"] [data-deja-dedans]'),
+    ).toBeTruthy()
+    expect(
+      pellicule.querySelector('[data-image-du-clip="5"] [data-deja-dedans]'),
+    ).toBeNull()
+
+    fireEvent.click(
+      pellicule.querySelector('[data-image-du-clip="5"]') as HTMLElement,
+    )
+    fireEvent.click(
+      pellicule.querySelector('[data-image-du-clip="9"]') as HTMLElement,
+    )
+    fireEvent.click(within(pellicule).getByRole("button", { name: /^Prendre 2 / }))
+
+    await waitFor(() => expect(auChutier(cadre, 5)).toBeTruthy())
+    expect(auChutier(cadre, 9)).toBeTruthy()
+    // **Rien du ruban n'a bougé** : aller chercher une image n'est pas la poser.
+    expect(cadre.querySelectorAll("[data-image-de-la-bande]")).toHaveLength(4)
+    expect(dernieresPrises(appels).map((p) => p.numero)).toEqual([12, 14, 16, 18])
+  })
+
+  test("une image du chutier se pose près de l'image choisie, lecteur en marche", async () => {
+    // ⚠️ **L'essai qui verrait le défaut** (8octies). L'animation tourne à deux
+    // images par seconde et l'écran en affiche une troisième ; l'image du
+    // chutier doit tomber **après l'image choisie** — la première, celle que les
+    // tables règlent —, pas après celle qui passe. Arrêter le lecteur d'abord
+    // supprimerait le défaut avant de le chercher : à l'arrêt, l'image regardée
+    // *est* l'image choisie.
+    const prises = PRISES_SEPAREES
+    const { atelier, cadre, appels } = await ouvrirLAtelier(
+      {
+        atelierDeBande: {
+          ...ATELIER_RENDU,
+          bande: {
+            ...GARDEE_A7,
+            cadence: 2,
+            sens: "boucle",
+            prises,
+            chutier: [{ numero: 7, clip: "", dx: 0, dy: 0 }],
+          },
+          ecarts: ecartsDesPrises(prises, GARDEE_A7.recette),
+        },
+      },
+      false,
+    )
+
+    await waitFor(() => expect(atelier.getByText(/image 3 sur 4/)).toBeTruthy(), {
+      timeout: 3000,
+    })
+
+    fireEvent.click(
+      atelier.getByRole("button", { name: "Poser l'image 7 après l'image 1" }),
+    )
+
+    await waitFor(() =>
+      expect(dernieresPrises(appels).map((p) => p.numero)).toEqual([
+        12, 7, 14, 16, 18,
+      ]),
+    )
+    // Elle quitte le chutier : une image est dans la bande ou au chutier,
+    // jamais dans les deux.
+    expect(auChutier(cadre, 7)).toBeNull()
+  })
+
+  test("le chutier part avec l'enregistrement et se relit après", async () => {
+    // *Le chutier se garde avec la bande et se rouvre* (8septies). On relit
+    // l'écran **après réouverture**, pas la réponse du `PUT` : une réserve qui
+    // partirait bien et s'écrirait mal rendrait la même réponse.
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 1))
+    fireEvent.click(atelier.getByRole("button", { name: /^Retirer / }))
+    fireEvent.click(await atelier.findByRole("button", { name: "Enregistrer ›" }))
+
+    await waitFor(() =>
+      expect(atelier.queryByText(/des corrections attendent/)).toBeNull(),
+    )
+    const ecriture = appels.find(
+      (a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps),
+    )
+    const parti = ecriture?.corps as { prises: Prise[]; chutier: Prise[] }
+    expect(parti.prises.map((p) => p.numero)).toEqual([12, 16, 18])
+    expect(parti.chutier.map((p) => p.numero)).toEqual([14])
+    expect(parti.chutier[0].recette?.passes[0]?.tolerance).toBe(61)
+
+    await waitFor(() => expect(auChutier(cadre, 14)).toBeTruthy())
+  })
+
+  test("remplacer une image lui retire sa recette, et l'écran le dit avant", async () => {
+    // ⚠️ **Une retouche mentirait sur une autre image** : un point de pipette ou
+    // un cadre tracé désigne un endroit de *celle-là*. La frame revient donc à
+    // la recette de l'animation — et *rien ne se réécrit en silence* veut dire
+    // que l'écran l'annonce **sous le contrôle qui le fera**.
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 1))
+    expect(
+      await atelier.findByText(/la remplacer la rend à la recette de l'animation/),
+    ).toBeTruthy()
+
+    fireEvent.change(
+      await atelier.findByLabelText("remplacer par une autre image du clip"),
+      { target: { value: "9" } },
+    )
+
+    await waitFor(() => {
+      const prises = dernieresPrises(appels)
+      expect(prises[1]?.numero).toBe(9)
+      expect(prises[1]?.recette ?? null).toBeNull()
+    })
+    // Les autres ne bougent pas : la troisième garde la sienne.
+    expect(dernieresPrises(appels)[2]?.recette?.quantification?.couleurs).toBe(12)
+  })
+
+  test("la fiche décrit l'image choisie et la remplace, lecteur en marche", async () => {
+    // ⚠️ **L'essai qui verrait le défaut** (8octies). La fiche passait par le
+    // même chemin que les flèches, et suivait donc l'image *qui passe* : on
+    // choisissait la troisième, la fiche décrivait la première, et taper un
+    // numéro remplaçait la première. La phrase « cette image a sa recette à
+    // elle » désignait, elle aussi, une image au hasard.
+    //
+    // Arrêter le lecteur d'abord effacerait le défaut avant de le chercher : à
+    // l'arrêt, l'image regardée *est* l'image choisie. Il tourne donc, ralenti à
+    // deux images par seconde — assez lent pour que l'essai sache laquelle passe
+    // au moment du geste, assez vivant pour que l'écart se produise.
+    const prises = PRISES_SEPAREES
+    const { atelier, cadre, appels } = await ouvrirLAtelier(
+      {
+        atelierDeBande: {
+          ...ATELIER_RENDU,
+          bande: { ...GARDEE_A7, cadence: 2, sens: "boucle", prises },
+          ecarts: ecartsDesPrises(prises, GARDEE_A7.recette),
+        },
+      },
+      false,
+    )
+    await waitFor(() => expect(atelier.getByText(/image 2 sur 4/)).toBeTruthy(), {
+      timeout: 3000,
+    })
+
+    // La troisième — celle qui porte ses douze couleurs. Le clic arrête le
+    // lecteur ; on le relance aussitôt, et on attend qu'une *autre* image passe.
+    fireEvent.click(
+      atelier.getByRole("button", { name: /l'image 16, 3ᵉ de l'animation/ }),
+    )
+    fireEvent.click(
+      await atelier.findByRole("button", { name: "faire tourner l'animation" }),
+    )
+    await waitFor(() => expect(atelier.getByText(/image 1 sur 4/)).toBeTruthy(), {
+      timeout: 3000,
+    })
+
+    // ⚠️ **Tout de suite, avant le cran suivant du lecteur.** La première image
+    // est à l'écran ; la fiche doit tenir sur la troisième, et annoncer ce
+    // qu'elle va lui faire perdre.
+    const champ = atelier.getByLabelText(
+      "remplacer par une autre image du clip",
+    ) as HTMLInputElement
+    expect(champ.value).toBe("16")
+    expect(
+      atelier.getByText(/la remplacer la rend à la recette de l'animation/),
+    ).toBeTruthy()
+
+    fireEvent.change(champ, { target: { value: "9" } })
+
+    await waitFor(() => {
+      const parties = dernieresPrises(appels)
+      expect(parties.map((p) => p.numero)).toEqual([12, 14, 9, 18])
+      expect(parties[2]?.recette ?? null).toBeNull()
+    })
+    // Celle qui passait à l'écran n'a rien perdu — ni son numéro, ni sa recette.
+    expect(dernieresPrises(appels)[1]?.recette?.passes[0]?.tolerance).toBe(61)
+    expect(cadre.querySelectorAll("[data-image-de-la-bande]")).toHaveLength(4)
+  })
+
+  test("une flèche choisit l'image qu'elle pousse, lecteur en marche", async () => {
+    // Le pendant du précédent, et l'autre moitié de la règle : **la flèche garde
+    // celle d'`A7`** — elle tombe sur ce que l'œil regardait —, mais elle emmène
+    // le ruban avec elle. Sans quoi les tables réglaient une image, la fiche en
+    // montrait une deuxième et le liseré du ruban en marquait une troisième.
+    const prises = PRISES_SEPAREES
+    const { atelier, cadre, appels } = await ouvrirLAtelier(
+      {
+        atelierDeBande: {
+          ...ATELIER_RENDU,
+          bande: { ...GARDEE_A7, cadence: 2, sens: "boucle", prises },
+          ecarts: ecartsDesPrises(prises, GARDEE_A7.recette),
+        },
+      },
+      false,
+    )
+    await waitFor(() => expect(atelier.getByText(/image 3 sur 4/)).toBeTruthy(), {
+      timeout: 3000,
+    })
+
+    const toile = atelier.getByRole("application", {
+      name: /les flèches la déplacent d'un pixel/,
+    })
+    toile.focus()
+    fireEvent.keyDown(window, { key: "ArrowRight" })
+
+    // La troisième a reçu la poussée — c'est elle qu'on regardait —, et c'est
+    // elle que la fiche décrit maintenant : les deux se sont rejointes.
+    await waitFor(() =>
+      expect(dernieresPrises(appels).map((p) => p.dx)).toEqual([0, 0, 1, 0]),
+    )
+    expect(
+      (
+        atelier.getByLabelText(
+          "remplacer par une autre image du clip",
+        ) as HTMLInputElement
+      ).value,
+    ).toBe("16")
+    expect(
+      cadre.querySelector('[data-image-de-la-bande="2"][aria-pressed="true"]'),
+    ).toBeTruthy()
+  })
+
+  test("« Reprendre le montage » rouvre le montage sur cette animation", async () => {
+    // **Le cul-de-sac d'`A7` par l'autre bout.** Le montage repartait toujours
+    // des réglages du jeu : ajouter une image demandait de refaire la bande
+    // entière. Il s'ouvre désormais sur *son* découpage et *sa* vitesse — celle
+    // de l'animation, onze, et non les huit du mouvement.
+    const { atelier } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(atelier.getByRole("button", { name: "Reprendre le montage ›" }))
+
+    const montage = await waitFor(() => {
+      const trouve = document.querySelector("[data-montage]")
+      if (!trouve) throw new Error("le montage ne s'est pas rouvert")
+      return trouve as HTMLElement
+    })
+    const dedans = within(montage)
+    // Par sa poignée, pas par son nom : le mouvement du clip s'appelle « marche »
+    // lui aussi, et l'en-tête le porte à trois centimètres de là.
+    expect(montage.querySelector("[data-on-remonte]")?.textContent).toBe("marche")
+    // Ses quatre images, pas la proposition du clip — poser une proposition
+    // par-dessus effacerait le travail au moment de le reprendre.
+    expect(
+      dedans.getByRole("button", { name: /Reprendre « marche » · 4 images/ }),
+    ).toBeTruthy()
+    // Onze, celle de l'animation — et non les huit que le mouvement propose :
+    // une bande a le droit d'être plus lente que la moyenne de son espèce.
+    expect(
+      (dedans.getByLabelText(/Vitesse, en chiffres/) as HTMLInputElement).value,
+    ).toBe("11 images / s")
+    // Le cadre s'y lit et ne s'y règle pas : le changer d'ici ne referait pas
+    // ses quatre nombres mesurés.
+    expect(montage.querySelector("[data-cadre-en-lecture]")).toBeTruthy()
+  })
+
+  test("reprendre le montage écrit sur l'animation, sans en garder une de plus", async () => {
+    const { atelier, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(atelier.getByRole("button", { name: "Reprendre le montage ›" }))
+    const montage = await waitFor(() => {
+      const trouve = document.querySelector("[data-montage]")
+      if (!trouve) throw new Error("le montage ne s'est pas rouvert")
+      return trouve as HTMLElement
+    })
+
+    // Le curseur du montage part de l'image 0 : la barre d'espace la prend.
+    fireEvent.keyDown(window, { key: " " })
+    fireEvent.click(
+      within(montage).getByRole("button", { name: /Reprendre « marche » · 5 images/ }),
+    )
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-atelier-de-bande]")).toBeTruthy(),
+    )
+    // **Une correction, pas une bande de plus.** Un `POST /api/strips` ici
+    // laisserait deux animations là où l'auteur en corrigeait une.
+    expect(
+      appels.some((a) => a.url === "/api/strips" && Boolean(a.corps)),
+    ).toBe(false)
+    const parti = appels.find(
+      (a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps),
+    )?.corps as { prises: Prise[]; chutier: Prise[] }
+    // L'image ajoutée se pose **au bout**, et pas à son rang de numéro : sur une
+    // reprise, l'ordre du ruban vient de l'auteur, et la ranger le défairait.
+    expect(parti.prises.map((p) => p.numero)).toEqual([12, 14, 16, 18, 0])
+    // ⚠️ **Une recette individuelle voyage avec sa prise** : les images gardées
+    // retrouvent la leur, l'image neuve n'en a aucune.
+    expect(parti.prises[1].recette?.passes[0]?.tolerance).toBe(61)
+    expect(parti.prises[4].recette ?? null).toBeNull()
+    expect(parti.chutier).toEqual([])
+  })
+
+  test("reprendre le montage envoie au chutier ce qu'on y laisse tomber", async () => {
+    // *Ce que vous laissez tombe au chutier, pas à la corbeille* : changer
+    // d'avis sur une image ne doit pas effacer ce qu'on avait réglé dessus.
+    const { atelier, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(atelier.getByRole("button", { name: "Reprendre le montage ›" }))
+    const montage = await waitFor(() => {
+      const trouve = document.querySelector("[data-montage]")
+      if (!trouve) throw new Error("le montage ne s'est pas rouvert")
+      return trouve as HTMLElement
+    })
+
+    // Le curseur va sur la deuxième image retenue — celle qui porte sa recette
+    // — et la barre d'espace la laisse.
+    for (let pas = 0; pas < 14; pas += 1)
+      fireEvent.keyDown(window, { key: "ArrowRight" })
+    fireEvent.keyDown(window, { key: " " })
+    fireEvent.click(
+      within(montage).getByRole("button", { name: /Reprendre « marche » · 3 images/ }),
+    )
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-atelier-de-bande]")).toBeTruthy(),
+    )
+    const parti = appels.find(
+      (a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps),
+    )?.corps as { prises: Prise[]; chutier: Prise[] }
+    expect(parti.prises.map((p) => p.numero)).toEqual([12, 16, 18])
+    expect(parti.chutier.map((p) => p.numero)).toEqual([14])
+    expect(parti.chutier[0].recette?.passes[0]?.tolerance).toBe(61)
+  })
+
+  const ouvrirLaReprise = async (bande: Partial<Bande>) => {
+    const { atelier, appels } = await ouvrirLAtelier({
+      atelierDeBande: { ...ATELIER_RENDU, bande: { ...GARDEE_A7, ...bande } },
+    })
+    await atelier.findByText(/en pixels du sprite/)
+    fireEvent.click(atelier.getByRole("button", { name: "Reprendre le montage ›" }))
+    const montage = await waitFor(() => {
+      const trouve = document.querySelector("[data-montage]")
+      if (!trouve) throw new Error("le montage ne s'est pas rouvert")
+      return trouve as HTMLElement
+    })
+    return { atelier, appels, montage, dedans: within(montage) }
+  }
+
+  /** Ce que la reprise a écrit sur l'animation — prises et chutier. */
+  const cePartiParLaReprise = (appels: { url: string; corps: unknown }[]) =>
+    appels.find((a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps))
+      ?.corps as { prises: Prise[]; chutier: Prise[] }
+
+  test("reprendre le montage ne retrie pas le ruban", async () => {
+    // ⚠️ **L'ordre du ruban est l'ordre de l'export**, et une reprise n'a pas le
+    // droit de le défaire. Le montage rangeait toute image ajoutée par numéro —
+    // ce qui est juste sur un montage neuf, où il n'y a pas d'autre ordre, et
+    // faux ici : celui-là vient de l'auteur, qui a déplacé ses images à la main.
+    // Une animation reprise pour y ajouter une seule image revenait rangée par
+    // numéro. Vu au navigateur le 5 septembre 2026.
+    const prises = [
+      GARDEE_A7.prises[0],
+      GARDEE_A7.prises[3],
+      GARDEE_A7.prises[1],
+      GARDEE_A7.prises[2],
+    ]
+    const { appels, dedans } = await ouvrirLaReprise({ prises })
+
+    // Elle s'ouvre sur l'ordre de l'animation, pas sur celui du clip.
+    fireEvent.click(dedans.getByRole("button", { name: "Image 9" }))
+    fireEvent.click(
+      dedans.getByRole("button", { name: /Reprendre « marche » · 5 images/ }),
+    )
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-atelier-de-bande]")).toBeTruthy(),
+    )
+    // L'image ajoutée se pose **au bout** — on la déplacera dans l'atelier —, et
+    // les quatre autres n'ont pas bougé d'un rang.
+    expect(cePartiParLaReprise(appels).prises.map((p) => p.numero)).toEqual([
+      12, 18, 14, 16, 9,
+    ])
+  })
+
+  test("une image du chutier reprise au montage quitte le chutier", async () => {
+    // *Une image est dans la bande, ou au chutier, jamais dans les deux.* Une
+    // image mise de côté que le montage reprend était dans les deux à la fois :
+    // le ruban la jouait, et le chutier proposait encore de la poser.
+    const { appels, dedans } = await ouvrirLaReprise({
+      chutier: [{ numero: 9, clip: "", dx: 3, dy: 0 }],
+    })
+
+    // On la reprend sur la pellicule, comme n'importe quelle image du clip : le
+    // chutier est une réserve de l'atelier, le montage ne connaît que le clip.
+    fireEvent.click(dedans.getByRole("button", { name: "Image 9" }))
+    fireEvent.click(
+      dedans.getByRole("button", { name: /Reprendre « marche » · 5 images/ }),
+    )
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-atelier-de-bande]")).toBeTruthy(),
+    )
+    const parti = cePartiParLaReprise(appels)
+    expect(parti.prises.map((p) => p.numero)).toEqual([12, 14, 16, 18, 9])
+    // Et elle retrouve sa poussée : c'est **sa** prise qui remonte, pas une neuve.
+    expect(parti.prises[4]?.dx).toBe(3)
+    expect(parti.chutier).toEqual([])
+  })
+
+  test("« Reprendre le montage » est fermé avec sa raison sur une animation mêlée", async () => {
+    // **Le montage ne montre qu'un clip.** Y reprendre le découpage d'une
+    // animation qui puise dans deux laisserait tomber les images de l'autre —
+    // sans un mot, et c'est très exactement ce que la version interdit.
+    const prises: Prise[] = [
+      ...GARDEE_A7.prises.slice(0, 3),
+      { numero: 4, clip: "clip-b", dx: 0, dy: 0 },
+    ]
+    const { atelier } = await ouvrirLAtelier({
+      atelierDeBande: {
+        ...ATELIER_RENDU,
+        bande: { ...GARDEE_A7, prises, clips: ["clip-a", "clip-b"], melangee: true },
+        images_par_clip: { "clip-a": 22, "clip-b": 18 },
+        ecarts: prises.map(() => ({ places: [], fenetre_davant: false })),
+      },
+    })
+    await atelier.findByText(/en pixels du sprite/)
+
+    expect(
+      atelier
+        .getByRole("button", { name: "Reprendre le montage ›" })
+        .hasAttribute("disabled"),
+    ).toBe(true)
+    expect(await atelier.findByText(/laisserait tomber celles de l'autre/)).toBeTruthy()
+  })
+
+  test("« Reprendre le montage » attend que les corrections soient enregistrées", async () => {
+    const { atelier, cadre } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    pousserDUnPixel(cadre)
+
+    const bouton = await atelier.findByRole("button", {
+      name: "Reprendre le montage ›",
+    })
+    await waitFor(() => expect(bouton.hasAttribute("disabled")).toBe(true))
+    expect(await atelier.findByText(/Des corrections attendent/)).toBeTruthy()
   })
 })
 

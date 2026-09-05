@@ -180,6 +180,14 @@
       "port": 8436
     },
     {
+      "name": "atelier-jetable-v303-3",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_v303_3.py"
+      ],
+      "port": 8472
+    },
+    {
       "name": "maquettes-carnet",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [

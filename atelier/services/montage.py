@@ -719,6 +719,21 @@ class ServiceMontage:
             },
             "cadre": self._etat_du_cadre(bande),
             "clips_voisins": self._clips_voisins(bande),
+            # **La géométrie de la planche contact** (V3.03.3) — de quoi
+            # dessiner la pellicule du clip sans redemander l'écran de montage,
+            # dont l'ouverture mesure la fenêtre commune et coûte une vingtaine
+            # de secondes sur un clip qu'on n'a jamais étudié.
+            #
+            # Le côté et le nombre de colonnes viennent d'ici parce qu'ils sont
+            # ceux avec lesquels l'image a été **écrite** : recopiés à l'écran,
+            # ils décaleraient la pellicule d'une case le jour où l'un des deux
+            # changerait. Le nombre de lignes, lui, se déduit du compte
+            # d'images, que l'écran a déjà dans `images_par_clip`.
+            "contact": {"cote": CONTACT_COTE, "colonnes": CONTACT_COLONNES},
+            # Ce qu'une bande peut porter au plus. L'écran s'en sert pour fermer
+            # « dupliquer » **avant** le geste plutôt que de laisser
+            # l'enregistrement échouer une minute de travail plus tard.
+            "images_max": IMAGES_MAX,
             # Ce que chaque frame change à la recette de la bande (V3.03.1).
             # Au même rang que les prises : l'écran lit le ruban sur le même
             # défilement, sans recalculer de comparaison qui finirait par ne
@@ -845,6 +860,7 @@ class ServiceMontage:
         identifiant: str,
         *,
         prises: Sequence[Prise] | None = None,
+        chutier: Sequence[Prise] | None = None,
         recette: Recette | None = None,
         cadence: float | None = None,
         sens: str | None = None,
@@ -873,6 +889,15 @@ class ServiceMontage:
             # était, planche comprise.
             self._fichiers_des_prises(bande.clip, prises)
             bande.prises = tuple(prises)
+        if chutier is not None:
+            # **Le chutier passe le même contrôle que le ruban** (V3.03.3), et
+            # pour la même raison : une image qu'aucun clip ne porte se poserait
+            # sans lever, et la panne arriverait au moment de la reposer dans la
+            # bande — c'est-à-dire loin du geste qui l'a écrite. La seule
+            # différence est qu'un chutier **vide est un état normal**, là où une
+            # bande sans image n'en est pas un.
+            self._verifier_le_chutier(bande.clip, chutier)
+            bande.chutier = tuple(chutier)
         if recette is not None:
             bande.recette = recette
         if cadence is not None:
@@ -1199,6 +1224,29 @@ class ServiceMontage:
                 )
             retenues.append(toutes[prise.numero])
         return retenues
+
+    def _verifier_le_chutier(self, clip: str, chutier: Sequence[Prise]) -> None:
+        """Le chutier existe-t-il vraiment sur le disque ? (V3.03.3)
+
+        Le même contrôle que le ruban, **et il ne rend rien** : le chutier
+        n'entre dans aucune planche, donc personne n'a besoin de ses fichiers —
+        on veut seulement savoir qu'ils sont là. Sans ce passage, une image que
+        le clip ne porte pas s'écrirait sans lever, et la panne arriverait au
+        moment de la reposer dans la bande : loin du geste qui l'a écrite, et
+        avec un message parlant du ruban.
+
+        ⚠️ **Un chutier vide est un état normal**, à la différence d'une bande
+        sans image : c'est l'état de toutes les bandes d'avant la tranche, et
+        c'est celui d'une bande dont on vient de tout reposer.
+        """
+        if not chutier:
+            return
+        if len(chutier) > IMAGES_MAX:
+            raise ErreurAtelier(
+                f"le chutier porte au plus {IMAGES_MAX} images ; "
+                f"celui-ci en demande {len(chutier)}"
+            )
+        self._fichiers_des_prises(clip, chutier)
 
     # ── Le clip lui-même ─────────────────────────────────────────────────────
 

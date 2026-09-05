@@ -29,10 +29,10 @@ points.
 | **Reprises** — `R6` à `R9` | La planche de travers, le texte qui part en trois parties, la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** |
 | **V2.3** — `D1` à `D5` | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** |
 | **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **close le 5 septembre 2026**. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. **`A12` est l'objectif de la version, et il est atteint** : la matrice d'un personnage se lit sur deux calques — images fixes, animations —, chacun avec sa jauge. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée sort en planche de sprites, avec le fichier d'accompagnement que les moteurs lisent et une image qui tourne toute seule. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande. **`A7` ferme la version, et son vrai sujet n'était pas dans son plan** : une animation gardée **ne se rouvrait par aucun chemin** — la vignette remontait au clip, donc l'écran repartait des réglages du jeu |
-| **V3.01** à **V3.03** | Trois versions nées de l'usage, le 5 septembre 2026 : le tiroir qui relit ce qui part, la fiche d'un clip, et **l'atelier d'une animation au niveau des tables** | **ouvertes** — `V3.01` 1 sur 2 (reste la liste de modèles qui se plie), `V3.02` **close**, `V3.03` **2 sur 4**. `V3.03.1` donne à **chaque frame sa recette à elle** et refait l'écran dans la grammaire des tables ; `V3.03.2` pose ces tables **sur une sélection du ruban**, où *une valeur voyage seule quand une recette nommée remplace l'ensemble*. Restent `V3.03.3`, le montage de la bande, et `V3.03.4`, la main |
+| **V3.01** à **V3.03** | Trois versions nées de l'usage, le 5 septembre 2026 : le tiroir qui relit ce qui part, la fiche d'un clip, et **l'atelier d'une animation au niveau des tables** | **ouvertes** — `V3.01` 1 sur 2 (reste la liste de modèles qui se plie), `V3.02` **close**, `V3.03` **3 sur 4**. `V3.03.1` donne à **chaque frame sa recette à elle** et refait l'écran dans la grammaire des tables ; `V3.03.2` pose ces tables **sur une sélection du ruban**, où *une valeur voyage seule quand une recette nommée remplace l'ensemble* ; `V3.03.3` **monte la bande** — retirer, dupliquer, déplacer, le chutier, et le montage se reprend sur une animation gardée. Reste `V3.03.4`, la main |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 480 essais de
-serveur et 747 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 5 septembre 2026,
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 485 essais de
+serveur et 765 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 6 septembre 2026,
 et **aucun ne coûte un centime**.
 
 ### Ce qu'il faut savoir avant de toucher au code — dix points, et pas un de plus
@@ -156,7 +156,7 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
 `V3.03`, ouvertes le 5 septembre 2026 le jour même où `A7` fermait la V3. Elles ne sont pas un
 cadrage : chacune vient d'une séance où l'auteur s'est servi de ce qui venait d'être livré.
 **`V3.03` est celle qui reste à finir** — l'édition d'une animation devient l'édition d'images,
-et il en manque la moitié : le montage de la bande et la main.
+et il en manque **la main** : retoucher une frame au pixel, comme sur une image de l'établi.
 
 Les deux choses qui passaient devant la V3 sont closes depuis le 3 septembre 2026, et le tableau
 plus haut le dit : les quatre reprises hors version `R6` à `R9`, et la **V2.3** entière — un
