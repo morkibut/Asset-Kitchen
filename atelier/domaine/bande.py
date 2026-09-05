@@ -174,6 +174,17 @@ class Prise:
     dx: int = 0
     dy: int = 0
 
+    # **La recette de cette frame, quand elle a la sienne** (V3.03.1).
+    #
+    # `None` veut dire *la recette de la bande* — le défaut, et c'est ce qui
+    # fait qu'une bande d'avant la tranche se relit sans avoir été réécrite.
+    # Elle naît au premier réglage touché sur la frame, comme une **copie** de
+    # la recette de la bande à cet instant, et « reprendre la recette de la
+    # bande » la rend au défaut. Ce qui s'écarte s'écrit sur le ruban : une
+    # frame qui change n'a pas à faire refaire les autres, et une bande où
+    # chaque frame aurait pu changer doit le dire.
+    recette: Recette | None = None
+
     @property
     def poussee(self) -> bool:
         """A-t-elle été corrigée ? Ce qui n'a pas bougé ne s'annonce pas."""
@@ -184,12 +195,19 @@ class Prise:
         return self.clip or defaut
 
     def en_json(self) -> dict[str, Any]:
-        return {
+        rendu = {
             "numero": self.numero,
             "clip": self.clip,
             "dx": self.dx,
             "dy": self.dy,
         }
+        # **Le champ ne paraît que quand la frame en a une.** `None` veut dire
+        # *la recette de la bande*, et une prise sans recette s'écrit comme
+        # avant la tranche — la forme d'une bande d'A10 ne change pas d'un
+        # octet, et tout ce qui la relisait la relit encore.
+        if self.recette is not None:
+            rendu["recette"] = self.recette.en_json()
+        return rendu
 
     @staticmethod
     def depuis_json(d: dict[str, Any] | int | float) -> "Prise":
@@ -206,6 +224,7 @@ class Prise:
             clip=str(d.get("clip") or ""),
             dx=int(d.get("dx", 0)),
             dy=int(d.get("dy", 0)),
+            recette=Recette.depuis_json(d["recette"]) if d.get("recette") else None,
         )
 
 

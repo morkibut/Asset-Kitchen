@@ -199,7 +199,12 @@ def fenetre_commune(preparees: Sequence[np.ndarray], recette: Recette) -> Fenetr
 
 
 def monter(
-    preparees: Iterable[np.ndarray], recette: Recette, fenetre: Fenetre | None
+    preparees: Iterable[np.ndarray],
+    recette: Recette,
+    fenetre: Fenetre | None,
+    *,
+    recettes: Sequence[Recette] | None = None,
+    individuelles: Sequence[bool] | None = None,
 ) -> list[Rendu]:
     """Les images de la bande, passées par la chaîne du jeu **sur la même fenêtre**.
 
@@ -213,10 +218,17 @@ def monter(
     bande*, et deux endroits qui la décideraient auraient fini par la décider
     autrement. Elles ne se distinguent plus que par ce qu'elles rendent — des
     fichiers d'un côté, une planche de l'autre.
+
+    `recettes` porte la finition de **chaque** image quand des frames ont la
+    leur (V3.03.1) ; `None` veut dire la même recette pour toutes, et c'est ce
+    que le montage passe toujours. `individuelles` dit, au même rang, lesquelles
+    ont la leur — c'est ce qui décide de la palette de la bande.
     """
     return [
         Rendu(octets=en_png(image), largeur=image.shape[1], hauteur=image.shape[0])
-        for image in _rendre(list(preparees), recette, fenetre)
+        for image in _rendre(
+            list(preparees), recette, fenetre, recettes=recettes, individuelles=individuelles
+        )
     ]
 
 
@@ -227,6 +239,8 @@ def _rendre(
     *,
     stabiliser: bool = True,
     poussees: Sequence[tuple[int, int]] | None = None,
+    recettes: Sequence[Recette] | None = None,
+    individuelles: Sequence[bool] | None = None,
 ) -> list[np.ndarray]:
     """La chaîne du jeu sur toutes les images d'une bande — **et une seule écriture**.
 
@@ -238,12 +252,26 @@ def _rendre(
     la palette, et il le faut — décaler une image ne change aucune de ses
     couleurs, donc la palette de la bande reste celle qu'on a calculée.
 
+    `recettes` porte la recette de **chaque** image quand des frames ont la
+    leur (V3.03.1) ; `None` veut dire la même pour toutes. ⚠️ **Deux décisions
+    restent de la bande quoi qu'il arrive** : la fenêtre commune — mesurée une
+    fois, pour toutes —, et la palette, qui se calcule sur **les frames de la
+    bande** — celles qui n'ont pas de recette à elles. Une frame individuelle
+    porte la sienne : si sa réduction n'a pas de palette, elle se calcule sur
+    elle seule, comme une image seule. C'est ce qui fait que corriger une frame
+    ne refait pas les autres : la palette de la bande ne bouge pas quand une
+    frame change, elle ne bouge que quand la bande change.
+
     `stabiliser` à `False` rejoue la chaîne **d'avant `A5`** : silhouette tirée
     au sort image par image, palette recalculée à chaque image. ⚠️ Elle n'a
     qu'un appelant, et c'est le banc — mesurer ce que la tranche a gagné demande
     un *avant*, et un banc qui recopierait l'ancienne chaîne mesurerait sa propre
     copie plutôt que le produit.
     """
+    if recettes is None:
+        recettes = [recette] * len(preparees)
+    if individuelles is None:
+        individuelles = [False] * len(preparees)
     pose = fenetre is not None and a_recadre(recette)
     cadre = (
         (0, 0, fenetre.largeur - 1, fenetre.hauteur - 1)
@@ -251,15 +279,22 @@ def _rendre(
         else (fenetre.en_tuple() if fenetre else None)
     )
     entrees = [
-        poser_dans(image, fenetre, recette) if pose and fenetre is not None else image
-        for image in preparees
+        poser_dans(image, fenetre, recette_la)
+        if pose and fenetre is not None
+        else image
+        for image, recette_la in zip(preparees, recettes)
     ]
-    suite = _sans_recadrer(recette) if pose else recette
+    # **Chaque image a consommé *son* recadrage à la préparation** : la queue
+    # ne rejoue la place de recadrage d'aucune, la sienne comprise — c'est la
+    # règle de `_sans_recadrer`, passée au pluriel.
+    suites = [_sans_recadrer(lune) if a_recadre(lune) else lune for lune in recettes]
     if stabiliser:
-        suite = _avec_la_palette_de_la_bande(entrees, suite, cadre)
+        suites = _avec_la_palette_de_la_bande(
+            entrees, suites, individuelles, recette, cadre
+        )
     rendues = [
         queue(image, suite, cadre, silhouette_stable=None if stabiliser else False)
-        for image in entrees
+        for image, suite in zip(entrees, suites)
     ]
     if not poussees:
         return rendues
@@ -316,9 +351,11 @@ def pousser(image: np.ndarray, dx: int, dy: int) -> np.ndarray:
 
 def _avec_la_palette_de_la_bande(
     entrees: Sequence[np.ndarray],
-    recette: Recette,
+    suites: Sequence[Recette],
+    individuelles: Sequence[bool],
+    bande_recette: Recette,
     cadre: tuple[int, int, int, int] | None,
-) -> Recette:
+) -> list[Recette]:
     """La même recette, **sa palette décidée une fois pour toute la bande** (A5).
 
     ⚠️ **Sans ça, la palette se recalcule à chaque image.** La coupe médiane est
@@ -336,6 +373,15 @@ def _avec_la_palette_de_la_bande(
     2. la recette ne réduit pas les couleurs, ou sa place dort ;
     3. il n'y a qu'une image, qui ne peut scintiller contre personne.
 
+    **Depuis V3.03.1, la palette se calcule sur les frames *de la bande* — celles
+    qui n'ont pas de recette individuelle (`individuelles`).** C'est la
+    contrepartie exacte de *corriger une frame sans refaire les autres* : la
+    palette est une décision de la bande, et elle ne bouge que quand la bande
+    change. La première frame qui reçoit sa recette à elle quitte donc
+    la palette — la bande change de membres, et sa palette change une fois,
+    comme elle changerait si l'on ajoutait une image. Ensuite, retoucher *cette*
+    frame ne rebouge plus la palette : elle n'y est plus.
+
     **La palette se prend sur les images réduites, pas sur les originales**, et
     c'est le seul ordre juste : la réduction fond des couleurs voisines, et une
     palette choisie avant elle dépenserait ses places sur des nuances qui
@@ -347,28 +393,38 @@ def _avec_la_palette_de_la_bande(
     reste une couleur (`AGENTS.md`, point 5) ; lui donner une place de la palette
     dépenserait une couleur du jeu pour quelque chose que personne ne regarde.
     """
-    quantification = recette.quantification
+    quantification = bande_recette.quantification
     if (
         quantification is None
         or quantification.palette
-        or recette.dort(QUANTIFICATION)
+        or bande_recette.dort(QUANTIFICATION)
         or len(entrees) < 2
     ):
-        return recette
+        return list(suites)
+
+    # Les frames de la bande — celles qui n'ont pas de recette individuelle.
+    # Les autres décident de leur palette elles-mêmes, comme une image seule.
+    du_pool = [rang for rang, la_sienne in enumerate(individuelles) if not la_sienne]
+    if len(du_pool) < 2:
+        return list(suites)
 
     # La géométrie seule : ce que la quantification verra, et rien de ce qui
     # vient après elle. Écrit en retirant des places plutôt qu'en rejouant la
     # chaîne à la main — `queue` reste le seul endroit qui connaisse l'ordre.
     geometrie = replace(
-        recette, quantification=None, bords=None, contours=None, main=None
+        bande_recette, quantification=None, bords=None, contours=None, main=None
     )
-    reduites = [queue(image, geometrie, cadre) for image in entrees]
+    reduites = [queue(entrees[rang], geometrie, cadre) for rang in du_pool]
     palette = _palette_mediane(reduites, quantification.couleurs)
     if not palette:
-        return recette
-    return replace(
-        recette, quantification=replace(quantification, palette=palette)
-    )
+        return list(suites)
+    rendues = list(suites)
+    for rang in du_pool:
+        lune = rendues[rang]
+        rendues[rang] = replace(
+            lune, quantification=replace(lune.quantification, palette=palette)
+        )
+    return rendues
 
 
 def _palette_mediane(
@@ -524,6 +580,8 @@ def assembler(
     *,
     stabiliser: bool = True,
     poussees: Sequence[tuple[int, int]] | None = None,
+    recettes: Sequence[Recette] | None = None,
+    individuelles: Sequence[bool] | None = None,
 ) -> Planche:
     """La planche de sprites de cette bande, dans l'ordre donné (A10).
 
@@ -545,11 +603,21 @@ def assembler(
     seul endroit, et les deux fonctions ne se distinguent plus que par ce
     qu'elles rendent.
 
+    `recettes` porte la finition de **chaque** image quand des frames ont la
+    leur (V3.03.1) ; `None` veut dire la même pour toutes — et le montage, qui
+    ne connaît pas encore les recettes individuelles, ne passe jamais rien.
+
     `stabiliser` à `False` rejoue la chaîne d'avant `A5` — **le banc, et lui
     seul** : il lui faut un *avant* à mesurer.
     """
     rendus = _rendre(
-        preparees, recette, fenetre, stabiliser=stabiliser, poussees=poussees
+        preparees,
+        recette,
+        fenetre,
+        stabiliser=stabiliser,
+        poussees=poussees,
+        recettes=recettes,
+        individuelles=individuelles,
     )
     if not rendus:
         return Planche(octets=b"", case_largeur=0, case_hauteur=0, compte=0)

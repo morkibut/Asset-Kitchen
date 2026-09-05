@@ -538,10 +538,17 @@ class ServiceMontage:
         écritures de la même chaîne finiraient par ne plus rendre les mêmes
         pixels, et c'est l'auteur qui découvrirait l'écart entre ce qu'il corrige
         et ce qu'il exporte.
+
+        **Chaque image est préparée et finie avec sa recette à elle quand elle en
+        a une** (V3.03.1) : une frame qui change de détourage change ses pixels,
+        pas celle de sa voisine — seule la fenêtre et la palette restent de la
+        bande (`atelier/image/bande.py`).
         """
         retenues = self._fichiers_des_prises(bande.clip, bande.prises)
+        recettes, individuelles = self._recettes_de(bande)
         preparees = [
-            preparer(fichier.read_bytes(), bande.recette) for fichier in retenues
+            preparer(fichier.read_bytes(), recette_la)
+            for fichier, recette_la in zip(retenues, recettes)
         ]
         fenetre = (
             None
@@ -553,7 +560,61 @@ class ServiceMontage:
             bande.recette,
             fenetre,
             poussees=[(p.dx, p.dy) for p in bande.prises],
+            recettes=recettes,
+            individuelles=individuelles,
         )
+
+    def _recettes_de(self, bande: Bande) -> tuple[list[Recette], list[bool]]:
+        """La recette de chaque frame, et **si elle en a une à elle** (V3.03.1).
+
+        Le défaut est la recette de la bande — c'est ce qui rend une bande
+        d'avant identique à elle-même. Le second membre est ce qui décide de la
+        palette de la bande : une frame individuelle en sort, et retoucher
+        ensuite *cette* frame ne rebouge plus la palette des autres.
+        """
+        recettes: list[Recette] = []
+        individuelles: list[bool] = []
+        for prise in bande.prises:
+            individuelles.append(prise.recette is not None)
+            recettes.append(prise.recette or bande.recette)
+        return recettes, individuelles
+
+    def _ecarts_de(self, bande: Bande) -> list[dict[str, Any]]:
+        """Ce que chaque frame change à la recette de la bande, ou rien (V3.03.1).
+
+        Une frame sans recette individuelle n'a rien à dire. Une frame qui en a
+        une dit **les places qui diffèrent** — détourage, grille, couleurs, tout
+        ce que l'écran nomme — et une seule phrase de plus, qui ne se devine pas :
+        *la fenêtre commune a été mesurée avec la recette de la bande*, et une
+        frame qui s'écarte peut déborder du rectangle. Ce qui ne s'écarte sur
+        aucune place — une recette individuelle égale à celle de la bande — ne
+        s'annonce pas : rien n'a changé, et une phrase dirait le contraire.
+
+        Les mots viennent d'ici, pas de l'écran : deux endroits qui nommeraient
+        les places de la recette finiraient par ne plus les nommer pareil.
+        """
+        # Les places dans l'ordre du traitement, et leur mot français.
+        places = (
+            ("passes", "détourage"),
+            ("recadrage", "recadrage"),
+            ("grille", "grille"),
+            ("quantification", "quantification"),
+            ("bords", "bords"),
+            ("contours", "contours"),
+            ("main", "la main"),
+        )
+        ecarts: list[dict[str, Any]] = []
+        for prise in bande.prises:
+            if prise.recette is None:
+                ecarts.append({"places": (), "fenetre_davant": False})
+                continue
+            une = prise.recette.en_json()
+            autre = bande.recette.en_json()
+            differents = tuple(mot for cle, mot in places if une.get(cle) != autre.get(cle))
+            ecarts.append(
+                {"places": differents, "fenetre_davant": bool(differents)}
+            )
+        return ecarts
 
     # ── Rouvrir et corriger une animation gardée (A7) ────────────────────────
 
@@ -597,6 +658,11 @@ class ServiceMontage:
             },
             "cadre": self._etat_du_cadre(bande),
             "clips_voisins": self._clips_voisins(bande),
+            # Ce que chaque frame change à la recette de la bande (V3.03.1).
+            # Au même rang que les prises : l'écran lit le ruban sur le même
+            # défilement, sans recalculer de comparaison qui finirait par ne
+            # plus nommer les places pareil.
+            "ecarts": self._ecarts_de(bande),
         }
 
     def _clips_voisins(self, bande: Bande) -> list[dict[str, Any]]:
