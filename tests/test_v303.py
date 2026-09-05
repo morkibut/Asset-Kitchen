@@ -349,3 +349,102 @@ def test_l_apercu_et_la_planche_gardee_rendent_les_memes_pixels(
     gardee = _planche(client_video, relue["identifiant"])
 
     assert np.array_equal(apercue, gardee)
+
+
+# ── V3.03.2 · les tables sur une sélection ──────────────────────────────────
+#
+# **Ce que la tranche demande au serveur tient en deux lignes, et c'est voulu.**
+# La sélection est un geste d'écran : elle ne s'enregistre pas, le serveur ne la
+# connaît pas, et la route qui écrit une bande prend **déjà** la liste entière de
+# ses prises depuis `A7`. Ce qui reste à tenir ici est donc : qu'un lot de
+# recettes individuelles se relise après fermeture, et que les places aient le
+# même nom des deux côtés — sans quoi l'écran dirait « séparé sur les couleurs »
+# là où le ruban dit « s'écarte sur la quantification ».
+
+
+def test_un_lot_de_recettes_se_relit_apres_fermeture(
+    atelier_video, client_video, clip, tmp_path, double, animateur
+):
+    """*La garde se referme et se rouvre avec les recettes posées en lot* (8septies).
+
+    ⚠️ **Le pendant de l'essai d'une seule frame, et il n'en est pas la copie** :
+    ce qui se casserait ici est un lot qui s'écrase lui-même — trois prises
+    écrites à la file dont la dernière gagne, ou un index perdu en chemin. Les
+    trois recettes sont donc **différentes entre elles**, et la quatrième prise
+    n'en a aucune : un lot qui déborderait sur elle se verrait.
+
+    Et **une seule écriture** porte les trois : la route prend la liste depuis
+    `A7`, et c'est ce qui évite trente appels pour trente frames.
+    """
+    from atelier.services import Atelier
+
+    bande = _garder(client_video, clip)
+    prises = [dict(prise) for prise in bande["prises"]]
+    for rang, couleurs in ((0, 12), (1, 8), (2, 6)):
+        recette = dict(bande["recette"] or {})
+        quantification = dict(recette.get("quantification") or {})
+        quantification["couleurs"] = couleurs
+        recette["quantification"] = quantification
+        prises[rang]["recette"] = recette
+
+    relue = _corriger(client_video, bande["identifiant"], prises)
+    assert [
+        (p.get("recette") or {}).get("quantification", {}).get("couleurs")
+        for p in relue["prises"]
+    ] == [12, 8, 6, None]
+
+    # ⚠️ **On rouvre depuis le disque**, pas la réponse du `PUT` : un lot qui
+    # partirait bien et s'écrirait mal rendrait exactement la même réponse.
+    relu = Atelier(
+        racine=tmp_path,
+        fabrique_fournisseur=lambda: double,
+        fabrique_animateur=lambda: animateur,
+    )
+    gardees = relu.montage.bande(bande["identifiant"]).prises
+    assert [
+        p.recette.quantification.couleurs if p.recette else None for p in gardees
+    ] == [12, 8, 6, None]
+
+    ouverte = relu.montage.ouvrir_la_bande(bande["identifiant"])
+    assert [e["places"] for e in ouverte["ecarts"]] == [
+        ("quantification",),
+        ("quantification",),
+        ("quantification",),
+        (),
+    ]
+
+
+def test_les_places_portent_le_meme_nom_a_l_ecran_et_au_serveur():
+    """**Une liste, deux endroits, et un essai qui les tient ensemble.**
+
+    L'écran a besoin de nommer les places depuis la V3.03.2 : il dit ce qui est
+    *séparé* dans une sélection, et le serveur ne connaît pas la sélection —
+    il compare chaque frame à la bande, ce qui n'est pas la même question.
+
+    ⚠️ **Deux endroits qui nomment la même chose finissent toujours par diverger**,
+    et c'est celui de l'écran qui ment le premier parce que c'est celui qu'on
+    relit le moins. Le dépôt a déjà payé cette leçon deux fois — les crans de
+    cible, sept contre neuf, et les noms de moteurs de détourage. Même remède :
+    le banc lit les deux et refuse qu'ils s'écartent.
+    """
+    import re
+    from pathlib import Path
+
+    from atelier.services.montage import PLACES_DE_LA_RECETTE
+
+    ecran = (
+        Path(__file__).resolve().parents[1]
+        / "interface"
+        / "src"
+        / "composants"
+        / "AtelierDeBande.tsx"
+    )
+    texte = ecran.read_text(encoding="utf-8")
+    bloc = re.search(
+        r"export const PLACES_DE_LA_RECETTE[^=]*=\s*\[(.*?)\n\s*\]", texte, re.S
+    )
+    assert bloc is not None, (
+        "PLACES_DE_LA_RECETTE a été renommée ou déplacée hors de AtelierDeBande.tsx"
+    )
+    ecrites = re.findall(r'\[\s*"([^"]+)",\s*"([^"]+)"\s*\]', bloc.group(1))
+    assert tuple(ecrites) == PLACES_DE_LA_RECETTE

@@ -87,6 +87,109 @@ const MOT_DU_CADRE: Record<string, string> = {
   main: "posé à la main",
 }
 
+/** Les places d'une recette, **dans l'ordre du traitement, et leur mot
+ *  français**.
+ *
+ *  ⚠️ **La même liste vit sur le serveur** — `atelier/services/montage.py`,
+ *  `PLACES_DE_LA_RECETTE` —, et `tests/test_v303.py` les tient ensemble. Deux
+ *  endroits qui nomment les places finiraient par ne plus les nommer pareil, et
+ *  c'est celui de l'écran qui mentirait le premier : c'est celui qu'on relit le
+ *  moins.
+ *
+ *  **Pourquoi l'écran en a besoin, alors que la V3.03.1 s'en passait.** Le
+ *  serveur dit ce que chaque frame écarte *de la bande* ; à partir de la
+ *  V3.03.2 l'auteur choisit un sous-ensemble que le serveur ne connaît pas, et
+ *  ce qui est **séparé à l'intérieur d'une sélection** n'est pas l'union des
+ *  écarts à la bande — trois frames qui s'écartent toutes de la même façon sont
+ *  d'accord entre elles. */
+export const PLACES_DE_LA_RECETTE: readonly (readonly [keyof Recette, string])[] =
+  [
+    ["passes", "détourage"],
+    ["recadrage", "recadrage"],
+    ["grille", "grille"],
+    ["quantification", "quantification"],
+    ["bords", "bords"],
+    ["contours", "contours"],
+    ["main", "la main"],
+  ]
+
+const memeValeur = (une: unknown, autre: unknown) =>
+  JSON.stringify(une ?? null) === JSON.stringify(autre ?? null)
+
+const estUnObjet = (valeur: unknown): valeur is Record<string, unknown> =>
+  typeof valeur === "object" && valeur !== null && !Array.isArray(valeur)
+
+/** **Reporter sur `cible` ce qui a changé entre `avant` et `apres`** — et rien
+ *  d'autre (V3.03.2).
+ *
+ *  > ### ⚠️ Poser une recette entière sur une sélection aplatit ce qu'elle avait
+ *  >
+ *  > Les tables rendent une recette complète à chaque geste : bouger un curseur
+ *  > renvoie *toute* la recette de la frame qu'on regarde. L'écrire telle quelle
+ *  > sur les cinq frames choisies leur donnerait aussi les quatre valeurs
+ *  > qu'elles ne partageaient pas — **sans un mot**, et le plan l'interdit :
+ *  > *rien ne se réécrit en silence*.
+ *
+ *  **C'est ce qui sépare une valeur d'une recette nommée.** Une valeur voyage
+ *  seule ; une recette nommée remplace l'ensemble, parce qu'*en prendre la
+ *  moitié rendrait une image que personne n'a jamais jugée* (`A7` bis ②). Les
+ *  deux gestes existent à l'écran, et ils ne font pas la même chose.
+ *
+ *  **Une liste voyage entière**, comme une valeur simple : deux listes de passes
+ *  n'ont ni la même longueur ni les mêmes moteurs, et il n'existe aucune
+ *  correspondance terme à terme entre elles. Les objets, eux, se descendent
+ *  place par place — changer le tramage ne doit pas emporter le nombre de
+ *  couleurs. */
+export function reporterLeChange<T>(cible: T, avant: T, apres: T): T {
+  if (memeValeur(avant, apres)) return cible
+  if (!estUnObjet(avant) || !estUnObjet(apres) || !estUnObjet(cible))
+    return apres
+  const rendu: Record<string, unknown> = { ...cible }
+  for (const cle of new Set([...Object.keys(avant), ...Object.keys(apres)])) {
+    rendu[cle] = reporterLeChange(
+      (cible as Record<string, unknown>)[cle],
+      avant[cle],
+      apres[cle],
+    )
+  }
+  return rendu as T
+}
+
+/** Les places sur lesquelles un lot de recettes **n'est pas d'accord**.
+ *
+ *  Le mot du plan est *séparé*, et il se lit sur la table : *ces images-là n'ont
+ *  pas la même valeur ici*. Un lot d'une seule recette n'est séparé sur rien. */
+export function placesSeparees(recettes: (Recette | null)[]): string[] {
+  if (recettes.length < 2) return []
+  const [premiere, ...autres] = recettes
+  return PLACES_DE_LA_RECETTE.filter(([cle]) =>
+    autres.some((une) => !memeValeur(une?.[cle], premiere?.[cle])),
+  ).map(([, mot]) => mot)
+}
+
+/** **Une recette nommée ne remplace pas la main d'une image** (V3.03.2).
+ *
+ *  > ### ⚠️ Le sens du garde-fou est l'inverse de celui qu'on attend
+ *  >
+ *  > Le risque n'est pas qu'une recette nommée *propage* une retouche : elle
+ *  > n'en porte jamais. Le serveur la lui retire au moment de l'enregistrer —
+ *  > *un réglage voyage, une coordonnée ne voyage pas* (`U5`, `US-342`,
+ *  > `atelier/domaine/recette.py`, `voyage`). Le risque est qu'elle **efface**
+ *  > celle que l'image avait : « remplacer tout l'ensemble » remplacerait alors
+ *  > des passages par du vide, sans un mot, et *rien ne se réécrit en silence*.
+ *
+ *  Un curseur des tables n'a pas ce défaut : `reporterLeChange` ne déplace que
+ *  ce qui a changé, et aucune table de cet écran ne touche à la main. Ce
+ *  garde-fou est donc **au seul endroit qui pose une recette entière**.
+ *
+ *  ⚠️ **La table de la main n'arrive qu'en V3.03.4**, et la règle *« la main ne
+ *  se pose que sur une image à la fois »* avec elle : aujourd'hui, un écran
+ *  n'en pose aucune. Ce qui est tenu ici est le plus étroit et le seul qui soit
+ *  atteignable — la route qui écrit une bande accepte déjà une main sur une
+ *  prise. */
+const sansToucherALaMain = (rendue: Recette, dOrigine: Recette | null): Recette =>
+  ({ ...rendue, main: dOrigine?.main ?? null })
+
 export function EcranAtelierDeBande({
   identifiant,
   univers,
@@ -116,6 +219,16 @@ export function EcranAtelierDeBande({
   const [cadence, setCadence] = useState(8)
   const [sens, setSens] = useState<"boucle" | "aller-retour">("boucle")
   const [courante, setCourante] = useState(0)
+  /** **Les images que les tables règlent** (V3.03.2) — rangs triés, jamais vide,
+   *  et `courante` en fait toujours partie.
+   *
+   *  ⚠️ **Elle porte un geste, elle n'est pas un état de la bande.** Rien ne
+   *  l'enregistre, rien ne la relit à l'ouverture, et elle ne part dans aucun
+   *  corps de requête : c'est un moyen d'agir sur plusieurs images d'un coup,
+   *  pas une propriété de l'animation. Une sélection qu'on garderait sur le
+   *  disque serait à ranger, à rouvrir, et à expliquer — pour un choix qui ne
+   *  survit pas à la question suivante. */
+  const [selection, setSelection] = useState<number[]>([0])
   const [pelure, setPelure] = useState(0)
   const [joue, setJoue] = useState(true)
   const [pas, setPas] = useState(0)
@@ -331,35 +444,168 @@ export function EcranAtelierDeBande({
   const choisie = Math.min(courante, Math.max(0, prises.length - 1))
   const reglee = prises[choisie]?.recette ?? recette
 
+  // ── Une image, plusieurs, ou toutes (V3.03.2) ─────────────────────────────
+
+  /** Les rangs réellement choisis — bornés à ce que la bande porte, et **jamais
+   *  vides** : sans image choisie, les tables régleraient le néant. */
+  const choisies = useMemo(() => {
+    const dans = selection.filter((rang) => rang < prises.length)
+    return dans.length > 0 ? dans : [choisie]
+  }, [selection, prises.length, choisie])
+
+  const plusieurs = choisies.length > 1
+  /** **Toute la bande est choisie**, et ce cas-là ne se pose pas comme les
+   *  autres : voir `poserSurLaSelection`. */
+  const toutes = prises.length > 0 && choisies.length === prises.length
+
+  /** Ce sur quoi les images choisies **ne sont pas d'accord**. Les tables le
+   *  disent place par place, et la phrase du haut une fois pour le lot. */
+  const separes = useMemo(
+    () => placesSeparees(choisies.map((rang) => prises[rang]?.recette ?? recette)),
+    [choisies, prises, recette],
+  )
+
+  /** Combien d'images choisies ont déjà **leur recette à elles** — le nombre que
+   *  la phrase du lot annonce, une fois et pas trente. */
+  const siennes = choisies.filter((rang) => Boolean(prises[rang]?.recette)).length
+
   const laFrameAAuMine = useCallback(
     (index: number) => Boolean(prises[index]?.recette),
     [prises],
   )
 
-  /** Poser un réglage sur la frame choisie. Il arrête le lecteur comme les
-   *  autres gestes : ce qu'on vient de régler doit rester sous les yeux. */
-  const reglerLaChoisie = useCallback(
-    (change: (prise: Prise) => Prise) => {
+  // **Cliquer une image arrête le lecteur ; changer l'étendue du choix, non.**
+  // La règle est simple à tenir et à expliquer : ce qui change l'image sous les
+  // yeux arrête l'animation, ce qui ne change que la portée des tables la
+  // laisse tourner.
+
+  const choisirUne = useCallback((rang: number) => {
+    setJoue(false)
+    setCourante(rang)
+    setSelection([rang])
+  }, [])
+
+  /** Étendre depuis l'image des tables jusqu'à celle qu'on clique. L'ancre ne
+   *  bouge pas : c'est elle qu'on lit pendant qu'on étend. */
+  const etendreJusqua = useCallback(
+    (rang: number) => {
       setJoue(false)
-      setPrises((avant) =>
-        avant.map((prise, index) => (index === choisie ? change(prise) : prise)),
-      )
+      const [debut, fin] = courante <= rang ? [courante, rang] : [rang, courante]
+      setSelection(Array.from({ length: fin - debut + 1 }, (_, i) => debut + i))
     },
+    [courante],
+  )
+
+  const basculerUne = useCallback(
+    (rang: number) => {
+      setJoue(false)
+      if (!choisies.includes(rang)) {
+        setCourante(rang)
+        setSelection([...choisies, rang].sort((a, b) => a - b))
+        return
+      }
+      const reste = choisies.filter((autre) => autre !== rang)
+      // **Jamais vide** — retirer la dernière laisserait les tables sans rien à
+      // régler, et un panneau qui ne règle rien est un panneau cassé.
+      if (reste.length === 0) return
+      setSelection(reste)
+      if (rang === courante) setCourante(reste[0])
+    },
+    [choisies, courante],
+  )
+
+  const choisirToutes = useCallback(
+    () => setSelection(prises.map((_, rang) => rang)),
+    [prises],
+  )
+
+  const nEnChoisirQuUne = useCallback(
+    () => setSelection([choisie]),
     [choisie],
   )
 
-  const toucherLaFrame = useCallback(
-    (suivante: Recette) =>
-      reglerLaChoisie((prise) => ({ ...prise, recette: suivante })),
-    [reglerLaChoisie],
+  /** **Poser une valeur sur toutes les images choisies** (V3.03.2), et rien que
+   *  cette valeur — `reporterLeChange` dit pourquoi.
+   *
+   *  ⚠️ **Toute la bande choisie se règle sur la bande**, pas image par image.
+   *  Douze recettes individuelles identiques annonceraient douze écarts là où il
+   *  n'y en a aucun : le ruban se couvrirait de liserés, et « reprendre la
+   *  recette de l'animation » n'aurait plus rien à reprendre. */
+  const poserSurLaSelection = useCallback(
+    (apres: Recette) => {
+      const avant = reglee
+      if (!avant) return
+      setJoue(false)
+      if (toutes)
+        setRecette((laBande) =>
+          laBande ? reporterLeChange(laBande, avant, apres) : apres,
+        )
+      setPrises((liste) =>
+        liste.map((prise, rang) => {
+          // ⚠️ **Les recettes individuelles suivent quand même.** Sans cette
+          // ligne, un curseur posé sur les douze n'en bougerait que neuf, et les
+          // trois qui s'écartaient l'ignoreraient sans un mot — un curseur qui
+          // bouge sans que l'image change ne se distingue pas d'un curseur cassé.
+          if (toutes)
+            return prise.recette
+              ? {
+                  ...prise,
+                  recette: reporterLeChange(prise.recette, avant, apres),
+                }
+              : prise
+          if (!choisies.includes(rang)) return prise
+          // La recette individuelle naît d'une **copie** de celle de la bande —
+          // la règle de la V3.03.1, et elle vaut pour chaque image du lot.
+          const sienne = prise.recette ?? recette
+          return sienne
+            ? { ...prise, recette: reporterLeChange(sienne, avant, apres) }
+            : prise
+        }),
+      )
+    },
+    [reglee, toutes, choisies, recette],
   )
 
-  /** Rendre la frame au défaut. **Un geste annulable comme les autres** : il
-   *  n'écrit rien, il repose `null`, et « Annuler » ramène ce qu'il y avait. */
-  const retirerLaRecetteDeLaFrame = useCallback(
-    () => reglerLaChoisie((prise) => ({ ...prise, recette: null })),
-    [reglerLaChoisie],
+  /** **Poser une recette nommée**, qui remplace tout l'ensemble (`A7` bis ②).
+   *
+   *  C'est l'autre geste, et il ne fait pas ce que fait le précédent : une
+   *  valeur voyage seule, une recette nommée remplace. Sur toute la bande, elle
+   *  devient la recette de l'animation **et efface les recettes individuelles** —
+   *  ce sont elles qu'elle remplace, et les garder au-dessus reviendrait à ne
+   *  rien remplacer du tout. C'est ce que la phrase du lot annonce avant. */
+  const poserLaRecetteNommee = useCallback(
+    (nommee: Recette) => {
+      setJoue(false)
+      if (toutes) {
+        setRecette((laBande) => sansToucherALaMain(nommee, laBande))
+        setPrises((liste) => liste.map((prise) => ({ ...prise, recette: null })))
+        return
+      }
+      setPrises((liste) =>
+        liste.map((prise, rang) =>
+          choisies.includes(rang)
+            ? {
+                ...prise,
+                recette: sansToucherALaMain(nommee, prise.recette ?? recette),
+              }
+            : prise,
+        ),
+      )
+    },
+    [toutes, choisies, recette],
   )
+
+  /** Rendre les images choisies au défaut. **Un geste annulable comme les
+   *  autres** : il n'écrit rien, il repose `null`, et « Annuler » ramène ce
+   *  qu'il y avait. */
+  const reprendreLaRecetteDeLaBande = useCallback(() => {
+    setJoue(false)
+    setPrises((liste) =>
+      liste.map((prise, rang) =>
+        choisies.includes(rang) ? { ...prise, recette: null } : prise,
+      ),
+    )
+  }, [choisies])
 
   /** Ce que les tables de l'établi attendent pour se rendre sur cette frame.
    *
@@ -379,8 +625,8 @@ export function EcranAtelierDeBande({
         recette: reglee,
         univers,
         traitement,
-        regler: toucherLaFrame,
-        poser: toucherLaFrame,
+        regler: poserSurLaSelection,
+        poser: poserSurLaSelection,
         mesures: null,
       }
     : null
@@ -513,7 +759,25 @@ export function EcranAtelierDeBande({
         <p className="mesure text-[10px] leading-4 text-texte-3">
           {compte} image{compte > 1 ? "s" : ""}, {cadence} par seconde —{" "}
           {bande.secondes} s par tour.{" "}
-          {laFrameAAuMine(choisie) ? (
+          {/* **Ce que règlent les tables, en une phrase et à chaque fois.** Trois
+              portées possibles — une image, un lot, l'animation entière — et
+              rien d'autre à l'écran ne les distingue : la même colonne, les
+              mêmes curseurs. Sans cette phrase, un réglage posé sur douze images
+              ressemble trait pour trait à un réglage posé sur une. */}
+          {plusieurs ? (
+            toutes ? (
+              <>
+                Les <b className="text-texte-2">{compte} images</b> sont
+                choisies : ce qui se règle ici vaut pour toute l'animation.
+              </>
+            ) : (
+              <>
+                <b className="text-texte-2">{choisies.length} images</b>{" "}
+                choisies : ce qui se règle ici se pose sur les{" "}
+                {choisies.length}.
+              </>
+            )
+          ) : laFrameAAuMine(choisie) ? (
             <>
               L'image {choisie + 1} a <b className="text-texte-2">sa recette à
               elle</b> : ce qui se règle ici ne vaut que pour elle.
@@ -527,13 +791,23 @@ export function EcranAtelierDeBande({
           )}
         </p>
 
-        <RecetteEnregistree recettes={recettes} onRecette={setRecette} />
+        <RecetteEnregistree
+          recettes={recettes}
+          choisies={choisies.length}
+          siennes={siennes}
+          toutes={toutes}
+          onRecette={poserLaRecetteNommee}
+        />
 
         <ReglagesDeLaFrame
           reglages={reglages}
           sienne={laFrameAAuMine(choisie)}
+          ancre={choisie + 1}
+          choisies={choisies.length}
+          siennes={siennes}
+          separes={separes}
           ecart={ecarts[choisie]}
-          onReprendre={retirerLaRecetteDeLaFrame}
+          onReprendre={reprendreLaRecetteDeLaBande}
         />
 
         {change && (
@@ -603,7 +877,32 @@ export function EcranAtelierDeBande({
         {...PANNEAU}
         className="flex min-h-0 flex-col border-l border-bord bg-fond-1"
       >
-        <EnTetePanneau>Ses images</EnTetePanneau>
+        <div className="flex items-baseline gap-2 pr-2">
+          <EnTetePanneau>Ses images</EnTetePanneau>
+          {/* **Les deux boutons du choix** (V3.03.2). Ils sont là pour le
+              clavier autant que pour la souris : la maj-clic et le ctrl-clic
+              existent, mais aucun des deux ne se fait sans souris, et *tout se
+              fait au clavier autant qu'à la souris* est un critère de la
+              version. Ils ne touchent pas au lecteur — ils changent la portée
+              des tables, pas l'image sous les yeux. */}
+          <button
+            type="button"
+            onClick={choisirToutes}
+            disabled={toutes}
+            className="mesure ml-auto text-[10px] text-texte-3 hover:text-signal disabled:text-bord"
+          >
+            toutes
+          </button>
+          {plusieurs && (
+            <button
+              type="button"
+              onClick={nEnChoisirQuUne}
+              className="mesure text-[10px] text-texte-3 hover:text-signal"
+            >
+              une seule
+            </button>
+          )}
+        </div>
         <div className="defile flex min-h-0 flex-1 flex-wrap content-start gap-1 overflow-y-auto p-2">
           {prises.map((prise, index) => (
             <ImageDeLaBande
@@ -615,12 +914,16 @@ export function EcranAtelierDeBande({
               haut={haut}
               compte={compte}
               courante={index === rang}
+              choisie={choisies.includes(index)}
               venueDAilleurs={Boolean(prise.clip) && prise.clip !== bande.clip}
               ecart={ecarts[index]}
-              onChoisir={() => {
-                setJoue(false)
-                setCourante(index)
-              }}
+              onChoisir={(comment) =>
+                comment === "etendre"
+                  ? etendreJusqua(index)
+                  : comment === "ajouter"
+                    ? basculerUne(index)
+                    : choisirUne(index)
+              }
             />
           ))}
         </div>
@@ -899,7 +1202,12 @@ function CorrectionDeLImage({
   )
 }
 
-/** Une image de l'animation, dans la colonne de droite. */
+/** Une image de l'animation, dans la colonne de droite.
+ *
+ *  **Elle porte deux états qui ne se confondent pas** (V3.03.2) : *celle qu'on
+ *  voit en grand* — elle défile quand le lecteur tourne — et *celles que les
+ *  tables règlent*, qui ne bougent que sur un clic. Un seul liseré pour les deux
+ *  ferait clignoter le choix à la cadence de l'animation. */
 function ImageDeLaBande({
   prise,
   index,
@@ -908,6 +1216,7 @@ function ImageDeLaBande({
   haut,
   compte,
   courante,
+  choisie,
   venueDAilleurs,
   ecart,
   onChoisir,
@@ -918,12 +1227,15 @@ function ImageDeLaBande({
   large: number
   haut: number
   compte: number
+  /** Celle qu'on voit en grand, à cet instant. */
   courante: boolean
+  /** Elle fait partie de ce que les tables règlent. */
+  choisie: boolean
   venueDAilleurs: boolean
   /** Ce que cette image change à la recette de l'animation, ou rien (V3.03.1).
    *  **Les places sont nommées par le serveur** — voir `ReglagesDeLaFrame`. */
   ecart?: { places: string[]; fenetre_davant: boolean }
-  onChoisir: () => void
+  onChoisir: (comment: "seule" | "etendre" | "ajouter") => void
 }) {
   const cote = 64
   const facteur = Math.max(1, Math.floor(Math.min(cote / haut, cote / large)))
@@ -939,16 +1251,35 @@ function ImageDeLaBande({
   return (
     <button
       type="button"
-      onClick={onChoisir}
+      // **Maj étend, Ctrl ajoute** — les deux gestes de toute liste qui se
+      // sélectionne, et l'auteur les connaît déjà de son explorateur de
+      // fichiers. `metaKey` pour la même raison de l'autre côté du Mac. Ce que
+      // ni l'un ni l'autre ne fait sans souris se fait par les deux boutons
+      // « toutes » et « une seule », en haut du ruban.
+      onClick={(evenement) =>
+        onChoisir(
+          evenement.shiftKey
+            ? "etendre"
+            : evenement.ctrlKey || evenement.metaKey
+              ? "ajouter"
+              : "seule",
+        )
+      }
       data-image-de-la-bande={index}
       data-secarte={secarte ? "" : undefined}
+      data-choisie={choisie ? "" : undefined}
       aria-label={`l'image ${prise.numero}, ${index + 1}ᵉ de l'animation${
         secarte ? ` — s'écarte de l'animation : ${ecart!.places.join(", ")}` : ""
       }`}
       aria-current={courante}
+      aria-pressed={choisie}
       title={dit}
       className={`relative flex items-center justify-center overflow-hidden border bg-fond-2 ${
-        courante ? "border-signal" : "border-bord hover:border-texte-3"
+        courante
+          ? "border-signal"
+          : choisie
+            ? "border-texte-2"
+            : "border-bord hover:border-texte-3"
       }`}
       style={{ width: cote, height: cote }}
     >
@@ -1117,17 +1448,36 @@ function Lecteur({
  *  réglages, ce que la refonte des tables avait justement défait. */
 function TableDeLaFrame({
   nom,
+  separe,
   children,
 }: {
   nom: string
+  /** **Les images choisies n'ont pas la même valeur ici** (V3.03.2). Le mot est
+   *  posé sur le titre de la table, pas dans une phrase du haut : c'est là qu'on
+   *  regarde au moment de toucher un curseur, et une phrase à quarante lignes
+   *  au-dessus ne se relit pas. Ce que les curseurs montrent alors est la valeur
+   *  de l'image des tables ; **poser en écrit une seule sur les autres**, celle
+   *  qu'on vient de toucher, et rien de plus. */
+  separe?: boolean
   children: React.ReactNode
 }) {
   return (
     <section
       data-table-de-la-frame={nom}
+      data-separe={separe ? "" : undefined}
       className="flex flex-col gap-2 border-t border-bord pt-2"
     >
-      <EnTetePanneau>{nom}</EnTetePanneau>
+      <div className="flex items-baseline gap-2">
+        <EnTetePanneau>{nom}</EnTetePanneau>
+        {separe && (
+          <span
+            title="les images choisies n'ont pas la même valeur ici"
+            className="mesure text-[10px] text-signal"
+          >
+            séparé
+          </span>
+        )}
+      </div>
       {children}
     </section>
   )
@@ -1148,6 +1498,10 @@ function TableDeLaFrame({
 function ReglagesDeLaFrame({
   reglages,
   sienne,
+  ancre,
+  choisies,
+  siennes,
+  separes,
   ecart,
   onReprendre,
 }: {
@@ -1155,17 +1509,32 @@ function ReglagesDeLaFrame({
   reglages: Reglages | null
   /** L'image a-t-elle sa recette à elle ? Le titre et le bouton en dépendent. */
   sienne: boolean
+  /** Le rang, à partir de 1, de l'image dont les tables montrent les valeurs. */
+  ancre: number
+  /** Combien d'images les tables règlent (V3.03.2). */
+  choisies: number
+  /** Combien d'entre elles ont déjà leur recette à elles. */
+  siennes: number
+  /** Les places sur lesquelles les images choisies ne s'accordent pas. */
+  separes: string[]
   ecart?: { places: string[]; fenetre_davant: boolean }
   onReprendre: () => void
 }) {
   if (!reglages) return null
+  const plusieurs = choisies > 1
+  const separe = (nom: string) => separes.includes(nom)
   return (
     <div
       data-recette-de-la-frame={sienne ? "sienne" : "de-la-bande"}
+      data-images-choisies={choisies}
       className="flex flex-col gap-3 border-t border-bord pt-2"
     >
       <Libelle aide="bande.recette">
-        {sienne ? "la recette de cette image" : "la recette de l'animation"}
+        {plusieurs
+          ? `la recette de ces ${choisies} images`
+          : sienne
+            ? "la recette de cette image"
+            : "la recette de l'animation"}
       </Libelle>
 
       {/* **Ce qui parle de la frame entière est au-dessus des tables**, pas
@@ -1173,9 +1542,9 @@ function ReglagesDeLaFrame({
           écrans : l'écart et le bouton qui rend la frame au défaut se seraient
           trouvés là où personne ne descend, alors qu'ils disent ce qu'il faut
           savoir *avant* de toucher un réglage. */}
-      {sienne && (
+      {(sienne || siennes > 0) && (
         <div className="flex flex-col gap-1.5">
-          {ecart && ecart.places.length > 0 && (
+          {!plusieurs && ecart && ecart.places.length > 0 && (
             <p
               data-ecart-de-la-frame
               className="mesure text-[10px] leading-4 text-texte-3"
@@ -1185,12 +1554,32 @@ function ReglagesDeLaFrame({
             </p>
           )}
 
+          {/* ⚠️ **Ce qui va être écrasé se dit une fois pour le lot**, et à un
+              seul endroit — la règle de `G12`, écrite ici pour le ruban. Le
+              compte des recettes qu'une recette nommée remplacera vit **sous le
+              menu qui la pose**, au plus près du geste ; cette phrase-ci dit
+              l'autre moitié, celle que rien ne laisse deviner : *un curseur ne
+              déplace que la valeur qu'on touche*. Les deux ont un temps vécu
+              côte à côte et se répétaient presque mot pour mot — vu au
+              navigateur le 5 septembre 2026. */}
+          {plusieurs && separes.length > 0 && (
+            <p
+              data-separes-du-lot
+              className="mesure text-[10px] leading-4 text-texte-3"
+            >
+              Séparé sur <b className="text-texte-2">{separes.join(", ")}</b> —
+              les curseurs montrent la valeur de l'image {ancre}, et un réglage
+              ne pose <b className="text-texte-2">que la valeur touchée</b> : ce
+              que les autres ne partagent pas est gardé.
+            </p>
+          )}
+
           {/* ⚠️ **La fenêtre commune est mesurée avec la recette de la bande**,
               et ne se remesure pas frame par frame : les vingt secondes ne se
               paient pas à chaque cran de curseur. Une frame qui s'en écarte peut
               donc déborder, et c'est la phrase « d'avant » qui le dit — la même
               que sous la fenêtre elle-même, parce que c'est le même fait. */}
-          {ecart?.fenetre_davant && (
+          {!plusieurs && ecart?.fenetre_davant && (
             <p
               data-fenetre-davant-sur-la-frame
               className="mesure text-[10px] leading-4 text-signal"
@@ -1206,7 +1595,11 @@ function ReglagesDeLaFrame({
             onClick={onReprendre}
             className="mesure self-start border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-texte-1"
           >
-            Reprendre la recette de l'animation
+            {plusieurs
+              ? `Reprendre la recette de l'animation sur ${siennes} image${
+                  siennes > 1 ? "s" : ""
+                }`
+              : "Reprendre la recette de l'animation"}
           </button>
         </div>
       )}
@@ -1220,7 +1613,7 @@ function ReglagesDeLaFrame({
 
           **La main n'y est pas** : elle arrive en V3.03.4. Une table vide qui
           annoncerait sa place ferait attendre un geste qui n'existe pas. */}
-      <TableDeLaFrame nom="détourage">
+      <TableDeLaFrame nom="détourage" separe={separe("détourage")}>
         {/* ⚠️ **Une recette de jeu peut n'avoir aucune passe**, et l'écran
             n'offrait alors aucun moyen d'en ajouter : le fond restait, et il
             n'y avait rien à régler. Signalé par l'auteur le 4 septembre 2026.
@@ -1234,29 +1627,40 @@ function ReglagesDeLaFrame({
         )}
         <PanneauDetourage {...reglages} BlocPasse={BlocPasse} />
         <p className="mesure text-[10px] leading-4 text-texte-3">
-          {sienne
-            ? "Ce qui change ici ne vaut que pour l'image regardée."
-            : "Ce qui change ici vaut pour toutes les images de l'animation."}
+          {plusieurs
+            ? `Ce qui change ici se pose sur les ${choisies} images choisies.`
+            : sienne
+              ? "Ce qui change ici ne vaut que pour l'image regardée."
+              : "Ce qui change ici vaut pour toutes les images de l'animation."}
         </p>
       </TableDeLaFrame>
-      <TableDeLaFrame nom="recadrage">
+      <TableDeLaFrame nom="recadrage" separe={separe("recadrage")}>
         <PanneauRecadrage {...reglages} />
       </TableDeLaFrame>
-      <TableDeLaFrame nom="grille">
+      <TableDeLaFrame nom="grille" separe={separe("grille")}>
         {/* L'ancrage est rendu à droite, avec la vitesse et le sens : il tient
             de la bande entière, et un ancrage par image ferait sauter le sujet
             d'une frame à l'autre. */}
         <PanneauGrille {...reglages} sansAncrage />
       </TableDeLaFrame>
-      <TableDeLaFrame nom="quantification">
+      <TableDeLaFrame nom="quantification" separe={separe("quantification")}>
         <PanneauQuantification {...reglages} />
       </TableDeLaFrame>
-      <TableDeLaFrame nom="bords">
+      <TableDeLaFrame nom="bords" separe={separe("bords")}>
         <PanneauBords {...reglages} />
       </TableDeLaFrame>
-      <TableDeLaFrame nom="contours">
+      <TableDeLaFrame nom="contours" separe={separe("contours")}>
         <PanneauContours {...reglages} />
       </TableDeLaFrame>
+
+      {/* ⚠️ **La table de la main n'est pas ici, et sa phrase non plus.**
+          Le plan la veut grisée avec sa raison sur une sélection de plusieurs
+          images — *une coordonnée ne voyage pas* (lot `U`) —, mais la table
+          arrive en V3.03.4 et aucun écran ne pose de main sur une frame
+          aujourd'hui. Une phrase qui expliquerait pourquoi un geste absent est
+          indisponible ferait attendre ce geste. Ce qui est tenu dès maintenant
+          l'est dans le code, au seul endroit atteignable :
+          `sansToucherALaMain`. */}
     </div>
   )
 }
@@ -1376,26 +1780,39 @@ function FenetreDeLaBande({
   )
 }
 
-/** Une recette enregistrée, appliquée à l'animation entière.
+/** Une recette enregistrée, appliquée **aux images choisies**.
  *
- *  Demandé par l'auteur le 4 septembre 2026. Ce qu'il fallait trancher :
- *  **appliquer une recette enregistrée n'écrit rien tout de suite**, comme tout
- *  le reste de cet écran — elle remplace les réglages en cours, l'aperçu se
- *  refait, et « Annuler » ramène ceux d'avant. Une recette nommée qui écrirait
- *  d'office serait le seul geste de l'écran à ne pas s'annuler.
+ *  Demandé par l'auteur le 4 septembre 2026, étendu à une sélection en V3.03.2.
+ *  Ce qu'il fallait trancher : **appliquer une recette enregistrée n'écrit rien
+ *  tout de suite**, comme tout le reste de cet écran — elle remplace les
+ *  réglages en cours, l'aperçu se refait, et « Annuler » ramène ceux d'avant.
+ *  Une recette nommée qui écrirait d'office serait le seul geste de l'écran à ne
+ *  pas s'annuler.
  *
  *  Elle **remplace tout**, pas seulement le détourage : une recette est un
  *  ensemble, et en prendre la moitié rendrait une image que personne n'a jamais
- *  jugée. */
+ *  jugée (`A7` bis ②). C'est ce qui la sépare d'un curseur des tables, qui ne
+ *  fait voyager que la valeur touchée — et c'est aussi pourquoi elle est le seul
+ *  geste de l'écran qui ait besoin de dire *ce qu'il va écraser*. */
 function RecetteEnregistree({
   recettes,
+  choisies,
+  siennes,
+  toutes,
   onRecette,
 }: {
   recettes: Record<string, Recette>
+  /** Combien d'images la recette va remplacer. */
+  choisies: number
+  /** Combien d'entre elles avaient leur recette à elles. */
+  siennes: number
+  /** Toute la bande est choisie — la recette devient celle de l'animation. */
+  toutes: boolean
   onRecette: (r: Recette) => void
 }) {
   const noms = Object.keys(recettes).sort((a, b) => a.localeCompare(b, "fr"))
   if (noms.length === 0) return null
+  const plusieurs = choisies > 1
   return (
     <label className="mesure flex flex-col gap-1 border-t border-bord pt-2 text-[10px] text-texte-3">
       <Libelle aide="fiche.recettes">une recette enregistrée</Libelle>
@@ -1405,7 +1822,12 @@ function RecetteEnregistree({
           const choisie = recettes[evenement.target.value]
           if (choisie) onRecette(choisie)
         }}
-        aria-label="appliquer une recette enregistrée à cette animation"
+        // **Le libellé dit la portée, et la portée a changé** (V3.03.2). Il
+        // disait « à cette animation » quand la recette nommée était le seul
+        // geste de l'écran qui touchait la bande entière ; elle suit désormais
+        // la sélection, comme les tables. Un libellé qui promettrait encore
+        // l'animation entière serait faux onze fois sur douze.
+        aria-label="appliquer une recette enregistrée aux images choisies"
         className="border border-bord bg-fond-2 px-1 py-0.5 text-texte-1"
       >
         <option value="">— en appliquer une —</option>
@@ -1416,8 +1838,31 @@ function RecetteEnregistree({
         ))}
       </select>
       <span className="leading-4">
-        Elle remplace <b className="text-texte-2">tous</b> les réglages
-        ci-dessus, et rien n'est écrit tant que vous n'avez pas enregistré.
+        Elle remplace <b className="text-texte-2">tous</b> les réglages{" "}
+        {toutes
+          ? "de l'animation"
+          : plusieurs
+            ? `des ${choisies} images choisies`
+            : "de l'image choisie"}
+        , et rien n'est écrit tant que vous n'avez pas enregistré.
+        {/* **Une fois pour le lot** — jamais une phrase par image. Elle ne
+            paraît que quand il y a vraiment quelque chose à écraser : annoncer
+            « 0 recette individuelle sera remplacée » ferait craindre une perte
+            là où il n'y en a aucune. */}
+        {siennes > 0 && (
+          <>
+            {" "}
+            <b data-recettes-ecrasees={siennes} className="text-signal">
+              {plusieurs ? `${siennes} des ${choisies} images choisies ` : ""}
+              {siennes > 1
+                ? "ont leur recette à elles"
+                : plusieurs
+                  ? "a sa recette à elle"
+                  : "Cette image a sa recette à elle"}{" "}
+              : elle {siennes > 1 ? "les" : "la"} remplacera.
+            </b>
+          </>
+        )}
       </span>
     </label>
   )

@@ -36,7 +36,7 @@
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée devient une planche de sprites, son fichier d'accompagnement dans le format que les moteurs lisent, et une image qui tourne toute seule — jusque-là, une bande ne servait qu'à être regardée dans l'atelier. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande, et l'écran dit enfin ce qui bouge entre deux images — c'est la première mesure du produit qui regarde deux images ensemble. **`A7` ferme la version, et son vrai sujet n'était pas dans son plan** : une animation gardée ne se rouvrait par aucun chemin — la vignette remontait au clip, donc l'écran repartait des réglages du jeu et corriger une virgule demandait de tout refaire de mémoire. Elle apporte l'écran qui manquait, *l'atelier d'une animation*, et les gestes du plan par-dessus : la pelure d'oignon, la poussée au pixel, les neuf ancrages, une image prise dans un autre clip. **La version est close** | ci-dessous |
 | **V3.01** — la commande d'un clip se relit avant de partir | Le tiroir qui montre ce qui part et le corrige pour cet appel ; la liste des modèles qui se plie et se filtre | **1 close sur 2 le 5 septembre 2026** — le tiroir ; la liste des modèles reste à construire | ci-dessous |
 | **V3.02** — le clip a une fiche, comme une image | La galerie s'ouvre sur un clip au clic : la vidéo se regarde en boucle dans la colonne de droite, ce que le clip porte et ce qu'il a produit se lisent, et il se découpe depuis sa fiche | **✅ close le 5 septembre 2026** — une tranche, livrée le jour de son écriture, sans un centime | ci-dessous |
-| **V3.03** — l'atelier d'une animation au niveau des tables | L'édition d'une animation devient l'édition d'images : le montage redevient brut, chaque frame porte sa recette et se travaille avec les tables, la bande se monte (retirer, dupliquer, déplacer, prendre au clip, chutier), et la main s'y pose | **ouverte le 5 septembre 2026, non close** | ci-dessous |
+| **V3.03** — l'atelier d'une animation au niveau des tables | L'édition d'une animation devient l'édition d'images : le montage redevient brut, chaque frame porte sa recette et se travaille avec les tables, la bande se monte (retirer, dupliquer, déplacer, prendre au clip, chutier), et la main s'y pose | **ouverte le 5 septembre 2026, 2 closes sur 4** — `V3.03.1` a donné à chaque frame sa recette et refait l'écran dans la grammaire des tables ; `V3.03.2` pose les tables sur une sélection du ruban, **une valeur voyage seule quand une recette nommée remplace l'ensemble**. Restent `V3.03.3`, le montage de la bande, et `V3.03.4`, la main — qui reprend au passage le grisé de la main sur une sélection | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -280,10 +280,10 @@ V3.02  ① la fiche d'un clip — la galerie s'ouvre au clic    ✔ close le 5 s
 
  │
  ▼
-V3.03  l'atelier d'une animation au niveau des tables       ouverte le 5 septembre 2026
-       ① le montage redevient brut, chaque frame a sa recette
-       ② les tables sur une sélection · ③ la bande se monte
-         au clip · ④ la main sur une frame
+V3.03  l'atelier d'une animation au niveau des tables       ouverte, 2 closes sur 4
+       ① le montage redevient brut, chaque frame a sa recette  ✔ close
+       ② les tables sur une sélection  ✔ close
+       ③ la bande se monte au clip · ④ la main sur une frame
 
  │
  ▼
@@ -4002,12 +4002,12 @@ colonnes d'un même écran.
 
 | Tranche | Ce qu'elle livre |
 |---|---|
-| **V3.03.1** | chaque frame porte sa recette, l'écran se refait dans la grammaire des tables, le montage redevient brut — le socle |
-| **V3.03.2** | les tables sur une sélection : une frame, plusieurs, toutes, et les recettes nommées |
+| **V3.03.1** | chaque frame porte sa recette, l'écran se refait dans la grammaire des tables, le montage redevient brut — le socle. **Livrée** |
+| **V3.03.2** | les tables sur une sélection : une frame, plusieurs, toutes, et les recettes nommées. **Livrée**, moins le grisé de la main, qui part avec elle en `V3.03.4` |
 | **V3.03.3** | la bande se monte : retirer, dupliquer, déplacer, reprendre au clip, le chutier |
-| **V3.03.4** | la main sur une frame |
+| **V3.03.4** | la main sur une frame — **et son grisé sur une sélection**, repris de `V3.03.2` |
 
-### V3.03.1 · Chaque frame porte sa recette, et le montage redevient brut — **à construire**
+### V3.03.1 · Chaque frame porte sa recette, et le montage redevient brut — ✅ **livrée le 5 septembre 2026**
 
 **Ce qu'on livre.** Trois choses, et la première porte les deux autres.
 
@@ -4050,21 +4050,29 @@ que l'aperçu montrait* devient vrai frame par frame, là où on le regarde.
 
 **Critères d'acceptation**
 
-- [ ] Une bande gardée avant la tranche se rouvre telle quelle, la recette de la bande vaut pour chaque frame — rien ne migre
-- [ ] Toucher un réglage sur une frame lui donne sa recette individuelle, copie de la bande à cet instant, et le ruban écrit l'écart
-- [ ] « Reprendre la recette de la bande » rend la frame au défaut, et se défait
-- [ ] L'écran se lit comme les tables : panneau gauche (tables de la frame), frame en grand avec zoom au centre, ruban + lecteur + réglages de bande à droite
-- [ ] La table détourage d'une frame offre les quatre moteurs et toutes leurs valeurs, et la phrase qui remplace celle qu'un moteur ne lit pas
-- [ ] Le montage ne montre plus la boucle traitée ni le panneau de recette ; il n'évalue plus que le mouvement
-- [ ] Une frame qui s'écarte de la bande porte la phrase « d'avant » pour la fenêtre commune, et « Reprendre la fenêtre » reste un bouton
-- [ ] Les gestes d'A7 survivent : pelure d'oignon, poussée au pixel bornée, neuf ancrages, remplacement par une image d'un autre clip du même personnage
-- [ ] On corrige l'image qu'on regarde, lecteur en marche — l'essai laisse tourner, ralenti, et tombe en défaisant le correctif (8octies)
-- [ ] Une garde se referme et se rouvre avec ses recettes individuelles — gardée avec des réglages qui ne sont pas ceux du défaut (8septies)
-- [ ] Tout se fait au clavier autant qu'à la souris ; tout fonctionne réseau coupé ; le guide reçoit ses lignes
+- [x] Une bande gardée avant la tranche se rouvre telle quelle, la recette de la bande vaut pour chaque frame — rien ne migre
+- [x] Toucher un réglage sur une frame lui donne sa recette individuelle, copie de la bande à cet instant, et le ruban écrit l'écart
+- [x] « Reprendre la recette de la bande » rend la frame au défaut, et se défait
+- [x] L'écran se lit comme les tables : panneau gauche (tables de la frame), frame en grand avec zoom au centre, ruban + lecteur + réglages de bande à droite
+- [x] La table détourage d'une frame offre les quatre moteurs et toutes leurs valeurs, et la phrase qui remplace celle qu'un moteur ne lit pas
+- [x] Le montage ne montre plus la boucle traitée ni le panneau de recette ; il n'évalue plus que le mouvement
+- [x] Une frame qui s'écarte de la bande porte la phrase « d'avant » pour la fenêtre commune, et « Reprendre la fenêtre » reste un bouton
+- [x] Les gestes d'A7 survivent : pelure d'oignon, poussée au pixel bornée, neuf ancrages, remplacement par une image d'un autre clip du même personnage
+- [x] On corrige l'image qu'on regarde, lecteur en marche — l'essai laisse tourner, ralenti, et tombe en défaisant le correctif (8octies)
+- [x] Une garde se referme et se rouvre avec ses recettes individuelles — gardée avec des réglages qui ne sont pas ceux du défaut (8septies)
+- [x] Tout se fait au clavier autant qu'à la souris ; tout fonctionne réseau coupé ; le guide reçoit ses lignes
+
+> **Ce que « lecteur en marche » veut dire ici, et qui a été tranché en le
+> construisant.** Les flèches corrigent l'image *affichée* — la règle d'`A7`, et
+> elle ne bouge pas. **Les tables, elles, suivent l'image *choisie***. Les avoir
+> fait suivre l'affichée a donné un panneau qui apparaissait et disparaissait
+> onze fois par seconde : *on ne clique pas un bouton qui s'en va*. Une flèche
+> est instantanée, une table se lit avant d'être touchée, et lire prend plus
+> longtemps qu'une image de l'animation.
 
 **Bloquée par** — aucune. **Elle ne bloque rien** : les trois suivantes la prennent pour socle.
 
-### V3.03.2 · Les tables sur une sélection : une frame, plusieurs, toutes — **à construire**
+### V3.03.2 · Les tables sur une sélection : une frame, plusieurs, toutes — ✅ **livrée le 5 septembre 2026**, sauf le grisé de la main
 
 **Ce qu'on livre.** L'autre moitié de la demande : *« traiter les frames une par une ou toutes à la
 fois ou juste une sélection, avec tous les outils classiques des tables »*. Le ruban se sélectionne
@@ -4094,14 +4102,36 @@ avec sa raison — comme toujours, *le grisé porte sa raison*.
 
 **Critères d'acceptation**
 
-- [ ] Le ruban se sélectionne au clic et s'étend ; la sélection porte un geste, elle n'est pas un état complet
-- [ ] Les tables s'appliquent à la sélection : une valeur « séparé » se pose pour toutes en une passe
-- [ ] Une recette nommée se pose sur la sélection, remplace tout l'ensemble, et n'écrit rien avant « Enregistrer »
-- [ ] « Remettre la recette de la bande » s'applique à la sélection
-- [ ] Un liseré marque les frames à recette individuelle ; ce qui va être écrasé se dit une fois pour le lot, et la phrase vaut aussi pour les retouches à la main quand elles existent
-- [ ] La main est grisée avec sa raison sur une sélection de plusieurs frames
-- [ ] Une route serveur prend une liste — pas trente appels pour trente frames
-- [ ] La garde se referme et se rouvre avec les recettes posées en lot (8septies)
+- [x] Le ruban se sélectionne au clic et s'étend ; la sélection porte un geste, elle n'est pas un état complet
+- [x] Les tables s'appliquent à la sélection : une valeur « séparé » se pose pour toutes en une passe
+- [x] Une recette nommée se pose sur la sélection, remplace tout l'ensemble, et n'écrit rien avant « Enregistrer »
+- [x] « Remettre la recette de la bande » s'applique à la sélection
+- [x] Un liseré marque les frames à recette individuelle ; ce qui va être écrasé se dit une fois pour le lot, et la phrase vaut aussi pour les retouches à la main quand elles existent
+- [ ] La main est grisée avec sa raison sur une sélection de plusieurs frames — **reporté en `V3.03.4`, voir ci-dessous**
+- [x] Une route serveur prend une liste — pas trente appels pour trente frames
+- [x] La garde se referme et se rouvre avec les recettes posées en lot (8septies)
+
+> ### ⚠️ Deux choses que la construction a trouvées, et qui changent le cadrage
+>
+> **① Une valeur voyage, une recette remplace — et c'est la tranche entière.**
+> Les tables rendent une recette *complète* à chaque geste : bouger un curseur
+> renvoie toute la recette de l'image regardée. L'écrire telle quelle sur la
+> sélection lui donnerait aussi les valeurs qu'elle ne partageait pas, **sans
+> un mot**, et ça ne se verrait qu'à l'export. Un réglage des tables ne déplace
+> donc que ce qui a changé ; une recette nommée, elle, remplace l'ensemble —
+> c'est ce qui justifie qu'elle *seule* annonce d'avance ce qu'elle écrase.
+> Corollaire : **toute la bande choisie se règle sur la bande**, pas image par
+> image ; douze recettes individuelles identiques annonceraient douze écarts là
+> où il n'y en a aucun.
+>
+> **② Le critère de la main portait sur un geste absent, et sur le mauvais
+> risque.** La table de la main n'arrive qu'en `V3.03.4`, et aucun écran n'en
+> pose sur une frame aujourd'hui : la griser serait faire attendre un geste qui
+> n'existe pas (`AGENTS.md`, 8nonies). Et une recette nommée **ne peut pas
+> propager** de retouche — le serveur la lui retire à l'enregistrement (`U5`,
+> `US-342`). Le risque réel est l'inverse : *remplacer tout l'ensemble*
+> **effacerait** la main que l'image avait. C'est ce qui est tenu ici ; la
+> phrase et le grisé partent avec la table, en `V3.03.4`.
 
 **Bloquée par** — `V3.03.1`.
 
@@ -4152,6 +4182,13 @@ frame touchée porte le liseré de 03.2.
 **Elle ne s'applique qu'à une frame à la fois**, et la raison est écrite à la place des réglages
 quand plusieurs frames sont choisies : peindre est un geste de pixels, et dupliquer une passe de
 main sur d'autres images serait poser des retouches sans les avoir regardées.
+
+> ⚠️ **Ce grisé était un critère de `V3.03.2`, et il a été reporté ici** le 5 septembre 2026 : une
+> table absente ne se grise pas, et une phrase expliquant pourquoi un geste inexistant est
+> indisponible ferait attendre ce geste (`AGENTS.md`, 8nonies). Ce que `V3.03.2` tient déjà, et
+> qui n'attend pas la table : **poser une recette nommée n'efface pas la main d'une image** —
+> elle n'en porte aucune, le serveur la lui retire (`U5`), donc *remplacer tout l'ensemble*
+> remplacerait des passages par du vide.
 
 **Critères d'acceptation**
 

@@ -86,6 +86,29 @@ CONTACT_COLONNES = 16
 # large.
 IMAGES_MAX = 64
 
+# Les places d'une recette **dans l'ordre du traitement, et leur mot français**.
+#
+# ⚠️ **La même liste vit à l'écran**, dans `interface/src/composants/AtelierDeBande.tsx`,
+# et `tests/test_v303.py` les tient ensemble — comme les crans de cible et les
+# noms de moteurs avant elles. Deux endroits qui nomment les places finissent
+# toujours par ne plus les nommer pareil, et c'est l'écran qui ment le premier
+# parce que c'est lui qu'on relit le moins.
+#
+# L'écran en a besoin pour une chose que le serveur ne peut pas faire à sa
+# place : dire ce qui est **séparé dans une sélection** (V3.03.2). Le serveur
+# compare chaque frame à la bande ; l'auteur, lui, choisit un sous-ensemble que
+# le serveur ne connaît pas, et l'union des écarts à la bande n'est pas la même
+# chose que ce qui diffère à l'intérieur de la sélection.
+PLACES_DE_LA_RECETTE: tuple[tuple[str, str], ...] = (
+    ("passes", "détourage"),
+    ("recadrage", "recadrage"),
+    ("grille", "grille"),
+    ("quantification", "quantification"),
+    ("bords", "bords"),
+    ("contours", "contours"),
+    ("main", "la main"),
+)
+
 
 class ServiceMontage:
     """Ouvrir un clip, en tailler des bandes, les garder.
@@ -640,16 +663,7 @@ class ServiceMontage:
         ce qu'on vient de régler, et un écran qui nommerait les places lui-même
         serait le second vocabulaire que cette méthode existe pour éviter.
         """
-        # Les places dans l'ordre du traitement, et leur mot français.
-        places = (
-            ("passes", "détourage"),
-            ("recadrage", "recadrage"),
-            ("grille", "grille"),
-            ("quantification", "quantification"),
-            ("bords", "bords"),
-            ("contours", "contours"),
-            ("main", "la main"),
-        )
+        places = PLACES_DE_LA_RECETTE
         ecarts: list[dict[str, Any]] = []
         for prise in prises:
             if prise.recette is None:

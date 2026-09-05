@@ -11,6 +11,73 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V3.03.1 et .2 — une image de l'animation devient une image de l'établi — 5 septembre 2026
+
+Deux tranches d'un coup, et la seconde ne tient que par la première. **Chaque frame d'une bande
+porte désormais sa recette à elle**, facultative, née du premier réglage qu'on touche et copiée
+de celle de la bande à cet instant ; puis **les tables se posent sur une sélection du ruban** —
+une image, plusieurs, toutes. L'atelier d'une animation a repris la grammaire des tables : les
+six panneaux de l'établi à gauche, la frame en grand au milieu avec son zoom, le ruban et le
+lecteur à droite. Les trois curseurs sans nom d'`A7` ont disparu.
+
+**Le montage, lui, est redevenu brut** : plus de boucle traitée, plus de panneau de recette. On
+y juge le mouvement, pas le traitement — *une bande mal ramenée sur sa grille n'est pas jugeable*,
+et l'inverse est vrai du mouvement sous un détourage.
+
+### Un panneau qui clignotait onze fois par seconde
+
+L'atelier s'ouvre en jouant. Les tables ont d'abord suivi l'image **affichée**, par analogie avec
+les flèches — et le titre, la phrase d'écart et le bouton « reprendre la recette » apparaissaient
+et disparaissaient à la cadence de l'animation. *On ne clique pas un bouton qui s'en va, et on ne
+lit pas un panneau qui bat.*
+
+**Les deux gestes n'ont pas le même temps, et c'est ce qui les sépare.** Une flèche est
+instantanée : on regarde, on pousse, ça tombe là où l'œil était — la règle d'`A7`, et elle ne
+bouge pas. Une table se *lit* avant d'être touchée, et lire prend plus longtemps qu'une image de
+l'animation. Elle suit donc la frame **choisie**. Vu au navigateur, sur l'atelier jetable ; aucun
+essai ne pouvait le voir, ils lisent un instant.
+
+### Une valeur voyage, une recette remplace — et c'est toute la V3.03.2
+
+Les tables rendent une recette **complète** à chaque geste : bouger un curseur renvoie toute la
+recette de l'image regardée. L'écrire telle quelle sur les cinq images choisies leur donnerait
+aussi les quatre valeurs qu'elles ne partageaient pas, **sans un mot**, et ça ne se verrait qu'à
+l'export. Un réglage des tables ne déplace donc que ce qui a changé ; une recette nommée, elle,
+remplace l'ensemble — *en prendre la moitié rendrait une image que personne n'a jamais jugée*.
+C'est ce qui explique que la seconde soit le seul geste de l'écran à annoncer d'avance ce qu'il
+écrase.
+
+Corollaire trouvé en le construisant : **toute la bande choisie se règle sur la bande**, pas
+image par image. Douze recettes individuelles identiques annonceraient douze écarts là où il n'y
+en a aucun, le ruban se couvrirait de liserés, et « reprendre la recette de l'animation » n'aurait
+plus rien à reprendre. Les recettes individuelles qui subsistent, elles, **suivent quand même** :
+sans ça un curseur posé sur les douze n'en bougerait que neuf.
+
+### Le critère de la main portait sur le mauvais risque
+
+Le plan voulait la table de la main *grisée avec sa raison* sur une sélection de plusieurs images.
+Deux choses l'ont déplacé en `V3.03.4`. La table n'existe pas encore dans cet écran, et **une
+phrase expliquant pourquoi un geste absent est indisponible fait attendre ce geste**. Surtout, une
+recette nommée **ne peut pas propager** de retouche : le serveur la lui retire à l'enregistrement
+(`U5`, `US-342`). Le risque réel va dans l'autre sens — *remplacer tout l'ensemble* effacerait la
+main que l'image avait. C'est celui-là qui est tenu, au seul endroit atteignable.
+
+### Ce que la tranche a coûté ailleurs
+
+Le socle serveur reçu du fil précédent était incomplet et l'annonçait fini : **l'aperçu jetait les
+recettes de frame** — rappelé à chaque geste, il aurait rendu tout curseur posé sur une image sans
+effet à l'écran jusqu'à l'enregistrement. La règle de partage des recettes est maintenant écrite
+**une fois pour les deux chemins de la planche**, celui qu'on enregistre et celui qu'on regarde.
+
+Et deux manques d'`A7` rapportés dans `BlocPasse`, où ils servent aussi l'établi : le durcissement
+suit le moteur (`D1`), et la tolérance d'un moteur qui ne la lit pas laisse une phrase à sa place
+au lieu d'un curseur mort.
+
+**Les places d'une recette sont maintenant nommées à deux endroits** — le serveur les comparait
+déjà frame par frame, l'écran doit dire ce qui est *séparé* dans une sélection que le serveur ne
+connaît pas. Un essai tient les deux listes ensemble, comme pour les crans de cible et les noms de
+moteurs avant elles.
+
 ## V3.02 — le clip a une fiche, comme une image — 5 septembre 2026
 
 Une tranche, écrite et livrée le même jour, sans un centime. La galerie traitait les clips comme

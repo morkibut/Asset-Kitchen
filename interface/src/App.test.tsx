@@ -23213,8 +23213,10 @@ describe("A7 · l'atelier d'une animation", () => {
       },
     })
 
+    // « toutes », depuis la V3.03.2 : la recette nommée suit la sélection.
+    fireEvent.click(await atelier.findByRole("button", { name: "toutes" }))
     const choix = await atelier.findByLabelText(
-      "appliquer une recette enregistrée à cette animation",
+      "appliquer une recette enregistrée aux images choisies",
     )
     fireEvent.change(choix, { target: { value: "mon pixel art" } })
 
@@ -23237,7 +23239,7 @@ describe("A7 · l'atelier d'une animation", () => {
     await atelier.findByText(/en pixels du sprite/)
     expect(
       atelier.queryByLabelText(
-        "appliquer une recette enregistrée à cette animation",
+        "appliquer une recette enregistrée aux images choisies",
       ),
     ).toBeNull()
   })
@@ -23317,11 +23319,17 @@ describe("A7 · l'atelier d'une animation", () => {
     // décide de qui paie les vingt secondes de la remesure.
     //
     // ⚠️ **Ce qui périme la fenêtre est la recette de la bande** (V3.03.1), et
-    // c'est ce que l'essai pose ici : une recette nommée remplace celle de
-    // l'animation entière. Régler la tolérance ne le ferait plus — depuis la
-    // tranche, ce geste-là écarte *une frame*, et la fenêtre commune reste
-    // mesurée avec la recette de la bande. Sa phrase à elle est vérifiée par
-    // « une frame qui s'écarte dit que la fenêtre commune est d'avant ».
+    // c'est ce que l'essai pose ici : une recette nommée posée sur **toutes**
+    // les images remplace celle de l'animation. Régler la tolérance ne le ferait
+    // plus — depuis la tranche, ce geste-là écarte *une frame*, et la fenêtre
+    // commune reste mesurée avec la recette de la bande. Sa phrase à elle est
+    // vérifiée par « une frame qui s'écarte dit que la fenêtre commune est
+    // d'avant ».
+    //
+    // **Et « toutes » n'est pas décoratif ici** (V3.03.2) : la recette nommée
+    // suit la sélection comme les tables, et la sélection d'ouverture est *une*
+    // image. Sans ce clic, elle écarterait la première frame et laisserait la
+    // fenêtre commune parfaitement à jour.
     const { atelier, cadre } = await ouvrirLAtelier({
       recettes: {
         "mon pixel art": {
@@ -23332,9 +23340,10 @@ describe("A7 · l'atelier d'une animation", () => {
     })
     expect(cadre.querySelector("[data-fenetre-davant]")).toBeNull()
 
+    fireEvent.click(await atelier.findByRole("button", { name: "toutes" }))
     fireEvent.change(
       await atelier.findByLabelText(
-        "appliquer une recette enregistrée à cette animation",
+        "appliquer une recette enregistrée aux images choisies",
       ),
       { target: { value: "mon pixel art" } },
     )
@@ -23715,6 +23724,394 @@ describe("A7 · l'atelier d'une animation", () => {
         (await atelier.findByLabelText(/tolérance, en chiffres/)) as HTMLInputElement
       ).value,
     ).toBe("61")
+  })
+
+  // ── V3.03.2 · les tables sur une sélection ───────────────────────────────
+  //
+  // **Le défaut de forme que ces essais évitent, et qu'aucune revue ne verrait.**
+  // Les tables rendent une recette *entière* à chaque geste : bouger un curseur
+  // renvoie toute la recette de l'image qu'on regarde. L'écrire telle quelle sur
+  // les images choisies leur donnerait aussi les valeurs qu'elles ne
+  // partageaient pas — **sans un mot**, et ça ne se voit qu'à la fin, sur une
+  // planche. Un essai qui poserait un réglage sur un lot *déjà d'accord* ne
+  // pourrait pas le voir : ceux d'ici partent tous d'un lot **qui n'est pas
+  // d'accord**, et vérifient ce que les valeurs non touchées sont devenues.
+
+  /** Quatre images dont deux portent déjà leur recette, et pas la même :
+   *  la deuxième s'écarte sur le détourage, la troisième sur les couleurs. */
+  const PRISES_SEPAREES: Prise[] = GARDEE_A7.prises.map((prise, rang) =>
+    rang === 1
+      ? {
+          ...prise,
+          recette: {
+            ...GARDEE_A7.recette,
+            passes: [{ ...PASSE_PAR_DEFAUT, tolerance: 61 }],
+          },
+        }
+      : rang === 2
+        ? {
+            ...prise,
+            recette: {
+              ...GARDEE_A7.recette,
+              quantification: { couleurs: 12, palette: [], tramage: "aucun" },
+            },
+          }
+        : prise,
+  )
+
+  /** Une recette enregistrée, et **elle ne porte aucune main** — c'est le
+   *  serveur qui l'a voulu, pas l'essai : `voyage` la lui retire à
+   *  l'enregistrement (`U5`, `US-342`). Une recette nommée avec une main serait
+   *  un état que le produit ne sait pas fabriquer, et l'essai qui s'en servirait
+   *  prouverait quelque chose sur rien. */
+  const RECETTES_NOMMEES: Record<string, Recette> = {
+    "mon pixel art": {
+      ...RECETTE_VIDE,
+      passes: [{ ...PASSE_PAR_DEFAUT, tolerance: 61 }],
+      quantification: { couleurs: 48, palette: [], tramage: "aucun" },
+    },
+  }
+
+  /** Une retouche posée sur une image de la bande.
+   *
+   *  ⚠️ **Aucun écran ne la pose encore** — la table de la main arrive en
+   *  V3.03.4 —, mais **la route qui écrit une bande l'accepte déjà** sur une
+   *  prise, et c'est ce qui rend cet état atteignable aujourd'hui : par l'agent,
+   *  par un appel direct, et demain par l'écran. */
+  const UNE_MAIN: Recette["main"] = {
+    opacite: [],
+    calques: [
+      {
+        nom: "retouche",
+        visible: true,
+        passages: [{ garde: false, rayon: 2, points: [[8, 9]], couleur: "" }],
+      },
+    ],
+  }
+
+  const ouvrirSeparee = (prises: Prise[] = PRISES_SEPAREES) => {
+    const bande = { ...GARDEE_A7, prises }
+    return ouvrirLAtelier({
+      recettes: RECETTES_NOMMEES,
+      atelierDeBande: {
+        bande,
+        planche: "data:image/png;base64,AAAA",
+        clips: { "clip-a": clipRendu("clip-a", false) },
+        images_par_clip: { "clip-a": 22 },
+        cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
+        clips_voisins: VOISINS_A7,
+        ecarts: ecartsDesPrises(prises, GARDEE_A7.recette),
+      },
+    })
+  }
+
+  /** Le ruban, par son rang — les essais parlent de la 1ʳᵉ, la 2ᵉ, la 3ᵉ. */
+  const vignette = (cadre: HTMLElement, rang: number) =>
+    cadre.querySelector(
+      `[data-image-de-la-bande="${rang}"]`,
+    ) as HTMLButtonElement
+
+  /** Les prises du dernier aperçu — ce que l'écran **enverrait**, et non ce
+   *  qu'il affiche : une valeur posée sur un lot se lit là, pas dans un champ. */
+  const dernieresPrises = (appels: { url: string; corps: unknown }[]) =>
+    ((
+      [...appels].reverse().find((a) => a.url === "/api/montage/preview")
+        ?.corps as { prises?: Prise[] }
+    )?.prises ?? []) as Prise[]
+
+  test("le ruban se sélectionne au clic et s'étend", async () => {
+    const { atelier, cadre } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    // À l'ouverture, une seule image est choisie — c'est ce qui fait tenir la
+    // règle de la V3.03.1 : *toucher un réglage donne à cette image sa recette*.
+    expect(cadre.querySelectorAll("[data-choisie]")).toHaveLength(1)
+
+    fireEvent.click(vignette(cadre, 1))
+    fireEvent.click(vignette(cadre, 3), { shiftKey: true })
+
+    await waitFor(() =>
+      expect(cadre.querySelectorAll("[data-choisie]")).toHaveLength(3),
+    )
+    expect(vignette(cadre, 0).getAttribute("aria-pressed")).toBe("false")
+
+    // Ctrl retire celle du milieu — l'intervalle n'est pas une prison.
+    fireEvent.click(vignette(cadre, 2), { ctrlKey: true })
+    await waitFor(() =>
+      expect(cadre.querySelectorAll("[data-choisie]")).toHaveLength(2),
+    )
+  })
+
+  test("la sélection porte un geste : rien ne l'enregistre", async () => {
+    // **Elle n'est pas un état de la bande.** Une sélection gardée sur le disque
+    // serait à ranger, à rouvrir et à expliquer, pour un choix qui ne survit pas
+    // à la question suivante. L'essai regarde ce qui part : le corps de
+    // l'aperçu et celui de l'enregistrement.
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 0))
+    fireEvent.click(vignette(cadre, 2), { shiftKey: true })
+    await reglerLaTolerance(atelier, 33)
+    fireEvent.click(await atelier.findByRole("button", { name: "Enregistrer ›" }))
+
+    await waitFor(() =>
+      expect(atelier.queryByText(/des corrections attendent/)).toBeNull(),
+    )
+    const partis = appels
+      .filter((a) => Boolean(a.corps))
+      .map((a) => JSON.stringify(a.corps))
+    expect(partis.some((corps) => /selection|choisie/i.test(corps))).toBe(false)
+  })
+
+  test("une valeur se pose sur toute la sélection, et rien d'autre ne voyage", async () => {
+    // **Le cœur de la tranche.** Trois images choisies, deux d'accord sur les
+    // couleurs et une non ; on touche la tolérance. Les trois doivent la
+    // recevoir, et **la troisième doit garder ses douze couleurs** — c'est la
+    // ligne qui tombe si l'écran repose la recette entière au lieu de la valeur.
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 0))
+    fireEvent.click(vignette(cadre, 2), { shiftKey: true })
+    await reglerLaTolerance(atelier, 33)
+
+    await waitFor(() => {
+      const prises = dernieresPrises(appels)
+      expect(prises[0]?.recette?.passes[0]?.tolerance).toBe(33)
+      expect(prises[1]?.recette?.passes[0]?.tolerance).toBe(33)
+      expect(prises[2]?.recette?.passes[0]?.tolerance).toBe(33)
+    })
+    const prises = dernieresPrises(appels)
+    // Ce qui n'a pas été touché est resté ce qu'il était, image par image.
+    expect(prises[2]?.recette?.quantification?.couleurs).toBe(12)
+    expect(prises[0]?.recette?.quantification?.couleurs).toBe(24)
+    // Et la quatrième, non choisie, n'a toujours aucune recette à elle.
+    expect(prises[3]?.recette ?? null).toBeNull()
+  })
+
+  test("une table dit « séparé » quand les images choisies ne s'accordent pas", async () => {
+    const { atelier, cadre } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 0))
+    fireEvent.click(vignette(cadre, 2), { shiftKey: true })
+
+    await waitFor(() =>
+      expect(
+        cadre.querySelector('[data-table-de-la-frame="détourage"][data-separe]'),
+      ).toBeTruthy(),
+    )
+    expect(
+      cadre.querySelector(
+        '[data-table-de-la-frame="quantification"][data-separe]',
+      ),
+    ).toBeTruthy()
+    // **Ce sur quoi elles sont d'accord ne s'annonce pas** : un « séparé » posé
+    // partout ne séparerait plus rien.
+    expect(
+      cadre.querySelector('[data-table-de-la-frame="bords"][data-separe]'),
+    ).toBeNull()
+    // Et une seule phrase le résume pour le lot, pas une par image.
+    expect(cadre.querySelectorAll("[data-separes-du-lot]")).toHaveLength(1)
+  })
+
+  test("ce qui va être écrasé se dit une fois pour le lot", async () => {
+    // La règle de `G12`, écrite ici pour le ruban : *ce qui n'a pas voyagé se
+    // dit une fois pour le lot*, pas trente fois.
+    const { atelier, cadre } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 0))
+    fireEvent.click(vignette(cadre, 2), { shiftKey: true })
+
+    // **Une fois, et à un seul endroit** : sous le menu qui pose la recette,
+    // au plus près du geste qui écrase.
+    await waitFor(() =>
+      expect(cadre.querySelectorAll("[data-recettes-ecrasees]")).toHaveLength(1),
+    )
+    // Deux des trois choisies portent leur recette, et c'est ce nombre-là que
+    // l'écran annonce — celui du lot, pas celui de la bande.
+    expect(
+      cadre
+        .querySelector("[data-recettes-ecrasees]")
+        ?.getAttribute("data-recettes-ecrasees"),
+    ).toBe("2")
+    // Le liseré montre lesquelles, et il n'en montre pas une de plus.
+    expect(cadre.querySelectorAll("[data-liser-ecart]")).toHaveLength(2)
+  })
+
+  test("une recette enregistrée remplace tout l'ensemble des images choisies", async () => {
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 1))
+    fireEvent.click(vignette(cadre, 2), { shiftKey: true })
+    fireEvent.change(
+      await atelier.findByLabelText(
+        "appliquer une recette enregistrée aux images choisies",
+      ),
+      { target: { value: "mon pixel art" } },
+    )
+
+    await waitFor(() => {
+      const prises = dernieresPrises(appels)
+      expect(prises[1]?.recette?.passes[0]?.tolerance).toBe(61)
+      expect(prises[2]?.recette?.passes[0]?.tolerance).toBe(61)
+    })
+    const prises = dernieresPrises(appels)
+    // **Elle remplace, elle ne reporte pas** : les douze couleurs de la
+    // troisième s'en vont avec le reste — *une recette est un ensemble, en
+    // prendre la moitié rendrait une image que personne n'a jamais jugée*.
+    expect(prises[2]?.recette?.quantification?.couleurs).toBe(48)
+    // Les non choisies n'ont rien reçu, et rien n'est écrit.
+    expect(prises[0]?.recette ?? null).toBeNull()
+    expect(prises[3]?.recette ?? null).toBeNull()
+    expect(
+      appels.some((a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps)),
+    ).toBe(false)
+    expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
+  })
+
+  test("une recette enregistrée ne jette pas la main d'une image", async () => {
+    // ⚠️ **Le risque va dans l'autre sens que celui qu'on attend.** Une recette
+    // nommée ne *propage* pas de retouche — le serveur lui retire sa main à
+    // l'enregistrement (`U5`) — mais « remplacer tout l'ensemble » remplacerait
+    // par du vide celle que l'image avait, sans un mot. *Rien ne se réécrit en
+    // silence*, et une retouche perdue ne se refait pas : elle se redessine.
+    const avecUneMain = PRISES_SEPAREES.map((prise, rang) =>
+      rang === 1
+        ? { ...prise, recette: { ...prise.recette!, main: UNE_MAIN } }
+        : prise,
+    )
+    const { atelier, cadre, appels } = await ouvrirSeparee(avecUneMain)
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 1))
+    fireEvent.click(vignette(cadre, 2), { shiftKey: true })
+    fireEvent.change(
+      await atelier.findByLabelText(
+        "appliquer une recette enregistrée aux images choisies",
+      ),
+      { target: { value: "mon pixel art" } },
+    )
+
+    await waitFor(() => {
+      const prises = dernieresPrises(appels)
+      expect(prises[1]?.recette?.passes[0]?.tolerance).toBe(61)
+    })
+    const prises = dernieresPrises(appels)
+    // Tout le reste a bien été remplacé — la recette est un ensemble.
+    expect(prises[1]?.recette?.quantification?.couleurs).toBe(48)
+    // Mais la retouche est encore là.
+    expect(prises[1]?.recette?.main?.calques[0]?.passages).toHaveLength(1)
+    // Et l'image d'à côté, qui n'en avait pas, n'en reçoit pas une.
+    expect(prises[2]?.recette?.main ?? null).toBeNull()
+  })
+
+  test("« reprendre la recette de l'animation » s'applique à la sélection", async () => {
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(vignette(cadre, 1))
+    fireEvent.click(vignette(cadre, 2), { shiftKey: true })
+    fireEvent.click(
+      await atelier.findByRole("button", {
+        name: "Reprendre la recette de l'animation sur 2 images",
+      }),
+    )
+
+    await waitFor(() => {
+      const prises = dernieresPrises(appels)
+      expect(prises[1]?.recette ?? null).toBeNull()
+      expect(prises[2]?.recette ?? null).toBeNull()
+    })
+    await waitFor(() =>
+      expect(cadre.querySelectorAll("[data-liser-ecart]")).toHaveLength(0),
+    )
+  })
+
+  test("toute la bande choisie se règle sur la bande, pas image par image", async () => {
+    // ⚠️ **Douze recettes individuelles identiques annonceraient douze écarts**
+    // là où il n'y en a aucun : le ruban se couvrirait de liserés, et
+    // « reprendre la recette de l'animation » n'aurait plus rien à reprendre.
+    const { atelier, cadre, appels } = await ouvrirLAtelier()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(await atelier.findByRole("button", { name: "toutes" }))
+    await reglerLaTolerance(atelier, 44)
+
+    await waitFor(() => {
+      const dernier = [...appels]
+        .reverse()
+        .find((a) => a.url === "/api/montage/preview")
+      const corps = dernier?.corps as { recette?: Recette; prises?: Prise[] }
+      expect(corps?.recette?.passes[0]?.tolerance).toBe(44)
+      expect(corps?.prises?.every((prise) => !prise.recette)).toBe(true)
+    })
+    expect(cadre.querySelectorAll("[data-liser-ecart]")).toHaveLength(0)
+  })
+
+  test("une valeur posée sur toutes suit aussi les recettes individuelles", async () => {
+    // Le pendant du précédent, et il tombe tout seul si on l'oublie : un curseur
+    // posé sur les quatre n'en bougerait que deux, et les deux qui s'écartaient
+    // l'ignoreraient sans un mot — *un curseur qui bouge sans que l'image change
+    // ne se distingue pas d'un curseur cassé* (`AGENTS.md`, 8nonies).
+    const { atelier, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(await atelier.findByRole("button", { name: "toutes" }))
+    await reglerLaTolerance(atelier, 44)
+
+    await waitFor(() => {
+      const corps = [...appels]
+        .reverse()
+        .find((a) => a.url === "/api/montage/preview")?.corps as {
+        recette?: Recette
+        prises?: Prise[]
+      }
+      expect(corps?.recette?.passes[0]?.tolerance).toBe(44)
+      expect(corps?.prises?.[1]?.recette?.passes[0]?.tolerance).toBe(44)
+      expect(corps?.prises?.[2]?.recette?.passes[0]?.tolerance).toBe(44)
+    })
+    // Et la troisième garde ses douze couleurs : la valeur voyage, pas la recette.
+    expect(dernieresPrises(appels)[2]?.recette?.quantification?.couleurs).toBe(12)
+  })
+
+  test("une route prend la liste, et la garde se rouvre avec les recettes du lot", async () => {
+    // Deux critères en un, parce qu'ils se prouvent du même geste : *une route
+    // serveur prend une liste — pas trente appels pour trente frames*, et *la
+    // garde se referme et se rouvre avec les recettes posées en lot* (8septies).
+    const { atelier, cadre, appels } = await ouvrirSeparee()
+    await atelier.findByText(/en pixels du sprite/)
+
+    // **Trois des quatre**, et pas les quatre : choisir toute la bande règle la
+    // bande, ce qui est l'objet de l'essai d'à côté. Ici on veut un vrai lot de
+    // recettes individuelles à relire.
+    fireEvent.click(vignette(cadre, 0))
+    fireEvent.click(vignette(cadre, 2), { shiftKey: true })
+    await reglerLaTolerance(atelier, 33)
+    fireEvent.click(await atelier.findByRole("button", { name: "Enregistrer ›" }))
+
+    await waitFor(() =>
+      expect(atelier.queryByText(/des corrections attendent/)).toBeNull(),
+    )
+    const ecritures = appels.filter(
+      (a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps),
+    )
+    expect(ecritures).toHaveLength(1)
+    expect((ecritures[0].corps as { prises: Prise[] }).prises).toHaveLength(4)
+
+    // **On relit l'écran après réouverture**, pas la réponse du `PUT` : c'est ce
+    // que le serveur a écrit qui compte, et le double le garde entre deux appels.
+    await waitFor(() =>
+      expect(cadre.querySelectorAll("[data-liser-ecart]")).toHaveLength(3),
+    )
+    expect(
+      (
+        (await atelier.findByLabelText(/tolérance, en chiffres/)) as HTMLInputElement
+      ).value,
+    ).toBe("33")
   })
 })
 
