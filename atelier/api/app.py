@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from atelier.api.animation import routeur as routeur_animation
 from atelier.api.bibliotheque import routeur as routeur_bibliotheque
+from atelier.api.gestes import routeur as routeur_gestes
 from atelier.api.production import routeur as routeur_production
 from atelier.api.routes import routeur
 from atelier.api.univers import routeur as routeur_univers
@@ -43,6 +44,7 @@ from atelier.services.bibliotheque import (
 )
 from atelier.services.agent import DepotRefuse, PlafondAtteint
 from atelier.services.decoupe import DecoupeRefusee
+from atelier.services.miroir import MiroirRefuse
 from atelier.services.ambiances import AmbianceRefusee
 from atelier.services.calibrage import CalibrageRefuse
 from atelier.services.envoi import EnvoiRefuse
@@ -88,6 +90,9 @@ CODES = {
     LienRefuse: 409,
     UniversRefuse: 409,
     DecoupeRefusee: 409,
+    # Il n'y a pas de case où ranger le miroir. 409 et non 400 : la demande est
+    # bien formée, c'est l'état de l'image qui s'y oppose.
+    MiroirRefuse: 409,
     EtiquetteRefusee: 409,
     MouvementRefuse: 409,
     AmbianceRefusee: 409,
@@ -163,6 +168,12 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
         openapi_url="/api/openapi.json",
     )
     application.state.atelier = atelier
+    # **Le serveur MCP est posé sur l'application, et B6 s'en sert.**
+    # `GET /api/actions` sert la liste des outils de l'agent : la barre et lui
+    # lisent la même, au même endroit. La poser ici plutôt que de la
+    # reconstruire dans la route est ce qui rend la promesse vraie — il n'y a
+    # pas de seconde liste à tenir à jour.
+    application.state.mcp = serveur_mcp
     application.include_router(routeur, prefix="/api")
     # Deux routeurs, un seul préfixe : de l'extérieur l'API n'a pas de couture.
     # La bibliothèque répond à une autre question que la fabrication d'une
@@ -178,6 +189,9 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # personne ne posait avant la V3 — *ce qui bouge* —, et son appel n'a ni la
     # forme ni la durée d'un appel d'image.
     application.include_router(routeur_animation, prefix="/api")
+    # Le sixième, arrivé avec B6 : ce que le serveur sait faire, servi à la
+    # barre. Il ne fait rien lui-même — il relit l'agent.
+    application.include_router(routeur_gestes, prefix="/api")
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

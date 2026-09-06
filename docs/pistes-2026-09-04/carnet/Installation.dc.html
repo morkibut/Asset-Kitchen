@@ -1,0 +1,531 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
+    .ch { height: 34px; display: flex; align-items: center; padding: 0 11px; border-radius: 7px; background: #fffdfa; border: 1px solid #ddd5c8; font-size: 13px; color: #221f1b; }
+    .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f; white-space: nowrap }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pas { display: flex; gap: 11px; align-items: flex-start; padding: 10px 11px; border-radius: 8px }
+    .pas i { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; display: inline-flex; align-items: center;
+             justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+             border: 1px solid #ddd5c8; background: #fffdfa; color: #6d675e; font-style: normal }
+    .pas-fait i { background: #5c7a52; border-color: #5c7a52; color: #fff8f4 }
+    .pas-ici { background: #fffdfa; border: 1px solid #a8492c; box-shadow: 0 0 0 1px #a8492c }
+    .pas-ici i { background: #a8492c; border-color: #a8492c; color: #fff8f4 }
+    td, th { padding: 8px 12px; border-bottom: 1px solid #ece6db; text-align: left; vertical-align: top;
+             font-size: 12.5px; line-height: 1.45 }
+    th { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+         color: #948c80; font-weight: 400 }
+    table { border-collapse: collapse; width: 100% }
+  
+    /* dessous r4 — début */
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f; white-space: nowrap }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+
+    /* dessous r4 — fin */
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; background: #f7f3ec">
+
+<div class="k" style="width: 1600px; height: 1000px; background: #f7f3ec; display: flex;
+            flex-direction: column; overflow: hidden">
+
+  <div style="padding: 20px 40px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center;
+              justify-content: space-between; gap: 24px; flex-shrink: 0">
+    <div style="display: flex; align-items: baseline; gap: 14px">
+      <div class="serif" style="font-size: 22px">L'atelier</div>
+      <span style="font-size: 12.5px; color: #6d675e">premi&egrave;re ouverture &middot; &eacute;tape 1 sur 4</span>
+    </div>
+    <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Tout passer et ouvrir l'atelier</a>
+  </div>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 300px minmax(0,1fr) 380px">
+
+    <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 30px 16px; display: flex;
+                flex-direction: column; gap: 5px; overflow: hidden">
+      <div class="rt" style="padding: 0 10px 8px">Le tour du propri&eacute;taire</div>
+      <div style="display: flex; flex-direction: column; gap: 3px">
+          <div class="pas pas-ici" style="justify-content: space-between; "><div style="display: flex; gap: 10px; align-items: flex-start"><i>1</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13.5px; font-weight: 600">Ce qui va &ecirc;tre demand&eacute;</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">deux minutes, et rien d'oblig&eacute;</span></div></div></div>
+          <div class="pas" style="justify-content: space-between; "><div style="display: flex; gap: 10px; align-items: flex-start"><i>2</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13.5px; ">Les images</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">un compte, ou rien du tout</span></div></div></div>
+          <div class="pas" style="justify-content: space-between; "><div style="display: flex; gap: 10px; align-items: flex-start"><i>3</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13.5px; ">Les animations</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">cette machine, ou un fournisseur</span></div></div></div>
+          <div class="pas" style="justify-content: space-between; "><div style="display: flex; gap: 10px; align-items: flex-start"><i>4</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13.5px; ">O&ugrave; tout se range</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">un dossier sur le disque</span></div></div></div>
+      </div>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px; padding: 12px 12px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 12.5px; font-weight: 600">Aucune des trois n'est obligatoire</div><div style="font-size: 11.5px; line-height: 1.5; color: #6d675e">L'atelier s'ouvre sans rien de tout &ccedil;a et fabrique des images gratuitement. Chaque &eacute;tape se refait plus tard, par le bouton <b style="color: #4e483f">L'installation</b>, en bas du carnet.</div></div>
+    </div>
+
+    <div style="padding: 30px 42px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <span class="rt">Bienvenue</span>
+        <h1 class="serif" style="font-size: 38px; line-height: 1.04; margin: 0">Trois choses &agrave; brancher &mdash; et aucune n'est obligatoire</h1>
+        <div style="font-size: 13.5px; color: #4e483f; max-width: 700px">L'atelier fabrique les images et les animations d'un jeu. Pour &ccedil;a il lui faut un compte quelque part, ou une carte graphique, ou rien du tout. Ce tour prend deux minutes, et se refait quand on veut.</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; align-items: stretch"><div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 15px; font-weight: 600">Les images</div><div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un compte chez OpenRouter donne 49 mod&egrave;les d'images. On paie ce qu'on demande&nbsp;: une image co&ucirc;te autour de <span class="mono">$0,02</span>.</div><div style="margin-top: auto; padding-top: 9px; border-top: 1px solid #ece6db; font-size: 12px; line-height: 1.5; color: #6d675e"><b style="color: #4e483f">Si on passe&nbsp;:</b> Pollinations r&eacute;pond, gratuitement, sans compte. Les images sont plus grossi&egrave;res.</div></div><div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 15px; font-weight: 600">Les animations</div><div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">ComfyUI, sur votre carte graphique, fabrique les clips gratuitement. C'est une autre application, &agrave; installer une fois.</div><div style="margin-top: auto; padding-top: 9px; border-top: 1px solid #ece6db; font-size: 12px; line-height: 1.5; color: #6d675e"><b style="color: #4e483f">Si on passe&nbsp;:</b> Les clips partent chez un fournisseur, de <span class="mono">$0,10</span> &agrave; <span class="mono">$0,40</span> pi&egrave;ce. Rien n'est bloqu&eacute;.</div></div><div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 15px; font-weight: 600">O&ugrave; tout se range</div><div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un seul dossier sur le disque re&ccedil;oit les images, les jeux et la base de l'atelier.</div><div style="margin-top: auto; padding-top: 9px; border-top: 1px solid #ece6db; font-size: 12px; line-height: 1.5; color: #6d675e"><b style="color: #4e483f">Si on passe&nbsp;:</b> Un dossier est choisi &agrave; c&ocirc;t&eacute; de l'application, et il se d&eacute;place plus tard.</div></div></div>
+      <div style="display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; border: 1px solid #e0cfb8; border-radius: 9px; background: #f4ece2"><div style="font-size: 12.5px; line-height: 1.55; color: #6d4a22"><b>Ce guide ne parle pas de votre jeu.</b> Le nom du jeu, son allure, son monde&nbsp;: c'est l'autre parcours, &laquo;&nbsp;Commencer un jeu&nbsp;&raquo;, qui vient juste apr&egrave;s. Ici on ne branche que la machine, et on n'y revient presque jamais.</div></div>
+      <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 20px"><span></span><div style="display: flex; align-items: center; gap: 14px"><a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Tout passer &mdash; je verrai plus tard</a><div class="bt bt-p" style="height: 38px; padding: 0 20px">Commencer &mdash; les images</div></div></div>
+    </div>
+
+    <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 30px 22px; display: flex;
+                flex-direction: column; gap: 13px; overflow: hidden">
+      <div class="rt">Ce que &ccedil;a co&ucirc;te</div>
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Ce guide</span><span style="font-size: 12.5px; text-align: right; color: #5c7a52">$0,00</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Cr&eacute;er un compte OpenRouter</span><span style="font-size: 12.5px; text-align: right; color: #5c7a52">$0,00</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Installer ComfyUI</span><span style="font-size: 12.5px; text-align: right; color: #5c7a52">$0,00</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Une image, ensuite</span><span style="font-size: 12.5px; text-align: right; color: #4e483f">~$0,02</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Une seconde d'animation</span><span style="font-size: 12.5px; text-align: right; color: #4e483f">$0,00 ici, ou ~$0,20</span></div>
+      </div>
+      <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 13px 14px;
+                  display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 13px; font-weight: 600">Rien n'est pr&eacute;lev&eacute; pendant ce tour</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">La premi&egrave;re d&eacute;pense arrive
+          quand on demande la premi&egrave;re image, et son prix est &eacute;crit sur le bouton avant qu'on appuie.</div>
+      </div>
+      <div style="margin-top: auto; font-size: 12px; color: #948c80; line-height: 1.5">
+        Ce guide ne s'ouvre tout seul qu'une fois, au tout premier lancement. Ensuite, c'est le bouton
+        <b style="color: #6d675e">L'installation</b>, en bas du carnet.</div>
+    </div>
+
+  </div>
+</div>
+
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">&Eacute;tape 2 sur 4 &mdash; les images</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">le compte OpenRouter et sa cl&eacute;, en quatre gestes &mdash; ou rien, et Pollinations r&eacute;pond</span>
+    </div>
+  <div class="k" style="width: 1532px; height: 780px; background: #f7f3ec; display: flex;
+              flex-direction: column; overflow: hidden; border: 1px solid #e2dbd0; border-radius: 10px">
+  
+    <div style="padding: 18px 32px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center;
+                justify-content: space-between; gap: 24px; flex-shrink: 0">
+      <div style="display: flex; align-items: baseline; gap: 14px">
+        <div class="serif" style="font-size: 19px">L'atelier</div>
+        <span style="font-size: 12.5px; color: #6d675e">premi&egrave;re ouverture &middot; &eacute;tape 2 sur 4</span>
+      </div>
+      <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Tout passer et ouvrir l'atelier</a>
+    </div>
+  
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 270px minmax(0,1fr) 350px">
+  
+      <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 16px; display: flex;
+                  flex-direction: column; gap: 5px; overflow: hidden">
+        <div class="rt" style="padding: 0 10px 8px">Le tour du propri&eacute;taire</div>
+        <div style="display: flex; flex-direction: column; gap: 3px">
+            <div class="pas pas-fait" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>1</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; ">Ce qui va &ecirc;tre demand&eacute;</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">deux minutes, et rien d'oblig&eacute;</span></div></div><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg></div>
+            <div class="pas pas-ici" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>2</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; font-weight: 600">Les images</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">un compte, ou rien du tout</span></div></div></div>
+            <div class="pas" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>3</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; ">Les animations</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">cette machine, ou un fournisseur</span></div></div></div>
+            <div class="pas" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>4</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; ">O&ugrave; tout se range</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">un dossier sur le disque</span></div></div></div>
+        </div>
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px; padding: 12px 12px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 12.5px; font-weight: 600">Aucune des trois n'est obligatoire</div><div style="font-size: 11.5px; line-height: 1.5; color: #6d675e">L'atelier s'ouvre sans rien de tout &ccedil;a et fabrique des images gratuitement. Chaque &eacute;tape se refait plus tard, par le bouton <b style="color: #4e483f">L'installation</b>, en bas du carnet.</div></div>
+      </div>
+  
+      <div style="padding: 24px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <span class="rt">Les images</span>
+          <h1 class="serif" style="font-size: 32px; line-height: 1.04; margin: 0">Avec quoi fabrique-t-on les images&nbsp;?</h1>
+          <div style="font-size: 13px; color: #4e483f; max-width: 700px">Deux fournisseurs sont branch&eacute;s d'avance. Le gratuit r&eacute;pond d&eacute;j&agrave;&nbsp;; le payant fait de bien meilleures images et demande un compte.</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px">
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 14px 15px; border: 1px solid #5c7a52;
+                      border-radius: 9px; background: #fffdfa">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+              <span style="font-size: 15px; font-weight: 600">Pollinations</span>
+              <span class="puce p-ok">d&eacute;j&agrave; l&agrave;</span>
+            </div>
+            <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Gratuit, sans compte, sans cl&eacute;.
+              Les images sont plus grossi&egrave;res. <b>C'est lui qui r&eacute;pond tant qu'on ne fait rien</b>,
+              et il reste le filet quand le reste tombe.</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 14px 15px; border: 1px solid #a8492c;
+                      border-radius: 9px; background: #fffdfa">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+              <span style="font-size: 15px; font-weight: 600">OpenRouter</span>
+              <span class="puce p-a">une cl&eacute; &agrave; poser</span>
+            </div>
+            <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un seul compte donne acc&egrave;s
+              &agrave; <b>49 mod&egrave;les</b> d'images, du plus rapide au plus fin. On paie ce qu'on demande&nbsp;:
+              une image co&ucirc;te autour de <span class="mono">$0,02</span>.</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="pas"><i>1</i><div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13.5px; font-weight: 600">Cr&eacute;er un compte</span><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Sur <span class="mono" style="font-size: 12px">openrouter.ai</span>. Une adresse e-mail suffit&nbsp;; aucune carte n'est demand&eacute;e &agrave; l'inscription.</div></div></div>
+          <div class="pas"><i>2</i><div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13.5px; font-weight: 600">Mettre un peu d'argent dessus</span><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le compte se recharge &agrave; la main, du montant qu'on veut. <b>Cinq dollars tiennent plus de deux cents images.</b> Rien n'est pr&eacute;lev&eacute; tout seul, et il n'y a pas d'abonnement.</div></div></div>
+          <div class="pas"><i>3</i><div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13.5px; font-weight: 600">Cr&eacute;er une cl&eacute;</span><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f"><span class="mono" style="font-size: 12px">Settings &rsaquo; Keys &rsaquo; Create key</span>. On lui donne un nom, puis on la copie&nbsp;: <b>elle ne se r&eacute;affiche jamais</b> apr&egrave;s.</div></div></div>
+          <div class="pas pas-ici"><i>4</i><div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13.5px; font-weight: 600">La coller ici</span><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Elle commence par <span class="mono" style="font-size: 12px">sk-or-v1-</span>. &laquo;&nbsp;V&eacute;rifier&nbsp;&raquo; l'essaie tout de suite et affiche ce qu'elle ouvre.</div></div></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px">
+          <div class="ch" style="flex: 1; height: 40px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+                      border-color: #a8492c; box-shadow: 0 0 0 1px #a8492c">sk-or-v1-9c4b2f7e8a1d6035bb47<span
+              style="width: 1.5px; height: 18px; background: #a8492c; margin-left: 3px"></span></div>
+          <div class="bt" style="height: 40px">V&eacute;rifier</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: #4e483f; margin-top: -8px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg><span>49 mod&egrave;les trouv&eacute;s &middot; il reste <span class="mono">$4,84</span> sur ce compte</span>
+        </div>
+        <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 20px"><div class="bt" style="height: 38px; padding: 0 16px">Revenir</div><div style="display: flex; align-items: center; gap: 14px"><a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Passer &mdash; je resterai au gratuit</a><div class="bt bt-p" style="height: 38px; padding: 0 20px">Les animations</div></div></div>
+      </div>
+  
+      <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 22px; display: flex;
+                  flex-direction: column; gap: 13px; overflow: hidden">
+        <div class="rt">Ce qui r&eacute;pond, pour l'instant</div>
+        <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Les images, en gratuit</span><span style="font-size: 12.5px; text-align: right; color: #5c7a52"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg> Pollinations</span></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Les images, en payant</span><span style="font-size: 12.5px; text-align: right; color: #a8492c">la cl&eacute; vient d'&ecirc;tre pos&eacute;e</span></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Les animations</span><span style="font-size: 12.5px; text-align: right; color: #b0a89b">&eacute;tape 3</span></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Le dossier de travail</span><span style="font-size: 12.5px; text-align: right; color: #b0a89b">&eacute;tape 4</span></div>
+        </div>
+        <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13px; font-weight: 600">O&ugrave; la cl&eacute; est gard&eacute;e</div>
+          <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Dans un fichier
+            <span class="mono" style="font-size: 11.5px">.env</span>, &agrave; c&ocirc;t&eacute; de l'application, sur
+            cette machine. Elle n'est envoy&eacute;e qu'&agrave; OpenRouter, et l'&eacute;cran ne la r&eacute;affiche
+            jamais en entier&nbsp;: six caract&egrave;res, pour la reconna&icirc;tre.</div>
+        </div>
+        <div style="margin-top: auto; font-size: 12px; color: #948c80; line-height: 1.5">
+          Une cl&eacute; vaut pour <b style="color: #6d675e">tous les jeux</b> de cette machine. C'est pour &ccedil;a
+          qu'elle n'est pas demand&eacute;e quand on cr&eacute;e un jeu.</div>
+      </div>
+  
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">&Eacute;tape 3 sur 4 &mdash; les animations</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">la plus longue, la plus facile &agrave; sauter &mdash; et la seule qui demande une carte graphique</span>
+    </div>
+  <div class="k" style="width: 1532px; height: 608px; background: #f7f3ec; display: flex;
+              flex-direction: column; overflow: hidden; border: 1px solid #e2dbd0; border-radius: 10px">
+  
+    <div style="padding: 18px 32px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center;
+                justify-content: space-between; gap: 24px; flex-shrink: 0">
+      <div style="display: flex; align-items: baseline; gap: 14px">
+        <div class="serif" style="font-size: 19px">L'atelier</div>
+        <span style="font-size: 12.5px; color: #6d675e">premi&egrave;re ouverture &middot; &eacute;tape 3 sur 4</span>
+      </div>
+      <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Tout passer et ouvrir l'atelier</a>
+    </div>
+  
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 270px minmax(0,1fr) 350px">
+  
+      <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 16px; display: flex;
+                  flex-direction: column; gap: 5px; overflow: hidden">
+        <div class="rt" style="padding: 0 10px 8px">Le tour du propri&eacute;taire</div>
+        <div style="display: flex; flex-direction: column; gap: 3px">
+            <div class="pas pas-fait" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>1</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; ">Ce qui va &ecirc;tre demand&eacute;</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">deux minutes, et rien d'oblig&eacute;</span></div></div><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg></div>
+            <div class="pas pas-fait" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>2</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; ">Les images</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">un compte, ou rien du tout</span></div></div><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg></div>
+            <div class="pas pas-ici" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>3</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; font-weight: 600">Les animations</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">cette machine, ou un fournisseur</span></div></div></div>
+            <div class="pas" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>4</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; ">O&ugrave; tout se range</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">un dossier sur le disque</span></div></div></div>
+        </div>
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px; padding: 12px 12px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 12.5px; font-weight: 600">Aucune des trois n'est obligatoire</div><div style="font-size: 11.5px; line-height: 1.5; color: #6d675e">L'atelier s'ouvre sans rien de tout &ccedil;a et fabrique des images gratuitement. Chaque &eacute;tape se refait plus tard, par le bouton <b style="color: #4e483f">L'installation</b>, en bas du carnet.</div></div>
+      </div>
+  
+      <div style="padding: 24px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <span class="rt">Les animations</span>
+          <h1 class="serif" style="font-size: 32px; line-height: 1.04; margin: 0">Animer sur cette machine&nbsp;?</h1>
+          <div style="font-size: 13px; color: #4e483f; max-width: 700px">Une animation se fabrique &agrave; partir d'une image, par un mod&egrave;le vid&eacute;o. Sur votre carte graphique c'est gratuit et lent&nbsp;; chez un fournisseur c'est imm&eacute;diat et pay&eacute; au clip.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="pas"><i>1</i><div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13.5px; font-weight: 600">Installer ComfyUI</span><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">C'est une <b>autre application</b>, gratuite, qu'on prend sur <span class="mono" style="font-size: 12px">comfy.org</span> &mdash; l'installateur de bureau suffit. L'atelier ne l'installe pas, ne la lance pas, et ne modifie jamais son r&eacute;glage.</div></div></div>
+          <div class="pas pas-ici"><i>2</i><div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13.5px; font-weight: 600">La laisser ouverte</span><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">L'atelier la cherche tout seul sur <span class="mono" style="font-size: 12px">127.0.0.1:8188</span>. Si elle &eacute;coute ailleurs, l'adresse se change juste en dessous.</div></div></div>
+          <div class="pas"><i>3</i><div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13.5px; font-weight: 600">Descendre les sept fichiers</span><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">L&agrave;, c'est l'atelier qui travaille&nbsp;: il demande &agrave; ComfyUI o&ugrave; sont ses dossiers et y d&eacute;pose ce qui manque. <b>25 Go</b>, une fois pour toutes. Une coupure se reprend o&ugrave; elle s'est arr&ecirc;t&eacute;e. La liste est sous cette planche.</div></div></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+          <span style="font-size: 12.5px; color: #6d675e; width: 118px">O&ugrave; elle &eacute;coute</span>
+          <div class="ch" style="width: 230px; font-family: 'IBM Plex Mono', monospace; font-size: 12px">http://127.0.0.1:8188</div>
+          <div class="bt">Chercher</div>
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #8a3f33">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #8a3f33"></span>
+            elle ne r&eacute;pond pas &mdash; ouvrez-la, puis cliquez &laquo;&nbsp;Chercher&nbsp;&raquo;</span>
+        </div>
+        <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 20px"><div class="bt" style="height: 38px; padding: 0 16px">Revenir</div><div style="display: flex; align-items: center; gap: 14px"><a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Passer &mdash; j'animerai chez un fournisseur</a><div class="bt bt-p" style="height: 38px; padding: 0 20px">Le dossier de travail</div></div></div>
+      </div>
+  
+      <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 22px; display: flex;
+                  flex-direction: column; gap: 13px; overflow: hidden">
+        <div class="rt">Ce que &ccedil;a demande &agrave; la machine</div>
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 13px; border: 1px solid #5c7a52; border-radius: 9px; background: #fffdfa"><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 13.5px; font-weight: 600">Confortable</span><span class="puce p-ok">vis&eacute;</span></div><div style="display: flex; flex-direction: column; gap: 5px"><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">M&eacute;moire de la carte</span><span style="font-size: 12px; text-align: right">12 Go</span></div><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">M&eacute;moire vive</span><span style="font-size: 12px; text-align: right">32 Go</span></div><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">Disque libre</span><span style="font-size: 12px; text-align: right">40 Go</span></div><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">Une seconde de clip</span><span style="font-size: 12px; text-align: right">~130 s</span></div></div></div>
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 13px; border: 1px solid #e0cfb8; border-radius: 9px; background: #fffdfa"><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 13.5px; font-weight: 600">Le minimum qui marche</span><span class="puce p-a">&ccedil;a passe</span></div><div style="display: flex; flex-direction: column; gap: 5px"><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">M&eacute;moire de la carte</span><span style="font-size: 12px; text-align: right">8 Go</span></div><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">M&eacute;moire vive</span><span style="font-size: 12px; text-align: right">16 Go</span></div><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">Disque libre</span><span style="font-size: 12px; text-align: right">30 Go</span></div><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">Une seconde de clip</span><span style="font-size: 12px; text-align: right">bien plus long</span></div></div></div>
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 13px; border: 1px solid #cfd9c8; border-radius: 9px; background: #fffdfa"><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 13.5px; font-weight: 600">Sans carte suffisante</span><span class="puce p-ok">sans souci</span></div><div style="display: flex; flex-direction: column; gap: 5px"><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">Cette &eacute;tape</span><span style="font-size: 12px; text-align: right">se passe</span></div><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">Les animations</span><span style="font-size: 12px; text-align: right">OpenRouter vid&eacute;o</span></div><div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 12px; color: #6d675e">Un clip</span><span style="font-size: 12px; text-align: right">de $0,10 &agrave; $0,40</span></div></div></div>
+        <div style="margin-top: auto; font-size: 11.5px; color: #948c80; line-height: 1.5">
+          Des indications, pas des exigences&nbsp;: l'atelier ne regarde pas la carte graphique. Il regarde si
+          ComfyUI r&eacute;pond, et ce qui est install&eacute; chez lui.</div>
+      </div>
+  
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">&Eacute;tape 4 sur 4 &mdash; o&ugrave; tout se range</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">un dossier, et ce qu'on y trouvera</span>
+    </div>
+  <div class="k" style="width: 1532px; height: 615px; background: #f7f3ec; display: flex;
+              flex-direction: column; overflow: hidden; border: 1px solid #e2dbd0; border-radius: 10px">
+  
+    <div style="padding: 18px 32px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center;
+                justify-content: space-between; gap: 24px; flex-shrink: 0">
+      <div style="display: flex; align-items: baseline; gap: 14px">
+        <div class="serif" style="font-size: 19px">L'atelier</div>
+        <span style="font-size: 12.5px; color: #6d675e">premi&egrave;re ouverture &middot; &eacute;tape 4 sur 4</span>
+      </div>
+      <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Tout passer et ouvrir l'atelier</a>
+    </div>
+  
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 270px minmax(0,1fr) 350px">
+  
+      <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 16px; display: flex;
+                  flex-direction: column; gap: 5px; overflow: hidden">
+        <div class="rt" style="padding: 0 10px 8px">Le tour du propri&eacute;taire</div>
+        <div style="display: flex; flex-direction: column; gap: 3px">
+            <div class="pas pas-fait" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>1</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; ">Ce qui va &ecirc;tre demand&eacute;</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">deux minutes, et rien d'oblig&eacute;</span></div></div><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg></div>
+            <div class="pas pas-fait" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>2</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; ">Les images</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">un compte, ou rien du tout</span></div></div><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg></div>
+            <div class="pas pas-fait" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>3</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; ">Les animations</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">cette machine, ou un fournisseur</span></div></div><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg></div>
+            <div class="pas pas-ici" style="justify-content: space-between; padding: 8px 10px"><div style="display: flex; gap: 10px; align-items: flex-start"><i>4</i><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12.5px; font-weight: 600">O&ugrave; tout se range</span><span style="font-size: 11px; color: #948c80; line-height: 1.35">un dossier sur le disque</span></div></div></div>
+        </div>
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px; padding: 12px 12px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 12.5px; font-weight: 600">Aucune des trois n'est obligatoire</div><div style="font-size: 11.5px; line-height: 1.5; color: #6d675e">L'atelier s'ouvre sans rien de tout &ccedil;a et fabrique des images gratuitement. Chaque &eacute;tape se refait plus tard, par le bouton <b style="color: #4e483f">L'installation</b>, en bas du carnet.</div></div>
+      </div>
+  
+      <div style="padding: 24px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <span class="rt">O&ugrave; tout se range</span>
+          <h1 class="serif" style="font-size: 32px; line-height: 1.04; margin: 0">Un seul dossier, pour tout</h1>
+          <div style="font-size: 13px; color: #4e483f; max-width: 700px">Les images re&ccedil;ues, les jeux et la base de l'atelier vont au m&ecirc;me endroit. On le choisit maintenant, ou on garde celui qui est propos&eacute;.</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px">
+          <div class="ch" style="flex: 1; height: 40px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">C:\Users\damien\Documents\atelier-du-marais</div>
+          <div class="bt" style="height: 40px">Parcourir&hellip;</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="display: flex; align-items: baseline; gap: 12px; padding-left: 0px"><span class="mono" style="font-size: 11.5px; color: #221f1b">atelier-du-marais</span><span style="font-size: 11.5px; color: #948c80">le dossier choisi</span></div><div style="display: flex; align-items: baseline; gap: 12px; padding-left: 18px"><span class="mono" style="font-size: 11.5px; color: #221f1b">donnees/</span><span style="font-size: 11.5px; color: #948c80"></span></div><div style="display: flex; align-items: baseline; gap: 12px; padding-left: 36px"><span class="mono" style="font-size: 11.5px; color: #4e483f">atelier.sqlite3</span><span style="font-size: 11.5px; color: #948c80">la base &mdash; les sujets, les poses, les d&eacute;penses</span></div><div style="display: flex; align-items: baseline; gap: 12px; padding-left: 36px"><span class="mono" style="font-size: 11.5px; color: #4e483f">projets/</span><span style="font-size: 11.5px; color: #948c80"></span></div><div style="display: flex; align-items: baseline; gap: 12px; padding-left: 54px"><span class="mono" style="font-size: 11.5px; color: #4e483f">le-marais-du-vieux-moulin/</span><span style="font-size: 11.5px; color: #948c80">un jeu</span></div><div style="display: flex; align-items: baseline; gap: 12px; padding-left: 72px"><span class="mono" style="font-size: 11.5px; color: #4e483f">projet.json</span><span style="font-size: 11.5px; color: #948c80">ses r&egrave;gles</span></div><div style="display: flex; align-items: baseline; gap: 12px; padding-left: 72px"><span class="mono" style="font-size: 11.5px; color: #4e483f">images/</span><span style="font-size: 11.5px; color: #948c80">tout ce qui est revenu</span></div><div style="display: flex; align-items: baseline; gap: 12px; padding-left: 18px"><span class="mono" style="font-size: 11.5px; color: #221f1b">.env</span><span style="font-size: 11.5px; color: #948c80">les cl&eacute;s pos&eacute;es &agrave; l'&eacute;tape 2</span></div></div>
+        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f"><b>Les sept fichiers de ComfyUI ne sont pas ici.</b> Ils vivent chez ComfyUI, dans ses propres dossiers &mdash; l'atelier les y d&eacute;pose, il ne les recopie pas. D&eacute;placer ce dossier-ci ne les d&eacute;place pas.</div></div>
+        <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 20px"><div class="bt" style="height: 38px; padding: 0 16px">Revenir</div><div style="display: flex; align-items: center; gap: 14px"><a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Garder celui-l&agrave;</a><div class="bt bt-p" style="height: 38px; padding: 0 20px">C'est pr&ecirc;t &mdash; ouvrir l'atelier</div></div></div>
+      </div>
+  
+      <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 22px; display: flex;
+                  flex-direction: column; gap: 13px; overflow: hidden">
+        <div class="rt">Le tour est fait</div>
+        <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Les images, en gratuit</span><span style="font-size: 12.5px; text-align: right; color: #5c7a52"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg> Pollinations</span></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Les images, en payant</span><span style="font-size: 12.5px; text-align: right; color: #5c7a52"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg> OpenRouter, 49 mod&egrave;les</span></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Les animations</span><span style="font-size: 12.5px; text-align: right; color: #8a5a2c">pass&eacute; &mdash; chez un fournisseur</span></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="font-size: 12.5px; color: #6d675e">Le dossier de travail</span><span style="font-size: 12.5px; text-align: right; color: #5c7a52"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c7a52" stroke-width="2.6" stroke-linecap="square"><path d="M5 13l4 4 10-10"/></svg> choisi</span></div>
+        </div>
+        <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13px; font-weight: 600">Et maintenant&nbsp;?</div>
+          <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">L'atelier s'ouvre sur sa liste de jeux,
+            vide. Le geste suivant est <b>Commencer un jeu</b> &mdash; et l&agrave;, on parle du jeu&nbsp;: son nom,
+            son allure, son monde.</div>
+        </div>
+        <div style="margin-top: auto; font-size: 12px; color: #948c80; line-height: 1.5">
+          Tout ceci se rouvre par le bouton <b style="color: #6d675e">L'installation</b>, en bas du carnet, dans
+          n'importe quel ordre.</div>
+      </div>
+  
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Les sept fichiers que l'atelier descend</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">ce que fait le troisi&egrave;me geste de l'&eacute;tape 3 &mdash; 25 Go une fois, repris &agrave; l'octet pr&egrave;s apr&egrave;s une coupure</span>
+    </div>
+  <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 4px 16px 8px"><table><tr><th>Le fichier</th><th>Chez ComfyUI, dans</th><th style="text-align: right">Poids</th><th>&nbsp;</th></tr><tr><td><span class="mono" style="font-size: 11.5px">Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf</span></td><td><span class="mono" style="font-size: 11.5px; color: #6d675e">diffusion_models</span></td><td style="text-align: right"><span class="mono">8,7 Go</span></td><td style="width: 300px; color: #6d675e">oblig&eacute;</td></tr><tr><td><span class="mono" style="font-size: 11.5px">Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf</span></td><td><span class="mono" style="font-size: 11.5px; color: #6d675e">diffusion_models</span></td><td style="text-align: right"><span class="mono">8,7 Go</span></td><td style="width: 300px; color: #6d675e">oblig&eacute;</td></tr><tr><td><span class="mono" style="font-size: 11.5px">umt5_xxl_fp8_e4m3fn_scaled.safetensors</span></td><td><span class="mono" style="font-size: 11.5px; color: #6d675e">text_encoders</span></td><td style="text-align: right"><span class="mono">6,3 Go</span></td><td style="width: 300px; color: #6d675e">oblig&eacute;</td></tr><tr><td><span class="mono" style="font-size: 11.5px">wan_2.1_vae.safetensors</span></td><td><span class="mono" style="font-size: 11.5px; color: #6d675e">vae</span></td><td style="text-align: right"><span class="mono">0,25 Go</span></td><td style="width: 300px; color: #6d675e">oblig&eacute;</td></tr><tr><td><span class="mono" style="font-size: 11.5px">wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors</span></td><td><span class="mono" style="font-size: 11.5px; color: #6d675e">loras</span></td><td style="text-align: right"><span class="mono">0,6 Go</span></td><td style="width: 300px; color: #6d675e">oblig&eacute;</td></tr><tr><td><span class="mono" style="font-size: 11.5px">wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors</span></td><td><span class="mono" style="font-size: 11.5px; color: #6d675e">loras</span></td><td style="text-align: right"><span class="mono">0,6 Go</span></td><td style="width: 300px; color: #6d675e">oblig&eacute;</td></tr><tr><td><span class="mono" style="font-size: 11.5px">wan2.2_animate_adapter_model.safetensors</span></td><td><span class="mono" style="font-size: 11.5px; color: #6d675e">loras</span></td><td style="text-align: right"><span class="mono">1,4 Go</span></td><td style="width: 300px; color: #6d675e"><b style="color: #a8492c">facultatif</b> &mdash; c'est lui qui fait de vrais sprites plut&ocirc;t qu'un rendu liss&eacute;. Sans lui le clip sort quand m&ecirc;me.</td></tr></table><div style="font-size: 12px; color: #6d675e; padding: 12px 12px 8px; line-height: 1.55">L'atelier ne devine aucun chemin&nbsp;: il demande &agrave; ComfyUI o&ugrave; sont ses dossiers, et &eacute;crit l&agrave;. <b>C'est la seule chose qu'il &eacute;crive chez lui</b>, et seulement quand on le demande.</div></div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Ce qui existe aujourd'hui, et ce qui manque</span>
+      
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-non" style="align-self: flex-start">relev&eacute;</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Ce guide n'existe pas</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Aujourd'hui la cl&eacute; se pose en &eacute;ditant un fichier <span class="mono" style="font-size: 11.5px">.env</span> &agrave; la racine, dans un &eacute;diteur de texte, avant de lancer l'app. Rien dans l'interface ne le dit.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-non" style="align-self: flex-start">relev&eacute;</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">ComfyUI n'est expliqu&eacute; nulle part</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">L'&eacute;cran des mod&egrave;les grise le moteur de la maison avec la bonne raison &mdash; &laquo;&nbsp;pas allum&eacute;&nbsp;&raquo; &mdash; mais ne dit ni ce que c'est, ni o&ugrave; le prendre. Le t&eacute;l&eacute;chargement des sept fichiers, lui, existe d&eacute;j&agrave;.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le dossier de travail ne se choisit pas</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Il est fix&eacute; &agrave; c&ocirc;t&eacute; de l'application, et rien ne permet de le d&eacute;placer. L'&eacute;tape 4 est donc enti&egrave;rement &agrave; construire.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-a" style="align-self: flex-start">&agrave; s&eacute;parer</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">L'assistant en douze &eacute;tapes n'est pas celui-l&agrave;</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Il existe, il s'ouvre au premier lancement, et il parle du <b>jeu</b>&nbsp;: son nom, son allure, son monde. Il ne dit pas un mot des comptes ni de la machine. Les deux guides sont &agrave; s&eacute;parer.</div></div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Quand ce guide s'ouvre, et par o&ugrave; on y revient</span>
+      
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Il s'ouvre tout seul une seule fois</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Au tout premier lancement, avant l'&eacute;cran d'ouverture. Ensuite il ne revient plus de lui-m&ecirc;me, m&ecirc;me si tout a &eacute;t&eacute; pass&eacute;.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 14px; font-weight: 600; line-height: 1.3">On le rouvre par le bouton du pied de carnet</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e"><b>L'installation</b>, en bas &agrave; gauche, sur tous les &eacute;crans. Il rouvre les m&ecirc;mes quatre &eacute;crans, au mot pr&egrave;s, sur leur sommaire&nbsp;: on va droit &agrave; celui qu'on veut reprendre.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Et le guide, lui, ne parle pas de &ccedil;a</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Le <b>?</b> du pied de carnet ouvre le guide de l'atelier&nbsp;: comment on travaille, les touches, les gestes. La machine et les comptes n'y sont pas.</div></div>
+  </div>
+  </div>
+  </div>
+
+  <!-- dessous r4 -->
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Ce que le guide ne montrait pas encore</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">le catalogue des modèles avec leur prix, et les jeux déjà sur la machine — repris de la planche qui vient d'être supprimée</span>
+    </div>
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 380px; gap: 24px; align-items: start">
+    <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 9px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+            <div class="rt">Le catalogue des modèles</div>
+            <span style="font-size: 12px; color: #6d675e">49 disponibles · 5 utilisés dans ce jeu</span>
+          </div>
+          <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+            <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; padding: 8px 14px; background: #f7f3ec; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase; color: #948c80">
+              <span>le modèle</span><span>ce qu’il fait par défaut</span><span style="text-align: right">par image</span><span style="text-align: right">son état</span>
+            </div>
+            <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+              <span class="mono" style="font-size: 12px">google/gemini-2.5-flash-image</span>
+              <span style="font-size: 12.5px; color: #4e483f">Les personnages, les objets, les décors</span>
+              <span class="mono" style="font-size: 12.5px; text-align: right">$0,019</span>
+              <span style="font-size: 12px; text-align: right; color: #a8492c">posé d’emblée</span>
+            </div>
+            <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+              <span class="mono" style="font-size: 12px">black-forest-labs/flux-1.1-pro</span>
+              <span style="font-size: 12.5px; color: #4e483f">Les terrains</span>
+              <span class="mono" style="font-size: 12.5px; text-align: right">$0,040</span>
+              <span style="font-size: 12px; text-align: right; color: #6d675e">disponible</span>
+            </div>
+            <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+              <span class="mono" style="font-size: 12px">stability/sd-3.5-large</span>
+              <span style="font-size: 12.5px; color: #b0a89b">—</span>
+              <span class="mono" style="font-size: 12.5px; text-align: right">$0,065</span>
+              <span style="font-size: 12px; text-align: right; color: #6d675e">disponible</span>
+            </div>
+            <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+              <span class="mono" style="font-size: 12px">openai/gpt-image-1</span>
+              <span style="font-size: 12.5px; color: #b0a89b">—</span>
+              <span class="mono" style="font-size: 12.5px; text-align: right">$0,190</span>
+              <span style="font-size: 12px; text-align: right; color: #6d675e">disponible</span>
+            </div>
+            <div style="display: grid; grid-template-columns: minmax(0,1fr) 250px 96px 118px; gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #ece6db">
+              <span class="mono" style="font-size: 12px">bria/remove-background</span>
+              <span style="font-size: 12.5px; color: #4e483f">Le détourage par modèle</span>
+              <span class="mono" style="font-size: 12.5px; text-align: right">$0,004</span>
+              <span style="font-size: 12px; text-align: right; color: #6d675e">disponible</span>
+            </div>
+            <div style="padding: 10px 14px; border-top: 1px solid #ece6db"><a href="#" style="font-size: 12.5px; text-decoration: none">Les 44 autres ›</a></div>
+          </div>
+        </div>
+    <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 13px; overflow: hidden">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <div class="rt">Les jeux ouverts sur cette machine</div>
+        </div>
+    
+        <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+          <div style="padding: 11px 13px; display: flex; flex-direction: column; gap: 2px; background: #f2ede4">
+            <span style="font-size: 13px; font-weight: 600">Le Marais du Vieux Moulin</span>
+            <span style="font-size: 11.5px; color: #6d675e">45 images · $1,55 · ouvert</span>
+          </div>
+          <div style="padding: 11px 13px; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #ece6db">
+            <span style="font-size: 13px">coeur de pierre — 01</span>
+            <span style="font-size: 11.5px; color: #6d675e">39 images · $0,27 · touché le 28 août</span>
+          </div>
+          <div style="padding: 11px 13px; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #ece6db">
+            <span style="font-size: 13px">Coeur de pierre</span>
+            <span style="font-size: 11.5px; color: #6d675e">aucune image · réglé puis laissé de côté</span>
+          </div>
+          <div style="padding: 11px 13px; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #ece6db; color: #948c80">
+            <span style="font-size: 13px">et trois autres</span>
+            <span style="font-size: 11.5px">Essai animation · vignettes · Bac à sable</span>
+          </div>
+          <div style="padding: 11px 13px; border-top: 1px solid #ece6db">
+            <a href="#" style="font-size: 12.5px; text-decoration: none">Commencer un jeu ›</a>
+          </div>
+        </div>
+    
+        <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13px; font-weight: 600">Les rendus gardés de côté</div>
+          <div style="display: grid; grid-template-columns: minmax(0,1fr) 70px; row-gap: 5px; font-size: 12.5px; align-items: baseline">
+            <span style="color: #4e483f">Images d’origine</span><span class="mono" style="text-align: right">4,2 Mo</span>
+            <span style="color: #4e483f">Rendus recalculables</span><span class="mono" style="text-align: right">11,8 Mo</span>
+            <span style="color: #4e483f">Silhouettes</span><span class="mono" style="text-align: right">0,9 Mo</span>
+          </div>
+          <div style="font-size: 11.5px; line-height: 1.45; color: #6d675e">Les rendus se refont tout seuls. Les vider libère 12 Mo et fait attendre 130 ms la prochaine fois qu’on ouvre une image.</div>
+          <div class="bt" style="height: 31px; font-size: 12.5px">Vider les rendus</div>
+        </div>
+    
+        <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+          <div style="font-size: 13px; font-weight: 600">L’atelier</div>
+          <div style="display: grid; grid-template-columns: minmax(0,1fr) 90px; row-gap: 5px; font-size: 12.5px; align-items: baseline">
+            <span style="color: #4e483f">Version</span><span class="mono" style="text-align: right">2.1.0</span>
+            <span style="color: #4e483f">Le serveur</span><span style="text-align: right; color: #5c7a52">en marche</span>
+            <span style="color: #4e483f">Le pont MCP</span><span style="text-align: right; color: #5c7a52">branché</span>
+          </div>
+        </div>
+    
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px">
+          <div class="bt" style="height: 33px; justify-content: flex-start">Ouvrir le dossier de travail</div>
+          <div class="bt" style="height: 33px; justify-content: flex-start">Le guide</div>
+        </div>
+      </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Un seul guide, deux entrées</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">il n'y a pas de version courte pour ceux qui reviennent</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-a" style="align-self: flex-start">la proposition</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La première fois, il se déroule</div>
+Au tout premier lancement, avant l'écran d'ouverture. Les quatre étapes se suivent, 1, 2, 3, 4, et aucune n'est obligatoire.
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-ok" style="align-self: flex-start">fait</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Ensuite, il s’ouvre sur son sommaire</div>
+Le bouton <b>L'installation</b>, en bas du carnet. Les quatre mêmes écrans, au mot près : on clique celui qu'on veut reprendre, ou on refait les quatre dans l'ordre.
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-non" style="align-self: flex-start">supprimé</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Une planche en moins</div>
+« L'installation, quand on y revient » était un second écran, avec ses propres blocs. Deux dessins pour une seule chose : il n'en reste qu'un, celui-ci.
+    </div>
+  </div>
+  </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

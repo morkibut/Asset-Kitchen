@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """A4 — la bande sort de l'atelier.
 
-Les critères de `docs/PLAN.md` § A4. Une bande gardée devient des fichiers
+Les critères de `docs/archive/plan-r6-a-v3.02.md` § A4. Une bande gardée devient des fichiers
 utilisables dans un moteur de jeu : une planche de sprites, le fichier
 d'accompagnement qui la décrit, et une image qui tourne toute seule.
 

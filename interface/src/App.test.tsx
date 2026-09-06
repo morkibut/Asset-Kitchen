@@ -33,15 +33,18 @@ import {
 import { App } from "./App"
 import { reinitialiserApercu } from "./composants/Apercu"
 import { toutReplier } from "./composants/chassis"
+import { LIGNES_AU_PLUS } from "./composants/Carnet"
 import { reinitialiserGuide } from "./composants/Guide"
 import { reinitialiserPressePapier } from "./composants/Tables"
 import { AIDE, SANS_ENTREE } from "./aide"
 import { POSE_VIDE } from "./api"
 import { COULEUR_TEINTE, NOM_TEINTE, PASSE_PAR_DEFAUT, RECETTE_VIDE, TEINTES } from "./api"
+import { UNIVERS_VIDE } from "./api"
 import type {
   Envoi,
   Tri,
   Asset,
+  BilanDuJeu,
   Bibliotheque,
   Boite,
   Cadrage,
@@ -86,6 +89,7 @@ import type {
   Piece,
   Planche,
   Pose,
+  Projet,
   PosesDesTypes,
   Recette,
   RetoucheDePalette,
@@ -430,8 +434,11 @@ const BIBLIOTHEQUE: Bibliotheque = {
       identifiant: "bac-a-sable",
       nom: "Bac à sable",
       cree_le: 1_787_800_000,
+      dernier_travail_le: 1_787_800_000,
       assets: 0,
       total_usd: 0,
+      univers: UNIVERS_VIDE,
+      pieces: [],
     },
   ],
   collections: [],
@@ -756,6 +763,7 @@ const asset = (
       quantification: null,
       bords: null,
       contours: null,
+      retournement: null,
       main: null,
       veille: [],
       nom: null,
@@ -1274,6 +1282,7 @@ const PLACES_DE_LA_RECETTE: readonly (readonly [keyof Recette, string])[] = [
   ["quantification", "quantification"],
   ["bords", "bords"],
   ["contours", "contours"],
+  ["retournement", "retournement"],
   ["main", "la main"],
 ]
 
@@ -1323,6 +1332,12 @@ function serveurDouble(options: {
    *  ce que l'auteur corrige avant de découper (US-73). */
   boites?: [number, number, number, number][]
   raisonDecoupe?: string | null
+  /** Ce que le serveur propose comme case pour le miroir d'une image (B1), et
+   *  sa raison quand il n'y en a pas. **Le test le décide, comme le serveur le
+   *  déciderait sur la direction de l'image** : les directions d'un jeu sont
+   *  libres, et l'écran ne calcule jamais la paire lui-même. La clé est
+   *  l'identifiant de l'image de départ. */
+  miroirs?: Record<string, { propose: string | null; raison: string | null }>
   /** Ce que l'atelier répond à un export. Par défaut une archive ; le test peut
    *  demander un refus, parce que l'export est le seul appel de l'interface qui
    *  ne rende pas du JSON et que son chemin d'erreur est donc à lui. */
@@ -1436,6 +1451,17 @@ function serveurDouble(options: {
    *  pas un refus —, et poser le cas ici évite à l'essai de deviner l'ordre des
    *  appels pour l'obtenir. */
   imageDejaPrise?: number
+  /** Les clips payés qui attendent un geste (B2) — `GET /clips/pending`. Vide
+   *  par défaut : le bandeau ne se montre que quand un essai en pose. */
+  clipsEnSouffrance?: Generation[]
+  /** Le bilan du tableau de bord (B5) — `GET /dashboard`. Vide par défaut :
+   *  aucune famille peuplée, aucun manque, un lot à zéro — ce qu'un jeu neuf
+   *  rend réellement. */
+  bilan?: BilanDuJeu
+  /** Ce que `POST /clips/{id}/recover` répond quand le fournisseur a expiré le
+   *  lien, par identifiant — la route rend quand même 200, avec un emplacement
+   *  échoué et sa raison, comme le vrai serveur le fait. */
+  recuperationEchouee?: Record<string, string>
   /** Ce que chaque type d'objet réclame (E9). */
   types?: PosesDesTypes["types"]
   /** Les deux listes du côté Ambiances (E11). */
@@ -2204,6 +2230,31 @@ function serveurDouble(options: {
         },
         ...(options.mesures ?? {}),
       })
+    if (url === "/api/clips/pending")
+      return rendre({ clips: options.clipsEnSouffrance ?? [] })
+    // ── Le bilan du tableau de bord (B5) ──────────────────────────────────
+    if (url === "/api/dashboard")
+      return rendre(
+        options.bilan ?? { familles: [], manques: [], lot: { images: 0, feuilles: 0, cout_usd: 0 } },
+      )
+    if (url.match(/^\/api\/clips\/[^/]+\/recover$/) && init?.method === "POST") {
+      const identifiant = url.split("/")[3]
+      const trouve = (options.clipsEnSouffrance ?? []).find(
+        (g) => g.identifiant === identifiant,
+      )
+      const raison = options.recuperationEchouee?.[identifiant]
+      const gabarit = trouve ?? clipRendu(identifiant, false)
+      return rendre({
+        ...gabarit,
+        emplacements: [
+          {
+            ...gabarit.emplacements[0],
+            statut: raison ? "echouee" : "reussie",
+            raison: raison ?? null,
+          },
+        ],
+      })
+    }
     if (url.startsWith("/api/spending"))
       return rendre(
         options.depenses ?? {
@@ -2245,6 +2296,7 @@ function serveurDouble(options: {
             quantification: null,
             bords: null,
             contours: null,
+            retournement: null,
             main: null,
             veille: [],
             nom: null,
@@ -2344,6 +2396,44 @@ function serveurDouble(options: {
         raison: options.raisonDecoupe ?? null,
       })
     }
+    // ── Le miroir — la troisième fabrique (B1) ──────────────────────────────
+    //
+    // **Deux routes, et le double les sépare comme le serveur les sépare** :
+    // `GET` propose une case et n'écrit rien, `POST` écrit un asset. Un double
+    // qui répondrait la même chose aux deux laisserait passer un écran qui
+    // fabrique en croyant demander.
+    //
+    // **Ce que l'asset neuf porte vient du service**, mot pour mot : la
+    // filiation, la direction désignée, zéro consommé, et la place
+    // `retournement` remplie dans sa recette — c'est elle, et rien d'autre, qui
+    // dit que l'image est un miroir.
+    if (url.startsWith("/api/assets/") && url.endsWith("/mirror")) {
+      const identifiant = url.slice("/api/assets/".length, -"/mirror".length)
+      const parent =
+        etat.assets.find((a) => a.identifiant === identifiant) ??
+        asset(identifiant)
+      if (init?.method === "POST") {
+        const ne: Asset = {
+          ...parent,
+          identifiant: `${identifiant}-miroir`,
+          label: `${parent.label} · miroir`,
+          parent: identifiant,
+          direction: (corps?.direction as string | null) ?? null,
+          consomme: 0,
+          cout_usd: 0,
+          recette: { ...parent.recette, retournement: { sens: "gauche-droite" } },
+        }
+        etat.assets = [ne, ...etat.assets]
+        return rendre({ parent: identifiant, miroir: ne })
+      }
+      const dit = options.miroirs?.[identifiant]
+      return rendre({
+        asset: identifiant,
+        direction: parent.direction,
+        propose: dit?.propose ?? null,
+        raison: dit?.raison ?? null,
+      })
+    }
     if (url === "/api/assets/delete") {
       etat.supprimes = corps.identifiants
       return rendre({
@@ -2394,6 +2484,7 @@ function serveurDouble(options: {
           quantification: null,
           bords: null,
           contours: null,
+          retournement: null,
           main: null,
           veille: [],
           nom: null,
@@ -2508,12 +2599,15 @@ function serveurDouble(options: {
     if (url.startsWith("/api/assets")) {
       const parametres = new URL(url, "http://x").searchParams
       const recherche = parametres.get("recherche")?.toLowerCase() ?? ""
+      // **La même limite que le vrai serveur** (B3) : sans elle, le double
+      // rendrait toujours tout et aucun essai ne pourrait voir la grille dire
+      // qu'elle est coupée.
+      const limite = Number(parametres.get("limite") ?? 200)
       const vivants = etat.assets.filter((a) => !etat.supprimes.includes(a.identifiant))
-      return rendre({
-        assets: recherche
-          ? vivants.filter((a) => a.label.toLowerCase().includes(recherche))
-          : vivants,
-      })
+      const filtres = recherche
+        ? vivants.filter((a) => a.label.toLowerCase().includes(recherche))
+        : vivants
+      return rendre({ assets: filtres.slice(0, limite), total: filtres.length })
     }
     if (url.startsWith("/api/board/paste")) {
       // Le serveur mesure les octets et refuse ce qui n'est pas une image, en
@@ -3470,7 +3564,7 @@ async function monter(fetchDouble: ReturnType<typeof vi.fn>, etat: Etat = ETAT) 
 async function champDePrompt() {
   const deja = screen.queryByPlaceholderText("Décris ce que tu veux fabriquer.")
   if (deja) return deja
-  fireEvent.click(screen.getByRole("tab", { name: "Codex" }))
+  allerA("Codex")
   return await champDePrompt()
 }
 
@@ -3582,14 +3676,37 @@ async function ouvrirLesReglagesDeLAppel() {
   if (ligne.getAttribute("aria-expanded") !== "true") fireEvent.click(ligne)
 }
 
-/** Revenir à la galerie — là où ce qui a été produit se regarde.
+/**
+ * ── L'aide de navigation — **le seul endroit du fichier qui sache comment on
+ *    change de lieu** (B0) ──────────────────────────────────────────────────
  *
- *  **Le nom de l'onglet n'est pas toujours « Galerie » tout court** : tant que
- *  des images sont en route, il porte leur compte, et c'est délibéré — le champ
- *  de prompt n'est rendu que sur la galerie, donc depuis l'Univers ou le Codex
- *  cet onglet est le seul endroit qui dise qu'on a payé. */
-function laGalerie() {
-  fireEvent.click(screen.getByRole("tab", { name: /^Galerie/ }))
+ * Ce fichier navigue soixante et une fois. Chacune écrivait
+ * `leLieu(…)` en toutes lettres, c'est-à-dire
+ * qu'elle disait **par quel dessin** on change de lieu au lieu de dire *où l'on
+ * va*. La V4 remplace les trois onglets par le carnet ; sans cette aide, la
+ * tranche qui les retire casserait soixante et un essais d'un coup, et il
+ * faudrait relire chacun pour retrouver ce qu'il voulait vraiment vérifier.
+ *
+ * **Deux fonctions, et la première suffit aux deux emplois.** Trente-huit
+ * appels naviguent, vingt-trois vérifient — l'onglet allumé, le nom qu'il
+ * porte. Les uns cliquent le lieu, les autres le lisent : c'est le même
+ * accesseur, et c'est pour ça qu'ils passent tous par lui.
+ *
+ * ⚠️ **Le nom de la galerie n'est pas toujours « Galerie » tout court** : tant
+ * que des images sont en route, il porte leur compte. C'est délibéré — le champ
+ * de prompt n'est rendu que sur la galerie, donc depuis l'Univers ou le Codex
+ * cet onglet est le seul endroit qui dise qu'on a payé. Le piège tenait dans
+ * chaque essai ; il tient maintenant ici, une fois.
+ */
+function leLieu(nom: string | RegExp): HTMLElement {
+  return screen.getByRole("tab", {
+    name: nom === "Galerie" ? /^Galerie/ : nom,
+  })
+}
+
+/** Aller quelque part. **C'est ce que trente-huit essais voulaient dire.** */
+function allerA(nom: string | RegExp) {
+  fireEvent.click(leLieu(nom))
 }
 
 async function cadreDuCodex() {
@@ -3610,7 +3727,7 @@ async function cadreDuCodex() {
  *  Les deux « Réglages » du produit ne se confondent pas : celui du châssis est
  *  un bouton, celui-ci est un côté, donc un onglet. */
 async function ouvrirLesReglagesDuJeu(etape: string) {
-  fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+  allerA("Univers")
   fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
   fireEvent.click(await screen.findByRole("button", { name: etape }))
 }
@@ -3646,7 +3763,7 @@ describe("l'écran de l'atelier", () => {
 
     // **On paie d'un côté, on regarde de l'autre.** La galerie est la planche
     // contact du produit ; c'est là que ce qui sort se juge.
-    laGalerie()
+    allerA("Galerie")
 
     // Deux emplacements, donc deux tuiles — jamais quatre.
     await waitFor(() => expect(tuiles()).toHaveLength(2))
@@ -3725,7 +3842,7 @@ describe("l'écran de l'atelier", () => {
       target: { value: "un prompt en cours d'écriture" },
     })
 
-    laGalerie()
+    allerA("Galerie")
     fireEvent.change(await screen.findByLabelText("Chercher dans la bibliothèque"), {
       target: { value: "tonneau" },
     })
@@ -3877,7 +3994,7 @@ describe("l'écran de l'atelier", () => {
     // ne parte, et la suivante n'attend pas la première.
     const { fetchDouble } = serveurDouble()
     const flux = await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     expect(await screen.findByText("Le tableau est vide.")).toBeTruthy()
 
     flux.emettre(
@@ -3912,7 +4029,7 @@ describe("l'écran de l'atelier", () => {
   test("une récupération qui échoue garde son adresse, sa raison, et son geste", async () => {
     const { fetchDouble } = serveurDouble()
     const flux = await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     await screen.findByText("Le tableau est vide.")
 
     flux.emettre(
@@ -3998,7 +4115,7 @@ describe("l'écran de l'atelier", () => {
   test("un fichier qui n'est pas une image est refusé en le nommant", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     await screen.findByText("Le tableau est vide.")
 
     // `DataTransfer` n'existe pas hors navigateur : on double ce que l'écran
@@ -4021,7 +4138,7 @@ describe("l'écran de l'atelier", () => {
   test("un texte collé dans un champ de saisie ne fabrique pas de carte", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     await screen.findByText("Le tableau est vide.")
 
     // L'écoute est posée sur la fenêtre : elle voit passer aussi les collages
@@ -4050,7 +4167,7 @@ describe("l'écran de l'atelier", () => {
     )
     // On revient regarder : le tableau vit du côté Inspiration, et il est resté
     // vide — c'est ce que l'essai vient prouver.
-    fireEvent.click(screen.getByRole("tab", { name: "Inspiration" }))
+    allerA("Inspiration")
     expect(await screen.findByText("Le tableau est vide.")).toBeTruthy()
   })
 
@@ -4777,12 +4894,13 @@ describe("l'infobulle et le guide", () => {
     await monter(fetchDouble)
     await ouvrirLeGuide()
 
-    // **Sept places, pas cinq** : les contours et la main s'y sont ajoutés.
+    // **Huit places, pas cinq** : les contours et la main s'y sont ajoutés en
+    // E5, le retournement en B1.
     const prose = screen
       .getByRole("heading", { name: "La boucle" })
       .closest("article")!.textContent!
-    expect(prose).toMatch(/Une recette a sept places/)
-    expect(prose).not.toMatch(/cinq places/)
+    expect(prose).toMatch(/Une recette a huit places/)
+    expect(prose).not.toMatch(/cinq places|sept places/)
     // Le corpus non plus ne les compte plus à cinq, ni ne nomme un écran parti.
     const corpus = Object.values(AIDE)
       .map((e) => `${e.quoi} ${e.change} ${e.long ?? ""}`)
@@ -5195,7 +5313,7 @@ describe("l'agent, vu de l'atelier", () => {
   ]
 
   const ouvrirLaToile = async () => {
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("button", { name: "toile" }))
   }
 
@@ -5297,7 +5415,7 @@ describe("l'agent, vu de l'atelier", () => {
     doublerLaGrille(160)
     const { fetchDouble } = serveurDouble({ cartes: compose() })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
 
     // La grille montre **tout** le tableau — classé ou non : c'est ce pour quoi
     // elle est bonne, et la toile ne la remplace pas.
@@ -5387,7 +5505,7 @@ describe("l'agent, vu de l'atelier", () => {
     const reglages = () => appels.filter((a) => a.url === "/api/board/m1")
     await waitFor(() => expect(reglages()).toHaveLength(1))
 
-    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+    allerA("Galerie")
     await ouvrirLaToile()
     await screen.findByText("3 à classer")
 
@@ -5510,7 +5628,7 @@ describe("l'agent, vu de l'atelier", () => {
     doublerLaGrille(160)
     const { fetchDouble, appels } = serveurDouble({ cartes: compose9() })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
 
     fireEvent.click(await screen.findByRole("button", { name: "+ note" }))
     const champ = await waitFor(() => {
@@ -5647,7 +5765,7 @@ describe("l'agent, vu de l'atelier", () => {
       ],
     })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
 
     // Le menu d'une carte image : pas de rangée de teinte.
     fireEvent.click(await screen.findByRole("button", { name: "Ouvrir la carte" }))
@@ -5723,7 +5841,7 @@ describe("l'agent, vu de l'atelier", () => {
       ],
     })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
 
     const carte = () => screen.getByRole("button", { name: "Ouvrir la note" }).closest("article")!
 
@@ -5882,7 +6000,7 @@ describe("l'aperçu", () => {
     doublerLaGrille(160)
     const { fetchDouble } = serveurDouble({ cartes: [carteImage("c1")] })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
 
     const carte = await waitFor(() => document.querySelector("article")!)
     survoler(carte)
@@ -5893,7 +6011,7 @@ describe("l'aperçu", () => {
     expect(apercu()).toBeNull()
     // L'onglet est resté ouvert derrière : une pression, un geste.
     expect(
-      screen.getByRole("tab", { name: "Univers" }).getAttribute("aria-selected"),
+      leLieu("Univers").getAttribute("aria-selected"),
     ).toBe("true")
   })
 
@@ -5910,7 +6028,7 @@ describe("l'aperçu", () => {
     // grandissait avec son texte, l'agrandir ne montrait rien de plus, et la
     // touche ne faisait rien. Depuis que la carte a la hauteur de son cran de
     // zoom, son texte est coupé — et il faut un endroit où le lire en entier.
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     const note = await waitFor(() => document.querySelector("article")!)
     survoler(note)
     espace()
@@ -6206,7 +6324,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
     // tienne un brouillon : le texte encore à l'écran ne prouverait que le
     // brouillon. Remonté, il naît de ce que l'onglet tient de l'univers — donc
     // de la réponse posée. C'est « rouvrir montre la même valeur », vu d'ici.
-    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+    allerA("Galerie")
     await ouvrirLesReglagesDuJeu("L'allure")
 
     // **Une rangée fermée dit ce qu'elle porte** — le début de son texte,
@@ -6236,11 +6354,11 @@ describe("le réglage d'univers se voit à l'instant", () => {
 
     await waitFor(() =>
       expect(palette.getByRole("button", { name: "16" }).className).toContain(
-        "border-signal",
+        "border-ancien-signal",
       ),
     )
     expect(palette.getByRole("button", { name: "32" }).className).not.toContain(
-      "border-signal",
+      "border-ancien-signal",
     )
   })
 
@@ -6453,7 +6571,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
     })
 
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
     fireEvent.click(await screen.findByRole("button", { name: "La taille" }))
     fireEvent.click(await screen.findByRole("button", { name: "96 px" }))
@@ -6709,7 +6827,7 @@ describe("l'écran des personnages", () => {
     // champ ; c'est fini, et l'onglet ne bouge pas.
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+        leLieu("Codex").getAttribute("aria-selected"),
       ).toBe("true"),
     )
     // Le signalement est écrit à la place de l'auteur — c'est ce qu'il ne veut
@@ -6747,7 +6865,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(ecran.getByRole("button", { name: "Fabriquer repos" }))
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+        leLieu("Codex").getAttribute("aria-selected"),
       ).toBe("true"),
     )
     await payer()
@@ -6794,7 +6912,7 @@ describe("l'écran des personnages", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+        leLieu("Codex").getAttribute("aria-selected"),
       ).toBe("true"),
     )
 
@@ -6827,7 +6945,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+        leLieu("Codex").getAttribute("aria-selected"),
       ).toBe("true"),
     )
 
@@ -6867,7 +6985,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+        leLieu("Codex").getAttribute("aria-selected"),
       ).toBe("true"),
     )
 
@@ -6925,7 +7043,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+        leLieu("Codex").getAttribute("aria-selected"),
       ).toBe("true"),
     )
 
@@ -7302,7 +7420,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     })
     // On revient là où l'on paie — c'est de là que l'écran de confirmation
     // s'ouvre, avec le champ.
-    fireEvent.click(screen.getByRole("tab", { name: "Codex" }))
+    allerA("Codex")
 
     const envoi = await relire()
     // Ni dans le texte assemblé, ni comme ligne : le champ n'est plus actif, il
@@ -7437,6 +7555,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
         quantification: null,
         bords: null,
         contours: null,
+        retournement: null,
         main: null,
         veille: [],
         nom: null,
@@ -7453,6 +7572,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
           quantification: null,
           bords: null,
           contours: null,
+          retournement: null,
           main: null,
           veille: [],
           nom: null,
@@ -7624,7 +7744,7 @@ describe("faire entrer une image depuis l'écran", () => {
     })
     // Le dépôt se fait sur la grille, qui est dans la galerie : on paie d'un
     // côté, on fait entrer et l'on juge de l'autre.
-    laGalerie()
+    allerA("Galerie")
     await waitFor(() => expect(tuiles()).toHaveLength(1))
 
     deposer(laGrille(), [
@@ -8133,7 +8253,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     // montrait deux vignettes identiques et laissait deviner.
     const vignettes = ecran.getAllByRole("button", { name: "Ouvrir casque · repos" })
     expect(vignettes).toHaveLength(2)
-    const marquees = vignettes.filter((v) => v.className.includes("outline-signal"))
+    const marquees = vignettes.filter((v) => v.className.includes("outline-ancien-signal"))
     expect(marquees).toHaveLength(1)
   })
 
@@ -8152,7 +8272,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     expect(
       ecran
         .getByRole("button", { name: "Ouvrir casque · repos" })
-        .className.includes("outline-signal"),
+        .className.includes("outline-ancien-signal"),
     ).toBe(false)
   })
 
@@ -8281,7 +8401,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
       name: /Ouvrir un nain au repos/,
     })
     expect(
-      vignettes.filter((v) => v.querySelector("img.outline-signal")),
+      vignettes.filter((v) => v.querySelector("img.outline-ancien-signal")),
     ).toHaveLength(1)
 
     fireEvent.click(ecran.getByRole("button", { name: "Garder un nain au repos" }))
@@ -8319,7 +8439,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     // **Aucune ne refuse, et aucune ne s'alarme.** `--echec` veut dire *ce qui
     // échoue ou ce qui détruit*, et un calque gardé n'échoue pas.
     expect(
-      document.querySelector("[data-univers] .text-echec"),
+      document.querySelector("[data-univers] .text-ancien-echec"),
     ).toBeNull()
   })
 
@@ -8951,7 +9071,7 @@ describe("les trois onglets", () => {
     vi.restoreAllMocks()
   })
 
-  const onglet = (nom: string) => screen.getByRole("tab", { name: nom })
+  const onglet = (nom: string) => leLieu(nom)
   const allume = (nom: string) => onglet(nom).getAttribute("aria-selected") === "true"
 
   // ── « Trois onglets, et un seul allumé à la fois ; aucun écran ne se
@@ -9355,8 +9475,10 @@ describe("l'écran des dépenses", () => {
     ],
   }
 
-  const ouvrir = async () => {
-    const double = serveurDouble({ depenses: DEPENSES })
+  const ouvrir = async (
+    reste: Partial<Parameters<typeof serveurDouble>[0]> = {},
+  ) => {
+    const double = serveurDouble({ depenses: DEPENSES, ...reste })
     await monter(double.fetchDouble)
     fireEvent.click(screen.getByTitle("Ouvrir les dépenses"))
     const cadre = await waitFor(() => {
@@ -9461,7 +9583,7 @@ describe("l'écran des dépenses", () => {
     )
     // On retombe là d'où l'on venait, pas ailleurs : l'onglet n'a pas bougé.
     expect(
-      screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      leLieu("Galerie").getAttribute("aria-selected"),
     ).toBe("true")
   })
 
@@ -9471,13 +9593,110 @@ describe("l'écran des dépenses", () => {
     // L'écran est une profondeur, pas un quatrième onglet : les trois restent
     // là, et celui d'où l'on vient reste allumé.
     expect(
-      screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      leLieu("Galerie").getAttribute("aria-selected"),
     ).toBe("true")
 
     const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
     fireEvent.click(fil.getByRole("button", { name: "Bac à sable" }))
     expect(await champDePrompt())
       .toBeTruthy()
+  })
+
+  // ── « Un clip payé chez le fournisseur mais jamais rapatrié se voit, et se
+  //     récupère sans repayer » (B2) ──────────────────────────────────────────
+
+  describe("les clips payés qui attendent", () => {
+    // **En souffrance** veut dire : le travail est connu, l'emplacement n'a
+    // pas abouti — c'est `Statut.ECHOUEE` ici, comme un téléchargement qui a
+    // manqué pendant que l'atelier était fermé.
+    const base = clipRendu("clip-attend", false, {
+      personnage: "balthazar",
+      pose: "marche",
+      cout_usd: 0.067,
+      consomme: 0.067,
+    })
+    const EN_SOUFFRANCE: Generation = {
+      ...base,
+      emplacements: [{ ...base.emplacements[0], statut: "echouee" }],
+    }
+
+    // **Le bandeau se cherche à chaque fois par sa marque `data-*`, jamais
+    // sur le `ecran` rendu par `ouvrir()`.** Ouvrir les dépenses déclenche un
+    // second rendu de `EcranDepenses` pendant que ses données arrivent, et le
+    // `cadre` capturé au tout début reste attaché à l'instantané d'avant : les
+    // libellés statiques de la colonne de gauche s'y lisent encore, mais un
+    // bloc qui n'existe qu'une fois les clips en souffrance reçus n'y paraît
+    // jamais. C'est le bandeau lui-même qu'on interroge, pas l'écran d'origine.
+    const bandeau = () =>
+      within(document.querySelector("[data-clips-en-souffrance]") as HTMLElement)
+
+    test("s'il n'y en a aucun, aucun bandeau ne s'affiche", async () => {
+      await ouvrir()
+      expect(document.querySelector("[data-clips-en-souffrance]")).toBeNull()
+    })
+
+    test("un clip en souffrance se voit, avec son montant", async () => {
+      await ouvrir({ clipsEnSouffrance: [EN_SOUFFRANCE] })
+      await waitFor(() =>
+        expect(document.querySelector("[data-clips-en-souffrance]")).toBeTruthy(),
+      )
+      // La phrase traverse un `<strong>` : `getByText` ne concatène que le
+      // texte propre d'un nœud, jamais celui de ses enfants — on vérifie donc
+      // le compte et la phrase séparément, de part et d'autre de la balise.
+      expect(bandeau().getByText("1 clip payé")).toBeTruthy()
+      expect(bandeau().getByText(/attend d'être récupéré/)).toBeTruthy()
+      expect(bandeau().getByText(/\$0,0670/)).toBeTruthy()
+      expect(bandeau().getByText(/balthazar/)).toBeTruthy()
+    })
+
+    test("récupérer ne repaie pas, et retire le clip du bandeau", async () => {
+      const { appels } = await ouvrir({ clipsEnSouffrance: [EN_SOUFFRANCE] })
+      await waitFor(() =>
+        expect(document.querySelector("[data-clips-en-souffrance]")).toBeTruthy(),
+      )
+
+      fireEvent.click(bandeau().getByRole("button", { name: "Récupérer sans repayer" }))
+
+      await waitFor(() =>
+        expect(document.querySelector("[data-clips-en-souffrance]")).toBeNull(),
+      )
+      // Un seul appel de récupération, et rien d'autre écrit : aucune dépense
+      // n'est jamais commandée depuis ce geste.
+      expect(
+        appels.some((a) => a.url === "/api/clips/clip-attend/recover"),
+      ).toBe(true)
+      expect(appels.some((a) => a.url === "/api/clips" && Boolean(a.corps))).toBe(
+        false,
+      )
+    })
+
+    test("le fournisseur a expiré le lien : la raison se lit, rien n'est facturé", async () => {
+      const { appels } = await ouvrir({
+        clipsEnSouffrance: [EN_SOUFFRANCE],
+        recuperationEchouee: { "clip-attend": "le lien a expiré chez le fournisseur" },
+      })
+      await waitFor(() =>
+        expect(document.querySelector("[data-clips-en-souffrance]")).toBeTruthy(),
+      )
+
+      fireEvent.click(bandeau().getByRole("button", { name: "Récupérer sans repayer" }))
+
+      expect(
+        await bandeau().findByText("le lien a expiré chez le fournisseur"),
+      ).toBeTruthy()
+      // Le clip reste annoncé, et le geste reste proposable — sous un nom qui
+      // dit que c'est une seconde tentative, pas la même offre qu'avant.
+      expect(bandeau().getByText(/balthazar/)).toBeTruthy()
+      expect(bandeau().getByRole("button", { name: "Réessayer" })).toBeTruthy()
+      // Rien n'est facturé : un seul appel de récupération est parti, et
+      // aucune commande neuve n'a été envoyée derrière l'échec.
+      expect(
+        appels.filter((a) => a.url === "/api/clips/clip-attend/recover"),
+      ).toHaveLength(1)
+      expect(appels.some((a) => a.url === "/api/clips" && Boolean(a.corps))).toBe(
+        false,
+      )
+    })
   })
 })
 
@@ -9504,14 +9723,14 @@ describe("les trois côtés de l'univers", () => {
     vi.restoreAllMocks()
   })
 
-  const cote = (nom: string) => screen.getByRole("tab", { name: nom })
+  const cote = (nom: string) => leLieu(nom)
   const survoler = (element: Element) => fireEvent.pointerOver(element)
   const espace = () => fireEvent.keyDown(window, { key: " ", code: "Space" })
 
   const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
     const double = serveurDouble(options)
     const flux = await monter(double.fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     await screen.findByRole("tab", { name: "Inspiration" })
     return { ...double, flux }
   }
@@ -9710,7 +9929,7 @@ describe("le codex et l'établi", () => {
   const codex = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
     const double = serveurDouble(options)
     const flux = await monter(double.fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Codex" }))
+    allerA("Codex")
     const cadre = within(await cadreDuCodex())
     return { ...double, flux, cadre }
   }
@@ -9810,9 +10029,9 @@ describe("le codex et l'établi", () => {
     expect(champ()).toHaveLength(1)
 
     // **La barre qui paie disparaît sur tout écran incapable de dépenser.**
-    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+    allerA("Galerie")
     expect(champ()).toHaveLength(0)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     expect(champ()).toHaveLength(0)
   })
 
@@ -9897,7 +10116,7 @@ describe("le codex et l'établi", () => {
 
     // Et l'onglet n'a pas bougé — on revient à l'établi par le fil.
     expect(
-      screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+      leLieu("Codex").getAttribute("aria-selected"),
     ).toBe("true")
     fireEvent.click(fil.getByRole("button", { name: "Le nain" }))
     expect(await screen.findByRole("button", { name: "Fabriquer marche" })).toBeTruthy()
@@ -10274,11 +10493,11 @@ describe("le châssis des tables", () => {
     expect(appels.filter((a) => a.url === "/api/generations")).toEqual([])
   })
 
-  // ── « La barre montre les sept places dans l'ordre où elles s'appliquent, et
-  //     l'ordre ne se change pas » et « le trait sépare les sept places des deux
+  // ── « La barre montre les huit places dans l'ordre où elles s'appliquent, et
+  //     l'ordre ne se change pas » et « le trait sépare les huit places des deux
   //     fabriques » ───────────────────────────────────────────────────────────
 
-  test("les sept places sont dans l'ordre du traitement, puis les deux fabriques", async () => {
+  test("les huit places sont dans l'ordre du traitement, puis les deux fabriques", async () => {
     const { cadre } = await ouvrirUneTable()
 
     // L'ordre est celui du domaine. Le lire autrement serait mentir sur ce que
@@ -10291,6 +10510,9 @@ describe("le châssis des tables", () => {
       "quantification",
       "bords",
       "contours",
+      // **En queue et avant la main** (B1) : le plan a tranché pour la fin de
+      // la chaîne, et le domaine déclare la place au même rang.
+      "retournement",
       "la main",
       "découpage",
       "superposition",
@@ -10319,7 +10541,7 @@ describe("le châssis des tables", () => {
     // `ajusté` est l'état d'ouverture : c'est le seul réglage qui suive le
     // cadre, donc le seul qui puisse être juste avant qu'on ait regardé.
     expect(cadre.getByRole("button", { name: "ajusté" }).className).toContain(
-      "border-signal",
+      "border-ancien-signal",
     )
 
     // Quatre commandes, et chacune fait une seule chose.
@@ -10984,10 +11206,10 @@ describe("le châssis des tables", () => {
     // défaut est le geste pour lequel la pipette a été admise : retirer un creux
     // de fond sans toucher au reste.
     const tache = await cadre.findByRole("button", { name: "cette tache" })
-    expect(tache.className).toContain("border-signal")
+    expect(tache.className).toContain("border-ancien-signal")
     expect(
       cadre.getByRole("button", { name: "partout" }).className,
-    ).not.toContain("border-signal")
+    ).not.toContain("border-ancien-signal")
   })
 
   test("le clic désarme la visée : regarder l'image ne déplace pas le point", async () => {
@@ -11018,7 +11240,7 @@ describe("le châssis des tables", () => {
     // entre deux colonnes de réglages mentirait sur ce qu'elle fait.
     expect(await screen.findByText("Ce qui sortira")).toBeTruthy()
     expect(
-      screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+      leLieu("Codex").getAttribute("aria-selected"),
     ).toBe("true")
   })
 
@@ -11397,9 +11619,9 @@ describe("le châssis des tables", () => {
     const { cadre } = await ouvrirUneTable({}, AVEC_MODELE(""))
 
     const rapide = await cadre.findByRole("button", { name: "rapide" })
-    expect(rapide.className).toContain("border-signal")
+    expect(rapide.className).toContain("border-ancien-signal")
     expect(cadre.getByRole("button", { name: "lourd" }).className).not.toContain(
-      "border-signal",
+      "border-ancien-signal",
     )
     expect(document.querySelector("[data-modele-a-descendre]")).toBeNull()
   })
@@ -11446,7 +11668,12 @@ describe("la galerie dégraissée", () => {
     // Le champ est parti en E2, avec la barre qui paie.
     expect(screen.queryByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeNull()
     // La colonne de 300 px est partie en E4 : elle suit ce qui paie.
-    expect(document.querySelector(".w-\\[300px\\]")).toBeNull()
+    //
+    // **Le carnet fait 300 px lui aussi, et il est là en permanence** (B0) :
+    // la question n'est donc plus « y a-t-il une colonne de 300 px ? » mais
+    // « y en a-t-il une autre que le carnet ? ». Ce que l'essai vérifie n'a
+    // pas bougé — c'est l'absence des réglages de l'appel dans la galerie.
+    expect(document.querySelector(".w-\\[300px\\]:not([data-carnet])")).toBeNull()
     // Et aucun curseur de retouche : la recette se lit ici, elle se règle dans
     // les tables — sur l'image en grand, ce que 380 px de colonne ne
     // permettaient pas.
@@ -11486,7 +11713,7 @@ describe("la galerie dégraissée", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
     expect(await screen.findByRole("button", { name: /^détourage/ })).toBeTruthy()
     expect(
-      screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      leLieu("Galerie").getAttribute("aria-selected"),
     ).toBe("true")
   })
 
@@ -11537,7 +11764,7 @@ describe("la galerie dégraissée", () => {
     // dit, et l'onglet a changé.
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+        leLieu("Codex").getAttribute("aria-selected"),
       ).toBe("true"),
     )
     const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
@@ -12078,7 +12305,7 @@ describe("l'assistant de démarrage", () => {
   ) => {
     const double = serveurDouble({ univers, ...options })
     await monter(double.fetchDouble, { ...ETAT, univers })
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
     await screen.findByRole("button", { name: "Le nom" })
     return double
@@ -12151,7 +12378,7 @@ describe("l'assistant de démarrage", () => {
     // mono : c'est la hauteur que l'échelle donne à ce qui doit être pressé.
     const continuer = screen.getByRole("button", { name: "Continuer →" })
     expect(continuer.className).toContain("h-[34px]")
-    expect(continuer.className).toContain("bg-signal")
+    expect(continuer.className).toContain("bg-ancien-signal")
   })
 
   test("continuer avance d'une étape, retour recule, et l'étape ouverte est celle qu'on clique", async () => {
@@ -12756,6 +12983,7 @@ describe("l'assistant de démarrage", () => {
           quantification: null,
           bords: null,
           contours: null,
+          retournement: null,
           main: null,
           veille: [],
           nom: null,
@@ -13003,7 +13231,7 @@ describe("les poses par type d'objet", () => {
   const ouvrirLesPoses = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
     const double = serveurDouble({ univers: UNIVERS, ...options })
     await monter(double.fetchDouble, { ...ETAT, univers: UNIVERS })
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
     fireEvent.click(await screen.findByRole("button", { name: "Poses et états" }))
     return double
@@ -13562,7 +13790,7 @@ describe("les palettes et les ambiances", () => {
   const ouvrirLeCote = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
     const double = serveurDouble(options)
     await monter(double.fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("tab", { name: "Ambiances et couleurs" }))
     await screen.findByText("les ambiances")
     return double
@@ -15146,7 +15374,7 @@ describe("le premier lancement", () => {
       expect(document.querySelector("[data-assistant]")).toBeTruthy(),
     )
     expect(
-      screen.getByRole("tab", { name: "Univers" }).getAttribute("aria-selected"),
+      leLieu("Univers").getAttribute("aria-selected"),
     ).toBe("true")
   })
 
@@ -15157,7 +15385,7 @@ describe("le premier lancement", () => {
 
     expect(document.querySelector("[data-assistant]")).toBeNull()
     expect(
-      screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      leLieu("Galerie").getAttribute("aria-selected"),
     ).toBe("true")
   })
 
@@ -15169,7 +15397,7 @@ describe("le premier lancement", () => {
     await waitFor(() =>
       expect(document.querySelector("[data-assistant]")).toBeTruthy(),
     )
-    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+    allerA("Galerie")
 
     await act(async () => {
       flux.emettre("etat", NEUF)
@@ -15226,7 +15454,7 @@ describe("le premier lancement", () => {
     // n'y en a aucune.
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+        leLieu("Codex").getAttribute("aria-selected"),
       ).toBe("true"),
     )
     const champ = await screen.findByLabelText("Nom de la chose du jeu à créer")
@@ -17082,7 +17310,7 @@ describe("l'écran de confirmation", () => {
     await monter(double.fetchDouble)
 
     // Au repos, l'onglet ne porte que son nom.
-    expect(screen.getByRole("tab", { name: "Galerie" })).toBeTruthy()
+    expect(leLieu("Galerie")).toBeTruthy()
 
     const champ = (await champDePrompt()) as HTMLTextAreaElement
     fireEvent.change(champ, { target: { value: "un petit voyageur, de face" } })
@@ -17096,10 +17324,10 @@ describe("l'écran de confirmation", () => {
     // On part à l'Univers : la barre de prompt n'y est pas, donc le bloc en
     // route non plus. La pastille, elle, est dans la barre de tête — rendue sur
     // les trois lieux.
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull())
     expect(
-      screen.getByRole("tab", { name: /^Galerie · 1 image en route$/ }),
+      leLieu(/^Galerie · 1 image en route$/),
     ).toBeTruthy()
   })
 
@@ -17637,7 +17865,7 @@ describe("l'écran de confirmation", () => {
 
     // On sort par l'onglet, qui est la sortie qu'aucun des deux écrans ne voit
     // venir — celle qui remonte de toute profondeur.
-    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+    allerA("Galerie")
     await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
 
     await champDePrompt()
@@ -17944,9 +18172,9 @@ describe("l'argent ne part qu'une fois", () => {
       fireEvent.change(champ, { target: { value: "un forgeron nain" } })
       await relire()
 
-      fireEvent.click(screen.getByRole("tab", { name: onglet }))
+      allerA(onglet)
       await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
-      expect(screen.getByRole("tab", { name: onglet }).getAttribute("aria-selected")).toBe(
+      expect(leLieu(onglet).getAttribute("aria-selected")).toBe(
         "true",
       )
       expect(
@@ -18824,7 +19052,7 @@ describe("une table s'éteint, et ça se voit", () => {
     const { cadre } = await ouvrirLesTables(["grille"])
     const valeur = cadre.getByText("64 px · 100 %")
     expect(valeur.className).toContain("line-through")
-    expect(valeur.className).not.toContain("text-signal")
+    expect(valeur.className).not.toContain("text-ancien-signal")
   })
 
   // ── « Ouvrir une table éteinte montre une colonne éteinte » ────────────────
@@ -19228,7 +19456,7 @@ describe("la palette se règle sans faire attendre", () => {
     await monter(
       (fetchDouble ?? double.fetchDouble) as unknown as ReturnType<typeof vi.fn>,
     )
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("tab", { name: "Ambiances et couleurs" }))
     fireEvent.click(await screen.findByRole("button", { name: /marais/ }))
     await screen.findByText(/l'aperçu/)
@@ -19364,7 +19592,7 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
   ) => {
     const double = serveurDouble({ cartes: CARTES, ...options })
     await monter(double.fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("button", { name: "toile" }))
     const bandeau = await waitFor(() => {
       const trouve = document.querySelector("[data-ilot='marais'] [data-nom-ilot]")
@@ -19404,7 +19632,7 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
     // Et le chemin y mène : le côté change, l'objet s'ouvre.
     fireEvent.click(within(dit).getByRole("button", { name: /aller la voir/ }))
     await waitFor(() =>
-      expect(screen.getByRole("tab", { name: "Ambiances et couleurs" })
+      expect(leLieu("Ambiances et couleurs")
         .getAttribute("aria-selected")).toBe("true"),
     )
     expect(await screen.findByText(/l'aperçu/)).toBeTruthy()
@@ -19518,7 +19746,7 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
       return double.fetchDouble(chemin, init)
     })
     await monter(refuse as unknown as ReturnType<typeof vi.fn>)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("button", { name: "toile" }))
     const bandeau = await waitFor(() => {
       const trouve = document.querySelector("[data-ilot='marais'] [data-nom-ilot]")
@@ -20210,7 +20438,7 @@ describe("les clés au pluriel", () => {
     const secrets = [A_DEUX_PLACES]
     const { appels, fetchDouble } = serveurDouble({ secrets, univers: UNIVERS })
     await monter(fetchDouble, { ...ETAT, secrets, univers: UNIVERS })
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
     fireEvent.click(await screen.findByRole("button", { name: "Les fournisseurs" }))
 
@@ -20277,7 +20505,7 @@ describe("les clés au pluriel", () => {
     const barre = document.querySelector("header") as HTMLElement
     expect(await within(barre).findByText("1 sur 2")).toBeTruthy()
 
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
     fireEvent.click(await screen.findByRole("button", { name: "Les fournisseurs" }))
 
@@ -20468,7 +20696,7 @@ describe("découper une carte du tableau", () => {
    *  200 ms de repos ; un essai n'a pas de pointeur qui se repose, et le clic
    *  l'épingle, ce qui est le même menu. */
   const ouvrirLeMenu = async (quoi = "Ouvrir la carte") => {
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Univers")
     fireEvent.click(await screen.findByRole("button", { name: quoi }))
   }
 
@@ -20720,8 +20948,8 @@ describe("découper une carte du tableau", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))
     await waitFor(() => expect(ecran()).toBeTruthy())
 
-    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    allerA("Galerie")
+    allerA("Univers")
 
     await waitFor(() => expect(ecran()).toBeNull())
     expect(await screen.findByRole("button", { name: "Ouvrir la carte" })).toBeTruthy()
@@ -20815,7 +21043,7 @@ describe("R6 — la planche qui attend un regard", () => {
   test("une planche qui attend garde sa tuile au lieu de s'évanouir", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
 
     act(() => FluxDouble.ouverts[0].emettre("generation", planche(9)))
 
@@ -20834,7 +21062,7 @@ describe("R6 — la planche qui attend un regard", () => {
   test("la tuile dit ce qui cloche, en clair, sans dire « échec »", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
     act(() => FluxDouble.ouverts[0].emettre("generation", planche(9)))
 
     expect(await screen.findByText("9 sujets · 1 de trop")).toBeTruthy()
@@ -20847,7 +21075,7 @@ describe("R6 — la planche qui attend un regard", () => {
     const attendue = planche(9)
     const { fetchDouble, appels } = serveurDouble({ aPublier: () => attendue })
     await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
     // Neuf sujets à l'écran, découpés par la page dans l'image de la planche —
     // aucune vignette n'existe côté serveur, c'est tout l'enjeu de la tranche.
     await ouvrirLeChoix(attendue)
@@ -20870,7 +21098,7 @@ describe("R6 — la planche qui attend un regard", () => {
     const attendue = planche(9)
     const { fetchDouble, appels } = serveurDouble({ aPublier: () => attendue })
     await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
     await ouvrirLeChoix(attendue)
 
     fireEvent.click(sujets()[0])
@@ -20890,7 +21118,7 @@ describe("R6 — la planche qui attend un regard", () => {
     const attendue = planche(9)
     const { fetchDouble, appels } = serveurDouble({ aPublier: () => attendue })
     await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
     await ouvrirLeChoix(attendue)
 
     fireEvent.click(sujets()[4])
@@ -20911,7 +21139,7 @@ describe("R6 — la planche qui attend un regard", () => {
     const quadrillee = planche(8, { pleines: [0, 1, 2, 3, 4, 5, 6, 7] })
     const { fetchDouble } = serveurDouble({ aPublier: () => quadrillee })
     await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
 
     act(() => FluxDouble.ouverts[0].emettre("generation", quadrillee))
     expect(await screen.findByText("8 sujets · 8 cases pleines")).toBeTruthy()
@@ -20935,7 +21163,7 @@ describe("R6 — la planche qui attend un regard", () => {
     const quadrillee = planche(8, { pleines: [0, 1, 2, 3, 4, 5, 6, 7] })
     const { fetchDouble, appels } = serveurDouble({ aPublier: () => quadrillee })
     await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
     await ouvrirLeChoix(quadrillee)
 
     // Huit gardés pour huit cases : le compte est juste d'emblée.
@@ -20953,7 +21181,7 @@ describe("R6 — la planche qui attend un regard", () => {
     const attendue = planche(9)
     const { fetchDouble } = serveurDouble({ aPublier: () => attendue })
     await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
     await ouvrirLeChoix(attendue)
 
     fireEvent.click(sujets()[8])
@@ -21448,7 +21676,7 @@ describe("A9 — commander un clip", () => {
       personnages: [personnage("Le nain")],
     })
     const flux = await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
 
     flux.emettre("generation", clipRendu("clip-a", false))
 
@@ -21469,7 +21697,7 @@ describe("A9 — commander un clip", () => {
       personnages: [personnage("Le nain")],
     })
     const flux = await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
 
     flux.emettre("generation", clipRendu("clip-a", false))
     flux.emettre("generation", clipRendu("clip-b", false))
@@ -21512,7 +21740,7 @@ describe("A9 — commander un clip", () => {
       personnages: [personnage("Le nain")],
     })
     const flux = await monter(fetchDouble)
-    laGalerie()
+    allerA("Galerie")
 
     flux.emettre("generation", clipRendu("clip-a", false))
     await screen.findByText("121 images · 24 i/s")
@@ -21558,7 +21786,7 @@ describe("A10 — découper un clip en bandes", () => {
       ...options,
     })
     const flux = await monter(double.fetchDouble)
-    laGalerie()
+    allerA("Galerie")
     flux.emettre("generation", clipRendu("clip-a", false))
     fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))
     const panneau = await waitFor(() => {
@@ -22386,7 +22614,7 @@ describe("A12 — la matrice sur deux calques", () => {
       return montage
     })
     // Et c'est bien **ce clip-là** qu'on est allé chercher.
-    expect(screen.getByRole("tab", { name: /^Galerie/ }).getAttribute("aria-selected")).toBe("true")
+    expect(leLieu(/^Galerie/).getAttribute("aria-selected")).toBe("true")
   })
 
   // ── « Retirer une bande ne supprime ni la bande, ni le clip » ─────────────
@@ -22521,7 +22749,7 @@ describe("A13 — l'image attrapée au vol", () => {
       ...options,
     })
     const flux = await monter(double.fetchDouble)
-    laGalerie()
+    allerA("Galerie")
     flux.emettre("generation", clipRendu("clip-a", false))
     fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))
     const panneau = await waitFor(() => {
@@ -22738,7 +22966,7 @@ describe("A4 — la bande sort de l'atelier", () => {
       ...options,
     })
     const flux = await monter(double.fetchDouble)
-    laGalerie()
+    allerA("Galerie")
     flux.emettre("generation", clipRendu("clip-a", false))
     fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))
     const panneau = await waitFor(() => {
@@ -24716,7 +24944,7 @@ describe("V3.02 — la fiche d'un clip", () => {
       generations: [clipRendu("clip-a", false)],
       ...etat,
     })
-    laGalerie()
+    allerA("Galerie")
     fireEvent.click(await screen.findByRole("button", { name: "Ouvrir la fiche" }))
     const panneau = await waitFor(() => {
       const cadre = document.querySelector("[data-fiche-clip]")
@@ -24833,7 +25061,7 @@ describe("V3.02 — la fiche d'un clip", () => {
       generations: [avecDepart],
       assets: [departeur],
     })
-    laGalerie()
+    allerA("Galerie")
     await waitFor(() =>
       expect(
         screen.getAllByRole("button", { name: "Ouvrir la fiche" }),
@@ -24885,3 +25113,911 @@ describe("V3.02 — la fiche d'un clip", () => {
   })
 })
 
+// ── B1 : le miroir — la septième place, et la troisième fabrique ─────────────
+//
+// **La panne se compte en dollars.** Un personnage vu de dessus se dessine dans
+// quatre directions ; celui qui marche vers l'ouest est le miroir exact de celui
+// qui marche vers l'est. Le produit n'avait aucune façon de le dire, donc les
+// deux se payaient.
+//
+// Ce qui se mesure sur des pixels — que retourner deux fois rende l'image de
+// départ, que la palette ne bouge pas, que l'empreinte des recettes déjà écrites
+// ne change pas — est tenu par `tests/test_b1.py`. Ce qui vit ici est ce que
+// l'écran montre, et surtout **ce qu'il refuse de deviner** : la paire de
+// directions vient du serveur, jamais d'une table écrite à l'écran.
+
+describe("B1 — le miroir", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const IMAGE = asset("bbbb2222-0", "le pèlerin, au repos")
+
+  const ouvrirLeRetournement = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const nain = personnage("Le pèlerin")
+    const double = serveurDouble({
+      assets: [IMAGE],
+      personnages: [
+        {
+          ...nain,
+          cases: nain.cases.map((c) =>
+            c.pose === "repos" ? { ...c, images: [IMAGE] } : c,
+          ),
+        },
+      ],
+      ...options,
+    })
+    await monter(double.fetchDouble)
+    await ouvrirLEtabli("Le pèlerin")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Ouvrir ${IMAGE.label} dans son outil`,
+      }),
+    )
+    const cadre = within(
+      await waitFor(() => {
+        const tables = document.querySelector("[data-tables]")
+        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
+        return tables as HTMLElement
+      }),
+    )
+    fireEvent.click(cadre.getByRole("button", { name: /^retournement/ }))
+    return { ...double, cadre }
+  }
+
+  // ── « Le retournement est une place de la recette, en queue et avant la
+  //     main » ────────────────────────────────────────────────────────────────
+
+  test("le sens pose la place, et la barre la résume", async () => {
+    const { cadre, appels } = await ouvrirLeRetournement()
+
+    fireEvent.click(cadre.getByRole("button", { name: "miroir gauche-droite" }))
+
+    // Le résumé de la barre est la valeur, jamais le fait qu'il y en ait une.
+    await waitFor(() =>
+      expect(cadre.getByRole("button", { name: /^retournement/ }).textContent).toContain(
+        "miroir gauche-droite",
+      ),
+    )
+
+    const pose = [...appels].reverse().find((a) => a.url.includes("/recipe"))
+    expect(pose).toBeTruthy()
+    expect((pose!.corps as { retournement: { sens: string } }).retournement.sens).toBe(
+      "gauche-droite",
+    )
+  })
+
+  test("les neuf autres moteurs paraissent, grisés, au lieu d'être cachés", async () => {
+    // **C'est ce qui dit ce que l'atelier saura faire**, et c'est la seule table
+    // de la chaîne qui manque en entier. Les cacher aurait laissé croire que le
+    // miroir gauche-droite est tout ce qu'on puisse vouloir.
+    const { cadre } = await ouvrirLeRetournement()
+
+    const lignes = document.querySelectorAll("[data-sens-a-ajouter]")
+    expect(lignes).toHaveLength(9)
+    expect(cadre.getByText("miroir haut-bas")).toBeTruthy()
+    expect(cadre.getByText("miroir, sauf ici")).toBeTruthy()
+    // Aucun n'est cliquable : proposer puis refuser serait pire que de montrer
+    // une liste.
+    expect(cadre.queryByRole("button", { name: "miroir haut-bas" })).toBeNull()
+  })
+
+  // ── « Le retournement s'endort sans se vider, comme les huit autres
+  //     places » ──────────────────────────────────────────────────────────────
+
+  test("la place se vide par son pied de colonne, et le nom est le sien", async () => {
+    const { cadre, appels } = await ouvrirLeRetournement()
+
+    fireEvent.click(cadre.getByRole("button", { name: "miroir gauche-droite" }))
+    await waitFor(() =>
+      expect(cadre.getByRole("button", { name: "Sans retournement ›" })).toBeTruthy(),
+    )
+
+    fireEvent.click(cadre.getByRole("button", { name: "Sans retournement ›" }))
+    await waitFor(() => {
+      const dernier = [...appels].reverse().find((a) => a.url.includes("/recipe"))
+      expect((dernier!.corps as { retournement: unknown }).retournement).toBeNull()
+    })
+  })
+
+  // ── « La direction est proposée par le serveur, jamais devinée à
+  //     l'écran » ────────────────────────────────────────────────────────────
+
+  test("la case proposée vient du serveur, et le champ dit qu'elle est proposée", async () => {
+    const { cadre } = await ouvrirLeRetournement({
+      miroirs: { "bbbb2222-0": { propose: "ouest", raison: null } },
+    })
+
+    const champ = (await cadre.findByLabelText(
+      "Ça se range en",
+    )) as HTMLInputElement
+    await waitFor(() => expect(champ.value).toBe("ouest"))
+    expect(cadre.getByText(/proposé, d'après la direction de cette image/)).toBeTruthy()
+  })
+
+  test("quand il ne sait pas, le champ attend et le geste se grise avec sa raison", async () => {
+    // **La phrase se lit avant le clic, pas après** : un refus qui arrive après
+    // coup est un refus qui a fait espérer. Et elle est recopiée telle quelle —
+    // c'est le serveur qui sait ce que le jeu a nommé.
+    const raison =
+      "un miroir gauche-droite ne change rien à « sud » — cette direction-là se génère"
+    const { cadre } = await ouvrirLeRetournement({
+      miroirs: { "bbbb2222-0": { propose: null, raison } },
+    })
+
+    expect(await cadre.findByText(raison)).toBeTruthy()
+    const champ = cadre.getByLabelText("Ça se range en") as HTMLInputElement
+    expect(champ.value).toBe("")
+    expect(
+      (cadre.getByRole("button", { name: /^Retourner ›/ }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true)
+
+    // **Rien n'est bloqué par une paire inconnue** : dès que l'auteur désigne
+    // une case, c'est la sienne qui vaut.
+    fireEvent.change(champ, { target: { value: "gauche" } })
+    await waitFor(() =>
+      expect(
+        (cadre.getByRole("button", { name: /^Retourner ›/ }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    )
+  })
+
+  test("la fabrique part avec la case visée, et ne dépense rien", async () => {
+    const { cadre, appels } = await ouvrirLeRetournement({
+      miroirs: { "bbbb2222-0": { propose: "ouest", raison: null } },
+    })
+
+    const bouton = await cadre.findByRole("button", { name: /^Retourner ›/ })
+    await waitFor(() => expect((bouton as HTMLButtonElement).disabled).toBe(false))
+    fireEvent.click(bouton)
+
+    await waitFor(() => {
+      const parti = appels.find(
+        (a) => a.url === "/api/assets/bbbb2222-0/mirror" && a.corps,
+      )
+      expect(parti).toBeTruthy()
+      expect((parti!.corps as { direction: string }).direction).toBe("ouest")
+    })
+    // Aucun appel au fournisseur : retourner marche réseau coupé.
+    expect(appels.filter((a) => a.url === "/api/generations")).toEqual([])
+  })
+
+  // ── « L'image retournée se range dans la direction qu'on lui désigne, et la
+  //     case se remplit » ──────────────────────────────────────────────────────
+
+  /** Une chose à quatre directions dont **une seule** est dessinée — le cas
+   *  mesuré du dépôt : michel porte 25 images en `droite` et aucune en
+   *  `gauche`. */
+  const casesAvecUneSeuleDirection = (remplie: string, images: Asset[]) =>
+    PLAN.map((p) => ({
+      pose: p.identifiant,
+      demandees: p.images * QUATRE.length,
+      images: p.identifiant === "repos" ? images : [],
+      ...VIDE_C3,
+      bandes_demandees: QUATRE.length,
+      directions: QUATRE.map((d) => ({
+        ...d,
+        demandees: p.images,
+        images: p.identifiant === "repos" && d.identifiant === remplie ? images : [],
+        a_confirmer: 0,
+        bandes: [],
+      })),
+      directions_rangees: [],
+    }))
+
+  const VUE_A_QUATRE: DirectionsDuJeu = {
+    directions: QUATRE,
+    origine: "vue",
+    vue: "vue-dessus-34",
+    vue_libelle: "De dessus, 3/4",
+    proposees: QUATRE,
+  }
+
+  const ouvrirLaMatrice = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const image = asset("cccc3333-0", "le pèlerin vers l'est")
+    const double = serveurDouble({
+      directions: VUE_A_QUATRE,
+      personnages: [
+        personnage("Balthazar", {
+          cases: casesAvecUneSeuleDirection("est", [image]),
+        }),
+      ],
+      ...options,
+    })
+    await monter(double.fetchDouble)
+    return { ...double, etabli: await ouvrirLEtabli("Balthazar"), image }
+  }
+
+  test("la case vide d'en face gagne un geste gratuit, et lui seul", async () => {
+    // **Il ne paraît que s'il y a de quoi retourner.** Un bouton grisé sur les
+    // cases où le miroir ne s'applique pas serait une colonne de refus — et le
+    // nord, qu'un miroir gauche-droite ne fabrique pas, n'en a pas.
+    const { etabli } = await ouvrirLaMatrice({
+      miroirs: { "cccc3333-0": { propose: "ouest", raison: null } },
+    })
+
+    expect(
+      await etabli.findByRole("button", { name: "Retourner vers ouest pour repos" }),
+    ).toBeTruthy()
+    for (const nom of ["sud", "nord", "est"])
+      expect(
+        etabli.queryByRole("button", { name: `Retourner vers ${nom} pour repos` }),
+      ).toBeNull()
+  })
+
+  test("le geste appelle la fabrique avec la case qu'il remplit", async () => {
+    const { etabli, appels } = await ouvrirLaMatrice({
+      miroirs: { "cccc3333-0": { propose: "ouest", raison: null } },
+    })
+
+    fireEvent.click(
+      await etabli.findByRole("button", { name: "Retourner vers ouest pour repos" }),
+    )
+
+    await waitFor(() => {
+      const parti = appels.find(
+        (a) => a.url === "/api/assets/cccc3333-0/mirror" && a.corps,
+      )
+      expect(parti).toBeTruthy()
+      expect((parti!.corps as { direction: string }).direction).toBe("ouest")
+    })
+  })
+
+  test("sans paire connue, aucune case ne propose de retourner", async () => {
+    // **La table du domaine ne connaît que les identifiants que le produit
+    // livre, et elle n'invente rien.** L'auteur nomme ses directions ; deviner
+    // qu'un mot français en désigne un autre serait la déduction que le produit
+    // refuse ailleurs.
+    const { etabli } = await ouvrirLaMatrice()
+
+    await etabli.findByRole("button", { name: "Fabriquer repos vers ouest" })
+    for (const nom of ["sud", "nord", "est", "ouest"])
+      expect(
+        etabli.queryByRole("button", { name: `Retourner vers ${nom} pour repos` }),
+      ).toBeNull()
+  })
+
+  // ── « Une image retournée porte sa provenance, distincte d'une image
+  //     générée » ──────────────────────────────────────────────────────────────
+
+  test("la tuile d'un miroir dit d'où elle vient, à la place d'un prix", async () => {
+    // **Il n'y a pas de durée sur une étiquette de tuile, et on n'en invente
+    // pas** : aucun composant n'en lit une sur un asset. Ce qui distingue les
+    // deux images est le prix — l'une en a un, l'autre n'a rien coûté.
+    const miroir: Asset = {
+      ...asset("bbbb2222-1", "le pèlerin · miroir ouest"),
+      parent: "bbbb2222-0",
+      direction: "ouest",
+      consomme: 0,
+      cout_usd: 0,
+      recette: { ...RECETTE_VIDE, retournement: { sens: "gauche-droite" } },
+    }
+    const { fetchDouble } = serveurDouble({ assets: [miroir, IMAGE] })
+    await monter(fetchDouble, { ...ETAT, assets: [miroir, IMAGE] })
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+
+    // À la taille de repos, le mot seul — la ligne dispose de 120 px, et
+    // « gratuit » y prendrait la place des dimensions.
+    expect(screen.getByText("miroir")).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "2×" }))
+    await waitFor(() => expect(screen.getByText("miroir · gratuit")).toBeTruthy())
+
+    // Et l'image de départ garde son prix : l'étiquette dit ce qui a été payé.
+    expect(screen.getByText("$0,0245")).toBeTruthy()
+  })
+
+  test("une image générée sur laquelle on pose un miroir garde son prix", async () => {
+    // **Les deux faits ensemble, jamais l'un sans l'autre** — la recette dit
+    // *miroir*, la dépense dit *payé*. L'étiquette dit ce qui a été payé.
+    const retouchee: Asset = {
+      ...asset("bbbb2222-2", "le pèlerin, retourné à la table"),
+      recette: { ...RECETTE_VIDE, retournement: { sens: "gauche-droite" } },
+    }
+    const { fetchDouble } = serveurDouble({ assets: [retouchee] })
+    await monter(fetchDouble, { ...ETAT, assets: [retouchee] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    fireEvent.click(screen.getByRole("button", { name: "2×" }))
+    await waitFor(() => expect(screen.getByText("$0,0245")).toBeTruthy())
+    expect(screen.queryByText("miroir · gratuit")).toBeNull()
+  })
+
+  test("une place endormie ne fait pas d'une image un miroir", async () => {
+    // **Endormie, la place ne compte pas** : l'image sort telle qu'elle est
+    // entrée, et une étiquette qui dirait « miroir » devant une image non
+    // retournée serait un effet resté en travers.
+    const endormi: Asset = {
+      ...asset("bbbb2222-3", "le pèlerin, retournement éteint"),
+      consomme: 0,
+      cout_usd: 0,
+      recette: {
+        ...RECETTE_VIDE,
+        retournement: { sens: "gauche-droite" },
+        veille: ["retournement"],
+      },
+    }
+    const { fetchDouble } = serveurDouble({ assets: [endormi] })
+    await monter(fetchDouble, { ...ETAT, assets: [endormi] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    fireEvent.click(screen.getByRole("button", { name: "2×" }))
+    await waitFor(() =>
+      expect(
+        document.querySelector("[data-mesures]")?.textContent,
+      ).toContain("$0,0000"),
+    )
+    expect(screen.queryByText("miroir · gratuit")).toBeNull()
+    expect(screen.queryByText("miroir")).toBeNull()
+  })
+
+  // ── « Un écran neuf doit une ligne au guide » ──────────────────────────────
+
+  test("les deux réglages du retournement sont expliqués", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: "Guide" }))
+    await screen.findByRole("heading", { name: "La boucle" })
+
+    for (const nom of ["le sens du retournement", "ça se range en"])
+      expect(screen.getAllByRole("heading", { name: nom }).length).toBeGreaterThan(0)
+  })
+})
+
+// ── B3 : les huit états — la grille dit ce qu'elle ne montre pas ────────────
+//
+// **Trois pertes silencieuses** (`docs/PLAN-carnet.md` § B3) : le décalage
+// horizontal que le serveur jetait à chaque réglage voisin et l'import qui
+// perd un fichier sans le dire sont tenus ailleurs — `tests/test_b3.py` pour
+// le premier, R3 pour le second, déjà en place. Ce fichier ne tient que la
+// troisième, la seule des trois qui vit à l'écran : la grille s'arrêtait à
+// 200 images sans le dire, et l'auteur croyait avoir tout vu.
+
+describe("B3 — la grille dit ce qu'elle ne montre pas", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const beaucoupDassets = (compte: number) =>
+    Array.from({ length: compte }, (_, i) => asset(`zzzz${i}-0`, `sujet ${i}`))
+
+  test("au-delà du plafond, elle dit combien elle en cache et charge la suite sur demande", async () => {
+    const tous = beaucoupDassets(205)
+    const { fetchDouble, appels } = serveurDouble({ assets: tous })
+    // **Le premier message du flux est déjà coupé à 200** dans le vrai serveur
+    // (`atelier.bibliotheque.grille_courante`, `atelier/api/routes.py`) : le
+    // double doit reproduire cette coupe pour ne pas fabriquer une course que
+    // le produit n'a pas — sans quoi la grille afficherait un instant les 205
+    // avant que `GET /assets` ne la ramène à 200.
+    await monter(fetchDouble, { ...ETAT, assets: tous.slice(0, 200) })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(200))
+    expect(screen.getByText("200 montrées sur 205")).toBeTruthy()
+
+    // **On laisse le premier message du flux se poser** avant de charger la
+    // suite : il fait passer le projet ouvert de « inconnu » à « bac à
+    // sable », ce qui redemande déjà la grille une fois de son côté — cliquer
+    // pendant cette course ferait lire un plafond remis à zéro par ce
+    // second appel, jamais celui que le clic vient de poser.
+    await waitFor(() =>
+      expect(
+        appels.filter((a) => a.url.startsWith("/api/assets")).length,
+      ).toBeGreaterThanOrEqual(2),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Charger la suite ›" }))
+
+    // **La même requête, plus large** — jamais un second appel qui
+    // s'additionnerait à la première page.
+    await waitFor(() => expect(tuiles()).toHaveLength(205))
+    expect(screen.queryByText(/montrées sur/)).toBeNull()
+    expect(screen.queryByRole("button", { name: "Charger la suite ›" })).toBeNull()
+
+    const dernier = [...appels].reverse().find((a) => a.url.startsWith("/api/assets?"))
+    expect(new URL(dernier!.url, "http://x").searchParams.get("limite")).toBe("400")
+  })
+
+  test("en dessous du plafond, la grille ne dit rien", async () => {
+    const tous = beaucoupDassets(3)
+    const { fetchDouble } = serveurDouble({ assets: tous })
+    await monter(fetchDouble, { ...ETAT, assets: tous })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(3))
+    expect(screen.queryByText(/montrées sur/)).toBeNull()
+    expect(screen.queryByRole("button", { name: "Charger la suite ›" })).toBeNull()
+  })
+})
+
+// ── B0 · Le socle du carnet ─────────────────────────────────────────────────
+//
+// **Le châssis neuf, avec un seul lieu réellement branché : le tableau de bord
+// du jeu.** C'est la balle traçante — si le carnet, la pile de lieux et l'aide
+// de navigation tiennent sur un lieu, ils tiendront sur vingt. Tout le reste
+// continue de s'ouvrir comme avant, à l'intérieur de la surface, et c'est ce
+// que le dernier essai de ce bloc vérifie.
+
+describe("B0 — le socle du carnet", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const leCarnet = () => screen.getByRole("navigation", { name: "Le carnet" })
+  const lignes = () =>
+    Array.from(leCarnet().querySelectorAll("[data-ligne-du-carnet]"))
+
+  // ── « Le carnet ne se ferme jamais tout seul, même pendant une génération »
+
+  test("le carnet reste à l'écran quel que soit le lieu où l'on va", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // Aucun écran de travail ne prend la fenêtre entière : on peut aller voir
+    // ailleurs et revenir, et le carnet est le chemin du retour.
+    expect(leCarnet()).toBeTruthy()
+    allerA("Codex")
+    expect(leCarnet()).toBeTruthy()
+    allerA("Univers")
+    expect(leCarnet()).toBeTruthy()
+    allerA("Galerie")
+    expect(leCarnet()).toBeTruthy()
+  })
+
+  test("il reste ouvert pendant qu'une image est en route", async () => {
+    const { fetchDouble } = serveurDouble()
+    const flux = await monter(fetchDouble)
+
+    // Une génération annoncée par le flux : c'est le moment où l'ancien produit
+    // enfermait — un écran par-dessus, et plus de sortie.
+    flux.emettre("generation", generation("gggg1111", 1, "en_cours"))
+
+    expect(leCarnet()).toBeTruthy()
+    // Et l'on va effectivement ailleurs pendant qu'elle tourne.
+    allerA("Codex")
+    expect(leCarnet()).toBeTruthy()
+  })
+
+  // ── « Une seule ligne du carnet est ouverte à la fois » ────────────────────
+
+  test("déplier une ligne referme celle qui l'était", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    const famille = screen.getByRole("button", { name: /^Les personnages/ })
+    fireEvent.click(famille)
+    // Une famille dépliée montre ses collections — « Tous » tant qu'elle n'en a
+    // pas d'autre : c'est ce que la planche prévoit pour un petit jeu.
+    expect(await screen.findByRole("button", { name: /^Tous/ })).toBeTruthy()
+
+    // En ouvrir une autre referme la première, par construction : un seul état
+    // tient la ligne dépliée.
+    fireEvent.click(screen.getByRole("button", { name: "Les autres jeux" }))
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /^Tous/ })).toBeNull(),
+    )
+  })
+
+  // ── « Le carnet ne dépasse pas trente lignes » ────────────────────────────
+
+  test("ouvert au plus grand, il tient sous les trente lignes", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // Dix lignes au repos — le nom du jeu ne compte pas, ni le pied, qui est
+    // sous le trait.
+    const auRepos = lignes().length
+    expect(auRepos).toBeLessThanOrEqual(LIGNES_AU_PLUS)
+
+    // Et déplié au plus grand : le déplié du nom du jeu est le plus haut des
+    // trois, neuf lignes au plus, avec deux jeux comme avec vingt.
+    fireEvent.click(screen.getByRole("button", { name: "Les autres jeux" }))
+    await waitFor(() => expect(lignes().length).toBeGreaterThan(auRepos))
+    expect(lignes().length).toBeLessThanOrEqual(LIGNES_AU_PLUS)
+  })
+
+  // ── « Le tableau de bord du jeu s'ouvre » ─────────────────────────────────
+
+  test("le nom du jeu ouvre le tableau de bord, et c'est le seul retour", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    const versLeJeu = leCarnet().querySelector(
+      "[data-vers-le-tableau-de-bord]",
+    ) as HTMLElement
+    expect(versLeJeu).toBeTruthy()
+    fireEvent.click(versLeJeu)
+
+    const tableau = await screen.findByRole("main", {
+      name: "Le tableau de bord du jeu",
+    })
+    expect(tableau).toBeTruthy()
+    // Il prend la surface, jamais la fenêtre : le carnet est toujours là.
+    expect(leCarnet()).toBeTruthy()
+    // Et la grille des images n'est plus dessous — une seule surface à la fois.
+    expect(screen.queryByRole("region", { name: "Grille des images" })).toBeNull()
+  })
+
+  test("un seul bouton rouille sur le tableau de bord, et il ne paie rien", async () => {
+    const { fetchDouble, appels } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(
+      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
+    )
+    const bouton = await screen.findByRole("button", { name: "Demander une image" })
+
+    // *Cliquer ne coûte jamais* : le bouton rouille mène là où la dépense
+    // s'annonce, il ne la déclenche pas.
+    const paye = () => appels.filter((a) => a.url.startsWith("/api/generations"))
+    const avant = paye().length
+    fireEvent.click(bouton)
+    expect(paye().length).toBe(avant)
+    expect(await screen.findByPlaceholderText(
+      "Décris ce que tu veux fabriquer.",
+    )).toBeTruthy()
+  })
+
+  // ── B5 — la barre de complétude, les manques, et la feuille en attente ────
+
+  /** Une planche arrivée qui attend un choix — le pendant minimal de celle de
+   *  `R6`, faite ici pour ne pas dépendre d'un `describe` qui ne l'exporte
+   *  pas : cinq images trouvées pour quatre demandées, ce qui suffit à
+   *  déclencher `attend_un_choix`. */
+  function pancheEnAttente(): Generation {
+    const lot = generation("pppp0000", 1, "reussie")
+    return {
+      ...lot,
+      pliage: {
+        nombre: 4,
+        colonnes: 2,
+        lignes: 2,
+        refus: null,
+        trouvees: 5,
+        mesures: [],
+        ecartees: null,
+        surplus: 1,
+        pleines: [],
+        attend_un_choix: true,
+      },
+    }
+  }
+
+  test("la barre et le manque d'une famille viennent du bilan servi par le serveur", async () => {
+    const bilan: BilanDuJeu = {
+      familles: [
+        { cle: "personnages", compte: 1, complet: 0.5, manque_texte: "1 poses faites sur 2." },
+      ],
+      manques: [
+        {
+          quantite: 1,
+          phrase: "« Le pèlerin » n'a pas 1 pose.",
+          famille: "personnages",
+          sujet: "le-pelerin",
+          cout_usd: 0.02,
+        },
+      ],
+      lot: { images: 1, feuilles: 1, cout_usd: 0.02 },
+    }
+    const { fetchDouble } = serveurDouble({ bilan })
+    await monter(fetchDouble)
+
+    fireEvent.click(
+      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
+    )
+    const tableau = await screen.findByRole("main", {
+      name: "Le tableau de bord du jeu",
+    })
+
+    // La phrase de manque, sous la carte de famille — jamais recalculée à
+    // l'écran, exactement ce que le serveur a rendu.
+    expect(await within(tableau).findByText("1 poses faites sur 2.")).toBeTruthy()
+
+    // « Ce qui manque le plus » : la ligne, son coût, et le total du lot —
+    // annoncé avant de cliquer.
+    expect(within(tableau).getByText("« Le pèlerin » n'a pas 1 pose.")).toBeTruthy()
+    expect(within(tableau).getByText(/Tout demander d'un coup/)).toBeTruthy()
+  })
+
+  test("un manque gratuit s'affiche « rien », sans couleur d'alerte ni prix", async () => {
+    const bilan: BilanDuJeu = {
+      familles: [],
+      manques: [
+        {
+          quantite: 1,
+          phrase: "La septième ligne de la bible est vide.",
+          famille: "personnages",
+          sujet: "le-monde",
+          cout_usd: 0,
+        },
+      ],
+      lot: { images: 1, feuilles: 1, cout_usd: 0 },
+    }
+    const { fetchDouble } = serveurDouble({ bilan })
+    await monter(fetchDouble)
+
+    fireEvent.click(
+      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
+    )
+    const tableau = await screen.findByRole("main", {
+      name: "Le tableau de bord du jeu",
+    })
+    expect(await within(tableau).findByText("rien")).toBeTruthy()
+  })
+
+  test("une feuille en attente montre son bandeau, puis disparaît une fois découpée", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble, { ...ETAT, generations: [pancheEnAttente()] })
+
+    fireEvent.click(
+      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
+    )
+    const tableau = await screen.findByRole("main", {
+      name: "Le tableau de bord du jeu",
+    })
+    expect(
+      await within(tableau).findByText("Une feuille attend d'être découpée"),
+    ).toBeTruthy()
+
+    // Cliquer mène à l'écran qui la montre déjà — la galerie — sans ouvrir de
+    // lieu de plus.
+    fireEvent.click(within(tableau).getByRole("button", { name: "Aller la découper" }))
+    expect(
+      await screen.findByRole("region", { name: "Grille des images" }),
+    ).toBeTruthy()
+  })
+
+  test("sans planche en attente, le bandeau ne paraît pas", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(
+      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
+    )
+    await screen.findByRole("main", { name: "Le tableau de bord du jeu" })
+    expect(screen.queryByText("Une feuille attend d'être découpée")).toBeNull()
+  })
+
+  // ── « L'ancien chemin vers chacun des autres écrans fonctionne encore » ───
+
+  test("les trois lieux d'avant s'ouvrent toujours, et depuis le carnet aussi", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // Par les onglets, comme avant.
+    allerA("Univers")
+    expect(await cadreDuCodex()).toBeTruthy()
+    allerA("Galerie")
+    expect(
+      await screen.findByRole("region", { name: "Grille des images" }),
+    ).toBeTruthy()
+
+    // Et par le carnet, qui est le chemin neuf. ⚠️ **On vise dans le carnet**,
+    // pas dans la fenêtre : « La galerie » nomme aussi deux boutons du codex,
+    // et c'est justement l'ancien chemin qu'on vérifie juste au-dessus.
+    const dansLeCarnet = within(leCarnet())
+    fireEvent.click(dansLeCarnet.getByRole("button", { name: "La toile de l'univers" }))
+    expect(await cadreDuCodex()).toBeTruthy()
+    fireEvent.click(dansLeCarnet.getByRole("button", { name: /^La galerie/ }))
+    expect(
+      await screen.findByRole("region", { name: "Grille des images" }),
+    ).toBeTruthy()
+  })
+
+  // ── « Le fil d'Ariane est lu depuis la pile de lieux » ────────────────────
+
+  test("le fil se lit depuis la pile, et remonter coupe la pile", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // Les dépenses sont une profondeur, pas un quatrième lieu : le fil le dit.
+    fireEvent.click(screen.getByRole("button", { name: /^Les dépenses/ }))
+    const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
+    expect(await fil.findByText("Les dépenses")).toBeTruthy()
+
+    // Le premier étage ramène à la racine, et le fil disparaît avec lui : une
+    // racine au repos n'a pas de fil, c'est la barre qui porte le nom du jeu.
+    const etages = within(
+      screen.getByRole("navigation", { name: "Où l'on est" }),
+    ).getAllByRole("button")
+    fireEvent.click(etages[0])
+    await waitFor(() =>
+      expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull(),
+    )
+  })
+})
+
+// ── B4 · L'ouverture ─────────────────────────────────────────────────────────
+//
+// Le point dur de la tranche : changer de jeu ne rechargeait que la
+// bibliothèque, jamais l'univers — la bible, la taille de pixel et les
+// grisés restaient ceux du jeu précédent jusqu'à reconnexion du flux. Ce
+// qu'on mesure ici est que **l'univers suit**, sans recharger la page ; les
+// grisés en dérivent au rendu, dans le même état, donc les suivre revient à
+// suivre `univers` lui-même. Le tri par jeu et le chantier scopé ont leurs
+// essais côté serveur, dans `tests/test_b4.py`.
+
+describe("B4 — l'ouverture", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Un second jeu, avec un univers qu'on ne confond pas avec celui de « Bac
+   *  à sable » : une autre taille de pixel, une autre palette, une bible qui
+   *  porte un mot. */
+  const UNIVERS_FORET: Univers = {
+    ...UNIVERS,
+    cible_px: 32,
+    palette: ["#102030", "#a1b2c3"],
+    bible: UNIVERS.bible.map((champ) =>
+      champ.nom === "monde" ? { ...champ, texte: "forêt dense" } : champ,
+    ),
+    vide: false,
+  }
+
+  const PROJET_FORET: Projet = {
+    identifiant: "foret",
+    nom: "Forêt",
+    cree_le: 1_787_900_000,
+    dernier_travail_le: 1_787_900_000,
+    assets: 3,
+    total_usd: 0.5,
+    univers: UNIVERS_FORET,
+    pieces: [],
+  }
+
+  const DEUX_JEUX: Bibliotheque = {
+    ...BIBLIOTHEQUE,
+    projets: [BIBLIOTHEQUE.projets[0], PROJET_FORET],
+  }
+
+  // « Forêt » paraît à plus d'un endroit une fois deux jeux dans la
+  // bibliothèque (le carnet, mais aussi le filtre par jeu de la galerie) :
+  // les essais visent dans le carnet, comme B0 le fait déjà.
+  const leCarnet = () => screen.getByRole("navigation", { name: "Le carnet" })
+
+  /** Un double qui répond sur `PUT /api/projects/current` — ce que le socle
+   *  `serveurDouble` ne tient pas, faute d'un essai qui en ait eu besoin
+   *  avant cette tranche — et sur `GET /api/universe` selon le jeu ouvert.
+   *  Le socle tient le reste, sans rien savoir de la bascule. */
+  function doubleAvecDeuxJeux() {
+    let courant = "bac-a-sable"
+    const socle = serveurDouble()
+    const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
+      const url = String(chemin)
+      if (url === "/api/projects/current" && init?.method === "PUT") {
+        const corps = JSON.parse(String(init.body)) as { projet: string | null }
+        courant = corps.projet ?? "bac-a-sable"
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ...DEUX_JEUX, courant }),
+        } as Response
+      }
+      if (url.startsWith("/api/universe") && init?.method === undefined) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            projet: courant,
+            univers: courant === "foret" ? UNIVERS_FORET : UNIVERS,
+            artworks: [],
+            fond_propose: {
+              couleur: "#FF00FF",
+              nom: "magenta",
+              ecart: 192,
+              voisine: "#C0C0C0",
+              raison: null,
+            },
+          }),
+        } as Response
+      }
+      return socle.fetchDouble(chemin, init)
+    })
+    return { fetchDouble }
+  }
+
+  test("changer de jeu depuis le carnet recharge l'univers, sans recharger la page", async () => {
+    const { fetchDouble } = doubleAvecDeuxJeux()
+    await monter(fetchDouble, { ...ETAT, bibliotheque: DEUX_JEUX })
+
+    fireEvent.click(within(leCarnet()).getByRole("button", { name: "Les autres jeux" }))
+    fireEvent.click(await within(leCarnet()).findByRole("button", { name: /Forêt/ }))
+
+    // La bascule part par la route dédiée — pas par un rechargement.
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([u, i]) =>
+            String(u) === "/api/projects/current" &&
+            (i as RequestInit | undefined)?.method === "PUT",
+        ),
+      ).toBe(true),
+    )
+
+    // Et l'univers du jeu qu'on vient d'ouvrir se lit — la bible, la taille
+    // de pixel, la palette —, dans le même panneau que T4 (`App.test.tsx`
+    // ligne ~4174) : « Ce qui part » n'a jamais deux vérités, ouvrir un jeu
+    // ou reprendre un onglet mesurent la même chose.
+    await ouvrirLesReglagesDeLAppel()
+    const bloc = (await screen.findByText("Ce qui part")).parentElement!
+    await waitFor(() => expect(bloc.textContent).toContain("32 px"))
+    expect(bloc.textContent).toContain("2 couleurs")
+    expect(bloc.textContent).toContain("1 champs")
+  })
+
+  test("choisir un jeu depuis l'écran d'ouverture l'ouvre, et referme l'écran", async () => {
+    const { fetchDouble } = doubleAvecDeuxJeux()
+    await monter(fetchDouble, { ...ETAT, bibliotheque: DEUX_JEUX })
+
+    fireEvent.click(within(leCarnet()).getByRole("button", { name: "Les autres jeux" }))
+    fireEvent.click(await within(leCarnet()).findByRole("button", { name: "Tous les jeux…" }))
+
+    const ecran = await screen.findByRole("main", {
+      name: "Sur quel jeu travaille-t-on",
+    })
+    expect(within(ecran).getByText("Forêt")).toBeTruthy()
+    expect(within(ecran).getByText("ouvert la dernière fois")).toBeTruthy()
+
+    fireEvent.click(within(ecran).getByText("Forêt"))
+
+    // L'écran se referme au clic, sans attendre la réponse du serveur — un
+    // choix ne reste pas en suspens le temps d'un aller-retour réseau.
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("main", { name: "Sur quel jeu travaille-t-on" }),
+      ).toBeNull(),
+    )
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(([u, i]) => {
+          if (String(u) !== "/api/projects/current") return false
+          const corps = JSON.parse(String((i as RequestInit | undefined)?.body ?? "{}"))
+          return corps.projet === "foret"
+        }),
+      ).toBe(true),
+    )
+  })
+})

@@ -39,6 +39,15 @@
     .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
     .lame::before { content: none }
     .lame { border-radius: 1px 1px 2px 2px; box-shadow: inset 0 6px 0 var(--b) }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .bt-off { background: #f2ede4; border-color: #e2dbd0; color: #b0a89b }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8;
+          border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
 
 
     .cmpr { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #ddd5c8; border-radius: 10px; overflow: hidden }
@@ -51,7 +60,8 @@
   </style>
 </helmet>
 
-<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+<div class="k" style="width: 1600px; background: #f7f3ec">
+<div style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; overflow: hidden">
 
   <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
     <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
@@ -61,6 +71,8 @@
       </div>
       <div style="font-size: 12.5px; color: #6d675e">45 images · 12 poses sur 18</div>
     </div>
+    <div class="rl"><span>Les r&egrave;gles du jeu</span></div>
+    <div class="rl"><span>La toile de l'univers</span><span class="num">61</span></div>
     <div style="display: flex; flex-direction: column; gap: 2px">
       <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
       <div class="rl" style="background: #e6dfd2; font-weight: 600"><span>Les personnages</span><span class="num" style="color: #a8492c">3</span></div>
@@ -76,19 +88,8 @@
       <div class="rl"><span>Les équipements</span><span class="num">2</span></div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
-      <div class="rl"><span>Son nom et son dossier</span></div>
-      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
-      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
-      <div class="rl"><span>Ses types de sujets</span><span class="num">8 échelles</span></div>
-      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
-      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
-      <div class="rl"><span>Son détourage de départ</span></div>
-      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
       <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
-      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+      <div class="rl"><span>La galerie</span><span class="num">45</span></div>
       <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
     </div>
     <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 13px 10px 0; display: flex; flex-direction: column; gap: 8px">
@@ -96,9 +97,9 @@
       <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
         <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
       </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
-        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
-        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      <div style="display: flex; align-items: center; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide et les touches</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> L'installation</span>
       </div>
     </div>
   </div>
@@ -108,10 +109,38 @@
 
     <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
       <div style="display: flex; flex-direction: column; gap: 3px">
-        <h1 class="serif" style="margin: 0; font-size: 36px; line-height: 1.05">Le pélerin et Le garde du moulin</h1>
+        <h1 class="serif" style="margin: 0; font-size: 36px; line-height: 1.05">Deux côte à côte</h1>
         <div style="font-size: 13px; color: #4e483f">Même pose, même fond, même taille. Ce qui diffère saute aux yeux — et se lit chiffré en dessous.</div>
       </div>
-      <div class="bt" style="height: 38px; padding: 0 16px; flex-shrink: 0">Ajouter un troisième</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0,1fr) 34px minmax(0,1fr) 152px; gap: 10px; align-items: center">
+        <div style="border: 1px solid #ddd5c8; border-radius: 9px; background: #fffdfa; padding: 9px 12px;
+                    display: flex; align-items: center; gap: 11px; min-width: 0">
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #6c6c6c; flex-shrink: 0;
+                      display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px">
+            <i class="fig" style="--a:#6b5a44;--b:#8a7458; width: 13px; height: 20px"></i>
+          </div>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 15px">Le pélerin</div>
+            <div style="font-size: 11.5px; color: #6d675e; margin-top: 1px">un personnage · 6 poses</div>
+          </div>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.6" stroke-linecap="square" style="flex-shrink:0"><path d="M7 10l5 5 5-5"/></svg>
+        </div>
+      <div style="text-align: center; font-size: 12.5px; color: #948c80">contre</div>
+        <div style="border: 1px solid #ddd5c8; border-radius: 9px; background: #fffdfa; padding: 9px 12px;
+                    display: flex; align-items: center; gap: 11px; min-width: 0">
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #6c6c6c; flex-shrink: 0;
+                      display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px">
+            <i class="fig" style="--a:#6b5a44;--b:#8a7458; width: 13px; height: 20px"></i>
+          </div>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 15px">Le garde du moulin</div>
+            <div style="font-size: 11.5px; color: #6d675e; margin-top: 1px">un personnage · 4 poses</div>
+          </div>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.6" stroke-linecap="square" style="flex-shrink:0"><path d="M7 10l5 5 5-5"/></svg>
+        </div>
+      <div class="bt" style="height: 54px; font-size: 12.5px">+ un troisième</div>
     </div>
 
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
@@ -190,6 +219,122 @@
     </div>
   </div>
 
+</div>
+
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Le sélecteur, ouvert</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 720px; text-align: right">Ce qui s'affiche quand on clique l'un des deux sélecteurs du haut.</span>
+    </div>
+    <div style="display: flex; gap: 22px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Choisir le second</span>
+        <span style="font-size: 12px; color: #6d675e">la liste des sujets</span>
+      </div>
+      <div style="width: 380px; height: 580px; border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4;
+                  padding: 18px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span class="serif" style="font-size: 21px">Choisir le second</span>
+      </div>
+      <div class="ch" style="justify-content: flex-start; gap: 8px; color: #948c80">
+        <span style="font-size: 13px">Chercher un sujet…</span>
+      </div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap">
+        <div class="col" style="background: #e6dfd2; font-weight: 600">Personnages</div>
+        <div class="col">Créatures</div>
+        <div class="col">Équipements</div>
+        <div class="col">Objets</div>
+        <div class="col">Décors</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px; overflow: hidden">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 6px 9px; border-radius: 6px;
+                      ">
+            <div style="width: 26px; height: 26px; border-radius: 5px; background: #6c6c6c; flex-shrink: 0"></div>
+            <span style="font-size: 13px; flex: 1; ">Le pélerin</span>
+            <span class="num">6 poses</span>
+          </div>          <div style="display: flex; align-items: center; gap: 10px; padding: 6px 9px; border-radius: 6px;
+                      ">
+            <div style="width: 26px; height: 26px; border-radius: 5px; background: #6c6c6c; flex-shrink: 0"></div>
+            <span style="font-size: 13px; flex: 1; ">La sorcière</span>
+            <span class="num">6 poses</span>
+          </div>          <div style="display: flex; align-items: center; gap: 10px; padding: 6px 9px; border-radius: 6px;
+                      ">
+            <div style="width: 26px; height: 26px; border-radius: 5px; background: #6c6c6c; flex-shrink: 0"></div>
+            <span style="font-size: 13px; flex: 1; ">Le passeur</span>
+            <span class="num">4 poses</span>
+          </div>          <div style="display: flex; align-items: center; gap: 10px; padding: 6px 9px; border-radius: 6px;
+                      background: #e6dfd2;">
+            <div style="width: 26px; height: 26px; border-radius: 5px; background: #6c6c6c; flex-shrink: 0"></div>
+            <span style="font-size: 13px; flex: 1; font-weight: 600">Le garde du moulin</span>
+            <span class="num">4 poses</span>
+          </div>          <div style="display: flex; align-items: center; gap: 10px; padding: 6px 9px; border-radius: 6px;
+                      ">
+            <div style="width: 26px; height: 26px; border-radius: 5px; background: #6c6c6c; flex-shrink: 0"></div>
+            <span style="font-size: 13px; flex: 1; ">Le braconnier</span>
+            <span class="num">2 poses</span>
+          </div>          <div style="display: flex; align-items: center; gap: 10px; padding: 6px 9px; border-radius: 6px;
+                      ">
+            <div style="width: 26px; height: 26px; border-radius: 5px; background: #6c6c6c; flex-shrink: 0"></div>
+            <span style="font-size: 13px; flex: 1; ">La rôdeuse</span>
+            <span class="num">6 poses</span>
+          </div>
+      </div>
+      <div style="border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 7px">
+        <span class="rt">les derniers regardés</span>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+          <div class="col">La grenouille</div>
+          <div class="col">Le moulin</div>
+          <div class="col">L'épée du marais</div>
+        </div>
+      </div>
+      <div style="margin-top: auto; font-size: 11.5px; line-height: 1.45; color: #6d675e">
+        On peut comparer deux choses de familles différentes — un personnage et une créature, pour voir si
+        elles vont ensemble. Le seul cas refusé : comparer un sujet avec lui-même.
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Choisir deux fois le même</span>
+        <span style="font-size: 12px; color: #6d675e">l'autre comparaison</span>
+      </div>
+      <div style="width: 380px; height: 580px; border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4;
+                  padding: 18px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span class="serif" style="font-size: 21px">Le même, deux fois</span>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">
+        Choisir deux fois le même sujet ouvre l'autre comparaison : deux de ses images, ou deux de ses
+        animations, côte à côte.
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <div style="border: 1px solid #a8492c; border-radius: 8px; background: #fffdfa; padding: 10px 11px;
+                    display: flex; flex-direction: column; gap: 3px">
+          <span style="font-size: 13px; font-weight: 600">Deux de ses images</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">Le repos du 2 septembre contre celui du 4. La règle et les écarts chiffrés marchent pareil.</span>
+        </div>
+        <div style="border: 1px solid #ddd5c8; border-radius: 8px; background: #fffdfa; padding: 10px 11px;
+                    display: flex; flex-direction: column; gap: 3px">
+          <span style="font-size: 13px">Deux de ses animations</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">Les deux boucles tournent sur le même métronome. C'est l'écran « les jouer ensemble » de ses animations.</span>
+        </div>
+      </div>
+      <div style="border-left: 3px solid #e0cfb8; background: #f4ece2; padding: 10px 11px; border-radius: 0 7px 7px 0;
+                  font-size: 12px; line-height: 1.5; color: #4e483f">
+        C'est la même question posée deux fois : <strong>laquelle je garde ?</strong> Pour les images, la réponse
+        est le favori de la matrice. Pour les animations, c'est « celle qui sort ».
+      </div>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+        <div class="bt" style="width: 100%; font-size: 12.5px">Ses images ›</div>
+        <div class="bt" style="width: 100%; font-size: 12.5px">Ses animations ›</div>
+      </div>
+      </div>
+    </div>
+    </div>
+  </div>
+  </div>
 </div>
 </x-dc>
 </body>

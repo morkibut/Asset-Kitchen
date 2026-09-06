@@ -756,7 +756,7 @@ export const AIDE: Record<string, Explication> = {
       "toi · l'outil la propose quand une pose est très en dehors des autres",
   },
 
-  // ── Les tables — les sept places de la recette ────────────────────────────
+  // ── Les tables — les huit places de la recette ────────────────────────────
   //
   // **L'ordre ne se négocie pas**, et c'est ce que ces entrées ont à dire avant
   // tout le reste : trois places n'ont aucun sens avant celle qui les précède.
@@ -1277,7 +1277,38 @@ export const AIDE: Record<string, Explication> = {
       "Il n'y a **pas d'aire minimale ici**, et c'est délibéré : un contour tracé autour de trois miettes ferait trois pâtés, mais la table des bords existe déjà pour retirer les miettes, et deux réglages qui font la même chose à deux endroits finissent par se contredire. Ce que cette table fait à la place, c'est le dire.\n\nCe n'est pas un verdict : un personnage à deux lanternes détachées fait légitimement trois taches.",
   },
 
-  // ── La septième place : la main ───────────────────────────────────────────
+  // ── La septième place : le retournement ───────────────────────────────────
+  //
+  // **La seule place du produit qui ne demande rien au modèle et ne coûte
+  // rien.** Elle existe parce qu'un personnage vu de dessus se dessine dans
+  // quatre directions et que la moitié d'entre elles sont les miroirs exacts de
+  // l'autre moitié : le produit n'avait aucune façon de le dire, donc les deux
+  // se payaient.
+
+  "retournement.sens": {
+    nom: "le sens du retournement",
+    ou: "tables",
+    quoi: "Comment l'image bascule. Un seul sens aujourd'hui : le miroir gauche-droite, qui renvoie l'image comme une glace — le pèlerin qui marchait vers l'est marche vers l'ouest.",
+    change:
+      "Rien à la génération, et c'est tout le sujet : le miroir ne demande rien au modèle et ne coûte rien. Aucun pixel n'est réinventé — ce sont les mêmes carrés de couleur, rangés dans l'autre ordre, donc la palette de l'image retournée est exactement celle d'où elle vient.",
+    origine: "toi · vide au départ · défaut miroir gauche-droite",
+    long:
+      "Neuf autres sens paraissent dans la table, grisés : miroir haut-bas, les deux quarts de tour, le demi-tour, la diagonale, le repli sur soi, « miroir sauf ici », et les deux rotations libres. Ils ne sont pas cachés parce que c'est ce qui dit ce que l'atelier saura faire — aucun n'existe aujourd'hui.\n\nLe retournement s'endort sans se vider, comme les sept autres places : éteint, il garde son sens et cesse d'agir sur l'image.",
+  },
+
+  "retournement.direction": {
+    nom: "ça se range en",
+    ou: "tables",
+    quoi: "La direction sous laquelle l'image retournée vient se poser dans le plan du jeu. La case vide « ouest » du pèlerin se remplit, et l'image qui la remplit n'a rien coûté.",
+    change:
+      "Rien à la génération : l'image obtenue est la même que celle d'où elle vient, retournée. Elle entre en bibliothèque avec sa filiation, à zéro dollar, et son étiquette dit « miroir · gratuit » là où une image générée dit son prix.",
+    origine:
+      "l'atelier propose la direction opposée · toi dès que tu en écris une",
+    long:
+      "**La direction proposée vient du serveur, jamais d'un calcul de l'écran.** Les directions d'un jeu sont libres et se renomment : deviner qu'un mot français en désigne un autre serait exactement la déduction que le produit refuse ailleurs. Quand l'atelier ne connaît pas la direction de l'image, le champ reste vide et attend la tienne.\n\n**Il y a deux directions qu'un miroir gauche-droite ne fabrique pas** : le sud et le nord, qui se rendent eux-mêmes. Un miroir ne peut montrer que ce qui est déjà dessiné — on ne voit jamais le dos d'un personnage qui nous fait face. Le geste se grise alors, avec sa raison, avant le clic : ces directions-là se génèrent.",
+  },
+
+  // ── La huitième place : la main ───────────────────────────────────────────
   //
   // **C'est la seule table qui n'applique aucune règle**, et c'est exactement
   // ce qu'une explication doit dire — sinon on la cherche parmi les réglages,
@@ -1286,7 +1317,7 @@ export const AIDE: Record<string, Explication> = {
   "etape.main": {
     nom: "La main",
     ou: "tables",
-    quoi: "La septième et dernière place. Le crayon, la gomme et la pipette, au pixel. Là où les six autres tables appliquent une règle à toute l'image, celle-ci ne fait que ce que tu désignes.",
+    quoi: "La huitième et dernière place. Le crayon, la gomme et la pipette, au pixel. Là où les sept autres tables appliquent une règle à toute l'image, celle-ci ne fait que ce que tu désignes.",
     change:
       "Rien à la génération, et rien tant que tu ne poses pas un pixel. Elle existe pour les trois pixels qu'aucun réglage n'atteint : un coin de fond collé au sujet, une dent dans un contour, une miette accrochée à la silhouette.",
     origine: "toi, geste par geste · rien au départ",
@@ -1356,7 +1387,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "galerie",
     quoi: "Ce que l'univers de ton projet a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
     change:
-      "Rien : c'est une lecture. Chaque ligne dit si la valeur du projet est encore appliquée ou si tu l'as réglée à la main depuis, et les sept places en dessous sont l'endroit où l'on change.",
+      "Rien : c'est une lecture. Chaque ligne dit si la valeur du projet est encore appliquée ou si tu l'as réglée à la main depuis, et les huit places en dessous sont l'endroit où l'on change.",
     origine: "l'univers du projet, tel qu'il est maintenant · l'échelle demandée à la naissance",
     long:
       "Sans cette rubrique, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nElle est calculée à la lecture, jamais rangée avec l'asset : la question posée est « qu'est-ce que le projet impose *maintenant* », et une valeur enregistrée aurait vieilli au premier réglage d'univers.\n\nElle dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque. Une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien d'imposé », qui est une réponse différente et fausse.",
@@ -1367,7 +1398,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "galerie",
     quoi: "Les recettes que tu as nommées, à reposer sur cette image d'un clic.",
     change:
-      "Applique les sept places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
+      "Applique les huit places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
     origine: "toi, en nommant · aucune au départ",
     long:
       "Une recette est nommée par son empreinte autant que par toi : deux recettes égales sont interchangeables, et c'est cette empreinte qui nomme le fichier de rendu sur le disque. Reposer une recette déjà appliquée ne recalcule donc rien.\n\nUne recette vide ne s'enregistre pas — elle n'aurait rien à rejouer.\n\nDans l'atelier d'une animation, elle **remplace tous les réglages à la fois** : une recette est un ensemble, et en prendre la moitié rendrait une image que personne n'a jamais jugée. Comme le reste de cet écran, elle n'écrit rien tant que tu n'as pas enregistré.",

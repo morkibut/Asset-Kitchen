@@ -1,0 +1,402 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 30px; padding: 0 11px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 12px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    /* une carte de sujet dans une grille de famille */
+    .c { border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 6px;
+         display: flex; flex-direction: column; gap: 5px }
+    .im { height: 66px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: flex-end;
+          justify-content: center; padding-bottom: 6px; overflow: hidden; position: relative }
+    .fg { display: block; background: #6b5a44; border-radius: 3px 3px 2px 2px; position: relative }
+    .fg::before { content: ''; position: absolute; left: 50%; top: -24%; transform: translateX(-50%);
+                  width: 58%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+    .nm { font-size: 11.5px; font-weight: 500; line-height: 1.2; height: 14px; overflow: hidden }
+    .qt { display: flex; align-items: center; justify-content: space-between; font-family: 'IBM Plex Mono', monospace;
+          font-size: 9.5px; color: #948c80 }
+    .pg { height: 3px; border-radius: 2px; background: #ece6db; overflow: hidden }
+    .pg i { display: block; height: 100% }
+    .fam { border: 1px solid #ddd5c8; border-radius: 11px; background: #fffdfa; overflow: hidden;
+           display: flex; flex-direction: column }
+    .fam-t { background: #f2ede4; border-bottom: 1px solid #e2dbd0; padding: 12px 15px;
+             display: flex; align-items: baseline; justify-content: space-between; gap: 12px }
+    .fam-c { padding: 14px 15px; display: flex; flex-direction: column; gap: 11px }
+    .dif { display: grid; grid-template-columns: 108px minmax(0,1fr); gap: 3px 11px; font-size: 12px; align-items: baseline }
+    .dif > span:nth-child(odd) { color: #948c80 }
+    .dif > span:nth-child(even) { color: #4e483f }
+    .tuile { background: #4a5c3a; border-radius: 2px; position: relative; overflow: hidden }
+    .tuile::before { content: ''; position: absolute; inset: 0;
+      background-image: radial-gradient(circle at 30% 40%, #55693f 0 2px, transparent 2px),
+                        radial-gradient(circle at 72% 68%, #3f4e33 0 3px, transparent 3px);
+      background-size: 20px 20px }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3120px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1060px">
+      <div style="font-size: 12.5px; color: #948c80">Les Salines › Les familles</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">La même grille, pour les autres familles</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">objets, décors, terrains, interface, équipements — ce qui ne change pas, ce qui change, et ce qui est commun à tort</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">sur 550 sujets</div>
+      <div class="serif" style="font-size: 30px">496</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 200px">ne sont pas des personnages, et n'ont pourtant aucun écran à eux</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1220px">
+    La grille des personnages vaut telle quelle pour les autres familles&nbsp;: même carnet, même en-tête, même bouton « Réglages de la famille ». <strong style="font-weight: 600">Ce qui change tient en cinq lignes</strong> — les poses, l'équipement, la vignette, ce que le bouton de réglages ouvre, et une phrase de caméra. Mais trois choses sont communes <em>à tort</em>, et la première coûte de l'argent à chaque image.
+  </div>
+
+  <!-- ══ famille, nature, sujet ══ -->
+  <div style="display: grid; grid-template-columns: 420px minmax(0,1fr); gap: 22px; align-items: start">
+    <div class="carte" style="padding: 17px 18px; display: flex; flex-direction: column; gap: 11px">
+      <div class="rt">le mot juste, avant tout le reste</div>
+      <div style="font-size: 16.5px; font-weight: 600; line-height: 1.3">Un sujet n'a pas de famille&nbsp;: il a une nature, et c'est elle qui porte la famille</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le pèlerin est de nature « personnage », et « personnage » appartient à la famille des personnages. Sa famille se <em>lit</em> dans sa nature&nbsp;; elle ne se pose pas séparément. Changer le type d'un sujet le fait donc changer de famille du même geste, et on ne peut pas ranger un sujet dans une famille indépendamment de son type.</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 10px"><strong style="font-weight: 600">Huit natures, quatre familles.</strong> Une nature dit trois choses d'un coup&nbsp;: sa famille, sa hauteur en pourcentage d'un personnage, et si le sujet se découpe. Aucune ne mène aux terrains ni aux équipements, que le carnet range pourtant à part.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div><span class="h2">Les huit natures livrées</span> <span style="font-size: 13.5px; color: #6d675e">— et ce que chacune impose</span></div>
+      <div class="pl" style="grid-template-columns: 190px 150px 110px 130px minmax(0,1fr)">
+        <div class="ent" style="border-top: 0">la nature</div><div class="ent" style="border-top: 0">sa famille</div><div class="ent" style="border-top: 0">sa hauteur</div><div class="ent" style="border-top: 0">elle se découpe</div><div class="ent" style="border-top: 0">ses poses</div>
+        <div><span style="font-weight: 600">personnage</span></div><div style="color: #4e483f">personnages</div><div class="mono" style="color: #4e483f">100 %</div><div style="color: #5c7a52">oui</div><div style="color: #4e483f">les six du jeu — repos, marche, course, attaque, dégâts, mort</div>
+        <div><span style="font-weight: 600">créature</span></div><div style="color: #4e483f">personnages</div><div class="mono" style="color: #4e483f">90 %</div><div style="color: #5c7a52">oui</div><div style="color: #4e483f">les six aussi — un lézard reçoit « attaque » comme un nain</div>
+        <div><span style="font-weight: 600">meuble</span></div><div style="color: #4e483f">objets</div><div class="mono" style="color: #4e483f">66 %</div><div style="color: #5c7a52">oui</div><div style="color: #4e483f">trois états — fermé, ouvert, vidé</div>
+        <div><span style="font-weight: 600">objet posé</span></div><div style="color: #4e483f">objets</div><div class="mono" style="color: #4e483f">50 %</div><div style="color: #5c7a52">oui</div><div style="color: #4e483f">une seule</div>
+        <div><span style="font-weight: 600">objet tenu</span></div><div style="color: #4e483f">objets</div><div class="mono" style="color: #4e483f">40 %</div><div style="color: #5c7a52">oui</div><div style="color: #4e483f">une seule</div>
+        <div><span style="font-weight: 600">décor</span></div><div style="color: #4e483f">décors</div><div class="mono" style="color: #4e483f">100 %</div><div style="color: #8a3f33">non</div><div style="color: #4e483f">aucune</div>
+        <div><span style="font-weight: 600">tuile</span></div><div style="color: #4e483f">décors <span class="puce p-a" style="margin-left: 5px">à séparer</span></div><div class="mono" style="color: #4e483f">100 %</div><div style="color: #8a3f33">non</div><div style="color: #4e483f">aucune</div>
+        <div><span style="font-weight: 600">élément d'interface</span></div><div style="color: #4e483f">interface</div><div class="mono" style="color: #4e483f">100 %</div><div style="color: #5c7a52">oui</div><div style="color: #4e483f">quatre états</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ les cinq autres familles ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les cinq autres grilles</span> <span style="font-size: 13.5px; color: #6d675e">— même châssis, cinq vignettes différentes</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">La vignette est le seul endroit où une famille a besoin de son propre dessin.</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px">
+
+      <!-- objets -->
+      <div class="fam">
+        <div class="fam-t">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span class="serif" style="font-size: 22px">Les 250 objets</span>
+            <span style="font-size: 12px; color: #6d675e">meubles, objets posés, objets tenus — trois natures, trois hauteurs</span>
+          </div>
+          <div style="display: flex; gap: 7px; flex-shrink: 0"><span class="bt">Réglages ›</span><span class="bt bt-p">Ajouter</span></div>
+        </div>
+        <div class="fam-c">
+          <div style="display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 8px">
+            <div class="c"><div class="im"><i class="fg" style="width: 26px; height: 30px; border-radius: 2px"></i></div><div class="nm">Le coffre</div><div class="pg"><i style="width: 100%; background: #5c7a52"></i></div><div class="qt"><span>meuble · 66 %</span><span>3/3</span></div></div>
+            <div class="c"><div class="im"><i class="fg" style="width: 18px; height: 24px; border-radius: 2px"></i></div><div class="nm">Le tonneau</div><div class="pg"><i style="width: 100%; background: #5c7a52"></i></div><div class="qt"><span>posé · 50 %</span><span>1/1</span></div></div>
+            <div class="c"><div class="im"><i class="fg" style="width: 8px; height: 22px; border-radius: 1px"></i></div><div class="nm">La clé</div><div class="pg"><i style="width: 100%; background: #5c7a52"></i></div><div class="qt"><span>tenu · 40 %</span><span>1/1</span></div></div>
+            <div class="c"><div class="im"><i class="fg" style="width: 22px; height: 28px; border-radius: 2px"></i></div><div class="nm">L'armoire</div><div class="pg"><i style="width: 66%; background: #a8492c"></i></div><div class="qt"><span>meuble · 66 %</span><span style="color: #a8492c">2/3</span></div></div>
+            <div class="c"><div class="im"><i class="fg" style="width: 14px; height: 18px; border-radius: 2px"></i></div><div class="nm">Le seau</div><div class="pg"><i style="width: 100%; background: #5c7a52"></i></div><div class="qt"><span>posé · 50 %</span><span>1/1</span></div></div>
+            <div class="c" style="border-style: dashed; border-color: #c9c2b6; background: #faf7f1; align-items: center; justify-content: center"><span style="font-size: 11.5px; color: #948c80">+ 245</span></div>
+          </div>
+          <div class="dif">
+            <span>ce qui change</span><span>Trois natures dans la même famille, et <strong style="font-weight: 600">c'est la hauteur qui compte</strong>&nbsp;: la vignette montre la silhouette d'un personnage en filigrane derrière, sinon on ne peut pas juger si un coffre fait la bonne taille.</span>
+            <span>ses réglages</span><span>Les natures et leurs poses. Pas d'emplacements de corps&nbsp;: un objet ne porte rien.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- décors -->
+      <div class="fam">
+        <div class="fam-t">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span class="serif" style="font-size: 22px">Les 38 décors</span>
+            <span style="font-size: 12px; color: #6d675e">une nature, aucune pose, aucune découpe</span>
+          </div>
+          <div style="display: flex; gap: 7px; flex-shrink: 0"><span class="bt">Réglages ›</span><span class="bt bt-p">Ajouter</span></div>
+        </div>
+        <div class="fam-c">
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px">
+            <div class="c"><div class="im" style="height: 84px; padding: 0; background: #3c4a53"></div><div class="nm">Le vieux moulin</div><div class="qt"><span>décor</span><span>1024 × 1024</span></div></div>
+            <div class="c"><div class="im" style="height: 84px; padding: 0; background: #4a4238"></div><div class="nm">La crypte</div><div class="qt"><span>décor</span><span>1024 × 1024</span></div></div>
+            <div class="c" style="border-style: dashed; border-color: #c9c2b6; background: #faf7f1; align-items: center; justify-content: center"><span style="font-size: 11.5px; color: #948c80">+ 36</span></div>
+          </div>
+          <div class="dif">
+            <span>ce qui change</span><span>Pas de compte de cases, donc <strong style="font-weight: 600">pas de barre de complétude</strong>. La vignette est plus grande et pleine cadre&nbsp;: un décor se juge en entier, pas à la taille d'un sprite.</span>
+            <span>attention</span><span style="color: #8a3f33">Aujourd'hui un décor affiche « rien ne manque » dès sa création et pour toujours — il n'a pas de cases à compter. Le carnet ne dira jamais qu'un lieu du jeu n'a pas d'image.</span>
+            <span>ses réglages</span><span>La nature seule. Ni poses, ni emplacements&nbsp;; le bouton n'ouvre qu'une colonne.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- terrains -->
+      <div class="fam">
+        <div class="fam-t">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span class="serif" style="font-size: 22px">Les 100 terrains</span>
+            <span style="font-size: 12px; color: #6d675e">rangés avec les décors dans le produit — <span style="color: #a8492c">à séparer</span></span>
+          </div>
+          <div style="display: flex; gap: 7px; flex-shrink: 0"><span class="bt">Réglages ›</span><span class="bt bt-p">Ajouter</span></div>
+        </div>
+        <div class="fam-c">
+          <div style="display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 8px">
+            <div class="c"><div class="im" style="height: 52px; padding: 0"><span class="tuile" style="position: absolute; inset: 0"></span></div><div class="nm">Herbe 01</div><div class="qt"><span style="color: #5c7a52">4 bords</span><span>64</span></div></div>
+            <div class="c"><div class="im" style="height: 52px; padding: 0"><span class="tuile" style="position: absolute; inset: 0; background: #5a4f3c"></span></div><div class="nm">Boue 01</div><div class="qt"><span style="color: #5c7a52">4 bords</span><span>64</span></div></div>
+            <div class="c"><div class="im" style="height: 52px; padding: 0"><span class="tuile" style="position: absolute; inset: 0; background: #3a4a58"></span></div><div class="nm">Eau 01</div><div class="qt"><span style="color: #a8492c">couture</span><span>64</span></div></div>
+            <div class="c"><div class="im" style="height: 52px; padding: 0"><span class="tuile" style="position: absolute; inset: 0; background: #4e4b45"></span></div><div class="nm">Pierre 01</div><div class="qt"><span style="color: #5c7a52">4 bords</span><span>64</span></div></div>
+            <div class="c"><div class="im" style="height: 52px; padding: 0"><span class="tuile" style="position: absolute; inset: 0; background: #52603e"></span></div><div class="nm">Roseau</div><div class="qt"><span style="color: #5c7a52">4 bords</span><span>64</span></div></div>
+            <div class="c" style="border-style: dashed; border-color: #c9c2b6; background: #faf7f1; align-items: center; justify-content: center"><span style="font-size: 11.5px; color: #948c80">+ 95</span></div>
+          </div>
+          <div class="dif">
+            <span>ce qui change</span><span>La vignette montre <strong style="font-weight: 600">la tuile répétée quatre fois</strong>, pas la tuile seule&nbsp;: c'est la couture qu'on regarde, et elle ne se voit que côte à côte. Une pastille dit si les quatre bords se raccordent.</span>
+            <span>pourquoi séparer</span><span>Une tuile remplit son carré, un moulin non. Elles partagent aujourd'hui le même réglage de découpe et de cadrage, et le dépôt a déjà noté que c'est une erreur&nbsp;: « deux types qui partagent un réglage et ne devraient pas ».</span>
+            <span>ses réglages</span><span>Ni poses, ni emplacements. À la place&nbsp;: la taille de tuile, et le jeu de raccords qu'un terrain doit fournir.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- interface -->
+      <div class="fam">
+        <div class="fam-t">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span class="serif" style="font-size: 22px">Les 46 éléments d'interface</span>
+            <span style="font-size: 12px; color: #6d675e">une nature, quatre états</span>
+          </div>
+          <div style="display: flex; gap: 7px; flex-shrink: 0"><span class="bt">Réglages ›</span><span class="bt bt-p">Ajouter</span></div>
+        </div>
+        <div class="fam-c">
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px">
+            <div class="c"><div class="im" style="height: 56px; padding: 0; background: linear-gradient(90deg,#efeae0 50%,#2a2620 50%); display: flex; align-items: center; justify-content: center"><span style="width: 58px; height: 20px; border-radius: 4px; background: #8a6a3c; border: 1px solid #6b5230"></span></div><div class="nm">Le bouton</div><div class="pg"><i style="width: 100%; background: #5c7a52"></i></div><div class="qt"><span>4 états</span><span>4/4</span></div></div>
+            <div class="c"><div class="im" style="height: 56px; padding: 0; background: linear-gradient(90deg,#efeae0 50%,#2a2620 50%); display: flex; align-items: center; justify-content: center"><span style="width: 62px; height: 12px; border-radius: 6px; background: #8a3f33"></span></div><div class="nm">La jauge de vie</div><div class="pg"><i style="width: 50%; background: #a8492c"></i></div><div class="qt"><span>4 états</span><span style="color: #a8492c">2/4</span></div></div>
+            <div class="c"><div class="im" style="height: 56px; padding: 0; background: linear-gradient(90deg,#efeae0 50%,#2a2620 50%); display: flex; align-items: center; justify-content: center"><span style="width: 40px; height: 40px; border-radius: 4px; border: 2px solid #8a6a3c"></span></div><div class="nm">Le cadre</div><div class="pg"><i style="width: 100%; background: #5c7a52"></i></div><div class="qt"><span>4 états</span><span>4/4</span></div></div>
+            <div class="c" style="border-style: dashed; border-color: #c9c2b6; background: #faf7f1; align-items: center; justify-content: center"><span style="font-size: 11.5px; color: #948c80">+ 43</span></div>
+          </div>
+          <div class="dif">
+            <span>ce qui change</span><span>La vignette est coupée en deux, <strong style="font-weight: 600">clair à gauche, sombre à droite</strong>&nbsp;: un élément d'interface doit rester lisible sur les deux, et c'est la seule question qu'on se pose en le regardant.</span>
+            <span>attention</span><span style="color: #8a3f33">Le retournement et le contour n'ont aucun sens ici — un bouton retourné a ses lettres à l'envers.</span>
+            <span>ses réglages</span><span>La nature et ses quatre états. Pas d'emplacements.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- équipements -->
+      <div class="fam" style="grid-column: span 2">
+        <div class="fam-t">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span class="serif" style="font-size: 22px">Les 62 équipements</span>
+            <span style="font-size: 12px; color: #6d675e">ce n'est pas une famille de sujets&nbsp;: c'est un vestiaire</span>
+          </div>
+          <div style="display: flex; gap: 7px; flex-shrink: 0"><span class="bt">Réglages ›</span><span class="bt bt-p">Ajouter une pièce</span></div>
+        </div>
+        <div class="fam-c">
+          <div style="display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 3px">
+              <div class="rt" style="padding-bottom: 3px">les six emplacements</div>
+              <div style="display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: #4e483f">
+                <span style="display: flex; justify-content: space-between; padding: 3px 8px; border-radius: 5px; background: #f2ede4"><span>le dos</span><span class="mono" style="color: #948c80">8</span></span>
+                <span style="display: flex; justify-content: space-between; padding: 3px 8px"><span>le corps</span><span class="mono" style="color: #948c80">14</span></span>
+                <span style="display: flex; justify-content: space-between; padding: 3px 8px"><span>les jambes</span><span class="mono" style="color: #948c80">9</span></span>
+                <span style="display: flex; justify-content: space-between; padding: 3px 8px"><span>le torse</span><span class="mono" style="color: #948c80">12</span></span>
+                <span style="display: flex; justify-content: space-between; padding: 3px 8px"><span>les mains</span><span class="mono" style="color: #948c80">13</span></span>
+                <span style="display: flex; justify-content: space-between; padding: 3px 8px"><span>la tête</span><span class="mono" style="color: #948c80">6</span></span>
+              </div>
+              <div style="font-size: 11px; color: #6d675e; padding: 6px 8px 0; line-height: 1.4">Du fond vers l'avant&nbsp;: c'est l'ordre d'empilement, et il est déjà le bon.</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <div style="display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 8px">
+                <div class="c"><div class="im" style="height: 58px"><i class="fg" style="width: 26px; height: 22px; background: #7d8590; border-radius: 3px"></i></div><div class="nm">Cotte de mailles</div><div class="pg"><i style="width: 100%; background: #5c7a52"></i></div><div class="qt"><span>torse</span><span>6/6</span></div></div>
+                <div class="c"><div class="im" style="height: 58px"><i class="fg" style="width: 20px; height: 16px; background: #8a6a3c; border-radius: 8px 8px 2px 2px"></i></div><div class="nm">Le casque</div><div class="pg"><i style="width: 100%; background: #5c7a52"></i></div><div class="qt"><span>tête</span><span>6/6</span></div></div>
+                <div class="c"><div class="im" style="height: 58px"><i class="fg" style="width: 7px; height: 34px; background: #9aa0a8; border-radius: 1px"></i></div><div class="nm">L'épée</div><div class="pg"><i style="width: 66%; background: #a8492c"></i></div><div class="qt"><span>mains</span><span style="color: #a8492c">4/6</span></div></div>
+                <div class="c"><div class="im" style="height: 58px"><i class="fg" style="width: 24px; height: 30px; background: #6b4a3c; border-radius: 3px"></i></div><div class="nm">La cape</div><div class="pg"><i style="width: 100%; background: #5c7a52"></i></div><div class="qt"><span>le dos</span><span>6/6</span></div></div>
+                <div class="c"><div class="im" style="height: 58px"><i class="fg" style="width: 18px; height: 18px; background: #7a6a52; border-radius: 3px"></i></div><div class="nm">La besace</div><div class="pg"><i style="width: 16%; background: #a8492c"></i></div><div class="qt"><span>le dos</span><span style="color: #a8492c">1/6</span></div></div>
+                <div class="c" style="border-color: #dcbcb2; background: #f8ece9"><div class="im" style="height: 58px"><i class="fg" style="width: 26px; height: 34px; background: #55606b; border-radius: 3px"></i></div><div class="nm">L'armure lourde</div><div class="pg"><i style="width: 0%; background: #8a3f33"></i></div><div class="qt"><span style="color: #8a3f33">agrandit</span><span style="color: #8a3f33">0/6</span></div></div>
+                <div class="c" style="border-style: dashed; border-color: #c9c2b6; background: #faf7f1; align-items: center; justify-content: center"><span style="font-size: 11.5px; color: #948c80">+ 56</span></div>
+              </div>
+              <div class="dif">
+                <span>ce qui change</span><span>La barre ne compte pas des poses mais <strong style="font-weight: 600">des calques</strong>&nbsp;: une pièce est fabriquée pose par pose, et il en faut six pour qu'elle suive le personnage partout. « 4/6 » veut dire que l'épée disparaît sur deux poses.</span>
+                <span>la pastille rouge</span><span>L'armure lourde n'a produit aucun calque&nbsp;: le modèle a dézoomé le personnage pour la faire tenir, et ce qui est revenu remplace le corps au lieu de s'y empiler. La génération a été payée.</span>
+                <span>ses réglages</span><span>Les emplacements de corps — la seule famille qui en ait, et c'est pour ça qu'ils sont rangés là plutôt que dans les règles du jeu.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ ce qui est commun à tort ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Ce qui est commun, à tort</span> <span style="font-size: 13.5px; color: #6d675e">— trois cas, et le premier se paie</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px">
+      <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 10px; padding: 16px 17px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt" style="color: #b08078">celui qui coûte</div>
+        <div style="font-size: 16px; font-weight: 600; line-height: 1.3; color: #8a3f33">Un bouton reçoit les quatre directions du jeu</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Les directions viennent de la vue du jeu et s'appliquent à <em>toute</em> chose qui a des poses. Dans un jeu vu de dessus, un meuble fait donc 3 poses × 4 directions = <strong style="font-weight: 600">12 cases</strong>, un élément d'interface 4 × 4 = <strong style="font-weight: 600">16</strong>. Chaque case est une image à fabriquer&nbsp;; une jauge de vie vue du nord n'existe pas.</div>
+        <div style="border-top: 1px solid #dcbcb2; padding-top: 10px; display: flex; flex-direction: column; gap: 5px">
+          <div style="font-size: 12.5px; font-weight: 600">Ce qu'il faut</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Que la nature dise si elle a des directions, comme elle dit déjà si elle se découpe. Un champ de plus au même endroit, et le problème tombe pour les cinq familles d'un coup.</div>
+        </div>
+      </div>
+      <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 10px; padding: 16px 17px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt" style="color: #a08050">celui qui ment</div>
+        <div style="font-size: 16px; font-weight: 600; line-height: 1.3; color: #8a5a2c">« Rien ne manque », pour toujours</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Un décor et une tuile n'ont pas de poses, donc pas de cases, donc leur compte de manques est nul. Ils affichent « rien ne manque » dès leur création, avant d'avoir la moindre image. Sur 138 sujets du marais — les décors et les terrains — le carnet ne signalera jamais rien.</div>
+        <div style="border-top: 1px solid #e0cfb8; padding-top: 10px; display: flex; flex-direction: column; gap: 5px">
+          <div style="font-size: 12.5px; font-weight: 600">Ce qu'il faut</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Compter autre chose que des cases quand il n'y en a pas&nbsp;: pour un décor, « a-t-il au moins une image qui sort »&nbsp;; pour une tuile, « ses quatre bords se raccordent-ils ».</div>
+        </div>
+      </div>
+      <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 10px; padding: 16px 17px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt" style="color: #a08050">celui qui est cassé</div>
+        <div style="font-size: 16px; font-weight: 600; line-height: 1.3; color: #8a5a2c">Le filtre de la galerie ne marche que pour une famille sur quatre</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Choisir « décors », « objets » ou « interface » dans la galerie vide la grille. Le commentaire du code dit encore que seuls les personnages portent des sujets — ce qui n'est plus vrai.</div>
+        <div style="border-top: 1px solid #e0cfb8; padding-top: 10px; display: flex; flex-direction: column; gap: 5px">
+          <div style="font-size: 12.5px; font-weight: 600">Ce qu'il faut</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Rien de conceptuel&nbsp;: une condition restée en arrière. Mais tant qu'elle est là, 496 sujets sur 550 sont introuvables par leur famille.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ le tableau de ce qui change ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Tout ce qui change, en une table</span> <span style="font-size: 13.5px; color: #6d675e">— le reste est identique</span></div>
+    </div>
+    <div class="pl" style="grid-template-columns: 175px repeat(5, minmax(0,1fr))">
+      <div class="ent" style="border-top: 0"></div>
+      <div class="ent" style="border-top: 0">personnages</div><div class="ent" style="border-top: 0">objets</div><div class="ent" style="border-top: 0">décors</div><div class="ent" style="border-top: 0">terrains</div><div class="ent" style="border-top: 0">interface</div>
+      <div><span style="font-weight: 600">Ses poses</span></div>
+      <div style="color: #4e483f">6</div><div style="color: #4e483f">3, 1, 1 selon la nature</div><div style="color: #948c80">aucune</div><div style="color: #948c80">aucune</div><div style="color: #4e483f">4 états</div>
+      <div><span style="font-weight: 600">Ses directions</span></div>
+      <div style="color: #4e483f">celles du jeu</div><div style="color: #8a3f33">celles du jeu — à tort</div><div style="color: #948c80">sans objet</div><div style="color: #948c80">sans objet</div><div style="color: #8a3f33">celles du jeu — à tort</div>
+      <div><span style="font-weight: 600">Elle porte un équipement</span></div>
+      <div style="color: #5c7a52">oui</div><div style="color: #948c80">non</div><div style="color: #948c80">non</div><div style="color: #948c80">non</div><div style="color: #948c80">non</div>
+      <div><span style="font-weight: 600">Elle se découpe</span></div>
+      <div style="color: #5c7a52">oui</div><div style="color: #5c7a52">oui</div><div style="color: #8a3f33">non</div><div style="color: #8a3f33">non</div><div style="color: #5c7a52">oui</div>
+      <div><span style="font-weight: 600">Détourage et recadrage</span></div>
+      <div style="color: #4e483f">oui</div><div style="color: #4e483f">oui</div><div style="color: #948c80">non — l'image sort en homothétie</div><div style="color: #948c80">non — elle remplit son carré</div><div style="color: #4e483f">oui</div>
+      <div><span style="font-weight: 600">La phrase de corps au modèle</span></div>
+      <div style="color: #4e483f">oui</div><div style="color: #948c80">non</div><div style="color: #948c80">non</div><div style="color: #948c80">non</div><div style="color: #948c80">non</div>
+      <div><span style="font-weight: 600">Son modèle d'IA</span></div>
+      <div style="color: #4e483f">réglable par famille</div><div style="color: #4e483f">réglable par famille</div><div style="color: #4e483f">réglable par famille</div><div style="color: #4e483f">réglable par famille</div><div style="color: #4e483f">réglable par famille</div>
+      <div><span style="font-weight: 600">Son détourage de départ</span></div>
+      <div style="color: #4e483f">réglable par famille</div><div style="color: #4e483f">réglable par famille</div><div style="color: #948c80">sans objet</div><div style="color: #948c80">sans objet</div><div style="color: #4e483f">réglable par famille</div>
+      <div><span style="font-weight: 600">Ce que sa vignette montre</span></div>
+      <div style="color: #4e483f">poses remplies</div><div style="color: #4e483f">sa hauteur, contre un personnage</div><div style="color: #4e483f">l'image entière, en grand</div><div style="color: #4e483f">la tuile répétée, et sa couture</div><div style="color: #4e483f">sur clair et sur sombre</div>
+    </div>
+  </div>
+
+  <!-- ══ quand ça rate ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">6 cas.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s'est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu'on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On change le type d'un sujet, de « objet posé » à « meuble ».</div>
+        <div style="color: #8a3f33">Il change aussi de hauteur, de nombre de poses — et parfois de famille&nbsp;: il disparaît d'une rubrique du carnet pour apparaître dans une autre.</div>
+        <div style="color: #4e483f">C'est la règle, pas une panne&nbsp;: la famille se lit dans le type. Mais l'écran doit dire ce qui va changer avant de valider, pas après.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On règle le détourage de départ de la famille « objets », pour un seul de ses quatre réglages.</div>
+        <div style="color: #8a3f33">Les trois autres retombent au défaut de la famille au lieu de garder ce qui avait été posé pour l'image. Le réglage par famille <em>écrase</em>, il ne complète pas.</div>
+        <div style="color: #4e483f">Reposer les quatre ensemble. Le bouton « garder ces réglages pour la suite » de l'atelier Détourer est le bon endroit pour ça — il part de valeurs qu'on vient de voir marcher.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On crée une nature par l'agent, sans dire sa famille.</div>
+        <div style="color: #8a3f33">Elle atterrit dans « tous » — qui n'est pas une famille de sujets mais la marque d'un artwork d'ambiance. Les écrans de réglages retirent « tous » de leurs listes, donc la nature devient invisible.</div>
+        <div style="color: #4e483f">Nommer la famille. Le défaut du champ devrait être l'une des cinq, pas la marque qui les exclut toutes.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On crée une créature — un dragon, un quadricoptère.</div>
+        <div style="color: #8a3f33">Il reçoit les six attitudes humaines et la phrase qui décrit un corps humain. Un quadricoptère qui « attaque » et qui « meurt » à la façon d'un nain.</div>
+        <div style="color: #4e483f">C'est assumé dans le dépôt, et l'argument est bon&nbsp;: « ce ne sont pas les familles qu'il fallait affiner, c'est la phrase ». Reste que la phrase n'a pas encore été affinée.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Un jeu vu de côté, en défilement. On génère une tuile de sol.</div>
+        <div style="color: #8a3f33">La phrase qui décrit un corps humain part avec la demande, pour une tuile d'herbe. Sur cette vue-là seulement, elle est écrite à l'intérieur d'un autre champ et échappe au filtre.</div>
+        <div style="color: #4e483f">Sortir la phrase de ce champ, comme dans les sept autres vues. C'est le seul endroit où le filtre par famille fuit.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On ouvre l'étape « emplacements » des réglages sur un jeu sans personnages.</div>
+        <div style="color: #8a3f33">Elle est ouverte, et pourtant rien ne peut porter d'équipement&nbsp;: elle se ferme sur la silhouette d'une nature, alors que le port d'une pièce se décide sur la famille. Deux critères voisins pour deux décisions voisines.</div>
+        <div style="color: #4e483f">Les aligner sur le même critère. Sinon on règle six emplacements que personne n'utilisera.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ce qui manque ══ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd'hui</span>
+      <div style="font-size: 12.5px; color: #6d675e; margin-top: -4px">Il n'existe aucun écran, aucun outil et aucun champ propre à une famille. Un décor est un personnage sans poses.</div>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px; margin-top: 3px">
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">Les directions ne devraient pas venir du jeu mais de la nature.</strong> Un champ de plus à côté de « se découpe », et douze cases inutiles par meuble disparaissent.</li>
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">Les terrains ne sont pas une famille.</strong> Ils sont rangés avec les décors, avec lesquels ils n'ont rien de commun sauf de ne pas se découper.</li>
+        <li style="margin-bottom: 6px">Aucun outil de terrain&nbsp;: pas de raccord de tuiles, pas de jeu de bordures, pas d'aperçu côte à côte. C'est pourtant la seule famille dont la qualité ne se juge <em>que</em> côte à côte.</li>
+        <li style="margin-bottom: 6px">Aucun kit d'interface&nbsp;: pas de neuf-tranches, pas de vue sur fond clair et sombre, pas d'état survolé.</li>
+        <li style="margin-bottom: 6px">Une vignette identique pour les cinq familles. C'est le seul endroit où chacune a vraiment besoin de son propre dessin.</li>
+        <li style="margin-bottom: 6px">« Rien ne manque » sur 138 sujets qui n'ont peut-être aucune image.</li>
+        <li style="margin-bottom: 6px">Le filtre par famille de la galerie ne rend rien pour trois familles sur quatre.</li>
+        <li style="margin-bottom: 6px">Le modèle par famille n'est pas le premier niveau de décision&nbsp;: une planche de poses et une retouche ont chacune leur modèle avant lui. Trois niveaux, et la famille est au milieu — rien ne le dit à l'écran.</li>
+      </ul>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">une décision, et elle s'écarte du produit</div>
+        <div style="font-size: 15px; font-weight: 600; line-height: 1.3">Six familles dans le carnet, cinq dans le code</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le carnet range les terrains à part. Le produit les met avec les décors. L'écart est voulu&nbsp;: une tuile remplit son carré et se juge sur sa couture, un moulin a une silhouette et se juge seul. Ils ne partagent qu'une chose — ne pas se découper — et le dépôt a déjà relevé que ce réglage commun est une erreur.</div>
+      </div>
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">avant / après</div>
+        <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Cinq blocs, un par famille, tous bâtis pareil : le même en-tête, le même bouton de réglages, la même grille — et cinq vignettes qui ne se ressemblent pas. Les objets portent la silhouette d'un personnage en filigrane derrière chaque sujet, pour qu'un coffre à 66 % se juge d'un coup d'œil. Les décors ont une vignette deux fois plus grande, sans barre de complétude. Les terrains montrent la tuile répétée quatre fois, avec une pastille verte quand les quatre bords se raccordent et une rouille quand une couture se voit. L'interface est coupée en deux, clair à gauche, sombre à droite. Et les équipements ne montrent pas des sujets mais un vestiaire : six emplacements du dos vers l'avant, et pour chaque pièce le compte de ses calques — « 4/6 » voulant dire que l'épée disparaît sur deux poses.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

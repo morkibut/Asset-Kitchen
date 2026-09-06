@@ -278,7 +278,7 @@ export function EcranPlanche({
                   type="button"
                   onClick={onVitrine}
                   title="voir en grand ce qui est déjà fait, avant de le refaire"
-                  className="mesure ml-auto px-1 text-[10px] text-signal hover:text-signal-clair"
+                  className="mesure ml-auto px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
                 >
                   la vitrine ›
                 </button>
@@ -504,7 +504,7 @@ function LigneDeCase({
         className={[
           "mt-[3px] h-[9px] w-[9px] shrink-0 rounded-[1px]",
           part
-            ? "border border-dashed border-signal"
+            ? "border border-dashed border-ancien-signal"
             : cellule.pleine
               ? "bg-texte-3"
               : "border border-bord",

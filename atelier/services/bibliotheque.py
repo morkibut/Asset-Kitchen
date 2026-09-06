@@ -224,6 +224,13 @@ class ServiceBibliotheque:
     # ── Les projets ──────────────────────────────────────────────────────────
 
     def projets(self) -> list[Projet]:
+        """Les jeux, dans l'ordre du dépôt — **pas celui de l'écran**.
+
+        `arbre()` les trie par dernier travaillé (B4) pour le carnet et
+        l'ouverture ; ici, l'ordre reste celui de `_base.projets()`, dont
+        d'autres lecteurs (la reconstruction, notamment) attendent la
+        création — pas la recence d'un geste sur le projet.
+        """
         return self._base.projets()
 
     @property
@@ -234,10 +241,23 @@ class ServiceBibliotheque:
 
     def choisir(self, identifiant: str | None) -> str | None:
         """Ouvrir un projet. `None` ouvre « sans projet » — la vue de ce qui a
-        été détaché, où l'on peut travailler mais où rien ne se range."""
-        if identifiant is not None and self._base.lire_projet(identifiant) is None:
-            raise ProjetInconnu(identifiant, [p.identifiant for p in self.projets()])
+        été détaché, où l'on peut travailler mais où rien ne se range.
+
+        **Compte comme un travail** (B4) : c'est ce que trie la liste des
+        jeux, en carnet comme à l'ouverture. `None` ne touche personne — la
+        vue « sans projet » n'est pas un jeu qu'on pourrait dater.
+        """
+        projet = None
+        if identifiant is not None:
+            projet = self._base.lire_projet(identifiant)
+            if projet is None:
+                raise ProjetInconnu(
+                    identifiant, [p.identifiant for p in self.projets()]
+                )
         self._courant = identifiant
+        if projet is not None:
+            projet.dernier_travail_le = time.time()
+            self.sauver_projet(projet)
         self._noter_courant()
         self._annoncer()
         return self._courant
@@ -416,6 +436,24 @@ class ServiceBibliotheque:
             favoris=favoris,
             recherche=recherche,
             limite=limite,
+        )
+
+    def compter(
+        self,
+        *,
+        projet: str | None = None,
+        sans_projet: bool = False,
+        collection: str | None = None,
+        favoris: bool = False,
+        recherche: str = "",
+    ) -> int:
+        """Ce que `chercher` rendrait sans sa limite (B3) — voir `compter_assets`."""
+        return self._base.compter_assets(
+            projet=projet,
+            sans_projet=sans_projet,
+            collection=collection,
+            favoris=favoris,
+            recherche=recherche,
         )
 
     def grille_courante(self, limite: int = PAR_DEFAUT) -> list[Asset]:
@@ -868,10 +906,17 @@ class ServiceBibliotheque:
         Compté et totalisé ici, jamais à l'écran : une somme faite dans le
         navigateur sur les deux cents assets qu'il a en mémoire dirait un
         chiffre faux dès que la bibliothèque dépasse ce que la grille sert.
+
+        **Les jeux sortent du dernier travaillé au plus ancien** (B4) — ce
+        que trie le carnet, ce que montre l'ouverture. `self.projets()`
+        garde l'ordre du dépôt ; c'est ici, à l'écran, que la récence compte.
         """
         combien = self._base.compter_par_projet()
         totaux = self._base.totaux_par_projet()
         par_collection = self._base.compter_par_collection()
+        projets = sorted(
+            self.projets(), key=lambda p: p.dernier_travail_le, reverse=True
+        )
         return {
             "courant": self._courant,
             "projets": [
@@ -880,7 +925,7 @@ class ServiceBibliotheque:
                     "assets": combien.get(projet.identifiant, 0),
                     "total_usd": totaux.get(projet.identifiant, 0.0),
                 }
-                for projet in self.projets()
+                for projet in projets
             ],
             "collections": [
                 {**collection.en_json(), "assets": par_collection.get(collection.identifiant, 0)}

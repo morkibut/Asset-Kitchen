@@ -1,0 +1,231 @@
+/**
+ * La pile de lieux — **où l'on est, et par où on y est arrivé.**
+ *
+ * Avant `B0`, « où l'on est » n'était écrit nulle part : il se *reconstruisait*
+ * à chaque rendu, à partir de douze états d'ouverture d'`App.tsx` et d'une
+ * chaîne de six ternaires longue de cent lignes. Deux conséquences, et les deux
+ * ont coûté :
+ *
+ * - **Le fil d'Ariane mentait par omission.** Neuf des douze états n'y
+ *   figuraient pas — le clip, l'envoi, le montage, l'atelier de bande, la
+ *   fiche d'un clip —, si bien qu'on pouvait être trois écrans plus bas avec un
+ *   fil vide.
+ * - **Une branche était morte sans que rien ne le dise.** `decoupeOuverte`
+ *   avait sept écritures, toutes à `null` : aucune porte ne l'ouvrait plus, et
+ *   son écran comme son fil étaient injoignables depuis le 6 septembre 2026.
+ *   Une chaîne de ternaires ne peut pas signaler ça ; une liste de genres, si.
+ *
+ * Ici, le lieu est **un état**, et le fil en est **dérivé**. Ce fichier ne
+ * connaît ni React, ni le DOM, ni une seule couleur : il se lit et s'essaie
+ * seul.
+ *
+ * ⚠️ **Ce qui n'est pas un lieu.** La pile dit ce que *la surface* montre. Une
+ * colonne de droite (la fiche d'un asset, la fiche d'un clip), un côté d'un
+ * écran (les trois côtés de l'univers), une table choisie dans l'écran des
+ * tables, une sélection : ce sont des états de l'écran où l'on est, pas des
+ * endroits où l'on va. Les mettre ici gonflerait la pile sans rien dire de
+ * plus, et le fil se mettrait à annoncer des étages qu'on n'a pas descendus.
+ */
+
+import type { Bande, Carte } from "./api"
+import type { CibleDuClip } from "./composants/Clip"
+
+// ── Ce qu'un lieu est ───────────────────────────────────────────────────────
+
+/**
+ * Les quatre racines — ce sur quoi une pile repose toujours.
+ *
+ * Trois viennent des onglets d'avant, et **le tableau de bord est le seul lieu
+ * neuf de `B0`** : c'est la balle traçante. Si le carnet, la pile et l'aide de
+ * navigation des essais tiennent sur lui, ils tiendront sur les vingt autres.
+ */
+export type Racine = "tableau-de-bord" | "galerie" | "univers" | "codex"
+
+export type Lieu =
+  // Les racines.
+  | { genre: "tableau-de-bord" }
+  | { genre: "galerie" }
+  | { genre: "univers" }
+  | { genre: "codex" }
+  // Ce qu'on ouvre par-dessus une racine.
+  | { genre: "depenses" }
+  | { genre: "carte"; carte: Carte }
+  | { genre: "sujet"; sujet: string }
+  | { genre: "case"; asset: string }
+  | { genre: "tables"; asset: string }
+  | { genre: "clip"; cible: CibleDuClip }
+  | { genre: "montage"; clip: string }
+  | { genre: "bande"; bande: string }
+  | { genre: "montage-de-bande"; bande: Bande }
+  | { genre: "envoi" }
+  | { genre: "reference" }
+
+export type Genre = Lieu["genre"]
+
+/** La pile au démarrage.
+ *
+ *  **La galerie, et pas le tableau de bord.** C'est l'écran qu'on regardait
+ *  déjà en revenant, et surtout : `B0` ajoute un lieu, elle n'en déplace aucun.
+ *  Le jour où l'ouverture (`B4`) décidera par où l'on entre, c'est elle qui
+ *  posera la première pile. */
+export const PILE_INITIALE: readonly Lieu[] = [{ genre: "galerie" }]
+
+// ── Lire la pile ────────────────────────────────────────────────────────────
+
+/** La racine sur laquelle la pile repose. */
+export function racine(pile: readonly Lieu[]): Racine {
+  const bas = pile[0]?.genre
+  return bas === "univers" || bas === "codex" || bas === "tableau-de-bord"
+    ? bas
+    : "galerie"
+}
+
+/** Le lieu d'un genre donné, ou `null`.
+ *
+ *  **On cherche dans toute la pile, pas seulement au sommet**, parce que
+ *  plusieurs lieux se voient ensemble : la case d'un sujet se regarde *dans* le
+ *  sujet, et les deux comptent. Le premier trouvé en partant du sommet gagne —
+ *  un même genre ne s'empile pas deux fois. */
+export function lieu<G extends Genre>(
+  pile: readonly Lieu[],
+  genre: G,
+): Extract<Lieu, { genre: G }> | null {
+  for (let rang = pile.length - 1; rang >= 0; rang -= 1) {
+    if (pile[rang].genre === genre) {
+      return pile[rang] as Extract<Lieu, { genre: G }>
+    }
+  }
+  return null
+}
+
+/** Est-on quelque part, à n'importe quelle profondeur ? */
+export function dans(pile: readonly Lieu[], genre: Genre): boolean {
+  return pile.some((l) => l.genre === genre)
+}
+
+// ── Bouger dans la pile ─────────────────────────────────────────────────────
+
+/**
+ * Descendre d'un étage.
+ *
+ * **Un même genre ne s'empile jamais deux fois** : ouvrir une seconde image
+ * depuis une image remplace la première au lieu de creuser. Sans cette règle,
+ * le fil grandirait sans fin dans un écran qui permet d'aller d'une sœur à
+ * l'autre, et « revenir » ne reviendrait nulle part.
+ *
+ * Descendre **coupe ce qui est plus profond que l'étage remplacé** : ouvrir un
+ * autre sujet ferme la case qu'on regardait dans le précédent, sinon la case
+ * d'un sujet s'afficherait sous le nom d'un autre.
+ */
+export function entrer(pile: readonly Lieu[], ou: Lieu): Lieu[] {
+  const deja = pile.findIndex((l) => l.genre === ou.genre)
+  if (deja === 0) return [ou]
+  if (deja > 0) return [...pile.slice(0, deja), ou]
+  return [...pile, ou]
+}
+
+/**
+ * Reposer la pile sur une racine — c'est le geste « aller ailleurs ».
+ *
+ * **Il remonte de toute profondeur, et c'est voulu** : le fil dit où l'on est,
+ * et désigner une racine est le geste qui dit « ailleurs ». Laisser une découpe
+ * ouverte derrière une autre racine a déjà coûté une fois — un écran enfermé
+ * qu'aucun onglet ne pouvait fermer.
+ */
+export function poser(ou: Racine): Lieu[] {
+  return [{ genre: ou } as Lieu]
+}
+
+/** Refermer un étage, où qu'il soit, **et tout ce qui est au-dessus**.
+ *
+ *  Une racine ne se referme pas — on en change avec `poser`. Un genre absent
+ *  rend la pile telle quelle, pour qu'un « fermer » de trop soit sans effet
+ *  plutôt qu'une erreur. */
+export function sortir(pile: readonly Lieu[], genre: Genre): Lieu[] {
+  const rang = pile.findIndex((l) => l.genre === genre)
+  return rang <= 0 ? [...pile] : pile.slice(0, rang)
+}
+
+/** Remonter à un étage de la pile, désigné par sa profondeur. */
+export function remonterA(pile: readonly Lieu[], profondeur: number): Lieu[] {
+  return pile.slice(0, Math.max(1, profondeur + 1))
+}
+
+// ── Le fil d'Ariane, dérivé ─────────────────────────────────────────────────
+
+/** Un étage du fil. `profondeur` à `null` : c'est l'étage où l'on est, il ne
+ *  ramène nulle part, et c'est ce qui le fait lire comme la fin du fil.
+ *
+ *  `de` et `rang` disent **quel lieu a donné cet étage, et lequel de ses noms
+ *  c'était**. L'écran en a besoin pour les gestes qui accompagnent un retour :
+ *  revenir par le nom d'une image la remet en sélection, revenir par le mot
+ *  *Galerie* ne le fait pas, et les deux ramènent pourtant au même étage. Sans
+ *  ça, il faudrait comparer des libellés — donc les traduire deux fois. */
+export type Etage = {
+  libelle: string
+  profondeur: number | null
+  de: Lieu | null
+  rang: number
+}
+
+/**
+ * Comment un lieu se nomme dans le fil.
+ *
+ * Les noms vivants — celui d'un sujet, le label d'une image, le groupe d'une
+ * carte — ne sont pas gardés dans la pile : ils y vieilliraient, et un sujet
+ * renommé garderait son ancien nom dans le fil jusqu'à ce qu'on remonte. La
+ * pile ne porte que des identifiants ; c'est l'écran qui sait les lire, et il
+ * passe cette fonction.
+ */
+export type Annuaire = (
+  lieu: Lieu,
+  profondeur: number,
+  pile: readonly Lieu[],
+) => string | readonly string[] | null
+
+/**
+ * Le fil d'Ariane, lu depuis la pile — **et de nulle part ailleurs.**
+ *
+ * Trois niveaux au plus après le nom du jeu, `Navigation.dc.html` § Le fil :
+ * chaque bout se clique, sauf le dernier, qui est l'étage où l'on est.
+ *
+ * **Un lieu peut nommer plusieurs étages**, et c'est ce qui permet à la pile de
+ * rester courte : l'écran des tables ouvert sur une image de la galerie dit
+ * `Galerie › tonneau-02 › Détourage` à lui tout seul. Le dernier nom qu'un lieu
+ * donne est *cet* étage ; ceux d'avant sont le chemin qui y mène, et ils
+ * ramènent donc à l'étage du dessous. C'est exactement ce que faisaient les six
+ * ternaires, écrit une fois au lieu de six.
+ *
+ * **Le nom du jeu n'est pas un lieu**, c'est le contexte : il ne paraît que
+ * quand il y a un fil, et il ramène à la racine. Une racine au repos ne donne
+ * donc aucun fil — c'est la barre qui porte alors le nom du jeu, comme avant.
+ */
+export function filDAriane(
+  pile: readonly Lieu[],
+  jeu: string,
+  nommer: Annuaire,
+): Etage[] {
+  const etages: Etage[] = []
+
+  pile.forEach((ou, profondeur) => {
+    const dit = nommer(ou, profondeur, pile)
+    if (!dit) return
+    const noms = typeof dit === "string" ? [dit] : dit
+    noms.forEach((libelle, rang) => {
+      const dernier = rang === noms.length - 1
+      etages.push({
+        libelle,
+        profondeur: dernier ? profondeur : Math.max(0, profondeur - 1),
+        de: ou,
+        rang,
+      })
+    })
+  })
+
+  if (etages.length === 0) return []
+
+  // Le dernier étage est celui où l'on est : il ne ramène nulle part.
+  etages[etages.length - 1] = { ...etages[etages.length - 1], profondeur: null }
+
+  return [{ libelle: jeu, profondeur: 0, de: null, rang: 0 }, ...etages]
+}

@@ -509,9 +509,9 @@ function PiedDeLAssistant({
               className={[
                 "block h-[6px] rounded-full transition-colors duration-[80ms]",
                 i === rang
-                  ? "w-4 bg-signal"
+                  ? "w-4 bg-ancien-signal"
                   : porte
-                    ? "w-[6px] bg-ok"
+                    ? "w-[6px] bg-ancien-ok"
                     : vues.has(cle)
                       ? "w-[6px] bg-bord-fort"
                       : "w-[6px] bg-bord",
@@ -532,7 +532,7 @@ function PiedDeLAssistant({
         type="button"
         onClick={() => onSortir?.()}
         title="rien n'est exigé — une étape passée reste passée, et se rouvre d'un clic"
-        className={`${bouton} ml-auto text-texte-2 hover:text-signal`}
+        className={`${bouton} ml-auto text-texte-2 hover:text-ancien-signal`}
       >
         j'ai fini pour l'instant
       </button>
@@ -540,7 +540,7 @@ function PiedDeLAssistant({
         type="button"
         disabled={rang >= ETAPES.length - 1}
         onClick={() => onAller(ETAPES[Math.min(rang + 1, ETAPES.length - 1)].cle)}
-        className={`${bouton} bg-signal font-medium text-fond-0 hover:bg-signal-clair disabled:bg-fond-2 disabled:text-texte-3`}
+        className={`${bouton} bg-ancien-signal font-medium text-fond-0 hover:bg-ancien-signal-clair disabled:bg-fond-2 disabled:text-texte-3`}
       >
         Continuer →
       </button>
@@ -833,7 +833,7 @@ function LeNom({ onErreur }: { onErreur: (raison: string) => void }) {
               )
               .catch((erreur) => onErreur(String(erreur)))
           }
-          className="mesure h-[34px] shrink-0 rounded-[2px] border border-bord-fort px-3 text-[11.5px] text-texte-2 hover:text-signal disabled:text-texte-3"
+          className="mesure h-[34px] shrink-0 rounded-[2px] border border-bord-fort px-3 text-[11.5px] text-texte-2 hover:text-ancien-signal disabled:text-texte-3"
         >
           renommer
         </button>
@@ -889,7 +889,7 @@ function LaVue({
                 className={[
                   "flex h-full w-full flex-col overflow-hidden rounded-[2px] border text-left transition-colors duration-[80ms]",
                   choisie
-                    ? "border-signal bg-signal/13"
+                    ? "border-ancien-signal bg-ancien-signal/13"
                     : "border-bord hover:bg-fond-2",
                 ].join(" ")}
               >
@@ -908,7 +908,7 @@ function LaVue({
                       conduite le dit déjà — et le chiffre le dit mieux. */}
                   <span className="mesure mt-auto flex items-baseline gap-1.5 border-t border-bord pt-2 text-[11px] text-texte-2">
                     <b
-                      className={`text-[15px] font-medium ${choisie ? "text-signal-clair" : "text-signal"}`}
+                      className={`text-[15px] font-medium ${choisie ? "text-ancien-signal-clair" : "text-ancien-signal"}`}
                     >
                       {vue.images}
                     </b>{" "}
@@ -998,13 +998,13 @@ function LeStyle({ univers, onRegler }: { univers: Univers; onRegler: Regler }) 
                 className={[
                   "flex w-[268px] flex-col gap-2 rounded-[2px] border p-3 text-left transition-colors duration-[80ms]",
                   marque
-                    ? "border-signal bg-signal/13"
+                    ? "border-ancien-signal bg-ancien-signal/13"
                     : "border-bord hover:bg-fond-2",
                 ].join(" ")}
               >
                 <VignetteDeStyle cle={cle} />
                 <span
-                  className={`text-[14px] leading-tight ${marque ? "text-signal" : "text-texte"}`}
+                  className={`text-[14px] leading-tight ${marque ? "text-ancien-signal" : "text-texte"}`}
                 >
                   {titre}
                 </span>
@@ -1137,7 +1137,7 @@ function LaTaille({
         className={[
           "flex h-[34px] w-fit items-center gap-2 rounded-[2px] border px-3 text-left text-[11.5px] transition-colors duration-[80ms]",
           univers.cible_px === AUCUNE_CIBLE
-            ? "border-signal bg-signal/13 text-signal"
+            ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
             : "border-bord text-texte-2 hover:bg-fond-2",
         ].join(" ")}
       >
@@ -1184,7 +1184,7 @@ function LaTaille({
                   className={[
                     "flex items-end justify-center rounded-[2px] border p-1 transition-colors duration-[80ms]",
                     marquee
-                      ? "border-signal bg-signal/13"
+                      ? "border-ancien-signal bg-ancien-signal/13"
                       : "border-transparent hover:border-bord",
                   ].join(" ")}
                 >
@@ -1192,7 +1192,7 @@ function LaTaille({
                 </button>
                 <span aria-hidden className="mt-1 h-px w-full bg-bord-fort" />
                 <span
-                  className={`mesure pt-2 pb-4 text-[10px] whitespace-nowrap ${marquee ? "text-signal" : "text-texte-3"}`}
+                  className={`mesure pt-2 pb-4 text-[10px] whitespace-nowrap ${marquee ? "text-ancien-signal" : "text-texte-3"}`}
                 >
                   {cible}
                 </span>
@@ -1267,7 +1267,7 @@ function LaTaille({
       <button
         type="button"
         onClick={onRealigner}
-        className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
+        className="mesure h-6 self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         Tout réaligner ›
       </button>
@@ -1412,7 +1412,7 @@ function LesTypes({ univers, onRegler }: { univers: Univers; onRegler: Regler })
                   remplie, et l'inverse se lirait à contresens. */}
               <span
                 aria-hidden
-                className={`h-[14px] w-[14px] shrink-0 border ${echelle.silhouette ? "border-signal bg-signal" : "border-bord-fort"}`}
+                className={`h-[14px] w-[14px] shrink-0 border ${echelle.silhouette ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort"}`}
               />
               {echelle.silhouette ? "il se découpe" : "plein cadre, pas de découpe"}
             </button>
@@ -1615,7 +1615,7 @@ function LAllure({
                 ].join(" ")}
               >
                 <span
-                  className={`mesure w-[14px] shrink-0 text-[10px] ${est_ouverte ? "text-signal" : "text-texte-3"}`}
+                  className={`mesure w-[14px] shrink-0 text-[10px] ${est_ouverte ? "text-ancien-signal" : "text-texte-3"}`}
                 >
                   {rang + 1}
                 </span>
@@ -1637,7 +1637,7 @@ function LAllure({
                     {champ.texte.trim() || atelier}
                   </span>
                 )}
-                <span className="mesure w-[14px] shrink-0 text-right text-[11px] text-ok">
+                <span className="mesure w-[14px] shrink-0 text-right text-[11px] text-ancien-ok">
                   {porte ? "✓" : ""}
                 </span>
               </button>
@@ -1665,7 +1665,7 @@ function LAllure({
                     className={[
                       "flex h-[26px] w-fit items-center gap-2 rounded-[2px] border px-2 text-[11.5px] transition-colors duration-[80ms]",
                       champ.actif
-                        ? "border-signal bg-signal/13 text-signal"
+                        ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
                         : "border-bord bg-fond-1 text-texte-3 hover:bg-fond-3",
                     ].join(" ")}
                   >
@@ -1741,7 +1741,7 @@ function LAllure({
                                   .catch(() => undefined)
                               }}
                               className={[
-                                "flex h-[24px] items-center rounded-[2px] border bg-fond-1 px-[9px] text-[11.5px] transition-colors duration-[80ms] hover:text-signal",
+                                "flex h-[24px] items-center rounded-[2px] border bg-fond-1 px-[9px] text-[11.5px] transition-colors duration-[80ms] hover:text-ancien-signal",
                                 // **Ce qui vient de l'auteur porte l'ambre**,
                                 // comme le modèle réglé à la main et
                                 // l'occupation épinglée d'un asset. Aucun
@@ -1759,7 +1759,7 @@ function LAllure({
                       <button
                         type="button"
                         onClick={() => setNeuve({ libelle: "", texte: "" })}
-                        className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
+                        className="mesure h-6 self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
                       >
                         + fabriquer une étiquette
                       </button>
@@ -1799,7 +1799,7 @@ function LAllure({
                                 })
                                 .catch((erreur) => onErreur(String(erreur)))
                             }
-                            className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
+                            className="mesure h-6 self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
                           >
                             la fabriquer ›
                           </button>
@@ -2079,7 +2079,7 @@ function LeFondDuJeu({
           <button
             type="button"
             onClick={() => void onRegler({ fond: propose.couleur })}
-            className="mesure text-[10px] text-signal hover:text-signal-clair"
+            className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             Prendre {propose.nom || propose.couleur}
           </button>
@@ -2168,7 +2168,7 @@ function LeTexteACopier({
           void navigator.clipboard?.writeText(texte)
           setCopie(true)
         }}
-        className="mesure h-[34px] self-start rounded-[2px] border border-bord-fort px-3 text-[11.5px] text-texte-2 hover:text-signal"
+        className="mesure h-[34px] self-start rounded-[2px] border border-bord-fort px-3 text-[11.5px] text-texte-2 hover:text-ancien-signal"
       >
         {copie ? "copié" : "copier"}
       </button>
@@ -2276,7 +2276,7 @@ function LesPoses({
           <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
             images à fabriquer
           </span>
-          <span className="mesure text-[22px] text-signal">{total}</span>
+          <span className="mesure text-[22px] text-ancien-signal">{total}</span>
         </span>
       </div>
       <Raison
@@ -2392,7 +2392,7 @@ function LesPoses({
                           .catch(echouer)
                       }
                       title="les images ne bougent pas — elles gardent l'identifiant de leur pose"
-                      className="mesure self-start px-1 text-[9.5px] text-texte-3 hover:text-signal"
+                      className="mesure self-start px-1 text-[9.5px] text-texte-3 hover:text-ancien-signal"
                     >
                       revenir à la liste proposée
                     </button>
@@ -2496,7 +2496,7 @@ function ListeDePoses({
                 type="button"
                 aria-label={`Retirer ${pose.nom}`}
                 onClick={() => onRetirer(pose.identifiant)}
-                className="shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+                className="shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
               >
                 ×
               </button>
@@ -2525,7 +2525,7 @@ function ListeDePoses({
             onAjouter(neuve.trim(), images)
             setNeuve("")
           }}
-          className="mesure h-[26px] shrink-0 px-2 text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
+          className="mesure h-[26px] shrink-0 px-2 text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
         >
           + ajouter
         </button>
@@ -2656,7 +2656,7 @@ function LesEmplacements({
                   aria-label={`Monter ${emplacement.nom}`}
                   disabled={rang === 0}
                   onClick={() => deplacer(rang, rang - 1)}
-                  className="mesure flex h-[24px] w-[24px] items-center justify-center rounded-[2px] border border-bord-fort text-[10px] text-texte-2 hover:text-signal disabled:border-bord disabled:text-texte-3"
+                  className="mesure flex h-[24px] w-[24px] items-center justify-center rounded-[2px] border border-bord-fort text-[10px] text-texte-2 hover:text-ancien-signal disabled:border-bord disabled:text-texte-3"
                 >
                   ↑
                 </button>
@@ -2665,7 +2665,7 @@ function LesEmplacements({
                   aria-label={`Descendre ${emplacement.nom}`}
                   disabled={rang === emplacements.length - 1}
                   onClick={() => deplacer(rang, rang + 1)}
-                  className="mesure flex h-[24px] w-[24px] items-center justify-center rounded-[2px] border border-bord-fort text-[10px] text-texte-2 hover:text-signal disabled:border-bord disabled:text-texte-3"
+                  className="mesure flex h-[24px] w-[24px] items-center justify-center rounded-[2px] border border-bord-fort text-[10px] text-texte-2 hover:text-ancien-signal disabled:border-bord disabled:text-texte-3"
                 >
                   ↓
                 </button>
@@ -2679,7 +2679,7 @@ function LesEmplacements({
                     .then((recu) => setEmplacements(recu?.emplacements ?? []))
                     .catch(echouer)
                 }
-                className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+                className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
               >
                 ×
               </button>
@@ -2708,7 +2708,7 @@ function LesEmplacements({
               })
               .catch(echouer)
           }
-          className="mesure h-[26px] shrink-0 px-2 text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
+          className="mesure h-[26px] shrink-0 px-2 text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
         >
           + ajouter
         </button>

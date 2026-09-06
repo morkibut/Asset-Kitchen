@@ -1,0 +1,382 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 32px; padding: 0 12px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 12.5px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .rai { font-size: 11px; line-height: 1.42; color: #6d675e }
+    /* une passe dans la colonne de gauche */
+    .pas { display: flex; flex-direction: column; gap: 3px; padding: 9px 11px; border-radius: 7px; cursor: default }
+    .pas-on { background: #e6dfd2 }
+    .pas-t { display: flex; align-items: baseline; justify-content: space-between; gap: 9px; font-size: 13px }
+    .pas-d { font-size: 11.5px; line-height: 1.4; color: #6d675e }
+    .n { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px }
+    /* le mur de vignettes */
+    .vig { border-radius: 6px; background: #6c6c6c; position: relative; display: flex; align-items: flex-end;
+           justify-content: center; padding-bottom: 9px; overflow: hidden; aspect-ratio: 1 }
+    .fg { display: block; width: 28%; height: 54%; background: #6b5a44; border-radius: 4px 4px 2px 2px; position: relative }
+    .fg::before { content: ''; position: absolute; left: 50%; top: -22%; transform: translateX(-50%);
+                  width: 60%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+    .vu { position: absolute; right: 5px; top: 5px; width: 15px; height: 15px; border-radius: 50%;
+          background: rgba(92,122,82,.92); display: flex; align-items: center; justify-content: center;
+          color: #fff; font-size: 9px }
+    .sous { font-size: 10.5px; color: #6d675e; line-height: 1.3 }
+    .neuf { background: #f4ece2; border: 1px dashed #e0cfb8; border-radius: 8px }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3260px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1050px">
+      <div style="font-size: 12.5px; color: #948c80">Les Salines › La relecture</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">La relecture avant livraison</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">passer les 560 images une dernière fois — non pas par une note, mais par une liste de défauts nommés, chacun vérifiable à l'œil</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 215px">mais pas instantané&nbsp;: une passe redétoure chaque image, environ 130 ms pièce</div>
+    </div>
+  </div>
+
+  <!-- ══ la correction de départ ══ -->
+  <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 10px; padding: 17px 19px;
+              display: grid; grid-template-columns: 330px minmax(0,1fr); gap: 24px; align-items: center">
+    <div style="display: flex; flex-direction: column; gap: 5px">
+      <div class="rt" style="color: #b08078">ce que je croyais, et qui est faux</div>
+      <div class="serif" style="font-size: 25px; line-height: 1.15; color: #8a3f33">« Deux mesures que l'atelier calcule déjà »</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <div style="font-size: 13px; line-height: 1.55; color: #4e483f">Elles existent — l'atelier les appelle lui-même « les deux mesures d'acceptation du fond » — mais <strong style="font-weight: 600">elles ne notent pas la qualité d'une image</strong>. Elles disent si la couleur de fond qu'on avait demandée au modèle était bien choisie. Une image magnifique sur un fond mal choisi sort mal notée&nbsp;; une image ratée sur un fond magenta sort à zéro sur les deux.</div>
+      <div style="font-size: 13px; line-height: 1.55; color: #4e483f; border-top: 1px solid #dcbcb2; padding-top: 9px">Et le produit n'a <strong style="font-weight: 600">aucune note de qualité</strong>&nbsp;: pas de colonne dans la base, pas de tri autre que la date, pas de mesure de netteté ni de contraste. Le seul vrai classement du dépôt ne couvre que les calques d'équipement. Cet écran ne peut donc pas être un classement — et c'est tant mieux.</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1200px">
+    Une note unique cacherait la raison. Ce qu'il faut avant de livrer, c'est une <strong style="font-weight: 600">liste de défauts nommés</strong>&nbsp;: chacun est une question à laquelle on répond oui ou non, chacun se voit à l'œil sur un mur de vignettes, et chacun a un geste qui le répare. On les passe une par une, on marque ce qu'on a vu, et on sait quand on a fini. C'est aussi la doctrine que le dépôt tient partout&nbsp;: <em>une mesure décrit, elle ne refuse jamais.</em>
+  </div>
+
+  <!-- ══ l'écran ══ -->
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden">
+    <div style="border-bottom: 1px solid #e2dbd0; background: #f2ede4; padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+      <span style="font-size: 14px; font-weight: 600">Un écran, ouvert depuis le pied du carnet — juste au-dessus de « La sortie »</span>
+      <span class="puce p-a">tout cet écran est à faire</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 370px minmax(0,1fr) 340px; min-height: 810px">
+
+      <!-- ── les passes ── -->
+      <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 16px 13px; display: flex; flex-direction: column; gap: 12px">
+        <div style="padding: 0 9px; display: flex; flex-direction: column; gap: 4px">
+          <div class="rt">Les passes</div>
+          <div style="font-size: 12px; color: #6d675e; line-height: 1.45">Neuf questions. Six se calculent d'un coup, trois demandent de relire les images.</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1px">
+          <div class="pas">
+            <div class="pas-t"><span>Ce qui manque</span><span class="n" style="color: #8a3f33">17</span></div>
+            <div class="pas-d">6 sujets sans aucune image, 11 poses vides</div>
+          </div>
+          <div class="pas pas-on">
+            <div class="pas-t"><span style="font-weight: 600">Ce n'est pas la bonne image qui sortira</span><span class="n" style="color: #a8492c">48</span></div>
+            <div class="pas-d">aucun favori posé&nbsp;: c'est la dernière faite qui partira, pas la meilleure</div>
+          </div>
+          <div class="pas">
+            <div class="pas-t"><span>Les calques à regarder</span><span class="n" style="color: #8a5a2c">23</span></div>
+            <div class="pas-d">rangés par le pire, avec le nom de la mesure qui décide</div>
+          </div>
+          <div class="pas">
+            <div class="pas-t"><span>Les directions incomplètes</span><span class="n" style="color: #8a5a2c">12</span></div>
+            <div class="pas-d">le jeu en déclare quatre, ces personnages n'en ont qu'une</div>
+          </div>
+          <div class="pas">
+            <div class="pas-t"><span>Les deux cases jumelles</span><span class="n" style="color: #8a5a2c">9</span></div>
+            <div class="pas-d">le modèle s'est répété&nbsp;: deux cases d'une même feuille se ressemblent à plus de 0,85</div>
+          </div>
+          <div class="pas">
+            <div class="pas-t"><span>Hors de la palette</span><span class="n" style="color: #8a5a2c">31</span></div>
+            <div class="pas-d">plus de 24 couleurs — le trait de contour en ajoute une à lui seul</div>
+          </div>
+          <div class="pas">
+            <div class="pas-t"><span>Le sujet ne remplit pas sa case</span><span class="n" style="color: #8a5a2c">14</span></div>
+            <div class="pas-d">l'écart à l'occupation que sa nature demande</div>
+          </div>
+          <div class="pas" style="opacity: .75">
+            <div class="pas-t"><span>Le fond était mal choisi</span><span class="n" style="color: #948c80">— </span></div>
+            <div class="pas-d">à lancer · 560 images × 130 ms ≈ 1 min 15</div>
+          </div>
+          <div class="pas">
+            <div class="pas-t"><span>La grille a dérivé</span><span class="n" style="color: #8a5a2c">7</span></div>
+            <div class="pas-d">seulement sur les images sorties d'une feuille</div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; padding: 0 9px; display: flex; flex-direction: column; gap: 9px">
+          <div style="border-top: 1px solid #e2dbd0; padding-top: 12px; display: flex; flex-direction: column; gap: 6px">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; font-size: 12.5px">
+              <span style="color: #4e483f">Passé en revue</span><span class="n" style="color: #5c7a52">412 / 560</span>
+            </div>
+            <div style="height: 5px; border-radius: 3px; background: #ddd5c8; overflow: hidden"><i style="display: block; height: 100%; width: 73.5%; background: #5c7a52"></i></div>
+            <div class="rai">Une image marquée « vue » ne remonte plus, même si elle apparaît dans une autre passe.</div>
+          </div>
+          <span class="bt" style="height: 34px">Tout remettre à revoir</span>
+        </div>
+      </div>
+
+      <!-- ── le mur ── -->
+      <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 15px; font-weight: 600">Ce n'est pas la bonne image qui sortira — 48 sujets</div>
+            <div style="font-size: 12px; color: #6d675e">Aucun favori n'a été posé sur ces sujets. La règle de sortie prend alors la plus récente, qui n'est pas forcément la meilleure.</div>
+          </div>
+          <div class="seg"><div class="sg sg-on">à la taille du jeu</div><div class="sg">× 4</div></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(8, minmax(0,1fr)); gap: 10px">
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig" style="outline: 2px solid #a8492c; outline-offset: 1px"><i class="fg"></i></span><span class="sous">le pèlerin<br><span style="color: #a8492c">3 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 50%"></i></span><span class="sous">le garde<br><span style="color: #a8492c">5 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 46%; width: 34%"></i></span><span class="sous">la grenouille<br><span style="color: #a8492c">2 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><span class="vu">✓</span><i class="fg" style="height: 56%"></i></span><span class="sous">le batelier<br><span style="color: #5c7a52">vu</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 44%; width: 36%"></i></span><span class="sous">le tonneau<br><span style="color: #a8492c">4 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 52%; width: 30%"></i></span><span class="sous">la barque<br><span style="color: #a8492c">2 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><span class="vu">✓</span><i class="fg" style="height: 58%"></i></span><span class="sous">la sorcière<br><span style="color: #5c7a52">vu</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 48%"></i></span><span class="sous">le rat<br><span style="color: #a8492c">3 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 54%; width: 32%"></i></span><span class="sous">le nénuphar<br><span style="color: #a8492c">2 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 42%; width: 38%"></i></span><span class="sous">le coffre<br><span style="color: #a8492c">6 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 50%"></i></span><span class="sous">le meunier<br><span style="color: #a8492c">3 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><span class="vu">✓</span><i class="fg" style="height: 56%; width: 30%"></i></span><span class="sous">la lanterne<br><span style="color: #5c7a52">vu</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 46%"></i></span><span class="sous">le corbeau<br><span style="color: #a8492c">2 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 52%; width: 34%"></i></span><span class="sous">la clé<br><span style="color: #a8492c">4 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 44%"></i></span><span class="sous">le seau<br><span style="color: #a8492c">2 essais</span></span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 58%; width: 28%"></i></span><span class="sous">le héron<br><span style="color: #a8492c">3 essais</span></span></span>
+        </div>
+
+        <div style="font-size: 12px; color: #6d675e">et 32 autres · <span style="color: #4e483f">↑ ↓ pour passer d'une vignette à l'autre, Espace pour marquer « vue »</span></div>
+
+        <div class="neuf" style="padding: 13px 15px; display: flex; gap: 14px; align-items: flex-start; margin-top: auto">
+          <span class="puce p-a" style="flex-shrink: 0; margin-top: 2px">pourquoi cette passe d'abord</span>
+          <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">C'est la seule qui change ce qui sortira du jeu. La règle est écrite à un seul endroit et lue par trois — l'export, l'équipement, la matrice&nbsp;: <strong style="font-weight: 600">le favori s'il y en a un, sinon la plus récente.</strong> Le dépôt note lui-même que sur ses images réelles il n'y avait aucun favori, donc que c'était toujours la dernière qui partait. Poser un favori depuis ce mur, c'est le seul geste de tout l'écran qui modifie le jeu livré.</div>
+        </div>
+      </div>
+
+      <!-- ── l'image regardée ── -->
+      <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 16px 15px; display: flex; flex-direction: column; gap: 12px">
+        <div class="rt">Le pèlerin, au repos</div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px">
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig" style="outline: 2px solid #a8492c; outline-offset: 1px"><i class="fg"></i></span><span class="sous" style="text-align: center">4 sept.</span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 52%"></i></span><span class="sous" style="text-align: center">3 sept.</span></span>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span class="vig"><i class="fg" style="height: 50%; width: 30%"></i></span><span class="sous" style="text-align: center">2 sept.</span></span>
+        </div>
+        <div class="rai">Les trois essais du pèlerin au repos. Celui qui est encadré est celui qui partira — parce qu'il est le plus récent, pas parce qu'il a été choisi.</div>
+
+        <div style="border-top: 1px solid #e2dbd0; padding-top: 12px; display: flex; flex-direction: column; gap: 8px">
+          <div class="rt">ce qu'on sait de lui</div>
+          <div style="display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 5px 10px; font-size: 12px; color: #4e483f">
+            <span>couleurs</span><span class="mono" style="color: #5c7a52">24 / 24</span>
+            <span>la case</span><span class="mono">64 × 66</span>
+            <span>occupation</span><span class="mono" style="color: #8a5a2c">86 % · sa nature en demande 100</span>
+            <span>frange du détourage</span><span class="mono">0 px · moteur du bord</span>
+            <span>direction</span><span class="mono" style="color: #8a3f33">aucune</span>
+          </div>
+          <div class="rai">Une frange à zéro n'est pas forcément une bonne nouvelle&nbsp;: le moteur du bord découpe net et laisse zéro par construction. Le chiffre dit quel moteur a servi, pas que l'image est propre.</div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px">
+          <span class="bt bt-p" style="height: 36px">Celle-ci sortira ★</span>
+          <div style="display: flex; gap: 7px">
+            <span class="bt" style="flex: 1">Retoucher ›</span>
+            <span class="bt" style="flex: 1">Refaire · $0,019</span>
+          </div>
+          <span class="bt" style="height: 30px">Vue, passer à la suivante <span class="mono" style="font-size: 10.5px; color: #948c80">Espace</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ les neuf passes ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les neuf passes</span> <span style="font-size: 13.5px; color: #6d675e">— ce que chacune sait déjà, et ce qu'elle demande</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Aucune ne refuse rien. Elles montrent, on tranche.</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 250px 300px 170px minmax(0,1fr)">
+      <div class="ent" style="border-top: 0">la passe</div><div class="ent" style="border-top: 0">ce qu'elle cherche</div><div class="ent" style="border-top: 0">ce qu'il faut</div><div class="ent" style="border-top: 0">le geste qui répare</div>
+
+      <div><span style="font-weight: 600">Ce qui manque</span></div>
+      <div style="color: #4e483f">Un sujet sans aucune image, une pose vide, une direction absente.</div>
+      <div><span class="puce p-ok">déjà là</span><div style="font-size: 11px; color: #6d675e; margin-top: 4px">l'écran d'accueil le compte déjà par famille</div></div>
+      <div style="color: #4e483f">Générer, ou retirer le sujet du jeu. C'est la seule passe où le défaut est une absence, et où il faut donc payer pour le réparer.</div>
+
+      <div><span style="font-weight: 600">Ce n'est pas la bonne image qui sortira</span></div>
+      <div style="color: #4e483f">Un sujet qui a plusieurs essais et aucun favori&nbsp;: c'est la dernière faite qui partira.</div>
+      <div><span class="puce p-ok">déjà là</span><div style="font-size: 11px; color: #6d675e; margin-top: 4px">la règle est écrite une fois, lue par trois écrans</div></div>
+      <div style="color: #4e483f">Poser le favori. <strong style="font-weight: 600">C'est le seul geste de l'écran qui change le jeu livré.</strong></div>
+
+      <div><span style="font-weight: 600">Les calques à regarder</span></div>
+      <div style="color: #4e483f">Les pièces d'équipement, rangées de la pire à la meilleure, avec le nom de la mesure qui a décidé — « à regarder · corps repeint ».</div>
+      <div><span class="puce p-ok">déjà là</span><div style="font-size: 11px; color: #6d675e; margin-top: 4px">c'est le seul vrai classement du produit</div></div>
+      <div style="color: #4e483f">Ouvrir la superposition, borner d'un rectangle, reprendre à la main. Rien à repayer.</div>
+
+      <div><span style="font-weight: 600">Les directions incomplètes</span></div>
+      <div style="color: #4e483f">Un personnage qui n'a qu'une direction dans un jeu qui en déclare quatre.</div>
+      <div><span class="puce p-ok">déjà là</span><div style="font-size: 11px; color: #6d675e; margin-top: 4px">la matrice le montre, sujet par sujet</div></div>
+      <div style="color: #4e483f">Générer les manquantes — ou les obtenir au miroir, le jour où le retournement existera.</div>
+
+      <div><span style="font-weight: 600">Les deux cases jumelles</span></div>
+      <div style="color: #4e483f">Deux cases d'une même feuille qui se ressemblent trop&nbsp;: le modèle s'est répété au lieu de dessiner deux poses.</div>
+      <div><span class="puce p-ok">déjà là</span><div style="font-size: 11px; color: #6d675e; margin-top: 4px">le chiffre est rangé sur chaque image découpée</div></div>
+      <div style="color: #4e483f">Regarder les deux côte à côte, en garder une, refaire l'autre. C'est le défaut le plus facile à rater à l'œil nu.</div>
+
+      <div><span style="font-weight: 600">Hors de la palette</span></div>
+      <div style="color: #4e483f">Une image qui porte plus de couleurs que le jeu n'en déclare.</div>
+      <div><span class="puce p-a">à compter</span><div style="font-size: 11px; color: #6d675e; margin-top: 4px">rien ne le stocke ; le calcul est court</div></div>
+      <div style="color: #4e483f">Rallumer la table des couleurs, ou reprendre le trait de contour dans une pastille de la palette — c'est lui qui ajoute la 25<sup>e</sup>.</div>
+
+      <div><span style="font-weight: 600">Le sujet ne remplit pas sa case</span></div>
+      <div style="color: #4e483f">L'écart entre ce que le sujet occupe et ce que sa nature demande — un personnage 100&nbsp;%, un meuble 66, un objet tenu 40.</div>
+      <div><span class="puce p-a">à compter</span><div style="font-size: 11px; color: #6d675e; margin-top: 4px">les deux nombres existent, personne ne les compare</div></div>
+      <div style="color: #4e483f">Reprendre le recadrage. C'est ce qui fait qu'un personnage paraît plus petit que ses voisins une fois dans le jeu.</div>
+
+      <div><span style="font-weight: 600">Le fond était mal choisi</span></div>
+      <div style="color: #4e483f">Les deux mesures d'acceptation du fond&nbsp;: la frange laissée par le détourage, et les pixels du sujet restés à la couleur du fond.</div>
+      <div><span class="puce p-non">à lancer</span><div style="font-size: 11px; color: #6d675e; margin-top: 4px">un détourage par image, ≈ 130 ms pièce</div></div>
+      <div style="color: #4e483f">Changer la couleur de fond du jeu pour les prochaines générations. Sur les images déjà là, reprendre le moteur de détourage.</div>
+
+      <div><span style="font-weight: 600">La grille a dérivé</span></div>
+      <div style="color: #4e483f">Une case découpée dont la maille du modèle ne tombe pas sur celle du jeu.</div>
+      <div><span class="puce p-ok">déjà là</span><div style="font-size: 11px; color: #6d675e; margin-top: 4px">rangé sur les images sorties d'une feuille</div></div>
+      <div style="color: #4e483f">Reprendre la case du sujet. Une dérive de 1,5× veut dire que le modèle a peint sur une maille de 12 px là où on en demandait 8.</div>
+    </div>
+  </div>
+
+  <!-- ══ pourquoi pas une note ══ -->
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px">
+    <div class="carte" style="padding: 16px 17px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">le premier piège</div>
+      <div style="font-size: 15.5px; font-weight: 600; line-height: 1.3">Une note unique cacherait la raison</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">« 0,42 » ne dit pas quoi faire. « 31 images ont 25 couleurs » se lit, se vérifie à l'œil, et a un geste. Et il n'y a de toute façon rien à combiner&nbsp;: le compte de frange est un nombre de pixels sans dénominateur dans le même objet, la part collée est une proportion, et <strong style="font-weight: 600">aucun code du dépôt ne décide laquelle pèse le plus</strong>. Le faire ici serait inventer un barème, pas en lire un.</div>
+    </div>
+    <div class="carte" style="padding: 16px 17px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">le second piège</div>
+      <div style="font-size: 15.5px; font-weight: 600; line-height: 1.3">Trier par le pire cache ce qui manque</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le seul tri par le pire qui existe dans le produit n'est pas le tri par défaut, et c'est délibéré&nbsp;: rangé par attitude, une case vide se lit&nbsp;; rangé par le pire, elle disparaît du haut de la liste. Un classement global de tout un jeu ferait exactement ça — d'où « ce qui manque » en première passe, avant toute note.</div>
+    </div>
+    <div class="carte" style="padding: 16px 17px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">le troisième piège</div>
+      <div style="font-size: 15.5px; font-weight: 600; line-height: 1.3">Deux règles désigneraient deux images</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Si cet écran classait par qualité pendant que l'export prend la plus récente, ils ne montreraient pas la même image. La règle de sortie est écrite à un seul endroit, exprès. Cet écran ne doit donc pas la doubler&nbsp;: il doit la <em>remplir</em>, en faisant poser des favoris.</div>
+    </div>
+  </div>
+
+  <!-- ══ quand ça rate ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">6 cas.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s'est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu'on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On compare la frange de deux images, l'une de 64 px et l'autre de 1024.</div>
+        <div style="color: #8a3f33">312 contre 312, et la seconde a l'air aussi propre que la première. C'est un compte brut de pixels&nbsp;: sans le pourtour au dénominateur, les deux nombres ne se comparent pas.</div>
+        <div style="color: #4e483f">Diviser par le pourtour, qui est dans le même objet. Aucun code ne le fait aujourd'hui — et choisir de le faire est une décision de produit, pas une lecture.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Une image affiche « frange&nbsp;: 0 px » et on la croit parfaite.</div>
+        <div style="color: #8a3f33">Le moteur du bord découpe net et laisse zéro frange <em>par construction</em>. Le zéro dit quel moteur a servi, pas que le détourage est réussi.</div>
+        <div style="color: #4e483f">Lire à côté quel moteur a été employé. La mesure n'a de sens qu'avec lui.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On lance la passe du fond sur les 560 images du jeu.</div>
+        <div style="color: #8a3f33">Une minute quinze d'attente. Chaque lecture redétoure l'image&nbsp;; le résultat n'est stocké nulle part et sera recalculé la fois d'après.</div>
+        <div style="color: #4e483f">C'est le prix, et l'écran doit l'annoncer avant de lancer plutôt que de faire attendre sans rien dire. La ranger une fois calculée serait le premier ajout utile.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On compare les mesures de fond de deux images qui n'ont pas la même recette de détourage.</div>
+        <div style="color: #8a3f33">Les chiffres ne veulent pas dire la même chose&nbsp;: les mesures se lisent sur l'image détourée, et la tolérance employée pour compter change d'une image à l'autre.</div>
+        <div style="color: #4e483f">Ne comparer que dans une même passe, et sur des images du même lot. Un classement global sur cette mesure serait faux.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On pose un favori sur l'écran de relecture et on regarde la vitrine du jeu.</div>
+        <div style="color: #8a3f33">La vitrine montre toujours l'autre image&nbsp;: elle prend la première trouvée, pas celle que la règle de sortie retient. Elle montre donc déjà autre chose que ce qui sortira.</div>
+        <div style="color: #4e483f">Aligner la vitrine sur la règle de sortie avant d'écrire cet écran-ci. Sinon on relit une image et on en livre une autre.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On demande un tri par qualité à l'agent.</div>
+        <div style="color: #8a3f33">Il n'y a rien à trier&nbsp;: aucune de ces mesures ne lui est exposée, et la seule requête d'images du produit ne sait ranger que par date.</div>
+        <div style="color: #4e483f">Aucun geste. C'est un manque du côté de l'agent, et il tombera de lui-même le jour où les passes seront rangées quelque part.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ce qui manque ══ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd'hui</span>
+      <div style="font-size: 12.5px; color: #6d675e; margin-top: -4px">Six passes sur neuf lisent des nombres qui existent déjà. C'est l'écran et le rangement qui n'existent pas.</div>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px; margin-top: 3px">
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">Aucun écran ne montre toutes les images d'un jeu.</strong> La route publique en rend 200 par défaut, 1000 au plus, et n'accepte aucun tri.</li>
+        <li style="margin-bottom: 6px">Aucune colonne de note dans la base&nbsp;: il n'y a rien à trier côté données, même si on le voulait.</li>
+        <li style="margin-bottom: 6px">Les deux mesures du fond ne sont rangées nulle part. Elles se recalculent à chaque ouverture d'une table de détourage — donc un balayage complet paie un détourage par image.</li>
+        <li style="margin-bottom: 6px">Le seul vrai classement — la gravité, entre 0 et 1, avec le nom de la mesure qui décide — ne couvre que les calques et les corps habillés. Sur une image ordinaire, il n'existe pas.</li>
+        <li style="margin-bottom: 6px">Le bouton « par le pire » n'apparaît que sur une colonne de pièce, jamais sur la colonne du corps, jamais sur la bibliothèque.</li>
+        <li style="margin-bottom: 6px">Aucune mesure de netteté, de contraste ni de respect de la palette n'est rangée sur une image. Ce qui porte le mot « netteté » sert à retrouver la maille du modèle, pas à juger.</li>
+        <li style="margin-bottom: 6px">Il n'existe aucune marque « vue »&nbsp;: rien ne permet de traverser 560 images sans repasser sur les mêmes.</li>
+        <li style="margin-bottom: 6px">La vitrine ne montre pas l'image qui sortira. Il faut aligner les deux avant de bâtir cet écran, sinon on relit une image et on en livre une autre.</li>
+        <li style="margin-bottom: 6px">L'agent ne voit aucune de ces mesures.</li>
+      </ul>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">avant / après</div>
+        <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Trois colonnes. À GAUCHE, les neuf passes, chacune avec son compte : dix-sept, quarante-huit, vingt-trois… Les six premières sont chiffrées d'emblée, les deux dernières portent un tiret et la mention « à lancer », avec le temps que ça prendra. En bas, une barre de progression : 412 sur 560 passés en revue. AU MILIEU, le mur : seize vignettes à la taille du jeu, sur fond gris neutre, avec sous chacune le nom du sujet et la raison en une ligne ; trois portent déjà la pastille verte « vue ». À DROITE, le sujet regardé : ses trois essais côte à côte, celui qui partira encadré en rouille, ce qu'on sait de lui en cinq lignes, et trois boutons — « Celle-ci sortira », « Retoucher », « Refaire · $0,019 ». Le bouton le plus haut est le seul de l'écran qui change ce qui sera livré.</div>
+      </div>
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">la doctrine, et elle est du dépôt</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">« Une mesure décrit, elle ne refuse jamais. » Le seul refus automatique du produit est le compte d'images qui revient d'une génération. Un écran qui déclarerait des images mauvaises irait contre ce qui est écrit partout ailleurs&nbsp;: il montre, il compte, il range — et c'est l'auteur qui tranche, une vignette à la fois.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

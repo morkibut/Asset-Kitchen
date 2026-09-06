@@ -52,8 +52,11 @@ l'on écrit : aucune modification de l'interface, du serveur ou des données ne 
 Deux défauts trouvés en chemin sont **consignés et non réparés**, exprès :
 
 - **`--color-signal-sourd` est déclaré et n'existe pas** — deux boutons actifs de l'écran des tables
-  n'ont aucun fond, et rien ne lève d'erreur. Voir `docs/DESIGN.md` § *Et un défaut à réparer avant
-  tout le reste*.
+  n'ont aucun fond, et rien ne lève d'erreur. Voir
+  `docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Et un défaut à réparer avant tout le reste.
+  ✔ **Réparé par `B0`, le 6 septembre 2026** : les deux boutons sont passés sur un jeton qui
+  existe. Le défaut avait été fermé *dans le document* en réécrivant la table sans lui, et il
+  restait ouvert dans le code — ce que le contrôle des deux sens a trouvé.
 - **Le figement de deux secondes** quand on éteint un champ de style, faute d'état d'attente. Voir
   `2026-09-04-le-parcours-voulu.md`.
 

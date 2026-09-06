@@ -1,0 +1,540 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .rg { display: flex; flex-direction: column; gap: 5px; padding-bottom: 11px; border-bottom: 1px solid #e2dbd0 }
+    .rg-t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12.5px }
+    .rai { font-size: 11px; line-height: 1.42; color: #6d675e }
+    .rai-f { color: #a8492c }
+    .rai-amb { color: #8a5a2c }
+    .cur { height: 5px; border-radius: 3px; background: #e2dbd0; position: relative }
+    .cur i { position: absolute; top: -4px; width: 13px; height: 13px; border-radius: 50%; background: #fffdfa;
+             border: 1px solid #a49a8b }
+    /* l'herbe du marais, pour juger la lisibilité — c'est là que le sprite ira */
+    .herbe { background-color: #4a5c3a;
+             background-image: radial-gradient(circle at 20% 30%, #55693f 0 3px, transparent 3px),
+                               radial-gradient(circle at 62% 71%, #43533a 0 4px, transparent 4px),
+                               radial-gradient(circle at 84% 22%, #566b41 0 3px, transparent 3px),
+                               radial-gradient(circle at 38% 84%, #3f4e33 0 4px, transparent 4px);
+             background-size: 42px 42px; border-radius: 8px; position: relative; overflow: hidden;
+             display: flex; align-items: center; justify-content: center }
+    .fig { display: block; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
+                   width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+    .trait { filter: drop-shadow(2px 0 0 #241d16) drop-shadow(-2px 0 0 #241d16)
+                     drop-shadow(0 2px 0 #241d16) drop-shadow(0 -2px 0 #241d16) }
+    .etq { position: absolute; left: 10px; top: 9px; font-size: 11px; color: #f0ece4;
+           background: rgba(20,18,14,.55); border-radius: 4px; padding: 2px 7px }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3500px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1030px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › au repos › Retoucher</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">Le contour</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">un trait retracé tout autour du sujet, une fois qu'il est à sa taille définitive</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 210px">moins de 5 ms sur une case de 64 px</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1180px">
+    Posé sur l'herbe du marais, le pèlerin s'y noie&nbsp;: sa robe brune et le vert sombre du sol ont presque la même valeur, et on ne voit plus où il finit. Un trait sombre tout autour, et il se détache. C'est la sixième table de la chaîne, <strong style="font-weight: 600">la plus complète des sept</strong> — et personne ne l'avait décrite. Elle est aussi la seule qui change la taille de l'image sans qu'on le lui ait demandé&nbsp;: une case de 64 en rend 66.
+  </div>
+
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 720px">
+
+    <!-- ══ la chaîne ══ -->
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 11px">
+      <div class="rt" style="padding: 0 9px">Les sept tables</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Détourer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le fond magenta part</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Recadrer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les bords vides sautent</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Pixéliser</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Couleurs</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la palette du monde</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Nettoyer</span><span style="color: #b0a89b; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les miettes partent</div>
+        </div>
+        <div class="plc" style="background: #e6dfd2; font-weight: 600; flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Le contour</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le trait de bord retracé</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>La main</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">ce qu'on repeint soi-même</div>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid #ddd5c8; padding-top: 10px; display: flex; flex-direction: column; gap: 2px">
+        <div class="rt" style="padding: 0 9px 4px">Les deux fabriques</div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <span style="color: #4e483f">Découper</span>
+          <div style="font-size: 11.5px; color: #6d675e">une image, plusieurs sujets</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <span style="color: #4e483f">Superposer</span>
+          <div style="font-size: 11.5px; color: #6d675e">deux images, un calque</div>
+        </div>
+        <div style="font-size: 11px; color: #948c80; padding: 4px 11px 0; line-height: 1.4">Elles ne s'endorment pas et ne modifient pas cette image&nbsp;: elles en fabriquent d'autres.</div>
+      </div>
+
+      <div style="border-top: 1px solid #ddd5c8; padding-top: 10px; display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span style="color: #4e483f">Retourner</span><span style="color: #a8492c; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les autres directions</div>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: #6d675e">
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #5c7a52; font-size: 15px; line-height: 1">●</span> posée, elle agit</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #b0a89b; font-size: 15px; line-height: 1">●</span> endormie, réglages gardés</div>
+        <div style="display: flex; align-items: center; gap: 7px"><span style="color: #a8492c; font-size: 15px; line-height: 1">●</span> n'existe pas encore</div>
+      </div>
+    </div>
+
+    <!-- ══ la surface ══ -->
+    <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="font-size: 15px; font-weight: 600">Le pèlerin, au repos — posé sur l'herbe où il ira</div>
+        <div class="seg"><div class="sg">Avant ›</div><div class="sg sg-on">Les deux</div><div class="sg">Après</div></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 292px">
+        <div class="herbe">
+          <i class="fig" style="width: 62px; height: 156px"></i>
+          <span class="etq">sans trait</span>
+          <span style="position: absolute; left: 10px; bottom: 9px; font-size: 11px; color: #f0c9bd">on ne voit plus où il finit</span>
+        </div>
+        <div class="herbe">
+          <i class="fig trait" style="width: 62px; height: 156px"></i>
+          <span class="etq">trait de 1 px, dehors</span>
+          <span style="position: absolute; left: 10px; bottom: 9px; font-size: 11px; color: #c8dcbb">il se détache du sol</span>
+        </div>
+      </div>
+
+      <!-- la croissance, écrite au moment du choix -->
+      <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 11px 13px;
+                  display: flex; align-items: center; gap: 18px">
+        <div style="display: flex; align-items: center; gap: 9px; flex-shrink: 0">
+          <span style="width: 46px; height: 46px; border: 1px solid #a49a8b; background: #fffdfa; border-radius: 3px"></span>
+          <span style="color: #a49a8b; font-size: 15px">→</span>
+          <span style="width: 52px; height: 52px; border: 2px solid #a8492c; background: #fffdfa; border-radius: 3px"></span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <div style="font-size: 13px; font-weight: 600; color: #8a5a2c">La silhouette grandit de 2 px sur chaque dimension</div>
+          <div style="font-size: 12px; color: #4e483f; line-height: 1.45">La case du jeu fait <span class="mono">64</span>, le fichier qui sort fait <span class="mono">66</span>. C'est le seul réglage de la chaîne qui change la taille du rendu, et il l'écrit au moment où on choisit — pas après.</div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">66 × 66</span><span style="color: #948c80">le rendu</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">24</span><span style="color: #948c80">couleurs — le trait est pris dans la palette</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">2</span><span style="color: #948c80">trous longés</span></span>
+        <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">4 ms</span><span style="color: #948c80">le temps que ça prend</span></span>
+      </div>
+
+      <div style="border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; gap: 14px; align-items: flex-start">
+        <div style="flex-shrink: 0; display: flex; gap: 7px">
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+            <span style="width: 54px; height: 54px; border-radius: 5px; background: #f0ede7; display: flex; align-items: center; justify-content: center"><i class="fig trait" style="width: 15px; height: 34px"></i></span>
+            <span style="font-size: 10.5px; color: #6d675e">cercles</span>
+          </span>
+          <span style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+            <span style="width: 54px; height: 54px; border-radius: 5px; background: #f0ede7; display: flex; align-items: center; justify-content: center"><i class="fig" style="width: 15px; height: 34px; box-shadow: 0 0 0 2px #241d16"></i></span>
+            <span style="font-size: 10.5px; color: #6d675e">laisses</span>
+          </span>
+        </div>
+        <div style="font-size: 12px; color: #4e483f; line-height: 1.5">L'espace entre le bras et le torse, la boucle de ceinture&nbsp;: ce sont des bords du sujet comme le pourtour. <strong style="font-weight: 600">Cercles</strong> les longe aussi — c'est ce que fait un vrai trait de contour. <strong style="font-weight: 600">Laisses</strong> ne change pas le trait&nbsp;: il bouche d'abord les trous, puis longe la silhouette pleine. Sur cette image, deux trous&nbsp;; le plus petit fait 5 px, et un trait d'un pixel de chaque côté le boucherait.</div>
+      </div>
+    </div>
+
+    <!-- ══ le volet ══ -->
+    <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <div class="rt">Le contour</div>
+        <div style="font-size: 11.5px; color: #6d675e">4 réglages</div>
+      </div>
+
+      <div class="rg">
+        <div class="rg-t"><span style="font-weight: 600">épaisseur</span><span class="mono" style="color: #4e483f">1 px</span></div>
+        <div class="cur"><i style="left: 0"></i></div>
+        <div class="rai">1 px de l'image rendue — celle qui part dans le jeu</div>
+        <div class="rai">en croix, la convention du pixel art à une épaisseur — le carré poserait des pixels en diagonale des coins</div>
+      </div>
+
+      <div class="rg">
+        <div class="rg-t"><span style="font-weight: 600">couleur</span></div>
+        <div style="display: flex; align-items: center; gap: 7px">
+          <span style="width: 26px; height: 26px; border-radius: 5px; background: #241d16; border: 1px solid #a49a8b"></span>
+          <span class="mono" style="font-size: 11.5px; color: #4e483f">#241d16</span>
+          <span style="margin-left: auto; display: flex; gap: 3px">
+            <span style="width: 14px; height: 14px; border-radius: 3px; background: #241d16; outline: 1.5px solid #a8492c; outline-offset: 1px"></span>
+            <span style="width: 14px; height: 14px; border-radius: 3px; background: #4a3b2a"></span>
+            <span style="width: 14px; height: 14px; border-radius: 3px; background: #6b5a44"></span>
+            <span style="width: 14px; height: 14px; border-radius: 3px; background: #8a7458"></span>
+            <span style="width: 14px; height: 14px; border-radius: 3px; background: #4a5c3a"></span>
+          </span>
+        </div>
+        <div class="rai">proposé, d'après ta palette · la plus sombre</div>
+      </div>
+
+      <div class="rg">
+        <div class="rg-t"><span style="font-weight: 600">position</span></div>
+        <div class="seg" style="width: 100%">
+          <div class="sg sg-on" style="flex: 1; text-align: center">dehors</div>
+          <div class="sg" style="flex: 1; text-align: center">dedans</div>
+          <div class="sg" style="flex: 1; text-align: center">à cheval</div>
+        </div>
+        <div class="rai rai-f">la silhouette grandit de 2 px sur chaque dimension</div>
+        <div class="rai">Dehors est le défaut&nbsp;: agrandir se défait, manger le sujet ne se défait pas.</div>
+      </div>
+
+      <div class="rg" style="border-bottom: 0">
+        <div class="rg-t"><span style="font-weight: 600">les trous</span></div>
+        <div class="seg" style="width: 100%">
+          <div class="sg sg-on" style="flex: 1; text-align: center">cercles</div>
+          <div class="sg" style="flex: 1; text-align: center">laisses</div>
+        </div>
+        <div class="rai">2 trous dans la silhouette · le plus petit fait 5 px</div>
+      </div>
+
+      <div style="border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-size: 12.5px; font-weight: 600">3 taches contournées</div>
+        <div class="rai">la plus petite fait 7 px — un compte qui surprend se règle dans la table des bords, juste avant</div>
+      </div>
+
+      <div style="margin-top: auto; border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 13px; font-weight: 600; color: #8a3f33">Ce que l'écran ne propose pas</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #4e483f">Le rendu fait 66 px et la case du jeu 64. Rien ici ne propose de <strong style="font-weight: 600">réserver la place du trait</strong> — poser le sujet 2 px plus petit à l'étape d'avant, pour que le trait le ramène pile à 64.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ un seul algorithme ══ -->
+  <div style="display: grid; grid-template-columns: 400px minmax(0,1fr); gap: 22px; align-items: start">
+    <div class="carte" style="padding: 16px 17px; display: flex; flex-direction: column; gap: 10px">
+      <div class="rt">à ne pas chercher</div>
+      <div style="font-size: 16px; font-weight: 600; line-height: 1.3">Le contour n'a pas de moteurs</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Six tables de la chaîne ont chacune une liste de moteurs&nbsp;— le détourage en propose quatre à l'écran, le nettoyage onze. Ici il n'y a qu'une façon de faire — épaissir la silhouette — et quatre réglages pour la conduire. Il n'y a donc pas de liste à comparer, pas de vitesse à choisir, pas de qualité à arbitrer.</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 10px">Deux régimes existent quand même, et personne ne les choisit&nbsp;: si une case est posée, le trait se compte en pixels de la case&nbsp;; sinon, il se pose sur la maille sur laquelle le modèle a peint. L'écran dit lequel s'applique, sous le curseur.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+        <div><span class="h2">Ce que le trait ne sait pas faire</span> <span style="font-size: 13.5px; color: #6d675e">— six manques, dont un déjà écrit dans un plan</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 13px">
+
+        <div class="mot mot-d">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+            <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le trait assombri</div><span class="puce p-a">prévu, jamais écrit</span>
+          </div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Chaque pixel du trait prend une version plus sombre de ce qu'il touche&nbsp;: brun foncé le long de la robe, chair foncée le long du bras, gris le long du bâton. Le sujet garde ses matières au lieu d'être cerné d'un même trait partout. <strong style="font-weight: 600">C'était la troisième façon d'obtenir la couleur</strong>, dans le plan qui a produit cette table&nbsp;: « la teinte dominante du bord, assombrie de 30 à 40 % ». Les deux autres — fixe, et prise dans la palette — sont là. Celle-ci n'a jamais été écrite.</div>
+          <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+            <span class="rt" style="font-size: 9.5px">quand</span> Dès qu'un sujet a plus de deux matières. Un garde en armure cerné de noir uni ressemble à un autocollant&nbsp;; cerné de son propre acier assombri, il ressemble à un dessin.</div>
+        </div>
+
+        <div class="mot mot-d">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+            <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Réserver la place du trait</div><span class="puce p-a">à ajouter</span>
+          </div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Dire à l'étape de la case de poser le sujet 2 px plus petit, pour que le trait le ramène pile à 64. Aujourd'hui la case fait 64, le fichier 66, l'écran l'annonce honnêtement — et rien ne le rattrape. C'est le seul manque qui touche <em>tous</em> les sujets d'un jeu à la fois.</div>
+          <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+            <span class="rt" style="font-size: 9.5px">quand</span> Dès que le jeu range ses sprites dans une grille fixe&nbsp;: les terrains, l'interface, et tout ce qui s'aligne sur une case.</div>
+        </div>
+
+        <div class="mot mot-d">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+            <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Un trait inégal</div><span class="puce p-a">à ajouter</span>
+          </div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Épais en bas, fin sur les côtés, absent en haut — comme si la lumière venait du ciel&nbsp;; ou coupé net là où le sujet touche le sol, pour qu'il ne garde pas une semelle noire qui le décolle de son ombre. Le trait est aujourd'hui de la même largeur partout, et toujours opaque&nbsp;: il n'y a pas non plus de réglage de transparence.</div>
+          <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+            <span class="rt" style="font-size: 9.5px">quand</span> Les personnages et les objets posés au sol. C'est ce qui sépare un sprite découpé d'un sprite posé.</div>
+        </div>
+
+        <div class="mot mot-d">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+            <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le trait sur l'ensemble, pas sur la pièce</div><span class="puce p-a">à ajouter</span>
+          </div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Sur un calque d'équipement, le trait cerne l'épée toute seule. Posée sur le pèlerin, elle a un liseré sombre qui la <em>détache</em> du corps au lieu de l'y coller. Le trait devrait se calculer sur la silhouette de l'ensemble, une fois les calques empilés.</div>
+          <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+            <span class="rt" style="font-size: 9.5px">quand</span> Chaque fois qu'un calque se pose&nbsp;: casque, armure, épée, cape. Les 62 équipements du marais sont concernés.</div>
+        </div>
+
+        <div class="mot mot-d">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+            <div style="font-size: 14px; font-weight: 600; line-height: 1.3">S'éteindre là où il a toujours tort</div><span class="puce p-a">à ajouter</span>
+          </div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Sur une tuile de terrain qui remplit son carré, le trait cerne chaque tuile&nbsp;: posées côte à côte, elles dessinent un carrelage. Sur un décor plein cadre, il dessine un cadre. La table ne sait pas qu'elle est sur une famille où elle n'a rien à faire.</div>
+          <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+            <span class="rt" style="font-size: 9.5px">quand</span> Les 100 terrains et les 38 décors du marais. Aujourd'hui, il faut y penser à chaque image.</div>
+        </div>
+
+        <div class="mot mot-d">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+            <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Voir le trait sur plusieurs fonds</div><span class="puce p-a">à ajouter</span>
+          </div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un trait qui va bien sur l'herbe disparaît sur la pierre de la crypte. Trois vignettes — herbe, pierre, eau — répondraient à la seule question qu'on se pose ici. Aujourd'hui l'image est montrée sur un damier de transparence, c'est-à-dire sur rien.</div>
+          <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+            <span class="rt" style="font-size: 9.5px">quand</span> À chaque réglage de couleur. C'est la question qui a fait poser un contour, et l'écran ne permet pas d'y répondre.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ les réglages ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les réglages</span> <span style="font-size: 13.5px; color: #6d675e">— 4 en tout, tous posés</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">La table la plus complète des sept, et celle que personne n'avait décrite.</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 190px 320px 250px minmax(0,1fr)">
+      <div class="ent">le réglage</div><div class="ent">ce qu'il règle</div><div class="ent">sa plage</div><div class="ent">ce qu'on voit changer</div>
+
+      <div><span style="font-weight: 600">Épaisseur</span></div>
+      <div style="color: #4e483f">La largeur du trait.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">1 à 8 px<br><span style="color: #948c80">par défaut : 1</span></div>
+      <div style="color: #4e483f">Sous le curseur, l'écran dit dans quelle unité on compte, parce qu'elle change. Case posée&nbsp;: « 1 px de l'image rendue — celle qui part dans le jeu ». Sans case, l'image fait encore mille pixels de côté et un trait d'un pixel y est un cheveu invisible&nbsp;: le trait se pose alors sur la maille du modèle, « 1 bloc de 8 px ». Et si le modèle n'a peint aucune maille, on le dit aussi. Au-delà de 8, ce n'est plus un contour mais un cadre — et un cadre se dessine à la main.</div>
+
+      <div><span style="font-weight: 600">Couleur</span></div>
+      <div style="color: #4e483f">De quoi le trait est fait.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">n'importe quelle couleur, ou une pastille de la palette<br><span style="color: #948c80">par défaut : la plus sombre de ta palette</span></div>
+      <div style="color: #4e483f">La palette du jeu est posée sous la pipette et la plus sombre est proposée d'office, avec la mention « proposé, d'après ta palette ». Le noir pur n'est le défaut que si le jeu n'a pas encore de palette. <strong style="font-weight: 600">Rien n'empêche d'en prendre une hors palette</strong>&nbsp;: le trait est tracé après l'étape des couleurs — exprès, pour que sa couleur soit exactement celle qu'on a choisie — donc il n'y repasse pas. L'écran écrit « hors palette » en ambre, et laisse faire.</div>
+
+      <div><span style="font-weight: 600">Position</span></div>
+      <div style="color: #4e483f">Où le trait se pose sur le bord&nbsp;: à l'extérieur du sujet, à l'intérieur, ou à cheval.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">dehors · dedans · à cheval<br><span style="color: #948c80">par défaut : dehors</span></div>
+      <div style="color: #4e483f">Une phrase paraît sous le choix, avec le vrai chiffre&nbsp;: « la silhouette grandit de 2 px sur chaque dimension », ou « la boîte ne bouge pas — le sujet est mangé de l'épaisseur ». Dehors est le défaut parce qu'agrandir se défait et que manger le sujet ne se défait pas. <strong style="font-weight: 600">À cheval, le pixel qui ne tombe pas juste va dehors</strong>&nbsp;: une épaisseur de 3 fait donc grandir de 4, pas de 3. Et à l'épaisseur 1, « à cheval » donne exactement « dehors » — trois boutons pour deux résultats.</div>
+
+      <div><span style="font-weight: 600">Les trous</span></div>
+      <div style="color: #4e483f">Si les trous de la silhouette — entre le bras et le torse, la boucle de ceinture — reçoivent le trait eux aussi.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">cercles · laisses<br><span style="color: #948c80">par défaut : cercles</span></div>
+      <div style="color: #4e483f">Cercles longe aussi l'intérieur, ce que fait un vrai contour de dessinateur. Laisses ne change pas le trait&nbsp;: il bouche d'abord les trous et longe la silhouette pleine — le même remplissage depuis le bord que le détourage. Sous le choix, le compte des trous et la taille du plus petit&nbsp;: c'est ce nombre-là qui décide, parce qu'un trou plus petit que deux fois l'épaisseur se referme.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px; margin-top: 2px">
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 13px; font-weight: 600">Pas de taille minimale ici, et c'est voulu</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Retirer les miettes est le travail de la table juste avant. Deux réglages qui font la même chose à deux endroits finissent par se contredire. Ce que celle-ci fait à la place&nbsp;: elle <em>compte</em> les taches que le trait va cerner, et renvoie sur la table d'avant quand le compte surprend.</div>
+      </div>
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 13px; font-weight: 600">Pourquoi le trait vient si tard</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Tracé <strong style="font-weight: 600">avant</strong> la mise en case, il serait troué&nbsp;: la réduction garde un pixel de trait là où il tombe sur un centre de bloc et le perd ailleurs — pas un contour absent, ce qui serait franc, mais un contour percé. Tracé <strong style="font-weight: 600">avant</strong> l'étape des couleurs, un noir pur ressortirait au plus proche de la palette, c'est-à-dire peut-être pas noir.</div>
+      </div>
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 13px; font-weight: 600">Elle est éteinte au départ</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le détourage, le recadrage, la case et les couleurs sont posés d'office sur toute image d'un jeu. Le contour, non&nbsp;: il faut aller le chercher, sur chaque image. C'est cohérent — tous les sujets n'en veulent pas — mais rien ne le propose non plus là où il irait de soi.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ deux mots pour deux choses ══ -->
+  <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 10px; padding: 17px 19px;
+              display: grid; grid-template-columns: 320px minmax(0,1fr); gap: 22px; align-items: center">
+    <div style="display: flex; flex-direction: column; gap: 5px">
+      <div class="rt" style="color: #b08078">un mot, deux choses</div>
+      <div class="serif" style="font-size: 25px; line-height: 1.15; color: #8a3f33">« Contour » veut dire deux choses sans rapport</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13px; font-weight: 600">Cette table-ci</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Retracer un trait sur une image déjà fabriquée. Gratuit, instantané, on le règle et on le voit.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13px; font-weight: 600">Le trait, dans l'allure du jeu</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">« contour noir », « sans contour », « contour sélectif »&nbsp;: des mots qui partent <em>au modèle</em> avec la demande d'image, et qui décident de ce qu'il dessine. Ça se règle une fois, dans les règles du jeu, et ça coûte une génération à corriger.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ pendant le calcul ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span class="h2">Pendant le calcul</span>
+    <div style="display: grid; grid-template-columns: 340px minmax(0,1fr) 250px; gap: 16px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">combien de temps</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Épaissir une silhouette de 64 px&nbsp;: 3 à 5 millisecondes. C'est l'étape la plus rapide de la chaîne. Sur une planche de 1024 px sans case posée, une trentaine de millisecondes. Rien n'est jamais recalculé depuis le début&nbsp;: le détourage est gardé, et seul ce qui vient après le trait redescend.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">ce qu'on montre à l'écran</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Rien de particulier&nbsp;: le trait apparaît. À 4 ms, une jauge serait plus longue à s'afficher qu'à disparaître, et le produit a déjà tranché que sous 240 ms rien ne paraît. Ce qui bouge, c'est le cadre autour de l'image&nbsp;: il grandit de 2 px sous les yeux quand on passe de « dedans » à « dehors », et « 66 × 66 » se met à jour dans la bande de mesures. C'est ce mouvement du cadre qui apprend le réglage, mieux que la phrase.<br><br>Deux réglages ne se comportent pas pareil, et le dessin doit le dire&nbsp;: la position et les trous partent au serveur <strong style="font-weight: 600">à chaque clic</strong>&nbsp;; l'épaisseur, elle, ne part <strong style="font-weight: 600">qu'au relâchement du curseur</strong>. On glisse librement de 1 à 8 sans déclencher huit calculs. Ce qu'on ne montre jamais&nbsp;: un sablier, une image vide, un pourcentage.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt">peut-on annuler</div>
+        <div style="font-size: 20px; color: #4e483f">La question ne se pose pas</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Rien n'interrompt un calcul dans le produit — mais à 4 ms il n'y a rien à interrompre. Ce qu'on défait, c'est le réglage&nbsp;: la table s'endort et garde ses quatre valeurs. Et le carré de veille ne se clique que si la table porte une valeur&nbsp;: éteindre une table vide écrirait un mot sans rien commander.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ quand ça rate ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">10 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s'est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu'on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le trait est dehors, et le jeu range ses sprites dans une grille de 64.</div>
+        <div style="color: #8a3f33">Le fichier fait 66 px. Le moteur de jeu le recadre tout seul et rogne un pixel en haut et à gauche, ou il le laisse déborder sur la case voisine. Dans les deux cas, personne n'a rien demandé.</div>
+        <div style="color: #4e483f">Passer le trait « dedans » — le sujet est mangé d'un pixel, la case est juste. Ou, quand ça existera, réserver la place du trait à l'étape de la case.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On prend une couleur de trait à la pipette, hors des 24 du jeu.</div>
+        <div style="color: #8a3f33">Le jeu passe à 25 couleurs, sur <em>toutes</em> ses images d'un coup puisque toutes portent le même trait. L'écran écrit « hors palette » en ambre et ne refuse pas.</div>
+        <div style="color: #4e483f">Reprendre une pastille de la palette posée sous la pipette. La plus sombre est proposée d'office ; c'est presque toujours la bonne.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le contour est posé sur une tuile de terrain, qui remplit tout son carré.</div>
+        <div style="color: #8a3f33">Chaque tuile est cernée. Posées côte à côte, elles dessinent un quadrillage sombre&nbsp;: le sol du marais ressemble à du carrelage.</div>
+        <div style="color: #4e483f">Endormir la table. Elle devrait s'éteindre toute seule sur cette famille — une tuile n'a pas de silhouette à détacher.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le nettoyage n'a pas tourné avant, ou son seuil est à zéro.</div>
+        <div style="color: #8a3f33">Trois miettes de six pixels laissées par la réduction deviennent trois pâtés cernés. Elles étaient invisibles ; le trait les a dessinées.</div>
+        <div style="color: #4e483f">Le volet le dit avant le clic — « 3 taches contournées, la plus petite fait 7 px » — et renvoie sur la table des bords, juste avant dans l'ordre.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">« Cercles » sur un sujet aux petits trous&nbsp;: la boucle de ceinture du pèlerin, 3 px à 64 carreaux.</div>
+        <div style="color: #8a3f33">Le trou est bouché. Un pixel de trait de chaque côté d'un trou de 3 px, il ne reste rien&nbsp;: la ceinture devient une bande pleine.</div>
+        <div style="color: #4e483f">Passer sur « laisses », ou remonter la finesse. Le compte des trous et la taille du plus petit sont écrits sous le choix, avant qu'on clique.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le trait est posé sur un calque d'équipement — l'épée seule, sur fond transparent.</div>
+        <div style="color: #8a3f33">L'épée est cernée sur tout son pourtour, y compris là où elle touche la main. Posée sur le pèlerin, elle flotte devant lui au lieu d'être tenue.</div>
+        <div style="color: #4e483f">Endormir la table sur les calques et laisser le trait au corps. Tant que le trait ne se calcule pas sur l'ensemble, c'est la seule réponse juste.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On choisit « à cheval » à l'épaisseur 1, en croyant partager le trait entre l'intérieur et l'extérieur.</div>
+        <div style="color: #8a3f33">Rien ne change par rapport à « dehors ». Le pixel unique ne se coupe pas en deux, et il va vers l'extérieur.</div>
+        <div style="color: #4e483f">Rien à réparer, mais l'écran ne devrait pas offrir trois choix quand il n'y en a que deux&nbsp;: à l'épaisseur 1, « à cheval » devrait se griser et dire pourquoi.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">L'image est entièrement transparente — un tirage raté, une case vide d'une planche.</div>
+        <div style="color: #8a3f33">Rien ne se trace, et <strong style="font-weight: 600">rien ne le dit</strong>. La table reste active, les quatre réglages répondent, et l'image ne change pas. On croit à un bug.</div>
+        <div style="color: #4e483f">C'est un manque. L'image entièrement opaque, elle, grise bien la table avec sa raison en clair&nbsp;: la transparente devrait faire pareil.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">L'image est entièrement opaque — le détourage n'a pas tourné.</div>
+        <div style="color: #8a3f33">La table est grisée, avec sa raison écrite&nbsp;: il n'y a pas de bord de sujet à longer. Rien ne se passe et on sait pourquoi.</div>
+        <div style="color: #4e483f">Remonter à la première table. Le contour ne travaille que sur de la transparence.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On cherche le réglage du contour dans les règles du jeu, parce qu'on y a vu le mot.</div>
+        <div style="color: #8a3f33">Ce qu'on y trouve — « contour noir », « sans contour » — part au modèle avec la demande d'image et n'a aucun effet sur une image déjà revenue. On règle la mauvaise chose.</div>
+        <div style="color: #4e483f">Deux mots pour deux choses, il en faut deux. Ici, « le trait de bord » ; dans les règles du jeu, « le trait » de l'allure. Le mot nu, tout seul, est piégé.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ce qui manque ══ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd'hui</span>
+      <div style="font-size: 12.5px; color: #6d675e; margin-top: -4px">La table est posée, complète et bien faite. Ce qui manque est autour d'elle.</div>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px; margin-top: 3px">
+        <li style="margin-bottom: 6px">Personne ne rattrape les 2 px. L'écran annonce que la silhouette grandit, la case du jeu reste à 64, et rien ne propose de réserver la place du trait à l'étape d'avant.</li>
+        <li style="margin-bottom: 6px">La couleur dérivée n'a jamais été écrite, alors qu'elle était prévue&nbsp;: « la teinte dominante du bord, assombrie de 30 à 40 % ». C'est ce qui sépare un contour d'atelier d'un contour de dessinateur.</li>
+        <li style="margin-bottom: 6px">Le trait est de la même largeur partout et toujours opaque. Pas de transparence, pas d'épaisseur qui suit la lumière, pas d'arrêt sous les pieds.</li>
+        <li style="margin-bottom: 6px">Sur un calque, le trait cerne la pièce et non l'ensemble. Chaque casque, chaque épée porte un liseré qui le détache du corps.</li>
+        <li style="margin-bottom: 6px">La table ne s'éteint pas là où elle a toujours tort — les terrains, les décors pleins cadre.</li>
+        <li style="margin-bottom: 6px">Pas d'aperçu du trait sur plusieurs fonds. L'image est montrée sur un damier de transparence, c'est-à-dire sur rien, alors que la question posée est « est-ce que ça se voit sur l'herbe ».</li>
+        <li style="margin-bottom: 6px">L'image entièrement transparente ne dit rien. Le trait ne se trace pas, la table reste active, et on croit à une panne.</li>
+        <li style="margin-bottom: 6px">« À cheval » à l'épaisseur 1 est exactement « dehors ». Un choix qui ne change rien devrait se griser avec sa raison.</li>
+        <li style="margin-bottom: 6px">L'agent ne sait pas que cette table existe&nbsp;: l'outil qui pose une recette ne documente ni son nom ni ses valeurs. Il faut les connaître pour s'en servir.</li>
+        <li style="margin-bottom: 6px">Aucune table de la chaîne n'a d'aperçu isolé&nbsp;: on pose le réglage, tout redescend, on regarde. Sur quelques dizaines de millisecondes ça passe — mais ça veut dire qu'on ne peut pas comparer deux traits côte à côte.</li>
+      </ul>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">avant / après</div>
+        <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Le pèlerin en robe brune, case de 64 px, 24 couleurs, posé sur l'herbe du marais — pas sur un damier de transparence : c'est sur l'herbe qu'il ira, et c'est là que la question se pose. À GAUCHE, sans trait : la robe brune et le vert sombre du sol ont presque la même valeur, on devine une forme sans voir où elle finit. À DROITE, avec un trait d'un pixel dans la plus sombre des 24 couleurs : il se détache d'un coup. Entre les deux, en petit, le même agrandi huit fois pour qu'on voie que le trait fait bien un pixel de la case et pas un pixel du fichier. Sous les deux images, le cadre : un carré de 64 en trait fin, un carré de 66 en trait rouille par-dessus, avec les deux chiffres. En bas, trois vignettes de la suite : la ceinture bouchée par « cercles » quand le trou fait 3 px ; l'épée seule, cernée, qui flotte devant le pèlerin ; et quatre tuiles d'herbe côte à côte, chacune cernée, qui dessinent un carrelage.</div>
+      </div>
+      <div style="border: 1px solid #e2dbd0; background: #fffdfa; border-radius: 9px; padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">le relevé</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">La chaîne compte <strong style="font-weight: 600">sept tables réglables</strong>, plus <strong style="font-weight: 600">deux fabriques</strong> derrière un trait dans la barre — découper, superposer — qui ne modifient pas cette image mais en produisent d'autres. Le contour est la sixième table, la main la septième et dernière.</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px">Dans le code, la recette compte <strong style="font-weight: 600">huit places</strong>&nbsp;: la superposition en occupe une, la seconde, sans être une table de l'écran — elle nomme deux images, pas une.</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 9px">L'ordre de la chaîne est réécrit à trois endroits&nbsp;: le domaine le nomme, le traitement le rejoue, l'écran le range une troisième fois. Trois listes à tenir d'accord pour un ordre qui « ne se négocie pas ».</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

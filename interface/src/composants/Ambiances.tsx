@@ -467,7 +467,7 @@ function EnTete({ nom, onSupprimer }: { nom: string; onSupprimer: () => void }) 
         type="button"
         onClick={onSupprimer}
         title="aucune image ne bouge — ce qui s'en servait retombe sur le jeu"
-        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
       >
         Supprimer
       </button>
@@ -505,7 +505,7 @@ function LesSources({
                 onClick={() =>
                   poser(palette.sources.filter((_, autre) => autre !== rang))
                 }
-                className="px-1 text-texte-3 hover:text-echec"
+                className="px-1 text-texte-3 hover:text-ancien-echec"
               >
                 ×
               </button>
@@ -520,7 +520,7 @@ function LesSources({
           onClick={() =>
             poser([...palette.sources, { genre: "officiels", reference: "" }])
           }
-          className="mesure h-[26px] rounded-[2px] border border-bord px-2 text-[10px] text-texte-2 hover:text-signal"
+          className="mesure h-[26px] rounded-[2px] border border-bord px-2 text-[10px] text-texte-2 hover:text-ancien-signal"
         >
           + les images officielles du jeu
         </button>
@@ -697,7 +697,7 @@ function LesRetouches({
                 type="button"
                 aria-label={`Défaire ${NOM_DU_GESTE[retouche.geste]} ${retouche.couleur}`}
                 onClick={() => defaire(rang)}
-                className="shrink-0 px-1 text-texte-3 hover:text-echec"
+                className="shrink-0 px-1 text-texte-3 hover:text-ancien-echec"
               >
                 ×
               </button>
@@ -772,7 +772,7 @@ function LaPaletteRendue({
               className={[
                 "relative h-[30px] w-[30px] rounded-[2px] border transition-opacity duration-[80ms]",
                 pastille.retiree
-                  ? "border-echec opacity-40"
+                  ? "border-ancien-echec opacity-40"
                   : "border-bord hover:border-bord-fort",
               ].join(" ")}
             >
@@ -786,7 +786,7 @@ function LaPaletteRendue({
               {pastille.retiree && (
                 <span
                   aria-hidden
-                  className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 rotate-[-30deg] bg-echec"
+                  className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 rotate-[-30deg] bg-ancien-echec"
                 />
               )}
             </button>
@@ -973,7 +973,7 @@ function PanneauAmbiance({
                         ),
                       })
                     }
-                    className="px-1 text-texte-3 hover:text-echec"
+                    className="px-1 text-texte-3 hover:text-ancien-echec"
                   >
                     ×
                   </button>

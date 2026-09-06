@@ -10,7 +10,7 @@ tant qu'on n'a pas dit *par rapport à quoi*
 (`docs/ARCHITECTURE.md` §4, règle 4 ; `docs/v21-arbitrages.md` A-18).
 
 Elle rejoint donc le découpage, à droite du trait de la barre des tables. À
-gauche, les sept places qui règlent l'image courante ; à droite, les deux gestes
+gauche, les huit places qui règlent l'image courante ; à droite, les deux gestes
 qui en fabriquent d'autres.
 
 **Ce qu'elle écrit est un asset entier**, et c'est le seul geste du produit dont

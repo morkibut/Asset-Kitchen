@@ -1,0 +1,12329 @@
+[
+ {
+  "empreinte": "09557667f6a5d952",
+  "empreinte_passes": "d75cddfbc9d13e93",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "09cdf8e3078a8c06",
+  "empreinte_passes": "d75cddfbc9d13e93",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 96,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 48,
+    "palette": [
+     "#a88344",
+     "#845f34",
+     "#8b5422",
+     "#6b5134",
+     "#7b4a21",
+     "#734823",
+     "#6d4624",
+     "#45463e",
+     "#6b401c",
+     "#643e1f",
+     "#603f23",
+     "#5f3a1c",
+     "#583b23",
+     "#57371d",
+     "#313a3b",
+     "#573317",
+     "#4f321a",
+     "#4b321e",
+     "#4a2d17",
+     "#442f1f",
+     "#422a17",
+     "#3a2d22",
+     "#39291d",
+     "#38281b",
+     "#252b2e",
+     "#0d2d40",
+     "#3f2312",
+     "#372415",
+     "#342419",
+     "#332013",
+     "#2f241c",
+     "#2f2217",
+     "#2f1e12",
+     "#29241f",
+     "#28211d",
+     "#2a2018",
+     "#291d16",
+     "#281a11",
+     "#222323",
+     "#22201d",
+     "#221d19",
+     "#182026",
+     "#0a212f",
+     "#221a16",
+     "#231912",
+     "#161a1d",
+     "#1a1614",
+     "#100e0d"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "1086df629547bf65",
+  "empreinte_passes": "df1ccb45d2897ebd",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 206,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "1290c36cf940be6b",
+  "empreinte_passes": "0b46c857bee6193a",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 128,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 137,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 48,
+    "palette": [
+     "#c6b9a8",
+     "#a9a18c",
+     "#a18c79",
+     "#9a7a67",
+     "#956a5b",
+     "#6e6a63",
+     "#815447",
+     "#6f5044",
+     "#665348",
+     "#644840",
+     "#57534f",
+     "#554945",
+     "#3c4b53",
+     "#693f39",
+     "#5a3e39",
+     "#523c3d",
+     "#523933",
+     "#464143",
+     "#483741",
+     "#493533",
+     "#3b4048",
+     "#3b3c3f",
+     "#39363a",
+     "#2f3d49",
+     "#2f363f",
+     "#2f333b",
+     "#512e31",
+     "#412d32",
+     "#3b2d31",
+     "#3a262f",
+     "#31303a",
+     "#322d31",
+     "#32242d",
+     "#2b2f38",
+     "#2b2c36",
+     "#2a2b31",
+     "#29262f",
+     "#2a1e28",
+     "#252832",
+     "#212833",
+     "#23242d",
+     "#23222a",
+     "#1e2129",
+     "#201d29",
+     "#1a1c27",
+     "#1d1b21",
+     "#1a1622",
+     "#150f1b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "13ecd8e0a95a6495",
+  "empreinte_passes": "53dc61d506da82be",
+  "recette": {
+   "bords": null,
+   "contours": {
+    "couleur": "#000000",
+    "epaisseur": 1,
+    "position": "interne",
+    "trous": "cercles"
+   },
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 96,
+    "decalage": -1,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": "recette 01",
+   "passes": [
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 106,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "17251023319bde17",
+  "empreinte_passes": "d75cddfbc9d13e93",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 128,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 48,
+    "palette": [
+     "#c6b9a8",
+     "#a9a18c",
+     "#a18c79",
+     "#9a7a67",
+     "#956a5b",
+     "#6e6a63",
+     "#815447",
+     "#6f5044",
+     "#665348",
+     "#644840",
+     "#57534f",
+     "#554945",
+     "#3c4b53",
+     "#693f39",
+     "#5a3e39",
+     "#523c3d",
+     "#523933",
+     "#464143",
+     "#483741",
+     "#493533",
+     "#3b4048",
+     "#3b3c3f",
+     "#39363a",
+     "#2f3d49",
+     "#2f363f",
+     "#2f333b",
+     "#512e31",
+     "#412d32",
+     "#3b2d31",
+     "#3a262f",
+     "#31303a",
+     "#322d31",
+     "#32242d",
+     "#2b2f38",
+     "#2b2c36",
+     "#2a2b31",
+     "#29262f",
+     "#2a1e28",
+     "#252832",
+     "#212833",
+     "#23242d",
+     "#23222a",
+     "#1e2129",
+     "#201d29",
+     "#1a1c27",
+     "#1d1b21",
+     "#1a1622",
+     "#150f1b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "1ceab362242e9dda",
+  "empreinte_passes": "a7947efc097e73ff",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      700,
+      613
+     ],
+     "portee": "partout",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "256135483633a17a",
+  "empreinte_passes": "28148d0295c3d218",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      666,
+      669
+     ],
+     "portee": "tache",
+     "seuil_alpha": 72,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      707,
+      656
+     ],
+     "portee": "tache",
+     "seuil_alpha": 80,
+     "tolerance": 13,
+     "trace": []
+    },
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      657,
+      795
+     ],
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "259084317d4fe900",
+  "empreinte_passes": "464726bb9f84be0e",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 128,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 48,
+    "palette": [
+     "#c6b9a8",
+     "#a9a18c",
+     "#a18c79",
+     "#9a7a67",
+     "#956a5b",
+     "#6e6a63",
+     "#815447",
+     "#6f5044",
+     "#665348",
+     "#644840",
+     "#57534f",
+     "#554945",
+     "#3c4b53",
+     "#693f39",
+     "#5a3e39",
+     "#523c3d",
+     "#523933",
+     "#464143",
+     "#483741",
+     "#493533",
+     "#3b4048",
+     "#3b3c3f",
+     "#39363a",
+     "#2f3d49",
+     "#2f363f",
+     "#2f333b",
+     "#512e31",
+     "#412d32",
+     "#3b2d31",
+     "#3a262f",
+     "#31303a",
+     "#322d31",
+     "#32242d",
+     "#2b2f38",
+     "#2b2c36",
+     "#2a2b31",
+     "#29262f",
+     "#2a1e28",
+     "#252832",
+     "#212833",
+     "#23242d",
+     "#23222a",
+     "#1e2129",
+     "#201d29",
+     "#1a1c27",
+     "#1d1b21",
+     "#1a1622",
+     "#150f1b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "265318d34fd7fa12",
+  "empreinte_passes": "464726bb9f84be0e",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 24,
+    "palette": [
+     "#e6b870",
+     "#bd8744",
+     "#b37112",
+     "#a96c16",
+     "#72612f",
+     "#2b5e58",
+     "#2a5d58",
+     "#855718",
+     "#2b5b55",
+     "#295b55",
+     "#285953",
+     "#265852",
+     "#24544e",
+     "#784c16",
+     "#704516",
+     "#5e481e",
+     "#643f15",
+     "#1d4b45",
+     "#18433d",
+     "#563713",
+     "#263628",
+     "#362b13",
+     "#15170b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "283809ac62248a6e",
+  "empreinte_passes": "6ef94b14f0650d49",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 213,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      351,
+      774
+     ],
+     "portee": "tache",
+     "seuil_alpha": 147,
+     "tolerance": 43,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 60
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "2ea66781e95975a3",
+  "empreinte_passes": "79457713618b6029",
+  "recette": {
+   "bords": null,
+   "contours": {
+    "couleur": "#000000",
+    "epaisseur": 1,
+    "position": "interne",
+    "trous": "cercles"
+   },
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 92
+   },
+   "main": null,
+   "nom": "pelerin",
+   "passes": [
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "u2net",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 27,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "2f334a5eeb6b4978",
+  "empreinte_passes": "01fc5f5c07388538",
+  "recette": {
+   "bords": {
+    "aire_min": 2
+   },
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 96,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 3,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 5,
+     "tolerance": 18,
+     "trace": []
+    },
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "3c2e3ee27b0b227c",
+  "empreinte_passes": "f0746c5c06d6fa34",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      356,
+      295
+     ],
+     "portee": "tache",
+     "seuil_alpha": 157,
+     "tolerance": 63,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 55
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "3e0f97f3dafaa5f3",
+  "empreinte_passes": "bfb0bdc06a6125c0",
+  "recette": {
+   "bords": {
+    "aire_min": 3
+   },
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 62
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "42e97c578b932f9f",
+  "empreinte_passes": "22371e95eb496483",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "isnet-general-use",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "42ed3c1f11d7d712",
+  "empreinte_passes": "9cdc46cb39fca651",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 227,
+     "tolerance": 74,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 60
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "4aa8c8f5c14bcc9d",
+  "empreinte_passes": "53ccf3c2e9c641d0",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 209,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 37
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "51b1b0d7812517ec",
+  "empreinte_passes": "4f53cda18c2baa0c",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": {
+    "affinage": [],
+    "base": "34c45ab46c524abca57d35a162f522f2-107",
+    "retouche": [],
+    "seuil": 32,
+    "zone": null
+   },
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "51d7e85e57c78adb",
+  "empreinte_passes": "4f53cda18c2baa0c",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": {
+    "calques": [],
+    "opacite": [
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        41,
+        47
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        44,
+        42
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        43,
+        42
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        43,
+        46
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        43,
+        55
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        43,
+        56
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        38,
+        63
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        36,
+        63
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        35,
+        63
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        37,
+        63
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        38,
+        63
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        37,
+        62
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        37,
+        62
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        62
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        39,
+        60
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        43,
+        56
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        42,
+        57
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        41,
+        59
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        41,
+        59
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        41,
+        58
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        42,
+        57
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        42,
+        56
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        42,
+        56
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        43,
+        55
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        43,
+        37
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        43,
+        35
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        42,
+        35
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        41,
+        33
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        36
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        39
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        41
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        14,
+        43
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        14,
+        44
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        14,
+        44
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        44
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        21,
+        62
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        22,
+        62
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        22,
+        63
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        23,
+        63
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        23,
+        63
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        38,
+        57
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        56
+       ],
+       [
+        40,
+        55
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        54
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        54
+       ],
+       [
+        40,
+        53
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        53
+       ],
+       [
+        40,
+        52
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        52
+       ],
+       [
+        40,
+        51
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        51
+       ],
+       [
+        40,
+        50
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        50
+       ],
+       [
+        40,
+        49
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        49
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        48
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        48
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        39,
+        54
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        39,
+        55
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        39,
+        55
+       ],
+       [
+        39,
+        56
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        39,
+        57
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        49
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        48
+       ],
+       [
+        15,
+        49
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        51
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        52
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        53
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        53
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        15,
+        47
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        17,
+        47
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        17,
+        45
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        17,
+        45
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        18,
+        45
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        18,
+        46
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        19,
+        45
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        17,
+        39
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        40,
+        44
+       ]
+      ],
+      "rayon": 0
+     }
+    ]
+   },
+   "nom": null,
+   "passes": [],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "577801667ef3ebef",
+  "empreinte_passes": "5d2512c09facfb2a",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": {
+    "calques": [],
+    "opacite": [
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        155,
+        263
+       ],
+       [
+        155,
+        262
+       ],
+       [
+        154,
+        262
+       ],
+       [
+        154,
+        261
+       ],
+       [
+        154,
+        260
+       ],
+       [
+        154,
+        259
+       ],
+       [
+        154,
+        258
+       ],
+       [
+        155,
+        258
+       ],
+       [
+        155,
+        259
+       ],
+       [
+        155,
+        260
+       ],
+       [
+        156,
+        261
+       ],
+       [
+        156,
+        262
+       ],
+       [
+        156,
+        263
+       ],
+       [
+        157,
+        263
+       ],
+       [
+        157,
+        264
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        165,
+        253
+       ],
+       [
+        165,
+        254
+       ],
+       [
+        165,
+        255
+       ],
+       [
+        165,
+        256
+       ],
+       [
+        165,
+        257
+       ],
+       [
+        165,
+        258
+       ],
+       [
+        165,
+        259
+       ],
+       [
+        165,
+        260
+       ],
+       [
+        166,
+        260
+       ],
+       [
+        166,
+        261
+       ],
+       [
+        166,
+        262
+       ],
+       [
+        166,
+        263
+       ],
+       [
+        166,
+        264
+       ],
+       [
+        166,
+        265
+       ],
+       [
+        166,
+        266
+       ],
+       [
+        166,
+        267
+       ],
+       [
+        166,
+        268
+       ],
+       [
+        166,
+        269
+       ],
+       [
+        165,
+        270
+       ],
+       [
+        164,
+        270
+       ],
+       [
+        164,
+        269
+       ],
+       [
+        164,
+        268
+       ],
+       [
+        163,
+        267
+       ],
+       [
+        162,
+        267
+       ],
+       [
+        162,
+        266
+       ],
+       [
+        161,
+        266
+       ],
+       [
+        161,
+        265
+       ],
+       [
+        161,
+        264
+       ],
+       [
+        161,
+        263
+       ],
+       [
+        161,
+        262
+       ],
+       [
+        161,
+        261
+       ],
+       [
+        161,
+        260
+       ],
+       [
+        161,
+        259
+       ],
+       [
+        161,
+        258
+       ],
+       [
+        161,
+        257
+       ],
+       [
+        161,
+        256
+       ],
+       [
+        161,
+        255
+       ],
+       [
+        161,
+        254
+       ]
+      ],
+      "rayon": 2
+     }
+    ]
+   },
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "isnet-general-use",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 96,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "5d9c3fb6d91de4a7",
+  "empreinte_passes": "ba9731df48f8c0df",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "birefnet-general",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": [
+      [
+       314,
+       346
+      ],
+      [
+       311,
+       345
+      ],
+      [
+       308,
+       342
+      ],
+      [
+       305,
+       339
+      ],
+      [
+       300,
+       331
+      ],
+      [
+       296,
+       323
+      ],
+      [
+       292,
+       316
+      ],
+      [
+       288,
+       310
+      ],
+      [
+       287,
+       307
+      ],
+      [
+       284,
+       305
+      ],
+      [
+       283,
+       303
+      ],
+      [
+       283,
+       301
+      ],
+      [
+       281,
+       301
+      ],
+      [
+       281,
+       299
+      ],
+      [
+       281,
+       297
+      ],
+      [
+       280,
+       295
+      ],
+      [
+       280,
+       292
+      ],
+      [
+       278,
+       289
+      ],
+      [
+       278,
+       287
+      ],
+      [
+       278,
+       285
+      ],
+      [
+       277,
+       283
+      ],
+      [
+       277,
+       281
+      ],
+      [
+       277,
+       278
+      ],
+      [
+       277,
+       276
+      ],
+      [
+       277,
+       274
+      ],
+      [
+       277,
+       272
+      ],
+      [
+       277,
+       270
+      ],
+      [
+       277,
+       268
+      ],
+      [
+       277,
+       266
+      ],
+      [
+       277,
+       264
+      ],
+      [
+       277,
+       262
+      ],
+      [
+       277,
+       258
+      ],
+      [
+       277,
+       256
+      ],
+      [
+       277,
+       253
+      ],
+      [
+       277,
+       251
+      ],
+      [
+       277,
+       249
+      ],
+      [
+       277,
+       247
+      ],
+      [
+       277,
+       243
+      ],
+      [
+       277,
+       241
+      ],
+      [
+       277,
+       239
+      ],
+      [
+       277,
+       233
+      ],
+      [
+       277,
+       230
+      ],
+      [
+       277,
+       227
+      ],
+      [
+       277,
+       224
+      ],
+      [
+       277,
+       222
+      ],
+      [
+       277,
+       220
+      ],
+      [
+       277,
+       218
+      ],
+      [
+       277,
+       216
+      ],
+      [
+       277,
+       214
+      ],
+      [
+       277,
+       212
+      ],
+      [
+       277,
+       208
+      ],
+      [
+       277,
+       206
+      ],
+      [
+       277,
+       203
+      ],
+      [
+       277,
+       201
+      ],
+      [
+       277,
+       199
+      ],
+      [
+       277,
+       197
+      ],
+      [
+       277,
+       193
+      ],
+      [
+       277,
+       189
+      ],
+      [
+       277,
+       187
+      ],
+      [
+       277,
+       183
+      ],
+      [
+       277,
+       180
+      ],
+      [
+       277,
+       178
+      ],
+      [
+       277,
+       174
+      ],
+      [
+       277,
+       172
+      ],
+      [
+       277,
+       169
+      ],
+      [
+       277,
+       165
+      ],
+      [
+       277,
+       162
+      ],
+      [
+       277,
+       158
+      ],
+      [
+       277,
+       156
+      ],
+      [
+       277,
+       153
+      ],
+      [
+       277,
+       151
+      ],
+      [
+       277,
+       149
+      ],
+      [
+       277,
+       147
+      ],
+      [
+       277,
+       145
+      ],
+      [
+       278,
+       143
+      ],
+      [
+       280,
+       141
+      ],
+      [
+       280,
+       139
+      ],
+      [
+       283,
+       135
+      ],
+      [
+       285,
+       131
+      ],
+      [
+       287,
+       129
+      ],
+      [
+       287,
+       127
+      ],
+      [
+       288,
+       123
+      ],
+      [
+       289,
+       119
+      ],
+      [
+       291,
+       116
+      ],
+      [
+       293,
+       111
+      ],
+      [
+       295,
+       108
+      ],
+      [
+       296,
+       104
+      ],
+      [
+       296,
+       101
+      ],
+      [
+       299,
+       99
+      ],
+      [
+       300,
+       96
+      ],
+      [
+       300,
+       93
+      ],
+      [
+       303,
+       91
+      ],
+      [
+       305,
+       88
+      ],
+      [
+       307,
+       84
+      ],
+      [
+       308,
+       81
+      ],
+      [
+       310,
+       80
+      ],
+      [
+       311,
+       77
+      ],
+      [
+       312,
+       74
+      ],
+      [
+       314,
+       73
+      ],
+      [
+       316,
+       70
+      ],
+      [
+       318,
+       68
+      ],
+      [
+       319,
+       66
+      ],
+      [
+       320,
+       64
+      ],
+      [
+       322,
+       61
+      ],
+      [
+       322,
+       58
+      ],
+      [
+       323,
+       56
+      ],
+      [
+       324,
+       54
+      ],
+      [
+       326,
+       54
+      ],
+      [
+       327,
+       52
+      ],
+      [
+       327,
+       49
+      ],
+      [
+       330,
+       47
+      ],
+      [
+       331,
+       45
+      ],
+      [
+       333,
+       42
+      ],
+      [
+       334,
+       39
+      ],
+      [
+       339,
+       37
+      ],
+      [
+       341,
+       35
+      ],
+      [
+       343,
+       34
+      ],
+      [
+       345,
+       31
+      ],
+      [
+       349,
+       30
+      ],
+      [
+       353,
+       27
+      ],
+      [
+       355,
+       26
+      ],
+      [
+       355,
+       24
+      ],
+      [
+       360,
+       24
+      ],
+      [
+       361,
+       22
+      ],
+      [
+       364,
+       20
+      ],
+      [
+       366,
+       20
+      ],
+      [
+       368,
+       19
+      ],
+      [
+       370,
+       18
+      ],
+      [
+       372,
+       18
+      ],
+      [
+       374,
+       16
+      ],
+      [
+       376,
+       16
+      ],
+      [
+       378,
+       16
+      ],
+      [
+       380,
+       16
+      ],
+      [
+       384,
+       16
+      ],
+      [
+       388,
+       16
+      ],
+      [
+       392,
+       16
+      ],
+      [
+       395,
+       16
+      ],
+      [
+       397,
+       16
+      ],
+      [
+       399,
+       16
+      ],
+      [
+       401,
+       16
+      ],
+      [
+       403,
+       16
+      ],
+      [
+       405,
+       16
+      ],
+      [
+       407,
+       16
+      ],
+      [
+       412,
+       16
+      ],
+      [
+       414,
+       16
+      ],
+      [
+       416,
+       16
+      ],
+      [
+       419,
+       16
+      ],
+      [
+       422,
+       16
+      ],
+      [
+       424,
+       16
+      ],
+      [
+       427,
+       16
+      ],
+      [
+       430,
+       16
+      ],
+      [
+       432,
+       16
+      ],
+      [
+       434,
+       16
+      ],
+      [
+       435,
+       18
+      ],
+      [
+       438,
+       18
+      ],
+      [
+       441,
+       18
+      ],
+      [
+       445,
+       19
+      ],
+      [
+       449,
+       19
+      ],
+      [
+       451,
+       20
+      ],
+      [
+       453,
+       20
+      ],
+      [
+       457,
+       20
+      ],
+      [
+       458,
+       23
+      ],
+      [
+       461,
+       23
+      ],
+      [
+       464,
+       23
+      ],
+      [
+       466,
+       24
+      ],
+      [
+       468,
+       24
+      ],
+      [
+       472,
+       24
+      ],
+      [
+       474,
+       26
+      ],
+      [
+       476,
+       26
+      ],
+      [
+       480,
+       26
+      ],
+      [
+       482,
+       27
+      ],
+      [
+       484,
+       29
+      ],
+      [
+       493,
+       33
+      ],
+      [
+       500,
+       35
+      ],
+      [
+       512,
+       39
+      ],
+      [
+       519,
+       43
+      ],
+      [
+       526,
+       45
+      ],
+      [
+       532,
+       46
+      ],
+      [
+       536,
+       47
+      ],
+      [
+       543,
+       50
+      ],
+      [
+       545,
+       52
+      ],
+      [
+       549,
+       52
+      ],
+      [
+       551,
+       53
+      ],
+      [
+       553,
+       54
+      ],
+      [
+       557,
+       56
+      ],
+      [
+       559,
+       57
+      ],
+      [
+       561,
+       57
+      ],
+      [
+       568,
+       60
+      ],
+      [
+       570,
+       62
+      ],
+      [
+       572,
+       62
+      ],
+      [
+       574,
+       64
+      ],
+      [
+       577,
+       65
+      ],
+      [
+       581,
+       69
+      ],
+      [
+       584,
+       70
+      ],
+      [
+       588,
+       72
+      ],
+      [
+       591,
+       73
+      ],
+      [
+       593,
+       76
+      ],
+      [
+       595,
+       76
+      ],
+      [
+       599,
+       77
+      ],
+      [
+       600,
+       80
+      ],
+      [
+       603,
+       81
+      ],
+      [
+       604,
+       83
+      ],
+      [
+       607,
+       83
+      ],
+      [
+       609,
+       85
+      ],
+      [
+       613,
+       87
+      ],
+      [
+       615,
+       88
+      ],
+      [
+       619,
+       93
+      ],
+      [
+       620,
+       96
+      ],
+      [
+       622,
+       97
+      ],
+      [
+       626,
+       103
+      ],
+      [
+       630,
+       107
+      ],
+      [
+       632,
+       112
+      ],
+      [
+       635,
+       114
+      ],
+      [
+       636,
+       118
+      ],
+      [
+       638,
+       123
+      ],
+      [
+       642,
+       127
+      ],
+      [
+       642,
+       129
+      ],
+      [
+       647,
+       134
+      ],
+      [
+       649,
+       138
+      ],
+      [
+       651,
+       141
+      ],
+      [
+       651,
+       143
+      ],
+      [
+       653,
+       145
+      ],
+      [
+       654,
+       147
+      ],
+      [
+       654,
+       149
+      ],
+      [
+       657,
+       150
+      ],
+      [
+       658,
+       153
+      ],
+      [
+       659,
+       157
+      ],
+      [
+       661,
+       160
+      ],
+      [
+       662,
+       162
+      ],
+      [
+       662,
+       164
+      ],
+      [
+       663,
+       166
+      ],
+      [
+       663,
+       168
+      ],
+      [
+       665,
+       170
+      ],
+      [
+       665,
+       172
+      ],
+      [
+       670,
+       191
+      ],
+      [
+       673,
+       197
+      ],
+      [
+       673,
+       200
+      ],
+      [
+       674,
+       206
+      ],
+      [
+       677,
+       211
+      ],
+      [
+       677,
+       214
+      ],
+      [
+       677,
+       216
+      ],
+      [
+       678,
+       222
+      ],
+      [
+       678,
+       226
+      ],
+      [
+       680,
+       227
+      ],
+      [
+       680,
+       233
+      ],
+      [
+       680,
+       235
+      ],
+      [
+       681,
+       237
+      ],
+      [
+       681,
+       241
+      ],
+      [
+       681,
+       243
+      ],
+      [
+       681,
+       246
+      ],
+      [
+       681,
+       250
+      ],
+      [
+       681,
+       254
+      ],
+      [
+       681,
+       258
+      ],
+      [
+       681,
+       260
+      ],
+      [
+       681,
+       264
+      ],
+      [
+       681,
+       266
+      ],
+      [
+       681,
+       268
+      ],
+      [
+       681,
+       272
+      ],
+      [
+       681,
+       274
+      ],
+      [
+       681,
+       277
+      ],
+      [
+       681,
+       281
+      ],
+      [
+       681,
+       284
+      ],
+      [
+       681,
+       287
+      ],
+      [
+       681,
+       289
+      ],
+      [
+       680,
+       293
+      ],
+      [
+       680,
+       295
+      ],
+      [
+       680,
+       299
+      ],
+      [
+       678,
+       301
+      ],
+      [
+       678,
+       303
+      ],
+      [
+       677,
+       305
+      ],
+      [
+       674,
+       307
+      ],
+      [
+       674,
+       310
+      ],
+      [
+       673,
+       312
+      ],
+      [
+       672,
+       316
+      ],
+      [
+       672,
+       318
+      ],
+      [
+       670,
+       320
+      ],
+      [
+       670,
+       322
+      ],
+      [
+       668,
+       326
+      ],
+      [
+       666,
+       328
+      ],
+      [
+       663,
+       330
+      ],
+      [
+       662,
+       333
+      ],
+      [
+       661,
+       335
+      ],
+      [
+       659,
+       337
+      ],
+      [
+       658,
+       339
+      ],
+      [
+       657,
+       341
+      ],
+      [
+       653,
+       342
+      ],
+      [
+       647,
+       346
+      ],
+      [
+       645,
+       347
+      ],
+      [
+       643,
+       347
+      ],
+      [
+       641,
+       347
+      ],
+      [
+       639,
+       349
+      ],
+      [
+       636,
+       350
+      ],
+      [
+       634,
+       350
+      ],
+      [
+       632,
+       351
+      ],
+      [
+       630,
+       353
+      ],
+      [
+       628,
+       353
+      ],
+      [
+       627,
+       357
+      ],
+      [
+       627,
+       360
+      ],
+      [
+       627,
+       362
+      ],
+      [
+       627,
+       364
+      ],
+      [
+       627,
+       366
+      ],
+      [
+       628,
+       368
+      ],
+      [
+       630,
+       370
+      ],
+      [
+       630,
+       372
+      ],
+      [
+       632,
+       374
+      ],
+      [
+       634,
+       377
+      ],
+      [
+       636,
+       380
+      ],
+      [
+       638,
+       381
+      ],
+      [
+       641,
+       384
+      ],
+      [
+       643,
+       387
+      ],
+      [
+       645,
+       389
+      ],
+      [
+       646,
+       391
+      ],
+      [
+       649,
+       392
+      ],
+      [
+       651,
+       395
+      ],
+      [
+       653,
+       396
+      ],
+      [
+       655,
+       400
+      ],
+      [
+       662,
+       403
+      ],
+      [
+       665,
+       405
+      ],
+      [
+       668,
+       405
+      ],
+      [
+       669,
+       407
+      ],
+      [
+       672,
+       407
+      ],
+      [
+       674,
+       407
+      ],
+      [
+       676,
+       408
+      ],
+      [
+       678,
+       408
+      ],
+      [
+       682,
+       410
+      ],
+      [
+       684,
+       410
+      ],
+      [
+       688,
+       411
+      ],
+      [
+       693,
+       411
+      ],
+      [
+       696,
+       411
+      ],
+      [
+       699,
+       411
+      ],
+      [
+       701,
+       411
+      ],
+      [
+       703,
+       411
+      ],
+      [
+       705,
+       411
+      ],
+      [
+       707,
+       411
+      ],
+      [
+       713,
+       416
+      ],
+      [
+       718,
+       419
+      ],
+      [
+       720,
+       422
+      ],
+      [
+       722,
+       422
+      ],
+      [
+       723,
+       426
+      ],
+      [
+       726,
+       427
+      ],
+      [
+       727,
+       430
+      ],
+      [
+       731,
+       432
+      ],
+      [
+       732,
+       435
+      ],
+      [
+       734,
+       437
+      ],
+      [
+       735,
+       439
+      ],
+      [
+       736,
+       441
+      ],
+      [
+       738,
+       442
+      ],
+      [
+       739,
+       445
+      ],
+      [
+       743,
+       449
+      ],
+      [
+       745,
+       451
+      ],
+      [
+       746,
+       453
+      ],
+      [
+       749,
+       458
+      ],
+      [
+       751,
+       461
+      ],
+      [
+       753,
+       462
+      ],
+      [
+       754,
+       464
+      ],
+      [
+       757,
+       466
+      ],
+      [
+       758,
+       468
+      ],
+      [
+       759,
+       470
+      ],
+      [
+       761,
+       473
+      ],
+      [
+       763,
+       474
+      ],
+      [
+       763,
+       476
+      ],
+      [
+       765,
+       477
+      ],
+      [
+       766,
+       480
+      ],
+      [
+       768,
+       481
+      ],
+      [
+       769,
+       485
+      ],
+      [
+       769,
+       487
+      ],
+      [
+       770,
+       489
+      ],
+      [
+       772,
+       492
+      ],
+      [
+       774,
+       495
+      ],
+      [
+       774,
+       499
+      ],
+      [
+       776,
+       503
+      ],
+      [
+       776,
+       505
+      ],
+      [
+       776,
+       507
+      ],
+      [
+       776,
+       509
+      ],
+      [
+       776,
+       511
+      ],
+      [
+       777,
+       514
+      ],
+      [
+       777,
+       518
+      ],
+      [
+       777,
+       534
+      ],
+      [
+       777,
+       536
+      ],
+      [
+       777,
+       539
+      ],
+      [
+       777,
+       541
+      ],
+      [
+       777,
+       543
+      ],
+      [
+       777,
+       545
+      ],
+      [
+       777,
+       547
+      ],
+      [
+       777,
+       553
+      ],
+      [
+       776,
+       555
+      ],
+      [
+       776,
+       557
+      ],
+      [
+       773,
+       559
+      ],
+      [
+       773,
+       561
+      ],
+      [
+       772,
+       564
+      ],
+      [
+       772,
+       569
+      ],
+      [
+       770,
+       572
+      ],
+      [
+       770,
+       574
+      ],
+      [
+       770,
+       577
+      ],
+      [
+       769,
+       581
+      ],
+      [
+       769,
+       585
+      ],
+      [
+       769,
+       588
+      ],
+      [
+       769,
+       591
+      ],
+      [
+       769,
+       593
+      ],
+      [
+       769,
+       595
+      ],
+      [
+       769,
+       597
+      ],
+      [
+       769,
+       599
+      ],
+      [
+       769,
+       601
+      ],
+      [
+       769,
+       604
+      ],
+      [
+       769,
+       608
+      ],
+      [
+       769,
+       612
+      ],
+      [
+       769,
+       615
+      ],
+      [
+       769,
+       619
+      ],
+      [
+       769,
+       623
+      ],
+      [
+       769,
+       626
+      ],
+      [
+       769,
+       628
+      ],
+      [
+       769,
+       630
+      ],
+      [
+       769,
+       632
+      ],
+      [
+       769,
+       634
+      ],
+      [
+       769,
+       636
+      ],
+      [
+       769,
+       638
+      ],
+      [
+       769,
+       641
+      ],
+      [
+       769,
+       643
+      ],
+      [
+       769,
+       645
+      ],
+      [
+       770,
+       647
+      ],
+      [
+       770,
+       649
+      ],
+      [
+       772,
+       651
+      ],
+      [
+       772,
+       653
+      ],
+      [
+       772,
+       655
+      ],
+      [
+       772,
+       658
+      ],
+      [
+       772,
+       661
+      ],
+      [
+       774,
+       663
+      ],
+      [
+       774,
+       665
+      ],
+      [
+       774,
+       668
+      ],
+      [
+       776,
+       669
+      ],
+      [
+       776,
+       672
+      ],
+      [
+       776,
+       674
+      ],
+      [
+       776,
+       676
+      ],
+      [
+       776,
+       685
+      ],
+      [
+       776,
+       692
+      ],
+      [
+       776,
+       695
+      ],
+      [
+       776,
+       697
+      ],
+      [
+       776,
+       700
+      ],
+      [
+       776,
+       703
+      ],
+      [
+       776,
+       705
+      ],
+      [
+       776,
+       707
+      ],
+      [
+       776,
+       709
+      ],
+      [
+       776,
+       711
+      ],
+      [
+       776,
+       713
+      ],
+      [
+       776,
+       715
+      ],
+      [
+       776,
+       718
+      ],
+      [
+       776,
+       720
+      ],
+      [
+       776,
+       722
+      ],
+      [
+       776,
+       724
+      ],
+      [
+       776,
+       726
+      ],
+      [
+       776,
+       728
+      ],
+      [
+       776,
+       730
+      ],
+      [
+       776,
+       732
+      ],
+      [
+       776,
+       734
+      ],
+      [
+       776,
+       736
+      ],
+      [
+       776,
+       738
+      ],
+      [
+       773,
+       740
+      ],
+      [
+       773,
+       742
+      ],
+      [
+       772,
+       745
+      ],
+      [
+       770,
+       746
+      ],
+      [
+       769,
+       749
+      ],
+      [
+       768,
+       751
+      ],
+      [
+       766,
+       751
+      ],
+      [
+       765,
+       753
+      ],
+      [
+       763,
+       754
+      ],
+      [
+       761,
+       754
+      ],
+      [
+       759,
+       754
+      ],
+      [
+       755,
+       755
+      ],
+      [
+       753,
+       755
+      ],
+      [
+       750,
+       757
+      ],
+      [
+       746,
+       758
+      ],
+      [
+       742,
+       759
+      ],
+      [
+       740,
+       759
+      ],
+      [
+       738,
+       759
+      ],
+      [
+       735,
+       759
+      ],
+      [
+       732,
+       762
+      ],
+      [
+       728,
+       762
+      ],
+      [
+       726,
+       762
+      ],
+      [
+       723,
+       762
+      ],
+      [
+       720,
+       762
+      ],
+      [
+       718,
+       762
+      ],
+      [
+       713,
+       762
+      ],
+      [
+       711,
+       762
+      ],
+      [
+       708,
+       762
+      ],
+      [
+       704,
+       762
+      ],
+      [
+       700,
+       762
+      ],
+      [
+       697,
+       762
+      ],
+      [
+       693,
+       762
+      ],
+      [
+       690,
+       762
+      ],
+      [
+       688,
+       762
+      ],
+      [
+       685,
+       762
+      ],
+      [
+       682,
+       762
+      ],
+      [
+       680,
+       762
+      ],
+      [
+       678,
+       761
+      ],
+      [
+       676,
+       759
+      ],
+      [
+       674,
+       759
+      ],
+      [
+       672,
+       759
+      ],
+      [
+       670,
+       758
+      ],
+      [
+       666,
+       757
+      ],
+      [
+       663,
+       755
+      ],
+      [
+       661,
+       755
+      ],
+      [
+       659,
+       755
+      ],
+      [
+       657,
+       753
+      ],
+      [
+       655,
+       753
+      ],
+      [
+       653,
+       751
+      ],
+      [
+       651,
+       751
+      ],
+      [
+       650,
+       749
+      ],
+      [
+       650,
+       747
+      ],
+      [
+       647,
+       745
+      ],
+      [
+       645,
+       743
+      ],
+      [
+       643,
+       742
+      ],
+      [
+       642,
+       740
+      ],
+      [
+       639,
+       736
+      ],
+      [
+       636,
+       734
+      ],
+      [
+       634,
+       732
+      ],
+      [
+       632,
+       731
+      ],
+      [
+       631,
+       728
+      ],
+      [
+       628,
+       724
+      ],
+      [
+       626,
+       722
+      ],
+      [
+       623,
+       720
+      ],
+      [
+       620,
+       716
+      ],
+      [
+       619,
+       713
+      ],
+      [
+       616,
+       712
+      ],
+      [
+       615,
+       709
+      ],
+      [
+       613,
+       708
+      ],
+      [
+       613,
+       705
+      ],
+      [
+       613,
+       703
+      ],
+      [
+       613,
+       701
+      ],
+      [
+       611,
+       701
+      ],
+      [
+       609,
+       701
+      ],
+      [
+       607,
+       701
+      ],
+      [
+       605,
+       701
+      ],
+      [
+       604,
+       703
+      ],
+      [
+       601,
+       704
+      ],
+      [
+       600,
+       707
+      ],
+      [
+       600,
+       712
+      ],
+      [
+       600,
+       715
+      ],
+      [
+       600,
+       718
+      ],
+      [
+       601,
+       720
+      ],
+      [
+       603,
+       720
+      ],
+      [
+       603,
+       722
+      ],
+      [
+       604,
+       724
+      ],
+      [
+       605,
+       726
+      ],
+      [
+       607,
+       728
+      ],
+      [
+       607,
+       730
+      ],
+      [
+       608,
+       732
+      ],
+      [
+       608,
+       734
+      ],
+      [
+       609,
+       736
+      ],
+      [
+       609,
+       738
+      ],
+      [
+       611,
+       740
+      ],
+      [
+       613,
+       742
+      ],
+      [
+       615,
+       745
+      ],
+      [
+       618,
+       747
+      ],
+      [
+       618,
+       749
+      ],
+      [
+       619,
+       751
+      ],
+      [
+       619,
+       753
+      ],
+      [
+       622,
+       755
+      ],
+      [
+       622,
+       757
+      ],
+      [
+       623,
+       759
+      ],
+      [
+       626,
+       761
+      ],
+      [
+       627,
+       763
+      ],
+      [
+       628,
+       765
+      ],
+      [
+       630,
+       768
+      ],
+      [
+       631,
+       770
+      ],
+      [
+       632,
+       772
+      ],
+      [
+       632,
+       774
+      ],
+      [
+       634,
+       776
+      ],
+      [
+       635,
+       778
+      ],
+      [
+       635,
+       780
+      ],
+      [
+       638,
+       781
+      ],
+      [
+       641,
+       785
+      ],
+      [
+       642,
+       788
+      ],
+      [
+       643,
+       790
+      ],
+      [
+       645,
+       792
+      ],
+      [
+       646,
+       795
+      ],
+      [
+       647,
+       797
+      ],
+      [
+       647,
+       799
+      ],
+      [
+       647,
+       801
+      ],
+      [
+       647,
+       803
+      ],
+      [
+       647,
+       805
+      ],
+      [
+       646,
+       807
+      ],
+      [
+       645,
+       812
+      ],
+      [
+       643,
+       813
+      ],
+      [
+       642,
+       817
+      ],
+      [
+       641,
+       820
+      ],
+      [
+       636,
+       823
+      ],
+      [
+       635,
+       826
+      ],
+      [
+       635,
+       828
+      ],
+      [
+       634,
+       830
+      ],
+      [
+       632,
+       830
+      ],
+      [
+       630,
+       832
+      ],
+      [
+       628,
+       834
+      ],
+      [
+       626,
+       835
+      ],
+      [
+       624,
+       835
+      ],
+      [
+       620,
+       836
+      ],
+      [
+       619,
+       838
+      ],
+      [
+       616,
+       838
+      ],
+      [
+       613,
+       839
+      ],
+      [
+       611,
+       839
+      ],
+      [
+       608,
+       842
+      ],
+      [
+       604,
+       843
+      ],
+      [
+       600,
+       845
+      ],
+      [
+       597,
+       845
+      ],
+      [
+       595,
+       845
+      ],
+      [
+       593,
+       845
+      ],
+      [
+       591,
+       845
+      ],
+      [
+       589,
+       846
+      ],
+      [
+       586,
+       846
+      ],
+      [
+       584,
+       847
+      ],
+      [
+       581,
+       847
+      ],
+      [
+       578,
+       847
+      ],
+      [
+       576,
+       847
+      ],
+      [
+       574,
+       847
+      ],
+      [
+       572,
+       847
+      ],
+      [
+       570,
+       847
+      ],
+      [
+       568,
+       847
+      ],
+      [
+       566,
+       847
+      ],
+      [
+       564,
+       847
+      ],
+      [
+       562,
+       847
+      ],
+      [
+       559,
+       847
+      ],
+      [
+       557,
+       847
+      ],
+      [
+       555,
+       847
+      ],
+      [
+       553,
+       845
+      ],
+      [
+       551,
+       845
+      ],
+      [
+       550,
+       843
+      ],
+      [
+       547,
+       840
+      ],
+      [
+       545,
+       839
+      ],
+      [
+       543,
+       839
+      ],
+      [
+       541,
+       836
+      ],
+      [
+       538,
+       835
+      ],
+      [
+       536,
+       834
+      ],
+      [
+       535,
+       832
+      ],
+      [
+       532,
+       831
+      ],
+      [
+       530,
+       827
+      ],
+      [
+       528,
+       827
+      ],
+      [
+       526,
+       826
+      ],
+      [
+       524,
+       824
+      ],
+      [
+       523,
+       822
+      ],
+      [
+       522,
+       820
+      ],
+      [
+       520,
+       820
+      ],
+      [
+       518,
+       817
+      ],
+      [
+       516,
+       816
+      ],
+      [
+       515,
+       819
+      ],
+      [
+       515,
+       822
+      ],
+      [
+       515,
+       824
+      ],
+      [
+       515,
+       826
+      ],
+      [
+       515,
+       828
+      ],
+      [
+       515,
+       830
+      ],
+      [
+       515,
+       832
+      ],
+      [
+       515,
+       834
+      ],
+      [
+       515,
+       836
+      ],
+      [
+       515,
+       838
+      ],
+      [
+       515,
+       840
+      ],
+      [
+       512,
+       842
+      ],
+      [
+       512,
+       845
+      ],
+      [
+       512,
+       847
+      ],
+      [
+       511,
+       849
+      ],
+      [
+       509,
+       853
+      ],
+      [
+       508,
+       855
+      ],
+      [
+       507,
+       857
+      ],
+      [
+       505,
+       858
+      ],
+      [
+       501,
+       861
+      ],
+      [
+       500,
+       863
+      ],
+      [
+       499,
+       865
+      ],
+      [
+       497,
+       867
+      ],
+      [
+       496,
+       869
+      ],
+      [
+       493,
+       872
+      ],
+      [
+       489,
+       874
+      ],
+      [
+       488,
+       876
+      ],
+      [
+       487,
+       878
+      ],
+      [
+       485,
+       880
+      ],
+      [
+       482,
+       881
+      ],
+      [
+       477,
+       882
+      ],
+      [
+       476,
+       884
+      ],
+      [
+       474,
+       884
+      ],
+      [
+       472,
+       885
+      ],
+      [
+       470,
+       886
+      ],
+      [
+       468,
+       886
+      ],
+      [
+       466,
+       889
+      ],
+      [
+       462,
+       889
+      ],
+      [
+       459,
+       890
+      ],
+      [
+       457,
+       890
+      ],
+      [
+       455,
+       890
+      ],
+      [
+       453,
+       890
+      ],
+      [
+       451,
+       890
+      ],
+      [
+       449,
+       890
+      ],
+      [
+       447,
+       890
+      ],
+      [
+       445,
+       890
+      ],
+      [
+       442,
+       890
+      ],
+      [
+       438,
+       890
+      ],
+      [
+       434,
+       890
+      ],
+      [
+       427,
+       890
+      ],
+      [
+       424,
+       890
+      ],
+      [
+       420,
+       890
+      ],
+      [
+       416,
+       890
+      ],
+      [
+       411,
+       889
+      ],
+      [
+       408,
+       888
+      ],
+      [
+       405,
+       888
+      ],
+      [
+       404,
+       886
+      ],
+      [
+       401,
+       885
+      ],
+      [
+       397,
+       884
+      ],
+      [
+       395,
+       882
+      ],
+      [
+       393,
+       882
+      ],
+      [
+       391,
+       881
+      ],
+      [
+       389,
+       881
+      ],
+      [
+       387,
+       878
+      ],
+      [
+       385,
+       877
+      ],
+      [
+       381,
+       874
+      ],
+      [
+       377,
+       873
+      ],
+      [
+       374,
+       870
+      ],
+      [
+       373,
+       866
+      ],
+      [
+       370,
+       865
+      ],
+      [
+       369,
+       863
+      ],
+      [
+       366,
+       862
+      ],
+      [
+       364,
+       859
+      ],
+      [
+       362,
+       858
+      ],
+      [
+       361,
+       855
+      ],
+      [
+       358,
+       854
+      ],
+      [
+       355,
+       851
+      ],
+      [
+       353,
+       849
+      ],
+      [
+       351,
+       847
+      ],
+      [
+       349,
+       843
+      ],
+      [
+       346,
+       840
+      ],
+      [
+       345,
+       838
+      ],
+      [
+       343,
+       836
+      ],
+      [
+       342,
+       834
+      ],
+      [
+       341,
+       832
+      ],
+      [
+       341,
+       830
+      ],
+      [
+       341,
+       828
+      ],
+      [
+       341,
+       826
+      ],
+      [
+       341,
+       824
+      ],
+      [
+       341,
+       822
+      ],
+      [
+       341,
+       820
+      ],
+      [
+       341,
+       817
+      ],
+      [
+       341,
+       815
+      ],
+      [
+       341,
+       813
+      ],
+      [
+       341,
+       811
+      ],
+      [
+       341,
+       809
+      ],
+      [
+       341,
+       807
+      ],
+      [
+       342,
+       805
+      ],
+      [
+       342,
+       803
+      ],
+      [
+       345,
+       801
+      ],
+      [
+       346,
+       799
+      ],
+      [
+       346,
+       797
+      ],
+      [
+       347,
+       795
+      ],
+      [
+       347,
+       793
+      ],
+      [
+       349,
+       790
+      ],
+      [
+       350,
+       786
+      ],
+      [
+       353,
+       784
+      ],
+      [
+       353,
+       782
+      ],
+      [
+       355,
+       780
+      ],
+      [
+       357,
+       778
+      ],
+      [
+       358,
+       776
+      ],
+      [
+       358,
+       774
+      ],
+      [
+       358,
+       772
+      ],
+      [
+       358,
+       770
+      ],
+      [
+       358,
+       766
+      ],
+      [
+       358,
+       763
+      ],
+      [
+       358,
+       761
+      ],
+      [
+       358,
+       759
+      ],
+      [
+       354,
+       757
+      ],
+      [
+       353,
+       755
+      ],
+      [
+       350,
+       754
+      ],
+      [
+       347,
+       751
+      ],
+      [
+       343,
+       750
+      ],
+      [
+       341,
+       749
+      ],
+      [
+       339,
+       749
+      ],
+      [
+       337,
+       750
+      ],
+      [
+       335,
+       751
+      ],
+      [
+       335,
+       753
+      ],
+      [
+       334,
+       755
+      ],
+      [
+       334,
+       757
+      ],
+      [
+       334,
+       759
+      ],
+      [
+       334,
+       762
+      ],
+      [
+       334,
+       765
+      ],
+      [
+       334,
+       768
+      ],
+      [
+       334,
+       770
+      ],
+      [
+       334,
+       772
+      ],
+      [
+       334,
+       774
+      ],
+      [
+       333,
+       776
+      ],
+      [
+       333,
+       778
+      ],
+      [
+       330,
+       780
+      ],
+      [
+       330,
+       782
+      ],
+      [
+       330,
+       785
+      ],
+      [
+       328,
+       786
+      ],
+      [
+       328,
+       789
+      ],
+      [
+       328,
+       792
+      ],
+      [
+       328,
+       795
+      ],
+      [
+       328,
+       797
+      ],
+      [
+       328,
+       799
+      ],
+      [
+       328,
+       801
+      ],
+      [
+       328,
+       803
+      ],
+      [
+       328,
+       805
+      ],
+      [
+       328,
+       807
+      ],
+      [
+       326,
+       808
+      ],
+      [
+       324,
+       808
+      ],
+      [
+       322,
+       808
+      ],
+      [
+       315,
+       805
+      ],
+      [
+       312,
+       801
+      ],
+      [
+       310,
+       801
+      ],
+      [
+       308,
+       800
+      ],
+      [
+       305,
+       797
+      ],
+      [
+       303,
+       796
+      ],
+      [
+       300,
+       795
+      ],
+      [
+       296,
+       792
+      ],
+      [
+       293,
+       790
+      ],
+      [
+       291,
+       789
+      ],
+      [
+       289,
+       789
+      ],
+      [
+       288,
+       786
+      ],
+      [
+       285,
+       784
+      ],
+      [
+       281,
+       782
+      ],
+      [
+       277,
+       782
+      ],
+      [
+       274,
+       780
+      ],
+      [
+       273,
+       778
+      ],
+      [
+       270,
+       776
+      ],
+      [
+       269,
+       774
+      ],
+      [
+       265,
+       773
+      ],
+      [
+       262,
+       772
+      ],
+      [
+       261,
+       770
+      ],
+      [
+       258,
+       769
+      ],
+      [
+       254,
+       766
+      ],
+      [
+       250,
+       763
+      ],
+      [
+       247,
+       761
+      ],
+      [
+       243,
+       758
+      ],
+      [
+       242,
+       755
+      ],
+      [
+       239,
+       753
+      ],
+      [
+       238,
+       751
+      ],
+      [
+       237,
+       749
+      ],
+      [
+       235,
+       749
+      ],
+      [
+       235,
+       747
+      ],
+      [
+       235,
+       745
+      ],
+      [
+       234,
+       743
+      ],
+      [
+       234,
+       740
+      ],
+      [
+       231,
+       736
+      ],
+      [
+       230,
+       734
+      ],
+      [
+       230,
+       731
+      ],
+      [
+       228,
+       727
+      ],
+      [
+       228,
+       724
+      ],
+      [
+       228,
+       720
+      ],
+      [
+       228,
+       718
+      ],
+      [
+       228,
+       715
+      ],
+      [
+       228,
+       712
+      ],
+      [
+       228,
+       708
+      ],
+      [
+       228,
+       704
+      ],
+      [
+       228,
+       700
+      ],
+      [
+       228,
+       697
+      ],
+      [
+       228,
+       695
+      ],
+      [
+       228,
+       693
+      ],
+      [
+       228,
+       690
+      ],
+      [
+       228,
+       686
+      ],
+      [
+       230,
+       682
+      ],
+      [
+       230,
+       678
+      ],
+      [
+       231,
+       674
+      ],
+      [
+       233,
+       672
+      ],
+      [
+       233,
+       670
+      ],
+      [
+       233,
+       668
+      ],
+      [
+       238,
+       651
+      ],
+      [
+       239,
+       646
+      ],
+      [
+       241,
+       642
+      ],
+      [
+       242,
+       635
+      ],
+      [
+       242,
+       632
+      ],
+      [
+       242,
+       628
+      ],
+      [
+       243,
+       624
+      ],
+      [
+       245,
+       620
+      ],
+      [
+       245,
+       618
+      ],
+      [
+       245,
+       616
+      ],
+      [
+       245,
+       612
+      ],
+      [
+       247,
+       611
+      ],
+      [
+       247,
+       609
+      ],
+      [
+       247,
+       607
+      ],
+      [
+       247,
+       604
+      ],
+      [
+       247,
+       601
+      ],
+      [
+       247,
+       597
+      ],
+      [
+       247,
+       595
+      ],
+      [
+       247,
+       593
+      ],
+      [
+       247,
+       591
+      ],
+      [
+       247,
+       589
+      ],
+      [
+       247,
+       586
+      ],
+      [
+       247,
+       584
+      ],
+      [
+       246,
+       582
+      ],
+      [
+       246,
+       578
+      ],
+      [
+       246,
+       576
+      ],
+      [
+       246,
+       574
+      ],
+      [
+       246,
+       572
+      ],
+      [
+       246,
+       570
+      ],
+      [
+       246,
+       568
+      ],
+      [
+       246,
+       566
+      ],
+      [
+       246,
+       564
+      ],
+      [
+       246,
+       562
+      ],
+      [
+       246,
+       559
+      ],
+      [
+       246,
+       557
+      ],
+      [
+       246,
+       555
+      ],
+      [
+       246,
+       553
+      ],
+      [
+       246,
+       550
+      ],
+      [
+       246,
+       541
+      ],
+      [
+       246,
+       535
+      ],
+      [
+       247,
+       532
+      ],
+      [
+       247,
+       530
+      ],
+      [
+       249,
+       527
+      ],
+      [
+       249,
+       522
+      ],
+      [
+       250,
+       519
+      ],
+      [
+       253,
+       512
+      ],
+      [
+       254,
+       509
+      ],
+      [
+       254,
+       505
+      ],
+      [
+       257,
+       504
+      ],
+      [
+       258,
+       497
+      ],
+      [
+       258,
+       495
+      ],
+      [
+       258,
+       492
+      ],
+      [
+       258,
+       488
+      ],
+      [
+       258,
+       484
+      ],
+      [
+       260,
+       480
+      ],
+      [
+       260,
+       478
+      ],
+      [
+       260,
+       476
+      ],
+      [
+       260,
+       474
+      ],
+      [
+       260,
+       472
+      ],
+      [
+       260,
+       470
+      ],
+      [
+       261,
+       468
+      ],
+      [
+       261,
+       465
+      ],
+      [
+       261,
+       462
+      ],
+      [
+       261,
+       459
+      ],
+      [
+       261,
+       455
+      ],
+      [
+       261,
+       453
+      ],
+      [
+       262,
+       450
+      ],
+      [
+       262,
+       447
+      ],
+      [
+       262,
+       445
+      ],
+      [
+       262,
+       443
+      ],
+      [
+       264,
+       441
+      ],
+      [
+       266,
+       437
+      ],
+      [
+       266,
+       435
+      ],
+      [
+       266,
+       432
+      ],
+      [
+       268,
+       428
+      ],
+      [
+       268,
+       426
+      ],
+      [
+       269,
+       424
+      ],
+      [
+       270,
+       420
+      ],
+      [
+       270,
+       418
+      ],
+      [
+       272,
+       415
+      ],
+      [
+       272,
+       412
+      ],
+      [
+       273,
+       410
+      ],
+      [
+       273,
+       408
+      ],
+      [
+       280,
+       399
+      ],
+      [
+       280,
+       396
+      ],
+      [
+       281,
+       393
+      ],
+      [
+       281,
+       391
+      ],
+      [
+       281,
+       389
+      ],
+      [
+       281,
+       385
+      ],
+      [
+       283,
+       384
+      ],
+      [
+       284,
+       380
+      ],
+      [
+       284,
+       378
+      ],
+      [
+       285,
+       376
+      ],
+      [
+       287,
+       374
+      ],
+      [
+       288,
+       372
+      ],
+      [
+       288,
+       370
+      ],
+      [
+       291,
+       369
+      ],
+      [
+       292,
+       366
+      ],
+      [
+       293,
+       364
+      ],
+      [
+       295,
+       362
+      ],
+      [
+       297,
+       360
+      ],
+      [
+       299,
+       360
+      ],
+      [
+       300,
+       358
+      ],
+      [
+       303,
+       357
+      ],
+      [
+       305,
+       355
+      ],
+      [
+       307,
+       355
+      ]
+     ]
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": [
+     4,
+     0,
+     1023,
+     1019
+    ],
+    "marge": 3
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "60ce3dfea5dffa10",
+  "empreinte_passes": "c79b054ed60d211a",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 199,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 55
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "6b2f3ff247b24db5",
+  "empreinte_passes": "bfb0bdc06a6125c0",
+  "recette": {
+   "bords": {
+    "aire_min": 3
+   },
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": "sprite-64",
+   "passes": [
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "6baefb87f46b2cbf",
+  "empreinte_passes": "fb17def2aa9aadaf",
+  "recette": {
+   "bords": {
+    "aire_min": 3
+   },
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 45
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 4,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 116,
+     "tolerance": 41,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "6e40f683ba08fc59",
+  "empreinte_passes": "5c158be364557cd4",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 24,
+    "palette": [],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "7db9bd6884ac862d",
+  "empreinte_passes": "4f53cda18c2baa0c",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": {
+    "affinage": [],
+    "base": "b7e313d9dd704501ad40747b3808fb8c-100",
+    "retouche": [],
+    "seuil": 32,
+    "zone": null
+   },
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "7ffcb485e29e7bf3",
+  "empreinte_passes": "84919446ecfc3817",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "birefnet-general",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "8841772c17b98b17",
+  "empreinte_passes": "bc97f3724d99f206",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      711,
+      655
+     ],
+     "portee": "partout",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "884199ecccde3678",
+  "empreinte_passes": "6bc6911e03a71170",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": {
+    "calques": [],
+    "opacite": [
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        232,
+        547
+       ],
+       [
+        232,
+        548
+       ],
+       [
+        232,
+        549
+       ],
+       [
+        232,
+        550
+       ],
+       [
+        233,
+        551
+       ],
+       [
+        233,
+        552
+       ],
+       [
+        234,
+        553
+       ],
+       [
+        234,
+        554
+       ],
+       [
+        234,
+        555
+       ],
+       [
+        234,
+        557
+       ],
+       [
+        234,
+        558
+       ],
+       [
+        234,
+        559
+       ],
+       [
+        234,
+        560
+       ],
+       [
+        234,
+        561
+       ],
+       [
+        234,
+        562
+       ],
+       [
+        234,
+        563
+       ],
+       [
+        234,
+        564
+       ],
+       [
+        234,
+        565
+       ],
+       [
+        234,
+        566
+       ],
+       [
+        234,
+        567
+       ],
+       [
+        234,
+        568
+       ],
+       [
+        234,
+        569
+       ],
+       [
+        234,
+        570
+       ],
+       [
+        234,
+        571
+       ],
+       [
+        234,
+        572
+       ],
+       [
+        234,
+        573
+       ],
+       [
+        234,
+        574
+       ],
+       [
+        234,
+        575
+       ],
+       [
+        234,
+        576
+       ],
+       [
+        234,
+        577
+       ],
+       [
+        234,
+        578
+       ],
+       [
+        234,
+        579
+       ],
+       [
+        234,
+        580
+       ],
+       [
+        234,
+        581
+       ],
+       [
+        234,
+        582
+       ],
+       [
+        234,
+        583
+       ],
+       [
+        234,
+        584
+       ],
+       [
+        234,
+        585
+       ]
+      ],
+      "rayon": 4
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        350,
+        566
+       ],
+       [
+        350,
+        568
+       ],
+       [
+        350,
+        569
+       ],
+       [
+        351,
+        569
+       ],
+       [
+        352,
+        570
+       ],
+       [
+        353,
+        571
+       ],
+       [
+        353,
+        572
+       ],
+       [
+        354,
+        573
+       ],
+       [
+        355,
+        574
+       ],
+       [
+        355,
+        575
+       ],
+       [
+        355,
+        576
+       ],
+       [
+        357,
+        577
+       ],
+       [
+        357,
+        578
+       ],
+       [
+        358,
+        579
+       ],
+       [
+        359,
+        579
+       ],
+       [
+        360,
+        581
+       ],
+       [
+        361,
+        581
+       ],
+       [
+        362,
+        581
+       ],
+       [
+        363,
+        582
+       ],
+       [
+        364,
+        582
+       ],
+       [
+        365,
+        582
+       ],
+       [
+        366,
+        582
+       ],
+       [
+        367,
+        582
+       ],
+       [
+        368,
+        582
+       ],
+       [
+        369,
+        582
+       ],
+       [
+        370,
+        582
+       ],
+       [
+        371,
+        582
+       ],
+       [
+        372,
+        582
+       ],
+       [
+        373,
+        582
+       ],
+       [
+        374,
+        582
+       ],
+       [
+        375,
+        582
+       ],
+       [
+        376,
+        582
+       ],
+       [
+        377,
+        582
+       ],
+       [
+        378,
+        582
+       ],
+       [
+        379,
+        582
+       ],
+       [
+        380,
+        582
+       ],
+       [
+        381,
+        582
+       ],
+       [
+        383,
+        582
+       ],
+       [
+        384,
+        582
+       ],
+       [
+        385,
+        582
+       ],
+       [
+        386,
+        582
+       ],
+       [
+        387,
+        582
+       ],
+       [
+        388,
+        582
+       ],
+       [
+        389,
+        582
+       ],
+       [
+        390,
+        582
+       ],
+       [
+        391,
+        582
+       ],
+       [
+        392,
+        582
+       ],
+       [
+        393,
+        582
+       ],
+       [
+        394,
+        582
+       ],
+       [
+        395,
+        582
+       ],
+       [
+        396,
+        582
+       ],
+       [
+        397,
+        580
+       ],
+       [
+        398,
+        579
+       ],
+       [
+        399,
+        578
+       ],
+       [
+        400,
+        577
+       ],
+       [
+        402,
+        576
+       ],
+       [
+        402,
+        575
+       ],
+       [
+        403,
+        574
+       ],
+       [
+        403,
+        573
+       ],
+       [
+        404,
+        572
+       ],
+       [
+        405,
+        570
+       ],
+       [
+        405,
+        569
+       ],
+       [
+        406,
+        568
+       ],
+       [
+        406,
+        567
+       ],
+       [
+        406,
+        566
+       ],
+       [
+        406,
+        565
+       ],
+       [
+        406,
+        564
+       ],
+       [
+        406,
+        563
+       ],
+       [
+        406,
+        562
+       ],
+       [
+        406,
+        561
+       ],
+       [
+        406,
+        560
+       ]
+      ],
+      "rayon": 7
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        348,
+        569
+       ],
+       [
+        348,
+        570
+       ],
+       [
+        348,
+        571
+       ],
+       [
+        348,
+        572
+       ],
+       [
+        348,
+        573
+       ],
+       [
+        348,
+        574
+       ],
+       [
+        348,
+        575
+       ],
+       [
+        349,
+        575
+       ],
+       [
+        350,
+        576
+       ],
+       [
+        351,
+        577
+       ],
+       [
+        352,
+        578
+       ],
+       [
+        353,
+        578
+       ],
+       [
+        354,
+        580
+       ],
+       [
+        355,
+        581
+       ],
+       [
+        356,
+        581
+       ],
+       [
+        357,
+        581
+       ],
+       [
+        358,
+        581
+       ],
+       [
+        360,
+        581
+       ],
+       [
+        361,
+        581
+       ],
+       [
+        362,
+        582
+       ],
+       [
+        363,
+        582
+       ],
+       [
+        364,
+        582
+       ],
+       [
+        365,
+        582
+       ],
+       [
+        366,
+        582
+       ],
+       [
+        367,
+        582
+       ],
+       [
+        368,
+        582
+       ]
+      ],
+      "rayon": 7
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        400,
+        582
+       ],
+       [
+        401,
+        582
+       ],
+       [
+        402,
+        582
+       ],
+       [
+        403,
+        582
+       ],
+       [
+        404,
+        582
+       ],
+       [
+        405,
+        582
+       ],
+       [
+        405,
+        581
+       ],
+       [
+        405,
+        580
+       ],
+       [
+        407,
+        579
+       ],
+       [
+        407,
+        578
+       ],
+       [
+        408,
+        576
+       ],
+       [
+        408,
+        575
+       ],
+       [
+        408,
+        574
+       ],
+       [
+        408,
+        573
+       ],
+       [
+        409,
+        572
+       ],
+       [
+        409,
+        571
+       ],
+       [
+        409,
+        570
+       ],
+       [
+        409,
+        569
+       ],
+       [
+        409,
+        568
+       ],
+       [
+        409,
+        567
+       ],
+       [
+        409,
+        566
+       ],
+       [
+        409,
+        565
+       ],
+       [
+        409,
+        564
+       ],
+       [
+        409,
+        563
+       ],
+       [
+        409,
+        562
+       ]
+      ],
+      "rayon": 7
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        143,
+        540
+       ]
+      ],
+      "rayon": 7
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        132,
+        528
+       ]
+      ],
+      "rayon": 7
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        90,
+        538
+       ]
+      ],
+      "rayon": 7
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        142,
+        560
+       ]
+      ],
+      "rayon": 7
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        111,
+        524
+       ]
+      ],
+      "rayon": 7
+     }
+    ]
+   },
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 182,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      379,
+      793
+     ],
+     "portee": "tache",
+     "seuil_alpha": 181,
+     "tolerance": 31,
+     "trace": []
+    },
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      321,
+      766
+     ],
+     "portee": "tache",
+     "seuil_alpha": 165,
+     "tolerance": 30,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 55
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "8a1f029b941c03d9",
+  "empreinte_passes": "7caabb5d70bfcb2c",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 48,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": {
+    "calques": [
+     {
+      "nom": "calque 1",
+      "passages": [
+       {
+        "couleur": "#172f28",
+        "garde": true,
+        "points": [
+         [
+          60,
+          88
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#172f28",
+        "garde": true,
+        "points": [
+         [
+          60,
+          82
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#172f28",
+        "garde": true,
+        "points": [
+         [
+          63,
+          84
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#172f28",
+        "garde": true,
+        "points": [
+         [
+          63,
+          87
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0c1612",
+        "garde": true,
+        "points": [
+         [
+          59,
+          81
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0c1612",
+        "garde": true,
+        "points": [
+         [
+          59,
+          86
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0c1612",
+        "garde": true,
+        "points": [
+         [
+          62,
+          90
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0c1612",
+        "garde": true,
+        "points": [
+         [
+          60,
+          90
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0c1612",
+        "garde": true,
+        "points": [
+         [
+          65,
+          84
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0c1612",
+        "garde": true,
+        "points": [
+         [
+          62,
+          82
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0c1612",
+        "garde": true,
+        "points": [
+         [
+          63,
+          89
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0c1612",
+        "garde": true,
+        "points": [
+         [
+          63,
+          86
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#050505",
+        "garde": true,
+        "points": [
+         [
+          58,
+          76
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#050505",
+        "garde": true,
+        "points": [
+         [
+          60,
+          72
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#050505",
+        "garde": true,
+        "points": [
+         [
+          57,
+          83
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#050505",
+        "garde": true,
+        "points": [
+         [
+          57,
+          86
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#050505",
+        "garde": true,
+        "points": [
+         [
+          59,
+          92
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#050505",
+        "garde": true,
+        "points": [
+         [
+          60,
+          92
+         ],
+         [
+          60,
+          91
+         ],
+         [
+          59,
+          90
+         ],
+         [
+          58,
+          90
+         ],
+         [
+          58,
+          89
+         ],
+         [
+          57,
+          89
+         ],
+         [
+          57,
+          88
+         ],
+         [
+          56,
+          88
+         ],
+         [
+          56,
+          87
+         ],
+         [
+          56,
+          86
+         ],
+         [
+          56,
+          85
+         ],
+         [
+          56,
+          84
+         ],
+         [
+          56,
+          83
+         ],
+         [
+          56,
+          82
+         ],
+         [
+          57,
+          81
+         ],
+         [
+          57,
+          80
+         ],
+         [
+          58,
+          80
+         ],
+         [
+          58,
+          79
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0f221d",
+        "garde": true,
+        "points": [
+         [
+          64,
+          72
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0f221d",
+        "garde": true,
+        "points": [
+         [
+          63,
+          79
+         ]
+        ],
+        "rayon": 2
+       },
+       {
+        "couleur": "#0f221d",
+        "garde": true,
+        "points": [
+         [
+          63,
+          77
+         ]
+        ],
+        "rayon": 2
+       }
+      ],
+      "visible": true
+     }
+    ],
+    "opacite": []
+   },
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 4,
+     "masquee": false,
+     "modele": "u2net",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 8,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "8af0cb1ad0b7c0ef",
+  "empreinte_passes": "131328ea81bb1027",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 113,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "8b9997e267156013",
+  "empreinte_passes": "55f3c2b975aa33de",
+  "recette": {
+   "bords": {
+    "aire_min": 0
+   },
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 256,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 59,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "8d919626d83f6a96",
+  "empreinte_passes": "b88878dcf525feca",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "birefnet-general",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 69,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "8ddc9b363833bc17",
+  "empreinte_passes": "6ac5ba8e53db93ce",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": {
+    "calques": [],
+    "opacite": [
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        435,
+        616
+       ],
+       [
+        435,
+        617
+       ],
+       [
+        435,
+        618
+       ],
+       [
+        435,
+        619
+       ],
+       [
+        435,
+        620
+       ],
+       [
+        435,
+        621
+       ],
+       [
+        435,
+        622
+       ],
+       [
+        435,
+        623
+       ],
+       [
+        436,
+        624
+       ],
+       [
+        436,
+        625
+       ],
+       [
+        436,
+        626
+       ],
+       [
+        436,
+        627
+       ],
+       [
+        436,
+        628
+       ],
+       [
+        436,
+        629
+       ],
+       [
+        436,
+        630
+       ],
+       [
+        436,
+        631
+       ],
+       [
+        436,
+        632
+       ],
+       [
+        436,
+        633
+       ],
+       [
+        436,
+        634
+       ],
+       [
+        436,
+        636
+       ],
+       [
+        436,
+        637
+       ],
+       [
+        436,
+        638
+       ],
+       [
+        436,
+        639
+       ],
+       [
+        436,
+        640
+       ],
+       [
+        436,
+        641
+       ],
+       [
+        436,
+        642
+       ]
+      ],
+      "rayon": 8
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        411,
+        611
+       ],
+       [
+        411,
+        612
+       ],
+       [
+        411,
+        613
+       ],
+       [
+        411,
+        614
+       ],
+       [
+        411,
+        615
+       ],
+       [
+        411,
+        616
+       ],
+       [
+        411,
+        617
+       ],
+       [
+        411,
+        618
+       ],
+       [
+        411,
+        619
+       ],
+       [
+        411,
+        620
+       ],
+       [
+        411,
+        621
+       ],
+       [
+        411,
+        622
+       ],
+       [
+        411,
+        623
+       ],
+       [
+        412,
+        624
+       ],
+       [
+        412,
+        625
+       ],
+       [
+        412,
+        626
+       ],
+       [
+        412,
+        627
+       ],
+       [
+        412,
+        628
+       ],
+       [
+        412,
+        629
+       ],
+       [
+        412,
+        630
+       ],
+       [
+        412,
+        631
+       ],
+       [
+        412,
+        632
+       ],
+       [
+        413,
+        633
+       ],
+       [
+        413,
+        634
+       ],
+       [
+        413,
+        635
+       ],
+       [
+        413,
+        637
+       ],
+       [
+        413,
+        638
+       ],
+       [
+        413,
+        639
+       ],
+       [
+        413,
+        640
+       ],
+       [
+        413,
+        641
+       ],
+       [
+        413,
+        642
+       ],
+       [
+        413,
+        643
+       ]
+      ],
+      "rayon": 8
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        435,
+        514
+       ],
+       [
+        435,
+        515
+       ],
+       [
+        435,
+        516
+       ],
+       [
+        436,
+        517
+       ],
+       [
+        436,
+        518
+       ],
+       [
+        436,
+        519
+       ],
+       [
+        436,
+        520
+       ],
+       [
+        436,
+        521
+       ],
+       [
+        436,
+        522
+       ],
+       [
+        436,
+        523
+       ],
+       [
+        436,
+        524
+       ],
+       [
+        436,
+        525
+       ],
+       [
+        436,
+        526
+       ],
+       [
+        436,
+        527
+       ],
+       [
+        436,
+        528
+       ],
+       [
+        436,
+        529
+       ],
+       [
+        436,
+        531
+       ]
+      ],
+      "rayon": 8
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        490,
+        569
+       ],
+       [
+        490,
+        570
+       ],
+       [
+        490,
+        571
+       ],
+       [
+        490,
+        572
+       ],
+       [
+        490,
+        573
+       ],
+       [
+        490,
+        575
+       ],
+       [
+        490,
+        576
+       ],
+       [
+        490,
+        577
+       ],
+       [
+        490,
+        578
+       ],
+       [
+        490,
+        579
+       ],
+       [
+        490,
+        580
+       ],
+       [
+        490,
+        581
+       ],
+       [
+        490,
+        582
+       ],
+       [
+        490,
+        583
+       ],
+       [
+        490,
+        584
+       ],
+       [
+        490,
+        585
+       ],
+       [
+        490,
+        586
+       ],
+       [
+        490,
+        587
+       ],
+       [
+        490,
+        588
+       ]
+      ],
+      "rayon": 8
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        488,
+        675
+       ],
+       [
+        488,
+        676
+       ],
+       [
+        488,
+        677
+       ],
+       [
+        488,
+        678
+       ],
+       [
+        488,
+        679
+       ],
+       [
+        488,
+        680
+       ],
+       [
+        488,
+        681
+       ],
+       [
+        488,
+        682
+       ],
+       [
+        488,
+        683
+       ],
+       [
+        488,
+        684
+       ],
+       [
+        488,
+        686
+       ],
+       [
+        488,
+        687
+       ],
+       [
+        488,
+        688
+       ],
+       [
+        488,
+        689
+       ],
+       [
+        488,
+        690
+       ],
+       [
+        488,
+        691
+       ],
+       [
+        488,
+        692
+       ],
+       [
+        488,
+        694
+       ],
+       [
+        488,
+        695
+       ],
+       [
+        488,
+        697
+       ],
+       [
+        488,
+        698
+       ],
+       [
+        488,
+        699
+       ],
+       [
+        488,
+        700
+       ],
+       [
+        488,
+        701
+       ],
+       [
+        488,
+        702
+       ],
+       [
+        488,
+        704
+       ],
+       [
+        488,
+        705
+       ]
+      ],
+      "rayon": 8
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        466,
+        667
+       ],
+       [
+        466,
+        668
+       ],
+       [
+        466,
+        669
+       ],
+       [
+        468,
+        672
+       ],
+       [
+        469,
+        675
+       ],
+       [
+        469,
+        676
+       ],
+       [
+        469,
+        677
+       ],
+       [
+        469,
+        679
+       ],
+       [
+        469,
+        681
+       ],
+       [
+        470,
+        682
+       ],
+       [
+        470,
+        683
+       ],
+       [
+        470,
+        684
+       ],
+       [
+        470,
+        686
+       ],
+       [
+        470,
+        688
+       ],
+       [
+        470,
+        689
+       ],
+       [
+        470,
+        690
+       ],
+       [
+        470,
+        691
+       ],
+       [
+        470,
+        692
+       ],
+       [
+        470,
+        693
+       ],
+       [
+        470,
+        694
+       ],
+       [
+        470,
+        695
+       ],
+       [
+        470,
+        696
+       ],
+       [
+        470,
+        698
+       ],
+       [
+        470,
+        699
+       ],
+       [
+        470,
+        700
+       ]
+      ],
+      "rayon": 8
+     }
+    ]
+   },
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 3,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 56,
+     "trace": []
+    },
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      387,
+      800
+     ],
+     "portee": "partout",
+     "seuil_alpha": 86,
+     "tolerance": 6,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 55
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "8f6056b74fdf4c87",
+  "empreinte_passes": "e0ead1fca551bb40",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 96,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 47,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 48,
+    "palette": [
+     "#c6b9a8",
+     "#a9a18c",
+     "#a18c79",
+     "#9a7a67",
+     "#956a5b",
+     "#6e6a63",
+     "#815447",
+     "#6f5044",
+     "#665348",
+     "#644840",
+     "#57534f",
+     "#554945",
+     "#3c4b53",
+     "#693f39",
+     "#5a3e39",
+     "#523c3d",
+     "#523933",
+     "#464143",
+     "#483741",
+     "#493533",
+     "#3b4048",
+     "#3b3c3f",
+     "#39363a",
+     "#2f3d49",
+     "#2f363f",
+     "#2f333b",
+     "#512e31",
+     "#412d32",
+     "#3b2d31",
+     "#3a262f",
+     "#31303a",
+     "#322d31",
+     "#32242d",
+     "#2b2f38",
+     "#2b2c36",
+     "#2a2b31",
+     "#29262f",
+     "#2a1e28",
+     "#252832",
+     "#212833",
+     "#23242d",
+     "#23222a",
+     "#1e2129",
+     "#201d29",
+     "#1a1c27",
+     "#1d1b21",
+     "#1a1622",
+     "#150f1b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "96b11d0bf697881f",
+  "empreinte_passes": "43ec4fbd1d584150",
+  "recette": {
+   "bords": null,
+   "contours": {
+    "couleur": "#000000",
+    "epaisseur": 1,
+    "position": "interne",
+    "trous": "cercles"
+   },
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": "recette 01",
+   "passes": [
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      178,
+      38
+     ],
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      174,
+      167
+     ],
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "97c4644c1f9cd272",
+  "empreinte_passes": "d75cddfbc9d13e93",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 96,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 48,
+    "palette": [
+     "#af8c5d",
+     "#8d6842",
+     "#955825",
+     "#675540",
+     "#834d23",
+     "#774b25",
+     "#714825",
+     "#474843",
+     "#734120",
+     "#674020",
+     "#623e21",
+     "#5c3d24",
+     "#5b3920",
+     "#363c3c",
+     "#62331b",
+     "#55341c",
+     "#4f341f",
+     "#4e2f19",
+     "#473221",
+     "#472e1b",
+     "#452b18",
+     "#3e2f24",
+     "#3c2b1e",
+     "#3c291a",
+     "#2a2c2c",
+     "#0d2e41",
+     "#442414",
+     "#3a2415",
+     "#362518",
+     "#362113",
+     "#31251d",
+     "#312317",
+     "#311f13",
+     "#2b241f",
+     "#29211c",
+     "#2b2017",
+     "#2a1e15",
+     "#2a1a11",
+     "#232322",
+     "#231f1c",
+     "#221d1b",
+     "#241d16",
+     "#192125",
+     "#0b212f",
+     "#231a14",
+     "#181a1c",
+     "#1b1614",
+     "#100e0d"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "9a3551f2b3a5431c",
+  "empreinte_passes": "df8dca5f9ae46a78",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 128,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 175,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 48,
+    "palette": [
+     "#c6b9a8",
+     "#a9a18c",
+     "#a18c79",
+     "#9a7a67",
+     "#956a5b",
+     "#6e6a63",
+     "#815447",
+     "#6f5044",
+     "#665348",
+     "#644840",
+     "#57534f",
+     "#554945",
+     "#3c4b53",
+     "#693f39",
+     "#5a3e39",
+     "#523c3d",
+     "#523933",
+     "#464143",
+     "#483741",
+     "#493533",
+     "#3b4048",
+     "#3b3c3f",
+     "#39363a",
+     "#2f3d49",
+     "#2f363f",
+     "#2f333b",
+     "#512e31",
+     "#412d32",
+     "#3b2d31",
+     "#3a262f",
+     "#31303a",
+     "#322d31",
+     "#32242d",
+     "#2b2f38",
+     "#2b2c36",
+     "#2a2b31",
+     "#29262f",
+     "#2a1e28",
+     "#252832",
+     "#212833",
+     "#23242d",
+     "#23222a",
+     "#1e2129",
+     "#201d29",
+     "#1a1c27",
+     "#1d1b21",
+     "#1a1622",
+     "#150f1b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "9bbafa6a4a0863e7",
+  "empreinte_passes": "be0ed42d13559c69",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 197,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 56
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "a9ed3341b858303f",
+  "empreinte_passes": "cd7e7a9fbbe0eb73",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "aaf0c3034636d1d2",
+  "empreinte_passes": "a747eb7942154033",
+  "recette": {
+   "bords": {
+    "aire_min": 28
+   },
+   "contours": {
+    "couleur": "#000000",
+    "epaisseur": 1,
+    "position": "externe",
+    "trous": "cercles"
+   },
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "vote",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "birefnet-general",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 64,
+    "palette": [],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 6
+   },
+   "veille": [
+    "contours"
+   ]
+  }
+ },
+ {
+  "empreinte": "bd55e2ebe863ec09",
+  "empreinte_passes": "d75cddfbc9d13e93",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "bde0738907fbc627",
+  "empreinte_passes": "d75cddfbc9d13e93",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "be2b2852b93979f0",
+  "empreinte_passes": "a747eb7942154033",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "birefnet-general",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 24,
+    "palette": [
+     "#e6b870",
+     "#bd8744",
+     "#b37112",
+     "#a96c16",
+     "#72612f",
+     "#2b5e58",
+     "#2a5d58",
+     "#855718",
+     "#2b5b55",
+     "#295b55",
+     "#285953",
+     "#265852",
+     "#24544e",
+     "#784c16",
+     "#704516",
+     "#5e481e",
+     "#643f15",
+     "#1d4b45",
+     "#18433d",
+     "#563713",
+     "#263628",
+     "#362b13",
+     "#15170b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "bf56c2a7df06b9f7",
+  "empreinte_passes": "464726bb9f84be0e",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 128,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 48,
+    "palette": [
+     "#c6b9a8",
+     "#a9a18c",
+     "#a18c79",
+     "#9a7a67",
+     "#956a5b",
+     "#6e6a63",
+     "#815447",
+     "#6f5044",
+     "#665348",
+     "#644840",
+     "#57534f",
+     "#554945",
+     "#3c4b53",
+     "#693f39",
+     "#5a3e39",
+     "#523c3d",
+     "#523933",
+     "#464143",
+     "#483741",
+     "#493533",
+     "#3b4048",
+     "#3b3c3f",
+     "#39363a",
+     "#2f3d49",
+     "#2f363f",
+     "#2f333b",
+     "#512e31",
+     "#412d32",
+     "#3b2d31",
+     "#3a262f",
+     "#31303a",
+     "#322d31",
+     "#32242d",
+     "#2b2f38",
+     "#2b2c36",
+     "#2a2b31",
+     "#29262f",
+     "#2a1e28",
+     "#252832",
+     "#212833",
+     "#23242d",
+     "#23222a",
+     "#1e2129",
+     "#201d29",
+     "#1a1c27",
+     "#1d1b21",
+     "#1a1622",
+     "#150f1b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "c17f342a3f525c2b",
+  "empreinte_passes": "c9ad8a6044cb4126",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 128,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 111,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "c21256117d6cbfa6",
+  "empreinte_passes": "d75cddfbc9d13e93",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 24,
+    "palette": [
+     "#e6b870",
+     "#bd8744",
+     "#b37112",
+     "#a96c16",
+     "#72612f",
+     "#2b5e58",
+     "#2a5d58",
+     "#855718",
+     "#2b5b55",
+     "#295b55",
+     "#285953",
+     "#265852",
+     "#24544e",
+     "#784c16",
+     "#704516",
+     "#5e481e",
+     "#643f15",
+     "#1d4b45",
+     "#18433d",
+     "#563713",
+     "#263628",
+     "#362b13",
+     "#15170b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "c470a0cf2790d502",
+  "empreinte_passes": "bdd2cbfef190a91e",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "birefnet-general-lite",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 1,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 64,
+    "palette": [],
+    "tramage": "aucun"
+   },
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "c6ea691d2327b278",
+  "empreinte_passes": "4f53cda18c2baa0c",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": {
+    "affinage": [],
+    "base": "0daa42bb89474631b265744a5958cde7-100",
+    "retouche": [
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        23,
+        41
+       ]
+      ],
+      "rayon": 6
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        34,
+        42
+       ]
+      ],
+      "rayon": 6
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        37,
+        49
+       ]
+      ],
+      "rayon": 6
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        25,
+        48
+       ]
+      ],
+      "rayon": 6
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        23,
+        53
+       ]
+      ],
+      "rayon": 6
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        34,
+        53
+       ]
+      ],
+      "rayon": 6
+     }
+    ],
+    "seuil": 32,
+    "zone": [
+     17,
+     36,
+     41,
+     57
+    ]
+   },
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "cbfb58f5deaa58cb",
+  "empreinte_passes": "17e4db2d9d3f7dad",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 218,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 55
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "cc399c3f9b66dd8d",
+  "empreinte_passes": "af0e815829add806",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "couleur",
+     "point": [
+      1483,
+      1299
+     ],
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "ce490d0b8e6711ed",
+  "empreinte_passes": "464726bb9f84be0e",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "cfd7bc355bf0d6da",
+  "empreinte_passes": "69c232f22cb89352",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": null,
+   "main": {
+    "calques": [],
+    "opacite": [
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        431,
+        695
+       ],
+       [
+        432,
+        695
+       ],
+       [
+        432,
+        696
+       ],
+       [
+        433,
+        697
+       ],
+       [
+        433,
+        698
+       ],
+       [
+        433,
+        699
+       ],
+       [
+        434,
+        699
+       ],
+       [
+        434,
+        701
+       ],
+       [
+        434,
+        702
+       ],
+       [
+        435,
+        703
+       ],
+       [
+        435,
+        704
+       ],
+       [
+        436,
+        704
+       ],
+       [
+        436,
+        705
+       ],
+       [
+        437,
+        705
+       ],
+       [
+        437,
+        706
+       ],
+       [
+        438,
+        707
+       ],
+       [
+        438,
+        708
+       ],
+       [
+        439,
+        708
+       ],
+       [
+        439,
+        709
+       ],
+       [
+        441,
+        710
+       ],
+       [
+        442,
+        710
+       ],
+       [
+        443,
+        711
+       ],
+       [
+        444,
+        712
+       ],
+       [
+        445,
+        712
+       ],
+       [
+        446,
+        712
+       ],
+       [
+        447,
+        713
+       ],
+       [
+        448,
+        713
+       ],
+       [
+        449,
+        713
+       ],
+       [
+        450,
+        713
+       ],
+       [
+        451,
+        713
+       ],
+       [
+        452,
+        713
+       ],
+       [
+        453,
+        713
+       ],
+       [
+        454,
+        713
+       ],
+       [
+        455,
+        713
+       ],
+       [
+        456,
+        713
+       ],
+       [
+        457,
+        713
+       ],
+       [
+        458,
+        713
+       ],
+       [
+        459,
+        713
+       ],
+       [
+        461,
+        713
+       ],
+       [
+        462,
+        712
+       ],
+       [
+        463,
+        711
+       ],
+       [
+        464,
+        711
+       ],
+       [
+        465,
+        710
+       ],
+       [
+        466,
+        710
+       ],
+       [
+        467,
+        710
+       ],
+       [
+        468,
+        709
+       ],
+       [
+        469,
+        709
+       ],
+       [
+        470,
+        708
+       ],
+       [
+        471,
+        707
+       ],
+       [
+        473,
+        705
+       ],
+       [
+        474,
+        705
+       ],
+       [
+        475,
+        705
+       ],
+       [
+        476,
+        704
+       ],
+       [
+        477,
+        704
+       ],
+       [
+        478,
+        703
+       ],
+       [
+        479,
+        703
+       ],
+       [
+        480,
+        702
+       ],
+       [
+        480,
+        701
+       ],
+       [
+        481,
+        700
+       ],
+       [
+        482,
+        700
+       ],
+       [
+        483,
+        699
+       ],
+       [
+        483,
+        698
+       ],
+       [
+        483,
+        697
+       ],
+       [
+        483,
+        696
+       ],
+       [
+        483,
+        695
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        456,
+        700
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        539,
+        685
+       ],
+       [
+        539,
+        686
+       ],
+       [
+        539,
+        687
+       ],
+       [
+        539,
+        688
+       ],
+       [
+        539,
+        689
+       ],
+       [
+        539,
+        690
+       ],
+       [
+        539,
+        691
+       ],
+       [
+        539,
+        692
+       ],
+       [
+        539,
+        693
+       ],
+       [
+        539,
+        694
+       ],
+       [
+        539,
+        695
+       ],
+       [
+        539,
+        696
+       ],
+       [
+        539,
+        698
+       ],
+       [
+        539,
+        699
+       ],
+       [
+        539,
+        700
+       ],
+       [
+        539,
+        701
+       ],
+       [
+        539,
+        702
+       ],
+       [
+        539,
+        703
+       ],
+       [
+        539,
+        704
+       ],
+       [
+        539,
+        705
+       ],
+       [
+        539,
+        706
+       ],
+       [
+        539,
+        707
+       ],
+       [
+        539,
+        708
+       ],
+       [
+        539,
+        709
+       ],
+       [
+        539,
+        710
+       ],
+       [
+        540,
+        711
+       ],
+       [
+        540,
+        712
+       ],
+       [
+        540,
+        713
+       ],
+       [
+        541,
+        713
+       ],
+       [
+        542,
+        713
+       ],
+       [
+        543,
+        713
+       ],
+       [
+        544,
+        713
+       ],
+       [
+        545,
+        713
+       ],
+       [
+        546,
+        713
+       ],
+       [
+        548,
+        713
+       ],
+       [
+        549,
+        713
+       ],
+       [
+        550,
+        713
+       ],
+       [
+        551,
+        713
+       ],
+       [
+        552,
+        713
+       ],
+       [
+        553,
+        713
+       ],
+       [
+        554,
+        713
+       ],
+       [
+        555,
+        713
+       ],
+       [
+        559,
+        711
+       ],
+       [
+        561,
+        711
+       ],
+       [
+        562,
+        711
+       ],
+       [
+        563,
+        711
+       ],
+       [
+        564,
+        711
+       ],
+       [
+        567,
+        711
+       ],
+       [
+        568,
+        711
+       ],
+       [
+        569,
+        711
+       ],
+       [
+        570,
+        711
+       ],
+       [
+        571,
+        711
+       ],
+       [
+        572,
+        711
+       ],
+       [
+        572,
+        710
+       ],
+       [
+        573,
+        710
+       ],
+       [
+        574,
+        710
+       ],
+       [
+        575,
+        709
+       ],
+       [
+        576,
+        708
+       ],
+       [
+        577,
+        708
+       ],
+       [
+        578,
+        708
+       ],
+       [
+        579,
+        707
+       ],
+       [
+        579,
+        706
+       ],
+       [
+        580,
+        706
+       ],
+       [
+        580,
+        705
+       ],
+       [
+        580,
+        704
+       ],
+       [
+        580,
+        703
+       ],
+       [
+        580,
+        702
+       ],
+       [
+        580,
+        701
+       ],
+       [
+        581,
+        700
+       ],
+       [
+        581,
+        699
+       ],
+       [
+        582,
+        698
+       ],
+       [
+        582,
+        697
+       ],
+       [
+        584,
+        695
+       ],
+       [
+        584,
+        694
+       ],
+       [
+        585,
+        693
+       ],
+       [
+        585,
+        692
+       ],
+       [
+        585,
+        691
+       ],
+       [
+        586,
+        690
+       ],
+       [
+        586,
+        689
+       ],
+       [
+        587,
+        688
+       ],
+       [
+        588,
+        687
+       ],
+       [
+        589,
+        687
+       ],
+       [
+        590,
+        686
+       ],
+       [
+        590,
+        685
+       ],
+       [
+        591,
+        683
+       ],
+       [
+        591,
+        682
+       ],
+       [
+        591,
+        681
+       ],
+       [
+        590,
+        681
+       ],
+       [
+        589,
+        681
+       ],
+       [
+        587,
+        681
+       ],
+       [
+        584,
+        681
+       ],
+       [
+        583,
+        681
+       ],
+       [
+        582,
+        681
+       ],
+       [
+        580,
+        681
+       ],
+       [
+        579,
+        681
+       ],
+       [
+        578,
+        681
+       ],
+       [
+        577,
+        681
+       ],
+       [
+        576,
+        681
+       ],
+       [
+        575,
+        681
+       ],
+       [
+        574,
+        681
+       ],
+       [
+        573,
+        681
+       ],
+       [
+        572,
+        681
+       ],
+       [
+        571,
+        681
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        556,
+        722
+       ],
+       [
+        557,
+        722
+       ],
+       [
+        558,
+        722
+       ],
+       [
+        560,
+        722
+       ],
+       [
+        561,
+        722
+       ],
+       [
+        562,
+        722
+       ],
+       [
+        563,
+        722
+       ],
+       [
+        564,
+        722
+       ],
+       [
+        565,
+        722
+       ],
+       [
+        566,
+        722
+       ],
+       [
+        567,
+        722
+       ],
+       [
+        568,
+        722
+       ],
+       [
+        569,
+        722
+       ],
+       [
+        570,
+        722
+       ],
+       [
+        571,
+        722
+       ],
+       [
+        572,
+        722
+       ],
+       [
+        573,
+        722
+       ],
+       [
+        574,
+        722
+       ],
+       [
+        575,
+        722
+       ],
+       [
+        576,
+        722
+       ],
+       [
+        577,
+        721
+       ],
+       [
+        578,
+        721
+       ],
+       [
+        579,
+        720
+       ],
+       [
+        580,
+        719
+       ],
+       [
+        582,
+        718
+       ],
+       [
+        584,
+        718
+       ],
+       [
+        585,
+        716
+       ],
+       [
+        586,
+        716
+       ],
+       [
+        587,
+        716
+       ],
+       [
+        588,
+        716
+       ],
+       [
+        589,
+        715
+       ],
+       [
+        589,
+        714
+       ],
+       [
+        589,
+        713
+       ],
+       [
+        589,
+        710
+       ],
+       [
+        590,
+        709
+       ],
+       [
+        590,
+        708
+       ],
+       [
+        590,
+        707
+       ],
+       [
+        590,
+        706
+       ],
+       [
+        591,
+        705
+       ],
+       [
+        591,
+        704
+       ],
+       [
+        591,
+        703
+       ],
+       [
+        591,
+        702
+       ],
+       [
+        591,
+        700
+       ],
+       [
+        591,
+        699
+       ],
+       [
+        591,
+        698
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        550,
+        693
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        430,
+        709
+       ],
+       [
+        431,
+        709
+       ],
+       [
+        432,
+        710
+       ],
+       [
+        433,
+        711
+       ],
+       [
+        435,
+        712
+       ],
+       [
+        435,
+        713
+       ],
+       [
+        436,
+        714
+       ],
+       [
+        436,
+        715
+       ],
+       [
+        436,
+        716
+       ],
+       [
+        437,
+        718
+       ],
+       [
+        438,
+        719
+       ],
+       [
+        438,
+        720
+       ],
+       [
+        439,
+        721
+       ],
+       [
+        439,
+        722
+       ],
+       [
+        440,
+        722
+       ],
+       [
+        440,
+        723
+       ],
+       [
+        441,
+        724
+       ],
+       [
+        442,
+        724
+       ],
+       [
+        443,
+        725
+       ],
+       [
+        444,
+        725
+       ],
+       [
+        446,
+        726
+       ],
+       [
+        447,
+        726
+       ],
+       [
+        448,
+        726
+       ],
+       [
+        449,
+        726
+       ],
+       [
+        450,
+        726
+       ],
+       [
+        451,
+        726
+       ],
+       [
+        452,
+        726
+       ],
+       [
+        453,
+        726
+       ],
+       [
+        454,
+        726
+       ],
+       [
+        455,
+        726
+       ],
+       [
+        456,
+        726
+       ],
+       [
+        457,
+        726
+       ],
+       [
+        458,
+        726
+       ],
+       [
+        459,
+        726
+       ],
+       [
+        460,
+        726
+       ],
+       [
+        462,
+        726
+       ],
+       [
+        463,
+        726
+       ],
+       [
+        464,
+        726
+       ],
+       [
+        465,
+        726
+       ],
+       [
+        466,
+        726
+       ],
+       [
+        467,
+        726
+       ],
+       [
+        468,
+        726
+       ],
+       [
+        469,
+        726
+       ],
+       [
+        470,
+        726
+       ],
+       [
+        471,
+        726
+       ],
+       [
+        472,
+        726
+       ],
+       [
+        473,
+        726
+       ],
+       [
+        474,
+        726
+       ],
+       [
+        475,
+        726
+       ],
+       [
+        476,
+        726
+       ],
+       [
+        477,
+        726
+       ],
+       [
+        478,
+        726
+       ],
+       [
+        479,
+        726
+       ],
+       [
+        480,
+        726
+       ],
+       [
+        480,
+        725
+       ],
+       [
+        480,
+        724
+       ],
+       [
+        482,
+        723
+       ],
+       [
+        482,
+        722
+       ],
+       [
+        482,
+        721
+       ],
+       [
+        482,
+        720
+       ],
+       [
+        482,
+        719
+       ],
+       [
+        482,
+        718
+       ],
+       [
+        483,
+        717
+       ],
+       [
+        483,
+        716
+       ],
+       [
+        483,
+        715
+       ],
+       [
+        484,
+        714
+       ],
+       [
+        484,
+        713
+       ],
+       [
+        485,
+        711
+       ],
+       [
+        485,
+        710
+       ],
+       [
+        486,
+        709
+       ],
+       [
+        487,
+        708
+       ],
+       [
+        487,
+        707
+       ],
+       [
+        488,
+        706
+       ],
+       [
+        488,
+        705
+       ],
+       [
+        488,
+        704
+       ],
+       [
+        489,
+        703
+       ],
+       [
+        489,
+        702
+       ],
+       [
+        491,
+        701
+       ],
+       [
+        491,
+        700
+       ],
+       [
+        491,
+        699
+       ],
+       [
+        491,
+        698
+       ],
+       [
+        491,
+        697
+       ],
+       [
+        491,
+        696
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        590,
+        712
+       ],
+       [
+        591,
+        712
+       ],
+       [
+        591,
+        711
+       ],
+       [
+        591,
+        710
+       ],
+       [
+        592,
+        710
+       ],
+       [
+        592,
+        709
+       ],
+       [
+        592,
+        708
+       ],
+       [
+        592,
+        707
+       ],
+       [
+        592,
+        706
+       ],
+       [
+        592,
+        705
+       ],
+       [
+        593,
+        705
+       ],
+       [
+        594,
+        704
+       ],
+       [
+        594,
+        703
+       ],
+       [
+        594,
+        702
+       ],
+       [
+        594,
+        701
+       ],
+       [
+        594,
+        699
+       ],
+       [
+        595,
+        699
+       ],
+       [
+        596,
+        698
+       ],
+       [
+        596,
+        697
+       ],
+       [
+        596,
+        696
+       ],
+       [
+        596,
+        695
+       ],
+       [
+        596,
+        694
+       ],
+       [
+        596,
+        693
+       ],
+       [
+        595,
+        693
+       ],
+       [
+        594,
+        692
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        666,
+        680
+       ],
+       [
+        664,
+        681
+       ],
+       [
+        663,
+        682
+       ],
+       [
+        662,
+        684
+       ],
+       [
+        662,
+        685
+       ],
+       [
+        661,
+        686
+       ],
+       [
+        660,
+        687
+       ],
+       [
+        659,
+        688
+       ],
+       [
+        658,
+        689
+       ],
+       [
+        658,
+        690
+       ],
+       [
+        658,
+        691
+       ],
+       [
+        658,
+        692
+       ],
+       [
+        658,
+        693
+       ],
+       [
+        658,
+        694
+       ],
+       [
+        658,
+        695
+       ],
+       [
+        658,
+        696
+       ],
+       [
+        659,
+        696
+       ],
+       [
+        660,
+        698
+       ],
+       [
+        661,
+        699
+       ],
+       [
+        662,
+        699
+       ],
+       [
+        662,
+        700
+       ],
+       [
+        662,
+        701
+       ],
+       [
+        662,
+        702
+       ],
+       [
+        662,
+        703
+       ],
+       [
+        661,
+        704
+       ],
+       [
+        660,
+        705
+       ],
+       [
+        660,
+        706
+       ],
+       [
+        658,
+        707
+       ],
+       [
+        658,
+        708
+       ],
+       [
+        657,
+        709
+       ],
+       [
+        657,
+        711
+       ],
+       [
+        657,
+        712
+       ],
+       [
+        658,
+        712
+       ],
+       [
+        659,
+        712
+       ],
+       [
+        660,
+        712
+       ],
+       [
+        661,
+        712
+       ],
+       [
+        663,
+        712
+       ],
+       [
+        664,
+        712
+       ],
+       [
+        665,
+        712
+       ],
+       [
+        666,
+        712
+       ],
+       [
+        667,
+        713
+       ],
+       [
+        668,
+        713
+       ],
+       [
+        668,
+        714
+       ],
+       [
+        669,
+        714
+       ],
+       [
+        670,
+        714
+       ],
+       [
+        671,
+        714
+       ],
+       [
+        672,
+        715
+       ],
+       [
+        673,
+        715
+       ],
+       [
+        674,
+        715
+       ],
+       [
+        675,
+        715
+       ],
+       [
+        675,
+        716
+       ],
+       [
+        676,
+        717
+       ],
+       [
+        677,
+        717
+       ],
+       [
+        678,
+        717
+       ],
+       [
+        679,
+        718
+       ],
+       [
+        680,
+        718
+       ],
+       [
+        681,
+        718
+       ],
+       [
+        682,
+        718
+       ],
+       [
+        683,
+        718
+       ],
+       [
+        684,
+        718
+       ],
+       [
+        685,
+        718
+       ],
+       [
+        687,
+        718
+       ],
+       [
+        688,
+        718
+       ],
+       [
+        689,
+        718
+       ],
+       [
+        690,
+        718
+       ],
+       [
+        691,
+        718
+       ],
+       [
+        692,
+        718
+       ],
+       [
+        693,
+        718
+       ],
+       [
+        694,
+        718
+       ],
+       [
+        695,
+        718
+       ],
+       [
+        696,
+        718
+       ],
+       [
+        697,
+        718
+       ],
+       [
+        698,
+        718
+       ],
+       [
+        699,
+        718
+       ],
+       [
+        700,
+        718
+       ],
+       [
+        701,
+        718
+       ],
+       [
+        702,
+        718
+       ],
+       [
+        703,
+        718
+       ],
+       [
+        704,
+        718
+       ],
+       [
+        705,
+        718
+       ],
+       [
+        706,
+        718
+       ],
+       [
+        707,
+        718
+       ],
+       [
+        708,
+        718
+       ],
+       [
+        709,
+        718
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        654,
+        716
+       ],
+       [
+        655,
+        716
+       ],
+       [
+        656,
+        716
+       ],
+       [
+        657,
+        716
+       ],
+       [
+        658,
+        716
+       ],
+       [
+        659,
+        718
+       ],
+       [
+        660,
+        718
+       ],
+       [
+        661,
+        719
+       ],
+       [
+        662,
+        719
+       ],
+       [
+        663,
+        720
+       ],
+       [
+        664,
+        721
+       ],
+       [
+        665,
+        721
+       ],
+       [
+        666,
+        721
+       ],
+       [
+        668,
+        722
+       ],
+       [
+        669,
+        723
+       ],
+       [
+        670,
+        723
+       ],
+       [
+        671,
+        723
+       ],
+       [
+        672,
+        724
+       ],
+       [
+        673,
+        724
+       ],
+       [
+        674,
+        724
+       ],
+       [
+        675,
+        724
+       ],
+       [
+        676,
+        725
+       ],
+       [
+        677,
+        725
+       ],
+       [
+        678,
+        725
+       ],
+       [
+        679,
+        725
+       ],
+       [
+        680,
+        725
+       ],
+       [
+        681,
+        725
+       ],
+       [
+        682,
+        725
+       ],
+       [
+        683,
+        725
+       ],
+       [
+        684,
+        725
+       ],
+       [
+        685,
+        725
+       ],
+       [
+        686,
+        725
+       ],
+       [
+        687,
+        725
+       ],
+       [
+        688,
+        725
+       ],
+       [
+        689,
+        725
+       ],
+       [
+        690,
+        725
+       ],
+       [
+        691,
+        725
+       ],
+       [
+        693,
+        725
+       ],
+       [
+        694,
+        725
+       ],
+       [
+        695,
+        725
+       ],
+       [
+        696,
+        725
+       ],
+       [
+        697,
+        725
+       ],
+       [
+        698,
+        725
+       ],
+       [
+        699,
+        725
+       ],
+       [
+        700,
+        725
+       ],
+       [
+        701,
+        725
+       ],
+       [
+        702,
+        725
+       ],
+       [
+        703,
+        725
+       ],
+       [
+        704,
+        725
+       ],
+       [
+        705,
+        725
+       ],
+       [
+        706,
+        725
+       ],
+       [
+        707,
+        725
+       ],
+       [
+        708,
+        725
+       ],
+       [
+        709,
+        725
+       ],
+       [
+        710,
+        725
+       ],
+       [
+        711,
+        725
+       ],
+       [
+        712,
+        725
+       ],
+       [
+        713,
+        724
+       ],
+       [
+        713,
+        723
+       ],
+       [
+        714,
+        722
+       ],
+       [
+        714,
+        721
+       ],
+       [
+        715,
+        721
+       ],
+       [
+        715,
+        720
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        490,
+        737
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        428,
+        739
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        570,
+        696
+       ],
+       [
+        568,
+        695
+       ],
+       [
+        563,
+        691
+       ],
+       [
+        563,
+        690
+       ],
+       [
+        561,
+        689
+       ],
+       [
+        560,
+        687
+       ],
+       [
+        560,
+        686
+       ],
+       [
+        559,
+        685
+       ],
+       [
+        558,
+        685
+       ],
+       [
+        558,
+        684
+       ],
+       [
+        558,
+        683
+       ],
+       [
+        556,
+        682
+       ],
+       [
+        555,
+        681
+       ],
+       [
+        554,
+        680
+       ],
+       [
+        553,
+        679
+       ]
+      ],
+      "rayon": 11
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        539,
+        701
+       ],
+       [
+        538,
+        701
+       ],
+       [
+        537,
+        701
+       ],
+       [
+        537,
+        702
+       ],
+       [
+        536,
+        702
+       ],
+       [
+        535,
+        703
+       ],
+       [
+        534,
+        703
+       ],
+       [
+        535,
+        703
+       ],
+       [
+        536,
+        703
+       ],
+       [
+        537,
+        703
+       ],
+       [
+        538,
+        703
+       ]
+      ],
+      "rayon": 11
+     }
+    ]
+   },
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 3,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 163,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "dbe70d8e850cf485",
+  "empreinte_passes": "4f53cda18c2baa0c",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": {
+    "affinage": [],
+    "base": "1b2da0b988c649d68d8a3dd3c9c3c58f-0",
+    "retouche": [
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        49,
+        2
+       ],
+       [
+        49,
+        3
+       ],
+       [
+        49,
+        4
+       ],
+       [
+        49,
+        5
+       ],
+       [
+        49,
+        6
+       ],
+       [
+        49,
+        7
+       ],
+       [
+        49,
+        8
+       ],
+       [
+        49,
+        9
+       ],
+       [
+        49,
+        10
+       ],
+       [
+        49,
+        11
+       ],
+       [
+        49,
+        12
+       ],
+       [
+        49,
+        13
+       ],
+       [
+        49,
+        14
+       ],
+       [
+        49,
+        15
+       ],
+       [
+        49,
+        16
+       ],
+       [
+        49,
+        17
+       ],
+       [
+        50,
+        17
+       ],
+       [
+        50,
+        18
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        50,
+        21
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        50,
+        24
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        48,
+        22
+       ],
+       [
+        47,
+        22
+       ],
+       [
+        46,
+        22
+       ],
+       [
+        45,
+        22
+       ],
+       [
+        46,
+        22
+       ],
+       [
+        47,
+        22
+       ],
+       [
+        48,
+        22
+       ],
+       [
+        49,
+        22
+       ],
+       [
+        50,
+        22
+       ],
+       [
+        51,
+        22
+       ],
+       [
+        52,
+        22
+       ],
+       [
+        53,
+        22
+       ],
+       [
+        54,
+        22
+       ],
+       [
+        55,
+        22
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        47,
+        27
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        49,
+        28
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        51,
+        28
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        52,
+        28
+       ],
+       [
+        53,
+        28
+       ],
+       [
+        53,
+        29
+       ],
+       [
+        52,
+        29
+       ],
+       [
+        52,
+        30
+       ],
+       [
+        51,
+        30
+       ],
+       [
+        50,
+        30
+       ],
+       [
+        49,
+        30
+       ],
+       [
+        49,
+        29
+       ],
+       [
+        48,
+        29
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        46,
+        27
+       ],
+       [
+        46,
+        28
+       ],
+       [
+        47,
+        28
+       ],
+       [
+        47,
+        29
+       ],
+       [
+        47,
+        30
+       ],
+       [
+        48,
+        30
+       ],
+       [
+        49,
+        30
+       ],
+       [
+        49,
+        31
+       ],
+       [
+        50,
+        31
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": false,
+      "points": [
+       [
+        53,
+        30
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        50,
+        24
+       ]
+      ],
+      "rayon": 2
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        48,
+        27
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        49,
+        27
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        50,
+        27
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        50,
+        27
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        51,
+        27
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        51,
+        25
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        51,
+        24
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        51,
+        24
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        51,
+        24
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        50,
+        24
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        49,
+        24
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        49,
+        23
+       ],
+       [
+        48,
+        23
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        47,
+        22
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        47,
+        22
+       ],
+       [
+        48,
+        22
+       ],
+       [
+        49,
+        22
+       ]
+      ],
+      "rayon": 0
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        47,
+        19
+       ],
+       [
+        48,
+        19
+       ],
+       [
+        49,
+        19
+       ],
+       [
+        50,
+        19
+       ],
+       [
+        51,
+        19
+       ],
+       [
+        52,
+        19
+       ],
+       [
+        53,
+        19
+       ],
+       [
+        54,
+        19
+       ],
+       [
+        55,
+        19
+       ]
+      ],
+      "rayon": 6
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        50,
+        15
+       ],
+       [
+        51,
+        15
+       ],
+       [
+        51,
+        14
+       ],
+       [
+        51,
+        13
+       ],
+       [
+        51,
+        12
+       ],
+       [
+        52,
+        12
+       ],
+       [
+        52,
+        11
+       ],
+       [
+        52,
+        10
+       ],
+       [
+        52,
+        9
+       ],
+       [
+        52,
+        8
+       ],
+       [
+        52,
+        7
+       ],
+       [
+        52,
+        6
+       ],
+       [
+        52,
+        5
+       ],
+       [
+        52,
+        4
+       ],
+       [
+        52,
+        3
+       ],
+       [
+        51,
+        3
+       ],
+       [
+        51,
+        2
+       ],
+       [
+        50,
+        2
+       ],
+       [
+        49,
+        3
+       ],
+       [
+        49,
+        4
+       ],
+       [
+        48,
+        4
+       ],
+       [
+        48,
+        5
+       ],
+       [
+        48,
+        6
+       ],
+       [
+        48,
+        7
+       ],
+       [
+        48,
+        8
+       ],
+       [
+        48,
+        9
+       ],
+       [
+        48,
+        10
+       ],
+       [
+        49,
+        11
+       ],
+       [
+        49,
+        12
+       ],
+       [
+        49,
+        13
+       ],
+       [
+        49,
+        14
+       ],
+       [
+        50,
+        14
+       ]
+      ],
+      "rayon": 6
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        51,
+        14
+       ],
+       [
+        51,
+        13
+       ],
+       [
+        51,
+        12
+       ],
+       [
+        51,
+        11
+       ],
+       [
+        51,
+        10
+       ],
+       [
+        51,
+        9
+       ],
+       [
+        51,
+        8
+       ],
+       [
+        51,
+        7
+       ],
+       [
+        51,
+        6
+       ],
+       [
+        51,
+        5
+       ],
+       [
+        51,
+        4
+       ],
+       [
+        50,
+        4
+       ],
+       [
+        49,
+        4
+       ],
+       [
+        49,
+        3
+       ],
+       [
+        48,
+        3
+       ],
+       [
+        47,
+        3
+       ],
+       [
+        46,
+        3
+       ],
+       [
+        46,
+        4
+       ]
+      ],
+      "rayon": 6
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        46,
+        4
+       ],
+       [
+        46,
+        5
+       ]
+      ],
+      "rayon": 6
+     },
+     {
+      "couleur": "",
+      "garde": true,
+      "points": [
+       [
+        48,
+        11
+       ],
+       [
+        48,
+        12
+       ]
+      ],
+      "rayon": 6
+     }
+    ],
+    "seuil": 32,
+    "zone": [
+     44,
+     0,
+     56,
+     32
+    ]
+   },
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "dea424705e1e91fb",
+  "empreinte_passes": "1576f2ba2c9afeb8",
+  "recette": {
+   "bords": null,
+   "contours": {
+    "couleur": "#000000",
+    "epaisseur": 1,
+    "position": "interne",
+    "trous": "cercles"
+   },
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 95
+   },
+   "main": null,
+   "nom": "recette 01",
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 106,
+     "tolerance": 5,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "deadbdceadfe866e",
+  "empreinte_passes": "55dd0eec1ef3001d",
+  "recette": {
+   "bords": {
+    "aire_min": 3
+   },
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 128,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": "sprite-64",
+   "passes": [
+    {
+     "durcissement": 1,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    },
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 225,
+     "tolerance": 57,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 32,
+    "palette": [
+     "#b9ae9b",
+     "#a18c79",
+     "#977261",
+     "#6e6a63",
+     "#785246",
+     "#654e45",
+     "#564e4a",
+     "#3c4b53",
+     "#613e39",
+     "#523b39",
+     "#473c42",
+     "#493533",
+     "#3b3e43",
+     "#39363a",
+     "#2f3a44",
+     "#2f333b",
+     "#492d32",
+     "#3a2a30",
+     "#312f36",
+     "#32242d",
+     "#2b2e37",
+     "#2a2b31",
+     "#29262f",
+     "#2a1e28",
+     "#242832",
+     "#23242d",
+     "#23222a",
+     "#1e2129",
+     "#1d1c28",
+     "#1d1b21",
+     "#1a1622",
+     "#150f1b"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "f187cc1938c06c14",
+  "empreinte_passes": "0bc4b86be01b606e",
+  "recette": {
+   "bords": null,
+   "contours": {
+    "couleur": "#000000",
+    "epaisseur": 1,
+    "position": "interne",
+    "trous": "cercles"
+   },
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 92
+   },
+   "main": null,
+   "nom": "pelerin",
+   "passes": [
+    {
+     "durcissement": 2,
+     "masquee": false,
+     "modele": "isnet-general-use",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 38,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "fdee3d81a0421ea5",
+  "empreinte_passes": "d29b53fe79d39e4d",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 3,
+     "masquee": false,
+     "modele": "isnet-general-use",
+     "moteur": "modele",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": null,
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "ff59672776f9c9e1",
+  "empreinte_passes": "d75cddfbc9d13e93",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": null,
+   "grille": {
+    "ancrage": "bas",
+    "cible": 64,
+    "decalage": 0,
+    "methode": "proche",
+    "occupation": 100
+   },
+   "main": null,
+   "nom": null,
+   "passes": [
+    {
+     "durcissement": 0,
+     "masquee": false,
+     "modele": "",
+     "moteur": "bord",
+     "point": null,
+     "portee": "tache",
+     "seuil_alpha": 128,
+     "tolerance": 28,
+     "trace": []
+    }
+   ],
+   "quantification": {
+    "couleurs": 24,
+    "palette": [
+     "#917a54",
+     "#494433",
+     "#482e17",
+     "#282825",
+     "#1f2625",
+     "#2b221c",
+     "#202224",
+     "#202223",
+     "#1f2224",
+     "#1f2223",
+     "#1f2222",
+     "#1c2222",
+     "#222122",
+     "#1f2124",
+     "#1f2123",
+     "#1f2122",
+     "#1e2122",
+     "#491611",
+     "#201d1b",
+     "#1a1a19",
+     "#131717",
+     "#101110",
+     "#0b0a09",
+     "#050505"
+    ],
+    "tramage": "aucun"
+   },
+   "recadrage": {
+    "boite": null,
+    "marge": 0
+   },
+   "veille": []
+  }
+ },
+ {
+  "empreinte": "ffa52a188df45b65",
+  "empreinte_passes": "4f53cda18c2baa0c",
+  "recette": {
+   "bords": null,
+   "contours": null,
+   "difference": {
+    "affinage": [],
+    "base": "b7e313d9dd704501ad40747b3808fb8c-100",
+    "retouche": [],
+    "seuil": 32,
+    "zone": [
+     34,
+     0,
+     60,
+     27
+    ]
+   },
+   "grille": null,
+   "main": null,
+   "nom": null,
+   "passes": [],
+   "quantification": null,
+   "recadrage": null,
+   "veille": []
+  }
+ }
+]

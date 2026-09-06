@@ -27,8 +27,18 @@
     .puce { font-size: 11.5px; color: #4e483f; border: 1px solid #e2dbd0; border-radius: 4px; padding: 2px 7px; background: #f7f3ec; white-space: nowrap; }
     .puce-vide { color: #a49a8b; border-style: dashed; }
     .bas { margin-top: auto; padding-top: 8px; border-top: 1px solid #ece6db; display: flex; align-items: baseline; justify-content: space-between; font-size: 11.5px; color: #948c80; }
+  
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f; white-space: nowrap }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
   </style>
 </helmet>
+
+<div class="k" style="width: 1600px; background: #f7f3ec">
 
 <div class="k" style="width: 1600px; height: 1000px; background: #f7f3ec; padding: 44px 60px 40px; display: flex; flex-direction: column; gap: 22px; overflow: hidden">
 
@@ -191,12 +201,169 @@
     <div style="display: flex; align-items: center; gap: 22px; font-size: 12.5px; color: #6d675e">
       <span>OpenRouter · 49 modèles</span>
       <span style="display: flex; align-items: center; gap: 6px"><i style="width: 7px; height: 7px; border-radius: 999px; background: #5c7a52; display: block"></i>l'atelier répond</span>
-      <a href="#" style="text-decoration: none"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span>&nbsp; Le guide ›</a>
-      <a href="#" style="text-decoration: none">Réglages de l'atelier ›</a>
-      <a href="#" style="text-decoration: none">Guide ›</a>
+      <a href="#" style="text-decoration: none"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span>&nbsp; Le guide et les touches ›</a>
+      <a href="#" style="text-decoration: none">l'installation ›</a>
     </div>
   </div>
 
+</div>
+
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Le panneau des touches</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 740px; text-align: right">ce qu'ouvre le <span class="kb">?</span> du pied, sur n'importe quel &eacute;cran &mdash; il se pose par-dessus sans rien fermer, et <span class="kb">esc</span> le referme</span>
+    </div>
+  <div style="position: relative; width: 1532px; height: 560px; background: #6c6c6c; border-radius: 10px;
+              display: flex; align-items: center; justify-content: center; overflow: hidden">
+
+    <!-- l'ecran, derriere, assombri : le panneau se pose par-dessus n'importe quoi -->
+    <div style="position: absolute; inset: 0; background:
+                linear-gradient(rgba(34,31,27,.55), rgba(34,31,27,.55)),
+                repeating-linear-gradient(90deg, #f2ede4 0 300px, #f7f3ec 300px 1220px, #f2ede4 1220px 1600px)"></div>
+
+    <div style="position: relative; width: 812px; background: #fffdfa; border: 1px solid #ddd5c8; border-radius: 12px;
+                box-shadow: 0 18px 44px rgba(34,31,27,.28); padding: 22px 24px 18px;
+                display: flex; flex-direction: column; gap: 16px">
+
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span class="serif" style="font-size: 27px; line-height: 1">Les touches</span>
+          <span style="font-size: 12.5px; color: #6d675e">celles qui marchent d&eacute;j&agrave;, &agrave; l'endroit o&ugrave; elles marchent</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <div class="ch" style="width: 190px; height: 30px; font-size: 12px; color: #948c80">chercher une touche</div>
+          <span style="font-size: 11.5px; color: #948c80; display: flex; align-items: center; gap: 5px">
+            <span class="kb">esc</span> referme</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 22px 30px">
+    <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="rt" style="font-size: 9.5px; padding-bottom: 5px; border-bottom: 1px solid #ece6db; margin-bottom: 5px">Partout, quel que soit l'&eacute;cran</div>
+      
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">?</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">ce panneau, et le guide</span><div style="font-size: 11px; color: #948c80; line-height: 1.3">la seule touche globale</div></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">espace</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">voir en grand l'image sous le pointeur</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">esc</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">refermer ce qui vient de s'ouvrir</span><div style="font-size: 11px; color: #948c80; line-height: 1.3">14 &eacute;crans</div></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">&#8984;K</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">chercher un sujet, ou lancer un geste</span></span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="rt" style="font-size: 9.5px; padding-bottom: 5px; border-bottom: 1px solid #ece6db; margin-bottom: 5px">Quand on &eacute;crit</div>
+      
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">&crarr;</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">valider le nom qu'on tape</span><span class="puce p-a" style="margin-left: 7px; vertical-align: 1px">jamais &eacute;crit</span><div style="font-size: 11px; color: #948c80; line-height: 1.3">~30 champs</div></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">esc</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">renoncer et rendre la valeur d'avant</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">&#8984;</span><span class="kb">&crarr;</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">lancer la g&eacute;n&eacute;ration</span><div style="font-size: 11px; color: #948c80; line-height: 1.3">&eacute;crit sous le bouton</div></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">&#8984;Z</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">d&eacute;faire le dernier geste</span><div style="font-size: 11px; color: #948c80; line-height: 1.3">la toile, et la main</div></span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="rt" style="font-size: 9.5px; padding-bottom: 5px; border-bottom: 1px solid #ece6db; margin-bottom: 5px">Sur une image, dans un atelier</div>
+      
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">&larr;</span><span class="kb">&uarr;</span><span class="kb">&rarr;</span><span class="kb">&darr;</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">la pousser d'un pixel</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">Maj</span><span class="kb">&larr;</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">de cinq pixels &agrave; la fois</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">suppr</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">retirer le rectangle choisi</span><span class="puce p-a" style="margin-left: 7px; vertical-align: 1px">jamais &eacute;crit</span><div style="font-size: 11px; color: #948c80; line-height: 1.3">le d&eacute;coupage</div></span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="rt" style="font-size: 9.5px; padding-bottom: 5px; border-bottom: 1px solid #ece6db; margin-bottom: 5px">Dans une grille d'images</div>
+      
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">&#8984;</span><span class="kb">clic</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">ajouter ou retirer de la s&eacute;lection</span><span class="puce p-a" style="margin-left: 7px; vertical-align: 1px">jamais &eacute;crit</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">Maj</span><span class="kb">clic</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">prendre tout ce qui est entre les deux</span><span class="puce p-a" style="margin-left: 7px; vertical-align: 1px">jamais &eacute;crit</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">espace</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">voir en grand, sans cliquer</span></span></div>
+    </div>
+      </div>
+
+      <div style="border-top: 1px solid #ece6db; padding-top: 12px; display: flex; align-items: center;
+                  justify-content: space-between; gap: 20px">
+        <span style="font-size: 12px; color: #6d675e">
+          Quatre de ces touches marchent aujourd'hui sans &ecirc;tre &eacute;crites nulle part.
+          Ce panneau est le premier endroit o&ugrave; elles le sont.</span>
+        <a href="#" style="text-decoration: none; font-size: 12.5px; flex-shrink: 0">Le guide &rsaquo;</a>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Le bloc &laquo;&nbsp;Ici&nbsp;&raquo; change avec l'&eacute;cran ouvert</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 700px; text-align: right">
+        les quatre blocs du haut ne bougent jamais&nbsp;; celui-ci dit les touches de l'endroit o&ugrave; l'on est,
+        et dispara&icirc;t quand l'&eacute;cran n'en a aucune</span>
+    </div>
+    <div style="display: flex; gap: 22px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Depuis le clip re&ccedil;u</span>
+      </div>
+      <div style="width: 372px; height: 214px; border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa;
+                  padding: 15px 16px; display: flex; flex-direction: column; gap: 1px; overflow: hidden">
+        <div class="rt" style="font-size: 9.5px; padding-bottom: 5px; border-bottom: 1px solid #ece6db; margin-bottom: 5px">Ici</div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">&larr;</span><span class="kb">&rarr;</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">se d&eacute;placer sur la pellicule</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">espace</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">prendre ou laisser cette image</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">P</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">la mettre de c&ocirc;t&eacute; comme pose fixe</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">esc</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">revenir &mdash; rien n'est perdu</span></span></div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Depuis un atelier de retouche</span>
+      </div>
+      <div style="width: 372px; height: 214px; border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa;
+                  padding: 15px 16px; display: flex; flex-direction: column; gap: 1px; overflow: hidden">
+        <div class="rt" style="font-size: 9.5px; padding-bottom: 5px; border-bottom: 1px solid #ece6db; margin-bottom: 5px">Ici</div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">&larr;</span><span class="kb">&uarr;</span><span class="kb">&rarr;</span><span class="kb">&darr;</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">pousser l'image d'un pixel</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">Maj</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">cinq pixels &agrave; la fois</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">&#8984;Z</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">d&eacute;faire le dernier passage</span></span></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 5px 0"><span style="display: flex; gap: 3px; width: 96px; flex-shrink: 0; padding-top: 1px"><span class="kb">esc</span></span><span style="flex: 1; min-width: 0"><span style="font-size: 12.5px; color: #221f1b; line-height: 1.35">refermer l'atelier</span></span></div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Depuis l'ouverture &mdash; aucun jeu ouvert</span>
+      </div>
+      <div style="width: 372px; height: 214px; border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa;
+                  padding: 15px 16px; display: flex; flex-direction: column; gap: 1px; overflow: hidden">
+        <div class="rt" style="font-size: 9.5px; padding-bottom: 5px; border-bottom: 1px solid #ece6db; margin-bottom: 5px">Ici</div>
+      <div style="display: flex; align-items: center; height: 118px; font-size: 12.5px; line-height: 1.55; color: #6d675e">Cet &eacute;cran n'a aucune touche &agrave; lui. Le bloc dispara&icirc;t plut&ocirc;t que d'afficher &laquo;&nbsp;aucune&nbsp;&raquo;&nbsp;: une case vide se lit comme une panne.</div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Pourquoi ce panneau, et pas seulement le guide</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 740px; text-align: right">relev&eacute; dans le code le 5 septembre &mdash; ce qui existe, ce qui manque</span>
+    </div>
+  <div style="display: flex; flex-direction: column; gap: 14px">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 7px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                  border-radius: 9px; background: #fffdfa">
+        <span class="puce p-ok" style="align-self: flex-start">existe</span>
+        <div style="font-size: 13.5px; font-weight: 600; line-height: 1.3">La touche <span class="kb">?</span> existe d&eacute;j&agrave;</div>
+        <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Elle ouvre le guide depuis n'importe o&ugrave;, et c'est le seul raccourci global de tout l'atelier. Elle n'est &eacute;crite sur aucun bouton, dans aucune infobulle, ni dans le guide lui-m&ecirc;me. Personne ne peut la trouver.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 7px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                  border-radius: 9px; background: #fffdfa">
+        <span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span>
+        <div style="font-size: 13.5px; font-weight: 600; line-height: 1.3">Le panneau, lui, n'existe pas</div>
+        <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Il n'y a aujourd'hui aucun &eacute;cran, aucune liste, aucun tableau des touches, nulle part. Le mot &laquo;&nbsp;raccourci&nbsp;&raquo; n'appara&icirc;t que dans les commentaires du code.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 7px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                  border-radius: 9px; background: #fffdfa">
+        <span class="puce p-ok" style="align-self: flex-start">chang&eacute; ici</span>
+        <div style="font-size: 13.5px; font-weight: 600; line-height: 1.3">Le pied du carnet le dit maintenant</div>
+        <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Il portait &laquo;&nbsp;Le guide&nbsp;&raquo;. Il porte &laquo;&nbsp;Le guide et les touches&nbsp;&raquo;, sur les trente-deux &eacute;crans du carnet. Un mot de plus, et l'on sait qu'il y a des touches.</div>
+      </div>
+    </div>
+    <div style="font-size: 13px; line-height: 1.6; color: #4e483f; max-width: 106ch">
+      Une remarque sur le glyphe. L'atelier a &eacute;cart&eacute; le point d'interrogation comme ic&ocirc;ne d'aide,
+      et il avait raison&nbsp;: trente points d'interrogation dans les panneaux auraient &eacute;t&eacute; trente fois
+      le m&ecirc;me bruit. Ici il n'y en a qu'un, et ce n'est pas une ic&ocirc;ne&nbsp;: c'est la touche,
+      imprim&eacute;e comme une touche. C'est m&ecirc;me tout son travail &mdash; se faire conna&icirc;tre de qui ne la conna&icirc;t pas.
+    </div>
+  </div>
+  </div>
+  </div>
 </div>
 </x-dc>
 </body>

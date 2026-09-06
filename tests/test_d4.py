@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de D4 — les moteurs s'ouvrent, le contour se pose net.
 
-Un test par critère de `docs/PLAN.md` § D4, nommé d'après lui.
+Un test par critère de `docs/archive/plan-r6-a-v3.02.md` § D4, nommé d'après lui.
 
 **Ce que la tranche livre, une fois le faux retiré.** Sa première version
 réclamait *« un cran intermédiaire entre nos deux modèles »* et *« un catalogue

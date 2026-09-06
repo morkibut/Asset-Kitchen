@@ -296,7 +296,7 @@ export function PanneauCalque({
       // comparaison d'identité plutôt qu'un `null` sec.
       // `couleur` vide : une couche de masque décide de ce qui reste, elle ne
       // pose aucune couleur. Le champ est arrivé en E5 avec les calques de
-      // dessin de la septième place.
+      // dessin de la huitième place.
       void affiner(quelle, [...couche, { garde, rayon, points, couleur: "" }]).finally(() =>
         setTrace((courant) => (courant === points ? null : courant)),
       )
@@ -501,7 +501,7 @@ export function PanneauCalque({
               <div
                 className={[
                   "pointer-events-none absolute border",
-                  outil === "zone" ? "border-signal" : "border-bord-fort",
+                  outil === "zone" ? "border-ancien-signal" : "border-bord-fort",
                 ].join(" ")}
                 style={{
                   left: zone[0] * echelle,
@@ -528,7 +528,7 @@ export function PanneauCalque({
                   onPointerUp={finir}
                   onPointerCancel={finir}
                   aria-label="Retailler la zone"
-                  className="absolute h-2.5 w-2.5 cursor-nwse-resize bg-signal"
+                  className="absolute h-2.5 w-2.5 cursor-nwse-resize bg-ancien-signal"
                   style={{
                     left: (zone[2] + 1) * echelle - 5,
                     top: (zone[3] + 1) * echelle - 5,
@@ -591,7 +591,7 @@ export function PanneauCalque({
               title="maintenir pour voir le calque tel que la différence l'avait rendu — rien n'est changé, et rien n'est redemandé au fournisseur"
               className={[
                 "mesure ml-auto px-1 text-[10px]",
-                avant ? "text-signal-clair" : "text-signal hover:text-signal-clair",
+                avant ? "text-ancien-signal-clair" : "text-ancien-signal hover:text-ancien-signal-clair",
               ].join(" ")}
             >
               {avant ? "Avant" : "Avant ›"}
@@ -614,7 +614,7 @@ export function PanneauCalque({
                   : "la couche est vidée d'un coup, l'autre ne bouge pas — rien n'est redemandé au fournisseur"
               }
               className={[
-                "mesure px-1 text-[10px] text-signal hover:text-signal-clair",
+                "mesure px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair",
                 mainPosee ? "" : "ml-auto",
               ].join(" ")}
             >
@@ -642,7 +642,7 @@ export function PanneauCalque({
           disabled={rejeu}
           onClick={() => void recaler()}
           title="la planche payée est relue et l'alignement recalculé — aucune image n'est redemandée, et rien ne naît ni ne meurt"
-          className="mesure self-start px-1 text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
+          className="mesure self-start px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
         >
           {rejeu ? "Recalage…" : "Recaler depuis la planche ›"}
         </button>
@@ -734,7 +734,7 @@ function Jugement({
           className={[
             "mesure h-[26px] rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
             asset.favori
-              ? "border-signal bg-signal/13 text-signal"
+              ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
               : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
           ].join(" ")}
         >
@@ -745,7 +745,7 @@ function Jugement({
             type="button"
             onClick={onSupprimer}
             title="l'image part à la corbeille — le pied de l'écran propose de la rendre"
-            className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec"
+            className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
           >
             {/* **« Cette image », et non « Supprimer » tout court.** La
                 colonne de gauche du même écran porte déjà un *Supprimer* —

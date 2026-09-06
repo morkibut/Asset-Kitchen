@@ -1,6 +1,6 @@
 ---
 name: planifie
-description: Découper un PRD en phases indépendamment livrables par tranches verticales (tracer bullets), puis produire ou étendre `docs/PLAN.md` selon un template fixe (décisions architecturales + phases avec user stories, livrable, critères d'acceptation, dépendances). Utilise sur /planifie, "découpe le PRD", "fais le plan d'implémentation", "casse-moi ça en phases", "écris le plan", "étends le plan", "tracer bullets", "vertical slices", ou dès qu'il faut transformer un PRD en plan d'exécution versionné. Aval naturel de /cadre.
+description: Découper un PRD en phases indépendamment livrables par tranches verticales (tracer bullets), puis produire ou étendre `docs/PLAN.md` selon un template fixe (décisions architecturales + phases avec user stories, livrable, critères d'acceptation, dépendances). Utilise sur /planifie, "découpe le PRD", "fais le plan d'implémentation", "casse-moi ça en phases", "écris le plan", "étends le plan", "tracer bullets", "vertical slices", ou dès qu'il faut transformer un PRD en plan d'exécution versionné. Aval naturel de /cadre, et enchaîne sur /affecte une fois le plan écrit.
 ---
 
 # /planifie
@@ -64,6 +64,10 @@ Itère jusqu'à validation.
 ### 7. Écris le plan
 
 Crée `docs/` si absent. Écris `docs/PLAN.md` selon le template. En mode extension, intègre les phases additionnelles aux phases existantes sans toucher au contenu déjà validé. Confirme *« ✓ écrit dans `docs/PLAN.md` »*.
+
+### 8. Enchaîne sur /affecte
+
+Un plan n'est pas fini tant que ses tranches ne portent pas leur difficulté et leur modèle. Enchaîne sur `/affecte` — sur les phases neuves seulement en mode extension. Ne le demande pas : fais-le, et dis en une phrase ce qui en est sorti.
 
 <plan-template>
 # Plan : <nom de la feature>

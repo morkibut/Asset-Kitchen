@@ -67,7 +67,7 @@ function PlaceDunFournisseur({
         <span
           className={[
             "mesure text-[10px]",
-            tiroir.pret ? "text-ok" : "text-texte-3",
+            tiroir.pret ? "text-ancien-ok" : "text-texte-3",
           ].join(" ")}
         >
           {tiroir.pret ? "prêt" : "en attente"}
@@ -172,7 +172,7 @@ function UnePlace({
             disabled={enCours}
             onClick={() => void agir(() => api.retirerSecret(secret.nom))}
             title="ses modèles se grisent — ses images et ses lignes de dépense restent"
-            className="mesure h-[34px] shrink-0 rounded-[2px] border border-bord px-2 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-echec disabled:cursor-not-allowed"
+            className="mesure h-[34px] shrink-0 rounded-[2px] border border-bord px-2 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-ancien-echec disabled:cursor-not-allowed"
           >
             retirer
           </button>

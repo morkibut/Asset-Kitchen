@@ -103,7 +103,8 @@
     <table class="sp">
       <tr><th style="width: 168px">Le mot</th><th style="width: 330px">Ce que c'est</th><th style="width: 250px">Dans le marais</th><th>À ne pas confondre avec</th></tr>
       <tr><td class="m">un jeu</td><td>Un dossier, une bible, une allure, des clés. Tout ce qui suit lui appartient.</td><td class="x">Le Marais du Vieux Moulin</td><td class="x">le jeu qu'on fabrique dans un moteur — l'atelier n'en sait rien</td></tr>
-      <tr><td class="m">une famille</td><td>Le type. Six, posées par l'atelier, jamais modifiables. Elle décide des outils qu'on aura.</td><td class="x">Les personnages</td><td class="x">une collection, qu'on crée soi-même</td></tr>
+      <tr><td class="m">une famille</td><td>Le grand rangement. Six, posées par l'atelier, jamais modifiables. Elle décide des outils qu'on aura.</td><td class="x">Les personnages</td><td class="x">une collection, qu'on crée soi-même</td></tr>
+      <tr><td class="m">une nature</td><td>Le type d'un sujet. Elle dit sa famille, sa hauteur en pourcentage d'un personnage, et s'il se découpe.</td><td class="x">personnage · meuble · tuile</td><td class="x">une famille, qu'elle porte — on ne pose pas les deux</td></tr>
       <tr><td class="m">une collection</td><td>Un groupe qu'on crée pour ranger. Un sujet peut être dans plusieurs.</td><td class="x">Les héros · Les monstres du marais</td><td class="x">une famille, qui est fixe</td></tr>
       <tr><td class="m">un sujet</td><td>Une chose du jeu. Un nom, une description, et des images qui viennent avec le temps.</td><td class="x">Le pélerin · Epée · Le vieux moulin</td><td class="x">une image, qui n'est qu'une de ses faces</td></tr>
     </table>
@@ -115,6 +116,7 @@
       <tr><td class="m">l'image de référence</td><td>Celle qui dit à quoi le sujet ressemble. Tout sujet en a une, et tout le reste s'y compare.</td><td class="x">l'épée seule, de face</td><td class="x">une image ordinaire — il n'y a qu'une référence à la fois</td></tr>
       <tr><td class="m">une feuille</td><td>Une image qui contient plusieurs cases, revenue d'une seule génération. Elle se découpe.</td><td class="x">six poses en 1536 × 256</td><td class="x">une image ordinaire — tant qu'elle n'est pas découpée, ses cases n'existent pas</td></tr>
       <tr><td class="m">une case</td><td>Un morceau d'une feuille, une fois coupé.</td><td class="x">la case « attaque »</td><td class="x">une case de tableau à l'écran</td></tr>
+      <tr><td class="m">un clip</td><td>Une petite vidéo revenue d'une génération, faite de toutes ses frames. On y prend les images dont on a besoin ; le même clip peut donner plusieurs animations.</td><td class="x">cinq secondes du pélerin qui marche, $0,10</td><td class="x">une animation, qui est un choix d'images dans le clip</td></tr>
       <tr><td class="m">un calque</td><td>Une image qui se pose par-dessus une autre, et se retire.</td><td class="x">le sac de voyage sur le pélerin qui marche</td><td class="x">une passe, qui modifie l'image elle-même</td></tr>
       <tr><td class="m">une passe</td><td>Une retouche posée sur une image. Elles s'empilent et se retirent dans n'importe quel ordre.</td><td class="x">détourage · réduction à 64 px · 24 couleurs</td><td class="x">un calque, qui reste une image à part</td></tr>
       <tr><td class="m">une vignette</td><td>Une image montrée en petit dans une grille.</td><td class="x">les 41 de la galerie</td><td class="x">l'icône d'inventaire, qui est une vraie image du jeu</td></tr>
@@ -128,8 +130,8 @@
       <tr><td class="m">une direction</td><td>D'où on voit le sujet. Le marais n'en a qu'une ; d'autres jeux en ont quatre.</td><td class="x">une seule</td><td class="x">la vue, qui est un réglage du jeu entier</td></tr>
       <tr><td class="m">un emplacement</td><td>Un endroit du corps où un équipement s'accroche.</td><td class="x">le dos · les mains · la tête</td><td class="x">un emploi, qui est plus large</td></tr>
       <tr><td class="m">un emploi</td><td>Une façon dont un équipement sert. Chacun a ses propres images.</td><td class="x">portée en main droite · posée au sol · son icône</td><td class="x">un emplacement, qui ne dit que l'endroit</td></tr>
-      <tr><td class="m">une animation</td><td>Des frames dans un ordre, avec un tempo et une boucle.</td><td class="x">aucune pour l'instant</td><td class="x">une feuille, qui est une image et pas une durée</td></tr>
-      <tr><td class="m">une frame</td><td>Une image prise à un moment d'une animation. Elle a sa durée à elle.</td><td class="x">la 2ᵉ des 4 frames de la marche</td><td class="x">une pose, qui est un moment du sujet et pas du mouvement</td></tr>
+      <tr><td class="m">une animation</td><td>Des frames dans un ordre, avec un tempo et une boucle.</td><td class="x">aucune pour l'instant</td><td class="x">un clip, qui est la vidéo entière d'où les frames sont prises</td></tr>
+      <tr><td class="m">une frame</td><td>Une image d'une animation, taillée dans un clip. Elle a sa durée à elle, et elle se souvient du clip d'où elle vient.</td><td class="x">la 2ᵉ des 4 frames de la marche</td><td class="x">une pose, qui est un moment du sujet et pas du mouvement</td></tr>
     </table>
 
     <div class="rt" style="margin: 30px 0 8px">Ce qui s'applique à tout le jeu</div>
@@ -149,7 +151,7 @@
       <tr><td class="m">un prompt</td><td>Le texte assemblé qui part au modèle : la bible du jeu, la description du sujet, la consigne de la pose, l'allure.</td><td class="x">SUJET · CASES · MONDE · TRAIT · CAMÉRA</td><td class="x">la description, qui n'en est qu'un morceau</td></tr>
       <tr><td class="m">une génération</td><td>Un prompt envoyé, payé qu'il réussisse ou non.</td><td class="x">84 générations, $1,55</td><td class="x">une image : une génération peut en rendre six</td></tr>
       <tr><td class="m">l'atelier</td><td>L'application. Elle tourne sur ta machine.</td><td class="x">—</td><td class="x">le jeu, qui est ce qu'elle contient</td></tr>
-      <tr><td class="m">le carnet</td><td>La colonne de gauche, toujours là. Elle sert à aller quelque part.</td><td class="x">17 lignes fermé</td><td class="x">la barre, qui sert à faire</td></tr>
+      <tr><td class="m">le carnet</td><td>La colonne de gauche, toujours là. Elle sert à aller quelque part.</td><td class="x">10 lignes fermé</td><td class="x">la barre, qui sert à faire</td></tr>
       <tr><td class="m">la surface</td><td>Le milieu de l'écran, là où le travail se fait.</td><td class="x">une page, une matrice, une planche, une table</td><td class="x">le volet, qui est la colonne de droite</td></tr>
       <tr><td class="m">la barre</td><td>⌘K. Elle cherche, et elle fait ce qui n'est nulle part à l'écran.</td><td class="x">—</td><td class="x">le carnet, qui ne fait qu'ouvrir</td></tr>
     </table>

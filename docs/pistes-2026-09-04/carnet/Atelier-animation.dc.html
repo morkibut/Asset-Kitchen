@@ -1,0 +1,461 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
+    .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
+    .bt-off { background: #f2ede4; border-color: #e2dbd0; color: #b0a89b; }
+    .ong { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 7px; font-size: 13.5px; color: #6d675e; }
+    .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .seg { display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; }
+    .sg { height: 29px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; color: #6d675e; }
+    .sg-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .ch { height: 34px; display: flex; align-items: center; padding: 0 11px; border-radius: 7px; background: #fffdfa; border: 1px solid #ddd5c8; font-size: 13px; color: #221f1b; }
+    .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
+    .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 14px 14px; }
+    .vide { border: 1px dashed #c9c2b6; border-radius: 8px; }
+    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
+    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
+    .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; background: #f7f3ec">
+
+  <div style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <div style="border-right:1px solid #e2dbd0; background:#f2ede4; padding:22px 12px 16px; display:flex;
+              flex-direction:column; gap:12px; overflow:hidden">
+      <div style="padding:0 10px; display:flex; flex-direction:column; gap:3px">
+        <span class="rt">la frame choisie</span>
+        <span class="serif" style="font-size:21px">5 sur 12</span>
+      </div>
+      <div style="margin:0 10px; border:1px solid #e0cfb8; background:#f4ece2; border-radius:7px; padding:8px 10px;
+                  font-size:11.5px; line-height:1.45; color:#4e483f">
+        Elle a sa recette &agrave; elle&nbsp;: son d&eacute;tourage n'est pas celui de la bande.
+      </div>
+      <div style="display:flex; flex-direction:column; gap:1px">
+        <div style="background:#e6dfd2; border-radius:6px; padding:7px 10px; display:flex; flex-direction:column; gap:3px">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+            <span style="font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:6px">D&eacute;tourer<span style="width:5px; height:5px; border-radius:50%; background:#a8492c; flex-shrink:0"></span></span>
+            <span style="color:#5c7a52; font-size:15px; line-height:1">&#9679;</span>
+          </div>
+          <div style="font-size:11.5px; color:#6d675e">le fond magenta part</div>
+        </div>
+        <div style="border-radius:6px; padding:7px 10px; display:flex; flex-direction:column; gap:3px">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+            <span style="font-size:13.5px; display:flex; align-items:center; gap:6px">Recadrer</span>
+            <span style="color:#5c7a52; font-size:15px; line-height:1">&#9679;</span>
+          </div>
+          <div style="font-size:11.5px; color:#6d675e">les bords vides sautent</div>
+        </div>
+        <div style="border-radius:6px; padding:7px 10px; display:flex; flex-direction:column; gap:3px">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+            <span style="font-size:13.5px; display:flex; align-items:center; gap:6px">Pix&eacute;liser</span>
+            <span style="color:#5c7a52; font-size:15px; line-height:1">&#9679;</span>
+          </div>
+          <div style="font-size:11.5px; color:#6d675e">la case du jeu</div>
+        </div>
+        <div style="border-radius:6px; padding:7px 10px; display:flex; flex-direction:column; gap:3px">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+            <span style="font-size:13.5px; display:flex; align-items:center; gap:6px">Couleurs</span>
+            <span style="color:#5c7a52; font-size:15px; line-height:1">&#9679;</span>
+          </div>
+          <div style="font-size:11.5px; color:#6d675e">la palette du monde</div>
+        </div>
+        <div style="border-radius:6px; padding:7px 10px; display:flex; flex-direction:column; gap:3px">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+            <span style="font-size:13.5px; display:flex; align-items:center; gap:6px">Nettoyer</span>
+            <span style="color:#b0a89b; font-size:15px; line-height:1">&#9679;</span>
+          </div>
+          <div style="font-size:11.5px; color:#6d675e">les pixels isol&eacute;s</div>
+        </div>
+        <div style="border-radius:6px; padding:7px 10px; display:flex; flex-direction:column; gap:3px">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+            <span style="font-size:13.5px; display:flex; align-items:center; gap:6px">Le contour</span>
+            <span style="color:#c9c2b6; font-size:15px; line-height:1">&#9679;</span>
+          </div>
+          <div style="font-size:11.5px; color:#6d675e">le trait de bord retrac&eacute;</div>
+        </div>
+        <div style="border-radius:6px; padding:7px 10px; display:flex; flex-direction:column; gap:3px">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+            <span style="font-size:13.5px; display:flex; align-items:center; gap:6px">La main</span>
+            <span style="color:#c9c2b6; font-size:15px; line-height:1">&#9679;</span>
+          </div>
+          <div style="font-size:11.5px; color:#6d675e">ce qu'on repeint soi-m&ecirc;me</div>
+        </div>
+        <div style="border-radius:6px; padding:7px 10px; display:flex; flex-direction:column; gap:3px">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+            <span style="font-size:13.5px; display:flex; align-items:center; gap:6px">Retourner</span>
+            <span style="color:#c9c2b6; font-size:15px; line-height:1">&#9679;</span>
+          </div>
+          <div style="font-size:11.5px; color:#6d675e">les autres directions</div>
+        </div>
+      </div>
+      <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px">
+        <div class="bt" style="width:100%; font-size:12.5px">Remettre la recette de la bande</div>
+        <div style="border-top:1px solid #e2dbd0; padding-top:11px; display:flex; flex-direction:column; gap:6px;
+                    font-size:11.5px; color:#6d675e">
+          <div style="display:flex; align-items:center; gap:7px"><span style="color:#5c7a52; font-size:14px; line-height:1">&#9679;</span> pos&eacute;e, elle agit</div>
+          <div style="display:flex; align-items:center; gap:7px"><span style="color:#b0a89b; font-size:14px; line-height:1">&#9679;</span> endormie, r&eacute;glages gard&eacute;s</div>
+          <div style="display:flex; align-items:center; gap:7px"><span style="width:5px; height:5px; border-radius:50%; background:#a8492c; display:inline-block"></span> s'&eacute;carte de la bande</div>
+        </div>
+      </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 13px">
+    <div style="display:flex; align-items:baseline; gap:9px; font-size:12.5px; color:#948c80">
+      <span>Le p&eacute;lerin</span><span>&rsaquo;</span><span>Ses animations</span><span>&rsaquo;</span>
+      <span>marche &middot; sud</span><span>&rsaquo;</span><span style="color:#3d382f">marche sud</span>
+    </div>
+
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px">
+      <div style="display:flex; flex-direction:column; gap:3px">
+        <h1 class="serif" style="margin:0; font-size:34px; line-height:1.05">L'atelier de la marche</h1>
+        <div style="font-size:13px; color:#4e483f">12&nbsp;images, dont 2 &agrave; recette s&eacute;par&eacute;e et 1 retouch&eacute;e &agrave; la main.</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-shrink:0">
+        <div class="bt" style="height:38px; font-size:12.5px">Annuler</div>
+        <div class="bt bt-p" style="height:38px; padding:0 16px">Enregistrer</div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:16px">
+      <div class="seg"><div class="sg sg-on">La frame</div><div class="sg">Avant / apr&egrave;s</div><div class="sg">Pelure d'oignon</div></div>
+      <div style="display:flex; align-items:center; gap:10px; font-size:12px; color:#6d675e">
+        <span>zoom</span>
+        <div class="seg"><div class="sg">&times;2</div><div class="sg sg-on">&times;4</div><div class="sg">&times;8</div></div>
+      </div>
+    </div>
+
+    <div style="flex:1; min-height:0; border-radius:10px; background:#6c6c6c; position:relative; display:flex;
+                align-items:center; justify-content:center; overflow:hidden">
+      <div class="damier" style="position:absolute; inset:0; opacity:.20"></div>
+      <i class="fig" style="--a:#6b5a44;--b:#8a7458; width:118px; height:280px; position:relative"></i>
+      <div style="position:absolute; left:12px; top:12px; display:flex; gap:7px">
+        <span style="background:rgba(0,0,0,.42); color:#f0ece4; border-radius:5px; padding:3px 8px; font-size:11px">frame 5</span>
+        <span style="background:#a8492c; color:#fff8f4; border-radius:5px; padding:3px 8px; font-size:11px">recette s&eacute;par&eacute;e</span>
+      </div>
+      <div style="position:absolute; right:12px; top:12px; background:rgba(0,0,0,.42); color:#f0ece4; border-radius:5px;
+                  padding:3px 8px; font-family:'IBM Plex Mono',monospace; font-size:11px">48 &times; 48 px &middot; 14 couleurs</div>
+      <div style="position:absolute; left:0; right:0; bottom:0; padding:11px 14px; display:flex; align-items:center;
+                  gap:14px; background:linear-gradient(transparent,rgba(0,0,0,.42)); font-size:11.5px; color:#e6e0d6">
+        <span>Les fl&egrave;ches changent de frame &middot; Maj pousse l'image de 5&nbsp;px</span>
+        <span style="flex:1"></span>
+        <span>Ctrl+Z d&eacute;fait, rien n'est &eacute;crit avant &laquo;&nbsp;Enregistrer&nbsp;&raquo;</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 13px; overflow: hidden">
+      <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px">
+        <span class="rt">le ruban</span>
+        <span class="num">12 images</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px"><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:49%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">1</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:51%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">2</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:48%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">3</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:50%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">4</span></div><div style="border:2px solid #a8492c; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><div style="position:absolute; top:4px; right:4px; display:flex; gap:3px"><span style="width:6px;height:6px;border-radius:50%;background:#a8492c"></span></div><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:47%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">5</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:49%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">6</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:51%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">7</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><div style="position:absolute; top:4px; right:4px; display:flex; gap:3px"><span style="width:6px;height:6px;border-radius:50%;background:#a8492c"></span></div><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:48%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">8</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:50%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">9</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><div style="position:absolute; top:4px; right:4px; display:flex; gap:3px"><span style="width:6px;height:6px;border-radius:50%;background:#5c7a52"></span></div><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:47%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">10</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:49%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">11</span></div><div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:68px; position:relative; overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458; width:16px; height:35px; position:absolute; bottom:14%; left:51%; transform:translateX(-50%)"></i><span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">12</span></div></div>
+      <div style="display:flex; align-items:center; gap:14px; font-size:11px; color:#6d675e">
+        <span style="display:flex; align-items:center; gap:5px"><i style="width:6px;height:6px;border-radius:50%;background:#a8492c"></i> recette s&eacute;par&eacute;e</span>
+        <span style="display:flex; align-items:center; gap:5px"><i style="width:6px;height:6px;border-radius:50%;background:#5c7a52"></i> retouch&eacute;e &agrave; la main</span>
+      </div>
+
+      <div style="display:flex; gap:6px">
+        <div class="bt" style="flex:1; height:30px; font-size:12px">Retirer</div>
+        <div class="bt" style="flex:1; height:30px; font-size:12px">Dupliquer</div>
+        <div class="bt" style="width:34px; height:30px; padding:0">&#8593;</div>
+        <div class="bt" style="width:34px; height:30px; padding:0">&#8595;</div>
+      </div>
+
+      <div style="border-top:1px solid #e2dbd0; padding-top:12px; display:flex; align-items:center; gap:12px">
+        <div class="bt bt-p" style="width:40px; height:40px; padding:0; border-radius:50%; font-size:14px">&#9654;</div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:5px">
+          <div style="display:flex; align-items:baseline; justify-content:space-between">
+            <span style="font-size:12.5px">la vitesse</span><span class="mono" style="font-size:12px">12 i/s</span>
+          </div>
+          <div class="glis"><i style="left:52%"></i></div>
+        </div>
+      </div>
+      <div style="font-size:11.5px; color:#6d675e; margin-top:-4px">1,0&nbsp;s pour un tour. C'est aussi la vitesse export&eacute;e.</div>
+
+      <div style="display:flex; flex-direction:column; gap:9px">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+          <span style="font-size:12.5px">le sens</span>
+          <div class="seg"><div class="sg sg-on">boucle</div><div class="sg">aller-retour</div></div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+          <span style="font-size:12.5px">la fen&ecirc;tre</span>
+          <span class="ch" style="height:29px; font-size:12px">du clip</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+          <span style="font-size:12.5px; display:flex; align-items:center; gap:7px">l'ancrage <span class="puce p-a">&agrave; ajouter</span></span>
+          <div style="display:grid; grid-template-columns:repeat(3,11px); gap:2px">
+            <i style="width:11px;height:11px;border-radius:2px;background:#e6dfd2"></i><i style="width:11px;height:11px;border-radius:2px;background:#e6dfd2"></i><i style="width:11px;height:11px;border-radius:2px;background:#e6dfd2"></i>
+            <i style="width:11px;height:11px;border-radius:2px;background:#e6dfd2"></i><i style="width:11px;height:11px;border-radius:2px;background:#e6dfd2"></i><i style="width:11px;height:11px;border-radius:2px;background:#e6dfd2"></i>
+            <i style="width:11px;height:11px;border-radius:2px;background:#e6dfd2"></i><i style="width:11px;height:11px;border-radius:2px;background:#a8492c"></i><i style="width:11px;height:11px;border-radius:2px;background:#e6dfd2"></i>
+          </div>
+        </div>
+        <div style="font-size:11.5px; line-height:1.45; color:#6d675e">
+          L'ancrage dit o&ugrave; le personnage pose les pieds dans sa case. Les pieds au milieu du bord bas,
+          c'est ce qui &eacute;vite qu'il flotte quand il change d'animation.
+        </div>
+      </div>
+
+      <div style="margin-top:auto; display:flex; flex-direction:column; gap:8px">
+        <div class="bt" style="width:100%; font-size:12.5px">Prendre des images dans le clip &rsaquo;</div>
+        <div class="bt" style="width:100%; font-size:12.5px">Reprendre le montage &rsaquo;</div>
+      </div>
+  </div>
+
+  </div>
+
+
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">La colonne de gauche, selon la table ouverte</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 720px; text-align: right">Les tables sont celles de n'importe quelle image du jeu. Ce qui change ici&nbsp;: elles s'appliquent &agrave; une frame, ou &agrave; plusieurs.</span>
+    </div>
+    <div style="display: flex; gap: 22px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">D&eacute;tourer</span>
+        <span style="font-size: 12px; color: #6d675e">une seule frame</span>
+      </div>
+      <div style="width: 300px; height: 620px; border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4;
+                  padding: 18px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="padding:0 10px; display:flex; flex-direction:column; gap:3px">
+        <span class="rt">la frame choisie</span>
+        <span class="serif" style="font-size:21px">5 sur 12</span>
+      </div>
+      <div style="margin:0 10px; border:1px solid #e0cfb8; background:#f4ece2; border-radius:7px; padding:8px 10px;
+                  font-size:11.5px; line-height:1.45; color:#4e483f">
+        Elle a sa recette &agrave; elle&nbsp;: son d&eacute;tourage n'est pas celui de la bande.
+      </div>
+      <div style="border-top:1px solid #e2dbd0; margin-top:4px; padding-top:12px; display:flex; flex-direction:column; gap:11px">
+        <div style="padding:0 10px; display:flex; align-items:baseline; justify-content:space-between">
+          <span style="font-size:14px; font-weight:600">D&eacute;tourer</span>
+          <span class="puce p-a">s&eacute;par&eacute;e</span>
+        </div>
+        <div style="padding:0 10px; display:flex; flex-direction:column; gap:8px">
+          <div class="carte" style="border-color:#a8492c; padding:9px 10px; display:flex; gap:9px; align-items:flex-start">
+            <i style="width:12px;height:12px;border-radius:50%;border:1px solid #a8492c;background:#a8492c;box-shadow:inset 0 0 0 2px #fffdfa;flex-shrink:0;margin-top:2px"></i>
+            <div><div style="font-size:12.5px; font-weight:600">Par couleur de fond</div>
+            <div style="font-size:11px; color:#6d675e; margin-top:2px">le gris du clip, tol&eacute;rance 18</div></div>
+          </div>
+          <div class="carte" style="padding:9px 10px; display:flex; gap:9px; align-items:flex-start">
+            <i style="width:12px;height:12px;border-radius:50%;border:1px solid #c9c2b6;background:#fffdfa;flex-shrink:0;margin-top:2px"></i>
+            <div><div style="font-size:12.5px">Par silhouette</div>
+            <div style="font-size:11px; color:#6d675e; margin-top:2px">un mod&egrave;le trouve le personnage &mdash; 1 &agrave; 2 s</div></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:5px; padding-top:3px">
+            <div style="display:flex; align-items:baseline; justify-content:space-between">
+              <span style="font-size:12px">la tol&eacute;rance</span><span class="mono" style="font-size:11.5px">18</span>
+            </div>
+            <div class="glis"><i style="left:28%"></i></div>
+            <div style="font-size:11px; line-height:1.4; color:#6d675e">La bande est &agrave; 12. Cette image a un halo plus large&nbsp;: le mod&egrave;le a flout&eacute; le bord.</div>
+          </div>
+        </div>
+        <div style="padding:0 10px"><div class="bt" style="width:100%; font-size:12px; height:30px">Remettre les 12 de la bande</div></div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">La main</span>
+        <span style="font-size: 12px; color: #6d675e">une seule frame</span>
+      </div>
+      <div style="width: 300px; height: 620px; border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4;
+                  padding: 18px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="padding:0 10px; display:flex; flex-direction:column; gap:3px">
+        <span class="rt">la frame choisie</span>
+        <span class="serif" style="font-size:21px">5 sur 12</span>
+      </div>
+      <div style="margin:0 10px; border:1px solid #e0cfb8; background:#f4ece2; border-radius:7px; padding:8px 10px;
+                  font-size:11.5px; line-height:1.45; color:#4e483f">
+        Trois passages de pinceau gard&eacute;s dans sa recette.
+      </div>
+      <div style="border-top:1px solid #e2dbd0; margin-top:4px; padding-top:12px; display:flex; flex-direction:column; gap:11px">
+        <div style="padding:0 10px; display:flex; align-items:baseline; justify-content:space-between">
+          <span style="font-size:14px; font-weight:600">La main</span>
+          <span class="puce p-a">V3.03.4</span>
+        </div>
+        <div style="padding:0 10px; display:flex; flex-direction:column; gap:10px">
+          <div class="seg" style="width:100%"><div class="sg sg-on" style="flex:1; justify-content:center">Poser</div><div class="sg" style="flex:1; justify-content:center">&Ocirc;ter</div></div>
+          <div style="display:flex; flex-direction:column; gap:5px">
+            <div style="display:flex; align-items:baseline; justify-content:space-between">
+              <span style="font-size:12px">le pinceau</span><span class="mono" style="font-size:11.5px">3 px</span>
+            </div>
+            <div class="glis"><i style="left:22%"></i></div>
+            <div style="font-size:11px; color:#6d675e">Carr&eacute;, de c&ocirc;t&eacute; impair&nbsp;: 1, 3, 5, 7.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px">
+            <span class="rt">la couleur</span>
+            <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:3px">
+              <i style="height:19px;border-radius:3px;background:#1a1410"></i><i style="height:19px;border-radius:3px;background:#3f3428"></i>
+              <i style="height:19px;border-radius:3px;background:#5c4d3a;box-shadow:0 0 0 2px #a8492c"></i><i style="height:19px;border-radius:3px;background:#6b5a44"></i>
+              <i style="height:19px;border-radius:3px;background:#8a7458"></i><i style="height:19px;border-radius:3px;background:#a89170"></i>
+              <i style="height:19px;border-radius:3px;background:#d8bb95"></i>
+            </div>
+            <div style="font-size:11px; color:#6d675e">Seules les couleurs du jeu. On ne peut pas en inventer une ici.</div>
+          </div>
+          <div style="display:flex; gap:6px">
+            <div class="bt" style="flex:1; height:29px; font-size:12px">D&eacute;faire</div>
+            <div class="bt" style="flex:1; height:29px; font-size:12px">Refaire</div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Cinq frames choisies</span>
+        <span style="font-size: 12px; color: #6d675e">ce qui diff&egrave;re dit &laquo;&nbsp;s&eacute;par&eacute;&nbsp;&raquo;</span>
+      </div>
+      <div style="width: 300px; height: 620px; border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4;
+                  padding: 18px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="padding:0 10px; display:flex; flex-direction:column; gap:3px">
+        <span class="rt">la s&eacute;lection</span>
+        <span class="serif" style="font-size:21px">5 frames</span>
+      </div>
+      <div style="margin:0 10px; border:1px solid #e0cfb8; background:#f4ece2; border-radius:7px; padding:8px 10px;
+                  font-size:11.5px; line-height:1.45; color:#4e483f">
+        <strong>2 d'entre elles ont une recette s&eacute;par&eacute;e.</strong> Poser un r&eacute;glage ici l'&eacute;crase.
+        C'est dit une fois, pas &agrave; chaque geste.
+      </div>
+      <div style="border-top:1px solid #e2dbd0; margin-top:4px; padding-top:12px; display:flex; flex-direction:column; gap:11px">
+        <div style="padding:0 10px; display:flex; align-items:baseline; justify-content:space-between">
+          <span style="font-size:14px; font-weight:600">Pix&eacute;liser</span>
+        </div>
+        <div style="padding:0 10px; display:flex; flex-direction:column; gap:11px">
+          <div style="display:flex; flex-direction:column; gap:5px">
+            <div style="display:flex; align-items:baseline; justify-content:space-between">
+              <span style="font-size:12px">la hauteur du sujet</span><span class="mono" style="font-size:11.5px; color:#8a5a2c">s&eacute;par&eacute;</span>
+            </div>
+            <div class="glis" style="background:#e6dfd2"><i style="left:44%; border-color:#c9c2b6"></i></div>
+            <div style="font-size:11px; line-height:1.4; color:#6d675e">Trois frames sont &agrave; 48, deux &agrave; 44. Poser une valeur la met aux cinq d'un coup.</div>
+          </div>
+          <div class="bt" style="width:100%; font-size:12px; height:30px">Poser 48 aux cinq</div>
+        </div>
+
+        <div style="margin:12px 10px 0; border-top:1px solid #e2dbd0; padding-top:12px; opacity:.5">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:5px">
+            <span style="font-size:13.5px">La main</span>
+            <span class="puce p-non">&eacute;teinte</span>
+          </div>
+          <div style="font-size:11.5px; line-height:1.45; color:#4e483f">
+            Peindre ne se copie pas d'une image &agrave; l'autre&nbsp;: le trait tomberait ailleurs. Choisir une seule
+            frame la rallume.
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:auto; padding:0 10px"><div class="bt" style="width:100%; font-size:12.5px">Poser une recette nomm&eacute;e &rsaquo;</div></div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Le chutier</span>
+        <span style="font-size: 12px; color: #6d675e">la r&eacute;serve de la bande</span>
+      </div>
+      <div style="width: 300px; height: 620px; border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4;
+                  padding: 18px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="padding:0 10px; display:flex; flex-direction:column; gap:3px">
+        <span class="rt">le chutier</span>
+        <span class="serif" style="font-size:21px">4 images</span>
+      </div>
+      <div style="margin:0 10px; font-size:11.5px; line-height:1.45; color:#6d675e">
+        La r&eacute;serve de la bande&nbsp;: des images prises dans le clip, pas encore pos&eacute;es dans le ruban.
+        Elle se garde avec l'animation et se retrouve en rouvrant.
+      </div>
+      <div style="padding:0 10px; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px">
+        <div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:64px; position:relative">
+          <i class="fig" style="--a:#6b5a44;--b:#8a7458; width:15px; height:32px; position:absolute; bottom:14%; left:48%; transform:translateX(-50%)"></i>
+          <span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">22</span></div>
+        <div style="border:2px solid #a8492c; border-radius:6px; background:#6c6c6c; height:64px; position:relative">
+          <i class="fig" style="--a:#6b5a44;--b:#8a7458; width:15px; height:32px; position:absolute; bottom:14%; left:52%; transform:translateX(-50%)"></i>
+          <span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">23</span></div>
+        <div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:64px; position:relative">
+          <i class="fig" style="--a:#6b5a44;--b:#8a7458; width:15px; height:32px; position:absolute; bottom:14%; left:44%; transform:translateX(-50%)"></i>
+          <span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">41</span></div>
+        <div style="border:1px solid #e2dbd0; border-radius:6px; background:#6c6c6c; height:64px; position:relative">
+          <i class="fig" style="--a:#6b5a44;--b:#8a7458; width:15px; height:32px; position:absolute; bottom:14%; left:50%; transform:translateX(-50%)"></i>
+          <span style="position:absolute; left:4px; bottom:3px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#e0dbd2">42</span></div>
+      </div>
+      <div style="padding:0 10px; display:flex; flex-direction:column; gap:8px; margin-top:4px">
+        <span class="rt">poser l'image 23</span>
+        <div class="seg" style="width:100%"><div class="sg sg-on" style="flex:1; justify-content:center">avant la 5</div><div class="sg" style="flex:1; justify-content:center">apr&egrave;s la 5</div></div>
+        <div class="bt bt-p" style="width:100%; font-size:12.5px; height:32px">La poser dans le ruban</div>
+      </div>
+      <div style="margin-top:auto; padding:0 10px; display:flex; flex-direction:column; gap:8px">
+        <div class="bt" style="width:100%; font-size:12.5px">Prendre d'autres images &rsaquo;</div>
+        <div style="font-size:11.5px; line-height:1.45; color:#6d675e">
+          Une image sortie du ruban revient ici plut&ocirc;t que de dispara&icirc;tre. Ses retouches la suivent.
+        </div>
+      </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Ce qui vient de quelle tranche</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">L'&eacute;cran est dessin&eacute; entier. Le d&eacute;p&ocirc;t, lui, l'ouvre en quatre fois &mdash; V3.03, ouverte le 5&nbsp;septembre.</span>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:14px">
+      <div class="carte" style="padding:13px 14px; display:flex; flex-direction:column; gap:7px">
+        <div style="display:flex; align-items:baseline; justify-content:space-between"><span style="font-size:13.5px; font-weight:600">V3.03.1</span><span class="puce p-ok">pos&eacute;e</span></div>
+        <div style="font-size:12.5px; line-height:1.5; color:#4e483f">Chaque frame porte sa recette. Le montage redevient brut.</div>
+      </div>
+      <div class="carte" style="padding:13px 14px; display:flex; flex-direction:column; gap:7px">
+        <div style="display:flex; align-items:baseline; justify-content:space-between"><span style="font-size:13.5px; font-weight:600">V3.03.2</span><span class="puce p-a">&agrave; venir</span></div>
+        <div style="font-size:12.5px; line-height:1.5; color:#4e483f">Les tables sur une s&eacute;lection&nbsp;: une frame, plusieurs, toutes. Les recettes nomm&eacute;es.</div>
+      </div>
+      <div class="carte" style="padding:13px 14px; display:flex; flex-direction:column; gap:7px">
+        <div style="display:flex; align-items:baseline; justify-content:space-between"><span style="font-size:13.5px; font-weight:600">V3.03.3</span><span class="puce p-a">&agrave; venir</span></div>
+        <div style="font-size:12.5px; line-height:1.5; color:#4e483f">Retirer, dupliquer, d&eacute;placer. Le chutier, et reprendre le montage.</div>
+      </div>
+      <div class="carte" style="padding:13px 14px; display:flex; flex-direction:column; gap:7px">
+        <div style="display:flex; align-items:baseline; justify-content:space-between"><span style="font-size:13.5px; font-weight:600">V3.03.4</span><span class="puce p-a">&agrave; venir</span></div>
+        <div style="font-size:12.5px; line-height:1.5; color:#4e483f">La main sur une frame, avec ses outils et ses t&eacute;moins.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px; border-left:3px solid #a8492c; padding:4px 0 4px 16px; font-size:13px; line-height:1.6; color:#3d382f; max-width:1180px">
+      <strong>Une recette individuelle ne voyage pas.</strong> Remplacer la prise d'une frame par une autre image
+      n'emporte pas ses retouches&nbsp;: c'est une autre image, et le d&eacute;tourage r&eacute;gl&eacute; sur la premi&egrave;re
+      mentirait sur la seconde. La prise qui part au chutier, elle, garde sa recette avec elle.
+    </div>
+  </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

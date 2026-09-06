@@ -97,7 +97,8 @@ const BANDE_ILOT = 20
 // ── Les deux échelles ───────────────────────────────────────────────────────
 //
 // **Ce qui se lit est en pixels d'écran ; ce qui se mesure est en pixels de
-// plan** (`docs/DESIGN.md` § Sur la toile, deux échelles). L'image, la carte, la
+// plan** (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Six règles de
+// comportement, la sixième). L'image, la carte, la
 // note, la boîte d'un îlot sont des **places** : elles suivent le zoom, sans
 // quoi la toile mentirait sur ce qu'elle range. Le nom d'un îlot, son compte, le
 // mot d'un trait et les trois prises sont des **lectures et des cibles** : ils
@@ -2064,7 +2065,7 @@ function NoeudIlot({ data }: NodeProps) {
   const perd = !part && !!geste && geste.depuis === nom && geste.vers !== nom
 
   /** La couleur de la surface — la teinte, le châssis, ou ce qui s'en va. */
-  const surface = part ? "var(--color-echec)" : (couleur ?? "var(--color-bord-fort)")
+  const surface = part ? "var(--color-ancien-echec)" : (couleur ?? "var(--color-bord-fort)")
   /** L'encre du bandeau, et c'est le bandeau qui la décide. */
   const encre = part || couleur ? "var(--color-fond-0)" : "var(--color-texte)"
 
@@ -2076,7 +2077,7 @@ function NoeudIlot({ data }: NodeProps) {
   // emprunter un mot à la sémantique, et le fond vidé le redit sur toute la
   // surface, là où l'œil est réellement posé pendant qu'on tire.
   const fond = part
-    ? "color-mix(in srgb, var(--color-echec) 8%, transparent)"
+    ? "color-mix(in srgb, var(--color-ancien-echec) 8%, transparent)"
     : perd
       ? "transparent"
       : accueille
@@ -2276,7 +2277,7 @@ function NoeudIlot({ data }: NodeProps) {
               isConnectableStart
               isConnectableEnd={false}
               style={{ borderColor: `color-mix(in srgb, ${encre} 55%, transparent)` }}
-              className="!relative !ml-1.5 !h-3 !w-3 !min-w-0 !shrink-0 !transform-none !cursor-crosshair !rounded-full !border !bg-transparent !opacity-100 !transition !duration-[80ms] hover:!border-signal"
+              className="!relative !ml-1.5 !h-3 !w-3 !min-w-0 !shrink-0 !transform-none !cursor-crosshair !rounded-full !border !bg-transparent !opacity-100 !transition !duration-[80ms] hover:!border-ancien-signal"
             />
           )}
           <Ancrage />
@@ -2345,7 +2346,7 @@ function NoeudIlot({ data }: NodeProps) {
                     ? "elle existe déjà — ce geste y mène, il n'en fait pas une seconde"
                     : "l'atelier lit les couleurs de ces images — rien n'est payé"
                 }
-                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-2 hover:text-signal"
+                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-2 hover:text-ancien-signal"
               >
                 {fait?.palette ? "ouvrir sa palette ›" : "faire une palette de ce paquet"}
               </button>
@@ -2357,7 +2358,7 @@ function NoeudIlot({ data }: NodeProps) {
                     ? "elle existe déjà — ce geste y mène, il n'en fait pas une seconde"
                     : "la palette, l'ambiance qui la porte, et il ne reste qu'à écrire les trois cases"
                 }
-                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-2 hover:text-signal"
+                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-2 hover:text-ancien-signal"
               >
                 {fait?.ambiance
                   ? "ouvrir son ambiance ›"
@@ -2378,7 +2379,7 @@ function NoeudIlot({ data }: NodeProps) {
                   <button
                     type="button"
                     onClick={() => cadre.onAllerAuxAmbiances(cadre.fabrique!.cible)}
-                    className="text-signal underline-offset-2 hover:underline"
+                    className="text-ancien-signal underline-offset-2 hover:underline"
                   >
                     aller la voir ›
                   </button>
@@ -2524,7 +2525,7 @@ function NoeudCarte({ data }: NodeProps) {
           position={Position.Right}
           isConnectableStart
           isConnectableEnd={false}
-          className="!top-[-6px] !left-0 !h-3 !w-3 !min-w-0 !transform-none !cursor-crosshair !rounded-full !border !border-bord-fort !bg-fond-2 !opacity-100 !transition !duration-[80ms] hover:!border-signal"
+          className="!top-[-6px] !left-0 !h-3 !w-3 !min-w-0 !transform-none !cursor-crosshair !rounded-full !border !border-bord-fort !bg-fond-2 !opacity-100 !transition !duration-[80ms] hover:!border-ancien-signal"
         />
       </div>
       <Ancrage />
@@ -2597,8 +2598,10 @@ function AreteLien({ id, source, target, data }: EdgeProps) {
             trait ne le traverse pas. Mono 10 px : c'est un fait sur ce qui est
             là, comme le nom d'un îlot.
 
-            **Et comme lui, il est de l'échelle de l'écran** (`docs/DESIGN.md`
-            § Sur la toile, deux échelles). Le trait est une géométrie du plan,
+            **Et comme lui, il est de l'échelle de l'écran**
+            (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md`
+            § Six règles de comportement, la sixième). Le trait est une
+            géométrie du plan,
             le mot est une lecture : à 0,3× il aurait fait trois pixels de haut,
             c'est-à-dire rien. L'ancre est le milieu du trait, et la pastille s'y
             centre. */}
@@ -2702,7 +2705,7 @@ function PavéLien({ lien, cadre }: { lien: Lien; cadre: Cadre }) {
           className={[
             "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
             lien.pointe
-              ? "border-signal bg-signal/13 text-signal"
+              ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
               : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
           ].join(" ")}
         >
@@ -2713,7 +2716,7 @@ function PavéLien({ lien, cadre }: { lien: Lien; cadre: Cadre }) {
         <button
           type="button"
           onClick={() => cadre.onCouperLien(lien)}
-          className="mesure ml-auto text-[10px] text-texte-3 hover:text-echec"
+          className="mesure ml-auto text-[10px] text-texte-3 hover:text-ancien-echec"
         >
           Couper
         </button>
@@ -2771,7 +2774,7 @@ function Poignee({
       type="button"
       aria-label="Régler la largeur sur la toile"
       style={{ pointerEvents: "auto" }}
-      className="nodrag nopan absolute -top-[5px] -left-[5px] h-[10px] w-[10px] cursor-ew-resize rounded-[2px] border border-bord-fort bg-fond-3 opacity-0 transition duration-[80ms] group-hover:opacity-100 hover:border-signal focus-visible:opacity-100"
+      className="nodrag nopan absolute -top-[5px] -left-[5px] h-[10px] w-[10px] cursor-ew-resize rounded-[2px] border border-bord-fort bg-fond-3 opacity-0 transition duration-[80ms] group-hover:opacity-100 hover:border-ancien-signal focus-visible:opacity-100"
       onPointerDown={(evenement) => {
         evenement.stopPropagation()
         evenement.currentTarget.setPointerCapture(evenement.pointerId)

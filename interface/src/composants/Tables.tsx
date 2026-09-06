@@ -5,7 +5,7 @@
 // détourage en regardant une vignette, et quatre réglages que le modèle porte
 // depuis T2 n'avaient jamais eu d'écran du tout.
 //
-// **La barre de tables** montre les sept places de la recette **dans l'ordre où
+// **La barre de tables** montre les huit places de la recette **dans l'ordre où
 // elles s'appliquent**, et cet ordre ne se change pas : c'est celui du domaine,
 // et le lire autrement serait mentir sur ce que l'image a subi. Chaque place dit
 // d'un carré si elle agit — plein quand elle **change l'image**, creux quand
@@ -64,6 +64,7 @@ import {
   PanneauMain,
   PanneauQuantification,
   PanneauRecadrage,
+  PanneauRetournement,
   passagesDe,
   rayonDe,
   RESUME,
@@ -82,11 +83,12 @@ export type Table =
   | "quantification"
   | "bords"
   | "contours"
+  | "retournement"
   | "main"
   | "decoupage"
   | "superposition"
 
-/** Les sept places, puis le trait, puis les deux fabriques.
+/** Les huit places, puis le trait, puis les deux fabriques.
  *
  *  **L'ordre est celui du traitement**, et il est écrit une fois — ici. Le
  *  domaine l'applique dans cet ordre-là ; deux listes ordonnées de la même
@@ -104,6 +106,11 @@ export const TABLES: readonly { cle: Table; nom: string; fabrique?: true }[] = [
   { cle: "quantification", nom: "quantification" },
   { cle: "bords", nom: "bords" },
   { cle: "contours", nom: "contours" },
+  // **En queue et avant la main** (B1). Les deux planches ne la plaçaient pas au
+  // même endroit ; le plan a tranché pour la fin de la chaîne, et le domaine la
+  // déclare au même rang — l'ordre du fichier est l'ordre d'exécution des deux
+  // côtés.
+  { cle: "retournement", nom: "retournement" },
   { cle: "main", nom: "la main" },
   { cle: "decoupage", nom: "découpage", fabrique: true },
   { cle: "superposition", nom: "superposition", fabrique: true },
@@ -134,6 +141,10 @@ function valeur(table: Table, recette: Recette): string | null {
         : null
     case "contours":
       return recette.contours ? RESUME.contours(recette.contours) : null
+    // Le carré se remplit dès que la place est là : un retournement n'a pas de
+    // valeur neutre — le seul sens qu'il porte retourne l'image.
+    case "retournement":
+      return recette.retournement ? RESUME.retournement(recette.retournement) : null
     // **Une pile de calques vides ne change pas l'image**, donc son carré reste
     // creux : le carré se remplit quand la place *change l'image*, pas quand
     // elle figure dans la recette. Le calque, lui, est gardé — on l'a créé.
@@ -165,6 +176,12 @@ function indisponible(
   // quoi faire, et le détourage est la première de la barre.
   if (table === "contours" && mesures?.opaque)
     return "cette image est entièrement opaque : il n'y a pas de bord de sujet à tracer, seulement les quatre bords du cadre. Détoure-la d'abord — c'est la première table de la barre."
+  // **Le retournement n'est jamais indisponible non plus** (B1), et ce n'est
+  // pas définitif : la planche demande qu'il se grise sur la famille interface
+  // — des lettres retournées sont illisibles — et sur les décors, dont l'ombre
+  // change de côté. Les deux refus supposent de lire la famille de l'image, ce
+  // que cette table ne fait pas encore ; ils viennent avec les neuf autres sens.
+  //
   // **La main n'est jamais indisponible**, et c'est l'exacte symétrie du
   // contour : toute image se retouche, y compris une image entièrement opaque
   // — *ôter* y crée de la transparence, et un calque de dessin s'y pose comme
@@ -181,7 +198,7 @@ function indisponible(
 /** La place de la recette qu'une table règle — ou rien, pour une fabrique.
  *
  *  **Deux listes qui se ressemblent, et il fallait les relier quelque part.**
- *  La barre compte neuf tables, la recette sept places : les deux fabriques
+ *  La barre compte dix tables, la recette huit places : les deux fabriques
  *  écrivent d'autres fichiers et ne posent rien sur celle-ci, donc elles n'ont
  *  rien à éteindre. Écrit ici, au même endroit que l'ordre des tables, pour que
  *  la correspondance se relise d'un coup d'œil le jour où une place bouge. */
@@ -244,7 +261,7 @@ function Carre({ etat }: { etat: "posee" | "vide" | "eteinte" }) {
       data-carre={etat}
       className={[
         "inline-block h-[9px] w-[9px] shrink-0",
-        etat === "posee" ? "bg-signal" : "border border-texte-3",
+        etat === "posee" ? "bg-ancien-signal" : "border border-texte-3",
       ].join(" ")}
     />
   )
@@ -349,7 +366,7 @@ function PanneauDesRecettes({
         <button
           type="button"
           onClick={onCopier}
-          className="mesure h-[26px] flex-1 rounded-[2px] border border-bord text-[10px] text-texte-2 hover:text-signal"
+          className="mesure h-[26px] flex-1 rounded-[2px] border border-bord text-[10px] text-texte-2 hover:text-ancien-signal"
         >
           Copier les réglages
         </button>
@@ -357,7 +374,7 @@ function PanneauDesRecettes({
           type="button"
           onClick={onColler}
           disabled={!aCopier}
-          className="mesure h-[26px] flex-1 rounded-[2px] border border-bord text-[10px] text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3 disabled:hover:text-texte-3"
+          className="mesure h-[26px] flex-1 rounded-[2px] border border-bord text-[10px] text-texte-2 hover:text-ancien-signal disabled:cursor-not-allowed disabled:text-texte-3 disabled:hover:text-texte-3"
         >
           Coller
         </button>
@@ -386,7 +403,7 @@ function PanneauDesRecettes({
           type="button"
           onClick={enregistrer}
           disabled={!propre}
-          className="mesure h-[26px] shrink-0 rounded-[2px] border border-bord px-2 text-[10px] text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3 disabled:hover:text-texte-3"
+          className="mesure h-[26px] shrink-0 rounded-[2px] border border-bord px-2 text-[10px] text-texte-2 hover:text-ancien-signal disabled:cursor-not-allowed disabled:text-texte-3 disabled:hover:text-texte-3"
         >
           {aRemplacer === propre ? "Remplacer ›" : "Enregistrer"}
         </button>
@@ -414,7 +431,7 @@ function PanneauDesRecettes({
               <button
                 type="button"
                 onClick={() => onAppliquer(enregistree)}
-                className="mesure shrink-0 text-[10px] text-texte-3 hover:text-signal"
+                className="mesure shrink-0 text-[10px] text-texte-3 hover:text-ancien-signal"
               >
                 appliquer
               </button>
@@ -422,7 +439,7 @@ function PanneauDesRecettes({
                 type="button"
                 onClick={() => onOublier(enregistree)}
                 aria-label={`oublier « ${enregistree} »`}
-                className="mesure shrink-0 text-[10px] text-texte-3 hover:text-echec"
+                className="mesure shrink-0 text-[10px] text-texte-3 hover:text-ancien-echec"
               >
                 oublier
               </button>
@@ -512,9 +529,17 @@ export function BarreDesTables({
   return (
     // **La bande ne grandit pas, et ce qui dépasse défile** — la règle du
     // panneau borné par l'écran (`docs/DESIGN.md`), appliquée à une bande.
-    // Mesuré au navigateur en tenant E5 : à sept places qui portent chacune
-    // leur valeur, la bande demande 1 323 px pour 1 280 offerts, et une bande
-    // qui s'épaissirait mentirait sur la liste fermée des cinq hauteurs.
+    // **Remesuré au navigateur en tenant B1**, le 6 septembre 2026, la huitième
+    // place posée : à sept places qui portent une valeur, la bande demande
+    // 1 491 px, et la fenêtre n'en offre que 1 064 à 1 280 — il manque 427 px.
+    // Elle cesse de manquer à partir de 1 710 px de fenêtre. *La mesure d'E5
+    // disait 1 323 pour 1 280 offerts, à sept places ; la conclusion n'a pas
+    // bougé, le chiffre si.* Une bande qui s'épaissirait mentirait sur la liste
+    // fermée des cinq hauteurs : elle défile, elle ne grandit pas.
+    //
+    // **La place la plus large est le retournement, à 229 px**, parce que son
+    // résumé écrit `miroir gauche-droite` en toutes lettres. Viennent ensuite
+    // la quantification (187) et les contours (169).
     //
     // **Ce qui défile, ce sont les places — jamais le geste qui les vide.**
     // `tout défaire` est hors de la zone qui défile : poussé dedans, il aurait
@@ -534,8 +559,8 @@ export function BarreDesTables({
         const commutable = !fabrique && !dehors && vaut !== null
         const chip = [
           // `whitespace-nowrap` : la bande fait 34 px et ne grandit pas.
-          // Trouvé au navigateur en tenant E5 — dès que la sixième et la
-          // septième places portent une valeur, `modèle · 28` et
+          // Trouvé au navigateur en tenant E5 — dès que deux places voisines
+          // portent une valeur, `modèle · 28` et
           // `128 px · 100 %` se repliaient chacun sur deux lignes et
           // débordaient de la bande par le haut et par le bas.
           "mesure flex h-[24px] shrink-0 items-center whitespace-nowrap text-[10px] transition-colors duration-[80ms]",
@@ -547,7 +572,7 @@ export function BarreDesTables({
         ].join(" ")
         return (
           <span key={cle} className="flex items-center gap-1">
-            {/* Le trait qui sépare les sept places des deux fabriques. Il ne
+            {/* Le trait qui sépare les huit places des deux fabriques. Il ne
                 sépare pas deux groupes de contrôles : il sépare **ce qui pose
                 sur cette image** de **ce qui écrit d'autres fichiers**. */}
             {fabrique && rang > 0 && !TABLES[rang - 1].fabrique && (
@@ -571,7 +596,7 @@ export function BarreDesTables({
                       : `éteindre ${nom} sans perdre ses réglages`
                   }
                   onClick={() => onVeille(cle, !eteinte)}
-                  className="flex h-[24px] shrink-0 items-center pl-2 pr-1.5 hover:text-signal"
+                  className="flex h-[24px] shrink-0 items-center pl-2 pr-1.5 hover:text-ancien-signal"
                 >
                   <Carre etat={eteinte ? "eteinte" : "posee"} />
                 </button>
@@ -602,7 +627,7 @@ export function BarreDesTables({
                 {vaut && (
                   <span
                     className={
-                      eteinte ? "text-texte-3 line-through" : "text-signal"
+                      eteinte ? "text-texte-3 line-through" : "text-ancien-signal"
                     }
                   >
                     {vaut}
@@ -658,7 +683,7 @@ export function BarreDesTables({
       <button
         type="button"
         onClick={onToutDefaire}
-        className="mesure flex h-[24px] shrink-0 items-center gap-1.5 whitespace-nowrap px-2 pr-4 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-echec"
+        className="mesure flex h-[24px] shrink-0 items-center gap-1.5 whitespace-nowrap px-2 pr-4 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-ancien-echec"
       >
         <span aria-hidden>×</span> tout défaire
       </button>
@@ -823,7 +848,7 @@ function Comparateur({
           onPointerDown={() => onAvant?.(true)}
           onPointerUp={() => onAvant?.(false)}
           onPointerLeave={() => onAvant?.(false)}
-          className="mesure h-[24px] shrink-0 whitespace-nowrap rounded-[2px] border border-bord-fort px-2 text-[10px] text-texte-2 hover:text-signal"
+          className="mesure h-[24px] shrink-0 whitespace-nowrap rounded-[2px] border border-bord-fort px-2 text-[10px] text-texte-2 hover:text-ancien-signal"
         >
           Avant ›
         </button>
@@ -868,7 +893,7 @@ function Comparateur({
             ? "Télécharger l'image d'origine, telle qu'elle est arrivée"
             : "Télécharger le rendu, avec les passes de la recette"
         }
-        className="flex h-[26px] shrink-0 items-center rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[11.5px] whitespace-nowrap text-texte-2 transition-colors duration-[80ms] hover:bg-fond-3 hover:text-signal"
+        className="flex h-[26px] shrink-0 items-center rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[11.5px] whitespace-nowrap text-texte-2 transition-colors duration-[80ms] hover:bg-fond-3 hover:text-ancien-signal"
       >
         PNG ↓
       </a>
@@ -929,7 +954,7 @@ function CommandesDeZoom({
             ),
           )
         }
-        className="h-[24px] w-[24px] rounded-[2px] border border-bord-fort text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3"
+        className="h-[24px] w-[24px] rounded-[2px] border border-bord-fort text-texte-2 hover:text-ancien-signal disabled:cursor-not-allowed disabled:text-texte-3"
       >
         −
       </button>
@@ -956,7 +981,7 @@ function CommandesDeZoom({
         onClick={() =>
           onZoom(borner(ARRETS_ZOOM.find((a) => a > effectif) ?? ZOOM_MAX))
         }
-        className="h-[24px] w-[24px] rounded-[2px] border border-bord-fort text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3"
+        className="h-[24px] w-[24px] rounded-[2px] border border-bord-fort text-texte-2 hover:text-ancien-signal disabled:cursor-not-allowed disabled:text-texte-3"
       >
         +
       </button>
@@ -966,8 +991,8 @@ function CommandesDeZoom({
         onClick={() => onZoom(100)}
         className={`mesure h-[24px] shrink-0 whitespace-nowrap rounded-[2px] border px-2 text-[10px] ${
           zoom === 100
-            ? "border-signal bg-signal-sourd text-signal"
-            : "border-bord-fort text-texte-2 hover:text-signal"
+            ? "border-ancien-signal bg-fond-3 text-ancien-signal"
+            : "border-bord-fort text-texte-2 hover:text-ancien-signal"
         }`}
       >
         100 %
@@ -978,8 +1003,8 @@ function CommandesDeZoom({
         onClick={() => onZoom("ajuste")}
         className={`mesure h-[24px] shrink-0 whitespace-nowrap rounded-[2px] border px-2 text-[10px] ${
           zoom === "ajuste"
-            ? "border-signal bg-signal-sourd text-signal"
-            : "border-bord-fort text-texte-2 hover:text-signal"
+            ? "border-ancien-signal bg-fond-3 text-ancien-signal"
+            : "border-bord-fort text-texte-2 hover:text-ancien-signal"
         }`}
       >
         ajusté
@@ -1507,7 +1532,7 @@ export function EcranTables({
                 <button
                   type="button"
                   onClick={() => veiller(ouverte, false)}
-                  className="text-signal underline-offset-2 hover:underline"
+                  className="text-ancien-signal underline-offset-2 hover:underline"
                 >
                   La rallumer ›
                 </button>
@@ -1523,7 +1548,7 @@ export function EcranTables({
             <p
               data-table-reveillee
               role="status"
-              className="mesure shrink-0 border-b border-bord bg-fond-2 px-3 py-2 text-[10px] text-signal"
+              className="mesure shrink-0 border-b border-bord bg-fond-2 px-3 py-2 text-[10px] text-ancien-signal"
             >
               {reveil}
             </p>
@@ -1570,6 +1595,13 @@ export function EcranTables({
               <PanneauBords {...reglages} />
             ) : ouverte === "contours" ? (
               <PanneauContours {...reglages} />
+            ) : ouverte === "retournement" ? (
+              <PanneauRetournement
+                {...reglages}
+                asset={asset}
+                onErreur={onErreur}
+                onFabrique={(miroir) => onSoeur(miroir.identifiant)}
+              />
             ) : ouverte === "main" ? (
               <PanneauMain {...reglages} etat={etatMain} />
             ) : null}
@@ -1589,7 +1621,7 @@ export function EcranTables({
               onClick={() =>
                 void poser(avecVeille(VIDER[ouverte]!(recette), ouverte, false))
               }
-              className="mesure h-[26px] shrink-0 border-t border-bord px-3 text-left text-[10px] text-texte-3 hover:text-signal"
+              className="mesure h-[26px] shrink-0 border-t border-bord px-3 text-left text-[10px] text-texte-3 hover:text-ancien-signal"
             >
               Sans {TABLES.find((t) => t.cle === ouverte)?.nom} ›
             </button>
@@ -1933,7 +1965,7 @@ function PromouvoirLeDetourage({
             setPose(null)
             setOuvert(true)
           }}
-          className="mesure self-start text-left text-[10px] text-signal hover:text-signal-clair"
+          className="mesure self-start text-left text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           enregistrer ce réglage comme défaut du projet ›
         </button>
@@ -1941,7 +1973,7 @@ function PromouvoirLeDetourage({
             geste dont l'effet vit dans un autre écran doit nommer cet écran :
             sans quoi on ne sait ni si ça a marché, ni où aller le vérifier. */}
         {pose && (
-          <p role="status" className="mesure text-[10px] leading-4 text-signal">
+          <p role="status" className="mesure text-[10px] leading-4 text-ancien-signal">
             c'est fait — {pose} partira désormais de ce détourage. Ça se relit
             dans Univers › réglages › Le détourage de départ.
           </p>
@@ -1962,7 +1994,7 @@ function PromouvoirLeDetourage({
       <button
         type="button"
         onClick={() => void poser("nature")}
-        className="mesure self-start text-left text-[10px] text-signal hover:text-signal-clair"
+        className="mesure self-start text-left text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         pour {NOM_DE_LA_NATURE[nature as Nature]} ›
       </button>
@@ -1970,7 +2002,7 @@ function PromouvoirLeDetourage({
         <button
           type="button"
           onClick={() => void poser("famille")}
-          className="mesure self-start text-left text-[10px] text-signal hover:text-signal-clair"
+          className="mesure self-start text-left text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           pour tout ce que tu ranges dans {NOM_FAMILLE[famille]} ›
         </button>
@@ -2009,6 +2041,7 @@ const VIDER: Partial<Record<Table, (r: Recette) => Recette>> = {
   quantification: (r) => ({ ...r, quantification: null }),
   bords: (r) => ({ ...r, bords: null }),
   contours: (r) => ({ ...r, contours: null }),
+  retournement: (r) => ({ ...r, retournement: null }),
   // **La pile entière, calques compris.** « Sans la main › » vide la table :
   // garder les calques vidés de leurs passages laisserait une pile qui ne fait
   // rien et que rien n'explique.
@@ -2055,7 +2088,7 @@ function Soeur({
  * L'image en grand, et le passage qu'on y trace.
  *
  * **Les coordonnées sont celles de l'image rendue**, coins inclus — c'est sur
- * elle que la septième place s'applique, et c'est elle qui part dans le jeu.
+ * elle que la huitième place s'applique, et c'est elle qui part dans le jeu.
  * Le cadre *est* l'image, mis à l'échelle par calcul : une boîte qui ment
  * décale ce qu'on pose dessus, et c'est la leçon du cadre de la Découpe.
  *
@@ -2211,7 +2244,7 @@ function ToileDeLaMain({
             width: `${((2 * rayonDe(etat.diametre) + 1) / largeur) * 100}%`,
             height: `${((2 * rayonDe(etat.diametre) + 1) / hauteur) * 100}%`,
           }}
-          className="pointer-events-none absolute border border-signal bg-signal/[.18]"
+          className="pointer-events-none absolute border border-ancien-signal bg-ancien-signal/[.18]"
         />
       )}
     </div>

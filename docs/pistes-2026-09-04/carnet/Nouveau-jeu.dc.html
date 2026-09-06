@@ -17,172 +17,751 @@
     .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
     .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
     .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
-    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
-    .rl-sub2 { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 34px; border-radius: 5px; font-size: 12.5px; color: #6d675e; }
     .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
     .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
     .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
-    .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
-    .ong { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 7px; font-size: 13.5px; color: #6d675e; }
-    .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
     .seg { display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; }
     .sg { height: 29px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; color: #6d675e; }
     .sg-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
     .ch { height: 34px; display: flex; align-items: center; padding: 0 11px; border-radius: 7px; background: #fffdfa; border: 1px solid #ddd5c8; font-size: 13px; color: #221f1b; }
     .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
-    .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 14px 14px; }
-    .vide { border: 1px dashed #c9c2b6; border-radius: 8px; }
-    .col { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 12.5px; background: #ece6db; color: #4e483f; }
-    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
-    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
-    .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
-    .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
-    .lame::before { content: none }
-    .lame { border-radius: 1px 1px 2px 2px; box-shadow: inset 0 6px 0 var(--b) }
-
-
+    .al { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 15px; display: flex;
+          flex-direction: column; gap: 11px; align-items: flex-start }
     .et { display: flex; align-items: center; gap: 9px; font-size: 13px }
     .et i { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
             font-family: 'IBM Plex Mono', monospace; font-size: 11px; border: 1px solid #ddd5c8; background: #fffdfa; color: #6d675e }
-    .al { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 15px; display: flex;
-           flex-direction: column; gap: 11px; align-items: flex-start }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f; white-space: nowrap }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .eti { display: inline-flex; align-items: center; height: 25px; padding: 0 10px; border-radius: 6px;
+           font-size: 12px; background: #fffdfa; border: 1px solid #ddd5c8; color: #4e483f }
+    .eti-on { background: #a8492c; border-color: #a8492c; color: #fff8f4 }
+    .eti-neuve { background: transparent; border-style: dashed; border-color: #c9c2b6; color: #6d675e }
+
+    /* Les dessins repris de « Son allure » : sa carte est plus serrée que
+       celle du wizard, on la redonne dans son coin plutôt que de la réécrire. */
+    .src-al .carte { border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 10px;
+                     display: flex; flex-direction: column; gap: 7px; }
+    .src-al .carte-on { border: 2px solid #a8492c; background: #faf3ee; padding: 9px; }
+    .src-al .t { font-size: 13.5px; font-weight: 600; line-height: 1.2 }
+    .src-al .d { font-size: 11.5px; color: #6d675e; line-height: 1.4 }
+
+    /* Ceux repris de « Sa vue » : les huit vignettes de caméra. */
+    .vue { border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; padding: 10px 11px 11px;
+           display: flex; flex-direction: column; gap: 7px; }
+    .vue-on { border: 2px solid #a8492c; background: #faf3ee; padding: 9px 10px 10px; }
+    .cadre { height: 92px; border-radius: 5px; background: #6c6c6c; position: relative; overflow: hidden; }
+    .sol { position: absolute; left: 0; right: 0; bottom: 0; }
+    .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%);
+                   width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
+    .lame::before { content: none }
+    .lame { border-radius: 1px 1px 2px 2px; box-shadow: inset 0 6px 0 var(--b) }
+    .titre { font-size: 14px; font-weight: 600; line-height: 1.2 }
+    .ref { font-size: 11.5px; color: #6d675e; line-height: 1.35 }
+    .dir { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; color: #948c80 }
   </style>
 </helmet>
 
-<div class="k" style="width: 1600px; height: 1000px; background: #f7f3ec; display: flex; flex-direction: column; overflow: hidden">
+<div class="k" style="width: 1600px; background: #f7f3ec">
 
-  <div style="padding: 22px 40px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center; justify-content: space-between; gap: 24px">
-    <div class="serif" style="font-size: 22px">Commencer un jeu</div>
-    <div style="display: flex; align-items: center; gap: 26px">
-      <div class="et" style="color: #4e483f">
-        <i style="background: #5c7a52; border-color: #5c7a52; color: #fff8f4">1</i>
-        <span style="font-weight: 400">Son nom</span>
-      </div>
-      <div class="et" style="color: #221f1b">
-        <i style="background: #a8492c; border-color: #a8492c; color: #fff8f4">2</i>
-        <span style="font-weight: 600">Son allure</span>
-      </div>
-      <div class="et" style="color: #948c80">
-        <i style="">3</i>
-        <span style="font-weight: 400">Son monde</span>
-      </div>
-      <div class="et" style="color: #948c80">
-        <i style="">4</i>
-        <span style="font-weight: 400">Ses clés</span>
-      </div>
-    </div>
+<div class="k" style="width: 1600px; height: 1000px; background: #f7f3ec; display: flex;
+            flex-direction: column; overflow: hidden">
+
+  <div style="padding: 22px 40px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center;
+              justify-content: space-between; gap: 24px; flex-shrink: 0">
+    <div class="serif" style="font-size: 22px; white-space: nowrap">Commencer un jeu</div>
+    <div style="display: flex; align-items: center; gap: 20px"><div class="et" style="color: #221f1b"><i style="background: #a8492c; border-color: #a8492c; color: #fff8f4">1</i><span style="font-weight: 600">Son nom</span></div><div class="et" style="color: #948c80"><i>2</i><span style="font-weight: 400">Son allure</span></div><div class="et" style="color: #948c80"><i>3</i><span style="font-weight: 400">Sa vue</span></div><div class="et" style="color: #948c80"><i>4</i><span style="font-weight: 400">Son monde</span></div></div>
     <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Fermer</a>
   </div>
 
   <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) 420px">
 
-    <div style="padding: 34px 46px; display: flex; flex-direction: column; gap: 24px; overflow: hidden">
+    <div style="padding: 34px 46px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
       <div style="display: flex; flex-direction: column; gap: 5px">
-        <h1 class="serif" style="font-size: 40px; line-height: 1.04">Quelle allure a ce jeu ?</h1>
-        <div style="font-size: 14px; color: #4e483f; max-width: 620px">Ce choix se répète dans chaque prompt. On peut le changer plus tard, mais toutes les images faites avant garderont l’ancienne allure.</div>
+        <h1 class="serif" style="font-size: 40px; line-height: 1.04; margin: 0">Comment s'appelle ce jeu&nbsp;?</h1>
+        <div style="font-size: 14px; color: #4e483f; max-width: 780px">Le nom se change quand on veut. Le dossier, non &mdash; alors il vaut mieux le voir tout de suite.</div>
       </div>
+      <div style="display: flex; flex-direction: column; gap: 22px; max-width: 680px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div class="rt" style="font-size: 9.5px">Le nom du jeu</div>
+          <div style="height: 62px; display: flex; align-items: center; padding: 0 18px; border-radius: 9px;
+                      background: #fffdfa; border: 1px solid #a8492c; box-shadow: 0 0 0 1px #a8492c">
+            <span class="serif" style="font-size: 28px">Le Marais du Vieux Moulin</span>
+            <span style="width: 1.5px; height: 30px; background: #a8492c; margin-left: 3px"></span>
+          </div>
+          <div style="font-size: 12px; color: #6d675e">
+            Il s'affiche en haut du carnet, et se change quand on veut.</div>
+        </div>
 
-      <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px">
-        <div class="al" style="border-color: #a8492c; box-shadow: 0 0 0 1px #a8492c">
-          <div style="width: 100%; height: 112px; border-radius: 7px; background: #f2ede4; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px">
-            <i style="width: 36px; height: 62px; background: #6b5a44; border-radius: 2px; position: relative"><i style="position: absolute; left: 50%; top: -15px; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 2px; background: #d8bb95"></i></i>
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 17px; border: 1px solid #e2dbd0;
+                    border-radius: 9px; background: #fffdfa">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px">
+            <span style="font-size: 13.5px; font-weight: 600">Son dossier sur le disque</span>
+            <span class="mono" style="font-size: 13px; color: #a8492c">le-marais-du-vieux-moulin</span>
           </div>
-          <div style="display: flex; flex-direction: column; gap: 2px">
-            <span style="font-size: 14px; font-weight: 600">Pixel art</span>
-            <span style="font-size: 11.5px; color: #6d675e">64 px · 24 couleurs</span>
-          </div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #6d675e">
+            Calcul&eacute; du nom&nbsp;: accents enlev&eacute;s, minuscules, tirets. C'est l&agrave; que les images du jeu
+            iront se ranger. <b style="color: #221f1b">Il ne changera plus jamais</b>, m&ecirc;me si le nom change &mdash;
+            alors autant le voir maintenant.</div>
         </div>
-        <div class="al" style="">
-          <div style="width: 100%; height: 112px; border-radius: 7px; background: #f2ede4; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px">
-            <i style="width: 36px; height: 62px; background: #5c7a52; border-radius: 6px 6px 3px 3px; position: relative"><i style="position: absolute; left: 50%; top: -15px; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: #d8bb95"></i></i>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 2px">
-            <span style="font-size: 14px; font-weight: 400">Dessin à plat</span>
-            <span style="font-size: 11.5px; color: #6d675e">traits nets, aplats</span>
-          </div>
-        </div>
-        <div class="al" style="">
-          <div style="width: 100%; height: 112px; border-radius: 7px; background: #f2ede4; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px">
-            <i style="width: 36px; height: 62px; background: #8a5a2c; border-radius: 6px 6px 3px 3px; position: relative"><i style="position: absolute; left: 50%; top: -15px; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: #d8bb95"></i></i>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 2px">
-            <span style="font-size: 14px; font-weight: 400">Peint</span>
-            <span style="font-size: 11.5px; color: #6d675e">matière, dégradés</span>
-          </div>
-        </div>
-        <div class="al" style="">
-          <div style="width: 100%; height: 112px; border-radius: 7px; background: #f2ede4; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px">
-            <i style="width: 36px; height: 62px; background: #55606e; border-radius: 6px 6px 3px 3px; position: relative"><i style="position: absolute; left: 50%; top: -15px; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: #d8bb95"></i></i>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 2px">
-            <span style="font-size: 14px; font-weight: 400">Vectoriel</span>
-            <span style="font-size: 11.5px; color: #6d675e">formes pleines</span>
-          </div>
-        </div>
-      </div>
 
-      <div style="display: flex; flex-direction: column; gap: 13px">
-        <div class="rt">Ce que le pixel art demande de plus</div>
-        <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px">
-          <div style="display: flex; flex-direction: column; gap: 7px">
-            <span style="font-size: 12.5px; color: #4e483f">La taille d’une case</span>
-            <div class="seg"><div class="sg">32</div><div class="sg sg-on">64</div><div class="sg">128</div></div>
-            <span style="font-size: 11.5px; color: #6d675e; line-height: 1.45">C’est la finesse de tout le jeu. 64 est le choix courant : le pélerin y tient en 58 carrés de haut.</span>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 7px">
-            <span style="font-size: 12.5px; color: #4e483f">Combien de couleurs</span>
-            <div class="seg"><div class="sg">16</div><div class="sg sg-on">24</div><div class="sg">32</div><div class="sg">64</div></div>
-            <span style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Se règle plus tard, image par image. On peut aussi ne rien limiter.</span>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 7px">
-            <span style="font-size: 12.5px; color: #4e483f">La couleur de fond à demander</span>
-            <div style="display: flex; align-items: center; gap: 8px">
-              <i style="width: 26px; height: 26px; border-radius: 5px; background: #ff00ff; border: 1px solid #ddd5c8"></i>
-              <i style="width: 26px; height: 26px; border-radius: 5px; background: #00ffff; border: 1px solid #ddd5c8"></i>
-              <i style="width: 26px; height: 26px; border-radius: 5px; background: #00ff00; border: 1px solid #ddd5c8"></i>
-              <span class="mono" style="font-size: 12px; color: #6d675e">FF00FF</span>
-            </div>
-            <span style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Elle est demandée au modèle et fait sauter le fond au détourage. Choisir une couleur qui n’existe pas dans le jeu.</span>
-          </div>
+        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; border: 1px solid #e0cfb8;
+                    border-radius: 9px; background: #f4ece2">
+          <span class="puce p-a" style="flex-shrink: 0; margin-top: 1px">&agrave; ajouter</span>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #6d4a22">
+            Deux jeux peuvent porter le m&ecirc;me nom aujourd'hui, sans un mot&nbsp;: le second prend le dossier
+            <span class="mono">-2</span> et l'on se retrouve avec deux lignes identiques dans la liste.
+            Cette &eacute;tape est l'endroit o&ugrave; le dire.</div>
         </div>
       </div>
-
-      <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 6px">
-        <div class="bt" style="height: 38px; padding: 0 16px">Revenir au nom</div>
-        <div style="display: flex; align-items: center; gap: 14px">
-          <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Passer et régler plus tard</a>
-          <div class="bt bt-p" style="height: 38px; padding: 0 20px">Écrire son monde</div>
-        </div>
-      </div>
+      <div style="margin-top: auto; padding-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 20px"><span></span><div style="display: flex; align-items: center; gap: 14px"><a href="#" style="font-size: 13px; text-decoration: none; color: #6d675e">Cr&eacute;er sans r&eacute;gler</a><div class="bt bt-p" style="height: 38px; padding: 0 20px">Choisir son allure</div></div></div>
     </div>
 
-    <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 34px 26px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
-      <div class="rt">Le jeu, tel qu’il se dessine</div>
+    <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 34px 26px; display: flex;
+                flex-direction: column; gap: 14px; overflow: hidden">
+      <div class="rt">Le jeu, tel qu'il se dessine</div>
       <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 11px">
         <div class="serif" style="font-size: 24px; line-height: 1.15">Le Marais du Vieux Moulin</div>
-        <div style="display: grid; grid-template-columns: minmax(0,1fr) 130px; row-gap: 7px; font-size: 12.5px; align-items: baseline">
-          <span style="color: #6d675e">Son dossier</span><span class="mono" style="text-align: right; font-size: 11.5px">test-v2</span>
-          <span style="color: #6d675e">Son allure</span><span style="text-align: right">pixel art</span>
-          <span style="color: #6d675e">Sa case</span><span class="mono" style="text-align: right">64 px</span>
-          <span style="color: #6d675e">Ses couleurs</span><span class="mono" style="text-align: right">24</span>
-          <span style="color: #6d675e">Son monde</span><span style="text-align: right; color: #b0a89b">à écrire</span>
-          <span style="color: #6d675e">Ses clés</span><span style="text-align: right; color: #b0a89b">à poser</span>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 155px; row-gap: 7px; font-size: 12.5px;
+                    align-items: baseline">
+          <span style="color: #6d675e">Son dossier</span><span style="text-align: right">le-marais-du-vieux-moulin</span><span style="color: #6d675e">Son allure</span><span style="text-align: right; color: #b0a89b">&agrave; choisir</span><span style="color: #6d675e">Sa case</span><span style="text-align: right; color: #b0a89b">&agrave; choisir</span><span style="color: #6d675e">Sa vue</span><span style="text-align: right; color: #b0a89b">&agrave; choisir</span><span style="color: #6d675e">Son monde</span><span style="text-align: right; color: #b0a89b">&agrave; &eacute;crire</span>
         </div>
       </div>
-
-      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
-        <div style="font-size: 13px; font-weight: 600">Ce qui est posé d’avance</div>
-        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Six poses, huit échelles de sujets, quatre emplacements de corps et un détourage de départ. Tout se change ensuite, dans les réglages du jeu — rien n’est à décider maintenant.</div>
-      </div>
-
-      <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
-        <div style="font-size: 13px; font-weight: 600">Rien n’est payé pendant ce parcours</div>
-        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Créer un jeu ne coûte rien. La première dépense arrive quand on demande la première image, et son prix est affiché avant.</div>
-      </div>
-
-      <div style="margin-top: auto; font-size: 12px; color: #948c80; line-height: 1.5">Quatre étapes, deux minutes. On peut fermer à tout moment : ce qui est rempli est gardé.</div>
+      <div style="padding: 14px 15px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; display: flex; flex-direction: column; gap: 8px"><div style="font-size: 13px; font-weight: 600">Quatre &eacute;tapes, et rien d'autre</div><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Ce parcours ne demande que ce qui part avec chaque demande d'image&nbsp;: le nom, l'allure, la vue et le monde. Tout le reste &mdash; la palette, les &eacute;chelles, les poses, le d&eacute;tourage &mdash; se r&egrave;gle l&agrave; o&ugrave; l'on s'en sert, et pas ici.</div></div>
+      <div style="margin-top: auto; font-size: 12px; color: #948c80; line-height: 1.5">On peut s'arr&ecirc;ter ici&nbsp;: un jeu cr&eacute;&eacute; sans rien r&eacute;gler fonctionne, avec les valeurs de l'atelier.</div>
     </div>
 
+  </div>
+</div>
+
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">&Eacute;tape 2 sur 4 &mdash; son allure</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">le style commande&nbsp;: en dessin, la taille et la pixelisation dispara&icirc;ssent</span>
+    </div>
+  <div class="k" style="width: 1532px; height: 900px; background: #f7f3ec; display: flex;
+              flex-direction: column; overflow: hidden; border: 1px solid #e2dbd0; border-radius: 10px">
+  
+    <div style="padding: 18px 32px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center;
+                justify-content: space-between; gap: 24px; flex-shrink: 0">
+      <div class="serif" style="font-size: 20px; white-space: nowrap">Commencer un jeu</div>
+      <div style="display: flex; align-items: center; gap: 20px"><div class="et" style="color: #4e483f"><i style="background: #5c7a52; border-color: #5c7a52; color: #fff8f4">1</i><span style="font-weight: 400">Son nom</span></div><div class="et" style="color: #221f1b"><i style="background: #a8492c; border-color: #a8492c; color: #fff8f4">2</i><span style="font-weight: 600">Son allure</span></div><div class="et" style="color: #948c80"><i>3</i><span style="font-weight: 400">Sa vue</span></div><div class="et" style="color: #948c80"><i>4</i><span style="font-weight: 400">Son monde</span></div></div>
+      <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Fermer</a>
+    </div>
+  
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) 400px">
+  
+      <div style="padding: 26px 36px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <h1 class="serif" style="font-size: 34px; line-height: 1.04; margin: 0">Quelle allure a ce jeu&nbsp;?</h1>
+          <div style="font-size: 13.5px; color: #4e483f; max-width: 780px">Le style commande le reste&nbsp;: en pixel on choisit une taille de case et une fa&ccedil;on de r&eacute;duire, en dessin ces deux-l&agrave; disparaissent. Ce choix se r&eacute;p&egrave;te dans chaque demande d'image.</div>
+        </div>
+        <div class="src-al" style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+          <div class="rt">Le style</div>
+          <div style="display: grid; grid-template-columns: 214px 214px minmax(0, 1fr); gap: 14px; align-items: stretch">
+    
+            <div class="carte carte-on" style="flex-direction: row; gap: 11px; align-items: center">
+              <div style="width: 74px; height: 74px; background: #6c6c6c; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                <svg viewBox="0 0 16 18" width="60" height="68" shape-rendering="crispEdges">
+                  <rect x="5" y="2" width="6" height="2" fill="#2f4a35"/><rect x="6" y="4" width="4" height="3" fill="#d8bb95"/>
+                  <rect x="4" y="7" width="8" height="6" fill="#2f4a35"/><rect x="6" y="9" width="4" height="4" fill="#c9b48c"/>
+                  <rect x="3" y="8" width="1" height="4" fill="#2f4a35"/><rect x="12" y="8" width="1" height="4" fill="#2f4a35"/>
+                  <rect x="5" y="13" width="2" height="3" fill="#5a3f28"/><rect x="9" y="13" width="2" height="3" fill="#5a3f28"/>
+                </svg>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <div class="t" style="color: #a8492c">Pixel</div>
+                <div class="d">Chaque pixel se voit et se compte.</div>
+                <div class="mono" style="font-size: 10.5px; color: #a8492c">choisi</div>
+              </div>
+            </div>
+    
+            <div class="carte" style="flex-direction: row; gap: 11px; align-items: center">
+              <div style="width: 74px; height: 74px; background: #6c6c6c; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                <svg viewBox="0 0 16 18" width="60" height="68">
+                  <ellipse cx="8" cy="5" rx="2.4" ry="2.7" fill="#d8bb95"/>
+                  <path d="M5.6 3.4 Q8 1.2 10.4 3.4 Q10.4 4.4 8 4.6 Q5.6 4.4 5.6 3.4 Z" fill="#2f4a35"/>
+                  <path d="M4 13 Q4 7.4 8 7.2 Q12 7.4 12 13 Z" fill="#2f4a35"/>
+                  <path d="M6 12.8 Q6 9 8 8.8 Q10 9 10 12.8 Z" fill="#c9b48c"/>
+                  <path d="M5.6 13.4 Q6.4 16.4 5.4 16.6 L7 16.6 Q7.4 15 7.4 13.4 Z" fill="#5a3f28"/>
+                  <path d="M8.6 13.4 Q8.6 15 9 16.6 L10.6 16.6 Q9.6 16.4 10.4 13.4 Z" fill="#5a3f28"/>
+                </svg>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <div class="t">Dessin</div>
+                <div class="d">Traits et aplats lisses, sans grille.</div>
+                <div class="mono" style="font-size: 10.5px; color: #948c80">1 jeu sur 6</div>
+              </div>
+            </div>
+    
+            <div style="border: 1px solid #ddd5c8; border-radius: 8px; background: #f4ece2; padding: 11px 13px; display: flex; flex-direction: column; gap: 6px; justify-content: center">
+              <div class="t">Le style commande les deux réglages du dessous</div>
+              <div class="d" style="color: #4e483f">En <strong style="font-weight: 600">pixel</strong>, tu choisis une <em>taille</em> en pixels et une <em>méthode de pixelisation</em>. En <strong style="font-weight: 600">dessin</strong>, ces deux-là disparaissent et une <em>finesse</em> les remplace : 256, 512, 1024 ou 2048.</div>
+            </div>
+          </div>
+        </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between">
+            <div class="rt">La taille — le côté du sprite, en pixels</div>
+            <div style="font-size: 12px; color: #948c80">plus le nombre monte, moins la grille se voit</div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px">
+            <div class="carte" style="padding: 7px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: repeating-conic-gradient(#5f6b57 0% 25%, #7d8a73 0% 50%) 0 0 / 10.5px 10.5px"></div><div class="mono" style="font-size: 12px">8</div></div>
+            <div class="carte" style="padding: 7px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: repeating-conic-gradient(#5f6b57 0% 25%, #7d8a73 0% 50%) 0 0 / 5.2px 5.2px"></div><div class="mono" style="font-size: 12px">16</div></div>
+            <div class="carte" style="padding: 7px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: repeating-conic-gradient(#5f6b57 0% 25%, #7d8a73 0% 50%) 0 0 / 3.5px 3.5px"></div><div class="mono" style="font-size: 12px">24</div></div>
+            <div class="carte" style="padding: 7px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: repeating-conic-gradient(#5f6b57 0% 25%, #7d8a73 0% 50%) 0 0 / 2.6px 2.6px"></div><div class="mono" style="font-size: 12px">32</div></div>
+            <div class="carte" style="padding: 7px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: repeating-conic-gradient(#5f6b57 0% 25%, #7d8a73 0% 50%) 0 0 / 1.8px 1.8px"></div><div class="mono" style="font-size: 12px">48</div></div>
+            <div class="carte carte-on" style="padding: 6px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: repeating-conic-gradient(#5f6b57 0% 25%, #7d8a73 0% 50%) 0 0 / 1.3px 1.3px"></div><div class="mono" style="font-size: 12px; color: #a8492c; font-weight: 500">64</div></div>
+            <div class="carte" style="padding: 7px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: #6e7a66"></div><div class="mono" style="font-size: 12px">96</div></div>
+            <div class="carte" style="padding: 7px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: #6e7a66"></div><div class="mono" style="font-size: 12px">128</div></div>
+            <div class="carte" style="padding: 7px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: #6e7a66"></div><div class="mono" style="font-size: 12px">256</div></div>
+            <div class="carte" style="padding: 7px; gap: 5px; align-items: center"><div style="width: 100%; height: 42px; border-radius: 3px; background: #6e7a66"></div><div class="mono" style="font-size: 12px">512</div></div>
+          </div>
+          <div style="font-size: 12.5px; color: #4e483f"><strong style="font-weight: 600">64 pixels</strong> — la taille la plus courante du pixel art. Assez de place pour un visage, assez peu pour que chaque pixel compte.</div>
+        </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between">
+            <div class="rt">La pixelisation — comment la grande image devient 64 pixels</div>
+            <div style="font-size: 12px; color: #948c80">le même bord, traité quatre fois</div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+    
+            <!-- vote -->
+            <div class="carte" style="flex-direction: row; gap: 11px; align-items: flex-start">
+              <div style="width: 78px; height: 78px; background: #6c6c6c; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                <svg viewBox="0 0 84 84" width="70" height="70" shape-rendering="crispEdges">
+                  <rect x="7" y="0" width="7" height="28" fill="#2f4a35"/>
+                  <rect x="0" y="28" width="7" height="7" fill="#2f4a35"/><rect x="0" y="35" width="14" height="7" fill="#2f4a35"/>
+                  <rect x="0" y="42" width="21" height="7" fill="#2f4a35"/><rect x="0" y="49" width="28" height="7" fill="#2f4a35"/>
+                  <rect x="0" y="56" width="35" height="7" fill="#2f4a35"/><rect x="0" y="63" width="42" height="7" fill="#2f4a35"/>
+                  <rect x="0" y="70" width="49" height="7" fill="#2f4a35"/><rect x="0" y="77" width="56" height="7" fill="#2f4a35"/>
+                </svg>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <div class="t">Vote en deux temps</div>
+                <div class="d">Contour net et intérieur lisible. Un sprite calme.</div>
+                <div class="mono" style="font-size: 10.5px; color: #948c80">celle d'origine · aucun jeu</div>
+              </div>
+            </div>
+    
+            <!-- pixeloe -->
+            <div class="carte" style="flex-direction: row; gap: 11px; align-items: flex-start">
+              <div style="width: 78px; height: 78px; background: #6c6c6c; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                <svg viewBox="0 0 84 84" width="70" height="70" shape-rendering="crispEdges">
+                  <rect x="7" y="0" width="14" height="28" fill="#2f4a35"/>
+                  <rect x="0" y="28" width="21" height="7" fill="#2f4a35"/><rect x="0" y="35" width="14" height="7" fill="#2f4a35"/>
+                  <rect x="0" y="42" width="28" height="7" fill="#2f4a35"/><rect x="0" y="49" width="21" height="7" fill="#2f4a35"/>
+                  <rect x="0" y="56" width="42" height="7" fill="#2f4a35"/><rect x="0" y="63" width="35" height="7" fill="#2f4a35"/>
+                  <rect x="0" y="70" width="56" height="7" fill="#2f4a35"/><rect x="0" y="77" width="49" height="7" fill="#2f4a35"/>
+                </svg>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <div class="t">Traits épaissis</div>
+                <div class="d">Les traits d'un pixel survivent. Le contour s'agite.</div>
+                <div class="mono" style="font-size: 10.5px; color: #948c80">aucun jeu</div>
+              </div>
+            </div>
+    
+            <!-- lanczos -->
+            <div class="carte" style="flex-direction: row; gap: 11px; align-items: flex-start">
+              <div style="width: 78px; height: 78px; background: #6c6c6c; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                <svg viewBox="0 0 84 84" width="70" height="70" shape-rendering="crispEdges">
+                  <rect x="7" y="0" width="7" height="28" fill="#7d8a73"/>
+                  <rect x="0" y="28" width="7" height="7" fill="#5a6c53"/>
+                  <rect x="0" y="35" width="7" height="7" fill="#2f4a35"/><rect x="7" y="35" width="7" height="7" fill="#66765e"/>
+                  <rect x="0" y="42" width="14" height="7" fill="#2f4a35"/><rect x="14" y="42" width="7" height="7" fill="#66765e"/>
+                  <rect x="0" y="49" width="21" height="7" fill="#2f4a35"/><rect x="21" y="49" width="7" height="7" fill="#66765e"/>
+                  <rect x="0" y="56" width="28" height="7" fill="#2f4a35"/><rect x="28" y="56" width="7" height="7" fill="#66765e"/>
+                  <rect x="0" y="63" width="35" height="7" fill="#2f4a35"/><rect x="35" y="63" width="7" height="7" fill="#66765e"/>
+                  <rect x="0" y="70" width="42" height="7" fill="#2f4a35"/><rect x="42" y="70" width="7" height="7" fill="#66765e"/>
+                  <rect x="0" y="77" width="49" height="7" fill="#2f4a35"/><rect x="49" y="77" width="7" height="7" fill="#66765e"/>
+                </svg>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <div class="t">Réduction douce</div>
+                <div class="d">Silhouette lisse, intérieur mou. Les traits fins s'effacent.</div>
+                <div class="mono" style="font-size: 10.5px; color: #948c80">aucun jeu</div>
+              </div>
+            </div>
+    
+            <!-- proche -->
+            <div class="carte carte-on" style="flex-direction: row; gap: 11px; align-items: flex-start">
+              <div style="width: 78px; height: 78px; background: #6c6c6c; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                <svg viewBox="0 0 84 84" width="70" height="70" shape-rendering="crispEdges">
+                  <rect x="14" y="0" width="7" height="28" fill="#2f4a35"/>
+                  <rect x="0" y="28" width="7" height="14" fill="#2f4a35"/>
+                  <rect x="0" y="42" width="21" height="14" fill="#2f4a35"/>
+                  <rect x="0" y="56" width="35" height="14" fill="#2f4a35"/>
+                  <rect x="0" y="70" width="56" height="14" fill="#2f4a35"/>
+                </svg>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <div class="t" style="color: #a8492c">Au plus proche</div>
+                <div class="d">Brut. Les marches deviennent grosses et irrégulières.</div>
+                <div class="mono" style="font-size: 10.5px; color: #a8492c">choisie · et par les 5 autres jeux</div>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+            <div style="font-size: 12.5px; color: #4e483f">Les quatre sont des partis pris, pas un classement. Rien ne coûte : changer de méthode et refaire la réduction ne rappelle pas l'IA.</div>
+            <div style="font-size: 12.5px; color: #6d675e; white-space: nowrap">Le vote est proposé par défaut — <strong style="font-weight: 600; color: #4e483f">aucun de tes six jeux ne l'a gardé.</strong></div>
+          </div>
+        </div>
+        </div>
+        <div style="margin-top: auto; padding-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 20px"><div class="bt" style="height: 38px; padding: 0 16px">Revenir au nom</div><div style="display: flex; align-items: center; gap: 14px"><a href="#" style="font-size: 13px; text-decoration: none; color: #6d675e">Garder ce qui est propos&eacute;</a><div class="bt bt-p" style="height: 38px; padding: 0 20px">Choisir sa vue</div></div></div>
+      </div>
+  
+      <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 26px 24px; display: flex;
+                  flex-direction: column; gap: 14px; overflow: hidden">
+        <div class="rt">Le jeu, tel qu'il se dessine</div>
+        <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 11px">
+          <div class="serif" style="font-size: 24px; line-height: 1.15">Le Marais du Vieux Moulin</div>
+          <div style="display: grid; grid-template-columns: minmax(0,1fr) 155px; row-gap: 7px; font-size: 12.5px;
+                      align-items: baseline">
+            <span style="color: #6d675e">Son dossier</span><span style="text-align: right"><span class="mono" style="font-size: 11.5px">le-marais-du-vieux-moulin</span></span><span style="color: #6d675e">Son allure</span><span style="text-align: right">pixel art</span><span style="color: #6d675e">Sa case</span><span style="text-align: right"><span class="mono">64 px</span></span><span style="color: #6d675e">Sa vue</span><span style="text-align: right; color: #b0a89b">&agrave; choisir</span><span style="color: #6d675e">Son monde</span><span style="text-align: right; color: #b0a89b">&agrave; &eacute;crire</span>
+          </div>
+        </div>
+        <div style="padding: 14px 15px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; display: flex; flex-direction: column; gap: 8px"><div style="font-size: 13px; font-weight: 600">La taille de case est le seul choix qu'on ne reprend pas gratuitement</div><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Changer le style ou la m&eacute;thode de r&eacute;duction se refait sur la machine, sans rien payer&nbsp;: la grande image est gard&eacute;e sur le disque. Changer la taille apr&egrave;s coup laisse les images d&eacute;j&agrave; faites &agrave; leur ancienne taille.</div></div>
+        <div style="padding: 14px 15px; border: 1px solid #e0cfb8; border-radius: 9px; background: #f4ece2; display: flex; flex-direction: column; gap: 8px"><div style="font-size: 13px; font-weight: 600">Rien n'est pay&eacute; pendant ce parcours</div><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Cr&eacute;er un jeu ne co&ucirc;te rien. La premi&egrave;re d&eacute;pense arrive quand on demande la premi&egrave;re image, et son prix est &eacute;crit sur le bouton avant qu'on appuie.</div></div>
+        <div style="margin-top: auto; font-size: 12px; color: #948c80; line-height: 1.5">Cet &eacute;cran &eacute;tait une planche &agrave; part, &laquo;&nbsp;Son allure&nbsp;&raquo;. Il est ici, et nulle part ailleurs.</div>
+      </div>
+  
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">&Eacute;tape 3 sur 4 &mdash; sa vue</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">l'&eacute;tape qui manquait &mdash; et c'est elle qui d&eacute;cide du nombre de directions</span>
+    </div>
+  <div class="k" style="width: 1532px; height: 830px; background: #f7f3ec; display: flex;
+              flex-direction: column; overflow: hidden; border: 1px solid #e2dbd0; border-radius: 10px">
+  
+    <div style="padding: 18px 32px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center;
+                justify-content: space-between; gap: 24px; flex-shrink: 0">
+      <div class="serif" style="font-size: 20px; white-space: nowrap">Commencer un jeu</div>
+      <div style="display: flex; align-items: center; gap: 20px"><div class="et" style="color: #4e483f"><i style="background: #5c7a52; border-color: #5c7a52; color: #fff8f4">1</i><span style="font-weight: 400">Son nom</span></div><div class="et" style="color: #4e483f"><i style="background: #5c7a52; border-color: #5c7a52; color: #fff8f4">2</i><span style="font-weight: 400">Son allure</span></div><div class="et" style="color: #221f1b"><i style="background: #a8492c; border-color: #a8492c; color: #fff8f4">3</i><span style="font-weight: 600">Sa vue</span></div><div class="et" style="color: #948c80"><i>4</i><span style="font-weight: 400">Son monde</span></div></div>
+      <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Fermer</a>
+    </div>
+  
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) 400px">
+  
+      <div style="padding: 26px 36px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <h1 class="serif" style="font-size: 34px; line-height: 1.04; margin: 0">D'o&ugrave; regarde-t-on ce jeu&nbsp;?</h1>
+          <div style="font-size: 13.5px; color: #4e483f; max-width: 780px">Huit vues, une seule par jeu. C'est elle qui d&eacute;cide du nombre de directions &mdash; donc du travail que chaque personnage demandera.</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-content: start">
+        
+              <!-- 1 · De face, fixe -->
+              <div class="vue">
+                <div class="cadre">
+                  <div class="sol" style="height: 16px; background: #5a5a5a"></div>
+                  <svg class="fig" style="bottom: 14px" viewBox="0 0 16 14" width="42" height="37" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#2f4a35"/><rect x="6" y="2" width="4" height="3" fill="#d8bb95"/><rect x="6" y="3" width="1" height="1" fill="#2a231a"/><rect x="9" y="3" width="1" height="1" fill="#2a231a"/><rect x="4" y="5" width="8" height="6" fill="#2f4a35"/><rect x="6" y="7" width="4" height="4" fill="#c9b48c"/><rect x="3" y="6" width="1" height="4" fill="#2f4a35"/><rect x="12" y="6" width="1" height="4" fill="#2f4a35"/><rect x="5" y="11" width="2" height="3" fill="#5a3f28"/><rect x="9" y="11" width="2" height="3" fill="#5a3f28"/></svg>
+                </div>
+                <div class="titre">De face, fixe</div>
+                <div class="ref">les écrans de combat au tour par tour</div>
+                <div class="dir">1 direction</div>
+              </div>
+        
+              <!-- 2 · De dessus, verticale — CHOISIE -->
+              <div class="vue vue-on">
+                <div class="cadre" style="background: #4d6b3f">
+                  <svg class="fig" style="bottom: 32px" viewBox="0 0 16 9" width="42" height="24" shape-rendering="crispEdges"><rect x="4" y="3" width="8" height="6" fill="#25392a"/><rect x="3" y="4" width="1" height="4" fill="#25392a"/><rect x="12" y="4" width="1" height="4" fill="#25392a"/><rect x="6" y="0" width="4" height="5" fill="#2f4a35"/><rect x="5" y="1" width="6" height="3" fill="#2f4a35"/><rect x="7" y="1" width="2" height="2" fill="#43684d"/></svg>
+                </div>
+                <div class="titre" style="color: #a8492c">De dessus, verticale</div>
+                <div class="ref">les jeux de tir à défilement vertical</div>
+                <div class="dir" style="color: #a8492c">1 direction · choisie</div>
+              </div>
+        
+              <!-- 3 · De côté — plateforme -->
+              <div class="vue">
+                <div class="cadre">
+                  <div class="sol" style="height: 24px; background: #4d6b3f"></div>
+                  <svg class="fig" style="bottom: 21px" viewBox="0 0 16 14" width="42" height="37" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#2f4a35"/><rect x="6" y="2" width="4" height="3" fill="#d8bb95"/><rect x="10" y="3" width="1" height="1" fill="#d8bb95"/><rect x="7" y="3" width="1" height="1" fill="#2a231a"/><rect x="5" y="5" width="6" height="6" fill="#2f4a35"/><rect x="6" y="7" width="3" height="4" fill="#c9b48c"/><rect x="9" y="6" width="3" height="1" fill="#2f4a35"/><rect x="4" y="11" width="3" height="3" fill="#5a3f28"/><rect x="8" y="11" width="3" height="3" fill="#463019"/></svg>
+                </div>
+                <div class="titre">De côté — plateforme</div>
+                <div class="ref">Mario, Celeste, Hollow Knight</div>
+                <div class="dir">2 directions</div>
+              </div>
+        
+              <!-- 4 · De côté — défilement -->
+              <div class="vue">
+                <div class="cadre">
+                  <div class="sol" style="height: 24px; background: #4d6b3f"></div>
+                  <svg class="fig" style="bottom: 21px" viewBox="0 0 16 14" width="42" height="37" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#2f4a35"/><rect x="6" y="2" width="4" height="3" fill="#d8bb95"/><rect x="10" y="3" width="1" height="1" fill="#d8bb95"/><rect x="7" y="3" width="1" height="1" fill="#2a231a"/><rect x="5" y="5" width="6" height="6" fill="#2f4a35"/><rect x="6" y="7" width="3" height="4" fill="#c9b48c"/><rect x="9" y="6" width="3" height="1" fill="#2f4a35"/><rect x="4" y="11" width="3" height="3" fill="#5a3f28"/><rect x="8" y="11" width="3" height="3" fill="#463019"/></svg>
+                </div>
+                <div class="titre">De côté — défilement</div>
+                <div class="ref">les jeux de baston de rue</div>
+                <div class="dir">2 directions</div>
+              </div>
+        
+              <!-- 5 · De dessus, stricte -->
+              <div class="vue">
+                <div class="cadre" style="background: #4d6b3f">
+                  <div style="position: absolute; left: 0; right: 0; top: 0; height: 9px; background: #446038"></div>
+                  <svg class="fig" style="bottom: 28px" viewBox="0 0 16 10" width="42" height="26" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="4" fill="#2f4a35"/><rect x="5" y="1" width="6" height="3" fill="#2f4a35"/><rect x="7" y="1" width="2" height="1" fill="#43684d"/><rect x="6" y="4" width="4" height="1" fill="#d8bb95"/><rect x="4" y="5" width="8" height="5" fill="#25392a"/><rect x="6" y="6" width="4" height="4" fill="#9e8c67"/><rect x="3" y="6" width="1" height="3" fill="#25392a"/><rect x="12" y="6" width="1" height="3" fill="#25392a"/></svg>
+                </div>
+                <div class="titre">De dessus, stricte</div>
+                <div class="ref">le premier Zelda, Hotline Miami</div>
+                <div class="dir">4 directions</div>
+              </div>
+        
+              <!-- 6 · De dessus, 3/4 -->
+              <div class="vue">
+                <div class="cadre" style="background: #4d6b3f">
+                  <div style="position: absolute; left: 0; right: 0; top: 0; height: 18px; background: #41573a"></div>
+                  <svg class="fig" style="bottom: 20px" viewBox="0 0 16 15" width="42" height="39" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#43684d"/><rect x="5" y="2" width="6" height="1" fill="#2f4a35"/><rect x="6" y="3" width="4" height="3" fill="#d8bb95"/><rect x="6" y="4" width="1" height="1" fill="#2a231a"/><rect x="9" y="4" width="1" height="1" fill="#2a231a"/><rect x="4" y="6" width="8" height="6" fill="#2f4a35"/><rect x="6" y="8" width="4" height="4" fill="#c9b48c"/><rect x="3" y="7" width="1" height="4" fill="#2f4a35"/><rect x="12" y="7" width="1" height="4" fill="#2f4a35"/><rect x="5" y="12" width="2" height="3" fill="#5a3f28"/><rect x="9" y="12" width="2" height="3" fill="#5a3f28"/></svg>
+                </div>
+                <div class="titre">De dessus, 3/4</div>
+                <div class="ref">Zelda A Link to the Past, Stardew Valley</div>
+                <div class="dir">4 directions</div>
+              </div>
+        
+              <!-- 7 · Oblique (cavalière) -->
+              <div class="vue">
+                <div class="cadre">
+                  <svg class="sol" style="height: 62px; width: 100%" viewBox="0 0 100 62" preserveAspectRatio="none"><polygon points="0,62 24,0 100,0 76,62" fill="#4d6b3f"/><g stroke="#3d5732" stroke-width="1.2" opacity=".65"><path d="M12 31 L88 31"/><path d="M18 0 L-6 62"/><path d="M56 0 L32 62"/><path d="M94 0 L70 62"/></g></svg>
+                  <svg class="fig" style="bottom: 18px" viewBox="0 0 20 16" width="52" height="42" shape-rendering="crispEdges"><rect x="8" y="0" width="6" height="1" fill="#43684d"/><rect x="7" y="1" width="6" height="1" fill="#43684d"/><rect x="5" y="2" width="6" height="2" fill="#2f4a35"/><rect x="6" y="4" width="4" height="3" fill="#d8bb95"/><rect x="6" y="5" width="1" height="1" fill="#2a231a"/><rect x="9" y="5" width="1" height="1" fill="#2a231a"/><rect x="4" y="7" width="8" height="6" fill="#2f4a35"/><rect x="6" y="9" width="4" height="4" fill="#c9b48c"/><rect x="3" y="8" width="1" height="4" fill="#2f4a35"/><rect x="12" y="8" width="1" height="4" fill="#2f4a35"/><rect x="5" y="13" width="2" height="3" fill="#5a3f28"/><rect x="9" y="13" width="2" height="3" fill="#5a3f28"/></svg>
+                </div>
+                <div class="titre">Oblique (cavalière)</div>
+                <div class="ref">Ultima, EarthBound</div>
+                <div class="dir">4 directions</div>
+              </div>
+        
+              <!-- 8 · Isométrique -->
+              <div class="vue">
+                <div class="cadre">
+                  <svg class="sol" style="height: 74px; width: 100%" viewBox="0 0 100 74" preserveAspectRatio="none"><polygon points="50,0 100,37 50,74 0,37" fill="#4d6b3f"/><g stroke="#3d5732" stroke-width="1.2" opacity=".65"><path d="M25 18.5 L75 55.5"/><path d="M75 18.5 L25 55.5"/></g><ellipse cx="50" cy="49" rx="13" ry="4.5" fill="#2c3f26" opacity=".4"/></svg>
+                  <svg class="fig" style="bottom: 26px" viewBox="0 0 16 15" width="40" height="37" shape-rendering="crispEdges"><rect x="5" y="0" width="6" height="2" fill="#43684d"/><rect x="5" y="2" width="6" height="1" fill="#2f4a35"/><rect x="6" y="3" width="4" height="3" fill="#d8bb95"/><rect x="6" y="4" width="1" height="1" fill="#2a231a"/><rect x="9" y="4" width="1" height="1" fill="#2a231a"/><rect x="4" y="6" width="8" height="6" fill="#2f4a35"/><rect x="6" y="8" width="4" height="4" fill="#c9b48c"/><rect x="3" y="7" width="1" height="4" fill="#2f4a35"/><rect x="12" y="7" width="1" height="4" fill="#2f4a35"/><rect x="5" y="12" width="2" height="3" fill="#5a3f28"/><rect x="9" y="12" width="2" height="3" fill="#5a3f28"/></svg>
+                </div>
+                <div class="titre">Isométrique</div>
+                <div class="ref">Diablo 2, Age of Empires 2</div>
+                <div class="dir">4 directions</div>
+              </div>
+            </div>
+        <div style="margin-top: auto; margin-bottom: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+              <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+                <div style="font-size: 14px; font-weight: 600">Changer la vue change le nombre de directions</div>
+                <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">
+                  Passer de <em>de dessus, verticale</em> à <em>de dessus, 3/4</em> fait passer chaque personnage de 6 cases à 24 — quatre directions par pose.
+                  <strong style="font-weight: 600">Les images déjà faites restent</strong>, et les nouvelles cases apparaissent vides.
+                </div>
+              </div>
+              <div style="border: 1px solid #ddd5c8; border-radius: 9px; background: #f4ece2; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+                <div style="font-size: 14px; font-weight: 600">Deux vues envoient exactement le même texte</div>
+                <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">
+                  <em>De côté — plateforme</em> et <em>de côté — défilement</em> écrivent la même consigne de caméra, mot pour mot.
+                  Seul le nom change. <a href="#" style="text-decoration: none">Les comparer ›</a>
+                </div>
+              </div>
+            </div>
+        <div style="margin-top: auto; padding-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 20px"><div class="bt" style="height: 38px; padding: 0 16px">Revenir &agrave; l'allure</div><div style="display: flex; align-items: center; gap: 14px"><a href="#" style="font-size: 13px; text-decoration: none; color: #6d675e">Laisser le mod&egrave;le d&eacute;cider</a><div class="bt bt-p" style="height: 38px; padding: 0 20px">&Eacute;crire son monde</div></div></div>
+      </div>
+  
+      <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 26px 24px; display: flex;
+                  flex-direction: column; gap: 14px; overflow: hidden">
+        <div class="rt">Le jeu, tel qu'il se dessine</div>
+        <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 11px">
+          <div class="serif" style="font-size: 24px; line-height: 1.15">Le Marais du Vieux Moulin</div>
+          <div style="display: grid; grid-template-columns: minmax(0,1fr) 155px; row-gap: 7px; font-size: 12.5px;
+                      align-items: baseline">
+            <span style="color: #6d675e">Son dossier</span><span style="text-align: right"><span class="mono" style="font-size: 11.5px">le-marais-du-vieux-moulin</span></span><span style="color: #6d675e">Son allure</span><span style="text-align: right">pixel art</span><span style="color: #6d675e">Sa case</span><span style="text-align: right"><span class="mono">64 px</span></span><span style="color: #6d675e">Sa vue</span><span style="text-align: right">de dessus, verticale</span><span style="color: #6d675e">Son monde</span><span style="text-align: right; color: #b0a89b">&agrave; &eacute;crire</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div class="rt">Ce que ce choix &eacute;crit, mot pour mot</div>
+          <div class="mono" style="font-size: 10.5px; line-height: 1.65; color: #3d382f; background: #f7f3ec;
+                      border: 1px solid #e2dbd0; border-radius: 8px; padding: 12px 13px">CAMERA &mdash; this overrides
+            everything above. The camera is directly overhead, looking straight down at the ground at 90 degrees. Not a
+            side view, not a three-quarter view, not a front view. No horizon line, no perspective, no vanishing
+            point.</div>
+          <div style="font-size: 12px; line-height: 1.5; color: #6d675e"><b style="color: #221f1b">Sur un personnage&nbsp;:</b>
+            le dessus de la t&ecirc;te et les &eacute;paules, jamais le visage, les pieds cach&eacute;s sous le
+            corps.</div>
+        </div>
+        <div style="padding: 14px 15px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; display: flex; flex-direction: column; gap: 8px"><div style="font-size: 13px; font-weight: 600">Sans vue choisie, l'atelier n'&eacute;crit rien</div><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le mod&egrave;le d&eacute;cide seul, et il change d'avis d'une image &agrave; l'autre. Trois de tes six jeux sont dans ce cas.</div></div>
+      </div>
+  
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">&Eacute;tape 4 sur 4 &mdash; son monde</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">sept lignes, dont deux que le wizard remplit lui-m&ecirc;me</span>
+    </div>
+  <div class="k" style="width: 1532px; height: 830px; background: #f7f3ec; display: flex;
+              flex-direction: column; overflow: hidden; border: 1px solid #e2dbd0; border-radius: 10px">
+  
+    <div style="padding: 18px 32px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center;
+                justify-content: space-between; gap: 24px; flex-shrink: 0">
+      <div class="serif" style="font-size: 20px; white-space: nowrap">Commencer un jeu</div>
+      <div style="display: flex; align-items: center; gap: 20px"><div class="et" style="color: #4e483f"><i style="background: #5c7a52; border-color: #5c7a52; color: #fff8f4">1</i><span style="font-weight: 400">Son nom</span></div><div class="et" style="color: #4e483f"><i style="background: #5c7a52; border-color: #5c7a52; color: #fff8f4">2</i><span style="font-weight: 400">Son allure</span></div><div class="et" style="color: #4e483f"><i style="background: #5c7a52; border-color: #5c7a52; color: #fff8f4">3</i><span style="font-weight: 400">Sa vue</span></div><div class="et" style="color: #221f1b"><i style="background: #a8492c; border-color: #a8492c; color: #fff8f4">4</i><span style="font-weight: 600">Son monde</span></div></div>
+      <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Fermer</a>
+    </div>
+  
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) 400px">
+  
+      <div style="padding: 26px 36px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <h1 class="serif" style="font-size: 34px; line-height: 1.04; margin: 0">De quoi ce monde est-il fait&nbsp;?</h1>
+          <div style="font-size: 13.5px; color: #4e483f; max-width: 780px">Sept lignes, qui partent dans cet ordre en t&ecirc;te de chaque demande d'image. Cinq s'&eacute;crivent ici&nbsp;; deux sont d&eacute;j&agrave; remplies par les &eacute;tapes d'avant, et on ne les tape pas deux fois.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+  <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa"><span style="font-size: 12.5px; color: #4e483f">Le monde</span><div style="font-size: 12.5px; line-height: 1.4; ">marais brumeux, moulins abandonn&eacute;s, eaux stagnantes couleur th&eacute;</div><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 9.5px; color: #5c7a52">&eacute;crit</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></span></div>
+  <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa"><span style="font-size: 12.5px; color: #4e483f">L'&eacute;poque</span><div style="font-size: 12.5px; line-height: 1.4; ">un Moyen &Acirc;ge humide, sans magie visible &mdash; outils de bois et de fer</div><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 9.5px; color: #5c7a52">&eacute;crit</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></span></div>
+  <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #f2ede4"><span style="font-size: 12.5px; color: #6d675e">Le rendu</span><div style="font-size: 12.5px; line-height: 1.4; color: #6d675e">pixel art, 64 pixels de c&ocirc;t&eacute;, aplats sans d&eacute;grad&eacute;</div><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 9.5px; color: #948c80">&eacute;tape 2</span><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">son allure &rsaquo;</a></span></div>
+  <div style="border: 1px solid #a8492c; box-shadow: 0 0 0 1px #a8492c; border-radius: 8px;
+              background: #fffdfa; padding: 13px 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px">
+      <span style="font-size: 13.5px; font-weight: 600">Le trait</span>
+      <span style="display: flex; align-items: center; gap: 11px">
+        <span class="puce p-ok">part avec chaque image</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a8492c" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 14l5-5 5 5"/></svg></span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span class="mono" style="font-size: 10px; color: #948c80">&agrave; cliquer &mdash; 16 &eacute;tiquettes</span>
+      <div style="width: 230px; height: 28px; display: flex; align-items: center; padding: 0 10px;
+                  border: 1px solid #ddd5c8; border-radius: 6px; background: #f7f3ec; font-size: 12px;
+                  color: #b0a89b">rechercher&hellip;</div>
+    </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 7px"><span class="eti">trait &eacute;pais</span><span class="eti">trait fin</span><span class="eti eti-on">trait net</span><span class="eti">trait tremblant</span><span class="eti eti-on">contour noir</span><span class="eti">contour de la couleur</span><span class="eti">sans contour</span><span class="eti">un pixel de contour</span><span class="eti">deux pixels de contour</span><span class="eti eti-on">aplats francs</span><span class="eti">d&eacute;grad&eacute; interdit</span><span class="eti">ombres en escalier</span><span class="eti">bords durs</span><span class="eti">sans anticr&eacute;nelage</span><span class="eti">silhouette lisible</span><span class="eti">d&eacute;tails au minimum</span><span class="eti eti-neuve"><span style="margin-right: 5px">+</span>fabriquer une &eacute;tiquette</span></div>
+  <div style="display: flex; flex-direction: column; gap: 5px"><span class="mono" style="font-size: 10px; color: #948c80">ce qui partira &mdash; 48 caract&egrave;res</span><div class="mono" style="min-height: 56px; font-size: 11.5px; line-height: 1.6; color: #221f1b; background: #f7f3ec; border: 1px solid #e2dbd0; border-radius: 7px; padding: 9px 11px">contour noir d'un pixel, trait net, aplats francs<span style="display: inline-block; width: 1.5px; height: 15px; background: #a8492c; vertical-align: -3px; margin-left: 2px"></span></div></div>
+    <div style="font-size: 11.5px; line-height: 1.5; color: #6d675e">Cliquer une &eacute;tiquette ajoute ses mots
+      dans le champ. On peut aussi n'en cliquer aucune et tout &eacute;crire&nbsp;: <b style="color: #221f1b">ce qui
+      part est ce qui est &eacute;crit l&agrave;</b>, pas la liste des &eacute;tiquettes.</div>
+  </div>
+  <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa"><span style="font-size: 12.5px; color: #4e483f">L'&eacute;clairage</span><div style="font-size: 12.5px; line-height: 1.4; ">lumi&egrave;re rasante de fin de jour, ombres longues vers l'est</div><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 9.5px; color: #5c7a52">&eacute;crit</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></span></div>
+  <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #f2ede4"><span style="font-size: 12.5px; color: #6d675e">La vue</span><div style="font-size: 12.5px; line-height: 1.4; color: #6d675e">de dessus, &agrave; la verticale &mdash; le texte de cam&eacute;ra complet</div><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 9.5px; color: #948c80">&eacute;tape 3</span><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">sa vue &rsaquo;</a></span></div>
+  <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 9px 12px; border: 1px dashed #c9c2b6; border-radius: 7px; background: transparent"><span style="font-size: 12.5px; color: #4e483f">Les contraintes</span><div style="font-size: 12.5px; line-height: 1.4; color: #b0a89b; font-style: italic">ce que le mod&egrave;le ne doit jamais faire &mdash; pas de texte, pas de cadre, fond uni</div><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 9.5px; color: #b0a89b">vide</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></span></div>
+        </div>
+        <div style="margin-top: auto; padding-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 20px"><div class="bt" style="height: 38px; padding: 0 16px">Revenir &agrave; la vue</div><div style="display: flex; align-items: center; gap: 14px"><a href="#" style="font-size: 13px; text-decoration: none; color: #6d675e">&Eacute;crire plus tard</a><div class="bt bt-p" style="height: 38px; padding: 0 20px">Ouvrir le jeu</div></div></div>
+      </div>
+  
+      <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 26px 24px; display: flex;
+                  flex-direction: column; gap: 14px; overflow: hidden">
+        <div class="rt">Le jeu, tel qu'il se dessine</div>
+        <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 11px">
+          <div class="serif" style="font-size: 24px; line-height: 1.15">Le Marais du Vieux Moulin</div>
+          <div style="display: grid; grid-template-columns: minmax(0,1fr) 155px; row-gap: 7px; font-size: 12.5px;
+                      align-items: baseline">
+            <span style="color: #6d675e">Son dossier</span><span style="text-align: right"><span class="mono" style="font-size: 11.5px">le-marais-du-vieux-moulin</span></span><span style="color: #6d675e">Son allure</span><span style="text-align: right">pixel art</span><span style="color: #6d675e">Sa case</span><span style="text-align: right"><span class="mono">64 px</span></span><span style="color: #6d675e">Sa vue</span><span style="text-align: right">de dessus, verticale</span><span style="color: #6d675e">Son monde</span><span style="text-align: right">5 lignes sur 7</span>
+          </div>
+        </div>
+        <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 9px">
+          <div style="font-size: 13px; font-weight: 600">Ce qui partira au mod&egrave;le</div>
+          <div class="mono" style="font-size: 10.5px; line-height: 1.7; color: #4e483f; background: #f7f3ec;
+                                   border-radius: 6px; padding: 10px 11px">
+            marais brumeux, moulins abandonn&eacute;s&hellip;<br>
+            un Moyen &Acirc;ge humide, sans magie&hellip;<br>
+            <span style="color: #948c80">pixel art, 64 pixels de c&ocirc;t&eacute;&hellip;</span><br>
+            <b style="color: #a8492c">contour noir d'un pixel, trait net&hellip;</b><br>
+            lumi&egrave;re rasante de fin de jour&hellip;<br>
+            <span style="color: #948c80">CAMERA &mdash; directly overhead&hellip;</span><br>
+            <span style="color: #b0a89b">&mdash; les contraintes&nbsp;: rien</span></div>
+          <div style="font-size: 12px; line-height: 1.5; color: #6d675e">
+            En gris, les deux lignes que le wizard a &eacute;crites lui-m&ecirc;me. Une ligne vide ne part pas. Puis
+            vient la description du sujet&nbsp;: c'est tout ce qui part, rien n'est ajout&eacute; dans le dos.</div>
+        </div>
+        <div style="margin-top: auto; font-size: 12px; color: #948c80; line-height: 1.5">Les sept lignes se rouvrent quand on veut, par la m&ecirc;me &eacute;tape. Les images d&eacute;j&agrave; faites ne changent pas.</div>
+      </div>
+  
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">On le rouvre pour modifier</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">c'est &ccedil;a, &laquo;&nbsp;les r&egrave;gles du jeu&nbsp;&raquo; &mdash; il n'y a pas d'autre &eacute;cran</span>
+    </div>
+  <div class="k" style="width: 1532px; height: 828px; background: #f7f3ec; display: flex;
+              flex-direction: column; overflow: hidden; border: 1px solid #e2dbd0; border-radius: 10px">
+  
+    <div style="padding: 18px 32px; border-bottom: 1px solid #e2dbd0; display: flex; align-items: center;
+                justify-content: space-between; gap: 24px; flex-shrink: 0">
+      <div class="serif" style="font-size: 20px; white-space: nowrap">Les r&egrave;gles du jeu</div>
+      <div style="font-size: 12.5px; color: #6d675e">quatre r&eacute;glages &mdash; ceux qui partent avec chaque demande d'image</div>
+      <a href="#" style="font-size: 12.5px; text-decoration: none; color: #6d675e">Fermer</a>
+    </div>
+  
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) 400px">
+  
+      <div style="padding: 26px 36px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <h1 class="serif" style="font-size: 34px; line-height: 1.04; margin: 0">Les r&egrave;gles de ce jeu</h1>
+          <div style="font-size: 13.5px; color: #4e483f; max-width: 780px">Le m&ecirc;me parcours, rouvert. On clique l'&eacute;tape qu'on veut reprendre, ou on refait les quatre dans l'ordre.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px">
+  <div style="display: grid; grid-template-columns: 26px 210px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 13px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa"><span class="mono" style="font-size: 10.5px; color: #948c80">1</span><span style="font-size: 13px">Son nom et son dossier</span><span style="font-size: 12.5px; color: #6d675e">Le Marais du Vieux Moulin &middot; <span class="mono">test-v2</span></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></div>
+  <div style="display: grid; grid-template-columns: 26px 210px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 13px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa"><span class="mono" style="font-size: 10.5px; color: #948c80">2</span><span style="font-size: 13px">Son allure</span><span style="font-size: 12.5px; color: #6d675e">pixel &middot; <span class="mono">64 px</span> &middot; au plus proche</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></div>
+  <div style="display: grid; grid-template-columns: 26px 210px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 13px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa"><span class="mono" style="font-size: 10.5px; color: #948c80">3</span><span style="font-size: 13px">Sa vue</span><span style="font-size: 12.5px; color: #6d675e">de dessus, verticale &middot; 1 direction</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></div>
+  <div style="display: grid; grid-template-columns: 26px 210px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 13px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa"><span class="mono" style="font-size: 10.5px; color: #948c80">4</span><span style="font-size: 13px">Le monde et son trait</span><span style="font-size: 12.5px; color: #6d675e">6 lignes sur 7 &mdash; &laquo;&nbsp;Les contraintes&nbsp;&raquo; est vide</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 6px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+            <span class="rt">S'applique &agrave; tout le jeu, mais se r&egrave;gle ailleurs</span>
+            <span style="font-size: 11.5px; color: #948c80">ces lignes se lisent ici&nbsp;; elles s'&eacute;crivent l&agrave; o&ugrave; l'on s'en sert</span>
+          </div>
+          <div style="border: 1px solid #e2dbd0; border-radius: 8px; background: #fffdfa; overflow: hidden">
+  <div style="display: grid; grid-template-columns: 236px minmax(0, 1fr) 150px; gap: 14px; align-items: center; padding: 8px 13px; border-bottom: 1px solid #ece6db"><span style="font-size: 12.5px; color: #4e483f">La palette et les ambiances</span><span style="font-size: 12.5px; color: #948c80">24 couleurs, six rampes</span><span style="text-align: right"><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">la toile de l’univers &rsaquo;</a></span></div>
+  <div style="display: grid; grid-template-columns: 236px minmax(0, 1fr) 150px; gap: 14px; align-items: center; padding: 8px 13px; border-bottom: 1px solid #ece6db"><span style="font-size: 12.5px; color: #4e483f">La couleur de fond</span><span style="font-size: 12.5px; color: #948c80"><span class="mono">#FF00FF</span> magenta</span><span style="text-align: right"><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">l’atelier Détourer &rsaquo;</a></span></div>
+  <div style="display: grid; grid-template-columns: 236px minmax(0, 1fr) 150px; gap: 14px; align-items: center; padding: 8px 13px; border-bottom: 1px solid #ece6db"><span style="font-size: 12.5px; color: #4e483f">Le d&eacute;tourage de d&eacute;part</span><span style="font-size: 12.5px; color: #948c80">le bord &middot; tol&eacute;rance 28</span><span style="text-align: right"><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">l’atelier Détourer &rsaquo;</a></span></div>
+  <div style="display: grid; grid-template-columns: 236px minmax(0, 1fr) 150px; gap: 14px; align-items: center; padding: 8px 13px; border-bottom: 1px solid #ece6db"><span style="font-size: 12.5px; color: #4e483f">Les natures de sujets</span><span style="font-size: 12.5px; color: #948c80">huit, r&eacute;parties sur les familles</span><span style="text-align: right"><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">chaque famille ›</a></span></div>
+  <div style="display: grid; grid-template-columns: 236px minmax(0, 1fr) 150px; gap: 14px; align-items: center; padding: 8px 13px; border-bottom: 1px solid #ece6db"><span style="font-size: 12.5px; color: #4e483f">Le plan de poses</span><span style="font-size: 12.5px; color: #948c80">six pour un personnage, aucune pour une tuile</span><span style="text-align: right"><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">chaque famille ›</a></span></div>
+  <div style="display: grid; grid-template-columns: 236px minmax(0, 1fr) 150px; gap: 14px; align-items: center; padding: 8px 13px; border-bottom: 1px solid #ece6db"><span style="font-size: 12.5px; color: #4e483f">Les emplacements de corps</span><span style="font-size: 12.5px; color: #948c80">six, du dos &agrave; la t&ecirc;te</span><span style="text-align: right"><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">la famille &laquo; personnages &raquo; ›</a></span></div>
+  <div style="display: grid; grid-template-columns: 236px minmax(0, 1fr) 150px; gap: 14px; align-items: center; padding: 8px 13px; border-bottom: 1px solid #ece6db"><span style="font-size: 12.5px; color: #4e483f">Le dossier de sortie</span><span style="font-size: 12.5px; color: #948c80">rien n’est gardé — on le nomme à chaque fois</span><span style="text-align: right"><span style="font-size: 11.5px; color: #948c80; white-space: nowrap">au moment d’exporter</span></span></div>
+  <div style="display: grid; grid-template-columns: 236px minmax(0, 1fr) 150px; gap: 14px; align-items: center; padding: 8px 13px; border-bottom: 1px solid #ece6db"><span style="font-size: 12.5px; color: #4e483f">Le mod&egrave;le de chaque famille</span><span style="font-size: 12.5px; color: #948c80">un par famille, sinon le d&eacute;faut</span><span style="text-align: right"><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">chaque famille ›</a></span></div>
+  <div style="display: grid; grid-template-columns: 236px minmax(0, 1fr) 150px; gap: 14px; align-items: center; padding: 8px 13px; border-bottom: 1px solid #ece6db"><span style="font-size: 12.5px; color: #4e483f">La cl&eacute; et les 49 mod&egrave;les</span><span style="font-size: 12.5px; color: #948c80">une cl&eacute;, un catalogue</span><span style="text-align: right"><a href="#" style="font-size: 11.5px; text-decoration: none; white-space: nowrap">l’installation ›</a></span></div>
+          </div>
+        </div>
+        <div style="margin-top: auto; padding-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 20px"><span></span><div style="display: flex; align-items: center; gap: 14px"><a href="#" style="font-size: 13px; text-decoration: none; color: #6d675e">Copier les r&egrave;gles d'un autre jeu</a><div class="bt bt-p" style="height: 38px; padding: 0 20px">Reprendre les quatre dans l'ordre</div></div></div>
+      </div>
+  
+      <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 26px 24px; display: flex;
+                  flex-direction: column; gap: 14px; overflow: hidden">
+        <div class="rt">Ce que le parcours demande, et pourquoi</div>
+        <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 9px">
+          <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f">Les quatre &eacute;tapes ont la m&ecirc;me
+            raison d'&ecirc;tre&nbsp;: <b style="color: #221f1b">elles partent avec chaque demande d'image</b>, ou elles
+            d&eacute;cident de la fa&ccedil;on dont l'image est fabriqu&eacute;e.</div>
+          <div class="mono" style="font-size: 10.5px; line-height: 1.7; color: #4e483f; background: #f7f3ec;
+                                   border-radius: 6px; padding: 10px 11px">
+            le monde, l'&eacute;poque, le trait&hellip;<br>
+            <span style="color: #a8492c">pixel art, 64 pixels de c&ocirc;t&eacute;</span><br>
+            <span style="color: #a8492c">CAMERA &mdash; directly overhead&hellip;</span><br>
+            <span style="color: #b0a89b">puis la description du sujet</span></div>
+          <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Le nom, lui, ne part pas au mod&egrave;le&nbsp;:
+            il d&eacute;cide du dossier o&ugrave; tout se range, et &ccedil;a ne se reprend pas.</div>
+        </div>
+        <div style="padding: 14px 15px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; display: flex; flex-direction: column; gap: 8px"><div style="font-size: 13px; font-weight: 600">Pourquoi la palette n'est pas ici</div><div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Une palette ne se d&eacute;cide pas avant d'avoir vu une image. Elle se lit sur ce qui existe, ou elle se prend dans une r&eacute;f&eacute;rence qu'on d&eacute;pose&nbsp;: sa place est avec la toile de l'univers, pas dans un parcours de d&eacute;part.</div></div>
+        <div style="margin-top: auto; font-size: 12px; color: #948c80; line-height: 1.5">Quatre &eacute;tapes, quatre &eacute;crans. Un r&eacute;glage ne se pose jamais &agrave; deux endroits&nbsp;: c'est toute la r&egrave;gle.</div>
+      </div>
+  
+    </div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-a" style="align-self: flex-start">la proposition</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Un seul parcours, deux entr&eacute;es</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">&Agrave; la cr&eacute;ation il se d&eacute;roule&nbsp;: 1, 2, 3, 4, 5, et le jeu s'ouvre. Ensuite il s'ouvre sur cette liste, et on va droit &agrave; la r&egrave;gle qu'on veut. Ce sont les m&ecirc;mes &eacute;crans, au mot pr&egrave;s.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-ok" style="align-self: flex-start">fait</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Quatre &eacute;crans en moins</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">&laquo;&nbsp;Son allure&nbsp;&raquo;, &laquo;&nbsp;Sa vue&nbsp;&raquo;, &laquo;&nbsp;Les couleurs&nbsp;&raquo; et &laquo;&nbsp;Le monde et son trait&nbsp;&raquo; &eacute;taient des planches &agrave; part, avec leur ligne dans le carnet. Elles sont ici, telles quelles.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-ok" style="align-self: flex-start">fait</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le carnet passe de dix-sept lignes &agrave; dix</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">La section &laquo;&nbsp;Ce qui s'applique &agrave; tout&nbsp;&raquo; et ses huit lignes ont disparu de la colonne de gauche. &Agrave; leur place, une ligne sous le nom du jeu&nbsp;: &laquo;&nbsp;Les r&egrave;gles du jeu&nbsp;&raquo;.</div></div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">D&eacute;plier, cliquer, ou &eacute;crire</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">la m&ecirc;me ligne dans ses trois &eacute;tats &mdash; les &eacute;tiquettes ne sont jamais obligatoires</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa"><div style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600">Repli&eacute;e</span><span style="font-size: 12px; color: #6d675e; line-height: 1.45">ce qu'elle dit, et le chevron pour l'ouvrir</span></div><div style="padding-top: 2px"><div style="display: grid; grid-template-columns: 104px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa"><span style="font-size: 12.5px; color: #4e483f">Le trait</span><div style="font-size: 12.5px; line-height: 1.4; ">contour noir d'un pixel, trait net, aplats francs</div><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 9.5px; color: #5c7a52">&eacute;crit</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.2" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></span></div></div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 15px 16px; border: 1px solid #a8492c; border-radius: 10px; background: #fffdfa"><div style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600">D&eacute;pli&eacute;e, on clique</span><span style="font-size: 12px; color: #6d675e; line-height: 1.45">trois &eacute;tiquettes cliqu&eacute;es, leurs mots sont tomb&eacute;s dans le champ</span></div><div style="display: flex; flex-wrap: wrap; gap: 7px"><span class="eti eti-on">trait net</span><span class="eti eti-on">contour noir</span><span class="eti">trait &eacute;pais</span><span class="eti">sans contour</span><span class="eti eti-on">aplats francs</span><span class="eti">bords durs</span></div><div style="display: flex; flex-direction: column; gap: 5px"><span class="mono" style="font-size: 10px; color: #948c80">ce qui partira &mdash; 40 caract&egrave;res</span><div class="mono" style="min-height: 40px; font-size: 11.5px; line-height: 1.6; color: #221f1b; background: #f7f3ec; border: 1px solid #e2dbd0; border-radius: 7px; padding: 9px 11px">trait net, contour noir, aplats francs</div></div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa"><div style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600">D&eacute;pli&eacute;e, on &eacute;crit</span><span style="font-size: 12px; color: #6d675e; line-height: 1.45">aucune &eacute;tiquette cliqu&eacute;e &mdash; et le champ part quand m&ecirc;me</span></div><div style="display: flex; flex-wrap: wrap; gap: 7px"><span class="eti">trait net</span><span class="eti">contour noir</span><span class="eti">trait &eacute;pais</span><span class="eti">sans contour</span><span class="eti">aplats francs</span><span class="eti">bords durs</span></div><div style="display: flex; flex-direction: column; gap: 5px"><span class="mono" style="font-size: 10px; color: #948c80">ce qui partira &mdash; 56 caract&egrave;res</span><div class="mono" style="min-height: 56px; font-size: 11.5px; line-height: 1.6; color: #221f1b; background: #f7f3ec; border: 1px solid #e2dbd0; border-radius: 7px; padding: 9px 11px">un contour d'un pixel, plus sombre que l'aplat qu'il borde<span style="display: inline-block; width: 1.5px; height: 15px; background: #a8492c; vertical-align: -3px; margin-left: 2px"></span></div></div></div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Les &eacute;tiquettes n'existent pas</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Les sept lignes sont aujourd'hui sept champs de texte libre, et rien d'autre. Aucune liste &agrave; cliquer, aucune recherche, aucune &eacute;tiquette fabriqu&eacute;e.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-a" style="align-self: flex-start">&agrave; d&eacute;cider</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Une &eacute;tiquette fabriqu&eacute;e reste dans ce jeu</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">On la tape une fois, elle rejoint la liste de la ligne o&ugrave; on l'a faite. Un autre jeu repart de la liste de d&eacute;part&nbsp;: c'est une proposition, pas une &eacute;vidence.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-ok" style="align-self: flex-start">r&eacute;gl&eacute;</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Une ligne longue ne se coupe pas</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Le champ grandit vers le bas. Il n'y a ni limite de caract&egrave;res, ni avertissement&nbsp;: le compteur est l&agrave; pour qu'on voie ce qu'on envoie, pas pour interdire.</div></div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Le m&ecirc;me r&eacute;glage &agrave; deux endroits</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">trois lignes de la bible redisaient ce que l'atelier &eacute;crit lui-m&ecirc;me</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-ok" style="align-self: flex-start">r&eacute;solu &mdash; &eacute;tape 3</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">La vue</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">L'auteur pouvait &eacute;crire &laquo;&nbsp;top-down&nbsp;&raquo; dans la ligne <b>vue</b> de la bible, et choisir <b>de dessus, verticale</b> dans l'&eacute;cran de la vue. Deux consignes de cam&eacute;ra, dans le m&ecirc;me envoi.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-ok" style="align-self: flex-start">r&eacute;solu &mdash; &eacute;tape 2</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le rendu</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Pareil pour la grille&nbsp;: la ligne <b>rendu</b> disait &laquo;&nbsp;pixel art on a 64px grid&nbsp;&raquo;, et l'allure la disait aussi. Une seule des deux est n&eacute;cessaire.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-a" style="align-self: flex-start">&agrave; d&eacute;cider</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Les contraintes</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Le troisi&egrave;me cas reste ouvert&nbsp;: la ligne <b>technique</b> peut redire le calage que l'atelier &eacute;crit d&eacute;j&agrave; &mdash; <span class="mono">isolated sprite</span>, <span class="mono">flat background</span>. Elle reste libre.</div></div>
+  </div>
+  <div style="display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-non" style="flex-shrink: 0; margin-top: 2px">relev&eacute;</span><div style="font-size: 12.5px; line-height: 1.6; color: #4e483f"><b>Aujourd'hui l'atelier rattrape le doublon &agrave; la main.</b> <span class="mono" style="font-size: 11px">atelier/domaine/projet.py</span> tient une liste de vingt-deux mots anglais &mdash; <span class="mono">top-down</span>, <span class="mono">isometric</span>, <span class="mono">camera</span>, <span class="mono">px grid</span>&hellip; Si l'un d'eux appara&icirc;t dans la ligne concern&eacute;e, l'atelier se tait&nbsp;; sinon les deux phrases s'empilent. Le commentaire du fichier le dit lui-m&ecirc;me&nbsp;: la liste est courte expr&egrave;s, parce qu'un mot de trop ferait dispara&icirc;tre une phrase que personne n'aurait remplac&eacute;e.<br><br>Poser la vue et le rendu &agrave; un seul endroit fait tomber deux des trois cas &mdash; et avec eux la moiti&eacute; de cette liste.</div></div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Ses cl&eacute;s&nbsp;: l'&eacute;tape qui a saut&eacute;</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">une cl&eacute; vaut pour la machine, pas pour un jeu &mdash; elle part dans l'installation</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-non" style="align-self: flex-start">retir&eacute;</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Une cl&eacute; ne se demande pas ici</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Elle se pose une fois, pour toute la machine. La redemander &agrave; chaque jeu la ferait ressaisir pour rien &mdash; et laisserait croire qu'un jeu peut avoir la sienne.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Elle se pose dans l'installation</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Le bouton en bas du carnet, bloc &laquo;&nbsp;Les fournisseurs&nbsp;&raquo;. Une cl&eacute; OpenRouter, et c'est tout ce qu'il y a &agrave; remplir. Elle vaut pour tous les jeux de la machine.</div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa"><span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span><div style="font-size: 14px; font-weight: 600; line-height: 1.3">Et &agrave; la toute premi&egrave;re ouverture, un guide</div><div style="font-size: 12px; line-height: 1.55; color: #6d675e">Cr&eacute;er le compte, obtenir la cl&eacute;, installer ComfyUI&nbsp;: c'est de la configuration d'application, pas de la cr&eacute;ation d'un jeu. Planche &laquo;&nbsp;L'installation&nbsp;&raquo;.</div></div>
+  </div>
+  <div style="display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; border: 1px solid #e0cfb8; border-radius: 9px; background: #f4ece2"><div style="font-size: 12.5px; line-height: 1.55; color: #6d4a22"><b>Sans aucune cl&eacute;, l'atelier fabrique quand m&ecirc;me.</b> Il descend sa liste jusqu'au premier mod&egrave;le qui r&eacute;pond sans compte &mdash; Pollinations. Les images sont plus grossi&egrave;res, et c'est gratuit. C'est aussi pour &ccedil;a que la cl&eacute; n'a pas &agrave; barrer la cr&eacute;ation d'un jeu.</div></div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Ce que la cr&eacute;ation d'un jeu est aujourd'hui</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">un champ, une touche, aucun &eacute;cran &mdash; les trois &eacute;tapes ci-dessus sont une proposition, celle-ci est un relev&eacute;</span>
+    </div>
+  <div style="display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 26px; align-items: start">
+
+    <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4; padding: 16px 14px;
+                display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 6px">
+        <span class="rt" style="font-size: 9.5px">Projets</span>
+        <span style="font-size: 15px; color: #6d675e">+</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <div class="rl" style="height: 26px; font-size: 13px"><span>Bac &agrave; sable</span><span class="num">12</span></div>
+        <div class="rl" style="height: 26px; font-size: 13px"><span>Essai animation</span><span class="num">4</span></div>
+      </div>
+      <div class="rt" style="font-size: 9.5px; padding: 8px 6px 2px">Collections</div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <div class="rl" style="height: 26px; font-size: 13px"><span>Les boss</span><span class="num">10</span></div>
+      </div>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 5px">
+        <div style="height: 32px; display: flex; align-items: center; padding: 0 10px; border-radius: 6px;
+                    background: #fffdfa; border: 1px solid #a8492c; font-size: 13px">
+          Le Marais du Vieux Moulin<span style="width: 1.5px; height: 16px; background: #a8492c; margin-left: 2px"></span>
+        </div>
+        <div style="font-size: 11px; color: #948c80; padding: 0 4px">
+          <span class="kb">&crarr;</span> pour cr&eacute;er, <span class="kb">esc</span> pour renoncer</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <div style="font-size: 13px; line-height: 1.65; color: #4e483f; max-width: 100ch">
+        Voil&agrave; toute la cr&eacute;ation d'un jeu, aujourd'hui&nbsp;: un champ qui appara&icirc;t <b>en bas</b> de la colonne
+        de gauche de la galerie, sous les collections, quand on clique le &laquo;&nbsp;+&nbsp;&raquo; qui est <b>en haut</b>.
+        On tape le nom, on appuie sur Entr&eacute;e. Il n'y a ni bouton &laquo;&nbsp;Cr&eacute;er&nbsp;&raquo;, ni fen&ecirc;tre,
+        ni message apr&egrave;s coup&nbsp;: le champ se vide, la ligne appara&icirc;t, et le jeu neuf devient le jeu ouvert
+        sans qu'on ait chang&eacute; d'&eacute;cran.
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-non" style="align-self: flex-start">relev&eacute;</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le &laquo;&nbsp;+&nbsp;&raquo; et son champ ne sont pas au m&ecirc;me endroit</div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Le bouton est dans l'en-t&ecirc;te de la section &laquo;&nbsp;Projets&nbsp;&raquo;, le champ appara&icirc;t tout en bas de la colonne, apr&egrave;s les collections. Entre les deux, il peut y avoir dix lignes.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-non" style="align-self: flex-start">relev&eacute;</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">L'assistant en douze &eacute;tapes ne s'ouvre pas ici</div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Il existe, mais il ne s'ouvre tout seul qu'au tout premier lancement de l'atelier. Cr&eacute;er un second jeu est justement l'un des gestes qui referment cette porte pour de bon. Et sa premi&egrave;re &eacute;tape, &laquo;&nbsp;Le nom&nbsp;&raquo;, <b>renomme</b>&nbsp;: elle ne cr&eacute;e rien.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-non" style="align-self: flex-start">relev&eacute;</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Un agent ne peut pas cr&eacute;er de jeu</div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Il n'existe aucun outil <span class="mono">create_project</span>&nbsp;: le serveur qui parle aux agents refuse express&eacute;ment de cr&eacute;er un projet au passage. C'est un geste d'humain.</div>
+    </div>
+      </div>
+    </div>
+  </div>
+  </div>
   </div>
 </div>
 </x-dc>

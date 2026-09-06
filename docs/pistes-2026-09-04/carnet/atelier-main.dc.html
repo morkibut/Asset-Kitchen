@@ -1,0 +1,633 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .plc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px;
+           border-radius: 6px; font-size: 13px }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .rg { display: flex; flex-direction: column; gap: 5px; padding-bottom: 11px; border-bottom: 1px solid #e2dbd0 }
+    .rg-t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12.5px }
+    .rai { font-size: 11px; line-height: 1.42; color: #6d675e }
+    .rai-f { color: #a8492c }
+    .rai-amb { color: #8a5a2c }
+    .cur { height: 5px; border-radius: 3px; background: #e2dbd0; position: relative }
+    .cur i { position: absolute; top: -4px; width: 13px; height: 13px; border-radius: 50%; background: #fffdfa;
+             border: 1px solid #a49a8b }
+    .dam { background-image: linear-gradient(45deg, #e6e0d6 25%, transparent 25%, transparent 75%, #e6e0d6 75%),
+                             linear-gradient(45deg, #e6e0d6 25%, transparent 25%, transparent 75%, #e6e0d6 75%);
+           background-size: 16px 16px; background-position: 0 0, 8px 8px; background-color: #f5f1e9 }
+
+    /* ── la toile agrandie : un pixel du rendu vaut 24 px à l'écran ── */
+    .toile { --p: 24px; position: relative; width: 528px; height: 480px; flex-shrink: 0;
+             border: 1px solid #c9c2b6; border-radius: 4px; overflow: hidden }
+    .toile .g { position: absolute; inset: 0;
+                background-image: linear-gradient(to right, rgba(30,26,20,.09) 1px, transparent 1px),
+                                  linear-gradient(to bottom, rgba(30,26,20,.09) 1px, transparent 1px);
+                background-size: var(--p) var(--p); pointer-events: none }
+    /* la maille du jeu, tous les 8 pixels — plus marquée, pour se repérer */
+    .toile .g8 { position: absolute; inset: 0;
+                 background-image: linear-gradient(to right, rgba(30,26,20,.2) 1px, transparent 1px),
+                                   linear-gradient(to bottom, rgba(30,26,20,.2) 1px, transparent 1px);
+                 background-size: calc(var(--p) * 8) calc(var(--p) * 8); pointer-events: none }
+    .px { position: absolute }
+    .vise { position: absolute; border: 2px solid #a8492c; border-radius: 50%; pointer-events: none }
+    .lg { position: absolute; font-size: 10.5px; color: #f0ece4; background: rgba(20,18,14,.62);
+          border-radius: 4px; padding: 2px 7px; white-space: nowrap }
+
+    /* ── une rangée de la pile de calques ── */
+    .cq { display: grid; grid-template-columns: 11px minmax(0,1fr) auto auto auto auto; gap: 7px;
+          align-items: center; padding: 6px 8px; border-radius: 5px; font-size: 12px }
+    .cq-on { background: #e6dfd2; font-weight: 600 }
+    .oeil { width: 9px; height: 9px; border-radius: 1px }
+    .fl { font-size: 10px; color: #948c80; padding: 0 1px }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3400px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <!-- ══════════ EN-TÊTE ══════════ -->
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1030px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › au repos › Retoucher</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">La main</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">repeindre soi-même les pixels qu'aucun réglage n'atteint — la septième table, et la dernière</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 215px">rien ne part au modèle&nbsp;; mais chaque passage rejoue les six tables d'avant</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1180px">
+    Il reste trois pixels faux&nbsp;: un éclat blanc dans l'œil, un bout de fond accroché sous le bras, une couleur qui a bavé sur la manche. Aucun réglage ne les atteint — un réglage travaille sur toute l'image, jamais sur trois pixels. C'est là que la main sert. <strong style="font-weight: 600">Elle existe, entièrement, et personne ne l'avait décrite</strong>&nbsp;: une pile de calques, un sol d'opacité, un pinceau, une couleur par passage. Ce qui manque, ce ne sont pas des réglages — ce sont six gestes que tout outil de dessin a, et un report d'une pose à l'autre qui coûte cher à ne pas avoir.
+  </div>
+
+  <!-- ══════════ L'ÉCRAN ══════════ -->
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden;
+              display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 720px">
+
+    <!-- ══ la chaîne ══ -->
+    <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 11px">
+      <div class="rt" style="padding: 0 9px">Les sept tables</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Détourer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le fond magenta part</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Recadrer</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les bords vides sautent</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Pixéliser</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Couleurs</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">la palette du monde</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Nettoyer</span><span style="color: #b0a89b; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">les miettes partent</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>Le contour</span><span style="color: #c9c2b6; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">le trait de bord retracé</div>
+        </div>
+        <div class="plc" style="background: #e6dfd2; font-weight: 600; flex-direction: column; align-items: stretch; gap: 3px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span>La main</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e">ce qu'on repeint soi-même</div>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid #ddd5c8; padding-top: 10px; display: flex; flex-direction: column; gap: 2px">
+        <div class="rt" style="padding: 0 9px 4px">Les deux fabriques</div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <span style="color: #4e483f">Découper</span>
+          <div style="font-size: 11.5px; color: #6d675e">une image, plusieurs sujets</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <span style="color: #4e483f">Superposer</span>
+          <div style="font-size: 11.5px; color: #6d675e">deux images, un calque</div>
+        </div>
+        <div style="font-size: 11px; color: #948c80; padding: 4px 11px 0; line-height: 1.4">Elles ne s'endorment pas et ne modifient pas cette image&nbsp;: elles en fabriquent d'autres.</div>
+      </div>
+
+      <div style="border-top: 1px solid #ddd5c8; padding-top: 10px; display: flex; flex-direction: column; gap: 2px">
+        <div class="plc" style="color: #b0a89b">
+          <span>Retourner</span><span class="puce p-a" style="font-size: 9px">à ajouter</span>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; padding: 0 10px; font-size: 11px; line-height: 1.45; color: #948c80">
+        Carré plein&nbsp;: la table change l'image. Creux&nbsp;: elle est endormie, ses réglages sont gardés.
+      </div>
+    </div>
+
+    <!-- ══ le cadre de travail ══ -->
+    <div style="display: flex; flex-direction: column; background: #fffdfa">
+
+      <div style="border-bottom: 1px solid #e2dbd0; background: #f2ede4; padding: 9px 16px;
+                  display: flex; align-items: center; gap: 14px">
+        <div class="seg">
+          <div class="sg">ajusté</div><div class="sg">100&nbsp;%</div>
+          <div class="sg">400&nbsp;%</div><div class="sg sg-on">800&nbsp;%</div>
+        </div>
+        <div class="seg">
+          <div class="sg sg-on">le rendu</div><div class="sg" style="color: #b0a89b">le brut</div><div class="sg">côte à côte</div>
+        </div>
+        <div style="font-size: 11.5px; color: #948c80">Avant&nbsp;› le rend le temps d'un appui</div>
+        <div class="mono" style="margin-left: auto; font-size: 11px; color: #6d675e">27, 14</div>
+      </div>
+
+      <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; gap: 22px">
+
+        <!-- la toile agrandie : 22 × 20 pixels du rendu, à 24 px chacun -->
+        <div class="toile dam">
+          <!-- la capuche -->
+          <div class="px" style="left: 168px; top: 48px; width: 168px; height: 48px; background: #6b5a44"></div>
+          <div class="px" style="left: 144px; top: 96px; width: 216px; height: 120px; background: #6b5a44"></div>
+          <!-- le visage -->
+          <div class="px" style="left: 192px; top: 120px; width: 120px; height: 72px; background: #b79b7c"></div>
+          <!-- les deux yeux -->
+          <div class="px" style="left: 216px; top: 144px; width: 24px; height: 24px; background: #2e2419"></div>
+          <div class="px" style="left: 264px; top: 144px; width: 24px; height: 24px; background: #2e2419"></div>
+          <!-- ① l'éclat blanc dans l'œil gauche -->
+          <div class="px" style="left: 216px; top: 144px; width: 24px; height: 24px; background: #f4f1ea"></div>
+          <!-- les épaules et la robe -->
+          <div class="px" style="left: 120px; top: 216px; width: 264px; height: 192px; background: #6b5a44"></div>
+          <div class="px" style="left: 96px; top: 264px; width: 48px; height: 120px; background: #5d4d3a"></div>
+          <div class="px" style="left: 360px; top: 264px; width: 48px; height: 120px; background: #5d4d3a"></div>
+          <!-- ② un bout de fond magenta resté sous le bras -->
+          <div class="px" style="left: 96px; top: 384px; width: 24px; height: 24px; background: #d8329a"></div>
+          <!-- ③ la couleur qui a bavé sur la manche -->
+          <div class="px" style="left: 384px; top: 312px; width: 48px; height: 24px; background: #9a7f5e"></div>
+          <div class="px" style="left: 384px; top: 336px; width: 24px; height: 24px; background: #9a7f5e"></div>
+
+          <div class="g8"></div>
+          <div class="g"></div>
+
+          <!-- les trois pixels visés -->
+          <div class="vise" style="left: 204px; top: 132px; width: 48px; height: 48px"></div>
+          <div class="vise" style="left: 90px; top: 378px; width: 36px; height: 36px"></div>
+          <div class="vise" style="left: 378px; top: 306px; width: 60px; height: 60px"></div>
+
+          <!-- le pinceau, un pixel, posé sur l'éclat blanc -->
+          <div class="px" style="left: 216px; top: 144px; width: 24px; height: 24px;
+                                 border: 2px solid #221f1b; box-shadow: 0 0 0 2px #fffdfa"></div>
+
+          <div class="lg" style="left: 9px; top: 9px">800&nbsp;% — un pixel du rendu fait 24 px à l'écran</div>
+          <div class="lg" style="left: 9px; bottom: 9px">la maille forte, tous les 8 pixels</div>
+        </div>
+
+        <!-- la même image à sa taille, pour juger -->
+        <div style="display: flex; flex-direction: column; gap: 14px; align-items: center">
+          <div class="rt">à sa taille</div>
+          <div class="dam" style="width: 128px; height: 128px; border: 1px solid #c9c2b6; border-radius: 4px;
+                                  position: relative; overflow: hidden">
+            <div class="px" style="left: 42px; top: 12px; width: 42px; height: 12px; background: #6b5a44"></div>
+            <div class="px" style="left: 36px; top: 24px; width: 54px; height: 30px; background: #6b5a44"></div>
+            <div class="px" style="left: 48px; top: 30px; width: 30px; height: 18px; background: #b79b7c"></div>
+            <div class="px" style="left: 54px; top: 36px; width: 6px; height: 6px; background: #f4f1ea"></div>
+            <div class="px" style="left: 66px; top: 36px; width: 6px; height: 6px; background: #2e2419"></div>
+            <div class="px" style="left: 30px; top: 54px; width: 66px; height: 48px; background: #6b5a44"></div>
+            <div class="px" style="left: 24px; top: 66px; width: 12px; height: 30px; background: #5d4d3a"></div>
+            <div class="px" style="left: 90px; top: 66px; width: 12px; height: 30px; background: #5d4d3a"></div>
+            <div class="px" style="left: 24px; top: 96px; width: 6px; height: 6px; background: #d8329a"></div>
+            <div class="px" style="left: 96px; top: 78px; width: 12px; height: 6px; background: #9a7f5e"></div>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e; text-align: center; max-width: 150px; line-height: 1.45">
+            64&nbsp;× 64. Les trois défauts tiennent dans un carré de deux millimètres — et se voient quand même en jeu.
+          </div>
+          <div style="border-top: 1px solid #e2dbd0; padding-top: 12px; display: flex; flex-direction: column; gap: 6px; align-items: center">
+            <div class="rt">le sol</div>
+            <div class="dam" style="width: 128px; height: 128px; border: 1px solid #c9c2b6; border-radius: 4px;
+                                    position: relative; overflow: hidden">
+              <!-- la silhouette, en repère seulement -->
+              <div class="px" style="left: 42px; top: 12px; width: 42px; height: 12px; background: #e0d9cc"></div>
+              <div class="px" style="left: 36px; top: 24px; width: 54px; height: 30px; background: #e0d9cc"></div>
+              <div class="px" style="left: 30px; top: 54px; width: 66px; height: 48px; background: #e0d9cc"></div>
+              <div class="px" style="left: 24px; top: 66px; width: 12px; height: 30px; background: #e0d9cc"></div>
+              <div class="px" style="left: 90px; top: 66px; width: 12px; height: 30px; background: #e0d9cc"></div>
+              <!-- le seul pixel que le sol touche -->
+              <div class="px" style="left: 24px; top: 96px; width: 6px; height: 6px; background: #d8329a"></div>
+              <div class="vise" style="left: 18px; top: 90px; width: 18px; height: 18px"></div>
+            </div>
+            <div style="font-size: 11.5px; color: #6d675e; text-align: center; max-width: 150px; line-height: 1.45">
+              L'opacité ne pose pas de couleur&nbsp;: elle ôte le pixel magenta, ou le remet.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid #e2dbd0; background: #f7f3ec; padding: 9px 16px;
+                  display: flex; align-items: center; gap: 16px; font-size: 11.5px; color: #6d675e">
+        <span>retouche de l'œil · poser · 1 px · <span class="mono">#2e2419</span></span>
+        <span style="margin-left: auto" class="mono">2 calques · 19 passages</span>
+      </div>
+    </div>
+
+    <!-- ══ le volet ══ -->
+    <div style="background: #f7f3ec; border-left: 1px solid #e2dbd0; padding: 17px 16px;
+                display: flex; flex-direction: column; gap: 15px">
+
+      <div style="border-left: 2px solid #ddd5c8; padding-left: 9px; font-size: 11px; line-height: 1.45; color: #6d675e">
+        La main se pose sur le rendu&nbsp;: le brut s'éteint dans le comparateur, et «&nbsp;Avant&nbsp;›&nbsp;» le rend le temps d'un appui.
+      </div>
+
+      <!-- la pile -->
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div class="rt">Les calques</div>
+        <div style="display: flex; flex-direction: column">
+          <div class="cq cq-on">
+            <span class="oeil" style="background: #5c7a52"></span>
+            <span>retouche de l'œil</span>
+            <span class="mono" style="font-size: 10px; color: #6d675e">4 · 6 px</span>
+            <span class="fl">↑</span><span class="fl">↓</span><span class="fl">×</span>
+          </div>
+          <div class="cq">
+            <span class="oeil" style="border: 1px solid #b0a89b"></span>
+            <span style="color: #948c80">la boucle de ceinture</span>
+            <span class="mono" style="font-size: 10px; color: #948c80">12 · 31 px</span>
+            <span class="fl">↑</span><span class="fl">↓</span><span class="fl">×</span>
+          </div>
+          <div class="cq">
+            <span class="oeil" style="background: #5c7a52"></span>
+            <span>l'opacité</span>
+            <span class="mono" style="font-size: 10px; color: #6d675e">3 · 18 px</span>
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+        <div style="font-size: 11px; line-height: 1.45; color: #6d675e; border-left: 2px solid #ddd5c8; padding-left: 9px">
+          «&nbsp;L'opacité&nbsp;» est le sol de la pile&nbsp;: elle ne se supprime pas et ne se déplace pas.
+        </div>
+        <div style="font-size: 11.5px; color: #a8492c; padding-top: 2px">+ calque de dessin</div>
+      </div>
+
+      <!-- le sens -->
+      <div style="display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #e2dbd0; padding-top: 13px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <span style="font-size: 12.5px">le sens</span>
+        </div>
+        <div class="seg" style="align-self: flex-start">
+          <div class="sg sg-on">poser</div><div class="sg">effacer</div>
+        </div>
+        <div class="rai">Sur «&nbsp;l'opacité&nbsp;», les deux boutons s'appellent <em>remettre</em> et <em>ôter</em>&nbsp;: c'est la même mécanique, mais elle ne pose pas de couleur.</div>
+      </div>
+
+      <!-- le pinceau -->
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <span style="font-size: 12.5px">le pinceau</span>
+          <span class="mono" style="font-size: 11px; color: #a8492c">1 px</span>
+        </div>
+        <div class="cur"><i style="left: 0"></i></div>
+        <div class="rai">1 px — c'est le pixel, l'autre bout du geste à main levée. <span class="mono">1 → 129</span>, impairs seulement&nbsp;: un pinceau a un centre.</div>
+        <div class="rai rai-amb">Toujours en pixels du rendu. Sur un dessin réglé à 1024 pour une case de 64, ce pixel-là est un seizième de pixel du jeu — et rien ne le dit.</div>
+      </div>
+
+      <!-- la couleur -->
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <span style="font-size: 12.5px">la couleur</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span style="width: 34px; height: 26px; border-radius: 2px; border: 1px solid #ddd5c8; background: #2e2419"></span>
+          <span class="mono" style="flex: 1; height: 26px; border: 1px solid #ddd5c8; border-radius: 2px;
+                                    background: #fffdfa; font-size: 10px; color: #221f1b; padding: 6px 8px">#2e2419</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 2px">
+          <span style="width: 16px; height: 16px; border-radius: 2px; background: #2e2419; border: 1px solid #221f1b"></span>
+          <span style="width: 16px; height: 16px; border-radius: 2px; background: #6b5a44; border: 1px solid #ddd5c8"></span>
+          <span style="width: 16px; height: 16px; border-radius: 2px; background: #5d4d3a; border: 1px solid #ddd5c8"></span>
+          <span style="width: 16px; height: 16px; border-radius: 2px; background: #b79b7c; border: 1px solid #ddd5c8"></span>
+          <span style="width: 16px; height: 16px; border-radius: 2px; background: #4a5c3a; border: 1px solid #ddd5c8"></span>
+          <span style="width: 16px; height: 16px; border-radius: 2px; background: #8a7458; border: 1px solid #ddd5c8"></span>
+          <span style="width: 16px; height: 16px; border-radius: 2px; background: #c4b291; border: 1px solid #ddd5c8"></span>
+          <span style="width: 16px; height: 16px; border-radius: 2px; background: #f4f1ea; border: 1px solid #ddd5c8"></span>
+        </div>
+        <div class="rai mono">#2e2419 · dans la palette</div>
+        <div class="rai">Le champ accepte n'importe quelle teinte, et dit alors <em>hors palette</em> en ambre. Il constate&nbsp;; il ne refuse pas.</div>
+      </div>
+
+      <!-- le calque actif -->
+      <div style="display: flex; flex-direction: column; gap: 5px; border-top: 1px solid #e2dbd0; padding-top: 13px">
+        <div class="rt">Le calque actif</div>
+        <div class="mono" style="font-size: 11px; color: #4e483f">retouche de l'œil · 4 passages</div>
+        <div class="mono" style="font-size: 11px; color: #948c80">dernier&nbsp;: poser · 1 px · #2e2419</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 4px">
+          <span style="font-size: 11.5px; color: #a8492c">Défaire le dernier · Ctrl&nbsp;+&nbsp;Z</span>
+          <span class="puce p-non" style="font-size: 9px">pas de refaire</span>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+                  border-top: 1px solid #e2dbd0; padding-top: 13px">
+        <span class="mono" style="font-size: 11px; color: #6d675e">2 calques · 19 passages</span>
+        <span style="font-size: 12.5px; font-weight: 600; color: #a8492c">Enregistrer</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ CE QUI EST DÉJÀ JUSTE ══════════ -->
+  <div style="display: flex; flex-direction: column; gap: 13px">
+    <div><span class="h2">Ce qui est déjà juste, et qu'il ne faut pas défaire</span>
+      <span style="font-size: 13.5px; color: #6d675e">— six choix qui tiennent, et dont trois sont durs à retrouver après coup</span></div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px">
+      <div class="mot">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">Un passage est un chemin, jamais une image</span>
+          <span class="puce p-ok">posé d'emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Ce qui est gardé, c'est la suite de points et le rayon — pas les pixels que ça produit. C'est ce qui permet de remonter changer le recadrage&nbsp;: le trait se rejoue sur l'image nouvelle au lieu de tomber à côté. Un masque en octets aurait pesé la taille de l'image à chaque geste, et se serait décalé à la première dimension qui bouge.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">La couleur est portée par le passage</span>
+          <span class="puce p-ok">posé d'emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Pas par le calque. Un calque n'est donc pas monochrome&nbsp;: il en contient autant qu'on y a posé de teintes. Sans ça, retoucher un œil noir et une joue rose demanderait deux calques, et la pile deviendrait illisible en dix minutes.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">Le dernier passage l'emporte</span>
+          <span class="puce p-ok">posé d'emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Sur un pixel donné, c'est le geste le plus récent qui gagne — comme un pinceau sur une toile. L'ordre de la liste est le sens du geste, et il ne se trie jamais&nbsp;: deux passages qui se croisent ne disent la même chose que dans l'ordre où la main les a faits.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">L'opacité est un sol, pas un calque</span>
+          <span class="puce p-ok">posé d'emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Elle ne pose aucune couleur&nbsp;: elle dit ce qui est là, sur l'image que les six tables ont produite. Elle est un champ à part, pas un calque marqué — et c'est pour ça qu'«&nbsp;elle ne se supprime pas et ne se déplace pas&nbsp;» est vrai sans qu'on ait à le surveiller.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">Il n'y a pas de liste de passages</span>
+          <span class="puce p-ok">posé d'emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">C'est la seule table dans ce cas, et c'est voulu&nbsp;: un geste à main levée en produit trente, et trente rangées ne se relisent pas. Le calque est l'unité de lecture&nbsp;; le passage n'existe que comme un compte et un Ctrl&nbsp;+&nbsp;Z.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">La pile se lit à l'envers de son ordre</span>
+          <span class="puce p-ok">posé d'emblée</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les calques s'appliquent du dessous vers le dessus&nbsp;; l'écran les montre du dessus vers le dessous, comme partout où il y a des calques. Le renversement est écrit à un seul endroit, et c'est ce qui évite qu'un jour deux écrans le comptent dans deux sens.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ LES RÉGLAGES ══════════ -->
+  <div style="display: flex; flex-direction: column; gap: 13px">
+    <div><span class="h2">Les réglages</span>
+      <span style="font-size: 13.5px; color: #6d675e">— quatre, et le premier n'en est pas vraiment un</span></div>
+
+    <div class="pl" style="grid-template-columns: 168px minmax(0,1fr) 300px 178px">
+      <div class="ent">ce qu'on règle</div>
+      <div class="ent">ce que ça fait</div>
+      <div class="ent">ce que ça change à l'image</div>
+      <div class="ent">à l'ouverture</div>
+
+      <div><span style="font-weight: 600">les calques</span></div>
+      <div>Créer, nommer, masquer, supprimer, monter, descendre. Masquer n'efface rien&nbsp;: le calque garde ses passages et cesse d'être appliqué.</div>
+      <div style="color: #4e483f">Rien tant qu'aucun passage n'y est posé. Un calque nommé et vide laisse le carré de la barre creux&nbsp;: le carré se remplit quand la table change l'image, pas quand elle figure dans la recette.</div>
+      <div class="mono" style="color: #6d675e">aucun calque&nbsp;; le sol seul</div>
+
+      <div><span style="font-weight: 600">le sens</span></div>
+      <div>Poser ou effacer. Sur le sol, les mêmes boutons s'appellent remettre et ôter.</div>
+      <div style="color: #4e483f">Décide de ce que fera le passage suivant. Il n'agit pas sur les passages déjà posés&nbsp;— pour revenir dessus, on repasse en effaçant.</div>
+      <div class="mono" style="color: #6d675e">poser</div>
+
+      <div><span style="font-weight: 600">le pinceau</span></div>
+      <div>De 1 à 129 pixels du rendu, impairs seulement — un pinceau a un centre. Le cran 1 est le pixel.</div>
+      <div style="color: #4e483f">La largeur du trait. C'est la seule chose qui sépare le geste à main levée de la retouche au pixel, et les deux bouts sont sur le même curseur.</div>
+      <div class="mono" style="color: #6d675e">1 px</div>
+
+      <div><span style="font-weight: 600">la couleur</span></div>
+      <div>La palette du jeu en nuancier, plus un champ libre. Absente sur le sol, qui ne pose pas de couleur.</div>
+      <div style="color: #4e483f">La teinte du passage suivant. Hors palette, la ligne le dit en ambre&nbsp;: la quantification est déjà passée et ne rattrapera pas cette couleur-là.</div>
+      <div class="mono" style="color: #6d675e">la dernière prise</div>
+    </div>
+  </div>
+
+  <!-- ══════════ LES GESTES QUI MANQUENT ══════════ -->
+  <div style="display: flex; flex-direction: column; gap: 13px">
+    <div><span class="h2">Les six gestes qui manquent</span>
+      <span style="font-size: 13.5px; color: #6d675e">— aucun n'est un réglage&nbsp;; tous se font aujourd'hui à la place, passage par passage</span></div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px">
+
+      <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 10px; padding: 16px 17px;
+                  display: flex; flex-direction: column; gap: 10px">
+        <div class="rt" style="color: #a8492c">celui qui coûte le plus</div>
+        <div style="font-size: 16px; font-weight: 600; line-height: 1.3; color: #8a3f33">Reporter un calque sur les autres poses</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le pèlerin a six poses. L'éclat blanc dans l'œil est le même défaut du modèle sur les six. Corriger celle du repos corrige un sixième du problème&nbsp;: un calque est lié à une seule image, et les cinq autres se refont à la main, au pixel près, sans rien pour vérifier qu'on a mis le point au même endroit.</div>
+        <div style="border-top: 1px solid #dcbcb2; padding-top: 10px; display: flex; flex-direction: column; gap: 5px">
+          <div style="font-size: 12.5px; font-weight: 600">Ce qu'il faut</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Copier le calque actif vers les poses qu'on désigne, et dire ensuite lesquelles ont dérivé. Les passages sont des chemins&nbsp;: les reporter sur une image de même taille est une recopie, pas un calcul.</div>
+        </div>
+      </div>
+
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">Refaire</span>
+          <span class="puce p-non">n'existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">«&nbsp;Défaire le dernier · Ctrl&nbsp;+&nbsp;Z&nbsp;» est là, et rien en face. Un défaire de trop, et le geste est perdu pour de bon. C'est le manque le plus voyant, et le moins cher à combler&nbsp;: il suffit de garder les passages retirés jusqu'au passage suivant.</div>
+      </div>
+
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">Prendre une couleur dans l'image</span>
+          <span class="puce p-non">n'existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Pour reprendre exactement le brun d'une manche, il n'y a que le nuancier et un champ hexadécimal — donc il faut lire la teinte ailleurs et la retaper. Le mot «&nbsp;pipette&nbsp;» est déjà pris dans le produit&nbsp;: il y nomme un moteur de détourage, qui <em>enlève</em> une couleur au lieu de la prendre.</div>
+      </div>
+
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">Le trait droit</span>
+          <span class="puce p-non">n'existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Tout est à main levée. Une lame d'épée, un bord de bouclier, un montant de porte&nbsp;: trois pixels de travers à chaque fois, qu'on reprend un par un. Le passage est déjà une suite de points — un trait droit, c'est un passage à deux points.</div>
+      </div>
+
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">Le remplissage</span>
+          <span class="puce p-non">n'existe pas</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Repeindre un aplat uni se fait passage par passage, au pinceau. Sur une cape de 40 pixels de large, c'est le geste le plus long de la table et celui qui laisse le plus de trous. Il n'entre pas dans le modèle actuel&nbsp;: un remplissage dépend des pixels d'en dessous, pas d'un chemin — il faudrait le garder comme un point de départ et une couleur, et le rejouer.</div>
+      </div>
+
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 600">La symétrie</span>
+          <span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un personnage vu de face est symétrique une fois sur deux. Peindre les deux yeux, c'est faire deux fois le même geste à un pixel près — et rater le miroir se voit tout de suite. Un axe posé une fois, et chaque passage est doublé en s'écrivant.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ L'UNITÉ DU PINCEAU ══════════ -->
+  <div style="display: grid; grid-template-columns: 460px minmax(0,1fr); gap: 22px; align-items: start">
+    <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 10px; padding: 17px 18px;
+                display: flex; flex-direction: column; gap: 11px">
+      <div class="rt" style="color: #a08050">deux tables voisines, deux réponses</div>
+      <div style="font-size: 16.5px; font-weight: 600; line-height: 1.3; color: #8a5a2c">Un «&nbsp;pixel&nbsp;», c'est celui de qui&nbsp;?</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le contour, la table juste avant, change d'unité tout seul&nbsp;: si une case est posée, son épaisseur se compte en pixels de la case&nbsp;; sinon, sur la maille où le modèle a peint. L'écran dit lequel s'applique, sous le curseur.</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">La main, elle, dit toujours «&nbsp;px du rendu&nbsp;». Sur un jeu en dessin réglé à 1024 pour une case de 64, un pinceau de 1 px peint un seizième de pixel du jeu — invisible une fois l'image réduite, et rien ne prévient.</div>
+      <div style="border-top: 1px solid #e0cfb8; padding-top: 11px; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-size: 12.5px; font-weight: 600">Ce qu'il faut</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">La même règle que le contour, écrite au même endroit, et une seule fois pour les deux tables.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div><span class="h2">Pendant le calcul</span>
+        <span style="font-size: 13.5px; color: #6d675e">— rien ne part&nbsp;; mais rien n'est instantané non plus</span></div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px">
+        <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 8px">
+          <div class="mono" style="font-size: 22px; color: #5c7a52">0 $</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Aucune demande ne part au modèle. Tout se calcule sur la machine, et un passage de plus ne coûte que du temps.</div>
+        </div>
+        <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 8px">
+          <div class="mono" style="font-size: 22px; color: #a8492c">6 tables</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Chaque passage relance la chaîne entière depuis le brut&nbsp;: détourage, recadrage, grille, couleurs, bords, contour, puis la pile. Sur une case de 64, c'est imperceptible&nbsp;; sur un brut de 2048, le trait traîne derrière le pointeur.</div>
+        </div>
+        <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 8px">
+          <div class="mono" style="font-size: 22px; color: #8a5a2c">à faire</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Rien ne montre le trait pendant qu'on le trace&nbsp;: il apparaît quand le rendu revient. C'est le seul endroit du produit où l'attente tombe entre le geste et sa trace, et c'est celui où elle se supporte le moins.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ QUAND ÇA RATE ══════════ -->
+  <div style="display: flex; flex-direction: column; gap: 13px">
+    <div><span class="h2">Quand ça rate</span>
+      <span style="font-size: 13.5px; color: #6d675e">— sept cas, et le premier n'a aucun message aujourd'hui</span></div>
+
+    <div style="border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="rt">ce qui arrive</div><div class="rt">ce qui se passe</div><div class="rt">ce qu'il faudrait</div>
+      </div>
+      <div class="rate">
+        <div style="font-weight: 600">On remonte changer le recadrage après avoir dessiné</div>
+        <div style="color: #4e483f">Les passages se rejouent sur l'image nouvelle. C'est prévu, et ça marche — mais si le cadre a bougé, le trait tombe ailleurs qu'où on l'avait mis, et rien ne le signale.</div>
+        <div style="color: #4e483f">Prévenir avant de valider le recadrage&nbsp;: «&nbsp;19 passages sont posés sur cette image&nbsp;». Et proposer de figer la pile en pixels plutôt que de la perdre de vue.</div>
+      </div>
+      <div class="rate">
+        <div style="font-weight: 600">On a défait un passage de trop</div>
+        <div style="color: #4e483f">Il est perdu. Il n'y a pas de refaire.</div>
+        <div style="color: #4e483f">Ctrl&nbsp;+&nbsp;Y, et garder les passages retirés jusqu'au geste suivant.</div>
+      </div>
+      <div class="rate">
+        <div style="font-weight: 600">On peint une couleur qui n'est pas dans la palette</div>
+        <div style="color: #4e483f">Ça passe, et la ligne dit «&nbsp;hors palette&nbsp;» en ambre. La quantification est déjà passée&nbsp;: elle ne rattrapera pas cette teinte-là.</div>
+        <div style="color: #5c7a52">Rien. Le produit constate, il ne refuse pas — et c'est juste&nbsp;: une couleur de plus dans un jeu est un fait qui se lit.</div>
+      </div>
+      <div class="rate">
+        <div style="font-weight: 600">On dessine sur le mauvais calque</div>
+        <div style="color: #4e483f">Rien ne l'empêche. Le calque actif est écrit en bas du volet et en bas du cadre, mais un calque masqué peut être actif&nbsp;: on peint alors sans rien voir apparaître.</div>
+        <div style="color: #4e483f">Choisir un calque masqué le rend visible, ou le geste est refusé avec sa raison. Peindre dans le vide n'est jamais ce qu'on voulait.</div>
+      </div>
+      <div class="rate">
+        <div style="font-weight: 600">On supprime un calque plein</div>
+        <div style="color: #4e483f">Il part sans confirmation, et le calque actif redevient le sol. Ctrl&nbsp;+&nbsp;Z ne défait qu'un passage, pas une suppression.</div>
+        <div style="color: #4e483f">Demander quand le calque porte des passages, ou faire entrer la suppression dans le même défaire que le reste.</div>
+      </div>
+      <div class="rate">
+        <div style="font-weight: 600">Le trait sort du cadre</div>
+        <div style="color: #4e483f">Les points hors cadre se bornent, comme le rectangle du recadrage. Rien ne lève, rien ne se perd.</div>
+        <div style="color: #5c7a52">Rien. C'est le comportement juste, et il est le même partout dans le produit.</div>
+      </div>
+      <div class="rate">
+        <div style="font-weight: 600">Un calque est nommé mais vide</div>
+        <div style="color: #4e483f">Le carré de la barre reste creux&nbsp;: la table figure dans la recette mais ne change pas l'image. Le calque, lui, est gardé — on l'a créé exprès.</div>
+        <div style="color: #5c7a52">Rien. C'est la règle du carré, et elle est la même pour les sept tables.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ CE QUI MANQUE ══════════ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 460px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div><span class="h2">Ce qui manque</span>
+        <span style="font-size: 13.5px; color: #6d675e">— dans l'ordre où je le ferais</span></div>
+      <ol style="padding-left: 20px; font-size: 13px; line-height: 1.6; color: #3d382f">
+        <li style="margin-bottom: 7px"><strong style="font-weight: 600">Refaire.</strong> Ctrl&nbsp;+&nbsp;Y. C'est une demi-journée, et c'est le seul manque que l'on rencontre à coup sûr dans les cinq premières minutes.</li>
+        <li style="margin-bottom: 7px"><strong style="font-weight: 600">Reporter un calque sur les autres poses.</strong> Le plus cher à ne pas avoir&nbsp;: sans lui, une retouche se paie six fois sur un personnage à six poses, vingt-quatre fois s'il a quatre directions.</li>
+        <li style="margin-bottom: 7px"><strong style="font-weight: 600">Prendre une couleur dans l'image.</strong> Et lui trouver un autre nom que «&nbsp;pipette&nbsp;», déjà pris par un moteur de détourage qui fait l'inverse.</li>
+        <li style="margin-bottom: 7px"><strong style="font-weight: 600">Le trait droit.</strong> Un passage à deux points&nbsp;: le modèle le porte déjà, il n'y a que le geste à écrire.</li>
+        <li style="margin-bottom: 7px"><strong style="font-weight: 600">L'unité du pinceau.</strong> La même règle que le contour, écrite une seule fois pour les deux tables.</li>
+        <li style="margin-bottom: 7px"><strong style="font-weight: 600">L'avertissement avant de remonter la chaîne.</strong> Dire combien de passages sont posés avant de laisser changer un recadrage ou une case.</li>
+        <li style="margin-bottom: 7px"><strong style="font-weight: 600">La symétrie, puis le remplissage.</strong> Les deux derniers, et les deux qui demandent le plus&nbsp;: le remplissage n'entre pas dans le modèle actuel du passage.</li>
+      </ol>
+    </div>
+
+    <div style="border: 1px solid #e2dbd0; background: #fffdfa; border-radius: 9px; padding: 15px 16px;
+                display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">le relevé</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">La main est la <strong style="font-weight: 600">septième et dernière table</strong>. Dans le code, elle est faite d'un sol — l'opacité — et d'une pile de calques de dessin. Un calque porte un nom, un état visible, et une suite de passages. Un passage porte son sens, son rayon, ses points et sa couleur.</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px">Le rayon va jusqu'à 64, ce qui fait le pinceau de 129 px du curseur. Le total de la table s'écrit en deux nombres — <span class="mono">2 calques · 19 passages</span> — et jamais en un seul&nbsp;: un passage peut en effacer un autre, donc le compte ne dit pas ce qu'ils font.</div>
+      <div style="font-size: 12px; line-height: 1.5; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 9px">Le contour et la main sont arrivés ensemble, après les cinq premières tables, et par le même raisonnement&nbsp;: chacune n'a de sens qu'après celle qui la précède, et la dernière n'en a qu'à la toute fin.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

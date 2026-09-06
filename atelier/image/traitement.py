@@ -54,6 +54,7 @@ from atelier.domaine.recette import (
     COULEUR,
     DETOURAGE,
     FLOYD,
+    GAUCHE_DROITE,
     GRILLE,
     LA_MAIN,
     LANCZOS,
@@ -63,6 +64,7 @@ from atelier.domaine.recette import (
     PIXELOE,
     QUANTIFICATION,
     RECADRAGE,
+    RETOURNEMENT,
     TRACE,
     VOTE,
     Bords,
@@ -74,6 +76,7 @@ from atelier.domaine.recette import (
     Quantification,
     Recadrage,
     Recette,
+    Retournement,
     Trait,
     parts_de,
     cote_du_canevas,
@@ -96,6 +99,7 @@ __all__ = [
     "durcir",
     "etat_des_silhouettes",
     "etendre",
+    "en_rendu",
     "finir",
     "mesurer_grille",
     "mesures_du_fond",
@@ -112,6 +116,7 @@ __all__ = [
     "raison_moteur",
     "restreindre",
     "retoucher",
+    "retourner",
     "retrouver_grille",
     "ronger",
     "sans_les_deux_dernieres",
@@ -1116,7 +1121,7 @@ def nettoyer(rgba: np.ndarray, bords: Bords) -> np.ndarray:
 #
 # **Écrit ici depuis E5, et importé par le calque** — il y vivait depuis C4,
 # quand la main ne servait qu'à affiner un masque de différence. Elle est
-# devenue la septième place de la recette, donc une étape du traitement
+# devenue la huitième place de la recette, donc une étape du traitement
 # ordinaire ; et `calque.py` importe déjà ce module, si bien que l'inverse
 # n'était pas possible. Deux rasterisations séparées auraient fini par ne plus
 # se rejoindre au rayon 1.
@@ -1132,7 +1137,7 @@ def pinceau(forme: tuple[int, int], trait: Trait) -> np.ndarray:
 
     **Carré depuis U11, et il était rond** (1<sup>er</sup> septembre 2026). Le
     disque était le bon choix de C4, où la main affinait un masque de différence
-    sur une image de mille pixels ; elle est depuis devenue la septième place de
+    sur une image de mille pixels ; elle est depuis devenue la huitième place de
     la recette, donc un outil qu'on emploie sur le sprite fini. Sur soixante-
     quatre pixels de côté, un disque de rayon deux ne fait pas un bord net : il
     fait un escalier que personne n'a dessiné. **Le carré est la forme de
@@ -1386,11 +1391,43 @@ def contourner(
     return sortie
 
 
+# ── Le retournement ──────────────────────────────────────────────────────────
+
+
+def retourner(rgba: np.ndarray, retournement: Retournement) -> np.ndarray:
+    """La septième place — le miroir gauche-droite (B1).
+
+    **Aucun pixel n'est réinventé** : c'est le même tableau, colonnes dans
+    l'autre ordre, les quatre canaux ensemble. Mesuré le 6 septembre 2026 sur
+    `0-brut.png` de la génération `038b7c1113c8` — michel au repos, 1024×1024 :
+    **27 505 couleurs avant, 27 505 après**, et l'aller-retour rend l'image de
+    départ au pixel près. C'est ce qui sépare un miroir d'une seconde
+    génération, et c'est ce que la planche montre sous les deux images.
+
+    **La copie contiguë n'est pas une précaution, c'est une réparation.**
+    `np.fliplr` rend une vue à pas négatif ; elle se lit et se compare très
+    bien, mais Pillow refuse de l'encoder et les places qui suivent — la main,
+    ses calques — écrivent alors dans un tableau qui n'est pas celui qu'on
+    croit. `ascontiguousarray` recopie une fois, et c'est tout ce que le
+    retournement coûte : **5,3 ms** de médiane sur neuf tirages de la même image
+    de 1024 px — 4,95 au plus vite, 5,81 au plus lent —, là où la planche
+    `atelier-retourner.dc.html` en prévoyait 30.
+
+    **Un sens inconnu ne retourne rien et ne lève pas** — même règle que
+    `durcissement_livre` : un module pur ne refuse pas, il rend l'image telle
+    quelle. Une recette écrite par la version qui connaîtra les neuf autres sens
+    (`B18`) continue donc de s'ouvrir ici.
+    """
+    if retournement.sens != GAUCHE_DROITE:
+        return rgba
+    return np.ascontiguousarray(np.fliplr(rgba))
+
+
 # ── La main ──────────────────────────────────────────────────────────────────
 
 
 def retoucher(rgba: np.ndarray, main: Main) -> np.ndarray:
-    """La septième et dernière place — ce que l'auteur désigne (E5, US-207).
+    """La huitième et dernière place — ce que l'auteur désigne (E5, US-207).
 
     **L'opacité d'abord, les dessins ensuite, du dessous vers le dessus.** Elle
     décide de ce qui est là, sur l'image que les six tables précédentes ont
@@ -1989,7 +2026,7 @@ def detourer(recette: Recette, octets: bytes) -> np.ndarray:
     """
     rgba = _tableau(octets)
     # **Une place endormie est sautée, elle n'est pas vidée** (U4). Le détourage
-    # est la seule place dont l'endormissement se lise ici : les six autres
+    # est la seule place dont l'endormissement se lise ici : les sept autres
     # vivent dans la queue. Rien de l'ordre fixe ne bouge — on saute, on ne
     # réordonne pas.
     #
@@ -2001,7 +2038,7 @@ def detourer(recette: Recette, octets: bytes) -> np.ndarray:
         # **Une passe dont le moteur manque est sautée, elle ne fait pas tomber
         # les autres** (U13). Une recette voyage : elle peut nommer un modèle
         # qu'une autre machine n'a pas, et l'image doit alors sortir avec les
-        # six autres places plutôt que pas du tout. Ce qui manque est **dit** —
+        # sept autres places plutôt que pas du tout. Ce qui manque est **dit** —
         # l'écran grise le moteur avec sa raison, sur la passe elle-même — et
         # `sans_moteur` en donne la liste à qui la demande.
         if passe.moteur == MODELE and raison_du_modele(passe.modele) is not None:
@@ -2036,15 +2073,39 @@ def sans_moteur(recette: Recette) -> list[str]:
     ]
 
 
+def en_rendu(rgba: np.ndarray) -> Rendu:
+    """Le PNG et ses dimensions, sur un tableau **déjà fini**.
+
+    **Séparée de `finir` en `B1`, et pas pour la forme.** Le service tenait
+    `finir(queue(rgba, recette), recette)` : la queue de la recette s'appliquait
+    **deux fois** à chaque rendu. Sept places l'ont supporté sans qu'on le voie —
+    recadrer une image déjà recadrée ne coupe plus rien, quantifier une palette
+    déjà réduite la laisse en place —, mais deux d'entre elles ne sont pas
+    idempotentes et rendaient une image fausse :
+
+    - **le contour**, tracé une seconde fois autour de la silhouette qu'il venait
+      d'agrandir : un trait demandé à 1 px en rendait 2. *Défaut livré, antérieur
+      à cette tranche, trouvé au navigateur le 6 septembre 2026.*
+    - **le retournement**, qui est une involution : deux miroirs gauche-droite
+      rendent l'image de départ, et la tranche entière était sans effet à
+      l'écran pendant que tous ses essais passaient au vert.
+
+    Aucun essai ne pouvait l'attraper : ils appellent `queue` ou `contourner`
+    directement, une seule fois. Ce qui l'a trouvé est d'avoir regardé les
+    octets **servis par la route**, sur un sujet dissymétrique — un carré centré
+    est son propre miroir et n'aurait rien montré.
+    """
+    hauteur, largeur = rgba.shape[:2]
+    return Rendu(octets=_en_png(rgba), largeur=largeur, hauteur=hauteur)
+
+
 def finir(
     rgba: np.ndarray,
     recette: Recette,
     fenetre: tuple[int, int, int, int] | None = None,
 ) -> Rendu:
-    """Les places 2 à 7, puis le PNG et ses dimensions."""
-    fini = queue(rgba, recette, fenetre)
-    hauteur, largeur = fini.shape[:2]
-    return Rendu(octets=_en_png(fini), largeur=largeur, hauteur=hauteur)
+    """Les places 2 à 8, puis le PNG et ses dimensions."""
+    return en_rendu(queue(rgba, recette, fenetre))
 
 
 def avant_la_grille(rgba: np.ndarray, recette: Recette) -> np.ndarray:
@@ -2069,7 +2130,7 @@ def queue(
     *,
     silhouette_stable: bool | None = None,
 ) -> np.ndarray:
-    """Les places 2 à 7, sur une image déjà détourée. Dans l'ordre, toujours.
+    """Les places 2 à 8, sur une image déjà détourée. Dans l'ordre, toujours.
 
     **Séparée de `finir` le 31 août 2026, et pour une raison qui n'est pas
     esthétique** : les mesures d'une table décrivent l'image *à un rang donné de
@@ -2135,6 +2196,11 @@ def queue(
         rgba = contourner(
             rgba, recette.contours, None if sur_case else retrouver_grille(rgba)
         )
+
+    # Le miroir en queue, après le contour et avant la main (B1). Le trait se
+    # trace donc sur la silhouette de départ, puis se retourne avec elle.
+    if recette.retournement is not None and not recette.dort(RETOURNEMENT):
+        rgba = retourner(rgba, recette.retournement)
 
     if recette.main is not None and not recette.dort(LA_MAIN):
         rgba = retoucher(rgba, recette.main)

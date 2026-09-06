@@ -102,7 +102,7 @@ export function BlocMouvements() {
               key={mouvement.identifiant}
               type="button"
               onClick={() => poser(api.montrerMouvement(mouvement.identifiant))}
-              className="rounded-[2px] border border-bord px-1.5 py-0.5 text-texte-2 hover:text-signal"
+              className="rounded-[2px] border border-bord px-1.5 py-0.5 text-texte-2 hover:text-ancien-signal"
             >
               {mouvement.nom} · remontrer
             </button>
@@ -186,7 +186,7 @@ function Ligne({
           type="button"
           onClick={onOuvrir}
           aria-expanded={ouvert}
-          className="text-[12.5px] text-texte hover:text-signal"
+          className="text-[12.5px] text-texte hover:text-ancien-signal"
         >
           {mouvement.nom}
         </button>
@@ -244,7 +244,7 @@ function Ligne({
             <button
               type="button"
               onClick={() => void onMasquer()}
-              className="mesure text-[10px] text-texte-3 hover:text-signal"
+              className="mesure text-[10px] text-texte-3 hover:text-ancien-signal"
             >
               {mouvement.livre ? "masquer — il se remontre" : "masquer — il s'en va"}
             </button>

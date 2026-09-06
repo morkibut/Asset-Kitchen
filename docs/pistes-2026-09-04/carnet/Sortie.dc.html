@@ -1,0 +1,417 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 32px; padding: 0 12px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 12.5px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .rg { display: flex; flex-direction: column; gap: 6px; padding-bottom: 11px; border-bottom: 1px solid #e2dbd0 }
+    .rai { font-size: 11px; line-height: 1.42; color: #6d675e }
+    .ch { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #4e483f; padding: 4px 0 }
+    .bx { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #a49a8b; background: #fffdfa; flex-shrink: 0 }
+    .bx-on { background: #a8492c; border-color: #a8492c }
+    .arb { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; line-height: 1.85; color: #4e483f;
+           white-space: pre }
+    .neuf { background: #f4ece2; border: 1px dashed #e0cfb8; border-radius: 8px }
+    .jeton { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: #ece6db;
+             border-radius: 4px; padding: 1px 6px; color: #4e483f }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3640px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1040px">
+      <div style="font-size: 12.5px; color: #948c80">Les Salines › La sortie</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">La sortie</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">550 sujets d'un côté, un dossier de projet de l'autre — quels fichiers, sous quels noms, et ce qui a changé depuis la dernière fois</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 215px">rien ne part sur le réseau&nbsp;; le seul coût est du disque qui se remplit</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1200px">
+    C'est la seule chose qu'on refait cinquante fois&nbsp;: on corrige trois sprites, on ressort, on relance le jeu. Tout doit donc tenir en un geste, dire à l'avance ce qui va être écrit, et <strong style="font-weight: 600">remplacer</strong> ce qui existe déjà. Aujourd'hui la sortie est éclatée en quatre boutons à quatre endroits, elle ne dit jamais quels fichiers vont sortir, et elle ne remplace rien&nbsp;: elle numérote.
+  </div>
+
+  <!-- ══ aujourd'hui ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Aujourd'hui</span> <span style="font-size: 13.5px; color: #6d675e">— quatre gestes, deux façons de recevoir, aucun écran commun</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Un personnage complet demande deux gestes, et arrive à deux endroits différents.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 13px">
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13.5px; font-weight: 600">Depuis la galerie</span><span class="puce p-a">.zip</span></div>
+        <div style="font-size: 12.5px; line-height: 1.45; color: #4e483f">Une sélection d'images part en archive, que le navigateur télécharge&nbsp;: un PNG par image, plus un descriptif à la racine.</div>
+        <div style="font-size: 11.5px; color: #8a3f33; border-top: 1px solid #ece6db; padding-top: 7px; margin-top: auto">Après le clic, l'écran ne dit rien du tout. Et il n'y a pas de « tout sélectionner ».</div>
+      </div>
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13.5px; font-weight: 600">Depuis un personnage</span><span class="puce p-ok">le dossier</span></div>
+        <div style="font-size: 12.5px; line-height: 1.45; color: #4e483f">Le seul bouton qui écrit vraiment sur la machine&nbsp;: un fichier par pose, un par pièce portée, plus un descriptif. À plat.</div>
+        <div style="font-size: 11.5px; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 7px; margin-top: auto">Il rend compte&nbsp;: « 4 fichiers posés dans C:\Jeux\mon-jeu\assets. Rien n'a été écrasé. »</div>
+      </div>
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13.5px; font-weight: 600">Ses animations</span><span class="puce p-a">.zip</span></div>
+        <div style="font-size: 12.5px; line-height: 1.45; color: #4e483f">Depuis la matrice, onglet « animations ». Toutes celles du personnage repartent en une archive.</div>
+        <div style="font-size: 11.5px; color: #8a3f33; border-top: 1px solid #ece6db; padding-top: 7px; margin-top: auto">Ses images vont dans le dossier du jeu, ses animations dans le dossier de téléchargement.</div>
+      </div>
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13.5px; font-weight: 600">Une animation seule</span><span class="puce p-a">.zip</span></div>
+        <div style="font-size: 12.5px; line-height: 1.45; color: #4e483f">Depuis l'écran de montage, un bouton par bande gardée. Une à la fois.</div>
+        <div style="font-size: 11.5px; color: #8a3f33; border-top: 1px solid #ece6db; padding-top: 7px; margin-top: auto">La route sait recevoir une liste&nbsp;; l'écran n'envoie jamais qu'un identifiant.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ l'écran ══ -->
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden">
+    <div style="border-bottom: 1px solid #e2dbd0; background: #f2ede4; padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+      <span style="font-size: 14px; font-weight: 600">Un seul écran, ouvert depuis le pied du carnet</span>
+      <span class="puce p-a">tout cet écran est à faire</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 400px minmax(0,1fr) 350px; min-height: 800px">
+
+      <!-- ── quoi, où, comment ── -->
+      <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 14px">
+
+        <div class="rg">
+          <div class="rt">1 · Ce qui sort</div>
+          <div style="display: flex; flex-direction: column; gap: 1px">
+            <span class="ch"><span class="bx bx-on"></span> Tout le jeu <span style="margin-left: auto" class="mono" style="color: #948c80">550</span></span>
+            <span class="ch" style="padding-left: 22px; color: #6d675e"><span>les personnages</span><span class="mono" style="margin-left: auto">54</span></span>
+            <span class="ch" style="padding-left: 22px; color: #6d675e"><span>les objets</span><span class="mono" style="margin-left: auto">250</span></span>
+            <span class="ch" style="padding-left: 22px; color: #6d675e"><span>les décors</span><span class="mono" style="margin-left: auto">38</span></span>
+            <span class="ch" style="padding-left: 22px; color: #6d675e"><span>les terrains</span><span class="mono" style="margin-left: auto">100</span></span>
+            <span class="ch" style="padding-left: 22px; color: #6d675e"><span>l'interface</span><span class="mono" style="margin-left: auto">46</span></span>
+            <span class="ch" style="padding-left: 22px; color: #6d675e"><span>les équipements</span><span class="mono" style="margin-left: auto">62</span></span>
+          </div>
+          <div style="border-top: 1px dashed #ddd5c8; padding-top: 8px; display: flex; flex-direction: column; gap: 1px">
+            <span class="ch"><span class="bx bx-on"></span> Les animations <span class="mono" style="margin-left: auto; color: #948c80">31</span></span>
+            <span class="ch"><span class="bx bx-on"></span> Les calques d'équipement <span class="mono" style="margin-left: auto; color: #948c80">186</span></span>
+          </div>
+          <div class="rai">Aujourd'hui il n'existe aucun lot de ce genre&nbsp;: seulement « un personnage », « ses animations », ou une sélection faite à la main dans la galerie.</div>
+        </div>
+
+        <div class="rg">
+          <div class="rt">2 · Où</div>
+          <div style="display: flex; align-items: center; gap: 7px">
+            <span class="mono" style="flex: 1; min-width: 0; font-size: 11.5px; background: #fffdfa; border: 1px solid #ddd5c8; border-radius: 6px; padding: 7px 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">D:\jeux\marais\assets</span>
+            <span class="bt" style="height: 30px; padding: 0 10px">Choisir…</span>
+          </div>
+          <div class="rai">Gardé <strong style="font-weight: 600">avec ce jeu-ci</strong>. Aujourd'hui il n'y a qu'un seul chemin, commun à tout l'atelier&nbsp;: deux jeux ouverts tour à tour se déposent au même endroit. Et il se tape à la main, sans que rien vérifie qu'il existe.</div>
+        </div>
+
+        <div class="rg">
+          <div class="rt">3 · Comment ça se range</div>
+          <div class="seg" style="width: 100%">
+            <div class="sg" style="flex: 1; text-align: center">à plat</div>
+            <div class="sg sg-on" style="flex: 1; text-align: center">en dossiers</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: #4e483f">
+            <span>le nom d'un fichier</span>
+            <span class="mono" style="background: #fffdfa; border: 1px solid #ddd5c8; border-radius: 6px; padding: 7px 9px; font-size: 11.5px">{famille}/{sujet}_{pose}_{direction}.png</span>
+            <span style="display: flex; gap: 4px; flex-wrap: wrap">
+              <span class="jeton">{famille}</span><span class="jeton">{collection}</span><span class="jeton">{sujet}</span>
+              <span class="jeton">{pose}</span><span class="jeton">{direction}</span><span class="jeton">{n}</span>
+            </span>
+          </div>
+          <div class="rai">Le produit range à plat aujourd'hui, et il a une raison écrite&nbsp;: « un sous-dossier inventé ici serait une structure imposée à un jeu dont personne ne sait comment il range ». La réponse n'est pas d'imposer une arborescence — c'est de laisser écrire la sienne, et de la garder.</div>
+        </div>
+
+        <div class="rg">
+          <div class="rt">4 · Ce qui existe déjà là-bas</div>
+          <div style="display: flex; flex-direction: column; gap: 1px">
+            <span class="ch"><span class="bx bx-on" style="border-radius: 50%"></span> Remplacer <span class="mono" style="margin-left: auto; color: #a8492c">38</span></span>
+            <span class="ch"><span class="bx" style="border-radius: 50%"></span> Garder les deux, numéroter</span>
+            <span class="ch"><span class="bx" style="border-radius: 50%"></span> S'arrêter s'il y a un doublon</span>
+            <span class="ch" style="border-top: 1px dashed #ddd5c8; margin-top: 6px; padding-top: 8px"><span class="bx"></span> Effacer ce qui ne sort plus <span class="mono" style="margin-left: auto; color: #948c80">2</span></span>
+          </div>
+          <div class="rai">Le produit ne sait <strong style="font-weight: 600">que</strong> numéroter&nbsp;: après trois sorties, le dossier contient <span class="mono">pelerin-repos.png</span>, <span class="mono">-2</span>, <span class="mono">-3</span>, et trois descriptifs. C'est au jeu de deviner lequel charger.</div>
+        </div>
+
+        <div class="rg" style="border-bottom: 0">
+          <div class="rt">5 · Pour quel moteur</div>
+          <div class="seg" style="width: 100%">
+            <div class="sg sg-on" style="flex: 1; text-align: center">Godot</div>
+            <div class="sg" style="flex: 1; text-align: center">Unity</div>
+            <div class="sg" style="flex: 1; text-align: center">Phaser</div>
+            <div class="sg" style="flex: 1; text-align: center">aucun</div>
+          </div>
+          <div class="rai">« Aucun » écrit ce que l'atelier écrit aujourd'hui&nbsp;: des PNG et un descriptif, à charge du jeu d'en faire ce qu'il veut. Les trois autres ajoutent le fichier que le moteur sait lire seul — c'est là toute la différence entre « des images dans un dossier » et « des sprites dans mon jeu ».</div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px">
+          <span class="bt bt-p" style="height: 40px">Sortir 767 fichiers ›</span>
+          <div class="rai" style="text-align: center">14,2 Mo · rien ne part sur le réseau</div>
+        </div>
+      </div>
+
+      <!-- ── ce qui sera écrit ── -->
+      <div style="padding: 17px 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+          <div style="font-size: 14.5px; font-weight: 600">Les fichiers qui seront écrits</div>
+          <div class="seg"><div class="sg sg-on">ce qui a changé</div><div class="sg">tout</div></div>
+        </div>
+
+        <div class="carte" style="padding: 14px 16px; flex: 1; overflow: hidden">
+          <div class="arb"><span style="color: #948c80">D:\jeux\salines\assets\</span>
+  personnages\
+    <span style="color: #a8492c">pelerin_repos_est.png</span>            <span style="color: #948c80">66×66   remplace</span>
+    <span style="color: #a8492c">pelerin_repos_ouest.png</span>          <span style="color: #948c80">66×66   remplace</span>
+    <span style="color: #a8492c">pelerin_marche_est.png</span>           <span style="color: #948c80">66×66   remplace</span>
+    <span style="color: #5c7a52">pelerin_marche_nord.png</span>          <span style="color: #948c80">66×66   nouveau</span>
+    <span style="color: #948c80">pelerin_course_est.png            66×66   inchangé</span>
+    <span style="color: #948c80">…  51 autres personnages</span>
+  equipements\
+    <span style="color: #5c7a52">cotte-de-mailles_repos_est.png</span>   <span style="color: #948c80">66×66   nouveau · calque</span>
+    <span style="color: #948c80">…  185 autres calques</span>
+  terrains\
+    <span style="color: #948c80">herbe-marais-01.png               64×64   inchangé</span>
+    <span style="color: #948c80">…  99 autres terrains</span>
+  animations\
+    <span style="color: #a8492c">pelerin_marche_est.png</span>           <span style="color: #948c80">528×66  8 images · remplace</span>
+    <span style="color: #a8492c">pelerin_marche_est.json</span>          <span style="color: #948c80">format Aseprite</span>
+    <span style="color: #5c7a52">pelerin_marche_est-anime.png</span>     <span style="color: #948c80">à regarder sans rien installer</span>
+    <span style="color: #948c80">…  30 autres animations</span>
+  <span style="color: #5c7a52">salines.tres</span>                          <span style="color: #948c80">le catalogue que Godot lit seul</span>
+  <span style="color: #a8492c">descriptif.json</span>                      <span style="color: #948c80">ce qu'est chaque fichier</span></div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 18px; font-size: 12px; color: #4e483f; flex-wrap: wrap">
+          <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #5c7a52">+41</span><span style="color: #948c80">nouveaux</span></span>
+          <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #a8492c">38</span><span style="color: #948c80">remplacés</span></span>
+          <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #948c80">688</span><span style="color: #948c80">inchangés depuis le 4 septembre</span></span>
+          <span style="display: flex; align-items: baseline; gap: 5px"><span class="mono" style="font-size: 13px; color: #221f1b">2</span><span style="color: #948c80">à effacer — le sujet n'existe plus</span></span>
+        </div>
+
+        <div class="neuf" style="padding: 12px 14px; display: flex; gap: 14px; align-items: flex-start">
+          <span class="puce p-a" style="flex-shrink: 0; margin-top: 2px">le cœur de l'écran</span>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Rien nulle part n'affiche aujourd'hui la liste des fichiers avant de cliquer, ni leur taille, ni le poids de l'archive. Et rien ne sait ce qui a changé depuis la dernière sortie&nbsp;: sur 550 sujets, c'est la seule chose qui rend le geste tenable. Elle demande une chose et une seule&nbsp;: se souvenir de ce qui a été posé la fois d'avant.</div>
+        </div>
+      </div>
+
+      <!-- ── ce qui n'est pas prêt ── -->
+      <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px">
+        <div class="rt">Ce qui n'est pas prêt</div>
+
+        <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13px; font-weight: 600; color: #8a3f33">6 sujets n'ont aucune image qui sort</div>
+          <div style="display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #4e483f">
+            <span>le passeur · aucune image</span>
+            <span>la roue du moulin · aucune image</span>
+            <span>le chaudron · aucune image</span>
+            <span style="color: #948c80">et trois autres</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6d675e; border-top: 1px solid #dcbcb2; padding-top: 8px">Ils seront sautés. Les voir ›</div>
+        </div>
+
+        <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13px; font-weight: 600; color: #8a5a2c">12 personnages n'ont qu'une direction</div>
+          <div style="font-size: 12px; line-height: 1.5; color: #4e483f">Le jeu en déclare quatre. Ces douze-là sortiront avec une seule image par pose, et le jeu les fera pivoter ou les affichera de travers.</div>
+          <div style="font-size: 11.5px; color: #6d675e; border-top: 1px solid #e0cfb8; padding-top: 8px">Les voir ›</div>
+        </div>
+
+        <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 12px 13px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13px; font-weight: 600; color: #8a5a2c">3 animations sans images</div>
+          <div style="font-size: 12px; line-height: 1.5; color: #4e483f">Une bande gardée dont les frames ont été supprimées ne peut pas faire de planche de sprites.</div>
+          <div style="font-size: 11.5px; color: #6d675e; border-top: 1px solid #e0cfb8; padding-top: 8px">Les voir ›</div>
+        </div>
+
+        <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13px; font-weight: 600">9 pièces sortent en corps entier</div>
+          <div style="font-size: 12px; line-height: 1.5; color: #4e483f">Ce ne sont pas des calques à empiler mais des corps qui <em>remplacent</em> le corps nu — le modèle a changé l'échelle en les posant. Le descriptif le dit&nbsp;; empilées à l'aveugle, elles donneraient deux corps superposés.</div>
+        </div>
+
+        <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 12px; display: flex; flex-direction: column; gap: 7px">
+          <div class="rt">la dernière sortie</div>
+          <div style="font-size: 12.5px; color: #4e483f">4 septembre 2026, 18 h 40<br>726 fichiers · 13,6 Mo</div>
+          <div class="rai">Rien ne garde ça aujourd'hui. C'est ce qu'il faut ajouter pour que « ce qui a changé » soit possible.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ le nom des fichiers ══ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 470px; gap: 22px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div><span class="h2">Le nom d'un fichier</span> <span style="font-size: 13.5px; color: #6d675e">— la seule chose que le jeu voit, et deux règles se le disputent</span></div>
+      <div class="pl" style="grid-template-columns: 230px minmax(0,1fr)">
+        <div class="ent" style="border-top: 0">la règle</div><div class="ent" style="border-top: 0">ce qu'elle donne</div>
+        <div><span style="font-weight: 600">Celle de l'export</span><div style="font-size: 11.5px; color: #948c80">un personnage, une archive</div></div>
+        <div style="color: #4e483f">Ne garde que les lettres sans accent, les chiffres et le tiret. « La sorcière du marais » devient <span class="mono">la-sorciere-du-marais</span>.</div>
+        <div><span style="font-weight: 600">Celle de l'agent</span><div style="font-size: 11.5px; color: #948c80">une image tout juste générée, posée dans un dossier</div></div>
+        <div style="color: #4e483f">Garde aussi le tiret bas, et coupe à 48 caractères. Le même sujet peut donc arriver deux fois dans le même dossier sous deux noms différents — et cette seconde voie <strong style="font-weight: 600">n'écrit aucun descriptif</strong>.</div>
+        <div><span style="font-weight: 600">Le nom ne fait pas foi</span><div style="font-size: 11.5px; color: #948c80">écrit deux fois dans le code</div></div>
+        <div style="color: #4e483f">« Le nom de fichier est une commodité de lecture, jamais un identifiant. » Deux animations appelées « marche » sortent en <span class="mono">marche.png</span> et <span class="mono">marche-2.png</span>&nbsp;; seul le descriptif dit laquelle est laquelle. Sauf qu'un moteur de jeu, lui, charge par nom.</div>
+        <div><span style="font-weight: 600">Ce qui manque au nom</span><div style="font-size: 11.5px; color: #948c80">le piège le plus cher du sujet</div></div>
+        <div style="color: #8a3f33">La direction. Un personnage à quatre directions ne sort <strong style="font-weight: 600">qu'une image par pose</strong>, et ni le nom ni le descriptif ne disent laquelle. L'écran montre une matrice pose × direction ; l'export n'en emporte qu'une colonne, sans le dire.</div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 10px">
+        <div class="rt">ce que l'archive contient déjà, et qui est bon</div>
+        <div style="font-size: 15px; font-weight: 600; line-height: 1.3">Une animation sort en trois fichiers</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; line-height: 1.5; color: #4e483f">
+          <span><strong style="font-weight: 600">La feuille de sprites</strong> — une rangée horizontale, en RGBA. Jamais agrandie&nbsp;: l'échelle déclarée est toujours 1.</span>
+          <span><strong style="font-weight: 600">Son fichier d'accompagnement</strong>, au format Aseprite&nbsp;: c'est celui que Phaser et une extension Godot lisent tout seuls. Il porte la durée de chaque image — 125 ms à la cadence par défaut de 8 images par seconde.</span>
+          <span><strong style="font-weight: 600">Un PNG animé</strong>, en boucle sans fin, pour regarder le résultat sans rien installer.</span>
+        </div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 9px">C'est le seul endroit où l'atelier écrit un fichier qu'un moteur sait lire. Pour les images fixes, il n'écrit rien de tel — pas d'atlas, pas de catalogue.</div>
+      </div>
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">ce qui ne sort jamais</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f"><strong style="font-weight: 600">L'image brute payée reste dans l'atelier</strong>, toujours. Ce qui part est le rendu, celui qu'on a réglé. C'est voulu — mais cela veut dire que le dossier du jeu ne suffit pas à refaire les images&nbsp;: il faut l'atelier, et le descriptif ne porte que de quoi les y retrouver.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ le descriptif ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Le descriptif</span> <span style="font-size: 13.5px; color: #6d675e">— le seul fichier qui dit ce qu'est chaque image</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Un moteur qui ne le lit pas empile les calques au hasard.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px">
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 13.5px; font-weight: 600">Ce qu'il porte aujourd'hui</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Pour chaque fichier&nbsp;: son rôle — corps, calque, corps habillé —, son sujet, sa pose, son identifiant dans l'atelier, sa recette et son empreinte. Et pour un personnage, l'ordre d'empilement de ses pièces, rangé par rang, du dos vers l'avant.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 13.5px; font-weight: 600">Ce qu'il ne porte pas</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">La direction d'une image fixe — la fiche d'une animation la porte, celle d'une image non. Le point d'appui du sujet dans sa case. La taille de case du jeu. La palette. Rien de tout ça n'est deviné par un moteur.</div>
+      </div>
+      <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 13.5px; font-weight: 600">Un piège dedans</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Quand rien n'est écrasé, le descriptif est numéroté comme les images&nbsp;: <span class="mono">descriptif-3.json</span>. Le plus récent n'est donc pas celui qui porte le nom court, et un jeu réglé pour lire « descriptif.json » lit le plus vieux.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ quand ça rate ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">8 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s'est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu'on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On corrige trois sprites et on ressort le personnage.</div>
+        <div style="color: #8a3f33">Le dossier contient maintenant <span class="mono">pelerin-repos.png</span> et <span class="mono">pelerin-repos-2.png</span>. Le jeu charge le premier, c'est-à-dire l'ancien. On croit que la correction n'a pas marché.</div>
+        <div style="color: #4e483f">Effacer le dossier à la main avant chaque sortie. C'est ce que tout le monde finit par faire, et c'est le signe qu'il manque un mode « remplacer ».</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le pèlerin a quatre directions dans la matrice. On le sort.</div>
+        <div style="color: #8a3f33">Six fichiers, un par pose. Les trois autres directions ne sont nulle part, et ni le nom ni le descriptif ne disent laquelle est sortie.</div>
+        <div style="color: #4e483f">Aucun geste ne répare ça&nbsp;: il faut les récupérer une par une dans la galerie. C'est le piège le plus cher du sujet, et rien ne le signale.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On travaille sur deux jeux, et on sort l'un après l'autre.</div>
+        <div style="color: #8a3f33">Les deux se déposent dans le même dossier&nbsp;: le chemin est commun à tout l'atelier, pas rangé avec le jeu.</div>
+        <div style="color: #4e483f">Changer le réglage entre les deux sorties, à la main, à chaque fois. Ou passer par l'agent, qui sait recevoir un dossier — l'écran, lui, ne l'envoie jamais.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On sort un personnage complet, images et animations.</div>
+        <div style="color: #8a3f33">Deux gestes, et deux endroits&nbsp;: les images sont posées dans le dossier du jeu, les animations téléchargées en archive dans le dossier de téléchargement du navigateur.</div>
+        <div style="color: #4e483f">Décompresser l'archive et déplacer les fichiers. C'est assumé dans le code, et ça reste deux gestes de trop.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Un moteur de jeu empile les calques d'équipement dans l'ordre des fichiers.</div>
+        <div style="color: #8a3f33">La cape passe devant le corps, le casque derrière la tête. Et neuf pièces qui « remplacent » le corps au lieu de s'y ajouter donnent deux corps superposés.</div>
+        <div style="color: #4e483f">Lire le descriptif&nbsp;: l'ordre y est, rangé par rang, et le rôle de chaque fichier aussi. Il n'y a aucun autre moyen de le savoir.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On sélectionne 400 images dans la galerie et on exporte.</div>
+        <div style="color: #8a3f33">L'archive est construite entièrement en mémoire avant de partir, et rien ne borne le nombre d'images acceptées. Sur une grosse sélection, le serveur y passe.</div>
+        <div style="color: #4e483f">Exporter par paquets. Et il n'y a de toute façon pas de « tout sélectionner » — on coche 400 vignettes à la main.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On exporte deux fois dans la même minute.</div>
+        <div style="color: #8a3f33">Les deux archives portent le même nom&nbsp;: il n'est daté qu'à la minute. C'est le navigateur qui les départage, à sa façon.</div>
+        <div style="color: #4e483f">Renommer la première avant de relancer la seconde.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On tape un chemin de dossier qui n'existe pas.</div>
+        <div style="color: #8a3f33">Rien ne le dit au moment où on le pose. Le dossier est créé au premier dépôt — ce qui est bien —, mais une faute de frappe crée un dossier de plus au lieu de prévenir.</div>
+        <div style="color: #4e483f">Vérifier soi-même. Un sélecteur de dossier réglerait la question, et il n'y en a pas&nbsp;: le chemin se tape.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ce qui manque ══ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd'hui</span>
+      <div style="font-size: 12.5px; color: #6d675e; margin-top: -4px">Le calcul est là et ne coûte rien. C'est l'écran qui n'existe pas.</div>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px; margin-top: 3px">
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">Un seul écran.</strong> Quatre boutons à quatre endroits, dont deux qui téléchargent une archive et un seul qui écrit vraiment dans le dossier du jeu.</li>
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">La liste des fichiers avant de cliquer.</strong> Ni les noms, ni la taille, ni le poids. On découvre ce qui est sorti en ouvrant le dossier.</li>
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">Ce qui a changé depuis la dernière fois.</strong> Sur 550 sujets, c'est ce qui rend le geste tenable — et ça ne demande que de se souvenir de la sortie précédente.</li>
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">Remplacer.</strong> Le produit ne sait que numéroter. Il n'existe ni écrasement volontaire, ni nettoyage, ni « c'est le même fichier qu'avant ».</li>
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">La direction dans l'export d'un personnage.</strong> Une seule image par pose, quel que soit le nombre de directions du jeu.</li>
+        <li style="margin-bottom: 6px">Aucun fichier de moteur pour les images fixes. Le seul du produit est le descriptif d'animation au format Aseprite.</li>
+        <li style="margin-bottom: 6px">Aucun atlas ni feuille de sprites pour les images fixes&nbsp;: dix images font dix fichiers.</li>
+        <li style="margin-bottom: 6px">Aucune arborescence — et la raison écrite est bonne&nbsp;: ne pas imposer une structure. Ce qu'il faut, c'est laisser écrire la sienne.</li>
+        <li style="margin-bottom: 6px">Le dossier est commun à tout l'atelier, pas rangé avec le jeu. Et il se tape&nbsp;: pas de sélecteur, aucune vérification.</li>
+        <li style="margin-bottom: 6px">Aucun lot&nbsp;: ni un projet, ni une famille, ni une collection. Et pas de « tout sélectionner » dans la galerie.</li>
+        <li style="margin-bottom: 6px">Poser une sélection d'images en fichiers n'existe que pour l'agent. L'écran ne sait que télécharger une archive.</li>
+        <li style="margin-bottom: 6px">Deux règles de nommage cohabitent, et l'une des deux n'écrit aucun descriptif.</li>
+        <li style="margin-bottom: 6px">Aucune relecture&nbsp;: rien ne rouvre un descriptif déjà écrit, donc on ne peut pas réimporter un lot sorti.</li>
+        <li style="margin-bottom: 6px">Aucun compte rendu après un téléchargement d'archive. Le seul « X fichiers posés » est celui du dossier du jeu.</li>
+      </ul>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">avant / après</div>
+        <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">L'écran en trois colonnes. À GAUCHE, cinq blocs numérotés qui se lisent de haut en bas comme une phrase : ce qui sort, où, comment ça se range, ce qu'on fait de ce qui est déjà là, pour quel moteur. Le bouton du bas porte le compte exact — « Sortir 767 fichiers » — et le poids. AU MILIEU, l'arbre des fichiers avec leurs vrais noms, en trois couleurs : vert les nouveaux, rouille les remplacés, gris les inchangés ; on peut le lire avant de cliquer, ce qui est tout le sujet. À DROITE, ce qui n'est pas prêt : six sujets sans image, douze personnages qui n'ont qu'une direction sur quatre, trois animations vides, neuf pièces qui remplacent le corps au lieu de s'empiler — chacun avec un lien pour y aller. Tout en bas à droite, la date de la sortie précédente, qui est la seule chose qu'il faut ajouter pour que la colonne du milieu soit possible.</div>
+      </div>
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">ce qui est déjà juste, et qu'il faut garder</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le dossier manquant est créé plutôt que refusé. Le compte rendu après coup dit le nombre et le chemin. La phrase fixe sous le bouton dit ce qui part et ce qui reste. Le bouton grisé dit <em>pourquoi</em> il est grisé — « aucun dossier de jeu — pose-le dans l'installation ». Et rien n'appelle jamais le réseau, ce qui est vérifié.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

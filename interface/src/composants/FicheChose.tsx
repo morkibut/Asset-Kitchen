@@ -304,7 +304,7 @@ export function FicheDeLaChose({
               className={[
                 "shrink-0 text-[9.5px]",
                 clef === "faites" && faites === tenues.length && tenues.length > 0
-                  ? "text-ok"
+                  ? "text-ancien-ok"
                   : "text-texte-3",
               ].join(" ")}
             >
@@ -320,7 +320,7 @@ export function FicheDeLaChose({
         <button
           type="button"
           onClick={onCalibrage}
-          className="mesure mt-2 flex h-[26px] w-full items-center gap-2 border-t border-bord px-2 pt-2 text-left text-[10px] text-texte-3 hover:text-signal"
+          className="mesure mt-2 flex h-[26px] w-full items-center gap-2 border-t border-bord px-2 pt-2 text-left text-[10px] text-texte-3 hover:text-ancien-signal"
         >
           <span className="min-w-0 flex-1 truncate">le calibrage</span>
           {cale && (
@@ -335,7 +335,7 @@ export function FicheDeLaChose({
         <button
           type="button"
           onClick={onFermer}
-          className="mesure mt-2 h-[26px] rounded-[2px] border border-bord px-2 text-[10px] text-texte-3 hover:text-signal"
+          className="mesure mt-2 h-[26px] rounded-[2px] border border-bord px-2 text-[10px] text-texte-3 hover:text-ancien-signal"
         >
           Fermer la fiche — Échap
         </button>
@@ -392,7 +392,7 @@ export function FicheDeLaChose({
               <button
                 type="button"
                 onClick={onVitrine}
-                className="text-signal hover:text-signal-clair"
+                className="text-ancien-signal hover:text-ancien-signal-clair"
               >
                 la voir en grand ›
               </button>
@@ -619,7 +619,7 @@ function CeQuiLHabille({
           <span className="text-texte-3">verrouillé</span>
         </div>
         {habillage.desaccord.length > 0 && (
-          <p className="mesure text-[10px] leading-4 text-echec">
+          <p className="mesure text-[10px] leading-4 text-ancien-echec">
             {habillage.desaccord.map((nom) => NOM_CHAMP[nom] ?? nom).join(" et ")}{" "}
             {habillage.desaccord.length > 1 ? "annoncent" : "annonce"} une autre
             grille dans le texte qui part — la bible se corrige dans l'Univers.
@@ -674,7 +674,7 @@ function ChampDeStyle({
           <button
             type="button"
             onClick={() => void onPoser({ rallumer: champ.nom })}
-            className="mesure ml-auto px-1 text-[9.5px] text-signal hover:text-signal-clair"
+            className="mesure ml-auto px-1 text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             rallumer
           </button>
@@ -683,7 +683,7 @@ function ChampDeStyle({
             type="button"
             onClick={() => void onPoser({ eteindre: champ.nom })}
             title="ce champ ne partira plus pour cette chose — un refus écrit, pas une case vide"
-            className="mesure ml-auto px-1 text-[9.5px] text-texte-3 hover:text-echec"
+            className="mesure ml-auto px-1 text-[9.5px] text-texte-3 hover:text-ancien-echec"
           >
             éteindre
           </button>
@@ -871,8 +871,8 @@ function LigneReference({
           className={[
             "mesure shrink-0 px-1 text-[10px]",
             action.ton === "signal"
-              ? "text-signal hover:text-signal-clair"
-              : "text-texte-3 hover:text-echec",
+              ? "text-ancien-signal hover:text-ancien-signal-clair"
+              : "text-texte-3 hover:text-ancien-echec",
           ].join(" ")}
         >
           {action.mot}
@@ -974,7 +974,7 @@ function CeQuiEstFait({
       <button
         type="button"
         onClick={onVitrine}
-        className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+        className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         les voir toutes en grand, l'une après l'autre ›
       </button>
@@ -1052,7 +1052,7 @@ function MatriceCompacte({
               <span
                 className={[
                   "shrink-0 text-[10px]",
-                  combien >= pose.images ? "text-ok" : "text-texte-3",
+                  combien >= pose.images ? "text-ancien-ok" : "text-texte-3",
                 ].join(" ")}
               >
                 {combien} / {pose.images}

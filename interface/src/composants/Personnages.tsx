@@ -703,7 +703,7 @@ function LignePose({
         }}
         aria-label={`Retirer l'attitude ${pose.nom}`}
         title="les images déjà faites restent"
-        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
       >
         ×
       </button>
@@ -796,7 +796,7 @@ export function Vestiaire({
                   }}
                   aria-label={`Retirer l'emplacement ${groupe.nom}`}
                   title="les pièces qui l'occupaient restent — jamais de cascade"
-                  className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-echec"
+                  className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
                 >
                   ×
                 </button>
@@ -918,7 +918,7 @@ function LignePiece({
           }}
           aria-label={`Retirer la pièce ${piece.nom}`}
           title="ses calques restent — jamais de cascade"
-          className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+          className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
         >
           ×
         </button>
@@ -1229,8 +1229,8 @@ function Sortie({
         </p>
       )}
       {refus && (
-        <p className="mesure flex items-center gap-1.5 text-[10px] text-echec">
-          <span aria-hidden className="inline-block h-px w-2 bg-echec" />
+        <p className="mesure flex items-center gap-1.5 text-[10px] text-ancien-echec">
+          <span aria-hidden className="inline-block h-px w-2 bg-ancien-echec" />
           {refus}
         </p>
       )}
@@ -1429,7 +1429,7 @@ function Identite({
           type="button"
           onClick={onFiche}
           title="ce qu'elle est, ce qui l'habille, ses images de référence — rien de tout ça ne coûte"
-          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           sa fiche ›
         </button>
@@ -1440,7 +1440,7 @@ function Identite({
           type="button"
           onClick={onVitrine}
           title="voir ce que ça donne, en grand, sur le fond que la bible décrit"
-          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           la vitrine ›
         </button>
@@ -1452,7 +1452,7 @@ function Identite({
           type="button"
           onClick={onCalibrage}
           title="toutes ses poses empilées dans la même case — c'est comme ça qu'on voit qu'il rapetisse en frappant"
-          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           le calibrage ›
         </button>
@@ -1472,7 +1472,7 @@ function Identite({
             }
           }}
           title="ses images restent, marquées « personnage supprimé »"
-          className="mesure ml-auto shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+          className="mesure ml-auto shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
         >
           Supprimer
         </button>
@@ -1823,6 +1823,20 @@ function Cases({
     }
   }
 
+  /** Remplir une case au miroir (B1).
+   *
+   *  **Rien à recharger**, comme la désignation juste au-dessus : le serveur
+   *  écrit l'asset et annonce la bibliothèque, et les cases se redemandent
+   *  d'elles-mêmes. La direction part avec le geste — c'est celle de la case
+   *  qu'on remplit, et le serveur n'a pas à la redeviner. */
+  const retourner = async (asset: string, direction: string) => {
+    try {
+      await api.retourner(asset, direction)
+    } catch (erreur) {
+      onErreur(erreur, "retournement refusé")
+    }
+  }
+
   /** Ranger — ou rendre — une direction, **pour cette chose seule**.
    *
    *  La portée large — une mort n'a qu'un angle, pour tout le jeu — se prend
@@ -2023,6 +2037,7 @@ function Cases({
                 void rangerDirection(pose.identifiant, direction, rangee)
               }
               onPlacer={(asset, direction) => void placer(asset, direction)}
+              onRetourner={(asset, direction) => void retourner(asset, direction)}
               // **Le × ne veut pas dire la même chose des deux côtés**, et c'est
               // ce que l'origine sert à trancher. Une pose du type se **range**
               // — elle appartient au type, elle reviendra chez les autres, et
@@ -2076,7 +2091,7 @@ function Cases({
               setCochees([])
             }}
             title="prépare la planche dans l'atelier — rien n'est dépensé ici"
-            className="mesure ml-auto px-1 text-[10px] text-signal hover:text-signal-clair"
+            className="mesure ml-auto px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             {piece ? "Habiller ensemble ›" : "Fabriquer ensemble ›"}
           </button>
@@ -2198,7 +2213,7 @@ function AjoutDePose({
         placeholder="une attitude pour elle seule…"
         aria-label={`Ajouter une attitude à ${personnage.nom}`}
         title="elle n'existera que pour cette chose — les autres du même type ne la verront pas"
-        className="champ h-[26px] w-[240px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[11px] text-texte-1 placeholder:text-texte-3"
+        className="champ h-[26px] w-[240px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[11px] text-texte placeholder:text-texte-3"
       />
       <span className="mesure text-[9.5px] text-texte-3">
         pour cette chose seule — rien n'est fabriqué
@@ -2226,6 +2241,7 @@ function LigneCase({
   onPlanche,
   onRangerDirection,
   onPlacer,
+  onRetourner,
   onRetirer,
   onDesigner,
   onFavori,
@@ -2263,6 +2279,9 @@ function LigneCase({
   /** Dire sous quel angle une image montre sa pose. Confirmer et déplacer sont
    *  le même geste, et il n'y en a donc qu'un. */
   onPlacer?: (asset: string, direction: string) => void
+  /** **Remplir une case au miroir** (B1) — l'image de départ et la case visée.
+   *  Rien n'est payé : c'est la même image, vue de l'autre côté. */
+  onRetourner?: (asset: string, direction: string) => void
   onRetirer: () => void
   onDesigner: (asset: string) => void
   /** **Garder celle-ci plutôt qu'une autre** (US-504). C'est le favori, la
@@ -2298,6 +2317,9 @@ function LigneCase({
   const vides = angles.filter((a) => a.images.length === 0)
   const incompletes = angles.filter((a) => a.images.length < a.demandees)
 
+  // **Ce que le miroir peut remplir sans rien payer** (B1).
+  const miroirs = useMiroirsDeLAttitude(angles)
+
   return (
     <li className="flex flex-col border-b border-bord">
     <div className="flex min-h-[52px] items-center gap-3 px-1 py-1">
@@ -2307,7 +2329,7 @@ function LigneCase({
         onChange={(e) => onCocher(e.target.checked)}
         aria-label={`Faire partir ${pose.nom} avec les autres`}
         title="cochées ensemble, elles partent en une seule planche"
-        className="shrink-0 accent-signal"
+        className="shrink-0 accent-ancien-signal"
       />
       <span className="flex w-[110px] shrink-0 flex-col justify-center">
         <span className="truncate text-[11.5px] text-texte-2">{pose.nom}</span>
@@ -2384,7 +2406,7 @@ function LigneCase({
       <span
         className={[
           "mesure shrink-0 text-[9.5px]",
-          faite ? "text-ok" : "text-texte-3",
+          faite ? "text-ancien-ok" : "text-texte-3",
         ].join(" ")}
         title={
           aDesDirections
@@ -2407,7 +2429,7 @@ function LigneCase({
           onClick={onPlanche}
           aria-label={`Ouvrir la planche de ${pose.nom}`}
           title={`${angles.length} directions, un seul appel — on voit ce qu'on achète avant de payer`}
-          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           la planche ›
         </button>
@@ -2420,7 +2442,7 @@ function LigneCase({
         onClick={onArmer}
         aria-label={`Fabriquer ${pose.nom}`}
         title="prépare le prompt dans l'atelier — rien n'est dépensé ici"
-        className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         Fabriquer ›
       </button>
@@ -2434,7 +2456,7 @@ function LigneCase({
         onClick={onAnimer}
         aria-label={`Animer ${pose.nom}`}
         title="ouvre l'écran qui commande un clip — rien n'est dépensé ici"
-        className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         Animer ›
       </button>
@@ -2452,7 +2474,7 @@ function LigneCase({
             ? "elle n'existe que sur cette chose — ses images restent en bibliothèque"
             : "ce personnage n'a pas besoin de cette attitude"
         }
-        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
       >
         ×
       </button>
@@ -2479,6 +2501,8 @@ function LigneCase({
             onRanger={() => onRangerDirection?.(angle.identifiant, true)}
             onPlacer={onPlacer}
             angles={angles}
+            miroirDepuis={miroirs[angle.identifiant] ?? null}
+            onRetourner={onRetourner}
           />
         ))}
 
@@ -2499,7 +2523,7 @@ function LigneCase({
                     ? "rangée sur cette chose seule"
                     : "rangée sur l'attitude, pour tout le jeu"
                 }
-                className="mesure text-[10px] text-texte-3 line-through opacity-60 hover:text-signal hover:no-underline hover:opacity-100"
+                className="mesure text-[10px] text-texte-3 line-through opacity-60 hover:text-ancien-signal hover:no-underline hover:opacity-100"
               >
                 {angle.nom}
               </button>
@@ -2527,6 +2551,56 @@ function LigneCase({
   )
 }
 
+/** Ce qui peut se remplir au miroir dans cette attitude — la case visée, et
+ *  l'image d'où elle viendrait (B1).
+ *
+ *  **La paire de directions est demandée au serveur, jamais calculée ici.** Les
+ *  directions d'un jeu sont libres et l'auteur les renomme : `bas` et `haut`
+ *  sont dans ce dépôt et dans aucune liste livrée. Deviner qu'un mot français en
+ *  désigne un autre serait la déduction que le produit refuse ailleurs — *vide
+ *  ne veut pas dire sud*.
+ *
+ *  **Une question par direction remplie, et seulement s'il y a une case vide à
+ *  remplir.** Une attitude complète ne demande rien ; une attitude sans aucune
+ *  image non plus. Ce qui reste est le cas mesuré — michel porte 25 images en
+ *  `droite` et aucune en `gauche` —, et il coûte un aller-retour par rangée. */
+function useMiroirsDeLAttitude(angles: CaseDirection[]) {
+  const [miroirs, setMiroirs] = useState<Record<string, string>>({})
+  const aRemplir = angles.some((a) => a.images.length === 0)
+  // La clé est la liste des images candidates : elle change quand une case se
+  // remplit ou se vide, et pas au rythme des rendus.
+  const sources = aRemplir
+    ? angles
+        .filter((a) => a.images.length > 0)
+        .map((a) => a.images[0].identifiant)
+        .join(",")
+    : ""
+
+  useEffect(() => {
+    if (!sources) {
+      setMiroirs({})
+      return
+    }
+    let vivant = true
+    void Promise.all(
+      sources.split(",").map((identifiant) =>
+        api.miroirPropose(identifiant).catch(() => null),
+      ),
+    ).then((reponses) => {
+      if (!vivant) return
+      const trouves: Record<string, string> = {}
+      for (const reponse of reponses)
+        if (reponse?.propose) trouves[reponse.propose] = reponse.asset
+      setMiroirs(trouves)
+    })
+    return () => {
+      vivant = false
+    }
+  }, [sources])
+
+  return miroirs
+}
+
 /** Une case : **une pose dans une direction** (E10).
  *
  *  C'est l'unité que le produit ne savait pas nommer avant cette étape. Elle
@@ -2546,6 +2620,8 @@ function SousLigneDirection({
   onAnimer,
   onRanger,
   onPlacer,
+  miroirDepuis,
+  onRetourner,
 }: {
   pose: Pose
   angle: CaseDirection
@@ -2566,6 +2642,11 @@ function SousLigneDirection({
   onAnimer: () => void
   onRanger: () => void
   onPlacer?: (asset: string, direction: string) => void
+  /** L'image dont cette case-ci est le miroir, quand le serveur en a désigné
+   *  une (B1). `null` le reste du temps, et le geste ne paraît pas : il n'y a
+   *  rien à retourner. */
+  miroirDepuis?: string | null
+  onRetourner?: (asset: string, direction: string) => void
 }) {
   const faite = angle.images.length >= angle.demandees
 
@@ -2599,7 +2680,7 @@ function SousLigneDirection({
                 }
                 aria-label={`Direction de ${asset.label}`}
                 title="faite avant les directions — le produit ne devine pas la sienne"
-                className="mesure h-[16px] w-[44px] rounded-[2px] border border-attente/60 bg-fond-2 px-0.5 text-[8px] text-attente"
+                className="mesure h-[16px] w-[44px] rounded-[2px] border border-epingle/60 bg-fond-2 px-0.5 text-[8px] text-epingle"
               >
                 <option value="">à confirmer</option>
                 {angles.map((autre) => (
@@ -2623,18 +2704,36 @@ function SousLigneDirection({
       <span
         className={[
           "mesure shrink-0 text-[9.5px]",
-          faite ? "text-ok" : "text-texte-3",
+          faite ? "text-ancien-ok" : "text-texte-3",
         ].join(" ")}
       >
         {angle.images.length} / {angle.demandees}
       </span>
+
+      {/* **Le miroir, avant les deux gestes qui paient** (B1). Il ne paraît que
+          quand une image existe dans la direction d'en face : sans elle il n'y
+          a rien à retourner, et un bouton grisé en permanence sur les cases où
+          le miroir ne s'applique pas serait une colonne de refus. Il est
+          d'abord dans l'ordre parce qu'il est gratuit — la question *faut-il
+          payer ?* se pose une fois qu'on sait que non. */}
+      {angle.images.length === 0 && miroirDepuis && (
+        <button
+          type="button"
+          onClick={() => onRetourner?.(miroirDepuis, angle.identifiant)}
+          aria-label={`Retourner vers ${angle.nom} pour ${pose.nom}`}
+          title="la même image, vue de l'autre côté"
+          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+        >
+          Retourner › gratuit
+        </button>
+      )}
 
       <button
         type="button"
         onClick={onArmer}
         aria-label={`Fabriquer ${pose.nom} vers ${angle.nom}`}
         title="prépare le prompt dans l'atelier — l'attitude et la direction, chacune écrite une fois"
-        className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         Fabriquer ›
       </button>
@@ -2644,7 +2743,7 @@ function SousLigneDirection({
         onClick={onAnimer}
         aria-label={`Animer ${pose.nom} vers ${angle.nom}`}
         title="ouvre l'écran qui commande un clip — l'attitude et l'angle sont déjà visés"
-        className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         Animer ›
       </button>
@@ -2654,7 +2753,7 @@ function SousLigneDirection({
         onClick={onRanger}
         aria-label={`Ranger ${angle.nom} pour ${pose.nom}`}
         title="cette chose ne réclame pas cet angle — elle reste montrée, barrée, et un clic la rend"
-        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
       >
         ×
       </button>
@@ -2757,7 +2856,7 @@ function LigneAnimee({
         <span
           className={[
             "mesure shrink-0 text-[9.5px]",
-            faite ? "text-ok" : "text-texte-3",
+            faite ? "text-ancien-ok" : "text-texte-3",
           ].join(" ")}
           title={
             aDesDirections
@@ -2773,7 +2872,7 @@ function LigneAnimee({
           onClick={onAnimer}
           aria-label={`Animer ${pose.nom}`}
           title="ouvre l'écran qui commande un clip — l'image de départ y est déjà proposée"
-          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           Animer ›
         </button>
@@ -2852,7 +2951,7 @@ function SousLigneAnimee({
       <span
         className={[
           "mesure shrink-0 text-[9.5px]",
-          faite ? "text-ok" : "text-texte-3",
+          faite ? "text-ancien-ok" : "text-texte-3",
         ].join(" ")}
       >
         {angle.bandes.length} / 1
@@ -2863,7 +2962,7 @@ function SousLigneAnimee({
         onClick={onAnimer}
         aria-label={`Animer ${pose.nom} vers ${angle.nom}`}
         title="ouvre l'écran qui commande un clip — l'attitude et l'angle sont déjà visés"
-        className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         Animer ›
       </button>
@@ -2909,7 +3008,7 @@ function VignetteDeBande({
         onClick={() => onOuvrir(bande.identifiant)}
         aria-label={`Retravailler l'animation ${bande.nom}`}
         title="ouvre son atelier — ses images une par une, avec tous ses réglages"
-        className="border border-transparent hover:border-signal"
+        className="border border-transparent hover:border-ancien-signal"
       >
         <BandeQuiTourne
           bande={bande}
@@ -2922,7 +3021,7 @@ function VignetteDeBande({
         onClick={() => onMonter(bande.clip)}
         aria-label={`Ouvrir le clip dont vient ${bande.nom}`}
         title="remonte au clip qui l'a fournie — il est payé, et il peut en donner d'autres"
-        className="mesure w-[52px] truncate text-center text-[8.5px] text-texte-3 hover:text-signal"
+        className="mesure w-[52px] truncate text-center text-[8.5px] text-texte-3 hover:text-ancien-signal"
       >
         {bande.nom}
       </button>
@@ -2931,7 +3030,7 @@ function VignetteDeBande({
         onClick={() => onDetacher(bande.identifiant)}
         aria-label={`Retirer cette animation de la case ${pose}`}
         title="la bande et son clip restent — c'est la case qu'on vide"
-        className="mesure absolute top-0 right-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-echec"
+        className="mesure absolute top-0 right-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-ancien-echec"
       >
         ×
       </button>
@@ -2990,7 +3089,7 @@ function VignetteDeCase({
           alt={asset.label}
           className={[
             "damier h-[44px] w-[44px] object-contain",
-            retenu && concurrence ? "outline outline-1 outline-signal" : "",
+            retenu && concurrence ? "outline outline-1 outline-ancien-signal" : "",
           ].join(" ")}
           style={{ imageRendering: "pixelated" }}
         />
@@ -3011,7 +3110,7 @@ function VignetteDeCase({
         onClick={() => onDesigner(asset.identifiant)}
         aria-label={`Retirer cette image de la case ${pose}`}
         title="l'image reste en bibliothèque — c'est la case qu'on vide"
-        className="mesure absolute right-0 bottom-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-echec"
+        className="mesure absolute right-0 bottom-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-ancien-echec"
       >
         ×
       </button>
@@ -3077,7 +3176,7 @@ function LigneCalque({
             ? "cochées ensemble, elles partent en une seule planche"
             : "cette attitude n'a pas encore de corps"
         }
-        className="shrink-0 accent-signal disabled:opacity-40"
+        className="shrink-0 accent-ancien-signal disabled:opacity-40"
       />
       <span className="w-[110px] shrink-0 truncate text-[11.5px] text-texte-2">
         {pose.nom}
@@ -3120,7 +3219,7 @@ function LigneCalque({
           onClick={onArmer}
           aria-label={`Habiller ${pose.nom} de ${piece.nom}`}
           title="prépare la planche dans l'atelier — rien n'est dépensé ici"
-          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           Habiller ›
         </button>
@@ -3179,7 +3278,7 @@ function Superposition({
         aria-label={`Ouvrir ${calque.label}`}
         className={[
           "damier relative block h-[44px] w-[44px]",
-          retenu && concurrence ? "outline outline-1 outline-signal" : "",
+          retenu && concurrence ? "outline outline-1 outline-ancien-signal" : "",
         ].join(" ")}
       >
         {dessous && empile && (
@@ -3255,7 +3354,7 @@ function CoinFavori({
       <span
         className={[
           "absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-l-transparent",
-          asset.favori ? "border-t-signal" : "border-t-texte-3/60",
+          asset.favori ? "border-t-ancien-signal" : "border-t-texte-3/60",
         ].join(" ")}
       />
     </button>

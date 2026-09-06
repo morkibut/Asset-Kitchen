@@ -39,6 +39,15 @@
     .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
     .lame::before { content: none }
     .lame { border-radius: 1px 1px 2px 2px; box-shadow: inset 0 6px 0 var(--b) }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .bt-off { background: #f2ede4; border-color: #e2dbd0; color: #b0a89b }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8;
+          border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
 
 
     .emp { display: grid; grid-template-columns: 52px 214px 128px minmax(0,1fr) 96px; gap: 14px; align-items: center; padding: 10px 11px; border-radius: 8px }
@@ -46,10 +55,23 @@
     .jauge { height: 5px; border-radius: 3px; background: #ece6db; overflow: hidden }
     .jauge i { display: block; height: 100%; background: #5c7a52 }
 
+  
+    /* dessous r4 — début */
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f; white-space: nowrap }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+
+    /* dessous r4 — fin */
   </style>
 </helmet>
 
-<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+<div class="k" style="width: 1600px; background: #f7f3ec">
+<div style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; overflow: hidden">
 
   <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
     <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
@@ -59,6 +81,8 @@
       </div>
       <div style="font-size: 12.5px; color: #6d675e">45 images · 12 poses sur 18</div>
     </div>
+    <div class="rl"><span>Les r&egrave;gles du jeu</span></div>
+    <div class="rl"><span>La toile de l'univers</span><span class="num">61</span></div>
     <div style="display: flex; flex-direction: column; gap: 2px">
       <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
       <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
@@ -73,17 +97,6 @@
       <div class="rl-sub" style="color: #948c80"><span>+ Nouvelle collection</span></div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
-      <div class="rl"><span>Son nom et son dossier</span></div>
-      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
-      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
-      <div class="rl"><span>Ses types de sujets</span><span class="num">8 échelles</span></div>
-      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
-      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
-      <div class="rl"><span>Son détourage de départ</span></div>
-      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
       <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
       <div class="rl"><span>La galerie</span><span class="num">45</span></div>
       <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
@@ -93,9 +106,9 @@
       <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
         <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
       </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
-        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
-        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      <div style="display: flex; align-items: center; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide et les touches</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> L'installation</span>
       </div>
     </div>
   </div>
@@ -224,6 +237,56 @@
     </div>
   </div>
 
+</div>
+
+
+  <!-- dessous r4 -->
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Trois mots &agrave; ne pas confondre</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">ce que dit le carnet, ce que dit le code</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">un emploi</span>
+        <span style="font-size: 12px; color: #948c80">le carnet</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span class="mono" style="font-size: 13px; color: #a8492c">une pi&egrave;ce</span>
+        <span style="font-size: 12px; color: #948c80">le code</span>
+      </div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Le carnet appelle &laquo;&nbsp;emploi&nbsp;&raquo; chaque fa&ccedil;on dont un objet sert&nbsp;: l'&eacute;p&eacute;e en main, l'&eacute;p&eacute;e au sol, l'&eacute;p&eacute;e en ic&ocirc;ne. Le code n'a pas ce mot dans ce sens &mdash; il l'emploie ailleurs, pour le compteur d'usages d'une &eacute;tiquette. C'est une proposition du carnet, pas un relev&eacute;.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">un emplacement</span>
+        <span style="font-size: 12px; color: #948c80">le carnet</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span class="mono" style="font-size: 13px; color: #a8492c">un emplacement</span>
+        <span style="font-size: 12px; color: #948c80">le code</span>
+      </div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Les deux disent la m&ecirc;me chose&nbsp;: un endroit du corps. Six sont propos&eacute;s, jamais impos&eacute;s, et dans l'ordre o&ugrave; ils s'empilent&nbsp;: le dos, le corps, les jambes, le torse, les mains, la t&ecirc;te. Un emplacement ne place rien&nbsp;: c'est un nom et un rang.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">jusqu'o&ugrave; elle va</span>
+        <span style="font-size: 12px; color: #948c80">le carnet</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span class="mono" style="font-size: 13px; color: #a8492c">sa port&eacute;e</span>
+        <span style="font-size: 12px; color: #948c80">le code</span>
+      </div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Deux valeurs, et pas une de plus&nbsp;: <b>contenue</b>, qui tient dans la silhouette du corps, et <b>agrandit</b>, qui d&eacute;borde. C'est l'auteur qui le d&eacute;clare&nbsp;; rien ne le devine du nom de la pi&egrave;ce. Le choix change la place laiss&eacute;e autour du corps sur la planche envoy&eacute;e&nbsp;: 92&nbsp;% ou 62&nbsp;%.</div>
+    </div>
+  </div>
+  </div>
+  </div>
 </div>
 </x-dc>
 </body>

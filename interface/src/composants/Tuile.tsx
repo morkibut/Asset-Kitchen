@@ -19,6 +19,7 @@
 import {
   api,
   depense,
+  estMiroir,
   type Asset,
   type Emplacement,
   type Generation,
@@ -165,7 +166,7 @@ export function Tuile({
         // désormais bornée par sa colonne, et c'est à son contenu de tenir
         // dedans.
         "arrivee relative flex min-w-0 flex-col border",
-        rate ? "border-echec/45 bg-echec/5" : "border-bord bg-fond-2",
+        rate ? "border-ancien-echec/45 bg-ancien-echec/5" : "border-bord bg-fond-2",
         // L'anneau du sélectionné — « la lampe de la table », `docs/design-motifs.md`
         // § La tuile. Aucune couleur de plus dans la grille.
         selectionnee ? "shadow-[0_0_0_2px_var(--color-lumiere)]" : "",
@@ -255,7 +256,7 @@ export function Tuile({
           <button
             type="button"
             onClick={() => onChoisir(lot.identifiant, emplacement.rang)}
-            className="mesure self-start text-[9.5px] text-signal hover:text-signal-clair"
+            className="mesure self-start text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             Choisir ce qu'on garde
           </button>
@@ -263,7 +264,7 @@ export function Tuile({
           <button
             type="button"
             onClick={() => onRelancer(lot.identifiant, emplacement.rang)}
-            className="mesure self-start text-[9.5px] text-signal hover:text-signal-clair"
+            className="mesure self-start text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             Relancer
           </button>
@@ -331,7 +332,7 @@ function CeQueLeClipDit({
           type="button"
           onClick={onGarder}
           title="les autres quittent la galerie et restent au journal des dépenses"
-          className="mesure self-start text-[9.5px] text-signal hover:text-signal-clair"
+          className="mesure self-start text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           Garder celui-ci · jeter {autresDuLot} autre
           {autresDuLot > 1 ? "s" : ""}
@@ -346,7 +347,7 @@ function CeQueLeClipDit({
           type="button"
           onClick={onDecouper}
           title="rien n'y dépense : le clip est déjà payé"
-          className="mesure self-start text-[9.5px] text-signal hover:text-signal-clair"
+          className="mesure self-start text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           Découper ›
         </button>
@@ -359,8 +360,10 @@ function CeQueLeClipDit({
  *  qui prend le relais — c'est la règle qui empêche la grille de se charger.
  *
  *  **`--texte-2` et 11 px, et c'est la règle du projet qui l'impose** — corrigé
- *  le 31 août 2026. `--texte-3` est sous le seuil de lisibilité *délibérément*
- *  (`docs/DESIGN.md` § Le texte), et la phrase qui l'autorise dit à quelle
+ *  le 31 août 2026. `--texte-3` était alors sous le seuil de lisibilité
+ *  *délibérément*
+ *  (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Typography), et la
+ *  phrase qui l'autorisait disait à quelle
  *  condition : « il ne porte jamais d'information dont l'absence bloquerait —
  *  il porte le grisé, la méta et la raison, tous redondants avec une autre
  *  marque ». **Le prix n'est redondant avec rien** : l'image ne dit pas ce
@@ -402,7 +405,24 @@ function Mesures({ asset, serree }: { asset: Asset; serree: boolean }) {
           se lirait *sans limite* là où il faut lire *sans prix*. Ce qu'elle a
           consommé — un jeton — se lit sur sa fiche, où il y a la place de le
           dire avec son mot. */}
-      <span className="shrink-0">{depense(asset.consomme, asset.unite)}</span>
+      {/* **Une image obtenue au miroir ne dit pas un prix, elle dit d'où elle
+          vient** (B1). Elle n'a rien coûté : l'argent a été dépensé une fois,
+          pour l'image de départ, et la filiation y mène. « $0,0000 » se lirait
+          comme un appel qui n'a rien facturé, ce qui est une autre chose — ici
+          il n'y a pas eu d'appel du tout.
+          **Les deux faits ensemble, jamais l'un sans l'autre** : une image
+          générée sur laquelle l'auteur pose ensuite un miroir garde son prix,
+          parce que l'étiquette dit ce qui a été payé.
+          Le mot seul à la taille de repos, comme le téléchargement juste en
+          dessous : la ligne dispose de 120 px, et « gratuit » y prendrait la
+          place des dimensions. */}
+      <span className="shrink-0">
+        {estMiroir(asset.recette) && asset.consomme === 0
+          ? serree
+            ? "miroir"
+            : "miroir · gratuit"
+          : depense(asset.consomme, asset.unite)}
+      </span>
       {/* **À la taille de repos, le lien se réduit à sa flèche.** La planche
           contact ne perd pas une colonne pour un bouton secondaire, et le
           téléchargement reste atteignable aux trois tailles — c'est le mot qui
@@ -414,7 +434,7 @@ function Mesures({ asset, serree }: { asset: Asset; serree: boolean }) {
         onClick={(e) => e.stopPropagation()}
         title="télécharger le PNG"
         aria-label="télécharger le PNG"
-        className="ml-auto shrink-0 text-signal hover:text-signal-clair"
+        className="ml-auto shrink-0 text-ancien-signal hover:text-ancien-signal-clair"
       >
         {serree ? "↓" : "PNG ↓"}
       </a>
@@ -452,7 +472,7 @@ function Pastille({
           ? // `--signal-clair`, nommé pour cet emploi au § Palette. Une
             // troisième couleur de pastille aurait été une couleur de plus
             // dans la grille ; celle-ci est déjà celle du survol du signal.
-            ["agent", "text-signal-clair"]
+            ["agent", "text-ancien-signal-clair"]
           : asset?.epingle
             ? ["réglé", "text-epingle"]
             : [null, ""]
@@ -470,7 +490,7 @@ function CoinFavori() {
   return (
     <span
       aria-label="favori"
-      className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-signal border-l-transparent"
+      className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-ancien-signal border-l-transparent"
     />
   )
 }
@@ -479,7 +499,7 @@ function CoinFavori() {
 function Raté({ raison }: { raison: string | null }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center p-3">
-      <p className="text-center text-[11.5px] leading-snug text-echec">
+      <p className="text-center text-[11.5px] leading-snug text-ancien-echec">
         {raison ?? "échec sans raison connue"}
       </p>
     </div>

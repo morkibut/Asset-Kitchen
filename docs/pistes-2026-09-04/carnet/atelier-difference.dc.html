@@ -1,0 +1,461 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 32px; padding: 0 12px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 12.5px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .rg { display: flex; flex-direction: column; gap: 5px; padding-bottom: 10px; border-bottom: 1px solid #e2dbd0 }
+    .rg-t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12.5px }
+    .rai { font-size: 11px; line-height: 1.42; color: #6d675e }
+    .cur { height: 5px; border-radius: 3px; background: #e2dbd0; position: relative }
+    .cur i { position: absolute; top: -4px; width: 13px; height: 13px; border-radius: 50%; background: #fffdfa;
+             border: 1px solid #a49a8b }
+    .tb { display: inline-flex; align-items: center; gap: 6px; height: 27px; padding: 0 10px; border-radius: 6px;
+          font-size: 12.5px; color: #6d675e; white-space: nowrap }
+    .tb-on { background: #221f1b; color: #f7f3ec; font-weight: 500 }
+    .dam { background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),
+                             linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);
+           background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7 }
+    .cadre { border-radius: 8px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center }
+    /* le pèlerin : un corps, et la cotte qui vient dessus */
+    .corps { display: block; width: 62px; height: 152px; background: #6b5a44; border-radius: 5px 5px 3px 3px; position: relative }
+    .corps::before { content: ''; position: absolute; left: 50%; top: -19px; transform: translateX(-50%);
+                     width: 33px; height: 33px; border-radius: 50%; background: #8a7458 }
+    .cotte { position: absolute; left: 50%; top: 24px; transform: translateX(-50%); width: 66px; height: 62px;
+             background: #7d8590; border-radius: 4px; box-shadow: inset 0 -3px 0 #656c75 }
+    .mes { display: grid; grid-template-columns: minmax(0,1fr) 62px; gap: 3px 10px; font-size: 12px; align-items: baseline }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3720px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1050px">
+      <div style="font-size: 12.5px; color: #948c80">Les personnages › Le pélerin › Ses images › la cotte de mailles › Superposition</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">La différence</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">deux images en entrée, une troisième en sortie — c'est par elle qu'un vêtement se fabrique</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 220px">une fois la feuille payée, plus rien ne part — caler, borner, retoucher, refaire&nbsp;: tout se calcule ici</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1200px">
+    On génère le pèlerin nu, puis le même pèlerin en cotte de mailles, <strong style="font-weight: 600">dans la même génération</strong>. Ce qui a changé entre les deux, c'est la cotte : on la garde seule, sur fond transparent, et elle se pose ensuite sur le corps sans rien redemander à personne. C'est la seule des neuf entrées de la barre qui prend <em>deux</em> images, et la seule qui en fabrique une qui n'existait pas.
+  </div>
+
+  <!-- ══ le chemin, en quatre temps ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Le chemin ordinaire</span> <span style="font-size: 13.5px; color: #6d675e">— l'atelier le fait seul, et une seule étape coûte quelque chose</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">L'autre chemin, à la main, est plus bas.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)) 24px; gap: 11px; align-items: stretch">
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><span class="mono" style="font-size: 11px; color: #948c80">1</span><span class="puce p-ok">gratuit</span></div>
+        <div style="font-size: 14px; font-weight: 600">La feuille part pleine</div>
+        <div style="font-size: 12.5px; line-height: 1.45; color: #4e483f">Les six corps nus du pèlerin — une pose par case — sont rangés sur une seule feuille, avec la consigne « mets-lui une cotte de mailles ».</div>
+        <div style="font-size: 11.5px; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 7px; margin-top: auto">Le corps est posé à 92&nbsp;% de sa case&nbsp;; à 62&nbsp;% si la pièce est de celles qui débordent, pour lui laisser la place.</div>
+      </div>
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px; border-color: #a8492c; background: #fdf7f3">
+        <div style="display: flex; align-items: center; justify-content: space-between"><span class="mono" style="font-size: 11px; color: #a8492c">2</span><span class="mono" style="font-size: 11.5px; color: #a8492c">$0,0189</span></div>
+        <div style="font-size: 14px; font-weight: 600">Une seule génération</div>
+        <div style="font-size: 12.5px; line-height: 1.45; color: #4e483f">Le modèle habille les six d'un coup. C'est le seul moment où de l'argent sort, et il sort une fois pour six poses.</div>
+        <div style="font-size: 11.5px; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 7px; margin-top: auto">Six poses en une génération plutôt qu'une pose payée six fois&nbsp;: c'est la raison d'être de la feuille.</div>
+      </div>
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><span class="mono" style="font-size: 11px; color: #948c80">3</span><span class="puce p-ok">gratuit</span></div>
+        <div style="font-size: 14px; font-weight: 600">Chaque case est recalée</div>
+        <div style="font-size: 12.5px; line-height: 1.45; color: #4e483f">La feuille revient, l'atelier la redécoupe sur la grille qu'il a lui-même posée, et cherche l'échelle et le décalage qui remettent chaque case sur son corps de départ.</div>
+        <div style="font-size: 11.5px; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 7px; margin-top: auto">131 échelles essayées, de 0,55 à 1,85. À égalité, celle qui est la plus proche de 1 gagne.</div>
+      </div>
+      <div class="carte" style="padding: 13px 14px; display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><span class="mono" style="font-size: 11px; color: #948c80">4</span><span class="puce p-ok">gratuit</span></div>
+        <div style="font-size: 14px; font-weight: 600">Six calques</div>
+        <div style="font-size: 12.5px; line-height: 1.45; color: #4e483f">Ce que la cotte a ajouté au corps est gardé seul, sur fond transparent. Un calque par pose, rangé à côté du corps — <strong style="font-weight: 600">le corps payé n'est jamais modifié</strong>.</div>
+        <div style="font-size: 11.5px; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 7px; margin-top: auto">Un calque n'est pas un fichier figé&nbsp;: c'est un calcul reposé sur l'image payée, refait à chaque affichage.</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: center; color: #c3b8a6; font-size: 17px">→</div>
+    </div>
+  </div>
+
+  <!-- ══ l'écran ══ -->
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden">
+
+    <!-- la barre des tables -->
+    <div style="border-bottom: 1px solid #e2dbd0; background: #f2ede4; padding: 9px 14px; display: flex; align-items: center; gap: 4px">
+      <span class="tb">Détourer</span><span class="tb">Recadrer</span><span class="tb">Pixéliser</span><span class="tb">Couleurs</span>
+      <span class="tb">Nettoyer</span><span class="tb">Le contour</span><span class="tb">La main</span>
+      <span style="width: 1px; height: 20px; background: #ccc4b6; margin: 0 8px"></span>
+      <span class="tb">Découper</span><span class="tb tb-on">Superposer</span>
+      <span style="margin-left: auto; font-size: 11.5px; color: #948c80">sept tables qui se règlent · deux fabriques qui produisent d'autres images</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 380px minmax(0,1fr) 330px; min-height: 760px">
+
+      <!-- ── les réglages ── -->
+      <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 16px 15px; display: flex; flex-direction: column; gap: 12px">
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div class="rt">Les deux images</div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="border: 1px solid #a8492c; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; align-items: center; gap: 9px">
+              <span style="width: 30px; height: 30px; border-radius: 5px; background: #6c6c6c; position: relative; overflow: hidden; flex-shrink: 0"><span style="position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); width: 11px; height: 20px; background: #7d8590; border-radius: 2px"></span></span>
+              <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+                <span class="rt" style="font-size: 9.5px; color: #a8492c">dessus · se déplace</span>
+                <span style="font-size: 12.5px; font-weight: 600">au repos, en cotte de mailles</span>
+              </span>
+            </div>
+            <div style="display: flex; justify-content: center"><span class="bt" style="height: 26px; padding: 0 10px; font-size: 11.5px">↕ échanger</span></div>
+            <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; align-items: center; gap: 9px">
+              <span style="width: 30px; height: 30px; border-radius: 5px; background: #6c6c6c; position: relative; overflow: hidden; flex-shrink: 0"><span style="position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); width: 11px; height: 20px; background: #6b5a44; border-radius: 2px"></span></span>
+              <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+                <span class="rt" style="font-size: 9.5px">dessous · fixe</span>
+                <span style="font-size: 12.5px; font-weight: 600">au repos, nu</span>
+              </span>
+            </div>
+          </div>
+          <div class="rai">Le calque est fait de ce que le <strong style="font-weight: 600">dessus</strong> ajoute. Échanger les deux ne change pas l'affichage&nbsp;: ça donne le crâne nu au lieu du casque.</div>
+        </div>
+
+        <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 10px 11px; display: flex; flex-direction: column; gap: 6px">
+          <div class="rt" style="color: #8a5a2c">avant de caler</div>
+          <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Le dessus porte <strong style="font-weight: 600">0 passe de détourage</strong>, le dessous en porte 2. Sans transparence sur le dessus, le calque prendrait tout le fond.</div>
+          <div><span class="bt" style="height: 27px; font-size: 11.5px">Reprendre les passes du dessous</span></div>
+        </div>
+
+        <div class="rg">
+          <div class="rg-t"><span style="font-weight: 600">le calage</span><span class="bt" style="height: 25px; padding: 0 9px; font-size: 11.5px">Recaler</span></div>
+          <div style="display: grid; grid-template-columns: 62px minmax(0,1fr) 46px; gap: 6px 9px; align-items: center; font-size: 12px; color: #4e483f">
+            <span>échelle</span><span class="cur"><i style="left: 42%"></i></span><span class="mono" style="text-align: right; font-size: 11.5px">1,000</span>
+            <span>horizontal</span><span class="cur"><i style="left: 50%"></i></span><span class="mono" style="text-align: right; font-size: 11.5px">+0</span>
+            <span>vertical</span><span class="cur"><i style="left: 50%"></i></span><span class="mono" style="text-align: right; font-size: 11.5px">+0</span>
+          </div>
+          <div class="rai">Au chiffre, au curseur ou aux touches − + ← → ↑ ↓. <span style="color: #a8492c">L'échelle est le seul réglage qui abîme l'image</span>&nbsp;: à un facteur qui n'est pas simple, la grille du pixel art se détruit. L'écran le marque, il ne le refuse pas.</div>
+          <div style="font-size: 11.5px; color: #6d675e">remettre à zéro ›</div>
+        </div>
+
+        <div class="rg">
+          <div class="rg-t"><span style="font-weight: 600">seuil de couleur</span><span class="mono" style="color: #4e483f">32</span></div>
+          <div class="cur"><i style="left: 12%"></i></div>
+          <div class="rai">De combien une couleur doit changer pour compter comme changée. À 0, la moindre variation de tirage entre dans le calque&nbsp;; à 120, la cotte grise sur une robe brune passe encore, mais une cotte grise sur une armure grise disparaît.</div>
+        </div>
+
+        <div class="rg">
+          <div class="rg-t"><span style="font-weight: 600">le rectangle</span><span style="font-size: 11.5px; color: #948c80">aucun</span></div>
+          <div class="rai">Glissé sur l'image, il borne ce qui part&nbsp;: hors de lui, la différence est effacée. C'est ce qui empêche un visage repeint au passage de partir avec la cotte. Sans rectangle, on cherche sur toute la case — <strong style="font-weight: 600">l'atelier n'en devine jamais</strong>.</div>
+        </div>
+
+        <div class="rg" style="border-bottom: 0">
+          <div class="rg-t"><span style="font-weight: 600">ce qui sortira</span></div>
+          <div style="display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: #4e483f">
+            <span style="display: flex; align-items: center; gap: 7px"><span style="width: 13px; height: 13px; border-radius: 3px; background: #a8492c; border: 1px solid #a8492c"></span> le calque seul</span>
+            <span style="display: flex; align-items: center; gap: 7px"><span style="width: 13px; height: 13px; border-radius: 3px; background: #fffdfa; border: 1px solid #a49a8b"></span> l'aplat — le pèlerin habillé, en une image</span>
+            <span style="display: flex; align-items: center; gap: 7px"><span style="width: 13px; height: 13px; border-radius: 3px; background: #fffdfa; border: 1px solid #a49a8b"></span> enregistrer ces réglages sur le corps</span>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; align-items: center; gap: 9px">
+          <span class="bt bt-p" style="height: 36px; padding: 0 14px">Fabriquer — 1 image ›</span>
+          <span style="font-size: 11.5px; color: #6d675e">Tout défaire ›</span>
+        </div>
+      </div>
+
+      <!-- ── le cadre de travail ── -->
+      <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+          <div style="font-size: 14.5px; font-weight: 600">Le dessus posé sur le dessous, et le rectangle qu'on y glisse</div>
+          <div class="seg"><div class="sg sg-on">teinte</div><div class="sg">normale</div><div class="sg">négatif</div></div>
+        </div>
+        <div class="cadre dam" style="height: 440px">
+          <span style="position: relative; display: block">
+            <i class="corps" style="opacity: .5; filter: sepia(.6) hue-rotate(-25deg)"></i>
+            <i class="cotte" style="opacity: .92"></i>
+            <!-- le rectangle qui borne -->
+            <span style="position: absolute; left: -8px; top: 16px; width: 82px; height: 80px; border: 1.5px dashed #a8492c; border-radius: 2px"></span>
+            <span style="position: absolute; left: -8px; top: 16px; width: 9px; height: 9px; background: #a8492c; transform: translate(-50%,-50%)"></span>
+            <span style="position: absolute; left: 74px; top: 96px; width: 9px; height: 9px; background: #a8492c; transform: translate(-50%,-50%)"></span>
+          </span>
+          <span style="position: absolute; left: 12px; top: 11px; font-size: 11px; color: #4e483f">le dessous est teinté et à 50&nbsp;% — ça ne change pas la sortie</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; font-size: 12px">
+          <span style="display: flex; align-items: center; gap: 14px">
+            <span class="mono" style="color: #221f1b">× 1,000 · +0 · +0</span>
+            <span style="color: #4e483f">ajout <strong style="font-weight: 600">18 %</strong></span>
+          </span>
+          <span style="color: #5c7a52">aucune génération ne part d'ici</span>
+        </div>
+        <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 8px">
+          <div class="rt">ce que la comparaison a mesuré</div>
+          <div style="display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 14px">
+            <span style="display: flex; flex-direction: column; gap: 2px"><span class="mono" style="font-size: 16px; color: #5c7a52">96&nbsp;%</span><span style="font-size: 11px; color: #6d675e">silhouette retrouvée</span></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span class="mono" style="font-size: 16px; color: #5c7a52">3&nbsp;%</span><span style="font-size: 11px; color: #6d675e">corps repeint</span></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span class="mono" style="font-size: 16px; color: #221f1b">18&nbsp;%</span><span style="font-size: 11px; color: #6d675e">part ajoutée</span></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span class="mono" style="font-size: 16px; color: #5c7a52">1,02</span><span style="font-size: 11px; color: #6d675e">échelle au retour</span></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span class="mono" style="font-size: 16px; color: #5c7a52">0,91</span><span style="font-size: 11px; color: #6d675e">un objet, pas de la poussière</span></span>
+          </div>
+          <div style="font-size: 11.5px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px"><strong style="font-weight: 600">Aucune de ces cinq mesures ne refuse quoi que ce soit.</strong> Elles disent ce qui a bougé&nbsp;; c'est à l'œil de trancher. Le « corps repeint » se lit d'ailleurs <em>hors</em> de l'empreinte de la pièce — sinon un casque qui cache le haut du crâne passerait pour un dégât.</div>
+        </div>
+      </div>
+
+      <!-- ── ce qui en sortira ── -->
+      <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 16px 15px; display: flex; flex-direction: column; gap: 13px">
+        <div class="rt">Ce qui en sortira</div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 12.5px; font-weight: 600">le calque seul</span><span style="font-size: 11px; color: #6d675e">fond&nbsp;: damier</span></div>
+          <div class="cadre dam" style="height: 210px; border: 1px solid #ddd5c8">
+            <span style="position: relative; display: block; width: 66px; height: 152px">
+              <i class="cotte" style="top: 24px"></i>
+            </span>
+          </div>
+          <div style="display: flex; gap: 4px">
+            <span style="width: 17px; height: 17px; border-radius: 4px; outline: 1.5px solid #a8492c; outline-offset: 1px" class="dam"></span>
+            <span style="width: 17px; height: 17px; border-radius: 4px; background: #fff; border: 1px solid #ddd5c8"></span>
+            <span style="width: 17px; height: 17px; border-radius: 4px; background: #1a1a1a"></span>
+            <span style="width: 17px; height: 17px; border-radius: 4px; background: #e88fb4"></span>
+            <span style="width: 17px; height: 17px; border-radius: 4px; background: #6ba3d6"></span>
+            <span style="width: 17px; height: 17px; border-radius: 4px; background: #6fbf73"></span>
+          </div>
+          <div class="rai">Six fonds, pour voir les bords baveux que le damier cache.</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 12.5px; font-weight: 600">le résultat</span><span style="font-size: 11px; color: #6d675e">maintenir pour masquer ›</span></div>
+          <div class="cadre" style="height: 210px; border: 1px solid #ddd5c8; background: #6c6c6c">
+            <span style="position: relative; display: block">
+              <i class="corps"></i>
+              <i class="cotte"></i>
+            </span>
+          </div>
+          <div class="rai">Le corps relu, le calque reposé dessus. Ce n'est pas un fichier&nbsp;: c'est recalculé à chaque affichage.</div>
+        </div>
+
+        <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 6px">
+          <div style="font-size: 12.5px; font-weight: 600">Ce calque ne vaut que pour cette pose</div>
+          <div class="rai">Il est taillé dans le corps au repos. Pour la marche, la course, l'attaque, les dégâts et la mort, il en faut cinq autres — et c'est pour ça que la feuille part avec les six corps d'un coup.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ les deux bouts ══ -->
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px">
+    <div class="carte" style="padding: 16px 17px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">le premier bout</div>
+      <div style="font-size: 16px; font-weight: 600; line-height: 1.3">Habiller un personnage — l'atelier fait tout</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">On choisit une pièce du vestiaire, on clique. La feuille part, revient, se redécoupe, se recale, et six calques sont rangés. On n'ouvre cet écran-ci que si un des six est de travers.</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px">Le vestiaire naît vide. Les six emplacements — le dos, le corps, les jambes, le torse, les mains, la tête — sont proposés en un clic, jamais écrits d'office. L'ordre est celui de l'empilement, du fond vers l'avant.</div>
+    </div>
+    <div class="carte" style="padding: 16px 17px; display: flex; flex-direction: column; gap: 9px">
+      <div class="rt">le second bout</div>
+      <div style="font-size: 16px; font-weight: 600; line-height: 1.3">Deux images quelconques — la fabrique, à la main</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le même calcul, sur deux images qu'on désigne soi-même. La neige sur le toit du moulin, la porte ouverte à partir de la porte fermée, le tonneau cassé à partir du tonneau neuf, la fenêtre allumée.</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px">Rien ne rapproche automatiquement deux images qui ne viennent pas de la même feuille&nbsp;: il faut les désigner toutes les deux. C'est le prix de la liberté de ce chemin-là.</div>
+    </div>
+  </div>
+
+  <!-- ══ les réglages ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les réglages</span> <span style="font-size: 13.5px; color: #6d675e">— six qui changent la sortie, quatre qui ne changent que l'affichage</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">L'en-tête des quatre derniers le dit lui-même&nbsp;: « ne change pas la sortie ».</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 190px 320px 250px minmax(0,1fr)">
+      <div class="ent">le réglage</div><div class="ent">ce qu'il règle</div><div class="ent">sa plage</div><div class="ent">ce qu'on voit changer</div>
+
+      <div><span style="font-weight: 600">Le dessus, le dessous</span></div>
+      <div style="color: #4e483f">Quelle image ajoute, et sur quoi.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">deux images de la même génération<br><span style="color: #948c80">par défaut : la case habillée sur son corps</span></div>
+      <div style="color: #4e483f">Un bouton « ↕ échanger » entre les deux. <strong style="font-weight: 600">Ce n'est pas un détail d'affichage</strong>&nbsp;: le calque est fait de ce que le dessus ajoute, donc l'inversion rend le crâne nu au lieu du casque. Le rôle de chacune est écrit en gros sur sa vignette, pas deviné.</div>
+
+      <div><span style="font-weight: 600">Le calage</span></div>
+      <div style="color: #4e483f">L'échelle, le décalage horizontal et le décalage vertical du dessus.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">échelle 0,25 à 4,0 · décalages −2048 à +2048 px<br><span style="color: #948c80">par défaut : 1,000 · +0 · +0</span></div>
+      <div style="color: #4e483f">« Recaler » cherche seul&nbsp;: 131 échelles de 0,55 à 1,85, des décalages bornés au quart du cadre, et à égalité l'échelle la plus proche de 1 gagne. Il remplit les trois chiffres et s'arrête là — <strong style="font-weight: 600">rien ne se déclenche derrière</strong>. Ensuite on corrige au curseur, au chiffre, ou d'un pixel à la fois aux touches. Le mot « rééchantillonne » paraît dès que l'échelle n'est plus 1.</div>
+
+      <div><span style="font-weight: 600">Seuil de couleur</span></div>
+      <div style="color: #4e483f">De combien une couleur doit changer pour compter comme changée.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">0 à 255<br><span style="color: #948c80">par défaut : 32</span></div>
+      <div style="color: #4e483f">À 0, le grain du tirage entre dans le calque et la cotte se retrouve entourée d'un nuage de pixels. À 120, une cotte grise sur une robe brune passe encore ; la même sur une armure grise disparaît. La part ajoutée, sous le cadre, monte et descend avec le curseur — c'est elle qu'on regarde.</div>
+
+      <div><span style="font-weight: 600">Le rectangle</span></div>
+      <div style="color: #4e483f">Ce qui borne la recherche. Hors de lui, la différence est effacée.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">glissé sur l'image, en pixels du rendu<br><span style="color: #948c80">par défaut : aucun — toute la case</span></div>
+      <div style="color: #4e483f">Le hors-rectangle reste visible, en clair&nbsp;: on voit ce qu'on écarte. Un glissé de moins de trois pixels retire le rectangle au lieu d'en poser un — le geste d'annulation est le même que celui de création. <strong style="font-weight: 600">Le déplacer ne redemande aucune image</strong> et ne coûte pas un centime&nbsp;: le calque se recalcule.</div>
+
+      <div><span style="font-weight: 600">La main, deux couches</span></div>
+      <div style="color: #4e483f">Ce que le pinceau dit du masque, et ce qu'il dit du calque.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">un pinceau, autant de passages qu'on veut<br><span style="color: #948c80">par défaut : aucun passage</span></div>
+      <div style="color: #4e483f">Deux couches séparées, et c'est ce qui fait tenir la promesse&nbsp;: la première <em>restreint</em> où la différence a le droit de garder ce qu'elle a trouvé, la seconde <em>tranche</em> sur ce qu'elle a rendu — elle ôte le trop, ramène le manque. Toucher l'une n'écrit jamais dans l'autre. Un passage est un chemin et un rayon, jamais une image&nbsp;: c'est ce qui permet de rejouer le tout sur une image d'une autre taille.</div>
+
+      <div><span style="font-weight: 600">Ce qui sortira</span></div>
+      <div style="color: #4e483f">Le calque seul, l'aplat, ou les deux. Et si les réglages restent sur le corps.</div>
+      <div class="mono" style="font-size: 11.5px; color: #6d675e">calque · aplat · les deux<br><span style="color: #948c80">par défaut : le calque seul</span></div>
+      <div style="color: #4e483f">Le compte est écrit dans le bouton avant le clic&nbsp;: « Fabriquer — 1 image ». Une image par sortie cochée, écrite en bibliothèque. Cocher « enregistrer ces réglages » les repose sur le corps, pour que la pièce suivante reparte du même calage.</div>
+
+      <div style="background: #f7f3ec"><span style="font-weight: 600; color: #6d675e">L'affichage</span></div>
+      <div style="background: #f7f3ec; color: #6d675e">Comment on voit pendant qu'on règle. Rien de tout ça n'entre dans l'image produite.</div>
+      <div class="mono" style="background: #f7f3ec; font-size: 11.5px; color: #948c80">teinte · normale · négatif<br>opacités 50 % et 92 %<br>fond du calque : 6 choix<br>maintenir pour masquer</div>
+      <div style="background: #f7f3ec; color: #6d675e">Le dessous teinté à moitié fait ressortir ce qui est ajouté. Le négatif fait sauter aux yeux les deux ou trois pixels de bord mal recalés. Le fond du calque montre les bords baveux que le damier cache. Maintenir la souris masque le calque&nbsp;: c'est l'avant/après le plus rapide de l'atelier.</div>
+    </div>
+  </div>
+
+  <!-- ══ quand ça rate ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">9 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s'est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu'on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le modèle a dézoomé le pèlerin pour faire tenir le manteau, de plus de 8&nbsp;%.</div>
+        <div style="color: #8a3f33">Aucun calque n'est fabriqué. Ce qui revient est gardé comme un <strong style="font-weight: 600">corps habillé</strong> — une image entière qui remplace le corps au lieu de s'empiler. La génération a été payée quand même.</div>
+        <div style="color: #4e483f">Déclarer la pièce « agrandit » plutôt que « contenue » avant de lancer&nbsp;: le corps part alors à 62&nbsp;% de sa case au lieu de 92&nbsp;%, et le modèle a la place. Rien ne le devine à ta place.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Une seule des six cases a dérivé.</div>
+        <div style="color: #8a3f33">Les six poses perdent leurs calques, pas seulement celle qui a bougé. Le verdict porte sur la feuille entière.</div>
+        <div style="color: #4e483f">Aucun réglage ne répare ça&nbsp;: c'est un défaut de conception. Le verdict devrait se prendre case par case — cinq calques et un corps habillé valent mieux que six corps habillés.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On ouvre la fabrique avec deux images dont le dessus n'a pas été détouré.</div>
+        <div style="color: #8a3f33">Le calque emporte tout le fond de l'image. Un pixel entre dans le calque s'il est opaque dessus et transparent dessous&nbsp;; une image qui revient du modèle est opaque de bord à bord.</div>
+        <div style="color: #4e483f">L'atelier le voit et le dit avant qu'on cale — « sans alpha sur le dessus, le calque prendrait tout le fond » — avec le bouton qui reprend les passes du dessous. Il ne le fait pas tout seul.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On intervertit le dessus et le dessous en croyant changer l'affichage.</div>
+        <div style="color: #8a3f33">Le calque devient le crâne nu&nbsp;: ce que le pèlerin nu « ajoute » au pèlerin casqué, c'est ses cheveux.</div>
+        <div style="color: #4e483f">Rebasculer. Le rôle de chaque image est écrit en gros sur sa vignette — « dessus · se déplace », « dessous · fixe » — justement parce que le geste est irréversible à l'œil.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On change la taille de pixel du jeu après avoir fabriqué des calques.</div>
+        <div style="color: #8a3f33">Tous les calques existants redeviennent leur case brute&nbsp;: le corps rendu à une autre taille ne se superpose plus à celui dans lequel le calque a été taillé. Un corps qui a changé de taille est un corps disparu.</div>
+        <div style="color: #4e483f">« Recaler depuis la feuille › ». Mais il faut que la feuille payée soit encore sur le disque — c'est la seule chose que l'atelier ne sait pas refaire.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le seuil de couleur est laissé à 0 sur une cotte grise posée sur une robe brune.</div>
+        <div style="color: #8a3f33">La cotte est entourée d'un nuage de pixels isolés&nbsp;: le grain du tirage a suffi à faire « changé ». La part ajoutée passe de 18 à 60&nbsp;%.</div>
+        <div style="color: #4e483f">Remonter le seuil, en regardant la part ajoutée sous le cadre. Puis borner d'un rectangle&nbsp;: c'est lui qui fait le gros du travail, pas le seuil.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Le modèle a repeint le visage au passage, en plus de poser la cotte.</div>
+        <div style="color: #8a3f33">Le visage repeint part avec la cotte. Posée sur les autres poses, la cotte emporte un morceau de tête qui ne correspond à rien.</div>
+        <div style="color: #4e483f">Le rectangle autour du torse. C'est exactement ce pour quoi il existe, et l'atelier n'en devine jamais aucun.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On veut poser la cotte obtenue au repos sur la pose de marche.</div>
+        <div style="color: #8a3f33">Impossible. Un calque est solidaire de la pose sur laquelle la pièce est apparue&nbsp;: il en faut un par pose, et rien ne les reporte.</div>
+        <div style="color: #4e483f">C'est la règle, pas une panne&nbsp;: la feuille part avec les six corps pour cette raison. En revanche, rien ne prévient avant d'avoir essayé.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On cherche l'écran qui montre le pèlerin avec la cotte <em>et</em> le casque <em>et</em> l'épée.</div>
+        <div style="color: #8a3f33">Il n'existe pas. Le produit sait poser <strong style="font-weight: 600">un</strong> calque sur son corps, jamais deux. L'ordre d'empilement n'est écrit nulle part dans l'atelier — seulement dans le fichier remis au moteur de jeu.</div>
+        <div style="color: #4e483f">C'est le manque principal, et c'est aussi le seul intérêt des calques&nbsp;: cinq pièces qui se combinent font trente-deux tenues. Le carnet le dessine sur « L'essai »&nbsp;; l'app ne le fait pas.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ trois mots piégés ══ -->
+  <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 10px; padding: 17px 19px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div class="serif" style="font-size: 25px; line-height: 1.15; color: #8a3f33">Trois mots qui désignent deux choses chacun</div>
+      <div style="font-size: 12.5px; color: #8a3f33">À nommer autrement avant d'écrire un écran.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">« calque »</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le calque d'équipement — une cotte de mailles posée sur un corps. Et le calque de dessin de la dernière table, celui qu'on peint à la main. Aucun rapport entre les deux.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">« emplacement »</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Une place sur un corps — le torse, la tête. Et la place d'une variation dans une génération. Le même service touche aux deux.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13.5px; font-weight: 600">« brut »</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Pour un calque, la case <em>déjà</em> mise à l'échelle et calée. Pour un corps habillé, la case telle qu'elle est arrivée du modèle. Deux images de la même feuille, deux sens.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ce qui manque ══ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd'hui</span>
+      <div style="font-size: 12.5px; color: #6d675e; margin-top: -4px">Le calcul est complet et bien fait. Ce qui manque est ce qu'on fait des calques une fois qu'on les a.</div>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px; margin-top: 3px">
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">Personne ne porte deux pièces à la fois.</strong> C'est le seul intérêt d'un calque, et c'est le seul écran qui n'existe pas. Cinq pièces font trente-deux tenues&nbsp;; l'atelier n'en montre aucune.</li>
+        <li style="margin-bottom: 6px">Un calque d'équipement ne reçoit pas sa direction. Le pliage ordinaire l'écrit, l'habillage non&nbsp;: sur un jeu à quatre directions, les calques d'une même pose sont indiscernables par angle.</li>
+        <li style="margin-bottom: 6px">Un calque n'a ni décalage propre, ni ordre, ni point d'ancrage&nbsp;: le placement est cuit dans l'image. On ne peut pas remonter un casque de deux pixels sans refaire le calque.</li>
+        <li style="margin-bottom: 6px">Le verdict porte sur la feuille entière et non case par case. Une case qui dérive fait perdre les calques des cinq autres.</li>
+        <li style="margin-bottom: 6px">Rien ne devine si une pièce déborde de la silhouette. C'est l'auteur qui le déclare avant de lancer, et de cette phrase dépend tout le reste. Une erreur se paie et ne se corrige pas après coup.</li>
+        <li style="margin-bottom: 6px">Une pièce n'a aucune image à elle et ne peut pas en avoir&nbsp;: pas d'écran qui génère un casque sur fond vide. Une pièce n'existe que sur un corps.</li>
+        <li style="margin-bottom: 6px">Aucune mesure ne refuse rien. Cinq chiffres décrivent le calque, aucun n'arrête un calque raté. Le seul refus automatique du produit est le compte d'images revenues.</li>
+        <li style="margin-bottom: 6px">L'agent n'a pas accès à ça. Ses cinq outils sont lister, ajouter une pose, remplir une case, habiller, exporter&nbsp;: ni superposer, ni masquer, ni retoucher.</li>
+        <li style="margin-bottom: 6px">Rien ne rapproche deux images qui ne viennent pas de la même feuille. Pour la neige sur le toit, il faut désigner les deux à la main.</li>
+        <li style="margin-bottom: 6px">Le report d'un calque d'une pose sur une autre. Ce n'est peut-être pas faisable honnêtement — mais rien ne le dit avant qu'on essaie.</li>
+      </ul>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 11px">
+        <div class="rt">ce que ça évite de payer</div>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) 92px; row-gap: 9px; font-size: 12.5px; align-items: baseline">
+          <span style="color: #4e483f">Cinq pièces, six poses, en calques&nbsp;: cinq feuilles</span><span class="mono" style="text-align: right; color: #5c7a52">$0,095</span>
+          <span style="color: #4e483f">Les mêmes trente-deux tenues générées une à une</span><span class="mono" style="text-align: right; color: #a8492c">$0,60</span>
+          <span style="border-top: 1px solid #ddd5c8; padding-top: 9px; color: #221f1b; font-weight: 600">Ce qu'on ne paie pas</span><span class="mono" style="border-top: 1px solid #ddd5c8; padding-top: 9px; text-align: right; color: #5c7a52; font-weight: 600">≈ $0,50</span>
+        </div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 9px">À cette échelle ce n'est pas l'argent qui compte&nbsp;: c'est que les trente-deux tenues montrent <em>le même</em> pèlerin, au pixel près. Généré trente-deux fois, il change de visage à chaque changement de tenue.</div>
+      </div>
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">avant / après</div>
+        <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Trois cases de 64 px en rang. À GAUCHE le pèlerin nu, robe brune, tel qu'il a été payé. AU MILIEU le même revenu de la feuille d'habillage, en cotte de mailles grise — presque identique, sauf le torse. À DROITE, sur damier, la cotte toute seule : une forme grise flottante, avec deux ou trois pixels bruns encore accrochés en bas, ceux que le rectangle n'a pas coupés. Sous la troisième, la ligne de mesures : « silhouette 96 % · repeint 3 % · ajout 18 % · échelle 1,02 ». Puis, en dessous, la rangée des six poses avec leur calque chacune, dont une barrée en rouge — celle où le modèle a dézoomé — avec la mention « corps habillé, pas de calque ». Et tout en bas, ce qui n'existe pas : le pèlerin portant la cotte, le casque et l'épée en même temps, avec la pile des trois dans l'ordre du dos vers l'avant.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

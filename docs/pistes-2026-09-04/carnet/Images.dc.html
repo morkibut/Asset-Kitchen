@@ -18,11 +18,11 @@
     .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
     .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
     .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
-    .rl-sub2 { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 10px 0 34px; border-radius: 5px; font-size: 12.5px; color: #6d675e; }
     .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
     .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
     .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
     .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
+    .bt-off { background: #f2ede4; border-color: #e2dbd0; color: #b0a89b; }
     .ong { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 7px; font-size: 13.5px; color: #6d675e; }
     .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
     .seg { display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; }
@@ -32,167 +32,490 @@
     .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
     .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 14px 14px; }
     .vide { border: 1px dashed #c9c2b6; border-radius: 8px; }
-    .col { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 12.5px; background: #ece6db; color: #4e483f; }
     .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
     .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
     .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
     .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
-    .lame::before { content: none }
-    .lame { border-radius: 1px 1px 2px 2px; box-shadow: inset 0 6px 0 var(--b) }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f }
 
+    .vg { position: relative; border-radius: 6px; background: linear-gradient(#d3dad2 0 62%, #b9ae95 62%);
+          display: flex; align-items: flex-end; justify-content: center; overflow: hidden; flex-shrink: 0 }
+    .vg-ret { box-shadow: 0 0 0 2px #5c7a52; border: 1px solid #5c7a52 }
+    .vg-gar { border: 1px solid #ddd5c8 }
+    .vg-eca { border: 1px dashed #c9c2b6; opacity: .45 }
+    .ctl { display: flex; border: 1px solid #ddd5c8; border-radius: 5px; overflow: hidden; background: #fffdfa }
+    .ctl b { flex: 1; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 9px;
+             font-weight: 400; color: #b0a89b; border-right: 1px solid #ece6db }
+    .ctl b:last-child { border-right: 0 }
+    .ctl b.on-v { background: #5c7a52; color: #fff8f4 }
+    .ctl b.on-r { background: #8a3f33; color: #fff8f4 }
+    .ctl b.on-n { background: #e6dfd2; color: #4e483f }
+    .sep { width: 1px; align-self: stretch; background: #c9c2b6; margin: 0 11px; flex-shrink: 0 }
+    .plus { border: 1px dashed #c9c2b6; border-radius: 6px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 2px; color: #948c80; flex-shrink: 0 }
+    .barre { height: 7px; border-radius: 4px; background: #ece6db; position: relative; margin-top: 5px }
+    .barre i { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: #c9c2b6 }
+
+    .epi { position: absolute; right: 3px; top: 3px; width: 12px; height: 12px; border-radius: 50%;
+           background: #e6dfd2; border: 1px solid #c9c2b6; display: flex; align-items: center;
+           justify-content: center; font-size: 7.5px; color: #4e483f }
 
   </style>
 </helmet>
 
-<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+<div class="k" style="width: 1600px; background: #f7f3ec">
 
-  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
-    <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
-        <div class="serif" style="font-size: 25px; line-height: 1.15">Le Marais du Vieux Moulin</div>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+  <div style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 12px 14px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px">
+        <span class="serif" style="font-size: 21px">Le Marais du Vieux Moulin</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
       </div>
-      <div style="font-size: 12.5px; color: #6d675e">45 images · 12 poses sur 18</div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
-      <div class="rl" style="background: #e6dfd2; font-weight: 600"><span>Les personnages</span><span class="num" style="color: #a8492c">3</span></div>
-      <div class="rl-sub" style="background: #ece6db; color: #221f1b; font-weight: 600"><span>Tous</span><span class="num">3</span></div>
-      <div class="rl-sub2" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le pélerin</span><span class="num" style="color: #a8492c">6 / 6</span></div>
-      <div class="rl-sub2"><span>Le garde du moulin</span><span class="num">6 / 6</span></div>
-      <div class="rl-sub2"><span>La grenouille des tourbières</span><span class="num">0 / 6</span></div>
-      <div class="rl-sub" style="color: #948c80"><span>+ Nouvelle collection</span></div>
-      <div class="rl"><span>Les objets</span><span class="num">1</span></div>
-      <div class="rl"><span>Les décors</span><span class="num">1</span></div>
-      <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
-      <div class="rl"><span>L'interface</span><span class="num">1</span></div>
-      <div class="rl"><span>Les équipements</span><span class="num">2</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
-      <div class="rl"><span>Son nom et son dossier</span></div>
-      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
-      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
-      <div class="rl"><span>Ses types de sujets</span><span class="num">8 échelles</span></div>
-      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
-      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
-      <div class="rl"><span>Son détourage de départ</span></div>
-      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
+      <div class="rl"><span>Les r&egrave;gles du jeu</span></div>
+      <div class="rl"><span>La toile de l'univers</span><span class="num">61</span></div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="rl" style="background: #e6dfd2; font-weight: 600"><span>Les personnages</span><span class="num">12</span></div>
+      <div class="rl-sub" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le p&eacute;lerin</span></div>
+      <div class="rl-sub"><span>La sorci&egrave;re</span></div>
+      <div class="rl-sub"><span>Le passeur</span></div>
+      <div class="rl"><span>Les cr&eacute;atures</span><span class="num">8</span></div>
+      <div class="rl"><span>Les &eacute;quipements</span><span class="num">9</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">14</span></div>
+      <div class="rl"><span>Les d&eacute;cors</span><span class="num">6</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">11</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">4</span></div>
+      </div>
+      <div class="rt" style="padding: 12px 10px 4px">Toutes les images</div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
       <div class="rl"><span>La galerie</span><span class="num">45</span></div>
-      <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
-    </div>
-    <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 13px 10px 0; display: flex; flex-direction: column; gap: 8px">
-      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Ces quatre onglets sont le même écran. Le carnet ne bouge pas quand on passe de l'un à l'autre.</div>
-      <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
-        <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
+      <div class="rl"><span>Les d&eacute;penses</span><span class="num">$1,55</span></div>
       </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
-        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
-        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 11px">
+        <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">On arrive ici par l'onglet <b>Ses images</b>, sur la page du p&eacute;lerin. Une pose est ouverte &agrave; la fois&nbsp;: c'est ce qui permet d'en avoir douze sans que l'&eacute;cran devienne illisible.</div>
+        <!-- pied -->
+        <div style="border-top: 1px solid #e2dbd0; padding: 11px 10px 0; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80"><span class="kb">&#8984;K</span><span>chercher, ou faire</span></div>
+          <div style="display: flex; align-items: center; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #4e483f">
+            <span style="display: flex; align-items: center; gap: 6px"><span class="kb">?</span>Le guide et les touches</span>
+            <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> L'installation</span>
+          </div>
+        </div>
+        <!-- /pied -->
       </div>
-    </div>
   </div>
 
   <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 13px">
-    <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80"><span>Les personnages</span><span>›</span><span>Tous</span><span>›</span><span style="color: #3d382f">Le pélerin</span></div>
+    <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80"><span style="color: #3d382f">Le p&eacute;lerin</span></div>
 
     <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
       <div style="display: flex; flex-direction: column; gap: 3px">
-        <h1 class="serif" style="margin: 0; font-size: 36px; line-height: 1.05">Le pélerin</h1>
-        <div style="font-size: 13px; color: #4e483f">Dix-huit images, rangées par pose. Une seule est retenue par pose ; les autres restent à côté.</div>
+        <h1 class="serif" style="margin: 0; font-size: 36px; line-height: 1.05">Ses images</h1>
+        <div style="font-size: 13px; color: #4e483f">une rang&eacute;e par direction &mdash; la retenue &agrave; gauche, les autres dans l'ordre o&ugrave; elles sont arriv&eacute;es</div>
       </div>
-      <div class="bt bt-p" style="height: 38px; padding: 0 16px; flex-shrink: 0">Générer une pose</div>
+      
     </div>
-
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
-      <div class="seg" style="padding: 3px"><div class="ong">Sa fiche</div><div class="ong ong-on">Ses images</div><div class="ong">Ses animations</div><div class="ong">L'essai</div></div>
+      <div class="seg" style="padding: 3px"><div class="ong">Sa fiche</div><div class="ong ong-on">Ses images</div><div class="ong">Ses animations</div><div class="ong">L'essai</div></div><div style="display: flex; align-items: center; gap: 9px">
+        <div class="seg"><div class="sg sg-on">toutes</div><div class="sg">&agrave; d&eacute;partager</div>
+        <div class="sg">&agrave; confirmer</div></div>
+        <span style="font-size: 12px; color: #6d675e">tout replier</span>
+      </div>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 10px">
-      <div class="seg">
-        <div class="sg sg-on">Toutes <span class="num" style="margin-left:4px">18</span></div>
-        <div class="sg">Retenues <span class="num" style="margin-left:4px">6</span></div>
-        <div class="sg">Variantes <span class="num" style="margin-left:4px">4</span></div>
-        <div class="sg">Calques <span class="num" style="margin-left:4px">4</span></div>
-        <div class="sg">Écartées <span class="num" style="margin-left:4px">4</span></div>
+    <div style="display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden">
+    <div style="display: flex; flex-direction: column; border: 1px solid #ddd5c8; border-radius: 10px;
+                background: #fffdfa; padding: 0 15px 8px">
+      <div style="display: flex; align-items: baseline; gap: 11px; padding: 12px 0 4px">
+        <span style="font-size: 12px; color: #948c80">&#9662;</span>
+        <span class="serif" style="font-size: 21px">repos</span>
+        <span style="font-size: 12px; color: #6d675e">4 directions &middot; 18 images &middot; 3 &agrave; confirmer</span>
       </div>
-      <div class="seg"><div class="sg">×1</div><div class="sg sg-on">×2</div><div class="sg">×4</div></div>
-      <div style="margin-left: auto; font-size: 12.5px; color: #6d675e">l'image cerclée de rouille est celle que le jeu utilise</div>
-    </div>
-
-    <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column">
-      <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 16px; align-items: center; padding: 9px 0; border-bottom: 1px solid #ece6db">
-        <div><div style="font-size: 13.5px; font-weight: 500">Repos</div><div style="font-size: 11.5px; color: #948c80">3 images · 1 retenue</div></div>
-        <div style="display: flex; gap: 9px; align-items: center"><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #a8492c;border-radius:7px;box-shadow: 0 0 0 3px rgba(168,73,44,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#6f5e48;--b:#8e7a5c;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #e2dbd0;border-radius:7px;opacity: .45;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#67563f;--b:#867054;width:20px;height:28px"></i><div style="position:absolute;right:4px;top:4px;background:#f8ece9;border:1px solid #dcbcb2;color:#8a3f33;font-size:9px;border-radius:3px;padding:1px 4px">écartée</div></div><div class="vide" style="width:76px;height:76px;display:flex;align-items:center;justify-content:center;color:#948c80;font-size:19px">+</div></div>
-      </div>
-      <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 16px; align-items: center; padding: 9px 0; border-bottom: 1px solid #ece6db">
-        <div><div style="font-size: 13.5px; font-weight: 500">Marche</div><div style="font-size: 11.5px; color: #948c80">4 images · 1 retenue</div></div>
-        <div style="display: flex; gap: 9px; align-items: center"><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #a8492c;border-radius:7px;box-shadow: 0 0 0 3px rgba(168,73,44,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#71604a;--b:#907c60;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #e2dbd0;border-radius:7px;opacity: .45;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#655440;--b:#836d52;width:20px;height:28px"></i><div style="position:absolute;right:4px;top:4px;background:#f8ece9;border:1px solid #dcbcb2;color:#8a3f33;font-size:9px;border-radius:3px;padding:1px 4px">écartée</div></div><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#6d5c46;--b:#8c765a;width:20px;height:28px"></i></div><div class="vide" style="width:76px;height:76px;display:flex;align-items:center;justify-content:center;color:#948c80;font-size:19px">+</div></div>
-      </div>
-      <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 16px; align-items: center; padding: 9px 0; border-bottom: 1px solid #ece6db">
-        <div><div style="font-size: 13.5px; font-weight: 500">Course</div><div style="font-size: 11.5px; color: #948c80">2 images · 1 retenue</div></div>
-        <div style="display: flex; gap: 9px; align-items: center"><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #a8492c;border-radius:7px;box-shadow: 0 0 0 3px rgba(168,73,44,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #e2dbd0;border-radius:7px;opacity: .45;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#6f5e48;--b:#8e7a5c;width:20px;height:28px"></i><div style="position:absolute;right:4px;top:4px;background:#f8ece9;border:1px solid #dcbcb2;color:#8a3f33;font-size:9px;border-radius:3px;padding:1px 4px">écartée</div></div><div class="vide" style="width:76px;height:76px;display:flex;align-items:center;justify-content:center;color:#948c80;font-size:19px">+</div></div>
-      </div>
-      <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 16px; align-items: center; padding: 9px 0; border-bottom: 1px solid #ece6db">
-        <div><div style="font-size: 13.5px; font-weight: 500">Attaque</div><div style="font-size: 11.5px; color: #948c80">3 images · 1 retenue</div></div>
-        <div style="display: flex; gap: 9px; align-items: center"><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #a8492c;border-radius:7px;box-shadow: 0 0 0 3px rgba(168,73,44,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#6b5a44;--b:#8a7458;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#71604a;--b:#907c60;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #e2dbd0;border-radius:7px;opacity: .45;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#655440;--b:#836d52;width:20px;height:28px"></i><div style="position:absolute;right:4px;top:4px;background:#f8ece9;border:1px solid #dcbcb2;color:#8a3f33;font-size:9px;border-radius:3px;padding:1px 4px">écartée</div></div><div class="vide" style="width:76px;height:76px;display:flex;align-items:center;justify-content:center;color:#948c80;font-size:19px">+</div></div>
-      </div>
-      <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 16px; align-items: center; padding: 9px 0; border-bottom: 1px solid #ece6db">
-        <div><div style="font-size: 13.5px; font-weight: 500">Dégâts</div><div style="font-size: 11.5px; color: #948c80">1 image · 1 retenue</div></div>
-        <div style="display: flex; gap: 9px; align-items: center"><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #a8492c;border-radius:7px;box-shadow: 0 0 0 3px rgba(168,73,44,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#7a6552;--b:#9c8467;width:20px;height:28px"></i></div><div class="vide" style="width:76px;height:76px;display:flex;align-items:center;justify-content:center;color:#948c80;font-size:19px">+</div><span style="font-size:12px;color:#948c80;margin-left:6px">aucune variante — on n’a jamais eu à choisir</span></div>
-      </div>
-      <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 16px; align-items: center; padding: 9px 0; border-bottom: 1px solid #ece6db">
-        <div><div style="font-size: 13.5px; font-weight: 500">Mort</div><div style="font-size: 11.5px; color: #948c80">1 image · 1 retenue</div></div>
-        <div style="display: flex; gap: 9px; align-items: center"><div class="damier" style="position:relative;width:76px;height:76px;border:1px solid #a8492c;border-radius:7px;box-shadow: 0 0 0 3px rgba(168,73,44,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#5f5142;--b:#7e6c58;width:20px;height:28px"></i></div><div class="vide" style="width:76px;height:76px;display:flex;align-items:center;justify-content:center;color:#948c80;font-size:19px">+</div></div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 16px; align-items: center; padding: 11px 0">
-        <div><div style="font-size: 13.5px; font-weight: 500; color: #6d675e">Ses calques</div><div style="font-size: 11.5px; color: #948c80">4 · portés par-dessus</div></div>
-        <div style="display: flex; gap: 9px; align-items: center">
-          <div class="damier" style="position:relative;width:60px;height:60px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#9c3b32;--b:#c2564e;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:60px;height:60px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#7a6a52;--b:#a3945c;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:60px;height:60px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#7a6a52;--b:#a3945c;width:20px;height:28px"></i></div><div class="damier" style="position:relative;width:60px;height:60px;border:1px solid #e2dbd0;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;overflow:hidden"><i class="fig" style="--a:#7a6a52;--b:#a3945c;width:20px;height:28px"></i></div>
-          <span style="font-size: 12px; color: #948c80; margin-left: 6px">l'épée au repos · le sac au repos ×2 · le sac en marche</span>
+      <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr) 46px; gap: 10px;
+                  align-items: start; padding: 9px 0; border-top: 1px solid #ece6db">
+        <div style="display: flex; flex-direction: column; gap: 1px; padding-top: 15px">
+          <span style="font-size: 12.5px; color: #221f1b">sud</span>
+          <span class="mono" style="font-size: 9.5px; color: #948c80">7</span>
         </div>
+        <div style="min-width: 0">
+          <div style="display: flex; gap: 8px; align-items: flex-start; overflow: hidden"><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-ret" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.3px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.8px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div><span style="position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #5c7a52; color: #fff8f4; font-size: 9px; display: flex; align-items: center; justify-content: center">&#10003;</span></div>
+              <div style="display: flex; justify-content: center"><span style="font-size: 9px; color: #a8492c">la retenue</span></div>
+              <span class="ctl"><b class="on-v">&#9679;</b><b class="">&#9675;</b><b class="">&#8856;</b></span>
+            </div><span class="sep"></span><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-7.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(7.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.0px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.5px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">01:41</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.3px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.8px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">01:44</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.8px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 25.4px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">01:49</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.8px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 25.4px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">02:06</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div><span class="sep"></span><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; flex-shrink: 0; padding-top: 20px"><span style="display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border: 1px solid #ddd5c8; border-radius: 12px; background: #fffdfa; font-size: 11px; color: #6d675e; white-space: nowrap">&#9656; 2 &eacute;cart&eacute;es</span></div></div>
+          
+        </div>
+        <div class="plus" style="width: 46px; height: 62px"><span style="font-size: 17px; font-weight: 300">+</span><span style="font-size: 8.5px; line-height: 1">g&eacute;n&eacute;rer</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr) 46px; gap: 10px;
+                  align-items: start; padding: 9px 0; border-top: 1px solid #ece6db">
+        <div style="display: flex; flex-direction: column; gap: 1px; padding-top: 15px">
+          <span style="font-size: 12.5px; color: #221f1b">nord</span>
+          <span class="mono" style="font-size: 9.5px; color: #948c80">2</span>
+        </div>
+        <div style="min-width: 0">
+          <div style="display: flex; gap: 8px; align-items: flex-start; overflow: hidden"><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-ret" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.8px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 25.4px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div><span style="position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #5c7a52; color: #fff8f4; font-size: 9px; display: flex; align-items: center; justify-content: center">&#10003;</span></div>
+              <div style="display: flex; justify-content: center"><span style="font-size: 9px; color: #a8492c">la retenue</span></div>
+              <span class="ctl"><b class="on-v">&#9679;</b><b class="">&#9675;</b><b class="">&#8856;</b></span>
+            </div><span class="sep"></span><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.3px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.8px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">04:05</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div></div>
+          
+        </div>
+        <div class="plus" style="width: 46px; height: 62px"><span style="font-size: 17px; font-weight: 300">+</span><span style="font-size: 8.5px; line-height: 1">g&eacute;n&eacute;rer</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr) 46px; gap: 10px;
+                  align-items: start; padding: 9px 0; border-top: 1px solid #ece6db">
+        <div style="display: flex; flex-direction: column; gap: 1px; padding-top: 15px">
+          <span style="font-size: 12.5px; color: #221f1b">est</span>
+          <span class="mono" style="font-size: 9.5px; color: #948c80">5</span>
+        </div>
+        <div style="min-width: 0">
+          <div style="display: flex; gap: 8px; align-items: flex-start; overflow: hidden"><div style="display: flex; align-items: center; width: 62px; height: 62px; flex-shrink: 0; border: 1px dashed #dcbcb2; border-radius: 6px; background: #f8ece9; padding: 0 6px; font-size: 9.5px; line-height: 1.3; color: #8a3f33; text-align: center">aucune retenue</div><span class="sep"></span><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-7.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(7.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.0px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.5px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">05:20</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.3px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.8px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">05:24</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.3px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.8px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">05:29</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.3px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.8px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">05:33</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div><span class="sep"></span><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; flex-shrink: 0; padding-top: 20px"><span style="display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border: 1px solid #ddd5c8; border-radius: 12px; background: #fffdfa; font-size: 11px; color: #6d675e; white-space: nowrap">&#9656; 1 &eacute;cart&eacute;e</span></div></div>
+          
+        </div>
+        <div class="plus" style="width: 46px; height: 62px"><span style="font-size: 17px; font-weight: 300">+</span><span style="font-size: 8.5px; line-height: 1">g&eacute;n&eacute;rer</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr) 46px; gap: 10px;
+                  align-items: start; padding: 9px 0; border-top: 1px solid #ece6db">
+        <div style="display: flex; flex-direction: column; gap: 1px; padding-top: 15px">
+          <span style="font-size: 12.5px; color: #221f1b">ouest</span>
+          <span class="mono" style="font-size: 9.5px; color: #948c80">&mdash;</span>
+        </div>
+        <div style="min-width: 0">
+          <div style="display: flex; gap: 8px; align-items: flex-start; overflow: hidden"><div style="display: flex; align-items: center; height: 84px; font-size: 12px; color: #b0a89b">rien encore &mdash; on peut la retourner depuis l'est, sans rien payer</div></div>
+          
+        </div>
+        <div class="plus" style="width: 46px; height: 62px"><span style="font-size: 17px; font-weight: 300">+</span><span style="font-size: 8.5px; line-height: 1">g&eacute;n&eacute;rer</span></div>
       </div>
     </div>
-
-    <div style="padding: 9px 0 15px; border-top: 1px solid #e2dbd0; display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 12.5px; color: #6d675e">
-      <span>Écarter une image ne l'efface pas : elle sort du jeu et reste dans la galerie.</span>
-      <a href="#" style="text-decoration: none; white-space: nowrap">Voir ses 18 images dans la galerie ›</a>
+    <div style="display: flex; align-items: center; gap: 11px; padding: 9px 15px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span style="font-size: 12px; color: #948c80">&#9656;</span>
+      <span class="serif" style="font-size: 18px">marche</span>
+      <span style="font-size: 12px; color: #6d675e">4 directions &middot; 24 images</span>
+      <span style="margin-left: auto"></span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 11px; padding: 9px 15px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span style="font-size: 12px; color: #948c80">&#9656;</span>
+      <span class="serif" style="font-size: 18px">course</span>
+      <span style="font-size: 12px; color: #6d675e">3 directions &middot; 9 images</span>
+      <span class="puce p-a" style="margin-left: auto">1 direction vide</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 11px; padding: 9px 15px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span style="font-size: 12px; color: #948c80">&#9656;</span>
+      <span class="serif" style="font-size: 18px">attaque</span>
+      <span style="font-size: 12px; color: #6d675e">2 directions &middot; 5 images</span>
+      <span class="puce p-a" style="margin-left: auto">2 sans retenue</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 11px; padding: 9px 15px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span style="font-size: 12px; color: #948c80">&#9656;</span>
+      <span class="serif" style="font-size: 18px">d&eacute;g&acirc;ts</span>
+      <span style="font-size: 12px; color: #6d675e">aucune image</span>
+      <span class="puce p-a" style="margin-left: auto">rien</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 11px; padding: 9px 15px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span style="font-size: 12px; color: #948c80">&#9656;</span>
+      <span class="serif" style="font-size: 18px">mort</span>
+      <span style="font-size: 12px; color: #6d675e">1 direction &middot; 4 images</span>
+      <span class="puce p-a" style="margin-left: auto">3 directions retir&eacute;es du plan</span>
+    </div>
     </div>
   </div>
 
   <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 13px; overflow: hidden">
-    <div style="display: flex; flex-direction: column; gap: 4px">
-      <div class="rt">L'image choisie</div>
-      <div style="font-size: 13px; line-height: 1.45; color: #4e483f">Le pélerin, au repos — celle que le jeu utilise.</div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <span class="serif" style="font-size: 21px">L'image retenue</span>
+      <span class="puce p-ok">retenue</span>
+    </div>
+    <div style="font-size: 13px; color: #4e483f">Le p&eacute;lerin, au repos, vers le sud &mdash; celle que le jeu utilise.</div>
+
+    <div style="height: 176px; background: #6c6c6c; border-radius: 9px; display: flex; align-items: center;
+                justify-content: center; overflow: hidden">
+      <div style="width: 152px; height: 152px; background: linear-gradient(#d3dad2 0 62%, #b9ae95 62%);
+                  display: flex; align-items: flex-end; justify-content: center">
+        <div style="padding-bottom: 14px"><div style="position: relative; width: 54.3px; height: 118px"><div style="position: absolute; left: 22.4px; bottom: 0; width: 8.3px; height: 47.2px; background: #6a5b47; border-radius: 3.5px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 22.4px; bottom: 0; width: 8.3px; height: 47.2px; background: #2f2820; border-radius: 3.5px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 42.5px; width: 30.7px; height: 42.5px; background: #5f503c; border-radius: 5.9px 5.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 77.9px; width: 17.7px; height: 17.7px; border-radius: 50%; background: #e2caa8"></div></div></div>
+      </div>
     </div>
 
-    <div class="damier" style="height: 208px; border: 1px solid #ddd5c8; border-radius: 9px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 26px">
-      <i class="fig" style="--a:#6b5a44;--b:#8a7458; width: 62px; height: 84px"></i>
+    <div style="display: flex; flex-direction: column; gap: 7px; border-top: 1px solid #e2dbd0; padding-top: 11px">
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Quand</span><span style="color: #221f1b; text-align: right">4 sept &middot; 01:53</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Par quel mod&egrave;le</span><span style="color: #221f1b; text-align: right">gpt-image-2</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Ce qu'elle a co&ucirc;t&eacute;</span><span style="color: #221f1b; text-align: right">$0,0189</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Sa taille</span><span style="color: #221f1b; text-align: right">1024 &rarr; 64 px</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Ses passes</span><span style="color: #221f1b; text-align: right">3 sur 9</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Ses calques</span><span style="color: #221f1b; text-align: right">4 &mdash; voir plus bas</span></div>
     </div>
 
-    <div class="carte" style="padding: 12px 13px; display: grid; grid-template-columns: minmax(0,1fr) auto; row-gap: 6px; font-size: 12.5px; align-items: baseline">
-      <span style="color: #6d675e">Quand</span><span class="mono" style="font-size: 11.5px">4 sept · 01:53</span>
-      <span style="color: #6d675e">Par quel modèle</span><span class="mono" style="font-size: 11.5px">gpt-image-2</span>
-      <span style="color: #6d675e">Ce qu'elle a coûté</span><span class="mono" style="font-size: 11.5px">$0,0189</span>
-      <span style="color: #6d675e">Sa taille</span><span class="mono" style="font-size: 11.5px">1024 → 64 px</span>
-      <span style="color: #6d675e">Ses passes</span><span class="mono" style="font-size: 11.5px">3 sur 9</span>
+    <div style="display: flex; flex-direction: column; gap: 5px; border-top: 1px solid #e2dbd0; padding-top: 11px">
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px">
+        <span style="color: #6d675e">Ce qui &eacute;tait parti</span>
+        <a href="#" style="text-decoration: none; font-size: 11.5px">tout voir</a>
+      </div>
+      <div style="font-size: 11.5px; line-height: 1.5; color: #6d675e">
+        idle stance, full body &mdash; A weathered pilgrim in a hooded brown robe, leather straps&hellip;</div>
     </div>
 
-    <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 7px">
-      <div style="display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 13px; font-weight: 600">Ce qui était parti</span><a href="#" style="font-size: 12px; text-decoration: none">tout voir</a></div>
-      <div class="mono" style="font-size: 11px; line-height: 1.55; color: #4e483f">idle stance, full body — A weathered pilgrim in a hooded brown robe, leather straps…</div>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+      <div class="bt bt-p" style="height: 38px; width: 100%">La retoucher</div>
+      <div class="bt" style="height: 34px; width: 100%">En g&eacute;n&eacute;rer une variante &mdash; $0,019</div>
+      <div class="bt bt-x" style="height: 30px; width: 100%; color: #8a3f33">L'&eacute;carter</div>
     </div>
+  </div>
 
-    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px">
-      <div class="bt" style="height: 33px; justify-content: flex-start">La retoucher</div>
-      <div class="bt" style="height: 33px; justify-content: flex-start">En faire son image de référence</div>
-      <div class="bt bt-p" style="height: 33px; justify-content: space-between; padding: 0 13px"><span>En générer une variante</span><span class="mono" style="font-size: 11.5px">$0,019</span></div>
-      <div class="bt" style="height: 33px; justify-content: flex-start; color: #8a3f33">L'écarter</div>
+  </div>
+
+
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Les quatre marques d'une image</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">trois qui s'excluent, et une quatri&egrave;me qui se pose par-dessus</span>
     </div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+    <div style="display: flex; gap: 15px; align-items: flex-start; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="flex-shrink: 0"><div style="display: flex; flex-direction: column; gap: 3px; width: 78px; flex-shrink: 0">
+              <div class="vg vg-ret" style="width: 78px; height: 78px"><div style="padding-bottom: 7px"><div style="position: relative; width: 22.2px; height: 48px"><div style="position: absolute; left: 9.2px; bottom: 0; width: 3.4px; height: 19.3px; background: #6a5b47; border-radius: 1.5px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 9.2px; bottom: 0; width: 3.4px; height: 19.3px; background: #2f2820; border-radius: 1.5px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 16.7px; width: 12.6px; height: 17.4px; background: #5f503c; border-radius: 2.4px 2.4px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 31.2px; width: 7.3px; height: 7.3px; border-radius: 50%; background: #e2caa8"></div></div></div><span style="position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #5c7a52; color: #fff8f4; font-size: 9px; display: flex; align-items: center; justify-content: center">&#10003;</span></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">01:53</span></div>
+              <span class="ctl"><b class="on-v">&#9679;</b><b class="">&#9675;</b><b class="">&#8856;</b></span>
+            </div></div>
+      <div style="min-width: 0; display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; gap: 9px">
+          <span style="font-size: 14px; font-weight: 600">Retenue</span>
+          <span class="mono" style="font-size: 10.5px; color: #a8492c">favori</span>
+        </div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Celle que le jeu utilise, et la seule de sa case. En retenir une autre lib&egrave;re celle-ci sans rien effacer.</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: flex-start; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="flex-shrink: 0"><div style="display: flex; flex-direction: column; gap: 3px; width: 78px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 78px; height: 78px"><div style="padding-bottom: 7px"><div style="position: relative; width: 22.2px; height: 48px"><div style="position: absolute; left: 9.2px; bottom: 0; width: 3.4px; height: 19.3px; background: #6a5b47; border-radius: 1.5px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 9.2px; bottom: 0; width: 3.4px; height: 19.3px; background: #2f2820; border-radius: 1.5px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 16.7px; width: 12.6px; height: 17.4px; background: #5f503c; border-radius: 2.4px 2.4px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 31.2px; width: 7.3px; height: 7.3px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">01:53</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div></div>
+      <div style="min-width: 0; display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; gap: 9px">
+          <span style="font-size: 14px; font-weight: 600">Gard&eacute;e</span>
+          <span class="mono" style="font-size: 10.5px; color: #a8492c">&mdash;</span>
+        </div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">L'&eacute;tat ordinaire&nbsp;: elle existe, elle est visible, elle ne sort pas. C'est l'absence des deux autres marques.</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: flex-start; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="flex-shrink: 0"><div style="display: flex; flex-direction: column; gap: 3px; width: 78px; flex-shrink: 0">
+              <div class="vg vg-eca" style="width: 78px; height: 78px"><div style="padding-bottom: 7px"><div style="position: relative; width: 22.2px; height: 48px"><div style="position: absolute; left: 9.2px; bottom: 0; width: 3.4px; height: 19.3px; background: #6a5b47; border-radius: 1.5px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 9.2px; bottom: 0; width: 3.4px; height: 19.3px; background: #2f2820; border-radius: 1.5px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 16.7px; width: 12.6px; height: 17.4px; background: #5f503c; border-radius: 2.4px 2.4px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 31.2px; width: 7.3px; height: 7.3px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">01:53</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="">&#9675;</b><b class="on-r">&#8856;</b></span>
+            </div></div>
+      <div style="min-width: 0; display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; gap: 9px">
+          <span style="font-size: 14px; font-weight: 600">&Eacute;cart&eacute;e</span>
+          <span class="mono" style="font-size: 10.5px; color: #a8492c">supprime_le</span>
+        </div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Repli&eacute;e derri&egrave;re la fl&egrave;che. Le fichier reste sur le disque et la d&eacute;pense reste au journal&nbsp;: &eacute;carter est un jugement, pas un effacement.</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: flex-start; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="flex-shrink: 0"><div style="display: flex; flex-direction: column; gap: 3px; width: 78px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 78px; height: 78px"><div style="padding-bottom: 7px"><div style="position: relative; width: 22.2px; height: 48px"><div style="position: absolute; left: 9.2px; bottom: 0; width: 3.4px; height: 19.3px; background: #6a5b47; border-radius: 1.5px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 9.2px; bottom: 0; width: 3.4px; height: 19.3px; background: #2f2820; border-radius: 1.5px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 17.4px; width: 12.6px; height: 17.4px; background: #5f503c; border-radius: 2.4px 2.4px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 31.9px; width: 7.3px; height: 7.3px; border-radius: 50%; background: #e2caa8"></div></div></div><span class="epi">&#9679;</span></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">02:06</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div></div>
+      <div style="min-width: 0; display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; gap: 9px">
+          <span style="font-size: 14px; font-weight: 600">&Eacute;pingl&eacute;e</span>
+          <span class="mono" style="font-size: 10.5px; color: #a8492c">epingle</span>
+        </div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Pos&eacute;e toute seule d&egrave;s qu'on touche une recette &agrave; la main. Un changement de palette du jeu <b>saute</b> les &eacute;pingl&eacute;es&nbsp;: le travail fait &agrave; la main ne se fait pas &eacute;craser par un r&eacute;glage g&eacute;n&eacute;ral.</div>
+      </div>
+    </div>
+  </div>
+  <div style="font-size: 13px; line-height: 1.6; color: #4e483f; max-width: 108ch; padding-top: 4px">
+    Les trois premi&egrave;res s'excluent&nbsp;: une image est retenue, ou gard&eacute;e, ou &eacute;cart&eacute;e, jamais deux &agrave; la fois,
+    et les trois boutons sous la vignette suffisent &agrave; passer de l'une &agrave; l'autre.
+    La quatri&egrave;me se pose <b>en plus</b> des trois, et jamais &agrave; la main&nbsp;: on l'obtient en touchant une recette.
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Quand la direction n'a jamais &eacute;t&eacute; d&eacute;clar&eacute;e</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">un cas que la matrice ne pouvait pas montrer, et que la rang&eacute;e montre tout seule</span>
+    </div>
+  <div style="display: flex; flex-direction: column; gap: 16px">
+    <div style="border: 1px solid #e0cfb8; border-radius: 10px; background: #fffdfa; padding: 4px 16px 12px">
+      <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr) 46px; gap: 10px;
+                  align-items: start; padding: 9px 0; border-top: 1px solid #ece6db">
+        <div style="display: flex; flex-direction: column; gap: 1px; padding-top: 15px">
+          <span style="font-size: 12.5px; color: #221f1b">sud</span>
+          <span class="mono" style="font-size: 9.5px; color: #948c80">3</span>
+        </div>
+        <div style="min-width: 0">
+          <div style="display: flex; gap: 8px; align-items: flex-start; overflow: hidden"><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-ret" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.3px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.8px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div><span style="position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #5c7a52; color: #fff8f4; font-size: 9px; display: flex; align-items: center; justify-content: center">&#10003;</span></div>
+              <div style="display: flex; justify-content: center"><span style="font-size: 9px; color: #a8492c">la retenue</span></div>
+              <span class="ctl"><b class="on-v">&#9679;</b><b class="">&#9675;</b><b class="">&#8856;</b></span>
+            </div><span class="sep"></span><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-7.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(7.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.0px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.5px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">01:41</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div><div style="display: flex; flex-direction: column; gap: 3px; width: 62px; flex-shrink: 0">
+              <div class="vg vg-gar" style="width: 62px; height: 62px"><div style="padding-bottom: 7px"><div style="position: relative; width: 17.7px; height: 38px"><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #6a5b47; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(-4.2deg)"></div><div style="position: absolute; left: 7.3px; bottom: 0; width: 2.7px; height: 15.4px; background: #2f2820; border-radius: 1.2px; transform-origin: 50% 0; transform: rotate(4.2deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 13.3px; width: 10.0px; height: 13.8px; background: #5f503c; border-radius: 1.9px 1.9px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 24.8px; width: 5.8px; height: 5.8px; border-radius: 50%; background: #e2caa8"></div></div></div></div>
+              <div style="display: flex; justify-content: center"><span class="mono" style="font-size: 9px; color: #948c80">01:44</span></div>
+              <span class="ctl"><b class="">&#9679;</b><b class="on-n">&#9675;</b><b class="">&#8856;</b></span>
+            </div></div>
+        </div>
+        <div class="plus" style="width: 46px; height: 62px"><span style="font-size: 17px; font-weight: 300">+</span><span style="font-size: 8.5px; line-height: 1">g&eacute;n&eacute;rer</span></div>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px">
+      <div style="font-size: 13px; line-height: 1.65; color: #4e483f">
+        Une image faite avant que le jeu ne d&eacute;clare ses directions ne sait pas d'o&ugrave; elle regarde.
+        L'atelier <b>ne le devine pas</b>&nbsp;: il la pose dans la premi&egrave;re rang&eacute;e avec la marque
+        &laquo;&nbsp;&agrave; confirmer&nbsp;&raquo;, en trait pointill&eacute;. Vide n'est pas le sud.
+      </div>
+      <div style="font-size: 13px; line-height: 1.65; color: #4e483f">
+        C'est pr&eacute;cis&eacute;ment ce que la matrice ne pouvait pas montrer&nbsp;: une case y disait
+        &laquo;&nbsp;3&nbsp;&raquo; sans pouvoir dire que ces trois-l&agrave; &eacute;taient rang&eacute;es par d&eacute;faut.
+        Dans la rang&eacute;e, elles sont &agrave; part, et un clic les confirme ou les d&eacute;place.
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Ses quatre calques</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">ce que porte l'image retenue &mdash; ils ne sont pas dans les rang&eacute;es, et voici pourquoi</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="position: relative; height: 130px; border: 1px solid #ddd5c8; border-radius: 8px;
+                  background: linear-gradient(#d3dad2 0 62%, #b9ae95 62%); display: flex; align-items: flex-end;
+                  justify-content: center; overflow: hidden">
+        <div style="padding-bottom: 12px"><div style="position: relative; width: 44.2px; height: 96px"><div style="position: absolute; left: 18.2px; bottom: 0; width: 6.7px; height: 38.4px; background: #6a5b47; border-radius: 2.9px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 18.2px; bottom: 0; width: 6.7px; height: 38.4px; background: #2f2820; border-radius: 2.9px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 34.6px; width: 25.0px; height: 34.6px; background: #5f503c; border-radius: 4.8px 4.8px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 63.4px; width: 14.4px; height: 14.4px; border-radius: 50%; background: #e2caa8"></div></div></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <span style="font-size: 13px; font-weight: 600">le corps nu</span>
+        <span style="font-size: 11.5px; color: #6d675e">&mdash; &middot; l'image retenue elle-m&ecirc;me</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="position: relative; height: 130px; border: 1px solid #ddd5c8; border-radius: 8px;
+                  background: linear-gradient(#d3dad2 0 62%, #b9ae95 62%); display: flex; align-items: flex-end;
+                  justify-content: center; overflow: hidden">
+        <div style="padding-bottom: 12px"><div style="position: relative; width: 44.2px; height: 96px"><div style="position: absolute; left: 18.2px; bottom: 0; width: 6.7px; height: 38.4px; background: #6a5b47; border-radius: 2.9px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 18.2px; bottom: 0; width: 6.7px; height: 38.4px; background: #2f2820; border-radius: 2.9px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 34.6px; width: 25.0px; height: 34.6px; background: #5f503c; border-radius: 4.8px 4.8px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 63.4px; width: 14.4px; height: 14.4px; border-radius: 50%; background: #e2caa8"></div></div></div><div style="position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); width: 30px; height: 20px; border-radius: 15px 15px 2px 2px; background: #8a8168; border: 1px solid rgba(34,31,27,.3)"></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <span style="font-size: 13px; font-weight: 600">l'&eacute;p&eacute;e du goliath</span>
+        <span style="font-size: 11.5px; color: #6d675e">la main droite &middot; &eacute;chelle 1,04</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="position: relative; height: 130px; border: 1px solid #ddd5c8; border-radius: 8px;
+                  background: linear-gradient(#d3dad2 0 62%, #b9ae95 62%); display: flex; align-items: flex-end;
+                  justify-content: center; overflow: hidden">
+        <div style="padding-bottom: 12px"><div style="position: relative; width: 44.2px; height: 96px"><div style="position: absolute; left: 18.2px; bottom: 0; width: 6.7px; height: 38.4px; background: #6a5b47; border-radius: 2.9px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 18.2px; bottom: 0; width: 6.7px; height: 38.4px; background: #2f2820; border-radius: 2.9px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 34.6px; width: 25.0px; height: 34.6px; background: #5f503c; border-radius: 4.8px 4.8px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 63.4px; width: 14.4px; height: 14.4px; border-radius: 50%; background: #e2caa8"></div></div></div><div style="position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); width: 30px; height: 20px; border-radius: 15px 15px 2px 2px; background: #7d5a3c; border: 1px solid rgba(34,31,27,.3)"></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <span style="font-size: 13px; font-weight: 600">la cape de bure</span>
+        <span style="font-size: 11.5px; color: #6d675e">le dos &middot; &eacute;chelle 0,98</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="position: relative; height: 130px; border: 1px solid #ddd5c8; border-radius: 8px;
+                  background: linear-gradient(#d3dad2 0 62%, #b9ae95 62%); display: flex; align-items: flex-end;
+                  justify-content: center; overflow: hidden">
+        <div style="padding-bottom: 12px"><div style="position: relative; width: 44.2px; height: 96px"><div style="position: absolute; left: 18.2px; bottom: 0; width: 6.7px; height: 38.4px; background: #6a5b47; border-radius: 2.9px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 18.2px; bottom: 0; width: 6.7px; height: 38.4px; background: #2f2820; border-radius: 2.9px; transform-origin: 50% 0; transform: rotate(0.0deg)"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 34.6px; width: 25.0px; height: 34.6px; background: #5f503c; border-radius: 4.8px 4.8px 2px 2px"></div><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 63.4px; width: 14.4px; height: 14.4px; border-radius: 50%; background: #e2caa8"></div></div></div><div style="position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); width: 30px; height: 20px; border-radius: 15px 15px 2px 2px; background: #7d8fa8; border: 1px solid rgba(34,31,27,.3)"></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <span style="font-size: 13px; font-weight: 600">le casque cabossé</span>
+        <span style="font-size: 11.5px; color: #6d675e">la t&ecirc;te &middot; &eacute;chelle 1,00</span>
+      </div>
+    </div>
+  </div>
+  <div style="font-size: 13px; line-height: 1.6; color: #4e483f; max-width: 108ch; padding-top: 6px">
+    Un calque n'est pas une image &agrave; lui&nbsp;: c'est une diff&eacute;rence pos&eacute;e sur celle-ci. Il n'a ni rang&eacute;e ni
+    &eacute;tat propre &mdash; il suit l'image qui le porte. Si l'on retient une autre image de cette case,
+    <b>les calques ne suivent pas</b>&nbsp;: ils appartiennent &agrave; celle sur laquelle ils ont &eacute;t&eacute; calcul&eacute;s.
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Ce que ce rangement demande au code</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">rien&nbsp;: les sept champs dont la rang&eacute;e a besoin sont d&eacute;j&agrave; sur l'image</span>
+    </div>
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 16px; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; align-items: baseline"><span class="mono" style="font-size: 12px; color: #a8492c">favori</span><span style="font-size: 12.5px">la retenue, et son liser&eacute; vert</span></div>
+      <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 16px; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; align-items: baseline"><span class="mono" style="font-size: 12px; color: #a8492c">supprime_le</span><span style="font-size: 12.5px">l'&eacute;cart&eacute;e, derri&egrave;re la fl&egrave;che</span></div>
+      <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 16px; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; align-items: baseline"><span class="mono" style="font-size: 12px; color: #a8492c">cree_le</span><span style="font-size: 12.5px">l'ordre de la rang&eacute;e, de la plus vieille &agrave; la plus r&eacute;cente</span></div>
+      <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 16px; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; align-items: baseline"><span class="mono" style="font-size: 12px; color: #a8492c">pose</span><span style="font-size: 12.5px">le groupe qu'on d&eacute;plie</span></div>
+      <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 16px; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; align-items: baseline"><span class="mono" style="font-size: 12px; color: #a8492c">direction</span><span style="font-size: 12.5px">la rang&eacute;e &mdash; et vide veut dire &laquo;&nbsp;&agrave; confirmer&nbsp;&raquo;, pas &laquo;&nbsp;sud&nbsp;&raquo;</span></div>
+      <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 16px; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; align-items: baseline"><span class="mono" style="font-size: 12px; color: #a8492c">rang</span><span style="font-size: 12.5px">quelle image du lot c'est &mdash; 1 sur 4, 2 sur 4&hellip;</span></div>
+      <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 16px; padding: 9px 12px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa; align-items: baseline"><span class="mono" style="font-size: 12px; color: #a8492c">epingle</span><span style="font-size: 12.5px">la quatri&egrave;me marque, celle que la main pose</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px 17px; border: 1px solid #e0cfb8;
+                border-radius: 9px; background: #f4ece2">
+      <span class="puce p-a" style="align-self: flex-start">la diff&eacute;rence</span>
+      <div style="font-size: 14px; font-weight: 600; color: #6d4a22">Les animations, elles, n'ont rien de tout &ccedil;a</div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #6d4a22">
+        La table des bandes porte la date, la pose et la direction, mais ni favori, ni rang, ni mise &agrave; l'&eacute;cart.
+        Le m&ecirc;me rangement y demande donc trois colonnes de plus &mdash; les m&ecirc;mes trois qui sont ici depuis
+        longtemps.</div>
+    </div>
+  </div>
+  </div>
   </div>
 
 </div>

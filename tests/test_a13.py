@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """A13 — l'image attrapée au vol : une image du clip entre en bibliothèque.
 
-Les critères de `docs/PLAN.md` § A13 qui vivent côté serveur. Ce que l'écran
+Les critères de `docs/archive/plan-r6-a-v3.02.md` § A13. Ceux qui vivent côté serveur ; ce que l'écran
 montre — le geste sur la loupe, la marque de ce qui est déjà pris, la phrase qui
 dit où c'est parti — vit dans `interface/src/App.test.tsx`.
 

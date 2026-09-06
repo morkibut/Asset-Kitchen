@@ -132,7 +132,7 @@ export function EcranVitrine({
             onClick={() => setEnsemble(!ensemble)}
             className={[
               "mesure h-[26px] rounded-[2px] border border-bord px-2 text-left text-[10px]",
-              ensemble ? "text-signal" : "text-texte-3 hover:text-texte-2",
+              ensemble ? "text-ancien-signal" : "text-texte-3 hover:text-texte-2",
             ].join(" ")}
           >
             toutes ses poses à la même échelle
@@ -156,7 +156,7 @@ export function EcranVitrine({
         <button
           type="button"
           onClick={onFermer}
-          className="mesure mt-2 h-[26px] rounded-[2px] border border-bord px-2 text-[10px] text-texte-3 hover:text-signal"
+          className="mesure mt-2 h-[26px] rounded-[2px] border border-bord px-2 text-[10px] text-texte-3 hover:text-ancien-signal"
         >
           Fermer la vitrine — Échap
         </button>
@@ -234,7 +234,7 @@ export function EcranVitrine({
                     }
                   }}
                   disabled={dedans.length === 0}
-                  className="min-w-0 flex-1 truncate text-left hover:text-signal disabled:text-texte-3 disabled:hover:text-texte-3"
+                  className="min-w-0 flex-1 truncate text-left hover:text-ancien-signal disabled:text-texte-3 disabled:hover:text-texte-3"
                 >
                   {pose.nom}
                 </button>
@@ -263,7 +263,7 @@ export function EcranVitrine({
                 <button
                   type="button"
                   onClick={() => setRegardee(image.asset)}
-                  className="min-w-0 flex-1 truncate text-left hover:text-signal"
+                  className="min-w-0 flex-1 truncate text-left hover:text-ancien-signal"
                 >
                   {image.chose}
                 </button>

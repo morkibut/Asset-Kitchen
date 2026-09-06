@@ -21,9 +21,12 @@ import {
   MAIN_VIDE,
   PASSE_PAR_DEFAUT,
   RECETTE_VIDE,
+  RETOURNEMENT_PAR_DEFAUT,
   occupationMax,
   type Asset,
   type Contour,
+  type MiroirPropose,
+  type Retournement,
   type GrilleDuModele,
   type Main,
   type MesuresDuFond,
@@ -127,6 +130,7 @@ export const RESUME = {
   quantification: (q: Quantification) => `${q.couleurs} couleurs`,
   bords: (b: Bords) => `tache ${b.aire_min} px`,
   contours: (c: Contour) => `${c.epaisseur} px · ${POSITIONS[c.position]}`,
+  retournement: (r: Retournement) => SENS_DU_RETOURNEMENT[r.sens],
   /** **Le compte des passages, pas celui des calques.** Trois calques vides ne
    *  changent rien à l'image, et le résumé d'une place dit ce que l'image a
    *  subi — c'est la même règle que « 2 passes » plutôt que « détourage ». */
@@ -146,6 +150,40 @@ export const TROUS: Record<Contour["trous"], string> = {
   cercles: "cerclés",
   laisses: "laissés",
 }
+
+/** Les sens que l'atelier sait appliquer — **un seul en B1**.
+ *
+ *  **La même liste vit dans `atelier/domaine/recette.py`** (`SENS`), et les deux
+ *  sont tenues ensemble par un essai, comme `MOTEUR` et `DURCISSEMENT_LIVRE`
+ *  avant elles. Ce qui figure dans une recette enregistrée est ce que le
+ *  traitement sait appliquer, et pas un cran de plus. */
+export const SENS_DU_RETOURNEMENT: Record<Retournement["sens"], string> = {
+  "gauche-droite": "miroir gauche-droite",
+}
+
+/** Les crans que la table propose — **les clés de la liste ci-dessus, et rien
+ *  d'autre**. Un littéral recopié à côté du segment se serait tu le jour où un
+ *  sens s'ajoute des deux côtés, et l'essai n'aurait rien vu. */
+export const SENS_LIVRES = Object.keys(SENS_DU_RETOURNEMENT) as readonly Retournement["sens"][]
+
+/** Les neuf autres moteurs de la planche, dans son ordre (B18).
+ *
+ *  **Ils paraissent, grisés, au lieu d'être cachés** : c'est ce qui dit ce que
+ *  l'atelier saura faire, et c'est la seule table de la chaîne qui manque en
+ *  entier. Une liste qui grandirait sous les yeux le jour où l'un d'eux arrive
+ *  se lit mieux qu'une liste d'un seul cran dont rien ne dit qu'elle est
+ *  courte. */
+export const SENS_A_AJOUTER: readonly string[] = [
+  "miroir haut-bas",
+  "quart de tour à droite",
+  "quart de tour à gauche",
+  "demi-tour",
+  "miroir sur la diagonale",
+  "miroir sur soi",
+  "miroir, sauf ici",
+  "rotation libre, au plus proche",
+  "rotation libre, méthode pixel art",
+]
 
 /** Ce qu'une position fait aux dimensions du rendu, en pixels et par côté.
  *
@@ -407,7 +445,7 @@ export function PanneauDetourage({
         onClick={() =>
           poser({ ...recette, passes: [...recette.passes, { ...PASSE_PAR_DEFAUT }] })
         }
-        className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
+        className="mesure h-6 self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         + une passe
       </button>
@@ -477,7 +515,7 @@ export function PanneauDetourage({
                       ],
                     })
                   }
-                  className="ml-auto text-[10px] text-signal hover:text-signal-clair"
+                  className="ml-auto text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
                 >
                   la retirer ›
                 </button>
@@ -1240,7 +1278,7 @@ export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
                   className={[
                     "mesure flex h-[24px] items-center gap-2 text-[10px]",
                     part ? "text-texte-2" : "text-texte-3",
-                    dernierEfface ? "border-b border-signal" : "",
+                    dernierEfface ? "border-b border-ancien-signal" : "",
                   ].join(" ")}
                 >
                   <span
@@ -1267,10 +1305,163 @@ export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
   )
 }
 
-// ── La main — la septième et dernière place ─────────────────────────────────
+// ── Le retournement — la septième place ─────────────────────────────────────
 //
-// **C'est la seule table du produit qui ne pose pas une règle.** Les six autres
-// appliquent quelque chose à toute l'image ; celle-ci ne fait que ce que
+// **La panne qu'elle répare se compte en dollars.** Un personnage vu de dessus
+// se dessine dans quatre directions ; celui qui marche vers l'ouest est le
+// miroir exact de celui qui marche vers l'est, au pixel près. Le produit n'avait
+// aucune façon de le dire : les deux se payaient, et le second ne revenait
+// jamais tout à fait comme le premier.
+//
+// **Deux choses dans une seule colonne, et elles ne font pas la même chose.**
+// Le sens est un réglage de la recette : il retourne l'image ouverte, s'endort
+// sans se vider, et se lit à côté du titre quand la table est repliée. *Ça se
+// range en* est une fabrique : elle écrit une image de plus et la pose dans une
+// case du plan du jeu.
+
+/** Ce que le serveur propose pour cette image-ci, et sa raison quand il n'y a
+ *  pas de case à remplir.
+ *
+ *  **La paire de directions n'est jamais calculée à l'écran** : les directions
+ *  d'un projet sont libres et l'auteur les renomme — deviner qu'un mot français
+ *  en désigne un autre serait la déduction que le produit refuse partout
+ *  ailleurs. `null` tant que la réponse n'est pas là : le geste se tait plutôt
+ *  que de promettre une case. */
+function useMiroirPropose(asset: Asset) {
+  const [propose, setPropose] = useState<MiroirPropose | null>(null)
+  useEffect(() => {
+    let vivant = true
+    setPropose(null)
+    api
+      .miroirPropose(asset.identifiant)
+      .then((recu) => vivant && setPropose(recu))
+      .catch(() => vivant && setPropose(null))
+    return () => {
+      vivant = false
+    }
+  }, [asset.identifiant])
+  return propose
+}
+
+export function PanneauRetournement({
+  asset,
+  recette,
+  poser,
+  onFabrique,
+  onErreur,
+}: Reglages & {
+  asset: Asset
+  /** L'image que la fabrique vient d'écrire. Absent, le geste se fait quand
+   *  même : c'est la grille d'à côté qui l'apprendrait au prochain aller-retour,
+   *  puisque le serveur annonce la bibliothèque. */
+  onFabrique?: (miroir: Asset) => void
+  onErreur?: (raison: string) => void
+}) {
+  const retournement = recette.retournement ?? RETOURNEMENT_PAR_DEFAUT
+  const propose = useMiroirPropose(asset)
+  /** `null` veut dire *pas touché* — le champ montre alors ce que le serveur
+   *  propose. Une chaîne, même vide, est un choix de l'auteur et l'emporte. */
+  const [designee, setDesignee] = useState<string | null>(null)
+  const [enVol, setEnVol] = useState(false)
+  useEffect(() => setDesignee(null), [asset.identifiant])
+
+  const rangee = designee ?? propose?.propose ?? ""
+  const suitLeServeur = designee === null && (propose?.propose ?? "") !== ""
+
+  const retourner = async () => {
+    setEnVol(true)
+    try {
+      const { miroir } = await api.retourner(asset.identifiant, rangee)
+      onFabrique?.(miroir)
+    } catch (erreur) {
+      onErreur?.(erreur instanceof Error ? erreur.message : "retournement refusé")
+    } finally {
+      setEnVol(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Reglage libelle="le sens" aide="retournement.sens">
+        {/* **Les crans viennent de la table, jamais d'un littéral.** Un
+            `["gauche-droite"]` écrit ici rouvrait la panne qu'un essai de la
+            même tranche venait de fermer : le jour où `B18` ajoute un sens au
+            domaine *et* à la table, l'essai passerait au vert et le cran
+            n'apparaîtrait pas. Une liste que personne ne lit n'en est pas une. */}
+        <Segments
+          valeurs={SENS_LIVRES}
+          valeur={retournement.sens}
+          libelles={SENS_DU_RETOURNEMENT}
+          onChange={(sens) => void poser({ ...recette, retournement: { sens } })}
+        />
+      </Reglage>
+
+      {/* **Un seul `Raison` dans ce panneau, et il porte un refus.** Partout
+          ailleurs dans le produit, cette ligne dit *pourquoi tu ne peux pas* ;
+          en poser une seconde sous un réglage disponible, pour expliquer ce que
+          le miroir fait à l'image, aurait appris deux sens contraires au même
+          signe. Ce que le miroir fait — les mêmes carrés de couleur dans
+          l'autre ordre, aucun pixel réinventé — est dit au guide, qui est
+          l'endroit des explications. */}
+
+      {/* **Les neuf autres paraissent au lieu d'être cachés** : c'est ce qui dit
+          ce que l'atelier saura faire, et c'est la seule table de la chaîne qui
+          manque en entier. Des lignes mortes, sans bouton — proposer puis
+          refuser serait pire que de montrer une liste. */}
+      <ul className="flex flex-col border-t border-bord pt-2">
+        {SENS_A_AJOUTER.map((nom) => (
+          <li
+            key={nom}
+            data-sens-a-ajouter
+            className="mesure flex h-[20px] items-center gap-2 text-[10px] text-texte-3"
+          >
+            <span className="min-w-0 truncate">{nom}</span>
+            <span className="ml-auto shrink-0">à ajouter</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* ── La fabrique : une image de plus, dans la case d'en face ────────── */}
+      <div className="flex flex-col gap-2 border-t border-bord pt-2">
+        <Reglage libelle="ça se range en" aide="retournement.direction">
+          <input
+            type="text"
+            value={rangee}
+            onChange={(e) => setDesignee(e.target.value)}
+            placeholder="le nom d'une direction du jeu"
+            aria-label="Ça se range en"
+            className="mesure h-[24px] w-full rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte"
+          />
+        </Reglage>
+        {suitLeServeur && (
+          <span className="mesure text-[10px] text-epingle">
+            proposé, d'après la direction de cette image
+          </span>
+        )}
+        {/* **La raison se lit avant le clic, jamais après.** Un refus qui arrive
+            après coup est un refus qui a fait espérer — et la phrase du serveur
+            est recopiée telle quelle : c'est lui qui sait ce que le jeu a
+            nommé. */}
+        {propose?.raison && !rangee.trim() && <Raison texte={propose.raison} />}
+
+        <button
+          type="button"
+          disabled={!rangee.trim() || enVol}
+          onClick={() => void retourner()}
+          title="écrit une image de plus, dans la case choisie"
+          className="mesure h-[26px] self-start px-1 text-left text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3 disabled:hover:text-texte-3"
+        >
+          {enVol ? "Retourner…" : "Retourner › gratuit"}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── La main — la huitième et dernière place ─────────────────────────────────
+//
+// **C'est la seule table du produit qui ne pose pas une règle.** Les sept
+// autres appliquent quelque chose à toute l'image ; celle-ci ne fait que ce que
 // l'auteur désigne. Elle est aussi la seule qui grandira — un mode manuel n'a
 // pas de fin naturelle —, et trois décisions d'aujourd'hui gardent la porte
 // ouverte : un passage est un vecteur, la couleur est portée par le passage, et
@@ -1378,7 +1569,7 @@ function RangeeDeCalque({
         onClick={onVisible}
         className={[
           "h-[9px] w-[9px] shrink-0",
-          visible ? "bg-signal" : "border border-texte-3",
+          visible ? "bg-ancien-signal" : "border border-texte-3",
         ].join(" ")}
       />
       {onNommer ? (
@@ -1411,7 +1602,7 @@ function RangeeDeCalque({
           type="button"
           aria-label={`Monter ${nom}`}
           onClick={onMonter}
-          className="mesure h-[24px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-signal"
+          className="mesure h-[24px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-signal"
         >
           ↑
         </button>
@@ -1421,7 +1612,7 @@ function RangeeDeCalque({
           type="button"
           aria-label={`Descendre ${nom}`}
           onClick={onDescendre}
-          className="mesure h-[24px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-signal"
+          className="mesure h-[24px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-signal"
         >
           ↓
         </button>
@@ -1431,7 +1622,7 @@ function RangeeDeCalque({
           type="button"
           aria-label={`Supprimer ${nom}`}
           onClick={onSupprimer}
-          className="mesure h-[24px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+          className="mesure h-[24px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
         >
           ×
         </button>
@@ -1557,7 +1748,7 @@ export function PanneauMain({
               ],
             })
           }}
-          className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
+          className="mesure h-6 self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           + calque de dessin
         </button>
@@ -1633,7 +1824,7 @@ export function PanneauMain({
           type="button"
           disabled={passagesActifs === 0}
           onClick={() => pose(sansLeDernier(main, actif))}
-          className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-signal disabled:text-texte-3"
+          className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-ancien-signal disabled:text-texte-3"
         >
           Défaire le dernier · Ctrl + Z
         </button>

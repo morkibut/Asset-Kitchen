@@ -1,0 +1,351 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
+    .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
+    .bt-off { background: #f2ede4; border-color: #e2dbd0; color: #b0a89b; }
+    .ong { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 7px; font-size: 13.5px; color: #6d675e; }
+    .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .seg { display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; }
+    .sg { height: 29px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; color: #6d675e; }
+    .sg-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .ch { height: 34px; display: flex; align-items: center; padding: 0 11px; border-radius: 7px; background: #fffdfa; border: 1px solid #ddd5c8; font-size: 13px; color: #221f1b; }
+    .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
+    .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 14px 14px; }
+    .vide { border: 1px dashed #c9c2b6; border-radius: 8px; }
+    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
+    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
+    .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; background: #f7f3ec">
+
+  <div style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 12px 14px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px">
+        <span class="serif" style="font-size: 21px">Le Marais du Vieux Moulin</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div class="rl"><span>Les r&egrave;gles du jeu</span></div>
+      <div class="rl"><span>La toile de l'univers</span><span class="num">61</span></div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="rl" style="background: #e6dfd2; font-weight: 600"><span>Les personnages</span><span class="num">12</span></div>
+      <div class="rl-sub" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le p&eacute;lerin</span></div>
+      <div class="rl-sub"><span>La sorci&egrave;re</span></div>
+      <div class="rl-sub"><span>Le passeur</span></div>
+      <div class="rl"><span>Les cr&eacute;atures</span><span class="num">8</span></div>
+      <div class="rl"><span>Les &eacute;quipements</span><span class="num">9</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">14</span></div>
+      <div class="rl"><span>Les d&eacute;cors</span><span class="num">6</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">11</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">4</span></div>
+      </div>
+      <div class="rt" style="padding: 12px 10px 4px">Toutes les images</div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="rl"><span>La galerie</span><span class="num">45</span></div>
+      <div class="rl"><span>Les d&eacute;penses</span><span class="num">$1,55</span></div>
+      </div>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 11px">
+        <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Le carnet reste en place. Demander un clip n'ouvre pas une autre application&nbsp;: c'est le m&ecirc;me &eacute;cran, avec une colonne de plus.</div>
+        <!-- pied -->
+        <div style="border-top: 1px solid #e2dbd0; padding: 11px 10px 0; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80"><span class="kb">&#8984;K</span><span>chercher, ou faire</span></div>
+          <div style="display: flex; align-items: center; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #4e483f">
+            <span style="display: flex; align-items: center; gap: 6px"><span class="kb">?</span>Le guide et les touches</span>
+            <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> L'installation</span>
+          </div>
+        </div>
+        <!-- /pied -->
+      </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 13px">
+    <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80"><span>Les personnages</span><span>&rsaquo;</span><span>Le p&eacute;lerin</span><span>&rsaquo;</span><span>Ses animations</span><span>&rsaquo;</span><span style="color: #3d382f">marche &middot; sud</span></div>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <h1 class="serif" style="margin: 0; font-size: 36px; line-height: 1.05">Demander un clip</h1>
+        <div style="font-size: 13px; color: #4e483f">Une vid&eacute;o de quelques secondes, faite &agrave; partir d'une image fixe. On y taillera les animations ensuite.</div>
+      </div>
+      
+    </div>
+
+    <div style="flex:1; min-height:0; display:grid; grid-template-columns:300px minmax(0,1fr); gap:26px; align-content:start; overflow:hidden">
+
+      <div style="display:flex; flex-direction:column; gap:9px">
+        <div class="rt">L'image de d&eacute;part</div>
+        <div style="height:300px; border-radius:9px; background:#6c6c6c; display:flex; align-items:flex-end;
+                    justify-content:center; padding-bottom:56px; position:relative">
+          <i class="fig" style="--a:#6b5a44;--b:#8a7458; width:74px; height:132px"></i>
+          <div style="position:absolute; left:10px; bottom:9px; font-size:11px; color:#d8d2c6">marche &middot; sud &middot; 4 sept</div>
+          <div style="position:absolute; right:10px; bottom:9px; font-size:11px; color:#d8d2c6">1:1 &middot; 480 px</div>
+        </div>
+        <div class="bt" style="width:100%; font-size:12.5px">En choisir une autre</div>
+        <div style="font-size:11.5px; line-height:1.5; color:#6d675e">
+          Le sprite est agrandi &agrave; facteur entier sur un fond gris au format demand&eacute; avant de partir. Le gris
+          n'est pas dans l'image gard&eacute;e&nbsp;: il sert au mod&egrave;le &agrave; voir o&ugrave; s'arr&ecirc;te le personnage.
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:22px; min-width:0">
+
+        <div style="display:flex; flex-direction:column; gap:9px">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px">
+            <span class="rt">Le mouvement demand&eacute;</span>
+            <span style="font-size:11.5px; color:#6d675e">7 mouvements. Ils appartiennent &agrave; l'atelier, pas au jeu.</span>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap"><div style="background:#fffdfa; border:1px solid #ddd5c8; color:#4e483f; border-radius:7px; padding:7px 12px; display:flex; align-items:baseline; gap:7px; font-size:13px">repos<span class="mono" style="font-size:11px; color:#948c80">8 i/s</span></div><div style="background:#fffdfa; border:1px solid #a8492c; font-weight:600; border-radius:7px; padding:7px 12px; display:flex; align-items:baseline; gap:7px; font-size:13px">marche<span class="mono" style="font-size:11px; color:#948c80">12 i/s</span></div><div style="background:#fffdfa; border:1px solid #ddd5c8; color:#4e483f; border-radius:7px; padding:7px 12px; display:flex; align-items:baseline; gap:7px; font-size:13px">course<span class="mono" style="font-size:11px; color:#948c80">14 i/s</span></div><div style="background:#fffdfa; border:1px solid #ddd5c8; color:#4e483f; border-radius:7px; padding:7px 12px; display:flex; align-items:baseline; gap:7px; font-size:13px">saut<span class="mono" style="font-size:11px; color:#948c80">12 i/s</span></div><div style="background:#fffdfa; border:1px solid #ddd5c8; color:#4e483f; border-radius:7px; padding:7px 12px; display:flex; align-items:baseline; gap:7px; font-size:13px">attaque<span class="mono" style="font-size:11px; color:#948c80">14 i/s</span></div><div style="background:#fffdfa; border:1px solid #ddd5c8; color:#4e483f; border-radius:7px; padding:7px 12px; display:flex; align-items:baseline; gap:7px; font-size:13px">d&eacute;g&acirc;ts<span class="mono" style="font-size:11px; color:#948c80">12 i/s</span></div><div style="background:#fffdfa; border:1px solid #ddd5c8; color:#4e483f; border-radius:7px; padding:7px 12px; display:flex; align-items:baseline; gap:7px; font-size:13px">mort<span class="mono" style="font-size:11px; color:#948c80">10 i/s</span></div></div>
+          <div class="carte" style="padding:10px 12px; font-size:12px; line-height:1.5; color:#4e483f">
+            <span class="mono" style="font-size:11.5px; color:#6d675e">walking cycle, side view, walking in place without moving across the frame, looping seamlessly</span>
+            <div style="margin-top:6px; color:#6d675e">Ce texte part tel quel. Il d&eacute;crit un cycle qui se referme&nbsp;&mdash; c'est ce qui
+            rend le clip taillable. Le r&eacute;&eacute;crire est possible dans les r&eacute;glages, pour tous les jeux &agrave; la fois.</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:20px">
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <span class="rt">la dur&eacute;e</span>
+          <div style="display:flex; align-items:center; gap:14px">
+            <div class="glis" style="flex:1"><i style="left:80%"></i></div>
+            <span class="mono" style="font-size:13px; width:34px">5 s</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; color:#b0a89b"><span>1 s</span><span>6 s</span></div><div style="font-size:11.5px; color:#6d675e; line-height:1.45; margin-top:5px">Cinq secondes donnent une centaine d'images&nbsp;: assez pour en tailler deux ou trois animations.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <span class="rt">les proportions</span>
+          <div class="seg" style="width:fit-content"><div class="sg sg-on">1:1</div><div class="sg">16:9</div><div class="sg">9:16</div></div><div style="font-size:11.5px; color:#6d675e; line-height:1.45; margin-top:5px">1:1 pour un sprite. Les deux autres servent aux d&eacute;cors.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <span class="rt">la r&eacute;solution</span>
+          <div class="seg" style="width:fit-content"><div class="sg sg-on">480p</div><div class="sg">720p</div></div><div style="font-size:11.5px; color:#6d675e; line-height:1.45; margin-top:5px">480p suffit&nbsp;: l'image finale fait 48&nbsp;px de haut.</div>
+        </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:9px">
+          <span class="rt">le mod&egrave;le</span>
+          <div style="display:flex; flex-direction:column; gap:7px">
+            <div class="carte" style="border-color:#a8492c; padding:11px 13px; display:flex; align-items:center; justify-content:space-between; gap:12px">
+              <div><div style="font-size:13.5px; font-weight:600">Kling 1.6 &mdash; standard</div>
+              <div style="font-size:11.5px; color:#6d675e; margin-top:2px">1 &agrave; 10 s &middot; 480p et 720p &middot; image de d&eacute;part accept&eacute;e</div></div>
+              <span class="mono" style="font-size:12px">$0,02 / s</span>
+            </div>
+            <div class="carte" style="padding:11px 13px; display:flex; align-items:center; justify-content:space-between; gap:12px; opacity:.55">
+              <div><div style="font-size:13.5px">Veo 3 &mdash; rapide</div>
+              <div style="font-size:11.5px; color:#8a3f33; margin-top:2px">n'accepte pas d'image de d&eacute;part &mdash; il faudrait tout d&eacute;crire par &eacute;crit</div></div>
+              <span class="mono" style="font-size:12px; color:#b0a89b">$0,06 / s</span>
+            </div>
+            <div class="carte" style="padding:11px 13px; display:flex; align-items:center; justify-content:space-between; gap:12px">
+              <div><div style="font-size:13.5px">Le moteur de la machine</div>
+              <div style="font-size:11.5px; color:#6d675e; margin-top:2px">tourne ici, sans r&eacute;seau &middot; 16 i/s impos&eacute;es</div></div>
+              <span class="mono" style="font-size:12px; color:#5c7a52">gratuit</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 13px; overflow: hidden">
+      <span class="rt">ce que &ccedil;a co&ucirc;te</span>
+      <div style="display:flex; align-items:baseline; gap:10px">
+        <span class="serif" style="font-size:38px; color:#221f1b">$0,10</span>
+      </div>
+      <div class="mono" style="font-size:11.5px; color:#6d675e; line-height:1.5">5&nbsp;s &times; $0,02 la seconde, en 480p</div>
+      <div style="font-size:12.5px; line-height:1.5; color:#4e483f">Le prix est annonc&eacute; par le fournisseur avant l'envoi, puis relu sur la facture quand le clip arrive. Les deux chiffres sont gard&eacute;s.</div>
+
+      <div style="border-top:1px solid #e2dbd0; padding-top:13px; display:flex; flex-direction:column; gap:8px">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+          <span class="rt">combien d'essais</span>
+          <div class="seg"><div class="sg sg-on">1</div><div class="sg">2</div><div class="sg">4</div><div class="sg">8</div></div>
+        </div>
+        <div style="font-size:11.5px; line-height:1.45; color:#6d675e">Un seul clip. Au-dessus de 1, chaque clip est une d&eacute;pense &agrave; part et ils reviennent l'un apr&egrave;s l'autre.</div>
+      </div>
+
+      <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px">
+        <div class="carte" style="padding:11px 12px; display:flex; flex-direction:column; gap:5px">
+          <span class="rt">ce qui n'est pas r&eacute;glable</span>
+          <div style="font-size:12px; line-height:1.5; color:#4e483f">
+            <strong>Les images par seconde du clip.</strong> Elles sont mesur&eacute;es sur le fichier re&ccedil;u.
+            La vitesse de l'animation, elle, se r&egrave;gle plus tard, sur la bande, et gratuitement.
+          </div>
+        </div>
+        <div style="border-left:3px solid #e0cfb8; background:#f4ece2; padding:9px 11px; border-radius:0 7px 7px 0;
+                    font-size:12px; line-height:1.5; color:#4e483f">
+          <strong>La direction n'est pas garantie.</strong> Sur un jeu vu de dessus, demander &laquo;&nbsp;nord&nbsp;&raquo;
+          et &laquo;&nbsp;sud&nbsp;&raquo; a rendu deux fois la m&ecirc;me image. La direction se rattrape au retournement,
+          pas par les mots.
+        </div>
+        <div class="bt bt-p" style="width:100%; height:42px; font-size:14px">Payer $0,10 et lancer</div>
+        <div style="font-size:11.5px; color:#6d675e; text-align:center">Rien n'est retir&eacute; avant ce bouton.</div>
+      </div>
+  </div>
+
+  </div>
+
+
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">La colonne de droite, selon ce qu'on demande</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 720px; text-align: right">Le prix, ses raisons et le bouton changent avec le lot et le mod&egrave;le. Le reste de l'&eacute;cran ne bouge pas.</span>
+    </div>
+    <div style="display: flex; gap: 22px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Quatre essais</span>
+        <span style="font-size: 12px; color: #6d675e">le lot</span>
+      </div>
+      <div style="width: 380px; height: 620px; border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4;
+                  padding: 18px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <span class="rt">ce que &ccedil;a co&ucirc;te</span>
+      <div style="display:flex; align-items:baseline; gap:10px">
+        <span class="serif" style="font-size:38px; color:#221f1b">$0,40</span>
+      </div>
+      <div class="mono" style="font-size:11.5px; color:#6d675e; line-height:1.5">4 &times; ( 5&nbsp;s &times; $0,02 la seconde ), en 480p</div>
+      <div style="font-size:12.5px; line-height:1.5; color:#4e483f">Quatre vid&eacute;os du m&ecirc;me geste, chacune diff&eacute;rente. C'est le seul endroit du produit o&ugrave; l'on demande plusieurs essais d'un coup.</div>
+
+      <div style="border-top:1px solid #e2dbd0; padding-top:13px; display:flex; flex-direction:column; gap:8px">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+          <span class="rt">combien d'essais</span>
+          <div class="seg"><div class="sg">1</div><div class="sg">2</div><div class="sg sg-on">4</div><div class="sg">8</div></div>
+        </div>
+        <div style="font-size:11.5px; line-height:1.45; color:#6d675e">Quand ils sont tous l&agrave;, un bouton &laquo;&nbsp;garder celui-ci&nbsp;&raquo; &eacute;carte les trois autres. Le geste s'annule&nbsp;: un clip &eacute;cart&eacute; se rend quand on veut.</div>
+      </div>
+
+      <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px">
+        <div class="carte" style="padding:11px 12px; display:flex; flex-direction:column; gap:5px">
+          <span class="rt">ce qui n'est pas r&eacute;glable</span>
+          <div style="font-size:12px; line-height:1.5; color:#4e483f">
+            <strong>Les images par seconde du clip.</strong> Elles sont mesur&eacute;es sur le fichier re&ccedil;u.
+            La vitesse de l'animation, elle, se r&egrave;gle plus tard, sur la bande, et gratuitement.
+          </div>
+        </div>
+        <div style="border-left:3px solid #e0cfb8; background:#f4ece2; padding:9px 11px; border-radius:0 7px 7px 0;
+                    font-size:12px; line-height:1.5; color:#4e483f">
+          <strong>La direction n'est pas garantie.</strong> Sur un jeu vu de dessus, demander &laquo;&nbsp;nord&nbsp;&raquo;
+          et &laquo;&nbsp;sud&nbsp;&raquo; a rendu deux fois la m&ecirc;me image. La direction se rattrape au retournement,
+          pas par les mots.
+        </div>
+        <div class="bt bt-p" style="width:100%; height:42px; font-size:14px">Payer $0,40 et lancer 4 clips</div>
+        <div style="font-size:11.5px; color:#6d675e; text-align:center">Rien n'est retir&eacute; avant ce bouton.</div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Le moteur de la machine</span>
+        <span style="font-size: 12px; color: #6d675e">gratuit, plus lent</span>
+      </div>
+      <div style="width: 380px; height: 620px; border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4;
+                  padding: 18px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <span class="rt">ce que &ccedil;a co&ucirc;te</span>
+      <div style="display:flex; align-items:baseline; gap:10px">
+        <span class="serif" style="font-size:38px; color:#5c7a52">gratuit</span>
+      </div>
+      <div class="mono" style="font-size:11.5px; color:#6d675e; line-height:1.5">le mod&egrave;le tourne sur cette machine</div>
+      <div style="font-size:12.5px; line-height:1.5; color:#4e483f">Aucune d&eacute;pense, mais deux minutes d'attente et une qualit&eacute; moindre. Utile pour v&eacute;rifier un cadrage avant de payer le vrai clip.</div>
+
+      <div style="border-top:1px solid #e2dbd0; padding-top:13px; display:flex; flex-direction:column; gap:8px">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+          <span class="rt">combien d'essais</span>
+          <div class="seg"><div class="sg sg-on">1</div><div class="sg">2</div><div class="sg">4</div><div class="sg">8</div></div>
+        </div>
+        <div style="font-size:11.5px; line-height:1.45; color:#6d675e">Le lot est possible aussi, mais l'attente se cumule&nbsp;: quatre clips locaux font huit minutes.</div>
+      </div>
+
+      <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px">
+        <div class="carte" style="padding:11px 12px; display:flex; flex-direction:column; gap:5px">
+          <span class="rt">ce qui n'est pas r&eacute;glable</span>
+          <div style="font-size:12px; line-height:1.5; color:#4e483f">
+            <strong>Les images par seconde du clip.</strong> Elles sont mesur&eacute;es sur le fichier re&ccedil;u.
+            La vitesse de l'animation, elle, se r&egrave;gle plus tard, sur la bande, et gratuitement.
+          </div>
+        </div>
+        <div style="border-left:3px solid #e0cfb8; background:#f4ece2; padding:9px 11px; border-radius:0 7px 7px 0;
+                    font-size:12px; line-height:1.5; color:#4e483f">
+          <strong>La direction n'est pas garantie.</strong> Sur un jeu vu de dessus, demander &laquo;&nbsp;nord&nbsp;&raquo;
+          et &laquo;&nbsp;sud&nbsp;&raquo; a rendu deux fois la m&ecirc;me image. La direction se rattrape au retournement,
+          pas par les mots.
+        </div>
+        <div class="bt bt-p" style="width:100%; height:42px; font-size:14px">Lancer &mdash; environ 2 min</div>
+        <div style="font-size:11.5px; color:#6d675e; text-align:center">Rien n'est retir&eacute; avant ce bouton.</div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Un mod&egrave;le impossible</span>
+        <span style="font-size: 12px; color: #6d675e">gris&eacute;, avec sa raison</span>
+      </div>
+      <div style="width: 380px; height: 620px; border: 1px solid #e2dbd0; border-radius: 10px; background: #f2ede4;
+                  padding: 18px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <span class="rt">ce que &ccedil;a co&ucirc;te</span>
+      <div style="display:flex; align-items:baseline; gap:10px">
+        <span class="serif" style="font-size:38px; color:#b0a89b">&mdash;</span>
+      </div>
+      <div style="font-size:12.5px; line-height:1.5; color:#4e483f">
+        Aucun prix &agrave; annoncer&nbsp;: le mod&egrave;le choisi ne peut pas faire ce qu'on lui demande.
+      </div>
+
+      <div style="border-left:3px solid #dcbcb2; background:#f8ece9; padding:11px 12px; border-radius:0 7px 7px 0;
+                  display:flex; flex-direction:column; gap:6px">
+        <div style="font-size:13px; font-weight:600; color:#8a3f33">Veo 3 n'accepte pas d'image de d&eacute;part</div>
+        <div style="font-size:12px; line-height:1.5; color:#4e483f">
+          Il faudrait d&eacute;crire le p&eacute;lerin par &eacute;crit, et le personnage obtenu ne serait pas le sien.
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:7px">
+        <span class="rt">ce qui d&eacute;bloque</span>
+        <div class="bt" style="width:100%; font-size:12.5px">Revenir &agrave; Kling 1.6 &mdash; $0,10</div>
+        <div class="bt" style="width:100%; font-size:12.5px">Passer en 720p &mdash; $0,25</div>
+      </div>
+
+      <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px">
+        <div style="font-size:12px; line-height:1.5; color:#6d675e">
+          Le mod&egrave;le impossible reste dans la liste, gris&eacute;, avec sa raison &eacute;crite. Il n'est jamais cach&eacute;&nbsp;:
+          savoir pourquoi on ne peut pas vaut mieux que ne pas voir l'option.
+        </div>
+        <div class="bt bt-off" style="width:100%; height:42px; font-size:14px">Lancer</div>
+      </div>
+      </div>
+    </div>
+    </div>
+  </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -111,6 +111,8 @@ export const PLACES_DE_LA_RECETTE: readonly (readonly [keyof Recette, string])[]
     ["quantification", "quantification"],
     ["bords", "bords"],
     ["contours", "contours"],
+    // **Le retournement, en queue et avant la main** (B1) — voir le serveur.
+    ["retournement", "retournement"],
     ["main", "la main"],
   ]
 
@@ -1102,7 +1104,7 @@ export function EcranAtelierDeBande({
           <button
             type="button"
             onClick={onFermer}
-            className="mesure ml-auto text-[10px] text-texte-3 hover:text-signal"
+            className="mesure ml-auto text-[10px] text-texte-3 hover:text-ancien-signal"
           >
             ‹ fermer
           </button>
@@ -1164,7 +1166,7 @@ export function EcranAtelierDeBande({
 
         {change && (
           <div className="flex flex-col gap-1.5 border-t border-bord pt-2">
-            <p className="mesure text-[10px] leading-4 text-signal">
+            <p className="mesure text-[10px] leading-4 text-ancien-signal">
               des corrections attendent — rien n'est écrit tant que vous n'avez
               pas enregistré
             </p>
@@ -1173,14 +1175,14 @@ export function EcranAtelierDeBande({
                 type="button"
                 onClick={() => void enregistrer()}
                 disabled={enregistre}
-                className="mesure border border-signal px-2 py-1 text-[10px] text-signal hover:bg-signal hover:text-fond-0 disabled:opacity-50"
+                className="mesure border border-ancien-signal px-2 py-1 text-[10px] text-ancien-signal hover:bg-ancien-signal hover:text-fond-0 disabled:opacity-50"
               >
                 {enregistre ? "on enregistre…" : "Enregistrer ›"}
               </button>
               <button
                 type="button"
                 onClick={annuler}
-                className="mesure border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-texte-1"
+                className="mesure border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-texte"
               >
                 Annuler
               </button>
@@ -1260,7 +1262,7 @@ export function EcranAtelierDeBande({
             type="button"
             onClick={choisirToutes}
             disabled={toutes}
-            className="mesure ml-auto text-[10px] text-texte-3 hover:text-signal disabled:text-bord"
+            className="mesure ml-auto text-[10px] text-texte-3 hover:text-ancien-signal disabled:text-bord"
           >
             toutes
           </button>
@@ -1268,7 +1270,7 @@ export function EcranAtelierDeBande({
             <button
               type="button"
               onClick={nEnChoisirQuUne}
-              className="mesure text-[10px] text-texte-3 hover:text-signal"
+              className="mesure text-[10px] text-texte-3 hover:text-ancien-signal"
             >
               une seule
             </button>
@@ -1432,7 +1434,7 @@ const CaseEnGrand = (() => {
         role="application"
         aria-label="l'image à corriger — les flèches la déplacent d'un pixel"
         title="cliquez, puis les flèches — Maj pour cinq pixels à la fois"
-        className="relative cursor-move border border-bord bg-fond-2 outline-none focus:border-signal"
+        className="relative cursor-move border border-bord bg-fond-2 outline-none focus:border-ancien-signal"
         style={{ width: large * facteur, height: haut * facteur }}
         onPointerDown={(evenement) => {
           evenement.currentTarget.setPointerCapture(evenement.pointerId)
@@ -1535,7 +1537,7 @@ function CorrectionDeLImage({
           <button
             type="button"
             onClick={onRemettreDroit}
-            className="mesure border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-signal"
+            className="mesure border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-ancien-signal"
           >
             remettre cette image droite
           </button>
@@ -1552,7 +1554,7 @@ function CorrectionDeLImage({
                 onRemplacer(Number(evenement.target.value), prise.clip)
               }
               aria-label="remplacer par une autre image du clip"
-              className="w-16 border border-bord bg-fond-2 px-1 py-0.5 text-texte-1"
+              className="w-16 border border-bord bg-fond-2 px-1 py-0.5 text-texte"
             />
             <span>sur {combien}</span>
           </label>
@@ -1583,7 +1585,7 @@ function CorrectionDeLImage({
               )
             }}
             aria-label="prendre cette image dans un autre clip"
-            className="border border-bord bg-fond-2 px-1 py-0.5 text-texte-1"
+            className="border border-bord bg-fond-2 px-1 py-0.5 text-texte"
           >
             {voisins.map((clip) => (
               <option key={clip.identifiant} value={clip.identifiant}>
@@ -1610,7 +1612,7 @@ function CorrectionDeLImage({
       {prise.recette && (
         <p
           data-recette-perdue-au-remplacement
-          className="mesure text-[10px] leading-4 text-signal"
+          className="mesure text-[10px] leading-4 text-ancien-signal"
         >
           Cette image a <b className="text-texte-2">sa recette à elle</b> : la
           remplacer la rend à la recette de l'animation. C'est une autre image,
@@ -1722,7 +1724,7 @@ function ImageDeLaBande({
       title={dit}
       className={`relative flex items-center justify-center overflow-hidden border bg-fond-2 ${
         courante
-          ? "border-signal"
+          ? "border-ancien-signal"
           : choisie
             ? "border-texte-2"
             : "border-bord hover:border-texte-3"
@@ -1745,7 +1747,7 @@ function ImageDeLaBande({
           data-venue-d-ailleurs
           aria-hidden
           title="prise dans un autre clip"
-          className="absolute right-0 top-0 h-1.5 w-1.5 bg-signal"
+          className="absolute right-0 top-0 h-1.5 w-1.5 bg-ancien-signal"
         />
       )}
       {/* **Le liseré de ce qui s'écarte** (V3.03.1). Sur le bord gauche et non
@@ -1765,7 +1767,7 @@ function ImageDeLaBande({
           data-poussee
           aria-hidden
           title="cette image a été poussée"
-          className="mesure absolute bottom-0 left-0 bg-fond-0/80 px-0.5 text-[7px] text-signal"
+          className="mesure absolute bottom-0 left-0 bg-fond-0/80 px-0.5 text-[7px] text-ancien-signal"
         >
           {prise.dx},{prise.dy}
         </span>
@@ -1823,7 +1825,7 @@ function MontageDuRuban({
           onClick={onRetirer}
           disabled={tout}
           aria-label={`Retirer ${mot} du ruban`}
-          className="mesure border border-bord px-1.5 py-0.5 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+          className="mesure border border-bord px-1.5 py-0.5 text-[10px] text-texte-3 hover:border-ancien-signal hover:text-ancien-signal disabled:cursor-not-allowed disabled:opacity-40"
         >
           retirer
         </button>
@@ -1832,7 +1834,7 @@ function MontageDuRuban({
           onClick={onDupliquer}
           disabled={deborde}
           aria-label={`Dupliquer ${mot}`}
-          className="mesure border border-bord px-1.5 py-0.5 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+          className="mesure border border-bord px-1.5 py-0.5 text-[10px] text-texte-3 hover:border-ancien-signal hover:text-ancien-signal disabled:cursor-not-allowed disabled:opacity-40"
         >
           dupliquer
         </button>
@@ -1842,7 +1844,7 @@ function MontageDuRuban({
           onClick={() => onDeplacer(place - 1)}
           disabled={place <= 0}
           aria-label={`Déplacer ${mot} vers la gauche`}
-          className="h-[22px] w-[22px] border border-bord text-[10px] text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-[22px] w-[22px] border border-bord text-[10px] text-texte-2 hover:text-ancien-signal disabled:cursor-not-allowed disabled:opacity-40"
         >
           ‹
         </button>
@@ -1851,7 +1853,7 @@ function MontageDuRuban({
           onClick={() => onDeplacer(place + 1)}
           disabled={place >= restants}
           aria-label={`Déplacer ${mot} vers la droite`}
-          className="h-[22px] w-[22px] border border-bord text-[10px] text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-[22px] w-[22px] border border-bord text-[10px] text-texte-2 hover:text-ancien-signal disabled:cursor-not-allowed disabled:opacity-40"
         >
           ›
         </button>
@@ -1926,7 +1928,7 @@ function LeChutier({
         <button
           type="button"
           onClick={onAllerAuClip}
-          className="mesure ml-auto text-[10px] text-signal hover:text-texte-1"
+          className="mesure ml-auto text-[10px] text-ancien-signal hover:text-texte"
         >
           prendre des images dans le clip ›
         </button>
@@ -1974,7 +1976,7 @@ function LeChutier({
                     onClick={() => onInserer(rang, "avant")}
                     disabled={plein}
                     aria-label={`Poser l'image ${prise.numero} avant l'image ${ancre}`}
-                    className="mesure ml-auto border border-bord px-1 py-0.5 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:opacity-40"
+                    className="mesure ml-auto border border-bord px-1 py-0.5 text-[10px] text-texte-3 hover:border-ancien-signal hover:text-ancien-signal disabled:opacity-40"
                   >
                     avant
                   </button>
@@ -1983,7 +1985,7 @@ function LeChutier({
                     onClick={() => onInserer(rang, "apres")}
                     disabled={plein}
                     aria-label={`Poser l'image ${prise.numero} après l'image ${ancre}`}
-                    className="mesure border border-bord px-1 py-0.5 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:opacity-40"
+                    className="mesure border border-bord px-1 py-0.5 text-[10px] text-texte-3 hover:border-ancien-signal hover:text-ancien-signal disabled:opacity-40"
                   >
                     après
                   </button>
@@ -1992,7 +1994,7 @@ function LeChutier({
                     onClick={() => onVider(rang)}
                     aria-label={`Laisser tomber l'image ${prise.numero} du chutier`}
                     title="elle reste dans le clip, on peut la reprendre"
-                    className="mesure px-1 text-[10px] text-texte-3 hover:text-signal"
+                    className="mesure px-1 text-[10px] text-texte-3 hover:text-ancien-signal"
                   >
                     ×
                   </button>
@@ -2103,7 +2105,7 @@ function PelliculeDuClip({
         <button
           type="button"
           onClick={onFermer}
-          className="mesure ml-auto text-[10px] text-texte-3 hover:text-signal"
+          className="mesure ml-auto text-[10px] text-texte-3 hover:text-ancien-signal"
         >
           ‹ revenir à l'image
         </button>
@@ -2137,7 +2139,7 @@ function PelliculeDuClip({
               }
               className={`relative border ${
                 prise
-                  ? "border-signal"
+                  ? "border-ancien-signal"
                   : "border-bord hover:border-texte-3"
               } ${dedans ? "opacity-50" : ""}`}
             >
@@ -2165,7 +2167,7 @@ function PelliculeDuClip({
           type="button"
           disabled={choisies.length === 0}
           onClick={() => onPrendre(choisies)}
-          className="mesure border border-signal px-2 py-1 text-[10px] text-signal hover:bg-signal hover:text-fond-0 disabled:border-bord disabled:text-texte-3"
+          className="mesure border border-ancien-signal px-2 py-1 text-[10px] text-ancien-signal hover:bg-ancien-signal hover:text-fond-0 disabled:border-bord disabled:text-texte-3"
         >
           {choisies.length === 0
             ? "choisissez au moins une image"
@@ -2208,7 +2210,7 @@ function RepriseDuMontage({
         type="button"
         disabled={melangee || bloquee}
         onClick={onReprendre}
-        className="mesure self-start border border-bord px-2 py-1 text-[10px] text-texte-3 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+        className="mesure self-start border border-bord px-2 py-1 text-[10px] text-texte-3 hover:border-ancien-signal hover:text-ancien-signal disabled:cursor-not-allowed disabled:opacity-40"
       >
         Reprendre le montage ›
       </button>
@@ -2282,7 +2284,7 @@ function ZoomDeLaFrame({
         title="Reculer"
         disabled={reculer === undefined}
         onClick={() => reculer !== undefined && onZoom(reculer)}
-        className="h-[22px] w-[22px] border border-bord text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3"
+        className="h-[22px] w-[22px] border border-bord text-texte-2 hover:text-ancien-signal disabled:cursor-not-allowed disabled:text-texte-3"
       >
         −
       </button>
@@ -2295,7 +2297,7 @@ function ZoomDeLaFrame({
         title="Avancer"
         disabled={avancer === undefined}
         onClick={() => avancer !== undefined && onZoom(avancer)}
-        className="h-[22px] w-[22px] border border-bord text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3"
+        className="h-[22px] w-[22px] border border-bord text-texte-2 hover:text-ancien-signal disabled:cursor-not-allowed disabled:text-texte-3"
       >
         +
       </button>
@@ -2304,7 +2306,7 @@ function ZoomDeLaFrame({
         onClick={() => onZoom(null)}
         disabled={!surMesure}
         title={`revenir au facteur qui fait tenir la pose entière — ${ajuste}×`}
-        className="border border-bord px-1.5 py-0.5 hover:text-texte-1 disabled:opacity-40"
+        className="border border-bord px-1.5 py-0.5 hover:text-texte disabled:opacity-40"
       >
         ajuster
       </button>
@@ -2336,7 +2338,7 @@ function Lecteur({
           type="button"
           onClick={() => onJoue(!joue)}
           aria-label={joue ? "arrêter l'animation" : "faire tourner l'animation"}
-          className="mesure border border-bord px-2 py-1 text-[10px] text-texte-2 hover:border-signal hover:text-signal"
+          className="mesure border border-bord px-2 py-1 text-[10px] text-texte-2 hover:border-ancien-signal hover:text-ancien-signal"
         >
           {joue ? "⏸ pause" : "▶ jouer"}
         </button>
@@ -2390,7 +2392,7 @@ function TableDeLaFrame({
         {separe && (
           <span
             title="les images choisies n'ont pas la même valeur ici"
-            className="mesure text-[10px] text-signal"
+            className="mesure text-[10px] text-ancien-signal"
           >
             séparé
           </span>
@@ -2500,7 +2502,7 @@ function ReglagesDeLaFrame({
           {!plusieurs && ecart?.fenetre_davant && (
             <p
               data-fenetre-davant-sur-la-frame
-              className="mesure text-[10px] leading-4 text-signal"
+              className="mesure text-[10px] leading-4 text-ancien-signal"
             >
               La fenêtre commune a été mesurée avec la recette de l'animation.
               Elle n'est pas fausse, elle est d'avant : cette image peut dépasser
@@ -2511,7 +2513,7 @@ function ReglagesDeLaFrame({
           <button
             type="button"
             onClick={onReprendre}
-            className="mesure self-start border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-texte-1"
+            className="mesure self-start border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-texte"
           >
             {plusieurs
               ? `Reprendre la recette de l'animation sur ${siennes} image${
@@ -2618,8 +2620,8 @@ function ReglagesDeLaBande({
             aria-pressed={sens === choix}
             className={`mesure border px-1.5 py-0.5 text-[10px] ${
               sens === choix
-                ? "border-signal text-signal"
-                : "border-bord text-texte-3 hover:text-texte-1"
+                ? "border-ancien-signal text-ancien-signal"
+                : "border-bord text-texte-3 hover:text-texte"
             }`}
           >
             {choix}
@@ -2675,7 +2677,7 @@ function FenetreDeLaBande({
       </p>
 
       {!etat.a_jour && (
-        <p data-fenetre-davant className="mesure text-[10px] leading-4 text-signal">
+        <p data-fenetre-davant className="mesure text-[10px] leading-4 text-ancien-signal">
           Elle a été mesurée avec un autre détourage. Elle n'est pas fausse, elle
           est d'avant : le sujet peut dépasser d'un côté.
         </p>
@@ -2685,7 +2687,7 @@ function FenetreDeLaBande({
         type="button"
         disabled={enCours || bloquee}
         onClick={onReprendre}
-        className="mesure self-start border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-texte-1 disabled:opacity-40"
+        className="mesure self-start border border-bord px-2 py-1 text-[10px] text-texte-3 hover:text-texte disabled:opacity-40"
       >
         {enCours ? "on remesure…" : "Reprendre la fenêtre"}
       </button>
@@ -2746,7 +2748,7 @@ function RecetteEnregistree({
         // la sélection, comme les tables. Un libellé qui promettrait encore
         // l'animation entière serait faux onze fois sur douze.
         aria-label="appliquer une recette enregistrée aux images choisies"
-        className="border border-bord bg-fond-2 px-1 py-0.5 text-texte-1"
+        className="border border-bord bg-fond-2 px-1 py-0.5 text-texte"
       >
         <option value="">— en appliquer une —</option>
         {noms.map((nom) => (
@@ -2770,7 +2772,7 @@ function RecetteEnregistree({
         {siennes > 0 && (
           <>
             {" "}
-            <b data-recettes-ecrasees={siennes} className="text-signal">
+            <b data-recettes-ecrasees={siennes} className="text-ancien-signal">
               {plusieurs ? `${siennes} des ${choisies} images choisies ` : ""}
               {siennes > 1
                 ? "ont leur recette à elles"
@@ -2815,7 +2817,7 @@ function ChoixDeLAncrage({
             title={MOT_DE_L_ANCRAGE[point]}
             onClick={() => onAncrage(point)}
             className={`h-5 w-5 ${
-              ancrage === point ? "bg-signal" : "bg-fond-2 hover:bg-fond-3"
+              ancrage === point ? "bg-ancien-signal" : "bg-fond-2 hover:bg-fond-3"
             }`}
           />
         ))}

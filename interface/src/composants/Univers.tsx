@@ -273,7 +273,8 @@ export function EcranUnivers({
            matière qu'on regarde, sur toute la largeur.
 
            **Chaque case est `flex`, et c'est ce qui borne le panneau qu'elle
-           porte** (`docs/DESIGN.md` § Un panneau est borné par l'écran). */
+           porte** (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md`
+           § Six règles de comportement, la première). */
         <DECOUPER.Provider value={onDecouperCarte}>
           <div
             data-colonnes

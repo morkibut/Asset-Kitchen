@@ -793,6 +793,20 @@ async def tableau_de_bord(
     }
 
 
+@routeur.get("/dashboard")
+async def bilan_du_jeu(requete: Request, projet: str | None = Query(None)) -> dict[str, Any]:
+    """B5 — la complétude par famille, ce qui manque le plus, et le prix du lot.
+
+    **Compté ici, jamais dans `TableauDeBord.tsx`** : l'écran ne tient qu'une
+    page de personnages, filtrée sur autre chose, et sommer dessus dirait un
+    chiffre faux dès qu'un jeu en a plus qu'une page — la même garde que
+    `GET /library` pour l'arbre de la bibliothèque.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    return atelier.production.bilan_du_jeu(vise, atelier.generations)
+
+
 @routeur.post("/characters", status_code=201)
 async def creer_personnage(requete: Request, corps: CorpsPersonnage) -> dict[str, Any]:
     """Un personnage de plus dans le projet (US-115). Ne coûte rien, ne sort pas."""

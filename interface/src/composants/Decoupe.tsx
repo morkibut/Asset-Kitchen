@@ -332,7 +332,7 @@ export function EcranDecoupe({
                         <span
                           aria-hidden
                           className={`mt-[3px] block h-[14px] w-[14px] shrink-0 rounded-[2px] border ${
-                            magenta ? "border-signal bg-signal" : "border-bord-fort"
+                            magenta ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort"
                           }`}
                         />
                         <span>
@@ -429,7 +429,7 @@ export function EcranDecoupe({
                 <span
                   aria-hidden
                   className={`mt-[3px] block h-[14px] w-[14px] shrink-0 rounded-[2px] border ${
-                    remplacer ? "border-signal bg-signal" : "border-bord-fort"
+                    remplacer ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort"
                   }`}
                 />
                 <span>
@@ -667,7 +667,7 @@ function Rectangle({
         "absolute block border transition-colors duration-[80ms]",
         choisi
           ? "border-lumiere shadow-[0_0_0_1px_var(--color-lumiere)]"
-          : "border-signal hover:border-signal-clair",
+          : "border-ancien-signal hover:border-ancien-signal-clair",
       ].join(" ")}
     >
       <span className="mesure absolute top-0 left-0 bg-[rgba(11,13,16,.82)] px-1 text-[8.5px] leading-[13px] text-texte-2">
@@ -722,7 +722,7 @@ function ListeBoites({
             type="button"
             onClick={() => onRetirer(rang)}
             aria-label={`Retirer le rectangle ${rang + 1}`}
-            className="shrink-0 px-1 hover:text-echec"
+            className="shrink-0 px-1 hover:text-ancien-echec"
           >
             ✕
           </button>

@@ -1,0 +1,398 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
+    .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
+    .bt-off { background: #f2ede4; border-color: #e2dbd0; color: #b0a89b; }
+    .ong { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 7px; font-size: 13.5px; color: #6d675e; }
+    .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .seg { display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; }
+    .sg { height: 29px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; color: #6d675e; }
+    .sg-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .ch { height: 34px; display: flex; align-items: center; padding: 0 11px; border-radius: 7px; background: #fffdfa; border: 1px solid #ddd5c8; font-size: 13px; color: #221f1b; }
+    .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
+    .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 14px 14px; }
+    .vide { border: 1px dashed #c9c2b6; border-radius: 8px; }
+    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
+    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
+    .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f }
+
+    .quad { background-image:
+        linear-gradient(to right, rgba(34,31,27,.14) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(34,31,27,.14) 1px, transparent 1px);
+        background-size: 128px 128px }
+    .quad-clair { background-image:
+        linear-gradient(to right, rgba(255,253,250,.22) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,253,250,.22) 1px, transparent 1px) }
+    .anc { display: grid; grid-template-columns: repeat(3, 22px); grid-template-rows: repeat(3, 22px); gap: 3px }
+    .anc i { border: 1px solid #ddd5c8; border-radius: 4px; background: #fffdfa }
+    .anc i.on { background: #a8492c; border-color: #a8492c }
+
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; background: #f7f3ec">
+
+  <div style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+
+  <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 12px 14px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px">
+        <span class="serif" style="font-size: 21px">Le Marais du Vieux Moulin</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg>
+      </div>
+      <div class="rl"><span>Les r&egrave;gles du jeu</span></div>
+      <div class="rl"><span>La toile de l'univers</span><span class="num">61</span></div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="rl" style="background: #e6dfd2; font-weight: 600"><span>Les personnages</span><span class="num">12</span></div>
+      <div class="rl-sub" style="background: #e6dfd2; color: #221f1b; font-weight: 600"><span>Le p&eacute;lerin</span></div>
+      <div class="rl-sub"><span>La sorci&egrave;re</span></div>
+      <div class="rl-sub"><span>Le passeur</span></div>
+      <div class="rl"><span>Les cr&eacute;atures</span><span class="num">8</span></div>
+      <div class="rl"><span>Les &eacute;quipements</span><span class="num">9</span></div>
+      <div class="rl"><span>Les objets</span><span class="num">14</span></div>
+      <div class="rl"><span>Les d&eacute;cors</span><span class="num">6</span></div>
+      <div class="rl"><span>Les terrains</span><span class="num">11</span></div>
+      <div class="rl"><span>L'interface</span><span class="num">4</span></div>
+      </div>
+      <div class="rt" style="padding: 12px 10px 4px">Toutes les images</div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+      <div class="rl"><span>La galerie</span><span class="num">45</span></div>
+      <div class="rl"><span>Les d&eacute;penses</span><span class="num">$1,55</span></div>
+      </div>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 11px">
+        <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">On y arrive depuis la page du p&eacute;lerin, &agrave; c&ocirc;t&eacute; de <b>Comparer</b>. C'est la seule vue qui r&eacute;pond &agrave; &laquo;&nbsp;est-ce qu'il fait la bonne taille&nbsp;?&nbsp;&raquo; sans qu'on ait &agrave; l'imaginer.</div>
+        <!-- pied -->
+        <div style="border-top: 1px solid #e2dbd0; padding: 11px 10px 0; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80"><span class="kb">&#8984;K</span><span>chercher, ou faire</span></div>
+          <div style="display: flex; align-items: center; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #4e483f">
+            <span style="display: flex; align-items: center; gap: 6px"><span class="kb">?</span>Le guide et les touches</span>
+            <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> L'installation</span>
+          </div>
+        </div>
+        <!-- /pied -->
+      </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0; gap: 13px">
+    <div style="display: flex; align-items: baseline; gap: 9px; font-size: 12.5px; color: #948c80"><span style="color: #3d382f">Le p&eacute;lerin</span></div>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <h1 class="serif" style="margin: 0; font-size: 36px; line-height: 1.05">Sur la grille du jeu</h1>
+        <div style="font-size: 13px; color: #4e483f">&agrave; sa vraie taille, sur les cases du jeu, &agrave; c&ocirc;t&eacute; de ce qui l'entoure</div>
+      </div>
+      
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+      <div class="seg" style="padding: 3px"><div class="ong">Sa fiche</div><div class="ong">Ses images</div><div class="ong">Ses animations</div><div class="ong">L'essai</div></div><div style="display: flex; align-items: center; gap: 8px"><span class="ong ong-on">Voir la grille du jeu</span><a href="./Comparer.dc.html" class="ong" style="text-decoration: none">Comparer &rsaquo;</a></div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <div class="seg"><div class="sg">&times;1</div><div class="sg sg-on">&times;2</div>
+        <div class="sg">&times;4</div><div class="sg">&times;8</div></div>
+        <span style="font-size: 12px; color: #6d675e">un facteur entier, jamais un zoom continu&nbsp;:
+        &agrave; &times;1,5 un pixel du jeu n'est plus un carr&eacute;</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 13px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 6px">
+          <i style="width: 13px; height: 13px; border-radius: 3px; background: #a8492c; display: block"></i>la grille</span>
+        <span style="display: flex; align-items: center; gap: 6px">
+          <i style="width: 13px; height: 13px; border-radius: 3px; background: #a8492c; display: block"></i>le sol</span>
+        <span style="display: flex; align-items: center; gap: 6px; color: #948c80">
+          <i style="width: 13px; height: 13px; border-radius: 3px; border: 1px solid #c9c2b6; display: block"></i>les rep&egrave;res</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="position: relative; height: 424px; background: #6c6c6c; border-radius: 9px; overflow: hidden">
+        <div class="quad quad-clair" style="position: absolute; inset: 0; background-position: 0 40px"></div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 40px; height: 2px; background: rgba(255,253,250,.5)"></div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: rgba(34,31,27,.22)"></div>
+        <div style="position: absolute; left: 22px; right: 22px; bottom: 40px; display: flex; gap: 0;
+                    align-items: flex-end">      <div style="display: flex; flex-direction: column; align-items: center; gap: 0; width: 256px; flex-shrink: 0">
+        <div style="position: relative; width: 256px; height: 384.0px"><div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 161px; height: 276px; background: linear-gradient(#9b8b6e, #6f6250); border-radius: 6px 6px 2px 2px"></div><div style="position: absolute; left: 50%; bottom: 269px; transform: translateX(-50%); width: 0; height: 0; border-left: 100px solid transparent; border-right: 100px solid transparent; border-bottom: 84px solid #6b4f33"></div><div style="position: absolute; left: 50%; bottom: 238px; transform: translate(-50%,0) rotate(24deg); width: 238px; height: 4px; background: #4a3f31"></div><div style="position: absolute; left: 50%; bottom: 238px; transform: translate(-50%,0) rotate(-66deg); width: 238px; height: 4px; background: #4a3f31"></div></div>
+      </div>      <div style="display: flex; flex-direction: column; align-items: center; gap: 0; width: 128px; flex-shrink: 0">
+        <div style="position: relative; width: 128px; height: 128.0px"><div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 36px; height: 95px; background: #5f503c; border-radius: 8px 8px 2px 2px"></div><div style="position: absolute; left: 50%; bottom: 90px; transform: translateX(-50%); width: 26px; height: 26px; border-radius: 50%; background: #e2caa8"></div></div>
+      </div>      <div style="display: flex; flex-direction: column; align-items: center; gap: 0; width: 128px; flex-shrink: 0">
+        <div style="position: relative; width: 128px; height: 115.2px"><div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 32px; height: 85px; background: #4e6b4a; border-radius: 7px 7px 2px 2px"></div><div style="position: absolute; left: 50%; bottom: 81px; transform: translateX(-50%); width: 23px; height: 23px; border-radius: 50%; background: #e2caa8"></div></div>
+      </div>      <div style="display: flex; flex-direction: column; align-items: center; gap: 0; width: 128px; flex-shrink: 0">
+        <div style="position: relative; width: 128px; height: 64.0px"><div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 50px; height: 64px; background: linear-gradient(90deg, #6b4f33, #8a6b47 40%, #5d442c); border-radius: 6px"></div></div>
+      </div>      <div style="display: flex; flex-direction: column; align-items: center; gap: 0; width: 128px; flex-shrink: 0">
+        <div style="position: relative; width: 128px; height: 51.2px"><div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 7px; height: 37px; background: #5d442c; border-radius: 2px"></div><div style="position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); width: 15px; height: 17px; background: radial-gradient(#f2c14e, #c0562a); border-radius: 50% 50% 40% 40%"></div></div>
+      </div></div>
+        <span class="mono" style="position: absolute; top: 8px; left: 11px; font-size: 9.5px; color: #f2ede4;
+                     background: rgba(0,0,0,.35); border-radius: 3px; padding: 2px 6px">une case = 64 px &middot; vue &times;2</span>
+      </div>
+      <div style="display: flex; gap: 0; padding-left: 22px"><div style="width: 256px; flex-shrink: 0; text-align: center; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 12px; color: #221f1b">le moulin</span><span class="mono" style="font-size: 9.5px; color: #948c80">d&eacute;cor &middot; 300&nbsp;%</span></div><div style="width: 128px; flex-shrink: 0; text-align: center; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 12px; color: #221f1b">le p&eacute;lerin</span><span class="mono" style="font-size: 9.5px; color: #948c80">personnage &middot; 100&nbsp;%</span></div><div style="width: 128px; flex-shrink: 0; text-align: center; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 12px; color: #221f1b">la grenouille</span><span class="mono" style="font-size: 9.5px; color: #948c80">cr&eacute;ature &middot; 90&nbsp;%</span></div><div style="width: 128px; flex-shrink: 0; text-align: center; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 12px; color: #221f1b">le tonneau</span><span class="mono" style="font-size: 9.5px; color: #948c80">objet pos&eacute; &middot; 50&nbsp;%</span></div><div style="width: 128px; flex-shrink: 0; text-align: center; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 12px; color: #221f1b">la torche</span><span class="mono" style="font-size: 9.5px; color: #948c80">objet tenu &middot; 40&nbsp;%</span></div></div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 14px; padding: 11px 14px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span style="font-size: 12.5px; color: #6d675e; flex-shrink: 0">&Agrave; c&ocirc;t&eacute; de lui</span>
+      <div style="display: flex; gap: 7px; flex-wrap: wrap">
+        <span class="sg sg-on" style="height: 26px">le moulin</span>
+        <span class="sg" style="height: 26px; background: #fffdfa; border: 1px solid #ddd5c8">la grenouille</span>
+        <span class="sg" style="height: 26px; background: #fffdfa; border: 1px solid #ddd5c8">le tonneau</span>
+        <span class="sg" style="height: 26px; background: #fffdfa; border: 1px solid #ddd5c8">la torche</span>
+        <span class="sg" style="height: 26px; color: #948c80">+ en ajouter</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="border-left: 1px solid #e2dbd0; background: #f2ede4; padding: 24px 20px; display: flex; flex-direction: column; gap: 13px; overflow: hidden">
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <span class="serif" style="font-size: 21px">Ce qu'il occupe</span>
+      <span class="puce p-a">&agrave; ajouter</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Son type de sujet</span><span style="color: #221f1b; text-align: right">personnage</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Ce qu'il occupe</span><span style="color: #221f1b; text-align: right">100&nbsp;% d'une case</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">La case du jeu</span><span style="color: #221f1b; text-align: right">64 px</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Son ancrage</span><span style="color: #221f1b; text-align: right">en bas, au centre</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Son d&eacute;calage</span><span style="color: #221f1b; text-align: right">0, 0</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Sa r&eacute;duction</span><span style="color: #221f1b; text-align: right">au plus proche</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px"><span style="color: #6d675e">Se d&eacute;toure</span><span style="color: #5c7a52; text-align: right">oui</span></div>
+    </div>
+
+    <div style="display: flex; align-items: flex-start; gap: 16px; border-top: 1px solid #e2dbd0; padding-top: 12px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div class="rt" style="font-size: 9.5px">O&ugrave; il se pose dans sa case</div>
+        <div class="anc"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i></div>
+      </div>
+      <div style="font-size: 11.5px; line-height: 1.5; color: #6d675e; padding-top: 16px">
+        En bas, au centre&nbsp;: les pieds sur la ligne, quelle que soit sa hauteur.
+        C'est ce qui fait qu'un personnage et une cr&eacute;ature marchent sur le m&ecirc;me sol.</div>
+    </div>
+
+    <div style="border-top: 1px solid #e2dbd0; padding-top: 12px; display: flex; flex-direction: column; gap: 6px">
+      <div class="rt" style="font-size: 9.5px">Le bar&egrave;me du jeu &mdash; huit types</div>
+<div style="display: flex; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 5px; background: #fffdfa; font-size: 12px"><span>personnage</span><span class="mono" style="font-size: 11px; color: #a8492c">100&nbsp;%</span></div><div style="display: flex; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 5px; background: transparent; font-size: 12px"><span>cr&eacute;ature</span><span class="mono" style="font-size: 11px; color: #948c80">90&nbsp;%</span></div><div style="display: flex; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 5px; background: transparent; font-size: 12px"><span>meuble</span><span class="mono" style="font-size: 11px; color: #948c80">66&nbsp;%</span></div><div style="display: flex; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 5px; background: transparent; font-size: 12px"><span>objet pos&eacute;</span><span class="mono" style="font-size: 11px; color: #948c80">50&nbsp;%</span></div><div style="display: flex; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 5px; background: transparent; font-size: 12px"><span>objet tenu</span><span class="mono" style="font-size: 11px; color: #948c80">40&nbsp;%</span></div><div style="display: flex; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 5px; background: transparent; font-size: 12px"><span>d&eacute;cor</span><span class="mono" style="font-size: 11px; color: #948c80">100&nbsp;%</span></div><div style="display: flex; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 5px; background: transparent; font-size: 12px"><span>tuile</span><span class="mono" style="font-size: 11px; color: #948c80">100&nbsp;%</span></div><div style="display: flex; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 5px; background: transparent; font-size: 12px"><span>&eacute;l&eacute;ment d'interface</span><span class="mono" style="font-size: 11px; color: #948c80">100&nbsp;%</span></div>
+    </div>
+
+    <div style="margin-top: auto; background: #f4ece2; border: 1px solid #e0cfb8; border-radius: 8px;
+                padding: 11px 12px; font-size: 11.5px; line-height: 1.5; color: #6d4a22">
+      Cet &eacute;cran n'existe pas. Les nombres qu'il affiche existent tous&nbsp;; ce qui manque, c'est
+      l'endroit o&ugrave; on les voit ensemble, sur des cases.
+    </div>
+  </div>
+
+  </div>
+
+
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Les cinq r&eacute;glages de la grille</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">la quatri&egrave;me place de la recette d'une image &mdash; celle qui d&eacute;cide de la taille</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span style="font-size: 14px; font-weight: 600">La case</span>
+        <span class="mono" style="font-size: 10.5px; color: #a8492c">cible</span>
+      </div>
+      <div class="quad" style="position: relative; height: 104px; border: 1px solid #ddd5c8; border-radius: 6px; background-color: #f2ede4; background-size: 102px 102px; overflow: hidden"><div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center"><span class="mono" style="font-size: 22px; color: #4e483f">64</span></div></div>
+      <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Le c&ocirc;t&eacute; de la case, en pixels. Dix valeurs de 8 &agrave; 512, plus &laquo;&nbsp;aucune&nbsp;&raquo; &mdash; qui n'est pas un trou&nbsp;: c'est &laquo;&nbsp;rends-moi ce que le mod&egrave;le a fait, tel quel&nbsp;&raquo;.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span style="font-size: 14px; font-weight: 600">L'occupation</span>
+        <span class="mono" style="font-size: 10.5px; color: #a8492c">occupation</span>
+      </div>
+      <div class="quad" style="position: relative; height: 104px; border: 1px solid #ddd5c8; border-radius: 6px; background-color: #f2ede4; background-size: 102px 102px; overflow: hidden"><div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 8px; width: 26px; height: 82px"><div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 21px; height: 61px; background: #5f503c; border-radius: 4px 4px 2px 2px"></div><div style="position: absolute; left: 50%; bottom: 57px; transform: translateX(-50%); width: 16px; height: 16px; border-radius: 50%; background: #e2caa8"></div></div><div style="position: absolute; left: 8px; bottom: 8px; width: 15px; height: 46px"><div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 12px; height: 34px; background: #6b4f33; border-radius: 2px 2px 2px 2px"></div><div style="position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); width: 9px; height: 9px; border-radius: 50%; background: #e2caa8"></div></div></div>
+      <div style="font-size: 12px; line-height: 1.5; color: #6d675e">La part de la case que le sujet prend. Un personnage vaut 100&nbsp;%, un objet pos&eacute; 50&nbsp;%. Elle vient du type de sujet, pas de l'image.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span style="font-size: 14px; font-weight: 600">L'ancrage</span>
+        <span class="mono" style="font-size: 10.5px; color: #a8492c">ancrage</span>
+      </div>
+      <div class="quad" style="position: relative; height: 104px; border: 1px solid #ddd5c8; border-radius: 6px; background-color: #f2ede4; background-size: 102px 102px; overflow: hidden"><div style="position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px"><div class="anc"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i></div></div></div>
+      <div style="font-size: 12px; line-height: 1.5; color: #6d675e">O&ugrave; le sujet se colle dans sa case, parmi neuf points. En bas au centre est le cas courant&nbsp;: les pieds sur le sol.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span style="font-size: 14px; font-weight: 600">Le d&eacute;calage</span>
+        <span class="mono" style="font-size: 10.5px; color: #a8492c">d&eacute;calage</span>
+      </div>
+      <div class="quad" style="position: relative; height: 104px; border: 1px solid #ddd5c8; border-radius: 6px; background-color: #f2ede4; background-size: 102px 102px; overflow: hidden"><div style="position: absolute; left: 46px; bottom: 8px; width: 24px; height: 74px"><div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 19px; height: 55px; background: #5f503c; border-radius: 4px 4px 2px 2px"></div><div style="position: absolute; left: 50%; bottom: 52px; transform: translateX(-50%); width: 14px; height: 14px; border-radius: 50%; background: #e2caa8"></div></div><div style="position: absolute; left: 30px; bottom: 8px; width: 16px; height: 1px; background: #a8492c"></div><span class="mono" style="position: absolute; left: 26px; bottom: 12px; font-size: 9px; color: #a8492c">+3</span></div>
+      <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Deux pixels de rattrapage, quand l'ancrage ne suffit pas. Il se compte en pixels de la case, pas de l'image re&ccedil;ue.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span style="font-size: 14px; font-weight: 600">La r&eacute;duction</span>
+        <span class="mono" style="font-size: 10.5px; color: #a8492c">m&eacute;thode</span>
+      </div>
+      <div class="quad" style="position: relative; height: 104px; border: 1px solid #ddd5c8; border-radius: 6px; background-color: #f2ede4; background-size: 102px 102px; overflow: hidden"><div style="position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; font-size: 9.5px; color: #6d675e"><span style="display: flex; align-items: center; justify-content: center">vote</span><span style="display: flex; align-items: center; justify-content: center; background: #a8492c; color: #fff8f4">au plus<br>proche</span><span style="display: flex; align-items: center; justify-content: center">pixeloe</span><span style="display: flex; align-items: center; justify-content: center">lanczos</span></div></div>
+      <div style="font-size: 12px; line-height: 1.5; color: #6d675e">Quatre fa&ccedil;ons de descendre &agrave; la taille de la case. Le r&eacute;sultat n'a rien &agrave; voir de l'une &agrave; l'autre sur un dessin fin.</div>
+    </div>
+  </div>
+  <div style="font-size: 13px; line-height: 1.6; color: #4e483f; max-width: 108ch; padding-top: 6px">
+    Ces cinq nombres sont la quatri&egrave;me place de la recette d'une image, et ils s'appliquent dans cet ordre&nbsp;:
+    on recadre sur ce qui n'est pas transparent, on r&eacute;duit, puis on pose sur une toile carr&eacute;e.
+    <b>Le nombre de couleurs vient apr&egrave;s, jamais avant</b> &mdash; r&eacute;duire une image d&eacute;j&agrave; r&eacute;duite &agrave; vingt-quatre
+    couleurs en fabrique de nouvelles.
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Quand un sujet d&eacute;passe sa case</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">depuis le 3 septembre, l'occupation monte &agrave; 800&nbsp;% &mdash; et le plafond n'est pas toujours 800</span>
+    </div>
+  <div style="display: grid; grid-template-columns: 460px minmax(0, 1fr); gap: 30px; align-items: start">
+    <div style="display: flex; gap: 14px">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px">
+        <div style="position: relative; width: 90px; height: 210px; display: flex; align-items: flex-end;
+                    justify-content: center">
+          <div class="quad" style="position: absolute; inset: 0; background-size: 62px 62px; background-color: #f2ede4;
+                      border: 1px solid #ddd5c8; border-radius: 5px"></div>
+          <div style="position: relative; width: 34px; height: 31.0px; background: #5f503c; border-radius: 4px 4px 2px 2px;
+                      margin-bottom: 1px"></div>
+        </div>
+        <div style="text-align: center">
+          <div style="font-size: 12.5px">un tonneau</div>
+          <div class="mono" style="font-size: 10px; color: #948c80">50&nbsp;%</div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px">
+        <div style="position: relative; width: 90px; height: 210px; display: flex; align-items: flex-end;
+                    justify-content: center">
+          <div class="quad" style="position: absolute; inset: 0; background-size: 62px 62px; background-color: #f2ede4;
+                      border: 1px solid #ddd5c8; border-radius: 5px"></div>
+          <div style="position: relative; width: 34px; height: 62.0px; background: #5f503c; border-radius: 4px 4px 2px 2px;
+                      margin-bottom: 1px"></div>
+        </div>
+        <div style="text-align: center">
+          <div style="font-size: 12.5px">un personnage</div>
+          <div class="mono" style="font-size: 10px; color: #948c80">100&nbsp;%</div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px">
+        <div style="position: relative; width: 90px; height: 210px; display: flex; align-items: flex-end;
+                    justify-content: center">
+          <div class="quad" style="position: absolute; inset: 0; background-size: 62px 62px; background-color: #f2ede4;
+                      border: 1px solid #ddd5c8; border-radius: 5px"></div>
+          <div style="position: relative; width: 34px; height: 186.0px; background: #6f6250; border-radius: 4px 4px 2px 2px;
+                      margin-bottom: 1px"></div>
+        </div>
+        <div style="text-align: center">
+          <div style="font-size: 12.5px">un moulin</div>
+          <div class="mono" style="font-size: 10px; color: #948c80">300&nbsp;%</div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px">
+        <div style="position: relative; width: 90px; height: 210px; display: flex; align-items: flex-end;
+                    justify-content: center">
+          <div class="quad" style="position: absolute; inset: 0; background-size: 62px 62px; background-color: #f2ede4;
+                      border: 1px solid #ddd5c8; border-radius: 5px"></div>
+          <div style="position: relative; width: 34px; height: 198.4px; background: #6f6250; border-radius: 4px 4px 2px 2px;
+                      margin-bottom: 1px"><span class="mono" style="position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #8a3f33">coup&eacute;</span></div>
+        </div>
+        <div style="text-align: center">
+          <div style="font-size: 12.5px">le plafond</div>
+          <div class="mono" style="font-size: 10px; color: #948c80">800&nbsp;%</div>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <div style="font-size: 13px; line-height: 1.65; color: #4e483f">
+        Jusqu'au 3 septembre, l'occupation s'arr&ecirc;tait &agrave; 100&nbsp;%&nbsp;: tout tenait dans une case, et un moulin
+        &eacute;tait aussi haut qu'un p&egrave;lerin. Elle monte maintenant &agrave; <b>800&nbsp;%</b>. Un moulin &agrave; 300&nbsp;% fait trois
+        personnages de haut, et son image revient trois fois plus grande &mdash; c'est le m&ecirc;me r&eacute;glage qui
+        d&eacute;cide de la place dans le jeu et du prix de l'appel.
+      </div>
+      <div style="display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; border: 1px solid #e0cfb8;
+                  border-radius: 9px; background: #f4ece2">
+        <span class="puce p-a" style="flex-shrink: 0; margin-top: 1px">le plafond</span>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #6d4a22">
+          800&nbsp;% n'est pas toujours atteignable&nbsp;: si la toile d&eacute;passerait <b>2048 carr&eacute;s de c&ocirc;t&eacute;</b>,
+          le plafond descend. Sur un jeu &agrave; 512&nbsp;px de case, on ne d&eacute;passe donc pas 400&nbsp;%.
+          L'&eacute;cran doit dire lequel des deux plafonds s'applique, et pourquoi.</div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Ce qui existe d&eacute;j&agrave; pour comparer des tailles</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">trois &eacute;crans, et ce qu'aucun des trois ne fait</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 16px 17px; border: 1px solid #e2dbd0;
+                border-radius: 10px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span style="font-size: 15px; font-weight: 600">La vitrine</span><span class="puce p-ok">existe</span>
+      </div>
+      <div class="mono" style="font-size: 10.5px; color: #948c80">Vitrine.tsx</div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Plusieurs images c&ocirc;te &agrave; c&ocirc;te, agrandies d'un facteur entier &mdash; &times;1, &times;2, &times;4, &times;8.</div>
+      <div style="font-size: 12px; line-height: 1.5; color: #8a3f33; border-top: 1px solid #ece6db;
+                  padding-top: 9px">Mais&nbsp;: aucune case, aucun sol. On compare des images, pas des places dans un jeu.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 16px 17px; border: 1px solid #e2dbd0;
+                border-radius: 10px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span style="font-size: 15px; font-weight: 600">La r&egrave;gle des tailles</span><span class="puce p-ok">existe</span>
+      </div>
+      <div class="mono" style="font-size: 10.5px; color: #948c80">l'assistant, une &eacute;tape</div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Dix sprites de d&eacute;monstration, un pixel pour un pixel, pour choisir la taille de case du jeu.</div>
+      <div style="font-size: 12px; line-height: 1.5; color: #8a3f33; border-top: 1px solid #ece6db;
+                  padding-top: 9px">Mais&nbsp;: ce sont des sprites d'exemple, pas les v&ocirc;tres. Elle sert &agrave; d&eacute;cider, pas &agrave; v&eacute;rifier.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 16px 17px; border: 1px solid #e2dbd0;
+                border-radius: 10px; background: #fffdfa">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <span style="font-size: 15px; font-weight: 600">Le calibrage</span><span class="puce p-ok">existe</span>
+      </div>
+      <div class="mono" style="font-size: 10.5px; color: #948c80">Calibrage.tsx</div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Les poses d'une m&ecirc;me chose empil&eacute;es, pour voir si elle garde la m&ecirc;me taille d'une pose &agrave; l'autre.</div>
+      <div style="font-size: 12px; line-height: 1.5; color: #8a3f33; border-top: 1px solid #ece6db;
+                  padding-top: 9px">Mais&nbsp;: une seule chose &agrave; la fois. On ne peut pas y poser le moulin &agrave; c&ocirc;t&eacute; du p&egrave;lerin.</div>
+    </div>
+  </div>
+  <div style="font-size: 13px; line-height: 1.6; color: #4e483f; max-width: 108ch; padding-top: 6px">
+    Les trois comparent des tailles, et aucun ne montre <b>la grille</b>. C'est le manque que cette planche
+    remplit&nbsp;: voir un sujet debout sur les cases du jeu, avec ses voisins, au facteur o&ugrave; on jouera.
+  </div>
+  </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

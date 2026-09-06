@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ce qu'un appel a **consommé**, et dans quelle unité.
 
-Arrivé en F2 (`docs/PLAN.md` § V2.2). C'est la révision n°2 de la version, et
+Arrivé en F2 (`docs/archive/plan-versions-tenues.md` § V2.2). C'est la révision n°2 de la version, et
 elle tient en une phrase : *« le coût enregistré est celui que l'appel facture »*
 devient *« ce que l'appel a consommé, dans l'unité du fournisseur »*.
 

@@ -437,7 +437,7 @@ export function EcranClip({
         <button
           type="button"
           onClick={() => setChoixOuvert((o) => !o)}
-          className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+          className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           {choixOuvert ? "fermer la bibliothèque" : "changer d'image ›"}
         </button>
@@ -570,7 +570,7 @@ export function EcranClip({
           </tbody>
         </table>
 
-        <p className="rounded-[2px] border-l-2 border-info bg-fond-2 p-3 text-[11.5px] leading-relaxed text-texte-2">
+        <p className="rounded-[2px] border-l-2 border-ancien-signal bg-fond-2 p-3 text-[11.5px] leading-relaxed text-texte-2">
           <strong className="text-texte">Ce clip n'hérite que de votre
           sprite.</strong> Ni les textes du jeu, ni ses images d'ambiance ne
           partent avec lui : un modèle vidéo ne prend qu'une seule image, et
@@ -644,7 +644,7 @@ export function EcranClip({
             aria-hidden
             className={[
               "block h-[9px] w-[9px] rounded-[1px] border",
-              seulementPossibles ? "border-signal bg-signal" : "border-bord-fort",
+              seulementPossibles ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort",
             ].join(" ")}
           />
           <span className="flex-1">seulement ce qui peut partir</span>
@@ -851,7 +851,7 @@ function ConfirmationClip({
           <button
             type="button"
             onClick={() => setChoixOuvert((o) => !o)}
-            className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+            className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             {choixOuvert ? "fermer la bibliothèque" : "changer d'image ›"}
           </button>
@@ -907,7 +907,7 @@ function ConfirmationClip({
             rows={6}
             aria-label="Corriger le texte du clip, pour cet appel"
             data-correction-clip
-            className="mesure min-h-[120px] resize-y rounded-[2px] border border-signal bg-fond-2 px-2 py-1 text-[10.5px] leading-[1.45] text-texte"
+            className="mesure min-h-[120px] resize-y rounded-[2px] border border-ancien-signal bg-fond-2 px-2 py-1 text-[10.5px] leading-[1.45] text-texte"
           />
         ) : (
           <p
@@ -937,7 +937,7 @@ function ConfirmationClip({
                   onRemettre()
                   setChampOuvert(false)
                 }}
-                className="mesure text-[10px] text-signal hover:text-signal-clair"
+                className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
               >
                 remettre le texte du mouvement
               </button>
@@ -948,7 +948,7 @@ function ConfirmationClip({
                 setBrouillon(null)
                 setChampOuvert((o) => !o)
               }}
-              className="mesure text-[10px] text-signal hover:text-signal-clair"
+              className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
             >
               {champOuvert ? "fermer" : "corriger"}
             </button>
@@ -1113,7 +1113,7 @@ function ChoixDansLaBibliotheque({
               type="button"
               onClick={() => onChoisir(asset)}
               title={asset.label}
-              className="block aspect-square w-full overflow-hidden border border-bord hover:border-signal"
+              className="block aspect-square w-full overflow-hidden border border-bord hover:border-ancien-signal"
             >
               <img
                 src={vignetteAsset(asset, 128)}
@@ -1167,7 +1167,7 @@ function CarteModele({
         grise
           ? "border-bord bg-fond-2 opacity-60"
           : choisi
-            ? "border-signal bg-fond-2"
+            ? "border-ancien-signal bg-fond-2"
             : "border-bord bg-fond-2 hover:border-bord-fort",
       ].join(" ")}
     >
@@ -1424,7 +1424,7 @@ function Choix({
           className={[
             "mesure h-[26px] rounded-[2px] px-2 text-[10.5px] transition-colors duration-[80ms]",
             v.cle === valeur
-              ? "bg-signal text-fond-0"
+              ? "bg-ancien-signal text-fond-0"
               : "border border-bord bg-fond-2 text-texte-2 hover:text-texte",
           ].join(" ")}
         >

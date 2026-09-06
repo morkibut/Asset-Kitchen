@@ -607,7 +607,7 @@ function BandeauDoublon({
           onChoisir(doublon.carte.identifiant)
           setDoublon(null)
         }}
-        className="text-signal hover:text-signal-clair"
+        className="text-ancien-signal hover:text-ancien-signal-clair"
       >
         La voir ›
       </button>
@@ -630,7 +630,7 @@ function BandeauDoublon({
             )
           })()
         }}
-        className="text-signal hover:text-signal-clair"
+        className="text-ancien-signal hover:text-ancien-signal-clair"
       >
         Importer quand même ›
       </button>
@@ -694,7 +694,7 @@ export function BarreTableau({
         {cartes.length} carte{cartes.length > 1 ? "s" : ""}
       </span>
       {artworks > 0 && (
-        <span className="mesure shrink-0 text-[10px] text-signal">
+        <span className="mesure shrink-0 text-[10px] text-ancien-signal">
           {artworks} artwork{artworks > 1 ? "s" : ""} officiel{artworks > 1 ? "s" : ""}
         </span>
       )}
@@ -719,7 +719,7 @@ export function BarreTableau({
           {/* Le `+` reste lisible à l'assistance : il fait partie du libellé,
               et un nom accessible qui dirait « note » là où l'écran dit
               « + note » nommerait une chose au lieu d'un geste. */}
-          <span className="text-signal">+</span> note
+          <span className="text-ancien-signal">+</span> note
         </button>
         <Libelle aide="tableau.vue">Vue</Libelle>
         <Segments
@@ -736,7 +736,9 @@ export function BarreTableau({
  * Les onze pastilles d'une teinte — **dix couleurs et le châssis**.
  *
  * « La liste est fermée, et il n'existe aucun sélecteur libre : le premier îlot
- * rouge vif se lirait comme un échec » (`docs/DESIGN.md` § Les teintes d'îlot).
+ * rouge vif se lirait comme un échec »
+ * (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Les dix teintes de
+ * rangement).
  * Elles prennent la forme exacte du carré de palette de l'écran Univers — le
  * seul motif de couleur nue du produit —, parce qu'une pastille n'est pas une
  * marque : c'est la couleur montrée.
@@ -856,7 +858,8 @@ export function CarteTuile({
 }) {
   const ouvert = choisie || survolee
   // **La teinte d'une note colore sa surface, jamais une marque posée dessus**
-  // (`docs/DESIGN.md` § Les teintes d'îlot, discipline n°2). Le fond à 8 %, sous
+  // (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Les dix teintes de
+  // rangement, discipline n°2). Le fond à 8 %, sous
   // le seuil où l'œil la trouve seule et assez pour délimiter — la même valeur
   // que le fond d'un îlot, parce que c'est la même chose : une surface qui dit
   // à quoi elle appartient.
@@ -1002,7 +1005,7 @@ export function CarteTuile({
         {carte.artwork && (
           <span
             aria-label="artwork officiel"
-            className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-signal border-l-transparent"
+            className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-ancien-signal border-l-transparent"
           />
         )}
 
@@ -1021,7 +1024,7 @@ export function CarteTuile({
 
       <div className="mesure flex shrink-0 items-center gap-1.5 border-t border-bord px-1.5 py-1 text-[9.5px] text-texte-3">
         {carte.artwork ? (
-          <span className="text-signal">{NOM_FAMILLE[carte.famille]}</span>
+          <span className="text-ancien-signal">{NOM_FAMILLE[carte.famille]}</span>
         ) : designeurs.length > 0 ? (
           <span className="truncate text-epingle">
             {designeurs.map((p) => p.nom).join(" · ")}
@@ -1287,11 +1290,11 @@ function Attente({ carte, plan = false }: { carte: Carte; plan?: boolean }) {
       className={[
         "flex w-full flex-col justify-center gap-1.5 p-3 text-left",
         plan ? "h-full" : "aspect-square",
-        echouee ? "bg-echec/5" : "bg-fond-2",
+        echouee ? "bg-ancien-echec/5" : "bg-fond-2",
       ].join(" ")}
     >
       <span
-        className={["mesure text-[10px]", echouee ? "text-echec" : "text-epingle"].join(" ")}
+        className={["mesure text-[10px]", echouee ? "text-ancien-echec" : "text-epingle"].join(" ")}
       >
         {echouee ? "pas arrivée" : "en attente…"}
       </span>
@@ -1299,7 +1302,7 @@ function Attente({ carte, plan = false }: { carte: Carte; plan?: boolean }) {
         {carte.source}
       </span>
       {carte.raison && (
-        <span className="mesure text-[9.5px] leading-snug text-echec">{carte.raison}</span>
+        <span className="mesure text-[9.5px] leading-snug text-ancien-echec">{carte.raison}</span>
       )}
     </div>
   )
@@ -1498,7 +1501,7 @@ function Reglages({
                 carte.statut !== "prete"
                   ? "border-bord bg-fond-2 text-texte-3"
                   : carte.officiel
-                    ? "border-signal bg-signal/13 text-signal"
+                    ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
                     : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
               ].join(" ")}
             >
@@ -1520,7 +1523,7 @@ function Reglages({
                     className={[
                       "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
                       carte.famille === famille
-                        ? "border-signal bg-signal/13 text-signal"
+                        ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
                         : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
                     ].join(" ")}
                   >
@@ -1550,7 +1553,7 @@ function Reglages({
           <button
             type="button"
             onClick={() => decouper(carte)}
-            className="mesure text-[10px] text-signal hover:text-signal-clair"
+            className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             Découper ›
           </button>
@@ -1563,7 +1566,7 @@ function Reglages({
                 .reessayerCarte(carte.identifiant)
                 .catch((e) => echouer(e, "récupération refusée"))
             }
-            className="mesure text-[10px] text-signal hover:text-signal-clair"
+            className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             Réessayer ›
           </button>
@@ -1573,7 +1576,7 @@ function Reglages({
             href={carte.source}
             target="_blank"
             rel="noreferrer"
-            className="mesure truncate text-[10px] text-texte-3 hover:text-signal"
+            className="mesure truncate text-[10px] text-texte-3 hover:text-ancien-signal"
             title={carte.source}
           >
             {carte.source}
@@ -1586,7 +1589,7 @@ function Reglages({
               .oublierCarte(carte.identifiant)
               .catch((e) => echouer(e, "suppression refusée"))
           }
-          className="mesure ml-auto text-[10px] text-texte-3 hover:text-echec"
+          className="mesure ml-auto text-[10px] text-texte-3 hover:text-ancien-echec"
         >
           Retirer
         </button>

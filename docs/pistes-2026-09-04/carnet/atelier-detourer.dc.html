@@ -73,7 +73,7 @@
               display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
 
     <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
-      <div class="rt" style="padding: 0 9px">La chaîne</div>
+      <div class="rt" style="padding: 0 9px">Les sept tables</div>
       <div style="display: flex; flex-direction: column; gap: 2px">
         <div class="plc" style="background: #e6dfd2; font-weight: 600; flex-direction: column; align-items: stretch; gap: 3px">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
@@ -89,7 +89,7 @@
         </div>
         <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
-            <span>Réduire</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+            <span>Pixéliser</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
           </div>
           <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
         </div>
@@ -117,6 +117,22 @@
           </div>
           <div style="font-size: 11.5px; color: #6d675e">ce qu’on repeint soi-même</div>
         </div>
+      </div>
+
+      <div style="border-top: 1px solid #ddd5c8; padding-top: 10px; display: flex; flex-direction: column; gap: 2px">
+        <div class="rt" style="padding: 0 9px 4px">Les deux fabriques</div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <span style="color: #4e483f">Découper</span>
+          <div style="font-size: 11.5px; color: #6d675e">une image, plusieurs sujets</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <span style="color: #4e483f">Superposer</span>
+          <div style="font-size: 11.5px; color: #6d675e">deux images, un calque</div>
+        </div>
+        <div style="font-size: 11px; color: #948c80; padding: 4px 11px 0; line-height: 1.4">Elles ne s'endorment pas et ne modifient pas cette image&nbsp;: elles en fabriquent d'autres.</div>
+      </div>
+
+      <div style="border-top: 1px solid #ddd5c8; padding-top: 10px; display: flex; flex-direction: column; gap: 2px">
         <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
             <span>Retourner</span><span style="color: #a8492c; font-size: 16px; line-height: 1">●</span>
@@ -219,7 +235,17 @@
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
         <span>portée</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">cette tache</div><div class="sg" style="padding: 3px 8px">partout</div></div>
       </div>
-        
+
+      </div>
+      <div style="border-top: 1px solid #e2dbd0; padding-top: 11px; display: flex; flex-direction: column; gap: 7px">
+        <div class="bt" style="justify-content: space-between; width: 100%; font-size: 12.5px">Garder ces r&eacute;glages pour la suite<span style="color: #a49a8b">&rsaquo;</span></div>
+        <div style="display: flex; flex-direction: column; gap: 5px; padding: 9px 10px; border: 1px solid #e2dbd0; border-radius: 7px; background: #fffdfa">
+          <span class="rt" style="font-size: 9.5px">Pour quelles images</span>
+          <label style="display: flex; align-items: center; gap: 7px; font-size: 12px"><i style="width: 12px; height: 12px; border-radius: 50%; border: 4px solid #a8492c; background: #fffdfa; flex-shrink: 0"></i>celles qui arrivent seules</label>
+          <label style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: #6d675e"><i style="width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; flex-shrink: 0"></i>celles d&eacute;coup&eacute;es d&rsquo;une feuille</label>
+          <label style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: #6d675e"><i style="width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; flex-shrink: 0"></i>toute la famille &laquo;&nbsp;personnages&nbsp;&raquo;</label>
+        </div>
+        <div style="font-size: 11.5px; line-height: 1.45; color: #6d675e">Les prochaines images arriveront d&eacute;tour&eacute;es comme celle-ci. Celles qui existent d&eacute;j&agrave; ne bougent pas.</div>
       </div>
       <div style="margin-top: auto; border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 7px">
         <div style="font-size: 12.5px; font-weight: 600">La couleur de fond du jeu</div>
@@ -230,6 +256,285 @@
         </div>
         <div style="font-size: 11.5px; line-height: 1.45; color: #4e483f">Elle est demandée au modèle dans chaque prompt et reprise ici comme couleur à faire partir. Tant que personne ne la choisit, elle n’est demandée nulle part et chaque image revient avec un fond différent.</div>
       </div>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Un bouton, au lieu d&rsquo;un &eacute;cran &agrave; part</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 720px; text-align: right">le d&eacute;tourage de d&eacute;part se r&egrave;gle ici, sur une vraie image, une fois qu&rsquo;on en a vu quelques-unes</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start">
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa">
+        <span class="puce p-non" style="align-self: flex-start">supprim&eacute;</span>
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Il y avait deux planches pour un seul atelier</div>
+        <div style="font-size: 12px; line-height: 1.55; color: #6d675e">&laquo;&nbsp;Le d&eacute;tourage de d&eacute;part&nbsp;&raquo; ouvrait ce m&ecirc;me &eacute;cran par une autre porte, sur une image choisie comme banc d&rsquo;essai. Deux planches, un seul outil&nbsp;: il n&rsquo;en reste qu&rsquo;une, celle-ci.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa">
+        <span class="puce p-ok" style="align-self: flex-start">existe d&eacute;j&agrave;</span>
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.3">L&rsquo;app fait d&eacute;j&agrave; exactement &ccedil;a</div>
+        <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Le bouton s&rsquo;y appelle <span class="mono" style="font-size: 11px">enregistrer ce r&eacute;glage comme d&eacute;faut du projet</span>, et il est dans la table d&rsquo;une image. Il ne restait qu&rsquo;&agrave; le montrer ici, et &agrave; jeter l&rsquo;&eacute;cran en trop.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa">
+        <span class="puce p-a" style="align-self: flex-start">&agrave; ne pas oublier</span>
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La port&eacute;e se choisit, elle ne se devine pas</div>
+        <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Une image venue seule ne se d&eacute;toure pas comme une case d&eacute;coup&eacute;e d&rsquo;une feuille, et un d&eacute;cor pas comme un personnage. Se tromper de port&eacute;e se voit &agrave; la dixi&egrave;me image, pas &agrave; la premi&egrave;re.</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa">
+      <span class="puce p-ok" style="flex-shrink: 0; margin-top: 2px">relev&eacute;</span>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f"><b>Le code dit la m&ecirc;me chose, et depuis deux jours.</b> Le commentaire de <span class="mono" style="font-size: 11px">interface/src/composants/Tables.tsx</span> l&rsquo;&eacute;crit noir sur blanc&nbsp;: l&rsquo;&eacute;tape des r&eacute;glages se traverse <b>avant d&rsquo;avoir fabriqu&eacute; la moindre image</b>, alors qu&rsquo;on ne sait quel d&eacute;tourage convient qu&rsquo;apr&egrave;s en avoir vu quelques-unes. La r&eacute;paration n&rsquo;a pas &eacute;t&eacute; de d&eacute;placer l&rsquo;&eacute;tape, mais de laisser r&eacute;gler une image et de dire <em>garde &ccedil;a</em> depuis l&rsquo;image elle-m&ecirc;me.<br><br>L&rsquo;&eacute;tape reste dans les r&egrave;gles du jeu, dixi&egrave;me sur onze&nbsp;: elle dit ce qui arrivera aux prochaines images. Mais elle ne se r&egrave;gle plus l&agrave;-bas &mdash; elle s&rsquo;y lit.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">La colonne de droite, selon le moteur</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 720px; text-align: right">L’écran ci-dessus montre « le bord », posé d’emblée. Voici les trois autres.</span>
+    </div>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">La pipette</span>
+        <span style="font-size: 12px; color: #6d675e">on désigne la couleur</span>
+      </div>
+      <div style="width: 370px; height: 910px; border: 1px solid #e2dbd0; border-radius: 10px;
+                  background: #f2ede4; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px;
+                  overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Le moteur</div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Le bord</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">part des quatre coins et gagne de proche en proche</span>
+        </span>
+      </div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">La pipette</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">on désigne la couleur à faire partir</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">La sélection</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">on entoure ce qu’on garde</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Le modèle</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">cinq finesses, de 0,65 s à 1,33 s</span>
+        </span>
+      </div>
+        
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">La couleur à faire partir</div>
+      <div style="display: flex; align-items: center; gap: 9px; border: 1px solid #ddd5c8;
+                  border-radius: 7px; background: #fffdfa; padding: 8px 10px">
+        <i style="width: 24px; height: 24px; border-radius: 4px; background: #ff00ff; border: 1px solid #ddd5c8; flex-shrink: 0"></i>
+        <div style="display: flex; flex-direction: column; gap: 1px">
+          <span class="mono" style="font-size: 12.5px">#FF00FF</span>
+          <span style="font-size: 11px; color: #6d675e">prise au clic, en haut à gauche</span>
+        </div>
+      </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Un second clic ailleurs sur l’image remplace la couleur. Rien ne se calcule tant qu’on n’a pas cliqué.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #221f1b">tolérance</span>
+          <span class="mono" style="font-size: 12px; color: #221f1b">28</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 23%; background: #a8492c; border-radius: 2px"></i>
+          <i style="position: absolute; left: 23%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #a8492c"></i>
+        </div>
+        <div style="font-size: 11px; color: #948c80; line-height: 1.4">Toutes les couleurs à moins de 28 de celle-ci partent aussi.</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px"><span>portée</span><div class="seg" style="padding: 1px"><div class="sg" style="padding: 3px 8px">cette tache</div><div class="sg sg-on" style="padding: 3px 8px">partout</div></div></div><div style="font-size: 11px; color: #948c80; margin-top: -2px; line-height: 1.4">Avec « cette tache », seuls les pixels collés au point cliqué partent.</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px"><span>bord rongé</span><div class="seg" style="padding: 1px"><div class="sg" style="padding: 3px 8px">0</div><div class="sg sg-on" style="padding: 3px 8px">1</div><div class="sg" style="padding: 3px 8px">2</div><div class="sg" style="padding: 3px 8px">3</div></div></div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e2dbd0; background: #fffdfa; border-radius: 8px;
+                  padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #221f1b">La différence avec « le bord »</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Le bord ne demande rien : il part des quatre coins et avance tant que la couleur se ressemble. La pipette laisse choisir, et sait donc faire partir une couleur qui ne touche aucun coin — un ciel derrière le personnage, par exemple.</div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">La sélection</span>
+        <span style="font-size: 12px; color: #6d675e">on entoure ce qu’on garde</span>
+      </div>
+      <div style="width: 370px; height: 910px; border: 1px solid #e2dbd0; border-radius: 10px;
+                  background: #f2ede4; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px;
+                  overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Le moteur</div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Le bord</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">part des quatre coins et gagne de proche en proche</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">La pipette</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">on désigne la couleur à faire partir</span>
+        </span>
+      </div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">La sélection</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">on entoure ce qu’on garde</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Le modèle</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">cinq finesses, de 0,65 s à 1,33 s</span>
+        </span>
+      </div>
+        
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Le tracé</div>
+      <div style="border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; padding: 10px 11px;
+                  display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; gap: 6px">
+          <div class="bt" style="flex: 1; height: 29px; font-size: 12px; background: #e6dfd2">Au lasso</div>
+          <div class="bt" style="flex: 1; height: 29px; font-size: 12px">Au rectangle</div>
+        </div>
+        <div style="font-size: 11.5px; line-height: 1.45; color: #4e483f">
+          On entoure ce qu’on garde. Tout ce qui reste dehors devient transparent.
+        </div>
+      </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Le tracé se reprend point par point tant qu’on n’a pas relâché. Échap l’efface.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #b0a89b">tolérance</span>
+          <span class="mono" style="font-size: 12px; color: #b0a89b">—</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8"></div>
+        <div style="font-size: 11px; color: #8a5a2c; line-height: 1.45">Éteinte : ici c’est le trait qui décide, pas la ressemblance des couleurs.</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px"><span>bord rongé</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">0</div><div class="sg" style="padding: 3px 8px">1</div><div class="sg" style="padding: 3px 8px">2</div><div class="sg" style="padding: 3px 8px">3</div></div></div><div style="font-size: 11px; color: #948c80; margin-top: -2px; line-height: 1.4">Ronger un pixel rattrape un trait tremblé.</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px"><span>ce qui est dehors</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">part</div><div class="sg" style="padding: 3px 8px">reste</div></div></div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e2dbd0; background: #fffdfa; border-radius: 8px;
+                  padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #221f1b">Quand il vaut mieux entourer</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Quand le fond a la même couleur qu’une partie du personnage — une robe brune sur un sol brun. Aucune tolérance ne saura les séparer ; le trait, si.</div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Le modèle</span>
+        <span style="font-size: 12px; color: #6d675e">cinq finesses</span>
+      </div>
+      <div style="width: 370px; height: 910px; border: 1px solid #e2dbd0; border-radius: 10px;
+                  background: #f2ede4; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px;
+                  overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Le moteur</div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Le bord</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">part des quatre coins et gagne de proche en proche</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">La pipette</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">on désigne la couleur à faire partir</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">La sélection</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">on entoure ce qu’on garde</span>
+        </span>
+      </div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">Le modèle</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">cinq finesses, de 0,65 s à 1,33 s</span>
+        </span>
+      </div>
+        
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">La finesse</div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid #ddd5c8;
+                    border-radius: 6px; background: #fffdfa; padding: 7px 10px; font-size: 12.5px">
+          <span>rapide</span><span class="mono" style="font-size: 11.5px; color: #6d675e">0,65 s</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid #ddd5c8;
+                    border-radius: 6px; background: #fffdfa; padding: 7px 10px; font-size: 12.5px">
+          <span>léger</span><span class="mono" style="font-size: 11.5px; color: #6d675e">0,80 s</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid #a8492c;
+                    border-radius: 6px; background: #fffdfa; padding: 7px 10px; font-size: 12.5px; font-weight: 600">
+          <span>intermédiaire</span><span class="mono" style="font-size: 11.5px; color: #6d675e">0,95 s</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid #ddd5c8;
+                    border-radius: 6px; background: #fffdfa; padding: 7px 10px; font-size: 12.5px">
+          <span>dessin</span><span class="mono" style="font-size: 11.5px; color: #6d675e">1,10 s</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid #ddd5c8;
+                    border-radius: 6px; background: #fffdfa; padding: 7px 10px; font-size: 12.5px">
+          <span>lourd</span><span class="mono" style="font-size: 11.5px; color: #6d675e">1,33 s</span></div>
+      </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">« dessin » est entraîné sur des images dessinées plutôt que photographiées — c’est celui qui convient ici.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #b0a89b">tolérance</span>
+          <span class="mono" style="font-size: 12px; color: #b0a89b">—</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8"></div>
+        <div style="font-size: 11px; color: #8a5a2c; line-height: 1.45">Éteinte : le modèle rend une silhouette, pas une comparaison de couleurs.</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px"><span>bord rongé</span><div class="seg" style="padding: 1px"><div class="sg" style="padding: 3px 8px">0</div><div class="sg sg-on" style="padding: 3px 8px">1</div><div class="sg" style="padding: 3px 8px">2</div><div class="sg" style="padding: 3px 8px">3</div></div></div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #221f1b">seuil alpha</span>
+          <span class="mono" style="font-size: 12px; color: #221f1b">128</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 50%; background: #a8492c; border-radius: 2px"></i>
+          <i style="position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #a8492c"></i>
+        </div>
+        <div style="font-size: 11px; color: #948c80; line-height: 1.4">En dessous, le pixel est jugé transparent.</div>
+      </div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px;
+                  padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #221f1b">Ce que ça coûte</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Rien en argent : le modèle tourne sur cette machine. Ce qu’il coûte, c’est une seconde d’attente à chaque changement de réglage — contre 130 ms pour les trois autres moteurs.</div>
+      </div>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -465,7 +770,7 @@
       <div class="rate">
         <div style="color: #221f1b">Le fond demandé au modèle est un gris clair, ou une couleur que le jeu contient — l'état d'avant que le fond devienne un réglage.</div>
         <div style="color: #8a3f33">Le détourage perce le sujet : la joue du pèlerin, l'os d'un squelette, l'armure grise du garde s'en vont avec le fond, et il reste un trou en plein milieu. Ou l'inverse : un anneau de gris reste collé autour de la robe.</div>
-        <div style="color: #4e483f">Choisir une couleur de fond franche dans les réglages du jeu — l'atelier propose le magenta en premier — et redemander l'image. La mesure « pixels du sujet encore à la couleur du fond » passe alors à zéro, et elle est écrite sous le curseur.</div>
+        <div style="color: #4e483f">Choisir une couleur de fond franche dans les règles du jeu — l'atelier propose le magenta en premier — et redemander l'image. La mesure « pixels du sujet encore à la couleur du fond » passe alors à zéro, et elle est écrite sous le curseur.</div>
       </div>
       <div class="rate">
         <div style="color: #221f1b">Une flaque de fond est complètement entourée par le sujet : entre le bras du pèlerin et son flanc, dans l'anneau d'une roue de moulin, entre deux pales.</div>
@@ -535,7 +840,7 @@
         <li style="margin-bottom: 6px">Pas de loupe au pixel. À 64 carreaux, un liseré fait un pixel : on ne le voit pas dans l'atelier, on le découvre dans le jeu.</li>
         <li style="margin-bottom: 6px">Pas de pinceau pendant le détourage. Il existe, mais tout à la fin du traitement, donc ce qu'on y efface n'est plus vu par le recadrage ni par la mise à l'échelle — la case est calculée sur un sujet qui n'est plus le bon.</li>
         <li style="margin-bottom: 6px">Pas de geste sur toute une animation. Huit frames de marche avec la même flaque de fond, c'est huit clics ; et rien ne garantit que le contour ne tremblera pas d'une frame à la suivante.</li>
-        <li style="margin-bottom: 6px">L'atelier devine la couleur du fond au lieu de lire celle que le jeu a déclarée. Le magenta est écrit dans les réglages du jeu, il part dans le prompt, et le détourage ne s'en sert pas : il reprend la couleur médiane des bordures. Un sujet qui déborde sur un bord fait basculer cette médiane.</li>
+        <li style="margin-bottom: 6px">L'atelier devine la couleur du fond au lieu de lire celle que le jeu a déclarée. Le magenta est écrit dans les règles du jeu, il part dans le prompt, et le détourage ne s'en sert pas : il reprend la couleur médiane des bordures. Un sujet qui déborde sur un bord fait basculer cette médiane.</li>
         <li style="margin-bottom: 6px">La tolérance mesure un écart sur le rouge, le vert et le bleu séparément. Sur un fond dégradé ou grainé, il faut la monter, et la monter mange le sujet. Viser la teinte fermerait ce compromis.</li>
         <li style="margin-bottom: 6px">La palette du jeu n'est pas utilisée pour protéger le sujet. Les 24 couleurs sont déposées, elles servent à quantifier — mais rien n'interdit au détourage de manger une couleur qui est dans la palette.</li>
         <li style="margin-bottom: 6px">Aucune façon d'annoncer un raté. Une image dont le détourage a mangé la moitié du sujet sort quand même, entre dans la bibliothèque, et rien ne la signale : les mesures existent (les pixels encore à la couleur du fond, la frange), elles s'affichent, mais personne n'est prévenu.</li>

@@ -106,6 +106,11 @@ PLACES_DE_LA_RECETTE: tuple[tuple[str, str], ...] = (
     ("quantification", "quantification"),
     ("bords", "bords"),
     ("contours", "contours"),
+    # **Le retournement, en queue et avant la main** (B1). Oublié ici, une frame
+    # qui s'écarterait de sa bande *par son seul miroir* ne s'annoncerait pas —
+    # la perte est silencieuse, et c'est le pire des défauts d'une liste tenue à
+    # la main.
+    ("retournement", "retournement"),
     ("main", "la main"),
 )
 

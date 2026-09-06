@@ -36,6 +36,7 @@ import {
   type Asset,
   type Depense,
   type Depenses,
+  type Generation,
 } from "../api"
 import { sujetAsset, useVisee } from "./Apercu"
 import { EnTetePanneau } from "./chassis"
@@ -73,7 +74,7 @@ function issue(appel: Depense): Issue {
 
 function Marque({ pour }: { pour: Issue }) {
   const commun = "inline-block h-[9px] w-[9px] shrink-0"
-  if (pour === "garde") return <span aria-hidden className={`${commun} bg-ok`} />
+  if (pour === "garde") return <span aria-hidden className={`${commun} bg-ancien-ok`} />
   if (pour === "perdu")
     return <span aria-hidden className={`${commun} border border-epingle`} />
   return <span aria-hidden className="inline-block h-px w-[9px] shrink-0 bg-texte-3" />
@@ -287,6 +288,8 @@ export function EcranDepenses({
           </button>
         </div>
 
+        <BandeauClipsEnSouffrance />
+
         <div className="defile min-h-0 flex-1 overflow-y-auto">
           {tout === null && (
             <p className="mesure p-4 text-[10px] text-texte-3">on relit la base…</p>
@@ -354,6 +357,108 @@ export function EcranDepenses({
       </section>
 
       <FicheAppel appel={ouvert} depenses={tout} />
+    </div>
+  )
+}
+
+// ── Les clips payés qui attendent (B2) ──────────────────────────────────────
+//
+// **De l'argent déjà dépensé qui dort.** `GET /clips/pending` et
+// `POST /clips/{id}/recover` existent depuis le 4 septembre — un clip payé
+// chez le fournisseur mais jamais rapatrié se récupère sans repayer — et
+// aucun écran ne le montrait. C'est le seul geste de tout le produit qui
+// rende de l'argent déjà parti, et sa place est ici, au-dessus du journal.
+//
+// **Le bandeau n'existe pas s'il n'y a rien à montrer** : pas de bloc vide.
+
+function BandeauClipsEnSouffrance() {
+  const [clips, setClips] = useState<Generation[] | null>(null)
+  const [enCours, setEnCours] = useState<string | null>(null)
+  const [echoues, setEchoues] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    let vivant = true
+    api
+      .clipsEnSouffrance()
+      .then((recu) => vivant && setClips(recu.clips))
+      .catch(() => vivant && setClips([]))
+    return () => {
+      vivant = false
+    }
+  }, [])
+
+  async function recuperer(identifiant: string) {
+    setEnCours(identifiant)
+    try {
+      const rendu = await api.recupererClip(identifiant)
+      const emplacement = rendu.emplacements[0]
+      // **Le fournisseur a pu expirer le lien.** La route répond quand même
+      // 200 — ce n'est pas la requête qui a échoué, c'est le rapatriement —
+      // et l'échec se lit sur l'emplacement, avec sa raison écrite par le
+      // serveur. Rien n'est facturé dans les deux cas.
+      if (emplacement.statut === "echouee" || emplacement.statut === "interrompue") {
+        setEchoues((e) => ({
+          ...e,
+          [identifiant]: emplacement.raison ?? "le clip n'a pas pu être récupéré",
+        }))
+      } else {
+        setClips((c) => (c ?? []).filter((g) => g.identifiant !== identifiant))
+      }
+    } catch {
+      setEchoues((e) => ({
+        ...e,
+        [identifiant]: "le clip n'a pas pu être récupéré",
+      }))
+    } finally {
+      setEnCours(null)
+    }
+  }
+
+  if (clips === null || clips.length === 0) return null
+
+  const total = clips.reduce((somme, g) => somme + g.cout_usd, 0)
+
+  return (
+    <div
+      data-clips-en-souffrance
+      className="mesure flex shrink-0 flex-col gap-2 border-b border-bord bg-fond-2 px-3 py-2"
+    >
+      <p className="text-[10px] text-texte-2">
+        <strong className="font-semibold text-texte">
+          {clips.length} clip{clips.length > 1 ? "s" : ""} payé
+          {clips.length > 1 ? "s" : ""}
+        </strong>{" "}
+        {clips.length > 1 ? "attendent" : "attend"} d'être récupéré
+        {clips.length > 1 ? "s" : ""} · {dollars(total)}
+      </p>
+      <div className="flex flex-col gap-1.5">
+        {clips.map((clip) => (
+          <div key={clip.identifiant} className="flex items-center gap-2 text-[10px]">
+            <span className="min-w-0 flex-1 truncate text-texte-2">
+              {clip.personnage ?? "sans personnage"}
+              {clip.pose && <span className="text-texte-3"> · {clip.pose}</span>}
+            </span>
+            {/* **Le geste reste proposable après un échec** — le lien peut
+                avoir expiré une fois et pas la suivante, et rien n'oblige à
+                refermer l'écran pour réessayer. */}
+            {echoues[clip.identifiant] && (
+              <span className="shrink-0 text-ancien-echec">{echoues[clip.identifiant]}</span>
+            )}
+            <button
+              type="button"
+              onClick={() => recuperer(clip.identifiant)}
+              disabled={enCours === clip.identifiant}
+              className="mesure h-[22px] shrink-0 rounded-[2px] border border-bord bg-fond-3 px-2 text-[10px] text-texte-2 transition-colors duration-[80ms] hover:bg-fond-1 disabled:opacity-55"
+            >
+              {enCours === clip.identifiant
+                ? "récupération…"
+                : echoues[clip.identifiant]
+                  ? "Réessayer"
+                  : "Récupérer sans repayer"}
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -730,7 +835,7 @@ function FicheAppel({
         <Bloc titre="Ce qui est revenu">
           <p className="mesure flex items-center gap-2 text-[10px]">
             <Marque pour={quoi} />
-            <span className={quoi === "garde" ? "text-ok" : "text-texte-2"}>
+            <span className={quoi === "garde" ? "text-ancien-ok" : "text-texte-2"}>
               {MARQUES[quoi].nom}
             </span>
             <span className="text-texte-3">— {MARQUES[quoi].explication}</span>

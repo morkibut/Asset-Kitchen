@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ce qu'un fournisseur demande pour travailler — **une place, jamais une valeur**.
 
-Arrivé en F3 (`docs/PLAN.md` § V2.2). Le tiroir cessait d'être « la clé » : il y
+Arrivé en F3 (`docs/archive/plan-versions-tenues.md` § V2.2). Le tiroir cessait d'être « la clé » : il y
 a plusieurs fournisseurs depuis F1, l'un n'en demande aucune, et **il en existe
 qui en demandent deux** — Cloudflare veut un identifiant de compte *et* un jeton,
 et un tiroir qui n'en accepterait qu'un les découvrirait en F4.

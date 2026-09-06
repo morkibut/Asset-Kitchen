@@ -1529,3 +1529,48 @@ la prochaine réécriture retrouvera.
   chaque chose que l'écran de départ savait et que l'écran d'arrivée ignore est une chose qu'il
   faut lui rendre — l'ordre, la réserve, ce qu'une case ne sait pas montrer deux fois. Payé le
   6 septembre 2026.
+
+
+- **Un utilitaire Tailwind dont le jeton n'existe pas ne lève aucune erreur — il ne fait rien.**
+  Ni le compilateur, ni la relecture, ni un essai d'écran ne le voient : la règle CSS n'est
+  simplement pas produite, et l'élément garde la couleur de son parent. Le contrôle posé par
+  `B0` en a trouvé **quinze emplois dans quatre fichiers** au premier lancement — `signal-sourd`
+  (deux boutons actifs de l'écran des tables sans **aucun** fond), `texte-1` (neuf survols de
+  l'atelier de bande qui ne changeaient rien), `attente`, `info`. Un gris sur du gris ne détonne
+  pas, et c'est ce qui les avait laissés passer. ⚠️ **La tentation, quand le contrôle les nomme,
+  est de déclarer les quatre pour le faire taire** : c'est inventer quatre valeurs que personne
+  n'a mesurées, et c'est exactement comme ça que huit couleurs étaient entrées dans les planches
+  sans être dans le document. Ce sont les écrans qu'on ramène sur des jetons qui existent. Le
+  banc est `py essais/essai_jetons.py`. Payé le 6 septembre 2026.
+
+
+- **Quand une pile remplace des états indépendants, l'ordre des appels se met à compter.**
+  `B0` a remplacé douze états d'ouverture d'`App.tsx` par une pile de lieux, en les gardant
+  **dérivés** — même nom, même type, même setter — pour que deux cents lectures ne bougent pas.
+  Un seul appel a cassé : « ouvrir l'établi » posait la profondeur *puis* changeait de lieu, et
+  poser une racine repose la pile — donc efface ce qu'on venait d'y mettre. Avec douze états
+  indépendants, l'ordre n'avait aucune importance ; avec une pile, **le lieu se pose d'abord, la
+  profondeur ensuite**, ce qui est aussi le sens de lecture : on va quelque part, puis on y
+  descend. ⚠️ Un seul essai sur 792 l'a vu, et il ne le disait pas — il cherchait un nom dans le
+  fil d'Ariane. Payé le 6 septembre 2026.
+
+
+- **Une réécriture de masse peut réécrire la fonction qu'elle vient de poser.** La bascule des
+  61 accès de navigation des essais d'écran remplaçait `fireEvent.click(leLieu(x))` par
+  `allerA(x)` — y compris **dans le corps d'`allerA`**, dont c'était précisément la définition.
+  Résultat : `allerA` s'appelant elle-même, et 250 essais rouges d'un coup. Le corps de `leLieu`
+  était protégé, celui d'`allerA` ne l'était pas. ⚠️ **Une substitution doit masquer toutes les
+  définitions qu'elle introduit, pas seulement la première** — et le signe, quand ça arrive, est
+  un `RangeError: Maximum call stack size exceeded` dont la trace ne cite qu'une ligne, répétée.
+  Payé le 6 septembre 2026.
+
+
+- **Un effet de bord dans une fonction de mise à jour d'état s'exécute deux fois, par
+  intermittence.** Le montage lisait son curseur au clavier par `setCurseur(c => { basculer(c);
+  return c })` — la valeur renvoyée est la même, donc React évalue la fonction une fois pour
+  voir si l'état bouge, renonce, puis la réévalue au rendu que `basculer` a lui-même déclenché.
+  **Deux bascules, et la barre d'espace ne fait rien.** Ça ne se produit que selon ce qui est en
+  attente sur le composant : l'essai passait seul et tombait dans la suite complète, un tour sur
+  plusieurs. ⚠️ **Une fonction de mise à jour doit être pure et ne rien faire d'autre que
+  renvoyer le prochain état** ; pour lire un état sans le mettre en dépendance, c'est une
+  référence qu'il faut, pas un `set…` détourné. Payé le 6 septembre 2026.

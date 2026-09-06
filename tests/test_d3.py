@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de D3 — le fond devient un réglage du projet.
 
-Un test par critère de `docs/PLAN.md` § D3, nommé d'après lui.
+Un test par critère de `docs/archive/plan-r6-a-v3.02.md` § D3, nommé d'après lui.
 
 **Ce que la tranche répare, et c'est mesuré ailleurs qu'ici.** Le produit
 demandait *un fond plat* sans dire lequel depuis le premier jour : le modèle

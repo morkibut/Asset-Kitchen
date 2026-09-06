@@ -3,421 +3,475 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Asset Kitchen — la toile, révisée</title>
+<title>Asset Kitchen — le système du carnet</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
-  --bord:#252B33; --bord-fort:#39424C;
-  --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
-  --signal:#49B3CE; --signal-clair:#8ED8E8; --lumiere:#EAF4F8;
-  --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
-  --damier-a:#191E24; --damier-b:#14181D;
-
-  --ardoise:#6686AD; --pervenche:#7781B6; --iris:#847DB9; --lavande:#9577B6;
-  --prune:#A76FB2; --mauve:#B16DA4; --bruyere:#B2708F;
-  --lichen:#678F4D; --mousse:#788B4B; --paille:#878748;
-
-  --o-lichen:#708c5d;
+  /* le papier */
+  --papier:#f7f3ec; --papier-cote:#f2ede4; --carte:#fffdfa; --ligne-ouverte:#e6dfd2;
+  --pourtour:#6c6c6c;
+  /* les traits */
+  --trait-faible:#ece6db; --trait:#e2dbd0; --contour:#ddd5c8; --pointille:#c9c2b6;
+  /* les encres */
+  --encre:#221f1b; --encre-2:#4e483f; --encre-3:#6d675e; --encre-4:#948c80; --eteint:#b0a89b;
+  --encre-controle:#3d382f; --encre-sur-signal:#fff8f4;
+  /* les signaux, et leurs trios */
+  --signal:#a8492c; --ok:#5c7a52; --echec:#8a3f33;
+  --fond-echec:#f8ece9;     --trait-echec:#dcbcb2;
+  --fond-attention:#f4ece2; --trait-attention:#e0cfb8; --encre-attention:#8a5a2c;
+  --fond-ok:#eef1ea;        --trait-ok:#cfd9c8;        --encre-ok:#4c6644;
+  /* l'étiquette */
+  --etiquette-fond-ok:#e4ecdf; --etiquette-encre-ok:#45613b; --etiquette-fond-echec:#f4e2dc;
+  /* le damier — il dit transparent, jamais décoratif */
+  --damier-clair:#ece7dc; --damier-sombre:#e4dfd4;
+  /* la trame */
+  --serif:"Instrument Serif",Georgia,serif;
+  --sans:"Instrument Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-font-smoothing:antialiased}
-body{background:var(--fond-0);color:var(--texte);font-family:"Instrument Sans",sans-serif;font-size:14px;line-height:1.55}
-.mono{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0;background:var(--papier);color:var(--encre-2);font:13px/1.5 var(--sans);
+     -webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;font-family:var(--serif);font-weight:400;color:var(--encre)}
+p{margin:0}
+.page{max-width:1180px;margin:0 auto;padding:34px 30px 80px}
+.bandeau-doc{border:1px solid var(--trait);background:var(--carte);border-radius:8px;
+  padding:22px 26px;margin-bottom:34px}
+.bandeau-doc h1{font-size:52px;line-height:1.02;letter-spacing:-.01em}
+.bandeau-doc .chapo{font-size:15px;line-height:1.55;color:var(--encre-2);margin-top:8px;max-width:64ch}
+.entete{font:10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--encre-4);margin:34px 0 14px}
+.section{border-top:1px solid var(--trait-faible);padding-top:22px;margin-top:34px}
+.cartouche{background:var(--carte);border:1px solid var(--trait);border-radius:8px;padding:22px}
+.rangee{display:flex;gap:14px;flex-wrap:wrap}
+.note{font-size:12.5px;color:var(--encre-3)}
+.mini{font-size:12px;color:var(--encre-4)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
-.page{max-width:1180px;margin:0 auto;padding:64px 32px 96px}
-header.tete{border-bottom:1px solid var(--bord);padding-bottom:32px;margin-bottom:56px}
-header.tete .kick{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3)}
-header.tete h1{font-family:"Instrument Serif",serif;font-size:44px;line-height:1.05;margin:14px 0 16px;font-weight:400}
-header.tete h1 em{font-style:italic;color:var(--signal)}
-header.tete p{color:var(--texte-2);max-width:64ch;font-size:15px}
-header.tete p b{color:var(--texte);font-weight:600}
+/* — specimen — */
+.spec{display:grid;grid-template-columns:190px 1fr;gap:8px 22px;align-items:baseline;
+  padding:14px 0;border-bottom:1px solid var(--trait-faible)}
+.spec:last-child{border-bottom:0}
+.spec .quoi{font:11px/1.4 var(--mono);color:var(--encre-4);text-align:right}
+.s52{font-family:var(--serif);font-size:52px;line-height:1.02;color:var(--encre)}
+.s38{font-family:var(--serif);font-size:38px;line-height:1.05;color:var(--encre)}
+.s25{font-family:var(--serif);font-size:25px;line-height:1.15;color:var(--encre)}
+.n15{font-size:15px;line-height:1.55}
+.n14{font-size:14px}
+.n13{font-size:13px}
+.n125{font-size:12.5px;color:var(--encre-3)}
+.m12{font:12px var(--mono);font-variant-numeric:tabular-nums}
+.m115{font:11.5px var(--mono);font-variant-numeric:tabular-nums;color:var(--encre-3)}
+.m105{font:10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--encre-4)}
 
-section{margin-bottom:72px}
-h2{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);border-bottom:1px solid var(--bord);padding-bottom:8px;margin-bottom:24px;font-weight:500}
-h3{font-size:12.5px;font-weight:600;color:var(--texte);margin-bottom:8px}
-p.note{color:var(--texte-2);font-size:12.5px;max-width:78ch}
-p.note em{color:var(--texte);font-style:italic}
-p.note b{color:var(--texte);font-weight:600}
-.mesure{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
+/* — palette — */
+.nuancier{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px}
+.nuance{border:1px solid var(--trait);border-radius:7px;overflow:hidden;background:var(--carte)}
+.nuance .pave{height:52px}
+.nuance .dit{padding:8px}
+.nuance .nom{font-size:12.5px;color:var(--encre-2)}
+.nuance .hex{font:11px var(--mono);color:var(--encre-4);margin-top:2px}
 
-/* palette */
-.roue{display:grid;grid-template-columns:repeat(10,1fr);gap:9px;margin-bottom:24px}
-.teinte{display:flex;flex-direction:column;gap:6px}
-.teinte .bloc{height:56px;border-radius:2px}
-.teinte .nom{font-size:11.5px;color:var(--texte-2)}
-.teinte .hex{font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--texte-3)}
-.teinte.neuve .nom{color:var(--texte)}
-.teinte.neuve .nom::after{content:" ·";color:var(--signal)}
+/* — pièces — */
+.btn{height:34px;padding:0 14px;border-radius:7px;font:13px var(--sans);cursor:pointer;
+  border:1px solid var(--contour);background:var(--carte);color:var(--encre-controle)}
+.btn-rouille{background:var(--signal);border-color:var(--signal);color:var(--encre-sur-signal)}
+.btn-eteint{color:var(--eteint);border-style:dashed;border-color:var(--pointille);
+  background:transparent;cursor:default}
+.champ{height:34px;width:100%;padding:0 10px;border:1px solid var(--contour);border-radius:7px;
+  background:var(--carte);font:13px var(--sans);color:var(--encre)}
+.champ::placeholder{color:var(--eteint)}
+.reglage{display:flex;align-items:center;justify-content:space-between;height:30px;
+  border-bottom:1px solid var(--trait-faible);font-size:12.5px}
+.reglage .val{font:11.5px var(--mono);font-variant-numeric:tabular-nums;color:var(--encre)}
+.onglets{display:flex;gap:22px;border-bottom:1px solid var(--trait)}
+.onglet{padding:0 0 8px;font-size:13px;color:var(--encre-3);border-bottom:2px solid transparent;
+  margin-bottom:-1px;cursor:pointer}
+.onglet.actif{color:var(--encre);border-bottom-color:var(--signal)}
+.etq{display:inline-block;padding:2px 7px;border:1px solid var(--trait);border-radius:5px;
+  font:11.5px var(--mono);color:var(--encre-3);background:var(--papier-cote)}
+.etq-ok{color:var(--etiquette-encre-ok);border-color:var(--etiquette-fond-ok);background:var(--etiquette-fond-ok)}
+.etq-echec{color:var(--echec);border-color:var(--etiquette-fond-echec);background:var(--etiquette-fond-echec)}
+.msg{border:1px solid var(--trait);border-radius:7px;padding:10px 12px;font-size:12.5px;margin-bottom:8px}
+.msg-echec{background:var(--fond-echec);border-color:var(--trait-echec);color:var(--echec)}
+.msg-att{background:var(--fond-attention);border-color:var(--trait-attention);color:var(--encre-attention)}
+.msg-ok{background:var(--fond-ok);border-color:var(--trait-ok);color:var(--encre-ok)}
+.vide{border:1px dashed var(--pointille);border-radius:8px;padding:22px;text-align:center}
+.vide .phrase{font-size:13px;color:var(--encre-3)}
+.compte{display:flex;justify-content:space-between;gap:22px;font-size:12.5px;
+  border-bottom:1px solid var(--trait-faible);padding:6px 0}
+.compte .n{font:12px var(--mono);font-variant-numeric:tabular-nums;color:var(--encre)}
+.compte .rouille{color:var(--signal)}
 
-.compare{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:8px}
-.cadre-cmp{border:1px solid var(--bord);border-radius:2px;background:var(--fond-0);padding:20px}
-.cadre-cmp .lg{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);margin-bottom:14px}
-.ilot-demo{border:1px solid;border-radius:2px;height:96px;position:relative}
-.ilot-demo .bande{height:20px;display:flex;align-items:center;gap:6px;padding:0 6px;font-family:"JetBrains Mono",monospace;font-size:10px}
+/* la vignette : le pourtour neutre, et le damier */
+.vign{width:88px;height:88px;border-radius:5px;border:1px solid var(--contour);
+  background:var(--pourtour);display:grid;place-items:center;overflow:hidden}
+.vign-damier{background:repeating-conic-gradient(var(--damier-sombre) 0% 25%, var(--damier-clair) 0% 50%) 0 0 / 14px 14px}
+.vign-vide{background:var(--papier-cote);border-style:dashed;border-color:var(--pointille)}
+.pelerin{width:44px;height:60px;border-radius:3px 3px 0 0;
+  background:linear-gradient(180deg,#8a5a2c 0 26%,#6b5a44 26% 62%,#2f2820 62% 100%)}
+.sous-vign{font:11px var(--mono);color:var(--encre-4);margin-top:5px}
 
-/* prises */
-.prises{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-.prise{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:20px}
-.prise .demo{height:64px;display:flex;align-items:center;justify-content:center}
-.prise h3{margin-top:14px}
-.prise p{font-size:11.5px;color:var(--texte-2)}
-.prise p b{color:var(--texte);font-weight:600}
-.grip{width:12px;height:12px;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,1fr);gap:2px;align-content:center;justify-items:center;align-items:center;padding:1px;flex:none}
-.grip i{width:3px;height:3px;border-radius:9999px;background:var(--fond-0);display:block}
-.grip.sur-chassis i{background:var(--texte-2)}
-.rond{width:12px;height:12px;border-radius:9999px;border:1px solid var(--bord-fort);background:var(--fond-2);flex:none}
-.carre{width:10px;height:10px;border-radius:2px;border:1px solid var(--bord-fort);background:var(--fond-3);flex:none}
-.zoomx{transform:scale(2.6);transform-origin:center}
-
-/* mockup */
-.appli{border:1px solid var(--bord);border-radius:3px;overflow:hidden;background:var(--fond-1)}
-.barre-tete{height:44px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--bord)}
-.barre-tete .marque{font-family:"Instrument Serif",serif;font-size:17px}
-.barre-tete .ecran{font-family:"Instrument Serif",serif;font-size:17px;color:var(--texte-2)}
-.corps{display:grid;grid-template-columns:250px minmax(0,1fr) 210px;height:460px}
-.col{border-right:1px solid var(--bord);background:var(--fond-1);overflow:hidden}
-.col:last-child{border-right:0;border-left:1px solid var(--bord)}
-.entete-panneau{height:30px;display:flex;align-items:center;padding:0 8px;font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);border-bottom:1px solid var(--bord)}
-.reglage{padding:8px;display:flex;flex-direction:column;gap:10px}
-.champ{display:flex;flex-direction:column;gap:4px}
-.champ label{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3)}
-.champ .val{height:32px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);display:flex;align-items:center;padding:0 8px;font-size:12.5px;color:var(--texte);overflow:hidden;white-space:nowrap}
-
-.barre-tableau{height:38px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--bord)}
-.barre-tableau .lg{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3)}
-.segs{display:flex;border:1px solid var(--bord);border-radius:2px;overflow:hidden}
-.segs button{height:26px;padding:0 10px;background:var(--fond-2);border:0;color:var(--texte-2);font-family:inherit;font-size:11.5px}
-.segs button.on{background:color-mix(in srgb,var(--signal) 13%,transparent);color:var(--signal-clair)}
-.btn-xs{height:24px;padding:0 9px;border:1px solid var(--bord-fort);border-radius:2px;background:var(--fond-2);color:var(--texte);font-family:inherit;font-size:11.5px;display:inline-flex;align-items:center;gap:5px}
-.plus{color:var(--signal)}
-
-.plan{position:relative;background:var(--fond-0);flex:1;overflow:hidden;
-  background-image:radial-gradient(var(--bord) 1px,transparent 1px);background-size:24px 24px;background-position:6px 6px}
-
-.ilot{position:absolute;border:1px solid;border-radius:2px}
-.ilot > .bande{position:absolute;top:-1px;left:-1px;right:-1px;height:20px;display:flex;align-items:center;gap:6px;padding:0 6px;font-family:"JetBrains Mono",monospace;font-size:10px;border-radius:2px 2px 0 0}
-.ilot > .bande .nom{color:var(--fond-0);font-weight:500;white-space:nowrap}
-.ilot > .bande .cpt{color:color-mix(in srgb,var(--fond-0) 90%,transparent);margin-left:auto;white-space:nowrap}
-.ilot > .bande .rond{margin-left:6px;background:transparent;border-color:color-mix(in srgb,var(--fond-0) 55%,transparent)}
-
-.carte{position:absolute;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
-.carte .img{background-image:
-    linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%),
-    linear-gradient(45deg,var(--damier-a) 25%,var(--damier-b) 25%,var(--damier-b) 75%,var(--damier-a) 75%);
-  background-size:12px 12px;background-position:0 0,6px 6px;position:relative;border-radius:1px 1px 0 0}
-.carte .img .sujet{position:absolute;inset:20%;border-radius:1px}
-.carte .pied{height:21px;display:flex;align-items:center;padding:0 5px;font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--texte-3);border-top:1px solid var(--bord)}
-.carte .coin{position:absolute;top:0;right:0;width:0;height:0;border-top:9px solid var(--signal);border-left:9px solid transparent}
-.carte > .rond{position:absolute;right:-7px;top:calc(50% - 6px)}
-.carte > .carre{position:absolute;right:-5px;bottom:-5px}
-.carte.visee > .carre{border-color:var(--signal)}
-
-.note-c{position:absolute;border:1px solid;border-radius:2px;padding:7px 8px;font-size:11.5px;line-height:1.4;color:var(--texte)}
-.trait{position:absolute;height:1px;background:var(--bord-fort);transform-origin:left center}
-.mot{position:absolute;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--texte-2);background:var(--fond-0);padding:1px 5px;border-radius:2px;white-space:nowrap}
-.fantome{position:absolute;border:1px solid var(--lumiere);border-radius:2px;background:var(--fond-2)}
-
-.legende{position:absolute;font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--signal);white-space:nowrap}
-.legende::before{content:"";position:absolute;left:-13px;top:6px;width:9px;height:1px;background:var(--signal)}
-
-.reserve-l{padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.mini{border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);overflow:hidden}
-.mini .img{height:52px;background-image:
-    linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%),
-    linear-gradient(45deg,var(--damier-a) 25%,var(--damier-b) 25%,var(--damier-b) 75%,var(--damier-a) 75%);
-  background-size:10px 10px;background-position:0 0,5px 5px}
-.mini .pied{height:19px;display:flex;align-items:center;padding:0 5px;font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--texte-3);border-top:1px solid var(--bord)}
-
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);text-align:left;padding:0 14px 8px 0;border-bottom:1px solid var(--bord);font-weight:500}
-td{padding:11px 14px 11px 0;border-bottom:1px solid var(--bord);color:var(--texte-2);vertical-align:top}
-td:first-child{color:var(--texte);white-space:nowrap}
-td b{color:var(--texte);font-weight:600}
-td em{color:var(--texte);font-style:italic}
-td .k{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--signal)}
-
-.duo{display:grid;grid-template-columns:1fr 1fr;gap:32px}
-.avert{border-left:2px solid var(--epingle);padding:2px 0 2px 14px;color:var(--texte-2);font-size:12.5px}
-.avert b{color:var(--epingle);font-weight:600}
-.avert em{color:var(--texte);font-style:italic}
-@media(max-width:1040px){.corps{grid-template-columns:1fr}.col{display:none}.roue{grid-template-columns:repeat(5,1fr)}.duo,.compare,.prises{grid-template-columns:1fr}}
+/* — la maquette d'écran — */
+.ecran{border:1px solid var(--trait);border-radius:10px;overflow:hidden;background:var(--papier);
+  display:grid;grid-template-columns:300px minmax(0,1fr) 380px;min-height:560px}
+.carnet{background:var(--papier-cote);border-right:1px solid var(--trait);
+  display:flex;flex-direction:column}
+.carnet .jeu{padding:14px;border-bottom:1px solid var(--trait)}
+.carnet .jeu .nom{font-family:var(--serif);font-size:25px;line-height:1.15;color:var(--encre)}
+.carnet .jeu .sous{font:11px var(--mono);color:var(--encre-4);margin-top:4px}
+.carnet nav{padding:8px 0;flex:1}
+.lg{display:flex;align-items:center;justify-content:space-between;height:30px;padding:0 14px;
+  font-size:14px;color:var(--encre-controle);cursor:pointer}
+.lg .n{font:11.5px var(--mono);color:var(--encre-4);font-variant-numeric:tabular-nums}
+.lg.ouverte{background:var(--ligne-ouverte);color:var(--encre)}
+.lg.rien .n{color:var(--eteint)}
+.sous-lg{padding:0 14px 0 30px;height:26px;display:flex;align-items:center;
+  justify-content:space-between;font-size:12.5px;color:var(--encre-3)}
+.carnet .pied{border-top:1px solid var(--trait);padding:8px 14px 14px}
+.carnet .pied .l{display:flex;align-items:center;justify-content:space-between;height:26px;
+  font-size:12.5px;color:var(--encre-3)}
+.surface{padding:30px;display:flex;flex-direction:column;gap:22px;min-width:0}
+.titre-ecran{font-family:var(--serif);font-size:38px;line-height:1.05;color:var(--encre)}
+.chapo{font-size:15px;line-height:1.55;color:var(--encre-2);max-width:60ch;margin-top:8px}
+.grille-poses{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.pose{display:flex;flex-direction:column;align-items:flex-start}
+.volet{background:var(--papier-cote);border-left:1px solid var(--trait);padding:22px}
+.volet h3{font-family:var(--serif);font-size:25px;line-height:1.15}
+.bloc{margin-top:22px}
+.attente{border:1px solid var(--trait);border-radius:7px;background:var(--carte);padding:10px 12px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:12.5px}
+.legende{font-size:12.5px;color:var(--encre-3);margin-top:8px}
+.raison{font-size:12.5px;color:var(--encre-3);margin-top:5px}
 </style>
 </head>
 <body>
 <div class="page">
 
-<header class="tete">
-  <div class="kick">Design preview · drill-down · 28 août 2026</div>
-  <h1>La toile <em>range</em>,<br>et ranger se voit.</h1>
-  <p>Huit corrections vues à l'atelier tenu, ramenées à une règle : <b>sur la toile, ce qui se lit est en pixels d'écran, ce qui se mesure est en pixels de plan.</b> Le reste — les prises permanentes, le bandeau coloré, les dix teintes — en découle. La grille d'assets ne bouge pas d'un pixel.</p>
-</header>
-
-<section>
-  <h2>Color — les teintes d'îlot passent de six à dix</h2>
-  <div class="roue">
-    <div class="teinte"><div class="bloc" style="background:var(--ardoise)"></div><div class="nom">ardoise</div><div class="hex">#6686AD</div></div>
-    <div class="teinte neuve"><div class="bloc" style="background:var(--pervenche)"></div><div class="nom">pervenche</div><div class="hex">#7781B6</div></div>
-    <div class="teinte"><div class="bloc" style="background:var(--iris)"></div><div class="nom">iris</div><div class="hex">#847DB9</div></div>
-    <div class="teinte neuve"><div class="bloc" style="background:var(--lavande)"></div><div class="nom">lavande</div><div class="hex">#9577B6</div></div>
-    <div class="teinte"><div class="bloc" style="background:var(--prune)"></div><div class="nom">prune</div><div class="hex">#A76FB2</div></div>
-    <div class="teinte neuve"><div class="bloc" style="background:var(--mauve)"></div><div class="nom">mauve</div><div class="hex">#B16DA4</div></div>
-    <div class="teinte"><div class="bloc" style="background:var(--bruyere)"></div><div class="nom">bruyère</div><div class="hex">#B2708F</div></div>
-    <div class="teinte"><div class="bloc" style="background:var(--lichen)"></div><div class="nom">lichen</div><div class="hex">#678F4D</div></div>
-    <div class="teinte neuve"><div class="bloc" style="background:var(--mousse)"></div><div class="nom">mousse</div><div class="hex">#788B4B</div></div>
-    <div class="teinte"><div class="bloc" style="background:var(--paille)"></div><div class="nom">paille</div><div class="hex">#878748</div></div>
+  <div class="bandeau-doc">
+    <h1>Le carnet</h1>
+    <p class="chapo">Le système de design d'Asset Kitchen, relevé le 6 septembre 2026 sur les
+      planches du carnet. Cinq teintes de papier, quatre traits, sept encres, trois signaux et
+      leurs trios. Trois familles de caractères. Onze pièces, six règles, quatre durées — et
+      rien d'autre n'entre.</p>
   </div>
-  <p class="note" style="margin-bottom:24px">Saturation <b>20 % → 30 %</b>, clarté réglée teinte par teinte pour tenir <b>4,6 : 1</b> sur <span class="mono">--fond-2</span> — la discipline d'origine, au chiffre près. Les quatre neuves (·) subdivisent les arcs déjà occupés. <b>Les deux arcs des sémantiques restent fermés</b> : 345–55° (<span class="mono" style="color:var(--echec)">--echec</span> 4°, <span class="mono" style="color:var(--epingle)">--epingle</span> 43°) et 120–200° (<span class="mono" style="color:var(--ok)">--ok</span> 140°, <span class="mono" style="color:var(--signal)">--signal</span> 192°). Aucun rouge, aucun vert franc, aucun ambre — c'est ce qui empêche un îlot de se lire comme un état.</p>
 
-  <div class="compare">
-    <div class="cadre-cmp">
-      <div class="lg">Aujourd'hui — fond 8 %, bande transparente</div>
-      <div class="ilot-demo" style="border-color:var(--o-lichen);background:color-mix(in srgb,var(--o-lichen) 8%,transparent)">
-        <div class="bande"><span style="width:10px;height:10px;border-radius:2px;border:1px solid var(--bord-fort);background:var(--fond-3)"></span><span style="color:var(--o-lichen)">marais</span><span style="color:var(--texte-3);margin-left:auto">4 cartes</span></div>
-      </div>
-    </div>
-    <div class="cadre-cmp">
-      <div class="lg">Proposé — fond 16 %, bandeau en teinte pleine</div>
-      <div class="ilot-demo" style="border-color:var(--lichen);background:color-mix(in srgb,var(--lichen) 16%,transparent)">
-        <div class="bande" style="background:var(--lichen)">
-          <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-          <span style="color:var(--fond-0);font-weight:500">marais</span>
-          <span style="color:color-mix(in srgb,var(--fond-0) 90%,transparent);margin-left:auto">4 cartes</span>
-          <span class="rond" style="margin-left:6px;background:transparent;border-color:color-mix(in srgb,var(--fond-0) 55%,transparent)"></span>
-        </div>
-      </div>
-    </div>
-    <div class="cadre-cmp">
-      <div class="lg">Sans teinte — le châssis, montré</div>
-      <div class="ilot-demo" style="border-color:var(--bord-fort);background:color-mix(in srgb,var(--fond-1) 40%,transparent)">
-        <div class="bande" style="background:var(--bord-fort)">
-          <span class="grip"><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i></span>
-          <span style="color:var(--texte);font-weight:500">sans nom</span>
-          <span style="color:color-mix(in srgb,var(--texte) 90%,transparent);margin-left:auto">3 cartes</span>
-          <span class="rond" style="margin-left:6px;background:transparent;border-color:color-mix(in srgb,var(--texte) 55%,transparent)"></span>
-        </div>
-      </div>
-    </div>
+  <!-- 1 · LES CARACTÈRES -->
+  <div class="entete">Les caractères</div>
+  <div class="cartouche">
+    <div class="spec"><div class="quoi">Serif 52 / 1.02<br>titre de planche</div>
+      <div class="s52">Six poses en une feuille</div></div>
+    <div class="spec"><div class="quoi">Serif 38 / 1.05<br>titre d'écran</div>
+      <div class="s38">De quoi les images ont l'air</div></div>
+    <div class="spec"><div class="quoi">Serif 25 / 1.15<br>le nom du jeu</div>
+      <div class="s25">Le Marais du Vieux Moulin</div></div>
+    <div class="spec"><div class="quoi">Sans 15 / 1.55<br>le chapô</div>
+      <div class="n15">Une image reçue du modèle passe par une suite d'étapes, toujours dans le
+        même ordre. Chacune se règle, s'endort, et se rejoue sans rien coûter : un rendu n'est
+        jamais gardé, il se recalcule.</div></div>
+    <div class="spec"><div class="quoi">Sans 14<br>ligne du carnet</div>
+      <div class="n14">Les personnages</div></div>
+    <div class="spec"><div class="quoi">Sans 13<br>courant, boutons</div>
+      <div class="n13">Découper ne coûte rien et se refait autant de fois qu'on veut.</div></div>
+    <div class="spec"><div class="quoi">Sans 12.5<br>précision sous une pièce</div>
+      <div class="n125">décoche une case et elle n'entre pas en bibliothèque</div></div>
+    <div class="spec"><div class="quoi">Mono 10.5 · +.14em<br>entête de section</div>
+      <div class="m105">Ce que le jeu contient</div></div>
+    <div class="spec"><div class="quoi">Mono 11.5 – 12<br>un compte, un prix, une taille</div>
+      <div class="m12">41 · $0,0189 · 64 × 64 px</div></div>
+    <p class="legende">La serif ne descend jamais sous 25 : en dessous elle se confond avec la
+      sans et ne sert plus à rien. Rien ne descend sous 10.5. Les trois fontes s'auto-hébergent
+      dans l'application — l'atelier doit tourner réseau coupé.</p>
   </div>
-  <p class="note" style="margin-top:16px"><b>Le bandeau décide de la couleur de son texte</b> — <span class="mono">--fond-0</span> sur une teinte (5,2 : 1), <span class="mono">--texte</span> sur <span class="mono">--bord-fort</span> quand l'îlot n'en a pas (8,4 : 1). C'est la seule conditionnelle de la toile, et elle est mécanique : du texte sombre sur <span class="mono">--bord-fort</span> vaut 1,9 : 1. Le compte est la couleur du nom à 90 %, jamais sous 4,7 : 1.</p>
-</section>
 
-<section>
-  <h2>La grammaire des prises — trois formes, plus un seul curseur</h2>
-  <p class="note" style="margin-bottom:24px">T8 avait tranché « aucun pixel de vocabulaire neuf, seul le curseur diffère » : trois carrés de 10 px identiques, séparés par le pointeur. C'est la <em>troisième</em> fois que cette décision cède à l'usage. La forme remplace le curseur.</p>
-  <div class="prises">
-    <div class="prise">
-      <div class="demo"><span class="grip sur-chassis zoomx"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
-      <h3>Six points — on saisit</h3>
-      <p>Le seul glyphe du produit. En tête du bandeau d'îlot, <b>permanent</b> : il ne s'efface plus au départ du pointeur.</p>
+  <!-- 2 · LES COULEURS -->
+  <div class="section">
+    <div class="entete">Les couleurs — cinq papiers, quatre traits, sept encres, trois signaux</div>
+    <div class="nuancier">
+      <div class="nuance"><div class="pave" style="background:#f7f3ec"></div><div class="dit"><div class="nom">le papier</div><div class="hex">#f7f3ec</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#f2ede4"></div><div class="dit"><div class="nom">les côtés</div><div class="hex">#f2ede4</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#fffdfa"></div><div class="dit"><div class="nom">les cartes</div><div class="hex">#fffdfa</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#e6dfd2"></div><div class="dit"><div class="nom">la ligne ouverte</div><div class="hex">#e6dfd2</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#6c6c6c"></div><div class="dit"><div class="nom">derrière une image</div><div class="hex">#6c6c6c · neutre, 15 %</div></div></div>
+      <div class="nuance"><div class="pave vign-damier" style="border-radius:0"></div><div class="dit"><div class="nom">le transparent</div><div class="hex">damier 14 px</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#ece6db"></div><div class="dit"><div class="nom">à peine</div><div class="hex">#ece6db</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#e2dbd0"></div><div class="dit"><div class="nom">le trait courant</div><div class="hex">#e2dbd0</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#ddd5c8"></div><div class="dit"><div class="nom">le contour d'une pièce</div><div class="hex">#ddd5c8</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#c9c2b6"></div><div class="dit"><div class="nom">le pointillé du vide</div><div class="hex">#c9c2b6</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#221f1b"></div><div class="dit"><div class="nom">le titre, le nom</div><div class="hex">#221f1b</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#4e483f"></div><div class="dit"><div class="nom">la phrase</div><div class="hex">#4e483f</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#6d675e"></div><div class="dit"><div class="nom">l'étiquette</div><div class="hex">#6d675e</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#948c80"></div><div class="dit"><div class="nom">le compteur, l'entête</div><div class="hex">#948c80</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#b0a89b"></div><div class="dit"><div class="nom">ce qui est grisé</div><div class="hex">#b0a89b</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#3d382f"></div><div class="dit"><div class="nom">le texte d'un contrôle</div><div class="hex">#3d382f</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#fff8f4;border:1px solid #e2dbd0"></div><div class="dit"><div class="nom">le texte sur le rouille</div><div class="hex">#fff8f4</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#a8492c"></div><div class="dit"><div class="nom">ce qu'on fait, ce qui coûte</div><div class="hex">#a8492c</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#5c7a52"></div><div class="dit"><div class="nom">ce qui est fait, ce qui est gratuit</div><div class="hex">#5c7a52</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#8a3f33"></div><div class="dit"><div class="nom">ce qui a raté</div><div class="hex">#8a3f33</div></div></div>
     </div>
-    <div class="prise">
-      <div class="demo"><span class="rond zoomx"></span></div>
-      <h3>Rond — on tire un trait</h3>
-      <p>12 px, <b>permanent</b>, entièrement hors du bord droit. Il passe en <span class="mono" style="color:var(--signal)">--signal</span> sous le pointeur.</p>
+    <p class="legende">Le rouille ne sert qu'à deux choses : le bouton qui lance, et le chiffre
+      qui coûte. Un seul bouton rouille par écran. Partout ailleurs, il ment.</p>
+
+    <div class="entete" style="margin-top:34px">Un signal qui se pose est un trio, jamais une couleur seule</div>
+    <div class="rangee" style="gap:14px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="background:#f8ece9;border:1px solid #dcbcb2;color:#8a3f33;border-radius:7px;padding:8px 14px;font-size:13px">
+        L'appel n'est pas parti. La clé a été refusée.</div>
+      <div style="background:#f4ece2;border:1px solid #e0cfb8;color:#8a5a2c;border-radius:7px;padding:8px 14px;font-size:13px">
+        Deux poses de ce lot se ressemblent beaucoup.</div>
+      <div style="background:#eef1ea;border:1px solid #cfd9c8;color:#4c6644;border-radius:7px;padding:8px 14px;font-size:13px">
+        Les six images sont entrées en bibliothèque.</div>
     </div>
-    <div class="prise">
-      <div class="demo"><span class="carre zoomx"></span></div>
-      <h3>Carré — on tire une dimension</h3>
-      <p>10 px, coin bas-droit, <b>révélé au survol</b> — inchangé. On ne le cherche que sur la carte qu'on regarde déjà.</p>
+    <div class="nuancier">
+      <div class="nuance"><div class="pave" style="background:#f8ece9;border:1px solid #dcbcb2"></div><div class="dit"><div class="nom">un raté</div><div class="hex">#f8ece9 · #dcbcb2 · #8a3f33</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#f4ece2;border:1px solid #e0cfb8"></div><div class="dit"><div class="nom">un avertissement</div><div class="hex">#f4ece2 · #e0cfb8 · #8a5a2c</div></div></div>
+      <div class="nuance"><div class="pave" style="background:#eef1ea;border:1px solid #cfd9c8"></div><div class="dit"><div class="nom">un oui</div><div class="hex">#eef1ea · #cfd9c8 · #4c6644</div></div></div>
     </div>
+    <p class="legende">Un fond, un trait, une encre, et les trois vont ensemble : le fond seul
+      bave sur le papier, les deux sont trop proches en clarté pour se séparer. L'encre d'un
+      oui posé (#4c6644) est plus sombre que le vert sur papier (#5c7a52) — elle s'écrit sur
+      un fond plus clair, et les confondre rend l'un des deux illisible.</p>
   </div>
-</section>
 
-<section>
-  <h2>L'écran — Univers · toile, un glissement en cours</h2>
-  <div class="appli">
-    <div class="barre-tete">
-      <span class="marque">Asset Kitchen</span>
-      <span style="color:var(--bord-fort)">/</span>
-      <span class="ecran">Univers</span>
-      <span class="mesure" style="margin-left:auto">bac-a-sable · 34 cartes · $2,41</span>
-    </div>
-    <div class="corps">
-      <div class="col">
-        <div class="entete-panneau">Univers</div>
-        <div class="reglage">
-          <div class="champ"><label>bible · lieu</label><div class="val">marais de tourbe, brumes basses</div></div>
-          <div class="champ"><label>taille de pixel</label><div class="val mono" style="font-size:11px">4 px</div></div>
-          <div class="champ"><label>palette</label>
-            <div style="display:flex;gap:4px;flex-wrap:wrap">
-              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#3E5148"></span>
-              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#6E7F5E"></span>
-              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#A89A6B"></span>
-              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#2A2E2A"></span>
-              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#C8B48A"></span>
-            </div>
-          </div>
-        </div>
-      </div>
+  <!-- 3 · LES PIÈCES -->
+  <div class="section">
+    <div class="entete">Les onze pièces</div>
+    <div class="cartouche">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:34px">
 
-      <div style="display:flex;flex-direction:column;min-width:0">
-        <div class="barre-tableau">
-          <span class="lg">Tableau</span>
-          <span class="mesure" style="color:var(--texte-2)">34 cartes</span>
-          <span class="mesure" style="color:var(--signal)">3 artworks</span>
-          <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
-            <button class="btn-xs"><span class="plus">+</span> note</button>
-            <span class="lg">Vue</span>
-            <div class="segs"><button>grille</button><button class="on">toile</button></div>
+        <div>
+          <div class="m105" style="margin-bottom:8px">Les boutons · un seul rouille</div>
+          <div class="rangee" style="align-items:center">
+            <button class="btn btn-rouille">Générer les 6 images&nbsp; <span class="num">$0,0189</span></button>
+            <button class="btn">Réessayer</button>
+            <button class="btn">Annuler</button>
           </div>
+          <div class="rangee" style="align-items:center;margin-top:8px">
+            <button class="btn btn-eteint">Générer</button>
+          </div>
+          <p class="raison">Aucune clé posée. → <span style="color:var(--signal)">Ses IA</span></p>
+          <p class="legende">La raison est écrite juste à côté, jamais dans une infobulle.</p>
         </div>
 
-        <div class="plan">
-          <div class="trait" style="left:214px;top:132px;width:118px"></div>
-          <div class="mot" style="left:244px;top:124px">alimente</div>
-          <div class="trait" style="left:186px;top:214px;width:170px;transform:rotate(38deg)"></div>
+        <div>
+          <div class="m105" style="margin-bottom:8px">Les champs · hauteur 34</div>
+          <input class="champ" value="Le pélerin">
+          <div style="height:8px"></div>
+          <input class="champ" placeholder="Son nom…">
+          <p class="legende"><span class="m115">le-pelerin</span> — un nom de dossier ne prend
+            pas d'accent</p>
+        </div>
 
-          <div class="ilot" style="left:28px;top:38px;width:186px;height:190px;border-color:var(--lichen);background:color-mix(in srgb,var(--lichen) 16%,transparent)">
-            <div class="bande" style="background:var(--lichen)">
-              <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              <span class="nom">marais</span><span class="cpt">4 cartes</span><span class="rond"></span>
-            </div>
-            <div class="carte" style="left:14px;top:34px;width:72px;height:81px">
-              <div class="img" style="height:59px"><div class="sujet" style="background:#6E7F5E"></div></div>
-              <div class="pied">marais</div><div class="coin"></div><span class="rond"></span>
-            </div>
-            <div class="carte" style="left:95px;top:34px;width:72px;height:81px">
-              <div class="img" style="height:59px"><div class="sujet" style="background:#3E5148"></div></div>
-              <div class="pied">marais</div><span class="rond"></span>
-            </div>
-            <div class="carte visee" style="left:14px;top:124px;width:72px;height:81px">
-              <div class="img" style="height:59px"><div class="sujet" style="background:#A89A6B"></div></div>
-              <div class="pied">marais</div><span class="rond"></span><span class="carre"></span>
-            </div>
-            <div class="carte" style="left:95px;top:124px;width:72px;height:81px">
-              <div class="img" style="height:59px"><div class="sujet" style="background:#C8B48A"></div></div>
-              <div class="pied">marais</div><span class="rond"></span>
-            </div>
+        <div>
+          <div class="m105" style="margin-bottom:8px">Les réglages · la valeur à droite</div>
+          <div class="reglage"><span>le seuil</span><span class="val">30</span></div>
+          <div class="reglage"><span>la tolérance</span><span class="val">0.14</span></div>
+          <div class="reglage"><span>la taille de case</span><span class="val">64 px</span></div>
+          <div class="reglage" style="border-bottom:0"><span>le fond</span><span class="val">s'enlève</span></div>
+        </div>
+
+        <div>
+          <div class="m105" style="margin-bottom:8px">Les onglets · quatre au plus</div>
+          <div class="onglets">
+            <div class="onglet actif">Sa fiche</div>
+            <div class="onglet">Ses images</div>
+            <div class="onglet">Ses animations</div>
+            <div class="onglet">L'essai</div>
           </div>
-
-          <div class="ilot" style="left:332px;top:38px;width:186px;height:130px;border-color:var(--mauve);border-style:dashed;background:transparent">
-            <div class="bande" style="background:var(--mauve)">
-              <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              <span class="nom">falaise</span><span class="cpt">2 cartes</span><span class="rond"></span>
-            </div>
-            <div class="carte" style="left:14px;top:34px;width:72px;height:81px">
-              <div class="img" style="height:59px"><div class="sujet" style="background:#7A6A58"></div></div>
-              <div class="pied">falaise</div><span class="rond"></span>
-            </div>
-            <div class="carte" style="left:95px;top:34px;width:72px;height:81px">
-              <div class="img" style="height:59px"><div class="sujet" style="background:#8E8E86"></div></div>
-              <div class="pied">falaise</div><span class="rond"></span>
-            </div>
-          </div>
-          <div class="legende" style="left:532px;top:44px">perd une carte :<br>pointillé,<br>fond vidé,<br>compte à 2</div>
-
-          <div class="ilot" style="left:332px;top:210px;width:186px;height:130px;border-color:var(--pervenche);background:color-mix(in srgb,var(--pervenche) 28%,transparent)">
-            <div class="bande" style="background:var(--pervenche)">
-              <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              <span class="nom">ciel</span><span class="cpt">3 cartes</span><span class="rond"></span>
-            </div>
-            <div class="carte" style="left:14px;top:34px;width:72px;height:81px">
-              <div class="img" style="height:59px"><div class="sujet" style="background:#5C6E8A"></div></div>
-              <div class="pied">ciel</div><span class="rond"></span>
-            </div>
-            <div class="fantome" style="left:95px;top:34px;width:72px;height:81px">
-              <div class="img" style="height:59px;position:relative;border-radius:1px 1px 0 0;background-image:
-                linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%),
-                linear-gradient(45deg,var(--damier-a) 25%,var(--damier-b) 25%,var(--damier-b) 75%,var(--damier-a) 75%);
-                background-size:12px 12px;background-position:0 0,6px 6px"><span style="position:absolute;inset:20%;border-radius:1px;background:#8E8E86"></span></div>
-              <div style="height:21px;display:flex;align-items:center;padding:0 5px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--texte-3);border-top:1px solid var(--bord)">ciel</div>
-            </div>
-          </div>
-          <div class="legende" style="left:532px;top:216px">accueille :<br>fond à 28 %,<br>compte à 3</div>
-
-          <div class="ilot" style="left:28px;top:262px;width:186px;height:88px;border-color:var(--echec);background:color-mix(in srgb,var(--echec) 8%,transparent)">
-            <div class="bande" style="background:var(--echec)">
-              <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              <span class="nom">ruine</span><span class="cpt" style="color:var(--fond-0)">l'îlot part — 1 trait</span>
-            </div>
-          </div>
-          <div class="legende" style="left:232px;top:268px">dernière carte sortante :<br>--echec, et ce qu'elle emporte</div>
-
-          <div class="note-c" style="left:332px;top:372px;width:186px;border-color:var(--paille);background:color-mix(in srgb,var(--paille) 16%,transparent)">
-            La brume mange toujours le bas du sprite.
+          <div style="height:22px"></div>
+          <div class="m105" style="margin-bottom:8px">Les étiquettes · jamais cliquables</div>
+          <div class="rangee" style="gap:4px">
+            <span class="etq">pixel · 64 px</span>
+            <span class="etq">24 couleurs</span>
+            <span class="etq etq-ok">6 / 6</span>
+            <span class="etq etq-echec">refusée</span>
           </div>
         </div>
-      </div>
 
-      <div class="col">
-        <div class="entete-panneau">Réserve · 12</div>
-        <div class="reserve-l">
-          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
-          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
-          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
-          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
-          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
-          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
+        <div>
+          <div class="m105" style="margin-bottom:8px">Les vignettes</div>
+          <div class="rangee">
+            <div>
+              <div class="vign vign-damier"><div class="pelerin"></div></div>
+              <div class="sous-vign">Repos · 64 × 64</div>
+            </div>
+            <div>
+              <div class="vign"><div class="pelerin" style="height:66px;width:48px"></div></div>
+              <div class="sous-vign">Marche · 1024 px</div>
+            </div>
+            <div>
+              <div class="vign vign-vide"><span class="mini">rien encore</span></div>
+              <div class="sous-vign">Course</div>
+            </div>
+          </div>
+          <p class="legende">Le damier dit <em>transparent</em>, le gris dit <em>pas encore
+            détouré</em>. Dans les deux cas l'image est posée sur le pourtour neutre.</p>
         </div>
+
+        <div>
+          <div class="m105" style="margin-bottom:8px">Les bandeaux · jamais flottants</div>
+          <div class="msg msg-echec">Le modèle a refusé. Il n'a pas dit pourquoi. Rien n'a été facturé.</div>
+          <div class="msg msg-att">Un morceau touche son bord. Déplace la coupe, ou accepte qu'il soit rogné.</div>
+          <div class="msg msg-ok">6 images rangées. La grenouille est complète.</div>
+        </div>
+
+        <div>
+          <div class="m105" style="margin-bottom:8px">Le vide · une phrase, un geste</div>
+          <div class="vide">
+            <p class="phrase">Aucun terrain pour l'instant.</p>
+            <p class="mini" style="margin-top:5px">Un terrain se répète sans qu'on voie la jointure.</p>
+            <button class="btn" style="margin-top:14px">Écrire un nom</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="m105" style="margin-bottom:8px">L'attente · le temps, jamais un %</div>
+          <div class="attente">
+            <span>4 images sur 6 · encore une vingtaine de secondes</span>
+            <button class="btn" style="height:26px;font-size:12.5px">Arrêter</button>
+          </div>
+          <div style="height:22px"></div>
+          <div class="m105" style="margin-bottom:8px">Les compteurs · alignés à droite</div>
+          <div class="compte"><span>Ce que la feuille a coûté</span><span class="n rouille">$0,0189</span></div>
+          <div class="compte"><span>Ce que la découpe coûte</span><span class="n" style="color:var(--ok)">rien</span></div>
+          <div class="compte" style="border-bottom:0"><span>Le prix d'une image</span><span class="n rouille">$0,0032</span></div>
+        </div>
+
       </div>
     </div>
   </div>
-</section>
 
-<section>
-  <h2>Les huit, et ce que chacun coûte</h2>
-  <table>
-    <thead><tr><th style="width:120px">Demande</th><th>Ce qui est proposé</th><th style="width:270px">Ce que ça coûte</th></tr></thead>
-    <tbody>
-      <tr>
-        <td>1 · à côté,<br>pas derrière</td>
-        <td><b>Une carte qui arrive de la réserve ne se pose jamais sur une autre</b> : elle glisse vers la droite, puis à la ligne, jusqu'à la première place libre — la règle de <span class="k">disposer</span>, appliquée à une carte au lieu d'un îlot. Le déplacement <em>sur</em> le plan garde le droit de recouvrir : la main y voit ce qu'elle fait, le glissement depuis la réserve est aveugle.</td>
-        <td>Une carte lâchée dans un îlot dense peut voyager visiblement depuis le point du lâcher. C'est honnête, et mieux que caché.</td>
-      </tr>
-      <tr>
-        <td>2 · sortir<br>d'un îlot</td>
-        <td><b>On entre par le centre, on sort par le tout.</b> Une carte quitte son îlot quand elle n'en touche plus rien ; elle y entre dès que son centre y est. Entrer ailleurs l'emporte sur rester.</td>
-        <td>Deux seuils au lieu d'un, et une carte peut être à moitié dehors en étant encore dedans — le cadre s'élargit au relâchement pour le dire.</td>
-      </tr>
-      <tr>
-        <td>3 · le dire<br>avant le lâcher</td>
-        <td><b>Un îlot dit ce qu'il vaudra.</b> Il accueille → fond 16 % → 28 %, compte +1. Il perd → fond vidé, cadre en pointillé, compte −1. Il meurt → <span class="mono" style="color:var(--echec)">--echec</span> et <em>l'îlot part</em>, inchangé.</td>
-        <td>Le cadre change de <em>trait</em> et non de couleur : <span class="mono" style="color:var(--echec)">--echec</span> reste réservé à ce qui détruit, sans quoi le seul vrai avertissement cesserait de se voir.</td>
-      </tr>
-      <tr>
-        <td>4 · les points<br>de lien</td>
-        <td><b>Rond de 12 px, permanent, entièrement hors du bord droit.</b> La poignée de largeur reste carrée, 10 px, au survol. <em>Le survol révèle</em> ne vaut plus sur la toile pour ce qui relie deux objets — c'est la seule surface où la cible du geste n'est pas ce qu'on regarde.</td>
-        <td>Le rond déborde de 3 px sur la voisine de droite. Une carte cachée en permanence coûtait plus cher.</td>
-      </tr>
-      <tr>
-        <td>5 · plus<br>de couleurs</td>
-        <td><b>Dix teintes, saturation 30 %, fond à 16 %.</b> La teinte devient visible sans devenir un état.</td>
-        <td><b>Pas de primaires</b> : les arcs de <span class="mono">--echec</span>, <span class="mono">--epingle</span>, <span class="mono">--ok</span> et <span class="mono">--signal</span> restent fermés. Et deux paires deviennent proches — ardoise/pervenche, iris/lavande.</td>
-      </tr>
-      <tr>
-        <td>6 · écrire<br>une note</td>
-        <td><b><span class="plus">+</span> note</b> dans la barre du tableau. En grille, la note naît en réserve ; en toile, le brouillon paraît au centre de ce que l'écran montre. Le double-clic sur le plan reste le geste précis.</td>
-        <td>Deux chemins pour un même résultat — le découvrable et le rapide. Le produit n'en a nulle part ailleurs.</td>
-      </tr>
-      <tr>
-        <td>7 · bandeau<br>et typo</td>
-        <td><b>Bandeau en teinte pleine, nom en <span class="mono">--fond-0</span></b> (5,2 : 1). Et la règle qui porte tout : <b>ce qui se lit est en pixels d'écran, ce qui se mesure est en pixels de plan.</b> Nom, compte, mot d'un trait, prises : écran. Image, carte, note, îlot : plan.</td>
-        <td>Deux systèmes de coordonnées sur une surface : tout objet neuf de la toile doit désormais déclarer auquel il appartient.</td>
-      </tr>
-      <tr>
-        <td>8 · le glyphe<br>de prise</td>
-        <td><b>Six points, permanents, en tête du bandeau.</b> Le carré de 10 px disparaît — il était le troisième carré identique de l'écran.</td>
-        <td>Le premier et le seul glyphe du produit. Il faut écrire la règle d'admission qui va avec, sinon il y en aura douze.</td>
-      </tr>
-    </tbody>
-  </table>
-</section>
+  <!-- 4 · UN ÉCRAN -->
+  <div class="section">
+    <div class="entete">Un écran entier — le carnet 300, la surface, le volet 380</div>
+    <div class="ecran">
 
-<section style="margin-bottom:0">
-  <h2>Ce qui ne bouge pas — et l'exception qu'il faut écrire</h2>
-  <div class="duo">
-    <div>
-      <p class="note" style="margin-bottom:16px"><b>La grille d'assets est intacte.</b> Rayon 0, aucune ombre, tuile muette, <em>le survol révèle</em>. Rien de ce qui précède ne la touche.</p>
-      <p class="note"><b>Le châssis n'a pas une couleur de plus.</b> Quatre sémantiques, un accent, une lampe. Les dix teintes restent le seul endroit du produit où une couleur ne veut rien dire.</p>
+      <aside class="carnet">
+        <div class="jeu">
+          <div class="nom">Le Marais du Vieux Moulin</div>
+          <div class="sous">41 images · $0,78</div>
+        </div>
+        <nav>
+          <div class="lg"><span>Les règles du jeu</span></div>
+          <div class="lg"><span>La toile de l'univers</span></div>
+          <div style="height:14px"></div>
+          <div class="lg ouverte"><span>Les personnages</span><span class="n">3</span></div>
+          <div class="sous-lg"><span>Les héros</span><span class="m115">1</span></div>
+          <div class="sous-lg"><span>Les PNJ</span><span class="m115">2</span></div>
+          <div class="sous-lg"><span>Sans collection</span><span class="m115">0</span></div>
+          <div class="lg"><span>Les équipements</span><span class="n">4</span></div>
+          <div class="lg"><span>Les objets</span><span class="n">1</span></div>
+          <div class="lg"><span>Les décors</span><span class="n">1</span></div>
+          <div class="lg rien"><span>Les terrains</span><span class="n">aucun</span></div>
+          <div class="lg"><span>L'interface</span><span class="n">2</span></div>
+          <div style="height:14px"></div>
+          <div class="lg"><span>La galerie</span><span class="n">41</span></div>
+          <div class="lg"><span>Les dépenses</span><span class="n">$0,78</span></div>
+        </nav>
+        <div class="pied">
+          <div class="l"><span>Chercher, ou faire</span><span class="m115">⌘K</span></div>
+          <div class="l"><span>Le guide et les touches</span><span class="m115">?</span></div>
+          <div class="l"><span>L'installation</span></div>
+        </div>
+      </aside>
+
+      <main class="surface">
+        <div>
+          <div class="m105">Les personnages › Le pélerin</div>
+          <h2 class="titre-ecran" style="margin-top:8px">Le pélerin</h2>
+          <p class="chapo">Il occupe toute la hauteur d'une case. Six poses attendues, quatre
+            directions depuis que le jeu est vu de trois quarts.</p>
+          <div class="rangee" style="gap:4px;margin-top:14px">
+            <span class="etq">personnage</span>
+            <span class="etq">Les héros</span>
+            <span class="etq etq-ok">4 poses sur 6</span>
+            <span class="etq">2 équipements</span>
+          </div>
+        </div>
+
+        <div class="onglets">
+          <div class="onglet actif">Sa fiche</div>
+          <div class="onglet">Ses images</div>
+          <div class="onglet">Ses animations</div>
+          <div class="onglet">L'essai</div>
+        </div>
+
+        <div>
+          <div class="m105" style="margin-bottom:14px">Ce qui existe de lui</div>
+          <div class="grille-poses">
+            <div class="pose"><div class="vign vign-damier"><div class="pelerin"></div></div>
+              <div class="sous-vign">Repos · 4 essais</div></div>
+            <div class="pose"><div class="vign vign-damier"><div class="pelerin" style="height:64px"></div></div>
+              <div class="sous-vign">Marche · 6 essais</div></div>
+            <div class="pose"><div class="vign"><div class="pelerin" style="height:58px;background:linear-gradient(180deg,#8a5a2c 0 30%,#5f503c 30% 66%,#2f2820 66% 100%)"></div></div>
+              <div class="sous-vign">Course · pas détourée</div></div>
+            <div class="pose"><div class="vign vign-vide"><span class="mini">rien encore</span></div>
+              <div class="sous-vign">Attaque</div></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="m105" style="margin-bottom:8px">Ce qui lui manque</div>
+          <div class="compte"><span>Deux poses — attaque, dégâts</span><span class="n rouille">$0,0378</span></div>
+          <div class="compte"><span>Neuf calques d'équipement</span><span class="n rouille">$0,17</span></div>
+          <div class="compte" style="border-bottom:0"><span>Une animation de marche, sur la carte de la maison</span><span class="n" style="color:var(--ok)">≈ 4 min</span></div>
+          <div style="margin-top:14px" class="rangee">
+            <button class="btn btn-rouille">Tout demander&nbsp; <span class="num">$0,21</span></button>
+            <button class="btn">Comparer à un autre personnage</button>
+          </div>
+        </div>
+      </main>
+
+      <aside class="volet">
+        <div class="m105">Son image de référence</div>
+        <h3 style="margin-top:8px">Au repos</h3>
+        <div style="margin-top:14px">
+          <div class="vign vign-damier" style="width:100%;height:200px">
+            <div class="pelerin" style="width:96px;height:132px"></div>
+          </div>
+          <p class="legende">Elle part au modèle à chaque nouvelle pose, et sert d'étalon de
+            comparaison.</p>
+        </div>
+
+        <div class="bloc">
+          <div class="m105" style="margin-bottom:8px">Ce qu'on en sait</div>
+          <div class="compte"><span>Le modèle</span><span class="n">gpt-image-2</span></div>
+          <div class="compte"><span>Ce qu'elle a coûté</span><span class="n rouille">$0,0189</span></div>
+          <div class="compte"><span>Sa taille</span><span class="n">64 × 64 px</span></div>
+          <div class="compte" style="border-bottom:0"><span>Ses passes</span><span class="n">5 posées</span></div>
+        </div>
+
+        <div class="bloc">
+          <div class="msg msg-att" style="margin:0">Une feuille attend d'être découpée. Ses six
+            cases ne comptent pas encore dans le jeu.</div>
+        </div>
+
+        <div class="bloc rangee">
+          <button class="btn">La retoucher</button>
+          <button class="btn">En choisir une autre</button>
+        </div>
+      </aside>
+
     </div>
-    <div>
-      <p class="avert"><b>La toile devient plus bavarde que le reste du produit</b> — prises permanentes, bandeaux pleins, dix teintes visibles. Ce n'est tenable que si le document dit <em>pourquoi</em> : <b>la grille montre, la toile range</b>, et il n'y a rien à juger sur la toile, seulement à placer. Sans cette phrase écrite, le prochain passage remettra la toile au silence et rouvrira les huit points.</p>
+    <p class="legende">Une seule ligne du carnet est ouverte. Le carnet ne se ferme jamais tout
+      seul, même pendant une génération. Un seul bouton rouille sur l'écran — et il porte son
+      prix.</p>
+  </div>
+
+  <!-- 5 · CE QUI RESTE OUVERT -->
+  <div class="section">
+    <div class="entete">Ce que ce système ne tranche pas</div>
+    <div class="cartouche">
+      <div class="compte"><span>Il n'y a pas de couleur pour « réglé à la main », et le produit a la notion</span><span class="n" style="color:var(--echec)">à trancher</span></div>
+      <div class="compte"><span>Les dix teintes d'îlot de la toile ne sont pas dans les planches</span><span class="n" style="color:var(--echec)">à refaire</span></div>
+      <div class="compte"><span>La serif n'a pas de gras, et n'en aura pas</span><span class="n" style="color:var(--encre-4)">consigné</span></div>
+      <div class="compte"><span>Le plancher de texte redescend de 13 à 12.5, et à 11.5 dans les ateliers</span><span class="n" style="color:var(--encre-4)">à surveiller</span></div>
+      <div class="compte"><span>17 renvois du code et des documents visent des sections retirées de DESIGN.md</span><span class="n" style="color:var(--encre-4)">pendant B0</span></div>
+      <div class="compte" style="border-bottom:0"><span>docs/design-motifs.md décrit encore le châssis sombre — 1 852 lignes</span><span class="n" style="color:var(--encre-4)">pendant B0</span></div>
     </div>
   </div>
-</section>
 
 </div>
 </body>

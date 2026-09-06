@@ -296,7 +296,7 @@ arbitré en les écrivant vit dans `docs/v21-arbitrages.md`.*
 
 ### Les tables de retouche
 
-- **US-194** — En tant qu'auteur, je veux une barre qui montre les sept places de ma recette dans leur ordre, chacune disant si elle agit et avec quelle valeur, afin de lire ce que l'image a subi sans aller vérifier.
+- **US-194** — En tant qu'auteur, je veux une barre qui montre les huit places de ma recette dans leur ordre, chacune disant si elle agit et avec quelle valeur, afin de lire ce que l'image a subi sans aller vérifier.
 - **US-195** — En tant qu'auteur, je veux qu'une table indisponible s'ouvre quand même et porte sa raison en clair à la place de ses réglages, avec ce qu'il faut faire pour l'allumer, afin de comprendre au moment où je suis allé chercher.
 - **US-196** — En tant qu'auteur, je veux comparer l'image brute et l'image rendue côte à côte ou superposées, avec le mode écrit quand ce n'est pas le rendu, afin de ne jamais oublier dans quel mode je regarde.
 - **US-197** — En tant qu'auteur, je veux passer d'une image à sa voisine sans refermer la table où je suis, afin de traiter une série sans rouvrir sept fois le même outil.
@@ -777,7 +777,7 @@ jeu. Écrites le 3 septembre 2026.*
 
 ### La grille retrouvée, et la réduction qui ne bave plus
 
-*Les sept sont livrées le 3 septembre 2026, en deux moitiés le même jour (`docs/PLAN.md` § D2).*
+*Les sept sont livrées le 3 septembre 2026, en deux moitiés le même jour (`docs/archive/plan-r6-a-v3.02.md` § D2).*
 
 > ⚠️ **`US-413` et `US-61` se lisent ensemble, et leur écart est réel.** `US-413` veut que
 > l'atelier retrouve la taille de bloc *« afin de ne pas ramener une image sur une grille qui

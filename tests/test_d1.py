@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de D1 — une recette par défaut, par nature d'image.
 
-Un test par critère de `docs/PLAN.md` § D1, nommé d'après lui.
+Un test par critère de `docs/archive/plan-r6-a-v3.02.md` § D1, nommé d'après lui.
 
 **La mesure qui a ouvert la tranche, et celle qui l'a corrigée.** Le plan
 partait d'un comptage : sur les 123 découpages écrits à la main dans ce dépôt,

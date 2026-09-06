@@ -188,6 +188,14 @@
       "port": 8472
     },
     {
+      "name": "atelier-jetable-b1",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b1.py"
+      ],
+      "port": 8473
+    },
+    {
       "name": "maquettes-carnet",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [
@@ -198,6 +206,14 @@
         "docs/pistes-2026-09-04/carnet"
       ],
       "port": 8933
+    },
+    {
+      "name": "atelier-jetable-b6",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b6.py"
+      ],
+      "port": 8474
     }
   ]
 }

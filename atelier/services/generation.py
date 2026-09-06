@@ -258,8 +258,22 @@ class ServiceGenerations:
     def recentes(self, limite: int = 50) -> list[Generation]:
         return self._base.recentes(limite)
 
-    def chantier(self, limite: int = 200) -> list[Generation]:
+    def chantier(
+        self,
+        limite: int = 200,
+        *,
+        projet: str | None = None,
+        sans_projet: bool = False,
+    ) -> list[Generation]:
         """Les générations dont **un emplacement attend encore une issue**.
+
+        **Scopée à un jeu, comme `grille_courante`** (B4) : `projet` ne montre
+        que les siennes, `sans_projet` que celles qui n'en ont aucun. Les
+        deux à leur défaut ne filtrent rien — c'est encore l'ancien
+        comportement, celui qu'un appelant qui ne les pose pas continue de
+        recevoir. Sans ce filtre, changer de jeu laissait le chantier du
+        précédent à l'écran : sa tuile ne partait qu'à la prochaine
+        génération de ce jeu-là, jamais au changement lui-même.
 
         C'est ce qui tient sa place dans la grille à côté de la bibliothèque :
         ce qui part, ce qui tourne, et ce qu'un redémarrage a coupé — celui-là
@@ -285,26 +299,37 @@ class ServiceGenerations:
         est arrivée est « réussi » même si sa voisine a été coupée.
         """
         en_suspens = (Statut.EN_ATTENTE, Statut.EN_COURS, Statut.INTERROMPUE)
+
+        def _du_projet(generation: Generation) -> bool:
+            if sans_projet:
+                return generation.projet is None
+            if projet is not None:
+                return generation.projet == projet
+            return True
+
         return [
             generation
             for generation in self._base.recentes(limite)
-            if any(e.statut in en_suspens for e in generation.emplacements)
-            or (generation.pliage is not None and generation.pliage.attend_un_choix)
-            # ⚠️ **Un clip arrivé garde sa place, comme la planche d'au-dessus
-            # et pour la même raison** (A9, V3) — vu au navigateur le
-            # 4 septembre 2026 : la galerie était vide au rechargement, alors
-            # que trois clips payés étaient sur le disque.
-            #
-            # Un clip est réussi dès qu'il arrive, donc il sortait d'ici ; et
-            # **rien ne prenait le relais**, parce qu'un clip n'entre pas en
-            # bibliothèque — ce n'est pas une image. Sa tuile disparaissait à
-            # l'arrivée. C'est le gâchis silencieux que `R6` a réparé pour la
-            # planche, à l'identique.
-            #
-            # **Jeté, il s'en va**, et c'est tout le sens du geste : il quitte
-            # la galerie et reste au journal, où l'argent, lui, ne s'efface
-            # jamais.
-            or (generation.clip is not None and not generation.clip.jete)
+            if _du_projet(generation)
+            and (
+                any(e.statut in en_suspens for e in generation.emplacements)
+                or (generation.pliage is not None and generation.pliage.attend_un_choix)
+                # ⚠️ **Un clip arrivé garde sa place, comme la planche d'au-dessus
+                # et pour la même raison** (A9, V3) — vu au navigateur le
+                # 4 septembre 2026 : la galerie était vide au rechargement, alors
+                # que trois clips payés étaient sur le disque.
+                #
+                # Un clip est réussi dès qu'il arrive, donc il sortait d'ici ; et
+                # **rien ne prenait le relais**, parce qu'un clip n'entre pas en
+                # bibliothèque — ce n'est pas une image. Sa tuile disparaissait à
+                # l'arrivée. C'est le gâchis silencieux que `R6` a réparé pour la
+                # planche, à l'identique.
+                #
+                # **Jeté, il s'en va**, et c'est tout le sens du geste : il quitte
+                # la galerie et reste au journal, où l'argent, lui, ne s'efface
+                # jamais.
+                or (generation.clip is not None and not generation.clip.jete)
+            )
         ]
 
     def total_couts(self, projet: str | None = None) -> float:

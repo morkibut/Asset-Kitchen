@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """L'adaptateur Pollinations — **le fournisseur qui ne demande rien**.
 
-Arrivé en F1 (`docs/PLAN.md` § V2.2). C'est lui qui rend vraie la phrase *la
+Arrivé en F1 (`docs/archive/plan-versions-tenues.md` § V2.2). C'est lui qui rend vraie la phrase *la
 première image ne demande plus rien* : sans compte, sans clé, sans carte, on
 écrit un sujet et une image arrive. Il ne sert qu'au brouillon, et le relevé du
 31 août 2026 dit pourquoi — `docs/releve-fournisseurs.md` § Fiche 1.

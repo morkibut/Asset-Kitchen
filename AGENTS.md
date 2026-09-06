@@ -10,30 +10,21 @@ code le jeu.
 Ce fichier-ci ne dit que **comment travailler dans ce dépôt**. Ce qu'il faut construire vit
 dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 
-## Où en est le dépôt → `docs/status/etat.md`
+## Où en est le dépôt → `docs/PLAN.md`
 
-**Cinq versions sont tenues, et trois blocs sont ouverts.** Le tableau dit lesquels ; le
-détail de chaque tranche, ses critères cochés et **ce que s'en servir a trouvé** vivent dans
-`docs/tranches/<code>.md` et `docs/status/etat.md`. Rien de tout ça ne se lit pour ouvrir une
-tranche neuve : ce qu'il faut savoir avant de toucher au code est plus bas, et tient en huit
-points.
+**Le tableau d'état vit dans `docs/PLAN.md`, § Où en est le dépôt, et nulle part ailleurs.**
+Il tenait ici aussi jusqu'au 6 septembre 2026 : deux documents répondaient à la même question,
+ce que la règle *une question, un document* interdit plus bas. La mise à jour de fin de tranche
+se fait donc désormais à **un seul endroit**.
 
-| Bloc | Ce qu'il a apporté | État |
-|---|---|---|
-| **V1** — `T1` à `T10` | La première image, le traitement non destructif, la bibliothèque, l'univers, la découpe, l'export, l'agent, la toile | **tenue** |
-| **V2** — `C1` à `C5` | Le personnage, son plan de poses, le lot plié, la pièce et le calque, la main, la sortie | **tenue** — `C5` écrite mais **pas encore usée** : personne n'a sorti un personnage dans un vrai jeu |
-| **Reprises** — `R1` à `R5` | Cinq corrections nées de l'usage, pas d'un cadrage | **tenues** |
-| **V2.1** — `E0` à `E20` | L'interface refaite : trois lieux au lieu de sept surfaces, le codex, l'établi, la galerie | **tenue** — dix-neuf sans réserve ; `E3` garde la pipette et `E8` les **dix-sept vignettes d'exemple**, qui sont une production d'images et non du code (`docs/vignettes-vues.md`) |
-| **Lot U** — `U1` à `U13` | Treize reprises de deux séances d'usage, le même soir | **tenues** — 87 critères cochés. **Quinze choix tranchés seuls attendent l'auteur** dans `docs/questions-du-lot-U.md` |
-| **V2.2** — `F0` à `F6` | D'autres fournisseurs, dont un qui ne demande ni compte ni clé | **close à 5 sur 6** — reste `F4`, qui attend un compte Cloudflare que ce dépôt n'a pas |
-| **Reprises** — `R6` à `R9` | La planche de travers, le texte qui part en trois parties, la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** |
-| **V2.3** — `D1` à `D5` | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** |
-| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **close le 5 septembre 2026**. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. **`A12` est l'objectif de la version, et il est atteint** : la matrice d'un personnage se lit sur deux calques — images fixes, animations —, chacun avec sa jauge. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée sort en planche de sprites, avec le fichier d'accompagnement que les moteurs lisent et une image qui tourne toute seule. **`A5` fait tenir le contour en place** : la silhouette et la palette d'une bande se décident une fois pour la bande. **`A7` ferme la version, et son vrai sujet n'était pas dans son plan** : une animation gardée **ne se rouvrait par aucun chemin** — la vignette remontait au clip, donc l'écran repartait des réglages du jeu |
-| **V3.01** à **V3.03** | Trois versions nées de l'usage, le 5 septembre 2026 : le tiroir qui relit ce qui part, la fiche d'un clip, et **l'atelier d'une animation au niveau des tables** | **ouvertes** — `V3.01` 1 sur 2 (reste la liste de modèles qui se plie), `V3.02` **close**, `V3.03` **3 sur 4**. `V3.03.1` donne à **chaque frame sa recette à elle** et refait l'écran dans la grammaire des tables ; `V3.03.2` pose ces tables **sur une sélection du ruban**, où *une valeur voyage seule quand une recette nommée remplace l'ensemble* ; `V3.03.3` **monte la bande** — retirer, dupliquer, déplacer, le chutier, et le montage se reprend sur une animation gardée. Reste `V3.03.4`, la main |
+En un mot : **onze blocs tenus ou clos, un seul ouvert** — la V4, *le carnet*, dont le plan est
+`docs/PLAN-carnet.md` et les tranches `docs/tranches/V4.md`. Ce qu'une tranche a appris en se
+construisant est dans `docs/status/etat.md` ; ses critères cochés dans `docs/tranches/<code>.md`.
+Rien de tout ça ne se lit pour ouvrir une tranche neuve.
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 485 essais de
-serveur et 765 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 6 septembre 2026,
-et **aucun ne coûte un centime**.
+**Ce qu'il faut savoir avant de toucher au code ne se lit nulle part ailleurs**, et c'est la
+suite immédiate.
+
 
 ### Ce qu'il faut savoir avant de toucher au code — dix points, et pas un de plus
 
@@ -230,157 +221,19 @@ pytest -q                            les critères d'acceptation, sans un centim
 cd interface && npm test             les essais d'écran — flux et fetch doublés, sans serveur
 py essais/essai_docs.py              le corpus de démarrage pesé et sa dérive lue,
                                      et tous les renvois vers les documents résolus
-py essais/essai_couverture.py        la couverture du fournisseur, gratuit
-py essais/essai_pollinations.py      l'adaptateur du fournisseur sans clé, contre le vrai
-                                     fournisseur. GRATUIT — deux appels, un jeton chacun,
-                                     aucun dollar, et une trentaine de secondes d'attente
-                                     entre les deux : le palier sans compte n'accepte qu'un
-                                     appel toutes les quinze secondes. C'est le seul essai
-                                     qui prouve la promesse de F1 — *sans compte, sans clé,
-                                     une image arrive* — et le seul qui lise chez lui
-                                     l'en-tête de consommation de F2. **Il demande une phrase
-                                     que personne n'a demandée**, l'horodatage compris : la
-                                     même phrase reviendrait de son cache, sans en-têtes, et
-                                     l'essai vérifierait le cache en croyant vérifier
-                                     l'adaptateur (`docs/PIEGES.md`)
-py essais/maquette_v3.py             les images de la maquette de la V3, refaites depuis un clip
-                                     déjà payé. GRATUIT — rien ne part chez un fournisseur. Il
-                                     écrit ses planches dans
-                                     `docs/maquettes-v3/01-du-sprite-a-la-bande.html`, qui reste
-                                     un fichier qu'on ouvre d'un double-clic. La page se fige
-                                     par `?fige` ou la barre d'espace : sans ça elle ne se
-                                     laisse pas photographier (`docs/PIEGES.md`)
-py essais/essai_pixel.py             brut contre traité, sur les images déjà là, gratuit
-py essais/essai_fenetre_commune.py   la dérive de cadrage d'un clip à l'autre — A2. GRATUIT :
-                                     il lit un clip déjà payé et n'en commande aucun. Il ne
-                                     mesure **pas** la taille du sprite rendu — un personnage
-                                     qui marche est plus large qu'un personnage au repos, et
-                                     ce chiffre-là mélangerait la pose et le cadrage — mais
-                                     **le facteur appliqué**, qui doit être constant dans un
-                                     clip. `--clip <chemin>` pour un autre que le moonwalk.
-                                     Sortie : `essais/mesures_fenetre_commune.json`, qui
-                                     s'accumule par clip au lieu de s'écraser
-py essais/essai_superposition_cadre.py   ce que le découpage du coin gardait, et ce qu'il
-                                     jetait — sur les pièces d'équipement du dépôt. GRATUIT,
-                                     et **en lecture seule sur `donnees/`** : l'atelier de
-                                     l'auteur peut tourner à côté. C'est lui qui a montré que
-                                     le geste de G16 était cassé pour les neuf pièces et non
-                                     pour deux. Sortie : `essais/mesures_superposition_cadre.json`
-py essais/essai_couleurs_et_taches.py  les deux dernières places de la recette — le nombre de
-                                     couleurs, la palette, le tramage, les taches et l'aire
-                                     minimale. Gratuit, sur les images déjà là ; c'est lui
-                                     que citent les maquettes 14 et 15. Depuis le 31 août
-                                     2026 il pèse aussi les **deux curseurs de fusion d'une
-                                     palette** — la proportion et l'attraction — et c'est ce
-                                     qui a levé le blocage de l'étape E11
-py essais/essai_ce_qui_part.py       ce que l'univers pose et ce qui part vraiment — le poids de
-                                     la bible dans le prompt, les générations qui l'ont portée,
-                                     ses contradictions avec le projet et avec la consigne de
-                                     reprise, ce que le nombre de couleurs achète, et le tableau.
-                                     Gratuit, sur les projets déjà là ; c'est lui que cite la
-                                     maquette 06
-py essais/essai_palette_vive.py      le temps d'un relâchement de curseur sur une palette,
-                                     avant et après U6 : 11 500 ms contre 25 sur trois vraies
-                                     cartes, mesuré le 1er septembre 2026. Gratuit, et il
-                                     n'écrit rien du jeu — il monte un atelier jetable dans
-                                     un dossier temporaire et emprunte des octets
-py essais/essai_moteurs_de_detourage.py  les cinq moteurs de détourage par modèle mis côte à
-                                     côte, sur quatre images du dépôt. GRATUIT — rien ne part
-                                     chez un fournisseur, tout tourne sur le processeur. **Le
-                                     premier lancement rapatrie les modèles manquants depuis
-                                     github.com/danielgatis/rembg — 382 Mo pour les deux qui
-                                     manquaient le 3 septembre 2026, et non les 257 annoncés :
-                                     l'allégé pèse 214 Mo, pas 88,6** ; les lancements suivants
-                                     ne téléchargent rien. Il compte la part de l'image gardée,
-                                     le temps, et surtout **l'ajouré trouvé** — c'est la seule
-                                     colonne qui sépare les moteurs, et c'est elle qui a fait
-                                     changer le moteur par défaut. Comptez trois minutes
-py essais/essai_export.py            l'archive rouverte, sur ce que l'atelier a — gratuit
-                                     (demande un atelier lancé)
-py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
-py essais/essai_univers_chaine.py    UN APPEL PAYANT, ~$0,023 — la chaîne de T4 de bout en bout
-py essais/essai_decoupe_planche.py   UN APPEL PAYANT, ~$0,004 — une vraie planche, découpée
-py essais/essai_prix_planche.py      TROIS APPELS PAYANTS, $0,081 le 31 août 2026 — ce qu'une
-                                     planche coûte par image selon son nombre de cases. Son
-                                     relevé, `essais/mesures_prix_planche.json`, est versionné :
-                                     c'est lui que l'écran de `E13` lira, et un prix mesuré qui
-                                     ne serait pas dans le dépôt serait un prix en dur
-py essais/essai_animation.py         BANC PAYANT, $2,87 le 1er septembre 2026 — huit modèles,
-                                     la même demande à tous : le prompt du produit et ses
-                                     trois images, relus dans une vraie génération. Sans ça
-                                     le banc mesurerait autre chose que ce que le produit
-                                     envoie. Sortie : `essais/resultats_animation/`
-py essais/essai_recette.py           BANC PAYANT, $2,45 le 1er septembre 2026 — vingt-neuf
-                                     demandes au même modèle, sept axes. Il a un **plafond
-                                     cumulé** : il relit ce qui est déjà sur le disque et
-                                     n'engage que la différence, donc une reprise ne repaie
-                                     pas la séance. Sortie : `essais/resultats_recette/`
-py essais/banc_complet.py            les deux bancs d'animation repassés par UN SEUL juge —
-                                     gratuit, tout est sur le disque. Sortie : `essais/tout.json`
-py essais/verdict_auteur.py          les mêmes, reclassés sur les NOTES DE L'AUTEUR, et la
-                                     confrontation des deux jugements — c'est elle qui a
-                                     montré que la mesure automatique ne prédisait rien.
-                                     Gratuit. Entrée : `essais/notes-auteur.json`.
-                                     Sortie : `essais/verdict.json`
-py essais/rapport_tout.py            les 111 animations qui tournent, avec leur note, leur
-                                     consigne, leurs images jointes et leur prix — gratuit,
-                                     ~12 Mo. C'est en s'en servant qu'on a vu que la mesure
-                                     était fausse. Sortie : `essais/rapport-animation.html`
-
-pytest -q tests/test_essais_socle.py  les fonctions pures du socle des six essais du
-                                     2 septembre 2026, sur le double, sans un centime
-py essais/essai_references_nommees.py --a-sec   E1 — les références nommées. Le premier
-                                     lancement de chaque essai est À SEC : il montre ce
-                                     qui partirait — textes, différence mot à mot, images
-                                     avec rôle et taille, appels, coût — et n'engage rien.
-                                     Sans `--a-sec` : PAYANT. Refait le 2 septembre 2026 après
-                                     une première séance à 0 bonne sur 8 : un témoin neuf et
-                                     trois textes neufs — rangé, rangé avec priorité des images,
-                                     réécrit par l'IA — à DEUX tirages chacun (~$0,25), avec
-                                     les artworks officiels que le personnage désigne, dans
-                                     l'ordre du produit ; plafond $0,60. Sortie :
-                                     `essais/resultats_references_nommees/`,
-                                     `essais/rapport-references-nommees.html`
-py essais/essai_taille_reference.py --tirages 2   E2 — la référence en 64, 256 ou 512 px.
-                                     QUATRE APPELS PAYANTS à deux tirages (~$0,14, la
-                                     surface se paie), plafond $1,00. Le témoin est celui
-                                     de E1 avec les artworks du jour, relu sans repayer.
-                                     Sa taille retenue est relue par E4 et E5
-py essais/essai_grille_complete.py --tirages 2    E3 — la grille 4×2 au lieu de 3×3.
-                                     QUATRE APPELS PAYANTS à deux tirages (~$0,11),
-                                     plafond $0,40 ; même témoin que E2
-py essais/essai_mise_en_pose.py      E4 — la « prep » de SpriteCook, en deux temps : huit
-                                     images seules (~$0,10), l'auteur en choisit une dans
-                                     le rapport, puis huit planches (~$0,20). PAYANT,
-                                     plafond $0,50 par lancement
-py essais/essai_pose_imposee.py      E5 — la pose imposée par image, une exploration :
-                                     UN APPEL PAYANT par pose (`--poses contact,passage`
-                                     fait un tour à ~$0,03), quatre tours au plus, un seul
-                                     correctif par tour, `--bande` pour le cinquième
-                                     (huit appels, ~$0,14). Plafond $0,50 par lancement.
-                                     Le script demande « ce que j'attends » et « ce qui
-                                     peut rater » avant chaque envoi (`--attendu`,
-                                     `--peut-rater` pour les passer sans terminal)
-py essais/essai_video_planche.py     E6 — le sprite animé par un modèle image-vers-vidéo
-                                     chez fal.ai (`FAL_KEY` dans `.env`, hors du produit).
-                                     REFUSE DE PARTIR tant que l'endpoint et le prix du jour
-                                     ne sont pas recopiés dans `essais/resultats_video/mesures.json`.
-                                     Deux clips par modèle, trois modèles (Wan 2.2 5B,
-                                     Seedance 1.0 pro fast, Kling 2.1 standard), cinq à
-                                     vingt-huit centimes le clip relevés le 2 septembre
-                                     2026, ~$0,96 en tout, plafond $3,00. Demande
-                                     `uv pip install -e ".[essais-video]"` pour lire les clips
-py essais/monter_bande_video.py      les huit images d'un cycle figé dans le rapport de E6,
-                                     passées dans la chaîne du produit sur une fenêtre
-                                     commune — gratuit
-py essais/verdict_essais.py          les six relevés `essais/notes-<essai>.json` relus, et
-                                     chaque règle du cahier appliquée telle qu'écrite —
-                                     gratuit, ne conclut rien au-delà
+py essais/essai_jetons.py            le système de design **dans les deux sens** :
+                                     il refuse une couleur que la liste ne déclare
+                                     pas, et il **compte** les jetons que rien
+                                     n'emploie — la seconde moitié ne refuse rien,
+                                     elle rend un compte, parce qu'un jeton
+                                     inemployé est soit une pièce pas encore
+                                     dessinée, soit un jeton mort
 ```
 
-Les six essais et leur cahier vivent dans `revue-externe-2026-09-02/cahier-des-essais.md`,
-hors de `docs/` : ils décrivent des essais, pas le produit. Leur socle commun est
-`essais/socle_essais.py`.
+**Les 29 autres bancs vivent dans `docs/bancs.md`** — ce que chacun mesure, ce qu'il coûte, et
+ce qu'il a trouvé. *Descendus le 6 septembre 2026, où le catalogue pesait 13 Ko de ce document.*
+⚠️ **Les payants ne partent qu'à la main**, et le fichier dit lesquels et combien.
+
 
 **Brancher un agent.** Le serveur MCP vit dans le même processus que l'API, sur `/mcp` :
 
@@ -429,57 +282,37 @@ l'autre est corrigé dans la foulée — jamais laissé en l'état.
 `docs/` **se lit à la demande, quand la tâche le demande** — jamais « pour se mettre en
 contexte » : c'est là qu'un corpus de démarrage triple sans que personne ne le décide.
 
-| Annexe | Ce qu'elle prolonge | On l'ouvre quand |
-|---|---|---|
-| `docs/prd-decisions.md` | le PRD | on veut savoir **ce que le produit a tranché** sur une question d'usage — ce qui entre en bibliothèque, ce qui se juge, ce que la génération refuse, ce que l'agent peut. *Descendu du PRD le 31 août 2026, où il pesait 55 % du document* |
-| `docs/tranches/V2.1.md` | le plan | on construit une étape de la V2.1 et on veut ses critères d'acceptation, ou ce qui a été décidé en la faisant. *Descendu du plan le 31 août 2026, où les vingt-et-une étapes pesaient 43 % du document* |
-| `docs/user-stories.md` | le PRD | on cherche ce qu'une user story demande, par son numéro |
-| `docs/prd-carnet.md` | le PRD | une décision du PRD paraît arbitraire et on veut ce qui l'a dictée |
-| `docs/archi-versions.md` | l'architecture | on travaille *dans* une version — les briques de la V1, le pliage et le calque de la V2, ce que les V3 à V5 supposent |
-| `docs/archi-fournisseur.md` | l'architecture | on rouvre la question du modèle, du catalogue, du contrat de génération ou des outils MCP |
-| `docs/carte-du-depot.md` | l'architecture | avant de toucher un fichier — ce qu'il tient, et pourquoi lui plutôt qu'un autre |
-| `docs/tranches/<code>.md` | le plan | on veut les critères d'acceptation, ce qui bloquait une tranche ou son rapport de tenue — vingt-trois fichiers : les vingt tranches de `T1` à `R5`, le lot correctif `U`, et les deux versions d'écrans et de fournisseurs `V2.1` et `V2.2`. **`V2.2.md` porte en plus ce que chaque tranche livre**, descendu du plan le 1<sup>er</sup> septembre 2026 : on y ouvre **un seul** fichier pour reprendre une tranche de cette version-là |
-| `docs/v21-arbitrages.md` | — | on ouvre une étape de la V2.1 et on veut savoir ce qui a été tranché en autonomie, ou ce qui reste ouvert. **Il ne fait foi sur rien** : ce qui est décidé vit dans le PRD, l'architecture, le design et le plan. Il garde la trace, et ses questions ouvertes se tranchent à l'usage |
-| `docs/maquettes-v2.1/` | le design | on construit un écran de la V2.1 — vingt-six maquettes, une par écran, plus un sommaire qui dit dans quel ordre elles se lisent. **Quelle maquette va avec quelle étape se lit dans `docs/tranches/V2.1.md`**, sous le titre de l'étape. Elles décrivent l'interface future, jamais l'état du code |
-| `docs/maquettes-v2.4/` | le design | on construit **le coin du calque** — l'écran unique où un calque se fabrique ou se reprend. Une seule maquette, `01-le-coin-du-calque.html`, ouvrable d'un double-clic. Elle ne bâtit rien : elle tranche quatre questions, écrit ce que chaque réponse écarte, et nomme ce que la construction devra au guide. **Elle attend l'arbitrage de l'auteur** — la tranche qui bâtira l'écran ne s'écrit pas avant |
-| `docs/design-motifs.md` | le design | on dessine un écran |
-| `docs/design-decisions.md` | le design | on rouvre une décision d'apparence |
-| `docs/PIEGES.md` | — | avant de toucher un terrain déjà miné, ou sur renvoi du code |
-| `docs/releve-usage.md` | — | on cherche ce qu'une séance d'usage a trouvé et qui n'est **pas encore** cadré ni planifié |
-| **`docs/bilan-v3.md`** | le plan | **on ouvre une tranche de la V2.3 ou de la V3** — les conclusions chiffrées des trois bancs payés, ce que le relevé d'outillage a rapporté, les trois défauts que le code porte aujourd'hui, et **ce qui est mort et ne doit pas se reproposer**. Il remplace la lecture des sept documents préparatoires |
-| `docs/v3-animation.md` | — | on veut les trois bancs planche par planche, avec les notes de l'auteur et les tableaux complets. **Le bilan suffit dans presque tous les cas** |
-| `docs/releve-outillage.md` | — | on veut le relevé d'outillage entier — sources, licences, ce qui est écarté et pourquoi. **Le bilan en donne les conclusions** |
-| `docs/archive/README.md` | — | on cherche un document qui a servi et qui est fini : les cinq versions livrées, les séances d'essai closes, les études qui ont tranché. **Rien n'y fait foi et rien n'y est à faire** |
-| `docs/archive/plan-versions-tenues.md` | le plan | on veut le détail d'une tranche des cinq versions livrées — `T`, `C`, `R1`–`R5`, `E`, `U`, `F`. *Descendu du plan le 2 septembre 2026, où les versions tenues pesaient plus des trois quarts du document* |
-| `docs/status/etat.md` | — | on cherche pourquoi c'est comme ça plutôt qu'autrement |
-| `docs/design-preview.html`, `docs/diagrams/`, `docs/maquette-atelier.html` | — | jamais d'office |
+**Quelle annexe s'ouvre quand → `docs/README.md`.** Une trentaine de fichiers y sont listés,
+chacun avec ce qu'il prolonge et le moment où on l'ouvre. *Descendu le 6 septembre 2026.*
+
 
 **Un document d'autorité ne grossit pas indéfiniment, et sa dérive se mesure** :
 `py essais/essai_docs.py` pèse les cinq documents de démarrage, document par document et
-section par section, et compare au relevé précédent. **Il ne fixe aucun plafond** — un
-seuil rond refuserait le jour où l'on écrit une phrase de plus, ce qui n'est pas une
-faute, et se relèverait le jour où il gêne, ce qui n'est pas un garde-fou.
+section par section, et compare au relevé précédent. Ce qui se surveille est la **tendance**.
 
-Ce qui se surveille est la **tendance**. La règle d'avant — *« dès qu'une section pèse
-plus que le document qui la porte, elle sort en annexe »* — n'a jamais déclenché : le
-corpus a triplé deux fois quand même, jusqu'à 315 Ko le 29 août 2026. Il est redescendu à
-139 le même jour, sans qu'une ligne soit supprimée. Ce chiffre-là est le repère : quand le
-banc annonce une dérive qui s'installe, une section descend en annexe et laisse un renvoi.
+**Trois descentes, et la troisième dit ce qui manquait.** Le 31 août 2026 le corpus était à
+**301 Ko** : les décisions d'implémentation pesaient 55 % du PRD et les vingt-et-une étapes de
+la V2.1 43 % du plan ; les deux sections sont descendues d'un bloc, et il est retombé à 235. Le
+2 septembre, le détail des cinq versions livrées est descendu du plan. Le 6 septembre, il était
+à **596 Ko — presque le double de son plus haut connu**, et le banc l'annonçait à chaque
+lancement sans que rien ne se passe. Il est redescendu à **165 Ko le même jour** : sept sections
+en annexe, deux fichiers d'archive, **et pas un mot changé**.
 
-**La règle a déclenché pour la première fois le 31 août 2026, en reportant la V2.1**, et la
-descente a été faite le même jour. La phrase qui tenait ici — *« aucune section n'atteint la
-moitié de son document »* — était devenue fausse : les **décisions d'implémentation** du PRD
-pesaient **55 %** de leur document, les vingt-et-une étapes de la V2.1 **43 %** du plan, et le
-corpus était monté à **301 Ko**. Les deux sections sont descendues **d'un bloc** —
-`docs/prd-decisions.md` et `docs/tranches/V2.1.md` —, sans qu'un mot soit réécrit : le corpus
-est retombé à **235 Ko**, et les trois renvois que le déplacement a cassés ont été nommés par
-le banc et réparés dans la foulée. C'est cette dernière phrase qui compte, et le paragraphe
-suivant dit pourquoi.
+⚠️ **La leçon de la troisième est que mesurer ne suffit pas.** Un garde-fou qu'on lit en
+diagonale n'en est pas un. Depuis le 6 septembre, le banc **ouvre sa sortie par un bandeau** dès
+que le corpus dépasse le relevé précédent, et la ligne remonte dans le rapport de fin de tranche.
+Il ne refuse toujours rien : un seuil rond refuserait le jour où l'on écrit une phrase de plus,
+ce qui n'est pas une faute, et se relèverait le jour où il gêne, ce qui n'est pas un garde-fou.
+
+**Ce qui ne descend jamais avec une section** : les invariants. Un invariant instauré vaut pour
+toutes les tranches suivantes, y compris celles d'une version qui n'existe pas encore.
 
 **Le banc pèse aussi les renvois**, et c'est l'autre moitié : une section qui part en
 annexe emporte avec elle les renvois du code et des documents qui la visaient, et un
 renvoi qui pointe une section déplacée **ne lève aucune erreur** — il ment en silence.
-Après tout déplacement de section, le banc se relance ; il nomme ce qui est tombé.
+Après tout déplacement de section, le banc se relance ; il nomme ce qui est tombé. Le
+6 septembre 2026 il en a nommé **dix-sept d'un coup**, tous redirigés dans la foulée : c'est la
+seule raison pour laquelle une descente de 430 Ko est vérifiable.
 
 ## Les skills et leurs frontières
 
@@ -523,7 +356,7 @@ ne peut énoncer, ou un piège déjà payé.
 | `atelier/` | le paquet Python, en sept couches : `domaine/` les objets et les règles, `fournisseur/` le port et son adaptateur, `image/` le traitement, `services/` les gestes, `depot/` SQLite et fichiers, `api/` les routes, `mcp/` la façade de l'agent |
 | `interface/` | React + Vite + Tailwind. `src/index.css` porte **tous** les tokens de `docs/DESIGN.md` — aucune couleur, aucun rayon, aucune durée n'est écrit ailleurs |
 | `tests/`, `interface/src/*.test.tsx` | les critères d'acceptation, un fichier par tranche et nommé d'après elle. **Aucun test ne coûte un centime** : le fournisseur est doublé côté serveur, `fetch` et `EventSource` côté écran |
-| `essais/` | les bancs — ce qui se mesure au lieu de se supposer. Les payants ne partent qu'à la main, et § Lancer dit lesquels et combien |
+| `essais/` | les bancs — ce qui se mesure au lieu de se supposer. Les payants ne partent qu'à la main, et **`docs/bancs.md` dit lesquels et combien** |
 | `donnees/` | ce que le produit écrit : les images payées, leurs recettes, les projets et leurs univers, et un index SQLite **jetable**. Hors Git |
 | `docs/` | les documents ; leur autorité est tranchée plus haut, § Les documents et leur autorité |
 | `screen_spritecook/`, `Anatomie de SpriteCook.html` | la référence d'ergonomie — 30 captures écran par écran, et l'analyse fonctionnelle qui a servi de point de départ |
@@ -617,6 +450,26 @@ ait à le redemander.
 `docs/` », qui n'a pas de plafond et fait avaler au démarrage un dossier d'un méga-octet.
 Ne jamais y recopier le contexte du dépôt, les règles ci-dessus, l'état Git ni la liste du
 reste à faire : tout cela vit déjà dans les fichiers, et la nouvelle session les lit seule.
+
+**Le prompt de reprise s'ouvre sur l'en-tête de la tâche suivante.** Avant les trois lignes,
+une ligne d'en-tête qui donne, dans cet ordre : **le nom de la tâche, sa difficulté, et le
+modèle recommandé**, lus dans `docs/PLAN-carnet-affectation.md` — sans le rejuger à froid.
+
+```
+B1 · Le miroir — [MEDIUM] — Sonnet, réflexion élevée
+(point dur : la règle d'empreinte se pose en Opus avant le reste)
+```
+
+Trois précisions :
+
+- **Si la tâche est un morceau d'une tranche et non la tranche entière**, c'est l'étiquette du
+  morceau qui vaut — les tableaux « points durs » et « morceaux qui descendent » du même
+  fichier priment sur la ligne de la tranche.
+- **Si la tâche n'est dans aucun des deux tableaux**, l'écrire quand même et dire pourquoi en
+  une phrase, sur le même critère que le fichier : ce que la tâche demande au moment de
+  l'écrire, pas sa valeur ni sa taille.
+- **Une étape ne se poursuit pas sans cet arrêt.** On rend l'étape, on donne le prompt, et on
+  attend — même quand la suite paraît évidente et même en mode automatique.
 
 ## Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell
 

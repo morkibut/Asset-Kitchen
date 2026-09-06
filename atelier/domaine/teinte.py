@@ -4,9 +4,14 @@
 Un îlot ou une note en porte une parce que l'auteur l'a choisie, jamais parce
 qu'un état la commande : c'est l'inverse exact des quatre sémantiques du châssis
 — `--ok`, `--epingle`, `--echec`, `--signal` —, qui disent toutes un fait sur le
-monde. `docs/DESIGN.md` § Les teintes d'îlot porte les valeurs et les trois
-disciplines qui les tiennent à distance ; ce fichier-ci ne porte que **la liste
-close**, et rien de ce qu'elles valent.
+monde. `docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Les dix teintes de
+rangement porte les valeurs et les trois disciplines qui les tiennent à
+distance ; ce fichier-ci ne porte que **la liste close**, et rien de ce
+qu'elles valent.
+
+⚠️ **Les dix ont été choisies pour un fond presque noir, et le carnet est du
+papier** (`docs/DESIGN.md` § Deux trous, et ils sont réels). Elles sont à
+refaire ; la liste close, elle, ne bouge pas.
 
 **Aucun hexadécimal ici, et c'est la décision.** Le produit range un *nom* —
 `ardoise`, `iris` — et l'écran seul sait ce qu'il vaut, par son token. Ranger

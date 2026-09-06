@@ -100,6 +100,58 @@ def directions_depuis_json(brut: Any) -> tuple[Direction, ...] | None:
     return tuple(retenues)
 
 
+# ── Ce qu'un miroir gauche-droite fait d'une direction (B1) ──────────────────
+#
+# **La table ne connaît que les identifiants que le produit livre, et elle
+# n'invente rien.** Ils viennent de `atelier/domaine/vue.py` — `_CARDINALES`,
+# `HUIT`, `DEUX` — et de nulle part ailleurs.
+#
+# `sud` et `nord` se rendent eux-mêmes, et c'est juste : un miroir gauche-droite
+# ne montre pas le dos d'un personnage. La planche le dit en trois mots — *le
+# nord se paie* —, et c'est l'écran qui doit l'annoncer **avant** le clic, pas le
+# service après.
+_AU_MIROIR: dict[str, str] = {
+    "est": "ouest",
+    "ouest": "est",
+    "droite": "gauche",
+    "gauche": "droite",
+    "nord-est": "nord-ouest",
+    "nord-ouest": "nord-est",
+    "sud-est": "sud-ouest",
+    "sud-ouest": "sud-est",
+    "sud": "sud",
+    "nord": "nord",
+}
+
+
+def direction_au_miroir(identifiant: str | None) -> str | None:
+    """Où se range l'image retournée — **et rien quand on ne sait pas**.
+
+    Même idiome que `durcissement_livre` dans `atelier/domaine/recette.py` : *ce
+    qu'on ne connaît pas ne produit rien*. Les directions d'un projet sont
+    libres, l'auteur les nomme et les renomme, et deviner qu'un mot français
+    désigne une direction opposée serait très exactement la déduction que le
+    produit refuse ailleurs — *vide ne veut pas dire sud*.
+
+    **Mesuré le 6 septembre 2026 dans `donnees/atelier.sqlite3`** : les
+    directions réellement écrites sur les 170 images du dépôt sont `bas` (12),
+    `haut` (2) et `droite` (25). L'auteur a nommé les siennes, et ni `bas` ni
+    `haut` n'appartiennent à une liste livrée : la table est donc **muette sur
+    deux d'entre elles**, et c'est le comportement voulu. Le cas que la tranche
+    sert vraiment est couvert — `michel` porte 25 images en `droite` et aucune en
+    `gauche`.
+
+    Ce que ça donne à l'écran : *la direction se propose quand on la connaît, et
+    se demande quand on ne la connaît pas.* Le réglage **Ça se range en** accepte
+    déjà le nom d'une direction du jeu, ou rien ; le défaut n'est qu'une
+    proposition, et aucun geste n'est bloqué par une paire inconnue.
+
+    Ce qui répare le fond — **déclarer le miroir sur la direction elle-même**,
+    dans les règles du jeu — appartient à `B14`, pas ici.
+    """
+    return _AU_MIROIR.get(identifiant or "")
+
+
 def composer(attitude: str, direction: str) -> str:
     """Les deux textes bout à bout — **et c'est tout ce que la composition est**.
 

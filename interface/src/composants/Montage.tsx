@@ -137,6 +137,15 @@ export function EcranMontage({
   /** L'image que le clavier désigne. Le geste se répète trois fois par clip :
    *  il doit se faire au clavier autant qu'à la souris. */
   const [curseur, setCurseur] = useState(0)
+  /* ⚠️ **La barre d'espace lit le curseur ici, pas dans un `setCurseur`.**
+     Le raccourci `setCurseur(c => { basculer(c); return c })` renvoie la même
+     valeur : React évalue la fonction une première fois pour voir si l'état
+     bouge, renonce, puis la réévalue au rendu suivant que `basculer` a lui-même
+     déclenché — donc **deux bascules, et l'image ne bouge pas**. Ça ne se
+     produit que selon ce qui est en attente sur le composant, ce qui en faisait
+     un essai rouge un tour sur plusieurs (`docs/PIEGES.md`). */
+  const ouRegarde = useRef(0)
+  ouRegarde.current = curseur
   /** **Les images déjà mises de côté** (A13), pour que prélever plusieurs fois
    *  d'affilée se lise sur la pellicule au lieu de se retenir de tête. Il vit
    *  dans l'écran et nulle part ailleurs : c'est ce qu'on a fait *pendant cette
@@ -302,10 +311,7 @@ export function EcranMontage({
         setCurseur((c) => Math.max(0, c - 1))
       } else if (evenement.key === " ") {
         evenement.preventDefault()
-        setCurseur((c) => {
-          basculer(c)
-          return c
-        })
+        basculer(ouRegarde.current)
       } else return
     }
     window.addEventListener("keydown", touche)
@@ -508,7 +514,7 @@ export function EcranMontage({
                     ? "revenir aux images retenues, à la vitesse de la bande"
                     : "la vidéo telle qu'elle est arrivée — son rythme, ses fondus"
                 }
-                className="mesure text-[10px] text-signal hover:text-signal-clair"
+                className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
               >
                 {enVideo ? "les images ›" : "la vidéo entière ›"}
               </button>
@@ -662,7 +668,7 @@ export function EcranMontage({
               <span className="mesure text-[10px] text-texte-3">
                 Remplit la case
               </span>
-              <span className="mesure text-[10px] text-signal-clair">
+              <span className="mesure text-[10px] text-ancien-signal-clair">
                 {pose
                   ? `${pose}${direction ? ` · ${direction}` : ""}`
                   : "aucune — brouillon"}
@@ -680,7 +686,7 @@ export function EcranMontage({
                   setPose(pose ? null : montage.clip.pose)
                   setDirection(pose ? null : montage.clip.direction)
                 }}
-                className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+                className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
               >
                 {pose ? "en faire un brouillon" : `viser ${montage.clip.pose} ›`}
               </button>
@@ -744,7 +750,7 @@ export function EcranMontage({
               type="button"
               disabled={reprend}
               onClick={reprendreLeCadre}
-              className="mesure self-start text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
+              className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
             >
               {reprend
                 ? "il remesure les images du clip…"
@@ -818,7 +824,7 @@ export function EcranMontage({
                     type="button"
                     onClick={() => void oublier(bande.identifiant)}
                     aria-label={`Effacer la bande ${bande.nom}`}
-                    className="mesure text-[10px] text-texte-3 hover:text-signal"
+                    className="mesure text-[10px] text-texte-3 hover:text-ancien-signal"
                   >
                     ×
                   </button>
@@ -1105,7 +1111,7 @@ function Pellicule({
                 // pas. Mesuré au navigateur, l'encadré des images retenues ne
                 // s'était **jamais** dessiné — une couleur inconnue ne fait pas
                 // d'erreur, elle ne fait rien.
-                outline: prise ? "1px solid var(--color-signal)" : undefined,
+                outline: prise ? "1px solid var(--color-ancien-signal)" : undefined,
                 outlineOffset: "-1px",
                 opacity: prise || misee ? 1 : 0.55,
               }}
@@ -1120,7 +1126,7 @@ function Pellicule({
                 <span
                   aria-hidden
                   data-mise-de-cote={numero}
-                  className="pointer-events-none block h-[2px] w-full bg-ok"
+                  className="pointer-events-none block h-[2px] w-full bg-ancien-ok"
                   style={{ marginTop: RUBAN - 2 }}
                 />
               )}
@@ -1129,7 +1135,7 @@ function Pellicule({
         })}
         {retenues.length > 0 && (
           <div
-            className="pointer-events-none absolute inset-y-0 border border-signal"
+            className="pointer-events-none absolute inset-y-0 border border-ancien-signal"
             style={{
               left: `${(debut / images) * 100}%`,
               width: `${((fin - debut + 1) / images) * 100}%`,
@@ -1138,12 +1144,12 @@ function Pellicule({
             <span
               data-poignee="gauche"
               onMouseDown={tirer("gauche")}
-              className="pointer-events-auto absolute inset-y-0 -left-1 w-2 cursor-ew-resize bg-signal/60"
+              className="pointer-events-auto absolute inset-y-0 -left-1 w-2 cursor-ew-resize bg-ancien-signal/60"
             />
             <span
               data-poignee="droite"
               onMouseDown={tirer("droite")}
-              className="pointer-events-auto absolute inset-y-0 -right-1 w-2 cursor-ew-resize bg-signal/60"
+              className="pointer-events-auto absolute inset-y-0 -right-1 w-2 cursor-ew-resize bg-ancien-signal/60"
             />
           </div>
         )}
@@ -1198,7 +1204,7 @@ function Pellicule({
             onClick={() => onPrelever(regarde)}
             aria-label={`Mettre l'image ${regarde} de côté`}
             title="elle entre en bibliothèque — rien n'est dépensé, et les images retenues ne bougent pas"
-            className="mesure w-fit px-1 text-[10px] text-signal hover:text-signal-clair"
+            className="mesure w-fit px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             Mettre de côté ›
           </button>
@@ -1275,7 +1281,7 @@ function Retenues({
           className="rounded-[2px] border p-0.5"
           style={{
             borderColor:
-              place === rang ? "var(--color-signal)" : "var(--color-bord)",
+              place === rang ? "var(--color-ancien-signal)" : "var(--color-bord)",
             background: "var(--color-fond-1)",
           }}
         >

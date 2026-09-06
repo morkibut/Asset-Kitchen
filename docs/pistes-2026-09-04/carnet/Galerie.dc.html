@@ -28,8 +28,27 @@
     .l { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 12.5px; }
     .l > span:first-child { color: #6d675e; flex-shrink: 0; }
     .l > span:last-child { text-align: right; color: #221f1b; }
+  
+    /* dessous r4 — début */
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f; white-space: nowrap }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+
+    .clip { position: absolute; left: 4px; bottom: 4px; display: flex; align-items: center; gap: 3px;
+            height: 15px; padding: 0 5px 0 4px; border-radius: 8px; background: rgba(20,18,15,.72);
+            font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #f7f3ec }
+    .clip svg { flex-shrink: 0 }
+
+    /* dessous r4 — fin */
   </style>
 </helmet>
+
+<div class="k" style="width: 1600px; background: #f7f3ec">
 
 <div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
 
@@ -42,6 +61,8 @@
       </div>
       <div style="font-size: 12.5px; color: #6d675e">45 images · 12 poses sur 18</div>
     </div>
+    <div class="rl"><span>Les r&egrave;gles du jeu</span></div>
+    <div class="rl"><span>La toile de l'univers</span><span class="num">61</span></div>
     <div style="display: flex; flex-direction: column; gap: 2px">
       <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
       <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
@@ -50,17 +71,6 @@
       <div class="rl"><span>Les terrains</span><span class="num">aucun</span></div>
       <div class="rl"><span>L'interface</span><span class="num">1</span></div>
       <div class="rl"><span>Les équipements</span><span class="num">2</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
-      <div class="rl"><span>Son nom et son dossier</span></div>
-      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
-      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
-      <div class="rl"><span>Ses types de sujets</span><span class="num">8 échelles</span></div>
-      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
-      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
-      <div class="rl"><span>Son détourage de départ</span></div>
-      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 2px">
       <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
@@ -73,9 +83,9 @@
       <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
         <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
       </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
-        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
-        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      <div style="display: flex; align-items: center; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide et les touches</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> L'installation</span>
       </div>
     </div>
   </div>
@@ -89,7 +99,7 @@
 
     <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
       <div style="display: flex; flex-direction: column; gap: 4px">
-        <h1 class="serif" style="margin: 0; font-size: 38px; line-height: 1">Les 45 images du marais</h1>
+        <h1 class="serif" style="margin: 0; font-size: 38px; line-height: 1">Les 45 images et 4 clips du marais</h1>
         <div style="font-size: 13.5px; color: #4e483f">Tout ce qui existe dans ce jeu, quel que soit le personnage. On regarde, on range, on corrige. <strong style="font-weight: 600">On ne fabrique rien ici.</strong></div>
       </div>
       <div style="display: flex; gap: 9px">
@@ -110,6 +120,7 @@
       <div class="puce">Décors <span class="mono" style="font-size: 11px; color: #948c80">1</span></div>
       <div class="puce">Interface <span class="mono" style="font-size: 11px; color: #948c80">1</span></div>
       <div class="puce">Équipement <span class="mono" style="font-size: 11px; color: #948c80">4</span></div>
+      <div class="puce">Clips <span class="mono" style="font-size: 11px; color: #948c80">4</span></div>
       <div class="puce">★ Favorites <span class="mono" style="font-size: 11px; color: #948c80">1</span></div>
       <div style="margin-left: auto; display: flex; gap: 2px; background: #ece6db; border-radius: 6px; padding: 2px">
         <div style="height: 26px; display: flex; align-items: center; padding: 0 10px; border-radius: 4px; font-size: 12px; color: #6d675e">1×</div>
@@ -136,10 +147,10 @@
     <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; align-content: start">
       <div class="tuile tuile-on"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="7" y="1" width="2" height="9" fill="#b8b0a3"/><rect x="6" y="9" width="4" height="2" fill="#7a6a52"/><rect x="7" y="11" width="2" height="4" fill="#5a3f28"/></svg><div style="position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; border-radius: 3px; background: #a8492c; display: flex; align-items: center; justify-content: center"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff8f4" stroke-width="3.4"><path d="M5 12l5 5 9-9"/></svg></div></div>
       <div class="tuile tuile-on"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="4" y="3" width="8" height="5" fill="#8a6a3e"/><rect x="5" y="4" width="6" height="3" fill="#a6864f"/><rect x="6" y="8" width="4" height="5" fill="#6b4a2e"/><rect x="5" y="1" width="6" height="2" fill="#c0a05e"/></svg><div style="position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; border-radius: 3px; background: #a8492c; display: flex; align-items: center; justify-content: center"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff8f4" stroke-width="3.4"><path d="M5 12l5 5 9-9"/></svg></div></div>
-      <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="2" fill="#2f4a35"/><rect x="6" y="3" width="4" height="3" fill="#d8bb95"/><rect x="4" y="6" width="8" height="6" fill="#2f4a35"/><rect x="6" y="8" width="4" height="4" fill="#c9b48c"/><rect x="3" y="7" width="1" height="4" fill="#2f4a35"/><rect x="12" y="7" width="1" height="4" fill="#2f4a35"/><rect x="5" y="12" width="2" height="3" fill="#5a3f28"/><rect x="9" y="12" width="2" height="3" fill="#5a3f28"/></svg><div style="position: absolute; top: 4px; left: 4px; font-size: 10px; color: #f6d27a">★</div></div>
-      <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="2" fill="#2f4a35"/><rect x="6" y="3" width="4" height="3" fill="#d8bb95"/><rect x="4" y="6" width="8" height="6" fill="#2f4a35"/><rect x="6" y="8" width="4" height="4" fill="#c9b48c"/><rect x="3" y="8" width="1" height="4" fill="#2f4a35"/><rect x="12" y="6" width="1" height="4" fill="#2f4a35"/><rect x="4" y="12" width="2" height="3" fill="#5a3f28"/><rect x="10" y="12" width="2" height="3" fill="#5a3f28"/></svg></div>
-      <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="6" y="1" width="6" height="2" fill="#2f4a35"/><rect x="7" y="3" width="4" height="3" fill="#d8bb95"/><rect x="5" y="6" width="8" height="5" fill="#2f4a35"/><rect x="7" y="8" width="4" height="3" fill="#c9b48c"/><rect x="2" y="7" width="3" height="1" fill="#2f4a35"/><rect x="3" y="11" width="3" height="3" fill="#5a3f28"/><rect x="10" y="12" width="3" height="3" fill="#5a3f28"/></svg></div>
-      <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="4" y="2" width="6" height="2" fill="#2f4a35"/><rect x="5" y="4" width="4" height="3" fill="#d8bb95"/><rect x="3" y="7" width="8" height="5" fill="#2f4a35"/><rect x="5" y="9" width="4" height="3" fill="#c9b48c"/><rect x="12" y="0" width="1" height="6" fill="#b8b0a3"/><rect x="4" y="12" width="2" height="3" fill="#5a3f28"/><rect x="8" y="12" width="2" height="3" fill="#5a3f28"/></svg></div>
+      <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="2" fill="#2f4a35"/><rect x="6" y="3" width="4" height="3" fill="#d8bb95"/><rect x="4" y="6" width="8" height="6" fill="#2f4a35"/><rect x="6" y="8" width="4" height="4" fill="#c9b48c"/><rect x="3" y="7" width="1" height="4" fill="#2f4a35"/><rect x="12" y="7" width="1" height="4" fill="#2f4a35"/><rect x="5" y="12" width="2" height="3" fill="#5a3f28"/><rect x="9" y="12" width="2" height="3" fill="#5a3f28"/></svg><div style="position: absolute; top: 4px; left: 4px; font-size: 10px; color: #f6d27a">★<span class="clip"><svg width="7" height="8" viewBox="0 0 7 8" fill="#f7f3ec"><polygon points="0,0 7,4 0,8"/></svg>5s</span></div></div>
+      <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="2" fill="#2f4a35"/><rect x="6" y="3" width="4" height="3" fill="#d8bb95"/><rect x="4" y="6" width="8" height="6" fill="#2f4a35"/><rect x="6" y="8" width="4" height="4" fill="#c9b48c"/><rect x="3" y="8" width="1" height="4" fill="#2f4a35"/><rect x="12" y="6" width="1" height="4" fill="#2f4a35"/><rect x="4" y="12" width="2" height="3" fill="#5a3f28"/><rect x="10" y="12" width="2" height="3" fill="#5a3f28"/></svg><span class="clip"><svg width="7" height="8" viewBox="0 0 7 8" fill="#f7f3ec"><polygon points="0,0 7,4 0,8"/></svg>5s</span></div>
+      <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="6" y="1" width="6" height="2" fill="#2f4a35"/><rect x="7" y="3" width="4" height="3" fill="#d8bb95"/><rect x="5" y="6" width="8" height="5" fill="#2f4a35"/><rect x="7" y="8" width="4" height="3" fill="#c9b48c"/><rect x="2" y="7" width="3" height="1" fill="#2f4a35"/><rect x="3" y="11" width="3" height="3" fill="#5a3f28"/><rect x="10" y="12" width="3" height="3" fill="#5a3f28"/></svg><span class="clip"><svg width="7" height="8" viewBox="0 0 7 8" fill="#f7f3ec"><polygon points="0,0 7,4 0,8"/></svg>3s</span></div>
+      <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="4" y="2" width="6" height="2" fill="#2f4a35"/><rect x="5" y="4" width="4" height="3" fill="#d8bb95"/><rect x="3" y="7" width="8" height="5" fill="#2f4a35"/><rect x="5" y="9" width="4" height="3" fill="#c9b48c"/><rect x="12" y="0" width="1" height="6" fill="#b8b0a3"/><rect x="4" y="12" width="2" height="3" fill="#5a3f28"/><rect x="8" y="12" width="2" height="3" fill="#5a3f28"/></svg><span class="clip"><svg width="7" height="8" viewBox="0 0 7 8" fill="#f7f3ec"><polygon points="0,0 7,4 0,8"/></svg>5s</span></div>
       <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="6" y="2" width="6" height="2" fill="#2f4a35"/><rect x="7" y="4" width="4" height="3" fill="#d8bb95"/><rect x="5" y="7" width="8" height="5" fill="#2f4a35"/><rect x="7" y="9" width="4" height="3" fill="#c9b48c"/><rect x="1" y="3" width="2" height="2" fill="#a8492c"/><rect x="6" y="12" width="2" height="3" fill="#5a3f28"/><rect x="10" y="12" width="2" height="3" fill="#5a3f28"/></svg></div>
       <div class="tuile"><svg viewBox="0 0 16 16" width="58" height="58" shape-rendering="crispEdges"><rect x="2" y="9" width="2" height="6" fill="#2f4a35"/><rect x="4" y="10" width="3" height="4" fill="#d8bb95"/><rect x="7" y="8" width="6" height="6" fill="#2f4a35"/><rect x="9" y="10" width="3" height="4" fill="#c9b48c"/><rect x="13" y="10" width="2" height="2" fill="#5a3f28"/></svg></div>
 
@@ -214,6 +225,68 @@
     </div>
   </div>
 
+</div>
+
+  <!-- dessous r4 -->
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Les clips sont dans la grille, eux aussi</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">un clip n'est pas une image : il dure, et la vignette doit le dire sans qu'on clique</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-a" style="align-self: flex-start">la proposition</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Un coin de lecture, et sa durée</div>
+En bas à gauche de la vignette, un triangle et le nombre de secondes. C'est la seule différence au repos : ni cadre, ni couleur à part — la grille reste une grille.
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-a" style="align-self: flex-start">la proposition</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Au survol, il joue</div>
+Les frames défilent dans la vignette, en boucle, sans son. On sort, il revient à sa première image. Rien ne se télécharge tant qu'on n'a pas survolé.
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-a" style="align-self: flex-start">à décider</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le filtre « Clips »</div>
+Dans la barre, à côté des familles. Les clips ne sont rangés dans aucune famille : ils appartiennent à une animation, pas à un sujet.
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Ce que le survol montre</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">les huit frames d'un clip de cinq secondes, telles qu'elles passent dans la vignette</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 14px 15px; border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Au repos</span><span style="font-size: 12px; color: #6d675e; line-height: 1.45">la première frame, et le coin de lecture</span></div><div style="display: flex; gap: 5px; align-items: center"><div style="width: 54px; height: 54px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg viewBox="0 0 16 16" width="46" height="46" shape-rendering="crispEdges"><rect x="6" y="6" width="4" height="6" fill="#8a7458"/><rect x="6" y="2" width="4" height="4" fill="#d8bb95"/><rect x="6" y="12" width="2" height="3" fill="#5c4d3a"/><rect x="8" y="12" width="2" height="1" fill="#5c4d3a"/></svg></div></div></div>
+    <div style="display: flex; flex-direction: column; gap: 9px; padding: 14px 15px; border: 1px solid #a8492c; border-radius: 10px; background: #fffdfa"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Au survol</span><span style="font-size: 12px; color: #6d675e; line-height: 1.45">les huit, en boucle, à la cadence du clip</span></div><div style="display: flex; gap: 5px; align-items: center"><div style="width: 54px; height: 54px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg viewBox="0 0 16 16" width="46" height="46" shape-rendering="crispEdges"><rect x="6" y="6" width="4" height="6" fill="#8a7458"/><rect x="6" y="2" width="4" height="4" fill="#d8bb95"/><rect x="6" y="12" width="2" height="3" fill="#5c4d3a"/><rect x="8" y="12" width="2" height="1" fill="#5c4d3a"/></svg></div><div style="width: 54px; height: 54px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg viewBox="0 0 16 16" width="46" height="46" shape-rendering="crispEdges"><rect x="6" y="6" width="4" height="6" fill="#8a7458"/><rect x="6" y="2" width="4" height="4" fill="#d8bb95"/><rect x="6" y="12" width="2" height="2" fill="#5c4d3a"/><rect x="8" y="12" width="2" height="2" fill="#5c4d3a"/></svg></div><div style="width: 54px; height: 54px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg viewBox="0 0 16 16" width="46" height="46" shape-rendering="crispEdges"><rect x="6" y="6" width="4" height="6" fill="#8a7458"/><rect x="6" y="2" width="4" height="4" fill="#d8bb95"/><rect x="6" y="12" width="2" height="1" fill="#5c4d3a"/><rect x="8" y="12" width="2" height="3" fill="#5c4d3a"/></svg></div><div style="width: 54px; height: 54px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg viewBox="0 0 16 16" width="46" height="46" shape-rendering="crispEdges"><rect x="6" y="6" width="4" height="6" fill="#8a7458"/><rect x="6" y="2" width="4" height="4" fill="#d8bb95"/><rect x="6" y="12" width="2" height="2" fill="#5c4d3a"/><rect x="8" y="12" width="2" height="2" fill="#5c4d3a"/></svg></div><div style="width: 54px; height: 54px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg viewBox="0 0 16 16" width="46" height="46" shape-rendering="crispEdges"><rect x="6" y="6" width="4" height="6" fill="#8a7458"/><rect x="6" y="2" width="4" height="4" fill="#d8bb95"/><rect x="6" y="12" width="2" height="3" fill="#5c4d3a"/><rect x="8" y="12" width="2" height="1" fill="#5c4d3a"/></svg></div><div style="width: 54px; height: 54px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg viewBox="0 0 16 16" width="46" height="46" shape-rendering="crispEdges"><rect x="6" y="6" width="4" height="6" fill="#8a7458"/><rect x="6" y="2" width="4" height="4" fill="#d8bb95"/><rect x="6" y="12" width="2" height="2" fill="#5c4d3a"/><rect x="8" y="12" width="2" height="2" fill="#5c4d3a"/></svg></div><div style="width: 54px; height: 54px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg viewBox="0 0 16 16" width="46" height="46" shape-rendering="crispEdges"><rect x="6" y="6" width="4" height="6" fill="#8a7458"/><rect x="6" y="2" width="4" height="4" fill="#d8bb95"/><rect x="6" y="12" width="2" height="1" fill="#5c4d3a"/><rect x="8" y="12" width="2" height="3" fill="#5c4d3a"/></svg></div><div style="width: 54px; height: 54px; border-radius: 5px; background: #6c6c6c; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg viewBox="0 0 16 16" width="46" height="46" shape-rendering="crispEdges"><rect x="6" y="6" width="4" height="6" fill="#8a7458"/><rect x="6" y="2" width="4" height="4" fill="#d8bb95"/><rect x="6" y="12" width="2" height="2" fill="#5c4d3a"/><rect x="8" y="12" width="2" height="2" fill="#5c4d3a"/></svg></div></div></div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La galerie ne connaît pas les clips</div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Elle liste les images du jeu. Les clips vivent ailleurs, dans l'animation qui les a demandés — et il n'existe aucune vue qui les montre tous.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Une vignette animée demande une image de couverture</div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Sinon la grille télécharge quatre vidéos dès qu'elle s'affiche. Le serveur ne fabrique aucune couverture aujourd'hui.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Un clip n’a pas de famille</div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Le filtre par famille ne peut donc pas le ranger. Il lui faut sa propre pastille, ou une deuxième barre — c'est à trancher.</div>
+    </div>
+  </div>
+  </div>
+  </div>
 </div>
 </x-dc>
 </body>

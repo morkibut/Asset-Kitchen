@@ -1203,6 +1203,14 @@ class Projet:
     identifiant: str
     nom: str
     cree_le: float = field(default_factory=time.time)
+    # ── L'ouverture (B4) ─────────────────────────────────────────────────────
+    #
+    # **Le dernier travail, pas la dernière ouverture — et pourtant c'est bien
+    # `choisir()` qui le pose**, faute de mieux : un jeu neuf le vaut déjà par
+    # sa création, et l'ouvrir est aujourd'hui le seul geste qu'on puisse
+    # dater sans aller chercher dans trois tables. C'est ce que la carte du
+    # carnet trie, et ce que le dropdown des cinq derniers jeux lit.
+    dernier_travail_le: float = field(default_factory=time.time)
     univers: Univers = field(default_factory=lambda: Univers(bible=bible_complete(())))
 
     # ── Les teintes d'îlot ───────────────────────────────────────────────────
@@ -1283,6 +1291,7 @@ class Projet:
             "identifiant": self.identifiant,
             "nom": self.nom,
             "cree_le": self.cree_le,
+            "dernier_travail_le": self.dernier_travail_le,
             "univers": self.univers.en_json(),
             "teintes": dict(self.teintes),
             "plan": [p.en_json() for p in self.plan],
@@ -1308,6 +1317,10 @@ class Projet:
             identifiant=d["identifiant"],
             nom=d.get("nom", d["identifiant"]),
             cree_le=d.get("cree_le", 0.0),
+            # Un fichier écrit avant B4 n'a pas la colonne : la création est la
+            # meilleure date qu'on lui connaisse, pas zéro — sans quoi tous les
+            # jeux d'avant B4 tomberaient d'un coup en fin de liste.
+            dernier_travail_le=d.get("dernier_travail_le", d.get("cree_le", 0.0)),
             univers=Univers.depuis_json(d.get("univers")),
             # Une teinte inconnue revient vide et l'entrée disparaît : la liste
             # est fermée, et un fichier ne la rouvre pas.

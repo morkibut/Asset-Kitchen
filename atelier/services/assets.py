@@ -65,6 +65,7 @@ from atelier.image import (
     Rendu,
     crans_occupation,
     detourer,
+    en_rendu,
     finir,
     mesures_du_fond,
     poches_de_fond,
@@ -1200,7 +1201,14 @@ class ServiceAssets:
         même image, et la comparaison mesurerait alors l'écart entre deux codes
         plutôt que l'effet d'une retouche.
         """
-        return finir(self._tableau_avec(asset, recette), recette)
+        # **`en_rendu` et non `finir`, et c'est une réparation** (B1).
+        # `_tableau_avec` a déjà appliqué la queue de la recette ; `finir`
+        # l'appliquait une seconde fois. Le contour en sortait tracé deux fois —
+        # un trait demandé à 1 px en rendait 2 — et le retournement, qui est une
+        # involution, s'annulait purement et simplement. Trouvé au navigateur le
+        # 6 septembre 2026, et invisible à tous les essais, qui appellent `queue`
+        # une seule fois.
+        return en_rendu(self._tableau_avec(asset, recette))
 
     def _tableau_avec(self, asset: Asset, recette: Recette) -> np.ndarray:
         """Le rendu, en tableau — l'étape d'avant le PNG.
@@ -1386,7 +1394,7 @@ class ServiceAssets:
             # Le premier ne peut venir que d'un fichier écrit à la main ; le
             # second arrive tout seul le jour où le brut est remplacé par une
             # image plus petite, et refuser la recette entière ferait alors
-            # disparaître les six autres places pour un point devenu caduc. Le
+            # disparaître les sept autres places pour un point devenu caduc. Le
             # traitement le tient : hors cadre, la pipette ne retire rien.
             if passe.point is not None and min(passe.point) < 0:
                 raise RecetteRefusee(f"passe {rang} : le point visé sort de l'image")

@@ -170,7 +170,7 @@ export function Raison({
         <button
           type="button"
           onClick={onAller}
-          className="text-signal hover:text-signal-clair"
+          className="text-ancien-signal hover:text-ancien-signal-clair"
         >
           {ouAller} ›
         </button>
@@ -213,7 +213,7 @@ export function Revers({
         type="button"
         onClick={onGeste}
         disabled={enCours}
-        className="text-signal hover:text-signal-clair disabled:text-texte-3"
+        className="text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
       >
         {enCours ? "…" : `${geste} ›`}
       </button>
@@ -422,7 +422,7 @@ function Valeur({ etat }: { etat: string | null | undefined }) {
     <span
       className={[
         "mesure ml-auto max-w-[60%] truncate pl-2 text-[9.5px]",
-        etat ? "text-signal" : "text-texte-3",
+        etat ? "text-ancien-signal" : "text-texte-3",
       ].join(" ")}
     >
       {etat || "—"}
@@ -533,7 +533,7 @@ export function Bouton({
   const couleurs = inactif
     ? "border border-bord bg-fond-2 text-texte-3"
     : principal
-      ? "bg-signal text-fond-0 hover:bg-signal-clair font-medium"
+      ? "bg-ancien-signal text-fond-0 hover:bg-ancien-signal-clair font-medium"
       : "border border-bord-fort bg-fond-2 text-texte hover:bg-fond-3"
   return (
     <button
@@ -606,7 +606,7 @@ export function Segments<T extends string | number>({
               grise
                 ? "border-bord bg-fond-2 text-texte-3"
                 : choisi
-                  ? "border-signal bg-signal/13 text-signal"
+                  ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
                   : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
             ].join(" ")}
           >
@@ -808,8 +808,9 @@ export function Curseur({
  * Une place de la recette est-elle remplie ou vide ?
  *
  * Pas une case à cocher du système : un titre de section cliquable, dont l'état
- * se lit à la couleur du texte et à un liseré. La recette a sept places — cinq
- * quand ce commentaire a été écrit, les contours et la main s'y sont ajoutés —,
+ * se lit à la couleur du texte et à un liseré. La recette a huit places — cinq
+ * quand ce commentaire a été écrit ; les contours et la main s'y sont ajoutés
+ * en E5, le retournement en B1 —,
  * et autant de cases à cocher alignées dans un panneau de 380 px
  * ressembleraient à un formulaire — or ce panneau est un établi.
  *
@@ -876,13 +877,13 @@ export function Etape({
       aria-hidden
       className={[
         "inline-block h-[9px] w-[9px] shrink-0 rounded-[2px] border",
-        active && !grise ? "border-signal bg-signal" : "border-bord-fort bg-fond-2",
+        active && !grise ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort bg-fond-2",
       ].join(" ")}
     />
   )
   const style = [
     "mesure flex h-[26px] items-center gap-2 text-left text-[9.5px] tracking-[.11em] uppercase transition-colors duration-[80ms]",
-    grise ? "text-texte-3" : active ? "text-signal" : "text-texte-3 hover:text-texte-2",
+    grise ? "text-texte-3" : active ? "text-ancien-signal" : "text-texte-3 hover:text-texte-2",
   ].join(" ")
 
   return (
@@ -1001,7 +1002,7 @@ export function Jauge({
       )}
       <span className="block h-[2px] w-full overflow-hidden bg-bord">
         <span
-          className="block h-full bg-signal transition-[width] duration-[240ms] ease-linear"
+          className="block h-full bg-ancien-signal transition-[width] duration-[240ms] ease-linear"
           style={{ width: `${part(ecoule, attendue, enAttente) * 100}%` }}
         />
       </span>

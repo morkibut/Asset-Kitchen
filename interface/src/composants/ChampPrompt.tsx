@@ -80,9 +80,9 @@ function EnRoute({ images, demarreLe, attendue }: EnVol) {
   return (
     <div
       role="status"
-      className="relative flex h-[34px] shrink-0 items-center overflow-hidden whitespace-nowrap rounded-[2px] border border-signal bg-fond-2 px-3"
+      className="relative flex h-[34px] shrink-0 items-center overflow-hidden whitespace-nowrap rounded-[2px] border border-ancien-signal bg-fond-2 px-3"
     >
-      <span className="mesure text-[11px] text-signal">
+      <span className="mesure text-[11px] text-ancien-signal">
         {images === 1 ? "1 image en route" : `${images} images en route`}
         {demarreLe === null
           ? " · en file"
@@ -194,7 +194,7 @@ export function ChampPrompt({
         className={[
           "resize-y rounded-[3px] border px-3 py-2 placeholder:text-texte-3",
           repris
-            ? "mesure min-h-[120px] leading-relaxed border-signal bg-fond-2 text-[11.5px] text-texte"
+            ? "mesure min-h-[120px] leading-relaxed border-ancien-signal bg-fond-2 text-[11.5px] text-texte"
             : // **56 px, la première des deux exceptions nommées à la liste
               // fermée des hauteurs** (`docs/DESIGN.md` § Spacing) : ce n'est
               // pas une bande, c'est une zone de saisie sur plusieurs lignes.
@@ -218,7 +218,7 @@ export function ChampPrompt({
           <button
             type="button"
             onClick={provenance.onDefaire}
-            className="text-signal hover:text-signal-clair"
+            className="text-ancien-signal hover:text-ancien-signal-clair"
           >
             défaire ›
           </button>
@@ -240,13 +240,13 @@ export function ChampPrompt({
           l'écran de confirmation, sous le texte assemblé ; rendre la main vit
           ici, parce que c'est ce champ-là qui change de nature. */}
       {repris && (
-        <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-signal">
-          <span aria-hidden className="inline-block h-px w-2 bg-signal" />
+        <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-ancien-signal">
+          <span aria-hidden className="inline-block h-px w-2 bg-ancien-signal" />
           <span>le texte part exactement tel qu'il est écrit ici</span>
           <button
             type="button"
             onClick={onRendre}
-            className="text-signal hover:text-signal-clair"
+            className="text-ancien-signal hover:text-ancien-signal-clair"
           >
             Rendre la main à l'atelier ›
           </button>
@@ -298,7 +298,7 @@ export function ChampPrompt({
                 avant le revers et avant le départ en cours : c'est la dernière
                 chose qui s'est produite, et c'est celle qui décide du geste
                 suivant. Il ne grise rien — relancer est le bon geste. */
-            <p className="mesure mt-1 text-[10px] leading-4 text-echec">
+            <p className="mesure mt-1 text-[10px] leading-4 text-ancien-echec">
               {echec} — rien n'a été facturé.
             </p>
           ) : revers ? (
@@ -317,7 +317,7 @@ export function ChampPrompt({
               type="button"
               onClick={onGenerer}
               disabled={enPaiement}
-              className="mesure mt-1 text-[10px] text-signal hover:text-signal-clair disabled:cursor-not-allowed disabled:text-texte-3"
+              className="mesure mt-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:cursor-not-allowed disabled:text-texte-3"
             >
               {enPaiement ? "paiement en cours…" : "Générer encore ›"}
             </button>

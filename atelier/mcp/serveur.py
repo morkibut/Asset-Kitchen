@@ -58,6 +58,57 @@ ATTENTE_MAX = 300.0
 _T = TypeVar("_T")
 
 
+def _barre(
+    *,
+    verbe: str,
+    titre: str,
+    phrase: str,
+    paiement: str = "gratuit",
+    ou: str = "",
+    route: str = "",
+    besoins: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    """La fiche que **la barre** lit sur un outil — et rien d'autre (B6).
+
+    `docs/pistes-2026-09-04/carnet/Barre.dc.html` : *« Elle affiche les actions
+    que le serveur sait faire — les mêmes que celles de l'agent. »* Pour que ce
+    soit vrai à la lettre, la liste de la barre **est** la liste des outils, et
+    ce que la barre a besoin de savoir en plus voyage avec l'outil, dans son
+    `meta` MCP. Une seconde table, rangée ailleurs et à tenir à jour à la main,
+    aurait divergé au premier outil ajouté — et c'est exactement la panne que la
+    tranche existe pour empêcher.
+
+    Un outil **sans** fiche paraît quand même, avec son titre anglais et le
+    défaut prudent d'`atelier/api/gestes.py` : *à confirmer*, donc injouable
+    depuis la barre. C'est la règle « elle ne paie jamais » tenue par
+    construction plutôt que par vigilance — l'oubli d'une fiche coûte une
+    étiquette laide, jamais un centime.
+
+    Les champs, et ce qu'ils commandent :
+
+    - `verbe` : l'un des six de `VERBES`, et le regroupement dans la barre.
+    - `paiement` : `gratuit`, ou `a-confirmer` — qui force `ou="envoi"` et
+      interdit toute route, dans `atelier/api/gestes.py`.
+    - `ou` : où le clic mène — un lieu du carnet, ou `ici` quand le geste se
+      fait sur place.
+    - `route` : ce que la barre appelle pour un geste `ici`, et **elle seule**.
+    - `besoins` : ce qu'il faut pour que le geste ait un sens. Ce qui n'est pas
+      satisfait ne s'affiche pas du tout — ni grisé, ni proposé.
+    """
+
+    return {
+        "barre": {
+            "verbe": verbe,
+            "titre": titre,
+            "phrase": phrase,
+            "paiement": paiement,
+            "ou": ou,
+            "route": route,
+            "besoins": list(besoins),
+        }
+    }
+
+
 def _refus_lisible(
     outil: Callable[..., Awaitable[_T]],
 ) -> Callable[..., Awaitable[_T]]:
@@ -110,6 +161,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="generate_asset",
+        meta=_barre(
+            verbe="generer",
+            titre="Générer une image",
+            phrase="Ouvre l'écran d'envoi, déjà rempli. Rien n'est lancé ni payé ici.",
+            paiement="a-confirmer",
+            besoins=("fournisseur",),
+        ),
         title="Generate an asset",
         description=(
             "Generate a game asset from a short subject description and return "
@@ -171,6 +229,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="check_generation",
+        meta=_barre(
+            verbe="aller",
+            titre="Voir le chantier",
+            phrase="Ce qui est en cours de fabrication, et ce qu'un redémarrage a coupé.",
+            ou="galerie",
+            besoins=("generations",),
+        ),
         title="Check a generation",
         description=(
             "Poll a generation started by generate_asset. Returns its status "
@@ -193,6 +258,12 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="list_projects",
+        meta=_barre(
+            verbe="aller",
+            titre="Changer de jeu",
+            phrase="La liste des jeux, le dernier travaillé en tête.",
+            ou="jeux",
+        ),
         title="List projects",
         description=(
             "List the projects and which one is currently open in the "
@@ -216,6 +287,12 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="list_assets",
+        meta=_barre(
+            verbe="aller",
+            titre="Chercher dans la bibliothèque",
+            phrase="Toutes les images du jeu, avec leurs filtres et leur tri.",
+            ou="galerie",
+        ),
         title="List assets",
         description=(
             "Search the library. Use this before generating — reusing an "
@@ -246,6 +323,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="get_asset",
+        meta=_barre(
+            verbe="aller",
+            titre="Ouvrir la fiche d'une image",
+            phrase="Ses mesures, sa recette, sa filiation et ce qu'elle a coûté.",
+            ou="galerie",
+            besoins=("images",),
+        ),
         title="Get one asset",
         description=(
             "Full metadata for one asset: measured dimensions, recipe, "
@@ -262,6 +346,12 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="list_models",
+        meta=_barre(
+            verbe="regler",
+            titre="Voir le catalogue des modèles",
+            phrase="Qui offre quoi, à quel prix, et ce qui est gris faute de clé.",
+            ou="reglages",
+        ),
         title="List image models",
         description=(
             "The catalogue of every provider: models, who offers each one, "
@@ -325,6 +415,12 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="import_asset",
+        meta=_barre(
+            verbe="creer",
+            titre="Importer une image du disque",
+            phrase="Elle entre dans la bibliothèque sans rien coûter.",
+            ou="galerie",
+        ),
         title="Import a local file",
         description=(
             "Bring a local image file into the library as a full asset — it "
@@ -371,6 +467,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="edit_asset",
+        meta=_barre(
+            verbe="travailler",
+            titre="Retoucher une image",
+            phrase="La recette de retouche : découpe, palette, grille, contour.",
+            ou="galerie",
+            besoins=("images",),
+        ),
         title="Edit an asset",
         description=(
             "Re-process an existing asset without calling the provider: cut "
@@ -434,6 +537,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="slice_asset",
+        meta=_barre(
+            verbe="travailler",
+            titre="Découper une planche",
+            phrase="Une feuille reçue devient une image par case.",
+            ou="galerie",
+            besoins=("images",),
+        ),
         title="Slice a sheet into assets",
         description=(
             "Cut a multi-sprite sheet into separate assets. Called without "
@@ -492,6 +602,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="export_assets",
+        meta=_barre(
+            verbe="sortir",
+            titre="Sortir des images vers le dossier du jeu",
+            phrase="Écrit une planche PNG et son fichier de description dans le dossier du jeu.",
+            ou="galerie",
+            besoins=("images",),
+        ),
         title="Export assets to a folder",
         description=(
             "Write the rendered PNG of each named asset into a folder — "
@@ -550,6 +667,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="list_characters",
+        meta=_barre(
+            verbe="aller",
+            titre="Voir le casting",
+            phrase="Les personnages du jeu, et ce qui manque à chacun.",
+            ou="codex",
+            besoins=("personnages",),
+        ),
         title="List characters and what they still need",
         description=(
             "The game's cast — characters, but also scenery, objects and UI "
@@ -653,6 +777,12 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="add_pose",
+        meta=_barre(
+            verbe="creer",
+            titre="Ajouter une pose au plan du jeu",
+            phrase="Le plan de poses est commun au casting : elle s'ajoute une fois.",
+            ou="univers",
+        ),
         title="Add a pose to the game plan",
         description=(
             "Add a pose — an attitude the game needs, like 'walk' or 'idle' — "
@@ -700,6 +830,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="generate_pose",
+        meta=_barre(
+            verbe="generer",
+            titre="Mettre un personnage en pose",
+            phrase="Ouvre l'écran d'envoi, déjà rempli. Rien n'est lancé ni payé ici.",
+            paiement="a-confirmer",
+            besoins=("fournisseur", "personnages"),
+        ),
         title="Fill a character's pose",
         description=(
             "Generate the body of one or more poses of a character. The "
@@ -783,6 +920,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="equip_character",
+        meta=_barre(
+            verbe="travailler",
+            titre="Poser une pièce sur un personnage",
+            phrase="Le calque se pose sur les poses qui existent déjà.",
+            ou="codex",
+            besoins=("personnages", "pieces"),
+        ),
         title="Put a piece of equipment on a character",
         description=(
             "Layer one piece of equipment onto poses that already have a body. "
@@ -846,6 +990,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="export_character",
+        meta=_barre(
+            verbe="sortir",
+            titre="Sortir la planche d'un personnage",
+            phrase="Une planche PNG, ses cases décrites, dans le dossier du jeu.",
+            ou="codex",
+            besoins=("personnages",),
+        ),
         title="Export a character into the game folder",
         description=(
             "Write a whole character into the game folder: one PNG per pose "
@@ -897,6 +1048,12 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     @serveur.tool(
         name="get_budget",
+        meta=_barre(
+            verbe="aller",
+            titre="Voir les dépenses",
+            phrase="Ce que la séance a coûté, et ce qui reste avant le plafond.",
+            ou="depenses",
+        ),
         title="Session budget",
         description=(
             "How many generations this session has used, what they cost in "
@@ -921,6 +1078,101 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             # et **d'où le chiffre vient**. Le plafond ci-dessus compte des
             # images ; celui-ci compte ce que le fournisseur alloue.
             "providers": [_reserve(r) for r in atelier.reserves.toutes()],
+        }
+
+    # ── Les trois gestes d'entretien (B6) ───────────────────────────────────
+    #
+    # **Ils entrent par l'agent parce que la barre les lit chez lui.** Le
+    # serveur savait déjà les trois — `POST /library/rebuild`, `/universe/realign`
+    # et `/models/refresh` sont livrés depuis longtemps —, mais aucun bouton ne
+    # les déclenchait et l'agent ne les connaissait pas. Les écrire ici les
+    # donne aux deux d'un coup : à l'agent, qui vient de poser trente images sur
+    # le disque et voudrait que l'index les voie ; à l'auteur, qui les trouve
+    # dans la barre sans qu'on ait dessiné trois boutons pour des gestes qu'on
+    # fait trois fois par an.
+    #
+    # **Les trois sont gratuits, et aucun ne touche le réseau pour payer.**
+    # `refresh_models` appelle bien le catalogue des fournisseurs, mais lire un
+    # catalogue ne coûte rien — c'est la même relecture que fait l'ouverture de
+    # l'atelier.
+
+    @serveur.tool(
+        name="rebuild_library",
+        meta=_barre(
+            verbe="travailler",
+            titre="Reconstruire l'index de la bibliothèque",
+            phrase=(
+                "Relit tous les fichiers du disque et refait la base. Aucune "
+                "image ne peut être perdue."
+            ),
+            ou="ici",
+            route="POST /api/library/rebuild",
+        ),
+        title="Rebuild the library index",
+        description=(
+            "Re-read every file on disk and rebuild the library index. The "
+            "files are the truth; the index is derived from them and can "
+            "always be rebuilt. Free, and no image can be lost. Use it after "
+            "writing files into the data folder by hand."
+        ),
+    )
+    @_refus_lisible
+    async def rebuild_library() -> dict[str, Any]:
+        compte = atelier.bibliotheque.reconstruire()
+        atelier.bibliotheque.ouvrir()
+        return {"rebuilt": compte}
+
+    @serveur.tool(
+        name="realign_project",
+        meta=_barre(
+            verbe="travailler",
+            titre="Recalculer le rendu des {images} images de ce jeu",
+            phrase=(
+                "Refait l'affichage des images du jeu. Les originaux ne sont "
+                "pas touchés."
+            ),
+            ou="ici",
+            route="POST /api/universe/realign",
+            besoins=("images",),
+        ),
+        title="Realign a project on its universe",
+        description=(
+            "Re-apply the project's palette and pixel grid to its assets, "
+            "without a single paid call. Hand-made settings are never "
+            "overwritten. Returns how many were brought up to date and how "
+            "many were kept as they are."
+        ),
+    )
+    @_refus_lisible
+    async def realign_project(project: str | None = None) -> dict[str, Any]:
+        return atelier.univers.realigner(_projet_ouvert(atelier, project))
+
+    @serveur.tool(
+        name="refresh_models",
+        meta=_barre(
+            verbe="regler",
+            titre="Relire le catalogue chez les fournisseurs",
+            phrase="Redemande la liste des modèles. Aucun appel payant.",
+            ou="ici",
+            route="POST /api/models/refresh",
+        ),
+        title="Refresh the model catalogue",
+        description=(
+            "Ask every provider for its catalogue again. Free — reading a "
+            "catalogue costs nothing. Never raises when the network is still "
+            "down: it returns the offline fallback and the date it was read."
+        ),
+    )
+    @_refus_lisible
+    async def refresh_models() -> dict[str, Any]:
+        etat = await atelier.catalogue.rafraichir()
+        return {
+            "models": [m.identifiant for m in etat.modeles],
+            # **Le repli n'est pas une panne, et il se dit** : hors ligne, le
+            # catalogue sert celui du disque avec sa date, et l'agent doit
+            # savoir qu'il lit une photo plutôt que le présent.
+            "offline": etat.repli,
+            "reason": etat.raison,
         }
 
     return serveur

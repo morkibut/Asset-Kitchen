@@ -47,7 +47,7 @@
     .fig::before { content: ''; position: absolute; left: 50%; top: -14%; transform: translateX(-50%);
                    width: 52%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
 
-  </style>
+    </style>
 </helmet>
 
 <div class="k" style="width: 1600px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
@@ -83,9 +83,9 @@
       <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
         <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
       </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
-        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
-        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      <div style="display: flex; align-items: center; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide et les touches</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> L'installation</span>
       </div>
       </div>
     </div>
@@ -233,7 +233,7 @@
       <div style="display: grid; grid-template-columns: 34px 240px minmax(0,1fr) 132px; gap: 15px; align-items: start; padding: 11px 13px; border-top: 1px solid #ece6db">
         <div class="mono" style="font-size: 12px; color: #a8492c">07</div>
         <div style="font-size: 13px; font-weight: 600; line-height: 1.35">7 · Recoudre les bords</div>
-        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Décaler l'image d'un demi-carré : les quatre bords se retrouvent en croix au milieu, la couture devient visible, on la peint, on remet en place. Aucune demande ne part au modèle. Les huit tables de retouche existantes ne font pas ce décalage.</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Décaler l'image d'un demi-carré : les quatre bords se retrouvent en croix au milieu, la couture devient visible, on la peint, on remet en place. Aucune demande ne part au modèle. Les sept tables de retouche existantes ne font pas ce décalage.</div>
         <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end">
           <span class="puce p-a">à ajouter</span>
           <span class="mono" style="font-size: 11px; color: #6d675e; text-align: right">gratuit</span>
@@ -443,7 +443,7 @@
         <li style="margin-bottom: 7px">Le texte envoyé au modèle demande l'inverse de ce qu'une tuile doit être : « un seul sujet isolé sur un fond plat », « le sujet est centré et remplit la plus grande partie de l'image », « pas de sol, pas de décor ». Une tuile remplit son carré bord à bord, n'a pas de sujet, pas de centre, et pas de fond à enlever.</li>
         <li style="margin-bottom: 7px">La taille de tuile n'existe pas. Le jeu déclare une seule finesse de pixel, 64, imposée à tout ce qui rentre. Le sol se dessine couramment en 32 ou 16, et ce nombre-là n'a aucun endroit où s'écrire.</li>
         <li style="margin-bottom: 7px">Rien ne montre une tuile répétée. On regarde le carré seul ; le défaut de raccord ne se voit qu'une fois le sol posé dans le jeu, c'est-à-dire après avoir payé les variantes.</li>
-        <li style="margin-bottom: 7px">Aucune retouche ne décale l'image d'un demi-carré. Il y en a huit dans les tables — détourage, différence, recadrage, grille, couleurs, bords, contours, dessin à la main — et pas une ne travaille sur ce qui se passe entre deux exemplaires de la même image.</li>
+        <li style="margin-bottom: 7px">Aucune retouche ne décale l'image d'un demi-carré. Il y en a sept dans les tables — détourage, recadrage, grille, couleurs, bords, contours, dessin à la main — et pas une ne travaille sur ce qui se passe entre deux exemplaires de la même image.</li>
         <li style="margin-bottom: 7px">Rien ne mesure une couture. L'atelier sait déjà retrouver le pas d'une image et dire si elle tombe bien sur ses carreaux ; personne ne compare la colonne de gauche à la colonne de droite.</li>
         <li style="margin-bottom: 7px">Les variantes n'existent que comme images concurrentes d'une même demande : on en retient une, on écarte les autres. Pour un terrain elles servent toutes en même temps, et rien ne dit laquelle sort le plus souvent.</li>
         <li style="margin-bottom: 7px">Le détourage est posé d'emblée sur tout ce qui entre dans la bibliothèque. Une tuile n'a pas de fond à enlever ; il faut aujourd'hui l'éteindre à la main, image par image.</li>

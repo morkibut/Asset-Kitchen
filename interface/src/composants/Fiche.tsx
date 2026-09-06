@@ -278,7 +278,7 @@ export function Fiche({
                   )
                 }
               }}
-              className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+              className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
             >
               Le remettre sur l'univers du projet ›
             </button>
@@ -303,7 +303,7 @@ export function Fiche({
           <a
             href={api.telechargementAsset(asset.identifiant, montrerBrut)}
             download
-            className="mesure mt-1 text-[10px] text-signal hover:text-signal-clair"
+            className="mesure mt-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
           >
             PNG ↓
           </a>
@@ -664,7 +664,7 @@ function LeTexteQuiLAFaite({
           <button
             type="button"
             onClick={() => onOuvrir(asset.parent!)}
-            className="mesure text-[10px] text-signal underline-offset-2 hover:underline"
+            className="mesure text-[10px] text-ancien-signal underline-offset-2 hover:underline"
           >
             aller la lire ›
           </button>
@@ -723,7 +723,7 @@ function LeTexteQuiLAFaite({
               .then(() => setCopie(true))
               .catch(() => setCopie(false))
           }}
-          className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+          className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           {copie ? "copié" : "copier le texte"}
         </button>
@@ -771,7 +771,7 @@ function Jugement({
           className={[
             "mesure h-[26px] rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
             asset.favori
-              ? "border-signal bg-signal/13 text-signal"
+              ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
               : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
           ].join(" ")}
         >
@@ -799,7 +799,7 @@ function Jugement({
         <button
           type="button"
           onClick={onSupprimer}
-          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec"
+          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
         >
           Supprimer
         </button>
@@ -1003,7 +1003,7 @@ function Descendance({
             <button
               type="button"
               onClick={() => onOuvrir(filiation.parent!.identifiant)}
-              className="mesure flex items-center gap-1.5 text-left text-[10px] text-signal hover:text-signal-clair"
+              className="mesure flex items-center gap-1.5 text-left text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
             >
               <span aria-hidden>↑</span>
               <span className="truncate">{filiation.parent.label}</span>
@@ -1026,7 +1026,7 @@ function Descendance({
                   key={enfant.identifiant}
                   type="button"
                   onClick={() => onOuvrir(enfant.identifiant)}
-                  className="mesure flex items-center gap-1.5 text-left text-[10px] text-texte-2 hover:text-signal"
+                  className="mesure flex items-center gap-1.5 text-left text-[10px] text-texte-2 hover:text-ancien-signal"
                 >
                   <span aria-hidden>↓</span>
                   <span className="truncate">{enfant.label}</span>
@@ -1208,7 +1208,7 @@ export function BlocPasse({
           aria-label={`passe ${rang + 1} — ${passe.masquee ? "masquée" : "visible"}`}
           title="la retirer du calcul le temps de regarder — elle garde ses réglages"
           onClick={() => onFini({ ...passe, masquee: !passe.masquee })}
-          className="mesure ml-auto text-[10px] text-signal hover:text-signal-clair"
+          className="mesure ml-auto text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           {passe.masquee ? "montrer" : "masquer"}
         </button>
@@ -1216,7 +1216,7 @@ export function BlocPasse({
           <button
             type="button"
             onClick={onRetirer}
-            className="mesure text-[10px] text-texte-3 hover:text-echec"
+            className="mesure text-[10px] text-texte-3 hover:text-ancien-echec"
           >
             retirer
           </button>
@@ -1354,7 +1354,7 @@ export function BlocPasse({
                 <button
                   type="button"
                   onClick={() => onViser?.(!enVisee)}
-                  className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+                  className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
                 >
                   {enVisee
                     ? "entoure le sujet dans l'image"
@@ -1403,7 +1403,7 @@ export function BlocPasse({
                   <button
                     type="button"
                     onClick={() => onViser?.(!enVisee)}
-                    className="mesure ml-auto text-[10px] text-signal hover:text-signal-clair"
+                    className="mesure ml-auto text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
                   >
                     {enVisee ? "annuler" : "viser à nouveau ›"}
                   </button>
@@ -1412,7 +1412,7 @@ export function BlocPasse({
                 <button
                   type="button"
                   onClick={() => onViser?.(!enVisee)}
-                  className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+                  className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
                 >
                   {enVisee ? "clique dans l'image" : "viser dans l'image ›"}
                 </button>
@@ -1545,6 +1545,19 @@ function RecetteEnLecture({ recette }: { recette: Recette }) {
       recette.quantification ? RESUME.quantification(recette.quantification) : null,
     ],
     ["bords", recette.bords ? RESUME.bords(recette.bords) : null],
+    // **Les trois dernières places, ajoutées en B1** — et le trou qu'elles
+    // bouchent était plus vieux qu'elles. Le contour et la main sont arrivés en
+    // E5 sans jamais entrer ici ; la fiche d'une image qui ne porte *que* l'une
+    // d'elles tombait donc sur « rien n'est posé », c'est-à-dire sur le
+    // contraire de ce qu'elle montrait. Un miroir a rendu la phrase franchement
+    // fausse : sa recette ne porte que le retournement, et la fiche annonçait
+    // une image arrivée du fournisseur — qui n'est arrivée de nulle part.
+    ["contours", recette.contours ? RESUME.contours(recette.contours) : null],
+    [
+      "retournement",
+      recette.retournement ? RESUME.retournement(recette.retournement) : null,
+    ],
+    ["la main", recette.main ? RESUME.main(recette.main) : null],
   ]
   const posees = places.filter(([, valeur]) => valeur !== null)
 

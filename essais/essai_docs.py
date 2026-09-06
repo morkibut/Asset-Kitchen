@@ -5,16 +5,23 @@
 seule — *« cinq documents se lisent au démarrage, et cinq seulement »*. La
 seconde ne tenait pas : *« dès qu'une section pèse plus que le document qui la
 porte, elle sort en annexe »* n'a jamais déclenché, parce qu'aucune section
-n'atteint jamais la moitié de son document — et le corpus a triplé deux fois
-quand même, jusqu'à 315 Ko.
+n'atteint jamais la moitié de son document — et le corpus a triplé trois fois
+quand même, jusqu'à 596 Ko le 6 septembre 2026.
 
 Un garde-fou qu'on ne mesure pas n'en est pas un. Ce banc le mesure — **et il ne
 refuse rien sur le poids**. Un plafond rond refuserait le jour où l'on écrit une
 phrase de plus, ce qui n'est pas une faute, et se relèverait le jour où il gêne,
-ce qui n'est pas un garde-fou. Ce qui se surveille est la **dérive** : le corpus
-a triplé deux fois sans que personne ne le décide, et c'est exactement ce que
-personne ne voyait. Chaque relevé est donc comparé au précédent, et le plus haut
-connu reste écrit pour que l'échelle ne se perde pas.
+ce qui n'est pas un garde-fou. Ce qui se surveille est la **dérive** : chaque
+relevé est comparé au précédent, et le plus haut connu reste écrit pour que
+l'échelle ne se perde pas.
+
+**Et mesurer ne suffisait pas.** Entre le 2 et le 6 septembre 2026, le corpus est
+passé de 235 à 596 Ko — presque le double du repère — pendant que ce banc
+affichait « le corpus est au-dessus de son plus haut connu » à chaque lancement.
+Personne ne l'a lu : la ligne était au milieu d'un tableau. Depuis, la dérive
+s'annonce **en premier et en gros** (`bandeau_de_derive`), et le poids remonte
+dans le verdict, que le banc passe ou non — un corpus qui dérive ne doit pas se
+cacher derrière un renvoi cassé.
 
 Ce qui **fait échouer** ce banc est ailleurs : un renvoi cassé. Le code et les
 documents renvoient aux documents six cents fois, et un renvoi qui pointe une
@@ -72,7 +79,7 @@ KO = 1024
 # a triplé deux fois sans que personne ne le décide, et c'est ça qu'on n'avait
 # pas vu. Chaque relevé est donc comparé au précédent, et le plus haut connu
 # reste écrit ici pour que l'échelle ne se perde pas.
-REPERE = ("le 29 août 2026, avant compactage", 322_899)
+REPERE = ("le 6 septembre 2026, avant la troisième descente", 609_876)
 
 # Où le code vit. On ne scanne ni `interface/node_modules`, ni `.venv`, ni
 # `docs/` lui-même : les renvois entre documents sont comptés à part.
@@ -407,6 +414,39 @@ def ecart(maintenant: int, avant: int | None) -> str:
     return f"   {signe}{abs(maintenant - avant) / KO:.1f} Ko"
 
 
+def bandeau_de_derive(documents: dict[str, Document]) -> None:
+    """Le bandeau qui manquait — la dérive dite avant le reste, pas au milieu.
+
+    Le banc mesurait déjà, et il annonçait « le corpus est au-dessus de son plus
+    haut connu » à chaque lancement. Personne ne l'a lu : entre le 2 et le
+    6 septembre 2026 le corpus est passé de 235 à 596 Ko, presque le double du
+    repère, pendant que la ligne s'affichait. **Un garde-fou qu'on lit en
+    diagonale n'en est pas un.**
+
+    Il ne refuse toujours rien — un seuil rond refuserait le jour où l'on écrit
+    une phrase de plus, ce qui n'est pas une faute. Il parle plus fort, et il
+    parle en premier.
+    """
+    avant = releve_precedent().get("= total")
+    total = sum(documents[c].octets for c in DEMARRAGE)
+    if not avant or total <= avant:
+        return
+    barre = "─" * 74
+    print()
+    print("  !!!  DÉRIVE DU CORPUS DE DÉMARRAGE  !!!")
+    print(f"  {barre}")
+    print(
+        f"  Il pesait {ko(avant).strip()} au relevé précédent, il pèse"
+        f" {ko(total).strip()} — soit +{(total - avant) / KO:.1f} Ko."
+    )
+    print("  Ces cinq documents s'ouvrent à chaque séance : ces octets-là se")
+    print("  paient à chaque fois, avant qu'une ligne de code soit lue.")
+    print("  Ce banc ne refuse rien, mais la décision ne se remet pas : une")
+    print("  section descend en annexe et laisse un renvoi — AGENTS.md,")
+    print("  § Les documents et leur autorité.")
+    print(f"  {barre}")
+
+
 def peser(documents: dict[str, Document]) -> int:
     total = sum(documents[c].octets for c in DEMARRAGE)
     avant = releve_precedent()
@@ -484,6 +524,10 @@ def principal() -> int:
     print("Banc du corpus de démarrage — aucun frais, aucun réseau, aucun atelier")
 
     documents = charger(cibles_connues())
+    # Lu **avant** que ce lancement n'écrive le sien : SORTIE est réécrit plus
+    # bas, et le verdict comparerait le relevé à lui-même.
+    corpus_avant = releve_precedent().get("= total")
+    bandeau_de_derive(documents)
     total = peser(documents)
     ou_est_le_poids(documents)
 
@@ -559,6 +603,17 @@ def principal() -> int:
             f" qui n'existe plus là où il la cherche."
         )
         verdict = 1
+    # La ligne que le rapport de fin de tranche recopie : le poids, et son
+    # mouvement depuis la dernière fois. Elle est dite dans les deux cas —
+    # un corpus qui dérive ne doit pas se cacher derrière un renvoi cassé.
+    if corpus_avant:
+        signe = "+" if total > corpus_avant else "−"
+        print(
+            f"  Corpus de démarrage : {ko(total).strip()}"
+            f" ({signe}{abs(total - corpus_avant) / KO:.1f} Ko depuis le relevé précédent)."
+        )
+    else:
+        print(f"  Corpus de démarrage : {ko(total).strip()}.")
     print(f"  Relevé écrit : {SORTIE}")
     return verdict
 

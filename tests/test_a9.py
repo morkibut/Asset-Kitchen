@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """A9 — le clip entre dans l'atelier.
 
-Les critères de `docs/PLAN.md` § A9. **Aucun n'appelle un vrai fournisseur** :
+Les critères de `docs/archive/plan-r6-a-v3.02.md` § A9. **Aucun n'appelle un vrai fournisseur** :
 l'animateur d'ici est un double qui rend un vrai fichier MP4 quand le décodeur
 est installé, et des octets quelconques sinon. Les dix-huit clips qui ont servi
 à trancher la méthode ont coûté 1,38 $ ; ces essais-ci coûtent zéro.
@@ -826,6 +826,47 @@ def test_recuperer_par_la_route_ne_recommande_rien(client_video, animateur):
     reprise = client_video.post(f"/api/clips/{identifiant}/recover")
     assert reprise.status_code == 200
     assert len(animateur.soumissions) == 1
+
+
+async def test_recuperer_quand_le_lien_a_expire_ne_leve_pas_et_ne_repaie_pas(
+    service, animateur
+):
+    """*Le fournisseur a expiré le lien* (B2) — `recuperer` répond quand même.
+
+    C'est le geste que l'écran des dépenses appelle sur « récupérer sans
+    repayer » : ce n'est pas la requête qui échoue, c'est le rapatriement, et
+    la route doit pouvoir rendre 200 avec une raison plutôt que de lever.
+    **Aucun essai ne couvrait une seconde panne** — celui d'à côté rattrape un
+    clip dont la reprise réussit ; ici, elle échoue aussi.
+    """
+    animateur.echec_au_telechargement = AppelRefuse(
+        "le clip n'a pas pu être téléchargé (401)", statut=401, consomme=0.041
+    )
+    generation = await service.commander(MELE.identifiant, demande())
+    await service.attendre_tout()
+    premiere = service.lire(generation.identifiant)
+    assert premiere.emplacements[0].statut == Statut.ECHOUEE
+    assert premiere.cout_usd == pytest.approx(0.041)
+
+    # Le second échec ne refacture rien — `consomme=0.0`, comme un lien qui a
+    # expiré sans qu'aucun appel n'atteigne le fournisseur.
+    animateur.echec_au_telechargement = AppelRefuse(
+        "le lien de téléchargement a expiré (410)", statut=410, consomme=0.0
+    )
+    rattrapee = await service.recuperer(generation.identifiant)
+
+    assert rattrapee.emplacements[0].statut == Statut.ECHOUEE
+    assert "expiré" in rattrapee.emplacements[0].raison
+    # **La première facture doit survivre à la seconde panne** — c'est le cœur
+    # du critère « ne repaie pas » : additionner un échec à zéro ne doit jamais
+    # effacer ce qu'un échec précédent avait déjà consommé.
+    assert rattrapee.cout_usd == pytest.approx(0.041)
+    # Toujours récupérable ensuite : le numéro du travail n'a pas bougé, et
+    # rien de neuf n'a été soumis au fournisseur — seule la récupération a
+    # été retentée.
+    assert rattrapee.clip.travail == "travail-1"
+    assert len(animateur.soumissions) == 1
+    assert len(animateur.recuperations) == 2
 
 
 def test_commander_sans_image_de_la_bibliotheque_se_refuse_avant_de_payer(

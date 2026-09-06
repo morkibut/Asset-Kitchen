@@ -131,7 +131,7 @@ function Cran({
           type="button"
           aria-label={`${libelle} — ${touches[0]}`}
           onClick={(e) => bouger(-1, e.shiftKey)}
-          className="h-[24px] w-[24px] rounded-[2px] border border-bord bg-fond-2 hover:text-signal"
+          className="h-[24px] w-[24px] rounded-[2px] border border-bord bg-fond-2 hover:text-ancien-signal"
         >
           {touches[0]}
         </button>
@@ -139,7 +139,7 @@ function Cran({
           type="button"
           aria-label={`${libelle} — ${touches[1]}`}
           onClick={(e) => bouger(1, e.shiftKey)}
-          className="h-[24px] w-[24px] rounded-[2px] border border-bord bg-fond-2 hover:text-signal"
+          className="h-[24px] w-[24px] rounded-[2px] border border-bord bg-fond-2 hover:text-ancien-signal"
         >
           {touches[1]}
         </button>
@@ -357,7 +357,7 @@ export function EcranSuperposition({
               onClick={() =>
                 poser({ dessus: pose.dessous, dessous: pose.dessus })
               }
-              className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
+              className="mesure h-6 self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
             >
               ↕ échanger
             </button>
@@ -376,7 +376,7 @@ export function EcranSuperposition({
               <button
                 type="button"
                 onClick={() => setChoisir("dessous")}
-                className="mesure h-[26px] rounded-[2px] border border-bord-fort px-2 text-left text-[10px] text-texte-2 hover:text-signal"
+                className="mesure h-[26px] rounded-[2px] border border-bord-fort px-2 text-left text-[10px] text-texte-2 hover:text-ancien-signal"
               >
                 choisir l'image du dessous — celle sur laquelle on pose ›
               </button>
@@ -443,7 +443,7 @@ export function EcranSuperposition({
                         })
                         .catch((erreur) => onErreur(String(erreur)))
                     }
-                    className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
+                    className="mesure h-6 self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
                   >
                     reprendre les {ouverture.passes_dessous} passes du dessous ›
                   </button>
@@ -494,7 +494,7 @@ export function EcranSuperposition({
               type="button"
               disabled={!pret || recalage}
               onClick={() => void recaler()}
-              className="mesure h-[34px] w-full rounded-[2px] border border-bord-fort bg-fond-2 text-[11.5px] text-texte-2 hover:text-signal disabled:text-texte-3"
+              className="mesure h-[34px] w-full rounded-[2px] border border-bord-fort bg-fond-2 text-[11.5px] text-texte-2 hover:text-ancien-signal disabled:text-texte-3"
             >
               {recalage ? "cherche…" : "Recaler"}
             </button>
@@ -537,7 +537,7 @@ export function EcranSuperposition({
             <button
               type="button"
               onClick={() => poser({ echelle: 1, dx: 0, dy: 0 })}
-              className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-signal"
+              className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-ancien-signal"
             >
               remettre à zéro ›
             </button>
@@ -560,7 +560,7 @@ export function EcranSuperposition({
               <button
                 type="button"
                 onClick={() => poser({ rectangle: null })}
-                className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-echec"
+                className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-ancien-echec"
               >
                 × le rectangle — {pose.rectangle[2] - pose.rectangle[0] + 1}×
                 {pose.rectangle[3] - pose.rectangle[1] + 1}
@@ -621,7 +621,7 @@ export function EcranSuperposition({
                       })
                       .catch((erreur) => onErreur(String(erreur)))
                   }
-                  className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-signal"
+                  className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-ancien-signal"
                 >
                   repartir de zéro ›
                 </button>
@@ -644,14 +644,14 @@ export function EcranSuperposition({
             type="button"
             disabled={!pret || sorties.length === 0}
             onClick={() => void fabriquer()}
-            className="mesure h-[34px] px-3 text-left text-[11.5px] text-signal hover:text-signal-clair disabled:text-texte-3"
+            className="mesure h-[34px] px-3 text-left text-[11.5px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
           >
             Fabriquer — {sorties.length} image{sorties.length > 1 ? "s" : ""} ›
           </button>
           <button
             type="button"
             onClick={() => poser({ echelle: 1, dx: 0, dy: 0, rectangle: null, main: [] })}
-            className="mesure h-[26px] border-t border-bord px-3 text-left text-[10px] text-texte-3 hover:text-echec"
+            className="mesure h-[26px] border-t border-bord px-3 text-left text-[10px] text-texte-3 hover:text-ancien-echec"
           >
             Tout défaire ›
           </button>
@@ -734,7 +734,7 @@ export function EcranSuperposition({
             onPointerDown={() => setMasque(true)}
             onPointerUp={() => setMasque(false)}
             onPointerLeave={() => setMasque(false)}
-            className="mesure h-[24px] self-start rounded-[2px] border border-bord-fort px-2 text-[10px] text-texte-2 hover:text-signal"
+            className="mesure h-[24px] self-start rounded-[2px] border border-bord-fort px-2 text-[10px] text-texte-2 hover:text-ancien-signal"
           >
             masquer le calque
           </button>
@@ -787,7 +787,7 @@ function ImageChoisie({
       <button
         type="button"
         onClick={onChanger}
-        className="mesure shrink-0 text-[10px] text-signal hover:text-signal-clair"
+        className="mesure shrink-0 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
       >
         changer ›
       </button>

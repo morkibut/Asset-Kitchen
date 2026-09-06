@@ -1,0 +1,303 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 32px; padding: 0 12px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 12.5px; font-weight: 500 }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .fin { border: 1px solid #ddd5c8; border-radius: 9px; background: #fffdfa; padding: 12px 13px;
+           display: flex; flex-direction: column; gap: 9px }
+    .fin-on { border-color: #a8492c; background: #fdf7f3; box-shadow: 0 0 0 3px rgba(168,73,44,.12) }
+    .apercu { background: #6c6c6c; border-radius: 6px; display: flex; align-items: flex-end; justify-content: center;
+              overflow: hidden; height: 118px }
+    .fg { display: block; background: #6b5a44; border-radius: 4px 4px 2px 2px; position: relative }
+    .fg::before { content: ''; position: absolute; left: 50%; top: -22%; transform: translateX(-50%);
+                  width: 60%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+    .sg2 { padding: 5px 0; border-radius: 5px; font-size: 11.5px; color: #6d675e; text-align: center;
+           font-family: 'IBM Plex Mono', monospace }
+    .mur { border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 9px }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 2860px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1060px">
+      <div style="font-size: 12.5px; color: #948c80">Le Marais du Vieux Moulin › Les règles du jeu › Sa finesse</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">La finesse en dessin</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">un jeu qui n'est pas en pixel art ne demande pas « combien de carrés » — et à partir de 1024, il ne peut plus rien retoucher du tout</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">la panne</div>
+      <div class="serif" style="font-size: 30px; color: #8a3f33">une seule ligne</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 210px">un plafond resté à 512 sur la porte d'entrée des recettes</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1220px">
+    Un jeu se déclare <strong style="font-weight: 600">pixel art</strong> ou <strong style="font-weight: 600">dessin</strong>, à la deuxième étape. En pixel art, l'étape suivante demande une taille de case&nbsp;: dix valeurs, de 8 à 512 carrés. En dessin, elle demande une <em>finesse</em> — combien de détail chaque fichier garde — et elle en propose quatre&nbsp;: 256, 512, 1024, 2048. Tout cela est bien fait, jusqu'au nom de l'étape qui change. Puis on choisit 1024, et <strong style="font-weight: 600">la fiche de chaque image du jeu cesse de fonctionner</strong> — pas seulement pour la taille&nbsp;: pour tout.
+  </div>
+
+  <!-- ══ l'étape du parcours ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">L'étape, telle qu'elle est</span> <span style="font-size: 13.5px; color: #6d675e">— quatrième des règles du jeu, et elle est bonne</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Le même écran sert de parcours de départ et de panneau de réglages.</div>
+    </div>
+
+    <div class="carte" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 5px; max-width: 780px">
+          <h2 class="serif" style="font-size: 30px; line-height: 1.1">La finesse</h2>
+          <div style="font-size: 13px; line-height: 1.5; color: #4e483f">Combien de détail chaque image garde. Ce n'est pas un nombre de carrés&nbsp;: ton jeu n'est pas en pixel art — c'est la finesse du fichier, à choisir d'après la taille à l'écran. Environ le double de la hauteur affichée, pour rester net.</div>
+        </div>
+        <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+          <span class="bt" style="height: 30px">aucune</span>
+          <span style="font-size: 11px; color: #6d675e; text-align: right; max-width: 210px">l'image garde la finesse que le modèle lui a donnée</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 13px">
+        <div class="fin">
+          <div class="apercu"><i class="fg" style="width: 20px; height: 46px"></i></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><span class="mono" style="font-size: 15px">256</span><span class="puce p-ok">retouche&nbsp;ok</span></div>
+          <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Petits objets d'inventaire, icônes, éléments d'interface.</div>
+        </div>
+        <div class="fin fin-on">
+          <div class="apercu"><i class="fg" style="width: 30px; height: 70px"></i></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><span class="mono" style="font-size: 15px">512</span><span class="puce p-ok">retouche&nbsp;ok</span></div>
+          <div style="font-size: 12px; line-height: 1.45; color: #4e483f">La finesse courante d'un personnage de jeu 2D dessiné.</div>
+          <div style="font-size: 11px; color: #a8492c; border-top: 1px solid #ece6db; padding-top: 7px">le défaut du dessin — et la raison pour laquelle la panne ne se voit pas tout de suite</div>
+        </div>
+        <div class="fin">
+          <div class="apercu"><i class="fg" style="width: 42px; height: 98px"></i></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><span class="mono" style="font-size: 15px">1024</span><span class="puce p-non">plus de retouche</span></div>
+          <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Personnages en gros plan, portraits de dialogue, gros objets.</div>
+        </div>
+        <div class="fin">
+          <div class="apercu"><i class="fg" style="width: 50px; height: 112px"></i></div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><span class="mono" style="font-size: 15px">2048</span><span class="puce p-non">plus de retouche</span></div>
+          <div style="font-size: 12px; line-height: 1.45; color: #4e483f">Décors, écrans de titre, illustrations plein cadre.</div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px; font-size: 12px; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 13px">
+        <span>Au survol d'une valeur, l'écran dit ce que le changement casserait&nbsp;: le compte d'images concernées, et ce que ça coûterait de les refaire. Rien n'est grisé.</span>
+        <span style="margin-left: auto; color: #8a3f33; white-space: nowrap">Les deux valeurs marquées sont celles que l'écran recommande.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ les deux murs ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les deux murs</span> <span style="font-size: 13.5px; color: #6d675e">— l'un accepte 2048, l'autre refuse au-dessus de 512</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Ils décrivent tous les deux la même chose&nbsp;: la case d'une image.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: minmax(0,1fr) 56px minmax(0,1fr); gap: 0; align-items: stretch">
+      <div class="mur" style="border: 1px solid #cfd9c8; background: #eef1ea">
+        <div class="rt" style="color: #7d9070">celui qui a été mis à jour</div>
+        <div style="font-size: 17px; font-weight: 600; line-height: 1.3">Le service accepte de 8 à 2048</div>
+        <div class="mono" style="font-size: 12px; background: #fffdfa; border: 1px solid #cfd9c8; border-radius: 6px; padding: 9px 11px; color: #4c6644">CIBLE_MIN, CIBLE_MAX = 8, 2048</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Et son commentaire dit pourquoi, en toutes lettres&nbsp;: « le plafond est passé de 512 à 2048, et c'est le style qui l'exige — un jeu en dessin ne demande pas des carrés, il demande une finesse, et ses quatre valeurs montent à 2048 ».</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #cfd9c8; padding-top: 9px">Le réglage du jeu lui-même est borné aux mêmes 8–2048. Poser une finesse de 2048 sur un projet passe sans broncher. Un essai du dépôt affirme d'ailleurs qu'un jeu en dessin à 1024 porte bien une grille de 1024.</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: center; color: #a8492c; font-size: 22px">✕</div>
+      <div class="mur" style="border: 1px solid #dcbcb2; background: #f8ece9">
+        <div class="rt" style="color: #b08078">celui qui est resté</div>
+        <div style="font-size: 17px; font-weight: 600; line-height: 1.3">La porte d'entrée refuse au-dessus de 512</div>
+        <div class="mono" style="font-size: 12px; background: #fffdfa; border: 1px solid #dcbcb2; border-radius: 6px; padding: 9px 11px; color: #8a3f33">cible: int = Field(64, ge=8, le=512)</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">C'est le champ qui porte la case d'une recette quand l'écran l'envoie. Trois portes s'en servent&nbsp;: poser la recette d'une image, coller sur une image les réglages d'une autre, et enregistrer une recette nommée.</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #dcbcb2; padding-top: 9px">Le service, derrière, n'est jamais atteint. Le refus tombe avant lui, sur le format de la requête.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ la conséquence ══ -->
+  <div style="display: grid; grid-template-columns: 480px minmax(0,1fr); gap: 22px; align-items: start">
+    <div class="carte" style="padding: 17px 18px; display: flex; flex-direction: column; gap: 12px">
+      <div class="rt">ce que voit un jeu en dessin réglé sur 1024</div>
+      <div style="font-size: 16px; font-weight: 600; line-height: 1.3">La table de la case, sur la fiche d'une image</div>
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 3px">
+        <span class="sg2">8</span><span class="sg2">16</span><span class="sg2">24</span><span class="sg2">32</span><span class="sg2">48</span>
+        <span class="sg2">64</span><span class="sg2">96</span><span class="sg2">128</span><span class="sg2">256</span><span class="sg2">512</span>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.5; color: #8a3f33">Dix boutons, <strong style="font-weight: 600">aucun n'est marqué</strong>. La liste de cette table est celle du pixel art&nbsp;; 1024 et 2048 n'y sont pas, et un segment ne se marque que sur égalité exacte. L'auteur voit une rangée de choix dont aucun ne correspond à son jeu, sans un mot d'explication.</div>
+      <div style="border-top: 1px solid #ece6db; padding-top: 11px; display: flex; flex-direction: column; gap: 7px">
+        <div style="font-size: 13px; font-weight: 600">Et le reste ne marche plus non plus</div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'écran renvoie <strong style="font-weight: 600">la recette entière</strong> à chaque geste. Bouger le curseur de tolérance du détourage renvoie donc aussi la grille, à 1024&nbsp;: refus. Le geste se défait tout seul à l'écran, et le message ne dit pas lequel des sept réglages a été refusé.</div>
+      </div>
+      <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 8px; padding: 11px 12px; font-size: 12.5px; line-height: 1.5; color: #8a3f33">
+        Un jeu en dessin à 1024 ou 2048 ne peut poser <strong style="font-weight: 600">aucune</strong> retouche&nbsp;: ni détourage, ni recadrage, ni contour, ni pinceau. Toute la chaîne est fermée par une borne qui n'a rien à voir avec elle.
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div><span class="h2">Pourquoi personne ne l'a vu</span></div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 13px">
+        <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13.5px; font-weight: 600">512 est le défaut du dessin</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Un jeu qui bascule en pixel art vers dessin sans rien choisir retombe sur 512. Et 512 est aussi dans la liste du pixel art. Tout marche&nbsp;: la panne n'existe pas pour lui.</div>
+        </div>
+        <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13.5px; font-weight: 600">256 aussi est dans les deux listes</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Deux des quatre finesses sont partagées avec le pixel art. Sur celles-là, rien ne se voit — ni le plafond, ni la rangée de boutons vide.</div>
+        </div>
+        <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13.5px; font-weight: 600">Ce sont les deux valeurs recommandées qui cassent</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">1024 pour les portraits, 2048 pour les décors&nbsp;: l'écran les propose, avec leur phrase, en les présentant comme les bons choix. Suivre le conseil de l'écran est ce qui déclenche la panne.</div>
+        </div>
+        <div class="carte" style="padding: 14px 15px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13.5px; font-weight: 600">Le refus ne nomme pas le coupable</div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Le geste refusé est celui qu'on venait de faire — bouger une tolérance. Ce qui est refusé est un autre champ, envoyé au passage. Impossible de faire le lien depuis l'écran.</div>
+        </div>
+      </div>
+      <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 9px; padding: 15px 17px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14px; font-weight: 600; color: #8a5a2c">Un essai fige la liste du pixel art</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">La liste des dix tailles de la table est vérifiée par un essai qui compare, valeur pour valeur, avec la liste du pixel art du domaine. Y ajouter 1024 et 2048 le ferait tomber — ce qui est le signe qu'il faut <em>deux</em> listes ici comme il y en a deux dans le domaine, et non une liste allongée.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ la chaîne n'est pas la même ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">La chaîne n'est pas la même en dessin</span> <span style="font-size: 13.5px; color: #6d675e">— et c'est le vrai sujet, plus large que la borne</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">Le produit a fait ce travail dans les règles du jeu, pas encore sur les images.</div>
+    </div>
+    <div class="pl" style="grid-template-columns: 170px 300px 300px minmax(0,1fr)">
+      <div class="ent" style="border-top: 0">la table</div><div class="ent" style="border-top: 0">en pixel art</div><div class="ent" style="border-top: 0">en dessin</div><div class="ent" style="border-top: 0">où ça en est</div>
+
+      <div><span style="font-weight: 600">Détourer</span></div>
+      <div style="color: #4e483f">Le fond part, le sujet reste.</div>
+      <div style="color: #4e483f">Pareil, et plus important encore&nbsp;: un bord doux sur une image de 1024 se voit.</div>
+      <div><span class="puce p-non">fermé au-dessus de 512</span></div>
+
+      <div><span style="font-weight: 600">Recadrer</span></div>
+      <div style="color: #4e483f">Les bords vides sautent.</div>
+      <div style="color: #4e483f">Pareil.</div>
+      <div><span class="puce p-non">fermé au-dessus de 512</span></div>
+
+      <div><span style="font-weight: 600">Pixéliser</span></div>
+      <div style="color: #4e483f">« Combien de carrés » — la case du jeu, de 8 à 512.</div>
+      <div style="color: #4e483f"><strong style="font-weight: 600">La finesse</strong> — combien de détail le fichier garde, de 256 à 2048. Ce n'est pas une grille de jeu, c'est une taille de fichier.</div>
+      <div><span class="puce p-a">le nom change dans le parcours, pas sur la fiche</span></div>
+
+      <div><span style="font-weight: 600">Couleurs</span></div>
+      <div style="color: #4e483f">Les 24 du jeu, imposées.</div>
+      <div style="color: #4e483f">Sans objet la plupart du temps&nbsp;: un jeu dessiné ne compte pas ses couleurs. La table devrait naître éteinte, avec sa raison.</div>
+      <div><span class="puce p-ok">déjà réservé au pixel art</span></div>
+
+      <div><span style="font-weight: 600">Nettoyer</span></div>
+      <div style="color: #4e483f">Les miettes que la réduction a fabriquées.</div>
+      <div style="color: #4e483f">Sans objet&nbsp;: il n'y a pas eu de réduction. Rien n'a fabriqué de miettes.</div>
+      <div><span class="puce p-a">à éteindre, avec sa raison</span></div>
+
+      <div><span style="font-weight: 600">Le contour</span></div>
+      <div style="color: #4e483f">1 px de la case&nbsp;: un trait franc, visible.</div>
+      <div style="color: #4e483f">1 px sur 1024, c'est un cheveu invisible. Il faudrait compter en part de l'image, ou proposer d'emblée 8 à 16 px.</div>
+      <div><span class="puce p-a">l'unité s'adapte déjà, la plage non</span></div>
+
+      <div><span style="font-weight: 600">La main</span></div>
+      <div style="color: #4e483f">Trois pixels qu'aucun réglage n'atteint.</div>
+      <div style="color: #4e483f">Pareil, mais le pinceau va jusqu'à 64 de rayon&nbsp;: sur une image de 2048 c'est encore petit.</div>
+      <div><span class="puce p-a">plage à revoir</span></div>
+    </div>
+  </div>
+
+  <!-- ══ quand ça rate ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">5 cas.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s'est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu'on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On choisit 1024 pour un jeu de portraits, comme l'écran le conseille.</div>
+        <div style="color: #8a3f33">Le réglage est accepté sans un mot. Puis, sur n'importe quelle image, le moindre curseur bougé revient en arrière tout seul.</div>
+        <div style="color: #4e483f">Redescendre à 512 en attendant. C'est la seule issue à l'écran — et elle annule justement le choix que l'écran recommandait.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On ouvre la table de la case sur une image d'un jeu à 1024.</div>
+        <div style="color: #8a3f33">Dix boutons, de 8 à 512, aucun marqué. Rien ne dit que la finesse du jeu n'est simplement pas dans la liste.</div>
+        <div style="color: #4e483f">Il faut deux listes ici comme il y en a deux dans le domaine, choisies par le style — pas une liste allongée, qu'un essai du dépôt refuserait de toute façon.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On colle sur une image les réglages d'une autre, dans un jeu à 2048.</div>
+        <div style="color: #8a3f33">Refus, sans que la taille soit en cause dans ce qu'on voulait coller. Le collage passe par la même porte que la recette.</div>
+        <div style="color: #4e483f">Aucun. Les trois portes qui portent une recette ont la même borne.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On bascule un jeu de pixel art à dessin, puis on rouvre les règles.</div>
+        <div style="color: #8a3f33">La taille est retombée à 512, l'étape a changé de nom, et la façon de réduire est passée d'elle-même sur une méthode qui convient au dessin. Tout ça est juste — et masque la panne.</div>
+        <div style="color: #4e483f">Rien à réparer&nbsp;: c'est le bon comportement. Mais c'est aussi pourquoi le défaut n'apparaît qu'à celui qui monte au-dessus.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On choisit « aucune » finesse pour laisser au modèle ce qu'il rend.</div>
+        <div style="color: #8a3f33">Aucune remise sur grille. L'écran le dit&nbsp;: « le détourage, le recadrage et la palette s'appliquent toujours ». Et là, tout fonctionne.</div>
+        <div style="color: #4e483f">C'est le contournement qui marche aujourd'hui pour un jeu en dessin&nbsp;: ne pas poser de finesse du tout. Personne ne l'écrit nulle part.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ce qui manque ══ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qu'il faut faire</span>
+      <div style="font-size: 12.5px; color: #6d675e; margin-top: -4px">Dans l'ordre, du plus court au plus long.</div>
+      <ol style="padding-left: 19px; font-size: 12.5px; line-height: 1.6; color: #4e483f; margin-top: 3px">
+        <li style="margin-bottom: 9px"><strong style="font-weight: 600">Monter le plafond de la porte d'entrée à 2048</strong>, pour qu'il dise la même chose que le service qui est derrière. Une ligne, et un jeu en dessin retrouve toute sa chaîne de retouche.</li>
+        <li style="margin-bottom: 9px"><strong style="font-weight: 600">Deux listes sur la fiche d'une image</strong>, choisies par le style, comme le domaine en a déjà deux. Pas une liste allongée&nbsp;: un essai fige la liste du pixel art, et il a raison de le faire.</li>
+        <li style="margin-bottom: 9px"><strong style="font-weight: 600">Nommer le champ refusé.</strong> L'écran envoie sept réglages et n'en a bougé qu'un&nbsp;: quand le serveur refuse, il doit dire lequel, sinon le geste se défait sans raison visible.</li>
+        <li style="margin-bottom: 9px"><strong style="font-weight: 600">N'envoyer que ce qui a changé</strong>, ou au moins ne pas faire refuser un geste à cause d'un champ qu'on n'a pas touché. C'est la cause réelle de l'ampleur de la panne&nbsp;: sans ça, une borne sur la taille ferme aussi le pinceau.</li>
+        <li style="margin-bottom: 9px"><strong style="font-weight: 600">Éteindre d'office les tables sans objet en dessin</strong> — les couleurs, le nettoyage — avec leur raison écrite, comme le produit sait déjà le faire ailleurs.</li>
+        <li style="margin-bottom: 0"><strong style="font-weight: 600">Revoir les plages des tables qui comptent en pixels.</strong> Un contour de 1 px et un pinceau de 64 de rayon ont un sens sur une case de 64&nbsp;; sur une image de 2048, ce sont des cheveux.</li>
+      </ol>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">avant / après</div>
+        <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">En haut, l'étape des règles du jeu telle qu'elle est : quatre vignettes du même personnage, à sa vraie taille, de 256 à 2048 — on voit le détail monter d'une case à l'autre, et c'est tout l'intérêt de cet écran. Deux portent une pastille verte, deux une pastille rouge. En dessous, les deux murs face à face, avec leur ligne de code chacun, et une croix entre les deux. Puis, en petit, la table de la case telle qu'elle apparaît dans un jeu à 1024 : dix boutons gris, pas un seul marqué. Et sous cette table, le message qu'on reçoit en bougeant un tout autre curseur — « retouche refusée » — sans un mot sur la taille.</div>
+      </div>
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">à ne pas confondre</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">« La finesse » désigne ici la taille du fichier d'une image. Elle n'a rien à voir avec la <strong style="font-weight: 600">finesse du trait</strong> de l'allure du jeu, qui part au modèle avec la demande d'image. Comme pour le mot « contour », deux notions voisines portent presque le même mot&nbsp;: l'une se règle une fois dans les règles du jeu et coûte une génération à changer, l'autre se pose sur chaque image et ne coûte rien.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

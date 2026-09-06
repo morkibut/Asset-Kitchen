@@ -30,6 +30,7 @@ import {
   heure,
   poserLeFichier,
   Refus,
+  type Action,
   type Asset,
   type Envoi,
   type LigneQuiPart,
@@ -85,10 +86,33 @@ import {
 import { ChampPrompt, type EnVol } from "./composants/ChampPrompt"
 import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
+import {
+  Carnet,
+  NOM_DANS_LE_CARNET,
+  derniersJeux,
+  type LigneDeFamille,
+} from "./composants/Carnet"
+import { TableauDeBord } from "./composants/TableauDeBord"
+import { Ouverture } from "./composants/Ouverture"
+import {
+  PILE_INITIALE,
+  dans,
+  entrer,
+  filDAriane,
+  lieu,
+  poser,
+  racine,
+  remonterA,
+  sortir,
+  type Annuaire,
+  type Lieu,
+  type Racine,
+} from "./lieux"
 import { EcranDepenses } from "./composants/Depenses"
 import { EcranEnvoi, TRI_VIDE } from "./composants/Envoi"
 import {
   EcranCodex,
+  FAMILLES,
   NOM_DE_LA_RUBRIQUE,
   type Rubrique,
 } from "./composants/Codex"
@@ -102,6 +126,7 @@ import { EcranAtelierDeBande } from "./composants/AtelierDeBande"
 import { EcranMontage } from "./composants/Montage"
 import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
+import { Barre, fermerBarre, ouvrirBarre, useBarre } from "./composants/Barre"
 import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile, type Entree } from "./composants/Tuile"
 import { EcranUnivers, type Cote } from "./composants/Univers"
@@ -160,6 +185,12 @@ const GOUTTIERE = 9
 // la réparation avec la chose qu'elle répare.
 const REPOS_FRAPPE = 200
 
+// **Le plafond de la grille** (B3), identique à `PAR_DEFAUT` côté serveur
+// (`atelier/services/bibliotheque.py`). « Charger la suite » ne fait que le
+// faire monter : la même requête, plus large, jamais un second appel qui
+// s'additionnerait à la première page.
+const TAILLE_PAGE_GRILLE = 200
+
 /**
  * Un cran tient-il à cette largeur ?
  *
@@ -214,6 +245,12 @@ export function App() {
   // La bibliothèque telle que le serveur l'a filtrée. C'est **lui** qui filtre :
   // la recherche doit porter sur tout, pas sur ce que cet onglet a en mémoire.
   const [grille, setGrille] = useState<Asset[]>([])
+  // **Ce que le filtre courant rendrait sans plafond** (B3). La grille
+  // s'arrêtait à 200 sans le dire — l'auteur croyait avoir tout vu. `null`
+  // tant que le premier `GET /assets` n'a pas répondu : on ne compare jamais
+  // une grille encore vide à un total qu'on n'a pas encore lu.
+  const [totalGrille, setTotalGrille] = useState<number | null>(null)
+  const [limiteGrille, setLimiteGrille] = useState(TAILLE_PAGE_GRILLE)
   const [bibliotheque, setBibliotheque] = useState<Bibliotheque>(BIBLIOTHEQUE_VIDE)
   const [filtre, setFiltre] = useState<Filtre>(FILTRE_VIDE)
   /** La famille qu'on regarde dans la galerie, `""` pour toutes, `"aucune"`
@@ -251,13 +288,54 @@ export function App() {
   //
   // La galerie est l'onglet de départ : c'est l'écran qu'on regardait déjà en
   // arrivant, et un produit ne change pas d'accueil pour se réorganiser.
-  const [onglet, setOnglet] = useState<Onglet>("galerie")
+  //
+  // ── B0 · La pile de lieux ─────────────────────────────────────────────────
+  //
+  // **Ce `useState`-ci est le seul état de navigation du produit.** Les douze
+  // qui suivaient — l'onglet, les dépenses, le clip, le montage, l'atelier de
+  // bande, la confirmation, la carte découpée, le sujet, la case, les tables —
+  // n'ont pas disparu : ils sont **dérivés** de la pile, avec exactement le
+  // même nom, le même type et le même setter. Les deux cents endroits qui les
+  // lisent n'ont pas bougé d'une ligne, et il n'y a plus qu'une vérité.
+  //
+  // Ce que ça change tout de suite : le fil d'Ariane se **lit** au lieu de se
+  // reconstruire (`interface/src/lieux.ts`, `filDAriane`), et un lieu que plus
+  // rien n'ouvre se voit — `decoupeOuverte` avait sept écritures, toutes à
+  // `null`, et son écran était injoignable depuis des jours.
+  const [pile, setPile] = useState<Lieu[]>(() => [...PILE_INITIALE])
+
+  /** L'ouverture (B4) — **prend la fenêtre entière**, comme le parcours de
+   *  création, et ce n'est pas un lieu de la pile : elle ne parle pas d'un
+   *  jeu, elle sert à en choisir un. On y va depuis le nom du jeu, dans le
+   *  carnet ; on en part en choisissant un jeu, en en créant un, ou par
+   *  Échap — la pile, elle, ne bouge pas : il y a toujours un jeu ouvert
+   *  dessous, sauf à l'avoir choisi soi-même.
+   *
+   *  `"creer"` porte en plus l'intention : venir de « + Commencer un jeu »
+   *  pose le focus sur le champ de nom sans qu'on ait à recliquer. */
+  const [choixDuJeu, setChoixDuJeu] = useState<null | "jeux" | "creer">(null)
+
+  /** Le tableau de bord est **le seul lieu neuf de `B0`**, et il n'est pas un
+   *  onglet : c'est le lieu du jeu entier, et le seul chemin de retour. Les
+   *  trois onglets restent, et leurs écrans avec eux, jusqu'à ce que chaque
+   *  tranche de la V4 les reprenne un par un. */
+  const tableauDeBord = racine(pile) === "tableau-de-bord"
+  const onglet: Onglet = tableauDeBord
+    ? "galerie"
+    : (racine(pile) as Exclude<Racine, "tableau-de-bord">)
+  /** Changer d'onglet **repose la pile**, donc remonte de toute profondeur —
+   *  ce que le bloc `onOnglet` faisait à la main en neuf appels. */
+  const setOnglet = (prochain: Onglet) => setPile(poser(prochain))
 
   // **L'écran des dépenses est une profondeur, pas un quatrième onglet** (E18).
   // Il s'ouvre depuis le total de la barre de tête, et le fil dit d'où l'on
   // vient : `Cœur de pierre › Les dépenses`. Il n'a pas de lieu à lui parce
   // qu'il ne parle d'aucun des trois — il parle de l'atelier entier.
-  const [depensesOuvertes, setDepensesOuvertes] = useState(false)
+  const depensesOuvertes = dans(pile, "depenses")
+  const setDepensesOuvertes = (ouvert: boolean) =>
+    setPile((p) =>
+      ouvert ? entrer(p, { genre: "depenses" }) : sortir(p, "depenses"),
+    )
 
   /** **Commander un clip est une profondeur, pas un quatrième onglet** (A9).
    *
@@ -268,7 +346,9 @@ export function App() {
    *
    *  Il tient **la case visée**, jamais un booléen : l'image de départ
    *  proposée, le mouvement proposé et le titre en dépendent tous les trois. */
-  const [clipOuvert, setClipOuvert] = useState<CibleDuClip | null>(null)
+  const clipOuvert = lieu(pile, "clip")?.cible ?? null
+  const setClipOuvert = (cible: CibleDuClip | null) =>
+    setPile((p) => (cible ? entrer(p, { genre: "clip", cible }) : sortir(p, "clip")))
 
   /** **Le clip qu'on est en train de découper** (A10) — l'identifiant de sa
    *  génération, ou rien.
@@ -279,7 +359,11 @@ export function App() {
    *  produit** — contrairement aux trois écrans qui paient —, parce qu'il ne
    *  dépense rien : le clip est déjà payé, et découper se refait autant de fois
    *  qu'on veut. */
-  const [montageOuvert, setMontageOuvert] = useState<string | null>(null)
+  const montageOuvert = lieu(pile, "montage")?.clip ?? null
+  const setMontageOuvert = (clip: string | null) =>
+    setPile((p) =>
+      clip ? entrer(p, { genre: "montage", clip }) : sortir(p, "montage"),
+    )
 
   /** **Le clip dont la fiche est ouverte** (V3.02) — l'identifiant de sa
    *  génération, ou rien.
@@ -294,7 +378,7 @@ export function App() {
   // **L'atelier d'une animation gardée** (A7). Il prend la place de la
   // matrice, comme le montage prend celle de la galerie : on y entre depuis
   // la vignette de l'animation, et rien n'y dépense.
-  const [bandeOuverte, setBandeOuverte] = useState<string | null>(null)
+  const bandeOuverte = lieu(pile, "bande")?.bande ?? null
   /** **Le montage rouvert sur une animation gardée** (V3.03.3) — pour en
    *  changer les images retenues.
    *
@@ -304,14 +388,29 @@ export function App() {
    *  plutôt que son seul identifiant, parce que le montage a besoin de ses
    *  prises — ce qu'on garde retrouve sa recette — et qu'un second aller-retour
    *  au serveur pour ce qu'on vient de lire serait un état de plus à tenir. */
-  const [montageDeLaBande, setMontageDeLaBande] = useState<Bande | null>(null)
+  const montageDeLaBande = lieu(pile, "montage-de-bande")?.bande ?? null
+  const setMontageDeLaBande = (bande: Bande | null) =>
+    setPile((p) =>
+      bande
+        ? entrer(p, { genre: "montage-de-bande", bande })
+        : sortir(p, "montage-de-bande"),
+    )
   /** Ouvrir — ou refermer — l'atelier d'une animation. **Une seule porte**, et
    *  elle referme le montage au passage : sans elle, ouvrir une seconde
    *  animation pendant qu'on remonte la première montrerait le montage de
-   *  celle qu'on vient de quitter. */
+   *  celle qu'on vient de quitter.
+   *
+   *  La pile le tient par construction : `montage-de-bande` est plus haut que
+   *  `bande`, donc entrer dans une autre bande coupe ce qui est au-dessus. */
   const ouvrirLAtelierDeBande = useCallback((identifiant: string | null) => {
-    setMontageDeLaBande(null)
-    setBandeOuverte(identifiant)
+    setPile((p) =>
+      identifiant
+        ? entrer(sortir(p, "montage-de-bande"), {
+            genre: "bande",
+            bande: identifiant,
+          })
+        : sortir(p, "bande"),
+    )
   }, [])
 
   // **Chaque écran replie ses colonnes, et les nomme.** Une seule table pour
@@ -426,7 +525,9 @@ export function App() {
   // **Il s'intercale, il ne remplace pas.** Le bouton reste celui de la barre
   // qui paie, il n'y a toujours qu'un seul endroit d'où l'argent part, et rien
   // n'est dépensé tant que le bouton *de cet écran-là* n'est pas pressé.
-  const [envoiOuvert, setEnvoiOuvert] = useState(false)
+  const envoiOuvert = dans(pile, "envoi")
+  const setEnvoiOuvert = (ouvert: boolean) =>
+    setPile((p) => (ouvert ? entrer(p, { genre: "envoi" }) : sortir(p, "envoi")))
   const [envoi, setEnvoi] = useState<Envoi | null>(null)
   // **Vrai tant que la fenêtre vient de s'ouvrir** (M3) : c'est ce qui fait
   // partir la première demande sans attendre, alors que toutes les suivantes
@@ -462,7 +563,11 @@ export function App() {
   // pouvait jamais en ajouter une — et c'est pourtant le seul endroit du produit
   // qui montre lesquelles partent, donc le seul où l'on s'aperçoit qu'il en
   // manque une.
-  const [choixDeReference, setChoixDeReference] = useState(false)
+  const choixDeReference = dans(pile, "reference")
+  const setChoixDeReference = (ouvert: boolean) =>
+    setPile((p) =>
+      ouvert ? entrer(p, { genre: "reference" }) : sortir(p, "reference"),
+    )
   // **La série qu'on a choisi de ne plus relire.** Une chose et une pose : dès
   // qu'on change de l'une ou de l'autre, l'écran revient. Il n'existe aucune
   // case « pour toujours » — on la cocherait le premier jour, quand on ne sait
@@ -541,7 +646,9 @@ export function App() {
    *  étage, et un étage se dit dans le fil d'Ariane. La découpe d'une planche a
    *  le sien depuis E3 ; celle d'une carte l'aurait perdu, et *Échap* aurait été
    *  la seule porte de sortie d'un écran plein cadre. */
-  const [carteDecoupee, setCarteDecoupee] = useState<Carte | null>(null)
+  const carteDecoupee = lieu(pile, "carte")?.carte ?? null
+  const setCarteDecoupee = (carte: Carte | null) =>
+    setPile((p) => (carte ? entrer(p, { genre: "carte", carte }) : sortir(p, "carte")))
 
   /** Ce que la toile demande d'ouvrir côté Ambiances, ou rien (U7).
    *
@@ -575,11 +682,15 @@ export function App() {
   // arrive par le flux à chaque image produite, et une copie gardée ici serait
   // celle d'avant.
   const [choseChoisie, setChoseChoisie] = useState<string | null>(null)
-  const [choseOuverteId, setChoseOuverte] = useState<string | null>(null)
+  const choseOuverteId = lieu(pile, "sujet")?.sujet ?? null
+  const setChoseOuverte = (sujet: string | null) =>
+    setPile((p) => (sujet ? entrer(p, { genre: "sujet", sujet }) : sortir(p, "sujet")))
   /** L'image dont l'outil est ouvert **en plein cadre dans l'établi** (E2). Un
    *  identifiant, jamais l'objet : l'image continue d'arriver par le flux à
    *  chaque retouche, et une copie gardée ici serait celle d'avant. */
-  const [caseOuverte, setCaseOuverte] = useState<string | null>(null)
+  const caseOuverte = lieu(pile, "case")?.asset ?? null
+  const setCaseOuverte = (asset: string | null) =>
+    setPile((p) => (asset ? entrer(p, { genre: "case", asset }) : sortir(p, "case")))
   /** Quelle table est ouverte. **Elle survit au changement d'image** : on règle
    *  la même place sur six attitudes à la file, et refermer la table à chaque
    *  voisine ferait du geste six gestes. */
@@ -587,7 +698,11 @@ export function App() {
   /** L'image dont les tables sont ouvertes **depuis la galerie** (E4). C'est la
    *  seconde des deux portes de la fiche, et la seule qu'une image sans chose
    *  du jeu possède : les tables s'ouvrent sur n'importe quelle image. */
-  const [tablesOuvertes, setTablesOuvertes] = useState<string | null>(null)
+  const tablesOuvertes = lieu(pile, "tables")?.asset ?? null
+  const setTablesOuvertes = (asset: string | null) =>
+    setPile((p) =>
+      asset ? entrer(p, { genre: "tables", asset }) : sortir(p, "tables"),
+    )
   /** Les réglages de l'appel, repliés au pied de la barre qui paie. Le repli
    *  vit dans le registre du châssis comme tous les autres : il survit au
    *  changement d'onglet, qui démonte l'écran (E1). */
@@ -615,14 +730,23 @@ export function App() {
       .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
       .find((a) => a.identifiant === caseOuverte) ?? null
 
-  // ── T5 : la découpe ───────────────────────────────────────────────────────
+  // ── T5 : la découpe — **retirée en `B0`, parce qu'elle était morte** ──────
   //
-  // **L'identifiant, jamais l'objet.** L'asset ouvert dans l'écran de découpe
-  // continue d'arriver par le flux — une retouche, un rangement, un
-  // réalignement de lot. Gardé en copie, il serait celui d'avant ; gardé en
-  // identifiant, il se relit dans la grille, qui est la seule vérité de cet
-  // onglet. Même règle que la fiche, et pour la même raison.
-  const [decoupeOuverte, setDecoupeOuverte] = useState<string | null>(null)
+  // `decoupeOuverte` portait l'asset ouvert dans l'écran de découpe de la
+  // galerie. Le relevé du 6 septembre 2026 a trouvé **sept écritures, toutes à
+  // `null`** : plus aucune porte ne l'ouvrait. La sienne était le bouton de la
+  // fiche d'une image, retiré quand le découpage est devenu la première des
+  // deux fabriques de la barre des tables — sans que l'état, son écran ni sa
+  // branche de fil d'Ariane partent avec lui.
+  //
+  // ⚠️ **Rien ne pouvait le dire avant.** Une chaîne de ternaires ne signale
+  // pas une branche qu'on n'atteint plus, aucun essai ne vérifie ce qu'un
+  // écran *ne montre pas*, et le compilateur voyait sept usages. C'est la pile
+  // de lieux qui l'a rendu visible : il fallait lui donner un genre, et un
+  // genre où l'on n'entre jamais se remarque tout de suite.
+  //
+  // La découpe d'une planche reste joignable — par la barre des tables, qui
+  // est son vrai chemin depuis `E3`.
 
   /** Le zoom de la grille — 1× / 2× / 4×, `docs/DESIGN.md` § Layout. Il n'est
    *  ni sauvegardé ni partagé : c'est un réglage de coup d'œil, pas une
@@ -718,6 +842,49 @@ export function App() {
     window.addEventListener("keydown", surTouche)
     return () => window.removeEventListener("keydown", surTouche)
   }, [])
+
+  // ── B6 · La barre ─────────────────────────────────────────────────────────
+  //
+  // **Ctrl+K, et Cmd+K sur un Mac.** C'est la touche que tout le monde essaie
+  // en premier, et elle ne sert à rien d'autre dans le produit. Comme le guide,
+  // elle ne prend jamais la main quand on écrit : une barre qui s'ouvre au
+  // milieu d'un prompt fait perdre la phrase.
+  const barreOuverte = useBarre()
+
+  useEffect(() => {
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key !== "k" && e.key !== "K") return
+      if (!e.ctrlKey && !e.metaKey) return
+      e.preventDefault()
+      ouvrirBarre()
+    }
+    window.addEventListener("keydown", surTouche)
+    return () => window.removeEventListener("keydown", surTouche)
+  }, [])
+
+  /** Ce que le serveur sait faire **maintenant**, dans ce jeu-ci.
+   *
+   *  Relu à chaque bascule de jeu et à chaque ouverture de la barre : ce qui
+   *  est proposé dépend de ce que le jeu contient — un personnage créé fait
+   *  paraître quatre gestes —, et une liste vieille de dix minutes montrerait
+   *  des gestes morts ou en cacherait de vivants.
+   *
+   *  **L'écran ne filtre rien** : il affiche ce qu'il reçoit. La règle « ce qui
+   *  ne peut pas se faire ne s'affiche pas » est tenue par le serveur, une
+   *  fois, plutôt que par chaque écran qui lirait la liste. */
+  const [actions, setActions] = useState<Action[]>([])
+
+  useEffect(() => {
+    if (!barreOuverte) return
+    let vivant = true
+    api
+      .actions()
+      .then((recu) => vivant && setActions(recu.actions))
+      .catch(() => vivant && setActions([]))
+    return () => {
+      vivant = false
+    }
+  }, [barreOuverte, bibliotheque.courant])
 
   // **Ce que le flux a besoin de savoir, sans le faire se rebrancher.**
   //
@@ -853,19 +1020,32 @@ export function App() {
 
   const relireGrille = useCallback(async () => {
     try {
-      const { assets } = await api.assets({
+      const { assets, total } = await api.assets({
         ...filtre,
         sansProjet: bibliotheque.courant === null,
+        limite: limiteGrille,
       })
       setGrille(assets)
+      setTotalGrille(total)
     } catch (erreur) {
       echouer(erreur, "la bibliothèque ne répond pas")
     }
-  }, [filtre, bibliotheque.courant])
+  }, [filtre, bibliotheque.courant, limiteGrille])
 
   useEffect(() => {
     void relireGrille()
   }, [relireGrille])
+
+  // **Changer de filtre repart de la première page** (B3) : sans ça, une
+  // recherche neuve hériterait du plafond agrandi par « Charger la suite »
+  // sur la recherche précédente, et montrerait quatre cents images d'un
+  // sujet qui n'en a que huit.
+  useEffect(() => {
+    setLimiteGrille(TAILLE_PAGE_GRILLE)
+  }, [filtre, bibliotheque.courant])
+
+  const chargerLaSuiteGrille = () =>
+    setLimiteGrille((limite) => limite + TAILLE_PAGE_GRILLE)
 
   // ── Le tableau d'inspiration ──────────────────────────────────────────────
   //
@@ -943,6 +1123,48 @@ export function App() {
     void relireProduction()
   }, [relireProduction])
 
+  // ── L'univers, redemandé au changement de jeu (B4) ────────────────────────
+  //
+  // **Le bug de bascule que l'ouverture devait réparer.** `univers` — la
+  // bible, la taille de pixel, la palette, les grisés qui en dérivent — ne
+  // vivait que du premier message du flux et de l'événement `univers` posé
+  // par un réglage : changer de jeu (`ouvrirProjet`) rechargeait la
+  // bibliothèque, jamais lui. L'écran gardait donc la bible et la taille de
+  // pixel du jeu précédent jusqu'à ce que le flux se rebranche — un
+  // rechargement de page, en pratique.
+  //
+  // **De quel jeu `univers` parle en ce moment** — pas un `bibliotheque.courant`
+  // d'avant, un vrai ref posé par les deux messages qui remplissent `univers` :
+  // le premier message du flux et l'événement `univers` d'un réglage. Sans lui,
+  // l'effet du dessous relirait l'univers à *chaque* montage — y compris le
+  // tout premier, où le flux vient tout juste de le servir — et un double de
+  // test qui ne sait répondre qu'un univers par défaut à `GET /universe`
+  // écraserait alors ce que le premier message venait d'installer.
+  const projetDeLUnivers = useRef<string | null>(null)
+
+  const relireUnivers = useCallback(async () => {
+    try {
+      const recu = await api.univers()
+      // **Une réponse qui arrive après qu'on ait changé une seconde fois de
+      // jeu est une réponse périmée** — même piège que la carte et l'asset
+      // qui se fondent par identifiant : elle porte le projet qu'elle
+      // visait, pas celui qu'on regarde maintenant. `""` est la forme que le
+      // serveur donne à « sans projet » ici, faute d'un identifiant à
+      // renvoyer.
+      if ((recu.projet || null) !== vivant.current.courant) return
+      setUnivers(recu.univers)
+      projetDeLUnivers.current = recu.projet || null
+    } catch {
+      // Muet, comme `relireEtat` : l'univers vrai revient de toute façon au
+      // prochain rebranchement du flux.
+    }
+  }, [])
+
+  useEffect(() => {
+    if (projetDeLUnivers.current === bibliotheque.courant) return
+    void relireUnivers()
+  }, [relireUnivers, bibliotheque.courant])
+
   /** Redemander ce que le serveur grise — et lui seul.
    *
    *  La quantification s'allume quand une palette existe (US-65), et c'est le
@@ -1002,6 +1224,7 @@ export function App() {
         }
         setBibliotheque(recu.bibliotheque)
         setUnivers(recu.univers ?? UNIVERS_VIDE)
+        projetDeLUnivers.current = recu.bibliotheque.courant
         empreinteUnivers.current = JSON.stringify(recu.univers ?? UNIVERS_VIDE)
         if (recu.generations) setChantier(recu.generations)
         if (recu.assets) setGrille(recu.assets)
@@ -1014,7 +1237,16 @@ export function App() {
         // pendant son absence est un fait périmé.
         setPanne(null)
       },
-      generation: (recue) => setChantier((liste) => fondre(liste, recue)),
+      // **Scopé au jeu ouvert, comme l'asset juste au-dessus** (B4). Une
+      // génération qui tourne dans un autre projet — un autre onglet, ou
+      // l'agent — arrive sur le même flux : elle n'a rien à faire dans le
+      // chantier qu'on regarde, ni à y rester si on vient de changer de jeu.
+      generation: (recue) =>
+        setChantier((liste) =>
+          recue.projet === vivant.current.courant
+            ? fondre(liste, recue)
+            : liste.filter((g) => g.identifiant !== recue.identifiant),
+        ),
       asset: (recu) => {
         setGrille((liste) =>
           fondreAsset(liste, recu, vivant.current.filtre, vivant.current.courant),
@@ -1145,6 +1377,7 @@ export function App() {
       univers: (recu) => {
         if (recu.projet !== vivant.current.courant) return
         setUnivers(recu.univers)
+        projetDeLUnivers.current = recu.projet
         setTeintes(recu.teintes)
         // Un balayage a changé des recettes, donc des empreintes, donc les
         // adresses des rendus : la grille se redemande une fois, pour le lot.
@@ -1243,6 +1476,12 @@ export function App() {
     // apparaître dans une recherche mentirait sur ce qu'elle a trouvé.
     if (!filtreActif(filtre)) {
       for (const generation of chantier) {
+        // **Le chantier d'un autre jeu ne montre rien ici** (B4). Le flux
+        // filtre déjà ce qui arrive en direct ; ce garde-ci couvre ce qui
+        // était déjà dans le chantier **avant** un changement de jeu — le
+        // premier message du flux ne se rejoue pas à la bascule, seuls les
+        // faits qui suivent le sont.
+        if (generation.projet !== bibliotheque.courant) continue
         // **Une planche qui attend un choix garde sa place** (R6). Elle est
         // réussie — payée, arrivée, entière — mais rien n'est entré en
         // bibliothèque : sans cette ligne, sa tuile disparaîtrait à l'arrivée
@@ -1298,7 +1537,7 @@ export function App() {
     return [...parCle.values()].sort(
       (a, b) => b.date - a.date || a.rang - b.rang,
     )
-  }, [chantier, grille, filtre, famille])
+  }, [chantier, grille, filtre, famille, bibliotheque.courant])
 
   // ── La raison qui rend générer inactif ────────────────────────────────────
 
@@ -2117,9 +2356,6 @@ export function App() {
   ].join(" ")
 
   const ouverte = fiche ? grille.find((a) => a.identifiant === fiche) : undefined
-  const planche = decoupeOuverte
-    ? grille.find((a) => a.identifiant === decoupeOuverte)
-    : undefined
 
   /** **Le clip dont la fiche est ouverte**, relu dans ce que la galerie tient
    *  déjà — jamais un aller-retour pour ouvrir : la fiche se bâtit de ce qui
@@ -2168,6 +2404,29 @@ export function App() {
   const projetCourant =
     bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant) ?? null
 
+  /** Ce que le carnet montre, famille par famille.
+   *
+   *  **Les noms portent leur article** — *Les personnages*, *L'interface* —,
+   *  et c'est ce que la planche écrit. Ce n'est pas de la coquetterie : la
+   *  grille du codex a déjà des boutons nommés *Personnages*, et deux gestes
+   *  différents portant le même nom dans la même fenêtre ne se distinguent ni
+   *  à l'œil ni à l'oreille.
+   *
+   *  ⚠️ **Cinq familles, et la planche en montre six** : *Les terrains* n'en
+   *  est pas une dans le code, et une ligne qui ne mène nulle part serait pire
+   *  qu'une ligne absente. Les terrains arrivent avec les tuiles, hors du
+   *  périmètre de la V4. */
+  const famillesDuCarnet: LigneDeFamille[] = FAMILLES.map((famille) => {
+    const compte = personnages.filter(
+      (p) => (p.famille ?? "personnages") === famille.cle,
+    ).length
+    return {
+      cle: famille.cle,
+      nom: NOM_DANS_LE_CARNET[famille.cle] ?? famille.nom,
+      compte: compte || null,
+    }
+  })
+
   /** Les colonnes que l'écran actif peut replier, **nommées par lui**. La
    *  réserve n'a de bascule qu'en vue toile : sans elle il n'y a pas de
    *  colonne, et une bascule pour une colonne absente mentirait sur ce que
@@ -2193,116 +2452,113 @@ export function App() {
           : []
         : []
 
-  /** Le fil d'Ariane, ou rien. **C'est la porte d'entrée qui le décide**, pas
-   *  l'écran d'arrivée : la découpe atteinte depuis la fiche d'une image porte
-   *  le fil court de la galerie — le jeu, l'onglet, l'image, l'outil — et le
-   *  même écran atteint plus tard depuis l'établi d'une chose portera le fil
-   *  long, qui nommera la famille et l'entité traversées (E3).
+  /**
+   * Comment un lieu se nomme dans le fil — **la seule chose que l'écran ajoute
+   * à la pile.**
    *
-   *  Chaque segment ramène à son étage, sauf le dernier, qui est l'étage où
-   *  l'on est. */
-  const chemin: Segment[] = depensesOuvertes
-    ? [
-        {
-          libelle: projetCourant?.nom ?? "sans projet",
-          onAller: () => setDepensesOuvertes(false),
-        },
-        { libelle: "Les dépenses" },
-      ]
-    : // **Découper une carte du tableau.** Le même fil que la découpe d'une
-      // planche, à un mot près : *Inspiration* au lieu de *Galerie*, parce que
-      // ce ne sont pas les mêmes images et que le produit ne les confond nulle
-      // part. Le dernier segment ne ramène nulle part — c'est l'étage où l'on
-      // est.
-      carteDecoupee
-      ? [
-          {
-            libelle: projetCourant?.nom ?? "sans projet",
-            onAller: () => setCarteDecoupee(null),
-          },
-          { libelle: "Inspiration", onAller: () => setCarteDecoupee(null) },
-          {
-            // Le groupe d'une carte est le seul nom qu'elle porte ; sans
-            // groupe, son identifiant, qui en est un aussi.
-            libelle: carteDecoupee.groupe || carteDecoupee.identifiant,
-            onAller: () => setCarteDecoupee(null),
-          },
-          { libelle: "Découpage" },
+   * Avant `B0`, ce bloc faisait cent lignes et six ternaires imbriqués : il
+   * *devinait* où l'on était en interrogeant dix états d'ouverture les uns
+   * après les autres, dans un ordre de priorité qui n'était écrit nulle part.
+   * Maintenant la pile dit où l'on est, et ceci dit seulement comment ça
+   * s'écrit.
+   *
+   * **Un lieu peut nommer plusieurs étages**, et c'est ce qui garde la pile
+   * courte : l'écran des tables ouvert sur une image de la galerie dit
+   * `Galerie › tonneau-cerclé-02 › Détourage` à lui seul. Le dernier nom est
+   * *cet* étage ; ceux d'avant sont le chemin qui y mène.
+   *
+   * **Les noms sont relus à chaque rendu, jamais gardés dans la pile** : un
+   * sujet renommé garderait sinon son ancien nom dans le fil jusqu'à ce qu'on
+   * remonte.
+   */
+  const nommerLeLieu: Annuaire = (ou, _profondeur, dedans) => {
+    switch (ou.genre) {
+      // Une racine au repos ne donne aucun fil : c'est la barre qui porte
+      // alors le nom du jeu. Le codex fait exception — il nomme la famille
+      // qu'on regarde, et c'est la seule chose qui distingue ses cinq écrans.
+      case "codex": {
+        const sujet = dedans.find((l) => l.genre === "sujet")
+        const chose =
+          sujet && sujet.genre === "sujet"
+            ? personnages.find((p) => p.identifiant === sujet.sujet)
+            : null
+        return (
+          NOM_DE_LA_RUBRIQUE[chose ? (chose.famille ?? "personnages") : rubrique] ??
+          "Personnages"
+        )
+      }
+      case "galerie":
+      case "univers":
+      case "tableau-de-bord":
+        return null
+
+      case "depenses":
+        return "Les dépenses"
+
+      // *Inspiration* et non *Univers* : ce ne sont pas les mêmes images, et le
+      // produit ne les confond nulle part.
+      case "carte":
+        return ["Inspiration", ou.carte.groupe || ou.carte.identifiant, "Découpage"]
+
+      case "sujet": {
+        const chose = personnages.find((p) => p.identifiant === ou.sujet)
+        return chose ? chose.nom : null
+      }
+
+      case "case": {
+        const image = choseOuverte?.cases
+          .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
+          .find((a) => a.identifiant === ou.asset)
+        return image ? image.label : null
+      }
+
+      case "tables": {
+        const image = grille.find((a) => a.identifiant === ou.asset)
+        return [
+          "Galerie",
+          image ? image.label || image.identifiant : ou.asset,
+          TABLES.find((t) => t.cle === table)?.nom ?? "",
         ]
-      : // **La profondeur du codex.** Une chose du jeu ouverte allonge le fil
-      // d'un étage : `Cœur de pierre › Personnages › Balthazar`. C'est le même
-      // endroit vu de plus près, et chaque segment ramène au sien.
-      choseOuverte
-      ? [
-          {
-            libelle: projetCourant?.nom ?? "sans projet",
-            onAller: () => {
-              setCaseOuverte(null)
-              setChoseOuverte(null)
-            },
+      }
+
+      // Les trois écrans qui recouvrent le produit n'ont pas de fil : ils ne
+      // sont pas un endroit où l'on est descendu, ils sont ce qui se passe.
+      case "clip":
+      case "envoi":
+      case "reference":
+      case "montage":
+      case "bande":
+      case "montage-de-bande":
+        return null
+    }
+  }
+
+  /** Le fil d'Ariane, **lu depuis la pile et de nulle part ailleurs**.
+   *
+   *  Chaque étage ramène à sa profondeur, sauf le dernier, qui est l'étage où
+   *  l'on est. Remonter, c'est couper la pile — un seul geste au lieu des
+   *  quatorze remises à zéro que les anciens `onAller` faisaient à la main. */
+  const chemin: Segment[] = filDAriane(
+    pile,
+    projetCourant?.nom ?? "sans projet",
+    nommerLeLieu,
+  ).map((etage) => ({
+    libelle: etage.libelle,
+    onAller:
+      etage.profondeur == null
+        ? undefined
+        : () => {
+            const cible = etage.profondeur as number
+            setPile((p) => remonterA(p, cible))
+            // **Revenir par le nom d'une image la remet en sélection** — donc
+            // rouvre sa fiche —, revenir par le mot *Galerie* ne le fait pas.
+            // Les deux ramènent au même étage : c'est le rang du nom dans son
+            // lieu qui les sépare, pas son libellé.
+            if (etage.de?.genre === "tables" && etage.rang === 1) {
+              setSelection([etage.de.asset])
+            }
           },
-          {
-            // **La famille de la chose ouverte, pas la rubrique** : on peut
-            // ouvrir un décor puis changer de rubrique, et le fil doit dire d'où
-            // vient ce qu'on regarde.
-            libelle:
-              NOM_DE_LA_RUBRIQUE[choseOuverte.famille ?? "personnages"] ??
-              "Personnages",
-            onAller: () => {
-              setCaseOuverte(null)
-              setChoseOuverte(null)
-            },
-          },
-          {
-            libelle: choseOuverte.nom,
-            onAller: () => setCaseOuverte(null),
-          },
-          // L'outil ouvert est un étage de plus, et il ne l'est que quand il
-          // est ouvert : un fil qui montrerait toujours cinq segments dirait
-          // une profondeur où l'on n'est pas.
-          ...(imageOuverte ? [{ libelle: imageOuverte.label }] : []),
-        ]
-      : onglet === "codex"
-        ? [
-            {
-              libelle: projetCourant?.nom ?? "sans projet",
-              onAller: () => setChoseOuverte(null),
-            },
-            { libelle: NOM_DE_LA_RUBRIQUE[rubrique] ?? "Personnages" },
-          ]
-        : imageDesTables
-          ? [
-              {
-                libelle: projetCourant?.nom ?? "sans projet",
-                onAller: () => setTablesOuvertes(null),
-              },
-              { libelle: "Galerie", onAller: () => setTablesOuvertes(null) },
-              {
-                libelle: imageDesTables.label || imageDesTables.identifiant,
-                onAller: () => {
-                  setTablesOuvertes(null)
-                  setSelection([imageDesTables.identifiant])
-                },
-              },
-              { libelle: TABLES.find((t) => t.cle === table)?.nom ?? "" },
-            ]
-          : planche
-      ? [
-          {
-            libelle: projetCourant?.nom ?? "sans projet",
-            onAller: () => setDecoupeOuverte(null),
-          },
-          { libelle: "Galerie", onAller: () => setDecoupeOuverte(null) },
-          {
-            libelle: planche.label || planche.identifiant,
-            onAller: () => {
-              setDecoupeOuverte(null)
-              setSelection([planche.identifiant])
-            },
-          },
-          { libelle: "Découpage" },
-        ]
-      : []
+  }))
 
   /**
    * La barre qui paie — **une seule dans tout le produit** (E2).
@@ -2471,8 +2727,112 @@ export function App() {
     </div>
   )
 
+  /** Ouvrir un jeu — carnet, ouverture, et l'ancien `Arbre` un jour.
+   *
+   *  **Le point dur de `B4`.** `ouvrirProjet` ne rend que la bibliothèque ;
+   *  l'univers, lui, ne suit qu'au prochain rebranchement du flux — c'est
+   *  l'effet posé sur `bibliotheque.courant`, plus haut, qui referme cet
+   *  écart dès que `setBibliotheque` fait avancer cette valeur-ci. Poser la
+   *  réponse tout de suite, plutôt que d'attendre l'annonce du flux, évite
+   *  un aller-retour de plus pour un geste qui se veut immédiat. */
+  const ouvrirJeu = async (identifiant: string | null) => {
+    try {
+      setBibliotheque(await api.ouvrirProjet(identifiant))
+    } catch (erreur) {
+      echouer(erreur, "ce jeu ne s'ouvre pas")
+    }
+  }
+
+  if (choixDuJeu) {
+    return (
+      <Ouverture
+        bibliotheque={bibliotheque}
+        personnages={personnages}
+        plan={plan}
+        autoFocusCreer={choixDuJeu === "creer"}
+        onOuvrir={(identifiant) => {
+          void ouvrirJeu(identifiant)
+          setChoixDuJeu(null)
+        }}
+        onCreer={async (nom) => {
+          const reponse = await api.creerProjet(nom)
+          setBibliotheque(reponse.bibliotheque)
+        }}
+        onSupprimer={async (identifiant) => {
+          const reponse = await api.supprimerProjet(identifiant)
+          setBibliotheque(reponse.bibliotheque)
+        }}
+        onReconstruire={async () => {
+          const reponse = await api.reconstruire()
+          setBibliotheque(reponse.bibliotheque)
+        }}
+        onFermer={() => setChoixDuJeu(null)}
+        onGuide={() => ouvrirGuide()}
+        onInstallation={() => setReglagesOuverts(true)}
+        onErreur={setPanne}
+      />
+    )
+  }
+
   return (
-    <div className="grid h-full grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
+    <div className="flex h-full bg-papier">
+      {/* ── Le carnet — 300 px, à gauche, **jamais recouvert** ──────────────
+          C'est la première pièce du châssis de la V4, et la seule règle qu'elle
+          impose au reste tient en une phrase : *il ne se ferme jamais tout
+          seul*. Aucun écran de travail ne prend la fenêtre entière, même
+          pendant une génération — on peut aller voir ailleurs et revenir.
+
+          **Il double les chemins, il n'en retire aucun.** Les trois onglets
+          sont toujours là, avec leurs écrans, et chaque tranche de la V4 en
+          reprendra un. C'est ce qui permet aux 784 essais d'écran de continuer
+          de naviguer comme avant pendant que le carnet se construit. */}
+      <Carnet
+        jeu={projetCourant?.nom ?? "sans projet"}
+        seconde={
+          bibliotheque.projets.length === 0
+            ? "aucun jeu"
+            : `${projetCourant?.assets ?? 0} images`
+        }
+        familles={famillesDuCarnet}
+        regles={cartes.length || null}
+        images={projetCourant?.assets ?? 0}
+        depense={
+          projetCourant ? projetCourant.total_usd : bibliotheque.sans_projet.total_usd
+        }
+        autresJeux={derniersJeux(bibliotheque.projets, bibliotheque.courant)}
+        ouvert={
+          tableauDeBord
+            ? "jeu"
+            : depensesOuvertes
+              ? "depenses"
+              : onglet === "univers"
+                ? "univers"
+                : onglet === "codex"
+                  ? rubrique
+                  : "galerie"
+        }
+        surLeJeu={() => setPile(poser("tableau-de-bord"))}
+        surLaFamille={(cle) => {
+          setPile(poser("codex"))
+          setRubrique(cle as Rubrique)
+        }}
+        surLesRegles={() => setPile(poser("univers"))}
+        surLaGalerie={() => setPile(poser("galerie"))}
+        surLesDepenses={() => {
+          setFente(null)
+          setDepensesOuvertes(true)
+        }}
+        surUnAutreJeu={(identifiant) => void ouvrirJeu(identifiant)}
+        surTousLesJeux={() => setChoixDuJeu("jeux")}
+        surCommencerUnJeu={() => setChoixDuJeu("creer")}
+        surLaBarre={ouvrirBarre}
+        surLeGuide={() => ouvrirGuide()}
+        surLInstallation={() => setReglagesOuverts(true)}
+        atelierMuet={!liaison}
+        cleAbsente={etat ? !etat.secrets.some((t) => t.pret) : false}
+      />
+
+      <div className="grid min-w-0 flex-1 grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
       <BarreChassis
         onglet={onglet}
         onOnglet={(prochain) => {
@@ -2491,7 +2851,6 @@ export function App() {
           // venait de voir qu'elle manquait. Sortir n'est pas demander autre
           // chose — c'est `signatureDeLAppel` qui dit ce qu'est un autre appel,
           // et elle est relue à la réouverture.
-          setDecoupeOuverte(null)
           setCarteDecoupee(null)
           setDepensesOuvertes(false)
           setClipOuvert(null)
@@ -2516,7 +2875,6 @@ export function App() {
         // grisé tant que cet écran n'existait pas ; il l'a perdue en E18, qui
         // est très exactement l'endroit où elle devait disparaître.
         onDepenses={() => {
-          setDecoupeOuverte(null)
           setFente(null)
           setDepensesOuvertes(true)
         }}
@@ -2751,12 +3109,41 @@ export function App() {
         </div>
       )}
 
+      {/* ── Le tableau de bord du jeu — le seul lieu que `B0` branche ──────
+          Il prend la surface, jamais la fenêtre : le carnet reste à gauche. Il
+          n'a pas de fil d'Ariane, parce qu'il est le haut du jeu — c'est de lui
+          qu'on descend, et c'est vers lui qu'on remonte. */}
+      {tableauDeBord && !depensesOuvertes && !envoiOuvert && !clipOuvert && (
+        <TableauDeBord
+          jeu={projetCourant?.nom ?? "sans projet"}
+          images={projetCourant?.assets ?? 0}
+          depense={
+            projetCourant
+              ? projetCourant.total_usd
+              : bibliotheque.sans_projet.total_usd
+          }
+          generations={null}
+          familles={famillesDuCarnet}
+          feuilleEnAttente={
+            chantier.find((g) => g.pliage?.attend_un_choix === true) ?? null
+          }
+          surLaFamille={(cle) => {
+            setPile(poser("codex"))
+            setRubrique(cle as Rubrique)
+          }}
+          surDemanderUneImage={() => setPile(poser("codex"))}
+          // **La galerie montre déjà la tuile en attente** (elle en tient le
+          // chantier) : B5 n'ouvre donc aucun lieu de plus, elle y ramène.
+          surAllerDecouper={() => setPile(poser("galerie"))}
+        />
+      )}
+
       {/* **Les tables, à la profondeur de la galerie.** Une image qui
           n'appartient à aucune chose du jeu n'a pas d'établi ; elle a quand
           même une recette, et il faut un endroit pour la régler. Ses sœurs sont
           alors les voisines de la grille, ce que la maquette du châssis prévoit
           en toutes lettres. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "galerie" && imageDesTables && etat && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && onglet === "galerie" && imageDesTables && etat && (
         <EcranTables
           asset={imageDesTables}
           soeurs={grille}
@@ -2786,21 +3173,6 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "galerie" && !imageDesTables && planche && (
-        <EcranDecoupe
-          sujet={{
-            famille: "planche",
-            planche,
-            onDecoupe: (decoupes) => {
-              setDecoupeOuverte(null)
-              if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
-            },
-          }}
-          onFermer={() => setDecoupeOuverte(null)}
-          onFente={setFente}
-        />
-      )}
-
       {/* Quatre colonnes, largeurs absolues, et 160 ms sur la largeur quand
           l'une se replie ou que la fiche s'ouvre — `docs/DESIGN.md` § Motion,
           « tu n'as pas perdu ta place ». Les panneaux restent montés : replier
@@ -2808,7 +3180,8 @@ export function App() {
           partie de ce que le mouvement promet.
 
           **Chaque case est `flex`, et c'est ce qui borne le panneau qu'elle
-          porte** — `docs/DESIGN.md` § Un panneau est borné par l'écran. Une case
+          porte** — `docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Six
+          règles de comportement, la première. Une case
           de grille est haute comme sa piste, mais un `aside` posé dedans en
           bloc reste haut comme *son contenu* : son `overflow-y-auto` intérieur
           n'a alors rien à contraindre, et l'`overflow-hidden` de la case rogne
@@ -2832,7 +3205,7 @@ export function App() {
           par l'écran, jamais par son contenu » interdit. La retirer répare les
           deux d'un coup, et elle ne perd rien en partant : ce qu'elle tient vit
           dans `App`, pas dans son montage. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "galerie" && !planche &&
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && onglet === "galerie" &&
         !imageDesTables && (
       <main
         className="grid min-h-0"
@@ -2939,6 +3312,25 @@ export function App() {
           />
           )}
 
+          {/* **La grille dit quand elle est coupée** (B3). Elle s'arrêtait à
+              200 images sans le dire, et l'auteur croyait avoir tout vu — une
+              liste tronquée qui ne le dit pas ment en silence (`docs/DESIGN.md`
+              § Les six règles, 6). Absent tant que tout ce qui répond au
+              filtre est déjà montré. */}
+          {totalGrille !== null && grille.length < totalGrille && (
+            <p className="mesure flex h-[26px] shrink-0 items-center gap-1.5 border-t border-bord px-4 text-[10px] text-texte-3">
+              <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
+              {`${grille.length} montrées sur ${totalGrille}`}
+              <button
+                type="button"
+                onClick={chargerLaSuiteGrille}
+                className="mesure ml-auto text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+              >
+                Charger la suite ›
+              </button>
+            </p>
+          )}
+
           {/* **Le pied de la galerie dit qu'aucun appel ne part d'ici** (E4).
               De quoi savoir d'un coup d'œil dans quelle moitié du produit on se
               trouve : ici on juge et on range, on ne paie jamais. La phrase
@@ -2967,12 +3359,18 @@ export function App() {
               // appartient — un onglet plus loin, à la profondeur de la
               // chose —, et les tables, qui s'ouvrent sur n'importe quelle
               // image sans quitter la galerie.
+              /* ⚠️ **Le lieu d'abord, la profondeur ensuite** — depuis `B0`.
+                 Poser une racine repose la pile, donc efface ce qui était
+                 au-dessus : descendre puis changer de lieu perdait la
+                 descente. Avec douze états indépendants l'ordre ne comptait
+                 pas ; avec une pile il compte, et c'est le bon sens de
+                 lecture — on va quelque part, puis on y descend. */
               onOuvrirLEtabli={() => {
                 if (!ouverte.personnage) return
+                setOnglet("codex")
                 setChoseOuverte(ouverte.personnage)
                 setChoseChoisie(ouverte.personnage)
                 setCaseOuverte(ouverte.identifiant)
-                setOnglet("codex")
               }}
               onOuvrirLesTables={() => setTablesOuvertes(ouverte.identifiant)}
               onOuvrir={(identifiant) => setSelection([identifiant])}
@@ -3304,6 +3702,60 @@ export function App() {
           peut pas échouer. On ne pose pas une fente vide pour la symétrie. */}
       {guideOuvert && <EcranGuide onFermer={fermerGuide} />}
 
+      {/* **La barre est la troisième zone du châssis** (B6) : par-dessus le
+          carnet et la surface, appelée au clavier, jamais à côté d'eux.
+
+          **Elle ne paie ni ne lance rien**, et ce n'est pas gardé ici : une
+          action qui coûte arrive du serveur sans route, donc `surJouer` ne peut
+          pas la prendre. Ce qui s'ouvre alors est l'écran d'envoi, où le prix
+          est sous les yeux. */}
+      {barreOuverte && (
+        <Barre
+          actions={actions}
+          personnages={personnages}
+          pieces={pieces}
+          images={grille}
+          chantier={chantier}
+          plan={plan}
+          surUnPersonnage={(identifiant) => {
+            setPile(poser("codex"))
+            setRubrique("personnages")
+            setChoseOuverte(identifiant)
+          }}
+          surUnePiece={() => {
+            setPile(poser("codex"))
+            setRubrique("objets")
+          }}
+          surUneImage={(identifiant) => {
+            setPile(poser("galerie"))
+            setTablesOuvertes(identifiant)
+          }}
+          surUneGeneration={() => setPile(poser("galerie"))}
+          surUnLieu={(ou) => {
+            // **Six destinations, et le défaut est la galerie.** Un `ou` que
+            // cet écran ne connaît pas — parce qu'un outil neuf en a déclaré un
+            // — mène quelque part plutôt que nulle part.
+            if (ou === "codex") setPile(poser("codex"))
+            else if (ou === "univers") setPile(poser("univers"))
+            else if (ou === "depenses") setDepensesOuvertes(true)
+            else if (ou === "reglages") setReglagesOuverts(true)
+            else if (ou === "jeux") setChoixDuJeu("jeux")
+            else setPile(poser("galerie"))
+          }}
+          surEnvoi={() => setEnvoiOuvert(true)}
+          surJouer={(action) => {
+            // Gratuit, sur place, et par la route que le serveur a servie. Ce
+            // qui revient n'est pas lu : le flux d'événements annonce déjà ce
+            // que l'atelier vient de faire, et le relire ici en ferait deux
+            // vérités.
+            void api
+              .jouerUneAction(action.route)
+              .catch((erreur) => echouer(erreur, "ce geste n'a pas abouti"))
+          }}
+          onFermer={fermerBarre}
+        />
+      )}
+
       {reglagesOuverts && etat && (
         <EcranReglages
           tiroirs={etat.secrets}
@@ -3332,6 +3784,7 @@ export function App() {
           referme, et on n'a rien quitté. Il ne porte pas de fente de refus,
           pour la même raison que le Guide : il ne demande rien au serveur. */}
       {apercu && <Apercu sujet={apercu} onFermer={fermerApercu} />}
+      </div>
     </div>
   )
 }
@@ -3404,16 +3857,16 @@ function Cible({
       <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
         Pour
       </span>
-      <span className="flex flex-wrap items-center gap-1.5 rounded-[2px] border border-signal bg-signal/13 py-1 pr-1 pl-2">
+      <span className="flex flex-wrap items-center gap-1.5 rounded-[2px] border border-ancien-signal bg-ancien-signal/13 py-1 pr-1 pl-2">
         <span className="text-[11.5px] text-texte">{personnage.nom}</span>
         {poses.map((pose) => (
           <span key={pose.identifiant} className="flex items-center">
-            <span className="mesure text-[10px] text-signal">{pose.nom}</span>
+            <span className="mesure text-[10px] text-ancien-signal">{pose.nom}</span>
             <button
               type="button"
               onClick={() => onRetirer(pose)}
               aria-label={`Retirer ${pose.nom} de ce qui part`}
-              className="mesure px-1 text-[10px] text-texte-3 hover:text-echec"
+              className="mesure px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
             >
               ×
             </button>
@@ -3435,7 +3888,7 @@ function Cible({
           type="button"
           onClick={onDesarmer}
           aria-label="Ne plus viser ces cases"
-          className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-echec"
+          className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
         >
           tout retirer
         </button>
@@ -3544,7 +3997,7 @@ function UneReinjection({
         type="button"
         onClick={() => onRetirer(asset)}
         aria-label="Retirer la réinjection"
-        className="mesure px-1 text-[10px] text-texte-3 hover:text-echec"
+        className="mesure px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
       >
         ×
       </button>
@@ -3619,7 +4072,7 @@ function Grille({
         <button
           type="button"
           onClick={onRetirerFiltre}
-          className="mesure text-[11px] text-signal hover:text-signal-clair"
+          className="mesure text-[11px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           Retirer le filtre ›
         </button>
@@ -3712,7 +4165,7 @@ function autresDuLot(entrees: Entree[], entree: Entree): number {
  *  entrer sa première image, et une surface qui n'accepterait le dépôt qu'une
  *  fois pleine serait fermée quand elle sert le plus. */
 const cadreDepot = (survole: boolean) =>
-  survole ? "outline outline-1 -outline-offset-1 outline-signal" : ""
+  survole ? "outline outline-1 -outline-offset-1 outline-ancien-signal" : ""
 
 /** La grille se nomme, dans ses trois états.
  *
@@ -3749,12 +4202,12 @@ function BarreEtat({
   // arrêté (liaison rompue), le fournisseur est injoignable (repli), ou tout
   // va bien. La première l'emporte — sans serveur, le reste ne veut rien dire.
   const [couleur, texte] = !liaison
-    ? ["var(--color-echec)", "l'atelier ne répond pas"]
+    ? ["var(--color-ancien-echec)", "l'atelier ne répond pas"]
     : panne
-      ? ["var(--color-echec)", panne]
+      ? ["var(--color-ancien-echec)", panne]
       : catalogue.repli
         ? ["var(--color-epingle)", "hors ligne"]
-        : ["var(--color-ok)", "en ligne"]
+        : ["var(--color-ancien-ok)", "en ligne"]
 
   const assets =
     bibliotheque.projets.reduce((somme, p) => somme + p.assets, 0) +

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de R6 — la planche qui revient de travers.
 
-Un test par critère de `docs/PLAN.md` § R6, nommé d'après lui.
+Un test par critère de `docs/archive/plan-r6-a-v3.02.md` § R6, nommé d'après lui.
 
 **Deux défauts, un seul geste.** Le premier jetait de l'argent en le disant :
 une planche qui rendait neuf sujets pour huit était refusée entière et se

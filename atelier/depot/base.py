@@ -537,6 +537,40 @@ class Base:
             return None
         return Asset.depuis_json(json.loads(ligne["contenu"]))
 
+    @staticmethod
+    def _conditions_assets(
+        *,
+        projet: str | None,
+        sans_projet: bool,
+        collection: str | None,
+        favoris: bool,
+        recherche: str,
+        supprimes: bool,
+    ) -> tuple[list[str], list[Any]]:
+        """Le filtre de la grille, bâti une seule fois.
+
+        **Partagé par `assets()` et `compter_assets()`** — sans quoi les deux
+        finiraient par diverger, exactement le défaut que ce fichier interdit
+        en tête : une grille qui montre 200 images et un total qui n'aurait pas
+        compté les mêmes.
+        """
+        conditions = ["supprime_le IS NOT NULL" if supprimes else "supprime_le IS NULL"]
+        arguments: list[Any] = []
+        if sans_projet:
+            conditions.append("projet IS NULL")
+        elif projet is not None:
+            conditions.append("projet = ?")
+            arguments.append(projet)
+        if collection is not None:
+            conditions.append("collection = ?")
+            arguments.append(collection)
+        if favoris:
+            conditions.append("favori = 1")
+        if recherche.strip():
+            conditions.append("recherche LIKE ?")
+            arguments.append("%" + normaliser(recherche.strip()) + "%")
+        return conditions, arguments
+
     def assets(
         self,
         *,
@@ -559,21 +593,14 @@ class Base:
         Un asset supprimé est **hors bibliothèque** tant que son annulation
         court : il ne se compte pas, ne se cherche pas, ne se filtre pas.
         """
-        conditions = ["supprime_le IS NOT NULL" if supprimes else "supprime_le IS NULL"]
-        arguments: list[Any] = []
-        if sans_projet:
-            conditions.append("projet IS NULL")
-        elif projet is not None:
-            conditions.append("projet = ?")
-            arguments.append(projet)
-        if collection is not None:
-            conditions.append("collection = ?")
-            arguments.append(collection)
-        if favoris:
-            conditions.append("favori = 1")
-        if recherche.strip():
-            conditions.append("recherche LIKE ?")
-            arguments.append("%" + normaliser(recherche.strip()) + "%")
+        conditions, arguments = self._conditions_assets(
+            projet=projet,
+            sans_projet=sans_projet,
+            collection=collection,
+            favoris=favoris,
+            recherche=recherche,
+            supprimes=supprimes,
+        )
 
         with self._connexion() as connexion:
             lignes = connexion.execute(
@@ -588,6 +615,37 @@ class Base:
                 (*arguments, limite),
             ).fetchall()
         return [Asset.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
+    def compter_assets(
+        self,
+        *,
+        projet: str | None = None,
+        sans_projet: bool = False,
+        collection: str | None = None,
+        favoris: bool = False,
+        recherche: str = "",
+        supprimes: bool = False,
+    ) -> int:
+        """Combien la grille tiendrait sans son plafond (B3).
+
+        **La grille s'arrêtait à 200 sans le dire** — l'auteur croyait avoir
+        tout vu. Ce compte est ce qui permet d'écrire « 200 montrées sur 486 » :
+        même filtre que `assets()`, sans le `LIMIT`.
+        """
+        conditions, arguments = self._conditions_assets(
+            projet=projet,
+            sans_projet=sans_projet,
+            collection=collection,
+            favoris=favoris,
+            recherche=recherche,
+            supprimes=supprimes,
+        )
+        with self._connexion() as connexion:
+            ligne = connexion.execute(
+                "SELECT COUNT(*) AS total FROM assets WHERE " + " AND ".join(conditions),
+                arguments,
+            ).fetchone()
+        return int(ligne["total"])
 
     def assets_recents(self, limite: int = 200) -> list[Asset]:
         return self.assets(limite=limite)

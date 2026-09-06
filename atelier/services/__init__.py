@@ -46,6 +46,7 @@ from atelier.services.bibliotheque import (
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.reserves import ServiceReserves
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
+from atelier.services.miroir import MiroirRefuse, ServiceMiroir
 from atelier.services.etiquettes import EtiquetteRefusee, ServiceEtiquettes
 from atelier.services.mouvements import MouvementRefuse, ServiceMouvements
 from atelier.services.superposition import ServiceSuperposition, SuperpositionRefusee
@@ -110,6 +111,8 @@ __all__ = [
     "ServiceBibliotheque",
     "ServiceCatalogue",
     "ServiceDecoupe",
+    "MiroirRefuse",
+    "ServiceMiroir",
     "ServiceAnimation",
     "ServiceEtiquettes",
     "ServiceMouvements",
@@ -197,7 +200,7 @@ ANIMATEURS: list[Callable[[], PortAnimateur]] = [_openrouter_video, _maison]
 
 # **L'ordre est celui de la liste des modèles à l'écran, et il est délibéré** :
 # le payant d'abord, parce que c'est lui qui porte les univers et que le gratuit
-# est un brouillon (`docs/PLAN.md` § V2.2 — *ce qui n'est pas une raison*). Il
+# est un brouillon (`docs/archive/plan-versions-tenues.md` § V2.2 — *ce qui n'est pas une raison*). Il
 # décide aussi du repli du défaut quand aucune clé n'est déposée : on descend la
 # liste jusqu'au premier modèle utilisable, et c'est ainsi qu'une machine neuve
 # tombe sur celui qui ne demande rien.
@@ -272,6 +275,13 @@ class Atelier:
         # ranger : il ne connaît ni le catalogue, ni l'univers, ni le
         # fournisseur. C'est ce qui fait qu'une planche se découpe réseau coupé.
         self.decoupe = ServiceDecoupe(
+            self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
+        )
+        # **La troisième fabrique, au même rang et pour la même raison** (B1) :
+        # retourner une image déjà payée ne demande ni catalogue ni fournisseur,
+        # et c'est très exactement ce qui fait qu'une direction cesse de se
+        # payer deux fois.
+        self.miroir = ServiceMiroir(
             self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
         )
         # **La base d'étiquettes ne connaît ni projet ni fournisseur** : elle

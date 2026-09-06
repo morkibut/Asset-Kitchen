@@ -554,7 +554,7 @@ export function EcranEnvoi({
               type="button"
               onClick={() => onReprendre(envoi.texte)}
               disabled={!envoi.texte}
-              className="mesure h-[26px] self-start text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
+              className="mesure h-[26px] self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
             >
               Reprendre le texte ›
             </button>
@@ -661,7 +661,7 @@ export function EcranEnvoi({
                   grise rien : c'est le seul état de l'écran d'où le bon geste
                   est de recommencer. */}
               {echec && (
-                <p className="mesure text-[10px] leading-4 text-echec">
+                <p className="mesure text-[10px] leading-4 text-ancien-echec">
                   {echec} — rien n'a été facturé, on peut relancer.
                 </p>
               )}
@@ -723,7 +723,7 @@ export function EcranEnvoi({
                     <input
                       type="checkbox"
                       onChange={(e) => onSauter(e.target.checked)}
-                      className="h-3 w-3 accent-signal"
+                      className="h-3 w-3 accent-ancien-signal"
                     />
                     <span>ne plus me le montrer pour cette série</span>
                   </label>
@@ -843,7 +843,7 @@ function SectionFond({
             <button
               type="button"
               onClick={() => onFond(propose.couleur)}
-              className="mesure text-[10px] text-signal hover:text-signal-clair"
+              className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
             >
               Prendre {propose.nom || propose.couleur}
             </button>
@@ -943,7 +943,7 @@ function Ligne({
             !ligne.eteignable
               ? "border-texte-3 bg-texte-3"
               : ligne.allumee
-                ? "border-signal bg-signal"
+                ? "border-ancien-signal bg-ancien-signal"
                 : "border-bord-fort",
           ].join(" ")}
         />
@@ -977,7 +977,7 @@ function Ligne({
                   setBrouillon(null)
                   onRemettre()
                 }}
-                className="mesure text-[10px] text-signal hover:text-signal-clair"
+                className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
               >
                 remettre
               </button>
@@ -988,7 +988,7 @@ function Ligne({
               <button
                 type="button"
                 onClick={onGarder}
-                className="mesure text-[10px] text-signal hover:text-signal-clair"
+                className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
               >
                 garder sur la chose ›
               </button>
@@ -1001,7 +1001,7 @@ function Ligne({
                 setBrouillon(null)
                 setOuvert((o) => !o)
               }}
-              className="mesure text-[10px] text-signal hover:text-signal-clair"
+              className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
             >
               {ouvert ? "fermer" : "corriger"}
             </button>
@@ -1018,7 +1018,7 @@ function Ligne({
             }}
             rows={2}
             aria-label={`Corriger ${ligne.nom}`}
-            className="mesure min-h-[44px] resize-y rounded-[2px] border border-signal bg-fond-2 px-2 py-1 text-[10.5px] leading-[1.45] text-texte"
+            className="mesure min-h-[44px] resize-y rounded-[2px] border border-ancien-signal bg-fond-2 px-2 py-1 text-[10.5px] leading-[1.45] text-texte"
           />
         ) : (
           <TexteQuiPart texte={ligne.texte} allumee={ligne.allumee} />
@@ -1091,7 +1091,7 @@ function TexteQuiPart({ texte, allumee }: { texte: string; allumee: boolean }) {
         <button
           type="button"
           onClick={() => setOuvert((o) => !o)}
-          className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+          className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           {ouvert
             ? "replier"
@@ -1154,7 +1154,7 @@ function LigneImage({
           aria-hidden
           className={[
             "block h-[9px] w-[9px] rounded-[1px] border",
-            image.cochee ? "border-signal bg-signal" : "border-bord-fort",
+            image.cochee ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort",
           ].join(" ")}
         />
       </button>
@@ -1349,7 +1349,7 @@ function LigneOption({
             option.refus
               ? "border-texte-3"
               : option.allumee
-                ? "border-signal bg-signal"
+                ? "border-ancien-signal bg-ancien-signal"
                 : "border-bord-fort",
           ].join(" ")}
         />

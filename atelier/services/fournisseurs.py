@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les fournisseurs du produit, et le seul endroit qui sache lesquels.
 
-Arrivé en F1 (`docs/PLAN.md` § V2.2). Jusque-là il n'y en avait qu'un, et le
+Arrivé en F1 (`docs/archive/plan-versions-tenues.md` § V2.2). Jusque-là il n'y en avait qu'un, et le
 produit disait « le fournisseur ». Il y en a deux, et il en viendra d'autres :
 ce qui se dit désormais est **celui de ce modèle-là**.
 

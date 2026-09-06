@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """A10 — un clip payé devient plusieurs bandes.
 
-Les critères de `docs/PLAN.md` § A10. **Aucun n'appelle un vrai fournisseur** :
+Les critères de `docs/archive/plan-r6-a-v3.02.md` § A10. **Aucun n'appelle un vrai fournisseur** :
 le clip d'ici est fabriqué sur place, image par image, de sorte qu'on sache
 exactement ce qu'il contient — un moment immobile, puis un aller-retour qui se
 referme. C'est la seule façon de mesurer une détection de rythme : sur un vrai

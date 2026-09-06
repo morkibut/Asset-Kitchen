@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f7f3ec; }
+    a { color: #a8492c; }
+    .k, .k * { box-sizing: border-box; }
+    .k { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #221f1b; }
+    .serif { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #948c80; }
+    .rl { display: flex; align-items: center; justify-content: space-between; height: 30px; padding: 0 10px; border-radius: 5px; font-size: 14px; color: #3d382f; }
+    .rl-sub { display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 10px 0 22px; border-radius: 5px; font-size: 13px; color: #6d675e; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #948c80; }
+    .bt { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 7px; font-size: 13px; background: #fffdfa; border: 1px solid #ddd5c8; color: #3d382f; }
+    .bt-p { background: #a8492c; color: #fff8f4; border-color: #a8492c; font-weight: 500; }
+    .bt-x { background: transparent; border-color: transparent; color: #6d675e; }
+    .bt-off { background: #f2ede4; border-color: #e2dbd0; color: #b0a89b; }
+    .ong { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 7px; font-size: 13.5px; color: #6d675e; }
+    .ong-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .seg { display: inline-flex; gap: 3px; padding: 3px; background: #ece6db; border-radius: 9px; }
+    .sg { height: 29px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; color: #6d675e; }
+    .sg-on { background: #fffdfa; border: 1px solid #ddd5c8; color: #221f1b; font-weight: 500; }
+    .ch { height: 34px; display: flex; align-items: center; padding: 0 11px; border-radius: 7px; background: #fffdfa; border: 1px solid #ddd5c8; font-size: 13px; color: #221f1b; }
+    .carte { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; }
+    .damier { background: repeating-conic-gradient(#e4dfd4 0% 25%, #ece7dc 0% 50%) 0 0 / 14px 14px; }
+    .vide { border: 1px dashed #c9c2b6; border-radius: 8px; }
+    .glis { height: 5px; border-radius: 3px; background: #ddd5c8; position: relative; }
+    .glis i { position: absolute; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fffdfa; border: 2px solid #a8492c; }
+    .fig { display: block; width: 30px; height: 40px; background: var(--a); border-radius: 5px 5px 3px 3px; position: relative }
+    .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f }
+
+  </style>
+</helmet>
+
+<div class="k" style="width:1600px; background:#f7f3ec; padding:38px 34px 46px; display:flex; flex-direction:column; gap:34px">
+
+  <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:30px">
+    <div style="display:flex; flex-direction:column; gap:6px; max-width:900px">
+      <div class="rt">les animations</div>
+      <h1 class="serif" style="margin:0; font-size:46px; line-height:1.02">Le chemin d'une animation</h1>
+      <div style="font-size:15px; line-height:1.55; color:#4e483f">
+        Une animation ne se demande pas directement. On paie une courte vid&eacute;o, on taille dedans, on nettoie,
+        et on choisit. Sept &eacute;tapes, dont une seule co&ucirc;te.
+      </div>
+    </div>
+    <div style="flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:5px">
+      <div class="rt">une marche compl&egrave;te</div>
+      <div class="serif" style="font-size:34px; color:#a8492c">$0,10</div>
+      <div style="font-size:12px; color:#6d675e; text-align:right; max-width:220px">
+        Et $0,03 si le m&ecirc;me clip sert &agrave; trois animations.
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:16px">
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:10px;
+                  ">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+          <span class="mono" style="font-size:11px; color:#948c80">1 sur 7</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px">
+          <span class="serif" style="font-size:21px; line-height:1.1">La case vide</span>
+          <span style="font-size:11.5px; color:#948c80">l'&eacute;cran &laquo;&nbsp;Ses animations&nbsp;&raquo;</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f; flex:1">On choisit une pose et une direction. Rien n'est encore demand&eacute;.</div>
+        <div style="border-top:1px solid #ece6db; padding-top:9px; font-size:13px; color:#5c7a52; font-weight:500">gratuit</div>
+      </div>
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:10px;
+                  border-color:#a8492c; border-width:2px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+          <span class="mono" style="font-size:11px; color:#948c80">2 sur 7</span><span class="puce p-non" style="border-color:#dcbcb2">seule d&eacute;pense</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px">
+          <span class="serif" style="font-size:21px; line-height:1.1">Demander un clip</span>
+          <span style="font-size:11.5px; color:#948c80">l'&eacute;cran &laquo;&nbsp;Demander un clip&nbsp;&raquo;</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f; flex:1">Une vid&eacute;o de 5&nbsp;secondes faite &agrave; partir d'une image fixe du personnage. On peut en demander 1, 2, 4 ou 8 d'un coup.</div>
+        <div style="border-top:1px solid #ece6db; padding-top:9px; font-size:13px; color:#a8492c; font-weight:500">$0,10 le clip</div>
+      </div>
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:10px;
+                  ">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+          <span class="mono" style="font-size:11px; color:#948c80">3 sur 7</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px">
+          <span class="serif" style="font-size:21px; line-height:1.1">Le clip arrive</span>
+          <span style="font-size:11.5px; color:#948c80">l'&eacute;cran &laquo;&nbsp;Le clip&nbsp;&raquo;</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f; flex:1">Une centaine d'images en sortent. Si plusieurs ont &eacute;t&eacute; demand&eacute;s, on garde le meilleur et on &eacute;carte les autres &mdash; le geste s'annule.</div>
+        <div style="border-top:1px solid #ece6db; padding-top:9px; font-size:13px; color:#5c7a52; font-weight:500">gratuit</div>
+      </div>
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:10px;
+                  ">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+          <span class="mono" style="font-size:11px; color:#948c80">4 sur 7</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px">
+          <span class="serif" style="font-size:21px; line-height:1.1">Le montage</span>
+          <span style="font-size:11.5px; color:#948c80">l'&eacute;cran &laquo;&nbsp;Le montage&nbsp;&raquo;</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f; flex:1">On prend les images qui font le geste. C'est ici qu'on d&eacute;cide si le mouvement est bon, sur l'image brute. Un clip donne plusieurs animations.</div>
+        <div style="border-top:1px solid #ece6db; padding-top:9px; font-size:13px; color:#5c7a52; font-weight:500">gratuit</div>
+      </div>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:16px">
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:10px;
+                  ">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+          <span class="mono" style="font-size:11px; color:#948c80">5 sur 7</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px">
+          <span class="serif" style="font-size:21px; line-height:1.1">L'atelier</span>
+          <span style="font-size:11.5px; color:#948c80">l'&eacute;cran &laquo;&nbsp;L'atelier de l'animation&nbsp;&raquo;</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f; flex:1">Chaque image passe par les tables du jeu &mdash; d&eacute;tourage, pixels, palette. On retire, on duplique, on d&eacute;place, on va rechercher une image dans le clip.</div>
+        <div style="border-top:1px solid #ece6db; padding-top:9px; font-size:13px; color:#5c7a52; font-weight:500">gratuit</div>
+      </div>
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:10px;
+                  ">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+          <span class="mono" style="font-size:11px; color:#948c80">6 sur 7</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px">
+          <span class="serif" style="font-size:21px; line-height:1.1">D&eacute;partager</span>
+          <span style="font-size:11.5px; color:#948c80">l'&eacute;cran &laquo;&nbsp;Ses animations&nbsp;&raquo;</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f; flex:1">Plusieurs animations peuvent remplir la m&ecirc;me case. On les joue ensemble et on d&eacute;signe celle qui sort.</div>
+        <div style="border-top:1px solid #ece6db; padding-top:9px; font-size:13px; color:#5c7a52; font-weight:500">gratuit</div>
+      </div>
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:10px;
+                  ">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+          <span class="mono" style="font-size:11px; color:#948c80">7 sur 7</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px">
+          <span class="serif" style="font-size:21px; line-height:1.1">Sortir</span>
+          <span style="font-size:11.5px; color:#948c80">l'&eacute;cran &laquo;&nbsp;L'export&nbsp;&raquo;</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f; flex:1">Trois fichiers&nbsp;: une planche d'images, son descriptif pour le moteur de jeu, et une image anim&eacute;e pour la regarder.</div>
+        <div style="border-top:1px solid #ece6db; padding-top:9px; font-size:13px; color:#5c7a52; font-weight:500">gratuit</div>
+      </div>
+      <div style="border:1px dashed #c9c2b6; border-radius:9px; background:#faf7f1; padding:15px 16px;
+                  display:flex; flex-direction:column; gap:9px; justify-content:center">
+        <div class="serif" style="font-size:19px">On peut s'arr&ecirc;ter l&agrave;</div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f">
+          Une animation gard&eacute;e sert d&eacute;j&agrave; dans l'essai du personnage, sans &ecirc;tre sortie.
+          L'export sert &agrave; l'emmener dans le moteur de jeu.
+        </div>
+      </div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:14px">
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:24px">
+      <span class="h2">Trois jugements, trois &eacute;crans</span>
+      <span style="font-size:12.5px; color:#6d675e; max-width:700px; text-align:right">
+        Chacun pose une seule question. C'est pour &ccedil;a qu'ils ne se ressemblent pas.
+      </span>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px">
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:9px">
+        <div class="serif" style="font-size:20px">Le mouvement</div>
+        <div style="font-size:12px; color:#948c80">sur l'&eacute;cran &laquo;&nbsp;Le montage&nbsp;&raquo;</div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f">L'image y est brute&nbsp;: telle qu'elle sort de la vid&eacute;o, sans d&eacute;tourage ni r&eacute;duction de couleurs.</div>
+        <div style="border-left:3px solid #e6dfd2; padding-left:11px; font-size:12.5px; line-height:1.5; color:#3d382f; font-style:italic">Le geste est-il juste, et la boucle se referme-t-elle&nbsp;?</div>
+      </div>
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:9px">
+        <div class="serif" style="font-size:20px">Les images</div>
+        <div style="font-size:12px; color:#948c80">sur l'&eacute;cran &laquo;&nbsp;L'atelier de l'animation&nbsp;&raquo;</div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f">Chaque image y passe par les tables, une par une, avec ses r&eacute;glages &agrave; elle si besoin.</div>
+        <div style="border-left:3px solid #e6dfd2; padding-left:11px; font-size:12.5px; line-height:1.5; color:#3d382f; font-style:italic">Les images sont-elles propres, et &agrave; la bonne taille&nbsp;?</div>
+      </div>
+      <div class="carte" style="padding:15px 16px; display:flex; flex-direction:column; gap:9px">
+        <div class="serif" style="font-size:20px">Le choix</div>
+        <div style="font-size:12px; color:#948c80">sur l'&eacute;cran &laquo;&nbsp;Ses animations&nbsp;&raquo;</div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f">Les essais d'une m&ecirc;me case s'y jouent ensemble, sur le m&ecirc;me m&eacute;tronome.</div>
+        <div style="border-left:3px solid #e6dfd2; padding-left:11px; font-size:12.5px; line-height:1.5; color:#3d382f; font-style:italic">Laquelle des trois marches garde-t-on&nbsp;?</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:14px">
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:24px">
+      <span class="h2">Ce qui n'existe pas</span>
+      <span style="font-size:12.5px; color:#6d675e; max-width:700px; text-align:right">
+        Quatre raccourcis qu'on croit voir dans un outil pareil, et qui ne sont nulle part.
+      </span>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:16px">
+      <div style="display:flex; flex-direction:column; gap:6px; padding:13px 15px; border:1px dashed #c9c2b6;
+                  border-radius:9px; background:#faf7f1">
+        <div style="font-size:13px; font-weight:600; color:#8a3f33; text-decoration:line-through; text-decoration-color:#dcbcb2">Animer une suite d'images fixes</div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f">Une image du jeu n'a pas de num&eacute;ro d'&eacute;tape. Huit images de marche rang&eacute;es dans la m&ecirc;me case restent huit images sans ordre&nbsp;: rien ne peut les jouer. Le seul chemin passe par la vid&eacute;o.</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; padding:13px 15px; border:1px dashed #c9c2b6;
+                  border-radius:9px; background:#faf7f1">
+        <div style="font-size:13px; font-weight:600; color:#8a3f33; text-decoration:line-through; text-decoration-color:#dcbcb2">Choisir la cadence du clip</div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f">Les images par seconde de la vid&eacute;o sont subies&nbsp;: on les mesure sur le fichier re&ccedil;u. La vitesse de l'animation, elle, se r&egrave;gle apr&egrave;s coup et gratuitement.</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; padding:13px 15px; border:1px dashed #c9c2b6;
+                  border-radius:9px; background:#faf7f1">
+        <div style="font-size:13px; font-weight:600; color:#8a3f33; text-decoration:line-through; text-decoration-color:#dcbcb2">Jouer l'animation une seule fois</div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f">Deux sens seulement&nbsp;: la boucle et l'aller-retour. Jouer une fois est une d&eacute;cision du moteur de jeu, pas de l'atelier.</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; padding:13px 15px; border:1px dashed #c9c2b6;
+                  border-radius:9px; background:#faf7f1">
+        <div style="font-size:13px; font-weight:600; color:#8a3f33; text-decoration:line-through; text-decoration-color:#dcbcb2">Obtenir une direction en la demandant</div>
+        <div style="font-size:12.5px; line-height:1.55; color:#4e483f">Sur un jeu vu de dessus, &laquo;&nbsp;nord&nbsp;&raquo; et &laquo;&nbsp;sud&nbsp;&raquo; ont rendu la m&ecirc;me image. La direction se rattrape en retournant l'image, pas en changeant les mots.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="border-left:3px solid #a8492c; padding:5px 0 5px 17px; font-size:14px; line-height:1.65; color:#3d382f; max-width:1240px">
+    <strong>Un clip de cinq secondes est fait pour donner plusieurs animations.</strong>
+    Une centaine d'images&nbsp;: de quoi y trouver un repos, une marche, et parfois un pas de c&ocirc;t&eacute;.
+    Le prix par animation baisse &agrave; chaque bande gard&eacute;e, et retailler ne co&ucirc;te rien&nbsp;: le fichier
+    vid&eacute;o reste sur le disque.
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

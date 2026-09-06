@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """A12 — la matrice sur deux calques : les images fixes, et les animations.
 
-Les critères de `docs/PLAN.md` § A12 qui vivent côté serveur. Ce que l'écran
+Les critères de `docs/archive/plan-r6-a-v3.02.md` § A12. Ceux qui vivent côté serveur ; ce que l'écran
 montre — la bascule, les deux jauges, la vignette qui tourne — vit dans
 `interface/src/App.test.tsx`.
 

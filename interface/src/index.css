@@ -1,12 +1,134 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Les tokens de `docs/DESIGN.md`, et rien d'autre. Aucune valeur de couleur,
-   de rayon ou de durée n'est écrite ailleurs dans l'interface.
+   Les jetons de `docs/DESIGN.md`, et rien d'autre. Aucune couleur, aucun rayon
+   n'est écrit ailleurs dans l'interface.
 
-   « La table lumineuse » : le châssis est muet, les assets sont la seule chose
-   colorée à l'écran. Pas de mode clair — c'en est une décision : un fond clair
-   remonte la luminance d'entourage et fausse le contraste perçu d'un sprite.
+   « Le papier » : le châssis est clair, et c'est ce que les planches du carnet
+   emploient — `docs/pistes-2026-09-04/carnet/Systeme.dc.html`. La décision
+   d'avant disait l'inverse, en toutes lettres, à cette place même : *« pas de
+   mode clair — c'en est une décision »*. Elle est tombée le 6 septembre 2026,
+   tranchée par l'auteur : **les maquettes font foi**.
+
+   Ce qui reste vrai de l'argument d'avant, et qui se surveille : juger un
+   sprite sur fond clair remonte la luminance d'entourage. C'est pour ça que
+   `--color-pourtour` existe — un gris neutre **derrière une image, et nulle
+   part ailleurs** —, et c'est dans les ateliers de retouche, la galerie et
+   l'essai que ça se verra en premier si ça gêne.
+
+   **Deux systèmes cohabitent ici, et c'est voulu.** Le carnet, la surface et
+   la barre sont bâtis sur les jetons de papier ci-dessous. Les écrans qui
+   n'ont pas encore été redessinés — la galerie, le codex, l'univers, les
+   tables — continuent de tourner sur l'ancien châssis chaud et sombre, dont
+   les jetons sont plus bas, préfixés `ancien-`. Chaque tranche de la V4 en
+   déplace un, et le préfixe dit d'un coup d'œil ce qui reste à faire.
+   L'ancien système est décrit dans
+   `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`.
+
+   Un jeton se déclare **une fois, ici**. Deux directions se vérifient, et
+   `tests/test_b0.py` les tient : ce que le code écrit doit être déclaré, et
+   ce qui est déclaré et que rien n'emploie se compte à voix haute.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* ── Le papier — `docs/DESIGN.md` § Color, Le papier ──────────────────────── */
+  --color-papier: #f7f3ec;
+  --color-papier-cote: #f2ede4;
+  --color-carte: #fffdfa;
+  --color-ligne-ouverte: #e6dfd2;
+  /* Derrière une image, et nulle part ailleurs : c'est le seul gris neutre du
+     produit, et il existe pour que le papier ne fausse pas le jugement. */
+  --color-pourtour: #6c6c6c;
+  --color-damier-clair: #ece7dc;
+  --color-damier-sombre: #e4dfd4;
+
+  /* ── Les traits — le trait sépare des panneaux, pas des lignes ────────────── */
+  --color-trait-faible: #ece6db;
+  --color-trait: #e2dbd0;
+  --color-contour: #ddd5c8;
+  --color-pointille: #c9c2b6;
+
+  /* ── Les encres ───────────────────────────────────────────────────────────── */
+  --color-encre: #221f1b;
+  --color-encre-2: #4e483f;
+  --color-encre-3: #6d675e;
+  --color-encre-4: #948c80;
+  --color-eteint: #b0a89b;
+  /* Les deux dernières sont des encres de **contrôle**, pas de lecture : un
+     bouton n'écrit pas dans la même encre qu'un titre. Sans la seconde, le
+     bouton qui lance n'a pas de couleur de texte du tout. */
+  --color-encre-controle: #3d382f;
+  --color-encre-sur-signal: #fff8f4;
+
+  /* ── Les trois signaux ────────────────────────────────────────────────────── */
+  /* Le rouille ne sert qu'à deux choses : le bouton qui lance, et le chiffre
+     qui coûte. Un seul bouton rouille par écran. Partout ailleurs, il ment. */
+  --color-signal: #a8492c;
+  --color-ok: #5c7a52;
+  --color-echec: #8a3f33;
+
+  /* ── Un signal qui se pose est un trio, jamais une couleur seule ──────────── */
+  /* Un fond sans son trait donne une pastille qui bave sur le papier : les deux
+     sont trop proches en clarté pour se séparer seuls. C'est le trou que la
+     fermeture de `D0` a trouvé — huit couleurs employées partout, déclarées
+     nulle part, parce qu'un signal y était écrit comme une couleur. */
+  --color-fond-echec: #f8ece9;
+  --color-trait-echec: #dcbcb2;
+  --color-fond-attention: #f4ece2;
+  --color-trait-attention: #e0cfb8;
+  --color-encre-attention: #8a5a2c;
+  --color-fond-ok: #eef1ea;
+  --color-trait-ok: #cfd9c8;
+  /* `--color-ok` et `--color-encre-ok` ne sont pas la même couleur : l'une
+     s'écrit sur le papier, l'autre sur le fond d'un bandeau. Les confondre rend
+     l'une des deux illisible. */
+  --color-encre-ok: #4c6644;
+
+  /* ── L'étiquette — le seul jeu qu'aucun écran n'emploie encore ────────────── */
+  /* Déclaré pour que le premier qui en aura besoin ne l'invente pas. Son texte
+     rouge est `--color-echec`, déjà déclaré ; une étiquette neutre est
+     `--color-trait-faible` sur `--color-encre-2`. */
+  --color-etiquette-fond-ok: #e4ecdf;
+  --color-etiquette-encre-ok: #45613b;
+  --color-etiquette-fond-echec: #f4e2dc;
+
+  /* ── Les trois familles — un système de rôles, pas de goût ────────────────── */
+  /* Une serif pour ce qui se lit une fois, une sans pour ce qui se lit tout le
+     temps, une chasse fixe pour tout ce qui se compte.
+
+     ⚠️ **Elles sont encore tirées du réseau**, dans `interface/index.html`, ce
+     que l'invariant du produit interdit : *tout ce qui ne demande pas le
+     fournisseur fonctionne réseau coupé*. Réseau coupé, l'atelier retombe
+     aujourd'hui sur les polices du système. L'auto-hébergement demande de
+     déposer les fichiers dans le dépôt, et il n'est pas fait. */
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* ── Les arrondis — liste fermée, et nommés par leur valeur ───────────────── */
+  /* Nommés `5 · 7 · 8 · 10` et non `sm · md · lg` : la liste du document EST la
+     liste des valeurs, et un nom d'échelle permettrait d'en glisser une
+     sixième sans que ça se voie. */
+  --radius-5: 5px;
+  --radius-7: 7px;
+  --radius-8: 8px;
+  --radius-10: 10px;
+
+  --ease-entree: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   L'ancien châssis — chaud et sombre, décrit par
+   `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`.
+
+   **Il n'est pas là par nostalgie : il fait tourner quarante écrans.** La V4
+   les redessine un par un, et chaque tranche vide un peu ce bloc. Le préfixe
+   `ancien-` est là pour ça — `bg-ancien-signal` dans un fichier dit « cet
+   écran n'a pas encore été repris », et ça se compte d'un `grep`.
+
+   Trois noms seulement se disputaient avec le carnet — `signal`, `ok`,
+   `echec` — et c'est le carnet qui les garde : ce sont les mots du document de
+   design, et un écran neuf qui écrit `bg-signal` doit obtenir du rouille.
    ───────────────────────────────────────────────────────────────────────────── */
 
 @theme {
@@ -21,28 +143,24 @@
   --color-texte-2: #98a2ac;
   --color-texte-3: #5e6771;
 
-  --color-signal: #49b3ce;
-  --color-signal-clair: #8ed8e8;
+  --color-ancien-signal: #49b3ce;
+  --color-ancien-signal-clair: #8ed8e8;
   --color-lumiere: #eaf4f8;
-  --color-ok: #5fa871;
+  --color-ancien-ok: #5fa871;
   --color-epingle: #c8a03c;
-  --color-echec: #cb6c65;
+  --color-ancien-echec: #cb6c65;
 
-  /* Les dix teintes d'îlot — `docs/DESIGN.md` § Les teintes d'îlot. **Le seul
-     endroit du produit où une couleur ne veut rien dire** : un îlot ou une note
-     en porte une parce que l'auteur l'a choisie, jamais parce qu'un état la
-     commande. Saturation plafonnée à 30 % quand les quatre sémantiques vivent
-     entre 40 et 55 %, et toutes les dix à 4,6 : 1 sur `--fond-2` — au-dessus du
-     seuil AA, sous le contraste de toutes les sémantiques. C'est ce qui les
-     fait lire comme un rangement plutôt que comme un état.
+  /* Les dix teintes d'îlot — `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`
+     § Les dix teintes de rangement. **Le seul endroit du produit où une couleur
+     ne veut rien dire** : un îlot ou une note en porte une parce que l'auteur
+     l'a choisie, jamais parce qu'un état la commande. Saturation plafonnée à
+     30 % quand les quatre sémantiques vivent entre 40 et 55 %, et toutes les
+     dix à 4,6 : 1 sur `--color-fond-2`.
 
-     **Dix depuis le 28 août 2026**, contre six à l'origine, et les six noms de
-     départ ne bougent pas d'une teinte de roue : seule leur saturation monte.
-     Les quatre neuves — pervenche, lavande, mauve, mousse — subdivisent les
-     arcs déjà occupés, parce que **deux arcs de la roue sont interdits et ce
-     sont ceux des sémantiques** : 345–55° où vivent `--echec` et `--epingle`,
-     120–200° où vivent `--ok` et `--signal`. Une onzième ne peut naître que
-     dans ce qui reste.
+     ⚠️ **Elles ont été choisies pour un fond presque noir, et le carnet est du
+     papier.** `docs/DESIGN.md` § Deux trous, et ils sont réels : elles sont à
+     refaire, et c'est la tranche de la toile qui les refera. D'ici là elles
+     servent la toile telle qu'elle est.
 
      L'ordre est celui du document, et c'est celui des pastilles à l'écran : il
      suit la roue, il ne se trie pas alphabétiquement. */
@@ -60,19 +178,25 @@
   --color-damier-a: #191e24;
   --color-damier-b: #14181d;
 
-  --font-serif: "Instrument Serif", Georgia, serif;
-  --font-sans: "Instrument Sans", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* ⚠️ **Quatre noms manquaient ici, et le code les écrivait quand même** —
+     `signal-sourd`, `texte-1`, `attente`, `info`, quinze fois dans quatre
+     fichiers. Trouvés en fermant `B0`, par le contrôle qui regarde dans
+     l'autre sens.
 
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
+     Un utilitaire Tailwind dont le jeton n'existe pas **ne lève aucune
+     erreur** : il ne produit pas de règle, et l'élément garde la couleur de
+     son parent. Deux boutons actifs de l'écran des tables n'avaient donc
+     aucun fond, et un encadré du clip aucun filet.
 
-  --ease-entree: cubic-bezier(0.2, 0, 0, 1);
+     Ils ne sont **pas** déclarés ici : ce sont les quatre écrans qui ont été
+     ramenés sur des jetons existants. Déclarer une couleur pour faire taire un
+     contrôle inventerait une valeur que ni ce fichier ni `docs/DESIGN.md`
+     n'ont jamais mesurée — et c'est exactement comme ça que les huit couleurs
+     de `D0` étaient entrées. */
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -83,9 +207,10 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-fond-0);
-  color: var(--color-texte);
+  background: var(--color-papier);
+  color: var(--color-encre-2);
   font-family: var(--font-sans);
+  /* 13 px — le texte courant du carnet. `docs/DESIGN.md` § Typography. */
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
@@ -97,9 +222,27 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Le damier alpha — la seule texture du produit, et elle est fonctionnelle :
-   elle révèle la transparence d'un sprite détouré. Écart volontairement faible
-   entre les deux tons, pour qu'il ne devienne pas un motif que l'œil suit. */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Le damier — il dit « transparent », jamais un décor.
+
+   Deux jeux : celui du papier (14 px, `docs/DESIGN.md` § Le papier) et celui de
+   l'ancien châssis, que les écrans pas encore repris emploient. Ils portent des
+   classes différentes pour qu'aucun écran ne change d'apparence sans qu'on
+   l'ait voulu.
+   ───────────────────────────────────────────────────────────────────────────── */
+.damier-papier {
+  background-image:
+    linear-gradient(45deg, var(--color-damier-sombre) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-damier-sombre) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-damier-sombre) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-damier-sombre) 75%);
+  background-size: 14px 14px;
+  background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+  background-color: var(--color-damier-clair);
+}
+
+/* Le damier alpha de l'ancien châssis — écart volontairement faible entre les
+   deux tons, pour qu'il ne devienne pas un motif que l'œil suit. */
 .damier {
   background-image:
     linear-gradient(45deg, var(--color-damier-b) 25%, transparent 25%),
@@ -128,9 +271,8 @@ body {
   background-position: 0 0, 0 12px, 12px -12px, -12px 0;
 }
 
-/* Le curseur — ajouté en T2, seul contrôle neuf du châssis. Aucune couleur de
-   plus : rail en `--bord`, poignée en `--signal`. Hauteur alignée sur la rangée
-   de 26 px du § Spacing. */
+/* Le curseur — ajouté en T2, seul contrôle neuf de l'ancien châssis. Aucune
+   couleur de plus : rail en `--color-bord`, poignée en `--color-ancien-signal`. */
 .curseur {
   appearance: none;
   background: transparent;
@@ -147,11 +289,11 @@ body {
   height: 12px;
   width: 12px;
   border-radius: 9999px;
-  background: var(--color-signal);
+  background: var(--color-ancien-signal);
   transition: background 80ms;
 }
 .curseur:hover::-webkit-slider-thumb {
-  background: var(--color-signal-clair);
+  background: var(--color-ancien-signal-clair);
 }
 .curseur:disabled::-webkit-slider-thumb {
   background: var(--color-texte-3);
@@ -166,10 +308,17 @@ body {
   width: 12px;
   border: 0;
   border-radius: 9999px;
-  background: var(--color-signal);
+  background: var(--color-ancien-signal);
 }
 
-/* La liste close de ce qui bouge — § Motion. Rien d'autre ne s'anime. */
+/* ─────────────────────────────────────────────────────────────────────────────
+   La liste close de ce qui bouge — `docs/DESIGN.md` § Motion.
+
+   Quatre durées et une absence : **120** survol, appui, coche · **180** une
+   ligne du carnet s'ouvre · **220** un volet entre ou sort, une image arrive
+   dans une grille · **aucune** pour changer de surface, l'écran est là tout de
+   suite. Rien d'autre n'entre.
+   ───────────────────────────────────────────────────────────────────────────── */
 @keyframes arrivee {
   from {
     opacity: 0;
@@ -180,19 +329,65 @@ body {
     transform: none;
   }
 }
+
+/* Une image arrive dans une grille : elle apparaît sur place, sans grandir. */
 .arrivee {
-  animation: arrivee 120ms var(--ease-entree);
+  animation: arrivee 220ms var(--ease-entree);
 }
 
-/* La jauge de génération est **déterminée** (`docs/DESIGN.md` § Motion) et n'a
-   pas d'image-clé : sa largeur est calculée à partir de l'instant du départ et
-   de l'attente mesurée du modèle, et elle glisse par `transition`. Il n'y a
-   donc rien à animer ici — une image-clé de balayage dirait « ça travaille »
-   sans dire « voilà où ça en est », ce que le design refuse. */
+/* Un volet entre depuis son bord. */
+@keyframes volet {
+  from {
+    transform: translateX(8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.volet {
+  animation: volet 220ms var(--ease-entree);
+}
+
+/* Une ligne du carnet s'ouvre : la hauteur, et rien d'autre. La règle est
+   posée ici pour que les lignes du carnet n'aient pas à la répéter. */
+.ligne-qui-souvre {
+  animation: ligne-qui-souvre 180ms var(--ease-entree);
+  overflow: hidden;
+}
+@keyframes ligne-qui-souvre {
+  from {
+    max-height: 0;
+  }
+  to {
+    max-height: 40rem;
+  }
+}
+
+/* La jauge de génération est **déterminée** et n'a pas d'image-clé : sa largeur
+   est calculée à partir de l'instant du départ et de l'attente mesurée du
+   modèle, et elle glisse par `transition`. Il n'y a donc rien à animer ici —
+   une image-clé de balayage dirait « ça travaille » sans dire « voilà où ça en
+   est », ce que le design refuse. */
 
 *:focus-visible {
   outline: 2px solid var(--color-signal);
   outline-offset: 1px;
+}
+
+/* **L'unique exception, et c'est la barre** (B6). La règle au-dessus signale
+   *où la main est posée*, ce qui suppose qu'elle se déplace. Le champ de la
+   barre l'a en naissant et ne la rend jamais tant qu'elle est ouverte : le
+   liseré n'y signalerait rien, et il vaudrait un second rouille à l'écran, à
+   côté de la seule marque qui doit s'y voir — « à confirmer ». C'est le curseur
+   qui porte le rouille, comme sur `Barre.dc.html`.
+
+   Écrite ici et pas en classe utilitaire : la règle au-dessus est hors couche,
+   donc elle bat n'importe quel `focus-visible:outline-none` de Tailwind, quelle
+   que soit sa spécificité. */
+[data-barre] input:focus-visible {
+  outline: none;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -203,11 +398,6 @@ body {
    réglage a donc changé sous les pieds du produit, sans qu'une ligne d'ici le
    demande. Mesuré le 31 août 2026 sur la galerie : trente-huit boutons,
    trente-huit flèches ordinaires.
-
-   Il mord plus fort ici qu'ailleurs : le châssis est volontairement muet — pas
-   de relief, pas de cadre de rangée, pas de couleur d'appel —, ce qui retire
-   au passage tous les autres indices de ce qui se clique. Le curseur était le
-   dernier qui restait.
 
    `:disabled` reprend la flèche : un contrôle éteint porte déjà sa raison
    écrite, et une main dessus promettrait ce qu'il refuse. `not-allowed` reste
@@ -224,20 +414,17 @@ button:disabled {
   cursor: default;
 }
 
-/* La barre de défilement — 9 px, la gouttière de la grille d'assets. Un seul
-   vocabulaire de largeur dans le produit.
+/* La barre de défilement — 9 px, la gouttière de la grille d'assets.
 
-   La poignée est en `--bord-fort` et non en `--bord` : sur `--fond-1`, le trait
-   de séparation du châssis passe sous le seuil où l'œil le trouve, et une barre
-   qu'on ne voit pas ne dit pas « il y a plus ». C'est la seule pièce du châssis
-   qui doit se faire remarquer quand elle paraît — et elle ne paraît que quand
-   il y a quelque chose à dire. */
+   La poignée est en `--color-contour` : c'est le contour de ce qui réagit, et
+   une barre de défilement en est. Elle ne paraît que quand il y a quelque
+   chose à dire. */
 ::-webkit-scrollbar {
   width: 9px;
   height: 9px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-bord-fort);
+  background: var(--color-contour);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-track {
@@ -245,13 +432,13 @@ button:disabled {
 }
 :root {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-bord-fort) transparent;
+  scrollbar-color: var(--color-contour) transparent;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Un panneau est borné par l'écran, jamais par son contenu — `docs/DESIGN.md`
-   § Layout. Toute zone qui défile porte cette classe, et elle porte deux
-   règles que Tailwind ne dit pas en un mot.
+   Une zone qui défile est bornée par l'écran, jamais par son contenu —
+   `docs/DESIGN.md` § Layout. Toute zone qui défile porte cette classe, et elle
+   porte deux règles que Tailwind ne dit pas en un mot.
 
    `flex-shrink: 0` sur les enfants directs : dans une colonne flex qui défile,
    un bloc se comprime au lieu de sortir. Mesuré le 27 août 2026 en bornant les
@@ -273,11 +460,11 @@ button:disabled {
 /* Le menu d'une carte du tableau — `docs/design-motifs.md` § Le menu d'une carte.
    Il paraît **sans clic**, donc sans geste qui dise qu'on l'a demandé : les
    80 ms de fondu sont ce qui le fait lire comme une chose venue se poser
-   par-dessus, plutôt que comme une grille qui se recompose. C'est à ce titre
-   qu'il entre dans la liste close du § Motion, et pas au titre du confort.
-   Les 2 px de levée sont ceux de l'arrivée d'un asset dans la grille, à un
-   pixel près : le même vocabulaire pour la même chose — quelque chose est là
-   qui n'y était pas. */
+   par-dessus, plutôt que comme une grille qui se recompose.
+
+   ⚠️ **80 ms n'est pas dans la liste close du § Motion**, qui n'en tient que
+   quatre — 120, 180, 220 et aucune. Cette classe appartient à l'ancien
+   châssis ; elle passera à 120 ms quand la toile sera reprise. */
 @keyframes paraitre {
   from {
     opacity: 0;

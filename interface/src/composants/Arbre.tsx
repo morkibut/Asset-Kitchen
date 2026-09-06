@@ -115,7 +115,7 @@ export function Arbre({
                   ce produit n'a aucune surface modale, et le compte vient de
                   l'arbre — que le serveur a compté. */}
               {aSupprimer === projet.identifiant && (
-                <div className="flex flex-col gap-1 border-l-2 border-echec bg-echec/5 px-2 py-1.5">
+                <div className="flex flex-col gap-1 border-l-2 border-ancien-echec bg-ancien-echec/5 px-2 py-1.5">
                   <p className="mesure text-[10px] leading-4 text-texte-2">
                     {projet.assets === 0
                       ? "aucun asset — rien à détacher"
@@ -125,7 +125,7 @@ export function Arbre({
                     <button
                       type="button"
                       onClick={() => void supprimer(projet.identifiant)}
-                      className="mesure text-[10px] text-echec hover:text-texte"
+                      className="mesure text-[10px] text-ancien-echec hover:text-texte"
                     >
                       Supprimer ›
                     </button>
@@ -233,7 +233,7 @@ function Rangee({
     <div
       className={[
         "group flex h-[26px] items-center gap-2 border-l-2 pr-1 pl-2",
-        ouverte ? "border-signal bg-fond-2" : "border-transparent",
+        ouverte ? "border-ancien-signal bg-fond-2" : "border-transparent",
       ].join(" ")}
     >
       <button
@@ -259,7 +259,7 @@ function Rangee({
           type="button"
           onClick={onSupprimer}
           aria-label={`Supprimer ${nom}`}
-          className="mesure w-3 shrink-0 text-[10px] text-transparent group-hover:text-texte-3 hover:!text-echec"
+          className="mesure w-3 shrink-0 text-[10px] text-transparent group-hover:text-texte-3 hover:!text-ancien-echec"
         >
           ×
         </button>
@@ -285,7 +285,7 @@ function Section({
           type="button"
           onClick={onAjouter}
           aria-label={`Nouvelle entrée dans ${titre}`}
-          className="ml-auto text-[12px] text-texte-3 hover:text-signal"
+          className="ml-auto text-[12px] text-texte-3 hover:text-ancien-signal"
         >
           +
         </button>
@@ -351,7 +351,7 @@ function JournalDuProjet({
               <span
                 className={[
                   "mesure text-[9.5px] leading-4",
-                  rate.statut === "interrompue" ? "text-epingle" : "text-echec",
+                  rate.statut === "interrompue" ? "text-epingle" : "text-ancien-echec",
                 ].join(" ")}
               >
                 {rate.raison ?? "échec sans raison connue"}
@@ -364,7 +364,7 @@ function JournalDuProjet({
                 <button
                   type="button"
                   onClick={() => onRelancer(appel.identifiant, rate.rang)}
-                  className="ml-auto text-signal hover:text-signal-clair"
+                  className="ml-auto text-ancien-signal hover:text-ancien-signal-clair"
                 >
                   Relancer ›
                 </button>

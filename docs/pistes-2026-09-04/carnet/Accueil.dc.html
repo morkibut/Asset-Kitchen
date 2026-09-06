@@ -39,6 +39,15 @@
     .fig::before { content: ''; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--b) }
     .lame::before { content: none }
     .lame { border-radius: 1px 1px 2px 2px; box-shadow: inset 0 6px 0 var(--b) }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .bt-off { background: #f2ede4; border-color: #e2dbd0; color: #b0a89b }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8;
+          border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
 
 
     .fam { border: 1px solid #e2dbd0; border-radius: 10px; background: #fffdfa; padding: 14px 15px; display: flex; flex-direction: column; gap: 9px }
@@ -50,10 +59,23 @@
     .fam .s { font-size: 12px; color: #6d675e; line-height: 1.4 }
     .rec { display: grid; grid-template-columns: 78px minmax(0,1fr) 116px 62px; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 6px; font-size: 12.5px }
 
+    
+    /* dessous r4 — début */
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.12 }
+    .kb { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; border: 1px solid #ddd5c8; border-bottom-width: 2px;
+          border-radius: 4px; padding: 1px 5px; background: #fffdfa; color: #4e483f; white-space: nowrap }
+    .puce { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px;
+            letter-spacing: .06em; border-radius: 3px; padding: 2px 6px; white-space: nowrap; text-transform: uppercase }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+
+    /* dessous r4 — fin */
   </style>
 </helmet>
 
-<div class="k" style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; background: #f7f3ec; overflow: hidden">
+<div class="k" style="width: 1600px; background: #f7f3ec">
+<div style="width: 1600px; height: 1000px; display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; overflow: hidden">
 
   <div style="border-right: 1px solid #e2dbd0; background: #f2ede4; padding: 22px 14px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
     <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 5px">
@@ -63,6 +85,8 @@
       </div>
       <div style="font-size: 12.5px; color: #6d675e">45 images · 12 poses sur 18</div>
     </div>
+    <div class="rl"><span>Les r&egrave;gles du jeu</span></div>
+    <div class="rl"><span>La toile de l'univers</span><span class="num">61</span></div>
     <div style="display: flex; flex-direction: column; gap: 2px">
       <div class="rt" style="padding: 0 10px 6px">Ce que le jeu contient</div>
       <div class="rl"><span>Les personnages</span><span class="num">3</span></div>
@@ -73,29 +97,18 @@
       <div class="rl"><span>Les équipements</span><span class="num">2</span></div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 2px">
-      <div class="rt" style="padding: 0 10px 6px">Ce qui s'applique à tout</div>
-      <div class="rl"><span>Son nom et son dossier</span></div>
-      <div class="rl"><span>Son allure</span><span class="num">4 sur 5</span></div>
-      <div class="rl"><span>Le monde et son trait</span><span class="num">6 / 7</span></div>
-      <div class="rl"><span>Ses types de sujets</span><span class="num">8 échelles</span></div>
-      <div class="rl"><span>Son plan de poses</span><span class="num">6</span></div>
-      <div class="rl"><span>Ses emplacements de corps</span><span class="num">4</span></div>
-      <div class="rl"><span>Son détourage de départ</span></div>
-      <div class="rl"><span>Ses IA et ses clés</span><span class="num">49</span></div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2px">
       <div class="rt" style="padding: 0 10px 6px">Toutes les images</div>
-      <div class="rl"><span>La galerie</span><span class="num">41</span></div>
+      <div class="rl"><span>La galerie</span><span class="num">45</span></div>
       <div class="rl"><span>Les dépenses</span><span class="num">$1,55</span></div>
     </div>
     <div style="margin-top: auto; border-top: 1px solid #e2dbd0; padding: 13px 10px 0; display: flex; flex-direction: column; gap: 8px">
-      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">On revient ici en cliquant le nom du jeu, tout en haut du carnet. Le nom du jeu, en haut, ouvre la liste des jeux et les réglages de l'atelier.</div>
+      <div style="font-size: 12.5px; line-height: 1.45; color: #6d675e">Le nom du jeu, en haut, ouvre la liste des jeux et l'installation.</div>
       <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #948c80">
         <span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">⌘K</span><span>chercher, ou faire</span>
       </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #4e483f">
-        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide</span>
-        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> Réglages</span>
+      <div style="display: flex; align-items: center; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #4e483f">
+        <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="border: 1px solid #ddd5c8; border-radius: 4px; padding: 2px 5px; background: #fffdfa">?</span> Le guide et les touches</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6d675e" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0"><path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg> L'installation</span>
       </div>
     </div>
   </div>
@@ -207,7 +220,7 @@
         <div style="display: flex; align-items: center; gap: 8px"><span style="color: #5c7a52">✓</span><span>OpenRouter — 49 modèles disponibles</span></div>
         <div style="display: flex; align-items: center; gap: 8px"><span style="color: #948c80">·</span><span style="color: #6d675e">Aucune autre clé posée</span></div>
       </div>
-      <a href="#" style="font-size: 12.5px; text-decoration: none">Les réglages de l'atelier ›</a>
+      <a href="#" style="font-size: 12.5px; text-decoration: none">L'installation ›</a>
     </div>
 
     <div class="carte" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 8px">
@@ -224,6 +237,99 @@
     </div>
   </div>
 
+</div>
+
+
+  <!-- dessous r4 -->
+  <div style="width: 1600px; background: #f7f3ec; padding: 34px 34px 44px; display: flex; flex-direction: column; gap: 34px; border-top: 1px solid #e2dbd0">
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">On y arrive par o&ugrave;</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">la ligne du haut se coupe en deux&nbsp;: le nom ram&egrave;ne ici, le chevron d&eacute;plie</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 17px; border: 1px solid #e2dbd0;
+                border-radius: 10px; background: #fffdfa">
+      <div style="font-size: 15px; font-weight: 600">On clique le nom</div>
+      <div style="display: flex; gap: 18px; align-items: flex-start">
+        <div style="width: 268px; padding: 12px 10px 10px; border-radius: 8px; background: #f2ede4;
+                    border: 1px solid #e6dfd2">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <div class="serif" style="font-size: 22px; line-height: 1.15; padding: 2px 6px; border-radius: 5px;
+                        background: #e6dfd2">Le Marais du Vieux Moulin</div>
+            <div style="padding: 7px; border-radius: 5px; background: transparent; display: flex"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></div>
+          </div>
+          <div style="font-size: 12px; color: #6d675e; padding: 4px 6px 0">45 images &middot; 12 poses sur 18</div>
+        </div>
+        <div style="width: 220px; padding: 10px; border-radius: 8px; background: #f7f3ec;
+                    border: 1px solid #e6dfd2; display: flex; flex-direction: column; gap: 7px">
+          <div class="serif" style="font-size: 15px">Le Marais du Vieux Moulin</div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px"><div style="height: 26px; border: 1px solid #e2dbd0; border-radius: 4px; background: #fffdfa"></div><div style="height: 26px; border: 1px solid #e2dbd0; border-radius: 4px; background: #fffdfa"></div><div style="height: 26px; border: 1px solid #e2dbd0; border-radius: 4px; background: #fffdfa"></div><div style="height: 26px; border: 1px solid #e2dbd0; border-radius: 4px; background: #fffdfa"></div><div style="height: 26px; border: 1px solid #e2dbd0; border-radius: 4px; background: #fffdfa"></div><div style="height: 26px; border: 1px solid #e2dbd0; border-radius: 4px; background: #fffdfa"></div></div>
+          <div style="font-size: 10px; color: #948c80">la page du jeu</div>
+        </div>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">On revient sur cette page, d'o&ugrave; qu'on soit. C'est le seul chemin de retour, et il est &agrave; la m&ecirc;me place sur tous les &eacute;crans.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 17px; border: 1px solid #e2dbd0;
+                border-radius: 10px; background: #fffdfa">
+      <div style="font-size: 15px; font-weight: 600">On clique le chevron</div>
+      <div style="display: flex; gap: 18px; align-items: flex-start">
+        <div style="width: 268px; padding: 12px 10px 10px; border-radius: 8px; background: #f2ede4;
+                    border: 1px solid #e6dfd2">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <div class="serif" style="font-size: 22px; line-height: 1.15; padding: 2px 6px; border-radius: 5px;
+                        background: transparent">Le Marais du Vieux Moulin</div>
+            <div style="padding: 7px; border-radius: 5px; background: #e6dfd2; display: flex"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a49a8b" stroke-width="2.4" stroke-linecap="square" style="flex-shrink: 0"><path d="M7 10l5 5 5-5"/></svg></div>
+          </div>
+          <div style="font-size: 12px; color: #6d675e; padding: 4px 6px 0">45 images &middot; 12 poses sur 18</div>
+        </div>
+        <div style="width: 220px; padding: 10px; border-radius: 8px; background: #f2ede4;
+                    border: 1px solid #e6dfd2; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px"><div style="height: 15px; border-radius: 3px; background: #f2ede4; width: 46%"></div><div style="height: 15px; border-radius: 3px; background: #e6dfd2; width: 82%"></div><div style="height: 15px; border-radius: 3px; background: #e6dfd2; width: 74%"></div><div style="height: 15px; border-radius: 3px; background: #e6dfd2; width: 88%"></div><div style="height: 15px; border-radius: 3px; background: #e6dfd2; width: 70%"></div><div style="height: 15px; border-radius: 3px; background: #e6dfd2; width: 78%"></div><div style="height: 15px; border-radius: 3px; background: #f2ede4; width: 40%"></div><div style="height: 15px; border-radius: 3px; background: #e6dfd2; width: 66%"></div><div style="height: 15px; border-radius: 3px; background: #e6dfd2; width: 58%"></div><div style="height: 15px; border-radius: 3px; background: #f2ede4; width: 34%"></div><div style="height: 15px; border-radius: 3px; background: #e6dfd2; width: 62%"></div><div style="height: 15px; border-radius: 3px; background: #e6dfd2; width: 54%"></div></div>
+          <div style="font-size: 10px; color: #948c80; padding-top: 3px">douze lignes, dans le carnet</div>
+        </div>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Les douze lignes se d&eacute;plient dans le carnet, sur place&nbsp;: les autres jeux, commencer un jeu, l'installation, et les gestes sur le jeu entier. On ne change pas d'&eacute;cran.</div>
+    </div>
+  </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">Les trois portes</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 760px; text-align: right">une seule existe aujourd'hui&nbsp;: celle du lancement</span>
+    </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-ok" style="align-self: flex-start">existe</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Au lancement de l'app</div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Le dernier jeu touch&eacute; s'ouvre sur sa page. C'est le seul chemin qui existe aujourd'hui, et c'est ce qui manquait &agrave; l'auteur.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Le nom du jeu, cliqu&eacute;</div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">La moiti&eacute; gauche de la premi&egrave;re ligne du carnet, visible sur tous les &eacute;crans. Le chemin de retour, et il n'y en a qu'un.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 15px 16px; border: 1px solid #e2dbd0;
+                border-radius: 9px; background: #fffdfa">
+      <span class="puce p-a" style="align-self: flex-start">&agrave; ajouter</span>
+      <div style="font-size: 14px; font-weight: 600; line-height: 1.3">La barre</div>
+      <div style="font-size: 12px; line-height: 1.55; color: #6d675e">Taper le nom du jeu dans la barre, puis <span class="kb">Entr&eacute;e</span>. Le jeu ouvert y est d&eacute;j&agrave; la premi&egrave;re proposition quand la barre s'ouvre &agrave; vide.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 18px; align-items: flex-start; padding: 16px 18px; border: 1px solid #e0cfb8;
+              border-radius: 10px; background: #f4ece2">
+    <span class="puce p-a" style="flex-shrink: 0; margin-top: 2px">corrig&eacute; ailleurs</span>
+    <div style="font-size: 13px; line-height: 1.6; color: #4e483f">
+      La planche <b>La navigation</b> &eacute;crivait&nbsp;: &laquo;&nbsp;le nom du jeu&hellip; est la seule ligne qui ne m&egrave;ne
+      nulle part&nbsp;&raquo;. Ce n'est plus vrai, et elle a &eacute;t&eacute; reprise&nbsp;: la ligne m&egrave;ne &agrave; la page du jeu,
+      son chevron d&eacute;plie. Le carnet garde ses neuf lignes et l'app ne gagne aucun raccourci.
+    </div>
+  </div>
+  </div>
+  </div>
 </div>
 </x-dc>
 </body>

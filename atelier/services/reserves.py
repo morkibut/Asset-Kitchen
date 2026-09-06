@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ce qui reste chez chaque fournisseur — **et d'où le chiffre vient**.
 
-Arrivé en F2 (`docs/PLAN.md` § V2.2). Un invariant de la version tient ici et
+Arrivé en F2 (`docs/archive/plan-versions-tenues.md` § V2.2). Un invariant de la version tient ici et
 nulle part ailleurs : *un chiffre de réserve dit toujours s'il est relevé chez
 le fournisseur ou compté ici.*
 

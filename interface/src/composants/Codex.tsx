@@ -544,7 +544,7 @@ function ListeDesChoses({
           type="button"
           onClick={onVitrine}
           title="le monde entier, une image par chose — sur le fond que la bible décrit"
-          className="mesure h-[26px] self-start px-1 text-[10px] text-signal hover:text-signal-clair"
+          className="mesure h-[26px] self-start px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           voir tout le monde en grand ›
         </button>
@@ -715,7 +715,7 @@ function CarteDeLaChose({
             evenement.stopPropagation()
             onOuvrir()
           }}
-          className="truncate text-left text-[13px] text-texte hover:text-signal"
+          className="truncate text-left text-[13px] text-texte hover:text-ancien-signal"
         >
           {personnage.nom}
         </button>
@@ -744,7 +744,7 @@ function CarteDeLaChose({
 
       <span className="mesure shrink-0 text-right text-[10px]">
         {restant === 0 ? (
-          <span className="text-ok">rien ne manque</span>
+          <span className="text-ancien-ok">rien ne manque</span>
         ) : (
           <span className="text-texte-2">
             {restant} case{restant > 1 ? "s" : ""} manquante{restant > 1 ? "s" : ""}
@@ -955,7 +955,7 @@ function Ligne({
       <span className="min-w-0 flex-1 truncate text-texte-3">{nom}</span>
       {/* **Le manque n'a pas de couleur** : le vert dit *complet*, son absence
           dit *pas encore*. Aucune alerte, aucun message qui réclame. */}
-      <span className={complet ? "text-ok" : "text-texte-2"}>{valeur}</span>
+      <span className={complet ? "text-ancien-ok" : "text-texte-2"}>{valeur}</span>
     </p>
   )
 }
@@ -1088,7 +1088,7 @@ function LesDirections({
               onErreur(erreur, "retour refusé")
             }
           }}
-          className="mesure self-start px-1 text-[10px] text-signal hover:text-signal-clair"
+          className="mesure self-start px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
         >
           revenir à ce que la vue propose —{" "}
           {directions.proposees.map((d) => d.nom).join(" · ")} ›
@@ -1175,7 +1175,7 @@ function LigneDirection({
         }}
         aria-label={`Retirer la direction ${direction.nom}`}
         title="les images déjà faites restent, avec son identifiant"
-        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
       >
         ×
       </button>
@@ -1216,7 +1216,7 @@ function PropositionDeBaisseLigne({
               onErreur(erreur, "retour refusé")
             }
           }}
-          className="text-signal hover:text-signal-clair"
+          className="text-ancien-signal hover:text-ancien-signal-clair"
         >
           rendre {proposition.defaite.map((p) => p.images_avant).join(" et ")} ›
         </button>
@@ -1240,7 +1240,7 @@ function PropositionDeBaisseLigne({
             onErreur(erreur, "proposition refusée")
           }
         }}
-        className="text-signal hover:text-signal-clair"
+        className="text-ancien-signal hover:text-ancien-signal-clair"
       >
         ramener à une image ›
       </button>

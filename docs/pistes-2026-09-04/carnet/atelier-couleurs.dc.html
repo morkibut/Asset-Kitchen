@@ -73,7 +73,7 @@
               display: grid; grid-template-columns: 230px minmax(0,1fr) 370px; min-height: 620px">
 
     <div style="background: #f2ede4; border-right: 1px solid #e2dbd0; padding: 17px 12px; display: flex; flex-direction: column; gap: 13px">
-      <div class="rt" style="padding: 0 9px">La chaîne</div>
+      <div class="rt" style="padding: 0 9px">Les sept tables</div>
       <div style="display: flex; flex-direction: column; gap: 2px">
         <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
@@ -89,7 +89,7 @@
         </div>
         <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
-            <span>Réduire</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
+            <span>Pixéliser</span><span style="color: #5c7a52; font-size: 16px; line-height: 1">●</span>
           </div>
           <div style="font-size: 11.5px; color: #6d675e">la case du jeu</div>
         </div>
@@ -117,6 +117,22 @@
           </div>
           <div style="font-size: 11.5px; color: #6d675e">ce qu’on repeint soi-même</div>
         </div>
+      </div>
+
+      <div style="border-top: 1px solid #ddd5c8; padding-top: 10px; display: flex; flex-direction: column; gap: 2px">
+        <div class="rt" style="padding: 0 9px 4px">Les deux fabriques</div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <span style="color: #4e483f">Découper</span>
+          <div style="font-size: 11.5px; color: #6d675e">une image, plusieurs sujets</div>
+        </div>
+        <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
+          <span style="color: #4e483f">Superposer</span>
+          <div style="font-size: 11.5px; color: #6d675e">deux images, un calque</div>
+        </div>
+        <div style="font-size: 11px; color: #948c80; padding: 4px 11px 0; line-height: 1.4">Elles ne s'endorment pas et ne modifient pas cette image&nbsp;: elles en fabriquent d'autres.</div>
+      </div>
+
+      <div style="border-top: 1px solid #ddd5c8; padding-top: 10px; display: flex; flex-direction: column; gap: 2px">
         <div class="plc" style="flex-direction: column; align-items: stretch; gap: 3px">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
             <span>Retourner</span><span style="color: #a8492c; font-size: 16px; line-height: 1">●</span>
@@ -193,8 +209,8 @@
       <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
         <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
         <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
-          <span style="font-size: 12.5px; font-weight: 400">Ranger la palette en rampes d’ombre <span class="puce p-a">à ajouter</span></span>
-          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">du plus sombre au plus clair, par teinte</span>
+          <span style="font-size: 12.5px; font-weight: 400">Ranger la palette par familles <span class="puce p-a">à ajouter</span></span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">les bruns ensemble, du plus sombre au plus clair</span>
         </span>
       </div>
         <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">La palette du jeu est lue sur ses images officielles. Six autres moteurs manquent.</div>
@@ -207,7 +223,7 @@
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px">
         <span>tramage</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">aucun</div><div class="sg" style="padding: 3px 8px">diffusion</div><div class="sg" style="padding: 3px 8px">trame</div></div>
       </div>
-      <div style="font-size: 11px; color: #8a5a2c; margin-top: -4px">la trame régulière est à ajouter — c’est celle qui convient au pixel art</div>
+      <div style="font-size: 11px; line-height: 1.45; color: #6d675e; margin-top: -4px">Le tramage remplace une couleur qu’on n’a pas par un damier de deux couleurs qu’on a. De loin l’œil les mélange ; de près on voit le damier. <span style="color: #8a5a2c">La trame régulière, la seule qui convienne à un sprite, est à ajouter.</span></div>
       <div style="display: flex; flex-direction: column; gap: 5px">
         <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
           <span style="font-size: 12.5px; color: #b0a89b">force du tramage</span>
@@ -225,6 +241,224 @@
         <div style="font-size: 12.5px; font-weight: 600">24 demandées, 14 obtenues</div>
         <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Le pélerin n’a pas de vert ni de gris : ces couleurs du jeu ne servent à rien sur lui. Ce n’est pas une erreur — mais quand un sujet n’en obtient que 6 sur 24, c’est qu’il est plus pauvre que le reste du jeu.</div>
       </div>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 15px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 24px">
+      <span class="h2">La colonne de droite, selon le moteur</span>
+      <span style="font-size: 12.5px; color: #6d675e; max-width: 720px; text-align: right">L’écran ci-dessus montre « imposer la palette du jeu ». Les deux dernières colonnes expliquent le tramage et le rangement de la palette.</span>
+    </div>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Les trouver dans l’image</span>
+        <span style="font-size: 12px; color: #6d675e">sans regarder le jeu</span>
+      </div>
+      <div style="width: 370px; height: 650px; border: 1px solid #e2dbd0; border-radius: 10px;
+                  background: #f2ede4; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px;
+                  overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Où on prend les couleurs</div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Imposer la palette du jeu</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">chaque pixel prend la couleur du jeu la plus proche</span>
+        </span>
+      </div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">Les trouver dans l’image</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">coupe médiane, sans regarder le jeu</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Fusionner les deux</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">garde les couleurs du jeu, attire le reste</span>
+        </span>
+      </div>
+        
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px"><span>couleurs</span><div class="seg" style="padding: 1px"><div class="sg" style="padding: 3px 8px">16</div><div class="sg sg-on" style="padding: 3px 8px">24</div><div class="sg" style="padding: 3px 8px">32</div><div class="sg" style="padding: 3px 8px">64</div></div></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px"><span>tramage</span><div class="seg" style="padding: 1px"><div class="sg sg-on" style="padding: 3px 8px">aucun</div><div class="sg" style="padding: 3px 8px">diffusion</div><div class="sg" style="padding: 3px 8px">trame</div></div></div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px;
+                  padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #221f1b">Ce que ça change</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Le pélerin garde ses propres bruns, choisis sur lui seul. Ils seront justes sur lui — et faux à côté de la grenouille et du moulin, qui auront eu droit aux leurs. C’est utile pour une image seule, jamais pour un jeu entier.</div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Fusionner les deux</span>
+        <span style="font-size: 12px; color: #6d675e">le jeu, plus quelques couleurs à lui</span>
+      </div>
+      <div style="width: 370px; height: 650px; border: 1px solid #e2dbd0; border-radius: 10px;
+                  background: #f2ede4; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px;
+                  overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Où on prend les couleurs</div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Imposer la palette du jeu</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">chaque pixel prend la couleur du jeu la plus proche</span>
+        </span>
+      </div>
+      <div style="border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #c9c2b6; background: #fffdfa; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 400">Les trouver dans l’image</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">coupe médiane, sans regarder le jeu</span>
+        </span>
+      </div>
+      <div style="border: 1px solid #ddd5c8; background: #fffdfa; border-radius: 7px; padding: 8px 10px; display: flex; gap: 9px; align-items: flex-start">
+        <span style="flex-shrink: 0; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #a8492c; background: #a8492c; box-shadow: inset 0 0 0 2px #fffdfa"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 12.5px; font-weight: 600">Fusionner les deux</span>
+          <span style="font-size: 11.5px; color: #6d675e; line-height: 1.4">garde les couleurs du jeu, attire le reste</span>
+        </span>
+      </div>
+        
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les réglages</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px"><span>couleurs</span><div class="seg" style="padding: 1px"><div class="sg" style="padding: 3px 8px">16</div><div class="sg" style="padding: 3px 8px">24</div><div class="sg sg-on" style="padding: 3px 8px">32</div><div class="sg" style="padding: 3px 8px">64</div></div></div>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 12.5px; color: #221f1b">part gardée du jeu</span>
+          <span class="mono" style="font-size: 12px; color: #221f1b">24 sur 32</span>
+        </div>
+        <div style="height: 3px; border-radius: 2px; background: #ddd5c8; position: relative">
+          <i style="position: absolute; left: 0; top: 0; bottom: 0; width: 75%; background: #a8492c; border-radius: 2px"></i>
+          <i style="position: absolute; left: 75%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: #fffdfa; border: 1px solid #a8492c"></i>
+        </div>
+        <div style="font-size: 11px; color: #948c80; line-height: 1.4">Les 24 du jeu sont posées d’office ; les 8 places restantes sont trouvées sur l’image.</div>
+      </div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e2dbd0; background: #fffdfa; border-radius: 8px;
+                  padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #221f1b">Quand ça sert</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Quand un sujet a une couleur que le jeu n’a pas — le vert d’une potion, l’or d’une couronne. On garde le monde en commun et on lui laisse ses quelques couleurs à lui.</div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Le tramage</span>
+        <span style="font-size: 12px; color: #6d675e">ce que c’est, en une image</span>
+      </div>
+      <div style="width: 370px; height: 650px; border: 1px solid #e2dbd0; border-radius: 10px;
+                  background: #f2ede4; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px;
+                  overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Le tramage, en une image</div>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <div style="display: flex; flex-direction: column; gap: 3px; align-items: center">
+          <i style="width: 34px; height: 34px; border-radius: 4px; background: #6b5a44"></i>
+          <span style="font-size: 10px; color: #6d675e">on a</span>
+        </div>
+        <span style="color: #948c80; font-size: 15px">+</span>
+        <div style="display: flex; flex-direction: column; gap: 3px; align-items: center">
+          <i style="width: 34px; height: 34px; border-radius: 4px; background: #a89170"></i>
+          <span style="font-size: 10px; color: #6d675e">on a</span>
+        </div>
+        <span style="color: #948c80; font-size: 15px">=</span>
+        <div style="display: flex; flex-direction: column; gap: 3px; align-items: center">
+          <i style="width: 34px; height: 34px; border-radius: 4px; background:
+             repeating-conic-gradient(#6b5a44 0% 25%, #a89170 0% 50%) 0 0 / 8px 8px"></i>
+          <span style="font-size: 10px; color: #6d675e">on voit</span>
+        </div>
+        <span style="color: #948c80; font-size: 15px">≈</span>
+        <div style="display: flex; flex-direction: column; gap: 3px; align-items: center">
+          <i style="width: 34px; height: 34px; border-radius: 4px; background: #8a7458"></i>
+          <span style="font-size: 10px; color: #6d675e">de loin</span>
+        </div>
+      </div>
+        <div style="font-size: 11.5px; color: #6d675e; line-height: 1.45">Le tramage remplace une couleur qu’on n’a pas par un damier de deux couleurs qu’on a. De loin l’œil les mélange. De près, sur un sprite de 48 pixels de haut, on voit le damier.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Les trois choix</div>
+      <div style="border: 1px solid #a8492c; border-radius: 6px; background: #fffdfa; padding: 8px 10px;
+                  display: flex; flex-direction: column; gap: 3px">
+        <span style="font-size: 12.5px; font-weight: 600">aucun</span>
+        <span style="font-size: 11px; line-height: 1.4; color: #6d675e">Chaque pixel prend la couleur la plus proche. Des aplats francs, et des marches d’escalier dans les dégradés. C’est ce qu’on veut presque toujours.</span>
+      </div>
+      <div style="border: 1px solid #ddd5c8; border-radius: 6px; background: #fffdfa; padding: 8px 10px;
+                  display: flex; flex-direction: column; gap: 3px">
+        <span style="font-size: 12.5px">diffusion</span>
+        <span style="font-size: 11px; line-height: 1.4; color: #6d675e">L’erreur d’un pixel est reportée sur ses voisins. Le damier devient irrégulier — beau sur une grande image, sale sur un sprite.</span>
+      </div>
+      <div style="border: 1px dashed #c9c2b6; border-radius: 6px; background: #faf7f1; padding: 8px 10px;
+                  display: flex; flex-direction: column; gap: 3px">
+        <span style="font-size: 12.5px; display: flex; align-items: center; gap: 7px">trame régulière <span class="puce p-a">à ajouter</span></span>
+        <span style="font-size: 11px; line-height: 1.4; color: #6d675e">Un motif fixe de 2×2, 4×4 ou 8×8. Le damier est régulier et se répète : c’est le seul tramage qui a l’air fait à la main.</span>
+      </div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px;
+                  padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #221f1b">Pourquoi c’est réglé sur « aucun »</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Les deux tramages disponibles sont faits pour de grandes images. Sur 48 pixels de haut, ils salissent plus qu’ils n’aident. Celui qui conviendrait — la trame régulière — n’existe pas encore.</div>
+      </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 9px">
+        <span style="font-size: 15px; font-weight: 600">Ranger par familles</span>
+        <span style="font-size: 12px; color: #6d675e">ce qu’on voit alors</span>
+      </div>
+      <div style="width: 370px; height: 650px; border: 1px solid #e2dbd0; border-radius: 10px;
+                  background: #f2ede4; padding: 17px 16px; display: flex; flex-direction: column; gap: 13px;
+                  overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Ranger la palette par familles</div>
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; flex-direction: column; gap: 3px">
+          <span style="font-size: 11px; color: #6d675e">aujourd’hui — l’ordre où le calcul les a trouvées</span>
+          <div style="display: flex; height: 20px; border-radius: 3px; overflow: hidden">
+            <i style="flex:1;background:#8a7458"></i><i style="flex:1;background:#2b3a2a"></i><i style="flex:1;background:#c96a45"></i>
+            <i style="flex:1;background:#1a1410"></i><i style="flex:1;background:#84a074"></i><i style="flex:1;background:#a89170"></i>
+            <i style="flex:1;background:#55606e"></i><i style="flex:1;background:#5c4d3a"></i><i style="flex:1;background:#f0e2c8"></i>
+            <i style="flex:1;background:#41563c"></i><i style="flex:1;background:#8a3f33"></i><i style="flex:1;background:#3f3428"></i>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 3px">
+          <span style="font-size: 11px; color: #6d675e">rangée — chaque famille du plus sombre au plus clair</span>
+          <div style="display: flex; height: 20px; border-radius: 3px; overflow: hidden">
+            <i style="flex:1;background:#1a1410"></i><i style="flex:1;background:#3f3428"></i><i style="flex:1;background:#5c4d3a"></i>
+            <i style="flex:1;background:#8a7458"></i><i style="flex:1;background:#a89170"></i><i style="flex:1;background:#f0e2c8"></i>
+            <i style="flex:1;background:#2b3a2a"></i><i style="flex:1;background:#41563c"></i><i style="flex:1;background:#84a074"></i>
+            <i style="flex:1;background:#8a3f33"></i><i style="flex:1;background:#c96a45"></i><i style="flex:1;background:#55606e"></i>
+          </div>
+        </div>
+      </div>
+        
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="rt">Ce qu’on voit alors</div>
+      <div style="font-size: 11.5px; line-height: 1.55; color: #4e483f">
+        Les bruns ensemble, les verts ensemble, du plus sombre au plus clair. On voit d’un coup qu’il manque
+        un ton entre le brun moyen et le brun clair — et c’est ce trou qui fait les marches d’escalier
+        sur la robe du pélerin.
+      </div>
+        
+      </div>
+      <div style="margin-top: auto; border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px;
+                  padding: 11px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12.5px; font-weight: 600; color: #221f1b">N’existe pas encore</div>
+        <div style="font-size: 11.5px; line-height: 1.5; color: #4e483f">Les 24 couleurs sont une liste plate, sans groupes. Les ranger ne change aucune image : ça change ce qu’on voit en les regardant, donc ce qu’on décide d’ajouter.</div>
+      </div>
+      </div>
+    </div>
     </div>
   </div>
 

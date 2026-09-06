@@ -1,36 +1,522 @@
 {
   "pages": [
-    { "id": "modele", "name": "Le modèle" },
-    { "id": "ecrans", "name": "Les écrans" },
-    { "id": "melange", "name": "Le mélange" }
+    {
+      "id": "le-socle",
+      "name": "Le socle"
+    },
+    {
+      "id": "ouvrir-l-atelier",
+      "name": "Ouvrir l'atelier"
+    },
+    {
+      "id": "les-sujets-et-leurs-familles",
+      "name": "Les sujets, et leurs familles"
+    },
+    {
+      "id": "un-personnage",
+      "name": "Un personnage"
+    },
+    {
+      "id": "les-animations-de-bout-en-bo",
+      "name": "Les animations, de bout en bout"
+    },
+    {
+      "id": "les-equipements",
+      "name": "Les équipements"
+    },
+    {
+      "id": "les-ateliers-de-retouche",
+      "name": "Les ateliers de retouche"
+    },
+    {
+      "id": "le-reste-du-jeu",
+      "name": "Le reste du jeu"
+    },
+    {
+      "id": "les-images",
+      "name": "Les images"
+    },
+    {
+      "id": "les-regles-du-jeu",
+      "name": "Les règles du jeu"
+    },
+    {
+      "id": "les-comptes-et-quand-ca-rate",
+      "name": "Les comptes, et quand ça rate"
+    }
   ],
   "artboards": [
-    { "file": "Main.dc.html", "page": "modele", "x": 0, "y": 0, "w": 1240, "h": 5800, "title": "Le modèle, et ce qu'il couvre", "print": "flow" },
-    { "file": "Carte.dc.html", "page": "modele", "x": 1400, "y": 0, "w": 1240, "h": 6200, "title": "Les écrans — ceux qui existent, ceux qui manquent", "print": "flow" },
-
-    { "file": "Ouverture.dc.html",  "page": "ecrans", "x": 0,    "y": 0,    "w": 1600, "h": 1000, "title": "Sur quel jeu travaille-t-on" },
-    { "file": "Accueil.dc.html",    "page": "ecrans", "x": 1720, "y": 0,    "w": 1600, "h": 1000, "title": "Le jeu, en une page" },
-    { "file": "Personnage.dc.html", "page": "ecrans", "x": 3440, "y": 0,    "w": 1600, "h": 1000, "title": "Un personnage — son essai et son vestiaire" },
-    { "file": "Equipement.dc.html", "page": "ecrans", "x": 5160, "y": 0,    "w": 1600, "h": 1000, "title": "Une pièce d'équipement, personnage par personnage" },
-
-    { "file": "Univers.dc.html",    "page": "ecrans", "x": 0,    "y": 1160, "w": 1600, "h": 1000, "title": "Les réglages du jeu — la page entière" },
-    { "file": "Reglages.dc.html",   "page": "ecrans", "x": 1720, "y": 1160, "w": 1600, "h": 1000, "title": "D'où on regarde le jeu — les huit vues" },
-    { "file": "Allure.dc.html",     "page": "ecrans", "x": 3440, "y": 1160, "w": 1600, "h": 1000, "title": "Le style, la taille, la pixelisation" },
-    { "file": "Tables.dc.html",     "page": "ecrans", "x": 5160, "y": 1160, "w": 1600, "h": 1000, "title": "Les tables de traitement" },
-
-    { "file": "Tuiles.dc.html",     "page": "ecrans", "x": 0,    "y": 2320, "w": 1600, "h": 1000, "title": "Un terrain, et son raccord" },
-    { "file": "Decors.dc.html",     "page": "ecrans", "x": 1720, "y": 2320, "w": 1600, "h": 1000, "title": "Un décor, et où il pose ses pieds" },
-    { "file": "Montage.dc.html",    "page": "ecrans", "x": 3440, "y": 2320, "w": 1600, "h": 1000, "title": "Le montage d'un clip" },
-    { "file": "Envoi.dc.html",      "page": "ecrans", "x": 5160, "y": 2320, "w": 1600, "h": 1000, "title": "Ce qu'on envoie à l'IA" },
-
-    { "file": "Toile.dc.html",    "page": "melange", "x": 0,    "y": 0,    "w": 1600, "h": 1000, "title": "Le plan du jeu, piloté par le carnet" },
-    { "file": "Barre.dc.html",    "page": "melange", "x": 1720, "y": 0,    "w": 1600, "h": 1000, "title": "La barre de recherche" },
-    { "file": "Parcours.dc.html", "page": "melange", "x": 0,    "y": 1160, "w": 1600, "h": 1000, "title": "Le parcours entier, de rien à un sprite" }
+    {
+      "file": "Main.dc.html",
+      "page": "le-socle",
+      "x": 0,
+      "y": 0,
+      "w": 1785,
+      "h": 5475,
+      "title": "L'idée",
+      "print": "flow"
+    },
+    {
+      "file": "Vocabulaire.dc.html",
+      "page": "le-socle",
+      "x": 1925,
+      "y": 0,
+      "w": 1240,
+      "h": 5219,
+      "title": "Les mots",
+      "print": "flow"
+    },
+    {
+      "file": "Systeme.dc.html",
+      "page": "le-socle",
+      "x": 3305,
+      "y": 0,
+      "w": 1240,
+      "h": 4153,
+      "title": "Le système",
+      "print": "flow"
+    },
+    {
+      "file": "Navigation.dc.html",
+      "page": "le-socle",
+      "x": 4685,
+      "y": 0,
+      "w": 1240,
+      "h": 8116,
+      "title": "La navigation",
+      "print": "flow"
+    },
+    {
+      "file": "Etats.dc.html",
+      "page": "le-socle",
+      "x": 6065,
+      "y": 0,
+      "w": 1600,
+      "h": 1060,
+      "title": "Les états",
+      "print": "flow"
+    },
+    {
+      "file": "Carte.dc.html",
+      "page": "le-socle",
+      "x": 0,
+      "y": 8333,
+      "w": 1240,
+      "h": 6104,
+      "title": "La carte",
+      "print": "flow"
+    },
+    {
+      "file": "Parcours.dc.html",
+      "page": "le-socle",
+      "x": 1380,
+      "y": 8333,
+      "w": 1600,
+      "h": 1060,
+      "title": "Le parcours",
+      "print": "flow"
+    },
+    {
+      "file": "Installation.dc.html",
+      "page": "ouvrir-l-atelier",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 5350,
+      "title": "L'installation",
+      "print": "flow"
+    },
+    {
+      "file": "Ouverture.dc.html",
+      "page": "ouvrir-l-atelier",
+      "x": 1740,
+      "y": 0,
+      "w": 1600,
+      "h": 2367,
+      "title": "L'ouverture",
+      "print": "flow"
+    },
+    {
+      "file": "Accueil.dc.html",
+      "page": "ouvrir-l-atelier",
+      "x": 3480,
+      "y": 0,
+      "w": 1600,
+      "h": 1856,
+      "title": "Le jeu ouvert",
+      "print": "flow"
+    },
+    {
+      "file": "Barre.dc.html",
+      "page": "ouvrir-l-atelier",
+      "x": 5220,
+      "y": 0,
+      "w": 1600,
+      "h": 1060,
+      "title": "La barre",
+      "print": "flow"
+    },
+    {
+      "file": "Nouveau-jeu.dc.html",
+      "page": "ouvrir-l-atelier",
+      "x": 6960,
+      "y": 0,
+      "w": 1600,
+      "h": 6300,
+      "title": "Commencer un jeu, et ses règles",
+      "print": "flow"
+    },
+    {
+      "file": "Guide.dc.html",
+      "page": "ouvrir-l-atelier",
+      "x": 0,
+      "y": 6560,
+      "w": 1600,
+      "h": 1791,
+      "title": "Le guide",
+      "print": "flow"
+    },
+    {
+      "file": "Famille.dc.html",
+      "page": "les-sujets-et-leurs-familles",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 2576,
+      "title": "Une famille",
+      "print": "flow"
+    },
+    {
+      "file": "Familles.dc.html",
+      "page": "les-sujets-et-leurs-familles",
+      "x": 1740,
+      "y": 0,
+      "w": 1600,
+      "h": 3806,
+      "title": "La même pour les autres familles",
+      "print": "flow"
+    },
+    {
+      "file": "Fiche.dc.html",
+      "page": "un-personnage",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 1060,
+      "title": "Sa fiche",
+      "print": "flow"
+    },
+    {
+      "file": "Images.dc.html",
+      "page": "un-personnage",
+      "x": 1740,
+      "y": 0,
+      "w": 1600,
+      "h": 2502,
+      "title": "Ses images",
+      "print": "flow"
+    },
+    {
+      "file": "Animations.dc.html",
+      "page": "un-personnage",
+      "x": 3480,
+      "y": 0,
+      "w": 1600,
+      "h": 2284,
+      "title": "Ses animations",
+      "print": "flow"
+    },
+    {
+      "file": "Essai.dc.html",
+      "page": "un-personnage",
+      "x": 5220,
+      "y": 0,
+      "w": 1600,
+      "h": 2081,
+      "title": "L'essai",
+      "print": "flow"
+    },
+    {
+      "file": "Comparer.dc.html",
+      "page": "un-personnage",
+      "x": 6960,
+      "y": 0,
+      "w": 1600,
+      "h": 1791,
+      "title": "Comparer deux sujets",
+      "print": "flow"
+    },
+    {
+      "file": "Grille.dc.html",
+      "page": "un-personnage",
+      "x": 0,
+      "y": 2762,
+      "w": 1600,
+      "h": 2136,
+      "title": "Voir la grille du jeu",
+      "print": "flow"
+    },
+    {
+      "file": "Animation-chaine.dc.html",
+      "page": "les-animations-de-bout-en-bo",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 1260,
+      "title": "Le chemin d'une animation",
+      "print": "flow"
+    },
+    {
+      "file": "Clip.dc.html",
+      "page": "les-animations-de-bout-en-bo",
+      "x": 1740,
+      "y": 0,
+      "w": 1600,
+      "h": 1831,
+      "title": "Demander un clip",
+      "print": "flow"
+    },
+    {
+      "file": "Clips.dc.html",
+      "page": "les-animations-de-bout-en-bo",
+      "x": 3480,
+      "y": 0,
+      "w": 1600,
+      "h": 2422,
+      "title": "Le clip reçu",
+      "print": "flow"
+    },
+    {
+      "file": "Atelier-animation.dc.html",
+      "page": "les-animations-de-bout-en-bo",
+      "x": 5220,
+      "y": 0,
+      "w": 1600,
+      "h": 2083,
+      "title": "L'atelier d'une animation",
+      "print": "flow"
+    },
+    {
+      "file": "Emplois.dc.html",
+      "page": "les-equipements",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 1344,
+      "title": "Ses emplois",
+      "print": "flow"
+    },
+    {
+      "file": "Emploi.dc.html",
+      "page": "les-equipements",
+      "x": 1740,
+      "y": 0,
+      "w": 1600,
+      "h": 2658,
+      "title": "Un emploi en détail",
+      "print": "flow"
+    },
+    {
+      "file": "Retouche.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 1951,
+      "title": "La retouche, vue d'ensemble",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-detourer.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 1740,
+      "y": 0,
+      "w": 1600,
+      "h": 7520,
+      "title": "Détourer",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-recadrer.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 3480,
+      "y": 0,
+      "w": 1600,
+      "h": 5486,
+      "title": "Recadrer",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-reduire.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 5220,
+      "y": 0,
+      "w": 1600,
+      "h": 6050,
+      "title": "Pixéliser",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-couleurs.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 6960,
+      "y": 0,
+      "w": 1600,
+      "h": 7243,
+      "title": "Couleurs",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-nettoyer.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 0,
+      "y": 7780,
+      "w": 1600,
+      "h": 5383,
+      "title": "Nettoyer",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-retourner.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 1740,
+      "y": 7780,
+      "w": 1600,
+      "h": 4961,
+      "title": "Retourner",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-decoupe.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 3480,
+      "y": 7780,
+      "w": 1600,
+      "h": 3680,
+      "title": "Découper une feuille",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-contour.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 5220,
+      "y": 7780,
+      "w": 1600,
+      "h": 4383,
+      "title": "Le contour",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-difference.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 6960,
+      "y": 7780,
+      "w": 1600,
+      "h": 3927,
+      "title": "La différence",
+      "print": "flow"
+    },
+    {
+      "file": "Relecture.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 0,
+      "y": 13423,
+      "w": 1600,
+      "h": 3419,
+      "title": "La relecture avant livraison",
+      "print": "flow"
+    },
+    {
+      "file": "Toile.dc.html",
+      "page": "le-reste-du-jeu",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 3588,
+      "title": "La toile de l'univers",
+      "print": "flow"
+    },
+    {
+      "file": "Decors.dc.html",
+      "page": "le-reste-du-jeu",
+      "x": 1740,
+      "y": 0,
+      "w": 1600,
+      "h": 4413,
+      "title": "Un décor",
+      "print": "flow"
+    },
+    {
+      "file": "Tuiles.dc.html",
+      "page": "le-reste-du-jeu",
+      "x": 3480,
+      "y": 0,
+      "w": 1600,
+      "h": 4264,
+      "title": "Un terrain",
+      "print": "flow"
+    },
+    {
+      "file": "Envoi.dc.html",
+      "page": "les-images",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 1060,
+      "title": "L'envoi",
+      "print": "flow"
+    },
+    {
+      "file": "Galerie.dc.html",
+      "page": "les-images",
+      "x": 1740,
+      "y": 0,
+      "w": 1600,
+      "h": 1693,
+      "title": "La galerie",
+      "print": "flow"
+    },
+    {
+      "file": "Sortie.dc.html",
+      "page": "les-images",
+      "x": 3480,
+      "y": 0,
+      "w": 1600,
+      "h": 3700,
+      "title": "La sortie",
+      "print": "flow"
+    },
+    {
+      "file": "Finesse.dc.html",
+      "page": "les-regles-du-jeu",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 3112,
+      "title": "La finesse en dessin",
+      "print": "flow"
+    },
+    {
+      "file": "Depenses.dc.html",
+      "page": "les-comptes-et-quand-ca-rate",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 1060,
+      "title": "Les dépenses",
+      "print": "flow"
+    },
+    {
+      "file": "atelier-main.dc.html",
+      "page": "les-ateliers-de-retouche",
+      "x": 1740,
+      "y": 13423,
+      "w": 1600,
+      "h": 3722
+    }
   ],
-  "annotations": [
-    { "id": "commencer", "page": "modele", "x": -380, "y": 0, "w": 290, "text": "Commence par la gauche.\n\nLe modèle en trois parties, les neuf règles de ton plan qu'il touche, les vingt-huit fonctions de l'atelier et où chacune se range, puis les manques repérés dans le code.\n\nÀ droite, le compte des écrans : les vingt-deux d'aujourd'hui, où chacun arrive, et les dix choses que le produit ne sait pas encore faire." },
-    { "id": "les-ecrans", "page": "ecrans", "x": -380, "y": 0, "w": 290, "text": "Douze écrans, dans l'ordre où on les rencontre.\n\nPremière ligne : on allume l'atelier, on choisit un jeu, on ouvre un personnage.\n\nDeuxième ligne : les réglages du jeu, avec les huit vues et les quatre pixelisations dessinées.\n\nTroisième ligne : les terrains et les décors — tout ce que l'atelier ne sait pas encore faire — puis le montage et le seul écran qui paie." },
-    { "id": "le-melange", "page": "melange", "x": -380, "y": 0, "w": 290, "text": "Le mélange que tu proposes.\n\nLe plan du jeu est piloté par le carnet. La barre de recherche lance les actions qui n'ont pas de bouton, et cliquer n'y déclenche jamais de paiement.\n\nEn dessous, le parcours complet : douze étapes, deux qui coûtent de l'argent." }
-  ],
-  "launch": { "view": "canvas", "page": "ecrans" }
+  "launch": {
+    "view": "canvas",
+    "page": "le-socle"
+  }
 }

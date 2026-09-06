@@ -1943,6 +1943,109 @@ class ServiceProduction:
 
         return rendues
 
+    # ── Le tableau de bord du jeu (B5) ────────────────────────────────────────
+
+    def bilan_du_jeu(self, projet: str, generations: Any) -> dict[str, Any]:
+        """Ce que `TableauDeBord.tsx` sert : la complétude par famille, ce qui
+        manque le plus toutes familles confondues, et ce que le lot coûterait.
+
+        **Compté ici, jamais à l'écran** (`bibliotheque.arbre`, même règle) :
+        l'écran ne tient qu'une page de personnages, et sommer dessus dirait un
+        chiffre faux dès qu'un jeu en a plus qu'une page.
+
+        **La jauge ne compte que ce qui est fabricable maintenant** (E12) :
+        `self.cases` s'appuie sur `personnage.tenues(...)`, qui a déjà écarté les
+        poses et les directions que ce sujet-là ou le jeu ont rangées — le
+        dénominateur ne contient donc jamais une case qu'aucun bouton ne peut
+        remplir aujourd'hui.
+
+        `generations` est `ServiceGenerations`, reçu en paramètre plutôt que
+        construit ici pour éviter le cycle d'imports que fabriquerait un import
+        de `atelier.services.generation` en tête de ce module : c'est lui qui
+        reçoit déjà `ServiceProduction`, jamais l'inverse.
+
+        **Le coût d'un manque est une mesure, pas un tarif** (même garde que
+        `cout_attendu`) : celui du modèle par défaut de sa famille, faute de
+        quoi personne n'a encore payé sur cette machine et le manque compte
+        pour `$0` — la seule valeur qu'on puisse annoncer sans l'inventer.
+        """
+        objet = self._exiger(projet)
+        par_famille: dict[str, dict[str, int]] = {}
+        manques: list[dict[str, Any]] = []
+        couts_connus: dict[str, float | None] = {}
+
+        for personnage in self.personnages(projet):
+            famille = self.famille_de(projet, personnage)
+            groupe = par_famille.setdefault(famille, {"compte": 0, "fait": 0, "total": 0})
+            groupe["compte"] += 1
+            for case in self.cases(projet, personnage):
+                demandees = int(case["demandees"])
+                fait = min(len(case["images"]), demandees)
+                groupe["fait"] += fait
+                groupe["total"] += demandees
+                manque = demandees - fait
+                if manque <= 0:
+                    continue
+                if famille not in couts_connus:
+                    modele = objet.univers.modele(famille)
+                    couts_connus[famille] = (
+                        generations.cout_attendu(modele, images=1)
+                        if modele
+                        else None
+                    )
+                cout_image = couts_connus[famille]
+                cout = round(cout_image * manque, 6) if cout_image else 0.0
+                pluriel = "s" if manque > 1 else ""
+                manques.append(
+                    {
+                        "quantite": manque,
+                        "phrase": f"« {personnage.nom} » n'a pas {manque} pose{pluriel}.",
+                        "famille": famille,
+                        "sujet": personnage.identifiant,
+                        "cout_usd": cout,
+                    }
+                )
+
+        familles = [
+            {
+                "cle": cle,
+                "compte": g["compte"],
+                # `None` quand rien n'est réclamé — une barre à 0 % dirait
+                # « en retard », ce que le manque n'est jamais (E2).
+                "complet": (g["fait"] / g["total"]) if g["total"] else None,
+                "manque_texte": (
+                    "rien n'est encore réclamé"
+                    if g["total"] == 0
+                    else f"{g['fait']} poses faites sur {g['total']}."
+                ),
+            }
+            for cle, g in par_famille.items()
+        ]
+
+        # **Le coût décroissant décide de l'ordre** — le manque le plus cher
+        # d'abord, comme la planche l'écrit. Une ligne à `$0` peut fermer la
+        # liste plutôt que d'en être écartée : *un manque gratuit reste un
+        # manque*, et le taire suggérerait qu'il n'y en a pas.
+        manques.sort(key=lambda m: m["cout_usd"], reverse=True)
+        principaux = manques[:6]
+        if not any(m["cout_usd"] == 0 for m in principaux):
+            gratuit = next((m for m in manques[6:] if m["cout_usd"] == 0), None)
+            if gratuit is not None:
+                principaux = [*principaux, gratuit]
+
+        return {
+            "familles": familles,
+            "manques": principaux,
+            "lot": {
+                "images": sum(m["quantite"] for m in manques),
+                # Une feuille par sujet en manque dans une famille — la même
+                # unité que la planche qui plie C1 : un appel par sujet, ses
+                # poses manquantes dedans.
+                "feuilles": len({(m["sujet"], m["famille"]) for m in manques}),
+                "cout_usd": round(sum(m["cout_usd"] for m in manques), 6),
+            },
+        }
+
     def viser(
         self,
         projet: str,

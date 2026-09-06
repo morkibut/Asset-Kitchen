@@ -11,6 +11,185 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B0 — le socle du carnet — 6 septembre 2026
+
+**Le châssis neuf est posé à côté de l'ancien, pas à sa place.** Un seul lieu est réellement
+branché — le tableau de bord du jeu —, et les quarante autres écrans s'ouvrent exactement comme
+avant, à l'intérieur de la surface. C'est la balle traçante : si le carnet, la pile de lieux et
+l'aide de navigation des essais tiennent sur un lieu, ils tiendront sur vingt.
+
+### La décision qui commande tout le reste : deux systèmes cohabitent
+
+`index.css` porte maintenant deux `@theme`. Trois noms se disputaient — `signal`, `ok`,
+`echec` — et **c'est le carnet qui les garde** : ce sont les mots de `docs/DESIGN.md`, et un
+écran neuf qui écrit `bg-signal` doit obtenir du rouille. L'ancien prend `ancien-`, sur
+**504 emplois dans 37 fichiers**.
+
+⚠️ **Ce n'est pas de la comptabilité, c'est une mesure.** `bg-ancien-signal` dans un fichier dit
+« cet écran n'a pas encore été repris », et l'avancement de la refonte se compte d'un `grep`.
+
+**Ce qui a été refusé** : donner aux anciens noms les valeurs du papier. Cela aurait basculé
+quarante écrans à la lumière d'un seul coup, alors que leurs contrastes ont été choisis pour du
+noir — `--texte` `#e6eaee` est *invisible* sur `#f7f3ec` — et qu'une tranche qui livre un lieu
+n'a pas de quoi en vérifier quarante.
+
+### Douze états sont devenus une pile, et les douze noms n'ont pas bougé
+
+`App.tsx` portait douze états d'ouverture indépendants. Ils sont maintenant **dérivés** de la
+pile de lieux — même nom, même type, même setter —, si bien que deux cents lectures n'ont pas
+changé d'une lettre alors que la source de vérité, elle, a entièrement changé.
+
+Deux choses en sont tombées :
+
+- **Un treizième état était mort** : `decoupeOuverte`, sept écritures, toutes à `null`, et un
+  écran entier derrière. Écrit à la main il se lisait comme les onze autres ; rangé dans une
+  pile, il n'avait aucun genre à recevoir. **Une pile ne cherche pas les états morts — elle les
+  rend impossibles à écrire.**
+- ⚠️ **L'ordre des appels s'est mis à compter.** Poser une racine repose la pile : « ouvrir
+  l'établi » posait la profondeur *puis* changeait de lieu, et perdait la descente. Avec douze
+  états indépendants, l'ordre n'avait aucune importance ; avec une pile, **le lieu d'abord, la
+  profondeur ensuite**, ce qui est aussi le sens de lecture.
+
+Le fil d'Ariane, lui, se déduit de la pile : 110 lignes de ternaires imbriqués remplacées par un
+annuaire qui nomme un lieu et une fonction qui empile les étages.
+
+### Le contrôle en sens inverse a trouvé des boutons sans fond
+
+`D0` demandait le garde-fou **dans les deux sens**. Le sens qui refuse a trouvé, au premier
+lancement, quinze emplois de quatre couleurs déclarées nulle part : `signal-sourd` — **deux
+boutons actifs de l'écran des tables sans aucun fond** —, `texte-1` — neuf survols de l'atelier
+de bande qui ne changeaient rien —, `attente` et `info`.
+
+⚠️ **Un utilitaire Tailwind dont le jeton n'existe pas ne lève aucune erreur** : la règle CSS
+n'est pas produite, l'élément garde la couleur de son parent, et un gris sur du gris ne détonne
+pas. Ni le compilateur, ni la relecture, ni 792 essais d'écran ne le voyaient.
+
+**Ce qui a été refusé : déclarer les quatre pour faire taire le contrôle.** Cela aurait inventé
+quatre valeurs que personne n'a mesurées — exactement la façon dont les huit couleurs de `D0`
+étaient entrées. Ce sont les écrans qu'on a ramenés sur des jetons qui existent.
+
+L'autre sens ne refuse rien : il compte **13 jetons déclarés que rien n'emploie**, et c'est un
+compte à lire, pas une faute à corriger.
+
+### Ce qui reste écrit en clair, et pourquoi
+
+Les tailles, les écarts et les durées **ne deviennent pas des jetons**. Un `--h-controle` qui
+vaudrait `34` cacherait très exactement ce que `docs/DESIGN.md` ferme : ses listes *sont* des
+listes de valeurs. Ce qui les tient est un contrôle — `py essais/essai_jetons.py` —, pas un nom.
+Les couleurs et les arrondis restent des jetons : `#a8492c` ne dit rien à personne, et c'est là
+que le nom sert.
+
+### Ce qu'elle laisse
+
+Le tableau de bord est **livré incomplet, et c'est écrit dans le fichier** : *ce qui manque le
+plus* et l'addition d'un lot demandent des comptes que le serveur ne rend pas par famille, et
+les calculer à l'écran donnerait un chiffre faux dès que la bibliothèque dépasse ce que la
+grille tient en mémoire. `B5` les finit.
+
+## V4 · D0 — le système de design réécrit — 6 septembre 2026
+
+**La tranche a trouvé son sujet en se fermant, et pas en s'écrivant.** `docs/DESIGN.md`, son
+spécimen et l'archive de l'ancien système existaient déjà en entrant — écrits le matin même,
+en même temps que le plan de la version. Il restait à **vérifier** les cinq critères au lieu
+de les affirmer, et c'est la vérification qui a rapporté.
+
+### Le comptage n'avait été fait que dans un sens
+
+Celui d'origine demandait : *ce que le document écrit, les planches l'emploient-elles ?* Bonne
+question, et la réponse était oui. **La réciproque n'avait pas été posée**, et c'est par là que
+ça fuyait : huit couleurs de châssis employées dans **21 à 40 planches sur 47** n'étaient
+déclarées nulle part.
+
+Elles avaient toutes la même cause, et elle tient en une phrase :
+
+> **Un signal n'est pas une couleur, c'est un trio** — un fond, un trait, une encre.
+
+Le document ne déclarait que le fond de chacun des trois signaux. Concrètement : **un bandeau
+d'avertissement n'était pas dessinable à partir de `docs/DESIGN.md`**. `B0` l'aurait découvert
+en écrivant la feuille de style, c'est-à-dire au moment le plus cher — celui où l'on cherche
+une valeur qu'aucun document n'a.
+
+### Le spécimen contredisait son propre document, et le damier dit pourquoi
+
+Le même comptage passé sur le spécimen y a trouvé quatre écarts. Le plus instructif est le
+damier : le document écrivait *« carreaux de 14 px »* **sans donner de couleur**. Le spécimen
+avait donc rempli le vide avec ce qu'il avait sous la main — `#cfcfcf` sur `#b6b6b6`, le gris
+de **l'ancien système sombre**, deux valeurs qui n'existent nulle part dans le carnet. Personne
+ne l'avait vu : un gris sur du gris ne détonne pas.
+
+⚠️ **Une valeur qu'un document ne donne pas ne lève aucune erreur** — elle est remplacée en
+silence par la précédente. C'est la même famille de panne que `--color-signal-sourd`, qui était
+déclaré et défini nulle part ; ici, l'inverse.
+
+Après correction : **zéro valeur hors liste sur 415 éléments mesurés** au navigateur, tailles,
+arrondis, écarts et couleurs confondus.
+
+### Ce qu'elle change pour `B0`
+
+Le garde-fou prévu ne regarde que ce que le code écrit. Il lui faut sa seconde moitié :
+**lister les jetons que rien n'emploie**. Elle ne refuse rien — elle rend un compte, parce
+qu'un jeton inemployé est soit une pièce pas encore dessinée, soit un jeton mort, et seul un
+humain sait lequel.
+
+### Et une chose que le dépôt cessera de faire
+
+**Aucun document ne compte plus les planches.** Elles étaient 43 le matin, 47 le soir, et le
+chiffre était écrit dans quatre documents — faux dans les quatre avant la fin de la journée.
+*Tranché par l'auteur :* le dossier grandit avec les fonctionnalités, c'est normal, et on
+construit sur ce qui est déjà dessiné et sur ce que le code tient déjà. **Ce qui fait foi,
+c'est le dossier, pas son cardinal.**
+
+## V4 · B1 — le miroir — 6 septembre 2026
+
+**La V4 s'ouvre.** Une image se retourne, gratuitement, et le retournement est **une
+place de la recette** — pas un bouton d'export. La distinction n'est pas de forme : une
+place s'endort et se rallume sans se vider, se rejoue sans rien coûter, voyage avec une
+recette nommée, et se lit à côté du titre quand la table est repliée.
+
+Le pèlerin qui marche vers l'ouest cesse de se payer. Et **le vrai gain n'est pas
+l'argent** : une génération rend *un autre* pèlerin, qui change de robe en se retournant.
+Un miroir rend le même, au pixel près — mesuré, palette identique des deux côtés.
+
+### La règle que la tranche pose pour toutes les suivantes
+
+**Une place vide ne s'écrit pas dans l'empreinte.** Sans elle, une place de plus changeait
+le JSON canonique de toutes les recettes du disque — donc leur empreinte, donc le nom de
+leur rendu —, et **tout le cache se recalculait**. Elle ne vaut que pour la clé neuve : les
+huit clés existantes s'écrivent toujours, `null` compris, et c'est ce qui garde le JSON
+d'une recette d'avant identique au caractère près. Les 61 recettes distinctes du dépôt sont
+figées avec leur empreinte d'avant, et un essai les compare à chaque passage.
+
+### Ce que la vérification au navigateur a trouvé
+
+**Le miroir ne retournait pas l'image**, et rien ne le disait. 1 529 essais de serveur,
+778 d'écran, tous verts ; l'asset créé, filié, à zéro dollar, rangé dans la bonne case et
+étiqueté `miroir · gratuit` — et à l'écran, les deux vignettes identiques.
+
+La cause n'était pas dans la tranche : le service appliquait **deux fois** la queue de la
+recette à chaque rendu. Sept places l'ont supporté sans qu'on le voie ; deux ne le
+supportent pas — le contour, qui se retraçait autour de la silhouette qu'il venait
+d'agrandir, et le retournement, qui est une involution. `en_rendu` sépare désormais
+l'encodage de la chaîne, et deux essais tiennent la réparation **sur les octets servis par
+la route** : c'est la seule façon dont ça pouvait se voir, tous les autres appelant `queue`
+une fois.
+
+*La tranche était complète, relue, et fausse.*
+
+### Les directions d'un jeu sont libres, et la table du miroir se tait
+
+Mesuré sur les 170 images du dépôt : les directions réellement écrites sont `bas`, `haut`
+et `droite` — et `gauche` n'apparaît nulle part. Ni `bas` ni `haut` n'appartiennent à une
+liste que le produit livre. La table des paires ne connaît donc que les identifiants
+livrés et **se tait sur le reste** : deviner qu'un mot français désigne une direction
+opposée serait la déduction que le produit refuse ailleurs. La direction se propose quand
+on la connaît, et se demande quand on ne la connaît pas.
+
+`sud` et `nord` se rendent eux-mêmes : le geste se grise avec sa raison, **avant** le clic.
+Un miroir ne montre pas le dos d'un personnage.
+
+Le détail — les cinq critères un par un, les trois défauts que la relecture a rattrapés, et
+ce que la tranche laisse ouvert — est dans `docs/tranches/V4.md`.
+
 ## V3.03.3 — la bande se monte — 6 septembre 2026
 
 Une animation gardée cesse d'être un tirage figé. Le ruban **se retire, se duplique, se

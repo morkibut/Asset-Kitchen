@@ -1,0 +1,397 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    .k { font-family: 'Instrument Sans', system-ui, sans-serif; color: #221f1b; font-size: 13.5px; line-height: 1.5;
+         -webkit-font-smoothing: antialiased }
+    .serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400 }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace }
+    .rt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .15em;
+          text-transform: uppercase; color: #948c80 }
+    .h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; line-height: 1.12 }
+    .carte { background: #fffdfa; border: 1px solid #e2dbd0; border-radius: 9px }
+    .bt { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 32px; padding: 0 12px;
+          border: 1px solid #ddd5c8; border-radius: 7px; background: #fffdfa; font-size: 12.5px; font-weight: 500 }
+    .bt-p { background: #a8492c; border-color: #a8492c; color: #fff }
+    .seg { display: inline-flex; border: 1px solid #ddd5c8; border-radius: 7px; background: #f2ede4; padding: 2px }
+    .sg { padding: 5px 11px; border-radius: 5px; font-size: 12.5px; color: #4e483f }
+    .sg-on { background: #fffdfa; color: #221f1b; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05) }
+    .puce { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em;
+            border-radius: 3px; padding: 2px 6px; white-space: nowrap }
+    .p-a { background: #f4ece2; color: #8a5a2c; border: 1px solid #e0cfb8 }
+    .p-ok { background: #eef1ea; color: #4c6644; border: 1px solid #cfd9c8 }
+    .p-non { background: #f8ece9; color: #8a3f33; border: 1px solid #dcbcb2 }
+    .pl { display: grid; gap: 0; border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden }
+    .pl > div { padding: 10px 13px; border-top: 1px solid #ece6db }
+    .pl > div:nth-child(-n+4) { border-top: 0 }
+    .ent { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+           color: #948c80; background: #f7f3ec }
+    .mot { border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; padding: 13px 14px;
+           display: flex; flex-direction: column; gap: 8px }
+    .mot-d { border-style: dashed; border-color: #c9c2b6; background: #faf7f1 }
+    .rate { display: grid; grid-template-columns: 268px minmax(0,1fr) minmax(0,1fr); gap: 16px; padding: 11px 13px;
+            border-top: 1px solid #ece6db; font-size: 12.5px; line-height: 1.5 }
+    .rg { display: flex; flex-direction: column; gap: 5px; padding-bottom: 10px; border-bottom: 1px solid #e2dbd0 }
+    .rg-t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12.5px }
+    .rai { font-size: 11px; line-height: 1.42; color: #6d675e }
+    .cur { height: 5px; border-radius: 3px; background: #e2dbd0; position: relative }
+    .cur i { position: absolute; top: -4px; width: 13px; height: 13px; border-radius: 50%; background: #fffdfa;
+             border: 1px solid #a49a8b }
+    .tb { display: inline-flex; align-items: center; gap: 6px; height: 27px; padding: 0 10px; border-radius: 6px;
+          font-size: 12.5px; color: #6d675e; white-space: nowrap }
+    .tb-on { background: #221f1b; color: #f7f3ec; font-weight: 500 }
+    .dam { background-image: linear-gradient(45deg,#dedad2 25%,transparent 25%),linear-gradient(-45deg,#dedad2 25%,transparent 25%),
+                             linear-gradient(45deg,transparent 75%,#dedad2 75%),linear-gradient(-45deg,transparent 75%,#dedad2 75%);
+           background-size: 14px 14px; background-position: 0 0,0 7px,7px -7px,-7px 0px; background-color: #f0ede7 }
+    /* une case de la feuille : le pèlerin dans une pose */
+    .case { position: relative; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12% }
+    .p { display: block; width: 26%; height: 56%; background: #6b5a44; border-radius: 4px 4px 2px 2px; position: relative }
+    .p::before { content: ''; position: absolute; left: 50%; top: -22%; transform: translateX(-50%);
+                 width: 62%; aspect-ratio: 1; border-radius: 50%; background: #8a7458 }
+    .rect { position: absolute; border: 1.5px solid #a8492c; border-radius: 2px }
+    .rect-on { border-width: 2px; box-shadow: 0 0 0 2px rgba(255,253,250,.85) }
+    .no { position: absolute; left: 3px; top: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+          color: #fffdfa; background: rgba(168,73,44,.9); border-radius: 3px; padding: 0 4px }
+    .lg { display: grid; grid-template-columns: 22px minmax(0,1fr) 74px 16px; gap: 9px; align-items: center;
+          padding: 7px 9px; border-radius: 6px; font-size: 12px }
+    .vg { border-radius: 5px; border: 1px solid #ddd5c8; position: relative; overflow: hidden }
+    .neuf { background: #f4ece2; border: 1px dashed #e0cfb8; border-radius: 8px }
+  </style>
+</helmet>
+
+<div class="k" style="width: 1600px; min-height: 3560px; background: #f7f3ec; padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 26px">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+    <div style="display: flex; flex-direction: column; gap: 5px; max-width: 1040px">
+      <div style="font-size: 12.5px; color: #948c80">Le Marais du Vieux Moulin › Galerie › les six poses du pèlerin › Découpage</div>
+      <h1 class="serif" style="font-size: 44px; line-height: 1.02">Découper une feuille en cases</h1>
+      <div style="font-size: 15px; color: #4e483f; line-height: 1.5">une image en entrée, plusieurs sujets en sortie — l'atelier propose, on corrige, puis on coupe</div>
+    </div>
+    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div class="rt">ce que ça coûte</div>
+      <div class="serif" style="font-size: 30px; color: #5c7a52">gratuit</div>
+      <div style="font-size: 12px; color: #6d675e; text-align: right; max-width: 220px">l'argent reste sur la feuille&nbsp;: les morceaux naissent à zéro</div>
+    </div>
+  </div>
+
+  <div style="border-left: 3px solid #a8492c; padding: 3px 0 3px 15px; font-size: 14px; line-height: 1.55; color: #3d382f; max-width: 1200px">
+    Le modèle rend souvent une feuille&nbsp;: six poses côte à côte, huit tuiles d'herbe, une feuille d'icônes. Il faut la couper. <strong style="font-weight: 600">Le geste est toujours en deux temps</strong> — l'atelier propose des rectangles, on les corrige, on coupe ce qu'on a sous les yeux. Rien n'est créé tant qu'on n'a pas cliqué. Chaque morceau devient une image entière de la bibliothèque, avec ses pixels et ses réglages&nbsp;; la feuille reste en place.
+  </div>
+
+  <!-- ══ l'écran ══ -->
+  <div style="border: 1px solid #ddd5c8; border-radius: 12px; background: #f7f3ec; overflow: hidden">
+
+    <div style="border-bottom: 1px solid #e2dbd0; background: #f2ede4; padding: 9px 14px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap">
+      <span class="tb">Détourer</span><span class="tb">Recadrer</span><span class="tb">Pixéliser</span><span class="tb">Couleurs</span>
+      <span class="tb">Nettoyer</span><span class="tb">Le contour</span><span class="tb">La main</span>
+      <span style="width: 1px; height: 20px; background: #ccc4b6; margin: 0 8px"></span>
+      <span class="tb tb-on">Découper</span><span class="tb">Superposer</span>
+      <span style="margin-left: auto; font-size: 11.5px; color: #948c80">une fabrique&nbsp;: elle ne change pas cette image, elle en écrit d'autres</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0,1fr) 400px; min-height: 790px">
+
+      <!-- ── l'image et ses rectangles ── -->
+      <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; min-width: 0">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+          <div style="font-size: 14.5px; font-weight: 600">La feuille telle qu'elle est arrivée — 1024 × 704</div>
+          <div style="font-size: 12px; color: #6d675e">c'est l'image <strong style="font-weight: 600">brute</strong> qui est montrée et découpée, pas le rendu retouché</div>
+        </div>
+
+        <div class="dam" style="position: relative; border-radius: 8px; height: 470px; padding: 0">
+          <!-- les six cases du pèlerin, 3 colonnes × 2 lignes -->
+          <div style="position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr)">
+            <div class="case"><i class="p"></i></div>
+            <div class="case"><i class="p" style="height: 52%"></i></div>
+            <div class="case"><i class="p" style="height: 58%; width: 30%"></i></div>
+            <div class="case"></div>
+            <div class="case"><i class="p" style="height: 54%; width: 30%"></i></div>
+            <div class="case"><i class="p" style="height: 50%"></i></div>
+            <div class="case"><i class="p" style="height: 46%; width: 34%"></i></div>
+            <div class="case"></div>
+          </div>
+          <!-- les rectangles proposés -->
+          <div class="rect rect-on" style="left: 2.2%; top: 4%; width: 20.6%; height: 44%"><span class="no">1</span></div>
+          <div class="rect" style="left: 27.2%; top: 6%; width: 20.6%; height: 42%"><span class="no">2</span></div>
+          <div class="rect" style="left: 52%; top: 4%; width: 21%; height: 44%"><span class="no">3</span></div>
+          <div class="rect" style="left: 27.2%; top: 53%; width: 20.6%; height: 43%"><span class="no">4</span></div>
+          <div class="rect" style="left: 52%; top: 55%; width: 21%; height: 41%"><span class="no">5</span></div>
+          <div class="rect" style="left: 2.2%; top: 56%; width: 21%; height: 40%"><span class="no">6</span></div>
+          <span style="position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: #4e483f; background: rgba(255,253,250,.85); border-radius: 4px; padding: 3px 8px">glisse pour ajouter un rectangle · clique pour en choisir un</span>
+        </div>
+
+        <div style="border: 1px solid #e0cfb8; background: #f4ece2; border-radius: 8px; padding: 9px 12px; font-size: 12px; color: #4e483f">
+          <strong style="font-weight: 600">Corrigé à la main</strong> — changer un réglage relancera la détection et remplacera cette liste, corrections comprises.
+        </div>
+
+        <!-- ce qui sortira, en vignettes : la proposition -->
+        <div class="neuf" style="padding: 12px 13px; display: flex; flex-direction: column; gap: 9px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+            <span style="font-size: 13px; font-weight: 600; color: #8a5a2c">Les six morceaux, avant de couper</span>
+            <span class="puce p-a">à ajouter</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(8, minmax(0,1fr)); gap: 8px">
+            <span style="display: flex; flex-direction: column; gap: 4px"><span class="vg dam" style="height: 62px"><span class="case" style="position: absolute; inset: 0"><i class="p" style="width: 30%; height: 58%"></i></span></span><span style="font-size: 10.5px; color: #4e483f">au repos</span></span>
+            <span style="display: flex; flex-direction: column; gap: 4px"><span class="vg dam" style="height: 62px"><span class="case" style="position: absolute; inset: 0"><i class="p" style="width: 30%; height: 54%"></i></span></span><span style="font-size: 10.5px; color: #4e483f">marche</span></span>
+            <span style="display: flex; flex-direction: column; gap: 4px"><span class="vg dam" style="height: 62px"><span class="case" style="position: absolute; inset: 0"><i class="p" style="width: 32%; height: 60%"></i></span></span><span style="font-size: 10.5px; color: #4e483f">course</span></span>
+            <span style="display: flex; flex-direction: column; gap: 4px"><span class="vg dam" style="height: 62px"><span class="case" style="position: absolute; inset: 0"><i class="p" style="width: 32%; height: 56%"></i></span></span><span style="font-size: 10.5px; color: #4e483f">attaque</span></span>
+            <span style="display: flex; flex-direction: column; gap: 4px"><span class="vg dam" style="height: 62px"><span class="case" style="position: absolute; inset: 0"><i class="p" style="width: 30%; height: 52%"></i></span></span><span style="font-size: 10.5px; color: #4e483f">dégâts</span></span>
+            <span style="display: flex; flex-direction: column; gap: 4px"><span class="vg dam" style="height: 62px"><span class="case" style="position: absolute; inset: 0"><i class="p" style="width: 36%; height: 48%"></i></span></span><span style="font-size: 10.5px; color: #4e483f">mort</span></span>
+            <span style="display: flex; flex-direction: column; gap: 4px; opacity: .45"><span class="vg dam" style="height: 62px; border-style: dashed"></span><span style="font-size: 10.5px; color: #6d675e">vide</span></span>
+            <span style="display: flex; flex-direction: column; gap: 4px; opacity: .45"><span class="vg dam" style="height: 62px; border-style: dashed"></span><span style="font-size: 10.5px; color: #6d675e">vide</span></span>
+          </div>
+          <div style="font-size: 11.5px; line-height: 1.45; color: #4e483f">Aujourd'hui l'écran montre des rectangles sur l'image, jamais ce qui va en sortir. L'écran du dépliage, lui, le fait déjà&nbsp;: il découpe côté navigateur pour montrer les sujets. C'est le même besoin, et le même travail. Les deux cases vides sont décochées d'office.</div>
+        </div>
+      </div>
+
+      <!-- ── ce qui sortira ── -->
+      <div style="background: #f2ede4; border-left: 1px solid #e2dbd0; padding: 16px 15px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <div class="rt">Ce qui sortira</div>
+          <div class="mono" style="font-size: 11px; color: #6d675e">1024 × 704</div>
+        </div>
+
+        <div class="rg">
+          <div class="rg-t"><span style="font-weight: 600">Détection</span></div>
+          <div class="seg" style="width: 100%">
+            <div class="sg sg-on" style="flex: 1; text-align: center">zones opaques</div>
+            <div class="sg" style="flex: 1; text-align: center">grille fixe</div>
+            <div class="sg" style="flex: 1; text-align: center; color: #8a5a2c">les gouttières</div>
+          </div>
+          <div class="rai"><strong style="font-weight: 600">Zones opaques</strong> détoure d'abord, puis cherche les taches d'un seul tenant. <strong style="font-weight: 600">Grille fixe</strong> coupe en parts égales sans rien regarder. <strong style="font-weight: 600">Les gouttières</strong> <span class="puce p-a" style="font-size: 9px">à ajouter</span> cherche les rangées et les colonnes vides — c'est ce qu'il faut sur une feuille opaque de bord à bord, et aucun des deux autres ne sait le faire.</div>
+        </div>
+
+        <div class="rg">
+          <div class="rg-t"><span style="font-weight: 600">taille minimale</span><span class="mono" style="color: #4e483f">16 px</span></div>
+          <div class="cur"><i style="left: 12%"></i></div>
+          <div class="rai">Sous cette taille, une tache n'est pas un sujet. Ne sert qu'en « zones opaques »&nbsp;: la grille l'ignore.</div>
+        </div>
+
+        <div class="rg">
+          <div class="rg-t"><span style="font-weight: 600">la grille</span><span style="font-size: 11px; color: #948c80">en grille fixe</span></div>
+          <div style="display: grid; grid-template-columns: 62px minmax(0,1fr) 40px; gap: 6px 9px; align-items: center; font-size: 12px; color: #6d675e">
+            <span>colonnes</span><span class="cur"><i style="left: 22%"></i></span><span class="mono" style="text-align: right; font-size: 11.5px">4</span>
+            <span>lignes</span><span class="cur"><i style="left: 8%"></i></span><span class="mono" style="text-align: right; font-size: 11.5px">2</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 62px minmax(0,1fr) 40px; gap: 6px 9px; align-items: center; font-size: 12px; color: #8a5a2c; border-top: 1px dashed #e0cfb8; padding-top: 7px">
+            <span>ou la case</span><span class="mono" style="font-size: 11.5px">256 × 352 px</span><span class="puce p-a" style="font-size: 9px">à&nbsp;ajouter</span>
+          </div>
+          <div class="rai">On connaît souvent la taille de la tuile, jamais le nombre de colonnes&nbsp;: aujourd'hui il faut faire la division soi-même.</div>
+        </div>
+
+        <div class="rg">
+          <div class="rg-t"><span style="font-weight: 600">6 rectangles</span><span style="font-size: 11.5px; color: #6d675e">Tout retirer ›</span></div>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span class="lg" style="background: #fffdfa; border: 1px solid #a8492c"><span class="mono" style="color: #a8492c">1</span><span class="mono" style="font-size: 11.5px">246 × 310</span><span class="mono" style="font-size: 11px; color: #948c80">@ 18,26</span><span style="color: #a49a8b">✕</span></span>
+            <span class="lg"><span class="mono" style="color: #948c80">2</span><span class="mono" style="font-size: 11.5px">244 × 298</span><span class="mono" style="font-size: 11px; color: #948c80">@ 278,42</span><span style="color: #a49a8b">✕</span></span>
+            <span class="lg"><span class="mono" style="color: #948c80">3</span><span class="mono" style="font-size: 11.5px">252 × 312</span><span class="mono" style="font-size: 11px; color: #948c80">@ 532,28</span><span style="color: #a49a8b">✕</span></span>
+            <span class="lg"><span class="mono" style="color: #948c80">4</span><span class="mono" style="font-size: 11.5px">242 × 304</span><span class="mono" style="font-size: 11px; color: #948c80">@ 278,374</span><span style="color: #a49a8b">✕</span></span>
+            <span class="lg"><span class="mono" style="color: #948c80">5</span><span class="mono" style="font-size: 11.5px">250 × 290</span><span class="mono" style="font-size: 11px; color: #948c80">@ 532,388</span><span style="color: #a49a8b">✕</span></span>
+            <span class="lg"><span class="mono" style="color: #948c80">6</span><span class="mono" style="font-size: 11.5px">248 × 284</span><span class="mono" style="font-size: 11px; color: #948c80">@ 18,394</span><span style="color: #a49a8b">✕</span></span>
+          </div>
+          <div class="rai">L'ordre affiché est l'ordre gardé, par bandes de gauche à droite. <strong style="font-weight: 600">Chaque morceau emportera 4 px de fond de plus sur chaque côté</strong> — sans ça, le détourage lirait du sujet sur sa bordure et mangerait le sprite.</div>
+        </div>
+
+        <div class="rg neuf" style="border-bottom: 0; padding: 11px 12px">
+          <div class="rg-t"><span style="font-weight: 600; color: #8a5a2c">Ce que chaque case est</span><span class="puce p-a">à ajouter</span></div>
+          <div style="display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #4e483f">
+            <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="color: #948c80">1</span> au repos</span>
+            <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="color: #948c80">2</span> marche</span>
+            <span style="display: flex; align-items: center; gap: 7px"><span class="mono" style="color: #948c80">3</span> course</span>
+            <span style="font-size: 11px; color: #948c80; padding-left: 20px">… et trois autres</span>
+          </div>
+          <div class="rai">La feuille a été demandée pour les six poses du pèlerin&nbsp;: l'atelier le sait, il peut proposer l'affectation dans l'ordre et laisser corriger. Aujourd'hui les six morceaux s'appellent « les six poses du pèlerin · 1/6 », et il faut les renommer et les ranger un par un.</div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 7px">
+          <span class="bt bt-p" style="height: 38px">Découper en 6 sujets ›</span>
+          <div class="rai" style="text-align: center">64 morceaux au maximum, par geste.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ les deux façons ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <div><span class="h2">Les façons de proposer</span> <span style="font-size: 13.5px; color: #6d675e">— 2 sont là, 1 manque, et la main rattrape tout</span></div>
+      <div style="font-size: 12.5px; color: #6d675e">La seconde n'est pas un repli de la première&nbsp;: elles répondent à deux feuilles différentes.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 13px">
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Zones opaques</div><span class="puce p-ok">là</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">L'image est détourée d'abord — même si la recette ne le demande pas, sinon une feuille opaque de bord à bord n'aurait qu'une seule tache&nbsp;: elle-même. Puis les taches d'un seul tenant sont cherchées, celles qui se touchent à trois pixels près sont recollées — le bras détaché du corps revient au corps — et les plus petites que la taille minimale sont jetées.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Des sujets séparés posés sur un fond uni&nbsp;: six poses, une feuille d'objets, un jeu d'icônes.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Grille fixe</div><span class="puce p-ok">là</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Colonnes × lignes cases égales, sans rien regarder. Le reste de la division se répartit sur les premières cases&nbsp;: rien n'est jeté au bord. <strong style="font-weight: 600">Elle ne saute jamais une case vide</strong> — huit cases pour six sujets, et deux morceaux transparents à retirer à la main.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Une feuille de tuiles collées les unes aux autres, où il n'y a aucun vide à détecter.</div>
+      </div>
+      <div class="mot mot-d">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">Les gouttières</div><span class="puce p-a">à ajouter</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">Chercher les rangées et les colonnes <em>entièrement d'une seule couleur</em> et couper là. C'est le cas le plus courant de tout&nbsp;: le modèle rend une feuille opaque, avec des bandes de fond entre les cases. Ni « zones opaques » ni « grille fixe » ne savent le lire — le premier ne voit qu'une tache, la seconde coupe au mauvais endroit dès que les cases ne sont pas parfaitement régulières.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Presque toutes les feuilles rendues par un modèle. Aujourd'hui, on les découpe à la main.</div>
+      </div>
+      <div class="mot">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 9px">
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.3">À la main</div><span class="puce p-ok">là</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.5; color: #4e483f">On glisse un rectangle sur l'image. Sous quatre pixels de côté, c'est un clic et non un rectangle — le même geste sert donc à choisir et à créer, sans se marcher dessus. Suppr retire celui qui est choisi, Échap ferme.</div>
+        <div style="font-size: 12px; line-height: 1.45; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 8px">
+          <span class="rt" style="font-size: 9.5px">quand</span> Toujours, en correction. Et quand la détection ne trouve rien&nbsp;: elle dit alors pourquoi et laisse la main plutôt que d'échouer.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ce qu'un morceau devient ══ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 430px; gap: 22px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div><span class="h2">Ce qu'un morceau devient</span> <span style="font-size: 13.5px; color: #6d675e">— une image entière, pas un bout de sa feuille</span></div>
+      <div class="pl" style="grid-template-columns: 210px minmax(0,1fr)">
+        <div class="ent">ce qu'il reçoit</div><div class="ent">d'où ça vient</div>
+        <div><span style="font-weight: 600">Ses pixels</span></div>
+        <div style="color: #4e483f">Le rectangle demandé, <strong style="font-weight: 600">plus 4 px de fond sur chaque côté</strong>. Ce n'est pas du confort&nbsp;: sans cette marge, le détourage lirait du sujet collé à la bordure et mangerait le sprite. L'écran ne l'annonce pas.</div>
+        <div><span style="font-weight: 600">Sa recette</span></div>
+        <div style="color: #4e483f">Celle de la feuille, telle quelle — <strong style="font-weight: 600">sauf le recadrage</strong>, dont la boîte désignait un rectangle de la feuille et n'a plus de sens ici. Seule la marge du recadrage est gardée.</div>
+        <div><span style="font-weight: 600">Son nom</span></div>
+        <div style="color: #4e483f">« les six poses du pèlerin · 3/6 ». Imposé&nbsp;: pas de motif, pas de préfixe, pas de numérotation choisie.</div>
+        <div><span style="font-weight: 600">Son rangement</span></div>
+        <div style="color: #4e483f">Celui de la feuille&nbsp;: son projet, sa collection, son modèle, sa provenance. On ne choisit rien au moment de couper.</div>
+        <div><span style="font-weight: 600">Son prix</span></div>
+        <div style="color: #4e483f">Zéro. Une découpe n'a rien coûté&nbsp;: l'argent reste inscrit sur la feuille, et le compte du jeu ne bouge pas.</div>
+        <div><span style="font-weight: 600">Sa date</span></div>
+        <div style="color: #4e483f">Maintenant, pas celle de la génération. Un morceau coupé six mois après remonte en tête des nouveautés.</div>
+        <div><span style="font-weight: 600">Sa parenté</span></div>
+        <div style="color: #4e483f">Un lien vers la feuille, dans les deux sens. La feuille reste en place, et supprimer la feuille n'emporte pas les morceaux.</div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">l'autre découpe, celle qu'on ne voit pas</div>
+        <div style="font-size: 15px; font-weight: 600; line-height: 1.3">Le dépliage</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Quand c'est l'atelier lui-même qui a demandé la feuille, il connaît la grille qu'il a posée&nbsp;: il coupe tout seul, à l'arrivée, sans rien demander. Les morceaux reçoivent alors leur pose <em>et</em> leur direction, et sont marqués « morceau de feuille » — ce qui décide de leur détourage par défaut.</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #8a3f33; border-top: 1px solid #ece6db; padding-top: 9px">La découpe à la main, elle, ne pose <strong style="font-weight: 600">ni direction ni marque de feuille</strong>. Deux images issues de la même feuille peuvent donc naître avec des réglages différents selon le chemin emprunté.</div>
+      </div>
+      <div style="border: 1px solid #dcbcb2; background: #f8ece9; border-radius: 9px; padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-size: 14px; font-weight: 600; color: #8a3f33">« Découper » veut dire deux choses</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Sur une image, couper une feuille en cases — cet écran. Sur un clip vidéo, « Découper › » ouvre le montage, pour en extraire des bandes. Deux boutons, le même mot, deux écrans sans rapport.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ quand ça rate ══ -->
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px">
+      <span class="h2">Quand ça rate</span>
+      <div style="font-size: 12.5px; color: #6d675e">9 cas vus sur le marais.</div>
+    </div>
+    <div style="border: 1px solid #e2dbd0; border-radius: 9px; background: #fffdfa; overflow: hidden">
+      <div class="rate" style="border-top: 0; background: #f7f3ec">
+        <div class="ent" style="background: none; padding: 0">ce qui s'est passé</div>
+        <div class="ent" style="background: none; padding: 0">ce qu'on voit</div>
+        <div class="ent" style="background: none; padding: 0">le geste qui répare</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On a dessiné six rectangles à la main, puis touché au curseur de taille minimale.</div>
+        <div style="color: #8a3f33">Les six rectangles ont disparu, remplacés par la nouvelle proposition. Sans confirmation.</div>
+        <div style="color: #4e483f">Une ligne prévient — « corrigé à la main : changer un réglage relancera la détection » — et c'est tout ce qu'il y a. Il faudrait demander avant d'effacer un travail de dix minutes.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">La feuille est opaque de bord à bord, avec des bandes de fond entre les cases.</div>
+        <div style="color: #8a3f33">« Zones opaques » ne trouve qu'une seule tache&nbsp;: l'image entière. Elle le dit — « le détourage n'a rien laissé d'opaque — corrige à la main ».</div>
+        <div style="color: #4e483f">Passer en grille fixe si les cases sont régulières, sinon dessiner les six rectangles. Le mode « les gouttières » existerait pour ça.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On règle une grille de 16 × 16 pour une grande feuille de tuiles.</div>
+        <div style="color: #8a3f33">Les curseurs acceptent, l'écran affiche 256 rectangles, et la découpe est refusée&nbsp;: le maximum est 64 morceaux par geste.</div>
+        <div style="color: #4e483f">Découper en plusieurs fois. Mais le refus arrive après le clic&nbsp;: les curseurs devraient s'arrêter là où le service s'arrête.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">La grille fixe est posée sur une feuille dont deux cases sont restées vides.</div>
+        <div style="color: #8a3f33">Huit morceaux sont créés, dont deux entièrement transparents, qui vont grossir la bibliothèque du jeu.</div>
+        <div style="color: #4e483f">Les retirer à la main de la liste avant de couper. Aucun aperçu ne les montre&nbsp;: on ne les voit qu'une fois créés.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Deux sujets se touchent presque — le bâton du pèlerin frôle le tonneau voisin.</div>
+        <div style="color: #8a3f33">Un seul rectangle pour les deux. La détection recolle tout ce qui est séparé de trois pixels ou moins, exprès, pour recoller un bras détaché de son corps.</div>
+        <div style="color: #4e483f">Couper le rectangle en deux à la main, ou passer en grille fixe. Le recollage n'est pas réglable.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On découpe la feuille des six poses à la main, puis on cherche les images dans la matrice du pèlerin.</div>
+        <div style="color: #8a3f33">Elles ne sont nulle part&nbsp;: elles s'appellent « les six poses du pèlerin · 1/6 » à « 6/6 », rangées dans le projet de la feuille, sans pose et sans direction.</div>
+        <div style="color: #4e483f">Les renommer et les affecter une par une. C'est exactement ce que l'écran devrait proposer au moment de couper — il sait pourquoi la feuille a été demandée.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">Un agent écrit <span class="mono">mode="grid"</span> en anglais.</div>
+        <div style="color: #8a3f33">Refus. Seuls « auto » et « grille » sont acceptés, et la description de l'outil ne cite aucune valeur possible.</div>
+        <div style="color: #4e483f">Écrire « grille ». L'outil devrait lister ses valeurs — c'est le genre de chose qu'on ne devine pas.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On veut couper vingt feuilles de tuiles avec la même grille.</div>
+        <div style="color: #8a3f33">Il faut ouvrir les vingt une par une, régler la grille vingt fois. Rien ne garde une grille, rien n'accepte plusieurs images.</div>
+        <div style="color: #4e483f">Aucun geste ne répare ça aujourd'hui. Une grille nommée et rejouable serait le premier ajout utile.</div>
+      </div>
+      <div class="rate">
+        <div style="color: #221f1b">On importe une feuille faite ailleurs et on attend que l'atelier propose de la couper.</div>
+        <div style="color: #8a3f33">Rien ne vient. Le découpage automatique n'existe que pour les feuilles que l'atelier a lui-même demandées.</div>
+        <div style="color: #4e483f">Ouvrir la fabrique à la main. Une image bien plus large que haute, avec des sujets répétés, mériterait qu'on pose la question.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ce qui manque ══ -->
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 420px; gap: 26px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span class="h2">Ce qui manque aujourd'hui</span>
+      <div style="font-size: 12.5px; color: #6d675e; margin-top: -4px">Le calcul est bon et couvert par des essais. Ce qui manque est ce qui entoure le geste.</div>
+      <ul style="padding-left: 19px; font-size: 12.5px; line-height: 1.55; color: #4e483f; columns: 2; column-gap: 26px; margin-top: 3px">
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">On ne voit pas ce qui va sortir.</strong> L'écran montre des rectangles sur l'image, jamais les vignettes des morceaux. L'écran du dépliage le fait déjà, côté navigateur&nbsp;: c'est le même travail.</li>
+        <li style="margin-bottom: 6px"><strong style="font-weight: 600">On ne dit pas ce que chaque case est.</strong> Six morceaux numérotés, à renommer et à ranger un par un — alors que l'atelier sait pourquoi la feuille a été demandée.</li>
+        <li style="margin-bottom: 6px">Pas de détection par rangées et colonnes vides, qui est pourtant le cas le plus courant d'une feuille rendue par un modèle.</li>
+        <li style="margin-bottom: 6px">Pas de taille de case en pixels&nbsp;: la grille se décrit en colonnes et en lignes, et on connaît presque toujours l'inverse.</li>
+        <li style="margin-bottom: 6px">Pas de marge, pas de gouttière, pas de point de départ. La grille part toujours du coin haut-gauche.</li>
+        <li style="margin-bottom: 6px">Pas de découpe en lot&nbsp;: une image à la fois, vingt fois pour vingt feuilles.</li>
+        <li style="margin-bottom: 6px">Pas de grille gardée et rejouable. Chaque découpe repart de zéro.</li>
+        <li style="margin-bottom: 6px">Les 4 px de fond ajoutés autour de chaque morceau ne sont écrits nulle part à l'écran, alors qu'ils changent les dimensions de ce qui sort.</li>
+        <li style="margin-bottom: 6px">Les morceaux coupés à la main ne reçoivent ni direction ni marque de feuille&nbsp;: deux images de la même feuille peuvent naître avec des réglages différents selon le chemin.</li>
+        <li style="margin-bottom: 6px">Les bornes ne sont pas les mêmes partout&nbsp;: l'écran laisse régler jusqu'à 16 × 16, le service refuse au-delà de 64 morceaux. Le refus arrive après le clic.</li>
+        <li style="margin-bottom: 6px">Les valeurs de départ diffèrent selon la porte&nbsp;: 4 × 2 à l'écran, 2 × 1 pour l'agent. Rien ne le justifie.</li>
+        <li style="margin-bottom: 6px">Un chemin d'écran est écrit mais injoignable&nbsp;: la découpe en plein cadre depuis la galerie, fil d'Ariane compris, n'a aucun bouton qui y mène.</li>
+      </ul>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 13px">
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">avant / après</div>
+        <div style="font-size: 12.5px; line-height: 1.6; color: #4e483f; white-space: pre-line">Une feuille de 1024 × 704 sur damier : le pèlerin dessiné six fois, trois par rangée, sur un fond magenta uni, avec deux cases restées vides en bout de rangée. Par-dessus, six rectangles rouille numérotés dans le coin haut-gauche, dont le premier est choisi — anneau clair autour. À droite, la colonne : les six lignes de la liste, leurs dimensions et leur position, et le bouton « Découper en 6 sujets ». Sous l'image, la bande qui manque : les six vignettes de ce qui va sortir, sur damier, avec dessous le nom qu'on leur donne — au repos, marche, course, attaque, dégâts, mort — et les deux cases vides grisées, décochées. Puis, en petit, le raté typique : la même feuille en mode « zones opaques » alors qu'elle est opaque de bord à bord, avec un seul rectangle qui entoure toute l'image et la phrase « le détourage n'a rien laissé d'opaque — corrige à la main ».</div>
+      </div>
+      <div class="carte" style="padding: 15px 16px; display: flex; flex-direction: column; gap: 9px">
+        <div class="rt">le relevé</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f">Le geste existe deux fois dans le code, et c'est assumé&nbsp;: une découpe pour les images du jeu, une autre pour les cartes du tableau d'inspiration, avec deux services et deux paires de routes. Elles ne partagent que la vérification des rectangles — et leurs phrases de refus diffèrent déjà.</div>
+        <div style="font-size: 12.5px; line-height: 1.55; color: #4e483f; border-top: 1px solid #ece6db; padding-top: 9px">Un seul endroit du produit où découper <em>efface</em>&nbsp;: sur une carte d'inspiration, avec un seul rectangle, la case « ce morceau prend la place de l'originale ». Décochée par défaut, délibérément.</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #6d675e; border-top: 1px solid #ece6db; padding-top: 9px">Rien de tout ça ne coûte d'argent, et c'est garanti par construction&nbsp;: le service de découpe n'a aucun accès au fournisseur, et un essai le vérifie réseau coupé.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

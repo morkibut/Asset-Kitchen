@@ -33,6 +33,7 @@ from atelier.domaine.recette import (
     CERCLES,
     DEHORS,
     EPAISSEUR_MAX,
+    GAUCHE_DROITE,
     OCCUPATION_MAX_ABSOLU,
     PLACES,
     RAYON_MAX,
@@ -135,8 +136,17 @@ async def flux(requete: Request, limite: int = Query(50, ge=1, le=500)) -> Respo
                     # bibliothèque et paraît par `assets` ; ce qui a échoué est
                     # au journal du projet avec son coût. Ne restent ici que les
                     # emplacements qui attendent encore une issue.
+                    # **Scopé au jeu ouvert** (B4) : sans ce filtre, le
+                    # chantier du jeu précédent restait à l'écran après un
+                    # changement de jeu — sa tuile ne partait qu'à la
+                    # prochaine génération, jamais au changement lui-même.
                     "generations": [
-                        g.en_json() for g in atelier.generations.chantier(limite)
+                        g.en_json()
+                        for g in atelier.generations.chantier(
+                            limite,
+                            projet=atelier.bibliotheque.courant,
+                            sans_projet=atelier.bibliotheque.courant is None,
+                        )
                     ],
                     # La grille du projet ouvert, servie avec l'état pour qu'un
                     # onglet qui s'ouvre la dessine sans un second appel.
@@ -887,6 +897,13 @@ class CorpsGrille(BaseModel):
     # refuse au chiffre exact, qu'il calcule d'après la cible.
     occupation: int = Field(100, ge=1, le=OCCUPATION_MAX_ABSOLU)
     ancrage: str = "bas"
+    # **Le décalage horizontal** (E17) — une coordonnée écrite par le calibrage
+    # seul, jamais par cet écran. Le champ doit exister ici quand même : ce
+    # corps porte la recette entière à chaque changement d'un autre réglage
+    # (`PUT /assets/{id}/recipe`), et un champ absent du modèle Pydantic est
+    # silencieusement jeté par la validation — la valeur posée par le calibrage
+    # disparaissait donc dès qu'on touchait `occupation` ou `cible` à côté.
+    decalage: int = 0
     # **La méthode de réduction** (D2). Elle se comporte comme `ancrage` : la
     # charge la porte, l'écran l'envoie à chaque fois, et l'omettre retombe sur
     # « au plus proche » — ce que l'atelier faisait avant que la question se
@@ -922,9 +939,9 @@ class CorpsTrait(BaseModel):
 
     *Écrit ici depuis E5, et importé par la production.* Il servait aux deux
     couches de la main d'un calque d'équipement ; la main est devenue la
-    septième place de la recette, donc le passage appartient à la recette.
+    huitième place de la recette, donc le passage appartient à la recette.
     `couleur` est vide partout où le passage décide d'un masque — les deux
-    couches d'un calque, et l'opacité de la septième place.
+    couches d'un calque, et l'opacité de la huitième place.
     """
 
     garde: bool = True
@@ -948,6 +965,19 @@ class CorpsContour(BaseModel):
     trous: str = CERCLES
 
 
+class CorpsRetournement(BaseModel):
+    """La septième place (B1) — le miroir, et un seul sens pour l'instant.
+
+    **Le sens n'est pas borné ici**, et c'est la décision de `CorpsContour` juste
+    au-dessus reprise pour la même raison : le domaine ne lève pas sur un nom
+    qu'il ne connaît pas, il rend l'image telle quelle. Un sens venu d'une
+    version plus récente arrive donc sans effet au lieu de faire tomber un rendu
+    en 422 — et l'écran, lui, ne propose que ce que l'atelier sait faire.
+    """
+
+    sens: str = GAUCHE_DROITE
+
+
 class CorpsCalqueDessin(BaseModel):
     nom: str = ""
     visible: bool = True
@@ -955,7 +985,7 @@ class CorpsCalqueDessin(BaseModel):
 
 
 class CorpsMainDeLaRecette(BaseModel):
-    """La septième place (E5) — un sol, et ce qu'on empile dessus.
+    """La huitième place (E5) — un sol, et ce qu'on empile dessus.
 
     `calques` est rangé **du dessous vers le dessus**, comme dans le domaine :
     l'ordre de la charge est l'ordre d'application, et c'est l'écran qui
@@ -988,6 +1018,10 @@ class CorpsRecette(BaseModel):
     quantification: CorpsQuantification | None = None
     bords: CorpsBords | None = None
     contours: CorpsContour | None = None
+    # **Entre le contour et la main**, comme dans le domaine et comme à l'écran :
+    # l'ordre de la charge est l'ordre d'exécution, et c'est ce qui rend la
+    # chaîne lisible d'un bout à l'autre du dépôt.
+    retournement: CorpsRetournement | None = None
     main: CorpsMainDeLaRecette | None = None
     # **Les places endormies** (U4). Une liste de noms de places, vide dans
     # l'immense majorité des recettes. Le nom est vérifié ici plutôt que d'être
@@ -1115,15 +1149,19 @@ async def liste_assets(
     bibliotheque = _atelier(requete).bibliotheque
     if not tous and projet is None and not sans_projet and collection is None:
         projet, sans_projet = bibliotheque.courant, bibliotheque.courant is None
-    assets = bibliotheque.chercher(
+    filtre = dict(
         projet=None if tous else projet,
         sans_projet=sans_projet and not tous,
         collection=collection,
         favoris=favoris,
         recherche=recherche,
-        limite=limite,
     )
-    return {"assets": [a.en_json() for a in assets]}
+    assets = bibliotheque.chercher(limite=limite, **filtre)
+    # **Le total, pas seulement les 200 montrées** (B3) : sans lui, la grille
+    # s'arrêtait en silence et l'auteur croyait avoir tout vu. Même filtre,
+    # sans le plafond — voir `compter_assets`.
+    total = bibliotheque.compter(**filtre)
+    return {"assets": [a.en_json() for a in assets], "total": total}
 
 
 @routeur.get("/assets/{identifiant}")
@@ -1371,6 +1409,57 @@ async def decouper(
     """Une planche de huit devient huit assets, chacun filié (US-72, US-74)."""
     boites = [tuple(b) for b in corps.boites]  # type: ignore[misc]
     return _atelier(requete).decoupe.decouper(identifiant, boites)
+
+
+# ── Le miroir ────────────────────────────────────────────────────────────────
+#
+# **Deux routes, et la coupure est celle du slicer** : `GET` propose la direction
+# et se redemande à chaque ouverture de fiche ; `POST` fabrique un asset et ne se
+# redemande jamais. C'est la convention d'URL du dépôt, et on n'en réinvente pas
+# une seconde pour une fabrique de plus.
+
+
+class CorpsMiroir(BaseModel):
+    """Où l'image retournée vient se ranger.
+
+    **Facultative, parce que le défaut se calcule** : sans elle, le service
+    prend `direction_au_miroir` de la direction du parent. Ce n'est pas une
+    déduction imposée — dès que l'auteur en désigne une, c'est la sienne qui
+    vaut, y compris un nom que la table du domaine ne connaît pas. Les
+    directions d'un projet sont libres, et l'écran a déjà eu le dernier mot.
+    """
+
+    direction: str | None = None
+
+
+@routeur.get("/assets/{identifiant}/mirror")
+async def proposer_miroir(requete: Request, identifiant: str) -> dict[str, Any]:
+    """La direction proposée, et la raison quand il n'y en a pas (B1).
+
+    Rien n'est créé, rien n'est écrit. Elle existe pour que l'écran grise le
+    geste **avant** le clic : *« un miroir gauche-droite ne montre pas le dos
+    d'un personnage »* se lit devant le bouton, pas dans un refus qui arrive
+    après avoir fait espérer.
+    """
+    return _atelier(requete).miroir.propose(identifiant)
+
+
+@routeur.post("/assets/{identifiant}/mirror", status_code=201)
+async def retourner_asset(
+    requete: Request, identifiant: str, corps: CorpsMiroir | None = None
+) -> dict[str, Any]:
+    """Une image devient deux, et la seconde n'a rien coûté (B1).
+
+    Le miroir est un asset entier, filié sur l'image de départ, exactement comme
+    une découpe l'est sur sa planche : supprimer l'un laisse l'autre en place. Ce
+    qui le retourne est sa recette — la place `retournement` remplie —, et non
+    ses octets, qui sont ceux de son parent.
+
+    Aucun appel au fournisseur : retourner marche réseau coupé.
+    """
+    return _atelier(requete).miroir.retourner(
+        identifiant, (corps.direction if corps else None)
+    )
 
 
 # ── La superposition ─────────────────────────────────────────────────────────

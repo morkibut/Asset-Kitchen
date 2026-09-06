@@ -33,13 +33,23 @@ la seule forme correcte — aucune n'a de sens avant celle qui la précède :
 7. **contours** — le trait de bord, retracé. Après la grille, qui le mangeait ;
    après la quantification, pour que sa couleur soit celle qu'on a choisie.
    Arrivé en E5.
-8. **la main** — la dernière, et rien ne se rejoue après elle : ce qu'une main
+8. **retournement** — le miroir gauche-droite. Arrivé en B1, et **son rang a
+   été arbitré** : `Retouche.dc.html` le plaçait avant le recadrage,
+   `atelier-retourner.dc.html` à la fin de la chaîne, et `docs/PLAN-carnet.md`
+   a tranché pour la fin — la planche dédiée est la plus récente et la plus
+   détaillée. **L'arbitrage ne coûte rien à l'image** : un miroir pur ne
+   déplace aucun pixel dans sa colonne, et le recadrage se fait sur la boîte
+   opaque, qui se retourne avec le sujet — les deux rangs rendent le même
+   fichier. Ce qu'il achète, en revanche, c'est que le retournement soit **la
+   dernière chose que la machine fasse avant que la main ne passe** : on le lit
+   sur l'image finie, telle qu'elle partira dans le jeu.
+9. **la main** — la dernière, et rien ne se rejoue après elle : ce qu'une main
    a posé ne doit pas tomber parce que la machine repasse. Arrivée en E5.
 
-Les deux dernières portent le compte à **sept places** — la différence, elle,
-n'en est plus une aux yeux du produit : elle nomme deux images en entrée et en
-produit une troisième, ce qu'aucune place ne fait, et elle devient une fabrique
-en E6. Elle reste ici tant que cette étape-là n'est pas tenue.
+Le compte est de **huit places** — la différence, elle, n'en est plus une aux
+yeux du produit : elle nomme deux images en entrée et en produit une troisième,
+ce qu'aucune place ne fait, et elle devient une fabrique en E6. Elle reste ici
+tant que cette étape-là n'est pas tenue.
 
 **Une recette nommée est une recette, et rien d'autre** (`docs/ARCHITECTURE.md`
 §4 : « un preset *est* une recette nommée »). Le nom ne fait pas partie de
@@ -146,7 +156,7 @@ def durcissement_livre(moteur: str) -> int:
 
 # ── Les places, nommées une fois (U4) ────────────────────────────────────────
 #
-# **Les sept places du traitement, dans l'ordre où elles s'appliquent**, plus la
+# **Les huit places du traitement, dans l'ordre où elles s'appliquent**, plus la
 # différence qui vit en seconde position sans être une table de l'écran. Elles
 # n'avaient jamais eu besoin d'un nom en tant que liste : chacune était un champ,
 # et l'ordre était celui du fichier. La veille en demande un — *quelles places
@@ -159,6 +169,10 @@ GRILLE = "grille"
 QUANTIFICATION = "quantification"
 BORDS = "bords"
 CONTOURS = "contours"
+# **Le retournement, en queue et avant la main** (B1). Le rang est arbitré, et
+# la raison est en tête de fichier : les deux planches ne le plaçaient pas au
+# même endroit, le plan a tranché pour la fin de la chaîne.
+RETOURNEMENT = "retournement"
 LA_MAIN = "main"
 PLACES = (
     DETOURAGE,
@@ -168,6 +182,7 @@ PLACES = (
     QUANTIFICATION,
     BORDS,
     CONTOURS,
+    RETOURNEMENT,
     LA_MAIN,
 )
 
@@ -246,7 +261,7 @@ class Trait:
     en contient autant qu'on y a posé de teintes, ce qui évite d'en fabriquer un
     par couleur. Vide — le défaut — le passage ne pose aucune couleur : c'est le
     cas des deux couches de la main d'un calque d'équipement (C4), qui décident
-    d'un masque, et celui de l'**opacité** de la septième place, qui décide de
+    d'un masque, et celui de l'**opacité** de la huitième place, qui décide de
     ce qui est là.
 
     Un trait sans point ne fait rien : `depuis_json` le laisse tomber au lieu de
@@ -1065,13 +1080,60 @@ class Contour:
         )
 
 
+# ── Le retournement ──────────────────────────────────────────────────────────
+#
+# **La panne qu'il répare se compte en dollars.** Un personnage vu de dessus se
+# dessine dans quatre directions ; celui qui marche vers l'ouest est le miroir
+# exact de celui qui marche vers l'est, au pixel près. Jusqu'à B1 le produit
+# n'avait aucune façon de le dire, donc les deux se payaient — et le second
+# revenait rarement identique au premier, parce qu'une génération ne rend jamais
+# deux fois la même image. Le miroir, lui, ne réinvente aucun pixel : c'est le
+# même tableau, colonnes dans l'autre ordre.
+#
+# **Un seul sens en B1**, et les neuf autres moteurs — haut-bas, quarts de tour,
+# demi-tour, diagonale, repli, zones protégées, rotation libre, RotSprite —
+# viennent en B18. La liste est déclarée ici plutôt qu'à l'écran pour la raison
+# de `MOTEURS` et de `TRAMAGES` : ce qui figure dans une recette enregistrée est
+# ce que le traitement sait appliquer, et pas un cran de plus.
+
+GAUCHE_DROITE = "gauche-droite"
+SENS = (GAUCHE_DROITE,)
+
+
+@dataclass(frozen=True, slots=True)
+class Retournement:
+    """La septième place — le miroir, et pour l'instant un seul (B1).
+
+    **Un sens, et rien d'autre.** Ce qui pourrait s'y ajouter — les zones
+    protégées (« miroir, sauf ici »), le raccord, l'axe du repli, le
+    retournement d'un lot — est hors de cette tranche, et l'écrire d'avance
+    ferait figurer dans les recettes du disque des réglages que personne
+    n'applique : très exactement la faute de `bayer`, écrit puis retiré le jour
+    même faute d'être rendu.
+
+    **Un sens inconnu ne retourne rien, et ne lève pas** — même règle que
+    `durcissement_livre` et `methode_connue` : le domaine relit des fichiers, il
+    ne juge pas. Une recette écrite par une version qui connaît les neuf autres
+    sens doit continuer de s'ouvrir ici, en rendant l'image telle quelle.
+    """
+
+    sens: str = GAUCHE_DROITE
+
+    def en_json(self) -> dict[str, Any]:
+        return {"sens": self.sens}
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "Retournement":
+        return Retournement(sens=str(d.get("sens") or GAUCHE_DROITE))
+
+
 # ── La main ──────────────────────────────────────────────────────────────────
 #
-# **La septième et dernière place, et c'est ce qui la définit** : elle porte sur
+# **La huitième et dernière place, et c'est ce qui la définit** : elle porte sur
 # l'image telle qu'elle partira dans le jeu. Rien ne se rejoue après elle, sans
 # quoi la machine effacerait ce qu'une main vient de poser.
 #
-# Là où les six autres places appliquent une règle à toute l'image, celle-ci ne
+# Là où les sept autres places appliquent une règle à toute l'image, celle-ci ne
 # fait que ce que l'auteur désigne. La panne qu'elle répare n'a pas d'autre
 # remède : **les trois pixels qu'aucun réglage n'atteint** — un coin de fond
 # collé au sujet, une dent dans un contour, une miette accrochée à la
@@ -1115,7 +1177,7 @@ class CalqueDessin:
 
 @dataclass(frozen=True, slots=True)
 class Main:
-    """La pile de la septième place : un sol, et ce qu'on empile dessus.
+    """La pile de la huitième place : un sol, et ce qu'on empile dessus.
 
     **L'opacité est le sol, et elle est d'une autre nature.** Elle ne pose
     aucune couleur : elle décide de ce qui est là, sur l'image que les six
@@ -1126,7 +1188,7 @@ class Main:
 
     `calques` est rangé **du dessous vers le dessus, dans l'ordre où on
     l'applique** — l'ordre du fichier est l'ordre d'exécution, comme pour les
-    sept places elles-mêmes. L'écran, lui, montre la pile du dessus au dessous,
+    huit places elles-mêmes. L'écran, lui, montre la pile du dessus au dessous,
     comme partout où il y a des calques ; c'est un renversement d'affichage, et
     il est écrit là où il se fait.
     """
@@ -1176,11 +1238,13 @@ class Main:
 
 @dataclass(frozen=True, slots=True)
 class Recette:
-    """Sept places nommées, dans un ordre qui ne se négocie pas.
+    """Huit places nommées, dans un ordre qui ne se négocie pas.
 
     *Six jusqu'au 31 août 2026 ; le contour et la main sont arrivées avec E5, et
     par le même raisonnement que les cinq premières* — chacune n'a de sens
-    qu'après celle qui la précède, et la dernière n'en a qu'à la toute fin.
+    qu'après celle qui la précède, et la dernière n'en a qu'à la toute fin. *Le
+    retournement est arrivé avec B1*, en avant-dernier, et il est la seule place
+    dont la clé ne s'écrit pas quand elle est vide — voir `en_json`.
     """
 
     passes: tuple[Passe, ...] = ()
@@ -1198,12 +1262,13 @@ class Recette:
     quantification: Quantification | None = None
     bords: Bords | None = None
 
-    # **Les deux dernières places, dans l'ordre où elles s'appliquent.** Le
+    # **Les trois dernières places, dans l'ordre où elles s'appliquent.** Le
     # contour se trace sur la silhouette définitive et dans les couleurs
-    # définitives ; la main passe après tout, y compris après lui — c'est même
-    # son usage le plus fréquent, reprendre la dent que le trait vient de
-    # laisser.
+    # définitives ; le retournement passe après lui, sur l'image finie ; la main
+    # passe après tout — c'est même son usage le plus fréquent, reprendre la
+    # dent que le trait vient de laisser.
     contours: "Contour | None" = None
+    retournement: "Retournement | None" = None
     main: "Main | None" = None
 
     # **Les places endormies** (U4, `US-334` à `US-339`, 1<sup>er</sup> septembre
@@ -1241,8 +1306,32 @@ class Recette:
             or self.quantification
             or self.bords
             or self.contours
+            or self.retournement
             or self.main
         )
+
+    @property
+    def miroir(self) -> bool:
+        """Cette recette retourne-t-elle l'image ?
+
+        **C'est la recette qui dit ce qu'une image est**, et rien d'autre : il
+        n'existe nulle part un drapeau « ceci est un miroir » à tenir d'accord
+        avec le disque — c'est le raisonnement de `calque` juste en dessous,
+        repris mot pour mot parce que c'est le même. Un champ sur l'`Asset`
+        aurait été une seconde vérité, et elle se serait démentie au premier
+        retournement retiré à la table.
+
+        **Endormie, la place ne compte pas** : une image dont le retournement
+        dort sort telle qu'elle est entrée, et une étiquette qui dirait
+        « miroir » devant une image non retournée serait un effet resté en
+        travers.
+
+        L'étiquette *miroir · gratuit · instantané* se lit sur ce fait **et** sur
+        `consomme == 0`. Une image générée sur laquelle l'auteur pose ensuite un
+        miroir garde son étiquette *générée · prix · temps* : elle a coûté, et
+        l'étiquette dit ce qui a été payé.
+        """
+        return self.retournement is not None and not self.dort(RETOURNEMENT)
 
     @property
     def calque(self) -> bool:
@@ -1297,6 +1386,29 @@ class Recette:
             ),
             "bords": self.bords.en_json() if self.bords else None,
             "contours": self.contours.en_json() if self.contours else None,
+            # ── La clé neuve ne s'écrit que si la place est remplie (B1) ──────
+            #
+            # **Les huit clés qui l'entourent s'écrivent toujours, `null`
+            # compris, et elles ne bougent pas d'un caractère.** Une neuvième
+            # écrite à `null` partout changerait le JSON canonique de *toutes*
+            # les recettes déjà sur le disque, donc leur empreinte, donc le nom
+            # de leur rendu : les 61 recettes distinctes relevées dans le dépôt
+            # le 6 septembre 2026 auraient toutes été recalculées, pour un champ
+            # qu'aucune ne porte.
+            #
+            # Écrite seulement quand elle est remplie, elle laisse le canonique
+            # d'une recette sans retournement **strictement identique** à celui
+            # d'avant la tranche. `tests/test_b1.py` le tient sur le corpus figé
+            # (`tests/recettes-avant-b1.json`).
+            #
+            # **La règle vaut pour cette clé-là, et pas pour les huit autres** :
+            # retirer leurs `null` serait très exactement le recalcul qu'on
+            # évite ici, en plus grand.
+            **(
+                {"retournement": self.retournement.en_json()}
+                if self.retournement is not None
+                else {}
+            ),
             "main": self.main.en_json() if self.main else None,
             # **Triée, toujours** (U4). L'empreinte est le JSON canonique de la
             # recette : deux recettes qui endorment les mêmes places dans un
@@ -1326,6 +1438,15 @@ class Recette:
             ),
             bords=Bords.depuis_json(d["bords"]) if d.get("bords") else None,
             contours=Contour.depuis_json(d["contours"]) if d.get("contours") else None,
+            # **Absente veut dire vide** (B1), et c'est ce qui fait qu'une
+            # recette écrite avant la tranche se relit sans rien perdre : elle
+            # n'a pas la clé, elle n'a pas la place, et elle se réécrit à
+            # l'identique.
+            retournement=(
+                Retournement.depuis_json(d["retournement"])
+                if d.get("retournement")
+                else None
+            ),
             main=Main.depuis_json(d["main"]) if d.get("main") else None,
             # **Ce qui n'est pas une place connue tombe** (U4). Une recette
             # écrite par un agent, ou relue d'un disque plus vieux que ce champ,
@@ -1464,6 +1585,12 @@ def voyage(recette: Recette) -> tuple[Recette, tuple[str, ...]]:
         )
     if main is not None:
         main = None
+
+    # **Le retournement voyage entier, et il n'y a donc rien à retirer** (B1).
+    # Un sens est un réglage : *gauche-droite* dit la même chose sur n'importe
+    # quelle image, comme une tolérance de 28. La ligne est écrite quand même,
+    # parce que la question se repose à chaque place neuve et qu'une absence de
+    # code ne dit pas si elle a été tranchée ou oubliée.
 
     return (
         replace(

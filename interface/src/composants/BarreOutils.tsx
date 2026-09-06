@@ -165,7 +165,7 @@ export function BarreOutils({
             className={[
               "mesure h-[26px] shrink-0 rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
               favoris
-                ? "border-signal bg-signal/13 text-signal"
+                ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
                 : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
             ].join(" ")}
           >
@@ -220,7 +220,7 @@ export function BarreOutils({
               type="button"
               onClick={() => onFavori(true)}
               aria-label="Marquer la sélection en favori"
-              className="mesure h-[26px] shrink-0 px-1 text-[10px] text-texte-2 hover:text-signal"
+              className="mesure h-[26px] shrink-0 px-1 text-[10px] text-texte-2 hover:text-ancien-signal"
             >
               Favori
             </button>
@@ -228,7 +228,7 @@ export function BarreOutils({
               type="button"
               onClick={onSupprimer}
               aria-label="Supprimer la sélection"
-              className="mesure h-[26px] shrink-0 px-1 text-[10px] text-texte-2 hover:text-echec"
+              className="mesure h-[26px] shrink-0 px-1 text-[10px] text-texte-2 hover:text-ancien-echec"
             >
               Supprimer
             </button>
@@ -349,7 +349,7 @@ function FenteAnnulation({
       <button
         type="button"
         onClick={onAnnuler}
-        className="text-signal hover:text-signal-clair"
+        className="text-ancien-signal hover:text-ancien-signal-clair"
       >
         Annuler ›
       </button>

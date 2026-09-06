@@ -275,7 +275,7 @@ export type Trait = {
   points: [number, number][]
   /** **Portée par le passage, pas par le calque** (E5). Un calque n'est donc
    *  pas monochrome. Vide partout où le passage décide d'un masque : les deux
-   *  couches d'un calque d'équipement, et l'opacité de la septième place. */
+   *  couches d'un calque d'équipement, et l'opacité de la huitième place. */
   couleur: string
 }
 
@@ -293,6 +293,14 @@ export type Contour = {
   position: "externe" | "interne" | "centre"
   trous: "cercles" | "laisses"
 }
+
+/** La septième place — le miroir (B1).
+ *
+ *  **Un sens, et rien d'autre.** Ce qui pourrait s'y ajouter — les zones
+ *  protégées, le raccord, l'axe du repli, le retournement d'un lot — vient en
+ *  B18 : l'écrire d'avance ferait figurer dans les recettes du disque des
+ *  réglages que personne n'applique. */
+export type Retournement = { sens: "gauche-droite" }
 
 /** Un calque de dessin — de la matière posée par-dessus (US-208). */
 export type CalqueDessin = { nom: string; visible: boolean; passages: Trait[] }
@@ -1077,7 +1085,7 @@ export const POSE_VIDE: Superposition = {
   dessus_arrivee: false,
 }
 
-/** La septième place : un sol, et ce qu'on empile dessus.
+/** La huitième place : un sol, et ce qu'on empile dessus.
  *
  *  `opacite` est le sol de la pile — elle ne pose aucune couleur, elle décide
  *  de ce qui est là. Elle est un champ à part plutôt qu'un calque marqué, et
@@ -1248,6 +1256,10 @@ export type Recette = {
   quantification: Quantification | null
   bords: Bords | null
   contours: Contour | null
+  /** **Entre le contour et la main**, comme dans le domaine (B1) : le contour
+   *  se trace sur la silhouette définitive, le retournement passe après lui sur
+   *  l'image finie, et la main passe après tout. */
+  retournement: Retournement | null
   main: Main | null
   /** Les places en veille : elles gardent leurs réglages et cessent d'agir sur
    *  l'image (U4). **Éteinte et vide sont deux états** — vider une place efface
@@ -1273,6 +1285,7 @@ export type Place =
   | "quantification"
   | "bords"
   | "contours"
+  | "retournement"
   | "main"
 
 export const RECETTE_VIDE: Recette = {
@@ -1283,6 +1296,7 @@ export const RECETTE_VIDE: Recette = {
   quantification: null,
   bords: null,
   contours: null,
+  retournement: null,
   main: null,
   veille: [],
   nom: null,
@@ -1298,6 +1312,10 @@ export const CONTOUR_PAR_DEFAUT: Contour = {
   position: "externe",
   trous: "cercles",
 }
+
+/** Le seul sens que l'atelier sait appliquer aujourd'hui (B1). Les neuf autres
+ *  paraissent dans la table, grisés, et viennent en B18. */
+export const RETOURNEMENT_PAR_DEFAUT: Retournement = { sens: "gauche-droite" }
 
 export const MAIN_VIDE: Main = { opacite: [], calques: [] }
 
@@ -1980,6 +1998,66 @@ export type Vestiaire = {
 // La deuxième famille d'images du produit. Une carte ne s'exporte jamais, ne
 // compte pas dans la bibliothèque, n'a ni recette ni rendu : elle rassemble.
 
+/** Une famille du bilan (B5), telle que le serveur la compte — **et seulement
+ *  celles qui ont au moins un sujet** : une famille vide n'y paraît pas, et
+ *  l'écran garde alors ce qu'il savait déjà d'elle (`compte: null`). */
+export type FamilleDuBilan = {
+  cle: string
+  compte: number
+  /** La fraction de ce qui est fabricable maintenant qui est fait (E12), ou
+   *  `null` quand rien n'est réclamé — une barre à 0 % dirait « en retard »,
+   *  ce que le manque n'est jamais. */
+  complet: number | null
+  manque_texte: string
+}
+
+/** Une ligne de « ce qui manque le plus » (B5) — **son coût compris**, la
+ *  médiane mesurée sur ce modèle, jamais un tarif écrit à l'écran. */
+export type ManqueDuBilan = {
+  quantite: number
+  phrase: string
+  famille: string
+  sujet: string
+  cout_usd: number
+}
+
+/** Ce que `GET /dashboard` sert en un seul appel — le bilan entier du jeu ouvert. */
+export type BilanDuJeu = {
+  familles: FamilleDuBilan[]
+  manques: ManqueDuBilan[]
+  lot: { images: number; feuilles: number; cout_usd: number }
+}
+
+// ── B6 · Ce que la barre propose ────────────────────────────────────────────
+
+/** Les six verbes du carnet, et il n'y en a pas un septième.
+ *
+ *  L'ordre vient du serveur (`atelier/api/gestes.py`), et l'écran ne le refait
+ *  pas : il groupe ce qu'il reçoit dans l'ordre où il le reçoit. */
+export type Verbe = "aller" | "creer" | "generer" | "travailler" | "sortir" | "regler"
+
+/** Une action que le serveur sait faire, telle que la barre la reçoit.
+ *
+ *  **`route` est vide dès que `paiement` vaut `a-confirmer`**, et c'est la
+ *  promesse de la planche tenue par ce qui n'est pas là : la barre n'a rien à
+ *  appeler pour une action qui coûte, elle ne peut qu'ouvrir l'écran d'envoi. */
+export type Action = {
+  /** Le nom de l'outil chez l'agent — l'identité, jamais montrée. */
+  outil: string
+  verbe: Verbe
+  titre: string
+  phrase: string
+  paiement: "gratuit" | "a-confirmer"
+  /** `ici` quand le geste se fait sur place, `envoi` quand il faut confirmer,
+   *  sinon le lieu du carnet où l'on atterrit. */
+  ou: string
+  /** `"POST /api/…"`, ou vide. */
+  route: string
+  besoins: string[]
+}
+
+export type Actions = { verbes: Verbe[]; actions: Action[] }
+
 export type Famille = "personnages" | "objets" | "decors" | "interface" | "tous"
 
 export const FAMILLES: readonly Famille[] = [
@@ -2000,8 +2078,9 @@ export const NOM_FAMILLE: Record<Famille, string> = {
   tous: "tous",
 }
 
-/** Les dix, et il n'y en a pas une onzième — `docs/DESIGN.md` § Les teintes
- *  d'îlot. Le vide **est** une valeur : un îlot sans teinte porte celle du
+/** Les dix, et il n'y en a pas une onzième —
+ *  `docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Les dix teintes de
+ *  rangement. Le vide **est** une valeur : un îlot sans teinte porte celle du
  *  châssis, ce qui est exactement ce que ce document dit qu'il est.
  *
  *  **Six jusqu'au 28 août 2026**, dix depuis : les quatre neuves subdivisent les
@@ -2607,8 +2686,17 @@ export type Projet = {
   identifiant: string
   nom: string
   cree_le: number
+  /** Posée par `choisir()` — l'ouvrir, faute de mieux (B4). C'est elle que
+   *  trie la liste des jeux, en carnet comme à l'ouverture. */
+  dernier_travail_le: number
   assets: number
   total_usd: number
+  /** **Servi pour chaque jeu, pas seulement l'ouvert** — `en_json()` le porte
+   *  déjà, l'écran d'ouverture n'a qu'à le lire. C'est ce qui permet à une
+   *  carte de montrer le style, la taille et la palette d'un jeu qu'on n'a
+   *  pas ouvert. */
+  univers: Univers
+  pieces: Piece[]
 }
 
 export type Collection = {
@@ -2899,7 +2987,7 @@ export type TachesDeLAsset = {
   /** Aucun pixel transparent — donc **aucun bord de sujet à tracer**. C'est le
    *  seul cas où la table des contours est indisponible. */
   opaque: boolean
-  /** Ce que chaque couche de la septième place change (E5) — des **pixels
+  /** Ce que chaque couche de la huitième place change (E5) — des **pixels
    *  touchés** sur l'opacité, des **pixels posés** sur un calque de dessin.
    *  `null` quand la place est vide : l'écran se tait alors, plutôt que
    *  d'écrire des zéros pour une table qu'on n'a pas ouverte. */
@@ -2985,6 +3073,21 @@ export type Proposition = Decoupable & {
   largeur: number
   hauteur: number
   mode: ModeDecoupe
+}
+
+/** Où le miroir d'une image irait se ranger, et pourquoi il n'a nulle part où
+ *  aller quand c'est le cas (B1).
+ *
+ *  `propose` est la direction que le serveur déduit de celle de l'image ;
+ *  `raison` la phrase à écrire **avant** le clic quand il n'y a pas de case à
+ *  remplir — une direction que le jeu a nommée lui-même, ou `sud` et `nord`,
+ *  qu'un miroir gauche-droite rend telles quelles. Les deux ne sont jamais
+ *  remplies ensemble. */
+export type MiroirPropose = {
+  asset: string
+  direction: string | null
+  propose: string | null
+  raison: string | null
 }
 
 /** La même chose d'une carte du tableau d'inspiration. **`carte` et non
@@ -3893,18 +3996,48 @@ export const api = {
   /** La grille. **La seule du produit** : mêmes filtres, même recherche, même
    *  sélection, qu'on cherche à réutiliser ou à organiser (US-31). Le filtrage
    *  est fait par le serveur — la recherche doit porter sur toute la
-   *  bibliothèque, pas sur ce que le navigateur a en mémoire. */
-  assets: (filtre: Partial<Filtre> & { sansProjet?: boolean } = {}) => {
+   *  bibliothèque, pas sur ce que le navigateur a en mémoire.
+   *
+   *  **`total` compte au-delà du plafond** (B3) : la grille s'arrêtait à 200
+   *  images sans le dire, et l'écran croyait avoir tout vu. `limite` ne fait
+   *  monter que ce qui revient — la même requête, plus large, jamais un
+   *  second appel qui s'additionnerait à la première page. */
+  assets: (filtre: Partial<Filtre> & { sansProjet?: boolean; limite?: number } = {}) => {
     const parametres = new URLSearchParams()
     if (filtre.sansProjet) parametres.set("sans_projet", "true")
     if (filtre.collection) parametres.set("collection", filtre.collection)
     if (filtre.favoris) parametres.set("favoris", "true")
     if (filtre.recherche?.trim()) parametres.set("recherche", filtre.recherche.trim())
+    if (filtre.limite) parametres.set("limite", String(filtre.limite))
     const suite = parametres.toString()
-    return appeler<{ assets: Asset[] }>(`/assets${suite ? `?${suite}` : ""}`)
+    return appeler<{ assets: Asset[]; total: number }>(`/assets${suite ? `?${suite}` : ""}`)
   },
 
   arbre: () => appeler<Bibliotheque>("/library"),
+
+  /** B5 — la complétude par famille, ce qui manque le plus et le prix du lot.
+   *  Compté côté serveur (`ServiceProduction.bilan_du_jeu`) : le tableau de
+   *  bord ne tient qu'une page de personnages, jamais tous ceux du jeu. */
+  bilanDuJeu: () => appeler<BilanDuJeu>("/dashboard"),
+
+  /** B6 — ce que le serveur sait faire, **et rien que la barre ait à savoir en
+   *  plus**. La liste est celle des outils de l'agent : une fonction ajoutée au
+   *  serveur y paraît sans qu'on touche à l'interface.
+   *
+   *  Ce qui n'a pas de sens maintenant n'est pas dans la réponse — la barre ne
+   *  filtre rien, elle affiche. */
+  actions: () => appeler<Actions>("/actions"),
+
+  /** Le geste gratuit d'une action, appelé par sa route **telle qu'elle est
+   *  servie**. La barre ne connaît aucun chemin par cœur : c'est ce qui lui
+   *  interdit d'en inventer un pour une action payante, qui n'en porte pas. */
+  jouerUneAction: (route: string) => {
+    const [methode, chemin] = route.split(" ")
+    return appeler<unknown>(chemin.replace(/^\/api/, ""), {
+      method: methode,
+      body: methode === "POST" ? "{}" : undefined,
+    })
+  },
 
   reconstruire: () =>
     appeler<{ reconstruit: Record<string, number>; bibliotheque: Bibliotheque }>(
@@ -4020,6 +4153,26 @@ export const api = {
     appeler<{ planche: string; decoupes: Asset[] }>(`/assets/${identifiant}/slices`, {
       method: "POST",
       body: JSON.stringify({ boites }),
+    }),
+
+  // ── Le miroir — la troisième fabrique (B1) ─────────────────────────────────
+  //
+  // **La même coupure que le slicer, et pour la même raison** : proposer ne
+  // crée rien et se redemande à chaque ouverture, retourner écrit un asset et
+  // ne se redemande jamais.
+  //
+  // **La direction proposée vient du serveur, jamais d'un calcul d'écran.** Les
+  // directions d'un projet sont libres et l'auteur les renomme : une table de
+  // paires écrite ici aurait deviné qu'un mot français désigne une direction
+  // opposée, ce que le produit refuse partout ailleurs.
+
+  miroirPropose: (identifiant: string) =>
+    appeler<MiroirPropose>(`/assets/${identifiant}/mirror`),
+
+  retourner: (identifiant: string, direction?: string | null) =>
+    appeler<{ parent: string; miroir: Asset }>(`/assets/${identifiant}/mirror`, {
+      method: "POST",
+      body: JSON.stringify({ direction: direction ?? null }),
     }),
 
   // ── La superposition — la seconde fabrique (E6) ────────────────────────────
@@ -5549,6 +5702,26 @@ export const quantite = (valeur: number, unite?: string | null) => {
  *  s'écrit à côté, avec `quantite`, jamais à la place. */
 export const depense = (valeur: number, unite?: string | null) =>
   estArgent(unite) ? dollars(valeur) : "gratuit"
+
+/** Cette recette retourne-t-elle l'image ? (B1)
+ *
+ *  **C'est la recette qui dit ce qu'une image est**, et rien d'autre : il
+ *  n'existe nulle part un drapeau « ceci est un miroir » à tenir d'accord avec
+ *  le disque — c'est le raisonnement de `Recette.calque` côté serveur, repris
+ *  mot pour mot parce que c'est le même. Un champ sur l'`Asset` aurait été une
+ *  seconde vérité, et elle se serait démentie au premier retournement retiré à
+ *  la table.
+ *
+ *  **Endormie, la place ne compte pas** : l'image sort telle qu'elle est
+ *  entrée, et une étiquette qui dirait « miroir » devant une image non
+ *  retournée serait un effet resté en travers.
+ *
+ *  L'étiquette *miroir · gratuit* se lit sur ce fait **et** sur `consomme` à
+ *  zéro : une image générée sur laquelle l'auteur pose ensuite un miroir garde
+ *  son prix, parce que l'étiquette dit ce qui a été payé. */
+export const estMiroir = (recette: Recette) =>
+  recette.retournement !== null &&
+  !(recette.veille ?? []).includes("retournement")
 
 /** Un poids de fichier, en mégaoctets — **jamais arrondi vers le bas** (U13).
  *

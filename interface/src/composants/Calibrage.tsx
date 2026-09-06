@@ -290,7 +290,7 @@ export function EcranCalibrage({
                         "mise de côté refusée",
                       )
                     }
-                    className="text-signal hover:text-signal-clair"
+                    className="text-ancien-signal hover:text-ancien-signal-clair"
                   >
                     la mettre de côté ›
                   </button>
@@ -482,7 +482,7 @@ function Geste({
         className={
           ton === "epingle"
             ? "text-epingle hover:text-texte disabled:text-texte-3"
-            : "text-signal hover:text-signal-clair disabled:text-texte-3"
+            : "text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
         }
       >
         <span
@@ -668,7 +668,7 @@ function Reglage({
         type="button"
         onClick={() => onChange(borner(valeur - 1))}
         aria-label={`${nom} — un de moins`}
-        className="mesure h-[26px] w-[26px] shrink-0 rounded-[2px] border border-bord text-[11px] text-texte-2 hover:text-signal"
+        className="mesure h-[26px] w-[26px] shrink-0 rounded-[2px] border border-bord text-[11px] text-texte-2 hover:text-ancien-signal"
       >
         −
       </button>
@@ -676,7 +676,7 @@ function Reglage({
         type="button"
         onClick={() => onChange(borner(valeur + 1))}
         aria-label={`${nom} — un de plus`}
-        className="mesure h-[26px] w-[26px] shrink-0 rounded-[2px] border border-bord text-[11px] text-texte-2 hover:text-signal"
+        className="mesure h-[26px] w-[26px] shrink-0 rounded-[2px] border border-bord text-[11px] text-texte-2 hover:text-ancien-signal"
       >
         +
       </button>
@@ -805,7 +805,7 @@ function Empilement({
       <span
         className={[
           "mesure text-[9.5px] tracking-[.11em] uppercase",
-          apres ? "text-ok" : "text-texte-3",
+          apres ? "text-ancien-ok" : "text-texte-3",
         ].join(" ")}
       >
         {titre}

@@ -147,7 +147,8 @@ l'écran de confirmation, la ligne éteinte **reste à l'écran, barrée** — c
   pastille ronde, point de 5 px. **Il n'en reste qu'un**, l'interrupteur bascule. La pastille ronde
   reste réservée aux **états** (en ligne, réussi, raté), où elle sert déjà et ne se clique pas.
 
-Les règles de dessin sont dans `docs/DESIGN.md` § *Les interrupteurs*.
+Les règles de dessin sont dans `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`
+§ Les interrupteurs.
 
 ### Et les infobulles cessent de faire de la philosophie
 

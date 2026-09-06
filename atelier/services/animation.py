@@ -663,11 +663,18 @@ class ServiceAnimation:
         Le numéro reste parce qu'un échec de téléchargement n'est pas un échec
         de fabrication : le clip existe chez le fournisseur, il a été facturé, et
         « récupérer » ira le chercher.
+
+        **Additionné, jamais écrasé** (B2) : un rapatriement qui échoue une
+        seconde fois — le lien a expiré, par exemple — rend le plus souvent
+        `consomme=0.0`, puisque rien n'a été refacturé. Écraser effacerait la
+        première facture au lieu de ne rien y ajouter, et un clip payé
+        disparaîtrait du journal des dépenses au moment précis où l'écran est
+        censé le montrer.
         """
         emplacement = generation.emplacements[0]
         emplacement.statut = Statut.ECHOUEE
         emplacement.raison = raison
-        emplacement.consomme = consomme
+        emplacement.consomme += consomme
         emplacement.unite = unite
         self._sauver(generation)
 

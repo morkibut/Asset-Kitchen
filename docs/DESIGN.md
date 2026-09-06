@@ -1,779 +1,475 @@
 # Asset Kitchen — Design System
 
-> **Réécrit de zéro le 4 septembre 2026**, sur demande de l'auteur, après douze relevés du code et
-> de l'état de l'art. Ce document fait foi sur **l'apparence** — et sur rien d'autre. Ce que fait un
-> écran est tranché par `docs/PRD.md` ; comment c'est construit, par `docs/ARCHITECTURE.md`.
-> Spécimen vivant : `docs/design-preview-refonte.html`.
+> **Réécrit le 6 septembre 2026, d'après les planches de `docs/pistes-2026-09-04/carnet/`.**
+> L'auteur a tranché le même jour : *les maquettes font foi*. Ce document ne décide donc
+> presque rien — il **relève** ce que les planches emploient déjà, et il ferme les listes.
 >
-> **Le système d'avant est archivé tel quel dans `docs/archive/DESIGN-avant-refonte-2026-09-04.md`**,
-> et il n'est pas périmé pour autant : **c'est encore lui qui tourne dans le code**. Tant que la
-> refonte n'est pas livrée, l'archive décrit le produit et ce fichier-ci décrit la cible. Chaque
-> section ci-dessous dit ce qu'elle change et ce qu'elle garde.
+> ⚠️ **Le dossier de planches grandit, et c'est normal** : une fonctionnalité neuve amène ses
+> maquettes. Aucun chiffre de ce document ne dit *combien* il y en a — un compte écrit ici
+> serait faux la semaine suivante, et il l'a été : le relevé portait sur 43 planches le matin,
+> il y en avait 47 le soir. **Ce qui fait foi, c'est le dossier, pas son cardinal.** Une planche
+> neuve n'oblige pas à rouvrir ce document ; elle l'oblige seulement à ne rien employer qui n'y
+> soit pas.
+>
+> Le système d'avant — châssis chaud et sombre, *« mode clair : il n'y en a pas »* — est
+> archivé dans `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`. **Il décrit encore le code**
+> tant que la tranche `B0` de `docs/PLAN-carnet.md` n'est pas livrée.
+>
+> Les décisions datées vivent dans `docs/design-decisions.md`, les motifs dans
+> `docs/design-motifs.md`. Ce fichier ne les recopie pas.
 
 ---
 
-## Pourquoi on a tout repris
+## Comment ce document a été obtenu
 
-L'auteur, le 4 septembre 2026 : *« les écrans sont surchargés de texte et de liens, c'est pas
-lisible, pas intuitif pour un sou, aucun workflow ne se dessine visuellement, on passe son temps à
-faire des allers-retours avec ses yeux pour essayer de décrypter comment fonctionne l'interface, ce
-qui est cliquable ou pas, à quel endroit… et pourtant les fonctionnalités sont bien. »*
+Pas par consultation : par comptage. Toutes les planches du dossier ont été relevées, et les
+valeurs retenues sont celles qu'elles emploient vraiment.
 
-**Il a raison, et la cause n'est pas celle qu'il nomme.** Ce n'est pas la quantité de texte : c'est
-que **rien à l'écran n'a de bord**. Quatre mesures suffisent à l'établir, et elles commandent tout
-ce document.
+| Ce qui a été compté | Résultat |
+|---|---|
+| Couleurs employées, toutes planches | Les plus fréquentes sont **exactement celles que `Systeme.dc.html` déclare**, et dans le même ordre. La palette n'est pas une intention, elle est tenue |
+| Polices | Trois, et trois seulement : Instrument Serif, Instrument Sans, IBM Plex Mono |
+| Tailles de texte | 18 valeurs employées pour 9 déclarées. La liste déclarée fait loi, **plus une** : voir *Typography* |
+| Arrondis | 10 valeurs employées pour 4 déclarées. La liste déclarée fait loi : voir *Layout* |
+| Écarts (`gap`) | 14 valeurs employées pour 5 déclarées. La liste déclarée fait loi |
 
-| Ce qui a été mesuré | Le chiffre | Ce que ça produit |
-|---|---|---|
-| Boutons sans cadre ni fond visible au repos | **231 sur 259** — le survol porte l'information pour 233 d'entre eux | « on ne sait pas ce qui est cliquable » |
-| Apparences distinctes pour ces boutons | **108**, dont **71** qui n'existent qu'une fois ; le composant partagé n'est employé que 20 fois | aucune convention n'a pu se former |
-| Soulignement — la seule décoration qui ressemble à un lien | **109 mots non cliquables** contre **1 cliquable** | la convention est inversée, pas absente |
-| Écarts de 40 px dans tout le code | **un seul, dans 35 751 lignes** ; 92 % des 495 écarts tiennent entre 4 et 12 px | aucun endroit où l'œil se pose |
+**Ce que ce comptage établit** : la couleur et la typographie du carnet sont un système ;
+les arrondis et les écarts sont du dessin à la main. Les uns se reprennent tels quels, les
+autres se referment.
 
-S'y ajoutent : **526 déclarations de taille sur 732 à 10 px ou moins**, 94 % du texte tassé dans une
-bande de 4,5 px découpée en dix valeurs ; **427 lignes dessinées** dont 84 % sous la moitié du seuil
-où l'œil perçoit un trait ; **quatre fonds qui ne couvrent que 10,3 points de clarté au total**,
-avec 1,05 à 1,10 contre 1 entre deux surfaces voisines — c'est-à-dire deux surfaces qui ne se
-distinguent pas.
+### ⚠️ Et un second comptage, fait en fermant `D0`, a trouvé le trou inverse
 
-Et trois paires, dans du code partagé donc sur **tous** les écrans, où un texte mort et un bouton
-portent exactement les mêmes réglages, à quelques pixels l'un de l'autre.
+Le premier comptage vérifiait que *ce que le document écrit, les planches l'emploient*. Il ne
+vérifiait pas la réciproque, et c'est elle qui manquait : **huit couleurs de châssis employées
+dans 21 à 40 planches n'étaient déclarées nulle part ici.** Pas du dessin à la main — les mêmes
+huit, aux mêmes endroits, partout.
 
-**Ce qui n'était pas en cause** : l'audit du 31 août 2026 relevait quatorze défauts. Treize sont
-réparés, un seul reste ouvert (*les douze étapes des réglages du jeu, qu'on voudrait voir
-ensemble*). La « grosse passe de design » n'avait aucune matière là-dedans. `N1` du plan est donc
-rendue par ce relevé.
+La cause tient en une phrase : **un signal n'est pas une couleur, c'est un trio** — un fond, un
+trait, une encre. Le document n'en déclarait que le fond, si bien qu'un bandeau d'avertissement
+n'était pas dessinable à partir de lui. Les deux autres manquantes sont l'encre d'un bouton et
+l'encre *sur* le bouton rouille : sans elles, le bouton qui lance n'a pas de couleur de texte.
+
+Puis le même comptage a été passé **sur le spécimen**, et il y a trouvé trois écarts de plus :
+le damier n'avait pas de couleurs du tout — seulement une taille de carreau —, l'étiquette verte
+se bordait d'une teinte que rien ne déclarait, et le bouton rouille écrivait en **blanc pur**
+là où les planches écrivent `#fff8f4`. Corrigés : le spécimen ne contient plus une seule valeur
+hors des listes de ce document, sur 415 éléments mesurés.
+
+Les tables de *Color* sont complétées en conséquence. **C'est très exactement le défaut que la
+dernière section de ce document dit avoir fermé par construction**, pris par l'autre bout : là,
+une couleur déclarée et définie nulle part ; ici, une couleur employée et déclarée nulle part.
+**Le garde-fou de `B0` doit refuser les deux sens**, et c'est le seul enseignement de `D0` qui
+change une autre tranche.
 
 ---
 
 ## Product Context
 
-- **Quoi** : atelier personnel de production d'assets 2D pour jeu. On définit l'univers d'un jeu une
-  fois, on fabrique au cas par cas ce qui lui appartient. Voir `docs/PRD.md` § Solution.
-- **Pour qui** : une personne — l'auteur du jeu, qui est aussi l'auteur de l'outil. Il juge la
-  qualité à l'œil, mieux et plus vite qu'une machine.
-- **Espace** : outils de production créative à forte densité — Lightroom, Aseprite, Blender, Linear,
-  Raycast.
-- **Type** : **outil interne de production**, écran large uniquement. Ni site marketing, ni produit
-  grand public.
-- **Ce qu'on doit retenir en trois secondes** : **le bois et la lampe** — *l'outil est chaud comme un
-  plan de travail, et la seule lumière neutre de l'écran tombe sur l'image.*
-
-**Il n'y a pas de novice à protéger.** Un seul utilisateur, expérimenté, qui est l'auteur du
-produit. Les arguments d'apprentissage progressif ne s'appliquent pas ici, et le travail de
-référence sur les dispositions plates (*CommandMaps*, CHI 2012) donne l'avantage à l'écran où tout
-est visible chez les gens expérimentés, sans coût pour les débutants. **Replier reste donc
-l'exception argumentée, jamais le réflexe.**
+- **Quoi** : un atelier personnel de production d'assets 2D pour jeu vidéo. On définit
+  l'univers d'un jeu une fois, puis on fabrique au cas par cas ses personnages, objets,
+  décors, terrains, équipements et interface. Ce qui coûte se paie à l'image ; tout le reste
+  tourne sur la machine, réseau coupé.
+- **Pour qui** : un auteur seul, qui n'est pas développeur, qui fait son jeu et qui paie ses
+  générations de sa poche.
+- **Type** : outil de production, dense en données, employé des heures d'affilée.
+- **Ce qu'on doit retenir en trois secondes** : *un carnet ouvert sur un établi.* On voit ce
+  que le jeu contient, on voit ce qui manque, et rien ne coûte tant qu'on n'a pas appuyé sur
+  le seul bouton rouille de l'écran.
 
 ---
 
 ## Aesthetic Direction
 
-- **Direction** : **organique et chaude** pour le châssis, **instrument** pour la densité. L'outil
-  cesse de se retirer — il se tient bien, pour qu'on sache où poser la main.
-- **Décoration** : **minimale, mais la forme est obligatoire.** Aucun dégradé, aucune ombre portée,
-  aucune icône illustrative. **En échange, tout ce qui réagit porte un bord visible.** C'était le
-  vide du système d'avant : il interdisait la décoration et n'imposait rien à la place.
-- **Mood** : chaud, calme, franc. On voit d'un coup d'œil ce qui se clique, ce qui informe, et où va
-  la suite.
-- **Références** : Linear et Raycast pour la hiérarchie et la densité tenue ; Gruvbox et Everforest
-  pour les fonds chauds à très faible saturation ; Lightroom et Capture One pour la lumière de
-  jugement d'image.
+- **Direction** : éditorial sur papier. Une serif pour ce qui se lit une fois, des trames de
+  lignes pour ce qui se lit tout le temps, et le vide comme seul séparateur à l'intérieur d'un
+  panneau.
+- **Décoration** : minimale. Aucune texture, aucun dégradé, aucune ombre portée. La seule
+  texture du produit est le damier de transparence, et il veut dire quelque chose.
+- **Mood** : un cahier de travail qu'on annote, pas un tableau de bord qui surveille.
 
 ### Le principe unique dont tout découle
 
-**Ce qui réagit se voit sans la souris ; ce qui informe se range par le vide.**
+**Le châssis est du papier ; l'image sort du papier et se juge sur une lumière neutre.**
 
-C'est la phrase qui remplace *« chaque décision retire une concurrence à la grille »*. L'ancienne
-était juste et elle a été appliquée jusqu'à retirer aussi ce qui n'était pas une concurrence — les
-bords. Ce document rend le bord obligatoire à ce qui se clique, et le retire à tout le reste.
+C'est la seule décision structurelle du système, et elle résout la contradiction que le
+produit portait depuis son premier jour.
 
-**Le test qui tranche, et il est vérifiable** : *sur une capture immobile, souris posée à côté,
-peut-on nommer toutes les zones cliquables ?* Si non, le système ne marche pas. Aujourd'hui la
-réponse est non pour 233 boutons sur 259.
+- Le châssis — carnet, surface, volets, tables, boutons — est un papier chaud,
+  `#f7f3ec`. Il ne prétend rien être d'autre qu'un support.
+- **Derrière une image, et uniquement là, `#6c6c6c`** : un gris strictement neutre, à 15 % de
+  réflectance, la valeur que la norme de jugement d'image demande. Cette surface ne change
+  jamais, ni avec le thème, ni avec le jeu ouvert, ni avec l'écran.
 
-### Ce que la refonte garde du système d'avant, et ce n'est pas peu
+Le système d'avant tenait qu'un fond clair faussait le contraste perçu d'un sprite. **Cette
+phrase avait déjà été retirée le 4 septembre 2026, et pour la raison inverse** : c'est
+l'entourage *sombre* qui abaisse le contraste perçu — effet Bartleson-Breneman —, et le
+damier de l'atelier était à 1,08 % de réflectance quand la norme en demande 10 à 20. L'atelier
+poussait l'auteur à surcontraster ses sprites, et il ne s'en apercevait qu'une fois l'image
+dans le jeu.
 
-Ces acquis ont chacun une raison mesurée. **Une refonte qui les perdrait aurait à les repayer à
-l'usage, comme la première fois.**
-
-- **Le prix dans le libellé du bouton** — `Payer et lancer — $0,067` contre `Lancer — gratuit`,
-  `Revenir sans rien dépenser`, `aucun appel ne part d'ici`. Dix-huit chaînes de ce genre dans douze
-  écrans. C'est la promesse centrale d'un outil qui paie ses images, **aucun pictogramme ne sait la
-  dire**, et c'est la seule chose que l'interface fait déjà mieux que ses concurrentes.
-- **Les 88 à 95 explications qui disent la conséquence et non la fonction** — *« les images déjà
-  faites restent »*, *« l'image part à la corbeille — le pied de l'écran propose de la rendre »*.
-- **Le grisé qui porte sa raison en toutes lettres**, sous le contrôle, en permanence, jamais dans
-  une bulle au survol. 68 emplois, un composant dédié. C'est rare, et c'est bon.
-- **Le recueil d'explications** : 134 entrées, un gabarit imposé (*ce que c'est, ce que ça change,
-  d'où ça sort*), en français clair. Un an de rédaction déjà faite.
-- **Les états vides écrits comme des invitations** — *« Ce jeu n'a encore personne. Nomme le
-  premier. »* Il ne leur manque pas un texte, il leur manque **un bouton à côté**.
-- **L'écran de confirmation avant la dépense** : chaque texte et chaque image qui partent sur leur
-  ligne avec un interrupteur, le prix dans le bouton, un dominant, une sortie explicite. **C'est le
-  seul écran où la hiérarchie fait déjà son travail — il est le modèle de la refonte, pas sa
-  matière.**
-- **Le bloc replié qui porte sa valeur à droite de son titre** — sept appels sur sept respectent la
-  règle. Le seul motif que le code applique intégralement.
-- **La suite de segments** : le seul contrôle dont l'état se lit sans bouger la souris. 36 emplois.
-- **Le budget de mouvement** : 74 transitions courtes, une seule jauge et elle est déterminée. C'est
-  le point où le produit est **en avance** sur ses références. Rien à y faire.
-- **La discipline des couleurs** : 27 couleurs dans un seul fichier, 2 108 emplois qui passent tous
-  par un nom, **une seule valeur recopiée à la main dans tout le produit**. C'est ce qui rend une
-  refonte de palette bon marché — et ce qu'une refonte bâclée détruirait.
+Ce qui survit de l'ancienne règle : **un châssis chaud entre en concurrence avec les verts,
+les bruns et les ors du pixel art.** C'est vrai du papier comme il était vrai du bois. C'est
+exactement pour ça que le pourtour de l'image est neutre et ne l'est qu'à cet endroit.
 
 ---
 
 ## Color
 
-**Approche : restrained.** Un seul accent, un châssis chaud à très faible saturation, quatre
-sémantiques, et **une surface de jugement qui n'obéit à rien de tout cela**.
+**Approche** : retenue. **Trente-deux valeurs, liste fermée**, et rien d'autre n'entre. Le
+nombre paraît grand ; il ne l'est pas, parce que onze d'entre elles ne sont que **trois signaux
+déclinés en trio** — fond, trait, encre —, trois de plus l'étiquette, deux les encres de
+contrôle et deux les carreaux du damier. **Trois teintes seulement portent un sens**, et ce sont
+elles qu'on retient : le rouille, le vert, le rouge sombre.
 
-### La décision structurelle : le châssis se réchauffe, et l'image en sort
+### Le papier
 
-Le document d'avant affirmait qu'*un fond clair remonte la luminance d'entourage et fausse le
-contraste perçu d'un sprite*. **C'est l'inverse qui est vrai**, et trois relevés le disent : c'est
-l'entourage **sombre** qui abaisse le contraste perçu (effet Bartleson-Breneman). Le damier de
-l'atelier est à **1,08 % de réflectance** quand la norme de jugement d'image (ISO 3664) en demande
-**10 à 20**. L'atelier pousse donc l'auteur à **surcontraster** ses sprites — le défaut même que la
-phrase croyait prévenir, et il ne s'en aperçoit qu'une fois l'image dans le jeu.
-
-**L'autre moitié de la phrase reste vraie et survit intacte** : un châssis chaud entre bien en
-concurrence avec les verts, les bruns et les ors du pixel art de fantasy. C'est ce qui a écarté la
-maquette ambre du 26 août 2026, après essai.
-
-> **Le produit confondait deux surfaces.** Le châssis et le pourtour de l'image sont deux choses
-> différentes, et le refus du 26 août portait sur leur confusion. **On peut chauffer l'outil à
-> condition de sortir l'image du châssis** — et c'est la seule chose de neuf qui autorise à rouvrir
-> cette décision-là.
-
-⚠️ **La phrase fausse vit à trois endroits et doit être retirée d'un seul geste** :
-`docs/DESIGN.md` (fait — c'est ce paragraphe qui la remplace), le journal des décisions au
-26 août 2026, et **le commentaire en tête de `interface/src/index.css`, lignes 7 à 9**. Si elle reste
-dans le code, elle reviendra à la relecture suivante et refermera la décision. Le produit connaît ce
-défaut : le 31 août 2026, une correction écrite dans un document et pas dans les deux autres endroits
-où la même promesse était inscrite a été notée comme *une contradiction en attente*.
-
-### Le châssis — teinte 60° en OKLCH, chroma plafonnée à 0,013
-
-**Aucune valeur n'a été choisie à l'œil.** Chacune est le résultat d'une recherche sur sa clarté, à
-teinte et saturation fixées, jusqu'à atteindre sa cible de contraste. Le script est
-`docs/design-preview-refonte.html` (il recalcule tout dans la page) ; la méthode est décrite
-au § Comment ces valeurs ont été obtenues.
-
-**Tous les contrastes sont mesurés sur `--fond-2` `#48413C`** — le fond le plus clair sur lequel du
-texte est réellement posé. Mesurer sur `--fond-0` donnerait des chiffres flatteurs et faux à l'usage.
-
-| Token | Hex | Ce qu'il doit atteindre | WCAG | APCA |
-|---|---|---|---|---|
-| `--fond-0` | `#201B18` | 1,30 : 1 sous `--fond-1` | 1,70 | — |
-| `--fond-1` | `#35302C` | 1,30 : 1 sous `--fond-2` | 1,30 | — |
-| `--fond-2` | `#48413C` | la référence | — | — |
-| `--fond-3` | `#58514B` | 1,28 : 1 sur `--fond-2` | 1,28 | — |
-| `--trait` | `#69615B` | 1,65 : 1 — **visible, jamais une affordance** | 1,65 | — |
-| `--contour` | `#958B83` | **3,00 : 1 — le seuil du bord perçu** | 3,00 | — |
-| `--contour-fort` | `#B7ACA3` | 4,50 : 1 — le focus | 4,50 | — |
-| `--texte` | `#F4F0EE` | contraste perçu 88 | 8,84 | −88 |
-| `--texte-2` | `#D5D0CC` | contraste perçu 68 | 6,54 | −68 |
-| `--texte-3` | `#B6B1AD` | contraste perçu 50 | 4,71 | −50 |
-
-**La marche entre deux surfaces voisines vaut 1,30 : 1**, contre 1,05 à 1,10 aujourd'hui. C'est le
-changement le plus mécanique du document et l'un des plus visibles : deux surfaces voisines se
-distinguaient si peu qu'elles ne se distinguaient pas.
-
-**`--texte-3` n'est plus sous le seuil.** Le gris le plus sombre d'avant (`#5E6771`, 3,01 : 1, et
-contraste réellement perçu de **22** sur une échelle où 30 est le plancher absolu de tout texte)
-était employé **496 fois** — plus que les deux autres gris réunis —, dont **318 fois sous 11 px** et
-**103 fois sur des boutons**. La règle qui l'autorisait n'était pas fautive ; son application l'était.
-Il remonte, et il est **rendu au texte inerte** — mais dans cet ordre : *on le remonte d'abord, en
-une ligne, pour que plus rien ne reste illisible ; on le rend à ce qui ne se clique pas ensuite,
-écran par écran, à mesure que le vocabulaire de boutons passe.*
-
-### La garde des arcs s'étend au châssis, et voici sa borne
-
-Deux arcs de la roue restent fermés parce que les quatre couleurs qui disent quelque chose y vivent.
-Le châssis chaud tombe dedans — et il y reste, **sous une condition écrite** :
-
-> **La garde des arcs vaut pour toute couleur dont la chroma dépasse 0,03. En dessous, ce n'est plus
-> une couleur, c'est une matière.**
-> Le châssis est à **0,013**, soit **huit fois moins que la plus sourde des quatre sémantiques**.
-> Corollaire tenu par cette règle : `--epingle` doit garder **au moins huit fois la chroma du
-> châssis**. Si une teinte de châssis future ne peut pas respecter cet écart, c'est la teinte qui
-> change, jamais la sémantique.
-
-Sans cette borne écrite, un châssis chaud éteindrait la seule couleur chaude que le produit s'était
-autorisée — `--epingle`, qui dit *réglé à la main*, *interrompu*, *catalogue servi de repli*, et dont
-le coût avait été nommé le 27 août 2026 : *« un point chaud de plus dans un châssis froid »*.
-
-### Le signal et les quatre sémantiques
-
-| Token | Hex | Cible | WCAG | APCA | Usage |
-|---|---|---|---|---|---|
-| `--signal` | `#5EC8E4` | perçu 55 | 5,18 | −55 | **le seul accent** — marque, texte d'accent, jauge |
-| `--signal-plein` | `#87E5FF` | perçu 72 | 7,00 | −72 | **le fond du bouton dominant**, avec `--fond-0` par-dessus (perçu **81**) |
-| `--ok` | `#81CB91` | perçu 55 | 5,19 | −55 | réussi, en ligne, posé dans le dossier du jeu |
-| `--epingle` | `#DEB653` | perçu 55 | 5,21 | −55 | réglé à la main, interrompu, catalogue servi de repli |
-| `--echec` | `#FFA29A` | perçu 55 | 5,19 | −55 | appel raté, suppression, refus |
-
-**Le cyan reste, et il est le seul choix du châssis que la mesure confirme entièrement.** Sur les
-quatre jeux réels du dépôt, aucune couleur de palette ne s'en approche — distance minimale mesurée
-de 86 sur 441 possibles. C'est la seule famille chromatique qu'un asset de fantasy ne produit
-presque jamais, et sur un châssis désormais chaud, elle est en plus complémentaire : elle ressort
-mieux qu'avant, pas moins.
-
-**Il se dédouble, et c'est ce qui résout la contradiction entre deux relevés.** L'un plafonnait le
-fond parce qu'au-delà l'accent cesse d'être lisible en petit texte ; l'autre voulait monter le fond
-et éclaircir l'accent. **Les deux ont raison sur des emplois différents** : `--signal` porte les
-marques et le texte d'accent, `--signal-plein` porte les fonds pleins, où c'est le texte sombre
-par-dessus qui doit être lisible. Le fond monte, et rien ne se perd.
-
-`--info` reste retiré (27 août 2026) : un token sémantique qui nomme un état et ne colore plus rien
-ré-autorise un second gris neutre le jour où quelqu'un cherchera « la couleur d'une information ».
-
-### La lumière — la surface qui ne suit rien
-
-**C'est la proposition centrale de cette refonte, et la seule surface du produit qui ne change
-jamais**, quel que soit le fond retenu.
-
-| Token | Hex | Réflectance | Usage |
-|---|---|---|---|
-| `--pourtour` | `#6C6C6C` | **15 %** | le fond immédiat de toute image qu'on regarde pour la juger |
-| `--damier-a` | `#686868` | 13,8 % | damier alpha, carreau sombre |
-| `--damier-b` | `#707070` | 16,2 % | damier alpha, carreau clair |
-
-**Strictement neutres** : rouge, vert et bleu rigoureusement égaux. La valeur de 15 % est le milieu
-de la fourchette de l'ISO 3664, et c'est ce qu'un gris de visionnage vaut dans Lightroom et
-Capture One.
-
-**Où elle s'applique, et la liste est fermée** : la tuile d'une image dans la grille, la fiche,
-l'aperçu plein écran, la vitrine, la superposition, la planche. Partout ailleurs, c'est le châssis.
-**Le damier et le pourtour ne se confondent pas** : le damier dit *il n'y a pas de couleur ici* — il
-révèle la transparence d'un sprite détouré, et il a servi le 3 septembre 2026 à montrer qu'aucun
-fond n'était posé, à la place d'une pastille qui affirmait le contraire. Il garde son écart
-volontairement faible entre les deux carreaux — assez pour se lire, trop peu pour que l'œil suive le
-motif — et il devient neutre, comme le pourtour. Carreaux de 12 px sur une tuile, 16 px en fiche.
-
-### Les dix teintes de rangement
-
-| Token | Hex | Token | Hex |
-|---|---|---|---|
-| `--ilot-ardoise` | `#90AECC` | `--ilot-mauve` | `#C7A0B5` |
-| `--ilot-pervenche` | `#9EAACF` | `--ilot-bruyere` | `#CC9FA6` |
-| `--ilot-iris` | `#ABA7CD` | `--ilot-paille` | `#B2AC84` |
-| `--ilot-lavande` | `#B6A4C8` | `--ilot-mousse` | `#A3B089` |
-| `--ilot-prune` | `#C0A1C0` | `--ilot-lichen` | `#96B292` |
-
-Les dix sont posées à la **même clarté perçue** — contraste perçu 46, WCAG 4,33 à 4,36 : 1 sur
-`--fond-2` —, **au-dessus du seuil AA et sous les quatre sémantiques**, dont la chroma est deux fois
-la leur. C'est ce qui les fait lire comme un rangement plutôt que comme un état.
-
-**Les quatre disciplines ne se négocient pas**, et elles sont reconduites telles quelles : chroma
-plafonnée sous celle des sémantiques ; elles ne colorent que des **surfaces de la toile** — cadre
-d'îlot, bandeau, fond d'îlot, fond de note — jamais une marque sur une carte, jamais un contrôle ;
-la liste est **fermée** et il n'existe aucun sélecteur libre ; et les deux arcs des sémantiques leur
-restent interdits.
-
-### Mode clair — il n'y en a pas, et c'en est toujours une décision
-
-Un seul utilisateur, un seul écran. Ce qui change, c'est que **la raison a changé** : ce n'est plus
-« un fond clair fausse le jugement » — cette phrase était fausse. C'est que **doubler la palette
-double la maintenance des états**, et que le besoin derrière la demande (*c'est trop sombre*) est
-servi par la profondeur du châssis, qui a monté.
-
-### La teinte du jeu ouvert — abandonnée par son auteur, le 4 septembre 2026
-
-L'idée était de teindre automatiquement l'interface à la palette du jeu ouvert. Elle est
-**abandonnée**, et c'est l'auteur qui l'abandonne après lecture des mesures. Elle s'écrit ici pour
-qu'elle ne se rouvre pas par oubli.
-
-Techniquement, elle coûtait presque rien : les 27 couleurs vivent dans un seul fichier, la palette
-du jeu arrive déjà entière côté écran. **Ce sont quatre mesures qui l'ont tuée**, et la dernière
-touche au métier même du produit :
-
-1. **Aucune palette réelle ne peut fournir une couleur de texte.** Sur les 48 couleurs d'un jeu de
-   l'auteur, une seule atteint le seuil minimal ; une autre palette plafonne à 2,60 : 1, un peu plus
-   du tiers de ce qu'il faut.
-2. **La teinte dominante des quatre projets pourvus tombe à moins de 30° d'une des quatre
-   sémantiques — quatre fois sur quatre** (écarts mesurés : 12, 15, 23 et 29°).
-3. **Deux projets sur six n'ont aucune palette**, et c'est l'état de tout jeu neuf.
-4. **La boucle se referme sur elle-même** : un châssis teint à la couleur du jeu fait paraître les
-   sprites de ce jeu **10 à 17 % moins colorés** à la teinte que le châssis porte déjà, **24 à 41 %**
-   à une teinte franchement visible. C'est exactement le jugement que l'atelier sert à porter,
-   faussé dans le sens qui trompe : *il fait rater ce qui est juste.*
-
-**Ce qui existe déjà ne bouge pas** : la vitrine propose les trois premières couleurs de la palette
-comme fonds de jugement, avec sa raison écrite dans le code — *une couleur que le jeu emploie, le
-sujet s'y détache ou non*. Elle reste ce qu'elle est. **L'étendre n'est pas au programme** : l'auteur
-a tranché *« laisse tomber cette idée »*, et cette phrase couvre la demande entière, pas seulement sa
-forme la plus risquée.
-
----
-
-## Les quatre formes, et la cinquième est interdite
-
-**C'est le cœur de la refonte.** La liste est fermée, chaque forme a un métier, et **tout passe par
-le composant partagé** — employé aujourd'hui 20 fois sur 259.
-
-| Forme | Ce qu'elle porte | Comment elle se dessine |
+| Jeton | Valeur | Où |
 |---|---|---|
-| **Le plein** | le geste qui fait avancer le travail ou qui paie — **un seul par écran** | fond `--signal-plein`, texte `--fond-0`, graisse 600 |
-| **Le cadre** | le geste ordinaire | fond `--fond-2`, bord `--contour` (**3,00 : 1**), texte `--texte` |
-| **Le lien** | ce qui mène ailleurs | texte `--signal`, souligné 1 px à 3 px de la ligne de base |
-| **L'éteint** | ce qui ne peut pas être fait maintenant | fond `--fond-2`, bord `--trait` **pointillé**, texte `--texte-3`, **plus sa raison en clair sous le contrôle** |
+| `--papier` | `#f7f3ec` | le fond général de la surface |
+| `--papier-cote` | `#f2ede4` | le carnet, le volet — ce qui borde |
+| `--carte` | `#fffdfa` | une carte, un champ, une case posée sur le papier |
+| `--ligne-ouverte` | `#e6dfd2` | la ligne du carnet actuellement dépliée |
+| `--pourtour` | `#6c6c6c` | **derrière une image, et nulle part ailleurs** |
+| `--damier-clair` | `#ece7dc` | le damier — carreaux de **14 px**, et il dit *transparent*, jamais décoratif |
+| `--damier-sombre` | `#e4dfd4` | l'autre carreau du même damier |
 
-> **La cinquième forme — le mot gris cliquable — est interdite.** Elle compte aujourd'hui
-> **85 emplois**, dont 12 qui ne se déclarent même pas au survol. C'est elle qui produit la plainte.
+⚠️ **Le damier a deux valeurs, et elles étaient tues.** La version d'avant écrivait *« carreaux
+de 14 px »* sans dire de quelle couleur, ce qui n'est pas dessinable ; le spécimen, faute de
+mieux, avait gardé le gris de l'ancien système sombre — `#cfcfcf` sur `#b6b6b6`, deux valeurs
+qui n'existent nulle part dans le carnet. Les deux ci-dessus sont celles des planches.
 
-**Le soulignement change de camp.** Il est rendu au cliquable. **Et la marque qu'il libère doit être
-remplacée dans le même mouvement** : les 109 mots soulignés d'aujourd'hui sont les **points
-d'accroche des explications**, et sans marque ils deviennent introuvables — ce qui perdrait le
-recueil de 134 entrées que ce document range parmi les acquis à ne pas perdre. La nouvelle marque ne
-peut être ni un glyphe (le produit a refusé trente points d'interrogation pour ça) ni une couleur
-(elles sont toutes prises). *C'est la seule question de forme que ce document laisse ouverte, et elle
-se tranche avant la première passe d'écran.*
+### Les traits
 
-**« Éteint » et « allumé mais non choisi » cessent de partager les mêmes pixels.** Le même triplet de
-classes sert aujourd'hui aux deux, quatre fois chacun.
+| Jeton | Valeur | Où |
+|---|---|---|
+| `--trait-faible` | `#ece6db` | une séparation qui ne promet rien |
+| `--trait` | `#e2dbd0` | le trait courant, le cadre d'un panneau |
+| `--contour` | `#ddd5c8` | **le contour de ce qui réagit** — bouton, champ, onglet |
+| `--pointille` | `#c9c2b6` | le pointillé d'un vide, d'une zone à remplir |
 
-**Toute zone cliquable fait au moins 24 × 24 px** (critère 2.5.8 de WCAG 2.2, contraignant en Europe
-depuis le 28 juin 2025). Trois croix de fermeture sont en dessous, dont une qui mesure environ
-10 × 14 px.
+**À l'intérieur d'un panneau, on groupe par le vide.** Le trait sépare des panneaux, pas des
+lignes.
 
-**Un contrôle est visible s'il est survolé OU choisi OU au focus clavier.** Le produit a déjà écrit
-cette ligne correctement à un endroit ; il suffit de la généraliser. Quatre contrôles n'existent
-aujourd'hui qu'à la souris, **dont deux sont hors du clavier** : poser un favori sur une image est un
-geste que seule la souris peut faire.
+### Les encres
 
-### Les interrupteurs — la couleur porte l'état, pas le mot
+| Jeton | Valeur | Où |
+|---|---|---|
+| `--encre` | `#221f1b` | un titre, le nom d'une chose |
+| `--encre-2` | `#4e483f` | la phrase, le texte courant |
+| `--encre-3` | `#6d675e` | l'étiquette, la précision sous une pièce |
+| `--encre-4` | `#948c80` | un compteur, une entête de section |
+| `--eteint` | `#b0a89b` | ce qui est grisé — **et la raison est écrite à côté** |
+| `--encre-controle` | `#3d382f` | **le texte d'un bouton, d'un champ, d'une ligne du carnet** |
+| `--encre-sur-signal` | `#fff8f4` | le texte **sur** le bouton rouille, et le galet d'une bascule |
 
-**Décision de l'auteur, le 4 septembre 2026**, et elle vaut au-delà des onze contrôles qui l'ont
-provoquée : *« une interface trop textuelle est fatigante et lourde à utiliser. Une icône ou un
-bouton bascule se comprend naturellement, sans se lire. »*
+**Les deux dernières sont des encres de contrôle, pas de lecture.** Un bouton n'écrit pas dans
+la même encre qu'un titre : `#3d382f` se tient entre `--encre` et `--encre-2`, et c'est ce que
+les planches emploient sur tout ce qui réagit. Sans `--encre-sur-signal`, le bouton qui lance
+n'a pas de couleur de texte du tout.
 
-Le produit avait **six dessins et cinq paires de mots pour une seule idée**. Il n'en reste **un
-dessin et un couple de mots**.
+### Les trois signaux
 
-| | Ce que c'est |
-|---|---|
-| **La forme** | un **interrupteur bascule**, et rien d'autre. Il remplace le carré de 9 px, le carré de 14 px, `●`/`○`, `✓`, et les libellés qui décrivaient l'état |
-| **L'état** | il se lit **à la couleur d'abord** : actif en `--signal`, inactif en `--fond-2` bordé de `--trait`. La couleur est primordiale — on doit voir ce qui est actif avant de le lire |
-| **Les mots** | **`actif` / `inactif`**, et le mot reste l'**étiquette de ce que l'interrupteur commande**, jamais la description de son état. L'interrupteur dit l'état ; le mot dit de quoi |
-| **La cible** | 24 × 24 px minimum, comme tout ce qui se clique |
+| Jeton | Valeur | Ce qu'il dit |
+|---|---|---|
+| `--signal` | `#a8492c` | *ce qu'on fait, ce qui coûte* — le rouille |
+| `--ok` | `#5c7a52` | *ce qui est fait, ce qui est gratuit* |
+| `--echec` | `#8a3f33` | *ce qui a raté* |
 
-**La pastille ronde ne s'y confond pas** : elle reste réservée aux **états** — en ligne, réussi,
-raté — qu'on ne clique pas. Un interrupteur est un geste, une pastille est un constat.
+**Le rouille ne sert qu'à deux choses : le bouton qui lance, et le chiffre qui coûte.** Un
+seul bouton rouille par écran. Partout ailleurs, il ment.
 
-**Et une icône pour la seule idée qui n'est pas celle-là** : *voir ou ne pas voir*. **Un œil, ouvert
-ou fermé.** Deux endroits seulement dans tout le produit — masquer un calque le temps de vérifier
-qu'une pièce d'équipement tient sur le corps, et peindre en magenta sur l'image ce qui ne compte pas.
-Partout ailleurs, éteindre ne cache rien : dans l'écran de confirmation, une ligne éteinte **reste à
-l'écran, barrée**, et c'est tout le sens de cet écran.
+### Un signal qui se pose est un trio, jamais une couleur seule
 
-### Les deux traits, et un seul est fort
+Un bandeau, une pastille, un champ en faute : les planches leur donnent toujours **un fond, un
+trait et une encre**, et les trois vont ensemble. Écrire le fond sans le trait donne une
+pastille qui bave sur le papier — les deux sont trop proches en clarté pour se séparer seuls.
 
-**Le trait qui range n'est pas le trait qui se clique.**
+| Ce que ça dit | Fond | Trait | Encre |
+|---|---|---|---|
+| **un raté** | `--fond-echec` `#f8ece9` | `--trait-echec` `#dcbcb2` | `--echec` `#8a3f33` |
+| **un avertissement** | `--fond-attention` `#f4ece2` | `--trait-attention` `#e0cfb8` | `--encre-attention` `#8a5a2c` |
+| **un oui** | `--fond-ok` `#eef1ea` | `--trait-ok` `#cfd9c8` | `--encre-ok` `#4c6644` |
 
-- **`--trait`, 1,65 : 1** — il sépare et ne promet rien. Réservé au **cadre extérieur** d'un panneau
-  et aux bandes. **À l'intérieur d'un panneau, on groupe par le vide, pas par des lignes.**
-- **`--contour`, 3,00 : 1** — il ne se pose que sur ce qui réagit. Le voir, c'est savoir qu'on peut
-  cliquer.
-- **`--contour-fort`, 4,50 : 1** — le focus, plus l'anneau `--signal-plein` de 2 px.
+⚠️ **`--ok` et `--encre-ok` ne sont pas la même couleur, et c'est voulu.** `#5c7a52` est le vert
+qu'on emploie *sur le papier* — une coche, un mot « gratuit ». `#4c6644` est plus sombre parce
+qu'il s'écrit sur `#eef1ea` et non sur `#f7f3ec`. Les confondre rend un des deux illisible.
 
-C'est ce qui finance la suppression des **427 lignes** actuelles, dont 84 % sont sous le seuil de
-perception : assez pour salir l'image, pas assez pour qu'une seule serve de repère.
+⚠️ **Et `--fond-ok` vaut `#eef1ea`, pas `#e4ecdf`.** La version d'avant déclarait `#e4ecdf`, qui
+est autre chose : le fond d'une **étiquette** verte, une pièce plus petite et plus saturée qu'un
+bandeau. Les deux existent, et se sont confondus parce qu'ils se ressemblent.
 
-⚠️ **Élaguer les traits se fait après la montée des fonds, jamais avant** — sans les marches à
-1,30 : 1, un panneau sans trait n'a plus de bord du tout. Et c'est une passe à faire au navigateur,
-écran par écran : on ne s'aperçoit qu'un trait manquait qu'en le voyant manquer.
+L'étiquette a donc son propre jeu, et il est **le seul de ce document qui ne soit employé que
+par `Systeme.dc.html`** — aucun écran ne s'en sert encore. Il est déclaré pour que le premier
+qui en aura besoin ne l'invente pas :
 
-### La bande d'action, et ce qu'elle doit à la fente
+| Jeton | Valeur | Où |
+|---|---|---|
+| `--etiquette-fond-ok` | `#e4ecdf` | le fond d'une étiquette verte |
+| `--etiquette-encre-ok` | `#45613b` | son texte |
+| `--etiquette-fond-echec` | `#f4e2dc` | le fond d'une étiquette rouge |
 
-Une bande de **48 px au bas de la colonne de travail** : à droite le dominant, à sa gauche trois
-secondaires au maximum, à gauche la ligne d'état. **Ancrée au bas de la colonne, jamais de l'écran,
-jamais flottante** — Figma a fait flotter sa barre d'outils en bas dans sa refonte, et c'est devenu
-la critique la plus reprise de son propre forum.
+Son texte à elle est `--echec`, déjà déclaré. Une étiquette neutre est `--trait-faible` sur
+`--encre-2`, tous deux déclarés plus haut.
 
-Elle répare trois défauts mesurés : il n'existe aucune zone d'action fixe dans tout le produit ; le
-bouton qui paie flotte dans le flux du bloc de prompt et **se déplace verticalement selon la longueur
-du texte saisi** ; et sur la matrice de l'établi, trois commandes de même apparence se suivent sur
-chaque ligne — c'est la deuxième qui engage l'argent, répétée une trentaine de fois.
+### Mode sombre
 
-⚠️ **Ce qu'elle doit à la fente du champ de prompt, et qui doit être tranché en la construisant.**
-Cette fente n'a jamais deux locataires à la fois, mais elle en a **trois qui se relaient** — le
-raccourci au repos, la raison quand le bouton qui paie est grisé, le repli hors ligne. C'est ce qui
-rend la règle tenable. Loger la ligne d'état de la bande dans cette fente y ajouterait un quatrième
-locataire **toujours présent**, et détruirait le seul endroit du produit où un refus s'explique avant
-le clic. **Soit la bande porte son propre état, soit elle n'en porte pas.**
+Il n'y en a pas, et c'est une décision — la symétrique de celle qu'on vient de retirer. Un
+produit qui doit rendre un jugement de couleur fiable n'offre pas deux entourages : le
+pourtour de l'image serait le même dans les deux, et tout le reste changerait autour de lui,
+ce qui est exactement la condition qui fausse le jugement.
+
+### Deux trous, et ils sont réels
+
+Le comptage les a trouvés, les planches ne les couvrent pas, et ils se posent avant `B0`.
+
+1. **Il n'y a pas de couleur pour *réglé à la main*.** Le produit a la notion : un asset porte
+   un champ `epingle`, et l'ancien système lui donnait une couleur à lui. Les trois signaux du
+   carnet n'en laissent pas de place. Soit la marque cesse d'être une couleur, soit une
+   quatrième entre.
+2. **Les dix teintes d'îlot de la toile ne sont pas dans les planches.** Les dix actuelles ont
+   été choisies pour un fond presque noir ; sur du papier, elles sont à refaire. `Toile.dc.html`
+   montre des îlots teintés sans donner leurs valeurs.
 
 ---
 
 ## Typography
 
-Trois familles, **trois rôles étanches**.
+Trois familles, et c'est un système de rôles, pas de goût : **une serif pour ce qui se lit
+une fois, une sans pour ce qui se lit tout le temps, une chasse fixe pour tout ce qui se
+compte.**
 
-| Rôle | Police | Rationale |
+| Rôle | Police | Pourquoi celle-ci |
 |---|---|---|
-| **Display** | **Fraunces** (variable) | Chaude, avec un axe d'*optique* qui l'épaissit quand elle rapetisse — et **elle a des graisses**. Instrument Serif n'existe qu'en romain et italique d'un seul poids : le produit s'en est déjà trouvé bloqué. |
-| **Body et contrôles** | **Archivo** (variable) | Trois raisons mesurées. La **hauteur d'œil la plus haute** des grotesques pratiques (0,531 em), ce qui l'autorise à composer à 14,1 px là où d'autres exigent 15,5 ; **5,8 % de français en plus par ligne** qu'Instrument Sans ; et **le plus faible débord d'accent mesuré** — le É ne dépasse le H que de 0,18 em contre 0,23 —, ce qui compte énormément en français, où ce sont les capitales accentuées qu'une rangée serrée rogne en premier. Elle a en plus un **axe de chasse réel** (62 à 125 %) : condenser à 90 % rend 8,3 % de largeur sans toucher ni à la taille ni au contraste. |
-| **Mesures** | **JetBrains Mono** | `tabular-nums`, zéro barré. Elle porte **toutes** les mesures et **rien d'autre**. |
+| Titres | **Instrument Serif** | c'est celle de toutes les planches, et elle ne descend jamais sous 25 px, où le produit lui donne raison : en dessous elle se confond avec la sans |
+| Texte | **Instrument Sans** | la même famille de dessin que la serif, donc les deux ne se disputent pas |
+| Mesures | **IBM Plex Mono** | ce que les planches importent. Le produit livre aujourd'hui JetBrains Mono : le changement est d'une ligne |
 
-⚠️ **Le piège d'Archivo** : la demander en instances fixes livre une fonte **sans l'axe de chasse**,
-c'est-à-dire sans la moitié de la raison qui l'a fait choisir. Et **les trois fontes s'auto-hébergent**
-au lieu d'être tirées du réseau à chaque ouverture, comme aujourd'hui.
+**Chargement : auto-hébergé, jamais tiré du réseau.** Ce n'est pas une préférence, c'est un
+invariant du produit — *tout ce qui ne demande pas le fournisseur fonctionne réseau coupé*.
+Les planches emploient l'adresse de Google Fonts parce que ce sont des documents autonomes ;
+l'application ne le peut pas.
 
-### Les deux règles d'emploi
+### L'échelle — liste fermée
 
-**1 — Fraunces ne descend jamais sous 19 px et n'entre jamais dans un contrôle.** Trois usages : le
-nom du produit dans la barre de tête, les titres d'écran, les états vides. *« Ta bibliothèque est
-vide. Écris. »* en serif est une invitation ; en sans, c'est un message d'erreur.
-
-**2 — Toute mesure est en JetBrains Mono, et la chasse fixe ne porte que des mesures.** La règle
-d'avant était juste et son application la contredisait : **313 de ses 604 emplois sont des boutons ou
-de la prose**. Les explications du produit sont donc rendues en chasse fixe à 10 px, ce qui les rend
-indistinguables d'un relevé de mesures — **c'est très exactement ce que l'auteur décrit comme « une
-interface qui assomme d'infos techniques »**. Une phrase française prise dans la mono coûte 35,7 % de
-largeur pour un bénéfice nul.
-
-**La coupe se fait donc dans l'autre sens que le réflexe** : la chasse fixe **garde** les montants,
-durées, dimensions, comptes et pourcentages ; elle **perd** la prose et les libellés de boutons. Le
-1er septembre 2026, le produit a réparé un défaut avec la règle telle qu'elle est — le bouton de
-téléchargement était invisible dans une bande où sept éléments sur huit sont des faits mesurés, et la
-réparation a consisté à en faire **la seule chose de la bande qui ne soit pas en chasse fixe**. Cette
-réparation ne fonctionne que si la chasse fixe veut dire *fait mesuré*.
-
-Une seule exception, et elle dit la même chose qu'un nombre : `gratuit`, à la place d'un montant, chez
-un fournisseur qui ne facture pas.
-
-Corollaires : `font-variant-numeric: tabular-nums` systématique, virgule décimale, espace fine avant
-l'unité (`4 px`, `$0,067`, `64×64`).
-
-### Cinq tailles, et rien entre
-
-| px | Interligne | Ce qu'elle porte |
+| Police | Tailles | Emploi |
 |---|---|---|
-| **11** | 16 px | ce qui n'est **jamais** porteur de sens tout seul — unité, en-tête de colonne en capitales espacées, méta d'une tuile |
-| **13** | 18 px | **le plancher** — tout contrôle, tout libellé, toute rangée, tout tableau |
-| **15** | 24 px | la prose qu'on lit vraiment, le nom en fiche |
-| **19** | 26 px | titre de section |
-| **28** | 34 px | titre d'écran, état vide — en Fraunces |
+| Serif | **52** / 1.02 · **38** / 1.05 · **25** / 1.15 | titre de planche · titre d'écran · nom du jeu |
+| Sans | **15** / 1.55 · **14** · **13.5** · **13** · **12.5** · **12** | chapô · ligne du carnet · courant et boutons · précision |
+| Mono | **12** · **11.5** · **11** · **10.5** (+.14 em, majuscules) | compte, prix, taille · entête de section |
 
-Cinq au lieu de **vingt**, et le plancher passe de 10 à 13 px. **Chaque taille porte son interligne
-écrit**, au lieu du 1,5 hérité par accident sur 89 % des éléments. **Le poids par défaut passe de 400
-à 500** : cela abaisse d'un cran entier l'exigence de contraste pour environ 1 % de largeur en plus.
+**La serif ne descend jamais sous 25.** **Rien ne descend sous 10.5.**
 
-⚠️ **Ce que le plancher coûte, et il faut le payer.** Remonter 526 déclarations de 10 à 13 px
-augmente la surface de texte d'**environ un tiers**, sur un produit que son auteur trouve surchargé.
-La chasse condensée en rend 8,3 % et le gain de police 5,8 % : **cela ne couvre pas la moitié**. Le
-reste se paie en **enlevant des contrôles et des mots**, écran par écran, avec un budget chiffré
-décidé avant de dessiner. Sans ce calcul, la refonte livre un écran plus lisible mot par mot et plus
-lourd d'ensemble — c'est-à-dire une réponse à *pas lisible* qui aggrave *surchargé de texte*.
+Le comptage a trouvé dix-huit tailles employées, dont 9.5, 9 et 8. Ces trois-là appartiennent
+au **texte de commentaire qui entoure les écrans dans les planches**, pas aux écrans — les
+planches sont des documents, pas des captures. Elles sont refusées.
 
-**Le contraste se mesure en perception réelle (APCA), et l'ancien calcul ne sert plus que de filet.**
-Sur fond sombre, WCAG 2 délivre des certificats de conformité à des textes illisibles : le gris
-secondaire du produit affiche 7,12 : 1, le meilleur niveau, pour un contraste réellement perçu de 50
-quand il en faut 75. Et **on ne pousse pas le contraste au maximum** : la cible du texte principal est
-88, pas 93,6 — au-delà, le texte clair bave sur le fond sombre, particulièrement chez les 30 à 50 %
-d'adultes astigmates.
+**La seule taille ajoutée à la liste déclarée est 11.5**, et elle est ajoutée parce que la
+mesure l'impose : les six planches d'atelier de retouche l'emploient 280 fois, dans leurs
+tables de réglages. Refuser une taille employée à ce point aurait décrit un système que le
+dessin ne suit pas.
+
+⚠️ **Ce que ce plancher coûte, et il faut le savoir avant de dessiner.** Le relevé du
+4 septembre 2026 avait fixé un plancher à 13 px, après avoir compté que 526 déclarations sur
+732 étaient à 10 px ou moins et que 94 % du texte du produit tenait dans une bande de 4,5 px.
+Le carnet redescend à 12.5, et ses tables d'atelier à 11.5. **La densité des ateliers est donc
+payée en taille de texte, et c'est le premier endroit où regarder si la lisibilité redevient
+un grief.**
 
 ---
 
 ## Spacing
 
-- **Base** : 4 px.
-- **Densité** : **compacte, mais avec un palier de repos.** Ce n'est pas un adoucissement : c'est
-  qu'il n'y avait aucun palier.
-- **Cinq crans : `4 · 8 · 12 · 24 · 40`.**
+- **Base** : 2 px, parce que la moitié des écarts du carnet sont impairs.
+- **Densité** : compacte. C'est un outil de production, pas une page.
+- **Les seuls écarts** : **4 · 8 · 14 · 22 · 34**. Liste fermée.
+- **Marges de la surface** : 30. **Gouttières** : 14.
 
-**Le cinquième cran est la nouveauté qui compte.** 92 % des 495 écarts du produit sont tassés entre
-4 et 12 px, et il existe **un seul écart de 40 px dans 35 751 lignes**. Il n'y a donc littéralement
-aucun endroit où l'œil se pose — c'est ça, *les allers-retours avec les yeux*.
+Le comptage trouve quatorze valeurs employées, de 2 à 20. C'est du dessin à la main : aucune
+ne domine, aucune ne porte de sens. La liste déclarée l'emporte, et un écran qui en réclame
+une seizième est un écran mal découpé.
 
-> **Deux blocs séparés de 40 px n'ont besoin d'aucun trait entre eux.** C'est cette règle qui finance
-> la suppression des 427 lignes.
+### Hauteurs de contrôle — liste fermée
 
-Gouttière de grille d'assets : 12 px. Padding de panneau : 12 px. Padding de zone centrale : 24 px.
-Gouttière de défilement réservée en permanence partout où ça défile : **9 px** — reconduit tel quel,
-parce que 9 px qui apparaissent peuvent retirer une colonne entière d'une grille au moment où l'on y
-cherche quelque chose.
+**34 · 30 · 26 · 22**, et le champ de prompt à **54** parce que c'est une zone de saisie et
+non une bande.
 
-### Hauteurs de contrôle — nouvelle liste fermée, et elle est *dérivée*
+Un bouton et un champ font tous les deux **34** — c'est ce que les planches montrent, et c'est
+dérivé et non choisi : une ligne de 13 px avec son interligne de 18, plus 8 px de garde de
+chaque côté.
 
-**`48 · 40 · 36 · 30`.** Quatre valeurs. La liste d'avant — `44 · 38 · 34 · 30 · 26` — **ne survit
-pas au plancher de 13 px**, et c'est écrit plutôt que subi : une rangée de 26 px portant une ligne de
-13 px et son interligne de 18 laisserait 3 px de garde de chaque côté, bordure comprise. La liste
-s'ouvrirait alors en silence, et avec elle la seule discipline qui empêchait chaque écran neuf de
-réinventer sa propre hauteur.
+### Largeurs de colonne — liste fermée
 
-**Chaque valeur est une ligne de texte plus une garde nommée** — c'est ce qui la rend défendable :
+**300** le carnet (fixe, toujours là) · **380** le volet (fixe, se ferme, ne se rétrécit
+jamais) · **880** la barre (un plafond, pas une largeur : elle se centre et rétrécit sous
+lui) · la surface prend le reste.
 
-| px | Le calcul | Ce qui la porte |
-|---|---|---|
-| **48** | 18 + 2×14 + 2 | barre de tête, **bande d'action**, pied de l'assistant |
-| **40** | 18 + 2×10 + 2 | toute barre d'outils, vignette d'une image de référence |
-| **36** | 18 + 2×8 + 2 | **bouton, champ** — dont le bouton qui paie et le champ qui nomme |
-| **30** | 18 + 2×5 + 2 | rangée d'arbre, rangée d'étape, bouton de segment, en-tête de panneau, champ de recherche, barre d'état |
-
-**Deux valeurs sortent de la liste, et les deux sont nommées.** Le **champ de prompt** est une zone de
-saisie sur plusieurs lignes, pas une bande : deux lignes de 18 px, plus 8 px de garde en haut et en
-bas, plus le trait, font **54 px**. Et le **bouton compact reste à 24 px**, parce qu'il vit *à
-l'intérieur* d'une rangée qui est elle-même dans la liste — c'est aussi le plancher de zone cliquable
-imposé par WCAG 2.2, ce qui n'est pas une coïncidence.
-
-**Une bande de la liste ne grandit pas — et ce qui en sort est une mesure, jamais un geste.**
-Reconduit tel quel du système d'avant, avec l'ordre du sacrifice : *les dimensions de l'image partent
-en premier, parce que c'est la seule mesure de cette bande qui se relise ailleurs ; puis les libellés
-des contrôles, parce qu'un libellé n'est pas un geste non plus.* Aucune barre de défilement
-horizontale : elle prend 16 px sur les 40 de la bande, construite et retirée le 1er septembre 2026.
-
-⚠️ **Une bande précise doit être remesurée avant que l'échelle ne soit arrêtée** : le comparateur des
-tables réclamait **973 px pour 840 disponibles** à 1 600 px de fenêtre, aux anciennes tailles. Ses
-libellés passent de 10 à 13 px, en français qui coûte déjà +39,9 % de largeur sur l'anglais. Elle
-déborde à toutes les tailles de fenêtre, et c'est l'un des quatre écrans que ce document déclare
-**denses à juste titre**.
-
-### Largeurs de colonne — la liste est fermée aussi
-
-**`380 · 300 · 240`**, reconduites. **Et une règle nouvelle, qui répond aux allers-retours du
-regard** :
-
-> **Un contrôle se tient dans la même colonne que ce qu'il modifie, et un objet ne raconte pas sa vie
-> à trois endroits à la fois.**
-
-Elle se paie : elle interdit la mise en page qui met l'arbre à gauche, les réglages dans une deuxième
-colonne, la grille au milieu et la fiche à droite — c'est-à-dire trois colonnes traversées deux fois
-pour un seul geste. *Ce document pose la règle ; c'est `/design` qui l'applique écran par écran.*
+La troisième est entrée avec `B6`, relevée sur `Barre.dc.html`. Ce n'est pas une colonne : la
+barre se pose **par-dessus** les deux autres et ne partage la grille avec personne. Elle est
+dans cette liste parce que c'est la seule largeur fixe que le produit écrive en dehors du
+châssis, et qu'une valeur non déclarée est une valeur qu'on réinventera un peu différente au
+prochain écran.
 
 ---
 
 ## Layout
 
-- **Approche** : **grid-disciplined**, sans exception.
-- **Trois onglets, et une profondeur** : **Univers · Codex · Galerie**, plus un fil d'Ariane qui
-  nomme la profondeur. Reconduit.
-- **Grid de la Galerie et du Codex** : `240px · minmax(0,1fr) · 380px`.
-- **Grid de l'Établi** : `380px · minmax(0,1fr) · 380px`, les deux colonnes repliables.
-- **Max content width** : **aucune**, à deux exceptions nommées — la colonne de prose du Guide et la
-  carte de texte du tableau d'inspiration ouverte en grand, bornées à **540 px**, soit 70 signes par
-  ligne. **La borne s'écrit en `em`, jamais en `ch`** : un `ch` vaut la largeur du chiffre zéro, et
-  une colonne de `72ch` tient 112 signes.
-- **Grille d'assets** : `repeat(auto-fill, minmax(128px, 1fr))`, gouttière 12 px. Zoom 1× / 2× / 4×.
-  **Un cran est disponible quand deux tuiles y tiennent côte à côte**, pas une. **Le cran choisi reste
-  choisi même devenu indisponible**, et la barre le dit.
-- **Border radius** : `sm 3px · md 5px · lg 8px · full 9999px`. **La tuile d'asset reste à 0** — le
-  bord de la tuile et le bord du sprite deviennent la même sorte de ligne, et la grille se lit comme
-  une planche contact. Corollaire obligatoire : **aucune ombre portée sur une tuile**.
+**Approche** : grille disciplinée. Trois colonnes, toujours les mêmes largeurs.
 
-Le rayon monte de `2/3/4` à `3/5/8` : c'est le seul geste franchement « moderne » du document, et il
-est bon marché. **Ce n'est pas un « arrondi de confort »** au sens que le document d'avant interdisait
-— l'argument contre l'arrondi, lui, tient et il est mesuré : *le pinceau de la main est passé du rond
-au carré le 31 août 2026 parce qu'un disque de rayon 2 sur un sprite de 64 pixels ne fait pas un bord
-net, il fait un escalier que personne n'a dessiné.* **Ce qui touche un sprite reste carré ; ce qui
-touche le châssis s'arrondit.**
+```
+┌──────────┬──────────────────────────────┬────────────┐
+│ le carnet│         la surface           │  le volet  │
+│   300    │  le reste · marges 30        │    380     │
+│  fixe    │  gouttières 14               │  se ferme  │
+└──────────┴──────────────────────────────┴────────────┘
+```
 
-### Six règles de comportement que la refonte ne doit pas perdre
+### Les quatre présentations, et la cinquième est interdite
 
-Elles ont été payées à l'écran, pas au banc d'essai, et elles vivent dans les mêmes fichiers que ce
-que la refonte va réécrire. **À vérifier écran par écran pendant la passe.**
+La surface ne prend que quatre formes. Un écran neuf est l'une des quatre.
 
-1. **Un panneau est borné par l'écran, jamais par son contenu.** Mesuré : trois colonnes sur quatre
-   rognaient en silence, la fiche demandait 1 310 px pour ce qu'on lui donnait.
-2. **Un bloc ne s'écrase jamais pour tenir.** La liste des modèles est tombée à 0 px et a disparu
-   entièrement. Un contrôle écrasé ment sur son état.
-3. **La gouttière de 9 px est réservée en permanence partout où ça défile.**
-4. **Le cran de zoom choisi reste choisi même devenu indisponible, et la barre le dit** — le seul
-   endroit du produit où l'on rend autre chose que ce qui est demandé, et il ne le fait jamais en
-   silence.
-5. **Un cran de zoom tient quand deux tuiles y tiennent, pas une.**
-6. **Sur la toile, tout objet déclare son échelle** — écran ou plan. *Ce qui se lit est en pixels
-   d'écran ; ce qui se mesure est en pixels de plan.*
-
-Et une septième, du même ordre : **une image ne se met pas dans ce qui est borné plus court qu'elle.**
-*Ce qui se lit par morceaux peut vivre dans un panneau borné ; ce qui ne se comprend qu'entier demande
-son propre écran.*
-
----
-
-## Les icônes
-
-**Jeu retenu : Lucide**, habillé aux **bouts et angles carrés** — c'est le seul jeu libre sérieux dont
-on peut écraser le bout de trait pour qu'il parle la même langue que le pinceau du produit, qui est
-carré depuis le 31 août 2026, *parce que le pinceau l'est*.
-
-**Deux tailles et pas une troisième** : **16 px** dans tout ce qui se clique, **20 px** dans la barre
-des trois lieux. Trait **1,5 px**, calé sur le texte de la rangée et jamais sur sa hauteur.
-
-**Toujours accompagnées de leur mot**, sauf dans une rangée répétée où le mot est déjà en tête de
-colonne. **Jamais seules dans un panneau.**
-
-### Le plafond, et pourquoi il n'est pas la vraie borne
-
-**Plafond : 18 pictogrammes** — c'est le nombre de verbes distincts recensés dans le produit. Mais
-**la règle d'admission posée le 28 août 2026 est plus sévère que le plafond, et c'est elle qui
-tranche** :
-
-> *Un dessin n'entre que là où aucun mot ne peut tenir, et où la forme est lue sans apprentissage.*
-
-Un plafond est un compte ; cette règle est une condition. Dix-huit places libres admettraient
-dix-sept formes que la condition refuserait.
-
-### Ce que les icônes ne feront pas, et il faut le dire avant de les dessiner
-
-- **Sur 223 emplacements de bouton, 77 seulement (35 %) peuvent devenir un pictogramme lu sans
-  apprentissage.** 95 (43 %) ne le peuvent pas : ce sont des lieux que l'atelier a inventés —
-  l'établi, la vitrine, le calibrage, la planche, les tables — ou des nuances de prix qu'aucune forme
-  ne dit. 51 (23 %) sont ambigus dans les deux registres.
-- **La place gagnée ne sauve pas la barre qui déborde** : la plus serrée passe de 1 284 à 1 011 px
-  (−21 %) alors que sa colonne peut descendre à 520. Les icônes divisent le débordement par deux,
-  elles ne le suppriment pas. **Si l'encombrement est un vrai sujet, il se traite en enlevant des
-  contrôles, pas en rétrécissant leurs libellés.**
-- **Le refus de la roue dentée et du point d'interrogation reste valable** : les remplacer par deux
-  carrés dans la barre du haut libère 69 px sur 599, soit 12 %.
-
-### L'inventaire des signes est à corriger, et il ne coûte rien
-
-Le compte de « trois glyphes » **ne décrit plus le code depuis longtemps** : dix-huit
-caractères-signes sont réellement rendus à l'écran, plus sept formes dessinées. Deux croix
-différentes servent au même geste (`×` dans 17 boutons, `✕` dans 3), et **le même `×` sert aussi de
-signe de multiplication dans une trentaine de mesures** — un libellé contient les deux emplois à trois
-centimètres d'écart. Le triangle plein de 13 px dit **trois choses différentes**, même forme, même
-couleur, même coin.
-
-**Trois corrections d'inventaire, sans discussion de fond** : une seule croix, `×` rendu à la
-multiplication, et un seul sens par forme dessinée.
-
----
-
-## L'écriture — dire la conséquence, jamais l'aphorisme
-
-**Décision de l'auteur, le 4 septembre 2026** : *« fini les phrases mystère sans sujet ni sens. On ne
-fait pas de la philosophie. Tu mets un truc concret et clair. »*
-
-| Ce qui est visé | Ce qui le remplace |
+| La forme | Ce qu'elle montre |
 |---|---|
-| *« un refus écrit, pas une case vide »* | **« ne sera pas utilisé pour la génération IA »** |
+| **une page** | une seule chose, et tout ce qu'on en sait |
+| **une matrice** | des choses en lignes, des états en colonnes — on voit les trous |
+| **une planche** | une grande image qu'on découpe, qu'on retouche, qu'on assemble |
+| **une table** | des lignes qu'on trie et qu'on compte |
 
-**La règle** : une explication nomme **la chose** et **ce qui va lui arriver**. Ce qui est condamné
-n'est pas la longueur — c'est la forme qui oppose deux abstractions sans dire de quoi elle parle, et
-qui laisse le lecteur reconstituer le sujet.
+**Deux écrans seulement prennent la fenêtre entière** : l'ouverture, et le parcours de
+création d'un jeu.
 
-⚠️ **Elle ne condamne pas les explications rangées plus haut parmi les acquis** — *« les images déjà
-faites restent »*, *« l'image part à la corbeille — le pied de l'écran propose de la rendre »*,
-*« rien n'est consommé tant que le bouton n'est pas pressé »*. Celles-là ont un sujet et disent ce
-qui arrive : **elles sont le modèle, pas la cible.** La distinction est nette et elle se teste —
-*qui fait quoi, dans cette phrase ?* Si la question n'a pas de réponse, la phrase est à réécrire.
+### Arrondis — liste fermée
 
-Le vocabulaire fermé — un mot par geste — vit dans **`docs/vocabulaire-a-fermer.md`**.
+**5 · 7 · 8 · 10**.
+
+Le comptage trouve dix valeurs, de 1 à 10, sans qu'aucune domine — 9 px est même la plus
+fréquente et n'est pas dans la liste déclarée. C'est du dessin, pas un système : la liste
+déclarée l'emporte, sans quoi il n'y a pas de liste du tout.
+
+---
+
+## Les onze pièces
+
+Onze, et rien de plus. Un écran qui en réclame une douzième est un écran mal découpé.
+
+| La pièce | La règle |
+|---|---|
+| **Les boutons** | un seul rouille par écran. Hauteur 34 |
+| **Les champs** | hauteur 34, comme les boutons |
+| **Les réglages** | la valeur se lit **à droite**, toujours |
+| **Les onglets** | quatre au plus — au-delà, c'est le carnet qui doit s'en charger |
+| **Les lignes du carnet** | trois états, pas quatre |
+| **Les étiquettes** | jamais cliquables |
+| **Les vignettes** | le damier dit *transparent*, le gris dit *pas encore détouré* |
+| **Les bandeaux** | au-dessus de ce qu'ils concernent, **jamais flottants** |
+| **Le vide** | une phrase, un geste, rien d'autre |
+| **L'attente** | le temps qui reste, **jamais un pourcentage** |
+| **Les compteurs** | chasse fixe, alignés à droite |
+
+---
+
+## Les six règles
+
+Six phrases qui décident à notre place quand un écran hésite.
+
+1. **Cliquer ne coûte jamais.** Seul un bouton rouille dépense. Ouvrir, trier, découper,
+   retoucher, exporter : gratuit, et on peut le refaire.
+2. **Le grisé porte sa raison.** Un bouton éteint dit à côté de lui pourquoi il l'est, et
+   donne le geste qui le rallume. Jamais une infobulle.
+3. **L'échec arrive au moment où on génère.** Pas à l'ouverture d'un écran. Une clé manquante
+   ne barre rien tant qu'on ne demande rien.
+4. **Une seule ligne du carnet est ouverte.** En ouvrir une referme l'autre. Fermé, le carnet
+   tient en dix lignes.
+5. **Un chiffre affiché est un chiffre compté.** Pas d'à-peu-près, pas de « plusieurs ». Si on
+   ne sait pas compter, on n'affiche pas.
+6. **Rien ne se perd sans être dit.** Une liste coupée dit qu'elle est coupée. Un import raté
+   se nomme. Un fichier écarté reste écarté, pas effacé.
 
 ---
 
 ## Motion
 
-**Inchangé.** C'est le point où le produit est en avance sur ses références comparées, et il n'y a
-rien à y faire.
+Assez pour comprendre d'où vient ce qui apparaît. Pas assez pour attendre.
 
-- **Approche** : **minimal-fonctionnel**.
-- **Easing** : entrée `cubic-bezier(.2,0,0,1)` · sortie `ease-in` · déplacement `ease-in-out`
-- **Durées** : micro 80 ms · court 160 ms · moyen 240 ms. **Rien au-dessus de 240 ms.**
+| Durée | Pour quoi | Comment |
+|---|---|---|
+| **120 ms** | survol, appui, coche | la couleur seule change |
+| **180 ms** | une ligne du carnet s'ouvre | la hauteur, et rien d'autre |
+| **220 ms** | un volet entre ou sort | il glisse depuis son bord |
+| **220 ms** | une image arrive dans une grille | elle apparaît sur place, sans grandir |
+| **aucune** | changer de surface | l'écran est là, tout de suite |
 
-La liste close de ce qui bouge est reconduite telle quelle (jauge déterminée, arrivée d'un asset,
-annulation après suppression, repli de panneau, ouverture de fiche, ce qui paraît sans clic), ainsi
-que **la règle qui la garde close** : *un mouvement n'entre dans la liste que si la chose qui arrive
-n'a aucun autre moyen d'être remarquée.*
-
-**Ce qui manque n'est pas du mouvement, ce sont des états.** L'auteur demandait « des retours
-visuels » ; ce qui lui manque réellement est **ce qui s'affiche quand un appel part, quand il
-revient, quand il rate, et quand la clé est absente** — cinq surfaces que l'audit du 31 août déclare
-**jamais examinées**. Elles sont peu nombreuses et très visibles : *c'est ce qui se verra le plus
-vite.*
+Quatre durées, et une absence. Rien d'autre n'entre.
 
 ---
 
-## Comment ces valeurs ont été obtenues
+## L'écriture
 
-Aucune couleur de ce document n'a été choisie à l'œil. Pour chacune, la teinte et la saturation sont
-fixées et **la clarté est cherchée par dichotomie jusqu'à atteindre sa cible de contraste**, en
-OKLCH, avec réduction automatique de la saturation quand la couleur sort de la gamme affichable.
+Le vocabulaire fermé de `Vocabulaire.dc.html` s'applique partout : écrans, menus, guide,
+messages d'erreur. Un mot de la liste noire ne s'écrit pas, et ce qui n'a pas de mot dans la
+liste ne se dit pas — c'est la liste qu'on modifie d'abord, pas l'écran.
 
-Les contrastes sont donnés **deux fois** : en rapport classique (WCAG 2.1) et en **contraste
-réellement perçu (APCA W3 0.1.9)**. Le second fait foi ; le premier n'est gardé que comme filet.
+Deux exceptions gardées, parce qu'elles n'ont pas d'équivalent employé : **prompt** et
+**frame**.
 
-**La page `docs/design-preview-refonte.html` recalcule tout dans le navigateur**, sur les valeurs
-réellement appliquées : le tableau de vérification qu'elle affiche n'est pas recopié, il est mesuré à
-l'ouverture. **Elle porte aussi les quatre profondeurs de fond** — `ombre · bois · sable · lin` — et
-c'est ainsi que la profondeur a été tranchée : en regardant, pas en discutant. `bois` est retenue.
-`lin` était volontairement trop clair, pour borner.
+Une phrase dit la conséquence, jamais la règle. *« Décoche une case et elle n'entre pas en
+bibliothèque »*, pas *« les cases décochées sont exclues de l'import »*.
 
 ---
 
 ## Ce que ce document ne tranche pas
 
-1. **La nouvelle marque du point d'accroche d'une explication** — le soulignement lui est retiré. Ni
-   un glyphe, ni une couleur. À trancher avant la première passe d'écran.
-2. **Le geste dominant de l'établi** : *Fabriquer ce qui manque* ou *Poser les fichiers dans le
-   dossier du jeu*. Personne d'autre que l'auteur ne sait lequel est l'aboutissement de son travail.
-3. **Le budget de mots par écran**, sans lequel le plancher de 13 px alourdit ce qu'il éclaire.
-4. **Les douze étapes des réglages du jeu** — lesquelles voir ensemble. C'est le seul défaut de
-   l'audit encore ouvert, et aucune tranche du plan ne le porte.
-5. **Cinq surfaces n'ont jamais été examinées** : le premier contact quand aucun jeu n'existe, la
-   planche de pose, ce qui s'affiche quand un appel rate ou que la clé manque, ce que fait une
-   génération pendant qu'elle tourne, et le comportement sur un écran plus petit.
-6. **Le mot « fiche » nomme deux objets, et le chemin vers l'un des deux n'existe pas.** Trouvé par
-   l'auteur le 4 septembre 2026 en relisant **le premier écran de la liste du vocabulaire**. Dans la
-   galerie, on clique un asset et la colonne de droite s'appelle *la fiche*. Dans le codex, on clique
-   un personnage et on n'arrive **pas** sur sa fiche : on arrive sur un écran qui porte son nom et
-   qui sert à fabriquer des poses, avec dans la colonne de gauche **un morceau de fiche** et un lien
-   minuscule vers *sa fiche*, *la vitrine* et *le calibrage*. **Ce n'est pas un mot à renommer, c'est
-   une structure d'écrans à revoir** — et c'est très exactement *« aucun workflow ne se dessine
-   visuellement »*, pris sur le fait.
+Six points restent ouverts. Les cinq premiers se posent avant l'écran qui en dépend ; le sixième
+est une dette de renvois, et il se solde dans `B0`.
 
-### Et un défaut à réparer avant tout le reste
-
-**`--color-signal-sourd` est déclaré dans le document d'avant et n'existe nulle part dans la feuille
-de style**, alors que deux endroits de `Tables.tsx` l'emploient : **deux boutons actifs n'ont donc
-aucun fond**, et c'est le motif que ce document range parmi les meilleurs du produit. Le même jeton
-est annoncé pour l'anneau de focus, qui utilise en réalité l'accent plein. **Toute la thèse
-« repeindre le produit coûte une ligne » repose sur l'idée qu'aucune couleur ne vit hors de la table
-des noms — c'est le seul contre-exemple, et il est dans le sens le plus dangereux : un nom sans
-valeur, qui ne lève aucune erreur.**
+1. **La couleur de *réglé à la main*** — voir *Color*, deux trous.
+2. **Les dix teintes d'îlot sur papier** — voir *Color*, deux trous.
+3. **La serif n'a pas de gras, et n'en aura pas.** Instrument Serif n'existe qu'en romain et
+   italique d'un seul poids ; le produit s'en est déjà trouvé bloqué une fois, et c'est ce qui
+   avait fait choisir Fraunces le 4 septembre. Dans le carnet la serif ne sert qu'aux titres,
+   jamais sous 25 px, donc la contrainte ne mord pas. **Le jour où un titre gras est
+   nécessaire, il n'y en a pas.**
+4. **`docs/design-motifs.md` décrit encore l'ancien système** — 1 852 lignes écrites pour un
+   châssis sombre. Il se reprend motif par motif, pendant `B0`, pas avant.
+5. **Le commentaire en tête de `interface/src/index.css`** porte encore la phrase retirée sur
+   le fond clair. Il se corrige dans `B0`, avec le reste du fichier de style.
+6. **Dix-sept renvois pointent vers des sections de ce document qui n'existent plus** — treize
+   depuis le code, quatre entre documents —, et `py essais/essai_docs.py` les nomme un par un.
+   Ils visent *les teintes d'îlot*, *sur la toile*, *un panneau est borné par l'écran*, *les
+   interrupteurs* : des sections de systèmes antérieurs. **Seize étaient déjà cassés avant le
+   6 septembre 2026** et un l'a été par la réécriture du matin ; aucun ne l'a été en fermant
+   `D0`. ⚠️ **Un renvoi cassé ne lève aucune erreur — il ment en silence**, et celui de
+   `interface/src/index.css:31` renvoie à la palette d'îlots, qui est justement l'un des deux
+   trous ouverts. Ils se réparent dans `B0`, en même temps que la feuille de style qui les
+   porte.
 
 ---
 
-## Trois garde-fous mécaniques, pour que ça ne recommence pas
+## Un défaut d'avant, fermé par construction
 
-Le désordre d'aujourd'hui n'est pas venu d'un mauvais choix : il est venu de **l'absence de
-barrière**. 259 boutons écrits à la main, 20 tailles de texte, 108 apparences. Remettre tout droit à
-un instant donné ne sert à rien si la dérive peut reprendre au premier écran écrit vite.
+`--color-signal-sourd` était déclaré dans le document de design et **défini nulle part dans la
+feuille de style**, alors que deux boutons actifs de l'écran des tables l'employaient : ils
+n'avaient aucun fond, et rien ne levait d'erreur. La table de jetons ci-dessus est écrite de
+zéro et ne le contient pas.
 
-1. **Une taille de texte hors des cinq autorisées** → refusée.
-2. **Une couleur écrite en dur au lieu de passer par son nom** → refusée.
-3. **Un bouton écrit à la main au lieu du composant partagé** → refusé.
+Le garde-fou qui empêche que ça recommence est écrit dans `docs/design-decisions.md` du
+4 septembre 2026, et il tient toujours : **une vérification refuse le code qui écrit une
+couleur en dur au lieu de passer par son nom, une taille hors de la liste, ou un bouton écrit
+à la main au lieu du composant partagé.** Elle se pose dans `B0`.
 
-Et une quatrième, plus ambitieuse et faisable : **le contraste minimal de toute marque au repos**.
+⚠️ **Et `D0` lui a ajouté une moitié qui manquait.** Le garde-fou ci-dessus ne regarde que dans
+un sens : *ce que le code écrit est-il déclaré ?* Il ne demande jamais *ce qui est déclaré
+est-il défini, et ce qui est employé est-il déclaré ?* — et c'est par là que le carnet a fui :
+huit couleurs de châssis employées dans 21 à 40 planches n'étaient nulle part dans ce document,
+parce qu'un signal y était écrit comme une couleur alors que le dessin en fait un trio.
 
-C'est une demi-journée de travail, et cela protège des années.
+**Le contrôle de `B0` se fait donc dans les deux sens**, et il est peu coûteux : d'un côté
+refuser une valeur du code absente de la liste, de l'autre lister les valeurs de la liste que
+rien n'emploie. La seconde moitié ne refuse rien — elle rend un compte. Un jeton que personne
+n'emploie est soit une pièce pas encore dessinée, soit un jeton mort, et seul un humain sait
+lequel.
 
 ---
 
 ## Motifs → `docs/design-motifs.md`
 
-Les motifs transversaux — la tuile, l'emplacement, le grisé qui porte sa raison, la fente, le menu qui
-sort du flux, les écrans un par un — vivent dans **`docs/design-motifs.md`**, qui a la même autorité
-que ce fichier.
-
-**Un motif ne redéfinit jamais un token** : il applique ce qui est décidé ci-dessus. En cas de
-contradiction, les sections ci-dessus l'emportent.
-
-> ⚠ **`docs/design-motifs.md` décrit le système d'avant — 4 septembre 2026.** Il portait déjà un
-> retard sur la V2.1 ; il en porte un second sur cette refonte. Ses motifs restent utiles comme
-> inventaire de ce que le produit fait, **et aucune de ses valeurs de couleur, de taille ou de hauteur
-> ne fait plus foi**. Il se réécrit au fil des passes d'écran, pas avant.
-
----
-
-## Decisions Log → `docs/design-decisions.md`
-
-Le journal complet vit dans **`docs/design-decisions.md`**. Il ne tranche rien : il explique. On
-l'ouvre pour rouvrir une décision, pas pour connaître le système.
-
-**Toute décision nouvelle s'écrit là-bas**, en bas du tableau, y compris quand elle vient de
-`/design-systeme`. Ne pas la réinstaller ici : c'est ce qui avait porté ce fichier à 140 Ko.
+## Journal des décisions → `docs/design-decisions.md`

@@ -159,7 +159,7 @@ function EtatDesFournisseurs({
       type="button"
       onClick={onReglages}
       title={manquants.map((t) => t.manque).filter(Boolean).join(" · ")}
-      className="mesure shrink-0 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-signal"
+      className="mesure shrink-0 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-ancien-signal"
     >
       {texte}
     </button>
@@ -265,14 +265,14 @@ function FenteEcran({ fente }: { fente: Fente }) {
     <span
       className={[
         "mesure flex items-center gap-1.5 text-[10px]",
-        fente.ton === "echec" ? "text-echec" : "text-ok",
+        fente.ton === "echec" ? "text-ancien-echec" : "text-ancien-ok",
       ].join(" ")}
     >
       <span
         aria-hidden
         className={[
           "inline-block h-px w-2",
-          fente.ton === "echec" ? "bg-echec" : "bg-ok",
+          fente.ton === "echec" ? "bg-ancien-echec" : "bg-ancien-ok",
         ].join(" ")}
       />
       {fente.texte}
@@ -372,9 +372,12 @@ export function BarreChassis({
           recette qui agit : le produit n'a qu'un vocabulaire de l'état.
 
           **Un onglet éteint est en `--texte-2`, jamais en `--texte-3`** —
-          corrigé le 31 août 2026. `--texte-3` est sous le seuil de lisibilité
-          délibérément, et `docs/DESIGN.md` § Le texte dit à quelle condition :
-          il ne porte que du redondant. Un onglet de navigation n'est ni un
+          corrigé le 31 août 2026. `--texte-3` était alors sous le seuil de
+          lisibilité *délibérément*, et à cette condition-là :
+          il ne portait que du redondant — le grisé, la méta, la raison, tous
+          doublés par une autre marque
+          (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Typography).
+          Un onglet de navigation n'est ni un
           grisé, ni une méta, ni une raison — c'est **l'adresse d'un lieu**, et
           rien d'autre à l'écran ne dit que ce lieu existe. Le mettre là le
           rendait lisible seulement au survol, c'est-à-dire une fois qu'on
@@ -416,7 +419,7 @@ export function BarreChassis({
             {cle === "galerie" && enVol > 0 && (
               <span
                 aria-hidden
-                className="mesure rounded-[2px] bg-signal px-1 py-px text-[9.5px] leading-[13px] text-fond-0"
+                className="mesure rounded-[2px] bg-ancien-signal px-1 py-px text-[9.5px] leading-[13px] text-fond-0"
               >
                 {enVol}
               </span>

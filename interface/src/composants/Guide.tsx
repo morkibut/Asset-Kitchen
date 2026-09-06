@@ -336,11 +336,11 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               de l'argent et ne rend jamais la même image.
             </P>
             <P>
-              Une recette a <B>sept places</B>, appliquées dans un ordre fixe — détourage,
-              recadrage, grille, quantification, bords, contours, la main. Ce n'est pas une
-              simplification : trois d'entre elles n'ont aucun sens avant celle qui les
-              précède. Rien ne peut se recadrer avant d'avoir un fond enlevé sur lequel
-              trouver le sujet.
+              Une recette a <B>huit places</B>, appliquées dans un ordre fixe — détourage,
+              recadrage, grille, quantification, bords, contours, retournement, la main. Ce
+              n'est pas une simplification : trois d'entre elles n'ont aucun sens avant celle
+              qui les précède. Rien ne peut se recadrer avant d'avoir un fond enlevé sur
+              lequel trouver le sujet.
             </P>
             <P>
               Une sélection sort en archive avec son descriptif. C'est le seul moment où

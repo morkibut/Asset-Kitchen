@@ -52,7 +52,7 @@ class Option:
 def nommer(fournisseur: str, chez_lui: str) -> str:
     """Le nom complet d'un modèle : **qui le propose, et son nom chez lui**.
 
-    Instauré en F1 (`docs/PLAN.md` § V2.2) : *un modèle se nomme par son
+    Instauré en F1 (`docs/archive/plan-versions-tenues.md` § V2.2) : *un modèle se nomme par son
     fournisseur **et** par son nom ; les deux ensemble, jamais l'un seul*. Deux
     fournisseurs peuvent proposer un modèle du même nom — Cloudflare héberge les
     modèles de Leonardo, Pollinations annonce des `flux` qui n'en sont pas — et

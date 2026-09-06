@@ -1212,7 +1212,8 @@ Elles n'en font qu'une : **la toile s'était construite en héritant des motifs 
 grille n'est pas faite pour ça.** Ce qui suit remplace ce que les sous-sections précédentes disent
 du bandeau, des prises et du classement ; le reste tient.
 
-**La règle mère, et elle est dans `docs/DESIGN.md` § Sur la toile, deux échelles : ce qui se lit
+**La règle mère, et elle est dans `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`
+§ Six règles de comportement, la sixième : ce qui se lit
 est en pixels d'écran, ce qui se mesure est en pixels de plan.** L'image, la carte, la note, la
 boîte de l'îlot sont du plan — ce sont des places. Le nom d'un îlot, son compte, le mot d'un trait
 et les trois prises sont de l'écran — ce sont des lectures et des cibles. Un nom d'îlot illisible
@@ -1240,8 +1241,9 @@ nom à 90 %** : un seul nombre pour les deux cas, jamais sous 4,7 : 1.
 
 **Le fond d'îlot double, de 8 à 16 %.** Le 8 % était écrit « sous le seuil où l'œil la trouve
 seule, assez pour délimiter » — vrai, et c'était le problème : on posait une teinte et on ne
-voyait pas laquelle. La saturation, elle, ne bouge pas au-delà de 30 % (`docs/DESIGN.md`
-§ Les teintes d'îlot) : **la visibilité se gagne à l'opacité, jamais à la saturation**, parce que
+voyait pas laquelle. La saturation, elle, ne bouge pas au-delà de 30 %
+(`docs/archive/DESIGN-chassis-chaud-2026-09-04.md`
+§ Les dix teintes de rangement) : **la visibilité se gagne à l'opacité, jamais à la saturation**, parce que
 c'est la saturation seule qui sépare un rangement d'un état.
 
 **Trois prises, trois formes — et la forme remplace le curseur.** T8 avait tranché « aucun pixel de
