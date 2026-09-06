@@ -172,7 +172,7 @@ d'agents avant le gros morceau.
 |---|---|---|
 | **1** | `B1` ✔, `B2` ✔, `B3` ✔ | aucune dépendance, du gain immédiat, et trois pertes silencieuses réparées |
 | **2** | `D0` ✔, `B0` ✔ | le système de design réécrit, puis le socle du carnet — tout le reste s'y branche |
-| **3** | `B4` ✔, `B5`, `B6` ✔, `B7` | l'ouverture, le tableau de bord, la barre, le guide |
+| **3** | `B4` ✔, `B5` ✔, `B6` ✔, `B7` | l'ouverture, le tableau de bord, la barre, le guide |
 | **4** | `B8`, `B9`, `B10`, `B11` | la collection, la grille d'une famille, la page d'un sujet, le départage |
 | **5** | `B14`, `B15` | les règles du jeu, l'installation |
 | **6** | `B16`, `B17`, `B18` | les tables rangées, puis les moteurs |
@@ -262,29 +262,19 @@ se trie par dernier travaillé — une date neuve, `Projet.dernier_travail_le`, 
 
 ---
 
-## B5 · Le tableau de bord du jeu
+## B5 · Le tableau de bord du jeu — **tenue le 6 septembre 2026**
 
 **Planche** : `Accueil.dc.html`
 
-### Ce qu'on livre
-
-La page d'un jeu ouvert : six cartes, une par famille, avec ce qui est complet et ce qui ne
-l'est pas ; ce qui manque le plus, avec son prix ; ce qui vient d'être fait. Et le nom du jeu
-devient le seul chemin de retour, au même endroit sur tous les écrans.
-
-### Critères d'acceptation
-
-- [ ] Une barre de complétude par famille, et le manque dit en clair sous chaque barre.
-- [ ] « Ce qui manque le plus » liste les manques toutes familles confondues, chacun avec son
-      coût, et le total du lot est annoncé avant de cliquer.
-- [ ] Une jauge ne compte que ce qu'on peut fabriquer maintenant — l'invariant d'`E12` tient.
-- [ ] Le manque n'a aucune couleur d'alerte et ne réclame rien.
-- [ ] Un bandeau apparaît quand une feuille reçue attend d'être découpée, et disparaît sinon.
-- [ ] Cliquer le nom du jeu ramène ici depuis n'importe quel écran.
+La page d'un jeu ouvert : une carte par famille avec ce qui est complet et ce qui ne l'est pas,
+« ce qui manque le plus » toutes familles confondues avec son coût, et le bandeau d'une feuille
+reçue qui attend d'être découpée. Compté côté serveur (`GET /api/dashboard`,
+`ServiceProduction.bilan_du_jeu`), jamais recalculé à l'écran. Détail et verdicts des six
+critères dans `docs/tranches/V4.md` § B5.
 
 ### Bloquée par
 
-- `B0`, `B4`
+- `B0`, `B4` — tenue le 6 septembre 2026.
 
 ---
 

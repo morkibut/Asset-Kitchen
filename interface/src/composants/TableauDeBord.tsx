@@ -118,10 +118,10 @@ export function TableauDeBord({
               <button
                 type="button"
                 onClick={() => surLaFamille(famille.cle)}
-                className="flex w-full flex-col gap-[9px] rounded-8 border border-trait bg-carte p-[16px] text-left transition-colors duration-120 hover:border-contour"
+                className="flex w-full flex-col gap-[9px] rounded-8 border border-trait bg-carte p-[14px] text-left transition-colors duration-120 hover:border-contour"
               >
                 <span className="flex items-baseline justify-between gap-[10px]">
-                  <span className="text-[14.5px] font-medium text-encre">
+                  <span className="text-[14px] font-medium text-encre">
                     {famille.nom}
                   </span>
                   <span className="mesure text-[15px] text-encre">
@@ -131,7 +131,7 @@ export function TableauDeBord({
                 {/* La barre ne paraît que si le serveur a un compte à en
                     tirer — une famille sans sujet n'a rien à mesurer. */}
                 {detail && detail.complet != null && (
-                  <span className="block h-[5px] overflow-hidden rounded-5 bg-fond-2">
+                  <span className="block h-[4px] overflow-hidden rounded-5 bg-fond-2">
                     <span
                       className="block h-full rounded-5 bg-ok"
                       style={{ width: `${Math.round(detail.complet * 100)}%` }}
@@ -153,7 +153,7 @@ export function TableauDeBord({
       <div className="mt-[26px] grid grid-cols-2 gap-[22px]">
         {/* ── Ce qui manque le plus ─────────────────────────────────────── */}
         <div>
-          <h2 className="mesure mb-[9px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+          <h2 className="mesure mb-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
             Ce qui manque le plus
           </h2>
           {bilan && bilan.manques.length === 0 ? (
@@ -161,11 +161,11 @@ export function TableauDeBord({
               rien ne manque, à ce qu'on a compté
             </p>
           ) : (
-            <div className="rounded-8 border border-trait bg-carte p-[5px]">
+            <div className="rounded-8 border border-trait bg-carte p-[4px]">
               {(bilan?.manques ?? []).map((manque, rang) => (
                 <div
                   key={`${manque.sujet}-${manque.famille}-${rang}`}
-                  className="grid grid-cols-[64px_minmax(0,1fr)_92px_50px] items-center gap-[10px] rounded-5 px-[10px] py-[7px] text-[12.5px] text-encre-2"
+                  className="grid grid-cols-[64px_minmax(0,1fr)_92px_50px] items-center gap-[10px] rounded-5 p-[8px] text-[12.5px] text-encre-2"
                 >
                   <span className="mesure text-encre-3">
                     {manque.quantite} pose{manque.quantite > 1 ? "s" : ""}
@@ -184,7 +184,7 @@ export function TableauDeBord({
             </div>
           )}
           {bilan && bilan.lot.images > 0 && (
-            <p className="mt-[9px] text-[12px] leading-[1.45] text-encre-4">
+            <p className="mt-[8px] text-[12px] leading-[1.45] text-encre-4">
               Tout demander d'un coup : {bilan.lot.images} image
               {bilan.lot.images > 1 ? "s" : ""} en {bilan.lot.feuilles} feuille
               {bilan.lot.feuilles > 1 ? "s" : ""} pliée
@@ -202,7 +202,7 @@ export function TableauDeBord({
           {feuilleEnAttente && (
             <div
               data-feuille-en-attente
-              className="flex flex-col gap-[8px] rounded-8 border border-trait bg-carte p-[13px]"
+              className="flex flex-col gap-[8px] rounded-8 border border-trait bg-carte p-[14px]"
             >
               <p className="text-[13px] font-medium text-encre">
                 Une feuille attend d'être découpée
@@ -214,7 +214,7 @@ export function TableauDeBord({
               <button
                 type="button"
                 onClick={surAllerDecouper}
-                className="h-[32px] self-start rounded-7 border border-trait bg-fond-1 px-[13px] text-[12.5px] text-encre transition-colors duration-120 hover:border-contour"
+                className="h-[34px] self-start rounded-7 border border-trait bg-fond-1 px-[14px] text-[12.5px] text-encre transition-colors duration-120 hover:border-contour"
               >
                 Aller la découper
               </button>
