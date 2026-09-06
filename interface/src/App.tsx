@@ -894,6 +894,12 @@ export function App() {
     const surTouche = (e: KeyboardEvent) => {
       if (e.key !== "k" && e.key !== "K") return
       if (!e.ctrlKey && !e.metaKey) return
+      const cible = e.target as HTMLElement | null
+      const saisie =
+        cible?.tagName === "INPUT" ||
+        cible?.tagName === "TEXTAREA" ||
+        cible?.isContentEditable
+      if (saisie) return
       e.preventDefault()
       ouvrirBarre()
     }
