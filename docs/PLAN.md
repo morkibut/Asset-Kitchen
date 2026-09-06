@@ -43,11 +43,11 @@ construisant** dans `docs/status/etat.md`, ses **critères cochés** dans
 | **V3.02** | Le clip a une fiche, comme une image | **close le 5 septembre 2026** | idem |
 | **V2.5**, **V3.01**, **V3.03**, **V3.1** | Quatre blocs ouverts quand la V4 est entrée. Ce qui y a été livré tient : le relevé `N1`, le tiroir qui relit ce qui part, les trois quarts de l'atelier d'une animation aux tables, `G1` et `G16` | **périmés par le carnet** — les écrans qu'ils réparaient sont redessinés, donc le reste ne se reprend pas tel quel. ⚠️ Les quatorze tranches `G` de la V3.1 nomment des défauts réels, et **se relisent avant de clore la V4** | `archive/plan-perime-par-la-v4.md` |
 | **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **non ouverte** | ci-dessous |
-| **V4** — le carnet, `D0` et `B0` à `B22` | **La refonte de l'interface**, relevée sur les planches de `docs/pistes-2026-09-04/carnet/` : les trois onglets tombent, un carnet de 300 px les remplace, la surface n'a plus que quatre présentations. Ce n'est pas un habillage — quatre chantiers touchent le modèle, et 58 items de retouche manquent, dont une dizaine remplacent une génération payée | **ouverte le 6 septembre 2026, 8 closes sur 24** — `B1` le miroir, `B2` les clips payés qui attendent, `B3` les huit états, `D0` le système de design réécrit, `B0` le socle du carnet, `B4` l'ouverture, `B5` le tableau de bord, `B6` la barre | **`docs/PLAN-carnet.md`** |
+| **V4** — le carnet, `D0` et `B0` à `B22` | **La refonte de l'interface**, relevée sur les planches de `docs/pistes-2026-09-04/carnet/` : les trois onglets tombent, un carnet de 300 px les remplace, la surface n'a plus que quatre présentations. Ce n'est pas un habillage — quatre chantiers touchent le modèle, et 58 items de retouche manquent, dont une dizaine remplacent une génération payée | **ouverte le 6 septembre 2026, 9 closes sur 24** — `B1` le miroir, `B2` les clips payés qui attendent, `B3` les huit états, `D0` le système de design réécrit, `B0` le socle du carnet, `B4` l'ouverture, `B5` le tableau de bord, `B6` la barre, `B7` le guide en volet | **`docs/PLAN-carnet.md`** |
 | **V5**, **V6** | Les tuiles qui se raccordent, le son | **non découpées** — décalées d'un cran le 6 septembre 2026 par l'entrée de la V4 | `docs/archi-versions.md` §9 et §10 |
 
 **226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 574 essais de
-serveur et 809 d'écran** tiennent le dépôt — comptés le 6 septembre 2026, et **aucun ne coûte
+serveur et 819 d'écran** tiennent le dépôt — comptés le 6 septembre 2026, et **aucun ne coûte
 un centime**.
 
 ---

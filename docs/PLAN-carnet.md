@@ -300,42 +300,22 @@ autorise qu'un.
 
 ---
 
-## B7 · Le guide en volet, et les touches
+## B7 · Le guide en volet, et les touches — **tenue le 6 septembre 2026**
 
 **Planches** : `Guide.dc.html`, `Ouverture.dc.html`
 
-### Ce qu'on livre
-
-Le guide cesse de recouvrir l'écran et devient un volet, ouvert à côté de ce qu'il documente.
-Il montre ce qui concerne l'écran ouvert, pas un sommaire. Et l'atelier dit enfin ses touches.
-
-**Le travail réel est un remappage** : `interface/src/aide.ts` porte 157 entrées classées par
-*lieu*, et ces lieux portent les noms d'écrans de la V1 disparus — `etabli`, `codex`,
-`fabriques`. Neuf lieux à réadresser vers les lignes du carnet.
-
-**Deux lieux n'ont pas d'écran d'accueil** dans les maquettes : `fabriques` (19 entrées, le
-calage d'un équipement) et `ambiances` (4 entrées). Ils atterrissent respectivement en `B19` et
-sur la toile.
-
-**Vérifié** : la touche `?` fonctionne déjà et ouvre le guide de n'importe où. Elle n'est
-écrite nulle part — ni sur un bouton, ni dans une bulle, ni dans le guide. Personne ne peut la
-trouver.
-
-### Critères d'acceptation
-
-- [ ] Les 157 entrées sont adressées à une ligne du carnet qui existe — un essai refuse un
-      lieu inconnu.
-- [ ] `SANS_ENTREE` reste juste : ce qui n'a pas d'explication y est, et rien d'autre.
-- [ ] Une explication ne se recopie jamais : le volet, la bulle et la ligne sous un titre
-      lisent le même texte.
-- [ ] Le panneau des touches montre les touches de l'écran ouvert ; quand l'écran n'en a
-      aucune, le bloc n'existe pas.
-- [ ] Une touche annoncée répond ; une touche qui ne répond pas encore n'est pas annoncée.
-- [ ] Le volet ne porte jamais une raison de refus — elle reste sous le bouton grisé.
+Le guide ne recouvre plus l'écran : `VoletGuide` (`interface/src/composants/Guide.tsx`) est un
+volet de 380 px posé à droite, qui ne montre que ce qui concerne l'écran ouvert. Les 157
+entrées d'`aide.ts` sont réadressées — pas vers neuf écrans de la V1, mais, autant que
+possible, vers les genres mêmes de `Lieu` (`interface/src/lieux.ts`) : neuf des quatorze
+valeurs de `Explication["ou"]` sont des littéraux de `Lieu` réemployés tels quels. Le panneau
+des touches est neuf : cinq raccourcis réels y entrent, chacun vérifié dans le code qui le lit
+avant d'être annoncé. Détail, verdicts des six critères et ce qui reste ouvert dans
+`docs/tranches/V4.md` § B7.
 
 ### Bloquée par
 
-- `B0`
+- `B0` — tenue le 6 septembre 2026.
 
 ---
 

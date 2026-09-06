@@ -62,6 +62,7 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/TableauDeBord.tsx",
     "interface/src/composants/Ouverture.tsx",
     "interface/src/composants/Barre.tsx",
+    "interface/src/composants/Guide.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────

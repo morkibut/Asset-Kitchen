@@ -1,29 +1,40 @@
-// L'écran Guide — la seule prose du produit.
-//
-// `docs/design-motifs.md` § L'écran Guide, et la seule prose du produit. C'est un
-// écran, pas un panneau : on l'ouvre quand on ne sait pas, on le ferme quand on
-// sait. Il couvre l'Atelier comme Univers et Découpe.
-//
-// **Il ne porte pas de fente de refus, et c'est la preuve qu'on a compris la
-// règle.** Les deux autres écrans en portent une parce qu'ils couvrent la barre
-// d'état et qu'un refus provoqué chez eux serait rendu derrière eux. Le Guide
-// ne demande rien au serveur, ne dépense rien, ne peut pas échouer. On ne pose
-// pas une fente vide pour la symétrie.
-//
-// **Sa troisième partie est le corpus des infobulles**, rendu à la file. Un
-// seul texte, deux rendus : une explication recopiée dans deux fichiers diverge
-// en trois semaines, et c'est celle qui est sous les yeux au moment du doute
-// qui sera la fausse.
+/**
+ * Le guide — un volet depuis `B7`, plus un écran.
+ *
+ * `docs/pistes-2026-09-04/carnet/Guide.dc.html`. Avant cette tranche, ouvrir
+ * le guide recouvrait tout l'atelier et montrait les 157 entrées du corpus à
+ * la file, groupées par les neuf écrans de la V1 — dont six avaient disparu
+ * depuis longtemps. **Il montre maintenant ce qui concerne l'écran ouvert,
+ * et rien d'autre** : un volet de 380 px, posé à droite, qui ne cache jamais
+ * ce qu'il documente.
+ *
+ * **Il n'a aucune liste à lui.** Ce qu'il affiche vient de `entree.ou` — le
+ * même champ que `chassis.tsx` et chaque bulle lisent déjà pour `nom`/`quoi` —
+ * et de l'écran que `App.tsx` calcule depuis la pile de lieux. Ajouter une
+ * entrée au corpus avec le bon `ou` la fait paraître ici sans toucher ce
+ * fichier.
+ *
+ * **Il ne porte pas de fente de refus**, pour la même raison qu'avant : il ne
+ * demande rien au serveur, ne dépense rien, ne peut pas échouer.
+ *
+ * **Ce qui ne fait pas le voyage depuis l'écran d'avant** : les six pas de
+ * « Le geste » et les quatre visites d'écran (« L'univers », « Le codex »,
+ * « La galerie », « L'établi ») — une prose longue, écrite pour une colonne de
+ * 540 px et pour des noms d'écrans que le carnet a en partie remplacés.
+ * Aucun des six critères de `B7` ne la réclame, et la retailler de force dans
+ * 380 px lui aurait fait dire autre chose. Elle reste lisible dans l'historique
+ * Git (`git show HEAD~1:interface/src/composants/Guide.tsx`) si elle doit un
+ * jour redevenir un vrai parcours d'accueil.
+ */
 
 import { useEffect, useRef, useSyncExternalStore } from "react"
 import { AIDE, SANS_ENTREE, type Explication } from "../aide"
 
 // ── Ouvrir le guide depuis n'importe où ─────────────────────────────────────
 //
-// Le même patron que le repli global du châssis : un magasin de module, parce
-// que le lien « Le guide › » d'une infobulle vit dans un panneau qui ne connaît
-// pas `App`, et qu'on ne fait pas descendre un rappel à travers quatre étages
-// pour un écran qui s'ouvre.
+// Le patron de la barre, et pour la même raison : il s'appelle au clavier
+// depuis n'importe quel écran, et on ne fait pas descendre un rappel à
+// travers quatre étages pour un volet qui se pose par-dessus tout.
 
 let ouvert = false
 let ancre: string | null = null
@@ -33,6 +44,9 @@ function prevenir() {
   abonnes.forEach((f) => f())
 }
 
+/** `cle`, s'il est donné, force l'écran du volet à celui de cette entrée-là —
+ *  c'est le lien « Le guide › » d'une bulle, et il doit toujours retomber
+ *  juste, même si on le clique depuis un écran que l'entrée ne concerne pas. */
 export function ouvrirGuide(cle?: string) {
   ouvert = true
   ancre = cle ?? null
@@ -59,75 +73,74 @@ export function useGuide() {
   )
 }
 
-/** Remettre le guide à zéro — les essais d'écran, comme pour le repli. */
+/** Remettre le guide à zéro — les essais d'écran, comme pour la barre. */
 export function reinitialiserGuide() {
   ouvert = false
   ancre = null
   prevenir()
 }
 
-// ── Le sommaire ─────────────────────────────────────────────────────────────
+// ── L'écran, en toutes lettres ───────────────────────────────────────────────
 
-// **Un lieu, pas un thème.** Quand on cherche une explication, on se souvient
-// d'où l'on était, pas de quelle catégorie la chose relève. On range donc par
-// endroit du produit, dans l'ordre où on les rencontre : ce qu'on pose une fois,
-// ce qu'on nomme, ce qu'on fabrique, ce qu'on juge, ce qu'on retouche, et ce
-// qu'on règle une fois pour toutes.
-const OU: Record<Explication["ou"], string> = {
+/** Comment un écran se nomme dans l'en-tête du volet. Fermée : ajouter un
+ *  membre à `Explication["ou"]` sans l'ajouter ici est une erreur de type,
+ *  pas un oubli silencieux. */
+const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
+  "tableau-de-bord": "Le tableau de bord",
+  codex: "Le codex",
+  sujet: "La fiche d'un sujet",
+  galerie: "La galerie",
+  case: "La fiche d'une image",
+  clip: "Un clip",
+  bande: "Une animation",
+  montage: "Le montage d'un clip",
+  tables: "Les tables",
+  depenses: "Les dépenses",
   inspiration: "Inspiration",
   jeu: "Réglages du jeu",
   ambiances: "Ambiances et couleurs",
-  codex: "Le codex",
-  etabli: "L'établi",
-  galerie: "La galerie",
-  tables: "Les tables",
-  fabriques: "Les fabriques",
-  reglages: "Les réglages de l'atelier",
+  reglages: "L'installation",
+  equipement: "Les équipements",
 }
 
-/** Les trois côtés de l'univers, puis les six lieux d'ailleurs. L'ordre est
- *  écrit une seule fois : le sommaire et le corps le lisent tous les deux.
- *
- *  **Le mot « Dans » n'est pas dans les noms.** Les groupes s'appelaient *Dans
- *  l'univers*, *Dans l'atelier* : répété neuf fois dans une colonne de 240 px,
- *  ça mange la place pour rien. Il est écrit une fois, en tête de chaque moitié.
- *
- *  **Les réglages de l'atelier en dernier, et c'est encore l'ordre des lieux.**
- *  On les pose une fois et on n'y revient qu'en cas de doute : les mettre en
- *  tête ferait commencer un guide de fabrication par une page d'administration. */
-const DANS_LUNIVERS = ["inspiration", "jeu", "ambiances"] as const
-const AILLEURS = [
-  "codex",
-  "etabli",
-  "galerie",
-  "tables",
-  "fabriques",
-  "reglages",
-] as const
-const OUS = [...DANS_LUNIVERS, ...AILLEURS] as const
-
-// **Cinq temps, et « nommer » est le premier.** Sur une machine neuve, c'est le
-// seul geste possible : il n'y a pas d'établi tant qu'il n'y a pas de chose. La
-// boucle est l'ouverture de la partie, pas un temps de plus.
+// ── Le panneau des touches ────────────────────────────────────────────────
 //
-// **Quatre lieux, et le guide dit lequel n'est pas un onglet.** On ne visite pas
-// des pièces que personne ne peut ouvrir : la Découpe n'est plus un lieu — c'est
-// une table parmi les autres —, et l'écran qui s'appelait l'Atelier n'existe
-// plus. Ce qu'il faisait se fait sur l'établi d'une chose du jeu.
-const PARTIES = [
-  {
-    id: "geste",
-    titre: "Le geste",
-    entrees: ["La boucle", "Nommer", "Écrire", "Générer", "Juger", "Garder"],
-  },
-  {
-    id: "lieux",
-    titre: "Les lieux",
-    entrees: ["L'univers", "Le codex", "La galerie", "L'établi"],
-  },
-] as const
+// **Rien n'y entre sans avoir été vérifié dans le code qui la lit** — c'est
+// le critère qui commande la tranche. Une touche qui ne répond plus un jour
+// doit sortir d'ici le même jour.
+//
+// **Les tables n'y sont pas.** `Ctrl Z` défait un trait de pinceau, mais
+// seulement sur la place « la main » — une des huit — et cette place vit
+// dans un état propre à `Tables.tsx`, jamais remonté jusqu'ici. L'annoncer
+// pour tout l'écran des tables la rendrait fausse sur les sept autres.
+const CTRL_Z = /Mac|iPhone|iPad/.test(navigator.userAgent) ? "⌘Z" : "Ctrl Z"
 
-export function EcranGuide({ onFermer }: { onFermer: () => void }) {
+const TOUCHES: Partial<Record<Explication["ou"], readonly { touche: string; quoi: string }[]>> = {
+  inspiration: [
+    { touche: "suppr", quoi: "retire le rectangle de découpe choisi" },
+    { touche: CTRL_Z, quoi: "défait le dernier geste de composition sur la toile" },
+  ],
+  montage: [
+    { touche: "← →", quoi: "déplace le curseur sur le ruban du clip" },
+    { touche: "espace", quoi: "prend ou laisse l'image visée" },
+  ],
+  bande: [
+    { touche: "↑ ↓ ← →", quoi: "déplace la case choisie d'un pixel" },
+    { touche: "maj + flèche", quoi: "déplace de cinq pixels" },
+  ],
+}
+
+// ── Le volet ─────────────────────────────────────────────────────────────
+
+export function VoletGuide({
+  onFermer,
+  ecran,
+}: {
+  onFermer: () => void
+  /** L'écran ouvert, calculé par `App.tsx` depuis la pile de lieux — ou
+   *  `null` sur un parcours qui n'en a pas encore (l'ouverture, par exemple). */
+  ecran: Explication["ou"] | null
+}) {
   const corps = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -138,597 +151,104 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
     return () => window.removeEventListener("keydown", surTouche)
   }, [onFermer])
 
-  // Le lien d'une infobulle ouvre l'écran **à l'ancre du réglage**.
+  // Un lien de bulle force l'écran de sa propre entrée : ouvrir « Le guide › »
+  // depuis un réglage retombe toujours sur ce réglage, jamais sur un groupe
+  // vide parce que l'écran calculé aurait divergé d'un rendu à l'autre.
+  const cible = ancre && AIDE[ancre] ? AIDE[ancre] : null
+  const scope = cible?.ou ?? ecran
+
   useEffect(() => {
     if (!ancre) return
-    const cible = corps.current?.querySelector(`#reglage-${ancre.replace(/\W/g, "-")}`)
-    cible?.scrollIntoView({ block: "start" })
+    const noeud = corps.current?.querySelector(`#reglage-${ancre.replace(/\W/g, "-")}`)
+    noeud?.scrollIntoView({ block: "start" })
   }, [])
 
-  const aller = (id: string) => {
-    corps.current?.querySelector(`#${id}`)?.scrollIntoView({ block: "start" })
-  }
-
-  const parOu = (ou: Explication["ou"]) =>
-    Object.entries(AIDE).filter(([, e]) => e.ou === ou)
+  const entrees = scope ? Object.entries(AIDE).filter(([, e]) => e.ou === scope) : []
+  const touches = scope ? TOUCHES[scope] : undefined
+  const rien = entrees.length === 0 && !touches
 
   return (
-    <div className="fixed inset-0 z-10 flex flex-col bg-fond-0">
-      {/* La barre de tête du produit, sans fente de refus : rien ici ne peut
-          échouer. Le titre est en serif — c'est un *titre d'écran*, le deuxième
-          des trois emplois, et le Guide n'en ouvre pas un quatrième. */}
-      <header className="flex h-[44px] shrink-0 items-center gap-4 border-b border-bord bg-fond-1 px-4">
-        <h1 className="font-serif text-[17px] leading-none text-texte">Guide</h1>
-        <span className="mesure text-[10px] text-texte-3">
-          comment marche l'atelier, et ce que fait chaque réglage
-        </span>
+    <div
+      data-volet-du-guide
+      aria-label="Le guide"
+      className="fixed inset-y-0 right-0 z-10 flex w-[380px] shrink-0 flex-col border-l border-trait bg-carte"
+    >
+      <header className="flex h-[54px] shrink-0 items-center gap-[8px] border-b border-trait px-[14px]">
+        <div className="min-w-0 flex-1">
+          <h1 className="font-serif text-[15px] leading-none text-encre">Guide</h1>
+          {scope && (
+            <p className="mesure mt-[4px] truncate text-[11px] text-encre-4">
+              {NOM_DE_LECRAN[scope]}
+            </p>
+          )}
+        </div>
         <button
           type="button"
           onClick={onFermer}
-          className="mesure ml-auto h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte-2 transition-colors duration-[80ms] hover:bg-fond-3"
+          className="mesure h-[26px] shrink-0 rounded-5 border border-contour px-[8px] text-[10.5px] text-encre-3 transition-colors duration-120 hover:bg-papier"
         >
           fermer · Échap
         </button>
       </header>
 
-      {/* `240px · 1fr` — 240 est la colonne de l'arbre, réemployée : un sommaire,
-          c'est *où ça se range*. Aucune troisième largeur n'est inventée. */}
-      <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)]">
-        <nav
-          aria-label="Le sommaire"
-          className="defile min-h-0 overflow-y-auto border-r border-bord bg-fond-1 p-2"
-        >
-          {PARTIES.map((partie) => (
-            <div key={partie.id}>
-              <Groupe>{partie.titre}</Groupe>
-              {partie.entrees.map((nom) => (
-                <Rangee key={nom} onClick={() => aller(ancrer(nom))}>
-                  {nom}
-                </Rangee>
+      <div ref={corps} className="defile min-h-0 flex-1 overflow-y-auto p-[22px]">
+        {rien && (
+          <p className="text-[12px] leading-[1.5] text-encre-3">
+            Rien à expliquer ici pour l'instant.
+          </p>
+        )}
+
+        {touches && touches.length > 0 && (
+          <div className="mb-[22px] rounded-8 border border-trait bg-papier p-[14px]">
+            <h2 className="mesure mb-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+              Les touches de cet écran
+            </h2>
+            <ul className="flex flex-col gap-[8px]">
+              {touches.map((t) => (
+                <li key={t.touche} className="flex items-baseline gap-[8px] text-[12px] text-encre-2">
+                  <span className="mesure shrink-0 rounded-5 border border-contour px-[4px] py-px text-[10.5px] text-encre-3">
+                    {t.touche}
+                  </span>
+                  <span>{t.quoi}</span>
+                </li>
               ))}
-            </div>
-          ))}
+            </ul>
+          </div>
+        )}
 
-          <Groupe>Les réglages — dans l'univers</Groupe>
-          {DANS_LUNIVERS.map((ou) => (
-            <Rangee key={ou} onClick={() => aller(`ou-${ou}`)} compte={parOu(ou).length}>
-              {OU[ou]}
-            </Rangee>
-          ))}
+        {entrees.map(([cle, entree]) => (
+          <Reglage key={cle} cle={cle} entree={entree} />
+        ))}
 
-          <Groupe>Les réglages — ailleurs</Groupe>
-          {AILLEURS.map((ou) => (
-            <Rangee key={ou} onClick={() => aller(`ou-${ou}`)} compte={parOu(ou).length}>
-              {OU[ou]}
-            </Rangee>
-          ))}
-
-          <div className="my-2 h-px bg-bord" />
-          <Rangee onClick={() => aller("manque")} compte={SANS_ENTREE.length}>
-            Ce qui manque
-          </Rangee>
-        </nav>
-
-        <div ref={corps} className="defile min-h-0 overflow-y-auto px-12 pt-11 pb-16">
-          {/* **La prose est bornée à 36em, et le `em` est celui de la prose.**
-              La seule largeur maximale du produit. L'unité n'est pas `ch` :
-              `72ch` rend 671 px, soit 88 signes, parce que `ch` vaut l'avance du
-              zéro — l'un des signes les plus larges de la police.
-              `text-[15px]` n'est pas décoratif : sans lui, `36em` se résolvait
-              sur les 13 px hérités du corps et rendait **468 px, soit 61 signes
-              par ligne** — mesuré au navigateur le 31 août 2026. La règle en
-              vise 74, et la borne était donc trop étroite d'un cinquième, dans
-              le sens que personne ne regarde : une colonne trop courte ne se
-              remarque pas, elle fatigue. 540 px, 70 signes.
-              Calée à gauche, et la place qui reste à droite reste vide : c'est
-              ce vide qui dit qu'on est sorti de l'atelier. */}
-          <article className="max-w-[36em] text-[15px]">
-            <Titre id="la-boucle">La boucle</Titre>
-            <P>
-              Tu nommes, tu écris, tu génères, tu regardes, tu gardes ce qui est bon.{" "}
-              <B>C'est toute l'application.</B> Le reste — l'univers, les tables, le
-              catalogue — existe pour que cette boucle-là demande le moins de décisions
-              possible.
-            </P>
-
-            <H id="nommer">Nommer</H>
-            <P>
-              Écrire un nom <B>crée la chose</B>. On tape <C>un tonneau cerclé de fer</C>{" "}
-              dans le champ du codex : le tonneau entre dans la liste sur-le-champ, et son
-              établi s'ouvre. Ce n'est pas un champ de prompt — <B>on ne paie rien en
-              nommant</B>.
-            </P>
-            <P>
-              C'est le premier temps parce que sur une machine neuve, c'est le{" "}
-              <I>seul geste possible</I> : il n'y a pas d'établi tant qu'il n'y a pas de
-              chose. Et c'est le geste que l'atelier connaît déjà pour les poses et les
-              pièces d'équipement — nommer, c'est créer, partout.
-            </P>
-
-            <H id="ecrire">Écrire</H>
-            <P>
-              Le champ ne demande que <I>le sujet</I>. Ni le style, ni la palette, ni le
-              format : ils sont déjà posés dans l'univers du jeu, et ils partent tout seuls
-              à chaque génération. Écrire <C>un tonneau</C> suffit. Écrire{" "}
-              <C>un tonneau pixel art 32×32 palette sombre</C> fait le travail une seconde
-              fois, et moins bien que l'univers ne le fait.
-            </P>
-            <P>
-              Le champ est <B>en pied d'écran</B>, et il n'existe qu'à deux endroits :
-              l'établi d'une chose, et le codex. La galerie n'en a pas — on y juge, on n'y
-              paie jamais.
-            </P>
-
-            <H id="generer">Générer</H>
-            <P>
-              N tuiles paraissent aussitôt <B>à leur taille définitive</B>, avec leur jauge et
-              leur compteur. La grille ne se recompose pas entre le départ et l'arrivée : ton
-              œil reste où il était, et un échec atterrit exactement là où le succès serait
-              arrivé — fond rouge sourd, la raison en clair à la place du sprite, et{" "}
-              <I>Relancer</I> à la place de la mesure.
-            </P>
-            <P>
-              Le coût est écrit sur le bouton <B>avant</B> le clic. Et{" "}
-              <B>rien n'est jamais relancé automatiquement</B> — ni une génération
-              interrompue, ni un appel raté, ni une carte qui n'est pas arrivée. Relancer est
-              toujours ton geste, partout, sans exception.
-            </P>
-            <P>
-              Entre le bouton et la dépense, <B>un écran s'intercale</B> : il montre tout ce
-              qui va partir, ligne par ligne — les textes du jeu, ceux de son ambiance, ton
-              sujet, chaque image jointe avec son prix —, chacune avec un interrupteur. Ce
-              qu'on y éteint ou corrige ne vaut que pour cet appel-là. Une case le saute pour
-              la série en cours, jamais pour toujours.
-            </P>
-            <P>
-              Un appel qui rate a coûté de l'argent sans produire d'image. Il n'entre donc pas
-              dans la grille, qui ne montre que ce qu'on peut réutiliser. Où est passé
-              l'argent se lit dans <I>les dépenses</I>, qui portent{" "}
-              <B>tous les appels payés</B> et pas seulement ceux qui ont raté.
-            </P>
-
-            <H id="juger">Juger</H>
-            <P>
-              La grille est une planche contact : c'est là que tu tries à l'œil. Trois marques
-              seulement, et la hiérarchie est volontaire — <B>ce que tu poses est une forme,
-              ce que le système constate est un mot.</B>
-            </P>
-            <Liste
-              items={[
-                ["Le coin plein en cyan", "favori — la seule marque que tu poses toi-même"],
-                ["L'anneau clair", "sélectionné, et rien d'autre ; la fiche est la sélection quand elle vaut un"],
-                ["Une pastille en mono", "un état subi : réglé, agent, parent supprimé"],
-              ]}
-            />
-            <P>
-              La tuile montre le <B>rendu</B>, pas le brut, dès qu'une recette existe : juger
-              sur le brut alors que tu as détouré et remis sur grille ferait juger autre chose
-              que ce qui partira dans ton jeu. Le brut reste à un geste — la bascule de la
-              fiche.
-            </P>
-            <P>
-              Une vignette de 128 px ne suffit pas toujours. <B>Pose le pointeur sur une image
-              et appuie sur la barre d'espace</B> : elle emplit l'écran. Espace encore, Échap,
-              ou un clic, et elle s'en va — tu n'as rien quitté. La <I>molette</I> zoome autour
-              du pointeur, et au-delà de l'ajustement tu déplaces l'image en la tirant ; le
-              pied dit ses dimensions et le facteur, <C>96×96 · 673 %</C>. Ça marche{" "}
-              <B>partout dans l'atelier</B>, sur n'importe quelle vignette, sans exception.
-            </P>
-            <P>
-              Pour juger vraiment, il y a la <I>vitrine</I> : l'image en grand, seule, sur le
-              fond qu'on choisit et à côté de ce à quoi on veut la comparer. Elle ne modifie
-              rien et ne coûte pas un centime — la barre qui paie s'y retire, et son absence
-              le dit avant qu'on ait lu quoi que ce soit.
-            </P>
-            <P>
-              Ce que tu vois en grand est <B>exactement l'image qui était sous le pointeur</B> :
-              le rendu si la tuile montre le rendu, le brut si la bascule de la fiche est sur
-              brut. L'aperçu n'a aucun réglage à lui — il agrandit, il ne décide pas. Et tant
-              que tu es en train d'écrire dans un champ, la barre d'espace reste une espace :
-              il suffit de bouger la souris sur une image pour la lui rendre.
-            </P>
-
-            <H id="garder">Garder</H>
-            <P>
-              Le traitement est <B>non destructif</B> : l'image brute et la recette sont
-              gardées, et le fichier traité n'est qu'un rendu, écrit sur disque comme cache et
-              effaçable sans rien perdre. Recalculer coûte des millisecondes ; regénérer coûte
-              de l'argent et ne rend jamais la même image.
-            </P>
-            <P>
-              Une recette a <B>huit places</B>, appliquées dans un ordre fixe — détourage,
-              recadrage, grille, quantification, bords, contours, retournement, la main. Ce
-              n'est pas une simplification : trois d'entre elles n'ont aucun sens avant celle
-              qui les précède. Rien ne peut se recadrer avant d'avoir un fond enlevé sur
-              lequel trouver le sujet.
-            </P>
-            <P>
-              Une sélection sort en archive avec son descriptif. C'est le seul moment où
-              quelque chose quitte l'atelier.
-            </P>
-
-            <Titre id="l-univers">L'univers</Titre>
-            <P>
-              <I>Un onglet.</I> Ce que tu poses <B>une fois</B> et qui s'applique ensuite tout
-              seul. Il a trois côtés, un seul allumé à la fois, chacun plein écran :{" "}
-              <I>Inspiration</I>, le tableau d'images qu'on rassemble pour réfléchir au jeu
-              avant d'en fabriquer une seule ; <I>Réglages</I>, les questions qui disent ce
-              qu'est ce jeu — les sept textes, la taille de pixel, le barème d'échelles, le
-              modèle par famille ; <I>Ambiances et couleurs</I>, où se fabriquent les palettes
-              et les lots de style réutilisables.
-            </P>
-            <P>
-              C'est un écran et non un panneau, et c'est le rythme qui le dit : au début d'un
-              jeu, puis ponctuellement. Il couvre le travail au lieu de s'y ajouter. Le
-              tableau appartient au jeu — supprimer un jeu emporte son tableau, alors que ses
-              images sont seulement détachées : une inspiration n'a de sens que dans son
-              univers, une image produite en a un partout.
-            </P>
-
-            <H id="le-codex">Le codex</H>
-            <P>
-              <I>Un onglet.</I> L'inventaire de ce que ton monde contient, rangé par famille —
-              personnages, décors, objets, interface, équipement — avec ce que chaque chose a
-              déjà et ce qui lui manque. C'est le <B>seul endroit où l'on nomme</B>, et le
-              second des deux seuls endroits d'où l'argent part.
-            </P>
-            <P>
-              Le manque n'y a aucune couleur d'alerte, et rien n'y réclame jamais rien : une
-              case vide est un fait, pas un reproche. On y compte ce qu'on peut fabriquer
-              maintenant — ce qui est déjà rangé n'est jamais compté comme manquant.
-            </P>
-
-            <H id="la-galerie">La galerie</H>
-            <P>
-              <I>Un onglet.</I> Toutes les images produites, toutes choses confondues. C'est là
-              qu'on juge et qu'on range, et <B>nulle part on n'y paie</B> — elle n'a pas de
-              champ de saisie, et c'est délibéré.
-            </P>
-            <P>
-              Les jeux et les collections sont dans la colonne de gauche, avec le total du jeu
-              ouvert. Ce total est un lien : il ouvre les dépenses, où tous les appels payés
-              se lisent un par un. Il faut pouvoir expliquer une facture.
-            </P>
-            <P>
-              Une animation arrive ici comme une image, avec un bouton de plus :{" "}
-              <I>Découper</I>. Il ouvre <B>le montage</B>, à la place de la grille. Deux boucles
-              y tournent côte à côte et sur le même métronome — à gauche ce que le modèle a
-              rendu, fond compris, pour juger le <B>mouvement</B> ; à droite les mêmes images
-              passées par la chaîne de ton jeu, pour juger le <B>découpage</B>. Le ruban en
-              dessous porte toutes les images du clip, une tranche chacune : un clic prend ou
-              laisse, une loupe suit le pointeur, et les flèches puis la barre d'espace font la
-              même chose au clavier.
-            </P>
-            <P>
-              La boucle de gauche sait aussi montrer <B>la vidéo entière</B>, telle qu'elle
-              est arrivée — le lien est au-dessus d'elle. Ce n'est pas la même chose que les
-              images : celles-ci sont figées et l'écran les rejoue à <I>sa</I> vitesse, alors
-              que la vidéo porte le rythme du modèle, ses fondus, ce qu'il fait entre deux
-              images. C'est là qu'on juge si le mouvement lui-même est bon.
-            </P>
-            <P>
-              À l'ouverture, l'atelier a déjà regardé le clip et pose deux remarques : où il ne
-              bouge presque pas, et où la boucle se referme le mieux. <B>Elles ne décident de
-              rien</B> — elles disent où regarder, et tout se reprend image par image ensuite.
-              Un même clip donne autant d'animations que tu veux : nomme-en une, garde-la,
-              recommence. Elles partagent toutes le même cadre, <B>pour qu'un personnage ne
-              change pas de taille en passant du repos à la marche</B>.
-            </P>
-            <P>
-              <B>Rien de tout cela ne dépense</B> : le clip est payé une fois, et l'écran
-              t'écrit ce qu'il t'a coûté par animation gardée — <C>$0,0670</C> pour une seule,
-              la moitié dès la deuxième. C'est le seul endroit qui te dira combien vaut vraiment
-              une animation.
-            </P>
-
-            <H id="l-etabli">L'établi</H>
-            <P>
-              <I>Une profondeur, pas un onglet.</I> Une chose du jeu, ouverte : ce qu'elle est,
-              ce qu'elle a déjà, et ce qu'on peut lui ajouter. On n'y arrive pas par la barre —{" "}
-              <B>on clique un nom dans le codex</B>, et le fil qui dit où l'on est remplace le
-              nom de l'onglet.
-            </P>
-            <P>
-              C'est l'un des rares endroits d'où l'argent part. Sa matrice arme, la barre tire :
-              cliquer <I>Fabriquer</I> sur une case remplit le champ et rend la main, il n'y a
-              jamais qu'un endroit qui dépense.
-            </P>
-            <P>
-              <I>Animer</I> ouvre le troisième, et c'est un écran entier :{" "}
-              <B>on n'y commande pas une image, on y commande une vidéo</B> — une durée, un
-              format, une image de départ obligatoire, et le bouton porte ce que ça coûte. Tu
-              découperas le clip ensuite, autant de fois que tu veux, sans repayer.
-            </P>
-            <P>
-              <B>Un des modèles proposés ne coûte rien</B> : il tourne sur la carte graphique de
-              cette machine. Le bouton porte alors <B>un temps</B> à la place d'un montant — la
-              règle ne change pas, elle change d'unité : rien ne part sans que tu saches ce que
-              ça te prend. Ce temps ne se multiplie pas comme un prix ; le premier clip charge
-              le modèle en mémoire, les suivants sont plus courts. Et le panneau sous les
-              modèles te dit ce qui manque à ta machine, s'il manque quelque chose : il le liste
-              avec sa taille et sa licence, et il sait aller le chercher.
-            </P>
-            <P>
-              Ce modèle-là veut des <B>clips courts</B> — une seconde plutôt que trois —, et
-              l'écran le dit à l'endroit où tu choisis. La raison est mesurée : plus le clip est
-              long, plus l'animation qu'on en tire se dégrade, et <B>aucune mesure automatique
-              ne le voit</B>. Comme il ne coûte rien, la bonne façon de s'en servir est d'en
-              lancer plusieurs courts et de garder le meilleur.
-            </P>
-            <P>
-              Sa matrice se lit sur <B>deux calques</B> : les images fixes, et les animations. La
-              bascule est en haut à droite, et <B>elle porte les deux comptes</B> — tu vois d'un
-              coup d'œil qu'une chose est dessinée sur six poses et animée sur une seule. Les deux
-              ne se mélangent jamais, et c'est le point : une case qui porterait l'image{" "}
-              <I>et</I> l'animation aurait l'air pleine dès qu'elle a l'une des deux, et il te
-              manquerait une animation sans que rien ne le dise.
-            </P>
-            <P>
-              Sur le calque animé, une case remplie <B>tourne</B> — pas une image figée,
-              l'animation elle-même à la taille de la vignette. Le nom sous elle te ramène au clip
-              dont elle vient, qui est payé et peut en donner d'autres. Et la croix sur la
-              vignette <B>ne jette rien</B> : elle vide la case, l'animation reste, le clip aussi.
-            </P>
-            <P>
-              Compte-y <B>une animation par direction</B>, pas une par image. Une marche vue sous
-              quatre angles demande beaucoup d'images pour être dessinée et quatre animations pour
-              être animée : une animation porte déjà ses images dedans.
-            </P>
-            <P>
-              Sur l'écran qui découpe un clip, <B>une image se met de côté</B> : survole le ruban,
-              la loupe la montre en grand, et <C>Mettre de côté ›</C> la fait entrer en
-              bibliothèque. Ça ne touche pas aux images que tu retiens pour l'animation — tu peux
-              prélever pendant que tu découpes. Une pose fixe, un objet, un détail de décor : ce
-              que tu en fais n'appartient plus à l'animation.
-            </P>
-            <P>
-              Elle arrive <B>traitée comme le reste</B> — détourage, grille, palette du jeu —, et
-              sa recette se reprend après coup comme celle de n'importe quelle image ; l'image
-              brute est toujours là. Elle ne va dans <B>aucune case</B> : la ranger est un second
-              geste, quand tu veux, et c'est le geste ordinaire. Sa fiche dit d'où elle vient — le
-              clip, lui, a été payé une fois.
-            </P>
-            <P>
-              <B>Une animation sort de l'atelier en trois fichiers.</B> La planche — toutes ses
-              images côte à côte, ce qu'un moteur de jeu charge —, un petit fichier qui la décrit,
-              et une image qui tourne toute seule, pour la montrer sans rien installer. Deux
-              endroits pour la faire sortir : <C>Sortir ›</C> sur la ligne d'une animation que tu
-              viens de tailler, et <C>Sortir ses animations ›</C> sous la jauge du calque animé,
-              qui les emporte <B>toutes en une seule archive</B>.
-            </P>
-            <P>
-              Le petit fichier n'est pas de nous : c'est <B>celui qu'écrit Aseprite</B>, et c'est
-              le plus lu par les moteurs. Un moteur qui sait le lire fabrique l'animation tout
-              seul, à la bonne vitesse et dans le bon sens. Ce que l'atelier sait en plus — de quel
-              clip elle vient, ce qui a été payé, quels réglages — est écrit <B>à côté</B>, dans un
-              fichier à part : on n'ajoute rien dans le format des autres.
-            </P>
-            <P>
-              <B>Sous l'aperçu qui tourne, une phrase dit ce qui bouge entre les images.</B> Deux
-              choses y sont comptées. La part de ce qui bouge <B>qui revient sur ses pas</B> :
-              un point que le personnage traverse s'allume une fois et reste allumé, alors qu'un
-              point qui s'allume, s'éteint et se rallume est revenu en arrière. Et le nombre de
-              couleurs <B>qui n'apparaissent que dans une seule image</B>.
-            </P>
-            <P>
-              Le premier ne tranche pas tout seul : sur une marche, un bras qui balance revient
-              vraiment sur ses pas, et c'est du mouvement, pas un défaut. Il se lit <B>en comparant
-              deux réglages de la même animation</B> — change la taille du pixel ou le nombre de
-              couleurs, et regarde le chiffre. Le second est plus net : une couleur qui ne dure
-              qu'un huitième de seconde n'est pas une nuance, c'est un scintillement. Aucun des
-              deux ne bloque quoi que ce soit — ils sont là pour que tu regardes ton animation
-              tourner en face du chiffre.
-            </P>
-            <P>
-              <B>Une animation gardée se rouvre, et c'est là qu'on la corrige.</B> Dans le codex,
-              sur la ligne d'une pose, clique <B>la vignette</B> de l'animation : son atelier
-              s'ouvre avec les réglages que tu y avais mis — pas ceux du jeu. Son <I>nom</I>, sous
-              la vignette, fait autre chose : il remonte au clip qui l'a fournie. Deux portes, et
-              elles ne mènent pas au même endroit.
-            </P>
-            <P>
-              Là, une image se corrige toute seule. Les flèches la déplacent d'un point, Maj de
-              cinq, et la souris la fait glisser. <B>Aux bords, les flèches cessent d'avoir un
-              effet</B> plutôt que de rogner l'image : une correction qui mangerait un bras ne se
-              verrait pas ici, elle se verrait dans ton jeu. Le curseur sous l'image montre{" "}
-              <B>l'image d'avant en transparence</B> dessous — c'est ce qui permet de juger un
-              déplacement au lieu de le deviner.
-            </P>
-            <P>
-              On peut aussi <B>remplacer une image par une autre</B>, du même clip ou d'un autre
-              clip du même personnage : le clip est déjà payé, en reprendre une image ne coûte
-              rien. C'est ce qu'on fait quand deux clips sont chacun bons à moitié. L'animation
-              dit alors de quel clip vient chacune de ses images.
-            </P>
-            <P>
-              <B>Le détourage se règle finement, moteur compris.</B> Quatre au choix — bord,
-              pipette, modèle, sélection —, et ce qu'ils demandent n'est pas le même : le
-              bord et la pipette lisent une tolérance, le modèle décide seul, la sélection
-              suit un tracé fait sur l'image brute. Le curseur de tolérance cède la place à
-              une phrase quand le moteur ne la lit pas, plutôt que de bouger sans effet.
-              Changer de moteur emporte son <I>ronger le bord</I> : le bord ne laisse aucun
-              pixel à demi transparent, le modèle en laisse sur presque tout le sujet.
-            </P>
-            <P>
-              Si la recette de ton jeu ne détoure rien, l'écran le dit et propose d'ajouter
-              un détourage à cette animation. Et si tu as <B>enregistré des recettes</B>, la
-              liste en haut de la colonne en applique une d'un coup — elle remplace tous les
-              réglages à la fois, parce qu'en prendre la moitié rendrait une image que
-              personne n'a jamais jugée.
-            </P>
-            <P>
-              <B>Rien n'est écrit tant que tu n'as pas enregistré</B>, et <I>Annuler</I> ramène
-              exactement ce qu'il y avait à l'ouverture. Une seule exception, et elle est dite à
-              l'écran : <I>Reprendre la fenêtre</I>. Elle remesure toutes les images, prend une
-              vingtaine de secondes, et écrit tout de suite — c'est pourquoi elle est fermée tant
-              que des corrections attendent.
-            </P>
-            <P>
-              La découpe, elle, n'est plus un lieu : c'est une table parmi les autres, sur la
-              barre des tables d'une image, à droite du trait — la première des deux fabriques.
-              Les tables ne se visitent pas non plus : elles s'ouvrent sur une image, et ce
-              qu'il faut en savoir est dit au temps <I>Garder</I>.
-            </P>
-
-            <Titre id="les-reglages">Les réglages</Titre>
-            <P>
-              Ce qui suit est <B>le même texte que les infobulles</B> de l'application, rendu à
-              la file, avec la version longue quand il y en a une. Survole le nom d'un réglage
-              dans un panneau : tu retrouveras les trois premières lignes de son entrée.
-            </P>
-
-            {/* **Un groupe sans explication paraît quand même, avec son zéro.**
-                Le faire disparaître cacherait le manque ; c'est la règle du
-                produit partout ailleurs — ce qui manque le dit — et le guide est
-                le dernier endroit où l'on aurait le droit d'y déroger. */}
-            {OUS.map((ou) => {
-              const miennes = parOu(ou)
-              return (
-                <section key={ou}>
-                  <H id={`ou-${ou}`}>{OU[ou]}</H>
-                  {miennes.length === 0 ? (
-                    <p className="mesure text-[11px] text-texte-3">
-                      0 — rien d'écrit ici pour l'instant.
-                    </p>
-                  ) : (
-                    miennes.map(([cle, e]) => (
-                      <Reglage key={cle} cle={cle} entree={e} />
-                    ))
-                  )}
-                </section>
-              )
-            })}
-
-            <Titre id="manque">Ce qui n'est pas encore écrit</Titre>
-            <P>
-              Un réglage sans entrée n'a <B>pas de pointillé</B> sous son nom, et rien ne casse :
-              aucune bulle vide, aucun « à documenter » dans les panneaux. Un manque de guide
-              est un fait sur le guide, et il se range ici.
-            </P>
-            <ul className="mesure mt-4 flex flex-col gap-1.5 border-l border-bord pl-4 text-[11px] text-texte-3">
+        {SANS_ENTREE.length > 0 && (
+          <div className="mt-[34px] border-t border-trait pt-[14px]">
+            <h2 className="mesure mb-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+              Ce qui n'est pas encore écrit
+            </h2>
+            <ul className="flex flex-col gap-[4px] text-[11px] text-encre-4">
               {SANS_ENTREE.map((nom) => (
                 <li key={nom}>{nom}</li>
               ))}
             </ul>
-          </article>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-// ── Les pièces de la prose ──────────────────────────────────────────────────
-//
-// **Aucun quatrième emploi du serif.** Le titre de l'écran en est un ; les
-// titres de section reprennent la forme de l'en-tête de panneau — sans 12,5 px,
-// majuscules, `letter-spacing .11em` — et la hiérarchie est portée par 48 px
-// d'espace. Un sous-titrage serif de 24 px sur la seule page de texte long est
-// très exactement le « bascule en blog » que la règle 1 du § Typography annonce.
-
-function ancrer(nom: string) {
-  return nom
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/\W+/g, "-")
-}
-
-function Titre({ id, children }: { id: string; children: React.ReactNode }) {
-  return (
-    <h2
-      id={id}
-      className="mt-14 mb-4 font-serif text-[32px] leading-[1.1] font-normal text-texte first:mt-0"
-    >
-      {children}
-    </h2>
-  )
-}
-
-function H({ id, children }: { id: string; children: React.ReactNode }) {
-  return (
-    <h3
-      id={id}
-      className="mt-12 mb-3.5 text-[12.5px] font-semibold tracking-[.11em] text-texte-3 uppercase"
-    >
-      {children}
-    </h3>
-  )
-}
-
-function P({ children }: { children: React.ReactNode }) {
-  return <p className="mb-4 text-[15px] leading-[1.65] text-texte-2">{children}</p>
-}
-
-function B({ children }: { children: React.ReactNode }) {
-  return <b className="font-semibold text-texte">{children}</b>
-}
-
-function I({ children }: { children: React.ReactNode }) {
-  return <em className="text-texte italic">{children}</em>
-}
-
-function C({ children }: { children: React.ReactNode }) {
-  return <code className="mesure text-[13px] text-texte">{children}</code>
-}
-
-function Liste({ items }: { items: readonly (readonly [string, string])[] }) {
-  return (
-    <ul className="mb-4 flex flex-col gap-2 border-l border-bord pl-4">
-      {items.map(([quoi, quoi2]) => (
-        <li key={quoi} className="text-[15px] leading-[1.6] text-texte-2">
-          <b className="font-semibold text-texte">{quoi}</b> — {quoi2}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function Groupe({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mesure px-2 pt-3.5 pb-1.5 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
-      {children}
-    </div>
-  )
-}
-
-function Rangee({
-  children,
-  compte,
-  onClick,
-}: {
-  children: React.ReactNode
-  compte?: number
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex h-[26px] w-full items-center gap-2 rounded-[2px] px-2 text-left text-[12.5px] text-texte-2 transition-colors duration-[80ms] hover:bg-fond-2 hover:text-texte"
-    >
-      <span className="truncate">{children}</span>
-      {compte !== undefined && (
-        <span className="mesure ml-auto text-[10px] text-texte-3">{compte}</span>
-      )}
-    </button>
-  )
-}
-
-/** Une entrée du corpus, en long. Les trois lignes de l'infobulle, plus ce que
- *  le panneau de 280 px ne peut pas porter. */
+/** Une entrée du corpus — **le même texte que la bulle**, jamais recopié. */
 function Reglage({ cle, entree }: { cle: string; entree: Explication }) {
   return (
-    <section id={`reglage-${cle.replace(/\W/g, "-")}`} className="mt-8">
-      <h4 className="mb-3 text-[15px] font-semibold text-texte">{entree.nom}</h4>
-      <div className="border-l border-bord pl-4">
-        <p className="text-[15px] leading-[1.6] text-texte">{entree.quoi}</p>
-        <p className="mt-2 text-[15px] leading-[1.6] text-texte-2">{entree.change}</p>
-        <p className="mesure mt-3 text-[10px] text-texte-3">{entree.origine}</p>
-      </div>
+    <section id={`reglage-${cle.replace(/\W/g, "-")}`} className="mt-[22px] first:mt-0">
+      <h3 className="text-[13px] font-medium text-encre">{entree.nom}</h3>
+      <p className="mt-[4px] text-[12px] leading-[1.5] text-encre">{entree.quoi}</p>
+      <p className="mt-[4px] text-[12px] leading-[1.5] text-encre-2">{entree.change}</p>
+      <p className="mesure mt-[8px] text-[10.5px] text-encre-4">{entree.origine}</p>
       {entree.long
         ?.split("\n\n")
         .map((para, i) => (
-          <p key={i} className="mt-4 text-[15px] leading-[1.65] text-texte-2">
+          <p key={i} className="mt-[8px] text-[12px] leading-[1.5] text-encre-2">
             {para}
           </p>
         ))}

@@ -125,7 +125,8 @@ import { EcranDepliage } from "./composants/Depliage"
 import { EcranAtelierDeBande } from "./composants/AtelierDeBande"
 import { EcranMontage } from "./composants/Montage"
 import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
-import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
+import { VoletGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
+import type { Explication } from "./aide"
 import { Barre, fermerBarre, ouvrirBarre, useBarre } from "./composants/Barre"
 import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile, type Entree } from "./composants/Tuile"
@@ -842,6 +843,44 @@ export function App() {
     window.addEventListener("keydown", surTouche)
     return () => window.removeEventListener("keydown", surTouche)
   }, [])
+
+  // **B7 — l'écran que le volet doit expliquer.** Répond à « où est-on ? »
+  // depuis les mêmes états que le `ouvert` de `Carnet` (plus bas), pour un
+  // autre public : ce n'est pas la même liste de destinations, parce que le
+  // guide descend là où le carnet ne mène pas — une image, un clip, une
+  // animation. Priorité aux profondeurs : une table ouverte l'emporte sur le
+  // simple fait d'être dans le codex.
+  //
+  // ⚠️ **`coteUnivers === "reglages"` n'est pas `ou: "reglages"` du corpus.**
+  // `Univers.tsx` nomme ainsi son côté « réglages du jeu » (`type Cote`) ; le
+  // corpus appelle la même idée `jeu`, et réserve `reglages` à l'installation
+  // de l'atelier — deux choses différentes qui partagent un mot par accident.
+  // Une seule traduction, ici, pour ne pas avoir à s'en souvenir ailleurs.
+  const ecranDuGuide: Explication["ou"] | null = reglagesOuverts
+    ? "reglages"
+    : depensesOuvertes
+      ? "depenses"
+      : tableauDeBord
+        ? "tableau-de-bord"
+        : onglet === "univers"
+          ? coteUnivers === "reglages"
+            ? "jeu"
+            : coteUnivers
+          : tablesOuvertes
+            ? "tables"
+            : caseOuverte
+              ? "case"
+              : montageOuvert
+                ? "montage"
+                : bandeOuverte
+                  ? "bande"
+                  : ficheClip
+                    ? "clip"
+                    : clipOuvert || choseOuverteId
+                      ? "sujet"
+                      : onglet === "codex"
+                        ? "codex"
+                        : "galerie"
 
   // ── B6 · La barre ─────────────────────────────────────────────────────────
   //
@@ -3696,11 +3735,11 @@ export function App() {
         onRelireCatalogue={redemanderCatalogue}
       />
 
-      {/* **Le Guide couvre l'atelier**, comme Univers et Découpe — on l'ouvre
-          quand on ne sait pas, on le ferme quand on sait. Il ne porte pas de
-          fente de refus : il ne demande rien au serveur, ne dépense rien, ne
-          peut pas échouer. On ne pose pas une fente vide pour la symétrie. */}
-      {guideOuvert && <EcranGuide onFermer={fermerGuide} />}
+      {/* **Le guide est un volet depuis `B7`** : il ne recouvre plus l'atelier,
+          il se pose à droite de ce qu'il documente, sur l'écran que
+          `ecranDuGuide` vient de calculer. Il ne porte pas de fente de refus :
+          il ne demande rien au serveur, ne dépense rien, ne peut pas échouer. */}
+      {guideOuvert && <VoletGuide onFermer={fermerGuide} ecran={ecranDuGuide} />}
 
       {/* **La barre est la troisième zone du châssis** (B6) : par-dessus le
           carnet et la surface, appelée au clavier, jamais à côté d'eux.

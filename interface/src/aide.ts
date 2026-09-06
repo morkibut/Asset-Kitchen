@@ -58,23 +58,43 @@ export type Explication = {
   /** La version longue, rendue par l'écran Guide seul. Le panneau de 280 px ne
    *  la porte jamais : au-delà de trois lignes, c'est le guide qu'on veut. */
   long?: string
-  /** Où ça se règle, pour le sommaire du guide. **Un lieu, pas un thème** :
+  /** Où ça se règle, pour le volet du guide (`B7`). **Un lieu, pas un thème** :
    *  quand on cherche une explication, on se souvient d'où l'on était.
    *
-   *  Les trois premiers sont les trois côtés de l'univers ; les six autres sont
-   *  ailleurs dans le produit. Le mot « Dans » n'est pas dans les noms : il est
-   *  écrit une fois, en tête de chaque moitié du sommaire — répété neuf fois
-   *  dans une colonne de 240 px, il mangerait la place pour rien. */
+   *  **Ce ne sont plus les neuf écrans de la V1** — ils ont disparu avec elle,
+   *  et personne ne les rouvre plus. Ce sont, autant que possible, les genres
+   *  mêmes de `Lieu` (`interface/src/lieux.ts`) : `codex`, `sujet`, `galerie`,
+   *  `case`, `clip`, `bande`, `tables`, `depenses`, `tableau-de-bord`. Trois
+   *  valeurs de plus, sans équivalent dans la pile parce qu'un **côté** de
+   *  l'univers n'est pas un lieu où l'on empile — `inspiration`, `jeu`,
+   *  `ambiances` : les trois côtés de l'écran univers, au même nom que
+   *  `Univers.tsx` exporte déjà (`type Cote`). Et deux qui ne sont ni l'un ni
+   *  l'autre : `reglages`, l'installation de l'atelier — un écran par
+   *  booléen, hors de la pile — et `equipement`, provisoire : les dix-sept
+   *  entrées des fabriques atterrissent sur la famille codex la plus proche
+   *  en attendant l'écran que `B19` doit leur donner.
+   *
+   *  ⚠️ **`jeu` et `reglages` ne sont pas la même chose**, et le nom de l'un
+   *  n'a pas été aligné sur l'autre : `jeu` est le côté « Réglages » de
+   *  l'univers — ce qu'on pose une fois par projet — quand `reglages` est
+   *  l'installation de la machine — clés, cache, dossier de l'agent. Les
+   *  confondre ferait grossir le mauvais groupe de neuf entrées. */
   ou:
+    | "tableau-de-bord"
+    | "codex"
+    | "sujet"
+    | "galerie"
+    | "case"
+    | "clip"
+    | "bande"
+    | "montage"
+    | "tables"
+    | "depenses"
     | "inspiration"
     | "jeu"
     | "ambiances"
-    | "codex"
-    | "etabli"
-    | "galerie"
-    | "tables"
-    | "fabriques"
     | "reglages"
+    | "equipement"
 }
 
 export const AIDE: Record<string, Explication> = {
@@ -537,7 +557,7 @@ export const AIDE: Record<string, Explication> = {
 
   "codex.chose.sujet": {
     nom: "Ce qu'il est",
-    ou: "codex",
+    ou: "sujet",
     quoi: "Le texte qui redit à la machine de qui il s'agit, et qui repart avec chaque image qu'on demande de cette chose.",
     change:
       "Il part dans le texte de chaque génération de cette chose, avant le reste. Sans lui, l'appel ne dit pas de quoi il s'agit et la machine invente.",
@@ -546,7 +566,7 @@ export const AIDE: Record<string, Explication> = {
 
   "codex.chose.habillage": {
     nom: "Ce qui l'habille",
-    ou: "codex",
+    ou: "sujet",
     quoi: "Les sept textes de style qui décrivent le monde autour de la chose — le monde, l'époque, le rendu, la vue, le trait, la lumière, la technique.",
     change:
       "Ils partent avec chaque image. Par défaut ils viennent du jeu ; en réécrire un ici ne vaut que pour cette chose, et le texte remplacé reste lisible en dessous, barré.",
@@ -555,7 +575,7 @@ export const AIDE: Record<string, Explication> = {
 
   "codex.chose.exemples": {
     nom: "Ses images d'exemple",
-    ou: "codex",
+    ou: "sujet",
     quoi: "Les images qu'on joint à la demande pour montrer le style visé, et qui sont disponibles pour chaque image de cette chose.",
     change:
       "Rien tout seul. Ce qui part vraiment se coche juste avant de payer — mais une image qui n'est pas retenue ici n'y sera pas proposée.",
@@ -564,7 +584,7 @@ export const AIDE: Record<string, Explication> = {
 
   "codex.chose.poses": {
     nom: "Ce que le jeu réclame",
-    ou: "codex",
+    ou: "sujet",
     quoi: "Les attitudes que cette chose doit avoir : repos, marche, course pour un personnage ; fermé, ouvert, vidé pour un coffre.",
     change:
       "Rien à la génération. C'est cette liste qui décide du nombre de cases à remplir, donc de ce que le tableau de droite compte.",
@@ -573,7 +593,7 @@ export const AIDE: Record<string, Explication> = {
 
   "codex.chose.faites": {
     nom: "Ce qui est fait",
-    ou: "codex",
+    ou: "sujet",
     quoi: "Les images qui existent déjà pour cette chose, une par attitude remplie.",
     change:
       "Rien du tout, et c'est le point : on regarde, on ne modifie rien et on ne paie rien.",
@@ -582,7 +602,7 @@ export const AIDE: Record<string, Explication> = {
 
   "codex.chose.matrice": {
     nom: "Sa matrice",
-    ou: "codex",
+    ou: "sujet",
     quoi: "Le tableau des attitudes de cette chose, avec ce qui les remplit, et il change pendant qu'on règle à gauche.",
     change:
       "Rien à la génération. Ranger une attitude retire sa ligne et son coût — le compte des rangées reste écrit à côté, pour qu'un tableau plein obtenu en rangeant ne passe pas pour un travail fini.",
@@ -591,7 +611,7 @@ export const AIDE: Record<string, Explication> = {
 
   "codex.bande.image": {
     nom: "L'image choisie",
-    ou: "codex",
+    ou: "sujet",
     quoi: "Une image de l'animation, et ce qu'on lui a fait à elle seule : de combien elle a été poussée, et de quel clip elle vient.",
     change:
       "Cette image-là, et aucune autre. C'est toute la différence avec les réglages de gauche : ceux-là valent pour l'animation entière, celui-ci ne corrige qu'une pose qui tombe à côté.",
@@ -604,7 +624,7 @@ export const AIDE: Record<string, Explication> = {
 
   "reglages.modele": {
     nom: "modèle",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Le moteur d'image qui fabriquera la génération, choisi dans une liste où plusieurs fournisseurs se mélangent — chaque ligne dit qui le propose.",
     change:
       "Le prix, le rendu, et deux plafonds : le nombre de références acceptées et le nombre de variations possibles. Un modèle qui ne peut pas honorer ta demande reste visible et grisé, avec sa raison — jamais remplacé en silence.",
@@ -615,7 +635,7 @@ export const AIDE: Record<string, Explication> = {
 
   "reglages.proportions": {
     nom: "proportions",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Le rapport largeur / hauteur de l'image demandée au fournisseur.",
     change:
       "La forme de ce qui revient, avant tout post-traitement. Les valeurs que le modèle choisi n'accepte pas sont grisées, jamais cachées.",
@@ -626,7 +646,7 @@ export const AIDE: Record<string, Explication> = {
 
   "reglages.variations": {
     nom: "variations",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Combien d'images partent d'un seul clic — 1, 2 ou 4.",
     change:
       "Multiplie le prix à l'identique : 4 variations, ce sont 4 appels et 4 fois le coût. Ce ne sont pas 4 images différentes demandées, ce sont 4 tirages de la même demande.",
@@ -637,7 +657,7 @@ export const AIDE: Record<string, Explication> = {
 
   "reglages.sujet": {
     nom: "sujet",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "La nature de ce que tu fabriques — un personnage, un objet tenu en main, un décor — choisie dans le barème de ton univers.",
     change:
       "Trois choses d'un seul geste : quels artworks partent en référence, quel modèle est proposé par défaut, et quelle part de la case le sujet occupera une fois sur grille.",
@@ -648,7 +668,7 @@ export const AIDE: Record<string, Explication> = {
 
   "atelier.import": {
     nom: "Importer",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Faire entrer une image de ton disque dans la bibliothèque — par le bouton, ou en la déposant sur la grille.",
     change:
       "Elle devient un asset entier : elle se retouche, se découpe, se réinjecte, s'exporte et se supprime comme celles que tu as payées. Sa fiche dit « importé » et un coût nul, et son nom est celui du fichier.",
@@ -659,7 +679,7 @@ export const AIDE: Record<string, Explication> = {
 
   "atelier.import.traitement": {
     nom: "brute ou traitée",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Ce que le projet appliquera à l'image qui entre : rien du tout, ou sa recette — détourage, taille de pixel, palette.",
     change:
       "Sur « brute », l'image entre aux dimensions du fichier et sa recette reste vide — c'est le même mot que la visionneuse de la fiche, et il veut dire la même chose. Sur « traitée », elle arrive habillée comme une image générée ici.",
@@ -670,7 +690,7 @@ export const AIDE: Record<string, Explication> = {
 
   "atelier.apercu": {
     nom: "Ce qui partira",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Le texte exact envoyé au modèle, rangé en trois parties : le contexte — ce que ton jeu est —, les références — ce que chaque image jointe est —, et la demande — ton sujet, les consignes de planche, et la caméra qui ferme le texte.",
     change:
       "Rien à la génération tant que tu le lis — c'est une lecture, pas un réglage. « Reprendre le texte » en fait le contenu du champ : ce que tu écris alors part mot pour mot, sans que l'atelier ajoute quoi que ce soit.",
@@ -681,7 +701,7 @@ export const AIDE: Record<string, Explication> = {
 
   "envoi.ecran": {
     nom: "L'écran de confirmation",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Ce qui s'ouvre entre le bouton et la dépense. Il montre, ligne par ligne et rangé en trois parties, tout ce qui va être envoyé — le contexte du jeu, les références, la demande — avec un interrupteur sur chacune et son prix à côté.",
     change:
       "Rien tout seul : c'est une relecture. Ce qu'on y éteint ou corrige ne vaut que pour cet appel-là, et rien ne remonte dans les réglages du jeu ni dans l'ambiance.",
@@ -705,7 +725,7 @@ export const AIDE: Record<string, Explication> = {
   // La raison de construction est descendue dans `long`, où elle attendait.
   "etabli.calibrage": {
     nom: "Le calibrage",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Les poses d'une même chose ne sortent pas toutes à la même hauteur, et cet outil les remet toutes à la même — sans rien redessiner et sans rien payer.",
     change:
       "Il réécrit la taille rendue des poses qu'on lui désigne. Le défaut qu'il corrige est mesuré : six poses du même personnage, même recette, sont sorties à 64, 60, 64, 53, 64 et 43 pixels de haut — un bras tendu élargit la boîte du sujet, et la mise sur grille rétrécit tout le reste.",
@@ -717,7 +737,7 @@ export const AIDE: Record<string, Explication> = {
 
   "calibrage.occupation": {
     nom: "occupation",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "La part de la case que la chose occupe en hauteur — à cent pour cent elle touche le haut et le bas, à quatre-vingts elle flotte.",
     change:
       "La taille à laquelle elle apparaîtra dans le jeu, et rien d'autre. Comme c'est une part et non un nombre de pixels, changer la taille de la case plus tard ne défait aucun calage.",
@@ -730,7 +750,7 @@ export const AIDE: Record<string, Explication> = {
   // entrées, jamais une seule qui essaierait de couvrir les deux.
   "calibrage.decalage": {
     nom: "décalage",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "De combien la chose est poussée à gauche ou à droite dans sa case.",
     change:
       "Où elle se trouve dans la case, pas sa taille. Il sert à recentrer une pose dont le geste déporte la silhouette — un bras tendu, une arme levée.",
@@ -739,7 +759,7 @@ export const AIDE: Record<string, Explication> = {
 
   "calibrage.reference": {
     nom: "la référence",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "La pose à laquelle on compare les autres à l'œil — c'est presque toujours le repos, la première qu'on a dessinée.",
     change:
       "Rien du tout : elle décide seulement quelle silhouette est montrée à demi effacée dans l'empilement. Elle ne décide pas de la hauteur commune.",
@@ -748,7 +768,7 @@ export const AIDE: Record<string, Explication> = {
 
   "calibrage.mise_de_cote": {
     nom: "mettre de côté",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Sortir une pose du calage commun — on le fait pour une pose couchée ou accroupie, qui est basse pour de bonnes raisons.",
     change:
       "Elle cesse de tirer la hauteur commune vers le bas, donc les autres cessent d'être rapetissées à cause d'elle. Sa case, elle, se remplit et se compte comme avant.",
@@ -1384,7 +1404,7 @@ export const AIDE: Record<string, Explication> = {
 
   "fiche.impose": {
     nom: "Imposé par le projet",
-    ou: "galerie",
+    ou: "case",
     quoi: "Ce que l'univers de ton projet a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
     change:
       "Rien : c'est une lecture. Chaque ligne dit si la valeur du projet est encore appliquée ou si tu l'as réglée à la main depuis, et les huit places en dessous sont l'endroit où l'on change.",
@@ -1395,7 +1415,7 @@ export const AIDE: Record<string, Explication> = {
 
   "fiche.recettes": {
     nom: "Recettes",
-    ou: "galerie",
+    ou: "case",
     quoi: "Les recettes que tu as nommées, à reposer sur cette image d'un clic.",
     change:
       "Applique les huit places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
@@ -1406,7 +1426,7 @@ export const AIDE: Record<string, Explication> = {
 
   "fiche.reinjecter": {
     nom: "Réinjecter",
-    ou: "galerie",
+    ou: "case",
     quoi: "Renvoyer cette image dans le générateur, dans l'un de ses quatre rôles.",
     change:
       "Trois rôles envoient l'image — référence (elle inspire), source d'édition (elle engendre), guide de style (elle donne la manière). Le quatrième n'envoie rien : il reprend le prompt, le modèle et les réglages de la génération qui a produit cet asset.",
@@ -1417,7 +1437,7 @@ export const AIDE: Record<string, Explication> = {
 
   "fiche.personnage": {
     nom: "Corps de",
-    ou: "galerie",
+    ou: "case",
     quoi: "Le personnage et l'attitude dont cette image est le corps.",
     change:
       "Rien à la génération. La case correspondante cesse d'être vide dans l'écran Personnages, et l'image y paraît en vignette — elle ne bouge pas de la bibliothèque pour autant.",
@@ -1475,7 +1495,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.depart": {
     nom: "L'image de départ",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "La première image du clip — celle que le modèle va animer, et il n'en prend qu'une.",
     change:
       "Tout ce à quoi le clip ressemblera. **Elle est obligatoire et ne cède jamais** : sans elle il n'y a pas d'appel du tout, là où les images jointes d'une génération ordinaire s'effacent quand le modèle n'a plus de place. Le clip n'hérite de rien d'autre — ni des textes du jeu, ni de son ambiance.",
@@ -1485,7 +1505,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.format": {
     nom: "Le format du clip",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Sa durée, ses proportions et sa taille — les trois choses qui décident du prix.",
     change:
       "Le prix, à chaque cran. Un modèle vidéo se facture au **jeton vidéo** — hauteur × largeur × images par seconde × durée —, donc la surface compte autant que le temps : le carré coûte près de moitié moins que le format large, et il cadre mieux un personnage seul.",
@@ -1495,7 +1515,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.lot": {
     nom: "Combien de clips",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Le nombre de clips que ce geste lance d'un coup. Un est le défaut.",
     change:
       "Le prix, multiplié d'autant, et le bouton l'annonce avant. **Chacun est une dépense à part** : quatre clips coûtent quatre fois, et l'écran des dépenses le dira quatre fois — y compris pour ceux que tu jetteras.",
@@ -1505,7 +1525,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.prix": {
     nom: "Le prix du clip",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Ce que le clip devrait coûter, avec la formule qui produit ce chiffre.",
     change:
       "Rien à ce qui part. C'est une **borne haute** affichée avant l'envoi : ce qui s'enregistre après est le montant que le fournisseur a facturé, et l'écart mesuré sur treize clips va de quatre pour cent de plus à cinquante-huit pour cent de moins.",
@@ -1515,7 +1535,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.moteur": {
     nom: "La carte de cette machine",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Ce que ton ordinateur peut faire lui-même, et ce qu'il lui manque pour ça.",
     change:
       "Rien à ce qui part. Ce panneau ne dépense jamais d'argent — il regarde ce que l'application du moteur a sur son disque, et il te dit si le modèle gratuit est utilisable maintenant.",
@@ -1525,7 +1545,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.mesure": {
     nom: "Ce qui est mesuré",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Ce que ce dépôt-ci a observé du modèle en payant ses propres essais, et rien d'autre.",
     change:
       "Rien à ce qui part. C'est ce qui te permet de choisir en sachant sur quoi tu t'appuies — **aucun modèle proposé n'atteint la barre des huit tirages** : ce sont des propositions étayées, pas un arbitrage clos.",
@@ -1535,7 +1555,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.liste": {
     nom: "La liste de modèles",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "L'ordre dans lequel les modèles se présentent, et le filtre qui range ce qui ne peut pas partir.",
     change:
       "Ce que tu lis d'abord, et à quel point la liste te laisse tranquille. **L'ordre vient du serveur** — le modèle gratuit en tête, puis les payants du moins cher au plus cher pour la demande courante — et l'interrupteur, allumé, ne montre que ce qui peut partir.",
@@ -1545,7 +1565,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.confirmation": {
     nom: "Ce qui part avec le clip",
-    ou: "etabli",
+    ou: "sujet",
     quoi: "Le tiroir qui s'ouvre entre « Commander ce clip » et la dépense : la dernière relecture, corrigeable.",
     change:
       "Ce qui va partir. **Le texte, mot pour mot, et l'image de départ — rien d'autre.** Une correction faite ici vaut pour cet appel seulement, et ne touche jamais au mouvement de la bibliothèque.",
@@ -1555,7 +1575,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.fiche": {
     nom: "La fiche d'un clip",
-    ou: "galerie",
+    ou: "clip",
     quoi: "La colonne de droite qui s'ouvre quand on clique sur la vignette d'un clip — comme la fiche d'une image, pour ce que la galerie garde sans que ce soit une image.",
     change:
       "**La vidéo du clip, en boucle** — son rythme, ses fondus, ce qu'il fait entre deux images —, ce qu'il a coûté, ce qu'il anime, ce qu'il a produit, et la porte du montage.",
@@ -1567,7 +1587,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bande.nom": {
     nom: "Le nom de l'animation",
-    ou: "galerie",
+    ou: "bande",
     quoi: "Comment cette animation-là s'appellera, une fois tirée du clip.",
     change:
       "Ce que tu liras dans la liste des bandes, et ce qui partira dans le descriptif de l'export. **Un clip en porte plusieurs** : un même tirage donne souvent un repos et une marche, et sans nom tu ne saurais plus laquelle est laquelle.",
@@ -1577,7 +1597,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bande.cadre": {
     nom: "Le cadre de la bande",
-    ou: "galerie",
+    ou: "bande",
     quoi: "Le rectangle sur lequel toutes les images de la bande sont recadrées.",
     change:
       "La taille à laquelle ton personnage sort, et **si elle reste la même d'une animation à l'autre**. Pris sur le clip entier, toutes les bandes de ce clip ont la même assise ; pris sur la bande seule, elles ne s'accordent plus entre elles.",
@@ -1592,7 +1612,7 @@ export const AIDE: Record<string, Explication> = {
     // animation se règle dans son atelier, qui s'ouvre depuis la matrice d'un
     // personnage. Le sommaire du guide envoyait encore chercher au mauvais
     // endroit.
-    ou: "codex",
+    ou: "sujet",
     quoi: "Ce qu'on fait aux images du clip pour en tirer des sprites : détourer, réduire, limiter les couleurs.",
     change:
       "L'aspect de la bande, et rien d'autre. **Elle part de celle du jeu et ne s'y substitue jamais** : ce que tu changes ici s'écrit sur cette bande-là, ton jeu ne bouge pas, et la bande suivante repart du jeu.",
@@ -1603,7 +1623,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bande.vitesse": {
     nom: "La vitesse de la bande",
-    ou: "galerie",
+    ou: "bande",
     quoi: "Combien d'images par seconde, et dans quel sens elles se jouent.",
     change:
       "L'aperçu que tu regardes **et** ce qui partira dans ton moteur de jeu. C'est le même réglage : deux — un pour regarder, un pour livrer — finiraient par se contredire, et c'est toi qui découvrirais l'écart dans le jeu.",
@@ -1613,7 +1633,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bande.gardees": {
     nom: "Les bandes de ce clip",
-    ou: "galerie",
+    ou: "bande",
     quoi: "Ce que tu as déjà tiré de ce tirage-ci.",
     change:
       "Le prix par animation, qui **baisse à chaque bande gardée**. Un clip de cinq secondes porte plus qu'un cycle de marche, et c'est ce compteur qui te dit ce que tu as vraiment payé pour une animation utilisable.",
@@ -1623,7 +1643,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bande.chutier": {
     nom: "Le chutier",
-    ou: "codex",
+    ou: "sujet",
     quoi: "La réserve d'une animation : les images mises de côté, pas encore posées dans le ruban.",
     change:
       "Ce que tu retires du ruban y va **avec sa recette**, au lieu de disparaître. Retirer cesse d'être un geste qu'on hésite à faire : l'image est à côté, elle se repose où tu veux, et rien n'est perdu.",
@@ -1634,7 +1654,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bande.montage": {
     nom: "Reprendre le montage",
-    ou: "codex",
+    ou: "sujet",
     quoi: "Rouvrir la pellicule du clip sur une animation déjà gardée, pour en changer les images retenues.",
     change:
       "Ce que l'animation contient. Ce que tu gardes **retrouve ses réglages** — sa poussée au pixel, sa recette à elle — et ce que tu laisses tombe au chutier. Rien n'est perdu, et tu n'as rien à reposer de mémoire.",
@@ -1682,7 +1702,7 @@ export const AIDE: Record<string, Explication> = {
 
   "fabrique.planche": {
     nom: "La planche de poses",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Une feuille où le modèle dessine plusieurs attitudes du même personnage en un seul appel, et que l'atelier redécoupe ensuite en images séparées.",
     change:
       "Elle divise le prix : une planche coûte le prix d'un appel quel que soit le nombre de cases qu'elle porte. Et elle achète quelque chose qu'aucun appel séparé ne garantit — les cases sortent à la même échelle et dans le même style, puisqu'elles ont été peintes ensemble.",
@@ -1707,7 +1727,7 @@ export const AIDE: Record<string, Explication> = {
 
   "fabrique.superposition": {
     nom: "La superposition",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "L'outil qui pose une pièce d'équipement sur un personnage : il prend le corps nu et le corps habillé, et il en tire le calque de ce qui a été ajouté.",
     change:
       "Rien sur les deux images de départ, qui ne sont jamais repeintes. Elle en produit une troisième — un calque —, et un calque est solidaire de la pose sur laquelle la pièce est apparue : il en faut un par pose.",
@@ -1716,7 +1736,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.images": {
     nom: "les deux images",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Le dessus, qui se déplace, et le dessous, qui est le sol et ne bouge jamais.",
     change:
       "Rien sur les deux images de départ, qui ne sont jamais repeintes. Intervertir les deux change le résultat, puisque le calque est fait de ce que le **dessus** ajoute.",
@@ -1727,7 +1747,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.detourage": {
     nom: "avant de caler",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "L'état du détourage des deux images — c'est lui qui décide si un calque est seulement possible.",
     change:
       "Rien tant que tu ne reprends pas les passes. Une image qui revient du modèle est opaque de bord à bord : sans alpha sur le dessus, le calque emporte tout le fond de l'image.",
@@ -1738,7 +1758,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.voir": {
     nom: "voir les deux images",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "L'opacité et le mode de couleur du dessous, l'opacité du dessus.",
     change:
       "Rien du tout à ce qui sort — c'est de l'affichage, et rien d'autre. Ils existent pour une seule raison : caler à l'œil deux images qui se ressemblent.",
@@ -1749,7 +1769,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.calage": {
     nom: "le calage",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Où le dessus se pose sur le dessous — une proposition, puis ce que tu ajustes.",
     change:
       "Rien à la génération, et pas un centime : les deux images sont déjà payées. Avant, un recalage raté n'avait aucun recours — le calque était perdu et il fallait relancer une génération.",
@@ -1760,7 +1780,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.echelle": {
     nom: "échelle du dessus",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "La taille du dessus par rapport au dessous. Détente à 1,000.",
     change:
       "C'est **le seul réglage de l'outil qui abîme l'image** : rééchantillonner du pixel art à un facteur qui n'est pas simple détruit la grille. Le champ le marque ; il ne le refuse pas.",
@@ -1771,7 +1791,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.decalage": {
     nom: "décalage du dessus",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "De combien le dessus se déplace, en pixels de l'image rendue.",
     change:
       "Rien à la génération. Le signe suit l'écran : la touche qui monte fait monter l'image.",
@@ -1782,7 +1802,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.seuil": {
     nom: "ce qu'on garde du dessus",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "De combien une couleur doit changer pour compter comme changée, et le rectangle hors duquel le dessus est masqué.",
     change:
       "Rien à la génération. **Le rectangle sert deux fois** : il isole la pièce pour qu'on voie le corps dessous pendant qu'on cale, et ce qu'il masque à l'écran, il le masque aussi à la sortie.",
@@ -1793,7 +1813,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.sorties": {
     nom: "ce qu'on en sort",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Le calque — ce que le dessus ajoute, sur fond transparent — et l'aplat — les deux fondues en une.",
     change:
       "Les deux **se cochent au lieu de s'exclure** : on veut souvent le calque pour le réutiliser et l'aplat pour l'avoir tout de suite. Ce qui est fabriqué n'a rien coûté — l'argent a été dépensé deux fois, pour les deux images, et les deux filiations y mènent.",
@@ -1804,7 +1824,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.fond": {
     nom: "le fond du calque",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Sur quoi on regarde le calque seul — le damier, ou l'un des cinq aplats vifs.",
     change:
       "Rien : c'est de l'affichage. Il sert à repérer les **pixels oubliés**, ceux qui auraient dû partir avec le corps et sont restés accrochés au calque.",
@@ -1815,7 +1835,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.resultat": {
     nom: "le résultat",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Le dessous à 100 %, le calque par-dessus — tel que ce sera dans le jeu.",
     change:
       "Rien : c'est une lecture. Maintenir « masquer le calque » le retire le temps de l'appui, et c'est ce qui dit si la pièce tient sur le corps.",
@@ -1826,7 +1846,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.mesures": {
     nom: "ce que la comparaison a mesuré",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Cinq nombres : silhouette, corps repeint, ajout, échelle, compacité.",
     change:
       "Rien. **Aucune ne refuse quoi que ce soit** — elles disent si la superposition a réussi, et servent à ranger les calques d'un vestiaire dans l'ordre où il faut les regarder. Le seul refus automatique du produit reste le compte d'images.",
@@ -1837,7 +1857,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.mode": {
     nom: "Détection",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Comment les rectangles sont proposés : « auto » cherche les zones opaques, « grille » découpe en cases égales.",
     change:
       "Ne découpe rien — propose. Ce qui part à la découpe est la liste que tu vois à droite, corrections à la main comprises. Changer ce réglage relance la détection et remplace ce que tu as dessiné.",
@@ -1848,7 +1868,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.taille_min": {
     nom: "taille minimale",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "En dessous de ce côté, en pixels, une zone opaque n'est pas un sprite.",
     change:
       "Monte-la pour ignorer les éclats de fond qui ont survécu au seuil ; descends-la pour rattraper un petit sprite oublié. Chaque cran relance la détection et remplace ce que tu avais dessiné.",
@@ -1859,7 +1879,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.colonnes": {
     nom: "colonnes",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Le nombre de colonnes égales dans lesquelles la planche est coupée.",
     change:
       "Avec les lignes, décide du nombre de découpes proposées : colonnes × lignes, cases vides comprises. Le reste de la division se répartit — rien n'est jeté au bord droit.",
@@ -1870,7 +1890,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.lignes": {
     nom: "lignes",
-    ou: "fabriques",
+    ou: "equipement",
     quoi: "Le nombre de rangées égales dans lesquelles la planche est coupée.",
     change:
       "Avec les colonnes, décide du nombre de découpes proposées. Une case vide donne quand même un rectangle : la grille fixe ne saute rien, et c'est ce qui la rend prévisible. Retire-le à la main si tu n'en veux pas.",
