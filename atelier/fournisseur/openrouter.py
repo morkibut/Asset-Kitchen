@@ -74,8 +74,23 @@ class OpenRouter:
 
     nom = "OpenRouter"
 
-    def __init__(self, cle: str | None = None) -> None:
+    def __init__(
+        self,
+        cle: str | None = None,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
         self._cle = (cle or "").strip()
+        # **Le point d'entrée des essais, et il n'en existe pas d'autre** (B15).
+        # Même raison que sur `MoteurDeLaMaison` : on ne peut ni démarrer
+        # OpenRouter dans un essai, ni compter sur sa présence — et un essai qui
+        # l'appellerait pour de bon coûterait de l'argent. Le double se branche
+        # ici, et tout le reste du fichier est exercé pour de vrai.
+        #
+        # ⚠️ Il n'est lu que par `solde()`. `catalogue()` et `generer()` ont
+        # leurs propres doubles depuis T1 — au niveau du port, pas du transport —
+        # et les y brancher aussi aurait fait deux façons de doubler le même
+        # adaptateur.
+        self._transport = transport
 
     def secrets(self) -> tuple[Secret, ...]:
         """Une seule place, et c'est la clé (F3)."""
@@ -103,7 +118,66 @@ class OpenRouter:
         Rendre ici un chiffre qu'aucun appel n'a mesuré serait très exactement
         ce que la règle de T1 interdit — et le produit sait déjà dire ce qu'il a
         dépensé chez lui : c'est le total de la barre de tête.
+
+        ⚠️ **`solde()` ne dément pas cette méthode-ci.** `compte()` répond *dans
+        quelle unité ce fournisseur alloue*, et la réponse reste *en argent, sans
+        allocation*. `solde()` répond à une autre question, posée par un seul
+        bouton d'un seul écran : *ce compte-là, il lui reste combien ?* Elle
+        n'entre dans aucun calcul, ne décide d'aucun grisé, et ne s'affiche que
+        quand on la demande.
         """
+        return None
+
+    async def solde(self) -> str | None:
+        """Ce qu'il reste sur le compte, **en une phrase** — ou `None` (B15).
+
+        C'est ce que le bouton *Vérifier* de l'écran d'installation annonce à
+        côté du compte de modèles, et c'est **la seule chose qui prouve
+        vraiment la clé** : le catalogue, lui, est public et répond sans elle.
+
+        Deux formes essayées dans l'ordre, parce qu'OpenRouter en sert deux et
+        que le produit n'a pas à savoir laquelle est en vigueur ce mois-ci :
+        `GET /credits` (`total_credits` moins `total_usage`), puis `GET /key`
+        (`limit_remaining`). **Rien ne se lit** rend `None`, et l'écran écrit
+        *le solde n'a pas été lu* — jamais un zéro, qui se lirait comme un
+        compte vide.
+
+        ⚠️ **Ces deux formes n'ont jamais été exercées contre le vrai service**
+        depuis ce dépôt : aucun appel réel n'a été fait en `B15`. C'est
+        exactement pourquoi l'échec de lecture se dit au lieu de s'inventer.
+
+        Une clé refusée, elle, n'est pas un silence : elle lève `AppelRefuse`,
+        et c'est ce qui distingue *je n'ai pas su lire* de *on m'a dit non*.
+        """
+        if not self._cle:
+            return None
+        for chemin, lire in (("/credits", _credits), ("/key", _limite)):
+            try:
+                async with httpx.AsyncClient(
+                    timeout=DELAI_CATALOGUE, transport=self._transport
+                ) as client:
+                    reponse = await client.get(
+                        f"{BASE}{chemin}",
+                        headers={"Authorization": f"Bearer {self._cle}"},
+                    )
+                    if reponse.status_code in (401, 403):
+                        raise AppelRefuse(
+                            "la clé n'a pas été acceptée par OpenRouter",
+                            statut=reponse.status_code,
+                        )
+                    reponse.raise_for_status()
+                    montant = lire(reponse.json())
+            except httpx.HTTPStatusError:
+                continue
+            except httpx.HTTPError as erreur:
+                raise FournisseurIndisponible(
+                    f"le compte est injoignable — {_panne(erreur)}"
+                ) from None
+            except (ValueError, TypeError):
+                continue
+            if montant is not None:
+                # La virgule française, comme partout ailleurs dans le produit.
+                return f"il reste ${montant:.2f}".replace(".", ",") + " sur ce compte"
         return None
 
     # ── Le catalogue ─────────────────────────────────────────────────────────
@@ -285,6 +359,29 @@ def _type_media(octets: bytes) -> str:
     if octets[:4] == b"RIFF" and octets[8:12] == b"WEBP":
         return "image/webp"
     return "application/octet-stream"
+
+
+def _nombre(valeur: Any) -> float | None:
+    """Un nombre, ou rien. **Une chaîne n'en est pas un ici.**
+
+    Un service qui rendrait `"4.84"` au lieu de `4.84` serait accepté sans
+    broncher par `float()`, et le jour où il rendrait `"illimité"` le produit
+    lèverait au milieu d'un écran. On ne lit que ce qui est déjà un nombre.
+    """
+    return float(valeur) if isinstance(valeur, (int, float)) else None
+
+
+def _credits(brut: Any) -> float | None:
+    """`GET /credits` — ce qui a été mis dessus, moins ce qui a été dépensé."""
+    donnees = (brut or {}).get("data") or {}
+    pose = _nombre(donnees.get("total_credits"))
+    depense = _nombre(donnees.get("total_usage"))
+    return None if pose is None or depense is None else pose - depense
+
+
+def _limite(brut: Any) -> float | None:
+    """`GET /key` — ce qu'il reste sous le plafond de cette clé-là."""
+    return _nombre(((brut or {}).get("data") or {}).get("limit_remaining"))
 
 
 def _panne(erreur: httpx.HTTPError) -> str:

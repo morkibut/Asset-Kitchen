@@ -653,18 +653,52 @@ prendre. Et le dossier de travail est fixé à côté de l'application, sans moy
 
 ### Critères d'acceptation
 
-- [ ] La clé se pose depuis l'écran, et le bouton de vérification annonce le nombre de modèles
-      trouvés et la réserve.
-- [ ] Retirer une clé grise les modèles de ce fournisseur-là, et n'efface ni image ni dépense.
-- [ ] Un fournisseur injoignable grise ses modèles à lui, jamais ceux d'un autre.
-- [ ] ComfyUI se détecte, son adresse se change, et le téléchargement des poids reprend après
-      une coupure.
-- [ ] Le dossier de travail se choisit, et l'écran dit ce qui s'y range.
-- [ ] Sur une machine où rien n'a été déposé, une image arrive quand même.
+- [x] La clé se pose depuis l'écran, et le bouton de vérification annonce le nombre de modèles
+      trouvés et la réserve. *`POST /api/install/check/{fournisseur}` compte le catalogue et lit
+      le solde ; la phrase est « **N modèles trouvés · il reste $X sur ce compte** ». Aucun
+      chiffre n'est écrit en dur — la planche en annonçait 49, la photo du catalogue en porte 51
+      aujourd'hui. Vu au navigateur avec une clé explicitement fictive, et l'aperçu ne montre
+      jamais plus de six caractères.*
+- [x] Retirer une clé grise les modèles de ce fournisseur-là, et n'efface ni image ni dépense.
+      *Acquis depuis `F3`, et **déjà mesuré** par
+      `tests/test_f3.py::test_retirer_grise_ses_modeles_et_n_efface_rien` — non redoublé,
+      cité. Revu au navigateur : le catalogue passe à « 2 grisés » et la mesure du disque ne
+      bouge pas d'un octet.*
+- [x] Un fournisseur injoignable grise ses modèles à lui, jamais ceux d'un autre. *Acquis depuis
+      `F1`, mesuré par `test_ce_qui_manque_a_un_fournisseur_grise_ses_modeles_et_eux_seuls` et
+      `test_couper_un_seul_fournisseur_ne_touche_pas_a_l_autre`. `B15` ajoute le cas de la
+      vérification : `test_verifier_un_fournisseur_ne_dit_rien_de_l_autre`.*
+- [x] ComfyUI se détecte, son adresse se change, et le téléchargement des poids reprend après
+      une coupure. *⚠️ **L'adresse ne se changeait pas du tout avant cette tranche** : un
+      commentaire de `maison.py` promettait `ATELIER_COMFY` depuis six jours, et rien ne la
+      lisait. Elle se règle maintenant par l'écran ou par l'environnement, et **prend effet sans
+      redémarrer** — le seul adaptateur gardé du dépôt est refabriqué quand son adresse ne
+      correspond plus. La reprise après coupure était déjà faite à l'octet près (`.part` +
+      en-tête `Range`) et déjà mesurée par `test_a11.py:695` ; elle a été revue à l'écran, où
+      deux clics font 7 → 6 → 5 fichiers.*
+- [x] Le dossier de travail se choisit, et l'écran dit ce qui s'y range. *Choisir **écrit une
+      adresse et ne déplace rien** : l'atelier la lit au démarrage suivant, l'ancien dossier
+      reste intact, et l'écran montre les deux chemins pour qu'une copie à la main soit
+      évidente. Un dossier absent est refusé et le créer est un second geste ; un dossier déjà
+      plein n'est pas un refus. Trois essais mesurent des **absences** — rien de déplacé, rien
+      de copié, rien d'effacé, et aucune route d'installation qui efface.*
+- [x] Sur une machine où rien n'a été déposé, une image arrive quand même. *Acquis depuis `F1`
+      et mesuré par `test_sans_aucune_cle_le_defaut_glisse_vers_le_gratuit_et_l_image_arrive`.
+      L'écran le dit désormais en toutes lettres, à l'étape 1 comme à l'étape 2 : le gratuit
+      répond déjà, et il reste le filet quand le reste tombe.*
 
 ### Bloquée par
 
-- `B0`
+- `B0` — tenue.
+
+### Sa conception, jugée avant la première ligne
+
+Le relevé — qui a trouvé que le tiroir à secrets et le grisé par fournisseur étaient **déjà
+entiers**, et que l'adresse de ComfyUI ne se réglait **pas du tout** —, la décision qui commande
+la tranche (*on choisit un dossier, on ne déménage rien*), les dix arbitrages, le découpage en
+quatre morceaux et les six défauts que le navigateur a trouvés sont dans `docs/tranches/V4.md`
+§ B15. *Écrits le 9 septembre 2026.* **Les quatre morceaux sont tenus le même jour** ; le compte
+rendu est au même endroit.
 
 ---
 

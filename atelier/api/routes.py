@@ -48,6 +48,7 @@ from atelier.domaine.superposition import (
 )
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.image import rendre_en_png, vignette
+from atelier import reglages
 from atelier.reglages import deposer_secret, retirer_secret
 from atelier.services import Atelier
 from atelier.services.assets import AssetInconnu, TRACE_MAX
@@ -274,6 +275,146 @@ async def regler_agent(requete: Request, corps: CorpsAgent) -> dict[str, Any]:
     champs = {c: v for c, v in corps.model_dump().items() if v is not None}
     atelier.agent.regler(**champs)
     return atelier.agent.en_json()
+
+
+# ── L'installation de la machine (B15) ───────────────────────────────────────
+#
+# **Sept routes, et aucune ne déplace ni n'efface quoi que ce soit.** Elles
+# posent une adresse, examinent un chemin, créent un dossier vide quand on le
+# leur demande explicitement, et mesurent. Le dossier de travail choisi prend
+# effet **au démarrage suivant** : rien ne bouge sur le disque, et revenir en
+# arrière c'est retaper l'ancien chemin (`docs/tranches/V4.md` § B15).
+#
+# ⚠️ **Aucune valeur de secret ne passe par ici.** Les trois routes qui touchent
+# aux clés sont plus haut, inchangées depuis F3, et elles ne rendent jamais
+# qu'un aperçu de six caractères.
+
+
+class CorpsChemin(BaseModel):
+    """Un chemin de dossier, tapé à la main.
+
+    **Dans le corps, jamais dans l'adresse.** Un chemin de disque désigne la
+    machine de quelqu'un ; il n'a rien à faire dans une URL, où il finirait dans
+    les journaux du serveur et l'historique du navigateur.
+    """
+
+    chemin: str = Field(min_length=1, max_length=4096)
+
+
+class CorpsAdresse(BaseModel):
+    adresse: str = Field(min_length=1, max_length=512)
+
+
+@routeur.get("/install")
+async def lire_l_installation(requete: Request) -> dict[str, Any]:
+    """Les quatre étapes, **en un seul aller-retour**.
+
+    Le dossier et ce qu'il porte, où le fichier de secrets habite, où ComfyUI
+    est cherché, les jeux déjà là, et *le tour doit-il se dérouler tout seul*.
+    Quatre appels auraient laissé le sommaire annoncer un état et l'étape
+    ouverte en montrer un autre.
+    """
+    return _atelier(requete).installation.etat().en_json()
+
+
+@routeur.post("/install/workspace/check")
+async def examiner_le_dossier(requete: Request, corps: CorpsChemin) -> dict[str, Any]:
+    """Ce qu'un chemin est — **et rien n'y est écrit de définitif**.
+
+    La seule écriture est un fichier temporaire posé puis retiré, pour savoir si
+    l'atelier pourra vraiment écrire là : `os.access` ment sur Windows, et un
+    dossier annoncé inscriptible qui ne l'est pas se découvre à la première
+    image reçue, c'est-à-dire après avoir payé.
+    """
+    return _atelier(requete).installation.examiner(corps.chemin).en_json()
+
+
+@routeur.put("/install/workspace")
+async def poser_le_dossier(requete: Request, corps: CorpsChemin) -> dict[str, Any]:
+    """Choisir où l'atelier rangera tout — **à partir du prochain démarrage**.
+
+    Elle n'écrit qu'une ligne dans `installation.json`. **Rien n'est déplacé,
+    rien n'est copié, rien n'est effacé** : ce qui est déjà rangé reste où il
+    est, et l'écran le dit avec les deux chemins côte à côte.
+
+    Un chemin inutilisable est **refusé**, avec sa raison — et pas créé en
+    silence : sur Windows un chemin se tape à la main, et un `mkdir` obligeant
+    sèmerait des dossiers vides à la première faute de frappe. Créer est un
+    autre appel, et l'écran en fait un autre bouton.
+    """
+    dossier = _atelier(requete).installation.poser_dossier(corps.chemin)
+    if not dossier.utilisable:
+        raise ErreurAtelier(dossier.refus or "ce dossier ne convient pas", ou_aller="reglages")
+    return {
+        "dossier": dossier.en_json(),
+        "installation": _atelier(requete).installation.etat().en_json(),
+    }
+
+
+@routeur.post("/install/workspace/create")
+async def creer_le_dossier(requete: Request, corps: CorpsChemin) -> dict[str, Any]:
+    """Faire exister un dossier vide — **et ne rien poser dessus**.
+
+    Deux gestes pour deux effets : celui-ci crée, l'autre décide. Les confondre
+    ferait d'une faute de frappe un dossier semé quelque part *et* un atelier
+    qui pointe dessus.
+    """
+    return _atelier(requete).installation.creer_dossier(corps.chemin).en_json()
+
+
+@routeur.put("/install/comfy")
+async def poser_l_adresse_de_comfy(
+    requete: Request, corps: CorpsAdresse
+) -> dict[str, Any]:
+    """Où chercher ComfyUI. **Prend effet tout de suite**, sans redémarrage.
+
+    Contrairement au dossier de travail : rien n'est ouvert sur cette adresse,
+    il n'y a qu'un adaptateur à refabriquer. ⚠️ Avant `B15` cette adresse était
+    **en dur** — `ATELIER_COMFY` était cité par un commentaire et lu par
+    personne.
+    """
+    atelier = _atelier(requete)
+    return {
+        "comfy": atelier.installation.poser_comfy(corps.adresse),
+        "origine": reglages.origine_de_l_adresse(),
+    }
+
+
+@routeur.delete("/install/comfy")
+async def oublier_l_adresse_de_comfy(requete: Request) -> dict[str, Any]:
+    """Revenir à l'adresse d'origine sans avoir à la retaper."""
+    atelier = _atelier(requete)
+    return {
+        "comfy": atelier.installation.oublier_comfy(),
+        "origine": reglages.origine_de_l_adresse(),
+    }
+
+
+@routeur.post("/install/done")
+async def le_tour_est_fait(requete: Request) -> dict[str, Any]:
+    """Le tour a été passé ou terminé — **il ne se rouvrira plus tout seul**.
+
+    Passer et finir écrivent la même chose, et c'est voulu : la planche dit
+    *« il ne revient plus de lui-même, même si tout a été passé »*. Il se rouvre
+    par le pied du carnet, autant de fois qu'on veut.
+    """
+    atelier = _atelier(requete)
+    atelier.installation.tour_fait()
+    return atelier.installation.etat().en_json()
+
+
+@routeur.post("/install/check/{fournisseur}")
+async def verifier_un_fournisseur(requete: Request, fournisseur: str) -> dict[str, Any]:
+    """*Ce compte-là ouvre quoi ?* — le bouton **Vérifier**.
+
+    Rend le nombre de modèles vraiment servis et ce qu'il reste sur le compte,
+    en une phrase. ⚠️ **Jamais la valeur du secret**, ni entière ni tronquée :
+    l'aperçu de six caractères vit ailleurs, et il ne passe pas par ici.
+
+    **Ne lève pas** quand le fournisseur ne répond pas ou refuse la clé : c'est
+    précisément ce que le bouton sert à découvrir, et l'écran l'écrit à côté.
+    """
+    return (await _atelier(requete).fournisseurs.verifier(fournisseur)).en_json()
 
 
 # ── Le catalogue ─────────────────────────────────────────────────────────────

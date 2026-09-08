@@ -78,8 +78,15 @@ from atelier.fournisseur.port import ClipProduit, EtatTravail
 # ── Où ComfyUI écoute ────────────────────────────────────────────────────────
 #
 # Le port par défaut de ComfyUI, et il ne se règle pas ici : le produit ne
-# choisit pas où une application tierce écoute. `ATELIER_COMFY` le déplace pour
-# ceux qui l'ont déplacé, et c'est tout ce que le produit a à en savoir.
+# choisit pas où une application tierce écoute.
+#
+# ⚠️ **Ce commentaire a menti pendant six jours.** Il annonçait qu'`ATELIER_COMFY`
+# déplaçait l'adresse « pour ceux qui l'ont déplacée » — et le relevé de `B15` a
+# trouvé que ce nom n'était lu **nulle part** dans le dépôt : une seule
+# occurrence, celle-ci. L'adresse était en dur, et rien ne la changeait. Depuis
+# `B15` elle se règle vraiment, par `atelier.reglages.adresse_comfy()`, qui
+# reçoit cette valeur-ci en défaut : l'environnement d'abord (`ATELIER_COMFY`),
+# puis `installation.json`, puis ce port-là.
 BASE_PAR_DEFAUT = "http://127.0.0.1:8188"
 
 NOM = "Maison"
@@ -353,6 +360,17 @@ class MoteurDeLaMaison:
         # C'est écrit dans la phrase que l'écran affiche — une attente s'annonce
         # « environ », comme un prix.
         self._deja_tire = False
+
+    @property
+    def adresse(self) -> str:
+        """Où cet exemplaire-ci parle. **Sans barre oblique finale.**
+
+        Lue par `_maison()` (`atelier/services/__init__.py`) pour savoir si
+        l'objet gardé est encore celui de l'adresse réglée : c'est le seul
+        moyen qu'un changement d'adresse agisse sur un adaptateur qui, lui, se
+        garde exprès.
+        """
+        return self._base
 
     @property
     def premier_tirage(self) -> bool:

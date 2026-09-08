@@ -20,11 +20,11 @@ from typing import Any, Callable
 
 from atelier.depot import Base, Fichiers
 from atelier.fournisseur import OpenRouter, Pollinations, PortFournisseur
-from atelier.fournisseur.maison import MoteurDeLaMaison
+from atelier.fournisseur.maison import BASE_PAR_DEFAUT, MoteurDeLaMaison
 from atelier.fournisseur.openrouter_video import OpenRouterVideo
 from atelier.fournisseur.port import PortAnimateur
 from atelier.fournisseur.openrouter import CLE
-from atelier.reglages import lire_secret
+from atelier.reglages import adresse_comfy, lire_secret
 from atelier.services.agent import (
     DepotRefuse,
     GardeFous,
@@ -55,6 +55,7 @@ from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
 from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.generation import ServiceGenerations
+from atelier.services.installation import ServiceInstallation
 from atelier.services.montage import ServiceMontage
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.equipement import ServiceEquipement
@@ -183,10 +184,19 @@ def _maison() -> PortAnimateur:
     Garder l'objet ne garde pas sa réponse : `catalogue_video` revisite à chaque
     relecture du catalogue, et la route de l'écran revisite à chaque peinture.
     L'auteur qui vient d'allumer ComfyUI voit donc le grisé tomber.
+
+    ⚠️ **Et il se refabrique quand son adresse change** (`B15`). C'est la seule
+    entorse au paragraphe ci-dessus, et elle est nécessaire : garder un objet
+    construit sur `127.0.0.1:8188` après que l'auteur a posé une autre adresse
+    aurait fait un réglage qui s'écrit et qui n'agit pas — le pire des deux.
+    La comparaison ne coûte rien et ne déclenche rien dans le cas normal, où
+    l'adresse ne bouge jamais : ce que la classe promet de garder, elle le
+    garde.
     """
     global _LA_MAISON
-    if _LA_MAISON is None:
-        _LA_MAISON = MoteurDeLaMaison()
+    voulue = adresse_comfy(BASE_PAR_DEFAUT).rstrip("/")
+    if _LA_MAISON is None or getattr(_LA_MAISON, "adresse", "") != voulue:
+        _LA_MAISON = MoteurDeLaMaison(voulue)
     return _LA_MAISON
 
 
@@ -295,6 +305,14 @@ class Atelier:
         # c'est la décision durable de la V3, et elle se lit dans cette ligne :
         # ni projet, ni catalogue, ni fournisseur ne lui sont passés.
         self.mouvements = ServiceMouvements(self.fichiers)
+        # **L'installation de la machine (B15), au même rang et pour la raison
+        # inverse** : les trois au-dessus n'appartiennent à aucun jeu ; celui-ci
+        # n'appartient même pas à l'atelier — il décrit la machine. Il lit la
+        # bibliothèque pour une seule question, et elle décide de tout le reste :
+        # *cet atelier a-t-il déjà des jeux ?* Sans elle, le tour du propriétaire
+        # pourrait s'ouvrir en plein écran chez quelqu'un qui travaille depuis un
+        # mois.
+        self.installation = ServiceInstallation(self.fichiers, self.bibliotheque)
         # **Après la bibliothèque et les assets, comme le slicer, et pour la
         # même raison** : le plan, les personnages et la matrice ne fabriquent
         # aucune image. Ni catalogue, ni fournisseur — c'est ce qui fait que

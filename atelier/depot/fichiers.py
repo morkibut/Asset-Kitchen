@@ -49,7 +49,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Iterator
 
-from atelier.reglages import DONNEES
+from atelier.reglages import DONNEES, dossier_de_travail  # noqa: F401  (DONNEES : lu par les essais)
 
 # `.env` s'écrit en UTF-16 quand PowerShell le crée avec `>` (voir
 # `docs/PIEGES.md`). Ces fichiers-ci sont écrits par le produit, donc en UTF-8 —
@@ -61,7 +61,13 @@ ENCODAGES = ("utf-8", "utf-8-sig", "utf-16", "latin-1")
 
 class Fichiers:
     def __init__(self, racine: Path | None = None) -> None:
-        self.racine = racine or DONNEES
+        # **Le seul endroit du produit qui décide où tout se range** — et depuis
+        # `B15`, l'endroit se choisit. `dossier_de_travail()` rend `donnees/` à
+        # côté de l'application tant que personne n'a rien posé, si bien qu'un
+        # atelier qui n'a jamais vu l'écran d'installation se comporte
+        # exactement comme avant. Un essai qui passe `racine` ne le consulte
+        # même pas.
+        self.racine = racine or dossier_de_travail()
         self.generations = self.racine / "generations"
         self.projets = self.racine / "projets"
         self.catalogue = self.racine / "catalogue.json"

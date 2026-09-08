@@ -3703,6 +3703,84 @@ export type Tiroir = {
   pret: boolean
 }
 
+// ── L'installation de la machine (B15) ──────────────────────────────────────
+//
+// ⚠️ **Aucun de ces types ne porte une valeur de secret.** Le tiroir ci-dessus
+// est le seul qui approche un secret, et il n'en montre que six caractères.
+
+/** Le verdict porté sur un chemin, **avant qu'on y range quoi que ce soit**.
+ *
+ *  Les quatre faits séparément, parce que l'écran en fait trois choses : un
+ *  dossier absent se propose à la création, un dossier non inscriptible ne se
+ *  propose pas du tout, et un dossier déjà plein n'est pas un refus — c'est
+ *  même le cas normal quand on revient sur ses pas après avoir copié ses
+ *  fichiers à la main. */
+export type DossierDeTravail = {
+  chemin: string
+  existe: boolean
+  est_un_dossier: boolean
+  inscriptible: boolean
+  /** Ce que l'atelier y range et qui s'y trouve déjà. Vide : un dossier neuf. */
+  contenu: string[]
+  utilisable: boolean
+  /** Ce qui empêche, en clair, ou `null`. Trois refus, jamais un seul mot pour
+   *  les trois : ils ne se réparent pas du même geste. */
+  refus: string | null
+}
+
+/** Une ligne de la mesure du disque. `recalculable` est la seule colonne qui
+ *  compte : une image reçue a été payée et ne se refait pas, un rendu se refait
+ *  en millisecondes depuis elle. */
+export type PosteDuDisque = {
+  nom: string
+  octets: number
+  mo: number
+  recalculable: boolean
+}
+
+export type DisqueDeLAtelier = {
+  postes: PosteDuDisque[]
+  total_mo: number
+  /** Ce qu'un nettoyage libérerait. ⚠️ **`B15` mesure, elle n'efface pas** — le
+   *  bouton *Vider les rendus* de la planche n'est pas construit. */
+  recalculable_mo: number
+}
+
+/** Ce que l'écran des quatre étapes affiche, pris au même instant. */
+export type EtatInstallation = {
+  /** Le dossier où tout se range aujourd'hui, tel qu'il est vraiment résolu. */
+  dossier: string
+  /** `environnement` | `fichier` | `defaut` — qui a décidé de ce dossier-là. */
+  origine_du_dossier: string
+  /** Le dossier réglé pour le **prochain** démarrage, quand il n'est pas celui
+   *  d'aujourd'hui — et la chaîne vide le reste du temps. Choisir un dossier
+   *  écrit une adresse et ne déplace rien : entre le clic et le redémarrage,
+   *  l'atelier écrit dans `dossier` et rangera dans celui-ci. */
+  dossier_au_prochain_demarrage: string
+  disque: DisqueDeLAtelier
+  /** Où le fichier de secrets habite. **Il ne suit pas le dossier de travail.** */
+  fichier_env: string
+  comfy: string
+  origine_de_l_adresse: string
+  /** Le tour du propriétaire doit-il se dérouler tout seul ? Faux dès que
+   *  l'atelier a produit quoi que ce soit, ou dès qu'on l'a passé une fois. */
+  premiere_ouverture: boolean
+  jeux: string[]
+}
+
+/** Le résultat du bouton *Vérifier* — **et jamais la valeur essayée**. */
+export type VerificationDuFournisseur = {
+  fournisseur: string
+  joignable: boolean
+  modeles: number
+  /** Une phrase, pas un nombre : un fournisseur compte en dollars, un autre en
+   *  jetons, un troisième ne compte rien. */
+  reserve: string | null
+  raison: string | null
+  /** Ce que l'écran écrit sur une ligne, déjà composé par le serveur. */
+  phrase: string
+}
+
 /** Le cadre de l'agent — ce que l'auteur lui a laissé faire (US-91).
  *
  *  Chaque garde-fou porte **son interrupteur et sa valeur séparément** : les
@@ -3929,6 +4007,69 @@ export const api = {
     appeler<{ tiroirs: Tiroir[] }>(`/settings/keys/${encodeURIComponent(nom)}`, {
       method: "DELETE",
     }),
+
+  // ── L'installation de la machine (B15) ────────────────────────────────────
+  //
+  // **Rien ici ne transporte une valeur de secret.** Les deux fonctions
+  // ci-dessus sont les seules qui en envoient une, et aucune n'en relit : le
+  // serveur ne rend jamais qu'un aperçu de six caractères.
+
+  /** Les quatre étapes en un seul aller-retour — le dossier, le fichier de
+   *  secrets, ComfyUI, les jeux déjà là. Quatre appels auraient laissé le
+   *  sommaire annoncer un état et l'étape ouverte en montrer un autre. */
+  installation: () => appeler<EtatInstallation>("/install"),
+
+  /** Ce qu'un chemin est, **sans rien y écrire de définitif**. Le chemin voyage
+   *  dans le corps et jamais dans l'adresse : un chemin de disque désigne la
+   *  machine de quelqu'un, il n'a rien à faire dans une URL. */
+  examinerLeDossier: (chemin: string) =>
+    appeler<DossierDeTravail>("/install/workspace/check", {
+      method: "POST",
+      body: JSON.stringify({ chemin }),
+    }),
+
+  /** Choisir où l'atelier rangera tout — **à partir du prochain démarrage**.
+   *  Rien n'est déplacé, rien n'est copié, rien n'est effacé. */
+  poserLeDossier: (chemin: string) =>
+    appeler<{ dossier: DossierDeTravail; installation: EtatInstallation }>(
+      "/install/workspace",
+      { method: "PUT", body: JSON.stringify({ chemin }) },
+    ),
+
+  /** Faire exister un dossier vide — **et ne rien poser dessus**. Deux gestes
+   *  pour deux effets : les confondre ferait d'une faute de frappe un dossier
+   *  semé quelque part *et* un atelier qui pointe dessus. */
+  creerLeDossier: (chemin: string) =>
+    appeler<DossierDeTravail>("/install/workspace/create", {
+      method: "POST",
+      body: JSON.stringify({ chemin }),
+    }),
+
+  /** Où chercher ComfyUI. **Prend effet tout de suite**, sans redémarrage —
+   *  contrairement au dossier de travail : rien n'est ouvert sur cette adresse. */
+  poserLAdresseDeComfy: (adresse: string) =>
+    appeler<{ comfy: string; origine: string }>("/install/comfy", {
+      method: "PUT",
+      body: JSON.stringify({ adresse }),
+    }),
+
+  /** Revenir à l'adresse d'origine sans avoir à la retaper. */
+  oublierLAdresseDeComfy: () =>
+    appeler<{ comfy: string; origine: string }>("/install/comfy", {
+      method: "DELETE",
+    }),
+
+  /** Le tour a été passé ou terminé — il ne se rouvrira plus tout seul. */
+  tourFait: () => appeler<EtatInstallation>("/install/done", { method: "POST" }),
+
+  /** *Ce compte-là ouvre quoi ?* — le bouton **Vérifier**. Rend le nombre de
+   *  modèles vraiment servis et ce qu'il reste sur le compte, en une phrase.
+   *  ⚠️ **Jamais la valeur du secret**, sous aucune forme. */
+  verifierLeFournisseur: (fournisseur: string) =>
+    appeler<VerificationDuFournisseur>(
+      `/install/check/${encodeURIComponent(fournisseur)}`,
+      { method: "POST" },
+    ),
 
   generer: (corps: {
     modele: string

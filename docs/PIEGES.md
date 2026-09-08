@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent quatre-vingts pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent quatre-vingt-sept pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1620,3 +1620,44 @@ la prochaine réécriture retrouvera.
   seulement celui qu'on vient de nommer (`ServiceMontage.ecarter` appelle `purger()`) : une
   puce « N écartée(s) » posée au montage peut donc disparaître pour de bon après un clic fait
   ailleurs sur le même écran. Payé le 9 septembre 2026, en `B11`.
+- **`GET /api/clips/engine` retrouve le moteur de la maison *par son nom*, pas par sa place.**
+  `atelier/api/animation.py::_moteur` parcourt les animateurs montés et compare
+  `porte.nom` à `atelier.fournisseur.maison.NOM` (`"Maison"`) ; s'il ne le trouve pas, il lève
+  un `HTTPException` 404. Un atelier d'essai qui monte un animateur double appelé autrement —
+  « Muet », par exemple — fait donc répondre 404 à une route qui existe, et l'écran affiche un
+  message de machine. ⚠️ **Aucun essai d'écran ne peut le voir** : ils doublent `fetch` et
+  servent la réponse qu'ils veulent. Un atelier jetable qui veut montrer l'étape ComfyUI doit
+  nommer son double `NOM_MAISON` et lui donner `visiter()` et `telecharger()`. Payé en
+  vérifiant au navigateur le 9 septembre 2026, en `B15`.
+- **Un refus levé par `HTTPException(detail={"raison": ...})` arrive à l'écran en langage de
+  machine.** Le client (`interface/src/api.ts`, `appeler()`) lit `charge?.raison` **à la
+  racine** de la charge, et retombe sinon sur `l'atelier a répondu ${status}`. Les
+  `ErreurAtelier` passent bien — le gestionnaire d'exceptions de `app.py` les met à plat —,
+  mais FastAPI emballe le détail d'une `HTTPException` dans `detail`, et la raison est perdue.
+  Une route qui veut être comprise doit lever une `ErreurAtelier`, pas une `HTTPException`.
+  Relevé le 9 septembre 2026, en `B15` ; la seule occurrence atteignable date d'`A11`.
+- **Le serveur met la virgule dans ses *phrases*, jamais dans ses *nombres*.**
+  `maison.py::_virgule` écrit « il manque 26,5 Go » ; le même objet JSON rend `go: 8.7`,
+  `memoire_libre_go: 6.9`, `go_a_telecharger: 26.5` — nus, avec le point du JSON. Un écran qui
+  interpole ces nombres directement affiche les deux notations à deux lignes d'écart. ⚠️ **Un
+  essai d'écran ne l'attrape pas** : il assertait la chaîne telle qu'elle sortait, donc il
+  confirmait la faute. Tout nombre servi par le serveur et destiné à être lu passe par un
+  formateur — voir `Installation.tsx::gigas` et `::mesureDuDisque`. Payé au navigateur le
+  9 septembre 2026, en `B15`.
+- **Un libellé de navigation ne se compose pas à partir d'un titre.** `Revenir à ${titre}` et
+  `Passer à ${titre}` donnaient « revenir à les images » et « passer à les animations » : il
+  faudrait connaître le genre et l'article de chaque titre, ce qui ne se calcule pas. Chaque
+  étape porte ses phrases écrites à la main, à côté de son titre — c'est le même raisonnement
+  que `Secret.aucun` (F3), qui existe parce que le français a un genre. ⚠️ **Aucun essai ne
+  regardait ces boutons** : ils sont décoratifs jusqu'au jour où on les lit. Payé au navigateur
+  le 9 septembre 2026, en `B15`.
+- **Deux valeurs justes, assemblées, peuvent mentir.** `GET /api/install` rendait le dossier
+  **en service** (`Fichiers.racine`) et l'origine du **réglage** (`origine_du_dossier()`).
+  Chacune était exacte ; ensemble elles faisaient afficher l'ancien chemin sous la phrase « il
+  a été choisi ici », entre le clic de *Ranger ici* et le redémarrage — c'est-à-dire très
+  exactement pendant la fenêtre de temps où l'auteur se demande si son geste a servi. La
+  réponse porte maintenant les deux chemins séparément. ⚠️ **Et un champ « ce qui change au
+  prochain démarrage » ne se calcule pas en comparant deux chemins** : tous les essais du
+  dépôt et tous les ateliers jetables montent l'atelier sur une racine explicite, qui diffère
+  du défaut sans que personne n'ait rien choisi. Il faut un réglage réellement posé
+  (`origine != "defaut"`). Payé au navigateur le 9 septembre 2026, en `B15`.

@@ -20,14 +20,36 @@ voir `docs/PIEGES.md`.
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
+from typing import Any
 
 from atelier.domaine.secret import EtatSecret
 
 RACINE = Path(__file__).resolve().parent.parent
 DONNEES = RACINE / "donnees"
 FICHIER_ENV = RACINE / ".env"
+
+# **Les réglages de la machine, et jamais un secret** (B15). Un second fichier à
+# la racine, à côté de `.env` et jamais versionné comme lui — mais il ne porte
+# rien qui se cache : le dossier de travail, l'adresse de ComfyUI, et *le tour
+# a-t-il été fait*. Trois choses, et pas une de plus.
+#
+# ⚠️ **Il vit hors du dossier qu'il désigne**, forcément : un pointeur rangé dans
+# ce qu'il pointe ne se retrouve plus quand on change d'adresse.
+FICHIER_INSTALLATION = RACINE / "installation.json"
+
+# Les deux places d'environnement de l'installation. **Elles passent devant le
+# fichier**, comme pour un secret et pour la même raison : ce que la machine
+# impose l'emporte sur ce que le produit a noté.
+DOSSIER_ENV = "ATELIER_DONNEES"
+COMFY_ENV = "ATELIER_COMFY"
+
+# ⚠️ **Le port par défaut de ComfyUI n'est pas écrit ici.** C'est l'adaptateur
+# qui sait où une application tierce écoute (`atelier.fournisseur.maison`), et
+# `adresse_comfy()` le reçoit en paramètre plutôt que de l'importer : deux
+# endroits qui déclareraient le même port finiraient par en déclarer deux.
 
 ENCODAGES = ("utf-8-sig", "utf-16", "utf-8", "latin-1")
 
@@ -143,3 +165,137 @@ def retirer_secret(nom: str) -> EtatSecret:
             ("\n".join(lignes) + "\n") if lignes else "", encoding="utf-8"
         )
     return etat_secret(nom)
+
+
+# ── L'installation de la machine (B15) ───────────────────────────────────────
+#
+# **Ce bloc ne touche à aucun secret.** Il porte ce qui décrit la machine et
+# non le compte : où l'atelier range ses fichiers, où ComfyUI écoute, et si le
+# tour du propriétaire a déjà été fait. Rien de ce qui passe par ici n'a besoin
+# d'être caché, et rien de ce qui est caché ne passe par ici.
+
+
+def _texte_du_fichier(chemin: Path) -> str | None:
+    """Le contenu d'un fichier de configuration, quel que soit son encodage.
+
+    Même précaution que pour `.env`, et pour la même raison : ces fichiers sont
+    écrits par le produit en UTF-8, mais rien n'empêche de les corriger à la
+    main au terminal — et PowerShell écrit en UTF-16 avec `>` et `Out-File`
+    (`docs/PIEGES.md`). Un fichier illisible n'est pas une panne : c'est un
+    réglage qu'on n'a pas, et le produit reprend ses valeurs par défaut.
+    """
+    if not chemin.is_file():
+        return None
+    octets = chemin.read_bytes()
+    for encodage in ENCODAGES:
+        try:
+            return octets.decode(encodage)
+        except (UnicodeDecodeError, UnicodeError):
+            continue
+    return None
+
+
+def lire_installation() -> dict[str, Any]:
+    """Les réglages de la machine, ou un dictionnaire vide. **Ne lève jamais.**
+
+    Un fichier absent, illisible ou abîmé rend `{}` : l'atelier doit s'ouvrir
+    sur ses valeurs par défaut plutôt que refuser de démarrer parce qu'un
+    réglage facultatif est mal formé. C'est la règle de `Fichiers._lire_json`,
+    appliquée un cran plus tôt — avant même qu'un dossier de travail existe.
+    """
+    texte = _texte_du_fichier(FICHIER_INSTALLATION)
+    if not texte:
+        return {}
+    try:
+        contenu = json.loads(texte)
+    except (json.JSONDecodeError, ValueError):
+        return {}
+    return contenu if isinstance(contenu, dict) else {}
+
+
+def poser_installation(**champs: Any) -> dict[str, Any]:
+    """Écrit un ou plusieurs réglages, **sans toucher aux autres**.
+
+    Même règle que `deposer_secret` : on relit, on remplace la sienne, on
+    recopie le reste. Un écran qui pose un champ à la fois ne doit pas effacer
+    ce qu'un autre vient d'écrire.
+
+    **Et le fichier s'écrit entièrement ou pas du tout** : on écrit à côté, puis
+    on renomme (`docs/PIEGES.md` — *un fichier qui fait foi s'écrit entièrement
+    ou pas du tout*). Un `installation.json` tronqué désignerait un dossier de
+    travail qui n'existe pas, et l'atelier ne s'ouvrirait plus.
+    """
+    reglages = lire_installation()
+    reglages.update(champs)
+    octets = json.dumps(reglages, indent=1, ensure_ascii=False).encode("utf-8")
+    FICHIER_INSTALLATION.parent.mkdir(parents=True, exist_ok=True)
+    provisoire = FICHIER_INSTALLATION.with_name(FICHIER_INSTALLATION.name + ".ecriture")
+    provisoire.write_bytes(octets)
+    os.replace(provisoire, FICHIER_INSTALLATION)
+    return reglages
+
+
+def _reglage(nom_env: str, cle: str) -> tuple[str, str]:
+    """La valeur d'un réglage de machine et **d'où elle vient**.
+
+    L'environnement d'abord, le fichier ensuite — l'ordre des secrets, pour la
+    raison des secrets : ce que la machine impose l'emporte sur ce que le
+    produit a noté, et l'écran doit pouvoir dire lequel des deux parle.
+    """
+    depuis_environnement = os.environ.get(nom_env, "").strip()
+    if depuis_environnement:
+        return depuis_environnement, "environnement"
+    valeur = str(lire_installation().get(cle) or "").strip()
+    if valeur:
+        return valeur, "fichier"
+    return "", "defaut"
+
+
+def dossier_de_travail() -> Path:
+    """Où l'atelier range tout — **le seul endroit du produit qui le décide**.
+
+    `Fichiers.__init__` est son unique lecteur, et c'est ce qui rend le dossier
+    déplaçable sans toucher un seul appel ailleurs.
+
+    ⚠️ **Le changement prend effet au prochain démarrage, et c'est délibéré.**
+    L'atelier construit son graphe d'objets une fois — la base SQLite est
+    ouverte sur un chemin, les services le tiennent — et rien n'est déplacé sur
+    le disque : ce qui est déjà rangé reste où il est. Poser une adresse est
+    donc un geste sans risque et réversible, là où déménager des gigaoctets
+    sous une base ouverte n'en serait pas un.
+    """
+    valeur, origine = _reglage(DOSSIER_ENV, "dossier")
+    return Path(valeur).expanduser() if origine != "defaut" else DONNEES
+
+
+def origine_du_dossier() -> str:
+    """`environnement` | `fichier` | `defaut` — ce que l'écran affiche à côté."""
+    return _reglage(DOSSIER_ENV, "dossier")[1]
+
+
+def adresse_comfy(defaut: str) -> str:
+    """Où ComfyUI écoute. **Le défaut vient de l'adaptateur**, jamais d'ici.
+
+    ⚠️ Avant `B15`, `ATELIER_COMFY` était cité par un commentaire de
+    `atelier/fournisseur/maison.py` et **lu par personne** : l'adresse était en
+    dur, et rien au monde ne la changeait. Le commentaire disait vrai depuis
+    cette fonction-ci.
+    """
+    valeur, origine = _reglage(COMFY_ENV, "comfy")
+    return valeur.rstrip("/") if origine != "defaut" else defaut
+
+
+def origine_de_l_adresse() -> str:
+    """`environnement` | `fichier` | `defaut`, comme pour le dossier."""
+    return _reglage(COMFY_ENV, "comfy")[1]
+
+
+def tour_deja_fait() -> bool:
+    """Le tour du propriétaire a-t-il déjà été passé sur cette machine ?
+
+    **Ce n'est que la moitié de la réponse.** L'autre moitié — *l'atelier
+    a-t-il déjà des jeux ?* — se lit sur le disque, et c'est le service de
+    l'installation qui les réunit : un fichier absent sur un atelier qui
+    travaille depuis un mois ne doit pas faire surgir un guide de bienvenue.
+    """
+    return bool(lire_installation().get("tour_fait"))

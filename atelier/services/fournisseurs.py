@@ -22,6 +22,8 @@ from __future__ import annotations
 from typing import Callable
 
 from atelier.domaine import Compte
+from atelier.domaine.erreurs import ErreurAtelier
+from atelier.domaine.installation import Verification
 from atelier.domaine.secret import Secret, Tiroir
 from atelier.fournisseur import PortFournisseur
 from atelier.reglages import etat_secret
@@ -100,6 +102,48 @@ class Fournisseurs:
             )
         return tiroirs
 
+    # ── La vérification (B15) ────────────────────────────────────────────────
+
+    async def verifier(self, nom: str) -> Verification:
+        """*Ce compte-là ouvre quoi ?* — le bouton **Vérifier** de l'installation.
+
+        Trois questions posées d'affilée, et l'ordre compte :
+
+        1. **Ce fournisseur a-t-il ce qu'il demande ?** Sinon on n'appelle rien :
+           sa phrase de manque est déjà la bonne réponse, et c'est la même que
+           celle qui grise ses modèles.
+        2. **Combien de modèles sert-il vraiment ?** On relit son catalogue, on
+           ne recopie pas la photo : *un chiffre affiché est un chiffre compté*.
+           ⚠️ Chez OpenRouter le catalogue est **public** — ce compte-là ne
+           prouve donc pas la clé, et c'est la question suivante qui la prouve.
+        3. **Que reste-t-il sur le compte ?** `solde()` est optionnel sur le
+           port, comme `compte()` et `secrets()` avant lui : un fournisseur qui
+           ne sait pas répondre n'écrit pas de méthode pour le dire.
+
+        **Ne lève jamais.** Un fournisseur injoignable ou une clé refusée sont
+        des états que l'écran doit afficher, pas des pannes — et c'est très
+        exactement ce que le bouton sert à découvrir.
+        """
+        fournisseur = self.de(nom)
+        vrai_nom = getattr(fournisseur, "nom", nom)
+        manque = indisponible_de(fournisseur)
+        if manque:
+            return Verification(vrai_nom, False, 0, raison=manque)
+
+        try:
+            modeles = len(await fournisseur.catalogue())
+        except ErreurAtelier as erreur:
+            return Verification(vrai_nom, False, 0, raison=erreur.raison)
+
+        try:
+            reserve = await solde_de(fournisseur)
+        except ErreurAtelier as erreur:
+            # **Le compte de modèles est perdu pour l'affichage, et c'est juste** :
+            # une clé refusée est la seule nouvelle de cet écran-là.
+            return Verification(vrai_nom, False, modeles, raison=erreur.raison)
+
+        return Verification(vrai_nom, True, modeles, reserve=reserve)
+
     def secret(self, nom: str) -> Secret | None:
         """La place qui porte ce nom d'environnement, chez n'importe lequel.
 
@@ -134,6 +178,18 @@ def secrets_de(fournisseur: PortFournisseur) -> tuple[Secret, ...]:
     """
     geste = getattr(fournisseur, "secrets", None)
     return tuple(geste()) if callable(geste) else ()
+
+
+async def solde_de(fournisseur: PortFournisseur) -> str | None:
+    """Ce qu'il reste sur le compte de celui-ci, ou `None` (B15).
+
+    Optionnel sur le port pour la raison exacte d'`indisponible_de` : un
+    fournisseur qui ne tient aucun compte — Pollinations, le moteur de la
+    maison — n'a pas à écrire une méthode pour dire qu'il n'en tient pas, et
+    aucun double d'essai du dépôt n'a eu à changer.
+    """
+    geste = getattr(fournisseur, "solde", None)
+    return await geste() if callable(geste) else None
 
 
 def compte_de(fournisseur: PortFournisseur) -> Compte | None:

@@ -67,6 +67,19 @@ export type Lieu =
   // de *création*, lui, n'est pas ici — il prend la fenêtre entière, avant même
   // qu'un jeu soit ouvert, comme l'ouverture de `B4`.
   | { genre: "regles" }
+  // L'installation de la machine (`B15`) — **le seul lieu qui ne parle d'aucun
+  // jeu**. Les clés, ComfyUI, le dossier de travail : ce qu'on branche une fois
+  // et qui vaut pour tous les jeux de cette machine.
+  //
+  // **Elle se pose sur n'importe quelle racine**, comme `depenses` et `regles` :
+  // on la rouvre du pied du carnet, d'où qu'on vienne. Les quatre étapes ne sont
+  // pas quatre lieux (§ *Ce qui n'est pas un lieu*, en tête de ce fichier) — on
+  // ne les descend pas, on les choisit.
+  //
+  // ⚠️ **Le tour de première ouverture, lui, n'est pas ici** : il prend la
+  // fenêtre entière avant même qu'un jeu soit ouvert, comme l'ouverture de `B4`
+  // et le parcours de création de `B14`.
+  | { genre: "installation" }
   | { genre: "sujet"; sujet: string }
   | { genre: "case"; asset: string }
   | { genre: "tables"; asset: string }

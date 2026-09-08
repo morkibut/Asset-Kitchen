@@ -11,6 +11,85 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B15 — l'installation — 9 septembre 2026
+
+**Ce qu'on branche une fois sur cette machine a enfin un écran** : le compte et la clé, ComfyUI,
+le dossier de travail, ce que le disque porte. Quatre étapes, deux modes — `Installation.tsx`
+reprend sans le discuter le motif de `B14` : en première ouverture il prend la fenêtre entière
+et s'ouvre tout seul sur un atelier neuf jamais visité ; rouvert par le pied du carnet, il
+s'ouvre sur le sommaire des quatre, carnet visible.
+
+**C'était la seule tranche du plan qui pose un secret et qui écrit sur le disque de quelqu'un**,
+et c'est ce qui a commandé chaque arbitrage.
+
+⚠️ **On choisit un dossier, on ne déménage rien.** Trois façons de tenir le geste, et la plus
+élégante était la pire : `shutil.move` sur des gigaoctets, avec une base SQLite ouverte dessus,
+sur Windows, pendant que le serveur tourne — un échec au milieu laisse la moitié des images d'un
+côté et l'index de l'autre. Ce qui est fait à la place : **poser une adresse**, que l'atelier lit
+au démarrage suivant. Rien ne bouge, rien ne s'efface, l'ancien dossier reste où il est, et
+revenir en arrière c'est retaper l'ancien chemin. L'écran montre les deux chemins pour qu'une
+copie à la main soit évidente. Trois essais mesurent des **absences** — rien de déplacé, rien de
+copié, rien d'effacé, et **aucune route d'installation qui efface**, lu sur la table de routage
+et non sur une intention.
+
+⚠️ **L'adresse de ComfyUI ne se changeait pas du tout.** Un commentaire de
+`atelier/fournisseur/maison.py` promettait `ATELIER_COMFY` depuis six jours ; la variable n'était
+lue nulle part, et `_maison()` construisait le moteur sans argument — adresse en dur. Elle se
+règle maintenant par l'écran ou par l'environnement, et **prend effet sans redémarrer** :
+`MoteurDeLaMaison` est le seul adaptateur gardé du dépôt (pour le grisé et le premier tirage), et
+`_maison()` compare son adresse à celle des réglages pour ne le refabriquer que si elles
+diffèrent — donc jamais dans le cas normal.
+
+**Rien ne s'efface, nulle part.** Le *Vider les rendus* de la planche n'est pas construit : le
+disque se **mesure**, poste par poste, en séparant ce qui a été payé de ce qui se refait tout
+seul, et l'écran écrit ce qu'un nettoyage libérerait. Une suppression de masse pilotée par un
+glob est exactement le geste que `docs/PIEGES.md` a déjà payé une fois, aucun critère ne la
+demande, et elle mérite sa tranche et ses essais à elle.
+
+**Trois des six critères étaient déjà tenus, et déjà mesurés, avant la première ligne** — le
+grisé par fournisseur (`F1`), le retrait d'une clé qui n'efface ni image ni dépense (`F3`),
+l'image qui arrive sans aucune clé (`F1`). Ils sont cités dans l'en-tête de `tests/test_b15.py`
+plutôt que redoublés : deux jeux d'essais sur le même fait finissent par ne plus dire la même
+chose.
+
+⚠️ **Le navigateur a trouvé six choses qu'aucun essai ne voyait**, sur `atelier_jetable_b15.py`.
+Deux fautes de français composées à partir d'un titre — *« Revenir à les images »*, *« Passer à
+les images »* : chaque étape porte maintenant ses deux phrases écrites à la main, parce que le
+français n'a pas de règle qui se calcule sans le genre et l'article. Un point décimal anglais à
+deux lignes d'une virgule française — *« il manque 26,5 Go »* puis *« 8.7 Go »* : le serveur met
+la virgule dans ses phrases et rend ses nombres nus. Une licence promise par le nom d'un essai
+et jamais affichée — elle est pourtant la question qu'on se pose **avant** de télécharger, parce
+que ce qui descend là finira dans un jeu vendu. *« Descendre les 1 fichiers »*. Et surtout : le
+dossier **en service** affiché sous l'origine du **réglage**, si bien qu'entre le clic et le
+redémarrage l'écran montrait l'ancien chemin avec la phrase « il a été choisi ici ». Chacune des
+deux valeurs, prise seule, était juste — c'est leur assemblage qui mentait, et il ne mentait que
+pendant la fenêtre de temps où l'auteur se demande justement si son geste a servi.
+
+**Le sixième défaut était dans l'essai, pas dans le produit** : le double d'animateur s'appelait
+« Muet » et `GET /api/clips/engine` retrouve le moteur *par son nom*. Il a montré au passage
+qu'un refus porté par `HTTPException(detail={"raison": …})` arrive à l'écran en langage de
+machine — `appeler()` lit `charge?.raison` à la racine, FastAPI l'emballe dans `detail`. Une
+seule est atteignable en pratique, elle vient d'`A11`, et elle est notée plutôt que corrigée
+ici.
+
+**Une chose reste non exercée, et elle est écrite en clair** : `OpenRouter.solde()` interroge
+`GET /credits` puis retombe sur `GET /key`, et **ces deux formes n'ont jamais parlé au vrai
+service** — aucun appel réel n'a été fait dans cette tranche. Quand rien ne se lit, la
+vérification annonce le compte de modèles et écrit *le solde n'a pas été lu*, ce qui est vrai,
+plutôt qu'un chiffre qui ne l'est pas.
+
+**Deux suites vertes** : 1 010 essais d'écran (+38), 1 719 côté serveur (+45 : les 44 de
+`tests/test_b15.py` et un cas paramétré de plus, `Installation.tsx` entrant dans
+`LES_FICHIERS_DU_CARNET`), `tsc -b` propre, le garde-fou de design sans reproche et les 1 595
+renvois de doc tous justes.
+
+⚠️ **Et un garde-fou resté rouge jusqu'au dernier moment** : `test_g1.py::test_aucun_numero_d_
+etape_n_est_ecrit_a_la_main` refusait les quatre bandeaux de section de `Installation.tsx`
+(« Étape 1 · Ce qui va être demandé »). C'est très exactement le défaut que `B14` avait déjà
+reproduit trois jours plus tôt, et pour lequel cet essai avait été élargi. Les bandeaux disent
+maintenant le nom de l'étape, comme ceux de `ReglesDuJeu.tsx` — un rang écrit à la main se
+décale quand une étape s'insère.
+
 ## V4 · B14 — les règles du jeu, en quatre étapes — 9 septembre 2026
 
 **Commencer un jeu se fait en quatre pas — son nom, son allure, sa vue, son monde — et le même

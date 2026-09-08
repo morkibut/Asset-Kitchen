@@ -97,6 +97,7 @@ import { EcranFamille } from "./composants/Famille"
 import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
 import { TableauDeBord } from "./composants/TableauDeBord"
 import { Ouverture } from "./composants/Ouverture"
+import { Installation } from "./composants/Installation"
 import { ReglesDuJeu } from "./composants/ReglesDuJeu"
 import {
   PILE_INITIALE,
@@ -338,6 +339,43 @@ export function App() {
   const reglesOuvertes = dans(pile, "regles")
   const setReglesOuvertes = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "regles" }) : sortir(p, "regles")))
+
+  /** L'installation de la machine (`B15`) — **le seul lieu qui ne parle d'aucun
+   *  jeu**. Les clés, ComfyUI, le dossier de travail : ce qu'on branche une fois
+   *  et qui vaut pour tous les jeux. Le pied du carnet l'ouvre, d'où qu'on
+   *  vienne — comme les dépenses et les règles.
+   *
+   *  ⚠️ **`EcranReglages` n'a pas disparu pour autant** : il porte encore les
+   *  garde-fous de l'agent et la bibliothèque de mouvements, que `B15` ne
+   *  reprend pas, et cinq autres portes y mènent. Seul le pied du carnet
+   *  bascule ici ; l'écran neuf porte un lien nommé vers l'ancien panneau. */
+  const installationOuverte = dans(pile, "installation")
+  const setInstallationOuverte = (ouvert: boolean) =>
+    setPile((p) =>
+      ouvert ? entrer(p, { genre: "installation" }) : sortir(p, "installation"),
+    )
+
+  /** Le tour du propriétaire doit-il se dérouler tout seul ? (`B15`)
+   *
+   *  **Le serveur seul décide**, sur deux faits : personne n'a jamais réglé
+   *  quoi que ce soit ici, et l'atelier n'a encore rien produit
+   *  (`ServiceBibliotheque.neuf()`, écrite en E19 et réemployée). Un atelier
+   *  injoignable ou une route absente rendent `false` : un guide de bienvenue
+   *  qui surgirait sur une erreur de réseau serait pire que pas de guide. */
+  const [tourAOuvrir, setTourAOuvrir] = useState(false)
+  const tourVu = useRef(false)
+  useEffect(() => {
+    let vivant = true
+    void api
+      .installation()
+      .then((recu) => {
+        if (vivant && recu.premiere_ouverture && !tourVu.current) setTourAOuvrir(true)
+      })
+      .catch(() => undefined)
+    return () => {
+      vivant = false
+    }
+  }, [])
 
   /** Le tableau de bord est **le seul lieu neuf de `B0`**, et il n'est pas un
    *  onglet : c'est le lieu du jeu entier, et le seul chemin de retour. Les
@@ -2667,6 +2705,13 @@ export function App() {
       case "regles":
         return "Les règles du jeu"
 
+      // L'installation (`B15`) — **un nom, pas quatre**, exactement pour la
+      // raison ci-dessus. Et le nom du jeu la précède quand même dans le fil :
+      // c'est le comportement des dépenses et des règles, qui s'ouvrent aussi
+      // de partout. Changer l'un demanderait de changer les trois.
+      case "installation":
+        return "L'installation"
+
       // *Inspiration* et non *Univers* : ce ne sont pas les mêmes images, et le
       // produit ne les confond nulle part.
       case "carte":
@@ -2933,6 +2978,32 @@ export function App() {
   // c'est elle qui crée le jeu. Le champ de nom en ligne qu'`Ouverture` portait
   // avant `B14` a disparu — il était l'étape du nom en plus petit, et à un autre
   // endroit.
+  // **Le tour du propriétaire prend la fenêtre entière, avant l'écran
+  // d'ouverture** (`B15`) — la planche le dit, et c'est le seul moment où il
+  // s'ouvre tout seul. Un troisième écran plein cadre s'ajoute donc aux deux du
+  // châssis (`docs/PLAN-carnet.md` § Le châssis), et pour la même raison
+  // qu'eux : il n'y a pas encore de jeu à montrer dans le carnet.
+  //
+  // ⚠️ **Il ne peut pas surgir chez quelqu'un qui travaille** : le serveur ne
+  // l'annonce que sur un atelier qui n'a rien produit *et* où le tour n'a jamais
+  // été passé. Le fermer l'écrit, et il ne revient plus de lui-même — on le
+  // rouvre par le pied du carnet.
+  if (tourAOuvrir) {
+    return (
+      <Installation
+        mode="premiere"
+        tiroirs={etat?.secrets ?? []}
+        modeles={modeles}
+        onTiroirs={() => void api.etat().then(setEtat).catch(() => undefined)}
+        onFerme={() => {
+          tourVu.current = true
+          setTourAOuvrir(false)
+        }}
+        onLesAutresReglages={() => setReglagesOuverts(true)}
+      />
+    )
+  }
+
   if (choixDuJeu === "creer") {
     return (
       <ReglesDuJeu
@@ -3056,7 +3127,11 @@ export function App() {
         surCommencerUnJeu={() => setChoixDuJeu("creer")}
         surLaBarre={ouvrirBarre}
         surLeGuide={() => ouvrirGuide()}
-        surLInstallation={() => setReglagesOuverts(true)}
+        /* **Le pied du carnet est la seule porte qui bascule sur le lieu neuf**
+           (`B15`). Les cinq autres mènent toujours à `EcranReglages`, qui porte
+           l'agent et les mouvements ; les repointer toutes aurait rendu l'agent
+           injoignable — la branche morte que `lieux.ts` raconte en tête. */
+        surLInstallation={() => setInstallationOuverte(true)}
         atelierMuet={!liaison}
         cleAbsente={etat ? !etat.secrets.some((t) => t.pret) : false}
       />
@@ -3168,6 +3243,30 @@ export function App() {
           onErreur={setPanne}
         />
       )}
+
+      {/* ── L'installation de la machine (`B15`) ────────────────────────────
+          **Le même écran que le tour de première ouverture, et les mêmes
+          écritures** — un fichier, deux modes, comme `B14`. Ce qui change est
+          ce qui l'entoure : ici le carnet reste visible, parce qu'on revient
+          régler une machine qui tourne.
+
+          Même ligne de grille et même chaîne de gardes que les règles : elle
+          n'appartient à aucune des quatre racines, et on la rouvre d'où qu'on
+          vienne. */}
+      {installationOuverte &&
+        !reglesOuvertes &&
+        !depensesOuvertes &&
+        !envoiOuvert &&
+        !clipOuvert && (
+          <Installation
+            mode="reglages"
+            tiroirs={etat?.secrets ?? []}
+            modeles={modeles}
+            onTiroirs={() => void api.etat().then(setEtat).catch(() => undefined)}
+            onFerme={() => setInstallationOuverte(false)}
+            onLesAutresReglages={() => setReglagesOuverts(true)}
+          />
+        )}
 
       {/* ── Commander un clip, entre la case et la dépense (A9) ────────────
           **La troisième surface d'où l'argent part**, et la V3 l'assume : on ne
