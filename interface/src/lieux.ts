@@ -81,6 +81,15 @@ export type Lieu =
   // et le parcours de création de `B14`.
   | { genre: "installation" }
   | { genre: "sujet"; sujet: string }
+  // La grille du jeu, et comparer (`B13`) — **deux profondeurs de la page d'un
+  // sujet**, atteintes depuis son bandeau d'onglets, comme la matrice l'était
+  // déjà avant `B10`. Aucune des deux ne porte d'écriture : la grille montre le
+  // sujet posé sur ses cases, comparer montre deux sujets — ou deux images d'un
+  // même sujet — côte à côte. Le second sujet choisi dans le comparateur est un
+  // état de l'écran, pas un second paramètre du lieu : revenir plus tard y
+  // retrouve la page qu'on avait ouverte, pas la comparaison qu'on y faisait.
+  | { genre: "grille"; sujet: string }
+  | { genre: "comparer"; sujet: string }
   | { genre: "case"; asset: string }
   | { genre: "tables"; asset: string }
   | { genre: "clip"; cible: CibleDuClip }

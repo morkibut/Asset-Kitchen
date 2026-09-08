@@ -122,6 +122,8 @@ import {
   type Rubrique,
 } from "./composants/Codex"
 import { PageDuSujet } from "./composants/PageDuSujet"
+import { GrilleDuJeu } from "./composants/GrilleDuJeu"
+import { Comparer } from "./composants/Comparer"
 import { EcranReglages } from "./composants/EcranReglages"
 import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
 import { FicheDuClip } from "./composants/FicheDuClip"
@@ -841,6 +843,18 @@ export function App() {
     setPile((p) =>
       asset ? entrer(p, { genre: "tables", asset }) : sortir(p, "tables"),
     )
+  /** La grille du jeu, et comparer (`B13`) — deux profondeurs de plus de la
+   *  page d'un sujet, ouvertes depuis son bandeau d'onglets. Ni l'une ni
+   *  l'autre ne dépense : aucune des deux n'a besoin de fermer la barre qui
+   *  paie, elles n'en reçoivent simplement pas. */
+  const grilleOuverte = lieu(pile, "grille")?.sujet ?? null
+  const setGrilleOuverte = (sujet: string | null) =>
+    setPile((p) => (sujet ? entrer(p, { genre: "grille", sujet }) : sortir(p, "grille")))
+  const comparerOuvert = lieu(pile, "comparer")?.sujet ?? null
+  const setComparerOuvert = (sujet: string | null) =>
+    setPile((p) =>
+      sujet ? entrer(p, { genre: "comparer", sujet }) : sortir(p, "comparer"),
+    )
   /** Les réglages de l'appel, repliés au pied de la barre qui paie. Le repli
    *  vit dans le registre du châssis comme tous les autres : il survit au
    *  changement d'onglet, qui démonte l'écran (E1). */
@@ -854,6 +868,13 @@ export function App() {
    *  ou renommé ferme donc l'établi, ou l'y suit, sans qu'on écrive un mot. */
   const choseOuverte =
     personnages.find((p) => p.identifiant === choseOuverteId) ?? null
+
+  /** Le sujet dont la grille du jeu, ou le comparateur, est ouvert — **relus
+   *  dans la liste vivante**, pour la même raison que `choseOuverte`. */
+  const sujetDeLaGrille =
+    personnages.find((p) => p.identifiant === grilleOuverte) ?? null
+  const sujetDuComparateur =
+    personnages.find((p) => p.identifiant === comparerOuvert) ?? null
 
   /** L'image dont l'outil est ouvert, **relue dans les cases de la chose**. Une
    *  image retirée de sa case referme donc l'outil, et une image retouchée s'y
@@ -2722,6 +2743,17 @@ export function App() {
         return chose ? chose.nom : null
       }
 
+      // La grille du jeu, et comparer (`B13`) — deux profondeurs de plus de
+      // la page d'un sujet, chacune avec son propre dernier nom.
+      case "grille": {
+        const chose = personnages.find((p) => p.identifiant === ou.sujet)
+        return chose ? [chose.nom, "Sur la grille du jeu"] : null
+      }
+      case "comparer": {
+        const chose = personnages.find((p) => p.identifiant === ou.sujet)
+        return chose ? [chose.nom, "Comparer"] : null
+      }
+
       case "case": {
         const image = choseOuverte?.cases
           .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
@@ -3959,7 +3991,7 @@ export function App() {
         )
       ) : null}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && !bandeOuverte && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && !bandeOuverte && !sujetDeLaGrille && !sujetDuComparateur && (
         /* **La page du sujet, et non plus sa matrice** (B10) : on arrive sur la
            chose, quatre onglets sur un seul écran. La matrice est devenue une
            profondeur de cette page — elle porte encore le vestiaire, les
@@ -4085,6 +4117,54 @@ export function App() {
           // le flux comme le reste du cadre de l'agent, donc le bouton
           // s'allume à l'instant où l'auteur pose le dossier dans l'autre écran.
           dossierJeu={etat?.agent.garde_fous.dossier_jeu ?? ""}
+          // **B13** — la grille du jeu et comparer, ouvertes depuis le
+          // bandeau d'onglets. Deux profondeurs de plus, comme la matrice.
+          onGrille={() => setGrilleOuverte(choseOuverte.identifiant)}
+          onComparer={() => setComparerOuvert(choseOuverte.identifiant)}
+        />
+      )}
+
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && sujetDeLaGrille && !bandeOuverte && (
+        /* **La grille du jeu** (B13) — une profondeur de plus de la page d'un
+           sujet, comme la matrice l'était déjà avant B10. Elle ne dépense
+           rien : pas de barre qui paie. */
+        <GrilleDuJeu
+          personnage={sujetDeLaGrille}
+          plan={plan}
+          univers={univers}
+          onFermer={() => setGrilleOuverte(null)}
+          onComparer={() => {
+            setGrilleOuverte(null)
+            setComparerOuvert(sujetDeLaGrille.identifiant)
+          }}
+        />
+      )}
+
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && sujetDuComparateur && !bandeOuverte && (
+        /* **Comparer** (B13) — deux sujets côte à côte, ou deux images d'un
+           même sujet. Elle non plus ne dépense rien. */
+        <Comparer
+          personnage={sujetDuComparateur}
+          personnages={personnages}
+          plan={plan}
+          univers={univers}
+          onFermer={() => setComparerOuvert(null)}
+          onGrille={() => {
+            setComparerOuvert(null)
+            setGrilleOuverte(sujetDuComparateur.identifiant)
+          }}
+          // **« La retoucher » peut viser l'image de l'autre sujet.** L'outil
+          // ne relit une image que dans les cases de `choseOuverte`
+          // (`imageOuverte`, plus haut) ; ouvrir la case sans changer de sujet
+          // laissait donc l'outil chercher une image absente de la page
+          // affichée, et rien ne s'ouvrait. Changer de sujet d'abord referme
+          // Comparer de lui-même — `entrer` coupe tout ce qui est plus
+          // profond que l'étage remplacé (`lieux.ts`) — ce qui est le geste
+          // juste : on va corriger l'image là où elle vit.
+          onOuvrirCase={(sujet, asset) => {
+            setChoseOuverte(sujet)
+            setCaseOuverte(asset)
+          }}
         />
       )}
 
