@@ -1273,7 +1273,32 @@ export type Main = { opacite: Trait[]; calques: CalqueDessin[] }
  *  travers. */
 export type Couche = "affinage" | "retouche"
 
-export type Recadrage = { marge: number; boite: number[] | null }
+/** Le format verrouillé pendant qu'on trace (B18) — vide ou absent veut dire
+ *  *libre*, le comportement d'avant. */
+export type FormatDeRecadrage = "" | "carre" | "2:1" | "3:4"
+
+/** Les six réglages de B18 sont **optionnels**, comme au domaine : une
+ *  absence vaut *neutre*, et c'est ce qui laisse `PanneauRecadrage`
+ *  (`Places.tsx`, l'écran de montage) et ses essais tels qu'ils sont écrits,
+ *  sans qu'aucun ne bascule un réglage qu'il n'a jamais posé. */
+export type Recadrage = {
+  marge: number
+  boite: number[] | null
+  /** **Un cadre de taille imposée** (B18) : `[largeur, hauteur]`, ou `null`/
+   *  absent quand aucune taille de sortie n'est demandée. */
+  taille?: [number, number] | null
+  format?: FormatDeRecadrage
+  /** **Le calage sur un multiple** (B18) — zéro ou absent veut dire aucun
+   *  calage. */
+  multiple?: 0 | 8 | 16 | 32
+  /** **Centré sur la masse** plutôt que sur le rectangle (B18). */
+  masse?: boolean
+  /** **La ligne de pied** (B18), en pixels de l'image d'origine — `null`/
+   *  absent veut dire *non posée*. */
+  ligne_pied?: number | null
+  /** **Le rognage d'un bord de couleur unie** (B18). */
+  bord_uni?: boolean
+}
 /** Les neuf points par lesquels une chose tient dans sa case (A7).
  *
  *  Deux jusque-là — `bas` et `centre` —, et ils gardent exactement leur sens :

@@ -899,7 +899,7 @@ livre seul.
 | Atelier | Existants | À écrire |
 |---|---|---|
 | Détourer | 8 | 5 — la couleur déclarée du jeu, la teinte plutôt que la valeur, la palette en garde-fou, le pinceau remonté en amont, la même passe sur les frames voisines |
-| Recadrer | 7 | 6 — taille imposée, format verrouillé, calage sur multiple, centré sur la masse, ligne de pied, rognage d'un bord uni |
+| Recadrer | 13 | 0 — **tenu** : taille imposée, format verrouillé, calage sur multiple, centré sur la masse, ligne de pied, rognage d'un bord uni. Les six sont des champs neufs de `Recadrage` (`atelier/domaine/recette.py`), du calcul pur dans `atelier/image/traitement.py`, câblés à l'écran dans `ReglagesDuRecadrage` (`Retouche.tsx`), essai à `tests/test_b18_recadrer.py` |
 | Pixéliser | 4 | 4 — sur les carrés du modèle, couleur dominante de case, médiane de case, lumière juste |
 | Couleurs | 7 | 9 — trame régulière, force du tramage, k-moyennes, octree, distance à l'œil, rampes d'ombre… |
 | Nettoyer | 2 | 9 — le relevé se contredit sur le compte (9, 11 ou 12) ; à trancher avant de chiffrer |
@@ -911,6 +911,36 @@ livre seul.
 portée et le raccord de tuile. Le pipeline déduit la taille finale de la seule boîte opaque du
 sujet — une ombre agrandit le canevas au-delà, et un raccord a besoin des pixels d'à côté.
 Ce sont des changements d'architecture, pas des fonctions de plus.
+
+### Recadrer — tenu, six décisions tranchées en écrivant
+
+Les six intitulés de la planche étaient elliptiques ; tranché sans remonter, comme demandé.
+
+- **Taille imposée** fait tenir le sujet *dans* `largeur × hauteur` en gardant ses proportions
+  (`object-fit: contain`), jamais étiré — la planche dit « agrandi ou réduit pour tenir », pas
+  « déformé ». `loger_dans` complète l'espace qui reste sur l'axe le plus court en transparent.
+- **Format verrouillé** ne rétrécit jamais le rectangle déjà décidé par le sujet, la boîte
+  tracée ou la marge : il grandit l'axe le plus court pour tenir le rapport (`carré`, `2:1`,
+  `3:4` — les trois que la planche nomme), borné par l'image plutôt que de sortir du cadre.
+- **Calage sur un multiple** n'avance que les bords bas et droit ; le coin haut-gauche, qui
+  porte déjà la marge et le format, ne bouge pas. Paliers `8 · 16 · 32`, comme la planche.
+- ⚠️ **Centré sur la masse ne change quelque chose que sur une taille imposée.** Le recadrage
+  seul ne fabrique jamais de rectangle plus grand que le sujet — il n'y a donc rien à répartir
+  tant qu'aucune taille de sortie n'impose un espace vide sur un axe. L'écran le dit quand
+  `masse` est activé sans `taille`.
+- **Ligne de pied** est en pixels de l'image d'origine, comme `boite` et le point d'une pipette
+  — même famille de coordonnées, même raison : la place se lit tôt dans la chaîne. Elle déplace
+  le rectangle sans changer sa hauteur ; elle ne s'hérite pas à la découpe (`decoupe.py`), pour
+  la même raison que `boite`.
+- **Rognage d'un bord de couleur unie** cherche le sujet par couleur (`boite_hors_bord_uni`,
+  médiane de la bordure comme `_couleur_du_bord`) et sert de recours quand l'image n'a pas
+  d'alpha utile — il ne remplace jamais `boite_opaque` quand l'alpha existe déjà.
+- ⚠️ **La taille imposée est avalée par `Pixéliser` comme l'est déjà la marge.** Quand une case
+  (`Grille`) est posée, elle refait sa propre recherche de boîte sur l'image déjà recadrée et
+  rogne dessus — c'est le même mécanisme mesuré le 30 août 2026 pour la marge
+  (`Recette.marge_sans_effet`). Non traité ici : recalculer et exposer cette interaction pour
+  les six réglages neufs aurait dépassé une tranche `[EASY]` ; un `taille_sans_effet` symétrique à
+  `marge_sans_effet` reste à écrire si l'usage le réclame.
 
 ### Critères d'acceptation
 

@@ -30,6 +30,7 @@ from atelier.domaine import (
 from atelier.domaine.catalogue import modele_en_json
 from atelier.domaine.recette import (
     AU_PLUS_PROCHE,
+    CANEVAS_MAX,
     CERCLES,
     CURSEUR_MAX,
     CURSEUR_MIN,
@@ -1033,8 +1034,28 @@ class CorpsPasse(BaseModel):
 
 
 class CorpsRecadrage(BaseModel):
+    """La table *Recadrer* — la boîte, la marge, et les six réglages de B18.
+
+    **Les six champs doivent exister ici même quand l'écran ne les pose pas**
+    (même leçon que `decalage` et `CorpsQuantification` juste au-dessus) :
+    ce corps porte la recette entière à chaque changement d'un autre réglage,
+    et un champ absent du modèle Pydantic est silencieusement jeté par la
+    validation.
+
+    `format` et `multiple` ne sont pas bornés à une liste ici — même décision
+    que `CorpsRetournement.sens` : le domaine ne lève pas sur un mot qu'il ne
+    connaît pas, il retombe sur le neutre (`format_connu`, `multiple_connu`),
+    et l'écran, lui, ne propose que ce que l'atelier sait faire.
+    """
+
     marge: int = Field(0, ge=0)
     boite: list[int] | None = None
+    taille: list[int] | None = Field(default=None, min_length=2, max_length=2)
+    format: str = ""
+    multiple: int = 0
+    masse: bool = False
+    ligne_pied: int | None = Field(default=None, ge=0, le=CANEVAS_MAX * 8)
+    bord_uni: bool = False
 
 
 class CorpsGrille(BaseModel):

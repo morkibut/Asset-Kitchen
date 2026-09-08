@@ -36,7 +36,7 @@ from typing import Any, Iterable
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
-from atelier.domaine.recette import Passe, Recadrage, Recette
+from atelier.domaine.recette import Passe, Recette
 from atelier.image import COTE_MIN, Boite, decouper, grille_fixe, mesurer, zones_opaques
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ServiceBibliotheque
@@ -326,12 +326,19 @@ def _recette_heritee(planche: Asset) -> Recette:
     seul comportement qui rende « découper » utile en un geste plutôt qu'en
     neuf.
 
-    **Le recadrage explicite ne s'hérite pas.** Sa boîte désignait un rectangle
-    de la planche ; posée sur une découpe, elle désignerait un rectangle qui n'a
-    plus rien à voir, et le plus souvent hors de l'image. La marge, elle, reste :
-    c'est un réglage, pas une coordonnée.
+    **Les coordonnées explicites ne s'héritent pas** — la boîte tracée et la
+    ligne de pied (B18) : l'une désignait un rectangle de la planche, l'autre
+    un rang de ses pixels, et posées sur une découpe elles désigneraient un
+    endroit qui n'a plus rien à voir, le plus souvent hors de l'image. Le
+    reste — marge, taille imposée, format verrouillé, calage sur un multiple,
+    centrage sur la masse, rognage d'un bord uni — sont des réglages, pas des
+    coordonnées, et ils restent.
     """
     recette = planche.recette
-    if recette.recadrage is None or recette.recadrage.boite is None:
+    if recette.recadrage is None or (
+        recette.recadrage.boite is None and recette.recadrage.ligne_pied is None
+    ):
         return recette
-    return replace(recette, recadrage=Recadrage(marge=recette.recadrage.marge))
+    return replace(
+        recette, recadrage=replace(recette.recadrage, boite=None, ligne_pied=None)
+    )
