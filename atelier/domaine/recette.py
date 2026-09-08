@@ -816,14 +816,130 @@ def parts_de(ancrage: str) -> tuple[float, float]:
     """
     return PARTS_DE_L_ANCRAGE.get(ancrage, PARTS_DE_L_ANCRAGE[BAS])
 
-# Les deux tramages, et il n'y en a pas d'autre. **Deux valeurs déclarées, deux
-# valeurs implémentées** : `bayer` a été écrit ici puis retiré le jour même, faute
-# d'être rendu par la bibliothèque de traitement. Un réglage qui figure dans une
-# recette enregistrée et que personne n'applique est un mensonge qui se réveille
-# des mois plus tard, au rappel d'une recette nommée.
+# Les trois tramages. **Trois valeurs déclarées, trois valeurs implémentées** :
+# `bayer` avait été écrit ici puis retiré le jour même, faute d'être rendu par la
+# bibliothèque de traitement — un réglage qui figure dans une recette enregistrée
+# et que personne n'applique est un mensonge qui se réveille des mois plus tard,
+# au rappel d'une recette nommée.
+#
+# **`trame` le ramène en B18, et cette fois avec son moteur** : Pillow ne sait
+# pas tramer autrement qu'en diffusion, donc la trame régulière est posée à la
+# main par `atelier/image/palette.py`, qui tient déjà la carte des couleurs. La
+# planche `atelier-couleurs.dc.html` en dit la raison en une phrase : *« Le semis
+# de Floyd se recalcule à chaque frame — c'est le seul tramage disponible
+# aujourd'hui, et c'est le mauvais pour ce qui bouge. »* Une trame ordonnée pose
+# ses points toujours au même endroit, donc l'herbe garde son motif de frame en
+# frame au lieu de grésiller.
 AUCUN = "aucun"
 FLOYD = "floyd"
-TRAMAGES = (AUCUN, FLOYD)
+TRAME = "trame"
+TRAMAGES = (AUCUN, FLOYD, TRAME)
+
+# Le côté du motif de trame, en pixels. La planche cite « 2×2, 4×4 ou 8×8 » ;
+# **le produit n'en propose qu'un, et c'est 4×4**. Le choix est tranché ici
+# plutôt que laissé ouvert : sur un sprite de 48 pixels de haut, 2×2 ne porte que
+# cinq niveaux et se lit comme un damier franc, 8×8 en porte soixante-cinq et son
+# motif fait une texture visible plus large que la plupart des aplats d'un
+# sprite. 4×4 — dix-sept niveaux sur un carré de quatre — est le seul des trois
+# qui tienne à cette échelle-là. Un réglage de plus aurait été un réglage dont
+# deux valeurs sur trois sont des mauvais choix documentés.
+COTE_DE_LA_TRAME = 4
+
+# ── La force du tramage (B18) ────────────────────────────────────────────────
+#
+# **Cent veut dire *ce que le produit fait déjà*, et c'est ce qui tient
+# l'empreinte.** La planche affiche « par défaut : 0 » — mais elle l'affiche sur
+# un écran où *aucun* tramage n'est choisi, et le curseur y est grisé avec sa
+# raison. Le neutre d'une clé neuve, lui, se lit à l'autre bout : c'est la valeur
+# pour laquelle une recette écrite avant la tranche rend **exactement** l'image
+# qu'elle rendait. Aujourd'hui `floyd` trame à pleine force ; le neutre est donc
+# 100, et la clé ne s'écrit que si on l'en écarte. C'est la règle de `B1`
+# descendue au cran du réglage, la même que les six clés de `B17`.
+FORCE_TRAMAGE_LIVREE = 100
+
+
+# ── Les trois algorithmes de palette (B18) ───────────────────────────────────
+#
+# **Trois façons de choisir N couleurs, et une seule façon de les poser.** C'est
+# l'architecture de la tranche, et elle tient en une phrase : un algorithme de
+# quantification de palette *choisit des couleurs*, il ne peint rien. La carte
+# des pixels sur la palette, le tramage, les couleurs gardées et la distance sont
+# écrits **une fois** dans `atelier/image/palette.py` et valent pour les trois —
+# sans quoi « distance à l'œil » aurait eu trois implémentations qui auraient
+# fini par ne plus répondre pareil, exactement le piège que `docs/PIEGES.md`
+# nomme pour les listes en double.
+#
+# | algorithme  | ce qu'il rend                                                |
+# |-------------|--------------------------------------------------------------|
+# | `mediane`   | l'espace coupé en deux, puis en deux — ce que le produit fait |
+# | `kmoyennes` | les couleurs que l'image contient vraiment, par regroupement  |
+# | `octree`    | l'espace découpé en huit — sature moins vite sur du bariolé   |
+#
+# **`mediane` est le neutre, et non le meilleur.** C'est ce que `quantifier` fait
+# depuis le premier jour ; une recette qui ne nomme aucun algorithme doit rendre
+# son image à l'octet près, donc le champ retombe ici. Les deux autres se
+# choisissent, et la planche dit quand : k-moyennes *« quand la coupe médiane
+# noie une couleur rare mais importante »*, octree *« quand on demande 32
+# couleurs et qu'on en obtient 14 »*.
+MEDIANE = "mediane"
+KMOYENNES = "kmoyennes"
+OCTREE = "octree"
+ALGORITHMES = (MEDIANE, KMOYENNES, OCTREE)
+
+NOM_DE_L_ALGORITHME = {
+    MEDIANE: "coupe médiane",
+    KMOYENNES: "k-moyennes",
+    OCTREE: "découpe en huit",
+}
+
+
+def algorithme_connu(algorithme: Any) -> str:
+    """Le nom rendu tel quel s'il existe, sinon celui qui ne surprend personne.
+
+    **Le domaine ne lève pas sur un nom qu'il ne connaît pas** — même règle que
+    `methode_connue` et `durcissement_livre`. On retombe sur la coupe médiane,
+    c'est-à-dire sur ce que l'atelier faisait avant que la question se pose.
+    """
+    return algorithme if algorithme in ALGORITHMES else MEDIANE
+
+
+# ── La distance entre deux couleurs (B18) ────────────────────────────────────
+#
+# **« La plus proche » ne veut pas dire la même chose pour la machine et pour
+# l'œil.** Le produit compte aujourd'hui le rouge, le vert et le bleu à parts
+# égales — ce que l'œil ne fait pas —, si bien que le vert vif d'une grenouille
+# peut partir sur un gris-vert terne parce qu'il en est proche *au calcul*.
+#
+# **`brute` est le neutre, et il est aussi le défaut du produit** : une recette
+# neuve part en `brute`, comme une recette écrite avant la tranche, et l'auteur
+# passe à `oeil` quand il le décide. C'est un choix, pas un oubli — `oeil` change
+# l'image de toute recette qui le reçoit sans l'avoir demandé, et rien dans la
+# tranche ne justifie de le poser d'office. Le corps du port (`routes.py`) et
+# l'écran (`quantificationDe`) posent tous deux `brute`.
+#
+# Il n'y a donc **pas de `DISTANCE_LIVREE`**, contrairement à `force_tramage` :
+# une constante « valeur livrée » n'a de sens que là où elle diffère du neutre,
+# et une seconde constante qui vaudrait `BRUTE` ne pourrait que finir par mentir
+# — elle a d'ailleurs commencé par le faire, en valant `OEIL` sans que rien ne
+# la lise.
+BRUTE = "brute"
+OEIL = "oeil"
+DISTANCES = (BRUTE, OEIL)
+
+NOM_DE_LA_DISTANCE = {BRUTE: "brute", OEIL: "à l'œil"}
+
+
+def distance_connue(distance: Any) -> str:
+    """Le nom rendu tel quel s'il existe, sinon la mesure d'avant la tranche."""
+    return distance if distance in DISTANCES else BRUTE
+
+
+# Combien de couleurs on peut soustraire à la fusion. La planche borne le réglage
+# à six — *« de 0 à 6 couleurs, prises à la pipette sur l'image »* — et le nombre
+# se défend tout seul : une couleur gardée est une place de palette dépensée
+# d'office, et en garder plus de six sur une palette de huit ne laisserait plus
+# rien à choisir à l'algorithme.
+GARDEES_MAX = 6
 
 
 # ── Les méthodes de réduction, arrivées en D2 ────────────────────────────────
@@ -1240,6 +1356,100 @@ class Quantification:
     teinte: int = 0
     echanges: tuple[Echange, ...] = ()
 
+    # ── Les six réglages neufs de B18 ────────────────────────────────────────
+    #
+    # **Même règle qu'en B17, un cran plus loin** : aucun ne s'écrit tant qu'il
+    # vaut son neutre, et le neutre de chacun est *ce que l'atelier faisait la
+    # veille*. C'est ce qui fait que les 61 recettes du corpus figé gardent leur
+    # empreinte au caractère près, donc leur cache, alors que la table gagne six
+    # réglages.
+
+    #: Comment les N couleurs sont choisies — voir `ALGORITHMES`.
+    algorithme: str = MEDIANE
+
+    #: La graine de `kmoyennes`, **écrite dans la recette et non tirée au sort**.
+    #:
+    #: C'est la condition que la planche pose en toutes lettres : *« la graine
+    #: doit être enregistrée avec les réglages, sinon deux fois la même demande
+    #: ne rendent pas la même image — et le produit tient à ce que la même
+    #: recette rende toujours le même pixel »*. Elle est donc un réglage comme un
+    #: autre : elle entre dans l'empreinte, elle voyage avec une recette nommée,
+    #: et deux ateliers sur deux machines rendent le même fichier.
+    #:
+    #: Elle ne sert qu'à `kmoyennes` ; les deux autres algorithmes ne tirent rien
+    #: au sort et l'ignorent.
+    graine: int = 0
+
+    #: La part du tramage effectivement posée, de 0 à 100 — voir
+    #: `FORCE_TRAMAGE_LIVREE` pour la raison du neutre à cent.
+    force_tramage: int = FORCE_TRAMAGE_LIVREE
+
+    #: Comment on décide quelle couleur est « la plus proche » — voir `DISTANCES`.
+    distance: str = BRUTE
+
+    #: Les pixels cachés sous la transparence entrent-ils dans le compte ?
+    #:
+    #: **Faux est le neutre, et c'est un défaut qu'on garde exprès le temps d'une
+    #: relecture.** La panne est mesurée dans la planche : *« le magenta qu'on
+    #: vient de retirer est encore là, sous la transparence, et il entre dans le
+    #: compte : demander 8 couleurs en rend 7 visibles »*. Une bande d'animation
+    #: ne compte déjà que les pixels visibles (`atelier/image/bande.py`,
+    #: `_palette_mediane`) ; une image seule, non. Poser vrai d'office aurait
+    #: changé le rendu de toute image détourée du dépôt — ce que le critère de la
+    #: tranche interdit.
+    visibles_seuls: bool = False
+
+    #: Les couleurs qu'aucune fusion ne doit emporter, au plus `GARDEES_MAX`.
+    #:
+    #: Elles sont **posées dans la palette avant que l'algorithme ne choisisse le
+    #: reste**, et non protégées après coup : protéger après aurait demandé de
+    #: décider quelle couleur choisie céder sa place, ce à quoi il n'y a pas de
+    #: bonne réponse. À huit couleurs, garder le noir du contour et le vert de la
+    #: grenouille laisse six places à l'algorithme.
+    gardees: tuple[str, ...] = ()
+
+    @property
+    def gardees_vives(self) -> tuple[str, ...]:
+        """Les couleurs gardées qui **nomment quelque chose**, sans doublon.
+
+        Même lecture que `echanges_vifs`, et pour la même raison : une pastille
+        vide est un état de passage — le temps d'aller chercher la couleur à la
+        pipette — et un état de passage qui changerait l'empreinte ferait
+        recalculer tout le rendu pour un réglage qui ne fait rien.
+        """
+        vues: list[str] = []
+        for couleur in self.gardees:
+            if couleur and couleur not in vues:
+                vues.append(couleur)
+        return tuple(vues[:GARDEES_MAX])
+
+    @property
+    def reglages_de_b18_neutres(self) -> bool:
+        """Les six réglages de `B18` sont-ils tous au repos ?
+
+        **La seule lecture de « peut-on prendre le chemin d'avant »**, et elle
+        est posée à un seul endroit : `quantifier` garde son code d'origine —
+        Pillow, mot pour mot — tant qu'elle répond vrai. C'est ce qui rend la
+        promesse vérifiable plutôt que plausible : là où la tranche ne règle
+        rien, ce n'est pas un chemin *équivalent* qui s'exécute, c'est le même.
+
+        ⚠️ **Le tramage compte, alors qu'il n'est pas une clé neuve.** `trame`
+        est une *valeur* neuve d'une clé qui existait, et l'oublier ici a coûté
+        un défaut réel, trouvé par les essais : la trame régulière partait sur le
+        chemin d'avant, où Pillow ne la connaît pas, et retombait silencieusement
+        sur « aucun tramage ». Le réglage était posé, déclaré, validé — et sans
+        effet. C'est très exactement le mensonge que le commentaire de `TRAMAGES`
+        raconte à propos de `bayer`, à deux tranches d'intervalle.
+        """
+        return (
+            self.algorithme == MEDIANE
+            and self.tramage != TRAME
+            and self.force_tramage == FORCE_TRAMAGE_LIVREE
+            and self.distance == BRUTE
+            and not self.visibles_seuls
+            and not self.gardees_vives
+        )
+
     @property
     def curseurs_neutres(self) -> bool:
         """Les quatre curseurs sont-ils tous au repos ?
@@ -1267,6 +1477,7 @@ class Quantification:
 
     def en_json(self) -> dict[str, Any]:
         vifs = self.echanges_vifs
+        gardees = self.gardees_vives
         return {
             "couleurs": self.couleurs,
             "palette": list(self.palette),
@@ -1277,6 +1488,23 @@ class Quantification:
             **({"saturation": self.saturation} if self.saturation else {}),
             **({"teinte": self.teinte} if self.teinte else {}),
             **({"echanges": [e.en_json() for e in vifs]} if vifs else {}),
+            # ── Les six de B18, même règle ────────────────────────────────────
+            #
+            # **`force_tramage` se compare à cent, pas à zéro**, et c'est le seul
+            # de la liste dont le neutre ne soit pas la valeur vide : son neutre
+            # est *le tramage plein*, celui que `floyd` pose aujourd'hui. Écrire
+            # la clé à cent aurait changé l'empreinte de toute recette tramée du
+            # dépôt pour un réglage qui ne change rien.
+            **({"algorithme": self.algorithme} if self.algorithme != MEDIANE else {}),
+            **({"graine": self.graine} if self.graine else {}),
+            **(
+                {"force_tramage": self.force_tramage}
+                if self.force_tramage != FORCE_TRAMAGE_LIVREE
+                else {}
+            ),
+            **({"distance": self.distance} if self.distance != BRUTE else {}),
+            **({"visibles_seuls": True} if self.visibles_seuls else {}),
+            **({"gardees": list(gardees)} if gardees else {}),
         }
 
     @staticmethod
@@ -1298,6 +1526,15 @@ class Quantification:
                 for e in (d.get("echanges") or ())
                 if isinstance(e, dict)
             ),
+            # **Absente veut dire neutre** (B18, d'après B17) : une recette
+            # écrite avant la tranche se relit sans rien perdre et se réécrit à
+            # l'identique, caractère pour caractère.
+            algorithme=algorithme_connu(d.get("algorithme", MEDIANE)),
+            graine=int(d.get("graine", 0) or 0),
+            force_tramage=int(d.get("force_tramage", FORCE_TRAMAGE_LIVREE)),
+            distance=distance_connue(d.get("distance", BRUTE)),
+            visibles_seuls=bool(d.get("visibles_seuls", False)),
+            gardees=tuple(str(c) for c in (d.get("gardees") or ()) if c),
         )
 
 

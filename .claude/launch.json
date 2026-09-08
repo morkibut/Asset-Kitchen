@@ -392,6 +392,14 @@
         "essais/atelier_jetable_b18_nettoyer.py"
       ],
       "port": 8492
+    },
+    {
+      "name": "atelier-jetable-b18-couleurs",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b18_couleurs.py"
+      ],
+      "port": 8491
     }
   ]
 }

@@ -37,6 +37,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
   CONTOUR_PAR_DEFAUT,
+  FORCE_TRAMAGE_LIVREE,
+  GARDEES_MAX,
   GARDER_MAX,
   GRAIN_MAX,
   LISSAGE_MAX,
@@ -967,9 +969,22 @@ function ReglagesDeLaGrille({ recette, univers, traitement, regler, poser }: Pos
   )
 }
 
-function ReglagesDesCouleurs({ recette, univers, traitement, regler, poser }: Poste) {
+function ReglagesDesCouleurs({
+  recette,
+  univers,
+  traitement,
+  mesures,
+  regler,
+  poser,
+}: Poste) {
   const valeurs = quantificationDe(recette, univers)
   const paliers = paliersDeCouleurs(recette.grille?.cible ?? 64)
+
+  /** **« 24 demandées, 14 obtenues »** (`B18`) — le seul chiffre qui explique
+   *  pourquoi monter le réglage ne change plus rien. Il vient du serveur, qui le
+   *  lit sur le rendu final ; le recalculer ici demanderait de décoder l'image,
+   *  et donnerait un second compte qui finirait par ne plus dire le premier. */
+  const compte = mesures?.couleurs ?? null
 
   /** **Toujours la table entière, jamais deux champs sur neuf** (B17, la leçon
    *  de `decalage` / E17) : reposer le nombre de couleurs à côté d'un échange
@@ -989,12 +1004,97 @@ function ReglagesDesCouleurs({ recette, univers, traitement, regler, poser }: Po
         />
       </Reglage>
 
+      {/* ── D'où viennent les couleurs, et comment on les choisit (B18) ─────
+          Le premier réglage de la table dans la planche : *« Où on prend les
+          couleurs »*. Grisé quand la palette du jeu est posée — c'est elle qui
+          décide alors, et l'algorithme n'a plus rien à choisir. */}
+      <Reglage nom="algorithme">
+        <Choix
+          valeurs={["mediane", "kmoyennes", "octree"] as const}
+          valeur={valeurs.algorithme ?? "mediane"}
+          libelles={{
+            mediane: "coupe médiane",
+            kmoyennes: "k-moyennes",
+            octree: "découpe en huit",
+          }}
+          eteints={
+            valeurs.palette.length > 0
+              ? {
+                  mediane: SOUS_LA_PALETTE,
+                  kmoyennes: SOUS_LA_PALETTE,
+                  octree: SOUS_LA_PALETTE,
+                }
+              : {}
+          }
+          onChange={(algorithme) => void poser(avec({ algorithme }))}
+        />
+      </Reglage>
+
+      {/* **La graine ne paraît qu'avec k-moyennes**, seul algorithme qui tire
+          quelque chose. La montrer ailleurs serait un réglage qui ne fait
+          rien — ce que `docs/PIEGES.md` compte comme pire qu'un réglage
+          absent. */}
+      {valeurs.algorithme === "kmoyennes" && valeurs.palette.length === 0 && (
+        <>
+          <Reglage nom="graine">
+            <Glissiere
+              nom="graine"
+              valeur={valeurs.graine ?? 0}
+              min={0}
+              max={99}
+              onRegler={(v) => regler(avec({ graine: v }))}
+              onPoser={(v) => void poser(avec({ graine: v }))}
+            />
+          </Reglage>
+          <Pourquoi texte="la graine est écrite dans la recette — deux fois la même demande rendent la même image" />
+        </>
+      )}
+
       <Reglage nom="tramage">
         <Choix
-          valeurs={["aucun", "floyd"] as const}
+          valeurs={["aucun", "floyd", "trame"] as const}
           valeur={valeurs.tramage}
-          libelles={{ aucun: "aucun", floyd: "diffusion" }}
+          libelles={{ aucun: "aucun", floyd: "diffusion", trame: "trame régulière" }}
           onChange={(tramage) => void poser(avec({ tramage }))}
+        />
+      </Reglage>
+
+      {/* **La force ne paraît qu'avec un tramage**, et la planche le montre
+          ainsi : *« Grisée : aucun tramage n'est choisi. »* */}
+      <Reglage nom="force du tramage">
+        <Glissiere
+          nom="force du tramage"
+          valeur={valeurs.force_tramage ?? FORCE_TRAMAGE_LIVREE}
+          min={0}
+          max={100}
+          unite=" %"
+          eteint={valeurs.tramage === "aucun"}
+          onRegler={(v) => regler(avec({ force_tramage: v }))}
+          onPoser={(v) => void poser(avec({ force_tramage: v }))}
+        />
+      </Reglage>
+      {valeurs.tramage === "aucun" && (
+        <Pourquoi texte="aucun tramage n'est choisi" />
+      )}
+
+      {/* ── Comment on mesure « la plus proche » (B18) ────────────────────── */}
+      <Reglage nom="distance des couleurs">
+        <Choix
+          valeurs={["brute", "oeil"] as const}
+          valeur={valeurs.distance ?? "brute"}
+          libelles={{ brute: "brute", oeil: "à l'œil" }}
+          onChange={(distance) => void poser(avec({ distance }))}
+        />
+      </Reglage>
+
+      {/* ── Ce qu'on compte (B18) ──────────────────────────────────────────
+          Le magenta retiré est encore sous la transparence, et il prend une
+          place de la palette : demander 8 couleurs en rend 7 visibles. */}
+      <Reglage nom="ne compter que ce qu'on voit">
+        <Choix
+          valeurs={["non", "oui"] as const}
+          valeur={valeurs.visibles_seuls ? "oui" : "non"}
+          onChange={(v) => void poser(avec({ visibles_seuls: v === "oui" }))}
         />
       </Reglage>
 
@@ -1009,6 +1109,18 @@ function ReglagesDesCouleurs({ recette, univers, traitement, regler, poser }: Po
       {univers.palette.length > 0 && (
         <p className="mesure text-[10.5px] text-encre-4">
           la palette du jeu porte {univers.palette.length} couleurs
+        </p>
+      )}
+
+      {/* ── « 24 demandées, 14 obtenues » (B18) ────────────────────────────
+          Sans ce chiffre, l'auteur monte le réglage en croyant gagner du
+          détail. Avec, il voit à quel cran l'image cesse d'avoir des teintes
+          à donner. */}
+      {compte !== null && compte.demandees > 0 && (
+        <p className="mesure text-[10.5px] text-encre-4">
+          {compte.demandees} demandées, {compte.obtenues} obtenues
+          {compte.obtenues < compte.demandees &&
+            " — cette image n'a plus de teintes différentes à donner"}
         </p>
       )}
 
@@ -1033,6 +1145,17 @@ function ReglagesDesCouleurs({ recette, univers, traitement, regler, poser }: Po
         ))}
       </div>
 
+      {/* ── Les couleurs gardées, avant que l'algorithme ne choisisse (B18) ──
+          Elles sont posées d'office dans la palette : à 8 couleurs, garder le
+          noir du contour et le vert de la grenouille laisse six places à
+          l'algorithme. Grisées sous une palette de jeu, qui décide seule. */}
+      <CouleursGardees
+        gardees={valeurs.gardees ?? []}
+        palette={univers.palette}
+        eteint={valeurs.palette.length > 0}
+        onChange={(gardees) => void poser(avec({ gardees }))}
+      />
+
       {/* ── L'échange de couleurs, après la réduction (B17) ────────────────
           Posé avant, il serait défait par la réduction, qui renverrait la
           couleur écrite au plus proche de la palette. */}
@@ -1041,6 +1164,80 @@ function ReglagesDesCouleurs({ recette, univers, traitement, regler, poser }: Po
         palette={univers.palette}
         onChange={(echanges) => void poser(avec({ echanges }))}
       />
+    </div>
+  )
+}
+
+/** La raison écrite à côté du grisé, quand la palette du jeu est posée.
+ *  **Écrite une fois** : trois grisés qui la recopieraient finiraient par ne
+ *  plus dire la même chose. */
+const SOUS_LA_PALETTE = "la palette du jeu décide seule des couleurs"
+
+/** Les couleurs qu'aucune fusion n'emporte (`B18`).
+ *
+ *  **Le même geste que la table d'échange, en plus court** : une pastille, une
+ *  couleur, et rien d'autre. Elle se pique sur la palette du jeu quand il y en
+ *  a une, et se tape à la main sinon — la pipette sur l'image appartient à la
+ *  surface à coordonnées, que cette table ne porte pas.
+ *
+ *  ⚠️ **La planche la veut à la pipette sur l'image** ; ce qui est livré ici est
+ *  le choix parmi les couleurs connues. Le geste de pipette vit dans la
+ *  surface à coordonnées de l'ancien écran, que `B16` a laissée en place et que
+ *  cette table ne double pas. */
+function CouleursGardees({
+  gardees,
+  palette,
+  eteint,
+  onChange,
+}: {
+  gardees: string[]
+  palette: string[]
+  eteint: boolean
+  onChange: (gardees: string[]) => void
+}) {
+  return (
+    <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
+      <Etiquette>couleurs gardées — jamais fondues avec une voisine</Etiquette>
+
+      {gardees.length > 0 && (
+        <div className="flex flex-wrap gap-[6px]">
+          {gardees.map((couleur, rang) => (
+            <button
+              key={`${couleur}-${rang}`}
+              type="button"
+              aria-label={`retirer ${couleur} des couleurs gardées`}
+              className="h-[22px] w-[22px] rounded-5 border border-trait-faible"
+              style={{ background: couleur }}
+              onClick={() => onChange(gardees.filter((_, i) => i !== rang))}
+            />
+          ))}
+        </div>
+      )}
+
+      {eteint ? (
+        <Pourquoi texte={SOUS_LA_PALETTE} />
+      ) : gardees.length >= GARDEES_MAX ? (
+        <Pourquoi
+          texte={`${GARDEES_MAX} couleurs gardées au plus — au-delà il ne reste rien à choisir`}
+        />
+      ) : palette.length > 0 ? (
+        <div className="flex flex-wrap gap-[6px]">
+          {palette
+            .filter((c) => !gardees.includes(c))
+            .map((couleur) => (
+              <button
+                key={couleur}
+                type="button"
+                aria-label={`garder ${couleur}`}
+                className="h-[14px] w-[14px] rounded-5 border border-trait-faible opacity-60 hover:opacity-100"
+                style={{ background: couleur }}
+                onClick={() => onChange([...gardees, couleur])}
+              />
+            ))}
+        </div>
+      ) : (
+        <Pourquoi texte="le jeu n'a pas encore de palette où piquer une couleur" />
+      )}
     </div>
   )
 }

@@ -901,7 +901,7 @@ livre seul.
 | Détourer | 13 | 0 — livrés : la couleur déclarée du jeu, la teinte plutôt que la valeur, la palette en garde-fou, le pinceau remonté en amont, la même passe sur les frames voisines |
 | Recadrer | 13 | 0 — **tenu** : taille imposée, format verrouillé, calage sur multiple, centré sur la masse, ligne de pied, rognage d'un bord uni. Les six sont des champs neufs de `Recadrage` (`atelier/domaine/recette.py`), du calcul pur dans `atelier/image/traitement.py`, câblés à l'écran dans `ReglagesDuRecadrage` (`Retouche.tsx`), essai à `tests/test_b18_recadrer.py` |
 | Pixéliser | 8 | 0 — **tenu le 8 septembre 2026**, voir la note sous le tableau |
-| Couleurs | 7 | 9 — trame régulière, force du tramage, k-moyennes, octree, distance à l'œil, rampes d'ombre… |
+| Couleurs | 7 + 9 | **0 — tenu le 8 septembre 2026** |
 | Nettoyer | 4 | 0 — **tenu.** Sept moteurs neufs : garder le sujet seul, boucher les trous, reboucher les poches de fond, ronger puis regonfler, regonfler puis ronger, vote des voisins, la désignation à la main. Le détail est sous le tableau. |
 | Retourner | 10 — **livrés le 8 septembre 2026** | 0 |
 | Contour | 7 | 0 — **les six capacités tenues** (couleur dérivée, réserver la place, trait inégal, contour sur l'ensemble empilé, s'éteindre sur un sujet plein cadre, aperçu sur plusieurs fonds) |
@@ -1070,26 +1070,157 @@ un champ par moteur dans `Bords`, actif dès qu'il est posé, neutre à zéro. `
 cette forme plutôt que d'en ouvrir une seconde : deux modèles pour la même table auraient fini
 par se contredire, exactement comme le compte de la planche s'est contredit lui-même.
 
+### L'atelier **Couleurs** — tenu le 8 septembre 2026
+
+**L'architecture, posée avant la première ligne** : *un algorithme de quantification de palette
+choisit des couleurs, il ne peint rien.* Une interface commune —
+`(pixels (N,3), couleurs) ▸ palette (K,3)`, `K ≤ couleurs` — et trois implémentations : coupe
+médiane, k-moyennes, découpe en huit. **La carte des pixels sur la palette, le tramage, la
+distance et les couleurs gardées sont écrits une fois** dans `atelier/image/palette.py` et
+valent pour les trois. Sans cet invariant, « distance à l'œil » aurait eu trois implémentations
+qui auraient fini par ne plus répondre pareil sur la même image ; quatre essais le mesurent
+sans lire le code.
+
+**Neuf moteurs livrés**, avec leur réglage à l'écran dans les deux écrans de la retouche —
+l'ancien (`Places.tsx`) comme le neuf (`Retouche.tsx`), la règle que `B17` a posée le temps du
+déménagement :
+
+1. **la trame régulière** — une trame ordonnée de 4×4, qui pose ses points toujours au même
+   endroit : le semis de Floyd se recalcule à chaque frame, donc l'herbe grésille ;
+2. **la force du tramage** — de 0 à 100 % ;
+3. **k-moyennes**, avec sa graine écrite dans la recette ;
+4. **la découpe en huit** (octree) ;
+5. **la distance à l'œil** (OKLab) contre la distance brute ;
+6. **ne compter que les pixels qu'on voit** ;
+7. **les couleurs gardées** — au plus six, jamais fondues avec une voisine ;
+8. **les rampes d'ombre** — la palette rangée par familles, du plus sombre au plus clair ;
+9. **« 24 demandées, 14 obtenues »** — le compte que la planche appelle *le seul chiffre qui
+   explique pourquoi monter le réglage ne change plus rien*.
+
+⚠️ **La planche nomme neuf moteurs « à ajouter », mais `B17` en avait déjà tenu deux** — les
+quatre curseurs de teinte / saturation / luminosité / contraste, et le remplacement d'une
+couleur par une autre. Sept des neuf restaient donc à écrire. Les deux places rendues à la
+liste sont les couleurs gardées et le compte obtenu, que la planche marque « à ajouter » dans
+sa table des réglages sans les compter parmi ses moteurs. **Le compte de neuf est donc tenu,
+mais ce ne sont pas exactement les neuf de la liste des moteurs** ; c'est le seul écart de
+périmètre de l'atelier.
+
+⚠️ **Le neutre d'un réglage n'est pas ce que la planche affiche comme défaut**, et l'écart est
+délibéré. La planche donne « à l'œil » et « oui » pour défauts, et 0 pour la force du tramage.
+Le neutre d'une clé neuve, lui, est *la valeur pour laquelle une recette écrite avant la tranche
+rend exactement l'image qu'elle rendait* — sans quoi les 61 recettes du corpus figé changeraient
+d'empreinte, donc de nom de rendu, et tout leur cache se recalculerait. Les champs retombent
+donc sur `brute`, `non`, et **100 pour la force** (le tramage d'aujourd'hui est plein). C'est
+l'arbitrage exact de `D2` pour `Grille.methode`. ⚠️ **Et la distance en reste à `brute` pour
+une recette neuve aussi** : une constante `DISTANCE_LIVREE` valant `oeil` avait été écrite,
+mais rien ne la lisait — ni le corps du port, ni l'écran — et elle annonçait donc un défaut
+produit qui n'existait pas. Elle est retirée ; le jour où l'on voudra vraiment livrer `oeil`,
+c'est le corps du port et `quantificationDe` qu'il faudra changer, et ce sera visible.
+
+⚠️ **`reglages_de_b18_neutres` doit compter le tramage, qui n'est pourtant pas une clé neuve.**
+`trame` est une *valeur* neuve d'une clé qui existait, et l'oublier a coûté un défaut réel,
+attrapé par les essais : la trame partait sur le chemin d'avant, où Pillow ne la connaît pas, et
+retombait en silence sur « aucun tramage ». Le réglage était posé, déclaré, validé — et sans
+effet, très exactement le mensonge que le commentaire de `TRAMAGES` raconte à propos de `bayer`.
+
+⚠️ **Un défaut trouvé dans Pillow, et il n'est pas de nous.** Sous une palette imposée,
+`Image.quantize(palette=…)` ne cherche pas exactement la couleur la plus proche : il passe par
+un cache approché. Mesuré sur un dégradé de 64 carrés et une palette de quatre couleurs,
+**1,9 % des pixels partent sur la mauvaise couleur** — un rose clair envoyé sur le brun alors
+que le blanc est plus proche. Les deux chemins de `quantifier` ne rendent donc pas tout à fait
+la même image sous palette imposée, et **c'est le chemin neuf qui a raison**. Un essai l'épingle
+plutôt que de le taire ; faire passer tout le monde par la carte maison est une décision
+d'après, parce qu'elle changerait des rendus déjà calculés.
+
+⚠️ **Le seuil de gris des rampes est mesuré, et un premier choix était faux.** Le chroma d'OKLab
+s'effondre avec la clarté : un seuil absolu rangeait les bruns sombres avec les gris, et un
+premier seuil relatif à 0,10 rangeait encore un tan clair à 0,0985. Mesuré sur dix-sept
+couleurs, le rapport chroma/clarté tombe dans un trou franc — les gris à 0,000–0,026, les
+couleurs à 0,098–0,227 — et le seuil est posé au milieu, à 0,06. **Trouvé en regardant les
+rampes de l'atelier jetable, pas par un essai** ; un essai les tient maintenant tous les deux.
+
+**Les mesures, sur une case de 64 carrés** — la taille où le produit quantifie réellement, la
+place `quantification` venant après la grille : coupe médiane 3,9 ms, trame régulière 13,4 ms,
+couleurs gardées 13,6 ms, distance à l'œil 14,7 ms, trame à 30 % 17,7 ms, octree 10,8 ms,
+k-moyennes 76,8 ms. Toutes sous les 240 ms de `B16`, et un essai le borne.
+
+⚠️ **Un seul moteur dépasse le seuil, et par construction** : la diffusion d'erreur *à force
+réduite*. Floyd-Steinberg est le seul algorithme de l'atelier qu'on ne peut pas écrire en
+tableaux — le voisin de droite doit avoir reçu l'erreur du pixel courant avant d'être décidé —,
+donc la boucle est irréductible en Python : 143 ms sur une case de 64, une seconde sur 256, et
+treize sur 1 024. **À pleine force ce chemin n'est jamais pris** (Pillow diffuse en C et rend la
+même image), et c'est de loin le cas courant ; la boucle ne sert qu'à ce que Pillow ne sait pas
+faire — doser la force, et mesurer à l'œil. La jauge de `B16` l'annonce, et un essai garde le
+chiffre pour qu'une accélération future se mesure contre lui.
+
+**Deux accélérations ont été nécessaires pour tenir le seuil**, et aucune n'est une
+approximation : la carte des pixels se calcule **par couleur distincte** et non par pixel
+(un million de pixels, trente mille couleurs), et k-moyennes pondère les couleurs distinctes par
+leur population au lieu de faire glisser cent mille fois le même pixel. Les deux rendent le même
+résultat à l'octet près — ce sont des factorisations.
+
+⚠️ **Un défaut de mémoire trouvé à la relecture, et il cassait pour de bon.** `_plus_proches`
+ne découpait en blocs qu'un seul de ses deux axes. Tant que les cibles sont la palette — au plus
+256 couleurs — ça suffit, et c'est le cas de la carte des pixels. Mais les trois algorithmes
+appellent la fonction **à l'envers** pour ramener leurs couleurs calculées sur des couleurs
+réelles : la palette d'un côté, *toutes les couleurs distinctes de l'image* de l'autre. Rien ne
+bornait ce côté-là. La coupe médiane, seule des trois à ne pas passer par `_echantillon`, y
+montait à **9,7 Go** sur un rendu de 2 048 px — un `MemoryError` sur une machine à 8 Go, une
+attente de plusieurs dizaines de secondes ailleurs, dès que l'auteur posait un réglage de
+*Couleurs* sur un asset sans grille. Deux réparations, mesurées : les **deux** axes se découpent
+maintenant (c'est leur *produit* qui borne la mémoire, jamais un seul côté), et la coupe médiane
+passe par `_echantillon` comme les deux autres. Mesuré sur une image de bruit à 512 px
+(260 000 couleurs distinctes) : **1 603 Mo avant, 240 Mo après** ; à 2 048 px et 3,7 millions de
+couleurs distinctes, les trois algorithmes tiennent ensemble sous **369 Mo**. Deux essais tiennent
+la réparation — un sur le pic de mémoire, un sur l'égalité rang par rang entre le calcul par
+blocs et le calcul d'un seul tenant, égalités comprises.
+
+**Ce que la réparation change à l'image, et c'est mesuré.** Soixante rendus rejoués avec l'ancien
+code et le neuf dans le même processus : **48 identiques à l'octet près**, et les 12 qui diffèrent
+sont tous la coupe médiane sur une image de **plus de 300 000 pixels** — c'est-à-dire exactement
+le plafond de `_echantillon` qui s'applique enfin, comme il s'appliquait déjà à k-moyennes et à
+l'octree. En dessous du plafond, rien ne bouge ; la palette imposée, k-moyennes et l'octree ne
+bougent nulle part. Aucune recette du disque n'est touchée : le corpus figé passe par le chemin
+Pillow d'avant, et les réglages de `B18` ne sont posés dans aucune recette existante.
+
+**Deux rendus complets par lecture d'une table, et ils sont tous deux nécessaires.** La route des
+mesures rend l'image *arrêtée avant les bords* — c'est celle que le seuil va trancher —, et
+`_couleurs_de` rend l'image *finale*, parce que le compte « obtenues » décrit ce qu'on a et non
+ce qu'un réglage fera. Deux recettes différentes, donc deux images différentes : vérifié à la
+relecture, ce n'est pas un calcul en double.
+
 ### Critères d'acceptation
 
 - [x] Chaque atelier livré porte tous ses moteurs à l'écran, et aucun n'est en dur dans le code
-      sans réglage. *Vrai pour Détourer, Recadrer, Pixéliser, Découpe, Retourner, Contour et
-      Nettoyer — les sept livrés à ce jour dans la file.*
+      sans réglage. *Vrai pour Détourer, Recadrer, Pixéliser, Découpe, Retourner, Contour,
+      Nettoyer et Couleurs — les huit livrés dans la file. Pour Couleurs, vérifié au navigateur
+      sur l'atelier jetable du port 8491 : k-moyennes rend à la grenouille le vert franc que la
+      coupe médiane noie, la trame pose un damier régulier là où il y avait des aplats, la force
+      le dose (25 % laisse les aplats propres, 70 % les remplit), la graine ne paraît qu'avec
+      k-moyennes.*
 - [ ] Trois réglages figés dans le code de la réduction sortent enfin à l'écran. *Non tenu, voir
       la note sous Pixéliser ci-dessus.*
 - [x] Chaque moteur neuf porte sa mesure de temps, et l'écran l'annonce quand elle dépasse
       240 ms. *Vrai pour les quatre moteurs de Pixéliser (26 à 108 ms sur une case de 64), pour
       les dix sens de Retourner (RotSprite mesuré à ~1,3 s sur une planche de 1024 px, seul des
-      dix à dépasser le seuil) et pour les sept moteurs de Nettoyer (moins de 4 ms chacun sur une
-      case de 64) ; la jauge qui les annonce est le mécanisme générique déjà posé, commun à tout
-      `PUT …/recipe`.*
-- [x] Les 1 347 essais de serveur passent sans modification. *Compte grandi depuis l'écriture de
-      ce critère (plus de 2 000 après Détourer/Recadrer/Pixéliser/Découpe/Retourner/Contour/
-      Nettoyer) ; trois essais existants ont dû changer pour refléter un compte qui grandit par
-      construction — `tests/test_t2.py` (quatre méthodes de réduction devenues huit),
-      `tests/test_b1.py` (un sens de retournement devenu dix) et le compte d'entrées de `AIDE`
-      dans `App.test.tsx` — même règle que `tests/test_d2.py` applique déjà à trois essais de
-      `T2`/`T4`.*
+      dix à dépasser le seuil), pour les sept moteurs de Nettoyer (moins de 4 ms chacun sur une
+      case de 64) et pour les neuf moteurs de Couleurs (3,9 à 76,8 ms sur une case de 64 ; seule
+      la diffusion d'erreur à force réduite dépasse, par construction, puisqu'elle ne peut pas
+      s'écrire en tableaux) ; la jauge qui les annonce est le mécanisme générique déjà posé,
+      commun à tout `PUT …/recipe`.*
+- [x] Les 1 347 essais de serveur passent sans modification. *Chiffre d'une version antérieure du
+      plan ; le compte a grandi à chaque atelier livré (plus de 2 000 après
+      Détourer/Recadrer/Pixéliser/Découpe/Retourner/Contour/Nettoyer/Couleurs). Quatre essais
+      existants ont dû changer pour refléter un compte qui grandit par construction —
+      `tests/test_t2.py` (quatre méthodes de réduction devenues huit), `tests/test_b1.py` (un
+      sens de retournement devenu dix), le compte d'entrées de `AIDE` dans `App.test.tsx`, et
+      l'assertion sur le compte obtenu dans `tests/test_b18_couleurs.py` — même règle que
+      `tests/test_d2.py` applique déjà à trois essais de `T2`/`T4`. Les 61 recettes du corpus
+      figé de `B1` gardent leur empreinte au caractère près. ⚠️ **Un seul rouge côté écran, et il
+      est antérieur à la tranche** — `App.test.tsx` › `A7 · une recette enregistrée ne jette pas
+      la main d'une image` attend 48 couleurs et en lit 24. Vérifié à plusieurs reprises en
+      remisant les fichiers d'écran de chaque atelier : il échoue à l'identique sans eux. Il
+      n'appartient à aucun atelier de cette file et n'a été touché par aucun.*
 
 ### Bloquée par
 

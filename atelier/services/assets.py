@@ -50,11 +50,17 @@ from atelier.domaine.recette import (
     TEINTE_MAX,
     TEINTE_MIN,
     TOLERANCE_ECHANGE_MAX,
+    ALGORITHMES,
+    DISTANCES,
+    GARDEES_MAX,
+    NOM_DE_L_ALGORITHME,
+    NOM_DE_LA_DISTANCE,
     MODELE,
     MOTEURS,
     NOM_DE_LA_METHODE,
     PLACES,
     PORTEES,
+    QUANTIFICATION,
     POSITIONS,
     RAYON_MAX,
     TRAMAGES,
@@ -98,6 +104,7 @@ from atelier.image.traitement import (
     silhouette,
 )
 from atelier.image.calque import avec_alpha, differencier
+from atelier.image.palette import couleurs_obtenues, rampes
 from atelier.services.evenements import Diffusion
 
 # Les bornes des réglages, et le seul endroit qui les dise. Une recette venue
@@ -268,6 +275,25 @@ class ServiceAssets:
                 # **Ce que l'écran annonce sans interdire** (D2) : la palette du
                 # jeu manque, les couleurs viennent donc de l'image.
                 "note": self.note_de_palette(projet),
+                # **Les trois algorithmes et les deux distances** (B18), avec
+                # leur nom français. L'écran les montre, il ne les recompose
+                # pas : c'est la règle que `reductions` tient déjà depuis D2, et
+                # celle qui évite qu'une seconde liste finisse par diverger.
+                "algorithmes": [
+                    {"nom": nom, "libelle": NOM_DE_L_ALGORITHME[nom]}
+                    for nom in ALGORITHMES
+                ],
+                "distances": [
+                    {"nom": nom, "libelle": NOM_DE_LA_DISTANCE[nom]}
+                    for nom in DISTANCES
+                ],
+                # **La palette du jeu rangée en rampes d'ombre** (B18). Elle ne
+                # change aucune image — la planche le dit en toutes lettres :
+                # *« ça change ce qu'on voit en les regardant, donc ce qu'on
+                # décide d'ajouter »*. Les bruns ensemble, du plus sombre au plus
+                # clair, et c'est ce rangement qui fait voir le trou qu'il
+                # faudrait combler.
+                "rampes": [list(r) for r in rampes(self.palette_du_projet(projet))],
             },
             # **Les quatre façons de réduire** (D2), avec leur raison de grisé.
             # Trois ne demandent rien ; « traits épaissis » tire une
@@ -431,6 +457,37 @@ class ServiceAssets:
             "main": self._pixels_de_la_main(asset),
             "visees": self._couleurs_visees(asset),
             "recadrage": self._recadrage_de(asset),
+            # **« 24 demandées, 14 obtenues »** (B18). La planche compte ce
+            # chiffre parmi ce qui manque, et son absence a un coût mesuré :
+            # *« rien à l'écran ne dit l'écart, donc l'auteur monte le réglage en
+            # croyant gagner du détail »*. C'est le seul nombre qui explique
+            # pourquoi monter le réglage ne change plus rien.
+            "couleurs": self._couleurs_de(asset),
+        }
+
+    def _couleurs_de(self, asset: Asset) -> dict[str, Any]:
+        """Combien de couleurs cette image demande, et combien elle en obtient.
+
+        **Sur le rendu final, et c'est le seul endroit juste.** Les autres
+        mesures de cette route se prennent sur l'image *avant les bords*, parce
+        qu'elles décrivent ce qu'un réglage va faire ; celle-ci décrit ce qu'on
+        **a**, donc elle se lit sur l'image telle qu'elle sort — bords, contour
+        et main compris, qui tous peuvent ajouter ou retirer une couleur.
+
+        `demandees` est nul quand la table dort ou n'est pas posée : il n'y a
+        alors aucun écart à expliquer, et l'écran n'a rien à montrer.
+        """
+        quantification = asset.recette.quantification
+        if quantification is None or asset.recette.dort(QUANTIFICATION):
+            return {"demandees": 0, "obtenues": 0}
+        demandees = (
+            len(quantification.palette)
+            if quantification.palette
+            else quantification.couleurs
+        )
+        return {
+            "demandees": demandees,
+            "obtenues": couleurs_obtenues(self._tableau_avec(asset, asset.recette)),
         }
 
     def _mesures_du_fond(self, asset: Asset) -> dict[str, Any]:
@@ -1548,6 +1605,35 @@ class ServiceAssets:
                     raise RecetteRefusee(
                         f"échange {rang} : la tolérance va de 0 à {TOLERANCE_ECHANGE_MAX}"
                     )
+
+            # ── Les six réglages de B18, bornés au même endroit ───────────────
+            #
+            # **Le nom d'abord, la valeur ensuite**, comme la méthode de
+            # réduction en `D2` : un nom inconnu vient d'un agent ou d'un fichier
+            # retouché à la main, et il vaut mieux le dire que rendre en silence
+            # une image que personne n'a demandée. Le domaine, lui, continue de
+            # retomber sur le neutre — il relit des fichiers, il ne juge pas.
+            if quantification.algorithme not in ALGORITHMES:
+                raise RecetteRefusee(
+                    f"algorithme de palette inconnu « {quantification.algorithme} »"
+                )
+            if quantification.distance not in DISTANCES:
+                raise RecetteRefusee(
+                    f"distance des couleurs inconnue « {quantification.distance} »"
+                )
+            if not 0 <= quantification.force_tramage <= 100:
+                raise RecetteRefusee("la force du tramage va de 0 à 100 %")
+            # ⚠️ **Sur les couleurs déclarées, jamais sur `gardees_vives`.**
+            # Cette lecture-là tronque déjà à `GARDEES_MAX` — c'est sa règle de
+            # domaine, qui relit sans juger —, donc la comparer à `GARDEES_MAX`
+            # ne peut jamais être vraie : un écran qui en enverrait douze en
+            # perdait six en silence au lieu d'être refusé, ce qui est très
+            # exactement le contraire de ce que le commentaire ci-dessus promet.
+            declarees = [c for c in dict.fromkeys(quantification.gardees) if c]
+            if len(declarees) > GARDEES_MAX:
+                raise RecetteRefusee(
+                    f"on ne garde pas plus de {GARDEES_MAX} couleurs"
+                )
 
         bords = recette.bords
         if bords is not None:

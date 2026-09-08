@@ -32,11 +32,14 @@ from atelier.domaine.recette import (
     ANGLE_MAX,
     ANGLE_MIN,
     AU_PLUS_PROCHE,
+    BRUTE,
     CANEVAS_MAX,
     CERCLES,
     CURSEUR_MAX,
     CURSEUR_MIN,
     DEHORS,
+    FORCE_TRAMAGE_LIVREE,
+    MEDIANE,
     EPAISSEUR_MAX,
     GARDER_MAX,
     GAUCHE,
@@ -1187,6 +1190,19 @@ class CorpsQuantification(BaseModel):
     saturation: int = Field(0, ge=CURSEUR_MIN, le=CURSEUR_MAX)
     teinte: int = Field(0, ge=TEINTE_MIN, le=TEINTE_MAX)
     echanges: list[CorpsEchange] = Field(default_factory=list)
+
+    # ── Les six de B18, et le neutre de chacun est celui du domaine ───────────
+    #
+    # **Les défauts sont recopiés du domaine, pas réinventés ici.** Un corps qui
+    # poserait `force_tramage=0` par défaut éteindrait le tramage de toute
+    # recette dont l'écran ne renvoie pas la clé — la panne exacte de `decalage`
+    # en E17, et celle que la docstring de cette classe raconte déjà.
+    algorithme: str = MEDIANE
+    graine: int = Field(0, ge=0)
+    force_tramage: int = Field(FORCE_TRAMAGE_LIVREE, ge=0, le=100)
+    distance: str = BRUTE
+    visibles_seuls: bool = False
+    gardees: list[str] = Field(default_factory=list)
 
 
 class CorpsDesignation(BaseModel):
