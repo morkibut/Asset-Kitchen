@@ -1355,6 +1355,63 @@ export const AIDE: Record<string, Explication> = {
       "Il n'y a **pas d'aire minimale ici**, et c'est délibéré : un contour tracé autour de trois miettes ferait trois pâtés, mais la table des bords existe déjà pour retirer les miettes, et deux réglages qui font la même chose à deux endroits finissent par se contredire. Ce que cette table fait à la place, c'est le dire.\n\nCe n'est pas un verdict : un personnage à deux lanternes détachées fait légitimement trois taches.",
   },
 
+  // ── Les six capacités de B18 ────────────────────────────────────────────────
+
+  "contours.derivee": {
+    nom: "couleur du trait",
+    ou: "tables",
+    quoi: "Fixe, ou dérivée : chaque pixel du trait prend alors la teinte du bord le plus proche, assombrie.",
+    change:
+      "Rien à la génération. Dérivée, la couleur choisie au-dessus est ignorée — le trait suit la matière du sujet plutôt qu'une seule teinte.",
+    origine: "toi · défaut fixe",
+    long:
+      "C'était la troisième façon d'obtenir la couleur du trait, prévue dans le plan qui a produit cette table et jamais écrite : « la teinte dominante du bord, assombrie de 30 à 40 % ». Un sujet à plusieurs matières — une robe, une peau, un bâton — garde alors chacune la sienne, cernée de sa propre couleur assombrie, plutôt que d'un même noir partout.",
+  },
+
+  "contours.reserver": {
+    nom: "réserver la place",
+    ou: "tables",
+    quoi: "La case ne grandit jamais, quel que soit le choix de position.",
+    change:
+      "Rien à la génération. Posé, le sujet perd l'épaisseur du trait sur son bord plutôt que le fichier — la case du jeu reste à sa taille, quoi qu'il arrive.",
+    origine: "toi · défaut éteint",
+    long:
+      "Le trait posé « dehors » agrandit le rendu, et rien ne rattrapait ça avant B18. `reserver` prime sur `position` : la case ne bouge plus jamais. Ce n'est pas tout à fait ce que la planche de conception décrivait — réserver la place *en amont*, à l'étape de la case — parce que ça demanderait de faire circuler cette information entre deux tables de la chaîne ; le résultat obtenu ici est le même que « dedans », choisi automatiquement.",
+  },
+
+  "contours.inegal": {
+    nom: "trait inégal",
+    ou: "tables",
+    quoi: "Un dégradé du haut (presque rien) vers le bas (plein), comme si la lumière venait du ciel — et rien sur la toute dernière rangée du sujet.",
+    change:
+      "Rien à la génération. La dernière rangée ne reçoit jamais le trait : pas de semelle noire qui décollerait le sujet de son ombre.",
+    origine: "toi · défaut éteint",
+    long:
+      "Le trait de la table est aujourd'hui de la même force partout. Posé, il s'éclaircit vers le haut et s'arrête net sous les pieds — ce qui sépare un sprite découpé d'un sprite posé au sol.",
+  },
+
+  "contours.sur_calques": {
+    nom: "sur l'ensemble empilé",
+    ou: "tables",
+    quoi: "Le trait se calcule sur la silhouette de tous les calques posés ensemble, pas sur ce calque seul.",
+    change:
+      "Rien à la génération. Une pièce d'équipement — une épée, un casque — ne porte alors plus son propre liseré là où elle touche le corps.",
+    origine: "toi · défaut éteint",
+    long:
+      "Sur un calque d'équipement, le trait cernait la pièce toute seule — un liseré qui la détache du corps au lieu de l'y coller. Posé, le trait se trace après composition des calques, sur le pourtour de l'ensemble.",
+  },
+
+  "contours.desactive_plein_cadre": {
+    nom: "s'éteindre sur une tuile",
+    ou: "tables",
+    quoi: "Un sujet qui touche les quatre bords de l'image sur toute leur longueur — une tuile, un décor plein cadre — ne reçoit pas de trait.",
+    change:
+      "Rien à la génération. Décoché, le trait se trace même sur un tel sujet, ce qui dessine un quadrillage une fois les images posées côte à côte.",
+    origine: "toi · défaut actif",
+    long:
+      "Une tuile n'a pas de silhouette à détacher : ses bords sont ceux du cadre. Ce garde-fou est plus fin que « entièrement opaque » — une tuile texturée peut laisser passer un peu de fond sans jamais ouvrir ses quatre bords.",
+  },
+
   // ── La septième place : le retournement ───────────────────────────────────
   //
   // **La seule place du produit qui ne demande rien au modèle et ne coûte

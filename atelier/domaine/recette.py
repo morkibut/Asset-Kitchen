@@ -1192,10 +1192,16 @@ TROUS = (CERCLES, LAISSES)
 # dessiner à la main. Ce n'est pas une limite technique.
 EPAISSEUR_MAX = 8
 
+# **La part que la couleur dérivée retire, en assombrissant** (B18). Prise au
+# milieu de la fourchette que le plan avait écrite sans jamais la coder — « la
+# teinte dominante du bord, assombrie de 30 à 40 % ».
+ASSOMBRISSEMENT_DERIVE = 0.35
+
 
 @dataclass(frozen=True, slots=True)
 class Contour:
-    """La sixième place — le trait de bord, retracé (E5, US-205).
+    """La sixième place — le trait de bord, retracé (E5, US-205 ; six capacités
+    de plus en B18).
 
     `epaisseur` est **en pixels de l'image rendue**, seule unité qui ne mente
     pas : une fois la grille posée, l'image rendue *est* la case, et un pixel
@@ -1207,12 +1213,45 @@ class Contour:
     au moment du choix. `externe` est le défaut parce qu'**agrandir est
     réversible et manger le sujet ne l'est pas** ; c'est aussi pourquoi, à
     cheval, le pixel impair va vers l'extérieur.
+
+    ── Les six capacités de B18 ──────────────────────────────────────────────
+
+    `derivee` — la couleur du trait n'est plus fixe : chaque pixel du trait
+    prend la teinte du bord le plus proche, assombrie. `couleur` est alors
+    ignoré. Prévue dans le plan qui a produit la table, jamais écrite avant.
+
+    `reserver` — la case ne grandit jamais, quoi que dise `position` : le
+    sujet perd l'épaisseur du trait sur son bord plutôt que de laisser le
+    fichier dépasser la case du jeu. C'est `dedans`, mais choisi pour la
+    raison inverse — pas parce qu'on veut manger le sujet, mais parce qu'on
+    refuse que le rendu change de taille.
+
+    `inegal` — le trait n'est plus de la même force partout : un dégradé du
+    haut (fin, presque rien) vers le bas (plein), comme si la lumière venait
+    du ciel, et rien sur la toute dernière rangée du sujet — pas de semelle
+    noire qui décolle le sujet de son ombre.
+
+    `sur_calques` — le trait se calcule sur la silhouette de l'ensemble empilé
+    (voir `contourner_empile` dans `atelier/image/traitement.py`), pas sur ce
+    seul calque : une pièce d'équipement posée sur un corps ne porte alors
+    plus son propre liseré.
+
+    `desactive_plein_cadre` — actif par défaut : quand le sujet touche les
+    quatre bords de l'image sur toute leur longueur (une tuile, un décor
+    plein cadre), il n'y a nulle part de bord de sujet à longer qui ne soit
+    aussi un bord du cadre, et le trait ne se trace pas — sans quoi des
+    tuiles posées côte à côte dessineraient un carrelage.
     """
 
     epaisseur: int = 1
     couleur: str = "#000000"
     position: str = DEHORS
     trous: str = CERCLES
+    derivee: bool = False
+    reserver: bool = False
+    inegal: bool = False
+    sur_calques: bool = False
+    desactive_plein_cadre: bool = True
 
     @property
     def parts(self) -> tuple[int, int]:
@@ -1221,8 +1260,14 @@ class Contour:
         À cheval, la moitié qui ne tombe pas juste va **dehors** : c'est la
         conséquence directe du défaut, et elle se lit sur l'agrandissement que
         l'écran annonce plutôt que de se deviner.
+
+        **`reserver` prime sur `position`** (B18) : la promesse qu'il porte —
+        la case ne change jamais de taille — vaudrait moins si un choix de
+        position pouvait encore la rouvrir.
         """
         epaisseur = max(1, min(EPAISSEUR_MAX, self.epaisseur))
+        if self.reserver:
+            return 0, epaisseur
         if self.position == DEDANS:
             return 0, epaisseur
         if self.position == A_CHEVAL:
@@ -1236,6 +1281,22 @@ class Contour:
             "couleur": self.couleur,
             "position": self.position,
             "trous": self.trous,
+            # ── Les clés neuves ne s'écrivent que remplies (B18, d'après B17,
+            # lui-même d'après B1) : « une clé neuve dans une place existante
+            # ne s'écrit que quand elle vaut autre chose que son neutre ».
+            # Sans ça, toute recette du corpus figé qui pose déjà un contour
+            # changerait d'empreinte, donc de nom de rendu, pour six capacités
+            # qu'aucune ne demande. `desactive_plein_cadre` est neutre à
+            # `True` — c'est l'inverse des quatre autres, neutres à `False`.
+            **({"derivee": self.derivee} if self.derivee else {}),
+            **({"reserver": self.reserver} if self.reserver else {}),
+            **({"inegal": self.inegal} if self.inegal else {}),
+            **({"sur_calques": self.sur_calques} if self.sur_calques else {}),
+            **(
+                {}
+                if self.desactive_plein_cadre
+                else {"desactive_plein_cadre": self.desactive_plein_cadre}
+            ),
         }
 
     @staticmethod
@@ -1245,6 +1306,11 @@ class Contour:
             couleur=str(d.get("couleur") or "#000000"),
             position=str(d.get("position") or DEHORS),
             trous=str(d.get("trous") or CERCLES),
+            derivee=bool(d.get("derivee", False)),
+            reserver=bool(d.get("reserver", False)),
+            inegal=bool(d.get("inegal", False)),
+            sur_calques=bool(d.get("sur_calques", False)),
+            desactive_plein_cadre=bool(d.get("desactive_plein_cadre", True)),
         )
 
 

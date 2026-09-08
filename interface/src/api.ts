@@ -292,6 +292,19 @@ export type Contour = {
   couleur: string
   position: "externe" | "interne" | "centre"
   trous: "cercles" | "laisses"
+  /** La couleur dérivée (B18) — la teinte du bord, assombrie ; `couleur` est
+   *  alors ignoré. */
+  derivee: boolean
+  /** Réserver la place (B18) — la case ne grandit jamais, quoi que dise
+   *  `position`. */
+  reserver: boolean
+  /** Le trait inégal (B18) — dégradé du haut vers le bas, rien sous les pieds. */
+  inegal: boolean
+  /** Le trait sur l'ensemble empilé (B18), pas sur ce seul calque. */
+  sur_calques: boolean
+  /** S'éteint tout seul sur un sujet qui touche les quatre bords en entier —
+   *  une tuile, un décor plein cadre (B18). Actif par défaut. */
+  desactive_plein_cadre: boolean
 }
 
 /** La septième place — le miroir (B1).
@@ -1527,6 +1540,11 @@ export const CONTOUR_PAR_DEFAUT: Contour = {
   couleur: "#000000",
   position: "externe",
   trous: "cercles",
+  derivee: false,
+  reserver: false,
+  inegal: false,
+  sur_calques: false,
+  desactive_plein_cadre: true,
 }
 
 /** Le seul sens que l'atelier sait appliquer aujourd'hui (B1). Les neuf autres

@@ -1131,6 +1131,89 @@ function ReglagesDuContour({ recette, univers, mesures, regler, poser }: Poste) 
           }`}
         />
       )}
+
+      {/* ── Les six capacités de B18 ─────────────────────────────────────── */}
+      <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
+        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+          <input
+            type="checkbox"
+            checked={contour.derivee}
+            onChange={(e) => changer({ derivee: e.target.checked })}
+            className="mt-[4px]"
+          />
+          <span>
+            couleur dérivée
+            <span className="mesure block text-[10.5px] text-encre-4">
+              chaque pixel du trait prend la teinte du bord le plus proche, assombrie — la
+              couleur choisie plus haut est alors ignorée
+            </span>
+          </span>
+        </label>
+
+        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+          <input
+            type="checkbox"
+            checked={contour.reserver}
+            onChange={(e) => changer({ reserver: e.target.checked })}
+            className="mt-[4px]"
+          />
+          <span>
+            réserver la place
+            <span className="mesure block text-[10.5px] text-encre-4">
+              la case ne grandit jamais, quel que soit le choix de position — le sujet perd
+              l'épaisseur du trait sur son bord plutôt que le fichier
+            </span>
+          </span>
+        </label>
+
+        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+          <input
+            type="checkbox"
+            checked={contour.inegal}
+            onChange={(e) => changer({ inegal: e.target.checked })}
+            className="mt-[4px]"
+          />
+          <span>
+            trait inégal
+            <span className="mesure block text-[10.5px] text-encre-4">
+              dégradé du haut (presque rien) vers le bas (plein), comme si la lumière venait
+              du ciel — et rien sous les pieds
+            </span>
+          </span>
+        </label>
+
+        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+          <input
+            type="checkbox"
+            checked={contour.sur_calques}
+            onChange={(e) => changer({ sur_calques: e.target.checked })}
+            className="mt-[4px]"
+          />
+          <span>
+            sur l'ensemble empilé
+            <span className="mesure block text-[10.5px] text-encre-4">
+              cerne la silhouette de tous les calques posés ensemble, pas ce calque seul —
+              une pièce d'équipement ne garde alors plus son propre liseré
+            </span>
+          </span>
+        </label>
+
+        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+          <input
+            type="checkbox"
+            checked={contour.desactive_plein_cadre}
+            onChange={(e) => changer({ desactive_plein_cadre: e.target.checked })}
+            className="mt-[4px]"
+          />
+          <span>
+            s'éteindre sur une tuile
+            <span className="mesure block text-[10.5px] text-encre-4">
+              quand le sujet touche les quatre bords de l'image sur toute leur longueur — une
+              tuile, un décor plein cadre — le trait ne se trace pas
+            </span>
+          </span>
+        </label>
+      </div>
     </div>
   )
 }
@@ -1242,6 +1325,18 @@ const CE_QUE_LE_TEMOIN_MONTRE: Record<Temoin, string> = {
   apres: "Après",
 }
 
+/** Voir le trait sur plusieurs fonds (B18) — la question que pose le contour
+ *  est « est-ce que ça se voit sur l'herbe », et un damier de transparence n'y
+ *  répond pas. Les trois teintes sont celles de `atelier-contour.dc.html`. */
+type FondApercu = "damier" | "herbe" | "pierre" | "eau"
+
+const FONDS_APERCU: Record<FondApercu, string | null> = {
+  damier: null,
+  herbe: "var(--color-apercu-herbe)",
+  pierre: "var(--color-apercu-pierre)",
+  eau: "var(--color-apercu-eau)",
+}
+
 /** ⚠️ **Des multiples entiers, et un sprite de 64 px n'est pas regardable à
  *  ×1.** Vu au navigateur : l'image occupait un huitième d'un cadre de cinq
  *  cents pixels, et l'on ne pouvait juger d'aucun réglage — c'est-à-dire qu'on
@@ -1275,6 +1370,13 @@ export function Retouche({
   const [ouverte, setOuverte] = useState<Table>("detourage")
   const [temoin, setTemoin] = useState<Temoin>("apres")
   const [zoom, setZoom] = useState<Zoom>(4)
+  // **L'aperçu sur plusieurs fonds (B18)** — une préférence d'écran, jamais un
+  // réglage de la recette : poser le sujet sur de l'herbe ne change pas un
+  // pixel du fichier qui part dans le jeu. Le rendu porte déjà son alpha ; le
+  // fond se pose donc en CSS, derrière l'image, sans redemander quoi que ce
+  // soit au serveur — `apercu_sur_fonds` (`atelier/image/traitement.py`)
+  // rend le même calcul côté serveur, pour l'export et pour l'essai.
+  const [fondApercu, setFondApercu] = useState<FondApercu>("damier")
 
   // Changer d'image rouvre la première table : garder celle d'avant ferait
   // croire qu'on a réglé quelque chose sur celle qu'on vient d'ouvrir.
@@ -1300,6 +1402,12 @@ export function Retouche({
     oeil.observe(noeud)
     return () => oeil.disconnect()
   }, [])
+
+  // **Le damier cède la place au fond choisi**, et seulement sur la table du
+  // contour — c'est elle qui pose la question, les sept autres n'en ont pas
+  // besoin. Le damier peint son propre fond derrière l'image ; il faut donc
+  // l'ôter, sans quoi la couleur posée sur le cadre ne se verrait jamais.
+  const montreUnFond = ouverte === "contours" && FONDS_APERCU[fondApercu] !== null
 
   /** Le plus grand côté à montrer — deux images côte à côte se partagent la
    *  place, donc le témoin « les deux » compte double. */
@@ -1482,11 +1590,39 @@ export function Retouche({
                   </button>
                 ))}
               </div>
+              {/* **Sur plusieurs fonds, seulement là où la question se pose**
+                  (B18) — les autres tables n'ont pas à en tenir compte, et le
+                  proposer partout aurait dilué l'unique raison d'être de
+                  celui-ci : voir si le trait se détache. */}
+              {ouverte === "contours" && (
+                <div
+                  data-fond-apercu
+                  className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]"
+                >
+                  {(Object.keys(FONDS_APERCU) as FondApercu[]).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      aria-pressed={fondApercu === f}
+                      onClick={() => setFondApercu(f)}
+                      className={[
+                        "flex h-[26px] items-center rounded-7 px-[8px] text-[12px] transition-colors duration-120",
+                        fondApercu === f
+                          ? "bg-carte font-medium text-encre"
+                          : "text-encre-3 hover:text-encre",
+                      ].join(" ")}
+                    >
+                      {f === "damier" ? "Damier" : f[0].toUpperCase() + f.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div
               ref={cadre}
               data-scene-de-retouche
+              style={montreUnFond ? { backgroundColor: FONDS_APERCU[fondApercu] as string } : undefined}
               className="flex min-h-[300px] flex-1 items-center justify-center gap-[8px] overflow-auto rounded-8 bg-pourtour p-[22px]"
             >
               {(temoin === "avant" || temoin === "deux") && (
@@ -1497,7 +1633,10 @@ export function Retouche({
                     width={asset.largeur * zoomTenu}
                     height={asset.hauteur * zoomTenu}
                     style={{ imageRendering: "pixelated" }}
-                    className="damier block max-h-full min-w-0 object-contain"
+                    className={[
+                      montreUnFond ? "" : "damier",
+                      "block max-h-full min-w-0 object-contain",
+                    ].join(" ")}
                   />
                   <figcaption className="mesure text-[10.5px] text-carte">
                     avant · {asset.largeur}×{asset.hauteur}
@@ -1512,7 +1651,10 @@ export function Retouche({
                     width={(asset.rendu_largeur || asset.largeur) * zoomTenu}
                     height={(asset.rendu_hauteur || asset.hauteur) * zoomTenu}
                     style={{ imageRendering: "pixelated" }}
-                    className="damier block max-h-full min-w-0 object-contain"
+                    className={[
+                      montreUnFond ? "" : "damier",
+                      "block max-h-full min-w-0 object-contain",
+                    ].join(" ")}
                   />
                   {/* **La taille rendue est écrite sous l'image**, parce que
                       c'est le seul endroit où le contour se voit changer les

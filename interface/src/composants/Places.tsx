@@ -244,8 +244,12 @@ export const SENS_A_AJOUTER: readonly string[] = [
  *  **Écrit une fois, et c'est la même arithmétique que le serveur** : à cheval,
  *  la moitié qui ne tombe pas juste va vers l'extérieur — agrandir est
  *  réversible, manger le sujet ne l'est pas. Un second calcul écrit à l'écran
- *  aurait fini par annoncer autre chose que ce que l'image fait. */
+ *  aurait fini par annoncer autre chose que ce que l'image fait.
+ *
+ *  **`reserver` prime sur `position`** (B18), comme dans `Contour.parts` côté
+ *  domaine : la case ne doit plus jamais grandir, quel que soit le choix. */
 export function debord(contour: Contour): number {
+  if (contour.reserver) return 0
   if (contour.position === "interne") return 0
   if (contour.position === "centre") return Math.ceil(contour.epaisseur / 2)
   return contour.epaisseur
@@ -1534,6 +1538,67 @@ export function PanneauContours({ recette, univers, poser, regler, mesures }: Re
           />
         </div>
       )}
+
+      {/* ── Les six capacités de B18 ────────────────────────────────────── */}
+      <div className="flex flex-col gap-2 border-t border-bord pt-2">
+        <Reglage libelle="couleur du trait" aide="contours.derivee">
+          <Segments
+            valeurs={["fixe", "derivee"] as const}
+            valeur={contour.derivee ? "derivee" : "fixe"}
+            libelles={{ fixe: "fixe", derivee: "dérivée" }}
+            onChange={(v) => pose({ ...contour, derivee: v === "derivee" })}
+          />
+        </Reglage>
+        {contour.derivee && (
+          <Raison texte="chaque pixel du trait prend la teinte du bord le plus proche, assombrie — la couleur choisie ci-dessus est ignorée" />
+        )}
+
+        <Reglage libelle="la case" aide="contours.reserver">
+          <Segments
+            valeurs={["libre", "reservee"] as const}
+            valeur={contour.reserver ? "reservee" : "libre"}
+            libelles={{ libre: "libre", reservee: "toujours fixe" }}
+            onChange={(v) => pose({ ...contour, reserver: v === "reservee" })}
+          />
+        </Reglage>
+        {contour.reserver && (
+          <Raison texte="la case ne grandit jamais, quel que soit le choix de position — le sujet perd l'épaisseur du trait sur son bord" />
+        )}
+
+        <Reglage libelle="régularité" aide="contours.inegal">
+          <Segments
+            valeurs={["regulier", "inegal"] as const}
+            valeur={contour.inegal ? "inegal" : "regulier"}
+            libelles={{ regulier: "régulier", inegal: "inégal" }}
+            onChange={(v) => pose({ ...contour, inegal: v === "inegal" })}
+          />
+        </Reglage>
+        {contour.inegal && (
+          <Raison texte="dégradé du haut (presque rien) vers le bas (plein), comme si la lumière venait du ciel — et rien sous les pieds" />
+        )}
+
+        <Reglage libelle="sur" aide="contours.sur_calques">
+          <Segments
+            valeurs={["ce-calque", "empile"] as const}
+            valeur={contour.sur_calques ? "empile" : "ce-calque"}
+            libelles={{ "ce-calque": "ce calque", empile: "l'ensemble empilé" }}
+            onChange={(v) => pose({ ...contour, sur_calques: v === "empile" })}
+          />
+        </Reglage>
+        {contour.sur_calques && (
+          <Raison texte="le trait cerne la silhouette de tous les calques empilés, pas ce calque seul — une pièce d'équipement ne porte alors plus son propre liseré" />
+        )}
+
+        <Reglage libelle="sur une tuile" aide="contours.desactive_plein_cadre">
+          <Segments
+            valeurs={["trace", "eteint"] as const}
+            valeur={contour.desactive_plein_cadre ? "eteint" : "trace"}
+            libelles={{ trace: "trace quand même", eteint: "s'éteint" }}
+            onChange={(v) => pose({ ...contour, desactive_plein_cadre: v === "eteint" })}
+          />
+        </Reglage>
+        <Raison texte="quand le sujet touche les quatre bords de l'image sur toute leur longueur — une tuile, un décor plein cadre" />
+      </div>
     </div>
   )
 }

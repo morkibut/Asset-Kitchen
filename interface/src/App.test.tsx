@@ -4861,8 +4861,9 @@ describe("l'infobulle et le guide", () => {
       "reglages",
       "equipement",
     ])
-    // 157 avant `B17`, plus les cinq entrées des quatre moteurs neufs.
-    expect(Object.keys(AIDE).length).toBe(162)
+    // 157 avant `B17`, plus les cinq entrées des quatre moteurs neufs, plus
+    // les cinq entrées des six capacités neuves du contour (`B18`).
+    expect(Object.keys(AIDE).length).toBe(167)
     for (const [cle, entree] of Object.entries(AIDE)) {
       expect(LIEUX_FERMES.has(entree.ou), `${cle} → ou: "${entree.ou}"`).toBe(true)
     }

@@ -47,6 +47,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from atelier.domaine.recette import (
+    ASSOMBRISSEMENT_DERIVE,
     AU_PLUS_PROCHE,
     BAS,
     BORD,
@@ -91,10 +92,12 @@ __all__ = [
     "MesuresDuFond",
     "MoteurAbsent",
     "Rendu",
+    "apercu_sur_fonds",
     "appliquer",
     "boite_opaque",
     "composantes",
     "contourner",
+    "contourner_empile",
     "detourer",
     "detourer_bord",
     "detourer_couleur",
@@ -1559,9 +1562,30 @@ def contourner(
     coins ; la croix ne le fait pas, et c'est la convention du pixel art. Au-delà
     d'une épaisseur c'est le carré qui reprend, parce qu'une croix répétée donne
     un losange.
+
+    ── Les six capacités de B18 ───────────────────────────────────────────────
+
+    **`desactive_plein_cadre` se lit avant tout le reste** : un sujet qui touche
+    les quatre bords de l'image sur toute leur longueur — une tuile, un décor
+    plein cadre — n'a nulle part de bord de sujet qui ne soit aussi un bord du
+    cadre, et le tracer dessinerait un carrelage une fois les images posées côte
+    à côte. C'est la même famille de garde-fou que « entièrement opaque »
+    au-dessus, en plus fin : celui-là ne voyait qu'un sujet sans le moindre
+    pixel transparent, celui-ci voit aussi la tuile texturée dont les coins
+    laissent passer un peu de fond.
+
+    `derivee` et `inegal` changent *comment* le trait se peint, pas *où* :
+    `_tracer_derive` et `_tracer_inegal` reprennent le même anneau de pixels et
+    ne font que choisir sa couleur autrement. Les deux se composent : un trait
+    inégal en couleur dérivée demande les deux réglages à la fois, et
+    `_tracer_inegal` sait aller chercher la couleur du bord quand `derivee` est
+    posé.
     """
     sujet = rgba[:, :, 3] > 0
     if not sujet.any() or sujet.all():
+        return rgba
+
+    if contour.desactive_plein_cadre and _touche_les_quatre_bords(sujet):
         return rgba
 
     if contour.trous == LAISSES:
@@ -1583,6 +1607,7 @@ def contourner(
         anneau = etendre(sujet, dehors, croix=croix) & ~restreindre(
             sujet, dedans, croix=croix
         )
+        epaisseur_px = max(dehors, dedans)
     else:
         # **Le débord se paie en pixels, l'anneau se calcule en blocs.** Un
         # trait externe d'un bloc agrandit l'image d'un bloc de chaque côté, et
@@ -1601,11 +1626,237 @@ def contourner(
             blocs, dedans, croix=croix
         )
         anneau = anneau_blocs[lignes[:, None], colonnes[None, :]]
+        epaisseur_px = max(dehors, dedans) * pas
+
+    if contour.inegal:
+        return _tracer_inegal(rgba, anneau, sujet, contour, epaisseur_px)
+    if contour.derivee:
+        return _tracer_derive(rgba, anneau, sujet, epaisseur_px)
 
     sortie = rgba.copy()
     rouge, vert, bleu = _rvb(contour.couleur)
     sortie[anneau] = (rouge, vert, bleu, 255)
     return sortie
+
+
+def _touche_les_quatre_bords(sujet: np.ndarray) -> bool:
+    """Un sujet qui n'a nulle part où respirer — une tuile, un décor plein cadre (B18).
+
+    Vrai quand les quatre bords de l'image sont opaques sur toute leur
+    longueur. Il ne reste alors aucun bord de sujet à longer qui ne soit aussi
+    un bord du cadre — le distinguer du cas « entièrement opaque » ci-dessus
+    est ce qui manquait : une tuile texturée peut laisser un pixel transparent
+    ici ou là sans jamais ouvrir ses quatre bords.
+    """
+    return bool(
+        sujet[0, :].all()
+        and sujet[-1, :].all()
+        and sujet[:, 0].all()
+        and sujet[:, -1].all()
+    )
+
+
+# Les huit voisins d'un pixel, dans le même repère que `CARRE` (un pad de un
+# pixel, le centre est `(1, 1)`) — sans le centre lui-même.
+_VOISINS_DU_PIXEL = tuple((dy, dx) for dy, dx in CARRE if (dy, dx) != (1, 1))
+
+
+def _propager_couleur(
+    couleurs: np.ndarray, connu: np.ndarray, iterations: int
+) -> np.ndarray:
+    """La couleur du sujet, étendue vers l'extérieur un pixel à la fois (B18).
+
+    **Un pixel gagné prend la couleur du premier voisin déjà connu**, trouvé
+    dans un ordre fixe — haut, bas, gauche, droite, puis les diagonales. Une
+    seule teinte par pixel, celle du bord le plus proche, plutôt qu'une moyenne
+    qui délaverait la matière : brun le long de la robe, chair le long du bras,
+    gris le long du bâton. `iterations` est bornée par `EPAISSEUR_MAX`, donc
+    par au plus huit tours — le même ordre de grandeur qu'`etendre`.
+    """
+    couleurs = couleurs.astype(np.int16).copy()
+    connu = connu.copy()
+    hauteur, largeur = connu.shape
+    for _ in range(max(1, iterations)):
+        front = etendre(connu, 1) & ~connu
+        if not front.any():
+            break
+        pris = np.zeros_like(front)
+        borde_connu = np.pad(connu, 1, constant_values=False)
+        borde_couleurs = np.pad(
+            couleurs, ((1, 1), (1, 1), (0, 0)), constant_values=0
+        )
+        for dy, dx in _VOISINS_DU_PIXEL:
+            voisin_connu = borde_connu[dy : dy + hauteur, dx : dx + largeur]
+            voisin_couleurs = borde_couleurs[dy : dy + hauteur, dx : dx + largeur]
+            prend = front & voisin_connu & ~pris
+            couleurs[prend] = voisin_couleurs[prend]
+            pris |= prend
+        connu |= front
+    return np.clip(couleurs, 0, 255).astype(np.uint8)
+
+
+def _tracer_derive(
+    rgba: np.ndarray, anneau: np.ndarray, sujet: np.ndarray, epaisseur_px: int
+) -> np.ndarray:
+    """La couleur dérivée — la teinte du bord, assombrie (B18).
+
+    **Prévue dans le plan qui a produit cette table, et jamais écrite** : « la
+    teinte dominante du bord, assombrie de 30 à 40 % ». Chaque pixel du trait
+    prend la couleur du sujet le plus proche plutôt qu'une même teinte
+    partout — le sujet garde ses matières au lieu d'être cerné d'un trait
+    unique, ce qui sépare un contour d'atelier d'un contour de dessinateur.
+    """
+    if not anneau.any():
+        return rgba
+    couleurs = _propager_couleur(rgba[:, :, :3], sujet, epaisseur_px)
+    sortie = rgba.copy()
+    sortie[anneau, :3] = np.clip(
+        couleurs[anneau].astype(np.float64) * (1 - ASSOMBRISSEMENT_DERIVE), 0, 255
+    ).astype(np.uint8)
+    sortie[anneau, 3] = 255
+    return sortie
+
+
+def _tracer_inegal(
+    rgba: np.ndarray,
+    anneau: np.ndarray,
+    sujet: np.ndarray,
+    contour: Contour,
+    epaisseur_px: int,
+) -> np.ndarray:
+    """Le trait inégal — un dégradé du haut vers le bas, et rien sous les
+    pieds (B18).
+
+    **Épais en bas, presque rien en haut**, comme si la lumière venait du
+    ciel ; et la toute dernière rangée du sujet ne reçoit jamais le trait, pour
+    qu'il ne colle pas une semelle noire qui décollerait le sujet de son
+    ombre. Le dégradé est un mélange alpha avec ce qu'il y avait dessous —
+    du fond transparent côté « dehors », la couleur d'origine du sujet côté
+    « dedans » — et non un simple seuil, pour que la transition se voie.
+    """
+    if not anneau.any():
+        return rgba
+
+    lignes_sujet = np.where(sujet.any(axis=1))[0]
+    y0, y1 = int(lignes_sujet.min()), int(lignes_sujet.max())
+    hauteur_bbox = max(1, y1 - y0)
+
+    grille_lignes = np.arange(rgba.shape[0])[:, None]
+    poids = np.clip((grille_lignes - y0) / hauteur_bbox, 0.0, 1.0)
+    poids = 0.15 + 0.85 * poids
+    poids_image = np.broadcast_to(poids, sujet.shape)
+
+    # **La dernière rangée de l'anneau, pas celle du sujet** : dehors, le trait
+    # vit *sous* le pied du sujet, à `y1 + dehors` ; dedans, il vit *sur* le
+    # pied, à `y1` lui-même. Les deux sont « la rangée la plus basse que
+    # l'anneau porte réellement », et c'est elle qu'on retire dans les deux cas.
+    lignes_anneau = np.where(anneau.any(axis=1))[0]
+    bas_anneau = int(lignes_anneau.max())
+    sous_les_pieds = np.zeros_like(anneau)
+    sous_les_pieds[bas_anneau, :] = True
+    anneau_actif = anneau & ~sous_les_pieds
+    if not anneau_actif.any():
+        return rgba
+
+    if contour.derivee:
+        couleurs = _propager_couleur(rgba[:, :, :3], sujet, epaisseur_px)
+    else:
+        rouge, vert, bleu = _rvb(contour.couleur)
+        couleurs = np.empty_like(rgba[:, :, :3])
+        couleurs[:, :] = (rouge, vert, bleu)
+
+    sortie = rgba.copy()
+    poids_actif = poids_image[anneau_actif][:, None]
+    fond_couleur = sortie[anneau_actif, :3].astype(np.float64)
+    fond_alpha = sortie[anneau_actif, 3].astype(np.float64)
+
+    melange = (
+        couleurs[anneau_actif].astype(np.float64) * poids_actif
+        + fond_couleur * (1 - poids_actif)
+    )
+    sortie[anneau_actif, :3] = np.clip(melange, 0, 255).astype(np.uint8)
+    alpha = poids_actif[:, 0] * 255 + fond_alpha * (1 - poids_actif[:, 0])
+    sortie[anneau_actif, 3] = np.clip(alpha, 0, 255).astype(np.uint8)
+    return sortie
+
+
+def contourner_empile(
+    calques: Sequence[np.ndarray],
+    contour: Contour,
+    grille: "GrilleRetrouvee | None" = None,
+) -> np.ndarray:
+    """Le trait sur l'ensemble empilé, pas sur une pièce seule (B18).
+
+    **Sur un calque d'équipement, le trait cernait l'épée toute seule** — un
+    liseré sombre qui la détache du corps au lieu de l'y coller. Ce que fait
+    cette fonction : composer les calques du dessous vers le dessus — la même
+    convention que partout où il y en a une pile (`Main.calques`,
+    `atelier/image/calque.py::superposer`, dont on reprend ici la règle sans en
+    dépendre : le dessus l'emporte partout où il est opaque) — puis tracer le
+    contour existant sur la silhouette de cette **union**. Le trait ne voit
+    donc plus la frontière entre deux calques qui se recouvrent, seulement le
+    pourtour de l'ensemble.
+
+    Rend l'image composée, avec le trait dessus — pas seulement le trait : le
+    résultat est prêt à servir tel quel, exactement comme `contourner` rend
+    l'image reçue et pas seulement son anneau.
+    """
+    if not calques:
+        raise ValueError("contourner_empile : au moins un calque")
+    empile = calques[0].copy()
+    for dessus in calques[1:]:
+        if dessus.shape != empile.shape:
+            raise ValueError(
+                "contourner_empile : tous les calques doivent avoir la même forme"
+            )
+        couvre = dessus[:, :, 3] > 0
+        empile[couvre] = dessus[couvre]
+    return contourner(empile, contour, grille)
+
+
+# ── L'aperçu sur plusieurs fonds (B18) ───────────────────────────────────────
+#
+# **N'est pas un réglage de la recette, et c'est voulu.** Poser le sujet sur de
+# l'herbe ne change pas un pixel du rendu qui part dans le jeu — c'est un fond
+# de jugement, pas un fond du fichier. La question qu'il répond est celle qui a
+# fait poser un contour : « est-ce que ça se voit », et l'écran ne montrait
+# jusqu'ici l'image que sur un damier de transparence, c'est-à-dire sur rien.
+#
+# Les trois teintes reprennent celles de `atelier-contour.dc.html` : l'herbe du
+# marais est déjà dans la planche (`.herbe { background-color: #4a5c3a }`),
+# la pierre et l'eau sont choisies pour couvrir les deux autres valeurs qu'un
+# sujet croise le plus souvent — un intérieur de pierre, une étendue d'eau.
+FONDS_APERCU: dict[str, tuple[int, int, int]] = {
+    "herbe": (74, 92, 58),
+    "pierre": (122, 116, 108),
+    "eau": (58, 92, 122),
+}
+
+
+def apercu_sur_fonds(
+    rgba: np.ndarray, fonds: Sequence[str] = tuple(FONDS_APERCU)
+) -> dict[str, np.ndarray]:
+    """Le sujet posé sur des fonds unis, pour voir si le trait porte (B18).
+
+    Un nom de fond qui ne figure pas dans `FONDS_APERCU` est ignoré — même
+    règle que `durcissement_livre` : un module pur ne refuse pas un nom qu'il
+    ne connaît pas, il rend ce qu'il sait rendre.
+    """
+    resultat: dict[str, np.ndarray] = {}
+    alpha = (rgba[:, :, 3:4].astype(np.float64)) / 255.0
+    sujet_rgb = rgba[:, :, :3].astype(np.float64)
+    for nom in fonds:
+        teinte = FONDS_APERCU.get(nom)
+        if teinte is None:
+            continue
+        fond = np.empty_like(sujet_rgb)
+        fond[:, :] = teinte
+        compose = sujet_rgb * alpha + fond * (1 - alpha)
+        image = np.empty_like(rgba)
+        image[:, :, :3] = np.clip(compose, 0, 255).astype(np.uint8)
+        image[:, :, 3] = 255
+        resultat[nom] = image
+    return resultat
 
 
 # ── Le retournement ──────────────────────────────────────────────────────────
