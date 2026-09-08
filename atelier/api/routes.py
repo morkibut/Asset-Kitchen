@@ -1208,6 +1208,12 @@ class CorpsContour(BaseModel):
     couleur: str = "#000000"
     position: str = DEHORS
     trous: str = CERCLES
+    # ── Les six capacités de B18 ──────────────────────────────────────────
+    derivee: bool = False
+    reserver: bool = False
+    inegal: bool = False
+    sur_calques: bool = False
+    desactive_plein_cadre: bool = True
 
 
 class CorpsRetournement(BaseModel):

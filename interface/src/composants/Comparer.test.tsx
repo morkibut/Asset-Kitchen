@@ -11,6 +11,7 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { Comparer } from "./Comparer"
 import {
+  CONTOUR_PAR_DEFAUT,
   RECETTE_VIDE,
   type Asset,
   type Case,
@@ -210,7 +211,16 @@ describe("deux sujets côte à côte", () => {
               images: [
                 image({
                   identifiant: "b",
-                  recette: { ...RECETTE_VIDE, contours: { epaisseur: 2, couleur: "#1a1a1a", position: "externe", trous: "cercles" } },
+                  recette: {
+                    ...RECETTE_VIDE,
+                    contours: {
+                      ...CONTOUR_PAR_DEFAUT,
+                      epaisseur: 2,
+                      couleur: "#1a1a1a",
+                      position: "externe",
+                      trous: "cercles",
+                    },
+                  },
                 }),
               ],
               corps: "b",

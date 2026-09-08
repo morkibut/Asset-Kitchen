@@ -42,6 +42,13 @@
   --color-damier-clair: #ece7dc;
   --color-damier-sombre: #e4dfd4;
 
+  /* ── Les fonds d'aperçu du contour — jamais la couleur d'un sujet ─────────── */
+  /* Trois fonds plats, à la place du damier, pour juger un trait sur ce qu'il
+     rencontrera en jeu plutôt que sur un neutre. Aucun sujet ne s'y peint. */
+  --color-apercu-herbe: #4a5c3a;
+  --color-apercu-pierre: #7a746c;
+  --color-apercu-eau: #3a5c7a;
+
   /* ── Les traits — le trait sépare des panneaux, pas des lignes ────────────── */
   --color-trait-faible: #ece6db;
   --color-trait: #e2dbd0;

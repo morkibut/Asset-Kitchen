@@ -904,7 +904,7 @@ livre seul.
 | Couleurs | 7 | 9 — trame régulière, force du tramage, k-moyennes, octree, distance à l'œil, rampes d'ombre… |
 | Nettoyer | 2 | 9 — le relevé se contredit sur le compte (9, 11 ou 12) ; à trancher avant de chiffrer |
 | Retourner | 10 — **livrés le 8 septembre 2026** | 0 |
-| Contour | 1 procédé | 6 capacités — couleur dérivée, trait inégal, contour sur l'ensemble empilé… |
+| Contour | 7 | 0 — **les six capacités tenues** (couleur dérivée, réserver la place, trait inégal, contour sur l'ensemble empilé, s'éteindre sur un sujet plein cadre, aperçu sur plusieurs fonds) |
 | Découpe | 3 | 0 — **les gouttières, tenu le 8 septembre 2026** : `atelier/image/decoupe.py::gouttieres` lit la brute telle quelle, sans détourage — une rangée ou une colonne entièrement de la couleur du fond (`_couleur_du_bord`, la médiane de la bordure) est une gouttière, et ce qui reste entre deux gouttières est une case. ⚠️ **Le fond se lit à la médiane de la bordure, jamais à l'uniformité de la case elle-même** : un sprite qui se trouve être un aplat d'une seule couleur — fréquent en pixel art — serait sinon confondu avec une case vide. Troisième segment de « Détection » dans `Decoupe.tsx`, `ModeDecoupe` gagne `"gouttieres"`, et `duree_ms` (critère commun à `B18`) est mesuré et annoncé au-delà de 240 ms. |
 
 **Détourer, livré.** Un cinquième moteur — `palette`, la palette en garde-fou — s'ajoute à
@@ -1008,11 +1008,47 @@ cette file.
 ⚠️ **Repli, réglages partiels** — l'axe et la moitié gardée sont posables à l'écran ; le curseur
 qui fait glisser l'axe sur l'image, décrit par la planche, ne l'est pas encore.
 
+#### Contour — les six capacités, tenues
+
+Ajoutées à `atelier/domaine/recette.py::Contour` (`derivee`, `reserver`, `inegal`, `sur_calques`,
+`desactive_plein_cadre`) et à l'engin de `atelier/image/traitement.py::contourner` ; câblées à
+l'écran dans `interface/src/composants/Retouche.tsx::ReglagesDuContour` et
+`interface/src/composants/Places.tsx::PanneauContours`. Essais réels dans
+`tests/test_b18_contour.py`.
+
+- **Couleur dérivée** — chaque pixel du trait prend la teinte du bord le plus proche, assombrie
+  de 35 % (`ASSOMBRISSEMENT_DERIVE`), au lieu d'une couleur fixe partout.
+- **Réserver la place** — `reserver` prime sur `position` : la case ne grandit jamais. ⚠️ **Ce
+  n'est pas ce que la planche décrivait** (« poser le sujet 2 px plus petit à l'étape de la
+  grille »). Le geste décrit demanderait de coordonner Contour avec Grille/Pixéliser — un autre
+  atelier de cette même file, en cours en parallèle — et le pipeline actuel ne fait pas circuler
+  cette information entre places. Tenu à la place : la case reste fixe en mangeant l'épaisseur
+  sur le bord (même résultat que `position: dedans`, mais choisi automatiquement quel que soit
+  le réglage de position). Vrai « réserver en amont » reste à écrire le jour où Grille le porte.
+- **Trait inégal** — dégradé d'alpha du haut (quasi rien) vers le bas (plein), et la dernière
+  rangée de l'anneau ne reçoit jamais le trait (pas de « semelle » sous les pieds).
+- **Contour sur l'ensemble empilé** — `contourner_empile` compose des calques (le dessus gagne
+  partout où il est opaque, comme `atelier/image/calque.py::superposer`) puis trace sur la
+  silhouette de l'union. ⚠️ **Câblé, effet non observable en pratique aujourd'hui** : le réglage
+  `sur_calques` part bien au serveur et le moteur existe et est testé sur de vraies images, mais
+  aucun écran ne fournit encore à la retouche d'un asset les calques d'un porteur (ça suppose de
+  brancher `B19`/`B20` — le vestiaire et les calques d'animation — jusqu'à cet endroit). Tant
+  qu'un seul calque est connu, `sur_calques` ne change rien au rendu.
+- **S'éteindre sur un sujet plein cadre** — actif par défaut (`desactive_plein_cadre=True`) :
+  un sujet qui touche les quatre bords de l'image sur toute leur longueur ne trace plus de
+  trait, même s'il n'est pas *entièrement* opaque (une tuile texturée). Celui-ci est câblé de
+  bout en bout et se vérifie au navigateur.
+- **Aperçu sur plusieurs fonds** — `apercu_sur_fonds` (herbe/pierre/eau) existe et est testée
+  côté serveur ; à l'écran, la même idée est rendue **en CSS** plutôt qu'en rappelant le serveur
+  à chaque clic (le PNG rendu porte déjà son alpha, poser un fond derrière est instantané et
+  gratuit) — décision prise pour la fluidité, documentée ici plutôt que devinée en relisant le
+  diff.
+
 ### Critères d'acceptation
 
 - [x] Chaque atelier livré porte tous ses moteurs à l'écran, et aucun n'est en dur dans le code
-      sans réglage. *Vrai pour Détourer, Recadrer, Pixéliser, Découpe et Retourner — les cinq
-      livrés à ce jour dans la file.*
+      sans réglage. *Vrai pour Détourer, Recadrer, Pixéliser, Découpe, Retourner et Contour — les
+      six livrés à ce jour dans la file.*
 - [ ] Trois réglages figés dans le code de la réduction sortent enfin à l'écran. *Non tenu, voir
       la note sous Pixéliser ci-dessus.*
 - [x] Chaque moteur neuf porte sa mesure de temps, et l'écran l'annonce quand elle dépasse
@@ -1021,11 +1057,12 @@ qui fait glisser l'axe sur l'image, décrit par la planche, ne l'est pas encore.
       dix à dépasser le seuil) ; la jauge qui les annonce est le mécanisme générique déjà posé,
       commun à tout `PUT …/recipe`.*
 - [x] Les 1 347 essais de serveur passent sans modification. *Compte grandi depuis l'écriture de
-      ce critère (plus de 2 000 après Détourer/Recadrer/Pixéliser/Découpe/Retourner) ; deux
-      essais existants ont dû changer pour refléter un compte qui grandit par construction —
-      `tests/test_t2.py` (quatre méthodes de réduction devenues huit) et `tests/test_b1.py` (un
-      sens de retournement devenu dix) — même règle que `tests/test_d2.py` applique déjà à trois
-      essais de `T2`/`T4`.*
+      ce critère (plus de 2 000 après Détourer/Recadrer/Pixéliser/Découpe/Retourner/Contour) ;
+      trois essais existants ont dû changer pour refléter un compte qui grandit par
+      construction — `tests/test_t2.py` (quatre méthodes de réduction devenues huit),
+      `tests/test_b1.py` (un sens de retournement devenu dix) et le compte d'entrées de `AIDE`
+      dans `App.test.tsx` — même règle que `tests/test_d2.py` applique déjà à trois essais de
+      `T2`/`T4`.*
 
 ### Bloquée par
 

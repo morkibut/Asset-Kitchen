@@ -4863,8 +4863,9 @@ describe("l'infobulle et le guide", () => {
     ])
     // 157 avant `B17`, plus les cinq entrées des quatre moteurs neufs, plus
     // les trois entrées de B18 — l'angle, le repli et les zones protégées du
-    // retournement, les trois seuls des dix sens à ouvrir un réglage de plus.
-    expect(Object.keys(AIDE).length).toBe(165)
+    // retournement, les trois seuls des dix sens à ouvrir un réglage de plus
+    // —, plus les cinq entrées des six capacités neuves du contour (`B18`).
+    expect(Object.keys(AIDE).length).toBe(170)
     for (const [cle, entree] of Object.entries(AIDE)) {
       expect(LIEUX_FERMES.has(entree.ou), `${cle} → ou: "${entree.ou}"`).toBe(true)
     }
