@@ -1046,7 +1046,7 @@ export function useEcoule(demarreLe: number | null): number {
  * n'est jamais atteint. Une jauge qui se colle à 100 % avant l'arrivée dit une
  * chose fausse ; celle-ci dit « ça dépasse, et ça continue ».
  */
-function part(ecoule: number, attendue: number, enAttente: boolean): number {
+export function part(ecoule: number, attendue: number, enAttente: boolean): number {
   if (enAttente || attendue <= 0) return 0
   const fraction = ecoule / attendue
   if (fraction <= 1) return 0.85 * fraction

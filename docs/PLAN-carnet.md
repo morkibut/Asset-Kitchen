@@ -753,12 +753,26 @@ peut poser aucune retouche.
 
 ### Critères d'acceptation
 
-- [ ] Les sept tables et les deux fabriques sont à l'écran, aucune n'est cachée.
-- [ ] Un réglage grisé porte sa raison écrite à côté, et le geste qui le débloque.
-- [ ] Une jauge apparaît pendant un calcul de plus de 240 ms, et jamais avant.
-- [ ] Un jeu en style dessin peut poser une retouche à 1 024 et à 2 048.
-- [ ] Les six contradictions sont tranchées, chacune par un essai.
-- [ ] Une place s'éteint sans se vider ; une coordonnée ne voyage toujours pas.
+- [x] Les sept tables et les deux fabriques sont à l'écran, aucune n'est cachée. — **huit**
+      tables : voir l'arbitrage 1, la septième manquait au comptage des planches.
+- [x] Un réglage grisé porte sa raison écrite à côté, et le geste qui le débloque.
+- [x] Une jauge apparaît pendant un calcul de plus de 240 ms, et jamais avant.
+- [x] Un jeu en style dessin peut poser une retouche à 1 024 et à 2 048. — la route **et** la
+      table : le plafond avait deux moitiés.
+- [x] Les six contradictions sont tranchées, chacune par un essai.
+- [x] Une place s'éteint sans se vider ; une coordonnée ne voyage toujours pas.
+
+### Sa conception, jugée avant la première ligne
+
+Le relevé a mesuré la chaîne côté serveur et côté écran avant d'écrire, et les six
+contradictions ont été tranchées comme des décisions de produit — chacune écrite, chacune
+tenue par un essai. Le compte-rendu complet, arbitrage par arbitrage, est dans
+`docs/tranches/V4.md`, section `B16`.
+
+Deux choses que le relevé n'avait pas prévues et que l'écriture a imposées : **l'écran neuf
+double l'ancien au lieu de le remplacer** (l'ancien garde le cadre de découpe, la colonne des
+sœurs et les trois surfaces à coordonnées, que `B17`/`B18` déménageront), et **le plafond
+avait une seconde moitié à l'écran** — la table ne proposait que les tailles du pixel art.
 
 ### Bloquée par
 

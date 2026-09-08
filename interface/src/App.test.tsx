@@ -10715,14 +10715,47 @@ describe("le châssis des tables", () => {
     })
 
     fireEvent.click(puce(cadre, "bords"))
-    // Le seuil par défaut est 3 px : les deux petites partent, le sujet reste.
-    expect(await cadre.findByText("2 taches effacées sur 3")).toBeTruthy()
+    // ⚠️ **Zéro, pas trois** (B16). Cet essai figeait un défaut : le panneau
+    // lisait `?? 3` pour une place *non posée*, donc il annonçait deux taches
+    // effacées pendant que l'image n'avait pas bougé d'un pixel et que le carré
+    // de la barre restait creux. Le domaine dit zéro (`Bords.aire_min = 0`), et
+    // `PanneauContours` lisait déjà zéro pour la même absence. *Un chiffre
+    // affiché est un chiffre compté* : rien de posé, rien d'effacé.
+    expect(await cadre.findByText("0 tache effacée sur 3")).toBeTruthy()
     // Triées de la plus petite à la plus grande — l'ordre du seuil.
     const aires = within(cadre.getByRole("list")).getAllByText(/^\d+ px$/)
       .map((n) => n.textContent)
     expect(aires).toEqual(["1 px", "2 px", "900 px"])
     // **Ce qui est coupé se dit**, jamais tu en silence.
     expect(cadre.getByText(/12 taches de plus, non listées/)).toBeTruthy()
+  })
+
+  test("un seuil posé coupe la liste là où il tombe", async () => {
+    // L'autre moitié de l'essai précédent : ce qui était vérifié sur un seuil
+    // supposé se vérifie maintenant sur un seuil **posé**.
+    const { cadre } = await ouvrirUneTable(
+      {
+        mesures: {
+          taches: [
+            { aire: 1, boite: [3, 3, 3, 3], couleur: "#112233", point: [3, 3] },
+            { aire: 2, boite: [8, 8, 9, 9], couleur: "#445566", point: [8, 8] },
+            { aire: 900, boite: [0, 0, 63, 63], couleur: "#778899", point: [0, 0] },
+          ],
+          coupees: 0,
+          poches: [],
+          crans_occupation: [],
+        },
+      },
+      [
+        {
+          ...asset("bbbb2222-0", "le nain, au repos"),
+          recette: { ...RECETTE_VIDE, bords: { aire_min: 3 } },
+        },
+      ],
+    )
+
+    fireEvent.click(puce(cadre, "bords"))
+    expect(await cadre.findByText("2 taches effacées sur 3")).toBeTruthy()
   })
 
   // ── « Le détourage propose les poches de fond enfermées, cerclées et
@@ -18201,6 +18234,9 @@ describe("le zoom de la table", () => {
           jete: 0.8283,
           bords: [],
           coupe: { gauche: 32, haut: 32, droite: 56, bas: 56 },
+          // **La sixième lecture du serveur** (B16) : la marge est-elle avalée
+          // par la mise en case ? Ces images-là n'ont pas de grille posée.
+          marge_sans_effet: false,
         },
       },
     })
@@ -18229,6 +18265,7 @@ describe("le zoom de la table", () => {
           jete: 0.7551,
           bords: ["haut"],
           coupe: {},
+          marge_sans_effet: false,
         },
       },
     })
@@ -18276,6 +18313,7 @@ describe("le zoom de la table", () => {
             jete: 0.2437,
             bords: [],
             coupe: {},
+            marge_sans_effet: false,
           },
         },
       },

@@ -72,6 +72,7 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/Installation.tsx",
     "interface/src/composants/GrilleDuJeu.tsx",
     "interface/src/composants/Comparer.tsx",
+    "interface/src/composants/Retouche.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────

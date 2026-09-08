@@ -548,6 +548,16 @@ class ServiceAssets:
             "jete": round(max(0.0, jete), 4),
             "bords": bords,
             "coupe": coupe,
+            # **La sixième lecture, et elle décide d'un grisé** (B16). La mise
+            # en case refait sa propre recherche de la boîte du sujet et rogne
+            # dessus : la marge est alors avalée, mesuré le 30 août 2026 —
+            # marge 0 et marge 40 rendent le même fichier à l'octet près.
+            #
+            # ⚠️ **Elle est calculée ici et pas à l'écran**, parce que l'écran
+            # s'était trompé dessus : `recette.grille != null` est faux dans
+            # trois cas. La règle vit une seule fois, dans le domaine
+            # (`Recette.marge_sans_effet`), et l'écran l'affiche.
+            "marge_sans_effet": asset.recette.marge_sans_effet(),
         }
 
     def _poches_de(self, asset: Asset, rgba: np.ndarray) -> dict[str, Any]:

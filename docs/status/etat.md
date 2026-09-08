@@ -11,6 +11,52 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B16 — les tables dans la grammaire du carnet — 9 septembre 2026
+
+**La chaîne de retouche redessinée, et aucun moteur ajouté.** Une barre horizontale de huit
+tables dans l'ordre du domaine, un trait, puis les deux fabriques. L'image seule à gauche, les
+réglages **hors de l'image** dans la colonne de droite, la jauge sous l'image, le témoin
+*avant · les deux · après* au-dessus. La logique est empruntée à ce qui existe — `useRecette`
+et `useMesures` de `Places.tsx`, `valeur`/`indisponible` de `Tables.tsx`, la courbe de la jauge
+de `chassis.tsx` — pour qu'il n'y ait **qu'une vérité par fait**.
+
+**La vraie tranche était ailleurs : six contradictions à trancher comme des décisions de
+produit.** Le détail de chacune est dans `docs/tranches/V4.md`. Les deux qui ont changé le
+domaine :
+
+⚠️ **La marge du recadrage se grisait sur une condition fausse.** L'écran testait
+`recette.grille != null`, et se trompait dans trois cas : une grille endormie, une grille sans
+détourage vif (le calcul fait alors une homothétie sur toute l'image, et la marge agit), et
+l'inverse. La condition est descendue dans le domaine — `Recette.marge_sans_effet()` —, là où
+la neutralisation a lieu, et le serveur la rend avec les mesures. **C'est le serveur qui
+coupe, jamais l'écran** ; deux dérivations d'une même règle finissent toujours par ne plus
+s'accorder.
+
+⚠️ **Un seuil de nettoyage à zéro faisait une recette non vide.** Donc un rendu calculé, mis
+en cache, et un asset épinglé — pour une image identique au brut, à l'octet près. `Recette.vide`
+suit maintenant l'invariant `E3` : *une place compte quand elle change l'image, pas quand elle
+figure dans la recette*. Ce n'est pas la veille : éteindre garde la valeur, ici la valeur
+elle-même ne fait rien.
+
+**Ce que le navigateur a trouvé et que 1 000 essais d'écran ne voyaient pas** — cinq défauts,
+tous corrigés : une valeur écrite deux fois, une image trop petite pour montrer quoi que ce
+soit, une raison de grisé enfermée dans une infobulle (ce que la règle 2 du design interdit
+en toutes lettres), une barre qui s'annonçait par ses phrases au lieu de ses noms (un `title`
+sur un bouton **devient** son nom accessible), et un grossissement affiché qui n'était pas
+appliqué. Les essais d'écran cherchent un texte ; le texte était toujours là.
+
+**Et le plafond avait deux moitiés.** Monter la borne de la route de 512 à `CIBLE_MAX` ne
+servait à rien tant que la table ne proposait que les dix tailles du pixel art : un jeu en
+dessin réglé sur 1 024 n'avait aucun cran à cliquer. La table lit maintenant le style du jeu.
+C'est exactement la panne que `test_e8` avait fermée le 31 août pour l'autre liste, rouverte
+un cran plus haut — et la liste neuve est tenue contre le domaine par un essai, comme l'autre.
+
+⚠️ **L'écran neuf double l'ancien, il ne le remplace pas.** `EcranTables` garde trois
+locataires que cette tranche n'a pas mandat de déménager : le cadre de découpe qui se monte
+dedans, la colonne des sœurs, et les trois surfaces où l'on pose une coordonnée. L'écran neuf
+les montre et dit qu'elles ne voyagent pas ; il ne les pose pas. C'est le traitement réservé à
+la matrice par `B10`.
+
 ## V4 · B15 — l'installation — 9 septembre 2026
 
 **Ce qu'on branche une fois sur cette machine a enfin un écran** : le compte et la clé, ComfyUI,

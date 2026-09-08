@@ -72,6 +72,19 @@ import {
 //  `tests/test_e8.py` tient toujours les deux listes ensemble.
 export const CIBLES = [8, 16, 24, 32, 48, 64, 96, 128, 256, 512] as const
 
+/** **Les finesses d'un jeu en dessin** (`atelier/domaine/vue.py`, `FINESSES`).
+ *
+ *  La même panne que ci-dessus, un cran plus haut : la table ne proposait que
+ *  les dix tailles du pixel art, donc **un jeu en dessin réglé sur 1024 ou 2048
+ *  n'avait aucun outil pour appliquer sa propre finesse**. La route la refusait
+ *  d'ailleurs aussi — son plafond était écrit `512` à la main, à côté des 2048
+ *  du service (`B16`, contradiction du plafond).
+ *
+ *  Deux listes et non une : 8 carrés n'a pas plus de sens pour un dessin que
+ *  2048 n'en a pour du pixel art. `tests/test_b16.py` tient celle-ci contre le
+ *  domaine, comme `tests/test_e8.py` tient l'autre. */
+export const FINESSES = [256, 512, 1024, 2048] as const
+
 export const MOTEUR: Record<Passe["moteur"], string> = {
   bord: "bord",
   couleur: "pipette",
@@ -568,6 +581,21 @@ function MesuresDuFondRendues({ mesures }: { mesures: MesuresDuFond }) {
         />
         <span className="mesure text-[10px] text-texte-2">{mesures.fond}</span>
       </div>
+      {/* ⚠️ **Cette couleur est devinée, pas lue** (B16), et c'est la seule
+          ligne de l'écran qui le dise. Le jeu déclare un fond dans ses règles,
+          il part dans le prompt — et `atelier/domaine/fond.py` n'est importé ni
+          par la recette ni par le traitement : le détourage reprend la couleur
+          médiane des bordures, qu'un sujet débordant sur un bord fait basculer.
+
+          La phrase est ici plutôt que dans un piège de doc parce que c'est ici
+          qu'elle mord : on règle une tolérance contre une couleur, et croire
+          qu'on vise celle du jeu fait chercher le défaut au mauvais endroit.
+          C'est le corollaire du piège de `D5` — *un réglage qu'on croit avoir
+          posé ailleurs et qui n'agit pas est pire qu'un réglage absent*.
+
+          Le moteur qui lirait la couleur déclarée appartient à `B18` ; le jour
+          où il arrive, cette phrase s'en va avec `tests/test_b16.py`. */}
+      <Raison texte="devinée sur les bordures de l'image — le détourage ne lit pas encore la couleur déclarée du jeu" />
       {/* **Le pourtour est le dénominateur de la frange**, et il est dit avec
           elle : « 312 pixels à demi transparents » ne veut rien dire tant qu'on
           ne sait pas si le bord en fait 300 ou 30 000. */}
@@ -615,13 +643,19 @@ export function PanneauRecadrage({ recette, regler, poser, mesures }: Reglages) 
   const boite = recette.recadrage?.boite ?? null
   const marge = recette.recadrage?.marge ?? 0
   const vu = mesures?.recadrage ?? null
-  // **La marge est sans effet quand une case est posée**, et c'est mesuré, pas
+  // **La marge est sans effet quand une case s'applique**, et c'est mesuré, pas
   // supposé : la grille recherche elle-même la boîte du sujet et rogne dessus
   // avant de mettre à l'échelle, si bien que les pixels transparents gardés par
   // la marge disparaissent. Le même fichier à l'octet près, marge 0 comme
   // marge 40 — la mesure du 30 août 2026, dans
   // `docs/maquettes-v2.1/12-table-recadrage.html`.
-  const margeSansEffet = recette.grille != null
+  //
+  // ⚠️ **La condition vient du serveur** (B16). Elle s'écrivait ici
+  // `recette.grille != null`, et elle est fausse dans trois cas : une grille
+  // **endormie** ne met rien en case, une grille sans **détourage vif** fait
+  // une homothétie de l'image entière — et la marge agit alors —, et
+  // l'inverse. La règle vit une seule fois, dans `Recette.marge_sans_effet`.
+  const margeSansEffet = vu?.marge_sans_effet ?? false
   // Ce qu'on garde, écrit avec sa provenance : un constat n'est pas un réglage.
   const depart = boite ?? vu?.sujet ?? null
   return (
@@ -698,6 +732,11 @@ export function PanneauRecadrage({ recette, regler, poser, mesures }: Reglages) 
           min={0}
           max={64}
           unite=" px"
+          // **Éteint pour de bon quand la case l'avale** (B16). La phrase était
+          // déjà là ; le curseur restait pleinement actif, et l'on croyait
+          // régler quelque chose. C'est la règle 2 de `docs/DESIGN.md` — *le
+          // grisé porte sa raison* — dont on ne tenait que la moitié.
+          inactif={margeSansEffet}
           onChange={(prochaine) =>
             regler({ ...recette, recadrage: { marge: prochaine, boite } })
           }
@@ -718,7 +757,7 @@ export function PanneauRecadrage({ recette, regler, poser, mesures }: Reglages) 
           d'origine. Douze pixels ne veulent pas dire la même chose sur une
           image de 512 et sur une de 2048 ; dix pour cent, si. */}
       {margeSansEffet && (
-        <Raison texte="la grille est posée : c'est l'occupation qui donne l'air autour du sujet" />
+        <Raison texte="la case avale la marge : c'est la hauteur qui donne l'air autour du sujet" />
       )}
       {/* **Ce que la table a vu, et qui n'est pas un réglage.** Le sujet touche
           un bord de l'image d'origine : le modèle l'a peint coupé, et la marge
@@ -1240,7 +1279,16 @@ export function PanneauContours({ recette, univers, poser, regler, mesures }: Re
 }
 
 export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
-  const seuil = recette.bords?.aire_min ?? 3
+  // ⚠️ **Zéro, pas trois** (B16). Ce panneau lisait `?? 3` et `PanneauContours`
+  // lisait `?? 0` pour la même absence : le curseur affichait 3 px, la liste
+  // annonçait « 4 taches effacées sur 11 », l'image n'avait pas bougé d'un
+  // pixel et le carré de la barre était resté creux. Deux écrans du même
+  // atelier ne disaient pas la même chose de *rien de posé*.
+  //
+  // Le domaine dit zéro depuis toujours (`Bords.aire_min = 0`), et
+  // `Univers.recette_de` ne pose même pas la place. Afficher ce qui est posé
+  // est le seul geste juste — un chiffre affiché est un chiffre compté.
+  const seuil = recette.bords?.aire_min ?? 0
   const liste = mesures?.taches ?? []
   const partent = liste.filter((t) => t.aire < seuil).length
   return (
