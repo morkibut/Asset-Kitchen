@@ -11,7 +11,14 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { PageDuSujet } from "./PageDuSujet"
-import { RECETTE_VIDE, type Asset, type Case, type Personnage, type Pose } from "../api"
+import {
+  RECETTE_VIDE,
+  type Asset,
+  type Case,
+  type Personnage,
+  type Pose,
+  type Univers,
+} from "../api"
 
 afterEach(() => {
   cleanup()
@@ -181,6 +188,11 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
     <PageDuSujet
       ouvert={sujet(surplus)}
       plan={PLAN}
+      /* **B12** — l'essai reçoit les autres sujets et les règles du jeu. Un
+         seul sujet ici : le sélecteur « un deuxième sujet » n'aura donc que
+         « aucun » à proposer, ce que ses propres essais couvrent. */
+      personnages={[sujet(surplus)]}
+      univers={UNIVERS.univers as unknown as Univers}
       emplacements={[]}
       pieces={[]}
       vestiaire={null}
@@ -211,7 +223,7 @@ describe("les quatre onglets", () => {
   // construits **sans nommer leur tranche** — `B11` et `B12` ne veulent rien
   // dire à l'écran, et l'interface n'écrit de code de tranche nulle part
   // ailleurs.
-  test("les quatre sont là, cliquables, et l'essai dit qu'il n'est pas encore construit", () => {
+  test("les quatre sont là, cliquables, et les quatre sont construits", () => {
     monter()
     for (const nom of ["Sa fiche", "Ses images", "Ses animations", "L'essai"])
       expect(onglet(nom)).toBeTruthy()
@@ -219,8 +231,22 @@ describe("les quatre onglets", () => {
     // `AnimationsDuSujet.test.tsx` pour son rangement.
     fireEvent.click(onglet("Ses animations"))
     expect(document.querySelector("[data-onglet-animations]")).toBeTruthy()
+    // Et « L'essai » depuis B12 — voir `EssaiDuSujet.test.tsx`. Le dernier des
+    // quatre à cesser d'être un mot sans écran.
     fireEvent.click(onglet("L'essai"))
-    expect(screen.getByText(/décor n'est pas encore construit/)).toBeTruthy()
+    expect(document.querySelector("[data-onglet-essai]")).toBeTruthy()
+  })
+
+  test("la barre qui paie se retire sur L'essai, et sur lui seul", () => {
+    // Un seul bouton rouille par écran (`docs/DESIGN.md`) : *L'essai* porte sa
+    // propre porte vers la dépense, « Demander un clip ». Garder la barre en
+    // ferait deux, et le rouille cesserait de vouloir dire quelque chose.
+    monter()
+    expect(document.querySelector("[data-barre-qui-paie]")).toBeTruthy()
+    fireEvent.click(onglet("L'essai"))
+    expect(document.querySelector("[data-barre-qui-paie]")).toBeNull()
+    fireEvent.click(onglet("Ses images"))
+    expect(document.querySelector("[data-barre-qui-paie]")).toBeTruthy()
   })
 
   test("passer d'un onglet à l'autre ne redemande rien au serveur, aller et retour", async () => {

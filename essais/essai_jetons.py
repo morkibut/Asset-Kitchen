@@ -78,6 +78,9 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/Emploi.tsx",
     "interface/src/composants/VestiaireDuSujet.tsx",
     "interface/src/composants/Retouche.tsx",
+    # B12 — l'essai : le quatrième onglet de la page d'un sujet, celui où le
+    # personnage se joue au clavier.
+    "interface/src/composants/EssaiDuSujet.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────

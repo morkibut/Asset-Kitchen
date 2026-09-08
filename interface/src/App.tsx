@@ -4252,6 +4252,12 @@ export function App() {
         <PageDuSujet
           ouvert={choseOuverte}
           plan={plan}
+          /* **B12** — l'essai pose un second sujet à côté pour comparer les
+             tailles en mouvement, et règle sa scène sur la case et la couleur
+             de fond du jeu. Les deux sont déjà ici ; les relire aurait fait
+             deux vérités. */
+          personnages={personnages}
+          univers={univers}
           onPersonnage={fondrePersonnage}
           emplacements={emplacements}
           pieces={pieces}

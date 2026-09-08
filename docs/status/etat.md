@@ -11,6 +11,88 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B12 — l'essai — 10 septembre 2026
+
+**Le quatrième onglet de la page d'un sujet, et le seul endroit du produit où quelque chose
+bouge parce qu'on appuie sur une touche.** Le personnage à la taille du jeu, `Z Q S D` pour se
+déplacer, `Maj` pour courir, `Espace` pour attaquer, `1` à `6` pour jouer une pose. Une scène
+qu'on règle — fond, grille, cadre de la case, sol — et un second sujet posé à côté pour
+comparer les tailles en mouvement. Le nom *L'essai* existait depuis `B10`, l'écran non.
+
+### La tranche entière tient dans une phrase du plan, et cette phrase cachait trois pièges
+
+*« La vitesse jouée doit être exactement celle qui sortira à l'export. »*
+
+**1. `cadence` n'est pas la vitesse jouée.** Le format d'accompagnement compte en millièmes de
+seconde **entiers**, et `duree_en_ms` (`atelier/domaine/aseprite.py`) est le seul endroit qui
+arrondit : son résultat part dans `duration` du descriptif *et* dans l'image animée. Les trois
+lecteurs d'avant — `Apercu.tsx`, `AtelierDeBande.tsx`, `Montage.tsx` — jouent tous
+`1000 / cadence`, donc un rythme que **rien n'exporte** : à 12 images par seconde, 83,33 ms
+contre les 83 du fichier. `dureeImageMs` (`interface/src/api.ts`) double la fonction du
+serveur, comme `occupationMax` double `occupation_max` depuis la tranche des tailles.
+
+**2. L'arrondi de JavaScript n'est pas celui de Python.** `Math.round` monte un demi ; Python
+le pousse au **pair le plus proche**. À 16 images par seconde — 62,5 ms — l'un rend 63 et
+l'autre 62, et seize est une cadence d'animation ordinaire. C'est le même piège que
+`tests/test_tailles.py` avait fermé sur `cible × occupation`, sauf qu'ici il **mord**, parce
+que `1000 / cadence` tombe sur un demi dès que la cadence divise 2 000 sans diviser 1 000.
+`tests/test_b12.py` ne recopie donc aucune table : il extrait la vraie fonction de `api.ts`,
+la fait tourner sous Node, et la compare à `duree_en_ms` sur 123 cadences. Deux tables tenues
+à la main auraient fini par ne plus dire la même chose — c'est exactement la panne qu'on ferme.
+
+**3. `requestAnimationFrame` ne bat pas partout, et il ne le dit pas.** Le métronome était un
+`requestAnimationFrame` avec accumulateur sur `performance.now()` — la façon propre de ne pas
+dériver. Mesuré au navigateur en fermant la tranche : dans le volet de l'atelier,
+`document.visibilityState` vaut `visible`, `document.hidden` vaut `false`, et **rAF est appelé
+zéro fois par seconde**. La page se croit visible, rien ne compose, l'animation est figée et
+personne ne le dit. Le battement est passé sur `setInterval` au pas exact ; l'horloge qui
+décide de combien d'images on avance reste `performance.now()`, si bien que la moyenne ne
+dérive pas. **Aucun essai d'écran ne pouvait trouver ça** : jsdom ne compose rien non plus, et
+les essais ne mesurent pas le rythme — ils mesurent le pas annoncé.
+
+Mesuré ensuite sur l'atelier jetable, par script parce qu'une capture ne juge pas un
+métronome : repos **124,4 ms** pour 125 annoncées, marche **83,3** pour 83, course **71,0**
+pour 71, attaque **62,0 ms sur 80 images** pour les 62 du descriptif.
+
+### Ce que l'écran refuse de faire
+
+**Il ne remplace pas une animation qui manque.** Une attaque vers le sud qui n'existe pas
+laisse le personnage **au repos** et l'écrit ; jouer l'attaque vers l'est à sa place ferait
+croire que la case est faite. La colonne montre alors ce qui existe ailleurs, sans y aller
+toute seule.
+
+**Il ne devine pas un vocabulaire.** Le déplacement, la course et l'attaque se reconnaissent
+**par identifiant**, sur la liste que le produit livre (`CONSIGNES`, `atelier/domaine/plan.py`),
+et les touches visent les directions livrées (`_CARDINALES` et `DEUX`, `atelier/domaine/vue.py`)
+— `Q` vise `ouest`, sinon `gauche`, sinon rien. C'est l'idiome de `direction_au_miroir` :
+*ce qu'on ne connaît pas ne produit rien*. Un jeu de côté garde donc `Z` muette, ce qui est
+juste : il n'a pas de nord.
+
+**Il n'écoute pas le clavier de la fenêtre.** L'écouteur est sur la scène, qui prend le clavier
+quand on la clique et le rend sur Échap. Un écouteur sur `window` aurait volé `Ctrl+K` à la
+barre et `?` au guide — le défaut que `B6` a payé — et fait marcher le personnage pendant qu'on
+écrit ailleurs.
+
+**Il ne dépense rien, et il n'a qu'un rouille.** Aucun `fetch` ne part du fichier ; régler la
+scène entière, poser un second sujet et jouer au clavier ne fait **aucun appel réseau**, compté
+au navigateur en enveloppant `fetch`. Le bouton *Demander un clip* ouvre l'écran du clip
+pré-rempli — vérifié : *« Animer Le pèlerin — attaque · sud »*, mouvement *attaque* choisi par
+le serveur, image de départ posée, et chaque modèle avec son prix. **La barre qui paie se
+retire sur cet onglet**, et sur lui seul : deux boutons rouille sur un écran, et le rouille
+cesse de vouloir dire quelque chose.
+
+### Ce qu'il n'a pas
+
+**L'équipement ne se superpose pas sur le cycle.** Une pièce se cale aujourd'hui sur une image
+fixe, et rien ne la pose sur les douze images d'une animation qui tourne. La planche le range
+dans *ce que cet écran n'a pas encore*, et les critères ne le demandent pas — ce qu'un sujet
+porte se lit sur sa fiche (`B19`).
+
+**Le zoom de cet écran n'est pas celui de la grille.** `×3 · ×6 · ×1` au lieu de
+`×1 · ×2 · ×4 · ×8`, parce que c'est ce que la planche dessine et que le défaut à ×3 est la
+taille où un mouvement se juge. La règle commune est tenue : **un facteur entier, jamais un
+zoom continu**.
+
 ## V4 · B17 — les moteurs qui remplacent une génération — 10 septembre 2026
 
 **Quatre traitements gratuits qui faisaient repayer une image**, et **aucune place neuve** pour
