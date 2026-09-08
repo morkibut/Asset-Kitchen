@@ -175,7 +175,7 @@ d'agents avant le gros morceau.
 | **3** | `B4` ✔, `B5` ✔, `B6` ✔, `B7` | l'ouverture, le tableau de bord, la barre, le guide |
 | **4** | `B8`, `B9`, `B10`, `B11` | la collection, la grille d'une famille, la page d'un sujet, le départage |
 | **5** | `B14`, `B15` | les règles du jeu, l'installation |
-| **6** | `B16`, `B17`, `B18` | les tables rangées, puis les moteurs |
+| **6** | `B16`, `B17`, `B18` ✔ | les tables rangées, puis les moteurs |
 | **7** | `B12`, `B13` ✔, `B19` ✔, `B20` ✔, `B21` ✔, `B22` ✔ | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
 
 `B8` et `B17` sont du serveur pur : ils se prennent en parallèle du rang qui les précède.
@@ -886,7 +886,7 @@ dans `docs/tranches/V4.md` § B17.
 
 ---
 
-## B18 · Le reste des moteurs
+## B18 · Le reste des moteurs — **tenue le 8 septembre 2026**
 
 **Planches** : les neuf `atelier-*.dc.html`
 
@@ -995,9 +995,10 @@ par un sur de vraies images (dimensions attendues, pixels effectivement déplac�
 de `test_b1.py` restent verts, deux d'entre eux mis à jour pour compter dix sens au lieu d'un —
 voir le commit.
 
-*Décision tranchée* : le plan compte huit noms pour neuf moteurs (« quarts de tour » au
-pluriel). C'est bien **dix** moteurs en tout dans la planche, un déjà livré par `B1` — le
-compte que `SENS_A_AJOUTER` (posé par `B1`, maintenant vidé) portait déjà correctement.
+**B18 compte huit noms pour neuf moteurs**, « quarts de tour » y étant écrit au pluriel — il en
+désigne deux, le droit et le gauche. C'est bien **dix** moteurs en tout dans la planche, un déjà
+livré par `B1` — le compte que `SENS_A_AJOUTER` (posé par `B1`, maintenant vidé) portait déjà
+correctement.
 
 ⚠️ **Zones protégées, geste minimal** — « miroir, sauf ici » est un moteur réel côté serveur (un
 `Trait` par zone, le même pinceau que la main), mais l'écran ne sait encore que poser une zone
