@@ -319,11 +319,11 @@ avant d'être annoncé. Détail, verdicts des six critères et ce qui reste ouve
 
 ---
 
-## B8 · La collection devient un vrai groupe — **`B8.5` tenue le 7 septembre 2026**
+## B8 · La collection devient un vrai groupe — **tenue le 7 septembre 2026**
 
 **Planches** : `Famille.dc.html`, `Vocabulaire.dc.html`
 
-**Cinq morceaux sur six sont écrits.** `B8.1` a posé le modèle de l'adhésion — la collection
+**Six morceaux sont écrits.** `B8.1` a posé le modèle de l'adhésion — la collection
 porte ses membres, un membre est le couple `(jeu, sujet)` —, et les cinq essais qui parlaient de
 collection nomment désormais laquelle des deux ils vérifient. `B8.2` lui ajoute la table de
 jointure de l'index, plus petite qu'annoncée : `reconstruire()` relisait déjà les adhésions
@@ -336,6 +336,7 @@ emportait avec elle : le rangement, le filtre de la grille, et l'arbre, qui comp
 sujets au lieu d'images. `B8.5` rend la recherche en deux groupes — les sujets par leur nom et
 leur description, les images par leur prompt, leur pose, leur direction et le nom de leur
 sujet —, et c'est elle qui fait vraiment servir la table de `B8.3` : personne ne la lisait avant.
+`B8.6`, le vocabulaire du serveur, était déjà acquis : docstrings de `supprimer_collection`, `ranger_sujet` et `retirer_sujet` disaient déjà « sujet(s) » plutôt qu'« assets », et la clé du retour de `supprimer_collection` portait `"sujets"` au lieu d'`"assets"`.
 
 ### Ce qu'on livre
 
