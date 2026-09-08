@@ -1081,6 +1081,39 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · défaut 32",
   },
 
+  "quantification.curseurs": {
+    nom: "les quatre curseurs",
+    ou: "tables",
+    quoi: "Luminosité, contraste, saturation et teinte, appliqués à l'image avant qu'elle soit ramenée sur ses couleurs.",
+    change:
+      "Change la couleur du rendu sans redemander l'image. Les quatre agissent avant la réduction, jamais après : régler après, c'est décaler des couleurs déjà choisies et en refabriquer qui ne sont plus dans la palette.",
+    origine: "toi · les quatre à zéro par défaut, et zéro ne touche à rien",
+    long:
+      "Ils sont posés dans la table Couleurs parce que c'est le même moment de la chaîne : on reçoit l'image, on la règle, on la réduit. Les quatre à zéro, le moteur rend l'image reçue sans la copier — un réglage neutre ne coûte rien et ne s'écrit pas dans la recette, donc l'empreinte d'une recette déjà en usage ne bouge pas.\n\nLa teinte tourne autour de l'axe des gris : un gris reste gris quel que soit l'angle. C'est la même matrice que le filtre `hue-rotate` d'un navigateur, pour que ce qu'on voit dans l'aperçu soit ce qui sort du serveur.\n\nAucun des quatre ne touche à la transparence. Un sujet détouré le reste, au pixel près.",
+  },
+
+  "quantification.echanges": {
+    nom: "échanges de couleur",
+    ou: "tables",
+    quoi: "Des paires — cette couleur-là devient celle-ci — appliquées après la réduction.",
+    change:
+      "Donne une variante sans payer une image : la même cape en bleu, en vert, en rouge. La silhouette est identique à l'octet près, puisque seule la couleur des pixels opaques change.",
+    origine: "toi · aucune paire par défaut",
+    long:
+      "Un échange vient après la réduction, et c'est ce qui le rend exact : à ce moment-là l'image ne porte plus qu'une poignée de couleurs franches, et nommer celle qu'on veut remplacer a un sens. Avant la réduction, la même couleur existe en cent nuances et la paire n'en attraperait qu'une.\n\nToutes les paires sont lues sur l'image reçue, jamais l'une sur le résultat de l'autre : une paire ne repeint pas ce qu'une autre vient de poser, donc *rouge devient bleu* suivi de *bleu devient vert* ne fait pas passer le rouge au vert. Si deux paires visent le même pixel — leurs tolérances se recouvrent —, c'est la première de la liste qui l'emporte.\n\nLa transparence n'est jamais touchée. Un échange ne peut ni découper ni reboucher.",
+  },
+
+  "quantification.echanges.tolerance": {
+    nom: "tolérance de la paire",
+    ou: "tables",
+    quoi: "De combien une couleur de l'image peut s'écarter de la couleur nommée pour être quand même échangée.",
+    change:
+      "À 0, seule la couleur exacte part. Monter attrape les nuances voisines — les deux ou trois bleus qu'une réduction a laissés là où l'œil n'en voit qu'un.",
+    origine: "toi · défaut 0",
+    long:
+      "L'écart se mesure comme partout ailleurs dans le dépôt : le plus grand des trois écarts, sur le rouge, le vert et le bleu. C'est la même règle que la détection du fond et que le détourage par les bords, et c'est délibéré — deux distances de couleur dans un même produit donnent deux réponses à la même question.\n\nMonter trop haut fait déborder la paire sur un voisin qu'on voulait garder : la peau part avec la tunique. Le débordement se voit sur l'image tout de suite, puisque le rendu se refait à chaque cran du curseur.",
+  },
+
   "etape.bords": {
     nom: "Nettoyage des bords",
     ou: "tables",
@@ -1099,6 +1132,28 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · défaut 3 px, et 0 n'efface rien",
     long:
       "Une tache est une zone opaque connexe, trouvée par le même remplissage par plages que la détection de la découpe — donc la même réponse sur la même image.\n\nMonter trop haut efface un détail détaché du corps : la pointe d'une lance, une étincelle, un éclat de magie. Le réglage est le dernier de la recette parce qu'il travaille sur ce que les quatre autres ont laissé, et pas sur l'image reçue.",
+  },
+
+  "bords.grain_min": {
+    nom: "grain de couleur",
+    ou: "tables",
+    quoi: "Un pixel posé au milieu du sujet, dont la couleur n'est portée par aucun voisin, reprend la couleur qui l'entoure.",
+    change:
+      "Efface le point de couleur accroché au sujet — celui que la tache minimale ne voit pas, parce qu'il n'est pas isolé : il est collé au corps, entouré de pixels opaques. C'est le seul réglage qui l'atteigne.",
+    origine: "toi · défaut 0, et 0 n'efface rien",
+    long:
+      "Le chiffre se lit ainsi : combien des huit voisins doivent porter exactement la couleur du pixel pour qu'on le laisse tranquille. À 1, un pixel dont pas un seul voisin ne partage la couleur est un grain. À 3, il faut trois complices pour survivre.\n\nDeux garde-fous l'empêchent d'abîmer le sujet. Il ne regarde que les pixels entourés de huit pixels opaques : le bord du sujet n'est jamais touché, donc la silhouette ne bouge pas. Et il ne repeint que si au moins cinq des huit voisins portent la même couleur — sinon il n'y a pas de couleur d'accueil évidente, et il ne fait rien. Sur une image non réduite, où chaque pixel a sa nuance, cette condition n'est jamais remplie : le réglage se désarme tout seul plutôt que de lisser un dégradé.\n\nIl ne peut pas inventer une couleur : celle qu'il pose est toujours celle d'un voisin.",
+  },
+
+  "bords.lissage": {
+    nom: "escalier des bords",
+    ou: "tables",
+    quoi: "Les pixels qui ne tiennent au sujet que par un coin sont décrochés — jusqu'à trois passes.",
+    change:
+      "Adoucit la marche d'escalier qu'une réduction laisse sur une diagonale. Une passe suffit presque toujours ; trois est le maximum, et c'est déjà beaucoup.",
+    origine: "toi · défaut 0, et 0 ne décroche rien",
+    long:
+      "Un pixel décroché est un pixel opaque qui n'a aucun voisin opaque en haut, en bas, à gauche ni à droite, mais qui en a un en diagonale. Il ne tient au corps que par un angle, et c'est exactement la dent qu'une réduction au plus proche voisin laisse le long d'un trait oblique.\n\nCe n'est pas la même chose que la tache minimale, et les deux réglages ne se remplacent pas : la tache minimale efface ce qui est détaché du sujet — une étincelle, un éclat —, ce réglage-ci rabote ce qui y tient mal. Une étincelle vraiment détachée survit au décrochage et meurt à la tache minimale.\n\nIl ne peut jamais couper le sujet en deux : il n'enlève que des pixels sans voisin orthogonal, et le corps tient par ses voisins orthogonaux.",
   },
 
   // ── L'assistant de démarrage — le seul écran qui règle un jeu ─────────────
@@ -1421,7 +1476,7 @@ export const AIDE: Record<string, Explication> = {
       "Applique les huit places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
     origine: "toi, en nommant · aucune au départ",
     long:
-      "Une recette est nommée par son empreinte autant que par toi : deux recettes égales sont interchangeables, et c'est cette empreinte qui nomme le fichier de rendu sur le disque. Reposer une recette déjà appliquée ne recalcule donc rien.\n\nUne recette vide ne s'enregistre pas — elle n'aurait rien à rejouer.\n\nDans l'atelier d'une animation, elle **remplace tous les réglages à la fois** : une recette est un ensemble, et en prendre la moitié rendrait une image que personne n'a jamais jugée. Comme le reste de cet écran, elle n'écrit rien tant que tu n'as pas enregistré.",
+      "Une recette est nommée par son empreinte autant que par toi : deux recettes égales sont interchangeables. L'empreinte est rangée à côté de l'image, avec son rendu ; un rendu dont l'empreinte ne correspond plus est traité exactement comme un fichier absent, et se refait à la première lecture. Reposer une recette déjà appliquée ne recalcule donc rien.\n\nUne recette vide ne s'enregistre pas — elle n'aurait rien à rejouer.\n\nDans l'atelier d'une animation, elle **remplace tous les réglages à la fois** : une recette est un ensemble, et en prendre la moitié rendrait une image que personne n'a jamais jugée. Comme le reste de cet écran, elle n'écrit rien tant que tu n'as pas enregistré.",
   },
 
   "fiche.reinjecter": {

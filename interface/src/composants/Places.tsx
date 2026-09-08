@@ -18,13 +18,21 @@ import {
   api,
   CE_QUE_LA_METHODE_REND,
   CONTOUR_PAR_DEFAUT,
+  CURSEUR_MAX,
+  CURSEUR_MIN,
+  GRAIN_MAX,
+  LISSAGE_MAX,
+  LIT_DE_COULEUR,
   MAIN_VIDE,
   PASSE_PAR_DEFAUT,
   RECETTE_VIDE,
   RETOURNEMENT_PAR_DEFAUT,
+  TEINTE_MAX,
+  TEINTE_MIN,
   occupationMax,
   type Asset,
   type Contour,
+  type Echange,
   type MiroirPropose,
   type Retournement,
   type GrilleDuModele,
@@ -109,6 +117,20 @@ export const DURCISSEMENT_LIVRE: Record<Passe["moteur"], number> = {
  *  n'apprend rien de plus qu'un carré plein, alors que « bord · 28 » dit ce que
  *  l'image a subi. La seule exception est le pluriel, où la valeur ne tient
  *  plus : deux passes ont deux moteurs, et c'est le nombre qui devient le fait. */
+/** Combien des quatre curseurs de `B17` sont hors de leur neutre.
+ *
+ *  **Écrit une fois, lu par le résumé et par le carré de la barre** : deux
+ *  comptes séparés auraient fini par ne pas remplir le carré de la même table
+ *  que le résumé décrit. */
+export const curseursPoses = (q: Quantification): number =>
+  [q.luminosite, q.contraste, q.saturation, q.teinte].filter((v) => (v ?? 0) !== 0).length
+
+/** Les échanges qui font quelque chose — ceux qui nomment leurs deux couleurs.
+ *  **Une paire vide est gardée mais ne compte pas** : c'est la règle d'une passe
+ *  de détourage sans point, un cran plus bas. */
+export const echangesVifs = (q: Quantification): Echange[] =>
+  (q.echanges ?? []).filter((e) => e.depuis && e.vers)
+
 export const RESUME = {
   detourage: (recette: Recette) =>
     recette.passes.length === 1
@@ -127,8 +149,27 @@ export const RESUME = {
       .filter(Boolean)
       .join(" · ") || `marge ${r.marge} px`,
   grille: (g: Grille) => `${g.cible} px · ${g.occupation} %`,
-  quantification: (q: Quantification) => `${q.couleurs} couleurs`,
-  bords: (b: Bords) => `tache ${b.aire_min} px`,
+  /** **Ce qui agit, et rien d'autre** (U2), pour les six réglages de `B17`
+   *  aussi : un curseur à zéro ne se lit pas, un échange sans couleurs non plus.
+   *  Le résumé dit ce que l'image a subi. */
+  quantification: (q: Quantification) =>
+    [
+      `${q.couleurs} couleurs`,
+      curseursPoses(q) ? `${curseursPoses(q)} curseur${curseursPoses(q) > 1 ? "s" : ""}` : null,
+      echangesVifs(q).length
+        ? `${echangesVifs(q).length} échange${echangesVifs(q).length > 1 ? "s" : ""}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  bords: (b: Bords) =>
+    [
+      b.aire_min > 0 ? `tache ${b.aire_min} px` : null,
+      b.grain_min ? `grain ${b.grain_min}` : null,
+      b.lissage ? `lissage ${b.lissage}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ") || `tache ${b.aire_min} px`,
   contours: (c: Contour) => `${c.epaisseur} px · ${POSITIONS[c.position]}`,
   retournement: (r: Retournement) => SENS_DU_RETOURNEMENT[r.sens],
   /** **Le compte des passages, pas celui des calques.** Trois calques vides ne
@@ -588,6 +629,13 @@ function MesuresDuFondRendues({ mesures }: { mesures: MesuresDuFond }) {
             : `${mesures.colles} px du sujet sont encore à la couleur du fond, soit ${part} % — un cran de tolérance de plus les emporterait ; un fond d'une couleur que le jeu ne contient pas les met à zéro`
         }
       />
+      {/* **Le lit de couleur, dit et non réglé** (B17). C'est la seule des
+          quatre réparations de la tranche qui ne soit le réglage de personne :
+          elle répare un défaut du fichier, pas un choix. Elle se dit ici parce
+          que c'est ici qu'on lit ce que le fond est devenu — et parce qu'un
+          traitement qui agit sans se voir nulle part est très exactement ce que
+          le relevé reproche au reste de la chaîne. */}
+      <Raison texte={`le fond ne reste plus sous la transparence : ${LIT_DE_COULEUR} px de la couleur du sujet sont étalés vers l'extérieur à la fin de la chaîne, et le reste est mis à zéro — gratuit, et rien de visible ne bouge`} />
     </div>
   )
 }
@@ -902,8 +950,67 @@ export function PanneauGrille({
   )
 }
 
-export function PanneauQuantification({ recette, univers, poser }: Reglages) {
+/** Ce que la table *Couleurs* vaut aujourd'hui, avec ses neutres.
+ *
+ *  **Une seule lecture pour tout l'écran** — les six réglages de `B17`
+ *  n'arrivent sur le fil que posés (règle de `B1`), et les lire chacun de son
+ *  côté avec son propre repli aurait fini par en oublier un. */
+export const quantificationDe = (
+  recette: Recette,
+  univers: Univers,
+): Quantification => ({
+  couleurs: recette.quantification?.couleurs ?? univers.couleurs,
+  palette: recette.quantification?.palette ?? univers.palette,
+  tramage: recette.quantification?.tramage ?? "aucun",
+  luminosite: recette.quantification?.luminosite ?? 0,
+  contraste: recette.quantification?.contraste ?? 0,
+  saturation: recette.quantification?.saturation ?? 0,
+  teinte: recette.quantification?.teinte ?? 0,
+  echanges: recette.quantification?.echanges ?? [],
+})
+
+/** Les cinq nombres de couleurs qu'on peut choisir d'un clic. Un projet peut en
+ *  porter un autre — le sien est déduit de ses artworks —, et la colonne
+ *  l'ajoute alors à la suite. */
+const COULEURS_OFFERTES: readonly number[] = [4, 8, 16, 32, 64]
+
+/** Une paire qui ne nomme encore aucune couleur. Elle vit dans le panneau, pas
+ *  dans la recette : voir `TableDEchange`. */
+const PAIRE_VIDE: Echange = { depuis: "", vers: "", tolerance: 0 }
+
+/** Jusqu'où le curseur de tolérance d'une paire monte **à l'écran**. Le domaine
+ *  en accepte davantage ; au-delà d'une soixantaine de crans, une paire attrape
+ *  déjà des couleurs que personne n'appellerait voisines, et le curseur cesse
+ *  de servir à ce pour quoi il est là. */
+const TOLERANCE_D_UNE_PAIRE_MAX = 64
+
+/** Les quatre curseurs, dans l'ordre où le traitement les applique. Écrits une
+ *  fois : trois boucles auraient fini par ne plus les nommer pareil. */
+const CURSEURS = [
+  { cle: "luminosite", nom: "luminosité", min: CURSEUR_MIN, max: CURSEUR_MAX, unite: " %" },
+  { cle: "contraste", nom: "contraste", min: CURSEUR_MIN, max: CURSEUR_MAX, unite: " %" },
+  { cle: "saturation", nom: "saturation", min: CURSEUR_MIN, max: CURSEUR_MAX, unite: " %" },
+  { cle: "teinte", nom: "teinte", min: TEINTE_MIN, max: TEINTE_MAX, unite: "°" },
+] as const
+
+export function PanneauQuantification({ recette, univers, regler, poser }: Reglages) {
   const q = recette.quantification
+  const valeurs = quantificationDe(recette, univers)
+
+  /** **Toujours la table entière, jamais trois champs sur neuf.** Chacun des
+   *  trois réglages d'avant `B17` réécrivait la quantification depuis zéro ;
+   *  ajouter six champs aurait fait disparaître la cape échangée dès qu'on
+   *  touche au nombre de couleurs à côté. C'est très exactement la panne que
+   *  `decalage` a payée en `E17`, et elle se répare ici une fois pour toutes. */
+  const avec = (suivant: Partial<Quantification>): Recette => ({
+    ...recette,
+    quantification: { ...valeurs, ...suivant },
+  })
+
+  const couleursOffertes = COULEURS_OFFERTES.includes(valeurs.couleurs)
+    ? COULEURS_OFFERTES
+    : [...COULEURS_OFFERTES, valeurs.couleurs].sort((a, b) => a - b)
+
   /** **Deux sources de couleurs, et le modèle les portait déjà.** Une palette
    *  vide veut dire *déduite de l'image elle-même* — le domaine le dit depuis
    *  T2, et aucun écran ne l'avait jamais proposé : la fiche reposait toujours
@@ -918,14 +1025,7 @@ export function PanneauQuantification({ recette, univers, poser }: Reglages) {
           valeur={surLImage ? "l'image" : "le jeu"}
           indisponibles={univers.palette.length === 0 ? ["le jeu"] : []}
           onChange={(source) =>
-            poser({
-              ...recette,
-              quantification: {
-                couleurs: q?.couleurs ?? univers.couleurs,
-                palette: source === "l'image" ? [] : univers.palette,
-                tramage: q?.tramage ?? "aucun",
-              },
-            })
+            poser(avec({ palette: source === "l'image" ? [] : univers.palette }))
           }
         />
       </Reglage>
@@ -946,20 +1046,20 @@ export function PanneauQuantification({ recette, univers, poser }: Reglages) {
           </div>
         </Reglage>
       )}
+      {/* ⚠️ **Ce que le segment montre est ce que le geste posera**, et ce
+          n'était pas le cas : la colonne se repliait sur `32` quand la place
+          n'est pas posée, tandis que le geste posait le nombre du projet. Sur un
+          jeu réglé à 24 couleurs, l'écran annonçait donc 32 et envoyait 24 —
+          sans qu'aucun des deux ne soit faux tout seul. Le repli est maintenant
+          unique (`quantificationDe`), et quand le nombre du projet n'est aucun
+          des cinq, il **s'ajoute à la suite** plutôt que de n'allumer aucun
+          segment : une colonne où rien n'est allumé ne dit pas quel nombre est
+          en vigueur. */}
       <Reglage libelle="couleurs" aide="quantification.couleurs">
         <Segments
-          valeurs={[4, 8, 16, 32, 64] as const}
-          valeur={(q?.couleurs ?? 32) as 4 | 8 | 16 | 32 | 64}
-          onChange={(couleurs) =>
-            poser({
-              ...recette,
-              quantification: {
-                couleurs,
-                palette: q?.palette ?? univers.palette,
-                tramage: q?.tramage ?? "aucun",
-              },
-            })
-          }
+          valeurs={couleursOffertes}
+          valeur={valeurs.couleurs}
+          onChange={(couleurs) => poser(avec({ couleurs }))}
         />
       </Reglage>
       {/* **Le tramage**, porté par le modèle depuis T2 et jamais montré. Il
@@ -969,18 +1069,175 @@ export function PanneauQuantification({ recette, univers, poser }: Reglages) {
         <Segments
           valeurs={["aucun", "floyd"] as const}
           valeur={(q?.tramage ?? "aucun") as "aucun" | "floyd"}
-          onChange={(tramage) =>
-            poser({
-              ...recette,
-              quantification: {
-                couleurs: q?.couleurs ?? univers.couleurs,
-                palette: q?.palette ?? univers.palette,
-                tramage,
-              },
-            })
-          }
+          onChange={(tramage) => poser(avec({ tramage }))}
         />
       </Reglage>
+
+      {/* ── Les quatre curseurs, avant la réduction (B17) ──────────────────────
+
+          **Ils sont au-dessus de rien et en dessous de tout, et c'est voulu** :
+          la table les applique *avant* de réduire, et les lire après les
+          réglages de la réduction dirait le contraire de ce que la machine
+          fait. La phrase sous le titre le dit en clair plutôt que de compter
+          sur l'ordre pour l'apprendre. */}
+      <div className="flex flex-col gap-2 border-t border-bord pt-2">
+        <Libelle aide="quantification.curseurs">
+          avant de réduire — {valeurs.couleurs} couleurs pour dire l'image, pas
+          son exposition
+        </Libelle>
+        {CURSEURS.map(({ cle, nom, min, max, unite }) => (
+          <Reglage key={cle} libelle={nom} aide={`quantification.${cle}`}>
+            <Curseur
+              libelle={nom}
+              valeur={valeurs[cle] ?? 0}
+              min={min}
+              max={max}
+              unite={unite}
+              onChange={(v) => regler(avec({ [cle]: v }))}
+              onFini={(v) => void poser(avec({ [cle]: v }))}
+            />
+          </Reglage>
+        ))}
+      </div>
+
+      {/* ── L'échange de couleurs, après la réduction (B17) ────────────────── */}
+      <TableDEchange
+        echanges={valeurs.echanges ?? []}
+        palette={univers.palette}
+        onChange={(echanges) => void poser(avec({ echanges }))}
+      />
+    </div>
+  )
+}
+
+/** La table de correspondance — *cette couleur-ci devient celle-là*.
+ *
+ *  **Elle se pose après la réduction**, et la phrase le dit à côté du titre :
+ *  posée avant, elle serait défaite par la réduction, qui renverrait le bleu
+ *  qu'on vient d'écrire au plus proche de la palette — c'est-à-dire peut-être au
+ *  brun d'où il vient.
+ *
+ *  **Ce qu'elle épargne se dit en toutes lettres** : trois pèlerins qui ne
+ *  diffèrent que par la couleur de leur cape coûtaient trois générations, et les
+ *  trois étaient trois silhouettes différentes. Ici la silhouette ne bouge pas
+ *  d'un pixel — c'est le vrai gain, l'argent n'est que le second. */
+function TableDEchange({
+  echanges,
+  palette,
+  onChange,
+}: {
+  echanges: Echange[]
+  palette: string[]
+  onChange: (echanges: Echange[]) => void
+}) {
+  /** ⚠️ **La paire en train de se faire reste à l'écran, et n'est pas envoyée.**
+   *
+   *  Trouvé au navigateur, et c'est un défaut que ni les essais d'écran ni ceux
+   *  du serveur ne pouvaient voir, parce qu'il naît de leur rencontre : le
+   *  bouton ajoutait une paire sans sa seconde couleur à la recette, l'écran
+   *  renvoyait la recette entière comme il le fait à chaque geste, et le serveur
+   *  refusait — à juste titre — *« une paire nomme deux couleurs »*. La ligne ne
+   *  paraissait donc jamais, et **la table d'échange était inutilisable** : le
+   *  seul geste qui l'ouvre était aussi celui qui la faisait refuser.
+   *
+   *  La paire inachevée vit ici, dans le panneau, et rejoint la recette au
+   *  moment où sa seconde couleur est nommée. Les deux règles tiennent alors
+   *  ensemble : *rien qui n'agit pas n'entre dans la recette* — donc l'empreinte
+   *  ne bouge pas pour une paire vide — et *le serveur reste strict*, ce qui
+   *  garde le refus utile pour une recette qui viendrait d'ailleurs. */
+  const [brouillon, setBrouillon] = useState<Echange | null>(null)
+
+  const changer = (rang: number, suivant: Partial<Echange>) =>
+    onChange(echanges.map((e, i) => (i === rang ? { ...e, ...suivant } : e)))
+
+  const changerLeBrouillon = (suivant: Partial<Echange>) => {
+    const prochain = { ...(brouillon ?? PAIRE_VIDE), ...suivant }
+    if (prochain.depuis && prochain.vers) {
+      setBrouillon(null)
+      onChange([...echanges, prochain])
+      return
+    }
+    setBrouillon(prochain)
+  }
+
+  const lignes = [
+    ...echanges.map((echange, rang) => ({ echange, rang, encours: false })),
+    ...(brouillon ? [{ echange: brouillon, rang: echanges.length, encours: true }] : []),
+  ]
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-bord pt-2">
+      <Libelle aide="quantification.echanges">
+        après la réduction — une couleur en remplace une autre, la silhouette ne
+        bouge pas
+      </Libelle>
+
+      {lignes.map(({ echange, rang, encours }) => (
+        <div key={rang} className="flex flex-col gap-1">
+          <Reglage libelle="celle qui part">
+            <ChoixDeCouleur
+              couleur={echange.depuis}
+              palette={palette}
+              onChange={(depuis) =>
+                encours ? changerLeBrouillon({ depuis }) : changer(rang, { depuis })
+              }
+            />
+          </Reglage>
+          <Reglage libelle="celle qui vient">
+            <ChoixDeCouleur
+              couleur={echange.vers}
+              palette={palette}
+              onChange={(vers) =>
+                encours ? changerLeBrouillon({ vers }) : changer(rang, { vers })
+              }
+            />
+          </Reglage>
+          <Reglage libelle="tolérance de la paire" aide="quantification.echanges.tolerance">
+            <Curseur
+              libelle="tolérance de la paire"
+              valeur={echange.tolerance}
+              min={0}
+              max={TOLERANCE_D_UNE_PAIRE_MAX}
+              onChange={(tolerance) =>
+                encours ? setBrouillon({ ...echange, tolerance }) : changer(rang, { tolerance })
+              }
+              onFini={(tolerance) =>
+                encours ? setBrouillon({ ...echange, tolerance }) : changer(rang, { tolerance })
+              }
+            />
+          </Reglage>
+          {/* **Ce qui manque se dit, et l'image ne bouge pas en attendant.** */}
+          {encours && (
+            <Raison
+              texte={
+                echange.depuis
+                  ? "il manque la couleur qui vient — rien n'est appliqué tant que la paire n'en nomme pas deux"
+                  : "il manque la couleur qui part — rien n'est appliqué tant que la paire n'en nomme pas deux"
+              }
+            />
+          )}
+          <button
+            type="button"
+            className="self-start text-[10px] text-texte-3 underline"
+            onClick={() =>
+              encours
+                ? setBrouillon(null)
+                : onChange(echanges.filter((_, i) => i !== rang))
+            }
+          >
+            Retirer cet échange ›
+          </button>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        disabled={brouillon !== null}
+        className="self-start text-[10px] text-texte-2 underline disabled:text-texte-3 disabled:no-underline"
+        onClick={() => setBrouillon({ ...PAIRE_VIDE, depuis: palette[0] ?? "" })}
+      >
+        Échanger une couleur ›
+      </button>
     </div>
   )
 }
@@ -1241,20 +1498,83 @@ export function PanneauContours({ recette, univers, poser, regler, mesures }: Re
 
 export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
   const seuil = recette.bords?.aire_min ?? 3
+  const grain = recette.bords?.grain_min ?? 0
+  const lissage = recette.bords?.lissage ?? 0
   const liste = mesures?.taches ?? []
   const partent = liste.filter((t) => t.aire < seuil).length
+
+  /** La table entière à chaque geste, jamais un champ sur trois — la leçon de
+   *  `E17`, la même qu'au-dessus pour les couleurs. */
+  const avec = (suivant: Partial<Bords>): Recette => ({
+    ...recette,
+    bords: { aire_min: seuil, grain_min: grain, lissage, ...suivant },
+  })
+
   return (
     <div className="flex flex-col gap-2">
       <Reglage libelle="tache minimale" aide="bords.aire_min">
         <Curseur
+          libelle="tache minimale"
           valeur={seuil}
           min={0}
           max={64}
           unite=" px"
-          onChange={(aire_min) => regler({ ...recette, bords: { aire_min } })}
-          onFini={(aire_min) => void poser({ ...recette, bords: { aire_min } })}
+          onChange={(aire_min) => regler(avec({ aire_min }))}
+          onFini={(aire_min) => void poser(avec({ aire_min }))}
         />
       </Reglage>
+
+      {/* ── Le grain de couleur, et l'escalier (B17) ───────────────────────────
+
+          **Ce que la tache minimale n'a jamais pu atteindre.** Elle compte des
+          taches dans la silhouette ; un pixel vert vif au milieu d'une robe
+          brune est opaque et collé au sujet, donc il n'est aucune tache et
+          aucune valeur de ce curseur-là ne l'a jamais vu. La phrase le dit,
+          parce que la question *pourquoi mon pixel vert ne part pas* est
+          exactement celle que le relevé a trouvée sans réponse. */}
+      <div className="flex flex-col gap-2 border-t border-bord pt-2">
+        <Libelle aide="bords.grain_min">
+          la couleur, pas la silhouette — ce qu'un seuil de taille ne voit pas
+        </Libelle>
+        <Reglage libelle="grain de couleur" aide="bords.grain_min">
+          <Curseur
+            libelle="grain de couleur"
+            valeur={grain}
+            min={0}
+            max={GRAIN_MAX}
+            unite={grain === 0 ? "" : " voisins"}
+            onChange={(grain_min) => regler(avec({ grain_min }))}
+            onFini={(grain_min) => void poser(avec({ grain_min }))}
+          />
+        </Reglage>
+        <Raison
+          texte={
+            grain === 0
+              ? "rien de posé : un pixel isolé au milieu d'un aplat reste où il est"
+              : `un pixel dont moins de ${grain} voisin${grain > 1 ? "s" : ""} porte${grain > 1 ? "nt" : ""} sa couleur prend celle de la majorité — le bord du sujet n'est jamais touché`
+          }
+        />
+        <Reglage libelle="lissage" aide="bords.lissage">
+          <Curseur
+            libelle="lissage"
+            valeur={lissage}
+            min={0}
+            max={LISSAGE_MAX}
+            unite={lissage === 0 ? "" : lissage > 1 ? " passes" : " passe"}
+            onChange={(v) => regler(avec({ lissage: v }))}
+            onFini={(v) => void poser(avec({ lissage: v }))}
+          />
+        </Reglage>
+        <Raison
+          texte={
+            lissage === 0
+              ? "rien de posé : les dents en diagonale restent"
+              : lissage === LISSAGE_MAX
+                ? "trois passes : le sujet s'arrondit et perd ses angles vifs — sur un visage de 8 px, le nez disparaît"
+                : "un pixel qui ne tient au sujet que par un coin s'en va ; celui qui tient par un côté ne bouge jamais"
+          }
+        />
+      </div>
 
       {/* **La liste de ce qui va partir, triée du plus petit au plus grand, et
           coupée là où le seuil tombe.** L'ordre est la moitié de la réponse :

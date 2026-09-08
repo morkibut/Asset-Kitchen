@@ -37,10 +37,17 @@ from atelier.domaine.recette import (
     ANCRAGES,
     BORD,
     COULEUR,
+    CURSEUR_MAX,
+    CURSEUR_MIN,
     DETOURAGE,
     DIFFERENCE,
     EPAISSEUR_MAX,
+    GRAIN_MAX,
+    LISSAGE_MAX,
     METHODES_DE_REDUCTION,
+    TEINTE_MAX,
+    TEINTE_MIN,
+    TOLERANCE_ECHANGE_MAX,
     MODELE,
     MOTEURS,
     NOM_DE_LA_METHODE,
@@ -1466,8 +1473,50 @@ class ServiceAssets:
             if quantification.tramage not in TRAMAGES:
                 raise RecetteRefusee(f"tramage inconnu « {quantification.tramage} »")
 
-        if recette.bords is not None and recette.bords.aire_min < 0:
-            raise RecetteRefusee("l'aire minimale d'une tache ne peut pas être négative")
+            # **Les six réglages de B17, bornés ici comme les trois d'avant.**
+            # Le filet vaut pour toute provenance — un agent, une recette nommée
+            # relue d'un disque, un fichier retouché à la main —, et pas
+            # seulement pour l'écran, dont les bornes sont déclarées à part dans
+            # le modèle Pydantic.
+            for nom, valeur, bas, haut in (
+                ("la luminosité", quantification.luminosite, CURSEUR_MIN, CURSEUR_MAX),
+                ("le contraste", quantification.contraste, CURSEUR_MIN, CURSEUR_MAX),
+                ("la saturation", quantification.saturation, CURSEUR_MIN, CURSEUR_MAX),
+                ("la teinte", quantification.teinte, TEINTE_MIN, TEINTE_MAX),
+            ):
+                if not bas <= valeur <= haut:
+                    raise RecetteRefusee(f"{nom} va de {bas} à {haut}")
+
+            # **Une couleur illisible se marque, elle ne se refuse pas**
+            # (US-210) — la règle du contour, reprise telle quelle. Ce qui est
+            # refusé ici est une paire qui ne nomme rien : sans les deux
+            # couleurs, l'échange est un réglage posé qui n'agit nulle part, et
+            # `docs/PIEGES.md:984` dit que c'est pire qu'un réglage absent.
+            for rang, echange in enumerate(quantification.echanges, start=1):
+                if not (echange.depuis and echange.vers):
+                    raise RecetteRefusee(
+                        f"échange {rang} : une paire nomme deux couleurs, "
+                        "celle qui part et celle qui vient"
+                    )
+                if not 0 <= echange.tolerance <= TOLERANCE_ECHANGE_MAX:
+                    raise RecetteRefusee(
+                        f"échange {rang} : la tolérance va de 0 à {TOLERANCE_ECHANGE_MAX}"
+                    )
+
+        bords = recette.bords
+        if bords is not None:
+            if bords.aire_min < 0:
+                raise RecetteRefusee(
+                    "l'aire minimale d'une tache ne peut pas être négative"
+                )
+            # Huit voisins, donc huit compagnons possibles : au-delà, le réglage
+            # emporterait tout pixel entouré, y compris un aplat entier.
+            if not 0 <= bords.grain_min <= GRAIN_MAX:
+                raise RecetteRefusee(
+                    f"le grain de couleur va de 0 à {GRAIN_MAX} voisins"
+                )
+            if not 0 <= bords.lissage <= LISSAGE_MAX:
+                raise RecetteRefusee(f"le lissage va de 0 à {LISSAGE_MAX} passes")
 
         # **Les deux couches de la main** (C4). Seul le rayon a des bornes : un
         # point hors du cadre se borne au lieu de lever — c'est la règle du

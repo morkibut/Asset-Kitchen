@@ -11,6 +11,69 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B17 — les moteurs qui remplacent une génération — 10 septembre 2026
+
+**Quatre traitements gratuits qui faisaient repayer une image**, et **aucune place neuve** pour
+les porter. C'est la décision qui commande la tranche : les planches rangent les quatre dans deux
+tables qui existent déjà, et le relevé a compté **dix-sept phrases du dépôt qui citent un rang de
+place** — en insérer une aurait fait mentir cinq fichiers sans qu'une ligne ne lève
+(`docs/PIEGES.md`, le piège que `D2` avait déjà payé sur huit phrases).
+
+`B1` avait posé *une place neuve ne change pas l'empreinte* ; cette tranche descend la règle d'un
+cran, à **une clé neuve dans une place existante**. Huit clés arrivent — six sur la
+quantification, deux sur les bords — et aucune ne s'écrit tant qu'elle vaut son neutre. Les
+61 recettes du corpus figé de `B1` rendent la même empreinte **et le même JSON canonique,
+caractère pour caractère**.
+
+**Ce que les quatre réparent** : le magenta resté sous la transparence, qui remonte en liseré dès
+qu'une image est réduite ou rangée dans une planche ; l'échange de couleurs, qui rend trois
+pèlerins de capes différentes **au pixel près la même silhouette** là où trois générations en
+rendaient trois ; les quatre curseurs, posés **avant** la réduction pour que les 24 couleurs du
+jeu cessent d'être dépensées à décrire une image mal exposée ; et le grain de couleur accroché au
+sujet — un pixel vert vif au milieu d'une robe brune, qu'**aucune valeur du seuil de taille n'a
+jamais pu atteindre**, puisqu'il est opaque et connexe.
+
+**Le morceau `[HARD]`, et comment il évite un grisé.** Le grain se juge sur ses huit voisins :
+*un pixel entouré de huit pixels opaques, dont moins de N portent sa couleur, prend celle qu'une
+majorité franche des voisins porte.* Trois propriétés en découlent — un aplat reste un aplat, un
+bord n'est jamais candidat, et un détail de deux pixels survit parce qu'*un détail a un
+compagnon*. Surtout : la **majorité franche à cinq sur huit** désarme le moteur tout seul sur une
+image non réduite, où aucun voisinage n'atteint jamais cinq fois la même teinte. Sans elle, il
+aurait fallu le griser tant que la quantification n'agit pas, donc écrire une dépendance entre
+deux places — ce que le traitement n'a qu'à un seul endroit et signale comme délicat.
+
+**Trois défauts trouvés, et aucun par les essais qu'on venait d'écrire.** Le premier par les
+essais de `B1` : le lit de couleur prenait *le premier voisin dans un ordre fixe*, et l'ordre des
+huit voisins n'est pas symétrique — retourner deux fois une image ne rendait plus l'image de
+départ, sans qu'un seul pixel visible ne bouge. Les deux autres au navigateur : **toute image
+gratuite du produit s'affichait « miroir · gratuit »** depuis `B1`, parce que le serveur omet la
+clé quand la place est vide et que l'écran testait `!== null` — vrai pour `undefined` ; et **la
+table d'échange était inutilisable**, le seul geste qui l'ouvre étant celui qui la faisait
+refuser. Ce dernier ne pouvait être vu ni par les essais d'écran ni par ceux du serveur : chaque
+moitié était juste toute seule, et un essai d'écran *figeait* même le défaut.
+
+**Puis une relecture critique en a trouvé six autres**, tous réparés sauf un, qui est une
+conséquence à assumer :
+
+- **La matrice de teinte n'était pas une rotation.** Elle mêlait les trois constantes du filtre du
+  W3C — qui *sont* la luma du W3C — à celle de Rec. 601 : `+90°` puis `−90°` ne rendait pas
+  l'image, et un bleu saturé gagnait 30 % de luminosité. Le gris restait gris par accident, et le
+  seul essai qui existait passait. Remplacer la matrice par l'identité laissait **86 essais sur 87
+  au vert** : rien ne mesurait ce qu'elle calcule.
+- **Deux moteurs coûtaient cher sur une grande image** — 2,2 s pour le lit, 7,4 s et 1,78 Go pour
+  le grain, sur un dessin de 2 048 sans place `grille`, et le grain les dépensait pour rendre
+  l'image inchangée. Ramenés à 157 ms et 432 ms / 101 Mo, sans changer un pixel de ce qui sort.
+- **Trois essais ne mesuraient rien** — dont un qui vérifiait qu'un tableau d'octets tient entre 0
+  et 255, et la mesure 1 de l'atelier jetable, qui annonçait son résultat **aussi bien le moteur
+  éteint**.
+- **Les rendus déjà calculés ne se refont pas seuls.** Le lit change ce que la chaîne produit sans
+  changer l'empreinte — le critère n° 4 l'exige — et un rendu ne se recalcule que si son empreinte
+  a bougé ou si son fichier a disparu. Un `del` sur les `<rang>-rendu.png` à la fusion suffit, et
+  c'est un geste documenté comme sans perte depuis `T2`.
+
+Le détail, les cinq mesures de temps et ce que chaque moteur épargne sont dans
+`docs/tranches/V4.md` § B17.
+
 ## V4 · B15 — l'installation — 9 septembre 2026
 
 **Ce qu'on branche une fois sur cette machine a enfin un écran** : le compte et la clé, ComfyUI,

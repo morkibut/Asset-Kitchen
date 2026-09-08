@@ -31,13 +31,20 @@ from atelier.domaine.catalogue import modele_en_json
 from atelier.domaine.recette import (
     AU_PLUS_PROCHE,
     CERCLES,
+    CURSEUR_MAX,
+    CURSEUR_MIN,
     DEHORS,
     EPAISSEUR_MAX,
     GAUCHE_DROITE,
+    GRAIN_MAX,
+    LISSAGE_MAX,
     OCCUPATION_MAX_ABSOLU,
     PLACES,
     RAYON_MAX,
     SEUIL_COULEUR,
+    TEINTE_MAX,
+    TEINTE_MIN,
+    TOLERANCE_ECHANGE_MAX,
     places_inconnues,
 )
 from atelier.domaine.superposition import (
@@ -1057,14 +1064,48 @@ class CorpsGrille(BaseModel):
     methode: str = AU_PLUS_PROCHE
 
 
+class CorpsEchange(BaseModel):
+    """Une ligne de la table de correspondance (B17).
+
+    **Les deux couleurs ne sont pas bornées ici**, et c'est la règle de
+    `CorpsContour` reprise telle quelle : *une couleur hors palette se marque,
+    elle ne se refuse pas* (US-210). Le traitement rend du noir sur une valeur
+    illisible plutôt que de faire tomber un rendu au milieu d'une frappe ; ce que
+    le service refuse, lui, est une paire qui ne nomme rien du tout.
+    """
+
+    depuis: str = ""
+    vers: str = ""
+    tolerance: int = Field(0, ge=0, le=TOLERANCE_ECHANGE_MAX)
+
+
 class CorpsQuantification(BaseModel):
+    """La table *Couleurs* — la réduction, et les six réglages de B17.
+
+    **Les six champs doivent exister ici même quand l'écran ne les pose pas.**
+    C'est la leçon de `decalage` en E17, un cran plus haut dans ce fichier : ce
+    corps porte la recette **entière** à chaque changement d'un autre réglage
+    (`PUT /assets/{id}/recipe`), et un champ absent du modèle Pydantic est
+    silencieusement jeté par la validation — la cape échangée disparaîtrait donc
+    dès qu'on touche au nombre de couleurs à côté.
+    """
+
     couleurs: int = Field(32, ge=2, le=256)
     palette: list[str] = Field(default_factory=list)
     tramage: str = "aucun"
+    luminosite: int = Field(0, ge=CURSEUR_MIN, le=CURSEUR_MAX)
+    contraste: int = Field(0, ge=CURSEUR_MIN, le=CURSEUR_MAX)
+    saturation: int = Field(0, ge=CURSEUR_MIN, le=CURSEUR_MAX)
+    teinte: int = Field(0, ge=TEINTE_MIN, le=TEINTE_MAX)
+    echanges: list[CorpsEchange] = Field(default_factory=list)
 
 
 class CorpsBords(BaseModel):
+    """La table *Nettoyer* — les taches, le grain de couleur, l'escalier (B17)."""
+
     aire_min: int = Field(0, ge=0)
+    grain_min: int = Field(0, ge=0, le=GRAIN_MAX)
+    lissage: int = Field(0, ge=0, le=LISSAGE_MAX)
 
 
 class CorpsTrait(BaseModel):
