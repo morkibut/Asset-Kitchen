@@ -463,11 +463,20 @@ type Poste = {
   ouvrir: (table: Table) => void
 }
 
-function ReglagesDuDetourage({ recette, traitement, poser, regler }: Poste) {
+function ReglagesDuDetourage({ recette, univers, traitement, poser, regler }: Poste) {
   const passes = recette.passes
-  const grises = Object.fromEntries(
-    traitement.moteurs.filter((m) => m.raison).map((m) => [m.nom, m.raison as string]),
-  ) as Partial<Record<Passe["moteur"], string>>
+  const grises = {
+    ...(Object.fromEntries(
+      traitement.moteurs.filter((m) => m.raison).map((m) => [m.nom, m.raison as string]),
+    ) as Partial<Record<Passe["moteur"], string>>),
+    // **La palette du jeu grisée avec sa raison, comme le modèle par
+    // silhouette** (B18) : sans artwork officiel promu, il n'y a aucune
+    // couleur à garder — proposer le moteur puis le refuser au premier essai
+    // serait exactement l'invariant que `docs/PLAN.md` interdit.
+    ...(univers.palette.length === 0
+      ? { palette: "aucune palette du jeu — dépose un artwork officiel pour lui en donner une" }
+      : {}),
+  }
 
   const changer = (rang: number, suite: Partial<Passe>) =>
     passes.map((p, i) => (i === rang ? { ...p, ...suite } : p))
@@ -497,7 +506,7 @@ function ReglagesDuDetourage({ recette, traitement, poser, regler }: Poste) {
 
           <Reglage nom="moteur">
             <Choix
-              valeurs={["bord", "couleur", "modele", "trace"] as const}
+              valeurs={["bord", "couleur", "modele", "trace", "palette"] as const}
               valeur={passe.moteur}
               libelles={MOTEUR}
               eteints={grises}
@@ -511,26 +520,34 @@ function ReglagesDuDetourage({ recette, traitement, poser, regler }: Poste) {
                   passes: changer(rang, {
                     moteur,
                     durcissement: DURCISSEMENT_LIVRE[moteur],
+                    // **La palette se copie dans la passe au moment du choix**
+                    // (B18) — comme `Quantification.palette` avant elle, et
+                    // pour la même raison : une recette est un calcul complet,
+                    // rejouable sans redemander au projet ce qu'il contenait
+                    // ce jour-là.
+                    ...(moteur === "palette" ? { palette: univers.palette } : {}),
                   }),
                 })
               }
             />
           </Reglage>
 
-          <Reglage nom="tolérance">
-            <Glissiere
-              nom={`tolérance de la passe ${rang + 1}`}
-              valeur={passe.tolerance}
-              min={0}
-              max={255}
-              onRegler={(tolerance) =>
-                regler({ ...recette, passes: changer(rang, { tolerance }) })
-              }
-              onPoser={(tolerance) =>
-                void poser({ ...recette, passes: changer(rang, { tolerance }) })
-              }
-            />
-          </Reglage>
+          {(passe.moteur === "bord" || passe.moteur === "couleur" || passe.moteur === "trace") && (
+            <Reglage nom="tolérance">
+              <Glissiere
+                nom={`tolérance de la passe ${rang + 1}`}
+                valeur={passe.tolerance}
+                min={0}
+                max={255}
+                onRegler={(tolerance) =>
+                  regler({ ...recette, passes: changer(rang, { tolerance }) })
+                }
+                onPoser={(tolerance) =>
+                  void poser({ ...recette, passes: changer(rang, { tolerance }) })
+                }
+              />
+            </Reglage>
+          )}
 
           <Reglage nom="bord rongé">
             <Choix
@@ -542,16 +559,77 @@ function ReglagesDuDetourage({ recette, traitement, poser, regler }: Poste) {
             />
           </Reglage>
 
-          <Reglage nom="portée">
-            <Choix
-              valeurs={["tache", "partout"] as const}
-              valeur={passe.portee}
-              libelles={{ tache: "cette tache", partout: "partout" }}
-              onChange={(portee) =>
-                void poser({ ...recette, passes: changer(rang, { portee }) })
-              }
+          {/* **Comparer par teinte plutôt que canal par canal** (B18). Un
+              fond assombri par une ombre ou un dégradé reste la même couleur
+              *tournée* d'un cran plus sombre : la teinte l'ignore, la valeur
+              (l'écart par canal) en a besoin d'une tolérance plus large — qui
+              mange alors une peau ou un pelage qui n'a rien à voir. */}
+          {(passe.moteur === "bord" || passe.moteur === "couleur") && (
+            <Reglage nom="comparaison">
+              <Choix
+                valeurs={["canal", "teinte"] as const}
+                valeur={passe.teinte ? "teinte" : "canal"}
+                libelles={{ canal: "par canal", teinte: "par teinte" }}
+                onChange={(choix) =>
+                  void poser({ ...recette, passes: changer(rang, { teinte: choix === "teinte" }) })
+                }
+              />
+            </Reglage>
+          )}
+
+          {/* **La couleur déclarée du jeu, visée au lieu d'être devinée**
+              (B18). `bord` prend par défaut la médiane des quatre bordures ;
+              un sujet qui déborde largement sur un bord la fait glisser vers
+              sa propre couleur. Grisé sans fond déclaré — proposer un réglage
+              qui n'a rien à viser serait un réglage qui n'a l'air que de
+              marcher. */}
+          {passe.moteur === "bord" && univers.fond && (
+            <Reglage nom="couleur visée">
+              <Choix
+                valeurs={["", univers.fond] as const}
+                valeur={passe.couleur_du_jeu ?? ""}
+                libelles={{ "": "devinée sur les bordures", [univers.fond]: "la couleur déclarée du jeu" }}
+                onChange={(couleur_du_jeu) =>
+                  void poser({ ...recette, passes: changer(rang, { couleur_du_jeu }) })
+                }
+              />
+            </Reglage>
+          )}
+          {passe.moteur === "bord" && !univers.fond && (
+            <Pourquoi texte="aucune couleur déclarée dans les règles du jeu — la médiane des bordures reste devinée" />
+          )}
+
+          {passe.moteur === "couleur" && (
+            <Reglage nom="portée">
+              <Choix
+                valeurs={["tache", "partout"] as const}
+                valeur={passe.portee}
+                libelles={{ tache: "cette tache", partout: "partout" }}
+                onChange={(portee) =>
+                  void poser({ ...recette, passes: changer(rang, { portee }) })
+                }
+              />
+            </Reglage>
+          )}
+
+          {passe.moteur === "palette" && (() => {
+            const compte = passe.palette?.length ?? 0
+            return (
+              <Pourquoi
+                texte={
+                  compte > 0
+                    ? `${compte} couleur${compte > 1 ? "s" : ""} du jeu, intouchable${compte > 1 ? "s" : ""} — un pixel qui n'en est aucune, et qui touche un bord, est du fond`
+                    : "aucune couleur posée — cette passe ne retire rien, comme une pipette non visée"
+                }
+              />
+            )
+          })()}
+
+          {(passe.traits?.length ?? 0) > 0 && (
+            <Pourquoi
+              texte={`${passe.traits!.length} passage${passe.traits!.length > 1 ? "s" : ""} du pinceau posé${passe.traits!.length > 1 ? "s" : ""} sur cette image, avant le recadrage — ils ne voyagent pas non plus`}
             />
-          </Reglage>
+          )}
 
           {/* **Ce qui ne voyage pas se montre, et ne se règle pas ici.** Un
               point de pipette et une forme entourée désignent un endroit de
@@ -582,16 +660,14 @@ function ReglagesDuDetourage({ recette, traitement, poser, regler }: Poste) {
         Une passe de plus
       </button>
 
-      {/* ⚠️ **La couleur du fond est devinée, pas lue** (B16). Le jeu en
-          déclare une dans ses règles, elle part dans le prompt — et
-          `atelier/domaine/fond.py` n'est importé ni par la recette ni par le
-          traitement. Le détourage reprend la couleur médiane des bordures,
-          qu'un sujet débordant sur un bord fait basculer.
-
-          C'est ici que ça mord : on règle une tolérance contre une couleur, et
-          croire qu'on vise celle du jeu fait chercher le défaut au mauvais
-          endroit. Le moteur qui lirait la couleur déclarée appartient à `B18`. */}
-      <Pourquoi texte="la couleur du fond est devinée sur les bordures de l'image — le détourage ne lit pas encore celle que le jeu a déclarée" />
+      {/* **La couleur du fond se devine par défaut, et se vise depuis B18.**
+          Le jeu la déclare dans ses règles, elle part dans le prompt — et
+          `atelier/domaine/fond.py` reste hors de la recette et du traitement
+          (B16) : c'est le réglage « couleur visée » de chaque passe `bord`,
+          ci-dessus, qui copie la couleur déclarée au lieu de la relire en
+          direct. Sans lui, le détourage reprend la médiane des bordures,
+          qu'un sujet débordant sur un bord fait basculer. */}
+      <Pourquoi texte="chaque passe « bord » devine sur les bordures, sauf si elle vise la couleur déclarée du jeu — réglage « couleur visée » ci-dessus" />
     </div>
   )
 }

@@ -360,6 +360,14 @@
         "essais/atelier_jetable_b18_pixeliser.py"
       ],
       "port": 8490
+    },
+    {
+      "name": "atelier-jetable-b18-detourer",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b18_detourer.py"
+      ],
+      "port": 8488
     }
   ]
 }

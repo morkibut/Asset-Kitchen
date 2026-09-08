@@ -97,7 +97,17 @@ BORD = "bord"
 COULEUR = "couleur"
 MODELE = "modele"
 TRACE = "trace"
-MOTEURS = (BORD, COULEUR, MODELE, TRACE)
+
+# **Le cinquième, arrivé en B18** — « tout ce qui n'est pas dans la palette du
+# jeu » sur la planche. Il retire le fond par les mêmes bordures que `BORD`,
+# mais son critère n'est plus une ressemblance à une couleur : c'est une
+# appartenance à la liste fermée des couleurs du jeu. **C'est le seul moteur
+# qui ne peut pas entamer le sujet, par construction** — une couleur de la
+# palette ne peut jamais être jugée fond, quel que soit le sale du reste de
+# l'image (grain, halo, dégradé).
+PALETTE = "palette"
+
+MOTEURS = (BORD, COULEUR, MODELE, TRACE, PALETTE)
 
 
 # ── Le durcissement appartient au moteur, et c'est la mesure qui le dit (D1) ──
@@ -128,7 +138,13 @@ MOTEURS = (BORD, COULEUR, MODELE, TRACE)
 #
 # **`trace` ne borne que la recherche**, il ne détoure pas lui-même : il n'a pas
 # de frange propre, donc pas de durcissement livré.
-DURCISSEMENT_LIVRE = {BORD: 0, COULEUR: 1, MODELE: 2, TRACE: 0}
+#
+# **`palette` (B18) suit `bord`, pas de mesure séparée.** C'est le même
+# remplissage par plages depuis les bordures, avec le même bord binaire — la
+# seule chose qui change est le test appliqué à chaque pixel, jamais la forme
+# du résultat. Rien ne dit qu'il fabrique une frange que `bord` ne fabrique
+# pas, et zéro est ce que `bord` a appris à ne pas retaper.
+DURCISSEMENT_LIVRE = {BORD: 0, COULEUR: 1, MODELE: 2, TRACE: 0, PALETTE: 0}
 
 
 # Comment le produit **nomme** chaque moteur quand il en parle en français.
@@ -142,6 +158,7 @@ NOM_DU_MOTEUR = {
     COULEUR: "pipette",
     MODELE: "modèle",
     TRACE: "sélection",
+    PALETTE: "palette du jeu",
 }
 
 
@@ -479,6 +496,50 @@ class Passe:
     #: pas la recette — la passe arrive sans effet, et la route le dit.
     modele: str = ""
 
+    # ── Les quatre réglages neufs de B18 ─────────────────────────────────────
+    #
+    # **Aucun ne s'écrit tant qu'il vaut son neutre**, la règle de `B1` reprise
+    # pour la cinquième fois (`Bords`, `Quantification` l'ont déjà tenue) :
+    # sans elle, chaque passe déjà sur le disque changerait d'empreinte pour
+    # quatre réglages qu'aucune ne pose.
+
+    #: **Comparer par teinte plutôt que canal par canal.** `tolerance` mesure
+    #: aujourd'hui le plus grand écart sur le rouge, le vert et le bleu pris
+    #: séparément : un fond assombri par une ombre ou un dégradé demande alors
+    #: une tolérance large, qui mange une joue rose au passage. La teinte prend
+    #: le magenta clair et le magenta sombre d'un coup, et laisse le rose
+    #: tranquille — c'est la même couleur *tournée*, pas la même couleur
+    #: *assombrie*. Sert à `bord`, `couleur` et `palette` ; sans effet sur
+    #: `trace`, qui ne compare aucune couleur, et sur `modele`, qui n'en lit
+    #: aucune non plus.
+    teinte: bool = False
+
+    #: **La couleur que le jeu a déclarée**, visée telle quelle au lieu d'être
+    #: devinée. `bord` prend aujourd'hui la médiane des quatre bordures : un
+    #: sujet qui déborde largement sur un bord — un moulin, une bande d'herbe —
+    #: fait glisser cette médiane vers sa propre couleur, et le détourage se
+    #: met à chercher le sujet au lieu du fond. Vide, le défaut, c'est
+    #: exactement le comportement d'avant B18 : deviner sur les bordures.
+    couleur_du_jeu: str = ""
+
+    #: **Les couleurs que rien ici ne peut manger** (moteur `palette`). Un
+    #: pixel qui n'est aucune d'elles et qui touche un bord est du fond, sans
+    #: discussion ; un pixel qui en est une reste, quel que soit le sale du
+    #: reste de l'image. Vide, la passe ne retire rien — même règle qu'une
+    #: pipette non visée : sans information sur ce qu'il ne faut pas manger,
+    #: elle ne mange rien du tout plutôt que de tout manger.
+    palette: tuple[str, ...] = ()
+
+    #: **Le pinceau, remonté dans le détourage lui-même** (U11 descendu d'un
+    #: cran). L'atelier sait déjà ôter et ramener à la main, au pixel — c'est
+    #: `Main`, la huitième place — mais tout à la fin, quand la case est déjà
+    #: calculée sur un sujet qui n'est pas le bon. Posés ici, ces passages du
+    #: pinceau s'appliquent sur le masque **que cette passe vient de
+    #: produire**, avant que le recadrage et la mise sur grille ne mesurent le
+    #: sujet. Même type, même lecture, même ordre que `Main.opacite` : le
+    #: dernier passage l'emporte.
+    traits: tuple[Trait, ...] = ()
+
     def en_json(self) -> dict[str, Any]:
         return {
             "moteur": self.moteur,
@@ -490,6 +551,11 @@ class Passe:
             "masquee": self.masquee,
             "trace": [list(p) for p in self.trace],
             "modele": self.modele,
+            # ── Les clés neuves ne s'écrivent que remplies (B18, d'après B1) ──
+            **({"teinte": self.teinte} if self.teinte else {}),
+            **({"couleur_du_jeu": self.couleur_du_jeu} if self.couleur_du_jeu else {}),
+            **({"palette": list(self.palette)} if self.palette else {}),
+            **({"traits": [t.en_json() for t in self.traits]} if self.traits else {}),
         }
 
     @staticmethod
@@ -510,6 +576,13 @@ class Passe:
                 (int(p[0]), int(p[1])) for p in (d.get("trace") or ()) if len(p) >= 2
             ),
             modele=str(d.get("modele") or ""),
+            # **Absente veut dire neutre** (B18, d'après B1) : une recette
+            # écrite avant la tranche se relit sans rien perdre et se réécrit
+            # à l'identique, caractère pour caractère.
+            teinte=bool(d.get("teinte", False)),
+            couleur_du_jeu=str(d.get("couleur_du_jeu") or ""),
+            palette=tuple(d.get("palette") or ()),
+            traits=traits_depuis_json(d.get("traits")),
         )
 
 

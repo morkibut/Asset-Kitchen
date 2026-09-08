@@ -898,7 +898,7 @@ livre seul.
 
 | Atelier | Existants | À écrire |
 |---|---|---|
-| Détourer | 8 | 5 — la couleur déclarée du jeu, la teinte plutôt que la valeur, la palette en garde-fou, le pinceau remonté en amont, la même passe sur les frames voisines |
+| Détourer | 13 | 0 — livrés : la couleur déclarée du jeu, la teinte plutôt que la valeur, la palette en garde-fou, le pinceau remonté en amont, la même passe sur les frames voisines |
 | Recadrer | 13 | 0 — **tenu** : taille imposée, format verrouillé, calage sur multiple, centré sur la masse, ligne de pied, rognage d'un bord uni. Les six sont des champs neufs de `Recadrage` (`atelier/domaine/recette.py`), du calcul pur dans `atelier/image/traitement.py`, câblés à l'écran dans `ReglagesDuRecadrage` (`Retouche.tsx`), essai à `tests/test_b18_recadrer.py` |
 | Pixéliser | 8 | 0 — **tenu le 8 septembre 2026**, voir la note sous le tableau |
 | Couleurs | 7 | 9 — trame régulière, force du tramage, k-moyennes, octree, distance à l'œil, rampes d'ombre… |
@@ -906,6 +906,24 @@ livre seul.
 | Retourner | 1 après `B1` | 9 — haut-bas, quarts de tour, demi-tour, diagonale, repli, zones protégées, rotation libre, RotSprite |
 | Contour | 1 procédé | 6 capacités — couleur dérivée, trait inégal, contour sur l'ensemble empilé… |
 | Découpe | 3 | 0 — **les gouttières, tenu le 8 septembre 2026** : `atelier/image/decoupe.py::gouttieres` lit la brute telle quelle, sans détourage — une rangée ou une colonne entièrement de la couleur du fond (`_couleur_du_bord`, la médiane de la bordure) est une gouttière, et ce qui reste entre deux gouttières est une case. ⚠️ **Le fond se lit à la médiane de la bordure, jamais à l'uniformité de la case elle-même** : un sprite qui se trouve être un aplat d'une seule couleur — fréquent en pixel art — serait sinon confondu avec une case vide. Troisième segment de « Détection » dans `Decoupe.tsx`, `ModeDecoupe` gagne `"gouttieres"`, et `duree_ms` (critère commun à `B18`) est mesuré et annoncé au-delà de 240 ms. |
+
+**Détourer, livré.** Un cinquième moteur — `palette`, la palette en garde-fou — s'ajoute à
+`atelier/domaine/recette.py::MOTEURS`, plutôt que quatre réglages qui n'auraient été que des
+variantes de `bord` et `couleur` : c'est le seul, par construction, qui ne peut jamais manger le
+sujet — `tests/test_d4.py` fige désormais le compte à cinq. Le fond et la
+palette déclarés arrivent dans la recette **copiés par le service au moment du choix** —
+`Univers.recette_de()` le faisait déjà pour `Quantification.palette` — jamais lus en direct
+depuis `atelier/domaine/fond.py`, ce qui aurait recréé le couplage que `B16` a fermé
+(`tests/test_b16.py`).
+
+⚠️ **Deux réglages n'ont pas d'écran interactif dédié, et c'est voulu.** Le pinceau remonté en
+amont (`Passe.traits`) se montre en ligne de statut dans `Retouche.tsx` — *« N passages du
+pinceau posés sur cette image, avant le recadrage »* — le même traitement que le point de la
+pipette et la forme entourée, qui ne voyagent déjà pas (invariant du lot U). La même passe rejouée
+sur les frames voisines (`detourer_meme_passe`) n'a aucune route qui consomme aujourd'hui une
+recette sur plusieurs frames à la fois ; elle est prouvée par essai serveur et par le banc de
+`essais/atelier_jetable_b18_detourer.py` (mode `sans-servir`), pas par un geste cliquable — la
+construire aurait demandé une route neuve hors du périmètre d'un réglage de détourage.
 
 **Deux items ne rentrent pas dans le modèle actuel** et sont sortis de cette file : l'ombre
 portée et le raccord de tuile. Le pipeline déduit la taille finale de la seule boîte opaque du

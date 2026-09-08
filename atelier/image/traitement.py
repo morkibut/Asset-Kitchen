@@ -65,6 +65,7 @@ from atelier.domaine.recette import (
     LUMIERE_JUSTE,
     MEDIANE,
     MODELE,
+    PALETTE,
     PARTOUT,
     PIXELOE,
     QUANTIFICATION,
@@ -103,6 +104,8 @@ __all__ = [
     "detourer",
     "detourer_bord",
     "detourer_couleur",
+    "detourer_meme_passe",
+    "detourer_palette",
     "detourer_trace",
     "durcir",
     "etat_des_silhouettes",
@@ -455,8 +458,10 @@ def raison_moteur(moteur: str) -> str | None:
     # La pipette n'a rien à télécharger : c'est le même remplissage par plages
     # que le bord, amorcé ailleurs. Elle est donc toujours là, comme lui. La
     # sélection magique non plus (U12) : c'est encore le même remplissage, borné
-    # cette fois par ce qu'on a entouré.
-    if moteur in (BORD, COULEUR, TRACE):
+    # cette fois par ce qu'on a entouré. **La palette du jeu non plus** (B18) :
+    # c'est le même remplissage depuis les bordures, avec un critère différent
+    # — rien à installer, rien à télécharger.
+    if moteur in (BORD, COULEUR, TRACE, PALETTE):
         return None
     if moteur != MODELE:
         return f"moteur inconnu — « {moteur} »"
@@ -496,6 +501,61 @@ def _couleur_du_bord(rgb: np.ndarray) -> np.ndarray:
         [rgb[0, :, :], rgb[-1, :, :], rgb[:, 0, :], rgb[:, -1, :]], axis=0
     )
     return np.median(bordure.astype(np.int16), axis=0)
+
+
+# ── La teinte, plutôt que la valeur (B18) ────────────────────────────────────
+#
+# **Ce que `tolerance` compare aujourd'hui : le plus grand écart sur le rouge,
+# le vert et le bleu pris séparément — une distance de Tchebychev sur la
+# *valeur*.** Un fond magenta assombri par une ombre, un dégradé ou un grain de
+# compression s'écarte alors beaucoup en valeur tout en restant, à l'œil, la
+# même couleur *tournée* d'un cran plus sombre. Il faut monter la tolérance
+# pour l'attraper, et à cette hauteur-là elle attrape aussi un rose de peau qui
+# n'a rien à voir.
+#
+# **La teinte ignore l'assombrissement, elle ne voit que la couleur.** C'est la
+# composante `H` du modèle teinte-saturation-valeur, et elle seule : deux
+# magentas de luminosité différente ont presque la même teinte, un rose de peau
+# a une teinte très différente d'un magenta franc.
+
+
+def _teinte_255(rgb: np.ndarray) -> np.ndarray:
+    """La teinte de chaque pixel, ramenée sur 0-255 pour rester dans l'échelle
+    des trois autres canaux — et donc dans celle de `tolerance`.
+
+    **Un gris n'a pas de teinte, et il en reçoit une quand même** (zéro) : un
+    pixel sans saturation ne doit jamais se comparer par hasard à une teinte
+    qu'il ne porte pas, mais la fonction reste totale — pas de valeur spéciale
+    à propager plus loin, comme `Trait.couleur` vide plutôt qu'un `None`.
+    """
+    r, v, b = (rgb[..., 0].astype(np.float64), rgb[..., 1].astype(np.float64), rgb[..., 2].astype(np.float64))
+    maxi = np.maximum(np.maximum(r, v), b)
+    mini = np.minimum(np.minimum(r, v), b)
+    ecart = maxi - mini
+    secours = np.where(ecart == 0, 1.0, ecart)  # évite une division par zéro, sans effet sur le résultat
+
+    teinte = np.zeros_like(r)
+    est_r = (maxi == r) & (ecart > 0)
+    est_v = (maxi == v) & (ecart > 0) & ~est_r
+    est_b = (ecart > 0) & ~est_r & ~est_v
+
+    teinte = np.where(est_r, ((v - b) / secours) % 6.0, teinte)
+    teinte = np.where(est_v, (b - r) / secours + 2.0, teinte)
+    teinte = np.where(est_b, (r - v) / secours + 4.0, teinte)
+    teinte = (teinte * 60.0) % 360.0  # en degrés, 0 à 360
+
+    return (teinte / 360.0 * 255.0).astype(np.uint8)
+
+
+def _distance_teinte(teintes: np.ndarray, cible: int) -> np.ndarray:
+    """L'écart circulaire à une teinte cible, dans la même échelle 0-255.
+
+    **Circulaire, comme la roue des couleurs** : 255 est collé à 0, pas à
+    l'autre bout d'une droite. Sans ça, un magenta à 254 et un magenta à 1 se
+    liraient à 253 d'écart, alors que sur la roue ils sont voisins.
+    """
+    brut = np.abs(teintes.astype(np.int16) - int(cible))
+    return np.minimum(brut, 255 - brut)
 
 
 def _remplir(proche: np.ndarray, graines: list[tuple[int, int]]) -> np.ndarray:
@@ -562,17 +622,46 @@ def _graines_du_bord(proche: np.ndarray) -> list[tuple[int, int]]:
     return graines
 
 
-def detourer_bord(rgb: np.ndarray, tolerance: int) -> np.ndarray:
+def detourer_bord(
+    rgb: np.ndarray,
+    tolerance: int,
+    *,
+    cible: tuple[int, int, int] | None = None,
+    teinte: bool = False,
+) -> np.ndarray:
     """L'alpha d'une image dont le fond est plat — le cas de tout ce qui sort d'ici.
 
     Un pixel n'est du fond que s'il est **relié au bord** par une chaîne de
     pixels proches de la couleur de bordure. C'est toute la différence avec un
     seuil global : un blanc à l'intérieur du sujet — l'os d'un squelette, le
     reflet d'une fiole — n'est relié à rien, et reste.
+
+    ── `cible` : la couleur déclarée du jeu, visée au lieu de devinée (B18) ──
+
+    **Sans elle, la cible est la médiane des quatre bordures** — le
+    comportement d'avant B18, et le défaut. Elle se trompe quand le sujet
+    déborde largement sur un bord : un moulin qui occupe plus de la moitié
+    d'une bordure tire cette médiane vers le brun de ses planches, et le
+    détourage se met à chercher le sujet au lieu du fond.
+
+    **Avec elle, c'est la couleur que le jeu a déclarée qui est visée**, telle
+    quelle — celle qui est réellement partie dans le prompt. Un sujet qui
+    déborde ne change plus rien à ce qui est cherché.
+
+    ── `teinte` : comparer la couleur, pas son assombrissement (B18) ─────────
+
+    Voir `_teinte_255` : la teinte ignore un fond assombri par une ombre, un
+    dégradé ou un grain de compression, là où la valeur (l'écart par canal) en
+    a besoin d'une tolérance plus large — qui mange alors une joue rose au
+    passage.
     """
-    cible = _couleur_du_bord(rgb)
-    ecart = np.abs(rgb.astype(np.int16) - cible).max(axis=2)
-    proche = ecart <= tolerance
+    reference = np.asarray(cible, dtype=np.int16) if cible is not None else _couleur_du_bord(rgb)
+    if teinte:
+        teintes = _teinte_255(rgb)
+        proche = _distance_teinte(teintes, int(_teinte_255(reference.astype(np.uint8).reshape(1, 1, 3))[0, 0])) <= tolerance
+    else:
+        ecart = np.abs(rgb.astype(np.int16) - reference).max(axis=2)
+        proche = ecart <= tolerance
     fond = _remplir(proche, _graines_du_bord(proche))
     return np.where(fond, np.uint8(0), np.uint8(255))
 
@@ -584,6 +673,7 @@ def detourer_couleur(
     *,
     partout: bool = False,
     reste: np.ndarray | None = None,
+    teinte: bool = False,
 ) -> np.ndarray:
     """L'alpha d'une image dont on a **désigné le fond du doigt** (E3).
 
@@ -627,10 +717,52 @@ def detourer_couleur(
     if not (0 <= x < largeur and 0 <= y < hauteur):
         return np.full((hauteur, largeur), np.uint8(255))
     cible = rgb[y, x].astype(np.int16)
-    proche = np.abs(rgb.astype(np.int16) - cible).max(axis=2) <= tolerance
+    if teinte:
+        teintes = _teinte_255(rgb)
+        proche = _distance_teinte(teintes, int(teintes[y, x])) <= tolerance
+    else:
+        proche = np.abs(rgb.astype(np.int16) - cible).max(axis=2) <= tolerance
     if reste is not None:
         proche = proche & reste
     fond = proche if partout else _remplir(proche, [(y, x)])
+    return np.where(fond, np.uint8(0), np.uint8(255))
+
+
+# ── Le détourage par la palette du jeu (B18) ─────────────────────────────────
+
+
+def detourer_palette(
+    rgb: np.ndarray, palette: Sequence[str], tolerance: int
+) -> np.ndarray:
+    """L'alpha d'une image dont **rien de ce que le jeu contient ne peut partir**.
+
+    Le remplissage depuis le bord vise une seule couleur ; celui-ci vise
+    l'inverse d'une liste entière. Un pixel n'est **candidat** au fond que
+    lorsqu'il ne ressemble à *aucune* des couleurs de la palette — la même
+    distance de Tchebychev que `detourer_bord`, comparée à chacune plutôt qu'à
+    une seule cible. Le remplissage par plages, ensuite, ne descend que sur ces
+    candidats et ne part que des bordures : un pixel de la palette entouré de
+    fond reste donc du fond, mais un pixel de la palette **collé à un bord**
+    reste, lui, du sujet — c'est ce qui fait que le vert de la grenouille ne
+    part jamais, même sur un fond sale, granuleux ou dégradé.
+
+    **Sans palette, la passe ne retire rien** — même règle qu'une pipette non
+    visée (E3) : sans savoir ce qu'il ne faut pas manger, ce moteur ne mange
+    rien du tout plutôt que de tout manger en l'absence de tout critère.
+    """
+    hauteur, largeur = rgb.shape[:2]
+    couleurs = [_rvb(c) for c in palette if c]
+    if not couleurs:
+        return np.full((hauteur, largeur), np.uint8(255))
+
+    dans_la_palette = np.zeros((hauteur, largeur), dtype=bool)
+    rgb16 = rgb.astype(np.int16)
+    for r, v, b in couleurs:
+        ecart = np.abs(rgb16 - np.array((r, v, b), dtype=np.int16)).max(axis=2)
+        dans_la_palette |= ecart <= tolerance
+
+    proche = ~dans_la_palette
+    fond = _remplir(proche, _graines_du_bord(proche))
     return np.where(fond, np.uint8(0), np.uint8(255))
 
 
@@ -2759,9 +2891,26 @@ def _detourer(rgba: np.ndarray, passe: Passe) -> np.ndarray:
             # cette ligne, la tache repart par le couloir que la passe
             # précédente a ouvert et ressort ailleurs dans l'image.
             reste=rgba[:, :, 3] > 0,
+            teinte=passe.teinte,
         )
+    elif passe.moteur == PALETTE:
+        neuf = detourer_palette(rgba[:, :, :3], passe.palette, passe.tolerance)
     else:
-        neuf = detourer_bord(rgba[:, :, :3], passe.tolerance)
+        neuf = detourer_bord(
+            rgba[:, :, :3],
+            passe.tolerance,
+            cible=_rvb(passe.couleur_du_jeu) if passe.couleur_du_jeu else None,
+            teinte=passe.teinte,
+        )
+
+    # ── Le pinceau, remonté dans le détourage lui-même (B18) ─────────────────
+    #
+    # **Sur le masque que cette passe vient de produire**, avant qu'il ne
+    # rejoigne l'alpha déjà posé. C'est ce qui fait que la correction est vue
+    # par le recadrage et la mise sur grille — arrivée là, la case se calcule
+    # sur le sujet corrigé, pas sur celui que l'algorithme a rendu tout seul.
+    if passe.traits:
+        neuf = np.where(peindre(neuf > 0, passe.traits), np.uint8(255), np.uint8(0))
 
     alpha = np.minimum(rgba[:, :, 3], neuf)
     alpha = durcir(alpha, passe.seuil_alpha)
@@ -2816,6 +2965,27 @@ def detourer(recette: Recette, octets: bytes) -> np.ndarray:
             continue
         rgba = _detourer(rgba, passe)
     return rgba
+
+
+def detourer_meme_passe(
+    passe: Passe, octets_des_frames: Sequence[bytes]
+) -> tuple[np.ndarray, ...]:
+    """Le même geste, rejoué **verbatim** sur chaque frame voisine (B18).
+
+    **« Le même point, la même forme entourée »** (`docs/pistes-2026-09-04/
+    carnet/atelier-detourer.dc.html`) — et c'est tout le sens de cette fonction
+    par rapport à `voyage` (`atelier/domaine/recette.py`) : coller une recette
+    d'une image à l'autre en retire le point et la forme entourée, parce
+    qu'une coordonnée ne dit rien sur une autre silhouette. Ici, au contraire,
+    c'est *exactement* la même coordonnée qu'on veut reposer, parce que huit
+    frames d'une même marche portent souvent la même flaque de fond enfermée
+    au même endroit — c'est le cas pour lequel ce geste existe, et le seul.
+
+    Rend un rendu par frame, dans l'ordre reçu, pour que l'écran les montre
+    tous avant qu'on accepte ou reprenne ceux qui ont raté — aucun n'est
+    écrit ici, cette fonction ne fait que rejouer et rendre.
+    """
+    return tuple(_detourer(_tableau(o), passe) for o in octets_des_frames)
 
 
 def raison_du_modele(modele: str) -> str | None:

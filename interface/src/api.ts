@@ -191,7 +191,7 @@ export type Generation = {
 // places sont vides ne produit aucun rendu : le brut suffit.
 
 export type Passe = {
-  moteur: "bord" | "couleur" | "modele" | "trace"
+  moteur: "bord" | "couleur" | "modele" | "trace" | "palette"
   tolerance: number
   seuil_alpha: number
   durcissement: number
@@ -234,6 +234,29 @@ export type Passe = {
    *  rendait. Le catalogue vit au serveur : la recette porte le choix, elle ne
    *  tient pas la liste. */
   modele: string
+  /** **Comparer par teinte plutôt que canal par canal** (B18). Sert à `bord`,
+   *  `couleur` et `palette` : un fond assombri par une ombre ou un dégradé
+   *  s'écarte beaucoup en valeur tout en restant, à l'œil, la même couleur
+   *  *tournée* d'un cran plus sombre — la teinte l'ignore, la valeur non.
+   *
+   *  **Optionnel, absent veut dire `false`** — comme au serveur (`Passe.
+   *  depuis_json`) : une passe écrite avant B18 n'a pas ce champ, et son
+   *  absence doit rendre exactement ce qu'elle rendait. */
+  teinte?: boolean
+  /** **La couleur que le jeu a déclarée**, visée par `bord` au lieu d'être
+   *  devinée sur les bordures (B18). Vide ou absente, le défaut, c'est
+   *  deviner — un sujet qui déborde largement sur un bord fait alors glisser
+   *  la couleur devinée vers sa propre couleur. */
+  couleur_du_jeu?: string
+  /** **Les couleurs que le moteur `palette` ne peut jamais manger** (B18) —
+   *  la palette du jeu, ou un sous-ensemble choisi. Vide ou absente, la passe
+   *  ne retire rien, comme une pipette non visée. */
+  palette?: string[]
+  /** **Le pinceau, remonté dans le détourage lui-même** (B18). Les mêmes
+   *  passages qu'à `Main.opacite`, posés un cran plus tôt dans la chaîne :
+   *  ils s'appliquent sur le masque que *cette* passe vient de produire,
+   *  avant que le recadrage et la mise sur grille ne mesurent le sujet. */
+  traits?: Trait[]
 }
 
 /** La seconde place — celle qui fait d'une image un **calque** (C3).
@@ -1586,6 +1609,10 @@ export const PASSE_PAR_DEFAUT: Passe = {
   masquee: false,
   trace: [],
   modele: "",
+  teinte: false,
+  couleur_du_jeu: "",
+  palette: [],
+  traits: [],
 }
 
 export type Asset = {
@@ -4025,6 +4052,15 @@ export type Silhouette = {
 export type EtatTraitement = {
   moteurs: { nom: Passe["moteur"]; raison: string | null }[]
   silhouettes: Silhouette[]
+  /** **La couleur de fond que le jeu a déclarée** (B18) — celle que « la
+   *  couleur déclarée du jeu » vise, au lieu de la deviner sur les bordures.
+   *  Vide ou absente sans projet, ou tant que personne ne l'a choisie dans
+   *  les règles du jeu. */
+  fond?: string
+  /** **La palette du jeu**, pour « la palette en garde-fou » (B18) — la même
+   *  liste que celle de la table Couleurs. Vide ou absente sans artwork
+   *  officiel promu. */
+  palette?: string[]
   /** **`raison` ne vaut plus jamais autre chose que `null`** depuis D2, et la
    *  clé est gardée parce qu'elle est l'endroit où le grisé se rallumerait.
    *

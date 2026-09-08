@@ -564,24 +564,28 @@ def test_la_disponibilite_du_contour_ne_lit_aucune_famille():
 # ─────────────────────────────────────────────────────────────────────────────
 # 6 · « La couleur de fond du jeu n'est pas lue par le détourage »
 #
-# **Arbitrage : c'est un moteur qui manque, pas un défaut à réparer ici.**
-# `B16` n'ajoute aucun moteur ; ce qu'elle doit, c'est le dire là où ça mord.
+# **Arbitrage : c'était un moteur qui manquait, pas un défaut à réparer ici.**
+# `B16` n'a ajouté aucun moteur ; `B18` l'a écrit — voir `tests/
+# test_b18_detourer.py`, § 1. Cet essai-ci est tombé le jour où B18 l'a
+# écrit, exactement comme son propre commentaire l'annonçait ; ce qui suit
+# est sa mise à jour, pas une suppression : le domaine et le traitement
+# restent découplés de `atelier/domaine/fond.py`, seule la façon de viser la
+# couleur déclarée change.
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def test_le_traitement_ne_lit_pas_la_couleur_declaree_du_jeu():
-    """**Un essai d'absence qui nomme ce qui la justifie.**
+def test_le_traitement_vise_la_couleur_declaree_sans_importer_domaine_fond():
+    """**Le moteur existe depuis B18, et le découplage tient quand même.**
 
-    `atelier/domaine/fond.py` est lu par le projet, la vue, la production et les
-    univers — jamais par la recette ni par le traitement. Le magenta est écrit
-    dans les règles du jeu, il part dans le prompt, et le détourage reprend la
-    **couleur médiane des bordures** : un sujet qui déborde sur un bord fait
-    basculer cette médiane.
+    `atelier/domaine/fond.py` reste lu par le projet, la vue, la production et
+    les univers — jamais par la recette ni par le traitement : la couleur
+    déclarée voyage comme `Quantification.palette` avant elle, copiée dans
+    `Passe.couleur_du_jeu` par le service au moment où la recette se pose, pas
+    relue en direct depuis `atelier.domaine.fond` au moment du calcul.
 
-    ⚠️ Le jour où `B18` écrit le moteur *« la couleur déclarée du jeu »*, cet
-    essai tombe. C'est voulu : la ligne de l'écran qui dit *« devinée sur les
-    bordures »* doit partir le même jour, et un essai qui laisserait faire
-    protégerait une phrase devenue fausse."""
+    L'écran, lui, ne dit plus qu'il ignore la couleur déclarée : il dit que le
+    moteur `bord` la devine **sauf** quand une passe la vise — ce que
+    `Places.tsx` écrit désormais en toutes lettres."""
     for module in (domaine_recette, domaine_traitement):
         source = inspect.getsource(module)
         assert "fond import" not in source, module.__name__
@@ -598,7 +602,7 @@ def test_le_traitement_ne_lit_pas_la_couleur_declaree_du_jeu():
         / "composants"
         / "Places.tsx"
     ).read_text(encoding="utf-8")
-    assert "ne lit pas encore la couleur déclarée du jeu" in places
+    assert "vise la couleur déclarée du jeu" in places
 
 
 # ─────────────────────────────────────────────────────────────────────────────

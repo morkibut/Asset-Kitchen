@@ -185,6 +185,25 @@ class ServiceAssets:
         objet = self._base.lire_projet(projet)
         return objet.univers.palette if objet else ()
 
+    def fond_du_projet(self, projet: str | None) -> str:
+        """La couleur de fond que le jeu a déclarée — celle que `atelier.
+        domaine.fond` propose et que l'auteur a choisie, pas celle que le
+        détourage devine sur les bordures (B18).
+
+        **Même lecture que `palette_du_projet`, et pour la même raison** :
+        elle vit dans `projet.json`, à portée de ce fichier-ci, et ce service
+        ne fait que la lire — c'est `atelier.domaine.fond` et l'écran des
+        règles du jeu qui la posent.
+
+        Vide sans projet, comme sans fond choisi : les deux absences se lisent
+        pareil, et c'est très exactement ce qui fait qu'un moteur `bord`
+        continue de deviner sur les bordures tant que personne n'a choisi.
+        """
+        if projet is None:
+            return ""
+        objet = self._base.lire_projet(projet)
+        return objet.univers.fond if objet else ""
+
     def raison_quantification(self, projet: str | None) -> str | None:
         """Pourquoi la quantification est grisée — **plus jamais depuis D2**.
 
@@ -235,6 +254,13 @@ class ServiceAssets:
             # écrit en dur, donc il se sert comme tout le reste : le serveur le
             # rend, l'écran le montre, et personne ne le recompose.
             "silhouettes": etat_des_silhouettes(),
+            # **La couleur et la palette du jeu** (B18) — de quoi câbler « la
+            # couleur déclarée du jeu » et « la palette en garde-fou » à
+            # l'écran sans lui faire deviner, à sa façon, ce que le projet a
+            # déclaré. Vides sans projet ou sans rien de posé : c'est l'écran
+            # qui décide alors de retomber sur le geste d'avant B18.
+            "fond": self.fond_du_projet(projet),
+            "palette": list(self.palette_du_projet(projet)),
             "quantification": {
                 "raison": self.raison_quantification(projet),
                 # **Ce que l'écran annonce sans interdire** (D2) : la palette du
@@ -1428,6 +1454,14 @@ class ServiceAssets:
                 raise RecetteRefusee(
                     f"passe {rang} : la forme entourée sort de l'image"
                 )
+            # **Le pinceau remonté dans le détourage** (B18) — le même rayon
+            # que les deux couches de la différence et que la main : c'est le
+            # même pinceau, posé un cran plus tôt dans la chaîne.
+            for passage, trait in enumerate(passe.traits, start=1):
+                if not 0 <= trait.rayon <= RAYON_MAX:
+                    raise RecetteRefusee(
+                        f"passe {rang}, pinceau {passage} : le rayon va de 0 à {RAYON_MAX}"
+                    )
 
         grille = recette.grille
         if grille is not None:
