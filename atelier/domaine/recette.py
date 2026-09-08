@@ -576,6 +576,47 @@ def _durcissement_non_choisi(avant: Passe, apres: Passe) -> bool:
     )
 
 
+# ── Les six réglages neufs de B18 ────────────────────────────────────────────
+#
+# **Aucun ne s'écrit tant qu'il vaut son neutre** (B1, descendue d'un cran par
+# B17) : une clé neuve dans une place existante ne doit pas changer l'empreinte
+# des recettes déjà écrites, sans quoi tout leur cache se recalculerait pour un
+# réglage qu'aucune ne pose.
+#
+# **Les trois formats verrouillés que la planche nomme**, et pas un de plus —
+# ajouter un format est sans risque pour une recette déjà écrite, qui ne le
+# demande pas.
+FORMAT_LIBRE = ""
+CARRE = "carre"
+DEUX_POUR_UN = "2:1"
+TROIS_POUR_QUATRE = "3:4"
+FORMATS_DE_RECADRAGE: dict[str, tuple[int, int]] = {
+    CARRE: (1, 1),
+    DEUX_POUR_UN: (2, 1),
+    TROIS_POUR_QUATRE: (3, 4),
+}
+
+
+def format_connu(format_: Any) -> str:
+    """Le nom rendu tel quel s'il existe, sinon *libre* — même règle que
+    `methode_connue` : le domaine ne lève pas sur un mot qu'il ne connaît pas."""
+    return format_ if format_ in FORMATS_DE_RECADRAGE else FORMAT_LIBRE
+
+
+# **Trois paliers, et zéro qui veut dire aucun calage** — la planche ne cite
+# que 8, 16 et 32 pour l'herbe du marais.
+MULTIPLES_DE_CALAGE = (0, 8, 16, 32)
+
+
+def multiple_connu(n: Any) -> int:
+    """Le multiple demandé, ou zéro s'il ne figure pas dans la liste fermée."""
+    try:
+        n = int(n)
+    except (TypeError, ValueError):
+        return 0
+    return n if n in MULTIPLES_DE_CALAGE else 0
+
+
 @dataclass(frozen=True, slots=True)
 class Recadrage:
     """Sur la boîte opaque, avec une marge. Une boîte explicite l'emporte.
@@ -583,20 +624,76 @@ class Recadrage:
     La boîte explicite n'est pas un réglage d'écran en T2 : c'est par elle que le
     slicer posera ses découpes en T5, et l'écrire ici coûte trois lignes contre
     une reprise de la recette le jour venu.
+
+    **Les six champs de B18** ne changent rien à ce qui précède : ils
+    s'appliquent *après* la boîte (tracée ou mesurée) et la marge, dans l'ordre
+    où `_recadrer` les lit — ligne de pied, puis format, puis multiple, puis la
+    taille imposée, qui est la seule à changer les dimensions du fichier rendu
+    plutôt que le rectangle coupé dedans.
+
+    `taille` — **un cadre de taille imposée** : le sujet vient se loger dans
+    exactement ces `largeur, hauteur`-là, agrandi ou réduit pour tenir. `None`
+    est le défaut : personne ne demande une taille de sortie fixe.
+
+    `format` — **le format verrouillé** : le rectangle grandit depuis son
+    centre jusqu'à tenir ce rapport, plutôt que de partir en losange. Vide veut
+    dire *libre*, le comportement d'avant B18.
+
+    `multiple` — **le calage sur un multiple** : les quatre bords du rectangle
+    sautent au multiple de ce nombre juste au-dessus. Zéro veut dire *aucun
+    calage*.
+
+    `masse` — **centré sur la masse** plutôt que sur le rectangle, quand une
+    taille imposée laisse un espace vide sur un seul axe (une hallebarde qui
+    dépasse d'un seul côté déplace le rectangle sans déplacer le corps). Faux
+    par défaut : le rectangle reste ce qui décide.
+
+    `ligne_pied` — **la ligne de pied**, en pixels de l'image d'origine : le
+    rectangle se déplace verticalement, sans changer de hauteur, pour que ce
+    rang-là tombe en bas de ce qui est gardé. `None` veut dire *non posée*.
+
+    `bord_uni` — **le rognage d'un bord de couleur unie** : la boîte se
+    cherche par distance de couleur à la bordure plutôt que par transparence,
+    ce qui rend la table utilisable sur une image qui n'a jamais été détourée.
+    Faux par défaut : seule la transparence compte, comme avant B18.
     """
 
     marge: int = 0  # en pixels de l'image d'origine
     boite: tuple[int, int, int, int] | None = None
+    taille: tuple[int, int] | None = None
+    format: str = FORMAT_LIBRE
+    multiple: int = 0
+    masse: bool = False
+    ligne_pied: int | None = None
+    bord_uni: bool = False
 
     def en_json(self) -> dict[str, Any]:
-        return {"marge": self.marge, "boite": list(self.boite) if self.boite else None}
+        return {
+            "marge": self.marge,
+            "boite": list(self.boite) if self.boite else None,
+            # ── Les clés neuves ne s'écrivent que remplies (B18, d'après B17) ──
+            **({"taille": list(self.taille)} if self.taille else {}),
+            **({"format": self.format} if self.format else {}),
+            **({"multiple": self.multiple} if self.multiple else {}),
+            **({"masse": self.masse} if self.masse else {}),
+            **({"ligne_pied": self.ligne_pied} if self.ligne_pied is not None else {}),
+            **({"bord_uni": self.bord_uni} if self.bord_uni else {}),
+        }
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "Recadrage":
         boite = d.get("boite")
+        taille = d.get("taille")
+        ligne_pied = d.get("ligne_pied")
         return Recadrage(
             marge=int(d.get("marge", 0)),
             boite=(tuple(int(v) for v in boite) if boite else None),
+            taille=(tuple(int(v) for v in taille) if taille else None),
+            format=format_connu(d.get("format") or FORMAT_LIBRE),
+            multiple=multiple_connu(d.get("multiple", 0)),
+            masse=bool(d.get("masse", False)),
+            ligne_pied=(int(ligne_pied) if ligne_pied is not None else None),
+            bord_uni=bool(d.get("bord_uni", False)),
         )
 
 

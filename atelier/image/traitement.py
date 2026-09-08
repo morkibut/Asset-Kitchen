@@ -55,6 +55,7 @@ from atelier.domaine.recette import (
     COULEUR,
     DETOURAGE,
     FLOYD,
+    FORMATS_DE_RECADRAGE,
     GAUCHE_DROITE,
     GRILLE,
     LA_MAIN,
@@ -109,6 +110,9 @@ __all__ = [
     "methode_disponible",
     "modele_descendu",
     "moteur_disponible",
+    "boite_hors_bord_uni",
+    "centre_de_masse",
+    "loger_dans",
     "peindre",
     "pinceau",
     "pose_du_calque",
@@ -1725,21 +1729,203 @@ def sans_les_deux_dernieres(recette: Recette) -> Recette:
 # ── La remise sur grille ─────────────────────────────────────────────────────
 
 
+# ── Les six réglages neufs de l'atelier Recadrer (B18) ───────────────────────
+#
+# **De la géométrie de boîte, et rien de plus** : les six fonctions ci-dessous
+# ne lisent ni modèle ni réseau, chacune est pure — une boîte et quelques
+# entiers en entrée, une boîte ou une image en sortie —, et `_recadrer` les
+# enchaîne toujours dans le même ordre : la boîte de départ (sujet, boîte
+# tracée, ou bord uni), la ligne de pied, la marge, le format verrouillé, le
+# calage sur un multiple, la coupe, puis — seule à changer les dimensions du
+# fichier rendu — la taille imposée.
+
+
+def centre_de_masse(alpha: np.ndarray) -> tuple[float, float]:
+    """Le centre de gravité de l'alpha — **centré sur la masse**, pas sur la
+    boîte. Une hallebarde qui dépasse d'un seul côté pèse peu de pixels à côté
+    du corps : elle déplace la boîte du sujet, elle déplace à peine son centre
+    de masse.
+
+    Pondérée par l'alpha et non par un simple « opaque ou pas » : un bord à
+    demi transparent compte pour sa part, comme il compte dans tout le reste
+    du pipeline. Le centre géométrique de l'image sert de repli quand il ne
+    reste rien d'opaque — le même choix que `parts_de` pour un ancrage
+    inconnu : une réponse plutôt qu'une exception, sur une entrée qui n'a pas
+    de sens.
+    """
+    hauteur, largeur = alpha.shape[:2]
+    poids = alpha.astype(np.float64)
+    total = float(poids.sum())
+    if total <= 0:
+        return largeur / 2, hauteur / 2
+    lignes = np.arange(hauteur, dtype=np.float64)
+    colonnes = np.arange(largeur, dtype=np.float64)
+    cy = float((poids.sum(axis=1) * lignes).sum() / total)
+    cx = float((poids.sum(axis=0) * colonnes).sum() / total)
+    return cx, cy
+
+
+def boite_hors_bord_uni(rgb: np.ndarray, tolerance: int = 24) -> tuple[int, int, int, int] | None:
+    """La boîte du sujet, cherchée par couleur plutôt que par transparence —
+    **le rognage d'un bord de couleur unie**. Utile sur une image qui n'a
+    jamais été détourée, donc sans un seul pixel transparent où `boite_opaque`
+    pourrait chercher.
+
+    La bordure sert de référence — sa médiane, exactement comme le détourage
+    par le bord (`_couleur_du_bord`) — et tout pixel qui s'en écarte de plus de
+    `tolerance` sur son canal le plus éloigné devient le sujet. `None` si rien
+    ne s'en écarte : une image d'une seule couleur n'a rien à recadrer.
+    """
+    cible = _couleur_du_bord(rgb)
+    ecart = np.abs(rgb.astype(np.int16) - cible).max(axis=2)
+    return boite_opaque(ecart > tolerance)
+
+
+def _ajuster_au_format(
+    boite: tuple[int, int, int, int], format_: str, largeur: int, hauteur: int
+) -> tuple[int, int, int, int]:
+    """Le rectangle grandi depuis son centre jusqu'à tenir le rapport demandé
+    — **le format verrouillé**. Un format vide ou inconnu ne change rien :
+    c'est le format *libre*, le comportement d'avant B18.
+
+    Il ne rétrécit jamais : un rectangle plus étroit que son format grandit en
+    largeur, un rectangle plus large grandit en hauteur — jamais l'inverse,
+    pour ne jamais couper davantage que ce que le sujet ou la marge avaient
+    déjà décidé. Borné par l'image : au-delà, le rapport cède plutôt que de
+    sortir du cadre.
+    """
+    ratio = FORMATS_DE_RECADRAGE.get(format_)
+    if ratio is None:
+        return boite
+    x0, y0, x1, y1 = boite
+    ratio_largeur, ratio_hauteur = ratio
+    largeur_boite = x1 - x0 + 1
+    hauteur_boite = y1 - y0 + 1
+    if largeur_boite * ratio_hauteur >= hauteur_boite * ratio_largeur:
+        hauteur_boite = max(1, round(largeur_boite * ratio_hauteur / ratio_largeur))
+    else:
+        largeur_boite = max(1, round(hauteur_boite * ratio_largeur / ratio_hauteur))
+    largeur_boite = min(largeur_boite, largeur)
+    hauteur_boite = min(hauteur_boite, hauteur)
+    centre_x, centre_y = (x0 + x1) / 2, (y0 + y1) / 2
+    nx0 = max(0, min(round(centre_x - largeur_boite / 2), largeur - largeur_boite))
+    ny0 = max(0, min(round(centre_y - hauteur_boite / 2), hauteur - hauteur_boite))
+    return int(nx0), int(ny0), int(nx0 + largeur_boite - 1), int(ny0 + hauteur_boite - 1)
+
+
+def _caler_sur_multiple(
+    boite: tuple[int, int, int, int], multiple: int, largeur: int, hauteur: int
+) -> tuple[int, int, int, int]:
+    """Les deux bords bas et droit du rectangle, avancés au multiple juste
+    au-dessus — **le calage sur un multiple**. Zéro ou un : aucun calage, le
+    rectangle ne bouge pas.
+
+    Le coin haut-gauche ne bouge jamais : c'est lui qui porte la marge et le
+    format, et le faire glisser aussi ferait remonter le sujet dans son propre
+    rectangle sans raison. Seules les dimensions sont arrondies, vers le haut,
+    et bornées par l'image.
+    """
+    if multiple <= 1:
+        return boite
+    x0, y0, x1, y1 = boite
+    largeur_ronde = -(-(x1 - x0 + 1) // multiple) * multiple
+    hauteur_ronde = -(-(y1 - y0 + 1) // multiple) * multiple
+    x1 = min(largeur - 1, x0 + largeur_ronde - 1)
+    y1 = min(hauteur - 1, y0 + hauteur_ronde - 1)
+    return x0, y0, x1, y1
+
+
+def _caler_sur_ligne_de_pied(
+    boite: tuple[int, int, int, int], ligne_pied: int, hauteur: int
+) -> tuple[int, int, int, int]:
+    """Le rectangle déplacé verticalement, sans changer de hauteur, pour que
+    `ligne_pied` tombe sur son bord bas — **la ligne de pied**. Chaque image
+    qui porte la même valeur voit alors ses pieds tomber au même rang, quelle
+    que soit la hauteur de son propre sujet.
+    """
+    x0, y0, x1, y1 = boite
+    hauteur_boite = y1 - y0 + 1
+    y1 = max(0, min(hauteur - 1, ligne_pied))
+    y0 = max(0, y1 - hauteur_boite + 1)
+    return x0, y0, x1, y1
+
+
+def loger_dans(rgba: np.ndarray, taille: tuple[int, int], *, masse: bool = False) -> np.ndarray:
+    """Le sujet, logé dans une case de `taille` exacte, agrandi ou réduit pour
+    tenir — **un cadre de taille imposée**. Les proportions du rectangle
+    recadré sont gardées, jamais étirées : ce qui reste d'espace sur l'axe le
+    plus court est transparent.
+
+    Cet espace se répartit également des deux côtés par défaut ; `masse`
+    répartit à la place autour du centre de gravité du sujet (`centre_de_masse`)
+    plutôt qu'autour du centre géométrique du rectangle — un garde dont la
+    hallebarde tire le rectangle sur le côté garde alors le corps au milieu, et
+    c'est la hallebarde qui déborde davantage d'un côté.
+    """
+    hauteur, largeur = rgba.shape[:2]
+    cible_largeur, cible_hauteur = max(1, taille[0]), max(1, taille[1])
+    echelle = min(cible_largeur / largeur, cible_hauteur / hauteur)
+    neuve_largeur = max(1, round(largeur * echelle))
+    neuve_hauteur = max(1, round(hauteur * echelle))
+    redimensionnee = np.asarray(
+        Image.fromarray(rgba, mode="RGBA").resize(
+            (neuve_largeur, neuve_hauteur), Image.LANCZOS
+        )
+    )
+    canevas = np.zeros((cible_hauteur, cible_largeur, 4), dtype=np.uint8)
+    if masse:
+        centre_x, centre_y = centre_de_masse(rgba[:, :, 3])
+        centre_x, centre_y = centre_x * echelle, centre_y * echelle
+    else:
+        centre_x, centre_y = neuve_largeur / 2, neuve_hauteur / 2
+    decalage_x = int(round(cible_largeur / 2 - centre_x))
+    decalage_y = int(round(cible_hauteur / 2 - centre_y))
+    src_x0, src_y0 = max(0, -decalage_x), max(0, -decalage_y)
+    dst_x0, dst_y0 = max(0, decalage_x), max(0, decalage_y)
+    largeur_collee = min(neuve_largeur - src_x0, cible_largeur - dst_x0)
+    hauteur_collee = min(neuve_hauteur - src_y0, cible_hauteur - dst_y0)
+    if largeur_collee > 0 and hauteur_collee > 0:
+        canevas[dst_y0 : dst_y0 + hauteur_collee, dst_x0 : dst_x0 + largeur_collee] = (
+            redimensionnee[
+                src_y0 : src_y0 + hauteur_collee, src_x0 : src_x0 + largeur_collee
+            ]
+        )
+    return canevas
+
+
 def _recadrer(rgba: np.ndarray, recadrage: Recadrage) -> np.ndarray:
     hauteur, largeur = rgba.shape[:2]
     if recadrage.boite is not None:
         x0, y0, x1, y1 = recadrage.boite
+    elif recadrage.bord_uni:
+        boite = boite_hors_bord_uni(rgba[:, :, :3]) or boite_opaque(rgba[:, :, 3])
+        if boite is None:
+            return rgba  # une seule couleur, d'un bout à l'autre : rien à recadrer
+        x0, y0, x1, y1 = boite
     else:
         boite = boite_opaque(rgba[:, :, 3])
         if boite is None:
             return rgba  # plus rien à recadrer : on ne fabrique pas une image vide
         x0, y0, x1, y1 = boite
+
+    if recadrage.ligne_pied is not None:
+        x0, y0, x1, y1 = _caler_sur_ligne_de_pied((x0, y0, x1, y1), recadrage.ligne_pied, hauteur)
+
     marge = max(0, recadrage.marge)
     x0 = max(0, x0 - marge)
     y0 = max(0, y0 - marge)
     x1 = min(largeur - 1, x1 + marge)
     y1 = min(hauteur - 1, y1 + marge)
-    return rgba[y0 : y1 + 1, x0 : x1 + 1]
+
+    if recadrage.format:
+        x0, y0, x1, y1 = _ajuster_au_format((x0, y0, x1, y1), recadrage.format, largeur, hauteur)
+    if recadrage.multiple:
+        x0, y0, x1, y1 = _caler_sur_multiple((x0, y0, x1, y1), recadrage.multiple, largeur, hauteur)
+
+    coupee = rgba[y0 : y1 + 1, x0 : x1 + 1]
+    if recadrage.taille is not None:
+        coupee = loger_dans(coupee, recadrage.taille, masse=recadrage.masse)
+    return coupee
 
 
 # ── Les quatre réductions, arrivées en D2 ────────────────────────────────────

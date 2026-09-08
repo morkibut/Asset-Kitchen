@@ -51,10 +51,12 @@ import {
   type Contour,
   type Echange,
   type EtatTraitement,
+  type FormatDeRecadrage,
   type Grille,
   type Methode,
   type Passe,
   type Quantification,
+  type Recadrage,
   type Recette,
   type TachesDeLAsset,
   type Univers,
@@ -594,14 +596,45 @@ function ReglagesDuDetourage({ recette, traitement, poser, regler }: Poste) {
   )
 }
 
+/** Les huit champs, aucun optionnel — **ce que cette colonne envoie toujours**,
+ *  quand bien même le type `Recadrage` du port les laisse absents pour les
+ *  écrans qui n'en ont pas besoin (`PanneauRecadrage`, l'écran de montage). */
+type RecadrageComplet = Required<Recadrage>
+
+const RECADRAGE_PAR_DEFAUT: RecadrageComplet = {
+  marge: 0,
+  boite: null,
+  taille: null,
+  format: "",
+  multiple: 0,
+  masse: false,
+  ligne_pied: null,
+  bord_uni: false,
+}
+
+const NOM_DU_FORMAT: Record<FormatDeRecadrage, string> = {
+  "": "libre",
+  carre: "carré",
+  "2:1": "2 pour 1",
+  "3:4": "3 pour 4",
+}
+
 function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }: Poste) {
-  const recadrage = recette.recadrage ?? { marge: 0, boite: null }
+  // **Toujours les huit champs**, jamais un objet partiel (B18) : un envoi qui
+  // n'en garderait que deux effacerait les six autres au premier geste posé
+  // depuis cette colonne — la même faute que `decalage` en E17.
+  const recadrage: RecadrageComplet = { ...RECADRAGE_PAR_DEFAUT, ...(recette.recadrage ?? {}) }
   const vu = mesures?.recadrage ?? null
   // ⚠️ **La condition vient du serveur, jamais d'ici** (B16). L'écran la
   // dérivait de `recette.grille != null`, et c'est faux dans trois cas : grille
   // endormie, grille sans détourage vif, et l'inverse. La règle vit une seule
   // fois, dans `Recette.marge_sans_effet`.
   const margeAvalee = vu?.marge_sans_effet ?? false
+  const hauteurOrigine = vu?.origine[1] ?? 0
+  const changer = (suite: Partial<RecadrageComplet>): RecadrageComplet => ({
+    ...recadrage,
+    ...suite,
+  })
   return (
     <div className="flex flex-col gap-[14px]">
       <Reglage nom="ce qu'on garde">
@@ -616,7 +649,7 @@ function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }: Poste)
           }
           onChange={(quoi) => {
             if (quoi === "sujet" && recadrage.boite)
-              void poser({ ...recette, recadrage: { marge: recadrage.marge, boite: null } })
+              void poser({ ...recette, recadrage: changer({ boite: null }) })
           }}
         />
       </Reglage>
@@ -639,12 +672,8 @@ function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }: Poste)
           // était déjà là et le curseur restait actif : on ne tenait que la
           // moitié de la règle 2.
           eteint={margeAvalee}
-          onRegler={(marge) =>
-            regler({ ...recette, recadrage: { marge, boite: recadrage.boite } })
-          }
-          onPoser={(marge) =>
-            void poser({ ...recette, recadrage: { marge, boite: recadrage.boite } })
-          }
+          onRegler={(marge) => regler({ ...recette, recadrage: changer({ marge }) })}
+          onPoser={(marge) => void poser({ ...recette, recadrage: changer({ marge }) })}
         />
       </Reglage>
       {margeAvalee && (
@@ -653,6 +682,137 @@ function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }: Poste)
           geste="Pixéliser"
           onGeste={() => ouvrir("grille")}
         />
+      )}
+
+      {/* **Le format verrouillé** (B18) : le rectangle grandit depuis son
+          centre pour tenir ce rapport, au lieu de partir en losange. */}
+      <Reglage nom="format">
+        <Choix
+          valeurs={["", "carre", "2:1", "3:4"] as const}
+          valeur={recadrage.format}
+          libelles={NOM_DU_FORMAT}
+          onChange={(format) => void poser({ ...recette, recadrage: changer({ format }) })}
+        />
+      </Reglage>
+
+      {/* **Le calage sur un multiple** (B18) : les bords bas et droit du
+          rectangle sautent au multiple choisi, jamais entre deux. */}
+      <Reglage nom="caler sur un multiple">
+        <Choix
+          valeurs={[0, 8, 16, 32] as const}
+          valeur={recadrage.multiple}
+          libelles={{ 0: "aucun", 8: "8", 16: "16", 32: "32" }}
+          onChange={(multiple) => void poser({ ...recette, recadrage: changer({ multiple }) })}
+        />
+      </Reglage>
+
+      {/* **Le rognage d'un bord de couleur unie** (B18) : la boîte se cherche
+          par couleur plutôt que par transparence, sans passer par le
+          détourage d'abord. */}
+      <Reglage nom="ce qui borde le sujet">
+        <Choix
+          valeurs={["non", "oui"] as const}
+          valeur={recadrage.bord_uni ? "oui" : "non"}
+          libelles={{ non: "la transparence", oui: "un bord de couleur unie" }}
+          onChange={(quoi) =>
+            void poser({ ...recette, recadrage: changer({ bord_uni: quoi === "oui" }) })
+          }
+        />
+      </Reglage>
+
+      {/* **La ligne de pied** (B18) : un rang de l'image d'origine, tracé une
+          fois, sur lequel le bas du rectangle se cale. */}
+      <Reglage nom="ligne de pied">
+        <Choix
+          valeurs={["non", "oui"] as const}
+          valeur={recadrage.ligne_pied !== null ? "oui" : "non"}
+          libelles={{ non: "non posée", oui: "posée" }}
+          onChange={(quoi) =>
+            void poser({
+              ...recette,
+              recadrage: changer({
+                ligne_pied:
+                  quoi === "oui" ? (vu?.sujet?.[3] ?? Math.max(0, hauteurOrigine - 1)) : null,
+              }),
+            })
+          }
+        />
+      </Reglage>
+      {recadrage.ligne_pied !== null && hauteurOrigine > 0 && (
+        <Glissiere
+          nom="ligne de pied"
+          valeur={recadrage.ligne_pied}
+          min={0}
+          max={Math.max(0, hauteurOrigine - 1)}
+          unite=" px"
+          onRegler={(ligne_pied) => regler({ ...recette, recadrage: changer({ ligne_pied }) })}
+          onPoser={(ligne_pied) => void poser({ ...recette, recadrage: changer({ ligne_pied }) })}
+        />
+      )}
+
+      {/* **Un cadre de taille imposée** (B18) : le sujet se loge dans
+          exactement `largeur × hauteur`, agrandi ou réduit pour tenir. Deux
+          curseurs à zéro veulent dire *aucune taille imposée*. */}
+      <Reglage nom="taille imposée" dit={recadrage.taille ? `${recadrage.taille[0]} × ${recadrage.taille[1]} px` : "aucune"}>
+        <div className="flex flex-col gap-[6px]">
+          <Glissiere
+            nom="largeur imposée"
+            valeur={recadrage.taille?.[0] ?? 0}
+            min={0}
+            max={2048}
+            unite=" px"
+            onRegler={(largeur) => {
+              const hauteur = recadrage.taille?.[1] ?? largeur
+              regler({
+                ...recette,
+                recadrage: changer({ taille: largeur > 0 && hauteur > 0 ? [largeur, hauteur] : null }),
+              })
+            }}
+            onPoser={(largeur) => {
+              const hauteur = recadrage.taille?.[1] ?? largeur
+              void poser({
+                ...recette,
+                recadrage: changer({ taille: largeur > 0 && hauteur > 0 ? [largeur, hauteur] : null }),
+              })
+            }}
+          />
+          <Glissiere
+            nom="hauteur imposée"
+            valeur={recadrage.taille?.[1] ?? 0}
+            min={0}
+            max={2048}
+            unite=" px"
+            onRegler={(hauteur) => {
+              const largeur = recadrage.taille?.[0] ?? hauteur
+              regler({
+                ...recette,
+                recadrage: changer({ taille: largeur > 0 && hauteur > 0 ? [largeur, hauteur] : null }),
+              })
+            }}
+            onPoser={(hauteur) => {
+              const largeur = recadrage.taille?.[0] ?? hauteur
+              void poser({
+                ...recette,
+                recadrage: changer({ taille: largeur > 0 && hauteur > 0 ? [largeur, hauteur] : null }),
+              })
+            }}
+          />
+        </div>
+      </Reglage>
+      {/* **Centré sur la masse** (B18) — ne change quelque chose que si une
+          taille imposée laisse un espace vide sur un axe. */}
+      <Reglage nom="centrage">
+        <Choix
+          valeurs={["non", "oui"] as const}
+          valeur={recadrage.masse ? "oui" : "non"}
+          libelles={{ non: "sur le rectangle", oui: "sur la masse du sujet" }}
+          onChange={(quoi) =>
+            void poser({ ...recette, recadrage: changer({ masse: quoi === "oui" }) })
+          }
+        />
+      </Reglage>
+      {recadrage.masse && !recadrage.taille && (
+        <Pourquoi texte="sans effet ici : le centrage ne se voit que sur une taille imposée" />
       )}
     </div>
   )
