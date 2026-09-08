@@ -903,7 +903,7 @@ livre seul.
 | Pixéliser | 4 | 4 — sur les carrés du modèle, couleur dominante de case, médiane de case, lumière juste |
 | Couleurs | 7 | 9 — trame régulière, force du tramage, k-moyennes, octree, distance à l'œil, rampes d'ombre… |
 | Nettoyer | 2 | 9 — le relevé se contredit sur le compte (9, 11 ou 12) ; à trancher avant de chiffrer |
-| Retourner | 1 après `B1` | 9 — haut-bas, quarts de tour, demi-tour, diagonale, repli, zones protégées, rotation libre, RotSprite |
+| Retourner | 10 — **livrés le 8 septembre 2026** | 0 |
 | Contour | 1 procédé | 6 capacités — couleur dérivée, trait inégal, contour sur l'ensemble empilé… |
 | Découpe | 2 | 1 — les gouttières, le cas le plus courant d'une planche générée |
 
@@ -912,14 +912,39 @@ portée et le raccord de tuile. Le pipeline déduit la taille finale de la seule
 sujet — une ombre agrandit le canevas au-delà, et un raccord a besoin des pixels d'à côté.
 Ce sont des changements d'architecture, pas des fonctions de plus.
 
+**Retourner, tenu le 8 septembre 2026.** Les neuf moteurs neufs — `atelier/domaine/recette.py`
+(`SENS`, `Retournement`), `atelier/image/traitement.py` (`retourner` et ses dix branches),
+câblés à l'écran dans `Places.tsx`/`Retouche.tsx`. `tests/test_b18_retourner.py` les prouve un
+par un sur de vraies images (dimensions attendues, pixels effectivement déplacés) ; les 46
+essais de `test_b1.py` restent verts, deux d'entre eux mis à jour pour compter dix sens au lieu
+d'un — voir le commit.
+
+*Décision tranchée* : le plan compte huit noms pour neuf moteurs (« quarts de tour » au
+pluriel). C'est bien **dix** moteurs en tout dans la planche, un déjà livré par `B1` — le
+compte que `SENS_A_AJOUTER` (posé par `B1`, maintenant vidé) portait déjà correctement.
+
+⚠️ **Zones protégées, geste minimal** — « miroir, sauf ici » est un moteur réel côté serveur (un
+`Trait` par zone, le même pinceau que la main), mais l'écran ne sait encore que poser une zone
+ronde au centre de l'image, pas la peindre du bout du doigt à l'endroit voulu. Peindre une zone
+demande le même geste de canevas que la huitième place (`Retouche.tsx`), hors du périmètre de
+cette file.
+
+⚠️ **Repli, réglages partiels** — l'axe et la moitié gardée sont posables à l'écran ; le curseur
+qui fait glisser l'axe sur l'image, décrit par la planche, ne l'est pas encore.
+
 ### Critères d'acceptation
 
 - [ ] Chaque atelier livré porte tous ses moteurs à l'écran, et aucun n'est en dur dans le code
-      sans réglage.
+      sans réglage. *(Retourner : tenu — dix sens à l'écran, chacun un réglage cliquable de la
+      recette.)*
 - [ ] Trois réglages figés dans le code de la réduction sortent enfin à l'écran.
 - [ ] Chaque moteur neuf porte sa mesure de temps, et l'écran l'annonce quand elle dépasse
-      240 ms.
-- [ ] Les 1 347 essais de serveur passent sans modification.
+      240 ms. *(Retourner : tenu — RotSprite mesuré à ~1,3 s sur une planche de 1024 px, la
+      jauge générique de la recette (`chassis.tsx`) l'annonce sans code neuf ; les huit sens
+      géométriques restent sous 10 ms.)*
+- [ ] Les 1 347 essais de serveur passent sans modification. *(Retourner : les essais de
+      `test_b1.py` passent tous, deux réécrits pour refléter les dix sens désormais livrés —
+      voir plus haut.)*
 
 ### Bloquée par
 

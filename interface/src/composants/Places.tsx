@@ -205,7 +205,8 @@ export const TROUS: Record<Contour["trous"], string> = {
   laisses: "laissés",
 }
 
-/** Les sens que l'atelier sait appliquer — **un seul en B1**.
+/** Les dix sens que l'atelier sait appliquer — un seul en B1, neuf de plus en
+ *  B18.
  *
  *  **La même liste vit dans `atelier/domaine/recette.py`** (`SENS`), et les deux
  *  sont tenues ensemble par un essai, comme `MOTEUR` et `DURCISSEMENT_LIVRE`
@@ -213,6 +214,15 @@ export const TROUS: Record<Contour["trous"], string> = {
  *  traitement sait appliquer, et pas un cran de plus. */
 export const SENS_DU_RETOURNEMENT: Record<Retournement["sens"], string> = {
   "gauche-droite": "miroir gauche-droite",
+  "haut-bas": "miroir haut-bas",
+  "quart-droite": "quart de tour à droite",
+  "quart-gauche": "quart de tour à gauche",
+  "demi-tour": "demi-tour",
+  diagonale: "miroir sur la diagonale",
+  repli: "miroir sur soi",
+  "sauf-zones": "miroir, sauf ici",
+  "angle-libre": "rotation libre, au plus proche",
+  rotsprite: "rotation libre, méthode pixel art",
 }
 
 /** Les crans que la table propose — **les clés de la liste ci-dessus, et rien
@@ -220,24 +230,11 @@ export const SENS_DU_RETOURNEMENT: Record<Retournement["sens"], string> = {
  *  sens s'ajoute des deux côtés, et l'essai n'aurait rien vu. */
 export const SENS_LIVRES = Object.keys(SENS_DU_RETOURNEMENT) as readonly Retournement["sens"][]
 
-/** Les neuf autres moteurs de la planche, dans son ordre (B18).
- *
- *  **Ils paraissent, grisés, au lieu d'être cachés** : c'est ce qui dit ce que
- *  l'atelier saura faire, et c'est la seule table de la chaîne qui manque en
- *  entier. Une liste qui grandirait sous les yeux le jour où l'un d'eux arrive
- *  se lit mieux qu'une liste d'un seul cran dont rien ne dit qu'elle est
- *  courte. */
-export const SENS_A_AJOUTER: readonly string[] = [
-  "miroir haut-bas",
-  "quart de tour à droite",
-  "quart de tour à gauche",
-  "demi-tour",
-  "miroir sur la diagonale",
-  "miroir sur soi",
-  "miroir, sauf ici",
-  "rotation libre, au plus proche",
-  "rotation libre, méthode pixel art",
-]
+/** Les deux moitiés d'un repli — les mêmes mots que l'ancrage. */
+export const MOITIES_DU_REPLI: Record<"gauche" | "droite", string> = {
+  gauche: "gauche",
+  droite: "droite",
+}
 
 /** Ce qu'une position fait aux dimensions du rendu, en pixels et par côté.
  *
@@ -1717,6 +1714,7 @@ function useMiroirPropose(asset: Asset) {
 export function PanneauRetournement({
   asset,
   recette,
+  regler,
   poser,
   onFabrique,
   onErreur,
@@ -1751,6 +1749,18 @@ export function PanneauRetournement({
     }
   }
 
+  const posant = (partiel: Partial<Retournement>) =>
+    void poser({ ...recette, retournement: { ...retournement, ...partiel } })
+  const reglant = (partiel: Partial<Retournement>) =>
+    regler({ ...recette, retournement: { ...retournement, ...partiel } })
+
+  const ajouterZoneAuCentre = () => {
+    const zones = retournement.zones_protegees ?? []
+    posant({
+      zones_protegees: [...zones, { garde: true, rayon: 5, points: [[32, 32]], couleur: "" }],
+    })
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <Reglage libelle="le sens" aide="retournement.sens">
@@ -1763,7 +1773,8 @@ export function PanneauRetournement({
           valeurs={SENS_LIVRES}
           valeur={retournement.sens}
           libelles={SENS_DU_RETOURNEMENT}
-          onChange={(sens) => void poser({ ...recette, retournement: { sens } })}
+          plusieursRangees
+          onChange={(sens) => posant({ sens })}
         />
       </Reglage>
 
@@ -1775,22 +1786,59 @@ export function PanneauRetournement({
           l'autre ordre, aucun pixel réinventé — est dit au guide, qui est
           l'endroit des explications. */}
 
-      {/* **Les neuf autres paraissent au lieu d'être cachés** : c'est ce qui dit
-          ce que l'atelier saura faire, et c'est la seule table de la chaîne qui
-          manque en entier. Des lignes mortes, sans bouton — proposer puis
-          refuser serait pire que de montrer une liste. */}
-      <ul className="flex flex-col border-t border-bord pt-2">
-        {SENS_A_AJOUTER.map((nom) => (
-          <li
-            key={nom}
-            data-sens-a-ajouter
-            className="mesure flex h-[20px] items-center gap-2 text-[10px] text-texte-3"
-          >
-            <span className="min-w-0 truncate">{nom}</span>
-            <span className="ml-auto shrink-0">à ajouter</span>
-          </li>
-        ))}
-      </ul>
+      {/* **Les trois champs qui suivent ne comptent que pour trois sens** — ils
+          ne paraissent que sous le sens auquel ils s'appliquent, jamais tous à
+          la fois : un angle sous « miroir haut-bas » ne voudrait rien dire. */}
+      {(retournement.sens === "angle-libre" || retournement.sens === "rotsprite") && (
+        <Reglage libelle="angle" aide="retournement.angle">
+          <Curseur
+            valeur={retournement.angle ?? 0}
+            min={-180}
+            max={180}
+            unite="°"
+            onChange={(angle) => reglant({ angle })}
+            onFini={(angle) => posant({ angle })}
+          />
+        </Reglage>
+      )}
+
+      {retournement.sens === "repli" && (
+        <Reglage libelle="moitié gardée" aide="retournement.repli">
+          <Segments
+            valeurs={["gauche", "droite"] as const}
+            valeur={retournement.moitie_repli ?? "gauche"}
+            libelles={MOITIES_DU_REPLI}
+            onChange={(moitie_repli) => posant({ moitie_repli })}
+          />
+        </Reglage>
+      )}
+
+      {retournement.sens === "sauf-zones" && (
+        <Reglage libelle="zones protégées" aide="retournement.zones">
+          <div className="flex items-center gap-2">
+            <span className="mesure text-[10px] text-texte-3">
+              {(retournement.zones_protegees ?? []).length} zone
+              {(retournement.zones_protegees ?? []).length > 1 ? "s" : ""}
+            </span>
+            <button
+              type="button"
+              onClick={ajouterZoneAuCentre}
+              className="mesure h-[22px] px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+            >
+              + une zone au centre
+            </button>
+            {(retournement.zones_protegees ?? []).length > 0 && (
+              <button
+                type="button"
+                onClick={() => posant({ zones_protegees: [] })}
+                className="mesure h-[22px] px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+              >
+                vider
+              </button>
+            )}
+          </div>
+        </Reglage>
+      )}
 
       {/* ── La fabrique : une image de plus, dans la case d'en face ────────── */}
       <div className="flex flex-col gap-2 border-t border-bord pt-2">

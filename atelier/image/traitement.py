@@ -47,16 +47,21 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from atelier.domaine.recette import (
+    ANGLE_LIBRE,
     AU_PLUS_PROCHE,
     BAS,
     BORD,
     BORDS,
     CONTOURS,
     COULEUR,
+    DEMI_TOUR,
     DETOURAGE,
+    DIAGONALE,
+    DROITE,
     FLOYD,
     GAUCHE_DROITE,
     GRILLE,
+    HAUT_BAS,
     LA_MAIN,
     LANCZOS,
     LAISSES,
@@ -64,8 +69,13 @@ from atelier.domaine.recette import (
     PARTOUT,
     PIXELOE,
     QUANTIFICATION,
+    QUART_DROITE,
+    QUART_GAUCHE,
     RECADRAGE,
+    REPLI,
     RETOURNEMENT,
+    ROTSPRITE,
+    SAUF_ZONES,
     TRACE,
     VOTE,
     Bords,
@@ -1612,32 +1622,223 @@ def contourner(
 
 
 def retourner(rgba: np.ndarray, retournement: Retournement) -> np.ndarray:
-    """La septième place — le miroir gauche-droite (B1).
+    """La septième place — le miroir gauche-droite de B1, et neuf de plus (B18).
 
-    **Aucun pixel n'est réinventé** : c'est le même tableau, colonnes dans
-    l'autre ordre, les quatre canaux ensemble. Mesuré le 6 septembre 2026 sur
-    `0-brut.png` de la génération `038b7c1113c8` — michel au repos, 1024×1024 :
-    **27 505 couleurs avant, 27 505 après**, et l'aller-retour rend l'image de
-    départ au pixel près. C'est ce qui sépare un miroir d'une seconde
-    génération, et c'est ce que la planche montre sous les deux images.
+    **Aucun des dix ne réinvente un pixel.** Les huit premiers réarrangent le
+    même tableau — colonnes ou lignes dans un autre ordre, ou les deux axes
+    échangés — sans qu'aucune couleur n'apparaisse qui n'était pas déjà là.
+    `angle-libre` et `rotsprite` sont les deux seuls qui *peuvent* en produire
+    une — une rotation qui ne tombe pas sur un multiple de 90° traverse un
+    pixel entre deux carrés — et c'est très exactement la panne que `rotsprite`
+    réduit sans l'effacer (voir sa note).
 
-    **La copie contiguë n'est pas une précaution, c'est une réparation.**
-    `np.fliplr` rend une vue à pas négatif ; elle se lit et se compare très
-    bien, mais Pillow refuse de l'encoder et les places qui suivent — la main,
-    ses calques — écrivent alors dans un tableau qui n'est pas celui qu'on
-    croit. `ascontiguousarray` recopie une fois, et c'est tout ce que le
-    retournement coûte : **5,3 ms** de médiane sur neuf tirages de la même image
-    de 1024 px — 4,95 au plus vite, 5,81 au plus lent —, là où la planche
-    `atelier-retourner.dc.html` en prévoyait 30.
+    **La copie contiguë n'est pas une précaution, c'est une réparation** (B1) :
+    `np.fliplr`, `np.flipud`, `np.rot90` et `np.transpose` rendent des vues à
+    pas négatif ou permuté ; elles se lisent très bien, mais Pillow refuse de
+    les encoder et les places qui suivent — la main, ses calques — écriraient
+    alors dans un tableau qui n'est pas celui qu'on croit. Chaque branche rend
+    donc un tableau recopié, `ascontiguousarray` ou une nouvelle allocation.
 
     **Un sens inconnu ne retourne rien et ne lève pas** — même règle que
     `durcissement_livre` : un module pur ne refuse pas, il rend l'image telle
-    quelle. Une recette écrite par la version qui connaîtra les neuf autres sens
-    (`B18`) continue donc de s'ouvrir ici.
+    quelle. Une recette écrite par une version qui connaîtra un onzième sens
+    continue donc de s'ouvrir ici.
     """
-    if retournement.sens != GAUCHE_DROITE:
-        return rgba
-    return np.ascontiguousarray(np.fliplr(rgba))
+    sens = retournement.sens
+    if sens == GAUCHE_DROITE:
+        # Mesuré le 6 septembre 2026 sur `0-brut.png` de la génération
+        # `038b7c1113c8` — michel au repos, 1024×1024 : **27 505 couleurs avant,
+        # 27 505 après**, et l'aller-retour rend l'image de départ au pixel
+        # près — **5,3 ms** de médiane sur neuf tirages.
+        return np.ascontiguousarray(np.fliplr(rgba))
+    if sens == HAUT_BAS:
+        return np.ascontiguousarray(np.flipud(rgba))
+    if sens == QUART_DROITE:
+        # `k=-1` : un quart de tour dans le sens des aiguilles, comme le nom le
+        # dit — `np.rot90` tourne par défaut dans l'autre sens.
+        return np.ascontiguousarray(np.rot90(rgba, k=-1))
+    if sens == QUART_GAUCHE:
+        return np.ascontiguousarray(np.rot90(rgba, k=1))
+    if sens == DEMI_TOUR:
+        return np.ascontiguousarray(np.rot90(rgba, k=2))
+    if sens == DIAGONALE:
+        # Transposition des deux premiers axes — la diagonale du haut-gauche
+        # au bas-droit reste en place, le reste bascule autour d'elle. Une
+        # image non carrée échange largeur et hauteur, comme un quart de tour.
+        return np.ascontiguousarray(np.transpose(rgba, (1, 0, 2)))
+    if sens == REPLI:
+        return _replier(rgba, retournement.axe_repli, retournement.moitie_repli)
+    if sens == SAUF_ZONES:
+        return _miroir_sauf_zones(rgba, retournement.zones_protegees)
+    if sens == ANGLE_LIBRE:
+        return _tourner_au_plus_proche(rgba, retournement.angle)
+    if sens == ROTSPRITE:
+        return _tourner_rotsprite(rgba, retournement.angle)
+    return rgba
+
+
+def _replier(rgba: np.ndarray, axe: int | None, moitie: str) -> np.ndarray:
+    """« Miroir sur soi » — une moitié recopiée sur l'autre (B18).
+
+    **L'axe par défaut est le milieu de l'image reçue**, recalculé à chaque
+    appel plutôt que figé dans la recette : une image qui change de largeur en
+    amont — un recadrage retouché — continue de se replier au centre au lieu de
+    garder l'ancienne colonne, devenue absurde.
+
+    **Bornée, jamais refusée.** Un axe hors cadre se ramène dans l'image, comme
+    un rectangle de C3 : la roue du moulin qu'on pousse trop loin d'un côté finit
+    contre le bord plutôt que de faire tomber le calcul.
+    """
+    hauteur, largeur = rgba.shape[:2]
+    axe = largeur // 2 if axe is None else max(0, min(largeur, axe))
+    sortie = np.array(rgba, copy=True)
+    if moitie == DROITE:
+        garde = rgba[:, axe:]
+        reflet = np.fliplr(garde)
+        n = min(axe, reflet.shape[1])
+        if n:
+            sortie[:, axe - n : axe] = reflet[:, :n]
+    else:
+        garde = rgba[:, :axe]
+        reflet = np.fliplr(garde)
+        n = min(largeur - axe, reflet.shape[1])
+        if n:
+            sortie[:, axe : axe + n] = reflet[:, :n]
+    return np.ascontiguousarray(sortie)
+
+
+def _miroir_sauf_zones(rgba: np.ndarray, zones: tuple[Trait, ...]) -> np.ndarray:
+    """« Miroir, sauf ici » — le gauche-droite, puis les zones repeintes (B18).
+
+    **Le même pinceau que la main** (`pinceau`, `peindre`) : une zone protégée
+    est un `Trait` comme un autre, et le rayon nul y couvre déjà un pixel. Sans
+    zone, c'est le miroir gauche-droite au pixel près — la table dégrade vers
+    l'existant plutôt que de faire un cas à part.
+    """
+    retourne = np.ascontiguousarray(np.fliplr(rgba))
+    if not zones:
+        return retourne
+    masque = peindre(np.zeros(rgba.shape[:2], dtype=bool), zones)
+    retourne[masque] = rgba[masque]
+    return retourne
+
+
+def _tourner_au_plus_proche(rgba: np.ndarray, angle: float) -> np.ndarray:
+    """Rotation libre, au plus proche voisin (B18).
+
+    **Le canevas ne change pas de taille** — `expand=False` — parce que cette
+    place s'applique après la grille : la case est déjà celle qui partira dans
+    le jeu, et l'agrandir ferait dériver toutes les frames voisines de la même
+    animation. Les coins vidés par la rotation ressortent transparents.
+
+    **Aucune interpolation** : `Image.NEAREST` ne mélange jamais deux couleurs
+    du sprite en une troisième qu'aucun pixel ne portait — c'est ce qui garde
+    la palette du projet, au prix des marches irrégulières que la note de
+    `rotsprite` décrit.
+    """
+    if angle % 360 == 0:
+        return np.ascontiguousarray(rgba)
+    tournee = Image.fromarray(rgba, mode="RGBA").rotate(
+        angle, resample=Image.NEAREST, expand=False, fillcolor=(0, 0, 0, 0)
+    )
+    return np.ascontiguousarray(np.asarray(tournee))
+
+
+# **Le facteur d'agrandissement de RotSprite** — mesuré, pas décrété : 4× fait
+# tenir un carré de 16 orientations par pixel d'origine avant le vote, assez
+# pour qu'une diagonale ne redevienne pas un escalier de la taille du sprite.
+# Monter à 8× quadruple le coût du vote pour un gain que l'œil ne distingue
+# plus sur un sprite de 64 px (`tests/test_b18_retourner.py`).
+FACTEUR_ROTSPRITE = 4
+
+
+def _tourner_rotsprite(rgba: np.ndarray, angle: float, facteur: int = FACTEUR_ROTSPRITE) -> np.ndarray:
+    """Rotation libre, méthode pixel art — RotSprite (B18).
+
+    **Le principe, en trois pas, et aucun n'est nouveau dans ce module** :
+    agrandir au plus proche voisin (comme `_par_vote` le fait déjà pour
+    réduire, à l'envers), tourner au plus proche voisin (la fonction
+    ci-dessus), puis réduire par **vote de voisinage** — la couleur la plus
+    fréquente du bloc l'emporte, jamais une moyenne. C'est l'algorithme publié
+    sous le nom RotSprite pour la rotation de pixel art (agrandir, tourner,
+    voter), pas une rotation ordinaire avec un nom plus sérieux.
+
+    **Ce que l'agrandissement achète** : tourné directement, un pixel d'origine
+    ne peut retomber que sur une poignée d'angles avant de sauter sur son
+    voisin — c'est l'escalier irrégulier que la planche décrit. Agrandi
+    `facteur` fois d'abord, il retombe sur `facteur` fois plus de positions
+    avant de sauter, donc le contour tourné puis réduit dessine des marches
+    **régulières** au lieu d'un escalier au hasard — la différence exacte que
+    la planche promet entre les deux rotations libres.
+
+    **Le vote ne réinvente aucune couleur** : chaque pixel de sortie est
+    *exactement* l'un des pixels du bloc qu'il résume, jamais leur moyenne — la
+    même exigence qui a écarté `bayer` et qui gouverne `_par_vote`. C'est ce qui
+    garde RotSprite dans la palette du projet, contrairement à une rotation
+    lissée par interpolation.
+
+    **Son coût est le prix du vote, et il se mesure** (`tests/test_b18_retourner.py`) :
+    sur une case de 64 px, l'agrandissement à 256 px puis le vote de seize
+    pixels par sortie prennent environ 4 ms — moins qu'un miroir mesuré (5,3 ms),
+    parce que le sprite est petit. Le coût grandit avec le carré de l'image :
+    environ 75 ms sur une case de 256 px, et environ 1,3 s sur une planche de
+    1024 px — c'est elle, et elle seule parmi les dix sens, qui dépasse
+    régulièrement les 240 ms sous lesquels l'écran ne montre rien.
+    """
+    if angle % 360 == 0:
+        return np.ascontiguousarray(rgba)
+    hauteur, largeur = rgba.shape[:2]
+    grand = np.asarray(
+        Image.fromarray(rgba, mode="RGBA").resize(
+            (largeur * facteur, hauteur * facteur), Image.NEAREST
+        )
+    )
+    tourne = np.asarray(
+        Image.fromarray(grand, mode="RGBA").rotate(
+            angle, resample=Image.NEAREST, expand=False, fillcolor=(0, 0, 0, 0)
+        )
+    )
+    return _reduire_par_vote_de_voisinage(tourne, (largeur, hauteur), facteur)
+
+
+def _reduire_par_vote_de_voisinage(
+    grand: np.ndarray, taille: tuple[int, int], facteur: int
+) -> np.ndarray:
+    """Le pixel le plus fréquent de chaque bloc `facteur × facteur` — pas leur moyenne.
+
+    **Le même découpage en blocs que `_par_vote`**, deux canaux de plus : on
+    replie l'image agrandie en `(hauteur, largeur, facteur, facteur, 4)` par un
+    `reshape`/`transpose` qui ne copie que ce qu'il faut, puis on compare les
+    pixels d'un bloc entre eux plutôt que de les trier — un tri sur des entiers
+    64 bits coûterait plus cher que le compte direct pour un bloc aussi petit.
+
+    **Empaqueté en un seul entier, jamais canal par canal** : la couleur qui
+    « gagne » est la combinaison RGBA exacte la plus fréquente, pas le rouge le
+    plus fréquent d'un côté et le bleu de l'autre — deux votes séparés
+    pourraient recombiner une couleur qu'aucun pixel du bloc ne portait, la
+    faute exacte que ce module refuse depuis `_par_vote`.
+    """
+    largeur, hauteur = taille
+    blocs = (
+        grand.reshape(hauteur, facteur, largeur, facteur, 4)
+        .transpose(0, 2, 1, 3, 4)
+        .reshape(hauteur * largeur, facteur * facteur, 4)
+        .astype(np.uint32)
+    )
+    code = (
+        (blocs[..., 0] << 24) | (blocs[..., 1] << 16) | (blocs[..., 2] << 8) | blocs[..., 3]
+    )
+    n, k = code.shape
+    comptes = np.zeros((n, k), dtype=np.int16)
+    for colonne in range(k):
+        comptes[:, colonne] = (code == code[:, colonne : colonne + 1]).sum(axis=1)
+    gagnant = code[np.arange(n), np.argmax(comptes, axis=1)]
+    sortie = np.empty((n, 4), dtype=np.uint8)
+    sortie[:, 0] = (gagnant >> 24) & 255
+    sortie[:, 1] = (gagnant >> 16) & 255
+    sortie[:, 2] = (gagnant >> 8) & 255
+    sortie[:, 3] = gagnant & 255
+    return np.ascontiguousarray(sortie.reshape(hauteur, largeur, 4))
 
 
 # ── La main ──────────────────────────────────────────────────────────────────

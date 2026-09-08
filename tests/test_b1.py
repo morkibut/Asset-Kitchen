@@ -792,16 +792,18 @@ def test_les_sens_du_retournement_sont_les_memes_des_deux_cotes():
     """**Deux listes pour un fait finissent toujours par diverger** — la leçon
     des sept crans contre neuf (E8), et celle du nom des moteurs (D1).
 
-    L'écran propose les sens ; le traitement les applique. Le jour où `B18` en
-    ajoute un côté domaine sans le poser dans la table, l'auteur ne pourrait pas
-    le choisir ; posé côté écran sans le domaine, il retournerait dans le vide et
-    l'image sortirait telle quelle. Aucune des deux pannes ne lève : elles se
-    lisent sur l'image, ou pas du tout.
+    L'écran propose les sens ; le traitement les applique. Posé côté domaine
+    sans la table, l'auteur ne pourrait pas le choisir ; posé côté écran sans le
+    domaine, il retournerait dans le vide et l'image sortirait telle quelle.
+    Aucune des deux pannes ne lève : elles se lisent sur l'image, ou pas du tout.
 
-    L'essai lit la source de l'écran plutôt que de recopier les noms — une
-    troisième copie serait très exactement la panne qu'on ferme ici. La clé est
-    entre guillemets parce qu'elle porte un tiret, ce que le motif de
-    `tests/test_d1.py` ne prévoyait pas.
+    **Mis à jour par `B18`** : le corps de l'essai ne change pas — il continue
+    de lire la source de l'écran plutôt que de recopier les noms —, seule la
+    liste attendue grandit de un à dix. L'essai qui suivait celui-ci,
+    `test_les_sens_a_ajouter_ne_sont_pas_des_sens`, vérifiait l'inverse — que
+    les neuf sens à venir n'étaient *pas encore* des sens — et `B18` les a
+    livrés : `SENS_A_AJOUTER` a quitté `Places.tsx`, et il n'y a donc plus rien
+    à opposer à `SENS`.
     """
     ecrit = re.search(
         r'export const SENS_DU_RETOURNEMENT: Record<Retournement\["sens"\], string> = \{([^}]*)\}',
@@ -814,24 +816,25 @@ def test_les_sens_du_retournement_sont_les_memes_des_deux_cotes():
     lus = dict(re.findall(r'"?([\w-]+)"?: "([^"]*)"', ecrit.group(1)))
 
     assert set(lus) == set(SENS), "l'écran et le domaine ne proposent pas les mêmes sens"
-    assert lus == {GAUCHE_DROITE: "miroir gauche-droite"}
+    assert lus == {
+        GAUCHE_DROITE: "miroir gauche-droite",
+        "haut-bas": "miroir haut-bas",
+        "quart-droite": "quart de tour à droite",
+        "quart-gauche": "quart de tour à gauche",
+        "demi-tour": "demi-tour",
+        "diagonale": "miroir sur la diagonale",
+        "repli": "miroir sur soi",
+        "sauf-zones": "miroir, sauf ici",
+        "angle-libre": "rotation libre, au plus proche",
+        "rotsprite": "rotation libre, méthode pixel art",
+    }
 
 
-def test_les_sens_a_ajouter_ne_sont_pas_des_sens():
-    """Les neuf lignes grisées de la table **n'existent nulle part ailleurs**.
-
-    Elles disent ce que l'atelier saura faire (`B18`), et rien de plus. Si l'une
-    d'elles se retrouvait dans `SENS`, elle serait proposée pour de bon et
-    retournerait dans le vide — une ligne morte qui a pris vie sans que personne
-    l'écrive.
-    """
-    ecrit = re.search(
-        r"export const SENS_A_AJOUTER: readonly string\[\] = \[([^\]]*)\]",
-        PLACES_TSX.read_text(encoding="utf-8"),
-    )
-    assert ecrit is not None, "SENS_A_AJOUTER a quitté Places.tsx"
-
-    a_ajouter = re.findall(r'"([^"]*)"', ecrit.group(1))
-
-    assert len(a_ajouter) == 9, "la planche en compte dix en tout, un seul est livré"
-    assert not set(a_ajouter) & set(SENS)
+def test_sens_a_ajouter_a_quitte_l_ecran_maintenant_que_b18_a_tout_livre():
+    """**Le symétrique de l'essai d'avant.** `SENS_A_AJOUTER` existait pour
+    montrer, grisées, les neuf lignes que `B1` ne savait pas encore poser. Les
+    dix sens vivent maintenant tous dans `SENS_DU_RETOURNEMENT` ; une liste
+    « à ajouter » qui traînerait encore serait soit un moteur oublié à l'écran,
+    soit une ligne morte que personne ne lit plus."""
+    source = PLACES_TSX.read_text(encoding="utf-8")
+    assert "SENS_A_AJOUTER" not in source

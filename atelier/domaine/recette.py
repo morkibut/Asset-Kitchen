@@ -1258,41 +1258,119 @@ class Contour:
 # deux fois la même image. Le miroir, lui, ne réinvente aucun pixel : c'est le
 # même tableau, colonnes dans l'autre ordre.
 #
-# **Un seul sens en B1**, et les neuf autres moteurs — haut-bas, quarts de tour,
-# demi-tour, diagonale, repli, zones protégées, rotation libre, RotSprite —
-# viennent en B18. La liste est déclarée ici plutôt qu'à l'écran pour la raison
-# de `MOTEURS` et de `TRAMAGES` : ce qui figure dans une recette enregistrée est
-# ce que le traitement sait appliquer, et pas un cran de plus.
+# **Un seul sens en B1, les neuf autres arrivent en B18** — haut-bas, les deux
+# quarts de tour, le demi-tour, la diagonale, le repli d'une moitié, les zones
+# protégées (« miroir, sauf ici ») et les deux rotations libres (au plus proche,
+# puis RotSprite). Neuf noms, pas huit : `docs/PLAN-carnet.md` en compte huit
+# parce que « quarts de tour » y est écrit au pluriel pour deux moteurs — celui
+# de droite et celui de gauche sont deux sens distincts, comme le confirme la
+# planche et la liste `SENS_A_AJOUTER` déjà posée à l'écran par B1
+# (`interface/src/composants/Places.tsx`).
+#
+# La liste est déclarée ici plutôt qu'à l'écran pour la raison de `MOTEURS` et
+# de `TRAMAGES` : ce qui figure dans une recette enregistrée est ce que le
+# traitement sait appliquer, et pas un cran de plus.
 
 GAUCHE_DROITE = "gauche-droite"
-SENS = (GAUCHE_DROITE,)
+HAUT_BAS = "haut-bas"
+QUART_DROITE = "quart-droite"
+QUART_GAUCHE = "quart-gauche"
+DEMI_TOUR = "demi-tour"
+DIAGONALE = "diagonale"
+REPLI = "repli"
+SAUF_ZONES = "sauf-zones"
+ANGLE_LIBRE = "angle-libre"
+ROTSPRITE = "rotsprite"
+SENS = (
+    GAUCHE_DROITE,
+    HAUT_BAS,
+    QUART_DROITE,
+    QUART_GAUCHE,
+    DEMI_TOUR,
+    DIAGONALE,
+    REPLI,
+    SAUF_ZONES,
+    ANGLE_LIBRE,
+    ROTSPRITE,
+)
+
+# **La moitié gardée d'un repli** — les mêmes deux mots que les neuf points de
+# l'ancrage, `GAUCHE` et `DROITE` (ci-dessus) : ils désignent déjà le côté
+# qu'on garde, et un second couple de constantes pour dire la même chose aurait
+# fini par diverger du premier.
+MOITIES_DU_REPLI = (GAUCHE, DROITE)
+
+# Les deux angles qui portent un curseur, et pas seulement le retournement,
+# partagent la même borne que la teinte — un demi-tour dans chaque sens en fait
+# le tour entier.
+ANGLE_MIN, ANGLE_MAX = TEINTE_MIN, TEINTE_MAX
 
 
 @dataclass(frozen=True, slots=True)
 class Retournement:
-    """La septième place — le miroir, et pour l'instant un seul (B1).
+    """La septième place — le miroir gauche-droite de B1, et neuf de plus (B18).
 
-    **Un sens, et rien d'autre.** Ce qui pourrait s'y ajouter — les zones
-    protégées (« miroir, sauf ici »), le raccord, l'axe du repli, le
-    retournement d'un lot — est hors de cette tranche, et l'écrire d'avance
-    ferait figurer dans les recettes du disque des réglages que personne
-    n'applique : très exactement la faute de `bayer`, écrit puis retiré le jour
-    même faute d'être rendu.
+    **Un sens, et quatre champs qui ne comptent que pour trois d'entre eux.**
+    `angle` sert à `angle-libre` et `rotsprite` ; `axe_repli` et `moitie_repli`
+    ne servent qu'à `repli` ; `zones_protegees` ne sert qu'à `sauf-zones`. Les
+    sept autres sens n'en lisent aucun — c'est le sens seul qui choisit ce que
+    le traitement applique, jamais une combinaison de champs.
+
+    **Aucun champ neuf ne s'écrit tant qu'il vaut son neutre** (même règle que
+    B17 sur `Quantification`, elle-même reprise de B1) : une recette
+    `gauche-droite` déjà sur le disque doit continuer de rendre le même JSON
+    canonique, donc la même empreinte, donc ne pas recalculer son rendu pour
+    des champs qu'elle ne pose pas.
 
     **Un sens inconnu ne retourne rien, et ne lève pas** — même règle que
     `durcissement_livre` et `methode_connue` : le domaine relit des fichiers, il
-    ne juge pas. Une recette écrite par une version qui connaît les neuf autres
+    ne juge pas. Une recette écrite par une version qui connaîtra un onzième
     sens doit continuer de s'ouvrir ici, en rendant l'image telle quelle.
     """
 
     sens: str = GAUCHE_DROITE
 
+    # ── `angle-libre` et `rotsprite` ──────────────────────────────────────────
+    # En degrés, dans le sens que Pillow choisit pour `Image.rotate` — positif
+    # tourne dans le sens antihoraire. −180 à +180, comme la teinte.
+    angle: float = 0.0
+
+    # ── `repli` — miroir sur soi ──────────────────────────────────────────────
+    # `None` veut dire *le milieu de l'image*, calculé au moment du calcul et
+    # jamais figé ici : une recette qui ne dit rien doit continuer de replier au
+    # centre si l'image change de taille en amont.
+    axe_repli: int | None = None
+    moitie_repli: str = GAUCHE
+
+    # ── `sauf-zones` — miroir, sauf ici ───────────────────────────────────────
+    # **Le même `Trait` que la main** (E5) : un pinceau de rayon et de points,
+    # jamais un masque en octets. `garde` y vaut toujours son défaut, `True` —
+    # une zone de cette table n'ôte rien, elle protège.
+    zones_protegees: tuple[Trait, ...] = ()
+
     def en_json(self) -> dict[str, Any]:
-        return {"sens": self.sens}
+        return {
+            "sens": self.sens,
+            **({"angle": self.angle} if self.angle else {}),
+            **({"axe_repli": self.axe_repli} if self.axe_repli is not None else {}),
+            **({"moitie_repli": self.moitie_repli} if self.moitie_repli != GAUCHE else {}),
+            **(
+                {"zones_protegees": [t.en_json() for t in self.zones_protegees]}
+                if self.zones_protegees
+                else {}
+            ),
+        }
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "Retournement":
-        return Retournement(sens=str(d.get("sens") or GAUCHE_DROITE))
+        axe = d.get("axe_repli")
+        return Retournement(
+            sens=str(d.get("sens") or GAUCHE_DROITE),
+            angle=float(d.get("angle") or 0.0),
+            axe_repli=(int(axe) if axe is not None else None),
+            moitie_repli=str(d.get("moitie_repli") or GAUCHE),
+            zones_protegees=traits_depuis_json(d.get("zones_protegees")),
+        )
 
 
 # ── La main ──────────────────────────────────────────────────────────────────

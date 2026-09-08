@@ -29,12 +29,15 @@ from atelier.domaine import (
 )
 from atelier.domaine.catalogue import modele_en_json
 from atelier.domaine.recette import (
+    ANGLE_MAX,
+    ANGLE_MIN,
     AU_PLUS_PROCHE,
     CERCLES,
     CURSEUR_MAX,
     CURSEUR_MIN,
     DEHORS,
     EPAISSEUR_MAX,
+    GAUCHE,
     GAUCHE_DROITE,
     GRAIN_MAX,
     LISSAGE_MAX,
@@ -1161,16 +1164,25 @@ class CorpsContour(BaseModel):
 
 
 class CorpsRetournement(BaseModel):
-    """La septième place (B1) — le miroir, et un seul sens pour l'instant.
+    """La septième place — le miroir de B1, et neuf sens de plus (B18).
 
     **Le sens n'est pas borné ici**, et c'est la décision de `CorpsContour` juste
     au-dessus reprise pour la même raison : le domaine ne lève pas sur un nom
     qu'il ne connaît pas, il rend l'image telle quelle. Un sens venu d'une
     version plus récente arrive donc sans effet au lieu de faire tomber un rendu
     en 422 — et l'écran, lui, ne propose que ce que l'atelier sait faire.
+
+    **Les quatre champs neufs sont bornés, eux**, parce qu'ils portent un
+    nombre et non un nom : un angle hors de `[-180, 180]` ou un rayon de
+    pinceau hors de `[0, RAYON_MAX]` rend un 422 lisible plutôt qu'une valeur
+    absurde silencieusement acceptée.
     """
 
     sens: str = GAUCHE_DROITE
+    angle: float = Field(0.0, ge=ANGLE_MIN, le=ANGLE_MAX)
+    axe_repli: int | None = Field(None, ge=0)
+    moitie_repli: str = GAUCHE
+    zones_protegees: list[CorpsTrait] = Field(default_factory=list)
 
 
 class CorpsCalqueDessin(BaseModel):

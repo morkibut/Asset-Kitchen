@@ -4839,7 +4839,7 @@ describe("l'infobulle et le guide", () => {
     }
   })
 
-  test("les 162 entrées sont adressées à un écran qui existe — un ou refuse un lieu inconnu", () => {
+  test("les 165 entrées sont adressées à un écran qui existe — un ou refuse un lieu inconnu", () => {
     // **Le critère qui commande la tranche (B7).** Fermé côté type
     // (`Explication["ou"]`, qui n'accepte à la compilation que ces valeurs-là),
     // et retenu ici aussi : un `ou` qui ne serait dans aucun des deux serait
@@ -4861,8 +4861,10 @@ describe("l'infobulle et le guide", () => {
       "reglages",
       "equipement",
     ])
-    // 157 avant `B17`, plus les cinq entrées des quatre moteurs neufs.
-    expect(Object.keys(AIDE).length).toBe(162)
+    // 157 avant `B17`, plus les cinq entrées des quatre moteurs neufs, plus
+    // les trois entrées de B18 — l'angle, le repli et les zones protégées du
+    // retournement, les trois seuls des dix sens à ouvrir un réglage de plus.
+    expect(Object.keys(AIDE).length).toBe(165)
     for (const [cle, entree] of Object.entries(AIDE)) {
       expect(LIEUX_FERMES.has(entree.ou), `${cle} → ou: "${entree.ou}"`).toBe(true)
     }
@@ -25234,19 +25236,31 @@ describe("B1 — le miroir", () => {
     )
   })
 
-  test("les neuf autres moteurs paraissent, grisés, au lieu d'être cachés", async () => {
-    // **C'est ce qui dit ce que l'atelier saura faire**, et c'est la seule table
-    // de la chaîne qui manque en entier. Les cacher aurait laissé croire que le
-    // miroir gauche-droite est tout ce qu'on puisse vouloir.
-    const { cadre } = await ouvrirLeRetournement()
+  test("les neuf autres moteurs sont cliquables, et posent la place (B18)", async () => {
+    // **Ils paraissaient grisés jusqu'à B18** — c'était ce qui disait ce que
+    // l'atelier saurait faire. Depuis, ce sont de vrais réglages : les cacher à
+    // nouveau, ou les laisser grisés, referait croire que le miroir
+    // gauche-droite est tout ce qu'on puisse vouloir.
+    const { cadre, appels } = await ouvrirLeRetournement()
 
-    const lignes = document.querySelectorAll("[data-sens-a-ajouter]")
-    expect(lignes).toHaveLength(9)
-    expect(cadre.getByText("miroir haut-bas")).toBeTruthy()
-    expect(cadre.getByText("miroir, sauf ici")).toBeTruthy()
-    // Aucun n'est cliquable : proposer puis refuser serait pire que de montrer
-    // une liste.
-    expect(cadre.queryByRole("button", { name: "miroir haut-bas" })).toBeNull()
+    fireEvent.click(cadre.getByRole("button", { name: "miroir haut-bas" }))
+
+    await waitFor(() =>
+      expect(cadre.getByRole("button", { name: /^retournement/ }).textContent).toContain(
+        "miroir haut-bas",
+      ),
+    )
+    const pose = [...appels].reverse().find((a) => a.url.includes("/recipe"))
+    expect((pose!.corps as { retournement: { sens: string } }).retournement.sens).toBe(
+      "haut-bas",
+    )
+
+    fireEvent.click(cadre.getByRole("button", { name: "miroir, sauf ici" }))
+    await waitFor(() =>
+      expect(cadre.getByRole("button", { name: /^retournement/ }).textContent).toContain(
+        "miroir, sauf ici",
+      ),
+    )
   })
 
   // ── « Le retournement s'endort sans se vider, comme les huit autres

@@ -392,17 +392,31 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
     }
   })
 
-  test("les sens qui n'existent pas encore le disent en clair, une fois", async () => {
+  test("les dix sens du retournement sont tous cliquables depuis B18", async () => {
+    // **Neuf d'entre eux disaient encore « n'existe pas encore » avant B18** —
+    // c'était la table la plus creuse de la chaîne. Elle ne l'est plus : les
+    // dix boutons doivent tous répondre à un clic, aucun grisé.
     monter()
     fireEvent.click(within(barre()).getByRole("button", { name: "Retourner" }))
     const col = colonne()
-    await waitFor(() =>
-      expect(within(col).getAllByText(/n'existe pas encore/i).length).toBe(1),
-    )
-    // Quatre crans partagent la même raison : elle s'écrit une seule fois.
-    expect(
-      col.querySelectorAll("button[disabled]").length,
-    ).toBeGreaterThanOrEqual(2)
+    await waitFor(() => expect(col.textContent).toBeTruthy())
+
+    expect(within(col).queryByText(/n'existe pas encore/i)).toBeNull()
+    for (const nom of [
+      "miroir gauche-droite",
+      "miroir haut-bas",
+      "quart de tour à droite",
+      "quart de tour à gauche",
+      "demi-tour",
+      "miroir sur la diagonale",
+      "miroir sur soi",
+      "miroir, sauf ici",
+      "rotation libre, au plus proche",
+      "rotation libre, méthode pixel art",
+    ]) {
+      const bouton = within(col).getByRole("button", { name: nom }) as HTMLButtonElement
+      expect(bouton.disabled).toBe(false)
+    }
   })
 
   test("le détourage dit que la couleur du fond est devinée, pas lue", async () => {

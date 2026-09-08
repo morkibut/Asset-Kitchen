@@ -294,13 +294,32 @@ export type Contour = {
   trous: "cercles" | "laisses"
 }
 
-/** La septième place — le miroir (B1).
+/** La septième place — le miroir gauche-droite de B1, et neuf sens de plus
+ *  (B18).
  *
- *  **Un sens, et rien d'autre.** Ce qui pourrait s'y ajouter — les zones
- *  protégées, le raccord, l'axe du repli, le retournement d'un lot — vient en
- *  B18 : l'écrire d'avance ferait figurer dans les recettes du disque des
- *  réglages que personne n'applique. */
-export type Retournement = { sens: "gauche-droite" }
+ *  **Les quatre champs neufs ne comptent que pour trois sens.** `angle` sert à
+ *  `angle-libre` et `rotsprite` ; `axe_repli`/`moitie_repli` ne servent qu'à
+ *  `repli` ; `zones_protegees` ne sert qu'à `sauf-zones`. Tous facultatifs,
+ *  comme côté serveur (`Retournement.en_json`) : une recette qui ne pose que
+ *  `sens` reste une valeur valide de ce type, et les littéraux `{ sens:
+ *  "gauche-droite" }` déjà écrits dans les essais continuent de typer. */
+export type Retournement = {
+  sens:
+    | "gauche-droite"
+    | "haut-bas"
+    | "quart-droite"
+    | "quart-gauche"
+    | "demi-tour"
+    | "diagonale"
+    | "repli"
+    | "sauf-zones"
+    | "angle-libre"
+    | "rotsprite"
+  angle?: number
+  axe_repli?: number | null
+  moitie_repli?: "gauche" | "droite"
+  zones_protegees?: Trait[]
+}
 
 /** Un calque de dessin — de la matière posée par-dessus (US-208). */
 export type CalqueDessin = { nom: string; visible: boolean; passages: Trait[] }
@@ -1529,8 +1548,9 @@ export const CONTOUR_PAR_DEFAUT: Contour = {
   trous: "cercles",
 }
 
-/** Le seul sens que l'atelier sait appliquer aujourd'hui (B1). Les neuf autres
- *  paraissent dans la table, grisés, et viennent en B18. */
+/** Le défaut d'une place sans retournement — le miroir gauche-droite de B1.
+ *  Les neuf autres sens (B18) se posent en choisissant `sens` ; les champs qui
+ *  ne les concernent pas restent absents. */
 export const RETOURNEMENT_PAR_DEFAUT: Retournement = { sens: "gauche-droite" }
 
 export const MAIN_VIDE: Main = { opacite: [], calques: [] }
