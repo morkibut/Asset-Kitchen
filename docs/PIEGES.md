@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent soixante-quatorze pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent quatre-vingts pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1574,3 +1574,22 @@ la prochaine réécriture retrouvera.
   plusieurs. ⚠️ **Une fonction de mise à jour doit être pure et ne rien faire d'autre que
   renvoyer le prochain état** ; pour lire un état sans le mettre en dépendance, c'est une
   référence qu'il faut, pas un `set…` détourné. Payé le 6 septembre 2026.
+
+
+- **`PUT /assets/favorite` écrit un champ et ne démote personne.** `services/bibliotheque.py`
+  est la **seule** écriture de `.favori` du produit, et elle ne regarde pas les voisines de la
+  case. Le serveur ne tient donc pas l'unicité de la retenue : il **départage** au rendu, par
+  `corps_retenu`, qui prend le maximum de `(favori, cree_le, rang)`. Deux retenues dans une
+  même case sont un état parfaitement atteignable, et c'est la **plus récente** qui part dans
+  le jeu. ⚠️ Un écran qui trie autrement — la première, ou l'ordre d'arrivée — désigne une
+  image pendant que l'export en écrit une autre, **et rien ne le signale**. Tout écran qui
+  retient doit donc éteindre les autres lui-même, et **avant** d'allumer la sienne : dans
+  l'autre sens, un appel qui échoue laisse deux retenues au lieu de l'état d'avant. Payé en
+  relevé le 8 septembre 2026, en `B10`.
+- **Une colonne de flex ne descend pas sous la largeur de son contenu, et pousse ses voisines
+  hors de la fenêtre.** `min-width: auto` est la valeur par défaut d'un enfant de flex : la
+  surface d'un écran refusait de se réduire et éjectait le volet de 380 px dès qu'on
+  resserrait à 1000 px. `min-w-0` sur la colonne qui doit céder. ⚠️ **Aucun essai d'écran ne
+  peut voir ça** — jsdom ne fait pas de mise en page, les éléments n'ont pas de largeur, et
+  l'assertion passe pendant que la fenêtre déborde. C'est le second atelier qui le trouve, pas
+  la suite. Payé le 8 septembre 2026, en `B10`.

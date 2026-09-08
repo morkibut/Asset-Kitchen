@@ -372,7 +372,14 @@ export function EcranEtabli({
     // jeu, sa fente de refus, et un bouton pour retourner à l'atelier. Les
     // trois premiers sont dans la barre du châssis ; le quatrième n'a plus
     // d'objet, un onglet ne se ferme pas.
-    <div data-etabli data-univers className="flex min-h-0 min-w-0 flex-col bg-fond-0">
+    //
+    // ⚠️ **`data-etabli` est parti d'ici en `B10`**, et il n'est pas perdu : il
+    // vit sur `PageDuSujet.tsx`, qui est devenue le lieu « un sujet est
+    // ouvert » et qui contient cet écran-ci comme profondeur. Deux marqueurs
+    // identiques imbriqués auraient fait dire au premier `querySelector` venu
+    // autre chose selon la profondeur ouverte. Cette matrice garde le sien,
+    // `data-matrice`, pour ce qui veut la viser *elle*.
+    <div data-matrice data-univers className="flex min-h-0 min-w-0 flex-col bg-fond-0">
       {/* **Une case pleine ouvre son outil en plein cadre, et l'on revient sans
           avoir changé d'onglet** (E2). L'outil remplace la matrice, il ne se
           pose pas dessus : c'est la profondeur suivante du même endroit, et le

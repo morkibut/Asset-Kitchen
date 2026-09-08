@@ -65,6 +65,8 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/Guide.tsx",
     "interface/src/composants/Famille.tsx",
     "interface/src/composants/ReglagesDeFamille.tsx",
+    "interface/src/composants/PageDuSujet.tsx",
+    "interface/src/composants/ImagesDuSujet.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────

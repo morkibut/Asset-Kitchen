@@ -119,7 +119,7 @@ import {
   NOM_DE_LA_RUBRIQUE,
   type Rubrique,
 } from "./composants/Codex"
-import { EcranEtabli } from "./composants/Personnages"
+import { PageDuSujet } from "./composants/PageDuSujet"
 import { EcranReglages } from "./composants/EcranReglages"
 import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
 import { FicheDuClip } from "./composants/FicheDuClip"
@@ -3769,7 +3769,14 @@ export function App() {
       ) : null}
 
       {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && !bandeOuverte && (
-        <EcranEtabli
+        /* **La page du sujet, et non plus sa matrice** (B10) : on arrive sur la
+           chose, quatre onglets sur un seul écran. La matrice est devenue une
+           profondeur de cette page — elle porte encore le vestiaire, les
+           planches, le calibrage, la vitrine et la commande d'un clip, que B10
+           ne reprend pas. Les rappels ci-dessous sont ceux d'avant, aux mêmes
+           signatures : la page en sert la moitié et passe l'autre à la
+           matrice. */
+        <PageDuSujet
           ouvert={choseOuverte}
           plan={plan}
           onPersonnage={fondrePersonnage}

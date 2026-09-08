@@ -3617,7 +3617,16 @@ async function relire() {
  *  le vise n'a rien à ouvrir.
  *
  *  Le cadre reste borné à l'écran ouvert, comme avant : une assertion posée sur
- *  tout le document trouverait la barre du châssis et la barre d'état. */
+ *  tout le document trouverait la barre du châssis et la barre d'état.
+ *
+ *  ⚠️ **Un étage de plus depuis `B10`, et c'est tout ce qui change ici.**
+ *  Cliquer un sujet ouvre désormais *sa page* — quatre onglets, la fiche
+ *  d'abord —, et la matrice est devenue la profondeur suivante de cette page.
+ *  Cette aide y descend donc d'elle-même, par le lien que la fiche en porte.
+ *  C'est ce que les soixante essais qui l'appellent viennent chercher : ni la
+ *  fiche ni les onglets ne sont ce qu'ils mesurent, et la même aide leur rend
+ *  le même cadre qu'avant. Ceux qui visent la page neuve, eux, ont leurs
+ *  propres essais, dans `PageDuSujet.test.tsx` et `ImagesDuSujet.test.tsx`. */
 async function ouvrirLEtabli(nom?: string) {
   fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
   // La rubrique ouverte survit d'un essai à l'autre dans un même écran : on
@@ -3640,13 +3649,22 @@ async function ouvrirLEtabli(nom?: string) {
         .filter(Boolean)[0]
   if (premier) {
     fireEvent.click(premier)
-    return within(
+    const page = await waitFor(() => {
+      const etabli = document.querySelector("[data-etabli]")
+      if (!etabli) throw new Error("l'établi ne s'est pas ouvert")
+      return etabli as HTMLElement
+    })
+    // La porte de la matrice, sur la fiche du sujet. Absente quand un outil
+    // occupe déjà la page — on y est alors descendu autrement.
+    const porte = page.querySelector("[data-porte-de-la-matrice]")
+    if (porte) {
+      fireEvent.click(porte)
       await waitFor(() => {
-        const etabli = document.querySelector("[data-etabli]")
-        if (!etabli) throw new Error("l'établi ne s'est pas ouvert")
-        return etabli as HTMLElement
-      }),
-    )
+        if (!document.querySelector("[data-matrice]"))
+          throw new Error("la matrice ne s'est pas ouverte")
+      })
+    }
+    return within(document.querySelector("[data-etabli]") as HTMLElement)
   }
   return within(cadre)
 }
@@ -6515,8 +6533,14 @@ describe("l'écran des personnages", () => {
     fireEvent.keyDown(nommer, { key: "Enter" })
 
     // La chose créée s'ouvre : on la nomme pour la décrire, pas pour la ranger.
+    //
+    // **Le champ a changé d'écran en `B10`, pas de rôle** : la description
+    // s'écrivait dans la colonne d'identité de la matrice, elle est maintenant
+    // sur la fiche du sujet, qui est la première chose qu'on voit en l'ouvrant.
+    // C'est ce que la tranche livre ; ce que cet essai mesure — *elle s'écrit
+    // une fois et part avec chaque génération* — est inchangé.
     fireEvent.click(await screen.findByRole("button", { name: "Ouvrir son établi" }))
-    const description = await screen.findByLabelText("Description du personnage")
+    const description = await screen.findByLabelText("Description du sujet")
     fireEvent.change(description, {
       target: { value: "un forgeron nain à la barbe tressée" },
     })

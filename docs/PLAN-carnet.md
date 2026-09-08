@@ -451,14 +451,19 @@ Ses images se rangent en rangées, une par direction, la retenue en tête. Et un
 
 ### Critères d'acceptation
 
-- [ ] La retenue est toujours en tête, quelle que soit sa date ; les gardées suivent en ordre
-      chronologique et ne se réordonnent pas.
-- [ ] Retenir une image en démote une autre, et l'écart n'efface rien.
-- [ ] Une direction vide se lit « à confirmer » et jamais « sud » ; un clic confirme.
-- [ ] La case « + générer » ne défile jamais.
-- [ ] Les calques d'une image sont ceux de cette image, pas ceux de la pose — changer la
-      retenue ne réattribue pas ses calques.
-- [ ] Passer d'un onglet à l'autre ne recharge pas le carnet.
+- [x] La retenue est toujours en tête, quelle que soit sa date ; les gardées suivent en ordre
+      chronologique et ne se réordonnent pas. — `rangerLaLigne`, et le départage est celui du
+      serveur : entre deux retenues, la plus récente, comme `corps_retenu`.
+- [x] Retenir une image en démote une autre, et l'écart n'efface rien. — ⚠️ **la démotion se
+      fait à l'écran** : `PUT /assets/favorite` écrit un champ et ne touche pas les voisines.
+- [x] Une direction vide se lit « à confirmer » et jamais « sud » ; un clic confirme. — le clic
+      est dans le volet, seul endroit qui sache de quelle image on parle.
+- [x] La case « + générer » ne défile jamais. — troisième colonne de la grille, hors de la
+      piste ; tenu par la structure, pas par une position calculée.
+- [x] Les calques d'une image sont ceux de cette image, pas ceux de la pose — changer la
+      retenue ne réattribue pas ses calques. — filtrés sur `recette.difference.base`.
+- [x] Passer d'un onglet à l'autre ne recharge pas le carnet. — l'onglet est un état de la
+      page, pas un lieu de la pile ; l'essai compte les appels, et il n'en part aucun.
 
 ### Bloquée par
 

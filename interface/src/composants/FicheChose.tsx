@@ -93,7 +93,7 @@ const LIGNE_DE_LECTURE = 8
  *  chose-là tient, les rangées comptées **à côté** et jamais fondues dedans.
  *  C'est celle qui porte le garde-fou — une jauge pleine obtenue en rangeant se
  *  lit comme telle. */
-function comptes(personnage: Personnage, plan: Pose[]) {
+export function comptes(personnage: Personnage, plan: Pose[]) {
   const cases: Record<string, Case> = Object.fromEntries(
     personnage.cases.map((c) => [c.pose, c]),
   )
@@ -115,7 +115,7 @@ function comptes(personnage: Personnage, plan: Pose[]) {
  *  pas de portrait — et c'est un état qui se constate, pas un manque à réparer :
  *  une chose neuve n'a rien à montrer d'elle-même, et une case vide le dit mieux
  *  qu'un dessin d'attente. */
-function portraitDe(personnage: Personnage, plan: Pose[]): {
+export function portraitDe(personnage: Personnage, plan: Pose[]): {
   asset: Asset
   pose: string
 } | null {

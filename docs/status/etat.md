@@ -11,6 +11,59 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B10 — la page d'un sujet — 8 septembre 2026
+
+**Cliquer un sujet ouvre sa page, plus son atelier.** Quatre onglets sur un seul écran — *Sa
+fiche*, *Ses images*, *Ses animations*, *L'essai* —, dont les deux premiers construits. Les
+deux autres sont dans la barre, cliquables, et disent qu'ils viennent : les cacher aurait fait
+croire que la page est finie, et les remplir aurait empiété sur `B11` et `B12`.
+
+**La matrice n'a pas été remplacée : elle est descendue d'un cran.** Le plan la faisait
+disparaître. Le relevé a compté ce qu'elle porte encore et que rien d'autre ne sert — commander
+un clip, l'atelier d'une animation, le vestiaire, la planche d'une pose, le calibrage, la
+vitrine, le miroir, les poses cochées, plus la fiche plein cadre. **Huit fonctions du produit
+n'ont aucun autre chemin** avant `B11`, `B12` et `B19` : les retirer pour livrer un onglet
+aurait été une régression déguisée en refonte. Elle est donc devenue la profondeur suivante de
+la page, comme la vitrine et le calibrage étaient déjà des profondeurs d'elle.
+
+**Un marqueur d'essai a changé de porteur, et c'est ce qui a sauvé 349 essais.** `data-etabli`
+veut dire *un sujet est ouvert* : il est passé sur la page, la matrice prend `data-matrice`.
+Deux marqueurs identiques imbriqués auraient fait dire au premier `querySelector` venu autre
+chose selon la profondeur ouverte. Une seule aide — `ouvrirLEtabli` — descend maintenant
+l'étage supplémentaire, et les 57 appels qui la traversent n'ont rien eu à changer.
+
+⚠️ **Retenir une image démote à l'écran, parce que le serveur ne démote pas.** `PUT
+/assets/favorite` écrit un champ et ne regarde pas les voisines : c'est la seule écriture de
+`.favori` du produit. Le serveur *départage* au lieu d'imposer l'unicité — `corps_retenu` prend
+le maximum de `(favori, cree_le, rang)` —, si bien que deux retenues dans une case sont
+possibles et que c'est la plus récente qui part dans le jeu. L'écran éteint donc les autres
+**avant** d'allumer la sienne : un échec au premier appel laisse l'état d'avant intact. Et son
+tri reprend le départage du serveur au mot, sans quoi le liseré aurait désigné une image et
+l'export en aurait écrit une autre.
+
+⚠️ **Le total affiché compte ses images, pas ses appels, et le dit.** La planche écrit *« Ce
+qu'il a coûté »*. Ce chiffre n'existe nulle part : `GET /spending` porte bien le sujet par
+ligne mais rend les 500 derniers appels de tout l'atelier, sans filtre — un total tiré de là
+serait tronqué **en silence**. L'écran écrit *« Ce que ses images ont coûté »*, exact pour ce
+qu'il nomme, et renvoie les générations ratées vers Les dépenses.
+
+**Quatre commandes de la maquette n'ont pas été écrites** — *Recadrer*, *Le dupliquer*, *Le
+comparer*, *Générer les 9 calques* — faute de route derrière, et le chip « N écartées » non
+plus : la charge d'un sujet filtre `supprime_le IS NULL`, donc il n'aurait jamais rien pu
+montrer.
+
+⚠️ **Trois défauts que seul le navigateur a vus.** Une pose dont toutes les images attendent
+leur angle annonçait « 1 sans retenue » — vrai et inutile, on ne départage pas des images dont
+on ignore d'où elles regardent. La surface poussait le volet de 380 px hors de la fenêtre dès
+qu'on resserrait, parce qu'une colonne de flex refuse de descendre sous la largeur de son
+contenu ; `min-w-0` sur les deux surfaces, et **aucun essai d'écran ne pouvait le voir — ils
+n'ont pas de largeur**. Et le total s'écrivait en rouille à zéro, ce qui faisait une dépense
+d'un sujet fait d'images importées.
+
+**Un défaut vu là qui n'est pas de cette tranche** : à 1000 px, *tout* l'atelier déborde —
+mesuré sur le codex, qui ne porte pas une ligne de `B10` : grille de châssis à 700 px pour
+872 px de contenu. C'est la largeur minimale du châssis actuel, et elle appartient à `B0`.
+
 ## V4 · B9.4 à B9.7 — l'écran d'une famille — 8 septembre 2026
 
 **Cliquer « Les personnages » dans le carnet ouvre enfin une grille de personnages.** La route
