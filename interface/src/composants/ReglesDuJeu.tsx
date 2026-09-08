@@ -1,0 +1,1175 @@
+/**
+ * Les règles du jeu, en quatre étapes — B14.
+ *
+ * `docs/pistes-2026-09-04/carnet/Nouveau-jeu.dc.html`. Le nom, l'allure, la vue,
+ * le monde : **ce parcours ne demande que ce qui part avec chaque demande
+ * d'image, ou ce qui décide de la façon dont l'image est fabriquée.** C'est le
+ * critère d'entrée de l'auteur, et il exclut tout le reste — la palette, les
+ * natures, les poses, le détourage, la clé — qui se règle là où l'on s'en sert.
+ *
+ * ⚠️ **Un seul parcours, deux entrées, et c'est un critère d'acceptation.**
+ * `mode="creation"` le déroule dans l'ordre avant qu'un jeu existe ;
+ * `mode="reglages"` l'ouvre sur la liste des quatre, et l'on va droit à celle
+ * qu'on veut reprendre. Ce sont **les mêmes écrans et les mêmes écritures** —
+ * un seul chemin, pas deux formulaires qui divergeront au premier réglage
+ * ajouté. C'est pour ça que ce fichier a un mode plutôt qu'un jumeau.
+ *
+ * **Deux écrans du produit prennent la fenêtre entière** (`docs/PLAN-carnet.md`
+ * § Le châssis) : l'ouverture et le parcours de création. La réouverture, elle,
+ * est un lieu ordinaire — `{ genre: "regles" }` — et le carnet reste visible à
+ * côté. Les quatre étapes ne sont **pas** quatre lieux : elles sont un état de
+ * cet écran, comme les onglets de `PageDuSujet.tsx`.
+ *
+ * ⚠️ **Le piège du `PUT /universe`, le même qu'en `B9.7`** : `bible` est
+ * remplacée **en entier** dès que la clé est envoyée. L'étape du monde renvoie
+ * donc toujours les sept cases — les cinq qu'elle montre, et les deux que
+ * l'atelier écrit, dont le texte d'auteur devenu inerte qu'il ne faut pas
+ * effacer au passage.
+ *
+ * **`rendu` et `vue` ne se tapent plus** (`CHAMPS_DE_L_ATELIER`, côté serveur).
+ * C'est le cœur de la tranche : l'auteur pouvait écrire sa caméra dans la case
+ * `vue` de la bible *et* choisir une vue ailleurs, et les deux partaient dans le
+ * même envoi. Les deux lignes sont ici en lecture seule, avec l'étape qui les
+ * remplit — et ce que l'auteur y avait tapé avant est montré barré plutôt que
+ * jeté (`atelier.sans_effet`).
+ *
+ * **Le texte de caméra affiché est celui du serveur, au caractère près.** Il
+ * vient de `api.vuesEtTailles()` — `phrase`, `contrainte`, `volume`, `corps` —,
+ * qui sont littéralement les chaînes qui atteignent le fournisseur. Une
+ * paraphrase serait devenue fausse au premier mot changé dans
+ * `atelier/domaine/vue.py`, et rien ne l'aurait dit.
+ *
+ * **Ce que la planche dessine et qui n'a aucune route derrière** — non
+ * construit, et nommé plutôt que caché, comme `B10` l'a fait pour « Recadrer » :
+ * *Copier les règles d'un autre jeu* (rien ne copie un univers dans un autre),
+ * et les comptes « 1 jeu sur 6 » sous les styles et les méthodes
+ * (`GET /universe` ne sert que le jeu ouvert ; les compter demanderait de rouvrir
+ * les autres un par un). *Une commande que rien n'appelle est une ligne morte.*
+ *
+ * **Ce que la planche annonce comme manquant et qui existe** : les étiquettes.
+ * Elle écrit « à ajouter — les étiquettes n'existent pas » ; elles sont dans le
+ * dépôt depuis le 1ᵉʳ septembre 2026, soixante-dix livrées rangées par case
+ * (`GET /api/labels`). La planche est en retard sur le code, comme celle de
+ * l'atelier d'animation l'était déjà.
+ */
+
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
+import {
+  AUCUNE_CIBLE,
+  CE_QUE_LA_METHODE_REND,
+  NOM_CHAMP,
+  NOM_DE_LA_METHODE,
+  Refus,
+  api,
+  type CeQueLAtelierEcrit,
+  type Champ,
+  type Etiquette,
+  type Methode,
+  type Style,
+  type TailleDImage,
+  type Univers,
+  type VueDuJeu,
+} from "../api"
+
+// ── Les quatre étapes ────────────────────────────────────────────────────────
+
+export type Etape = "nom" | "allure" | "vue" | "monde"
+
+/** L'ordre est fermé et il ne se négocie pas : c'est celui de la planche, et
+ *  c'est aussi celui des dépendances — l'allure décide de ce que « la taille »
+ *  veut dire, la vue décide du nombre de directions, et le monde lit les deux. */
+const ETAPES: readonly { clef: Etape; titre: string; question: string }[] = [
+  { clef: "nom", titre: "Son nom", question: "Comment s'appelle ce jeu ?" },
+  { clef: "allure", titre: "Son allure", question: "Quelle allure a ce jeu ?" },
+  { clef: "vue", titre: "Sa vue", question: "D'où regarde-t-on ce jeu ?" },
+  { clef: "monde", titre: "Son monde", question: "De quoi ce monde est-il fait ?" },
+]
+
+/** Quelle étape remplit chacune des deux cases que l'atelier écrit — c'est ce
+ *  que la ligne en lecture seule affiche à droite, pour qu'on sache où aller. */
+const ETAPE_DE_LA_CASE: Record<string, { clef: Etape; nom: string }> = {
+  rendu: { clef: "allure", nom: "son allure" },
+  vue: { clef: "vue", nom: "sa vue" },
+}
+
+/** Le dossier, tel que le serveur le dérivera du nom.
+ *
+ *  ⚠️ **Une prévisualisation, pas la règle.** La règle vit dans
+ *  `atelier.domaine.projet.repere`, et elle seule décide — elle ajoute
+ *  notamment le `-2` d'un dossier déjà pris, ce que l'écran ne peut pas savoir
+ *  avant d'avoir demandé. On montre ici la dérivation du nom, qui est la partie
+ *  stable et la seule que l'étape ait à expliquer : accents enlevés, minuscules,
+ *  tirets. Le dossier réel s'affiche dès que le jeu existe, et c'est lui qui
+ *  fait foi. */
+export function dossierPrevu(nom: string): string {
+  return (
+    nom
+      .normalize("NFKD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "projet"
+  )
+}
+
+// ── Les pièces ───────────────────────────────────────────────────────────────
+
+function Intitule({ children }: { children: ReactNode }) {
+  return (
+    <span className="text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+      {children}
+    </span>
+  )
+}
+
+/** Une phrase qui explique une conséquence — jamais un ordre, jamais une
+ *  personnification. Même rôle que `Raison` dans l'ancien assistant. */
+function Note({ children }: { children: ReactNode }) {
+  return (
+    <p className="rounded-8 border border-trait bg-papier-cote p-[14px] text-[12px] leading-[1.5] text-encre-2">
+      {children}
+    </p>
+  )
+}
+
+function Alerte({ children }: { children: ReactNode }) {
+  return (
+    <p
+      data-avertissement
+      role="status"
+      className="rounded-8 border border-trait-attention bg-fond-attention p-[14px] text-[12px] leading-[1.5] text-encre-attention"
+    >
+      {children}
+    </p>
+  )
+}
+
+/** Une carte qu'on choisit — le geste répété de l'allure et de la vue. */
+function Choix({
+  titre,
+  quoi,
+  choisi,
+  onChoisir,
+  children,
+}: {
+  titre: string
+  quoi: string
+  choisi: boolean
+  onChoisir: () => void
+  children?: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={choisi}
+      aria-label={titre}
+      onClick={onChoisir}
+      className={[
+        "flex h-full flex-col gap-[4px] rounded-8 border p-[14px] text-left transition-colors duration-120",
+        choisi
+          ? "border-signal bg-ligne-ouverte"
+          : "border-trait bg-carte hover:border-encre-4",
+      ].join(" ")}
+    >
+      {children}
+      <span className="text-[13px] font-medium text-encre">{titre}</span>
+      <span className="text-[11.5px] leading-[1.45] text-encre-3">{quoi}</span>
+    </button>
+  )
+}
+
+/** La vignette d'une vue ou d'un style. **Absente, elle le dit** — une image
+ *  manquante ne casse pas l'étape, et le choix reste possible sur le titre. */
+function Vignette({ fichier, alt }: { fichier: string; alt: string }) {
+  const [absente, setAbsente] = useState(false)
+  useEffect(() => setAbsente(false), [fichier])
+  if (absente) {
+    return (
+      <span className="flex aspect-[4/3] w-full items-center justify-center rounded-5 border border-dashed border-pointille text-[11px] text-eteint">
+        pas encore dessinée
+      </span>
+    )
+  }
+  return (
+    <img
+      src={`/vignettes/${fichier}.png`}
+      alt={alt}
+      onError={() => setAbsente(true)}
+      className="aspect-[4/3] w-full rounded-5 bg-pourtour object-contain"
+      // Au plus proche : une vignette de pixel art perdrait ses carrés si le
+      // navigateur la lissait, et c'est très exactement ce qu'on compare.
+      style={{ imageRendering: "pixelated" }}
+    />
+  )
+}
+
+// ── L'étape « Son nom » ──────────────────────────────────────────────────────
+
+function SonNom({
+  mode,
+  nom,
+  onNom,
+  dossier,
+  avertissement,
+}: {
+  mode: Mode
+  nom: string
+  onNom: (nom: string) => void
+  /** Le dossier réel quand le jeu existe ; sinon, celui que le nom laisse
+   *  prévoir. Les deux se distinguent à l'écran : l'un est un fait, l'autre
+   *  une prévision. */
+  dossier: string | null
+  avertissement: string
+}) {
+  return (
+    <div className="flex max-w-[880px] flex-col gap-[22px]">
+      <p className="text-[13px] leading-[1.55] text-encre-2">
+        Le nom se change quand on veut. Le dossier, non — alors il vaut mieux le
+        voir tout de suite.
+      </p>
+
+      <label className="flex flex-col gap-[4px]">
+        <Intitule>Le nom du jeu</Intitule>
+        <input
+          value={nom}
+          onChange={(e) => onNom(e.target.value)}
+          placeholder="Le Marais du Vieux Moulin"
+          aria-label="Le nom du jeu"
+          className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre outline-none placeholder:text-eteint focus:border-encre-4"
+        />
+        <span className="text-[11.5px] text-encre-4">
+          Il s'affiche en haut du carnet, et se change quand on veut.
+        </span>
+      </label>
+
+      <div className="flex flex-col gap-[4px]">
+        <Intitule>Son dossier sur le disque</Intitule>
+        <span
+          data-dossier-du-jeu
+          className="mesure flex h-[34px] items-center truncate rounded-7 border border-trait bg-papier-cote px-[14px] text-[12.5px] text-encre-4"
+        >
+          {/* **Rien tant que rien n'est tapé.** Vu au navigateur : le champ
+              vide affichait `projet`, qui est le repli du serveur pour un nom
+              sans une seule lettre — un dossier annoncé que personne n'aura
+              jamais, puisque le bouton est éteint tant que le nom est vide. */}
+          {dossier ?? (nom.trim() ? dossierPrevu(nom) : "")}
+        </span>
+        <span className="text-[11.5px] leading-[1.45] text-encre-4">
+          {dossier
+            ? "Calculé du nom à la création : accents enlevés, minuscules, tirets. Il ne changera plus jamais, même si le nom change."
+            : "Il se calculera du nom : accents enlevés, minuscules, tirets. C'est là que les images iront se ranger, et il ne changera plus jamais."}
+        </span>
+      </div>
+
+      {avertissement && <Alerte>{avertissement}</Alerte>}
+
+      <Note>
+        {mode === "creation"
+          ? "On peut s'arrêter ici : un jeu créé sans rien régler fonctionne, avec les valeurs de l'atelier. Rien de ce parcours ne coûte quoi que ce soit — la première dépense arrive quand on demande la première image."
+          : "Le nom se change ici ; le dossier reste celui de la création. Renommer ne déplace aucun fichier et ne change aucune image."}
+      </Note>
+    </div>
+  )
+}
+
+// ── L'étape « Son allure » ───────────────────────────────────────────────────
+
+const STYLES: readonly { cle: Style; titre: string; quoi: string }[] = [
+  { cle: "pixel", titre: "Pixel", quoi: "Chaque pixel se voit et se compte." },
+  { cle: "dessin", titre: "Dessin", quoi: "Traits et aplats lisses, sans grille." },
+]
+
+const METHODES: readonly Methode[] = ["vote", "pixeloe", "lanczos", "proche"]
+
+function SonAllure({
+  univers,
+  tailles,
+  finesses,
+  onRegler,
+}: {
+  univers: Univers
+  tailles: TailleDImage[]
+  finesses: TailleDImage[]
+  onRegler: (reglage: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
+}) {
+  const enPixel = univers.style === "pixel"
+  const echelle = enPixel ? tailles : finesses
+  const posee = echelle.find((t) => t.cible === univers.cible_px) ?? null
+
+  return (
+    <div className="flex flex-col gap-[22px]">
+      <p className="max-w-[880px] text-[13px] leading-[1.55] text-encre-2">
+        Le style commande le reste : en pixel on choisit une taille de case et
+        une façon de réduire, en dessin ces deux-là disparaissent et une finesse
+        les remplace. Ce choix part avec chaque demande d'image.
+      </p>
+
+      <section className="flex flex-col gap-[8px]">
+        <Intitule>Le style</Intitule>
+        <div className="grid grid-cols-2 gap-[14px] lg:max-w-[880px]">
+          {STYLES.map(({ cle, titre, quoi }) => (
+            <Choix
+              key={cle}
+              titre={titre}
+              quoi={quoi}
+              choisi={univers.style === cle}
+              onChoisir={() => void onRegler({ style: cle })}
+            >
+              <Vignette fichier={`style-${cle}`} alt="" />
+            </Choix>
+          ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-[8px]">
+        <Intitule>
+          {enPixel
+            ? "La taille — le côté du sprite, en pixels"
+            : "La finesse — combien de détail le fichier garde"}
+        </Intitule>
+        <div
+          data-echelle-du-jeu
+          className="flex flex-wrap gap-[4px]"
+          role="group"
+          aria-label={enPixel ? "La taille du sprite" : "La finesse"}
+        >
+          {echelle.map(({ cible }) => (
+            <button
+              key={cible}
+              type="button"
+              aria-pressed={univers.cible_px === cible}
+              onClick={() => void onRegler({ cible_px: cible })}
+              className={[
+                "mesure h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
+                univers.cible_px === cible
+                  ? "border-signal bg-ligne-ouverte text-encre"
+                  : "border-trait bg-carte text-encre-3 hover:border-encre-4",
+              ].join(" ")}
+            >
+              {cible}
+            </button>
+          ))}
+          <button
+            type="button"
+            aria-pressed={univers.cible_px === AUCUNE_CIBLE}
+            onClick={() => void onRegler({ cible_px: AUCUNE_CIBLE })}
+            className={[
+              "h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
+              univers.cible_px === AUCUNE_CIBLE
+                ? "border-signal bg-ligne-ouverte text-encre"
+                : "border-trait bg-carte text-encre-3 hover:border-encre-4",
+            ].join(" ")}
+          >
+            aucune
+          </button>
+        </div>
+        <p className="text-[11.5px] leading-[1.45] text-encre-3">
+          {posee
+            ? `${posee.cible} — ${posee.quoi}`
+            : "Aucune taille imposée : ce que le modèle rend entre tel quel."}
+        </p>
+      </section>
+
+      {enPixel && (
+        <section className="flex flex-col gap-[8px]">
+          <Intitule>
+            La pixelisation — comment la grande image devient {univers.cible_px || "N"}{" "}
+            pixels
+          </Intitule>
+          <div className="grid grid-cols-2 gap-[14px] xl:grid-cols-4">
+            {METHODES.map((m) => (
+              <Choix
+                key={m}
+                titre={NOM_DE_LA_METHODE[m]}
+                quoi={CE_QUE_LA_METHODE_REND[m]}
+                choisi={univers.methode_pixels === m}
+                onChoisir={() => void onRegler({ methode_pixels: m })}
+              />
+            ))}
+          </div>
+          <Note>
+            Les quatre sont des partis pris, pas un classement. Changer de méthode
+            et refaire la réduction se fait sur la machine, sans rien payer.
+          </Note>
+        </section>
+      )}
+
+      <Note>
+        La taille de case est le seul choix qu'on ne reprend pas gratuitement :
+        changer le style ou la méthode se refait sur la machine, puisque la grande
+        image est gardée sur le disque. Changer la taille après coup laisse les
+        images déjà faites à leur ancienne taille.
+      </Note>
+    </div>
+  )
+}
+
+// ── L'étape « Sa vue » ───────────────────────────────────────────────────────
+
+function SaVue({
+  univers,
+  vues,
+  onRegler,
+}: {
+  univers: Univers
+  vues: VueDuJeu[]
+  onRegler: (reglage: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
+}) {
+  const choisie = vues.find((v) => v.identifiant === univers.vue) ?? null
+
+  // **Deux vues écrivent exactement la même consigne**, et la planche le dit.
+  // On ne le recopie pas : on le calcule sur les textes servis, si bien que la
+  // phrase disparaîtra d'elle-même le jour où les deux vues divergeront.
+  const jumelles = useMemo(() => {
+    if (!choisie?.contrainte) return [] as VueDuJeu[]
+    return vues.filter(
+      (v) => v.identifiant !== choisie.identifiant && v.contrainte === choisie.contrainte,
+    )
+  }, [choisie, vues])
+
+  return (
+    <div className="flex flex-col gap-[22px]">
+      <p className="max-w-[880px] text-[13px] leading-[1.55] text-encre-2">
+        Huit vues, une seule par jeu. C'est elle qui décide du nombre de
+        directions — donc du travail que chaque personnage demandera.
+      </p>
+
+      <div className="grid grid-cols-2 gap-[14px] xl:grid-cols-4">
+        {vues.map((v) => (
+          <Choix
+            key={v.identifiant}
+            titre={v.libelle}
+            quoi={v.exemples}
+            choisi={univers.vue === v.identifiant}
+            onChoisir={() => void onRegler({ vue: v.identifiant })}
+          >
+            <Vignette fichier={v.identifiant} alt="" />
+            <span className="mesure text-[11px] text-encre-4">
+              {v.images} direction{v.images > 1 ? "s" : ""}
+            </span>
+          </Choix>
+        ))}
+      </div>
+
+      {choisie ? (
+        <section className="flex flex-col gap-[8px]">
+          <Intitule>Ce que ce choix écrit, mot pour mot</Intitule>
+          {/* **Le texte du serveur, au caractère près.** Une paraphrase serait
+              devenue fausse au premier mot changé dans `atelier/domaine/vue.py`,
+              et rien ne l'aurait dit. */}
+          <div
+            data-texte-de-camera
+            className="mesure flex flex-col gap-[8px] rounded-8 border border-trait bg-papier-cote p-[14px] text-[12px] leading-[1.55] text-encre-2"
+          >
+            <p>
+              <span className="text-encre-4">View and framing: </span>
+              {choisie.phrase}
+            </p>
+            <p>{choisie.contrainte}</p>
+            {choisie.volume && <p>{choisie.volume}</p>}
+            {choisie.corps && (
+              <p>
+                {choisie.corps}
+                <span className="text-encre-4"> — pour ce qui a un corps seulement</span>
+              </p>
+            )}
+          </div>
+          <p className="text-[11.5px] leading-[1.45] text-encre-4">
+            La première ligne part en tête de la demande, avec le reste du monde ;
+            les autres la ferment, juste avant l'envoi.
+          </p>
+          {jumelles.length > 0 && (
+            <Note>
+              « {jumelles.map((v) => v.libelle).join(" », « ")} » écrit la même
+              consigne de caméra, mot pour mot. Seul le nom change.
+            </Note>
+          )}
+        </section>
+      ) : (
+        <Note>
+          <strong className="text-encre">
+            Sans vue choisie, l'atelier n'écrit rien.
+          </strong>{" "}
+          Le modèle décide seul de sa caméra, et il change d'avis d'une image à
+          l'autre.
+        </Note>
+      )}
+
+      <Note>
+        Changer la vue change le nombre de directions. Les images déjà faites
+        restent, et les nouvelles cases apparaissent vides.
+      </Note>
+    </div>
+  )
+}
+
+// ── L'étape « Son monde » ────────────────────────────────────────────────────
+
+/** Ce que chaque ligne de la bible demande — la question, pas la définition. */
+const QUESTION_DE_LA_CASE: Record<string, string> = {
+  monde: "de quoi ce monde est fait",
+  epoque: "quand ça se passe, et avec quelle technique",
+  trait: "comment le trait et les aplats se comportent",
+  eclairage: "d'où vient la lumière, et ce qu'elle fait aux ombres",
+  technique: "ce que le modèle ne doit jamais faire",
+}
+
+function SonMonde({
+  univers,
+  atelier,
+  etiquettes,
+  onBible,
+  onEtape,
+  onEtiquettes,
+}: {
+  univers: Univers
+  atelier: CeQueLAtelierEcrit
+  etiquettes: Etiquette[]
+  onBible: (bible: Champ[]) => Promise<void>
+  onEtape: (etape: Etape) => void
+  onEtiquettes: (etiquettes: Etiquette[]) => void
+}) {
+  // Le brouillon des cinq cases qu'on tape. Les deux autres ne se tapent pas ;
+  // leur texte voyage quand même dans l'envoi, sans quoi le `PUT` les
+  // effacerait — voir le piège en tête de fichier.
+  const [brouillon, setBrouillon] = useState<Record<string, string>>({})
+  const [ouverte, setOuverte] = useState<string | null>(null)
+
+  useEffect(() => {
+    setBrouillon(Object.fromEntries(univers.bible.map((c) => [c.nom, c.texte])))
+  }, [univers.bible])
+
+  const deLAtelier = new Set(atelier.champs)
+
+  const poser = async (nom: string, texte: string) => {
+    if (texte === (univers.bible.find((c) => c.nom === nom)?.texte ?? "")) return
+    // **Les sept cases, toujours** : la clé `bible` remplace la liste entière.
+    await onBible(
+      univers.bible.map((c) => ({
+        ...c,
+        texte: c.nom === nom ? texte : (brouillon[c.nom] ?? c.texte),
+      })),
+    )
+  }
+
+  return (
+    <div className="flex max-w-[880px] flex-col gap-[22px]">
+      <p className="text-[13px] leading-[1.55] text-encre-2">
+        Sept lignes, qui partent dans cet ordre en tête de chaque demande
+        d'image. Cinq s'écrivent ici ; deux sont déjà remplies par les étapes
+        d'avant, et on ne les tape pas deux fois.
+      </p>
+
+      <ul className="flex flex-col gap-[8px]">
+        {univers.bible.map((champ) => {
+          const nom = NOM_CHAMP[champ.nom] ?? champ.nom
+          const ecritParLAtelier = deLAtelier.has(champ.nom)
+          const etape = ETAPE_DE_LA_CASE[champ.nom]
+          const phrase = univers.phrases?.[champ.nom] ?? ""
+          const inerte = atelier.sans_effet[champ.nom] ?? ""
+
+          if (ecritParLAtelier) {
+            return (
+              <li
+                key={champ.nom}
+                data-case-de-l-atelier={champ.nom}
+                className="flex flex-col gap-[4px] rounded-8 border border-trait bg-papier-cote p-[14px]"
+              >
+                <div className="flex items-baseline gap-[8px]">
+                  <span className="text-[13px] font-medium text-encre">{nom}</span>
+                  <span className="mesure min-w-0 flex-1 truncate text-[12px] text-encre-3">
+                    {phrase || "rien ne part"}
+                  </span>
+                  {etape && (
+                    <button
+                      type="button"
+                      onClick={() => onEtape(etape.clef)}
+                      className="shrink-0 text-[12px] text-encre-2 underline transition-colors duration-120 hover:text-encre"
+                    >
+                      étape {etape.nom} ›
+                    </button>
+                  )}
+                </div>
+                <span className="text-[11.5px] leading-[1.45] text-encre-4">
+                  Cette ligne s'écrit toute seule, depuis l'étape à droite. La
+                  taper ici aurait fait deux consignes dans le même envoi.
+                </span>
+                {inerte && (
+                  <p
+                    data-texte-sans-effet={champ.nom}
+                    className="text-[11.5px] leading-[1.45] text-encre-attention"
+                  >
+                    Ce qui avait été tapé ici ne part plus :{" "}
+                    <s className="text-encre-4">{inerte}</s> — rien n'est effacé, et
+                    ce texte se recopie ailleurs s'il a encore quelque chose à dire.
+                  </p>
+                )}
+              </li>
+            )
+          }
+
+          const siennes = etiquettes.filter((e) => e.case === champ.nom)
+          const texte = brouillon[champ.nom] ?? ""
+
+          return (
+            <li
+              key={champ.nom}
+              data-case-de-la-bible={champ.nom}
+              className="flex flex-col gap-[8px] rounded-8 border border-trait bg-carte p-[14px]"
+            >
+              <button
+                type="button"
+                aria-expanded={ouverte === champ.nom}
+                onClick={() => setOuverte(ouverte === champ.nom ? null : champ.nom)}
+                className="flex items-baseline gap-[8px] text-left"
+              >
+                <span className="text-[13px] font-medium text-encre">{nom}</span>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-encre-3">
+                  {texte || QUESTION_DE_LA_CASE[champ.nom] || ""}
+                </span>
+                <span className="mesure shrink-0 text-[11px] text-encre-4">
+                  {texte.trim() ? "écrit" : "vide"}
+                </span>
+              </button>
+
+              {ouverte === champ.nom && (
+                <>
+                  <textarea
+                    value={texte}
+                    onChange={(e) =>
+                      setBrouillon((b) => ({ ...b, [champ.nom]: e.target.value }))
+                    }
+                    onBlur={() => void poser(champ.nom, texte)}
+                    rows={2}
+                    aria-label={`La ligne « ${nom} »`}
+                    placeholder={QUESTION_DE_LA_CASE[champ.nom]}
+                    className="defile resize-y rounded-7 border border-contour bg-papier p-[8px] text-[13px] leading-[1.55] text-encre outline-none placeholder:text-eteint focus:border-encre-4"
+                  />
+                  {siennes.length > 0 && (
+                    <div className="flex flex-wrap gap-[4px]">
+                      {siennes.slice(0, 16).map((e) => (
+                        <button
+                          key={e.identifiant}
+                          type="button"
+                          title={e.texte}
+                          onClick={() => {
+                            // Cliquer ajoute ses mots ; ce qui part reste ce
+                            // qui est écrit dans le champ, pas la liste.
+                            const suite = texte.trim()
+                              ? `${texte.trim()}, ${e.texte}`
+                              : e.texte
+                            setBrouillon((b) => ({ ...b, [champ.nom]: suite }))
+                            void poser(champ.nom, suite)
+                            api
+                              .etiquetteServie(e.identifiant)
+                              .then((recu) => onEtiquettes(recu.etiquettes))
+                              .catch(() => undefined)
+                          }}
+                          className={[
+                            "h-[26px] rounded-full border px-[14px] text-[12px] transition-colors duration-120",
+                            e.livree
+                              ? "border-trait text-encre-3 hover:bg-ligne-ouverte"
+                              : "border-epingle text-encre-2 hover:bg-ligne-ouverte",
+                          ].join(" ")}
+                        >
+                          {e.libelle}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-[11.5px] leading-[1.45] text-encre-4">
+                    Cliquer une étiquette ajoute ses mots dans le champ. On peut
+                    aussi n'en cliquer aucune et tout écrire : ce qui part est ce
+                    qui est écrit là, pas la liste des étiquettes.
+                  </p>
+                </>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+
+      <Note>
+        Une ligne vide ne part pas. Puis vient la description du sujet : c'est
+        tout ce qui part, rien n'est ajouté dans le dos.
+      </Note>
+    </div>
+  )
+}
+
+// ── Ce qui s'applique à tout le jeu, mais se règle ailleurs ──────────────────
+
+/** Les huit lignes que le carnet perd, rassemblées ici en **lecture seule**.
+ *
+ *  Elles ne sont pas dans le parcours parce qu'elles ne passent pas son critère
+ *  d'entrée — elles ne partent pas avec la demande d'image, ou elles ne
+ *  décident pas de la façon dont l'image est fabriquée. Les lire ici évite
+ *  qu'on les cherche ; les écrire ici en aurait fait un second endroit. */
+function ReglesDAilleurs({ univers }: { univers: Univers }) {
+  const ailleurs: { quoi: string; etat: string; ou: string }[] = [
+    {
+      quoi: "La palette et les ambiances",
+      etat: univers.palette.length
+        ? `${univers.palette.length} couleurs`
+        : "aucune couleur encore — elle se lit sur les images promues",
+      ou: "la toile de l'univers",
+    },
+    {
+      quoi: "La couleur de fond",
+      etat: univers.fond || "aucune — le modèle rend un fond plat quelconque",
+      ou: "l'atelier Détourer",
+    },
+    { quoi: "Le détourage de départ", etat: "par nature et par famille", ou: "l'atelier Détourer" },
+    {
+      quoi: "Les natures de sujets",
+      etat: `${univers.bareme.length} réparties sur les familles`,
+      ou: "chaque famille",
+    },
+    { quoi: "Le plan de poses", etat: "propre à chaque nature", ou: "chaque famille" },
+    { quoi: "Les emplacements de corps", etat: "communs au casting", ou: "la famille personnages" },
+    {
+      quoi: "Le modèle de chaque famille",
+      etat: `${Object.values(univers.modeles).filter(Boolean).length} posés, le catalogue décide du reste`,
+      ou: "chaque famille",
+    },
+    { quoi: "La clé et le catalogue des modèles", etat: "pour toute la machine", ou: "l'installation" },
+  ]
+  return (
+    <section data-regles-d-ailleurs className="flex flex-col gap-[8px]">
+      <Intitule>S'applique à tout le jeu, mais se règle ailleurs</Intitule>
+      <p className="text-[12px] leading-[1.5] text-encre-3">
+        Ces lignes se lisent ici ; elles s'écrivent là où l'on s'en sert. Un
+        réglage ne se pose jamais à deux endroits.
+      </p>
+      <ul className="flex flex-col">
+        {ailleurs.map(({ quoi, etat, ou }) => (
+          <li
+            key={quoi}
+            className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-baseline gap-[14px] border-b border-trait py-[8px] text-[12.5px] last:border-b-0"
+          >
+            <span className="text-encre-2">{quoi}</span>
+            <span className="truncate text-encre-4">{etat}</span>
+            <span className="mesure shrink-0 text-[11px] text-encre-4">{ou} ›</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+// ── L'écran ──────────────────────────────────────────────────────────────────
+
+export type Mode = "creation" | "reglages"
+
+export function ReglesDuJeu({
+  mode,
+  nomDuJeu,
+  dossierDuJeu,
+  onFerme,
+  onCree,
+  onRenomme,
+  onErreur,
+}: {
+  mode: Mode
+  /** Le nom du jeu ouvert — vide en création, où il n'y en a pas encore. */
+  nomDuJeu: string
+  /** Son dossier, `null` tant que le jeu n'existe pas. */
+  dossierDuJeu: string | null
+  onFerme: () => void
+  /** Le jeu vient d'être créé et ouvert : le parent recharge sa bibliothèque. */
+  onCree: (identifiant: string) => void
+  onRenomme: () => void
+  onErreur: (raison: string) => void
+}) {
+  // En création on déroule ; en réglages on ouvre sur la liste des quatre.
+  const [ouverte, setOuverte] = useState<Etape | null>(mode === "creation" ? "nom" : null)
+  const [nom, setNom] = useState(nomDuJeu)
+  const [avertissement, setAvertissement] = useState("")
+  const [enCours, setEnCours] = useState(false)
+  const [cree, setCree] = useState(false)
+
+  const [univers, setUnivers] = useState<Univers | null>(null)
+  const [atelier, setAtelier] = useState<CeQueLAtelierEcrit>({
+    champs: [],
+    sans_effet: {},
+  })
+  const [vues, setVues] = useState<VueDuJeu[]>([])
+  const [tailles, setTailles] = useState<TailleDImage[]>([])
+  const [finesses, setFinesses] = useState<TailleDImage[]>([])
+  const [etiquettes, setEtiquettes] = useState<Etiquette[]>([])
+
+  const echouer = useCallback(
+    (erreur: unknown, defaut: string) =>
+      onErreur(erreur instanceof Refus || erreur instanceof Error ? erreur.message : defaut),
+    [onErreur],
+  )
+
+  useEffect(() => setNom(nomDuJeu), [nomDuJeu])
+
+  // **Les deux listes fermées, et le catalogue d'étiquettes.** Lues une fois :
+  // elles ne dépendent d'aucun jeu et ne changent pas pendant le parcours.
+  useEffect(() => {
+    let vivant = true
+    api
+      .vuesEtTailles()
+      .then((recu) => {
+        if (!vivant) return
+        setVues(recu.vues ?? [])
+        setTailles(recu.tailles ?? [])
+        setFinesses(recu.finesses ?? [])
+      })
+      .catch((erreur) => vivant && echouer(erreur, "les vues n'ont pas pu être lues"))
+    // Non critique : sans étiquettes, les cinq cases restent des champs libres.
+    api
+      .etiquettes()
+      .then((recu) => vivant && setEtiquettes(recu?.etiquettes ?? []))
+      .catch(() => undefined)
+    return () => {
+      vivant = false
+    }
+  }, [echouer])
+
+  const relireLUnivers = useCallback(async () => {
+    const recu = await api.univers()
+    setUnivers(recu.univers)
+    setAtelier(recu.atelier ?? { champs: [], sans_effet: {} })
+  }, [])
+
+  // En réglages, le jeu existe déjà : on lit son univers tout de suite. En
+  // création il n'y en a pas encore — la lecture attend que l'étape du nom l'ait
+  // créé.
+  useEffect(() => {
+    if (mode === "creation") return
+    let vivant = true
+    void api
+      .univers()
+      .then((recu) => {
+        if (!vivant) return
+        setUnivers(recu.univers)
+        setAtelier(recu.atelier ?? { champs: [], sans_effet: {} })
+      })
+      .catch((erreur) => vivant && echouer(erreur, "l'univers n'a pas pu être lu"))
+    return () => {
+      vivant = false
+    }
+  }, [mode, echouer])
+
+  const regler = useCallback(
+    async (reglage: Parameters<typeof api.reglerUnivers>[0]) => {
+      try {
+        const recu = await api.reglerUnivers(reglage)
+        setUnivers(recu.univers)
+        setAtelier(recu.atelier ?? { champs: [], sans_effet: {} })
+      } catch (erreur) {
+        echouer(erreur, "le réglage a été refusé")
+      }
+    },
+    [echouer],
+  )
+
+  /** Le nom **tel qu'il est sur le serveur**, pour ne réécrire que ce qui a
+   *  changé. Vide en création tant que le jeu n'existe pas.
+   *
+   *  Sans lui, revenir sur l'étape du nom après l'avoir passée renverrait un
+   *  renommage du nom vers lui-même à chaque clic — un appel qui ne fait rien,
+   *  mais qui rejouerait l'avertissement d'homonyme et le ferait clignoter. */
+  const [nomPose, setNomPose] = useState(mode === "reglages" ? nomDuJeu : "")
+  useEffect(() => {
+    if (mode === "reglages") setNomPose(nomDuJeu)
+  }, [mode, nomDuJeu])
+
+  /** L'étape du nom — **le seul endroit qui crée ou renomme**, et le même dans les
+   *  deux modes du point de vue de l'auteur : il tape un nom, il continue.
+   *
+   *  Rend l'avertissement du serveur avec le verdict, plutôt que de le laisser
+   *  seulement dans l'état : l'appelant a besoin de savoir qu'il *vient*
+   *  d'arriver pour ne pas passer par-dessus sans le montrer. */
+  const poserLeNom = useCallback(async (): Promise<{
+    ok: boolean
+    avertissement: string
+  }> => {
+    const propre = nom.trim()
+    if (!propre || enCours) return { ok: false, avertissement: "" }
+    setEnCours(true)
+    try {
+      if (mode === "creation" && !cree) {
+        const recu = await api.creerProjet(propre)
+        setAvertissement(recu.avertissement)
+        setNomPose(propre)
+        setCree(true)
+        onCree(recu.projet.identifiant)
+        await relireLUnivers()
+        return { ok: true, avertissement: recu.avertissement }
+      }
+      if (propre !== nomPose && dossierDuJeu) {
+        const recu = await api.renommerProjet(dossierDuJeu, propre)
+        setAvertissement(recu.avertissement)
+        setNomPose(propre)
+        onRenomme()
+        return { ok: true, avertissement: recu.avertissement }
+      }
+      // Rien à écrire : le nom est déjà celui du serveur.
+      return { ok: true, avertissement: "" }
+    } catch (erreur) {
+      echouer(erreur, mode === "creation" ? "création refusée" : "renommage refusé")
+      return { ok: false, avertissement: "" }
+    } finally {
+      setEnCours(false)
+    }
+  }, [
+    nom,
+    enCours,
+    mode,
+    cree,
+    nomPose,
+    dossierDuJeu,
+    onCree,
+    onRenomme,
+    relireLUnivers,
+    echouer,
+  ])
+
+  // Échap referme l'étape ouverte, puis l'écran. En création, il ferme tout de
+  // suite : il n'y a pas d'étage à remonter, l'écran est la fenêtre entière.
+  useEffect(() => {
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return
+      if (mode === "reglages" && ouverte !== null) {
+        setOuverte(null)
+        return
+      }
+      onFerme()
+    }
+    window.addEventListener("keydown", surTouche)
+    return () => window.removeEventListener("keydown", surTouche)
+  }, [mode, ouverte, onFerme])
+
+  const rang = ouverte === null ? -1 : ETAPES.findIndex((e) => e.clef === ouverte)
+  const courante = ouverte === null ? null : ETAPES[rang]
+
+  /** Avancer d'une étape — en création, l'étape du nom crée d'abord. */
+  const continuer = async () => {
+    if (ouverte === "nom") {
+      const dit = await poserLeNom()
+      if (!dit.ok) return
+      // **On ne passe pas par-dessus un avertissement sans l'avoir montré.**
+      // Trouvé par l'essai : le geste écrivait la phrase d'homonyme *et*
+      // changeait d'étape dans le même clic, si bien que personne ne la lisait
+      // jamais. Rien n'est bloqué pour autant — le jeu est déjà créé, et le
+      // clic suivant continue. C'est la seule fois où le bouton ne fait pas ce
+      // qu'il annonce, et c'est parce qu'il a quelque chose à dire d'abord.
+      if (dit.avertissement && dit.avertissement !== avertissement) return
+    }
+    if (mode === "reglages") {
+      setOuverte(null)
+      return
+    }
+    const suivante = ETAPES[rang + 1]
+    if (suivante) setOuverte(suivante.clef)
+    else onFerme()
+  }
+
+  const dossier = cree || mode === "reglages" ? dossierDuJeu : null
+  // Le jeu existe-t-il ? En création, seulement après l'étape du nom.
+  const pret = mode === "reglages" || cree
+
+  return (
+    <main
+      data-regles-du-jeu
+      data-mode={mode}
+      aria-label={mode === "creation" ? "Commencer un jeu" : "Les règles du jeu"}
+      className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-papier"
+    >
+      {/* ── L'en-tête et les quatre étapes ──────────────────────────────── */}
+      <header className="flex shrink-0 items-end justify-between gap-[22px] border-b border-trait px-[30px] pb-[14px] pt-[22px]">
+        <div className="flex min-w-0 flex-col gap-[4px]">
+          <h1 className="font-serif text-[38px] leading-[1.05] text-encre">
+            {mode === "creation" ? "Commencer un jeu" : "Les règles de ce jeu"}
+          </h1>
+          <p className="text-[13px] text-encre-2">
+            {mode === "creation"
+              ? "Quatre étapes, et rien d'autre : ce qui part avec chaque demande d'image."
+              : "Le même parcours, rouvert. On clique l'étape qu'on veut reprendre."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onFerme}
+          className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
+        >
+          Fermer
+        </button>
+      </header>
+
+      <nav
+        aria-label="Les quatre étapes"
+        className="flex shrink-0 gap-[4px] border-b border-trait px-[30px] py-[8px]"
+      >
+        {ETAPES.map((etape, i) => {
+          // En création, on n'accède pas à une étape tant que le jeu n'existe
+          // pas : l'univers qu'elles règlent n'a pas encore de fichier.
+          const atteignable = i === 0 || pret
+          return (
+            <button
+              key={etape.clef}
+              type="button"
+              disabled={!atteignable}
+              aria-current={ouverte === etape.clef}
+              onClick={() => setOuverte(etape.clef)}
+              className={[
+                "flex h-[30px] items-center gap-[8px] rounded-7 px-[14px] text-[13px] transition-colors duration-120",
+                ouverte === etape.clef
+                  ? "bg-papier-cote font-medium text-encre"
+                  : "text-encre-3 hover:text-encre",
+                atteignable ? "" : "text-eteint hover:text-eteint",
+              ].join(" ")}
+            >
+              <span className="mesure text-[11px] text-encre-4">{i + 1}</span>
+              {etape.titre}
+            </button>
+          )
+        })}
+      </nav>
+
+      {/* ── Le corps ─────────────────────────────────────────────────────── */}
+      <div className="defile min-h-0 flex-1 overflow-y-auto px-[30px] py-[22px]">
+        {courante && (
+          <h2 className="mb-[14px] font-serif text-[25px] leading-[1.15] text-encre">
+            {courante.question}
+          </h2>
+        )}
+
+        {ouverte === "nom" && (
+          <SonNom
+            mode={mode}
+            nom={nom}
+            onNom={setNom}
+            dossier={dossier}
+            avertissement={avertissement}
+          />
+        )}
+
+        {ouverte === "allure" && univers && (
+          <SonAllure
+            univers={univers}
+            tailles={tailles}
+            finesses={finesses}
+            onRegler={regler}
+          />
+        )}
+
+        {ouverte === "vue" && univers && (
+          <SaVue univers={univers} vues={vues} onRegler={regler} />
+        )}
+
+        {ouverte === "monde" && univers && (
+          <SonMonde
+            univers={univers}
+            atelier={atelier}
+            etiquettes={etiquettes}
+            onBible={(bible) => regler({ bible })}
+            onEtape={setOuverte}
+            onEtiquettes={setEtiquettes}
+          />
+        )}
+
+        {ouverte !== null && ouverte !== "nom" && !univers && (
+          <p className="text-[13px] text-encre-3">Les réglages du jeu se chargent…</p>
+        )}
+
+        {/* La liste des quatre — l'entrée du mode réglages. */}
+        {ouverte === null && (
+          <div className="flex max-w-[880px] flex-col gap-[22px]">
+            <ul className="flex flex-col">
+              {ETAPES.map((etape, i) => (
+                <li key={etape.clef}>
+                  <button
+                    type="button"
+                    onClick={() => setOuverte(etape.clef)}
+                    data-etape-des-regles={etape.clef}
+                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-baseline gap-[14px] border-b border-trait py-[14px] text-left transition-colors duration-120 hover:bg-ligne-ouverte"
+                  >
+                    <span className="mesure text-[11px] text-encre-4">{i + 1}</span>
+                    <span className="text-[13.5px] text-encre">{etape.titre}</span>
+                    <span className="truncate text-[12.5px] text-encre-3">
+                      {resumeDeLEtape(etape.clef, univers, nomDuJeu, dossierDuJeu, vues)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {univers && <ReglesDAilleurs univers={univers} />}
+          </div>
+        )}
+      </div>
+
+      {/* ── Le pied — passer, revenir, continuer ─────────────────────────── */}
+      {ouverte !== null && (
+        <footer className="flex shrink-0 items-center justify-between gap-[22px] border-t border-trait px-[30px] py-[14px]">
+          <button
+            type="button"
+            onClick={() => (rang > 0 ? setOuverte(ETAPES[rang - 1].clef) : onFerme())}
+            className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
+          >
+            {rang > 0 ? `‹ Revenir à ${ETAPES[rang - 1].titre.toLowerCase()}` : "‹ Fermer"}
+          </button>
+          <div className="flex items-center gap-[14px]">
+            <span className="text-[11.5px] text-encre-4">
+              {mode === "creation"
+                ? `Étape ${rang + 1} sur 4 — chacune se saute.`
+                : "Ce qui est déjà fabriqué ne bouge pas."}
+            </span>
+            {/* **Le seul bouton rouille de l'écran** — la règle de `D0` : le
+                rouille ne sert qu'au bouton qui lance et au chiffre qui coûte.
+                Ici rien ne coûte, et c'est ce bouton qui mène au bout. */}
+            <button
+              type="button"
+              disabled={enCours || (ouverte === "nom" && !nom.trim())}
+              onClick={() => void continuer()}
+              className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal transition-colors duration-120 hover:bg-echec disabled:opacity-60"
+            >
+              {libelleDuBouton(mode, ouverte, rang, cree)}
+            </button>
+          </div>
+        </footer>
+      )}
+    </main>
+  )
+}
+
+/** Ce que le bouton de pied annonce — **ce qu'il fait, pas « suivant »**.
+ *
+ *  En création, l'étape du nom crée ; les suivantes se sautent et le disent, parce
+ *  qu'un « suivant » aurait laissé croire qu'il faut régler pour avancer. */
+function libelleDuBouton(mode: Mode, ouverte: Etape, rang: number, cree: boolean): string {
+  if (mode === "reglages") return "Revenir à la liste"
+  if (ouverte === "nom") return cree ? "Choisir son allure" : "Créer et choisir son allure"
+  if (rang === ETAPES.length - 1) return "Ouvrir le jeu"
+  return `Passer à ${ETAPES[rang + 1].titre.toLowerCase()}`
+}
+
+/** Une ligne de résumé par étape, pour la liste du mode réglages. */
+function resumeDeLEtape(
+  etape: Etape,
+  univers: Univers | null,
+  nom: string,
+  dossier: string | null,
+  vues: readonly VueDuJeu[],
+): string {
+  if (etape === "nom") return dossier ? `${nom} · ${dossier}` : nom
+  if (!univers) return "…"
+  if (etape === "allure") {
+    const taille = univers.cible_px ? `${univers.cible_px} px` : "aucune taille"
+    if (univers.style !== "pixel") return `dessin · ${taille}`
+    return `pixel · ${taille} · ${NOM_DE_LA_METHODE[univers.methode_pixels]}`
+  }
+  if (etape === "vue") {
+    const choisie = vues.find((v) => v.identifiant === univers.vue)
+    if (!choisie) return "aucune — le modèle décide seul"
+    return `${choisie.libelle} · ${choisie.images} direction${choisie.images > 1 ? "s" : ""}`
+  }
+  const ecrites = univers.bible.filter(
+    (c) => c.texte.trim() && !["rendu", "vue"].includes(c.nom),
+  ).length
+  return `${ecrites} ligne${ecrites > 1 ? "s" : ""} sur 5 écrite${ecrites > 1 ? "s" : ""}`
+}

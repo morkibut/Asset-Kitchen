@@ -198,9 +198,8 @@ export function Ouverture({
   bibliotheque,
   personnages,
   plan,
-  autoFocusCreer,
   onOuvrir,
-  onCreer,
+  onCommencer,
   onSupprimer,
   onReconstruire,
   onFermer,
@@ -215,11 +214,11 @@ export function Ouverture({
    *  un pour l'obtenir. */
   personnages: readonly Personnage[]
   plan: readonly Pose[]
-  /** Ouverte depuis « + Commencer un jeu » : le champ de nom prend le focus
-   *  tout de suite, sans qu'on ait à recliquer. */
-  autoFocusCreer?: boolean
   onOuvrir: (identifiant: string) => void
-  onCreer: (nom: string) => Promise<void>
+  /** Ouvrir le parcours des règles du jeu, en mode création (`B14`). C'est lui
+   *  qui demande le nom, et lui qui crée : cet écran-ci ne fait que choisir
+   *  parmi les jeux qui existent. */
+  onCommencer: () => void
   onSupprimer: (identifiant: string) => Promise<void>
   onReconstruire: () => Promise<void>
   onFermer: () => void
@@ -228,47 +227,25 @@ export function Ouverture({
   onErreur: (raison: string) => void
 }) {
   const [recherche, setRecherche] = useState("")
-  const [creation, setCreation] = useState(Boolean(autoFocusCreer))
-  const [nom, setNom] = useState("")
-  const [enCours, setEnCours] = useState(false)
   const [aSupprimer, setASupprimer] = useState<string | null>(null)
   const [reconstruction, setReconstruction] = useState(false)
 
   const echouer = (erreur: unknown, defaut: string) =>
     onErreur(erreur instanceof Refus ? erreur.message : defaut)
 
-  // **Échap referme d'abord ce qui vient de s'ouvrir par-dessus** — le champ
-  // de création —, et l'écran lui-même ensuite. Toujours un jeu ouvert
-  // dessous : fermer l'ouverture sans en choisir un ramène à celui qu'on
-  // avait déjà, jamais nulle part.
+  // **Échap ferme l'écran.** Il n'y a plus rien qui s'ouvre par-dessus depuis
+  // que le champ de création est parti dans le parcours (`B14`). Toujours un
+  // jeu ouvert dessous : fermer l'ouverture sans en choisir un ramène à celui
+  // qu'on avait déjà, jamais nulle part.
   useEffect(() => {
     const surTouche = (evenement: KeyboardEvent) => {
       if (evenement.key !== "Escape" || evenement.defaultPrevented) return
       evenement.stopPropagation()
-      if (creation) {
-        setCreation(false)
-        return
-      }
       onFermer()
     }
     window.addEventListener("keydown", surTouche, true)
     return () => window.removeEventListener("keydown", surTouche, true)
-  }, [creation, onFermer])
-
-  const creer = async () => {
-    const propre = nom.trim()
-    if (!propre || enCours) return
-    setEnCours(true)
-    try {
-      await onCreer(propre)
-      setNom("")
-      setCreation(false)
-    } catch (erreur) {
-      echouer(erreur, "création refusée")
-    } finally {
-      setEnCours(false)
-    }
-  }
+  }, [onFermer])
 
   const supprimer = async (identifiant: string) => {
     setASupprimer(null)
@@ -323,7 +300,7 @@ export function Ouverture({
           />
           <button
             type="button"
-            onClick={() => setCreation(true)}
+            onClick={onCommencer}
             className="h-[34px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[13px] font-medium text-encre-2 transition-colors duration-120 hover:border-signal hover:text-signal"
           >
             + Commencer un jeu
@@ -353,58 +330,26 @@ export function Ouverture({
           ))}
 
           {/* ── Commencer un jeu ─────────────────────────────────────────── */}
-          {creation ? (
-            <div className="flex flex-col gap-[14px] rounded-8 border border-contour bg-carte p-[22px]">
-              <span className="text-[15px] font-medium text-encre-2">
-                Commencer un jeu
-              </span>
-              <input
-                autoFocus
-                type="text"
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void creer()
-                }}
-                placeholder="le nom du jeu"
-                className="h-[34px] rounded-7 border border-contour bg-papier px-[14px] text-[13.5px] text-encre placeholder:text-encre-4"
-              />
-              <div className="flex gap-[14px]">
-                <button
-                  type="button"
-                  onClick={() => void creer()}
-                  disabled={!nom.trim() || enCours}
-                  className="h-[30px] rounded-7 bg-signal px-[14px] text-[13px] text-encre-sur-signal disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Créer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCreation(false)}
-                  className="h-[30px] px-[8px] text-[13px] text-encre-3 hover:text-encre-2"
-                >
-                  Renoncer
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setCreation(true)}
-              className="flex flex-col items-center justify-center gap-[8px] rounded-8 border border-dashed border-pointille p-[22px] text-center"
-            >
-              <span className="flex h-[34px] w-[34px] items-center justify-center rounded-5 border border-pointille text-[15px] font-light text-encre-4">
-                +
-              </span>
-              <span className="text-[15px] font-medium text-encre-2">
-                Commencer un jeu
-              </span>
-              <span className="text-[12.5px] leading-[1.4] text-encre-4">
-                Un nom suffit. Les réglages se posent après, et rien n'est
-                obligatoire.
-              </span>
-            </button>
-          )}
+          {/* **Elle n'ouvre plus un champ, elle ouvre le parcours** (`B14`).
+              Le champ en ligne qui vivait ici était l'étape du nom, en
+              plus petit et à un autre endroit : deux façons de nommer un jeu,
+              dont une seule montrait le dossier qu'on ne reprend pas. */}
+          <button
+            type="button"
+            onClick={onCommencer}
+            className="flex flex-col items-center justify-center gap-[8px] rounded-8 border border-dashed border-pointille p-[22px] text-center"
+          >
+            <span className="flex h-[34px] w-[34px] items-center justify-center rounded-5 border border-pointille text-[15px] font-light text-encre-4">
+              +
+            </span>
+            <span className="text-[15px] font-medium text-encre-2">
+              Commencer un jeu
+            </span>
+            <span className="text-[12.5px] leading-[1.4] text-encre-4">
+              Quatre étapes, et chacune se saute. Rien n'est obligatoire, et
+              rien ne coûte.
+            </span>
+          </button>
         </div>
       </div>
 

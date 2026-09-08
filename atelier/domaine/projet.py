@@ -127,40 +127,55 @@ INTITULES = {
 }
 
 
+# ── Les deux cases que l'atelier écrit seul ──────────────────────────────────
+#
+# **Un réglage ne se pose jamais à deux endroits** — la règle de `B14`, et elle
+# vaut d'abord ici. `rendu` dit la grille de pixels, `vue` dit la caméra : les
+# deux sont **entièrement déterminées** par `style`/`cible_px` et par `vue`, qui
+# se choisissent aux étapes 2 et 3 du parcours des règles du jeu. Laisser
+# l'auteur écrire dans ces deux cases-là, c'était lui donner un second endroit
+# où dire la même chose — et les deux partaient, empilées, dans le même envoi.
+#
+# **La panne était mesurée, et elle a survécu à sa première réparation.** Le
+# 1ᵉʳ septembre 2026, trois prompts réellement payés portaient la caméra deux
+# fois (voir `texte_de_la_case`). La réparation d'alors — `_REDITES`, ci-dessous
+# — lisait les mots de l'auteur pour deviner s'il parlait déjà de caméra. Elle
+# marchait quand elle voyait le mot, et pas autrement : *« vu du ciel, bien
+# au-dessus »* ne contient aucun des douze mots anglais de la liste, et la
+# phrase de l'atelier s'empilait dessus.
+#
+# **Ce que ça retire de la liste** : `vue` (douze mots) et `rendu` (quatre)
+# n'ont plus rien à arbitrer, puisqu'il n'y a plus deux textes à départager.
+# Restent les quatre de `technique` — la seule des trois cases qui garde du
+# texte d'auteur, parce que le calage n'est pas le seul sujet dont elle parle.
+CHAMPS_DE_L_ATELIER = ("rendu", "vue")
+
+# **Ce que l'auteur avait tapé là ne disparaît pas du fichier.** Il reste dans
+# la case, il est relu, il est servi à l'écran — il ne *part* plus, et l'écran
+# le montre barré avec l'étape qui écrit à sa place. Effacer aurait été le seul
+# geste destructeur d'une tranche qui n'en demandait aucun.
+
+
 # ── Quand l'auteur redit ce que l'atelier allait dire ────────────────────────
 #
-# **Trois cases seulement**, celles où l'atelier écrit une phrase de lui-même :
-# le rendu dit la grille, la technique dit le calage, la vue dit la caméra. Les
-# quatre autres — le monde, l'époque, le trait, l'éclairage — n'ont pas de
-# phrase d'atelier, et rien à arbitrer.
+# **Une seule case désormais**, `technique` : l'atelier y écrit le calage et le
+# fond, et l'auteur y écrit tout ce qu'un modèle ne doit jamais faire. Les deux
+# sujets cohabitent dans la même case, donc les deux textes s'empilent — et il
+# faut bien lire les mots pour savoir si l'auteur redit le calage.
+#
+# `rendu` et `vue` en sont sorties avec `B14` : elles n'ont plus de texte
+# d'auteur qui parte, donc plus rien à départager. Voir `CHAMPS_DE_L_ATELIER`.
 #
 # **Des mots, pas une intention.** On ne devine pas si l'auteur voulait préciser
-# ou remplacer ; on regarde s'il parle déjà du même sujet. Une case `vue` qui
-# contient `top-down`, `camera`, `isometric` ou `side view` parle bien de la
-# caméra, et la phrase de l'atelier en ferait une seconde. Une case `vue` qui
-# dirait seulement *un peu resserré sur le sujet* n'en parle pas, et les deux
-# s'empilent comme avant.
+# ou remplacer ; on regarde s'il parle déjà du même sujet. Une case `technique`
+# qui contient `isolated sprite` ou `flat background` redit bien le calage, et
+# la phrase de l'atelier en ferait une seconde.
 #
 # **La liste est courte exprès.** Chaque mot ajouté est un cas où l'atelier se
 # tait ; en ajouter un de trop ferait disparaître une phrase que personne
 # n'aurait remplacée. On préfère l'empilement — visible, et corrigeable d'un
 # clic à l'écran de confirmation — au silence.
 _REDITES: dict[str, tuple[str, ...]] = {
-    "vue": (
-        "top-down",
-        "top down",
-        "overhead",
-        "side view",
-        "front view",
-        "front-facing",
-        "isometric",
-        "oblique",
-        "camera",
-        "3/4",
-        "three-quarter",
-        "orthographic",
-    ),
-    "rendu": ("pixel art on a", "px grid", "x grid", "grid,"),
     "technique": ("tile snap", "isolated sprite", "sprite isolé", "flat background"),
 }
 
@@ -756,16 +771,54 @@ class Univers:
         **Le perdant ne disparaît pas** : `resoudre` le montre barré à l'écran de
         confirmation, avec ce qui l'a remplacé, comme pour toutes les autres
         couches.
+
+        ── **Deux cases ne se départagent plus : l'atelier y écrit seul** (B14) ──
+
+        `rendu` et `vue` sont passées dans `CHAMPS_DE_L_ATELIER`. Elles ne
+        rendent que la phrase de l'atelier, et le texte de l'auteur ne s'y joint
+        plus — ni devant, ni derrière, ni à la place quand un mot-clé le
+        désigne. La raison est celle de la tranche entière : *un réglage ne se
+        pose jamais à deux endroits*. La grille se choisit à l'étape de l'allure,
+        la caméra à l'étape de la vue, et il n'y a plus de second endroit d'où
+        les redire.
+
+        **Sans vue choisie, la case rend le vide, et c'est une réponse.** Le
+        modèle décide alors seul de sa caméra — c'est la règle d'US-57, celle qui
+        interdit de faire parler un jeu que personne n'a décrit, et elle ne
+        change pas ici. Ce qui change, c'est qu'un texte d'auteur resté dans la
+        case ne vient plus la remplir à la place du choix qu'on n'a pas fait.
+
+        **Ce que l'auteur avait tapé là reste lisible** : `texte_sans_effet` le
+        rend, l'écran le montre barré avec l'étape qui écrit à sa place, et le
+        fichier ne perd rien.
         """
         champ = self.champ(nom)
         if not champ.actif:
             return ""
         atelier = "" if self.vide else self.phrase_du_produit(nom)
+        if nom in CHAMPS_DE_L_ATELIER:
+            return atelier
         ecrit = champ.texte.strip()
         if atelier and ecrit and _redit(nom, ecrit):
             return ecrit
         morceaux = [atelier, ecrit]
         return ", ".join(m for m in morceaux if m)
+
+    def textes_sans_effet(self) -> dict[str, str]:
+        """Ce que l'auteur a tapé dans une case de l'atelier, et qui ne part plus.
+
+        **Seulement ce qui est réellement là.** Une case de l'atelier vide ne
+        rend pas de ligne : l'écran dessinerait un avertissement autour de rien.
+        Le cas courant — un jeu neuf, ou un jeu dont l'auteur n'a jamais écrit
+        dans ces deux cases-là — rend donc un dictionnaire vide, et l'écran ne
+        montre aucune rature.
+
+        C'est la contrepartie de `CHAMPS_DE_L_ATELIER` : le texte cesse de
+        partir, il ne cesse pas d'exister. Le rendre ici est la seule façon que
+        l'écran ait de le dire au lieu de le faire disparaître en silence.
+        """
+        restes = ((nom, self.champ(nom).texte.strip()) for nom in CHAMPS_DE_L_ATELIER)
+        return {nom: texte for nom, texte in restes if texte}
 
     def famille_du_type(self, nom: str) -> str:
         """La famille d'une chose du jeu, **lue dans son type** (E15).
@@ -1525,3 +1578,32 @@ def repere(nom: str, pris: object = (), defaut: str = "projet") -> str:
     while f"{base}-{rang}" in pris:
         rang += 1
     return f"{base}-{rang}"
+
+
+def meme_nom(un: str, autre: str) -> bool:
+    """Ces deux noms de jeu sont-ils le même, pour un œil humain ? (B14)
+
+    **Les espaces et la casse ne distinguent pas deux jeux.** « le marais » et
+    « Le  Marais » donnent deux lignes qu'on ne peut pas différencier dans la
+    liste ; les accents, si — « Foret » et « Forêt » se lisent, et l'auteur qui
+    écrit les deux sait ce qu'il fait. C'est pour cela que cette comparaison
+    n'est **pas** `repere` : le dossier déplie les accents parce qu'un système de
+    fichiers l'exige, un lecteur non.
+    """
+    return " ".join(un.split()).casefold() == " ".join(autre.split()).casefold()
+
+
+def deja_porte(nom: str, noms: Iterable[str]) -> bool:
+    """Un jeu porte-t-il déjà ce nom ? — **la règle vit ici et nulle part ailleurs**.
+
+    Elle sert deux gestes qui n'ont rien d'autre en commun : créer un jeu et en
+    renommer un. Les écrire chacun de son côté aurait donné deux définitions de
+    « le même nom », et elles auraient divergé au premier accent.
+
+    **Elle avertit, elle ne refuse pas** (B14). Deux jeux du même nom sont
+    légitimes — deux essais du même monde, une reprise —, seulement personne ne
+    veut y tomber sans l'avoir voulu. Le refus dur est réservé aux cas où le
+    produit ne saurait pas quoi faire ensuite ; ici il sait très bien : il crée,
+    il donne un dossier distinct, et il le dit.
+    """
+    return any(meme_nom(nom, autre) for autre in noms)

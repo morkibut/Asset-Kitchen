@@ -175,8 +175,10 @@ def test_le_serveur_ecrit_le_champ_et_ne_departage_pas_deux_bandes_peuvent_etre_
 ):
     """⚠️ **Documente une décision, pour qu'on ne la redécouvre pas.**
 
-    Reportée de `B10` (`docs/PIEGES.md` § `PUT /assets/favorite` écrit un champ
-    et ne démote personne) : `PUT /strips/favorite` fait la même chose, et pour
+    Reportée de `B10` — `docs/PIEGES.md`, le piège « `PUT /assets/favorite`
+    écrit un champ et ne démote personne », qui y est une puce et non un titre :
+    le renvoi le désignait par un `§`, et `essais/essai_docs.py` l'a nommé cassé
+    le 9 septembre 2026. `PUT /strips/favorite` fait la même chose, et pour
     la même raison — c'est l'écran, dans `AnimationsDuSujet.tsx`, qui démonte
     les autres retenues de la rangée **avant** d'allumer la sienne. Deux
     retenues dans la même case sont donc un état atteignable côté serveur, et

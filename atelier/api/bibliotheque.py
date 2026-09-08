@@ -160,10 +160,22 @@ async def creer_projet(requete: Request, corps: CorpsNom) -> dict[str, Any]:
     """Un vrai projet, quand on en ressent le besoin et pas avant (US-5).
 
     Il s'ouvre aussitôt : personne ne crée un projet pour ne pas y travailler.
+
+    **Un nom déjà pris avertit, il ne refuse pas** (B14). Le jeu est créé, il
+    reçoit son propre dossier — c'est `repere` qui s'en charge, et il le fait
+    depuis toujours —, et la réponse dit qu'un homonyme existe. Refuser aurait
+    interdit deux essais du même monde ; se taire est ce que le produit faisait
+    avant, et c'est ce qui laissait deux lignes identiques dans la liste.
     """
     atelier = _atelier(requete)
     projet = atelier.bibliotheque.creer_projet(corps.nom)
-    return {"projet": projet.en_json(), "bibliotheque": atelier.bibliotheque.arbre()}
+    return {
+        "projet": projet.en_json(),
+        "avertissement": atelier.bibliotheque.avertissement_de_nom(
+            projet.nom, sauf=projet.identifiant
+        ),
+        "bibliotheque": atelier.bibliotheque.arbre(),
+    }
 
 
 @routeur.put("/projects/current")
@@ -183,10 +195,20 @@ async def renommer_projet(
     C'est ce qui permet à l'assistant de *renommer* le « Bac à sable » plutôt
     que d'en créer un second : sur une machine neuve, le premier lancement
     s'ouvre sur un jeu qui existe déjà, et rien n'est exigé pour commencer.
+
+    **Le même avertissement qu'à la création** (B14), et c'est la même phrase :
+    renommer un jeu du nom d'un autre laisse exactement les deux lignes
+    identiques que la création évitait de laisser en silence.
     """
     atelier = _atelier(requete)
     projet = atelier.bibliotheque.renommer_projet(identifiant, corps.nom)
-    return {"projet": projet.en_json(), "bibliotheque": atelier.bibliotheque.arbre()}
+    return {
+        "projet": projet.en_json(),
+        "avertissement": atelier.bibliotheque.avertissement_de_nom(
+            projet.nom, sauf=projet.identifiant
+        ),
+        "bibliotheque": atelier.bibliotheque.arbre(),
+    }
 
 
 @routeur.delete("/projects/{identifiant}")

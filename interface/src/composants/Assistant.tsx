@@ -145,7 +145,8 @@ const ETAPES = [
   // en dessin *combien de détail*. La colonne de gauche et le titre de l'écran
   // doivent dire le même mot — les voir se contredire à 240 px l'un de l'autre
   // ferait douter qu'on soit au bon endroit —, et le rang se retrouve par l'un
-  // comme par l'autre, sans quoi l'étape perdrait sa ligne « étape 4 · le jeu ».
+  // comme par l'autre, sans quoi l'étape perdrait la ligne qui dit son rang et
+  // son groupe.
   { cle: "taille", groupe: "le jeu", nom: "La taille", nomDessin: "La finesse" },
   { cle: "types", groupe: "le jeu", nom: "Les types d'objets" },
   { cle: "allure", groupe: "le style", nom: "L'allure" },

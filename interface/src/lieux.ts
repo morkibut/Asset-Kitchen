@@ -57,6 +57,16 @@ export type Lieu =
   // vers la même famille n'atterriraient pas au même endroit — c'est ce qui
   // arrivait avant, la pile disant `codex` et un `useState` disant laquelle.
   | { genre: "famille"; famille: string }
+  // Les règles du jeu (`B14`) — **le parcours de création, rouvert**. Elle ne
+  // porte aucune charge : les quatre étapes sont un état de l'écran, pas
+  // quatre lieux (§ *Ce qui n'est pas un lieu*, en tête de ce fichier), et
+  // l'étape ouverte se choisit d'un clic sans qu'on ait descendu un étage.
+  //
+  // **Elle se pose sur n'importe quelle racine**, comme `depenses` : les règles
+  // sont celles du jeu ouvert, et on les rouvre d'où qu'on vienne. Le parcours
+  // de *création*, lui, n'est pas ici — il prend la fenêtre entière, avant même
+  // qu'un jeu soit ouvert, comme l'ouverture de `B4`.
+  | { genre: "regles" }
   | { genre: "sujet"; sujet: string }
   | { genre: "case"; asset: string }
   | { genre: "tables"; asset: string }

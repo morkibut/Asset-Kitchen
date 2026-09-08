@@ -240,6 +240,7 @@ export function Carnet({
   collectionOuverte,
   arrivants,
   regles,
+  lignesEcrites,
   images,
   depense,
   autresJeux,
@@ -250,6 +251,7 @@ export function Carnet({
   surNouvelleCollection,
   surDeposer,
   surLesRegles,
+  surLesReglesDuJeu,
   surLaGalerie,
   surLesDepenses,
   surUnAutreJeu,
@@ -279,6 +281,10 @@ export function Carnet({
   arrivants: Readonly<Record<string, number>>
   /** Ce que la toile de l'univers porte, ou `null`. */
   regles: number | null
+  /** Combien des cinq lignes du monde sont écrites (`B14`), ou `null` tant
+   *  qu'on ne le sait pas. Les deux autres — le rendu et la vue — ne se tapent
+   *  pas : l'atelier les écrit depuis l'allure et la vue choisies. */
+  lignesEcrites: number | null
   images: number
   depense: number
   autresJeux: readonly AutreJeu[]
@@ -293,6 +299,9 @@ export function Carnet({
    *  geste — et c'est lui qui range, parce que le carnet ne parle à personne. */
   surDeposer: (collection: string) => void
   surLesRegles: () => void
+  /** Rouvrir le parcours des quatre étapes (`B14`) — les mêmes écrans qu'à la
+   *  création, et les mêmes écritures. */
+  surLesReglesDuJeu: () => void
   surLaGalerie: () => void
   surLesDepenses: () => void
   surUnAutreJeu: (identifiant: string) => void
@@ -388,6 +397,17 @@ export function Carnet({
 
         {/* ── Ce qui s'applique à tout le jeu ─────────────────────────────── */}
         <EnTete enfants="Les règles du jeu" />
+        {/* **Le parcours de `B14`, rouvert.** La planche du carnet le met ici,
+            juste sous le nom du jeu : les quatre réglages qui partent avec
+            chaque demande d'image. Il porte le compte des lignes de bible
+            écrites, parce qu'un carnet dont chaque ligne compte quelque chose
+            n'a pas de raison d'en laisser une muette. */}
+        <Ligne
+          nom="Les règles du jeu"
+          compte={lignesEcrites == null ? null : `${lignesEcrites} / 5`}
+          ouverte={ouvert === "regles"}
+          onAller={surLesReglesDuJeu}
+        />
         <Ligne
           nom="La toile de l'univers"
           compte={regles == null ? null : String(regles)}

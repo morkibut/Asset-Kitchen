@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 from atelier.domaine.teinte import TEINTES
 from atelier.image import rendre_en_png
+from atelier.domaine.projet import CHAMPS_DE_L_ATELIER, Univers
 from atelier.domaine.recette import OCCUPATION_MAX_ABSOLU
 from atelier.domaine.vue import FINESSES, TAILLES, VUES
 from atelier.services import Atelier
@@ -707,14 +708,45 @@ async def image_carte(
 # ── L'univers du projet ──────────────────────────────────────────────────────
 
 
+def _ce_que_l_atelier_ecrit(univers: Univers) -> dict[str, Any]:
+    """Les cases que l'atelier écrit seul, ce qu'il y écrit, et ce qui ne part plus.
+
+    **Servi à côté de l'univers, jamais dedans** (B14). `Univers.en_json()` est
+    le format du disque : y ranger trois listes qui se recalculent à chaque
+    lecture en aurait fait une seconde vérité, écrite dans le fichier et donc
+    fatalement en retard sur `style`, `cible_px` et `vue` qui la déterminent.
+    C'est la même raison qui a sorti ces phrases des cases le 1ᵉʳ septembre 2026
+    (`atelier.domaine.vue.phrase_de_grille`), et elle n'a pas changé.
+
+    Deux clés, et deux seulement :
+
+    · `champs` — quelles cases de la bible ne se tapent plus, pour que l'écran
+      les dessine en lecture seule avec l'étape qui les remplit ;
+    · `sans_effet` — ce que l'auteur avait tapé là avant `B14` et qui ne part
+      plus. Vide dans le cas courant ; l'écran ne montre une rature que quand il
+      y a vraiment quelque chose à rayer.
+
+    **Et surtout pas les phrases** : `Univers.en_json()` rend déjà `phrases`
+    depuis le 1ᵉʳ septembre 2026, et c'est le texte exact qui partira. En poser
+    une seconde copie ici aurait été, mot pour mot, la faute que cette tranche
+    corrige — le même réglage à deux endroits, servi dans la même réponse.
+    """
+    return {
+        "champs": list(CHAMPS_DE_L_ATELIER),
+        "sans_effet": univers.textes_sans_effet(),
+    }
+
+
 @routeur.get("/universe")
 async def lire_univers(requete: Request, projet: str | None = None) -> dict[str, Any]:
     """La bible, le barème, la palette et les défauts du projet."""
     atelier = _atelier(requete)
     identifiant = _projet(requete, projet)
+    univers = atelier.univers.univers(identifiant)
     return {
         "projet": identifiant,
-        "univers": atelier.univers.univers(identifiant).en_json(),
+        "univers": univers.en_json(),
+        "atelier": _ce_que_l_atelier_ecrit(univers),
         # **Ce que l'atelier proposerait comme fond, et ce qu'il en sait** (D3).
         # Servie ici plutôt que calculée à l'écran pour la raison de toutes les
         # autres listes de cette route : la distance qui décide de la sûreté d'un
@@ -761,6 +793,11 @@ async def regler_univers(
     return {
         "projet": identifiant,
         "univers": objet.univers.en_json(),
+        # **Ce que l'atelier écrit suit le réglage** (B14), pour la raison exacte
+        # du fond proposé juste dessous : choisir une vue à l'étape 3 change la
+        # phrase de caméra, et un écran qui garderait l'ancienne montrerait le
+        # texte d'une vue qu'on vient de quitter.
+        "atelier": _ce_que_l_atelier_ecrit(objet.univers),
         # **La proposition suit le réglage** (D3) : changer la palette change ce
         # que l'atelier proposerait, et un écran qui garderait l'ancienne
         # proposition montrerait une couleur calculée sur des artworks qui ne

@@ -256,7 +256,17 @@ def test_une_relance_renvoie_le_texte_qui_etait_parti(client, double):
 
 
 def test_la_bible_compte_sept_champs_chacun_activable(client):
-    univers = _bible(client, rendu="pixel art 16 bits", vue="trois quarts, corps entier")
+    """**Le contenu des deux nouvelles cases a changé de source en `B14`, pas
+    leur interrupteur.** `rendu` et `vue` ne portent plus de texte d'auteur :
+    l'atelier y écrit seul, depuis la taille de pixel et depuis la vue choisie
+    (`CHAMPS_DE_L_ATELIER`). C'est pour cela que la fixture pose désormais une
+    *vue* et non un texte de vue — sans vue choisie, la case n'a plus rien à
+    dire, et l'essai mesurerait l'absence au lieu de l'extinction.
+
+    Ce que l'essai vérifie, lui, n'a pas bougé d'un mot : sept champs, et chacun
+    s'éteint pour lui seul."""
+    univers = _bible(client, monde="marais de fer")
+    client.put("/api/universe", json={"vue": "vue-dessus-34"})
     noms = [c["nom"] for c in univers["bible"]]
     assert noms == list(CHAMPS_BIBLE)
     assert len(noms) == 7
@@ -269,10 +279,7 @@ def test_la_bible_compte_sept_champs_chacun_activable(client):
                 "bible": [
                     {
                         "nom": c,
-                        "texte": {
-                            "rendu": "pixel art 16 bits",
-                            "vue": "trois quarts, corps entier",
-                        }.get(c, ""),
+                        "texte": "marais de fer" if c == "monde" else "",
                         "actif": c != nom,
                     }
                     for c in CHAMPS_BIBLE

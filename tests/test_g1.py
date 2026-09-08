@@ -45,8 +45,16 @@ def _fichiers_de_l_interface() -> list[Path]:
     ]
 
 
-#: `l'étape 4`, `à l'étape 10` — la forme exacte que le produit employait.
-NUMERO_D_ETAPE = re.compile(r"l'étape\s+\d+")
+#: `l'étape 4`, `à l'étape 10`, `Étape 1 · Son nom` — un rang écrit à la main,
+#: sous quelque forme que ce soit.
+#:
+#: ⚠️ **La première écriture exigeait l'apostrophe et la minuscule**, et c'est
+#: `B14` qui a montré le trou : son parcours en quatre étapes a écrit *cinq*
+#: rangs à la main — quatre bandeaux de section `// ── Étape 2 · Son allure ──`
+#: et un `L'étape 1` en tête de bloc — que cet essai a tous laissés passer, alors
+#: qu'il en refusait huit autres dans les mêmes fichiers. La forme qui compte est
+#: le mot suivi du chiffre ; la casse et ce qui précède ne sont que du décor.
+NUMERO_D_ETAPE = re.compile(r"étape\s+\d+", re.IGNORECASE)
 
 
 def test_aucun_numero_d_etape_n_est_ecrit_a_la_main():
@@ -58,6 +66,14 @@ def test_aucun_numero_d_etape_n_est_ecrit_a_la_main():
     étages, dont le second demandait de savoir qu'il existe. Ces deux
     lignes-là disent maintenant *« la deuxième »* en toutes lettres, ce qui les
     rend plus claires **et** rend cet essai absolu.
+
+    **Élargi le 9 septembre 2026, en `B14`** : il ne demande plus l'apostrophe ni
+    la minuscule. Un second parcours à étapes est né ce jour-là, et il a écrit
+    cinq rangs que cette forme-ci ne voyait pas — quatre bandeaux de section et
+    un début de commentaire. Le défaut que la tranche `G1` avait chiffré s'est
+    donc reproduit, à la casse près, dans le premier écran à étapes construit
+    depuis. Ce qui remplace un rang est **le nom de l'étape** : il ne se décale
+    pas quand une autre s'insère.
     """
     fautives: list[str] = []
     for chemin in _fichiers_de_l_interface():

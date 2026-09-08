@@ -37,7 +37,13 @@ from atelier.domaine.consommation import est_argent
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Generation, Statut
 from atelier.domaine.personnage import Personnage
-from atelier.domaine.projet import NOM_BAC_A_SABLE, Collection, Projet, repere
+from atelier.domaine.projet import (
+    NOM_BAC_A_SABLE,
+    Collection,
+    Projet,
+    deja_porte,
+    repere,
+)
 from atelier.services.assets import ServiceAssets
 from atelier.services.evenements import Diffusion
 
@@ -309,6 +315,55 @@ class ServiceBibliotheque:
         self._annoncer()
         return objet
 
+    def jeux_du_meme_nom(self, nom: str, sauf: str = "") -> list[str]:
+        """Les jeux qui portent déjà ce nom-là — **les autres, pas celui-ci** (B14).
+
+        `sauf` est l'identifiant du jeu qu'on vient de créer ou de renommer : il
+        porte le nom qu'on interroge, et se compter lui-même ferait avertir tout
+        le monde tout le temps.
+
+        Rend des **noms**, pas des identifiants : c'est ce que l'écran affiche, et
+        c'est ce dont l'avertissement parle. L'identifiant, lui, est justement
+        celui qui *ne* se confond pas — il porte déjà son `-2`.
+        """
+        return [
+            p.nom
+            for p in self.projets()
+            if p.identifiant != sauf and deja_porte(nom, [p.nom])
+        ]
+
+    def avertissement_de_nom(self, nom: str, sauf: str = "") -> str:
+        """Ce qu'il y a à dire quand un nom est déjà pris, ou rien.
+
+        **Une phrase écrite ici, pas deux composées à l'écran.** Le parcours de
+        création et celui des règles du jeu montrent le même avertissement ; le
+        composer de chaque côté aurait donné deux textes pour un seul fait.
+
+        **Elle cite le nom de l'autre jeu, pas celui qu'on vient de taper.**
+        Trouvé par l'essai, et ce n'est pas un détail de rédaction : « le
+        marais » et « Le  Marais » ne sont *pas* la même chaîne — c'est bien
+        pour ça qu'ils entrent en collision. Redire au lecteur ce qu'il vient
+        d'écrire ne lui apprend rien ; lui montrer l'orthographe exacte de
+        l'autre ligne lui dit laquelle il va voir en double.
+
+        Vide quand le nom est libre — et l'écran ne dessine alors aucun bandeau,
+        au lieu d'un bandeau vide.
+        """
+        autres = self.jeux_du_meme_nom(nom, sauf)
+        if not autres:
+            return ""
+        if len(autres) == 1:
+            return (
+                f"Un autre jeu s'appelle déjà « {autres[0]} ». Les deux "
+                "resteront, avec des dossiers différents — mais la liste "
+                "montrera deux lignes identiques."
+            )
+        return (
+            f"{len(autres)} autres jeux s'appellent déjà « {autres[0]} ». Ils "
+            "resteront tous, avec des dossiers différents — mais la liste "
+            "montrera autant de lignes identiques."
+        )
+
     def supprimer_projet(self, identifiant: str) -> dict[str, Any]:
         """Détache, ne détruit pas (US-30).
 
@@ -373,7 +428,13 @@ class ServiceBibliotheque:
         return projet
 
     def _creer(self, nom: str) -> Projet:
-        propre = nom.strip()
+        # **Les espaces se replient ici comme au renommage** (B14). Les deux
+        # gestes nomment la même chose et les deux ne le faisaient pas pareil :
+        # `renommer_projet` repliait depuis toujours, `_creer` se contentait de
+        # `strip()`. Un jeu créé « Le  Marais » gardait donc son espace double,
+        # et se renommer de son propre nom le lui retirait — deux vérités sur ce
+        # qu'est un nom, trouvées en écrivant l'avertissement d'homonyme.
+        propre = " ".join(nom.split())
         if not propre:
             raise RangementRefuse("un projet a besoin d'un nom")
         pris = {p.identifiant for p in self._base.projets()}

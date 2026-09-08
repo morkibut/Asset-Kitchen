@@ -531,23 +531,29 @@ def test_lavertissement_sur_la_taille_est_sur_la_ligne_fautive(client):
     # lui-même n'est plus rangée dans la case, donc elle ne peut plus rester
     # sur une taille qu'on a quittée. Ce que le vrai projet porte, en revanche,
     # est bien ce genre de ligne-ci — tapée, en français, avec un nombre.
+    #
+    # **La ligne fautive a déménagé de `rendu` à `technique` avec `B14`**, et
+    # c'est le seul mot de cet essai qui bouge. `rendu` est devenue une case de
+    # l'atelier : ce qu'on y tape ne part plus, donc ne peut plus se tromper.
+    # `technique` reste ouverte au texte d'auteur — le calage et l'interdit y
+    # cohabitent — et c'est là que la contradiction de taille survit.
     _bible(
         client,
-        rendu="chunky 64x64 pixel art, no smoothing",
+        technique="chunky 64x64 pixel art, no smoothing",
         monde="Deep forge halls",
     )
     chose = _creer(client)
 
     envoi = _envoi(client, personnage=chose["identifiant"])
 
-    fautive = _ligne(envoi, clef("jeu", "rendu"))
+    fautive = _ligne(envoi, clef("jeu", "technique"))
     assert "64" in fautive["avertissement"] and "128" in fautive["avertissement"]
     assert _ligne(envoi, clef("jeu", "monde"))["avertissement"] == ""
     # Un seul avertissement de texte, et il est sur la ligne coupable. L'autre
     # vient du groupe des images, et il porte sa propre clef : le compte se lit à
     # droite pour qu'on sache qu'il y en a, même sans être descendu jusqu'à eux.
     assert [a["clef"] for a in envoi["avertissements"] if a["clef"].startswith("jeu.")] == [
-        clef("jeu", "rendu")
+        clef("jeu", "technique")
     ]
 
 

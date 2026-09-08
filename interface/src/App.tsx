@@ -97,6 +97,7 @@ import { EcranFamille } from "./composants/Famille"
 import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
 import { TableauDeBord } from "./composants/TableauDeBord"
 import { Ouverture } from "./composants/Ouverture"
+import { ReglesDuJeu } from "./composants/ReglesDuJeu"
 import {
   PILE_INITIALE,
   dans,
@@ -315,9 +316,28 @@ export function App() {
    *  Échap — la pile, elle, ne bouge pas : il y a toujours un jeu ouvert
    *  dessous, sauf à l'avoir choisi soi-même.
    *
-   *  `"creer"` porte en plus l'intention : venir de « + Commencer un jeu »
-   *  pose le focus sur le champ de nom sans qu'on ait à recliquer. */
+   *  `"creer"` n'ouvre plus le même écran depuis `B14` : il ouvre **le parcours
+   *  des règles du jeu en mode création**, dont la première étape est le nom.
+   *  L'ouverture, elle, garde son rôle — choisir parmi ceux qui existent. */
   const [choixDuJeu, setChoixDuJeu] = useState<null | "jeux" | "creer">(null)
+
+  /** Le jeu que le parcours de création vient de créer, ou `null`.
+   *
+   *  **Le parcours doit connaître son dossier** — c'est ce que l'étape du nom montre
+   *  une fois le jeu créé, et c'est l'identifiant que l'étape renomme si l'on y
+   *  revient. `bibliotheque.courant` le dirait aussi, mais une frappe plus tard
+   *  seulement : `creer_projet` ouvre le jeu côté serveur, et l'arbre ne
+   *  revient qu'au rafraîchissement suivant. */
+  const [creeParLeParcours, setCreeParLeParcours] = useState<string | null>(null)
+
+  /** Les règles du jeu, rouvertes (`B14`) — **une profondeur, pas une racine**.
+   *
+   *  Le carnet visible à côté est ce qui la distingue du parcours de création :
+   *  on règle un jeu qui tourne, on ne le fabrique pas. Les quatre étapes sont
+   *  un état de l'écran, jamais quatre lieux (`interface/src/lieux.ts`). */
+  const reglesOuvertes = dans(pile, "regles")
+  const setReglesOuvertes = (ouvert: boolean) =>
+    setPile((p) => (ouvert ? entrer(p, { genre: "regles" }) : sortir(p, "regles")))
 
   /** Le tableau de bord est **le seul lieu neuf de `B0`**, et il n'est pas un
    *  onglet : c'est le lieu du jeu entier, et le seul chemin de retour. Les
@@ -2641,6 +2661,12 @@ export function App() {
       case "depenses":
         return "Les dépenses"
 
+      // Les règles du jeu (`B14`) — **un nom, pas deux**. Les quatre étapes ne
+      // sont pas des étages : on ne les descend pas, on les choisit, et un fil
+      // qui les annoncerait ferait croire à une profondeur qui n'existe pas.
+      case "regles":
+        return "Les règles du jeu"
+
       // *Inspiration* et non *Univers* : ce ne sont pas les mêmes images, et le
       // produit ne les confond nulle part.
       case "carte":
@@ -2889,21 +2915,55 @@ export function App() {
     }
   }
 
+  /** Relire l'arbre — **après un geste qui change la liste des jeux**, création
+   *  et renommage. Le parcours de `B14` ne rend pas la bibliothèque lui-même :
+   *  il ne la tient pas, et deux façons de la poser auraient fini par en
+   *  laisser une en retard. */
+  const rafraichirLArbre = async () => {
+    try {
+      setBibliotheque(await api.arbre())
+    } catch {
+      // Sans conséquence : le nom du carnet se rafraîchira au prochain geste.
+    }
+  }
+
+  // **Le parcours de création prend la fenêtre entière**, comme l'ouverture —
+  // ce sont les deux seuls écrans du produit dans ce cas (`docs/PLAN-carnet.md`
+  // § Le châssis). Il fait lui-même les quatre étapes, la première comprise :
+  // c'est elle qui crée le jeu. Le champ de nom en ligne qu'`Ouverture` portait
+  // avant `B14` a disparu — il était l'étape du nom en plus petit, et à un autre
+  // endroit.
+  if (choixDuJeu === "creer") {
+    return (
+      <ReglesDuJeu
+        mode="creation"
+        nomDuJeu=""
+        dossierDuJeu={creeParLeParcours}
+        onCree={(identifiant) => {
+          setCreeParLeParcours(identifiant)
+          void rafraichirLArbre()
+        }}
+        onRenomme={() => void rafraichirLArbre()}
+        onFerme={() => {
+          setChoixDuJeu(null)
+          setCreeParLeParcours(null)
+        }}
+        onErreur={setPanne}
+      />
+    )
+  }
+
   if (choixDuJeu) {
     return (
       <Ouverture
         bibliotheque={bibliotheque}
         personnages={personnages}
         plan={plan}
-        autoFocusCreer={choixDuJeu === "creer"}
         onOuvrir={(identifiant) => {
           void ouvrirJeu(identifiant)
           setChoixDuJeu(null)
         }}
-        onCreer={async (nom) => {
-          const reponse = await api.creerProjet(nom)
-          setBibliotheque(reponse.bibliotheque)
-        }}
+        onCommencer={() => setChoixDuJeu("creer")}
         onSupprimer={async (identifiant) => {
           const reponse = await api.supprimerProjet(identifiant)
           setBibliotheque(reponse.bibliotheque)
@@ -2944,6 +3004,15 @@ export function App() {
         collectionOuverte={collectionOuverte}
         arrivants={arrivants}
         regles={cartes.length || null}
+        // Les cinq lignes du monde qui portent vraiment un texte. Les deux
+        // autres — le rendu et la vue — ne se comptent pas : l'atelier les
+        // écrit lui-même, et un compte sur sept ferait croire qu'il en reste
+        // deux à taper (`B14`).
+        lignesEcrites={
+          univers.bible.filter(
+            (c) => c.texte.trim() && c.nom !== "rendu" && c.nom !== "vue",
+          ).length
+        }
         images={projetCourant?.assets ?? 0}
         depense={
           projetCourant ? projetCourant.total_usd : bibliotheque.sans_projet.total_usd
@@ -2954,7 +3023,9 @@ export function App() {
             ? "jeu"
             : depensesOuvertes
               ? "depenses"
-              : onglet === "univers"
+              : reglesOuvertes
+                ? "regles"
+                : onglet === "univers"
                 ? "univers"
                 : familleOuverte
                   ? familleOuverte
@@ -2974,6 +3045,7 @@ export function App() {
         }}
         surDeposer={(collection) => void deposerDansLaCollection(collection)}
         surLesRegles={() => setPile(poser("univers"))}
+        surLesReglesDuJeu={() => setReglesOuvertes(true)}
         surLaGalerie={() => setPile(poser("galerie"))}
         surLesDepenses={() => {
           setFente(null)
@@ -3074,6 +3146,26 @@ export function App() {
           projetCourant={bibliotheque.courant}
           onErreur={setPanne}
           onFermer={() => setDepensesOuvertes(false)}
+        />
+      )}
+
+      {/* ── Les règles du jeu, rouvertes (`B14`) ────────────────────────────
+          **Le même parcours qu'à la création, et les mêmes écritures.** Ce qui
+          change est ce qui l'entoure : ici le carnet reste visible, parce qu'on
+          règle un jeu qui tourne au lieu d'en fabriquer un.
+
+          Il prend la même ligne de grille que les dépenses, et la même chaîne
+          de gardes : il n'appartient à aucune des quatre racines — les règles
+          sont celles du jeu, et on les rouvre d'où qu'on vienne. */}
+      {reglesOuvertes && !depensesOuvertes && !envoiOuvert && !clipOuvert && (
+        <ReglesDuJeu
+          mode="reglages"
+          nomDuJeu={projetCourant?.nom ?? ""}
+          dossierDuJeu={bibliotheque.courant}
+          onCree={() => undefined}
+          onRenomme={() => void rafraichirLArbre()}
+          onFerme={() => setReglesOuvertes(false)}
+          onErreur={setPanne}
         />
       )}
 

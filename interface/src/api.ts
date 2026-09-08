@@ -413,6 +413,24 @@ export type VueDuJeu = {
   /** Ce que le choix écrit dans la case `vue` de la bible. */
   phrase: string
   directions: Direction[]
+  /** ── Les trois textes de caméra, **servis depuis toujours et déclarés
+   *  seulement en `B14`** ─────────────────────────────────────────────────
+   *
+   *  `Vue.en_json()` les rend depuis le 1ᵉʳ septembre 2026 ; ce type-ci ne les
+   *  nommait pas, donc aucun écran ne pouvait les montrer. Le parcours des
+   *  règles du jeu doit afficher **le texte de caméra exact qui partira** —
+   *  pas une paraphrase —, et c'est de là qu'il le prend : ces trois chaînes
+   *  sont littéralement celles qui atteignent le fournisseur
+   *  (`ServiceProduction.cadrage`), ce qu'un essai serveur verrouille.
+   *
+   *  `contrainte` — la caméra redite en queue de prompt, à l'impératif.
+   *  `volume` — quelles faces du sujet on voit ; part pour tout ce que le jeu
+   *  dessine, une tuile comprise.
+   *  `corps` — l'exemple humain, et lui seul dépend de la famille : il ne part
+   *  que pour ce qui a une tête et des pieds. Vide sur certaines vues. */
+  contrainte: string
+  volume: string
+  corps: string
 }
 
 /** Un angle sous lequel le jeu regarde une chose (E10).
@@ -2480,6 +2498,34 @@ export type Carte = {
 
 export type Champ = { nom: string; texte: string; actif: boolean }
 
+/** Les cases de la bible que l'atelier écrit seul — **et pas l'auteur** (B14).
+ *
+ *  `rendu` dit la grille de pixels, `vue` dit la caméra. Les deux sont
+ *  entièrement déterminées par des réglages qui se choisissent ailleurs : la
+ *  taille à l'étape de l'allure, la vue à l'étape de la vue. Laisser un champ
+ *  de texte en face, c'était donner un second endroit d'où dire la même chose,
+ *  et les deux partaient — empilés — dans le même envoi.
+ *
+ *  **Servi à côté de l'univers, jamais dedans** : `Univers` est le format du
+ *  disque, et ces trois listes se recalculent à chaque lecture. Les y ranger en
+ *  aurait fait une vérité écrite, donc fatalement en retard sur les réglages
+ *  qui la déterminent.
+ *
+ *  **Le texte exact qui partira n'est pas ici** : il est dans `Univers.phrases`,
+ *  où il vit depuis le 1ᵉʳ septembre 2026. En poser une seconde copie aurait été
+ *  la faute même que cette tranche corrige. */
+export type CeQueLAtelierEcrit = {
+  /** Les noms des cases concernées — `["rendu", "vue"]`. Lu plutôt que recopié
+   *  ici : la liste est close côté serveur, et deux listes finiraient par
+   *  diverger d'une case. */
+  champs: string[]
+  /** Ce que l'auteur avait tapé là avant `B14`, et qui **ne part plus**. Le
+   *  fichier le garde, la route le rend, l'écran le montre barré avec l'étape
+   *  qui écrit à sa place. Vide dans le cas courant — et l'écran ne dessine
+   *  alors aucune rature. */
+  sans_effet: Record<string, string>
+}
+
 /** Ce que l'auteur lit d'un champ de bible. La clé voyage sans accent.
  *
  *  **Sept depuis R2** (US-161, US-162). `rendu` et `vue` sont exactement les
@@ -4161,11 +4207,17 @@ export const api = {
   taches: (identifiant: string) =>
     appeler<TachesDeLAsset>(`/assets/${identifiant}/spots`),
 
+  /** **Le jeu est créé, et il s'ouvre.** `avertissement` est vide dans le cas
+   *  ordinaire ; il porte une phrase quand un autre jeu s'appelle déjà comme
+   *  celui-ci (B14). Ce n'est pas un refus : le jeu existe, il a son propre
+   *  dossier, et la phrase dit seulement que la liste montrera deux lignes
+   *  identiques. La règle vit au serveur — deux définitions de « le même nom »
+   *  auraient divergé au premier accent. */
   creerProjet: (nom: string) =>
-    appeler<{ projet: Projet; bibliotheque: Bibliotheque }>("/projects", {
-      method: "POST",
-      body: JSON.stringify({ nom }),
-    }),
+    appeler<{ projet: Projet; avertissement: string; bibliotheque: Bibliotheque }>(
+      "/projects",
+      { method: "POST", body: JSON.stringify({ nom }) },
+    ),
 
   ouvrirProjet: (projet: string | null) =>
     appeler<Bibliotheque>("/projects/current", {
@@ -4646,11 +4698,14 @@ export const api = {
   /** Le nom change, **l'identifiant jamais** : c'est ce qui permet à
    *  l'assistant de renommer le « Bac à sable » plutôt que d'en créer un
    *  second. */
+  /** Le même `avertissement` qu'à la création, pour le même fait (B14) :
+   *  renommer un jeu du nom d'un autre laisse exactement les deux lignes
+   *  identiques que la création évitait de laisser en silence. */
   renommerProjet: (identifiant: string, nom: string) =>
-    appeler<{ projet: Projet; bibliotheque: Bibliotheque }>(`/projects/${identifiant}`, {
-      method: "PUT",
-      body: JSON.stringify({ nom }),
-    }),
+    appeler<{ projet: Projet; avertissement: string; bibliotheque: Bibliotheque }>(
+      `/projects/${identifiant}`,
+      { method: "PUT", body: JSON.stringify({ nom }) },
+    ),
 
   ouvrirSuperposition: (dessus: string, dessous?: string) =>
     appeler<OuvertureSuperposition>(
@@ -5459,6 +5514,8 @@ export const api = {
     appeler<{
       projet: string
       univers: Univers
+      /** Les deux cases que l'atelier écrit seul (B14). */
+      atelier: CeQueLAtelierEcrit
       /** **Ce que l'atelier proposerait comme fond à ce jeu-là** (D3), calculé
        *  par le serveur : la distance qui décide de la sûreté d'un fond est
        *  celle du détourage, et une seconde arithmétique ici aurait fini par
@@ -5499,10 +5556,12 @@ export const api = {
     detourage_planche?: DefautDetourage | null
     detourages?: Partial<Record<Famille, DefautDetourage>> | null
   }) =>
-    appeler<{ projet: string; univers: Univers; fond_propose: FondPropose }>(
-      "/universe",
-      { method: "PUT", body: JSON.stringify(reglage) },
-    ),
+    appeler<{
+      projet: string
+      univers: Univers
+      atelier: CeQueLAtelierEcrit
+      fond_propose: FondPropose
+    }>("/universe", { method: "PUT", body: JSON.stringify(reglage) }),
 
   /** Réappliquer la palette et la grille du projet — **sans un appel payant**.
    *  Sans identifiants, tout le projet en sautant les épinglés ; avec, cette

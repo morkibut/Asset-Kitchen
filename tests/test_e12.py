@@ -104,8 +104,14 @@ def test_une_ambiance_remplace_trois_textes_et_dit_lesquels(client):
 
 def test_un_texte_ecrit_ici_montre_celui_quil_remplace(client):
     """**On doit pouvoir lire ce à quoi on a renoncé sans aller le chercher
-    ailleurs.** C'est ce qui rend un écart lisible plutôt qu'accidentel."""
-    _bible(client, vue="3/4 top-down orthographic view")
+    ailleurs.** C'est ce qui rend un écart lisible plutôt qu'accidentel.
+
+    **La case du jeu se pose maintenant par la vue, plus par un texte** (`B14`) :
+    `vue` est une case de l'atelier, et son contenu se choisit à l'étape de la
+    vue. La fixture pose donc `vue-dessus-34`, dont la phrase est mot pour mot
+    celle que cet essai attendait déjà. Ce qui est mesuré ne change pas : ce que
+    la fiche écrit gagne, et ce qu'elle écarte se lit barré."""
+    client.put("/api/universe", json={"vue": "vue-dessus-34"})
     chose = _creer(client)
 
     _regler(
@@ -117,7 +123,7 @@ def test_un_texte_ecrit_ici_montre_celui_quil_remplace(client):
     vue = _champ(_habillage(client, chose["identifiant"]), "vue")
     assert vue["origine"] == "ici"
     assert vue["texte"] == "flat orthographic icon, centered"
-    assert vue["remplace"] == "3/4 top-down orthographic view"
+    assert vue["remplace"] == "3/4 top-down orthographic view, subject centered"
 
 
 def test_un_texte_ecrit_ici_remplace_meme_celui_de_lambiance(client):
@@ -192,7 +198,14 @@ def test_le_desaccord_entre_le_texte_et_la_grille_se_voit(client):
     case. Ce qui reste possible — et ce que le vrai projet porte, mot pour mot,
     en français — est un texte **tapé à la main** qui nomme une taille. Celui-là
     ne se corrige pas tout seul, et c'est très exactement pour lui que cet écran
-    existe."""
+    existe.
+
+    **Et `B14` a fait tomber la moitié de la faute** — c'est le second mot qui
+    bouge, et il se mesure ici. `rendu` est devenue une case de l'atelier : le
+    texte tapé à la main n'y part plus, donc il ne peut plus contredire la
+    grille. Il en reste **une** sur deux, `technique`, la seule des trois cases
+    à phrase d'atelier qui garde du texte d'auteur — et c'est très exactement le
+    troisième doublon que la planche de `B14` laisse ouvert."""
     client.put("/api/universe", json={"cible_px": 128})
     _bible(
         client,
@@ -204,8 +217,11 @@ def test_le_desaccord_entre_le_texte_et_la_grille_se_voit(client):
     habillage = _habillage(client, chose["identifiant"])
 
     assert habillage["cible_px"] == 128
-    assert set(habillage["desaccord"]) == {"rendu", "technique"}
-    assert _champ(habillage, "rendu")["annonce"] == [64]
+    assert set(habillage["desaccord"]) == {"technique"}
+    # Le texte de `rendu` est toujours sur le disque — il n'annonce plus rien,
+    # parce qu'il ne part plus. C'est la disparition du doublon, vue d'ici.
+    assert _champ(habillage, "rendu")["annonce"] == []
+    assert _champ(habillage, "technique")["annonce"] == [64]
 
 
 def test_un_accord_ne_se_signale_pas(client):

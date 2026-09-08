@@ -11,6 +11,54 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B14 — les règles du jeu, en quatre étapes — 9 septembre 2026
+
+**Commencer un jeu se fait en quatre pas — son nom, son allure, sa vue, son monde — et le même
+parcours rouvert *est* l'écran des règles du jeu.** Pas deux écrans qui se ressemblent : un
+fichier, `interface/src/composants/ReglesDuJeu.tsx`, deux modes. En création il prend la fenêtre
+entière et enchaîne les pas ; rouvert depuis le carnet il s'ouvre sur la liste des quatre, le
+carnet visible à côté. Un essai compare les deux entrées sur la route, la méthode **et le corps
+du message** — le septième critère est tenu par construction, pas par vigilance.
+
+⚠️ **Le relevé a trouvé trois sources de consigne de caméra, là où la planche en annonçait
+deux.** Avant `B14`, l'auteur pouvait écrire « vu du dessus » dans la ligne *vue* de la bible
+**et** choisir une vue dans les réglages : les deux partaient, dans le même envoi, à quelques
+lignes d'écart. Une liste de vingt mots anglais (`_REDITES`, `atelier/domaine/projet.py`)
+essayait de rattraper le cas en détectant si le texte d'auteur disait déjà la même chose — et son
+commentaire avouait lui-même être « volontairement courte ». Elle ne rattrapait rien d'écrit en
+français, ni « vu du ciel, bien au-dessus ».
+
+**La liste n'a pas été allongée : la seconde place d'écriture a été supprimée.** `rendu` et `vue`
+deviennent des **cases de l'atelier** (`CHAMPS_DE_L_ATELIER`) — l'atelier seul y écrit, à partir
+du style, de la cible en pixels et de la vue choisie. `_REDITES` tombe de vingt mots à quatre, et
+ne garde que `technique`, le seul doublon que la planche laisse ouvert. Allonger la liste aurait
+reconduit le défaut sous une forme un peu plus longue.
+
+**Rien n'a été effacé du disque.** Le texte d'auteur devenu inerte reste enregistré, reste relu,
+et remonte par `atelier.sans_effet` dans la réponse de `/api/universe`. L'écran le montre **barré**,
+avec un lien vers l'étape qui écrit à sa place. Supprimer en silence du texte que quelqu'un a
+tapé aurait été le contraire de ce que la tranche répare.
+
+**Le troisième doublon reste, et c'est mesuré.** Le rappel `CAMERA — this overrides everything
+above` en queue de prompt a été gardé : `essais/essai_vue.py` l'a payé sur trente images, et le
+rapport de cadrage est passé de 1,55 à 1,13 grâce à lui. `B14` retire la répétition **dans la
+bible**, pas le rappel qui marche.
+
+**Deux jeux du même nom : un avertissement, pas un refus.** Le jeu se crée, reçoit son dossier
+`-2`, et la phrase nomme **l'autre jeu** — première version du code, elle citait le nom qu'on
+venait de taper, et c'est un essai qui l'a attrapé. Le même essai a montré que `_creer` faisait
+`strip()` là où `renommer_projet` faisait `" ".join(nom.split())` : créer et renommer ne
+jugeaient pas les espaces de la même façon.
+
+**Quatre essais serveur existants ont changé** — leurs décors écrivaient dans `vue` ou `rendu`
+pour fabriquer une ligne, ce qui ne produit plus rien. Chacun garde son intention, réglée par la
+vraie vue plutôt que par du texte ; `tests/test_e12.py::test_le_desaccord_entre_le_texte_et_la_
+grille_se_voit` est même devenu l'essai qui **mesure** la disparition d'un des doublons.
+
+**Deux suites vertes** : 972 essais d'écran (+22), 1 674 côté serveur (+18 : les 17 de
+`tests/test_b14.py` et un cas paramétré de plus, `ReglesDuJeu.tsx` entrant dans
+`LES_FICHIERS_DU_CARNET`), `tsc -b` propre et le garde-fou de design sans reproche.
+
 ## V4 · B11 — ses animations, et le départage — 9 septembre 2026
 
 **L'onglet *Ses animations* de la page d'un sujet (`B10`) est construit.** Même rangement que

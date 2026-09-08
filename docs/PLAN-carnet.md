@@ -595,18 +595,45 @@ modèle → la famille ; les emplacements de corps → la famille personnages ; 
 
 ### Critères d'acceptation
 
-- [ ] Chacune des quatre étapes se saute, et le jeu se crée sans en régler une seule.
-- [ ] L'écran montre le texte de caméra exact qui partira au modèle.
-- [ ] Sans vue choisie, rien n'est écrit et l'écran le dit — le modèle décide seul.
-- [ ] Deux des trois doublons de consigne disparaissent, et un essai le mesure sur un envoi
-      réel.
-- [ ] Deux jeux ne peuvent plus porter le même nom sans avertissement.
-- [ ] Le dossier reste figé au nom de création, même si le nom change ensuite.
-- [ ] Le parcours rouvert écrit dans les mêmes réglages que le parcours de création.
+- [x] Chacune des quatre étapes se saute, et le jeu se crée sans en régler une seule. *Vérifié
+      au navigateur en espionnant `fetch` : les trois derniers pas sautés d'affilée n'envoient
+      **aucun** appel d'écriture, et `univers.vide` vaut `true` sur le jeu créé.*
+- [x] L'écran montre le texte de caméra exact qui partira au modèle. *Il ne le recompose pas :
+      `phrase`, `contrainte`, `volume` et `corps` viennent de `GET /api/universe/views`, et un
+      essai serveur vérifie que ces chaînes-là sont littéralement celles qui atteignent le
+      fournisseur. Relu dans le DOM au navigateur, identique au caractère près.*
+- [x] Sans vue choisie, rien n'est écrit et l'écran le dit — le modèle décide seul. *Et le
+      texte d'auteur ne comble plus le trou : avant `B14`, un jeu sans vue envoyait quand même
+      la caméra que quelqu'un avait tapée dans la case, un jour, sans plus savoir où elle se
+      réglait.*
+- [x] Deux des trois doublons de consigne disparaissent, et un essai le mesure sur un envoi
+      réel. *`rendu` et `vue` deviennent des cases de l'atelier (`CHAMPS_DE_L_ATELIER`) ;
+      `_REDITES` passe de **vingt** mots à quatre — la planche en annonçait vingt-deux, et
+      c'est le seul chiffre d'elle que le relevé corrige. Mesuré sur
+      `FournisseurDouble.demandes[-1].prompt`, donc sur ce qui est arrivé au bout du port, pas
+      sur un texte d'écran. Le troisième, `technique`, reste ouvert — la planche le dit
+      elle-même, et deux essais le disent aussi.*
+- [x] Deux jeux ne peuvent plus porter le même nom sans avertissement. *Un avertissement, pas
+      un refus : le jeu est créé, il reçoit son dossier `-2`, et la phrase nomme **l'autre
+      jeu**. Une règle (`deja_porte`), deux gestes — créer et renommer.*
+- [x] Le dossier reste figé au nom de création, même si le nom change ensuite. *Acquis depuis
+      toujours, et vérifié plutôt que supposé : `repere` dérive à la création, `renommer_projet`
+      ne touche jamais `identifiant`, et l'essai le relit **sur le disque** après deux
+      renommages.*
+- [x] Le parcours rouvert écrit dans les mêmes réglages que le parcours de création. *Tenu par
+      construction : un seul fichier, deux modes. Un essai compare les deux sur la route, la
+      méthode **et le corps du message** — ils sont identiques.*
 
 ### Bloquée par
 
-- `B0`
+- `B0` — tenue.
+
+### Sa conception, jugée avant la première ligne
+
+Le relevé — qui a trouvé **trois** sources de caméra là où la planche en annonçait deux —, la
+décision qui commande la tranche, les huit arbitrages et le découpage en quatre morceaux sont
+dans `docs/tranches/V4.md` § B14. *Écrits le 9 septembre 2026.* **Les quatre morceaux sont
+tenus le même jour** ; le compte rendu est au même endroit.
 
 ---
 

@@ -18,7 +18,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 
-import { COLLECTIONS_AU_PLUS, Carnet } from "./Carnet"
+import { COLLECTIONS_AU_PLUS, Carnet, LIGNES_AU_PLUS } from "./Carnet"
 import { GLISSE_DES_SUJETS } from "./Famille"
 import type { GroupeDeRangement } from "../api"
 
@@ -49,6 +49,7 @@ function monter(surplus: Partial<Parameters<typeof Carnet>[0]> = {}) {
     surNouvelleCollection: vi.fn(),
     surDeposer: vi.fn(),
     surLesRegles: vi.fn(),
+    surLesReglesDuJeu: vi.fn(),
     surLaGalerie: vi.fn(),
     surLesDepenses: vi.fn(),
     surUnAutreJeu: vi.fn(),
@@ -67,6 +68,7 @@ function monter(surplus: Partial<Parameters<typeof Carnet>[0]> = {}) {
       collectionOuverte={null}
       arrivants={{}}
       regles={61}
+      lignesEcrites={3}
       images={560}
       depense={0}
       autresJeux={[]}
@@ -200,4 +202,37 @@ test("sans collection, une famille ne déplie que « Tous » et l'ajout", () => 
   expect(screen.getByRole("button", { name: /^Tous/ })).toBeTruthy()
   expect(screen.getByRole("button", { name: /Nouvelle collection/ })).toBeTruthy()
   expect(screen.queryByText(/et \d+ autres/)).toBeNull()
+})
+
+// ── B14 — la ligne des règles du jeu ────────────────────────────────────────
+
+test("« Les règles du jeu » ouvre le parcours, et compte les lignes écrites", () => {
+  const rappels = monter({ lignesEcrites: 3 })
+
+  const ligne = screen.getByRole("button", { name: /^Les règles du jeu/ })
+  fireEvent.click(ligne)
+
+  expect(rappels.surLesReglesDuJeu).toHaveBeenCalled()
+  // **Cinq et non sept** : le rendu et la vue ne se tapent pas, l'atelier les
+  // écrit depuis l'allure et la vue choisies. Compter sur sept ferait croire
+  // qu'il en reste deux à remplir.
+  expect(ligne.textContent).toContain("3 / 5")
+})
+
+test("la ligne des règles ne se confond pas avec la toile de l'univers", () => {
+  const rappels = monter()
+
+  fireEvent.click(screen.getByRole("button", { name: /La toile de l'univers/ }))
+
+  expect(rappels.surLesRegles).toHaveBeenCalled()
+  expect(rappels.surLesReglesDuJeu).not.toHaveBeenCalled()
+})
+
+test("le carnet tient toujours sous son plafond avec la ligne de plus", () => {
+  monter({ lignesEcrites: 5 })
+  deplier()
+
+  expect(
+    document.querySelectorAll("[data-ligne-du-carnet]").length,
+  ).toBeLessThanOrEqual(LIGNES_AU_PLUS)
 })
