@@ -1,0 +1,478 @@
+// Ce que l'onglet « Ses animations » fait (B11) : le rangement d'une rangée de
+// bandes — la retenue en tête, les gardées dans l'ordre où elles sont
+// arrivées, les écartées repliées derrière une flèche —, les trois marques qui
+// s'excluent, et la promotion de la plus récente des gardées quand on écarte
+// la retenue. `fetch` est doublé à la main, comme partout dans le dépôt —
+// aucun essai ne coûte un centime.
+//
+// Le composant est rendu seul, sans passer par `App` : ce qu'il demande au
+// serveur tient en trois routes, et les monter toutes pour les regarder ferait
+// de chaque essai une seconde suite d'écran. Voir `ImagesDuSujet.test.tsx`,
+// dont ce fichier reprend la structure au mot près pour les bandes.
+
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { afterEach, describe, expect, test, vi } from "vitest"
+
+import { AnimationsDuSujet, rangerLaLigne, rangeesDeLaCase } from "./AnimationsDuSujet"
+import { RECETTE_VIDE, type Bande, type Case, type Personnage, type Pose } from "../api"
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
+// ── De quoi fabriquer un sujet ──────────────────────────────────────────────
+
+function bande(surplus: Partial<Bande> & { identifiant: string; cree_le: number }): Bande {
+  return {
+    clip: "clip-1",
+    nom: `essai ${surplus.identifiant}`,
+    images: [0, 2, 4, 6],
+    prises: [],
+    chutier: [],
+    clips: ["clip-1"],
+    melangee: false,
+    cadence: 8,
+    sens: "boucle",
+    cadre: {
+      choix: "clip",
+      gauche: 0,
+      sommet: 0,
+      droite: 23,
+      bas: 23,
+      largeur: 24,
+      hauteur: 24,
+      mot: "pris sur le clip entier",
+    },
+    recette: RECETTE_VIDE,
+    projet: "le-marais",
+    personnage: "pelerin",
+    pose: "repos",
+    direction: "sud",
+    planche: `generations/clip-1/bandes/${surplus.identifiant}.png`,
+    case_largeur: 24,
+    case_hauteur: 24,
+    compte: 4,
+    secondes: 0.5,
+    brouillon: false,
+    favori: false,
+    rang: 0,
+    supprime_le: null,
+    supprime: false,
+    ...surplus,
+  }
+}
+
+const DIRECTION = {
+  consigne: "",
+  demandees: 1,
+  images: [],
+  a_confirmer: 0,
+  bandes: [],
+  bandes_ecartees: [],
+}
+
+function sienne(surplus: Partial<Case> & { pose: string }): Case {
+  return {
+    demandees: 1,
+    images: [],
+    bandes: [],
+    bandes_ecartees: [],
+    bandes_demandees: 1,
+    calques: {},
+    retenus: {},
+    corps: null,
+    origine: "type",
+    directions: [],
+    directions_rangees: [],
+    sans_direction: [],
+    ...surplus,
+  }
+}
+
+const PLAN: Pose[] = [
+  { identifiant: "repos", nom: "repos", images: 1, consigne: "", ecartees: [], images_avant: 0 },
+  { identifiant: "marche", nom: "marche", images: 1, consigne: "", ecartees: [], images_avant: 0 },
+]
+
+function personnage(cases: Case[]): Personnage {
+  return {
+    identifiant: "pelerin",
+    projet: "le-marais",
+    nom: "Le pèlerin",
+    description: "a weathered pilgrim",
+    ecartees: [],
+    concept_arts: [],
+    references_ecartees: [],
+    cree_le: 1_700_000_000,
+    cases,
+    plan: PLAN,
+    type: "personnage",
+    ambiance: "",
+    prend: "tout",
+    textes: {},
+    eteints: [],
+    references: [],
+    ajoutees: [],
+    directions_ecartees: {},
+    hors_calibrage: [],
+    famille: "personnages",
+    equipable: true,
+  }
+}
+
+/** Trois bandes d'une même rangée : la plus ancienne, la retenue du milieu, la
+ *  plus récente. C'est le cas qui fait mentir un tri par date seule. */
+const VIEILLE = bande({ identifiant: "a", cree_le: 100 })
+const RETENUE = bande({ identifiant: "b", cree_le: 200, favori: true })
+const RECENTE = bande({ identifiant: "c", cree_le: 300 })
+
+const CASE_SUD = sienne({
+  pose: "repos",
+  // **Le pendant du corps** (`Case.bandes`) : le serveur y met exactement les
+  // mêmes bandes que celles réparties par direction — c'est le même ensemble,
+  // vu d'un cran plus haut (`atelier/services/production.py`, `cases`).
+  bandes: [VIEILLE, RETENUE, RECENTE],
+  directions: [
+    { ...DIRECTION, identifiant: "sud", nom: "sud", bandes: [VIEILLE, RETENUE, RECENTE] },
+    { ...DIRECTION, identifiant: "nord", nom: "nord", bandes: [] },
+  ],
+})
+
+function construireDouble() {
+  const appels: { url: string; methode: string; corps: unknown }[] = []
+  const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
+    appels.push({
+      url: String(chemin),
+      methode: init?.method ?? "GET",
+      corps:
+        init?.body && typeof init.body === "string"
+          ? (JSON.parse(init.body) as unknown)
+          : undefined,
+    })
+    return { ok: true, status: 200, json: async () => ({}) } as Response
+  })
+  return { fetchDouble, appels }
+}
+
+function monter(cases: Case[] = [CASE_SUD]) {
+  const { fetchDouble, appels } = construireDouble()
+  vi.stubGlobal("fetch", fetchDouble)
+  const rappels = {
+    onAnimer: vi.fn(),
+    onOuvrirLaBande: vi.fn(),
+    onErreur: vi.fn(),
+  }
+  render(<AnimationsDuSujet personnage={personnage(cases)} plan={PLAN} {...rappels} />)
+  return { ...rappels, appels }
+}
+
+const rangee = (cle: string) =>
+  document.querySelector(`[data-rangee="${cle}"]`) as HTMLElement
+
+// ── Le rangement, sans écran ────────────────────────────────────────────────
+
+describe("le rangement d'une rangée", () => {
+  test("la retenue passe en tête quelle que soit sa date, les gardées suivent la leur", () => {
+    const { retenue, gardees } = rangerLaLigne([RECENTE, VIEILLE, RETENUE])
+    expect(retenue?.identifiant).toBe("b")
+    expect(gardees.map((b) => b.identifiant)).toEqual(["a", "c"])
+  })
+
+  test("sans aucune retenue, rien ne se promeut de soi-même", () => {
+    const { retenue, gardees } = rangerLaLigne([RECENTE, VIEILLE])
+    expect(retenue).toBeNull()
+    expect(gardees.map((b) => b.identifiant)).toEqual(["a", "c"])
+  })
+
+  test("entre deux retenues, la plus récente gagne", () => {
+    const ancienne = bande({ identifiant: "x", cree_le: 50, favori: true })
+    const { retenue } = rangerLaLigne([ancienne, RETENUE])
+    expect(retenue?.identifiant).toBe("b")
+  })
+
+  test("une pose sans direction déclarée n'a qu'une rangée, et le mot n'y paraît pas", () => {
+    const rangees = rangeesDeLaCase(sienne({ pose: "repos", bandes: [VIEILLE] }))
+    expect(rangees).toHaveLength(1)
+    expect(rangees[0].nom).toBe("toutes")
+    expect(rangees[0].direction).toBeNull()
+  })
+
+  test("une bande écartée ne compte pas dans la rangée, et se retrouve triée à part", () => {
+    const ecartee1 = bande({ identifiant: "e1", cree_le: 400, supprime_le: 1_700 })
+    const ecartee2 = bande({ identifiant: "e2", cree_le: 350, supprime_le: 1_700 })
+    const rangees = rangeesDeLaCase(
+      sienne({
+        pose: "repos",
+        directions: [
+          {
+            ...DIRECTION,
+            identifiant: "sud",
+            nom: "sud",
+            bandes: [RETENUE],
+            bandes_ecartees: [ecartee1, ecartee2],
+          },
+        ],
+      }),
+    )
+    expect(rangees[0].compte).toBe(1)
+    expect(rangees[0].ecartees.map((b) => b.identifiant)).toEqual(["e2", "e1"])
+  })
+})
+
+// ── L'écran ─────────────────────────────────────────────────────────────────
+
+describe("les rangées à l'écran", () => {
+  test("la première pose est dépliée, ses rangées portent leur direction et leur compte", () => {
+    monter()
+    const sud = rangee("repos/sud")
+    expect(within(sud).getByText("sud")).toBeTruthy()
+    expect(within(sud).getByText("3")).toBeTruthy()
+    expect(screen.getByText("la retenue")).toBeTruthy()
+  })
+
+  test("la retenue est le premier bouton de la piste, avant les deux gardées", () => {
+    monter()
+    const vignettes = rangee("repos/sud").querySelectorAll("[data-vignette-de-bande]")
+    expect([...vignettes].map((v) => v.getAttribute("data-vignette-de-bande"))).toEqual([
+      "b",
+      "a",
+      "c",
+    ])
+  })
+
+  test("une direction sans bande dit « rien encore », et garde sa case à générer", () => {
+    monter()
+    const nord = rangee("repos/nord")
+    expect(within(nord).getByText(/rien encore/)).toBeTruthy()
+    expect(within(nord).getByLabelText("Générer nord")).toBeTruthy()
+  })
+
+  test("la case « + générer » est hors de la piste qui défile", () => {
+    monter()
+    const sud = rangee("repos/sud")
+    const piste = sud.querySelector(".overflow-x-auto") as HTMLElement
+    const case_ = sud.querySelector("[data-case-de-generation]") as HTMLElement
+    expect(piste).toBeTruthy()
+    expect(piste.contains(case_)).toBe(false)
+  })
+
+  test("générer une case part avec sa pose et sa direction, sans rien dépenser", () => {
+    const { onAnimer, appels } = monter()
+    fireEvent.click(screen.getByLabelText("Générer nord"))
+    expect(onAnimer).toHaveBeenCalledTimes(1)
+    expect(onAnimer.mock.calls[0][1].identifiant).toBe("repos")
+    expect(onAnimer.mock.calls[0][2]).toEqual({ identifiant: "nord", nom: "nord" })
+    expect(appels).toHaveLength(0)
+  })
+
+  test("une pose sans direction déclarée génère sans angle", () => {
+    const { onAnimer } = monter([sienne({ pose: "repos", bandes: [VIEILLE] })])
+    fireEvent.click(screen.getByLabelText("Générer cette pose"))
+    expect(onAnimer.mock.calls[0][2]).toBeNull()
+  })
+
+  test("une pose se replie et se déplie, et une seule reste ouverte", () => {
+    monter([CASE_SUD, sienne({ pose: "marche", bandes: [VIEILLE] })])
+    expect(rangee("repos/sud")).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: /marche/ }))
+    expect(rangee("repos/sud")).toBeNull()
+    expect(rangee("marche/—")).toBeTruthy()
+  })
+
+  test("plusieurs bandes et aucune retenue : la rangée le dit, et c'est son seul rouge", () => {
+    monter([
+      sienne({
+        pose: "repos",
+        directions: [{ ...DIRECTION, identifiant: "sud", nom: "sud", bandes: [VIEILLE, RECENTE] }],
+      }),
+    ])
+    expect(within(rangee("repos/sud")).getByText("aucune retenue")).toBeTruthy()
+  })
+
+  test("une seule bande sans retenue ne réclame rien : il n'y a rien à départager", () => {
+    monter([
+      sienne({
+        pose: "repos",
+        directions: [{ ...DIRECTION, identifiant: "sud", nom: "sud", bandes: [VIEILLE] }],
+      }),
+    ])
+    expect(screen.queryByText("aucune retenue")).toBeNull()
+  })
+})
+
+describe("les écartées, repliées derrière la flèche", () => {
+  const ecartee = bande({ identifiant: "e", cree_le: 150, supprime_le: 1_700 })
+  const avecEcartee = sienne({
+    pose: "repos",
+    bandes: [RETENUE],
+    bandes_ecartees: [ecartee],
+    directions: [
+      {
+        ...DIRECTION,
+        identifiant: "sud",
+        nom: "sud",
+        bandes: [RETENUE],
+        bandes_ecartees: [ecartee],
+      },
+    ],
+  })
+
+  test("une bande écartée ne paraît pas dans la piste, seulement derrière la flèche", () => {
+    monter([avecEcartee])
+    const sud = rangee("repos/sud")
+    expect(sud.querySelector('[data-vignette-de-bande="e"]')).toBeNull()
+    expect(within(sud).getByRole("button", { name: "1 écartée" })).toBeTruthy()
+  })
+
+  test("un clic déplie la flèche, et montre l'écartée en transparence", () => {
+    monter([avecEcartee])
+    const sud = rangee("repos/sud")
+    expect(sud.querySelector('[data-vignette-de-bande="e"]')).toBeNull()
+    fireEvent.click(within(sud).getByRole("button", { name: /écartée/ }))
+    expect(sud.querySelector('[data-vignette-de-bande="e"]')).toBeTruthy()
+  })
+
+  test("restaurer une écartée part à /api/strips/restore", async () => {
+    const { appels } = monter([avecEcartee])
+    const sud = rangee("repos/sud")
+    fireEvent.click(within(sud).getByRole("button", { name: /écartée/ }))
+    fireEvent.click(within(sud).getByRole("button", { name: /restaurer/i }))
+    await waitFor(() => expect(appels).toHaveLength(1))
+    expect(appels[0].url).toBe("/api/strips/restore")
+    expect(appels[0].corps).toEqual({ identifiants: ["e"] })
+  })
+})
+
+describe("les trois marques", () => {
+  test("retenir démote l'ancienne retenue, et l'ordre des deux appels compte", async () => {
+    const { appels } = monter()
+    const vignette = rangee("repos/sud").querySelectorAll("[data-vignette-de-bande]")[2] as HTMLElement
+    const bloc = vignette.closest("span")?.parentElement as HTMLElement
+    fireEvent.click(within(bloc).getAllByLabelText("La retenir")[2])
+    await waitFor(() => expect(appels).toHaveLength(2))
+    // La démotion part la première : un échec à ce moment-là laisse l'état
+    // d'avant intact, au lieu de deux retenues dans la même case.
+    expect(appels[0].url).toBe("/api/strips/favorite")
+    expect(appels[0].corps).toEqual({ identifiants: ["b"], favori: false })
+    expect(appels[1].corps).toEqual({ identifiants: ["c"], favori: true })
+  })
+
+  test("garder la retenue l'éteint, et n'en allume aucune autre", async () => {
+    const { appels } = monter()
+    fireEvent.click(screen.getAllByLabelText("La garder seulement")[0])
+    await waitFor(() => expect(appels).toHaveLength(1))
+    expect(appels[0].corps).toEqual({ identifiants: ["b"], favori: false })
+  })
+
+  test("garder une bande déjà gardée n'appelle personne", () => {
+    const { appels } = monter()
+    fireEvent.click(screen.getAllByLabelText("La garder seulement")[1])
+    expect(appels).toHaveLength(0)
+  })
+
+  test("écarter une simple gardée ne touche à aucune retenue", async () => {
+    const { appels } = monter()
+    fireEvent.click(screen.getAllByLabelText("L'écarter")[1]) // la vieille, gardée
+    await waitFor(() => expect(appels).toHaveLength(1))
+    expect(appels[0].url).toBe("/api/strips/delete")
+    expect(appels[0].corps).toEqual({ identifiants: ["a"] })
+  })
+
+  test("⚠️ écarter la retenue promeut la plus récente des gardées à sa place", async () => {
+    // Le critère d'acceptation de B11 : une bande écartée qui était la retenue
+    // laisse la place à la plus récente de celles qui restent — parce que rien
+    // côté serveur ne redépartage seul une bande, contrairement à une image
+    // (`corps_retenu`). Voir l'en-tête d'`AnimationsDuSujet.tsx`.
+    const { appels } = monter()
+    fireEvent.click(screen.getAllByLabelText("L'écarter")[0]) // la retenue, b
+    await waitFor(() => expect(appels).toHaveLength(2))
+    expect(appels[0].url).toBe("/api/strips/delete")
+    expect(appels[0].corps).toEqual({ identifiants: ["b"] })
+    expect(appels[1].url).toBe("/api/strips/favorite")
+    // c est la plus récente des gardées restantes (a, c).
+    expect(appels[1].corps).toEqual({ identifiants: ["c"], favori: true })
+  })
+
+  test("écarter la seule bande d'une rangée à une bande ne promeut personne", async () => {
+    const { appels } = monter([
+      sienne({
+        pose: "repos",
+        directions: [{ ...DIRECTION, identifiant: "sud", nom: "sud", bandes: [VIEILLE] }],
+      }),
+    ])
+    fireEvent.click(screen.getByLabelText("L'écarter"))
+    await waitFor(() => expect(appels).toHaveLength(1))
+    expect(appels[0].corps).toEqual({ identifiants: ["a"] })
+  })
+})
+
+describe("le volet de la bande", () => {
+  test("il ouvre sur la retenue de la pose dépliée, et la nomme", () => {
+    monter()
+    const volet = document.querySelector("[data-volet-de-la-bande]") as HTMLElement
+    expect(within(volet).getByText("L'animation retenue")).toBeTruthy()
+  })
+
+  test("choisir une gardée change le volet, qui cesse de dire « retenue »", () => {
+    monter()
+    fireEvent.click(screen.getByLabelText(/essai a/))
+    const volet = document.querySelector("[data-volet-de-la-bande]") as HTMLElement
+    expect(within(volet).getByText("L'animation choisie")).toBeTruthy()
+  })
+
+  test("« L'ouvrir dans l'atelier » part avec l'identifiant de la bande", () => {
+    const { onOuvrirLaBande } = monter()
+    fireEvent.click(screen.getByRole("button", { name: "L'ouvrir dans l'atelier" }))
+    expect(onOuvrirLaBande).toHaveBeenCalledWith("b")
+  })
+
+  test("« En générer une variante » anime la pose et la direction de la bande choisie", () => {
+    const { onAnimer } = monter()
+    fireEvent.click(screen.getByRole("button", { name: "En générer une variante" }))
+    expect(onAnimer.mock.calls[0][1].identifiant).toBe("repos")
+    expect(onAnimer.mock.calls[0][2]).toEqual({ identifiant: "sud", nom: "sud" })
+  })
+
+  test("« L'écarter » depuis le volet part au serveur, et promeut si c'était la retenue", async () => {
+    const { appels } = monter()
+    const volet = document.querySelector("[data-volet-de-la-bande]") as HTMLElement
+    fireEvent.click(within(volet).getByRole("button", { name: "L'écarter" }))
+    await waitFor(() => expect(appels).toHaveLength(2))
+    expect(appels[0].corps).toEqual({ identifiants: ["b"] })
+  })
+
+  test("sans rien de choisi, le volet ne se referme pas — il se vide", () => {
+    monter([sienne({ pose: "repos" })])
+    expect(document.querySelector("[data-volet-vide]")).toBeTruthy()
+    expect(screen.getByText(/Aucune de ses poses n'est animée/)).toBeTruthy()
+  })
+})
+
+describe("les deux filtres", () => {
+  const sansRetenue = sienne({
+    pose: "marche",
+    directions: [{ ...DIRECTION, identifiant: "sud", nom: "sud", bandes: [VIEILLE, RECENTE] }],
+  })
+
+  test("« à départager » ne garde que les poses où plusieurs bandes se disputent la case", () => {
+    monter([CASE_SUD, sansRetenue])
+    fireEvent.click(screen.getByRole("tab", { name: "à départager" }))
+    expect(screen.queryByRole("button", { name: /repos/ })).toBeNull()
+    expect(screen.getByRole("button", { name: /marche/ })).toBeTruthy()
+  })
+
+  test("aucun troisième onglet — « sans retenue » désignerait le même ensemble", () => {
+    // Une case à une seule bande non retenue n'est déjà pas signalée par
+    // `ceQuiCloche` : un onglet de plus n'isolerait jamais rien que « à
+    // départager » ne montre déjà. Voir l'en-tête du fichier.
+    monter()
+    expect(screen.queryByRole("tab", { name: "sans retenue" })).toBeNull()
+  })
+
+  test("un filtre qui ne garde rien le dit, plutôt que de rendre un écran vide", () => {
+    monter([sienne({ pose: "repos" })])
+    fireEvent.click(screen.getByRole("tab", { name: "à départager" }))
+    expect(screen.getByText("Rien de ce genre-là dans ses poses.")).toBeTruthy()
+  })
+})

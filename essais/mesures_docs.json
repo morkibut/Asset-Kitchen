@@ -1,11 +1,11 @@
 {
- "releve_le": 1788850266.7162302,
+ "releve_le": 1788856136.588245,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 172078,
+  "octets": 172521,
   "documents": {
    "AGENTS.md": {
     "octets": 35404,
@@ -236,20 +236,20 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 47964,
+    "octets": 48407,
     "titres": 21,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 47312
+      "octets": 47755
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 24,
-      "octets": 5298
+      "octets": 5741
      },
      {
       "titre": "Les invariants du produit",
@@ -557,11 +557,19 @@
  },
  "renvois": {
   "code": {
-   "total": 579,
-   "casses": []
+   "total": 586,
+   "casses": [
+    {
+     "source": "tests/test_b11.py",
+     "ligne": 178,
+     "cible": "docs/PIEGES.md",
+     "ancre": "`PUT /assets/favorite` écrit un champ et ne démote personne) : `PUT /strips/favorite` fait la même chose, et pour la mêm",
+     "raison": "aucun titre de docs/PIEGES.md ne répond à « put assets favorite ecrit un champ et ne demote personne »"
+    }
+   ]
   },
   "docs": {
-   "total": 979,
+   "total": 983,
    "casses": []
   }
  }

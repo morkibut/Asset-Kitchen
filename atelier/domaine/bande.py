@@ -300,10 +300,49 @@ class Bande:
 
     cree_le: float = field(default_factory=time.time)
 
+    # ── Le rangement, le jugement, l'écart (B11) ─────────────────────────────
+    #
+    # **Le report de trois colonnes qui existent sur `Asset` depuis T3**, et
+    # rien de plus : une bande se juge et s'écarte exactement comme une image,
+    # et lui refuser ces trois champs aurait voulu dire garder deux calques —
+    # images et animations — qui se comportent différemment devant le même
+    # geste de l'auteur.
+    #
+    # **Les défauts font qu'une bande d'avant `B11` se relit sans perte** : pas
+    # de retenue, rang neutre, pas écartée — exactement ce qu'elle était avant
+    # que ces champs n'existent. Même garde que `Collection.membres` avant
+    # `B8.2` : une fiche sans la clé rend un état vide, pas une erreur.
+    #
+    # `favori` — laquelle sort dans le jeu. **Aucune règle ne l'impose encore ici** :
+    # contrairement à `corps_retenu` pour les images, rien dans ce dépôt ne lit
+    # ce champ pour décider ce qui s'exporte — `B12`/`B13` en décideront le jour
+    # où une bande précise doit jouer dans le moteur. Pour l'instant, il ne sert
+    # qu'à l'écran *Ses animations*, qui départage comme la matrice le fait déjà
+    # pour les images (`docs/PIEGES.md`).
+    favori: bool = False
+    # `rang` — un départage de plus quand deux bandes partagent la même seconde
+    # de création, comme sur un asset. **Aucun geste de ce dépôt ne le règle
+    # encore** : une bande n'a pas d'emplacement d'où le tirer, contrairement à
+    # un asset qui naît d'un rang de génération. Il existe pour que le tri
+    # `cree_le, rang` soit écrit une fois, à la même forme des deux côtés du
+    # calque — images et animations —, prêt pour la tranche qui voudra
+    # réordonner à la main.
+    rang: int = 0
+    # `supprime_le` — l'écart, non destructif, même règle qu'un asset
+    # (`ServiceBibliotheque.supprimer`) : la bande sort du rangement tout de
+    # suite, ses fichiers attendent le même délai avant de partir pour de bon.
+    supprime_le: float | None = None
+
     @property
     def brouillon(self) -> bool:
         """Aucune case visée. Elle existe, elle sert, elle ne remplit rien."""
         return not (self.personnage and self.pose)
+
+    @property
+    def supprime(self) -> bool:
+        """Hors rangement. Ses fichiers sont peut-être encore là — l'annulation
+        court —, mais plus rien ne le montre ni ne la compte dans une case."""
+        return self.supprime_le is not None
 
     @property
     def images(self) -> tuple[int, ...]:
@@ -394,6 +433,10 @@ class Bande:
             "compte": self.compte,
             "secondes": self.secondes,
             "brouillon": self.brouillon,
+            "favori": self.favori,
+            "rang": self.rang,
+            "supprime_le": self.supprime_le,
+            "supprime": self.supprime,
         }
 
     @staticmethod
@@ -426,4 +469,10 @@ class Bande:
             case_largeur=int(d.get("case_largeur", 0)),
             case_hauteur=int(d.get("case_hauteur", 0)),
             cree_le=float(d.get("cree_le") or time.time()),
+            # Absents pour toute bande d'avant B11 : pas de retenue, rang
+            # neutre, pas écartée — l'état d'une bande telle qu'elle a toujours
+            # été avant que ces trois champs n'existent.
+            favori=bool(d.get("favori", False)),
+            rang=int(d.get("rang", 0)),
+            supprime_le=d.get("supprime_le"),
         )

@@ -1593,3 +1593,30 @@ la prochaine réécriture retrouvera.
   peut voir ça** — jsdom ne fait pas de mise en page, les éléments n'ont pas de largeur, et
   l'assertion passe pendant que la fenêtre déborde. C'est le second atelier qui le trouve, pas
   la suite. Payé le 8 septembre 2026, en `B10`.
+- **Une bande écrite directement dans le dépôt (sans passer par un clip réel) disparaît de
+  l'index au premier redémarrage du serveur.** `tests/test_b11.py` pose ses bandes à la main,
+  comme `test_a12.py` le fait déjà — `Bande(...)` puis `atelier.base.enregistrer_bande(...)`,
+  sans jamais faire exister le clip qu'elles nomment. Ça tient en test parce qu'un test ne
+  redémarre jamais l'atelier. Un atelier jetable, si : `ServiceBibliotheque.ouvrir()` déclenche
+  `reconstruire()` dès que la table `generations` est vide (le cas d'un atelier qui n'a encore
+  rien généré), et `reconstruire()` ne relit une bande que si `clip in connus` — l'ensemble des
+  générations trouvées sur le disque. Une bande dont le clip est inconnu est traitée comme une
+  bande dont le clip a disparu : filtrée en silence, alors que sa fiche JSON est toujours là.
+  ⚠️ **Le symptôme trompe** : le résumé imprimé juste avant `uvicorn.run()` (même processus,
+  même `ouvrir()` d'avant) montre les bonnes bandes ; l'écran ouvert dans le navigateur (après
+  le second `ouvrir()`, au démarrage d'`uvicorn`) les montre toutes vides. Un atelier jetable
+  qui pose des bandes à la main doit donc aussi poser, par bande, une `Generation` minimale
+  (`atelier.fichiers.ecrire_enregistrement` puis `atelier.base.enregistrer`) — voir
+  `essais/atelier_jetable_b11.py::_poser_un_clip`. Payé en vérifiant au navigateur le
+  9 septembre 2026, en `B11`.
+- **Huit secondes, c'est le temps de cliquer trois fois, pas de regarder une capture.**
+  `ANNULATION_S` (8 s) court depuis l'instant où `supprime_le` est posé, pas depuis l'ouverture
+  de l'écran. Une bande écartée au montage d'un atelier jetable est donc déjà hors délai le
+  temps qu'un humain (ou un outil de navigateur, plus lent encore) navigue jusqu'à l'écran et
+  clique « restaurer » : le serveur répond `409` et a raison de le faire. Pour vérifier le
+  vrai chemin de restauration, il faut écarter **depuis l'écran, en direct**, et cliquer
+  « restaurer » tout de suite après — pas relire un état écarté au montage. Et un `POST
+  /strips/delete` ou `/restore` balaie au passage **tous** les écarts expirés du sujet, pas
+  seulement celui qu'on vient de nommer (`ServiceMontage.ecarter` appelle `purger()`) : une
+  puce « N écartée(s) » posée au montage peut donc disparaître pour de bon après un clic fait
+  ailleurs sur le même écran. Payé le 9 septembre 2026, en `B11`.

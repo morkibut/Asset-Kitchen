@@ -59,13 +59,20 @@ function image(
   }
 }
 
-const DIRECTION = { consigne: "", demandees: 1, a_confirmer: 0, bandes: [] }
+const DIRECTION = {
+  consigne: "",
+  demandees: 1,
+  a_confirmer: 0,
+  bandes: [],
+  bandes_ecartees: [],
+}
 
 function sienne(surplus: Partial<Case> & { pose: string }): Case {
   return {
     demandees: 1,
     images: [],
     bandes: [],
+    bandes_ecartees: [],
     bandes_demandees: 1,
     calques: {},
     retenus: {},

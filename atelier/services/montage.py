@@ -34,7 +34,7 @@ import json
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Iterable, Sequence
 
 import numpy as np
 
@@ -65,6 +65,12 @@ from atelier.image.bande import (
 )
 from atelier.image.rythme import lire as lire_le_rythme
 from atelier.image.traitement import avant_la_grille, detourer
+# **La même annulation courte que la bibliothèque, au mot près** (B11) : huit
+# secondes pour revenir sur un écart, puis c'est définitif — voir
+# `ServiceBibliotheque.purger`. Une seconde constante ici aurait fini par
+# diverger de la première sans qu'aucun essai ne le remarque avant que
+# l'auteur ne le découvre en jetant une bande.
+from atelier.services.bibliotheque import ANNULATION_S, AnnulationExpiree
 from atelier.services.evenements import Diffusion
 
 # Le nom du fichier où l'étude d'un clip se garde, à côté de ses images. **Une
@@ -499,6 +505,98 @@ class ServiceMontage:
         self._fichiers.oublier_bande(bande.clip, identifiant)
         self._annoncer(bande, oubliee=True)
         return bande
+
+    # ── Juger, écarter (B11) ─────────────────────────────────────────────────
+    #
+    # **Le report des trois gestes de la bibliothèque**, au mot près : marquer
+    # favori, écarter sans détruire, restaurer dans le délai. La différence
+    # avec `ServiceBibliotheque` n'est pas dans le geste, elle est dans où vit
+    # la donnée — voir la note du schéma plus bas.
+
+    def marquer_favori(self, identifiants: Iterable[str], favori: bool) -> list[Bande]:
+        """La seule marque que l'auteur pose lui-même sur une bande — le
+        pendant exact de `ServiceBibliotheque.marquer_favori`.
+
+        **Ce champ n'impose encore rien ailleurs dans le dépôt.** Contrairement
+        au favori d'un asset, lu par `corps_retenu` pour composer la planche
+        d'équipement et l'export, aucune règle de ce dépôt ne va encore chercher
+        celui-ci : il ne sert qu'à l'écran qui départage à l'affichage — voir
+        `AnimationsDuSujet.tsx`. Le jour où une bande précise doit jouer dans le
+        moteur (`B12`, `B13`), c'est ce champ-là qu'on ira lire, sans rien
+        ajouter au schéma.
+        """
+        marquees = []
+        for identifiant in identifiants:
+            bande = self.bande(identifiant)
+            bande.favori = favori
+            self._sauver(bande)
+            marquees.append(bande)
+        return marquees
+
+    def ecarter(self, identifiants: Iterable[str]) -> dict[str, Any]:
+        """La bande sort du rangement tout de suite, ses fichiers attendent
+        (US-27, reporté ici au mot près).
+
+        **Rien d'autre que `supprime_le` ne bouge.** `prises`, `recette` et
+        `chutier` — les retouches par frame — restent intactes : écarter est un
+        jugement sur *laquelle sort*, pas un effacement de ce qu'on a réglé
+        dessus. Une bande qu'on restaure dans le délai retrouve donc exactement
+        ce qu'elle portait.
+
+        **Jamais de cascade** : le clip et ses images ne bougent pas — c'était
+        déjà la règle d'`oublier`, avant que l'écart n'existe.
+        """
+        self.purger()
+        maintenant = time.time()
+        ecartees = []
+        for identifiant in identifiants:
+            bande = self.bande(identifiant)
+            bande.supprime_le = maintenant
+            self._sauver(bande)
+            ecartees.append(bande.identifiant)
+        return {
+            "ecartees": ecartees,
+            "annulation_s": ANNULATION_S,
+            "expire_le": maintenant + ANNULATION_S,
+        }
+
+    def restaurer(self, identifiants: Iterable[str]) -> list[Bande]:
+        """Revenir en arrière, tant que l'instant dure — même règle qu'un
+        asset (`ServiceBibliotheque.annuler_suppression`)."""
+        rendues = []
+        for identifiant in identifiants:
+            bande = self.bande(identifiant)
+            if bande.supprime_le is None:
+                continue
+            if time.time() - bande.supprime_le > ANNULATION_S:
+                raise AnnulationExpiree()
+            bande.supprime_le = None
+            self._sauver(bande)
+            rendues.append(bande)
+        return rendues
+
+    def purger(self, maintenant: float | None = None) -> int:
+        """Le balayage des bandes écartées depuis plus de `ANNULATION_S`.
+
+        **Relit tout, filtre en Python — pas de colonne SQL dédiée**, et c'est
+        un choix, pas un oubli : une bande n'est jamais une des milliers d'une
+        bibliothèque, elle est une poignée par case d'un seul personnage, et le
+        dépôt entier n'en tient jamais plus que quelques centaines. Balayer en
+        relisant `contenu` coûte donc une poignée de millisecondes, là où
+        `a_purger` sur les assets répond à une vraie question d'échelle. Une
+        colonne `supprime_le` sur `bandes` referait la même chose en plus
+        cher : une migration de schéma pour économiser une comparaison que
+        Python fait déjà en mémoire.
+        """
+        limite = (maintenant or time.time()) - ANNULATION_S
+        partis = 0
+        for bande in self._base.bandes():
+            if bande.supprime_le is not None and bande.supprime_le < limite:
+                self._fichiers.oublier_bande(bande.clip, bande.identifiant)
+                self._base.oublier_bande(bande.identifiant)
+                self._annoncer(bande, oubliee=True)
+                partis += 1
+        return partis
 
     # ── Prélever une image du clip (A13) ─────────────────────────────────────
 

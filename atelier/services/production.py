@@ -1975,12 +1975,28 @@ class ServiceProduction:
         # derrière une image présente — très exactement ce que l'auteur veut
         # voir. Deux calques gardent l'invariant intact au lieu de le tordre : il
         # vaut deux fois, une fois par calque.
+        # **Écartée range à part, jamais dans `animations`** (B11) : c'est le
+        # même partage que `assets_du_personnage`, qui filtre `supprime_le IS
+        # NULL` en SQL avant que ce calcul ne commence — sauf qu'ici le filtre
+        # se fait en Python, `bandes_du_personnage` n'ayant pas de colonne
+        # dédiée à interroger (voir la note de `ServiceMontage.purger`). Une
+        # bande écartée continue donc de vider sa case au même titre qu'une
+        # image supprimée : elle ne compte plus dans `bandes`, ne pèse plus sur
+        # `bandes_demandees`, et ne concurrence plus pour la retenue.
+        #
+        # Elle n'est pour autant pas perdue : `animations_ecartees` la porte
+        # jusqu'à `bandes_ecartees`, le seul endroit du produit qui la montre —
+        # *Ses animations* (`AnimationsDuSujet.tsx`), qui la range derrière sa
+        # flèche plutôt que de la faire disparaître.
         animations: dict[str, list[Bande]] = {}
+        animations_ecartees: dict[str, list[Bande]] = {}
         for bande in self._base.bandes_du_personnage(
             personnage.identifiant, projet=projet
         ):
-            if bande.pose:
-                animations.setdefault(bande.pose, []).append(bande)
+            if not bande.pose:
+                continue
+            cible = animations_ecartees if bande.supprime_le is not None else animations
+            cible.setdefault(bande.pose, []).append(bande)
 
         # **Les directions du jeu, lues une fois pour toutes les lignes.** Vide
         # est un état normal — un jeu vu de face n'en a pas —, et le mot ne
@@ -1993,6 +2009,7 @@ class ServiceProduction:
         for pose in personnage.tenues(self.plan_de(projet, personnage)):
             siennes = corps.get(pose.identifiant, [])
             ses_bandes = animations.get(pose.identifiant, [])
+            ses_bandes_ecartees = animations_ecartees.get(pose.identifiant, [])
             tenues = personnage.directions_tenues(pose, toutes)
             # **Ce que cette pose réclame, lu et non recalculé** (B9.1) : la
             # même fonction sert la grille d'une famille, qui compte les mêmes
@@ -2038,6 +2055,19 @@ class ServiceProduction:
                                 and direction.identifiant == premiere
                             )
                         ],
+                        # **Les écartées de cette direction-là** (B11), même
+                        # repli sur la première direction que juste au-dessus —
+                        # une bande écartée avant que le jeu ne déclare ses
+                        # angles ne cesse pas d'être orientable pour autant.
+                        "bandes_ecartees": [
+                            b.en_json()
+                            for b in ses_bandes_ecartees
+                            if b.direction == direction.identifiant
+                            or (
+                                not b.direction
+                                and direction.identifiant == premiere
+                            )
+                        ],
                     }
                 )
 
@@ -2063,6 +2093,12 @@ class ServiceProduction:
                     # de marche vers la gauche, ce qui n'a aucun sens.
                     "bandes": [b.en_json() for b in ses_bandes],
                     "bandes_demandees": reclamees.bandes,
+                    # **Ce qui a été écarté de ce calque-là, toutes directions
+                    # confondues** (B11) — le pendant de `bandes`, jamais mêlé à
+                    # lui : une bande écartée ne compte plus pour ce que la
+                    # case demande, elle reste seulement visible, repliée,
+                    # pour l'écran qui la montre.
+                    "bandes_ecartees": [b.en_json() for b in ses_bandes_ecartees],
                     # ── Le second axe de la case (E10) ───────────────────────
                     #
                     # Une entrée par direction tenue, avec ce qui la remplit.

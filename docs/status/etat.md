@@ -11,6 +11,50 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B11 — ses animations, et le départage — 9 septembre 2026
+
+**L'onglet *Ses animations* de la page d'un sujet (`B10`) est construit.** Même rangement que
+*Ses images* — une ligne par pose, une rangée par direction, la retenue en tête —, mais pour des
+bandes plutôt que des images, et deux choses y diffèrent sciemment.
+
+**Le vrai travail était sous l'écran, avant tout pixel.** `Bande` ne portait ni `favori`, ni
+`rang`, ni `supprime_le` — les trois existent sur `Asset` depuis `T3`. Le relevé a d'abord tranché
+une question d'architecture plutôt que de recopier la table des assets : une case de ce produit
+ne porte jamais plus qu'une poignée de bandes, et le dépôt entier n'en tient jamais plus que
+quelques centaines — loin de l'échelle qui a fait indexer les colonnes d'un asset. Les trois
+champs vivent donc dans `contenu`, comme `Collection.membres` avant `B8.2`, et `VERSION` n'a pas
+bougé.
+
+⚠️ **Écarter la retenue d'une bande promeut la plus récente des gardées — un geste que les
+images n'ont pas besoin de faire.** Une image démotée reste départagée par `corps_retenu`, qui
+relit toutes les images vivantes de la case et en reprend une au rendu suivant. Une bande
+écartée, elle, **sort** du calcul : `ServiceProduction.cases()` la range dans
+`animations_ecartees`, et il n'existe aucune fonction équivalente à `corps_retenu` qui
+repêcherait une gardée à sa place. Sans ce geste, écarter la seule retenue d'une rangée qui a
+d'autres bandes aurait laissé la case sans retenue en silence. L'écran appelle donc `PUT
+/strips/favorite` sur la plus récente des gardées, juste après le `POST /strips/delete` — et
+seulement s'il y en a une.
+
+**Les écartées se voient, contrairement aux images de `B10`.** `assets_du_personnage` filtre les
+images écartées en SQL avant que la matrice ne les compte, si bien qu'aucune n'apparaît jamais
+dans la charge d'un sujet — c'est pour ça que `B10` avait renoncé au chip « N écartées » de sa
+maquette. Une bande n'a pas cette contrainte (le filtre est en Python, pas en SQL) et le critère
+d'acceptation de `B11` demande explicitement l'écart « derrière la flèche » : `bandes_ecartees`
+existe pour cette seule raison, replié par défaut sous un bouton qui déplie et propose de
+restaurer.
+
+**Deux trouvailles au navigateur, sur l'atelier jetable**, ajoutées à `docs/PIEGES.md` : une
+bande écrite directement dans le dépôt (sans passer par un vrai clip, comme le font déjà les
+essais serveur) disparaît de l'index dès que l'atelier redémarre — `ServiceBibliotheque
+.reconstruire()` ne relit une bande que si son clip a une génération connue, et un clip inventé
+n'en a pas. Et la fenêtre de restauration de huit secondes est plus courte qu'un aller-retour
+d'outil de navigateur : une bande écartée au montage du décor est déjà hors délai le temps qu'on
+l'atteigne à l'écran, ce qui n'est pas un défaut — c'est `restaurer` fait en direct, juste après
+un écart fait en direct, qui vérifie le vrai chemin.
+
+**Deux suites vertes** : 950 essais d'écran (+33), 1656 côté serveur (+11 : les dix de
+`tests/test_b11.py` et un cas paramétré de plus sur `LES_FICHIERS_DU_CARNET`), `tsc -b` propre.
+
 ## V4 · B10 — la page d'un sujet — 8 septembre 2026
 
 **Cliquer un sujet ouvre sa page, plus son atelier.** Quatre onglets sur un seul écran — *Sa

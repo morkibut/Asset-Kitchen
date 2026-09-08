@@ -487,16 +487,26 @@ seul cas rouge du produit — une case où plusieurs essais existent et où aucu
 
 ### Critères d'acceptation
 
-- [ ] Une seule bande est retenue par case (pose × direction), et retenir bascule en un geste.
-- [ ] Écarter une bande ne la détruit pas : elle passe derrière la flèche, et la plus récente
-      des gardées prend sa place.
-- [ ] Le tri par pose, direction et date ne demande aucune donnée nouvelle.
-- [ ] « À départager » est le seul rouge de l'écran.
-- [ ] Écarter une bande ne perd pas les retouches par frame qui lui sont attachées.
+- [x] Une seule bande est retenue par case (pose × direction), et retenir bascule en un geste.
+      — même départage qu'`ImagesDuSujet.tsx` : le serveur ne démote pas
+      (`PUT /strips/favorite` écrit un champ et ne regarde pas les voisines), l'écran démote
+      avant de promouvoir, vérifié sur l'ordre des deux appels.
+- [x] Écarter une bande ne la détruit pas : elle passe derrière la flèche, et la plus récente
+      des gardées prend sa place. — ⚠️ **contrairement aux images**, ce repêchage n'a rien
+      d'automatique côté serveur (pas de `corps_retenu` pour une bande) : l'écran appelle
+      `PUT /strips/favorite` sur la plus récente des gardées juste après le
+      `POST /strips/delete`, et seulement s'il y en a une.
+- [x] Le tri par pose, direction et date ne demande aucune donnée nouvelle. — `cree_le`
+      existait déjà sur `Bande`.
+- [x] « À départager » est le seul rouge de l'écran. — même règle qu'`ImagesDuSujet.tsx` :
+      à partir de deux bandes vivantes sans retenue.
+- [x] Écarter une bande ne perd pas les retouches par frame qui lui sont attachées. — seul
+      `supprime_le` change ; `prises`, `recette` et `chutier` restent identiques, vérifié à
+      l'octet dans `tests/test_b11.py`.
 
 ### Bloquée par
 
-- `B10`
+- `B10` — tenue.
 
 ---
 

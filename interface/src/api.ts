@@ -898,6 +898,22 @@ export type Bande = {
   secondes: number
   /** Aucune case visée. Elle existe, elle sert, **elle ne bloque rien**. */
   brouillon: boolean
+  /** **Laquelle sort dans le jeu** (B11) — le pendant exact de `Asset.favori`.
+   *  Aucune règle de ce dépôt ne le lit encore pour décider d'un export : il
+   *  ne sert qu'à l'écran *Ses animations*, qui départage comme la matrice le
+   *  fait déjà pour les images (`docs/PIEGES.md`). */
+  favori: boolean
+  /** Un départage de plus à date égale, comme sur un asset. Aucun geste de ce
+   *  dépôt ne le règle encore : il existe pour que le tri `cree_le, rang`
+   *  s'écrive une fois, à la même forme des deux côtés du calque. */
+  rang: number
+  /** L'écart, non destructif — même règle qu'un asset (`Asset.supprime_le`) :
+   *  la bande sort du rangement tout de suite, ses fichiers attendent le même
+   *  délai avant de partir pour de bon. */
+  supprime_le: number | null
+  /** Hors rangement — `supprime_le !== null`, déduit côté serveur pour ne pas
+   *  refaire ce calcul à chaque écran. */
+  supprime: boolean
 }
 
 /** Tout ce qu'il faut pour **retravailler** une animation gardée (A7).
@@ -1621,6 +1637,10 @@ export type CaseDirection = Direction & {
    *  sont — repli d'une bande sans direction sur la première compris, parce
    *  qu'un jeu peut déclarer ses directions après avoir gardé des bandes. */
   bandes: Bande[]
+  /** **Ce qui a été écarté de cette direction-là** (B11) — le pendant de
+   *  `bandes`, jamais mêlé à lui : une bande écartée ne remplit plus la case,
+   *  elle reste seulement visible, repliée, pour l'écran qui la montre. */
+  bandes_ecartees: Bande[]
 }
 
 /** Une case de la matrice : ce qu'une attitude demande, et ce qui la remplit.
@@ -1652,6 +1672,11 @@ export type Case = {
    *  présente. Deux calques gardent l'invariant intact au lieu de le tordre : il
    *  vaut deux fois, une fois par calque. */
   bandes: Bande[]
+  /** **Ce qui a été écarté de ce calque-là, toutes directions confondues**
+   *  (B11) — le pendant de `bandes`, jamais mêlé à lui : une bande écartée ne
+   *  compte plus pour ce que la case demande, elle reste seulement visible,
+   *  repliée derrière la flèche de *Ses animations*. */
+  bandes_ecartees: Bande[]
   /** **Une animation par direction, jamais autant que d'images.** C'est là que
    *  les deux calques cessent de se ressembler : une marche demande huit images
    *  *par direction* pour être dessinée, et **une seule bande par direction**
@@ -4586,6 +4611,37 @@ export const api = {
    *  coûte rien : c'est toute la différence avec l'autre moitié de l'atelier. */
   oublierLaBande: (identifiant: string) =>
     appeler<Bande>(`/strips/${identifiant}`, { method: "DELETE" }),
+
+  // ── Juger, écarter une bande (B11) ─────────────────────────────────────────
+  //
+  // Le pendant exact des trois gestes de la bibliothèque, sur une bande.
+  // ⚠️ **Le serveur écrit le champ et ne démote personne** — comme
+  // `api.favori` pour un asset : c'est l'appelant qui doit éteindre les
+  // autres retenues de la rangée avant d'allumer la sienne
+  // (`AnimationsDuSujet.tsx`, `rangerLaLigne`).
+
+  favoriBande: (identifiants: string[], favori: boolean) =>
+    appeler<{ bandes: Bande[] }>("/strips/favorite", {
+      method: "PUT",
+      body: JSON.stringify({ identifiants, favori }),
+    }),
+
+  /** Sort du rangement tout de suite, s'efface après le délai — le pendant
+   *  exact de `api.supprimerAssets`. **Jamais de cascade** : le clip et ses
+   *  images restent, comme `oublierLaBande` le fait déjà. */
+  ecarterBandes: (identifiants: string[]) =>
+    appeler<{ ecartees: string[]; annulation_s: number; expire_le: number }>(
+      "/strips/delete",
+      { method: "POST", body: JSON.stringify({ identifiants }) },
+    ),
+
+  /** L'annulation courte, refusée au-delà du délai — le pendant exact de
+   *  `api.restaurer`. */
+  restaurerBandes: (identifiants: string[]) =>
+    appeler<{ bandes: Bande[] }>("/strips/restore", {
+      method: "POST",
+      body: JSON.stringify({ identifiants }),
+    }),
 
   /** Le nom change, **l'identifiant jamais** : c'est ce qui permet à
    *  l'assistant de renommer le « Bac à sable » plutôt que d'en créer un

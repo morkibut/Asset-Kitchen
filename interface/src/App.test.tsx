@@ -662,6 +662,9 @@ const VIDE_C3: Omit<Case, "pose" | "demandees" | "images"> = {
   // un et non `demandees` : une attitude réclame **une animation par
   // direction**, pas autant d'animations que d'images.
   bandes: [],
+  // **Ce qui a été écarté, vide** (B11) — l'état d'un jeu qui n'a encore rien
+  // écarté, c'est-à-dire l'immense majorité des essais.
+  bandes_ecartees: [],
   bandes_demandees: 1,
 }
 
@@ -1228,6 +1231,13 @@ function bandeRendue(nom: string, images: number[], prises?: Prise[]): Bande {
     compte: images.length,
     secondes: images.length / 8,
     brouillon: true,
+    // **État par défaut d'une bande** (B11) : rien de retenu, rang neutre,
+    // pas écartée — la même valeur que ce champ prend sur toute bande qui n'a
+    // encore reçu aucun de ces trois gestes.
+    favori: false,
+    rang: 0,
+    supprime_le: null,
+    supprime: false,
   }
 }
 
@@ -7932,6 +7942,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
         directions_rangees: [],
         sans_direction: [],
         bandes: [],
+        bandes_ecartees: [],
         bandes_demandees: 1,
       })),
     })
@@ -8724,6 +8735,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
             directions_rangees: [],
             sans_direction: [],
             bandes: [],
+            bandes_ecartees: [],
             bandes_demandees: 1,
           })),
         }),
@@ -13239,6 +13251,7 @@ describe("la vue du jeu et ses directions", () => {
           images: rang === 0 ? (faites[p.identifiant] ?? []) : [],
           a_confirmer: rang === 0 ? (faites[p.identifiant] ?? []).length : 0,
           bandes: [],
+          bandes_ecartees: [],
         })),
         directions_rangees: QUATRE.filter((d) =>
           (rangees[p.identifiant] ?? []).includes(d.identifiant),
@@ -15759,6 +15772,7 @@ describe("la planche d'une pose", () => {
               demandees: 1,
               a_confirmer: 0,
               bandes: [],
+              bandes_ecartees: [],
             }))
           : [],
     })),
@@ -25154,6 +25168,7 @@ describe("B1 — le miroir", () => {
         images: p.identifiant === "repos" && d.identifiant === remplie ? images : [],
         a_confirmer: 0,
         bandes: [],
+        bandes_ecartees: [],
       })),
       directions_rangees: [],
     }))

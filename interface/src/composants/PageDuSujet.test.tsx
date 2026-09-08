@@ -62,6 +62,7 @@ function sienne(surplus: Partial<Case> & { pose: string }): Case {
     demandees: 1,
     images: [],
     bandes: [],
+    bandes_ecartees: [],
     bandes_demandees: 1,
     calques: {},
     retenus: {},
@@ -201,14 +202,14 @@ describe("les quatre onglets", () => {
   // construits **sans nommer leur tranche** — `B11` et `B12` ne veulent rien
   // dire à l'écran, et l'interface n'écrit de code de tranche nulle part
   // ailleurs.
-  test("les quatre sont là, cliquables, et deux disent qu'ils ne sont pas construits", () => {
+  test("les quatre sont là, cliquables, et l'essai dit qu'il n'est pas encore construit", () => {
     monter()
     for (const nom of ["Sa fiche", "Ses images", "Ses animations", "L'essai"])
       expect(onglet(nom)).toBeTruthy()
+    // « Ses animations » est construit depuis B11 — voir
+    // `AnimationsDuSujet.test.tsx` pour son rangement.
     fireEvent.click(onglet("Ses animations"))
-    expect(screen.getByText(/n'est pas encore construit/)).toBeTruthy()
-    // Et il n'y mène pas dans le vide : ses cases savent déjà les commander.
-    expect(screen.getByRole("button", { name: "Ses cases, une par une ›" })).toBeTruthy()
+    expect(document.querySelector("[data-onglet-animations]")).toBeTruthy()
     fireEvent.click(onglet("L'essai"))
     expect(screen.getByText(/décor n'est pas encore construit/)).toBeTruthy()
   })
@@ -245,6 +246,13 @@ describe("les quatre onglets", () => {
     monter()
     fireEvent.click(onglet("Ses images"))
     expect(document.querySelector("[data-onglet-images]")).toBeTruthy()
+    expect(document.querySelector('[data-pose-de-rangement="repos"]')).toBeTruthy()
+  })
+
+  test("l'onglet « Ses animations » montre bien le rangement en rangées (B11)", () => {
+    monter()
+    fireEvent.click(onglet("Ses animations"))
+    expect(document.querySelector("[data-onglet-animations]")).toBeTruthy()
     expect(document.querySelector('[data-pose-de-rangement="repos"]')).toBeTruthy()
   })
 })
@@ -448,10 +456,13 @@ describe("la matrice, devenue une profondeur", () => {
     expect(onglet("Sa fiche").getAttribute("aria-selected")).toBe("true")
   })
 
-  test("« Ses animations » y mène aussi, parce que c'est là qu'elles vivent encore", () => {
+  test("« Ses animations » ne mène plus à la matrice — c'est son propre écran depuis B11", () => {
+    // Avant B11, l'onglet était un placeholder dont le seul geste possible
+    // était de fuir vers la matrice. Il a maintenant son propre rangement
+    // (`AnimationsDuSujet.tsx`), et cette porte de secours a disparu avec lui.
     monter()
     fireEvent.click(onglet("Ses animations"))
-    fireEvent.click(screen.getByRole("button", { name: "Ses cases, une par une ›" }))
-    expect(document.querySelector("[data-matrice]")).toBeTruthy()
+    expect(screen.queryByRole("button", { name: "Ses cases, une par une ›" })).toBeNull()
+    expect(document.querySelector("[data-matrice]")).toBeNull()
   })
 })

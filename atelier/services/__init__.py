@@ -501,6 +501,12 @@ class Atelier:
         # doit attendre qu'il réponde : c'est ce qui donne son sens à « réseau
         # coupé, la bibliothèque fonctionne normalement » (US-92).
         self.bibliotheque.ouvrir()
+        # **Le même balayage que la bibliothèque, pour l'écart d'une bande**
+        # (B11) : ce que huit secondes n'ont pas vu revenir part pour de bon.
+        # Après elle et non avant : `bibliotheque.ouvrir()` reconstruit l'index
+        # si les fichiers en disent plus que lui, et le balayage doit lire
+        # l'état repose, pas celui d'avant.
+        self.montage.purger()
         self.generations.reprendre()
         # Les images produites avant que les assets existent — celles de T1 —
         # en reçoivent un ici. Sans ça elles resteraient dans la grille sans

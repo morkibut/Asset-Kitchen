@@ -53,6 +53,7 @@ import { vignetteAsset } from "./Apercu"
 import { comptes, portraitDe } from "./FicheChose"
 import { EcranEtabli } from "./Personnages"
 import { ImagesDuSujet } from "./ImagesDuSujet"
+import { AnimationsDuSujet } from "./AnimationsDuSujet"
 
 /** Les quatre onglets, dans l'ordre de la planche. Deux sont construits ; les
  *  deux autres se nomment quand même — un onglet qu'on ajouterait plus tard
@@ -790,25 +791,24 @@ export function PageDuSujet(proprietes: {
           />
         )}
 
-        {(onglet === "animations" || onglet === "essai") && (
+        {onglet === "animations" && (
+          <AnimationsDuSujet
+            personnage={ouvert}
+            plan={sienPlan}
+            onAnimer={(personnage, pose, direction) =>
+              proprietes.onAnimer(personnage, pose, direction)
+            }
+            onOuvrirLaBande={proprietes.onOuvrirLaBande}
+            onErreur={echouer}
+          />
+        )}
+
+        {onglet === "essai" && (
           <div className="flex min-h-0 flex-1 flex-col gap-[8px] pt-[22px]">
-            <p className="font-serif text-[25px] leading-[1.15] text-encre">
-              {onglet === "animations" ? "Ses animations" : "L'essai"}
-            </p>
+            <p className="font-serif text-[25px] leading-[1.15] text-encre">L'essai</p>
             <p className="max-w-[380px] text-[13px] leading-[1.45] text-encre-2">
-              {onglet === "animations"
-                ? "Le rangement de ses bandes n'est pas encore construit. En attendant, ses animations se commandent et se retravaillent dans ses cases."
-                : "Le voir bouger dans un décor n'est pas encore construit."}
+              Le voir bouger dans un décor n'est pas encore construit.
             </p>
-            {onglet === "animations" && (
-              <button
-                type="button"
-                onClick={() => setMatriceOuverte(true)}
-                className="h-[34px] self-start rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
-              >
-                Ses cases, une par une ›
-              </button>
-            )}
           </div>
         )}
       </div>

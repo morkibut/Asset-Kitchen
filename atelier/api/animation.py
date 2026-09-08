@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from atelier.domaine.animation import (
     PROPORTIONS_DEFAUT,
@@ -903,6 +903,63 @@ async def exporter_des_bandes(requete: Request, corps: CorpsBandes) -> Response:
     return reponse_archive(
         _atelier(requete).export.exporter_bandes(corps.identifiants)
     )
+
+
+# ── Juger, écarter (B11) ─────────────────────────────────────────────────────
+#
+# Le report des trois gestes de la bibliothèque (`PUT /assets/favorite`,
+# `POST /assets/delete`, `POST /assets/restore`) sur une bande. **Déclarées ici,
+# avant celles qui prennent un identifiant** — même raison que `/strips/export`
+# juste au-dessus : `favorite`, `delete` et `restore` ne doivent jamais pouvoir
+# se faire lire comme le nom d'une bande par un chemin à trou déclaré avant eux.
+
+
+class CorpsSelectionDeBandes(BaseModel):
+    """Une sélection de bandes — même règle que `CorpsSelection` des assets :
+    une seule bande est une sélection d'une, et chaque geste de jugement
+    s'écrit une fois pour un nombre quelconque."""
+
+    identifiants: list[str] = Field(min_length=1)
+
+
+class CorpsFavoriDeBande(CorpsSelectionDeBandes):
+    favori: bool = True
+
+
+@routeur.put("/strips/favorite")
+async def marquer_favorite_une_bande(
+    requete: Request, corps: CorpsFavoriDeBande
+) -> dict[str, Any]:
+    """La seule marque que l'auteur pose lui-même sur une bande — le pendant
+    exact de `PUT /assets/favorite`."""
+    marquees = _atelier(requete).montage.marquer_favori(
+        corps.identifiants, corps.favori
+    )
+    return {"bandes": [b.en_json() for b in marquees]}
+
+
+@routeur.post("/strips/delete")
+async def ecarter_des_bandes(
+    requete: Request, corps: CorpsSelectionDeBandes
+) -> dict[str, Any]:
+    """Sort du rangement tout de suite, s'efface après le délai — le pendant
+    exact de `POST /assets/delete`.
+
+    **Jamais de cascade** : le clip et ses images restent, comme `oublier` le
+    fait déjà. La réponse porte l'échéance — c'est elle que le bandeau
+    d'annulation décompte.
+    """
+    return _atelier(requete).montage.ecarter(corps.identifiants)
+
+
+@routeur.post("/strips/restore")
+async def restaurer_des_bandes(
+    requete: Request, corps: CorpsSelectionDeBandes
+) -> dict[str, Any]:
+    """L'annulation courte. Refusée au-delà du délai, en le disant — le pendant
+    exact de `POST /assets/restore`."""
+    rendues = _atelier(requete).montage.restaurer(corps.identifiants)
+    return {"bandes": [b.en_json() for b in rendues]}
 
 
 @routeur.put("/strips/{identifiant}/case")
