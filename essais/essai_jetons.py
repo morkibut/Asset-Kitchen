@@ -77,6 +77,8 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/Emplois.tsx",
     "interface/src/composants/Emploi.tsx",
     "interface/src/composants/VestiaireDuSujet.tsx",
+    # B20 — les calques d'animation : le calque de la pose, reposé image par image
+    "interface/src/composants/CalquesAnimes.tsx",
     "interface/src/composants/Retouche.tsx",
 )
 

@@ -71,7 +71,12 @@ from atelier.image.traitement import avant_la_grille, detourer
 # diverger de la première sans qu'aucun essai ne le remarque avant que
 # l'auteur ne le découvre en jetant une bande.
 from atelier.services.bibliotheque import ANNULATION_S, AnnulationExpiree
+# **Deux fonctions, et le service des calques d'animation n'entre pas ici** : il
+# reçoit ce montage-ci en paramètre, jamais l'inverse. L'import ne va donc que
+# dans un sens, et il n'y a pas de cycle à craindre.
+from atelier.services.calques_animes import calque_de_la_pose, habiller_les_images
 from atelier.services.evenements import Diffusion
+from atelier.services.superposition import en_rgba
 
 # Le nom du fichier où l'étude d'un clip se garde, à côté de ses images. **Une
 # étude, pas un réglage** : elle ne porte rien que l'auteur ait décidé, tout s'y
@@ -468,6 +473,30 @@ class ServiceMontage:
             raise ErreurAtelier(f"bande inconnue : {identifiant}")
         return bande
 
+    # ── Les trois portes ouvertes aux calques d'animation (B20) ──────────────
+    #
+    # **Trois passe-plats, et ils existent pour que `B20` n'aille pas chercher
+    # sous le capot.** Le service des calques d'animation a besoin d'écrire une
+    # bande, de relire les fichiers de ses prises et de connaître la recette de
+    # chaque image — trois choses que ce service savait déjà faire, en privé.
+    # Les recopier chez lui aurait donné deux façons de préparer une image,
+    # donc deux systèmes de coordonnées, et un calage qui tombe à côté sans que
+    # rien ne lève. Les ouvrir coûte trois lignes et tient la chaîne unique.
+
+    def enregistrer(self, bande: Bande) -> None:
+        """Écrire une bande — le fichier d'abord, l'index ensuite, et l'annonce."""
+        self._sauver(bande)
+
+    def fichiers_des_prises(
+        self, clip: str, prises: Sequence[Prise]
+    ) -> list[Path]:
+        """Les fichiers d'image de ces prises, dans leur ordre."""
+        return self._fichiers_des_prises(clip, prises)
+
+    def recettes_de(self, bande: Bande) -> tuple[list[Recette], list[bool]]:
+        """La recette de chaque image, et si elle est à elle."""
+        return self._recettes_de(bande)
+
     def renommer(self, identifiant: str, nom: str) -> Bande:
         propre = nom.strip()
         if not propre:
@@ -699,6 +728,7 @@ class ServiceMontage:
             preparer(fichier.read_bytes(), recette_la)
             for fichier, recette_la in zip(retenues, recettes)
         ]
+        preparees = self._habiller_si_besoin(bande, preparees)
         fenetre = (
             None
             if bande.cadre.vide
@@ -712,6 +742,39 @@ class ServiceMontage:
             recettes=recettes,
             individuelles=individuelles,
         )
+
+    def _habiller_si_besoin(
+        self, bande: Bande, preparees: list[np.ndarray]
+    ) -> list[np.ndarray]:
+        """Poser la pièce sur les images, **quand la bande en porte une** (B20).
+
+        **Ici, et pas dans le service des calques d'animation**, parce que c'est
+        ici que la planche s'assemble — et qu'il n'y a qu'un seul endroit qui
+        l'assemble. Une bande habillée dont la planche se serait faite ailleurs
+        aurait fini par rendre d'autres pixels que celle du corps, et c'est
+        l'auteur qui aurait découvert l'écart dans son moteur de jeu.
+
+        Sans ce passage, une bande qui porte une épée rendait la planche du
+        **corps nu** sous son propre nom : l'écran l'aurait montrée habillée —
+        il lit l'aperçu, qui compose —, et l'export aurait sorti le corps seul.
+
+        **Le calque introuvable ne fait pas tomber la planche** : la bande sort
+        nue, ce qu'elle est redevenue. C'est la règle des orphelins du produit —
+        jamais de cascade, l'état se voit et se répare.
+        """
+        if bande.habillage is None or not (bande.personnage and bande.pose):
+            return preparees
+        calque = calque_de_la_pose(
+            self._base,
+            bande.projet or "",
+            bande.personnage,
+            bande.pose,
+            bande.habillage.piece,
+        )
+        if calque is None:
+            return preparees
+        octets, _ = self._assets.octets(calque)
+        return habiller_les_images(preparees, en_rgba(octets), bande.calages)
 
     @staticmethod
     def _recettes_des_prises(

@@ -176,7 +176,7 @@ d'agents avant le gros morceau.
 | **4** | `B8`, `B9`, `B10`, `B11` | la collection, la grille d'une famille, la page d'un sujet, le départage |
 | **5** | `B14`, `B15` | les règles du jeu, l'installation |
 | **6** | `B16`, `B17`, `B18` | les tables rangées, puis les moteurs |
-| **7** | `B12`, `B13` ✔, `B19` ✔, `B20`, `B21`, `B22` | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
+| **7** | `B12`, `B13` ✔, `B19` ✔, `B20` ✔, `B21`, `B22` | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
 
 `B8` et `B17` sont du serveur pur : ils se prennent en parallèle du rang qui les précède.
 
@@ -969,7 +969,7 @@ lecture du disque mais dans `regler_piece`, qui reconstruisait une pièce champ 
 
 ---
 
-## B20 · Les calques d'animation
+## B20 · Les calques d'animation — **tenue le 10 septembre 2026**
 
 **Planche** : `Emploi.dc.html`
 
@@ -980,16 +980,47 @@ machine. C'est le seul chemin pour qu'un personnage équipé bouge.
 
 **Vérifié** : une bande porte le projet, le personnage, la pose et la direction. Elle n'a
 aucun champ *pièce*, et les mots *pièce* et *équipement* n'apparaissent nulle part dans toute
-la couche animation. Le calcul de recalage, lui, existe déjà.
+la couche animation. Le calcul de recalage, lui, existe déjà — c'est
+`atelier/image/calque.py::proposer`, écrit en `M1`, et il n'a pas été retouché d'une ligne.
+
+**La géométrie, tranchée en tenant la tranche.** L'axe des directions que `B19` renvoyait ici
+entre — et il entre **sans toucher aux calques**. Un calque reste solidaire de sa pose ; c'est
+la **bande** qui porte la direction, depuis `A10`. Habiller les quatre bandes d'une pose relit
+donc quatre fois *le même* calque, et l'écran rend la grille de vingt-quatre rangées de la
+planche sans qu'aucun des dix-huit calques supplémentaires n'ait à exister. Le seul endroit du
+module qui va chercher une image cherche par *(pièce, personnage, pose)*, jamais par direction :
+`ServiceCalquesAnimes._calque_de`.
+
+**Une bande habillée est une bande à elle**, comme un calque est un asset à lui (`C3`). La
+symétrie n'est pas décorative : elle a obligé à poser le `piece IS NULL` de `C3` à deux
+endroits de la couche animation — `Base.bandes_par_pose` et `ServiceProduction.cases()` —, sans
+quoi habiller une marche aurait rempli la case *marche* une seconde fois.
 
 ### Critères d'acceptation
 
-- [ ] Une bande porte sa pièce, et une case sans animation du personnage reste vide sans
-      compter comme un manque.
-- [ ] L'écran distingue « le calque tient » (recalé image par image) de « le calque glisse »
-      (un seul calage pour toute la bande).
-- [ ] Le recalage ne coûte rien et ne rappelle aucun fournisseur.
-- [ ] Un calage gardé à la main se réutilise sur la pièce suivante.
+- [x] Une bande porte sa pièce, et une case sans animation du personnage reste vide sans
+      compter comme un manque. *`Bande.habillage` porte la pièce, la tenue et le calage à la
+      main ; `Bande.piece` s'en déduit et devient une colonne du rangement. Le compte de la
+      matrice exclut `sans-animation` — **il n'y a rien à habiller, et aucun clic ne le
+      changerait**. Vérifié au navigateur sur le goliath : 24 rangées, `2 sur 6 · 18 sans
+      animation`, et la ligne « Attaque » porte son calque, dit « rien à habiller » et
+      **n'offre aucun bouton**.*
+- [x] L'écran distingue « le calque tient » (recalé image par image) de « le calque glisse »
+      (un seul calage pour toute la bande). *Et la distinction est mesurable, pas
+      déclarative : sur le clip d'essai — où le corps descend d'image en image — *tient* rend
+      `dy = [1, 7, 10, 13, 16, 16, 16, 16]` et *glisse* rend `[1]` huit fois. Mesuré au
+      navigateur sur les images habillées elles-mêmes, pas seulement sur les nombres.*
+- [x] Le recalage ne coûte rien et ne rappelle aucun fournisseur. *Vérifiable plutôt
+      qu'affirmé : `ServiceCalquesAnimes` ne reçoit **ni catalogue, ni fournisseur, ni
+      animateur** — la privation du montage, pour la même raison. Trois essais le mesurent (le
+      double ne reçoit aucun appel, aucune génération n'est créée, le service n'a pas les
+      attributs), et l'atelier jetable compte les générations avant et après quatre
+      habillages : écart 0.*
+- [x] Un calage gardé à la main se réutilise sur la pièce suivante. *`ReglagesGardes` (`M1`)
+      réemployé tel quel, gardé sur la bande **nue** — celle du corps que toutes les pièces
+      partagent — et non sur l'habillée. Vérifié au navigateur : `1,15 / +5 / −4` posé sur
+      l'épée, repris par le casque de fer sur la même animation, **et chaque pièce lit son
+      propre calque**. Une bande nue jamais touchée, elle, recale bien de zéro.*
 
 ### Bloquée par
 

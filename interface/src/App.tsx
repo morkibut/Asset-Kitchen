@@ -56,6 +56,8 @@ import {
   type Personnage,
   type Piece,
   type GenreDEmploi,
+  type MatriceDesCalquesAnimes,
+  type TenueDuCalque,
   type VestiaireDuJeu,
   type DirectionsDuJeu,
   type Pose,
@@ -92,6 +94,7 @@ import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { Emplois } from "./composants/Emplois"
 import { Emploi } from "./composants/Emploi"
+import { CalquesAnimes } from "./composants/CalquesAnimes"
 import {
   Carnet,
   EQUIPEMENT,
@@ -560,6 +563,10 @@ export function App() {
    *  `null` tant qu'on ne l'a pas lu : les écrans le disent plutôt que de
    *  montrer un vestiaire vide qui ressemblerait à « il ne porte rien ». */
   const [vestiaireDuJeu, setVestiaireDuJeu] = useState<VestiaireDuJeu | null>(null)
+  /** La matrice des calques d'animation de l'emploi ouvert (`B20`), ou `null`
+   *  tant que l'écran n'est pas ouvert — voir `relireLesCalquesAnimes`. */
+  const [calquesAnimes, setCalquesAnimes] =
+    useState<MatriceDesCalquesAnimes | null>(null)
   // **La case que le prochain appel remplira** (US-120). Armée depuis la
   // matrice, désarmée dès que l'appel est parti : c'est une intention qui vaut
   // pour *cette* génération, et une intention qui survivrait à son geste
@@ -901,6 +908,24 @@ export function App() {
         ? entrer(p, { genre: "emploi", piece: pieceOuverte, emploi })
         : sortir(p, "emploi"),
     )
+  /** Les calques d'animation d'un emploi (`B20`) — une profondeur de plus.
+   *
+   *  **Le porteur est passé au lieu**, et non déduit à l'ouverture : cet écran
+   *  range des bandes, et une bande appartient à un personnage. Un emploi qui ne
+   *  porte personne n'a donc rien à y montrer, et le bouton qui y mène ne
+   *  paraît pas sur lui. */
+  const calquesAnimesLieu = lieu(pile, "calques-animes")
+  const ouvrirLesCalquesAnimes = (porteur: string | null) =>
+    setPile((p) =>
+      porteur && pieceOuverte && emploiOuvertLieu
+        ? entrer(p, {
+            genre: "calques-animes",
+            piece: pieceOuverte,
+            emploi: emploiOuvertLieu.emploi,
+            porteur,
+          })
+        : sortir(p, "calques-animes"),
+    )
 
   // ── Les gestes du vestiaire (`B19`) ───────────────────────────────────────
   //
@@ -916,6 +941,47 @@ export function App() {
   const apresUnGesteDuVestiaire = async () => {
     await relireLeVestiaire()
     await relireProduction()
+  }
+
+  // ── Les gestes des calques d'animation (`B20`) ───────────────────────────
+  //
+  // Même règle que ci-dessus : l'écran ne parle pas au serveur, il remonte. Les
+  // trois relisent **la matrice seule** — habiller ne change ni le vestiaire ni
+  // la production, puisque aucun calque n'est créé et aucune pièce n'est
+  // attribuée. Relire les trois aurait fait payer deux balayages pour rien.
+
+  const habillerUneBande = async (bande: string, tenue: TenueDuCalque) => {
+    try {
+      await api.habillerLaBande(
+        bande,
+        calquesAnimesLieu?.piece ?? "",
+        tenue,
+      )
+      await relireLesCalquesAnimes()
+    } catch (erreur) {
+      echouer(erreur, "le calque n'a pas pu être posé")
+    }
+  }
+
+  const reglerUnCalqueAnime = async (
+    habillee: string,
+    tenue: TenueDuCalque,
+  ) => {
+    try {
+      await api.reglerLeCalqueAnime(habillee, tenue)
+      await relireLesCalquesAnimes()
+    } catch (erreur) {
+      echouer(erreur, "la façon de suivre a été refusée")
+    }
+  }
+
+  const deshabillerUneBande = async (habillee: string) => {
+    try {
+      await api.deshabillerLaBande(habillee)
+      await relireLesCalquesAnimes()
+    } catch (erreur) {
+      echouer(erreur, "le calque n'a pas pu être retiré")
+    }
   }
 
   const ajouterUnEmploi = async (
@@ -1508,6 +1574,34 @@ export function App() {
   useEffect(() => {
     void relireLeVestiaire()
   }, [relireLeVestiaire])
+
+  /** La matrice des calques d'animation (`B20`), **demandée seulement quand
+   *  l'écran est ouvert**.
+   *
+   *  Elle lit les bandes et les calques d'un porteur ; la charger au démarrage
+   *  ferait payer ce balayage à tout le produit pour un écran que presque
+   *  personne n'ouvre. C'est le même partage que `vestiaire` et
+   *  `vestiaire_du_jeu` côté serveur, et pour la même raison. */
+  const relireLesCalquesAnimes = useCallback(async () => {
+    if (!calquesAnimesLieu) {
+      setCalquesAnimes(null)
+      return
+    }
+    try {
+      setCalquesAnimes(
+        await api.calquesAnimes(
+          calquesAnimesLieu.piece,
+          calquesAnimesLieu.porteur,
+        ),
+      )
+    } catch (erreur) {
+      echouer(erreur, "les calques d'animation ne répondent pas")
+    }
+  }, [calquesAnimesLieu?.piece, calquesAnimesLieu?.porteur])
+
+  useEffect(() => {
+    void relireLesCalquesAnimes()
+  }, [relireLesCalquesAnimes])
 
   useEffect(() => {
     void relireProduction()
@@ -2969,6 +3063,11 @@ export function App() {
           ?.emplois.find((e) => e.identifiant === ou.emploi)
         return sien ? sien.nom || libelleDEmploi(sien) : null
       }
+
+      // Les calques d'animation d'un emploi (`B20`) — une profondeur de plus,
+      // et son nom ne dépend d'aucune lecture : il dit ce que l'écran montre.
+      case "calques-animes":
+        return "Ses animations"
 
       // La grille du jeu, et comparer (`B13`) — deux profondeurs de plus de
       // la page d'un sujet, chacune avec son propre dernier nom.
@@ -4506,7 +4605,11 @@ export function App() {
         onglet === "codex" &&
         !bandeOuverte &&
         pieceEtSesEmplois &&
-        emploiOuvert && (
+        emploiOuvert &&
+        /* **Les calques d'animation passent devant leur emploi**, comme
+           l'emploi passe devant sa pièce : ils sont plus profonds, et deux
+           surfaces à la fois n'existent pas. */
+        !calquesAnimesLieu && (
           <Emploi
             emploi={emploiOuvert}
             piece={pieceEtSesEmplois.piece}
@@ -4539,6 +4642,35 @@ export function App() {
               setCaseOuverte(asset)
             }}
             onLesAutresEmplois={() => ouvrirLEmploi(null)}
+            /* **Seulement sur un emploi porté** : un emploi qui ne porte
+               personne n'a pas d'animation à habiller — il n'a ni pose, ni
+               calque, seulement une description. L'écran d'`Emploi` décide de
+               montrer le bouton ou non, à partir de ce porteur-là. */
+            onCalquesAnimes={() =>
+              ouvrirLesCalquesAnimes(emploiOuvert.porteur || null)
+            }
+          />
+        )}
+
+      {/* ── Les calques d'animation d'un emploi (`B20`) ─────────────────────
+          *Ses animations, image par image* — le calque de la pose, reposé sur
+          chaque image de chaque bande. **Aucun bouton de cet écran ne
+          dépense** : le recalage tourne sur la machine. */}
+      {!depensesOuvertes &&
+        !envoiOuvert &&
+        !clipOuvert &&
+        onglet === "codex" &&
+        !bandeOuverte &&
+        calquesAnimesLieu &&
+        calquesAnimes && (
+          <CalquesAnimes
+            matrice={calquesAnimes}
+            onPoser={(bande, tenue) => void habillerUneBande(bande, tenue)}
+            onBasculer={(habillee, tenue) =>
+              void reglerUnCalqueAnime(habillee, tenue)
+            }
+            onRetirer={(habillee) => void deshabillerUneBande(habillee)}
+            onRevenirALEmploi={() => ouvrirLesCalquesAnimes(null)}
           />
         )}
 

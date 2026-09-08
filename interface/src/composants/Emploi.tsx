@@ -199,6 +199,7 @@ export function Emploi({
   onRetirer,
   onCalque,
   onLesAutresEmplois,
+  onCalquesAnimes,
 }: {
   emploi: EmploiResolu
   piece: Piece
@@ -215,6 +216,10 @@ export function Emploi({
   onRetirer: () => void
   onCalque: (asset: string) => void
   onLesAutresEmplois: () => void
+  /** Ouvrir *ses animations, image par image* (`B20`). Le bouton ne paraît que
+   *  sur un emploi **porté** : sans porteur il n'y a ni pose, ni bande, ni rien
+   *  à habiller. */
+  onCalquesAnimes: () => void
 }) {
   const [nom, setNom] = useBrouillon(emploi.nom, emploi.identifiant)
   const [description, setDescription] = useBrouillon(
@@ -278,6 +283,20 @@ export function Emploi({
         {/* ── La matrice — une colonne de poses, jamais une grille ──────── */}
         <div className="flex items-baseline gap-[8px]">
           <Etiquette>Une rangée par pose</Etiquette>
+          {/* **Et pendant les animations** (B20) — aucun calque de plus n'est
+              généré : c'est celui de la pose qui est recalé sur chaque image,
+              sur la machine et gratuitement. Le bouton ne paraît que sur un
+              emploi porté, parce que lui seul a des animations à habiller. */}
+          {porte && porteur !== null ? (
+            <button
+              type="button"
+              data-voir-les-calques-animes
+              onClick={onCalquesAnimes}
+              className="h-[26px] rounded-7 px-[8px] text-[12.5px] text-encre-3 transition-colors duration-120 hover:text-encre"
+            >
+              Ses animations, image par image ›
+            </button>
+          ) : null}
           <span className="mesure ml-auto text-[12.5px] text-encre-3">
             {compteDesCalques(emploi.fait, emploi.attendu)}
           </span>

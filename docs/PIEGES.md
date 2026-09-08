@@ -1694,3 +1694,48 @@ la prochaine réécriture retrouvera.
   avait déjà refermée de son côté. Réparé en important `quantificationDe`, `CURSEURS`,
   `PAIRE_VIDE` et `TOLERANCE_D_UNE_PAIRE_MAX` depuis `Places.tsx` plutôt qu'en les réécrivant une
   troisième fois. Payé le 10 septembre 2026, à la fusion de `B16` et `B17`.
+- **Depuis un worktree, le python du dépôt principal importe le dépôt principal.** Le `.venv`
+  porte le dépôt en installation modifiable, si bien qu'`import atelier` résout vers
+  `C:\...\gag2\atelier` et **non** vers celui du worktree. `python -c` lancé depuis le worktree
+  s'en tire — `sys.path[0]` y est le dossier courant —, mais `python C:\...\scratchpad\essai.py`
+  met le dossier *du script* en tête et laisse l'installation gagner. ⚠️ **Le symptôme est un
+  faux vert** : une vérification écrite pour du code neuf passe en mesurant le code de l'auteur,
+  et une route qu'on vient d'ajouter n'apparaît nulle part sans qu'aucune erreur ne lève. Trouvé
+  en cherchant pourquoi sept routes déclarées ne se retrouvaient pas dans l'application.
+  **Poser `PYTHONPATH` sur le worktree pour tout ce qu'on y lance** — pytest compris. Payé le
+  10 septembre 2026, en `B20`.
+- **Un axe neuf sur un objet déjà rangé recompte les cases d'une autre matrice.** `Bande` gagne
+  un champ `piece` en `B20`, et une bande habillée est une bande à part entière — comme un
+  calque est un asset à part entière depuis `C3`. Le compte des images tenait déjà le
+  `piece IS NULL` qui sépare un corps d'un calque ; celui des bandes ne l'avait pas, faute d'axe
+  à séparer. Sans lui, habiller la marche du goliath remplissait la case *marche* **une seconde
+  fois** : la matrice de `B11` annonçait deux animations là où le personnage n'en a qu'une, et
+  la seconde ne s'était jamais découpée. Deux endroits à corriger, et ils ne se ressemblent
+  pas — `Base.bandes_par_pose` (en SQL) et `ServiceProduction.cases()` (en Python).
+  ⚠️ **Quand on ajoute à un objet l'axe qui sépare déjà un autre calque du produit, chercher
+  tous les endroits qui comptent cet objet — le filtre existe ailleurs, tout écrit, et c'est
+  qu'il manque ici.** Payé le 10 septembre 2026, en `B20`.
+- **Une pièce née hors d'une fiche ne montre aucun emploi, et ses calques n'y changent rien.**
+  `B19` a tranché qu'une pièce créée par la route naît **déclarée vide**, et qu'une pièce
+  déclarée ne consulte plus ses calques — sans quoi un porteur retiré reparaîtrait à la
+  relecture suivante. Conséquence pour tout décor monté par les routes :
+  `POST /api/characters/pieces` sans `porteur` donne une pièce que le carnet affiche « aucun
+  emploi » **même après lui avoir posé six calques**. L'atelier jetable de `B20` s'est monté
+  ainsi, et l'écran de la tranche n'avait alors aucune porte d'entrée — alors que le serveur,
+  lui, répondait juste : la matrice se demande par *(pièce, porteur)* et n'a jamais eu besoin
+  d'un emploi. ⚠️ **Un décor d'essai monté par les routes n'est pas un disque d'avant la
+  tranche**, et les deux ne se lisent pas pareil ; passer `porteur` à la création est le geste
+  qui les raccorde. Payé au navigateur le 10 septembre 2026, en `B20`.
+- **Un aperçu qui compose et une planche qui n'en sait rien mentent d'accord.** `B20` fait
+  d'une bande habillée une bande comme les autres, donc `ServiceMontage.planche` la sert — et
+  il assemblait les images du **corps nu** sous le nom de l'habillée. Rien ne levait, et rien
+  ne se voyait : l'écran montre l'aperçu, qui compose bien la pièce ; seul l'export aurait
+  sorti le corps seul, et l'écart se serait découvert en ouvrant le fichier dans le moteur de
+  jeu. ⚠️ **Quand une tranche ajoute un état à un objet, chercher tout ce qui rend cet objet en
+  pixels — pas seulement ce qui l'affiche.** Un aperçu et un rendu définitif qui passent par
+  deux chaînes différentes finissent toujours par diverger ; ici la réparation a été de faire
+  passer les deux par la même fonction (`habiller_les_images`), et non d'en corriger une.
+  ⚠️ **Et la mesure doit être en octets** : deux planches assemblées des mêmes images avec et
+  sans la pièce ne peuvent pas être identiques, alors qu'un essai qui compterait les images ou
+  vérifierait les dimensions serait passé dans les deux cas. Trouvé en relisant la tranche
+  avant de commiter, le 10 septembre 2026, en `B20`.

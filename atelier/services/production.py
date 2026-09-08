@@ -2041,12 +2041,19 @@ class ServiceProduction:
         # jusqu'à `bandes_ecartees`, le seul endroit du produit qui la montre —
         # *Ses animations* (`AnimationsDuSujet.tsx`), qui la range derrière sa
         # flèche plutôt que de la faire disparaître.
+        #
+        # **Une bande habillée n'est pas une animation du personnage** (B20),
+        # et elle s'écarte ici par le même `piece is None` que les images tiennent
+        # une trentaine de lignes plus haut. C'est le corps qui remplit la case ;
+        # l'épée qu'on lui pose dessus se compte dans la matrice de son emploi,
+        # et nulle part ailleurs. Sans ce filtre, habiller une marche ferait
+        # afficher deux marches — et la seconde ne se serait jamais découpée.
         animations: dict[str, list[Bande]] = {}
         animations_ecartees: dict[str, list[Bande]] = {}
         for bande in self._base.bandes_du_personnage(
             personnage.identifiant, projet=projet
         ):
-            if not bande.pose:
+            if not bande.pose or bande.piece is not None:
                 continue
             cible = animations_ecartees if bande.supprime_le is not None else animations
             cible.setdefault(bande.pose, []).append(bande)

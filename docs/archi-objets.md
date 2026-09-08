@@ -7,6 +7,15 @@
 > qui le lie aux autres. ⚠️ **La V4 en modifie quatre** : la pièce d'équipement déclare qui la
 > porte, la collection devient un groupe libre de sujets, la bande se range comme une image,
 > le clip entre en bibliothèque (`docs/PLAN-carnet.md`).
+>
+> **Et `B20` a ajouté un champ à la bande, le 10 septembre 2026** : son **habillage** — la
+> pièce qu'elle porte, la façon dont le calque suit (*il tient*, recalé image par image, ou *il
+> glisse*, un seul calage pour toute la bande), et le calage posé à la main quand il y en a un.
+> Une bande sans habillage est le corps nu, et c'est le cas de toutes celles d'avant. ⚠️ **Ce
+> n'est pas une entité de plus** : une bande habillée est une bande, exactement comme un calque
+> rendu est un asset — et l'invariant de `C3` tient sans exception, *un calque reste solidaire
+> de sa pose*. La direction est portée par la bande, jamais par le calque, si bien qu'habiller
+> les quatre bandes d'une pose relit le même calque quatre fois.
 
 ## 5 · Modèle d'objets
 
