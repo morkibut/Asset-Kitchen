@@ -34,6 +34,7 @@ from atelier.domaine.animation import (
 from atelier.domaine.bande import BOUCLE
 from atelier.domaine.bande import CADENCE_PAR_DEFAUT as CADENCE_DE_BANDE
 from atelier.domaine.bande import Cadre, Prise
+from atelier.domaine.calque_anime import TIENT
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.recette import Recette
 from atelier.api.routes import reponse_archive
@@ -960,6 +961,114 @@ async def restaurer_des_bandes(
     exact de `POST /assets/restore`."""
     rendues = _atelier(requete).montage.restaurer(corps.identifiants)
     return {"bandes": [b.en_json() for b in rendues]}
+
+
+# ── Les calques d'animation (B20) ────────────────────────────────────────────
+#
+# **Toutes sous `/strips/{id}/layer`**, et le segment littéral vient après le
+# trou de l'identifiant sans risque : `layer` n'est pas en concurrence avec le
+# nom d'une bande, il est *derrière* lui. Le piège des routes à segments ne se
+# pose que quand deux chemins se disputent la **même** position.
+#
+# **Aucune ne dépense**, et c'est vérifiable plutôt qu'affirmé : le service
+# qu'elles appellent ne tient ni catalogue, ni fournisseur, ni animateur.
+
+
+class CorpsHabillage(BaseModel):
+    """La pièce à poser, et comment son calque suit."""
+
+    piece: str
+    tenue: str = TIENT
+
+
+class CorpsTenue(BaseModel):
+    """La façon de suivre, seule — changer d'avis refait les nombres."""
+
+    tenue: str
+
+
+class CorpsCalage(BaseModel):
+    """Le calage posé à la main, et s'il sert à la pièce suivante.
+
+    `garder` est vrai par défaut : c'est le critère de la tranche, et le défaut
+    doit être celui qui rend le geste utile. Le refuser reste possible — un
+    calage bon pour une seule pièce ne doit pas s'imposer à la suivante.
+    """
+
+    echelle: float = 1.0
+    dx: int = 0
+    dy: int = 0
+    seuil: int | None = None
+    garder: bool = True
+
+
+@routeur.post("/strips/{identifiant}/layer", status_code=201)
+async def habiller_une_bande(
+    requete: Request, identifiant: str, corps: CorpsHabillage
+) -> dict[str, Any]:
+    """Poser le calque d'une pièce sur chaque image de cette animation.
+
+    **Rien n'est généré, rien n'est payé** : le calque existe, les images
+    existent, et ce qui se calcule ici est une suite de nombres.
+    """
+    return _atelier(requete).calques_animes.habiller(
+        identifiant, corps.piece, corps.tenue
+    )
+
+
+@routeur.put("/strips/{identifiant}/layer")
+async def regler_le_calque_anime(
+    requete: Request, identifiant: str, corps: CorpsTenue
+) -> dict[str, Any]:
+    """Le calque tient, ou il glisse — **et les nombres se refont**.
+
+    Une bascule qui ne changerait pas les calages ne changerait rien à l'écran,
+    ce qui ne se distingue pas d'une bascule cassée.
+    """
+    return _atelier(requete).calques_animes.regler(identifiant, corps.tenue)
+
+
+@routeur.post("/strips/{identifiant}/layer/align")
+async def caler_un_calque_anime(
+    requete: Request, identifiant: str, corps: CorpsCalage
+) -> dict[str, Any]:
+    """Le calage posé à la main — **et gardé pour la pièce suivante**.
+
+    Les mêmes nombres sont posés sur la bande nue, celle du corps : la prochaine
+    pièce habillée sur cette animation partira d'eux au lieu de zéro.
+    """
+    return _atelier(requete).calques_animes.caler_a_la_main(
+        identifiant,
+        corps.echelle,
+        corps.dx,
+        corps.dy,
+        seuil=corps.seuil,
+        garder=corps.garder,
+    )
+
+
+@routeur.delete("/strips/{identifiant}/layer/align")
+async def oublier_le_calage_dun_calque_anime(
+    requete: Request, identifiant: str
+) -> dict[str, Any]:
+    """Défaire le calage à la main — le recalage reprend la main."""
+    return _atelier(requete).calques_animes.oublier_le_calage(identifiant)
+
+
+@routeur.get("/strips/{identifiant}/layer/preview")
+async def apercu_dun_calque_anime(
+    requete: Request, identifiant: str
+) -> dict[str, Any]:
+    """Les images habillées, **sans rien écrire sur le disque**."""
+    return _atelier(requete).calques_animes.apercu(identifiant)
+
+
+@routeur.delete("/strips/{identifiant}/layer")
+async def deshabiller_une_bande(
+    requete: Request, identifiant: str
+) -> dict[str, Any]:
+    """L'habillage s'en va ; le corps et le calque restent."""
+    return _atelier(requete).calques_animes.deshabiller(identifiant)
 
 
 @routeur.put("/strips/{identifiant}/case")

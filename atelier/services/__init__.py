@@ -56,6 +56,7 @@ from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
 from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.generation import ServiceGenerations
 from atelier.services.installation import ServiceInstallation
+from atelier.services.calques_animes import HabillageRefuse, ServiceCalquesAnimes
 from atelier.services.montage import ServiceMontage
 from atelier.services.sortie import ServiceSortie, SortieRefusee
 from atelier.services.planche import PlancheRefusee, ServicePlanche
@@ -453,6 +454,17 @@ class Atelier:
             self.assets,
             self.production,
             self.diffusion,
+        )
+        # **Les calques d'animation, montés juste après le montage** (B20), et
+        # comme lui sans catalogue, sans fournisseur et sans animateur : reposer
+        # un calque déjà obtenu sur des images déjà payées ne demande rien à
+        # personne. C'est ce qu'il ne tient pas qui garantit la phrase de son
+        # écran — *le recalage ne coûte rien*.
+        self.calques_animes = ServiceCalquesAnimes(
+            self.base,
+            self.assets,
+            self.montage,
+            self.production,
         )
         self.planche = ServicePlanche(self.production, self.generations)
         # **Ce qui part, monté après elle** (E14) : l'écran qui s'intercale

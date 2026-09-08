@@ -1141,6 +1141,32 @@ async def emplois_du_jeu(
     return atelier.equipement.vestiaire_du_jeu(_projet(requete, projet))
 
 
+@routeur.get("/characters/pieces/{identifiant}/animations/{porteur}")
+async def calques_animes_de_lemploi(
+    requete: Request,
+    identifiant: str,
+    porteur: str,
+    projet: str | None = Query(None),
+) -> dict[str, Any]:
+    """**Ses animations, image par image** — la matrice d'un emploi (B20).
+
+    Une rangée par pose **et par direction**, ce que la matrice des images ne
+    peut pas faire : un calque n'a pas de direction, une bande en a une. C'est
+    la bande qui porte l'axe, et le calque de la pose se repose sur les quatre.
+
+    **Le compte n'est pas celui des rangées.** Une case sans animation du
+    personnage ne compte pas comme un manque — il n'y a rien à habiller, et
+    aucun clic ne le changerait.
+
+    Rien ici ne dépense et rien n'appelle un fournisseur : tout ce qu'elle
+    montre est sur le disque, et le recalage tourne sur la machine.
+    """
+    atelier = _atelier(requete)
+    return atelier.calques_animes.matrice(
+        _projet(requete, projet), identifiant, porteur
+    )
+
+
 @routeur.get("/characters/pieces/{identifiant}/wearers")
 async def portee_de_la_piece(
     requete: Request, identifiant: str, projet: str | None = Query(None)

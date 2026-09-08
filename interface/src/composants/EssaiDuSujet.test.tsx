@@ -69,6 +69,11 @@ function bande(surplus: Partial<Bande> & { identifiant: string }): Bande {
     rang: 0,
     supprime_le: null,
     supprime: false,
+    piece: null,
+    habillage: null,
+    habillee: false,
+    calages: [],
+    calage_garde: null,
     ...surplus,
   }
 }

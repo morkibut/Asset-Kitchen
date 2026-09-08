@@ -190,6 +190,7 @@ function monter({
   const onRetirer = vi.fn()
   const onCalque = vi.fn()
   const onLesAutresEmplois = vi.fn()
+  const onCalquesAnimes = vi.fn()
   render(
     <Emploi
       emploi={emploiDe(emploi)}
@@ -200,9 +201,10 @@ function monter({
       onRetirer={onRetirer}
       onCalque={onCalque}
       onLesAutresEmplois={onLesAutresEmplois}
+      onCalquesAnimes={onCalquesAnimes}
     />,
   )
-  return { onRegler, onRetirer, onCalque, onLesAutresEmplois }
+  return { onRegler, onRetirer, onCalque, onLesAutresEmplois, onCalquesAnimes }
 }
 
 const rangees = () => document.querySelectorAll("[data-rangee-de-pose]")

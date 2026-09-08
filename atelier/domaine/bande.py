@@ -33,7 +33,13 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from atelier.domaine.calque_anime import (
+    CalageParImage,
+    Habillage,
+    calages_depuis_json,
+)
 from atelier.domaine.recette import Recette
+from atelier.domaine.superposition import ReglagesGardes
 
 # ── Le sens de lecture ───────────────────────────────────────────────────────
 #
@@ -292,6 +298,42 @@ class Bande:
     pose: str | None = None
     direction: str | None = None
 
+    # ── Ce qu'elle porte par-dessus le corps (B20) ───────────────────────────
+    #
+    # **Le champ qui manquait au rangement.** Une bande portait les quatre
+    # ci-dessus et rien de plus ; les mots *pièce* et *équipement* n'existaient
+    # nulle part dans la couche animation, et une animation habillée n'avait
+    # donc nulle part où se ranger.
+    #
+    # Vide veut dire **le corps nu**, et c'est le cas de toutes les bandes du
+    # dépôt : une bande d'avant `B20` se relit sans habillage sans qu'un fichier
+    # ait été réécrit.
+    #
+    # ⚠️ **La direction est ici, le calque ne l'a pas.** Habiller les quatre
+    # bandes d'une pose consulte quatre fois le même calque — celui de la pose.
+    # C'est ce qui fait tenir l'invariant de `C3` en ajoutant l'axe des
+    # directions : il est porté par la bande, jamais par ce qu'on pose dessus.
+    habillage: Habillage | None = None
+
+    # Les nombres du calage, une entrée par image retenue. **Un cache, comme la
+    # planche** : les effacer ne perd rien, le recalage les refait sur la
+    # machine et ne demande aucun fournisseur. Ils sont gardés parce que les
+    # relire est immédiat et que les refaire demande un instant — pas parce
+    # qu'ils seraient la vérité.
+    calages: tuple[CalageParImage, ...] = ()
+
+    # **Le calage que l'auteur a posé à la main sur cette animation**, gardé
+    # pour la pièce suivante. Même geste et même objet que sur une image de
+    # référence (`M1`) : un jeu de nombres qui marche pour un casque marchera à
+    # peu près pour le suivant, puisque c'est le même corps qui bouge de la même
+    # façon. Il revient prérempli, avec sa provenance écrite, et se défait d'un
+    # clic — comme tout ce que le produit devine.
+    #
+    # Il vit sur la bande **nue**, et c'est ce qui le rend réutilisable : une
+    # bande habillée est celle d'une pièce, la bande nue est celle du corps que
+    # toutes les pièces partagent.
+    calage_garde: ReglagesGardes | None = None
+
     # La planche de sprites déjà calculée. **Un cache, et rien d'autre** :
     # l'effacer ne perd rien, la recalculer coûte des millisecondes.
     planche: str | None = None
@@ -343,6 +385,22 @@ class Bande:
         """Hors rangement. Ses fichiers sont peut-être encore là — l'annulation
         court —, mais plus rien ne le montre ni ne la compte dans une case."""
         return self.supprime_le is not None
+
+    @property
+    def piece(self) -> str | None:
+        """La pièce qu'elle porte, ou rien — **lue, jamais rangée deux fois**.
+
+        C'est ce que le rangement demande (une colonne, comme `pose`), et c'est
+        une question qu'on pose partout. La tirer de l'habillage plutôt que de
+        tenir un second champ est ce qui empêche les deux de se contredire —
+        la même raison qui fait d'`images` une lecture de `prises`.
+        """
+        return self.habillage.piece if self.habillage else None
+
+    @property
+    def habillee(self) -> bool:
+        """Porte-t-elle quelque chose ? Une bande nue est le corps seul."""
+        return self.habillage is not None
 
     @property
     def images(self) -> tuple[int, ...]:
@@ -426,6 +484,17 @@ class Bande:
             "personnage": self.personnage,
             "pose": self.pose,
             "direction": self.direction,
+            # **`piece` est écrite à plat en plus de l'habillage**, et pour la
+            # même raison qu'`images` accompagne `prises` : c'est ce que lisent
+            # le rangement, la matrice et tout ce qui ne veut que trier. Elle se
+            # calcule depuis l'habillage, donc les deux ne peuvent pas diverger.
+            "piece": self.piece,
+            "habillage": self.habillage.en_json() if self.habillage else None,
+            "habillee": self.habillee,
+            "calages": [c.en_json() for c in self.calages],
+            "calage_garde": (
+                self.calage_garde.en_json() if self.calage_garde else None
+            ),
             "planche": self.planche,
             "case_largeur": self.case_largeur,
             "case_hauteur": self.case_hauteur,
@@ -465,6 +534,15 @@ class Bande:
             personnage=d.get("personnage") or None,
             pose=d.get("pose") or None,
             direction=d.get("direction") or None,
+            # Absents pour toute bande d'avant `B20`, et pour toute bande nue :
+            # les deux se relisent comme le corps seul, ce qu'elles sont.
+            habillage=Habillage.depuis_json(d.get("habillage")),
+            calages=calages_depuis_json(d.get("calages")),
+            calage_garde=(
+                ReglagesGardes.depuis_json(d["calage_garde"])
+                if isinstance(d.get("calage_garde"), dict)
+                else None
+            ),
             planche=d.get("planche") or None,
             case_largeur=int(d.get("case_largeur", 0)),
             case_hauteur=int(d.get("case_hauteur", 0)),

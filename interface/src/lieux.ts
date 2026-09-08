@@ -110,6 +110,20 @@ export type Lieu =
   // n'existe que sur sa pièce, et le retrouver en cherchant dans toutes les
   // pièces du jeu aurait demandé au fil de savoir des choses qu'il n'a pas.
   | { genre: "emploi"; piece: string; emploi: string }
+  // Les calques d'animation de cet emploi (`B20`) — *ses animations, image par
+  // image*. Une profondeur sous l'emploi, et elle porte **le porteur en plus**
+  // des deux identifiants de l'emploi.
+  //
+  // Pourquoi le porteur explicitement, alors que l'emploi le connaît : cet écran
+  // range des **bandes**, et une bande appartient à un personnage. Le déduire de
+  // l'emploi aurait marché pour un emploi porté et pour aucun autre — et un
+  // emploi qui ne porte personne n'a pas d'animation à habiller du tout.
+  | {
+      genre: "calques-animes"
+      piece: string
+      emploi: string
+      porteur: string
+    }
   | { genre: "sujet"; sujet: string }
   // La grille du jeu, et comparer (`B13`) — **deux profondeurs de la page d'un
   // sujet**, atteintes depuis son bandeau d'onglets, comme la matrice l'était

@@ -179,6 +179,12 @@ CREATE TABLE IF NOT EXISTS bandes (
     personnage  TEXT,
     pose        TEXT,
     direction   TEXT,
+    -- **La pièce que cette animation porte** (B20), et elle sépare les deux
+    -- calques de la couche animation exactement comme `assets.piece` sépare
+    -- ceux de la couche image : une bande sans pièce est le corps qui bouge,
+    -- une bande avec pièce est ce même mouvement habillé. Compter sans elle
+    -- ferait paraître une épée en marche comme une seconde marche du goliath.
+    piece       TEXT,
     contenu     TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS bandes_par_clip ON bandes (clip);
@@ -898,8 +904,16 @@ class Base:
         mêle pas au premier : une case qui porterait les deux serait pleine dès
         qu'elle a l'une des deux, et une animation manquante se cacherait
         derrière une image présente.
+
+        **Une bande habillée ne compte pas** (B20), et c'est très exactement le
+        `piece IS NULL` que le compte des images tient depuis `C3`, posé ici le
+        jour où une bande a pu porter une pièce. Sans lui, habiller la marche du
+        goliath remplirait la case *marche* une seconde fois, et la matrice
+        dirait deux animations là où le personnage n'en a qu'une.
         """
-        return self._comptes_par_pose("bandes", projet, personnages)
+        return self._comptes_par_pose(
+            "bandes", projet, personnages, conditions=("piece IS NULL",)
+        )
 
     def vignettes_par_personnage(
         self, projet: str, personnages: Sequence[str]
@@ -1381,9 +1395,9 @@ class Base:
                 """
                 INSERT INTO bandes (
                     identifiant, clip, nom, cree_le,
-                    projet, personnage, pose, direction, contenu
+                    projet, personnage, pose, direction, piece, contenu
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(identifiant) DO UPDATE SET
                     clip = excluded.clip,
                     nom = excluded.nom,
@@ -1391,6 +1405,7 @@ class Base:
                     personnage = excluded.personnage,
                     pose = excluded.pose,
                     direction = excluded.direction,
+                    piece = excluded.piece,
                     contenu = excluded.contenu
                 """,
                 (
@@ -1402,6 +1417,7 @@ class Base:
                     bande.personnage,
                     bande.pose,
                     bande.direction,
+                    bande.piece,
                     json.dumps(bande.en_json(), ensure_ascii=False),
                 ),
             )

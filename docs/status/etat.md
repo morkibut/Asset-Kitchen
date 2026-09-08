@@ -173,6 +173,65 @@ porte ce qui appartient à l'atelier et n'en porte que trois. Or sortir appartie
 le dossier est gardé avec lui, le lot est fait de ses sujets. Il est donc **au-dessus du
 trait**, sous *Les dépenses*, et le pied reste à trois boutons.
 
+## V4 · B20 — les calques d'animation — 10 septembre 2026
+
+**Le champ qui manquait, et l'axe qui n'avait pas à entrer.** Une bande portait le projet, le
+personnage, la pose et la direction ; les mots *pièce* et *équipement* n'apparaissaient nulle
+part dans toute la couche animation, si bien qu'une animation habillée n'avait nulle part où se
+ranger. C'est la lacune que `B19` avait explicitement laissée ici.
+
+**Ce que la tranche n'a pas eu à écrire est ce qui la définit.** Le recalage existait depuis
+`M1` — `atelier/image/calque.py::proposer` —, les calques existaient depuis `C3`, les images du
+clip depuis `A10`. Il n'y avait rien à inventer entre les trois, seulement à les brancher : le
+service neuf ne fait que choisir *quelles* images poser sur *quel* calque, et déléguer le calcul.
+
+**La géométrie, qui était le morceau dur.** `B19` avait renvoyé ici l'axe des directions après
+avoir refusé la grille de vingt-quatre cases de la planche — un calque n'a de direction nulle
+part. Les deux se concilient dans un seul sens, et il tient en une phrase : **la direction vient
+de la bande, jamais du calque**. Habiller les quatre bandes d'une pose relit quatre fois *le
+même* calque ; l'écran rend donc bien les vingt-quatre rangées que la planche dessinait, et
+aucun des dix-huit calques supplémentaires n'a à exister. Un seul endroit du module va chercher
+une image, et il cherche par *(pièce, personnage, pose)* — vérifié au navigateur : sur six poses
+et quatre directions, chaque pose ne rend **qu'un** calque distinct.
+
+**Une bande habillée est une bande à elle**, comme un calque est un asset à lui. La symétrie
+avec `C3` a coûté ce qu'elle devait coûter : le `piece IS NULL` que le compte des images tient
+depuis `C3` a dû être posé à **deux endroits de plus** — `Base.bandes_par_pose` et
+`ServiceProduction.cases()`. Sans lui, habiller la marche du goliath aurait rempli la case
+*marche* une seconde fois, et la matrice de `B11` aurait annoncé deux animations là où le
+personnage n'en a qu'une — la seconde ne s'étant jamais découpée.
+
+**Le critère qui décide de la forme du compte** : *une case sans animation du personnage n'est
+pas un manque*. Une animation d'équipement suit celle du personnage ; là où il n'a rien, il n'y
+a rien à habiller, et **aucun clic ne le changerait**. L'afficher en manque ferait annoncer un
+trou que personne ne peut combler. L'ordre des questions est la décision : *le personnage a-t-il
+cette animation ?* passe avant *la pièce a-t-elle un calque ?*, sans quoi une pose qui a son
+calque et pas son animation dirait « à habiller » et compterait. Le décor du jetable pose
+exactement ce cas.
+
+**Ce qui a été réemployé plutôt que réécrit** : `ReglagesGardes` (`M1`) pour le calage à la
+main, gardé sur la bande **nue** — celle du corps que toutes les pièces partagent — et non sur
+l'habillée. C'est ce qui le rend réutilisable, et c'est le quatrième critère : `1,15 / +5 / −4`
+posé sur l'épée repart sur le casque de fer, vérifié au navigateur.
+
+**La gratuité est vérifiable et non affirmée.** Le service ne reçoit ni catalogue, ni
+fournisseur, ni animateur — la privation du montage, pour la même raison : *ce qu'il ne tient
+pas, il ne peut pas l'appeler*. Trois essais le mesurent, et le jetable compte les générations
+avant et après quatre habillages : écart zéro.
+
+**Le trou trouvé en relisant, et il ne se voyait nulle part.** Une bande habillée étant une
+bande, `ServiceMontage.planche` la servait — en assemblant les images du **corps nu** sous son
+nom. Rien ne levait : l'écran montre l'aperçu, qui compose bien la pièce, et seul l'export
+aurait sorti le corps seul. Deux chaînes de rendu pour le même objet finissent toujours par
+diverger ; la réparation les fait passer par la même fonction plutôt que d'en corriger une, et
+la mesure est en octets — un essai qui aurait compté les images serait passé dans les deux cas.
+
+**Livré** : `atelier/domaine/calque_anime.py` (neuf), cinq champs sur `Bande`, une colonne
+`piece` sur la table `bandes`, `atelier/services/calques_animes.py` (neuf), le compositage de la
+planche dans `ServiceMontage`, sept routes, `interface/src/composants/CalquesAnimes.tsx` (neuf)
+et son lieu. 33 essais Python, 22 essais d'écran ; les 1 901 essais de serveur et les 1 182
+d'écran passent sans régression.
+
 ## V4 · B17 — les moteurs qui remplacent une génération — 10 septembre 2026
 
 **Quatre traitements gratuits qui faisaient repayer une image**, et **aucune place neuve** pour

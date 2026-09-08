@@ -59,6 +59,14 @@ function bande(surplus: Partial<Bande> & { identifiant: string; cree_le: number 
     rang: 0,
     supprime_le: null,
     supprime: false,
+    // **L'état d'une bande nue** (B20) : elle ne porte aucune pièce, et c'est
+    // celui de toute bande d'avant la tranche — aucun fichier n'a été réécrit
+    // pour lui donner ces cinq champs.
+    piece: null,
+    habillage: null,
+    habillee: false,
+    calages: [],
+    calage_garde: null,
     ...surplus,
   }
 }

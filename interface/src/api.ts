@@ -932,6 +932,113 @@ export type Bande = {
   /** Hors rangement — `supprime_le !== null`, déduit côté serveur pour ne pas
    *  refaire ce calcul à chaque écran. */
   supprime: boolean
+  /** **La pièce que cette animation porte** (B20), ou `null` pour le corps nu.
+   *
+   *  C'est le champ qui manquait au rangement : une bande portait le projet, le
+   *  personnage, la pose et la direction, et rien ne pouvait dire *celle-ci est
+   *  l'épée du goliath en marche*. Déduite de `habillage`, jamais rangée deux
+   *  fois — comme `images` se déduit de `prises`. */
+  piece: string | null
+  /** Ce qu'elle porte par-dessus le corps, ou `null`. */
+  habillage: HabillageDeBande | null
+  /** Porte-t-elle quelque chose ? `habillage !== null`, déduit côté serveur. */
+  habillee: boolean
+  /** Où le calque se pose, une entrée par image retenue. **Un cache** : les
+   *  refaire ne coûte rien et ne rappelle aucun fournisseur. */
+  calages: CalageParImage[]
+  /** Le calage posé à la main sur **cette animation nue**, gardé pour la pièce
+   *  suivante (B20). Il vit sur la bande du corps, jamais sur l'habillée : c'est
+   *  ce qui le rend réutilisable, toutes les pièces partageant le même corps. */
+  calage_garde: CalageGarde | null
+}
+
+/** Comment le calque suit le personnage — **deux façons, toutes deux gratuites**.
+ *
+ *  Ce qui les sépare est le temps de calcul : *tient* rejoue le recalage sur
+ *  chaque image, *glisse* n'en calcule qu'un et le sert partout. */
+export type TenueDuCalque = "tient" | "glisse"
+
+/** Ce qu'une bande porte par-dessus le corps (B20). */
+export type HabillageDeBande = {
+  piece: string
+  tenue: TenueDuCalque
+  /** La phrase que l'écran affiche — **composée par le serveur**, pour que les
+   *  deux mots ne se réécrivent pas différemment d'un écran à l'autre. */
+  mot: string
+  /** L'auteur a-t-il posé le calage lui-même ? Ce qui n'a pas été touché ne
+   *  s'annonce pas. */
+  a_la_main: boolean
+  main: CalageGarde | null
+}
+
+/** Où le calque se pose sur **une** image de la bande. */
+export type CalageParImage = {
+  numero: number
+  echelle: number
+  dx: number
+  dy: number
+  /** Ce que le recalage a trouvé de commun entre les deux images. Elle permet
+   *  de dire *ce calage-là tombe mal* sans regarder les images une par une. */
+  couverture: number
+}
+
+/** Un calage gardé, avec sa provenance — la forme de `ReglagesGardes` (M1). */
+export type CalageGarde = {
+  depuis: string
+  le: number
+  echelle: number
+  dx: number
+  dy: number
+  rectangle: number[] | null
+  seuil: number
+}
+
+/** L'état d'une case de la matrice des calques d'animation (B20).
+ *
+ *  ⚠️ **`sans-animation` ne compte pas comme un manque.** Une animation
+ *  d'équipement suit celle du personnage : là où il n'a rien, il n'y a rien à
+ *  habiller, et aucun clic ne le changerait. `sans-calque`, lui, se répare —
+ *  une planche d'équipement donnera le calque. */
+export type EtatDuCalqueAnime =
+  | "habille"
+  | "a-habiller"
+  | "sans-animation"
+  | "sans-calque"
+
+/** Une rangée de la matrice : **une pose, une direction, un état**. */
+export type RangeeDeCalqueAnime = {
+  pose: string
+  pose_nom: string
+  /** Vide pour un jeu sans directions — un jeu vu de face n'en a pas. */
+  direction: string
+  direction_nom: string
+  etat: EtatDuCalqueAnime
+  /** Ce que l'état veut dire, en clair. Composé par le serveur : l'écran lit le
+   *  mot, il ne rejoue pas la règle. */
+  mot: string
+  /** Le calque de la pose — **le même pour ses quatre directions**, parce qu'un
+   *  calque reste solidaire de sa pose (`C3`, tenu par `B19`). */
+  calque: string | null
+  /** L'animation nue du personnage sur cette case, s'il en a une. */
+  bande: string | null
+  compte: number
+  habillee: Bande | null
+}
+
+/** Ce que l'écran des calques d'animation d'un emploi demande, en un appel.
+ *
+ *  **`attendu` exclut les cases sans animation** : c'est le serveur qui décide
+ *  ce qui compte, et l'écran qui le lit. */
+export type MatriceDesCalquesAnimes = {
+  projet: string
+  piece: Piece
+  porteur: { identifiant: string; nom: string }
+  rangees: RangeeDeCalqueAnime[]
+  fait: number
+  attendu: number
+  /** Combien de cases sont vides parce que le personnage n'a pas l'animation.
+   *  Dites, jamais comptées comme un manque. */
+  sans_animation: number
 }
 
 // ── Le temps d'une image, en millisecondes entières (B12) ────────────────────
@@ -5762,6 +5869,59 @@ export const api = {
   retirerEmploi: (piece: string, emploi: string) =>
     appeler<{ emploi: Emploi } & VestiaireDuJeu>(
       `/characters/pieces/${encodeURIComponent(piece)}/uses/${encodeURIComponent(emploi)}`,
+      { method: "DELETE" },
+    ),
+
+  // ── Les calques d'animation (B20) ────────────────────────────────────────
+  //
+  // **Aucun de ces cinq appels ne dépense.** Le calque existe, les images du
+  // clip existent, et ce qui se calcule entre les deux tourne sur la machine :
+  // le service que ces routes appellent ne tient aucun fournisseur.
+
+  /** La matrice d'un emploi : **une rangée par pose et par direction**.
+   *
+   *  Légitime ici et refusée sur `Emploi.tsx`, pour une raison exacte : ce qu'on
+   *  range est une bande, et une bande porte sa direction depuis `A10`. Le
+   *  calque, lui, n'en a pas — les quatre directions d'une pose lisent le même. */
+  calquesAnimes: (piece: string, porteur: string) =>
+    appeler<MatriceDesCalquesAnimes>(
+      `/characters/pieces/${encodeURIComponent(piece)}/animations/${encodeURIComponent(porteur)}`,
+    ),
+
+  /** Poser le calque d'une pièce sur chaque image d'une animation. */
+  habillerLaBande: (bande: string, piece: string, tenue: TenueDuCalque) =>
+    appeler<Bande>(`/strips/${encodeURIComponent(bande)}/layer`, {
+      method: "POST",
+      body: JSON.stringify({ piece, tenue }),
+    }),
+
+  /** Le calque tient, ou il glisse — **et les nombres se refont**. */
+  reglerLeCalqueAnime: (habillee: string, tenue: TenueDuCalque) =>
+    appeler<Bande>(`/strips/${encodeURIComponent(habillee)}/layer`, {
+      method: "PUT",
+      body: JSON.stringify({ tenue }),
+    }),
+
+  /** Le calage posé à la main — **et gardé pour la pièce suivante**. */
+  calerLeCalqueAnime: (
+    habillee: string,
+    corps: {
+      echelle?: number
+      dx?: number
+      dy?: number
+      seuil?: number | null
+      garder?: boolean
+    },
+  ) =>
+    appeler<Bande>(`/strips/${encodeURIComponent(habillee)}/layer/align`, {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
+
+  /** L'habillage s'en va ; le corps et le calque restent. */
+  deshabillerLaBande: (habillee: string) =>
+    appeler<{ oubliee: string; piece: string | null }>(
+      `/strips/${encodeURIComponent(habillee)}/layer`,
       { method: "DELETE" },
     ),
 
