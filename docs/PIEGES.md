@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Deux cent deux pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Deux cent trois pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1821,3 +1821,18 @@ la prochaine réécriture retrouvera.
   vérificateur de types sur l'arbre entier — pas un essai — qui a trouvé l'écart. Réparé en
   complétant la fabrique avec les cinq valeurs neutres. Payé le 10 septembre 2026, en fusionnant
   `B20`.
+- **Une fenêtre « les plus récentes » sans `WHERE projet` se venge sur le jeu le plus calme.**
+  `GET /clips` lisait `ServiceGenerations.recentes(limite)` — les générations les plus
+  fraîches, tous jeux confondus — exactement comme `chantier()` le fait déjà pour la mémoire de
+  session. Un jeu qui n'a produit qu'un seul clip, il y a une heure, se fait chasser de cette
+  fenêtre dès qu'un autre jeu a généré ne serait-ce que huit images depuis : rien ne l'annonce,
+  la route rend 200, une liste simplement plus courte. C'est très exactement le symptôme qu'un
+  clip payé « disparaît après la fermeture de son lot » — le vrai coupable n'était pas le lot
+  qui ferme, c'était l'absence de tout `projet` dans la requête. ⚠️ **Une liste qui se dit
+  « la plus récente » sans préciser *la plus récente de quoi* est fausse par construction dès
+  qu'un second flux de faits existe** — ici, un second jeu. `Base.generations_du_projet(projet,
+  limite)` existait déjà, employée ailleurs, et scoper dessus au lieu de la fenêtre globale
+  suffit ; la route garde son ancien sens quand `projet` est omis, pour ne rien casser chez qui
+  l'appelait déjà sans lui. Trouvé au relevé, avant d'écrire une ligne côté écran, et rejoué en
+  essai (`test_un_clip_peu_actif_ne_se_fait_pas_chasser_par_un_autre_jeu`) plutôt que constaté au
+  navigateur. Payé le 8 septembre 2026, en `B22`.

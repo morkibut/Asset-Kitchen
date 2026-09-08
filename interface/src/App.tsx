@@ -254,6 +254,13 @@ export function App() {
   // Le chantier : ce qui tourne, et ce qu'un redémarrage a coupé. Ce qui a
   // réussi est en bibliothèque, ce qui a échoué est au journal du projet.
   const [chantier, setChantier] = useState<Generation[]>([])
+  /** **Les clips gardés du jeu ouvert, relus depuis le dépôt** (B22) — pas
+   *  seulement ceux que le chantier tient encore en mémoire. Un clip payé n'a
+   *  aucun asset qui prend sa place à l'arrivée ; sans cette liste-ci, il ne
+   *  restait visible que le temps que le chantier le tienne, c'est-à-dire
+   *  jusqu'au premier rechargement. Relue à l'ouverture du jeu — un clip payé
+   *  ne change jamais, une relecture régulière n'apprendrait rien de plus. */
+  const [clipsDuJeu, setClipsDuJeu] = useState<Generation[]>([])
   /** La planche dont on choisit ce qu'on garde (R6) — **par identifiant, jamais
    *  par objet**. La génération vit dans le chantier, que le flux tient à jour :
    *  en garder une copie ici ferait un second exemplaire qui vieillirait pendant
@@ -274,7 +281,8 @@ export function App() {
   const [bibliotheque, setBibliotheque] = useState<Bibliotheque>(BIBLIOTHEQUE_VIDE)
   const [filtre, setFiltre] = useState<Filtre>(FILTRE_VIDE)
   /** La famille qu'on regarde dans la galerie, `""` pour toutes, `"aucune"`
-   *  pour ce qui n'appartient à aucune chose du jeu (E4). */
+   *  pour ce qui n'appartient à aucune chose du jeu (E4), `"clips"` pour eux
+   *  seuls — distinct des familles, parce qu'un clip n'en a aucune (B22). */
   const [famille, setFamille] = useState("")
   const [selection, setSelection] = useState<string[]>([])
   const [annulation, setAnnulation] = useState<Annulation | null>(null)
@@ -1494,6 +1502,35 @@ export function App() {
   const chargerLaSuiteGrille = () =>
     setLimiteGrille((limite) => limite + TAILLE_PAGE_GRILLE)
 
+  // ── Les clips gardés, relus depuis le dépôt (B22) ─────────────────────────
+  //
+  // Comme la grille, elle se redemande au changement de jeu et **seulement**
+  // alors : un clip payé ne change jamais une fois arrivé, et le rejouer à
+  // chaque rendu ferait un aller-retour pour rien. Sans jeu ouvert, il n'y a
+  // rien à demander — la galerie d'aucun jeu ne montre les clips de tous.
+
+  const relireClipsDuJeu = useCallback(async () => {
+    if (!bibliotheque.courant) {
+      setClipsDuJeu([])
+      return
+    }
+    try {
+      // **Une réponse se lit, elle ne se croit pas.** Le double de `fetch` des
+      // essais d'écran rend `{}` pour une route qu'il ne connaît pas encore —
+      // `clips` y vaudrait `undefined`, et `clipsDuJeu` doit rester une liste
+      // quoi qu'il arrive : `entrees` la parcourt sans se demander si elle
+      // existe.
+      const recu = await api.clips(bibliotheque.courant)
+      setClipsDuJeu(recu.clips ?? [])
+    } catch (erreur) {
+      echouer(erreur, "les clips du jeu ne répondent pas")
+    }
+  }, [bibliotheque.courant])
+
+  useEffect(() => {
+    void relireClipsDuJeu()
+  }, [relireClipsDuJeu])
+
   // ── Le tableau d'inspiration ──────────────────────────────────────────────
   //
   // Il se redemande quand le projet ouvert change, et **seulement** alors : le
@@ -1969,13 +2006,38 @@ export function App() {
 
   // ── Ce que la grille montre ───────────────────────────────────────────────
 
+  // **Le filtre « clips »** (B22) : distinct des familles, parce qu'un clip
+  // n'en a aucune — le rejouer aux mêmes places que « personnages » ou
+  // « décors » ferait passer pour une famille ce qui n'en est pas une.
+  const clipsSeuls = famille === "clips"
+
   const entrees = useMemo<Entree[]>(() => {
     const parCle = new Map<string, Entree>()
-    // Le chantier d'abord : il tient sa place **avant** que l'image n'existe.
-    // Il ne paraît pas quand un filtre est posé — un lot qui n'est pas encore
-    // arrivé n'a rien à quoi un filtre puisse s'appliquer, et le faire
-    // apparaître dans une recherche mentirait sur ce qu'elle a trouvé.
     if (!filtreActif(filtre)) {
+      // **Les clips gardés, relus depuis le dépôt** (B22), avant le chantier
+      // pour que celui-ci les recouvre à la même clé s'il en tient une
+      // version plus fraîche — encore en cours, ou pas encore départagée. Un
+      // clip n'a pas de famille : il ne paraît que sous « Toutes » ou sous
+      // le filtre qui lui est dédié.
+      if (famille === "" || clipsSeuls) {
+        for (const generation of clipsDuJeu) {
+          if (generation.clip?.jete) continue
+          const emplacement = generation.emplacements[0]
+          const rang = emplacement?.rang ?? 0
+          const cle = `${generation.identifiant}-${rang}`
+          parCle.set(cle, {
+            cle,
+            date: generation.cree_le,
+            rang,
+            sorte: "clip",
+            generation,
+          })
+        }
+      }
+      // Le chantier ensuite : il tient sa place **avant** que l'image n'existe.
+      // Il ne paraît pas quand un filtre est posé — un lot qui n'est pas encore
+      // arrivé n'a rien à quoi un filtre puisse s'appliquer, et le faire
+      // apparaître dans une recherche mentirait sur ce qu'elle a trouvé.
       for (const generation of chantier) {
         // **Le chantier d'un autre jeu ne montre rien ici** (B4). Le flux
         // filtre déjà ce qui arrive en direct ; ce garde-ci couvre ce qui
@@ -2000,6 +2062,12 @@ export function App() {
         // journal des dépenses, où l'argent, lui, ne s'efface jamais.
         const clip = generation.clip ?? null
         if (clip?.jete) continue
+        // **Un clip n'a pas de famille** (B22) : le filtre « Clips » le garde,
+        // un filtre de famille précis l'exclut comme il exclurait n'importe
+        // quelle image qui n'est pas la sienne. Ce qui n'est pas un clip ne
+        // gagne ni ne perd rien ici — c'est la règle d'avant B22.
+        if (clip && famille && famille !== "clips") continue
+        if (!clip && clipsSeuls) continue
         for (const emplacement of generation.emplacements) {
           if (emplacement.statut === "reussie" && !attend && !clip) continue
           const cle = `${generation.identifiant}-${emplacement.rang}`
@@ -2015,30 +2083,34 @@ export function App() {
       }
     }
     // Puis la bibliothèque : un asset **remplace** l'emplacement qui l'attendait,
-    // à la même clé et donc à la même place.
-    for (const asset of grille) {
-      // **Le filtre par famille se pose ici, sur la grille chargée** (E4). Ce
-      // n'est pas un filtre de serveur comme la recherche ou la collection : la
-      // famille d'une image est celle de la chose du jeu à qui elle appartient,
-      // et la seule famille qui existe aujourd'hui est *personnages*. Le jour
-      // où les quatre autres portent des choses (E15), il descendra au serveur
-      // avec elles — d'ici là, le poser en bas lui ferait porter une requête
-      // pour une distinction qui n'existe pas encore.
-      if (famille === "aucune" && asset.personnage) continue
-      if (famille === "personnages" && !asset.personnage) continue
-      if (famille && famille !== "aucune" && famille !== "personnages") continue
-      parCle.set(asset.identifiant, {
-        cle: asset.identifiant,
-        date: asset.cree_le,
-        rang: asset.rang,
-        sorte: "asset",
-        asset,
-      })
+    // à la même clé et donc à la même place. Absente du tout quand seuls les
+    // clips sont demandés — un clip n'étant pas un asset, aucun des deux ne se
+    // recouvrent jamais, mais autant ne pas parcourir la grille pour rien.
+    if (!clipsSeuls) {
+      for (const asset of grille) {
+        // **Le filtre par famille se pose ici, sur la grille chargée** (E4). Ce
+        // n'est pas un filtre de serveur comme la recherche ou la collection : la
+        // famille d'une image est celle de la chose du jeu à qui elle appartient,
+        // et la seule famille qui existe aujourd'hui est *personnages*. Le jour
+        // où les quatre autres portent des choses (E15), il descendra au serveur
+        // avec elles — d'ici là, le poser en bas lui ferait porter une requête
+        // pour une distinction qui n'existe pas encore.
+        if (famille === "aucune" && asset.personnage) continue
+        if (famille === "personnages" && !asset.personnage) continue
+        if (famille && famille !== "aucune" && famille !== "personnages") continue
+        parCle.set(asset.identifiant, {
+          cle: asset.identifiant,
+          date: asset.cree_le,
+          rang: asset.rang,
+          sorte: "asset",
+          asset,
+        })
+      }
     }
     return [...parCle.values()].sort(
       (a, b) => b.date - a.date || a.rang - b.rang,
     )
-  }, [chantier, grille, filtre, famille, bibliotheque.courant])
+  }, [chantier, clipsDuJeu, grille, filtre, famille, clipsSeuls, bibliotheque.courant])
 
   // ── La raison qui rend générer inactif ────────────────────────────────────
 
@@ -5176,12 +5248,16 @@ function Grille({
  *  là-dessus marcherait presque toujours, et jetterait la mauvaise vidéo payée
  *  le jour où l'auteur relance exactement la même chose. */
 function autresDuLot(entrees: Entree[], entree: Entree): number {
-  if (entree.sorte !== "emplacement") return 0
+  // **`"clip"` compte aussi** (B22) : un lot pas encore départagé peut
+  // survivre à la fermeture du chantier, un clip de chaque côté du départage
+  // — un dans le chantier qui vient d'arriver, l'autre déjà relu depuis le
+  // dépôt après un rechargement.
+  if (entree.sorte === "asset") return 0
   const lot = entree.generation.clip?.lot
   if (!lot) return 0
   return entrees.filter(
     (autre) =>
-      autre.sorte === "emplacement" &&
+      autre.sorte !== "asset" &&
       autre.generation.clip?.lot === lot &&
       autre.generation.identifiant !== entree.generation.identifiant,
   ).length

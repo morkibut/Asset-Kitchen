@@ -4964,7 +4964,15 @@ export const api = {
       body: JSON.stringify(corps),
     }),
 
-  clips: () => appeler<{ clips: Generation[] }>("/clips"),
+  /** **Tous les clips gardés d'un jeu** (B22), pas seulement ceux que le
+   *  chantier tient encore en mémoire — c'est ce qui les fait survivre à la
+   *  fermeture de leur lot. `projet` scope la recherche : omis, la route
+   *  retombe sur son ancien sens, les plus récents de *tous* les jeux. */
+  clips: (projet?: string | null, limite = 300) =>
+    appeler<{ clips: Generation[] }>(
+      `/clips?limite=${limite}` +
+        (projet ? `&projet=${encodeURIComponent(projet)}` : ""),
+    ),
 
   /** Ceux qui sont payés — ou peut-être payés — et attendent un geste. **La
    *  liste ne récupère rien** : elle dit ce qu'il y a à récupérer. */
@@ -6181,6 +6189,13 @@ export const api = {
    *  décodé à la demande. */
   imageDuClip: (identifiant: string, numero: number) =>
     `/api/clips/${identifiant}/frames/${numero}`,
+
+  /** La couverture d'un clip pour une case de grille (B22) — sa première
+   *  frame, réduite au serveur, jamais le fichier entier. C'est elle que la
+   *  galerie affiche au repos ; ouvrir la galerie ne télécharge donc aucune
+   *  vidéo, pas même sa première image en taille native. */
+  couvertureDuClip: (identifiant: string, cote: number) =>
+    `/api/clips/${identifiant}/cover?cote=${cote}`,
 
   /** Le fichier tel qu'il est arrivé. Le brut, jamais un rendu. */
   videoDuClip: (identifiant: string) => `/api/clips/${identifiant}/video`,

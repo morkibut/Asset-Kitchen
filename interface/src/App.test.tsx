@@ -1475,6 +1475,11 @@ function serveurDouble(options: {
   /** Les clips payés qui attendent un geste (B2) — `GET /clips/pending`. Vide
    *  par défaut : le bandeau ne se montre que quand un essai en pose. */
   clipsEnSouffrance?: Generation[]
+  /** **Les clips relus depuis le dépôt** (B22) — `GET /clips?projet=…`. C'est
+   *  ce qui reste visible une fois le lot fermé, distinct du chantier qui ne
+   *  voit que ce qui vient d'arriver. Vide par défaut : un jeu neuf n'a encore
+   *  gardé aucun clip. */
+  clipsDuJeu?: Generation[]
   /** Le bilan du tableau de bord (B5) — `GET /dashboard`. Vide par défaut :
    *  aucune famille peuplée, aucun manque, un lot à zéro — ce qu'un jeu neuf
    *  rend réellement. */
@@ -2019,6 +2024,18 @@ function serveurDouble(options: {
     // l'écran affiche et ce qu'il envoie. Le reste — la dépense écrite avant le
     // fichier, le clip qui survit à la fermeture — est tenu par
     // `tests/test_a9.py`, sur le vrai service et sur le disque.
+    // **Les clips relus depuis le dépôt** (B22) — jamais `/api/clips/quelque
+    // chose`, seulement la route nue avec sa requête. Scopée comme le vrai
+    // serveur : sans `projet` elle rend tout, avec elle ne rend que le sien —
+    // c'est ce qui fait qu'un clip garde sa place une fois son lot fermé.
+    if ((url === "/api/clips" || url.startsWith("/api/clips?")) && init?.method !== "POST") {
+      const parametres = new URL(url, "http://x").searchParams
+      const projet = parametres.get("projet")
+      const clips = options.clipsDuJeu ?? []
+      return rendre({
+        clips: projet ? clips.filter((g) => g.projet === projet) : clips,
+      })
+    }
     if (url.startsWith("/api/clips/models"))
       return rendre(options.modelesVideo ?? MODELES_VIDEO)
     // Le moteur de la maison (A11). **Le relevé se refait à chaque appel** dans
@@ -11755,7 +11772,7 @@ describe("la galerie dégraissée", () => {
     await monter(fetchDouble, { ...ETAT, assets: [orpheline, rattachee] })
     await waitFor(() => expect(tuiles()).toHaveLength(2))
 
-    const filtre = screen.getByLabelText("Ne montrer que les images d'une famille")
+    const filtre = screen.getByLabelText("Ne montrer qu'une famille, ou les clips")
     // **Neuf appels sur vingt-huit n'ont aucune chose du jeu** : un essai, une
     // texture, une image apportée. Les taire ferait de ces images-là des
     // introuvables, alors que la galerie est leur domicile.
@@ -21648,10 +21665,66 @@ describe("A9 — commander un clip", () => {
     const image = await screen.findByRole("img", {
       name: "walking cycle, walking in place",
     })
-    expect(image.getAttribute("src")).toBe("/api/clips/clip-a/frames/0")
+    // B22 : la tuile demande la couverture fabriquée par le serveur — une
+    // frame réduite, jamais le fichier entier — et non plus une frame à
+    // résolution native.
+    expect(image.getAttribute("src")).toBe("/api/clips/clip-a/cover?cote=256")
     // Et il dit ce qu'il porte et ce qu'il a coûté.
     expect(screen.getByText("121 images · 24 i/s")).toBeTruthy()
     expect(screen.getByText("$0,0670")).toBeTruthy()
+  })
+
+  // ── « B22 — un clip reste un habitant de la galerie, pas un feu de paille
+  //     du chantier » ──────────────────────────────────────────────────────
+
+  test("un clip relu depuis le dépôt garde sa place même quand le chantier ne le voit plus, et n'y télécharge aucune vidéo", async () => {
+    const image = asset("aaaa1111-0", "une image")
+    const { fetchDouble, appels } = serveurDouble({
+      assets: [image],
+      // **Relu, pas vu arriver** : aucun événement « generation » n'est émis
+      // dans cet essai — c'est exactement ce qui se passe une fois le lot
+      // fermé, quand le chantier ne tient plus rien et que seul
+      // `GET /api/clips` en parle encore.
+      clipsDuJeu: [clipRendu("clip-a", false)],
+    })
+    await monter(fetchDouble, { ...ETAT, assets: [image] })
+    allerA("Galerie")
+
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+    expect(
+      await screen.findByRole("img", { name: "walking cycle, walking in place" }),
+    ).toBeTruthy()
+
+    // **Aucune vidéo ne part à l'ouverture de la galerie** — seule la
+    // couverture, réduite, a été demandée (vérifié plus haut sur son `src`).
+    expect(appels.some((a) => a.url.includes("/video"))).toBe(false)
+  })
+
+  test("le filtre « clips » isole les clips des images de la bibliothèque, et distinctement des familles", async () => {
+    const image = asset("aaaa1111-0", "une image")
+    const { fetchDouble } = serveurDouble({
+      assets: [image],
+      clipsDuJeu: [clipRendu("clip-a", false)],
+    })
+    await monter(fetchDouble, { ...ETAT, assets: [image] })
+    allerA("Galerie")
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+
+    const filtre = screen.getByLabelText("Ne montrer qu'une famille, ou les clips")
+
+    fireEvent.change(filtre, { target: { value: "clips" } })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    expect(screen.getByRole("img", { name: "walking cycle, walking in place" })).toBeTruthy()
+    expect(screen.queryByRole("img", { name: "une image" })).toBeNull()
+
+    // **Distinct d'une famille de choses du jeu** : un clip n'appartenant à
+    // aucune famille, le filtrer sur « personnages » l'écarte comme il
+    // écarterait n'importe quelle image qui n'est pas la sienne.
+    fireEvent.change(filtre, { target: { value: "personnages" } })
+    await waitFor(() => expect(tuiles()).toHaveLength(0))
+
+    fireEvent.change(filtre, { target: { value: "" } })
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
   })
 
   test("garder un clip et jeter les autres est un seul geste, et il s'annule", async () => {
