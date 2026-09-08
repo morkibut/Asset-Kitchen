@@ -296,6 +296,14 @@
         "dessin"
       ],
       "port": 8482
+    },
+    {
+      "name": "atelier-jetable-b17",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b17.py"
+      ],
+      "port": 8483
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent quatre-vingt-sept pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent quatre-vingt-huit pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1678,3 +1678,19 @@ la prochaine réécriture retrouvera.
   sans son chemin `docs/`, et le banc ne le voit donc pas du tout. ⚠️ **Citer une planche par son
   chemin, et nommer sa section en prose, jamais derrière un `§`.** Payé le 9 septembre 2026, en
   `B19`.
+- **Deux tranches qui touchent la même chaîne peuvent la livrer deux fois, chacune à moitié.**
+  `B16` a redessiné *Couleurs* et *Nettoyer* dans `Retouche.tsx` avec ses propres panneaux
+  (`ReglagesDesCouleurs`, `ReglagesDuNettoyage`) pendant que `B17` ajoutait les quatre curseurs,
+  l'échange de couleurs, le grain et le lissage à l'**ancien** écran (`Places.tsx` §
+  `PanneauQuantification`/`PanneauBords`). Les deux suites passaient : chaque tranche testait son
+  propre panneau, et aucune ne touchait le fichier de l'autre. Résultat, invisible tant que
+  personne n'ouvrait l'écran neuf avec une recette qui posait ces six champs : les six moteurs de
+  `B17` existaient, fonctionnaient, et n'avaient **aucun contrôle** sur l'écran que `PageDuSujet`
+  ouvre réellement — `ReglagesDuNettoyage` reposait en plus `bords: { aire_min }` seul, prêt à
+  effacer un grain ou un lissage déjà posés dès qu'on aurait touché la tache minimale (la panne
+  de `decalage` / `E17`, une deuxième fois). ⚠️ **Une intégration entre deux écrans du même
+  domaine ne se vérifie pas en relisant chaque tranche : il faut ouvrir l'écran que l'utilisateur
+  ouvre.** Trouvé au navigateur en fusionnant `B16` et `B17`, en reposant la question que chacune
+  avait déjà refermée de son côté. Réparé en important `quantificationDe`, `CURSEURS`,
+  `PAIRE_VIDE` et `TOLERANCE_D_UNE_PAIRE_MAX` depuis `Places.tsx` plutôt qu'en les réécrivant une
+  troisième fois. Payé le 10 septembre 2026, à la fusion de `B16` et `B17`.

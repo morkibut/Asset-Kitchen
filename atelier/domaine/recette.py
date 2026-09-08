@@ -938,6 +938,56 @@ class Grille:
         )
 
 
+# ── L'échange de couleurs (B17) ──────────────────────────────────────────────
+#
+# **Une paire nomme deux couleurs, elle n'en calcule aucune.** C'est la règle que
+# la planche des couleurs pose déjà pour la fusion de deux palettes — *chacune
+# est authentiquement une couleur de l'une des deux sources, jamais une moyenne
+# inventée*. Ici elle a une seconde conséquence, et c'est le critère de la
+# tranche : trois pèlerins qui ne diffèrent que par la cape sortent **au pixel
+# près la même silhouette**, ce qu'une génération ne rend jamais.
+
+TOLERANCE_ECHANGE_MAX = 255
+
+
+@dataclass(frozen=True, slots=True)
+class Echange:
+    """*Cette couleur-ci devient celle-là.*
+
+    **La tolérance est sur la paire, pas sur la table** (B17), et la planche le
+    demande en toutes lettres : *« elle se règle à chaque clic — un halo flou
+    demande plus, un aplat net demande moins »*. Une cape qui porte quatre bruns
+    se dit donc en quatre paires exactes, ou en une seule paire large ; le
+    produit n'oblige ni à l'un ni à l'autre.
+
+    **Zéro veut dire exactement cette couleur-là**, et c'est le défaut : après la
+    quantification les couleurs sont finies et connues, et viser à côté n'a plus
+    de sens.
+    """
+
+    depuis: str = ""
+    vers: str = ""
+    tolerance: int = 0
+
+    def en_json(self) -> dict[str, Any]:
+        return {"depuis": self.depuis, "vers": self.vers, "tolerance": self.tolerance}
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "Echange":
+        return Echange(
+            depuis=str(d.get("depuis", "")),
+            vers=str(d.get("vers", "")),
+            tolerance=int(d.get("tolerance", 0)),
+        )
+
+
+# Les bornes des quatre curseurs. La luminosité, le contraste et la saturation
+# se disent en pour-cent d'écart au neutre ; la teinte se dit en degrés sur la
+# roue, et un demi-tour dans chaque sens en fait le tour entier.
+CURSEUR_MIN, CURSEUR_MAX = -100, 100
+TEINTE_MIN, TEINTE_MAX = -180, 180
+
+
 @dataclass(frozen=True, slots=True)
 class Quantification:
     """Ramener l'image sur un nombre fini de couleurs.
@@ -947,17 +997,75 @@ class Quantification:
     (`docs/archive/plan-versions-tenues.md`, US-65). `palette` vide veut dire « déduite de l'image
     elle-même » — ce que le service refuse à l'écran, et ce dont l'essai de
     comparaison se sert, lui, pour mesurer ce que le post-traitement rapporte.
+
+    **Elle porte les six réglages de la table *Couleurs*, et pas seulement la
+    réduction** (B17). Les quatre curseurs et la table d'échange sont rangés ici
+    parce que la planche `atelier-couleurs.dc.html` les range dans cette
+    table-là — et parce qu'une place de plus aurait fait mentir les dix-sept
+    phrases du dépôt qui citent un rang (`docs/PIEGES.md:1140`).
+
+    **Les deux moments de la table.** Les curseurs passent *avant* la réduction,
+    l'échange *après*, et l'écart est la moitié de leur raison d'être : un
+    curseur posé après repeindrait 24 couleurs choisies avec soin, un échange
+    posé avant serait défait par la réduction qui le renverrait au plus proche.
+    `queue` les applique dans cet ordre-là et un essai le tient.
     """
 
     couleurs: int = 32
     palette: tuple[str, ...] = ()  # hex, vide = déduite de l'image
     tramage: str = AUCUN  # "aucun" | "floyd"
 
+    # ── Les six réglages neufs de B17 ────────────────────────────────────────
+    #
+    # **Aucun ne s'écrit tant qu'il vaut son neutre**, et c'est la règle de `B1`
+    # descendue d'un cran : elle valait pour *une place neuve*, elle vaut ici
+    # pour *une clé neuve dans une place existante*. Sans elle, les seize
+    # recettes du corpus figé qui portent une quantification auraient toutes
+    # changé d'empreinte, donc de nom de rendu, et tout leur cache se serait
+    # recalculé pour six réglages qu'aucune ne pose.
+    luminosite: int = 0
+    contraste: int = 0
+    saturation: int = 0
+    teinte: int = 0
+    echanges: tuple[Echange, ...] = ()
+
+    @property
+    def curseurs_neutres(self) -> bool:
+        """Les quatre curseurs sont-ils tous au repos ?
+
+        **Neutre veut dire sans effet, pas presque sans effet** — la promesse de
+        la veille (U4), au cran du réglage. Une image dont les quatre curseurs
+        sont à zéro sort à l'octet près comme si la tranche n'existait pas, et
+        c'est cette lecture-là qui l'assure, une seule fois, pour le traitement
+        comme pour l'écran.
+        """
+        return not (self.luminosite or self.contraste or self.saturation or self.teinte)
+
+    @property
+    def echanges_vifs(self) -> tuple[Echange, ...]:
+        """Les paires qui nomment **leurs deux couleurs**, et elles seules.
+
+        C'est la seule lecture de « quels échanges agissent », et elle sert aux
+        deux bouts : le moteur applique celles-là, et l'empreinte n'écrit
+        que celles-là. Une paire à moitié nommée est un état de passage — le
+        temps d'aller chercher la seconde couleur — et un état de passage qui
+        changerait l'empreinte ferait recalculer tout le rendu d'une image pour
+        un réglage qui ne fait rien.
+        """
+        return tuple(e for e in self.echanges if e.depuis and e.vers)
+
     def en_json(self) -> dict[str, Any]:
+        vifs = self.echanges_vifs
         return {
             "couleurs": self.couleurs,
             "palette": list(self.palette),
             "tramage": self.tramage,
+            # ── Les clés neuves ne s'écrivent que remplies (B17, d'après B1) ──
+            **({"luminosite": self.luminosite} if self.luminosite else {}),
+            **({"contraste": self.contraste} if self.contraste else {}),
+            **({"saturation": self.saturation} if self.saturation else {}),
+            **({"teinte": self.teinte} if self.teinte else {}),
+            **({"echanges": [e.en_json() for e in vifs]} if vifs else {}),
         }
 
     @staticmethod
@@ -966,7 +1074,30 @@ class Quantification:
             couleurs=int(d.get("couleurs", 32)),
             palette=tuple(d.get("palette", ())),
             tramage=d.get("tramage", AUCUN),
+            # **Absente veut dire neutre** (B17), le pendant exact de « absente
+            # veut dire vide » que `B1` a posé pour le retournement : une recette
+            # écrite avant la tranche se relit sans rien perdre et se réécrit à
+            # l'identique, caractère pour caractère.
+            luminosite=int(d.get("luminosite", 0)),
+            contraste=int(d.get("contraste", 0)),
+            saturation=int(d.get("saturation", 0)),
+            teinte=int(d.get("teinte", 0)),
+            echanges=tuple(
+                Echange.depuis_json(e)
+                for e in (d.get("echanges") or ())
+                if isinstance(e, dict)
+            ),
         )
+
+
+# Trois passes de décrochage suffisent à ronger un sujet de 64 carrés jusqu'à
+# lui retirer ses angles ; la planche `atelier-nettoyer.dc.html` borne le réglage
+# là et dit pourquoi — *« à 3, sur un visage de 8 px, le nez disparaît »*.
+LISSAGE_MAX = 3
+
+# Un pixel a huit voisins, donc huit compagnons possibles. Au-delà, le réglage
+# emporterait tout pixel entouré, aplats compris — ce n'est plus un nettoyage.
+GRAIN_MAX = 8
 
 
 @dataclass(frozen=True, slots=True)
@@ -977,16 +1108,53 @@ class Bords:
     après elle depuis E5, et elle garde son rang — les miettes partent **avant**
     qu'un contour ne les entoure, sinon trois taches de six pixels rendraient
     trois pâtés que personne n'a dessinés.
+
+    **Elle nettoie deux choses depuis B17, et pas la même** : `aire_min` compte
+    des taches dans la **silhouette**, `grain_min` compte des **couleurs**. La
+    planche `atelier-nettoyer.dc.html` l'appelle le réglage *ce qu'on nettoie*,
+    et note que le produit ne savait faire que la première — *« un pixel vert vif
+    au milieu de la robe brune : rien ne le voit »*.
     """
 
     aire_min: int = 0  # taches plus petites que ça : effacées
 
+    # ── Les deux réglages neufs de B17 ───────────────────────────────────────
+    #
+    # **Ils ne s'écrivent que posés**, comme les six de la quantification et pour
+    # la même raison : sept recettes du corpus figé portent une place `bords`, et
+    # aucune ne les pose.
+
+    # **Le jumeau de `aire_min`, pour la couleur au lieu de la silhouette.**
+    # `aire_min` compte des taches dans l'alpha : un pixel vert vif au milieu
+    # d'une robe brune est opaque et collé au sujet, il n'est aucune tache, et
+    # aucune valeur de ce curseur-là ne l'a jamais attrapé. Celui-ci compte des
+    # **grains de couleur** : combien des huit voisins d'un pixel portent sa
+    # teinte. Zéro éteint le moteur ; à 1, un pixel dont aucun voisin ne porte sa
+    # couleur s'en va — à 2, celui qui n'en a qu'un. Deux pixels verts côte à
+    # côte se portent l'un l'autre et survivent : *un détail a un compagnon, une
+    # poussière n'en a pas.*
+    grain_min: int = 0
+
+    # **Les dents en diagonale, décrochées une passe à la fois.** Un pixel qui ne
+    # tient au sujet que par un coin s'en va ; un pixel qui tient par un côté ne
+    # bouge jamais. Zéro à trois passes, et la planche prévient de la troisième :
+    # *« à 3, le sujet s'arrondit et perd ses angles vifs »*.
+    lissage: int = 0
+
     def en_json(self) -> dict[str, Any]:
-        return {"aire_min": self.aire_min}
+        return {
+            "aire_min": self.aire_min,
+            **({"grain_min": self.grain_min} if self.grain_min else {}),
+            **({"lissage": self.lissage} if self.lissage else {}),
+        }
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "Bords":
-        return Bords(aire_min=int(d.get("aire_min", 0)))
+        return Bords(
+            aire_min=int(d.get("aire_min", 0)),
+            grain_min=int(d.get("grain_min", 0)),
+            lissage=int(d.get("lissage", 0)),
+        )
 
 
 # ── Le contour ───────────────────────────────────────────────────────────────

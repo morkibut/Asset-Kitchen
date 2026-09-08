@@ -37,6 +37,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
   CONTOUR_PAR_DEFAUT,
+  GRAIN_MAX,
+  LISSAGE_MAX,
   MAIN_VIDE,
   NOM_DE_LA_METHODE,
   PASSE_PAR_DEFAUT,
@@ -45,11 +47,14 @@ import {
   paliersDeCouleurs,
   type Ancrage,
   type Asset,
+  type Bords,
   type Contour,
+  type Echange,
   type EtatTraitement,
   type Grille,
   type Methode,
   type Passe,
+  type Quantification,
   type Recette,
   type TachesDeLAsset,
   type Univers,
@@ -64,16 +69,20 @@ import { imageAsset } from "./Apercu"
 import { part, useEcoule } from "./chassis"
 import {
   CIBLES,
+  CURSEURS,
   DURCISSEMENT_LIVRE,
   FINESSES,
   MOTEUR,
+  PAIRE_VIDE,
   RESUME,
   SENS_A_AJOUTER,
   SENS_DU_RETOURNEMENT,
   SENS_LIVRES,
+  TOLERANCE_D_UNE_PAIRE_MAX,
   TROUS,
   debord,
   defautGrille,
+  quantificationDe,
   useMesures,
   useRecette,
 } from "./Places"
@@ -721,33 +730,34 @@ function ReglagesDeLaGrille({ recette, univers, traitement, regler, poser }: Pos
   )
 }
 
-function ReglagesDesCouleurs({ recette, univers, traitement, poser }: Poste) {
-  const quantification = recette.quantification ?? {
-    couleurs: 32,
-    palette: [],
-    tramage: "aucun" as const,
-  }
+function ReglagesDesCouleurs({ recette, univers, traitement, regler, poser }: Poste) {
+  const valeurs = quantificationDe(recette, univers)
   const paliers = paliersDeCouleurs(recette.grille?.cible ?? 64)
+
+  /** **Toujours la table entière, jamais deux champs sur neuf** (B17, la leçon
+   *  de `decalage` / E17) : reposer le nombre de couleurs à côté d'un échange
+   *  déjà posé ne doit pas le faire disparaître. */
+  const avec = (suivant: Partial<Quantification>): Recette => ({
+    ...recette,
+    quantification: { ...valeurs, ...suivant },
+  })
+
   return (
     <div className="flex flex-col gap-[14px]">
       <Reglage nom="couleurs">
         <Choix
           valeurs={paliers}
-          valeur={quantification.couleurs}
-          onChange={(couleurs) =>
-            void poser({ ...recette, quantification: { ...quantification, couleurs } })
-          }
+          valeur={valeurs.couleurs}
+          onChange={(couleurs) => void poser(avec({ couleurs }))}
         />
       </Reglage>
 
       <Reglage nom="tramage">
         <Choix
           valeurs={["aucun", "floyd"] as const}
-          valeur={quantification.tramage}
+          valeur={valeurs.tramage}
           libelles={{ aucun: "aucun", floyd: "diffusion" }}
-          onChange={(tramage) =>
-            void poser({ ...recette, quantification: { ...quantification, tramage } })
-          }
+          onChange={(tramage) => void poser(avec({ tramage }))}
         />
       </Reglage>
 
@@ -764,6 +774,200 @@ function ReglagesDesCouleurs({ recette, univers, traitement, poser }: Poste) {
           la palette du jeu porte {univers.palette.length} couleurs
         </p>
       )}
+
+      {/* ── Les quatre curseurs, avant la réduction (B17) ──────────────────
+          Ils s'appliquent avant que la table ne réduise l'image : les lire
+          après les réglages de réduction dirait le contraire de ce que la
+          machine fait. */}
+      <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
+        <Etiquette>avant de réduire — {valeurs.couleurs} couleurs pour dire l'image</Etiquette>
+        {CURSEURS.map(({ cle, nom, min, max, unite }) => (
+          <Reglage key={cle} nom={nom}>
+            <Glissiere
+              nom={nom}
+              valeur={valeurs[cle] ?? 0}
+              min={min}
+              max={max}
+              unite={unite}
+              onRegler={(v) => regler(avec({ [cle]: v }))}
+              onPoser={(v) => void poser(avec({ [cle]: v }))}
+            />
+          </Reglage>
+        ))}
+      </div>
+
+      {/* ── L'échange de couleurs, après la réduction (B17) ────────────────
+          Posé avant, il serait défait par la réduction, qui renverrait la
+          couleur écrite au plus proche de la palette. */}
+      <TableDEchange
+        echanges={valeurs.echanges ?? []}
+        palette={univers.palette}
+        onChange={(echanges) => void poser(avec({ echanges }))}
+      />
+    </div>
+  )
+}
+
+/** La table de correspondance — *cette couleur-ci devient celle-là*, après la
+ *  réduction. Le même geste que `Places.tsx` § `PanneauQuantification`, dans
+ *  le vocabulaire de cet écran : une paire en train de se faire reste ici, à
+ *  l'écran, et ne rejoint la recette qu'une fois ses deux couleurs nommées —
+ *  sans quoi le seul geste qui ouvre la table est aussi celui que le serveur
+ *  refuse (*une paire nomme deux couleurs*), trouvé au navigateur. */
+function TableDEchange({
+  echanges,
+  palette,
+  onChange,
+}: {
+  echanges: Echange[]
+  palette: string[]
+  onChange: (echanges: Echange[]) => void
+}) {
+  const [brouillon, setBrouillon] = useState<Echange | null>(null)
+
+  const changer = (rang: number, suivant: Partial<Echange>) =>
+    onChange(echanges.map((e, i) => (i === rang ? { ...e, ...suivant } : e)))
+
+  const changerLeBrouillon = (suivant: Partial<Echange>) => {
+    const prochain = { ...(brouillon ?? PAIRE_VIDE), ...suivant }
+    if (prochain.depuis && prochain.vers) {
+      setBrouillon(null)
+      onChange([...echanges, prochain])
+      return
+    }
+    setBrouillon(prochain)
+  }
+
+  const lignes = [
+    ...echanges.map((echange, rang) => ({ echange, rang, encours: false })),
+    ...(brouillon ? [{ echange: brouillon, rang: echanges.length, encours: true }] : []),
+  ]
+
+  return (
+    <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
+      <Etiquette>après la réduction — une couleur en remplace une autre</Etiquette>
+
+      {lignes.map(({ echange, rang, encours }) => (
+        <div key={rang} className="flex flex-col gap-[8px]">
+          <Reglage nom="celle qui part">
+            <ChoixDeCouleur
+              couleur={echange.depuis}
+              palette={palette}
+              onChange={(depuis) =>
+                encours ? changerLeBrouillon({ depuis }) : changer(rang, { depuis })
+              }
+            />
+          </Reglage>
+          <Reglage nom="celle qui vient">
+            <ChoixDeCouleur
+              couleur={echange.vers}
+              palette={palette}
+              onChange={(vers) =>
+                encours ? changerLeBrouillon({ vers }) : changer(rang, { vers })
+              }
+            />
+          </Reglage>
+          <Reglage nom="tolérance de la paire">
+            <Glissiere
+              nom="tolérance de la paire"
+              valeur={echange.tolerance}
+              min={0}
+              max={TOLERANCE_D_UNE_PAIRE_MAX}
+              onRegler={(tolerance) =>
+                encours ? setBrouillon({ ...echange, tolerance }) : changer(rang, { tolerance })
+              }
+              onPoser={(tolerance) =>
+                encours ? setBrouillon({ ...echange, tolerance }) : changer(rang, { tolerance })
+              }
+            />
+          </Reglage>
+          {encours && (
+            <Pourquoi
+              texte={
+                echange.depuis
+                  ? "il manque la couleur qui vient — rien n'est appliqué tant que la paire n'en nomme pas deux"
+                  : "il manque la couleur qui part — rien n'est appliqué tant que la paire n'en nomme pas deux"
+              }
+            />
+          )}
+          <button
+            type="button"
+            onClick={() =>
+              encours ? setBrouillon(null) : onChange(echanges.filter((_, i) => i !== rang))
+            }
+            className="self-start text-[11.5px] text-encre-3 transition-colors duration-120 hover:text-encre"
+          >
+            Retirer cet échange
+          </button>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        disabled={brouillon !== null}
+        onClick={() => setBrouillon({ ...PAIRE_VIDE, depuis: palette[0] ?? "" })}
+        className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-encre-4 disabled:hover:border-trait"
+      >
+        Échanger une couleur
+      </button>
+    </div>
+  )
+}
+
+/** Une couleur, choisie par pipette de palette ou entrée en clair — la même
+ *  règle que `Places.tsx` (US-210) : *proposée, jamais imposée*. Rien ici ne
+ *  désigne un endroit de cette image-là, donc rien n'appartient au pinceau. */
+function ChoixDeCouleur({
+  couleur,
+  palette,
+  onChange,
+}: {
+  couleur: string
+  palette: string[]
+  onChange: (couleur: string) => void
+}) {
+  return (
+    <div className="flex flex-col gap-[4px]">
+      <div className="flex items-center gap-[8px]">
+        {/* **Aucune couleur de repli écrite ici.** Une valeur qui n'est pas
+            un hexadécimal à six chiffres — la paire vide, ou une couleur en
+            cours de frappe — n'est pas une valeur valide pour ce contrôle
+            natif, et le navigateur la remplace lui-même sans qu'on ait à
+            écrire laquelle. */}
+        <input
+          type="color"
+          value={couleur}
+          aria-label="Couleur"
+          onChange={(e) => onChange(e.target.value)}
+          className="h-[26px] w-[34px] shrink-0 rounded-7 border border-trait bg-carte"
+        />
+        <input
+          type="text"
+          value={couleur}
+          aria-label="Couleur, en hexadécimal"
+          spellCheck={false}
+          onChange={(e) => onChange(e.target.value)}
+          className="mesure h-[26px] min-w-0 flex-1 rounded-7 border border-trait bg-carte px-[8px] text-[11.5px] text-encre"
+        />
+      </div>
+      {palette.length > 0 && (
+        <div className="flex flex-wrap gap-[4px]">
+          {palette.map((c) => (
+            <button
+              key={c}
+              type="button"
+              title={c}
+              aria-label={`Prendre ${c}`}
+              onClick={() => onChange(c)}
+              style={{ background: c }}
+              className={[
+                "h-[14px] w-[14px] border",
+                c.toLowerCase() === couleur.toLowerCase() ? "border-encre" : "border-trait",
+              ].join(" ")}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -774,8 +978,19 @@ function ReglagesDuNettoyage({ recette, mesures, regler, poser }: Poste) {
   // pas bougé d'un pixel — pendant que la table des contours lisait la même
   // absence comme un zéro. Un chiffre affiché est un chiffre compté.
   const seuil = recette.bords?.aire_min ?? 0
+  const grain = recette.bords?.grain_min ?? 0
+  const lissage = recette.bords?.lissage ?? 0
   const taches = mesures?.taches ?? []
   const partent = taches.filter((t) => t.aire < seuil).length
+
+  /** **Toujours la table entière** (B17, la même leçon qu'au-dessus pour les
+   *  couleurs) : régler la tache minimale ne doit pas effacer un grain ou un
+   *  lissage déjà posés. */
+  const avec = (suivant: Partial<Bords>): Recette => ({
+    ...recette,
+    bords: { aire_min: seuil, grain_min: grain, lissage, ...suivant },
+  })
+
   return (
     <div className="flex flex-col gap-[14px]">
       <Reglage nom="tache minimale">
@@ -785,8 +1000,8 @@ function ReglagesDuNettoyage({ recette, mesures, regler, poser }: Poste) {
           min={0}
           max={64}
           unite=" px"
-          onRegler={(aire_min) => regler({ ...recette, bords: { aire_min } })}
-          onPoser={(aire_min) => void poser({ ...recette, bords: { aire_min } })}
+          onRegler={(aire_min) => regler(avec({ aire_min }))}
+          onPoser={(aire_min) => void poser(avec({ aire_min }))}
         />
       </Reglage>
       <Pourquoi
@@ -796,6 +1011,44 @@ function ReglagesDuNettoyage({ recette, mesures, regler, poser }: Poste) {
             : `${partent} ${pluriel(partent, "tache effacée", "taches effacées")} sur ${taches.length}`
         }
       />
+
+      {/* ── Le grain de couleur, et l'escalier (B17) ───────────────────────
+          **Ce que la tache minimale n'a jamais pu atteindre.** Elle compte des
+          taches dans la silhouette ; un pixel vert vif au milieu d'une robe
+          brune est opaque et collé au sujet, donc aucune valeur de ce
+          curseur-là ne l'a jamais vu. */}
+      <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
+        <Etiquette>la couleur, pas la silhouette</Etiquette>
+        <Reglage nom="grain de couleur">
+          <Glissiere
+            nom="grain de couleur"
+            valeur={grain}
+            min={0}
+            max={GRAIN_MAX}
+            unite={grain === 0 ? "" : " voisins"}
+            onRegler={(grain_min) => regler(avec({ grain_min }))}
+            onPoser={(grain_min) => void poser(avec({ grain_min }))}
+          />
+        </Reglage>
+        <Pourquoi
+          texte={
+            grain === 0
+              ? "rien de posé : un pixel isolé au milieu d'un aplat reste où il est"
+              : `un pixel dont moins de ${grain} voisin${grain > 1 ? "s" : ""} porte${grain > 1 ? "nt" : ""} sa couleur prend celle de la majorité — le bord du sujet n'est jamais touché`
+          }
+        />
+        <Reglage nom="lissage">
+          <Glissiere
+            nom="lissage"
+            valeur={lissage}
+            min={0}
+            max={LISSAGE_MAX}
+            unite={lissage === 0 ? "" : lissage > 1 ? " passes" : " passe"}
+            onRegler={(v) => regler(avec({ lissage: v }))}
+            onPoser={(v) => void poser(avec({ lissage: v }))}
+          />
+        </Reglage>
+      </div>
     </div>
   )
 }

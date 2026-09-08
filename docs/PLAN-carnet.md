@@ -780,7 +780,7 @@ avait une seconde moitié à l'écran** — la table ne proposait que les taille
 
 ---
 
-## B17 · Les moteurs qui remplacent une génération
+## B17 · Les moteurs qui remplacent une génération — **tenue le 10 septembre 2026**
 
 **Planches** : `Retouche.dc.html`, `atelier-couleurs.dc.html`, `atelier-nettoyer.dc.html`
 
@@ -804,17 +804,66 @@ Quatre traitements gratuits qui font aujourd'hui repayer une image :
 
 ### Critères d'acceptation
 
-- [ ] Un fichier exporté ne porte plus de magenta sous ses pixels transparents.
-- [ ] Une cape change de couleur sans une génération, et la silhouette est identique à
-      l'octet près.
-- [ ] Les quatre curseurs se posent avant la quantification, et un essai le vérifie sur
-      l'ordre de la chaîne.
-- [ ] Les recettes existantes rendent la même empreinte qu'avant.
-- [ ] Chaque moteur neuf est mesuré : temps de calcul, et ce qu'il épargne.
+- [x] Un fichier exporté ne porte plus de magenta sous ses pixels transparents. *Le lit de
+      couleur étale 3 px de la couleur du sujet vers l'extérieur, en fin de chaîne, et met le
+      reste à zéro. **Il n'est le réglage de personne** : le critère est écrit sans condition, et
+      en faire une place l'aurait laissé éteint sur les 61 recettes du dépôt. Il ne se pose
+      toutefois que si une passe de détourage agit — on répare ce qu'on a cassé. Mesuré sur les
+      fichiers rendus par `/download`, **contre un second atelier monté le moteur éteint** :
+      2 sujets sur 5 en portaient, 0 sur 5 en portent, et le moteur repeint des pixels
+      transparents sur les cinq. ⚠️ Les rendus **déjà calculés** gardent leur fichier : leur
+      empreinte n'a pas bougé, ce que le critère n° 4 exige. Un `del` sur les `<rang>-rendu.png`
+      à la fusion les refait, gratuitement et sans perte (`T2`).*
+- [x] Une cape change de couleur sans une génération, et la silhouette est identique à
+      l'octet près. *L'échange se pose **après** la quantification et ne lit jamais l'alpha ;
+      deux capes différentes rendent la même silhouette à l'octet près. Une paire ne repasse
+      jamais sur ce qu'une autre a posé : `brun → bleu` puis `bleu → vert` laisse le brun bleu.
+      Il reste un seul cas où l'ordre des lignes décide — deux paires dont les tolérances
+      attrapent le même pixel : la première le prend, un essai l'épingle, et l'aide le dit.*
+- [x] Les quatre curseurs se posent avant la quantification, et un essai le vérifie sur
+      l'ordre de la chaîne. *`test_les_curseurs_se_posent_avant_la_quantification_et_l_echange_apres`
+      mesure l'ordre **sans lire le code** : une couleur échangée après la réduction survit là où
+      elle serait repartie au plus proche, et sans les curseurs la cape tombe sur l'autre couleur
+      de la palette.*
+- [x] Les recettes existantes rendent la même empreinte qu'avant. *Les 61 recettes du corpus figé
+      de `B1`, empreinte **et** JSON canonique caractère pour caractère. La règle de `B1` descend
+      d'un cran : **une clé neuve dans une place existante ne s'écrit que remplie**. Sept essais
+      vérifient l'inverse — une clé posée change bien l'empreinte, donc refait le rendu.*
+- [x] Chaque moteur neuf est mesuré : temps de calcul, et ce qu'il épargne. *Sur une case de
+      64 carrés : lit de couleur 0,49 ms, échange 0,19 ms, curseurs 0,09 ms, grain 0,22 ms,
+      escalier 0,16 ms. La mesure est **bornée par un essai** — un moteur qui dépasserait les
+      240 ms de `B16` fait échouer la suite. ⚠️ **Et la case de 64 ne dit pas tout** : les deux
+      moteurs qui balaient l'image sont mesurés à part sur un dessin de 2 048, où ils coûtaient
+      2,2 s et 7,4 s — ramenés à 188 ms et 400 ms, mémoire bornée à 101 Mo. Le garde-fou de cet
+      essai-là est le **pic de mémoire**, qui ne dépend pas de la machine.*
 
 ### Bloquée par
 
 - `B1` — c'est `B1` qui pose la règle « une place neuve ne change pas l'empreinte ».
+
+### Sa conception, jugée avant la première ligne
+
+Le relevé — qui a compté **dix-sept phrases du dépôt citant un rang de place**, et confirmé que
+les deux planches rangent les quatre moteurs dans des tables **qui existent déjà** —, la décision
+qui commande la tranche (*aucune place neuve : huit clés dans deux places*), le raisonnement du
+morceau `[HARD]` et les deux défauts trouvés en construisant sont dans `docs/tranches/V4.md`
+§ B17. **Les trois morceaux sont tenus le même jour** ; le compte rendu est au même endroit.
+
+**Trois défauts trouvés, aucun par les essais de la tranche.** Le lit de couleur cassait
+l'involution du miroir en choisissant *le premier voisin dans un ordre fixe* — attrapé par les
+essais de `B1`, sans qu'un pixel visible ne bouge. **Toute image gratuite du produit s'affichait
+« miroir · gratuit » depuis `B1`**, parce que le serveur omet la clé quand la place est vide et
+que l'écran testait `!== null` — trouvé au navigateur, réparé en un caractère. Et **la table
+d'échange était inutilisable**, le bouton qui l'ouvre posant une paire vide que le serveur
+refusait : un défaut né de la couture entre deux moitiés justes, que seul le navigateur pouvait
+voir — un essai d'écran le *figeait* même.
+
+**Puis une relecture critique en a trouvé six autres**, dont un défaut de calcul que rien ne
+mesurait : la matrice de teinte mêlait les constantes du filtre du W3C à la luma de Rec. 601 et
+n'était plus une rotation. Remplacée par l'identité, **86 essais sur 87 restaient au vert**.
+Les deux moteurs qui balaient l'image coûtaient par ailleurs des secondes sur un dessin de 2 048 —
+7,4 s et 1,78 Go pour le grain, qui n'y change rien. Tout est réparé et mesuré ; le détail est
+dans `docs/tranches/V4.md` § B17.
 
 ---
 

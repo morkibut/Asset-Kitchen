@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import importlib.util
 import io
+import math
 import os
 from dataclasses import dataclass, replace
 from typing import Any, Sequence
@@ -70,7 +71,9 @@ from atelier.domaine.recette import (
     Bords,
     CalqueDessin,
     Contour,
+    Echange,
     Grille,
+    LISSAGE_MAX,
     Main,
     Passe,
     Quantification,
@@ -1097,24 +1100,238 @@ def composantes(masque: np.ndarray) -> list[tuple[np.ndarray, int]]:
     return taches
 
 
+# Les huit voisins, dans un ordre fixe — mais **aucun résultat ne dépend de cet
+# ordre**, et c'est une propriété à tenir, pas une remarque. Les deux moteurs qui
+# s'en servent choisissent par un minimum ou par une majorité franche : deux
+# réponses qui ne connaissent pas la gauche de la droite. Un moteur qui
+# départagerait par le rang casserait l'involution du miroir de `B1` sans qu'un
+# seul pixel visible ne le montre — c'est arrivé une fois dans cette tranche.
+VOISINS = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+
+# **Combien de voisins doivent être d'accord pour qu'on repeigne un pixel.** Cinq
+# sur huit — une majorité franche, pas une majorité relative. Ce chiffre est le
+# garde-fou de tout le moteur : sur une image qui n'a pas été réduite à quelques
+# couleurs, aucun voisinage n'atteint jamais cinq fois la même teinte, et le
+# moteur ne touche donc **rien du tout** au lieu de raser un dégradé. Il se
+# désarme tout seul là où il n'a rien à faire, plutôt que d'être grisé par une
+# règle qu'il faudrait tenir d'accord ailleurs.
+MAJORITE_DU_VOISINAGE = 5
+
+# **Combien de voisins il suffit d'examiner pour trouver cette majorité.** Une
+# couleur portée par cinq voisins sur huit en laisse au plus trois autres : parmi
+# quatre voisins quelconques, il y en a donc au moins un qui la porte. Chercher
+# parmi les huit revenait à faire deux fois le même travail — et sur une image
+# non réduite, où tout l'intérieur est candidat, ces deux fois-là se comptaient
+# en secondes et en gigaoctets.
+ASSEZ_DE_CANDIDATS = len(VOISINS) - MAJORITE_DU_VOISINAGE + 1
+
+# Les grains sont traités par paquets : la mémoire employée ne dépend alors plus
+# de la taille de l'image, seulement de ce nombre-là. Un quart de million de
+# pixels par paquet tient dans quelques dizaines de mégaoctets, et un paquet plus
+# petit ne ferait que multiplier les allers-retours sans rien économiser.
+PAQUET_DE_GRAINS = 1 << 18
+
+
+def _voisinage(canal: np.ndarray, remplissage: int) -> np.ndarray:
+    """Les huit voisins de chaque pixel, empilés en dernière dimension.
+
+    Hors du cadre, `remplissage` — jamais le pixel du bord recopié : un bord
+    recopié se donnerait sept voisins identiques à lui-même et passerait pour
+    une majorité franche.
+    """
+    borde = np.pad(canal, 1, mode="constant", constant_values=remplissage)
+    hauteur, largeur = canal.shape[:2]
+    return np.stack(
+        [borde[1 + dy : 1 + dy + hauteur, 1 + dx : 1 + dx + largeur] for dy, dx in VOISINS],
+        axis=-1,
+    )
+
+
+def depoussierer(rgba: np.ndarray, grain_min: int) -> np.ndarray:
+    """**Le grain de couleur accroché au sujet** — ce qu'aucun seuil de taille
+    n'a jamais pu atteindre.
+
+    `nettoyer` compte des taches dans la transparence. Un pixel resté vert vif au
+    milieu d'une robe brune est opaque et collé au sujet : il n'est aucune tache,
+    et aucune valeur du curseur de taille ne l'a jamais vu. Celui-ci ne regarde
+    pas la transparence — il regarde **la couleur d'un pixel contre celle de ses
+    huit voisins**, et c'est très exactement le trou du relevé.
+
+    **La règle, en une phrase** : *un pixel entouré de huit pixels opaques, dont
+    moins de `grain_min` portent sa couleur, prend la couleur qu'une majorité
+    franche de ses voisins porte.* Trois choses en découlent, et ce sont les
+    trois qui le distinguent d'un flou :
+
+    - **Un aplat redevient un aplat.** Le brun de la robe est porté par sept ou
+      huit voisins : il n'est jamais de la poussière.
+    - **Un bord reste net.** Un pixel du pourtour du sujet n'est pas entouré de
+      huit pixels opaques, donc il n'est jamais candidat — le moteur ne peut pas
+      toucher la silhouette, même par accident.
+    - **Un trait fin survit.** Deux pixels verts côte à côte se portent l'un
+      l'autre : chacun a un voisin de sa couleur, et à `grain_min = 1` ni l'un ni
+      l'autre ne part. C'est ce qui sépare une poussière d'un détail — un détail
+      a au moins un compagnon.
+
+    **Il ne moyenne rien** : la couleur posée est celle qu'un voisin porte déjà.
+    C'est la règle des palettes du produit — *jamais une moyenne inventée* — et
+    ici elle a une conséquence de plus : le moteur ne peut pas faire entrer une
+    couleur de plus dans une image qu'on vient de ramener à vingt-quatre.
+
+    **Le compte se fait sur l'image d'entrée, et l'écriture d'un seul coup** :
+    deux grains voisins se jugent chacun sur ce qui était là, pas sur ce que
+    l'autre vient de devenir. La même recette rend donc toujours le même pixel,
+    quel que soit l'ordre où l'on balaie l'image.
+
+    ⚠️ **Le cas qui coûtait cher est celui où le moteur ne fait rien.** Sur une
+    image *non réduite*, chaque pixel a sa nuance : aucun voisin ne porte sa
+    couleur, donc **tout l'intérieur est un grain**, et la première écriture
+    comparait alors les huit voisins deux à deux, sur trois canaux — un tableau
+    de `(pixels, 8, 8, 3)`. Mesuré à 2 048 : sept secondes et 1,8 Go, pour rendre
+    l'image inchangée. Deux choses le règlent, et aucune ne change ce qui sort :
+    les couleurs tiennent dans **un seul entier** au lieu de trois canaux, et il
+    suffit d'examiner **quatre** voisins au lieu de huit — une couleur portée par
+    cinq voisins sur huit en laisse au plus trois autres, donc elle se trouve
+    forcément parmi quatre quelconques d'entre eux. Le travail se fait enfin par
+    paquets, si bien que la mémoire employée ne dépend plus de la taille de
+    l'image. Mesuré sur le même cas, à 2 048 : **7 371 ms et 1,78 Go → 432 ms et
+    101 Mo**, pour la même image en sortie.
+    """
+    if grain_min <= 0:
+        return rgba
+
+    opaque = rgba[:, :, 3] > 0
+    if not opaque.any():
+        return rgba
+
+    hauteur, largeur = opaque.shape
+    # Le cadre d'un pixel autour de l'image : les voisins d'un pixel du bord se
+    # lisent alors sans test. Il vaut *transparent* et *couleur inconnue*, ce qui
+    # exclut les quatre bordures de l'image et empêche le dehors de compter.
+    code_borde = np.full((hauteur + 2, largeur + 2), COULEUR_INCONNUE, dtype=np.int32)
+    code_borde[1:-1, 1:-1] = (
+        rgba[:, :, 0].astype(np.int32) * 65536
+        + rgba[:, :, 1].astype(np.int32) * 256
+        + rgba[:, :, 2].astype(np.int32)
+    )
+    opaque_borde = np.zeros((hauteur + 2, largeur + 2), dtype=bool)
+    opaque_borde[1:-1, 1:-1] = opaque
+
+    # Les deux comptes, **sans jamais empiler les huit voisins de toute
+    # l'image** : une addition par direction, sur un octet par pixel.
+    voisins_opaques = np.zeros((hauteur, largeur), dtype=np.uint8)
+    siens = np.zeros((hauteur, largeur), dtype=np.uint8)
+    propre = code_borde[1:-1, 1:-1]
+    for dy, dx in VOISINS:
+        fenetre = slice(1 + dy, hauteur + 1 + dy), slice(1 + dx, largeur + 1 + dx)
+        voisins_opaques += opaque_borde[fenetre]
+        siens += code_borde[fenetre] == propre
+
+    # Un pixel qui touche le vide n'est pas candidat : le bord du sujet ne se
+    # repeint pas, donc la silhouette ne peut pas bouger.
+    grains = opaque & (voisins_opaques == len(VOISINS)) & (siens < grain_min)
+    if not grains.any():
+        return rgba
+
+    # ── Ce qui remplace le grain : la couleur qu'une majorité franche porte ───
+    lignes, colonnes = np.nonzero(grains)
+    sortie = None
+    for debut in range(0, len(lignes), PAQUET_DE_GRAINS):
+        ly = lignes[debut : debut + PAQUET_DE_GRAINS]
+        lx = colonnes[debut : debut + PAQUET_DE_GRAINS]
+        # Les huit voisins de ces grains-là, en couleur, et rien d'autre.
+        candidats = np.stack(
+            [code_borde[ly + 1 + dy, lx + 1 + dx] for dy, dx in VOISINS], axis=1
+        )  # (n, 8)
+        # Pour chacun des quatre premiers voisins, combien des huit portent sa
+        # couleur. Quatre suffisent, et la note du haut dit pourquoi.
+        accord = (candidats[:, :ASSEZ_DE_CANDIDATS, None] == candidats[:, None, :]).sum(
+            axis=-1, dtype=np.int16
+        )  # (n, 4)
+        # **Le mieux suivi, et l'égalité n'existe pas.** Deux couleurs ne peuvent
+        # pas atteindre cinq voisins sur huit à la fois : dès que le seuil est
+        # franchi, la couleur élue est unique, et le rang où `argmax` la trouve
+        # ne change donc rien à ce qui est posé — pas plus que le sous-ensemble
+        # de voisins qu'on a examiné. La même recette rend le même pixel, et le
+        # moteur commute avec le miroir.
+        elu = accord.argmax(axis=1)
+        rang = np.arange(len(ly))
+        assez = accord[rang, elu] >= MAJORITE_DU_VOISINAGE
+        if not assez.any():
+            continue
+        if sortie is None:
+            sortie = rgba.copy()
+        pris = candidats[rang, elu][assez]
+        sortie[ly[assez], lx[assez], 0] = ((pris >> 16) & 0xFF).astype(np.uint8)
+        sortie[ly[assez], lx[assez], 1] = ((pris >> 8) & 0xFF).astype(np.uint8)
+        sortie[ly[assez], lx[assez], 2] = (pris & 0xFF).astype(np.uint8)
+
+    return rgba if sortie is None else sortie
+
+
+def decrocher_les_coins(rgba: np.ndarray, passes: int) -> np.ndarray:
+    """**L'escalier** : un pixel qui ne tient au sujet que par un coin s'en va.
+
+    C'est le geste que la planche appelle *le plus fin de l'atelier*, et il a une
+    propriété qu'aucun des dix autres n'a : **il ne peut rien couper**. Un pixel
+    dont aucun des quatre côtés ne touche le sujet n'est relié à rien pour
+    `composantes`, qui compte en quatre voisins depuis `T5` — le retirer ne peut
+    donc détacher aucun morceau qui tenait.
+
+    Une passe retire une dent, trois en retirent trois d'affilée. La planche
+    prévient de la troisième : *« le sujet s'arrondit et perd ses angles vifs ;
+    sur un visage de 8 px, le nez disparaît »*. C'est pourquoi le réglage est
+    borné à trois et non laissé libre.
+
+    **Seul l'alpha bouge.** La couleur d'un pixel décroché reste sous lui — et le
+    lit de couleur, en fin de chaîne, s'occupera de ce qu'elle devient.
+    """
+    if passes <= 0:
+        return rgba
+
+    sortie = rgba.copy()
+    canal = sortie[:, :, 3]  # une vue : écrire dedans écrit dans `sortie`
+    for _ in range(min(passes, LISSAGE_MAX)):
+        opaque = canal > 0
+        if not opaque.any():
+            break
+        huit = _voisinage(opaque.astype(np.uint8), 0).astype(bool)
+        # `VOISINS` range les diagonales aux rangs 0, 2, 5, 7 et les côtés aux
+        # rangs 1, 3, 4, 6 — l'ordre est fixé une fois, en tête de fichier.
+        cotes = huit[:, :, (1, 3, 4, 6)].any(axis=-1)
+        diagonales = huit[:, :, (0, 2, 5, 7)].any(axis=-1)
+        dents = opaque & ~cotes & diagonales
+        if not dents.any():
+            break
+        canal[dents] = 0
+    return sortie
+
+
 def nettoyer(rgba: np.ndarray, bords: Bords) -> np.ndarray:
     """Le dernier mot : les taches trop petites pour être le sujet s'en vont.
 
     Une réduction au plus proche voisin laisse derrière elle des pixels isolés —
     un éclat de fond qui a survécu au seuil, un bout de contour détaché. À
     64 pixels de côté, un pixel isolé se voit ; à 1024, il ne se voyait pas.
+
+    **Trois moteurs depuis B17, dans l'ordre où ils se corrigent l'un l'autre** :
+    les taches détachées d'abord, puis le grain de couleur, puis l'escalier. La
+    taille avant la couleur parce qu'un éclat détaché n'a pas à être repeint
+    avant d'être effacé ; l'escalier en dernier parce qu'il travaille sur la
+    silhouette définitive, celle que les deux autres viennent d'arrêter.
     """
-    if bords.aire_min <= 0:
-        return rgba
-    alpha = rgba[:, :, 3]
-    if not alpha.any():
-        return rgba
-    sortie = rgba.copy()
-    canal = sortie[:, :, 3]  # une vue, pas une copie : écrire dedans écrit dans `sortie`
-    for tache, aire in composantes(alpha > 0):
-        if aire < bords.aire_min:
-            canal[tache] = 0
-    return sortie
+    if bords.aire_min > 0:
+        alpha = rgba[:, :, 3]
+        if alpha.any():
+            sortie = rgba.copy()
+            # une vue, pas une copie : écrire dedans écrit dans `sortie`
+            canal = sortie[:, :, 3]
+            for tache, aire in composantes(alpha > 0):
+                if aire < bords.aire_min:
+                    canal[tache] = 0
+            rgba = sortie
+
+    rgba = depoussierer(rgba, bords.grain_min)
+    return decrocher_les_coins(rgba, bords.lissage)
 
 
 # ── Le pinceau, et ce qu'il couvre ───────────────────────────────────────────
@@ -1902,6 +2119,183 @@ def _palette_imposee(couleurs: tuple[str, ...]) -> Image.Image:
     return reference
 
 
+# ── Les quatre curseurs, avant la réduction (B17) ────────────────────────────
+#
+# **La panne qu'ils réparent se compte en couleurs, pas en dollars.** Un tirage
+# revenu trop sombre partait à la quantification tel quel, et les 24 couleurs du
+# jeu étaient dépensées à décrire une image mal exposée. Deux curseurs suffisent
+# à rendre les 24 couleurs à ce qu'elles ont à dire.
+#
+# **Le neutre est l'identité à l'octet près**, et ce n'est pas un détail de
+# confort : c'est ce qui permet de poser la place sans la régler et d'obtenir
+# exactement l'image d'avant. `curseurs_neutres` répond une fois pour tout le
+# dépôt, et cette fonction sort avant d'avoir converti quoi que ce soit.
+
+# Les trois coefficients de la luminosité perçue — ceux de Rec. 601, les mêmes
+# que le reste du monde emploie pour désaturer. Ils sont ici plutôt qu'une
+# moyenne à parts égales parce que l'œil ne pèse pas le vert comme le bleu :
+# désaturer à parts égales éclaircit les bleus et assombrit les verts, ce qui se
+# voit tout de suite sur une herbe de marais.
+LUMA = (0.299, 0.587, 0.114)
+
+
+def _sinus_de_la_teinte(luma: tuple[float, float, float]) -> tuple[float, float, float]:
+    """La ligne du milieu de la matrice de teinte, **déduite de la luma**.
+
+    Les deux autres lignes s'écrivent directement avec les trois poids ; la
+    troisième ne se devine pas, et c'est celle que tout le monde recopie du
+    W3C. Elle est ici le seul jeu de nombres qui laisse à la fois l'axe des
+    gris fixe et la luminosité perçue inchangée — la contrainte s'écrit
+    « la luma de la sortie est celle de l'entrée », et elle a une seule
+    solution. Pour la luma du W3C elle rend bien `0,1427 · 0,1410 · −0,2837`,
+    c'est-à-dire les trois nombres de la spécification, arrondis.
+    """
+    r, v, b = luma
+    return (
+        (r * r + b - b * r) / v,
+        r - b,
+        -(r * (1 - b) + b * b) / v,
+    )
+
+
+_SINUS_DE_LA_TEINTE = _sinus_de_la_teinte(LUMA)
+
+
+def _rotation_de_teinte(degres: float) -> np.ndarray:
+    """La matrice qui tourne les couleurs autour de l'axe des gris.
+
+    **Une rotation, pas un décalage de canal** : le gris reste gris, la
+    luminosité perçue ne bouge pas, et un tour complet rend l'image de départ.
+    Elle est écrite ici plutôt qu'un aller-retour en TSV — un aller-retour en
+    8 bits perd des couleurs à chaque passage, et le produit tient à ce que la
+    même recette rende toujours le même pixel.
+
+    ⚠️ **Les trois constantes du filtre du web ne se recopient pas.** La
+    première écriture de cette fonction reprenait `0.143`, `0.140`, `-0.283` de
+    la spécification W3C tout en posant `LUMA` de Rec. 601 sur les deux autres
+    lignes. Ces trois nombres-là ne sont pas des constantes universelles : ils
+    sont **calculés à partir de la luma du W3C**, qui n'est pas la nôtre
+    (0,213 / 0,715 / 0,072 contre 0,299 / 0,587 / 0,114). Mélangées, elles
+    faisaient une matrice qui n'était plus une rotation : `+90°` puis `-90°` ne
+    rendait pas l'image de départ, et un bleu saturé gagnait 30 % de luminosité
+    au passage. Le défaut ne se voyait pas sur un gris — la ligne du milieu
+    sommait quand même à 1 — et c'est pourquoi il faut ici les deux essais que
+    `B17` a ajoutés après coup : *une couleur connue tombe où il faut*, et *la
+    luminosité perçue ne bouge pas*.
+
+    Les trois nombres se déduisent de la luma en imposant que l'axe des gris
+    soit fixe et que la luminosité soit conservée — c'est ce que fait la ligne
+    `_sinus_de_la_teinte` ci-dessous, et c'est pourquoi elle est calculée et non
+    écrite en dur : changer `LUMA` sans elle recasserait tout en silence.
+    """
+    angle = math.radians(degres)
+    cos, sin = math.cos(angle), math.sin(angle)
+    r, v, b = LUMA
+    s0, s1, s2 = _SINUS_DE_LA_TEINTE
+    return np.array(
+        [
+            [r + cos * (1 - r) - sin * r, v - cos * v - sin * v, b - cos * b + sin * (1 - b)],
+            [r - cos * r + sin * s0, v + cos * (1 - v) + sin * s1, b - cos * b + sin * s2],
+            [r - cos * r - sin * (1 - r), v - cos * v + sin * v, b + cos * (1 - b) + sin * b],
+        ],
+        dtype=np.float32,
+    )
+
+
+def regler_les_couleurs(rgba: np.ndarray, quantification: Quantification) -> np.ndarray:
+    """Luminosité, contraste, saturation, teinte — **avant** la réduction.
+
+    L'ordre des quatre n'est pas indifférent, et c'est celui de la planche :
+    on éclaircit, on écarte du gris, on sature, on tourne. Le contraste après la
+    luminosité parce qu'il écarte autour du gris moyen — l'inverse aurait
+    ramené vers le centre ce qu'on venait de remonter.
+
+    **L'alpha n'est ni lu ni écrit.** Les quatre curseurs ne peuvent donc pas
+    changer d'un pixel ce que le détourage a décidé.
+    """
+    if quantification.curseurs_neutres:
+        return rgba
+
+    couleurs = rgba[:, :, :3].astype(np.float32) / 255.0
+
+    if quantification.luminosite:
+        couleurs = couleurs + quantification.luminosite / 100.0
+
+    if quantification.contraste:
+        # Un contraste de +100 double l'écart au gris moyen, un contraste de
+        # −100 écrase tout sur le gris. La courbe est une droite : c'est ce que
+        # le curseur montre, et une courbe en S aurait fait dire au réglage
+        # autre chose que ce qu'il dit.
+        couleurs = 0.5 + (couleurs - 0.5) * (1.0 + quantification.contraste / 100.0)
+
+    if quantification.saturation:
+        gris = couleurs @ np.array(LUMA, dtype=np.float32)
+        couleurs = gris[:, :, None] + (couleurs - gris[:, :, None]) * (
+            1.0 + quantification.saturation / 100.0
+        )
+
+    if quantification.teinte:
+        couleurs = couleurs @ _rotation_de_teinte(quantification.teinte).T
+
+    sortie = rgba.copy()
+    sortie[:, :, :3] = np.clip(couleurs * 255.0 + 0.5, 0, 255).astype(np.uint8)
+    return sortie
+
+
+# ── L'échange de couleurs, après la réduction (B17) ──────────────────────────
+#
+# **Trois pèlerins pour une génération.** Trois capes de couleurs différentes
+# coûtaient trois tirages, et rendaient trois silhouettes différentes. Une table
+# de correspondance sur une image déjà finie les rend identiques au pixel près,
+# gratuitement — ce qu'une génération ne sait pas faire.
+#
+# **Après la quantification, et c'est ce qui la rend exacte.** Posé avant, le
+# bleu qu'on vient d'écrire repartirait au plus proche de la palette, donc
+# peut-être au brun d'où il vient. Posé après, il nomme des couleurs finies et
+# rend exactement celles qu'on a demandées.
+
+
+def echanger_les_couleurs(
+    rgba: np.ndarray, echanges: Sequence[Echange]
+) -> np.ndarray:
+    """La table de correspondance, appliquée d'un seul coup.
+
+    **Une paire ne repasse jamais sur ce qu'une autre a posé.** Les écarts se
+    mesurent tous sur l'image d'entrée, et un pixel déjà pris par une paire est
+    fermé aux suivantes : `brun → bleu` puis `bleu → vert` laisse le brun bleu,
+    au lieu de l'envoyer au vert par un chemin que personne n'a écrit. Il reste
+    un seul cas où l'ordre des lignes décide — deux paires dont les tolérances
+    se recouvrent sur le même pixel : la première le prend, et c'est la règle
+    qu'on peut lire dans la table, de haut en bas.
+
+    **L'écart se mesure comme partout ailleurs dans l'atelier** — la distance de
+    Tchebychev, celle de `detourer_bord` et de `domaine/fond.py`. Une seconde
+    façon de mesurer une distance de couleur aurait fini par répondre autrement
+    que la première sur la même image.
+
+    **L'alpha n'est ni lu ni écrit** : c'est ce qui tient le critère de la
+    tranche — *la silhouette est identique à l'octet près*.
+    """
+    vives = [e for e in echanges if e.depuis and e.vers]
+    if not vives:
+        return rgba
+
+    entree = rgba[:, :, :3].astype(np.int16)
+    sortie = rgba.copy()
+    pris = np.zeros(rgba.shape[:2], dtype=bool)
+
+    for echange in vives:
+        cible = np.array(_rvb(echange.depuis), dtype=np.int16)
+        ecart = np.abs(entree - cible).max(axis=2)
+        touche = (ecart <= max(0, echange.tolerance)) & ~pris
+        if not touche.any():
+            continue
+        sortie[:, :, :3][touche] = np.array(_rvb(echange.vers), dtype=np.uint8)
+        pris |= touche
+
+    return sortie
+
+
 def quantifier(rgba: np.ndarray, quantification: Quantification) -> np.ndarray:
     """Des aplats, à la place de trente mille couleurs.
 
@@ -2108,6 +2502,136 @@ def finir(
     return en_rendu(queue(rgba, recette, fenetre))
 
 
+# ── Le lit de couleur sous la transparence (B17) ─────────────────────────────
+#
+# **La seule des quatre réparations de la tranche qui ne soit le réglage de
+# personne.** Les trois autres sont des choix ; celle-ci répare un défaut du
+# fichier, et le critère est écrit sans condition — *un fichier exporté ne porte
+# plus de magenta sous ses pixels transparents*, pas *peut ne plus en porter*.
+# En faire une place l'aurait laissée éteinte sur les soixante et une recettes
+# du dépôt, c'est-à-dire n'aurait rien réparé.
+#
+# **Ce qu'elle ne touche pas, et c'est ce qui la rend sûre** : elle n'écrit que
+# dans des pixels dont l'alpha est **exactement nul**, et elle ne touche jamais
+# l'alpha. Un pixel visible, même à moitié transparent, sort à l'octet près comme
+# avant. Elle ne peut donc rien changer à ce qu'on voit — seulement à ce qui
+# remonte quand l'image est réduite de moitié, tournée, ou rangée dans une
+# planche, et c'est très exactement le liseré que le relevé décrit.
+
+# Deux ou trois pixels, dit la planche. Trois : c'est ce qu'il faut pour qu'une
+# réduction de moitié suivie d'une seconde ne retrouve toujours pas le fond.
+LIT_DE_COULEUR = 3
+
+# Une couleur codée sur trois octets tient sous 2²⁴ ; cette valeur-là est donc
+# au-dessus de toutes les autres, et *le plus petit voisin* ne peut jamais la
+# choisir. C'est ce qui remplace un test « ce voisin est-il connu ? » à chaque
+# lecture — et ce qui remplit le cadre d'un pixel posé autour de l'image.
+COULEUR_INCONNUE = 1 << 24
+
+
+def etaler_sous_la_transparence(rgba: np.ndarray, pixels: int = LIT_DE_COULEUR) -> np.ndarray:
+    """La couleur du bord, étalée vers l'extérieur sous les pixels vides.
+
+    Le détourage met les pixels du fond à zéro d'opacité et **ne touche pas à
+    leur couleur** : chaque pixel vide du fichier porte encore le magenta du
+    fond. Tant que le jeu affiche au pixel près, personne ne le voit ; dès qu'un
+    filtre mélange deux pixels voisins — une réduction, une rotation, une planche
+    —, le magenta remonte en liseré autour du sujet.
+
+    **Elle recopie, elle ne moyenne pas.** Chaque pixel vide prend une couleur
+    qu'un de ses voisins déjà connus porte. Une moyenne aurait fabriqué une
+    couleur que l'image ne contient pas, et cette couleur-là aurait fini par
+    manger une place dans la palette d'une planche quantifiée plus tard.
+
+    **Et elle choisit d'une façon qui ne connaît pas la gauche de la droite** :
+    parmi les couleurs des voisins connus, la plus petite lue comme un nombre.
+    Ce n'est pas une coquetterie — prendre *le premier voisin dans un ordre fixe*
+    marchait aussi bien, et **cassait l'involution du miroir** que `B1` a posée :
+    l'ordre des huit voisins n'est pas symétrique, si bien que retourner une
+    image puis la retourner encore ne rendait plus exactement l'image de départ.
+    Le défaut ne se voyait sur aucun pixel visible, et les cinq essais de `B1`
+    l'ont attrapé — c'est précisément à ça qu'ils servent. Un choix qui ne dépend
+    que de l'ensemble des couleurs voisines, jamais de leur position, commute
+    avec le miroir comme avec n'importe quel quart de tour à venir.
+
+    **Au-delà du lit, un pixel vide ne porte plus rien du tout.** Étaler la
+    couleur jusqu'au bord aurait demandé autant de passes que l'image est large —
+    une seconde sur un dessin de 2 048 — et aurait fait grossir le fichier, un
+    aplat uni se compressant en presque rien là où un semis de teintes ne se
+    compresse pas. Les remettre à zéro coûte une ligne, rend le critère vrai à la
+    lettre — *plus de magenta sous aucun pixel transparent* —, et ce qui reste au
+    loin ne peut de toute façon atteindre le sujet sous aucun filtre : il y a
+    trois pixels de vraie couleur entre les deux.
+
+    ⚠️ **Elle ne travaille que sur la frontière, et il a fallu la réécrire pour
+    ça.** La première version empilait trois voisinages de huit valeurs sur
+    *toute* l'image et à *chaque* passe — quatre-vingt-seize octets par pixel et
+    par passe. Sur une case de 64 le prix ne se voyait pas ; sur un dessin de
+    2 048 sans place `grille`, il montait à 2,2 secondes, **à chaque rendu
+    détouré**. Le moteur ne peint pourtant qu'un liseré de trois pixels : il
+    lit maintenant les huit voisins des seuls pixels de la frontière, et le seul
+    calcul qui balaie l'image entière est une dilatation de booléens, à un octet
+    par pixel. Mesuré à 2 048 : 2 231 ms → 157 ms, et à 64 : 2,0 ms → 0,5 ms.
+    """
+    if pixels <= 0:
+        return rgba
+    connu = rgba[:, :, 3] > 0
+    # Rien à étaler quand tout est plein, et rien d'où partir quand tout est
+    # vide : une image entièrement transparente n'a aucune couleur de bord.
+    if not connu.any() or connu.all():
+        return rgba
+
+    hauteur, largeur = connu.shape
+    # Les trois canaux en un seul nombre, pour que « la plus petite couleur »
+    # soit une comparaison et non trois. Un pixel inconnu prend une valeur
+    # au-dessus de toutes les autres : il ne peut jamais être choisi.
+    borde = np.full((hauteur + 2, largeur + 2), COULEUR_INCONNUE, dtype=np.int32)
+    borde[1:-1, 1:-1] = (
+        rgba[:, :, 0].astype(np.int32) * 65536
+        + rgba[:, :, 1].astype(np.int32) * 256
+        + rgba[:, :, 2].astype(np.int32)
+    )
+    # Le cadre d'un pixel évite un test de bord à chaque lecture, et il vaut
+    # *inconnu* : le dehors de l'image ne peut pas donner sa couleur.
+    borde[1:-1, 1:-1][~connu] = COULEUR_INCONNUE
+    plein = np.zeros((hauteur + 2, largeur + 2), dtype=bool)
+    plein[1:-1, 1:-1] = connu
+
+    for _ in range(pixels):
+        # La frontière : les pixels vides qui touchent un pixel connu. C'est le
+        # seul calcul qui balaie l'image entière — huit « ou » sur des booléens.
+        touche = np.zeros((hauteur, largeur), dtype=bool)
+        for dy, dx in VOISINS:
+            touche |= plein[1 + dy : hauteur + 1 + dy, 1 + dx : largeur + 1 + dx]
+        frontiere = touche & ~connu
+        if not frontiere.any():
+            break
+        lignes, colonnes = np.nonzero(frontiere)
+        y, x = lignes + 1, colonnes + 1
+        # Les huit voisins des seuls pixels de la frontière. Ils sont tous lus
+        # **avant** la moindre écriture : la passe est donc simultanée, et deux
+        # pixels voisins de la frontière ne se donnent pas leur couleur l'un à
+        # l'autre au milieu du balayage.
+        voisines = np.stack([borde[y + dy, x + dx] for dy, dx in VOISINS], axis=1)
+        borde[y, x] = voisines.min(axis=1)
+        plein[y, x] = True
+        connu[lignes, colonnes] = True
+
+    sortie = rgba.copy()
+    # Ce qui vient d'être peint, et lui seul : les pixels déjà opaques gardent
+    # leur couleur à l'octet près.
+    peints = connu & (rgba[:, :, 3] == 0)
+    if peints.any():
+        codes = borde[1:-1, 1:-1][peints]
+        sortie[:, :, :3][peints] = np.stack(
+            [(codes >> 16) & 0xFF, (codes >> 8) & 0xFF, codes & 0xFF], axis=1
+        ).astype(np.uint8)
+    reste = ~connu
+    if reste.any():
+        sortie[:, :, :3][reste] = 0
+    return sortie
+
+
 def avant_la_grille(rgba: np.ndarray, recette: Recette) -> np.ndarray:
     """L'image **telle que `sur_grille` la verra** : détourée, puis recadrée si
     la recette le demande.
@@ -2177,7 +2701,21 @@ def queue(
         )
 
     if recette.quantification is not None and not recette.dort(QUANTIFICATION):
+        # ── Les trois moments de la table *Couleurs* (B17) ────────────────────
+        #
+        # **Les curseurs avant, la réduction, l'échange après** — et l'ordre est
+        # la moitié de leur raison d'être. Un curseur posé après la réduction
+        # repeindrait vingt-quatre couleurs choisies avec soin et rendrait une
+        # palette que le jeu ne connaît pas ; un échange posé avant serait défait
+        # par la réduction, qui renverrait le bleu qu'on vient d'écrire au plus
+        # proche de la palette — c'est-à-dire peut-être au brun d'où il vient.
+        #
+        # Les trois dorment ensemble, parce que c'est **une seule table** à
+        # l'écran comme dans la planche : endormir *Couleurs* rend l'image telle
+        # qu'elle est entrée, ce que la veille promet depuis U4.
+        rgba = regler_les_couleurs(rgba, recette.quantification)
         rgba = quantifier(rgba, recette.quantification)
+        rgba = echanger_les_couleurs(rgba, recette.quantification.echanges)
 
     if recette.bords is not None and not recette.dort(BORDS):
         rgba = nettoyer(rgba, recette.bords)
@@ -2204,6 +2742,27 @@ def queue(
 
     if recette.main is not None and not recette.dort(LA_MAIN):
         rgba = retoucher(rgba, recette.main)
+
+    # ── Le lit de couleur, en tout dernier (B17) ─────────────────────────────
+    #
+    # **Il vient après la main** parce que la main est la dernière à créer de la
+    # transparence — *ôter* ouvre des pixels, et un lit posé plus tôt les aurait
+    # manqués. Il n'est le réglage de personne : c'est une réparation du fichier,
+    # pas un effet qu'on ajoute, et il ne peut rien changer à ce qui se voit.
+    #
+    # **Il répare ce que le détourage a laissé, et rien d'autre.** Le magenta
+    # sous la transparence est là parce que *nous* avons mis ces pixels à zéro
+    # d'opacité sans toucher à leur couleur ; une image que rien n'a détourée
+    # n'a pas de fond à cacher, et la lui repeindre serait poser un effet là où
+    # il n'y a pas de panne. La conséquence se dit simplement : **la tranche ne
+    # change aucun rendu qui n'a pas été détouré**, et les essais du miroir
+    # (`B1`) le mesurent sans avoir eu besoin d'une ligne de plus.
+    #
+    # C'est la même lecture que la case ci-dessus — `passes_vives`, la seule du
+    # dépôt qui réponde à *le détourage agit-il ?* Une seconde façon de la poser
+    # finirait par répondre autrement.
+    if recette.passes_vives():
+        rgba = etaler_sous_la_transparence(rgba)
 
     return rgba
 

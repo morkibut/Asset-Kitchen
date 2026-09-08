@@ -4814,7 +4814,7 @@ describe("l'infobulle et le guide", () => {
     }
   })
 
-  test("les 157 entrées sont adressées à un écran qui existe — un ou refuse un lieu inconnu", () => {
+  test("les 162 entrées sont adressées à un écran qui existe — un ou refuse un lieu inconnu", () => {
     // **Le critère qui commande la tranche (B7).** Fermé côté type
     // (`Explication["ou"]`, qui n'accepte à la compilation que ces valeurs-là),
     // et retenu ici aussi : un `ou` qui ne serait dans aucun des deux serait
@@ -4836,7 +4836,8 @@ describe("l'infobulle et le guide", () => {
       "reglages",
       "equipement",
     ])
-    expect(Object.keys(AIDE).length).toBe(157)
+    // 157 avant `B17`, plus les cinq entrées des quatre moteurs neufs.
+    expect(Object.keys(AIDE).length).toBe(162)
     for (const [cle, entree] of Object.entries(AIDE)) {
       expect(LIEUX_FERMES.has(entree.ou), `${cle} → ou: "${entree.ou}"`).toBe(true)
     }

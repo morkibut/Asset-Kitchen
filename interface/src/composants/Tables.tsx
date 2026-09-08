@@ -135,8 +135,15 @@ export function valeur(table: Table, recette: Recette): string | null {
       return recette.grille ? RESUME.grille(recette.grille) : null
     case "quantification":
       return recette.quantification ? RESUME.quantification(recette.quantification) : null
+    // **Trois moteurs depuis B17, et le carré se remplit sur n'importe lequel**
+    // — le grain de couleur et l'escalier agissent sans qu'aucune tache ne
+    // parte. Ne regarder que `aire_min` aurait laissé la barre annoncer une
+    // table creuse pendant que l'image change sous les yeux.
     case "bords":
-      return recette.bords && recette.bords.aire_min > 0
+      return recette.bords &&
+        (recette.bords.aire_min > 0 ||
+          (recette.bords.grain_min ?? 0) > 0 ||
+          (recette.bords.lissage ?? 0) > 0)
         ? RESUME.bords(recette.bords)
         : null
     case "contours":

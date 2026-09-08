@@ -1275,12 +1275,59 @@ export function coteDuSujet(cible: number, occupation: number): number {
 export function coteDuCanevas(cible: number, occupation: number): number {
   return Math.max(Math.max(1, cible), coteDuSujet(cible, occupation))
 }
+/** Une ligne de la table de correspondance (B17) — *cette couleur-ci devient
+ *  celle-là*. La tolérance est sur la paire et non sur la table : un halo flou
+ *  en demande plus, un aplat net en demande moins. */
+export type Echange = { depuis: string; vers: string; tolerance: number }
+
+/** La table **Couleurs** : la réduction, et les six réglages de `B17`.
+ *
+ *  **Les six se posent avec le reste, toujours.** L'écran renvoie la recette
+ *  entière à chaque geste ; un champ omis serait jeté par la validation du
+ *  serveur, et la cape échangée disparaîtrait dès qu'on touche au nombre de
+ *  couleurs à côté — c'est la panne que `decalage` a payée en E17. */
 export type Quantification = {
   couleurs: number
   palette: string[]
   tramage: "aucun" | "floyd"
+  /** Les quatre curseurs, **avant** la réduction : un curseur posé après
+   *  repeindrait les 24 couleurs qu'on vient de choisir.
+   *
+   *  **Facultatifs sur le fil, et ce n'est pas une négligence.** Le serveur
+   *  n'écrit une clé neuve que si elle est posée — c'est la règle de `B1` qui
+   *  garde l'empreinte des recettes d'avant —, si bien qu'une recette qui ne
+   *  règle rien arrive sans ces six clés-là. Les lire avec leur neutre est donc
+   *  la façon exacte de les lire, pas un filet. */
+  luminosite?: number
+  contraste?: number
+  saturation?: number
+  teinte?: number
+  /** L'échange, **après** la réduction : posé avant, il serait défait par elle,
+   *  qui renverrait le bleu au plus proche de la palette. */
+  echanges?: Echange[]
 }
-export type Bords = { aire_min: number }
+
+/** La table **Nettoyer** : les taches, le grain de couleur, l'escalier (B17).
+ *
+ *  `aire_min` compte des taches dans la **silhouette** ; `grain_min` compte des
+ *  **couleurs**, et c'est ce que le seuil de taille n'a jamais su atteindre — un
+ *  pixel vert vif au milieu d'une robe brune est opaque et collé au sujet. */
+export type Bords = { aire_min: number; grain_min?: number; lissage?: number }
+
+/** Les bornes des réglages de `B17`, écrites une fois. Le serveur les tient
+ *  aussi de son côté ; celles-ci arrêtent la valeur avant qu'elle parte. */
+export const CURSEUR_MIN = -100
+export const CURSEUR_MAX = 100
+export const TEINTE_MIN = -180
+export const TEINTE_MAX = 180
+export const GRAIN_MAX = 8
+export const LISSAGE_MAX = 3
+
+/** La largeur du lit de couleur posé sous la transparence, en pixels (`B17`).
+ *  **Ce n'est pas un réglage** : c'est une réparation du fichier, toujours
+ *  posée, et le nombre est ici pour que l'écran puisse le dire au lieu de le
+ *  taire. Il est tenu d'accord avec `atelier/image/traitement.py` par un essai. */
+export const LIT_DE_COULEUR = 3
 
 export type Recette = {
   passes: Passe[]
@@ -6304,9 +6351,21 @@ export const depense = (valeur: number, unite?: string | null) =>
  *
  *  L'étiquette *miroir · gratuit* se lit sur ce fait **et** sur `consomme` à
  *  zéro : une image générée sur laquelle l'auteur pose ensuite un miroir garde
- *  son prix, parce que l'étiquette dit ce qui a été payé. */
+ *  son prix, parce que l'étiquette dit ce qui a été payé.
+ *
+ *  **`== null` et non `!== null`, et c'est une réparation** (trouvée au
+ *  navigateur en `B17`). La règle que `B1` a posée côté serveur est que *la clé
+ *  neuve ne s'écrit que si la place est remplie* — une recette sans
+ *  retournement arrive donc **sans la clé du tout**, et `recette.retournement`
+ *  vaut `undefined`, pas `null`. Or `undefined !== null` est vrai : depuis `B1`,
+ *  **toute image gratuite du produit s'affichait « miroir · gratuit »**, y
+ *  compris une image importée que rien n'a jamais retournée. Le défaut ne se
+ *  voyait pas sur les images générées, qui ont un prix et gardent leur prix.
+ *
+ *  La règle vaut pour toute clé que le serveur peut omettre, et `B17` en ajoute
+ *  huit : une comparaison lâche à `null` répond juste pour les deux absences. */
 export const estMiroir = (recette: Recette) =>
-  recette.retournement !== null &&
+  recette.retournement != null &&
   !(recette.veille ?? []).includes("retournement")
 
 /** Un poids de fichier, en mégaoctets — **jamais arrondi vers le bas** (U13).
