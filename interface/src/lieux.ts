@@ -80,6 +80,16 @@ export type Lieu =
   // fenêtre entière avant même qu'un jeu soit ouvert, comme l'ouverture de `B4`
   // et le parcours de création de `B14`.
   | { genre: "installation" }
+  // La sortie (`B21`) — **où les fichiers du jeu s'en vont**. Elle se pose sur
+  // n'importe quelle racine, comme `depenses` et `regles` : on sort de partout,
+  // et c'est le geste qu'on refait cinquante fois.
+  //
+  // ⚠️ **Elle appartient au jeu, pas à l'atelier**, et c'est ce qui la
+  // distingue d'`installation` juste au-dessus : le dossier où l'on dépose est
+  // gardé avec ce jeu-ci, et le lot qui sort est fait de ses sujets. Elle ne
+  // porte pourtant aucune charge — les cinq réglages sont un état de l'écran,
+  // pas cinq lieux (§ *Ce qui n'est pas un lieu*, en tête de ce fichier).
+  | { genre: "sortie" }
   // Une pièce d'équipement et ses emplois (`B19`) — **elle se pose sur le
   // codex**, comme la grille d'une famille, et pour la même raison : c'est le
   // même endroit vu par une porte de plus. Le carnet la déplie sous *Les

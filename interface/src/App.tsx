@@ -105,6 +105,7 @@ import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
 import { TableauDeBord } from "./composants/TableauDeBord"
 import { Ouverture } from "./composants/Ouverture"
 import { Installation } from "./composants/Installation"
+import { Sortie } from "./composants/Sortie"
 import { ReglesDuJeu } from "./composants/ReglesDuJeu"
 import {
   PILE_INITIALE,
@@ -364,6 +365,15 @@ export function App() {
     setPile((p) =>
       ouvert ? entrer(p, { genre: "installation" }) : sortir(p, "installation"),
     )
+
+  /** La sortie (`B21`) — **le seul écran d'où les fichiers du jeu s'en vont**.
+   *
+   *  Elle s'ouvre d'où qu'on vienne, comme les dépenses, les règles et
+   *  l'installation. Ce qui la distingue de la dernière : elle appartient au
+   *  jeu — son dossier est gardé avec lui, et son lot est fait de ses sujets. */
+  const sortieOuverte = dans(pile, "sortie")
+  const setSortieOuverte = (ouvert: boolean) =>
+    setPile((p) => (ouvert ? entrer(p, { genre: "sortie" }) : sortir(p, "sortie")))
 
   /** Le tour du propriétaire doit-il se dérouler tout seul ? (`B15`)
    *
@@ -2942,6 +2952,11 @@ export function App() {
       case "installation":
         return "L'installation"
 
+      // La sortie (`B21`) — même règle que les trois au-dessus : un nom, et le
+      // nom du jeu le précède, parce qu'on l'ouvre de partout.
+      case "sortie":
+        return "La sortie"
+
       // *Inspiration* et non *Univers* : ce ne sont pas les mêmes images, et le
       // produit ne les confond nulle part.
       case "carte":
@@ -3399,6 +3414,10 @@ export function App() {
           setFente(null)
           setDepensesOuvertes(true)
         }}
+        surLaSortie={() => {
+          setFente(null)
+          setSortieOuverte(true)
+        }}
         surUnAutreJeu={(identifiant) => void ouvrirJeu(identifiant)}
         surTousLesJeux={() => setChoixDuJeu("jeux")}
         surCommencerUnJeu={() => setChoixDuJeu("creer")}
@@ -3542,6 +3561,27 @@ export function App() {
             onTiroirs={() => void api.etat().then(setEtat).catch(() => undefined)}
             onFerme={() => setInstallationOuverte(false)}
             onLesAutresReglages={() => setReglagesOuverts(true)}
+          />
+        )}
+
+      {/* ── La sortie (`B21`) ───────────────────────────────────────────────
+          **Un seul écran, là où il y avait quatre boutons.** Il prend la même
+          ligne de grille et la même chaîne de gardes que les règles et
+          l'installation : il n'appartient à aucune des quatre racines, et on
+          l'ouvre d'où qu'on vienne.
+
+          Le carnet reste visible — sortir n'est pas un parcours dont on ne
+          revient pas, c'est un geste qu'on refait cinquante fois. */}
+      {sortieOuverte &&
+        !reglesOuvertes &&
+        !installationOuverte &&
+        !depensesOuvertes &&
+        !envoiOuvert &&
+        !clipOuvert && (
+          <Sortie
+            projet={projetCourant?.identifiant ?? null}
+            onFerme={() => setSortieOuverte(false)}
+            onErreur={(refus) => setPanne(refus.message)}
           />
         )}
 

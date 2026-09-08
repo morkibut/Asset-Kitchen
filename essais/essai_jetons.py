@@ -81,6 +81,8 @@ LES_FICHIERS_DU_CARNET = (
     # B12 — l'essai : le quatrième onglet de la page d'un sujet, celui où le
     # personnage se joue au clavier.
     "interface/src/composants/EssaiDuSujet.tsx",
+    # B21 — la sortie : le seul écran d'où les fichiers du jeu s'en vont.
+    "interface/src/composants/Sortie.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────

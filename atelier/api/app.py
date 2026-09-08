@@ -19,6 +19,7 @@ from atelier.api.animation import routeur as routeur_animation
 from atelier.api.bibliotheque import routeur as routeur_bibliotheque
 from atelier.api.gestes import routeur as routeur_gestes
 from atelier.api.production import routeur as routeur_production
+from atelier.api.sortie import routeur as routeur_sortie
 from atelier.api.routes import routeur
 from atelier.api.univers import routeur as routeur_univers
 from mcp.server.transport_security import TransportSecuritySettings
@@ -59,6 +60,7 @@ from atelier.services.production import (
     ProductionRefusee,
 )
 from atelier.services.export import ExportRefuse
+from atelier.services.sortie import SortieRefusee
 from atelier.services.univers import (
     CarteInconnue,
     CarteRefusee,
@@ -102,6 +104,10 @@ CODES = {
     EnvoiRefuse: 409,
     SuperpositionRefusee: 409,
     ExportRefuse: 409,
+    # Même code que l'export, et pour la même raison (B21) : « il n'y a rien à
+    # sortir » et « ce dossier existe déjà » sont des refus du produit, pas des
+    # fautes d'appel — l'écran les affiche tels quels, en français.
+    SortieRefusee: 409,
     PersonnageInconnu: 404,
     PoseInconnue: 404,
     ProductionRefusee: 409,
@@ -199,6 +205,10 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # Le sixième, arrivé avec B6 : ce que le serveur sait faire, servi à la
     # barre. Il ne fait rien lui-même — il relit l'agent.
     application.include_router(routeur_gestes, prefix="/api")
+    # Le septième, arrivé avec B21 : la sortie. Il répond à une question que
+    # les quatre exports d'avant ne posaient pas — *qu'est-ce qui va être
+    # écrit, et qu'est-ce qui a changé depuis la dernière fois ?*
+    application.include_router(routeur_sortie, prefix="/api")
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

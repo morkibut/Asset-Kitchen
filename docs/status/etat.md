@@ -93,6 +93,86 @@ porte se lit sur sa fiche (`B19`).
 taille où un mouvement se juge. La règle commune est tenue : **un facteur entier, jamais un
 zoom continu**.
 
+## V4 · B21 — la sortie — 10 septembre 2026
+
+**Quatre gestes à quatre endroits, et aucun ne disait ce qu'il allait écrire.** Exporter une
+sélection de la galerie, exporter un personnage, exporter ses animations, exporter une bande :
+deux rendaient une archive au navigateur, un seul écrivait vraiment dans le dossier du jeu, et
+aucun ne savait ce qu'il avait posé la fois d'avant. Ce qui manquait n'était pas un cinquième
+chemin, c'était **l'écran qui les rassemble et qui se lit avant de cliquer**.
+
+**Trois sous-systèmes n'existaient nulle part dans `atelier/`** — la prévisualisation avant
+écriture, le diff avec la sortie précédente, le catalogue par moteur. Les trois sont là ; le
+reste — le rendu d'une image, sa fiche, la planche de sprites, le fichier d'accompagnement au
+format Aseprite, l'image animée — est **demandé à `ServiceExport`, jamais refait**.
+
+**Le plan est un générateur, et c'est la décision qui tient tout le reste.** Le même code sert
+l'aperçu et l'écriture : les deux ne peuvent donc pas nommer deux listes différentes, et *ce qui
+sort est exactement ce que l'aperçu montrait* n'est pas une discipline mais une conséquence.
+Aucun des deux ne garde plus d'un fichier en mémoire — on fabrique les octets, on les pèse, on
+les empreinte, on les laisse partir. La planche relève que l'archive d'aujourd'hui « est
+construite entièrement en mémoire avant de partir, et rien ne borne le nombre d'images
+acceptées » ; l'aperçu aurait été le pire endroit où refaire ça, puisqu'il se demande à chaque
+changement de réglage.
+
+**Le diff se lit sur le dossier, pas sur une mémoire.** C'est l'arbitrage central de la tranche.
+*Ce qui est là fait foi* est déjà écrit dans l'export lui-même, et un index qui dirait seul ce
+qui a été posé se tromperait au premier fichier effacé à la main, au premier dossier restauré
+d'une sauvegarde. Un fichier abîmé dehors se dit donc « remplacé » **sans que rien n'ait bougé
+dans l'atelier** — et c'est un essai à part entière.
+
+La sortie précédente est gardée quand même, dans `sorties.json` à la racine — quatre champs par
+jeu, pas une table —, et **elle ne sert qu'à une chose que le dossier ne sait pas trancher** :
+quels fichiers de là-bas sont les nôtres. Sans elle, « effacer ce qui ne sort plus » voudrait
+dire « tout ce que je ne reconnais pas », et le premier décor peint à la main y passerait. Elle
+tient aussi le dossier **par jeu** — la planche relève que deux jeux ouverts tour à tour se
+déposaient au même endroit, le chemin étant commun à tout l'atelier.
+
+**Écraser est un paramètre, pas un second écrivain.** `ServiceAgent.deposer` porte les trois
+règles du dossier du jeu depuis T7, dont *un fichier de même nom n'est jamais écrasé*. Elle
+reste le défaut, et l'agent ne la lève jamais ; c'est l'écran qui la lève, parce qu'il vient de
+montrer la liste. La raison est écrite en tête de l'export : « un second endroit qui écrirait
+dans le dossier du jeu serait un second endroit où oublier la deuxième ».
+
+**La direction entre enfin dans le nom du fichier.** La planche appelle ça *le piège le plus
+cher du sujet* : un personnage à quatre directions ne sortait qu'**une image par pose**, et ni
+le nom ni le descriptif ne disaient laquelle. La matrice connaît ses colonnes depuis `E10` ; la
+sortie les parcourt, et le choix dans une colonne reste `corps_retenu` — une seconde règle de
+retenue aurait fait montrer une image à l'écran et sortir l'autre.
+
+**Ce qui a été refusé à la planche**, et pourquoi. *Les terrains* n'est pas une famille du
+domaine. *Les calques d'équipement* ne sont pas un lot mais ce qui accompagne un corps : « une
+pose sans corps ne sort pas, ses calques compris » est une règle de C5, et en faire un lot
+aurait permis de sortir des calques sans corps. Le gabarit de nom à jetons
+(`{famille}/{sujet}_{pose}_{direction}`) n'est pas construit : les deux rangements sont fermés,
+et le nom suit la règle de nommage qui existe plutôt que d'en ajouter une seconde — la planche
+relève elle-même que « deux règles de nommage cohabitent » comme un défaut. Et *Choisir…* n'a
+aucune route derrière : aucun navigateur ne donne le chemin d'un dossier à une page web, même
+absence et même raison que dans `Installation.tsx`.
+
+**Le catalogue par moteur est réel pour deux des trois, et honnête pour le troisième.** Godot
+reçoit une ressource `SpriteFrames` qu'il charge seul — c'est ce que la planche appelle *le
+catalogue que Godot lit seul* ; Phaser un *asset pack*, qui lui fait fabriquer les animations
+depuis le fichier d'accompagnement d'`A4`, resté jusqu'ici sans client. Unity n'a pas de
+catalogue en texte qu'on dépose dans un dossier : il reçoit une liste que son import lit, et
+**l'écran le dit** plutôt que de laisser découvrir la différence en ouvrant Unity.
+
+**Le format Aseprite ne gagne rien**, et l'essai le vérifie sur le **jeu de clés exact** des
+deux niveaux, pas sur leur présence — `docs/PIEGES.md` : un format emprunté se dégrade d'une
+clé. Ce qui appartient à l'atelier — la filiation, la recette, l'empreinte, le prix — vit à
+côté, dans son propre descriptif.
+
+**Le navigateur a trouvé deux défauts qu'aucun essai d'écran ne voyait.** Un reste rangé dans un
+sous-dossier s'affichait par son seul nom, juste sous un fichier prévu portant le même nom à la
+racine : on lisait deux fois `le-pelerin-repos-est.png`, une fois « nouveau » et une fois « à
+effacer », sans rien pour les distinguer. Et la raison du grisé était écrite deux fois — sous le
+bouton et dans l'arbre vide —, ce qui faisait douter qu'il s'agisse du même empêchement.
+
+**Où l'écran vit dans le carnet.** La planche l'ouvre « depuis le pied du carnet » ; le pied
+porte ce qui appartient à l'atelier et n'en porte que trois. Or sortir appartient au **jeu** —
+le dossier est gardé avec lui, le lot est fait de ses sujets. Il est donc **au-dessus du
+trait**, sous *Les dépenses*, et le pied reste à trois boutons.
+
 ## V4 · B17 — les moteurs qui remplacent une génération — 10 septembre 2026
 
 **Quatre traitements gratuits qui faisaient repayer une image**, et **aucune place neuve** pour

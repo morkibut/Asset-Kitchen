@@ -85,6 +85,17 @@ class Fichiers:
         # relit **à chaque appel** du MCP (US-91), là où l'état ne se lit qu'à
         # l'ouverture. Deux rythmes de lecture, deux fichiers.
         self.agent = self.racine / "agent.json"
+        # La sortie précédente, jeu par jeu (B21). **Un fichier à la racine, et
+        # pas une table** : ce qu'on garde tient en quatre champs par jeu — la
+        # date, le dossier, les chemins posés et leur poids —, et une table
+        # aurait fait payer un schéma, une migration et un index à quelque chose
+        # qui se relit d'un bloc au moment où l'écran s'ouvre.
+        #
+        # **Il ne fait pas foi sur le contenu**, et c'est ce qui le garde
+        # petit : « nouveau, remplacé ou inchangé » se lit sur le dossier
+        # lui-même. Ceci ne répond qu'à *quels fichiers de là-bas sont les
+        # nôtres* — la question qu'un dossier ne peut pas trancher seul.
+        self.sorties = self.racine / "sorties.json"
         self.base = self.racine / "atelier.sqlite3"
 
     def preparer(self) -> None:
@@ -564,6 +575,20 @@ class Fichiers:
         touché aux garde-fous.
         """
         contenu = self._lire_json(self.agent)
+        return contenu if isinstance(contenu, dict) else {}
+
+    def ecrire_sorties(self, contenu: dict[str, Any]) -> None:
+        self._ecrire_json(self.sorties, contenu)
+
+    def lire_sorties(self) -> dict[str, Any]:
+        """Ce que chaque jeu a sorti la dernière fois. Absent, il rend `{}`.
+
+        **Ne lève jamais**, comme le cadre de l'agent : un atelier qui n'a
+        jamais rien sorti n'est pas en panne, il n'a simplement pas de fois
+        d'avant — et l'écran le dit alors en toutes lettres au lieu d'un
+        comparatif vide.
+        """
+        contenu = self._lire_json(self.sorties)
         return contenu if isinstance(contenu, dict) else {}
 
     # ── Relire le disque ─────────────────────────────────────────────────────

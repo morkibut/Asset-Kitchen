@@ -6141,6 +6141,119 @@ export const api = {
     archive(`/api/characters/${personnage}/strips/export`, {
       projet: projet ?? null,
     }),
+
+  // ── La sortie (B21) ───────────────────────────────────────────────────────
+
+  /** Les cinq listes fermées, le dossier de ce jeu, et la fois d'avant.
+   *
+   *  **L'écran ne redéclare aucune des listes.** Un moteur de plus paraît sans
+   *  qu'une ligne bouge ici, et surtout : l'écran ne peut pas proposer une
+   *  valeur que le serveur refuserait, puisque c'est lui qui les donne. */
+  reglagesDeLaSortie: (projet?: string | null) =>
+    appeler<ReglagesDeLaSortie>(
+      `/output/settings?projet=${encodeURIComponent(projet ?? "")}`,
+    ),
+
+  /** Ce qui sortirait — **et pas un octet n'est écrit**.
+   *
+   *  Se redemande à chaque changement de réglage : cliquer ne coûte jamais, et
+   *  cette route-ci ne dépense rien, ne crée rien, et ne touche au dossier de
+   *  destination que pour le lire. */
+  prevoirLaSortie: (reglage: ReglageDeSortie) =>
+    appeler<ApercuDeSortie>("/output/preview", {
+      method: "POST",
+      body: JSON.stringify(reglage),
+    }),
+
+  /** La sortie, pour de vrai. Ce qui revient est le compte rendu — les chemins
+   *  posés, ce qui a été effacé, et où le descriptif est parti. Aucun octet
+   *  d'image ne traverse cette route. */
+  sortir: (reglage: ReglageDeSortie) =>
+    appeler<BilanDeSortie>("/output", {
+      method: "POST",
+      body: JSON.stringify(reglage),
+    }),
+}
+
+// ── Ce que la sortie échange (B21) ──────────────────────────────────────────
+
+/** Les cinq réponses de l'écran, plus le jeu visé. Toutes les valeurs viennent
+ *  des listes que `reglagesDeLaSortie` a servies. */
+export type ReglageDeSortie = {
+  projet?: string | null
+  lot: string
+  dossier: string | null
+  rangement: string
+  collision: string
+  moteur: string
+}
+
+export type ReglagesDeLaSortie = {
+  lots: string[]
+  rangements: string[]
+  collisions: string[]
+  moteurs: string[]
+  dossier: string
+  precedente: SortiePrecedente | null
+}
+
+export type SortiePrecedente = {
+  le: number
+  dossier: string
+  compte: number
+  chemins: string[]
+  octets: number
+}
+
+/** Un fichier tel qu'il sortirait. `largeur` et `hauteur` à zéro veulent dire
+ *  **pas mesuré** — un descriptif est du texte —, jamais « une image de zéro
+ *  pixel » : l'arbre n'écrit alors rien à leur place. */
+export type FichierDeSortie = {
+  chemin: string
+  octets: number
+  empreinte: string
+  marque: string
+  role: string
+  sujet: string
+  source: string
+  largeur: number
+  hauteur: number
+  images: number
+}
+
+export type PasPret = {
+  genre: string
+  phrase: string
+  compte: number
+  sujets: { identifiant: string; nom: string; quoi: string }[]
+}
+
+export type ApercuDeSortie = {
+  dossier: string
+  fichiers: FichierDeSortie[]
+  restes: FichierDeSortie[]
+  pas_prets: PasPret[]
+  precedente: SortiePrecedente | null
+  reglage: ReglageDeSortie
+  compte: number
+  octets: number
+  comptes: Record<string, number>
+  /** La raison du grisé, ou le vide. **Une phrase, pas une erreur** : un aperçu
+   *  qui ne peut rien montrer reste un aperçu, et le bouton se grise avec sa
+   *  raison en dessous plutôt que de faire paraître un bandeau d'échec. */
+  refus: string
+}
+
+export type BilanDeSortie = {
+  dossier: string
+  ecrits: FichierDeSortie[]
+  effaces: string[]
+  inchanges: number
+  descriptif: string
+  catalogue: string
+  le: number
+  compte: number
+  octets: number
 }
 
 export type Archive = { nom: string; octets: Blob }

@@ -176,7 +176,7 @@ d'agents avant le gros morceau.
 | **4** | `B8`, `B9`, `B10`, `B11` | la collection, la grille d'une famille, la page d'un sujet, le départage |
 | **5** | `B14`, `B15` | les règles du jeu, l'installation |
 | **6** | `B16`, `B17`, `B18` | les tables rangées, puis les moteurs |
-| **7** | `B12`, `B13` ✔, `B19` ✔, `B20`, `B21`, `B22` | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
+| **7** | `B12`, `B13` ✔, `B19` ✔, `B20`, `B21` ✔, `B22` | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
 
 `B8` et `B17` sont du serveur pur : ils se prennent en parallèle du rang qui les précède.
 
@@ -1037,13 +1037,49 @@ n'y ajoute rien) et l'image animée de prévisualisation.
 
 ### Critères d'acceptation
 
-- [ ] L'arbre des fichiers se lit avant d'écrire, avec le compte et le poids total.
-- [ ] Chaque fichier est marqué nouveau, remplacé ou inchangé face à la sortie précédente.
-- [ ] Les quatre modes de collision existent, et « remplacer » en est un.
-- [ ] Un panneau dit ce qui n'est pas prêt : sujets sans image, personnages à direction unique,
+- [x] L'arbre des fichiers se lit avant d'écrire, avec le compte et le poids total.
+- [x] Chaque fichier est marqué nouveau, remplacé ou inchangé face à la sortie précédente.
+- [x] Les quatre modes de collision existent, et « remplacer » en est un.
+- [x] Un panneau dit ce qui n'est pas prêt : sujets sans image, personnages à direction unique,
       animations vides.
-- [ ] La sortie reste gratuite et fonctionne réseau coupé.
-- [ ] Le format Aseprite ne gagne aucune clé de notre cru.
+- [x] La sortie reste gratuite et fonctionne réseau coupé.
+- [x] Le format Aseprite ne gagne aucune clé de notre cru.
+
+> **Tenue le 10 septembre 2026.** `atelier/domaine/sortie.py` (le vocabulaire et ses cinq
+> listes fermées), `atelier/services/sortie.py`, `atelier/api/sortie.py`,
+> `interface/src/composants/Sortie.tsx`, `tests/test_b21.py`, `essais/atelier_jetable_b21.py`
+> (port 8486).
+>
+> **Ce qui a été tranché en cours de route**, et qui s'écarte de la planche :
+>
+> 1. **Le diff se lit sur le dossier, pas sur une mémoire.** *Ce qui est là fait foi* est un
+>    invariant du dépôt, déjà écrit dans l'export lui-même. Un fichier abîmé à la main dehors
+>    se dit donc « remplacé » sans que rien n'ait bougé dans l'atelier. La sortie précédente
+>    est gardée quand même — un fichier JSON à la racine, `sorties.json`, pas une table — et
+>    elle ne sert qu'à une chose que le dossier ne sait pas trancher : **quels fichiers de
+>    là-bas sont les nôtres**, pour qu'« effacer ce qui ne sort plus » ne touche jamais à ce
+>    que l'auteur a mis là.
+> 2. **Les quatre modes sont `remplacer`, `numeroter`, `arreter`, `effacer`.** La planche
+>    dessine trois boutons ronds et une case à cocher sous un pointillé ; le critère en compte
+>    quatre, et les quatre répondent bien à la même question — *ce qui existe déjà là-bas*.
+>    `effacer` est le seul qui ait besoin de la fois d'avant.
+> 3. **Écraser est un paramètre de `ServiceAgent.deposer`, pas un second écrivain.** « Un
+>    second endroit qui écrirait dans le dossier du jeu serait un second endroit où oublier la
+>    deuxième règle » : le défaut reste la numérotation, et l'agent ne lève jamais la règle.
+> 4. **Deux lots de la planche n'existent pas** — *les terrains*, qui n'est pas une famille, et
+>    *les calques d'équipement*, qui ne sont pas un lot mais ce qui accompagne un corps.
+> 5. **La direction entre dans le nom du fichier.** C'est ce que la planche appelle *le piège
+>    le plus cher du sujet* : l'export d'un personnage n'emportait qu'une image par pose sans
+>    dire laquelle des quatre.
+> 6. **Le gabarit de nom à jetons n'est pas construit** — `{famille}/{sujet}_{pose}_…` reste
+>    sur la planche. Les deux rangements sont fermés, et le nom suit la règle de nommage qui
+>    existe (`repere()`), plutôt que d'en ajouter une seconde.
+> 7. **Le catalogue de moteur est réel pour Godot et Phaser**, et honnête pour Unity : Godot
+>    reçoit une ressource `SpriteFrames` qu'il charge seul, Phaser un *asset pack*, et Unity
+>    une liste que son import lit — l'écran le dit, parce qu'Unity n'a pas de catalogue en
+>    texte qu'on dépose dans un dossier.
+> 8. **L'écran est dans le carnet au-dessus du trait**, sous *Les dépenses*, et non dans le
+>    pied : le pied porte ce qui appartient à l'atelier, et sortir appartient au jeu.
 
 ### Bloquée par
 
