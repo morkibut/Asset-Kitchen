@@ -405,12 +405,12 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
     ).toBeGreaterThanOrEqual(2)
   })
 
-  test("le détourage dit que la couleur du fond est devinée, pas lue", async () => {
+  test("le détourage dit que la couleur du fond se devine, sauf si une passe la vise", async () => {
     monter()
     fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
     expect(
       await within(colonne()).findByText(
-        /ne lit pas encore celle que le jeu a déclarée/i,
+        /sauf si elle vise la couleur déclarée du jeu/i,
       ),
     ).toBeTruthy()
   })

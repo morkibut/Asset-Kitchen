@@ -98,6 +98,7 @@ export const MOTEUR: Record<Passe["moteur"], string> = {
   couleur: "pipette",
   modele: "modèle",
   trace: "sélection",
+  palette: "palette du jeu",
 }
 
 /** **Ce que chaque moteur ronge de bord sans que personne l'ait posé** (D1).
@@ -120,6 +121,10 @@ export const DURCISSEMENT_LIVRE: Record<Passe["moteur"], number> = {
   couleur: 1,
   modele: 2,
   trace: 0,
+  // **`palette` suit `bord`** (B18) : même remplissage par plages depuis les
+  // bordures, même bord binaire — rien ne dit qu'il fabrique une frange que
+  // `bord` ne fabrique pas.
+  palette: 0,
 }
 
 /** Ce qu'une place posée dit d'elle-même quand elle est repliée
@@ -622,21 +627,15 @@ function MesuresDuFondRendues({ mesures }: { mesures: MesuresDuFond }) {
         />
         <span className="mesure text-[10px] text-texte-2">{mesures.fond}</span>
       </div>
-      {/* ⚠️ **Cette couleur est devinée, pas lue** (B16), et c'est la seule
-          ligne de l'écran qui le dise. Le jeu déclare un fond dans ses règles,
-          il part dans le prompt — et `atelier/domaine/fond.py` n'est importé ni
-          par la recette ni par le traitement : le détourage reprend la couleur
-          médiane des bordures, qu'un sujet débordant sur un bord fait basculer.
-
-          La phrase est ici plutôt que dans un piège de doc parce que c'est ici
-          qu'elle mord : on règle une tolérance contre une couleur, et croire
-          qu'on vise celle du jeu fait chercher le défaut au mauvais endroit.
-          C'est le corollaire du piège de `D5` — *un réglage qu'on croit avoir
-          posé ailleurs et qui n'agit pas est pire qu'un réglage absent*.
-
-          Le moteur qui lirait la couleur déclarée appartient à `B18` ; le jour
-          où il arrive, cette phrase s'en va avec `tests/test_b16.py`. */}
-      <Raison texte="devinée sur les bordures de l'image — le détourage ne lit pas encore la couleur déclarée du jeu" />
+      {/* **Cette couleur est devinée, sauf si la passe vise la couleur
+          déclarée** (B16, réparé en B18). Le défaut du moteur `bord` reste la
+          médiane des bordures — un sujet débordant sur un bord la fait
+          basculer —, mais « couleur du jeu » sur une passe la remplace par
+          celle que les règles du jeu ont posée (`atelier/domaine/fond.py`),
+          visée telle quelle plutôt que devinée. C'est le réglage `couleur
+          du jeu` de la passe qui tranche, pas cette carte : elle ne fait que
+          dire ce que le fond est *devenu*. */}
+      <Raison texte="devinée sur les bordures de l'image, sauf quand une passe de détourage vise la couleur déclarée du jeu" />
       {/* **Le pourtour est le dénominateur de la frange**, et il est dit avec
           elle : « 312 pixels à demi transparents » ne veut rien dire tant qu'on
           ne sait pas si le bord en fait 300 ou 30 000. */}

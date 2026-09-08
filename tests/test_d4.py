@@ -125,10 +125,16 @@ def test_le_produit_compte_quatre_moteurs_et_cinq_modeles():
     """**Le compte que la première version de la tranche donnait faux.** Elle
     parlait de deux modèles et de trois moteurs de découpe ; le produit en avait
     trois et quatre. Ce test fige les deux comptes pour que l'erreur ne reparte
-    pas d'un document non vérifié."""
+    pas d'un document non vérifié.
+
+    **Le compte des moteurs est passé à cinq en B18** — « la palette en
+    garde-fou » s'est ajoutée à `bord`, `couleur`, `modele` et `trace` — et
+    c'est mis à jour ici pour la même raison qu'il a été figé : un chiffre
+    vérifié vaut mieux qu'un chiffre supposé. Celui des modèles de silhouette
+    ne bouge pas."""
     from atelier.domaine.recette import MOTEURS
 
-    assert len(MOTEURS) == 4
+    assert len(MOTEURS) == 5
     assert len(SILHOUETTES) == 5
 
 

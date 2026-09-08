@@ -1005,6 +1005,36 @@ def _trouver(requete: Request, identifiant: str) -> Generation:
 # passe sur le disque et le processeur de la machine.
 
 
+class CorpsTrait(BaseModel):
+    """Un passage de la main — ce qu'un geste a gardé, ôté, ou posé.
+
+    **Un chemin et un rayon, jamais un masque en octets** : ce qui traverse le
+    port est ce que la recette enregistre, et une recette porte un calcul, pas
+    une image. Les points sont en pixels de l'image **rendue**, et un point hors
+    du cadre se borne au lieu d'être refusé.
+
+    **Rayon 0, c'est le pixel** : les deux échelles — à main levée, puis au
+    pixel — sont les deux bouts d'un seul réglage (US-149, US-207).
+
+    *Écrit ici depuis E5, et importé par la production.* Il servait aux deux
+    couches de la main d'un calque d'équipement ; la main est devenue la
+    huitième place de la recette, donc le passage appartient à la recette.
+    `couleur` est vide partout où le passage décide d'un masque — les deux
+    couches d'un calque, et l'opacité de la huitième place.
+
+    **Déplacée avant `CorpsPasse` en B18** : le pinceau remonté dans le
+    détourage lui-même (`Passe.traits`) en a besoin un cran plus tôt dans le
+    fichier — `from __future__ import annotations` diffère l'évaluation des
+    annotations, mais Pydantic résout quand même le nom au moment où il
+    construit le modèle, pas à l'appel.
+    """
+
+    garde: bool = True
+    rayon: int = Field(0, ge=0, le=RAYON_MAX)
+    points: list[tuple[int, int]] = Field(default_factory=list)
+    couleur: str = ""
+
+
 class CorpsPasse(BaseModel):
     moteur: str = "bord"
     tolerance: int = Field(28, ge=0, le=255)
@@ -1030,6 +1060,26 @@ class CorpsPasse(BaseModel):
     # veut dire *le défaut du produit* — le plus rapide —, et c'est ce qui fait
     # qu'une recette écrite avant ce champ rend exactement ce qu'elle rendait.
     modele: str = ""
+    # ── Les quatre réglages neufs de B18 ──────────────────────────────────────
+    #
+    # **Doivent exister ici même quand l'écran ne les pose pas** — la leçon de
+    # `decalage` en E17 : ce corps porte la recette entière à chaque geste, et
+    # un champ absent du modèle Pydantic est silencieusement jeté par la
+    # validation.
+    #
+    # **Comparer par teinte plutôt que canal par canal** (`bord`, `couleur`,
+    # `palette`) — faux par défaut, ce que l'atelier faisait avant B18.
+    teinte: bool = False
+    # **La couleur que le jeu a déclarée**, visée par `bord` au lieu d'être
+    # devinée sur les bordures. Vide, le défaut, c'est deviner — le geste
+    # d'avant B18.
+    couleur_du_jeu: str = ""
+    # **Les couleurs que le moteur `palette` ne peut jamais manger.** Vide, la
+    # passe ne retire rien — même règle qu'une pipette non visée.
+    palette: list[str] = Field(default_factory=list)
+    # **Le pinceau, remonté dans le détourage lui-même** — les mêmes passages
+    # que la main, posés un cran plus tôt dans la chaîne.
+    traits: list[CorpsTrait] = Field(default_factory=list)
 
 
 class CorpsRecadrage(BaseModel):
@@ -1119,30 +1169,6 @@ class CorpsBords(BaseModel):
     aire_min: int = Field(0, ge=0)
     grain_min: int = Field(0, ge=0, le=GRAIN_MAX)
     lissage: int = Field(0, ge=0, le=LISSAGE_MAX)
-
-
-class CorpsTrait(BaseModel):
-    """Un passage de la main — ce qu'un geste a gardé, ôté, ou posé.
-
-    **Un chemin et un rayon, jamais un masque en octets** : ce qui traverse le
-    port est ce que la recette enregistre, et une recette porte un calcul, pas
-    une image. Les points sont en pixels de l'image **rendue**, et un point hors
-    du cadre se borne au lieu d'être refusé.
-
-    **Rayon 0, c'est le pixel** : les deux échelles — à main levée, puis au
-    pixel — sont les deux bouts d'un seul réglage (US-149, US-207).
-
-    *Écrit ici depuis E5, et importé par la production.* Il servait aux deux
-    couches de la main d'un calque d'équipement ; la main est devenue la
-    huitième place de la recette, donc le passage appartient à la recette.
-    `couleur` est vide partout où le passage décide d'un masque — les deux
-    couches d'un calque, et l'opacité de la huitième place.
-    """
-
-    garde: bool = True
-    rayon: int = Field(0, ge=0, le=RAYON_MAX)
-    points: list[tuple[int, int]] = Field(default_factory=list)
-    couleur: str = ""
 
 
 class CorpsContour(BaseModel):
