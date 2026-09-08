@@ -4861,11 +4861,13 @@ describe("l'infobulle et le guide", () => {
       "reglages",
       "equipement",
     ])
-    // 157 avant `B17`, plus les cinq entrées des quatre moteurs neufs, plus
-    // les trois entrées de B18 — l'angle, le repli et les zones protégées du
-    // retournement, les trois seuls des dix sens à ouvrir un réglage de plus
-    // —, plus les cinq entrées des six capacités neuves du contour (`B18`).
-    expect(Object.keys(AIDE).length).toBe(170)
+    // 157 avant `B17`, 162 avec ses cinq entrées, plus les trois entrées de
+    // B18 sur le retournement — l'angle, le repli et les zones protégées, les
+    // trois seuls des dix sens à ouvrir un réglage de plus —, plus les cinq
+    // entrées des six capacités neuves du contour, plus les sept entrées des
+    // sept moteurs neufs de nettoyer (garder, boucher, reboucher, les deux
+    // morphologies, l'épargne, le vote des voisins) — tout ça `B18`.
+    expect(Object.keys(AIDE).length).toBe(177)
     for (const [cle, entree] of Object.entries(AIDE)) {
       expect(LIEUX_FERMES.has(entree.ou), `${cle} → ou: "${entree.ou}"`).toBe(true)
     }

@@ -37,9 +37,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
   CONTOUR_PAR_DEFAUT,
+  GARDER_MAX,
   GRAIN_MAX,
   LISSAGE_MAX,
   MAIN_VIDE,
+  MORPHOLOGIE_MAX,
   NOM_DE_LA_METHODE,
   PASSE_PAR_DEFAUT,
   RETOURNEMENT_PAR_DEFAUT,
@@ -1215,16 +1217,50 @@ function ReglagesDuNettoyage({ recette, mesures, regler, poser }: Poste) {
   const seuil = recette.bords?.aire_min ?? 0
   const grain = recette.bords?.grain_min ?? 0
   const lissage = recette.bords?.lissage ?? 0
+  const garder = recette.bords?.garder ?? 0
+  const boucher = recette.bords?.boucher_jusqua ?? 0
+  const reboucher = recette.bords?.reboucher_jusqua ?? 0
+  const ouverture = recette.bords?.ronger_regonfler ?? 0
+  const fermeture = recette.bords?.regonfler_ronger ?? 0
+  const vote = recette.bords?.vote_voisins ?? 0
+  const epargneFins = recette.bords?.epargner_traits_fins ?? true
+  const designations = recette.bords?.designations ?? []
   const taches = mesures?.taches ?? []
+  const trous = mesures?.trous ?? []
+  const poches = mesures?.poches ?? []
   const partent = taches.filter((t) => t.aire < seuil).length
 
-  /** **Toujours la table entière** (B17, la même leçon qu'au-dessus pour les
-   *  couleurs) : régler la tache minimale ne doit pas effacer un grain ou un
-   *  lissage déjà posés. */
+  /** **Toujours la table entière** (B17, B18 — la même leçon qu'au-dessus pour
+   *  les couleurs) : régler un curseur ne doit effacer aucun des autres
+   *  moteurs déjà posés sur cette même place. */
   const avec = (suivant: Partial<Bords>): Recette => ({
     ...recette,
-    bords: { aire_min: seuil, grain_min: grain, lissage, ...suivant },
+    bords: {
+      aire_min: seuil,
+      grain_min: grain,
+      lissage,
+      garder,
+      boucher_jusqua: boucher,
+      reboucher_jusqua: reboucher,
+      ronger_regonfler: ouverture,
+      regonfler_ronger: fermeture,
+      vote_voisins: vote,
+      epargner_traits_fins: epargneFins,
+      designations,
+      ...suivant,
+    },
   })
+
+  /** Efface l'amas sous ce point — **la désignation à la main** (B18). La
+   *  dernière sur un même point l'emporte : on retire d'abord toute
+   *  désignation antérieure de ce point, comme `Trait.points` le fait déjà
+   *  pour un passage de la main. */
+  const designer = (point: [number, number]) => {
+    const propres = designations.filter(
+      (d) => d.point[0] !== point[0] || d.point[1] !== point[1]
+    )
+    void poser(avec({ designations: [...propres, { point, garde: false }] }))
+  }
 
   return (
     <div className="flex flex-col gap-[14px]">
@@ -1247,7 +1283,135 @@ function ReglagesDuNettoyage({ recette, mesures, regler, poser }: Poste) {
         }
       />
 
-      {/* ── Le grain de couleur, et l'escalier (B17) ───────────────────────
+      {/* ── Garder le sujet seul (B18) ──────────────────────────────────────
+          **Un rang, jamais une taille.** Ce que la tache minimale ne peut pas
+          faire : effacer un amas collé au sujet, quelle que soit son aire. */}
+      <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
+        <Reglage nom="garder les plus grandes">
+          <Glissiere
+            nom="garder les plus grandes"
+            valeur={garder}
+            min={0}
+            max={GARDER_MAX}
+            unite={garder === 0 ? "" : garder > 1 ? " amas" : " amas"}
+            onRegler={(v) => regler(avec({ garder: v }))}
+            onPoser={(v) => void poser(avec({ garder: v }))}
+          />
+        </Reglage>
+        <Pourquoi
+          texte={
+            garder === 0
+              ? "désactivé — rien ne se trie par rang"
+              : `seuls les ${garder} plus grands amas sur ${taches.length} restent, quelle que soit leur aire`
+          }
+        />
+      </div>
+
+      {/* ── Boucher les trous, reboucher les poches de fond (B18) ──────────
+          **Deux lectures inverses de la même chose** : un trou est
+          transparent et entouré de sujet ; une poche de fond est opaque, à la
+          couleur du bord, et enfermée. Les confondre a déjà coûté cher au
+          détourage (voir `atelier/image/taches.py`). */}
+      <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
+        <Reglage nom="boucher les trous jusqu'à">
+          <Glissiere
+            nom="boucher les trous jusqu'à"
+            valeur={boucher}
+            min={0}
+            max={64}
+            unite=" px"
+            onRegler={(v) => regler(avec({ boucher_jusqua: v }))}
+            onPoser={(v) => void poser(avec({ boucher_jusqua: v }))}
+          />
+        </Reglage>
+        <Pourquoi
+          texte={
+            boucher === 0
+              ? `désactivé — ${trous.length} ${pluriel(trous.length, "trou", "trous")} de silhouette laissé${trous.length > 1 ? "s" : ""} tel${trous.length > 1 ? "s" : ""} quel${trous.length > 1 ? "s" : ""}`
+              : `${trous.filter((t) => t.aire <= boucher).length} des ${trous.length} ${pluriel(trous.length, "trou", "trous")} se combleraient, avec la couleur qui les entoure`
+          }
+        />
+        <Reglage nom="reboucher les poches de fond jusqu'à">
+          <Glissiere
+            nom="reboucher les poches de fond jusqu'à"
+            valeur={reboucher}
+            min={0}
+            max={64}
+            unite=" px"
+            onRegler={(v) => regler(avec({ reboucher_jusqua: v }))}
+            onPoser={(v) => void poser(avec({ reboucher_jusqua: v }))}
+          />
+        </Reglage>
+        <Pourquoi
+          texte={
+            reboucher === 0
+              ? `désactivé — ${poches.length} ${pluriel(poches.length, "poche de fond enfermée", "poches de fond enfermées")} laissée${poches.length > 1 ? "s" : ""} opaque${poches.length > 1 ? "s" : ""}`
+              : `${poches.filter((t) => t.aire <= reboucher).length} des ${poches.length} poches deviendraient transparentes`
+          }
+        />
+      </div>
+
+      {/* ── Les deux morphologies (B18) ─────────────────────────────────────
+          **Deux opérations inverses, dans un ordre qui compte** : ronger puis
+          regonfler retire ce qui est trop fin pour survivre à l'érosion ;
+          regonfler puis ronger comble ce qui est trop fin pour survivre au
+          gonflement. */}
+      <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
+        <Reglage nom="ronger puis regonfler">
+          <Glissiere
+            nom="ronger puis regonfler"
+            valeur={ouverture}
+            min={0}
+            max={MORPHOLOGIE_MAX}
+            unite={ouverture === 0 ? "" : " px"}
+            onRegler={(v) => regler(avec({ ronger_regonfler: v }))}
+            onPoser={(v) => void poser(avec({ ronger_regonfler: v }))}
+          />
+        </Reglage>
+        <Pourquoi
+          texte={
+            ouverture === 0
+              ? "désactivé — aucune excroissance n'est retirée"
+              : "les excroissances plus fines que ce rayon disparaissent, le corps garde sa taille"
+          }
+        />
+        <Reglage nom="épargner les traits fins">
+          <Choix
+            valeurs={["oui", "non"] as const}
+            valeur={epargneFins ? "oui" : "non"}
+            onChange={(v) =>
+              void poser(avec({ epargner_traits_fins: v === "oui" }))
+            }
+          />
+        </Reglage>
+        <Pourquoi
+          texte={
+            epargneFins
+              ? "une hampe, un brin d'herbe — un pixel de large — survit au rongement"
+              : "rien n'est épargné : un trait d'un pixel de large disparaît comme le reste"
+          }
+        />
+        <Reglage nom="regonfler puis ronger">
+          <Glissiere
+            nom="regonfler puis ronger"
+            valeur={fermeture}
+            min={0}
+            max={MORPHOLOGIE_MAX}
+            unite={fermeture === 0 ? "" : " px"}
+            onRegler={(v) => regler(avec({ regonfler_ronger: v }))}
+            onPoser={(v) => void poser(avec({ regonfler_ronger: v }))}
+          />
+        </Reglage>
+        <Pourquoi
+          texte={
+            fermeture === 0
+              ? "désactivé — aucune entaille du bord n'est comblée"
+              : "les entailles du bord plus fines que ce rayon se comblent, le corps garde sa taille"
+          }
+        />
+      </div>
+
+      {/* ── Le grain de couleur, l'escalier, et le vote des voisins ─────────
           **Ce que la tache minimale n'a jamais pu atteindre.** Elle compte des
           taches dans la silhouette ; un pixel vert vif au milieu d'une robe
           brune est opaque et collé au sujet, donc aucune valeur de ce
@@ -1283,7 +1447,70 @@ function ReglagesDuNettoyage({ recette, mesures, regler, poser }: Poste) {
             onPoser={(v) => void poser(avec({ lissage: v }))}
           />
         </Reglage>
+        <Reglage nom="vote des voisins">
+          <Glissiere
+            nom="vote des voisins"
+            valeur={vote}
+            min={0}
+            max={LISSAGE_MAX}
+            unite={vote === 0 ? "" : vote > 1 ? " passes" : " passe"}
+            onRegler={(v) => regler(avec({ vote_voisins: v }))}
+            onPoser={(v) => void poser(avec({ vote_voisins: v }))}
+          />
+        </Reglage>
+        <Pourquoi
+          texte={
+            vote === 0
+              ? "désactivé — un bord irrégulier le reste"
+              : "chaque pixel du bord suit la majorité franche de ses huit voisins"
+          }
+        />
       </div>
+
+      {/* ── La désignation à la main (B18) ──────────────────────────────────
+          **Le seul endroit de la table où l'on désigne au pixel près** — la
+          planche le dit en toutes lettres. Une ligne, un clic, la tache s'en
+          va, quel que soit le seuil au-dessus. */}
+      {taches.length > 0 && (
+        <div className="flex flex-col gap-[6px] border-t border-trait-faible pt-[8px]">
+          <Etiquette>désigner une tache</Etiquette>
+          <div className="flex flex-col gap-[2px]">
+            {taches.slice(0, 8).map((t) => {
+              const designee = designations.some(
+                (d) => d.point[0] === t.point[0] && d.point[1] === t.point[1] && !d.garde
+              )
+              return (
+                <div
+                  key={`${t.point[0]},${t.point[1]}`}
+                  className="flex items-center justify-between gap-[8px] text-[11.5px]"
+                >
+                  <span className="flex items-center gap-[6px] text-encre-3">
+                    <span
+                      aria-hidden
+                      className="inline-block h-[8px] w-[8px] shrink-0 border border-trait"
+                      style={{ background: t.couleur }}
+                    />
+                    {t.aire} px
+                  </span>
+                  <button
+                    type="button"
+                    disabled={designee}
+                    onClick={() => designer(t.point)}
+                    className={[
+                      "h-[22px] rounded-7 border px-[8px] text-[11px]",
+                      designee
+                        ? "cursor-not-allowed border-trait-faible text-eteint"
+                        : "border-trait text-encre-3 hover:border-encre-4",
+                    ].join(" ")}
+                  >
+                    {designee ? "effacée" : "effacer"}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

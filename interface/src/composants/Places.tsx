@@ -20,8 +20,10 @@ import {
   CONTOUR_PAR_DEFAUT,
   CURSEUR_MAX,
   CURSEUR_MIN,
+  GARDER_MAX,
   GRAIN_MAX,
   LISSAGE_MAX,
+  MORPHOLOGIE_MAX,
   LIT_DE_COULEUR,
   MAIN_VIDE,
   PASSE_PAR_DEFAUT,
@@ -185,6 +187,13 @@ export const RESUME = {
       b.aire_min > 0 ? `tache ${b.aire_min} px` : null,
       b.grain_min ? `grain ${b.grain_min}` : null,
       b.lissage ? `lissage ${b.lissage}` : null,
+      b.garder ? `garder ${b.garder}` : null,
+      b.boucher_jusqua ? `boucher ${b.boucher_jusqua} px` : null,
+      b.reboucher_jusqua ? `reboucher ${b.reboucher_jusqua} px` : null,
+      b.ronger_regonfler ? `ouverture ${b.ronger_regonfler} px` : null,
+      b.regonfler_ronger ? `fermeture ${b.regonfler_ronger} px` : null,
+      b.vote_voisins ? `vote ${b.vote_voisins}` : null,
+      b.designations?.length ? `${b.designations.length} désignée${b.designations.length > 1 ? "s" : ""}` : null,
     ]
       .filter(Boolean)
       .join(" · ") || `tache ${b.aire_min} px`,
@@ -1612,15 +1621,49 @@ export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
   const seuil = recette.bords?.aire_min ?? 0
   const grain = recette.bords?.grain_min ?? 0
   const lissage = recette.bords?.lissage ?? 0
+  const garder = recette.bords?.garder ?? 0
+  const boucher = recette.bords?.boucher_jusqua ?? 0
+  const reboucher = recette.bords?.reboucher_jusqua ?? 0
+  const ouverture = recette.bords?.ronger_regonfler ?? 0
+  const fermeture = recette.bords?.regonfler_ronger ?? 0
+  const vote = recette.bords?.vote_voisins ?? 0
+  const epargneFins = recette.bords?.epargner_traits_fins ?? true
+  const designations = recette.bords?.designations ?? []
   const liste = mesures?.taches ?? []
+  const trous = mesures?.trous ?? []
+  const poches = mesures?.poches ?? []
   const partent = liste.filter((t) => t.aire < seuil).length
 
   /** La table entière à chaque geste, jamais un champ sur trois — la leçon de
-   *  `E17`, la même qu'au-dessus pour les couleurs. */
+   *  `E17`, la même qu'au-dessus pour les couleurs, étendue aux sept moteurs
+   *  neufs de `B18`. */
   const avec = (suivant: Partial<Bords>): Recette => ({
     ...recette,
-    bords: { aire_min: seuil, grain_min: grain, lissage, ...suivant },
+    bords: {
+      aire_min: seuil,
+      grain_min: grain,
+      lissage,
+      garder,
+      boucher_jusqua: boucher,
+      reboucher_jusqua: reboucher,
+      ronger_regonfler: ouverture,
+      regonfler_ronger: fermeture,
+      vote_voisins: vote,
+      epargner_traits_fins: epargneFins,
+      designations,
+      ...suivant,
+    },
   })
+
+  /** Efface l'amas sous ce point — la désignation à la main (B18), même
+   *  géométrie que le point de la pipette : la dernière désignation d'un même
+   *  point l'emporte. */
+  const designer = (point: [number, number]) => {
+    const propres = designations.filter(
+      (d) => d.point[0] !== point[0] || d.point[1] !== point[1]
+    )
+    void poser(avec({ designations: [...propres, { point, garde: false }] }))
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -1686,6 +1729,143 @@ export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
                 : "un pixel qui ne tient au sujet que par un coin s'en va ; celui qui tient par un côté ne bouge jamais"
           }
         />
+        <Reglage libelle="vote des voisins" aide="bords.vote_voisins">
+          <Curseur
+            libelle="vote des voisins"
+            valeur={vote}
+            min={0}
+            max={LISSAGE_MAX}
+            unite={vote === 0 ? "" : vote > 1 ? " passes" : " passe"}
+            onChange={(v) => regler(avec({ vote_voisins: v }))}
+            onFini={(v) => void poser(avec({ vote_voisins: v }))}
+          />
+        </Reglage>
+        <Raison
+          texte={
+            vote === 0
+              ? "désactivé — un bord irrégulier le reste"
+              : "chaque pixel du bord suit la majorité franche de ses huit voisins"
+          }
+        />
+      </div>
+
+      {/* ── Garder le sujet seul (B18) ────────────────────────────────────── */}
+      <div className="flex flex-col gap-2 border-t border-bord pt-2">
+        <Reglage libelle="garder les plus grandes" aide="bords.garder">
+          <Curseur
+            libelle="garder les plus grandes"
+            valeur={garder}
+            min={0}
+            max={GARDER_MAX}
+            unite={garder === 0 ? "" : " amas"}
+            onChange={(v) => regler(avec({ garder: v }))}
+            onFini={(v) => void poser(avec({ garder: v }))}
+          />
+        </Reglage>
+        <Raison
+          texte={
+            garder === 0
+              ? "désactivé — rien ne se trie par rang"
+              : `seuls les ${garder} plus grands amas sur ${liste.length} restent, quelle que soit leur aire`
+          }
+        />
+      </div>
+
+      {/* ── Boucher les trous, reboucher les poches de fond (B18) ──────────── */}
+      <div className="flex flex-col gap-2 border-t border-bord pt-2">
+        <Reglage libelle="boucher les trous jusqu'à" aide="bords.boucher_jusqua">
+          <Curseur
+            libelle="boucher les trous jusqu'à"
+            valeur={boucher}
+            min={0}
+            max={64}
+            unite=" px"
+            onChange={(v) => regler(avec({ boucher_jusqua: v }))}
+            onFini={(v) => void poser(avec({ boucher_jusqua: v }))}
+          />
+        </Reglage>
+        <Raison
+          texte={
+            boucher === 0
+              ? `désactivé — ${trous.length} trou${trous.length > 1 ? "s" : ""} de silhouette laissé${trous.length > 1 ? "s" : ""} tel${trous.length > 1 ? "s" : ""} quel${trous.length > 1 ? "s" : ""}`
+              : `${trous.filter((t) => t.aire <= boucher).length} des ${trous.length} trous se combleraient, avec la couleur qui les entoure`
+          }
+        />
+        <Reglage
+          libelle="reboucher les poches de fond jusqu'à"
+          aide="bords.reboucher_jusqua"
+        >
+          <Curseur
+            libelle="reboucher les poches de fond jusqu'à"
+            valeur={reboucher}
+            min={0}
+            max={64}
+            unite=" px"
+            onChange={(v) => regler(avec({ reboucher_jusqua: v }))}
+            onFini={(v) => void poser(avec({ reboucher_jusqua: v }))}
+          />
+        </Reglage>
+        <Raison
+          texte={
+            reboucher === 0
+              ? `désactivé — ${poches.length} poche${poches.length > 1 ? "s" : ""} de fond enfermée${poches.length > 1 ? "s" : ""} laissée${poches.length > 1 ? "s" : ""} opaque${poches.length > 1 ? "s" : ""}`
+              : `${poches.filter((t) => t.aire <= reboucher).length} des ${poches.length} poches deviendraient transparentes`
+          }
+        />
+      </div>
+
+      {/* ── Les deux morphologies (B18) ─────────────────────────────────────── */}
+      <div className="flex flex-col gap-2 border-t border-bord pt-2">
+        <Reglage libelle="ronger puis regonfler" aide="bords.ronger_regonfler">
+          <Curseur
+            libelle="ronger puis regonfler"
+            valeur={ouverture}
+            min={0}
+            max={MORPHOLOGIE_MAX}
+            unite={ouverture === 0 ? "" : " px"}
+            onChange={(v) => regler(avec({ ronger_regonfler: v }))}
+            onFini={(v) => void poser(avec({ ronger_regonfler: v }))}
+          />
+        </Reglage>
+        <Raison
+          texte={
+            ouverture === 0
+              ? "désactivé — aucune excroissance n'est retirée"
+              : "les excroissances plus fines que ce rayon disparaissent, le corps garde sa taille"
+          }
+        />
+        <Reglage libelle="épargner les traits fins" aide="bords.epargner_traits_fins">
+          <Segments
+            valeurs={["oui", "non"] as const}
+            valeur={epargneFins ? "oui" : "non"}
+            onChange={(v) => void poser(avec({ epargner_traits_fins: v === "oui" }))}
+          />
+        </Reglage>
+        <Raison
+          texte={
+            epargneFins
+              ? "une hampe, un brin d'herbe — un pixel de large — survit au rongement"
+              : "rien n'est épargné : un trait d'un pixel de large disparaît comme le reste"
+          }
+        />
+        <Reglage libelle="regonfler puis ronger" aide="bords.regonfler_ronger">
+          <Curseur
+            libelle="regonfler puis ronger"
+            valeur={fermeture}
+            min={0}
+            max={MORPHOLOGIE_MAX}
+            unite={fermeture === 0 ? "" : " px"}
+            onChange={(v) => regler(avec({ regonfler_ronger: v }))}
+            onFini={(v) => void poser(avec({ regonfler_ronger: v }))}
+          />
+        </Reglage>
+        <Raison
+          texte={
+            fermeture === 0
+              ? "désactivé — aucune entaille du bord n'est comblée"
+              : "les entailles du bord plus fines que ce rayon se comblent, le corps garde sa taille"
+          }
+        />
       </div>
 
       {/* **La liste de ce qui va partir, triée du plus petit au plus grand, et
@@ -1704,12 +1884,18 @@ export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
               const part = tache.aire < seuil
               const dernierEfface =
                 part && liste[rang + 1] !== undefined && liste[rang + 1].aire >= seuil
+              // **La désignation à la main** (B18) : un clic efface cet amas-là,
+              // quel que soit le seuil — le geste que la planche appelle « le
+              // seul endroit de la table où l'on désigne au pixel près ».
+              const designee = designations.some(
+                (d) => d.point[0] === tache.point[0] && d.point[1] === tache.point[1] && !d.garde
+              )
               return (
                 <li
                   key={tache.boite.join(",")}
                   className={[
                     "mesure flex h-[24px] items-center gap-2 text-[10px]",
-                    part ? "text-texte-2" : "text-texte-3",
+                    part || designee ? "text-texte-2" : "text-texte-3",
                     dernierEfface ? "border-b border-ancien-signal" : "",
                   ].join(" ")}
                 >
@@ -1722,6 +1908,14 @@ export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
                   <span className="ml-auto">
                     {tache.boite[0]},{tache.boite[1]}
                   </span>
+                  <button
+                    type="button"
+                    disabled={designee}
+                    onClick={() => designer(tache.point)}
+                    className="mesure h-[14px] shrink-0 rounded-[5px] border border-bord px-1 text-[10.5px] leading-[14px] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {designee ? "effacée" : "effacer"}
+                  </button>
                 </li>
               )
             })}

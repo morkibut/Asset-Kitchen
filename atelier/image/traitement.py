@@ -88,6 +88,7 @@ from atelier.domaine.recette import (
     Bords,
     CalqueDessin,
     Contour,
+    Designation,
     Echange,
     Grille,
     LISSAGE_MAX,
@@ -97,6 +98,7 @@ from atelier.domaine.recette import (
     Recadrage,
     Recette,
     Retournement,
+    TOLERANCE_POCHES,
     Trait,
     parts_de,
     cote_du_canevas,
@@ -110,7 +112,9 @@ __all__ = [
     "Rendu",
     "apercu_sur_fonds",
     "appliquer",
+    "appliquer_designations",
     "boite_opaque",
+    "boucher_les_trous",
     "composantes",
     "contourner",
     "contourner_empile",
@@ -125,6 +129,7 @@ __all__ = [
     "etendre",
     "en_rendu",
     "finir",
+    "garder_le_sujet_seul",
     "mesurer_grille",
     "mesures_du_fond",
     "methode_disponible",
@@ -141,14 +146,18 @@ __all__ = [
     "raison_du_modele",
     "raison_methode",
     "raison_moteur",
+    "reboucher_les_poches_de_fond",
+    "regonfler_puis_ronger",
     "restreindre",
     "retoucher",
     "retourner",
     "retrouver_grille",
     "ronger",
+    "ronger_puis_regonfler",
     "sans_les_deux_dernieres",
     "sans_moteur",
     "silhouette",
+    "voter_les_voisins",
 ]
 
 
@@ -1459,6 +1468,301 @@ def decrocher_les_coins(rgba: np.ndarray, passes: int) -> np.ndarray:
     return sortie
 
 
+def _touche_un_bord(masque: np.ndarray) -> bool:
+    """Une zone qui touche un bord de l'image est le dehors, jamais un trou."""
+    hauteur, largeur = masque.shape
+    return bool(
+        masque[0].any()
+        or masque[hauteur - 1].any()
+        or masque[:, 0].any()
+        or masque[:, largeur - 1].any()
+    )
+
+
+def garder_le_sujet_seul(rgba: np.ndarray, n: int) -> np.ndarray:
+    """**« Garder le sujet seul »** : ne laisse que les `n` plus grands amas.
+
+    Le reste s'efface, fût-il collé à trois pixels du plus grand — ce que
+    `aire_min` ne peut jamais faire, puisqu'il ne connaît qu'une taille et pas
+    un rang. `n` compte les *plus grandes* pour que la « plus grande » soit
+    toujours gardée quel que soit `n` : demander 1 revient toujours à garder le
+    sujet, jamais à deviner lequel des amas l'est.
+    """
+    if n <= 0:
+        return rgba
+    alpha = rgba[:, :, 3]
+    if not alpha.any():
+        return rgba
+    zones = composantes(alpha > 0)
+    if len(zones) <= n:
+        return rgba
+    zones.sort(key=lambda z: z[1], reverse=True)
+    garde = np.zeros_like(alpha, dtype=bool)
+    for masque, _ in zones[:n]:
+        garde |= masque
+    sortie = rgba.copy()
+    sortie[:, :, 3] = np.where(garde, alpha, np.uint8(0))
+    return sortie
+
+
+def _premiere_couleur_voisine(
+    rgb: np.ndarray, connu: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Pour chaque pixel, la couleur du premier voisin **connu**, dans l'ordre
+    fixe des quatre côtés puis des quatre coins — même convention que
+    `_voisin_interieur`, généralisée à n'importe quel masque de « ce qui est
+    déjà fiable » plutôt qu'au seul intérieur d'une silhouette.
+
+    Rend la couleur retenue et un masque disant où l'on en a trouvé une.
+    **Un voisin, jamais une moyenne** — même règle que partout ailleurs dans ce
+    module : une moyenne fabriquerait une teinte que l'image ne contient pas.
+    """
+    hauteur, largeur = connu.shape
+    borde_rgb = np.pad(rgb, ((1, 1), (1, 1), (0, 0)))
+    borde_connu = np.pad(connu, 1, constant_values=False)
+    couleur = np.zeros_like(rgb)
+    trouve = np.zeros(connu.shape, dtype=bool)
+    for dy, dx in ((0, 1), (2, 1), (1, 0), (1, 2), (0, 0), (0, 2), (2, 0), (2, 2)):
+        candidat = borde_connu[dy : dy + hauteur, dx : dx + largeur]
+        prendre = candidat & ~trouve
+        couleur[prendre] = borde_rgb[dy : dy + hauteur, dx : dx + largeur][prendre]
+        trouve |= candidat
+    return couleur, trouve
+
+
+def _combler_par_voisinage(
+    rgba: np.ndarray, cible: np.ndarray, max_passes: int
+) -> np.ndarray:
+    """Rend opaque `cible`, anneau par anneau depuis son pourtour.
+
+    Chaque passe prend, pour les pixels de `cible` qui touchent déjà de
+    l'opaque, la couleur d'un voisin — puis les traite comme opaques à la
+    passe suivante, de sorte qu'un trou plus large qu'un pixel se comble en
+    plusieurs passes, de son bord vers son centre. Bornée par `max_passes` :
+    une zone de `cible` ne peut jamais avoir un rayon plus grand que son
+    aire, donc ce nombre suffit toujours à l'atteindre en entier.
+    """
+    if not cible.any():
+        return rgba
+    sortie = rgba.copy()
+    restant = cible.copy()
+    for _ in range(max(1, max_passes)):
+        if not restant.any():
+            break
+        opaque = sortie[:, :, 3] > 0
+        couleur, trouve = _premiere_couleur_voisine(sortie[:, :, :3], opaque)
+        a_faire = restant & trouve
+        if not a_faire.any():
+            break
+        sortie[a_faire, 0] = couleur[a_faire, 0]
+        sortie[a_faire, 1] = couleur[a_faire, 1]
+        sortie[a_faire, 2] = couleur[a_faire, 2]
+        sortie[a_faire, 3] = 255
+        restant = restant & ~a_faire
+    return sortie
+
+
+def boucher_les_trous(rgba: np.ndarray, seuil: int) -> np.ndarray:
+    """**« Boucher les trous »** : comble les trous de la silhouette d'aire au
+    plus égale à `seuil`, avec la couleur qui les entoure.
+
+    Un trou est le **transparent qu'un sujet entoure** — même lecture que
+    `atelier.image.taches.trous`, celle du contour et pas celle du détourage
+    (voir la note de ce module sur les deux lectures inverses). Un trou qui
+    touche un bord de l'image est le fond ordinaire, jamais un trou.
+    """
+    if seuil <= 0:
+        return rgba
+    alpha = rgba[:, :, 3]
+    vide = alpha == 0
+    if not vide.any():
+        return rgba
+    a_combler = np.zeros_like(vide)
+    for masque, aire in composantes(vide):
+        if aire > seuil or _touche_un_bord(masque):
+            continue
+        a_combler |= masque
+    if not a_combler.any():
+        return rgba
+    return _combler_par_voisinage(rgba, a_combler, seuil)
+
+
+def reboucher_les_poches_de_fond(
+    rgba: np.ndarray, seuil: int, tolerance: int = TOLERANCE_POCHES
+) -> np.ndarray:
+    """**« Reboucher les poches de fond »** : rend transparentes les poches de
+    fond enfermées d'aire au plus égale à `seuil`.
+
+    Le jumeau exact de `boucher_les_trous`, sur l'autre lecture : une poche de
+    fond est **opaque**, à la couleur du bord, mais que le remplissage depuis
+    les bordures n'a pas rejointe — voir `atelier.image.taches.poches_de_fond`,
+    dont ceci reprend le calcul pour agir au lieu de seulement compter.
+    """
+    if seuil <= 0 or 0 in rgba.shape[:2]:
+        return rgba
+    rgb = rgba[:, :, :3]
+    cible = _couleur_du_bord(rgb)
+    proche = np.abs(rgb.astype(np.int16) - cible).max(axis=2) <= tolerance
+    if not proche.any():
+        return rgba
+    joignable = _remplir(proche, _graines_du_bord(proche))
+    enferme = proche & ~joignable & (rgba[:, :, 3] > 0)
+    if not enferme.any():
+        return rgba
+    a_effacer = np.zeros_like(enferme)
+    for masque, aire in composantes(enferme):
+        if aire <= seuil:
+            a_effacer |= masque
+    if not a_effacer.any():
+        return rgba
+    sortie = rgba.copy()
+    sortie[:, :, 3] = np.where(a_effacer, np.uint8(0), rgba[:, :, 3])
+    return sortie
+
+
+def ronger_puis_regonfler(
+    rgba: np.ndarray, rayon: int, epargner_fins: bool = True
+) -> np.ndarray:
+    """**« Ronger puis regonfler »** : ouverture morphologique de `rayon`.
+
+    Érode le sujet de `rayon`, puis le regonfle du même rayon. Une
+    excroissance plus fine que `rayon` ne survit pas à l'érosion et ne
+    repousse donc pas à la dilatation ; le corps, lui, retrouve exactement sa
+    taille — les deux passes se compensent partout ailleurs.
+
+    `epargner_fins`, comme `ronger_conditionnel` au détourage : un pixel qui
+    n'a **aucun voisin franchement intérieur** (`_voisin_interieur`) est un
+    trait d'un seul pixel d'épaisseur de part en part, et l'ouverture
+    l'effacerait en entier plutôt que de le raboter. Restauré tel quel.
+    """
+    if rayon <= 0:
+        return rgba
+    alpha = rgba[:, :, 3]
+    sujet = alpha > 0
+    if not sujet.any():
+        return rgba
+    ouvert = etendre(restreindre(sujet, rayon), rayon)
+    if epargner_fins:
+        _, connu = _voisin_interieur(rgba[:, :, :3], sujet)
+        ouvert = ouvert | (sujet & ~connu)
+    if np.array_equal(ouvert, sujet):
+        return rgba
+    sortie = rgba.copy()
+    sortie[:, :, 3] = np.where(ouvert, alpha, np.uint8(0))
+    return sortie
+
+
+def regonfler_puis_ronger(rgba: np.ndarray, rayon: int) -> np.ndarray:
+    """**« Regonfler puis ronger »** : fermeture morphologique de `rayon`.
+
+    L'inverse de `ronger_puis_regonfler` : gonfle le sujet de `rayon`, puis le
+    ronge du même rayon. Une entaille du bord plus fine que `rayon` se comble
+    à la dilatation et ne revient pas à l'érosion ; le corps garde sa taille.
+
+    **Ne peut qu'ajouter**, jamais retirer — une fermeture contient toujours
+    le masque de départ —, donc les pixels ajoutés sont neufs et réclament une
+    couleur : `_combler_par_voisinage` la leur donne, comme pour un trou.
+    """
+    if rayon <= 0:
+        return rgba
+    alpha = rgba[:, :, 3]
+    sujet = alpha > 0
+    if not sujet.any():
+        return rgba
+    ferme = restreindre(etendre(sujet, rayon), rayon)
+    ajoute = ferme & ~sujet
+    if not ajoute.any():
+        return rgba
+    return _combler_par_voisinage(rgba, ajoute, rayon)
+
+
+def voter_les_voisins(rgba: np.ndarray, passes: int) -> np.ndarray:
+    """**« Vote des voisins »** : chaque pixel suit la majorité franche de ses
+    huit voisins, `passes` fois de suite (bornée à `LISSAGE_MAX`, la même
+    borne que l'escalier et pour la même raison — la planche le dit : *« à 3,
+    sur un visage de 8 px, le nez disparaît »*).
+
+    À la différence de l'escalier (`decrocher_les_coins`), qui ne peut que
+    retirer, celui-ci peut aussi **ajouter** — un pixel transparent entouré
+    d'une majorité de sujet devient sujet. C'est ce qui rend un bord
+    irrégulier régulier dans les deux sens, et ce qui distingue le lissage
+    d'un simple rognement : une dent qui manque se comble autant qu'une dent
+    qui dépasse se rabote.
+    """
+    if passes <= 0:
+        return rgba
+    sortie = rgba.copy()
+    for _ in range(min(passes, LISSAGE_MAX)):
+        alpha = sortie[:, :, 3]
+        opaque = alpha > 0
+        huit = _voisinage(opaque.astype(np.uint8), 0)
+        compte = huit.sum(axis=-1)
+        grandir = ~opaque & (compte >= MAJORITE_DU_VOISINAGE)
+        retrecir = opaque & (compte <= len(VOISINS) - MAJORITE_DU_VOISINAGE)
+        if not grandir.any() and not retrecir.any():
+            break
+        if retrecir.any():
+            sortie[:, :, 3] = np.where(retrecir, np.uint8(0), alpha)
+        if grandir.any():
+            couleur, trouve = _premiere_couleur_voisine(
+                sortie[:, :, :3], sortie[:, :, 3] > 0
+            )
+            appliquer = grandir & trouve
+            if appliquer.any():
+                sortie[appliquer, 0] = couleur[appliquer, 0]
+                sortie[appliquer, 1] = couleur[appliquer, 1]
+                sortie[appliquer, 2] = couleur[appliquer, 2]
+                sortie[appliquer, 3] = 255
+    return sortie
+
+
+def appliquer_designations(
+    original: np.ndarray, resultat: np.ndarray, designations: tuple[Designation, ...]
+) -> np.ndarray:
+    """Les taches désignées à la main — effacées, ou protégées (B18).
+
+    **`garde=True` se lit sur `original`** : l'amas tel qu'il était avant tout
+    nettoyage est recopié sur le résultat, ce qui annule ce que les réglages
+    au-dessus lui ont fait, quels qu'ils soient. **`garde=False` se lit sur
+    `resultat`** : on efface l'amas tel qu'il se présente une fois les autres
+    réglages passés, parce que c'est ce que l'auteur a sous les yeux au moment
+    de cliquer.
+
+    Un point hors de l'image, ou tombé sur du vide, ne fait rien — il se
+    borne, comme le reste des points du produit depuis T5.
+    """
+    if not designations:
+        return resultat
+    sortie = resultat.copy()
+    hauteur, largeur = sortie.shape[:2]
+    zones_originales: list[tuple[np.ndarray, int]] | None = None
+    zones_resultat: list[tuple[np.ndarray, int]] | None = None
+    for d in designations:
+        x, y = d.point
+        if not (0 <= x < largeur and 0 <= y < hauteur):
+            continue
+        if d.garde:
+            if original[y, x, 3] == 0:
+                continue
+            if zones_originales is None:
+                zones_originales = composantes(original[:, :, 3] > 0)
+            for masque, _ in zones_originales:
+                if masque[y, x]:
+                    sortie[masque] = original[masque]
+                    break
+        else:
+            if sortie[y, x, 3] == 0:
+                continue
+            if zones_resultat is None:
+                zones_resultat = composantes(sortie[:, :, 3] > 0)
+            for masque, _ in zones_resultat:
+                if masque[y, x]:
+                    sortie[masque, 3] = 0
+                    zones_resultat = None  # le résultat a changé, à recalculer
+                    break
+    return sortie
+
+
 def nettoyer(rgba: np.ndarray, bords: Bords) -> np.ndarray:
     """Le dernier mot : les taches trop petites pour être le sujet s'en vont.
 
@@ -1466,12 +1770,19 @@ def nettoyer(rgba: np.ndarray, bords: Bords) -> np.ndarray:
     un éclat de fond qui a survécu au seuil, un bout de contour détaché. À
     64 pixels de côté, un pixel isolé se voit ; à 1024, il ne se voyait pas.
 
-    **Trois moteurs depuis B17, dans l'ordre où ils se corrigent l'un l'autre** :
-    les taches détachées d'abord, puis le grain de couleur, puis l'escalier. La
-    taille avant la couleur parce qu'un éclat détaché n'a pas à être repeint
-    avant d'être effacé ; l'escalier en dernier parce qu'il travaille sur la
-    silhouette définitive, celle que les deux autres viennent d'arrêter.
+    **Neuf moteurs depuis B18, dans un ordre qui se corrige lui-même** : les
+    taches détachées d'abord (rien à trier ni combler tant que les éclats
+    n'ont pas disparu), puis le tri des amas, puis les deux comblements — le
+    trou et la poche de fond ne se recoupent jamais, l'ordre entre eux
+    n'importe donc pas —, puis les deux morphologies — l'ouverture avant la
+    fermeture, pour qu'une excroissance rongée ne soit pas regonflée par la
+    fermeture qui suit —, puis le vote des voisins qui régularise ce que tout
+    ce qui précède a laissé, puis le grain de couleur et l'escalier de B17
+    dans leur ordre déjà tenu, et enfin la désignation à la main — qui doit
+    voir le résultat de tout le reste pour effacer *ce qu'on a sous les yeux*,
+    et l'original pour protéger *ce qui existait avant qu'on y touche*.
     """
+    original = rgba
     if bords.aire_min > 0:
         alpha = rgba[:, :, 3]
         if alpha.any():
@@ -1483,8 +1794,19 @@ def nettoyer(rgba: np.ndarray, bords: Bords) -> np.ndarray:
                     canal[tache] = 0
             rgba = sortie
 
+    rgba = garder_le_sujet_seul(rgba, bords.garder)
+    rgba = boucher_les_trous(rgba, bords.boucher_jusqua)
+    rgba = reboucher_les_poches_de_fond(rgba, bords.reboucher_jusqua)
+    rgba = ronger_puis_regonfler(
+        rgba, bords.ronger_regonfler, bords.epargner_traits_fins
+    )
+    rgba = regonfler_puis_ronger(rgba, bords.regonfler_ronger)
+    rgba = voter_les_voisins(rgba, bords.vote_voisins)
     rgba = depoussierer(rgba, bords.grain_min)
-    return decrocher_les_coins(rgba, bords.lissage)
+    rgba = decrocher_les_coins(rgba, bords.lissage)
+    if bords.designations:
+        rgba = appliquer_designations(original, rgba, bords.designations)
+    return rgba
 
 
 # ── Le pinceau, et ce qu'il couvre ───────────────────────────────────────────

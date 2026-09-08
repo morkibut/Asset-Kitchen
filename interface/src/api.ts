@@ -1538,12 +1538,30 @@ export type Quantification = {
   echanges?: Echange[]
 }
 
-/** La table **Nettoyer** : les taches, le grain de couleur, l'escalier (B17).
+/** Une tache désignée à la main — effacée, ou protégée (B18). Le point,
+ *  jamais un numéro de ligne : une tache est retrouvée à chaque rendu, et son
+ *  rang dans la liste bouge dès qu'un réglage au-dessus change d'un cran. */
+export type Designation = { point: [number, number]; garde?: boolean }
+
+/** La table **Nettoyer** : B17 (le grain de couleur, l'escalier) et B18 (le
+ *  reste des neuf moteurs de la planche).
  *
  *  `aire_min` compte des taches dans la **silhouette** ; `grain_min` compte des
  *  **couleurs**, et c'est ce que le seuil de taille n'a jamais su atteindre — un
  *  pixel vert vif au milieu d'une robe brune est opaque et collé au sujet. */
-export type Bords = { aire_min: number; grain_min?: number; lissage?: number }
+export type Bords = {
+  aire_min: number
+  grain_min?: number
+  lissage?: number
+  garder?: number
+  boucher_jusqua?: number
+  reboucher_jusqua?: number
+  ronger_regonfler?: number
+  regonfler_ronger?: number
+  vote_voisins?: number
+  epargner_traits_fins?: boolean
+  designations?: Designation[]
+}
 
 /** Les bornes des réglages de `B17`, écrites une fois. Le serveur les tient
  *  aussi de son côté ; celles-ci arrêtent la valeur avant qu'elle parte. */
@@ -1553,6 +1571,10 @@ export const TEINTE_MIN = -180
 export const TEINTE_MAX = 180
 export const GRAIN_MAX = 8
 export const LISSAGE_MAX = 3
+
+/** Les bornes des sept moteurs neufs de `B18`, même règle. */
+export const GARDER_MAX = 8
+export const MORPHOLOGIE_MAX = 8
 
 /** La largeur du lit de couleur posé sous la transparence, en pixels (`B17`).
  *  **Ce n'est pas un réglage** : c'est une réparation du fichier, toujours

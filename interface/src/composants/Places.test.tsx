@@ -252,7 +252,21 @@ describe("la table Nettoyer", () => {
     const { poser } = monter(PanneauBords as typeof PanneauQuantification, recette)
     glisser("tache minimale", 7)
     const pose = poser.mock.calls.at(-1)![0] as Recette
-    expect(pose.bords).toEqual({ aire_min: 7, grain_min: 2, lissage: 1 })
+    // La table entière voyage — y compris les sept moteurs neufs de `B18`,
+    // à leur neutre puisqu'ils n'ont pas été touchés.
+    expect(pose.bords).toEqual({
+      aire_min: 7,
+      grain_min: 2,
+      lissage: 1,
+      garder: 0,
+      boucher_jusqua: 0,
+      reboucher_jusqua: 0,
+      ronger_regonfler: 0,
+      regonfler_ronger: 0,
+      vote_voisins: 0,
+      epargner_traits_fins: true,
+      designations: [],
+    })
   })
 
   test("le grain éteint dit qu'il ne fait rien, plutôt que de se taire", () => {
@@ -277,7 +291,21 @@ describe("la table Nettoyer", () => {
     const { poser } = monter(PanneauBords as typeof PanneauQuantification, recette)
     glisser("lissage", 2)
     const pose = poser.mock.calls.at(-1)![0] as Recette
-    expect(pose.bords).toEqual({ aire_min: 4, grain_min: 0, lissage: 2 })
+    // Même chose pour une recette d'avant `B18` : ses sept clés absentes se
+    // lisent à leur neutre, et voyagent avec le reste de la table.
+    expect(pose.bords).toEqual({
+      aire_min: 4,
+      grain_min: 0,
+      lissage: 2,
+      garder: 0,
+      boucher_jusqua: 0,
+      reboucher_jusqua: 0,
+      ronger_regonfler: 0,
+      regonfler_ronger: 0,
+      vote_voisins: 0,
+      epargner_traits_fins: true,
+      designations: [],
+    })
   })
 })
 

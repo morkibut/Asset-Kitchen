@@ -38,10 +38,12 @@ from atelier.domaine.recette import (
     CURSEUR_MIN,
     DEHORS,
     EPAISSEUR_MAX,
+    GARDER_MAX,
     GAUCHE,
     GAUCHE_DROITE,
     GRAIN_MAX,
     LISSAGE_MAX,
+    MORPHOLOGIE_MAX,
     OCCUPATION_MAX_ABSOLU,
     PLACES,
     RAYON_MAX,
@@ -1187,12 +1189,27 @@ class CorpsQuantification(BaseModel):
     echanges: list[CorpsEchange] = Field(default_factory=list)
 
 
+class CorpsDesignation(BaseModel):
+    """Une tache désignée à la main — effacée, ou protégée (B18)."""
+
+    point: tuple[int, int] = (0, 0)
+    garde: bool = False
+
+
 class CorpsBords(BaseModel):
-    """La table *Nettoyer* — les taches, le grain de couleur, l'escalier (B17)."""
+    """La table *Nettoyer* — B17 (le grain, l'escalier) et B18 (le reste)."""
 
     aire_min: int = Field(0, ge=0)
     grain_min: int = Field(0, ge=0, le=GRAIN_MAX)
     lissage: int = Field(0, ge=0, le=LISSAGE_MAX)
+    garder: int = Field(0, ge=0, le=GARDER_MAX)
+    boucher_jusqua: int = Field(0, ge=0)
+    reboucher_jusqua: int = Field(0, ge=0)
+    ronger_regonfler: int = Field(0, ge=0, le=MORPHOLOGIE_MAX)
+    regonfler_ronger: int = Field(0, ge=0, le=MORPHOLOGIE_MAX)
+    vote_voisins: int = Field(0, ge=0, le=LISSAGE_MAX)
+    epargner_traits_fins: bool = True
+    designations: list[CorpsDesignation] = Field(default_factory=list)
 
 
 class CorpsContour(BaseModel):

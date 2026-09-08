@@ -42,9 +42,11 @@ from atelier.domaine.recette import (
     DETOURAGE,
     DIFFERENCE,
     EPAISSEUR_MAX,
+    GARDER_MAX,
     GRAIN_MAX,
     LISSAGE_MAX,
     METHODES_DE_REDUCTION,
+    MORPHOLOGIE_MAX,
     TEINTE_MAX,
     TEINTE_MIN,
     TOLERANCE_ECHANGE_MAX,
@@ -1561,6 +1563,31 @@ class ServiceAssets:
                 )
             if not 0 <= bords.lissage <= LISSAGE_MAX:
                 raise RecetteRefusee(f"le lissage va de 0 à {LISSAGE_MAX} passes")
+            # ── Les sept moteurs de B18, bornés comme les deux d'avant ────────
+            if not 0 <= bords.garder <= GARDER_MAX:
+                raise RecetteRefusee(
+                    f"garder le sujet seul va de 0 à {GARDER_MAX} amas"
+                )
+            if bords.boucher_jusqua < 0:
+                raise RecetteRefusee(
+                    "l'aire à boucher ne peut pas être négative"
+                )
+            if bords.reboucher_jusqua < 0:
+                raise RecetteRefusee(
+                    "l'aire à reboucher ne peut pas être négative"
+                )
+            if not 0 <= bords.ronger_regonfler <= MORPHOLOGIE_MAX:
+                raise RecetteRefusee(
+                    f"ronger puis regonfler va de 0 à {MORPHOLOGIE_MAX} px"
+                )
+            if not 0 <= bords.regonfler_ronger <= MORPHOLOGIE_MAX:
+                raise RecetteRefusee(
+                    f"regonfler puis ronger va de 0 à {MORPHOLOGIE_MAX} px"
+                )
+            if not 0 <= bords.vote_voisins <= LISSAGE_MAX:
+                raise RecetteRefusee(
+                    f"le vote des voisins va de 0 à {LISSAGE_MAX} passes"
+                )
 
         # **Les deux couches de la main** (C4). Seul le rayon a des bornes : un
         # point hors du cadre se borne au lieu de lever — c'est la règle du
