@@ -52,7 +52,10 @@ from atelier.domaine.recette import (
     algorithme_connu,
     distance_connue,
 )
+from atelier.image import palette as module_palette
 from atelier.image.palette import (
+    PIXELS_AU_PLUS,
+    _echantillon,
     couleurs_obtenues,
     palette_par,
     par_coupe_mediane,
@@ -61,6 +64,7 @@ from atelier.image.palette import (
     rampes,
 )
 from atelier.image.traitement import quantifier
+from atelier.services.assets import RecetteRefusee, ServiceAssets
 
 CORPUS = Path(__file__).resolve().parent / "recettes-avant-b1.json"
 
@@ -93,6 +97,25 @@ def image_riche(cote: int = 64, *, detouree: bool = True) -> np.ndarray:
     if detouree:
         rgba[: cote // 8, :, :3] = MAGENTA
         rgba[: cote // 8, :, 3] = 0
+    return rgba
+
+
+def image_bariolee(cote: int = 512) -> np.ndarray:
+    """Une image où **presque chaque pixel porte sa propre couleur**.
+
+    `image_riche` est un dégradé : elle a beaucoup de pixels et peu de couleurs.
+    C'est le bon banc pour la carte des pixels sur la palette, et c'est
+    exactement le mauvais pour le chemin inverse — celui qui ramène les couleurs
+    calculées sur les couleurs *réelles* de l'image, et dont le coût suit le
+    nombre de couleurs distinctes, pas la surface.
+
+    Le bruit est tiré sur une graine fixe : la même image à chaque exécution,
+    comme partout ailleurs dans ce dépôt.
+    """
+    tirage = np.random.default_rng(7)
+    rgba = np.zeros((cote, cote, 4), dtype=np.uint8)
+    rgba[:, :, :3] = tirage.integers(0, 256, size=(cote, cote, 3), dtype=np.uint8)
+    rgba[:, :, 3] = 255
     return rgba
 
 
@@ -631,6 +654,42 @@ def test_on_ne_garde_pas_plus_de_six_couleurs():
     assert len(trop.gardees_vives) == GARDEES_MAX
 
 
+def test_le_service_refuse_douze_couleurs_gardees_au_lieu_de_les_tronquer():
+    """⚠️ **Le domaine tronque, le service refuse — et le service le faisait mal.**
+
+    `gardees_vives` coupe déjà à six : c'est sa règle, il relit des fichiers et
+    ne juge pas. Le filet du service, lui, doit *nommer* ce qui dépasse — c'est
+    ce que son commentaire promet. Il lisait pourtant la liste déjà coupée, donc
+    sa condition ne pouvait jamais être vraie, et douze couleurs passaient en
+    perdant six en silence. Il lit maintenant les couleurs **déclarées**.
+
+    `_verifier` ne touche pas à `self` : on l'appelle tel quel, sans monter un
+    service entier pour une condition d'une ligne.
+    """
+    douze = Recette(
+        quantification=Quantification(
+            couleurs=32, gardees=tuple(f"#{n:06x}" for n in range(12))
+        )
+    )
+    with pytest.raises(RecetteRefusee, match="on ne garde pas plus de 6 couleurs"):
+        ServiceAssets._verifier(None, douze)
+
+    # Six passent, et douze doublons de la même couleur aussi : ce qui est
+    # refusé, c'est de nommer plus de six couleurs, pas d'en répéter une.
+    ServiceAssets._verifier(
+        None,
+        Recette(
+            quantification=Quantification(
+                couleurs=32, gardees=tuple(f"#{n:06x}" for n in range(6))
+            )
+        ),
+    )
+    ServiceAssets._verifier(
+        None,
+        Recette(quantification=Quantification(couleurs=32, gardees=("#1edc3c",) * 12)),
+    )
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 # Moteur 8 · les rampes d'ombre
 # ═════════════════════════════════════════════════════════════════════════════
@@ -725,11 +784,20 @@ def test_le_compte_obtenu_ne_regarde_que_les_pixels_visibles():
 
 def test_le_compte_obtenu_est_bien_plus_bas_que_le_compte_demande():
     """*« Demander 32 en rend 14 à 28. »* C'est l'écart que le chiffre existe
-    pour rendre visible, et il est réel : on l'épingle plutôt que de le taire."""
+    pour rendre visible, et il est réel : on l'épingle plutôt que de le taire.
+
+    **L'écart est mesuré, pas supposé** : sur cette image-ci, 64 demandées en
+    rendent 63. L'image est fabriquée et la coupe médiane ne tire rien au sort,
+    donc les deux nombres sont les mêmes à chaque exécution — c'est ce qui permet
+    d'écrire l'inégalité stricte plutôt qu'un vœu."""
     image = image_riche()
     obtenues = couleurs_obtenues(quantifier(image, Quantification(couleurs=64)))
-    assert obtenues <= 64
-    assert obtenues < 64 or True  # l'écart dépend de l'image ; le compte, lui, est borné
+    assert obtenues <= 64, "le compte obtenu ne dépasse jamais le compte demandé"
+    assert obtenues < 64, (
+        f"l'écart « demandées / obtenues » a disparu : {obtenues} sur 64 — "
+        "si c'est un gain réel, c'est le chiffre de la docstring qu'il faut "
+        "reprendre, pas l'assertion"
+    )
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -827,6 +895,92 @@ def test_la_memoire_reste_bornee_sur_une_grande_image():
     print(f"\n  octree, sur 512 px : pic {pic / 1e6:.0f} Mo")
     assert pic < 400e6, f"le pic de mémoire est de {pic / 1e6:.0f} Mo"
     assert couleurs_obtenues(sortie) <= 32
+
+
+def test_la_memoire_reste_bornee_quand_c_est_l_image_qui_est_la_grande_liste():
+    """⚠️ **Le cas que l'essai d'au-dessus ne voyait pas**, et il cassait pour de
+    bon.
+
+    L'essai précédent mesure l'octree sur une image *pauvre* en couleurs : la
+    grande liste y est celle des pixels, la petite celle de la palette, et
+    découper les pixels en blocs suffisait. Les trois algorithmes appellent
+    pourtant `_plus_proches` **à l'envers** pour ramener leurs couleurs calculées
+    sur des couleurs réelles — la palette d'un côté, *toutes les couleurs
+    distinctes de l'image* de l'autre. Rien ne bornait ce côté-là.
+
+    Mesuré sur cette image-ci, 512 px de bruit et 260 000 couleurs distinctes :
+    **1 603 Mo** avant la réparation, 240 Mo après. À 2 048 px — la taille d'un
+    rendu réel — le même chemin montait à plusieurs gigaoctets et rendait la
+    table *Couleurs* inutilisable sur une machine ordinaire.
+
+    **La coupe médiane, et pas une autre** : elle était la seule des trois à ne
+    pas passer par `_echantillon`, donc la seule dont l'histogramme suivait la
+    surface de l'image. Un futur agent qui retirerait l'un des deux garde-fous —
+    le découpage des cibles en blocs, ou l'échantillon — fait échouer cet essai.
+    """
+    import tracemalloc
+
+    image = image_bariolee(512)
+    distinctes = np.unique(image[:, :, :3].reshape(-1, 3), axis=0).shape[0]
+    assert distinctes > 250_000, "sans quoi cet essai ne prouve rien"
+
+    # Un réglage posé, sinon c'est le chemin Pillow d'avant qui s'exécute et
+    # aucune ligne de `B18` n'est mesurée.
+    pose = Quantification(couleurs=256, algorithme=MEDIANE, visibles_seuls=True)
+    assert not pose.reglages_de_b18_neutres
+
+    tracemalloc.start()
+    sortie = quantifier(image, pose)
+    _, pic = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    print(
+        f"\n  coupe médiane, 512 px et {distinctes} couleurs distinctes : "
+        f"pic {pic / 1e6:.0f} Mo"
+    )
+    assert pic < 600e6, f"le pic de mémoire est de {pic / 1e6:.0f} Mo"
+    assert couleurs_obtenues(sortie) <= 256
+
+
+def test_la_coupe_mediane_plafonne_son_histogramme_comme_les_deux_autres():
+    """**Le second garde-fou, énoncé tout seul.** La palette d'un tableau plus
+    grand que le plafond est celle de son échantillon — c'est ce que veut dire
+    *« elle passe par `_echantillon` »*, et l'essai le dit sans passer par une
+    mesure de mémoire, qui dépend de la machine."""
+    tirage = np.random.default_rng(11)
+    pixels = tirage.integers(0, 256, size=(PIXELS_AU_PLUS * 2, 3), dtype=np.uint8)
+    assert pixels.shape[0] > PIXELS_AU_PLUS
+    for algorithme in ALGORITHMES:
+        entiere = palette_par(algorithme, pixels, 32)
+        plafonnee = palette_par(algorithme, _echantillon(pixels), 32)
+        assert np.array_equal(entiere, plafonnee), algorithme
+
+
+def test_le_decoupage_en_blocs_rend_exactement_le_meme_rang():
+    """**Les blocs bornent la mémoire, ils ne changent pas une couleur.**
+
+    Un `argmin` d'un seul tenant rend le **premier** minimum ; le parcours par
+    blocs ne remplace la meilleure cible connue qu'en étant *strictement* plus
+    proche, ce qui garde le même rang à égalité. L'essai le vérifie là où les
+    égalités abondent — cinq valeurs par canal — parce que c'est le seul endroit
+    où les deux calculs pourraient diverger, et une divergence d'un rang est une
+    couleur de moins dans l'image.
+    """
+    tirage = np.random.default_rng(3)
+    points = (tirage.integers(0, 5, size=(700, 3)) * 60).astype(np.float32)
+    cibles = (tirage.integers(0, 5, size=(900, 3)) * 60).astype(np.float32)
+    attendu = np.argmin(
+        ((points[:, None, :] - cibles[None, :, :]) ** 2).sum(axis=2), axis=1
+    )
+    depart = module_palette._COUPLES_PAR_BLOC
+    try:
+        # Des blocs volontairement minuscules : un par cible, puis trois, puis
+        # tout d'un coup — les trois découpages doivent rendre le même vecteur.
+        for couples in (points.shape[0], points.shape[0] * 3, depart):
+            module_palette._COUPLES_PAR_BLOC = couples
+            obtenu = module_palette._plus_proches(points, cibles)
+            assert np.array_equal(obtenu, attendu), couples
+    finally:
+        module_palette._COUPLES_PAR_BLOC = depart
 
 
 # ═════════════════════════════════════════════════════════════════════════════

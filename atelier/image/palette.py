@@ -505,11 +505,20 @@ def par_coupe_mediane(pixels: np.ndarray, couleurs: int) -> np.ndarray:
     le même contrat** — sans quoi « la palette ne porte que des couleurs de
     l'image » serait vraie de deux moteurs sur trois, ce qui est la pire des
     trois situations.
+
+    ⚠️ **Elle passe par `_echantillon`, comme les deux autres.** Elle était la
+    seule à ne pas le faire, et ça se payait : `distinctes` montait alors à un
+    million et demi de couleurs sur une image de 2 048 px, que le retour à la
+    couleur réelle mesurait toutes contre tous les milieux. Le plafond de
+    300 000 pixels est le même que pour k-moyennes et l'octree, pour la même
+    raison — *un histogramme de 300 000 pixels décrit une palette de 256 couleurs
+    très largement au-delà de ce que l'œil distingue sur le résultat*.
     """
-    if not pixels.size:
+    echantillon = _echantillon(pixels)
+    if not echantillon.size:
         return np.zeros((0, 3), dtype=np.uint8)
     bande = Image.fromarray(
-        np.ascontiguousarray(pixels.reshape(1, -1, 3)), mode="RGB"
+        np.ascontiguousarray(echantillon.reshape(1, -1, 3)), mode="RGB"
     )
     indexee = bande.quantize(
         colors=max(1, min(256, couleurs)), method=Image.Quantize.MEDIANCUT
@@ -519,7 +528,7 @@ def par_coupe_mediane(pixels: np.ndarray, couleurs: int) -> np.ndarray:
         [plate[rang * 3 : rang * 3 + 3] for rang in sorted(set(indexee.tobytes()))],
         dtype=np.uint8,
     )
-    distinctes = np.unique(pixels.reshape(-1, 3), axis=0)
+    distinctes = np.unique(echantillon.reshape(-1, 3), axis=0)
     posees = distinctes[
         _plus_proches(
             milieux.astype(np.float32), distinctes.astype(np.float32)
@@ -720,6 +729,22 @@ def palette_par(
     return choisir(pixels, couleurs, graine)  # type: ignore[misc]
 
 
+#: Combien de points par bloc, au plus. Le côté « long » du découpage : il ne
+#: dépend que de lui-même, donc il ne bouge pas d'un appelant à l'autre.
+_POINTS_PAR_BLOC = 32_768
+
+#: Combien de **couples** (point, cible) au plus dans un même tableau
+#: intermédiaire. 8 388 608 couples × 3 canaux × 4 octets = 100 Mo — la borne que
+#: la docstring de `_plus_proches` annonce, et c'est le produit des deux côtés
+#: qui la fixe, jamais un seul.
+_COUPLES_PAR_BLOC = _POINTS_PAR_BLOC * 256
+
+
+def _ecarts_carres(points: np.ndarray, cibles: np.ndarray) -> np.ndarray:
+    """La matrice des écarts au carré entre chaque point et chaque cible."""
+    return ((points[:, None, :] - cibles[None, :, :]) ** 2).sum(axis=2)
+
+
 def _plus_proches(points: np.ndarray, cibles: np.ndarray) -> np.ndarray:
     """Pour chaque point, le rang de la cible la plus proche. Par blocs.
 
@@ -728,16 +753,57 @@ def _plus_proches(points: np.ndarray, cibles: np.ndarray) -> np.ndarray:
     gigaoctet en flottants ; c'est très exactement la panne que `B17` a payée sur
     ses deux moteurs qui balaient l'image — 1,78 Go pour le grain — et le
     garde-fou qu'elle a posé est le **pic de mémoire**, qui ne dépend pas de la
-    machine. Trente-deux mille points par bloc tiennent sous cent mégaoctets
-    quelle que soit la palette.
+    machine.
+
+    ⚠️ **Les deux axes se découpent, et découper le seul axe `points` ne bornait
+    rien.** C'est un défaut réel, mesuré à la relecture de `B18` : les trois
+    algorithmes appellent cette fonction *à l'envers* pour ramener leurs couleurs
+    calculées sur des couleurs réelles — `points` est alors la petite palette et
+    `cibles` le tableau des couleurs distinctes de l'image entière. Un bloc de
+    256 points contre 1,5 million de cibles pèse alors neuf gigaoctets, et la
+    coupe médiane, seule des trois à ne pas passer par `_echantillon`, y montait
+    à **9,7 Go** sur une image de 2 048 px. Ce n'est pas la taille des blocs qui
+    bornait la mémoire, c'est leur **produit** : `_COUPLES_PAR_BLOC` le tient,
+    quel que soit lequel des deux axes est le grand.
+
+    **Le résultat est identique, bloc par bloc ou d'un seul tenant.** `argmin`
+    rend le premier minimum ; ici, une cible d'un bloc suivant ne remplace la
+    meilleure connue qu'en étant *strictement* plus proche, ce qui garde le
+    premier rang à égalité — la même couleur, donc la même image à l'octet près.
     """
     if not points.size:
         return np.zeros((0,), dtype=np.intp)
+    par_point = min(_POINTS_PAR_BLOC, points.shape[0])
+    par_cible = max(1, _COUPLES_PAR_BLOC // par_point)
     rangs = np.empty(points.shape[0], dtype=np.intp)
-    for debut in range(0, points.shape[0], 32_768):
-        tranche = points[debut : debut + 32_768]
-        ecarts = ((tranche[:, None, :] - cibles[None, :, :]) ** 2).sum(axis=2)
-        rangs[debut : debut + 32_768] = np.argmin(ecarts, axis=1)
+    for debut in range(0, points.shape[0], par_point):
+        tranche = points[debut : debut + par_point]
+        if cibles.shape[0] <= par_cible:
+            # Le cas de très loin le plus courant — les cibles sont la palette —
+            # et c'est mot pour mot le calcul d'avant, sans le moindre détour.
+            rangs[debut : debut + par_point] = np.argmin(
+                _ecarts_carres(tranche, cibles), axis=1
+            )
+            continue
+        # Le meilleur écart connu, et le rang qui va avec. Ils naissent du
+        # premier paquet plutôt que d'un `inf` posé d'avance : c'est ce qui leur
+        # donne le type exact des écarts, quel qu'il soit, au lieu d'un
+        # arrondi silencieux à la première comparaison.
+        meilleurs = np.array([])
+        courants = np.zeros(tranche.shape[0], dtype=np.intp)
+        for debut_cible in range(0, cibles.shape[0], par_cible):
+            ecarts = _ecarts_carres(
+                tranche, cibles[debut_cible : debut_cible + par_cible]
+            )
+            proches = np.argmin(ecarts, axis=1)
+            valeurs = np.take_along_axis(ecarts, proches[:, None], axis=1)[:, 0]
+            if not debut_cible:
+                meilleurs, courants = valeurs.copy(), proches.astype(np.intp)
+                continue
+            mieux = valeurs < meilleurs
+            meilleurs[mieux] = valeurs[mieux]
+            courants[mieux] = proches[mieux] + debut_cible
+        rangs[debut : debut + par_point] = courants
     return rangs
 
 

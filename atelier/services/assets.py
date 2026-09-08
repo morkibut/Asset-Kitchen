@@ -1587,7 +1587,14 @@ class ServiceAssets:
                 )
             if not 0 <= quantification.force_tramage <= 100:
                 raise RecetteRefusee("la force du tramage va de 0 à 100 %")
-            if len(quantification.gardees_vives) > GARDEES_MAX:
+            # ⚠️ **Sur les couleurs déclarées, jamais sur `gardees_vives`.**
+            # Cette lecture-là tronque déjà à `GARDEES_MAX` — c'est sa règle de
+            # domaine, qui relit sans juger —, donc la comparer à `GARDEES_MAX`
+            # ne peut jamais être vraie : un écran qui en enverrait douze en
+            # perdait six en silence au lieu d'être refusé, ce qui est très
+            # exactement le contraire de ce que le commentaire ci-dessus promet.
+            declarees = [c for c in dict.fromkeys(quantification.gardees) if c]
+            if len(declarees) > GARDEES_MAX:
                 raise RecetteRefusee(
                     f"on ne garde pas plus de {GARDEES_MAX} couleurs"
                 )

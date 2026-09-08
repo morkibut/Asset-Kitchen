@@ -740,18 +740,23 @@ def algorithme_connu(algorithme: Any) -> str:
 # égales — ce que l'œil ne fait pas —, si bien que le vert vif d'une grenouille
 # peut partir sur un gris-vert terne parce qu'il en est proche *au calcul*.
 #
-# **`brute` est le neutre, et `oeil` est le défaut du produit** — la même
-# répartition que `Grille.methode` en `D2`, et pour la même raison : le champ
-# retombe sur ce que l'atelier faisait avant, de sorte qu'une recette écrite
-# avant la tranche rend exactement la même image ; le défaut du produit, lui,
-# n'entre que dans les recettes fabriquées à neuf.
+# **`brute` est le neutre, et il est aussi le défaut du produit** : une recette
+# neuve part en `brute`, comme une recette écrite avant la tranche, et l'auteur
+# passe à `oeil` quand il le décide. C'est un choix, pas un oubli — `oeil` change
+# l'image de toute recette qui le reçoit sans l'avoir demandé, et rien dans la
+# tranche ne justifie de le poser d'office. Le corps du port (`routes.py`) et
+# l'écran (`quantificationDe`) posent tous deux `brute`.
+#
+# Il n'y a donc **pas de `DISTANCE_LIVREE`**, contrairement à `force_tramage` :
+# une constante « valeur livrée » n'a de sens que là où elle diffère du neutre,
+# et une seconde constante qui vaudrait `BRUTE` ne pourrait que finir par mentir
+# — elle a d'ailleurs commencé par le faire, en valant `OEIL` sans que rien ne
+# la lise.
 BRUTE = "brute"
 OEIL = "oeil"
 DISTANCES = (BRUTE, OEIL)
 
 NOM_DE_LA_DISTANCE = {BRUTE: "brute", OEIL: "à l'œil"}
-
-DISTANCE_LIVREE = OEIL
 
 
 def distance_connue(distance: Any) -> str:

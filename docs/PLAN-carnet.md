@@ -953,8 +953,11 @@ Le neutre d'une clé neuve, lui, est *la valeur pour laquelle une recette écrit
 rend exactement l'image qu'elle rendait* — sans quoi les 61 recettes du corpus figé changeraient
 d'empreinte, donc de nom de rendu, et tout leur cache se recalculerait. Les champs retombent
 donc sur `brute`, `non`, et **100 pour la force** (le tramage d'aujourd'hui est plein). C'est
-l'arbitrage exact de `D2` pour `Grille.methode`, et `DISTANCE_LIVREE` garde écrit ce que le
-produit choisirait pour une recette neuve.
+l'arbitrage exact de `D2` pour `Grille.methode`. ⚠️ **Et la distance en reste à `brute` pour
+une recette neuve aussi** : une constante `DISTANCE_LIVREE` valant `oeil` avait été écrite,
+mais rien ne la lisait — ni le corps du port, ni l'écran — et elle annonçait donc un défaut
+produit qui n'existait pas. Elle est retirée ; le jour où l'on voudra vraiment livrer `oeil`,
+c'est le corps du port et `quantificationDe` qu'il faudra changer, et ce sera visible.
 
 ⚠️ **`reglages_de_b18_neutres` doit compter le tramage, qui n'est pourtant pas une clé neuve.**
 `trame` est une *valeur* neuve d'une clé qui existait, et l'oublier a coûté un défaut réel,
@@ -997,6 +1000,36 @@ approximation : la carte des pixels se calcule **par couleur distincte** et non 
 (un million de pixels, trente mille couleurs), et k-moyennes pondère les couleurs distinctes par
 leur population au lieu de faire glisser cent mille fois le même pixel. Les deux rendent le même
 résultat à l'octet près — ce sont des factorisations.
+
+⚠️ **Un défaut de mémoire trouvé à la relecture, et il cassait pour de bon.** `_plus_proches`
+ne découpait en blocs qu'un seul de ses deux axes. Tant que les cibles sont la palette — au plus
+256 couleurs — ça suffit, et c'est le cas de la carte des pixels. Mais les trois algorithmes
+appellent la fonction **à l'envers** pour ramener leurs couleurs calculées sur des couleurs
+réelles : la palette d'un côté, *toutes les couleurs distinctes de l'image* de l'autre. Rien ne
+bornait ce côté-là. La coupe médiane, seule des trois à ne pas passer par `_echantillon`, y
+montait à **9,7 Go** sur un rendu de 2 048 px — un `MemoryError` sur une machine à 8 Go, une
+attente de plusieurs dizaines de secondes ailleurs, dès que l'auteur posait un réglage de
+*Couleurs* sur un asset sans grille. Deux réparations, mesurées : les **deux** axes se découpent
+maintenant (c'est leur *produit* qui borne la mémoire, jamais un seul côté), et la coupe médiane
+passe par `_echantillon` comme les deux autres. Mesuré sur une image de bruit à 512 px
+(260 000 couleurs distinctes) : **1 603 Mo avant, 240 Mo après** ; à 2 048 px et 3,7 millions de
+couleurs distinctes, les trois algorithmes tiennent ensemble sous **369 Mo**. Deux essais tiennent
+la réparation — un sur le pic de mémoire, un sur l'égalité rang par rang entre le calcul par
+blocs et le calcul d'un seul tenant, égalités comprises.
+
+**Ce que la réparation change à l'image, et c'est mesuré.** Soixante rendus rejoués avec l'ancien
+code et le neuf dans le même processus : **48 identiques à l'octet près**, et les 12 qui diffèrent
+sont tous la coupe médiane sur une image de **plus de 300 000 pixels** — c'est-à-dire exactement
+le plafond de `_echantillon` qui s'applique enfin, comme il s'appliquait déjà à k-moyennes et à
+l'octree. En dessous du plafond, rien ne bouge ; la palette imposée, k-moyennes et l'octree ne
+bougent nulle part. Aucune recette du disque n'est touchée : le corpus figé passe par le chemin
+Pillow d'avant, et les réglages de `B18` ne sont posés dans aucune recette existante.
+
+**Deux rendus complets par lecture d'une table, et ils sont tous deux nécessaires.** La route des
+mesures rend l'image *arrêtée avant les bords* — c'est celle que le seuil va trancher —, et
+`_couleurs_de` rend l'image *finale*, parce que le compte « obtenues » décrit ce qu'on a et non
+ce qu'un réglage fera. Deux recettes différentes, donc deux images différentes : vérifié à la
+relecture, ce n'est pas un calcul en double.
 
 ### Critères d'acceptation
 
