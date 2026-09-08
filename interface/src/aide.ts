@@ -987,8 +987,62 @@ export const AIDE: Record<string, Explication> = {
     ou: "tables",
     quoi: "Comment les couleurs qui n'existent pas dans la palette sont approchées : par la plus proche, ou par un mélange de points.",
     change:
-      "Sans tramage, un dégradé réduit à seize couleurs se pose en bandes franches. Avec, les bandes se mêlent en un semis de points — ce qui ressemble davantage au pixel art d'époque et ce qui, sur un sprite de 64 px, se voit beaucoup.",
+      "Sans tramage, un dégradé réduit à seize couleurs se pose en bandes franches. Avec, les bandes se mêlent en un semis de points — ce qui ressemble davantage au pixel art d'époque et ce qui, sur un sprite de 64 px, se voit beaucoup.\n\nIl y en a deux, et ils ne servent pas au même. **Diffusion** reporte l'erreur d'un pixel sur ses voisins : le semis dépend de ce qu'il y a autour, donc il se recalcule à chaque frame et une animation grésille. **Trame régulière** décide par la position du pixel, sur un motif fixe de 4×4 : le damier se répète et tient d'une frame à l'autre. Sur ce qui bouge, c'est le seul des deux qui convienne.",
     origine: "toi · défaut aucun",
+  },
+
+  "quantification.algorithme": {
+    nom: "algorithme",
+    ou: "tables",
+    quoi: "Comment les couleurs de la palette sont choisies, quand elles sont trouvées dans l'image plutôt qu'imposées par le jeu.",
+    change:
+      "**Coupe médiane** découpe l'espace des couleurs en deux, puis en deux, et rend le milieu de chaque boîte. C'est rapide et c'est ce que l'atelier fait depuis toujours ; une couleur rare mais franche y pèse peu et se noie.\n\n**K-moyennes** part de couleurs candidates et les laisse glisser vers le centre de ce qui les entoure : le vert d'une grenouille au milieu d'une image de bruns survit au lieu de virer olive. C'est le plus lent des trois.\n\n**Découpe en huit** sature moins vite : quand tu demandes 32 couleurs et que tu n'en obtiens que 14, c'est elle qui t'en rendra le plus.\n\nGrisé quand la palette du jeu est posée : elle décide alors seule, et il n'y a rien à choisir.",
+    origine: "toi · défaut coupe médiane",
+  },
+
+  "quantification.graine": {
+    nom: "graine",
+    ou: "tables",
+    quoi: "Le point de départ de k-moyennes. Elle n'existe que pour cet algorithme-là ; les deux autres ne tirent rien au sort.",
+    change:
+      "Deux graines donnent deux palettes légèrement différentes sur la même image : si une couleur te déplaît, changer la graine est le geste le moins cher pour en essayer une autre.\n\nElle est **écrite dans la recette**, et c'est ce qui permet à k-moyennes d'exister ici : sans elle, deux fois la même demande ne rendraient pas la même image, et le produit tient à ce que la même recette rende toujours le même pixel.",
+    origine: "toi · défaut 0",
+  },
+
+  "quantification.force_tramage": {
+    nom: "force du tramage",
+    ou: "tables",
+    quoi: "Combien de points le semis pose.",
+    change:
+      "À 25 %, seuls les grands dégradés reçoivent des points et les aplats restent propres. À 100 %, c'est le semis complet.\n\nGrisée tant qu'aucun tramage n'est choisi : il n'y a alors aucun point à doser.",
+    origine: "toi · défaut 100 %",
+  },
+
+  "quantification.distance": {
+    nom: "distance des couleurs",
+    ou: "tables",
+    quoi: "Comment on décide quelle couleur de la palette est « la plus proche » d'un pixel.",
+    change:
+      "**Brute** compte le rouge, le vert et le bleu à parts égales — ce que l'œil ne fait pas. Le vert vif d'une grenouille peut alors partir sur un gris-vert terne, parce qu'il en est proche au calcul.\n\n**À l'œil** mesure dans un espace où deux couleurs également distantes paraissent également différentes. Le vert reste vert, et les gris restent des gris. Sur les bruns et les gris, les deux donnent la même image.",
+    origine: "toi · défaut brute",
+  },
+
+  "quantification.visibles_seuls": {
+    nom: "ne compter que ce qu'on voit",
+    ou: "tables",
+    quoi: "Si les pixels cachés sous la transparence entrent dans le compte des couleurs.",
+    change:
+      "Le fond qu'un détourage vient de retirer est encore là, sous la transparence, avec sa couleur intacte : il prend une place de la palette pour une couleur que personne ne regarde. Décoché, tu demandes 8 couleurs et tu en obtiens 7 sur le sujet. Coché, les 8 sont pour lui.\n\nUne animation ne compte déjà que les pixels visibles ; ce réglage donne la même correction à une image seule.",
+    origine: "toi · défaut non",
+  },
+
+  "quantification.gardees": {
+    nom: "couleurs gardées",
+    ou: "tables",
+    quoi: "Les couleurs qu'aucune réduction ne doit fondre avec une voisine. Six au plus.",
+    change:
+      "Elles sont posées d'office dans la palette, avant que l'algorithme ne choisisse le reste : à 8 couleurs, en garder deux lui en laisse six.\n\nPique le noir d'un contour et le vert d'une grenouille, et à 8 couleurs le contour reste noir au lieu de virer brun foncé, la grenouille reste verte au milieu des bruns. Au-delà de six, il ne resterait plus rien à choisir.",
+    origine: "toi · défaut aucune",
   },
 
   "etape.grille": {

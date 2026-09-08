@@ -20,6 +20,7 @@ import {
   CONTOUR_PAR_DEFAUT,
   CURSEUR_MAX,
   CURSEUR_MIN,
+  FORCE_TRAMAGE_LIVREE,
   GRAIN_MAX,
   LISSAGE_MAX,
   LIT_DE_COULEUR,
@@ -991,9 +992,13 @@ export function PanneauGrille({
 
 /** Ce que la table *Couleurs* vaut aujourd'hui, avec ses neutres.
  *
- *  **Une seule lecture pour tout l'écran** — les six réglages de `B17`
- *  n'arrivent sur le fil que posés (règle de `B1`), et les lire chacun de son
- *  côté avec son propre repli aurait fini par en oublier un. */
+ *  **Une seule lecture pour tout l'écran** — les six réglages de `B17` et les
+ *  six de `B18` n'arrivent sur le fil que posés (règle de `B1`), et les lire
+ *  chacun de son côté avec son propre repli aurait fini par en oublier un.
+ *
+ *  **Le neutre de `force_tramage` est cent**, seul de la liste à ne pas être la
+ *  valeur vide : le tramage d'aujourd'hui est plein, et lire son absence comme
+ *  un zéro éteindrait le semis de toute recette tramée. */
 export const quantificationDe = (
   recette: Recette,
   univers: Univers,
@@ -1006,6 +1011,12 @@ export const quantificationDe = (
   saturation: recette.quantification?.saturation ?? 0,
   teinte: recette.quantification?.teinte ?? 0,
   echanges: recette.quantification?.echanges ?? [],
+  algorithme: recette.quantification?.algorithme ?? "mediane",
+  graine: recette.quantification?.graine ?? 0,
+  force_tramage: recette.quantification?.force_tramage ?? FORCE_TRAMAGE_LIVREE,
+  distance: recette.quantification?.distance ?? "brute",
+  visibles_seuls: recette.quantification?.visibles_seuls ?? false,
+  gardees: recette.quantification?.gardees ?? [],
 })
 
 /** Les cinq nombres de couleurs qu'on peut choisir d'un clic. Un projet peut en
@@ -1109,9 +1120,76 @@ export function PanneauQuantification({ recette, univers, regler, poser }: Regla
           lui les aplats se posent en bandes, avec lui ils se mêlent. */}
       <Reglage libelle="tramage" aide="quantification.tramage">
         <Segments
-          valeurs={["aucun", "floyd"] as const}
-          valeur={(q?.tramage ?? "aucun") as "aucun" | "floyd"}
+          valeurs={["aucun", "floyd", "trame"] as const}
+          valeur={(q?.tramage ?? "aucun") as "aucun" | "floyd" | "trame"}
           onChange={(tramage) => poser(avec({ tramage }))}
+        />
+      </Reglage>
+
+      {/* ── Les six réglages de B18 ───────────────────────────────────────────
+          **Ils sont ici comme ils sont dans `Retouche.tsx`**, et pour la raison
+          que `B17` a posée en mettant les siens dans les deux écrans : l'ancien
+          écran double le neuf le temps d'un déménagement, et un réglage qui
+          n'existerait que d'un côté serait introuvable selon la porte par
+          laquelle on est entré. */}
+      <Reglage libelle="algorithme" aide="quantification.algorithme">
+        <Segments
+          valeurs={["mediane", "kmoyennes", "octree"] as const}
+          valeur={valeurs.algorithme ?? "mediane"}
+          indisponibles={surLImage ? [] : ["mediane", "kmoyennes", "octree"]}
+          onChange={(algorithme) => poser(avec({ algorithme }))}
+        />
+      </Reglage>
+      {!surLImage && (
+        <Raison texte="la palette du jeu décide seule des couleurs — bascule « couleurs de » sur « l'image » pour choisir un algorithme" />
+      )}
+
+      {/* **La graine ne paraît qu'avec k-moyennes**, seul algorithme qui tire
+          quelque chose : la montrer ailleurs serait un réglage sans effet. */}
+      {surLImage && valeurs.algorithme === "kmoyennes" && (
+        <>
+          <Reglage libelle="graine" aide="quantification.graine">
+            <Curseur
+              libelle="graine"
+              valeur={valeurs.graine ?? 0}
+              min={0}
+              max={99}
+              onChange={(v) => regler(avec({ graine: v }))}
+              onFini={(v) => void poser(avec({ graine: v }))}
+            />
+          </Reglage>
+          <Raison texte="la graine est écrite dans la recette — deux fois la même demande rendent la même image" />
+        </>
+      )}
+
+      <Reglage libelle="force du tramage" aide="quantification.force_tramage">
+        <Curseur
+          libelle="force du tramage"
+          valeur={valeurs.force_tramage ?? FORCE_TRAMAGE_LIVREE}
+          min={0}
+          max={100}
+          unite=" %"
+          onChange={(v) => regler(avec({ force_tramage: v }))}
+          onFini={(v) => void poser(avec({ force_tramage: v }))}
+        />
+      </Reglage>
+      {(q?.tramage ?? "aucun") === "aucun" && (
+        <Raison texte="aucun tramage n'est choisi — la force ne pose aucun point" />
+      )}
+
+      <Reglage libelle="distance des couleurs" aide="quantification.distance">
+        <Segments
+          valeurs={["brute", "oeil"] as const}
+          valeur={valeurs.distance ?? "brute"}
+          onChange={(distance) => poser(avec({ distance }))}
+        />
+      </Reglage>
+
+      <Reglage libelle="ne compter que le visible" aide="quantification.visibles_seuls">
+        <Segments
+          valeurs={["non", "oui"] as const}
+          valeur={valeurs.visibles_seuls ? "oui" : "non"}
+          onChange={(v) => poser(avec({ visibles_seuls: v === "oui" }))}
         />
       </Reglage>
 

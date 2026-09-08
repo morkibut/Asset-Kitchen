@@ -336,6 +336,14 @@
         "essais/atelier_jetable_b22.py"
       ],
       "port": 8487
+    },
+    {
+      "name": "atelier-jetable-b18-couleurs",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b18_couleurs.py"
+      ],
+      "port": 8491
     }
   ]
 }

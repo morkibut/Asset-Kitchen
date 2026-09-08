@@ -901,7 +901,7 @@ livre seul.
 | Détourer | 8 | 5 — la couleur déclarée du jeu, la teinte plutôt que la valeur, la palette en garde-fou, le pinceau remonté en amont, la même passe sur les frames voisines |
 | Recadrer | 7 | 6 — taille imposée, format verrouillé, calage sur multiple, centré sur la masse, ligne de pied, rognage d'un bord uni |
 | Pixéliser | 4 | 4 — sur les carrés du modèle, couleur dominante de case, médiane de case, lumière juste |
-| Couleurs | 7 | 9 — trame régulière, force du tramage, k-moyennes, octree, distance à l'œil, rampes d'ombre… |
+| Couleurs | 7 + 9 | **0 — tenue le 11 septembre 2026** |
 | Nettoyer | 2 | 9 — le relevé se contredit sur le compte (9, 11 ou 12) ; à trancher avant de chiffrer |
 | Retourner | 1 après `B1` | 9 — haut-bas, quarts de tour, demi-tour, diagonale, repli, zones protégées, rotation libre, RotSprite |
 | Contour | 1 procédé | 6 capacités — couleur dérivée, trait inégal, contour sur l'ensemble empilé… |
@@ -912,14 +912,118 @@ portée et le raccord de tuile. Le pipeline déduit la taille finale de la seule
 sujet — une ombre agrandit le canevas au-delà, et un raccord a besoin des pixels d'à côté.
 Ce sont des changements d'architecture, pas des fonctions de plus.
 
+### L'atelier **Couleurs** — tenu le 11 septembre 2026
+
+**L'architecture, posée avant la première ligne** : *un algorithme de quantification de palette
+choisit des couleurs, il ne peint rien.* Une interface commune —
+`(pixels (N,3), couleurs) ▸ palette (K,3)`, `K ≤ couleurs` — et trois implémentations : coupe
+médiane, k-moyennes, découpe en huit. **La carte des pixels sur la palette, le tramage, la
+distance et les couleurs gardées sont écrits une fois** dans `atelier/image/palette.py` et
+valent pour les trois. Sans cet invariant, « distance à l'œil » aurait eu trois implémentations
+qui auraient fini par ne plus répondre pareil sur la même image ; quatre essais le mesurent
+sans lire le code.
+
+**Neuf moteurs livrés**, avec leur réglage à l'écran dans les deux écrans de la retouche —
+l'ancien (`Places.tsx`) comme le neuf (`Retouche.tsx`), la règle que `B17` a posée le temps du
+déménagement :
+
+1. **la trame régulière** — une trame ordonnée de 4×4, qui pose ses points toujours au même
+   endroit : le semis de Floyd se recalcule à chaque frame, donc l'herbe grésille ;
+2. **la force du tramage** — de 0 à 100 % ;
+3. **k-moyennes**, avec sa graine écrite dans la recette ;
+4. **la découpe en huit** (octree) ;
+5. **la distance à l'œil** (OKLab) contre la distance brute ;
+6. **ne compter que les pixels qu'on voit** ;
+7. **les couleurs gardées** — au plus six, jamais fondues avec une voisine ;
+8. **les rampes d'ombre** — la palette rangée par familles, du plus sombre au plus clair ;
+9. **« 24 demandées, 14 obtenues »** — le compte que la planche appelle *le seul chiffre qui
+   explique pourquoi monter le réglage ne change plus rien*.
+
+⚠️ **La planche nomme neuf moteurs « à ajouter », mais `B17` en avait déjà tenu deux** — les
+quatre curseurs de teinte / saturation / luminosité / contraste, et le remplacement d'une
+couleur par une autre. Sept des neuf restaient donc à écrire. Les deux places rendues à la
+liste sont les couleurs gardées et le compte obtenu, que la planche marque « à ajouter » dans
+sa table des réglages sans les compter parmi ses moteurs. **Le compte de neuf est donc tenu,
+mais ce ne sont pas exactement les neuf de la liste des moteurs** ; c'est le seul écart de
+périmètre de l'atelier.
+
+⚠️ **Le neutre d'un réglage n'est pas ce que la planche affiche comme défaut**, et l'écart est
+délibéré. La planche donne « à l'œil » et « oui » pour défauts, et 0 pour la force du tramage.
+Le neutre d'une clé neuve, lui, est *la valeur pour laquelle une recette écrite avant la tranche
+rend exactement l'image qu'elle rendait* — sans quoi les 61 recettes du corpus figé changeraient
+d'empreinte, donc de nom de rendu, et tout leur cache se recalculerait. Les champs retombent
+donc sur `brute`, `non`, et **100 pour la force** (le tramage d'aujourd'hui est plein). C'est
+l'arbitrage exact de `D2` pour `Grille.methode`, et `DISTANCE_LIVREE` garde écrit ce que le
+produit choisirait pour une recette neuve.
+
+⚠️ **`reglages_de_b18_neutres` doit compter le tramage, qui n'est pourtant pas une clé neuve.**
+`trame` est une *valeur* neuve d'une clé qui existait, et l'oublier a coûté un défaut réel,
+attrapé par les essais : la trame partait sur le chemin d'avant, où Pillow ne la connaît pas, et
+retombait en silence sur « aucun tramage ». Le réglage était posé, déclaré, validé — et sans
+effet, très exactement le mensonge que le commentaire de `TRAMAGES` raconte à propos de `bayer`.
+
+⚠️ **Un défaut trouvé dans Pillow, et il n'est pas de nous.** Sous une palette imposée,
+`Image.quantize(palette=…)` ne cherche pas exactement la couleur la plus proche : il passe par
+un cache approché. Mesuré sur un dégradé de 64 carrés et une palette de quatre couleurs,
+**1,9 % des pixels partent sur la mauvaise couleur** — un rose clair envoyé sur le brun alors
+que le blanc est plus proche. Les deux chemins de `quantifier` ne rendent donc pas tout à fait
+la même image sous palette imposée, et **c'est le chemin neuf qui a raison**. Un essai l'épingle
+plutôt que de le taire ; faire passer tout le monde par la carte maison est une décision
+d'après, parce qu'elle changerait des rendus déjà calculés.
+
+⚠️ **Le seuil de gris des rampes est mesuré, et un premier choix était faux.** Le chroma d'OKLab
+s'effondre avec la clarté : un seuil absolu rangeait les bruns sombres avec les gris, et un
+premier seuil relatif à 0,10 rangeait encore un tan clair à 0,0985. Mesuré sur dix-sept
+couleurs, le rapport chroma/clarté tombe dans un trou franc — les gris à 0,000–0,026, les
+couleurs à 0,098–0,227 — et le seuil est posé au milieu, à 0,06. **Trouvé en regardant les
+rampes de l'atelier jetable, pas par un essai** ; un essai les tient maintenant tous les deux.
+
+**Les mesures, sur une case de 64 carrés** — la taille où le produit quantifie réellement, la
+place `quantification` venant après la grille : coupe médiane 3,9 ms, trame régulière 13,4 ms,
+couleurs gardées 13,6 ms, distance à l'œil 14,7 ms, trame à 30 % 17,7 ms, octree 10,8 ms,
+k-moyennes 76,8 ms. Toutes sous les 240 ms de `B16`, et un essai le borne.
+
+⚠️ **Un seul moteur dépasse le seuil, et par construction** : la diffusion d'erreur *à force
+réduite*. Floyd-Steinberg est le seul algorithme de l'atelier qu'on ne peut pas écrire en
+tableaux — le voisin de droite doit avoir reçu l'erreur du pixel courant avant d'être décidé —,
+donc la boucle est irréductible en Python : 143 ms sur une case de 64, une seconde sur 256, et
+treize sur 1 024. **À pleine force ce chemin n'est jamais pris** (Pillow diffuse en C et rend la
+même image), et c'est de loin le cas courant ; la boucle ne sert qu'à ce que Pillow ne sait pas
+faire — doser la force, et mesurer à l'œil. La jauge de `B16` l'annonce, et un essai garde le
+chiffre pour qu'une accélération future se mesure contre lui.
+
+**Deux accélérations ont été nécessaires pour tenir le seuil**, et aucune n'est une
+approximation : la carte des pixels se calcule **par couleur distincte** et non par pixel
+(un million de pixels, trente mille couleurs), et k-moyennes pondère les couleurs distinctes par
+leur population au lieu de faire glisser cent mille fois le même pixel. Les deux rendent le même
+résultat à l'octet près — ce sont des factorisations.
+
 ### Critères d'acceptation
 
-- [ ] Chaque atelier livré porte tous ses moteurs à l'écran, et aucun n'est en dur dans le code
-      sans réglage.
+- [x] Chaque atelier livré porte tous ses moteurs à l'écran, et aucun n'est en dur dans le code
+      sans réglage. — *pour **Couleurs** : les six réglages neufs sont dans les deux écrans de la
+      retouche, chacun avec la raison écrite à côté de son grisé. Vérifié au navigateur sur
+      l'atelier jetable du port 8491 : l'algorithme change l'image et k-moyennes rend à la
+      grenouille le vert franc que la coupe médiane noie ; la trame pose un damier régulier là où
+      il y avait des aplats ; la force le dose (25 % laisse les aplats propres, 70 % les
+      remplit) ; la graine ne paraît qu'avec k-moyennes. Les sept autres ateliers de la file
+      restent à faire.*
 - [ ] Trois réglages figés dans le code de la réduction sortent enfin à l'écran.
-- [ ] Chaque moteur neuf porte sa mesure de temps, et l'écran l'annonce quand elle dépasse
-      240 ms.
-- [ ] Les 1 347 essais de serveur passent sans modification.
+- [x] Chaque moteur neuf porte sa mesure de temps, et l'écran l'annonce quand elle dépasse
+      240 ms. — *pour **Couleurs** : les mesures sont ci-dessus, bornées par un essai sur une case
+      de 64. La jauge de `B16` fait l'annonce, et le seul moteur qui dépasse est nommé avec sa
+      raison.*
+- [x] Les essais de serveur passent sans modification. — *pour **Couleurs** : 1 954 essais avant
+      (1 949 passés, 5 sautés), 2 013 après (2 008 passés, 5 sautés) — 59 ajoutés, aucun modifié.
+      ⚠️ **Le plan disait 1 347**, chiffre d'une version antérieure ; le compte réel du dépôt au
+      11 septembre 2026 est 1 954. Les 61 recettes du corpus figé de `B1` gardent leur empreinte
+      au caractère près, et six essais vérifient l'inverse — une clé posée change bien
+      l'empreinte, donc refait le rendu.*
+      *Côté écran, 1 237 essais passent sur 1 238. ⚠️ **Le seul rouge est antérieur à la
+      tranche** — `App.test.tsx` › `A7 · une recette enregistrée ne jette pas la main d'une
+      image` attend 48 couleurs et en lit 24. Vérifié en remisant les cinq fichiers d'écran de
+      `B18` : il échoue à l'identique sans eux. Il n'appartient pas à cet atelier et n'a pas été
+      touché.*
 
 ### Bloquée par
 

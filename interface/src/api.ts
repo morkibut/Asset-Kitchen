@@ -1424,7 +1424,11 @@ export type Echange = { depuis: string; vers: string; tolerance: number }
 export type Quantification = {
   couleurs: number
   palette: string[]
-  tramage: "aucun" | "floyd"
+  /** `trame` est arrivé en `B18` — une trame ordonnée de 4×4, qui pose ses
+   *  points toujours au même endroit. C'est le seul des trois qui tienne sur une
+   *  animation : le semis de Floyd se recalcule à chaque frame, donc l'herbe
+   *  grésille. */
+  tramage: "aucun" | "floyd" | "trame"
   /** Les quatre curseurs, **avant** la réduction : un curseur posé après
    *  repeindrait les 24 couleurs qu'on vient de choisir.
    *
@@ -1440,7 +1444,36 @@ export type Quantification = {
   /** L'échange, **après** la réduction : posé avant, il serait défait par elle,
    *  qui renverrait le bleu au plus proche de la palette. */
   echanges?: Echange[]
+
+  /** ── Les six réglages de `B18` ────────────────────────────────────────────
+   *
+   *  **Facultatifs sur le fil pour la même raison que les six de `B17`** : le
+   *  serveur n'écrit une clé neuve que si elle est posée, ce qui garde
+   *  l'empreinte — donc le cache — des recettes écrites avant la tranche. Les
+   *  lire avec leur neutre est la façon exacte de les lire.
+   *
+   *  **Et le neutre n'est pas la valeur vide partout.** `force_tramage` vaut
+   *  100 au repos, parce que le tramage d'aujourd'hui est un tramage plein :
+   *  lire son absence comme un zéro éteindrait le semis de toutes les recettes
+   *  tramées du dépôt. */
+  algorithme?: "mediane" | "kmoyennes" | "octree"
+  /** La graine de k-moyennes, **écrite dans la recette**. Sans elle, deux fois
+   *  la même demande ne rendraient pas la même image. */
+  graine?: number
+  force_tramage?: number
+  distance?: "brute" | "oeil"
+  visibles_seuls?: boolean
+  /** Les couleurs qu'aucune fusion n'emporte, au plus `GARDEES_MAX`. */
+  gardees?: string[]
 }
+
+/** Le neutre de la force du tramage — **cent, et non zéro**. Voir le
+ *  commentaire de `Quantification`. */
+export const FORCE_TRAMAGE_LIVREE = 100
+
+/** Au plus six couleurs gardées : une couleur gardée est une place de palette
+ *  dépensée d'office, et en garder plus ne laisserait rien à choisir. */
+export const GARDEES_MAX = 6
 
 /** La table **Nettoyer** : les taches, le grain de couleur, l'escalier (B17).
  *
@@ -3457,6 +3490,14 @@ export type TachesDeLAsset = {
   visees: (string | null)[]
   /** Ce que la table de recadrage lit sur l'image (U2). */
   recadrage: MesuresRecadrage
+  /** **« 24 demandées, 14 obtenues »** (`B18`) — le seul chiffre qui explique
+   *  pourquoi monter le nombre de couleurs ne change plus rien.
+   *
+   *  `obtenues` ne compte que les pixels **visibles** : une couleur cachée sous
+   *  la transparence n'est pas une couleur qu'on a obtenue. Les deux valent zéro
+   *  quand la table dort ou n'est pas posée — il n'y a alors aucun écart à
+   *  expliquer. */
+  couleurs: { demandees: number; obtenues: number }
 }
 
 /** Ce que le recadrage garde et ce qu'il jette — **cinq lectures, aucun

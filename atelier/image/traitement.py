@@ -2309,27 +2309,52 @@ def quantifier(rgba: np.ndarray, quantification: Quantification) -> np.ndarray:
     jamais la transparence. C'est l'autre moitié du piège du liseré — forcer
     l'alpha à 255 en même temps qu'on ramène les couleurs ressort les contours à
     demi transparents en pixels opaques de la couleur du fond.
+
+    ── Les deux chemins, depuis B18 ──────────────────────────────────────────
+
+    **Tant que les six réglages de `B18` sont à leur neutre, c'est le code
+    d'avant qui s'exécute — le même, pas un équivalent.** C'est la forme la plus
+    forte que puisse prendre la promesse « les recettes existantes rendent la
+    même empreinte » : il n'y a rien à comparer, rien à vérifier au pixel près,
+    parce qu'aucune ligne ne change pour elles. `reglages_de_b18_neutres` est la
+    seule lecture qui décide, et elle est écrite dans le domaine.
+
+    Dès qu'un réglage neuf est posé, la réduction passe par
+    `atelier/image/palette.py`, qui tient les trois algorithmes et la carte
+    commune. Pillow n'y sert plus : il ne sait ni tramer en trame régulière, ni
+    mesurer une distance à l'œil, ni réserver une couleur gardée.
     """
-    alpha = rgba[:, :, 3].copy()
-    rgb = Image.fromarray(rgba[:, :, :3], mode="RGB")
-    tramage = (
-        Image.Dither.FLOYDSTEINBERG
-        if quantification.tramage == FLOYD
-        else Image.Dither.NONE
-    )
-
-    if quantification.palette:
-        indexee = rgb.quantize(
-            palette=_palette_imposee(quantification.palette), dither=tramage
-        )
-    else:
-        couleurs = max(2, min(256, quantification.couleurs))
-        indexee = rgb.quantize(
-            colors=couleurs, method=Image.Quantize.MEDIANCUT, dither=tramage
+    if quantification.reglages_de_b18_neutres:
+        alpha = rgba[:, :, 3].copy()
+        rgb = Image.fromarray(rgba[:, :, :3], mode="RGB")
+        tramage = (
+            Image.Dither.FLOYDSTEINBERG
+            if quantification.tramage == FLOYD
+            else Image.Dither.NONE
         )
 
-    sortie = np.dstack([np.asarray(indexee.convert("RGB")), alpha])
-    return sortie
+        if quantification.palette:
+            indexee = rgb.quantize(
+                palette=_palette_imposee(quantification.palette), dither=tramage
+            )
+        else:
+            couleurs = max(2, min(256, quantification.couleurs))
+            indexee = rgb.quantize(
+                colors=couleurs, method=Image.Quantize.MEDIANCUT, dither=tramage
+            )
+
+        return np.dstack([np.asarray(indexee.convert("RGB")), alpha])
+
+    # **L'import est ici, et c'est un cycle assumé.** `palette.py` a besoin du
+    # détourage de ce module pour lire une palette d'artworks ; ce module a
+    # besoin des algorithmes de `palette.py` pour en poser une. Le cycle est réel
+    # et il n'est pas un défaut de rangement : les deux modules parlent de la
+    # même chose par les deux bouts. L'import différé est la façon habituelle de
+    # le dire en Python, et il ne coûte rien — au premier appel les deux modules
+    # sont chargés depuis longtemps.
+    from atelier.image import palette as _palette
+
+    return _palette.reduire_l_image(rgba, quantification)
 
 
 # ── L'ordre fixe ─────────────────────────────────────────────────────────────
