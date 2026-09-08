@@ -37,6 +37,7 @@ from atelier.domaine.bande import Cadre, Prise
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.recette import Recette
 from atelier.api.routes import reponse_archive
+from atelier.image import vignette
 from atelier.services import Atelier
 
 # **Un seul endroit qui met un modèle vidéo en JSON**, et c'est le service.
@@ -516,16 +517,27 @@ async def rendre_des_clips(requete: Request, corps: CorpsClips) -> dict[str, Any
 
 @routeur.get("/clips")
 async def liste_clips(
-    requete: Request, limite: int = Query(100, ge=1, le=500)
+    requete: Request,
+    limite: int = Query(100, ge=1, le=500),
+    projet: str | None = Query(None),
 ) -> dict[str, Any]:
-    """Les clips, du plus récent au plus ancien. **Ce sont des générations.**"""
+    """Les clips, du plus récent au plus ancien. **Ce sont des générations.**
+
+    ⚠️ **`projet` scope la recherche à un seul jeu** (B22). Omis, la fenêtre des
+    `limite` générations les plus récentes est celle de *tous* les jeux
+    confondus — les clips d'un jeu peu actif se font chasser par les images
+    d'un autre, exactement ce qui rend un clip invisible après la fermeture de
+    son lot. Posé, la fenêtre porte sur les générations du jeu lui-même :
+    `Base.generations_du_projet`, la requête déjà servie au journal des
+    dépenses (`ServiceBibliotheque.journal`).
+    """
     atelier = _atelier(requete)
-    clips = [
-        g.en_json()
-        for g in atelier.generations.recentes(limite)
-        if g.clip is not None
-    ]
-    return {"clips": clips}
+    generations = (
+        atelier.base.generations_du_projet(projet, limite)
+        if projet is not None
+        else atelier.generations.recentes(limite)
+    )
+    return {"clips": [g.en_json() for g in generations if g.clip is not None]}
 
 
 @routeur.get("/clips/pending")
@@ -647,6 +659,33 @@ async def image_du_clip(requete: Request, identifiant: str, numero: int) -> Resp
         )
     return Response(
         content=fichier.read_bytes(),
+        media_type="image/png",
+        headers={"Cache-Control": "private, max-age=86400"},
+    )
+
+
+@routeur.get("/clips/{identifiant}/cover")
+async def couverture_du_clip(
+    requete: Request, identifiant: str, cote: int = Query(256, ge=16, le=1024)
+) -> Response:
+    """La première image du clip, réduite pour une case de grille (B22).
+
+    **La galerie n'affiche jamais le fichier entier** — `vignette_asset` tient
+    déjà cette règle pour une image, et un clip n'y faisait pas exception :
+    sans cette route, cent clips demandaient chacun leur première frame à sa
+    résolution native pour n'en montrer qu'un timbre-poste. La frame est déjà
+    sur le disque depuis l'arrivée du clip ; réduire ne redécode rien, et ne
+    rappelle personne.
+    """
+    generation = _clip(requete, identifiant)
+    atelier = _atelier(requete)
+    dossier: Path = atelier.fichiers.dossier_images_clip(identifiant, 0)
+    fichier = dossier / "0000.png"
+    if not fichier.is_file():
+        refus = generation.clip.extraction_refus
+        raise ErreurAtelier(refus or "ce clip ne porte aucune image")
+    return Response(
+        content=vignette(fichier.read_bytes(), cote),
         media_type="image/png",
         headers={"Cache-Control": "private, max-age=86400"},
     )

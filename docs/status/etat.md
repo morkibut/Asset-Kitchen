@@ -11,6 +11,48 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B22 — la galerie connaît les clips — 8 septembre 2026
+
+**Un clip gardé n'était visible qu'un instant.** Il apparaissait à l'arrivée de son lot, porté
+par le chantier — la mémoire de session —, et disparaissait dès que ce chantier oubliait
+l'appel : au premier redémarrage, ou simplement noyé sous l'activité d'autres jeux. Le relevé a
+confirmé les deux trous que la planche annonçait — le type que la galerie parcourt n'avait que
+deux formes, et rien ne fabriquait de couverture animée — et en a trouvé un troisième, plus
+grave que les deux autres : **`GET /clips` bornait sa fenêtre aux générations les plus récentes
+de *tous* les jeux confondus**, sans le moindre `WHERE projet = ?`. Un jeu resté tranquille
+perdait donc son clip dès qu'un autre avait été actif depuis, ce qui est exactement le
+mécanisme qui rendait un clip invisible après la fermeture de son lot — pas un oubli d'écran,
+un trou de requête.
+
+**Ce qui change.** `GET /api/clips` accepte maintenant un `projet`, et route vers
+`Base.generations_du_projet` plutôt que vers la fenêtre globale des générations récentes ; sans
+lui, elle garde son ancien sens, pour ne rien casser chez qui l'appelait déjà. `Tuile.tsx` gagne
+une troisième forme d'entrée (`sorte: "clip"`), relue depuis le dépôt et fusionnée avec ce que
+le chantier voit arriver en direct, à la même clé — la tuile ne bouge pas d'une ligne au moment
+où le lot ferme, elle **est** la même tuile. Sa couverture vient d'une route neuve,
+`GET /api/clips/{id}/cover`, qui réduit au serveur (même moteur que `vignette_asset`) la
+première frame déjà écrite sur le disque à l'arrivée du clip — jamais un nouveau décodage,
+jamais le fichier entier. Le survol rejoue les frames en boucle sur la planche contact déjà
+servie au montage (`A10`), en pourcentages plutôt qu'en pixels : la case de la grille est en
+`auto-fill`, sa largeur n'est jamais connue d'avance, et mesurer le DOM pour la retrouver aurait
+réintroduit exactement la fragilité que `B9`/`U8` avaient déjà écartée ailleurs. Un filtre
+« clips » rejoint la barre, séparé des six familles par une ligne creuse non cliquable — un clip
+n'appartenant à aucune d'elles, le confondre avec une septième famille aurait menti sur ce qu'il
+est.
+
+**Vérifié sur un atelier jetable dédié**, port 8487 (`essais/atelier_jetable_b22.py`), avec
+« Les Salines » peuplé de 122 clips gardés (dont une paire non départagée du même lot), 5 jetés
+et 12 personnages — rien de payé, chaque clip posé directement dans le dépôt comme
+`atelier_jetable_b11.py` le fait déjà pour une bande. Au navigateur : 134 tuiles en « Toutes »
+(122 clips + 12 personnages, les 5 jetés bien absents), 122 sous le filtre « clips », 12 sous
+« personnages » ; **zéro requête vidéo sur toute la session**, la couverture seule partant à
+l'ouverture et la planche contact seulement au premier survol d'une tuile ; le survol fait
+mesurablement avancer `background-position`, remet à zéro dès qu'on ressort et que l'on
+resurvole ; et un défilement complet des 134 tuiles ne déclenche aucune tâche de plus de 50 ms
+(`PerformanceObserver("longtask")`) — la grille ne rame pas. Le geste « Garder celui-ci » de
+`A9`, rejoué sur la paire non départagée, fonctionne à l'identique sur un clip relu du dépôt :
+il n'avait jamais été écrit pour distinguer les deux origines.
+
 ## V4 · B17 — les moteurs qui remplacent une génération — 10 septembre 2026
 
 **Quatre traitements gratuits qui faisaient repayer une image**, et **aucune place neuve** pour

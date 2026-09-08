@@ -176,7 +176,7 @@ d'agents avant le gros morceau.
 | **4** | `B8`, `B9`, `B10`, `B11` | la collection, la grille d'une famille, la page d'un sujet, le départage |
 | **5** | `B14`, `B15` | les règles du jeu, l'installation |
 | **6** | `B16`, `B17`, `B18` | les tables rangées, puis les moteurs |
-| **7** | `B12`, `B13` ✔, `B19` ✔, `B20`, `B21`, `B22` | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
+| **7** | `B12`, `B13` ✔, `B19` ✔, `B20`, `B21`, `B22` ✔ | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
 
 `B8` et `B17` sont du serveur pur : ils se prennent en parallèle du rang qui les précède.
 
@@ -1032,32 +1032,40 @@ n'y ajoute rien) et l'image animée de prévisualisation.
 
 ---
 
-## B22 · La galerie connaît les clips
+## B22 · La galerie connaît les clips — **tenue le 8 septembre 2026**
 
 **Planche** : `Galerie.dc.html`
 
-### Ce qu'on livre
+Un clip gardé se relit désormais du dépôt, pas seulement du chantier : `GET /api/clips` scope
+maintenant par `projet` (`Base.generations_du_projet`), et l'écran fusionne ce qu'il relit avec
+ce que le chantier voit arriver en direct — la tuile ne bouge pas de clé quand le lot ferme. Sa
+couverture est fabriquée par le serveur (`GET /api/clips/{id}/cover`, la même réduction que
+`vignette_asset`, sur la première frame déjà écrite au disque à l'arrivée du clip) : ouvrir la
+galerie ne télécharge donc jamais de vidéo. Le survol rejoue les frames en boucle sur la
+planche contact déjà servie au montage (`A10`, `atelier/services/montage.py::contact()`) — zéro
+appel neuf, zéro décodage — en pourcentages plutôt qu'en pixels, pour tenir dans une grille
+`auto-fill` dont la largeur des cases n'est jamais connue d'avance. Un filtre « clips » existe
+dans la barre, séparé des familles par une ligne creuse, non cliquable : un clip n'appartient à
+aucune d'elles.
 
-Un clip devient une entrée durable de la galerie, et pas seulement un résultat frais qu'on
-regarde une fois. Un coin de lecture avec sa durée ; au survol, les frames défilent en boucle.
-
-**Trois choses à savoir, et la maquette les dit elle-même** : la galerie ne connaît pas les
-clips aujourd'hui (le type qu'elle parcourt n'a que deux formes, et le clip n'apparaît que tant
-qu'il est le résultat d'un lot) ; une vignette animée réclame une image de couverture que le
-serveur ne fabrique pas ; et un clip n'a pas de famille, donc pas de place dans le filtre
-actuel.
+**Le relevé avait trouvé un troisième trou, plus profond que les deux annoncés par la
+planche** : `GET /clips` (et `chantier()`, qu'il aurait pu réutiliser) bornait sa fenêtre aux
+générations les plus récentes de *tous* les jeux confondus — un jeu resté tranquille perdait son
+clip dès qu'un autre jeu avait été actif depuis, ce qui est très exactement ce qui rendait un
+clip invisible après la fermeture de son lot. Un essai le démontre
+(`test_un_clip_peu_actif_ne_se_fait_pas_chasser_par_un_autre_jeu`).
 
 ### Critères d'acceptation
 
-- [ ] Un clip reste dans la galerie après la fermeture de son lot.
-- [ ] Ouvrir la galerie ne télécharge aucune vidéo — seule la couverture arrive.
-- [ ] Le survol joue les frames en boucle, sans son, et revient à la première en sortant.
-- [ ] Un filtre « clips » existe, distinct des six familles.
-- [ ] La grille ne ralentit pas quand le jeu porte cent clips.
+- [x] Un clip reste dans la galerie après la fermeture de son lot.
+- [x] Ouvrir la galerie ne télécharge aucune vidéo — seule la couverture arrive.
+- [x] Le survol joue les frames en boucle, sans son, et revient à la première en sortant.
+- [x] Un filtre « clips » existe, distinct des six familles.
+- [x] La grille ne ralentit pas quand le jeu porte cent clips.
 
 ### Bloquée par
 
-- `B0`, `B3`
+- `B0`, `B3` — tenues le 6 septembre 2026.
 
 ---
 

@@ -49,7 +49,8 @@ export function BarreOutils({
   favoris: boolean
   onFavoris: (v: boolean) => void
   /** La famille qu'on regarde, `""` pour toutes, `"aucune"` pour ce qui
-   *  n'appartient à aucune chose du jeu. */
+   *  n'appartient à aucune chose du jeu, `"clips"` pour eux seuls — un clip
+   *  n'ayant lui-même aucune famille (B22). */
   famille: string
   onFamille: (famille: string) => void
   collection: string | null
@@ -145,7 +146,7 @@ export function BarreOutils({
           <select
             value={famille}
             onChange={(e) => onFamille(e.target.value)}
-            aria-label="Ne montrer que les images d'une famille"
+            aria-label="Ne montrer qu'une famille, ou les clips"
             // `shrink` et un plancher, plutôt que `shrink-0` : quand la rangée
             // manque de place, un filtre dont le nom se rogne vaut mieux qu'un
             // geste de sélection qui sort du cadre. La liste déroulée, elle,
@@ -158,6 +159,16 @@ export function BarreOutils({
             <option value="objets">objets</option>
             <option value="interface">interface</option>
             <option value="aucune">sans chose du jeu</option>
+            {/* **Distinct des familles, pas une septième** (B22) : un clip
+                n'appartient à aucune chose du jeu, il vient d'une animation.
+                Le séparer par une ligne creuse le dit sans un second contrôle,
+                que la largeur de cette barre ne laisse pas loger. Une valeur
+                à elle, jamais choisissable, pour ne pas la confondre avec
+                « toutes les familles » qui vaut déjà la chaîne vide. */}
+            <option value="---" disabled>
+              ──────────
+            </option>
+            <option value="clips">clips</option>
           </select>
           <button
             type="button"

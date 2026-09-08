@@ -1694,3 +1694,18 @@ la prochaine réécriture retrouvera.
   avait déjà refermée de son côté. Réparé en important `quantificationDe`, `CURSEURS`,
   `PAIRE_VIDE` et `TOLERANCE_D_UNE_PAIRE_MAX` depuis `Places.tsx` plutôt qu'en les réécrivant une
   troisième fois. Payé le 10 septembre 2026, à la fusion de `B16` et `B17`.
+- **Une fenêtre « les plus récentes » sans `WHERE projet` se venge sur le jeu le plus calme.**
+  `GET /clips` lisait `ServiceGenerations.recentes(limite)` — les générations les plus
+  fraîches, tous jeux confondus — exactement comme `chantier()` le fait déjà pour la mémoire de
+  session. Un jeu qui n'a produit qu'un seul clip, il y a une heure, se fait chasser de cette
+  fenêtre dès qu'un autre jeu a généré ne serait-ce que huit images depuis : rien ne l'annonce,
+  la route rend 200, une liste simplement plus courte. C'est très exactement le symptôme qu'un
+  clip payé « disparaît après la fermeture de son lot » — le vrai coupable n'était pas le lot
+  qui ferme, c'était l'absence de tout `projet` dans la requête. ⚠️ **Une liste qui se dit
+  « la plus récente » sans préciser *la plus récente de quoi* est fausse par construction dès
+  qu'un second flux de faits existe** — ici, un second jeu. `Base.generations_du_projet(projet,
+  limite)` existait déjà, employée ailleurs, et scoper dessus au lieu de la fenêtre globale
+  suffit ; la route garde son ancien sens quand `projet` est omis, pour ne rien casser chez qui
+  l'appelait déjà sans lui. Trouvé au relevé, avant d'écrire une ligne côté écran, et rejoué en
+  essai (`test_un_clip_peu_actif_ne_se_fait_pas_chasser_par_un_autre_jeu`) plutôt que constaté au
+  navigateur. Payé le 8 septembre 2026, en `B22`.

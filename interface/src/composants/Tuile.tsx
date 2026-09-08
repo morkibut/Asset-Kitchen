@@ -16,6 +16,7 @@
 // Rayon 0, aucune ombre : le bord de la tuile et le bord du sprite sont la même
 // sorte de ligne, et la grille se lit comme une planche contact.
 
+import { useEffect, useState } from "react"
 import {
   api,
   depense,
@@ -28,13 +29,20 @@ import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { Jauge, type Zoom } from "./chassis"
 
 /**
- * Ce que la grille itère. Un asset, ou un emplacement qui l'attend encore.
+ * Ce que la grille itère. Un asset, un emplacement qui l'attend encore, ou un
+ * clip gardé (B22).
  *
- * `cle` est la même dans les deux cas, et c'est tout le mécanisme :
+ * `cle` est la même dans les trois cas, et c'est tout le mécanisme :
  * `<génération>-<rang>`, l'identifiant que l'asset porte à sa naissance.
  * `date` et `rang` sont l'ordre — la date du **lot**, jamais celle de
  * l'arrivée, sans quoi les variations d'un même lot glisseraient les unes par
  * rapport aux autres pendant qu'on les regarde.
+ *
+ * **`"clip"` est un clip relu depuis le dépôt**, pas depuis le chantier qui
+ * vient de le voir arriver — c'est ce qui le fait survivre à la fermeture de
+ * son lot (`api.clips`). Il n'a pas d'`emplacement` : rien de subi (raté, en
+ * cours) n'a de sens pour un clip qu'on relit longtemps après, il est arrivé
+ * ou il n'existe pas.
  */
 export type Entree =
   | { cle: string; date: number; rang: number; sorte: "asset"; asset: Asset }
@@ -46,6 +54,7 @@ export type Entree =
       generation: Generation
       emplacement: Emplacement
     }
+  | { cle: string; date: number; rang: number; sorte: "clip"; generation: Generation }
 
 export function Tuile({
   entree,
@@ -95,7 +104,7 @@ export function Tuile({
 }) {
   const asset = entree.sorte === "asset" ? entree.asset : null
   const emplacement = entree.sorte === "emplacement" ? entree.emplacement : null
-  const lot = entree.sorte === "emplacement" ? entree.generation : null
+  const lot = entree.sorte === "asset" ? null : entree.generation
   const rate =
     emplacement !== null &&
     (emplacement.statut === "echouee" || emplacement.statut === "interrompue")
@@ -107,16 +116,20 @@ export function Tuile({
    *  que l'auteur n'a pas dit ce qu'il gardait. Elle porte donc l'image de la
    *  planche — ce qu'on a acheté se voit — et un geste, pas une raison. */
   const attend = lot?.pliage?.attend_un_choix === true
-  /** **Un clip, et il est arrivé** (A9). Ni raté ni en cours : payé, arrivé, et
-   *  il garde sa place parce qu'aucun asset ne viendra le remplacer — un clip
-   *  n'entre pas en bibliothèque, ce n'est pas une image.
+  /** **Un clip, et il est arrivé** (A9), qu'il vienne du chantier ou du dépôt
+   *  (B22). Ni raté ni en cours : payé, arrivé, et il garde sa place parce
+   *  qu'aucun asset ne viendra le remplacer — un clip n'entre pas en
+   *  bibliothèque, ce n'est pas une image. Un clip relu depuis le dépôt
+   *  (`sorte: "clip"`) n'a pas d'emplacement à interroger : il n'est là que
+   *  parce qu'il est arrivé, sinon `api.clips` ne l'aurait pas rendu.
    *
    *  Ce qu'il montre est **une image prélevée dedans**, jamais une tuile en
    *  erreur : c'est le critère de la tranche, en toutes lettres. Quand
    *  l'extraction n'a pas pu se faire — le décodeur manque —, la tuile dit
    *  pourquoi et reste une tuile ordinaire. Le clip, lui, reste payé. */
   const clip = lot?.clip ?? null
-  const clipArrive = clip !== null && emplacement?.statut === "reussie"
+  const clipArrive =
+    clip !== null && (entree.sorte === "clip" || emplacement?.statut === "reussie")
   const clipEnImages = clipArrive && clip.images > 0
 
   const titre =
@@ -139,13 +152,19 @@ export function Tuile({
   const source = asset
     ? vignetteAsset(asset, cote)
     : clipEnImages && lot
-      ? // La première image du clip. **Prélevée, pas décodée à la demande** :
-        // elle est sur le disque depuis l'arrivée.
-        api.imageDuClip(lot.identifiant, 0)
+      ? // La couverture du clip (B22) — sa première frame, réduite au
+        // serveur, jamais le fichier entier : cent clips ne doivent pas
+        // faire télécharger cent images à leur résolution native pour
+        // n'en montrer qu'un timbre-poste.
+        api.couvertureDuClip(lot.identifiant, cote)
       : attend && lot && emplacement
         ? api.image(lot.identifiant, emplacement.rang)
         : null
   const visee = useVisee(sujet)
+  // **Le survol qui fait défiler les frames d'un clip** (B22). Porté par la
+  // tuile entière — la même surface que `visee` — et non par une sous-partie :
+  // survoler l'image ou sa légende doit jouer la même chose.
+  const [survolee, setSurvolee] = useState(false)
 
   /** La tuile est-elle à la taille de repos ? **Mesuré, pas estimé** : à 1× la
    *  tuile fait 132,6 px et la ligne des mesures en réclame 137 (U8). Aux deux
@@ -154,8 +173,14 @@ export function Tuile({
 
   return (
     <figure
-      onPointerEnter={visee.entrer}
-      onPointerLeave={visee.sortir}
+      onPointerEnter={() => {
+        visee.entrer()
+        setSurvolee(true)
+      }}
+      onPointerLeave={() => {
+        visee.sortir()
+        setSurvolee(false)
+      }}
       className={[
         // **`min-w-0`, et c'est lui qui répare le débordement** (U8). Une case
         // de grille vaut `min-width: auto` par défaut, c'est-à-dire *au moins
@@ -200,7 +225,7 @@ export function Tuile({
         aria-label={attend ? "Ouvrir la planche" : "Ouvrir la fiche"}
         className="relative aspect-square w-full cursor-pointer overflow-hidden disabled:cursor-default"
       >
-        {source && (
+        {source && !(clipEnImages && survolee) && (
           <img
             src={source}
             alt={titre.slice(0, 80)}
@@ -215,6 +240,19 @@ export function Tuile({
             style={{ imageRendering: "pixelated" }}
           />
         )}
+        {/* **Le survol joue les frames en boucle** (B22) — sur la planche
+            contact déjà servie au montage (`A10`), jamais un nouvel appel
+            payant : elle ne se charge qu'ici, au premier survol, jamais à
+            l'ouverture de la galerie. */}
+        {clipEnImages && lot && clip && (
+          <PelliculeAuSurvol
+            survolee={survolee}
+            identifiant={lot.identifiant}
+            images={clip.images}
+            cadence={clip.cadence}
+          />
+        )}
+        {clipEnImages && clip && <CoinDeLecture clip={clip} />}
         {enCours && (
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-2">
             <Jauge
@@ -275,6 +313,105 @@ export function Tuile({
         )}
       </figcaption>
     </figure>
+  )
+}
+
+/** Le nombre de colonnes de la planche contact (`atelier/services/montage.py`,
+ *  `CONTACT_COLONNES`). Un clip ne change jamais, donc sa planche non plus :
+ *  c'est une constante du format écrit sur le disque, pas une mesure — la
+ *  changer invaliderait toutes les planches déjà là. */
+const COLONNES_DE_LA_PELLICULE = 16
+
+/** Défile les frames d'un clip pendant le survol, revient à zéro en sortant.
+ *
+ *  **Bornée à douze par seconde** : au-delà, l'œil ne distingue plus une frame
+ *  de plus et le navigateur décoderait pour rien — c'est la même retenue que
+ *  la mesure du contour (`docs/PIEGES.md`), appliquée ici au rythme plutôt
+ *  qu'à un seuil. */
+function useDefilementDesFrames(actif: boolean, images: number, cadence: number): number {
+  const [frame, setFrame] = useState(0)
+  useEffect(() => {
+    if (!actif || images <= 1) {
+      setFrame(0)
+      return
+    }
+    const parSeconde = Math.min(Math.max(cadence || 8, 2), 12)
+    const identifiant = window.setInterval(() => {
+      setFrame((f) => (f + 1) % images)
+    }, 1000 / parSeconde)
+    return () => window.clearInterval(identifiant)
+  }, [actif, images, cadence])
+  return frame
+}
+
+/** Les frames d'un clip, en boucle, au survol (B22).
+ *
+ *  **Une seule image chargée** — la planche contact déjà écrite par le
+ *  montage (`A10`, `api.contactDuClip`) — jamais une par frame : cent clips
+ *  survolés un par un ne coûteraient jamais plus qu'une planche à la fois, et
+ *  aucun ne coûte quoi que ce soit tant qu'on ne le survole pas, puisque ce
+ *  composant ne pose son `background-image` que rendu, c'est-à-dire survolé.
+ *
+ *  **En pourcentages, jamais en pixels.** La case de la grille n'a pas de
+ *  largeur connue d'avance — `auto-fill` l'étire selon la fenêtre — et mesurer
+ *  le DOM pour la retrouver serait le genre de mesure que ce produit évite
+ *  déjà ailleurs (U8). `background-size` en `%` se cale sur la boîte réelle
+ *  tout seul ; seul le nombre de colonnes et de lignes de la grille compte. */
+function PelliculeAuSurvol({
+  survolee,
+  identifiant,
+  images,
+  cadence,
+}: {
+  survolee: boolean
+  identifiant: string
+  images: number
+  cadence: number
+}) {
+  const frame = useDefilementDesFrames(survolee, images, cadence)
+  if (!survolee) return null
+  const colonnes = COLONNES_DE_LA_PELLICULE
+  const lignes = Math.max(1, Math.ceil(images / colonnes))
+  const colonne = frame % colonnes
+  const ligne = Math.floor(frame / colonnes)
+  return (
+    <div
+      aria-hidden
+      className="damier absolute inset-0"
+      style={{
+        backgroundImage: `url(${api.contactDuClip(identifiant)})`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: `${colonnes * 100}% ${lignes * 100}%`,
+        backgroundPosition:
+          `${colonnes > 1 ? (colonne * 100) / (colonnes - 1) : 0}% ` +
+          `${lignes > 1 ? (ligne * 100) / (lignes - 1) : 0}%`,
+        imageRendering: "pixelated",
+      }}
+    />
+  )
+}
+
+/** Le coin de lecture — un triangle et la durée, en bas à gauche (B22).
+ *
+ *  **La seule différence au repos** entre la tuile d'un clip et celle d'une
+ *  image : ni cadre, ni couleur à part, comme le propose la maquette
+ *  (`Galerie.dc.html`). La durée est **mesurée sur le fichier** — images sur
+ *  cadence —, jamais celle qu'on avait demandée : c'est la règle constante du
+ *  produit, et un clip peut rendre quatre secondes et demie pour cinq
+ *  commandées. */
+function CoinDeLecture({ clip }: { clip: { images: number; cadence: number } }) {
+  if (!clip.cadence) return null
+  const secondes = Math.max(1, Math.round(clip.images / clip.cadence))
+  return (
+    <span
+      aria-hidden
+      className="mesure absolute bottom-1.5 left-1.5 flex items-center gap-1 bg-fond-0/82 px-1 py-px text-[8.5px] text-texte-2"
+    >
+      <svg width="6" height="7" viewBox="0 0 6 7" fill="currentColor">
+        <polygon points="0,0 6,3.5 0,7" />
+      </svg>
+      {secondes}s
+    </span>
   )
 }
 
