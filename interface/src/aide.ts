@@ -1916,12 +1916,12 @@ export const AIDE: Record<string, Explication> = {
   "decoupe.mode": {
     nom: "Détection",
     ou: "equipement",
-    quoi: "Comment les rectangles sont proposés : « auto » cherche les zones opaques, « grille » découpe en cases égales.",
+    quoi: "Comment les rectangles sont proposés : « auto » cherche les zones opaques, « grille » découpe en cases égales, « les gouttières » cherche les bandes de fond entre les cases.",
     change:
       "Ne découpe rien — propose. Ce qui part à la découpe est la liste que tu vois à droite, corrections à la main comprises. Changer ce réglage relance la détection et remplace ce que tu as dessiné.",
     origine: "toi · défaut auto",
     long:
-      "Le mode auto lit un alpha, donc il détoure d'abord : une planche telle qu'elle arrive du modèle est opaque de bord à bord, et sa seule zone connexe serait l'image entière. C'est la même règle que pour la palette — ce qui est majoritaire n'est pas ce qui compte.\n\nLa grille fixe n'est pas un repli de l'auto : elle répond à une planche d'une autre nature — des sprites qui se touchent, des cases vides à conserver — et c'est toi qui sais laquelle tu as.\n\nUne détection qui rend une seule boîte, ou aucune, est un résultat et pas une panne. Rien ici ne bloque : tu dessines les rectangles qui manquent, tu retires ceux qui sont en trop, et c'est ta liste qui part.",
+      "Le mode auto lit un alpha, donc il détoure d'abord : une planche telle qu'elle arrive du modèle est opaque de bord à bord, et sa seule zone connexe serait l'image entière. C'est la même règle que pour la palette — ce qui est majoritaire n'est pas ce qui compte.\n\nLa grille fixe n'est pas un repli de l'auto : elle répond à une planche d'une autre nature — des sprites qui se touchent, des cases vides à conserver — et c'est toi qui sais laquelle tu as.\n\nLes gouttières lisent la brute telle quelle, sans détourage : elles cherchent les rangées et les colonnes entièrement d'une seule couleur, et coupent là. C'est le cas le plus courant d'une feuille rendue par un modèle — opaque de bord à bord, avec des bandes de fond entre les cases — que ni l'auto (qui n'y verrait qu'une seule tache) ni la grille (qui coupe au mauvais endroit dès que les cases ne sont pas parfaitement régulières) ne savent lire.\n\nUne détection qui rend une seule boîte, ou aucune, est un résultat et pas une panne. Rien ici ne bloque : tu dessines les rectangles qui manquent, tu retires ceux qui sont en trop, et c'est ta liste qui part.",
   },
 
   "decoupe.taille_min": {

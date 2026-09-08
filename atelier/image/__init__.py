@@ -14,6 +14,7 @@ from atelier.image.decoupe import (
     Boite,
     decouper,
     en_ordre_de_lecture,
+    gouttieres,
     grille_fixe,
     zones_opaques,
 )
@@ -89,6 +90,7 @@ __all__ = [
     "en_rendu",
     "finir",
     "gabarit",
+    "gouttieres",
     "grille_fixe",
     "mesurer",
     "mesurer_grille",

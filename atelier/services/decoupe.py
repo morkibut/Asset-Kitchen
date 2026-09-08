@@ -37,18 +37,34 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.recette import Passe, Recadrage, Recette
-from atelier.image import COTE_MIN, Boite, decouper, grille_fixe, mesurer, zones_opaques
+from atelier.image import (
+    COTE_MIN,
+    Boite,
+    decouper,
+    gouttieres,
+    grille_fixe,
+    mesurer,
+    zones_opaques,
+)
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ServiceBibliotheque
 from atelier.services.evenements import Diffusion
 
-# Les deux modes de proposition. **Le second n'est pas un repli du premier** :
-# une planche régulière dont les sprites se touchent, ou dont certaines cases
-# sont vides, n'a pas de zones connexes séparées — et c'est l'auteur qui sait
-# laquelle des deux planches il a sous les yeux.
+# Les trois modes de proposition. **Aucun n'est un repli d'un autre** : une
+# planche régulière dont les sprites se touchent, ou dont certaines cases sont
+# vides, n'a pas de zones connexes séparées ; une feuille opaque de bord à bord
+# n'a pas de grille connue d'avance mais porte des bandes de fond entre ses
+# cases (`B18`) — et c'est l'auteur qui sait laquelle des trois planches il a
+# sous les yeux.
 AUTO = "auto"
 GRILLE = "grille"
-MODES = (AUTO, GRILLE)
+GOUTTIERES = "gouttieres"
+MODES = (AUTO, GRILLE, GOUTTIERES)
+
+# Au-delà, l'écran annonce le temps pris par la détection (`B18`, critère
+# d'acceptation commun à tout l'atelier des moteurs) — jamais avant, pour ne
+# pas alarmer sur ce qui se sent à peine.
+SEUIL_LENT_MS = 240
 
 # Le rang à partir duquel vivent les découpes, dans la génération de leur
 # planche. **Au-dessus de tout emplacement imaginable** : un appel rend quelques
@@ -152,6 +168,7 @@ class ServiceDecoupe:
             raise DecoupeRefusee(f"mode de découpe inconnu « {mode} »")
         asset = self._exiger(identifiant)
 
+        depart = time.perf_counter()
         raison: str | None = None
         if mode == GRILLE:
             if not 1 <= colonnes <= DECOUPES_MAX or not 1 <= lignes <= DECOUPES_MAX:
@@ -161,6 +178,16 @@ class ServiceDecoupe:
                     f"une planche se découpe en {DECOUPES_MAX} morceaux au plus"
                 )
             boites = grille_fixe(asset.largeur, asset.hauteur, colonnes, lignes)
+        elif mode == GOUTTIERES:
+            # **Elle lit la brute telle quelle, sans détourage.** C'est ce qui
+            # la rend utile là où « zones opaques » échoue : une feuille opaque
+            # de bord à bord n'a qu'une seule tache une fois détourée, mais ses
+            # bandes de fond entre les cases restent lisibles sur l'image brute.
+            boites = gouttieres(self._fichiers.lire(asset.brut))
+            if not boites:
+                raison = (
+                    "aucune bande de fond entièrement unie — corrige à la main"
+                )
         else:
             # **On détoure d'abord, même si la recette ne le demande pas.** Une
             # planche telle qu'elle arrive du modèle est opaque de bord à bord :
@@ -176,6 +203,7 @@ class ServiceDecoupe:
                     if not alpha.any()
                     else "aucune zone au-dessus de cette taille — descends la taille"
                 )
+        duree_ms = (time.perf_counter() - depart) * 1000
 
         return {
             "asset": asset.identifiant,
@@ -185,6 +213,7 @@ class ServiceDecoupe:
             "mode": mode,
             "boites": [list(b) for b in boites],
             "raison": raison,
+            "duree_ms": round(duree_ms, 1),
         }
 
     # ── Découper ─────────────────────────────────────────────────────────────

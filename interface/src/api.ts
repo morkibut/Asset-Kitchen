@@ -3519,17 +3519,23 @@ export type Filiation = {
  *  tout le produit, celle du serveur. */
 export type Boite = [number, number, number, number]
 
-export type ModeDecoupe = "auto" | "grille"
+export type ModeDecoupe = "auto" | "grille" | "gouttieres"
 
 /** Ce qu'une proposition de découpe a de commun aux deux familles d'images —
  *  et **c'est tout ce que l'écran en lit**. Il montre les rectangles et la
  *  raison ; d'où vient l'image, il le sait déjà par le sujet qu'on lui a donné.
  *
  *  `raison` est le grisé du produit : une détection qui ne trouve rien dit
- *  pourquoi, elle ne se tait pas. */
+ *  pourquoi, elle ne se tait pas.
+ *
+ *  `duree_ms` est ce que la détection a coûté côté serveur (`B18`) — l'écran
+ *  ne l'affiche que passé un seuil, pour ne pas alarmer sur ce qui se sent à
+ *  peine. Optionnel : seule la découpe d'un asset le porte pour l'instant,
+ *  la découpe d'une carte du tableau d'inspiration ne le mesure pas encore. */
 export type Decoupable = {
   boites: Boite[]
   raison: string | null
+  duree_ms?: number
 }
 
 /** Ce que le serveur propose de découper d'une planche — rien n'est créé tant
