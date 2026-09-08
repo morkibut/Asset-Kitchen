@@ -273,6 +273,7 @@ export function Carnet({
   surLesReglesDuJeu,
   surLaGalerie,
   surLesDepenses,
+  surLaSortie,
   surUnAutreJeu,
   surTousLesJeux,
   surCommencerUnJeu,
@@ -329,6 +330,8 @@ export function Carnet({
   surLesReglesDuJeu: () => void
   surLaGalerie: () => void
   surLesDepenses: () => void
+  /** La sortie (`B21`) — l'écran d'où les fichiers du jeu s'en vont. */
+  surLaSortie: () => void
   surUnAutreJeu: (identifiant: string) => void
   surTousLesJeux: () => void
   surCommencerUnJeu: () => void
@@ -536,6 +539,20 @@ export function Carnet({
           compte={dollars(depense)}
           ouverte={ouvert === "depenses"}
           onAller={surLesDepenses}
+        />
+        {/* ── La sortie (`B21`) ─────────────────────────────────────────────
+            **Au-dessus du trait, et c'est une décision.** La planche l'ouvre
+            « depuis le pied du carnet » ; le pied porte ce qui appartient à
+            l'atelier et n'en porte que trois — la barre, le guide,
+            l'installation. Or sortir appartient au *jeu* : le dossier où l'on
+            dépose est gardé avec lui, et ce qui part est fait de ses sujets.
+            La règle du carnet — ce qui est au jeu au-dessus, ce qui est à
+            l'atelier en dessous — tranche donc contre la lettre de la planche,
+            et le pied reste à trois boutons. */}
+        <Ligne
+          nom="La sortie"
+          ouverte={ouvert === "sortie"}
+          onAller={surLaSortie}
         />
 
         <div className="h-[14px] shrink-0" />

@@ -78,6 +78,8 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/Emploi.tsx",
     "interface/src/composants/VestiaireDuSujet.tsx",
     "interface/src/composants/Retouche.tsx",
+    # B21 — la sortie : le seul écran d'où les fichiers du jeu s'en vont.
+    "interface/src/composants/Sortie.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────

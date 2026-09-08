@@ -1694,3 +1694,38 @@ la prochaine réécriture retrouvera.
   avait déjà refermée de son côté. Réparé en important `quantificationDe`, `CURSEURS`,
   `PAIRE_VIDE` et `TOLERANCE_D_UNE_PAIRE_MAX` depuis `Places.tsx` plutôt qu'en les réécrivant une
   troisième fois. Payé le 10 septembre 2026, à la fusion de `B16` et `B17`.
+- **Un fichier qu'on n'a pas mis dans la liste des sortants devient un fichier à effacer.**
+  L'aperçu de la sortie (`B21`) ne comptait, dans son arbre, que les images et les planches : le
+  descriptif et le catalogue du moteur étaient écrits **après**, hors du plan. Conséquence, à la
+  seconde sortie dans le même dossier : le `descriptif.json` de la fois d'avant n'était dans
+  aucune des deux listes, donc il s'annonçait comme *un reste à effacer* — un fichier que la
+  sortie allait réécrire trois lignes plus bas. ⚠️ **Une comparaison entre deux listes n'est
+  juste que si les deux sont complètes** ; un fichier écrit « en plus », hors du parcours qui
+  décide, sera lu comme étranger par tout ce qui compare. Réparé en faisant du descriptif et du
+  catalogue les deux derniers éléments du même générateur — ils y sont en queue parce qu'ils
+  parlent des autres. Payé le 10 septembre 2026, en `B21`.
+- **Un chemin affiché par son seul nom ment dès que deux dossiers coexistent.** L'arbre de la
+  sortie groupe ses fichiers par dossier et n'écrit, sur chaque ligne, que le nom — ce qui est
+  juste tant qu'un dossier surplombe la ligne. Les **restes**, eux, ne sont rangés sous aucun
+  groupe : `personnages/le-pelerin-repos-est.png` s'affichait donc `le-pelerin-repos-est.png`,
+  juste sous le fichier prévu `le-pelerin-repos-est.png` de la racine. Deux lignes identiques à
+  l'œil, l'une « nouveau », l'autre « à effacer », et rien pour dire que ce sont deux fichiers
+  différents. ⚠️ **Une liste qui n'est pas dans l'arbre porte son chemin entier.** Invisible aux
+  essais d'écran, qui ne montaient qu'un cas à la fois ; trouvé en changeant le rangement au
+  navigateur, ce qui est exactement le geste qui fait cohabiter les deux formes de chemin. Payé
+  le 10 septembre 2026, en `B21`.
+- **Une raison de grisé écrite deux fois fait douter qu'il s'agisse du même empêchement.**
+  « aucun dossier de jeu — pose-le dans l'installation » paraissait sous le bouton **et** à la
+  place de l'arbre vide. Les deux étaient vrais, et c'est le problème : à l'écran, un même refus
+  répété à deux endroits se lit comme deux refus. ⚠️ **La raison va là où l'on va cliquer**
+  (`docs/DESIGN.md`, *le grisé porte sa raison*) ; le vide, lui, dit seulement qu'il est vide.
+  Trouvé par un essai d'écran qui refusait de choisir entre deux occurrences du même texte — le
+  doublon était réel, pas une faute d'essai. Payé le 10 septembre 2026, en `B21`.
+- **Un sujet créé dans une famille prend le type de cette famille, et ce type porte ses propres
+  attitudes.** Un atelier jetable qui crée « Le tonneau » avec `famille: "objets"` puis lui
+  impose les poses du **plan du jeu** reçoit un `409 production_refusee` : « Le tonneau ne tient
+  pas la pose repos ». Le `PUT` des poses réussit pourtant — c'est la génération qui refuse, un
+  geste plus loin, si bien que la faute paraît venir de la génération. ⚠️ **Les poses d'un sujet
+  se lisent sur le sujet** (ses `cases`), jamais sur le plan du projet, dès que la famille n'est
+  pas celle des personnages. C'est la règle d'`E9`, et elle se voit mal parce que les deux
+  listes coïncident pour la famille par défaut. Payé le 10 septembre 2026, en `B21`.

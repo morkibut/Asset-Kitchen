@@ -57,6 +57,7 @@ from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.generation import ServiceGenerations
 from atelier.services.installation import ServiceInstallation
 from atelier.services.montage import ServiceMontage
+from atelier.services.sortie import ServiceSortie, SortieRefusee
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import ChoixAttendu, CompteFaux, ServicePliage
@@ -499,6 +500,23 @@ class Atelier:
             # l'export reste du disque et du processeur, ce que son premier
             # paragraphe promet et ce que ses essais comptent.
             self.montage,
+        )
+        # **La sortie, montée après l'export et sur lui** (B21). Elle ne
+        # remplace aucune des quatre portes existantes : elle les rassemble sous
+        # un écran qui dit d'abord ce qu'il va écrire. Tout ce qui fabrique —
+        # le rendu d'une image, sa fiche, les trois fichiers d'une animation —
+        # lui est demandé plutôt que refait, et ce qui pose reste le geste de
+        # l'agent. Elle n'apporte donc, elle non plus, ni fournisseur ni
+        # catalogue : sortir reste du disque et du processeur.
+        self.sortie = ServiceSortie(
+            self.base,
+            self.fichiers,
+            self.assets,
+            self.production,
+            self.equipement,
+            self.montage,
+            self.agent,
+            self.export,
         )
 
     async def ouvrir(self) -> None:

@@ -373,7 +373,14 @@ class ServiceAgent:
 
     # ── Le dépôt dans le dossier du jeu ──────────────────────────────────────
 
-    def deposer(self, octets: bytes, nom: str, dossier: str | None = None) -> str:
+    def deposer(
+        self,
+        octets: bytes,
+        nom: str,
+        dossier: str | None = None,
+        *,
+        ecraser: bool = False,
+    ) -> str:
         """Pose un fichier dans le dossier du jeu, et rend son chemin absolu.
 
         Trois règles, et elles sont toutes les trois dans US-84 :
@@ -391,6 +398,18 @@ class ServiceAgent:
         Rend le chemin **absolu** : c'est ce que l'agent va écrire dans le code
         du jeu, et un chemin relatif y serait relatif à un dossier de travail que
         l'atelier ne connaît pas.
+
+        **`ecraser` lève la deuxième règle, et rien d'autre** (B21). La règle
+        reste le défaut, et l'agent ne la lève jamais : c'est l'écran de la
+        sortie qui la lève, parce que l'auteur y a coché *Remplacer* devant la
+        liste des fichiers qui vont l'être. La différence est là — l'agent
+        numérote parce qu'il ne peut pas demander, l'écran écrase parce qu'il
+        vient de montrer quoi.
+
+        **Un paramètre plutôt qu'un second écrivain**, exactement pour la raison
+        écrite en tête de `atelier/services/export.py` : « un second endroit qui
+        écrirait dans le dossier du jeu serait un second endroit où oublier la
+        deuxième ». Les deux autres règles valent donc aussi quand on écrase.
         """
         cible = (dossier or self.garde_fous().dossier_jeu).strip()
         if not cible:
@@ -414,7 +433,7 @@ class ServiceAgent:
         if not chemin.is_dir():
             raise DepotRefuse(f"« {chemin} » existe et n'est pas un dossier")
 
-        fichier = _libre(chemin, nom)
+        fichier = chemin / nom if ecraser else _libre(chemin, nom)
         try:
             fichier.write_bytes(octets)
         except OSError as panne:

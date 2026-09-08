@@ -211,14 +211,14 @@ class ServiceExport:
                     raise ExportRefuse(
                         f"« {identifiant} » n'est plus dans la bibliothèque"
                     )
-                octets = self._png(asset)
+                octets = self.octets_du_rendu(asset)
                 nom = self._nommer(asset, pris)
                 pris.add(nom.removesuffix(".png"))
                 # **Rangé sans recompression.** Un PNG est déjà dégonflé : le
                 # repasser au deflate coûte du temps pour quelques octets. Le
                 # descriptif, lui, est du texte, et il se comprime.
                 archive.writestr(nom, octets, compress_type=zipfile.ZIP_STORED)
-                fiches.append(self._fiche(asset, nom, octets))
+                fiches.append(self.fiche_de_l_asset(asset, nom, octets))
 
             archive.writestr(
                 DESCRIPTIF,
@@ -476,27 +476,8 @@ class ServiceExport:
 
         with zipfile.ZipFile(tampon, "w") as archive:
             for gardee in bandes:
-                planche = self._montage.planche(gardee.identifiant)
-                # **Relue après la planche, et pas avant** : celle-ci a pu se
-                # recalculer, et c'est alors elle qui vient de poser la taille
-                # d'une case. Ce qui est là fait foi.
-                bande = self._montage.bande(gardee.identifiant)
-                nom = self._nommer_bande(bande, racine, pris)
-                pris.add(nom)
-
-                descriptif = aseprite.descriptif(
-                    bande,
-                    image=f"{nom}.png",
-                    case_largeur=bande.case_largeur,
-                    case_hauteur=bande.case_hauteur,
-                    compte=bande.compte,
-                )
-                animee = en_image_animee(
-                    planche,
-                    bande.case_largeur,
-                    bande.case_hauteur,
-                    aseprite.ordre_des_images(bande.compte, bande.sens),
-                    aseprite.duree_en_ms(bande.cadence),
+                bande, nom, planche, descriptif, animee = self.trois_fichiers(
+                    gardee.identifiant, racine, pris
                 )
                 archive.writestr(
                     f"{nom}.png", planche, compress_type=zipfile.ZIP_STORED
@@ -511,7 +492,7 @@ class ServiceExport:
                 archive.writestr(
                     f"{nom}{ANIMEE}", animee, compress_type=zipfile.ZIP_STORED
                 )
-                fiches.append(self._fiche_de_bande(bande, nom, descriptif))
+                fiches.append(self.fiche_de_la_bande(bande, nom, descriptif))
 
             archive.writestr(
                 DESCRIPTIF,
@@ -541,6 +522,46 @@ class ServiceExport:
             compte=len(fiches),
         )
 
+    def trois_fichiers(
+        self, identifiant: str, racine: str = "", pris: set[str] | None = None
+    ) -> tuple[Bande, str, bytes, dict[str, Any], bytes]:
+        """Ce qu'une animation pose : la planche, son accompagnement, l'animée.
+
+        **Extraite de l'archive en `B21`, et pas recopiée.** La sortie unifiée a
+        besoin des trois mêmes fichiers, sous les trois mêmes noms, faits par
+        les trois mêmes appels — les fabriquer une seconde fois à côté aurait
+        donné deux planches à tenir identiques, ce qui est très exactement le
+        critère qu'`A4` avait payé pour rendre vrai.
+
+        `pris` est le carnet des noms déjà servis, tenu par l'appelant : c'est
+        lui qui parcourt un lot, et deux animations nommées « marche » doivent se
+        départager d'un bout à l'autre du lot, pas à l'intérieur de cet appel.
+        """
+        planche = self._montage.planche(identifiant)
+        # **Relue après la planche, et pas avant** : celle-ci a pu se
+        # recalculer, et c'est alors elle qui vient de poser la taille d'une
+        # case. Ce qui est là fait foi.
+        bande = self._montage.bande(identifiant)
+        deja = pris if pris is not None else set()
+        nom = self._nommer_bande(bande, racine, deja)
+        deja.add(nom)
+
+        descriptif = aseprite.descriptif(
+            bande,
+            image=f"{nom}.png",
+            case_largeur=bande.case_largeur,
+            case_hauteur=bande.case_hauteur,
+            compte=bande.compte,
+        )
+        animee = en_image_animee(
+            planche,
+            bande.case_largeur,
+            bande.case_hauteur,
+            aseprite.ordre_des_images(bande.compte, bande.sens),
+            aseprite.duree_en_ms(bande.cadence),
+        )
+        return bande, nom, planche, descriptif, animee
+
     @staticmethod
     def _nommer_bande(bande: Bande, racine: str, pris: set[str]) -> str:
         """Le nom des trois fichiers de cette animation — lisible, et unique.
@@ -553,7 +574,7 @@ class ServiceExport:
         mot = bande.nom or bande.identifiant
         return repere(f"{racine} {mot}" if racine else mot, pris, "animation")
 
-    def _fiche_de_bande(
+    def fiche_de_la_bande(
         self, bande: Bande, nom: str, descriptif: dict[str, Any]
     ) -> dict[str, Any]:
         """De quoi reconnaître cette animation, et la refaire.
@@ -617,13 +638,13 @@ class ServiceExport:
         instant = time.time()
         fiches: list[dict[str, Any]] = []
         for asset, quoi in parts:
-            octets = self._png(asset)
+            octets = self.octets_du_rendu(asset)
             chemin = self._agent.deposer(octets, quoi["nom"], dossier)
             fiches.append(
                 {
                     "chemin": chemin,
                     **quoi["contexte"],
-                    **self._fiche(asset, Path(chemin).name, octets),
+                    **self.fiche_de_l_asset(asset, Path(chemin).name, octets),
                 }
             )
 
@@ -655,7 +676,7 @@ class ServiceExport:
 
     # ── Ce qui part, et sous quel nom ────────────────────────────────────────
 
-    def _png(self, asset: Asset) -> bytes:
+    def octets_du_rendu(self, asset: Asset) -> bytes:
         """Les octets du fichier de l'archive. **Le rendu, et en PNG.**
 
         Le rendu parce que c'est ce qu'on voit — exporter le brut d'un asset
@@ -683,7 +704,7 @@ class ServiceExport:
 
     # ── Le descriptif ────────────────────────────────────────────────────────
 
-    def _fiche(self, asset: Asset, nom: str, octets: bytes) -> dict[str, Any]:
+    def fiche_de_l_asset(self, asset: Asset, nom: str, octets: bytes) -> dict[str, Any]:
         """De quoi reconnaître cette image, et la rejouer (US-76).
 
         Les cinq choses que la tranche demande : le label, le prompt, les
