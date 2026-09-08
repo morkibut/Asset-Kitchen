@@ -934,6 +934,34 @@ export type Bande = {
   supprime: boolean
 }
 
+// ── Le temps d'une image, en millisecondes entières (B12) ────────────────────
+//
+// **Le double de `duree_en_ms` du serveur** (`atelier/domaine/aseprite.py`), et
+// il double celle-là pour la même raison que `occupationMax` double
+// `occupation_max` : l'écran doit compter seul, sans attendre de réponse.
+//
+// ⚠️ **`cadence` n'est pas la vitesse jouée, c'est `dureeImageMs(cadence)`.**
+// Le format d'accompagnement compte en millièmes de seconde entiers, et
+// l'arrondi se fait **une fois** — c'est ce nombre-ci qui part dans
+// `duration` du descriptif et dans l'image animée. Un lecteur d'écran qui
+// jouerait `1000 / cadence` jouerait un rythme que rien n'exporte : à 12 i/s,
+// 83,33 ms contre les 83 ms du fichier.
+//
+// ⚠️ **Et l'arrondi de JavaScript n'est pas celui de Python.** `Math.round`
+// monte un demi ; Python le pousse au pair le plus proche. À 16 i/s —
+// 62,5 ms —, `Math.round` rend 63 et le serveur écrit 62. Le calcul ci-dessous
+// reproduit celui du serveur, pas celui du langage. `tests/test_b12.py` tient
+// les deux d'accord.
+export function dureeImageMs(cadence: number): number {
+  if (cadence <= 0) return 0
+  const exact = 1000 / cadence
+  const bas = Math.floor(exact)
+  const reste = exact - bas
+  const arrondi =
+    reste > 0.5 ? bas + 1 : reste < 0.5 ? bas : bas % 2 === 0 ? bas : bas + 1
+  return Math.max(1, arrondi)
+}
+
 /** Tout ce qu'il faut pour **retravailler** une animation gardée (A7).
  *
  *  `images_par_clip` borne le choix quand on remplace une image : l'écran ne

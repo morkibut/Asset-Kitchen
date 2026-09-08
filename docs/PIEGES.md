@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent quatre-vingt-huit pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent quatre-vingt-treize pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1694,3 +1694,40 @@ la prochaine réécriture retrouvera.
   avait déjà refermée de son côté. Réparé en important `quantificationDe`, `CURSEURS`,
   `PAIRE_VIDE` et `TOLERANCE_D_UNE_PAIRE_MAX` depuis `Places.tsx` plutôt qu'en les réécrivant une
   troisième fois. Payé le 10 septembre 2026, à la fusion de `B16` et `B17`.
+- **`requestAnimationFrame` peut n'être jamais appelé alors que la page se dit visible.** Le
+  métronome de `B12` — l'écran où l'on joue le personnage au clavier — avançait sur
+  `requestAnimationFrame`, avec un accumulateur sur `performance.now()` pour ne pas dériver.
+  Mesuré dans le volet navigateur de l'atelier : `document.visibilityState` vaut `visible`,
+  `document.hidden` vaut `false`, et **rAF est appelé zéro fois par seconde**. L'animation est
+  figée, la page se croit visible, et rien ne le dit — le seul symptôme est un compteur d'images
+  qui ne bouge plus. ⚠️ **Aucun essai d'écran ne peut trouver ça** : jsdom ne compose rien non
+  plus, et les essais mesurent le pas *annoncé*, pas le rythme *joué*. Il faut un script dans la
+  vraie page qui compte les changements d'image sur quelques secondes — une capture d'écran ne
+  juge pas un métronome. La sortie : battre sur `setInterval`, qui ne dépend pas du compositeur,
+  et garder `performance.now()` comme horloge — chaque réveil demande *combien d'images se sont
+  écoulées*, jamais *avance d'une*. Payé le 10 septembre 2026, en fermant `B12`.
+- **`round` de Python et `Math.round` de JavaScript ne rendent pas la même chose sur un demi.**
+  Python arrondit au **pair le plus proche**, JavaScript pousse vers le **haut**.
+  `tests/test_tailles.py` avait déjà nommé le risque sur `cible × occupation` et prouvé qu'il ne
+  mordait pas — aucune case du produit ne finit par 50. Sur la durée d'une image d'animation, il
+  mord : `duree_en_ms(cadence)` vaut `round(1000 / cadence)`, et mille divisé par seize fait
+  **exactement 62,5** — le serveur écrit 62 dans le descriptif d'export, `Math.round` aurait joué
+  63, et seize images par seconde est une cadence d'animation ordinaire. ⚠️ **Ce qui le rend
+  invisible, c'est que l'écart est d'une milliseconde** : personne ne le voit, aucun essai ne le
+  lève, et le produit promet pourtant que *la vitesse jouée est celle qui sortira*. La sortie :
+  reproduire l'arrondi du serveur dans `dureeImageMs` (`interface/src/api.ts`), et surtout **ne
+  pas tenir deux tables de valeurs attendues à la main** — `tests/test_b12.py` extrait la vraie
+  fonction TypeScript de `api.ts`, la fait tourner sous Node, et la compare à celle du serveur sur
+  cent vingt-trois cadences. Deux tables auraient fini par ne plus dire la même chose, ce qui est
+  la panne qu'on ferme, pas celle qu'on ouvre. Payé le 10 septembre 2026, en écrivant `B12`.
+- **Trois lecteurs jouaient déjà une vitesse que rien n'exporte, et le dépôt promettait le
+  contraire.** `atelier/domaine/bande.py` écrit noir sur blanc *« elle porte sa cadence, et il n'y
+  en a qu'une »*, `Montage.tsx` *« cette vitesse est celle qui partira dans le jeu »*,
+  `AtelierDeBande.tsx` *« c'est le même chiffre qui part dans le jeu »*. C'est vrai du **chiffre**
+  et faux du **rythme** : les trois écrans jouent `1000 / cadence` en flottant, alors que le
+  descriptif d'export et l'image animée prennent tous deux `duree_en_ms(cadence)`, un entier. À
+  douze images par seconde l'écran joue 83,33 ms et le fichier 83. ⚠️ **La promesse écrite dans
+  trois fichiers a servi de preuve** : personne n'a rouvert la question, parce que trois
+  commentaires disaient qu'elle était réglée. `B12` corrige son propre lecteur ; les trois autres
+  jouent encore le mauvais pas, et c'est un écart connu, pas un oubli — les corriger déplacerait
+  le rythme de vignettes que personne ne chronomètre. Payé le 10 septembre 2026, en relevant `B12`.

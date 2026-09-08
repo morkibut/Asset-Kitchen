@@ -525,16 +525,35 @@ bouton *jouer* est éteint en dur. Aucun écran du produit ne fait bouger quoi q
 
 ### Critères d'acceptation
 
-- [ ] Le personnage se pilote au clavier, et la vitesse jouée est celle qui sortira à l'export.
-- [ ] Une animation qui manque le dit et laisse le personnage au repos — il ne joue jamais une
-      autre animation à sa place.
-- [ ] Le bouton « demander un clip » part d'ici pré-rempli avec la pose et la direction, et son
-      prix est annoncé.
-- [ ] La scène se règle sans rien fabriquer et sans rien payer.
+- [x] Le personnage se pilote au clavier, et la vitesse jouée est celle qui sortira à l'export.
+      *`Z Q S D` déplacent et tournent, `Maj` fait courir, `Espace` attaque, `1` à `6` jouent
+      une pose ; l'écouteur est sur la scène et non sur `window`, donc `Ctrl+K` et `?`
+      restent au carnet. La vitesse est `dureeImageMs(cadence)` (`interface/src/api.ts`), le
+      double exact de `duree_en_ms` (`atelier/domaine/aseprite.py`) — **pas `1000/cadence`**,
+      que les trois lecteurs d'avant emploient. Mesuré au navigateur sur l'atelier jetable :
+      repos 124,4 ms pour 125 annoncées, marche 83,3 pour 83, course 71,0 pour 71, et
+      **attaque 62,0 ms sur 80 images pour les 62 du descriptif** — c'est la cadence où
+      `Math.round` aurait rendu 63. `tests/test_b12.py` fait tourner la vraie fonction de
+      l'écran sous Node et la compare à celle du serveur sur 123 cadences.*
+- [x] Une animation qui manque le dit et laisse le personnage au repos — il ne joue jamais une
+      autre animation à sa place. *Vérifié au navigateur : `4` en regardant vers le sud écrit
+      « attaque vers sud n'existe pas », le pèlerin joue toujours `repos-sud`, et la liste
+      montre que l'attaque existe vers l'est sans y aller. Sans repos non plus, rien ne bouge
+      et la scène le dit.*
+- [x] Le bouton « demander un clip » part d'ici pré-rempli avec la pose et la direction, et son
+      prix est annoncé. *Vérifié au navigateur : le bouton porte « attaque · sud », l'écran du
+      clip s'ouvre sur « Animer Le pèlerin — attaque · sud », le mouvement *attaque* est
+      choisi par le serveur, l'image de départ est le portrait retenu, et chaque modèle porte
+      son prix — `≈ $0,0324`, `≈ 10 min sur votre carte · gratuit`. Rien n'a été commandé.*
+- [x] La scène se règle sans rien fabriquer et sans rien payer. *Fond (gris neutre, clair,
+      damier, la couleur du jeu), grille, cadre de la case, sol plat ou en pente, un deuxième
+      sujet, le zoom, le clavier : **zéro appel réseau**, compté au navigateur en enveloppant
+      `fetch`, et par essai (`EssaiDuSujet.test.tsx`). La barre qui paie se retire sur cet
+      onglet — un seul bouton rouille par écran.*
 
 ### Bloquée par
 
-- `B10`, `B11`
+- `B10`, `B11` — tenues.
 
 ---
 

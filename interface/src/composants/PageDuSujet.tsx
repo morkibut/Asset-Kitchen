@@ -34,6 +34,13 @@
  * pied, et elle appartient au châssis. La planche en dessine un second,
  * *Demander une image* — il aurait dit ce que la barre dit déjà, à trente
  * pixels d'elle.
+ *
+ * ⚠️ **Sauf sur *L'essai*, où la barre se retire** (`B12`). Cet onglet-là porte
+ * sa propre porte vers une dépense — *Demander un clip* —, et deux boutons
+ * rouille sur le même écran est très exactement ce que `docs/DESIGN.md`
+ * interdit : le rouille cesse de vouloir dire quelque chose dès qu'il y en a
+ * deux. C'est aussi ce que la planche `Essai.dc.html` dessine, et le même geste
+ * que la barre fait déjà quand un outil s'ouvre.
  */
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
@@ -47,6 +54,7 @@ import {
   type Piece,
   type Pose,
   type EmplacementCorps,
+  type Univers,
   type VestiaireDuJeu,
 } from "../api"
 import type { Fente } from "./BarreChassis"
@@ -55,12 +63,13 @@ import { comptes, portraitDe } from "./FicheChose"
 import { EcranEtabli } from "./Personnages"
 import { ImagesDuSujet } from "./ImagesDuSujet"
 import { AnimationsDuSujet } from "./AnimationsDuSujet"
+import { EssaiDuSujet } from "./EssaiDuSujet"
 import { VestiaireDuSujet } from "./VestiaireDuSujet"
 
-/** Les quatre onglets, dans l'ordre de la planche. Deux sont construits ; les
- *  deux autres se nomment quand même — un onglet qu'on ajouterait plus tard
- *  déplacerait les trois autres, et la page changerait de forme à chaque
- *  tranche. */
+/** Les quatre onglets, dans l'ordre de la planche. **Les quatre sont
+ *  construits depuis `B12`** — le dernier, *L'essai*, était nommé bien avant
+ *  d'exister, pour qu'un onglet ajouté plus tard ne déplace pas les trois
+ *  autres et que la page ne change pas de forme à chaque tranche. */
 type Onglet = "fiche" | "images" | "animations" | "essai"
 
 const ONGLETS: readonly { clef: Onglet; nom: string }[] = [
@@ -631,6 +640,13 @@ function Exporter({
 export function PageDuSujet(proprietes: {
   ouvert: Personnage
   plan: Pose[]
+  /** Tous les sujets du jeu — **pour en poser un à côté dans l'essai** (`B12`)
+   *  et comparer les tailles en mouvement. Ils sont déjà chargés un cran
+   *  au-dessus ; un appel de plus pour les relire ferait deux vérités. */
+  personnages: Personnage[]
+  /** Les règles du jeu, pour la case et la couleur de fond de la scène de
+   *  l'essai (`B12`) — la même prop que `GrilleDuJeu` et `Comparer` reçoivent. */
+  univers: Univers
   emplacements: EmplacementCorps[]
   pieces: Piece[]
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
@@ -901,16 +917,22 @@ export function PageDuSujet(proprietes: {
         )}
 
         {onglet === "essai" && (
-          <div className="flex min-h-0 flex-1 flex-col gap-[8px] pt-[22px]">
-            <p className="font-serif text-[25px] leading-[1.15] text-encre">L'essai</p>
-            <p className="max-w-[380px] text-[13px] leading-[1.45] text-encre-2">
-              Le voir bouger dans un décor n'est pas encore construit.
-            </p>
-          </div>
+          <EssaiDuSujet
+            personnage={ouvert}
+            personnages={proprietes.personnages}
+            plan={sienPlan}
+            univers={proprietes.univers}
+            onAnimer={(personnage, pose, direction) =>
+              proprietes.onAnimer(personnage, pose, direction)
+            }
+            onAnimations={() => setOnglet("animations")}
+          />
         )}
       </div>
 
-      {barreQuiPaie}
+      {/* Voir l'en-tête : sur *L'essai*, la porte vers la dépense est dans
+          l'onglet, et la barre se retire pour qu'il n'y ait qu'un rouille. */}
+      {onglet !== "essai" && barreQuiPaie}
     </main>
   )
 }
