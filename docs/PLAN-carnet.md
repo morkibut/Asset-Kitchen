@@ -900,7 +900,7 @@ livre seul.
 |---|---|---|
 | Détourer | 8 | 5 — la couleur déclarée du jeu, la teinte plutôt que la valeur, la palette en garde-fou, le pinceau remonté en amont, la même passe sur les frames voisines |
 | Recadrer | 13 | 0 — **tenu** : taille imposée, format verrouillé, calage sur multiple, centré sur la masse, ligne de pied, rognage d'un bord uni. Les six sont des champs neufs de `Recadrage` (`atelier/domaine/recette.py`), du calcul pur dans `atelier/image/traitement.py`, câblés à l'écran dans `ReglagesDuRecadrage` (`Retouche.tsx`), essai à `tests/test_b18_recadrer.py` |
-| Pixéliser | 4 | 4 — sur les carrés du modèle, couleur dominante de case, médiane de case, lumière juste |
+| Pixéliser | 8 | 0 — **tenu le 8 septembre 2026**, voir la note sous le tableau |
 | Couleurs | 7 | 9 — trame régulière, force du tramage, k-moyennes, octree, distance à l'œil, rampes d'ombre… |
 | Nettoyer | 2 | 9 — le relevé se contredit sur le compte (9, 11 ou 12) ; à trancher avant de chiffrer |
 | Retourner | 1 après `B1` | 9 — haut-bas, quarts de tour, demi-tour, diagonale, repli, zones protégées, rotation libre, RotSprite |
@@ -942,14 +942,50 @@ Les six intitulés de la planche étaient elliptiques ; tranché sans remonter, 
   les six réglages neufs aurait dépassé une tranche `[EASY]` ; un `taille_sans_effet` symétrique à
   `marge_sans_effet` reste à écrire si l'usage le réclame.
 
+**Pixéliser, tenu.** Les quatre moteurs manquants sont écrits dans
+`atelier/domaine/recette.py` (`SUR_LE_MODELE`, `DOMINANTE`, `MEDIANE`, `LUMIERE_JUSTE`, dans
+`METHODES_DE_REDUCTION`) et `atelier/image/traitement.py` (`_par_sur_le_modele`,
+`_par_dominante`, `_par_mediane`, `_par_lumiere_juste`), câblés à l'écran par le même mécanisme
+que les quatre premiers — `traitement.reductions` nourrit le segment « façon de réduire » de
+`Retouche.tsx` sans qu'une ligne d'écran n'ait bougé. Vérifié au navigateur : les huit crans
+apparaissent, aucun des quatre neufs n'est grisé, et chacun change vraiment le rendu servi
+(mesuré en JS dans la page — `couleur dominante de case` ramène un grain de 28 pixels à deux
+teintes exactes, `réduction douce en lumière juste` sort à 166 de gris moyen contre 128 pour
+`réduction douce` sur le même damier contrasté).
+
+Deux décisions tranchées en écrivant la tranche :
+- **`sur les carrés du modèle`** rejoue `retrouver_grille` (D2/D4) plutôt que d'inventer une
+  seconde mesure de grille — c'est la fonction que la planche réclame déjà, simplement jamais
+  appelée depuis la réduction. Sans grille détectée, elle retombe sur le vote en deux temps.
+- **`couleur dominante de case`** et **`médiane de case`** rognent la source à un multiple exact
+  du pas plutôt que de la rééchantillonner d'abord (comme le fait le vote) : les deux promettent
+  de ne jamais peindre une couleur absente de l'image, et un rééchantillonnage Lanczos en
+  mélange déjà avant que la case ne soit choisie.
+
+⚠️ **« Trois réglages figés dans le code de la réduction » — non tenu, documenté plutôt que
+bâclé.** L'épaisseur des traits de `traits épaissis` (figée à 2), le nombre de teintes de
+travail du vote (figé à 32) et le choix de silhouette majorité/centre (décidé dans le code selon
+qu'il s'agit d'une bande ou d'une image seule) restent sans réglage d'écran. Les exposer
+demande des champs neufs sur `Grille` — donc une empreinte de recette qui bouge, la même
+prudence que `B17` a payée sur ses six clés de `Quantification`/`Bords` — et cela déborde du
+lot « quatre moteurs neufs » confié à cette tranche. Laissé à qui reprendra ce critère.
+
 ### Critères d'acceptation
 
-- [ ] Chaque atelier livré porte tous ses moteurs à l'écran, et aucun n'est en dur dans le code
-      sans réglage.
-- [ ] Trois réglages figés dans le code de la réduction sortent enfin à l'écran.
-- [ ] Chaque moteur neuf porte sa mesure de temps, et l'écran l'annonce quand elle dépasse
-      240 ms.
-- [ ] Les 1 347 essais de serveur passent sans modification.
+- [x] Chaque atelier livré porte tous ses moteurs à l'écran, et aucun n'est en dur dans le code
+      sans réglage. *Vrai pour Pixéliser, seul atelier livré à ce jour dans la file.*
+- [ ] Trois réglages figés dans le code de la réduction sortent enfin à l'écran. *Non tenu, voir
+      la note ci-dessus.*
+- [x] Chaque moteur neuf porte sa mesure de temps, et l'écran l'annonce quand elle dépasse
+      240 ms. *Vrai pour les quatre moteurs de Pixéliser — mesurés dans `tests/test_b18_pixeliser.py`
+      (26 à 108 ms sur une case de 64, contre un plafond de 240 ms) ; la jauge qui les annonce
+      est le mécanisme générique déjà posé, commun à tout `PUT …/recipe`.*
+- [x] Les 1 347 essais de serveur passent sans modification. *1 975 essais serveur passent après
+      Pixéliser (le compte a grandi depuis l'écriture de ce critère) ; un seul essai existant a dû
+      changer — `tests/test_t2.py::test_les_quatre_reductions_sont_annoncees_avec_leur_raison`,
+      qui fixait le compte des méthodes à quatre et est devenu faux par construction en en
+      ajoutant quatre. Réécrit pour dire pourquoi, même règle que `tests/test_d2.py` applique
+      déjà à trois essais de `T2`/`T4`.*
 
 ### Bloquée par
 

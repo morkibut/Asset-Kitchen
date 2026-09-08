@@ -352,6 +352,14 @@
         "essais/atelier_jetable_b18_recadrer.py"
       ],
       "port": 8489
+    },
+    {
+      "name": "atelier-jetable-b18-pixeliser",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b18_pixeliser.py"
+      ],
+      "port": 8490
     }
   ]
 }

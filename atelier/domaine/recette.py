@@ -776,13 +776,54 @@ AU_PLUS_PROCHE = "proche"
 LANCZOS = "lanczos"
 VOTE = "vote"
 PIXELOE = "pixeloe"
-METHODES_DE_REDUCTION = (VOTE, PIXELOE, LANCZOS, AU_PLUS_PROCHE)
+
+# ── Les quatre méthodes de B18 — « Pixéliser », le reste des moteurs ─────────
+#
+# **`sur_modele` n'invente aucun pas** : elle rejoue `retrouver_grille` — déjà
+# posée en D2/D4 pour la seule mesure — et échantillonne un pixel par case
+# **réellement peinte**, phase comprise, avant de ramener ce résultat à la
+# cible demandée. C'est le manque que la planche place devant tous les
+# autres : *« le pas et l'endroit où il commence sont mesurés depuis le
+# 3 septembre et affichés à l'écran, et rien ne s'en sert »*
+# (`docs/pistes-2026-09-04/carnet/atelier-reduire.dc.html`).
+#
+# **`dominante` et `mediane` n'inventent aucune couleur non plus**, chacune à
+# sa manière : la première reprend l'esprit du vote en deux temps mais peint
+# la case avec la couleur exacte la plus fréquente — jamais une moyenne —, la
+# seconde prend la médiane de chaque canal, qui **efface le grain sans faire
+# baver le bord**, contrairement à une moyenne.
+#
+# **`lumiere_juste` répare l'assombrissement de la réduction douce.** Une
+# moyenne calculée sur des octets sRGB assombrit les zones contrastées — un
+# damier noir et blanc moyenné en sRGB rend un gris plus sombre que le gris
+# perçu. Convertir en lumière linéaire avant de moyenner, puis revenir en
+# sRGB après, est la correction standard (`docs/DESIGN.md` ne la nomme pas,
+# c'est la loi de gamma de l'écran).
+SUR_LE_MODELE = "sur_modele"
+DOMINANTE = "dominante"
+MEDIANE = "mediane"
+LUMIERE_JUSTE = "lumiere_juste"
+
+METHODES_DE_REDUCTION = (
+    VOTE,
+    PIXELOE,
+    LANCZOS,
+    AU_PLUS_PROCHE,
+    SUR_LE_MODELE,
+    DOMINANTE,
+    MEDIANE,
+    LUMIERE_JUSTE,
+)
 
 NOM_DE_LA_METHODE = {
     VOTE: "vote en deux temps",
     PIXELOE: "traits épaissis",
     LANCZOS: "réduction douce",
     AU_PLUS_PROCHE: "au plus proche",
+    SUR_LE_MODELE: "sur les carrés du modèle",
+    DOMINANTE: "couleur dominante de case",
+    MEDIANE: "médiane de case",
+    LUMIERE_JUSTE: "réduction douce en lumière juste",
 }
 
 # **Ce que le produit choisit pour un projet neuf** — tranché par l'auteur le

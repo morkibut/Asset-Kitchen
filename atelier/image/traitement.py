@@ -54,6 +54,7 @@ from atelier.domaine.recette import (
     CONTOURS,
     COULEUR,
     DETOURAGE,
+    DOMINANTE,
     FLOYD,
     FORMATS_DE_RECADRAGE,
     GAUCHE_DROITE,
@@ -61,12 +62,15 @@ from atelier.domaine.recette import (
     LA_MAIN,
     LANCZOS,
     LAISSES,
+    LUMIERE_JUSTE,
+    MEDIANE,
     MODELE,
     PARTOUT,
     PIXELOE,
     QUANTIFICATION,
     RECADRAGE,
     RETOURNEMENT,
+    SUR_LE_MODELE,
     TRACE,
     VOTE,
     Bords,
@@ -1956,7 +1960,15 @@ def raison_methode(methode: str) -> str | None:
     charge `torch`. Une machine où PixelOE est installé ferait tomber
     `tests/test_t2.py` sans qu'aucune image ait été réduite.
     """
-    if methode in (VOTE, LANCZOS, AU_PLUS_PROCHE):
+    if methode in (
+        VOTE,
+        LANCZOS,
+        AU_PLUS_PROCHE,
+        SUR_LE_MODELE,
+        DOMINANTE,
+        MEDIANE,
+        LUMIERE_JUSTE,
+    ):
         return None
     if methode != PIXELOE:
         return f"méthode inconnue — « {methode} »"
@@ -2081,7 +2093,186 @@ def _par_pixeloe(rgb: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
     )
 
 
-_REDUCTIONS = {VOTE: _par_vote, LANCZOS: _par_lanczos, PIXELOE: _par_pixeloe}
+# ── Les quatre réductions de B18 ─────────────────────────────────────────────
+
+
+def _cases_exactes(
+    rgb: np.ndarray, taille: tuple[int, int]
+) -> tuple[np.ndarray, int] | None:
+    """`rgb` découpé en cases carrées entières, sans qu'un seul pixel soit inventé.
+
+    **Un simple rognage, jamais un rééchantillonnage** : `dominante` et
+    `mediane` promettent de ne jamais peindre une couleur absente de l'image
+    reçue, et un rééchantillonnage — même Lanczos — en mélange déjà avant que
+    la case ne soit choisie. Le prix est qu'un reste plus étroit qu'une case
+    entière, en bas ou à droite, est perdu — le même prix que paie `proche` en
+    arrondissant son pas.
+
+    Rend `None` quand il n'y a même pas deux pixels sources par case : il n'y
+    a alors rien à départager, et l'appelant retombe sur une méthode qui sait
+    mélanger.
+    """
+    large, haut = taille
+    pas = max(1, min(rgb.shape[0] // max(1, haut), rgb.shape[1] // max(1, large)))
+    if pas < 2:
+        return None
+    rogne = rgb[: haut * pas, : large * pas]
+    cases = (
+        rogne.reshape(haut, pas, large, pas, 3)
+        .transpose(0, 2, 1, 3, 4)
+        .reshape(haut * large, pas * pas, 3)
+    )
+    return cases, pas
+
+
+def _par_dominante(rgb: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
+    """Chaque case prend la couleur **exacte** la plus fréquente qu'elle porte.
+
+    **Elle n'invente rien, contrairement au vote en deux temps** : celui-ci
+    trie les pixels par teinte puis peint la case avec leur *moyenne* — une
+    couleur que l'image d'origine ne portait pas forcément. Ici, la case
+    garde une des couleurs qu'elle avait déjà. C'est ce que demande la
+    planche : « les aplats restent des aplats… celui-ci n'en invente aucune,
+    au prix d'un intérieur plus plat. »
+
+    `np.unique` plutôt que `np.bincount` : les couleurs sont codées sur
+    24 bits, et `bincount` allouerait un tableau de seize millions d'entrées
+    pour compter trois cents pixels.
+    """
+    trouve = _cases_exactes(rgb, taille)
+    if trouve is None:
+        return _par_lanczos(rgb, taille)
+    cases, _ = trouve
+    large, haut = taille
+    codes = (
+        (cases[:, :, 0].astype(np.int64) << 16)
+        | (cases[:, :, 1].astype(np.int64) << 8)
+        | cases[:, :, 2].astype(np.int64)
+    )
+    sortie = np.empty((haut * large, 3), dtype=np.uint8)
+    for rang in range(haut * large):
+        valeurs, comptes = np.unique(codes[rang], return_counts=True)
+        gagnant = int(valeurs[int(np.argmax(comptes))])
+        sortie[rang] = (gagnant >> 16 & 255, gagnant >> 8 & 255, gagnant & 255)
+    return sortie.reshape(haut, large, 3)
+
+
+def _par_mediane(rgb: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
+    """Chaque canal de chaque case prend sa **médiane** — le grain s'efface,
+    le bord ne bave pas.
+
+    Une moyenne mélangerait un grain dans le bord voisin ; la médiane, elle,
+    ignore la minorité qu'est un pixel de grain ou de bruit de compression,
+    tant qu'il ne dépasse pas la moitié de la case. C'est le prix inverse de
+    `dominante` : le bord survit, mais un tout petit détail — un œil d'un
+    pixel — peut disparaître avec le grain.
+    """
+    trouve = _cases_exactes(rgb, taille)
+    if trouve is None:
+        return _par_lanczos(rgb, taille)
+    cases, _ = trouve
+    large, haut = taille
+    sortie = np.median(cases, axis=1).round().astype(np.uint8)
+    return sortie.reshape(haut, large, 3)
+
+
+def _par_sur_le_modele(rgb: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
+    """Réduit sur la grille que **le modèle a réellement peinte**, pas sur un
+    pas décrété par la seule division de la taille.
+
+    **Le manque que la planche place devant tous les autres** — voir l'en-tête
+    de `METHODES_DE_REDUCTION` dans `atelier/domaine/recette.py`. `au plus
+    proche` et `vote` calculent leur pas comme `source // cible`, ce qui tombe
+    rarement sur la phase exacte des carrés que le modèle a peints : un
+    échantillon pris à cheval sur deux carrés hérite d'une couleur qui n'est
+    ni tout à fait le fond ni tout à fait le sujet — 29 % des carrés sur la
+    mesure du 2 septembre. Ici, `retrouver_grille` (D2/D4) donne le vrai pas
+    et la vraie phase ; on prend un pixel au centre de chaque case
+    **réellement peinte**, puis on ramène cette grille-là — jamais la source
+    brute — à la taille demandée.
+
+    **Repli sur le vote** quand aucune grille n'est détectée — une photo, un
+    dessin continu, une image trop petite — puisque c'est le défaut du
+    produit depuis le 3 septembre : la moins inventive des méthodes qui
+    mélangent est la plus honnête à choisir sans qu'on l'ait demandée.
+    """
+    hauteur, largeur = rgb.shape[:2]
+    trouvee = retrouver_grille(rgb)
+    if not trouvee.trouvee:
+        return _par_vote(rgb, taille)
+
+    pas = trouvee.pas
+    phase_y, phase_x = trouvee.phase
+    xs = np.arange(phase_x, largeur, pas)
+    ys = np.arange(phase_y, hauteur, pas)
+    if xs.size == 0 or ys.size == 0:
+        return _par_vote(rgb, taille)
+
+    xs_centre = np.clip(xs + pas // 2, 0, largeur - 1)
+    ys_centre = np.clip(ys + pas // 2, 0, hauteur - 1)
+    echantillon = rgb[np.ix_(ys_centre, xs_centre)]
+    return np.asarray(
+        Image.fromarray(echantillon, mode="RGB").resize(taille, Image.Resampling.NEAREST)
+    )
+
+
+def _srgb_vers_lineaire(canal: np.ndarray) -> np.ndarray:
+    """L'octet sRGB ramené à une intensité linéaire, entre 0 et 1."""
+    c = canal.astype(np.float64) / 255.0
+    return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+
+
+def _lineaire_vers_srgb(canal: np.ndarray) -> np.ndarray:
+    """L'inverse de `_srgb_vers_lineaire`, rendue en octets."""
+    c = np.clip(canal, 0.0, 1.0)
+    sortie = np.where(c <= 0.0031308, c * 12.92, 1.055 * np.power(c, 1 / 2.4) - 0.055)
+    return np.clip(sortie * 255.0, 0, 255).round().astype(np.uint8)
+
+
+# **Une table de 256 entrées plutôt qu'une puissance calculée à chaque pixel.**
+# `rgb` est toujours un octet, donc `_srgb_vers_lineaire` ne peut renvoyer que
+# 256 valeurs distinctes par canal — mesuré, l'élévation à la puissance 2,4 sur
+# un dessin de 1216 px coûtait 178 ms à elle seule, contre 16 ms pour l'indexer
+# ici. `_lineaire_vers_srgb`, elle, reçoit un flottant continu issu du
+# rééchantillonnage : aucune table ne peut la remplacer.
+_LUT_SRGB_VERS_LINEAIRE = _srgb_vers_lineaire(np.arange(256, dtype=np.uint8)).astype(
+    np.float32
+)
+
+
+def _par_lumiere_juste(rgb: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
+    """La réduction douce, sans l'assombrissement qu'elle inflige aux zones
+    contrastées.
+
+    **Une moyenne d'octets sRGB n'est pas la moyenne de la lumière perçue** :
+    moyenner 0 et 255 en sRGB rend 128, mais un capteur verrait la moitié de
+    la lumière physique de 255, ce qui correspond à un octet sRGB proche de
+    188. Un damier moyenné en sRGB sort donc plus sombre que le gris qu'un œil
+    y verrait, et l'herbe claire d'un pré vire olive. Ici, on convertit en
+    lumière linéaire, on moyenne — Lanczos, comme `réduction douce` —, puis on
+    repasse en sRGB.
+    """
+    lineaire = _LUT_SRGB_VERS_LINEAIRE[rgb]
+    canaux = [
+        np.asarray(
+            Image.fromarray(np.ascontiguousarray(lineaire[:, :, canal]), mode="F").resize(
+                taille, Image.Resampling.LANCZOS
+            )
+        )
+        for canal in range(3)
+    ]
+    return _lineaire_vers_srgb(np.dstack(canaux))
+
+
+_REDUCTIONS = {
+    VOTE: _par_vote,
+    LANCZOS: _par_lanczos,
+    PIXELOE: _par_pixeloe,
+    SUR_LE_MODELE: _par_sur_le_modele,
+    DOMINANTE: _par_dominante,
+    MEDIANE: _par_mediane,
+    LUMIERE_JUSTE: _par_lumiere_juste,
+}
 
 
 def _reduire(

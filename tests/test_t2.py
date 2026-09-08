@@ -302,18 +302,35 @@ def test_la_quantification_s_annonce_sans_palette_au_lieu_de_se_griser(client, d
     assert reponse.json()["recette"]["quantification"]["couleurs"] == 16
 
 
-# ── Les quatre réductions sont annoncées avec leur raison de grisé (D2) ──────
+# ── Les huit réductions sont annoncées avec leur raison de grisé (D2, B18) ───
 
 
-def test_les_quatre_reductions_sont_annoncees_avec_leur_raison(client):
-    """Même invariant que les moteurs de détourage : trois méthodes ne demandent
-    rien, la quatrième tire une bibliothèque lourde et se grise si elle manque —
-    jamais proposée puis refusée."""
+def test_les_huit_reductions_sont_annoncees_avec_leur_raison(client):
+    """Même invariant que les moteurs de détourage : sept méthodes ne
+    demandent rien, « traits épaissis » tire une bibliothèque lourde et se
+    grise si elle manque — jamais proposée puis refusée.
+
+    ⚠️ **Le compte est passé de quatre à huit en B18** — « Pixéliser, le reste
+    des moteurs » (`docs/PLAN-carnet.md` § B18) ajoute `sur_modele`,
+    `dominante`, `mediane` et `lumiere_juste` à `METHODES_DE_REDUCTION`. Ce
+    test fixait le compte à quatre ; il est réécrit pour dire pourquoi plutôt
+    que jeté — même règle que `tests/test_d2.py` applique déjà à trois essais
+    de `T2`/`T4` que D2 rendait faux.
+    """
     reductions = {
         r["nom"]: r for r in client.get("/api/status").json()["traitement"]["reductions"]
     }
-    assert set(reductions) == {"vote", "pixeloe", "lanczos", "proche"}
-    for nom in ("vote", "lanczos", "proche"):
+    assert set(reductions) == {
+        "vote",
+        "pixeloe",
+        "lanczos",
+        "proche",
+        "sur_modele",
+        "dominante",
+        "mediane",
+        "lumiere_juste",
+    }
+    for nom in ("vote", "lanczos", "proche", "sur_modele", "dominante", "mediane", "lumiere_juste"):
         assert reductions[nom]["raison"] is None, f"« {nom} » ne demande rien"
         assert reductions[nom]["libelle"]
 

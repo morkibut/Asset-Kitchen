@@ -1328,10 +1328,10 @@ export type Grille = {
   decalage: number
   /** Comment on passe de mille pixels à `cible` carrés (D2).
    *
-   *  **Un choix de style, pas un classement** : les quatre méthodes rendent des
-   *  images franchement différentes, et c'est l'auteur qui tranche laquelle
-   *  ressemble à son jeu. Le projet donne le départ (`Univers.methode_pixels`),
-   *  l'image garde le dernier mot.
+   *  **Un choix de style, pas un classement** : les huit méthodes (D2, puis
+   *  B18) rendent des images franchement différentes, et c'est l'auteur qui
+   *  tranche laquelle ressemble à son jeu. Le projet donne le départ
+   *  (`Univers.methode_pixels`), l'image garde le dernier mot.
    *
    *  `proche` est le défaut du champ, et c'est ce que l'atelier faisait avant
    *  la tranche : une recette enregistrée avant D2 rend ainsi la même image
@@ -1355,11 +1355,19 @@ export const NOM_DU_STYLE: Record<Style, string> = {
   dessin: "en dessin",
 }
 
-/** Les quatre façons de réduire (D2), du plus soigné au plus brut.
+/** Les huit façons de réduire (D2, puis B18), du plus soigné au plus brut.
  *
  *  Les valeurs traversent le port telles quelles : une valeur traduite au
  *  passage est une valeur qu'on peut traduire de travers. */
-export type Methode = "vote" | "pixeloe" | "lanczos" | "proche"
+export type Methode =
+  | "vote"
+  | "pixeloe"
+  | "lanczos"
+  | "proche"
+  | "sur_modele"
+  | "dominante"
+  | "mediane"
+  | "lumiere_juste"
 
 /** Le nom court de chaque méthode. **La même table vit dans
  *  `atelier/domaine/recette.py`**, et les deux sont tenues ensemble par un
@@ -1376,6 +1384,10 @@ export const NOM_DE_LA_METHODE: Record<Methode, string> = {
   pixeloe: "traits épaissis",
   lanczos: "réduction douce",
   proche: "au plus proche",
+  sur_modele: "sur les carrés du modèle",
+  dominante: "couleur dominante de case",
+  mediane: "médiane de case",
+  lumiere_juste: "réduction douce en lumière juste",
 }
 
 /** Ce que chaque méthode rend, en une ligne. **Le libellé vient du serveur**
@@ -1386,6 +1398,10 @@ export const CE_QUE_LA_METHODE_REND: Record<Methode, string> = {
   pixeloe: "garde les traits d'un pixel, contour plus agité",
   lanczos: "silhouette lisse, intérieur mou — proche d'un dessin réduit",
   proche: "brut : un pixel sur N gardé, les autres jetés",
+  sur_modele: "réduit sur la vraie grille du modèle, jamais un pas décrété",
+  dominante: "l'aplat garde une couleur qu'il avait déjà, jamais une moyenne",
+  mediane: "le grain s'efface, le bord ne bave pas",
+  lumiere_juste: "la douceur de lanczos, sans l'assombrissement des contrastes",
 }
 
 /** Les six paliers de couleurs, et le plafond est **le côté du sprite** (D2).
@@ -4018,9 +4034,9 @@ export type EtatTraitement = {
    *  traitement a bien lieu, mais les couleurs viennent de chaque image et non
    *  de la palette du jeu. `null` dès qu'une palette existe. */
   quantification: { raison: string | null; note: string | null }
-  /** Les quatre façons de réduire, avec leur raison de grisé (D2). Trois ne
-   *  demandent rien ; « traits épaissis » tire une bibliothèque lourde et se
-   *  grise quand elle manque — jamais proposée puis refusée. */
+  /** Les huit façons de réduire, avec leur raison de grisé (D2, puis B18).
+   *  Sept ne demandent rien ; « traits épaissis » tire une bibliothèque lourde
+   *  et se grise quand elle manque — jamais proposée puis refusée. */
   reductions: { nom: Methode; libelle: string; raison: string | null }[]
   recettes: string[]
 }
