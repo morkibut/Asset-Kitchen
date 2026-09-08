@@ -77,6 +77,7 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/Emplois.tsx",
     "interface/src/composants/Emploi.tsx",
     "interface/src/composants/VestiaireDuSujet.tsx",
+    "interface/src/composants/Retouche.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────

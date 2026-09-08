@@ -3309,6 +3309,17 @@ export type MesuresRecadrage = {
    *  quand elle est plus large que lui : **une boîte n'agit que quand elle
    *  coupe**. */
   coupe: Record<string, number>
+  /** **La marge est-elle avalée par la mise en case ?** (B16)
+   *
+   *  Mesuré le 30 août 2026 : marge 0 et marge 40 rendent le même fichier à
+   *  l'octet près quand une case s'applique, parce que la grille refait sa
+   *  propre recherche de la boîte du sujet et rogne dessus.
+   *
+   *  ⚠️ **Elle vient du serveur et ne se recalcule jamais ici.** L'écran la
+   *  dérivait de `recette.grille != null`, et cette condition est fausse dans
+   *  trois cas : grille endormie, grille sans détourage vif, et l'inverse. La
+   *  règle vit dans `Recette.marge_sans_effet` et nulle part ailleurs. */
+  marge_sans_effet: boolean
 }
 
 export type Filiation = {

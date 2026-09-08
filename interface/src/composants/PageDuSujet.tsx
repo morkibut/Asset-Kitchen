@@ -670,6 +670,10 @@ export function PageDuSujet(proprietes: {
   onCreerPiece: (nom: string) => void
   /** Il ne la porte plus. **Ses calques restent** — jamais de cascade. */
   onRetirerLEmploi: (piece: string, emploi: string) => void
+  /** **La chaîne de retouche redessinée** (B16) — sur l'image de référence du
+   *  sujet. Optionnelle : la page se rend sans, et le bouton se grise alors
+   *  comme les deux autres. */
+  onRetoucher?: () => void
   outil: ReactNode
 }) {
   const { ouvert, plan, barreQuiPaie, outil, onFente } = proprietes
@@ -834,6 +838,20 @@ export function PageDuSujet(proprietes: {
               className="h-[30px] rounded-7 px-[14px] text-[13.5px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:text-eteint disabled:hover:text-eteint"
             >
               Comparer ›
+            </button>
+            {/* **B16** — la chaîne de retouche redessinée, troisième
+                profondeur de cette page et la seule des trois qui écrive. Elle
+                s'ouvre sur l'image de référence du sujet, celle que la fiche
+                nomme déjà : la retouche d'une image précise garde sa porte, sur
+                la ligne de l'image, dans *Ses images*. */}
+            <button
+              type="button"
+              onClick={proprietes.onRetoucher}
+              disabled={!auMoinsUneImage}
+              title={auMoinsUneImage ? undefined : "aucune image encore — rien à retoucher"}
+              className="h-[30px] rounded-7 px-[14px] text-[13.5px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:text-eteint disabled:hover:text-eteint"
+            >
+              La retouche ›
             </button>
           </div>
         </div>

@@ -112,6 +112,19 @@ export type Lieu =
   | { genre: "comparer"; sujet: string }
   | { genre: "case"; asset: string }
   | { genre: "tables"; asset: string }
+  // La retouche (`B16`) — **la chaîne redessinée sur le papier du carnet**, une
+  // profondeur de plus de la page d'un sujet, atteinte depuis une de ses
+  // images. Elle porte les huit tables dans leur ordre, le trait, et les deux
+  // fabriques à droite de lui.
+  //
+  // ⚠️ **Elle ne remplace pas `"tables"`, elle le double le temps d'un
+  // déménagement** — exactement ce que `B10` a fait de la matrice. L'écran de
+  // l'ancien châssis garde trois locataires que celui-ci ne reprend pas : le
+  // cadre de la découpe monté à l'intérieur, la colonne des sœurs, et les trois
+  // surfaces où l'on désigne un endroit de l'image — la pipette, la forme
+  // entourée, le pinceau. Il s'en ira quand elles auront déménagé, en `B17` et
+  // `B18`.
+  | { genre: "retouche"; asset: string }
   | { genre: "clip"; cible: CibleDuClip }
   | { genre: "montage"; clip: string }
   | { genre: "bande"; bande: string }

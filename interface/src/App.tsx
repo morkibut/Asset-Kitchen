@@ -131,6 +131,7 @@ import {
 import { PageDuSujet } from "./composants/PageDuSujet"
 import { GrilleDuJeu } from "./composants/GrilleDuJeu"
 import { Comparer } from "./composants/Comparer"
+import { Retouche } from "./composants/Retouche"
 import { EcranReglages } from "./composants/EcranReglages"
 import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
 import { FicheDuClip } from "./composants/FicheDuClip"
@@ -990,6 +991,15 @@ export function App() {
     pieceEtSesEmplois?.emplois.find(
       (e) => e.identifiant === emploiOuvertLieu?.emploi,
     ) ?? null
+
+  /** La retouche (`B16`) — la chaîne redessinée, une profondeur de plus de la
+   *  page d'un sujet. Elle ne dépense rien : *cliquer ne coûte jamais*, et
+   *  toute la chaîne se rejoue sans un centime. */
+  const retoucheOuverte = lieu(pile, "retouche")?.asset ?? null
+  const setRetoucheOuverte = (asset: string | null) =>
+    setPile((p) =>
+      asset ? entrer(p, { genre: "retouche", asset }) : sortir(p, "retouche"),
+    )
   /** Les réglages de l'appel, repliés au pied de la barre qui paie. Le repli
    *  vit dans le registre du châssis comme tous les autres : il survit au
    *  changement d'onglet, qui démonte l'écran (E1). */
@@ -1023,6 +1033,15 @@ export function App() {
     choseOuverte?.cases
       .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
       .find((a) => a.identifiant === caseOuverte) ?? null
+
+  /** L'image dont la chaîne de retouche est ouverte (`B16`) — **relue dans la
+   *  charge du sujet, jamais gardée**. C'est la règle du dépôt : on tient des
+   *  identifiants, pas des objets, sans quoi une image retouchée resterait
+   *  affichée telle qu'elle était quand on l'a ouverte. */
+  const imageDeLaRetouche =
+    choseOuverte?.cases
+      .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
+      .find((a) => a.identifiant === retoucheOuverte) ?? null
 
   // ── T5 : la découpe — **retirée en `B0`, parce qu'elle était morte** ──────
   //
@@ -2962,6 +2981,17 @@ export function App() {
         return chose ? [chose.nom, "Comparer"] : null
       }
 
+      // La retouche (`B16`) — le troisième de ces écrans, et le seul des trois
+      // qui écrive. Son dernier nom est *La retouche* et non la table ouverte :
+      // la table est un état de l'écran, pas une profondeur de la pile
+      // (`lieux.ts`, « ce qui n'est pas un lieu »).
+      case "retouche": {
+        const image = choseOuverte?.cases
+          .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
+          .find((a) => a.identifiant === ou.asset)
+        return image ? [image.label || image.identifiant, "La retouche"] : null
+      }
+
       case "case": {
         const image = choseOuverte?.cases
           .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
@@ -4211,7 +4241,7 @@ export function App() {
         )
       ) : null}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && !bandeOuverte && !sujetDeLaGrille && !sujetDuComparateur && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && !bandeOuverte && !sujetDeLaGrille && !sujetDuComparateur && !imageDeLaRetouche && (
         /* **La page du sujet, et non plus sa matrice** (B10) : on arrive sur la
            chose, quatre onglets sur un seul écran. La matrice est devenue une
            profondeur de cette page — elle porte encore le vestiaire, les
@@ -4238,7 +4268,29 @@ export function App() {
           // retouche, on ne paie pas — et un écran incapable de dépenser ne
           // porte pas le champ qui dépense.
           barreQuiPaie={imageOuverte ? null : barreQuiPaie}
+          // ⚠️ **« La retoucher » mène toujours à l'écran de l'ancien
+          // châssis** (B16), et c'est une décision. Il porte encore trois
+          // locataires que la chaîne redessinée ne reprend pas — le cadre de
+          // la découpe monté à l'intérieur, la colonne des sœurs, et les trois
+          // surfaces où l'on désigne un endroit de l'image. Le repointer
+          // maintenant aurait fait tomber 106 essais qui mesurent ces
+          // locataires-là, sans en déplacer un seul.
+          //
+          // C'est mot pour mot ce que `B10` a fait de la matrice : elle est
+          // descendue d'un cran plutôt que de disparaître, et elle s'en ira
+          // quand ses locataires auront déménagé — ici, en `B17` et `B18`.
           onOuvrirCase={setCaseOuverte}
+          // **La chaîne redessinée s'ouvre comme la grille du jeu et
+          // comparer** : une porte de plus dans le bandeau, sur l'image de
+          // référence du sujet — celle que la page nomme déjà.
+          onRetoucher={() => {
+            const reference = choseOuverte.cases
+              .flatMap((c) => c.images)
+              .find((a) => a.favori)
+            const derniere = choseOuverte.cases.flatMap((c) => c.images).at(-1)
+            const image = reference ?? derniere
+            if (image) setRetoucheOuverte(image.identifiant)
+          }}
           /* **Une case animée se remonte jusqu'à son clip** (A12), et le clip
              se découpe dans la galerie : deux gestes en un, comme la
              superposition juste en dessous. C'est écrit ici parce que seul
@@ -4350,7 +4402,34 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && sujetDeLaGrille && !bandeOuverte && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && imageDeLaRetouche && etat && !bandeOuverte && (
+        /* **La retouche** (B16) — la chaîne redessinée sur le papier du
+           carnet : huit tables dans leur ordre, un trait, deux fabriques à
+           droite de lui. Elle écrit — c'est le seul de ces trois écrans qui le
+           fasse — mais elle ne dépense pas : *cliquer ne coûte jamais*. */
+        <Retouche
+          asset={imageDeLaRetouche}
+          univers={univers}
+          traitement={etat.traitement}
+          onFermer={() => setRetoucheOuverte(null)}
+          // Les deux fabriques mènent aux écrans qui existent : la découpe et
+          // la superposition écrivent d'autres fichiers, et elles ont chacune
+          // le leur depuis longtemps.
+          onDecouper={() => {
+            setRetoucheOuverte(null)
+            setCaseOuverte(imageDeLaRetouche.identifiant)
+            setTable("decoupage")
+          }}
+          onSuperposer={() => {
+            setRetoucheOuverte(null)
+            setCaseOuverte(imageDeLaRetouche.identifiant)
+            setTable("superposition")
+          }}
+          onErreur={setPanne}
+        />
+      )}
+
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && sujetDeLaGrille && !bandeOuverte && !imageDeLaRetouche && (
         /* **La grille du jeu** (B13) — une profondeur de plus de la page d'un
            sujet, comme la matrice l'était déjà avant B10. Elle ne dépense
            rien : pas de barre qui paie. */

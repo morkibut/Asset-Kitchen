@@ -1297,14 +1297,30 @@ class Recette:
 
     @property
     def vide(self) -> bool:
-        """Rien à faire : le rendu **est** le brut, et il n'y a pas de cache."""
+        """Rien à faire : le rendu **est** le brut, et il n'y a pas de cache.
+
+        ⚠️ **Une place compte quand elle change l'image, pas quand elle figure
+        dans la recette** (invariant E3). Le carré de la barre tient cette règle
+        depuis toujours ; cette propriété-ci ne la tenait pas, et le nettoyage
+        l'a montré (`B16`).
+
+        `bords={aire_min: 0}` est le cas exact : `nettoyer` sort sans rien faire
+        (`traitement.py:1107`), et pourtant la recette se disait non vide — donc
+        un rendu calculé, mis en cache, et l'asset **épinglé** pour une image
+        identique au brut. Un seuil de zéro n'efface aucune tache ; il ne pose
+        rien non plus.
+
+        **Ce n'est pas la veille**, et les deux gestes restent distincts :
+        endormir garde la valeur et la rend au réveil, tandis qu'ici c'est la
+        valeur elle-même qui ne fait rien.
+        """
         return not (
             self.passes
             or self.difference
             or self.recadrage
             or self.grille
             or self.quantification
-            or self.bords
+            or (self.bords is not None and self.bords.aire_min > 0)
             or self.contours
             or self.retournement
             or self.main
@@ -1501,6 +1517,37 @@ class Recette:
         if self.dort(DETOURAGE):
             return ()
         return tuple(p for p in self.passes if not p.masquee)
+
+    # ── La marge que la case avale (B16) ─────────────────────────────────────
+
+    def marge_sans_effet(self) -> bool:
+        """La marge du recadrage est-elle avalée par la mise en case ?
+
+        **Mesuré le 30 août 2026 : marge 0 et marge 40 rendent le même fichier
+        à l'octet près.** La raison n'est pas que la grille ignore la marge —
+        `_recadrer` l'applique dans tous les cas — mais que `sur_grille` refait
+        *sa propre* recherche de la boîte du sujet et rogne dessus, jetant les
+        pixels transparents que la marge venait de garder.
+
+        **Une seule lecture, ici, parce que l'écran s'était trompé dessus.**
+        `Places.tsx` lisait `recette.grille != null`, et cette condition est
+        fausse dans trois cas — c'est ce que `B16` a trouvé en relisant
+        `traitement.queue` ligne à ligne. La case ne s'applique que si la grille
+        est **posée** (`grille is not None`), **éveillée** (`not dort(GRILLE)`,
+        `traitement.py:2151`) et que le détourage **agit** (`case =
+        bool(passes_vives())`, `traitement.py:2167`) — sans détourage vif,
+        `sur_grille` fait une homothétie de l'image entière et la marge change
+        bel et bien le rendu.
+
+        Ce qu'elle ne dit pas, et volontairement : *quoi faire à la place*. Le
+        geste — « c'est la hauteur qui donne l'air autour du sujet » — porte des
+        noms d'écran que le domaine n'a pas à connaître.
+        """
+        return (
+            self.grille is not None
+            and not self.dort(GRILLE)
+            and bool(self.passes_vives())
+        )
 
 
 # ── Ce qui voyage d'une image à l'autre (U5) ─────────────────────────────────

@@ -51,7 +51,7 @@ from atelier.image import rendre_en_png, vignette
 from atelier import reglages
 from atelier.reglages import deposer_secret, retirer_secret
 from atelier.services import Atelier
-from atelier.services.assets import AssetInconnu, TRACE_MAX
+from atelier.services.assets import AssetInconnu, CIBLE_MAX, CIBLE_MIN, TRACE_MAX
 from atelier.services.export import Archive
 from atelier.services.catalogue import EtatFournisseur
 
@@ -1031,7 +1031,20 @@ class CorpsRecadrage(BaseModel):
 
 
 class CorpsGrille(BaseModel):
-    cible: int = Field(64, ge=8, le=512)
+    # ⚠️ **La porte d'entrée était restée à 512** (B16). Le service accepte
+    # `8..2048` depuis `D2` — un jeu en style *dessin* ne demande pas des carrés
+    # mais une **finesse**, et ses quatre valeurs montent à 2048 (`vue.py`,
+    # `FINESSES`) —, mais ce champ-ci plafonnait à 512 et refusait tout par un
+    # **422 de Pydantic**, qui ne nomme rien d'utile. Comme l'écran renvoie la
+    # recette **entière** à chaque geste, bouger une tolérance de détourage
+    # envoyait aussi la grille : un jeu en dessin à 1 024 ne pouvait poser
+    # *aucune* retouche, et le message ne disait pas laquelle des tables était
+    # en cause.
+    #
+    # Les bornes viennent maintenant du service, d'où sortent aussi les phrases
+    # de refus — celles qui **nomment le réglage fautif** plutôt que de ramener
+    # en silence vers la borne la plus proche (`assets.py:95-108`).
+    cible: int = Field(64, ge=CIBLE_MIN, le=CIBLE_MAX)
     # **Le plafond n'est plus 100 %** (tranche des tailles) : au-delà, le sujet
     # dépasse la case et la boîte grandit avec lui — c'est ce qui rend un moulin
     # ou une tour demandables. La borne portée ici est large exprès ; le service

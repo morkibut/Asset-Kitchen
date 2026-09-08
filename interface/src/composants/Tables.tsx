@@ -122,7 +122,7 @@ export const TABLES: readonly { cle: Table; nom: string; fabrique?: true }[] = [
  *  dans la recette.** Les deux ont longtemps coïncidé, et le recadrage a montré
  *  qu'elles ne coïncident pas toujours : il est posé dès la naissance de tout
  *  asset qui a une silhouette, et une marge de zéro ne change rien. */
-function valeur(table: Table, recette: Recette): string | null {
+export function valeur(table: Table, recette: Recette): string | null {
   switch (table) {
     case "detourage":
       return recette.passes.length > 0 ? RESUME.detourage(recette) : null
@@ -163,7 +163,7 @@ function valeur(table: Table, recette: Recette): string | null {
  *  raison en clair à la place de ses réglages, avec ce qu'il faut faire pour
  *  l'allumer. C'est la règle de T1 — *le grisé porte sa raison* — qui change
  *  d'endroit, pas qui disparaît : une puce n'a pas la place d'une phrase. */
-function indisponible(
+export function indisponible(
   table: Table,
   traitement: EtatTraitement,
   mesures: TachesDeLAsset | null,
