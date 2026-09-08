@@ -36,6 +36,7 @@ import {
   type LigneQuiPart,
   type Tri,
   type Bibliotheque,
+  type GroupeDeRangement,
   type Etat,
   type Filtre,
   type Bande,
@@ -92,6 +93,8 @@ import {
   derniersJeux,
   type LigneDeFamille,
 } from "./composants/Carnet"
+import { EcranFamille } from "./composants/Famille"
+import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
 import { TableauDeBord } from "./composants/TableauDeBord"
 import { Ouverture } from "./composants/Ouverture"
 import {
@@ -683,6 +686,82 @@ export function App() {
   // arrive par le flux à chaque image produite, et une copie gardée ici serait
   // celle d'avant.
   const [choseChoisie, setChoseChoisie] = useState<string | null>(null)
+
+  // ── La grille d'une famille (`B9`) ────────────────────────────────────────
+  //
+  // **La famille vit dans la pile, pas à côté.** `rubrique` a longtemps porté
+  // « laquelle » pendant que la pile ne disait que *codex* : deux portes vers la
+  // même famille n'atterrissaient donc pas au même endroit, et le fil d'Ariane
+  // devinait ce que la pile ne savait pas. La pile le sait maintenant, et
+  // `rubrique` ne sert plus qu'à l'ancien codex — celui des directions, des
+  // poses et du vestiaire, qui ne sont pas des familles de sujets.
+  const familleOuverte = lieu(pile, "famille")?.famille ?? null
+  /** **`poser` puis `entrer`, et jamais l'inverse** : la famille se pose *sur*
+   *  le codex, elle n'en est pas une cinquième racine — l'onglet *Codex* reste
+   *  le geste qui dit « ailleurs », et c'est lui qui la referme. */
+  const ouvrirLaFamille = (cle: string) => {
+    setCollectionOuverte(null)
+    // ⚠️ **L'équipement n'est pas une famille de sujets.** Le carnet lui donne
+    // une ligne, mais `famille_du_type` ne connaît que les quatre autres : une
+    // grille d'équipement serait vide à jamais, et l'auteur croirait avoir tout
+    // perdu. Le vestiaire vit dans l'ancien codex, et c'est lui qu'on ouvre —
+    // jusqu'à ce qu'une tranche lui donne son écran (`B19`).
+    if (cle === "equipement") {
+      setPile(poser("codex"))
+      setRubrique("equipement")
+      return
+    }
+    setPile(entrer(poser("codex"), { genre: "famille", famille: cle }))
+  }
+  /** Le groupe ouvert sous la famille, ou `null` pour « Tous ». **Pas un lieu**
+   *  (`lieux.ts` le dit : un état de l'écran où l'on est n'est pas un endroit où
+   *  l'on va) — mais le fil le nomme, parce qu'il change ce que la grille
+   *  montre. */
+  const [collectionOuverte, setCollectionOuverte] = useState<string | null>(null)
+  /** Les collections du jeu, telles que la grille les a lues. Le carnet les
+   *  montre sans aller les chercher lui-même : une seconde lecture dirait un
+   *  compte d'un autre instant. */
+  const [groupesDeLaFamille, setGroupesDeLaFamille] = useState<GroupeDeRangement[]>([])
+  /** Ce qu'on traîne, et ce qui arriverait dans chaque groupe si l'on lâchait.
+   *  Tenu ici parce que la cible du geste — une ligne du carnet — n'est pas dans
+   *  l'écran d'où il part. */
+  const [glisses, setGlisses] = useState<readonly string[] | null>(null)
+  const [arrivants, setArrivants] = useState<Record<string, number>>({})
+  /** Un compteur, pas un drapeau : deux rangements de suite doivent relire deux
+   *  fois, et un booléen déjà à vrai ne redéclencherait rien (le patron de
+   *  `nommer`, E19). */
+  const [grilleARelire, setGrilleARelire] = useState(0)
+  const [reglagesDeFamille, setReglagesDeFamille] = useState(false)
+  /** « + Nouvelle collection », cliqué dans le carnet : c'est la grille qui sait
+   *  demander le nom, et un compteur plutôt qu'un drapeau — deux clics de suite
+   *  doivent rouvrir le champ deux fois (le patron de `nommer`, E19). */
+  const [creerUnGroupe, setCreerUnGroupe] = useState(0)
+
+  /** Lâcher les sujets traînés dans un groupe du carnet.
+   *
+   *  **On range tout ce qu'on traîne, sans trier ce qui y est déjà** : ranger ce
+   *  qui est rangé est un geste sans effet côté serveur (`Collection.avec`), et
+   *  demander d'abord *lesquels y sont* coûterait un aller-retour pour éviter
+   *  des appels qui ne font rien. Le compte annoncé pendant le geste, lui, ne
+   *  compte que les arrivants — c'est la grille qui le calcule, elle a la
+   *  réponse sous la main. */
+  const deposerDansLaCollection = async (collection: string) => {
+    const sujets = glisses ?? []
+    setGlisses(null)
+    setArrivants({})
+    if (!sujets.length || !bibliotheque.courant) return
+    try {
+      let arbre = null
+      for (const sujet of sujets) {
+        arbre = await api.rangerSujet(collection, bibliotheque.courant, sujet)
+      }
+      if (arbre) setBibliotheque(arbre.bibliotheque)
+      setGrilleARelire((n) => n + 1)
+    } catch (erreur) {
+      echouer(erreur, "rangement refusé")
+    }
+  }
+
   const choseOuverteId = lieu(pile, "sujet")?.sujet ?? null
   const setChoseOuverte = (sujet: string | null) =>
     setPile((p) => (sujet ? entrer(p, { genre: "sujet", sujet }) : sortir(p, "sujet")))
@@ -878,7 +957,12 @@ export function App() {
                     ? "clip"
                     : clipOuvert || choseOuverteId
                       ? "sujet"
-                      : onglet === "codex"
+                      : // ⚠️ **La grille d'une famille se documente encore
+                        // comme le codex** : le guide (B7) n'a pas d'entrées à
+                        // elle, et lui en écrire est le travail de sa tranche,
+                        // pas de B9. Mieux vaut les explications du voisin le
+                        // plus proche qu'un volet vide.
+                        onglet === "codex"
                         ? "codex"
                         : "galerie"
 
@@ -2477,7 +2561,7 @@ export function App() {
    *  colonne, et une bascule pour une colonne absente mentirait sur ce que
    *  l'écran contient (`docs/DESIGN.md` § Layout). */
   const bascules: Bascule[] =
-    onglet === "codex" && !choseOuverteId
+    onglet === "codex" && !choseOuverteId && !familleOuverte
       ? [
           { cle: "familles", nom: "familles", repliee: replies.familles },
           { cle: "fiche", nom: "fiche", repliee: replies.fiche },
@@ -2522,6 +2606,9 @@ export function App() {
       // alors le nom du jeu. Le codex fait exception — il nomme la famille
       // qu'on regarde, et c'est la seule chose qui distingue ses cinq écrans.
       case "codex": {
+        // La grille d'une famille nomme déjà l'étage quand elle est ouverte —
+        // deux noms pour un seul endroit feraient un fil qui se répète.
+        if (dedans.some((l) => l.genre === "famille")) return null
         const sujet = dedans.find((l) => l.genre === "sujet")
         const chose =
           sujet && sujet.genre === "sujet"
@@ -2532,6 +2619,20 @@ export function App() {
           "Personnages"
         )
       }
+      // La grille d'une famille (`B9`). Elle nomme l'étage à la place du codex
+      // qui la porte : c'est elle qui sait *laquelle*, et le `case "codex"`
+      // ci-dessus le devinait d'un état posé à côté de la pile. Le groupe
+      // ouvert donne un second nom — « Les personnages › Les boss » —, parce
+      // qu'un fil qui dirait toujours *Tous* mentirait dès qu'on ouvre un
+      // groupe.
+      case "famille": {
+        const nom = NOM_DE_LA_RUBRIQUE[ou.famille] ?? ou.famille
+        const groupe = groupesDeLaFamille.find(
+          (g) => g.identifiant === collectionOuverte,
+        )
+        return groupe ? [nom, groupe.nom] : nom
+      }
+
       case "galerie":
       case "univers":
       case "tableau-de-bord":
@@ -2839,6 +2940,9 @@ export function App() {
             : `${projetCourant?.assets ?? 0} images`
         }
         familles={famillesDuCarnet}
+        collections={groupesDeLaFamille}
+        collectionOuverte={collectionOuverte}
+        arrivants={arrivants}
         regles={cartes.length || null}
         images={projetCourant?.assets ?? 0}
         depense={
@@ -2852,15 +2956,23 @@ export function App() {
               ? "depenses"
               : onglet === "univers"
                 ? "univers"
-                : onglet === "codex"
-                  ? rubrique
-                  : "galerie"
+                : familleOuverte
+                  ? familleOuverte
+                  : onglet === "codex"
+                    ? rubrique
+                    : "galerie"
         }
         surLeJeu={() => setPile(poser("tableau-de-bord"))}
-        surLaFamille={(cle) => {
-          setPile(poser("codex"))
-          setRubrique(cle as Rubrique)
+        surLaFamille={ouvrirLaFamille}
+        surLaCollection={(cle, collection) => {
+          if (familleOuverte !== cle) ouvrirLaFamille(cle)
+          setCollectionOuverte(collection)
         }}
+        surNouvelleCollection={(cle) => {
+          if (familleOuverte !== cle) ouvrirLaFamille(cle)
+          setCreerUnGroupe((n) => n + 1)
+        }}
+        surDeposer={(collection) => void deposerDansLaCollection(collection)}
         surLesRegles={() => setPile(poser("univers"))}
         surLaGalerie={() => setPile(poser("galerie"))}
         surLesDepenses={() => {
@@ -3172,10 +3284,7 @@ export function App() {
           feuilleEnAttente={
             chantier.find((g) => g.pliage?.attend_un_choix === true) ?? null
           }
-          surLaFamille={(cle) => {
-            setPile(poser("codex"))
-            setRubrique(cle as Rubrique)
-          }}
+          surLaFamille={ouvrirLaFamille}
           surDemanderUneImage={() => setPile(poser("codex"))}
           // **La galerie montre déjà la tuile en attente** (elle en tient le
           // chantier) : B5 n'ouvre donc aucun lieu de plus, elle y ramène.
@@ -3523,11 +3632,60 @@ export function App() {
         />
       )}
 
+      {/* ── La grille d'une famille (`B9`) ─────────────────────────────────
+          **Elle remplace le codex comme destination du carnet**, elle ne s'ajoute
+          pas à côté : cliquer « Les personnages » ouvrait l'ancien écran, et
+          deux écrans pour le même geste auraient été deux vérités sur ce qu'est
+          une famille.
+
+          **L'ancien codex reste joignable par son onglet**, et il le faut : les
+          *directions*, les *poses* et le *vestiaire* n'y sont pas des familles
+          de sujets, et aucune ligne du carnet ne les atteint — les couper serait
+          rejouer la branche morte que `lieux.ts` raconte en tête de fichier. */}
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && familleOuverte && !choseOuverte && (
+        <EcranFamille
+          famille={familleOuverte}
+          nom={NOM_DANS_LE_CARNET[familleOuverte] ?? familleOuverte}
+          jeu={bibliotheque.courant ?? ""}
+          collection={collectionOuverte}
+          glisses={glisses}
+          rafraichi={grilleARelire}
+          creerUnGroupe={creerUnGroupe}
+          surGlisser={(sujets, combien) => {
+            setGlisses(sujets)
+            setArrivants(combien ?? {})
+          }}
+          surGroupes={setGroupesDeLaFamille}
+          // Le carnet compte les groupes ; un rangement fait dans la grille
+          // doit donc redescendre jusqu'à lui, sans quoi la ligne resterait à
+          // son chiffre d'avant.
+          surRange={() => void api.arbre().then(setBibliotheque).catch(() => {})}
+          surReglages={() => setReglagesDeFamille(true)}
+          surAjouter={() => {
+            // Nommer, c'est créer (US-115) : le champ qui nomme vit dans le
+            // codex, et c'est encore lui qui fait naître un sujet.
+            setPile(poser("codex"))
+            setRubrique(familleOuverte as Rubrique)
+            setNommer((n) => n + 1)
+          }}
+          surErreur={setPanne}
+        />
+      )}
+
+      {reglagesDeFamille && familleOuverte && (
+        <ReglagesDeFamille
+          famille={familleOuverte}
+          nom={NOM_DANS_LE_CARNET[familleOuverte] ?? familleOuverte}
+          onFermer={() => setReglagesDeFamille(false)}
+          onErreur={setPanne}
+        />
+      )}
+
       {/* **Le codex, et sa profondeur.** Une chose du jeu ouverte remplace le
           codex par son établi — c'est le même endroit vu de plus près, et le
           fil d'Ariane le dit. Les deux portent la barre qui paie, parce qu'ils
           sont les deux lieux d'où l'argent part. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && !choseOuverte && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && !choseOuverte && !familleOuverte && (
         <EcranCodex
           plan={plan}
           personnages={personnages}
@@ -3767,10 +3925,12 @@ export function App() {
             setRubrique("personnages")
             setChoseOuverte(identifiant)
           }}
-          surUnePiece={() => {
-            setPile(poser("codex"))
-            setRubrique("objets")
-          }}
+          // **Le vestiaire, et non plus la grille des objets.** La barre
+          // ouvrait la rubrique *objets* pour une pièce d'équipement, qui n'y a
+          // jamais figuré : les pièces vivent au vestiaire, et c'est lui qu'on
+          // ouvre. Trouvé en unifiant les portes vers une famille — la ligne du
+          // carnet et celle de la barre menaient à deux endroits différents.
+          surUnePiece={() => ouvrirLaFamille("equipement")}
           surUneImage={(identifiant) => {
             setPile(poser("galerie"))
             setTablesOuvertes(identifiant)

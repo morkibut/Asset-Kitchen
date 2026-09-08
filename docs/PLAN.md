@@ -43,10 +43,10 @@ construisant** dans `docs/status/etat.md`, ses **critères cochés** dans
 | **V3.02** | Le clip a une fiche, comme une image | **close le 5 septembre 2026** | idem |
 | **V2.5**, **V3.01**, **V3.03**, **V3.1** | Quatre blocs ouverts quand la V4 est entrée. Ce qui y a été livré tient : le relevé `N1`, le tiroir qui relit ce qui part, les trois quarts de l'atelier d'une animation aux tables, `G1` et `G16` | **périmés par le carnet** — les écrans qu'ils réparaient sont redessinés, donc le reste ne se reprend pas tel quel. ⚠️ Les quatorze tranches `G` de la V3.1 nomment des défauts réels, et **se relisent avant de clore la V4** | `archive/plan-perime-par-la-v4.md` |
 | **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **non ouverte** | ci-dessous |
-| **V4** — le carnet, `D0` et `B0` à `B22` | **La refonte de l'interface**, relevée sur les planches de `docs/pistes-2026-09-04/carnet/` : les trois onglets tombent, un carnet de 300 px les remplace, la surface n'a plus que quatre présentations. Ce n'est pas un habillage — quatre chantiers touchent le modèle, et 58 items de retouche manquent, dont une dizaine remplacent une génération payée | **ouverte le 6 septembre 2026, 9 closes sur 24** — `B1` le miroir, `B2` les clips payés qui attendent, `B3` les huit états, `D0` le système de design réécrit, `B0` le socle du carnet, `B4` l'ouverture, `B5` le tableau de bord, `B6` la barre, `B7` le guide en volet | **`docs/PLAN-carnet.md`** |
+| **V4** — le carnet, `D0` et `B0` à `B22` | **La refonte de l'interface**, relevée sur les planches de `docs/pistes-2026-09-04/carnet/` : les trois onglets tombent, un carnet de 300 px les remplace, la surface n'a plus que quatre présentations. Ce n'est pas un habillage — quatre chantiers touchent le modèle, et 58 items de retouche manquent, dont une dizaine remplacent une génération payée | **ouverte le 6 septembre 2026, 10 closes sur 24** — `B1` le miroir, `B2` les clips payés qui attendent, `B3` les huit états, `D0` le système de design réécrit, `B0` le socle du carnet, `B4` l'ouverture, `B5` le tableau de bord, `B6` la barre, `B7` le guide en volet, **`B9` la grille d'une famille** — ses sept morceaux tenus le 8 septembre : le compte groupé, la route paginée avec ses collections, l'écran à trois vues, le glisser-déposer vers les collections, les trois filtres et le panneau de réglages. `B8` reste entamée : cinq morceaux sur six sont écrits — le modèle de l'adhésion, la table de jointure, les sujets qui entrent dans l'index, les gestes qui rangent, retirent et suppriment, et la recherche en deux groupes qui fait enfin lire cet index | **`docs/PLAN-carnet.md`** |
 | **V5**, **V6** | Les tuiles qui se raccordent, le son | **non découpées** — décalées d'un cran le 6 septembre 2026 par l'entrée de la V4 | `docs/archi-versions.md` §9 et §10 |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 574 essais de
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 582 essais de
 serveur et 819 d'écran** tiennent le dépôt — comptés le 6 septembre 2026, et **aucun ne coûte
 un centime**.
 
@@ -507,13 +507,30 @@ personne ne croie la question réglée :
 
 ## Ce que ce plan ne couvre pas
 
-La **V4** — les tuiles qui se raccordent — et la **V5** — le son — sont décrites dans
-`docs/archi-versions.md` §9 et §10, et ne sont pas découpées ici.
+Les **tuiles qui se raccordent** et le **son** sont décrites dans `docs/archi-versions.md` §9
+et §10, et ne sont pas découpées ici. *Leurs numéros y datent d'avant le décalage du
+6 septembre 2026 : le carnet a pris la V4, et elles sont descendues d'un cran.*
+
+**Deux versions de plus sont cadrées et non découpées → `docs/cadrage-fil-et-3d.md`.** Le
+**fil** — discuter avec un modèle pour mettre un prompt au point, puis retoucher l'image
+revenue jusqu'à ce qu'elle convienne — et le **pantin 3D** — animer par un maillage riggé au
+lieu d'une vidéo, en recopiant le prototype `asset3d`. **Rien ne s'en construit avant que la V4
+soit close**, relevés compris ; c'est tranché avec l'auteur le 6 septembre 2026, et le fichier
+enregistre ses quatre décisions, les quatre invariants à lever, et les deux relevés qui
+décident du découpage. Le fil passe avant le pantin 3D : c'est lui qui construit la brique
+image→image dont le 3D dépend.
 
 ### Le pantin — sorti de la V3 le 3 septembre 2026, arguments intacts
 
 *Ex-`A8`, 6 US (401–406), aucune ligne écrite. **Tranché par l'auteur** : la V3 ne fait qu'une
 chose, animer par la vidéo, et le pantin est une seconde façon de faire la même chose.*
+
+> ⚠️ **Il revient en 3D, et sa limite fatale tombe avec.** Ce qui l'a écarté est écrit trois
+> paragraphes plus bas : *« il ne fait bouger que ce qui est déjà dessiné »* — pas de demi-tour,
+> pas de main qui se retourne. Un maillage riggé fait les trois, et le prototype `asset3d`
+> mesure 2 min 17 pour le maillage et 8 s pour le squelette, sur cette machine et sans un
+> centime. **La suite est cadrée dans `docs/cadrage-fil-et-3d.md`** ; ce qui est écrit
+> ci-dessous garde sa valeur de constat sur le pantin 2D, qui, lui, ne se reprend pas.
 
 **Ce que c'était.** On obtient les pièces d'un personnage à partir d'une de ses images, l'atelier
 y pose un squelette tout seul, on applique un mouvement de la bibliothèque, et l'on obtient une

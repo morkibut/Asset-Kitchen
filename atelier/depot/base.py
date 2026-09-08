@@ -7,8 +7,8 @@ les variations partent en parallèle, et une connexion partagée entre threads
 est le premier bug qu'on s'épargne.
 
 `contenu` porte l'enregistrement complet en JSON ; les colonnes qui le doublent
-existent pour être **interrogées** — statut, coût, date, projet, collection,
-favori, filiation, suppression — et sont toujours réécrites depuis l'objet.
+existent pour être **interrogées** — statut, coût, date, projet, favori,
+filiation, suppression — et sont toujours réécrites depuis l'objet.
 Jamais deux vérités : l'objet est la vérité, les colonnes en sont une projection.
 
 **Et l'objet lui-même est sur le disque.** « Les fichiers font foi, la base est
@@ -34,11 +34,12 @@ from typing import Any, Iterable, Iterator, Sequence
 from atelier.domaine.asset import Asset
 from atelier.domaine.bande import Bande
 from atelier.domaine.generation import Generation
+from atelier.domaine.personnage import Personnage
 from atelier.domaine.projet import Collection, Projet
 
 # Change à chaque évolution du schéma. L'index est alors jeté et refait depuis
 # les fichiers : c'est le geste normal, pas un incident.
-VERSION = 6
+VERSION = 11
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS generations (
@@ -69,9 +70,20 @@ CREATE TABLE IF NOT EXISTS assets (
     recherche   TEXT NOT NULL DEFAULT '',
     cree_le     REAL NOT NULL,
     projet      TEXT,
-    collection  TEXT,
     parent      TEXT,
     personnage  TEXT,
+    -- **La case que cette image remplit, en colonnes** (B9.1). Elles doublent
+    -- `contenu`, comme `personnage` et `favori` le font depuis T3, et elles se
+    -- réécrivent de l'objet à chaque enregistrement — jamais l'inverse. Sans
+    -- elles, compter les cases pleines de deux cents sujets demandait de relire
+    -- le JSON de chaque image ; avec elles, c'est un `GROUP BY`.
+    --
+    -- `piece` est ici pour une raison précise : c'est **elle** qui sépare les
+    -- deux axes de la matrice (C3). Une image sans pièce est un corps et remplit
+    -- la case de sa pose ; avec pièce, elle remplit la case de sa colonne
+    -- d'équipement. Compter sans elle ferait paraître un casque comme un corps.
+    pose        TEXT,
+    piece       TEXT,
     favori      INTEGER NOT NULL DEFAULT 0,
     epingle     INTEGER NOT NULL DEFAULT 0,
     supprime_le REAL,
@@ -79,14 +91,18 @@ CREATE TABLE IF NOT EXISTS assets (
 );
 CREATE INDEX IF NOT EXISTS assets_par_date ON assets (cree_le DESC);
 CREATE INDEX IF NOT EXISTS assets_par_projet ON assets (projet);
-CREATE INDEX IF NOT EXISTS assets_par_collection ON assets (collection);
 CREATE INDEX IF NOT EXISTS assets_par_parent ON assets (parent);
 -- La matrice de production demande « les images de ce personnage » à chaque
 -- rendu, et une suppression de personnage les redemande toutes : c'est très
 -- exactement la question qu'un index existe pour répondre. Le schéma n'a
 -- aucune migration — il est jeté et refait depuis les fichiers au premier
 -- démarrage qui suit son évolution (`docs/ARCHITECTURE.md` §4).
-CREATE INDEX IF NOT EXISTS assets_par_personnage ON assets (personnage);
+--
+-- **La pose en second terme** (B9.1) : la matrice demande toujours « les images
+-- de ce personnage », et la grille d'une famille demande « combien par pose,
+-- pour ces deux cents sujets-là ». Un index sur le couple répond aux deux — le
+-- préfixe reste utilisable seul.
+CREATE INDEX IF NOT EXISTS assets_par_personnage ON assets (personnage, pose);
 
 CREATE TABLE IF NOT EXISTS projets (
     identifiant TEXT PRIMARY KEY,
@@ -102,6 +118,49 @@ CREATE TABLE IF NOT EXISTS collections (
     cree_le     REAL NOT NULL,
     contenu     TEXT NOT NULL
 );
+
+-- **La table de jointure d'une adhésion** (B8.2). `collections.contenu` porte
+-- déjà les membres — la fiche JSON complète, comme partout ailleurs dans ce
+-- fichier — et cette table n'en est donc pas la vérité : elle existe pour
+-- qu'une question comme « les collections de ce sujet » ou « les sujets de
+-- cette collection » se pose en SQL plutôt qu'en relisant `contenu` de chaque
+-- ligne. `collection` référence son couple `(jeu, sujet)`, jamais l'inverse :
+-- deux jeux peuvent nommer leur sujet pareil (`docs/tranches/V4.md` § B8).
+-- `ON DELETE CASCADE` fait qu'une collection supprimée n'y laisse aucune ligne
+-- fantôme, sans qu'un appelant ait à s'en souvenir.
+CREATE TABLE IF NOT EXISTS collections_membres (
+    collection  TEXT NOT NULL REFERENCES collections (identifiant) ON DELETE CASCADE,
+    jeu         TEXT NOT NULL,
+    sujet       TEXT NOT NULL,
+    PRIMARY KEY (collection, jeu, sujet)
+);
+CREATE INDEX IF NOT EXISTS collections_membres_par_sujet ON collections_membres (jeu, sujet);
+
+-- **Le sujet, comme raccourci jetable** (B8.3). `donnees/projets/<jeu>/personnages/`
+-- reste la vérité — cette table n'en est qu'un index qui se reconstruit d'elle,
+-- exactement comme `assets`. Elle renverse la décision écrite en toutes lettres
+-- dans `atelier/services/production.py` (« lus du disque, jamais d'un index ») :
+-- `B9` doit pouvoir en faire défiler des centaines, et parcourir chaque fichier
+-- de chaque jeu à chaque écran ne le permet pas. Un identifiant de sujet n'est
+-- unique que **par jeu** (`docs/tranches/V4.md` § B8) : la clé est le couple, pas
+-- le seul identifiant, sinon `pelerin` du Marais écraserait celui des Salines.
+-- **Les deux colonnes de recherche** (B8.5). `recherche` porte le nom *et* la
+-- description normalisés — c'est elle que la recherche de sujets interroge.
+-- `recherche_nom` ne porte que le nom : une image se retrouve par le nom de
+-- son sujet, jamais par sa description, et confondre les deux aurait fait
+-- remonter des images sur un mot qui ne décrit qu'un texte de bible que
+-- personne n'a tapé pour chercher une image (`docs/tranches/V4.md` § B8.5).
+CREATE TABLE IF NOT EXISTS personnages (
+    identifiant   TEXT NOT NULL,
+    projet        TEXT NOT NULL,
+    nom           TEXT NOT NULL DEFAULT '',
+    recherche     TEXT NOT NULL DEFAULT '',
+    recherche_nom TEXT NOT NULL DEFAULT '',
+    cree_le       REAL NOT NULL,
+    contenu       TEXT NOT NULL,
+    PRIMARY KEY (projet, identifiant)
+);
+CREATE INDEX IF NOT EXISTS personnages_par_projet ON personnages (projet, cree_le);
 
 -- **Les bandes ne sont pas des assets** (A10), et cette table est la forme que
 -- prend cette décision. Une bande est une suite d'images qui n'existent
@@ -126,7 +185,15 @@ CREATE INDEX IF NOT EXISTS bandes_par_clip ON bandes (clip);
 CREATE INDEX IF NOT EXISTS bandes_par_personnage ON bandes (personnage);
 """
 
-TABLES = ("generations", "assets", "projets", "collections", "bandes")
+TABLES = (
+    "generations",
+    "assets",
+    "projets",
+    "collections_membres",
+    "collections",
+    "bandes",
+    "personnages",
+)
 
 
 # ── Le projet, lu une seule fois par demande ─────────────────────────────────
@@ -483,14 +550,26 @@ class Base:
     # elles sont toujours réécrites depuis l'objet. L'objet est la vérité.
 
     def enregistrer_asset(self, asset: Asset) -> None:
+        """Écrit l'asset, et recalcule `recherche` depuis lui — jamais un ajout.
+
+        **`recherche` porte le prompt, la pose et la direction** (B8.5) — les
+        trois champs que l'asset porte lui-même, dont l'identifiant est déjà un
+        mot normalisé (`atelier/domaine/projet.py:repere`). **Le nom du sujet
+        n'y est pas** : il vit sur le `Personnage`, pas sur l'asset, et le
+        graver ici à la naissance de l'image le figerait — un sujet renommé
+        laisserait ses images introuvables sous son nouveau nom. La recherche
+        d'une image par le nom de son sujet passe donc par une jointure sur
+        `personnages`, toujours à jour, jamais par cette colonne
+        (`_conditions_assets`).
+        """
         with self._connexion() as connexion:
             connexion.execute(
                 """
                 INSERT INTO assets
                     (identifiant, generation, rang, label, recherche, cree_le,
-                     projet, collection, parent, personnage, favori, epingle,
+                     projet, parent, personnage, pose, piece, favori, epingle,
                      supprime_le, contenu)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(identifiant) DO UPDATE SET
                     label = excluded.label,
                     recherche = excluded.recherche,
@@ -502,9 +581,10 @@ class Base:
                     -- en tête, et ça s'est vu au premier réalignement de lot.
                     cree_le = excluded.cree_le,
                     projet = excluded.projet,
-                    collection = excluded.collection,
                     parent = excluded.parent,
                     personnage = excluded.personnage,
+                    pose = excluded.pose,
+                    piece = excluded.piece,
                     favori = excluded.favori,
                     epingle = excluded.epingle,
                     supprime_le = excluded.supprime_le,
@@ -515,12 +595,17 @@ class Base:
                     asset.generation,
                     asset.rang,
                     asset.label,
-                    normaliser(asset.label),
+                    normaliser(
+                        " ".join(
+                            filter(None, (asset.label, asset.pose, asset.direction))
+                        )
+                    ),
                     asset.cree_le,
                     asset.projet,
-                    asset.collection,
                     asset.parent,
                     asset.personnage,
+                    asset.pose,
+                    asset.piece,
                     int(asset.favori),
                     int(asset.epingle),
                     asset.supprime_le,
@@ -553,6 +638,22 @@ class Base:
         finiraient par diverger, exactement le défaut que ce fichier interdit
         en tête : une grille qui montre 200 images et un total qui n'aurait pas
         compté les mêmes.
+
+        **`collection` ne lit plus une colonne de l'image depuis B8.4** : une
+        collection range des **sujets**, pas des images
+        (`docs/tranches/V4.md` § B8). Le filtre devient donc *les images des
+        sujets de cette collection* — une image y répond si son couple
+        `(projet, personnage)` est un membre de `collections_membres`. `NULL`
+        n'y égale jamais rien : une image sans projet ou sans personnage ne
+        matche donc aucune collection, sans garde à écrire pour le dire.
+
+        **`recherche` porte deux moitiés depuis B8.5** : la colonne `recherche`
+        de l'image elle-même — prompt, pose, direction —, **ou** le nom de son
+        sujet, lu à l'instant par une jointure sur `personnages`. La seconde
+        moitié ne peut pas être une colonne : un sujet renommé doit changer ce
+        que ses images trouvent, sans qu'aucune image n'ait été réécrite pour
+        ça — c'est le sens même d'un index qui se reconstruit du sujet, pas
+        d'un sujet copié dans l'image (`docs/tranches/V4.md` § B8.5).
         """
         conditions = ["supprime_le IS NOT NULL" if supprimes else "supprime_le IS NULL"]
         arguments: list[Any] = []
@@ -562,13 +663,24 @@ class Base:
             conditions.append("projet = ?")
             arguments.append(projet)
         if collection is not None:
-            conditions.append("collection = ?")
+            conditions.append(
+                "EXISTS (SELECT 1 FROM collections_membres cm "
+                "WHERE cm.collection = ? AND cm.jeu = assets.projet "
+                "AND cm.sujet = assets.personnage)"
+            )
             arguments.append(collection)
         if favoris:
             conditions.append("favori = 1")
         if recherche.strip():
-            conditions.append("recherche LIKE ?")
-            arguments.append("%" + normaliser(recherche.strip()) + "%")
+            terme = "%" + normaliser(recherche.strip()) + "%"
+            conditions.append(
+                "(recherche LIKE ? OR EXISTS ("
+                "SELECT 1 FROM personnages p WHERE p.projet = assets.projet "
+                "AND p.identifiant = assets.personnage AND p.recherche_nom LIKE ?"
+                "))"
+            )
+            arguments.append(terme)
+            arguments.append(terme)
         return conditions, arguments
 
     def assets(
@@ -660,8 +772,21 @@ class Base:
             ).fetchall()
         return [Asset.depuis_json(json.loads(l["contenu"])) for l in lignes]
 
-    def assets_du_personnage(self, personnage: str) -> list[Asset]:
+    def assets_du_personnage(
+        self, personnage: str, *, projet: str | None = None
+    ) -> list[Asset]:
         """Les images faites pour ce personnage — **jamais les supprimées**.
+
+        **`projet` n'est pas un confort, c'est le piège de B8.** Un identifiant
+        de sujet n'est unique que par jeu : sans lui, les images du `pelerin`
+        des Salines remplissent les cases de celui du Marais, et la matrice du
+        second se dit complète en montrant les images du premier. Trouvé en
+        B9.1, où le compte groupé — qui filtre, lui — contredisait la matrice.
+        `None` ne filtre pas : c'est ce que font encore les appelants qui n'ont
+        pas de jeu sous la main, et qui ne posent pas la question de la case.
+
+        Une image sans jeu compte quand même : elle porte bien ce sujet-là, et
+        l'écarter ferait disparaître une case pleine sans que rien ne le dise.
 
         C'est la question de la matrice, posée à chaque rendu : une case est
         pleine parce qu'une image la porte, et non parce qu'une liste de cases
@@ -671,14 +796,150 @@ class Base:
         L'ordre est celui de la grille — la plus fraîche d'abord —, parce que
         c'est la dernière image faite qui représente sa case.
         """
+        conditions = ["personnage = ?", "supprime_le IS NULL"]
+        arguments: list[Any] = [personnage]
+        if projet is not None:
+            conditions.append("(projet = ? OR projet IS NULL)")
+            arguments.append(projet)
         with self._connexion() as connexion:
             lignes = connexion.execute(
-                "SELECT contenu FROM assets "
-                "WHERE personnage = ? AND supprime_le IS NULL "
-                "ORDER BY cree_le DESC, rang ASC",
-                (personnage,),
+                "SELECT contenu FROM assets WHERE "
+                + " AND ".join(conditions)
+                + " ORDER BY cree_le DESC, rang ASC",
+                arguments,
             ).fetchall()
         return [Asset.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
+    # ── Le compte groupé, pour toute une page de sujets (B9.1) ───────────────
+    #
+    # **Ce que ces deux méthodes remplacent, et rien d'autre.** La matrice d'un
+    # sujet (`ServiceProduction.cases`) fait un aller-retour SQL par sujet ;
+    # `bilan_du_jeu` l'appelle en boucle et le dit lui-même. La grille d'une
+    # famille en montre deux cents d'un coup : deux cents allers-retours pour
+    # afficher deux cents petits « 4 / 6 ».
+    #
+    # ⚠️ Elles ne comptent **que ce qui existe**, jamais ce qui est attendu. La
+    # règle de complétude — quelles poses ce sujet-là tient, sous quels angles,
+    # combien d'images chacune réclame — vit sur `Personnage` et sur `Pose`, et
+    # elle y reste : la réécrire en SQL fabriquerait une seconde vérité, très
+    # exactement ce que `famille_de` refuse d'ailleurs pour la famille (E15).
+    # Ici on rend le numérateur ; le dénominateur se calcule en Python, à côté,
+    # par les règles déjà écrites (`docs/tranches/V4.md` § B9, décision 2).
+
+    def _comptes_par_pose(
+        self,
+        table: str,
+        projet: str,
+        personnages: Sequence[str],
+        conditions: Sequence[str] = (),
+    ) -> dict[tuple[str, str], int]:
+        """Combien de lignes par couple *(sujet, pose)*, pour ces sujets-là.
+
+        **Le jeu filtre, mais un sans-jeu compte quand même.** Un identifiant de
+        sujet n'est unique que par jeu (`docs/tranches/V4.md` § B8) : sans le
+        filtre, le `pelerin` des Salines gonflerait le compte de celui du Marais.
+        Mais une image peut porter un sujet sans porter de jeu, et la matrice la
+        compte aujourd'hui — l'exclure ici ferait dire à la grille moins que ce
+        que la fiche du même sujet montre, ce qui est la pire des deux fautes.
+        """
+        if not personnages:
+            return {}
+        toutes = [
+            "pose IS NOT NULL",
+            "pose <> ''",
+            "(projet = ? OR projet IS NULL)",
+            *conditions,
+        ]
+        comptes: dict[tuple[str, str], int] = {}
+        # SQLite plafonne le nombre de paramètres d'une requête ; on découpe,
+        # comme `rangs_vivants` le fait déjà pour la même raison.
+        with self._connexion() as connexion:
+            for depart in range(0, len(personnages), 400):
+                paquet = list(personnages[depart : depart + 400])
+                trous = ",".join("?" * len(paquet))
+                lignes = connexion.execute(
+                    f"SELECT personnage, pose, COUNT(*) AS combien FROM {table} "
+                    "WHERE " + " AND ".join(toutes)
+                    + f" AND personnage IN ({trous}) GROUP BY personnage, pose",
+                    (projet, *paquet),
+                ).fetchall()
+                for ligne in lignes:
+                    comptes[(ligne["personnage"], ligne["pose"])] = int(ligne["combien"])
+        return comptes
+
+    def images_par_pose(
+        self, projet: str, personnages: Sequence[str]
+    ) -> dict[tuple[str, str], int]:
+        """Les **corps** faits, couple par couple — jamais les calques.
+
+        `piece IS NULL` est la même ligne de partage que la matrice (C3) : une
+        image qui porte une pièce remplit la case de sa colonne d'équipement, pas
+        celle de sa pose. Sans ce filtre, un casque posé sur six poses ferait
+        paraître six corps qui n'existent pas, et un sujet sans un seul corps se
+        dirait complet.
+
+        Une image supprimée ne compte pas, exactement comme dans
+        `assets_du_personnage` : *une case est pleine parce qu'une image la
+        porte*, et la vider ne demande donc rien à défaire.
+        """
+        return self._comptes_par_pose(
+            "assets",
+            projet,
+            personnages,
+            conditions=("supprime_le IS NULL", "piece IS NULL"),
+        )
+
+    def bandes_par_pose(
+        self, projet: str, personnages: Sequence[str]
+    ) -> dict[tuple[str, str], int]:
+        """Les animations faites, couple par couple.
+
+        **Le second calque, compté à part** (A12, `AGENTS.md` 8quater). Il ne se
+        mêle pas au premier : une case qui porterait les deux serait pleine dès
+        qu'elle a l'une des deux, et une animation manquante se cacherait
+        derrière une image présente.
+        """
+        return self._comptes_par_pose("bandes", projet, personnages)
+
+    def vignettes_par_personnage(
+        self, projet: str, personnages: Sequence[str]
+    ) -> dict[str, Asset]:
+        """Une image par sujet — **celle que sa carte montre** (B9.4).
+
+        La grille d'une famille dessine deux cents cartes, chacune avec une
+        vignette. Relire les images de chaque sujet pour n'en garder qu'une
+        serait deux cents allers-retours pour deux cents timbres-poste : c'est
+        exactement ce que `B9.1` a retiré au compte, et le rendre ici par la
+        bande n'aurait aucun sens.
+
+        **La plus fraîche gagne**, comme dans `assets_du_personnage` : c'est la
+        dernière image faite qui représente son sujet. `MAX(cree_le)` avec les
+        autres colonnes nues est défini en SQLite — la ligne rendue est celle
+        du maximum, pas une ligne au hasard.
+
+        **Un corps, jamais une pièce** : un casque n'est pas le portrait de
+        celui qui le porte. C'est la même séparation que `piece IS NULL` tient
+        déjà dans le compte des cases.
+        """
+        vignettes: dict[str, Asset] = {}
+        if not personnages:
+            return vignettes
+        with self._connexion() as connexion:
+            for depart in range(0, len(personnages), 400):
+                paquet = list(personnages[depart : depart + 400])
+                trous = ",".join("?" * len(paquet))
+                lignes = connexion.execute(
+                    "SELECT personnage, contenu, MAX(cree_le) FROM assets "
+                    "WHERE supprime_le IS NULL AND piece IS NULL "
+                    "AND (projet = ? OR projet IS NULL) "
+                    f"AND personnage IN ({trous}) GROUP BY personnage",
+                    (projet, *paquet),
+                ).fetchall()
+                for ligne in lignes:
+                    vignettes[ligne["personnage"]] = Asset.depuis_json(
+                        json.loads(ligne["contenu"])
+                    )
+        return vignettes
 
     def rangs_vivants(self, generations: Sequence[str]) -> dict[str, set[int]]:
         """Quels emplacements ont **encore** leur image, pour un lot d'appels.
@@ -743,14 +1004,71 @@ class Base:
             ).fetchall()
         return {l["projet"]: l["combien"] for l in lignes}
 
-    def compter_par_collection(self) -> dict[str, int]:
+    def compter_par_collection(self, jeu: str | None = None) -> dict[str, int]:
+        """Combien de **sujets** par collection (B8.4) — plus des images.
+
+        Lu sur `collections_membres` : chaque ligne y est un couple
+        `(jeu, sujet)` déjà dédupliqué par `Collection.avec`, donc compter les
+        lignes de la table revient à compter les sujets.
+
+        **Sans `jeu`, une collection qui mêle deux univers compte les deux
+        ensemble** — c'est une taille de groupe pour l'arbre, et c'est ce que
+        l'arbre veut : il range les collections de l'atelier, pas d'un jeu.
+
+        **Avec `jeu`, c'est « combien de ce jeu-ci »**, ce que `sujets_du_jeu`
+        seule savait répondre jusqu'ici (`atelier/domaine/projet.py`), et ce
+        dont la grille de `B9.5` a besoin : le « 10 + 3 » annoncé au-dessus
+        d'une collection pendant qu'on y glisse trois sujets doit compter les
+        dix **de ce jeu-là**. Un compte mêlé annoncerait un total que le carnet
+        ne montrerait jamais.
+        """
         with self._connexion() as connexion:
             lignes = connexion.execute(
-                "SELECT collection, count(*) AS combien FROM assets "
-                "WHERE supprime_le IS NULL AND collection IS NOT NULL "
-                "GROUP BY collection"
+                "SELECT collection, count(*) AS combien FROM collections_membres "
+                + ("WHERE jeu = ? " if jeu is not None else "")
+                + "GROUP BY collection",
+                (jeu,) if jeu is not None else (),
             ).fetchall()
         return {l["collection"]: l["combien"] for l in lignes}
+
+    def collections_par_sujet(
+        self, jeu: str, sujets: Sequence[str]
+    ) -> dict[str, list[dict[str, str]]]:
+        """Les collections de chaque sujet, pour toute une page (B9.3).
+
+        **Une jointure, posée à côté du compte de B9.1** dans la même requête
+        de la route — c'est le patron déjà écrit en `B8.4` pour *compter* un
+        groupe, employé ici pour *lister* les groupes d'un sujet. `collections.nom`
+        est joint tout de suite : sans lui, l'écran devrait relire chaque
+        collection une par une pour savoir comment l'appeler.
+
+        **Filtré par jeu, comme `assets_du_personnage` depuis B9.1** — le même
+        piège d'homonymie s'appliquerait sinon : le `pelerin` du Marais verrait
+        les collections où le `pelerin` des Salines est rangé.
+
+        Un sujet sans aucune collection reçoit une liste vide, jamais une clé
+        absente — la carte n'a pas à distinguer les deux.
+        """
+        resultat: dict[str, list[dict[str, str]]] = {s: [] for s in sujets}
+        if not sujets:
+            return resultat
+        with self._connexion() as connexion:
+            for depart in range(0, len(sujets), 400):
+                paquet = list(sujets[depart : depart + 400])
+                trous = ",".join("?" * len(paquet))
+                lignes = connexion.execute(
+                    "SELECT cm.sujet AS sujet, c.identifiant AS identifiant, "
+                    "c.nom AS nom FROM collections_membres cm "
+                    "JOIN collections c ON c.identifiant = cm.collection "
+                    f"WHERE cm.jeu = ? AND cm.sujet IN ({trous}) "
+                    "ORDER BY c.cree_le",
+                    (jeu, *paquet),
+                ).fetchall()
+                for ligne in lignes:
+                    resultat[ligne["sujet"]].append(
+                        {"identifiant": ligne["identifiant"], "nom": ligne["nom"]}
+                    )
+        return resultat
 
     def a_purger(self, avant: float) -> list[Asset]:
         """Les suppressions dont l'annulation a expiré. Un balayage, jamais une
@@ -940,6 +1258,22 @@ class Base:
                     json.dumps(collection.en_json(), ensure_ascii=False),
                 ),
             )
+            # La table de jointure se réécrit en entier plutôt que se diffe :
+            # même règle que `contenu` deux lignes plus haut, et une collection
+            # ne porte jamais assez de membres pour que ça coûte quoi que ce
+            # soit (B8.2).
+            connexion.execute(
+                "DELETE FROM collections_membres WHERE collection = ?",
+                (collection.identifiant,),
+            )
+            connexion.executemany(
+                "INSERT INTO collections_membres (collection, jeu, sujet) "
+                "VALUES (?, ?, ?)",
+                [
+                    (collection.identifiant, membre.jeu, membre.sujet)
+                    for membre in collection.membres
+                ],
+            )
 
     def collections(self) -> list[Collection]:
         with self._connexion() as connexion:
@@ -961,6 +1295,82 @@ class Base:
         with self._connexion() as connexion:
             connexion.execute(
                 "DELETE FROM collections WHERE identifiant = ?", (identifiant,)
+            )
+
+    # ── Les sujets, comme raccourci jetable (B8.3) ───────────────────────────
+    #
+    # **Deux crochets, pas une chasse.** `ServiceProduction._sauver` est le seul
+    # endroit du dépôt qui écrive un personnage, et `supprimer_personnage` le
+    # seul qui l'efface — les deux appellent respectivement `enregistrer_personnage`
+    # et `oublier_personnage` juste après avoir touché le fichier. Rien d'autre
+    # n'écrit ici, et `personnages()` (`atelier/services/production.py`) continue
+    # de lire le disque : router cette lecture est l'affaire de `B8.4` et de `B9`.
+
+    def enregistrer_personnage(self, personnage: Personnage) -> None:
+        with self._connexion() as connexion:
+            connexion.execute(
+                """
+                INSERT INTO personnages
+                    (identifiant, projet, nom, recherche, recherche_nom, cree_le, contenu)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(projet, identifiant) DO UPDATE SET
+                    nom = excluded.nom,
+                    recherche = excluded.recherche,
+                    recherche_nom = excluded.recherche_nom,
+                    cree_le = excluded.cree_le,
+                    contenu = excluded.contenu
+                """,
+                (
+                    personnage.identifiant,
+                    personnage.projet,
+                    personnage.nom,
+                    normaliser(personnage.nom + " " + personnage.description),
+                    normaliser(personnage.nom),
+                    personnage.cree_le,
+                    json.dumps(personnage.en_json(), ensure_ascii=False),
+                ),
+            )
+
+    def personnages_du_projet(
+        self, projet: str, *, recherche: str = "", limite: int | None = 200
+    ) -> list[Personnage]:
+        """Ceux d'un projet — **et ceux qui répondent à une recherche** (B8.5).
+
+        Le même filtre que celui des images (`_conditions_assets`), en plus
+        simple : un seul groupe, un seul champ de comparaison, parce qu'un
+        sujet n'a ni prompt ni pose — juste un nom et une description, tous
+        deux dans `recherche`.
+
+        **`limite=None` ne plafonne rien** — arrivé en B9.2, pour la route qui
+        sert une famille : la décision 1 de `B9` filtre la famille **en
+        mémoire**, et filtrer en mémoire un sous-ensemble d'une page déjà
+        plafonnée aurait fait paraître moins de sujets qu'il n'en existe
+        vraiment dans cette famille. Il faut donc le jeu entier avant de
+        répartir, et seule cette route-là pose `limite=None` : `rechercher_personnages`
+        garde son plafond, exposé tel quel à l'agent et à l'écran de recherche.
+        """
+        conditions = ["projet = ?"]
+        arguments: list[Any] = [projet]
+        if recherche.strip():
+            conditions.append("recherche LIKE ?")
+            arguments.append("%" + normaliser(recherche.strip()) + "%")
+        requete = (
+            "SELECT contenu FROM personnages WHERE "
+            + " AND ".join(conditions)
+            + " ORDER BY cree_le"
+        )
+        if limite is not None:
+            requete += " LIMIT ?"
+            arguments.append(limite)
+        with self._connexion() as connexion:
+            lignes = connexion.execute(requete, arguments).fetchall()
+        return [Personnage.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
+    def oublier_personnage(self, projet: str, identifiant: str) -> None:
+        with self._connexion() as connexion:
+            connexion.execute(
+                "DELETE FROM personnages WHERE projet = ? AND identifiant = ?",
+                (projet, identifiant),
             )
 
     # ── Les bandes (A10) ─────────────────────────────────────────────────────
@@ -1020,11 +1430,22 @@ class Base:
             ).fetchall()
         return [Bande.depuis_json(json.loads(l["contenu"])) for l in lignes]
 
-    def bandes_du_personnage(self, personnage: str) -> list[Bande]:
+    def bandes_du_personnage(
+        self, personnage: str, *, projet: str | None = None
+    ) -> list[Bande]:
+        """Le second calque du même sujet, et le même filtre facultatif que
+        `assets_du_personnage` — pour la même raison, et elle y est écrite."""
+        conditions = ["personnage = ?"]
+        arguments: list[Any] = [personnage]
+        if projet is not None:
+            conditions.append("(projet = ? OR projet IS NULL)")
+            arguments.append(projet)
         with self._connexion() as connexion:
             lignes = connexion.execute(
-                "SELECT contenu FROM bandes WHERE personnage = ? ORDER BY cree_le",
-                (personnage,),
+                "SELECT contenu FROM bandes WHERE "
+                + " AND ".join(conditions)
+                + " ORDER BY cree_le",
+                arguments,
             ).fetchall()
         return [Bande.depuis_json(json.loads(l["contenu"])) for l in lignes]
 
@@ -1051,6 +1472,7 @@ class Base:
         projets: Iterable[Projet] = (),
         collections: Iterable[Collection] = (),
         bandes: Iterable[Bande] = (),
+        personnages: Iterable[Personnage] = (),
     ) -> None:
         """Repose en bloc ce qu'on vient de relire du disque (US-40)."""
         for projet in projets:
@@ -1063,3 +1485,5 @@ class Base:
             self.enregistrer_asset(asset)
         for bande in bandes:
             self.enregistrer_bande(bande)
+        for personnage in personnages:
+            self.enregistrer_personnage(personnage)

@@ -57,8 +57,19 @@ class CorpsSelection(BaseModel):
 
 
 class CorpsRangement(CorpsSelection):
+    """**Ne pose plus qu'un projet** (B8.4) : ranger dans une collection est un
+    geste sur un sujet, pas sur une image — voir `CorpsMembre`."""
+
     projet: str | None = None
-    collection: str | None = None
+
+
+class CorpsMembre(BaseModel):
+    """Un couple `(jeu, sujet)` — jamais l'identifiant seul, pour la raison de
+    `Membre` (`atelier/domaine/projet.py`) : deux jeux peuvent nommer leur
+    sujet pareil."""
+
+    jeu: str = Field(min_length=1)
+    sujet: str = Field(min_length=1)
 
 
 class CorpsFavori(CorpsSelection):
@@ -203,10 +214,38 @@ async def creer_collection(requete: Request, corps: CorpsNom) -> dict[str, Any]:
 
 @routeur.delete("/collections/{identifiant}")
 async def supprimer_collection(requete: Request, identifiant: str) -> dict[str, Any]:
-    """La collection part, ses assets restent — dans leur projet, sans collection."""
+    """La collection part. Aucun sujet n'est touché (B8.4) : l'adhésion vit sur
+    la collection, la retirer ne défait rien ailleurs."""
     atelier = _atelier(requete)
     compte = atelier.bibliotheque.supprimer_collection(identifiant)
     return {**compte, "bibliotheque": atelier.bibliotheque.arbre()}
+
+
+@routeur.put("/collections/{identifiant}/members")
+async def ranger_sujet(
+    requete: Request, identifiant: str, corps: CorpsMembre
+) -> dict[str, Any]:
+    """Un sujet de plus dans le groupe (B8.4). Sans effet s'il y est déjà."""
+    atelier = _atelier(requete)
+    collection = atelier.bibliotheque.ranger_sujet(identifiant, corps.jeu, corps.sujet)
+    return {
+        "collection": collection.en_json(),
+        "bibliotheque": atelier.bibliotheque.arbre(),
+    }
+
+
+@routeur.delete("/collections/{identifiant}/members/{jeu}/{sujet}")
+async def retirer_sujet(
+    requete: Request, identifiant: str, jeu: str, sujet: str
+) -> dict[str, Any]:
+    """Le sujet quitte le groupe (B8.4). Ni son jeu ni ses images n'en savent
+    rien — seule l'adhésion bouge."""
+    atelier = _atelier(requete)
+    collection = atelier.bibliotheque.retirer_sujet(identifiant, jeu, sujet)
+    return {
+        "collection": collection.en_json(),
+        "bibliotheque": atelier.bibliotheque.arbre(),
+    }
 
 
 # ── Ranger, juger, jeter ─────────────────────────────────────────────────────
@@ -214,11 +253,9 @@ async def supprimer_collection(requete: Request, identifiant: str) -> dict[str, 
 
 @routeur.put("/assets/arrangement")
 async def ranger(requete: Request, corps: CorpsRangement) -> dict[str, Any]:
-    """Poser une sélection dans un projet, dans une collection, ou nulle part."""
+    """Poser une sélection dans un projet, ou nulle part."""
     atelier = _atelier(requete)
-    ranges = atelier.bibliotheque.ranger(
-        corps.identifiants, projet=corps.projet, collection=corps.collection
-    )
+    ranges = atelier.bibliotheque.ranger(corps.identifiants, projet=corps.projet)
     return {
         "assets": [a.en_json() for a in ranges],
         "bibliotheque": atelier.bibliotheque.arbre(),

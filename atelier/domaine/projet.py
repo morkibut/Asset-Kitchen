@@ -1350,14 +1350,134 @@ class Projet:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class Membre:
+    """Un sujet rangé dans une collection — **le jeu et le sujet ensemble**.
+
+    Jamais un identifiant seul, et c'est la seule chose à retenir de cet
+    objet. Les identifiants de sujet sont uniques **par jeu** : `balthazar`
+    existe dans `coeur-de-pierre-01` comme il pourrait exister ailleurs, et une
+    collection peut n'appartenir à aucun jeu (voir la docstring de ce module).
+    Un identifiant nu ferait donc entrer le sujet d'un autre jeu dans la
+    collection au premier homonyme — silencieusement, et sans qu'aucun écran
+    puisse le distinguer d'un rangement voulu.
+
+    **Les mots sont ceux des écrans, `jeu` et `sujet`**, et c'est un choix de
+    l'auteur, tranché le 6 septembre 2026 contre la recommandation inverse :
+    le code du carnet parlera la langue des maquettes. Ailleurs dans le dépôt
+    les mêmes choses s'appellent encore `projet` et `personnage` — un
+    `Personnage` porte son `projet`, une image porte son `personnage` —, et la
+    traduction se fait aux frontières, en un mot chaque fois.
+
+    ⚠️ **Le champ `Collection.projet` ne suit pas**, et ce n'est pas un oubli :
+    c'est le jeu auquel appartient la collection elle-même, il est écrit sous
+    ce nom-là dans `collections.json` depuis T3, et le renommer ferait
+    disparaître le jeu de toutes les collections déjà sur le disque. Le
+    renommage général, s'il vient, est une tranche à lui seul.
+    """
+
+    jeu: str
+    sujet: str
+
+    def en_json(self) -> dict[str, Any]:
+        return {"jeu": self.jeu, "sujet": self.sujet}
+
+
+def membres_depuis_json(brut: Any) -> tuple[Membre, ...]:
+    """Les membres d'une fiche de collection, dans l'ordre où ils ont été rangés.
+
+    **Une fiche écrite avant B8 n'a pas de membres, et ce n'est pas une
+    erreur** : elle rend un tuple vide, la collection se relit, rien n'est
+    perdu. C'est ce qui tient le critère « les collections déjà écrites sur le
+    disque se relisent sans perte » sans qu'aucune conversion ait lieu.
+
+    Ce qui est mal formé — une entrée sans jeu, sans sujet, ou qui n'est pas
+    une fiche — est écarté plutôt que de faire échouer la lecture : un membre
+    illisible ne doit pas emporter la collection entière avec lui.
+    """
+    if not isinstance(brut, (list, tuple)):
+        return ()
+    membres: list[Membre] = []
+    deja: set[tuple[str, str]] = set()
+    for entree in brut:
+        if not isinstance(entree, dict):
+            continue
+        jeu = entree.get("jeu")
+        sujet = entree.get("sujet")
+        if not isinstance(jeu, str) or not jeu:
+            continue
+        if not isinstance(sujet, str) or not sujet:
+            continue
+        couple = (jeu, sujet)
+        if couple in deja:
+            continue
+        deja.add(couple)
+        membres.append(Membre(jeu=jeu, sujet=sujet))
+    return tuple(membres)
+
+
 @dataclass(slots=True)
 class Collection:
-    """Un regroupement à plat. Ne contraint rien, ne coûte rien."""
+    """Un regroupement à plat de **sujets**. Ne contraint rien, ne coûte rien.
+
+    **L'adhésion s'écrit ici, sur la collection, et pas sur le sujet** (B8).
+    C'est ce qui rend vrai par construction *retirer une collection ne perd
+    aucun sujet* : supprimer, c'est réécrire un fichier, et aucun fichier de
+    sujet n'est touché. L'autre sens aurait demandé de balayer tous les sujets
+    de tous les jeux — un balayage capable de réussir à moitié, pour un geste
+    qui ne devrait rien écrire du tout.
+
+    Un sujet appartient à **plusieurs** collections, et y en ranger un ne le
+    retire d'aucune autre. C'est la différence avec ce que portait l'image
+    jusqu'à B8.4 — `Asset.collection`, zéro ou une —, et qui en est partie.
+
+    ⚠️ **Une collection d'un jeu accueille le sujet d'un autre, et c'est
+    voulu.** Tranché par l'auteur le 6 septembre 2026 : ranger n'est jamais
+    refusé, un groupe peut devenir mixte. C'est l'inverse de ce que fait le
+    `projet` de la collection pour les **images**, qui décide du leur — mais
+    ranger un sujet ne le déplace pas d'univers, il n'y a donc rien à
+    trancher et rien à refuser.
+
+    **Ce que ça coûte, et où c'est payé** : un écran qui compte les sujets
+    d'une collection doit dire de quel jeu il parle, sinon il additionne deux
+    univers. `sujets_du_jeu()` est là pour ça, et c'est par elle que
+    l'arbre de `B8.4` et la grille de `B9` liront un groupe.
+    """
 
     identifiant: str
     nom: str
     projet: str | None = None
     cree_le: float = field(default_factory=time.time)
+    membres: tuple[Membre, ...] = ()
+
+    def contient(self, jeu: str, sujet: str) -> bool:
+        return Membre(jeu=jeu, sujet=sujet) in self.membres
+
+    def avec(self, jeu: str, sujet: str) -> "Collection":
+        """Le sujet rangé. **Deux fois ne fait pas deux membres** : ranger ce
+        qui est déjà rangé est un geste sans effet, pas une erreur — c'est ce
+        qui rend un glisser-déposer répété inoffensif."""
+        if self.contient(jeu, sujet):
+            return self
+        return replace(self, membres=self.membres + (Membre(jeu=jeu, sujet=sujet),))
+
+    def sans(self, jeu: str, sujet: str) -> "Collection":
+        """Le sujet retiré du groupe. **Le sujet lui-même ne bouge pas** : ni
+        son fichier, ni son jeu, ni ses images."""
+        return replace(
+            self,
+            membres=tuple(
+                m for m in self.membres if m.jeu != jeu or m.sujet != sujet
+            ),
+        )
+
+    def sujets_du_jeu(self, jeu: str) -> tuple[str, ...]:
+        """Les sujets de ce jeu-là, dans l'ordre où ils ont été rangés.
+
+        **La méthode par laquelle un groupe se lit**, et pas un raccourci :
+        une collection peut mêler deux univers (voir plus haut), si bien que
+        lire `membres` sans filtrer, c'est compter deux jeux ensemble."""
+        return tuple(m.sujet for m in self.membres if m.jeu == jeu)
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -1365,6 +1485,7 @@ class Collection:
             "nom": self.nom,
             "projet": self.projet,
             "cree_le": self.cree_le,
+            "membres": [m.en_json() for m in self.membres],
         }
 
     @staticmethod
@@ -1374,6 +1495,7 @@ class Collection:
             nom=d.get("nom", d["identifiant"]),
             projet=d.get("projet"),
             cree_le=d.get("cree_le", 0.0),
+            membres=membres_depuis_json(d.get("membres")),
         )
 
 

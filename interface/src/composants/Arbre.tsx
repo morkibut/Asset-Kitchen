@@ -171,7 +171,7 @@ export function Arbre({
               <Rangee
                 key={c.identifiant}
                 nom={c.nom}
-                compte={c.assets}
+                compte={c.sujets}
                 ouverte={collection === c.identifiant}
                 onOuvrir={() =>
                   onCollection(collection === c.identifiant ? null : c.identifiant)

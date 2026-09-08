@@ -36,6 +36,7 @@ from atelier.domaine.bande import Bande
 from atelier.domaine.consommation import est_argent
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Generation, Statut
+from atelier.domaine.personnage import Personnage
 from atelier.domaine.projet import NOM_BAC_A_SABLE, Collection, Projet, repere
 from atelier.services.assets import ServiceAssets
 from atelier.services.evenements import Diffusion
@@ -167,6 +168,16 @@ class ServiceBibliotheque:
             if isinstance(c, dict) and c.get("identifiant")
         ]
 
+        # **Le sujet entre dans l'index comme le reste** (B8.3) : un raccourci
+        # jetable, reconstruit d'ici comme `assets` ou `collections`. La vérité
+        # reste `donnees/projets/<jeu>/personnages/` — un fichier disparu ne
+        # revient pas plus qu'un asset dont l'image brute a été effacée.
+        personnages = [
+            Personnage.depuis_json(contenu)
+            for projet in projets
+            for contenu in self._fichiers.parcourir_personnages(projet.identifiant)
+        ]
+
         generations: list[Generation] = []
         assets: list[Asset] = []
         for contenu in self._fichiers.parcourir_generations():
@@ -212,6 +223,7 @@ class ServiceBibliotheque:
             projets=projets,
             collections=collections,
             bandes=bandes,
+            personnages=personnages,
         )
         return {
             "projets": len(projets),
@@ -219,6 +231,7 @@ class ServiceBibliotheque:
             "generations": len(generations),
             "assets": len(assets),
             "bandes": len(bandes),
+            "personnages": len(personnages),
         }
 
     # ── Les projets ──────────────────────────────────────────────────────────
@@ -315,7 +328,6 @@ class ServiceBibliotheque:
         detaches = []
         for asset in self._base.assets(projet=identifiant, limite=100_000):
             asset.projet = None
-            asset.collection = None
             self._assets.sauver(asset)
             detaches.append(asset.identifiant)
 
@@ -391,25 +403,61 @@ class ServiceBibliotheque:
         collection = Collection(
             identifiant=repere(propre, pris), nom=propre, projet=projet
         )
+        self._sauver_collection(collection)
+        return collection
+
+    def _sauver_collection(self, collection: Collection) -> Collection:
+        """**Le seul endroit qui écrit une collection**, index et fichier
+        ensemble (B8.1).
+
+        L'index et `collections.json` ne se laissent pas écrire séparément :
+        la fiche du disque est reconstruite **depuis l'index** juste après y
+        avoir posé la collection, si bien qu'un appelant qui oublierait la
+        seconde moitié laisserait une adhésion vivante en mémoire et absente du
+        disque — invisible jusqu'au prochain redémarrage. Les gestes de B8.4
+        passent tous par ici, pour la même raison qu'un sujet n'a qu'un seul
+        endroit qui l'écrit (`ServiceProduction._sauver`).
+        """
         self._base.enregistrer_collection(collection)
         self._ecrire_collections()
         self._annoncer()
         return collection
 
     def supprimer_collection(self, identifiant: str) -> dict[str, Any]:
-        """La collection part, ses assets restent — dans leur projet, sans
-        collection. Une collection ne contraint rien, la supprimer non plus."""
-        if self._base.lire_collection(identifiant) is None:
+        """La collection part. **Aucun sujet n'est touché** (B8.4) : l'adhésion
+        s'écrit sur la collection (B8.1), donc la supprimer n'a rien à défaire
+        ailleurs — ni fichier de sujet à réécrire, ni image à toucher. La table
+        de jointure se vide d'elle-même, par `ON DELETE CASCADE` (B8.2)."""
+        collection = self._base.lire_collection(identifiant)
+        if collection is None:
             raise CollectionInconnue(identifiant)
-        vides = 0
-        for asset in self._base.assets(collection=identifiant, limite=100_000):
-            asset.collection = None
-            self._assets.sauver(asset)
-            vides += 1
         self._base.oublier_collection(identifiant)
         self._ecrire_collections()
         self._annoncer()
-        return {"collection": identifiant, "assets": vides}
+        return {"collection": identifiant, "sujets": len(collection.membres)}
+
+    def ranger_sujet(self, identifiant: str, jeu: str, sujet: str) -> Collection:
+        """Un sujet de plus dans le groupe (B8.4).
+
+        **Deux fois ne fait pas deux membres** (`Collection.avec`), donc un
+        glisser-déposer répété sur la même case ne casse rien. Et ranger ne
+        juge jamais : un sujet d'un autre jeu que celui de la collection y
+        entre quand même — tranché par l'auteur en `B8.1`, contre la
+        recommandation inverse.
+        """
+        collection = self._base.lire_collection(identifiant)
+        if collection is None:
+            raise CollectionInconnue(identifiant)
+        return self._sauver_collection(collection.avec(jeu, sujet))
+
+    def retirer_sujet(self, identifiant: str, jeu: str, sujet: str) -> Collection:
+        """Le sujet quitte le groupe (B8.4). **Il ne bouge pas lui-même** — ni
+        son fichier, ni son jeu, ni ses images : seule l'adhésion change
+        (`Collection.sans`)."""
+        collection = self._base.lire_collection(identifiant)
+        if collection is None:
+            raise CollectionInconnue(identifiant)
+        return self._sauver_collection(collection.sans(jeu, sujet))
 
     def _ecrire_collections(self) -> None:
         self._fichiers.ecrire_collections(
@@ -490,30 +538,22 @@ class ServiceBibliotheque:
         identifiants: Iterable[str],
         *,
         projet: str | None = None,
-        collection: str | None = None,
     ) -> list[Asset]:
-        """Poser une sélection dans un projet, dans une collection, ou nulle part.
+        """Poser une sélection dans un projet, ou nulle part.
 
-        **Une collection qui appartient à un projet décide du projet** : sinon
-        un asset se retrouverait dans la collection d'un univers et dans un
-        autre univers, et l'arbre mentirait à l'un des deux endroits.
+        **Ranger dans une collection n'est plus un geste sur l'image** (B8.4) :
+        une collection range des sujets, et c'est `ranger_sujet` /
+        `retirer_sujet` qui portent ce geste-là. Une image ne décide donc plus
+        de son projet par la collection où on la pose — il n'y a plus de
+        collection à poser sur elle.
         """
         if projet is not None and self._base.lire_projet(projet) is None:
             raise ProjetInconnu(projet, [p.identifiant for p in self.projets()])
 
-        cible = projet
-        if collection is not None:
-            fiche = self._base.lire_collection(collection)
-            if fiche is None:
-                raise CollectionInconnue(collection)
-            if fiche.projet is not None:
-                cible = fiche.projet
-
         ranges = []
         for identifiant in identifiants:
             asset = self._trouver(identifiant)
-            asset.projet = cible
-            asset.collection = collection
+            asset.projet = projet
             self._assets.sauver(asset)
             ranges.append(asset)
         self._annoncer()
@@ -910,6 +950,14 @@ class ServiceBibliotheque:
         **Les jeux sortent du dernier travaillé au plus ancien** (B4) — ce
         que trie le carnet, ce que montre l'ouverture. `self.projets()`
         garde l'ordre du dépôt ; c'est ici, à l'écran, que la récence compte.
+
+        **Une collection compte désormais des sujets, sous la clé `sujets`, et
+        non plus des images sous `assets`** (B8.4) : le renommage est
+        volontaire. Un écran d'avant la tranche qui lirait encore `assets` sur
+        une collection ne trouverait rien plutôt qu'un chiffre plausible et
+        faux — la même règle qu'applique déjà `docs/tranches/V4.md` (§ B8) à
+        la grille : compter zéro se voit, compter juste la mauvaise moitié ne
+        se voit pas.
         """
         combien = self._base.compter_par_projet()
         totaux = self._base.totaux_par_projet()
@@ -928,7 +976,7 @@ class ServiceBibliotheque:
                 for projet in projets
             ],
             "collections": [
-                {**collection.en_json(), "assets": par_collection.get(collection.identifiant, 0)}
+                {**collection.en_json(), "sujets": par_collection.get(collection.identifiant, 0)}
                 for collection in self.collections()
             ],
             "sans_projet": {

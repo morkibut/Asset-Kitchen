@@ -119,6 +119,12 @@ ANCIENS_ETATS = (
     "choseOuverteId",
     "caseOuverte",
     "tablesOuvertes",
+    # **La famille rejoint la liste le jour où elle entre dans la pile** (B9.4).
+    # Elle vivait exactement du défaut que cette liste garde : la pile disait
+    # *codex* et un `useState` disait *laquelle*, si bien que deux portes vers la
+    # même famille n'atterrissaient pas au même endroit et que le fil d'Ariane
+    # devinait ce que la pile ne savait pas.
+    "familleOuverte",
 )
 
 

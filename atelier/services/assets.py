@@ -753,7 +753,6 @@ class ServiceAssets:
             # pas parce qu'on relance l'appel qui l'avait produite.
             direction=ancien.direction if ancien else generation.direction,
             personnage_supprime=ancien.personnage_supprime if ancien else False,
-            collection=ancien.collection if ancien else None,
             favori=ancien.favori if ancien else False,
             # La filiation vient de la source d'édition réinjectée (US-12).
             # Sans réinjection, l'asset n'a pas de parent — et c'est vrai, pas

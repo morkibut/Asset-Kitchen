@@ -11,6 +11,290 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B9.4 à B9.7 — l'écran d'une famille — 8 septembre 2026
+
+**Cliquer « Les personnages » dans le carnet ouvre enfin une grille de personnages.** La route
+existait depuis `B9.2` et personne ne l'affichait ; c'est fini. Trois vues — la grille, la liste,
+le tableau des poses —, une recherche, trois filtres, la sélection multiple, un volet à droite,
+le glisser-déposer vers les collections, et un panneau de réglages à côté.
+
+**La famille est un lieu, pas un `useState`.** `lieux.ts` gagne un variant `famille` posé sur le
+codex. Sans lui, la pile aurait dit *codex* pendant qu'un état disait *laquelle* : deux portes
+vers la même famille n'auraient pas atterri au même endroit, et le fil d'Ariane aurait deviné ce
+que la pile ne savait pas. Le nom est entré dans la liste des états d'ouverture interdits de
+`tests/test_b0.py` le jour même où il est entré dans la pile.
+
+**Les trois comptes de filtre portent sur la famille entière, jamais sur la page servie.** Comptés
+sur la page, l'onglet aurait dit *Incomplets 31* au-dessus d'une grille qui n'en montre que les
+premiers chargés — et le chiffre aurait *baissé* en cliquant « Charger la suite », c'est-à-dire
+l'inverse de ce que fait ce bouton.
+
+**Les collections vides sont servies à part, et il le faut.** Une collection sans membre ne
+figure sur la carte d'aucun sujet : lue depuis les cartes, elle serait invisible. Or c'est
+précisément celle qu'on veut remplir en y glissant quelque chose.
+
+⚠️ **Le « 10 + 3 » du survol ne peut pas se lire dans le glissement.** `getData` est vide pendant
+un `dragover` — la règle du drag-and-drop HTML, pas un défaut. Le compte projeté est donc calculé
+au `dragstart` et remonté au parent, parce que la seconde cible de dépôt vit dans le carnet, qui
+n'a pas les sujets de la page pour le calculer lui-même. Et il ne compte que **ceux qui n'y sont
+pas déjà** : annoncer trois pour n'en poser qu'un mentirait sur ce qui va se passer.
+
+⚠️ **Deux allers-retours pour un, et seul le navigateur l'a vu.** Remettre la limite de page à 120
+dans un `useEffect` la remettait après le départ du chargement : ouvrir une collection lisait
+d'abord la famille avec l'ancienne limite déroulée — 360 sujets pour rien — puis la relisait à
+120. La remise se fait pendant le rendu. Mesuré sur l'atelier jetable : *avant 2, après 1*.
+**L'essai qui le garde compare la liste des lectures, pas un temps** — la mesure trop large du
+point 8sexies aurait dit « c'est rapide » des deux.
+
+⚠️ **Et l'écran ne posait pas son fond.** Le châssis autour est encore sombre : une grille de
+cartes claires se dessinait sur du noir. Aucun essai d'écran ne pouvait le voir, aucun
+compilateur non plus — c'est très exactement ce que le second atelier sert à trouver.
+
+**Le panneau de réglages a corrigé sa propre conception.** Elle annonçait un *PATCH partiel* sur
+`PUT /universe` ; la route remplace tout l'univers. Le panneau garde donc les deux tables
+entières en mémoire, n'édite que les lignes de la famille ouverte, et renvoie toujours le tout.
+Deux essais vérifient que les trois autres familles ressortent inchangées du corps envoyé.
+
+**La maquette n'a pas été suivie sur trois points, et c'est assumé.** Le rouille sur ce qui manque
+(le rouille ne sert qu'au bouton qui lance et au chiffre qui coûte, précédent de `TableauDeBord`),
+le fantôme du glisser réduit à un rectangle, et les commandes que rien n'appellerait — *Exporter*,
+*Générer la pose manquante*, *Les retirer du jeu* — qui n'ont pas été écrites.
+
+## V4 · B9.1 — le compte groupé par sujet — 7 septembre 2026
+
+**La grille d'une famille saura dire « 4 poses sur 6 » de deux cents sujets en deux requêtes.**
+Le produit savait déjà répondre à cette question — c'est la matrice, `cases()` — mais une fois
+par sujet, avec un aller-retour SQL chacun : `bilan_du_jeu` l'appelle en boucle depuis `B5` et
+le dit lui-même. `comptes(projet, sujets)` remplace la boucle par un `GROUP BY personnage, pose`
+sur les images et un autre sur les bandes. Aucune route ne le sert : c'est `B9.2`, et le silence
+est voulu — 8nonies interdit une route que nul écran n'affiche.
+
+**Ce que le morceau a trouvé n'était pas dans son périmètre : la matrice comptait les images
+d'un homonyme d'un autre jeu.** Un identifiant de sujet n'est unique que par jeu — le piège
+nommé en toutes lettres par `B8.1` — et `assets_du_personnage` ne filtrait que par sujet. Le
+`pelerin` du Marais se disait donc complet en montrant les images du `pelerin` des Salines.
+
+⚠️ **Et c'est la *forme* de l'essai qui l'a trouvé, pas son sujet.** Le compte groupé filtre par
+jeu parce qu'un `GROUP BY` l'exige : sans ça, deux univers s'additionnent dans la même ligne. Un
+essai écrit sur le nouveau chemin seul aurait passé ; un essai écrit sur l'ancien seul aussi.
+Ce qui a fait tomber le défaut est l'essai qui exige que **les deux chemins disent la même
+chose**, sur dix cas dont la matrice seule connaît la règle — une pose écartée, une pose ajoutée
+pour ce sujet-là, un angle rangé, un calque, une image supprimée. C'est la leçon à emporter :
+quand un second chemin naît pour répondre à une question déjà répondue, le confronter au premier
+vaut mieux que de le vérifier seul, **et il faut le confronter avant de croire au nouveau**.
+
+**Une règle est sortie de `cases`, et il fallait qu'elle en sorte.** *Ce qu'une pose réclame* —
+`pose.images × directions tenues` d'un côté, *une bande par direction* de l'autre — vivait à
+l'intérieur de la boucle qui fabrique les objets d'écran. Le compte groupé en avait besoin sans
+fabriquer un seul de ces objets. La recopier aurait fait deux vérités sur ce que le produit
+réclame, et elles n'auraient divergé qu'au premier angle rangé, longtemps après. `reclame()` la
+porte une fois pour les deux, et rend les deux calques ensemble — ils ne se comptent pas pareil.
+
+**Le mémo du projet comptait autant que les deux requêtes.** `plan_de` relit le jeu à chaque
+appel, donc une fois par sujet : quinze ouvertures de base pour douze sujets, cinq pour deux.
+Deux requêtes groupées devant douze relectures de projet ne gagnent rien du tout — c'est le
+défaut mesuré en `M3`, rejoué à l'identique par un écran neuf. `@projet_lu_une_fois()` ramène le
+compte à trois quel que soit le nombre de sujets. **Et l'essai compte des allers-retours, pas des
+secondes** : un temps mesuré sur douze sujets aurait dit « c'est rapide » d'une boucle qui ne
+l'est pas, ce qui est très exactement la mesure trop large du point 8sexies.
+
+**`complet` ne regarde que les images, et c'est une décision, pas un oubli.** Toute pose réclame
+au moins une animation par direction ; si `complet` les comptait, le filtre *Incomplets* de
+`B9.6` rendrait le jeu entier tant qu'une bande manque — donc toujours — et ne trierait plus
+rien. Le calque animé est rendu à côté, entier, pour qu'une carte le montre sans que le filtre
+s'y noie.
+
+**1 616 essais au vert.**
+
+## V4 · B9.2 et B9.3 — la route qui sert une famille, avec ses collections — 7 septembre 2026
+
+**Une route pour deux morceaux du découpage, parce qu'ils composent la même carte.** `GET
+/characters/families/{famille}` rend une page de sujets d'une famille, chacun portant déjà son
+compte de complétude et ses collections — pagination façon `B3`, filtre de famille en mémoire,
+jointure sur `collections_membres`.
+
+**Le piège que la décision 1 de `B9` ne nommait pas assez fort : filtrer avant de paginer, pas
+après.** Charger une page de l'index puis n'en garder que les sujets de la bonne famille aurait
+rendu une page plus courte que demandé dès qu'une autre famille s'y mêle, et un total faux. La
+méthode lit donc le jeu entier par l'index avant de répartir, et ne pagine qu'ensuite —
+`personnages_du_projet` gagne un `limite=None` pour ça, réservé à cette route.
+
+**Les collections sont jointes dans la route, pas dans `ServiceProduction`.** Aucun des deux
+services n'a besoin de l'autre pour répondre à sa propre question ; seule la route compose les
+deux, exactement comme d'autres routes composent déjà `production` et `equipement`.
+
+**1 623 essais au vert.**
+
+## V4 · B8.5 — la recherche en deux groupes — 7 septembre 2026
+
+**La table de `B8.3` a enfin un lecteur.** Elle attendait depuis sa naissance — « rien ne la lit
+encore », disait sa propre entrée — et c'est ce morceau qui la fait servir : chercher un sujet
+par son nom ou sa description passe désormais par elle, jamais par le disque, ce qui est
+exactement la raison pour laquelle elle existe.
+
+**Une décision que le relevé n'avait pas prise : deux colonnes de recherche, pas une.** Le
+critère sépare bien les deux groupes — un sujet répond à son nom et sa description, une image
+au nom de son sujet, jamais à sa description —, mais rien n'avait tranché *comment* l'index
+tiendrait cette distinction. Une seule colonne normalisée aurait suffi au premier groupe mais
+aurait fait fuir la seconde : chercher le mot d'une description de sujet aurait fait remonter
+les images de ce sujet, sur un mot que personne n'a tapé pour les chercher, elles. `personnages`
+porte donc `recherche` (nom + description) pour le premier groupe et `recherche_nom` (le nom
+seul) pour la jointure du second — un coût de build minime pour ne pas répondre à côté.
+
+**Le nom d'un sujet ne se grave jamais dans une image, contrairement à sa pose et sa
+direction.** Les trois sont des identifiants stables et pourraient sembler symétriques ; ils ne
+le sont pas. La pose et la direction naissent déjà normalisées et ne vivent que sur l'asset —
+les graver dans sa colonne `recherche`, comme le prompt l'était déjà, ne crée aucune seconde
+vérité puisque l'asset se réécrit en entier à chaque changement de case. Le nom d'un sujet, lui,
+vit sur le `Personnage`, qui se renomme sans qu'aucune image ne soit touchée : le graver aurait
+recréé exactement le défaut que `B8.1` refusait pour la collection elle-même. La recherche d'une
+image par le nom de son sujet passe donc par une jointure à l'instant de la requête — jamais par
+une copie —, et `test_renommer_un_sujet_change_aussitot_ce_que_ses_images_trouvent` le vérifie en
+renommant un sujet en cours de route et en cherchant sous les deux noms.
+
+**Aucune migration.** Comme pour `label` avant elle, `recherche` se recalcule à chaque écriture ;
+la reconstruction depuis le disque la remplit d'elle-même, sans qu'une ligne de migration soit
+écrite nulle part.
+
+**1 602 essais au vert.**
+
+## V4 · B8.4 — les gestes de la collection — 7 septembre 2026
+
+**Le mot *collection* ne dit plus qu'une seule chose, et le garde-fou posé en `B8.1` peut se
+refermer.** Quatre chemins existants reprenaient l'ancien sens — `Asset.collection`, un champ
+posé sur l'image — et c'est ce morceau qui les a fait basculer vers le nouveau : une collection
+qui range des sujets, pas des images. Deux gestes neufs s'ajoutent, `ranger_sujet` et
+`retirer_sujet`, chacun un aller simple vers `Collection.avec` / `.sans` — la forme posée en
+`B8.1`, inchangée depuis.
+
+**`arbre()` change le nom de sa clé, pas seulement ce qu'elle compte.** L'ancien
+`compter_par_collection` comptait des images ; le nouveau compte des lignes de
+`collections_membres`, donc des sujets. Garder la clé `assets` avec un sujet dessous aurait
+affiché un chiffre plausible et faux à un écran qui n'a pas encore changé — exactement le risque
+que le relevé de `B8` avait nommé d'avance. La clé devient `sujets`, et un écran qui lirait
+encore l'ancienne verrait un zéro visible plutôt qu'un compte qui ment.
+
+**Un essai de `B8.1` rangeait encore par l'ancien chemin, et personne ne l'avait vu venir.**
+`test_l_index_efface_la_bibliotheque_se_reconstruit_depuis_les_fichiers` (`test_t3.py`) posait
+une image dans un projet en passant `collection` sans `projet` à `PUT arrangement` — le geste
+d'avant `B8.4`, où « une collection décide du projet ». Le paramètre `collection` de `ranger()`
+est parti avec cette tranche ; l'essai continuait de l'envoyer, il était désormais simplement
+ignoré, et l'image ne rangeait plus nulle part — trouvé à l'exécution, pas à la lecture, parce
+que rien dans le corps de la requête ne signale un champ mort. Corrigé en rangeant par `projet`
+explicitement, et en laissant la vérification des membres à `test_b8.py`, comme le commentaire
+de l'essai le demandait déjà.
+
+**Aucune validation neuve.** `ranger_sujet` et `retirer_sujet` ne jugent ni le jeu ni le sujet —
+la décision de `B8.1` reconduite : `avec()` ne juge pas, et ranger un sujet ne le déplace
+d'aucun univers.
+
+**1 596 essais au vert.**
+
+## V4 · B8.3 — les sujets entrent dans l'index — 6 septembre 2026
+
+**Renverse une décision écrite en toutes lettres, et ça n'a coûté que deux crochets.**
+`atelier/services/production.py` disait depuis T1 que les personnages sont « lus du disque,
+jamais d'un index » ; `B9` a besoin d'en faire défiler des centaines, et parcourir chaque
+fichier de chaque jeu à chaque écran ne le permettra pas. Le relevé de `B8` avait déjà trouvé
+qu'un seul endroit écrit un sujet (`_sauver`) et un seul l'efface (`supprimer_personnage`) : la
+table `personnages` s'y accroche, sans toucher à un troisième endroit.
+
+**Le couple `(projet, identifiant)` en clé, comme pour un membre de collection.** Les
+identifiants de sujet ne sont uniques que par jeu — `pelerin` existe dans le Marais et pourrait
+exister ailleurs — et une clé nue aurait fait écraser l'un par l'autre dans l'index le jour où
+deux jeux partageraient un nom.
+
+**Rien ne la lit encore, et c'est voulu.** `personnages()` continue de lire le disque ; router
+cette lecture est le travail de `B8.4` et de `B9`, pas de celui-ci. Même choix que `B8.2` avait
+fait pour `collections_membres` : poser l'index avant ses lecteurs plutôt que de le faire
+naître avec le premier geste qui s'en sert.
+
+**L'essai qui coûte, un troisième jumeau.** Point 8septies d'`AGENTS.md`, comme pour `B8.1` et
+`B8.2` : l'index est effacé du disque, un atelier neuf remonté sur le même dossier, la table lue
+en SQL directement. Et le sens inverse se vérifie aussi — un sujet supprimé avant l'effacement
+de l'index ne doit pas ressusciter, puisque son fichier n'est plus sur le disque pour le
+reconstruire.
+
+**1 591 essais au vert.**
+
+## V4 · B8.2 — la table de jointure — 6 septembre 2026
+
+**Plus petite que ce que le découpage annonçait.** `B8.1` l'avait déjà prévenu : la
+reconstruction relit les adhésions depuis `collections.contenu`, qui porte la fiche entière,
+donc `reconstruire()` n'avait rien à changer. Il restait la table elle-même —
+`collections_membres(collection, jeu, sujet)` — et le passage de `VERSION`, de 6 à 7.
+
+**Une seule règle d'écriture, et c'est celle de tout le fichier.** La table se réécrit en
+entier à chaque sauvegarde d'une collection — tout effacer, tout réinsérer — plutôt que de la
+diffé : même règle que `contenu`, qui se réécrit toujours depuis l'objet, jamais deux vérités.
+Une collection ne porte jamais assez de membres pour que ça coûte quoi que ce soit.
+
+**`ON DELETE CASCADE` fait le geste de `B8.4` avant que `B8.4` existe.** Supprimer une
+collection vide ses lignes de jointure sans qu'un appelant ait à y penser — `foreign_keys=ON`
+est déjà la politique du dépôt depuis T3, la cascade n'a rien demandé de nouveau ailleurs. La
+même leçon que les deux crochets uniques qui écrivent et effacent un sujet, relevée en `B8.1`.
+
+**Pourquoi une table plutôt qu'une lecture de plus.** Aucun geste de `B8.1` ou `B8.2` n'en a
+besoin — rien ne route encore dessus. Elle existe pour `B8.4` et `B8.5` : compter les sujets
+d'une collection ou chercher où vit un sujet deviennent des jointures SQL, là où ce serait des
+boucles Python sur chaque fiche sans elle. Poser l'index avant ses lecteurs, plutôt que de la
+faire naître en même temps que le premier geste qui la lit.
+
+**L'essai qui coûte, jumeau de celui de `B8.1`, posé sur l'index cette fois.** Point 8septies
+d'`AGENTS.md` : l'index est effacé du disque, un atelier neuf remonté sur le même dossier, et
+la table est lue en SQL directement — jamais la réponse d'un geste qu'on vient de faire.
+Vérifié **en défaisant le correctif** : retirer la réécriture de la table fait tomber trois
+essais sur quatre — le quatrième, celui de la suppression, passe trivialement puisqu'il n'y a
+alors rien à effacer, et c'est le signal attendu plutôt qu'un trou dans l'essai.
+
+**1 586 essais au vert.**
+
+## V4 · B8.1 — le modèle de l'adhésion — 6 septembre 2026
+
+**La collection porte enfin ses membres, et personne ne le lui demande encore.** C'est le
+premier des six morceaux de `B8`, et le seul en `[HARD]` : il pose la forme dont les cinq
+autres héritent. Trois fichiers touchés, aucune route, aucun écran.
+
+**Le piège était le couple, et il a été payé d'avance.** Un membre est `(jeu, sujet)`, jamais
+un identifiant seul : les identifiants de sujet sont uniques *par jeu*, et une collection peut
+n'appartenir à aucun jeu — « à refaire », « pour la démo » en traversent plusieurs. Un
+identifiant nu aurait fait entrer l'homonyme d'un autre univers au premier rangement, sans
+qu'aucun écran puisse le distinguer d'un geste voulu. Le relevé l'avait vu avant la première
+ligne ; c'est la deuxième fois qu'une conception jugée avant d'écrire épargne un défaut
+qu'aucun essai n'aurait cherché.
+
+**La persistance n'a pas eu une ligne à changer, et ça vaut d'être su.** L'index garde chaque
+collection sous forme de fiche JSON complète, et la reconstruction relit `collections.json` par
+le même `depuis_json` : les membres traversent le disque et l'index gratuitement. `B8.2` — la
+table de jointure — n'est donc pas un travail de survie de la donnée mais d'index de recherche,
+ce qui la rend plus petite qu'annoncée.
+
+**Deux arbitrages de l'auteur en fin de morceau, et les deux ont renversé la recommandation.**
+
+*Le code du carnet parle la langue des écrans* : `Membre(jeu, sujet)`, et les clés du fichier
+avec, là où le reste du dépôt dit `projet` et `personnage`. Le champ `Collection.projet` ne suit
+pas — c'est le jeu de la collection elle-même, écrit sous ce nom depuis T3, et le renommer ferait
+disparaître le jeu de toutes les collections déjà sur le disque.
+
+*Un groupe peut mêler deux univers* : ranger n'est jamais refusé. L'argument est plus fort que
+celui qu'on lui opposait — **ranger un sujet ne le déplace pas d'univers**, contrairement à
+ranger une image, donc il n'y a rien à trancher et rien à refuser. Ce que la souplesse coûte est
+nommé d'avance : un compte de sujets doit toujours dire de quel jeu il parle, et `sujets_du_jeu()`
+est le seul chemin par lequel un groupe se lit. Lire `membres` sans filtrer, c'est additionner
+deux jeux — le défaut à surveiller en `B8.4` et en `B9`.
+
+⚠️ **Le mot *collection* veut dire deux choses jusqu'à `B8.4`, et le garde-fou a été posé tout
+de suite.** Les cinq essais qui parlaient de collection ont été réécrits pour **nommer laquelle
+des deux ils vérifient** et ce qu'ils deviendront quand la colonne partira. Quatre portent
+l'ancienne — celle qui se pose sur une image —, un porte les deux. Sans ça, l'essai qui tombera
+en `B8.4` ne dirait pas s'il constate une régression ou le changement voulu.
+
+**L'essai qui coûte n'interroge jamais la réponse d'un `POST`** (point 8septies d'`AGENTS.md`) :
+il pose deux adhésions qui ne sont pas le défaut, lit le fichier, efface l'index, remonte un
+atelier sur le même dossier et regarde ce que `donnees/` a su rendre. Et il a été vérifié **en
+défaisant le correctif** — `en_json` privée de sa ligne de membres fait tomber deux essais sur
+neuf, dont celui-là ; un essai écrit après coup passe des deux côtés une fois sur deux.
+
 ## V4 · B0 — le socle du carnet — 6 septembre 2026
 
 **Le châssis neuf est posé à côté de l'ancien, pas à sa place.** Un seul lieu est réellement

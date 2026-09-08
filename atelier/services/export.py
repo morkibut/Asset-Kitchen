@@ -701,7 +701,6 @@ class ServiceExport:
             "cree_le": asset.cree_le,
             "cout_usd": asset.cout_usd,
             "projet": self._nommer_projet(asset.projet),
-            "collection": self._nommer_collection(asset.collection),
             # **Mesurées sur le fichier qui part**, jamais recopiées de
             # l'enregistrement : c'est l'invariant de T1, et l'export est
             # justement l'endroit où les deux diffèrent — un asset détouré sort
@@ -775,15 +774,6 @@ class ServiceExport:
         projet = self._base.lire_projet(identifiant)
         return {"identifiant": identifiant, "nom": projet.nom if projet else identifiant}
 
-    def _nommer_collection(self, identifiant: str | None) -> dict[str, str] | None:
-        if identifiant is None:
-            return None
-        collection = self._base.lire_collection(identifiant)
-        return {
-            "identifiant": identifiant,
-            "nom": collection.nom if collection else identifiant,
-        }
-
 
 def _nomme(identifiant: str, pose: Any) -> dict[str, str]:
     """Une pose, dite par son identifiant **et** par son nom.
@@ -824,10 +814,11 @@ def _piece_en_json(
 def _nom_archive(instant: float, racine: str = "", quoi: str = "") -> str:
     """`atelier-20260827-1743.zip` — daté, et rien d'autre.
 
-    Pas le nom du projet : une sélection traverse les projets dès qu'une
-    collection les traverse, et un nom qui mentirait une fois sur dix vaut moins
-    qu'un nom qui ne dit que la date. Ce que contient l'archive est écrit dans
-    le descriptif, qui, lui, ne peut pas mentir.
+    Pas le nom du projet : une sélection à la main dans la galerie traverse les
+    projets aussi facilement qu'elle en reste à un seul, et un nom qui
+    mentirait une fois sur dix vaut moins qu'un nom qui ne dit que la date. Ce
+    que contient l'archive est écrit dans le descriptif, qui, lui, ne peut pas
+    mentir.
 
     **Un personnage, lui, ne traverse rien** (A4) : quand on sait de qui sont
     les animations, son nom passe devant — `le-nain-animations-20260904-1743.zip`

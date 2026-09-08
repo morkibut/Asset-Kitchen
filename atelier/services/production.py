@@ -26,10 +26,10 @@ from __future__ import annotations
 
 import re
 
-from dataclasses import replace
-from typing import Any, Sequence
+from dataclasses import dataclass, replace
+from typing import Any, Collection, Sequence
 
-from atelier.depot import Base, Fichiers
+from atelier.depot import Base, Fichiers, projet_lu_une_fois
 from atelier.domaine.asset import Asset
 from atelier.domaine.bande import Bande
 from atelier.domaine.erreurs import ErreurAtelier
@@ -77,6 +77,74 @@ class ProductionRefusee(ErreurAtelier):
     """Un geste que le produit refuse, avec sa raison en clair."""
 
     code = "production_refusee"
+
+
+# ── Ce qu'une pose réclame, écrit une fois (B9.1) ────────────────────────────
+#
+# **Le dénominateur de la matrice**, sorti de `cases` le jour où un second
+# lecteur en a eu besoin. `cases` le calculait à l'intérieur de sa boucle ;
+# `comptes` en a besoin pour les mêmes poses, avec les mêmes directions, et sans
+# fabriquer un seul objet d'écran. Recopier la formule là-bas aurait fait deux
+# vérités sur *ce que le produit réclame*, et la première pose ajoutée à un jeu
+# vu de face les aurait fait diverger sans qu'aucun essai ne le voie.
+
+
+@dataclass(frozen=True, slots=True)
+class Reclame:
+    """Ce qu'une pose réclame à une chose, **dans ses deux calques**.
+
+    Ils ne se ressemblent pas, et c'est tout l'intérêt de les rendre ensemble
+    (A12, `AGENTS.md` 8quater) : une marche demande huit images *par direction*
+    pour être dessinée, et **une seule bande par direction** pour être animée —
+    la bande porte déjà ses huit images dedans. Multiplier par `pose.images` du
+    côté animé demanderait huit marches vers la gauche.
+    """
+
+    images: int
+    bandes: int
+
+
+def reclame(pose: Pose, directions: Sequence[Direction]) -> Reclame:
+    """Ce que cette pose réclame sous ces angles-là.
+
+    `directions` est ce que `Personnage.directions_tenues` a déjà filtré — les
+    angles que ce sujet-ci tient pour cette pose-là. **Vide est un état normal**
+    et non un zéro : un jeu vu de face n'a pas de directions, et le produit vaut
+    alors le facteur, comme avant E10.
+    """
+    angles = max(1, len(directions))
+    return Reclame(images=pose.images * angles, bandes=angles)
+
+
+# ── Les trois filtres de la grille d'une famille (B9.6) ──────────────────────
+#
+# **Trois lectures de plus sur une donnée déjà servie**, et pas un calcul de
+# plus : *incomplet* est exactement `complet is False` — le drapeau que `B9.1`
+# pose déjà, celui-là même que `bilan_du_jeu` compte depuis `B5`. Le refaire ici
+# en comparant `fait` et `attendu` en referait une seconde vérité, et elle
+# divergerait au premier sujet qui ne réclame rien.
+
+TOUS_LES_SUJETS = "tous"
+INCOMPLETS = "incomplets"
+SANS_DESCRIPTION = "sans-description"
+
+#: Dans l'ordre où la planche les range au-dessus de la grille.
+LES_FILTRES: tuple[str, ...] = (TOUS_LES_SUJETS, INCOMPLETS, SANS_DESCRIPTION)
+
+
+def _retient(filtre: str, personnage: Personnage, comptes: dict[str, Any]) -> bool:
+    """Ce sujet-là passe-t-il ce filtre-là ?
+
+    **Un filtre inconnu ne retient rien de moins que tout** : la grille d'un
+    écran plus vieux que le serveur qui la sert doit montrer la famille, pas une
+    page vide — c'est la même règle que `famille_du_type` applique à un type que
+    le barème ne connaît plus.
+    """
+    if filtre == INCOMPLETS:
+        return not comptes[personnage.identifiant]["complet"]
+    if filtre == SANS_DESCRIPTION:
+        return not personnage.description.strip()
+    return True
 
 
 # Les trois cases de bible qu'une ambiance peut remplacer, et **les quatre qui
@@ -1463,8 +1531,14 @@ class ServiceProduction:
     def personnages(self, projet: str) -> list[Personnage]:
         """Ceux de ce projet, dans l'ordre où ils ont été créés.
 
-        **Lus du disque, jamais d'un index** : ils ne se cherchent ni ne se
-        paginent, et effacer `atelier.sqlite3` ne peut pas les perdre.
+        **Lus du disque ici encore** — cette méthode ne change pas —, mais
+        depuis `B8.3` chaque sujet entre aussi dans un index jetable :
+        `_sauver` et `supprimer_personnage` l'alimentent, en plus du fichier.
+        Router *cette* lecture sur l'index est l'affaire de `B8.4` et de `B9`,
+        qui en ont besoin pour faire défiler des centaines de sujets ; tant
+        qu'aucun des deux n'existe, relire le disque reste correct et
+        effacer `atelier.sqlite3` ne peut toujours rien perdre — l'index se
+        reconstruit de ces mêmes fichiers.
         """
         self._exiger(projet)
         lus = [
@@ -1478,6 +1552,107 @@ class ServiceProduction:
             if un.identifiant == identifiant:
                 return un
         raise PersonnageInconnu(identifiant)
+
+    def rechercher_personnages(
+        self, projet: str, recherche: str, limite: int = 200
+    ) -> list[Personnage]:
+        """Les sujets d'un projet dont le nom **ou** la description répondent
+        au terme (B8.5).
+
+        **Sur l'index, pas sur le disque** — contrairement à `personnages()`
+        ci-dessus. C'est très exactement ce que la table jetable de `B8.3`
+        existait pour permettre : chercher parmi des centaines de sujets sans
+        rouvrir un fichier par sujet à chaque frappe. Un sujet renommé y
+        répond sous son nom neuf dès le prochain appel — `_sauver` réécrit sa
+        ligne d'index au même geste que le fichier, `recherche` compris.
+        """
+        self._exiger(projet)
+        return self._base.personnages_du_projet(
+            projet, recherche=recherche, limite=limite
+        )
+
+    @projet_lu_une_fois()
+    def famille(
+        self,
+        projet: str,
+        famille: str,
+        *,
+        recherche: str = "",
+        limite: int = 120,
+        filtre: str = TOUS_LES_SUJETS,
+        seulement: Collection[str] | None = None,
+    ) -> dict[str, Any]:
+        """Une famille du jeu, paginée, chaque sujet portant déjà son compte
+        de complétude (B9.2), et les comptes de ses trois filtres (B9.6).
+
+        **Décision 1 de `B9`** : la famille se filtre en mémoire, jamais en
+        base. `famille_de` lit le barème du jeu, déjà en mémoire une fois par
+        appel ; ajouter une colonne `famille` à l'index des sujets
+        recréerait une seconde vérité que `E15` a justement fermée pour la
+        même raison — *une chose est définie à un seul endroit*.
+
+        ⚠️ **La famille se filtre avant de paginer, jamais après.** Charger une
+        page de l'index puis n'en garder que ceux de la bonne famille rendrait
+        une page plus courte que `limite` dès qu'une autre famille s'y mêle, et
+        `total` compterait des sujets d'une autre famille. Cette méthode lit
+        donc **le jeu entier** par l'index (`personnages_du_projet(limite=None)`),
+        répartit en mémoire, et ne pagine qu'ensuite.
+
+        **Décision 3 de `B9`** : pagination façon B3, jamais de fenêtre
+        glissante. `limite` grandit d'un appel à l'autre côté écran (« Charger
+        la suite »), comme la grille d'images ; `total` est le compte de la
+        famille entière, filtre de recherche compris, pour que l'écran sache
+        combien il en reste à charger.
+
+        ⚠️ **Le filtre se pose ici, pas à l'écran** (B9.6). La planche écrit
+        *« Incomplets 31 »* au-dessus d'une grille qui n'en montre que trente
+        sur cinquante-quatre : un compte fait sur la page servie dirait donc un
+        chiffre plus petit que la vérité, et *Incomplets* n'y trierait que ce
+        qui est déjà chargé. Les trois comptes se font donc sur la famille
+        entière, et le filtre choisi s'applique **avant** de paginer — exactement
+        pour la raison qui fait déjà filtrer la famille avant de paginer.
+
+        **Et le compte de complétude se fait une seule fois, pour tout le
+        monde** : c'est ce que `B9.1` a rendu bon marché — deux requêtes
+        groupées, quel que soit le nombre de sujets. Le calculer sur la famille
+        entière plutôt que sur la page ne coûte donc pas un aller-retour de
+        plus, et c'est ce qui permet aux trois comptes de dire vrai.
+
+        **`seulement` restreint à une collection, et c'est la route qui le
+        remplit.** Une collection est une question du carnet (`B8`) ; ce service
+        ne sait pas les lire, et il n'a pas à l'apprendre pour répondre à la
+        sienne. La route, qui a les deux sous la main, lui passe donc les
+        identifiants déjà résolus — exactement comme elle joint les collections
+        de chaque carte sans faire de l'un des deux services le client de
+        l'autre. Un ensemble vide n'est pas *aucun filtre* : c'est une
+        collection qui ne contient rien de ce jeu-ci, et la grille doit alors
+        être vide.
+        """
+        tous = self._base.personnages_du_projet(
+            projet, recherche=recherche, limite=None
+        )
+        de_la_famille = [
+            p
+            for p in tous
+            if self.famille_de(projet, p) == famille
+            and (seulement is None or p.identifiant in seulement)
+        ]
+        # `detail=True` : la vue *Les poses* montre une colonne par pose, et doit
+        # donc savoir laquelle manque. Demandé ici plutôt que dans un second
+        # appel sur la seule page — deux appels feraient deux requêtes groupées
+        # de plus pour un découpage que la boucle a déjà fait.
+        comptes = self.comptes(projet, de_la_famille, detail=True)
+        retenus = [p for p in de_la_famille if _retient(filtre, p, comptes)]
+        page = retenus[:limite]
+        return {
+            "personnages": page,
+            "total": len(retenus),
+            "comptes": {p.identifiant: comptes[p.identifiant] for p in page},
+            "filtres": {
+                nom: sum(1 for p in de_la_famille if _retient(nom, p, comptes))
+                for nom in LES_FILTRES
+            },
+        }
 
     def creer_personnage(
         self,
@@ -1702,6 +1877,7 @@ class ServiceProduction:
             marques += 1
 
         self._fichiers.effacer_personnage(projet, personnage.identifiant)
+        self._base.oublier_personnage(projet, personnage.identifiant)
         # Un personnage parti n'a plus de cases à calculer — mais il garde sa
         # forme : l'écran le retire sur `supprime`, et une charge d'une autre
         # forme que les autres serait un cas de plus à traiter pour rien.
@@ -1763,7 +1939,14 @@ class ServiceProduction:
         objet = self._exiger(projet)
         corps: dict[str, list[Asset]] = {}
         calques: dict[str, dict[str, list[Asset]]] = {}
-        for asset in self._base.assets_du_personnage(personnage.identifiant):
+        # **Les images de ce sujet-là, dans ce jeu-ci** — le filtre est arrivé en
+        # B9.1 : un identifiant de sujet n'est unique que par jeu (B8), et sans
+        # lui la matrice du `pelerin` du Marais se remplissait des images de son
+        # homonyme des Salines. Trouvé parce que le compte groupé, qui filtre,
+        # contredisait cette méthode-ci.
+        for asset in self._base.assets_du_personnage(
+            personnage.identifiant, projet=projet
+        ):
             if not asset.pose:
                 continue
             # **La pièce sépare les deux axes, et elle seule** (C3). Sans pièce,
@@ -1793,7 +1976,9 @@ class ServiceProduction:
         # voir. Deux calques gardent l'invariant intact au lieu de le tordre : il
         # vaut deux fois, une fois par calque.
         animations: dict[str, list[Bande]] = {}
-        for bande in self._base.bandes_du_personnage(personnage.identifiant):
+        for bande in self._base.bandes_du_personnage(
+            personnage.identifiant, projet=projet
+        ):
             if bande.pose:
                 animations.setdefault(bande.pose, []).append(bande)
 
@@ -1809,6 +1994,10 @@ class ServiceProduction:
             siennes = corps.get(pose.identifiant, [])
             ses_bandes = animations.get(pose.identifiant, [])
             tenues = personnage.directions_tenues(pose, toutes)
+            # **Ce que cette pose réclame, lu et non recalculé** (B9.1) : la
+            # même fonction sert la grille d'une famille, qui compte les mêmes
+            # cases sans en fabriquer une seule.
+            reclamees = reclame(pose, tenues)
             premiere = tenues[0].identifiant if tenues else ""
             # Une image sans direction ne connaît pas la sienne : elle se range
             # dans la première, et le produit dit que c'est un rangement.
@@ -1861,7 +2050,7 @@ class ServiceProduction:
                     # lecteur de faire la multiplication qu'on cherche à lui
                     # épargner. Sans direction déclarée le produit vaut le
                     # facteur, et rien ne change pour un jeu qui n'en a pas.
-                    "demandees": pose.images * max(1, len(tenues)),
+                    "demandees": reclamees.images,
                     "images": [a.en_json() for a in siennes],
                     # ── Le calque animé (A12) ────────────────────────────────
                     #
@@ -1873,7 +2062,7 @@ class ServiceProduction:
                     # Multiplier par `pose.images` ici demanderait huit animations
                     # de marche vers la gauche, ce qui n'a aucun sens.
                     "bandes": [b.en_json() for b in ses_bandes],
-                    "bandes_demandees": max(1, len(tenues)),
+                    "bandes_demandees": reclamees.bandes,
                     # ── Le second axe de la case (E10) ───────────────────────
                     #
                     # Une entrée par direction tenue, avec ce qui la remplit.
@@ -1942,6 +2131,122 @@ class ServiceProduction:
             )
 
         return rendues
+
+    # ── Le compte groupé, pour une page entière de sujets (B9.1) ─────────────
+
+    @projet_lu_une_fois()
+    def comptes(
+        self,
+        projet: str,
+        personnages: Sequence[Personnage],
+        *,
+        detail: bool = False,
+    ) -> dict[str, dict[str, Any]]:
+        """« 4 poses sur 6 » pour deux cents sujets, en **deux** requêtes.
+
+        C'est le même compte que `cases`, sans les objets d'écran : la grille
+        d'une famille montre un chiffre par carte, pas une matrice par carte.
+        `cases` reste la réponse pour *un* sujet — elle porte les images
+        elles-mêmes, leurs vignettes, leurs directions rangées —, et cette
+        méthode-ci ne la remplace nulle part.
+
+        **Ce qui change est l'aller-retour, pas la règle.** `cases` demande à
+        SQLite les images d'un sujet, puis les siennes, puis celles du suivant :
+        `bilan_du_jeu` le fait déjà en boucle et le dit. Ici, une requête groupée
+        rend d'un coup ce que chaque sujet de la page a de fait — et le reste du
+        calcul est **exactement** celui d'en dessus, par les mêmes appels :
+        `plan_de`, `tenues`, `directions_tenues`, `reclame`. Aucune de ces quatre
+        règles n'est réécrite en SQL, et c'est la décision de la tranche
+        (`docs/tranches/V4.md` § B9, décision 2) : les poses qu'un sujet écarte,
+        celles qu'il ajoute pour lui seul, les angles que le jeu range et ceux
+        que cette chose-là range pour cette pose-là vivent sur le `Personnage`,
+        déjà écrits et déjà testés. Les redire en SQL aurait fabriqué une seconde
+        vérité qui diverge au premier sujet qui écarte une pose.
+
+        **Les deux calques ne se mêlent pas** (A12, `AGENTS.md` 8quater) : les
+        images d'un côté, les animations de l'autre, et jamais un total commun —
+        une animation manquante se cacherait derrière une image présente.
+
+        ⚠️ **`complet` ne regarde que les images**, et c'est délibéré. Toute pose
+        réclame au moins une animation par direction ; si `complet` les comptait,
+        le filtre « incomplets » de la grille (B9.6) rendrait le jeu entier tant
+        qu'une seule bande manque, et ne trierait donc plus rien. C'est aussi le
+        calque que `bilan_du_jeu` compte depuis B5 : deux écrans qui disent
+        « complet » doivent dire la même chose. Le calque animé est rendu à côté,
+        entier, pour que la carte puisse le montrer sans que le filtre s'y noie.
+
+        **Un sujet qui ne réclame rien est complet, jamais « en retard »** — même
+        garde que la barre à `None` du tableau de bord (E2) : *rien ne manque*
+        n'est pas *tout manque*, et un décor sans pose n'a pas à remonter dans une
+        liste de choses à finir.
+
+        **`detail` ajoute le découpage pose par pose, et rien d'autre** (B9.4).
+        La vue *Les poses* de la grille montre une colonne par pose et une ligne
+        par sujet : elle a besoin de savoir *laquelle* manque, pas seulement
+        combien. Le calcul est déjà fait dans la boucle ci-dessous — le drapeau
+        ne fait que garder ce qu'elle jetait. **Il est facultatif parce que le
+        reste du produit n'en veut pas** : la carte de la grille et le tableau de
+        bord n'écrivent qu'un total, et leur faire porter six fois plus de JSON
+        pour un chiffre qu'ils n'affichent pas serait payer pour rien.
+
+        ⚠️ **Le mémo du projet est ouvert ici, et il fallait le faire.** Deux
+        requêtes groupées ne servent à rien si `plan_de` relit le jeu une fois
+        par sujet — c'est le défaut mesuré en M3, quarante-deux relectures pour
+        une seule question, et une page de deux cents sujets le rejouerait à
+        l'identique. La portée est celle de la question, et elle se referme avec
+        elle.
+        """
+        objet = self._exiger(projet)
+        identifiants = [p.identifiant for p in personnages]
+        # Deux requêtes pour toute la page, quel que soit son nombre de sujets.
+        images = self._base.images_par_pose(projet, identifiants)
+        animations = self._base.bandes_par_pose(projet, identifiants)
+        # Les directions du jeu, lues **une fois** pour toute la page — comme
+        # `cases` les lit une fois par sujet.
+        toutes = objet.univers.directions_du_jeu()
+
+        rendus: dict[str, dict[str, Any]] = {}
+        for personnage in personnages:
+            poses_faites = 0
+            fait = attendu = 0
+            anime_fait = anime_attendu = 0
+            tenues = personnage.tenues(self.plan_de(projet, personnage))
+            par_pose: list[dict[str, Any]] = []
+            for pose in tenues:
+                reclamees = reclame(
+                    pose, personnage.directions_tenues(pose, toutes)
+                )
+                cle = (personnage.identifiant, pose.identifiant)
+                # **Plafonné, comme le tableau de bord le plafonne** : dix images
+                # dans une case qui en réclame quatre ne font pas 250 % — elles
+                # font une case pleine, et les six autres sont des variantes que
+                # personne n'a encore départagées.
+                sienne = min(images.get(cle, 0), reclamees.images)
+                fait += sienne
+                attendu += reclamees.images
+                anime_fait += min(animations.get(cle, 0), reclamees.bandes)
+                anime_attendu += reclamees.bandes
+                if sienne >= reclamees.images:
+                    poses_faites += 1
+                if detail:
+                    par_pose.append(
+                        {
+                            "identifiant": pose.identifiant,
+                            "nom": pose.nom,
+                            "fait": sienne,
+                            "attendu": reclamees.images,
+                        }
+                    )
+
+            rendus[personnage.identifiant] = {
+                # La ligne que la carte écrit en toutes lettres : « 4 / 6 poses ».
+                "poses": {"fait": poses_faites, "attendu": len(tenues)},
+                "images": {"fait": fait, "attendu": attendu},
+                "bandes": {"fait": anime_fait, "attendu": anime_attendu},
+                "complet": fait >= attendu,
+                **({"detail": par_pose} if detail else {}),
+            }
+        return rendus
 
     # ── Le tableau de bord du jeu (B5) ────────────────────────────────────────
 
@@ -2682,10 +2987,16 @@ class ServiceProduction:
         en ferait une seconde vérité. Elles voyagent en revanche avec chaque
         annonce, parce que l'écran fond ce qu'il reçoit et qu'une charge amputée
         remplacerait un objet entier par un objet à trous.
+
+        **Et depuis B8.3, l'index en garde un raccourci** (`atelier/depot/base.py`,
+        table `personnages`) : le fichier s'écrit d'abord, l'index ensuite, jamais
+        l'inverse — la même règle que pour un asset (`docs/ARCHITECTURE.md` §4).
+        C'est le seul autre crochet, avec `supprimer_personnage` plus bas.
         """
         self._fichiers.ecrire_personnage(
             personnage.projet, personnage.identifiant, personnage.en_json()
         )
+        self._base.enregistrer_personnage(personnage)
         self._diffusion.publier(
             "personnage", self.en_charge(personnage.projet, personnage)
         )

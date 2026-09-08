@@ -50,6 +50,13 @@ export type Lieu =
   // Ce qu'on ouvre par-dessus une racine.
   | { genre: "depenses" }
   | { genre: "carte"; carte: Carte }
+  // La grille d'une famille (`B9`) — **elle se pose sur le codex**, elle n'en
+  // est pas une cinquième racine : c'est le même endroit vu par une porte de
+  // plus, et l'onglet *Codex* reste ce qui dit « ailleurs ». La clé de la
+  // famille voyage ici plutôt que dans un état à côté, sans quoi deux portes
+  // vers la même famille n'atterriraient pas au même endroit — c'est ce qui
+  // arrivait avant, la pile disant `codex` et un `useState` disant laquelle.
+  | { genre: "famille"; famille: string }
   | { genre: "sujet"; sujet: string }
   | { genre: "case"; asset: string }
   | { genre: "tables"; asset: string }

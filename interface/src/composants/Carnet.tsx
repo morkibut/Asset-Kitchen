@@ -23,17 +23,36 @@
  *
  * **Ce qu'une famille déplie, ce sont ses collections, jamais ses sujets.**
  * Trois personnages ou cinquante-quatre, le carnet garde la même hauteur : les
- * sujets, c'est la grille qui les montre. Tant que la collection n'est pas un
- * vrai groupe (`B8`), une famille n'en déplie qu'une — « Tous » —, ce que la
- * planche prévoit pour un petit jeu.
+ * sujets, c'est la grille qui les montre. `B0` n'en dépliait qu'une — « Tous » —
+ * faute de vrai groupe ; `B8` les a écrits et `B9` est le premier écran qui s'en
+ * sert, alors elles paraissent enfin.
+ *
+ * **Et une collection dépliée est une cible de dépôt** (`B9.5`) : c'est là qu'on
+ * lâche les sujets choisis dans la grille, et c'est là que s'écrit le « 10 + 3 »
+ * qui annonce ce que le groupe contiendra si l'on lâche ici.
+ *
+ * ⚠️ **La règle n°2 borne le nombre de collections dépliables**, et rien
+ * d'autre ne le borne : un jeu à quarante groupes ferait quarante lignes de
+ * plus, donc un carnet qui dépasse trente. Au-delà de `COLLECTIONS_AU_PLUS`, la
+ * liste s'arrête et une note dit combien manquent — elles restent toutes
+ * atteignables depuis le volet *Les ranger* de la grille, qui n'a pas de
+ * plafond parce qu'il n'a pas cette règle-là à tenir.
  */
 
 import { useState } from "react"
-import { dollars, type Projet } from "../api"
+import { dollars, type GroupeDeRangement, type Projet } from "../api"
 import { TOUCHE_DE_LA_BARRE } from "./Barre"
+import { GLISSE_DES_SUJETS } from "./Famille"
 
 /** Le plafond de la règle n°2, écrit une fois. */
 export const LIGNES_AU_PLUS = 30
+
+/** Combien de collections une famille déplie au plus.
+ *
+ *  Douze, et le chiffre se déduit de la règle n°2 plutôt que d'un goût : huit
+ *  lignes au repos, plus « Tous », plus « + Nouvelle collection », plus douze —
+ *  vingt-deux, sous les trente, avec de quoi ajouter une section demain. */
+export const COLLECTIONS_AU_PLUS = 12
 
 /**
  * Comment une famille se nomme **dans le carnet**, et nulle part ailleurs.
@@ -121,12 +140,105 @@ function Ligne({
   )
 }
 
+/**
+ * Une collection dépliée sous sa famille — **et la cible où l'on lâche.**
+ *
+ * Trois choses à la fois, et c'est voulu : elle dit ce que le groupe contient,
+ * elle l'ouvre dans la grille, et elle reçoit les sujets qu'on lui traîne
+ * dessus. La planche les montre comme une seule ligne parce que c'est un seul
+ * endroit — celui où l'on range.
+ *
+ * **Le compte projeté ne s'invente pas ici** : `arrivants` est ce que le parent
+ * a calculé, c'est-à-dire les sujets choisis qui n'y sont **pas déjà**. Ranger
+ * ce qui est rangé est un geste sans effet (`Collection.avec`) — annoncer
+ * « + 3 » puis n'en ajouter qu'un serait mentir sur ce qui va se passer.
+ *
+ * ⚠️ **`getData` est vide pendant le survol**, dans tous les navigateurs : seul
+ * `types` se lit. Ce qui s'affiche pendant le geste vient donc du parent, jamais
+ * de la charge du glissement, qui n'est relue qu'au lâcher.
+ */
+function LigneDeCollection({
+  nom,
+  sujets,
+  arrivants,
+  ouverte,
+  onAller,
+  onDeposer,
+}: {
+  nom: string
+  sujets: number
+  /** Combien de sujets arriveraient si l'on lâchait ici, ou `null` quand rien
+   *  n'est en train d'être glissé. Zéro n'est pas `null` : c'est « ils y sont
+   *  déjà tous », et la ligne doit le dire autrement qu'en s'allumant. */
+  arrivants: number | null
+  ouverte: boolean
+  onAller: () => void
+  onDeposer: () => void
+}) {
+  const [survolee, setSurvolee] = useState(false)
+  const vise = survolee && arrivants !== null && arrivants > 0
+
+  return (
+    <button
+      type="button"
+      onClick={onAller}
+      aria-current={ouverte ? "true" : undefined}
+      data-ligne-du-carnet
+      data-collection-du-carnet
+      onDragOver={(evenement) => {
+        if (!evenement.dataTransfer.types.includes(GLISSE_DES_SUJETS)) return
+        // Sans lui, `onDrop` ne part jamais — la règle du DOM, pas un détail.
+        evenement.preventDefault()
+        setSurvolee(true)
+      }}
+      onDragLeave={(evenement) => {
+        // Passer d'un enfant à l'autre déclenche un `dragleave` : sans cette
+        // garde, la ligne clignoterait sous le pointeur.
+        if (evenement.currentTarget.contains(evenement.relatedTarget as Node)) return
+        setSurvolee(false)
+      }}
+      onDrop={(evenement) => {
+        if (!evenement.dataTransfer.types.includes(GLISSE_DES_SUJETS)) return
+        evenement.preventDefault()
+        setSurvolee(false)
+        onDeposer()
+      }}
+      className={[
+        "flex h-[30px] w-full shrink-0 items-center gap-[8px] pl-[34px] pr-[14px]",
+        // Le trait est toujours là, transparent au repos : le poser au survol
+        // décalerait la ligne d'un pixel sous le pointeur, juste au moment où
+        // l'on vise.
+        "border border-dashed border-transparent",
+        "text-left text-[14px] transition-colors duration-120",
+        vise
+          ? "border-signal bg-ligne-ouverte text-signal"
+          : ouverte
+            ? "bg-ligne-ouverte text-encre"
+            : "text-encre-controle hover:bg-papier",
+      ].join(" ")}
+    >
+      <span className="truncate">{nom}</span>
+      <span
+        className={[
+          "mesure ml-auto shrink-0 text-[11px]",
+          vise ? "text-signal" : "text-encre-4",
+        ].join(" ")}
+      >
+        {vise ? `${sujets} + ${arrivants}` : sujets}
+      </span>
+    </button>
+  )
+}
+
 // ── Le carnet ───────────────────────────────────────────────────────────────
 
 export function Carnet({
   jeu,
   seconde,
   familles,
+  collections,
+  collectionOuverte,
+  arrivants,
   regles,
   images,
   depense,
@@ -134,6 +246,9 @@ export function Carnet({
   ouvert,
   surLeJeu,
   surLaFamille,
+  surLaCollection,
+  surNouvelleCollection,
+  surDeposer,
   surLesRegles,
   surLaGalerie,
   surLesDepenses,
@@ -152,6 +267,16 @@ export function Carnet({
    *  jeu sur ce qu'il a coûté. */
   seconde: string
   familles: readonly LigneDeFamille[]
+  /** Les collections du jeu, servies par la grille d'une famille (`B9.3`) —
+   *  **avec ce qu'elles contiennent de ce jeu-ci**, jamais le total de l'arbre,
+   *  qui additionne les univers. Vide tant qu'aucune famille n'a été ouverte :
+   *  le carnet ne va pas les chercher lui-même, il montre ce que l'écran a lu. */
+  collections: readonly GroupeDeRangement[]
+  /** La collection ouverte sous la famille, ou `null` pour « Tous ». */
+  collectionOuverte: string | null
+  /** Combien de sujets arriveraient dans chaque collection si l'on lâchait
+   *  maintenant. Vide quand rien n'est glissé. */
+  arrivants: Readonly<Record<string, number>>
   /** Ce que la toile de l'univers porte, ou `null`. */
   regles: number | null
   images: number
@@ -161,6 +286,12 @@ export function Carnet({
   ouvert: string | null
   surLeJeu: () => void
   surLaFamille: (cle: string) => void
+  /** Ouvrir un groupe sous la famille, ou revenir à « Tous » avec `null`. */
+  surLaCollection: (cle: string, collection: string | null) => void
+  surNouvelleCollection: (cle: string) => void
+  /** Lâcher ici. Le parent sait ce qu'on traîne — il l'a posé au départ du
+   *  geste — et c'est lui qui range, parce que le carnet ne parle à personne. */
+  surDeposer: (collection: string) => void
   surLesRegles: () => void
   surLaGalerie: () => void
   surLesDepenses: () => void
@@ -279,13 +410,36 @@ export function Carnet({
             />
             {depliee === famille.cle && (
               <div className="ligne-qui-souvre">
-                {/* Sans collection, une famille n'en déplie qu'une : « Tous ».
-                    La grille suffit à voir les trois. */}
+                {/* « Tous » d'abord — c'est la famille entière, et c'est là
+                    qu'on retombe en refermant un groupe. */}
                 <Ligne
                   nom="Tous"
                   decale
+                  ouverte={ouvert === famille.cle && collectionOuverte === null}
                   compte={famille.compte == null ? "aucun" : String(famille.compte)}
-                  onAller={() => surLaFamille(famille.cle)}
+                  onAller={() => surLaCollection(famille.cle, null)}
+                />
+                {collections.slice(0, COLLECTIONS_AU_PLUS).map((groupe) => (
+                  <LigneDeCollection
+                    key={groupe.identifiant}
+                    nom={groupe.nom}
+                    sujets={groupe.sujets}
+                    arrivants={arrivants[groupe.identifiant] ?? null}
+                    ouverte={collectionOuverte === groupe.identifiant}
+                    onAller={() => surLaCollection(famille.cle, groupe.identifiant)}
+                    onDeposer={() => surDeposer(groupe.identifiant)}
+                  />
+                ))}
+                {collections.length > COLLECTIONS_AU_PLUS && (
+                  <div className="px-[14px] pl-[34px] text-[11px] text-encre-4">
+                    et {collections.length - COLLECTIONS_AU_PLUS} autres — le
+                    volet de la grille les montre toutes
+                  </div>
+                )}
+                <Ligne
+                  nom="＋ Nouvelle collection"
+                  decale
+                  onAller={() => surNouvelleCollection(famille.cle)}
                 />
               </div>
             )}

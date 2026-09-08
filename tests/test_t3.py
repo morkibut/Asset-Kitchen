@@ -198,32 +198,33 @@ def test_une_seule_grille_pour_filtrer_chercher_et_selectionner(client):
     assert _bibliotheque(client, recherche="dragon") == []
 
 
-def test_le_rangement_a_deux_niveaux_et_la_collection_decide_du_projet(client):
-    """Projet › Collection › Asset, et rien d'autre (US-33).
+def test_le_rangement_pose_un_projet_et_larbre_le_compte(client):
+    """Projet › Asset, et rien d'autre pour une image (US-33).
 
-    Une collection qui appartient à un projet **décide** du projet de ce qu'on y
-    range : sinon un asset serait dans la collection d'un univers et dans un
-    autre univers, et l'arbre mentirait à l'un des deux endroits.
+    ⚠️ **La collection ne range plus des images depuis B8.4** — elle range des
+    **sujets** (`docs/PLAN-carnet.md` § B8), et `PUT /api/assets/arrangement`
+    ne pose donc plus qu'un projet. Cet essai remplace celui qui vérifiait
+    qu'une collection décidait du projet de ce qu'on y rangeait : ce geste a
+    disparu avec la colonne `Asset.collection`, elle-même partie avec lui. Le
+    geste qui range un sujet dans une collection, lui, est testé à part —
+    `tests/test_b8.py`, § B8.4.
     """
     asset = _asset(client, _generer(client))
     foret = client.post("/api/projects", json={"nom": "Forêt"}).json()["projet"]
-    armes = client.post(
-        "/api/collections", json={"nom": "Armes", "projet": foret["identifiant"]}
-    ).json()["collection"]
 
     reponse = client.put(
         "/api/assets/arrangement",
-        json={"identifiants": [asset["identifiant"]], "collection": armes["identifiant"]},
+        json={"identifiants": [asset["identifiant"]], "projet": foret["identifiant"]},
     )
     assert reponse.status_code == 200, reponse.text
     range_ = reponse.json()["assets"][0]
 
-    assert range_["collection"] == "armes"
-    assert range_["projet"] == "foret"  # la collection a décidé
-    assert _bibliotheque(client, collection="armes")[0]["identifiant"] == asset["identifiant"]
+    assert range_["projet"] == "foret"
+    assert "collection" not in range_
+    assert _bibliotheque(client, projet="foret")[0]["identifiant"] == asset["identifiant"]
 
     arbre = _arbre(client)
-    assert next(c for c in arbre["collections"] if c["identifiant"] == "armes")["assets"] == 1
+    assert next(p for p in arbre["projets"] if p["identifiant"] == "foret")["assets"] == 1
 
 
 # ── « La filiation d'un asset est lisible depuis sa fiche » et « supprimer un
@@ -372,11 +373,19 @@ def test_l_index_efface_la_bibliotheque_se_reconstruit_depuis_les_fichiers(
     """L'invariant de la tranche, éprouvé par le pire : on efface l'index.
 
     Ce qui doit revenir n'est pas seulement la liste des images — c'est tout ce
-    que l'auteur a posé de sa main : le projet qu'il a créé, la collection, le
-    rangement, le favori, la filiation, et la recette de T2.
+    que l'auteur a posé de sa main : le projet qu'il a créé, le rangement, le
+    favori, la filiation, et la recette de T2.
+
+    **La collection ne se pose plus sur l'image** (B8.4) : *Armes* existe ici
+    pour prouver que la collection elle-même revient de `collections.json`,
+    rien de plus — le rangement dans un projet se demande par `projet`, une
+    collection ne le décide plus. Que les **membres** d'une collection — les
+    sujets de B8.1 — reviennent eux aussi de `collections.json` est vérifié à
+    part, dans `tests/test_b8.py` : deux invariants dans un même essai, c'est
+    un essai qui ne dit plus lequel est tombé.
     """
     foret = client.post("/api/projects", json={"nom": "Forêt"}).json()["projet"]
-    armes = client.post(
+    client.post(
         "/api/collections", json={"nom": "Armes", "projet": foret["identifiant"]}
     ).json()["collection"]
 
@@ -393,7 +402,7 @@ def test_l_index_efface_la_bibliotheque_se_reconstruit_depuis_les_fichiers(
         "/api/assets/arrangement",
         json={
             "identifiants": [souche["identifiant"]],
-            "collection": armes["identifiant"],
+            "projet": foret["identifiant"],
         },
     )
     client.put(
@@ -428,7 +437,6 @@ def test_l_index_efface_la_bibliotheque_se_reconstruit_depuis_les_fichiers(
     revenus = {a.identifiant: a for a in refait.bibliotheque.chercher(projet="foret")}
     assert set(revenus) == {souche["identifiant"], enfant["identifiant"]}
     assert revenus[souche["identifiant"]].favori is True
-    assert revenus[souche["identifiant"]].collection == "armes"
     assert revenus[souche["identifiant"]].recette.grille.cible == 32
     assert revenus[enfant["identifiant"]].parent == souche["identifiant"]
     # Le coût aussi : le journal se relit du disque comme le reste.

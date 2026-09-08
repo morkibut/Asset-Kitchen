@@ -1,11 +1,11 @@
 {
- "releve_le": 1788713040.1688051,
+ "releve_le": 1788822221.884307,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 169809,
+  "octets": 171746,
   "documents": {
    "AGENTS.md": {
     "octets": 35404,
@@ -236,20 +236,20 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 45695,
+    "octets": 47632,
     "titres": 21,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 45060
+      "octets": 46980
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 24,
-      "octets": 4409
+      "octets": 4966
      },
      {
       "titre": "Les invariants du produit",
@@ -345,24 +345,24 @@
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
       "ligne": 508,
-      "octets": 9417
+      "octets": 10780
      },
      {
       "titre": "Le pantin — sorti de la V3 le 3 septembre 2026, arguments intacts",
       "niveau": 3,
-      "ligne": 513,
-      "octets": 5520
+      "ligne": 523,
+      "octets": 6083
      },
      {
       "titre": "Les trois risques encore ouverts",
       "niveau": 3,
-      "ligne": 588,
+      "ligne": 605,
       "octets": 1772
      },
      {
       "titre": "Un risque qui est levé, et il faut le dire",
       "niveau": 3,
-      "ligne": 612,
+      "ligne": 629,
       "octets": 1926
      }
     ]
@@ -557,11 +557,11 @@
  },
  "renvois": {
   "code": {
-   "total": 543,
+   "total": 574,
    "casses": []
   },
   "docs": {
-   "total": 950,
+   "total": 978,
    "casses": []
   }
  }

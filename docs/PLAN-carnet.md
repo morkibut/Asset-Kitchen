@@ -319,9 +319,23 @@ avant d'être annoncé. Détail, verdicts des six critères et ce qui reste ouve
 
 ---
 
-## B8 · La collection devient un vrai groupe
+## B8 · La collection devient un vrai groupe — **`B8.5` tenue le 7 septembre 2026**
 
 **Planches** : `Famille.dc.html`, `Vocabulaire.dc.html`
+
+**Cinq morceaux sur six sont écrits.** `B8.1` a posé le modèle de l'adhésion — la collection
+porte ses membres, un membre est le couple `(jeu, sujet)` —, et les cinq essais qui parlaient de
+collection nomment désormais laquelle des deux ils vérifient. `B8.2` lui ajoute la table de
+jointure de l'index, plus petite qu'annoncée : `reconstruire()` relisait déjà les adhésions
+depuis `B8.1`, sans une ligne à changer. `B8.3` fait entrer le **sujet lui-même** dans l'index —
+une table `personnages`, accrochée aux deux seuls endroits qui en écrivent un — et elle non plus
+n'a rien eu à changer ailleurs : rien ne la lit encore, exactement comme `B8.2` à sa sortie.
+`B8.4` referme les gestes — ranger un sujet, l'en retirer, supprimer une collection sans toucher
+à ses sujets — et reprend les quatre chemins existants que la disparition d'`Asset.collection`
+emportait avec elle : le rangement, le filtre de la grille, et l'arbre, qui compte désormais des
+sujets au lieu d'images. `B8.5` rend la recherche en deux groupes — les sujets par leur nom et
+leur description, les images par leur prompt, leur pose, leur direction et le nom de leur
+sujet —, et c'est elle qui fait vraiment servir la table de `B8.3` : personne ne la lisait avant.
 
 ### Ce qu'on livre
 
@@ -336,16 +350,41 @@ description ou sa pose est impossible, et la barre de `B6` en dépend.
 
 ### Critères d'acceptation
 
-- [ ] Un sujet se range dans deux collections et reste dans les deux.
-- [ ] Retirer une collection ne perd aucun sujet : ils redeviennent sans collection.
-- [ ] L'index se reconstruit du disque et retrouve les mêmes adhésions — les fichiers font
-      foi, la base est reconstructible.
-- [ ] La recherche trouve un sujet par son nom, sa description et sa pose.
-- [ ] Les collections déjà écrites sur le disque se relisent sans perte.
+- [x] Un sujet se range dans deux collections et reste dans les deux. *Tenu par `B8.4` :
+      `ranger_sujet` pose le couple `(jeu, sujet)` dans une collection par `Collection.avec`,
+      idempotent et indifférent à ce qui est déjà écrit dans les autres collections.*
+- [x] Retirer une collection ne perd aucun sujet : ils redeviennent sans collection. *Tenu par
+      `B8.4` : `supprimer_collection` ne lit ni ne parcourt plus un seul asset — seules la fiche
+      et sa ligne de jointure partent.*
+- [x] L'index se reconstruit du disque et retrouve les mêmes adhésions — les fichiers font
+      foi, la base est reconstructible. *Tenu par `B8.2` : la table de jointure porte les mêmes
+      adhésions que la fiche après un aller-retour disque complet.*
+- [x] La recherche rend **deux groupes** : les sujets par leur nom et leur description, les
+      images par leur prompt, leur pose, leur direction et le nom de leur sujet. *Précisé le
+      6 septembre 2026 : le critère d'origine mêlait les deux — un sujet n'a pas de pose.*
+      *Tenu par `B8.5` : `GET /api/characters/search` pour le premier groupe, sur la colonne
+      `recherche` (nom + description) de la table `personnages` ; le filtre `recherche` existant
+      de `GET /api/assets` pour le second, élargi à la pose et la direction — gravées dans la
+      colonne `recherche` de l'image comme le prompt l'était déjà — et au nom du sujet, lu par
+      une jointure à l'instant de la requête, jamais gravé, pour qu'un sujet renommé change
+      aussitôt ce que ses images trouvent.*
+- [x] Une collection ne range que des **sujets**. Le filtre `collection` de la galerie devient
+      « les images des sujets de cette collection », et `Asset.collection` disparaît. *Tenu par
+      `B8.4` : le filtre devient une jointure `EXISTS` sur `collections_membres` par
+      `(jeu, sujet)`, et le champ, la colonne et l'index d'`Asset.collection` sont retirés.*
+- [x] Les collections déjà écrites sur le disque se relisent sans perte. *Tenu par `B8.1` :
+      une fiche sans clé `membres` — celles d'avant `B8` — rend simplement un groupe vide,
+      par un chemin de lecture correct et non par une conversion ; il n'y avait d'ailleurs rien
+      à migrer sur le disque de l'auteur au 6 septembre 2026. Coche restée en retard jusqu'ici.*
 
 ### Bloquée par
 
 Aucune — le serveur seul, démarrable en parallèle de `B0`.
+
+### Sa conception, jugée avant la première ligne
+
+Le relevé, les deux décisions de modèle, les trois arbitrages de l'auteur et le découpage en
+six morceaux sont dans `docs/tranches/V4.md` § B8. *Écrits le 6 septembre 2026.*
 
 ---
 
@@ -367,17 +406,29 @@ existe.
 
 ### Critères d'acceptation
 
-- [ ] La grille tient 250 sujets sans ralentir : elle défile, elle ne recalcule pas ses
-      vignettes à chaque rendu.
-- [ ] Faire glisser une sélection sur une collection montre le compte projeté avant le lâcher.
-- [ ] Les filtres portent leur compte, et « incomplets » se dérive de ce que la nature attend.
-- [ ] Le panneau des réglages de famille écrit dans le modèle existant, sans nouvelle table.
-- [ ] Une seule grille d'assets dans tout le produit — celle-ci n'en est pas une seconde : elle
+- [x] La grille tient 250 sujets sans ralentir : elle défile, elle ne recalcule pas ses
+      vignettes à chaque rendu. *Cliquée sur 260 personnages : la page se charge par 120, et
+      l'image d'une carte est une vignette réduite, servie en `lazy`, jamais l'image entière.*
+- [x] Faire glisser une sélection sur une collection montre le compte projeté avant le lâcher.
+      *`10 + 3` pendant le survol, `13` au lâcher — vérifié au navigateur sur la ligne
+      « Les boss » du carnet, et le compte n'annonce que les sujets qui n'y sont pas déjà.*
+- [x] Les filtres portent leur compte, et « incomplets » se dérive de ce que la nature attend.
+      *Et le compte porte sur la famille entière, pas sur la page servie.*
+- [x] Le panneau des réglages de famille écrit dans le modèle existant, sans nouvelle table.
+      *Quatre lectures et trois écritures, toutes sur des routes qui existaient déjà.*
+- [x] Une seule grille d'assets dans tout le produit — celle-ci n'en est pas une seconde : elle
       range des sujets, pas des images.
 
 ### Bloquée par
 
 - `B0`, `B8`
+
+### Sa conception, jugée avant la première ligne
+
+Le relevé, les décisions et la question posée à l'auteur — mal posée une première fois, en
+jargon, avant d'être reformulée — ainsi que le découpage en sept morceaux sont dans
+`docs/tranches/V4.md` § B9. *Écrits le 7 septembre 2026.* **Les sept morceaux sont tenus le
+8 septembre 2026** ; le compte rendu est au même endroit.
 
 ---
 

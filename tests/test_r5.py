@@ -111,18 +111,21 @@ def test_le_recalage_se_rejoue_depuis_la_planche_sans_un_centime(client, double,
 
 
 def test_l_asset_rejoue_garde_son_identite(client, double, atelier):
-    """Identifiant, rang, label, collection, favori et **masque** : rien de ce
-    qui ne sort pas d'un calcul n'est recalculé."""
+    """Identifiant, rang, label, favori et **masque** : rien de ce qui ne sort
+    pas d'un calcul n'est recalculé.
+
+    ⚠️ **`collection` sortait de cette liste avant B8.4** — `Asset.collection`,
+    zéro ou une, posée sur l'image. Rejouer un calque n'a jamais eu à connaître
+    les groupes de sujets qui la remplacent (`Collection.membres`, B8.1) : la
+    colonne est partie, et ce que cet essai garde est la liste des champs qui
+    survivent, moins un.
+    """
     personnage, poses = _personnage(client, 2)
     _corps(client, double, personnage, poses)
     piece = _piece(client)
     _habiller(client, double, personnage, piece, poses)
 
     calque = _entrees(client, personnage, piece)[0]["identifiant"]
-    collection = client.post(
-        "/api/collections", json={"nom": "à garder"}
-    ).json()["collection"]["identifiant"]
-    client.put("/api/assets", json={"identifiants": [calque], "collection": collection})
     client.put("/api/assets", json={"identifiants": [calque], "favori": True})
     client.put(f"/api/assets/{calque}/layer", json={"zone": [1, 1, 9, 9]})
 
@@ -130,8 +133,9 @@ def test_l_asset_rejoue_garde_son_identite(client, double, atelier):
     assert _recaler(client, calque).status_code == 200
     apres = _fiche(client, calque)
 
-    for champ in ("identifiant", "rang", "label", "collection", "favori", "cree_le"):
+    for champ in ("identifiant", "rang", "label", "favori", "cree_le"):
         assert apres[champ] == avant[champ], champ
+    assert "collection" not in apres
     # Le masque est du travail de la main, pas un résultat de mesure : il reste.
     assert apres["recette"]["difference"]["zone"] == [1, 1, 9, 9]
 

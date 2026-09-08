@@ -257,7 +257,6 @@ class ServiceDecoupe:
                         # ne pas savoir dire qui l'a dessinée.
                         modele=planche.modele,
                         projet=planche.projet,
-                        collection=planche.collection,
                         parent=planche.identifiant,
                         # **Datée de maintenant, pas du lot de la planche.** Ce
                         # qu'on vient de fabriquer se voit en tête de grille :
@@ -271,8 +270,8 @@ class ServiceDecoupe:
             )
             rang += 1
 
-        # L'arbre compte les assets par projet et par collection : huit de plus
-        # changent ces comptes, et personne d'autre ne les recalcule.
+        # L'arbre compte les assets par projet : huit de plus changent ce
+        # compte, et personne d'autre ne le recalcule.
         self._diffusion.publier("bibliotheque", self._bibliotheque.arbre())
         return {
             "planche": planche.identifiant,

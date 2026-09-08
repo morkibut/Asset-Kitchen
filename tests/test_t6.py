@@ -217,34 +217,28 @@ def test_le_descriptif_porte_label_prompt_reglages_dimensions_et_filiation(
     assert "recette" in fiche and fiche["empreinte"]
 
 
-def test_le_descriptif_dit_le_projet_et_la_collection_par_leur_nom(client):
+def test_le_descriptif_dit_le_projet_par_son_nom(client):
     """Un identifiant de projet est un repère de dossier ; un nom se lit.
 
     Le descriptif porte les deux : l'identifiant pour retrouver la chose dans
     l'atelier, le nom pour la reconnaître six mois plus tard.
+
+    ⚠️ **Ce test portait aussi la collection, avant B8.4.** Elle s'écrivait
+    alors sur l'image — `Asset.collection`, une au plus, d'où le champ unique
+    que le descriptif lisait. La colonne est partie avec la refonte de la
+    collection en groupe de **sujets** (`docs/PLAN-carnet.md` § B8), et le
+    descriptif d'une image ne dit donc plus rien d'une collection : ce qu'il
+    devrait dire d'un groupe de sujets — le sien, ou ceux de son personnage —
+    reste une décision d'export, qui attend sa tranche.
     """
-    # Une collection **du projet** : une collection sans projet traverse les
-    # univers et détache donc ce qu'on y range (`ARCHITECTURE.md` §5). Ce qu'on
-    # veut voir ici, c'est un asset qui a les deux.
-    collection = client.post(
-        "/api/collections", json={"nom": "Tonneaux du port", "projet": "bac-a-sable"}
-    ).json()["collection"]
     generation = _generer(client)
     identifiant = f"{generation['identifiant']}-0"
-    range_ = client.put(
-        "/api/assets/arrangement",
-        json={"identifiants": [identifiant], "collection": collection["identifiant"]},
-    )
-    assert range_.status_code == 200, range_.text
 
     _, descriptif = _ouvrir(_exporter(client, [identifiant]))
     fiche = descriptif["assets"][0]
 
     assert fiche["projet"]["nom"] == "Bac à sable"
-    assert fiche["collection"] == {
-        "identifiant": collection["identifiant"],
-        "nom": "Tonneaux du port",
-    }
+    assert "collection" not in fiche
 
 
 def test_un_parent_supprime_reste_dans_la_filiation_du_descriptif(client, double):

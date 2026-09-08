@@ -23,9 +23,15 @@ Trois invariants se rejoignent ici, et ils viennent de trois tranches :
   — l'enregistrement de l'asset est écrit à côté de ses images. La bibliothèque
   se reconstruira en relisant le disque, sans rien à rétro-adapter.
 
-Le rangement, la filiation et le jugement — `projet`, `collection`, `parent`,
-`favori` — ont été déclarés en T2 et sont écrits depuis T3. Les déclarer d'avance
-a coûté quatre champs ; les ajouter après coup aurait coûté une migration.
+Le rangement, la filiation et le jugement — `projet`, `parent`, `favori` — ont
+été déclarés en T2 et sont écrits depuis T3. Les déclarer d'avance a coûté trois
+champs ; les ajouter après coup aurait coûté une migration.
+
+**`collection` a vécu ici de T3 à B8.4** — zéro ou une, posée par un rangement
+sur l'image. Elle est partie avec la refonte de la collection en groupe libre
+de **sujets** (`docs/PLAN-carnet.md` § B8) : une image n'appartient plus à une
+collection en propre, c'est son sujet qui peut appartenir à plusieurs à la fois
+(`atelier/domaine/projet.py`, `Collection.membres`).
 """
 
 from __future__ import annotations
@@ -217,7 +223,6 @@ class Asset:
 
     # ── Le rangement, la filiation, le jugement ──────────────────────────────
     projet: str | None = None
-    collection: str | None = None
     parent: str | None = None
     favori: bool = False
 
@@ -306,7 +311,6 @@ class Asset:
             ),
             "personnage_supprime": self.personnage_supprime,
             "projet": self.projet,
-            "collection": self.collection,
             "parent": self.parent,
             "parent_supprime": self.parent_supprime,
             "favori": self.favori,
@@ -373,7 +377,6 @@ class Asset:
             ),
             personnage_supprime=d.get("personnage_supprime", False),
             projet=d.get("projet"),
-            collection=d.get("collection"),
             parent=d.get("parent"),
             parent_supprime=d.get("parent_supprime", False),
             favori=d.get("favori", False),

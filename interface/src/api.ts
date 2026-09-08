@@ -2704,7 +2704,77 @@ export type Collection = {
   nom: string
   projet: string | null
   cree_le: number
-  assets: number
+  /** **Des sujets, plus des images** (B8.4) — et le renommage a laissé
+   *  l'écran derrière lui : le type disait encore `assets`, que le serveur
+   *  n'envoie plus, si bien que l'arbre de la galerie affichait le compte
+   *  d'une collection en `undefined` depuis la tranche. Trouvé en branchant
+   *  `B9` dessus, la première tranche qui s'en sert vraiment. */
+  sujets: number
+}
+
+// ── La grille d'une famille (B9) ────────────────────────────────────────────
+
+/** Ce qu'un sujet a de fait sur ce qu'il attend, **dans ses deux calques**
+ *  (B9.1).
+ *
+ *  Les images et les animations se comptent séparément, et ne se mêlent jamais
+ *  en un seul total : une animation manquante se cacherait derrière une image
+ *  présente. `complet` ne regarde que les images — sans quoi le filtre
+ *  *Incomplets* rendrait le jeu entier tant qu'une bande manque, c'est-à-dire
+ *  toujours. */
+export type CompteDuSujet = {
+  poses: { fait: number; attendu: number }
+  images: { fait: number; attendu: number }
+  bandes: { fait: number; attendu: number }
+  complet: boolean
+  /** Le même compte, pose par pose — **ce que la vue *Les poses* dessine**.
+   *  Il sort de la même boucle que les totaux ci-dessus : les deux ne peuvent
+   *  pas se contredire. */
+  detail: { identifiant: string; nom: string; fait: number; attendu: number }[]
+}
+
+/** Une collection où l'on peut ranger, et ce qu'elle contient **de ce jeu-ci**.
+ *
+ *  ⚠️ Ce n'est pas `Collection.sujets` de l'arbre, qui compte les sujets de tous
+ *  les jeux ensemble : le « 10 + 3 » annoncé pendant un glisser doit compter les
+ *  dix que le carnet montre, pas ceux d'un autre univers. */
+export type GroupeDeRangement = { identifiant: string; nom: string; sujets: number }
+
+/** Les trois onglets de filtre, dans l'ordre où la planche les range. */
+export type FiltreDeFamille = "tous" | "incomplets" | "sans-description"
+
+/** Une carte de la grille : le sujet, son compte, et ses collections.
+ *
+ *  ⚠️ **Ce n'est pas un `Personnage`.** La route de la famille rend
+ *  `Personnage.en_json()` tel quel ; `cases`, `plan`, `famille` et `equipable`
+ *  sont composés par `GET /characters`, et ne sont pas là. Les déclarer ici
+ *  ferait croire à l'écran qu'il les a. */
+export type SujetDeLaGrille = {
+  identifiant: string
+  projet: string
+  nom: string
+  description: string
+  type: string
+  cree_le: number
+  compte: CompteDuSujet
+  collections: { identifiant: string; nom: string }[]
+  /** L'image que la carte montre — la plus fraîche de ce sujet, jamais une
+   *  pièce d'équipement —, ou `null` quand il n'en a aucune. `empreinte` est le
+   *  cassage de cache de l'adresse, à passer tel quel à `api.vignette`. */
+  vignette: { identifiant: string; empreinte: string } | null
+}
+
+export type GrilleDeFamille = {
+  personnages: SujetDeLaGrille[]
+  /** Les collections où l'on peut ranger — **y compris les vides**, qui ne
+   *  figurent sur la carte d'aucun sujet et resteraient donc invisibles comme
+   *  cibles de dépôt, alors que ce sont justement celles qu'on veut remplir. */
+  groupes: GroupeDeRangement[]
+  /** Ce que chaque onglet compte, sur la famille entière et non sur la page. */
+  filtres: Record<FiltreDeFamille, number>
+  /** Le compte de la famille une fois le filtre et la recherche appliqués —
+   *  ce qu'il reste à charger se lit `total - personnages.length`. */
+  total: number
 }
 
 /** L'arbre, compté et totalisé **par le serveur**. Une somme faite ici, sur les
@@ -4096,6 +4166,28 @@ export const api = {
       { method: "DELETE" },
     ),
 
+  /** Ranger un sujet dans une collection (B8.4).
+   *
+   *  **Un sujet à la fois, et c'est voulu** : ranger ce qui est déjà rangé est
+   *  un geste sans effet côté serveur (`Collection.avec`), si bien qu'un
+   *  glisser-déposer de trois sujets est trois appels dont aucun ne peut faire
+   *  de mal s'il est rejoué. Un envoi groupé aurait demandé une route neuve
+   *  pour économiser deux allers-retours locaux. */
+  rangerSujet: (collection: string, jeu: string, sujet: string) =>
+    appeler<{ collection: Collection; bibliotheque: Bibliotheque }>(
+      `/collections/${encodeURIComponent(collection)}/members`,
+      { method: "PUT", body: JSON.stringify({ jeu, sujet }) },
+    ),
+
+  /** Le sujet quitte le groupe. **Ni son jeu ni ses images n'en savent rien** —
+   *  seule l'adhésion bouge (B8.4). */
+  retirerSujet: (collection: string, jeu: string, sujet: string) =>
+    appeler<{ collection: Collection; bibliotheque: Bibliotheque }>(
+      `/collections/${encodeURIComponent(collection)}/members/` +
+        `${encodeURIComponent(jeu)}/${encodeURIComponent(sujet)}`,
+      { method: "DELETE" },
+    ),
+
   ranger: (
     identifiants: string[],
     rangement: { projet?: string | null; collection?: string | null },
@@ -4762,6 +4854,43 @@ export const api = {
   // ── Le plan de poses et les personnages ───────────────────────────────────
 
   production: () => appeler<Production>("/characters"),
+
+  /** La grille d'une famille, paginée (B9.2, B9.3, B9.6).
+   *
+   *  **Une page, pas une fenêtre glissante** : `limite` grandit d'un appel à
+   *  l'autre — c'est le « Charger la suite » de la bibliothèque d'images, le
+   *  seul patron de pagination que le produit connaisse.
+   *
+   *  **Le filtre part au serveur, il ne se pose pas ici.** Filtrer la page reçue
+   *  dirait « 31 incomplets » au-dessus d'une grille qui n'en montrerait que
+   *  ceux des trente premiers chargés ; les trois comptes rendus par `filtres`
+   *  portent, eux, sur la famille entière.
+   *
+   *  Comme toutes ses voisines de ce routeur, elle n'envoie pas de projet : le
+   *  serveur sert le jeu ouvert. */
+  familleDeSujets: (
+    famille: string,
+    options: {
+      recherche?: string
+      filtre?: FiltreDeFamille
+      /** La collection ouverte sous la famille, dans le carnet. Vide ou absente :
+       *  toute la famille. */
+      collection?: string | null
+      limite?: number
+    } = {},
+  ) => {
+    const parametres = new URLSearchParams()
+    if (options.recherche?.trim())
+      parametres.set("recherche", options.recherche.trim())
+    if (options.filtre && options.filtre !== "tous")
+      parametres.set("filtre", options.filtre)
+    if (options.collection) parametres.set("collection", options.collection)
+    if (options.limite) parametres.set("limite", String(options.limite))
+    const suite = parametres.toString()
+    return appeler<GrilleDeFamille>(
+      `/characters/families/${encodeURIComponent(famille)}${suite ? `?${suite}` : ""}`,
+    )
+  },
 
   // ── La planche d'une pose (E13) ──────────────────────────────────────────
   //

@@ -429,7 +429,14 @@ def test_une_ambiance_ecrit_ses_trois_textes(client):
 def test_une_chose_du_jeu_designe_son_ambiance_sur_sa_fiche(client):
     """Et **aucune collection ne décide d'une ambiance** : une collection reste
     un dossier qui ne décide de rien. Grouper vingt monstres et régler leur style
-    sont deux gestes différents."""
+    sont deux gestes différents.
+
+    **Laquelle des deux collections** — le mot en a désigné deux le temps de
+    B8 : celle qui se posait sur une image (`Asset.collection`, zéro ou une,
+    partie en B8.4) et celle qui groupe des sujets (`Collection.membres`,
+    B8.1). Ici, **les deux** : ni l'une ni l'autre n'a jamais eu à décider d'un
+    style, et c'est bien pour ça que la seconde peut être libre.
+    """
     ambiance = _ambiance(client, "Marais de cendre")
     cree = client.post("/api/characters", json={"nom": "Le rôdeur"}).json()["personnage"]
 

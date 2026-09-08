@@ -85,6 +85,49 @@ Haiku est sans risque, et c'est là que l'économie se fait vraiment.
 
 ---
 
+## B8 en détail, morceau par morceau
+
+*Découpée le 6 septembre 2026, avant d'être confiée — règle 3 plus bas. La conception est dans
+`docs/tranches/V4.md` § B8.* Six morceaux, **du serveur uniquement** : l'écran est `B9`.
+
+| # | Le morceau | Étiquette |
+|---|---|---|
+| **B8.1** | le modèle de l'adhésion — la collection porte ses membres, et un membre est un couple `(jeu, sujet)` | `[HARD]` |
+| **B8.2** | la table de jointure dans l'index, et sa reconstruction depuis le disque | `[MEDIUM]` |
+| **B8.3** | les sujets entrent dans l'index — deux crochets, un seul endroit écrit un sujet | `[MEDIUM]` |
+| **B8.4** | les gestes : ranger, retirer, supprimer une collection, et l'arbre qui compte des sujets | `[MEDIUM]` |
+| **B8.5** | la recherche en deux groupes — les sujets, les images | `[MEDIUM]` |
+| **B8.6** | le vocabulaire du serveur : « ses assets restent » devient « ses sujets restent » | `[VERY-EASY]` |
+
+**Un seul morceau reste Opus** : `B8.1`, qui pose la forme dont les cinq autres héritent.
+Le relevé a fait descendre `B8.3`, qu'on croyait dur — un seul endroit du dépôt écrit un sujet,
+un seul l'efface, donc l'index se branche sur deux crochets nommés et non sur une chasse.
+
+---
+
+## B9 en détail, morceau par morceau
+
+*Découpée le 7 septembre 2026, avant d'être confiée — règle 3 plus bas. La conception, le
+relevé et la question posée à l'auteur sont dans `docs/tranches/V4.md` § B9.* Sept morceaux :
+trois de serveur, quatre d'écran.
+
+| # | Le morceau | Étiquette |
+|---|---|---|
+| **B9.1** | le compte groupé par sujet — une requête agrégée qui remplace un aller-retour SQL par sujet, combinée en Python aux règles de complétude déjà écrites sur `Personnage` | `[HARD]` |
+| **B9.2** | la route qui sert une famille, paginée façon B3, avec le compte de B9.1 posé sur chaque sujet | `[MEDIUM]` |
+| **B9.3** | chaque sujet servi porte déjà ses collections — une jointure de plus sur le patron de B8.4 | `[EASY]` |
+| **B9.4** | la grille, la recherche et la sélection multiple | `[MEDIUM]` |
+| **B9.5** | le glisser-déposer avec compte projeté avant le lâcher | `[MEDIUM]` |
+| **B9.6** | les filtres et leur compte, dérivés de B9.1 | `[EASY]` |
+| **B9.7** | le panneau des réglages de famille — trois tables, aucune route neuve | `[MEDIUM]` |
+
+**Un seul morceau reste Opus** : `B9.1`, le point dur déjà repéré plus haut (§ Les points durs
+qui montent d'un cran). Il pose la requête agrégée dont `B9.2` et `B9.6` héritent ; les quatre
+morceaux d'écran n'ont ensuite aucun algorithme à inventer, seulement à composer ce que le
+serveur leur sert.
+
+---
+
 ## B18 en détail, atelier par atelier
 
 `B18` est une file, et ses huit ateliers ne se valent pas. Pris séparément :

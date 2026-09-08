@@ -63,6 +63,8 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/Ouverture.tsx",
     "interface/src/composants/Barre.tsx",
     "interface/src/composants/Guide.tsx",
+    "interface/src/composants/Famille.tsx",
+    "interface/src/composants/ReglagesDeFamille.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────
@@ -114,6 +116,11 @@ NATIF = {
     "xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl",
     # `border-…` et `decoration-…` servent aussi au style du trait.
     "solid", "dashed", "dotted", "double", "hidden",
+    # …et au **modèle de bordure d'un tableau** : `border-collapse` et
+    # `border-separate` sont des mots du framework au même titre que `dashed`,
+    # pas des noms de couleur. Trouvés en B9.4, la première vue du produit qui
+    # dessine un vrai tableau.
+    "collapse", "separate",
 }
 
 UTILITAIRES = (

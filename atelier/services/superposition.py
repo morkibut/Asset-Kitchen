@@ -300,7 +300,6 @@ class ServiceSuperposition:
                         provenance=haut.provenance,
                         modele=haut.modele,
                         projet=haut.projet,
-                        collection=haut.collection,
                         personnage=haut.personnage,
                         pose=haut.pose,
                         piece=haut.piece if sortie == CALQUE else None,

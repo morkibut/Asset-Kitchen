@@ -36,7 +36,13 @@ from atelier.domaine.generation import (
     Statut,
 )
 from atelier.domaine.pliage import CasePliee, Geometrie, MesuresLot, Pliage, geometrie
-from atelier.domaine.projet import NOM_BAC_A_SABLE, Collection, Projet, repere
+from atelier.domaine.projet import (
+    NOM_BAC_A_SABLE,
+    Collection,
+    Membre,
+    Projet,
+    repere,
+)
 from atelier.domaine.recette import (
     Bords,
     Grille,
@@ -60,6 +66,7 @@ __all__ = [
     "Generation",
     "Geometrie",
     "Grille",
+    "Membre",
     "MesuresLot",
     "Modele",
     "ModeleInconnu",

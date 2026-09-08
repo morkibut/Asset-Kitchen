@@ -34,6 +34,7 @@ from pydantic import BaseModel, Field
 from atelier.api.routes import CorpsTrait, reponse_archive
 from atelier.domaine.recette import OCCUPATION_MAX_ABSOLU, RAYON_MAX
 from atelier.services import Atelier
+from atelier.services.production import TOUS_LES_SUJETS
 
 routeur = APIRouter()
 
@@ -767,6 +768,130 @@ async def oublier_les_poses_du_type(
 
 
 # ── Les personnages ──────────────────────────────────────────────────────────
+
+
+@routeur.get("/characters/search")
+async def rechercher_personnages(
+    requete: Request,
+    recherche: str = Query(""),
+    projet: str | None = Query(None),
+    limite: int = Query(200, ge=1, le=1000),
+) -> dict[str, Any]:
+    """Les sujets d'un projet dont le nom ou la description répondent (B8.5).
+
+    **Deux segments, et c'est sans risque ici** — pas de conflit possible avec
+    `/characters/{identifiant}`, qui n'existe qu'en `PUT` et `DELETE` : aucune
+    route `GET` à deux segments ne peut lui être prise pour un identifiant.
+
+    Sur l'index de `B8.3`, pas sur le disque : c'est la seule des deux
+    lectures de sujets à l'être, et c'est voulu — chercher parmi des centaines
+    de sujets en rouvrant un fichier par sujet à chaque frappe est
+    exactement ce que la table jetable existe pour éviter.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    trouves = atelier.production.rechercher_personnages(vise, recherche, limite)
+    return {"personnages": [p.en_json() for p in trouves]}
+
+
+@routeur.get("/characters/families/{famille}")
+async def grille_de_famille(
+    requete: Request,
+    famille: str,
+    recherche: str = Query(""),
+    filtre: str = Query(TOUS_LES_SUJETS),
+    collection: str = Query(""),
+    projet: str | None = Query(None),
+    limite: int = Query(120, ge=1, le=1000),
+) -> dict[str, Any]:
+    """La grille d'une famille, paginée — chaque sujet porte déjà son compte
+    de complétude (B9.1) et ses collections (B9.3).
+
+    **Trois segments, sans risque de collision** — comme `/characters/search` :
+    `/characters/{identifiant}` n'existe qu'en `PUT` et `DELETE`, et aucune
+    route `GET` à plusieurs segments ne peut lui être prise pour un identifiant.
+
+    `limite` grandit d'un appel à l'autre côté écran (« Charger la suite »,
+    B3) ; `total` est le compte de la famille entière, filtre de recherche
+    compris, pour que l'écran sache combien il en reste à charger.
+
+    **Les collections sont jointes ici, pas dans `ServiceProduction`** : c'est
+    une question du carnet (B8), posée à côté d'une question de production
+    (B9.1), et la route est le seul endroit qui a besoin des deux à la fois.
+
+    **`groupes` est la liste des collections où l'on peut ranger**, avec ce que
+    chacune contient **de ce jeu-ci** (B9.5). Elle n'est pas déductible de la
+    page : une collection vide n'apparaît sur la carte d'aucun sujet, et
+    resterait donc invisible comme cible de dépôt — or c'est justement celle
+    qu'on veut remplir. Le filtre `projet is None or projet == jeu` est celui
+    que l'arbre de la galerie applique déjà (`interface/src/composants/Arbre.tsx`)
+    : une seule règle pour dire *les collections de ce jeu*.
+
+    **`collection` restreint la grille à un groupe** — la ligne qu'on ouvre sous
+    une famille dans le carnet. C'est ici que les deux questions se rejoignent une
+    troisième fois : le carnet sait lire un groupe, la production sait répartir
+    une famille, et la route passe à la seconde les identifiants que la première a
+    résolus. **Une collection inconnue rend une grille vide plutôt qu'un refus** :
+    un groupe supprimé pendant qu'on le regardait ne doit pas casser l'écran, il
+    doit se vider — et la ligne du carnet aura disparu avec lui.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    seulement: set[str] | None = None
+    if collection:
+        groupe = next(
+            (c for c in atelier.bibliotheque.collections() if c.identifiant == collection),
+            None,
+        )
+        seulement = set(groupe.sujets_du_jeu(vise)) if groupe else set()
+    page = atelier.production.famille(
+        vise,
+        famille,
+        recherche=recherche,
+        limite=limite,
+        filtre=filtre,
+        seulement=seulement,
+    )
+    identifiants = [p.identifiant for p in page["personnages"]]
+    collections = atelier.base.collections_par_sujet(vise, identifiants)
+    vignettes = atelier.base.vignettes_par_personnage(vise, identifiants)
+    comptes = page["comptes"]
+    combien = atelier.base.compter_par_collection(vise)
+    return {
+        "personnages": [
+            {
+                **p.en_json(),
+                "compte": comptes[p.identifiant],
+                "collections": collections[p.identifiant],
+                # `null` plutôt qu'une clé absente : la carte doit pouvoir dire
+                # « aucune image » sans confondre ce cas avec un champ qu'un
+                # serveur plus vieux n'enverrait pas.
+                "vignette": (
+                    None
+                    if p.identifiant not in vignettes
+                    else {
+                        "identifiant": vignettes[p.identifiant].identifiant,
+                        # L'empreinte n'est que le cassage de cache de l'adresse
+                        # (elle nomme la recette rendue) : absente, la vignette
+                        # se sert quand même.
+                        "empreinte": vignettes[p.identifiant].empreinte or "",
+                    }
+                ),
+            }
+            for p in page["personnages"]
+        ],
+        "groupes": [
+            {
+                "identifiant": groupe.identifiant,
+                "nom": groupe.nom,
+                "sujets": combien.get(groupe.identifiant, 0),
+            }
+            for groupe in atelier.bibliotheque.collections()
+            if groupe.projet is None or groupe.projet == vise
+        ],
+        "filtres": page["filtres"],
+        "total": page["total"],
+    }
 
 
 @routeur.get("/characters")

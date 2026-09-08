@@ -164,7 +164,6 @@ class ServiceMiroir:
                 direction=rangee,
                 piece=parent.piece,
                 projet=parent.projet,
-                collection=parent.collection,
                 parent=parent.identifiant,
                 # **Datée de maintenant, pas du lot du parent.** Ce qu'on vient
                 # de fabriquer se voit en tête de grille ; datée du lot, l'image
@@ -174,8 +173,8 @@ class ServiceMiroir:
             )
         )
 
-        # L'arbre compte les assets par projet et par collection : un de plus
-        # change ces comptes, et personne d'autre ne les recalcule.
+        # L'arbre compte les assets par projet : un de plus change ce compte,
+        # et personne d'autre ne le recalcule.
         self._diffusion.publier("bibliotheque", self._bibliotheque.arbre())
         return {"parent": parent.identifiant, "miroir": miroir.en_json()}
 
