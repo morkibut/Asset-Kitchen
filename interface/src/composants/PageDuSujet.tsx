@@ -627,10 +627,19 @@ export function PageDuSujet(proprietes: {
   onOuvrirLaBande: (bande: string) => void
   onSuperposition: (identifiant: string) => void
   onSupprimer: (identifiants: string[]) => void
+  /** Ouvre la grille du jeu pour ce sujet (`B13`) — une profondeur de plus de
+   *  cette page, comme la matrice. */
+  onGrille: () => void
+  /** Et comparer, à côté — la même profondeur, l'autre écran. */
+  onComparer: () => void
   outil: ReactNode
 }) {
   const { ouvert, plan, barreQuiPaie, outil, onFente } = proprietes
   const [onglet, setOnglet] = useState<Onglet>("fiche")
+  // **B13** — la grille du jeu et comparer n'ont rien à montrer sans une
+  // image. Les deux liens se grisent avec leur raison plutôt que de
+  // disparaître, comme partout ailleurs dans ce fichier.
+  const auMoinsUneImage = ouvert.cases.some((c) => c.images.length > 0)
   // La matrice, profondeur suivante de cette page — voir l'en-tête du fichier.
   const [matriceOuverte, setMatriceOuverte] = useState(false)
   const [lu, setLu] = useState<CeQueLaFicheLit>({
@@ -743,24 +752,52 @@ export function PageDuSujet(proprietes: {
           </div>
         </div>
 
-        <div role="tablist" aria-label="La page du sujet" className="flex gap-[4px] self-start rounded-8 bg-papier-cote p-[4px]">
-          {ONGLETS.map(({ clef, nom }) => (
+        <div className="flex items-center justify-between gap-[14px]">
+          <div role="tablist" aria-label="La page du sujet" className="flex gap-[4px] self-start rounded-8 bg-papier-cote p-[4px]">
+            {ONGLETS.map(({ clef, nom }) => (
+              <button
+                key={clef}
+                type="button"
+                role="tab"
+                aria-selected={onglet === clef}
+                onClick={() => setOnglet(clef)}
+                className={[
+                  "flex h-[30px] items-center rounded-7 px-[14px] text-[13.5px] transition-colors duration-120",
+                  onglet === clef
+                    ? "bg-carte font-medium text-encre"
+                    : "text-encre-3 hover:text-encre",
+                ].join(" ")}
+              >
+                {nom}
+              </button>
+            ))}
+          </div>
+
+          {/* **B13** — la grille du jeu, et comparer : deux profondeurs de
+              plus de cette page, jamais deux onglets de plus, parce
+              qu'aucune des deux ne remplace la fiche ou les images. Grisées
+              avec leur raison tant que le sujet n'a aucune image : la
+              grille n'aurait rien à poser, et comparer rien à montrer. */}
+          <div className="flex items-center gap-[8px]">
             <button
-              key={clef}
               type="button"
-              role="tab"
-              aria-selected={onglet === clef}
-              onClick={() => setOnglet(clef)}
-              className={[
-                "flex h-[30px] items-center rounded-7 px-[14px] text-[13.5px] transition-colors duration-120",
-                onglet === clef
-                  ? "bg-carte font-medium text-encre"
-                  : "text-encre-3 hover:text-encre",
-              ].join(" ")}
+              onClick={proprietes.onGrille}
+              disabled={!auMoinsUneImage}
+              title={auMoinsUneImage ? undefined : "aucune image encore — rien à poser sur la grille"}
+              className="h-[30px] rounded-7 px-[14px] text-[13.5px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:text-eteint disabled:hover:text-eteint"
             >
-              {nom}
+              Voir la grille du jeu
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={proprietes.onComparer}
+              disabled={!auMoinsUneImage}
+              title={auMoinsUneImage ? undefined : "aucune image encore — rien à comparer"}
+              className="h-[30px] rounded-7 px-[14px] text-[13.5px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:text-eteint disabled:hover:text-eteint"
+            >
+              Comparer ›
+            </button>
+          </div>
         </div>
 
         {onglet === "fiche" && (

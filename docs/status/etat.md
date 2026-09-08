@@ -11,6 +11,44 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B13 — la grille du jeu, et comparer — 8 septembre 2026
+
+**Deux écrans en lecture seule, tous deux accrochés au bandeau d'onglets de
+`PageDuSujet.tsx`, à côté de *Sa fiche*/*Ses images*/*Ses animations*.** La grille du jeu
+pose le sujet sur sa case avec ses voisins étiquetés de leur occupation ; comparer met deux
+sujets — ou deux images d'un même sujet, quand le second choix est le premier — côte à
+côte, avec l'écart chiffré et l'action qui le corrige. Aucun des deux ne coûte, n'écrit ni
+n'ajoute une route : `univers` et `personnages` sont déjà chargés à la racine de `App.tsx`.
+
+**Le plan supposait un calcul manquant — le plafond réel d'occupation. Il existait déjà,**
+testé aux deux bouts (`occupation_max`, `atelier/domaine/recette.py`, et son double
+`occupationMax`, `interface/src/api.ts`, déjà employé par `Assistant.tsx` et `Places.tsx`).
+`B13` n'écrit donc aucune ligne de domaine : elle réemploie l'existant, montré à côté du
+reste. Les quatre écarts chiffrés de `Comparer.tsx` viennent eux aussi de nombres déjà
+réels — `rendu_largeur`/`rendu_hauteur`, `recette.contours`, `recette.quantification.couleurs`
+— sans qu'aucun ne soit inventé ; la ligne « Son ombre » de la planche a été abandonnée,
+faute de toute mesure du produit qui la porte.
+
+⚠️ **Le relevé a trouvé trois défauts en vérifiant au navigateur, aucun par les essais
+d'écran.** Une couleur écrite en clair dans un `style` en ligne (`GrilleDuJeu.tsx`), que
+`essai_jetons.py` interdit partout dans le texte source et pas seulement dans une
+`className` — corrigée par un jeton déjà déclaré et un mélange `overlay` plutôt qu'une
+transparence littérale. Un écart de contour qui ne comptait pas quand un seul des deux
+côtés en portait un — la règle exigeait les deux non nuls avant de comparer, donc *« une
+image détourée, l'autre jamais »*, le cas le plus courant, se lisait *« le même »*. Et
+« La retoucher » qui restait sans effet visible quand l'écart appartenait au second sujet
+comparé : l'outil de retouche ne cherche une image que dans les cases du sujet dont la
+page est affichée, et le bouton ne portait que l'identifiant de l'image, jamais celui de
+son sujet. Les trois sont corrigés, et le dernier a changé la façon dont *La retoucher*
+navigue : elle bascule d'abord sur la page du bon sujet — ce qui referme Comparer de
+lui-même, la pile de lieux coupant ce qui est plus profond que l'étage remplacé — avant
+d'ouvrir la case.
+
+**Vérifié sur un atelier jetable dédié**, port 8480 (`essais/atelier_jetable_b13.py`) : un
+sujet dont l'image dépasse sa case, porte un contour que l'autre n'a pas, et un compte de
+couleurs au-delà du réglage du jeu — les trois écarts et leurs trois formes de correction
+en même temps, sur un seul sujet-témoin.
+
 ## V4 · B14 — les règles du jeu, en quatre étapes — 9 septembre 2026
 
 **Commencer un jeu se fait en quatre pas — son nom, son allure, sa vue, son monde — et le même

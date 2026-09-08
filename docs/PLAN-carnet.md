@@ -176,7 +176,7 @@ d'agents avant le gros morceau.
 | **4** | `B8`, `B9`, `B10`, `B11` | la collection, la grille d'une famille, la page d'un sujet, le départage |
 | **5** | `B14`, `B15` | les règles du jeu, l'installation |
 | **6** | `B16`, `B17`, `B18` | les tables rangées, puis les moteurs |
-| **7** | `B12`, `B13`, `B19`, `B20`, `B21`, `B22` | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
+| **7** | `B12`, `B13` ✔, `B19`, `B20`, `B21`, `B22` | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
 
 `B8` et `B17` sont du serveur pur : ils se prennent en parallèle du rang qui les précède.
 
@@ -557,11 +557,30 @@ toile ne dépasse pas 2 048 pixels de côté. Sur une case de 512, le plafond n'
 
 ### Critères d'acceptation
 
-- [ ] Le zoom est entier et rien d'autre : ×1, ×2, ×4, ×8.
-- [ ] Le plafond d'occupation affiché est celui que la taille de case permet vraiment.
-- [ ] Comparer deux sujets ne coûte rien et ne modifie rien.
-- [ ] Un écart hors norme porte l'action qui le corrige, avec son prix quand elle en a un.
-- [ ] Choisir deux fois le même sujet bascule en comparaison de deux de ses images.
+- [x] Le zoom est entier et rien d'autre : ×1, ×2, ×4, ×8. *Les deux écrans partagent le
+      même jeu de crans (`ZOOMS = [1,2,4,8]`) ; vérifié par essai et au navigateur —
+      `×3` n'existe sur aucun des deux, `×8` s'active bien (`aria-pressed`).*
+- [x] Le plafond d'occupation affiché est celui que la taille de case permet vraiment.
+      *`occupationMax(cible)` (`interface/src/api.ts`), le même calcul que le serveur
+      (`occupation_max`, `atelier/domaine/recette.py:786`, testé par
+      `tests/test_tailles.py`) — 800 % sur une case de 64, 400 % sur une case de 512,
+      vérifié aux deux essais et au navigateur.*
+- [x] Comparer deux sujets ne coûte rien et ne modifie rien. *`Comparer.tsx` ne prend que
+      des props et n'appelle jamais `fetch` — vérifié par essai (`fetchDouble` non
+      appelé) et au navigateur (`read_network_requests` pendant zoom, choix du second
+      sujet et bascule de mode : aucune requête neuve).*
+- [x] Un écart hors norme porte l'action qui le corrige, avec son prix quand elle en a un.
+      *Hauteur/largeur hors case → « La retoucher », qui ouvre réellement l'outil sur la
+      bonne image ; contour ou couleurs hors norme → le dernier coût réel de l'image
+      (`cout_usd`), jamais un prix promis. Deux défauts trouvés en vérifiant au
+      navigateur et corrigés avant tenue : un écart de contour ne comptait pas quand un
+      seul des deux côtés en portait un, et « La retoucher » restait sans effet quand
+      l'écart appartenait au second sujet — voir `docs/tranches/V4.md § B13`.*
+- [x] Choisir deux fois le même sujet bascule en comparaison de deux de ses images.
+      *Sélectionner le même sujet dans « Comparer avec » bascule le titre sur « Le même,
+      deux fois » et fait apparaître les deux sélecteurs d'image — vérifié par essai et
+      au navigateur (avec le repli honnête « aucune pose comparable » quand le sujet n'a
+      qu'une seule image).*
 
 ### Bloquée par
 

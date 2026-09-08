@@ -168,6 +168,8 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
     onOuvrirLaBande: vi.fn(),
     onSuperposition: vi.fn(),
     onSupprimer: vi.fn(),
+    onGrille: vi.fn(),
+    onComparer: vi.fn(),
   }
   render(
     <PageDuSujet
@@ -423,10 +425,30 @@ describe("ce qui lui manque", () => {
     expect(onPersonnage.mock.calls[0][0].supprime).toBe(true)
   })
 
-  test("aucune commande sans route derrière — ni dupliquer, ni comparer", () => {
+  test("aucune commande sans route derrière — dupliquer n'existe toujours pas", () => {
     monter()
     expect(screen.queryByRole("button", { name: /dupliquer/i })).toBeNull()
-    expect(screen.queryByRole("button", { name: /comparer/i })).toBeNull()
+  })
+
+  // **B13** — comparer a maintenant une route derrière : deux profondeurs de
+  // plus de cette page, ouvertes depuis son bandeau d'onglets.
+  test("la grille du jeu et comparer s'ouvrent depuis le bandeau d'onglets", () => {
+    const { onGrille, onComparer } = monter()
+    fireEvent.click(screen.getByRole("button", { name: "Voir la grille du jeu" }))
+    expect(onGrille).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole("button", { name: "Comparer ›" }))
+    expect(onComparer).toHaveBeenCalledTimes(1)
+  })
+
+  test("les deux liens se grisent, avec leur raison, sans aucune image", () => {
+    monter({
+      cases: [sienne({ pose: "repos" }), sienne({ pose: "marche" })],
+    })
+    const grille = screen.getByRole("button", { name: "Voir la grille du jeu" })
+    const comparer = screen.getByRole("button", { name: "Comparer ›" })
+    expect(grille).toBeDisabled()
+    expect(comparer).toBeDisabled()
+    expect(grille.title).toMatch(/aucune image/)
   })
 })
 
