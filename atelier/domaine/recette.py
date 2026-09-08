@@ -1100,6 +1100,85 @@ LISSAGE_MAX = 3
 GRAIN_MAX = 8
 
 
+# ── Les six moteurs de B18 (`docs/pistes-2026-09-04/carnet/atelier-nettoyer.dc.html`) ──
+#
+# **Le compte de la planche se contredisait trois fois** — douze en préambule
+# (celui des *réglages*, pas des moteurs), onze dans le réglage « méthode »
+# (le total, existants compris), neuf dans le détail des cartes « Les moteurs »
+# (`— 2 sont là, 9 restent à ajouter`). C'est ce dernier compte qui a été
+# retenu : c'est le seul qui corresponde à des cartes réellement décrites, une
+# par une, plutôt qu'à une phrase de synthèse.
+#
+# **Et deux des neuf étaient déjà posées en relisant le code.** « Médiane des
+# couleurs » est `grain_min` et « Décrocher les pixels de coin » est `lissage`
+# ci-dessus — les deux réglages neufs de B17, sous d'autres noms dans la
+# planche. Restent sept moteurs à écrire, et ce sont les six champs et la
+# désignation à la main qui suivent.
+#
+# **Pas de « méthode » à choisir, et c'est un choix délibéré.** La planche
+# imaginait un sélecteur unique parmi onze manières ; B17 a déjà tranché
+# autrement pour `grain_min` et `lissage` — un champ par moteur, actif dès
+# qu'il est posé, neutre à zéro. B18 continue cette forme plutôt que d'en
+# ouvrir une seconde : deux modèles pour la même table auraient fini par se
+# contredire, comme le compte de la planche lui-même.
+
+# Combien de morceaux on garde, quand on choisit « garder le sujet seul ».
+# Au-delà, ce n'est plus un nettoyage, c'est un tri qui ne trie plus rien.
+GARDER_MAX = 8
+
+# Le rayon d'une ouverture ou d'une fermeture morphologique, en pixels. Borné
+# comme le lissage et le grain : au-delà, l'opération mange plus que les
+# excroissances qu'elle vise, sur un sujet de 64 carrés.
+MORPHOLOGIE_MAX = 8
+
+# La tolérance par défaut des poches de fond — **la même que celle du moteur du
+# bord** (`Passe.tolerance`), parce que « reboucher les poches de fond »
+# retrouve exactement ce que ce moteur-là n'a pas pu atteindre
+# (`atelier/image/taches.py::poches_de_fond`), et pas une autre lecture du
+# fond.
+TOLERANCE_POCHES = 28
+
+
+@dataclass(frozen=True, slots=True)
+class Designation:
+    """Une tache désignée à la main, par un point qui lui appartient (B18).
+
+    **Le point, jamais un numéro de ligne** — même raison que le point de la
+    pipette (`Passe.point`) : une tache est retrouvée à chaque rendu, et son
+    rang dans la liste bouge dès qu'un réglage au-dessus change d'un cran. Le
+    point ne bouge pas, lui, tant que l'amas qu'il désigne existe.
+
+    `garde` distingue les deux gestes de la planche, qui ne sont qu'un seul
+    mécanisme vu de deux côtés : `False` **efface** l'amas sous le point, quel
+    que soit le seuil — *« Effacer une tache d'un clic », « à la main, une
+    miette à la fois »* ; `True` le **protège** de tout ce que les autres
+    réglages de cette même place effaceraient — *« cliquer une tache,
+    garder toujours »*. Une seule table, un seul geste, deux sens.
+    """
+
+    point: tuple[int, int] = (0, 0)
+    garde: bool = False
+
+    def en_json(self) -> dict[str, Any]:
+        return {"point": list(self.point), "garde": self.garde}
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "Designation":
+        point = d.get("point") or (0, 0)
+        return Designation(
+            point=(int(point[0]), int(point[1])),
+            garde=bool(d.get("garde", False)),
+        )
+
+
+def designations_depuis_json(brut: Any) -> tuple[Designation, ...]:
+    """Les désignations à la main, relues dans leur ordre — même règle que
+    `traits_depuis_json` : la dernière sur un même point l'emporte."""
+    if not isinstance(brut, (list, tuple)):
+        return ()
+    return tuple(Designation.depuis_json(d) for d in brut if isinstance(d, dict))
+
+
 @dataclass(frozen=True, slots=True)
 class Bords:
     """Ce qui traîne autour du sujet une fois le sujet à sa taille définitive.
@@ -1141,11 +1220,94 @@ class Bords:
     # *« à 3, le sujet s'arrondit et perd ses angles vifs »*.
     lissage: int = 0
 
+    # ── Les sept moteurs neufs de B18 ────────────────────────────────────────
+    #
+    # **Tous neutres à zéro**, comme les deux d'avant : sept recettes de plus
+    # portent déjà une place `bords`, et aucune ne pose ces champs.
+
+    # **« Garder le sujet seul ».** Combien des plus grands amas on garde ; le
+    # reste s'efface, fût-il à 40 px du sujet. Zéro : désactivé, rien ne se
+    # trie. Un pélerin qui perd une épée détachée par le détourage se répare à
+    # 1 ; une grenouille sur son nénuphar veut 2.
+    garder: int = 0
+
+    # **« Boucher les trous ».** Un trou de silhouette — transparent, entouré
+    # de sujet — d'aire au plus égale à ceci se comble, avec la couleur d'un
+    # pixel voisin déjà là. Zéro : rien ne se bouche, comme aujourd'hui.
+    boucher_jusqua: int = 0
+
+    # **« Reboucher les poches de fond ».** Le jumeau inverse du précédent :
+    # une poche de fond enfermée — opaque, à la couleur du bord, mais que le
+    # remplissage depuis les bordures n'a pas rejointe (`taches.poches_de_fond`)
+    # — d'aire au plus égale à ceci devient transparente. Zéro : aucune poche
+    # n'est touchée, comme aujourd'hui.
+    reboucher_jusqua: int = 0
+
+    # **« Ronger puis regonfler ».** Ouverture morphologique : érode le sujet
+    # de ce rayon, puis le regonfle du même rayon. Les excroissances plus
+    # fines que le rayon ne survivent pas à l'érosion et ne repoussent donc
+    # pas ; le corps, lui, retrouve sa taille. Zéro : désactivé.
+    ronger_regonfler: int = 0
+
+    # **« Regonfler puis ronger ».** Fermeture morphologique, l'inverse de la
+    # précédente : gonfle puis ronge. Les entailles du bord plus fines que le
+    # rayon se comblent ; le corps garde sa taille. Zéro : désactivé.
+    regonfler_ronger: int = 0
+
+    # **« Vote des voisins ».** Chaque pixel du bord prend l'avis de ses huit
+    # voisins et suit la majorité franche, `vote_voisins` fois de suite — les
+    # dents isolées rentrent dans le rang, une diagonale devient un escalier
+    # régulier. Bornée comme le lissage : au-delà de trois passes, un visage
+    # de 8 px perd son nez. Zéro : désactivé.
+    vote_voisins: int = 0
+
+    # **« Épargner les traits fins ».** N'agit que sur ce qui ronge — ici,
+    # « ronger puis regonfler ». Un pixel qui ne tient au sujet que par un
+    # côté et jamais par les deux (une hampe, un brin d'herbe) survit à
+    # l'érosion qui l'aurait sinon effacé en entier. Par défaut : oui, la
+    # même valeur que le détourage tient déjà pour son propre rongement
+    # conditionnel (`ronger_conditionnel`).
+    epargner_traits_fins: bool = True
+
+    # **La désignation à la main** — *« cliquer une tache dans l'image »*,
+    # *« effacer une tache d'un clic »*, *« à la main, une miette à la
+    # fois »* : trois cartes de la planche pour un seul geste. Vide : rien
+    # n'est désigné, comme aujourd'hui.
+    designations: tuple[Designation, ...] = ()
+
     def en_json(self) -> dict[str, Any]:
         return {
             "aire_min": self.aire_min,
             **({"grain_min": self.grain_min} if self.grain_min else {}),
             **({"lissage": self.lissage} if self.lissage else {}),
+            **({"garder": self.garder} if self.garder else {}),
+            **({"boucher_jusqua": self.boucher_jusqua} if self.boucher_jusqua else {}),
+            **(
+                {"reboucher_jusqua": self.reboucher_jusqua}
+                if self.reboucher_jusqua
+                else {}
+            ),
+            **(
+                {"ronger_regonfler": self.ronger_regonfler}
+                if self.ronger_regonfler
+                else {}
+            ),
+            **(
+                {"regonfler_ronger": self.regonfler_ronger}
+                if self.regonfler_ronger
+                else {}
+            ),
+            **({"vote_voisins": self.vote_voisins} if self.vote_voisins else {}),
+            **(
+                {}
+                if self.epargner_traits_fins
+                else {"epargner_traits_fins": False}
+            ),
+            **(
+                {"designations": [d.en_json() for d in self.designations]}
+                if self.designations
+                else {}
+            ),
         }
 
     @staticmethod
@@ -1154,6 +1316,14 @@ class Bords:
             aire_min=int(d.get("aire_min", 0)),
             grain_min=int(d.get("grain_min", 0)),
             lissage=int(d.get("lissage", 0)),
+            garder=int(d.get("garder", 0)),
+            boucher_jusqua=int(d.get("boucher_jusqua", 0)),
+            reboucher_jusqua=int(d.get("reboucher_jusqua", 0)),
+            ronger_regonfler=int(d.get("ronger_regonfler", 0)),
+            regonfler_ronger=int(d.get("regonfler_ronger", 0)),
+            vote_voisins=int(d.get("vote_voisins", 0)),
+            epargner_traits_fins=bool(d.get("epargner_traits_fins", True)),
+            designations=designations_depuis_json(d.get("designations")),
         )
 
 

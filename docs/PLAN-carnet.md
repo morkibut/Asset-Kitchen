@@ -902,7 +902,7 @@ livre seul.
 | Recadrer | 7 | 6 — taille imposée, format verrouillé, calage sur multiple, centré sur la masse, ligne de pied, rognage d'un bord uni |
 | Pixéliser | 4 | 4 — sur les carrés du modèle, couleur dominante de case, médiane de case, lumière juste |
 | Couleurs | 7 | 9 — trame régulière, force du tramage, k-moyennes, octree, distance à l'œil, rampes d'ombre… |
-| Nettoyer | 2 | 9 — le relevé se contredit sur le compte (9, 11 ou 12) ; à trancher avant de chiffrer |
+| Nettoyer | 4 | 0 — **tenu.** Sept moteurs neufs : garder le sujet seul, boucher les trous, reboucher les poches de fond, ronger puis regonfler, regonfler puis ronger, vote des voisins, la désignation à la main. Le détail est sous le tableau. |
 | Retourner | 1 après `B1` | 9 — haut-bas, quarts de tour, demi-tour, diagonale, repli, zones protégées, rotation libre, RotSprite |
 | Contour | 1 procédé | 6 capacités — couleur dérivée, trait inégal, contour sur l'ensemble empilé… |
 | Découpe | 2 | 1 — les gouttières, le cas le plus courant d'une planche générée |
@@ -911,6 +911,32 @@ livre seul.
 portée et le raccord de tuile. Le pipeline déduit la taille finale de la seule boîte opaque du
 sujet — une ombre agrandit le canevas au-delà, et un raccord a besoin des pixels d'à côté.
 Ce sont des changements d'architecture, pas des fonctions de plus.
+
+⚠️ **Nettoyer, le compte tranché.** La planche (`docs/pistes-2026-09-04/carnet/
+atelier-nettoyer.dc.html`) se contredisait trois fois sur le compte des moteurs : douze en
+préambule (c'est en fait le compte des *réglages*, douze aussi, pas celui des moteurs), onze
+dans le réglage « méthode » (le total, existants compris), neuf dans le détail des cartes
+« Les moteurs » (`— 2 sont là, 9 restent à ajouter`). **Le compte du détail a été retenu** —
+c'est le seul qui corresponde à des cartes réellement décrites une par une plutôt qu'à une
+phrase de synthèse, et c'est celui que `docs/PLAN-carnet-affectation.md` portait déjà.
+
+**Et en relisant le code avant d'écrire une ligne, deux des neuf se sont révélées déjà
+posées.** « Médiane des couleurs » est `Bords.grain_min` et « Décrocher les pixels de coin »
+est `Bords.lissage` — les deux réglages neufs livrés par `B17` sous d'autres noms que ceux de
+la planche, qui datait du 4 septembre et ne les connaissait pas encore. **Sept moteurs neufs
+ont donc été écrits, pas neuf** : `garder`, `boucher_jusqua`, `reboucher_jusqua`,
+`ronger_regonfler`, `regonfler_ronger`, `vote_voisins`, et `designations` (qui réunit à elle
+seule trois cartes de la planche — *« cliquer une tache dans l'image »*, *« effacer une tache
+d'un clic »*, *« à la main, une miette à la fois »* — en un seul mécanisme point + effacer/
+protéger, plutôt que d'en écrire trois qui referaient la même chose). Compte final : quatre
+moteurs existants avant `B18` (deux de la planche, deux de `B17`), sept écrits ici, onze en
+tout — ce qui recoupe enfin le « onze » du réglage « méthode » de la planche elle-même.
+
+**Aucune « méthode » à choisir n'a été ajoutée.** La planche imaginait un sélecteur unique
+parmi onze manières, mais `B17` avait déjà tranché autrement pour `grain_min` et `lissage` —
+un champ par moteur dans `Bords`, actif dès qu'il est posé, neutre à zéro. `B18` continue
+cette forme plutôt que d'en ouvrir une seconde : deux modèles pour la même table auraient fini
+par se contredire, exactement comme le compte de la planche s'est contredit lui-même.
 
 ### Critères d'acceptation
 
@@ -1204,7 +1230,9 @@ phrase, et ils coûteront cher s'ils sont découverts en cours de construction.
    fichier explique pourquoi la palette n'y est pas. Elle est sur la toile — c'est la seconde
    moitié qui est juste.
 4. **Le compte des moteurs de nettoyage se contredit trois fois** dans la même planche : douze
-   en préambule, onze dans un réglage, neuf dans le détail.
+   en préambule, onze dans un réglage, neuf dans le détail. ✅ **Tranché en `B18`** — le compte
+   du détail (neuf) est retenu ; voir la note sous le tableau de `B18` pour le détail complet,
+   et pour la découverte que deux des neuf étaient déjà posées par `B17`.
 5. **Le mot « planche » désigne deux choses** : la feuille revenue d'une génération, et l'une
    des quatre présentations de la surface.
 6. **La planche de l'atelier d'animation est en retard sur le dépôt** : elle annonce « à

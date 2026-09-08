@@ -153,13 +153,13 @@ function recetteDeTravail(surplus: Partial<Recette> = {}): Recette {
 
 const MESURES = {
   taches: [
-    { aire: 1, boite: [0, 0, 0, 0], couleur: "#6b5a44" },
-    { aire: 5, boite: [1, 1, 2, 2], couleur: "#6b5a44" },
+    { aire: 1, boite: [0, 0, 0, 0], couleur: "#6b5a44", point: [0, 0] },
+    { aire: 5, boite: [1, 1, 2, 2], couleur: "#6b5a44", point: [1, 1] },
   ],
   taches_total: 2,
   poches: [],
   poches_total: 0,
-  trous: [{ aire: 5, boite: [3, 3, 4, 4], couleur: "#000000" }],
+  trous: [{ aire: 5, boite: [3, 3, 4, 4], couleur: "#000000", point: [3, 3] }],
   crans_occupation: [100],
   hauteur: { carres: 64, personnages: 1, max: 800, sujet: 64 },
   grille_du_modele: { pas: 8, depart: 0, raison: null },

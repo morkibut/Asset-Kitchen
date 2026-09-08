@@ -336,6 +336,14 @@
         "essais/atelier_jetable_b22.py"
       ],
       "port": 8487
+    },
+    {
+      "name": "atelier-jetable-b18-nettoyer",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b18_nettoyer.py"
+      ],
+      "port": 8492
     }
   ]
 }
