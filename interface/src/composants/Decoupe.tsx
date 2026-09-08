@@ -60,7 +60,13 @@ const PADDING_ZONE = 16
 const LIBELLES: Partial<Record<string, string>> = {
   auto: "zones opaques",
   grille: "grille fixe",
+  gouttieres: "les gouttières",
 }
+
+/** Au-delà, l'écran annonce ce que la détection a coûté (`B18`) — jamais
+ *  avant, pour ne pas alarmer sur ce qui se sent à peine. Même seuil que le
+ *  reste de l'atelier des moteurs. */
+const SEUIL_LENT_MS = 240
 
 /**
  * Ce qu'on découpe — **et les deux familles d'images y sont nommées, jamais
@@ -351,14 +357,14 @@ export function EcranDecoupe({
             <div className="flex flex-col gap-1">
               <Libelle aide="decoupe.mode">Détection</Libelle>
               <Segments
-                valeurs={["auto", "grille"] as const}
+                valeurs={["auto", "grille", "gouttieres"] as const}
                 valeur={mode}
                 onChange={setMode}
                 libelles={LIBELLES}
               />
             </div>
 
-            {mode === "auto" ? (
+            {mode === "auto" && (
               <Reglage libelle="taille minimale" aide="decoupe.taille_min">
                 <Curseur
                   valeur={coteMin}
@@ -368,7 +374,9 @@ export function EcranDecoupe({
                   onChange={setCoteMin}
                 />
               </Reglage>
-            ) : (
+            )}
+
+            {mode === "grille" && (
               <>
                 <Reglage libelle="colonnes" aide="decoupe.colonnes">
                   <Curseur
@@ -384,7 +392,20 @@ export function EcranDecoupe({
               </>
             )}
 
+            {mode === "gouttieres" && (
+              <p className="text-[11.5px] leading-snug text-texte-2">
+                Cherche les rangées et les colonnes entièrement d'une seule
+                couleur, et coupe là — rien à régler.
+              </p>
+            )}
+
             <Raison texte={detectee?.raison ?? null} />
+
+            {detectee && (detectee.duree_ms ?? 0) > SEUIL_LENT_MS && (
+              <p className="mesure text-[10px] leading-4 text-texte-3">
+                détection : {Math.round(detectee.duree_ms ?? 0)} ms
+              </p>
+            )}
 
             {/* Ce que la détection ne peut pas savoir se dit ici, avant qu'on
                 s'en aperçoive : dessiner remplace la détection, changer de

@@ -13,12 +13,17 @@ seule zone, celle de l'image entière. Le service détoure donc avec le moteur d
 geste courant avant d'appeler ici — même règle, et pour la même raison, que
 l'extraction de palette : *ce qui est majoritaire n'est pas ce qui compte*.
 
-**Deux modes, et ils ne se ressemblent pas.** Les zones opaques trouvent des
+**Trois modes, et ils ne se ressemblent pas.** Les zones opaques trouvent des
 sprites posés n'importe où sur un fond ; la grille fixe découpe une planche
 régulière que la détection ne saurait pas séparer — sprites qui se touchent,
-cases vides à conserver. Le second n'est pas un repli du premier : il répond à
-une planche d'une autre nature, et c'est l'auteur qui sait laquelle il a
-(US-73).
+cases vides à conserver. Les gouttières cherchent les bandes de fond entre les
+cases d'une feuille opaque de bord à bord — le cas le plus courant d'une
+planche rendue par un modèle, que ni les zones opaques (qui n'y verraient
+qu'une seule tache) ni la grille fixe (qui coupe au mauvais endroit dès que les
+cases ne sont pas parfaitement régulières) ne savent lire (`B18`,
+`docs/pistes-2026-09-04/carnet/atelier-decoupe.dc.html`). Aucun des trois n'est
+un repli d'un autre : chacun répond à une planche d'une nature différente, et
+c'est l'auteur qui sait laquelle il a (US-73).
 
 **Rien ici ne bloque.** Une détection qui rend une seule boîte, ou aucune, est un
 résultat, pas une panne : l'auteur corrige à la main. Ce module ne lève jamais
@@ -32,7 +37,7 @@ import io
 import numpy as np
 from PIL import Image
 
-from atelier.image.traitement import composantes
+from atelier.image.traitement import _couleur_du_bord, composantes
 
 __all__ = [
     "COTE_MIN",
@@ -42,6 +47,7 @@ __all__ = [
     "Boite",
     "decouper",
     "en_ordre_de_lecture",
+    "gouttieres",
     "grille_fixe",
     "zones_opaques",
 ]
@@ -137,6 +143,91 @@ def grille_fixe(largeur: int, hauteur: int, colonnes: int, lignes: int) -> list[
         for y0, y1 in bornes_y
         for x0, x1 in bornes_x
     ]
+
+
+def gouttieres(octets: bytes) -> list[Boite]:
+    """Les cases d'une feuille coupée à ses bandes de fond, jamais à une grille
+    supposée.
+
+    **Elle lit l'image brute telle quelle**, sans détourage préalable — à la
+    différence de `zones_opaques`, qui a besoin d'un alpha déjà obtenu. C'est
+    précisément ce qui la rend utile sur le cas le plus courant : une feuille
+    rendue par un modèle est opaque de bord à bord, et un détourage n'y verrait
+    qu'une seule tache, l'image entière.
+
+    Une rangée, ou une colonne, **entièrement de la couleur du fond** est une
+    gouttière ; ce qui reste entre deux gouttières est une bande de contenu.
+    **Le test porte sur le fond, jamais sur la seule uniformité de la
+    rangée** : une rangée qui traverserait un sujet plat d'un bout à l'autre —
+    un aplat d'une seule couleur, fréquent en pixel art — serait sinon
+    confondue avec une gouttière alors qu'elle ne touche pas le fond du tout.
+
+    Les cases sont le produit cartésien des bandes de lignes et des bandes de
+    colonnes — sauf celles qui, à cette intersection précise, sont
+    elles-mêmes entièrement de la couleur du fond : une case vide entre deux
+    sujets n'a pas de gouttière qui l'entoure sur toute la largeur ou la
+    hauteur de l'image (ses voisines de la même bande portent du contenu),
+    mais elle ne porte rien pour autant, et une case vide n'est pas un sujet —
+    même choix que `zones_opaques`, qui rejette ce qu'aucun pixel ne remplit.
+    """
+    with Image.open(io.BytesIO(octets)) as ouverte:
+        image = np.asarray(ouverte.convert("RGBA"))
+    hauteur, largeur = image.shape[0], image.shape[1]
+    if hauteur == 0 or largeur == 0:
+        return []
+
+    # **Le fond, à la médiane de la bordure** — même moteur que le détourage
+    # par défaut (`_couleur_du_bord`) : la médiane et non la moyenne, pour
+    # qu'un sujet qui toucherait un bord ne la déplace pas. Sur les quatre
+    # canaux, pour qu'un fond transparent compte comme un fond au même titre
+    # qu'un fond opaque.
+    fond = _couleur_du_bord(image)
+
+    rangee_gouttiere = np.all(image == fond, axis=(1, 2))
+    colonne_gouttiere = np.all(image == fond, axis=(0, 2))
+
+    bandes_y = _bandes_de_contenu(rangee_gouttiere)
+    bandes_x = _bandes_de_contenu(colonne_gouttiere)
+
+    boites = [
+        (x0, y0, x1, y1)
+        for y0, y1 in bandes_y
+        for x0, x1 in bandes_x
+        if not _case_vide(image, fond, x0, y0, x1, y1)
+    ]
+    return en_ordre_de_lecture(boites)
+
+
+def _bandes_de_contenu(gouttiere: np.ndarray) -> list[tuple[int, int]]:
+    """Les bornes inclusives des groupes de rangées (ou colonnes) qui ne sont
+    pas des gouttières — ce qui reste entre deux bandes de fond."""
+    bandes: list[tuple[int, int]] = []
+    debut: int | None = None
+    for indice, est_gouttiere in enumerate(gouttiere):
+        if est_gouttiere:
+            if debut is not None:
+                bandes.append((debut, indice - 1))
+                debut = None
+            continue
+        if debut is None:
+            debut = indice
+    if debut is not None:
+        bandes.append((debut, len(gouttiere) - 1))
+    return bandes
+
+
+def _case_vide(
+    image: np.ndarray, fond: np.ndarray, x0: int, y0: int, x1: int, y1: int
+) -> bool:
+    """Vrai quand ce rectangle-là n'a rien dedans — entièrement de la couleur
+    du fond, du bord au bord, donc pas de sujet à en tirer.
+
+    **Comparé au fond, jamais à sa seule uniformité interne** : un sprite qui
+    se trouve être un aplat d'une seule couleur — fréquent en pixel art —
+    serait sinon confondu avec une case vide.
+    """
+    case = image[y0 : y1 + 1, x0 : x1 + 1]
+    return bool(np.all(case == fond))
 
 
 def en_ordre_de_lecture(boites: list[Boite]) -> list[Boite]:
