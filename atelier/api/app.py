@@ -44,6 +44,7 @@ from atelier.services.bibliotheque import (
 )
 from atelier.services.agent import DepotRefuse, PlafondAtteint
 from atelier.services.decoupe import DecoupeRefusee
+from atelier.services.equipement import EmploiInconnu
 from atelier.services.miroir import MiroirRefuse
 from atelier.services.ambiances import AmbianceRefusee
 from atelier.services.calibrage import CalibrageRefuse
@@ -104,6 +105,12 @@ CODES = {
     PersonnageInconnu: 404,
     PoseInconnue: 404,
     ProductionRefusee: 409,
+    # **Le même code que son parent, et il est là pour son nom** (B19) : la table
+    # se lit sur le type exact, si bien qu'un refus non inscrit retombe sur 400
+    # au lieu du 409 de `ProductionRefusee`. Inscrit ici, l'écran reçoit
+    # `emploi_inconnu` avec le statut que tous les autres refus du vestiaire
+    # portent déjà.
+    EmploiInconnu: 409,
     # Le plafond de la séance de l'agent. 429 et non 409 : c'est bien « trop
     # d'appels », et le refus porte le moyen de le relever.
     PlafondAtteint: 429,

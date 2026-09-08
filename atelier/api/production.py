@@ -274,17 +274,61 @@ class CorpsPiece(BaseModel):
     # **Contenue, ou qui agrandit — et l'auteur le déclare** (US-139). Le défaut
     # est celui qui marche : cinq pièces sur six mesurées propres le 28 août.
     portee: Literal["contenue", "agrandit"] = "contenue"
+    # **Le personnage qui la porte, quand elle naît de sa fiche** (B19). Vide,
+    # elle ne porte personne — et c'est le défaut, pas un oubli.
+    porteur: str = ""
     projet: str | None = None
 
 
 class CorpsReglagePiece(BaseModel):
-    """Tout ce qui se règle sur une pièce, en un geste. `None` ne touche pas."""
+    """Tout ce qui se règle sur une pièce, en un geste. `None` ne touche pas.
+
+    **Les emplois n'y sont pas**, et c'est délibéré (B19) : ils ont leurs trois
+    gestes à eux, sous `/characters/pieces/{identifiant}/uses`. Les faire entrer
+    ici aurait mis « renommer une pièce » et « retirer un porteur » dans le même
+    appel, avec le même `None` qui ne touche à rien — et une liste envoyée
+    entière est un remplacement, pas un réglage.
+    """
 
     nom: str | None = None
     description: str | None = None
     emplacement: str | None = None
     portee: Literal["contenue", "agrandit"] | None = None
     concept_arts: list[str] | None = None
+    projet: str | None = None
+
+
+class CorpsEmploi(BaseModel):
+    """Une façon dont une pièce sert (B19).
+
+    `genre` porte les noms du domaine — comme `portee` juste au-dessus, et pour
+    la même raison : une valeur traduite au passage du port est une valeur qu'on
+    peut traduire de travers.
+    """
+
+    genre: Literal["porte", "a-part", "mise-en-scene"] = "porte"
+    # **Obligatoire pour `porte`, refusé pour les deux autres** — le service le
+    # dit, avec le nom du personnage dans le refus.
+    porteur: str = ""
+    nom: str = ""
+    emplacement: str = ""
+    devant: bool = True
+    description: str = ""
+    projet: str | None = None
+
+
+class CorpsReglageEmploi(BaseModel):
+    """Ce qui se règle sur un emploi. `None` ne touche pas.
+
+    **Le porteur n'y est pas** : ses calques sont rangés sous lui, et les
+    déplacer en changeant un champ les laisserait derrière. Se tromper de
+    porteur se répare en retirant l'emploi et en en créant un autre.
+    """
+
+    nom: str | None = None
+    emplacement: str | None = None
+    devant: bool | None = None
+    description: str | None = None
     projet: str | None = None
 
 
@@ -1076,6 +1120,27 @@ async def retirer_emplacement(
     return _avec_vestiaire(atelier, vise, "emplacement", emplacement)
 
 
+@routeur.get("/characters/pieces/uses")
+async def emplois_du_jeu(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """**Le vestiaire résolu du jeu** — les pièces, leurs emplois, leurs comptes.
+
+    **Avant `/characters/pieces/{identifiant}` dans ce fichier, et il faut que ça
+    le reste** : `uses` serait sinon lu comme un identifiant de pièce, et
+    laquelle des deux gagne dépendrait de l'ordre des fonctions
+    (`docs/PIEGES.md`). Même piège que `slots/suggested`.
+
+    **Séparée de `/characters`, qui porte déjà le vestiaire** (B19). Celle-là
+    rend le fichier du projet et rien d'autre ; celle-ci lit les images, parce
+    que c'est le seul moyen de savoir qui porte une pièce qui n'a jamais rien
+    déclaré — toutes celles d'avant cette tranche. Les fondre aurait fait payer
+    ce balayage à chaque renommage de pièce.
+    """
+    atelier = _atelier(requete)
+    return atelier.equipement.vestiaire_du_jeu(_projet(requete, projet))
+
+
 @routeur.get("/characters/pieces/{identifiant}/wearers")
 async def portee_de_la_piece(
     requete: Request, identifiant: str, projet: str | None = Query(None)
@@ -1109,6 +1174,7 @@ async def ajouter_piece(requete: Request, corps: CorpsPiece) -> dict[str, Any]:
         description=corps.description,
         emplacement=corps.emplacement,
         portee=corps.portee,
+        porteur=corps.porteur,
     )
     return _avec_vestiaire(atelier, projet, "piece", piece)
 
@@ -1143,6 +1209,88 @@ async def retirer_piece(
     vise = _projet(requete, projet)
     piece = atelier.equipement.retirer_piece(vise, identifiant)
     return _avec_vestiaire(atelier, vise, "piece", piece)
+
+
+# ── Les emplois d'une pièce (B19) ────────────────────────────────────────────
+#
+# **Quatre segments, sous la pièce qui les porte**, et jamais sous le
+# personnage : un emploi appartient à la pièce, et le personnage n'a pas gagné
+# de champ de vestiaire dans cette tranche. Les trois gestes rendent le vestiaire
+# résolu entier, comme les six d'au-dessus rendent le vestiaire du fichier — un
+# écran qui vient d'ajouter un porteur voit du même coup le compte de ce qui lui
+# manque, sans second aller-retour.
+
+
+def _avec_emplois(
+    atelier: Atelier, projet: str, emploi: Any
+) -> dict[str, Any]:
+    return {
+        "emploi": emploi.en_json(),
+        **atelier.equipement.vestiaire_du_jeu(projet),
+    }
+
+
+@routeur.post("/characters/pieces/{identifiant}/uses", status_code=201)
+async def ajouter_emploi(
+    requete: Request, identifiant: str, corps: CorpsEmploi
+) -> dict[str, Any]:
+    """Une façon de plus dont cette pièce sert. **Ne coûte rien, ne sort pas.**
+
+    Un emploi porté attribue la pièce à un personnage : c'est la relation qui
+    manquait au modèle, et le seul endroit du produit qui l'écrive.
+    """
+    atelier = _atelier(requete)
+    projet = _projet(requete, corps.projet)
+    emploi = atelier.equipement.ajouter_emploi(
+        projet,
+        identifiant,
+        genre=corps.genre,
+        porteur=corps.porteur,
+        nom=corps.nom,
+        emplacement=corps.emplacement,
+        devant=corps.devant,
+        description=corps.description,
+    )
+    return _avec_emplois(atelier, projet, emploi)
+
+
+@routeur.put("/characters/pieces/{identifiant}/uses/{emploi}")
+async def regler_emploi(
+    requete: Request, identifiant: str, emploi: str, corps: CorpsReglageEmploi
+) -> dict[str, Any]:
+    """Ce qui se règle sur un emploi, en un seul geste — **jamais son porteur**."""
+    atelier = _atelier(requete)
+    projet = _projet(requete, corps.projet)
+    regle = atelier.equipement.regler_emploi(
+        projet,
+        identifiant,
+        emploi,
+        nom=corps.nom,
+        emplacement=corps.emplacement,
+        devant=corps.devant,
+        description=corps.description,
+    )
+    return _avec_emplois(atelier, projet, regle)
+
+
+@routeur.delete("/characters/pieces/{identifiant}/uses/{emploi}")
+async def retirer_emploi(
+    requete: Request,
+    identifiant: str,
+    emploi: str,
+    projet: str | None = Query(None),
+) -> dict[str, Any]:
+    """L'emploi part, **ses images restent** — jamais de cascade.
+
+    Elles restent dans la galerie, détachées, et gardent l'identifiant de la
+    pièce comme celui du personnage : remettre l'emploi les remet dans sa
+    colonne. Le geste déclare la pièce du même coup, sans quoi le porteur retiré
+    reparaîtrait à la relecture suivante, lu sur ces images-là.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    retire = atelier.equipement.retirer_emploi(vise, identifiant, emploi)
+    return _avec_emplois(atelier, vise, retire)
 
 
 # ── Le masque d'un calque ────────────────────────────────────────────────────

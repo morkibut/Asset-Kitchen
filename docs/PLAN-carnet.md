@@ -176,7 +176,7 @@ d'agents avant le gros morceau.
 | **4** | `B8`, `B9`, `B10`, `B11` | la collection, la grille d'une famille, la page d'un sujet, le départage |
 | **5** | `B14`, `B15` | les règles du jeu, l'installation |
 | **6** | `B16`, `B17`, `B18` | les tables rangées, puis les moteurs |
-| **7** | `B12`, `B13` ✔, `B19`, `B20`, `B21`, `B22` | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
+| **7** | `B12`, `B13` ✔, `B19` ✔, `B20`, `B21`, `B22` | l'essai, la grille du jeu, le vestiaire, les calques d'animation, la sortie, la galerie |
 
 `B8` et `B17` sont du serveur pur : ils se prennent en parallèle du rang qui les précède.
 
@@ -861,19 +861,44 @@ personnage gagne son vestiaire en images, et la colonne « ce que l'entité réc
 lister l'équipement du jeu entier pour chaque personnage.
 
 Puis les emplois : l'épée portée par trois personnages, posée au sol, plantée dans un rocher,
-son icône — chacun avec ses propres images, et sa matrice de 24 calques.
+son icône — chacun avec ses propres images, et sa matrice de calques.
 
 **Vérifié** : l'emplacement, la portée *contenue*/*agrandit* et ses deux valeurs (92 % / 62 %)
 existent déjà. C'est le lien vers un personnage qui manque, et lui seul.
 
+**Corrigé en tenant la tranche** : la « matrice de 24 calques » n'existe pas et ne pouvait pas
+naître ici — un calque n'a de direction nulle part dans le code, et 24 = 6 poses × 4 directions
+est une addition de la planche. La matrice d'un emploi est **une rangée par pose** ; l'axe des
+directions revient à `B20`. Et la perte silencieuse qu'il fallait craindre n'était pas dans la
+lecture du disque mais dans `regler_piece`, qui reconstruisait une pièce champ par champ.
+
 ### Critères d'acceptation
 
-- [ ] Une pièce créée depuis la fiche d'un personnage lui est attribuée d'emblée.
-- [ ] Une pièce ne porte personne par défaut.
-- [ ] Les emplacements de corps restent au jeu, jamais au personnage.
-- [ ] Les pièces déjà écrites sur le disque se relisent sans perte et sans porteur.
-- [ ] Un calque reste solidaire de sa pose — l'invariant de `C3` tient.
-- [ ] Les 19 entrées du guide rangées sous `fabriques` trouvent leur écran.
+- [x] Une pièce créée depuis la fiche d'un personnage lui est attribuée d'emblée.
+      *`ajouter_piece(..., porteur)` naît déclarée avec son emploi ; vérifié par essai et au
+      navigateur — « Bâton de sorcier » nommé sur la fiche du magicien remonte
+      `declare: true, emplois: ["le-magicien"]` et apparaît aussitôt dans son vestiaire.*
+- [x] Une pièce ne porte personne par défaut. *Nommée hors d'une fiche, elle naît **déclarée
+      vide** (`emplois == ()`) — pas indéterminée : rien ne se déduira jamais dessus. Vérifié
+      au navigateur sur « Casque de fer », créé sans porteur et sans calque : « aucun emploi ».*
+- [x] Les emplacements de corps restent au jeu, jamais au personnage. *Acquis par construction
+      — ils vivent sur `Projet`, et `Personnage` n'en porte aucun ; l'essai le mesure quand
+      même, parce que c'en est un critère.*
+- [x] Les pièces déjà écrites sur le disque se relisent sans perte et sans porteur. *Trois
+      plans d'essai séparés : la lecture (les porteurs viennent des calques, pas du fichier),
+      la réécriture (**identique à l'octet**, la clé `emplois` reste absente — mesuré sur les
+      octets réels de `donnees/projets/test-v2/projet.json`), et le service (renommer une pièce
+      ne perd pas ses emplois — le vrai vecteur de perte, trouvé au relevé dans `regler_piece`).
+      Vérifié en vrai sur `essais/atelier_jetable_b19.py`, qui efface la clé du disque **et** de
+      la colonne SQLite avant de servir : après une session entière de lecture, de navigation et
+      de gestes, les deux pièces non touchées n'ont toujours aucune clé `emplois`.*
+- [x] Un calque reste solidaire de sa pose — l'invariant de `C3` tient. *La matrice d'un emploi
+      est **une rangée par pose**, et non la grille de 24 de la planche : un calque ne porte de
+      direction nulle part dans le code. Un essai verrouille la décision ; l'axe des directions
+      revient à `B20`.*
+- [x] Les 19 entrées du guide rangées sous `fabriques` trouvent leur écran. *Les **17** entrées
+      que le dépôt porte réellement ont leur écran ; l'écart entre 17 et 19 est dans le plan,
+      pas dans le code, et il est noté tel quel dans `interface/src/aide.ts`.*
 
 ### Bloquée par
 

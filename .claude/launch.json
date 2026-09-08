@@ -271,6 +271,14 @@
         "essais/atelier_jetable_b13.py"
       ],
       "port": 8480
+    },
+    {
+      "name": "atelier-jetable-b19",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b19.py"
+      ],
+      "port": 8481
     }
   ]
 }

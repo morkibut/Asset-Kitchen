@@ -80,6 +80,26 @@ export type Lieu =
   // fenêtre entière avant même qu'un jeu soit ouvert, comme l'ouverture de `B4`
   // et le parcours de création de `B14`.
   | { genre: "installation" }
+  // Une pièce d'équipement et ses emplois (`B19`) — **elle se pose sur le
+  // codex**, comme la grille d'une famille, et pour la même raison : c'est le
+  // même endroit vu par une porte de plus. Le carnet la déplie sous *Les
+  // équipements*, à la place des collections, qui ne veulent rien dire d'une
+  // pièce.
+  //
+  // ⚠️ **Ce n'est pas un sujet.** Une pièce n'a pas d'image à elle — le produit
+  // interdit d'en générer une sur fond vide —, et sa page ne montre donc pas des
+  // images mais ses **emplois** : les façons dont elle sert. `sujet` et `piece`
+  // sont deux genres, et les confondre aurait donné une page de sujet à quelque
+  // chose qui n'a ni pose, ni direction, ni case.
+  | { genre: "piece"; piece: string }
+  // Un emploi de cette pièce-là (`B19`) — *portée par Le goliath*, *posée au
+  // sol*, *son icône*. Une profondeur sous la pièce, atteinte depuis sa liste,
+  // exactement comme la case d'un sujet se descend depuis sa matrice.
+  //
+  // **Il porte les deux identifiants**, pas seulement le sien : un emploi
+  // n'existe que sur sa pièce, et le retrouver en cherchant dans toutes les
+  // pièces du jeu aurait demandé au fil de savoir des choses qu'il n'a pas.
+  | { genre: "emploi"; piece: string; emploi: string }
   | { genre: "sujet"; sujet: string }
   // La grille du jeu, et comparer (`B13`) — **deux profondeurs de la page d'un
   // sujet**, atteintes depuis son bandeau d'onglets, comme la matrice l'était

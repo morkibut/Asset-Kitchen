@@ -83,6 +83,22 @@ export type LigneDeFamille = {
 /** Les cinq derniers jeux travaillés, au plus, plus ce qu'on en sait. */
 export type AutreJeu = { identifiant: string; nom: string; seconde: string }
 
+/** Une pièce d'équipement dépliée sous sa ligne (`B19`).
+ *
+ *  **Ce que l'équipement déplie, ce sont ses pièces, pas des collections.** Une
+ *  collection groupe des sujets ; une pièce n'en est pas un — elle n'a ni pose,
+ *  ni direction, ni case —, et la ligne dépliait donc jusqu'ici les groupes du
+ *  jeu, qui ne veulent rien dire d'elle. Le compte est celui de ses **emplois**,
+ *  parce que c'est ce que la planche écrit : *Epée · 6 emplois*. */
+export type LigneDePiece = {
+  identifiant: string
+  nom: string
+  emplois: number
+}
+
+/** La clé de la famille qui n'en est pas une — écrite une fois. */
+export const EQUIPEMENT = "equipement"
+
 // ── Les pièces ──────────────────────────────────────────────────────────────
 
 /** L'entête d'une section — mono 10.5, majuscules, +.14em. Elle ne se clique
@@ -238,6 +254,9 @@ export function Carnet({
   familles,
   collections,
   collectionOuverte,
+  piecesDuJeu,
+  pieceOuverte,
+  surUnePiece,
   arrivants,
   regles,
   lignesEcrites,
@@ -276,6 +295,12 @@ export function Carnet({
   collections: readonly GroupeDeRangement[]
   /** La collection ouverte sous la famille, ou `null` pour « Tous ». */
   collectionOuverte: string | null
+  /** Les pièces d'équipement du jeu (`B19`) — ce que *cette* ligne-là déplie, à
+   *  la place des collections. */
+  piecesDuJeu: readonly LigneDePiece[]
+  /** La pièce dont la page est ouverte, ou `null`. */
+  pieceOuverte: string | null
+  surUnePiece: (piece: string) => void
   /** Combien de sujets arriveraient dans chaque collection si l'on lâchait
    *  maintenant. Vide quand rien n'est glissé. */
   arrivants: Readonly<Record<string, number>>
@@ -428,7 +453,39 @@ export function Carnet({
                 surLaFamille(famille.cle)
               }}
             />
-            {depliee === famille.cle && (
+            {/* ── L'équipement déplie ses pièces (`B19`) ──────────────────── */}
+            {/* Elle n'a pas de collections : une collection groupe des sujets,
+                et une pièce n'en est pas un. Elle n'a pas non plus de « Tous »
+                qui mènerait à une grille — `famille_du_type` ne connaît pas
+                l'équipement, et cette grille serait vide à jamais. Ce qu'il y a
+                sous la ligne, ce sont les pièces, et chacune ouvre sa page. */}
+            {depliee === famille.cle && famille.cle === EQUIPEMENT && (
+              <div className="ligne-qui-souvre">
+                {piecesDuJeu.length === 0 ? (
+                  <div className="px-[14px] pl-[34px] text-[11px] text-encre-4">
+                    aucune pièce — elles se nomment depuis la fiche de qui les
+                    porte
+                  </div>
+                ) : (
+                  piecesDuJeu.map((piece) => (
+                    <Ligne
+                      key={piece.identifiant}
+                      nom={piece.nom}
+                      decale
+                      ouverte={pieceOuverte === piece.identifiant}
+                      compte={
+                        piece.emplois === 0
+                          ? "aucun emploi"
+                          : `${piece.emplois} ${piece.emplois > 1 ? "emplois" : "emploi"}`
+                      }
+                      onAller={() => surUnePiece(piece.identifiant)}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+
+            {depliee === famille.cle && famille.cle !== EQUIPEMENT && (
               <div className="ligne-qui-souvre">
                 {/* « Tous » d'abord — c'est la famille entière, et c'est là
                     qu'on retombe en refermant un groupe. */}

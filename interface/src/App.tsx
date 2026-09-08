@@ -28,6 +28,7 @@ import {
   filtreActif,
   FILTRE_VIDE,
   heure,
+  libelleDEmploi,
   poserLeFichier,
   Refus,
   type Action,
@@ -54,6 +55,8 @@ import {
   type EmplacementCorps,
   type Personnage,
   type Piece,
+  type GenreDEmploi,
+  type VestiaireDuJeu,
   type DirectionsDuJeu,
   type Pose,
   type Univers,
@@ -87,11 +90,15 @@ import {
 import { ChampPrompt, type EnVol } from "./composants/ChampPrompt"
 import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
+import { Emplois } from "./composants/Emplois"
+import { Emploi } from "./composants/Emploi"
 import {
   Carnet,
+  EQUIPEMENT,
   NOM_DANS_LE_CARNET,
   derniersJeux,
   type LigneDeFamille,
+  type LigneDePiece,
 } from "./composants/Carnet"
 import { EcranFamille } from "./composants/Famille"
 import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
@@ -539,6 +546,19 @@ export function App() {
   // personnages, parce qu'une colonne n'existe que par la pièce qui la nomme.
   const [emplacements, setEmplacements] = useState<EmplacementCorps[]>([])
   const [pieces, setPieces] = useState<Piece[]>([])
+  /** **Le vestiaire *résolu*** (`B19`) — les pièces avec leurs emplois, leurs
+   *  comptes, et les choses qui peuvent porter.
+   *
+   *  ⚠️ **Il ne se confond pas avec `pieces` juste au-dessus**, et il ne le
+   *  remplace pas : celui-là est la forme du fichier, servie par les six gestes
+   *  du vestiaire et par le flux ; celui-ci lit les images, parce que c'est le
+   *  seul moyen de savoir qui porte une pièce qui n'a jamais rien déclaré —
+   *  toutes celles d'avant `B19`. Les fondre aurait fait payer ce balayage à
+   *  chaque renommage de pièce.
+   *
+   *  `null` tant qu'on ne l'a pas lu : les écrans le disent plutôt que de
+   *  montrer un vestiaire vide qui ressemblerait à « il ne porte rien ». */
+  const [vestiaireDuJeu, setVestiaireDuJeu] = useState<VestiaireDuJeu | null>(null)
   // **La case que le prochain appel remplira** (US-120). Armée depuis la
   // matrice, désarmée dès que l'appel est parti : c'est une intention qui vaut
   // pour *cette* génération, et une intention qui survivrait à son geste
@@ -761,14 +781,16 @@ export function App() {
    *  le geste qui dit « ailleurs », et c'est lui qui la referme. */
   const ouvrirLaFamille = (cle: string) => {
     setCollectionOuverte(null)
-    // ⚠️ **L'équipement n'est pas une famille de sujets.** Le carnet lui donne
-    // une ligne, mais `famille_du_type` ne connaît que les quatre autres : une
-    // grille d'équipement serait vide à jamais, et l'auteur croirait avoir tout
-    // perdu. Le vestiaire vit dans l'ancien codex, et c'est lui qu'on ouvre —
-    // jusqu'à ce qu'une tranche lui donne son écran (`B19`).
+    // ⚠️ **L'équipement n'est pas une famille de sujets**, et il ne l'est
+    // toujours pas après `B19` : `famille_du_type` ne connaît que les quatre
+    // autres, et une grille d'équipement serait vide à jamais. Ce que `B19`
+    // change est ailleurs — la ligne du carnet **déplie ses pièces** à la place
+    // des collections, qui ne veulent rien dire d'une pièce, et chacune ouvre sa
+    // page. Le contournement vers l'ancien codex est levé : ouvrir la ligne sans
+    // choisir de pièce repose simplement la pile sur le codex, et le carnet
+    // montre par quoi entrer.
     if (cle === "equipement") {
       setPile(poser("codex"))
-      setRubrique("equipement")
       return
     }
     setPile(entrer(poser("codex"), { genre: "famille", famille: cle }))
@@ -855,6 +877,119 @@ export function App() {
     setPile((p) =>
       sujet ? entrer(p, { genre: "comparer", sujet }) : sortir(p, "comparer"),
     )
+  /** La pièce d'équipement ouverte, et l'emploi ouvert dedans (`B19`).
+   *
+   *  **Deux lieux, pas un** : la page d'une pièce montre ses emplois, celle
+   *  d'un emploi montre ses calques — c'est une profondeur, comme la case d'un
+   *  sujet sous sa matrice, et le fil doit pouvoir remonter d'un cran.
+   *
+   *  ⚠️ **Ouvrir une pièce referme l'emploi qu'on regardait** : `entrer` coupe
+   *  ce qui est plus profond, sans quoi l'emploi d'une épée s'afficherait sous
+   *  le nom d'un casque. */
+  const pieceOuverte = lieu(pile, "piece")?.piece ?? null
+  const ouvrirLaPiece = (piece: string | null) =>
+    setPile((p) =>
+      piece
+        ? entrer(poser("codex"), { genre: "piece", piece })
+        : sortir(p, "piece"),
+    )
+  const emploiOuvertLieu = lieu(pile, "emploi")
+  const ouvrirLEmploi = (emploi: string | null) =>
+    setPile((p) =>
+      emploi && pieceOuverte
+        ? entrer(p, { genre: "emploi", piece: pieceOuverte, emploi })
+        : sortir(p, "emploi"),
+    )
+
+  // ── Les gestes du vestiaire (`B19`) ───────────────────────────────────────
+  //
+  // **Les écrans ne parlent pas au serveur.** `Emplois`, `Emploi` et le
+  // vestiaire d'une fiche remontent leurs gestes ici, comme `GrilleDuJeu` le
+  // fait déjà : un écran qui appelle lui-même finit par relire lui-même, et deux
+  // relectures ne rendent pas le même instant.
+  //
+  // **Chacun relit les deux** — le vestiaire résolu *et* la production. Un
+  // emploi qui change modifie ce qu'un sujet porte (`Personnage.pieces`), et
+  // ne relire que le vestiaire aurait laissé la fiche du porteur avec la liste
+  // d'avant jusqu'au prochain changement de jeu.
+  const apresUnGesteDuVestiaire = async () => {
+    await relireLeVestiaire()
+    await relireProduction()
+  }
+
+  const ajouterUnEmploi = async (
+    piece: string,
+    corps: { genre: GenreDEmploi; porteur?: string; nom?: string },
+  ) => {
+    try {
+      await api.ajouterEmploi(piece, corps)
+      await apresUnGesteDuVestiaire()
+    } catch (erreur) {
+      echouer(erreur, "l'emploi a été refusé")
+    }
+  }
+
+  const reglerUnEmploi = async (
+    piece: string,
+    emploi: string,
+    champs: {
+      nom?: string
+      emplacement?: string
+      devant?: boolean
+      description?: string
+    },
+  ) => {
+    try {
+      await api.reglerEmploi(piece, emploi, champs)
+      await apresUnGesteDuVestiaire()
+    } catch (erreur) {
+      echouer(erreur, "le réglage a été refusé")
+    }
+  }
+
+  const retirerUnEmploi = async (piece: string, emploi: string) => {
+    try {
+      await api.retirerEmploi(piece, emploi)
+      // **On referme l'emploi si c'est celui qu'on regardait** — sinon l'écran
+      // resterait ouvert sur quelque chose qui n'existe plus, et le fil le
+      // nommerait encore.
+      if (emploiOuvertLieu?.emploi === emploi) ouvrirLEmploi(null)
+      await apresUnGesteDuVestiaire()
+    } catch (erreur) {
+      echouer(erreur, "le retrait a été refusé")
+    }
+  }
+
+  /** **Nommer une pièce depuis la fiche de qui la porte l'attribue d'emblée** —
+   *  le premier critère de la tranche, en un seul aller-retour. */
+  const donnerUnePiece = async (nom: string, porteur: string) => {
+    try {
+      await api.ajouterPiece({ nom, porteur })
+      await apresUnGesteDuVestiaire()
+    } catch (erreur) {
+      echouer(erreur, "la pièce a été refusée")
+    }
+  }
+
+  const retirerLaPiece = async (piece: string) => {
+    try {
+      await api.retirerPiece(piece)
+      ouvrirLaPiece(null)
+      await apresUnGesteDuVestiaire()
+    } catch (erreur) {
+      echouer(erreur, "le retrait a été refusé")
+    }
+  }
+
+  /** La pièce et l'emploi ouverts, **relus dans le vestiaire vivant** — même
+   *  raison que `choseOuverte` : une pièce retirée referme sa page, et un
+   *  emploi renommé y suit son nom sans qu'on écrive un mot. */
+  const pieceEtSesEmplois =
+    vestiaireDuJeu?.pieces.find((p) => p.piece.identifiant === pieceOuverte) ?? null
+  const emploiOuvert =
+    pieceEtSesEmplois?.emplois.find(
+      (e) => e.identifiant === emploiOuvertLieu?.emploi,
+    ) ?? null
   /** Les réglages de l'appel, repliés au pied de la barre qui paie. Le repli
    *  vit dans le registre du châssis comme tous les autres : il survit au
    *  changement d'onglet, qui démonte l'écran (E1). */
@@ -1034,7 +1169,15 @@ export function App() {
                   ? "bande"
                   : ficheClip
                     ? "clip"
-                    : clipOuvert || choseOuverteId
+                    : // **Les entrées des fabriques trouvent enfin leur
+                      // écran** (`B19`). Elles étaient rangées sous
+                      // `equipement` depuis `B7`, et **aucun écran ne
+                      // rendait jamais cette valeur** : dix-sept
+                      // explications écrites, joignables par rien. La page
+                      // d'une pièce et celle d'un emploi les servent.
+                      pieceOuverte
+                      ? "equipement"
+                      : clipOuvert || choseOuverteId
                       ? "sujet"
                       : // ⚠️ **La grille d'une famille se documente encore
                         // comme le codex** : le guide (B7) n'a pas d'entrées à
@@ -1111,6 +1254,7 @@ export function App() {
     relireEtat: async () => {},
     fondrePersonnage: (_recu: Personnage & { supprime?: boolean }) => {},
     relireProduction: async () => {},
+    relireLeVestiaire: async () => {},
     personnages: [] as Personnage[],
   })
 
@@ -1327,6 +1471,25 @@ export function App() {
     }
   }, [bibliotheque.courant])
 
+  /** Relire le vestiaire résolu (`B19`).
+   *
+   *  **Un second aller-retour, et il est assumé** : il balaie les calques du
+   *  jeu pour retrouver qui porte les pièces d'avant la tranche, et le coller à
+   *  `production()` aurait fait payer ce balayage à chaque ouverture de page.
+   *  Il se redemande au changement de jeu et après chaque geste sur un emploi —
+   *  jamais en continu. */
+  const relireLeVestiaire = useCallback(async () => {
+    try {
+      setVestiaireDuJeu(await api.emploisDuJeu())
+    } catch (erreur) {
+      echouer(erreur, "le vestiaire ne répond pas")
+    }
+  }, [bibliotheque.courant])
+
+  useEffect(() => {
+    void relireLeVestiaire()
+  }, [relireLeVestiaire])
+
   useEffect(() => {
     void relireProduction()
   }, [relireProduction])
@@ -1404,6 +1567,7 @@ export function App() {
     relireEtat,
     fondrePersonnage,
     relireProduction,
+    relireLeVestiaire,
     personnages,
   }
 
@@ -1563,6 +1727,12 @@ export function App() {
         if (recu.projet !== vivant.current.courant) return
         setEmplacements(recu.emplacements)
         setPieces(recu.pieces)
+        // **Et le vestiaire résolu avec** (`B19`) : une pièce ajoutée depuis la
+        // fiche d'un sujet arrive par ce message-là, et sans cette relecture sa
+        // page ne la verrait qu'au prochain changement de jeu. On redemande
+        // plutôt que de recomposer ici : le compte d'un emploi se lit sur les
+        // calques, et l'écran ne les a pas.
+        void vivant.current.relireLeVestiaire()
       },
       // **Une bande a bougé, et une case du calque animé change avec** (A12).
       //
@@ -2635,6 +2805,22 @@ export function App() {
     }
   })
 
+  /** Les pièces que la ligne des équipements déplie (`B19`), avec le compte
+   *  de leurs emplois.
+   *
+   *  **Le compte vient du vestiaire résolu, jamais de `pieces`** : une pièce
+   *  d'avant la tranche n'a rien de déclaré dans son fichier, et compter ce
+   *  qu'il porte aurait écrit « aucun emploi » sous une épée que deux
+   *  personnages portent. Tant que le vestiaire n'est pas lu, la liste vient
+   *  quand même de `pieces` — la ligne existe, son compte suit. */
+  const piecesDuCarnet: LigneDePiece[] = pieces.map((piece) => ({
+    identifiant: piece.identifiant,
+    nom: piece.nom,
+    emplois:
+      vestiaireDuJeu?.pieces.find((p) => p.piece.identifiant === piece.identifiant)
+        ?.emplois.length ?? 0,
+  }))
+
   /** Les colonnes que l'écran actif peut replier, **nommées par lui**. La
    *  réserve n'a de bascule qu'en vue toile : sans elle il n'y a pas de
    *  colonne, et une bascule pour une colonne absente mentirait sur ce que
@@ -2686,8 +2872,12 @@ export function App() {
       // qu'on regarde, et c'est la seule chose qui distingue ses cinq écrans.
       case "codex": {
         // La grille d'une famille nomme déjà l'étage quand elle est ouverte —
-        // deux noms pour un seul endroit feraient un fil qui se répète.
-        if (dedans.some((l) => l.genre === "famille")) return null
+        // deux noms pour un seul endroit feraient un fil qui se répète. La page
+        // d'une pièce (`B19`) fait pareil : sans cette garde, le fil disait
+        // « Personnages › Équipement › Epée », en annonçant un étage qu'on n'a
+        // pas descendu.
+        if (dedans.some((l) => l.genre === "famille" || l.genre === "piece"))
+          return null
         const sujet = dedans.find((l) => l.genre === "sujet")
         const chose =
           sujet && sujet.genre === "sujet"
@@ -2741,6 +2931,24 @@ export function App() {
       case "sujet": {
         const chose = personnages.find((p) => p.identifiant === ou.sujet)
         return chose ? chose.nom : null
+      }
+
+      // Une pièce d'équipement (`B19`) — **deux noms depuis un seul lieu**, comme
+      // la grille d'une famille : *Les équipements › Epée*. Le codex qui la porte
+      // ne nomme rien de son côté (voir sa garde ci-dessus) : deux noms pour un
+      // seul endroit feraient un fil qui se répète.
+      case "piece": {
+        const sienne = pieces.find((p) => p.identifiant === ou.piece)
+        return sienne ? [NOM_DE_LA_RUBRIQUE.equipement ?? "Équipement", sienne.nom] : null
+      }
+      // Un emploi de cette pièce-là (`B19`). Son libellé se compose comme à
+      // l'écran quand l'auteur ne lui en a pas donné : un fil qui dirait
+      // « porte-le-goliath » ne serait pas un fil.
+      case "emploi": {
+        const sien = vestiaireDuJeu?.pieces
+          .find((p) => p.piece.identifiant === ou.piece)
+          ?.emplois.find((e) => e.identifiant === ou.emploi)
+        return sien ? sien.nom || libelleDEmploi(sien) : null
       }
 
       // La grille du jeu, et comparer (`B13`) — deux profondeurs de plus de
@@ -3105,6 +3313,9 @@ export function App() {
         familles={famillesDuCarnet}
         collections={groupesDeLaFamille}
         collectionOuverte={collectionOuverte}
+        piecesDuJeu={piecesDuCarnet}
+        pieceOuverte={pieceOuverte}
+        surUnePiece={(piece) => ouvrirLaPiece(piece)}
         arrivants={arrivants}
         regles={cartes.length || null}
         // Les cinq lignes du monde qui portent vraiment un texte. Les deux
@@ -3122,7 +3333,11 @@ export function App() {
         }
         autresJeux={derniersJeux(bibliotheque.projets, bibliotheque.courant)}
         ouvert={
-          tableauDeBord
+          // Une pièce ouverte allume la ligne des équipements — c'est elle
+          // qui la déplie, et le fil dit la suite (`B19`).
+          pieceOuverte
+            ? EQUIPEMENT
+            : tableauDeBord
             ? "jeu"
             : depensesOuvertes
               ? "depenses"
@@ -3908,7 +4123,12 @@ export function App() {
           codex par son établi — c'est le même endroit vu de plus près, et le
           fil d'Ariane le dit. Les deux portent la barre qui paie, parce qu'ils
           sont les deux lieux d'où l'argent part. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && !choseOuverte && !familleOuverte && (
+      {/* ⚠️ **Et pas non plus quand une pièce est ouverte** (`B19`) : la page
+          d'une pièce se pose sur le codex comme la grille d'une famille, et sans
+          cette garde l'ancien codex la recouvrait — le fil disait « Épée », la
+          surface montrait les personnages. Vu au navigateur, pas aux essais :
+          leur double monte les écrans un par un. */}
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && (
         <EcranCodex
           plan={plan}
           personnages={personnages}
@@ -4121,6 +4341,12 @@ export function App() {
           // bandeau d'onglets. Deux profondeurs de plus, comme la matrice.
           onGrille={() => setGrilleOuverte(choseOuverte.identifiant)}
           onComparer={() => setComparerOuvert(choseOuverte.identifiant)}
+          /* **B19** — son vestiaire, dans sa fiche. Ce qu'il porte, lui, et
+             non l'équipement du jeu entier. */
+          vestiaire={vestiaireDuJeu}
+          onPiece={(piece) => ouvrirLaPiece(piece)}
+          onCreerPiece={(nom) => void donnerUnePiece(nom, choseOuverte.identifiant)}
+          onRetirerLEmploi={(piece, emploi) => void retirerUnEmploi(piece, emploi)}
         />
       )}
 
@@ -4167,6 +4393,75 @@ export function App() {
           }}
         />
       )}
+
+      {/* ── Le vestiaire : la page d'une pièce, et celle d'un emploi (`B19`) ── */}
+      {/* **Deux écrans, deux profondeurs**, posés sur le codex comme la grille
+          d'une famille. Ni l'un ni l'autre ne dépense : ils ne reçoivent pas la
+          barre qui paie, et c'est cette privation qui tient la promesse.
+          L'emploi passe devant sa pièce — il est plus profond, et deux surfaces
+          à la fois n'existent pas. */}
+      {!depensesOuvertes &&
+        !envoiOuvert &&
+        !clipOuvert &&
+        onglet === "codex" &&
+        !bandeOuverte &&
+        pieceEtSesEmplois &&
+        !emploiOuvert && (
+          <Emplois
+            pieceEtSesEmplois={pieceEtSesEmplois}
+            porteurs={vestiaireDuJeu?.porteurs ?? []}
+            onEmploi={(emploi) => ouvrirLEmploi(emploi)}
+            onAjouterEmploi={(corps) =>
+              void ajouterUnEmploi(pieceEtSesEmplois.piece.identifiant, corps)
+            }
+            onRetirerLaPiece={() =>
+              void retirerLaPiece(pieceEtSesEmplois.piece.identifiant)
+            }
+            onErreur={(raison) => setPanne(raison)}
+          />
+        )}
+
+      {!depensesOuvertes &&
+        !envoiOuvert &&
+        !clipOuvert &&
+        onglet === "codex" &&
+        !bandeOuverte &&
+        pieceEtSesEmplois &&
+        emploiOuvert && (
+          <Emploi
+            emploi={emploiOuvert}
+            piece={pieceEtSesEmplois.piece}
+            emplacements={emplacements}
+            /* **Relu dans la liste vivante**, et `null` quand il n'y est plus :
+               retirer un personnage ne va pas nettoyer les pièces derrière lui,
+               et l'écran doit savoir le dire plutôt que de tomber. */
+            porteur={
+              personnages.find((p) => p.identifiant === emploiOuvert.porteur) ?? null
+            }
+            onRegler={(champs) =>
+              void reglerUnEmploi(
+                pieceEtSesEmplois.piece.identifiant,
+                emploiOuvert.identifiant,
+                champs,
+              )
+            }
+            onRetirer={() =>
+              void retirerUnEmploi(
+                pieceEtSesEmplois.piece.identifiant,
+                emploiOuvert.identifiant,
+              )
+            }
+            onCalque={(asset) => {
+              // Un calque se retouche là où il vit — dans la page de son
+              // porteur. Ouvrir la case sans changer de sujet laisserait
+              // l'outil chercher une image absente de la page affichée, le
+              // défaut que `Comparer` a payé en `B13`.
+              if (emploiOuvert.porteur) setChoseOuverte(emploiOuvert.porteur)
+              setCaseOuverte(asset)
+            }}
+            onLesAutresEmplois={() => ouvrirLEmploi(null)}
+          />
+        )}
 
       <BarreEtat
         etat={etat}

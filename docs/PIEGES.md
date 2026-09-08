@@ -1661,3 +1661,20 @@ la prochaine réécriture retrouvera.
   dépôt et tous les ateliers jetables montent l'atelier sur une racine explicite, qui diffère
   du défaut sans que personne n'ait rien choisi. Il faut un réglage réellement posé
   (`origine != "defaut"`). Payé au navigateur le 9 septembre 2026, en `B15`.
+- **Un double d'essai qui ne connaît pas une route ne rend pas une erreur : il rend la réponse
+  de la route d'à côté.** `GET /api/characters/pieces/uses` (`B19`) ne correspondait à aucune
+  branche du double d'`App.test.tsx` et retombait sur le vestiaire de `C3`, qui rend des pièces
+  **nues**. L'écran lisait alors `p.piece.identifiant` sur un objet sans `piece`, et **736 essais
+  cassaient d'un coup** — alors que le navigateur, lui, marchait très bien. C'est le même piège
+  de rangement des routes que côté serveur (le segment littéral avant `{identifiant}`), mais il
+  se paie plus cher : côté serveur la mauvaise route rend un 422 qu'on voit ; dans un double,
+  elle rend un objet de la bonne forme apparente. ⚠️ **Quand une suite d'écran casse en masse
+  pendant qu'un atelier jetable marche, chercher d'abord une route que le double ignore.** Payé
+  le 9 septembre 2026, en `B19`.
+- **Un renvoi « § » vers une planche `.dc.html` est cassé par construction.**
+  `essais/essai_docs.py` n'indexe les titres que dans les fichiers Markdown : une planche HTML
+  lui rend **zéro section**, donc aucun nom de section n'y répond jamais. Le renvoi de `lieux.ts`
+  vers `Navigation.dc.html § Le fil` n'est pas refusé pour une seule raison — il nomme le fichier
+  sans son chemin `docs/`, et le banc ne le voit donc pas du tout. ⚠️ **Citer une planche par son
+  chemin, et nommer sa section en prose, jamais derrière un `§`.** Payé le 9 septembre 2026, en
+  `B19`.

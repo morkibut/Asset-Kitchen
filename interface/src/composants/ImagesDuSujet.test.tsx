@@ -95,6 +95,7 @@ function personnage(cases: Case[]): Personnage {
     identifiant: "pelerin",
     projet: "le-marais",
     nom: "Le pèlerin",
+    pieces: [],
     description: "a weathered pilgrim",
     ecartees: [],
     concept_arts: [],

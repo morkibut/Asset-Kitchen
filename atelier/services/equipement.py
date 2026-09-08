@@ -40,10 +40,15 @@ from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.equipement import (
     CONTENUE,
     EMPLACEMENTS_PROPOSES,
+    GENRES,
+    PORTE,
     PORTEES,
     Emplacement,
+    Emploi,
     MesuresCalque,
     Piece,
+    emploi_porte,
+    emplois_resolus,
     rang_suivant,
 )
 from atelier.domaine.generation import Generation
@@ -86,6 +91,13 @@ class PieceInconnue(ProductionRefusee):
 
     def __init__(self, identifiant: str) -> None:
         super().__init__(f"aucune pièce « {identifiant} » dans ce projet")
+
+
+class EmploiInconnu(ProductionRefusee):
+    code = "emploi_inconnu"
+
+    def __init__(self, identifiant: str) -> None:
+        super().__init__(f"aucun emploi « {identifiant} » sur cette pièce")
 
 
 class EmplacementInconnu(ProductionRefusee):
@@ -254,6 +266,7 @@ class ServiceEquipement:
         description: str = "",
         emplacement: str = "",
         portee: str = CONTENUE,
+        porteur: str = "",
     ) -> Piece:
         """Une pièce se décrit **une seule fois** sur le projet (US-137).
 
@@ -266,6 +279,17 @@ class ServiceEquipement:
         pour la pièce elle-même, et l'écrire ici évite d'imposer un ordre à
         l'auteur : nommer « casque · tête » ne doit pas demander d'avoir créé la
         tête d'abord.
+
+        **Une pièce ne porte personne par défaut** (B19). Elle naît déclarée et
+        vide — `emplois=()`, pas `None` : c'est une pièce dont on sait qu'elle
+        n'est portée par personne, pas une pièce dont on ne sait rien, et la
+        différence tient tout le critère de rétrocompatibilité (voir
+        `atelier/domaine/equipement.py`, le champ `emplois`).
+
+        **Sauf si elle naît de la fiche de quelqu'un** : `porteur` la lui attribue
+        d'emblée, en un seul aller-retour. Nommer une pièce depuis le vestiaire
+        d'un personnage et devoir ensuite dire qui la porte aurait fait deux
+        gestes là où l'auteur n'en voit qu'un.
         """
         objet = self._exiger(projet)
         propre = nom.strip()
@@ -273,6 +297,16 @@ class ServiceEquipement:
             raise ProductionRefusee("une pièce se crée avec un nom")
         if any(p.nom.casefold() == propre.casefold() for p in objet.pieces):
             raise ProductionRefusee(f"« {propre} » est déjà une pièce de ce projet")
+
+        # **Vérifié avant d'écrire quoi que ce soit** : une pièce à moitié créée,
+        # sans son porteur, obligerait l'auteur à défaire avant de refaire.
+        if porteur:
+            qui = self._production.personnage(projet, porteur)
+            if not self._production.porte_de_lequipement(projet, qui):
+                raise ProductionRefusee(
+                    f"« {qui.nom} » ne porte pas d'équipement — une pièce se "
+                    f"pose sur un corps, jamais sur rien"
+                )
 
         range_dans = self._emplacement_ou_creer(projet, emplacement)
         objet = self._exiger(projet)  # relu : l'emplacement neuf y est
@@ -282,6 +316,7 @@ class ServiceEquipement:
             description=description.strip(),
             emplacement=range_dans,
             portee=portee if portee in PORTEES else CONTENUE,
+            emplois=(emploi_porte(porteur),) if porteur else (),
         )
         objet.pieces = objet.pieces + (piece,)
         self._sauver(objet)
@@ -343,6 +378,13 @@ class ServiceEquipement:
                 if concept_arts is None
                 else tuple(dict.fromkeys(concept_arts))
             ),
+            # ⚠️ **Recopié, et il fallait y penser** (B19). Cette méthode
+            # reconstruit une pièce champ par champ au lieu de la modifier : un
+            # champ oublié ici n'est pas perdu à la lecture du disque — il est
+            # perdu au **premier renommage**, sans qu'aucune relecture ne
+            # l'annonce. Un essai de `tests/test_b19.py` renomme une pièce qui
+            # porte trois emplois et vérifie qu'ils sont toujours là.
+            emplois=courante.emplois,
         )
         objet.pieces = tuple(
             reglee if p.identifiant == courante.identifiant else p for p in objet.pieces
@@ -364,6 +406,325 @@ class ServiceEquipement:
         )
         self._sauver(objet)
         return retiree
+
+    # ── Les emplois d'une pièce (B19) ────────────────────────────────────────
+    #
+    # **Le lien qui manquait au modèle.** Un emploi dit *comment* une pièce sert,
+    # et son genre `porte` dit *qui* la porte. Tout ce bloc écrit sur la pièce,
+    # jamais sur le personnage : les emplacements de corps restent au jeu, et le
+    # personnage ne gagne pas un champ de vestiaire qu'il faudrait tenir d'accord
+    # avec celui d'en face.
+
+    def emplois(self, projet: str, piece: str) -> tuple[Emploi, ...]:
+        """Ses emplois — **déclarés, ou lus sur les calques déjà là**.
+
+        Une pièce qui n'a jamais rien déclaré (`emplois is None`, tous les
+        fichiers d'avant B19) n'est pas une pièce que personne ne porte : c'est
+        une pièce dont on ne sait rien. Le disque, lui, sait — un calque porte sa
+        pièce et son personnage depuis C3 —, et cette méthode le lui demande
+        plutôt que de rendre une liste vide sous laquelle dix images
+        disparaîtraient de l'écran.
+
+        **Rien n'est écrit pour autant.** La déduction est une lecture, refaite à
+        chaque appel ; le disque ne gagne la clé qu'au premier geste de l'auteur
+        sur les emplois de cette pièce-là, et c'est `_a_declarer` qui la pose.
+        """
+        objet = self._exiger(projet)
+        return self._emplois_de(objet, self._exiger_piece(objet, piece))
+
+    def _emplois_de(self, objet: Projet, piece: Piece) -> tuple[Emploi, ...]:
+        """La règle vient du domaine (`emplois_resolus`) — elle n'est pas
+        réécrite ici, `ServiceProduction` la lit aussi."""
+        return emplois_resolus(piece, self._porteurs_deduits(objet, piece))
+
+    def _porteurs_deduits(self, objet: Projet, piece: Piece) -> tuple[str, ...]:
+        """Qui porte cette pièce d'après les calques déjà sur le disque.
+
+        La même lecture que `ServiceProduction.portee_de_la_piece` fait depuis
+        E15, et pour la même raison : c'est l'image qui dit sa pièce et son
+        personnage, et un couple *(pièce, personnage)* qui a au moins un calque
+        est un emploi porté, qu'on l'ait déclaré ou non.
+        """
+        return tuple(
+            personnage.identifiant
+            for personnage in self._production.personnages(objet.identifiant)
+            if any(
+                asset.piece == piece.identifiant
+                for asset in self._base.assets_du_personnage(
+                    personnage.identifiant, projet=objet.identifiant
+                )
+            )
+        )
+
+    def _a_declarer(self, objet: Projet, piece: Piece) -> tuple[Emploi, ...]:
+        """Ce sur quoi un geste travaille — la déclaration, ou sa reprise.
+
+        **La reprise se fait à l'écriture, jamais à la lecture.** Retirer un
+        porteur sur une pièce qui en avait trois sans jamais l'avoir déclaré doit
+        laisser les deux autres : partir d'une liste vide les aurait effacés, et
+        partir de la déduction *à chaque relecture* aurait fait revenir celui
+        qu'on vient de retirer, ses calques étant toujours sur le disque. C'est
+        exactement le piège que `plan_depuis_json` évite pour les poses.
+        """
+        return self._emplois_de(objet, piece)
+
+    def ajouter_emploi(
+        self,
+        projet: str,
+        piece: str,
+        *,
+        genre: str = PORTE,
+        porteur: str = "",
+        nom: str = "",
+        emplacement: str = "",
+        devant: bool = True,
+        description: str = "",
+    ) -> Emploi:
+        """Une façon de plus dont cette pièce sert.
+
+        **Un personnage ne porte une pièce qu'une fois**, et le refus est ici. La
+        raison n'est pas de forme : les calques sont rangés par *(pièce,
+        personnage, pose)* et par rien d'autre, si bien que deux emplois portés
+        par le même personnage se partageraient les mêmes images sans qu'aucune
+        règle puisse dire laquelle va où.
+
+        **Seule une chose qui a un corps peut porter** — c'est déjà le refus de
+        C3 au moment de plier, et `porte_de_lequipement` le dit pour l'écran
+        depuis E15. Un décor ne prend pas d'épée.
+        """
+        objet = self._exiger(projet)
+        visee = self._exiger_piece(objet, piece)
+        deja = self._a_declarer(objet, visee)
+
+        retenu = genre if genre in GENRES else PORTE
+        if retenu == PORTE:
+            if not porteur:
+                raise ProductionRefusee(
+                    "un emploi porté se crée avec le personnage qui le porte"
+                )
+            qui = self._production.personnage(objet.identifiant, porteur)
+            if not self._production.porte_de_lequipement(objet.identifiant, qui):
+                raise ProductionRefusee(
+                    f"« {qui.nom} » ne porte pas d'équipement — une pièce se "
+                    f"pose sur un corps, jamais sur rien"
+                )
+            if any(e.porte and e.porteur == porteur for e in deja):
+                raise ProductionRefusee(
+                    f"« {qui.nom} » porte déjà « {visee.nom} »"
+                )
+            identifiant = emploi_porte(porteur).identifiant
+        else:
+            porteur = ""
+            identifiant = repere(
+                nom.strip() or retenu, {e.identifiant for e in deja}, "emploi"
+            )
+
+        emploi = Emploi(
+            identifiant=identifiant,
+            genre=retenu,
+            porteur=porteur,
+            nom=nom.strip(),
+            emplacement=self._emplacement_ou_creer(projet, emplacement)
+            if emplacement
+            else "",
+            devant=devant,
+            description=description.strip(),
+        )
+        objet = self._exiger(projet)  # relu : l'emplacement neuf y est
+        self._poser_emplois(objet, visee.identifiant, deja + (emploi,))
+        return emploi
+
+    def regler_emploi(
+        self,
+        projet: str,
+        piece: str,
+        identifiant: str,
+        *,
+        nom: str | None = None,
+        emplacement: str | None = None,
+        devant: bool | None = None,
+        description: str | None = None,
+    ) -> Emploi:
+        """Ce qui se règle sur un emploi, en un seul geste.
+
+        **Le porteur n'en fait pas partie, et c'est délibéré.** Changer le
+        porteur d'un emploi laisserait ses calques sous l'ancien — ils portent
+        son identifiant, pas celui de l'emploi —, et l'écran montrerait un
+        vestiaire vide à côté de dix images bien vivantes. Se tromper de porteur
+        se répare en retirant l'emploi et en en créant un autre : le geste dit
+        alors ce qu'il fait, et les images ne bougent toujours pas.
+        """
+        objet = self._exiger(projet)
+        visee = self._exiger_piece(objet, piece)
+        deja = self._a_declarer(objet, visee)
+        courant = _exiger_emploi(deja, identifiant)
+
+        range_dans = (
+            courant.emplacement
+            if emplacement is None
+            else (self._emplacement_ou_creer(projet, emplacement) if emplacement else "")
+        )
+        reglé = replace(
+            courant,
+            nom=courant.nom if nom is None else nom.strip(),
+            emplacement=range_dans,
+            devant=courant.devant if devant is None else bool(devant),
+            description=(
+                courant.description if description is None else description.strip()
+            ),
+        )
+        objet = self._exiger(projet)  # relu : l'emplacement neuf y est
+        self._poser_emplois(
+            objet,
+            visee.identifiant,
+            tuple(reglé if e.identifiant == identifiant else e for e in deja),
+        )
+        return reglé
+
+    def retirer_emploi(self, projet: str, piece: str, identifiant: str) -> Emploi:
+        """L'emploi part, **ses images restent** — jamais de cascade.
+
+        C'est la phrase de la planche, tenue au mot : *« Retirer un porteur ne
+        supprime pas ses images : elles restent dans la galerie, détachées. »*
+        Elles gardent l'identifiant de la pièce et celui du personnage ; remettre
+        l'emploi les remet dans sa colonne, exactement comme une pièce retirée
+        puis remise retrouve ses calques.
+
+        **Et il ne revient pas tout seul.** Le geste déclare la pièce du même
+        coup : la déduction qui lisait les calques ne sera plus jamais consultée
+        pour elle, sans quoi le porteur retiré reparaîtrait à la relecture
+        suivante, ses images étant toujours là.
+        """
+        objet = self._exiger(projet)
+        visee = self._exiger_piece(objet, piece)
+        deja = self._a_declarer(objet, visee)
+        retire = _exiger_emploi(deja, identifiant)
+        self._poser_emplois(
+            objet,
+            visee.identifiant,
+            tuple(e for e in deja if e.identifiant != identifiant),
+        )
+        return retire
+
+    def _poser_emplois(
+        self, objet: Projet, piece: str, emplois: tuple[Emploi, ...]
+    ) -> None:
+        """Écrire les emplois d'une pièce — **le seul chemin d'écriture**.
+
+        ⚠️ Il reconstruit une `Piece` comme `regler_piece`, et pour la même
+        raison : la dataclass a des `slots`, et un `replace` y marche, mais deux
+        façons d'écrire une pièce finiraient par diverger d'un champ. Celui-ci
+        passe par `replace` et ne nomme donc **aucun** champ : un champ ajouté
+        plus tard le traverse sans qu'on ait à y penser.
+        """
+        courante = self._exiger_piece(objet, piece)
+        posee = replace(courante, emplois=emplois)
+        objet.pieces = tuple(
+            posee if p.identifiant == piece else p for p in objet.pieces
+        )
+        self._sauver(objet)
+
+    # **Le vestiaire d'un personnage ne s'écrit pas ici**, et c'est voulu : c'est
+    # `ServiceProduction.pieces_du_personnage` qui le rend, parce que c'est
+    # `en_charge` qui le porte à l'écran et qu'un sujet n'a qu'une forme quand il
+    # franchit le port. Deux méthodes du même nom dans deux services auraient fini
+    # par répondre deux choses. La règle, elle, est écrite une fois dans le
+    # domaine — `emplois_resolus` — et les deux la lisent.
+
+    def vestiaire_du_jeu(self, projet: str) -> dict[str, Any]:
+        """Les pièces, leurs emplois résolus, et ce que chacun a de fait.
+
+        **Séparée de `vestiaire`, et il le fallait.** `vestiaire` est la forme
+        que porte chaque geste et chaque annonce du flux : elle se déduit du seul
+        fichier du projet, sans toucher aux images, et un geste sur un nom de
+        pièce n'a pas à payer un balayage des calques. Celle-ci lit les images —
+        c'est ce qui lui permet de rendre les emplois d'une pièce jamais déclarée
+        et le compte de chacun —, et elle n'est appelée que par les écrans qui
+        les montrent.
+
+        **Le compte est celui de la charge d'un sujet, pas un second.** Une pose
+        réclame ce que `reclame` dit qu'elle réclame, et le calque se compte
+        comme le corps : plafonné à ce qui est demandé, jamais 250 %.
+        """
+        objet = self._exiger(projet)
+        porteurs = [
+            p
+            for p in self._production.personnages(projet)
+            if self._production.porte_de_lequipement(projet, p)
+        ]
+        # Une lecture par personnage, comme `portee_de_la_piece` en fait une
+        # depuis E15 — et pas une par pièce : un jeu a peu de personnages et peu
+        # de pièces, mais le produit des deux se paierait.
+        calques: dict[tuple[str, str], set[str]] = {}
+        attendus: dict[str, int] = {}
+        for qui in porteurs:
+            for asset in self._base.assets_du_personnage(
+                qui.identifiant, projet=projet
+            ):
+                if asset.piece and asset.pose:
+                    calques.setdefault((asset.piece, qui.identifiant), set()).add(
+                        asset.pose
+                    )
+            attendus[qui.identifiant] = len(
+                qui.tenues(self._production.plan_de(projet, qui))
+            )
+
+        noms = {p.identifiant: p.nom for p in porteurs}
+        emplacements = {e.identifiant: e.nom for e in objet.emplacements}
+
+        pieces: list[dict[str, Any]] = []
+        for piece in objet.pieces:
+            siens = self._emplois_de(objet, piece)
+            rendus: list[dict[str, Any]] = []
+            for emploi in siens:
+                # **Un emploi qui n'est pas porté ne réclame qu'une image**, et
+                # elle ne se fabrique pas encore (voir le domaine) : le compte le
+                # dit à 0 / 1 plutôt que d'inventer une case.
+                attendu = attendus.get(emploi.porteur, 0) if emploi.porte else 1
+                fait = (
+                    len(calques.get((piece.identifiant, emploi.porteur), ()))
+                    if emploi.porte
+                    else 0
+                )
+                rendus.append(
+                    {
+                        **emploi.en_json(),
+                        # **Déduit veut dire « lu sur les images, pas déclaré »** :
+                        # l'écran le dit, parce qu'un emploi déduit disparaît si
+                        # ses images disparaissent, quand un emploi déclaré reste.
+                        "deduit": piece.emplois is None,
+                        # **Un porteur qui n'existe plus se voit, jamais de
+                        # cascade** — c'est déjà ce que la matrice fait d'une
+                        # image dont la direction a été retirée. Retirer un
+                        # personnage ne va pas nettoyer les pièces derrière lui :
+                        # l'orphelin se dit et se retire d'un clic.
+                        "orphelin": bool(emploi.porte and emploi.porteur not in noms),
+                        "porteur_nom": noms.get(emploi.porteur, emploi.porteur),
+                        "emplacement_nom": emplacements.get(
+                            emploi.emplacement or piece.emplacement, ""
+                        ),
+                        "fait": min(fait, attendu),
+                        "attendu": attendu,
+                    }
+                )
+            pieces.append(
+                {
+                    "piece": piece.en_json(),
+                    "declare": piece.emplois is not None,
+                    "emplois": rendus,
+                    "fait": sum(e["fait"] for e in rendus),
+                    "attendu": sum(e["attendu"] for e in rendus),
+                }
+            )
+
+        return {
+            "projet": objet.identifiant,
+            "emplacements": [
+                e.en_json() for e in sorted(objet.emplacements, key=lambda x: x.rang)
+            ],
+            "pieces": pieces,
+            "porteurs": [{"identifiant": p.identifiant, "nom": p.nom} for p in porteurs],
+        }
 
     def concept_arts(self, projet: str, piece: str | None) -> tuple[str, ...]:
         """Les cartes qu'une pièce désigne — même règle qu'un personnage (US-124).
@@ -1131,6 +1492,13 @@ class ServiceEquipement:
             ],
             "pieces": [p.en_json() for p in objet.pieces],
         }
+
+
+def _exiger_emploi(emplois: Sequence[Emploi], identifiant: str) -> Emploi:
+    for emploi in emplois:
+        if emploi.identifiant == identifiant:
+            return emploi
+    raise EmploiInconnu(identifiant)
 
 
 def _label(generation: Generation, case: CasePliee, piece: Piece | None) -> str:

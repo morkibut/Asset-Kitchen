@@ -36,6 +36,13 @@ from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.ambiance import CE_QU_ON_PREND, TEXTES, prises_du_mode
 from atelier.domaine.carte import PERSONNAGES
+
+# **Le domaine de l'équipement, importé pour sa seule règle de résolution** (B19)
+# — `emplois_resolus` dit ce qu'une pièce porte, déclaré ou lu sur ses calques,
+# et elle est écrite une fois pour les deux services qui la posent. Aucun service
+# d'équipement n'est importé ici : c'est lui qui dépend de celui-ci, pas
+# l'inverse, et ce module ne nomme donc que le domaine.
+from atelier.domaine.equipement import emplois_resolus
 from atelier.domaine.fond import fond_valide, interdiction, replier
 from atelier.domaine.envoi import (
     AMBIANCE as GROUPE_AMBIANCE,
@@ -1919,7 +1926,53 @@ class ServiceProduction:
             # une colonne d'équipement à un décor. Ce n'est pas un grisé : ce
             # qu'une famille ne peut pas avoir n'existe pas dans son établi.
             "equipable": self.porte_de_lequipement(projet, personnage),
+            # **Et ce qu'il porte, lui** (B19) — le troisième grief que la
+            # tranche lève. La colonne *ce que l'entité réclame* dessinait
+            # jusqu'ici une colonne par pièce **du jeu entier**, faute d'avoir
+            # jamais eu de quoi dire le contraire : le casque de fer se proposait
+            # sur la grenouille. Les identifiants suffisent — l'écran a déjà les
+            # pièces du vestiaire, et les redire ici en entier ferait une seconde
+            # copie à tenir d'accord.
+            "pieces": list(self.pieces_du_personnage(projet, personnage)),
         }
+
+    def pieces_du_personnage(
+        self, projet: str, personnage: Personnage
+    ) -> tuple[str, ...]:
+        """Les pièces que **ce personnage-là** porte, et lui seul (B19).
+
+        **La règle vient du domaine** (`emplois_resolus`), pas d'ici : une pièce
+        déclarée dit qui la porte, une pièce qui n'a jamais rien déclaré se lit
+        sur ses calques. L'écrire une seconde fois aurait fini par répondre
+        autrement que le vestiaire d'en face, sur la même pièce.
+
+        **Une seule lecture d'images**, celle de ce personnage : `cases` en fait
+        déjà une, et en ajouter une par pièce aurait payé le produit des deux.
+        Une chose qui ne porte pas d'équipement n'en lit aucune.
+        """
+        if not self.porte_de_lequipement(projet, personnage):
+            return ()
+        objet = self._exiger(projet)
+        siennes = {
+            asset.piece
+            for asset in self._base.assets_du_personnage(
+                personnage.identifiant, projet=projet
+            )
+            if asset.piece
+        }
+        return tuple(
+            piece.identifiant
+            for piece in objet.pieces
+            if any(
+                emploi.porte and emploi.porteur == personnage.identifiant
+                for emploi in emplois_resolus(
+                    piece,
+                    (personnage.identifiant,)
+                    if piece.identifiant in siennes
+                    else (),
+                )
+            )
+        )
 
     def cases(self, projet: str, personnage: Personnage) -> list[dict[str, Any]]:
         """Ce qui est fait et ce qui manque, pose par pose (US-119).

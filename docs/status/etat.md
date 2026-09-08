@@ -11,6 +11,64 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## V4 · B19 — le vestiaire — 9 septembre 2026
+
+**Une pièce d'équipement n'appartenait à personne.** Elle était décrite une fois pour le jeu et
+disponible sur tout le casting, sans aucun moyen de dire le contraire — c'est ce qui rendait
+l'écran Équipement illisible. Le relevé a confirmé le plan sur ce point : l'emplacement, la
+portée *contenue*/*agrandit* et ses deux valeurs (92 % / 62 %) existaient déjà, et seul le lien
+vers un personnage manquait.
+
+⚠️ **Une clé absente n'est pas une clé vide**, et c'est toute la tranche. Le critère demandait
+que les pièces déjà sur le disque se relisent « sans perte **et** sans porteur » — deux choses
+qui semblent se contredire. Elles se concilient parce que le lien qui existait déjà n'était pas
+dans le fichier de la pièce mais dans ses **calques**, un par couple (pièce, personnage). D'où
+le champ : `emplois is None` = jamais déclaré, et les porteurs se déduisent des calques ;
+`emplois == ()` = déclaré vide, et plus rien ne s'y déduit. `en_json` **omet la clé** quand elle
+est absente, donc un projet d'avant la tranche fait un aller-retour **identique à l'octet**, et
+l'adoption ne se fait qu'à l'écriture — jamais à la lecture. Le dépôt avait tranché la même
+question une fois déjà, dans `plan_depuis_json` : la réponse était écrite, il suffisait de la
+relire.
+
+⚠️ **La perte silencieuse n'était pas dans la lecture.** Un champ neuf absent d'un fichier prend
+sa valeur par défaut : la lecture n'a rien à perdre. Le vrai vecteur était `regler_piece`, qui
+reconstruisait `Piece(...)` champ par champ au lieu d'un `replace` — un champ oublié y disparaît
+**au premier renommage**, et rien ne le signale. C'est le genre de ligne qu'on ne trouve qu'en
+cherchant, parce qu'elle ne casse rien le jour où on l'écrit.
+
+⚠️ **La « matrice de 24 calques » de la planche n'existe pas.** Un calque ne porte de direction
+nulle part dans le code, et 24 = 6 poses × 4 directions est une addition de la planche. La
+matrice d'un emploi est **une rangée par pose** — ce que dit d'ailleurs le critère d'acceptation
+lui-même (*un calque reste solidaire de sa pose*). L'axe des directions revient à `B20`.
+
+**Trois écrans** : la page d'une pièce et de ses emplois, la page d'un emploi et de ses poses,
+et *Son vestiaire* dans la fiche d'un sujet — absente, et non grisée, pour un sujet non
+équipable.
+
+**Deux suites vertes** : 1 107 essais d'écran (+74), 1 752 côté serveur (+31 : les 28 de
+`tests/test_b19.py`, et trois cas paramétrés de plus sur `LES_FICHIERS_DU_CARNET`).
+
+**Le navigateur a trouvé trois défauts qu'aucun essai ne voyait**, tous pour la même raison —
+le double d'essai monte un écran à la fois, jamais la pile entière : l'ancien écran du codex
+recouvrait la page d'une pièce, le fil imprimait deux rangements pour un seul objet, et la carte
+« équipements portés » comptait les pièces trouvées sur les calques du sujet plutôt que ce qu'il
+porte. Ce troisième défaut est né de la tranche : depuis qu'un porteur retiré ne supprime plus
+ses images, les deux chiffres divergent — la carte disait « 2 » au-dessus d'un vestiaire qui
+n'en montrait qu'un.
+
+**Et un garde-fou resté rouge jusqu'à l'avant-dernière suite** : 736 échecs dans le seul
+`App.test.tsx`, alors que le navigateur marchait. Le double ne connaissait pas
+`GET /api/characters/pieces/uses`, qui retombait donc sur la route d'à côté — le vestiaire de
+`C3`, qui rend des pièces nues. **Un double qui ne connaît pas une route ne rend pas une erreur,
+il rend la réponse de la route d'à côté** : c'est le même piège de rangement des routes que côté
+serveur, et il se paie de la même façon.
+
+**Vérifié sur un atelier jetable dédié**, port 8481 (`essais/atelier_jetable_b19.py`), qui
+efface la clé `emplois` du `projet.json` **et** de la colonne `contenu` de SQLite avant de servir
+— sans quoi la lecture repasse par l'index dérivé et l'effacement n'a aucun effet. Après une
+session entière de lecture, de navigation et de gestes, les deux pièces non touchées n'avaient
+toujours aucune clé `emplois` sur le disque. C'est la preuve que le critère demandait.
+
 ## V4 · B15 — l'installation — 9 septembre 2026
 
 **Ce qu'on branche une fois sur cette machine a enfin un écran** : le compte et la clé, ComfyUI,

@@ -34,14 +34,20 @@ from typing import Any, Iterable
 
 __all__ = [
     "AGRANDIT",
+    "A_PART",
     "CONTENUE",
     "ECHELLE_TOLEREE",
     "EMPLACEMENTS_PROPOSES",
     "Emplacement",
+    "Emploi",
+    "GENRES",
+    "MISE_EN_SCENE",
     "MesuresCalque",
+    "PORTE",
     "PORTEES",
     "Piece",
     "emplacements_depuis_json",
+    "emplois_depuis_json",
     "pieces_depuis_json",
 ]
 
@@ -105,6 +111,158 @@ class Emplacement:
         )
 
 
+# ── Les trois genres d'emploi, et la liste est close (B19) ───────────────────
+#
+# Un **emploi** est une façon dont une pièce sert. La planche `Emplois.dc.html`
+# en montre six pour une seule épée : portée par trois personnages, posée au
+# sol, plantée dans un rocher, et son icône d'inventaire. Trois genres suffisent
+# à les tenir toutes, et le bouton de la planche les nomme lui-même — *porté par
+# quelqu'un · une image à part · une mise en scène*.
+#
+# **Un seul des trois fabrique quelque chose**, et c'est `PORTE`. Les deux
+# autres se déclarent, se lisent et se comptent ; ils ne partent pas chez le
+# fournisseur, parce qu'une pièce n'a pas d'image à elle et que le produit
+# interdit d'en générer une sur fond vide (`docs/archi-versions.md` §7). Les
+# poser dans la liste close coûte trois constantes ; les fabriquer serait une
+# seconde chaîne de production, et ce n'est pas ce que cette tranche livre.
+PORTE = "porte"
+A_PART = "a-part"
+MISE_EN_SCENE = "mise-en-scene"
+GENRES = (PORTE, A_PART, MISE_EN_SCENE)
+
+
+@dataclass(frozen=True, slots=True)
+class Emploi:
+    """Une façon dont une pièce sert — **c'est le lien qui manquait** (B19).
+
+    Avant cette tranche, une pièce n'appartenait à personne : elle était décrite
+    une fois pour le jeu et se posait sur n'importe quel corps. Rien ne
+    permettait de dire le contraire, et c'est ce qui rendait l'écran Équipement
+    illisible — il n'avait personne à qui rattacher ce qu'il montrait.
+
+    **Le porteur est un personnage, pas une pièce du corps.** L'emplacement, lui,
+    reste au jeu (`Projet.emplacements`) et ne bouge pas d'un mot : un emploi le
+    *cite*, il ne le possède pas. Un emploi qui n'en cite aucun retombe sur celui
+    de la pièce — c'est le cas courant, et l'écrire deux fois aurait fait deux
+    vérités sur la même question.
+
+    **Un personnage ne porte une pièce qu'une fois**, et le service le tient. La
+    raison n'est pas esthétique : les calques déjà sur le disque sont rangés par
+    *(pièce, personnage, pose)* et par rien d'autre (`atelier/depot/base.py:86`).
+    Deux emplois portés par le même personnage se partageraient les mêmes images
+    sans qu'aucune règle puisse dire laquelle va où.
+
+    `devant` dit si la pièce passe devant le corps ou derrière lui, et il est
+    **déclaré, pas déduit** — la planche le montre par emploi (« les mains ·
+    devant le corps », « le dos · derrière le corps »), et le déduire du rang de
+    l'emplacement aurait demandé qu'un emplacement s'appelle « le corps ». Aucun
+    des deux jeux réels de ce dépôt n'en a un.
+    """
+
+    identifiant: str
+    genre: str = PORTE
+
+    # Le personnage qui porte. **Vide sauf pour `PORTE`** — une pièce posée au
+    # sol ne porte personne, et lui donner un porteur vide n'est pas un manque.
+    porteur: str = ""
+
+    # Le libellé de l'auteur. Vide, l'écran le compose du genre et du porteur —
+    # *Portée par Le goliath* n'a pas à être tapé pour exister.
+    nom: str = ""
+
+    # **Vide veut dire « celui de la pièce »**, jamais « aucun ». Un emploi qui
+    # range l'épée dans le dos quand la pièce la range aux mains le dit ici, et
+    # lui seul.
+    emplacement: str = ""
+
+    devant: bool = True
+
+    # Ce que l'auteur ajoute pour cet emploi-là seulement — *plantée dans un
+    # rocher*. Elle ne remplace pas la description de la pièce, elle s'y ajoute.
+    description: str = ""
+
+    @property
+    def porte(self) -> bool:
+        return self.genre == PORTE
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "identifiant": self.identifiant,
+            "genre": self.genre,
+            "porteur": self.porteur,
+            "nom": self.nom,
+            "emplacement": self.emplacement,
+            "devant": self.devant,
+            "description": self.description,
+        }
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "Emploi":
+        identifiant = str(d.get("identifiant") or "")
+        genre = str(d.get("genre") or PORTE)
+        return Emploi(
+            identifiant=identifiant,
+            # Un genre inconnu retombe sur le défaut : la liste est close, et un
+            # fichier abîmé ne la rouvre pas. Même règle que la portée.
+            genre=genre if genre in GENRES else PORTE,
+            porteur=str(d.get("porteur") or ""),
+            nom=str(d.get("nom") or ""),
+            emplacement=str(d.get("emplacement") or ""),
+            devant=bool(d.get("devant", True)),
+            description=str(d.get("description") or ""),
+        )
+
+
+def emploi_porte(porteur: str) -> Emploi:
+    """L'emploi qu'un personnage a sur une pièce — **son identifiant est dérivé**.
+
+    Un personnage ne porte une pièce qu'une fois : l'identifiant se calcule donc
+    plutôt que de se tirer au sort, et c'est ce qui fait que l'emploi *lu sur les
+    calques* et l'emploi *déclaré* portent le même nom. Sans quoi déclarer une
+    pièce d'avant B19 aurait renommé ses emplois sous les yeux de l'écran qui
+    venait de les afficher.
+    """
+    return Emploi(identifiant=f"{PORTE}-{porteur}", genre=PORTE, porteur=porteur)
+
+
+def emplois_resolus(
+    piece: Piece, porteurs_deduits: Iterable[str]
+) -> tuple[Emploi, ...]:
+    """Les emplois d'une pièce — **déclarés, ou lus sur ses calques**.
+
+    **La règle est écrite ici, une seule fois**, parce que deux services la
+    posent : celui de l'équipement, qui la sert aux écrans, et celui de la
+    production, qui s'en sert pour ne plus montrer à un personnage l'équipement
+    du jeu entier. Deux copies auraient fini par répondre deux choses de la même
+    pièce, et c'est très exactement le genre d'écart que ce dépôt paie cher.
+
+    Une pièce qui n'a jamais rien déclaré n'est pas une pièce que personne ne
+    porte : c'est une pièce dont on ne sait rien, et le disque, lui, sait — un
+    calque porte sa pièce et son personnage depuis C3. Une pièce déclarée, même
+    vide, ne consulte plus rien : sinon le porteur qu'on vient de retirer
+    reparaîtrait à la relecture suivante, ses images étant toujours là.
+    """
+    if piece.emplois is not None:
+        return piece.emplois
+    return tuple(emploi_porte(p) for p in porteurs_deduits)
+
+
+def emplois_depuis_json(brut: Any) -> tuple[Emploi, ...]:
+    """Les emplois d'une pièce, dans l'ordre où ils ont été écrits.
+
+    Même dédoublonnage que partout ailleurs — le premier gagne —, et une entrée
+    sans identifiant est sautée plutôt que de faire tomber la lecture d'un jeu
+    entier pour une ligne abîmée.
+    """
+    return tuple(
+        _sans_doublon(
+            Emploi.depuis_json(e)
+            for e in _lisible(brut)
+            if isinstance(e, dict) and e.get("identifiant")
+        )
+    )
+
+
 @dataclass(slots=True)
 class Piece:
     """Ce qui se pose sur un emplacement — décrite **une fois** (US-137).
@@ -139,12 +297,52 @@ class Piece:
     # pas qui la désigne.
     concept_arts: tuple[str, ...] = ()
 
+    # ── Ses emplois, et l'absence n'est pas le vide (B19) ────────────────────
+    #
+    # **`None` et `()` ne disent pas la même chose, et c'est la décision de la
+    # tranche.** Le dépôt l'a déjà tranchée une fois, pour le plan de poses
+    # (`atelier/domaine/plan.py`, `plan_depuis_json`), et la réponse est reprise
+    # ici mot pour mot :
+    #
+    # - `None` — *jamais déclaré*. C'est l'état de toutes les pièces écrites
+    #   avant cette tranche : leur fichier n'a pas la clé. On ne sait pas qui les
+    #   porte, et **on ne l'invente pas** ; c'est le service qui va le lire sur
+    #   les calques déjà là, sans rien écrire derrière l'auteur.
+    # - `()` — *déclaré, et vide*. L'auteur a retiré le dernier porteur, ou la
+    #   pièce est née après la tranche sans en recevoir. Elle ne porte personne,
+    #   et aucune déduction ne doit la repeupler : ce serait faire ressusciter à
+    #   chaque relecture très exactement ce qu'il vient de retirer.
+    #
+    # C'est cette différence-là, et elle seule, qui répond à « une pièce sans
+    # porteur » contre « une pièce que personne ne porte ». `en_json` **omet la
+    # clé** quand elle vaut `None` : un jeu d'avant B19 relu puis réécrit rend
+    # les mêmes octets, sans une clé de plus.
+    emplois: tuple["Emploi", ...] | None = None
+
     @property
     def agrandit(self) -> bool:
         return self.portee == AGRANDIT
 
+    @property
+    def declaree(self) -> bool:
+        """L'auteur a-t-il déjà dit quelque chose des emplois de cette pièce ?"""
+        return self.emplois is not None
+
+    @property
+    def porteurs(self) -> tuple[str, ...]:
+        """Les personnages **déclarés** porteurs, dans l'ordre des emplois.
+
+        Vide quand rien n'est déclaré — ce qui est le cas de toutes les pièces
+        d'avant la tranche, et c'est le critère : *les pièces déjà écrites sur le
+        disque se relisent sans perte et sans porteur*. Ce que le disque porte
+        malgré tout se lit ailleurs, sur les calques, et par le service.
+        """
+        return tuple(
+            e.porteur for e in (self.emplois or ()) if e.porte and e.porteur
+        )
+
     def en_json(self) -> dict[str, Any]:
-        return {
+        rendu = {
             "identifiant": self.identifiant,
             "nom": self.nom,
             "description": self.description,
@@ -152,11 +350,16 @@ class Piece:
             "portee": self.portee,
             "concept_arts": list(self.concept_arts),
         }
+        # **La clé n'apparaît que si elle a été déclarée** — voir le champ.
+        if self.emplois is not None:
+            rendu["emplois"] = [e.en_json() for e in self.emplois]
+        return rendu
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "Piece":
         identifiant = str(d.get("identifiant") or "")
         portee = str(d.get("portee") or CONTENUE)
+        emplois = d.get("emplois")
         return Piece(
             identifiant=identifiant,
             nom=str(d.get("nom") or identifiant),
@@ -168,6 +371,9 @@ class Piece:
             concept_arts=tuple(
                 c for c in (d.get("concept_arts") or ()) if isinstance(c, str) and c
             ),
+            # `is None` et non `or` : une liste vide est une déclaration, pas une
+            # absence, et le motif `lu or DEFAUT` effacerait la différence.
+            emplois=None if emplois is None else emplois_depuis_json(emplois),
         )
 
 

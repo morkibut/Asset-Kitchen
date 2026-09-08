@@ -1595,9 +1595,134 @@ export type Piece = {
   emplacement: string
   portee: Portee
   concept_arts: string[]
+  /** **Ses emplois — et l'absence n'est pas le vide** (B19).
+   *
+   *  Absent : la pièce n'a *jamais rien déclaré*. C'est le cas de toutes celles
+   *  écrites avant `B19`, et cela ne veut pas dire que personne ne la porte —
+   *  le serveur lit alors ses porteurs sur les calques déjà là. Présent et
+   *  vide : elle ne porte personne, et il l'a dit.
+   *
+   *  ⚠️ **On ne s'en sert pas pour afficher** : c'est `emploisDuJeu` qui rend
+   *  les emplois résolus, avec leurs comptes et leurs noms. Ce champ-ci est la
+   *  forme du disque, servie par les six gestes du vestiaire. */
+  emplois?: Emploi[]
 }
 
 export type Portee = "contenue" | "agrandit"
+
+// ── Les emplois d'une pièce (B19) ───────────────────────────────────────────
+//
+// `docs/pistes-2026-09-04/carnet/Emplois.dc.html`. Un **emploi** est une façon
+// dont une pièce sert : l'épée portée par trois personnages, posée au sol,
+// plantée dans un rocher, son icône d'inventaire. C'est le lien qui manquait au
+// modèle — avant `B19`, une pièce n'appartenait à personne.
+//
+// ⚠️ **Le mot est pris ailleurs dans ce fichier** : `Etiquette.emplois` est un
+// compteur d'usages. La planche le dit elle-même (« Trois mots à ne pas
+// confondre ») ; les deux ne se rencontrent jamais.
+
+/** Les trois genres, et la liste est close.
+ *
+ *  Un seul fabrique : `porte`. Les deux autres se déclarent et se comptent —
+ *  une pièce n'a pas d'image à elle, et le produit interdit d'en générer une
+ *  sur fond vide. */
+export type GenreDEmploi = "porte" | "a-part" | "mise-en-scene"
+
+/** Un emploi tel que le disque le porte. */
+export type Emploi = {
+  identifiant: string
+  genre: GenreDEmploi
+  /** L'identifiant du personnage qui porte — vide sauf pour `porte`. */
+  porteur: string
+  /** Le libellé de l'auteur. Vide, l'écran le compose du genre et du porteur. */
+  nom: string
+  /** **Vide veut dire « celui de la pièce »**, jamais « aucun ». */
+  emplacement: string
+  devant: boolean
+  description: string
+}
+
+/** Un emploi tel que l'écran le montre — résolu, nommé, compté. */
+export type EmploiResolu = Emploi & {
+  /** **Lu sur les images, pas déclaré.** Il disparaît si ses images
+   *  disparaissent, quand un emploi déclaré reste. */
+  deduit: boolean
+  /** Son porteur n'existe plus dans le jeu. **Jamais de cascade** : l'orphelin
+   *  se dit, et se retire d'un clic. */
+  orphelin: boolean
+  porteur_nom: string
+  /** Le nom de son emplacement, celui de la pièce compris quand il n'en cite
+   *  aucun — l'écran n'a donc pas ce repli à refaire. */
+  emplacement_nom: string
+  fait: number
+  attendu: number
+}
+
+/**
+ * Comment un emploi se nomme — **écrit une fois, et en deux temps** (B19).
+ *
+ * Trois endroits le composent : la liste des emplois d'une pièce, la page d'un
+ * emploi, et le fil d'Ariane. La première écriture de la tranche en avait fait
+ * trois copies, et **elles divergeaient déjà** — l'une retombait sur
+ * « quelqu'un » quand le porteur manquait, l'autre sur « personne », et l'une
+ * des deux ignorait le nom que l'auteur avait écrit. Le fil aurait donc fini par
+ * dire autre chose que le titre de l'écran vers lequel il ramène.
+ *
+ * **Deux fonctions, parce qu'il y a deux questions.** `identiteDEmploi` dit ce
+ * que l'emploi *est* — la page d'un emploi l'écrit en titre, et montre à côté le
+ * nom libre de l'auteur, comme la planche le dessine. `libelleDEmploi` dit
+ * comment on le *désigne* ailleurs : le nom de l'auteur d'abord, l'identité
+ * sinon. Les mélanger aurait fait un titre qui répète sa propre sous-ligne.
+ *
+ * ⚠️ Un porteur retiré du jeu garde son emploi — **jamais de cascade** — et son
+ * nom peut donc manquer. On retombe sur l'identifiant, puis sur « quelqu'un »,
+ * plutôt que d'écrire « Portée par » suivi d'un trou.
+ */
+export function identiteDEmploi(emploi: {
+  genre: GenreDEmploi
+  porteur: string
+  porteur_nom: string
+}): string {
+  if (emploi.genre === "porte")
+    return `Portée par ${emploi.porteur_nom || emploi.porteur || "quelqu'un"}`
+  return emploi.genre === "a-part" ? "Une image à part" : "Une mise en scène"
+}
+
+export function libelleDEmploi(emploi: {
+  genre: GenreDEmploi
+  nom: string
+  porteur: string
+  porteur_nom: string
+}): string {
+  return emploi.nom.trim() || identiteDEmploi(emploi)
+}
+
+/** Une pièce et ses emplois, tels que `emploisDuJeu` les rend. */
+export type PieceEtSesEmplois = {
+  piece: Piece
+  /** L'auteur a-t-il déjà dit quelque chose de ses emplois ? Faux : ce que
+   *  l'écran montre a été lu sur les calques, et rien n'est écrit sur le
+   *  disque tant qu'il n'y touche pas. */
+  declare: boolean
+  emplois: EmploiResolu[]
+  fait: number
+  attendu: number
+}
+
+/** Le vestiaire résolu du jeu (B19).
+ *
+ *  **Séparé de `Vestiaire`, et il le fallait** : celui-là est la forme du
+ *  fichier, rendue par chaque geste et par le flux ; celui-ci lit les images,
+ *  parce que c'est le seul moyen de savoir qui porte une pièce qui n'a jamais
+ *  rien déclaré. Les fondre aurait fait payer ce balayage à chaque renommage. */
+export type VestiaireDuJeu = {
+  projet: string
+  emplacements: EmplacementCorps[]
+  pieces: PieceEtSesEmplois[]
+  /** Les choses qui **peuvent** porter — les mêmes candidats que `wearers`
+   *  depuis E15 : un décor et un bouton n'en sont pas. */
+  porteurs: { identifiant: string; nom: string }[]
+}
 
 // ── Le plan de poses et les personnages ─────────────────────────────────────
 //
@@ -1793,6 +1918,14 @@ export type Personnage = {
    *  pas une colonne grisée : ce qu'une famille ne peut pas avoir n'existe pas
    *  dans son établi. */
   equipable: boolean
+  /** **Les pièces que celle-ci porte, et elle seule** (B19) — le troisième
+   *  grief que la tranche lève. Avant, la colonne d'équipement d'un établi
+   *  listait *toutes* les pièces du jeu, pour chaque personnage : rien
+   *  n'empêchait de proposer le casque de fer sur la grenouille.
+   *
+   *  Des identifiants, pas des pièces : l'écran a déjà le vestiaire, et les
+   *  redire ici en entier ferait une seconde copie à tenir d'accord. */
+  pieces: string[]
 }
 
 /** Une case de la planche (E13) — une pose dans une direction.
@@ -5483,11 +5616,68 @@ export const api = {
     description?: string
     emplacement?: string
     portee?: Portee
+    /** **Le personnage qui la porte, quand elle naît de sa fiche** (B19) : elle
+     *  lui est attribuée d'emblée, en un seul aller-retour. Vide, elle ne porte
+     *  personne — et c'est le défaut, pas un oubli. */
+    porteur?: string
   }) =>
     appeler<{ piece: Piece } & Vestiaire>("/characters/pieces", {
       method: "POST",
       body: JSON.stringify(corps),
     }),
+
+  /** **Le vestiaire résolu du jeu** (B19) — les pièces, leurs emplois, leurs
+   *  comptes, et les choses qui peuvent porter.
+   *
+   *  C'est la seule lecture qui sache qui porte une pièce d'avant `B19` : elle
+   *  balaie les calques. Les six gestes du vestiaire, eux, rendent le fichier. */
+  emploisDuJeu: () => appeler<VestiaireDuJeu>("/characters/pieces/uses"),
+
+  /** Une façon de plus dont cette pièce sert. **Ne coûte rien, ne sort pas.**
+   *
+   *  Un emploi porté attribue la pièce à un personnage : c'est la relation qui
+   *  manquait au modèle, et le seul geste du produit qui l'écrive. */
+  ajouterEmploi: (
+    piece: string,
+    corps: {
+      genre?: GenreDEmploi
+      porteur?: string
+      nom?: string
+      emplacement?: string
+      devant?: boolean
+      description?: string
+    },
+  ) =>
+    appeler<{ emploi: Emploi } & VestiaireDuJeu>(
+      `/characters/pieces/${encodeURIComponent(piece)}/uses`,
+      { method: "POST", body: JSON.stringify(corps) },
+    ),
+
+  /** Ce qui se règle sur un emploi — **jamais son porteur**. Ses calques sont
+   *  rangés sous lui ; se tromper de porteur se répare en retirant l'emploi et
+   *  en en créant un autre, et les images ne bougent toujours pas. */
+  reglerEmploi: (
+    piece: string,
+    emploi: string,
+    champs: {
+      nom?: string
+      emplacement?: string
+      devant?: boolean
+      description?: string
+    },
+  ) =>
+    appeler<{ emploi: Emploi } & VestiaireDuJeu>(
+      `/characters/pieces/${encodeURIComponent(piece)}/uses/${encodeURIComponent(emploi)}`,
+      { method: "PUT", body: JSON.stringify(champs) },
+    ),
+
+  /** L'emploi part, **ses images restent** — jamais de cascade. Elles restent
+   *  dans la galerie, détachées ; remettre l'emploi les remet dans sa colonne. */
+  retirerEmploi: (piece: string, emploi: string) =>
+    appeler<{ emploi: Emploi } & VestiaireDuJeu>(
+      `/characters/pieces/${encodeURIComponent(piece)}/uses/${encodeURIComponent(emploi)}`,
+      { method: "DELETE" },
+    ),
 
   /** Tout ce qui se règle sur une pièce, **en un seul geste** — la portée
    *  comprise, et elle n'est jamais devinée (US-139). */

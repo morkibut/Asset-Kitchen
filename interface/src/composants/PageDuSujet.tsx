@@ -47,6 +47,7 @@ import {
   type Piece,
   type Pose,
   type EmplacementCorps,
+  type VestiaireDuJeu,
 } from "../api"
 import type { Fente } from "./BarreChassis"
 import { vignetteAsset } from "./Apercu"
@@ -54,6 +55,7 @@ import { comptes, portraitDe } from "./FicheChose"
 import { EcranEtabli } from "./Personnages"
 import { ImagesDuSujet } from "./ImagesDuSujet"
 import { AnimationsDuSujet } from "./AnimationsDuSujet"
+import { VestiaireDuSujet } from "./VestiaireDuSujet"
 
 /** Les quatre onglets, dans l'ordre de la planche. Deux sont construits ; les
  *  deux autres se nomment quand même — un onglet qu'on ajouterait plus tard
@@ -179,6 +181,10 @@ function SaFiche({
   onImages,
   onMatrice,
   dossierJeu,
+  vestiaire,
+  onPiece,
+  onCreerPiece,
+  onRetirerLEmploi,
   onErreur,
 }: {
   personnage: Personnage
@@ -191,6 +197,10 @@ function SaFiche({
   onImages: () => void
   onMatrice: () => void
   dossierJeu: string
+  vestiaire: VestiaireDuJeu | null
+  onPiece: (piece: string) => void
+  onCreerPiece: (nom: string) => void
+  onRetirerLEmploi: (piece: string, emploi: string) => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const [nom, setNom] = useState(personnage.nom)
@@ -222,9 +232,12 @@ function SaFiche({
   const echelle = lu.bareme.find((e) => e.nom === personnage.type) ?? null
 
   const images = personnage.cases.reduce((somme, c) => somme + c.images.length, 0)
-  const equipements = new Set(
-    personnage.cases.flatMap((c) => Object.keys(c.calques)),
-  ).size
+  // Ce qu'il porte, tel que le serveur le compte — et non les pièces trouvées
+  // sur ses calques. Depuis `B19` les deux divergent : retirer un porteur ne
+  // supprime aucune image, donc les calques d'une pièce qu'il ne porte plus
+  // restent sur le disque. Compter les calques faisait dire « 2 équipements
+  // portés » à la carte au-dessus d'un vestiaire qui n'en montrait qu'un.
+  const equipements = personnage.pieces.length
   const animations = personnage.cases.reduce((somme, c) => somme + c.bandes.length, 0)
   const manquante = tenues.find(
     (p) => (cases[p.identifiant]?.images.length ?? 0) === 0,
@@ -438,6 +451,20 @@ function SaFiche({
           </div>
         </div>
 
+        {/* ── Son vestiaire (`B19`) ──────────────────────────────────────── */}
+        {/* Il vient juste après *Ce qui existe de lui* parce qu'il en est la
+            suite : la carte « équipements portés » ci-dessus donne le compte,
+            celui-ci donne les images et les deux gestes. Les deux lisent la
+            même liste — la carte compte `personnage.pieces`, la section lit le
+            même partage dans le vestiaire résolu. */}
+        <VestiaireDuSujet
+          personnage={personnage}
+          vestiaire={vestiaire}
+          onPiece={onPiece}
+          onCreerPiece={onCreerPiece}
+          onRetirerLEmploi={onRetirerLEmploi}
+        />
+
         <div className="flex items-center justify-between gap-[22px] border-t border-trait py-[8px] text-[12.5px] text-encre-3">
           <span>
             Rien de ce qui est ici ne coûte quoi que ce soit. Seul le champ du pied
@@ -632,6 +659,17 @@ export function PageDuSujet(proprietes: {
   onGrille: () => void
   /** Et comparer, à côté — la même profondeur, l'autre écran. */
   onComparer: () => void
+  /** Le vestiaire résolu du jeu (`B19`), ou `null` tant qu'on ne l'a pas lu.
+   *  La fiche montre ce que **ce sujet-là** porte, jamais l'équipement du jeu
+   *  entier — c'est le troisième grief que la tranche lève. */
+  vestiaire: VestiaireDuJeu | null
+  /** Ouvrir la page d'une pièce. */
+  onPiece: (piece: string) => void
+  /** Nommer une pièce **que ce sujet porte** — elle lui est attribuée
+   *  d'emblée, en un seul aller-retour. */
+  onCreerPiece: (nom: string) => void
+  /** Il ne la porte plus. **Ses calques restent** — jamais de cascade. */
+  onRetirerLEmploi: (piece: string, emploi: string) => void
   outil: ReactNode
 }) {
   const { ouvert, plan, barreQuiPaie, outil, onFente } = proprietes
@@ -812,6 +850,10 @@ export function PageDuSujet(proprietes: {
             onImages={() => setOnglet("images")}
             onMatrice={() => setMatriceOuverte(true)}
             dossierJeu={proprietes.dossierJeu}
+            vestiaire={proprietes.vestiaire}
+            onPiece={proprietes.onPiece}
+            onCreerPiece={proprietes.onCreerPiece}
+            onRetirerLEmploi={proprietes.onRetirerLEmploi}
             onErreur={echouer}
           />
         )}

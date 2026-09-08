@@ -85,6 +85,7 @@ function sujet(surplus: Partial<Personnage> = {}): Personnage {
     identifiant: "le-pelerin",
     projet: "le-marais",
     nom: "Le pèlerin",
+    pieces: [],
     description: "a weathered pilgrim in a hooded brown robe",
     ecartees: [],
     concept_arts: [],
@@ -170,6 +171,11 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
     onSupprimer: vi.fn(),
     onGrille: vi.fn(),
     onComparer: vi.fn(),
+    // **B19** — son vestiaire. `null` : la page ne l'a pas encore lu, et la
+    // section le dit plutôt que de faire croire qu'il ne porte rien.
+    onPiece: vi.fn(),
+    onCreerPiece: vi.fn(),
+    onRetirerLEmploi: vi.fn(),
   }
   render(
     <PageDuSujet
@@ -177,6 +183,7 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
       plan={PLAN}
       emplacements={[]}
       pieces={[]}
+      vestiaire={null}
       dossierJeu={dossierJeu}
       barreQuiPaie={<div data-barre-qui-paie />}
       outil={null}
@@ -359,6 +366,47 @@ describe("sa fiche", () => {
     expect(screen.getByText("1 / 2")).toBeTruthy()
     expect(screen.getByText("poses")).toBeTruthy()
     expect(screen.getByText("image")).toBeTruthy()
+  })
+
+  // Trouvé au navigateur, sur l'atelier jetable de `B19` : après avoir retiré
+  // un porteur, la carte disait « 2 équipements portés » au-dessus d'un
+  // vestiaire qui n'en montrait qu'un. Elle comptait les pièces trouvées sur
+  // ses calques, et retirer un porteur ne supprime aucune image.
+  test("la carte des équipements compte ce qu'il porte, pas les pièces de ses calques", () => {
+    monter({
+      pieces: ["sac-de-voyage"],
+      cases: [
+        sienne({
+          pose: "repos",
+          images: [image({ identifiant: "a" })],
+          corps: "a",
+          calques: {
+            "sac-de-voyage": [image({ identifiant: "c1", piece: "sac-de-voyage" })],
+            epee: [image({ identifiant: "c2", piece: "epee" })],
+          },
+        }),
+        sienne({ pose: "marche" }),
+      ],
+    })
+    expect(screen.getByText("équipement porté")).toBeTruthy()
+    expect(screen.queryByText("équipements portés")).toBeNull()
+  })
+
+  test("un sujet qui ne porte rien affiche zéro, même avec des calques sur ses poses", () => {
+    monter({
+      pieces: [],
+      cases: [
+        sienne({
+          pose: "repos",
+          images: [image({ identifiant: "a" })],
+          corps: "a",
+          calques: { epee: [image({ identifiant: "c2", piece: "epee" })] },
+        }),
+        sienne({ pose: "marche" }),
+      ],
+    })
+    const mot = screen.getByText("équipement porté")
+    expect(mot.parentElement?.textContent).toContain("0")
   })
 })
 

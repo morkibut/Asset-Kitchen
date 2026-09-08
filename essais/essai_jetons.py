@@ -72,6 +72,11 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/Installation.tsx",
     "interface/src/composants/GrilleDuJeu.tsx",
     "interface/src/composants/Comparer.tsx",
+    # B19 — le vestiaire : la page d'une pièce, celle d'un emploi, et ce qu'un
+    # sujet porte dans sa fiche.
+    "interface/src/composants/Emplois.tsx",
+    "interface/src/composants/Emploi.tsx",
+    "interface/src/composants/VestiaireDuSujet.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────

@@ -70,9 +70,12 @@ export type Explication = {
    *  `ambiances` : les trois côtés de l'écran univers, au même nom que
    *  `Univers.tsx` exporte déjà (`type Cote`). Et deux qui ne sont ni l'un ni
    *  l'autre : `reglages`, l'installation de l'atelier — un écran par
-   *  booléen, hors de la pile — et `equipement`, provisoire : les dix-sept
-   *  entrées des fabriques atterrissent sur la famille codex la plus proche
-   *  en attendant l'écran que `B19` doit leur donner.
+   *  booléen, hors de la pile — et `equipement`, **qui a enfin le sien depuis
+   *  `B19`** : la page d'une pièce (`Emplois.tsx`) et celle d'un emploi
+   *  (`Emploi.tsx`) rendent cette valeur, et les **dix-sept** entrées des
+   *  fabriques s'y ouvrent. Avant, aucun écran ne la rendait jamais : dix-sept
+   *  explications écrites et joignables par rien. Le plan de la V4 en annonce
+   *  dix-neuf ; le dépôt en porte dix-sept, et c'est le compte relevé.
    *
    *  ⚠️ **`jeu` et `reglages` ne sont pas la même chose**, et le nom de l'un
    *  n'a pas été aligné sur l'autre : `jeu` est le côté « Réglages » de

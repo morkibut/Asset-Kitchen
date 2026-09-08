@@ -386,6 +386,9 @@ const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
     projet: "bac-a-sable",
     nom,
     description: "",
+    // **Ce qu'il porte** (`B19`) — vide par défaut : un sujet ne porte rien
+    // tant qu'on ne le dit pas, et c'est le critère de la tranche.
+    pieces: [],
     concept_arts: [],
     references_ecartees: [],
     cree_le: 1_787_800_100,
@@ -3231,6 +3234,65 @@ function serveurDouble(options: {
         emplacements: etat.emplacements,
         pieces: etat.pieces,
       })
+      // ── Le vestiaire résolu du jeu (B19) ──────────────────────────────────
+      //
+      // **Le segment littéral passe avant `{identifiant}`**, ici comme au
+      // serveur : sans cette branche en tête, `GET .../pieces/uses` tombait
+      // dans le vestiaire de `C3`, qui rend des pièces nues. L'écran lit alors
+      // `p.piece.identifiant` sur une pièce sans `piece`, et toute la page
+      // casse. C'est le même piège de rangement des routes, des deux côtés.
+      //
+      // La règle de résolution est celle du domaine : une pièce **déclarée**
+      // rend ses emplois, une pièce jamais déclarée les déduit de ses calques.
+      if (url === "/api/characters/pieces/uses" && (!init?.method || init.method === "GET")) {
+        const porteursDeduits = (piece: string) =>
+          etat.personnages
+            .filter((p) =>
+              p.cases.some((c) => (c.calques?.[piece] ?? []).length > 0),
+            )
+            .map((p) => p.identifiant)
+        const comptes = (piece: string, porteur: string) => ({
+          fait: (etat.personnages.find((p) => p.identifiant === porteur)?.cases ?? [])
+            .filter((c) => (c.calques?.[piece] ?? []).length > 0).length,
+          attendu: etat.plan.length,
+        })
+        const pieces = etat.pieces.map((piece) => {
+          const declare = piece.emplois !== undefined && piece.emplois !== null
+          const bruts = declare
+            ? (piece.emplois ?? [])
+            : porteursDeduits(piece.identifiant).map((porteur) => ({
+                identifiant: `porte-${porteur}`,
+                genre: "porte" as const,
+                porteur,
+                nom: "",
+                emplacement: "",
+                devant: true,
+                description: "",
+              }))
+          const emplois = bruts.map((e) => {
+            const porte = etat.personnages.find((p) => p.identifiant === e.porteur)
+            return {
+              ...e,
+              deduit: !declare,
+              orphelin: e.genre === "porte" && !porte,
+              porteur_nom: porte?.nom ?? "",
+              emplacement_nom:
+                etat.emplacements.find(
+                  (s) => s.identifiant === (e.emplacement || piece.emplacement),
+                )?.nom ?? "",
+              ...comptes(piece.identifiant, e.porteur),
+            }
+          })
+          return {
+            piece,
+            declare,
+            emplois,
+            fait: emplois.reduce((somme, e) => somme + e.fait, 0),
+            attendu: emplois.reduce((somme, e) => somme + e.attendu, 0),
+          }
+        })
+        return rendre({ projet: "bac-a-sable", emplacements: etat.emplacements, pieces })
+      }
       if (url === "/api/characters/slots" && init?.method === "POST") {
         const emplacement: EmplacementCorps = {
           identifiant: String(corps.nom).toLowerCase().replace(/\s+/g, "-"),
