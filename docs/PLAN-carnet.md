@@ -903,7 +903,7 @@ livre seul.
 | Pixéliser | 8 | 0 — **tenu le 8 septembre 2026**, voir la note sous le tableau |
 | Couleurs | 7 | 9 — trame régulière, force du tramage, k-moyennes, octree, distance à l'œil, rampes d'ombre… |
 | Nettoyer | 2 | 9 — le relevé se contredit sur le compte (9, 11 ou 12) ; à trancher avant de chiffrer |
-| Retourner | 1 après `B1` | 9 — haut-bas, quarts de tour, demi-tour, diagonale, repli, zones protégées, rotation libre, RotSprite |
+| Retourner | 10 — **livrés le 8 septembre 2026** | 0 |
 | Contour | 1 procédé | 6 capacités — couleur dérivée, trait inégal, contour sur l'ensemble empilé… |
 | Découpe | 3 | 0 — **les gouttières, tenu le 8 septembre 2026** : `atelier/image/decoupe.py::gouttieres` lit la brute telle quelle, sans détourage — une rangée ou une colonne entièrement de la couleur du fond (`_couleur_du_bord`, la médiane de la bordure) est une gouttière, et ce qui reste entre deux gouttières est une case. ⚠️ **Le fond se lit à la médiane de la bordure, jamais à l'uniformité de la case elle-même** : un sprite qui se trouve être un aplat d'une seule couleur — fréquent en pixel art — serait sinon confondu avec une case vide. Troisième segment de « Détection » dans `Decoupe.tsx`, `ModeDecoupe` gagne `"gouttieres"`, et `duree_ms` (critère commun à `B18`) est mesuré et annoncé au-delà de 240 ms. |
 
@@ -988,22 +988,44 @@ demande des champs neufs sur `Grille` — donc une empreinte de recette qui boug
 prudence que `B17` a payée sur ses six clés de `Quantification`/`Bords` — et cela déborde du
 lot « quatre moteurs neufs » confié à cette tranche. Laissé à qui reprendra ce critère.
 
+**Retourner, tenu le 8 septembre 2026.** Les neuf moteurs neufs — `atelier/domaine/recette.py`
+(`SENS`, `Retournement`), `atelier/image/traitement.py` (`retourner` et ses dix branches),
+câblés à l'écran dans `Places.tsx`/`Retouche.tsx`. `tests/test_b18_retourner.py` les prouve un
+par un sur de vraies images (dimensions attendues, pixels effectivement déplacés) ; les essais
+de `test_b1.py` restent verts, deux d'entre eux mis à jour pour compter dix sens au lieu d'un —
+voir le commit.
+
+*Décision tranchée* : le plan compte huit noms pour neuf moteurs (« quarts de tour » au
+pluriel). C'est bien **dix** moteurs en tout dans la planche, un déjà livré par `B1` — le
+compte que `SENS_A_AJOUTER` (posé par `B1`, maintenant vidé) portait déjà correctement.
+
+⚠️ **Zones protégées, geste minimal** — « miroir, sauf ici » est un moteur réel côté serveur (un
+`Trait` par zone, le même pinceau que la main), mais l'écran ne sait encore que poser une zone
+ronde au centre de l'image, pas la peindre du bout du doigt à l'endroit voulu. Peindre une zone
+demande le même geste de canevas que la huitième place (`Retouche.tsx`), hors du périmètre de
+cette file.
+
+⚠️ **Repli, réglages partiels** — l'axe et la moitié gardée sont posables à l'écran ; le curseur
+qui fait glisser l'axe sur l'image, décrit par la planche, ne l'est pas encore.
+
 ### Critères d'acceptation
 
 - [x] Chaque atelier livré porte tous ses moteurs à l'écran, et aucun n'est en dur dans le code
-      sans réglage. *Vrai pour Pixéliser, seul atelier livré à ce jour dans la file.*
+      sans réglage. *Vrai pour Détourer, Recadrer, Pixéliser, Découpe et Retourner — les cinq
+      livrés à ce jour dans la file.*
 - [ ] Trois réglages figés dans le code de la réduction sortent enfin à l'écran. *Non tenu, voir
-      la note ci-dessus.*
+      la note sous Pixéliser ci-dessus.*
 - [x] Chaque moteur neuf porte sa mesure de temps, et l'écran l'annonce quand elle dépasse
-      240 ms. *Vrai pour les quatre moteurs de Pixéliser — mesurés dans `tests/test_b18_pixeliser.py`
-      (26 à 108 ms sur une case de 64, contre un plafond de 240 ms) ; la jauge qui les annonce
-      est le mécanisme générique déjà posé, commun à tout `PUT …/recipe`.*
-- [x] Les 1 347 essais de serveur passent sans modification. *1 975 essais serveur passent après
-      Pixéliser (le compte a grandi depuis l'écriture de ce critère) ; un seul essai existant a dû
-      changer — `tests/test_t2.py::test_les_quatre_reductions_sont_annoncees_avec_leur_raison`,
-      qui fixait le compte des méthodes à quatre et est devenu faux par construction en en
-      ajoutant quatre. Réécrit pour dire pourquoi, même règle que `tests/test_d2.py` applique
-      déjà à trois essais de `T2`/`T4`.*
+      240 ms. *Vrai pour les quatre moteurs de Pixéliser (26 à 108 ms sur une case de 64) et pour
+      les dix sens de Retourner (RotSprite mesuré à ~1,3 s sur une planche de 1024 px, seul des
+      dix à dépasser le seuil) ; la jauge qui les annonce est le mécanisme générique déjà posé,
+      commun à tout `PUT …/recipe`.*
+- [x] Les 1 347 essais de serveur passent sans modification. *Compte grandi depuis l'écriture de
+      ce critère (plus de 2 000 après Détourer/Recadrer/Pixéliser/Découpe/Retourner) ; deux
+      essais existants ont dû changer pour refléter un compte qui grandit par construction —
+      `tests/test_t2.py` (quatre méthodes de réduction devenues huit) et `tests/test_b1.py` (un
+      sens de retournement devenu dix) — même règle que `tests/test_d2.py` applique déjà à trois
+      essais de `T2`/`T4`.*
 
 ### Bloquée par
 

@@ -368,6 +368,14 @@
         "essais/atelier_jetable_b18_detourer.py"
       ],
       "port": 8488
+    },
+    {
+      "name": "atelier-jetable-b18-retourner",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_b18_retourner.py"
+      ],
+      "port": 8493
     }
   ]
 }

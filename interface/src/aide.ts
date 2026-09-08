@@ -1366,12 +1366,45 @@ export const AIDE: Record<string, Explication> = {
   "retournement.sens": {
     nom: "le sens du retournement",
     ou: "tables",
-    quoi: "Comment l'image bascule. Un seul sens aujourd'hui : le miroir gauche-droite, qui renvoie l'image comme une glace — le pèlerin qui marchait vers l'est marche vers l'ouest.",
+    quoi: "Comment l'image bascule. Dix sens : le miroir gauche-droite, qui renvoie l'image comme une glace — le pèlerin qui marchait vers l'est marche vers l'ouest —, le miroir haut-bas, les deux quarts de tour, le demi-tour, la diagonale, le repli sur soi, « miroir sauf ici », et les deux rotations libres.",
     change:
-      "Rien à la génération, et c'est tout le sujet : le miroir ne demande rien au modèle et ne coûte rien. Aucun pixel n'est réinventé — ce sont les mêmes carrés de couleur, rangés dans l'autre ordre, donc la palette de l'image retournée est exactement celle d'où elle vient.",
+      "Rien à la génération sur les huit premiers, et c'est tout le sujet : ils ne demandent rien au modèle et ne coûtent rien. Aucun pixel n'est réinventé — ce sont les mêmes carrés de couleur, rangés dans un autre ordre, donc la palette de l'image retournée est exactement celle d'où elle vient. Les deux rotations libres, elles, peuvent traverser un pixel entre deux carrés — c'est ce que RotSprite réduit sans l'effacer.",
     origine: "toi · vide au départ · défaut miroir gauche-droite",
     long:
-      "Neuf autres sens paraissent dans la table, grisés : miroir haut-bas, les deux quarts de tour, le demi-tour, la diagonale, le repli sur soi, « miroir sauf ici », et les deux rotations libres. Ils ne sont pas cachés parce que c'est ce qui dit ce que l'atelier saura faire — aucun n'existe aujourd'hui.\n\nLe retournement s'endort sans se vider, comme les sept autres places : éteint, il garde son sens et cesse d'agir sur l'image.",
+      "Le retournement s'endort sans se vider, comme les sept autres places : éteint, il garde son sens et cesse d'agir sur l'image. Trois sens ouvrent un réglage de plus sous ce cran-ci — l'angle pour les deux rotations libres, la moitié gardée pour le repli, les zones protégées pour « miroir sauf ici ».",
+  },
+
+  "retournement.angle": {
+    nom: "l'angle",
+    ou: "tables",
+    quoi: "De combien tourner, pour les deux rotations libres. −180° à +180°.",
+    change:
+      "Le sujet pivote dans sa case. Au plus proche voisin, les diagonales se hachent dès quelques degrés sur une case de 64 px ; en RotSprite, le même angle garde des marches régulières au lieu d'un escalier au hasard.",
+    origine: "toi · 0° au départ",
+    long:
+      "Un angle multiple de 90° ne change rien à l'image : ce sont les quatre premiers sens qui font ce travail-là sans jamais réinventer un pixel. L'angle libre n'a de sens qu'entre deux quarts de tour.",
+  },
+
+  "retournement.repli": {
+    nom: "moitié gardée",
+    ou: "tables",
+    quoi: "Laquelle des deux moitiés de l'image, coupée en son milieu, est recopiée sur l'autre — le sens « miroir sur soi ».",
+    change:
+      "La moitié écartée disparaît, remplacée par le reflet de celle qu'on garde. La roue du moulin cesse d'avoir une pale plus large que les autres ; en échange, tout ce que le sujet avait d'unique du côté écarté se perd.",
+    origine: "toi · gauche au départ",
+    long:
+      "L'axe du repli, lui, n'a pas encore de curseur à l'écran : il vaut le milieu de l'image tant que rien ne le déplace.",
+  },
+
+  "retournement.zones": {
+    nom: "zones protégées",
+    ou: "tables",
+    quoi: "Les endroits qui reviennent tels quels après le miroir, dans le sens « miroir, sauf ici ». Le pèlerin qui tient son bâton à droite le garde à droite une fois retourné.",
+    change:
+      "Sans zone, « miroir, sauf ici » retourne toute l'image comme un miroir gauche-droite ordinaire. Chaque zone ajoutée y recolle, après coup, le pixel d'origine — au prix d'une petite couture visible au raccord.",
+    origine: "toi · aucune zone au départ",
+    long:
+      "Le geste d'aujourd'hui pose une zone ronde au centre de l'image, à ajuster à la main plus tard : peindre une zone du bout du doigt, comme la main le fait sur la huitième place, viendra avec l'écran qui le demande.",
   },
 
   "retournement.direction": {

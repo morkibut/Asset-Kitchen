@@ -77,7 +77,6 @@ import {
   MOTEUR,
   PAIRE_VIDE,
   RESUME,
-  SENS_A_AJOUTER,
   SENS_DU_RETOURNEMENT,
   SENS_LIVRES,
   TOLERANCE_D_UNE_PAIRE_MAX,
@@ -1375,26 +1374,17 @@ function ReglagesDuRetournement({ recette, poser }: Poste) {
   const retournement = recette.retournement ?? RETOURNEMENT_PAR_DEFAUT
   return (
     <div className="flex flex-col gap-[14px]">
+      {/* **Les dix sens depuis `B18`** — le détail de l'angle, du repli et des
+          zones protégées se règle sur la table elle-même (`Places.tsx`) : cet
+          écran range et nomme, il ne porte pas le réglage fin d'un moteur. */}
       <Reglage nom="sens">
         <Choix
           valeurs={SENS_LIVRES}
           valeur={retournement.sens}
           libelles={SENS_DU_RETOURNEMENT}
-          onChange={(sens) => void poser({ ...recette, retournement: { sens } })}
+          onChange={(sens) => void poser({ ...recette, retournement: { ...retournement, sens } })}
         />
       </Reglage>
-      {/* **Les neuf autres paraissent, grisés, au lieu d'être cachés** : c'est
-          ce qui dit ce que l'atelier saura faire, et cette table est la seule
-          de la chaîne qui manque presque en entier. Ils viennent en `B18`. */}
-      <div className="flex flex-col gap-[4px]">
-        <Etiquette>neuf sens à venir</Etiquette>
-        <Choix
-          valeurs={SENS_A_AJOUTER}
-          valeur=""
-          eteints={Object.fromEntries(SENS_A_AJOUTER.map((s) => [s, "n'existe pas encore"]))}
-          onChange={() => {}}
-        />
-      </div>
     </div>
   )
 }
