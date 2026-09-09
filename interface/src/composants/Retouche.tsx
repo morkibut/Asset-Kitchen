@@ -3493,9 +3493,9 @@ export function Retouche({
   // ── La molette approche et recule, et le point visé ne bouge pas ──────────
   //
   // **Repris de `Tables.tsx`, tel quel** (U2, rendue à l'écran neuf le
-  // 9 septembre 2026). `B25` avait fermé la porte de l'ancien écran sans que la
-  // molette ait déménagé : approcher ne se faisait plus qu'au champ et aux deux
-  // boutons, alors que c'est un critère déjà coché du lot `U`.
+  // 9 septembre 2026). `B25` avait recâblé les six portes sans que la molette
+  // ait déménagé avec elles : approcher ne se faisait plus qu'au champ et aux
+  // deux boutons, alors que c'est un critère déjà coché du lot `U`.
   //
   // **Un écouteur natif et non `onWheel`.** React pose ses écouteurs de molette
   // en *passif* sur la racine : `preventDefault` y est ignoré, et la page
