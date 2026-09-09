@@ -1477,7 +1477,7 @@ tranche :
   passe aux postes exportés de `Retouche.tsx` plutôt que d'être reconstruit — la voie la plus
   courte à vérifier, qui n'ouvre pas un second écran à refondre pour finir celui-ci.
 
-## B23 · Les trois surfaces déménagent
+## B23 · Les trois surfaces déménagent — **tenue le 9 septembre 2026**
 
 **Planches** : `Retouche.dc.html`, `atelier-main.dc.html`, `atelier-detourer.dc.html`,
 `atelier-recadrer.dc.html`, `atelier-retourner.dc.html`
@@ -1516,20 +1516,57 @@ décalerait ce qu'on pose dessus — la leçon du cadre de la Découpe.
 seul son habillage passe au papier. Deux implémentations d'un même geste finiraient par
 ne plus viser le même pixel, et c'est l'invariant que `B18` a payé sur `palette.py`.
 
+### Ce qui a été tenu
+
+Les quatre surfaces sont **déclarées dans `Retouche.tsx`** et l'ancien écran les lui
+emprunte — une seule implémentation, et c'est l'ancien qui importe le neuf, parce que
+c'est lui qui s'en va en `B26` : ce qui s'en va n'emporte rien. Le calcul est repris au
+caractère près, `rectangleDeLImage` compris ; seules les couleurs changent — le rouille
+et l'encre du papier à la place de la lumière et du fond sombre de l'ancien châssis.
+Aucune ligne de Python n'a bougé, et aucune clé n'est entrée dans le domaine.
+
+Trois choses ont dû venir avec elles, faute de quoi les surfaces n'auraient rien eu à
+poser : les **deux boutons qui arment** la pipette et la forme entourée (l'état vit
+au-dessus des deux colonnes, comme dans l'ancien écran), la **pile de la main** entière —
+calques, opacité, sens, diamètre, couleur, *Défaire le dernier* et son `Ctrl + Z` —, et
+les **trois réglages du retournement**.
+
+⚠️ **Deux écarts entre la fiche et ce que le code disait.**
+
+- La fiche compte *trois surfaces* dans son titre et **quatre** dans son corps ; ce sont
+  bien quatre, et `Tables.tsx` en portait quatre.
+- La fiche range « les zones protégées de `miroir, sauf ici` » sous `ToileDeLaMain`,
+  c'est-à-dire *une main pour les peindre*. Elle n'est pas livrée, et c'est un refus
+  réfléchi : les points d'une zone protégée sont des coordonnées **au rang du
+  retournement**, qui n'est pas celui du rendu qu'on regarde — un quart de tour en amont
+  suffit à les décaler. Les peindre sur l'image affichée aurait posé un geste qui ne vise
+  pas le pixel qu'il montre, c'est-à-dire exactement la panne que la convention de
+  coordonnées de cette tranche existe pour éviter. Le bouton *Une zone au centre*
+  déménage tel quel, et l'écran écrit pourquoi il n'y a pas mieux. **À reprendre le jour
+  où la surface saura montrer l'image au rang d'une place**, ce qui est un chantier à
+  soi.
+
 ### Critères d'acceptation
 
-- [ ] Les quatre surfaces se posent depuis `Retouche.tsx` seul, et le rendu servi change.
-      Vérifié au navigateur, sur un atelier jetable à part.
-- [ ] Un pixel visé à la pipette dans l'écran neuf et dans l'ancien donne la **même**
-      coordonnée dans la recette envoyée — mesuré, pas relu.
-- [ ] Plus aucune phrase de `Retouche.tsx` ne renvoie à `Places.tsx` ni à « l'ancien
-      écran » : un essai le tient sur le fichier, comme `tests/test_b16.py` le fait déjà.
-- [ ] L'angle, le repli et les zones protégées se règlent dans l'écran neuf, et les dix
+- [x] Les quatre surfaces se posent depuis `Retouche.tsx` seul, et le rendu servi change.
+      Vérifié au navigateur sur l'atelier jetable de `B16` (port 8482), les quatre gestes
+      faits à la souris : le rectangle `16, 16, 48, 48` avec sa boîte gardée en pointillé
+      à `4, 4, 60, 60` (les 12 px de marge, montrés pour la première fois), le point
+      `37, 11` et sa couleur `#d8d9d8` mesurée par le serveur, une forme de quatre points,
+      un passage de la main qui touche 125 pixels du rendu — et l'empreinte change à
+      chaque fois, donc l'adresse du rendu servi aussi.
+- [x] Un pixel visé à la pipette dans l'écran neuf et dans l'ancien donne la **même**
+      coordonnée dans la recette envoyée — mesuré, pas relu : les essais des deux écrans
+      posent le même geste sur une surface de 512 px pour une image de 1 024, et attendent
+      tous les deux `[128, 256]`. Le jour où les deux divergent, l'un des deux tombe.
+- [x] Plus aucune phrase de `Retouche.tsx` ne renvoie à `Places.tsx` ni à « l'ancien
+      écran » : `tests/test_b23.py` le tient sur le fichier.
+- [x] L'angle, le repli et les zones protégées se règlent dans l'écran neuf, et les dix
       sens de `B18` restent les dix.
-- [ ] Les 61 recettes du corpus figé de `B1` gardent leur empreinte au caractère près :
-      cette tranche ne pose **aucune clé neuve**, elle déplace un geste.
-- [ ] `essais/essai_jetons.py` reste vert — les surfaces neuves sont dans un fichier du
-      carnet, donc mesurées aux six listes fermées de `docs/DESIGN.md`.
+- [x] Les 61 recettes du corpus figé de `B1` gardent leur empreinte au caractère près :
+      aucune ligne de domaine n'a bougé, et `tests/test_b1.py` le mesure.
+- [x] `essais/essai_jetons.py` reste vert — les surfaces sont dans `Retouche.tsx`, déjà
+      dans la liste fermée, donc mesurées aux six listes de `docs/DESIGN.md`.
 
 ### Bloquée par
 

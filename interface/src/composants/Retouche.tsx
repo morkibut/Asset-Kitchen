@@ -26,16 +26,18 @@
  * **Cet écran n'ajoute aucun moteur** : c'est le périmètre de `B17` et `B18`.
  * Il range, il nomme, et il montre ce qui manque là où ça manque.
  *
- * **Ce qu'il ne prend pas, et pourquoi.** Les trois gestes qui désignent un
- * endroit de *cette* image-là — le point de la pipette, la forme entourée, le
- * pinceau — restent où ils sont. Ils ont besoin de la surface de l'image, leurs
- * moteurs se réécrivent en `B17`, et ce sont exactement les valeurs dont
- * l'invariant du lot U dit qu'elles **ne voyagent pas**. L'écran les montre
- * comme posées ou non, et il le dit.
+ * **Les quatre gestes qui se posent sur l'image vivent ici** (`B23`) — le
+ * rectangle de recadrage, le point de la pipette, la forme entourée et le
+ * pinceau de la main. `B16` les avait laissés derrière en promettant leur
+ * déménagement ; il a lieu ici, et il est un déménagement : le calcul des
+ * quatre surfaces est repris tel quel, seul leur habillage passe au papier.
+ * Elles restent ce dont l'invariant du lot U dit qu'il **ne voyage pas** — un
+ * point désigne un endroit de *cette* image-là, et la colonne le dit.
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
+  api,
   CONTOUR_PAR_DEFAUT,
   FORCE_TRAMAGE_LIVREE,
   GARDEES_MAX,
@@ -57,39 +59,52 @@ import {
   type EtatTraitement,
   type FormatDeRecadrage,
   type Grille,
+  type Main,
   type Methode,
   type Passe,
   type Quantification,
   type Recadrage,
   type Recette,
+  type Retournement,
   type TachesDeLAsset,
+  type Trait,
   type Univers,
 } from "../api"
 import { imageAsset } from "./Apercu"
-// **Deux fonctions pures, et rien d'autre de `chassis.tsx`.** Aucun fichier du
+// **Trois fonctions pures, et rien d'autre de `chassis.tsx`.** Aucun fichier du
 // carnet n'importe ce module — il porte le balisage de l'ancien châssis, et ses
-// couleurs ne sont pas celles du papier. Ces deux-là n'ont ni balise ni jeton :
-// c'est la courbe de la jauge et le battement qui la nourrit. Les réécrire
+// couleurs ne sont pas celles du papier. Ces trois-là n'ont ni balise ni jeton :
+// c'est la courbe de la jauge, le battement qui la nourrit, et le rectangle que
+// l'image occupe vraiment dans la surface qui reçoit un geste. Les réécrire
 // aurait fabriqué **deux vérités sur la même attente**, et c'est précisément la
 // panne que cette tranche répare ailleurs.
-import { part, useEcoule } from "./chassis"
+import { part, rectangleDeLImage, useEcoule } from "./chassis"
 import {
   CIBLES,
   CURSEURS,
   DURCISSEMENT_LIVRE,
   FINESSES,
+  MOITIES_DU_REPLI,
   MOTEUR,
+  OPACITE,
   PAIRE_VIDE,
   RESUME,
   SENS_DU_RETOURNEMENT,
   SENS_LIVRES,
   TOLERANCE_D_UNE_PAIRE_MAX,
   TROUS,
+  avecPassage,
   debord,
   defautGrille,
+  mainDe,
+  passagesDe,
   quantificationDe,
+  rayonDe,
+  sansLeDernier,
+  useEtatMain,
   useMesures,
   useRecette,
+  type EtatMain,
 } from "./Places"
 import { TABLES, avecVeille, dort, indisponible, placeDe, valeur, type Table } from "./Tables"
 
@@ -464,9 +479,30 @@ type Poste = {
   regler: (r: Recette) => void
   poser: (r: Recette) => void
   ouvrir: (table: Table) => void
+  /** Le rang de la passe qui attend son geste **dans l'image**, ou `null`.
+   *
+   *  **L'état vit au-dessus des deux colonnes** (B23, repris de l'écran des
+   *  tables) : la passe se règle à droite et se vise au milieu, et un état tenu
+   *  d'un seul côté aurait laissé l'autre l'ignorer. */
+  armee: number | null
+  onArmer: (rang: number | null) => void
+  /** Ce que l'écran tient de la main — le calque actif, le sens, le diamètre et
+   *  la couleur. Ils décrivent la **main**, pas l'image : les écrire dans la
+   *  recette les aurait fait entrer dans l'empreinte, donc changer de pinceau
+   *  aurait recalculé un rendu identique. */
+  etatMain: EtatMain
 }
 
-function ReglagesDuDetourage({ recette, univers, traitement, poser, regler }: Poste) {
+function ReglagesDuDetourage({
+  recette,
+  univers,
+  traitement,
+  mesures,
+  poser,
+  regler,
+  armee,
+  onArmer,
+}: Poste) {
   const passes = recette.passes
   const grises = {
     ...(Object.fromEntries(
@@ -492,7 +528,12 @@ function ReglagesDuDetourage({ recette, univers, traitement, poser, regler }: Po
         </p>
       )}
 
-      {passes.map((passe, rang) => (
+      {passes.map((passe, rang) => {
+      /** La couleur **mesurée par le serveur sous le point**, jamais recopiée
+       *  dans la recette : ce qui part est le point, et une couleur écrite à
+       *  côté de lui serait une copie que plus rien ne met à jour. */
+      const couleurVisee = mesures?.visees?.[rang] ?? null
+      return (
         <div key={rang} className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
           <div className="flex items-baseline justify-between gap-[8px]">
             <Etiquette>passe {rang + 1}</Etiquette>
@@ -634,26 +675,86 @@ function ReglagesDuDetourage({ recette, univers, traitement, poser, regler }: Po
             />
           )}
 
-          {/* **Ce qui ne voyage pas se montre, et ne se règle pas ici.** Un
-              point de pipette et une forme entourée désignent un endroit de
-              *cette* image-là ; ils ont besoin de sa surface, et l'invariant du
-              lot U dit qu'ils ne partent ni par un collage ni par une recette
-              nommée. */}
-          {(passe.moteur === "couleur" || passe.moteur === "trace") && (
+          {/* ── Les deux gestes qui se posent sur l'image (B23) ─────────────
+              **Le bouton arme, l'image reçoit.** Le point de la pipette et la
+              forme entourée désignent un endroit de *cette* image-là : ils ont
+              besoin de sa surface, et l'invariant du lot U dit qu'ils ne partent
+              ni par un collage ni par une recette nommée. La colonne dit donc ce
+              qui est posé, et elle ouvre la surface — elle ne règle pas quatre
+              nombres à sa place. */}
+          {passe.moteur === "couleur" && (
+            <Reglage nom="couleur visée">
+              <div className="flex flex-col gap-[4px]">
+                {passe.point && couleurVisee && (
+                  <span className="flex items-center gap-[8px]">
+                    <span
+                      aria-hidden
+                      style={{ background: couleurVisee }}
+                      className="inline-block h-[14px] w-[14px] shrink-0 rounded-5 border border-trait"
+                    />
+                    <span className="mesure text-[11.5px] text-encre-2">{couleurVisee}</span>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  data-viser={rang}
+                  aria-pressed={armee === rang}
+                  onClick={() => onArmer(armee === rang ? null : rang)}
+                  className="h-[26px] self-start rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+                >
+                  {/* ⚠️ **Les coordonnées ne se disent qu'une fois.** Elles
+                      sont écrites sous le bouton, avec ce qu'elles veulent
+                      dire ; les répéter sur le bouton se lirait comme deux
+                      points visés (`docs/DESIGN.md`, *la valeur se lit une
+                      fois*). */}
+                  {armee === rang
+                    ? "clique dans l'image"
+                    : passe.point
+                      ? "viser à nouveau ›"
+                      : "viser dans l'image ›"}
+                </button>
+              </div>
+            </Reglage>
+          )}
+          {passe.moteur === "couleur" && (
             <Pourquoi
               texte={
-                passe.moteur === "couleur"
-                  ? passe.point
-                    ? `un point est visé sur cette image · ${passe.point[0]}, ${passe.point[1]} — il se déplace sur l'image, et il ne voyage pas`
-                    : "aucun point visé — la pipette se pointe sur l'image, et ce point ne voyage pas"
+                passe.point
+                  ? `le point désigne un endroit de cette image-là · ${passe.point[0]}, ${passe.point[1]} — il ne voyage pas`
+                  : "tant qu'aucun point n'est posé, cette passe ne retire rien — et le point qu'on posera ne voyagera pas"
+              }
+            />
+          )}
+
+          {passe.moteur === "trace" && (
+            <Reglage nom="forme entourée">
+              <button
+                type="button"
+                data-entourer={rang}
+                aria-pressed={armee === rang}
+                onClick={() => onArmer(armee === rang ? null : rang)}
+                className="h-[26px] self-start rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+              >
+                {armee === rang
+                  ? "entoure le sujet dans l'image"
                   : passe.trace.length > 0
-                    ? `une forme est entourée sur cette image · ${passe.trace.length} points — elle se trace sur l'image, et elle ne voyage pas`
-                    : "aucune forme entourée — la sélection se trace sur l'image, et elle ne voyage pas"
+                    ? `${passe.trace.length} points · entourer à nouveau ›`
+                    : "entourer dans l'image ›"}
+              </button>
+            </Reglage>
+          )}
+          {passe.moteur === "trace" && (
+            <Pourquoi
+              texte={
+                passe.trace.length > 0
+                  ? "le bord est cherché à l'intérieur de ce que tu as entouré — rien ne bouge au-dehors, et cette forme ne voyage pas"
+                  : "tant qu'aucune forme n'est entourée, cette passe ne retire rien — et cette forme ne voyage pas"
               }
             />
           )}
         </div>
-      ))}
+      )
+      })}
 
       <button
         type="button"
@@ -721,10 +822,14 @@ function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }: Poste)
           valeurs={["sujet", "tracee"] as const}
           valeur={recadrage.boite ? "tracee" : "sujet"}
           libelles={{ sujet: "la boîte du sujet", tracee: "une boîte tracée" }}
+          // **La raison a changé de sens avec `B23`** : le rectangle se trace
+          // désormais *ici*, sur l'image à gauche. Le cran reste éteint tant
+          // qu'aucune boîte n'est tracée — il n'y a rien à choisir —, et sa
+          // phrase dit maintenant le geste au lieu de renvoyer ailleurs.
           eteints={
             recadrage.boite
               ? {}
-              : { tracee: "on trace le rectangle sur l'image, pas depuis cette colonne" }
+              : { tracee: "glisse le rectangle sur l'image, à gauche — il ne se tape pas en quatre nombres" }
           }
           onChange={(quoi) => {
             if (quoi === "sujet" && recadrage.boite)
@@ -1177,13 +1282,12 @@ const SOUS_LA_PALETTE = "la palette du jeu décide seule des couleurs"
  *
  *  **Le même geste que la table d'échange, en plus court** : une pastille, une
  *  couleur, et rien d'autre. Elle se pique sur la palette du jeu quand il y en
- *  a une, et se tape à la main sinon — la pipette sur l'image appartient à la
- *  surface à coordonnées, que cette table ne porte pas.
+ *  a une, et se tape à la main sinon.
  *
  *  ⚠️ **La planche la veut à la pipette sur l'image** ; ce qui est livré ici est
- *  le choix parmi les couleurs connues. Le geste de pipette vit dans la
- *  surface à coordonnées de l'ancien écran, que `B16` a laissée en place et que
- *  cette table ne double pas. */
+ *  le choix parmi les couleurs connues. La surface à coordonnées de cet écran ne
+ *  sert que le détourage, le recadrage et la main — lui faire porter un
+ *  cinquième geste demanderait de savoir, au clic, lequel des cinq on fait. */
 function CouleursGardees({
   gardees,
   palette,
@@ -1243,8 +1347,8 @@ function CouleursGardees({
 }
 
 /** La table de correspondance — *cette couleur-ci devient celle-là*, après la
- *  réduction. Le même geste que `Places.tsx` § `PanneauQuantification`, dans
- *  le vocabulaire de cet écran : une paire en train de se faire reste ici, à
+ *  réduction. Le geste de la table des couleurs, dans le vocabulaire de cet
+ *  écran : une paire en train de se faire reste ici, à
  *  l'écran, et ne rejoint la recette qu'une fois ses deux couleurs nommées —
  *  sans quoi le seul geste qui ouvre la table est aussi celui que le serveur
  *  refuse (*une paire nomme deux couleurs*), trouvé au navigateur. */
@@ -1348,9 +1452,9 @@ function TableDEchange({
   )
 }
 
-/** Une couleur, choisie par pipette de palette ou entrée en clair — la même
- *  règle que `Places.tsx` (US-210) : *proposée, jamais imposée*. Rien ici ne
- *  désigne un endroit de cette image-là, donc rien n'appartient au pinceau. */
+/** Une couleur, choisie par pipette de palette ou entrée en clair — la règle
+ *  d'US-210 : *proposée, jamais imposée*. Rien ici ne désigne un endroit de
+ *  cette image-là, donc rien n'appartient au pinceau. */
 function ChoixDeCouleur({
   couleur,
   palette,
@@ -1877,53 +1981,398 @@ function ReglagesDuContour({ recette, univers, mesures, regler, poser }: Poste) 
   )
 }
 
-function ReglagesDuRetournement({ recette, poser }: Poste) {
+function ReglagesDuRetournement({ recette, regler, poser }: Poste) {
   const retournement = recette.retournement ?? RETOURNEMENT_PAR_DEFAUT
+  const posant = (partiel: Partial<Retournement>) =>
+    void poser({ ...recette, retournement: { ...retournement, ...partiel } })
+  const reglant = (partiel: Partial<Retournement>) =>
+    regler({ ...recette, retournement: { ...retournement, ...partiel } })
+  const zones = retournement.zones_protegees ?? []
   return (
     <div className="flex flex-col gap-[14px]">
-      {/* **Les dix sens depuis `B18`** — le détail de l'angle, du repli et des
-          zones protégées se règle sur la table elle-même (`Places.tsx`) : cet
-          écran range et nomme, il ne porte pas le réglage fin d'un moteur. */}
+      {/* **Les dix sens depuis `B18`.** */}
       <Reglage nom="sens">
         <Choix
           valeurs={SENS_LIVRES}
           valeur={retournement.sens}
           libelles={SENS_DU_RETOURNEMENT}
-          onChange={(sens) => void poser({ ...recette, retournement: { ...retournement, sens } })}
+          onChange={(sens) => posant({ sens })}
         />
       </Reglage>
+
+      {/* ── Les trois réglages qui ne comptent que pour trois sens (B23) ────
+          **Chacun ne paraît que sous le sens auquel il s'applique**, jamais
+          tous à la fois : un angle sous « miroir haut-bas » ne voudrait rien
+          dire. Ils viennent de la table du retournement, repris tels quels —
+          seules leurs commandes passent au papier. */}
+      {(retournement.sens === "angle-libre" || retournement.sens === "rotsprite") && (
+        <Reglage nom="angle">
+          <Glissiere
+            nom="angle du retournement"
+            valeur={retournement.angle ?? 0}
+            min={-180}
+            max={180}
+            unite="°"
+            onRegler={(angle) => reglant({ angle })}
+            onPoser={(angle) => posant({ angle })}
+          />
+        </Reglage>
+      )}
+
+      {retournement.sens === "repli" && (
+        <Reglage nom="moitié gardée">
+          <Choix
+            valeurs={["gauche", "droite"] as const}
+            valeur={retournement.moitie_repli ?? "gauche"}
+            libelles={MOITIES_DU_REPLI}
+            onChange={(moitie_repli) => posant({ moitie_repli })}
+          />
+        </Reglage>
+      )}
+
+      {retournement.sens === "sauf-zones" && (
+        <div className="flex flex-col gap-[8px]">
+          <Reglage
+            nom="zones protégées"
+            dit={`${zones.length} zone${zones.length > 1 ? "s" : ""}`}
+          >
+            <div className="flex flex-wrap gap-[4px]">
+              <button
+                type="button"
+                onClick={() =>
+                  posant({
+                    zones_protegees: [
+                      ...zones,
+                      { garde: true, rayon: 5, points: [[32, 32]], couleur: "" },
+                    ],
+                  })
+                }
+                className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+              >
+                Une zone au centre
+              </button>
+              {zones.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => posant({ zones_protegees: [] })}
+                  className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-3 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+                >
+                  Les vider
+                </button>
+              )}
+            </div>
+          </Reglage>
+          {/* ⚠️ **Aucune main ne les peint encore, et c'est dit.** `B18` a livré
+              le moteur côté serveur ; la surface qui les tracerait poserait des
+              coordonnées *au rang du retournement*, qui n'est pas celui du
+              rendu qu'on regarde — un quart de tour en amont suffit à les
+              décaler. Un bouton qui pose une zone au centre est ce qu'on peut
+              tenir sans mentir sur le pixel visé. */}
+          <Pourquoi texte="la zone se pose au centre, à cinq pixels de rayon — le tracé à la main attend que ses coordonnées soient celles du rendu qu'on regarde" />
+        </div>
+      )}
     </div>
   )
 }
 
-function ReglagesDeLaMain({ recette, mesures, poser }: Poste) {
-  const main = recette.main ?? MAIN_VIDE
-  const pose = mesures?.main ?? null
+/** Une rangée de la pile de la main. **Le calque actif porte le filet d'encre**
+ *  — la marque du choix dans le carnet, et jamais une seconde. */
+function RangeeDeCalque({
+  nom,
+  passages,
+  visible,
+  actif,
+  pixels,
+  onChoisir,
+  onVisible,
+  onNommer,
+  onMonter,
+  onDescendre,
+  onSupprimer,
+}: {
+  nom: string
+  passages: number
+  visible: boolean
+  actif: boolean
+  pixels: number | null
+  onChoisir: () => void
+  onVisible?: () => void
+  onNommer?: (nom: string) => void
+  onMonter?: () => void
+  onDescendre?: () => void
+  onSupprimer?: () => void
+}) {
+  return (
+    <li
+      className={[
+        "flex h-[26px] items-center gap-[8px] rounded-7 border px-[8px]",
+        actif ? "border-encre-4 bg-carte" : "border-transparent hover:bg-carte",
+      ].join(" ")}
+    >
+      {/* Le disque plein à gauche est la visibilité ; **masquer un calque
+          n'efface rien**, et c'est très exactement la différence entre masquer
+          et supprimer. */}
+      <button
+        type="button"
+        aria-label={visible ? `Masquer ${nom}` : `Montrer ${nom}`}
+        aria-pressed={visible}
+        disabled={!onVisible}
+        onClick={onVisible}
+        className={[
+          "h-[8px] w-[8px] shrink-0 rounded-5",
+          visible ? "bg-ok" : "border border-contour",
+        ].join(" ")}
+      />
+      {onNommer ? (
+        <input
+          value={nom}
+          aria-label={`Nom du calque ${nom}`}
+          onFocus={onChoisir}
+          onChange={(e) => onNommer(e.target.value)}
+          className="min-w-0 flex-1 bg-transparent text-[12px] text-encre outline-none"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={onChoisir}
+          className="min-w-0 flex-1 text-left text-[12px] text-encre"
+        >
+          {nom}
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={onChoisir}
+        aria-label={`Choisir ${nom}`}
+        className="mesure shrink-0 text-[10.5px] text-encre-4"
+      >
+        {pixels === null ? passages : `${passages} · ${pixels} px`}
+      </button>
+      {onMonter && (
+        <button
+          type="button"
+          aria-label={`Monter ${nom}`}
+          onClick={onMonter}
+          className="mesure h-[22px] shrink-0 text-[10.5px] text-encre-3 transition-colors duration-120 hover:text-encre"
+        >
+          ↑
+        </button>
+      )}
+      {onDescendre && (
+        <button
+          type="button"
+          aria-label={`Descendre ${nom}`}
+          onClick={onDescendre}
+          className="mesure h-[22px] shrink-0 text-[10.5px] text-encre-3 transition-colors duration-120 hover:text-encre"
+        >
+          ↓
+        </button>
+      )}
+      {onSupprimer && (
+        <button
+          type="button"
+          aria-label={`Supprimer ${nom}`}
+          onClick={onSupprimer}
+          className="mesure h-[22px] shrink-0 text-[10.5px] text-encre-3 transition-colors duration-120 hover:text-encre"
+        >
+          ×
+        </button>
+      )}
+    </li>
+  )
+}
+
+/** La huitième place — **la seule table du produit qui ne pose pas une règle**.
+ *
+ *  Elle a déménagé entière avec `B23` : la pile des calques, l'opacité qui en
+ *  est le sol, le sens du geste, le diamètre du pinceau et sa couleur. Sans
+ *  eux, la surface qui reçoit le passage n'aurait rien à peindre — c'est
+ *  l'autre moitié du même geste, et les deux moitiés se tiennent maintenant sur
+ *  le même écran. */
+function ReglagesDeLaMain({ recette, univers, mesures, regler, poser, etatMain }: Poste) {
+  const main = mainDe(recette)
+  const { actif, choisir, sens, setSens, diametre, setDiametre, couleur, setCouleur } =
+    etatMain
+  const pose = (suivante: Main) => void poser({ ...recette, main: suivante })
+
+  const surLOpacite = actif === OPACITE
+  const calqueActif = surLOpacite ? null : main.calques[actif]
+  const passagesActifs = surLOpacite
+    ? main.opacite.length
+    : (calqueActif?.passages.length ?? 0)
+  const dernier: Trait | undefined = surLOpacite
+    ? main.opacite[main.opacite.length - 1]
+    : calqueActif?.passages[(calqueActif?.passages.length ?? 0) - 1]
+
+  const pixels = (rang: number): number | null => {
+    if (!mesures?.main) return null
+    return rang === OPACITE ? mesures.main.opacite : (mesures.main.calques[rang] ?? 0)
+  }
+
+  const deplacer = (rang: number, vers: number) => {
+    const calques = [...main.calques]
+    const [pris] = calques.splice(rang, 1)
+    calques.splice(vers, 0, pris)
+    choisir(vers)
+    pose({ ...main, calques })
+  }
+
   return (
     <div className="flex flex-col gap-[14px]">
-      {main.calques.length === 0 && main.opacite.length === 0 && (
-        <p className="text-[12.5px] text-encre-3">Aucun passage. Rien n'a été repeint.</p>
-      )}
-      {main.calques.map((calque, rang) => (
-        <div
-          key={rang}
-          className="flex items-baseline justify-between gap-[8px] border-t border-trait-faible pt-[8px]"
+      {/* **La pile se lit du dessus au dessous**, comme partout où il y a des
+          calques — et elle est *rangée* du dessous vers le dessus, qui est
+          l'ordre d'application. Le renversement est écrit ici, et nulle part
+          ailleurs. */}
+      <div className="flex flex-col gap-[4px]">
+        <Etiquette>les calques</Etiquette>
+        <ul className="flex flex-col">
+          {main.calques
+            .map((calque, rang) => ({ calque, rang }))
+            .reverse()
+            .map(({ calque, rang }) => (
+              <RangeeDeCalque
+                key={rang}
+                nom={calque.nom || `calque ${rang + 1}`}
+                passages={calque.passages.length}
+                visible={calque.visible}
+                actif={actif === rang}
+                pixels={pixels(rang)}
+                onChoisir={() => choisir(rang)}
+                onVisible={() =>
+                  pose({
+                    ...main,
+                    calques: main.calques.map((c, i) =>
+                      i === rang ? { ...c, visible: !c.visible } : c,
+                    ),
+                  })
+                }
+                onNommer={(nom) =>
+                  regler({
+                    ...recette,
+                    main: {
+                      ...main,
+                      calques: main.calques.map((c, i) => (i === rang ? { ...c, nom } : c)),
+                    },
+                  })
+                }
+                onMonter={
+                  rang < main.calques.length - 1 ? () => deplacer(rang, rang + 1) : undefined
+                }
+                onDescendre={rang > 0 ? () => deplacer(rang, rang - 1) : undefined}
+                onSupprimer={() => {
+                  choisir(OPACITE)
+                  pose({ ...main, calques: main.calques.filter((_, i) => i !== rang) })
+                }}
+              />
+            ))}
+          <RangeeDeCalque
+            nom="l'opacité"
+            passages={main.opacite.length}
+            visible
+            actif={surLOpacite}
+            pixels={pixels(OPACITE)}
+            onChoisir={() => choisir(OPACITE)}
+          />
+        </ul>
+        <Pourquoi texte="« l'opacité » est le sol de la pile : elle ne se supprime pas et ne se déplace pas" />
+        <button
+          type="button"
+          onClick={() => {
+            choisir(main.calques.length)
+            pose({
+              ...main,
+              calques: [
+                ...main.calques,
+                { nom: `calque ${main.calques.length + 1}`, visible: true, passages: [] },
+              ],
+            })
+          }}
+          className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
         >
-          <span className="text-[12.5px] text-encre-2">
-            {calque.nom || `calque ${rang + 1}`}
-          </span>
-          <span className="mesure text-[10.5px] text-encre-4">
-            {calque.passages.length} passages
-            {pose && pose.calques[rang] !== undefined ? ` · ${pose.calques[rang]} px` : ""}
-          </span>
-        </div>
-      ))}
-      {main.opacite.length > 0 && (
-        <p className="mesure text-[10.5px] text-encre-4">
-          {main.opacite.length} passages sur l'opacité
-          {pose ? ` · ${pose.opacite} px touchés` : ""}
-        </p>
+          Un calque de dessin de plus
+        </button>
+      </div>
+
+      {/* **Les deux crans changent de nom avec le calque actif.** C'est la même
+          mécanique — un passage qui ajoute, un passage qui retire — et le cran
+          allumé dit ce que le geste fera. */}
+      <Reglage nom="le sens">
+        <Choix
+          valeurs={["ajoute", "retire"] as const}
+          valeur={sens ? "ajoute" : "retire"}
+          libelles={
+            surLOpacite
+              ? { ajoute: "remettre", retire: "ôter" }
+              : { ajoute: "poser", retire: "effacer" }
+          }
+          onChange={(v) => setSens(v === "ajoute")}
+        />
+      </Reglage>
+
+      <Reglage nom="le pinceau">
+        <Glissiere
+          nom="diamètre du pinceau"
+          valeur={diametre}
+          min={1}
+          max={129}
+          unite=" px"
+          // **Impair seulement, parce qu'un pinceau a un centre** — le curseur
+          // rend le cran impair le plus proche, comme le pas de deux de la
+          // table d'origine.
+          onRegler={(v) => setDiametre(v % 2 === 0 ? v + 1 : v)}
+          onPoser={(v) => setDiametre(v % 2 === 0 ? v + 1 : v)}
+        />
+      </Reglage>
+      {/* **Le cran 1 px est le pixel** : un rayon nul ne couvre qu'un pixel de
+          large, et c'est l'autre bout de « à main levée, puis au pixel ». */}
+      <Pourquoi
+        texte={
+          diametre === 1
+            ? "1 px — c'est le pixel, l'autre bout du geste à main levée"
+            : `${diametre} px du rendu · impairs seulement, un pinceau a un centre`
+        }
+      />
+
+      {!surLOpacite && (
+        <Reglage nom="la couleur">
+          <ChoixDeCouleur
+            couleur={couleur}
+            palette={univers.palette}
+            onChange={setCouleur}
+          />
+        </Reglage>
       )}
+      {surLOpacite && (
+        <Pourquoi texte="l'opacité ne pose aucune couleur : elle décide de ce qui est là" />
+      )}
+
+      {/* **Il n'y a pas de liste de passages, et c'est la seule table dans ce
+          cas.** Un geste à main levée en produit des dizaines : trente rangées
+          ne se relisent pas, elles se subissent. Le calque est l'unité de
+          lecture ; le passage n'existe que comme un compte et un Ctrl + Z. */}
+      <div className="flex flex-col gap-[4px] border-t border-trait-faible pt-[8px]">
+        <Etiquette>le calque actif</Etiquette>
+        <span className="mesure text-[10.5px] text-encre-3">
+          {surLOpacite ? "l'opacité" : calqueActif?.nom || "calque"} · {passagesActifs}{" "}
+          passage{passagesActifs > 1 ? "s" : ""}
+        </span>
+        {/* Sans cette ligne, défaire est un pari. */}
+        {dernier && (
+          <span className="mesure text-[10.5px] text-encre-4">
+            dernier : {dernier.garde ? (surLOpacite ? "remettre" : "poser") : surLOpacite ? "ôter" : "effacer"} ·{" "}
+            {2 * dernier.rayon + 1} px{dernier.couleur ? ` · ${dernier.couleur}` : ""}
+          </span>
+        )}
+        <button
+          type="button"
+          disabled={passagesActifs === 0}
+          onClick={() => pose(sansLeDernier(main, actif))}
+          className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint disabled:hover:border-trait"
+        >
+          Défaire le dernier · Ctrl + Z
+        </button>
+      </div>
+
       <button
         type="button"
         onClick={() => void poser({ ...recette, main: MAIN_VIDE })}
@@ -1931,10 +2380,9 @@ function ReglagesDeLaMain({ recette, mesures, poser }: Poste) {
       >
         Tout effacer
       </button>
-      {/* **Le pinceau est une coordonnée**, comme le point de la pipette et la
-          forme entourée : il se pose sur l'image, il ne voyage pas, et il ne se
-          règle pas depuis une colonne. */}
-      <Pourquoi texte="on repeint sur l'image elle-même — un passage de la main ne voyage pas" />
+      <Pourquoi
+        texte={`${main.calques.length} calque${main.calques.length > 1 ? "s" : ""} · ${passagesDe(main)} passage${passagesDe(main) > 1 ? "s" : ""} — on repeint sur l'image, à gauche, et un passage de la main ne voyage pas`}
+      />
     </div>
   )
 }
@@ -1958,6 +2406,537 @@ function LaFabrique({ table, onAller }: { table: Table; onAller: () => void }) {
         L'ouvrir ›
       </button>
       <Pourquoi texte="elle ne s'endort pas : il n'y a rien à éteindre sur cette image-ci" />
+    </div>
+  )
+}
+
+// ── Les quatre surfaces à coordonnées ───────────────────────────────────────
+//
+// **Elles ont déménagé, elles n'ont pas été réécrites** (B23). Les quatre sont
+// nées avec le lot U dans l'écran des tables ; leur calcul est repris au
+// caractère près, et seul leur habillage passe au papier. Deux implémentations
+// d'un même geste finiraient par ne plus viser le même pixel, et c'est
+// l'invariant que `B18` a payé sur `palette.py`.
+//
+// ⚠️ **Une convention de coordonnées, et une seule.** Les quatre lisent le
+// rectangle de *l'image* et non celui de la surface (`rectangleDeLImage`),
+// coins inclus. Trois travaillent en pixels de l'image **brute** — le
+// recadrage s'applique avant la remise sur grille, et c'est ce qui fait
+// survivre un point aux passes qui le précèdent ; la main, seule, travaille sur
+// le **rendu**, parce que c'est sur lui que la huitième place s'applique et
+// c'est lui qui part dans le jeu.
+
+/**
+ * L'image en grand, et le passage qu'on y trace.
+ *
+ * **Les coordonnées sont celles de l'image rendue**, coins inclus — c'est sur
+ * elle que la huitième place s'applique, et c'est elle qui part dans le jeu.
+ * Le cadre *est* l'image, mis à l'échelle par calcul : une boîte qui ment
+ * décale ce qu'on pose dessus, et c'est la leçon du cadre de la Découpe.
+ *
+ * **Le trait se dessine à la largeur et à la couleur qu'il aura.** Sur un
+ * calque de dessin, la couleur choisie ; sur l'opacité, le rouille dans les
+ * deux sens — garder et ôter sont deux gestes ordinaires, et l'échec voudrait
+ * dire *ça détruit*, ce qu'une gomme ne fait pas.
+ *
+ * **Le curseur est le carré exact que le prochain passage couvrira** (U11). Il
+ * était un cercle qui suivait le pointeur ; il est désormais calé sur le pixel
+ * visé, à la taille qu'il aura vraiment — c'est la moitié du réglage, et sans
+ * lui le curseur de diamètre serait un nombre abstrait. La forme suit celle du
+ * pinceau, qui est carrée parce qu'on peint des pixels.
+ */
+export function ToileDeLaMain({
+  asset,
+  avant,
+  etat,
+  onPassage,
+}: {
+  asset: Asset
+  avant: boolean
+  etat: EtatMain
+  onPassage: (trait: Trait) => void
+}) {
+  const [trace, setTrace] = useState<[number, number][] | null>(null)
+  /** Le pixel visé — **et non la place du pointeur** (U11). Le curseur est le
+   *  carré que le prochain passage couvrira, donc il se cale sur la grille de
+   *  l'image ; le suivre au pixel d'écran près le décalerait d'un demi-pixel
+   *  d'image dès que le zoom dépasse cent pour cent. */
+  const [vise, setVise] = useState<[number, number] | null>(null)
+
+  // Les dimensions du **rendu** : c'est lui que la main touche. Une recette
+  // vide n'en a pas — le rendu *est* le brut, et ce sont ses dimensions.
+  const largeur = asset.rendu_largeur || asset.largeur
+  const hauteur = asset.rendu_hauteur || asset.hauteur
+
+  const surLOpacite = etat.actif === OPACITE
+  const teinte = surLOpacite ? "var(--color-signal)" : etat.couleur
+
+  /** Le point sous le pointeur, en pixels de l'image rendue.
+   *
+   *  **Il se lit dans le rectangle de l'image, pas dans celui de la surface**
+   *  (U11). C'est le défaut que la seconde séance a relevé — *le trait tombe à
+   *  quelques pixels de l'endroit visé, vers la gauche* —, et le mécanisme est
+   *  le même que celui trouvé dans la table de recadrage : la surface est
+   *  dimensionnée d'après les mesures que l'atelier garde de l'image rendue,
+   *  l'image est posée dedans en *tenant dans le cadre*, donc centrée avec des
+   *  bandes vides de chaque côté dès que les deux proportions diffèrent d'un
+   *  cheveu. Un recadrage change précisément les proportions du rendu : c'est
+   *  lui qui ouvrait l'écart, et l'auteur avait raison de le soupçonner. */
+  const point = (evenement: React.PointerEvent<HTMLDivElement>): [number, number] => {
+    const surface = evenement.currentTarget.getBoundingClientRect()
+    const image = rectangleDeLImage(surface, largeur, hauteur)
+    const x = ((evenement.clientX - image.left) / image.width) * largeur
+    const y = ((evenement.clientY - image.top) / image.height) * hauteur
+    return [
+      Math.max(0, Math.min(largeur - 1, Math.floor(x))),
+      Math.max(0, Math.min(hauteur - 1, Math.floor(y))),
+    ]
+  }
+
+  const terminer = () => {
+    if (!trace) return
+    setTrace(null)
+    onPassage({
+      garde: etat.sens,
+      rayon: rayonDe(etat.diametre),
+      points: trace,
+      couleur: surLOpacite ? "" : etat.couleur,
+    })
+  }
+
+  return (
+    <div
+      data-toile-main
+      style={{ aspectRatio: `${largeur} / ${hauteur}` }}
+      className="relative h-full w-full cursor-none"
+      onPointerDown={(evenement) => {
+        if (evenement.button !== 0) return
+        setTrace([point(evenement)])
+        evenement.currentTarget.setPointerCapture(evenement.pointerId)
+      }}
+      onPointerMove={(evenement) => {
+        const [x, y] = point(evenement)
+        setVise([x, y])
+        if (!trace) return
+        const dernier = trace[trace.length - 1]
+        // **Un point par pixel, pas un par événement.** Un pointeur envoie ce
+        // qu'il peut ; garder les doublons gonflerait la recette sans rien
+        // ajouter au tracé, que le serveur relie de toute façon.
+        if (dernier[0] === x && dernier[1] === y) return
+        setTrace([...trace, [x, y]])
+      }}
+      onPointerUp={terminer}
+      onPointerLeave={() => {
+        setVise(null)
+        terminer()
+      }}
+    >
+      <img
+        src={
+          avant
+            ? api.avant(asset.identifiant, asset.empreinte)
+            : api.rendu(asset.identifiant, asset.empreinte)
+        }
+        alt={asset.label}
+        draggable={false}
+        className="damier h-full w-full object-contain select-none"
+        style={{ imageRendering: "pixelated" }}
+      />
+
+      {/* Le passage en cours, à sa vraie largeur : elle vaut (2 × rayon + 1)
+          pixels d'image, mise à l'échelle du cadre. Zoomer l'épaissit ; c'est
+          voulu, puisqu'elle mesure l'image et non le châssis. */}
+      {trace && trace.length > 0 && (
+        <svg
+          aria-hidden
+          viewBox={`0 0 ${largeur} ${hauteur}`}
+          preserveAspectRatio="xMidYMid meet"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+        >
+          {/* **Bouts et joints carrés** (U11), parce que le pinceau l'est. Un
+              bout carré déborde d'une demi-largeur au-delà du dernier point,
+              ce qui est exactement ce qu'un carré posé sur ce point couvre. */}
+          <polyline
+            points={trace.map(([x, y]) => `${x + 0.5},${y + 0.5}`).join(" ")}
+            fill="none"
+            stroke={etat.sens ? teinte : "var(--color-signal)"}
+            strokeOpacity={etat.sens ? 1 : 0.45}
+            strokeWidth={etat.diametre}
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+          />
+        </svg>
+      )}
+
+      {/* Le curseur : **le carré exact que le prochain passage couvrira**
+          (U11). Il est calé sur la grille de l'image et non sur le pointeur —
+          c'est ce qui en fait une promesse plutôt qu'une indication —, et il
+          fait `2 × rayon + 1` pixels d'image, la largeur que le serveur peint.
+          Il ne suit pas le zoom du châssis : il mesure l'image, donc il
+          grandit avec elle. */}
+      {vise && (
+        <span
+          aria-hidden
+          data-curseur-main
+          style={{
+            left: `${((vise[0] - rayonDe(etat.diametre)) / largeur) * 100}%`,
+            top: `${((vise[1] - rayonDe(etat.diametre)) / hauteur) * 100}%`,
+            width: `${((2 * rayonDe(etat.diametre) + 1) / largeur) * 100}%`,
+            height: `${((2 * rayonDe(etat.diametre) + 1) / hauteur) * 100}%`,
+          }}
+          className="pointer-events-none absolute border border-signal"
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * L'image, et le point qu'on y désigne.
+ *
+ * **Un cercle, et rien d'autre.** Pas de tracé, pas de rectangle, pas de
+ * poignée : cette table ne se peint pas. Le cercle suit le pointeur avec le
+ * pixel visé marqué en son centre, et il ne paraît que pendant qu'on vise —
+ * sinon le pointeur est celui du produit, et une pipette permanente ferait de
+ * chaque regard sur l'image un risque de clic.
+ *
+ * Les coordonnées vont dans les pixels de l'image **brute**, comme le rectangle
+ * de recadrage : une seule convention dans tout le produit.
+ */
+export function PipetteSurImage({
+  asset,
+  point,
+  onPoint,
+}: {
+  asset: Asset
+  /** Le point déjà posé sur cette passe, marqué en creux — on vise à nouveau
+   *  en voyant d'où l'on part. */
+  point: [number, number] | null
+  onPoint: (point: [number, number]) => void
+}) {
+  const [survol, setSurvol] = useState<{ x: number; y: number } | null>(null)
+
+  /** Le pixel sous le pointeur. **Un plancher, pas un arrondi** : on désigne le
+   *  pixel qu'on survole, et un arrondi ferait basculer la visée sur le voisin
+   *  dès qu'on dépasse sa moitié — le rectangle de recadrage arrondit, lui,
+   *  parce qu'il pose un coin et non un pixel. */
+  const pixel = (evenement: React.MouseEvent<HTMLDivElement>) => {
+    // **Dans le rectangle de l'image, pas dans celui de la surface** (U11) —
+    // la troisième des trois surfaces qui reçoivent un geste, et le même
+    // calcul pour les trois.
+    const surface = evenement.currentTarget.getBoundingClientRect()
+    const image = rectangleDeLImage(surface, asset.largeur, asset.hauteur)
+    const x = ((evenement.clientX - image.left) / image.width) * asset.largeur
+    const y = ((evenement.clientY - image.top) / image.height) * asset.hauteur
+    return {
+      x: Math.max(0, Math.min(asset.largeur - 1, Math.floor(x))),
+      y: Math.max(0, Math.min(asset.hauteur - 1, Math.floor(y))),
+    }
+  }
+
+  /** Le centre d'un pixel, en pour cent du cadre — pas son coin. Un cercle posé
+   *  sur le coin est décalé d'un demi-pixel, ce qui se voit dès que l'image est
+   *  petite et affichée grande. */
+  const centre = (x: number, y: number) => ({
+    left: `${((x + 0.5) / asset.largeur) * 100}%`,
+    top: `${((y + 0.5) / asset.hauteur) * 100}%`,
+  })
+
+  return (
+    <div
+      data-pipette
+      style={{ aspectRatio: `${asset.largeur} / ${asset.hauteur}` }}
+      className="relative h-full w-full cursor-crosshair"
+      onPointerMove={(evenement) => setSurvol(pixel(evenement))}
+      onPointerLeave={() => setSurvol(null)}
+      onClick={(evenement) => {
+        const { x, y } = pixel(evenement)
+        onPoint([x, y])
+      }}
+    >
+      <img
+        src={api.rendu(asset.identifiant, asset.empreinte, true)}
+        alt={asset.label}
+        draggable={false}
+        className="damier h-full w-full object-contain select-none"
+        style={{ imageRendering: "pixelated" }}
+      />
+      {point && (
+        <span
+          aria-hidden
+          style={{ ...centre(point[0], point[1]), width: 9, height: 9 }}
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-signal"
+        />
+      )}
+      {survol && (
+        <span
+          aria-hidden
+          style={{ ...centre(survol.x, survol.y), width: 15, height: 15 }}
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-encre"
+        >
+          <span className="absolute left-1/2 top-1/2 h-px w-px -translate-x-1/2 -translate-y-1/2 bg-encre" />
+        </span>
+      )}
+    </div>
+  )
+}
+
+/**
+ * L'image, et la forme qu'on entoure à main levée autour du sujet.
+ *
+ * **On trace gros, l'atelier ajuste au bord.** Le trait qu'on fait ne devient
+ * jamais le contour du sprite : il borne la recherche, et c'est le serveur qui
+ * va chercher le bord du sujet à l'intérieur. C'est pour ça qu'on peut trembler.
+ *
+ * **La forme se ferme d'elle-même**, et le trait de fermeture se voit pendant
+ * qu'on trace : le geste est *entourer*, pas *dessiner une ligne*, et montrer la
+ * corde qui manque évite de croire qu'on a laissé un trou.
+ *
+ * Les coordonnées vont dans les pixels de l'image **brute**, comme le point de
+ * la pipette et le rectangle de recadrage : une seule convention dans tout le
+ * produit, et c'est ce qui fait survivre le tracé aux passes qui le précèdent.
+ */
+export function TraceSurImage({
+  asset,
+  trace,
+  onTrace,
+}: {
+  asset: Asset
+  /** La forme déjà posée sur cette passe, montrée en creux — on entoure à
+   *  nouveau en voyant ce qu'on remplace. */
+  trace: [number, number][]
+  onTrace: (trace: [number, number][]) => void
+}) {
+  const [encours, setEncours] = useState<[number, number][] | null>(null)
+
+  const point = (evenement: React.PointerEvent<HTMLDivElement>): [number, number] => {
+    const surface = evenement.currentTarget.getBoundingClientRect()
+    const image = rectangleDeLImage(surface, asset.largeur, asset.hauteur)
+    const x = ((evenement.clientX - image.left) / image.width) * asset.largeur
+    const y = ((evenement.clientY - image.top) / image.height) * asset.hauteur
+    return [
+      Math.max(0, Math.min(asset.largeur - 1, Math.floor(x))),
+      Math.max(0, Math.min(asset.hauteur - 1, Math.floor(y))),
+    ]
+  }
+
+  const terminer = () => {
+    if (!encours) return
+    setEncours(null)
+    // **Moins de trois points n'entoure rien**, et un clic isolé n'est pas un
+    // geste raté : c'est un geste qu'on n'a pas fait. On ne pose donc rien
+    // plutôt que de poser une forme vide qui n'effacerait rien en silence.
+    if (encours.length >= 3) onTrace(encours)
+  }
+
+  const montree = encours ?? trace
+
+  return (
+    <div
+      data-trace
+      style={{ aspectRatio: `${asset.largeur} / ${asset.hauteur}` }}
+      className="relative h-full w-full cursor-crosshair"
+      onPointerDown={(evenement) => {
+        if (evenement.button !== 0) return
+        setEncours([point(evenement)])
+        evenement.currentTarget.setPointerCapture(evenement.pointerId)
+      }}
+      onPointerMove={(evenement) => {
+        if (!encours) return
+        const [x, y] = point(evenement)
+        const dernier = encours[encours.length - 1]
+        // **Un point tous les deux pixels, pas un par événement.** Un pointeur
+        // envoie ce qu'il peut ; garder les doublons gonflerait la recette sans
+        // rien ajouter à une forme que le serveur remplit de toute façon.
+        if (Math.abs(dernier[0] - x) < 2 && Math.abs(dernier[1] - y) < 2) return
+        setEncours([...encours, [x, y]])
+      }}
+      onPointerUp={terminer}
+      onPointerLeave={terminer}
+    >
+      {/* **On entoure sur le brut, et pas sur le rendu**, pour la raison exacte
+          de la pipette : la forme est en pixels de l'image d'origine, et le
+          rendu porte le recadrage et la remise sur grille, qui déplacent tous
+          les deux ce qu'on montre. */}
+      <img
+        src={api.rendu(asset.identifiant, asset.empreinte, true)}
+        alt={asset.label}
+        draggable={false}
+        className="damier h-full w-full object-contain select-none"
+        style={{ imageRendering: "pixelated" }}
+      />
+      {montree.length > 1 && (
+        <svg
+          aria-hidden
+          viewBox={`0 0 ${asset.largeur} ${asset.hauteur}`}
+          preserveAspectRatio="xMidYMid meet"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+        >
+          <polygon
+            points={montree.map(([x, y]) => `${x + 0.5},${y + 0.5}`).join(" ")}
+            fill="var(--color-signal)"
+            fillOpacity={0.14}
+            stroke="var(--color-signal)"
+            strokeWidth={1}
+            strokeDasharray="3 2"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      )}
+    </div>
+  )
+}
+
+/**
+ * L'image, et le rectangle qu'on y glisse.
+ *
+ * **Le cadre *est* l'image**, mis à l'échelle par calcul : c'est la leçon du
+ * cadre de la Découpe, qui dessine des rectangles depuis T5 — une boîte qui ment
+ * décale ce qu'on pose dessus, et ici c'est le rectangle qui tomberait à côté.
+ *
+ * Les coordonnées vont dans les pixels de l'image **brute**, coins inclus : une
+ * seule convention de rectangle dans tout le produit, celle du serveur. Le
+ * recadrage s'applique avant la remise sur grille, donc c'est bien le brut qu'il
+ * découpe.
+ */
+export function CadreDeRecadrage({
+  asset,
+  boite,
+  onBoite,
+  obtenue,
+}: {
+  asset: Asset
+  boite: [number, number, number, number] | null
+  onBoite: (boite: [number, number, number, number] | null) => void
+  /** **Le rectangle réellement gardé, marge comprise** (U2) — mesuré par le
+   *  serveur, jamais recalculé ici. La marge s'ajoute à la boîte tracée, ce qui
+   *  est le comportement voulu mais que rien ne montrait : on dessinait un
+   *  rectangle et le rendu en gardait un autre, sans qu'aucun des deux ne soit
+   *  faux. Les deux sont désormais à l'écran ensemble, le second en pointillé. */
+  obtenue: [number, number, number, number] | null
+}) {
+  const [trace, setTrace] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(
+    null,
+  )
+
+  /** Le point sous le pointeur, en pixels de l'image brute.
+   *
+   *  **Il se lit dans le rectangle de l'image, pas dans celui de la surface**
+   *  (U2, U11). L'image est posée en *tenant dans le cadre* : dès que les deux
+   *  proportions diffèrent d'un cheveu — un arrondi de zoom suffit —, elle est
+   *  centrée avec des bandes vides de chaque côté, et mesurer la surface
+   *  décalerait le tracé de la largeur de la bande. */
+  const point = (evenement: React.PointerEvent<HTMLDivElement>) => {
+    const surface = evenement.currentTarget.getBoundingClientRect()
+    const image = rectangleDeLImage(surface, asset.largeur, asset.hauteur)
+    const x = ((evenement.clientX - image.left) / image.width) * asset.largeur
+    const y = ((evenement.clientY - image.top) / image.height) * asset.hauteur
+    return {
+      x: Math.max(0, Math.min(asset.largeur - 1, Math.floor(x))),
+      y: Math.max(0, Math.min(asset.hauteur - 1, Math.floor(y))),
+    }
+  }
+
+  const dessine = trace ?? (boite ? { x0: boite[0], y0: boite[1], x1: boite[2], y1: boite[3] } : null)
+  /** La place d'un rectangle d'image dans la surface, en pour cent. Une seule
+   *  arithmétique pour les deux rectangles : ils doivent se superposer
+   *  exactement quand la marge est nulle. */
+  const place = (x0: number, y0: number, x1: number, y1: number) => ({
+    left: `${(Math.min(x0, x1) / asset.largeur) * 100}%`,
+    top: `${(Math.min(y0, y1) / asset.hauteur) * 100}%`,
+    width: `${((Math.abs(x1 - x0) + 1) / asset.largeur) * 100}%`,
+    height: `${((Math.abs(y1 - y0) + 1) / asset.hauteur) * 100}%`,
+  })
+
+  return (
+    <div
+      data-cadre-recadrage
+      className="relative h-full w-full"
+      onPointerDown={(evenement) => {
+        if (evenement.button !== 0) return
+        const { x, y } = point(evenement)
+        setTrace({ x0: x, y0: y, x1: x, y1: y })
+        evenement.currentTarget.setPointerCapture(evenement.pointerId)
+      }}
+      onPointerMove={(evenement) => {
+        if (!trace) return
+        const { x, y } = point(evenement)
+        setTrace({ ...trace, x1: x, y1: y })
+      }}
+      onPointerUp={() => {
+        if (!trace) return
+        const x0 = Math.min(trace.x0, trace.x1)
+        const y0 = Math.min(trace.y0, trace.y1)
+        const x1 = Math.max(trace.x0, trace.x1)
+        const y1 = Math.max(trace.y0, trace.y1)
+        setTrace(null)
+        // **Un clic n'est pas un rectangle.** Sous trois pixels de côté, le
+        // geste était un clic : il retire le rectangle au lieu d'en poser un
+        // d'un pixel, que personne ne voulait.
+        if (x1 - x0 < 3 || y1 - y0 < 3) onBoite(null)
+        else onBoite([x0, y0, x1, y1])
+      }}
+    >
+      <img
+        src={api.rendu(asset.identifiant, asset.empreinte, true)}
+        alt={asset.label}
+        draggable={false}
+        className="damier h-full w-full object-contain select-none"
+        style={{ imageRendering: "pixelated" }}
+      />
+      {/* **Ce qui est jeté est assombri, pas masqué** — c'est le but : on voit
+          qu'on le coupe. Un masque plein montrerait un joli cadrage et
+          cacherait ce qu'on est en train de perdre. Quatre bandes plutôt qu'une
+          découpe : la même arithmétique que le rectangle, prise à l'envers. */}
+      {obtenue && (
+        <span aria-hidden className="pointer-events-none absolute inset-0">
+          <span
+            className="absolute left-0 right-0 top-0 bg-encre/40"
+            style={{ height: `${(obtenue[1] / asset.hauteur) * 100}%` }}
+          />
+          <span
+            className="absolute bottom-0 left-0 right-0 bg-encre/40"
+            style={{
+              height: `${((asset.hauteur - 1 - obtenue[3]) / asset.hauteur) * 100}%`,
+            }}
+          />
+          <span
+            className="absolute left-0 bg-encre/40"
+            style={{
+              top: `${(obtenue[1] / asset.hauteur) * 100}%`,
+              height: `${((obtenue[3] - obtenue[1] + 1) / asset.hauteur) * 100}%`,
+              width: `${(obtenue[0] / asset.largeur) * 100}%`,
+            }}
+          />
+          <span
+            className="absolute right-0 bg-encre/40"
+            style={{
+              top: `${(obtenue[1] / asset.hauteur) * 100}%`,
+              height: `${((obtenue[3] - obtenue[1] + 1) / asset.hauteur) * 100}%`,
+              width: `${((asset.largeur - 1 - obtenue[2]) / asset.largeur) * 100}%`,
+            }}
+          />
+        </span>
+      )}
+      {/* **Le rectangle obtenu, en pointillé** — celui que le rendu montre. Il
+          se dessine sous le rectangle tracé, pour que le second reste net quand
+          les deux coïncident. */}
+      {obtenue && (
+        <span
+          aria-hidden
+          data-boite-obtenue
+          style={place(obtenue[0], obtenue[1], obtenue[2], obtenue[3])}
+          className="pointer-events-none absolute border border-dashed border-encre-4"
+        />
+      )}
+      {dessine && (
+        <span
+          aria-hidden
+          data-boite-tracee
+          style={place(dessine.x0, dessine.y0, dessine.x1, dessine.y1)}
+          className="pointer-events-none absolute border border-signal"
+        />
+      )}
     </div>
   )
 }
@@ -1998,6 +2977,15 @@ const FONDS_APERCU: Record<FondApercu, string | null> = {
 const ZOOMS = [1, 2, 4, 8] as const
 type Zoom = (typeof ZOOMS)[number]
 
+/** Ce que la surface fait, écrit sous elle — **le geste, jamais le nom de la
+ *  table**, qui est déjà en haut de la colonne. */
+const CE_QUE_LA_SURFACE_DIT: Record<"main" | "pipette" | "trace" | "recadrage", string> = {
+  main: "on repeint",
+  pipette: "on vise un pixel",
+  trace: "on entoure le sujet",
+  recadrage: "on trace le rectangle",
+}
+
 export function Retouche({
   asset,
   univers,
@@ -2032,6 +3020,71 @@ export function Retouche({
   // croire qu'on a réglé quelque chose sur celle qu'on vient d'ouvrir.
   useEffect(() => setOuverte("detourage"), [asset.identifiant])
 
+  // ── Les quatre surfaces à coordonnées (B23) ──────────────────────────────
+
+  const etatMain = useEtatMain(univers)
+
+  /** La passe de détourage qui attend son geste dans l'image, ou `null`.
+   *
+   *  **L'état vit ici et pas dans la colonne** : la passe se règle à droite et
+   *  se vise au milieu, et les deux moitiés du geste n'ont que cet écran-ci en
+   *  commun. */
+  const [viseeArmee, setViseeArmee] = useState<number | null>(null)
+  /** **Dérivée, jamais nettoyée par un effet.** Retirer une passe ou la faire
+   *  repasser au bord laisserait un rang armé qui ne désigne plus rien ; le
+   *  vérifier au moment de s'en servir évite d'avoir à le corriger après coup,
+   *  et un état qu'on corrige après coup est visible un rendu sur deux. */
+  const visee =
+    viseeArmee !== null && recette.passes[viseeArmee]?.moteur === "couleur"
+      ? viseeArmee
+      : null
+  /** La passe qui attend qu'on **entoure** dans l'image (U12) — le même état
+   *  armé, lu par l'autre moteur. Deux états auraient pu s'armer ensemble, et
+   *  la surface aurait alors reçu deux gestes à la fois. */
+  const entourage =
+    viseeArmee !== null && recette.passes[viseeArmee]?.moteur === "trace"
+      ? viseeArmee
+      : null
+
+  /** La surface que la table ouverte pose sur l'image, ou `null` quand elle
+   *  n'en porte aucune. **Une seule à la fois** : une surface qui recevrait
+   *  deux gestes ne saurait pas lequel on vient de faire. */
+  const surface: "main" | "pipette" | "trace" | "recadrage" | null =
+    ouverte === "main"
+      ? "main"
+      : ouverte === "detourage" && visee !== null
+        ? "pipette"
+        : ouverte === "detourage" && entourage !== null
+          ? "trace"
+          : ouverte === "recadrage"
+            ? "recadrage"
+            : null
+
+  /** Le côté de ce que la surface montre. **Trois travaillent sur le brut, la
+   *  main sur le rendu** : c'est la convention de coordonnées de chacune, et
+   *  la mesurer autrement décalerait ce qu'on pose dessus. */
+  const coteDeLaSurface: [number, number] =
+    surface === "main"
+      ? [asset.rendu_largeur || asset.largeur, asset.rendu_hauteur || asset.hauteur]
+      : [asset.largeur, asset.hauteur]
+
+  // Ctrl + Z retire le dernier passage de la couche active. La touche n'est
+  // écoutée que dans la table de la main : ailleurs elle appartient à la toile
+  // du tableau d'inspiration, et deux piles d'annulation sur la même touche
+  // seraient une pile de trop.
+  useEffect(() => {
+    if (surface !== "main") return
+    const ecouter = (evenement: KeyboardEvent) => {
+      if (!(evenement.ctrlKey || evenement.metaKey) || evenement.key !== "z") return
+      const main = mainDe(recette)
+      if (passagesDe(main) === 0) return
+      evenement.preventDefault()
+      void poser({ ...recette, main: sansLeDernier(main, etatMain.actif) })
+    }
+    window.addEventListener("keydown", ecouter)
+    return () => window.removeEventListener("keydown", ecouter)
+  }, [surface, recette, etatMain.actif, poser])
+
   // ── Le grossissement, mesuré sur le cadre ────────────────────────────────
   //
   // Le cadre est mesuré plutôt que deviné : sa largeur dépend de la fenêtre,
@@ -2060,20 +3113,45 @@ export function Retouche({
   const montreUnFond = ouverte === "contours" && FONDS_APERCU[fondApercu] !== null
 
   /** Le plus grand côté à montrer — deux images côte à côte se partagent la
-   *  place, donc le témoin « les deux » compte double. */
+   *  place, donc le témoin « les deux » compte double. **Une surface est
+   *  seule** : elle prend la place de l'image, elle ne s'ajoute pas à elle. */
   const coteDeLImage =
     Math.max(
       asset.largeur,
       asset.hauteur,
       asset.rendu_largeur || 0,
       asset.rendu_hauteur || 0,
-    ) * (temoin === "deux" ? 2 : 1)
+    ) * (surface === null && temoin === "deux" ? 2 : 1)
   const zoomsTenables = ZOOMS.filter(
     (z) => coteDuCadre === 0 || coteDeLImage * z <= coteDuCadre,
   )
   const zoomTenu: Zoom = zoomsTenables.includes(zoom)
     ? zoom
     : (zoomsTenables.at(-1) ?? 1)
+
+  /** **Aucun cran ne tient : la surface se réduit au cadre.** Un cran choisi
+   *  qui dépasse, on le fait défiler — c'est voulu, et ça ne change pas. Mais
+   *  quand même ×1 ne tient pas, `zoomTenu` retombe à 1 sans que personne
+   *  l'ait demandé, et la surface prend alors sa taille en pixels réels : une
+   *  image de 1 024 dans un cadre de 545 laisse son coin haut-gauche hors
+   *  d'atteinte pour toujours, parce qu'un enfant centré qui déborde ne se
+   *  défile que de la moitié du débordement de chaque côté. On ne pourrait
+   *  plus y poser un coin de recadrage, y viser un pixel, y commencer un
+   *  tracé, y peindre. L'ancien écran montait ces mêmes surfaces en
+   *  `h-full w-full`, toujours contenues quelle que soit l'image ; ici on
+   *  fait pareil **en gardant les proportions**, parce que le curseur carré
+   *  de la main se place en pour cent de la boîte pendant que l'image s'y
+   *  contient : une boîte étirée les décalerait l'un de l'autre.
+   *  `rectangleDeLImage` convertit à la taille affichée, donc réduire la
+   *  surface ne décale aucune coordonnée envoyée. */
+  const surfaceAuCadre = zoomsTenables.length === 0
+  /** Ce par quoi multiplier le côté de la surface : le cran tenu, ou le repli
+   *  au cadre quand aucun cran ne tient. `coteDuCadre` est déjà le plus petit
+   *  côté du cadre moins ses marges, donc la boîte y entre dans les deux
+   *  sens. */
+  const echelleDeLaSurface = surfaceAuCadre
+    ? coteDuCadre / Math.max(coteDeLaSurface[0], coteDeLaSurface[1], 1)
+    : zoomTenu
 
   const poste: Poste = {
     recette,
@@ -2083,6 +3161,9 @@ export function Retouche({
     regler,
     poser,
     ouvrir: setOuverte,
+    armee: viseeArmee,
+    onArmer: setViseeArmee,
+    etatMain,
   }
 
   const raison = indisponible(ouverte, traitement, mesures)
@@ -2194,7 +3275,11 @@ export function Retouche({
                   une image de 2 048 px que le cadre réduisait en fait à un
                   cinquième. Les crans que le cadre ne peut pas tenir sont donc
                   retirés, et quand aucun ne tient, la rangée cède la place à la
-                  phrase qui dit ce qui se passe vraiment. */}
+                  phrase qui dit ce qui se passe vraiment. **Et ce qu'elle dit
+                  arrive** : les deux images du témoin se contiennent dans le
+                  cadre, et la surface s'y réduit aussi (`surfaceAuCadre`). Il
+                  n'y a pas de cas où cette phrase paraît sur une image qui
+                  déborde. */}
               {zoomsTenables.length > 0 ? (
                 <div data-zoom className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]">
                   {zoomsTenables.map((z) => (
@@ -2275,7 +3360,110 @@ export function Retouche({
               style={montreUnFond ? { backgroundColor: FONDS_APERCU[fondApercu] as string } : undefined}
               className="flex min-h-[300px] flex-1 items-center justify-center gap-[8px] overflow-auto rounded-8 bg-pourtour p-[22px]"
             >
-              {(temoin === "avant" || temoin === "deux") && (
+              {/* ── La surface qui reçoit le geste (B23) ───────────────────
+                  **Elle prend la place de l'image, elle ne se pose pas
+                  dessus.** Les quatre portent leur propre image — le brut pour
+                  les trois qui travaillent en pixels d'origine, le rendu pour
+                  la main —, et le cadre qui les tient *est* l'image, à la
+                  taille du grossissement choisi : une boîte qui ment décale ce
+                  qu'on pose dedans.
+
+                  ⚠️ **Sauf quand aucun cran ne tient** : la boîte se réduit
+                  alors au cadre, sans quoi un coin de l'image resterait hors
+                  d'atteinte pour toujours. Voir `surfaceAuCadre`. */}
+              {surface !== null && (
+                <figure
+                  data-surface={surface}
+                  data-surface-au-cadre={surfaceAuCadre ? "" : undefined}
+                  className="flex min-w-0 flex-col items-center gap-[4px]"
+                >
+                  <div
+                    style={{
+                      width: coteDeLaSurface[0] * echelleDeLaSurface,
+                      height: coteDeLaSurface[1] * echelleDeLaSurface,
+                    }}
+                    className="min-w-0 shrink-0"
+                  >
+                    {surface === "main" ? (
+                      <ToileDeLaMain
+                        asset={asset}
+                        avant={temoin === "avant"}
+                        etat={etatMain}
+                        onPassage={(trait) =>
+                          void poser({
+                            ...recette,
+                            main: avecPassage(mainDe(recette), etatMain.actif, trait),
+                          })
+                        }
+                      />
+                    ) : surface === "pipette" && visee !== null ? (
+                      <PipetteSurImage
+                        asset={asset}
+                        point={recette.passes[visee].point}
+                        onPoint={(point) => {
+                          void poser({
+                            ...recette,
+                            passes: recette.passes.map((p, i) =>
+                              i === visee ? { ...p, point } : p,
+                            ),
+                          })
+                          // **Le clic désarme.** Viser est un geste qui se
+                          // termine ; une visée qui reste armée ferait du
+                          // prochain regard sur l'image un déplacement du
+                          // point, sans que rien l'ait demandé.
+                          setViseeArmee(null)
+                        }}
+                      />
+                    ) : surface === "trace" && entourage !== null ? (
+                      <TraceSurImage
+                        asset={asset}
+                        trace={recette.passes[entourage].trace}
+                        onTrace={(trace) => {
+                          void poser({
+                            ...recette,
+                            passes: recette.passes.map((p, i) =>
+                              i === entourage ? { ...p, trace } : p,
+                            ),
+                          })
+                          // Le tracé fini désarme, pour la raison du clic de la
+                          // pipette.
+                          setViseeArmee(null)
+                        }}
+                      />
+                    ) : (
+                      <CadreDeRecadrage
+                        asset={asset}
+                        boite={
+                          (recette.recadrage?.boite as
+                            | [number, number, number, number]
+                            | undefined) ?? null
+                        }
+                        obtenue={mesures?.recadrage?.obtenue ?? null}
+                        // ⚠️ **Les huit champs, jamais deux** — la même leçon
+                        // que la colonne d'à côté : un envoi partiel effacerait
+                        // les six autres réglages du recadrage au premier
+                        // rectangle tracé.
+                        onBoite={(boite) =>
+                          void poser({
+                            ...recette,
+                            recadrage: {
+                              ...RECADRAGE_PAR_DEFAUT,
+                              ...(recette.recadrage ?? {}),
+                              boite,
+                            },
+                          })
+                        }
+                      />
+                    )}
+                  </div>
+                  <figcaption className="mesure text-[10.5px] text-carte">
+                    {CE_QUE_LA_SURFACE_DIT[surface]} · {coteDeLaSurface[0]}×
+                    {coteDeLaSurface[1]}
+                  </figcaption>
+                </figure>
+              )}
+
+              {surface === null && (temoin === "avant" || temoin === "deux") && (
                 <figure className="flex min-w-0 flex-col items-center gap-[4px]">
                   <img
                     src={imageAsset(asset, true)}
@@ -2293,7 +3481,7 @@ export function Retouche({
                   </figcaption>
                 </figure>
               )}
-              {(temoin === "apres" || temoin === "deux") && (
+              {surface === null && (temoin === "apres" || temoin === "deux") && (
                 <figure className="flex min-w-0 flex-col items-center gap-[4px]">
                   <img
                     src={imageAsset(asset)}

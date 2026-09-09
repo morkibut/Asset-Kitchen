@@ -33,6 +33,7 @@ import {
   RECETTE_VIDE,
   type Asset,
   type EtatTraitement,
+  type Passe,
   type Recette,
   type Univers,
 } from "../api"
@@ -540,6 +541,39 @@ describe("le grossissement dit ce qu'il fait vraiment", () => {
       rendre()
     }
   })
+
+  test("quand aucun cran ne tient, la surface se réduit au cadre", async () => {
+    // ⚠️ Le défaut que la relecture a trouvé : `zoomTenu` retombait à ×1 et la
+    // surface prenait ses 2 048 px dans un cadre de 500. Un enfant centré qui
+    // déborde ne se défile que de la moitié du débordement de chaque côté,
+    // donc le coin haut-gauche de l'image devenait inatteignable — plus moyen
+    // d'y poser un coin de recadrage, d'y viser un pixel, d'y peindre.
+    const rendre = cadreDe(500)
+    try {
+      monter({
+        asset: image({
+          largeur: 2048,
+          hauteur: 1024,
+          rendu_largeur: 2048,
+          rendu_hauteur: 1024,
+          recette: recetteDeTravail(),
+        }),
+      })
+      fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+      const boite = await waitFor(() => {
+        const f = document.querySelector("[data-surface='recadrage']")
+        expect(f?.getAttribute("data-surface-au-cadre")).toBe("")
+        return f?.firstElementChild as HTMLElement
+      })
+      // 500 − 44 de marges : la boîte y entre, et elle garde ses proportions,
+      // sinon le curseur carré de la main — placé en pour cent de la boîte —
+      // se décalerait de l'image, qui s'y contient.
+      expect(boite.style.width).toBe("456px")
+      expect(boite.style.height).toBe("228px")
+    } finally {
+      rendre()
+    }
+  })
 })
 
 describe("la jauge", () => {
@@ -763,6 +797,277 @@ describe("on n'annule pas un calcul", () => {
       within(colonne()).getByText(/un calcul ne s'interrompt pas/i),
     ).toBeTruthy()
     expect(within(colonne()).queryByRole("button", { name: /Annuler/i })).toBeNull()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B23 · les quatre surfaces à coordonnées, et les trois réglages du retournement
+//
+// ⚠️ **Les nombres de ces essais sont ceux de l'ancien écran, recopiés
+// exprès.** `interface/src/App.test.tsx` mesure les mêmes gestes sur la table
+// de `Tables.tsx` : un rectangle glissé de (64, 64) à (256, 320) sur une
+// surface de 512 px pour une image de 1 024 y donne `[128, 128, 512, 640]`, et
+// un clic en (64, 128) y pose le point `[128, 256]`. Les mêmes chiffres ici
+// disent la seule chose que la tranche promet — **c'est le même calcul**, et
+// non un second qui lui ressemble. Le jour où les deux divergent, l'un des deux
+// essais tombe.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Une passe de détourage, à un moteur près. */
+function passe(surplus: Partial<Passe> = {}): Passe {
+  return {
+    moteur: "bord",
+    tolerance: 28,
+    seuil_alpha: 128,
+    durcissement: 0,
+    point: null,
+    portee: "tache",
+    masquee: false,
+    trace: [],
+    modele: "",
+    ...surplus,
+  } as Passe
+}
+
+// jsdom ne connaît pas la capture de pointeur, et les trois surfaces qui se
+// glissent s'en servent — le cadre de recadrage, la forme entourée, la main.
+beforeEach(() => {
+  Element.prototype.setPointerCapture = () => {}
+  Element.prototype.hasPointerCapture = () => false
+  Element.prototype.releasePointerCapture = () => {}
+})
+
+/** La surface, mesurée par l'essai — **jsdom n'a pas de mise en page**, donc le
+ *  rectangle est celui qu'on lui donne. C'est ce que fait déjà l'essai de la
+ *  même surface dans l'ancien écran. */
+function poserLaSurface(noeud: HTMLElement, cote: number) {
+  noeud.getBoundingClientRect = () =>
+    ({ left: 0, top: 0, width: cote, height: cote }) as DOMRect
+}
+
+const dernierePose = (appels: { url: string; methode: string; corps: unknown }[]) =>
+  appels.filter((a) => a.url.includes("/recipe")).pop()?.corps as Recette | undefined
+
+describe("les quatre surfaces se posent depuis l'écran neuf", () => {
+  test("le rectangle de recadrage se glisse sur l'image, et part dans la recette", async () => {
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+
+    const toile = await waitFor(() => {
+      const noeud = document.querySelector("[data-cadre-recadrage]")
+      if (!noeud) throw new Error("pas de cadre de recadrage")
+      return noeud as HTMLElement
+    })
+    poserLaSurface(toile, 512)
+
+    fireEvent.pointerDown(toile, { button: 0, clientX: 64, clientY: 64, pointerId: 1 })
+    fireEvent.pointerMove(toile, { clientX: 256, clientY: 320, pointerId: 1 })
+    fireEvent.pointerUp(toile, { pointerId: 1 })
+
+    await waitFor(() => {
+      // 512 px d'écran pour 1 024 px d'image : le facteur est deux.
+      expect(dernierePose(appels)?.recadrage?.boite).toEqual([128, 128, 512, 640])
+    })
+    // ⚠️ **Les huit champs, jamais deux** : la marge déjà posée survit au
+    // rectangle qu'on vient de tracer.
+    expect(dernierePose(appels)?.recadrage?.marge).toBe(8)
+  })
+
+  test("le rectangle réellement gardé se voit en pointillé, sous le tracé", async () => {
+    monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    const obtenue = await waitFor(() => {
+      const noeud = document.querySelector("[data-boite-obtenue]")
+      if (!noeud) throw new Error("pas de boîte obtenue")
+      return noeud as HTMLElement
+    })
+    expect(obtenue.className).toContain("border-dashed")
+    // Elle est mesurée par le serveur, jamais recalculée ici : 248 / 1 024.
+    expect(obtenue.style.left).toBe(`${(248 / 1024) * 100}%`)
+  })
+
+  test("« une boîte tracée » n'est plus grisée pour toujours, et sa raison dit le geste", async () => {
+    monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    const cran = await within(colonne()).findByRole("button", { name: "une boîte tracée" })
+    expect((cran as HTMLButtonElement).disabled).toBe(true)
+    // La raison ne renvoie plus ailleurs : le geste se fait sur cet écran-ci.
+    expect(within(colonne()).getByText(/glisse le rectangle sur l'image/i)).toBeTruthy()
+
+    // Et une fois la boîte tracée, le cran s'allume.
+    cleanup()
+    monter({
+      asset: image({
+        recette: recetteDeTravail({
+          recadrage: { marge: 0, boite: [10, 10, 40, 40] },
+        } as Partial<Recette>),
+      }),
+    })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    expect(
+      (
+        (await within(colonne()).findByRole("button", {
+          name: "une boîte tracée",
+        })) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false)
+  })
+
+  test("un pixel visé à la pipette donne la même coordonnée qu'avant le déménagement", async () => {
+    const { appels } = monter({
+      asset: image({
+        recette: recetteDeTravail({ passes: [passe({ moteur: "couleur" })] } as Partial<Recette>),
+      }),
+    })
+
+    // **La surface n'est pas là avant d'armer.** Une pipette permanente ferait
+    // de chaque regard sur l'image un risque de clic.
+    expect(document.querySelector("[data-pipette]")).toBeNull()
+    fireEvent.click(
+      await within(colonne()).findByRole("button", { name: /viser dans l'image/ }),
+    )
+
+    const toile = document.querySelector("[data-pipette]") as HTMLElement
+    expect(toile).toBeTruthy()
+    poserLaSurface(toile, 512)
+    fireEvent.click(toile, { clientX: 64, clientY: 128 })
+
+    await waitFor(() => {
+      expect(dernierePose(appels)?.passes[0].point).toEqual([128, 256])
+    })
+    // **Le clic désarme** : viser est un geste qui se termine.
+    await waitFor(() => expect(document.querySelector("[data-pipette]")).toBeNull())
+  })
+
+  test("la forme entourée se trace sur l'image, et se ferme d'elle-même", async () => {
+    const { appels } = monter({
+      asset: image({
+        recette: recetteDeTravail({ passes: [passe({ moteur: "trace" })] } as Partial<Recette>),
+      }),
+    })
+
+    fireEvent.click(
+      await within(colonne()).findByRole("button", { name: /entourer dans l'image/ }),
+    )
+    const toile = document.querySelector("[data-trace]") as HTMLElement
+    expect(toile).toBeTruthy()
+    poserLaSurface(toile, 512)
+
+    fireEvent.pointerDown(toile, { button: 0, clientX: 20, clientY: 20, pointerId: 1 })
+    fireEvent.pointerMove(toile, { clientX: 120, clientY: 20, pointerId: 1 })
+    fireEvent.pointerMove(toile, { clientX: 120, clientY: 120, pointerId: 1 })
+    fireEvent.pointerUp(toile, { pointerId: 1 })
+
+    await waitFor(() => {
+      // Les mêmes pixels d'image brute, au facteur deux près.
+      expect(dernierePose(appels)?.passes[0].trace).toEqual([
+        [40, 40],
+        [240, 40],
+        [240, 240],
+      ])
+    })
+  })
+
+  test("la main peint sur le rendu, et le curseur est le carré du pixel visé", async () => {
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "La main" }))
+
+    const toile = await waitFor(() => {
+      const noeud = document.querySelector("[data-toile-main]")
+      if (!noeud) throw new Error("pas de toile de la main")
+      return noeud as HTMLElement
+    })
+    // 640 px d'écran pour un **rendu** de 64 px : le facteur est dix. C'est le
+    // rendu et non le brut — la huitième place s'applique sur lui.
+    poserLaSurface(toile, 640)
+
+    fireEvent.pointerMove(toile, { clientX: 205, clientY: 305, pointerId: 1 })
+    const curseur = document.querySelector("[data-curseur-main]") as HTMLElement
+    expect(curseur).toBeTruthy()
+    // **Calé sur la grille de l'image**, et carré : c'est la promesse d'U11.
+    expect(curseur.className).not.toContain("rounded-full")
+    const centreX =
+      Number.parseFloat(curseur.style.left) + Number.parseFloat(curseur.style.width) / 2
+    expect(centreX).toBeCloseTo((20.5 / 64) * 100, 6)
+
+    fireEvent.pointerDown(toile, { button: 0, clientX: 205, clientY: 305, pointerId: 1 })
+    fireEvent.pointerMove(toile, { clientX: 305, clientY: 305, pointerId: 1 })
+    fireEvent.pointerUp(toile, { pointerId: 1 })
+
+    await waitFor(() => {
+      const main = dernierePose(appels)?.main
+      expect(main?.opacite[0].points).toEqual([
+        [20, 30],
+        [30, 30],
+      ])
+      // Le pinceau de cinq pixels donne un rayon de deux — le diamètre est ce
+      // qu'on voit, le rayon ce que le calcul veut.
+      expect(main?.opacite[0].rayon).toBe(2)
+    })
+  })
+
+  test("les calques de la main se règlent ici, et l'opacité est le sol de la pile", async () => {
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "La main" }))
+
+    // Le sol ne se supprime ni ne se déplace : il n'a aucun de ces boutons.
+    expect(within(colonne()).queryByRole("button", { name: "Supprimer l'opacité" })).toBeNull()
+    fireEvent.click(
+      await within(colonne()).findByRole("button", { name: /Un calque de dessin de plus/ }),
+    )
+    await waitFor(() => {
+      expect(dernierePose(appels)?.main?.calques.length).toBe(1)
+    })
+    expect(within(colonne()).getByLabelText("Nom du calque calque 1")).toBeTruthy()
+  })
+})
+
+describe("les trois réglages du retournement se règlent dans l'écran neuf", () => {
+  const ouvrirLeRetournement = (sens: string) => {
+    const rendu = monter({
+      asset: image({
+        recette: recetteDeTravail({ retournement: { sens } } as unknown as Partial<Recette>),
+      }),
+    })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Retourner" }))
+    return rendu
+  }
+
+  test("l'angle se règle sous les deux rotations libres, et nulle part ailleurs", async () => {
+    const { appels } = ouvrirLeRetournement("angle-libre")
+    const angle = (await screen.findByLabelText(
+      "angle du retournement",
+    )) as HTMLInputElement
+    expect(angle.min).toBe("-180")
+    expect(angle.max).toBe("180")
+    fireEvent.change(angle, { target: { value: "35" } })
+    fireEvent.keyUp(angle)
+    await waitFor(() => {
+      expect(dernierePose(appels)?.retournement?.angle).toBe(35)
+    })
+
+    // Un angle sous « miroir haut-bas » ne voudrait rien dire : il n'y est pas.
+    cleanup()
+    ouvrirLeRetournement("haut-bas")
+    expect(screen.queryByLabelText("angle du retournement")).toBeNull()
+  })
+
+  test("la moitié gardée du repli se choisit ici", async () => {
+    const { appels } = ouvrirLeRetournement("repli")
+    fireEvent.click(await within(colonne()).findByRole("button", { name: "droite" }))
+    await waitFor(() => {
+      expect(dernierePose(appels)?.retournement?.moitie_repli).toBe("droite")
+    })
+  })
+
+  test("les zones protégées se posent et se vident ici", async () => {
+    const { appels } = ouvrirLeRetournement("sauf-zones")
+    fireEvent.click(
+      await within(colonne()).findByRole("button", { name: "Une zone au centre" }),
+    )
+    await waitFor(() => {
+      expect(dernierePose(appels)?.retournement?.zones_protegees?.length).toBe(1)
+    })
   })
 })
 
