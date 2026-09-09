@@ -35,7 +35,7 @@ import { reinitialiserApercu } from "./composants/Apercu"
 import { toutReplier } from "./composants/chassis"
 import { LIGNES_AU_PLUS } from "./composants/Carnet"
 import { reinitialiserGuide } from "./composants/Guide"
-import { reinitialiserPressePapier } from "./composants/Tables"
+import { reinitialiserPressePapier } from "./recette"
 import { AIDE, SANS_ENTREE, type Explication } from "./aide"
 import { POSE_VIDE } from "./api"
 import { COULEUR_TEINTE, NOM_TEINTE, PASSE_PAR_DEFAUT, RECETTE_VIDE, TEINTES } from "./api"
@@ -22807,12 +22807,16 @@ describe("A7 · l'atelier d'une animation", () => {
     // pèlerin.
     const { atelier } = await ouvrirLAtelier()
 
+    // **Cinq moteurs et non quatre depuis `B26`**, et c'est le gain de la
+    // tranche : l'atelier d'une animation montait un panneau de l'ancien
+    // châssis où la palette du jeu (`B18`) n'était jamais arrivée. Il règle
+    // maintenant les mêmes moteurs que la retouche.
     const moteurs = await atelier.findAllByRole("button", {
-      name: /^(bord|pipette|modèle|sélection)$/,
+      name: /^(bord|pipette|modèle|sélection|palette du jeu)$/,
     })
-    expect(moteurs).toHaveLength(4)
+    expect(moteurs).toHaveLength(5)
     // La tolérance est là tant que le moteur la lit.
-    expect(atelier.getByLabelText(/tolérance, en chiffres/)).toBeTruthy()
+    expect(atelier.getByLabelText(/tolérance de la passe 1, en chiffres/)).toBeTruthy()
 
     fireEvent.click(atelier.getByRole("button", { name: "modèle" }))
 
@@ -22820,7 +22824,7 @@ describe("A7 · l'atelier d'une animation", () => {
     // laisser un curseur qui ne fait rien — ou, ce qui revient au même, de le
     // faire disparaître sans un mot (`AGENTS.md`, 8nonies).
     await waitFor(() =>
-      expect(atelier.queryByLabelText(/tolérance, en chiffres/)).toBeNull(),
+      expect(atelier.queryByLabelText(/tolérance de la passe 1, en chiffres/)).toBeNull(),
     )
     expect(await atelier.findByText(/pas de tolérance à régler/)).toBeTruthy()
   })
@@ -22859,7 +22863,7 @@ describe("A7 · l'atelier d'une animation", () => {
     // que sa valeur — le lire obligerait à interroger une classe CSS. L'aperçu,
     // lui, repart à chaque geste avec la recette entière.
     const { atelier, appels } = await ouvrirLAtelier()
-    await atelier.findByLabelText(/tolérance, en chiffres/)
+    await atelier.findByLabelText(/tolérance de la passe 1, en chiffres/)
 
     fireEvent.click(atelier.getByRole("button", { name: "modèle" }))
 
@@ -22886,9 +22890,9 @@ describe("A7 · l'atelier d'une animation", () => {
     })
 
     expect(await atelier.findByText(/ne détoure rien/)).toBeTruthy()
-    fireEvent.click(atelier.getByRole("button", { name: "+ une passe" }))
+    fireEvent.click(atelier.getByRole("button", { name: "Une passe de plus" }))
 
-    expect(await atelier.findByLabelText(/tolérance, en chiffres/)).toBeTruthy()
+    expect(await atelier.findByLabelText(/tolérance de la passe 1, en chiffres/)).toBeTruthy()
     expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
   })
 
@@ -22914,7 +22918,7 @@ describe("A7 · l'atelier d'une animation", () => {
     // s'annule pas.
     expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
     expect(
-      (atelier.getByLabelText(/tolérance, en chiffres/) as HTMLInputElement).value,
+      (atelier.getByLabelText(/tolérance de la passe 1, en chiffres/) as HTMLInputElement).value,
     ).toBe("61")
     expect(
       appels.some((a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps)),
@@ -23119,7 +23123,7 @@ describe("A7 · l'atelier d'une animation", () => {
     atelier: ReturnType<typeof within>,
     valeur: number,
   ) => {
-    const champ = await atelier.findByLabelText(/tolérance, en chiffres/)
+    const champ = await atelier.findByLabelText(/tolérance de la passe 1, en chiffres/)
     fireEvent.change(champ, { target: { value: String(valeur) } })
     fireEvent.keyDown(champ, { key: "Enter" })
   }
@@ -23398,7 +23402,7 @@ describe("A7 · l'atelier d'une animation", () => {
     )
     expect(
       (
-        (await atelier.findByLabelText(/tolérance, en chiffres/)) as HTMLInputElement
+        (await atelier.findByLabelText(/tolérance de la passe 1, en chiffres/)) as HTMLInputElement
       ).value,
     ).toBe("61")
   })
@@ -23782,7 +23786,7 @@ describe("A7 · l'atelier d'une animation", () => {
     )
     expect(
       (
-        (await atelier.findByLabelText(/tolérance, en chiffres/)) as HTMLInputElement
+        (await atelier.findByLabelText(/tolérance de la passe 1, en chiffres/)) as HTMLInputElement
       ).value,
     ).toBe("33")
   })

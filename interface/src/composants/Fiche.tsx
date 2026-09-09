@@ -45,7 +45,7 @@ import {
 } from "./chassis"
 import { PANNEAU, POINTILLE, useInfobulle } from "./Infobulle"
 import { posesTenues } from "./Personnages"
-import { DURCISSEMENT_LIVRE, MOTEUR, RESUME } from "./Places"
+import { DURCISSEMENT_LIVRE, MOTEUR, RESUME } from "../recette"
 
 /** Le modèle qui a produit une image, tel qu'il se lit (US-123).
  *

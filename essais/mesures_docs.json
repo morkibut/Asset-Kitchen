@@ -1,11 +1,11 @@
 {
- "releve_le": 1788953631.5183694,
+ "releve_le": 1788958777.7663076,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 192907,
+  "octets": 193395,
   "documents": {
    "AGENTS.md": {
     "octets": 35404,
@@ -368,7 +368,7 @@
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 26027,
+    "octets": 26515,
     "titres": 31,
     "sections": [
      {
@@ -563,11 +563,11 @@
  },
  "renvois": {
   "code": {
-   "total": 695,
+   "total": 688,
    "casses": []
   },
   "docs": {
-   "total": 1025,
+   "total": 1026,
    "casses": []
   }
  }

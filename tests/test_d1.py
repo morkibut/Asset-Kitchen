@@ -65,7 +65,8 @@ from atelier.domaine.recette import (
 )
 
 RACINE = Path(__file__).resolve().parents[1]
-PLACES = RACINE / "interface" / "src" / "composants" / "Places.tsx"
+#: Le vocabulaire de la recette, sorti de l'ancien châssis en `B26`.
+RECETTE_TS = RACINE / "interface" / "src" / "recette.ts"
 
 #: Le modèle du double de `conftest`. Il ne facture rien et ne sort pas de la
 #: machine — c'est celui que tous les essais de génération emploient.
@@ -492,9 +493,9 @@ def test_le_nom_des_moteurs_est_le_meme_des_deux_cotes():
     ici."""
     ecrit = re.search(
         r'export const MOTEUR: Record<Passe\["moteur"\], string> = \{([^}]*)\}',
-        PLACES.read_text(encoding="utf-8"),
+        RECETTE_TS.read_text(encoding="utf-8"),
     )
-    assert ecrit is not None, "MOTEUR a été renommée ou déplacée hors de Places.tsx"
+    assert ecrit is not None, "MOTEUR a été renommée ou déplacée hors de recette.ts"
 
     lus = dict(re.findall(r'(\w+): "([^"]*)"', ecrit.group(1)))
 
@@ -507,9 +508,9 @@ def test_le_durcissement_livre_est_le_meme_des_deux_cotes():
     feraient deux produits."""
     ecrit = re.search(
         r'export const DURCISSEMENT_LIVRE: Record<Passe\["moteur"\], number> = \{([^}]*)\}',
-        PLACES.read_text(encoding="utf-8"),
+        RECETTE_TS.read_text(encoding="utf-8"),
     )
-    assert ecrit is not None, "DURCISSEMENT_LIVRE a quitté Places.tsx"
+    assert ecrit is not None, "DURCISSEMENT_LIVRE a quitté recette.ts"
 
     lus = {m: int(v) for m, v in re.findall(r"(\w+): (\d+)", ecrit.group(1))}
 

@@ -486,15 +486,22 @@ def test_les_deux_tables_lisent_la_meme_absence_comme_un_zero():
     # vérifie sur le fichier — un commentaire ne tient rien.
     from pathlib import Path
 
-    places = (
+    retouche = (
         Path(__file__).resolve().parent.parent
         / "interface"
         / "src"
         / "composants"
-        / "Places.tsx"
+        / "Retouche.tsx"
     ).read_text(encoding="utf-8")
-    assert "recette.bords?.aire_min ?? 3" not in places
-    assert places.count("recette.bords?.aire_min ?? 0") == 2
+    assert "aire_min ?? 3" not in retouche
+    # ⚠️ **Un seul lecteur depuis `B26`, et non deux.** Le second était le
+    # panneau du contour, qui retranchait du compte des taches celles que le
+    # seuil efface. Ce compte lit `mesures.taches`, que le poste du carnet ne
+    # rend pas : il est parti avec l'ancien châssis, et il est écrit comme
+    # perdu dans `docs/PLAN-carnet.md` § `B27`. La divergence que cet essai
+    # ferme — un écran qui lit 3 quand l'autre lit 0 — ne peut donc plus se
+    # produire ; ce qui reste à tenir, c'est que le lecteur survivant lise 0.
+    assert retouche.count("recette.bords?.aire_min ?? 0") == 1
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -538,12 +545,10 @@ def test_la_disponibilite_du_contour_ne_lit_aucune_famille():
     ont commise, et elle doit se payer à l'écriture, pas à l'usage."""
     from pathlib import Path
 
+    # `indisponible` a quitté l'ancien châssis en `B26` pour le module de
+    # vocabulaire : c'est un fait du domaine, pas du balisage.
     tables = (
-        Path(__file__).resolve().parent.parent
-        / "interface"
-        / "src"
-        / "composants"
-        / "Tables.tsx"
+        Path(__file__).resolve().parent.parent / "interface" / "src" / "recette.ts"
     ).read_text(encoding="utf-8")
     debut = tables.index("export function indisponible(")
     fin = tables.index("// ── La veille", debut)
@@ -585,7 +590,7 @@ def test_le_traitement_vise_la_couleur_declaree_sans_importer_domaine_fond():
 
     L'écran, lui, ne dit plus qu'il ignore la couleur déclarée : il dit que le
     moteur `bord` la devine **sauf** quand une passe la vise — ce que
-    `Places.tsx` écrit désormais en toutes lettres."""
+    `Retouche.tsx` écrit désormais en toutes lettres."""
     for module in (domaine_recette, domaine_traitement):
         source = inspect.getsource(module)
         assert "fond import" not in source, module.__name__
@@ -595,14 +600,14 @@ def test_le_traitement_vise_la_couleur_declaree_sans_importer_domaine_fond():
     # couleur-là.
     from pathlib import Path
 
-    places = (
+    retouche = (
         Path(__file__).resolve().parent.parent
         / "interface"
         / "src"
         / "composants"
-        / "Places.tsx"
+        / "Retouche.tsx"
     ).read_text(encoding="utf-8")
-    assert "vise la couleur déclarée du jeu" in places
+    assert "vise la couleur déclarée du jeu" in retouche
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -687,15 +692,11 @@ def test_la_table_offre_les_finesses_du_domaine_a_un_jeu_en_dessin():
 
     from atelier.domaine.vue import FINESSES
 
-    places = (
-        Path(__file__).resolve().parent.parent
-        / "interface"
-        / "src"
-        / "composants"
-        / "Places.tsx"
+    vocabulaire = (
+        Path(__file__).resolve().parent.parent / "interface" / "src" / "recette.ts"
     ).read_text(encoding="utf-8")
-    ecrit = re.search(r"export const FINESSES = \[([^\]]*)\]", places)
-    assert ecrit is not None, "FINESSES a été renommée ou déplacée hors de Places.tsx"
+    ecrit = re.search(r"export const FINESSES = \[([^\]]*)\]", vocabulaire)
+    assert ecrit is not None, "FINESSES a été renommée ou déplacée hors de recette.ts"
 
     assert [int(n) for n in re.findall(r"\d+", ecrit.group(1))] == [c for c, _ in FINESSES]
 

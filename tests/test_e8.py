@@ -29,9 +29,8 @@ from atelier.domaine.vue import (
     vue,
 )
 
-PLACES = (
-    Path(__file__).resolve().parents[1] / "interface" / "src" / "composants" / "Places.tsx"
-)
+#: Le vocabulaire de la recette, sorti de l'ancien châssis en `B26`.
+RECETTE_TS = Path(__file__).resolve().parents[1] / "interface" / "src" / "recette.ts"
 
 
 def _univers(client) -> dict:
@@ -81,8 +80,10 @@ def test_la_table_grille_propose_les_memes_tailles_que_l_assistant():
     ici. Le croquis de l'écran (`docs/maquettes-v2.1/13-table-grille.html`,
     première annotation) porte le même arbitrage.
     """
-    ecrit = re.search(r"const CIBLES = \[([^\]]*)\]", PLACES.read_text(encoding="utf-8"))
-    assert ecrit is not None, "CIBLES a été renommée ou déplacée hors de Places.tsx"
+    ecrit = re.search(
+        r"const CIBLES = \[([^\]]*)\]", RECETTE_TS.read_text(encoding="utf-8")
+    )
+    assert ecrit is not None, "CIBLES a été renommée ou déplacée hors de recette.ts"
 
     proposees = [int(n) for n in re.findall(r"\d+", ecrit.group(1))]
 

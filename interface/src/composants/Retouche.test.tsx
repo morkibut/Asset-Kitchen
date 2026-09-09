@@ -40,7 +40,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 import type { ReactNode } from "react"
 import { Retouche } from "./Retouche"
-import { reinitialiserPressePapier } from "./Tables"
+import { reinitialiserPressePapier } from "../recette"
 import {
   RECETTE_VIDE,
   UNIVERS_VIDE,

@@ -54,7 +54,8 @@ from atelier.image.traitement import (
 
 RACINE = Path(__file__).resolve().parents[1]
 RELEVE = RACINE / "essais" / "mesures_moteurs_de_detourage.json"
-PLACES = RACINE / "interface" / "src" / "composants" / "Places.tsx"
+RETOUCHE = RACINE / "interface" / "src" / "composants" / "Retouche.tsx"
+RECETTE_TS = RACINE / "interface" / "src" / "recette.ts"
 FICHE = RACINE / "interface" / "src" / "composants" / "Fiche.tsx"
 
 
@@ -565,29 +566,37 @@ def test_l_ecran_propose_la_palette_du_jeu_pour_la_couleur_du_trait():
     couleur du contour montre déjà la palette du projet en pastilles cliquables
     et marque une couleur hors palette. Ce test le fige.
     """
-    ecrit = PLACES.read_text(encoding="utf-8")
+    ecrit = RETOUCHE.read_text(encoding="utf-8")
 
     assert "function ChoixDeCouleur" in ecrit
     assert "palette.map" in ecrit, "les pastilles de la palette"
     assert "hors palette" in ecrit, "une couleur hors palette se marque"
-    # Et c'est bien la table des contours qui s'en sert, avec la palette du jeu.
-    contours = ecrit[ecrit.index("export function PanneauContours") :]
-    contours = contours[: contours.index("export function PanneauBords")]
+    # Et c'est bien le poste du contour qui s'en sert, avec la palette du jeu.
+    # ⚠️ **Le poste du carnet ne le faisait pas** (`B26`) : il rendait douze
+    # pastilles à la main, sans champ hexadécimal ni marque hors palette, et
+    # ne proposait pas la plus sombre. Ce critère de `D4` ne tenait plus que
+    # par le panneau de l'ancien châssis, qui est parti.
+    contours = ecrit[ecrit.index("export function ReglagesDuContour") :]
+    contours = contours[: contours.index("function ReglagesDuRetournement")]
     assert "<ChoixDeCouleur" in contours
     assert "palette={univers.palette}" in contours
+    assert "laPlusSombre(univers.palette)" in contours, "la seule chose qu'il devine"
 
 
 def test_l_ecran_dit_en_croix_ou_en_carre_et_dans_quelle_unite():
     """**« Et l'écran dit lequel »** — la seconde moitié du critère de la croix,
     et celle qu'on oublie. Deux formes qui changeraient sans un mot laisseraient
     chercher pourquoi un trait d'un pixel a maigri de quatre pixels."""
-    ecrit = PLACES.read_text(encoding="utf-8")
+    ecrit = RETOUCHE.read_text(encoding="utf-8")
 
     assert "en croix, la convention du pixel art" in ecrit
     assert "en carré, au-delà d'une épaisseur" in ecrit
-    # Et l'unité de l'épaisseur, qui n'est pas toujours le pixel.
-    assert "export function uniteDuTrait" in ecrit
-    assert re.search(r"la maille sur laquelle le modèle a peint", ecrit)
+    assert "uniteDuTrait(contour.epaisseur, recette, mesures)" in ecrit
+    # Et l'unité de l'épaisseur, qui n'est pas toujours le pixel. Le calcul
+    # est descendu dans le vocabulaire en `B26` — il ne dessine rien.
+    vocabulaire = RECETTE_TS.read_text(encoding="utf-8")
+    assert "export function uniteDuTrait" in vocabulaire
+    assert re.search(r"la maille sur laquelle le modèle a peint", vocabulaire)
 
 
 def test_l_ecran_dit_a_quel_cote_le_modele_infere():

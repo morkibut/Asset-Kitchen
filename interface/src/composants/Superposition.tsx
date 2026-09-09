@@ -27,9 +27,47 @@ import {
   type OuvertureSuperposition,
   type Superposition,
 } from "../api"
-import { Curseur, EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
+import {
+  Curseur,
+  EnTetePanneau,
+  Libelle,
+  NomDuReglage,
+  Raison,
+  Segments,
+} from "./chassis"
 import { PANNEAU } from "./Infobulle"
-import { Reglage } from "./Places"
+
+/** Un réglage : son libellé à gauche, sa commande à droite.
+ *
+ *  **Repris de `Places.tsx` tel quel** (`B26`) : cet écran-ci est le dernier à
+ *  s'en servir, et le fichier qui le portait part avec l'ancien châssis. Le
+ *  descendre dans le module de vocabulaire n'aurait servi à rien — c'est du
+ *  balisage, et il n'a plus qu'un lecteur. Il repartira le jour où la
+ *  superposition passera au papier du carnet. */
+function Reglage({
+  libelle,
+  aide,
+  children,
+}: {
+  libelle: string
+  aide?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-baseline gap-3">
+      <span className="w-[104px] shrink-0">
+        <Libelle aide={aide}>{libelle}</Libelle>
+      </span>
+      {/* **Le nom descend jusqu'au contrôle** (U3). Le champ où une valeur
+          s'écrit a besoin d'un nom pour être trouvable, et ce nom est déjà
+          écrit à gauche : le faire redire à chaque emploi aurait fabriqué
+          autant d'occasions de le laisser diverger de ce qui s'affiche. */}
+      <div className="min-w-0 flex-1">
+        <NomDuReglage.Provider value={libelle}>{children}</NomDuReglage.Provider>
+      </div>
+    </div>
+  )
+}
 
 /** Les six fonds du calque seul. **Ils servent à repérer les pixels oubliés** —
  *  ceux qui auraient dû partir avec le corps et sont restés accrochés. Sur le
