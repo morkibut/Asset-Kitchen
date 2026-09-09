@@ -329,6 +329,11 @@ function monter(
     impose?: unknown
     soeurs?: Asset[]
     decoupe?: (fermer: () => void) => ReactNode
+    /** Ce que le serveur dit savoir faire. **Surchargeable depuis `B26`** :
+     *  le catalogue des modèles de silhouette vient de là, et le double par
+     *  défaut le rend vide — un poste qui ne montre pas le choix quand le
+     *  serveur n'a rien répondu est la règle, pas l'exception. */
+    traitement?: EtatTraitement
   } = {},
 ) {
   const { fetchDouble, appels } = construireDouble(
@@ -345,7 +350,7 @@ function monter(
       asset={surplus.asset ?? image({ recette: recetteDeTravail() })}
       soeurs={surplus.soeurs ?? []}
       univers={surplus.univers ?? univers()}
-      traitement={TRAITEMENT}
+      traitement={surplus.traitement ?? TRAITEMENT}
       onFermer={onFermer}
       onSoeur={onSoeur}
       decoupe={surplus.decoupe ?? DECOUPE_STUB}
@@ -359,7 +364,7 @@ function monter(
         asset={nouveau.asset}
         soeurs={nouveau.soeurs ?? surplus.soeurs ?? []}
         univers={surplus.univers ?? univers()}
-        traitement={TRAITEMENT}
+        traitement={surplus.traitement ?? TRAITEMENT}
         onFermer={onFermer}
         onSoeur={onSoeur}
         decoupe={surplus.decoupe ?? DECOUPE_STUB}
@@ -2016,5 +2021,468 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
     expect(
       screen.queryByRole("button", { name: /enregistrer ce réglage comme défaut du projet/i }),
     ).toBeNull()
+  })
+})
+
+// ── Les réglages que le départ de `Places.test.tsx` a laissés sans essai ─────
+//
+// **`B26` a écrit que ses 22 essais étaient « tous doublés » ; c'était faux**,
+// et douze réglages sont tombés à zéro essai d'écran le jour de la
+// suppression : `echanges` (5 avant), `grain_min` et `lissage` (4), `saturation`
+// et `luminosite` (3), puis `vote_voisins`, les deux morphologies,
+// `boucher_jusqua`, `reboucher_jusqua`, `garder`, `epargner_traits_fins` et
+// `contraste` (2 chacun). Deux de plus n'en avaient jamais eu —
+// `visibles_seuls` et `force_tramage`.
+//
+// **La capacité n'avait pas bougé, la couverture si**, et c'est exactement la
+// forme de perte que ce chantier existe pour clore : un réglage sans essai
+// repart à la refonte suivante sans que rien ne refuse. Le domaine les tient de
+// son côté (`tests/test_b17.py`, `tests/test_b18.py`) ; ce qui suit tient le
+// seul fait dont l'écran répond — **la valeur réglée part dans la recette
+// envoyée**.
+//
+// ⚠️ **Le compte est refait ici plutôt que repris**, parce que celui qu'on
+// avait reçu comptait `remplissage` pour `lissage` et une phrase de commentaire
+// pour un essai. La règle, pour qu'elle se rejoue : un essai = un bloc `test(`,
+// commentaires retirés, le nom cité sur une frontière de mot.
+//
+// ⚠️ **`graine` n'est pas ici**, et c'est le seul : il n'a jamais eu d'essai
+// d'écran, ni avant `B26` ni après. Le noter vaut mieux que le laisser en
+// blanc — mais ce n'est pas cette tranche qui le lui a pris.
+
+describe("les réglages rendus sans essai par le départ de Places.test.tsx", () => {
+  /** Ouvre une table, pousse une glissière et relâche — le geste que
+   *  `Places.test.tsx` appelait `glisser`, dans le vocabulaire de cet écran. */
+  const glisser = async (table: string, nom: string, valeur: number) => {
+    fireEvent.click(within(barre()).getByRole("button", { name: table }))
+    const curseur = await screen.findByLabelText(nom)
+    fireEvent.change(curseur, { target: { value: String(valeur) } })
+    fireEvent.pointerUp(curseur)
+  }
+
+  test("le grain de couleur part dans la recette", async () => {
+    const { appels } = monter()
+    await glisser("Nettoyer", "grain de couleur", 3)
+    await waitFor(() => expect(dernierePose(appels)?.bords?.grain_min).toBe(3))
+  })
+
+  test("le lissage part dans la recette", async () => {
+    const { appels } = monter()
+    await glisser("Nettoyer", "lissage", 2)
+    await waitFor(() => expect(dernierePose(appels)?.bords?.lissage).toBe(2))
+  })
+
+  test("le vote des voisins part dans la recette", async () => {
+    const { appels } = monter()
+    await glisser("Nettoyer", "vote des voisins", 2)
+    await waitFor(() => expect(dernierePose(appels)?.bords?.vote_voisins).toBe(2))
+  })
+
+  test("les deux morphologies partent chacune sur sa clé, et ne se confondent pas", async () => {
+    // **L'ordre est ce qui les distingue** — ronger puis regonfler retire les
+    // excroissances, regonfler puis ronger comble les entailles. Les poser sur
+    // la même clé rendrait l'un des deux curseurs muet sans que rien ne le
+    // dise.
+    const { appels } = monter()
+    await glisser("Nettoyer", "ronger puis regonfler", 2)
+    await waitFor(() => expect(dernierePose(appels)?.bords?.ronger_regonfler).toBe(2))
+    expect(dernierePose(appels)?.bords?.regonfler_ronger).toBe(0)
+
+    await glisser("Nettoyer", "regonfler puis ronger", 3)
+    await waitFor(() => expect(dernierePose(appels)?.bords?.regonfler_ronger).toBe(3))
+    // Et le premier n'a pas été effacé au passage : la table part entière.
+    expect(dernierePose(appels)?.bords?.ronger_regonfler).toBe(2)
+  })
+
+  test("les trous et les poches de fond partent chacun sur sa clé", async () => {
+    // **Deux lectures inverses de la même chose** : un trou est transparent et
+    // entouré de sujet, une poche de fond est opaque et enfermée. Les
+    // confondre a déjà coûté cher au détourage.
+    const { appels } = monter()
+    await glisser("Nettoyer", "boucher les trous jusqu'à", 5)
+    await waitFor(() => expect(dernierePose(appels)?.bords?.boucher_jusqua).toBe(5))
+
+    await glisser("Nettoyer", "reboucher les poches de fond jusqu'à", 7)
+    await waitFor(() => expect(dernierePose(appels)?.bords?.reboucher_jusqua).toBe(7))
+    expect(dernierePose(appels)?.bords?.boucher_jusqua).toBe(5)
+  })
+
+  test("garder les plus grandes part dans la recette", async () => {
+    // **Un rang, jamais une taille** : ce que la tache minimale ne peut pas
+    // faire — effacer un amas collé au sujet, quelle que soit son aire.
+    const { appels } = monter()
+    await glisser("Nettoyer", "garder les plus grandes", 2)
+    await waitFor(() => expect(dernierePose(appels)?.bords?.garder).toBe(2))
+  })
+
+  test("épargner les traits fins s'éteint, et l'écran dit ce que ça change", async () => {
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyer" }))
+    expect(
+      await within(colonne()).findByText(/un pixel de large — survit au rongement/),
+    ).toBeTruthy()
+
+    fireEvent.click(within(colonne()).getByRole("button", { name: "non" }))
+    await waitFor(() =>
+      expect(dernierePose(appels)?.bords?.epargner_traits_fins).toBe(false),
+    )
+    expect(
+      within(colonne()).getByText(/rien n'est épargné/),
+    ).toBeTruthy()
+  })
+
+  test("les trois curseurs de B17 partent chacun sur sa clé", async () => {
+    // Les quatre curseurs viennent d'une même liste (`CURSEURS`) : ce qu'on
+    // mesure ici est que la clé suit le nom, et qu'un curseur posé n'efface pas
+    // celui d'à côté.
+    const { appels } = monter()
+    await glisser("Couleurs", "luminosité", 25)
+    await waitFor(() => expect(dernierePose(appels)?.quantification?.luminosite).toBe(25))
+
+    await glisser("Couleurs", "contraste", 15)
+    await waitFor(() => expect(dernierePose(appels)?.quantification?.contraste).toBe(15))
+
+    await glisser("Couleurs", "saturation", -40)
+    await waitFor(() => expect(dernierePose(appels)?.quantification?.saturation).toBe(-40))
+    expect(dernierePose(appels)?.quantification?.luminosite).toBe(25)
+    expect(dernierePose(appels)?.quantification?.contraste).toBe(15)
+  })
+
+  test("la force du tramage ne se règle qu'avec un tramage choisi", async () => {
+    // **Grisée tant qu'aucun tramage n'est choisi**, et la raison est écrite à
+    // côté — la règle du grisé de cet écran.
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+    const force = (await screen.findByLabelText("force du tramage")) as HTMLInputElement
+    expect(force.disabled).toBe(true)
+    expect(within(colonne()).getByText("aucun tramage n'est choisi")).toBeTruthy()
+
+    fireEvent.click(within(colonne()).getByRole("button", { name: "diffusion" }))
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText("force du tramage") as HTMLInputElement).disabled,
+      ).toBe(false),
+    )
+
+    await glisser("Couleurs", "force du tramage", 40)
+    await waitFor(() => expect(dernierePose(appels)?.quantification?.force_tramage).toBe(40))
+  })
+
+  test("ne compter que ce qu'on voit part dans la recette", async () => {
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+    fireEvent.click(await within(colonne()).findByRole("button", { name: "oui" }))
+    await waitFor(() =>
+      expect(dernierePose(appels)?.quantification?.visibles_seuls).toBe(true),
+    )
+  })
+
+  test("une paire d'échange ne rejoint la recette qu'une fois ses deux couleurs nommées", async () => {
+    // **Le geste qui ouvre la table est aussi celui que le serveur refuse** si
+    // la paire part à moitié faite (*une paire nomme deux couleurs*) : la
+    // brouillon reste donc à l'écran, et rien n'est envoyé tant qu'il manque
+    // une couleur.
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+    const avant = appels.filter((a) => a.url.includes("/recipe")).length
+
+    fireEvent.click(
+      await within(colonne()).findByRole("button", { name: /Échanger une couleur/i }),
+    )
+    expect(
+      within(colonne()).getByText(/il manque la couleur qui vient/),
+    ).toBeTruthy()
+    expect(appels.filter((a) => a.url.includes("/recipe")).length).toBe(avant)
+
+    // *Celle qui vient* est le second champ hexadécimal de la paire.
+    const champs = within(colonne()).getAllByLabelText("Couleur, en hexadécimal")
+    fireEvent.change(champs[1], { target: { value: "#8a5a2c" } })
+
+    await waitFor(() =>
+      expect(dernierePose(appels)?.quantification?.echanges).toEqual([
+        { depuis: "#241d16", vers: "#8a5a2c", tolerance: 0 },
+      ]),
+    )
+  })
+})
+
+// ── Les six capacités que `B26` a rattrapées ────────────────────────────────
+//
+// **Six capacités rendues sans une assertion, ce sont six capacités qui
+// repartiront à la prochaine refonte sans que rien ne refuse** — le motif même
+// que cette tranche existe pour clore. Les six vivaient dans les panneaux de
+// l'ancien châssis, elles ont été reprises dans les postes de `Retouche.tsx` le
+// 9 septembre 2026, et seul le contour avait jusqu'ici une assertion — au grep,
+// dans `tests/test_d4.py`. Ce qui suit mesure le geste, pas le texte du
+// fichier.
+
+describe("les six capacités rattrapées par B26", () => {
+  /** Un serveur qui sait détourer par modèle, et qui en propose deux. Le
+   *  double par défaut grise `modele` et rend un catalogue vide : c'est le cas
+   *  normal, pas celui qu'on veut mesurer ici. */
+  const AVEC_SILHOUETTES = {
+    ...TRAITEMENT,
+    moteurs: [
+      { nom: "bord", raison: null },
+      { nom: "couleur", raison: null },
+      { nom: "modele", raison: null },
+      { nom: "trace", raison: null },
+    ],
+    silhouettes: [
+      {
+        nom: "u2net",
+        titre: "rapide",
+        octets: 176_000_000,
+        lent: false,
+        note: "il suffit sur un sujet franchement détaché de son fond",
+        entree: 320,
+        licence: "MIT",
+        defaut: true,
+        descendu: true,
+        raison: null,
+      },
+      {
+        nom: "birefnet-general",
+        titre: "le meilleur sur les silhouettes difficiles",
+        octets: 950_000_000,
+        lent: true,
+        note: "il tient les cheveux, les brins d'herbe et les franges",
+        entree: 1024,
+        licence: "MIT",
+        defaut: false,
+        descendu: false,
+        raison: null,
+      },
+    ],
+  } as unknown as EtatTraitement
+
+  const ouvrirLeDetourage = (surplus: Parameters<typeof monter>[0] = {}) => {
+    const rendu = monter(surplus)
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    return rendu
+  }
+
+  // ── 1 · Masquer une passe (U10) ───────────────────────────────────────────
+
+  test("masquer une passe la retire du calcul et lui garde ses réglages", async () => {
+    const { appels } = ouvrirLeDetourage()
+    const interrupteur = await within(colonne()).findByRole("switch", {
+      name: "passe 1 — visible",
+    })
+    expect(interrupteur.getAttribute("aria-checked")).toBe("true")
+
+    fireEvent.click(interrupteur)
+    await waitFor(() => expect(dernierePose(appels)?.passes[0].masquee).toBe(true))
+    // **Masquer n'est pas retirer** : la tolérance posée est toujours là.
+    expect(dernierePose(appels)?.passes[0].tolerance).toBe(28)
+    expect(dernierePose(appels)?.passes.length).toBe(1)
+    expect(
+      within(colonne()).getByText(/retirée du calcul, elle garde tous ses réglages/),
+    ).toBeTruthy()
+    await waitFor(() =>
+      expect(
+        within(colonne())
+          .getByRole("switch", { name: "passe 1 — masquée" })
+          .getAttribute("aria-checked"),
+      ).toBe("false"),
+    )
+  })
+
+  test("toucher un réglage d'une passe masquée la remontre — la règle U10", async () => {
+    // **C'est la règle de la place endormie (U4), un cran plus bas** : poser
+    // une valeur *dit* qu'on veut cette passe, et refuser le curseur
+    // obligerait à un geste préalable pour avoir le droit de faire le geste
+    // qu'on voulait.
+    const { appels } = ouvrirLeDetourage()
+    fireEvent.click(
+      await within(colonne()).findByRole("switch", { name: "passe 1 — visible" }),
+    )
+    await waitFor(() => expect(dernierePose(appels)?.passes[0].masquee).toBe(true))
+
+    const tolerance = await screen.findByLabelText("tolérance de la passe 1")
+    fireEvent.change(tolerance, { target: { value: "44" } })
+    fireEvent.pointerUp(tolerance)
+
+    await waitFor(() => expect(dernierePose(appels)?.passes[0].tolerance).toBe(44))
+    expect(dernierePose(appels)?.passes[0].masquee).toBe(false)
+  })
+
+  // ── 2 · Le catalogue des modèles de détourage (U13) ───────────────────────
+
+  test("le modèle choisi part dans la passe, et le catalogue dit ce que chacun vaut", async () => {
+    // **Le catalogue décide, jamais une liste en dur** : `Passe.modele`
+    // partait toujours vide, c'est-à-dire au défaut du produit, sans que rien
+    // ne le dise.
+    const { appels } = ouvrirLeDetourage({ traitement: AVEC_SILHOUETTES })
+    fireEvent.click(within(colonne()).getByRole("button", { name: "modèle" }))
+
+    // Sans rien demander, c'est le défaut du serveur qui est montré — et sa
+    // note avec lui.
+    const rapide = await within(colonne()).findByRole("button", { name: "rapide" })
+    expect(rapide.getAttribute("aria-pressed")).toBe("true")
+    expect(
+      within(colonne()).getByText(/il suffit sur un sujet franchement détaché/),
+    ).toBeTruthy()
+
+    fireEvent.click(
+      within(colonne()).getByRole("button", {
+        name: "le meilleur sur les silhouettes difficiles",
+      }),
+    )
+    await waitFor(() =>
+      expect(dernierePose(appels)?.passes[0].modele).toBe("birefnet-general"),
+    )
+    // **Ce que ça pèse, dit avant l'attente** — pas au milieu.
+    expect(
+      await within(colonne()).findByText(/l'atelier descendra ce modèle/),
+    ).toBeTruthy()
+    // Et le côté auquel il infère, qui décide de ce qu'il peut rendre (D4).
+    expect(
+      within(colonne()).getByText(/il calcule à 1024 px et ne réagrandit pas son masque/),
+    ).toBeTruthy()
+  })
+
+  test("sans catalogue servi, le moteur reste choisissable et aucun modèle n'est deviné", () => {
+    // **Jamais une liste devinée** : le double par défaut ne rend aucune
+    // silhouette, et le poste montre alors le moteur sans son choix de modèle.
+    ouvrirLeDetourage({
+      traitement: { ...AVEC_SILHOUETTES, silhouettes: [] } as EtatTraitement,
+    })
+    fireEvent.click(within(colonne()).getByRole("button", { name: "modèle" }))
+    expect(within(colonne()).queryByRole("button", { name: "rapide" })).toBeNull()
+    // Et le curseur qui s'en va le dit, plutôt que de disparaître sans un mot.
+    expect(
+      within(colonne()).getByText(/il n'y a pas de tolérance à régler/),
+    ).toBeTruthy()
+  })
+
+  // ── 3 · L'échantillon de l'occupation ─────────────────────────────────────
+
+  test("l'échantillon donne les deux lectures d'une même hauteur", async () => {
+    // **Un pour cent n'est pas une mesure** : ce que la hauteur décide est un
+    // nombre de carrés, et c'est celui-là qu'on compare d'une image à l'autre.
+    monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Pixéliser" }))
+    expect(
+      await within(colonne()).findByText("100 % d'un personnage"),
+    ).toBeTruthy()
+    expect(
+      within(colonne()).getByText("l'image revient en 64 carrés de côté"),
+    ).toBeTruthy()
+  })
+
+  test("au-delà d'un personnage, l'échantillon compte les personnages", async () => {
+    monter({
+      asset: image({
+        recette: recetteDeTravail({
+          grille: {
+            cible: 64,
+            occupation: 300,
+            ancrage: "bas",
+            decalage: 0,
+            methode: "proche",
+          },
+        } as Partial<Recette>),
+      }),
+    })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Pixéliser" }))
+    expect(await within(colonne()).findByText("3 personnages de haut")).toBeTruthy()
+    expect(
+      within(colonne()).getByText("l'image revient en 192 carrés de côté"),
+    ).toBeTruthy()
+  })
+
+  // ── 4 · Ce que chaque méthode de pixélisation rend ────────────────────────
+
+  test("la phrase sous les segments suit la méthode choisie", async () => {
+    // **Un libellé de trois mots ne dit pas ce qu'on gagne et ce qu'on perd**,
+    // et c'est précisément ce qui départage les quatre.
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Pixéliser" }))
+    expect(
+      await within(colonne()).findByText("brut : un pixel sur N gardé, les autres jetés"),
+    ).toBeTruthy()
+
+    fireEvent.click(within(colonne()).getByRole("button", { name: "vote en deux temps" }))
+    await waitFor(() => expect(dernierePose(appels)?.grille?.methode).toBe("vote"))
+    expect(
+      within(colonne()).getByText("contour net et intérieur lisible — un sprite calme"),
+    ).toBeTruthy()
+  })
+
+  // ── 5 · La source des couleurs ────────────────────────────────────────────
+
+  test("choisir l'image vide la palette de la recette, choisir le jeu la recopie", async () => {
+    // **Une palette vide veut dire *déduite de l'image elle-même***, et le
+    // domaine le dit depuis `T2`. L'écran lisait déjà ce fait sans jamais le
+    // poser.
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+    expect(
+      (await within(colonne()).findByRole("button", { name: "le jeu" })).getAttribute(
+        "aria-pressed",
+      ),
+    ).toBe("true")
+
+    fireEvent.click(within(colonne()).getByRole("button", { name: "l'image" }))
+    await waitFor(() => expect(dernierePose(appels)?.quantification?.palette).toEqual([]))
+
+    fireEvent.click(within(colonne()).getByRole("button", { name: "le jeu" }))
+    await waitFor(() =>
+      // **Copiée dans la recette au moment du choix** : une recette est un
+      // calcul complet, rejouable sans redemander au projet ce qu'il contenait
+      // ce jour-là.
+      expect(dernierePose(appels)?.quantification?.palette).toEqual([
+        "#241d16",
+        "#8a5a2c",
+      ]),
+    )
+  })
+
+  test("sans palette de jeu, le jeu est grisé avec sa raison", async () => {
+    monter({ univers: univers({ palette: [] }) })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+    const leJeu = (await within(colonne()).findByRole("button", {
+      name: "le jeu",
+    })) as HTMLButtonElement
+    expect(leJeu.disabled).toBe(true)
+    expect(
+      within(colonne()).getByText(/dépose un artwork officiel pour lui en donner une/),
+    ).toBeTruthy()
+  })
+
+  // ── 6 · La provenance de la couleur du contour ────────────────────────────
+
+  test("le contour propose la plus sombre, et marque une couleur hors palette", async () => {
+    // **Le produit constate ; il ne refuse pas** (D4). Une couleur de plus dans
+    // un jeu est un fait qui se lit, et il mérite d'être dit ici puisque la
+    // réduction des couleurs est déjà passée et ne la rattrapera pas.
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Le contour" }))
+
+    // Rien n'est posé : la couleur montrée est proposée, pas choisie.
+    expect(
+      await within(colonne()).findByText("proposé, d'après ta palette · la plus sombre"),
+    ).toBeTruthy()
+    expect(within(colonne()).getByText("#241d16 · dans la palette")).toBeTruthy()
+
+    const hexa = within(colonne()).getAllByLabelText("Couleur, en hexadécimal")[0]
+    fireEvent.change(hexa, { target: { value: "#ff00ff" } })
+
+    await waitFor(() => expect(dernierePose(appels)?.contours?.couleur).toBe("#ff00ff"))
+    expect(within(colonne()).getByText("#ff00ff · hors palette")).toBeTruthy()
+    // La proposition ne se redit pas une fois la couleur posée.
+    expect(
+      within(colonne()).queryByText("proposé, d'après ta palette · la plus sombre"),
+    ).toBeNull()
+  })
+
+  test("la palette entière se prend à la pastille, pas seulement ses douze premières", async () => {
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Le contour" }))
+    fireEvent.click(
+      await within(colonne()).findByRole("button", { name: "Prendre #8a5a2c" }),
+    )
+    await waitFor(() => expect(dernierePose(appels)?.contours?.couleur).toBe("#8a5a2c"))
   })
 })

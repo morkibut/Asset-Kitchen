@@ -1851,9 +1851,8 @@ a perdu le nom *Ouvrir les tables* en `B25` — le bouton dit *La retoucher* et 
 retouche, il reste — et il ne lui reste ici que son import de `Places.tsx`, rien de plus. Son
 retrait appartient à la refonte de `Galerie.dc.html`, qui n'est pas dans ce plan.
 
-**Enfin les fichiers tombent** : `Places.tsx`, `Tables.tsx`, `Places.test.tsx` (22 essais,
-tous doublés par `Retouche.test.tsx`), et les douze blocs d'`App.test.tsx` sont rejoués ou
-retirés selon ce que `B25` en a fait.
+**Enfin les fichiers tombent** : `Places.tsx`, `Tables.tsx`, `Places.test.tsx` (22 essais),
+et les douze blocs d'`App.test.tsx` sont rejoués ou retirés selon ce que `B25` en a fait.
 
 ### Ce qui a été tenu
 
@@ -1906,6 +1905,14 @@ deux ne divergent. **Laissé hors de cette tranche parce que `Fiche.tsx` en est 
 c'est le panneau de détail de la galerie, pas un écran de retouche — et parce qu'une
 suppression de 370 lignes de plus dans une tranche déjà large se relit mal. À faire seul.
 
+⚠️ **Et une seconde implémentation de plus, née elle aussi de cette tranche.**
+`EchantillonDeHauteur` (`chassis.tsx`) et `EchantillonDeLaHauteur` (`Retouche.tsx`) dessinent
+la même hauteur, avec le même calcul. Le premier n'a plus qu'un lecteur, `Assistant.tsx` ; le
+second est celui que la retouche rend. C'est la même famille de défaut que l'orphelin
+`BlocPasse` — deux implémentations vivantes d'un même geste, qui finiront par ne plus dire la
+même chose —, à ceci près que celle-ci a **deux** lecteurs et non un. Portée en `B27` avec
+l'autre.
+
 **Le gain, mesuré au navigateur** (atelier jetable de la V3.03.3, port 8491) : l'atelier
 d'une animation règle maintenant **cinq moteurs de détourage et non quatre** — la palette du
 jeu de `B18` n'y était jamais arrivée —, le format verrouillé, le calage sur un multiple, la
@@ -1915,12 +1922,58 @@ Vérifié sur le fil, pas à l'œil : chacun des six postes pose bien sa valeur 
 `Passe.modele` partait toujours vide, et masquer puis toucher un réglage rend
 `masquee: false` — la règle U10, sur le fil.
 
-**Les essais** : `npx tsc -b` propre, **1 231 essais verts sur 23 fichiers** (les 22 de
-`Places.test.tsx` s'en vont, tous doublés) ; **2 212 essais Python verts**, dont les 61
-recettes du corpus figé de `B1` au caractère près ; `essai_jetons.py` et `essai_docs.py`
-verts. Seize essais d'`App.test.tsx` ont été rejoués contre les postes neufs — quinze pour le
-nom de la glissière, qui nomme désormais la passe qu'elle règle, et un pour le cinquième
-moteur.
+**Les essais** : `npx tsc -b` propre, **1 231 essais verts sur 23 fichiers** — **1 253 depuis
+la réparation du 9 septembre 2026**, vingt-deux de plus et pas un de moins ; **2 212 essais
+Python verts**, dont les 61 recettes du corpus figé de `B1` au caractère près ;
+`essai_jetons.py` et `essai_docs.py` verts. Seize essais d'`App.test.tsx` ont été rejoués
+contre les postes neufs — quinze pour le nom de la glissière, qui nomme désormais la passe
+qu'elle règle, et un pour le cinquième moteur.
+
+⚠️ **« Les 22 essais de `Places.test.tsx`, tous doublés » était faux, et c'est la seule
+phrase de cette tranche qui l'était.** Corrigé le 9 septembre 2026. **La capacité n'a bougé
+pour aucun de ces réglages** — ils sont tous à l'écran, et le domaine les tient de son côté
+(`tests/test_b17.py`, `tests/test_b18.py`) — mais leur **couverture d'écran** est tombée à
+zéro le jour de la suppression :
+
+| Réglage | Avant `B26` | Après `B26` | Depuis la réparation |
+|---|---|---|---|
+| `echanges` | 5 | 0 | 1 |
+| `grain_min` | 4 | 0 | 1 |
+| `lissage` | 4 | 0 | 1 |
+| `luminosite` | 3 | 0 | 1 |
+| `saturation` | 3 | 0 | 1 |
+| `vote_voisins` | 2 | 0 | 1 |
+| `ronger_regonfler` / `regonfler_ronger` | 2 | 0 | 1 |
+| `boucher_jusqua` | 2 | 0 | 1 |
+| `reboucher_jusqua` | 2 | 0 | 1 |
+| `garder` | 2 | 0 | 1 |
+| `epargner_traits_fins` | 2 | 0 | 1 |
+| `contraste` | 2 | 0 | 1 |
+| `visibles_seuls` | 0 | 0 | 1 |
+| `force_tramage` | 0 | 0 | 1 |
+
+⚠️ **Le compte a été refait ici plutôt que repris**, et il ne dit pas la même chose que
+celui qu'on avait reçu : celui-là comptait `remplissage` pour `lissage` et une phrase de
+commentaire pour un essai, et il laissait quatre réglages hors de sa liste. **La règle de
+comptage, pour qu'elle se rejoue** : un essai = un bloc `test(`, commentaires retirés, le nom
+du réglage cité sur une frontière de mot — sa clé de recette ou le nom français de sa
+commande.
+
+**Onze essais neufs** couvrent ces quatorze réglages — trois d'entre eux prennent une paire
+qui ne se distingue que par sa clé (les deux morphologies, les trous et les poches, les
+curseurs de `B17`), parce que les confondre est le défaut qu'on veut voir refuser. Ils sont
+dans `Retouche.test.tsx`, sous *les réglages rendus sans essai par le départ de
+`Places.test.tsx`*, et ils tiennent le seul fait dont l'écran répond : **la valeur réglée
+part dans la recette envoyée**, sans effacer celle d'à côté.
+
+⚠️ **Un seul réglage reste sans essai d'écran, et c'est écrit plutôt que laissé en blanc** :
+`graine`, la graine des k-moyennes. Elle n'en avait pas avant `B26` non plus — ce n'est donc
+pas une perte de cette tranche, et elle est notée pour ne pas se refermer en silence.
+
+⚠️ **Et les six capacités rattrapées repartaient sans une assertion d'écran.** Onze essais de
+comportement ont été ajoutés à `Retouche.test.tsx` le 9 septembre 2026, sous *les six
+capacités rattrapées par `B26`* ; le détail est en `B27`, avec les lignes du tableau qu'ils
+tiennent.
 
 ### Critères d'acceptation
 
@@ -1968,8 +2021,35 @@ Ce qui mesure l'avancement de la refonte doit dire la vérité le jour où elle 
 - **`interface/src/lieux.ts`** — l'avertissement de vingt lignes qui dit que `"retouche"`
   « ne remplace pas `"tables"` » décrit un état qui n'est plus vrai. Il devient le compte
   rendu du déménagement, avec sa date, plutôt qu'une promesse périmée.
-- **`atelier/domaine/recette.py:152` et `:2463`** — deux commentaires renvoient à
-  `Places.tsx` pour la liste jumelle et pour `marge_sans_effet`.
+- **`atelier/domaine/recette.py:152`, `:1952` et `:2463`** — trois commentaires renvoient à
+  `Places.tsx` : la liste jumelle des noms de moteur (`:152`), `SENS_A_AJOUTER` posé par
+  `B1` (`:1952`), et `marge_sans_effet` (`:2463`). ⚠️ **Le troisième n'était pas dans ce
+  relevé** : relu le 9 septembre 2026, il y entre.
+- **Trois renvois pleins de plus, dans du code d'essai** — vérifiés un par un le
+  9 septembre 2026, et aucun n'était listé :
+  - `essais/atelier_jetable_b1.py:46` — *« La mesure d'E5
+    (`interface/src/composants/Tables.tsx`) était faite à sept places : elle est à
+    refaire. »* Le banc décrit ce qu'on vient voir à l'écran ; c'est la mesure qui reste à
+    refaire, pas le fichier qui reste à lire.
+  - `tests/test_b18_retourner.py:15` — *« `SENS_A_AJOUTER` (posé par `B1` dans
+    `interface/src/composants/Places.tsx`, maintenant vidé) »*. La liste vit dans
+    `interface/src/recette.ts` depuis `B26`.
+  - `tests/test_b3.py:59` — *« `PUT /assets/{id}/recipe` est la route que chaque table de
+    retouche appelle à chaque réglage relâché (`interface/src/composants/Places.tsx`,
+    `useRecette.poser`) »*. `useRecette` est dans `interface/src/recette.ts`.
+
+  ⚠️ **Et rien ne les attrape** : `essai_docs.py` ne résout que les renvois **vers
+  `docs/`** (`essais/essai_docs.py`, la liste des cibles est `docs/` plus `AGENTS.md`). Un
+  renvoi du code vers un fichier de `interface/` ou d'`atelier/` peut donc pointer un
+  fichier supprimé sans qu'aucun banc ne bronche — c'est ce qui est arrivé aux six
+  ci-dessus. Le garde-fou d'import de cette tranche ne couvre pas ce cas non plus : il
+  regarde les `import`, pas les renvois écrits en prose.
+
+  **Ce sont les six seuls hors de `docs/`**, au grep du 9 septembre 2026. `docs/remarques/`,
+  `docs/tranches/V4.md`, `docs/releves/` et `docs/archive/` en portent une trentaine de plus,
+  et ceux-là **ne se corrigent pas** : ce sont des relevés datés et des tranches closes, qui
+  disent ce que le dépôt contenait le jour où ils ont été écrits. Les réécrire effacerait la
+  mesure. Le critère au grep, plus bas, ne vise donc que le code et les documents vivants.
 - **Trois documents portent la même phrase périmée** — `docs/status/etat.md`,
   `docs/tranches/V4.md` § B16, et `docs/PLAN-carnet.md` § B16 — *« l'écran neuf double
   l'ancien, il ne le remplace pas »*, renvoyée à des tranches closes qui ne l'ont pas
@@ -1977,6 +2057,19 @@ Ce qui mesure l'avancement de la refonte doit dire la vérité le jour où elle 
   écart-là qui a coûté une refonte annoncée close et livrée à moitié, et l'effacer sans
   le nommer coûterait la même chose la prochaine fois.
 - **`docs/carte-du-depot.md`** — les deux fichiers y sont décrits.
+- **Deux secondes implémentations vivantes, nées de `B26`, et c'est la même famille de
+  défaut que celle qui a ouvert ce chantier.**
+  - `BlocPasse` (`Fiche.tsx`, ~370 lignes) — **plus aucun lecteur**, et il porte pourtant
+    une seconde version du catalogue des modèles et de *masquer une passe*, les deux gestes
+    que `B26` vient de reprendre dans `ReglagesDuDetourage`. Il se retire.
+  - `EchantillonDeHauteur` (`chassis.tsx`) et `EchantillonDeLaHauteur` (`Retouche.tsx`) —
+    **le même dessin de hauteur, écrit deux fois**, avec le même calcul et deux jeux de
+    couleurs. `Assistant.tsx` lit le premier, la retouche rend le second. ⚠️ **Celui-ci ne
+    se supprime pas, il se fond** : les deux ont un lecteur vivant, et le retrait est donc
+    une extraction — le dessin descend dans une seule pièce, que les deux montent. Le
+    signaler ici parce que rien d'autre ne le voit : `tests/test_b23.py` tient l'invariant
+    *une seule implémentation de chaque surface*, et une hauteur dessinée n'est pas une
+    surface.
 
 ### Ce que le déménagement laisse derrière
 
@@ -2028,6 +2121,16 @@ gagne au passage tous les moteurs de `B17` et `B18`. **Aucune perte n'a été as
 tour** : les six étaient petites et clairement dans l'esprit de leur poste, et chacune a été
 reprise de son calcul d'origine plutôt que réécrite. Le détail poste par poste est en `B26`.
 
+⚠️ **Les six ont été rattrapées le 9 septembre 2026 sans une assertion d'écran**, et c'est
+réparé le même jour : ces lignes disaient « rattrapé » sur la foi d'une vérification au
+navigateur et de trois essais Python au grep. Onze essais de comportement sont dans
+`Retouche.test.tsx`, sous *les six capacités rattrapées par `B26`* — masquer une passe et la
+règle U10, le catalogue avec et sans catalogue servi, les deux lectures de l'échantillon, la
+phrase qui suit la méthode de pixélisation, la source des couleurs dans les deux sens et son
+grisé, la provenance de la couleur du contour et la palette entière à la pastille. **Six
+capacités rendues sans assertion, ce sont six capacités qui repartiraient à la prochaine
+refonte sans que rien ne refuse** — le motif même que ce chantier existe pour clore.
+
 ⚠️ **Et ce qui a été trouvé en le faisant** : trois critères déjà cochés de `D4` — le choix de
 couleur du contour, la marque *hors palette*, l'unité de l'épaisseur — **ne tenaient plus que
 par l'ancien panneau**, sans qu'aucune ligne de ce tableau ne les compte. C'est le même
@@ -2056,7 +2159,13 @@ pures — et la liste ne grandit que par décision écrite.
 - [ ] Aucune phrase du dépôt ne dit plus que l'écran de la retouche est doublé : au grep
       sur `docs/`, `interface/` et `atelier/`.
 - [ ] Le garde-fou d'import refuse une régression fabriquée exprès, et l'essai le montre.
-- [ ] `py essais/essai_docs.py` passe — aucun renvoi mort vers `Places.tsx`/`Tables.tsx`.
+- [ ] `py essais/essai_docs.py` passe. ⚠️ **Il ne suffit pas à ce critère** : il ne résout
+      que les renvois vers `docs/`, donc aucun renvoi mort vers `Places.tsx`/`Tables.tsx` ne
+      le fait échouer. Le critère se tient au grep sur le dépôt entier, et les six renvois
+      relevés le 9 septembre 2026 sont corrigés un par un.
+- [ ] Les deux secondes implémentations sont traitées : `BlocPasse` retiré,
+      `EchantillonDeHauteur` / `EchantillonDeLaHauteur` fondus en une seule pièce que
+      `Assistant.tsx` et `Retouche.tsx` montent tous les deux.
 - [ ] Les seize lignes de *Ce que le déménagement laisse derrière* sont tranchées une par
       une : rattrapée dans la chaîne redessinée, ou assumée par écrit avec sa raison.
       Aucune ne se referme en silence.

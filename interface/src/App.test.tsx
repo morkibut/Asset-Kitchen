@@ -10802,11 +10802,15 @@ describe("le châssis des tables", () => {
     const { cadre, appels } = await monterAvecQuantification()
 
     fireEvent.click(puce(cadre, "quantification"))
-    // ⚠️ **Le choix de la source des couleurs — *la palette du jeu* ou
-    // *l'image* — n'est pas repris par la chaîne redessinée** (`B25`). Une
-    // palette vide veut toujours dire « déduite de l'image elle-même » côté
-    // domaine ; plus aucun écran ne la pose. Noté dans
-    // `docs/PLAN-carnet.md` § `B27`.
+    // ✅ **Le choix de la source des couleurs — *la palette du jeu* ou
+    // *l'image* — est rattrapé** (`B26`, 9 septembre 2026). Il avait quitté
+    // l'écran avec l'ancien châssis en `B25` : une palette vide veut dire
+    // « déduite de l'image elle-même » côté domaine, l'écran neuf lisait déjà
+    // ce fait — c'est lui qui grise l'algorithme — et aucun poste ne le
+    // **posait**. `ReglagesDesCouleurs` (`Retouche.tsx`) porte maintenant
+    // *couleurs de — le jeu / l'image*, et pose `palette: []` sur *l'image*
+    // comme `PanneauQuantification` le faisait. L'essai est dans
+    // `Retouche.test.tsx`.
     //
     // Le tramage, lui, est là : sans lui un dégradé réduit à seize couleurs se
     // pose en bandes.
@@ -10893,11 +10897,18 @@ describe("le châssis des tables", () => {
   // ── « Le curseur d'occupation ne s'arrête que là où l'image change, et dit
   //     sur combien de pixels il tombe » ──────────────────────────────────────
 
-  // ⚠️ **L'échantillon de la hauteur est parti avec l'ancien écran** (`B25`) :
-  // le dessin qui montrait le sujet dans sa case, les deux lectures d'une même
-  // hauteur (« 3 personnages de haut », « l'image revient en 192 carrés de
-  // côté ») et le compte des crans qui changent l'image. La chaîne redessinée
-  // règle la hauteur à la glissière, sans échantillon. Noté dans
+  // ✅ **L'échantillon de la hauteur est rattrapé** (`B26`, 9 septembre 2026).
+  // Il était parti avec l'ancien écran en `B25` ; `EchantillonDeLaHauteur`
+  // (`Retouche.tsx`) reprend `EchantillonDeHauteur` (`chassis.tsx`) au calcul
+  // près — le sujet dessiné dans sa case, la hauteur d'un personnage en
+  // pointillé dès qu'on la dépasse, et les deux lectures (« 3 personnages de
+  // haut », « l'image revient en 192 carrés de côté »). Seules les couleurs
+  // passent au papier, et la case fait 34 — un écart déclaré — là où l'ancien
+  // écrivait 56 sans l'avoir déclaré nulle part. L'essai est dans
+  // `Retouche.test.tsx`.
+  //
+  // ⚠️ **Le compte des crans qui changent l'image, lui, reste perdu** :
+  // `mesures.crans_occupation` n'est lu par aucun écran. Noté dans
   // `docs/PLAN-carnet.md` § `B27`.
 
 
@@ -11150,14 +11161,14 @@ describe("le châssis des tables", () => {
   // `tests/test_u10.py`, et le défaut de la pipette est reproduit et chiffré
   // dans le banc `essais/essai_pipette_seconde.py`.
 
-  // ⚠️ **Masquer une passe est parti avec l'ancien écran** (`B25`), et avec
-  // lui quatre essais. Son détourage portait un interrupteur par passe —
-  // *passe 2 — visible* / *masquée* —, gardait ses réglages sous les yeux,
-  // remontrait la passe dès qu'on touchait un de ses curseurs, et faisait du
-  // nom de la passe la poignée de son explication. La chaîne redessinée sait
-  // ajouter et retirer une passe ; elle ne sait pas en masquer une, alors que
-  // `Passe.masquee` existe toujours dans le domaine et que le traitement en
-  // tient compte. Noté dans `docs/PLAN-carnet.md` § `B27`.
+  // ✅ **Masquer une passe est rattrapé** (`B26`, 9 septembre 2026). Le geste
+  // était parti avec l'ancien écran en `B25`, et avec lui quatre essais.
+  // `ReglagesDuDetourage` (`Retouche.tsx`) porte maintenant l'interrupteur par
+  // passe — `role="switch"`, `aria-checked`, le libellé *passe N — masquée* /
+  // *visible* —, garde ses réglages lisibles et grisés plutôt que cachés, et
+  // tient la règle U10 : toucher un réglage remontre la passe, `masquee`
+  // repartant à `false` avec la valeur touchée. Les essais sont dans
+  // `Retouche.test.tsx`.
 
 
 
@@ -11326,13 +11337,14 @@ describe("le châssis des tables", () => {
   // les modèles valent l'un contre l'autre vit dans le banc gratuit
   // `essais/essai_moteurs_silhouette.py`.
 
-  // ⚠️ **Le catalogue des modèles de détourage est parti avec l'ancien écran**
-  // (`B25`), et avec lui quatre essais. Le moteur `modele` reste choisissable
-  // dans la chaîne redessinée, mais *lequel* ne se choisit plus : le catalogue
-  // servi par le serveur — *rapide*, *le meilleur sur les silhouettes
-  // difficiles*, le poids annoncé avant le téléchargement, le défaut du produit
-  // quand rien n'est écrit — n'a pas déménagé. `Passe.modele` part donc
-  // toujours vide. Noté dans `docs/PLAN-carnet.md` § `B27`.
+  // ✅ **Le catalogue des modèles de détourage est rattrapé** (`B26`,
+  // 9 septembre 2026). Il était parti avec l'ancien écran en `B25`, et avec
+  // lui quatre essais. `ReglagesDuDetourage` (`Retouche.tsx`) reprend les
+  // mêmes phrases que `BlocPasse` : le titre de chaque modèle et sa note, le
+  // côté auquel il infère avec sa licence (`D4`), le poids annoncé avant le
+  // téléchargement, et le défaut du serveur quand rien n'est écrit. Choisir un
+  // modèle pose `{ modele }` dans la passe — `Passe.modele` ne part plus
+  // vide. L'essai est dans `Retouche.test.tsx`.
 
 
 
@@ -11655,21 +11667,26 @@ describe("le contour et la main", () => {
     expect((pose!.corps as { contours: Contour }).contours.position).toBe("interne")
   })
 
-  // ⚠️ **Deux essais du contour sont partis avec l'ancien écran** (`B25`), et
-  // ce sont deux pièces que la chaîne redessinée ne reprend pas :
+  // ✅ **Les deux essais du contour partis avec l'ancien écran** (`B25`) **ont
+  // retrouvé ce qu'ils mesuraient** (`B26`, 9 septembre 2026) :
   //
-  // - *« la position dit ce qu'elle fait aux dimensions »* — l'ancien panneau
-  //   écrivait « la silhouette grandit de 2 px » / « la boîte ne bouge pas » à
-  //   chaque cran. Le neuf n'écrit la croissance que quand une case du jeu est
-  //   posée, et sous une autre forme : « la case du jeu fait 64 px, le fichier
-  //   qui sort en fera 66 ».
+  // - *« la position dit ce qu'elle fait aux dimensions »* — le poste du
+  //   contour écrit la croissance **avec case posée comme sans** : « la case du
+  //   jeu fait 64 px, le fichier qui sort en fera 66 » d'un côté, « la
+  //   silhouette grandit de 2 px sur chaque dimension » / « la boîte ne bouge
+  //   pas — le sujet est mangé de l'épaisseur » de l'autre.
   // - *« la palette se propose, et une couleur hors palette se marque »* — la
-  //   provenance de la couleur (`proposé, d'après ta palette`, `hors palette`)
-  //   n'est écrite nulle part dans le panneau neuf.
+  //   couleur du contour passe par `ChoixDeCouleur` (`Retouche.tsx`), la pièce
+  //   que les autres postes emploient déjà : les pastilles de la palette
+  //   entière, le champ hexadécimal, la marque `dans la palette` /
+  //   `hors palette`, et *proposé, d'après ta palette · la plus sombre* tant
+  //   que rien n'est posé.
   //
-  // Les deux sont notées dans `docs/PLAN-carnet.md` § `B27`, avec le reste de
-  // ce que le déménagement laisse derrière. Les rejouer ici aurait demandé de
-  // mesurer une phrase que personne n'affiche.
+  // ⚠️ **Trois critères déjà cochés de `D4` ne tenaient plus que par l'ancien
+  // panneau** — le choix de couleur entier, la marque *hors palette*, l'unité
+  // de l'épaisseur. `tests/test_d4.py` les mesure maintenant sur
+  // `Retouche.tsx`, et les essais de comportement sont dans
+  // `Retouche.test.tsx`.
 
   // ── « Les passages s'empilent en calques nommables, masquables et
   //     réordonnables » ──────────────────────────────────────────────────────
@@ -18419,10 +18436,13 @@ describe("une table s'éteint, et ça se voit", () => {
     await waitFor(() =>
       expect(recettesPosees(appels).at(-1)?.grille?.methode).toBe("vote"),
     )
-    // ⚠️ **Ce que chaque méthode rend n'est plus écrit sous les segments**
-    // (`B25`) : l'ancien panneau disait « un pixel sur N gardé », « contour net
-    // et intérieur lisible ». La chaîne redessinée ne porte que les libellés.
-    // Noté dans `docs/PLAN-carnet.md` § `B27`.
+    // ✅ **Ce que chaque méthode rend est réécrit sous les segments** (`B26`,
+    // 9 septembre 2026). La phrase était partie avec l'ancien écran en `B25` ;
+    // `CE_QUE_LA_METHODE_REND` est rendu sous les crans de *façon de réduire*
+    // dans `ReglagesDeLaGrille` (`Retouche.tsx`) — « un pixel sur N gardé »,
+    // « contour net et intérieur lisible ». Un libellé de trois mots ne dit pas
+    // ce qu'on gagne et ce qu'on perd, et c'est ce qui départage les quatre.
+    // L'essai est dans `Retouche.test.tsx`.
   })
 
   // ── « L'interrupteur l'éteint ; recliquer la rallume » ─────────────────────
