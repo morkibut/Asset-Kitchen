@@ -1836,3 +1836,14 @@ la prochaine réécriture retrouvera.
   l'appelait déjà sans lui. Trouvé au relevé, avant d'écrire une ligne côté écran, et rejoué en
   essai (`test_un_clip_peu_actif_ne_se_fait_pas_chasser_par_un_autre_jeu`) plutôt que constaté au
   navigateur. Payé le 8 septembre 2026, en `B22`.
+- **`Get-Content` puis `Set-Content` réécrit un fichier français en charabia.** Couper la queue
+  d'un fichier source paraît anodin — lire les lignes, en garder les 2 097 premières, réécrire.
+  Dans Windows PowerShell 5.1, `Get-Content` décode en page de codes ANSI et `Set-Content
+  -Encoding utf8` réencode **avec** une marque d'ordre d'octets : `déménagé` devient
+  `dÃ©mÃ©nagÃ©`, `—` devient `â€"`, et un `git diff` annonce 548 lignes changées là où on en
+  attendait dix. Rien ne lève : le fichier reste du TypeScript valide, et l'accent est faux dans
+  toutes les phrases du produit. ⚠️ **Aucun outil PowerShell ne doit toucher au contenu d'un
+  fichier source de ce dépôt** — `Edit`/`Write` pour une modification, et `head -n N fichier >
+  copie && mv` sous Git Bash pour une coupe, qui travaille en octets et ne décode rien. La
+  parade quand c'est déjà arrivé : `git checkout -- <fichier>` et refaire, plutôt que corriger
+  les accents un à un. Payé le 9 septembre 2026, en `B23`.
