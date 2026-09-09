@@ -198,7 +198,6 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
       vestiaire={null}
       dossierJeu={dossierJeu}
       barreQuiPaie={<div data-barre-qui-paie />}
-      outil={null}
       {...rappels}
     />,
   )

@@ -134,21 +134,28 @@ export type Lieu =
   // retrouve la page qu'on avait ouverte, pas la comparaison qu'on y faisait.
   | { genre: "grille"; sujet: string }
   | { genre: "comparer"; sujet: string }
-  | { genre: "case"; asset: string }
-  | { genre: "tables"; asset: string }
-  // La retouche (`B16`) — **la chaîne redessinée sur le papier du carnet**, une
-  // profondeur de plus de la page d'un sujet, atteinte depuis une de ses
-  // images. Elle porte les huit tables dans leur ordre, le trait, et les deux
-  // fabriques à droite de lui.
+  // La retouche (`B16`) — **la chaîne redessinée sur le papier du carnet** :
+  // les huit tables dans leur ordre, le trait, les deux fabriques à droite de
+  // lui, la colonne des sœurs.
   //
-  // ⚠️ **Elle double encore `"tables"`, mais moins qu'avant** — exactement ce
-  // que `B10` a fait de la matrice. Les quatre surfaces où l'on désigne un
-  // endroit de l'image ont déménagé le 9 septembre 2026 (`B23`) : la pipette,
-  // la forme entourée, le pinceau et le cadre de recadrage se posent
-  // aujourd'hui depuis la retouche seule, et `Tables.tsx` les lui emprunte.
-  // L'écran de l'ancien châssis garde encore deux locataires que celui-ci ne
-  // reprend pas : le cadre de la découpe monté à l'intérieur, et la colonne
-  // des sœurs. Il s'en ira quand ils auront déménagé à leur tour, en `B24`.
+  // **Un seul genre pour cet écran, depuis `B25`.** Ils étaient trois —
+  // `"case"` (une image ouverte dans la page d'un sujet), `"tables"` (une image
+  // ouverte depuis la galerie) et celui-ci —, c'est-à-dire trois façons
+  // d'arriver au même endroit et trois branches où oublier une condition. C'est
+  // la panne exacte que `B0` a payée sur `decoupeOuverte` : sept écritures à
+  // `null` et pas une porte. `App.tsx` n'a plus qu'**un seul chemin
+  // d'écriture** pour lui — `ouvrirLaRetouche` — et les six portes du produit
+  // passent toutes par là.
+  //
+  // ⚠️ **Il s'entre depuis les deux racines**, `galerie` comme `codex`. L'asset
+  // suffit à le dire : une image de la galerie n'appartient à aucune chose du
+  // jeu, et c'est la pile qui porte alors la racine — pas un second genre. Ce
+  // qu'on affiche à sa place se relit dans les deux endroits, la charge du
+  // sujet ouvert d'abord, la grille de la galerie ensuite.
+  //
+  // ⚠️ **La table ouverte n'est pas ici** (§ *Ce qui n'est pas un lieu*, en
+  // tête de ce fichier) : c'est un état de l'écran, qu'on choisit sans avoir
+  // descendu un étage.
   | { genre: "retouche"; asset: string }
   | { genre: "clip"; cible: CibleDuClip }
   | { genre: "montage"; clip: string }

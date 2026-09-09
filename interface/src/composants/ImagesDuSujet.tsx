@@ -44,7 +44,7 @@
  * critère tenu par construction plutôt que par une position calculée.
  */
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   api,
   type Asset,
@@ -435,6 +435,7 @@ export function ImagesDuSujet({
   pieces,
   onArmer,
   onOuvrirCase,
+  onRegardee,
   onEcarter,
   onErreur,
 }: {
@@ -451,6 +452,11 @@ export function ImagesDuSujet({
     directions?: string[] | null,
   ) => void
   onOuvrirCase: (identifiant: string) => void
+  /** **L'image du volet, dite à la page qui porte cet onglet** (`B25`) — celle
+   *  qu'on regarde. Le bouton *La retouche ›* vit dans le bandeau, au-dessus
+   *  des onglets, et il n'a aucun autre moyen de savoir laquelle des douze est
+   *  sous les yeux. Optionnelle : cet onglet se rend seul dans ses essais. */
+  onRegardee?: (identifiant: string | null) => void
   /** **Écarter passe par `App`**, comme dans la matrice d'avant : c'est lui qui
    *  rend le bandeau « la rendre », et un second chemin de mise à l'écart aurait
    *  été un second endroit d'où l'on jette sans pouvoir défaire. */
@@ -504,6 +510,14 @@ export function ImagesDuSujet({
       null
     )
   }, [personnage.cases, choisie, parPose, poseOuverte])
+
+  // **Ce que le volet montre monte d'un cran** (`B25`) — voir `onRegardee`.
+  // Sur l'identifiant seul : l'objet change d'identité à chaque relecture de la
+  // charge, et le dire à chaque rendu ferait courir la page pour rien.
+  const vue = image?.identifiant ?? null
+  useEffect(() => {
+    onRegardee?.(vue)
+  }, [vue, onRegardee])
 
   /** Les calques de **cette image-là**, jamais ceux de sa pose.
    *

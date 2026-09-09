@@ -3766,6 +3766,28 @@ async function ouvrirLEtabli(nom?: string) {
   return within(cadre)
 }
 
+/** **Le nom d'une table à l'écran, depuis la clé que le domaine écrit** (`B25`).
+ *
+ *  La retouche porte le vocabulaire des planches — *Détourer*, *Nettoyer*,
+ *  *Pixéliser* — là où l'ancien écran reprenait la clé de la recette. Les
+ *  essais désignent la clé, qui ne bouge pas : c'est elle qui voyage dans la
+ *  recette, et la traduire une fois ici évite de la réécrire à quarante
+ *  endroits le jour où un nom d'écran change. */
+const NOM_DE_LA_TABLE_A_L_ECRAN: Record<string, string> = {
+  détourage: "Détourer",
+  recadrage: "Recadrer",
+  grille: "Pixéliser",
+  quantification: "Couleurs",
+  bords: "Nettoyer",
+  contours: "Le contour",
+  retournement: "Retourner",
+  "la main": "La main",
+  découpage: "Découper",
+  superposition: "Superposer",
+}
+
+const nomDeLaTable = (cle: string) => NOM_DE_LA_TABLE_A_L_ECRAN[cle] ?? cle
+
 /** Une rubrique de la colonne du codex — les poses, l'équipement, une famille.
  *
  *  Les deux listes que le jeu impose à plusieurs — le plan de poses, le
@@ -4431,19 +4453,21 @@ describe("le slicer et le zoom de la grille", () => {
     // **`Découper` a quitté la fiche** (E3, E4) : c'est une fabrique de la
     // barre des tables, et la fiche y mène par sa seconde porte.
     fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
-    fireEvent.click(await screen.findByRole("button", { name: /^découpage/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /^Découper/ }))
     return double
   }
 
   test("découper part de la fiche, montre ce qui sortira, et se corrige à la main", async () => {
     const { appels } = await ouvrirLaDecoupe()
 
-    // **On est descendu d'un étage dans la galerie**, et le fil le dit. Il n'y
-    // a plus de titre d'écran à chercher : le nom de l'outil est le dernier
-    // segment du fil, et l'écran n'en porte pas d'autre.
+    // **On est descendu d'un étage dans la galerie**, et le fil le dit — *La
+    // retouche* depuis `B25` : les trois genres de lieu de cet écran n'en font
+    // plus qu'un, et la table ouverte est un état de l'écran, pas une
+    // profondeur de la pile. La fabrique, elle, se lit sur sa puce enfoncée.
+    expect((await screen.findAllByText("La retouche")).length).toBeGreaterThan(0)
     expect(
-      (await screen.findAllByText("découpage")).length,
-    ).toBeGreaterThan(0)
+      screen.getByRole("button", { name: "Découper" }).getAttribute("aria-pressed"),
+    ).toBe("true")
     expect(screen.getByText("2 rectangles")).toBeTruthy()
     expect(screen.getByRole("button", { name: "Découper en 2 assets" })).toBeTruthy()
 
@@ -9094,18 +9118,22 @@ describe("les trois onglets", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
 
     const fil = within(await screen.findByRole("navigation", { name: "Où l'on est" }))
-    // Quatre segments : le jeu, l'onglet, l'image, l'outil. C'est la forme
+    // Quatre segments : le jeu, l'onglet, l'image, l'écran. C'est la forme
     // courte — celle d'une image atteinte par la galerie, qui n'appartient pas
     // forcément à une chose du jeu et n'a traversé aucune famille.
+    //
+    // **Le dernier segment est *La retouche* et non la table ouverte** (`B25`) :
+    // les trois genres de lieu de cet écran n'en font plus qu'un, et la table
+    // est un état de l'écran, pas une profondeur de la pile.
     expect(fil.getByText("Bac à sable")).toBeTruthy()
     expect(fil.getByText("Galerie")).toBeTruthy()
     expect(fil.getByText("tonneau-cerclé-02")).toBeTruthy()
-    expect(fil.getByText("détourage")).toBeTruthy()
+    expect(fil.getByText("La retouche")).toBeTruthy()
 
     // **Le dernier segment ne ramène nulle part** : c'est l'étage où l'on est,
     // et c'est ce qui le rend lisible comme la fin du fil.
-    expect(fil.queryByRole("button", { name: "détourage" })).toBeNull()
-    expect(fil.getByText("détourage").getAttribute("aria-current")).toBe("page")
+    expect(fil.queryByRole("button", { name: "La retouche" })).toBeNull()
+    expect(fil.getByText("La retouche").getAttribute("aria-current")).toBe("page")
 
     // Les autres ramènent. Celui de l'onglet remonte d'un étage — et la
     // galerie n'a pas de fil, parce qu'on n'y est descendu nulle part.
@@ -10047,9 +10075,9 @@ describe("le codex et l'établi", () => {
       await screen.findByRole("button", { name: "Ouvrir le nain, au repos dans son outil" }),
     )
 
-    // L'outil remplace la matrice, il ne se pose pas dessus : c'est la
+    // La retouche remplace la page, elle ne se pose pas dessus : c'est la
     // profondeur suivante du même endroit, et le fil la dit.
-    expect(await screen.findByRole("button", { name: /^détourage/ })).toBeTruthy()
+    expect(await screen.findByRole("button", { name: /^Détourer/ })).toBeTruthy()
     const fil = within(
       await screen.findByRole("navigation", { name: "Où l'on est" }),
     )
@@ -10060,12 +10088,18 @@ describe("le codex et l'établi", () => {
       screen.queryByPlaceholderText("Décris ce que tu veux fabriquer."),
     ).toBeNull()
 
-    // Et l'onglet n'a pas bougé — on revient à l'établi par le fil.
+    // Et l'onglet n'a pas bougé — on revient par le fil.
     expect(
       leLieu("Codex").getAttribute("aria-selected"),
     ).toBe("true")
     fireEvent.click(fil.getByRole("button", { name: "Le nain" }))
-    expect(await screen.findByRole("button", { name: "Fabriquer marche" })).toBeTruthy()
+    // **On revient dans la matrice, d'où l'on venait** (`B25`). L'ancien écran
+    // se montait *dans* cette page, en volet, et la matrice restait derrière ;
+    // la retouche prend la surface entière et démonte la page. La matrice n'est
+    // pas un lieu (`lieux.ts`, § *Ce qui n'est pas un lieu*) et ne s'écrit pas
+    // dans la pile : c'est `App.tsx` qui la tient, le temps d'un aller-retour,
+    // pour que remonter d'un cran revienne là d'où l'on vient.
+    expect(await screen.findByRole("button", { name: "‹ Sa page" })).toBeTruthy()
     expect(await champDePrompt()).toBeTruthy()
   })
 
@@ -10188,9 +10222,9 @@ describe("le châssis des tables", () => {
     )
     const cadre = within(
       await waitFor(() => {
-        const tables = document.querySelector("[data-tables]")
-        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
-        return tables as HTMLElement
+        const ecran = document.querySelector("[data-retouche]")
+        if (!ecran) throw new Error("la retouche ne s'est pas ouverte")
+        return ecran as HTMLElement
       }),
     )
     return { ...double, cadre }
@@ -10216,16 +10250,16 @@ describe("le châssis des tables", () => {
     )
     const cadre = within(
       await waitFor(() => {
-        const tables = document.querySelector("[data-tables]")
-        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
-        return tables as HTMLElement
+        const ecran = document.querySelector("[data-retouche]")
+        if (!ecran) throw new Error("la retouche ne s'est pas ouverte")
+        return ecran as HTMLElement
       }),
     )
     return { ...double, cadre }
   }
 
   const puce = (cadre: ReturnType<typeof within>, nom: string) =>
-    cadre.getByRole("button", { name: new RegExp(`^${nom}`) })
+    cadre.getByRole("button", { name: new RegExp(`^${nomDeLaTable(nom)}`) })
 
   // ── M7 · Promouvoir un détourage en défaut du projet ──────────────────────
   //
@@ -10357,7 +10391,7 @@ describe("le châssis des tables", () => {
     // « pas de contrôle » vaut mieux qu'un contrôle qui ne fait rien.
     const { cadre } = await ouvrirUneTable()
 
-    await cadre.findByRole("button", { name: "+ une passe" })
+    await cadre.findByRole("button", { name: "Une passe de plus" })
     expect(
       cadre.queryByRole("button", {
         name: /enregistrer ce réglage comme défaut du projet/,
@@ -10462,7 +10496,9 @@ describe("le châssis des tables", () => {
       "la main",
       "découpage",
       "superposition",
-    ].map((nom) => barre.findIndex((t) => t.startsWith(nom)))
+      // Les clés du domaine, traduites une fois au vocabulaire des planches
+      // (`B25`) : c'est l'ordre qu'on mesure, pas les mots.
+    ].map((nom) => barre.findIndex((t) => t.startsWith(nomDeLaTable(nom))))
     expect(rangs.every((r) => r >= 0)).toBe(true)
     expect([...rangs].sort((a, b) => a - b)).toEqual(rangs)
   })
@@ -10486,9 +10522,9 @@ describe("le châssis des tables", () => {
 
     // `ajusté` est l'état d'ouverture : c'est le seul réglage qui suive le
     // cadre, donc le seul qui puisse être juste avant qu'on ait regardé.
-    expect(cadre.getByRole("button", { name: "ajusté" }).className).toContain(
-      "border-ancien-signal",
-    )
+    expect(
+      cadre.getByRole("button", { name: "ajusté" }).getAttribute("aria-pressed"),
+    ).toBe("true")
 
     // Quatre commandes, et chacune fait une seule chose.
     expect(cadre.getByRole("button", { name: "Approcher" })).toBeTruthy()
@@ -10504,15 +10540,19 @@ describe("le châssis des tables", () => {
   test("cent pour cent rend un pixel d'image pour un pixel d'écran", async () => {
     const { cadre } = await ouvrirUneTable()
 
-    // La boîte porte le zoom, et elle seule : tout ce qui se rend au milieu la
-    // remplit — l'image seule, les deux côte à côte, la surface qui se peint —,
-    // donc aucune de ces trois surfaces n'a son propre calcul.
-    const boite = () =>
-      document.querySelector("[data-boite-image]") as HTMLElement
+    // **L'image porte le zoom, et elle seule** : tout ce qui se rend au milieu
+    // suit le même facteur — l'image seule, les deux côte à côte, la surface
+    // qui se peint —, donc aucune de ces trois surfaces n'a son propre calcul.
+    // **L'image de la scène, et non la vignette d'une sœur** : les deux portent
+    // le même libellé, et seule la première porte le grossissement.
+    const image = () =>
+      document.querySelector(
+        "[data-scene-de-retouche] img",
+      ) as HTMLImageElement
 
     fireEvent.click(cadre.getByRole("button", { name: "100 %" }))
-    expect(boite().style.width).toBe("1024px")
-    expect(boite().style.height).toBe("1024px")
+    expect(image().getAttribute("width")).toBe("1024")
+    expect(image().getAttribute("height")).toBe("1024")
 
     // Le pour cent s'écrit à la main, et il agit.
     const champ = cadre.getByLabelText(
@@ -10520,7 +10560,7 @@ describe("le châssis des tables", () => {
     ) as HTMLInputElement
     fireEvent.change(champ, { target: { value: "37" } })
     fireEvent.keyDown(champ, { key: "Enter" })
-    expect(boite().style.width).toBe("379px")
+    await waitFor(() => expect(image().getAttribute("width")).toBe("379"))
   })
 
   test("un pour cent hors bornes est ramené, jamais refusé", async () => {
@@ -10557,32 +10597,11 @@ describe("le châssis des tables", () => {
     expect(Number(champ.value)).toBeLessThan(100)
   })
 
-  test("le PNG de l'état courant se télécharge depuis la table", async () => {
-    // **Il n'existait qu'un seul endroit pour télécharger une image**, la tuile
-    // de la galerie, et on ne l'atteignait pas d'ici. Le fichier reçu est celui
-    // qu'on voyait : le rendu quand on regarde le rendu, le brut sinon.
-    const { cadre } = await ouvrirUneTable()
-
-    const lien = cadre.getByRole("link", { name: /^PNG ↓$/ }) as HTMLAnchorElement
-    expect(lien.getAttribute("href")).toContain("/download?brut=false")
-    expect(lien.getAttribute("download")).toMatch(/\.png$/)
-    // **Habillé en bouton, et c'est tout ce qui manquait.** Son libellé était
-    // en JetBrains Mono 10 px dans `--texte-2` — l'habit exact des mesures de
-    // la bande. Dans une bande où sept éléments sur huit sont des faits en
-    // mono, un huitième fait en mono ne se lit pas comme un geste.
-    expect(lien.className).toContain("text-[11.5px]")
-    expect(lien.className).toContain("bg-fond-2")
-    expect(lien.className).not.toContain("mesure")
-
-    fireEvent.click(cadre.getByRole("button", { name: "brut" }))
-    // **Le nom du bouton ne bouge plus** : c'est son infobulle qui nomme ce
-    // qu'il emporte, parce qu'un geste dont le libellé change de longueur
-    // décale tout ce qui est à côté de lui dans une bande qui ne grandit pas.
-    const brut = cadre.getByRole("link", { name: /^PNG ↓$/ }) as HTMLAnchorElement
-    expect(brut.getAttribute("href")).toContain("/download?brut=true")
-    expect(brut.getAttribute("download")).toContain("-brut")
-    expect(brut.getAttribute("title")).toContain("l'image d'origine")
-  })
+  // ⚠️ **Le PNG de l'état courant est parti avec l'ancien écran** (`B25`). Sa
+  // bande portait un lien *PNG ↓* qui téléchargeait ce qu'on regardait — le
+  // rendu, ou le brut quand on travaillait dessus. La chaîne redessinée n'en a
+  // pas, et la tuile de la galerie redevient le seul endroit d'où l'on
+  // télécharge. Noté dans `docs/PLAN-carnet.md` § `B27`.
 
   // ── « Le carré d'une place est plein si et seulement si la place change
   //     l'image » ─────────────────────────────────────────────────────────────
@@ -10600,10 +10619,13 @@ describe("le châssis des tables", () => {
     }
     const { cadre } = await ouvrirUneTable({}, [image])
 
-    // Le recadrage n'a pas de valeur à montrer : carré creux.
-    expect(puce(cadre, "recadrage").textContent).toBe("recadrage")
-    // Les bords en ont une : carré plein, et la valeur avec.
-    expect(puce(cadre, "bords").textContent).toContain("tache 4 px")
+    // Le recadrage n'a pas de valeur à montrer : pastille creuse.
+    expect(puce(cadre, "recadrage").getAttribute("data-etat")).toBe("vide")
+    // Les bords en ont une : pastille pleine, et la valeur se lit sous le nom
+    // de la table une fois qu'on l'ouvre (`B25`).
+    expect(puce(cadre, "bords").getAttribute("data-etat")).toBe("posee")
+    fireEvent.click(puce(cadre, "bords"))
+    expect(await cadre.findByText(/tache 4 px/)).toBeTruthy()
   })
 
   // ── « Une table indisponible s'ouvre, et son panneau porte la raison en
@@ -10641,10 +10663,10 @@ describe("le châssis des tables", () => {
   test("une fabrique n'a pas de carré, et les deux s'ouvrent en plein cadre", async () => {
     const { cadre } = await ouvrirUneTable()
 
-    // **Les deux gestes de droite n'ont pas de carré** : ils ne posent rien sur
-    // l'image courante, ils en fabriquent d'autres.
-    expect(puce(cadre, "découpage").textContent).toBe("découpage")
-    expect(puce(cadre, "superposition").textContent).toBe("superposition")
+    // **Les deux gestes de droite n'ont pas de pastille** : ils ne posent rien
+    // sur l'image courante, ils en fabriquent d'autres.
+    expect(puce(cadre, "découpage").querySelector("[data-pastille]")).toBeNull()
+    expect(puce(cadre, "superposition").querySelector("[data-pastille]")).toBeNull()
 
     fireEvent.click(puce(cadre, "superposition"))
     expect(await cadre.findByText("les deux images")).toBeTruthy()
@@ -10662,9 +10684,12 @@ describe("le châssis des tables", () => {
     // ensemble.
     // Les deux libellés sont courts — la bande fait 38 px et ne grandit pas —,
     // et ils partent avant les gestes quand la place manque.
-    expect(cadre.getByText("sur")).toBeTruthy()
-    expect(cadre.getByText("témoin")).toBeTruthy()
-    for (const nom of ["brut", "rendu", "aucun", "à côté", "par-dessus"]) {
+    // ⚠️ **Les deux étiquettes « sur » et « témoin » ne sont pas écrites**
+    // dans la chaîne redessinée (`B25`) : ce sont deux groupes de boutons
+    // voisins, et chacun porte sa valeur allumée.
+    expect(document.querySelector("[data-travail]")).toBeTruthy()
+    expect(document.querySelector("[data-temoin]")).toBeTruthy()
+    for (const nom of ["Brut", "Rendu", "Aucun", "À côté", "Par-dessus"]) {
       expect(cadre.getByRole("button", { name: nom }), nom).toBeTruthy()
     }
 
@@ -10674,15 +10699,15 @@ describe("le châssis des tables", () => {
     // **Le seul état durable qui change ce qu'un outil touche** se dit en
     // ambre. Le témoin, lui, ne se redit pas : son contrôle porte déjà sa
     // valeur, et la répéter serait du bruit.
-    fireEvent.click(cadre.getByRole("button", { name: "brut" }))
+    fireEvent.click(cadre.getByRole("button", { name: "Brut" }))
     expect(await cadre.findByText("on travaille sur le brut")).toBeTruthy()
 
-    fireEvent.click(cadre.getByRole("button", { name: "à côté" }))
+    fireEvent.click(cadre.getByRole("button", { name: "À côté" }))
     expect(cadre.queryByText(/on regarde/)).toBeNull()
 
     // Et revenir au rendu fait taire la phrase : un état durable qu'on oublie
     // est le danger ; le dire est ce qui autorise à le rendre durable.
-    fireEvent.click(cadre.getByRole("button", { name: "rendu" }))
+    fireEvent.click(cadre.getByRole("button", { name: "Rendu" }))
     await waitFor(() =>
       expect(cadre.queryByText("on travaille sur le brut")).toBeNull(),
     )
@@ -10703,7 +10728,7 @@ describe("le châssis des tables", () => {
     const surface = () => document.querySelector("[data-cadre-recadrage]")
     await waitFor(() => expect(surface()).toBeTruthy())
 
-    for (const temoin of ["à côté", "par-dessus"]) {
+    for (const temoin of ["À côté", "Par-dessus"]) {
       fireEvent.click(cadre.getByRole("button", { name: temoin }))
       await waitFor(() => expect(surface(), temoin).toBeTruthy())
     }
@@ -10711,7 +10736,12 @@ describe("le châssis des tables", () => {
     // **Le témoin par-dessus est un calque de lecture** : le curseur le
     // traverse, et le geste tombe sur l'image de travail. Une image posée
     // par-dessus qui intercepte les clics serait le défaut d'hier déguisé.
-    const dessus = cadre.getByAltText(/témoin/)
+    //
+    // On le mesure sur une table sans surface — quand une surface est posée,
+    // c'est elle qui prend la place de l'image, et le calque n'a plus d'image à
+    // doubler.
+    fireEvent.click(puce(cadre, "bords"))
+    const dessus = await cadre.findByAltText(/témoin/)
     expect(dessus.className).toContain("pointer-events-none")
   })
 
@@ -10725,13 +10755,13 @@ describe("le châssis des tables", () => {
     const { cadre } = await ouvrirUneTable({}, images)
 
     fireEvent.click(puce(cadre, "grille"))
-    expect(await cadre.findByText("cible")).toBeTruthy()
+    expect(await cadre.findByText("taille de case")).toBeTruthy()
 
     // On change d'image dans la colonne des sœurs…
     fireEvent.click(cadre.getByRole("button", { name: "le nain, de dos" }))
     // …et la table est toujours celle qu'on avait ouverte. C'est le geste qui
     // distingue une table d'un panneau : on règle la même place sur six images.
-    expect(await cadre.findByText("cible")).toBeTruthy()
+    expect(await cadre.findByText("taille de case")).toBeTruthy()
   })
 
   // ── « Vider une place et vider la recette entière sont deux gestes distincts,
@@ -10747,16 +10777,16 @@ describe("le châssis des tables", () => {
     const { cadre, appels } = await ouvrirUneTable({}, [image])
 
     fireEvent.click(puce(cadre, "bords"))
-    // Le pied de la table ne touche qu'elle.
-    fireEvent.click(await cadre.findByRole("button", { name: "Sans bords ›" }))
-    await waitFor(() =>
-      expect(appels.some((a) => a.url.includes("/recipe"))).toBe(true),
-    )
+    // ⚠️ **Le pied de colonne qui vide une seule place est parti avec l'ancien
+    // écran** (`B25`) : *Sans bords ›*, et ses huit sœurs. Endormir une place
+    // existe dans la chaîne redessinée — son interrupteur —, la **vider** n'y
+    // existe nulle part, et les deux gestes ne sont pas le même. Noté dans
+    // `docs/PLAN-carnet.md` § `B27`.
+    await cadre.findByText("tache minimale")
 
-    // `tout défaire` vit au bout de la barre, pas dans l'en-tête d'une table :
-    // il y mentait sur sa portée. Il passe par une autre route — celle du
-    // retour au brut, qui vide la recette entière.
-    fireEvent.click(cadre.getByRole("button", { name: /tout défaire/ }))
+    // Vider la recette entière, elle, est toujours là : au pied de la colonne,
+    // et par la route du retour au brut.
+    fireEvent.click(cadre.getByRole("button", { name: "Revenir au brut" }))
     await waitFor(() =>
       expect(appels.some((a) => a.url.includes("/reset"))).toBe(true),
     )
@@ -10772,19 +10802,15 @@ describe("le châssis des tables", () => {
     const { cadre, appels } = await monterAvecQuantification()
 
     fireEvent.click(puce(cadre, "quantification"))
-    // **Deux sources de couleurs**, et le modèle les portait déjà : une palette
-    // vide veut dire *déduite de l'image elle-même*, ce qu'aucun écran n'avait
-    // jamais proposé.
-    fireEvent.click(await cadre.findByRole("button", { name: "l'image" }))
-    await waitFor(() => {
-      const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
-      expect((envoi?.corps as { quantification: { palette: string[] } }).quantification
-        .palette).toEqual([])
-    })
-
-    // Et le tramage, porté depuis T2 et jamais montré : sans lui un dégradé
-    // réduit à seize couleurs se pose en bandes.
-    fireEvent.click(cadre.getByRole("button", { name: "floyd" }))
+    // ⚠️ **Le choix de la source des couleurs — *la palette du jeu* ou
+    // *l'image* — n'est pas repris par la chaîne redessinée** (`B25`). Une
+    // palette vide veut toujours dire « déduite de l'image elle-même » côté
+    // domaine ; plus aucun écran ne la pose. Noté dans
+    // `docs/PLAN-carnet.md` § `B27`.
+    //
+    // Le tramage, lui, est là : sans lui un dégradé réduit à seize couleurs se
+    // pose en bandes.
+    fireEvent.click(await cadre.findByRole("button", { name: "diffusion" }))
     await waitFor(() => {
       const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
       expect((envoi?.corps as { quantification: { tramage: string } }).quantification
@@ -10816,13 +10842,13 @@ describe("le châssis des tables", () => {
     // de la barre restait creux. Le domaine dit zéro (`Bords.aire_min = 0`), et
     // `PanneauContours` lisait déjà zéro pour la même absence. *Un chiffre
     // affiché est un chiffre compté* : rien de posé, rien d'effacé.
-    expect(await cadre.findByText("0 tache effacée sur 3")).toBeTruthy()
-    // Triées de la plus petite à la plus grande — l'ordre du seuil.
-    const aires = within(cadre.getByRole("list")).getAllByText(/^\d+ px$/)
-      .map((n) => n.textContent)
-    expect(aires).toEqual(["1 px", "2 px", "900 px"])
-    // **Ce qui est coupé se dit**, jamais tu en silence.
-    expect(cadre.getByText(/12 taches de plus, non listées/)).toBeTruthy()
+    expect(
+      await cadre.findByText("zéro n'efface rien — 3 taches détachées sur cette image"),
+    ).toBeTruthy()
+    // ⚠️ **La liste des taches n'a pas déménagé** (`B25`) : l'ancien panneau
+    // les listait, triées de la plus petite à la plus grande, et disait
+    // combien étaient coupées de la liste. La chaîne redessinée n'écrit que le
+    // compte. Noté dans `docs/PLAN-carnet.md` § `B27`.
   })
 
   test("un seuil posé coupe la liste là où il tombe", async () => {
@@ -10856,148 +10882,36 @@ describe("le châssis des tables", () => {
   // ── « Le détourage propose les poches de fond enfermées, cerclées et
   //     comptées, et n'en efface aucune de lui-même » ─────────────────────────
 
-  test("le détourage compte les poches enfermées, et dit qu'il n'en efface aucune", async () => {
-    const { cadre, appels } = await ouvrirUneTable({
-      mesures: {
-        taches: [],
-        coupees: 0,
-        poches: [
-          { aire: 42, boite: [10, 10, 19, 19], couleur: "#203040", point: [12, 10] },
-          { aire: 4, boite: [30, 30, 31, 31], couleur: "#405060", point: [30, 30] },
-        ],
-        poches_total: 2,
-        crans_occupation: [],
-      },
-    })
+  // ⚠️ **Les poches de fond proposées une par une sont parties avec l'ancien
+  // écran** (`B25`). Son détourage les cerclait, les comptait, et offrait *la
+  // retirer ›* sur chacune — un geste qui posait une passe pipette de plus, sur
+  // un pixel de la poche. La chaîne redessinée les compte, sous la table
+  // *Nettoyer*, et les rebouche en bloc par un seuil ; elle ne les désigne
+  // plus une par une. Noté dans `docs/PLAN-carnet.md` § `B27`.
 
-    expect(await cadre.findByText(/2 poches de fond enfermées/)).toBeTruthy()
-
-    // **Le geste est une proposition, et elle vise un pixel de la poche** — pas
-    // le centre de sa boîte, qui tombe dans le sujet dès que la zone est courbe.
-    // Rien n'est effacé sans que la recette le dise : c'est une passe pipette
-    // de plus, qui s'annule comme les autres.
-    fireEvent.click(cadre.getAllByRole("button", { name: "la retirer ›" })[0])
-    await waitFor(() => {
-      const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
-      const passes = (envoi?.corps as { passes: Record<string, unknown>[] }).passes
-      expect(passes[passes.length - 1]).toMatchObject({
-        moteur: "couleur",
-        point: [12, 10],
-        portee: "tache",
-        masquee: false,
-        trace: [],
-        modele: "",
-      })
-    })
-
-    expect(
-      cadre.getByText(/le produit n'en efface aucune/),
-    ).toBeTruthy()
-  })
 
   // ── « Le curseur d'occupation ne s'arrête que là où l'image change, et dit
   //     sur combien de pixels il tombe » ──────────────────────────────────────
 
-  test("le curseur d'occupation dit ses crans et le nombre de pixels", async () => {
-    const { cadre } = await ouvrirUneTable({
-      mesures: {
-        taches: [],
-        coupees: 0,
-        poches: [],
-        crans_occupation: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-      },
-    })
+  // ⚠️ **L'échantillon de la hauteur est parti avec l'ancien écran** (`B25`) :
+  // le dessin qui montrait le sujet dans sa case, les deux lectures d'une même
+  // hauteur (« 3 personnages de haut », « l'image revient en 192 carrés de
+  // côté ») et le compte des crans qui changent l'image. La chaîne redessinée
+  // règle la hauteur à la glissière, sans échantillon. Noté dans
+  // `docs/PLAN-carnet.md` § `B27`.
 
-    fireEvent.click(puce(cadre, "grille"))
-    // **Un pour cent n'est pas une mesure** : ce que la hauteur décide est un
-    // nombre de carrés, et c'est ce nombre qu'on compare. Il est passé du texte
-    // des crans à l'échantillon, où il se lit à côté du dessin.
-    expect(
-      await cadre.findByText(/l'image revient en 64 carrés de côté/),
-    ).toBeTruthy()
-    expect(cadre.getByText(/100 % d'un personnage/)).toBeTruthy()
-    // **Le curseur ne s'arrête que là où l'image change**, et le compte des
-    // positions offertes suit maintenant le plafond de la case — 791 sur une
-    // case de 64 carrés, depuis que la hauteur peut monter à huit personnages.
-    expect(
-      cadre.getByText(/10 crans changent l'image, sur les 791 du curseur/),
-    ).toBeTruthy()
-  })
 
-  test("la hauteur d'une image peut dépasser le personnage, et le dit", async () => {
-    // **C'est la tranche des tailles**, et c'est ce qui rend un bâtiment
-    // fabricable : le curseur montait à 100 %, donc rien ne pouvait être plus
-    // haut qu'un personnage. À 300 % l'image revient en 192 carrés, et
-    // l'échantillon dit les deux lectures — trois personnages, 192 carrés.
-    const moulin = asset("bbbb2222-0", "le moulin")
-    const { cadre } = await ouvrirUneTable({}, [
-      {
-        ...moulin,
-        recette: {
-          ...moulin.recette,
-          grille: {
-            cible: 64,
-            occupation: 300,
-            ancrage: "bas" as const,
-            decalage: 0,
-            methode: "proche" as const,
-          },
-        },
-      },
-    ])
-
-    fireEvent.click(puce(cadre, "grille"))
-    expect(await cadre.findByText(/3 personnages de haut/)).toBeTruthy()
-    expect(cadre.getByText(/l'image revient en 192 carrés de côté/)).toBeTruthy()
-  })
 
   // ── « L'écran montre le pas retrouvé, et laisse l'imposer à la main quand la
   //     détection renonce » (D2, seconde moitié) ──────────────────────────────
 
-  test("la table de grille dit sur quels carrés le modèle a peint", async () => {
-    // **La table portait quatre réglages et ne disait pas sur quoi ils
-    // travaillaient.** Un dessin peint sur des carrés de 8 pixels ne rendra
-    // jamais 128 carrés propres, et rien à l'écran ne le disait. Le pas seul ne
-    // suffirait pas : la taille se règle en carrés, donc la mesure les compte.
-    const { cadre } = await ouvrirUneTable()
+  // ⚠️ **La grille retrouvée du modèle est partie avec l'ancien écran**
+  // (`B25`) : *carrés de 8 pixels · 128 de côté*, et la phrase du serveur quand
+  // la détection renonce sur une peinture. Le serveur la mesure toujours
+  // (`mesures.grille_du_modele`), et plus aucun écran ne la lit. Noté dans
+  // `docs/PLAN-carnet.md` § `B27`.
 
-    fireEvent.click(puce(cadre, "grille"))
-    expect(await cadre.findByText(/carrés de 8 pixels/)).toBeTruthy()
-    expect(cadre.getByText(/128 de côté/)).toBeTruthy()
-    expect(cadre.getByText(/plus de détail à récupérer/)).toBeTruthy()
-  })
 
-  test("sur une peinture, la table dit qu'elle renonce et la taille reste à la main", async () => {
-    // **Renoncer n'est pas une panne, c'est la bonne réponse.** Sur une
-    // peinture il n'y a aucune grille à retrouver, et la mesure d'avant
-    // répondait « 2 » en y croyant. La phrase vient du serveur telle quelle :
-    // c'est lui qui sait *pourquoi* il s'est tu.
-    const renonce =
-      "le modèle a peint une image lisse : il n'y a aucune grille à retrouver, " +
-      "c'est la taille demandée qui décide des carrés"
-    const { cadre } = await ouvrirUneTable({
-      mesures: {
-        grille_du_modele: {
-          pas: 0,
-          nettete: 0.94,
-          peigne: 0.03,
-          carres: 0,
-          // **Zéro quand la détection renonce**, et c'est sans conséquence :
-          // sans pas, personne ne lit la phase (D4).
-          phase: [0, 0],
-          raison: renonce,
-        },
-      },
-    })
-
-    fireEvent.click(puce(cadre, "grille"))
-    expect(await cadre.findByText(renonce)).toBeTruthy()
-    // Rien n'a disparu : les neuf crans de taille sont là, et c'est **la**
-    // réponse quand la détection se tait — la cible est demandée, jamais
-    // déduite de l'image reçue.
-    expect(cadre.getByRole("button", { name: "64" })).toBeTruthy()
-    expect(cadre.queryByText(/carrés de \d+ pixels/)).toBeNull()
-  })
 
   // ── « Le rectangle de recadrage se pose sur l'image » ──────────────────────
 
@@ -11007,8 +10921,7 @@ describe("le châssis des tables", () => {
     fireEvent.click(puce(cadre, "recadrage"))
     // Sans rectangle tracé, c'est la boîte du sujet qui décide, et la table
     // écrit ses coordonnées avec leur provenance — un constat, pas un réglage.
-    const provenance = await cadre.findByText(/mesurée sur l'alpha/)
-    expect(provenance.className).toContain("text-epingle")
+    expect(await cadre.findByText(/mesurée sur l'alpha/)).toBeTruthy()
 
     const toile = document.querySelector("[data-cadre-recadrage]") as HTMLElement
     expect(toile).toBeTruthy()
@@ -11185,10 +11098,10 @@ describe("le châssis des tables", () => {
     // défaut est le geste pour lequel la pipette a été admise : retirer un creux
     // de fond sans toucher au reste.
     const tache = await cadre.findByRole("button", { name: "cette tache" })
-    expect(tache.className).toContain("border-ancien-signal")
+    expect(tache.getAttribute("aria-pressed")).toBe("true")
     expect(
-      cadre.getByRole("button", { name: "partout" }).className,
-    ).not.toContain("border-ancien-signal")
+      cadre.getByRole("button", { name: "partout" }).getAttribute("aria-pressed"),
+    ).toBe("false")
   })
 
   test("le clic désarme la visée : regarder l'image ne déplace pas le point", async () => {
@@ -11237,133 +11150,18 @@ describe("le châssis des tables", () => {
   // `tests/test_u10.py`, et le défaut de la pipette est reproduit et chiffré
   // dans le banc `essais/essai_pipette_seconde.py`.
 
-  /** Une image dont la recette porte **deux** passes : un bord, puis une
-   *  pipette visée. C'est l'enchaînement par lequel le défaut est passé. */
-  const DEUX_PASSES = (masquee = false) => [
-    {
-      ...asset("bbbb2222-0", "le nain, au repos"),
-      recette: {
-        ...RECETTE_VIDE,
-        passes: [
-          {
-            moteur: "bord" as const,
-            tolerance: 8,
-            seuil_alpha: 128,
-            durcissement: 0,
-            point: null,
-            portee: "tache" as const,
-            masquee: false,
-            trace: [],
-            modele: "",
-          },
-          {
-            moteur: "couleur" as const,
-            tolerance: 20,
-            seuil_alpha: 128,
-            durcissement: 0,
-            point: [16, 32] as [number, number],
-            portee: "tache" as const,
-            masquee,
-            trace: [],
-            modele: "",
-          },
-        ],
-      },
-    },
-  ]
+  // ⚠️ **Masquer une passe est parti avec l'ancien écran** (`B25`), et avec
+  // lui quatre essais. Son détourage portait un interrupteur par passe —
+  // *passe 2 — visible* / *masquée* —, gardait ses réglages sous les yeux,
+  // remontrait la passe dès qu'on touchait un de ses curseurs, et faisait du
+  // nom de la passe la poignée de son explication. La chaîne redessinée sait
+  // ajouter et retirer une passe ; elle ne sait pas en masquer une, alors que
+  // `Passe.masquee` existe toujours dans le domaine et que le traitement en
+  // tient compte. Noté dans `docs/PLAN-carnet.md` § `B27`.
 
-  const derniereRecette = (appels: { url: string; corps?: unknown }[]) =>
-    (
-      appels.filter((a) => a.url.includes("/recipe")).pop()?.corps as {
-        passes: { masquee: boolean; tolerance: number }[]
-      }
-    )?.passes
 
-  test("chaque passe porte un interrupteur, et le masquer part au serveur", async () => {
-    const { cadre, appels } = await ouvrirUneTable(
-      { mesures: { visees: [null, "#2a2a2a"] } },
-      DEUX_PASSES(),
-    )
 
-    fireEvent.click(cadre.getByRole("switch", { name: "passe 2 — visible" }))
 
-    await waitFor(() => {
-      const passes = derniereRecette(appels)
-      if (!passes) throw new Error("la recette n'est pas partie")
-      // **Deux passes, toujours** : masquer n'en retire aucune. C'est le
-      // serveur qui refait l'image sans elle, l'écran ne recalcule rien.
-      expect(passes).toHaveLength(2)
-      expect(passes[1].masquee).toBe(true)
-      expect(passes[0].masquee).toBe(false)
-    })
-  })
-
-  test("masquer n'est pas retirer, et la passe garde tous ses réglages", async () => {
-    const { cadre } = await ouvrirUneTable(
-      { mesures: { visees: [null, "#2a2a2a"] } },
-      DEUX_PASSES(true),
-    )
-
-    // Le mot a changé de sens dans les deux directions : on remontre ce qu'on
-    // avait masqué, et « retirer » est toujours là, à côté, pour l'autre geste.
-    expect(
-      await cadre.findByRole("switch", { name: "passe 2 — masquée" }),
-    ).toBeTruthy()
-    expect(cadre.getAllByRole("button", { name: "retirer" })).toHaveLength(2)
-    expect(
-      cadre.getByText(/retirée du calcul, elle garde tous ses réglages/),
-    ).toBeTruthy()
-
-    // **Et ses réglages sont sous les yeux, pas cachés** : les cacher rendrait
-    // le masque impossible à défaire en connaissance de cause.
-    const tolerances = cadre.getAllByLabelText(
-      "tolérance, en chiffres",
-    ) as HTMLInputElement[]
-    expect(tolerances[1].value).toBe("20")
-  })
-
-  test("toucher un réglage d'une passe masquée la remontre", async () => {
-    // **La règle de la veille d'une table, un cran plus bas** : poser une
-    // valeur *dit* qu'on veut cette passe. Refuser le curseur obligerait à un
-    // geste préalable pour avoir le droit de faire le geste qu'on voulait.
-    const { cadre, appels } = await ouvrirUneTable(
-      { mesures: { visees: [null, "#2a2a2a"] } },
-      DEUX_PASSES(true),
-    )
-
-    const champ = (
-      cadre.getAllByLabelText("tolérance, en chiffres") as HTMLInputElement[]
-    )[1]
-    fireEvent.change(champ, { target: { value: "40" } })
-    fireEvent.keyDown(champ, { key: "Enter" })
-
-    await waitFor(() => {
-      const passes = derniereRecette(appels)
-      if (!passes) throw new Error("la recette n'est pas partie")
-      expect(passes[1].tolerance).toBe(40)
-      expect(passes[1].masquee).toBe(false)
-    })
-  })
-
-  test("la table dit ce qu'une passe fait de celle qui la précède", async () => {
-    // **Le comportement retenu est écrit là où la question se pose.** Elle se
-    // pose sur la passe — c'est en en ajoutant une seconde qu'on se demande sur
-    // quoi elle travaille —, donc le nom de la passe devient sa poignée.
-    const { cadre } = await ouvrirUneTable(
-      { mesures: { visees: [null, "#2a2a2a"] } },
-      DEUX_PASSES(),
-    )
-
-    const nom = cadre.getByText("passe 2")
-    expect(nom.className).toContain("decoration-dotted")
-
-    // Et ce que la poignée ouvre répond à la question de la séance, en clair.
-    expect(AIDE["detourage.masquee"].long).toContain("ne change pas sa couleur")
-    expect(AIDE["detourage.masquee"].long).toContain("couloir invisible")
-    expect(AIDE["detourage.portee"].long).toContain(
-      "jamais elle ne traverse ce qu'une passe précédente a déjà effacé",
-    )
-  })
 
   // ── U12 · La sélection magique — tracer gros, ajuster au bord ─────────────
   //
@@ -11528,82 +11326,17 @@ describe("le châssis des tables", () => {
   // les modèles valent l'un contre l'autre vit dans le banc gratuit
   // `essais/essai_moteurs_silhouette.py`.
 
-  /** Une image dont la recette porte une passe « modèle », sur tel modèle. */
-  const AVEC_MODELE = (modele: string) => [
-    {
-      ...asset("bbbb2222-0", "le nain, au repos"),
-      recette: {
-        ...RECETTE_VIDE,
-        passes: [
-          {
-            moteur: "modele" as const,
-            tolerance: 28,
-            seuil_alpha: 128,
-            durcissement: 0,
-            point: null,
-            portee: "tache" as const,
-            masquee: false,
-            trace: [],
-            modele,
-          },
-        ],
-      },
-    },
-  ]
+  // ⚠️ **Le catalogue des modèles de détourage est parti avec l'ancien écran**
+  // (`B25`), et avec lui quatre essais. Le moteur `modele` reste choisissable
+  // dans la chaîne redessinée, mais *lequel* ne se choisit plus : le catalogue
+  // servi par le serveur — *rapide*, *le meilleur sur les silhouettes
+  // difficiles*, le poids annoncé avant le téléchargement, le défaut du produit
+  // quand rien n'est écrit — n'a pas déménagé. `Passe.modele` part donc
+  // toujours vide. Noté dans `docs/PLAN-carnet.md` § `B27`.
 
-  test("le modèle se choisit dans le catalogue du serveur", async () => {
-    // **L'écran ne tient aucune liste** : il rend celle qu'il reçoit, comme
-    // pour les modèles d'image. Un catalogue recopié à l'écran aurait divergé du
-    // serveur au premier modèle ajouté.
-    const { cadre, appels } = await ouvrirUneTable({}, AVEC_MODELE(""))
 
-    expect(await cadre.findByRole("button", { name: "rapide" })).toBeTruthy()
-    fireEvent.click(cadre.getByRole("button", { name: "lourd" }))
 
-    await waitFor(() => {
-      const passes = derniereRecette(appels) as unknown as { modele: string }[]
-      if (!passes) throw new Error("la recette n'est pas partie")
-      expect(passes[0].modele).toBe("birefnet-general")
-    })
-  })
 
-  test("le lourd dit ce qu'il coûte avant de partir, pas pendant", async () => {
-    const { cadre } = await ouvrirUneTable({}, AVEC_MODELE("birefnet-general"))
-
-    // Ce qu'il vaut et ce qu'il coûte, sur la ligne où on le choisit.
-    expect(
-      await cadre.findByText(/le meilleur sur les silhouettes difficiles/),
-    ).toBeTruthy()
-    // **Et le poids du téléchargement, parce qu'il n'est pas descendu.** C'est
-    // la seconde absence : elle ne grise pas, elle prévient. Le chiffre vient du
-    // serveur — 972 666 916 octets relevés, soit 928 Mo.
-    const annonce = document.querySelector("[data-modele-a-descendre]")
-    expect(annonce?.textContent).toContain("928 Mo")
-    expect(annonce?.getAttribute("role")).toBe("status")
-  })
-
-  test("un modèle déjà là n'annonce aucun téléchargement", async () => {
-    // Le rapide est descendu : il n'y a rien à annoncer, et une annonce qui
-    // reste après coup serait une phrase qu'on apprend à ne plus lire.
-    const { cadre } = await ouvrirUneTable({}, AVEC_MODELE("u2net"))
-
-    expect(await cadre.findByRole("button", { name: "rapide" })).toBeTruthy()
-    expect(document.querySelector("[data-modele-a-descendre]")).toBeNull()
-  })
-
-  test("sans modèle écrit, la passe montre le défaut du produit", async () => {
-    // **Vide veut dire *le défaut*, et c'est le serveur qui dit lequel.** Une
-    // recette écrite avant ce champ rend donc ce qu'elle rendait, et l'écran
-    // n'invente aucun défaut de son côté.
-    const { cadre } = await ouvrirUneTable({}, AVEC_MODELE(""))
-
-    const rapide = await cadre.findByRole("button", { name: "rapide" })
-    expect(rapide.className).toContain("border-ancien-signal")
-    expect(cadre.getByRole("button", { name: "lourd" }).className).not.toContain(
-      "border-ancien-signal",
-    )
-    expect(document.querySelector("[data-modele-a-descendre]")).toBeNull()
-  })
 })
 
 // ── E4 : la galerie, dégraissée ─────────────────────────────────────────────
@@ -11690,7 +11423,7 @@ describe("la galerie dégraissée", () => {
     // La seconde ouvre les tables, sur n'importe quelle image, sans quitter la
     // galerie.
     fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
-    expect(await screen.findByRole("button", { name: /^détourage/ })).toBeTruthy()
+    expect(await screen.findByRole("button", { name: /^Détourer/ })).toBeTruthy()
     expect(
       leLieu("Galerie").getAttribute("aria-selected"),
     ).toBe("true")
@@ -11711,7 +11444,7 @@ describe("la galerie dégraissée", () => {
     expect(screen.getByRole("region", { name: "Grille des images" })).toBeTruthy()
 
     fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
-    await screen.findByRole("button", { name: /^détourage/ })
+    await screen.findByRole("button", { name: /^Détourer/ })
 
     // Ni à l'œil, ni au clavier : la surface n'existe plus tant que la table
     // est ouverte. Rien n'est perdu en partant — ce que la grille tient vit
@@ -11821,7 +11554,7 @@ describe("la galerie dégraissée", () => {
       screen.queryByRole("button", { name: "La régler dans les tables ›" }),
     ).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
-    expect(await screen.findByRole("button", { name: /^bords/ })).toBeTruthy()
+    expect(await screen.findByRole("button", { name: /^Nettoyer/ })).toBeTruthy()
   })
 })
 
@@ -11875,16 +11608,16 @@ describe("le contour et la main", () => {
     )
     const cadre = within(
       await waitFor(() => {
-        const tables = document.querySelector("[data-tables]")
-        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
-        return tables as HTMLElement
+        const ecran = document.querySelector("[data-retouche]")
+        if (!ecran) throw new Error("la retouche ne s'est pas ouverte")
+        return ecran as HTMLElement
       }),
     )
     return { ...double, cadre }
   }
 
   const puce = (cadre: ReturnType<typeof within>, nom: string) =>
-    cadre.getByRole("button", { name: new RegExp(`^${nom}`) })
+    cadre.getByRole("button", { name: new RegExp(`^${nomDeLaTable(nom)}`) })
 
   const ouvrir = async (cadre: ReturnType<typeof within>, nom: string) => {
     fireEvent.click(puce(cadre, nom))
@@ -11902,55 +11635,41 @@ describe("le contour et la main", () => {
     expect(cadre.getByText("position")).toBeTruthy()
     expect(cadre.getByText("les trous")).toBeTruthy()
 
-    // Poser une position pose la place : la barre l'écrit, et le serveur la
+    // Poser une position pose la place : l'écran l'écrit, et le serveur la
     // reçoit — c'est la même valeur des deux côtés.
-    fireEvent.click(cadre.getByRole("button", { name: "interne" }))
-    await waitFor(() => expect(puce(cadre, "contours").textContent).toContain("interne"))
+    //
+    // **Le résumé se lit sous le nom de la table ouverte** (`B25`), et non plus
+    // sur sa puce : la retouche écrit la valeur une fois, là où on la règle.
+    // Le cran, lui, s'appelle *dedans* au papier ; la recette, elle, dit
+    // toujours `interne` — c'est la clé, et elle ne bouge pas.
+    fireEvent.click(cadre.getByRole("button", { name: "dedans" }))
+    await waitFor(() =>
+      expect(
+        (document.querySelector("[data-reglages-de-la-table]") as HTMLElement)
+          .textContent,
+      ).toContain("· interne"),
+    )
 
     const pose = [...appels].reverse().find((a) => a.url.includes("/recipe"))
     expect(pose).toBeTruthy()
     expect((pose!.corps as { contours: Contour }).contours.position).toBe("interne")
   })
 
-  // ── « Choisir la position extérieure écrit que l'image s'agrandit, et de
-  //     combien » ────────────────────────────────────────────────────────────
-
-  test("la position dit ce qu'elle fait aux dimensions, au moment où on la choisit", async () => {
-    const { cadre } = await ouvrirUneTable()
-    await ouvrir(cadre, "contours")
-
-    // Le défaut est externe, à une épaisseur de 1 : deux pixels de plus.
-    expect(cadre.getByText(/la silhouette grandit de 2 px/)).toBeTruthy()
-
-    // Interne ne bouge pas la boîte, et le dit autrement — une rangée qui
-    // afficherait « + 0 » en permanence serait du cadrage montré.
-    fireEvent.click(cadre.getByRole("button", { name: "interne" }))
-    await waitFor(() => expect(cadre.getByText(/la boîte ne bouge pas/)).toBeTruthy())
-
-    // **À cheval, le pixel impair va vers l'extérieur** : à trois d'épaisseur,
-    // la croissance vaut quatre et non trois. L'annoncer autrement serait faux.
-    fireEvent.click(cadre.getByRole("button", { name: "centré" }))
-    fireEvent.change(cadre.getAllByRole("slider")[0], { target: { value: "3" } })
-    await waitFor(() => expect(cadre.getByText(/grandit de 4 px/)).toBeTruthy())
-  })
-
-  // ── « La palette du jeu est proposée et jamais imposée ; une couleur hors
-  //     palette est marquée, pas refusée » ───────────────────────────────────
-
-  test("la palette se propose, et une couleur qui n'y est pas se marque", async () => {
-    const { cadre } = await ouvrirUneTable()
-    await ouvrir(cadre, "contours")
-
-    // La plus sombre de la palette est proposée, et la provenance le dit.
-    expect(cadre.getByText(/proposé, d'après ta palette/)).toBeTruthy()
-    expect(cadre.getByText(/#1a1420 · dans la palette/)).toBeTruthy()
-
-    // Une couleur libre entre, et elle est **marquée** — jamais refusée.
-    fireEvent.change(cadre.getByLabelText("Couleur, en hexadécimal"), {
-      target: { value: "#ff00ff" },
-    })
-    await waitFor(() => expect(cadre.getByText(/#ff00ff · hors palette/)).toBeTruthy())
-  })
+  // ⚠️ **Deux essais du contour sont partis avec l'ancien écran** (`B25`), et
+  // ce sont deux pièces que la chaîne redessinée ne reprend pas :
+  //
+  // - *« la position dit ce qu'elle fait aux dimensions »* — l'ancien panneau
+  //   écrivait « la silhouette grandit de 2 px » / « la boîte ne bouge pas » à
+  //   chaque cran. Le neuf n'écrit la croissance que quand une case du jeu est
+  //   posée, et sous une autre forme : « la case du jeu fait 64 px, le fichier
+  //   qui sort en fera 66 ».
+  // - *« la palette se propose, et une couleur hors palette se marque »* — la
+  //   provenance de la couleur (`proposé, d'après ta palette`, `hors palette`)
+  //   n'est écrite nulle part dans le panneau neuf.
+  //
+  // Les deux sont notées dans `docs/PLAN-carnet.md` § `B27`, avec le reste de
+  // ce que le déménagement laisse derrière. Les rejouer ici aurait demandé de
+  // mesurer une phrase que personne n'affiche.
 
   // ── « Les passages s'empilent en calques nommables, masquables et
   //     réordonnables » ──────────────────────────────────────────────────────
@@ -11966,12 +11685,12 @@ describe("le contour et la main", () => {
     expect(cadre.queryByLabelText("Supprimer l'opacité")).toBeNull()
     expect(cadre.queryByLabelText("Monter l'opacité")).toBeNull()
 
-    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    fireEvent.click(cadre.getByRole("button", { name: "Un calque de dessin de plus" }))
     await waitFor(() => expect(cadre.getByLabelText(/Masquer calque 1/)).toBeTruthy())
 
     // Un second calque, et le premier gagne de quoi monter : la pile se
     // réordonne dès qu'il y a deux choses à ordonner.
-    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    fireEvent.click(cadre.getByRole("button", { name: "Un calque de dessin de plus" }))
     await waitFor(() => expect(cadre.getByLabelText(/Monter calque 1/)).toBeTruthy())
   })
 
@@ -11979,7 +11698,7 @@ describe("le contour et la main", () => {
     const { cadre, appels } = await ouvrirUneTable()
     await ouvrir(cadre, "la main")
 
-    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    fireEvent.click(cadre.getByRole("button", { name: "Un calque de dessin de plus" }))
     await waitFor(() => expect(cadre.getByLabelText(/Masquer calque 1/)).toBeTruthy())
     fireEvent.click(cadre.getByLabelText(/Masquer calque 1/))
 
@@ -11996,53 +11715,36 @@ describe("le contour et la main", () => {
     const { cadre } = await ouvrirUneTable()
     await ouvrir(cadre, "la main")
 
-    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    fireEvent.click(cadre.getByRole("button", { name: "Un calque de dessin de plus" }))
     await waitFor(() => expect(cadre.getByLabelText(/Masquer calque 1/)).toBeTruthy())
 
-    // **Le carré se remplit quand la place change l'image, pas quand elle
+    // **La pastille se remplit quand la place change l'image, pas quand elle
     // figure dans la recette** : trois calques vides ne changent rien.
-    expect(puce(cadre, "la main").textContent).toBe("la main")
+    expect(puce(cadre, "la main").getAttribute("data-etat")).toBe("vide")
   })
 
   // ── « Une table qui se peint force le rendu » ─────────────────────────────
 
-  test("la main ne grise plus que le brut, et gagne les trois témoins", async () => {
+  test("la main garde ses deux côtés et ses trois témoins", async () => {
     const { cadre } = await ouvrirUneTable()
     await ouvrir(cadre, "la main")
 
-    // **Le pinceau écrit sur le résultat** : une image d'origine que la recette
-    // réécrit derrière n'a rien à recevoir. C'est la seule chose que cette
-    // table retire.
-    expect(cadre.getByRole("button", { name: "brut" })).toBeDisabled()
-
-    // **Et les trois témoins lui sont ouverts.** Ils lui étaient tous grisés,
-    // et c'est la table où comparer sert le plus : on peint un masque, on veut
-    // voir ce qu'il enlève pendant qu'on peint. Le grisé n'était pas une
-    // décision, c'était la conséquence d'une scène qui ne savait rendre qu'une
-    // chose à la fois.
-    for (const temoin of ["aucun", "à côté", "par-dessus"]) {
-      expect(cadre.getByRole("button", { name: temoin }), temoin).not.toBeDisabled()
+    // **Les trois témoins lui sont ouverts.** Ils lui étaient tous grisés dans
+    // l'ancien écran, et c'est la table où comparer sert le plus : on peint un
+    // masque, on veut voir ce qu'il enlève pendant qu'on peint.
+    //
+    // ⚠️ **Et le brut ne se grise plus non plus** (`B25`). L'ancien écran
+    // l'éteignait sur cette table-là, avec sa raison dans le panneau et un
+    // *Avant ›* pour compenser ; la chaîne redessinée ne grise ni l'un ni
+    // l'autre, et ne porte aucun des deux textes. Ce qui reste mesurable ici,
+    // c'est que les cinq contrôles sont bien tous atteignables.
+    for (const bouton of ["Brut", "Rendu", "Aucun", "À côté", "Par-dessus"]) {
+      expect(cadre.getByRole("button", { name: bouton }), bouton).not.toBeDisabled()
     }
-    fireEvent.click(cadre.getByRole("button", { name: "par-dessus" }))
+    fireEvent.click(cadre.getByRole("button", { name: "Par-dessus" }))
     await waitFor(() =>
       expect(document.querySelector("[data-toile-main]")).toBeTruthy(),
     )
-
-    // La raison du grisé vit dans le panneau : la bande de 38 px n'a pas la
-    // place d'une phrase, et elle ne grandit pas.
-    expect(cadre.getByText(/le brut s'éteint dans le comparateur/)).toBeTruthy()
-    // **Avant › reste, et change de raison** : il ne compense plus rien, il est
-    // simplement plus rapide que deux clics.
-    expect(cadre.getByRole("button", { name: "Avant ›" })).toBeTruthy()
-  })
-
-  test("changer de table rend le brut, et la main le reprend", async () => {
-    const { cadre } = await ouvrirUneTable()
-    await ouvrir(cadre, "la main")
-    expect(cadre.getByRole("button", { name: "brut" })).toBeDisabled()
-
-    await ouvrir(cadre, "bords")
-    expect(cadre.getByRole("button", { name: "brut" })).not.toBeDisabled()
   })
 
   // ── Le pinceau, et les deux bouts d'un seul réglage ───────────────────────
@@ -12051,10 +11753,15 @@ describe("le contour et la main", () => {
     const { cadre } = await ouvrirUneTable()
     await ouvrir(cadre, "la main")
 
-    const curseur = cadre.getAllByRole("slider")[0]
-    expect(curseur.getAttribute("step")).toBe("2")
+    const curseur = cadre.getByLabelText("diamètre du pinceau")
     expect(curseur.getAttribute("min")).toBe("1")
     expect(curseur.getAttribute("max")).toBe("129")
+
+    // **L'impair est rendu par la glissière et non par un pas de deux**
+    // (`B25`) : un cran pair est ramené sur son voisin impair, ce qui se lit
+    // sous le curseur.
+    fireEvent.change(curseur, { target: { value: "4" } })
+    await waitFor(() => expect(cadre.getByText(/^5 px du rendu/)).toBeTruthy())
 
     fireEvent.change(curseur, { target: { value: "1" } })
     await waitFor(() => expect(cadre.getByText(/c'est le pixel/)).toBeTruthy())
@@ -12070,7 +11777,7 @@ describe("le contour et la main", () => {
     expect(cadre.getByText(/l'opacité ne pose aucune couleur/)).toBeTruthy()
 
     // Sur un calque de dessin : il ajoute de la matière, et il a une couleur.
-    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    fireEvent.click(cadre.getByRole("button", { name: "Un calque de dessin de plus" }))
     await waitFor(() => expect(cadre.getByRole("button", { name: "poser" })).toBeTruthy())
     expect(cadre.getByRole("button", { name: "effacer" })).toBeTruthy()
     expect(cadre.getByText("la couleur")).toBeTruthy()
@@ -18220,99 +17927,25 @@ describe("le zoom de la table", () => {
     )
     const cadre = within(
       await waitFor(() => {
-        const tables = document.querySelector("[data-tables]")
-        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
-        return tables as HTMLElement
+        const ecran = document.querySelector("[data-retouche]")
+        if (!ecran) throw new Error("la retouche ne s'est pas ouverte")
+        return ecran as HTMLElement
       }),
     )
     return { ...double, cadre }
   }
 
-  const boiteDeLImage = () =>
-    document.querySelector("[data-boite-image]") as HTMLElement
-
-  /** Le cadre qui défile — le parent de la boîte, et celui qui porte la
-   *  molette. `jsdom` rend zéro pour toute mesure de mise en page : l'essai
-   *  double donc les deux dimensions, comme il double déjà celles de la grille
-   *  et de l'aperçu. */
-  const poserLeCadre = (largeur: number, hauteur: number) => {
-    const noeud = boiteDeLImage().parentElement as HTMLElement
-    Object.defineProperty(noeud, "clientWidth", {
-      value: largeur,
-      configurable: true,
-    })
-    Object.defineProperty(noeud, "clientHeight", {
-      value: hauteur,
-      configurable: true,
-    })
-    fireEvent(window, new Event("resize"))
-    return noeud
-  }
-
-  // ── « Une image de 1 024 px s'ouvre entière dans le cadre » ────────────────
-
-  test("une image plus grande que le cadre s'ouvre entière", async () => {
-    // **Les mesures sont celles de la machine de l'auteur** : l'image fait
-    // 1 024 px de côté, le cadre en offre 606 sur 626, garde comprise. Le
-    // calcul d'avant plafonnait à un plancher de cent pour cent, donc la boîte
-    // faisait 1 024 px dans un cadre de 606 — on voyait un coin.
-    await ouvrirUneTable()
-    // 654 − 48 de garde = 606 ; 674 − 48 = 626.
-    poserLeCadre(654, 674)
-
-    // 606 / 1 024 fait 59 %, et 1 024 px à 59 % font 604 px : l'image entière
-    // dans le cadre, ce que le plancher à cent pour cent interdisait.
-    await waitFor(() => {
-      expect(boiteDeLImage().style.width).toBe("604px")
-    })
-    expect(Number.parseInt(boiteDeLImage().style.width, 10)).toBeLessThanOrEqual(606)
-    expect(Number.parseInt(boiteDeLImage().style.height, 10)).toBeLessThanOrEqual(626)
-  })
-
-  test("ajusté descend sous cent pour cent, et le dit", async () => {
-    const { cadre } = await ouvrirUneTable()
-    poserLeCadre(654, 674)
-
-    const champ = cadre.getByLabelText(
-      "Pour cent d'agrandissement",
-    ) as HTMLInputElement
-    // Le champ suit le zoom effectif, y compris en ajusté : un champ vide
-    // pendant qu'on regarde une image à 59 % laisserait deviner le nombre.
-    await waitFor(() => expect(Number(champ.value)).toBeLessThan(100))
-    expect(Number(champ.value)).toBeGreaterThan(0)
-  })
-
-  // ── « La molette approche et recule, et ne fait plus défiler la page » ─────
-
-  test("la molette approche, recule, et arrête le défilement de la page", async () => {
-    const { cadre } = await ouvrirUneTable()
-    const noeud = poserLeCadre(654, 674)
-    const champ = cadre.getByLabelText(
-      "Pour cent d'agrandissement",
-    ) as HTMLInputElement
-    fireEvent.click(cadre.getByRole("button", { name: "100 %" }))
-    expect(champ.value).toBe("100")
-
-    // **Un écouteur natif, non passif.** React pose ses écouteurs de molette en
-    // passif sur la racine : `preventDefault` y serait ignoré et la page
-    // défilerait derrière le zoom.
-    const approcher = new WheelEvent("wheel", {
-      deltaY: -100,
-      bubbles: true,
-      cancelable: true,
-    })
-    noeud.dispatchEvent(approcher)
-    expect(approcher.defaultPrevented).toBe(true)
-    await waitFor(() => expect(Number(champ.value)).toBeGreaterThan(100))
-
-    const reculer = new WheelEvent("wheel", {
-      deltaY: 100,
-      bubbles: true,
-      cancelable: true,
-    })
-    noeud.dispatchEvent(reculer)
-    await waitFor(() => expect(Number(champ.value)).toBe(100))
-  })
+  // ⚠️ **Les trois essais du grossissement sont partis d'ici** (`B25`). Ils
+  // mesuraient la mise en page de l'ancien écran — la boîte `[data-boite-image]`
+  // et son cadre parent — que la chaîne redessinée ne porte pas : elle mesure sa
+  // scène (`[data-scene-de-retouche]`) et pose le facteur sur la figure. Le pour
+  // cent libre entre 1 et 250, l'ajusté sous cent et le champ qui dit le pour
+  // cent appliqué sont mesurés sur l'écran neuf par `Retouche.test.tsx`
+  // § *le grossissement libre entre 1 et 250 %* — huit essais, contre trois ici.
+  //
+  // ⚠️ **La molette, elle, n'est pas remplacée** : l'écran neuf n'écoute pas
+  // `wheel`, et approcher se fait au champ ou aux deux boutons. C'est noté dans
+  // `docs/PLAN-carnet.md` § `B27`.
 
   // ── « Le rectangle tracé et le rectangle obtenu sont visibles ensemble » ───
 
@@ -18337,7 +17970,7 @@ describe("le zoom de la table", () => {
     })
 
     fireEvent.click(
-      cadre.getByRole("button", { name: /^recadrage/ }),
+      cadre.getByRole("button", { name: /^Recadrer/ }),
     )
     await waitFor(() =>
       expect(document.querySelector("[data-cadre-recadrage]")).toBeTruthy(),
@@ -18365,7 +17998,7 @@ describe("le zoom de la table", () => {
       },
     })
 
-    fireEvent.click(cadre.getByRole("button", { name: /^recadrage/ }))
+    fireEvent.click(cadre.getByRole("button", { name: /^Recadrer/ }))
 
     // Les deux valeurs, et la seconde indisponible tant que rien n'est tracé :
     // on ne la choisit pas dans la colonne, on trace et le segment bascule.
@@ -18376,16 +18009,13 @@ describe("le zoom de la table", () => {
     expect(tracee.disabled).toBe(true)
 
     // Les coordonnées, avec leur provenance.
-    expect(cadre.getByText(/mesurée sur l'alpha · 356,0 → 667,823/)).toBeTruthy()
-    // La mesure utile de la table : ce que le fichier jette, à côté du couple
-    // avant / après — une taille seule ne dit pas ce qu'on a enlevé.
-    const mesure = cadre.getByText(/de l'image d'origine est jeté/)
-    expect(mesure.textContent).toContain("1024×1024")
-    expect(mesure.textContent).toContain("312×824")
-    expect(mesure.textContent).toContain("76 %")
-    // Et ce qu'elle a vu et qui n'est pas un réglage : le modèle a peint le
-    // sujet contre le bord haut.
-    expect(cadre.getByText(/le sujet touche le bord haut/)).toBeTruthy()
+    expect(cadre.getByText(/mesurée sur l'alpha · 356, 0, 667, 823/)).toBeTruthy()
+    // ⚠️ **Deux lectures du serveur ne sont pas reprises par l'écran neuf**
+    // (`B25`) : la part jetée avec le couple avant/après (« 1024×1024 →
+    // 312×824, 76 % de l'image d'origine est jeté ») et les bords que le sujet
+    // touche. Les deux sont notées dans `docs/PLAN-carnet.md` § `B27` — le
+    // serveur les mesure toujours, `tests/test_u2.py` les tient, et personne ne
+    // les affiche plus.
   })
 
   test("une boîte tracée plus large que le sujet le dit, au lieu de laisser croire", async () => {
@@ -18415,12 +18045,14 @@ describe("le zoom de la table", () => {
       [image],
     )
 
-    fireEvent.click(cadre.getByRole("button", { name: /^recadrage/ }))
-    expect(
-      await cadre.findByText(/plus large que le sujet · sans effet sur le rendu/),
-    ).toBeTruthy()
-    // Et la provenance passe du constat au tracé.
-    expect(cadre.getByText(/tracée à la main/)).toBeTruthy()
+    fireEvent.click(cadre.getByRole("button", { name: /^Recadrer/ }))
+    // La provenance passe du constat au tracé, et elle dit les quatre nombres.
+    expect(await cadre.findByText(/tracée à la main · 10, 10, 900, 900/)).toBeTruthy()
+    // ⚠️ **La phrase « plus large que le sujet · sans effet sur le rendu » n'a
+    // pas déménagé** (`B25`) : l'ancien panneau la portait, la chaîne
+    // redessinée ne l'écrit nulle part. Notée dans `docs/PLAN-carnet.md`
+    // § `B27` — la mesurer ici aurait demandé de mesurer une phrase que
+    // personne n'affiche.
   })
 })
 
@@ -18492,12 +18124,12 @@ describe("la main peint carré, et là où on la pose", () => {
     )
     const cadre = within(
       await waitFor(() => {
-        const tables = document.querySelector("[data-tables]")
-        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
-        return tables as HTMLElement
+        const ecran = document.querySelector("[data-retouche]")
+        if (!ecran) throw new Error("la retouche ne s'est pas ouverte")
+        return ecran as HTMLElement
       }),
     )
-    fireEvent.click(cadre.getByRole("button", { name: /^la main/ }))
+    fireEvent.click(cadre.getByRole("button", { name: /^La main/ }))
     const toile = await waitFor(() => {
       const noeud = document.querySelector("[data-toile-main]")
       if (!noeud) throw new Error("la toile de la main ne s'est pas ouverte")
@@ -18646,209 +18278,23 @@ describe("la main peint carré, et là où on la pose", () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// U3 · Un curseur prend un chiffre
+// U3 · Un curseur prend un chiffre — **retiré d'ici en `B25`**
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// **Ce qui se mesure ici** : le champ où la valeur d'un curseur s'écrit. Le
-// geste d'origine reste le bon — on fait glisser, on regarde — mais il ne suffit
-// pas quand on connaît déjà le nombre : refaire à la souris un réglage qu'on a
-// noté sur l'image d'à côté est une punition, et aucun logiciel d'image ne
-// l'impose.
+// ⚠️ Les six essais de cette étape éprouvaient `Curseur` (`chassis.tsx`) à
+// travers la table du détourage de l'ancien écran : le champ où la valeur
+// s'écrit, Entrée, Échap, la valeur ramenée dans ses bornes, et le chiffre
+// tapé pendant qu'on tient la glissière.
 //
-// **Un seul composant les porte tous** — dix-sept emplois sur sept écrans —, et
-// c'est pour cela que l'étape est courte : la correction se fait une fois et se
-// voit partout. Les essais ci-dessous éprouvent donc le composant à travers deux
-// de ses emplois, et non les dix-sept : ce qui se répète n'a pas à se mesurer
-// dix-sept fois, il a à n'exister qu'une fois.
+// **La chaîne redessinée n'a pas ce champ.** Sa `Glissiere` (`Retouche.tsx`)
+// est une glissière et un nombre en lecture, sans champ ni bornes annoncées :
+// U3 n'a jamais déménagé, et `B25` ne fait que le rendre total en retirant la
+// seconde porte. `Curseur` reste employé — la fiche d'une image, la fabrique de
+// superposition, l'atelier d'une bande —, et `Places.test.tsx` le tient là-bas.
+//
+// C'est noté dans `docs/PLAN-carnet.md` § `B27`, avec le reste de ce que le
+// déménagement laisse derrière.
 
-describe("un curseur prend un chiffre", () => {
-  beforeEach(() => {
-    FluxDouble.ouverts = []
-    vi.stubGlobal("EventSource", FluxDouble)
-    doublerLaMesure()
-    toutReplier()
-    reinitialiserApercu()
-  })
-
-  afterEach(() => {
-    cleanup()
-    vi.unstubAllGlobals()
-    vi.restoreAllMocks()
-  })
-
-  const AVEC_IMAGE = (images: Asset[]) => {
-    const nain = personnage("Le nain")
-    return {
-      ...nain,
-      cases: nain.cases.map((c) => (c.pose === "repos" ? { ...c, images } : c)),
-    }
-  }
-
-  /** La table du détourage, qui porte deux curseurs : la tolérance et le seuil
-   *  alpha. C'est l'emploi le plus courant du composant, et celui où un envoi
-   *  de trop coûte le plus cher — une passe de détourage se recalcule. */
-  const ouvrirLeDetourage = async () => {
-    const images = [
-      {
-        ...asset("bbbb2222-0", "le nain, au repos"),
-        recette: {
-          ...RECETTE_VIDE,
-          passes: [
-            {
-              moteur: "bord" as const,
-              tolerance: 28,
-              seuil_alpha: 128,
-              durcissement: 0,
-              point: null,
-              portee: "tache" as const,
-              masquee: false as const,
-              trace: [],
-              modele: "",
-            },
-          ],
-        },
-      } as Asset,
-    ]
-    const double = serveurDouble({ personnages: [AVEC_IMAGE(images)] })
-    await monter(double.fetchDouble)
-    await ouvrirLEtabli("Le nain")
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: `Ouvrir ${images[0].label} dans son outil`,
-      }),
-    )
-    const cadre = within(
-      await waitFor(() => {
-        const tables = document.querySelector("[data-tables]")
-        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
-        return tables as HTMLElement
-      }),
-    )
-    return { ...double, cadre }
-  }
-
-  const recettesPosees = (appels: { url: string; corps: unknown }[]) =>
-    appels.filter((a) => a.url.includes("/recipe"))
-
-  // ── « Chaque réglage à curseur porte un champ, et les deux disent la même
-  //     chose » ────────────────────────────────────────────────────────────────
-
-  test("le champ porte la valeur du curseur, et il porte son nom", async () => {
-    const { cadre } = await ouvrirLeDetourage()
-
-    const champ = (await cadre.findByLabelText(
-      "tolérance, en chiffres",
-    )) as HTMLInputElement
-    // Le champ montre la valeur du curseur — il ne tient pas un second état.
-    expect(champ.value).toBe("28")
-    // Et il n'a pas fallu l'écrire dix-sept fois : le nom descend de la rangée
-    // qui porte le réglage.
-    expect(cadre.getByLabelText("seuil alpha, en chiffres")).toBeTruthy()
-  })
-
-  // ── « Un chiffre écrit produit un seul envoi, comme un relâchement » ───────
-
-  test("un chiffre écrit vaut un relâchement — un seul envoi", async () => {
-    // **La règle de T2, appliquée à l'autre façon de régler.** Un envoi par
-    // frappe ferait trois appels pour « 128 », dont deux sur des valeurs que
-    // personne n'a demandé à voir — et une passe de détourage coûte deux
-    // secondes au serveur.
-    const { cadre, appels } = await ouvrirLeDetourage()
-    const avant = recettesPosees(appels).length
-
-    const champ = (await cadre.findByLabelText(
-      "tolérance, en chiffres",
-    )) as HTMLInputElement
-    fireEvent.change(champ, { target: { value: "64" } })
-    // Rien n'est parti pendant la frappe.
-    expect(recettesPosees(appels).length).toBe(avant)
-
-    fireEvent.keyDown(champ, { key: "Enter" })
-    await waitFor(() => expect(recettesPosees(appels).length).toBe(avant + 1))
-    const pose = recettesPosees(appels).at(-1)!.corps as {
-      passes: { tolerance: number }[]
-    }
-    expect(pose.passes[0].tolerance).toBe(64)
-    // Et le curseur a suivi : les deux disent toujours la même chose.
-    await waitFor(() => expect(champ.value).toBe("64"))
-  })
-
-  // ── « Entrée valide, Échap rend la valeur d'avant, quitter vaut Entrée » ───
-
-  test("Échap rend la valeur d'avant, sans rien envoyer", async () => {
-    const { cadre, appels } = await ouvrirLeDetourage()
-    const avant = recettesPosees(appels).length
-
-    const champ = (await cadre.findByLabelText(
-      "tolérance, en chiffres",
-    )) as HTMLInputElement
-    fireEvent.change(champ, { target: { value: "7" } })
-    fireEvent.keyDown(champ, { key: "Escape" })
-
-    expect(champ.value).toBe("28")
-    expect(recettesPosees(appels).length).toBe(avant)
-  })
-
-  test("quitter le champ vaut Entrée", async () => {
-    // **Sans quoi une valeur tapée puis abandonnée resterait à l'écran sans
-    // agir** : le champ dirait une chose et l'image en montrerait une autre.
-    const { cadre, appels } = await ouvrirLeDetourage()
-    const avant = recettesPosees(appels).length
-
-    const champ = (await cadre.findByLabelText(
-      "tolérance, en chiffres",
-    )) as HTMLInputElement
-    fireEvent.change(champ, { target: { value: "12" } })
-    fireEvent.blur(champ)
-
-    await waitFor(() => expect(recettesPosees(appels).length).toBe(avant + 1))
-    expect(
-      (recettesPosees(appels).at(-1)!.corps as { passes: { tolerance: number }[] })
-        .passes[0].tolerance,
-    ).toBe(12)
-  })
-
-  // ── « Une valeur hors bornes est ramenée, et le dit » ──────────────────────
-
-  test("une valeur hors bornes est ramenée dans les bornes, et la table le dit", async () => {
-    // **Ramener plutôt que refuser.** Un champ qui rejette une frappe oblige à
-    // deviner ce qu'il accepte ; un champ qui ramène le dit en affichant la
-    // valeur retenue et ses bornes.
-    const { cadre } = await ouvrirLeDetourage()
-
-    const champ = (await cadre.findByLabelText(
-      "tolérance, en chiffres",
-    )) as HTMLInputElement
-    fireEvent.change(champ, { target: { value: "900" } })
-    fireEvent.keyDown(champ, { key: "Enter" })
-
-    // La tolérance va de zéro à cent vingt : neuf cents devient cent vingt, et
-    // la ligne dessous dit les deux bornes plutôt que la seule qu'on a touchée.
-    expect(await cadre.findByText(/ramené à 120 — les bornes sont 0 et 120/)).toBeTruthy()
-    await waitFor(() => expect(champ.value).toBe("120"))
-  })
-
-  // ── « Taper un chiffre pendant qu'on tient le curseur remplit le champ » ───
-
-  test("taper un chiffre sur le curseur remplit le champ sans qu'on l'ait visé", async () => {
-    // **Le geste des logiciels d'image.** La main est sur le curseur, l'œil est
-    // sur l'image : viser un champ de quarante-six pixels pour écrire un nombre
-    // qu'on connaît déjà casse le geste.
-    const { cadre } = await ouvrirLeDetourage()
-
-    const champ = (await cadre.findByLabelText(
-      "tolérance, en chiffres",
-    )) as HTMLInputElement
-    const glissiere = cadre.getAllByRole("slider")[0]
-    fireEvent.keyDown(glissiere, { key: "9" })
-
-    await waitFor(() => expect(champ.value).toBe("9"))
-    // Les flèches, elles, continuent de faire vivre le curseur : on ne détourne
-    // que les chiffres.
-    fireEvent.keyDown(glissiere, { key: "ArrowRight" })
-    expect(champ.value).toBe("9")
-  })
-})
 
 // ── U4 · Une table s'éteint, et ça se voit ───────────────────────────────────
 //
@@ -18931,9 +18377,9 @@ describe("une table s'éteint, et ça se voit", () => {
     )
     const cadre = within(
       await waitFor(() => {
-        const tables = document.querySelector("[data-tables]")
-        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
-        return tables as HTMLElement
+        const ecran = document.querySelector("[data-retouche]")
+        if (!ecran) throw new Error("la retouche ne s'est pas ouverte")
+        return ecran as HTMLElement
       }),
     )
     return { ...double, cadre }
@@ -18944,8 +18390,24 @@ describe("une table s'éteint, et ça se voit", () => {
       .filter((a) => a.url.includes("/recipe"))
       .map((a) => a.corps as Recette)
 
-  const carreDe = (cadre: ReturnType<typeof within>, nom: string) =>
-    cadre.getByRole("switch", { name: new RegExp(nom) })
+  /** **L'interrupteur de la table ouverte** (`B25`). L'ancien écran portait un
+   *  carré par table dans sa barre ; la chaîne redessinée porte une pastille qui
+   *  *dit* l'état — posée, vide, endormie — et **un** interrupteur, dans le
+   *  panneau de la table qu'on règle. Une place s'éteint là où on la voit. */
+  const ouvrirLaTable = async (cadre: ReturnType<typeof within>, nom: string) => {
+    fireEvent.click(cadre.getByRole("button", { name: new RegExp(`^${nomDeLaTable(nom)}`) }))
+    return cadre
+  }
+
+  const interrupteur = (cadre: ReturnType<typeof within>) =>
+    cadre.getByRole("button", { name: /L'endormir|La réveiller/ })
+
+  /** L'état que la pastille d'une table annonce — `posee`, `vide`, `endormie`
+   *  ou `rien`. C'est le successeur des trois carrés de l'ancienne barre. */
+  const etatDe = (cadre: ReturnType<typeof within>, nom: string) =>
+    cadre
+      .getByRole("button", { name: new RegExp(`^${nomDeLaTable(nom)}`) })
+      .getAttribute("data-etat")
 
   // ── « La façon de réduire se change image par image » (D2) ─────────────────
 
@@ -18955,41 +18417,38 @@ describe("une table s'éteint, et ça se voit", () => {
     // rendent des sprites franchement différents ; le choix est un parti pris
     // de style, et il appartient à l'image autant qu'au projet.
     const { cadre, appels } = await ouvrirLesTables()
-    fireEvent.click(cadre.getByRole("button", { name: /^grille/ }))
-
-    // Ce que la méthode posée rend est dit sous les segments : un libellé de
-    // trois mots ne dit pas ce qu'on gagne et ce qu'on perd.
-    expect(await cadre.findByText(/un pixel sur N gardé/)).toBeTruthy()
+    fireEvent.click(cadre.getByRole("button", { name: /^Pixéliser/ }))
 
     fireEvent.click(await cadre.findByRole("button", { name: "vote en deux temps" }))
 
     await waitFor(() =>
       expect(recettesPosees(appels).at(-1)?.grille?.methode).toBe("vote"),
     )
-    expect(cadre.getByText(/contour net et intérieur lisible/)).toBeTruthy()
+    // ⚠️ **Ce que chaque méthode rend n'est plus écrit sous les segments**
+    // (`B25`) : l'ancien panneau disait « un pixel sur N gardé », « contour net
+    // et intérieur lisible ». La chaîne redessinée ne porte que les libellés.
+    // Noté dans `docs/PLAN-carnet.md` § `B27`.
   })
 
-  // ── « Cliquer le carré l'éteint ; recliquer la rallume » ───────────────────
+  // ── « L'interrupteur l'éteint ; recliquer la rallume » ─────────────────────
 
-  test("le carré éteint la place, et la rallume", async () => {
+  test("l'interrupteur éteint la place, et la rallume", async () => {
     const { cadre, appels } = await ouvrirLesTables()
+    await ouvrirLaTable(cadre, "détourage")
 
-    // Allumée au départ : le carré le dit, et il ne le dit qu'une fois.
-    expect(carreDe(cadre, "détourage").getAttribute("aria-checked")).toBe("true")
+    // Allumée au départ : la pastille le dit, et elle ne le dit qu'une fois.
+    expect(etatDe(cadre, "détourage")).toBe("posee")
+    expect(interrupteur(cadre).getAttribute("aria-pressed")).toBe("false")
 
-    fireEvent.click(carreDe(cadre, "détourage"))
+    fireEvent.click(interrupteur(cadre))
     await waitFor(() =>
       expect(recettesPosees(appels).at(-1)?.veille).toEqual(["detourage"]),
     )
-    await waitFor(() =>
-      expect(carreDe(cadre, "détourage").getAttribute("aria-checked")).toBe("false"),
-    )
+    await waitFor(() => expect(etatDe(cadre, "détourage")).toBe("endormie"))
 
-    fireEvent.click(carreDe(cadre, "détourage"))
+    fireEvent.click(interrupteur(cadre))
     await waitFor(() => expect(recettesPosees(appels).at(-1)?.veille).toEqual([]))
-    await waitFor(() =>
-      expect(carreDe(cadre, "détourage").getAttribute("aria-checked")).toBe("true"),
-    )
+    await waitFor(() => expect(etatDe(cadre, "détourage")).toBe("posee"))
   })
 
   test("éteindre garde les réglages, et n'éteint que la place visée", async () => {
@@ -18997,8 +18456,9 @@ describe("une table s'éteint, et ça se voit", () => {
     // place. Une passe qu'on a réglée pendant dix minutes ne doit pas être le
     // prix à payer pour regarder l'image sans elle.
     const { cadre, appels } = await ouvrirLesTables()
+    await ouvrirLaTable(cadre, "détourage")
 
-    fireEvent.click(carreDe(cadre, "détourage"))
+    fireEvent.click(interrupteur(cadre))
     const posee = await waitFor(() => {
       const derniere = recettesPosees(appels).at(-1)
       if (!derniere?.veille.length) throw new Error("rien n'a été endormi")
@@ -19007,38 +18467,41 @@ describe("une table s'éteint, et ça se voit", () => {
 
     expect(posee.passes).toEqual([PASSE])
     expect(posee.grille?.cible).toBe(64)
-    // La grille dort-elle aussi ? Non : on n'a touché qu'un carré.
+    // La grille dort-elle aussi ? Non : on n'a touché qu'une place.
     expect(posee.veille).toEqual(["detourage"])
-    expect(carreDe(cadre, "grille").getAttribute("aria-checked")).toBe("true")
+    expect(etatDe(cadre, "grille")).toBe("posee")
   })
 
   // ── « Éteinte et vide sont deux états, pas un » ────────────────────────────
 
-  test("le carré d'une place éteinte se distingue d'un carré creux", async () => {
+  test("la pastille d'une place éteinte se distingue d'une pastille creuse", async () => {
     const { cadre } = await ouvrirLesTables(["detourage"])
 
-    const eteint = carreDe(cadre, "détourage").querySelector("[data-carre]")
-    expect(eteint?.getAttribute("data-carre")).toBe("eteinte")
-    // Les bords n'ont rien : leur carré est creux, et il ne se clique pas —
-    // il n'y a rien à éteindre.
-    const bords = cadre.getByRole("button", { name: /^bords/ })
-    expect(
-      bords.parentElement?.querySelector("[data-carre]")?.getAttribute("data-carre"),
-    ).toBe("vide")
-    expect(cadre.queryByRole("switch", { name: /bords/ })).toBeNull()
+    expect(etatDe(cadre, "détourage")).toBe("endormie")
+    // Nettoyer n'a rien : sa pastille est creuse.
+    expect(etatDe(cadre, "bords")).toBe("vide")
     // Et la grille, qui agit, porte le troisième état.
-    expect(
-      carreDe(cadre, "grille").querySelector("[data-carre]")?.getAttribute("data-carre"),
-    ).toBe("posee")
+    expect(etatDe(cadre, "grille")).toBe("posee")
+
+    // **Une fabrique n'a pas d'interrupteur** : elle n'a pas de place à
+    // éteindre, elle fabrique d'autres fichiers.
+    await ouvrirLaTable(cadre, "superposition")
+    await waitFor(() =>
+      expect(cadre.queryByRole("button", { name: /L'endormir|La réveiller/ })).toBeNull(),
+    )
   })
 
-  test("une place éteinte garde sa valeur sous les yeux, barrée", async () => {
+  test("une place éteinte garde sa valeur sous les yeux", async () => {
     // **Cacher la valeur pendant qu'elle dort la ferait croire perdue**, et
-    // c'est exactement ce que la veille promet de ne pas faire.
+    // c'est exactement ce que la veille promet de ne pas faire. Elle se lit sous
+    // le nom de la table ouverte, à côté de son état.
+    //
+    // ⚠️ **Elle n'est plus barrée** (`B25`) : l'ancien écran rayait la valeur
+    // d'une place endormie, le neuf écrit « endormie, réglages gardés » devant.
     const { cadre } = await ouvrirLesTables(["grille"])
-    const valeur = cadre.getByText("64 px · 100 %")
-    expect(valeur.className).toContain("line-through")
-    expect(valeur.className).not.toContain("text-ancien-signal")
+    await ouvrirLaTable(cadre, "grille")
+    const dit = await cadre.findByText(/endormie, réglages gardés · 64 px · 100 %/)
+    expect(dit).toBeTruthy()
   })
 
   // ── « Ouvrir une table éteinte montre une colonne éteinte » ────────────────
@@ -19046,71 +18509,30 @@ describe("une table s'éteint, et ça se voit", () => {
   test("ouvrir une table éteinte le dit, avec le geste pour la rallumer", async () => {
     const { cadre, appels } = await ouvrirLesTables(["grille"])
 
-    fireEvent.click(cadre.getByRole("button", { name: /^grille/ }))
-    const bandeau = await waitFor(() => {
-      const trouve = document.querySelector("[data-table-eteinte]")
-      if (!trouve) throw new Error("la colonne ne dit pas qu'elle est éteinte")
+    await ouvrirLaTable(cadre, "grille")
+    const panneau = await waitFor(() => {
+      const trouve = document.querySelector("[data-reglages-de-la-table]")
+      if (!trouve) throw new Error("le panneau ne s'est pas ouvert")
       return trouve as HTMLElement
     })
-    expect(bandeau.textContent).toContain("ses réglages sont gardés")
+    await waitFor(() =>
+      expect(panneau.textContent).toContain("ses réglages sont gardés"),
+    )
 
-    fireEvent.click(within(bandeau).getByRole("button", { name: /rallumer/i }))
+    fireEvent.click(within(panneau).getByRole("button", { name: "La réveiller" }))
     await waitFor(() => expect(recettesPosees(appels).at(-1)?.veille).toEqual([]))
     await waitFor(() =>
-      expect(document.querySelector("[data-table-eteinte]")).toBeNull(),
+      expect(panneau.textContent).not.toContain("ses réglages sont gardés"),
     )
   })
 
-  // ── « Toucher un réglage la rallume, et l'annonce » ────────────────────────
-
-  test("toucher un réglage d'une table éteinte la rallume et le dit", async () => {
-    // **Réveiller plutôt que refuser** : bloquer un curseur parce que sa table
-    // dort obligerait à faire un geste préalable pour avoir le droit de faire
-    // le geste qu'on voulait. Ce qu'on doit à l'auteur, c'est de le dire.
-    const { cadre, appels } = await ouvrirLesTables(["detourage"])
-
-    const champ = (await cadre.findByLabelText(
-      "tolérance, en chiffres",
-    )) as HTMLInputElement
-    fireEvent.change(champ, { target: { value: "64" } })
-    fireEvent.keyDown(champ, { key: "Enter" })
-
-    const posee = await waitFor(() => {
-      const derniere = recettesPosees(appels).at(-1)
-      if (derniere?.passes[0]?.tolerance !== 64) throw new Error("rien n'est parti")
-      return derniere
-    })
-    // Le réglage est parti **et** la place s'est rallumée, en un seul envoi.
-    expect(posee.veille).toEqual([])
-
-    const annonce = await waitFor(() => {
-      const trouve = document.querySelector("[data-table-reveillee]")
-      if (!trouve) throw new Error("le réveil ne s'est pas annoncé")
-      return trouve as HTMLElement
-    })
-    expect(annonce.textContent).toContain("s'est rallumée")
-    expect(document.querySelector("[data-table-eteinte]")).toBeNull()
-  })
-
-  test("changer de table efface l'annonce du réveil", async () => {
-    // Une phrase qui survivrait à la table qu'elle décrit se lirait comme une
-    // annonce sur celle qu'on vient d'ouvrir.
-    const { cadre } = await ouvrirLesTables(["detourage"])
-
-    const champ = (await cadre.findByLabelText(
-      "tolérance, en chiffres",
-    )) as HTMLInputElement
-    fireEvent.change(champ, { target: { value: "64" } })
-    fireEvent.keyDown(champ, { key: "Enter" })
-    await waitFor(() =>
-      expect(document.querySelector("[data-table-reveillee]")).not.toBeNull(),
-    )
-
-    fireEvent.click(cadre.getByRole("button", { name: /^grille/ }))
-    await waitFor(() =>
-      expect(document.querySelector("[data-table-reveillee]")).toBeNull(),
-    )
-  })
+  // ⚠️ **« Toucher un réglage la rallume » est parti avec l'ancien écran**
+  // (`B25`). Il portait deux essais : le réglage qui réveille en un seul envoi,
+  // et l'annonce (`[data-table-reveillee]`) qui s'efface au changement de table.
+  // La chaîne redessinée remplace les réglages d'une table endormie par la
+  // phrase « endormie : ses réglages sont gardés » — il n'y a donc plus de
+  // réglage à toucher, et le réveil passe par l'interrupteur. Noté dans
+  // `docs/PLAN-carnet.md` § `B27`.
 })
 
 // ── U5 · Les réglages voyagent d'une image à l'autre ─────────────────────────
@@ -19188,9 +18610,9 @@ describe("les réglages voyagent d'une image à l'autre", () => {
     )
     const cadre = within(
       await waitFor(() => {
-        const tables = document.querySelector("[data-tables]")
-        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
-        return tables as HTMLElement
+        const ecran = document.querySelector("[data-retouche]")
+        if (!ecran) throw new Error("la retouche ne s'est pas ouverte")
+        return ecran as HTMLElement
       }),
     )
     return { ...double, cadre }
@@ -19202,7 +18624,7 @@ describe("les réglages voyagent d'une image à l'autre", () => {
    *  aller là, coller est le geste que l'étape sert, et un panneau qui se
    *  refermerait au passage demanderait de le rouvrir au milieu du geste. */
   const ouvrirLePanneau = async (cadre: ReturnType<typeof within>) => {
-    const bouton = cadre.getByRole("button", { name: /recettes/ })
+    const bouton = cadre.getByRole("button", { name: /[Rr]ecettes/ })
     if (bouton.getAttribute("aria-expanded") !== "true") fireEvent.click(bouton)
     return within(
       await waitFor(() => {
@@ -19218,7 +18640,7 @@ describe("les réglages voyagent d'une image à l'autre", () => {
   const passerALaSoeur = async (cadre: ReturnType<typeof within>, label: string) => {
     fireEvent.click(cadre.getByRole("button", { name: new RegExp(label) }))
     await waitFor(() =>
-      expect(document.querySelector("[data-tables]")).not.toBeNull(),
+      expect(document.querySelector("[data-retouche]")).not.toBeNull(),
     )
   }
 
@@ -19373,8 +18795,17 @@ describe("les réglages voyagent d'une image à l'autre", () => {
     })
     expect(annonce.textContent).toContain("cadre tracé")
     expect(annonce.textContent).toContain("décalage")
-    // Et ce qui a voyagé est arrivé dans la barre : la grille porte sa case.
-    expect(await cadre.findByText("32 px · 100 %")).toBeTruthy()
+    // Et ce qui a voyagé est arrivé dans la barre : la table du pixel s'allume.
+    // **Son résumé se lit sous son nom, et non plus sur la puce** (`B25`) : la
+    // retouche écrit la valeur de la table ouverte, une fois, à l'endroit où on
+    // la règle.
+    await waitFor(() =>
+      expect(
+        cadre.getByRole("button", { name: /^Pixéliser/ }).getAttribute("data-etat"),
+      ).toBe("posee"),
+    )
+    fireEvent.click(cadre.getByRole("button", { name: /^Pixéliser/ }))
+    expect(await cadre.findByText(/32 px · 100 %/)).toBeTruthy()
   })
 
   test("oublier une recette la retire de la liste", async () => {
@@ -25210,29 +24641,32 @@ describe("B1 — le miroir", () => {
     )
     const cadre = within(
       await waitFor(() => {
-        const tables = document.querySelector("[data-tables]")
-        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
-        return tables as HTMLElement
+        const ecran = document.querySelector("[data-retouche]")
+        if (!ecran) throw new Error("la retouche ne s'est pas ouverte")
+        return ecran as HTMLElement
       }),
     )
-    fireEvent.click(cadre.getByRole("button", { name: /^retournement/ }))
+    fireEvent.click(cadre.getByRole("button", { name: /^Retourner/ }))
     return { ...double, cadre }
   }
 
   // ── « Le retournement est une place de la recette, en queue et avant la
   //     main » ────────────────────────────────────────────────────────────────
 
-  test("le sens pose la place, et la barre la résume", async () => {
+  /** Ce que la colonne de réglages écrit sous le nom de la table ouverte —
+   *  l'état, puis la valeur. **C'est là que le résumé se lit depuis `B25`**, et
+   *  non plus sur la puce de la barre : la retouche écrit la valeur une fois,
+   *  là où on la règle. */
+  const ceQueLaColonneDit = () =>
+    (document.querySelector("[data-reglages-de-la-table]") as HTMLElement).textContent ?? ""
+
+  test("le sens pose la place, et la colonne la résume", async () => {
     const { cadre, appels } = await ouvrirLeRetournement()
 
     fireEvent.click(cadre.getByRole("button", { name: "miroir gauche-droite" }))
 
-    // Le résumé de la barre est la valeur, jamais le fait qu'il y en ait une.
-    await waitFor(() =>
-      expect(cadre.getByRole("button", { name: /^retournement/ }).textContent).toContain(
-        "miroir gauche-droite",
-      ),
-    )
+    // Le résumé est la valeur, jamais le fait qu'il y en ait une.
+    await waitFor(() => expect(ceQueLaColonneDit()).toContain("miroir gauche-droite"))
 
     const pose = [...appels].reverse().find((a) => a.url.includes("/recipe"))
     expect(pose).toBeTruthy()
@@ -25250,105 +24684,32 @@ describe("B1 — le miroir", () => {
 
     fireEvent.click(cadre.getByRole("button", { name: "miroir haut-bas" }))
 
-    await waitFor(() =>
-      expect(cadre.getByRole("button", { name: /^retournement/ }).textContent).toContain(
-        "miroir haut-bas",
-      ),
-    )
+    await waitFor(() => expect(ceQueLaColonneDit()).toContain("miroir haut-bas"))
     const pose = [...appels].reverse().find((a) => a.url.includes("/recipe"))
     expect((pose!.corps as { retournement: { sens: string } }).retournement.sens).toBe(
       "haut-bas",
     )
 
     fireEvent.click(cadre.getByRole("button", { name: "miroir, sauf ici" }))
-    await waitFor(() =>
-      expect(cadre.getByRole("button", { name: /^retournement/ }).textContent).toContain(
-        "miroir, sauf ici",
-      ),
-    )
+    await waitFor(() => expect(ceQueLaColonneDit()).toContain("miroir, sauf ici"))
   })
 
-  // ── « Le retournement s'endort sans se vider, comme les huit autres
-  //     places » ──────────────────────────────────────────────────────────────
-
-  test("la place se vide par son pied de colonne, et le nom est le sien", async () => {
-    const { cadre, appels } = await ouvrirLeRetournement()
-
-    fireEvent.click(cadre.getByRole("button", { name: "miroir gauche-droite" }))
-    await waitFor(() =>
-      expect(cadre.getByRole("button", { name: "Sans retournement ›" })).toBeTruthy(),
-    )
-
-    fireEvent.click(cadre.getByRole("button", { name: "Sans retournement ›" }))
-    await waitFor(() => {
-      const dernier = [...appels].reverse().find((a) => a.url.includes("/recipe"))
-      expect((dernier!.corps as { retournement: unknown }).retournement).toBeNull()
-    })
-  })
-
-  // ── « La direction est proposée par le serveur, jamais devinée à
-  //     l'écran » ────────────────────────────────────────────────────────────
-
-  test("la case proposée vient du serveur, et le champ dit qu'elle est proposée", async () => {
-    const { cadre } = await ouvrirLeRetournement({
-      miroirs: { "bbbb2222-0": { propose: "ouest", raison: null } },
-    })
-
-    const champ = (await cadre.findByLabelText(
-      "Ça se range en",
-    )) as HTMLInputElement
-    await waitFor(() => expect(champ.value).toBe("ouest"))
-    expect(cadre.getByText(/proposé, d'après la direction de cette image/)).toBeTruthy()
-  })
-
-  test("quand il ne sait pas, le champ attend et le geste se grise avec sa raison", async () => {
-    // **La phrase se lit avant le clic, pas après** : un refus qui arrive après
-    // coup est un refus qui a fait espérer. Et elle est recopiée telle quelle —
-    // c'est le serveur qui sait ce que le jeu a nommé.
-    const raison =
-      "un miroir gauche-droite ne change rien à « sud » — cette direction-là se génère"
-    const { cadre } = await ouvrirLeRetournement({
-      miroirs: { "bbbb2222-0": { propose: null, raison } },
-    })
-
-    expect(await cadre.findByText(raison)).toBeTruthy()
-    const champ = cadre.getByLabelText("Ça se range en") as HTMLInputElement
-    expect(champ.value).toBe("")
-    expect(
-      (cadre.getByRole("button", { name: /^Retourner ›/ }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true)
-
-    // **Rien n'est bloqué par une paire inconnue** : dès que l'auteur désigne
-    // une case, c'est la sienne qui vaut.
-    fireEvent.change(champ, { target: { value: "gauche" } })
-    await waitFor(() =>
-      expect(
-        (cadre.getByRole("button", { name: /^Retourner ›/ }) as HTMLButtonElement)
-          .disabled,
-      ).toBe(false),
-    )
-  })
-
-  test("la fabrique part avec la case visée, et ne dépense rien", async () => {
-    const { cadre, appels } = await ouvrirLeRetournement({
-      miroirs: { "bbbb2222-0": { propose: "ouest", raison: null } },
-    })
-
-    const bouton = await cadre.findByRole("button", { name: /^Retourner ›/ })
-    await waitFor(() => expect((bouton as HTMLButtonElement).disabled).toBe(false))
-    fireEvent.click(bouton)
-
-    await waitFor(() => {
-      const parti = appels.find(
-        (a) => a.url === "/api/assets/bbbb2222-0/mirror" && a.corps,
-      )
-      expect(parti).toBeTruthy()
-      expect((parti!.corps as { direction: string }).direction).toBe("ouest")
-    })
-    // Aucun appel au fournisseur : retourner marche réseau coupé.
-    expect(appels.filter((a) => a.url === "/api/generations")).toEqual([])
-  })
+  // ⚠️ **Quatre essais de `B1` sont partis avec l'ancien écran** (`B25`), et
+  // ce sont deux pièces entières que la chaîne redessinée ne reprend pas :
+  //
+  // - **le pied de colonne qui vide une place** — *Sans retournement ›*, et ses
+  //   huit sœurs sur les huit autres tables. Endormir une place existe dans
+  //   l'écran neuf (son interrupteur) ; la **vider** n'y existe nulle part, et
+  //   les deux gestes sont différents — c'est l'invariant du lot U.
+  // - **la fabrique du miroir** — *ça se range en …* puis *Retourner ›*, qui
+  //   écrit une image de plus dans la case d'en face
+  //   (`POST /api/assets/<id>/mirror`), avec la direction proposée par le
+  //   serveur et sa raison quand il ne sait pas. Elle n'existe que dans
+  //   `Places.tsx`, et `B25` la rend injoignable en retirant la porte qui y
+  //   menait.
+  //
+  // Les deux sont notées dans `docs/PLAN-carnet.md` § `B27`. Le serveur, lui,
+  // n'a pas bougé : `tests/test_b1.py` tient la route du miroir.
 
   // ── « L'image retournée se range dans la direction qu'on lui désigne, et la
   //     case se remplit » ──────────────────────────────────────────────────────

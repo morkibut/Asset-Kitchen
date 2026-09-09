@@ -1663,7 +1663,7 @@ trop court à l'usage, mesuré avant de conclure).
 
 ---
 
-## B25 · Une seule porte
+## B25 · Une seule porte — **tenue le 9 septembre 2026**
 
 **Planche** : `Navigation.dc.html`, `Retouche.dc.html`
 
@@ -1701,17 +1701,58 @@ aujourd'hui la référence du sujet, ou la dernière image — jamais celle qu'o
 C'était juste tant qu'il existait une seconde porte par image ; ce ne l'est plus dès
 qu'il n'y en a qu'une.
 
+### Ce qui a été tenu
+
+**Un seul chemin d'écriture dans la pile**, et c'est la pièce centrale : `ouvrirLaRetouche`
+dans `App.tsx` est le seul endroit du produit qui écrive `{ genre: "retouche" }`. Les six
+portes l'appellent, y compris celle qui demande une table (*la différence* passe
+`"superposition"`) ; refermer, c'est l'appeler avec `null`. `"case"` et `"tables"` ont
+quitté `lieux.ts`.
+
+⚠️ **La cinquième porte était déjà fermée.** Le relevé annonçait les deux fabriques de la
+retouche comme menant à l'ancien écran ; `B24` les avait montées dans le cadre la veille.
+Vérifié avant de la re-traiter, rien n'a été touché de ce côté.
+
+**Un seul montage pour les deux racines.** Il y en avait trois — le montage neuf du codex,
+l'ancien écran à la profondeur de la galerie, et le même monté en volet dans la page d'un
+sujet. Le montage retenu est celui du haut ; la page d'un sujet perd donc sa propriété
+`outil`, et `EcranEtabli` avec elle.
+
+⚠️ **Un montage unique démonte la page qui était derrière**, et une page démontée oublie
+ce qu'elle tenait. Deux états remontent d'un cran pour que *remonter d'un cran revienne
+d'où l'on venait* : **l'onglet ouvert** de la page d'un sujet et **sa matrice**. Ce ne
+sont pas des lieux et ils ne s'écrivent pas dans la pile — `lieux.ts` range les onglets
+avec la table ouverte et le panneau de droite — mais sans ce relais, ouvrir une image de
+*Ses images* ramenait sur *Sa fiche*. La colonne ouverte de la matrice et le panneau d'un
+calque, eux, ne sont pas rattrapés : on revient sur la matrice, pas sur le calque. Noté
+plus bas, en `B27`.
+
+**Le bouton de retour nomme ce qu'il y a derrière** : *‹ La galerie* quand on en vient,
+*‹ Ses images* sinon — et c'est aussi ce que la colonne des sœurs montre dans chaque cas.
+Il écrivait *Ses images* dans les deux, ce qui mentait à qui arrivait sur une image que
+personne n'a adoptée.
+
+**Les essais** : `npx tsc -b` propre, `1 246 essais verts sur 24 fichiers`. `App.test.tsx`
+passe de 828 à 715 essais — 39 rejoués mécaniquement contre `[data-retouche]` et le
+vocabulaire des planches, une trentaine adaptés un par un, 28 retirés avec leur note dans
+le fichier. **Ce qu'ils mesuraient et qui n'existe plus est listé en `B27`** : ce n'est pas
+une perte de couverture, c'est une perte de gestes, et elle se rattrape ou s'assume, mais
+en connaissance de cause.
+
+Vérifié au navigateur sur un atelier jetable (`essais/atelier_jetable_b25.py`, port 8497) :
+les quatre chemins, le fil d'Ariane à chaque étage, et le retour depuis chacun.
+
 ### Critères d'acceptation
 
-- [ ] Les six portes ouvrent `Retouche.tsx`, et `EcranTables` n'est plus monté nulle part
+- [x] Les six portes ouvrent `Retouche.tsx`, et `EcranTables` n'est plus monté nulle part
       — vérifié au grep sur `App.tsx`, pas seulement aux essais.
-- [ ] Une image de la galerie **sans chose du jeu** s'ouvre en retouche, avec ses voisines
+- [x] Une image de la galerie **sans chose du jeu** s'ouvre en retouche, avec ses voisines
       de la grille pour sœurs.
-- [ ] La pile de lieux ne porte plus qu'un genre pour cet écran, et remonter d'un cran
+- [x] La pile de lieux ne porte plus qu'un genre pour cet écran, et remonter d'un cran
       revient d'où l'on venait — depuis la galerie comme depuis un sujet.
-- [ ] Ouvrir la différence depuis un calque ouvre la retouche **sur la fabrique**, en un
+- [x] Ouvrir la différence depuis un calque ouvre la retouche **sur la fabrique**, en un
       geste, comme `G16` le tenait déjà.
-- [ ] Les 148 essais des douze blocs d'`App.test.tsx` qui montent l'ancien écran passent,
+- [x] Les 148 essais des douze blocs d'`App.test.tsx` qui montent l'ancien écran passent,
       **rejoués contre le neuf** : chaque `[data-tables]` devient le cadre de la retouche,
       ou l'essai est retiré parce qu'il mesure une pièce qui n'existe plus.
 
@@ -1828,6 +1869,42 @@ Ce qui mesure l'avancement de la refonte doit dire la vérité le jour où elle 
   le nommer coûterait la même chose la prochaine fois.
 - **`docs/carte-du-depot.md`** — les deux fichiers y sont décrits.
 
+### Ce que le déménagement laisse derrière
+
+⚠️ **Seize gestes de l'ancien écran sont devenus injoignables en `B25`**, et le relevé
+en a été fait essai par essai en re-câblant les portes : chaque ligne ci-dessous a coûté
+un ou plusieurs essais retirés d'`App.test.tsx`, et chacun de ces essais porte la note
+dans le fichier. **Ce n'est pas une perte de couverture, c'est une perte de gestes** — le
+serveur, lui, sait toujours tout faire. Chaque ligne se tranche à part : on la rattrape
+dans `Retouche.tsx`, ou on l'assume par écrit.
+
+| Ce qui n'a pas déménagé | Où c'était | Ce que le neuf en fait |
+|---|---|---|
+| **Un curseur prend un chiffre** — le champ où la valeur s'écrit, Entrée, Échap, la valeur ramenée dans ses bornes (U3, six essais) | `Curseur` (`chassis.tsx`), par la table du détourage | `Glissiere` est une glissière et un nombre en lecture : ni champ, ni bornes annoncées |
+| **Vider une seule place** — *Sans bords ›*, et ses huit sœurs | le pied de chaque colonne de table | endormir existe (l'interrupteur) ; **vider** n'existe nulle part, et ce n'est pas le même geste |
+| **La fabrique du miroir** — *ça se range en …* puis *Retourner ›* (`POST /api/assets/<id>/mirror`), avec la direction proposée par le serveur et sa raison quand il ne sait pas | `Places.tsx`, et là seulement | rien — le retournement de la chaîne ne fabrique pas d'image de plus |
+| **Masquer une passe** — *passe 2 — visible* / *masquée*, ses réglages gardés sous les yeux, la passe remontrée dès qu'on touche un curseur (quatre essais) | le détourage de l'ancien panneau | ajouter et retirer une passe, oui ; en masquer une, non — alors que `Passe.masquee` vit toujours dans le domaine |
+| **Le catalogue des modèles de détourage** — *rapide*, *le meilleur sur les silhouettes difficiles*, le poids annoncé avant le téléchargement, le défaut du produit (quatre essais) | le moteur `modele` du détourage | le moteur reste choisissable, **lequel** ne se choisit plus : `Passe.modele` part toujours vide |
+| **Le PNG de l'état courant** — *PNG ↓*, le rendu ou le brut selon ce qu'on travaille | la bande du bas de l'ancien écran | la tuile de la galerie redevient le seul endroit d'où l'on télécharge |
+| **Les poches de fond une par une** — cerclées, comptées, avec *la retirer ›* sur chacune (une passe pipette de plus) | le détourage | comptées sous *Nettoyer*, rebouchées en bloc par un seuil, jamais désignées une par une |
+| **L'échantillon de l'occupation** — le sujet dessiné dans sa case, les deux lectures d'une même hauteur (*3 personnages de haut*, *l'image revient en 192 carrés de côté*), le compte des crans qui changent l'image | la table de la grille | une glissière, sans échantillon |
+| **La grille retrouvée du modèle** — *carrés de 8 pixels · 128 de côté*, et la phrase du serveur quand la détection renonce sur une peinture | la table de la grille (D2) | le serveur la mesure toujours (`mesures.grille_du_modele`), **plus aucun écran ne la lit** |
+| **La source des couleurs** — *la palette du jeu* ou *l'image* | la quantification | une palette vide veut toujours dire « déduite de l'image », plus aucun écran ne la pose |
+| **La liste des taches** — triées de la plus petite à la plus grande, et *12 taches de plus, non listées* | l'aire minimale de *Nettoyer* | le compte seul |
+| **Deux lectures du contour** — la croissance à chaque cran (*la silhouette grandit de 2 px*) et la provenance de la couleur (*proposé, d'après ta palette*, *hors palette*) | le panneau du contour | la croissance n'est écrite que quand une case du jeu est posée, et sous une autre forme ; la provenance, nulle part |
+| **Trois lectures du recadrage** — la part jetée avec le couple avant/après, les bords que le sujet touche, *plus large que le sujet · sans effet sur le rendu* | le panneau du recadrage | les quatre nombres et leur provenance, sans ces trois phrases |
+| **Ce que chaque méthode de pixélisation rend** — *un pixel sur N gardé*, *contour net et intérieur lisible* | sous les segments de la grille | les libellés seuls |
+| **La molette qui approche** | le cadre de l'image | le champ et les deux boutons ; l'écran neuf n'écoute pas `wheel` |
+| **Toucher un réglage réveille une table endormie** — en un seul envoi, avec son annonce (deux essais) | l'ancien châssis | une table endormie n'a plus de réglage à toucher : *endormie : ses réglages sont gardés*, et le réveil passe par l'interrupteur |
+
+⚠️ **Et deux retours qui ne reviennent pas tout à fait.** La retouche se monte à la place
+de la page d'un sujet depuis `B25` — plus en volet dedans —, et une page démontée oublie
+ce qu'elle tenait. L'onglet ouvert et la matrice sont rattrapés (`App.tsx` les tient) ; **la
+colonne ouverte de la matrice et le panneau d'un calque ne le sont pas** : ouvrir *la
+différence* d'un calque puis remonter d'un cran ramène sur la matrice, colonne au corps,
+panneau fermé. Les rattraper demande de faire monter d'un cran deux états de plus, dans
+`Personnages.tsx` cette fois.
+
 ⚠️ **Un garde-fou de plus, et c'est celui qui aurait évité tout ceci.** Un essai qui
 refuse qu'un fichier hors de `LES_FICHIERS_DU_CARNET` soit importé par un fichier qui y
 est : c'est très exactement ce que `Retouche.tsx` faisait de `Places.tsx` depuis `B16`,
@@ -1842,6 +1919,9 @@ pures — et la liste ne grandit que par décision écrite.
       sur `docs/`, `interface/` et `atelier/`.
 - [ ] Le garde-fou d'import refuse une régression fabriquée exprès, et l'essai le montre.
 - [ ] `py essais/essai_docs.py` passe — aucun renvoi mort vers `Places.tsx`/`Tables.tsx`.
+- [ ] Les seize lignes de *Ce que le déménagement laisse derrière* sont tranchées une par
+      une : rattrapée dans la chaîne redessinée, ou assumée par écrit avec sa raison.
+      Aucune ne se referme en silence.
 
 ### Bloquée par
 

@@ -3180,6 +3180,8 @@ export function Retouche({
   soeurs,
   univers,
   traitement,
+  retour = "Ses images",
+  tableDeLaPorte = null,
   onFermer,
   onSoeur,
   decoupe,
@@ -3187,12 +3189,30 @@ export function Retouche({
   onUnivers,
 }: {
   asset: Asset
-  /** Les images voisines — les attitudes de la chose (`B24`, déménagé de
-   *  `Tables.tsx`). **On passe à l'image voisine sans que la table ouverte se
-   *  referme** : c'est le geste qui distingue une table d'un panneau. */
+  /** Les images voisines — les attitudes de la chose quand elle en a une, les
+   *  voisines de la grille quand elle n'en a pas (`B24`, déménagé de
+   *  `Tables.tsx` ; `B25` pour le second cas). **On passe à l'image voisine sans
+   *  que la table ouverte se referme** : c'est le geste qui distingue une table
+   *  d'un panneau. */
   soeurs: Asset[]
   univers: Univers
   traitement: EtatTraitement
+  /** **Ce qu'il y a derrière** — le nom du lieu où le bouton de gauche remonte
+   *  (`B25`). Les sœurs sont les attitudes d'une chose du jeu ou les voisines de
+   *  la grille selon d'où l'on vient ; écrire *Ses images* dans les deux cas
+   *  mentait à qui arrivait de la galerie sur une image que personne n'a
+   *  adoptée. */
+  retour?: string
+  /** La table sur laquelle la porte demande qu'on s'ouvre (`B25`) — *la
+   *  différence* d'un calque arrive directement sur la fabrique de
+   *  superposition, en un geste, comme `G16` le tenait déjà.
+   *
+   *  ⚠️ **Lue au montage, et une seule fois.** La table ouverte appartient à
+   *  cet écran-ci une fois qu'il est ouvert : la relire à chaque rendu
+   *  reposerait la superposition sous les doigts de qui vient d'en sortir. Les
+   *  portes ouvrent toujours un écran fermé — c'est le sens même d'une porte —,
+   *  donc une seconde demande le remonte à neuf et se lit comme la première. */
+  tableDeLaPorte?: Table | null
   onFermer: () => void
   onSoeur: (identifiant: string) => void
   /** La fabrique du découpage, **rendue dans le cadre de la retouche** et non
@@ -3211,7 +3231,7 @@ export function Retouche({
     onErreur,
   )
   const mesures = useMesures(asset)
-  const [ouverte, setOuverte] = useState<Table>("detourage")
+  const [ouverte, setOuverte] = useState<Table>(tableDeLaPorte ?? "detourage")
   const [travail, setTravail] = useState<Travail>("rendu")
   const [temoin, setTemoin] = useState<Temoin>("aucun")
   const [opacite, setOpacite] = useState(50)
@@ -3523,7 +3543,7 @@ export function Retouche({
             onClick={onFermer}
             className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
           >
-            ‹ Ses images
+            ‹ {retour}
           </button>
           <span className="min-w-0 truncate text-[12.5px] text-encre-3">{asset.label}</span>
 
