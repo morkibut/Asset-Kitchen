@@ -1,21 +1,21 @@
 {
- "releve_le": 1788966883.5441256,
+ "releve_le": 1788968428.5817266,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 195646,
+  "octets": 196069,
   "documents": {
    "AGENTS.md": {
-    "octets": 35404,
+    "octets": 35827,
     "titres": 14,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 34915
+      "octets": 35333
      },
      {
       "titre": "Où en est le dépôt → `docs/PLAN.md`",
@@ -45,54 +45,54 @@
       "titre": "Lancer",
       "niveau": 2,
       "ligne": 198,
-      "octets": 3576
+      "octets": 3994
      },
      {
       "titre": "Les documents et leur autorité",
       "niveau": 2,
-      "ligne": 258,
+      "ligne": 263,
       "octets": 3981
      },
      {
       "titre": "Les skills et leurs frontières",
       "niveau": 2,
-      "ligne": 317,
+      "ligne": 322,
       "octets": 1963
      },
      {
       "titre": "Où sont les choses → `docs/carte-du-depot.md`",
       "niveau": 2,
-      "ligne": 347,
+      "ligne": 352,
       "octets": 1663
      },
      {
       "titre": "Les projets voisins — les lire avant de réinventer",
       "niveau": 2,
-      "ligne": 364,
+      "ligne": 369,
       "octets": 1035
      },
      {
       "titre": "Règles durables",
       "niveau": 2,
-      "ligne": 381,
+      "ligne": 386,
       "octets": 3361
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 424,
+      "ligne": 429,
       "octets": 631
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 435,
+      "ligne": 440,
       "octets": 2244
      },
      {
       "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
       "niveau": 2,
-      "ligne": 474,
+      "ligne": 479,
       "octets": 1087
      }
     ]

@@ -228,6 +228,11 @@ py essais/essai_jetons.py            le système de design **dans les deux sens*
                                      elle rend un compte, parce qu'un jeton
                                      inemployé est soit une pièce pas encore
                                      dessinée, soit un jeton mort
+py essais/essai_imports.py           le garde-fou d'import : un fichier du carnet
+                                     n'emprunte aucune fonction, constante ni crochet à
+                                     un écran hors carnet — monter un composant reste
+                                     permis, la majuscule qui ouvre le nom fait la
+                                     différence entre monter et emprunter
 ```
 
 **Les 29 autres bancs vivent dans `docs/bancs.md`** — ce que chacun mesure, ce qu'il coûte, et

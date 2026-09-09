@@ -3937,9 +3937,9 @@ export function Retouche({
 
   // ── Ce qui voyage d'une image à l'autre (U5, déménagé en `B24`) ──────────
   //
-  // **Le presse-papiers vit hors de React**, dans `Tables.tsx` — importé ici,
-  // pas recréé : copier dans un écran et coller dans l'autre doit rester un
-  // seul geste tant que les deux coexistent (`Tables.tsx`, `copiee`).
+  // **Le presse-papiers vit hors de React**, dans `interface/src/recette.ts`
+  // — importé ici, pas recréé : copier dans un écran et coller dans l'autre
+  // reste un seul geste tant que ce module reste la seule source de vérité.
   const [nommees, setNommees] = useState<string[]>([])
   const [annonceRecette, setAnnonceRecette] = useState<string[] | null>(null)
   const [aCopier, setACopier] = useState(lireLePressePapier() !== null)

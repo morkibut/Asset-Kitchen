@@ -116,9 +116,18 @@ def noms_importes(defaut: str | None, membres: str | None) -> list[str]:
     return [n for n in noms if n]
 
 
+COMPOSANT = re.compile(r"^[A-Z][a-z]")
+
+
 def est_un_composant(nom: str) -> bool:
-    """PascalCase : on le monte (`<Foo />`), on ne l'emprunte pas."""
-    return bool(nom) and nom[0].isupper()
+    """PascalCase : on le monte (`<Foo />`), on ne l'emprunte pas.
+
+    Une majuscule seule ne suffit pas — `TROUS`, `SENS_LIVRES`, `ZOOM_MIN`
+    sont des constantes en SCREAMING_CASE, pas des composants, et elles
+    doivent rester refusables. Un composant React commence par une
+    majuscule *suivie d'une minuscule* (`EcranEtabli`, `BandeQuiTourne`) ;
+    une constante reste entièrement en majuscules."""
+    return bool(nom) and bool(COMPOSANT.match(nom))
 
 
 def emprunts_hors_carnet(texte: str, depuis: Path) -> list[str]:
@@ -156,7 +165,7 @@ def emprunts_hors_carnet(texte: str, depuis: Path) -> list[str]:
 
 
 def auto_essai() -> list[str]:
-    """Deux cas fabriqués, un refus attendu et un laissez-passer attendu.
+    """Trois cas fabriqués, deux refus attendus et un laissez-passer attendu.
     Retourne les phrases d'échec de l'auto-essai — vide si le garde-fou se
     comporte comme annoncé."""
     fautes = []
@@ -169,6 +178,18 @@ def auto_essai() -> list[str]:
         fautes.append(
             "l'auto-essai : un import fabriqué de `Montage.tsx` (hors carnet, hors "
             "exceptions) n'a pas été refusé — le garde-fou ne garde rien"
+        )
+    # Une constante en SCREAMING_CASE commence aussi par une majuscule, mais ce
+    # n'est pas un composant qu'on monte — c'est exactement le genre de symbole
+    # que l'import réel de `B16` empruntait à `Places.tsx` (`TROUS`,
+    # `SENS_LIVRES`), et il doit être refusé comme n'importe quelle fonction.
+    constante = 'import { TROUS, SENS_LIVRES } from "./Montage"\n'
+    trouve = emprunts_hors_carnet(constante, depuis)
+    if not trouve:
+        fautes.append(
+            "l'auto-essai : une constante SCREAMING_CASE (`TROUS`, `SENS_LIVRES`) "
+            "empruntée à `Montage.tsx` n'a pas été refusée — elle passe pour un "
+            "composant alors qu'elle n'en est pas un"
         )
     # Monter un composant du même fichier hors-carnet reste un geste normal —
     # une majuscule dit qu'on l'affiche, pas qu'on lui emprunte une logique.
