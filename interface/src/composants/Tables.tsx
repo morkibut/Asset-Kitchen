@@ -294,6 +294,20 @@ export function reinitialiserPressePapier(): void {
   copiee = null
 }
 
+/** Copier une recette dans le presse-papiers de séance (`B24`).
+ *
+ *  **Exportée pour que `Retouche.tsx` partage le même presse-papiers**, et
+ *  non un second : copier dans un écran et coller dans l'autre doit rester le
+ *  même geste tant que les deux écrans coexistent. */
+export function copierDansLePressePapier(recette: Recette): void {
+  copiee = recette
+}
+
+/** Ce qui est dans le presse-papiers, ou `null`. Voir `copierDansLePressePapier`. */
+export function lireLePressePapier(): Recette | null {
+  return copiee
+}
+
 /** Les gestes qui font voyager une recette, dans un panneau de la barre.
  *
  *  **Un seul point d'entrée pour les deux durées de vie.** Copier-coller sert
@@ -1041,9 +1055,13 @@ function CommandesDeZoom({
  *
  * Le pour cent est donc **libre entre 1 et 250**, il s'écrit à la main, et il
  * n'a plus de marque.
+ *
+ * ⚠️ **Exportés** (`B24`) : `Retouche.tsx` déménage ce même contrôle plutôt
+ * que d'en réécrire un second — deux calculs du même geste finiraient par ne
+ * plus viser le même pixel, la leçon que `B18` a payée sur `palette.py`.
  */
-const ZOOM_MIN = 1
-const ZOOM_MAX = 250
+export const ZOOM_MIN = 1
+export const ZOOM_MAX = 250
 
 /** Les arrêts de *plus* et *moins*.
  *
@@ -1052,16 +1070,16 @@ const ZOOM_MAX = 250
  *  que personne n'écrirait — 141 %, 199 %. La liste ci-dessous est serrée là où
  *  l'on règle et lâche là où l'on regarde de loin, et elle contient 100, qui
  *  est le seul arrêt qui ait un sens propre. */
-const ARRETS_ZOOM = [
+export const ARRETS_ZOOM = [
   1, 3, 6, 12, 25, 33, 50, 66, 75, 100, 125, 150, 175, 200, 225, 250,
 ] as const
 
 /** `ajusté` n'est pas un arrêt : c'est **le pour cent qui fait tenir l'image
  *  entière dans le cadre**, recalculé quand le cadre change. Il est l'état
  *  d'ouverture, et il peut descendre sous cent — c'était tout le défaut. */
-type ZoomTable = number | "ajuste"
+export type ZoomTable = number | "ajuste"
 
-const borner = (pour_cent: number) =>
+export const borner = (pour_cent: number) =>
   Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round(pour_cent)))
 
 /** Les 24 px de `p-6`, des deux côtés — la marge du cadre, à retirer de ce qui
@@ -1861,7 +1879,7 @@ export function EcranTables({
  *  **Le point de la pipette et le tracé n'en sont pas**, et c'est le domaine qui
  *  le décide : un défaut n'a pas d'image où viser. Les reconstruire ici serait
  *  une seconde vérité sur ce qu'est un détourage par défaut. */
-function defautDeLaPasse(passe: Passe): DefautDetourage {
+export function defautDeLaPasse(passe: Passe): DefautDetourage {
   return {
     moteur: passe.moteur,
     tolerance: passe.tolerance,
