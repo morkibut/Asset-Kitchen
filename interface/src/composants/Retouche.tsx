@@ -34,7 +34,7 @@
  * comme posées ou non, et il le dit.
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   api,
   CONTOUR_PAR_DEFAUT,
@@ -2258,10 +2258,17 @@ export function Retouche({
   // arrivait : un dessin ne se juge plus quand on n'en voit que ce que
   // `object-contain` en laisse. Le pour cent libre descend sous cent — et
   // c'est tout ce qui change.
-  const cadre = useRef<HTMLDivElement>(null)
+  // ⚠️ **Une `ref` posée dans une branche démontée perd son observateur**
+  // (`B24`) : `ouverte === "decoupage" | "superposition"` démonte ce cadre
+  // pour poser la fabrique à sa place, React y remonte un nœud DOM neuf au
+  // retour, et un `ResizeObserver` armé une fois pour toutes (`[]`) continue
+  // d'observer l'ancien nœud, orphelin — la fenêtre cesse d'être suivie après
+  // le premier aller-retour par une fabrique. Une `ref` de rappel réarme
+  // l'observateur à chaque nœud reçu, y compris le second.
+  const [noeudCadre, setNoeudCadre] = useState<HTMLDivElement | null>(null)
   const [dispo, setDispo] = useState({ largeur: 0, hauteur: 0 })
   useEffect(() => {
-    const noeud = cadre.current
+    const noeud = noeudCadre
     if (!noeud) return
     const mesurer = () =>
       setDispo((deja) => {
@@ -2279,7 +2286,7 @@ export function Retouche({
     const oeil = new ResizeObserver(mesurer)
     oeil.observe(noeud)
     return () => oeil.disconnect()
-  }, [])
+  }, [noeudCadre])
 
   const [zoom, setZoom] = useState<ZoomTable>("ajuste")
   // Changer d'image rouvre en ajusté, pour la même raison que la table.
@@ -2655,71 +2662,96 @@ export function Retouche({
             </div>
 
             <div
-              ref={cadre}
+              ref={setNoeudCadre}
               data-scene-de-retouche
               style={montreUnFond ? { backgroundColor: FONDS_APERCU[fondApercu] as string } : undefined}
-              className="flex min-h-[300px] flex-1 items-center justify-center gap-[8px] overflow-auto rounded-8 bg-pourtour p-[22px]"
+              className="flex min-h-[300px] flex-1 overflow-auto rounded-8 bg-pourtour p-[22px]"
             >
-              {temoin === "cote" && (
+              {/* **`m-auto` sur la boîte, jamais `justify-center` sur le
+                  cadre qui défile** (`B24`) : un contenu centré par
+                  `justify-center` déborde des deux côtés à la fois et le
+                  début — le bord gauche, le haut — devient inatteignable au
+                  défilement. C'est très exactement le piège que `Tables.tsx`
+                  a réparé pour son propre zoom ; même remède ici. */}
+              <div className="m-auto flex shrink-0 items-center gap-[8px]">
+                {temoin === "cote" && (
+                  <figure className="flex min-w-0 flex-col items-center gap-[4px]">
+                    <img
+                      src={imageAsset(asset, travail !== "brut")}
+                      alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
+                      width={Math.max(
+                        1,
+                        Math.round(
+                          (travail === "brut" ? asset.rendu_largeur || asset.largeur : asset.largeur) *
+                            facteur,
+                        ),
+                      )}
+                      height={Math.max(
+                        1,
+                        Math.round(
+                          (travail === "brut" ? asset.rendu_hauteur || asset.hauteur : asset.hauteur) *
+                            facteur,
+                        ),
+                      )}
+                      style={{ imageRendering: "pixelated" }}
+                      className="damier block max-h-full min-w-0 object-contain"
+                    />
+                    <figcaption className="mesure text-[10.5px] text-carte">
+                      témoin ·{" "}
+                      {travail === "brut" ? asset.rendu_largeur || asset.largeur : asset.largeur}×
+                      {travail === "brut" ? asset.rendu_hauteur || asset.hauteur : asset.hauteur}
+                    </figcaption>
+                  </figure>
+                )}
                 <figure className="flex min-w-0 flex-col items-center gap-[4px]">
-                  <img
-                    src={imageAsset(asset, travail !== "brut")}
-                    alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
-                    width={Math.max(
-                      1,
-                      Math.round(
-                        (travail === "brut" ? asset.rendu_largeur || asset.largeur : asset.largeur) *
-                          facteur,
-                      ),
+                  {/* **Le calque de témoin ne partage son conteneur relatif
+                      qu'avec l'image qu'il double** (`B24`) : posé plus haut,
+                      dans une `<figure>` qui contenait aussi la légende, il
+                      se décalait de l'image — mesuré au navigateur, +9 px au
+                      repos et hors-échelle à 250 %. `Tables.tsx` ne met rien
+                      d'autre que l'image dans son `<span className="relative">` ;
+                      la légende sort donc du conteneur relatif, et le
+                      `<span>` porte la taille exacte de l'image affichée pour
+                      que le calque en `h-full w-full` coïncide au pixel. */}
+                  <span
+                    className="relative block max-h-full min-w-0"
+                    style={{
+                      width: Math.max(1, Math.round(largeurVue * facteur)),
+                      height: Math.max(1, Math.round(hauteurVue * facteur)),
+                    }}
+                  >
+                    <img
+                      src={imageAsset(asset, travail === "brut")}
+                      alt={asset.label}
+                      width={Math.max(1, Math.round(largeurVue * facteur))}
+                      height={Math.max(1, Math.round(hauteurVue * facteur))}
+                      style={{ imageRendering: "pixelated" }}
+                      className={[
+                        montreUnFond ? "" : "damier",
+                        "block h-full w-full object-contain",
+                      ].join(" ")}
+                    />
+                    {/* **Un calque de lecture, et il ne prend pas le pointeur.**
+                        Le curseur d'opacité continue de dire ce qu'on voit ; une
+                        image posée par-dessus qui intercepterait les clics serait
+                        le défaut que `Tables.tsx` a réparé en U2. */}
+                    {temoin === "dessus" && (
+                      <img
+                        src={imageAsset(asset, travail !== "brut")}
+                        alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
+                        style={{ imageRendering: "pixelated", opacity: opacite / 100 }}
+                        className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                      />
                     )}
-                    height={Math.max(
-                      1,
-                      Math.round(
-                        (travail === "brut" ? asset.rendu_hauteur || asset.hauteur : asset.hauteur) *
-                          facteur,
-                      ),
-                    )}
-                    style={{ imageRendering: "pixelated" }}
-                    className="damier block max-h-full min-w-0 object-contain"
-                  />
+                  </span>
+                  {/* **La taille rendue est écrite sous l'image**, parce que
+                      c'est le seul endroit où le contour se voit changer les
+                      dimensions du fichier qui part dans le jeu. */}
                   <figcaption className="mesure text-[10.5px] text-carte">
-                    témoin ·{" "}
-                    {travail === "brut" ? asset.rendu_largeur || asset.largeur : asset.largeur}×
-                    {travail === "brut" ? asset.rendu_hauteur || asset.hauteur : asset.hauteur}
+                    {travail === "brut" ? "brut" : "rendu"} · {largeurVue}×{hauteurVue}
                   </figcaption>
                 </figure>
-              )}
-              <figure className="relative flex min-w-0 flex-col items-center gap-[4px]">
-                <img
-                  src={imageAsset(asset, travail === "brut")}
-                  alt={asset.label}
-                  width={Math.max(1, Math.round(largeurVue * facteur))}
-                  height={Math.max(1, Math.round(hauteurVue * facteur))}
-                  style={{ imageRendering: "pixelated" }}
-                  className={[
-                    montreUnFond ? "" : "damier",
-                    "block max-h-full min-w-0 object-contain",
-                  ].join(" ")}
-                />
-                {/* **Un calque de lecture, et il ne prend pas le pointeur.**
-                    Le curseur d'opacité continue de dire ce qu'on voit ; une
-                    image posée par-dessus qui intercepterait les clics serait
-                    le défaut que `Tables.tsx` a réparé en U2. */}
-                {temoin === "dessus" && (
-                  <img
-                    src={imageAsset(asset, travail !== "brut")}
-                    alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
-                    style={{ imageRendering: "pixelated", opacity: opacite / 100 }}
-                    className="pointer-events-none absolute inset-0 h-full w-full object-contain"
-                  />
-                )}
-                {/* **La taille rendue est écrite sous l'image**, parce que
-                    c'est le seul endroit où le contour se voit changer les
-                    dimensions du fichier qui part dans le jeu. */}
-                <figcaption className="mesure text-[10.5px] text-carte">
-                  {travail === "brut" ? "brut" : "rendu"} · {largeurVue}×{hauteurVue}
-                </figcaption>
-              </figure>
+              </div>
             </div>
 
             {/* **Le seul état durable qui change ce qu'un outil touche.** Il

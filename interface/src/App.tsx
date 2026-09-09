@@ -4644,9 +4644,17 @@ export function App() {
               sujet={{
                 famille: "planche",
                 planche: imageDeLaRetouche,
+                // ⚠️ **Les images d'une découpe n'ont ni `personnage` ni
+                // `pose`** (`atelier/services/decoupe.py`) : elles vont dans
+                // la grille libre, jamais dans une case d'un sujet. Rouvrir
+                // la retouche dessus (`B24`) demandait `imageDeLaRetouche`
+                // de la trouver dans `choseOuverte.cases`, où elle n'est
+                // jamais — l'écran se refermait donc sans un mot juste après
+                // la découpe. Le geste d'avant `B24` ne naviguait pas :
+                // fermer la fabrique et sélectionner le résultat.
                 onDecoupe: (decoupes) => {
                   fermerLaFabrique()
-                  if (decoupes.length > 0) setRetoucheOuverte(decoupes[0].identifiant)
+                  if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
                 },
               }}
               onFermer={fermerLaFabrique}
