@@ -200,7 +200,6 @@ export function EcranEtabli({
   onOuvrirLaBande,
   onSuperposition,
   onSupprimer,
-  outil,
 }: {
   /** **Le vestiaire du projet** (C3) — l'autre axe de la même matrice. Tenu par
    *  `App` comme le plan, et pour la même raison : un seul endroit écoute le
@@ -293,10 +292,6 @@ export function EcranEtabli({
    *  que ce bandeau appartient au châssis. Un second chemin de suppression
    *  aurait été un second endroit d'où l'on jette sans pouvoir défaire. */
   onSupprimer: (identifiants: string[]) => void
-  /** L'outil rendu en plein cadre. `App` le compose, parce qu'il a besoin du
-   *  traitement, de l'univers et du plan — que cet écran-ci n'a pas à
-   *  connaître pour montrer une matrice. */
-  outil: ReactNode
 }) {
   // **La fiche ouverte, ou non.** De l'écran et non du serveur : ouvrir une
   // fiche ne change pas le jeu, et l'enregistrer en ferait un état à remettre
@@ -380,20 +375,18 @@ export function EcranEtabli({
     // autre chose selon la profondeur ouverte. Cette matrice garde le sien,
     // `data-matrice`, pour ce qui veut la viser *elle*.
     <div data-matrice data-univers className="flex min-h-0 min-w-0 flex-col bg-fond-0">
-      {/* **Une case pleine ouvre son outil en plein cadre, et l'on revient sans
-          avoir changé d'onglet** (E2). L'outil remplace la matrice, il ne se
-          pose pas dessus : c'est la profondeur suivante du même endroit, et le
-          fil d'Ariane la dit. Les tables de E3 viendront ici ; d'ici là c'est la
-          recette, seul outil qui existe. */}
-      {/* **La fiche s'ouvre en plein cadre, comme un outil** (E12) : c'est la
-          profondeur suivante du même endroit, et elle emprunte le mécanisme
-          existant plutôt que d'en inventer un. Elle passe **après** l'outil :
-          une image ouverte gagne, parce qu'on y est descendu plus loin.
+      {/* ⚠️ **L'outil en plein cadre est parti d'ici** (`B25`). Une case pleine
+          ouvrait l'ancien écran des tables *dans* cette matrice, comme une
+          profondeur de plus du même endroit ; elle ouvre maintenant la retouche,
+          qui prend la surface entière et que le châssis monte seul. Un écran
+          atteint par deux montages est un écran dont les deux conditions
+          finissent par ne plus dire la même chose.
 
-          Et comme l'outil, elle fait disparaître la barre qui paie — régler ne
-          se paie pas. C'est `App` qui la retire, sur le même booléen. */}
-      {outil ??
-        (planchePose ? (
+          **La fiche, elle, reste en plein cadre** (E12) : c'est la profondeur
+          suivante du même endroit, et elle emprunte le mécanisme qui existait
+          plutôt que d'en inventer un. Comme l'outil d'avant, elle fait
+          disparaître la barre qui paie — régler ne se paie pas. */}
+      {(planchePose ? (
           <EcranPlanche
             personnage={ouvert}
             pose={planchePose}

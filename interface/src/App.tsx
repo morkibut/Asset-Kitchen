@@ -132,14 +132,17 @@ import {
   NOM_DE_LA_RUBRIQUE,
   type Rubrique,
 } from "./composants/Codex"
-import { PageDuSujet } from "./composants/PageDuSujet"
+import { PageDuSujet, type Onglet as OngletDuSujet } from "./composants/PageDuSujet"
 import { GrilleDuJeu } from "./composants/GrilleDuJeu"
 import { Comparer } from "./composants/Comparer"
 import { Retouche } from "./composants/Retouche"
 import { EcranReglages } from "./composants/EcranReglages"
-import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
+import { Fiche, nomDuModele } from "./composants/Fiche"
 import { FicheDuClip } from "./composants/FicheDuClip"
-import { EcranTables, TABLES, type Table } from "./composants/Tables"
+// ⚠️ **`EcranTables` n'est plus monté nulle part** (`B25`) : les six portes de
+// la retouche mènent toutes à `Retouche.tsx`. Il ne reste de ce fichier que le
+// type de la table qu'une porte demande — il s'en ira avec lui en `B26`.
+import type { Table } from "./composants/Tables"
 import { EcranDepliage } from "./composants/Depliage"
 import { EcranAtelierDeBande } from "./composants/AtelierDeBande"
 import { EcranMontage } from "./composants/Montage"
@@ -873,24 +876,6 @@ export function App() {
   const choseOuverteId = lieu(pile, "sujet")?.sujet ?? null
   const setChoseOuverte = (sujet: string | null) =>
     setPile((p) => (sujet ? entrer(p, { genre: "sujet", sujet }) : sortir(p, "sujet")))
-  /** L'image dont l'outil est ouvert **en plein cadre dans l'établi** (E2). Un
-   *  identifiant, jamais l'objet : l'image continue d'arriver par le flux à
-   *  chaque retouche, et une copie gardée ici serait celle d'avant. */
-  const caseOuverte = lieu(pile, "case")?.asset ?? null
-  const setCaseOuverte = (asset: string | null) =>
-    setPile((p) => (asset ? entrer(p, { genre: "case", asset }) : sortir(p, "case")))
-  /** Quelle table est ouverte. **Elle survit au changement d'image** : on règle
-   *  la même place sur six attitudes à la file, et refermer la table à chaque
-   *  voisine ferait du geste six gestes. */
-  const [table, setTable] = useState<Table>("detourage")
-  /** L'image dont les tables sont ouvertes **depuis la galerie** (E4). C'est la
-   *  seconde des deux portes de la fiche, et la seule qu'une image sans chose
-   *  du jeu possède : les tables s'ouvrent sur n'importe quelle image. */
-  const tablesOuvertes = lieu(pile, "tables")?.asset ?? null
-  const setTablesOuvertes = (asset: string | null) =>
-    setPile((p) =>
-      asset ? entrer(p, { genre: "tables", asset }) : sortir(p, "tables"),
-    )
   /** La grille du jeu, et comparer (`B13`) — deux profondeurs de plus de la
    *  page d'un sujet, ouvertes depuis son bandeau d'onglets. Ni l'une ni
    *  l'autre ne dépense : aucune des deux n'a besoin de fermer la barre qui
@@ -1076,14 +1061,30 @@ export function App() {
       (e) => e.identifiant === emploiOuvertLieu?.emploi,
     ) ?? null
 
-  /** La retouche (`B16`) — la chaîne redessinée, une profondeur de plus de la
-   *  page d'un sujet. Elle ne dépense rien : *cliquer ne coûte jamais*, et
-   *  toute la chaîne se rejoue sans un centime. */
+  /** La retouche (`B16`) — la chaîne redessinée. Elle ne dépense rien :
+   *  *cliquer ne coûte jamais*, et toute la chaîne se rejoue sans un centime.
+   *
+   *  **Une seule porte, et un seul chemin d'écriture** (`B25`). Les genres
+   *  `"case"` et `"tables"` ont fondu dans celui-ci : les six portes du produit
+   *  — la fiche d'une image de la galerie, *Ses images*, un calque, l'écart du
+   *  comparateur, les deux fabriques et le bandeau *La retouche ›* — passent
+   *  toutes par `ouvrirLaRetouche`, et il n'y a plus qu'un endroit où une
+   *  condition peut manquer. */
   const retoucheOuverte = lieu(pile, "retouche")?.asset ?? null
-  const setRetoucheOuverte = (asset: string | null) =>
+  /** La table sur laquelle la porte demande qu'on s'ouvre, ou `null` pour
+   *  *Détourer*, le défaut. **Elle n'est pas un lieu** (`lieux.ts`, § *Ce qui
+   *  n'est pas un lieu*) : c'est un état de l'écran, et il vit dans
+   *  `Retouche.tsx` une fois l'écran ouvert. Ceci n'est que la demande de la
+   *  porte, lue au montage — l'écran est toujours fermé quand une porte
+   *  l'ouvre, et une seconde demande le remonte donc à neuf. */
+  const [tableDeLaPorte, setTableDeLaPorte] = useState<Table | null>(null)
+  /** **Le seul endroit du produit qui écrive la retouche dans la pile.** */
+  const ouvrirLaRetouche = (asset: string | null, table: Table | null = null) => {
+    setTableDeLaPorte(table)
     setPile((p) =>
       asset ? entrer(p, { genre: "retouche", asset }) : sortir(p, "retouche"),
     )
+  }
   /** Les réglages de l'appel, repliés au pied de la barre qui paie. Le repli
    *  vit dans le registre du châssis comme tous les autres : il survit au
    *  changement d'onglet, qui démonte l'écran (E1). */
@@ -1098,6 +1099,24 @@ export function App() {
   const choseOuverte =
     personnages.find((p) => p.identifiant === choseOuverteId) ?? null
 
+  /** **L'onglet ouvert dans la page d'un sujet** (`B25`) — *Sa fiche*, *Ses
+   *  images*, *Ses animations*, *L'essai*.
+   *
+   *  ⚠️ **Ce n'est pas un lieu**, et il ne s'écrit pas dans la pile : `lieux.ts`
+   *  range les onglets d'un écran avec la table ouverte et le panneau de
+   *  droite. Il est tenu ici parce que la retouche se monte **à la place** de
+   *  cette page depuis `B25`, et qu'une page démontée oublie son onglet :
+   *  ouvrir une image de *Ses images* puis remonter d'un cran ramenait sur *Sa
+   *  fiche*, ce qui n'est pas d'où l'on venait. */
+  const [ongletDuSujet, setOngletDuSujet] = useState<OngletDuSujet>("fiche")
+  /** **Sa matrice ouverte** — même raison, même remise à zéro : la
+   *  superposition d'un calque part de là, et y revient. */
+  const [matriceDuSujet, setMatriceDuSujet] = useState(false)
+  useEffect(() => {
+    setOngletDuSujet("fiche")
+    setMatriceDuSujet(false)
+  }, [choseOuverteId])
+
   /** Le sujet dont la grille du jeu, ou le comparateur, est ouvert — **relus
    *  dans la liste vivante**, pour la même raison que `choseOuverte`. */
   const sujetDeLaGrille =
@@ -1105,27 +1124,42 @@ export function App() {
   const sujetDuComparateur =
     personnages.find((p) => p.identifiant === comparerOuvert) ?? null
 
-  /** L'image dont l'outil est ouvert, **relue dans les cases de la chose**. Une
-   *  image retirée de sa case referme donc l'outil, et une image retouchée s'y
-   *  montre à jour : la matrice est la seule vérité de cet écran. */
-  /** L'image dont les tables sont ouvertes depuis la galerie, relue dans la
-   *  grille — la seule vérité de cet onglet. */
-  const imageDesTables =
-    grille.find((a) => a.identifiant === tablesOuvertes) ?? null
+  /** Les images du sujet ouvert — ses attitudes, calques compris. */
+  const imagesDuSujetOuvert = (choseOuverte?.cases ?? []).flatMap((c) => [
+    ...c.images,
+    ...Object.values(c.calques).flat(),
+  ])
 
-  const imageOuverte =
-    choseOuverte?.cases
-      .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
-      .find((a) => a.identifiant === caseOuverte) ?? null
+  /** L'image de la retouche **quand elle appartient au sujet ouvert**, ou
+   *  `null`. C'est elle qui décide de la colonne des sœurs juste en dessous :
+   *  les attitudes de la chose, ou les voisines de la grille. */
+  const imageDuSujetEnRetouche =
+    imagesDuSujetOuvert.find((a) => a.identifiant === retoucheOuverte) ?? null
 
-  /** L'image dont la chaîne de retouche est ouverte (`B16`) — **relue dans la
-   *  charge du sujet, jamais gardée**. C'est la règle du dépôt : on tient des
+  /** L'image dont la chaîne de retouche est ouverte (`B16`) — **relue à chaque
+   *  rendu, jamais gardée**. C'est la règle du dépôt : on tient des
    *  identifiants, pas des objets, sans quoi une image retouchée resterait
-   *  affichée telle qu'elle était quand on l'a ouverte. */
+   *  affichée telle qu'elle était quand on l'a ouverte.
+   *
+   *  ⚠️ **Deux endroits où la chercher, et c'est la septième porte** (`B25`).
+   *  Elle n'était relue que dans la charge du sujet ; la porte de la galerie
+   *  sert justement des images qui n'appartiennent à **aucune** chose du jeu, et
+   *  l'écran se refermait donc sans un mot sur celles-là — le seul cas que les
+   *  deux écrans ne couvraient pas pareil, et celui qui empêchait de retirer
+   *  l'ancien. Le sujet d'abord, la grille ensuite : une image qui est dans les
+   *  deux est d'abord celle du sujet qu'on regarde. */
   const imageDeLaRetouche =
-    choseOuverte?.cases
-      .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
-      .find((a) => a.identifiant === retoucheOuverte) ?? null
+    imageDuSujetEnRetouche ??
+    grille.find((a) => a.identifiant === retoucheOuverte) ??
+    null
+
+  /** Les sœurs de l'image en retouche — **ses voisines, selon d'où l'on
+   *  vient**. Les attitudes de la chose quand elle en a une, les voisines de la
+   *  grille quand elle n'en a pas : dans les deux cas, on passe de l'une à
+   *  l'autre sans que la table ouverte se referme. */
+  const soeursDeLaRetouche = imageDuSujetEnRetouche
+    ? (choseOuverte?.cases ?? []).flatMap((c) => c.images)
+    : grille
 
   // ── T5 : la découpe — **retirée en `B0`, parce qu'elle était morte** ──────
   //
@@ -1252,6 +1286,15 @@ export function App() {
   // corpus appelle la même idée `jeu`, et réserve `reglages` à l'installation
   // de l'atelier — deux choses différentes qui partagent un mot par accident.
   // Une seule traduction, ici, pour ne pas avoir à s'en souvenir ailleurs.
+  //
+  // ⚠️ **`tables` et `case` sont des écrans du guide, pas des genres de lieu**
+  // (`B25`). La pile n'en porte plus qu'un pour la retouche ; le corpus, lui,
+  // garde ses deux groupes parce qu'ils ne disent pas la même chose : `tables`
+  // range les soixante-dix réglages de la chaîne — c'est la retouche —, et
+  // `case`, que `Guide.tsx` nomme *La fiche d'une image*, range les quatre
+  // champs de `Fiche.tsx`. Ces quatre-là sont **enfin joints à leur écran** :
+  // ils étaient adressés à l'image ouverte dans la page d'un sujet, où aucun
+  // des quatre ne paraît, alors qu'ils vivent dans le panneau de la galerie.
   const ecranDuGuide: Explication["ou"] | null = reglagesOuverts
     ? "reglages"
     : depensesOuvertes
@@ -1262,9 +1305,9 @@ export function App() {
           ? coteUnivers === "reglages"
             ? "jeu"
             : coteUnivers
-          : tablesOuvertes
+          : retoucheOuverte
             ? "tables"
-            : caseOuverte
+            : onglet === "galerie" && selection.length === 1
               ? "case"
               : montageOuvert
                 ? "montage"
@@ -1381,8 +1424,8 @@ export function App() {
   // `onglet` en dépendance parce que la galerie se **démonte** quand un autre
   // onglet est allumé (E1) : sans cette ligne, la largeur mesurée resterait
   // celle d'avant le départ, et le grisé du zoom mentirait au retour.
-  // `tablesOuvertes` pour la même raison, depuis le 31 août 2026 : la galerie
-  // se démonte aussi quand une table s'ouvre par-dessus elle, et la mesure
+  // `retoucheOuverte` pour la même raison, depuis le 31 août 2026 : la galerie
+  // se démonte aussi quand la retouche s'ouvre par-dessus elle, et la mesure
   // doit se reprendre au retour. L'identifiant plutôt que l'asset trouvé —
   // celui-ci change d'identité à chaque relecture de grille, et ferait courir
   // la mesure pour rien.
@@ -1391,7 +1434,7 @@ export function App() {
     replies.arbre,
     fiche,
     onglet,
-    tablesOuvertes,
+    retoucheOuverte,
   ])
 
   const echouer = (erreur: unknown, defaut_: string) =>
@@ -3171,27 +3214,25 @@ export function App() {
       // qui écrive. Son dernier nom est *La retouche* et non la table ouverte :
       // la table est un état de l'écran, pas une profondeur de la pile
       // (`lieux.ts`, « ce qui n'est pas un lieu »).
+      //
+      // **Deux noms depuis un sujet, trois depuis la galerie** (`B25`). Sous un
+      // sujet, c'est lui qui nomme son étage — *Le goliath › tonneau-02 › La
+      // retouche*. Sur la galerie, personne ne le fait au-dessus : le lieu porte
+      // alors le mot *Galerie* lui-même, exactement ce que l'ancien genre
+      // `"tables"` écrivait. **C'est la racine qui décide, pas l'endroit où
+      // l'image a été trouvée** : une image née d'une découpe se relit dans la
+      // grille tout en étant ouverte sous un sujet, et lui coller *Galerie*
+      // annoncerait un étage qu'on n'a pas descendu.
       case "retouche": {
-        const image = choseOuverte?.cases
-          .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
-          .find((a) => a.identifiant === ou.asset)
-        return image ? [image.label || image.identifiant, "La retouche"] : null
-      }
-
-      case "case": {
-        const image = choseOuverte?.cases
-          .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
-          .find((a) => a.identifiant === ou.asset)
-        return image ? image.label : null
-      }
-
-      case "tables": {
-        const image = grille.find((a) => a.identifiant === ou.asset)
-        return [
-          "Galerie",
-          image ? image.label || image.identifiant : ou.asset,
-          TABLES.find((t) => t.cle === table)?.nom ?? "",
-        ]
+        const image =
+          choseOuverte?.cases
+            .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
+            .find((a) => a.identifiant === ou.asset) ??
+          grille.find((a) => a.identifiant === ou.asset)
+        const nom = image ? image.label || image.identifiant : ou.asset
+        return racine(dedans) === "galerie"
+          ? ["Galerie", nom, "La retouche"]
+          : [nom, "La retouche"]
       }
 
       // Les trois écrans qui recouvrent le produit n'ont pas de fil : ils ne
@@ -3227,7 +3268,10 @@ export function App() {
             // rouvre sa fiche —, revenir par le mot *Galerie* ne le fait pas.
             // Les deux ramènent au même étage : c'est le rang du nom dans son
             // lieu qui les sépare, pas son libellé.
-            if (etage.de?.genre === "tables" && etage.rang === 1) {
+            // Le rang 1 n'est le nom de l'image que sur la galerie, où le lieu
+            // dit *Galerie › l'image › La retouche* ; sous un sujet il est
+            // *La retouche* elle-même, dernier étage, qui ne ramène nulle part.
+            if (etage.de?.genre === "retouche" && etage.rang === 1) {
               setSelection([etage.de.asset])
             }
           },
@@ -3627,8 +3671,7 @@ export function App() {
           setClipOuvert(null)
           fermerCeQuiPart()
           setChoseOuverte(null)
-          setCaseOuverte(null)
-          setTablesOuvertes(null)
+          ouvrirLaRetouche(null)
           setFente(null)
           setOnglet(prochain)
         }}
@@ -3971,41 +4014,6 @@ export function App() {
         />
       )}
 
-      {/* **Les tables, à la profondeur de la galerie.** Une image qui
-          n'appartient à aucune chose du jeu n'a pas d'établi ; elle a quand
-          même une recette, et il faut un endroit pour la régler. Ses sœurs sont
-          alors les voisines de la grille, ce que la maquette du châssis prévoit
-          en toutes lettres. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && onglet === "galerie" && imageDesTables && etat && (
-        <EcranTables
-          asset={imageDesTables}
-          soeurs={grille}
-          traitement={etat.traitement}
-          univers={univers}
-          ouverte={table}
-          onOuvrir={setTable}
-          onSoeur={setTablesOuvertes}
-          decoupe={
-            <EcranDecoupe
-              sujet={{
-                famille: "planche",
-                planche: imageDesTables,
-                onDecoupe: (decoupes) => {
-                  setTable("detourage")
-                  if (decoupes.length > 0)
-                    setSelection([decoupes[0].identifiant])
-                },
-              }}
-              onFermer={() => setTable("detourage")}
-              onFente={setFente}
-            />
-          }
-          onErreur={setPanne}
-          onUnivers={setUnivers}
-          BlocPasse={BlocPasse}
-        />
-      )}
-
       {/* Quatre colonnes, largeurs absolues, et 160 ms sur la largeur quand
           l'une se replie ou que la fiche s'ouvre — `docs/DESIGN.md` § Motion,
           « tu n'as pas perdu ta place ». Les panneaux restent montés : replier
@@ -4028,7 +4036,7 @@ export function App() {
           se poser dessus ; c'est elle, désormais, qui se retire quand un autre
           onglet est allumé. Ce qu'elle tient — la grille, l'arbre, le tableau —
           vit de toute façon dans `App`, et lui survit. */}
-      {/* **Et elle se retire quand une table s'ouvre** — corrigé le 31 août
+      {/* **Et elle se retire quand la retouche s'ouvre** — corrigé le 31 août
           2026. Elle restait montée sous la table de retouche : invisible, mais
           vivante. Mesuré au navigateur — 152 commandes atteignables à la
           Tabulation, dont 83 hors de l'écran, appartenant toutes à la grille du
@@ -4039,7 +4047,7 @@ export function App() {
           deux d'un coup, et elle ne perd rien en partant : ce qu'elle tient vit
           dans `App`, pas dans son montage. */}
       {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && onglet === "galerie" &&
-        !imageDesTables && (
+        !imageDeLaRetouche && (
       <main
         className="grid min-h-0"
         onTransitionEnd={mesurerCentre}
@@ -4190,7 +4198,7 @@ export function App() {
               onSupprimer={() => void supprimer([ouverte.identifiant])}
               // **Les deux portes** (E4). L'établi de la chose à qui l'image
               // appartient — un onglet plus loin, à la profondeur de la
-              // chose —, et les tables, qui s'ouvrent sur n'importe quelle
+              // chose —, et la retouche, qui s'ouvre sur n'importe quelle
               // image sans quitter la galerie.
               /* ⚠️ **Le lieu d'abord, la profondeur ensuite** — depuis `B0`.
                  Poser une racine repose la pile, donc efface ce qui était
@@ -4203,9 +4211,13 @@ export function App() {
                 setOnglet("codex")
                 setChoseOuverte(ouverte.personnage)
                 setChoseChoisie(ouverte.personnage)
-                setCaseOuverte(ouverte.identifiant)
+                ouvrirLaRetouche(ouverte.identifiant)
               }}
-              onOuvrirLesTables={() => setTablesOuvertes(ouverte.identifiant)}
+              // **La porte de la galerie mène à la retouche** (`B25`), et sans
+              // quitter la galerie : c'est la seule des six qui serve des images
+              // n'appartenant à aucune chose du jeu, et l'écran sait les ouvrir
+              // depuis cette tranche.
+              onRetoucher={() => ouvrirLaRetouche(ouverte.identifiant)}
               onOuvrir={(identifiant) => setSelection([identifiant])}
             />
           )}
@@ -4463,6 +4475,12 @@ export function App() {
         <PageDuSujet
           ouvert={choseOuverte}
           plan={plan}
+          // **L'onglet survit au montage de la retouche** (`B25`) : elle prend
+          // la place de cette page, et une page démontée oublie le sien.
+          onglet={ongletDuSujet}
+          onOnglet={setOngletDuSujet}
+          matrice={matriceDuSujet}
+          onMatriceOuverte={setMatriceDuSujet}
           /* **B12** — l'essai pose un second sujet à côté pour comparer les
              tailles en mouvement, et règle sa scène sur la case et la couleur
              de fond du jeu. Les deux sont déjà ici ; les relire aurait fait
@@ -4481,32 +4499,28 @@ export function App() {
             setClipOuvert({ personnage, pose, direction: direction ?? null })
           }
           onFente={setFente}
-          // **La barre de prompt se retire quand l'outil s'ouvre** : on
-          // retouche, on ne paie pas — et un écran incapable de dépenser ne
-          // porte pas le champ qui dépense.
-          barreQuiPaie={imageOuverte ? null : barreQuiPaie}
-          // ⚠️ **« La retoucher » mène toujours à l'écran de l'ancien
-          // châssis** (B16), et c'est une décision. Il porte encore trois
-          // locataires que la chaîne redessinée ne reprend pas — le cadre de
-          // la découpe monté à l'intérieur, la colonne des sœurs, et les trois
-          // surfaces où l'on désigne un endroit de l'image. Le repointer
-          // maintenant aurait fait tomber 106 essais qui mesurent ces
-          // locataires-là, sans en déplacer un seul.
-          //
-          // C'est mot pour mot ce que `B10` a fait de la matrice : elle est
-          // descendue d'un cran plutôt que de disparaître, et elle s'en ira
-          // quand ses locataires auront déménagé — ici, en `B17` et `B18`.
-          onOuvrirCase={setCaseOuverte}
-          // **La chaîne redessinée s'ouvre comme la grille du jeu et
-          // comparer** : une porte de plus dans le bandeau, sur l'image de
-          // référence du sujet — celle que la page nomme déjà.
-          onRetoucher={() => {
+          barreQuiPaie={barreQuiPaie}
+          // **Une image de *Ses images* ouvre la retouche** (`B25`) — la même
+          // porte que partout ailleurs. Elle menait à l'écran de l'ancien
+          // châssis, monté en volet dans cette page-ci ; il ne reste plus rien
+          // à y aller chercher depuis que `B23` et `B24` ont fait déménager ses
+          // neuf locataires, et la doubler d'un second genre de lieu était la
+          // dernière raison pour laquelle une condition pouvait manquer
+          // quelque part.
+          onOuvrirCase={(identifiant) => ouvrirLaRetouche(identifiant)}
+          // **La retouche s'ouvre sur l'image qu'on regarde** (`B25`). Le
+          // bandeau prenait la référence du sujet, ou sa dernière image —
+          // jamais celle qu'on désigne. C'était juste tant qu'il existait une
+          // seconde porte par image ; ce ne l'est plus depuis qu'il n'y en a
+          // qu'une. La page passe donc l'image de sa vitrine, et la référence
+          // ne sert plus que de repli quand elle n'en montre aucune.
+          onRetoucher={(regardee) => {
             const reference = choseOuverte.cases
               .flatMap((c) => c.images)
               .find((a) => a.favori)
             const derniere = choseOuverte.cases.flatMap((c) => c.images).at(-1)
-            const image = reference ?? derniere
-            if (image) setRetoucheOuverte(image.identifiant)
+            const image = regardee ?? reference?.identifiant ?? derniere?.identifiant
+            if (image) ouvrirLaRetouche(image)
           }}
           /* **Une case animée se remonte jusqu'à son clip** (A12), et le clip
              se découpe dans la galerie : deux gestes en un, comme la
@@ -4520,14 +4534,15 @@ export function App() {
           /* **Et la vignette, elle, ouvre l'animation** (A7) — sans changer
              d'onglet : on la retravaille là où on la regarde. */
           onOuvrirLaBande={ouvrirLAtelierDeBande}
-          // **Deux gestes en un, et l'ordre compte** (G16) : l'image s'ouvre
-          // dans les tables, et la table ouverte est la superposition. Écrit
-          // ici parce que la table ouverte est un état de l'établi — la
-          // matrice, elle, n'a pas à savoir qu'il existe des tables.
-          onSuperposition={(identifiant) => {
-            setCaseOuverte(identifiant)
-            setTable("superposition")
-          }}
+          // **Deux gestes en un, et l'ordre compte** (G16) : l'image s'ouvre en
+          // retouche, et la table ouverte est la superposition. Écrit ici parce
+          // que la table ouverte est un état de l'écran — la matrice, elle, n'a
+          // pas à savoir qu'il existe des tables. **En un seul geste** (`B25`) :
+          // c'est la porte qui dit sur quelle table on arrive, et l'écran est
+          // toujours fermé quand elle l'ouvre.
+          onSuperposition={(identifiant) =>
+            ouvrirLaRetouche(identifiant, "superposition")
+          }
           // **Jeter depuis la matrice passe par le même geste que la galerie**
           // (US-505) : un seul chemin de suppression dans tout le produit.
           //
@@ -4561,45 +4576,6 @@ export function App() {
               })
             })
           }}
-          outil={
-            imageOuverte && etat ? (
-              <EcranTables
-                asset={imageOuverte}
-                // **Les sœurs d'une image sont les autres images de la chose**
-                // — ses attitudes. On passe de l'une à l'autre sans que la
-                // table ouverte se referme, et c'est le geste qui distingue une
-                // table d'un panneau : on règle la même chose sur six images.
-                soeurs={(choseOuverte?.cases ?? []).flatMap((c) => c.images)}
-                traitement={etat.traitement}
-                univers={univers}
-                ouverte={table}
-                onOuvrir={setTable}
-                onSoeur={setCaseOuverte}
-                // **Le découpage est là, dans le cadre de la table** : on ne
-                // le cherche plus, et l'écran Découpe cesse d'être un endroit
-                // où aller. Il reste atteignable depuis la fiche d'une image
-                // tant que la galerie porte un bouton pour lui (E4).
-                decoupe={
-                  <EcranDecoupe
-                    sujet={{
-                      famille: "planche",
-                      planche: imageOuverte,
-                      onDecoupe: (decoupes) => {
-                        setTable("detourage")
-                        if (decoupes.length > 0)
-                          setSelection([decoupes[0].identifiant])
-                      },
-                    }}
-                    onFermer={() => setTable("detourage")}
-                    onFente={setFente}
-                  />
-                }
-                onErreur={setPanne}
-                onUnivers={setUnivers}
-                BlocPasse={BlocPasse}
-              />
-            ) : null
-          }
           // **Le dossier du jeu, tenu par les Réglages et lu ici** (C5). L'écran
           // ne s'en sert que pour griser avec sa raison : le geste, lui, le
           // redemande au serveur, qui en est le seul dépositaire. Il arrive par
@@ -4619,7 +4595,9 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && imageDeLaRetouche && etat && !bandeOuverte && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord &&
+        (onglet === "galerie" || onglet === "codex") &&
+        imageDeLaRetouche && etat && !bandeOuverte && (
         /* **La retouche** (B16) — la chaîne redessinée sur le papier du
            carnet : huit tables dans leur ordre, un trait, deux fabriques à
            droite de lui. Elle écrit — c'est le seul de ces trois écrans qui le
@@ -4628,17 +4606,44 @@ export function App() {
            **Les deux fabriques s'ouvrent ici même** (`B24`) : la découpe et
            la superposition écrivent d'autres fichiers, mais renvoyer à
            l'ancien `EcranTables` pour les atteindre n'en aurait pas fait des
-           fabriques — c'est le défaut que cette tranche répare. */
+           fabriques — c'est le défaut que cette tranche répare.
+
+           **Un seul montage pour les six portes** (`B25`), et il se pose sur
+           les deux racines : la galerie comme le codex. Il y en avait trois —
+           celui-ci, l'ancien écran à la profondeur de la galerie, et le même
+           monté en volet dans la page d'un sujet. Trois montages, c'est trois
+           conditions à tenir d'accord ; celle de la galerie et celle du codex
+           s'étaient déjà écartées sur ce qu'une image sans chose du jeu
+           pouvait ouvrir. */
         <Retouche
           asset={imageDeLaRetouche}
-          // **Les sœurs d'une image sont les autres images de la chose**,
-          // comme pour `EcranTables` : on passe de l'une à l'autre sans que
-          // la table ouverte se referme.
-          soeurs={(choseOuverte?.cases ?? []).flatMap((c) => c.images)}
+          // **Les sœurs d'une image sont ses voisines** — les attitudes de la
+          // chose quand elle en a une, les images de la grille quand elle n'en
+          // a pas (`B25`). On passe de l'une à l'autre sans que la table
+          // ouverte se referme.
+          soeurs={soeursDeLaRetouche}
           univers={univers}
           traitement={etat.traitement}
-          onFermer={() => setRetoucheOuverte(null)}
-          onSoeur={setRetoucheOuverte}
+          // **Le bouton de gauche nomme ce qu'il y a derrière** (`B25`) : la
+          // galerie quand on en vient, les images de la chose du jeu sinon —
+          // et c'est aussi ce que la colonne des sœurs montre dans chaque cas.
+          //
+          // ⚠️ **Et l'emploi fait un troisième cas.** *La différence* d'un
+          // calque s'ouvre depuis la page d'un emploi (plus bas, `onCalque`) :
+          // écrire *Ses images* là mentait, on n'en venait pas. Le nom est celui
+          // que le fil d'Ariane donne déjà à cet étage — `libelleDEmploi`, la
+          // même fonction — sans quoi le bouton et le fil diraient deux choses
+          // du même endroit.
+          retour={
+            emploiOuvert
+              ? libelleDEmploi(emploiOuvert)
+              : onglet === "galerie"
+                ? "La galerie"
+                : "Ses images"
+          }
+          tableDeLaPorte={tableDeLaPorte}
+          onFermer={() => ouvrirLaRetouche(null)}
+          onSoeur={(identifiant) => ouvrirLaRetouche(identifiant)}
           decoupe={(fermerLaFabrique) => (
             <EcranDecoupe
               sujet={{
@@ -4650,8 +4655,10 @@ export function App() {
                 // la retouche dessus (`B24`) demandait `imageDeLaRetouche`
                 // de la trouver dans `choseOuverte.cases`, où elle n'est
                 // jamais — l'écran se refermait donc sans un mot juste après
-                // la découpe. Le geste d'avant `B24` ne naviguait pas :
-                // fermer la fabrique et sélectionner le résultat.
+                // la découpe. Elle sait les lire depuis `B25`, mais le geste
+                // ne navigue toujours pas : on vient d'en fabriquer huit, et
+                // en ouvrir une au hasard déciderait à la place de l'auteur.
+                // Fermer la fabrique et sélectionner le résultat.
                 onDecoupe: (decoupes) => {
                   fermerLaFabrique()
                   if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
@@ -4682,7 +4689,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && sujetDuComparateur && !bandeOuverte && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && sujetDuComparateur && !bandeOuverte && !imageDeLaRetouche && (
         /* **Comparer** (B13) — deux sujets côte à côte, ou deux images d'un
            même sujet. Elle non plus ne dépense rien. */
         <Comparer
@@ -4695,17 +4702,16 @@ export function App() {
             setComparerOuvert(null)
             setGrilleOuverte(sujetDuComparateur.identifiant)
           }}
-          // **« La retoucher » peut viser l'image de l'autre sujet.** L'outil
-          // ne relit une image que dans les cases de `choseOuverte`
-          // (`imageOuverte`, plus haut) ; ouvrir la case sans changer de sujet
-          // laissait donc l'outil chercher une image absente de la page
-          // affichée, et rien ne s'ouvrait. Changer de sujet d'abord referme
-          // Comparer de lui-même — `entrer` coupe tout ce qui est plus
-          // profond que l'étage remplacé (`lieux.ts`) — ce qui est le geste
-          // juste : on va corriger l'image là où elle vit.
+          // **« La retoucher » peut viser l'image de l'autre sujet.** La
+          // retouche relit d'abord l'image dans les cases de `choseOuverte`
+          // (`imageDeLaRetouche`, plus haut) ; ouvrir sans changer de sujet lui
+          // faisait chercher une image absente de la page affichée. Changer de
+          // sujet d'abord referme Comparer de lui-même — `entrer` coupe tout ce
+          // qui est plus profond que l'étage remplacé (`lieux.ts`) — ce qui est
+          // le geste juste : on va corriger l'image là où elle vit.
           onOuvrirCase={(sujet, asset) => {
             setChoseOuverte(sujet)
-            setCaseOuverte(asset)
+            ouvrirLaRetouche(asset)
           }}
         />
       )}
@@ -4721,6 +4727,7 @@ export function App() {
         !clipOuvert &&
         onglet === "codex" &&
         !bandeOuverte &&
+        !imageDeLaRetouche &&
         pieceEtSesEmplois &&
         !emploiOuvert && (
           <Emplois
@@ -4742,6 +4749,11 @@ export function App() {
         !clipOuvert &&
         onglet === "codex" &&
         !bandeOuverte &&
+        /* **Et la retouche passe devant les deux** (`B25`) : *retoucher ce
+           calque* descend d'un cran de plus, et deux surfaces à la fois
+           n'existent pas. La condition manquait ici — c'est le genre d'oubli
+           que fondre les trois genres en un rend visible. */
+        !imageDeLaRetouche &&
         pieceEtSesEmplois &&
         emploiOuvert &&
         /* **Les calques d'animation passent devant leur emploi**, comme
@@ -4777,7 +4789,7 @@ export function App() {
               // l'outil chercher une image absente de la page affichée, le
               // défaut que `Comparer` a payé en `B13`.
               if (emploiOuvert.porteur) setChoseOuverte(emploiOuvert.porteur)
-              setCaseOuverte(asset)
+              ouvrirLaRetouche(asset)
             }}
             onLesAutresEmplois={() => ouvrirLEmploi(null)}
             /* **Seulement sur un emploi porté** : un emploi qui ne porte
@@ -4855,7 +4867,7 @@ export function App() {
           surUnePiece={() => ouvrirLaFamille("equipement")}
           surUneImage={(identifiant) => {
             setPile(poser("galerie"))
-            setTablesOuvertes(identifiant)
+            ouvrirLaRetouche(identifiant)
           }}
           surUneGeneration={() => setPile(poser("galerie"))}
           surUnLieu={(ou) => {

@@ -88,7 +88,7 @@ export function Fiche({
   onReglages,
   onSupprimer,
   onOuvrirLEtabli,
-  onOuvrirLesTables,
+  onRetoucher,
   onOuvrir,
 }: {
   asset: Asset
@@ -113,11 +113,11 @@ export function Fiche({
   onSupprimer: () => void
   /** **Les deux portes de la fiche** (E4). L'établi de la chose à qui l'image
    *  appartient — grisé avec sa raison quand elle n'appartient à personne — et
-   *  les tables, qui s'ouvrent sur n'importe quelle image. Le découpage n'a
-   *  plus de porte à lui : c'est une fabrique de la barre des tables, et on ne
-   *  le cherche plus. */
+   *  la retouche, qui s'ouvre sur n'importe quelle image. Le découpage n'a
+   *  plus de porte à lui : c'est une fabrique de la retouche, et on ne le
+   *  cherche plus. */
   onOuvrirLEtabli: () => void
-  onOuvrirLesTables: () => void
+  onRetoucher: () => void
   /** Remonter ou descendre la filiation sans quitter le panneau. */
   onOuvrir: (identifiant: string) => void
 }) {
@@ -299,7 +299,12 @@ export function Fiche({
           {!asset.personnage && (
             <Raison texte="cette image n'appartient à aucune chose du jeu — la rattacher plus haut lui ouvre son établi" />
           )}
-          <Bouton onClick={onOuvrirLesTables} enfants="Ouvrir les tables" />
+          {/* **Le bouton nomme ce qu'il ouvre** (`B25`) : il disait *Ouvrir les
+              tables* et ouvre la retouche depuis que les six portes n'en font
+              qu'une. *La retoucher* est le mot que le produit emploie déjà
+              partout ailleurs — *Ses images*, le comparateur —, et deux noms
+              pour un seul écran se lisent comme deux écrans. */}
+          <Bouton onClick={onRetoucher} enfants="La retoucher" />
           <a
             href={api.telechargementAsset(asset.identifiant, montrerBrut)}
             download
@@ -1580,13 +1585,14 @@ function RecetteEnLecture({ recette }: { recette: Recette }) {
       )}
       {/* **Aucune porte ici** — retiré le 31 août 2026. Cette rubrique portait
           un lien « La régler dans les tables › » qui appelait exactement la
-          même fonction que le bouton « Ouvrir les tables » du pied, douze
-          lignes plus bas dans le même panneau : deux noms, une seule
-          destination, dans une colonne qu'on lit d'un coup d'œil. Or le pied de
-          cette fiche écrit lui-même la règle — « la fiche porte **deux portes** :
-          l'établi de la chose à qui elle appartient, et les tables ». Un
-          troisième chemin qui double l'une des deux ne s'annonce pas comme un
-          doublon : il se lit comme une nuance qu'on aurait ratée. */}
+          même fonction que le bouton « La retoucher » du pied — « Ouvrir les
+          tables » à l'époque —, douze lignes plus bas dans le même panneau :
+          deux noms, une seule destination, dans une colonne qu'on lit d'un coup
+          d'œil. Or le pied de cette fiche écrit lui-même la règle — « la fiche
+          porte **deux portes** : l'établi de la chose à qui elle appartient, et
+          la retouche ». Un troisième chemin qui double l'une des deux ne
+          s'annonce pas comme un doublon : il se lit comme une nuance qu'on
+          aurait ratée. */}
     </div>
   )
 }

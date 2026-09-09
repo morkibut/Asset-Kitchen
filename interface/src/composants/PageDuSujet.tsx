@@ -70,7 +70,7 @@ import { VestiaireDuSujet } from "./VestiaireDuSujet"
  *  construits depuis `B12`** — le dernier, *L'essai*, était nommé bien avant
  *  d'exister, pour qu'un onglet ajouté plus tard ne déplace pas les trois
  *  autres et que la page ne change pas de forme à chaque tranche. */
-type Onglet = "fiche" | "images" | "animations" | "essai"
+export type Onglet = "fiche" | "images" | "animations" | "essai"
 
 const ONGLETS: readonly { clef: Onglet; nom: string }[] = [
   { clef: "fiche", nom: "Sa fiche" },
@@ -686,20 +686,54 @@ export function PageDuSujet(proprietes: {
   onCreerPiece: (nom: string) => void
   /** Il ne la porte plus. **Ses calques restent** — jamais de cascade. */
   onRetirerLEmploi: (piece: string, emploi: string) => void
-  /** **La chaîne de retouche redessinée** (B16) — sur l'image de référence du
-   *  sujet. Optionnelle : la page se rend sans, et le bouton se grise alors
+  /** **La chaîne de retouche redessinée** (B16) — sur **l'image qu'on
+   *  regarde** (`B25`), c'est-à-dire celle du volet de *Ses images*, et sur la
+   *  référence du sujet seulement quand on n'en regarde aucune. Le bandeau
+   *  prenait la référence dans tous les cas : c'était juste tant qu'il existait
+   *  une seconde porte par image, et ce ne l'est plus depuis qu'il n'y en a
+   *  qu'une. Optionnelle : la page se rend sans, et le bouton se grise alors
    *  comme les deux autres. */
-  onRetoucher?: () => void
-  outil: ReactNode
+  onRetoucher?: (regardee: string | null) => void
+  /** **L'onglet ouvert, tenu un cran au-dessus** (`B25`).
+   *
+   *  Un onglet n'est pas un lieu — `lieux.ts` le dit, et il ne s'écrit pas dans
+   *  la pile. Mais la retouche se monte maintenant **à la place** de cette page
+   *  au lieu de s'ouvrir en volet dedans : sans ce relais, ouvrir une image de
+   *  *Ses images* puis remonter d'un cran ramenait sur *Sa fiche*, et non là
+   *  d'où l'on venait. Optionnel : sans lui, la page tient son onglet
+   *  elle-même, comme avant. */
+  onglet?: Onglet
+  onOnglet?: (onglet: Onglet) => void
+  /** **La matrice ouverte, tenue au même endroit que l'onglet** (`B25`) — et
+   *  pour la même raison : la superposition d'un calque s'ouvre depuis elle, et
+   *  remonter d'un cran y revient. */
+  matrice?: boolean
+  onMatriceOuverte?: (ouverte: boolean) => void
 }) {
-  const { ouvert, plan, barreQuiPaie, outil, onFente } = proprietes
-  const [onglet, setOnglet] = useState<Onglet>("fiche")
+  const { ouvert, plan, barreQuiPaie, onFente } = proprietes
+  const [ongletTenuIci, setOngletTenuIci] = useState<Onglet>("fiche")
+  const onglet = proprietes.onglet ?? ongletTenuIci
+  const setOnglet = (choisi: Onglet) => {
+    setOngletTenuIci(choisi)
+    proprietes.onOnglet?.(choisi)
+  }
   // **B13** — la grille du jeu et comparer n'ont rien à montrer sans une
   // image. Les deux liens se grisent avec leur raison plutôt que de
   // disparaître, comme partout ailleurs dans ce fichier.
   const auMoinsUneImage = ouvert.cases.some((c) => c.images.length > 0)
   // La matrice, profondeur suivante de cette page — voir l'en-tête du fichier.
-  const [matriceOuverte, setMatriceOuverte] = useState(false)
+  const [matriceTenueIci, setMatriceTenueIci] = useState(false)
+  const matriceOuverte = proprietes.matrice ?? matriceTenueIci
+  const setMatriceOuverte = (ouverte: boolean) => {
+    setMatriceTenueIci(ouverte)
+    proprietes.onMatriceOuverte?.(ouverte)
+  }
+  /** L'image qu'on regarde dans *Ses images* — celle du volet (`B25`). Elle
+   *  monte jusqu'ici parce que le bouton *La retouche ›* vit dans le bandeau,
+   *  au-dessus des onglets, et qu'il n'a aucun autre moyen de savoir laquelle
+   *  des douze est sous les yeux. `null` tant qu'on n'a pas ouvert l'onglet :
+   *  le bandeau se rabat alors sur la référence du sujet. */
+  const [regardee, setRegardee] = useState<string | null>(null)
   const [lu, setLu] = useState<CeQueLaFicheLit>({
     bareme: [],
     siennes: null,
@@ -710,9 +744,14 @@ export function PageDuSujet(proprietes: {
   // Changer de sujet rend la fiche et referme la matrice : les onglets décrivent
   // celui qu'on regardait, et rester sur « Ses images » du précédent ferait
   // croire qu'on regarde encore les siennes.
+  // ⚠️ **Elle ne prévient pas le cran du dessus** : cet effet se rejoue à chaque
+  // montage, et la page se remonte au retour de la retouche. Le lui dire
+  // écraserait justement l'onglet qu'on cherche à retrouver. Celui qui tient
+  // l'onglet pour nous tient aussi son remise à zéro, sur le même sujet ouvert.
   useEffect(() => {
-    setOnglet("fiche")
-    setMatriceOuverte(false)
+    setOngletTenuIci("fiche")
+    setMatriceTenueIci(false)
+    setRegardee(null)
   }, [ouvert.identifiant])
 
   // **Le barème du jeu, pour l'occupation de sa nature.** Lu une fois pour la
@@ -769,24 +808,22 @@ export function PageDuSujet(proprietes: {
   // **La matrice prend toute la page, la barre qui paie comprise** : elle est
   // l'un des deux lieux d'où l'argent part, et la lui retirer aurait obligé à
   // remonter d'un cran pour dépenser.
-  if (matriceOuverte || outil)
+  if (matriceOuverte)
     return (
       <div data-etabli className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier">
-        {!outil && (
-          <div className="flex items-center gap-[8px] border-b border-trait bg-papier-cote px-[30px] py-[8px]">
-            <button
-              type="button"
-              onClick={() => setMatriceOuverte(false)}
-              className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
-            >
-              ‹ Sa page
-            </button>
-            <span className="text-[12.5px] text-encre-3">
-              Ses cases — le vestiaire, les planches, le calibrage et les animations
-              vivent encore ici.
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-[8px] border-b border-trait bg-papier-cote px-[30px] py-[8px]">
+          <button
+            type="button"
+            onClick={() => setMatriceOuverte(false)}
+            className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
+          >
+            ‹ Sa page
+          </button>
+          <span className="text-[12.5px] text-encre-3">
+            Ses cases — le vestiaire, les planches, le calibrage et les animations
+            vivent encore ici.
+          </span>
+        </div>
         <EcranEtabli {...proprietes} />
       </div>
     )
@@ -856,13 +893,14 @@ export function PageDuSujet(proprietes: {
               Comparer ›
             </button>
             {/* **B16** — la chaîne de retouche redessinée, troisième
-                profondeur de cette page et la seule des trois qui écrive. Elle
-                s'ouvre sur l'image de référence du sujet, celle que la fiche
-                nomme déjà : la retouche d'une image précise garde sa porte, sur
-                la ligne de l'image, dans *Ses images*. */}
+                profondeur de cette page et la seule des trois qui écrive.
+                **Elle s'ouvre sur l'image qu'on regarde** (`B25`) : celle du
+                volet de *Ses images*, et la référence du sujet seulement quand
+                on n'en regarde aucune. La retouche d'une image précise garde
+                sa porte à elle, sur la ligne de l'image. */}
             <button
               type="button"
-              onClick={proprietes.onRetoucher}
+              onClick={() => proprietes.onRetoucher?.(regardee)}
               disabled={!auMoinsUneImage}
               title={auMoinsUneImage ? undefined : "aucune image encore — rien à retoucher"}
               className="h-[30px] rounded-7 px-[14px] text-[13.5px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:text-eteint disabled:hover:text-eteint"
@@ -899,6 +937,7 @@ export function PageDuSujet(proprietes: {
             pieces={proprietes.pieces}
             onArmer={proprietes.onArmer}
             onOuvrirCase={proprietes.onOuvrirCase}
+            onRegardee={setRegardee}
             onEcarter={proprietes.onSupprimer}
             onErreur={echouer}
           />

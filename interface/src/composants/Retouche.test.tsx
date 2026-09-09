@@ -834,6 +834,244 @@ describe("le grossissement libre entre 1 et 250 % (B24, déménagé de Tables.ts
       rendre()
     }
   })
+
+  // ── U2 · « La molette approche et recule, en gardant le point visé » ───────
+  //
+  // **Un critère déjà coché du lot `U`, rendu à l'écran neuf** (9 septembre
+  // 2026). `B25` avait fermé la porte de l'ancien écran sans que la molette
+  // déménage : approcher ne se faisait plus qu'au champ et aux deux boutons.
+
+  /** La mise en page que `jsdom` ne fait pas — et il en faut une vraie ici,
+   *  parce que le geste se juge à un point qui ne bouge pas.
+   *
+   *  La boîte de l'image porte la taille que l'écran lui a calculée (le `<span>`
+   *  et son style en pixels) ; elle est centrée par `m-auto` tant qu'elle tient,
+   *  et le défilement du cadre la déplace dès qu'elle déborde. C'est exactement
+   *  ce que le navigateur fait, et c'est le minimum pour que
+   *  `scrollLeft += …` veuille dire quelque chose. */
+  function mettreEnPage(cote: number) {
+    const vrai = Element.prototype.getBoundingClientRect
+    Element.prototype.getBoundingClientRect = function () {
+      const noeud = this as HTMLElement
+      if (!noeud.hasAttribute?.("data-boite-image")) return vrai.call(this)
+      const dedans = noeud.querySelector("span[style]") as HTMLElement | null
+      const largeur = dedans ? parseFloat(dedans.style.width) || 0 : 0
+      const hauteur = dedans ? parseFloat(dedans.style.height) || 0 : 0
+      const cadre = document.querySelector("[data-scene-de-retouche]") as HTMLElement
+      const gauche = 22 + Math.max(0, (cote - 44 - largeur) / 2) - (cadre?.scrollLeft ?? 0)
+      const haut = 22 + Math.max(0, (cote - 44 - hauteur) / 2) - (cadre?.scrollTop ?? 0)
+      return {
+        x: gauche,
+        y: haut,
+        left: gauche,
+        top: haut,
+        width: largeur,
+        height: hauteur,
+        right: gauche + largeur,
+        bottom: haut + hauteur,
+        toJSON: () => ({}),
+      } as DOMRect
+    }
+    return () => {
+      Element.prototype.getBoundingClientRect = vrai
+    }
+  }
+
+  test("la molette approche, recule, arrête le défilement de la page, et garde le point sous le pointeur", async () => {
+    const rendreLeCadre = cadreDe(500)
+    const rendreLaMesure = mettreEnPage(500)
+    try {
+      monter({
+        asset: image({
+          largeur: 1024,
+          hauteur: 1024,
+          rendu_largeur: 1024,
+          rendu_hauteur: 1024,
+          recette: recetteDeTravail(),
+        }),
+      })
+      const cadre = await waitFor(() => {
+        const s = scene()
+        expect(s).toBeTruthy()
+        return s
+      })
+      // `jsdom` ne fait défiler personne : les deux positions deviennent des
+      // valeurs qu'on peut écrire, comme le navigateur les écrit.
+      for (const nom of ["scrollLeft", "scrollTop"])
+        Object.defineProperty(cadre, nom, { value: 0, writable: true, configurable: true })
+
+      const champ = () =>
+        document.querySelector(
+          '[data-zoom] input[aria-label="Pour cent d\'agrandissement"]',
+        ) as HTMLInputElement
+      const zoom = document.querySelector("[data-zoom]") as HTMLElement
+      fireEvent.click(within(zoom).getByRole("button", { name: "100 %" }))
+      await waitFor(() => expect(champ().value).toBe("100"))
+
+      // L'image fait 1 024 px dans un cadre qui en offre 456 : elle déborde,
+      // donc le défilement a de quoi rattraper — c'est le seul cas où « le
+      // point ne bouge pas » veut dire quelque chose.
+      const boite = document.querySelector("[data-boite-image]") as HTMLElement
+      const avant = boite.getBoundingClientRect()
+      const x = avant.left + avant.width * 0.75
+      const y = avant.top + avant.height * 0.25
+
+      // **Un écouteur natif, non passif.** React pose ses écouteurs de molette
+      // en passif sur la racine : `preventDefault` y serait ignoré et la page
+      // défilerait derrière le zoom.
+      const approcher = new WheelEvent("wheel", {
+        deltaY: -100,
+        clientX: x,
+        clientY: y,
+        bubbles: true,
+        cancelable: true,
+      })
+      cadre.dispatchEvent(approcher)
+      expect(approcher.defaultPrevented).toBe(true)
+      await waitFor(() => expect(Number(champ().value)).toBeGreaterThan(100))
+
+      // Le point de l'image qui était sous le pointeur y est encore : c'est
+      // *ça*, approcher — et non un grossissement centré qui emmène ailleurs.
+      const apres = boite.getBoundingClientRect()
+      expect(apres.left + apres.width * 0.75).toBeCloseTo(x, 0)
+      expect(apres.top + apres.height * 0.25).toBeCloseTo(y, 0)
+
+      const reculer = new WheelEvent("wheel", {
+        deltaY: 100,
+        clientX: x,
+        clientY: y,
+        bubbles: true,
+        cancelable: true,
+      })
+      cadre.dispatchEvent(reculer)
+      await waitFor(() => expect(Number(champ().value)).toBe(100))
+    } finally {
+      rendreLaMesure()
+      rendreLeCadre()
+    }
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// U3 · Un curseur prend un chiffre — rendu à l'écran neuf
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : le champ où la valeur d'une `Glissiere` s'écrit. Le
+// geste d'origine reste le bon — on fait glisser, on regarde — mais il ne suffit
+// pas quand on connaît déjà le nombre : refaire à la souris un réglage qu'on a
+// noté sur l'image d'à côté est une punition, et aucun logiciel d'image ne
+// l'impose.
+//
+// Le comportement est celui de `Curseur` (`chassis.tsx`), repris et non
+// réinventé. Un seul composant porte les vingt-deux glissières de l'écran : les
+// essais l'éprouvent donc par un de ses emplois, pas par les vingt-deux.
+
+describe("un curseur prend un chiffre", () => {
+  const recettesPosees = (appels: { url: string; corps: unknown }[]) =>
+    appels.filter((a) => a.url.includes("/recipe"))
+
+  /** *Nettoyer*, et sa tache minimale — de zéro à soixante-quatre pixels. */
+  const ouvrirNettoyer = async () => {
+    const rendu = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyer" }))
+    const champ = (await screen.findByLabelText(
+      "tache minimale, en chiffres",
+    )) as HTMLInputElement
+    return { ...rendu, champ }
+  }
+
+  test("le champ porte la valeur de la glissière, et il porte son nom", async () => {
+    const { champ } = await ouvrirNettoyer()
+    const glissiere = (await screen.findByLabelText(
+      "tache minimale",
+    )) as HTMLInputElement
+    // Le champ montre la valeur de la glissière — il ne tient pas un second
+    // état, et l'unité s'y lit comme partout ailleurs.
+    expect(champ.value).toBe(`${glissiere.value} px`)
+  })
+
+  test("un chiffre écrit vaut un relâchement — un seul envoi", async () => {
+    // **La règle de T2, appliquée à l'autre façon de régler.** Un envoi par
+    // frappe ferait deux appels pour « 12 », dont un sur une valeur que
+    // personne n'a demandé à voir.
+    const { champ, appels } = await ouvrirNettoyer()
+    const avant = recettesPosees(appels).length
+
+    fireEvent.change(champ, { target: { value: "12" } })
+    expect(recettesPosees(appels).length).toBe(avant)
+
+    fireEvent.keyDown(champ, { key: "Enter" })
+    await waitFor(() => expect(recettesPosees(appels).length).toBe(avant + 1))
+    expect(
+      (recettesPosees(appels).at(-1)!.corps as { bords: { aire_min: number } }).bords
+        .aire_min,
+    ).toBe(12)
+    // Et la glissière a suivi : les deux disent toujours la même chose.
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText("tache minimale") as HTMLInputElement).value,
+      ).toBe("12"),
+    )
+  })
+
+  test("Échap rend la valeur d'avant, sans rien envoyer", async () => {
+    const { champ, appels } = await ouvrirNettoyer()
+    const avant = recettesPosees(appels).length
+    const initiale = champ.value
+
+    fireEvent.change(champ, { target: { value: "7" } })
+    fireEvent.keyDown(champ, { key: "Escape" })
+
+    expect(champ.value).toBe(initiale)
+    expect(recettesPosees(appels).length).toBe(avant)
+  })
+
+  test("quitter le champ vaut Entrée", async () => {
+    // **Sans quoi une valeur tapée puis abandonnée resterait à l'écran sans
+    // agir** : le champ dirait une chose et l'image en montrerait une autre.
+    const { champ, appels } = await ouvrirNettoyer()
+    const avant = recettesPosees(appels).length
+
+    fireEvent.change(champ, { target: { value: "9" } })
+    fireEvent.blur(champ)
+
+    await waitFor(() => expect(recettesPosees(appels).length).toBe(avant + 1))
+    expect(
+      (recettesPosees(appels).at(-1)!.corps as { bords: { aire_min: number } }).bords
+        .aire_min,
+    ).toBe(9)
+  })
+
+  test("une valeur hors bornes est ramenée dans les bornes, et la table le dit", async () => {
+    // **Ramener plutôt que refuser.** Un champ qui rejette une frappe oblige à
+    // deviner ce qu'il accepte ; un champ qui ramène le dit en affichant la
+    // valeur retenue et ses bornes.
+    const { champ } = await ouvrirNettoyer()
+
+    fireEvent.change(champ, { target: { value: "900" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    expect(
+      await within(colonne()).findByText(/ramené à 64 px — les bornes sont 0 et 64/),
+    ).toBeTruthy()
+    await waitFor(() => expect(champ.value).toBe("64 px"))
+  })
+
+  test("taper un chiffre sur la glissière remplit le champ sans qu'on l'ait visée", async () => {
+    // **Le geste des logiciels d'image.** La main est sur la glissière, l'œil
+    // est sur l'image : viser un champ de quarante-six pixels pour écrire un
+    // nombre qu'on connaît déjà casse le geste.
+    const { champ } = await ouvrirNettoyer()
+    const glissiere = screen.getByLabelText("tache minimale")
+
+    fireEvent.keyDown(glissiere, { key: "9" })
+    await waitFor(() => expect(champ.value).toBe("9"))
+
+    // Les flèches, elles, continuent de faire vivre la glissière : on ne
+    // détourne que les chiffres.
+    fireEvent.keyDown(glissiere, { key: "ArrowRight" })
+    expect(champ.value).toBe("9")
+  })
 })
 
 describe("« sur » et « témoin » — deux questions, deux contrôles (B24, déménagé de Comparateur)", () => {
