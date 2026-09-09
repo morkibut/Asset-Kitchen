@@ -1112,9 +1112,19 @@ export function App() {
   /** **Sa matrice ouverte** — même raison, même remise à zéro : la
    *  superposition d'un calque part de là, et y revient. */
   const [matriceDuSujet, setMatriceDuSujet] = useState(false)
+  /** **La colonne ouverte de la matrice, et le panneau d'un calque** (`B27`) —
+   *  montés au même cran que l'onglet et la matrice, pour la même raison
+   *  laissée en aparté par `B27` : ouvrir *la différence* d'un calque puis
+   *  remonter d'un cran ramenait sur la matrice, colonne au corps, panneau
+   *  fermé — parce que ces deux états vivaient dans `EcranEtabli`, que la
+   *  retouche démonte en prenant sa place. */
+  const [colonneDeLaMatrice, setColonneDeLaMatrice] = useState<string | null>(null)
+  const [calqueDuPanneau, setCalqueDuPanneau] = useState<string | null>(null)
   useEffect(() => {
     setOngletDuSujet("fiche")
     setMatriceDuSujet(false)
+    setColonneDeLaMatrice(null)
+    setCalqueDuPanneau(null)
   }, [choseOuverteId])
 
   /** Le sujet dont la grille du jeu, ou le comparateur, est ouvert — **relus
@@ -4481,6 +4491,12 @@ export function App() {
           onOnglet={setOngletDuSujet}
           matrice={matriceDuSujet}
           onMatriceOuverte={setMatriceDuSujet}
+          // **La colonne et le panneau d'un calque survivent au montage de la
+          // retouche, pour la même raison que l'onglet et la matrice** (`B27`).
+          colonne={colonneDeLaMatrice}
+          onColonne={setColonneDeLaMatrice}
+          calque={calqueDuPanneau}
+          onCalque={setCalqueDuPanneau}
           /* **B12** — l'essai pose un second sujet à côté pour comparer les
              tailles en mouvement, et règle sa scène sur la case et la couleur
              de fond du jeu. Les deux sont déjà ici ; les relire aurait fait

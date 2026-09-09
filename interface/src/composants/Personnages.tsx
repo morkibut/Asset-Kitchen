@@ -200,6 +200,10 @@ export function EcranEtabli({
   onOuvrirLaBande,
   onSuperposition,
   onSupprimer,
+  colonne,
+  onColonne,
+  calque,
+  onCalque,
 }: {
   /** **Le vestiaire du projet** (C3) — l'autre axe de la même matrice. Tenu par
    *  `App` comme le plan, et pour la même raison : un seul endroit écoute le
@@ -292,6 +296,15 @@ export function EcranEtabli({
    *  que ce bandeau appartient au châssis. Un second chemin de suppression
    *  aurait été un second endroit d'où l'on jette sans pouvoir défaire. */
   onSupprimer: (identifiants: string[]) => void
+  /** **La colonne qu'on lit, tenue un cran au-dessus** (`B27`) — comme
+   *  l'onglet et la matrice de `PageDuSujet.tsx` : la retouche prend la place
+   *  de cette page en s'ouvrant, et un état gardé ici seul ne survivrait pas
+   *  au démontage. */
+  colonne: string | null
+  onColonne: (identifiant: string | null) => void
+  /** Le calque ouvert dans le panneau de droite, même raison, même relais. */
+  calque: string | null
+  onCalque: (identifiant: string | null) => void
 }) {
   // **La fiche ouverte, ou non.** De l'écran et non du serveur : ouvrir une
   // fiche ne change pas le jeu, et l'enregistrer en ferait un état à remettre
@@ -329,15 +342,6 @@ export function EcranEtabli({
 
   const setRefus = (texte: string) =>
     onFente(texte ? { ton: 'echec', texte } : null)
-  // **La colonne qu'on lit** (C3) : le corps, ou une pièce. Un identifiant et
-  // non l'objet — la pièce continue d'arriver par le flux, renommée ou rangée
-  // ailleurs, et une copie gardée ici serait celle d'avant. Même règle que la
-  // fiche et l'écran de découpe (`docs/PIEGES.md`).
-  const [colonne, setColonne] = useState<string | null>(null)
-  // Le calque ouvert dans le panneau de droite, par identifiant et pour la même
-  // raison : il se recalcule à chaque zone posée, et l'objet gardé serait celui
-  // d'avant le recalcul.
-  const [calque, setCalque] = useState<string | null>(null)
 
   const echouer = (erreur: unknown, defaut: string) =>
     setRefus(erreur instanceof Error ? erreur.message : defaut)
@@ -454,10 +458,10 @@ export function EcranEtabli({
           pieces={pieces}
           colonne={colonneVive}
           onColonne={(identifiant) => {
-            setColonne(identifiant)
-            setCalque(null)
+            onColonne(identifiant)
+            onCalque(null)
           }}
-          onCalque={setCalque}
+          onCalque={onCalque}
           onOuvrirCase={onOuvrirCase}
           onMonterLaBande={onMonterLaBande}
           onOuvrirLaBande={onOuvrirLaBande}
@@ -488,10 +492,10 @@ export function EcranEtabli({
               caseDuCalque?.retenus?.[piece.identifiant] ===
               ouvertCalque.identifiant
             }
-            onFermer={() => setCalque(null)}
+            onFermer={() => onCalque(null)}
             onSupprimer={() => {
               onSupprimer([ouvertCalque.identifiant])
-              setCalque(null)
+              onCalque(null)
             }}
             onSuperposition={() => onSuperposition(ouvertCalque.identifiant)}
             onErreur={echouer}

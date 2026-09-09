@@ -56,7 +56,6 @@ RACINE = Path(__file__).resolve().parents[1]
 RELEVE = RACINE / "essais" / "mesures_moteurs_de_detourage.json"
 RETOUCHE = RACINE / "interface" / "src" / "composants" / "Retouche.tsx"
 RECETTE_TS = RACINE / "interface" / "src" / "recette.ts"
-FICHE = RACINE / "interface" / "src" / "composants" / "Fiche.tsx"
 
 
 def _releve() -> dict:
@@ -601,8 +600,12 @@ def test_l_ecran_dit_en_croix_ou_en_carre_et_dans_quelle_unite():
 
 def test_l_ecran_dit_a_quel_cote_le_modele_infere():
     """Le nombre qui décide de ce qu'un modèle peut rendre se lit au moment où
-    on le choisit, pas dans un document."""
-    ecrit = FICHE.read_text(encoding="utf-8")
+    on le choisit, pas dans un document.
+
+    **Repointé sur `Retouche.tsx` en `B27`** : le geste vivait dans `BlocPasse`
+    (`Fiche.tsx`), orphelin depuis `B26` — `ReglagesDuDetourage` le porte
+    maintenant, repris au caractère près — et `BlocPasse` est retiré."""
+    ecrit = RETOUCHE.read_text(encoding="utf-8")
 
     assert "choisi.entree" in ecrit
     assert "réagrandit son masque" in ecrit

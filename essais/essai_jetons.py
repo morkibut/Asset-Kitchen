@@ -86,6 +86,14 @@ LES_FICHIERS_DU_CARNET = (
     # B21 — la sortie : le seul écran d'où les fichiers du jeu s'en vont.
     "interface/src/composants/Sortie.tsx",
 )
+# `interface/src/recette.ts` (B26) n'entre pas ici : ce n'est pas un écran —
+# aucun rendu, aucune classe Tailwind — c'est le vocabulaire du domaine que
+# `Retouche.tsx` emprunte. Les listes fermées de `docs/DESIGN.md` § Spacing,
+# Typography, Layout, Motion décrivent ce qu'un écran a le droit d'écrire ;
+# elles n'ont rien à dire d'une fonction pure ou d'un état de la main. Le
+# fichier reste couvert par le Sens 1 (`sources()` le scanne comme les
+# autres) : un jeton de couleur qu'il emploierait sans le déclarer serait
+# toujours refusé.
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────
 

@@ -1333,9 +1333,10 @@ export type Couche = "affinage" | "retouche"
 export type FormatDeRecadrage = "" | "carre" | "2:1" | "3:4"
 
 /** Les six réglages de B18 sont **optionnels**, comme au domaine : une
- *  absence vaut *neutre*, et c'est ce qui laisse `PanneauRecadrage`
- *  (`Places.tsx`, l'écran de montage) et ses essais tels qu'ils sont écrits,
- *  sans qu'aucun ne bascule un réglage qu'il n'a jamais posé. */
+ *  absence vaut *neutre*, et c'est ce qui laisse `ReglagesDuRecadrage`,
+ *  monté par l'atelier d'une animation (`AtelierDeBande.tsx`) sans certains
+ *  de ces champs, et ses essais tels qu'ils sont écrits, sans qu'aucun ne
+ *  bascule un réglage qu'il n'a jamais posé. */
 export type Recadrage = {
   marge: number
   boite: number[] | null

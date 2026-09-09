@@ -111,8 +111,9 @@ const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
 //
 // **Les tables n'y sont pas.** `Ctrl Z` défait un trait de pinceau, mais
 // seulement sur la place « la main » — une des huit — et cette place vit
-// dans un état propre à `Tables.tsx`, jamais remonté jusqu'ici. L'annoncer
-// pour tout l'écran des tables la rendrait fausse sur les sept autres.
+// dans un état propre à la retouche (`interface/src/recette.ts`, `useEtatMain`),
+// jamais remonté jusqu'ici. L'annoncer pour tout l'écran des tables la
+// rendrait fausse sur les sept autres.
 const CTRL_Z = /Mac|iPhone|iPad/.test(navigator.userAgent) ? "⌘Z" : "Ctrl Z"
 
 const TOUCHES: Partial<Record<Explication["ou"], readonly { touche: string; quoi: string }[]>> = {

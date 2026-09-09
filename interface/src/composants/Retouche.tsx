@@ -60,8 +60,6 @@ import {
   RETOURNEMENT_PAR_DEFAUT,
   Refus,
   CE_QUE_LA_METHODE_REND,
-  coteDuCanevas,
-  coteDuSujet,
   megaoctets,
   occupationMax,
   paliersDeCouleurs,
@@ -95,7 +93,7 @@ import { imageAsset, sujetAsset, useVisee } from "./Apercu"
 // l'image occupe vraiment dans la surface qui reçoit un geste. Les réécrire
 // aurait fabriqué **deux vérités sur la même attente**, et c'est précisément la
 // panne que cette tranche répare ailleurs.
-import { part, rectangleDeLImage, useEcoule } from "./chassis"
+import { EchantillonDeHauteur, part, rectangleDeLImage, useEcoule } from "./chassis"
 import { EcranSuperposition } from "./Superposition"
 // **Le vocabulaire vient d'un module sans écran** (`B26`). Les listes fermées,
 // les fonctions pures et les trois crochets de la recette ne sont pas du
@@ -1273,7 +1271,8 @@ function PromotionDuDetourage({
 
 /** Les huit champs, aucun optionnel — **ce que cette colonne envoie toujours**,
  *  quand bien même le type `Recadrage` du port les laisse absents pour les
- *  écrans qui n'en ont pas besoin (`PanneauRecadrage`, l'écran de montage). */
+ *  appelants qui n'en ont pas besoin (`ReglagesDuRecadrage` monté par
+ *  `AtelierDeBande.tsx`). */
 type RecadrageComplet = Required<Recadrage>
 
 const RECADRAGE_PAR_DEFAUT: RecadrageComplet = {
@@ -1497,68 +1496,6 @@ export function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }:
   )
 }
 
-/** **Les deux lectures d'une même hauteur** (rattrapé en `B26`).
- *
- *  Un pour cent n'est pas une mesure : ce que la hauteur décide est un nombre
- *  de carrés, et c'est celui-là qu'on compare d'une image à l'autre. Depuis que
- *  le réglage peut dépasser le personnage, il faut de surcroît voir *de
- *  combien* — le dessin le montre, le texte le compte.
- *
- *  **Repris d'`EchantillonDeHauteur` (`chassis.tsx`) au calcul près** ; seules
- *  les couleurs passent au papier, comme les quatre surfaces de `B23`. Il ne
- *  vivait plus que dans le panneau de la grille de l'ancien châssis, et il ne
- *  lit aucune mesure du serveur : rien ne le retenait de partir avec lui. */
-function EchantillonDeLaHauteur({ occupation, cible }: { occupation: number; cible: number }) {
-  const haut = 64
-  const enPersonnages = Math.max(1, occupation) / 100
-  // **L'échelle du dessin est le plus grand des deux** — le sujet ou le
-  // personnage —, sans quoi un moulin de trois personnages sortirait du cadre
-  // au lieu de le remplir.
-  const echelle = Math.max(1, enPersonnages)
-  const hSujet = Math.max(2, Math.round((haut * enPersonnages) / echelle))
-  const hPersonnage = Math.round(haut / echelle)
-  const carres = coteDuCanevas(cible, occupation)
-  const sujet = coteDuSujet(cible, occupation)
-  const depasse = occupation > 100
-  const nombre = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 2 })
-  return (
-    <div className="flex items-end gap-[14px]">
-      <span
-        aria-hidden
-        // **34, le plus large des écarts fermés de `docs/DESIGN.md`.** L'ancien
-        // châssis dessinait cette case à 56, une valeur qu'il n'avait déclarée
-        // nulle part ; le carnet reprend le calcul et non le nombre.
-        className="relative flex w-[34px] shrink-0 items-end justify-center border border-trait bg-papier-cote"
-        style={{ height: `${haut}px` }}
-      >
-        <span className="block w-full bg-encre-4" style={{ height: `${hSujet}px` }} />
-        {/* **La hauteur d'un personnage, en pointillé.** Dessinée seulement
-            quand elle dit quelque chose : à 100 % et au-dessous elle est le
-            haut du cadre, et un trait posé sur une bordure n'est pas un
-            repère. */}
-        {depasse && (
-          <span
-            className="absolute right-0 left-0 border-t border-dashed border-epingle"
-            style={{ bottom: `${hPersonnage}px` }}
-          />
-        )}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-        <span className="text-[12px] leading-tight text-encre-2">
-          {depasse
-            ? `${nombre(enPersonnages)} personnages de haut`
-            : `${occupation} % d'un personnage`}
-        </span>
-        <span className="mesure text-[10.5px] leading-tight text-encre-4">
-          {sujet === carres
-            ? `l'image revient en ${carres} carrés de côté`
-            : `${sujet} carrés dans une image de ${carres}`}
-        </span>
-      </div>
-    </div>
-  )
-}
-
 export function ReglagesDeLaGrille({
   recette,
   univers,
@@ -1618,7 +1555,13 @@ export function ReglagesDeLaGrille({
           onPoser={(occupation) => changer({ occupation })}
         />
       </Reglage>
-      <EchantillonDeLaHauteur occupation={grille.occupation} cible={grille.cible} />
+      <EchantillonDeHauteur
+        occupation={grille.occupation}
+        cible={grille.cible}
+        haut={64}
+        largeur={34}
+        palette="papier"
+      />
 
       {!sansAncrage && (
         <Reglage nom="ancrage">
@@ -3994,9 +3937,9 @@ export function Retouche({
 
   // ── Ce qui voyage d'une image à l'autre (U5, déménagé en `B24`) ──────────
   //
-  // **Le presse-papiers vit hors de React**, dans `Tables.tsx` — importé ici,
-  // pas recréé : copier dans un écran et coller dans l'autre doit rester un
-  // seul geste tant que les deux coexistent (`Tables.tsx`, `copiee`).
+  // **Le presse-papiers vit hors de React**, dans `interface/src/recette.ts`
+  // — importé ici, pas recréé : copier dans un écran et coller dans l'autre
+  // reste un seul geste tant que ce module reste la seule source de vérité.
   const [nommees, setNommees] = useState<string[]>([])
   const [annonceRecette, setAnnonceRecette] = useState<string[] | null>(null)
   const [aCopier, setACopier] = useState(lireLePressePapier() !== null)

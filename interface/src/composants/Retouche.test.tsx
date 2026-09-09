@@ -58,7 +58,7 @@ afterEach(() => {
 })
 
 beforeEach(() => {
-  // **N'existe que pour les essais** (`Tables.tsx`) : deux essais qui
+  // **N'existe que pour les essais** (`recette.ts`) : deux essais qui
   // partageraient un presse-papiers se raconteraient l'un l'autre.
   reinitialiserPressePapier()
   nommeesDouble = {}
@@ -1764,7 +1764,7 @@ describe("le presse-papiers et les recettes nommées (B24, U5 déménagé de Tab
     )
 
     // On change d'image — la sœur d'à côté — et le presse-papiers survit,
-    // parce qu'il vit hors de React (`Tables.tsx`).
+    // parce qu'il vit hors de React (`recette.ts`).
     fireEvent.click(screen.getByRole("button", { name: "Recettes ›" }))
     reouvrir({ asset: soeurs[1], soeurs })
 
