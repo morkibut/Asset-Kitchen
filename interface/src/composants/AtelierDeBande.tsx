@@ -43,17 +43,21 @@ import {
 } from "../api"
 import { rangDeLaBande } from "./Apercu"
 import { Curseur, EnTetePanneau, Libelle } from "./chassis"
-import { BlocPasse } from "./Fiche"
 import { PANNEAU } from "./Infobulle"
+// **Les six postes viennent de la retouche** (`B26`). L'atelier d'une animation
+// montait jusqu'ici les six panneaux de l'ancien châssis ; celui-ci s'en va, et
+// refaire cet écran-là n'était pas dans le périmètre du déménagement. Il gagne
+// au passage les moteurs de `B17` et `B18`, qui n'étaient jamais arrivés dans
+// l'ancien panneau — c'est un gain de la tranche, pas un dommage collatéral.
 import {
-  PanneauBords,
-  PanneauContours,
-  PanneauDetourage,
-  PanneauGrille,
-  PanneauQuantification,
-  PanneauRecadrage,
-  type Reglages,
-} from "./Places"
+  ReglagesDeLaGrille,
+  ReglagesDesCouleurs,
+  ReglagesDuContour,
+  ReglagesDuDetourage,
+  ReglagesDuNettoyage,
+  ReglagesDuRecadrage,
+  type Poste,
+} from "./Retouche"
 
 /** Les neuf points, **dans l'ordre où ils se dessinent** — trois par rangée.
  *  Les mots sont ceux du serveur, à la lettre : deux vocabulaires pour la même
@@ -966,10 +970,17 @@ export function EcranAtelierDeBande({
    *  de l'écran à ne pas s'annuler.
    *
    *  `mesures` est `null` et le reste : les taches et les poches se mesurent
-   *  sur **un asset**, et une frame de bande n'en est pas un. Les places sont
-   *  écrites pour ce cas — *on ne grise pas sur une ignorance* —, et elles se
-   *  taisent alors sur ce qu'elles ne savent pas au lieu de l'inventer. */
-  const reglages: Reglages | null = reglee
+   *  sur **un asset**, et une frame de bande n'en est pas un. Les postes sont
+   *  écrits pour ce cas — *on ne grise pas sur une ignorance* —, et ils se
+   *  taisent alors sur ce qu'ils ne savent pas au lieu de l'inventer.
+   *
+   *  ⚠️ **Quatre champs de `Poste` manquent, et ils manquent exprès** (`B26`) :
+   *  `asset` — donc aucune surface où viser un pixel, ni détourage à promouvoir
+   *  en défaut du projet —, `armee`/`onArmer` pour la même raison, `etatMain`
+   *  parce que la main arrive en V3.03.4, et `ouvrir` parce qu'il n'y a pas de
+   *  barre de places ici mais six postes empilés. Les postes montrent alors ce
+   *  qui est posé plutôt que d'offrir un bouton qui ne ferait rien. */
+  const poste: Poste | null = reglee
     ? {
         recette: reglee,
         univers,
@@ -1154,7 +1165,7 @@ export function EcranAtelierDeBande({
         />
 
         <ReglagesDeLaFrame
-          reglages={reglages}
+          poste={poste}
           sienne={laFrameAAuMine(choisie)}
           ancre={choisie + 1}
           choisies={choisies.length}
@@ -2416,7 +2427,7 @@ function TableDeLaFrame({
  *  recette ont déjà un mot français ailleurs ; les réécrire donnerait deux
  *  vocabulaires de la même chose, et celui de l'écran finirait par mentir. */
 function ReglagesDeLaFrame({
-  reglages,
+  poste,
   sienne,
   ancre,
   choisies,
@@ -2425,8 +2436,8 @@ function ReglagesDeLaFrame({
   ecart,
   onReprendre,
 }: {
-  /** Ce que les tables attendent, ou rien tant que la recette n'est pas lue. */
-  reglages: Reglages | null
+  /** Ce que les postes attendent, ou rien tant que la recette n'est pas lue. */
+  poste: Poste | null
   /** L'image a-t-elle sa recette à elle ? Le titre et le bouton en dépendent. */
   sienne: boolean
   /** Le rang, à partir de 1, de l'image dont les tables montrent les valeurs. */
@@ -2440,7 +2451,7 @@ function ReglagesDeLaFrame({
   ecart?: { places: string[]; fenetre_davant: boolean }
   onReprendre: () => void
 }) {
-  if (!reglages) return null
+  if (!poste) return null
   const plusieurs = choisies > 1
   const separe = (nom: string) => separes.includes(nom)
   return (
@@ -2539,13 +2550,13 @@ function ReglagesDeLaFrame({
             n'y avait rien à régler. Signalé par l'auteur le 4 septembre 2026.
             Le bouton « + une passe » du panneau y répond ; la phrase dit
             pourquoi il est seul, ce qu'un panneau vide ne dit pas. */}
-        {reglages.recette.passes.length === 0 && (
+        {poste.recette.passes.length === 0 && (
           <p className="mesure text-[10px] leading-4 text-texte-3">
             Cette animation ne détoure rien : le fond du clip part dans les
             sprites tel quel.
           </p>
         )}
-        <PanneauDetourage {...reglages} BlocPasse={BlocPasse} />
+        <ReglagesDuDetourage {...poste} />
         <p className="mesure text-[10px] leading-4 text-texte-3">
           {plusieurs
             ? `Ce qui change ici se pose sur les ${choisies} images choisies.`
@@ -2555,22 +2566,22 @@ function ReglagesDeLaFrame({
         </p>
       </TableDeLaFrame>
       <TableDeLaFrame nom="recadrage" separe={separe("recadrage")}>
-        <PanneauRecadrage {...reglages} />
+        <ReglagesDuRecadrage {...poste} />
       </TableDeLaFrame>
       <TableDeLaFrame nom="grille" separe={separe("grille")}>
         {/* L'ancrage est rendu à droite, avec la vitesse et le sens : il tient
             de la bande entière, et un ancrage par image ferait sauter le sujet
             d'une frame à l'autre. */}
-        <PanneauGrille {...reglages} sansAncrage />
+        <ReglagesDeLaGrille {...poste} sansAncrage />
       </TableDeLaFrame>
       <TableDeLaFrame nom="quantification" separe={separe("quantification")}>
-        <PanneauQuantification {...reglages} />
+        <ReglagesDesCouleurs {...poste} />
       </TableDeLaFrame>
       <TableDeLaFrame nom="bords" separe={separe("bords")}>
-        <PanneauBords {...reglages} />
+        <ReglagesDuNettoyage {...poste} />
       </TableDeLaFrame>
       <TableDeLaFrame nom="contours" separe={separe("contours")}>
-        <PanneauContours {...reglages} />
+        <ReglagesDuContour {...poste} />
       </TableDeLaFrame>
 
       {/* ⚠️ **La table de la main n'est pas ici, et sa phrase non plus.**

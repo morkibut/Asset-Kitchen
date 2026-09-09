@@ -41,7 +41,6 @@ from atelier.domaine.recette import Retournement
 RACINE = Path(__file__).resolve().parents[1]
 COMPOSANTS = RACINE / "interface" / "src" / "composants"
 RETOUCHE = COMPOSANTS / "Retouche.tsx"
-TABLES = COMPOSANTS / "Tables.tsx"
 
 #: Les quatre surfaces qui reçoivent un geste posé **sur l'image**.
 LES_QUATRE_SURFACES = (
@@ -95,27 +94,34 @@ def test_chaque_surface_n_est_ecrite_qu_une_fois():
     """**Deux implémentations d'un même geste finiraient par ne plus viser le
     même pixel.**
 
-    Les quatre surfaces sont désormais déclarées dans le fichier du carnet, et
-    l'ancien écran les emprunte au lieu d'en garder une copie. Le sens de
-    l'import compte : c'est l'ancien qui importe le neuf, parce que c'est lui
-    qui s'en va en `B26` — et ce qui s'en va n'emporte rien."""
+    `B23` avait laissé l'ancien écran *emprunter* les quatre surfaces au carnet
+    plutôt qu'en garder une copie — le sens de l'import comptait, parce que
+    c'était l'ancien qui s'en allait. **`B26` l'a fait partir**, et l'essai
+    change donc de forme : il n'y a plus d'emprunteur à surveiller, il y a un
+    dépôt entier où une seconde copie ne doit pas réapparaître.
+
+    Le fichier de la retouche est exclu de la recherche : c'est lui qui les
+    déclare."""
     retouche = _lire(RETOUCHE)
-    tables = _lire(TABLES)
 
     for surface in LES_QUATRE_SURFACES:
         declarations = re.findall(rf"^(?:export )?function {surface}\(", retouche, re.M)
         assert len(declarations) == 1, (
             f"{surface} n'est pas déclarée une fois et une seule dans Retouche.tsx"
         )
-        assert re.search(rf"^\s*function {surface}\(", tables, re.M) is None, (
-            f"{surface} est restée déclarée dans Tables.tsx — le déménagement en a"
-            " laissé une seconde copie"
-        )
 
-    emprunt = re.search(r"import \{([^}]*)\} from \"\./Retouche\"", tables)
-    assert emprunt is not None, "Tables.tsx n'emprunte plus les surfaces au carnet"
-    empruntees = {nom.strip() for nom in emprunt.group(1).split(",") if nom.strip()}
-    assert set(LES_QUATRE_SURFACES) <= empruntees
+    ailleurs = [
+        chemin
+        for chemin in sorted((RACINE / "interface" / "src").rglob("*.ts*"))
+        if chemin != RETOUCHE
+    ]
+    for chemin in ailleurs:
+        source = _lire(chemin)
+        for surface in LES_QUATRE_SURFACES:
+            assert re.search(rf"^\s*(?:export )?function {surface}\(", source, re.M) is None, (
+                f"{surface} est déclarée une seconde fois dans"
+                f" {chemin.relative_to(RACINE)} — le déménagement en a laissé une copie"
+            )
 
 
 def test_une_seule_convention_de_coordonnees():
@@ -130,8 +136,14 @@ def test_une_seule_convention_de_coordonnees():
     de coin écrite à côté — c'est ce que l'essai compte."""
     retouche = _lire(RETOUCHE)
     assert retouche.count("rectangleDeLImage(surface,") == len(LES_QUATRE_SURFACES)
-    # Et l'ancien écran n'en fait plus aucun : il ne calcule plus de coordonnée.
-    assert "rectangleDeLImage" not in _lire(TABLES)
+    # Et personne d'autre ne calcule de coordonnée d'image : l'ancien écran, qui
+    # en faisait autant, est parti en `B26`.
+    for chemin in sorted((RACINE / "interface" / "src").rglob("*.ts*")):
+        if chemin == RETOUCHE or chemin.name.endswith(".test.tsx"):
+            continue
+        assert "rectangleDeLImage(surface," not in _lire(chemin), (
+            f"{chemin.relative_to(RACINE)} recalcule le rectangle de l'image"
+        )
 
 
 def test_les_trois_reglages_du_retournement_sont_dans_l_ecran_neuf():

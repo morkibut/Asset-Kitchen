@@ -98,7 +98,7 @@ import {
 // **Le nom des moteurs et leur bord rongé livré vivent avec les tables**, où
 // l'auteur les manipule image par image. L'étape des défauts les emprunte
 // plutôt que d'en tenir une seconde liste (D1).
-import { DURCISSEMENT_LIVRE, MOTEUR } from "./Places"
+import { DURCISSEMENT_LIVRE, MOTEUR } from "../recette"
 import { PANNEAU } from "./Infobulle"
 import { TiroirDesSecrets } from "./Secrets"
 

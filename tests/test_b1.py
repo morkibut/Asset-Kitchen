@@ -52,11 +52,9 @@ MODELE = "essai:rend-du-png"
 
 CORPUS = Path(__file__).resolve().parent / "recettes-avant-b1.json"
 
-# La source de l'écran, lue telle quelle — jamais recopiée ici.
-PLACES_TSX = (
-    Path(__file__).resolve().parents[1]
-    / "interface" / "src" / "composants" / "Places.tsx"
-)
+# Le vocabulaire de la recette, lu tel quel — jamais recopié ici. Il vivait
+# dans l'ancien châssis ; `B26` l'a sorti dans un module sans écran.
+RECETTE_TS = Path(__file__).resolve().parents[1] / "interface" / "src" / "recette.ts"
 
 
 # ── De quoi jouer une séance ─────────────────────────────────────────────────
@@ -807,10 +805,10 @@ def test_les_sens_du_retournement_sont_les_memes_des_deux_cotes():
     """
     ecrit = re.search(
         r'export const SENS_DU_RETOURNEMENT: Record<Retournement\["sens"\], string> = \{([^}]*)\}',
-        PLACES_TSX.read_text(encoding="utf-8"),
+        RECETTE_TS.read_text(encoding="utf-8"),
     )
     assert ecrit is not None, (
-        "SENS_DU_RETOURNEMENT a été renommée ou déplacée hors de Places.tsx"
+        "SENS_DU_RETOURNEMENT a été renommée ou déplacée hors de recette.ts"
     )
 
     lus = dict(re.findall(r'"?([\w-]+)"?: "([^"]*)"', ecrit.group(1)))
@@ -836,5 +834,5 @@ def test_sens_a_ajouter_a_quitte_l_ecran_maintenant_que_b18_a_tout_livre():
     dix sens vivent maintenant tous dans `SENS_DU_RETOURNEMENT` ; une liste
     « à ajouter » qui traînerait encore serait soit un moteur oublié à l'écran,
     soit une ligne morte que personne ne lit plus."""
-    source = PLACES_TSX.read_text(encoding="utf-8")
+    source = RECETTE_TS.read_text(encoding="utf-8")
     assert "SENS_A_AJOUTER" not in source

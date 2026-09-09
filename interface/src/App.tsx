@@ -142,7 +142,7 @@ import { FicheDuClip } from "./composants/FicheDuClip"
 // ⚠️ **`EcranTables` n'est plus monté nulle part** (`B25`) : les six portes de
 // la retouche mènent toutes à `Retouche.tsx`. Il ne reste de ce fichier que le
 // type de la table qu'une porte demande — il s'en ira avec lui en `B26`.
-import type { Table } from "./composants/Tables"
+import type { Table } from "./recette"
 import { EcranDepliage } from "./composants/Depliage"
 import { EcranAtelierDeBande } from "./composants/AtelierDeBande"
 import { EcranMontage } from "./composants/Montage"

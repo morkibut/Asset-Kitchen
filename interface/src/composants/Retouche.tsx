@@ -59,6 +59,10 @@ import {
   PASSE_PAR_DEFAUT,
   RETOURNEMENT_PAR_DEFAUT,
   Refus,
+  CE_QUE_LA_METHODE_REND,
+  coteDuCanevas,
+  coteDuSujet,
+  megaoctets,
   occupationMax,
   paliersDeCouleurs,
   type Ancrage,
@@ -92,7 +96,13 @@ import { imageAsset, sujetAsset, useVisee } from "./Apercu"
 // aurait fabriqué **deux vérités sur la même attente**, et c'est précisément la
 // panne que cette tranche répare ailleurs.
 import { part, rectangleDeLImage, useEcoule } from "./chassis"
+import { EcranSuperposition } from "./Superposition"
+// **Le vocabulaire vient d'un module sans écran** (`B26`). Les listes fermées,
+// les fonctions pures et les trois crochets de la recette ne sont pas du
+// balisage : ce sont des faits du domaine, et une seconde définition d'un même
+// fait finit toujours par diverger de la première.
 import {
+  ARRETS_ZOOM,
   CIBLES,
   CURSEURS,
   DURCISSEMENT_LIVRE,
@@ -104,39 +114,37 @@ import {
   RESUME,
   SENS_DU_RETOURNEMENT,
   SENS_LIVRES,
+  TABLES,
   TOLERANCE_D_UNE_PAIRE_MAX,
   TROUS,
-  avecPassage,
-  debord,
-  defautGrille,
-  mainDe,
-  passagesDe,
-  quantificationDe,
-  rayonDe,
-  sansLeDernier,
-  useEtatMain,
-  useMesures,
-  useRecette,
-  type EtatMain,
-} from "./Places"
-import { EcranSuperposition } from "./Superposition"
-import {
-  ARRETS_ZOOM,
-  TABLES,
   ZOOM_MAX,
   ZOOM_MIN,
+  avecPassage,
   avecVeille,
   borner,
   copierDansLePressePapier,
+  debord,
   defautDeLaPasse,
+  defautGrille,
   dort,
   indisponible,
+  laPlusSombre,
   lireLePressePapier,
+  mainDe,
+  passagesDe,
   placeDe,
+  quantificationDe,
+  rayonDe,
+  sansLeDernier,
+  uniteDuTrait,
+  useEtatMain,
+  useMesures,
+  useRecette,
   valeur,
+  type EtatMain,
   type Table,
   type ZoomTable,
-} from "./Tables"
+} from "../recette"
 
 // ── Le vocabulaire des planches ─────────────────────────────────────────────
 
@@ -303,9 +311,17 @@ function JaugeDuCalcul({
 
 // ── Les pièces de la colonne de droite ──────────────────────────────────────
 
-function Etiquette({ children }: { children: ReactNode }) {
+function Etiquette({ children, barree }: { children: ReactNode; barree?: boolean }) {
   return (
-    <span className="text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+    <span
+      className={[
+        "text-[10.5px] uppercase tracking-[0.14em] text-encre-4",
+        // **Barré, et non grisé** (U10) : une passe masquée est toujours là et
+        // garde ses réglages. Le grisé dirait *presque vide* ; la barre dit
+        // *il y a quelque chose ici, et ça ne s'applique pas*.
+        barree ? "line-through" : "",
+      ].join(" ")}
+    >
       {children}
     </span>
   )
@@ -578,29 +594,40 @@ function Interrupteur({
 
 // ── La colonne de droite, table par table ───────────────────────────────────
 
-type Poste = {
+/** Ce qu'un poste de réglage attend pour se rendre.
+ *
+ *  ⚠️ **Quatre champs sont facultatifs, et c'est ce qui rend ces postes
+ *  montables ailleurs** (`B26`). L'atelier d'une animation les empile sur la
+ *  recette d'une bande, qui n'est l'image d'aucun asset : il n'a ni surface où
+ *  viser, ni pile de calques, ni barre de places à ouvrir. **L'absence du geste
+ *  voyage**, elle ne se remplace pas par une fonction qui ne fait rien : un
+ *  bouton inerte ne se distingue pas d'un bouton cassé, et chaque poste dit ce
+ *  qui est posé au lieu d'offrir de le poser. */
+export type Poste = {
   recette: Recette
   univers: Univers
   traitement: EtatTraitement
   mesures: TachesDeLAsset | null
   regler: (r: Recette) => void
   poser: (r: Recette) => void
-  ouvrir: (table: Table) => void
+  /** Ouvrir une autre place de la barre — le geste que porte un grisé. Absent
+   *  là où les postes sont empilés et où il n'y a pas de barre. */
+  ouvrir?: (table: Table) => void
   /** Le rang de la passe qui attend son geste **dans l'image**, ou `null`.
    *
    *  **L'état vit au-dessus des deux colonnes** (B23, repris de l'écran des
    *  tables) : la passe se règle à droite et se vise au milieu, et un état tenu
    *  d'un seul côté aurait laissé l'autre l'ignorer. */
-  armee: number | null
-  onArmer: (rang: number | null) => void
+  armee?: number | null
+  onArmer?: (rang: number | null) => void
   /** Ce que l'écran tient de la main — le calque actif, le sens, le diamètre et
    *  la couleur. Ils décrivent la **main**, pas l'image : les écrire dans la
    *  recette les aurait fait entrer dans l'empreinte, donc changer de pinceau
    *  aurait recalculé un rendu identique. */
-  etatMain: EtatMain
+  etatMain?: EtatMain
 }
 
-function ReglagesDuDetourage({
+export function ReglagesDuDetourage({
   recette,
   univers,
   traitement,
@@ -613,8 +640,15 @@ function ReglagesDuDetourage({
   onErreur,
   onUnivers,
 }: Poste & {
-  asset: Asset
-  onErreur: (raison: string) => void
+  /** L'image sur laquelle ce détourage se règle, ou rien.
+   *
+   *  **Rien, c'est l'atelier d'une animation** (`B26`) : on y règle la recette
+   *  d'une bande, qui n'est l'image d'aucun asset. Deux gestes en dépendent —
+   *  viser dans l'image et promouvoir ce détourage en défaut du projet — et
+   *  **ils s'absentent plutôt que de rester là sans rien faire** : un bouton
+   *  inerte ne se distingue pas d'un bouton cassé (`AGENTS.md`, 8nonies). */
+  asset?: Asset
+  onErreur?: (raison: string) => void
   /** **Le dossier du jeu vient de changer** (M7) — promouvoir un détourage en
    *  défaut du projet l'écrit, et l'atelier doit en tenir compte sans
    *  recharger. Absent, le geste se fait quand même : c'est l'écran d'à côté
@@ -622,6 +656,21 @@ function ReglagesDuDetourage({
   onUnivers?: (univers: Univers) => void
 }) {
   const passes = recette.passes
+  /** **Aucune image brute sous la main** — l'atelier d'une animation montre la
+   *  planche déjà traitée. Les deux gestes qui visent un pixel s'absentent au
+   *  lieu d'offrir un bouton qui ne fait rien, et la colonne dit ce qui est
+   *  posé plutôt que de faire croire qu'on peut le poser d'ici. */
+  const sansSurface = asset === undefined
+  /** Le catalogue des modèles de silhouette, tel que le serveur le rend (U13).
+   *
+   *  **Rattrapé en `B26`**, avec le catalogue lui-même : il ne vivait que dans
+   *  `BlocPasse` (`Fiche.tsx`), monté par le panneau de l'ancien châssis. Le
+   *  moteur `modele` était donc choisissable ici, mais **lequel** ne l'était
+   *  pas : `Passe.modele` partait toujours vide, c'est-à-dire au défaut du
+   *  produit, sans que rien ne le dise. Vide tant que le serveur n'a pas
+   *  répondu — on montre alors le moteur sans son choix de modèle, jamais une
+   *  liste devinée. */
+  const silhouettes = traitement.silhouettes ?? []
   const grises = {
     ...(Object.fromEntries(
       traitement.moteurs.filter((m) => m.raison).map((m) => [m.nom, m.raison as string]),
@@ -635,8 +684,22 @@ function ReglagesDuDetourage({
       : {}),
   }
 
+  /** ── Toucher un réglage remontre la passe masquée (U10) ──────────────────
+   *
+   *  **C'est la règle de la place endormie (U4), un cran plus bas** : poser une
+   *  valeur *dit* qu'on veut cette passe, et refuser le curseur parce qu'elle
+   *  est masquée obligerait à un geste préalable pour avoir le droit de faire
+   *  le geste qu'on voulait. On remontre plutôt que de refuser.
+   *
+   *  **Et sans annonce, contrairement à la place endormie.** L'annonce existait
+   *  là-bas parce que l'interrupteur vit en haut de la colonne, loin du réglage
+   *  qu'on touche ; ici le bouton est vingt pixels au-dessus du curseur, et le
+   *  bloc cesse d'être grisé sous les doigts — le redire serait dire ce qu'on
+   *  voit. */
   const changer = (rang: number, suite: Partial<Passe>) =>
-    passes.map((p, i) => (i === rang ? { ...p, ...suite } : p))
+    passes.map((p, i) =>
+      i === rang ? { ...(p.masquee ? { ...p, masquee: false } : p), ...suite } : p,
+    )
 
   return (
     <div className="flex flex-col gap-[14px]">
@@ -654,18 +717,54 @@ function ReglagesDuDetourage({
       return (
         <div key={rang} className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
           <div className="flex items-baseline justify-between gap-[8px]">
-            <Etiquette>passe {rang + 1}</Etiquette>
-            <button
-              type="button"
-              onClick={() =>
-                void poser({ ...recette, passes: passes.filter((_, i) => i !== rang) })
-              }
-              className="text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre"
-            >
-              La retirer
-            </button>
+            <Etiquette barree={passe.masquee}>passe {rang + 1}</Etiquette>
+            {/* **Masquer n'est pas retirer, et les deux mots le disent** (U10,
+                rattrapé en `B26` — le geste ne vivait que dans `BlocPasse`) :
+                l'un rend la passe au calcul d'un clic, l'autre la perd. Ils
+                sont côte à côte parce que c'est là qu'on hésite entre les
+                deux. */}
+            <div className="flex items-baseline gap-[8px]">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!passe.masquee}
+                aria-label={`passe ${rang + 1} — ${passe.masquee ? "masquée" : "visible"}`}
+                onClick={() =>
+                  void poser({
+                    ...recette,
+                    passes: passes.map((p, i) =>
+                      i === rang ? { ...p, masquee: !p.masquee } : p,
+                    ),
+                  })
+                }
+                className="text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre"
+              >
+                {passe.masquee ? "La montrer" : "La masquer"}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  void poser({ ...recette, passes: passes.filter((_, i) => i !== rang) })
+                }
+                className="text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre"
+              >
+                La retirer
+              </button>
+            </div>
           </div>
+          {passe.masquee && (
+            <Pourquoi texte="masquée : retirée du calcul, elle garde tous ses réglages — la remontrer rend l'image d'avant" />
+          )}
 
+          {/* **Les réglages restent lisibles, et ils restent réglables** — le
+              grisé de la place endormie, pas un verrou. Les cacher rendrait le
+              masque impossible à défaire en connaissance de cause. */}
+          <div
+            className={[
+              "flex flex-col gap-[8px]",
+              passe.masquee ? "opacity-50" : "",
+            ].join(" ")}
+          >
           <Reglage nom="moteur">
             <Choix
               valeurs={["bord", "couleur", "modele", "trace", "palette"] as const}
@@ -694,6 +793,61 @@ function ReglagesDuDetourage({
             />
           </Reglage>
 
+          {/* ── Quel modèle de silhouette (U13, rattrapé en `B26`) ───────────
+              **Le catalogue décide, jamais une liste en dur.** Le moteur par
+              modèle n'en connaissait qu'un seul, écrit dans le code : on ne
+              pouvait pas en essayer un autre sans toucher au code. Le choix se
+              fait passe par passe, comme le moteur lui-même.
+
+              **Vide veut dire le défaut du produit**, et c'est le serveur qui
+              dit lequel — l'écran ne choisit pas de défaut. */}
+          {passe.moteur === "modele" && silhouettes.length > 0 && (() => {
+            const choisi =
+              silhouettes.find((s) => s.nom === passe.modele) ??
+              silhouettes.find((s) => s.defaut) ??
+              silhouettes[0]
+            return (
+              <>
+                <Reglage nom="modèle">
+                  <Choix
+                    valeurs={silhouettes.map((s) => s.nom)}
+                    valeur={choisi.nom}
+                    libelles={Object.fromEntries(silhouettes.map((s) => [s.nom, s.titre]))}
+                    onChange={(modele) =>
+                      void poser({ ...recette, passes: changer(rang, { modele }) })
+                    }
+                  />
+                </Reglage>
+                <Pourquoi texte={choisi.note} />
+                {/* **Le côté auquel il infère, dit à côté de son poids** (D4).
+                    C'est le nombre qui décide de ce qu'un modèle peut rendre :
+                    un masque calculé en 320 puis étiré à 1024 perd tout ce qui
+                    est plus fin que trois pixels, et le rebond fabrique des
+                    demi-transparences *à l'intérieur* du sujet. */}
+                <Pourquoi
+                  texte={
+                    choisi.entree >= 1024
+                      ? `il calcule à ${choisi.entree} px et ne réagrandit pas son masque · ${choisi.licence}`
+                      : `⚠ il calcule à ${choisi.entree} px puis réagrandit son masque — ce qui est plus fin que trois pixels y disparaît · ${choisi.licence}`
+                  }
+                />
+                {/* **Ce que ça pèse, dit avant l'attente** — pas au milieu.
+                    Un modèle qui n'est pas encore descendu se rapatrie tout
+                    seul au premier rendu ; ce qu'on doit à l'auteur, c'est de
+                    le lui annoncer, pas de l'envoyer l'installer à la main. */}
+                {!choisi.descendu && !choisi.raison && (
+                  <p
+                    data-modele-a-descendre
+                    role="status"
+                    className="mesure text-[10.5px] text-epingle"
+                  >
+                    {`la première fois, l'atelier descendra ce modèle — ${megaoctets(choisi.octets)}`}
+                  </p>
+                )}
+              </>
+            )
+          })()}
+
           {(passe.moteur === "bord" || passe.moteur === "couleur" || passe.moteur === "trace") && (
             <Reglage nom="tolérance">
               <Glissiere
@@ -709,6 +863,19 @@ function ReglagesDuDetourage({
                 }
               />
             </Reglage>
+          )}
+          {/* **Un réglage qui s'en va le dit** (rattrapé en `B26`). Deux des
+              cinq moteurs ne lisent aucune tolérance : le faire disparaître
+              sans un mot revient au même qu'un curseur qui ne ferait rien
+              (`AGENTS.md`, 8nonies). */}
+          {(passe.moteur === "modele" || passe.moteur === "palette") && (
+            <Pourquoi
+              texte={
+                passe.moteur === "modele"
+                  ? "le modèle décide seul de la silhouette : il n'y a pas de tolérance à régler"
+                  : "la palette du jeu décide seule : il n'y a pas de tolérance à régler"
+              }
+            />
           )}
 
           <Reglage nom="bord rongé">
@@ -813,63 +980,84 @@ function ReglagesDuDetourage({
                     <span className="mesure text-[11.5px] text-encre-2">{couleurVisee}</span>
                   </span>
                 )}
-                <button
-                  type="button"
-                  data-viser={rang}
-                  aria-pressed={armee === rang}
-                  onClick={() => onArmer(armee === rang ? null : rang)}
-                  className="h-[26px] self-start rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
-                >
-                  {/* ⚠️ **Les coordonnées ne se disent qu'une fois.** Elles
-                      sont écrites sous le bouton, avec ce qu'elles veulent
-                      dire ; les répéter sur le bouton se lirait comme deux
-                      points visés (`docs/DESIGN.md`, *la valeur se lit une
-                      fois*). */}
-                  {armee === rang
-                    ? "clique dans l'image"
-                    : passe.point
-                      ? "viser à nouveau ›"
-                      : "viser dans l'image ›"}
-                </button>
+                {sansSurface ? (
+                  <span className="mesure text-[11.5px] text-encre-4">
+                    {passe.point
+                      ? `${passe.point[0]}, ${passe.point[1]} — visé ailleurs`
+                      : "aucun point visé"}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    data-viser={rang}
+                    aria-pressed={armee === rang}
+                    onClick={() => onArmer?.(armee === rang ? null : rang)}
+                    className="h-[26px] self-start rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+                  >
+                    {/* ⚠️ **Les coordonnées ne se disent qu'une fois.** Elles
+                        sont écrites sous le bouton, avec ce qu'elles veulent
+                        dire ; les répéter sur le bouton se lirait comme deux
+                        points visés (`docs/DESIGN.md`, *la valeur se lit une
+                        fois*). */}
+                    {armee === rang
+                      ? "clique dans l'image"
+                      : passe.point
+                        ? "viser à nouveau ›"
+                        : "viser dans l'image ›"}
+                  </button>
+                )}
               </div>
             </Reglage>
           )}
           {passe.moteur === "couleur" && (
             <Pourquoi
               texte={
-                passe.point
-                  ? `le point désigne un endroit de cette image-là · ${passe.point[0]}, ${passe.point[1]} — il ne voyage pas`
-                  : "tant qu'aucun point n'est posé, cette passe ne retire rien — et le point qu'on posera ne voyagera pas"
+                sansSurface
+                  ? "la pipette se pose sur l'image brute, dans la retouche — cet écran-ci n'a que la planche déjà traitée"
+                  : passe.point
+                    ? `le point désigne un endroit de cette image-là · ${passe.point[0]}, ${passe.point[1]} — il ne voyage pas`
+                    : "tant qu'aucun point n'est posé, cette passe ne retire rien — et le point qu'on posera ne voyagera pas"
               }
             />
           )}
 
           {passe.moteur === "trace" && (
             <Reglage nom="forme entourée">
-              <button
-                type="button"
-                data-entourer={rang}
-                aria-pressed={armee === rang}
-                onClick={() => onArmer(armee === rang ? null : rang)}
-                className="h-[26px] self-start rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
-              >
-                {armee === rang
-                  ? "entoure le sujet dans l'image"
-                  : passe.trace.length > 0
-                    ? `${passe.trace.length} points · entourer à nouveau ›`
-                    : "entourer dans l'image ›"}
-              </button>
+              {sansSurface ? (
+                <span className="mesure text-[11.5px] text-encre-4">
+                  {passe.trace.length > 0
+                    ? `${passe.trace.length} points, tracés ailleurs`
+                    : "aucune forme entourée"}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  data-entourer={rang}
+                  aria-pressed={armee === rang}
+                  onClick={() => onArmer?.(armee === rang ? null : rang)}
+                  className="h-[26px] self-start rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+                >
+                  {armee === rang
+                    ? "entoure le sujet dans l'image"
+                    : passe.trace.length > 0
+                      ? `${passe.trace.length} points · entourer à nouveau ›`
+                      : "entourer dans l'image ›"}
+                </button>
+              )}
             </Reglage>
           )}
           {passe.moteur === "trace" && (
             <Pourquoi
               texte={
-                passe.trace.length > 0
-                  ? "le bord est cherché à l'intérieur de ce que tu as entouré — rien ne bouge au-dehors, et cette forme ne voyage pas"
-                  : "tant qu'aucune forme n'est entourée, cette passe ne retire rien — et cette forme ne voyage pas"
+                sansSurface
+                  ? "la sélection se dessine sur l'image brute, dans la retouche — cet écran-ci n'a que la planche déjà traitée"
+                  : passe.trace.length > 0
+                    ? "le bord est cherché à l'intérieur de ce que tu as entouré — rien ne bouge au-dehors, et cette forme ne voyage pas"
+                    : "tant qu'aucune forme n'est entourée, cette passe ne retire rien — et cette forme ne voyage pas"
               }
             />
           )}
+          </div>
         </div>
       )
       })}
@@ -891,13 +1079,20 @@ function ReglagesDuDetourage({
           qu'un sujet débordant sur un bord fait basculer. */}
       <Pourquoi texte="chaque passe « bord » devine sur les bordures, sauf si elle vise la couleur déclarée du jeu — réglage « couleur visée » ci-dessus" />
 
-      <PromotionDuDetourage
-        asset={asset}
-        recette={recette}
-        univers={univers}
-        onUnivers={onUnivers}
-        onErreur={onErreur}
-      />
+      {/* **Promouvoir suppose une image à promouvoir.** Le geste écrit le
+          détourage de *cette image-ci* dans les règles du jeu, avec sa portée —
+          la nature de l'image, ou la famille de ce qu'elle montre. Une frame
+          d'animation n'a ni l'une ni l'autre : le geste s'absente, il ne se
+          grise pas. */}
+      {asset !== undefined && onErreur !== undefined && (
+        <PromotionDuDetourage
+          asset={asset}
+          recette={recette}
+          univers={univers}
+          onUnivers={onUnivers}
+          onErreur={onErreur}
+        />
+      )}
     </div>
   )
 }
@@ -1099,7 +1294,7 @@ const NOM_DU_FORMAT: Record<FormatDeRecadrage, string> = {
   "3:4": "3 pour 4",
 }
 
-function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }: Poste) {
+export function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }: Poste) {
   // **Toujours les huit champs**, jamais un objet partiel (B18) : un envoi qui
   // n'en garderait que deux effacerait les six autres au premier geste posé
   // depuis cette colonne — la même faute que `decalage` en E17.
@@ -1164,7 +1359,7 @@ function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }: Poste)
         <Pourquoi
           texte="la case avale la marge : c'est la hauteur qui donne l'air autour du sujet"
           geste="Pixéliser"
-          onGeste={() => ouvrir("grille")}
+          onGeste={ouvrir ? () => ouvrir("grille") : undefined}
         />
       )}
 
@@ -1302,7 +1497,88 @@ function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }: Poste)
   )
 }
 
-function ReglagesDeLaGrille({ recette, univers, traitement, regler, poser }: Poste) {
+/** **Les deux lectures d'une même hauteur** (rattrapé en `B26`).
+ *
+ *  Un pour cent n'est pas une mesure : ce que la hauteur décide est un nombre
+ *  de carrés, et c'est celui-là qu'on compare d'une image à l'autre. Depuis que
+ *  le réglage peut dépasser le personnage, il faut de surcroît voir *de
+ *  combien* — le dessin le montre, le texte le compte.
+ *
+ *  **Repris d'`EchantillonDeHauteur` (`chassis.tsx`) au calcul près** ; seules
+ *  les couleurs passent au papier, comme les quatre surfaces de `B23`. Il ne
+ *  vivait plus que dans le panneau de la grille de l'ancien châssis, et il ne
+ *  lit aucune mesure du serveur : rien ne le retenait de partir avec lui. */
+function EchantillonDeLaHauteur({ occupation, cible }: { occupation: number; cible: number }) {
+  const haut = 64
+  const enPersonnages = Math.max(1, occupation) / 100
+  // **L'échelle du dessin est le plus grand des deux** — le sujet ou le
+  // personnage —, sans quoi un moulin de trois personnages sortirait du cadre
+  // au lieu de le remplir.
+  const echelle = Math.max(1, enPersonnages)
+  const hSujet = Math.max(2, Math.round((haut * enPersonnages) / echelle))
+  const hPersonnage = Math.round(haut / echelle)
+  const carres = coteDuCanevas(cible, occupation)
+  const sujet = coteDuSujet(cible, occupation)
+  const depasse = occupation > 100
+  const nombre = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 2 })
+  return (
+    <div className="flex items-end gap-[14px]">
+      <span
+        aria-hidden
+        // **34, le plus large des écarts fermés de `docs/DESIGN.md`.** L'ancien
+        // châssis dessinait cette case à 56, une valeur qu'il n'avait déclarée
+        // nulle part ; le carnet reprend le calcul et non le nombre.
+        className="relative flex w-[34px] shrink-0 items-end justify-center border border-trait bg-papier-cote"
+        style={{ height: `${haut}px` }}
+      >
+        <span className="block w-full bg-encre-4" style={{ height: `${hSujet}px` }} />
+        {/* **La hauteur d'un personnage, en pointillé.** Dessinée seulement
+            quand elle dit quelque chose : à 100 % et au-dessous elle est le
+            haut du cadre, et un trait posé sur une bordure n'est pas un
+            repère. */}
+        {depasse && (
+          <span
+            className="absolute right-0 left-0 border-t border-dashed border-epingle"
+            style={{ bottom: `${hPersonnage}px` }}
+          />
+        )}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+        <span className="text-[12px] leading-tight text-encre-2">
+          {depasse
+            ? `${nombre(enPersonnages)} personnages de haut`
+            : `${occupation} % d'un personnage`}
+        </span>
+        <span className="mesure text-[10.5px] leading-tight text-encre-4">
+          {sujet === carres
+            ? `l'image revient en ${carres} carrés de côté`
+            : `${sujet} carrés dans une image de ${carres}`}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+export function ReglagesDeLaGrille({
+  recette,
+  univers,
+  traitement,
+  regler,
+  poser,
+  sansAncrage = false,
+}: Poste & {
+  /** **Retirer l'ancrage de ce poste**, parce qu'il appartient à autre chose là
+   *  où l'on s'en sert.
+   *
+   *  Sur une image, l'ancrage est un réglage de la grille comme un autre. Sur
+   *  une **animation**, il appartient à la bande entière : il décide par où le
+   *  sujet tient dans sa case, et un ancrage par image ferait sauter le
+   *  personnage d'une frame à l'autre. L'atelier d'une animation le rend donc
+   *  avec la vitesse et le sens, et il serait ici une seconde commande du même
+   *  réglage — à une portée différente, ce qui est pire que deux fois la
+   *  même. */
+  sansAncrage?: boolean
+}) {
   const grille: Grille = recette.grille ?? defautGrille()
   const plafond = occupationMax(grille.cible)
   const grisees = Object.fromEntries(
@@ -1342,15 +1618,18 @@ function ReglagesDeLaGrille({ recette, univers, traitement, regler, poser }: Pos
           onPoser={(occupation) => changer({ occupation })}
         />
       </Reglage>
+      <EchantillonDeLaHauteur occupation={grille.occupation} cible={grille.cible} />
 
-      <Reglage nom="ancrage">
-        <Choix
-          valeurs={Object.keys(NOM_DE_L_ANCRAGE) as Ancrage[]}
-          valeur={grille.ancrage}
-          libelles={NOM_DE_L_ANCRAGE}
-          onChange={(ancrage) => changer({ ancrage })}
-        />
-      </Reglage>
+      {!sansAncrage && (
+        <Reglage nom="ancrage">
+          <Choix
+            valeurs={Object.keys(NOM_DE_L_ANCRAGE) as Ancrage[]}
+            valeur={grille.ancrage}
+            libelles={NOM_DE_L_ANCRAGE}
+            onChange={(ancrage) => changer({ ancrage })}
+          />
+        </Reglage>
+      )}
 
       <Reglage nom="façon de réduire">
         <Choix
@@ -1361,6 +1640,10 @@ function ReglagesDeLaGrille({ recette, univers, traitement, regler, poser }: Pos
           onChange={(methode) => changer({ methode })}
         />
       </Reglage>
+      {/* **Ce que cette méthode-là rend**, en une ligne (rattrapé en `B26`).
+          Un libellé de trois mots ne dit pas ce qu'on gagne et ce qu'on perd,
+          et c'est précisément ce qui départage les quatre. */}
+      <Pourquoi texte={CE_QUE_LA_METHODE_REND[grille.methode]} />
 
       {/* **Le décalage est une coordonnée** (E17) : il n'est écrit que par le
           calibrage, il ne se règle pas ici, et il ne voyage pas. Le montrer
@@ -1374,7 +1657,7 @@ function ReglagesDeLaGrille({ recette, univers, traitement, regler, poser }: Pos
   )
 }
 
-function ReglagesDesCouleurs({
+export function ReglagesDesCouleurs({
   recette,
   univers,
   traitement,
@@ -1384,6 +1667,13 @@ function ReglagesDesCouleurs({
 }: Poste) {
   const valeurs = quantificationDe(recette, univers)
   const paliers = paliersDeCouleurs(recette.grille?.cible ?? 64)
+  /** **Une palette vide veut dire *déduite de l'image elle-même***, et le
+   *  domaine le dit depuis `T2`. L'écran lisait déjà ce fait — c'est lui qui
+   *  grise l'algorithme —, mais aucun poste ne le **posait** : on reposait
+   *  toujours celle du jeu. Rattrapé en `B26` : le geste ne vivait que dans le
+   *  panneau de l'ancien châssis, et les deux régimes rendent des images
+   *  franchement différentes. */
+  const surLImage = valeurs.palette.length === 0
 
   /** **« 24 demandées, 14 obtenues »** (`B18`) — le seul chiffre qui explique
    *  pourquoi monter le réglage ne change plus rien. Il vient du serveur, qui le
@@ -1401,6 +1691,31 @@ function ReglagesDesCouleurs({
 
   return (
     <div className="flex flex-col gap-[14px]">
+      {/* ── D'où viennent les couleurs (rattrapé en `B26`) ──────────────────
+          **Deux sources, et le modèle les portait déjà.** *Le jeu* copie la
+          palette du projet dans la recette ; *l'image* la vide, et l'algorithme
+          choisi ci-dessous décide alors des couleurs sur l'image elle-même. */}
+      <Reglage nom="couleurs de">
+        <Choix
+          valeurs={["le jeu", "l'image"] as const}
+          valeur={surLImage ? "l'image" : "le jeu"}
+          eteints={
+            univers.palette.length === 0
+              ? {
+                  "le jeu":
+                    "ce jeu n'a pas de palette — dépose un artwork officiel pour lui en donner une",
+                }
+              : {}
+          }
+          onChange={(source) =>
+            // **La palette se copie dans la recette au moment du choix**, comme
+            // celle d'une passe `palette` : une recette est un calcul complet,
+            // rejouable sans redemander au projet ce qu'il contenait ce jour-là.
+            void poser(avec({ palette: source === "l'image" ? [] : univers.palette }))
+          }
+        />
+      </Reglage>
+
       <Reglage nom="couleurs">
         <Choix
           valeurs={paliers}
@@ -1806,11 +2121,30 @@ function ChoixDeCouleur({
           ))}
         </div>
       )}
+      {/* **Le produit constate ; il ne refuse pas** (D4, rattrapé en `B26`).
+          Une couleur de plus dans un jeu est un fait qui se lit, et il mérite
+          d'être dit ici puisque la réduction des couleurs est déjà passée et ne
+          la rattrapera pas. */}
+      {palette.length > 0 && (
+        <span
+          className={[
+            "mesure text-[10.5px]",
+            palette.some((c) => c.toLowerCase() === couleur.toLowerCase())
+              ? "text-encre-4"
+              : "text-epingle",
+          ].join(" ")}
+        >
+          {couleur} ·{" "}
+          {palette.some((c) => c.toLowerCase() === couleur.toLowerCase())
+            ? "dans la palette"
+            : "hors palette"}
+        </span>
+      )}
     </div>
   )
 }
 
-function ReglagesDuNettoyage({ recette, mesures, regler, poser }: Poste) {
+export function ReglagesDuNettoyage({ recette, mesures, regler, poser }: Poste) {
   // ⚠️ **Zéro, pas trois** (B16). L'écran affichait 3 px et annonçait « 4
   // taches effacées sur 11 » alors que rien n'était posé et que l'image n'avait
   // pas bougé d'un pixel — pendant que la table des contours lisait la même
@@ -2116,8 +2450,17 @@ function ReglagesDuNettoyage({ recette, mesures, regler, poser }: Poste) {
   )
 }
 
-function ReglagesDuContour({ recette, univers, mesures, regler, poser }: Poste) {
-  const contour: Contour = recette.contours ?? CONTOUR_PAR_DEFAUT
+export function ReglagesDuContour({ recette, univers, mesures, regler, poser }: Poste) {
+  /** **La seule chose que ce poste devine** (D4, rendu en `B26`) : la plus
+   *  sombre de la palette du jeu, plutôt que le noir du produit. L'ancien
+   *  panneau la proposait déjà ; le poste neuf posait `CONTOUR_PAR_DEFAUT` tel
+   *  quel, si bien que le premier réglage touché écrivait dans la recette une
+   *  couleur que le jeu n'emploie pas. Deux écrans du même atelier ne
+   *  proposaient pas la même. */
+  const contour: Contour = recette.contours ?? {
+    ...CONTOUR_PAR_DEFAUT,
+    couleur: laPlusSombre(univers.palette) ?? CONTOUR_PAR_DEFAUT.couleur,
+  }
   const changer = (suite: Partial<Contour>) =>
     void poser({ ...recette, contours: { ...contour, ...suite } })
   const croissance = debord(contour) * 2
@@ -2137,6 +2480,24 @@ function ReglagesDuContour({ recette, univers, mesures, regler, poser }: Poste) 
           onPoser={(epaisseur) => changer({ epaisseur })}
         />
       </Reglage>
+      {/* **Un nombre seul demanderait « de quoi ? »** (D4, rattrapé en `B26`).
+          L'épaisseur se compte dans l'image rendue — sauf sans case posée, où
+          l'image fait encore mille pixels de côté et où un trait d'un pixel est
+          un cheveu invisible : le trait se pose alors sur la maille du modèle,
+          et l'écran dit laquelle plutôt que de laisser deviner. */}
+      <Pourquoi texte={uniteDuTrait(contour.epaisseur, recette, mesures)} />
+      {/* **La forme du pinceau, dite au moment du choix** (D4). Les deux ont
+          raison à des épaisseurs différentes : la croix à un pixel — le carré
+          poserait des pixels en diagonale des coins —, le carré au-dessus,
+          parce qu'une croix répétée donne un losange visible aux quatre coins
+          d'un sprite. */}
+      <Pourquoi
+        texte={
+          contour.epaisseur <= 1
+            ? "en croix, la convention du pixel art à une épaisseur — le carré poserait des pixels en diagonale des coins"
+            : "en carré, au-delà d'une épaisseur — une croix répétée donnerait un losange"
+        }
+      />
 
       <Reglage nom="position">
         <Choix
@@ -2156,31 +2517,46 @@ function ReglagesDuContour({ recette, univers, mesures, regler, poser }: Poste) 
         />
       </Reglage>
 
-      {univers.palette.length > 0 && (
-        <Reglage nom="couleur">
-          <div className="flex flex-wrap gap-[4px]">
-            {univers.palette.slice(0, 12).map((couleur) => (
-              <button
-                key={couleur}
-                type="button"
-                aria-label={couleur}
-                aria-pressed={contour.couleur === couleur}
-                onClick={() => changer({ couleur })}
-                style={{ background: couleur }}
-                className={`h-[22px] w-[22px] rounded-5 border transition-colors duration-120 ${
-                  contour.couleur === couleur ? "border-encre" : "border-trait"
-                }`}
-              />
-            ))}
-          </div>
-        </Reglage>
+      {/* **La palette entière, et non ses douze premières** (D4, rattrapé en
+          `B26`). Le choix passe par la pièce que les autres postes emploient
+          déjà : elle porte la pastille de chaque couleur du jeu, le champ
+          hexadécimal pour celles qui n'y sont pas, et elle dit sous elle si la
+          couleur posée est dans la palette ou hors d'elle. */}
+      <Reglage nom="couleur">
+        <ChoixDeCouleur
+          couleur={contour.couleur}
+          palette={univers.palette}
+          onChange={(couleur) => changer({ couleur })}
+        />
+      </Reglage>
+      {/* **Ce que le poste a deviné, dit une fois** : tant que rien n'est posé,
+          la couleur montrée est la plus sombre de la palette — proposée, pas
+          choisie. */}
+      {recette.contours === null && univers.palette.length > 0 && (
+        <Pourquoi texte="proposé, d'après ta palette · la plus sombre" />
       )}
 
       {/* **Le seul réglage de la chaîne qui change la taille du rendu**, et il
-          l'écrit au moment où on choisit — pas après. */}
-      {croissance > 0 && cible !== null && (
+          l'écrit au moment où on choisit — pas après. À cheval sur une
+          épaisseur impaire, le pixel qui ne tombe pas juste va dehors : la
+          croissance vaut alors un de plus que l'épaisseur.
+          **Et il le dit sans case posée aussi** (rattrapé en `B26`) : la
+          silhouette grandit du même nombre de pixels, que le jeu ait une case
+          ou non — n'en parler qu'avec une case laissait l'autre moitié des
+          images sans un mot. */}
+      {cible !== null ? (
+        croissance > 0 && (
+          <Pourquoi
+            texte={`la case du jeu fait ${cible} px, le fichier qui sort en fera ${cible + croissance}`}
+          />
+        )
+      ) : (
         <Pourquoi
-          texte={`la case du jeu fait ${cible} px, le fichier qui sort en fera ${cible + croissance}`}
+          texte={
+            croissance === 0
+              ? "la boîte ne bouge pas — le sujet est mangé de l'épaisseur"
+              : `la silhouette grandit de ${croissance} px sur chaque dimension`
+          }
         />
       )}
       {(mesures?.trous.length ?? 0) > 0 && (
@@ -2489,7 +2865,14 @@ function RangeeDeCalque({
  *  eux, la surface qui reçoit le passage n'aurait rien à peindre — c'est
  *  l'autre moitié du même geste, et les deux moitiés se tiennent maintenant sur
  *  le même écran. */
-function ReglagesDeLaMain({ recette, univers, mesures, regler, poser, etatMain }: Poste) {
+function ReglagesDeLaMain({
+  recette,
+  univers,
+  mesures,
+  regler,
+  poser,
+  etatMain,
+}: Poste & { etatMain: EtatMain }) {
   const main = mainDe(recette)
   const { actif, choisir, sens, setSens, diametre, setDiametre, couleur, setCouleur } =
     etatMain
@@ -3575,7 +3958,11 @@ export function Retouche({
    *  quand on la grossit au-delà. */
   const echelleDeLaSurface = facteur
 
-  const poste: Poste = {
+  /** **Cet écran-ci les a tous les quatre**, et le type le dit : il montre une
+   *  image, il tient la pile de la main, et sa barre ouvre les autres places.
+   *  Les quatre facultatifs de `Poste` sont facultatifs pour l'atelier d'une
+   *  animation, pas pour la retouche. */
+  const poste: Poste & { etatMain: EtatMain } = {
     recette,
     univers,
     traitement,
