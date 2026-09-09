@@ -10,7 +10,7 @@
  * **Aucun chiffre neuf ne s'y calcule.** Le plafond réel d'occupation —
  * `occupationMax(cible)` — existe déjà (`interface/src/api.ts`), testé côté
  * serveur (`tests/test_tailles.py`) et déjà employé par `Assistant.tsx` et
- * `Places.tsx`. Cet écran ne fait que le montrer à côté du reste.
+ * `Retouche.tsx`. Cet écran ne fait que le montrer à côté du reste.
  *
  * **Les voisins sont des types, pas des sujets réels du jeu.** Aller chercher
  * un vrai moulin et une vraie grenouille aurait demandé un appel de plus et un

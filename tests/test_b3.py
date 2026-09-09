@@ -56,7 +56,7 @@ def test_le_decalage_survit_a_la_modification_dun_autre_reglage(client, tmp_path
 def test_le_decalage_se_pose_directement_par_le_geste_de_la_tranche(client):
     """**Le geste nu, sans calibrage** : `PUT /assets/{id}/recipe` est la route
     que chaque table de retouche appelle à chaque réglage relâché
-    (`interface/src/composants/Places.tsx`, `useRecette.poser`). Le champ doit
+    (`interface/src/recette.ts`, `useRecette.poser`). Le champ doit
     y voyager pour lui-même, pas seulement parce que le calibrage l'a écrit
     avant."""
     import io

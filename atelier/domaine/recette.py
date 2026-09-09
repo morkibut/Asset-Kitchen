@@ -149,7 +149,7 @@ DURCISSEMENT_LIVRE = {BORD: 0, COULEUR: 1, MODELE: 2, TRACE: 0, PALETTE: 0}
 
 # Comment le produit **nomme** chaque moteur quand il en parle en français.
 #
-# **La même liste vit dans `interface/src/composants/Places.tsx`**, et les deux
+# **La même liste vit dans `interface/src/recette.ts`**, et les deux
 # sont tenues ensemble par un essai — comme les crans de cible avant elles.
 # Deux listes pour un fait finissent toujours par diverger ; un essai qui les
 # compare est ce qui rend la divergence impossible à livrer.
@@ -1949,7 +1949,7 @@ class Contour:
 # parce que « quarts de tour » y est écrit au pluriel pour deux moteurs — celui
 # de droite et celui de gauche sont deux sens distincts, comme le confirme la
 # planche et la liste `SENS_A_AJOUTER` déjà posée à l'écran par B1
-# (`interface/src/composants/Places.tsx`).
+# (`interface/src/recette.ts`, depuis B26).
 #
 # La liste est déclarée ici plutôt qu'à l'écran pour la raison de `MOTEURS` et
 # de `TRAMAGES` : ce qui figure dans une recette enregistrée est ce que le
@@ -2460,8 +2460,8 @@ class Recette:
         pixels transparents que la marge venait de garder.
 
         **Une seule lecture, ici, parce que l'écran s'était trompé dessus.**
-        `Places.tsx` lisait `recette.grille != null`, et cette condition est
-        fausse dans trois cas — c'est ce que `B16` a trouvé en relisant
+        L'écran (`interface/src/recette.ts` depuis B26) lisait `recette.grille != null`,
+        et cette condition est fausse dans trois cas — c'est ce que `B16` a trouvé en relisant
         `traitement.queue` ligne à ligne. La case ne s'applique que si la grille
         est **posée** (`grille is not None`), **éveillée** (`not dort(GRILLE)`,
         `traitement.py:2151`) et que le détourage **agit** (`case =

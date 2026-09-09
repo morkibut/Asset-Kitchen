@@ -435,11 +435,14 @@ dessin réglé sur 1 024 n'avait aucun cran à cliquer. La table lit maintenant 
 C'est exactement la panne que `test_e8` avait fermée le 31 août pour l'autre liste, rouverte
 un cran plus haut — et la liste neuve est tenue contre le domaine par un essai, comme l'autre.
 
-⚠️ **L'écran neuf double l'ancien, il ne le remplace pas.** `EcranTables` garde trois
-locataires que cette tranche n'a pas mandat de déménager : le cadre de découpe qui se monte
-dedans, la colonne des sœurs, et les trois surfaces où l'on pose une coordonnée. L'écran neuf
-les montre et dit qu'elles ne voyagent pas ; il ne les pose pas. C'est le traitement réservé à
-la matrice par `B10`.
+⚠️ **L'écran neuf double l'ancien, il ne le remplace pas — c'était vrai à la clôture de
+cette tranche.** `EcranTables` garde trois locataires que cette tranche n'a pas mandat de
+déménager : le cadre de découpe qui se monte dedans, la colonne des sœurs, et les trois
+surfaces où l'on pose une coordonnée. L'écran neuf les montre et dit qu'elles ne voyagent
+pas ; il ne les pose pas. C'est le traitement réservé à la matrice par `B10`.
+**Rattrapé depuis** : `B23` fait entrer les quatre surfaces dans l'écran neuf, `B24` les
+cinq derniers locataires, et `B26` retire `EcranTables`, `Places.tsx` et `Tables.tsx` du
+dépôt — l'écran neuf est depuis la seule implémentation.
 
 ## V4 · B15 — l'installation — 9 septembre 2026
 

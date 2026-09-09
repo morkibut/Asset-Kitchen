@@ -1181,7 +1181,7 @@ export function Point({ couleur }: { couleur: string }) {
 
 /**
  * L'échantillon de hauteur — **le sujet à côté d'un personnage** (tranche des
- * tailles, 3 septembre 2026).
+ * tailles, 3 septembre 2026 ; fondu avec celui de la retouche en `B27`).
  *
  * **Il répond à une demande précise de l'auteur** : *« les deux, avec un rappel
  * visuel, une sorte d'échantillon »*. Les deux, ce sont les deux façons de dire
@@ -1197,17 +1197,32 @@ export function Point({ couleur }: { couleur: string }) {
  * fichier qui reviendra, et le trait pointillé marque la hauteur d'un
  * personnage : au-dessous de 100 % il se confond avec le haut du cadre, au-delà
  * il descend, et le rapport se lit d'un coup d'œil.
+ *
+ * **Deux appelants, une seule pièce depuis `B27`.** `Assistant.tsx` la montre
+ * sur le châssis sombre de l'ancien écran ; `Retouche.tsx` la montre sur le
+ * papier du carnet, plus petite et resserrée. Le calcul ne varie pas d'un
+ * appelant à l'autre — deux implémentations vivantes auraient fini par ne plus
+ * compter le même rapport —, seuls les jetons de couleur et les deux tailles
+ * du dessin le font, par `palette`.
  */
 export function EchantillonDeHauteur({
   occupation,
   cible,
   haut = 84,
+  largeur = 56,
+  palette = "ancien",
 }: {
   occupation: number
   cible: number
   /** La hauteur du dessin, en points d'écran. Le seul réglage : les deux écrans
    *  qui s'en servent n'ont pas la même place. */
   haut?: number
+  /** La largeur du cadre, en points d'écran — même raison que `haut`. */
+  largeur?: number
+  /** **L'ancien châssis sombre**, ou **le papier du carnet** (`Retouche.tsx`,
+   *  repris en `B26`) : les deux appelants ne partagent pas le même système de
+   *  jetons, et c'est la seule chose qui doit varier entre eux. */
+  palette?: "ancien" | "papier"
 }) {
   const enPersonnages = Math.max(1, occupation) / 100
   // **L'échelle du dessin est le plus grand des deux** — le sujet ou le
@@ -1221,15 +1236,18 @@ export function EchantillonDeHauteur({
   const depasse = occupation > 100
   const nombre = (n: number) =>
     n.toLocaleString("fr-FR", { maximumFractionDigits: 2 })
+  const surPapier = palette === "papier"
   return (
-    <div className="flex items-end gap-3">
+    <div className={`flex items-end ${surPapier ? "gap-[14px]" : "gap-3"}`}>
       <span
         aria-hidden
-        className="relative flex w-[56px] shrink-0 items-end justify-center border border-bord-fort bg-fond-0"
-        style={{ height: `${haut}px` }}
+        className={`relative flex shrink-0 items-end justify-center border ${
+          surPapier ? "border-trait bg-papier-cote" : "border-bord-fort bg-fond-0"
+        }`}
+        style={{ height: `${haut}px`, width: `${largeur}px` }}
       >
         <span
-          className="block w-full bg-texte-3"
+          className={`block w-full ${surPapier ? "bg-encre-4" : "bg-texte-3"}`}
           style={{ height: `${hSujet}px` }}
         />
         {/* **La hauteur d'un personnage, en pointillé.** Dessinée seulement
@@ -1243,12 +1261,20 @@ export function EchantillonDeHauteur({
         )}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-        <span className="text-[11.5px] leading-tight text-texte-2">
+        <span
+          className={`leading-tight ${
+            surPapier ? "text-[12px] text-encre-2" : "text-[11.5px] text-texte-2"
+          }`}
+        >
           {depasse
             ? `${nombre(enPersonnages)} personnages de haut`
             : `${occupation} % d'un personnage`}
         </span>
-        <span className="mesure text-[9.5px] leading-tight text-texte-3">
+        <span
+          className={`mesure leading-tight ${
+            surPapier ? "text-[10.5px] text-encre-4" : "text-[9.5px] text-texte-3"
+          }`}
+        >
           {sujet === carres
             ? `l'image revient en ${carres} carrés de côté`
             : `${sujet} carrés dans une image de ${carres}`}

@@ -21,8 +21,8 @@
  *
  * ⚠️ **Ce qui n'est pas un lieu.** La pile dit ce que *la surface* montre. Une
  * colonne de droite (la fiche d'un asset, la fiche d'un clip), un côté d'un
- * écran (les trois côtés de l'univers), une table choisie dans l'écran des
- * tables, une sélection : ce sont des états de l'écran où l'on est, pas des
+ * écran (les trois côtés de l'univers), une table ouverte dans la retouche,
+ * une sélection : ce sont des états de l'écran où l'on est, pas des
  * endroits où l'on va. Les mettre ici gonflerait la pile sans rien dire de
  * plus, et le fil se mettrait à annoncer des étages qu'on n'a pas descendus.
  */

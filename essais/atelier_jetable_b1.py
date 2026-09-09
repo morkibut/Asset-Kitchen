@@ -43,8 +43,9 @@ un chiffre d'essai.
 
 - **La barre des tables compte huit places** — détourage, recadrage, grille,
   quantification, bords, contours, **retournement**, la main —, puis un trait,
-  puis les deux fabriques. La mesure d'E5 (`interface/src/composants/Tables.tsx`)
-  était faite à sept places : elle est à refaire.
+  puis les deux fabriques. La mesure d'E5 (`interface/src/composants/Retouche.tsx`,
+  qui a repris la barre de l'ancien `Tables.tsx`) était faite à sept places : elle
+  est à refaire.
 - **La table Retourner s'ouvre** : le sens, un seul cran vif et neuf grisés
   « à ajouter », le champ *Ça se range en*, et le bouton `Retourner ›`.
 - **La direction se propose.** Sur une image en `est`, le champ arrive rempli

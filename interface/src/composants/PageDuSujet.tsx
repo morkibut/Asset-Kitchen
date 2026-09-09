@@ -709,6 +709,16 @@ export function PageDuSujet(proprietes: {
    *  remonter d'un cran y revient. */
   matrice?: boolean
   onMatriceOuverte?: (ouverte: boolean) => void
+  /** **La colonne ouverte de la matrice, et le panneau d'un calque, tenus au
+   *  même endroit** (`B27`) — le défaut laissé en aparté par `B25` : ces deux
+   *  états vivaient dans `EcranEtabli`, que la retouche démonte en prenant sa
+   *  place, si bien que remonter d'un cran depuis *la différence* d'un calque
+   *  ramenait sur la matrice, colonne au corps, panneau fermé. Optionnels :
+   *  sans eux, `EcranEtabli` les tient elle-même, comme avant. */
+  colonne?: string | null
+  onColonne?: (identifiant: string | null) => void
+  calque?: string | null
+  onCalque?: (identifiant: string | null) => void
 }) {
   const { ouvert, plan, barreQuiPaie, onFente } = proprietes
   const [ongletTenuIci, setOngletTenuIci] = useState<Onglet>("fiche")
@@ -727,6 +737,22 @@ export function PageDuSujet(proprietes: {
   const setMatriceOuverte = (ouverte: boolean) => {
     setMatriceTenueIci(ouverte)
     proprietes.onMatriceOuverte?.(ouverte)
+  }
+  // **La colonne de la matrice, et le panneau d'un calque — même relais, même
+  // raison** (`B27`) : sans lui, ouvrir *la différence* d'un calque puis
+  // remonter d'un cran ramenait sur la matrice, colonne au corps, panneau
+  // fermé.
+  const [colonneTenueIci, setColonneTenueIci] = useState<string | null>(null)
+  const colonne = proprietes.colonne ?? colonneTenueIci
+  const setColonne = (identifiant: string | null) => {
+    setColonneTenueIci(identifiant)
+    proprietes.onColonne?.(identifiant)
+  }
+  const [calqueTenuIci, setCalqueTenuIci] = useState<string | null>(null)
+  const calque = proprietes.calque ?? calqueTenuIci
+  const setCalque = (identifiant: string | null) => {
+    setCalqueTenuIci(identifiant)
+    proprietes.onCalque?.(identifiant)
   }
   /** L'image qu'on regarde dans *Ses images* — celle du volet (`B25`). Elle
    *  monte jusqu'ici parce que le bouton *La retouche ›* vit dans le bandeau,
@@ -751,6 +777,8 @@ export function PageDuSujet(proprietes: {
   useEffect(() => {
     setOngletTenuIci("fiche")
     setMatriceTenueIci(false)
+    setColonneTenueIci(null)
+    setCalqueTenuIci(null)
     setRegardee(null)
   }, [ouvert.identifiant])
 
@@ -824,7 +852,13 @@ export function PageDuSujet(proprietes: {
             vivent encore ici.
           </span>
         </div>
-        <EcranEtabli {...proprietes} />
+        <EcranEtabli
+          {...proprietes}
+          colonne={colonne}
+          onColonne={setColonne}
+          calque={calque}
+          onCalque={setCalque}
+        />
       </div>
     )
 

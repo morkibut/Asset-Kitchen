@@ -11,8 +11,8 @@ seul, le miroir gauche-droite, était livré par `B1`. Les neuf autres :
 **Une ambiguïté du plan, tranchée ici et redite dans `atelier/domaine/recette.py`
 et dans le commit** : `docs/PLAN-carnet.md` § B18 compte huit noms pour neuf
 moteurs — « quarts de tour » y est écrit au pluriel parce qu'il en désigne
-deux, le droit et le gauche. La planche et `SENS_A_AJOUTER` (posé par `B1`
-dans `interface/src/composants/Places.tsx`, maintenant vidé) comptaient déjà
+deux, le droit et le gauche. La planche et `SENS_A_AJOUTER` (posé par `B1`,
+et vivant dans `interface/src/recette.ts` depuis B26) comptaient déjà
 les dix noms séparément ; c'est cette liste-là qui fait foi.
 
 **Aucun de ces essais ne coûte un centime** : les neuf moteurs sont des
