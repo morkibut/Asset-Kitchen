@@ -1575,7 +1575,7 @@ les **trois réglages du retournement**.
 
 ---
 
-## B24 · Ce qui restait dans les murs
+## B24 · Ce qui restait dans les murs — **tenue le 9 septembre 2026**
 
 **Planches** : `Retouche.dc.html`, `Main.dc.html`, `atelier-difference.dc.html`,
 `atelier-decoupe.dc.html`
@@ -1614,19 +1614,47 @@ aujourd'hui et qu'il perdrait :
 `Retouche.tsx` n'a que le second, et sans le par-dessus. Le premier est un état durable
 qu'on oublie : il se redit en ambre sous l'image, sinon on juge la mauvaise.
 
+### Ce qui a été tenu
+
+Les cinq gestes sont dans `Retouche.tsx`, chacun repris de son calcul d'origine. Une
+relecture Opus, sur le diff seul (avant que `B23` et `B24` ne se rencontrent en fusion),
+a trouvé quatre défauts de mise en page qu'aucun essai `jsdom` ne pouvait voir — un zoom
+au-delà de l'ajusté rendait la moitié de l'image inatteignable, le témoin « par-dessus »
+ne se superposait pas à l'image qu'il double, le cadre cessait d'être mesuré après un
+aller-retour par une fabrique, et découper depuis la retouche refermait l'écran sans un
+mot. Les quatre sont corrigés et vérifiés au navigateur, mesures DOM à l'appui.
+
+⚠️ **La fusion avec `B23` a demandé un arbitrage.** Les deux tranches réparaient le même
+débordement à deux niveaux différents — `B23` pour la surface de dessin, `B24` pour le
+témoin de comparaison. La structure retenue est celle de `B24` (`m-auto` sur un wrapper
+interne, jamais `justify-center` sur le cadre qui défile), avec la figure de la surface
+de `B23` posée dedans ; et **le pour cent ajusté se mesure sur la surface posée quand il
+y en a une**, pas sur l'image "brut/rendu" — trois des quatre surfaces travaillent en
+pixels du brut, la main sur le rendu, et les confondre aurait rouvert le coin
+inatteignable que `B23` existait pour fermer.
+
+⚠️ **La fusion a aussi révélé 18 tailles hors des listes fermées de `docs/DESIGN.md`** —
+les trois pièces neuves (`SoeurDuCarnet`, `CommandesDuZoom`, `PanneauDesRecettes`) avaient
+été reprises de `Tables.tsx`, jamais passé au crible du système de jetons. 16 réutilisent
+maintenant une valeur déjà déclarée (souvent la gouttière de 14, ou 26 — la hauteur des
+autres contrôles compacts du même écran) ; 2 sont entrées dans la liste, justifiées : 128
+pour la largeur de la colonne des sœurs (ni 300 ni 380 ne conviennent à une colonne d'une
+seule vignette), et 70 pour la mollette d'opacité du témoin par-dessus (54 s'est révélé
+trop court à l'usage, mesuré avant de conclure).
+
 ### Critères d'acceptation
 
-- [ ] Passer d'une sœur à l'autre ne referme pas la table ouverte, et la barre des huit
+- [x] Passer d'une sœur à l'autre ne referme pas la table ouverte, et la barre des huit
       se rafraîchit sur la sœur affichée.
-- [ ] Copier une recette sur une image, la coller sur une autre, la nommer, la
+- [x] Copier une recette sur une image, la coller sur une autre, la nommer, la
       réappliquer après un changement d'écran — les quatre gestes tiennent, et le
       presse-papier ne survit pas au rechargement de la page. C'est le contrat.
-- [ ] Promouvoir un détourage écrit bien dans l'univers, et la portée est **choisie**.
-- [ ] Les deux fabriques ouvrent la découpe et la différence **sans repasser par
+- [x] Promouvoir un détourage écrit bien dans l'univers, et la portée est **choisie**.
+- [x] Les deux fabriques ouvrent la découpe et la différence **sans repasser par
       `EcranTables`**, et `EcranSuperposition` reste atteignable.
-- [ ] Une image de 2 048 px se regarde entièrement, et le pour cent affiché est le pour
+- [x] Une image de 2 048 px se regarde entièrement, et le pour cent affiché est le pour
       cent appliqué — le défaut que le navigateur avait trouvé en `B16`.
-- [ ] `Retouche.test.tsx` monte de 30 essais à au moins 50, et aucun n'est le doublon
+- [x] `Retouche.test.tsx` monte de 30 essais à 59, et aucun n'est le doublon
       d'un essai de `Places.test.tsx`.
 
 ### Bloquée par
