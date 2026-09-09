@@ -19,7 +19,7 @@
 
 ---
 
-## Les 24 tranches
+## Les 29 tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -47,8 +47,13 @@
 | **B20** · les calques d'animation | `[MEDIUM]` | le calcul de recalage existe déjà ; il faut lui donner un axe *pièce* et distinguer le calque qui tient de celui qui glisse |
 | **B21** · la sortie | `[HARD]` | prévisualiser sans écrire, et se souvenir de la sortie précédente pour la comparer, sont deux sous-systèmes qui n'existent nulle part |
 | **B22** · la galerie connaît les clips | `[MEDIUM]` | un type neuf dans la galerie, une couverture fabriquée par le serveur, et cent clips qui ne doivent pas ralentir la grille |
+| **B23** · les trois surfaces déménagent | `[HARD]` | quatre surfaces à coordonnées redessinées sur le papier, où le moindre écart de convention décale ce qu'on pose sur l'image — l'invariant prime sur le calcul, déjà écrit |
+| **B24** · ce qui restait dans les murs | `[MEDIUM]` | cinq gestes indépendants à reporter — sœurs, presse-papier, promotion, deux fabriques, zoom libre — aucun n'invente un algorithme neuf |
+| **B25** · une seule porte | `[HARD]` | fondre trois genres de lieu en un seul touche la pile de navigation entière ; la panne qu'évite cette tranche est celle que `B0` a déjà payée une fois |
+| **B26** · l'ancien châssis sort de la retouche | `[MEDIUM]` | une extraction puis une suppression, ordonnée et mécanique une fois `B23`-`B25` posées ; le seul arbitrage (`AtelierDeBande.tsx`) est déjà tranché dans le plan |
+| **B27** · les garde-fous rattrapent la refonte | `[EASY]` | des mises à jour de listes et de phrases, plus un garde-fou d'import à écrire sur un patron déjà connu |
 
-**Compte** : 1 `[VERY-HARD]`, 8 `[HARD]`, 11 `[MEDIUM]`, 4 `[EASY]`, 0 `[VERY-EASY]` en tranche
+**Compte** : 1 `[VERY-HARD]`, 10 `[HARD]`, 13 `[MEDIUM]`, 5 `[EASY]`, 0 `[VERY-EASY]` en tranche
 entière — les `[VERY-EASY]` sont des sous-tâches, pas des tranches.
 
 ---
@@ -67,6 +72,8 @@ morceaux-là se sortent et se traitent à part, avant le reste de la tranche.
 | **B16** | l'arbitrage des six contradictions : ce sont des décisions de produit, pas du code | `[HARD]` |
 | **B17** | le nettoyage du pixel de couleur accroché au sujet — aucun algorithme existant ne le voit | `[HARD]` |
 | **B20** | la géométrie du recalage image par image, sans casser l'invariant « un calque reste solidaire de sa pose » | `[HARD]` |
+| **B23** | la convention de coordonnées des quatre surfaces — un pixel visé doit tomber au même endroit dans l'ancien et le neuf | `[HARD]` |
+| **B25** | fondre `"case"`, `"tables"` et `"retouche"` en un seul genre de lieu, sans perdre une porte au passage | `[HARD]` |
 
 ---
 

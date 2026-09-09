@@ -1457,6 +1457,333 @@ clip invisible après la fermeture de son lot. Un essai le démontre
 
 ---
 
+## Le déménagement — pourquoi il rouvre
+
+`B16` avait décidé, en connaissance de cause, que l'écran neuf doublerait l'ancien « le temps
+d'un déménagement », et confié ce déménagement à `B17`/`B18`. Les deux sont closes, et il n'a
+pas eu lieu — `Retouche.tsx` continue de renvoyer six fois vers `Places.tsx`. Ce n'est pas un
+oubli d'une tranche : personne n'avait chargé le déménagement lui-même dans une tranche. Ces
+cinq tranches-là le font.
+
+**Deux décisions tranchées ici, 9 septembre 2026**, pour ne pas les rouvrir tranche par
+tranche :
+
+- `Fiche.tsx` ne fait pas partie de ce chantier. Ce n'est pas un écran de retouche mais le
+  panneau de détail de la galerie — jugement, filiation, visionneuse, réinjecter, supprimer —
+  et le carnet n'a pas de remplaçant pour ça. Elle perd son bouton *Ouvrir les tables* et son
+  import de `Places.tsx` (`B26`), rien de plus. La refonte de ce panneau, si elle a lieu un
+  jour, est un autre chantier.
+- `AtelierDeBande.tsx`, qui monte aujourd'hui les six panneaux de réglage de `Places.tsx`,
+  passe aux postes exportés de `Retouche.tsx` plutôt que d'être reconstruit — la voie la plus
+  courte à vérifier, qui n'ouvre pas un second écran à refondre pour finir celui-ci.
+
+## B23 · Les trois surfaces déménagent
+
+**Planches** : `Retouche.dc.html`, `atelier-main.dc.html`, `atelier-detourer.dc.html`,
+`atelier-recadrer.dc.html`, `atelier-retourner.dc.html`
+
+### Ce qu'on livre
+
+Les gestes qui se posent **sur l'image** entrent dans la chaîne redessinée. C'est le
+déménagement que `B16` avait annoncé et que `B17`/`B18` n'ont pas fait : les deux tranches
+ont câblé leurs moteurs *dans les deux écrans*, l'ancien comme le neuf, sans jamais
+retirer le premier. Le décalage est écrit noir sur blanc dans le code — `Retouche.tsx`
+renvoie six fois le lecteur à `Places.tsx`, et `lieux.ts:144` dit encore que le genre
+`"retouche"` « ne remplace pas `"tables"`, il le double le temps d'un déménagement ».
+
+Quatre surfaces, toutes dans `Tables.tsx` aujourd'hui, redessinées sur le papier du
+carnet et montées dans le cadre de `Retouche.tsx` :
+
+- **`CadreDeRecadrage`** — le rectangle tracé à la main, plus le rectangle réellement
+  gardé en pointillé (U2). Sans lui, « une boîte tracée » reste grisée pour toujours avec
+  la raison *« on trace le rectangle sur l'image, pas depuis cette colonne »*.
+- **`PipetteSurImage`** — le point d'une passe de détourage, plancher et non arrondi.
+- **`TraceSurImage`** — la forme entourée, qui se ferme d'elle-même.
+- **`ToileDeLaMain`** — la huitième place : les calques, l'opacité, le curseur carré calé
+  sur le pixel visé (U11), et les zones protégées de `miroir, sauf ici` que `B18` a
+  livrées côté serveur sans main pour les peindre.
+
+Et les **trois réglages du retournement** que `Retouche.tsx` renvoie explicitement à
+`Places.tsx` : l'angle (`angle-libre`, `rotsprite`), la moitié gardée du repli, les zones
+protégées de `sauf-zones`.
+
+⚠️ **Une convention de coordonnées, pas deux.** Les quatre surfaces lisent le rectangle
+de *l'image* et non celui de la surface (`rectangleDeLImage`), en pixels de l'image
+**brute**, coins inclus. C'est déjà la règle des quatre, et la recopier de travers
+décalerait ce qu'on pose dessus — la leçon du cadre de la Découpe.
+
+⚠️ **On déménage, on ne réécrit pas.** Le calcul de chaque surface est repris tel quel ;
+seul son habillage passe au papier. Deux implémentations d'un même geste finiraient par
+ne plus viser le même pixel, et c'est l'invariant que `B18` a payé sur `palette.py`.
+
+### Critères d'acceptation
+
+- [ ] Les quatre surfaces se posent depuis `Retouche.tsx` seul, et le rendu servi change.
+      Vérifié au navigateur, sur un atelier jetable à part.
+- [ ] Un pixel visé à la pipette dans l'écran neuf et dans l'ancien donne la **même**
+      coordonnée dans la recette envoyée — mesuré, pas relu.
+- [ ] Plus aucune phrase de `Retouche.tsx` ne renvoie à `Places.tsx` ni à « l'ancien
+      écran » : un essai le tient sur le fichier, comme `tests/test_b16.py` le fait déjà.
+- [ ] L'angle, le repli et les zones protégées se règlent dans l'écran neuf, et les dix
+      sens de `B18` restent les dix.
+- [ ] Les 61 recettes du corpus figé de `B1` gardent leur empreinte au caractère près :
+      cette tranche ne pose **aucune clé neuve**, elle déplace un geste.
+- [ ] `essais/essai_jetons.py` reste vert — les surfaces neuves sont dans un fichier du
+      carnet, donc mesurées aux six listes fermées de `docs/DESIGN.md`.
+
+### Bloquée par
+
+- `B16`, `B18` — les moteurs que ces surfaces règlent doivent exister avant d'avoir un
+  écran.
+
+---
+
+## B24 · Ce qui restait dans les murs
+
+**Planches** : `Retouche.dc.html`, `Main.dc.html`, `atelier-difference.dc.html`,
+`atelier-decoupe.dc.html`
+
+### Ce qu'on livre
+
+Les cinq locataires de `Tables.tsx` que personne n'avait comptés — `B16` en annonçait
+trois, le relevé en trouve cinq de plus, et chacun est un geste que l'auteur fait
+aujourd'hui et qu'il perdrait :
+
+- **La colonne des sœurs.** On règle la même place sur six attitudes à la file, et la
+  table ne se referme pas entre deux. C'est le geste qui distingue une table d'un
+  panneau ; `Retouche.tsx` ne reçoit même pas de `soeurs`.
+- **Le presse-papier et les recettes nommées** (`PanneauDesRecettes`, U5) — copier ces
+  réglages-là, les coller ailleurs, les enregistrer sous un nom qui survit à la séance.
+  Le presse-papier vit **hors de React**, délibérément, parce qu'il traverse le démontage
+  de l'écran ; `reinitialiserPressePapier` reste exportée pour que deux essais ne se
+  racontent pas l'un l'autre.
+- **Promouvoir un détourage en défaut du projet** (`PromouvoirLeDetourage`, M7) — le
+  geste inverse de la onzième étape de l'univers, avec ses **deux portées** proposées et
+  jamais devinées : la nature de l'image, ou la famille de ce qu'elle montre.
+- **Les deux fabriques montées dedans.** `EcranDecoupe` se monte dans le cadre de la
+  table, et `EcranSuperposition` **n'est monté nulle part ailleurs** (`Tables.tsx:1508`) :
+  aujourd'hui les deux boutons de `Retouche.tsx` referment l'écran neuf pour rouvrir
+  l'ancien (`App.tsx:4635-4644`). Une fabrique qui renvoie chez l'ancêtre n'est pas une
+  fabrique.
+- **Le grossissement qui descend sous cent.** L'écran neuf ne connaît que ×1 ×2 ×4 ×8 et
+  se rabat sur *« réduite pour tenir dans le cadre »* dès qu'une image de 1 024 arrive.
+  C'est U2 entière, rouverte : un dessin ne se juge plus, on n'en voit que ce que
+  `object-contain` en laisse. La table libre entre 1 et 250 % revient, **et le pas entier
+  reste le défaut** — à ×1,5 un pixel du jeu n'est plus un carré.
+
+⚠️ **Le témoin de l'ancien écran en dit plus que celui du neuf.** `Comparateur`
+(`Tables.tsx`) porte deux contrôles pour deux questions — *ce qu'on travaille*
+(`brut | rendu`) et *le témoin* (`aucun | à côté | par-dessus`, avec son opacité).
+`Retouche.tsx` n'a que le second, et sans le par-dessus. Le premier est un état durable
+qu'on oublie : il se redit en ambre sous l'image, sinon on juge la mauvaise.
+
+### Critères d'acceptation
+
+- [ ] Passer d'une sœur à l'autre ne referme pas la table ouverte, et la barre des huit
+      se rafraîchit sur la sœur affichée.
+- [ ] Copier une recette sur une image, la coller sur une autre, la nommer, la
+      réappliquer après un changement d'écran — les quatre gestes tiennent, et le
+      presse-papier ne survit pas au rechargement de la page. C'est le contrat.
+- [ ] Promouvoir un détourage écrit bien dans l'univers, et la portée est **choisie**.
+- [ ] Les deux fabriques ouvrent la découpe et la différence **sans repasser par
+      `EcranTables`**, et `EcranSuperposition` reste atteignable.
+- [ ] Une image de 2 048 px se regarde entièrement, et le pour cent affiché est le pour
+      cent appliqué — le défaut que le navigateur avait trouvé en `B16`.
+- [ ] `Retouche.test.tsx` monte de 30 essais à au moins 50, et aucun n'est le doublon
+      d'un essai de `Places.test.tsx`.
+
+### Bloquée par
+
+- `B16` — elle ne dépend pas de `B23` : les deux se tiennent en parallèle.
+
+---
+
+## B25 · Une seule porte
+
+**Planche** : `Navigation.dc.html`, `Retouche.dc.html`
+
+### Ce qu'on livre
+
+Toutes les portes de la retouche mènent à `Retouche.tsx`, et les deux genres de lieu qui
+doublaient le troisième s'en vont.
+
+**Six portes mènent aujourd'hui à l'ancien écran**, et le relevé les a toutes suivies :
+
+| D'où | Comment | Ce qu'elle ouvre |
+|---|---|---|
+| La galerie | `Fiche.tsx:302` « Ouvrir les tables » | `EcranTables` (`App.tsx:3979`) |
+| La page d'un sujet | une image de *Ses images* (`onOuvrirCase`) | `EcranTables` en volet (`App.tsx:4566`) |
+| La page d'un sujet | un calque, « la différence » (`onSuperposition`) | `EcranTables`, table `superposition` |
+| Comparer | l'écart d'un des deux sujets (`App.tsx:4686`) | `EcranTables` |
+| La retouche elle-même | ses deux fabriques | `EcranTables` — elle se referme pour ça |
+| La page d'un sujet | *La retouche ›* du bandeau | `Retouche.tsx`, **et elle seule** |
+
+Et la septième porte n'existe pas : **`Retouche` ne sait pas ouvrir une image sans
+sujet.** Son asset est relu dans `choseOuverte.cases` (`App.tsx:1125`), alors que la porte
+de la galerie sert justement les images qui n'appartiennent à aucune chose du jeu. C'est
+le seul cas que les deux écrans ne couvrent pas pareil, et il commande cette tranche : on
+ne peut pas retirer l'ancien tant que le neuf ne sait pas faire ce qu'il fait.
+
+⚠️ **`"case"` et `"tables"` fondent dans `"retouche"`.** Trois genres de lieu pour un
+seul écran, c'est trois façons d'y arriver et trois branches où oublier une condition —
+la panne exacte que `B0` a payée sur `decoupeOuverte`, sept écritures à `null` et pas une
+porte. Le genre survivant garde `asset`, et **il s'entre depuis les deux racines** :
+`galerie` comme `codex`. La bascule se fait ici, pas à la suppression des fichiers, pour
+que le fil d'Ariane et la pile de lieux soient mesurés seuls.
+
+⚠️ **La retouche s'ouvre sur l'image qu'on regarde.** Le bandeau *La retouche ›* prend
+aujourd'hui la référence du sujet, ou la dernière image — jamais celle qu'on désigne.
+C'était juste tant qu'il existait une seconde porte par image ; ce ne l'est plus dès
+qu'il n'y en a qu'une.
+
+### Critères d'acceptation
+
+- [ ] Les six portes ouvrent `Retouche.tsx`, et `EcranTables` n'est plus monté nulle part
+      — vérifié au grep sur `App.tsx`, pas seulement aux essais.
+- [ ] Une image de la galerie **sans chose du jeu** s'ouvre en retouche, avec ses voisines
+      de la grille pour sœurs.
+- [ ] La pile de lieux ne porte plus qu'un genre pour cet écran, et remonter d'un cran
+      revient d'où l'on venait — depuis la galerie comme depuis un sujet.
+- [ ] Ouvrir la différence depuis un calque ouvre la retouche **sur la fabrique**, en un
+      geste, comme `G16` le tenait déjà.
+- [ ] Les 148 essais des douze blocs d'`App.test.tsx` qui montent l'ancien écran passent,
+      **rejoués contre le neuf** : chaque `[data-tables]` devient le cadre de la retouche,
+      ou l'essai est retiré parce qu'il mesure une pièce qui n'existe plus.
+
+### Bloquée par
+
+- `B23`, `B24` — on ne re-câble pas une porte vers un écran qui perd un geste en chemin.
+
+---
+
+## B26 · L'ancien châssis sort de la retouche
+
+**Planches** : aucune — c'est une tranche de retrait.
+
+### Ce qu'on livre
+
+`Places.tsx` (2 593 lignes) et `Tables.tsx` (2 615 lignes) quittent le dépôt, et rien ne
+se perd en route. Ce n'est pas une suppression : c'est une extraction suivie d'une
+suppression, et l'ordre n'est pas négociable.
+
+**Le vocabulaire sort d'abord.** `Retouche.tsx` importe lui-même **quatorze symboles de
+`Places.tsx`** — `CIBLES`, `CURSEURS`, `DURCISSEMENT_LIVRE`, `FINESSES`, `MOTEUR`,
+`PAIRE_VIDE`, `RESUME`, `SENS_DU_RETOURNEMENT`, `SENS_LIVRES`,
+`TOLERANCE_D_UNE_PAIRE_MAX`, `TROUS`, `debord`, `defautGrille`, `quantificationDe`, plus
+les deux crochets `useRecette` et `useMesures` — et **sept de `Tables.tsx`** : `TABLES`,
+`avecVeille`, `dort`, `indisponible`, `placeDe`, `valeur`, le type `Table`. Ce sont des
+faits du domaine, pas du balisage : ils partent dans un module sans écran,
+`interface/src/recette.ts`, qui n'importe ni `chassis.tsx` ni React sauf pour ses deux
+crochets. **Une vérité par fait** — la règle que `B16` s'était donnée en empruntant plutôt
+qu'en recopiant.
+
+**Puis les quatre autres consommateurs se repointent** :
+
+| Fichier | Ce qu'il prend | Ce qu'il devient |
+|---|---|---|
+| `AtelierDeBande.tsx` | les **six panneaux** `PanneauDetourage`…`PanneauContours` | les postes exportés de `Retouche.tsx` |
+| `Assistant.tsx` | `DURCISSEMENT_LIVRE`, `MOTEUR` | le module neuf |
+| `Fiche.tsx` | `DURCISSEMENT_LIVRE`, `MOTEUR`, `RESUME` | le module neuf |
+| `Superposition.tsx` | `Reglage` | sa propre pièce, ou celle du carnet |
+
+**`AtelierDeBande.tsx` est le vrai obstacle, et il n'était dans le relevé de personne.**
+L'atelier d'une animation monte les six panneaux de `Places.tsx` empilés (lignes
+2548-2573), tranché avec l'auteur le 5 septembre : *on corrige une pose en regardant deux
+réglages à la fois, et une barre en cacherait toujours l'un des deux*. `Places.tsx` a donc
+**deux consommateurs vivants**, pas un. **Tranché le 9 septembre 2026** : on exporte les
+postes de `Retouche.tsx` (`ReglagesDuDetourage`, `ReglagesDuRecadrage`,
+`ReglagesDeLaGrille`, `ReglagesDesCouleurs`, `ReglagesDuNettoyage`, `ReglagesDuContour`) et
+on les empile là-bas, plutôt que de refaire l'atelier d'une animation — un écran entier
+d'ancien châssis, hors périmètre de ce chantier. Cela rend au passage l'atelier
+d'animation cohérent avec la retouche, ce qu'il n'est plus depuis `B17` : les moteurs
+neufs n'y sont jamais arrivés.
+
+⚠️ **`Fiche.tsx` ne part pas, et ce n'est pas un oubli.** Ce n'est pas un écran de
+retouche : c'est la colonne de détail de l'onglet galerie — le jugement, la filiation, la
+visionneuse, le texte qui l'a faite, réinjecter, supprimer — et **le carnet n'a pas encore
+son remplaçant** ; `EcranFamille` (`B9`) range une famille, il ne montre pas une image.
+Elle exporte de surcroît `BlocPasse` et `nomDuModele`, employés par quatre fichiers. Elle
+perd ici son bouton *Ouvrir les tables* et son import de `Places.tsx`, rien de plus. Son
+retrait appartient à la refonte de `Galerie.dc.html`, qui n'est pas dans ce plan.
+
+**Enfin les fichiers tombent** : `Places.tsx`, `Tables.tsx`, `Places.test.tsx` (22 essais,
+tous doublés par `Retouche.test.tsx`), et les douze blocs d'`App.test.tsx` sont rejoués ou
+retirés selon ce que `B25` en a fait.
+
+### Critères d'acceptation
+
+- [ ] `interface/src/composants/Places.tsx` et `Tables.tsx` n'existent plus, et
+      `npx tsc --noEmit` passe.
+- [ ] Aucun fichier de `interface/src/` n'importe plus l'un des deux — au grep.
+- [ ] L'atelier d'une animation règle les **mêmes** moteurs que la retouche, ceux de
+      `B17` et `B18` compris : c'est un gain de la tranche, pas une régression à éviter.
+- [ ] Les cinq essais Python qui lisent ces fichiers comme du texte sont repointés et
+      passent : `tests/test_d1.py` (`MOTEUR`, `DURCISSEMENT_LIVRE`), `tests/test_d4.py`
+      (`PLACES`, `FICHE`), `tests/test_e8.py` (`CIBLES`), `tests/test_b1.py`
+      (`SENS_DU_RETOURNEMENT`), `tests/test_b16.py` (cinq lectures, dont
+      `indisponible` et `aire_min ?? 0`).
+- [ ] La suite d'écran passe entière, et `App.test.tsx` a perdu ses `[data-tables]`.
+- [ ] Les 61 recettes du corpus figé de `B1` gardent leur empreinte : aucune ligne de
+      domaine n'a bougé dans cette tranche, et un essai le dit.
+
+### Bloquée par
+
+- `B25`
+
+---
+
+## B27 · Les garde-fous rattrapent la refonte
+
+**Planche** : aucune — c'est une tranche d'outillage.
+
+### Ce qu'on livre
+
+Ce qui mesure l'avancement de la refonte doit dire la vérité le jour où elle avance.
+
+- **`essais/essai_jetons.py`** — `Retouche.tsx` y est déjà ; entrent les fichiers que
+  `B23` et `B24` ont écrits. ⚠️ **La liste ne s'étend pas au dépôt entier**, et c'est le
+  contraire de ce qu'on croit en fermant ces tranches : retirer `Places.tsx` et
+  `Tables.tsx` ne retire pas l'ancien châssis. Il en reste une trentaine d'écrans —
+  `Montage`, `Toile`, `Univers`, `Codex`, `Personnages`, `AtelierDeBande`, `Assistant`,
+  `Superposition`, `Calibrage`, `Envoi`, `Depenses`, `Ambiances`, `Planche`… — et
+  `index.css:22` les nomme encore. Un garde-fou qu'on doit désactiver n'en est plus un.
+- **`interface/src/index.css`** — la phrase du haut cite « la galerie, le codex,
+  l'univers, **les tables** » : les tables n'existent plus, la liste se corrige.
+  Les jetons `ancien-signal` restent : la galerie et le codex les emploient toujours.
+- **`interface/src/lieux.ts`** — l'avertissement de vingt lignes qui dit que `"retouche"`
+  « ne remplace pas `"tables"` » décrit un état qui n'est plus vrai. Il devient le compte
+  rendu du déménagement, avec sa date, plutôt qu'une promesse périmée.
+- **`atelier/domaine/recette.py:152` et `:2463`** — deux commentaires renvoient à
+  `Places.tsx` pour la liste jumelle et pour `marge_sans_effet`.
+- **`docs/status/etat.md`**, **`docs/tranches/V4.md` § B16** et **`docs/PLAN-carnet.md`
+  § B16** — les trois portent la phrase *« l'écran neuf double l'ancien, il ne le
+  remplace pas »*, renvoyée à des tranches closes qui ne l'ont pas faite. Elles sont
+  corrigées **en place**, avec le renvoi à `B23`-`B26` : c'est cet écart-là qui a coûté
+  une refonte annoncée close et livrée à moitié, et l'effacer sans le nommer coûterait
+  la même chose la prochaine fois.
+- **`docs/carte-du-depot.md`** — les deux fichiers y sont décrits.
+
+⚠️ **Un garde-fou de plus, et c'est celui qui aurait évité tout ceci.** Un essai qui
+refuse qu'un fichier hors de `LES_FICHIERS_DU_CARNET` soit importé par un fichier qui y
+est : c'est très exactement ce que `Retouche.tsx` faisait de `Places.tsx` depuis `B16`,
+sans qu'aucune ligne du dépôt ne le signale. Il se pose ici avec une liste d'exceptions
+nommées — le module de vocabulaire de `B26`, `chassis.tsx` pour ses deux fonctions
+pures — et la liste ne grandit que par décision écrite.
+
+### Critères d'acceptation
+
+- [ ] `py essais/essai_jetons.py` passe, et son compte de fichiers du carnet a grandi.
+- [ ] Aucune phrase du dépôt ne dit plus que l'écran de la retouche est doublé : au grep
+      sur `docs/`, `interface/` et `atelier/`.
+- [ ] Le garde-fou d'import refuse une régression fabriquée exprès, et l'essai le montre.
+- [ ] `py essais/essai_docs.py` passe — aucun renvoi mort vers `Places.tsx`/`Tables.tsx`.
+
+### Bloquée par
+
+- `B26`
+
+---
+
 ## Les agents, et qui fait quoi
 
 Sept rôles. Un agent ne tient qu'un rôle, et **le relecteur passe toujours en dernier** — sans
