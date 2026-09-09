@@ -4451,8 +4451,8 @@ describe("le slicer et le zoom de la grille", () => {
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
     // **`Découper` a quitté la fiche** (E3, E4) : c'est une fabrique de la
-    // barre des tables, et la fiche y mène par sa seconde porte.
-    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
+    // retouche, et la fiche y mène par sa seconde porte.
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     fireEvent.click(await screen.findByRole("button", { name: /^Découper/ }))
     return double
   }
@@ -9115,7 +9115,7 @@ describe("les trois onglets", () => {
     expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
-    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
 
     const fil = within(await screen.findByRole("navigation", { name: "Où l'on est" }))
     // Quatre segments : le jeu, l'onglet, l'image, l'écran. C'est la forme
@@ -9148,7 +9148,7 @@ describe("les trois onglets", () => {
     await monter(fetchDouble, { ...ETAT, assets: [planche] })
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
-    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     await screen.findByRole("navigation", { name: "Où l'on est" })
 
     // Cliquer un onglet est le geste qui dit « ailleurs ». Laisser la découpe
@@ -9205,7 +9205,7 @@ describe("les trois onglets", () => {
     expect(bande().getAllByText("Bac à sable")).toHaveLength(1)
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
-    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     await screen.findByRole("navigation", { name: "Où l'on est" })
 
     // Déployé, le fil le porte à son premier étage — et le total le lâche.
@@ -11420,9 +11420,9 @@ describe("la galerie dégraissée", () => {
       screen.getByText(/cette image n'appartient à aucune chose du jeu/),
     ).toBeTruthy()
 
-    // La seconde ouvre les tables, sur n'importe quelle image, sans quitter la
-    // galerie.
-    fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
+    // La seconde ouvre la retouche, sur n'importe quelle image, sans quitter
+    // la galerie.
+    fireEvent.click(screen.getByRole("button", { name: "La retoucher" }))
     expect(await screen.findByRole("button", { name: /^Détourer/ })).toBeTruthy()
     expect(
       leLieu("Galerie").getAttribute("aria-selected"),
@@ -11443,7 +11443,7 @@ describe("la galerie dégraissée", () => {
     await ouvrirLaFiche(asset("aaaa1111-0"))
     expect(screen.getByRole("region", { name: "Grille des images" })).toBeTruthy()
 
-    fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
+    fireEvent.click(screen.getByRole("button", { name: "La retoucher" }))
     await screen.findByRole("button", { name: /^Détourer/ })
 
     // Ni à l'œil, ni au clavier : la surface n'existe plus tant que la table
@@ -11553,7 +11553,7 @@ describe("la galerie dégraissée", () => {
     expect(
       screen.queryByRole("button", { name: "La régler dans les tables ›" }),
     ).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
+    fireEvent.click(screen.getByRole("button", { name: "La retoucher" }))
     expect(await screen.findByRole("button", { name: /^Nettoyer/ })).toBeTruthy()
   })
 })
@@ -17936,16 +17936,14 @@ describe("le zoom de la table", () => {
   }
 
   // ⚠️ **Les trois essais du grossissement sont partis d'ici** (`B25`). Ils
-  // mesuraient la mise en page de l'ancien écran — la boîte `[data-boite-image]`
-  // et son cadre parent — que la chaîne redessinée ne porte pas : elle mesure sa
-  // scène (`[data-scene-de-retouche]`) et pose le facteur sur la figure. Le pour
-  // cent libre entre 1 et 250, l'ajusté sous cent et le champ qui dit le pour
-  // cent appliqué sont mesurés sur l'écran neuf par `Retouche.test.tsx`
-  // § *le grossissement libre entre 1 et 250 %* — huit essais, contre trois ici.
-  //
-  // ⚠️ **La molette, elle, n'est pas remplacée** : l'écran neuf n'écoute pas
-  // `wheel`, et approcher se fait au champ ou aux deux boutons. C'est noté dans
-  // `docs/PLAN-carnet.md` § `B27`.
+  // mesuraient la mise en page de l'ancien écran — le cadre parent de la boîte —
+  // que la chaîne redessinée ne mesure pas pareil : elle mesure sa scène
+  // (`[data-scene-de-retouche]`) et pose le facteur sur la figure. Le pour cent
+  // libre entre 1 et 250, l'ajusté sous cent, le champ qui dit le pour cent
+  // appliqué **et la molette** sont mesurés sur l'écran neuf par
+  // `Retouche.test.tsx` § *le grossissement libre entre 1 et 250 %* — neuf
+  // essais, contre trois ici. La molette y garde le point visé sous le
+  // pointeur, comme ici, et arrête le défilement de la page.
 
   // ── « Le rectangle tracé et le rectangle obtenu sont visibles ensemble » ───
 
@@ -18278,7 +18276,7 @@ describe("la main peint carré, et là où on la pose", () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// U3 · Un curseur prend un chiffre — **retiré d'ici en `B25`**
+// U3 · Un curseur prend un chiffre — **déménagé d'ici en `B25`**
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // ⚠️ Les six essais de cette étape éprouvaient `Curseur` (`chassis.tsx`) à
@@ -18286,14 +18284,11 @@ describe("la main peint carré, et là où on la pose", () => {
 // s'écrit, Entrée, Échap, la valeur ramenée dans ses bornes, et le chiffre
 // tapé pendant qu'on tient la glissière.
 //
-// **La chaîne redessinée n'a pas ce champ.** Sa `Glissiere` (`Retouche.tsx`)
-// est une glissière et un nombre en lecture, sans champ ni bornes annoncées :
-// U3 n'a jamais déménagé, et `B25` ne fait que le rendre total en retirant la
-// seconde porte. `Curseur` reste employé — la fiche d'une image, la fabrique de
-// superposition, l'atelier d'une bande —, et `Places.test.tsx` le tient là-bas.
-//
-// C'est noté dans `docs/PLAN-carnet.md` § `B27`, avec le reste de ce que le
-// déménagement laisse derrière.
+// **Les six sont sur l'écran neuf**, dans `Retouche.test.tsx` § *un curseur
+// prend un chiffre* : sa `Glissiere` porte le champ depuis le 9 septembre 2026,
+// avec le comportement de `Curseur`, repris et non réinventé. `Curseur` reste
+// employé par ailleurs — la fiche d'une image, la fabrique de superposition,
+// l'atelier d'une bande —, et `Places.test.tsx` le tient là-bas.
 
 
 // ── U4 · Une table s'éteint, et ça se voit ───────────────────────────────────

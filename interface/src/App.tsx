@@ -4198,7 +4198,7 @@ export function App() {
               onSupprimer={() => void supprimer([ouverte.identifiant])}
               // **Les deux portes** (E4). L'établi de la chose à qui l'image
               // appartient — un onglet plus loin, à la profondeur de la
-              // chose —, et les tables, qui s'ouvrent sur n'importe quelle
+              // chose —, et la retouche, qui s'ouvre sur n'importe quelle
               // image sans quitter la galerie.
               /* ⚠️ **Le lieu d'abord, la profondeur ensuite** — depuis `B0`.
                  Poser une racine repose la pile, donc efface ce qui était
@@ -4217,7 +4217,7 @@ export function App() {
               // quitter la galerie : c'est la seule des six qui serve des images
               // n'appartenant à aucune chose du jeu, et l'écran sait les ouvrir
               // depuis cette tranche.
-              onOuvrirLesTables={() => ouvrirLaRetouche(ouverte.identifiant)}
+              onRetoucher={() => ouvrirLaRetouche(ouverte.identifiant)}
               onOuvrir={(identifiant) => setSelection([identifiant])}
             />
           )}
@@ -4627,7 +4627,20 @@ export function App() {
           // **Le bouton de gauche nomme ce qu'il y a derrière** (`B25`) : la
           // galerie quand on en vient, les images de la chose du jeu sinon —
           // et c'est aussi ce que la colonne des sœurs montre dans chaque cas.
-          retour={onglet === "galerie" ? "La galerie" : "Ses images"}
+          //
+          // ⚠️ **Et l'emploi fait un troisième cas.** *La différence* d'un
+          // calque s'ouvre depuis la page d'un emploi (plus bas, `onCalque`) :
+          // écrire *Ses images* là mentait, on n'en venait pas. Le nom est celui
+          // que le fil d'Ariane donne déjà à cet étage — `libelleDEmploi`, la
+          // même fonction — sans quoi le bouton et le fil diraient deux choses
+          // du même endroit.
+          retour={
+            emploiOuvert
+              ? libelleDEmploi(emploiOuvert)
+              : onglet === "galerie"
+                ? "La galerie"
+                : "Ses images"
+          }
           tableDeLaPorte={tableDeLaPorte}
           onFermer={() => ouvrirLaRetouche(null)}
           onSoeur={(identifiant) => ouvrirLaRetouche(identifiant)}

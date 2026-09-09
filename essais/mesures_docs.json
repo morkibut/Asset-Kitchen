@@ -1,5 +1,5 @@
 {
- "releve_le": 1788950006.0331728,
+ "releve_le": 1788953262.8517084,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
@@ -563,7 +563,7 @@
  },
  "renvois": {
   "code": {
-   "total": 695,
+   "total": 693,
    "casses": []
   },
   "docs": {

@@ -35,7 +35,14 @@
  * point désigne un endroit de *cette* image-là, et la colonne le dit.
  */
 
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react"
 import {
   api,
   CONTOUR_PAR_DEFAUT,
@@ -426,7 +433,20 @@ function Choix<T extends string | number>({
 
 /** Un curseur. **Il ne pose qu'au relâchement** : la valeur suit la main, le
  *  rendu suit la main lâchée — c'est la règle de `useRecette`, et c'est ce qui
- *  évite de payer une file d'attente par cran. */
+ *  évite de payer une file d'attente par cran.
+ *
+ *  **Et sa valeur s'écrit** (U3, rendue à l'écran neuf le 9 septembre 2026). Le
+ *  nombre de droite était en lecture seule : refaire à la souris un réglage
+ *  qu'on a noté sur l'image d'à côté est une punition, et c'était un critère
+ *  déjà coché du lot `U` que le déménagement de `B25` avait fait retomber.
+ *  Le comportement est celui de `Curseur` (`chassis.tsx`), repris et non
+ *  réinventé : Entrée valide, Échap rend la valeur d'avant, quitter le champ
+ *  vaut Entrée, une valeur hors bornes est **ramenée** — jamais refusée — et la
+ *  ligne dessous dit laquelle. Taper un chiffre pendant qu'on tient la
+ *  glissière remplit le champ sans qu'on ait eu à le viser.
+ *
+ *  **Un chiffre écrit vaut un relâchement** : un seul envoi, jamais un par
+ *  frappe — la règle de `T2` appliquée à l'autre façon de régler. */
 function Glissiere({
   valeur,
   min,
@@ -446,26 +466,90 @@ function Glissiere({
   onRegler: (v: number) => void
   onPoser: (v: number) => void
 }) {
+  // **`null` tant qu'on n'écrit pas.** Le champ montre alors la valeur de la
+  // glissière, si bien que les deux disent toujours la même chose sans qu'un
+  // état ait à les tenir d'accord. Il ne prend une valeur à lui que pendant la
+  // frappe, qui est un état de passage.
+  const [ecrit, setEcrit] = useState<string | null>(null)
+  // Ce qu'on a ramené, et il se dit. Effacé à la frappe suivante.
+  const [ramene, setRamene] = useState<string | null>(null)
+  const champ = useRef<HTMLInputElement>(null)
+
+  const valider = (texte: string) => {
+    setEcrit(null)
+    const lu = Number.parseFloat(texte.replace(",", ".").replace(/[^\d.-]/g, ""))
+    if (!Number.isFinite(lu)) return
+    const pose = Math.max(min, Math.min(max, lu))
+    setRamene(
+      pose !== lu ? `ramené à ${pose}${unite} — les bornes sont ${min} et ${max}` : null,
+    )
+    // La valeur bouge et se pose dans le même geste : `onRegler` seul laisserait
+    // le réglage à l'écran sans jamais l'appliquer.
+    onRegler(pose)
+    onPoser(pose)
+  }
+
   return (
-    <div className="flex items-center gap-[8px]">
-      <input
-        type="range"
-        aria-label={nom}
-        value={valeur}
-        min={min}
-        max={max}
-        disabled={eteint}
-        onChange={(e) => onRegler(Number(e.target.value))}
-        onPointerUp={(e) => onPoser(Number((e.target as HTMLInputElement).value))}
-        onKeyUp={(e) => onPoser(Number((e.target as HTMLInputElement).value))}
-        className={`curseur h-[22px] min-w-0 flex-1 ${eteint ? "opacity-40" : ""}`}
-      />
-      <span
-        className={`mesure w-[34px] shrink-0 text-right text-[11.5px] ${eteint ? "text-eteint" : "text-encre-2"}`}
-      >
-        {valeur}
-        {unite}
-      </span>
+    <div className="flex flex-col gap-[4px]">
+      <div className="flex items-center gap-[8px]">
+        <input
+          type="range"
+          aria-label={nom}
+          value={valeur}
+          min={min}
+          max={max}
+          disabled={eteint}
+          onChange={(e) => onRegler(Number(e.target.value))}
+          onPointerUp={(e) => onPoser(Number((e.target as HTMLInputElement).value))}
+          onKeyUp={(e) => onPoser(Number((e.target as HTMLInputElement).value))}
+          // **La frappe pendant qu'on tient la glissière remplit le champ**,
+          // sans qu'on ait eu à le viser — le geste des logiciels d'image. Les
+          // touches qui font vivre le curseur — les flèches, Origine, Fin — ne
+          // sont pas détournées.
+          onKeyDown={(e) => {
+            if (!/^[0-9]$/.test(e.key)) return
+            e.preventDefault()
+            setEcrit(e.key)
+            setRamene(null)
+            champ.current?.focus()
+          }}
+          className={`curseur h-[22px] min-w-0 flex-1 ${eteint ? "opacity-40" : ""}`}
+        />
+        <input
+          ref={champ}
+          type="text"
+          inputMode="numeric"
+          aria-label={`${nom}, en chiffres`}
+          disabled={eteint}
+          value={ecrit ?? `${valeur}${unite}`}
+          onChange={(e) => {
+            setEcrit(e.target.value)
+            setRamene(null)
+          }}
+          onFocus={(e) => e.target.select()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              valider((e.target as HTMLInputElement).value)
+              ;(e.target as HTMLInputElement).blur()
+            }
+            if (e.key === "Escape") {
+              setEcrit(null)
+              setRamene(null)
+            }
+          }}
+          // **Quitter le champ vaut Entrée.** Sans quoi une valeur tapée puis
+          // abandonnée resterait à l'écran sans agir : le champ dirait une chose
+          // et l'image en montrerait une autre.
+          onBlur={(e) => ecrit !== null && valider(e.target.value)}
+          className={[
+            "mesure w-[34px] shrink-0 rounded-7 border border-transparent bg-transparent px-[4px] text-right text-[11.5px] tabular-nums",
+            "hover:border-trait focus:border-encre-4 focus:bg-papier-cote focus:outline-none",
+            eteint ? "text-eteint" : "text-encre-2",
+          ].join(" ")}
+        />
+      </div>
+      {ramene && <Pourquoi texte={ramene} />}
     </div>
   )
 }
@@ -3201,7 +3285,9 @@ export function Retouche({
    *  (`B25`). Les sœurs sont les attitudes d'une chose du jeu ou les voisines de
    *  la grille selon d'où l'on vient ; écrire *Ses images* dans les deux cas
    *  mentait à qui arrivait de la galerie sur une image que personne n'a
-   *  adoptée. */
+   *  adoptée — et à qui arrivait d'un emploi par *la différence* d'un calque,
+   *  qui fait le troisième cas. C'est `App.tsx` qui le nomme : il est le seul à
+   *  savoir d'où l'on vient. */
   retour?: string
   /** La table sur laquelle la porte demande qu'on s'ouvre (`B25`) — *la
    *  différence* d'un calque arrive directement sur la fabrique de
@@ -3403,6 +3489,71 @@ export function Retouche({
     ) * 100 || 100,
   )
   const facteur = (zoom === "ajuste" ? ajuste : zoom) / 100
+
+  // ── La molette approche et recule, et le point visé ne bouge pas ──────────
+  //
+  // **Repris de `Tables.tsx`, tel quel** (U2, rendue à l'écran neuf le
+  // 9 septembre 2026). `B25` avait fermé la porte de l'ancien écran sans que la
+  // molette ait déménagé : approcher ne se faisait plus qu'au champ et aux deux
+  // boutons, alors que c'est un critère déjà coché du lot `U`.
+  //
+  // **Un écouteur natif et non `onWheel`.** React pose ses écouteurs de molette
+  // en *passif* sur la racine : `preventDefault` y est ignoré, et la page
+  // défilerait derrière le zoom. Posé à la main avec `{ passive: false }`, il
+  // arrête le défilement — c'est ce qui rend la molette utilisable dans un cadre
+  // qui défile.
+  //
+  // **Le point sous le pointeur reste sous le pointeur**, et ça se fait en deux
+  // temps : on note où l'on était *dans l'image* au moment du geste, puis on
+  // rattrape le défilement une fois que la nouvelle taille est posée. Le faire
+  // en un temps demanderait de prédire la mise en page — le `m-auto` qui centre
+  // une image plus petite que son cadre, les 22 px de garde — et une prédiction
+  // fausse se voit comme un sursaut.
+  const boiteImage = useRef<HTMLDivElement>(null)
+  const ancreDuZoom = useRef<{ ux: number; uy: number; x: number; y: number } | null>(
+    null,
+  )
+  // `ajuste` est recalculé à chaque rendu ; l'écouteur, lui, n'est posé qu'à
+  // chaque nœud de cadre. Un repère plutôt qu'une dépendance : le rebrancher à
+  // chaque redimensionnement en poserait un par image de rendu.
+  const ajusteVu = useRef(ajuste)
+  ajusteVu.current = ajuste
+
+  // ⚠️ **`noeudCadre` en dépendance, et non `[]`** : le cadre est démonté quand
+  // une fabrique prend sa place (`B24`), et un écouteur armé une fois pour
+  // toutes resterait sur le nœud orphelin — même piège que le `ResizeObserver`
+  // juste au-dessus.
+  useEffect(() => {
+    if (!noeudCadre) return
+    const molette = (evenement: WheelEvent) => {
+      evenement.preventDefault()
+      const rectangle = boiteImage.current?.getBoundingClientRect()
+      if (rectangle && rectangle.width > 0 && rectangle.height > 0)
+        ancreDuZoom.current = {
+          ux: (evenement.clientX - rectangle.left) / rectangle.width,
+          uy: (evenement.clientY - rectangle.top) / rectangle.height,
+          x: evenement.clientX,
+          y: evenement.clientY,
+        }
+      // Un cran de molette vaut un huitième d'octave : assez pour que le geste
+      // réponde, assez peu pour qu'on s'arrête où l'on veut.
+      const pas = evenement.deltaY < 0 ? 1.09 : 1 / 1.09
+      setZoom((courant) =>
+        borner((courant === "ajuste" ? ajusteVu.current : courant) * pas),
+      )
+    }
+    noeudCadre.addEventListener("wheel", molette, { passive: false })
+    return () => noeudCadre.removeEventListener("wheel", molette)
+  }, [noeudCadre])
+
+  useLayoutEffect(() => {
+    const vise = ancreDuZoom.current
+    ancreDuZoom.current = null
+    const rectangle = boiteImage.current?.getBoundingClientRect()
+    if (!vise || !noeudCadre || !rectangle) return
+    noeudCadre.scrollLeft += rectangle.left + vise.ux * rectangle.width - vise.x
+    noeudCadre.scrollTop += rectangle.top + vise.uy * rectangle.height - vise.y
+  }, [facteur, noeudCadre])
 
   /** **La surface est réduite pour tenir dans le cadre** (`B23`) — l'ajusté est
    *  descendu sous cent parce que l'image ne rentrait pas autrement. C'était le
@@ -3786,7 +3937,14 @@ export function Retouche({
                   a réparé pour son propre zoom ; même remède ici, et c'est
                   aussi ce qui garde les coins de la surface (`B23`)
                   atteignables quand on la grossit au-delà de l'ajusté. */}
-              <div className="m-auto flex shrink-0 items-center gap-[8px]">
+              {/* **`data-boite-image` est ce que la molette vise** : c'est la
+                  boîte dont le rectangle donne le point de l'image resté sous
+                  le pointeur. */}
+              <div
+                ref={boiteImage}
+                data-boite-image
+                className="m-auto flex shrink-0 items-center gap-[8px]"
+              >
                 {temoin === "cote" && (
                   <figure className="flex min-w-0 flex-col items-center gap-[4px]">
                     <img
