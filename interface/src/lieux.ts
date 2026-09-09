@@ -141,13 +141,14 @@ export type Lieu =
   // images. Elle porte les huit tables dans leur ordre, le trait, et les deux
   // fabriques à droite de lui.
   //
-  // ⚠️ **Elle ne remplace pas `"tables"`, elle le double le temps d'un
-  // déménagement** — exactement ce que `B10` a fait de la matrice. L'écran de
-  // l'ancien châssis garde trois locataires que celui-ci ne reprend pas : le
-  // cadre de la découpe monté à l'intérieur, la colonne des sœurs, et les trois
-  // surfaces où l'on désigne un endroit de l'image — la pipette, la forme
-  // entourée, le pinceau. Il s'en ira quand elles auront déménagé, en `B17` et
-  // `B18`.
+  // ⚠️ **Elle double encore `"tables"`, mais moins qu'avant** — exactement ce
+  // que `B10` a fait de la matrice. Les quatre surfaces où l'on désigne un
+  // endroit de l'image ont déménagé le 9 septembre 2026 (`B23`) : la pipette,
+  // la forme entourée, le pinceau et le cadre de recadrage se posent
+  // aujourd'hui depuis la retouche seule, et `Tables.tsx` les lui emprunte.
+  // L'écran de l'ancien châssis garde encore deux locataires que celui-ci ne
+  // reprend pas : le cadre de la découpe monté à l'intérieur, et la colonne
+  // des sœurs. Il s'en ira quand ils auront déménagé à leur tour, en `B24`.
   | { genre: "retouche"; asset: string }
   | { genre: "clip"; cible: CibleDuClip }
   | { genre: "montage"; clip: string }

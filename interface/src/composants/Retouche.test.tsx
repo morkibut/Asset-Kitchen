@@ -541,6 +541,39 @@ describe("le grossissement dit ce qu'il fait vraiment", () => {
       rendre()
     }
   })
+
+  test("quand aucun cran ne tient, la surface se réduit au cadre", async () => {
+    // ⚠️ Le défaut que la relecture a trouvé : `zoomTenu` retombait à ×1 et la
+    // surface prenait ses 2 048 px dans un cadre de 500. Un enfant centré qui
+    // déborde ne se défile que de la moitié du débordement de chaque côté,
+    // donc le coin haut-gauche de l'image devenait inatteignable — plus moyen
+    // d'y poser un coin de recadrage, d'y viser un pixel, d'y peindre.
+    const rendre = cadreDe(500)
+    try {
+      monter({
+        asset: image({
+          largeur: 2048,
+          hauteur: 1024,
+          rendu_largeur: 2048,
+          rendu_hauteur: 1024,
+          recette: recetteDeTravail(),
+        }),
+      })
+      fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+      const boite = await waitFor(() => {
+        const f = document.querySelector("[data-surface='recadrage']")
+        expect(f?.getAttribute("data-surface-au-cadre")).toBe("")
+        return f?.firstElementChild as HTMLElement
+      })
+      // 500 − 44 de marges : la boîte y entre, et elle garde ses proportions,
+      // sinon le curseur carré de la main — placé en pour cent de la boîte —
+      // se décalerait de l'image, qui s'y contient.
+      expect(boite.style.width).toBe("456px")
+      expect(boite.style.height).toBe("228px")
+    } finally {
+      rendre()
+    }
+  })
 })
 
 describe("la jauge", () => {

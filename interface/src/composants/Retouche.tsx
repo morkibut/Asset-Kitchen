@@ -3129,6 +3129,30 @@ export function Retouche({
     ? zoom
     : (zoomsTenables.at(-1) ?? 1)
 
+  /** **Aucun cran ne tient : la surface se réduit au cadre.** Un cran choisi
+   *  qui dépasse, on le fait défiler — c'est voulu, et ça ne change pas. Mais
+   *  quand même ×1 ne tient pas, `zoomTenu` retombe à 1 sans que personne
+   *  l'ait demandé, et la surface prend alors sa taille en pixels réels : une
+   *  image de 1 024 dans un cadre de 545 laisse son coin haut-gauche hors
+   *  d'atteinte pour toujours, parce qu'un enfant centré qui déborde ne se
+   *  défile que de la moitié du débordement de chaque côté. On ne pourrait
+   *  plus y poser un coin de recadrage, y viser un pixel, y commencer un
+   *  tracé, y peindre. L'ancien écran montait ces mêmes surfaces en
+   *  `h-full w-full`, toujours contenues quelle que soit l'image ; ici on
+   *  fait pareil **en gardant les proportions**, parce que le curseur carré
+   *  de la main se place en pour cent de la boîte pendant que l'image s'y
+   *  contient : une boîte étirée les décalerait l'un de l'autre.
+   *  `rectangleDeLImage` convertit à la taille affichée, donc réduire la
+   *  surface ne décale aucune coordonnée envoyée. */
+  const surfaceAuCadre = zoomsTenables.length === 0
+  /** Ce par quoi multiplier le côté de la surface : le cran tenu, ou le repli
+   *  au cadre quand aucun cran ne tient. `coteDuCadre` est déjà le plus petit
+   *  côté du cadre moins ses marges, donc la boîte y entre dans les deux
+   *  sens. */
+  const echelleDeLaSurface = surfaceAuCadre
+    ? coteDuCadre / Math.max(coteDeLaSurface[0], coteDeLaSurface[1], 1)
+    : zoomTenu
+
   const poste: Poste = {
     recette,
     univers,
@@ -3251,7 +3275,11 @@ export function Retouche({
                   une image de 2 048 px que le cadre réduisait en fait à un
                   cinquième. Les crans que le cadre ne peut pas tenir sont donc
                   retirés, et quand aucun ne tient, la rangée cède la place à la
-                  phrase qui dit ce qui se passe vraiment. */}
+                  phrase qui dit ce qui se passe vraiment. **Et ce qu'elle dit
+                  arrive** : les deux images du témoin se contiennent dans le
+                  cadre, et la surface s'y réduit aussi (`surfaceAuCadre`). Il
+                  n'y a pas de cas où cette phrase paraît sur une image qui
+                  déborde. */}
               {zoomsTenables.length > 0 ? (
                 <div data-zoom className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]">
                   {zoomsTenables.map((z) => (
@@ -3338,16 +3366,21 @@ export function Retouche({
                   les trois qui travaillent en pixels d'origine, le rendu pour
                   la main —, et le cadre qui les tient *est* l'image, à la
                   taille du grossissement choisi : une boîte qui ment décale ce
-                  qu'on pose dedans. */}
+                  qu'on pose dedans.
+
+                  ⚠️ **Sauf quand aucun cran ne tient** : la boîte se réduit
+                  alors au cadre, sans quoi un coin de l'image resterait hors
+                  d'atteinte pour toujours. Voir `surfaceAuCadre`. */}
               {surface !== null && (
                 <figure
                   data-surface={surface}
+                  data-surface-au-cadre={surfaceAuCadre ? "" : undefined}
                   className="flex min-w-0 flex-col items-center gap-[4px]"
                 >
                   <div
                     style={{
-                      width: coteDeLaSurface[0] * zoomTenu,
-                      height: coteDeLaSurface[1] * zoomTenu,
+                      width: coteDeLaSurface[0] * echelleDeLaSurface,
+                      height: coteDeLaSurface[1] * echelleDeLaSurface,
                     }}
                     className="min-w-0 shrink-0"
                   >
