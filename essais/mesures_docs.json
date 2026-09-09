@@ -1,11 +1,11 @@
 {
- "releve_le": 1788940421.8250391,
+ "releve_le": 1788944360.3244452,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 188796,
+  "octets": 189712,
   "documents": {
    "AGENTS.md": {
     "octets": 35404,
@@ -368,14 +368,14 @@
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 25111,
-    "titres": 30,
+    "octets": 26027,
+    "titres": 31,
     "sections": [
      {
       "titre": "Asset Kitchen — Design System",
       "niveau": 1,
       "ligne": 1,
-      "octets": 25111
+      "octets": 26027
      },
      {
       "titre": "Comment ce document a été obtenu",
@@ -471,7 +471,7 @@
       "titre": "Spacing",
       "niveau": 2,
       "ligne": 280,
-      "octets": 1552
+      "octets": 2468
      },
      {
       "titre": "Hauteurs de contrôle — liste fermée",
@@ -483,72 +483,78 @@
       "titre": "Largeurs de colonne — liste fermée",
       "niveau": 3,
       "ligne": 300,
-      "octets": 667
+      "octets": 1193
+     },
+     {
+      "titre": "Largeurs de petit contrôle — liste fermée",
+      "niveau": 3,
+      "ligne": 318,
+      "octets": 390
      },
      {
       "titre": "Layout",
       "niveau": 2,
-      "ligne": 314,
+      "ligne": 327,
       "octets": 1539
      },
      {
       "titre": "Les quatre présentations, et la cinquième est interdite",
       "niveau": 3,
-      "ligne": 326,
+      "ligne": 339,
       "octets": 589
      },
      {
       "titre": "Arrondis — liste fermée",
       "niveau": 3,
-      "ligne": 340,
+      "ligne": 353,
       "octets": 312
      },
      {
       "titre": "Les onze pièces",
       "niveau": 2,
-      "ligne": 350,
+      "ligne": 363,
       "octets": 864
      },
      {
       "titre": "Les six règles",
       "niveau": 2,
-      "ligne": 370,
+      "ligne": 383,
       "octets": 961
      },
      {
       "titre": "Motion",
       "niveau": 2,
-      "ligne": 389,
+      "ligne": 402,
       "octets": 565
      },
      {
       "titre": "L'écriture",
       "niveau": 2,
-      "ligne": 405,
+      "ligne": 418,
       "octets": 560
      },
      {
       "titre": "Ce que ce document ne tranche pas",
       "niveau": 2,
-      "ligne": 419,
+      "ligne": 432,
       "octets": 1880
      },
      {
       "titre": "Un défaut d'avant, fermé par construction",
       "niveau": 2,
-      "ligne": 447,
+      "ligne": 460,
       "octets": 1596
      },
      {
       "titre": "Motifs → `docs/design-motifs.md`",
       "niveau": 2,
-      "ligne": 473,
+      "ligne": 486,
       "octets": 39
      },
      {
       "titre": "Journal des décisions → `docs/design-decisions.md`",
       "niveau": 2,
-      "ligne": 475,
+      "ligne": 488,
       "octets": 57
      }
     ]
@@ -557,7 +563,7 @@
  },
  "renvois": {
   "code": {
-   "total": 681,
+   "total": 680,
    "casses": []
   },
   "docs": {

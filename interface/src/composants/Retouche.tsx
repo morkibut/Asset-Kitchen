@@ -4090,14 +4090,14 @@ function SoeurDuCarnet({
       aria-pressed={courante}
       title={asset.label}
       className={[
-        "overflow-hidden rounded-7 border p-[2px] transition-colors duration-120",
+        "overflow-hidden rounded-7 border p-[4px] transition-colors duration-120",
         courante ? "border-encre-4" : "border-transparent hover:border-trait",
       ].join(" ")}
     >
       <img
         src={sujetAsset(asset).src}
         alt={asset.label}
-        className="damier h-[48px] w-[48px] object-contain"
+        className="damier h-[54px] w-[54px] object-contain"
         style={{ imageRendering: "pixelated" }}
       />
     </button>
@@ -4156,7 +4156,7 @@ function CommandesDuZoom({
           if (e.key === "Escape") setEcrit(null)
         }}
         onBlur={(e) => ecrit !== null && valider(e.target.value)}
-        className="mesure h-[26px] w-[42px] rounded-7 border border-trait bg-carte px-[4px] text-right text-[12px] text-encre tabular-nums"
+        className="mesure h-[26px] w-[34px] rounded-7 border border-trait bg-carte px-[4px] text-right text-[12px] text-encre tabular-nums"
       />
       <span className="text-[12px] text-encre-4">%</span>
       <button
@@ -4259,17 +4259,17 @@ function PanneauDesRecettes({
   return (
     <div
       data-recettes
-      className="absolute right-0 top-full z-30 mt-[6px] w-[300px] rounded-8 border border-trait bg-carte p-[14px] text-left shadow-[0_4px_18px_rgba(0,0,0,.12)]"
+      className="absolute right-0 top-full z-30 mt-[4px] w-[300px] rounded-8 border border-trait bg-carte p-[14px] text-left shadow-[0_4px_18px_rgba(0,0,0,.12)]"
     >
       {/* ── La séance ──────────────────────────────────────────────────── */}
       <p className="mb-[8px] text-[11px] text-encre-4">
         Les réglages de cette image, ailleurs
       </p>
-      <div className="mb-[12px] flex gap-[8px]">
+      <div className="mb-[14px] flex gap-[8px]">
         <button
           type="button"
           onClick={onCopier}
-          className="h-[28px] flex-1 rounded-7 border border-trait text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+          className="h-[26px] flex-1 rounded-7 border border-trait text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
         >
           Copier les réglages
         </button>
@@ -4277,7 +4277,7 @@ function PanneauDesRecettes({
           type="button"
           onClick={onColler}
           disabled={!aCopier}
-          className="h-[28px] flex-1 rounded-7 border border-trait text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint disabled:hover:border-trait disabled:hover:text-eteint"
+          className="h-[26px] flex-1 rounded-7 border border-trait text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint disabled:hover:border-trait disabled:hover:text-eteint"
         >
           Coller
         </button>
@@ -4287,7 +4287,7 @@ function PanneauDesRecettes({
       )}
 
       {/* ── Ce qui survit à la séance ──────────────────────────────────── */}
-      <p className="mb-[8px] mt-[12px] border-t border-trait-faible pt-[12px] text-[11px] text-encre-4">
+      <p className="mb-[8px] mt-[14px] border-t border-trait-faible pt-[14px] text-[11px] text-encre-4">
         Les recettes nommées
       </p>
       <div className="mb-[8px] flex gap-[8px]">
@@ -4300,13 +4300,13 @@ function PanneauDesRecettes({
           onKeyDown={(evenement) => evenement.key === "Enter" && enregistrer()}
           placeholder="un nom pour ces réglages"
           aria-label="le nom de la recette"
-          className="h-[28px] min-w-0 flex-1 rounded-7 border border-trait bg-papier px-[8px] text-[12px] text-encre placeholder:text-eteint"
+          className="h-[26px] min-w-0 flex-1 rounded-7 border border-trait bg-papier px-[8px] text-[12px] text-encre placeholder:text-eteint"
         />
         <button
           type="button"
           onClick={enregistrer}
           disabled={!propre}
-          className="h-[28px] shrink-0 rounded-7 border border-trait px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint"
+          className="h-[26px] shrink-0 rounded-7 border border-trait px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint"
         >
           {aRemplacer === propre ? "Remplacer ›" : "Enregistrer"}
         </button>
@@ -4320,7 +4320,7 @@ function PanneauDesRecettes({
       {nommees.length === 0 ? (
         <p className="text-[12px] text-encre-4">aucune recette nommée pour l'instant.</p>
       ) : (
-        <ul className="flex max-h-[180px] flex-col overflow-y-auto">
+        <ul className="flex max-h-[30vh] flex-col overflow-y-auto">
           {nommees.map((enregistree) => (
             <li
               key={enregistree}
@@ -4355,7 +4355,7 @@ function PanneauDesRecettes({
         <div
           data-recettes-annonce
           role="status"
-          className="mt-[12px] border-t border-trait-faible pt-[12px] text-[11px] leading-[1.5] text-encre-2"
+          className="mt-[14px] border-t border-trait-faible pt-[14px] text-[11px] leading-[1.5] text-encre-2"
         >
           {annonce.length === 0 ? (
             <span>c'est posé — tous les réglages ont voyagé.</span>
@@ -4375,7 +4375,7 @@ function PanneauDesRecettes({
       )}
 
       {/* La recette courante en un mot. */}
-      <p className="mt-[12px] border-t border-trait-faible pt-[8px] text-[11px] text-encre-4">
+      <p className="mt-[14px] border-t border-trait-faible pt-[8px] text-[11px] text-encre-4">
         {TABLES.filter((t) => valeur(t.cle, recette) !== null)
           .map((t) => NOM_DE_LA_TABLE[t.cle])
           .join(" · ") || "cette image n'a aucun réglage posé"}

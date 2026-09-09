@@ -301,13 +301,26 @@ chaque côté.
 
 **300** le carnet (fixe, toujours là) · **380** le volet (fixe, se ferme, ne se rétrécit
 jamais) · **880** la barre (un plafond, pas une largeur : elle se centre et rétrécit sous
-lui) · la surface prend le reste.
+lui) · **128** ses sœurs (fixe, une vignette de front) · la surface prend le reste.
 
 La troisième est entrée avec `B6`, relevée sur `Barre.dc.html`. Ce n'est pas une colonne : la
 barre se pose **par-dessus** les deux autres et ne partage la grille avec personne. Elle est
 dans cette liste parce que c'est la seule largeur fixe que le produit écrive en dehors du
 châssis, et qu'une valeur non déclarée est une valeur qu'on réinventera un peu différente au
 prochain écran.
+
+La quatrième est entrée avec `B24`, relevée sur la colonne « ses sœurs » de `Retouche.tsx`.
+Ce n'est ni le carnet ni le volet : c'est une colonne qui ne montre qu'une vignette de large,
+son cadre de sélection et rien d'autre, jamais une liste de texte ni un réglage. 300 y aurait
+laissé la moitié de la colonne vide ; 380 plus encore. Une largeur aussi étroite et aussi
+particulière se déclare, sans quoi le prochain écran à vignette unique en invente une autre.
+
+### Largeurs de petit contrôle — liste fermée
+
+**70**, la mollette d'opacité du témoin « par-dessus » (`B24`, `Retouche.tsx`). Ce n'est ni un
+écart ni une colonne : c'est un curseur qu'on tire au doigt, et il doit rester assez long pour
+se régler sans trembler. Rien dans les listes ci-dessus ne s'en approche sans se voir — 54 s'y
+traîne, 300 dévore la barre d'outils.
 
 ---
 
