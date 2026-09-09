@@ -1792,12 +1792,12 @@ Ce qui mesure l'avancement de la refonte doit dire la vérité le jour où elle 
   rendu du déménagement, avec sa date, plutôt qu'une promesse périmée.
 - **`atelier/domaine/recette.py:152` et `:2463`** — deux commentaires renvoient à
   `Places.tsx` pour la liste jumelle et pour `marge_sans_effet`.
-- **`docs/status/etat.md`**, **`docs/tranches/V4.md` § B16** et **`docs/PLAN-carnet.md`
-  § B16** — les trois portent la phrase *« l'écran neuf double l'ancien, il ne le
-  remplace pas »*, renvoyée à des tranches closes qui ne l'ont pas faite. Elles sont
-  corrigées **en place**, avec le renvoi à `B23`-`B26` : c'est cet écart-là qui a coûté
-  une refonte annoncée close et livrée à moitié, et l'effacer sans le nommer coûterait
-  la même chose la prochaine fois.
+- **Trois documents portent la même phrase périmée** — `docs/status/etat.md`,
+  `docs/tranches/V4.md` § B16, et `docs/PLAN-carnet.md` § B16 — *« l'écran neuf double
+  l'ancien, il ne le remplace pas »*, renvoyée à des tranches closes qui ne l'ont pas
+  faite. Elles sont corrigées **en place**, avec le renvoi à `B23`-`B26` : c'est cet
+  écart-là qui a coûté une refonte annoncée close et livrée à moitié, et l'effacer sans
+  le nommer coûterait la même chose la prochaine fois.
 - **`docs/carte-du-depot.md`** — les deux fichiers y sont décrits.
 
 ⚠️ **Un garde-fou de plus, et c'est celui qui aurait évité tout ceci.** Un essai qui
