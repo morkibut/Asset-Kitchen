@@ -4623,26 +4623,46 @@ export function App() {
         /* **La retouche** (B16) — la chaîne redessinée sur le papier du
            carnet : huit tables dans leur ordre, un trait, deux fabriques à
            droite de lui. Elle écrit — c'est le seul de ces trois écrans qui le
-           fasse — mais elle ne dépense pas : *cliquer ne coûte jamais*. */
+           fasse — mais elle ne dépense pas : *cliquer ne coûte jamais*.
+
+           **Les deux fabriques s'ouvrent ici même** (`B24`) : la découpe et
+           la superposition écrivent d'autres fichiers, mais renvoyer à
+           l'ancien `EcranTables` pour les atteindre n'en aurait pas fait des
+           fabriques — c'est le défaut que cette tranche répare. */
         <Retouche
           asset={imageDeLaRetouche}
+          // **Les sœurs d'une image sont les autres images de la chose**,
+          // comme pour `EcranTables` : on passe de l'une à l'autre sans que
+          // la table ouverte se referme.
+          soeurs={(choseOuverte?.cases ?? []).flatMap((c) => c.images)}
           univers={univers}
           traitement={etat.traitement}
           onFermer={() => setRetoucheOuverte(null)}
-          // Les deux fabriques mènent aux écrans qui existent : la découpe et
-          // la superposition écrivent d'autres fichiers, et elles ont chacune
-          // le leur depuis longtemps.
-          onDecouper={() => {
-            setRetoucheOuverte(null)
-            setCaseOuverte(imageDeLaRetouche.identifiant)
-            setTable("decoupage")
-          }}
-          onSuperposer={() => {
-            setRetoucheOuverte(null)
-            setCaseOuverte(imageDeLaRetouche.identifiant)
-            setTable("superposition")
-          }}
+          onSoeur={setRetoucheOuverte}
+          decoupe={(fermerLaFabrique) => (
+            <EcranDecoupe
+              sujet={{
+                famille: "planche",
+                planche: imageDeLaRetouche,
+                // ⚠️ **Les images d'une découpe n'ont ni `personnage` ni
+                // `pose`** (`atelier/services/decoupe.py`) : elles vont dans
+                // la grille libre, jamais dans une case d'un sujet. Rouvrir
+                // la retouche dessus (`B24`) demandait `imageDeLaRetouche`
+                // de la trouver dans `choseOuverte.cases`, où elle n'est
+                // jamais — l'écran se refermait donc sans un mot juste après
+                // la découpe. Le geste d'avant `B24` ne naviguait pas :
+                // fermer la fabrique et sélectionner le résultat.
+                onDecoupe: (decoupes) => {
+                  fermerLaFabrique()
+                  if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
+                },
+              }}
+              onFermer={fermerLaFabrique}
+              onFente={setFente}
+            />
+          )}
           onErreur={setPanne}
+          onUnivers={setUnivers}
         />
       )}
 

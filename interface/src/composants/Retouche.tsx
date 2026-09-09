@@ -35,7 +35,7 @@
  * point désigne un endroit de *cette* image-là, et la colonne le dit.
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   api,
   CONTOUR_PAR_DEFAUT,
@@ -47,8 +47,11 @@ import {
   MAIN_VIDE,
   MORPHOLOGIE_MAX,
   NOM_DE_LA_METHODE,
+  NOM_DE_LA_NATURE,
+  NOM_FAMILLE,
   PASSE_PAR_DEFAUT,
   RETOURNEMENT_PAR_DEFAUT,
+  Refus,
   occupationMax,
   paliersDeCouleurs,
   type Ancrage,
@@ -57,10 +60,13 @@ import {
   type Contour,
   type Echange,
   type EtatTraitement,
+  type Famille,
   type FormatDeRecadrage,
   type Grille,
+  type Impose,
   type Main,
   type Methode,
+  type Nature,
   type Passe,
   type Quantification,
   type Recadrage,
@@ -70,7 +76,7 @@ import {
   type Trait,
   type Univers,
 } from "../api"
-import { imageAsset } from "./Apercu"
+import { imageAsset, sujetAsset, useVisee } from "./Apercu"
 // **Trois fonctions pures, et rien d'autre de `chassis.tsx`.** Aucun fichier du
 // carnet n'importe ce module — il porte le balisage de l'ancien châssis, et ses
 // couleurs ne sont pas celles du papier. Ces trois-là n'ont ni balise ni jeton :
@@ -106,7 +112,24 @@ import {
   useRecette,
   type EtatMain,
 } from "./Places"
-import { TABLES, avecVeille, dort, indisponible, placeDe, valeur, type Table } from "./Tables"
+import { EcranSuperposition } from "./Superposition"
+import {
+  ARRETS_ZOOM,
+  TABLES,
+  ZOOM_MAX,
+  ZOOM_MIN,
+  avecVeille,
+  borner,
+  copierDansLePressePapier,
+  defautDeLaPasse,
+  dort,
+  indisponible,
+  lireLePressePapier,
+  placeDe,
+  valeur,
+  type Table,
+  type ZoomTable,
+} from "./Tables"
 
 // ── Le vocabulaire des planches ─────────────────────────────────────────────
 
@@ -502,7 +525,18 @@ function ReglagesDuDetourage({
   regler,
   armee,
   onArmer,
-}: Poste) {
+  asset,
+  onErreur,
+  onUnivers,
+}: Poste & {
+  asset: Asset
+  onErreur: (raison: string) => void
+  /** **Le dossier du jeu vient de changer** (M7) — promouvoir un détourage en
+   *  défaut du projet l'écrit, et l'atelier doit en tenir compte sans
+   *  recharger. Absent, le geste se fait quand même : c'est l'écran d'à côté
+   *  qui montrerait l'ancien réglage jusqu'au prochain aller-retour. */
+  onUnivers?: (univers: Univers) => void
+}) {
   const passes = recette.passes
   const grises = {
     ...(Object.fromEntries(
@@ -772,6 +806,188 @@ function ReglagesDuDetourage({
           direct. Sans lui, le détourage reprend la médiane des bordures,
           qu'un sujet débordant sur un bord fait basculer. */}
       <Pourquoi texte="chaque passe « bord » devine sur les bordures, sauf si elle vise la couleur déclarée du jeu — réglage « couleur visée » ci-dessus" />
+
+      <PromotionDuDetourage
+        asset={asset}
+        recette={recette}
+        univers={univers}
+        onUnivers={onUnivers}
+        onErreur={onErreur}
+      />
+    </div>
+  )
+}
+
+// ── Promouvoir un détourage en défaut du projet (M7, déménagé en `B24`) ─────
+//
+// **Le geste inverse de l'étape des réglages, et le calcul est celui de
+// `Tables.tsx`, repris tel quel** — seul l'habillage passe au papier du
+// carnet. L'étape *Le détourage de départ* est la onzième des douze de
+// l'univers : on la traverse en réglant son jeu, avant d'avoir fabriqué la
+// moindre image, alors qu'on ne sait quel détourage convient qu'après en
+// avoir vu quelques-unes. Ici, on règle, on regarde, et l'on dit « garde ça ».
+//
+// **Une portée se choisit, elle ne se devine pas.** Le produit en connaît deux
+// pour un détourage : la nature de l'image — venue seule, ou découpée d'une
+// planche — et la famille de ce qu'elle montre. Les deux sont proposées,
+// jamais l'une supposée.
+function PromotionDuDetourage({
+  asset,
+  recette,
+  univers,
+  onUnivers,
+  onErreur,
+}: {
+  asset: Asset
+  recette: Recette
+  univers: Univers
+  onUnivers?: (univers: Univers) => void
+  onErreur: (raison: string) => void
+}) {
+  /** **La nature de l'image et sa famille viennent du serveur**, qui est le
+   *  seul à les savoir : la famille se lit dans le barème du jeu, jamais sur
+   *  l'image. C'est la même route que la fiche interroge. */
+  const [impose, setImpose] = useState<Impose | null>(null)
+  const [ouvert, setOuvert] = useState(false)
+  const [pose, setPose] = useState<string | null>(null)
+
+  useEffect(() => {
+    let vivant = true
+    setImpose(null)
+    setOuvert(false)
+    setPose(null)
+    void api
+      .imposeSurAsset(asset.identifiant)
+      .then((recu) => {
+        if (vivant) setImpose(recu)
+      })
+      .catch(() => {
+        if (vivant) setImpose(null)
+      })
+    return () => {
+      vivant = false
+    }
+  }, [asset.identifiant])
+
+  // **La première passe, et c'est structurel, pas arbitraire.** Un défaut ne
+  // porte qu'une passe : c'est celle qui s'applique à une image que personne
+  // n'a encore touchée, donc la première. Les suivantes corrigent *cette*
+  // image-là, sur ce que la première a déjà retiré.
+  const premiere = recette.passes[0] ?? null
+  const famille = (impose?.detourage?.famille ?? "") as Famille | ""
+  const nature = impose?.nature ?? ""
+
+  if (!premiere || nature === "") return null
+
+  const poserDefaut = async (quoi: "nature" | "famille") => {
+    const defaut = defautDeLaPasse(premiere)
+    try {
+      const recu = await api.reglerUnivers(
+        quoi === "nature"
+          ? nature === "planche"
+            ? { detourage_planche: defaut }
+            : { detourage_image: defaut }
+          : {
+              // **Le dictionnaire entier repart**, pas seulement la case qu'on
+              // change : le serveur lit ce champ comme la liste complète des
+              // familles réglées.
+              detourages: {
+                ...Object.fromEntries(
+                  Object.entries(univers.detourages).map(([f, p]) => [
+                    f,
+                    defautDeLaPasse(p),
+                  ]),
+                ),
+                [famille as Famille]: defaut,
+              },
+            },
+      )
+      onUnivers?.(recu.univers)
+      setOuvert(false)
+      setPose(
+        quoi === "nature"
+          ? NOM_DE_LA_NATURE[nature as Nature]
+          : `tout ce que tu ranges dans ${NOM_FAMILLE[famille as Famille]}`,
+      )
+    } catch (erreur) {
+      onErreur(erreur instanceof Refus ? erreur.message : "réglage refusé")
+    }
+  }
+
+  const resume =
+    `${MOTEUR[premiere.moteur]} · tolérance ${premiere.tolerance}` +
+    ` · seuil ${premiere.seuil_alpha}` +
+    ` · ${premiere.durcissement} px rongé${premiere.durcissement > 1 ? "s" : ""}`
+
+  if (!ouvert)
+    return (
+      <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
+        <button
+          type="button"
+          data-promouvoir-detourage
+          onClick={() => {
+            setPose(null)
+            setOuvert(true)
+          }}
+          className="text-[12px] text-encre-2 underline decoration-pointille underline-offset-2 transition-colors duration-120 hover:text-encre"
+        >
+          enregistrer ce réglage comme défaut du projet ›
+        </button>
+        {/* **Ce qui vient d'être posé se dit ici, et dit où le relire.** Un
+            geste dont l'effet vit dans un autre écran doit nommer cet écran. */}
+        {pose && (
+          <p role="status" className="text-[12px] leading-[1.5] text-encre-ok">
+            c'est fait — {pose} partira désormais de ce détourage. Ça se relit
+            dans Univers › réglages › Le détourage de départ.
+          </p>
+        )}
+      </div>
+    )
+
+  return (
+    <div
+      data-portee-du-defaut
+      className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]"
+    >
+      <Etiquette>en faire un défaut du projet</Etiquette>
+      <p className="text-[12px] leading-[1.5] text-encre-3">{resume}</p>
+      {/* **Deux portées, nommées par ce qu'elles couvrent** — jamais par le
+          mot du dépôt. */}
+      <button
+        type="button"
+        onClick={() => void poserDefaut("nature")}
+        className="text-[12px] text-encre-2 underline decoration-pointille underline-offset-2 transition-colors duration-120 hover:text-encre self-start"
+      >
+        pour {NOM_DE_LA_NATURE[nature as Nature]} ›
+      </button>
+      {famille && famille !== "tous" ? (
+        <button
+          type="button"
+          onClick={() => void poserDefaut("famille")}
+          className="text-[12px] text-encre-2 underline decoration-pointille underline-offset-2 transition-colors duration-120 hover:text-encre self-start"
+        >
+          pour tout ce que tu ranges dans {NOM_FAMILLE[famille]} ›
+        </button>
+      ) : (
+        // **Sans famille, on ne propose pas une portée vide.**
+        <Pourquoi texte="cette image n'a pas de famille — ce que tu fabriquais ne la nommait pas" />
+      )}
+      <Pourquoi texte="aucune image déjà faite n'est retouchée : un défaut vaut pour ce qui arrivera" />
+      {recette.passes.length > 1 && (
+        <Pourquoi
+          texte={`la passe 1 seule — un défaut n'en porte qu'une, et les ${recette.passes.length - 1} suivantes corrigent cette image-ci`}
+        />
+      )}
+      {(premiere.moteur === "couleur" || premiere.moteur === "trace") && (
+        <Pourquoi texte="ce que tu as visé dans l'image ne part pas avec — un défaut n'a pas d'image où viser" />
+      )}
+      <button
+        type="button"
+        onClick={() => setOuvert(false)}
+        className="text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre self-start"
+      >
+        annuler
+      </button>
     </div>
   )
 }
@@ -2387,29 +2603,6 @@ function ReglagesDeLaMain({ recette, univers, mesures, regler, poser, etatMain }
   )
 }
 
-/** Les deux fabriques. **Elles ne s'endorment pas et ne posent rien sur cette
- *  image** : elles en écrivent d'autres, et c'est le critère qui les range à
- *  droite du trait. */
-function LaFabrique({ table, onAller }: { table: Table; onAller: () => void }) {
-  const dit =
-    table === "decoupage"
-      ? "Une image en entrée, plusieurs sujets en sortie. Elle ne change pas l'image ouverte, elle en écrit d'autres — les morceaux naissent à zéro."
-      : "Elle prend deux images et en fabrique une troisième — l'armure sur le garde, la neige sur le toit du moulin. Dans la recette, elle occupe bel et bien une place, la seconde ; à l'écran elle vit à droite du trait, parce qu'elle nomme deux images et qu'une table n'en règle qu'une."
-  return (
-    <div className="flex flex-col gap-[14px]">
-      <p className="text-[13px] leading-[1.5] text-encre-2">{dit}</p>
-      <button
-        type="button"
-        onClick={onAller}
-        className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
-      >
-        L'ouvrir ›
-      </button>
-      <Pourquoi texte="elle ne s'endort pas : il n'y a rien à éteindre sur cette image-ci" />
-    </div>
-  )
-}
-
 // ── Les quatre surfaces à coordonnées ───────────────────────────────────────
 //
 // **Elles ont déménagé, elles n'ont pas été réécrites** (B23). Les quatre sont
@@ -2943,15 +3136,22 @@ export function CadreDeRecadrage({
 
 // ── L'écran ─────────────────────────────────────────────────────────────────
 
-/** Ce que le témoin montre. **Il ne retire jamais un geste** — c'est la règle
- *  que la V2.1 a payée : une comparaison pose un témoin à côté, elle ne
+/** Ce qu'on travaille — **c'est toujours celle-là que l'outil touche**, quel
+ *  que soit le témoin posé à côté. Repris de `Comparateur` (`Tables.tsx`,
+ *  U2/`B24`) : seul l'habillage change. */
+type Travail = "brut" | "rendu"
+
+const CE_QU_ON_TRAVAILLE: Record<Travail, string> = { brut: "Brut", rendu: "Rendu" }
+
+/** Ce qu'on met à côté pour comparer. **Il ne porte jamais rien** — c'est la
+ *  règle que la V2.1 a payée : une comparaison pose un témoin à côté, elle ne
  *  remplace pas l'outil. */
-type Temoin = "avant" | "deux" | "apres"
+type Temoin = "aucun" | "cote" | "dessus"
 
 const CE_QUE_LE_TEMOIN_MONTRE: Record<Temoin, string> = {
-  avant: "Avant",
-  deux: "Les deux",
-  apres: "Après",
+  aucun: "Aucun",
+  cote: "À côté",
+  dessus: "Par-dessus",
 }
 
 /** Voir le trait sur plusieurs fonds (B18) — la question que pose le contour
@@ -2966,17 +3166,6 @@ const FONDS_APERCU: Record<FondApercu, string | null> = {
   eau: "var(--color-apercu-eau)",
 }
 
-/** ⚠️ **Des multiples entiers, et un sprite de 64 px n'est pas regardable à
- *  ×1.** Vu au navigateur : l'image occupait un huitième d'un cadre de cinq
- *  cents pixels, et l'on ne pouvait juger d'aucun réglage — c'est-à-dire qu'on
- *  ne pouvait rien faire de l'écran. Aucun essai d'écran ne pouvait le voir :
- *  ils n'ont pas de largeur.
- *
- *  La règle est celle de `Vitrine.tsx` et de `GrilleDuJeu.tsx`, pour la même
- *  raison : à ×1,5 un pixel du jeu n'est plus un carré. */
-const ZOOMS = [1, 2, 4, 8] as const
-type Zoom = (typeof ZOOMS)[number]
-
 /** Ce que la surface fait, écrit sous elle — **le geste, jamais le nom de la
  *  table**, qui est déjà en haut de la colonne. */
 const CE_QUE_LA_SURFACE_DIT: Record<"main" | "pipette" | "trace" | "recadrage", string> = {
@@ -2988,26 +3177,44 @@ const CE_QUE_LA_SURFACE_DIT: Record<"main" | "pipette" | "trace" | "recadrage", 
 
 export function Retouche({
   asset,
+  soeurs,
   univers,
   traitement,
   onFermer,
-  onDecouper,
-  onSuperposer,
+  onSoeur,
+  decoupe,
   onErreur,
+  onUnivers,
 }: {
   asset: Asset
+  /** Les images voisines — les attitudes de la chose (`B24`, déménagé de
+   *  `Tables.tsx`). **On passe à l'image voisine sans que la table ouverte se
+   *  referme** : c'est le geste qui distingue une table d'un panneau. */
+  soeurs: Asset[]
   univers: Univers
   traitement: EtatTraitement
   onFermer: () => void
-  onDecouper: () => void
-  onSuperposer: () => void
+  onSoeur: (identifiant: string) => void
+  /** La fabrique du découpage, **rendue dans le cadre de la retouche** et non
+   *  ailleurs — sans repasser par l'ancien `EcranTables` (`B24`). Une
+   *  fonction plutôt qu'un nœud déjà construit : `ouverte` vit dans cet écran
+   *  et pas chez l'appelant, qui a donc besoin du geste qui la referme pour
+   *  construire son propre `onFermer`. */
+  decoupe: (fermerLaFabrique: () => void) => ReactNode
   onErreur: (raison: string) => void
+  /** **Le dossier du jeu vient de changer** (M7) — promouvoir un détourage en
+   *  défaut du projet l'écrit. */
+  onUnivers?: (univers: Univers) => void
 }) {
-  const { recette, regler, poser, revenirAuBrut, enVol } = useRecette(asset, onErreur)
+  const { recette, setRecette, regler, poser, revenirAuBrut, enVol } = useRecette(
+    asset,
+    onErreur,
+  )
   const mesures = useMesures(asset)
   const [ouverte, setOuverte] = useState<Table>("detourage")
-  const [temoin, setTemoin] = useState<Temoin>("apres")
-  const [zoom, setZoom] = useState<Zoom>(4)
+  const [travail, setTravail] = useState<Travail>("rendu")
+  const [temoin, setTemoin] = useState<Temoin>("aucun")
+  const [opacite, setOpacite] = useState(50)
   // **L'aperçu sur plusieurs fonds (B18)** — une préférence d'écran, jamais un
   // réglage de la recette : poser le sujet sur de l'herbe ne change pas un
   // pixel du fichier qui part dans le jeu. Le rendu porte déjà son alpha ; le
@@ -3016,9 +3223,14 @@ export function Retouche({
   // rend le même calcul côté serveur, pour l'export et pour l'essai.
   const [fondApercu, setFondApercu] = useState<FondApercu>("damier")
 
-  // Changer d'image rouvre la première table : garder celle d'avant ferait
-  // croire qu'on a réglé quelque chose sur celle qu'on vient d'ouvrir.
-  useEffect(() => setOuverte("detourage"), [asset.identifiant])
+  // ⚠️ **La table ouverte survit au changement d'image, délibérément**
+  // (`B24`) : passer d'une sœur à l'autre ne doit pas refermer la table sur
+  // laquelle on est — c'est le geste qui distingue une table d'un panneau, et
+  // c'est aussi le comportement réel de `Tables.tsx`/`App.tsx`, où `ouverte`
+  // est un état levé qu'aucune ouverture d'image ne réinitialise seule ; ce
+  // n'est que la fabrique qui se referme sur `detourage` en la quittant. Un
+  // effet posé ici sur `asset.identifiant` rouvrirait la première table à
+  // chaque sœur, ce qui est très exactement le défaut que ce critère interdit.
 
   // ── Les quatre surfaces à coordonnées (B23) ──────────────────────────────
 
@@ -3085,26 +3297,46 @@ export function Retouche({
     return () => window.removeEventListener("keydown", ecouter)
   }, [surface, recette, etatMain.actif, poser])
 
-  // ── Le grossissement, mesuré sur le cadre ────────────────────────────────
+  // ── Le grossissement, libre entre 1 et 250 % (`B24`, U2 déménagée) ───────
   //
-  // Le cadre est mesuré plutôt que deviné : sa largeur dépend de la fenêtre,
-  // et un cran de grossissement qui n'y tient pas afficherait un chiffre faux.
-  const cadre = useRef<HTMLDivElement>(null)
-  const [coteDuCadre, setCoteDuCadre] = useState(0)
+  // **Repris de `Tables.tsx`, tel quel.** Les crans ×1/×2/×4/×8 se rabattaient
+  // sur « réduite pour tenir dans le cadre » dès qu'une image de 1 024 px
+  // arrivait : un dessin ne se juge plus quand on n'en voit que ce que
+  // `object-contain` en laisse. Le pour cent libre descend sous cent — et
+  // c'est tout ce qui change.
+  // ⚠️ **Une `ref` posée dans une branche démontée perd son observateur**
+  // (`B24`) : `ouverte === "decoupage" | "superposition"` démonte ce cadre
+  // pour poser la fabrique à sa place, React y remonte un nœud DOM neuf au
+  // retour, et un `ResizeObserver` armé une fois pour toutes (`[]`) continue
+  // d'observer l'ancien nœud, orphelin — la fenêtre cesse d'être suivie après
+  // le premier aller-retour par une fabrique. Une `ref` de rappel réarme
+  // l'observateur à chaque nœud reçu, y compris le second.
+  const [noeudCadre, setNoeudCadre] = useState<HTMLDivElement | null>(null)
+  const [dispo, setDispo] = useState({ largeur: 0, hauteur: 0 })
   useEffect(() => {
-    const noeud = cadre.current
+    const noeud = noeudCadre
     if (!noeud) return
     const mesurer = () =>
-      // Les 22 px de marge intérieure, des deux côtés. Zéro veut dire *pas
-      // encore mesuré* — sous `jsdom` il n'y a aucune mise en page, et un
-      // cadre inconnu ne doit retirer aucun cran.
-      setCoteDuCadre(Math.max(0, Math.min(noeud.clientWidth, noeud.clientHeight) - 44))
+      setDispo((deja) => {
+        // Les 22 px de marge intérieure, des deux côtés. Zéro veut dire *pas
+        // encore mesuré* — sous `jsdom` il n'y a aucune mise en page, et un
+        // cadre inconnu ne doit retirer aucun cran.
+        const largeur = Math.max(0, noeud.clientWidth - 44)
+        const hauteur = Math.max(0, noeud.clientHeight - 44)
+        return deja.largeur === largeur && deja.hauteur === hauteur
+          ? deja
+          : { largeur, hauteur }
+      })
     mesurer()
     if (typeof ResizeObserver === "undefined") return
     const oeil = new ResizeObserver(mesurer)
     oeil.observe(noeud)
     return () => oeil.disconnect()
-  }, [])
+  }, [noeudCadre])
+
+  const [zoom, setZoom] = useState<ZoomTable>("ajuste")
+  // Changer d'image rouvre en ajusté, pour la même raison que la table.
+  useEffect(() => setZoom("ajuste"), [asset.identifiant])
 
   // **Le damier cède la place au fond choisi**, et seulement sur la table du
   // contour — c'est elle qui pose la question, les sept autres n'en ont pas
@@ -3112,46 +3344,65 @@ export function Retouche({
   // l'ôter, sans quoi la couleur posée sur le cadre ne se verrait jamais.
   const montreUnFond = ouverte === "contours" && FONDS_APERCU[fondApercu] !== null
 
-  /** Le plus grand côté à montrer — deux images côte à côte se partagent la
-   *  place, donc le témoin « les deux » compte double. **Une surface est
-   *  seule** : elle prend la place de l'image, elle ne s'ajoute pas à elle. */
-  const coteDeLImage =
-    Math.max(
-      asset.largeur,
-      asset.hauteur,
-      asset.rendu_largeur || 0,
-      asset.rendu_hauteur || 0,
-    ) * (surface === null && temoin === "deux" ? 2 : 1)
-  const zoomsTenables = ZOOMS.filter(
-    (z) => coteDuCadre === 0 || coteDeLImage * z <= coteDuCadre,
-  )
-  const zoomTenu: Zoom = zoomsTenables.includes(zoom)
-    ? zoom
-    : (zoomsTenables.at(-1) ?? 1)
+  /** Ce qu'on regarde vraiment. **Le rendu peut faire 64 px là où l'origine
+   *  en fait 1 024** : le pour cent ajusté se calcule sur celle des deux
+   *  qu'on travaille, jamais sur l'autre.
+   *
+   *  ⚠️ **Et quand une surface est posée, c'est elle qu'on regarde** (`B23`,
+   *  fusionné en `B24`). Elle prend la place de l'image, et ses coordonnées ne
+   *  sont pas celles que `travail` désigne : trois des quatre travaillent en
+   *  pixels du brut, la main sur le rendu. Mesurer l'ajusté sur l'autre côté
+   *  rendrait un pour cent qui ne fait tenir personne — une surface de
+   *  2 048 px ajustée sur un rendu de 64 px sortirait du cadre de tous les
+   *  côtés à la fois, et c'est très exactement le coin haut-gauche qu'on ne
+   *  pourrait plus atteindre. */
+  const largeurVue =
+    (surface !== null
+      ? coteDeLaSurface[0]
+      : travail === "brut"
+        ? asset.largeur
+        : asset.rendu_largeur || asset.largeur) || 1
+  const hauteurVue =
+    (surface !== null
+      ? coteDeLaSurface[1]
+      : travail === "brut"
+        ? asset.hauteur
+        : asset.rendu_hauteur || asset.hauteur) || 1
 
-  /** **Aucun cran ne tient : la surface se réduit au cadre.** Un cran choisi
-   *  qui dépasse, on le fait défiler — c'est voulu, et ça ne change pas. Mais
-   *  quand même ×1 ne tient pas, `zoomTenu` retombe à 1 sans que personne
-   *  l'ait demandé, et la surface prend alors sa taille en pixels réels : une
-   *  image de 1 024 dans un cadre de 545 laisse son coin haut-gauche hors
-   *  d'atteinte pour toujours, parce qu'un enfant centré qui déborde ne se
-   *  défile que de la moitié du débordement de chaque côté. On ne pourrait
-   *  plus y poser un coin de recadrage, y viser un pixel, y commencer un
-   *  tracé, y peindre. L'ancien écran montait ces mêmes surfaces en
-   *  `h-full w-full`, toujours contenues quelle que soit l'image ; ici on
-   *  fait pareil **en gardant les proportions**, parce que le curseur carré
-   *  de la main se place en pour cent de la boîte pendant que l'image s'y
-   *  contient : une boîte étirée les décalerait l'un de l'autre.
-   *  `rectangleDeLImage` convertit à la taille affichée, donc réduire la
-   *  surface ne décale aucune coordonnée envoyée. */
-  const surfaceAuCadre = zoomsTenables.length === 0
-  /** Ce par quoi multiplier le côté de la surface : le cran tenu, ou le repli
-   *  au cadre quand aucun cran ne tient. `coteDuCadre` est déjà le plus petit
-   *  côté du cadre moins ses marges, donc la boîte y entre dans les deux
-   *  sens. */
-  const echelleDeLaSurface = surfaceAuCadre
-    ? coteDuCadre / Math.max(coteDeLaSurface[0], coteDeLaSurface[1], 1)
-    : zoomTenu
+  /** **Le pour cent qui fait tenir l'image entière dans le cadre.** Il
+   *  descend sous cent, et il ne s'arrondit à aucun multiple : la règle des
+   *  multiples entiers appartient à ce qui *montre* une image, pas à ce qui
+   *  la travaille. Deux images côte à côte se partagent la place, donc le
+   *  témoin « à côté » compte double. */
+  const ajuste = borner(
+    Math.min(
+      dispo.largeur > 0
+        ? dispo.largeur / (largeurVue * (temoin === "cote" ? 2 : 1))
+        : 1,
+      dispo.hauteur > 0 ? dispo.hauteur / hauteurVue : 1,
+    ) * 100 || 100,
+  )
+  const facteur = (zoom === "ajuste" ? ajuste : zoom) / 100
+
+  /** **La surface est réduite pour tenir dans le cadre** (`B23`) — l'ajusté est
+   *  descendu sous cent parce que l'image ne rentrait pas autrement. C'était le
+   *  cas que les crans ×1/×2/×4/×8 ne savaient pas dire : ×1 ne tenait pas, la
+   *  surface prenait ses pixels réels, et le coin haut-gauche d'une image de
+   *  1 024 dans un cadre de 545 devenait inatteignable pour toujours — plus
+   *  moyen d'y poser un coin de recadrage, d'y viser un pixel, d'y peindre.
+   *  Le pour cent libre le dit maintenant tout seul, et le dit à l'écran.
+   *
+   *  L'attribut reste sur la figure parce que c'est la seule marque
+   *  observable de ce repli, et que `rectangleDeLImage` convertit à la taille
+   *  affichée : réduire la surface ne décale aucune coordonnée envoyée. */
+  const surfaceAuCadre = surface !== null && zoom === "ajuste" && ajuste < 100
+  /** Ce par quoi multiplier le côté de la surface. **Le même facteur que
+   *  l'image**, et pas une échelle à elle : la surface prend la place de
+   *  l'image, donc lui en donner une seconde ferait mentir le pour cent
+   *  affiché — l'invariant de `B24`. C'est `ajuste` qui la fait tenir dans le
+   *  cadre, et le `m-auto` du cadre qui garde ses deux coins atteignables
+   *  quand on la grossit au-delà. */
+  const echelleDeLaSurface = facteur
 
   const poste: Poste = {
     recette,
@@ -3183,6 +3434,82 @@ export function Retouche({
     [enVol, ouverte],
   )
 
+  // ── Ce qui voyage d'une image à l'autre (U5, déménagé en `B24`) ──────────
+  //
+  // **Le presse-papiers vit hors de React**, dans `Tables.tsx` — importé ici,
+  // pas recréé : copier dans un écran et coller dans l'autre doit rester un
+  // seul geste tant que les deux coexistent (`Tables.tsx`, `copiee`).
+  const [nommees, setNommees] = useState<string[]>([])
+  const [annonceRecette, setAnnonceRecette] = useState<string[] | null>(null)
+  const [aCopier, setACopier] = useState(lireLePressePapier() !== null)
+  const [recettesOuvertes, setRecettesOuvertes] = useState(false)
+
+  useEffect(() => setAnnonceRecette(null), [asset.identifiant])
+
+  /** Ce que le serveur a posé revient dans l'écran, recette comprise — coller
+   *  et appliquer ne passent pas par `poser` : c'est le serveur qui décide de
+   *  ce qui arrive. */
+  const recevoirRecette = (recu: { asset: Asset; laisse: string[] }) => {
+    setRecette(recu.asset.recette)
+    setAnnonceRecette(recu.laisse)
+  }
+
+  const recettes = {
+    nommees,
+    annonce: annonceRecette,
+    aCopier,
+    onLister: () => {
+      void api
+        .recettesNommees()
+        .then((recu) => setNommees(Object.keys(recu.recettes).sort()))
+        .catch(() => setNommees([]))
+    },
+    onCopier: () => {
+      copierDansLePressePapier(recette)
+      setACopier(true)
+      setAnnonceRecette(null)
+    },
+    onColler: () => {
+      const copiee = lireLePressePapier()
+      if (copiee === null) return
+      void api
+        .collerRecette(asset.identifiant, copiee)
+        .then(recevoirRecette)
+        .catch((erreur) =>
+          onErreur(erreur instanceof Error ? erreur.message : "collage refusé"),
+        )
+    },
+    onEnregistrer: (nom: string) => {
+      void api
+        .nommerRecette(nom, recette)
+        .then((recu) => {
+          setNommees(Object.keys(recu.recettes).sort())
+          setAnnonceRecette(recu.laisse)
+        })
+        .catch((erreur) =>
+          onErreur(
+            erreur instanceof Error ? erreur.message : "recette non enregistrée",
+          ),
+        )
+    },
+    onAppliquer: (nom: string) => {
+      void api
+        .appliquerRecette(asset.identifiant, nom)
+        .then(recevoirRecette)
+        .catch((erreur) =>
+          onErreur(erreur instanceof Error ? erreur.message : "recette refusée"),
+        )
+    },
+    onOublier: (nom: string) => {
+      void api
+        .oublierRecette(nom)
+        .then((recu) => setNommees(Object.keys(recu.recettes).sort()))
+        .catch((erreur) =>
+          onErreur(erreur instanceof Error ? erreur.message : "oubli refusé"),
+        )
+    },
+  }
+
   return (
     <main
       data-retouche
@@ -3198,7 +3525,42 @@ export function Retouche({
           >
             ‹ Ses images
           </button>
-          <span className="text-[12.5px] text-encre-3">{asset.label}</span>
+          <span className="min-w-0 truncate text-[12.5px] text-encre-3">{asset.label}</span>
+
+          {/* **Les recettes vivent au bout du bandeau**, comme dans
+              `Tables.tsx` : elles ont la portée de la recette entière, pas
+              d'une table, et un geste de portée générale ne se cherche pas au
+              milieu d'une colonne. */}
+          <div className="relative ml-auto shrink-0">
+            <button
+              type="button"
+              aria-expanded={recettesOuvertes}
+              onClick={() => setRecettesOuvertes((deja) => !deja)}
+              className={[
+                "h-[26px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
+                recettesOuvertes
+                  ? "border-encre-4 bg-carte text-encre"
+                  : "border-trait bg-carte text-encre-2 hover:border-encre-4 hover:text-encre",
+              ].join(" ")}
+            >
+              Recettes ›
+            </button>
+            {recettesOuvertes && (
+              <PanneauDesRecettes
+                recette={recette}
+                nommees={recettes.nommees}
+                annonce={recettes.annonce}
+                aCopier={recettes.aCopier}
+                onFermer={() => setRecettesOuvertes(false)}
+                onLister={recettes.onLister}
+                onCopier={recettes.onCopier}
+                onColler={recettes.onColler}
+                onEnregistrer={recettes.onEnregistrer}
+                onAppliquer={recettes.onAppliquer}
+                onOublier={recettes.onOublier}
+              />
+            )}
+          </div>
         </div>
 
         <div className="flex items-end justify-between gap-[22px]">
@@ -3263,115 +3625,191 @@ export function Retouche({
           })}
         </div>
 
+        {/* **La fabrique prend le cadre entier.** Elle ne pose rien sur
+            l'image ouverte : elle en écrit d'autres, et le montrer entre une
+            colonne de réglages et une colonne de sœurs mentirait sur ce
+            qu'elle fait — la règle de `Tables.tsx` (`B24`). */}
+        {ouverte === "decoupage" ? (
+          <div className="flex min-h-0 flex-1 overflow-hidden pb-[22px]">
+            {decoupe(() => setOuverte("detourage"))}
+          </div>
+        ) : ouverte === "superposition" ? (
+          <div className="flex min-h-0 flex-1 overflow-hidden pb-[22px]">
+            <EcranSuperposition
+              asset={asset}
+              soeurs={soeurs}
+              onErreur={onErreur}
+              onFabrique={(nees) => nees.length > 0 && onSoeur(nees[0].identifiant)}
+            />
+          </div>
+        ) : (
         <div className="flex min-h-0 flex-1 gap-[22px] overflow-hidden pb-[22px]">
           {/* ── L'image, et rien par-dessus ─────────────────────────────── */}
           <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
-            <div className="flex items-center justify-between gap-[8px]">
+            <div className="flex flex-wrap items-center justify-between gap-[8px]">
               <span className="min-w-0 truncate text-[12.5px] text-encre-2">
                 {CE_QUE_LA_TABLE_FAIT[ouverte]}
               </span>
-              {/* ⚠️ **Un grossissement affiché est un grossissement appliqué.**
-                  Vu au navigateur sur un jeu en dessin : l'écran disait ×4 sur
-                  une image de 2 048 px que le cadre réduisait en fait à un
-                  cinquième. Les crans que le cadre ne peut pas tenir sont donc
-                  retirés, et quand aucun ne tient, la rangée cède la place à la
-                  phrase qui dit ce qui se passe vraiment. **Et ce qu'elle dit
-                  arrive** : les deux images du témoin se contiennent dans le
-                  cadre, et la surface s'y réduit aussi (`surfaceAuCadre`). Il
-                  n'y a pas de cas où cette phrase paraît sur une image qui
-                  déborde. */}
-              {zoomsTenables.length > 0 ? (
-                <div data-zoom className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]">
-                  {zoomsTenables.map((z) => (
-                    <button
-                      key={z}
-                      type="button"
-                      aria-pressed={zoomTenu === z}
-                      onClick={() => setZoom(z)}
-                      className={[
-                        "flex h-[26px] min-w-[22px] items-center justify-center rounded-7 text-[12px] transition-colors duration-120",
-                        zoomTenu === z
-                          ? "bg-carte font-medium text-encre"
-                          : "text-encre-3 hover:text-encre",
-                      ].join(" ")}
-                    >
-                      ×{z}
-                    </button>
-                  ))}
+
+              <div className="flex flex-wrap items-center gap-[8px]">
+                {/* ⚠️ **Un grossissement affiché est un grossissement
+                    appliqué.** Vu au navigateur sur un jeu en dessin : l'écran
+                    disait ×4 sur une image de 2 048 px que le cadre réduisait
+                    en fait à un cinquième. Le pour cent libre descend en
+                    dessous de cent au lieu de se rabattre sur une phrase :
+                    l'image entière se voit toujours, à un pour cent qui est le
+                    pour cent appliqué. **Et ce qu'il dit arrive aussi pour la
+                    surface** (`B23`) : c'est elle que l'ajusté mesure quand
+                    elle est posée, donc elle tient dans le cadre comme
+                    l'image. */}
+                <div data-zoom className="flex items-center gap-[4px] rounded-8 bg-papier-cote p-[4px]">
+                  <CommandesDuZoom zoom={zoom} onZoom={setZoom} ajuste={ajuste} />
                 </div>
-              ) : (
-                <span data-zoom-impossible className="mesure text-[10.5px] text-encre-4">
-                  réduite pour tenir dans le cadre
-                </span>
-              )}
-              <div
-                data-temoin
-                className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]"
-              >
-                {(Object.keys(CE_QUE_LE_TEMOIN_MONTRE) as Temoin[]).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    aria-pressed={temoin === t}
-                    onClick={() => setTemoin(t)}
-                    className={[
-                      "flex h-[26px] items-center rounded-7 px-[8px] text-[12px] transition-colors duration-120",
-                      temoin === t
-                        ? "bg-carte font-medium text-encre"
-                        : "text-encre-3 hover:text-encre",
-                    ].join(" ")}
-                  >
-                    {CE_QUE_LE_TEMOIN_MONTRE[t]}
-                  </button>
-                ))}
-              </div>
-              {/* **Sur plusieurs fonds, seulement là où la question se pose**
-                  (B18) — les autres tables n'ont pas à en tenir compte, et le
-                  proposer partout aurait dilué l'unique raison d'être de
-                  celui-ci : voir si le trait se détache. */}
-              {ouverte === "contours" && (
-                <div
-                  data-fond-apercu
-                  className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]"
-                >
-                  {(Object.keys(FONDS_APERCU) as FondApercu[]).map((f) => (
+
+                {/* **« Sur », et « témoin » — deux questions, deux contrôles**
+                    (`Comparateur`, `Tables.tsx`, `B24`). Le premier dit quelle
+                    image porte le regard, le second dit ce qu'on met à côté
+                    pour comparer ; aucun croisement n'est interdit. */}
+                <div data-travail className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]">
+                  {(Object.keys(CE_QU_ON_TRAVAILLE) as Travail[]).map((t) => (
                     <button
-                      key={f}
+                      key={t}
                       type="button"
-                      aria-pressed={fondApercu === f}
-                      onClick={() => setFondApercu(f)}
+                      aria-pressed={travail === t}
+                      onClick={() => setTravail(t)}
                       className={[
                         "flex h-[26px] items-center rounded-7 px-[8px] text-[12px] transition-colors duration-120",
-                        fondApercu === f
+                        travail === t
                           ? "bg-carte font-medium text-encre"
                           : "text-encre-3 hover:text-encre",
                       ].join(" ")}
                     >
-                      {f === "damier" ? "Damier" : f[0].toUpperCase() + f.slice(1)}
+                      {CE_QU_ON_TRAVAILLE[t]}
                     </button>
                   ))}
                 </div>
-              )}
+
+                <div
+                  data-temoin
+                  className="flex items-center gap-[4px] rounded-8 bg-papier-cote p-[4px]"
+                >
+                  {(Object.keys(CE_QUE_LE_TEMOIN_MONTRE) as Temoin[]).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      aria-pressed={temoin === t}
+                      onClick={() => setTemoin(t)}
+                      className={[
+                        "flex h-[26px] items-center rounded-7 px-[8px] text-[12px] transition-colors duration-120",
+                        temoin === t
+                          ? "bg-carte font-medium text-encre"
+                          : "text-encre-3 hover:text-encre",
+                      ].join(" ")}
+                    >
+                      {CE_QUE_LE_TEMOIN_MONTRE[t]}
+                    </button>
+                  ))}
+                  {temoin === "dessus" && (
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={opacite}
+                      aria-label="Opacité du témoin par-dessus"
+                      onChange={(e) => setOpacite(Number(e.target.value))}
+                      className="w-[70px]"
+                    />
+                  )}
+                </div>
+
+                {/* **Sur plusieurs fonds, seulement là où la question se
+                    pose** (B18) — les autres tables n'ont pas à en tenir
+                    compte, et le proposer partout aurait dilué l'unique
+                    raison d'être de celui-ci : voir si le trait se détache. */}
+                {ouverte === "contours" && (
+                  <div
+                    data-fond-apercu
+                    className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]"
+                  >
+                    {(Object.keys(FONDS_APERCU) as FondApercu[]).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        aria-pressed={fondApercu === f}
+                        onClick={() => setFondApercu(f)}
+                        className={[
+                          "flex h-[26px] items-center rounded-7 px-[8px] text-[12px] transition-colors duration-120",
+                          fondApercu === f
+                            ? "bg-carte font-medium text-encre"
+                            : "text-encre-3 hover:text-encre",
+                        ].join(" ")}
+                      >
+                        {f === "damier" ? "Damier" : f[0].toUpperCase() + f.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div
-              ref={cadre}
+              ref={setNoeudCadre}
               data-scene-de-retouche
               style={montreUnFond ? { backgroundColor: FONDS_APERCU[fondApercu] as string } : undefined}
-              className="flex min-h-[300px] flex-1 items-center justify-center gap-[8px] overflow-auto rounded-8 bg-pourtour p-[22px]"
+              className="flex min-h-[300px] flex-1 overflow-auto rounded-8 bg-pourtour p-[22px]"
             >
-              {/* ── La surface qui reçoit le geste (B23) ───────────────────
-                  **Elle prend la place de l'image, elle ne se pose pas
-                  dessus.** Les quatre portent leur propre image — le brut pour
-                  les trois qui travaillent en pixels d'origine, le rendu pour
-                  la main —, et le cadre qui les tient *est* l'image, à la
-                  taille du grossissement choisi : une boîte qui ment décale ce
-                  qu'on pose dedans.
+              {/* **`m-auto` sur la boîte, jamais `justify-center` sur le
+                  cadre qui défile** (`B24`) : un contenu centré par
+                  `justify-center` déborde des deux côtés à la fois et le
+                  début — le bord gauche, le haut — devient inatteignable au
+                  défilement. C'est très exactement le piège que `Tables.tsx`
+                  a réparé pour son propre zoom ; même remède ici, et c'est
+                  aussi ce qui garde les coins de la surface (`B23`)
+                  atteignables quand on la grossit au-delà de l'ajusté. */}
+              <div className="m-auto flex shrink-0 items-center gap-[8px]">
+                {temoin === "cote" && (
+                  <figure className="flex min-w-0 flex-col items-center gap-[4px]">
+                    <img
+                      src={imageAsset(asset, travail !== "brut")}
+                      alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
+                      width={Math.max(
+                        1,
+                        Math.round(
+                          (travail === "brut" ? asset.rendu_largeur || asset.largeur : asset.largeur) *
+                            facteur,
+                        ),
+                      )}
+                      height={Math.max(
+                        1,
+                        Math.round(
+                          (travail === "brut" ? asset.rendu_hauteur || asset.hauteur : asset.hauteur) *
+                            facteur,
+                        ),
+                      )}
+                      style={{ imageRendering: "pixelated" }}
+                      className="damier block max-h-full min-w-0 object-contain"
+                    />
+                    <figcaption className="mesure text-[10.5px] text-carte">
+                      témoin ·{" "}
+                      {travail === "brut" ? asset.rendu_largeur || asset.largeur : asset.largeur}×
+                      {travail === "brut" ? asset.rendu_hauteur || asset.hauteur : asset.hauteur}
+                    </figcaption>
+                  </figure>
+                )}
 
-                  ⚠️ **Sauf quand aucun cran ne tient** : la boîte se réduit
-                  alors au cadre, sans quoi un coin de l'image resterait hors
-                  d'atteinte pour toujours. Voir `surfaceAuCadre`. */}
-              {surface !== null && (
+                {/* ── La surface qui reçoit le geste (B23) ─────────────────
+                    **Elle prend la place de l'image, elle ne se pose pas
+                    dessus.** Les quatre portent leur propre image — le brut
+                    pour les trois qui travaillent en pixels d'origine, le
+                    rendu pour la main —, et le cadre qui les tient *est*
+                    l'image, à la taille du grossissement choisi : une boîte
+                    qui ment décale ce qu'on pose dedans.
+
+                    ⚠️ **Elle est ce que l'ajusté mesure.** Le pour cent qui
+                    fait tenir l'image se calcule sur ses côtés à elle dès
+                    qu'elle est posée, sans quoi un coin resterait hors
+                    d'atteinte. Voir `surfaceAuCadre`. */}
+                {surface !== null ? (
                 <figure
                   data-surface={surface}
                   data-surface-au-cadre={surfaceAuCadre ? "" : undefined}
@@ -3387,7 +3825,7 @@ export function Retouche({
                     {surface === "main" ? (
                       <ToileDeLaMain
                         asset={asset}
-                        avant={temoin === "avant"}
+                        avant={travail === "brut"}
                         etat={etatMain}
                         onPassage={(trait) =>
                           void poser({
@@ -3461,49 +3899,65 @@ export function Retouche({
                     {coteDeLaSurface[1]}
                   </figcaption>
                 </figure>
-              )}
-
-              {surface === null && (temoin === "avant" || temoin === "deux") && (
+                ) : (
                 <figure className="flex min-w-0 flex-col items-center gap-[4px]">
-                  <img
-                    src={imageAsset(asset, true)}
-                    alt={`${asset.label}, avant`}
-                    width={asset.largeur * zoomTenu}
-                    height={asset.hauteur * zoomTenu}
-                    style={{ imageRendering: "pixelated" }}
-                    className={[
-                      montreUnFond ? "" : "damier",
-                      "block max-h-full min-w-0 object-contain",
-                    ].join(" ")}
-                  />
-                  <figcaption className="mesure text-[10.5px] text-carte">
-                    avant · {asset.largeur}×{asset.hauteur}
-                  </figcaption>
-                </figure>
-              )}
-              {surface === null && (temoin === "apres" || temoin === "deux") && (
-                <figure className="flex min-w-0 flex-col items-center gap-[4px]">
-                  <img
-                    src={imageAsset(asset)}
-                    alt={`${asset.label}, après`}
-                    width={(asset.rendu_largeur || asset.largeur) * zoomTenu}
-                    height={(asset.rendu_hauteur || asset.hauteur) * zoomTenu}
-                    style={{ imageRendering: "pixelated" }}
-                    className={[
-                      montreUnFond ? "" : "damier",
-                      "block max-h-full min-w-0 object-contain",
-                    ].join(" ")}
-                  />
+                  {/* **Le calque de témoin ne partage son conteneur relatif
+                      qu'avec l'image qu'il double** (`B24`) : posé plus haut,
+                      dans une `<figure>` qui contenait aussi la légende, il
+                      se décalait de l'image — mesuré au navigateur, +9 px au
+                      repos et hors-échelle à 250 %. `Tables.tsx` ne met rien
+                      d'autre que l'image dans son `<span className="relative">` ;
+                      la légende sort donc du conteneur relatif, et le
+                      `<span>` porte la taille exacte de l'image affichée pour
+                      que le calque en `h-full w-full` coïncide au pixel. */}
+                  <span
+                    className="relative block max-h-full min-w-0"
+                    style={{
+                      width: Math.max(1, Math.round(largeurVue * facteur)),
+                      height: Math.max(1, Math.round(hauteurVue * facteur)),
+                    }}
+                  >
+                    <img
+                      src={imageAsset(asset, travail === "brut")}
+                      alt={asset.label}
+                      width={Math.max(1, Math.round(largeurVue * facteur))}
+                      height={Math.max(1, Math.round(hauteurVue * facteur))}
+                      style={{ imageRendering: "pixelated" }}
+                      className={[
+                        montreUnFond ? "" : "damier",
+                        "block h-full w-full object-contain",
+                      ].join(" ")}
+                    />
+                    {/* **Un calque de lecture, et il ne prend pas le pointeur.**
+                        Le curseur d'opacité continue de dire ce qu'on voit ; une
+                        image posée par-dessus qui intercepterait les clics serait
+                        le défaut que `Tables.tsx` a réparé en U2. */}
+                    {temoin === "dessus" && (
+                      <img
+                        src={imageAsset(asset, travail !== "brut")}
+                        alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
+                        style={{ imageRendering: "pixelated", opacity: opacite / 100 }}
+                        className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                      />
+                    )}
+                  </span>
                   {/* **La taille rendue est écrite sous l'image**, parce que
                       c'est le seul endroit où le contour se voit changer les
                       dimensions du fichier qui part dans le jeu. */}
                   <figcaption className="mesure text-[10.5px] text-carte">
-                    après · {asset.rendu_largeur || asset.largeur}×
-                    {asset.rendu_hauteur || asset.hauteur}
+                    {travail === "brut" ? "brut" : "rendu"} · {largeurVue}×{hauteurVue}
                   </figcaption>
                 </figure>
-              )}
+                )}
+              </div>
             </div>
+
+            {/* **Le seul état durable qui change ce qu'un outil touche.** Il
+                se redit en ambre sous l'image, sinon on juge la mauvaise —
+                repris de `Comparateur` (`Tables.tsx`, `B24`). */}
+            {travail === "brut" && (
+              <span className="text-[10.5px] text-epingle">on travaille sur le brut</span>
+            )}
 
             {/* **La jauge est sous l'image, jamais dessus** — et elle ne
                 paraît qu'au-delà de 240 ms. */}
@@ -3546,7 +4000,12 @@ export function Retouche({
             ) : endormie ? (
               <Pourquoi texte="endormie : ses réglages sont gardés et se retrouvent tels quels au réveil" />
             ) : ouverte === "detourage" ? (
-              <ReglagesDuDetourage {...poste} />
+              <ReglagesDuDetourage
+                {...poste}
+                asset={asset}
+                onErreur={onErreur}
+                onUnivers={onUnivers}
+              />
             ) : ouverte === "recadrage" ? (
               <ReglagesDuRecadrage {...poste} />
             ) : ouverte === "grille" ? (
@@ -3561,12 +4020,7 @@ export function Retouche({
               <ReglagesDuRetournement {...poste} />
             ) : ouverte === "main" ? (
               <ReglagesDeLaMain {...poste} />
-            ) : (
-              <LaFabrique
-                table={ouverte}
-                onAller={ouverte === "decoupage" ? onDecouper : onSuperposer}
-              />
-            )}
+            ) : null}
 
             <div className="mt-auto flex flex-col gap-[8px] border-t border-trait pt-[14px]">
               <button
@@ -3584,9 +4038,349 @@ export function Retouche({
               <Pourquoi texte="un calcul ne s'interrompt pas — 28 ms pour la chaîne, 1,3 s au pire pour un modèle ; ce qui se défait, c'est le réglage" />
             </div>
           </aside>
+
+          {/* ── Ses sœurs (`B24`, déménagé de `Tables.tsx`) ────────────────
+              **On passe à la sœur suivante sans que la table ouverte se
+              referme** : c'est le geste qui distingue une table d'un
+              panneau, et la barre se rafraîchit d'elle-même sur `asset`. */}
+          <aside
+            data-ses-soeurs
+            aria-label="Ses sœurs"
+            className="flex w-[128px] shrink-0 flex-col gap-[8px] overflow-y-auto rounded-8 bg-papier-cote p-[14px]"
+          >
+            <Etiquette>ses sœurs</Etiquette>
+            <div className="flex flex-wrap content-start gap-[6px]">
+              {soeurs.map((soeur) => (
+                <SoeurDuCarnet
+                  key={soeur.identifiant}
+                  asset={soeur}
+                  courante={soeur.identifiant === asset.identifiant}
+                  onChoisir={() => onSoeur(soeur.identifiant)}
+                />
+              ))}
+              {soeurs.length === 0 && (
+                <p className="text-[10.5px] text-encre-4">cette image n'a pas de voisine</p>
+              )}
+            </div>
+          </aside>
         </div>
+        )}
       </div>
     </main>
+  )
+}
+
+/** Une sœur, dans sa colonne (`Tables.tsx`, déménagée en `B24`). */
+function SoeurDuCarnet({
+  asset,
+  courante,
+  onChoisir,
+}: {
+  asset: Asset
+  courante: boolean
+  onChoisir: () => void
+}) {
+  const visee = useVisee(sujetAsset(asset))
+  return (
+    <button
+      type="button"
+      onClick={onChoisir}
+      onPointerEnter={visee.entrer}
+      onPointerLeave={visee.sortir}
+      aria-pressed={courante}
+      title={asset.label}
+      className={[
+        "overflow-hidden rounded-7 border p-[2px] transition-colors duration-120",
+        courante ? "border-encre-4" : "border-transparent hover:border-trait",
+      ].join(" ")}
+    >
+      <img
+        src={sujetAsset(asset).src}
+        alt={asset.label}
+        className="damier h-[48px] w-[48px] object-contain"
+        style={{ imageRendering: "pixelated" }}
+      />
+    </button>
+  )
+}
+
+/** *moins*, le pour cent, *plus*, et le retour à cent — **repris de
+ *  `CommandesDeZoom` (`Tables.tsx`, U2/`B24`)**, seul l'habillage passe au
+ *  papier du carnet. Le champ suit le zoom effectif, y compris en `ajusté` :
+ *  un champ vide pendant qu'on regarde une image à 59 % laisserait deviner le
+ *  nombre. */
+function CommandesDuZoom({
+  zoom,
+  onZoom,
+  ajuste,
+}: {
+  zoom: ZoomTable
+  onZoom: (zoom: ZoomTable) => void
+  ajuste: number
+}) {
+  const effectif = zoom === "ajuste" ? ajuste : zoom
+  const [ecrit, setEcrit] = useState<string | null>(null)
+
+  const valider = (texte: string) => {
+    setEcrit(null)
+    const lu = Number.parseInt(texte.replace(/[^\d]/g, ""), 10)
+    // **Hors bornes, on ramène — on ne refuse pas.**
+    if (Number.isFinite(lu)) onZoom(borner(lu))
+  }
+
+  return (
+    <span className="flex items-center gap-[4px]">
+      <button
+        type="button"
+        aria-label="Reculer"
+        title="Reculer"
+        disabled={effectif <= ZOOM_MIN}
+        onClick={() =>
+          onZoom(
+            borner([...ARRETS_ZOOM].reverse().find((a) => a < effectif) ?? ZOOM_MIN),
+          )
+        }
+        className="flex h-[26px] w-[26px] items-center justify-center rounded-7 text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint"
+      >
+        −
+      </button>
+      <input
+        type="text"
+        inputMode="numeric"
+        aria-label="Pour cent d'agrandissement"
+        value={ecrit ?? `${effectif}`}
+        onChange={(e) => setEcrit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") valider((e.target as HTMLInputElement).value)
+          // Échap rend la valeur d'avant — comme partout ailleurs.
+          if (e.key === "Escape") setEcrit(null)
+        }}
+        onBlur={(e) => ecrit !== null && valider(e.target.value)}
+        className="mesure h-[26px] w-[42px] rounded-7 border border-trait bg-carte px-[4px] text-right text-[12px] text-encre tabular-nums"
+      />
+      <span className="text-[12px] text-encre-4">%</span>
+      <button
+        type="button"
+        aria-label="Approcher"
+        title="Approcher"
+        disabled={effectif >= ZOOM_MAX}
+        onClick={() => onZoom(borner(ARRETS_ZOOM.find((a) => a > effectif) ?? ZOOM_MAX))}
+        className="flex h-[26px] w-[26px] items-center justify-center rounded-7 text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        title="Un pixel d'image pour un pixel d'écran"
+        aria-pressed={zoom === 100}
+        onClick={() => onZoom(100)}
+        className={[
+          "h-[26px] shrink-0 whitespace-nowrap rounded-7 px-[8px] text-[12px] transition-colors duration-120",
+          zoom === 100 ? "bg-carte font-medium text-encre" : "text-encre-3 hover:text-encre",
+        ].join(" ")}
+      >
+        100 %
+      </button>
+      <button
+        type="button"
+        title="Toute l'image dans le cadre"
+        aria-pressed={zoom === "ajuste"}
+        onClick={() => onZoom("ajuste")}
+        className={[
+          "h-[26px] shrink-0 whitespace-nowrap rounded-7 px-[8px] text-[12px] transition-colors duration-120",
+          zoom === "ajuste" ? "bg-carte font-medium text-encre" : "text-encre-3 hover:text-encre",
+        ].join(" ")}
+      >
+        ajusté
+      </button>
+    </span>
+  )
+}
+
+/** Les gestes qui font voyager une recette (U5, déménagé en `B24`).
+ *
+ *  **Repris de `PanneauDesRecettes` (`Tables.tsx`)**, avec le presse-papiers
+ *  qu'il importe plutôt qu'un second : copier ici, coller là doit rester le
+ *  même geste tant que les deux écrans coexistent. Seul l'habillage change. */
+function PanneauDesRecettes({
+  recette,
+  nommees,
+  onFermer,
+  onLister,
+  onCopier,
+  onColler,
+  onEnregistrer,
+  onAppliquer,
+  onOublier,
+  aCopier,
+  annonce,
+}: {
+  recette: Recette
+  nommees: string[]
+  onFermer: () => void
+  onLister: () => void
+  onCopier: () => void
+  onColler: () => void
+  onEnregistrer: (nom: string) => void
+  onAppliquer: (nom: string) => void
+  onOublier: (nom: string) => void
+  /** Y a-t-il quelque chose dans le presse-papiers ? */
+  aCopier: boolean
+  /** Ce que le serveur a laissé au dernier voyage, ou ce qui vient d'être
+   *  fait. **Rendue par le serveur, jamais recalculée ici** : la règle du
+   *  voyage vit d'un seul côté. */
+  annonce: string[] | null
+}) {
+  const [nom, setNom] = useState("")
+  const [aRemplacer, setARemplacer] = useState<string | null>(null)
+  const propre = nom.trim()
+  const dejaPris = nommees.includes(propre)
+
+  useEffect(() => {
+    const ecouter = (evenement: KeyboardEvent) => {
+      if (evenement.key === "Escape") onFermer()
+    }
+    window.addEventListener("keydown", ecouter)
+    return () => window.removeEventListener("keydown", ecouter)
+  }, [onFermer])
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => onLister(), [])
+
+  const enregistrer = () => {
+    if (!propre) return
+    // **Un nom déjà pris propose de remplacer, et ne remplace jamais en
+    // silence.**
+    if (dejaPris && aRemplacer !== propre) return setARemplacer(propre)
+    setARemplacer(null)
+    onEnregistrer(propre)
+  }
+
+  return (
+    <div
+      data-recettes
+      className="absolute right-0 top-full z-30 mt-[6px] w-[300px] rounded-8 border border-trait bg-carte p-[14px] text-left shadow-[0_4px_18px_rgba(0,0,0,.12)]"
+    >
+      {/* ── La séance ──────────────────────────────────────────────────── */}
+      <p className="mb-[8px] text-[11px] text-encre-4">
+        Les réglages de cette image, ailleurs
+      </p>
+      <div className="mb-[12px] flex gap-[8px]">
+        <button
+          type="button"
+          onClick={onCopier}
+          className="h-[28px] flex-1 rounded-7 border border-trait text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+        >
+          Copier les réglages
+        </button>
+        <button
+          type="button"
+          onClick={onColler}
+          disabled={!aCopier}
+          className="h-[28px] flex-1 rounded-7 border border-trait text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint disabled:hover:border-trait disabled:hover:text-eteint"
+        >
+          Coller
+        </button>
+      </div>
+      {!aCopier && (
+        <Pourquoi texte="rien de copié pour l'instant — copie d'abord les réglages d'une image." />
+      )}
+
+      {/* ── Ce qui survit à la séance ──────────────────────────────────── */}
+      <p className="mb-[8px] mt-[12px] border-t border-trait-faible pt-[12px] text-[11px] text-encre-4">
+        Les recettes nommées
+      </p>
+      <div className="mb-[8px] flex gap-[8px]">
+        <input
+          value={nom}
+          onChange={(evenement) => {
+            setNom(evenement.target.value)
+            setARemplacer(null)
+          }}
+          onKeyDown={(evenement) => evenement.key === "Enter" && enregistrer()}
+          placeholder="un nom pour ces réglages"
+          aria-label="le nom de la recette"
+          className="h-[28px] min-w-0 flex-1 rounded-7 border border-trait bg-papier px-[8px] text-[12px] text-encre placeholder:text-eteint"
+        />
+        <button
+          type="button"
+          onClick={enregistrer}
+          disabled={!propre}
+          className="h-[28px] shrink-0 rounded-7 border border-trait px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint"
+        >
+          {aRemplacer === propre ? "Remplacer ›" : "Enregistrer"}
+        </button>
+      </div>
+      {aRemplacer === propre && (
+        <Pourquoi
+          texte={`« ${propre} » existe déjà — reclique pour la remplacer par les réglages de cette image.`}
+        />
+      )}
+
+      {nommees.length === 0 ? (
+        <p className="text-[12px] text-encre-4">aucune recette nommée pour l'instant.</p>
+      ) : (
+        <ul className="flex max-h-[180px] flex-col overflow-y-auto">
+          {nommees.map((enregistree) => (
+            <li
+              key={enregistree}
+              className="flex items-center gap-[8px] border-t border-trait-faible py-[4px] first:border-t-0"
+            >
+              <span className="min-w-0 flex-1 truncate text-[12px] text-encre-2">
+                {enregistree}
+              </span>
+              <button
+                type="button"
+                onClick={() => onAppliquer(enregistree)}
+                className="shrink-0 text-[11px] text-encre-3 transition-colors duration-120 hover:text-encre"
+              >
+                appliquer
+              </button>
+              <button
+                type="button"
+                onClick={() => onOublier(enregistree)}
+                aria-label={`oublier « ${enregistree} »`}
+                className="shrink-0 text-[11px] text-encre-3 transition-colors duration-120 hover:text-echec"
+              >
+                oublier
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* **Ce qui n'a pas voyagé se dit là où le geste a eu lieu**, et reste
+          jusqu'au geste suivant. */}
+      {annonce !== null && (
+        <div
+          data-recettes-annonce
+          role="status"
+          className="mt-[12px] border-t border-trait-faible pt-[12px] text-[11px] leading-[1.5] text-encre-2"
+        >
+          {annonce.length === 0 ? (
+            <span>c'est posé — tous les réglages ont voyagé.</span>
+          ) : (
+            <>
+              <span className="text-epingle">
+                posé, sauf ce qui désignait un endroit de l'autre image :
+              </span>
+              <ul className="mt-[4px] flex flex-col gap-[2px] text-encre-4">
+                {annonce.map((phrase) => (
+                  <li key={phrase}>· {phrase}</li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* La recette courante en un mot. */}
+      <p className="mt-[12px] border-t border-trait-faible pt-[8px] text-[11px] text-encre-4">
+        {TABLES.filter((t) => valeur(t.cle, recette) !== null)
+          .map((t) => NOM_DE_LA_TABLE[t.cle])
+          .join(" · ") || "cette image n'a aucun réglage posé"}
+      </p>
+    </div>
   )
 }
 
