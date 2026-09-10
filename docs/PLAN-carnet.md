@@ -2411,10 +2411,28 @@ règles du jeu ne savent pas se relève avant de le retirer.
 
 ### Critères d'acceptation
 
-- [ ] La ligne *Les règles du jeu* du carnet n'ouvre plus `EcranUnivers`.
-- [ ] Un seul écran écrit `api.reglerUnivers`.
-- [ ] Ce que l'assistant savait faire est relevé point par point, et chaque point est soit
-      relogé, soit retiré avec sa raison écrite.
+- [x] La ligne *Les règles du jeu* du carnet n'ouvre plus `EcranUnivers` — elle ouvrait déjà
+      `ReglesDuJeu.tsx` depuis `B14`. La ligne qui menait encore à l'ancien est *La toile de
+      l'univers*, et c'est une autre porte : voir ci-dessous.
+- [x] Un seul écran règle chaque réglage de l'univers. `Assistant.tsx` et `ReglesDuJeu.tsx`
+      écrivaient **les mêmes champs** — c'était le doublon —, et l'assistant est parti. Les
+      deux autres appelants de `api.reglerUnivers` écrivent des champs **disjoints**, et
+      chacun est déjà nommé par `ReglesDAilleurs` : `ReglagesDeFamille.tsx` (`bareme`,
+      `modeles`) et `Retouche.tsx` (`detourage_*`).
+- [x] Les douze étapes de l'assistant sont relevées une par une en tête de
+      `ReglesDuJeu.tsx`, avec pour chacune où elle est relogée ou pourquoi elle est retirée.
+      Trois réglages n'avaient que lui pour les écrire et ont déménagé dans l'étape
+      *Son allure* : le nombre de couleurs, la couleur de fond, le réalignement du jeu.
+
+### Ce que la tranche n'a pas fait, et pourquoi
+
+**`Toile.tsx`, `Tableau.tsx`, `Ambiances.tsx` et `Univers.tsx` restent sur l'ancien
+châssis.** Leur passage au papier n'est pas un portage de jetons, c'est un dessin : les dix
+teintes d'îlot sont calibrées pour un fond sombre — *« dix à 4,6 : 1 sur `--color-fond-2` »*,
+dit `index.css` —, et la géométrie de la toile ne tient dans aucune des largeurs fermées de
+`docs/DESIGN.md` § Spacing. `Toile.dc.html` dessine la version papier ; **la reconstruire
+demande sa propre tranche**, et la ligne *La toile de l'univers* du carnet reste sa seule
+porte d'ici là. `Univers.tsx` a perdu son côté *Réglages* et n'en tient plus que deux.
 
 ### Bloquée par
 

@@ -14,7 +14,7 @@
 //    `/api/universe/views`, au caractère près. Une paraphrase à l'écran serait
 //    devenue fausse au premier mot changé dans `atelier/domaine/vue.py`.
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { ReglesDuJeu, dossierPrevu } from "./ReglesDuJeu"
@@ -97,6 +97,18 @@ function construireDouble(
   options: {
     univers?: Partial<Univers>
     sansEffet?: Record<string, string>
+    /** **Ce que l'atelier proposerait comme fond** (D3) — relogé de l'assistant
+     *  par `C2`. Le serveur le calcule sur la palette du jeu ; l'écran ne fait
+     *  que le montrer. */
+    fondPropose?: {
+      couleur: string
+      nom: string
+      ecart: number
+      voisine: string
+      raison: string | null
+    }
+    /** Ce que le double répond à `POST /api/board/realign`. */
+    realignement?: { realignes: number; conserves: number; sur_grille: boolean }
     /** Les jeux déjà nommés — le double y cherche un homonyme, comme le
      *  service, pour que l'avertissement soit joué et pas seulement affiché. */
     jeux?: string[]
@@ -119,7 +131,9 @@ function construireDouble(
     projet: "le-marais",
     univers,
     atelier: { champs: ["rendu", "vue"], sans_effet: sansEffet },
-    fond_propose: { couleur: "", distance: 0 },
+    fond_propose:
+      options.fondPropose ??
+      ({ couleur: "", nom: "", ecart: 0, voisine: "", raison: null } as const),
     artworks: [],
   })
 
@@ -184,7 +198,17 @@ function construireDouble(
             .map((c) => [c.nom, c.texte.trim()]),
         )
       }
-      for (const cle of ["style", "cible_px", "vue", "methode_pixels"] as const) {
+      for (const cle of [
+        "style",
+        "cible_px",
+        "vue",
+        "methode_pixels",
+        // **Les deux réglages relogés de l'assistant par `C2`** : le nombre de
+        // couleurs et la couleur de fond. Le double les pose comme le serveur,
+        // sans quoi l'essai ne prouverait que l'appel, jamais l'affichage.
+        "couleurs",
+        "fond",
+      ] as const) {
         if (body[cle] !== undefined) univers = { ...univers, [cle]: body[cle] }
       }
       // Les deux phrases de l'atelier se recalculent, comme au serveur.
@@ -222,6 +246,12 @@ function construireDouble(
         avertissement: homonyme ? `Un autre jeu s'appelle déjà « ${homonyme} ».` : "",
         bibliotheque: { projets: [], sans_projet: {}, courant: "le-marais" },
       })
+    }
+
+    if (url === "/api/universe/realign" && methode === "POST") {
+      return rendre(
+        options.realignement ?? { realignes: 12, conserves: 3, sur_grille: true },
+      )
     }
 
     throw new Error(`route non doublée dans cet essai : ${methode} ${url}`)
@@ -441,6 +471,145 @@ describe("l'étape de l'allure", () => {
     expect(await screen.findByText(/La taille — le côté du sprite/)).toBeTruthy()
     expect(screen.getByText(/La pixelisation/)).toBeTruthy()
     expect(screen.getByRole("button", { name: "au plus proche" })).toBeTruthy()
+  })
+})
+
+// ── Ce que `C2` a relogé de l'assistant ─────────────────────────────────────
+//
+// `Assistant.tsx` était le doublon vrai de cet écran, et trois choses n'avaient
+// que lui pour les écrire : le nombre de couleurs, la couleur de fond, et le
+// réalignement de tout le jeu. Le relevé complet de ses douze étapes est en
+// tête de `ReglesDuJeu.tsx` ; ce qui suit vérifie les trois qui ont déménagé.
+
+describe("les réglages relogés de l'assistant (C2)", () => {
+  test("le nombre de couleurs se pose, et l'écran montre la valeur posée", async () => {
+    const { fetchDouble, appels } = construireDouble({
+      univers: { style: "pixel", cible_px: 64, couleurs: 16 },
+    })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    // **On cherche dans le groupe, jamais dans l'écran** : 32 et 64 sont à la
+    // fois des tailles de sprite et des nombres de couleurs, et les deux
+    // rangées de boutons se touchent.
+    const couleurs = within(
+      await screen.findByRole("group", { name: "Les couleurs demandées" }),
+    )
+    const trente_deux = couleurs.getByRole("button", { name: "32" })
+    expect(
+      couleurs.getByRole("button", { name: "16" }).getAttribute("aria-pressed"),
+    ).toBe("true")
+
+    fireEvent.click(trente_deux)
+
+    await waitFor(() =>
+      expect(trente_deux.getAttribute("aria-pressed")).toBe("true"),
+    )
+    const envoi = appels.find(
+      (a) => a.url === "/api/universe" && a.methode === "PUT",
+    )!
+    expect((envoi.corps as { couleurs: number }).couleurs).toBe(32)
+  })
+
+  test("les paliers de couleurs sont plafonnés par la taille du sprite", async () => {
+    const { fetchDouble } = construireDouble({
+      univers: { style: "pixel", cible_px: 32, couleurs: 16 },
+    })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    const groupe = await screen.findByRole("group", { name: "Les couleurs demandées" })
+    // 64, 128 et 256 ne paraissent pas : un sprite de 32 carrés de côté ne
+    // porte pas tant de teintes distinctes, et le dire évite qu'une liste
+    // courte se lise comme une panne.
+    expect(
+      Array.from(groupe.querySelectorAll("button")).map((b) => b.textContent),
+    ).toEqual(["8", "16", "32"])
+    expect(screen.getByText(/ne porte pas plus de 32 couleurs/)).toBeTruthy()
+  })
+
+  test("en dessin, le nombre de couleurs ne paraît pas — un dessin garde ses nuances", async () => {
+    const { fetchDouble } = construireDouble({ univers: { style: "dessin" } })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    await screen.findByRole("button", { name: "Dessin" })
+    expect(screen.queryByRole("group", { name: "Les couleurs demandées" })).toBeNull()
+  })
+
+  test("sans fond posé, le damier le dit, et la proposition du serveur se prend d'un clic", async () => {
+    const { fetchDouble, appels } = construireDouble({
+      univers: { style: "pixel", cible_px: 64, fond: "" },
+      fondPropose: {
+        couleur: "#ff00c8",
+        nom: "magenta",
+        ecart: 192,
+        voisine: "brun de robe",
+        raison: null,
+      },
+    })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    expect(await screen.findByText("aucun fond posé")).toBeTruthy()
+    // **Le prix est dit avec la proposition** : l'écart, et sur quoi il a été
+    // mesuré. Un chiffre nu ne se lirait pas.
+    expect(
+      screen.getByText(/à 192 de brun de robe, la couleur de ton jeu la plus proche/),
+    ).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Prendre magenta" }))
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/universe" &&
+            a.methode === "PUT" &&
+            (a.corps as { fond?: string }).fond === "#ff00c8",
+        ),
+      ).toBe(true),
+    )
+    // Et l'écran montre le fond posé, avec l'avertissement qui va avec.
+    expect(await screen.findByText("#ff00c8")).toBeTruthy()
+    expect(screen.getByText(/les images tirées avant ne se comparent plus/)).toBeTruthy()
+  })
+
+  test("le fond posé se retire, et l'écran repasse au damier", async () => {
+    const { fetchDouble, appels } = construireDouble({
+      univers: { style: "pixel", cible_px: 64, fond: "#ff00c8" },
+    })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    fireEvent.click(await screen.findByRole("button", { name: "Retirer" }))
+
+    await waitFor(() => expect(screen.getByText("aucun fond posé")).toBeTruthy())
+    const envoi = appels.find(
+      (a) => a.url === "/api/universe" && a.methode === "PUT",
+    )!
+    expect((envoi.corps as { fond: string }).fond).toBe("")
+  })
+
+  test("réaligner tout le jeu dit ce qu'il a fait, sous son bouton", async () => {
+    const { fetchDouble } = construireDouble({
+      univers: { style: "pixel", cible_px: 64 },
+      realignement: { realignes: 12, conserves: 3, sur_grille: false },
+    })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Réappliquer la palette à tout le jeu" }),
+    )
+
+    // **Sans remise sur grille, on le dit** (US-163) : le balayage a reposé la
+    // palette et retiré la grille, et quatre mots valent mieux qu'une infobulle.
+    expect(
+      await screen.findByText(
+        "12 remis à jour · 3 conservés tels quels · aucune remise sur grille",
+      ),
+    ).toBeTruthy()
   })
 })
 

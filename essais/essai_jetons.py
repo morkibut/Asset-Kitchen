@@ -37,8 +37,9 @@ fermées.
 il ne mesure plus ce qui reste, une fois qu'ajouter un fichier de plus n'y
 change presque rien. `LES_FICHIERS_DE_L_ANCIEN_CHASSIS` fait le sens inverse :
 elle nomme ce qui tourne **encore** sur l'ancien châssis, le banc l'imprime
-avec son compte de lignes, et chaque tranche de `docs/PLAN-carnet.md` § *La
-sortie de l'ancien châssis* en retire des noms. Le relevé du 10 septembre
+avec son compte de lignes, et chaque tranche du bloc en retire des noms — le
+bloc, c'est `docs/PLAN-carnet.md` § *La sortie de l'ancien châssis*.
+Le relevé du 10 septembre
 2026 partait de 33 fichiers ; le jour où cette liste est vide, elle disparaît
 avec `LES_FICHIERS_DU_CARNET` et le banc tient le dépôt entier.
 
@@ -114,19 +115,29 @@ LES_FICHIERS_DU_CARNET = (
 # casserait ce qui est déjà livré.
 LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # C1 — les réglages : EcranReglages et Mouvements perdent leur dernière
-    # porte ; Secrets reste tant qu'Assistant.tsx le monte de son côté.
+    # porte ; Secrets reste tant qu'EcranReglages.tsx le monte.
     "interface/src/composants/EcranReglages.tsx",
     "interface/src/composants/Secrets.tsx",
     "interface/src/composants/Mouvements.tsx",
-    # C2 — l'univers et ses quatre côtés, plus l'assistant, doublon vrai de
-    # ReglesDuJeu.tsx.
+    # C2 — `Assistant.tsx` est parti : c'était le doublon vrai de
+    # `ReglesDuJeu.tsx`, et le relevé de ses douze étapes est en tête de ce
+    # fichier-là. Restent les trois côtés d'inspiration de l'onglet Univers.
+    #
+    # ⚠️ **Leur passage au papier n'est pas un portage de jetons, c'est un
+    # dessin.** Les dix teintes d'îlot (`--color-ilot-…`) sont calibrées pour
+    # un fond sombre — « dix à 4,6 : 1 sur `--color-fond-2` », dit
+    # `index.css` —, et la géométrie de la toile (la carte, la réserve, le
+    # menu d'un îlot) ne tient dans aucune des largeurs fermées de
+    # `docs/DESIGN.md` § Spacing. `Toile.dc.html` dessine la version papier ;
+    # la reconstruire demande sa propre tranche, pas la fin de celle-ci.
     "interface/src/composants/Univers.tsx",
     "interface/src/composants/Toile.tsx",
     "interface/src/composants/Tableau.tsx",
     "interface/src/composants/Ambiances.tsx",
-    "interface/src/composants/Assistant.tsx",
-    # C3 — le codex.
-    "interface/src/composants/Codex.tsx",
+    # C3 — le codex : parti (`Codex.tsx`, retiré le 10 septembre 2026). Sa
+    # colonne des familles était le carnet, sa grille celle d'une famille ;
+    # créer une pièce d'équipement se fait depuis la fiche de qui la porte
+    # (`VestiaireDuSujet.tsx`, déjà dans `LES_FICHIERS_DU_CARNET`).
     # C4 — la galerie, écrite en clair dans App.tsx, et ce qu'elle monte.
     "interface/src/composants/Arbre.tsx",
     "interface/src/composants/BarreOutils.tsx",

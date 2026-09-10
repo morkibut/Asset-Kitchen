@@ -34,39 +34,29 @@ import {
   api,
   Refus,
   type Carte,
-  type EtatTraitement,
   type Fabrique,
   type Lien,
-  type Modele,
   type Personnage,
   type Teinte,
-  type Univers,
 } from "../api"
 import type { Fente } from "./BarreChassis"
 import { DECOUPER, Reserve, Tableau, useCollage, type Vue } from "./Tableau"
 import { EcranDecoupe } from "./Decoupe"
 import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
-import { Assistant } from "./Assistant"
 import { CoteAmbiancesEtCouleurs, type CibleAmbiances } from "./Ambiances"
 
 
 export function EcranUnivers({
-  univers,
-  modeles,
-  traitement,
   cartes,
   liens,
   teintes,
   personnages,
   cote,
   onCote,
-  onSortirDeLAssistant,
-  onDeposee,
   vue,
   onVue,
   replies,
   onFente,
-  onUnivers,
   onRelire,
   fabriques,
   onAllerAuxAmbiances,
@@ -75,11 +65,6 @@ export function EcranUnivers({
   carteDecoupee,
   onDecouperCarte,
 }: {
-  univers: Univers
-  modeles: Modele[]
-  /** **Ce que cette machine-ci sait faire** (D2). Il ne sert pas ici : il
-   *  descend a l'assistant, qui propose les facons de reduire installees. */
-  traitement: EtatTraitement
   /** Le tableau, tenu par `App` — comme la grille et l'arbre. **Un seul endroit
    *  écoute le flux**, pour toute la vie de l'onglet : un second abonnement
    *  ouvert à l'ouverture de cet écran-ci se rebrancherait à chaque aller-retour
@@ -100,14 +85,6 @@ export function EcranUnivers({
    *  contenu d'une bande partagée ne peut pas vivre sous cette bande. */
   cote: Cote
   onCote: (cote: Cote) => void
-  /** **Sortir de l'assistant** (E19) : on tombe dans le codex, champ qui nomme
-   *  allumé. C'est `App` qui sait où l'on tombe — cet écran-ci ne connaît que
-   *  le sien. */
-  onSortirDeLAssistant: () => void
-  /** **Un secret vient d'être déposé à l'étape « Les fournisseurs »** (F3). L'écran ne s'en sert
-   *  pas lui-même : il le fait passer à l'assistant, parce que ce que le dépôt
-   *  change — la barre du haut et le grisé des modèles — est rendu ailleurs. */
-  onDeposee: () => void
   vue: Vue
   onVue: (vue: Vue) => void
   replies: { univers: boolean; reserve: boolean }
@@ -117,12 +94,6 @@ export function EcranUnivers({
    *  envoyée à la barre d'état se serait rendue *derrière* lui. Devenu un
    *  onglet, il partage la fente du châssis et la barre d'état du produit. */
   onFente: (fente: Fente) => void
-  /** Poser l'univers que le serveur vient de rendre. **Un réglage arrive par
-   *  deux chemins qui se croisent** — la réponse du PUT et l'annonce du flux —,
-   *  comme un personnage ou une carte, et l'écran jetait ici le premier des
-   *  deux. Un écran qui ne sait pas poser ce qu'on lui rend est un piège qui se
-   *  réveille ailleurs : il se corrige même quand le flux suffirait. */
-  onUnivers: (univers: Univers) => void
   onRelire: () => void
   /** Ce que chaque paquet du tableau a produit (U7) — sa palette, son ambiance.
    *  Il arrive avec les cartes, par la même route, pour la même raison que les
@@ -191,26 +162,6 @@ export function EcranUnivers({
       .catch((e) => setRefus(e instanceof Refus ? e.message : "la carte n'a pas pu revenir"))
   }
 
-  const realigner = async () => {
-    try {
-      const fait = await api.realigner()
-      onFente({
-        ton: "ok",
-        texte: (
-          <>
-            {fait.realignes} remis à jour · {fait.conserves} conservés tels quels
-            {/* Sans cible, le balayage a remis la palette et **retiré** la
-                grille : il n'a rééchantillonné personne, et le dire tient en
-                quatre mots plutôt qu'en une infobulle (US-163). */}
-            {!fait.sur_grille && " · aucune remise sur grille"}
-          </>
-        ),
-      })
-    } catch (erreur) {
-      setRefus(erreur instanceof Refus ? erreur.message : "réalignement refusé")
-    }
-  }
-
   // Les colonnes du côté Inspiration : `1fr` en grille, `1fr · 380px` en toile,
   // avec la case qui tombe à zéro quand on replie la réserve. **La colonne de
   // 380 px de l'univers n'est plus là** : elle est passée du côté Réglages avec
@@ -233,12 +184,16 @@ export function EcranUnivers({
           qui les rend pour l'onglet actif ; le quatrième n'a plus d'objet, un
           onglet ne se ferme pas. */}
 
-      {/* **Trois côtés, un seul allumé, et le côté allumé prend tout l'écran**
+      {/* **Deux côtés, un seul allumé, et le côté allumé prend tout l'écran**
           (E7). Personne ne grignote personne : ce qui a cassé la version d'avant
-          est d'avoir mis sur le même écran deux choses qui servent à *chercher
-          une idée* et deux qui servent à *remplir des réglages*. Mesuré : la
-          bande de réglages faisait 1 843 px de haut dans 646 px visibles, et la
-          première image d'inspiration était à 4 161 px de défilement. */}
+          est d'avoir mis sur le même écran ce qui sert à *chercher une idée* et
+          ce qui sert à *remplir des réglages*. Mesuré : la bande de réglages
+          faisait 1 843 px de haut dans 646 px visibles, et la première image
+          d'inspiration était à 4 161 px de défilement.
+
+          **Il n'y en a plus que deux depuis `C2`** : le côté *Réglages* était
+          `Assistant.tsx`, doublon vrai de `ReglesDuJeu.tsx`, et il est parti —
+          le relevé de ce qu'il savait faire est en tête de ce fichier-là. */}
       {cote !== "inspiration" && <BarreDesCotes cote={cote} onCote={onCote} />}
 
       {/* **Découper prend la place du tableau, il ne se pose pas dessus.**
@@ -337,20 +292,6 @@ export function EcranUnivers({
         </DECOUPER.Provider>
       )}
 
-      {cote === "reglages" && (
-        <Assistant
-          onSortir={onSortirDeLAssistant}
-          univers={univers}
-          modeles={modeles}
-          artworks={cartes.filter((c) => c.artwork)}
-          traitement={traitement}
-          onUnivers={onUnivers}
-          onErreur={setRefus}
-          onRealigner={realigner}
-          onDeposee={onDeposee}
-        />
-      )}
-
       {cote === "ambiances" && (
         <CoteAmbiancesEtCouleurs
           onErreur={setRefus}
@@ -362,36 +303,36 @@ export function EcranUnivers({
   )
 }
 
-// ── Les trois côtés ─────────────────────────────────────────────────────────
+// ── Les deux côtés ──────────────────────────────────────────────────────────
 //
-// L'onglet tient quatre choses très différentes, et c'est ce qui a cassé sa
-// version d'avant : deux d'entre elles servent à **chercher une idée** — le
+// L'onglet tenait quatre choses très différentes, et c'est ce qui a cassé sa
+// version d'avant : deux d'entre elles servaient à **chercher une idée** — le
 // tableau rangé, le tableau à la main —, les deux autres à **remplir des
-// réglages** — les réglages du jeu, les ambiances. Ce ne sont pas les mêmes
-// besoins, et les mettre sur le même écran a fait perdre les deux.
+// réglages** — les réglages du jeu, les ambiances.
 //
-// Trois mots en haut de l'onglet, un seul allumé, et le côté allumé prend tout
-// l'écran. Personne ne grignote personne.
+// **`C2` a retiré le premier des deux réglages** : les règles du jeu se posent
+// dans `ReglesDuJeu.tsx`, en papier, et le côté *Réglages* de cet onglet était
+// le même formulaire écrit une seconde fois. Restent deux mots en haut de
+// l'onglet, un seul allumé, et le côté allumé prend tout l'écran.
 
-export type Cote = "inspiration" | "reglages" | "ambiances"
+export type Cote = "inspiration" | "ambiances"
 
 /** L'ordre n'est pas arbitraire : on regarde des images pour se donner une
- *  idée, on règle son jeu, on fabrique les lots de style qui s'en servent. Il
- *  est écrit une fois, ici. */
+ *  idée, puis on fabrique les lots de style qui s'en servent. Il est écrit une
+ *  fois, ici. */
 const COTES: readonly { cle: Cote; nom: string }[] = [
   { cle: "inspiration", nom: "Inspiration" },
-  { cle: "reglages", nom: "Réglages" },
   { cle: "ambiances", nom: "Ambiances et couleurs" },
 ]
 
-/** Les trois mots, sans leur bande — pour les poser dans une barre qui existe
+/** Les deux mots, sans leur bande — pour les poser dans une barre qui existe
  *  déjà. **Deux bandes empilées au-dessus du travail, jamais trois** : celle du
  *  châssis fait 44 px, celle-ci 38, et le côté Inspiration n'en ajoute pas une
- *  troisième pour ses trois mots (`docs/maquettes-v2.1/06-univers.html`, au
+ *  troisième pour ses mots (`docs/maquettes-v2.1/06-univers.html`, au
  *  paragraphe « La forme retenue — trois côtés, jamais deux à la fois »). */
 export function Cotes({ cote, onCote }: { cote: Cote; onCote: (cote: Cote) => void }) {
   return (
-    <div role="tablist" aria-label="Les trois côtés de l'univers" className="flex shrink-0 items-center gap-1">
+    <div role="tablist" aria-label="Les deux côtés de l'univers" className="flex shrink-0 items-center gap-1">
       {COTES.map(({ cle, nom }) => (
         <button
           key={cle}
@@ -414,7 +355,7 @@ export function Cotes({ cote, onCote }: { cote: Cote; onCote: (cote: Cote) => vo
 }
 
 /** La barre des côtés quand le côté allumé n'en a pas déjà une. Même hauteur —
- *  38 px, celle de toute barre d'outils du produit —, mêmes trois mots. */
+ *  38 px, celle de toute barre d'outils du produit —, mêmes mots. */
 function BarreDesCotes({
   cote,
   onCote,
@@ -431,8 +372,6 @@ function BarreDesCotes({
     </div>
   )
 }
-
-// ── Le côté Réglages ────────────────────────────────────────────────────────
 
 // ── Le côté Ambiances et couleurs ───────────────────────────────────────────
 //

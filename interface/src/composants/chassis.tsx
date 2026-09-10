@@ -1198,12 +1198,12 @@ export function Point({ couleur }: { couleur: string }) {
  * personnage : au-dessous de 100 % il se confond avec le haut du cadre, au-delà
  * il descend, et le rapport se lit d'un coup d'œil.
  *
- * **Deux appelants, une seule pièce depuis `B27`.** `Assistant.tsx` la montre
- * sur le châssis sombre de l'ancien écran ; `Retouche.tsx` la montre sur le
- * papier du carnet, plus petite et resserrée. Le calcul ne varie pas d'un
- * appelant à l'autre — deux implémentations vivantes auraient fini par ne plus
- * compter le même rapport —, seuls les jetons de couleur et les deux tailles
- * du dessin le font, par `palette`.
+ * **Elle a été mise en commun par `B27`, quand elle avait deux appelants** :
+ * l'assistant sur le châssis sombre, `Retouche.tsx` sur le papier du carnet.
+ * L'assistant est parti avec `C2` ; la pièce garde ses deux palettes, parce
+ * que le calcul ne varie pas d'un appelant à l'autre — deux implémentations
+ * vivantes auraient fini par ne plus compter le même rapport — et que seuls
+ * les jetons de couleur et les deux tailles du dessin le font, par `palette`.
  */
 export function EchantillonDeHauteur({
   occupation,

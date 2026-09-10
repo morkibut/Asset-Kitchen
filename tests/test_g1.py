@@ -11,6 +11,12 @@ l'auteur du 3 septembre 2026 : la règle générale — *un nombre affiché se c
 ou il ne s'affiche pas* — a été écartée. On relit, et on corrige quand ça se
 voit.
 
+⚠️ **Quatre de ces essais sont partis avec `C2`.** Ils lisaient des phrases de
+`Assistant.tsx` — les noms de ses douze étapes, le compte des types, la phrase
+de l'allure, le texte à copier —, et ce fichier a quitté le dépôt : il était le
+doublon vrai de `ReglesDuJeu.tsx`, qui porte maintenant le relevé de ce qu'il
+savait faire. Un essai qui garde une phrase d'un écran mort ne garde rien.
+
 **Il fige donc la seule famille où le calcul ne coûte rien** : les numéros
 d'étape. Ils étaient sept, écrits à la main, et l'insertion de l'étape du style
 les a *tous* décalés d'un cran le même jour, sans qu'une erreur ne se lève —
@@ -88,61 +94,6 @@ def test_aucun_numero_d_etape_n_est_ecrit_a_la_main():
     )
 
 
-def test_les_douze_etapes_portent_des_noms_distincts():
-    """**Nommer une étape ne sert que si le nom en désigne une seule.**
-
-    Les phrases du produit renvoient maintenant vers un nom — « l'étape « La
-    vue » » — plutôt que vers un rang. Deux étapes homonymes rendraient le renvoi
-    ambigu, et l'ambiguïté ne se verrait pas : la phrase resterait parfaitement
-    lisible en désignant deux endroits.
-
-    Le second nom de la quatrième étape compte comme un nom à part entière : il
-    s'affiche, donc il doit être unique lui aussi.
-    """
-    source = (SOURCES / "composants" / "Assistant.tsx").read_text(encoding="utf-8")
-    bloc = re.search(r"const ETAPES = \[(.*?)\n\] as const", source, re.S)
-    assert bloc, "la liste `ETAPES` a disparu de `Assistant.tsx`"
-
-    noms = re.findall(r"nom(?:Dessin)?: \"([^\"]+)\"", bloc.group(1))
-    cles = re.findall(r"\{ cle: \"(\w+)\"", bloc.group(1))
-    assert len(cles) == 12, f"douze étapes attendues, {len(cles)} trouvées"
-    assert len(noms) == len(set(noms)), f"deux étapes portent le même nom : {noms}"
-
-
-def test_le_compte_des_types_se_lit_sur_le_projet_ouvert():
-    """*« Les huit types »* était juste, puis un huitième est entré dans le
-    barème livré et la phrase a cessé de l'être — sans changer d'un mot.
-
-    Le barème est affiché dans la même étape, trois lignes plus haut : le
-    compter est gratuit, et il ne peut plus mentir.
-    """
-    source = (SOURCES / "composants" / "Assistant.tsx").read_text(encoding="utf-8")
-    assert "les huit types" not in source
-    assert "univers.bareme.length} types de ce" in source
-
-
-def test_la_phrase_de_l_allure_ne_cite_plus_de_proportion():
-    """*« Plus de la moitié du texte »* : 41 à 45 % depuis qu'un bloc caméra a
-    ajouté cinq cents caractères ailleurs, le soir même de son écriture.
-
-    **Elle disparaît plutôt qu'elle ne se remesure** : c'est un rapport entre
-    deux textes qui bougent chacun de leur côté, et le calculer ici demanderait
-    d'assembler le prompt entier pour afficher une phrase d'introduction. Ce qui
-    reste est ce qui ne bouge pas — c'est le bloc le plus lourd.
-    """
-    source = (SOURCES / "composants" / "Assistant.tsx").read_text(encoding="utf-8")
-    debut = source.index("titre=\"L'allure\"")
-    conduite = source[debut : debut + 1800]
-    # **La forme rendue, pas le mot** : le commentaire qui explique le retrait
-    # cite forcément la phrase d'avant, et le lui reprocher rendrait la
-    # correction indocumentable.
-    assert "<strong className=\"text-texte\">plus de la moitié" not in conduite
-    assert "le bloc le plus lourd" in conduite
-    # Et *l'univers* au lieu de *la tête* : « la tête que ton jeu doit avoir »
-    # est une image, et cette étape-là décrit un monde.
-    assert "sur l'univers de ton jeu" in conduite
-
-
 def test_la_lecture_de_palette_a_deux_phrases_selon_qu_il_reste_quelque_chose():
     """*« 100 % … le reste — le fond — est écarté »* se contredisait tout seul.
 
@@ -155,18 +106,6 @@ def test_la_lecture_de_palette_a_deux_phrases_selon_qu_il_reste_quelque_chose():
         source = (SOURCES / "composants" / nom).read_text(encoding="utf-8")
         assert "part >= 100" in source, f"{nom} suppose encore qu'il reste un fond"
         assert "aucun fond à retirer" in source, nom
-
-
-def test_le_texte_a_copier_demande_trois_approches_et_non_trois_teintes():
-    """*« Trois variantes qui explorent différentes températures de couleur »* :
-    on choisissait un filtre là où l'on cherche une direction.
-
-    Ce texte part chez un outil grand public, jamais chez le fournisseur de
-    l'atelier — **rien n'est payé par ici**.
-    """
-    source = (SOURCES / "composants" / "Assistant.tsx").read_text(encoding="utf-8")
-    assert "colour temperatures" not in source
-    assert "different approach to the same scene" in source
 
 
 def test_la_barre_d_attente_ne_cite_plus_un_endroit_qu_elle_a_quitte():

@@ -46,6 +46,48 @@
  * (`GET /universe` ne sert que le jeu ouvert ; les compter demanderait de rouvrir
  * les autres un par un). *Une commande que rien n'appelle est une ligne morte.*
  *
+ * ── `C2` · ce que l'assistant savait faire, et où c'est parti ───────────────
+ *
+ * `Assistant.tsx` (3 258 lignes) était **le doublon vrai de ce fichier** : les
+ * deux écrivaient `api.reglerUnivers`, et les deux réglaient le nom, le style,
+ * la vue et la taille. Il est parti avec `C2`. Ses douze étapes, une par une,
+ * et ce qu'elles sont devenues — **rien n'a été perdu en silence** :
+ *
+ * | L'étape de l'assistant | Où elle est maintenant |
+ * |---|---|
+ * | 1 · Le nom | ici, étape « Son nom » — le seul endroit qui crée ou renomme |
+ * | 2 · Le style | ici, étape « Son allure » |
+ * | 3 · La vue | ici, étape « Sa vue » |
+ * | 4 · La taille / la finesse | ici, étape « Son allure » |
+ * | 5 · Les types d'objets (barème d'échelles) | `ReglagesDeFamille.tsx`, table 1 — les natures se règlent dans la famille qui les porte |
+ * | 6 · L'allure (les cinq cases de la bible) | ici, étape « Son monde » |
+ * | 7a · Références et couleurs (le nombre de couleurs) | **relogé ici**, étape « Son allure » — il part avec chaque demande d'image, donc il passe le critère d'entrée du parcours |
+ * | 7b · La couleur de fond du jeu | **relogé ici**, étape « Son allure » — même raison, et l'assistant en était le seul écrivain. `ReglesDAilleurs` la renvoyait à « l'atelier Détourer », qui ne l'a jamais écrite : le renvoi était faux, il est retiré |
+ * | 7c · Le texte à copier dans un outil d'images | **retiré.** Il assemblait une description à coller ailleurs pour récupérer des images d'inspiration à la main. La toile de l'univers reçoit ces images par collage ou par dépôt, sans passer par un texte que personne ne relit ; et le parcours neuf montre déjà la description assemblée, étape « Son monde » |
+ * | 8 · Poses et états | `ReglagesDeFamille.tsx`, table 2 — le plan de poses est propre à chaque nature |
+ * | 9 · Emplacements de corps | `ReglagesDeFamille.tsx`, table 3a — famille personnages |
+ * | 10a · Le modèle de chaque famille | `ReglagesDeFamille.tsx`, table 3b |
+ * | 10b · `modele_planche` et `modele_edition` | **retirés.** Deux surcharges pour deux gestes rares — un lot d'attitudes qui part, un corps qui se retouche. Sans elles le catalogue décide, ce qui est déjà la règle écrite partout ailleurs (« le catalogue décide du reste »), et la fiche de chaque image dit quel modèle a servi. Un troisième endroit qui règle un modèle aurait été le défaut que cette tranche répare |
+ * | 11 · Le détourage de départ | `Retouche.tsx` — il y pose le défaut de la nature *et* celui de la famille, depuis la passe qu'on vient de régler sur une vraie image |
+ * | 12 · Les fournisseurs (le tiroir des clés) | `Installation.tsx`, étape « Les images » ; le tiroir lui-même reste `Secrets.tsx`, monté par `EcranReglages.tsx` |
+ *
+ * Et deux choses qui n'étaient pas des étapes :
+ *
+ * * **Le pied qui numérotait chaque écran** — le rang sur douze, `‹ Retour`,
+ *   `Continuer →`. Retiré : ce parcours-ci a le sien, sur quatre écrans au lieu
+ *   de douze.
+ * * **Le réalignement de tout le projet** (`api.realigner()` sans cible), qui
+ *   vivait dans le pied de l'écran Univers et n'était appelé que par
+ *   l'assistant. **Relogé ici**, étape « Son allure », à côté du nombre de
+ *   couleurs : réaligner, c'est reposer la palette et la grille, donc l'allure.
+ *   `Fiche.tsx` garde le réalignement d'une seule image.
+ *
+ * **Ce que l'assistant savait faire de mieux et qu'on ne reprend pas** : il
+ * enchaînait ses douze étapes dans un ordre imposé, sur un jeu neuf. Ce
+ * parcours-ci fait la même chose sur quatre — `mode="creation"` —, et les huit
+ * autres se règlent là où l'on s'en sert, quand on s'en sert. C'est le choix
+ * de `B14`, pas une perte.
+ *
  * **Ce que la planche annonce comme manquant et qui existe** : les étiquettes.
  * Elle écrit « à ajouter — les étiquettes n'existent pas » ; elles sont dans le
  * dépôt depuis le 1ᵉʳ septembre 2026, soixante-dix livrées rangées par case
@@ -61,9 +103,11 @@ import {
   NOM_DE_LA_METHODE,
   Refus,
   api,
+  paliersDeCouleurs,
   type CeQueLAtelierEcrit,
   type Champ,
   type Etiquette,
+  type FondPropose,
   type Methode,
   type Style,
   type TailleDImage,
@@ -285,16 +329,28 @@ function SonAllure({
   univers,
   tailles,
   finesses,
+  fondPropose,
+  retourDuRealignement,
   onRegler,
+  onRealigner,
 }: {
   univers: Univers
   tailles: TailleDImage[]
   finesses: TailleDImage[]
+  /** **Ce que l'atelier proposerait comme fond à ce jeu-là** (D3), calculé par
+   *  le serveur — `null` tant qu'aucun univers n'a été lu. Il arrive par le GET
+   *  et il est rafraîchi par chaque PUT : la couleur sûre dépend de la palette,
+   *  et la palette bouge. */
+  fondPropose: FondPropose | null
+  retourDuRealignement: string | null
   onRegler: (reglage: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
+  onRealigner: () => void
 }) {
   const enPixel = univers.style === "pixel"
   const echelle = enPixel ? tailles : finesses
   const posee = echelle.find((t) => t.cible === univers.cible_px) ?? null
+  const paliers = paliersDeCouleurs(univers.cible_px)
+  const fondPose = univers.fond !== ""
 
   return (
     <div className="flex flex-col gap-[22px]">
@@ -393,6 +449,161 @@ function SonAllure({
           </Note>
         </section>
       )}
+
+      {/* ── Le nombre de couleurs (`C2`, relogé de l'assistant) ────────────
+          **Le même réglage agit des deux côtés** : avec une palette il dit
+          combien de teintes y lire, sans palette combien en garder sur chaque
+          image. Il ne paraît qu'en pixel — un dessin garde ses nuances. */}
+      {enPixel && (
+        <section className="flex flex-col gap-[8px]">
+          <Intitule>Les couleurs demandées</Intitule>
+          <div
+            data-couleurs-du-jeu
+            className="flex flex-wrap gap-[4px]"
+            role="group"
+            aria-label="Les couleurs demandées"
+          >
+            {paliers.map((palier) => (
+              <button
+                key={palier}
+                type="button"
+                aria-pressed={univers.couleurs === palier}
+                onClick={() => void onRegler({ couleurs: palier })}
+                className={[
+                  "mesure h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
+                  univers.couleurs === palier
+                    ? "border-signal bg-ligne-ouverte text-encre"
+                    : "border-trait bg-carte text-encre-3 hover:border-encre-4",
+                ].join(" ")}
+              >
+                {palier}
+              </button>
+            ))}
+          </div>
+          {/* **Le plafond est le côté du sprite, et il est mesuré** : au-delà,
+              l'image ne contient plus assez de teintes distinctes pour remplir
+              la palette demandée. Dit ici pour qu'une liste courte ne se lise
+              pas comme une panne. */}
+          <p className="text-[11.5px] leading-[1.45] text-encre-3">
+            {paliers.length < 6
+              ? `Un sprite de ${univers.cible_px} carrés de côté ne porte pas plus de ${paliers[paliers.length - 1]} couleurs — au-delà, l'image n'a plus assez de teintes distinctes.`
+              : "Avec une palette, c'est le nombre de teintes à y lire ; sans palette, le nombre à garder sur chaque image."}
+          </p>
+          <button
+            type="button"
+            onClick={onRealigner}
+            className="mesure h-[30px] w-fit rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4"
+          >
+            Réappliquer la palette à tout le jeu
+          </button>
+          {retourDuRealignement && (
+            <p
+              data-retour-du-realignement
+              className="mesure text-[11.5px] text-encre-3"
+            >
+              {retourDuRealignement}
+            </p>
+          )}
+          <Note>
+            Le réalignement repose la palette et la grille sur les images déjà
+            faites, en sautant les épinglées. Tout se passe sur la machine :
+            rien n'est payé.
+          </Note>
+        </section>
+      )}
+
+      {/* ── La couleur de fond (`C2`, relogée de l'assistant) ──────────────
+          Elle part avec chaque demande d'image, donc elle est ici. L'assistant
+          en était le seul écrivain du produit. */}
+      <section className="flex flex-col gap-[8px]">
+        <Intitule>Le fond du jeu</Intitule>
+        <p className="max-w-[880px] text-[13px] leading-[1.55] text-encre-2">
+          Sur quelle couleur le sujet est demandé. Une couleur que rien dans ton
+          jeu ne contient rend le découpage presque parfait ; un gris clair — ce
+          que le modèle rend quand on ne dit rien — est aussi la couleur d'une
+          joue, et le découpage la mange avec le fond.
+        </p>
+        <div className="flex items-center gap-[8px]">
+          {/* ⚠️ **Pas de pastille de couleur tant qu'aucun fond n'est posé.**
+              Un `input type=color` n'a pas d'état vide : il *doit* porter une
+              couleur, et il porterait donc celle de la proposition, juste à
+              côté des mots « aucun fond posé ». Le damier est ce que le produit
+              montre partout ailleurs pour « pas de couleur » — et il reste
+              cliquable, parce que quand aucun candidat n'est sûr, c'est le seul
+              chemin qui reste. */}
+          {fondPose ? (
+            <input
+              type="color"
+              value={univers.fond}
+              aria-label="Couleur du fond"
+              onChange={(e) => void onRegler({ fond: e.target.value })}
+              className="h-[26px] w-[34px] shrink-0 rounded-5 border border-trait bg-carte"
+            />
+          ) : (
+            <span className="damier relative h-[26px] w-[34px] shrink-0 overflow-hidden rounded-5 border border-trait">
+              {/* Le sélecteur est transparent par-dessus le damier : il
+                  s'ouvre sur la couleur proposée quand il y en a une, et sur
+                  ce que le navigateur met par défaut quand il n'y en a pas.
+                  **Aucune couleur de repli n'est écrite ici** — une couleur en
+                  clair dans un écran est ce que le banc des jetons refuse, et
+                  celle-ci ne se voit de toute façon jamais. */}
+              <input
+                type="color"
+                value={fondPropose?.couleur ?? ""}
+                aria-label="Couleur du fond"
+                onChange={(e) => void onRegler({ fond: e.target.value })}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </span>
+          )}
+          <span className="mesure text-[11.5px] text-encre-3">
+            {fondPose ? univers.fond : "aucun fond posé"}
+          </span>
+          {fondPose && (
+            <button
+              type="button"
+              onClick={() => void onRegler({ fond: "" })}
+              className="mesure h-[26px] text-[11.5px] text-encre-4 hover:text-encre"
+            >
+              Retirer
+            </button>
+          )}
+        </div>
+        {/* **La proposition, et l'écart qui la porte.** Un chiffre nu ne se lit
+            pas : « à 192 de la couleur de ton jeu la plus proche » dit à la fois
+            ce qu'on gagne et sur quoi le calcul a porté. */}
+        {fondPropose?.couleur && fondPropose.couleur !== univers.fond && (
+          <div className="flex items-center gap-[8px]">
+            <button
+              type="button"
+              onClick={() => void onRegler({ fond: fondPropose.couleur })}
+              style={{ background: fondPropose.couleur }}
+              aria-label={`Prendre ${fondPropose.couleur}`}
+              className="h-[22px] w-[22px] shrink-0 rounded-5 border border-trait"
+            />
+            <button
+              type="button"
+              onClick={() => void onRegler({ fond: fondPropose.couleur })}
+              className="mesure text-[11.5px] text-signal hover:text-encre"
+            >
+              Prendre {fondPropose.nom || fondPropose.couleur}
+            </button>
+            <span className="mesure text-[11.5px] text-encre-4">
+              à {fondPropose.ecart} de {fondPropose.voisine}, la couleur de ton
+              jeu la plus proche
+            </span>
+          </div>
+        )}
+        {/* **Aucun candidat sûr est une réponse, pas une panne** — et l'atelier
+            le dit au lieu de choisir en silence. */}
+        {fondPropose?.raison && <Note>{fondPropose.raison}</Note>}
+        {fondPose && (
+          <Alerte>
+            Changer le fond change ce qui part au fournisseur : les images
+            tirées avant ne se comparent plus à celles d'après.
+          </Alerte>
+        )}
+      </section>
 
       <Note>
         La taille de case est le seul choix qu'on ne reprend pas gratuitement :
@@ -699,7 +910,12 @@ function SonMonde({
 
 // ── Ce qui s'applique à tout le jeu, mais se règle ailleurs ──────────────────
 
-/** Les huit lignes que le carnet perd, rassemblées ici en **lecture seule**.
+/** Les lignes que le carnet perd, rassemblées ici en **lecture seule**.
+ *
+ *  ⚠️ **« La couleur de fond » en est sortie avec `C2`.** Elle renvoyait à
+ *  « l'atelier Détourer », qui ne l'a jamais écrite : `Assistant.tsx` en était
+ *  le seul écrivain du produit, et le renvoi était donc faux. Elle se règle
+ *  maintenant à l'étape « Son allure », deux écrans plus haut.
  *
  *  Elles ne sont pas dans le parcours parce qu'elles ne passent pas son critère
  *  d'entrée — elles ne partent pas avec la demande d'image, ou elles ne
@@ -713,11 +929,6 @@ function ReglesDAilleurs({ univers }: { univers: Univers }) {
         ? `${univers.palette.length} couleurs`
         : "aucune couleur encore — elle se lit sur les images promues",
       ou: "la toile de l'univers",
-    },
-    {
-      quoi: "La couleur de fond",
-      etat: univers.fond || "aucune — le modèle rend un fond plat quelconque",
-      ou: "l'atelier Détourer",
     },
     { quoi: "Le détourage de départ", etat: "par nature et par famille", ou: "l'atelier Détourer" },
     {
@@ -797,6 +1008,14 @@ export function ReglesDuJeu({
   const [tailles, setTailles] = useState<TailleDImage[]>([])
   const [finesses, setFinesses] = useState<TailleDImage[]>([])
   const [etiquettes, setEtiquettes] = useState<Etiquette[]>([])
+  /** **La couleur de fond que l'atelier proposerait** (D3, relogée par `C2`).
+   *  Le serveur la calcule sur la palette du jeu ; l'écran ne la recalcule
+   *  jamais, parce que la distance qui décide de la sûreté d'un fond est celle
+   *  du détourage. */
+  const [fondPropose, setFondPropose] = useState<FondPropose | null>(null)
+  /** Ce que le dernier réalignement a fait, ou rien. Il se pose sous son
+   *  bouton : c'est là qu'on l'a demandé. */
+  const [retourDuRealignement, setRetourDuRealignement] = useState<string | null>(null)
 
   const echouer = useCallback(
     (erreur: unknown, defaut: string) =>
@@ -833,6 +1052,7 @@ export function ReglesDuJeu({
     const recu = await api.univers()
     setUnivers(recu.univers)
     setAtelier(recu.atelier ?? { champs: [], sans_effet: {} })
+    setFondPropose(recu.fond_propose ?? null)
   }, [])
 
   // En réglages, le jeu existe déjà : on lit son univers tout de suite. En
@@ -847,6 +1067,7 @@ export function ReglesDuJeu({
         if (!vivant) return
         setUnivers(recu.univers)
         setAtelier(recu.atelier ?? { champs: [], sans_effet: {} })
+        setFondPropose(recu.fond_propose ?? null)
       })
       .catch((erreur) => vivant && echouer(erreur, "l'univers n'a pas pu être lu"))
     return () => {
@@ -860,12 +1081,33 @@ export function ReglesDuJeu({
         const recu = await api.reglerUnivers(reglage)
         setUnivers(recu.univers)
         setAtelier(recu.atelier ?? { champs: [], sans_effet: {} })
+        setFondPropose(recu.fond_propose ?? null)
       } catch (erreur) {
         echouer(erreur, "le réglage a été refusé")
       }
     },
     [echouer],
   )
+
+  /** **Réappliquer la palette et la grille à tout le jeu** (`C2`, relogé du
+   *  pied de l'écran Univers, qui en était la seule porte). Sans identifiants :
+   *  tout le projet, en sautant les épinglées. Rien n'est payé — tout se passe
+   *  sur la machine. */
+  const realigner = useCallback(() => {
+    setRetourDuRealignement(null)
+    void api
+      .realigner()
+      .then((fait) => {
+        // **Sans cible, le balayage a remis la palette et *retiré* la grille**
+        // (US-163) : il n'a rééchantillonné personne, et le dire tient en
+        // quatre mots plutôt qu'en une infobulle.
+        setRetourDuRealignement(
+          `${fait.realignes} remis à jour · ${fait.conserves} conservés tels quels` +
+            (fait.sur_grille ? "" : " · aucune remise sur grille"),
+        )
+      })
+      .catch((erreur) => echouer(erreur, "réalignement refusé"))
+  }, [echouer])
 
   /** Le nom **tel qu'il est sur le serveur**, pour ne réécrire que ce qui a
    *  changé. Vide en création tant que le jeu n'existe pas.
@@ -1054,7 +1296,10 @@ export function ReglesDuJeu({
             univers={univers}
             tailles={tailles}
             finesses={finesses}
+            fondPropose={fondPropose}
+            retourDuRealignement={retourDuRealignement}
             onRegler={regler}
+            onRealigner={realigner}
           />
         )}
 

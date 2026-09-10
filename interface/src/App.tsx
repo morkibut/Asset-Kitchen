@@ -59,7 +59,6 @@ import {
   type MatriceDesCalquesAnimes,
   type TenueDuCalque,
   type VestiaireDuJeu,
-  type DirectionsDuJeu,
   type Pose,
   type Univers,
   UNIVERS_VIDE,
@@ -98,7 +97,9 @@ import { CalquesAnimes } from "./composants/CalquesAnimes"
 import {
   Carnet,
   EQUIPEMENT,
+  FAMILLES,
   NOM_DANS_LE_CARNET,
+  NOM_DE_LA_RUBRIQUE,
   derniersJeux,
   type LigneDeFamille,
   type LigneDePiece,
@@ -126,12 +127,6 @@ import {
 } from "./lieux"
 import { EcranDepenses } from "./composants/Depenses"
 import { EcranEnvoi, TRI_VIDE } from "./composants/Envoi"
-import {
-  EcranCodex,
-  FAMILLES,
-  NOM_DE_LA_RUBRIQUE,
-  type Rubrique,
-} from "./composants/Codex"
 import { PageDuSujet, type Onglet as OngletDuSujet } from "./composants/PageDuSujet"
 import { GrilleDuJeu } from "./composants/GrilleDuJeu"
 import { Comparer } from "./composants/Comparer"
@@ -547,29 +542,6 @@ export function App() {
   // à l'ouverture de l'écran Personnages se rebrancherait à chaque aller-retour
   // vers l'atelier, et le serveur renverrait l'état complet à chaque fois.
   const [plan, setPlan] = useState<Pose[]>([])
-  // **Les directions du jeu** (E10) — l'autre liste que le jeu impose à tout le
-  // monde, tenue ici pour la raison du plan : un seul endroit écoute le flux,
-  // pour toute la vie de l'onglet. Elle arrive dans le même aller-retour, parce
-  // qu'une case n'existe que par la direction qui la nomme.
-  // **La rubrique ouverte du codex** (E15) — tenue ici parce que le fil
-  // d'Ariane la nomme : cinq familles portent des choses, et un fil qui dirait
-  // toujours *Personnages* mentirait dans quatre cas sur cinq.
-  const [rubrique, setRubrique] = useState<Rubrique>("personnages")
-  // **On ne rouvre l'assistant qu'une fois** (E19) : le message d'état repart à
-  // chaque rebranchement du flux, et une porte qui se rouvre sous les doigts de
-  // quelqu'un qui travaille n'est plus une porte.
-  const premierLancementVu = useRef(false)
-  // **Le champ qui nomme s'allume quand on sort de l'assistant** (E19). Un
-  // compteur plutôt qu'un drapeau : deux sorties de suite doivent l'allumer deux
-  // fois, et un booléen déjà à vrai ne redéclencherait rien.
-  const [nommer, setNommer] = useState(0)
-  const [directions, setDirections] = useState<DirectionsDuJeu>({
-    directions: [],
-    origine: "vue",
-    vue: "",
-    vue_libelle: "",
-    proposees: [],
-  })
   const [personnages, setPersonnages] = useState<Personnage[]>([])
   // **Le vestiaire du projet** (C3) — l'autre axe de la même matrice, tenu ici
   // pour la raison du plan : un seul endroit écoute le flux, pour toute la vie
@@ -788,19 +760,6 @@ export function App() {
   // même raison que la vue : la barre du châssis rend les bascules de repli de
   // l'écran actif, et il n'y en a qu'au côté Inspiration, en vue toile.
   const [coteUnivers, setCoteUnivers] = useState<Cote>("inspiration")
-
-  // ── Le codex et sa profondeur (E2) ────────────────────────────────────────
-  //
-  // **Deux états, et ils ne disent pas la même chose.** *Choisie* est la chose
-  // dont la colonne de droite parle — un clic sur sa carte. *Ouverte* est la
-  // chose dans l'établi de laquelle on est descendu — un clic sur son nom, et le
-  // fil d'Ariane s'allonge. Les confondre ferait descendre d'un étage au premier
-  // regard porté sur une carte.
-  //
-  // **Des identifiants, jamais des objets** (`docs/PIEGES.md`) : un personnage
-  // arrive par le flux à chaque image produite, et une copie gardée ici serait
-  // celle d'avant.
-  const [choseChoisie, setChoseChoisie] = useState<string | null>(null)
 
   // ── La grille d'une famille (`B9`) ────────────────────────────────────────
   //
@@ -1297,12 +1256,6 @@ export function App() {
   // animation. Priorité aux profondeurs : une table ouverte l'emporte sur le
   // simple fait d'être dans le codex.
   //
-  // ⚠️ **`coteUnivers === "reglages"` n'est pas `ou: "reglages"` du corpus.**
-  // `Univers.tsx` nomme ainsi son côté « réglages du jeu » (`type Cote`) ; le
-  // corpus appelle la même idée `jeu`, et réserve `reglages` à l'installation
-  // de l'atelier — deux choses différentes qui partagent un mot par accident.
-  // Une seule traduction, ici, pour ne pas avoir à s'en souvenir ailleurs.
-  //
   // ⚠️ **`tables` et `case` sont des écrans du guide, pas des genres de lieu**
   // (`B25`). La pile n'en porte plus qu'un pour la retouche ; le corpus, lui,
   // garde ses deux groupes parce qu'ils ne disent pas la même chose : `tables`
@@ -1318,9 +1271,7 @@ export function App() {
       : tableauDeBord
         ? "tableau-de-bord"
         : onglet === "univers"
-          ? coteUnivers === "reglages"
-            ? "jeu"
-            : coteUnivers
+          ? coteUnivers
           : retoucheOuverte
             ? "tables"
             : onglet === "galerie" && selection.length === 1
@@ -1647,13 +1598,6 @@ export function App() {
     try {
       const production = await api.production()
       setPlan(production.plan)
-      setDirections({
-        directions: production.directions,
-        origine: production.origine,
-        vue: production.vue,
-        vue_libelle: production.vue_libelle,
-        proposees: production.proposees,
-      })
       setPersonnages(production.personnages)
       setEmplacements(production.emplacements)
       setPieces(production.pieces)
@@ -1802,17 +1746,12 @@ export function App() {
     return ecouter({
       etat: (recu) => {
         setEtat(recu)
-        // **L'atelier neuf ouvre l'assistant** (E19) — la seule minute que
-        // personne ne revoit jamais. Une seule fois par onglet : ce message
-        // repart à chaque rebranchement du flux, et rouvrir l'assistant sous
-        // les doigts de quelqu'un qui travaille serait une porte qui se referme
-        // sur lui. Le serveur, lui, dit un fait — *l'atelier n'a encore rien* —
-        // et il cesse d'être vrai au premier geste.
-        if (recu.premier_lancement && !premierLancementVu.current) {
-          premierLancementVu.current = true
-          setOnglet("univers")
-          setCoteUnivers("reglages")
-        }
+        // **L'atelier neuf ouvrait l'assistant** (E19) — retiré par `C2` avec
+        // lui. Le premier lancement a déjà son écran depuis `B15` : le tour du
+        // propriétaire (`Installation` en mode « première »), qui prend la
+        // fenêtre entière et que le serveur n'annonce que sur un atelier qui
+        // n'a rien produit. Deux écrans qui s'ouvrent seuls à la même minute
+        // étaient un de trop.
         setBibliotheque(recu.bibliotheque)
         setUnivers(recu.univers ?? UNIVERS_VIDE)
         projetDeLUnivers.current = recu.bibliotheque.courant
@@ -1927,13 +1866,6 @@ export function App() {
       // direction* : poser la liste seule aurait laissé les rangées d'avant.
       directions: (recu) => {
         if (recu.projet !== vivant.current.courant) return
-        setDirections({
-          directions: recu.directions,
-          origine: recu.origine,
-          vue: recu.vue,
-          vue_libelle: recu.vue_libelle,
-          proposees: recu.proposees,
-        })
         void vivant.current.relireProduction()
       },
       // **Le vestiaire arrive entier**, et il remplace — même règle que le plan,
@@ -3081,10 +3013,10 @@ export function App() {
    *  l'écran contient (`docs/DESIGN.md` § Layout). */
   const bascules: Bascule[] =
     onglet === "codex" && !choseOuverteId && !familleOuverte
-      ? [
-          { cle: "familles", nom: "familles", repliee: replies.familles },
-          { cle: "fiche", nom: "fiche", repliee: replies.fiche },
-        ]
+      ? // **Plus de colonnes à replier ici** (`C3`) : l'ancien codex en avait
+        // deux, la surface de repos n'en a plus aucune — elle ne porte que la
+        // barre qui paie.
+        []
       : onglet === "galerie"
       ? // **Une seule colonne repliable depuis E4** : celle de l'arbre. Celle
         // des réglages est partie avec ce qui paie, et une bascule pour une
@@ -3122,8 +3054,10 @@ export function App() {
   const nommerLeLieu: Annuaire = (ou, _profondeur, dedans) => {
     switch (ou.genre) {
       // Une racine au repos ne donne aucun fil : c'est la barre qui porte
-      // alors le nom du jeu. Le codex fait exception — il nomme la famille
-      // qu'on regarde, et c'est la seule chose qui distingue ses cinq écrans.
+      // alors le nom du jeu. **Depuis `C3`, le codex n'a plus de famille à
+      // lui** : sa seule surface de repos est la barre qui paie, sans nom
+      // propre. Il ne nomme donc plus que la chose ouverte au-dessus de lui,
+      // quand il y en a une.
       case "codex": {
         // La grille d'une famille nomme déjà l'étage quand elle est ouverte —
         // deux noms pour un seul endroit feraient un fil qui se répète. La page
@@ -3137,10 +3071,7 @@ export function App() {
           sujet && sujet.genre === "sujet"
             ? personnages.find((p) => p.identifiant === sujet.sujet)
             : null
-        return (
-          NOM_DE_LA_RUBRIQUE[chose ? (chose.famille ?? "personnages") : rubrique] ??
-          "Personnages"
-        )
+        return chose ? (NOM_DE_LA_RUBRIQUE[chose.famille ?? "personnages"] ?? "Personnages") : null
       }
       // La grille d'une famille (`B9`). Elle nomme l'étage à la place du codex
       // qui la porte : c'est elle qui sait *laquelle*, et le `case "codex"`
@@ -3624,7 +3555,10 @@ export function App() {
                 : familleOuverte
                   ? familleOuverte
                   : onglet === "codex"
-                    ? rubrique
+                    ? // **La surface de repos de « Créer » ne nomme plus de
+                      // famille** (`C3`) : rien à allumer dans le carnet quand
+                      // on y est sans avoir choisi de famille.
+                      null
                     : "galerie"
         }
         surLeJeu={() => setPile(poser("tableau-de-bord"))}
@@ -4242,7 +4176,6 @@ export function App() {
                 if (!ouverte.personnage) return
                 setOnglet("codex")
                 setChoseOuverte(ouverte.personnage)
-                setChoseChoisie(ouverte.personnage)
                 ouvrirLaRetouche(ouverte.identifiant)
               }}
               // **La porte de la galerie mène à la retouche** (`B25`), et sans
@@ -4300,41 +4233,22 @@ export function App() {
           leur retire leur en-tête de 44 px — il y en avait trois, un par écran,
           et il n'y en a plus qu'un — et leur fente de refus, désormais
           partagée. */}
-      {/* **`etat` garde l'écran** depuis D2 : l'assistant a besoin de savoir
-          quelles façons de réduire cette machine-ci sait faire, et cette liste
-          vient du serveur. Même garde que la galerie deux cents lignes plus
-          haut — on ne rend pas un écran avant d'avoir de quoi le remplir. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "univers" && etat && (
+      {/* **La garde sur `etat` est partie avec l'assistant** (`C2`) : elle
+          existait parce que le côté Réglages avait besoin de savoir quelles
+          façons de réduire cette machine-ci sait faire. Les deux côtés qui
+          restent ne lisent que le tableau. */}
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "univers" && (
         <EcranUnivers
-          univers={univers}
-          modeles={modeles}
-          traitement={etat.traitement}
           cartes={cartes}
           liens={liens}
           teintes={teintes}
           personnages={personnages}
           cote={coteUnivers}
           onCote={setCoteUnivers}
-          // **On sort de l'assistant à n'importe quelle étape** (E19), et l'on
-          // tombe dans le codex, champ qui nomme allumé. Pas dans la galerie :
-          // elle ne montre que des images produites, et il n'y en a aucune.
-          onSortirDeLAssistant={() => {
-            setOnglet("codex")
-            setRubrique("personnages")
-            setNommer((n) => n + 1)
-          }}
-          // **Le même geste que dans la fenêtre des réglages, parce que c'est
-          // le même dépôt** (F3) : l'état pour la barre du haut, le catalogue
-          // pour le grisé des modèles du fournisseur qu'on vient de servir.
-          onDeposee={async () => {
-            await relireEtat()
-            await relireCatalogue()
-          }}
           vue={vueUnivers}
           onVue={setVueUnivers}
           replies={{ univers: replies.univers, reserve: replies.reserve }}
           onFente={setFente}
-          onUnivers={setUnivers}
           onRelire={relireTableau}
           fabriques={fabriques}
           // **Aller voir ce qu'on vient de fabriquer** (U7) : le côté change et
@@ -4359,12 +4273,8 @@ export function App() {
           **Elle remplace le codex comme destination du carnet**, elle ne s'ajoute
           pas à côté : cliquer « Les personnages » ouvrait l'ancien écran, et
           deux écrans pour le même geste auraient été deux vérités sur ce qu'est
-          une famille.
-
-          **L'ancien codex reste joignable par son onglet**, et il le faut : les
-          *directions*, les *poses* et le *vestiaire* n'y sont pas des familles
-          de sujets, et aucune ligne du carnet ne les atteint — les couper serait
-          rejouer la branche morte que `lieux.ts` raconte en tête de fichier. */}
+          une famille. Nommer une chose neuve se fait maintenant depuis cet
+          écran lui-même — plus par un aller-retour vers le codex (`C3`). */}
       {!depensesOuvertes && !envoiOuvert && !clipOuvert && familleOuverte && !choseOuverte && (
         <EcranFamille
           famille={familleOuverte}
@@ -4384,14 +4294,8 @@ export function App() {
           // son chiffre d'avant.
           surRange={() => void api.arbre().then(setBibliotheque).catch(() => {})}
           surReglages={() => setReglagesDeFamille(true)}
-          surAjouter={() => {
-            // Nommer, c'est créer (US-115) : le champ qui nomme vit dans le
-            // codex, et c'est encore lui qui fait naître un sujet.
-            setPile(poser("codex"))
-            setRubrique(familleOuverte as Rubrique)
-            setNommer((n) => n + 1)
-          }}
           surErreur={setPanne}
+          onCree={fondrePersonnage}
           onOuvrir={setChoseOuverte}
         />
       )}
@@ -4405,50 +4309,25 @@ export function App() {
         />
       )}
 
-      {/* **Le codex, et sa profondeur.** Une chose du jeu ouverte remplace le
-          codex par son établi — c'est le même endroit vu de plus près, et le
-          fil d'Ariane le dit. Les deux portent la barre qui paie, parce qu'ils
-          sont les deux lieux d'où l'argent part. */}
+      {/* **Le repos de l'onglet Créer** (`C3` — `Codex.tsx` est parti). Sa
+          colonne des familles était le carnet, sa grille était celle d'une
+          famille : les deux existaient déjà ailleurs. Ce qui restait sans
+          maison neuve est la barre qui paie elle-même — **l'un des deux lieux
+          d'où l'argent part**, l'autre étant l'établi d'une chose — donc cette
+          surface ne porte plus qu'elle, sans colonnes. */}
       {/* ⚠️ **Et pas non plus quand une pièce est ouverte** (`B19`) : la page
-          d'une pièce se pose sur le codex comme la grille d'une famille, et sans
-          cette garde l'ancien codex la recouvrait — le fil disait « Épée », la
-          surface montrait les personnages. Vu au navigateur, pas aux essais :
-          leur double monte les écrans un par un. */}
+          d'une pièce se pose ici comme la grille d'une famille. */}
       {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && (
-        <EcranCodex
-          plan={plan}
-          personnages={personnages}
-          emplacements={emplacements}
-          pieces={pieces}
-          choisi={choseChoisie}
-          onChoisir={setChoseChoisie}
-          onOuvrir={(identifiant) => {
-            setChoseOuverte(identifiant)
-            setChoseChoisie(identifiant)
-          }}
-          onPersonnage={fondrePersonnage}
-          directions={directions}
-          onDirections={setDirections}
-          rubrique={rubrique}
-          onRubrique={setRubrique}
-          nommer={nommer}
-          onPlan={(recu) => {
-            // Le plan touché **et les choses avec** (E9) : la liste d'une chose
-            // dépend du plan, et le serveur seul sait laquelle. Le plan est posé
-            // tout de suite pour que la liste qui vient d'être écrite s'affiche
-            // sans attendre, et la production suit.
-            setPlan(recu)
-            void relireProduction()
-          }}
-          onVestiaire={(recu) => {
-            setEmplacements(recu.emplacements)
-            setPieces(recu.pieces)
-          }}
-          onArmer={(personnage, poses) => void armer(personnage, poses)}
-          replies={{ familles: replies.familles, fiche: replies.fiche }}
-          barreQuiPaie={barreQuiPaie}
-          onErreur={(erreur, defaut) => echouer(erreur, defaut)}
-        />
+        <div
+          data-codex
+          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-fond-0 p-4"
+        >
+          <p className="mesure max-w-[420px] text-center text-[12px] leading-5 text-texte-3">
+            Choisis une famille dans le carnet à gauche, ou écris directement ce
+            que tu veux fabriquer.
+          </p>
+          {barreQuiPaie}
+        </div>
       )}
 
       {/* **L'atelier d'une animation gardée** (A7) — il passe avant la
@@ -4895,7 +4774,6 @@ export function App() {
           plan={plan}
           surUnPersonnage={(identifiant) => {
             setPile(poser("codex"))
-            setRubrique("personnages")
             setChoseOuverte(identifiant)
           }}
           // **Le vestiaire, et non plus la grille des objets.** La barre
