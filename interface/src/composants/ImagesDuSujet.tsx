@@ -53,8 +53,11 @@ import {
   type Personnage,
   type Piece,
   type Pose,
+  type Role,
+  type Univers,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
+import { Fiche } from "./Fiche"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. Le double part au
  *  serveur : un écran à deux pixels par point rend l'image floue sinon. */
@@ -292,20 +295,6 @@ const heure = (quand: number) =>
     minute: "2-digit",
   })
 
-const jour = (quand: number) =>
-  new Date(quand * 1000).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-  })
-
-/** Le prix d'une image — **en rouille, comme tout ce qui coûte**, et « gratuit »
- *  quand le fournisseur n'a rien facturé. */
-function Prix({ image }: { image: Asset }) {
-  if (image.cout_usd <= 0)
-    return <span className="mesure text-encre-3">gratuit</span>
-  return <span className="mesure text-signal">${image.cout_usd.toFixed(4)}</span>
-}
-
 function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string }) {
   return (
     <button
@@ -433,10 +422,14 @@ export function ImagesDuSujet({
   personnage,
   plan,
   pieces,
+  personnages,
+  univers,
   onArmer,
   onOuvrirCase,
   onRegardee,
   onEcarter,
+  onReinjecter,
+  onReglages,
   onErreur,
 }: {
   personnage: Personnage
@@ -444,6 +437,11 @@ export function ImagesDuSujet({
   plan: Pose[]
   /** Le vestiaire du jeu, pour nommer les calques de l'image retenue. */
   pieces: Piece[]
+  /** Les deux que la fiche d'une image lit (`C4`) : la liste vivante des sujets,
+   *  pour dire de qui cette image est le corps, et l'univers du jeu, pour savoir
+   *  sur quelle palette elle a été quantifiée. */
+  personnages: Personnage[]
+  univers: Univers
   onArmer: (
     personnage: Personnage,
     poses: Pose[],
@@ -461,6 +459,11 @@ export function ImagesDuSujet({
    *  rend le bandeau « la rendre », et un second chemin de mise à l'écart aurait
    *  été un second endroit d'où l'on jette sans pouvoir défaire. */
   onEcarter: (identifiants: string[]) => void
+  /** Les deux rôles de la fiche qui arment l'appel suivant (`C4`) : renvoyer
+   *  cette image au générateur, et reprendre les réglages de sa génération. Ni
+   *  l'un ni l'autre ne dépense — la barre qui paie est au pied de la page. */
+  onReinjecter: (asset: string, role: Role) => void
+  onReglages: (asset: Asset) => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const nomDePose = useMemo(
@@ -748,132 +751,48 @@ export function ImagesDuSujet({
         )}
       </section>
 
-      {/* ── Le volet de l'image choisie ──────────────────────────────────── */}
+      {/* ── La fiche de l'image choisie (`C4`) ─────────────────────────────
+          **Il n'y a plus qu'un volet de fiche d'image dans le produit**, et
+          c'est `Fiche.tsx`. Celui qui était écrit ici faisait le même métier sur
+          une autre surface : même image en grand, mêmes lignes de provenance,
+          même prix — en moins complet. Il ne savait ni la recette, ni la
+          filiation, ni ce que le projet impose, ni renvoyer l'image au
+          générateur. Ce qu'il savait et que la fiche ignorait est parti dans la
+          fiche : de quelle case on parle, l'angle à confirmer, la variante,
+          l'écart.
+
+          ⚠️ **Une porte en moins, et c'est voulu** : *Reprendre dans l'établi*
+          n'est pas passé, parce que cette page **est** l'établi. */}
       {image && (
-        <aside
-          data-volet-de-l-image
-          aria-label="L'image choisie"
-          className="volet flex w-[380px] shrink-0 flex-col gap-[14px] overflow-y-auto border-l border-trait bg-papier-cote p-[22px]"
-        >
-          <div className="flex items-baseline justify-between gap-[8px]">
-            <span className="font-serif text-[25px] leading-[1.15] text-encre">
-              {image.favori ? "L'image retenue" : "L'image choisie"}
-            </span>
-            {image.favori && (
-              <span className="rounded-5 border border-trait-ok bg-fond-ok px-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-ok">
-                retenue
-              </span>
-            )}
-          </div>
-
-          {/* De quelle image on parle — sans quoi le volet décrit « une image »
-              et l'on ne sait laquelle des cinq de la rangée. */}
-          <p className="text-[13px] text-encre-2">
-            {personnage.nom}, {nomDePose.get(image.pose ?? "") ?? "sans pose"},{" "}
-            {image.direction
-              ? `vers ${image.direction}`
-              : "sans direction déclarée"}
-          </p>
-
-          <span className="flex h-[380px] items-center justify-center overflow-hidden rounded-8 bg-pourtour">
-            <img
-              src={vignetteAsset(image, 760)}
-              alt={image.label}
-              className="max-h-full max-w-full object-contain"
-            />
-          </span>
-
-          <dl className="flex flex-col gap-[4px] border-t border-trait pt-[8px] text-[12.5px]">
-            {(
-              [
-                ["Quand", `${jour(image.cree_le)} · ${heure(image.cree_le)}`],
-                ["Par quel modèle", image.modele || "inconnu"],
-                [
-                  "Sa taille",
-                  image.traite
-                    ? `${image.largeur} → ${image.rendu_largeur} px`
-                    : `${image.largeur} px`,
-                ],
-                [
-                  "Ses calques",
-                  calques.length === 0 ? "aucun" : String(calques.length),
-                ],
-              ] as const
-            ).map(([mot, valeur]) => (
-              <div key={mot} className="flex justify-between gap-[14px]">
-                <dt className="text-encre-3">{mot}</dt>
-                <dd className="text-right text-encre">{valeur}</dd>
-              </div>
-            ))}
-            <div className="flex justify-between gap-[14px]">
-              <dt className="text-encre-3">Ce qu'elle a coûté</dt>
-              <dd className="text-right">
-                <Prix image={image} />
-              </dd>
-            </div>
-          </dl>
-
-          {/* **La direction, quand l'image ne la dit pas** — le seul endroit
-              d'où l'on confirme, parce que c'est le seul où l'on sait de quelle
-              image on parle. Un clic la range. */}
-          {image.direction === null && image.pose && (
-            <div className="flex flex-col gap-[8px] rounded-8 border border-trait-attention bg-fond-attention p-[14px]">
-              <p className="text-[12.5px] font-medium text-encre-attention">
-                Sa direction est à confirmer
-              </p>
-              <p className="text-[11.5px] leading-[1.45] text-encre-2">
-                Elle a été faite avant que le jeu ne déclare ses angles. L'atelier ne la
-                devine pas.
-              </p>
-              <div className="flex flex-wrap gap-[4px]">
-                {directionsDe(image.pose).map((d) => (
-                  <button
-                    key={d.identifiant}
-                    type="button"
-                    onClick={() => void confirmer(image, d.identifiant)}
-                    className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
-                  >
-                    {d.nom}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-auto flex flex-col gap-[8px]">
-            <button
-              type="button"
-              onClick={() => onOuvrirCase(image.identifiant)}
-              className="h-[34px] rounded-7 border border-contour bg-carte text-[13px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
-            >
-              La retoucher
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const pose = image.pose ? poseDe(image.pose) : null
-                if (pose) onArmer(personnage, [pose], null, image.direction)
-              }}
-              className="h-[34px] rounded-7 border border-contour bg-carte text-[13px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
-            >
-              En générer une variante
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onEcarter([image.identifiant])
-                setChoisie(null)
-              }}
-              className="h-[30px] rounded-7 text-[12.5px] text-echec transition-colors duration-120 hover:bg-fond-echec"
-            >
-              L'écarter
-            </button>
-            <p className="text-[11.5px] leading-[1.45] text-encre-4">
-              Écarter est un jugement, pas un effacement : le fichier reste sur le
-              disque et la dépense reste au journal.
-            </p>
-          </div>
-        </aside>
+        <Fiche
+          asset={image}
+          univers={univers}
+          plan={plan}
+          personnages={personnages}
+          identite={`${personnage.nom}, ${
+            nomDePose.get(image.pose ?? "") ?? "sans pose"
+          }, ${image.direction ? `vers ${image.direction}` : "sans direction déclarée"}`}
+          directionsAConfirmer={image.pose ? directionsDe(image.pose) : []}
+          onDirection={(direction) => void confirmer(image, direction)}
+          onVariante={() => {
+            const pose = image.pose ? poseDe(image.pose) : null
+            if (pose) onArmer(personnage, [pose], null, image.direction)
+          }}
+          onEcarter={() => {
+            onEcarter([image.identifiant])
+            setChoisie(null)
+          }}
+          onFermer={() => setChoisie(null)}
+          onErreur={(raison) => onErreur(raison, raison)}
+          onReinjecter={(role) => onReinjecter(image.identifiant, role)}
+          onReglages={() => onReglages(image)}
+          onSupprimer={() => {
+            onEcarter([image.identifiant])
+            setChoisie(null)
+          }}
+          onRetoucher={() => onOuvrirCase(image.identifiant)}
+          onOuvrir={(identifiant) => setChoisie(identifiant)}
+        />
       )}
 
       {/* Le volet ne se referme pas, il se vide — sans quoi la surface change de

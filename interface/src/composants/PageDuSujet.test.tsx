@@ -176,6 +176,9 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
     onOuvrirLaBande: vi.fn(),
     onSuperposition: vi.fn(),
     onSupprimer: vi.fn(),
+    // Les deux rôles de la fiche d une image, montée dans *Ses images* (C4).
+    onReinjecter: vi.fn(),
+    onReglages: vi.fn(),
     onGrille: vi.fn(),
     onComparer: vi.fn(),
     // **B19** — son vestiaire. `null` : la page ne l'a pas encore lu, et la

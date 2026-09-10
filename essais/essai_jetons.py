@@ -138,16 +138,34 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # colonne des familles était le carnet, sa grille celle d'une famille ;
     # créer une pièce d'équipement se fait depuis la fiche de qui la porte
     # (`VestiaireDuSujet.tsx`, déjà dans `LES_FICHIERS_DU_CARNET`).
-    # C4 — la galerie, écrite en clair dans App.tsx, et ce qu'elle monte.
+    # C4 — la galerie. **Elle est un fichier depuis le 10 septembre 2026** :
+    # elle était écrite en clair dans `App.tsx`, et le banc ne la voyait donc
+    # pas — ni sa grille, ni sa cible, ni ses réinjections, ni la barre d'état
+    # du châssis. Elle entre ici avec `BarreEtat.tsx`, et **c'est la seule fois
+    # de ce bloc où le compte monte** : ce ne sont pas des lignes neuves, ce
+    # sont des lignes qu'`App.tsx` cachait. Les redessiner sur le papier de
+    # `Galerie.dc.html` est un dessin, pas une extraction — il vient après.
+    "interface/src/composants/Galerie.tsx",
+    "interface/src/composants/BarreEtat.tsx",
     "interface/src/composants/Arbre.tsx",
     "interface/src/composants/BarreOutils.tsx",
-    "interface/src/composants/ChampPrompt.tsx",
-    "interface/src/composants/PanneauReglages.tsx",
-    "interface/src/composants/Fiche.tsx",
-    "interface/src/composants/FicheDuClip.tsx",
     "interface/src/composants/Tuile.tsx",
     "interface/src/composants/Import.tsx",
     "interface/src/composants/Depliage.tsx",
+    "interface/src/composants/FicheDuClip.tsx",
+    # **Un seul volet de fiche d'image dans le produit** (`C4`). Il y en avait
+    # deux : celui-ci, et un second écrit en clair dans `ImagesDuSujet.tsx` —
+    # même métier, deux surfaces. Le second est parti, et ce que lui seul savait
+    # faire — de quelle case on parle, l'angle à confirmer, la variante, l'écart
+    # — vit maintenant ici, derrière des rappels facultatifs. `Fiche.tsx` est
+    # donc montée par la galerie **et** par *Ses images*.
+    "interface/src/composants/Fiche.tsx",
+    # ⚠️ **Ces deux-là ne sont pas la galerie**, et le plan les lui attribuait :
+    # la barre qui paie a quitté la galerie en `E4` — on ne paie plus d'ici. Ils
+    # partiront avec les deux surfaces qui la portent, le repos de l'onglet
+    # *Créer* et l'établi d'un sujet.
+    "interface/src/composants/ChampPrompt.tsx",
+    "interface/src/composants/PanneauReglages.tsx",
     # C5 — l'envoi, le clip, le montage.
     "interface/src/composants/Envoi.tsx",
     "interface/src/composants/Clip.tsx",
@@ -448,12 +466,18 @@ def main() -> int:
         f" châssis, {total_lignes_anciennes} lignes au total."
     )
     lignes.append(
-        "  Départ du 10 septembre 2026 : 33 fichiers / 41 059 lignes. Ce chiffre ne"
+        "  Départ du 10 septembre 2026 : 33 fichiers / 41 059 lignes. Ce chiffre"
     )
     lignes.append(
-        "  peut que descendre : `C2` à `C9` retirent des noms de la liste, jamais"
+        "  descend : `C2` à `C9` retirent des noms de la liste. Une seule exception,"
     )
-    lignes.append("  l'inverse.")
+    lignes.append(
+        "  `C4` : la galerie était écrite en clair dans `App.tsx`, invisible au banc ;"
+    )
+    lignes.append(
+        "  la sortir en fichier l'a rendue comptable. Deux noms de plus, pas une"
+    )
+    lignes.append("  ligne de plus.")
     if manquants:
         lignes.append("")
         lignes.append(

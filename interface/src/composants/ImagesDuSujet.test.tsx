@@ -12,7 +12,14 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { ImagesDuSujet, rangerLaLigne, rangeesDeLaCase } from "./ImagesDuSujet"
-import { RECETTE_VIDE, type Asset, type Case, type Personnage, type Pose } from "../api"
+import {
+  RECETTE_VIDE,
+  UNIVERS_VIDE,
+  type Asset,
+  type Case,
+  type Personnage,
+  type Pose,
+} from "../api"
 
 afterEach(() => {
   cleanup()
@@ -135,15 +142,34 @@ const CASE_SUD = sienne({
 function construireDouble() {
   const appels: { url: string; methode: string; corps: unknown }[] = []
   const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
-    appels.push({
-      url: String(chemin),
-      methode: init?.method ?? "GET",
-      corps:
-        init?.body && typeof init.body === "string"
-          ? (JSON.parse(init.body) as unknown)
-          : undefined,
-    })
-    return { ok: true, status: 200, json: async () => ({}) } as Response
+    // **Seules les écritures se comptent** (`C4`). Le volet de cet onglet est
+    // désormais la fiche du produit, et une fiche *lit* : sa génération, ce que
+    // le projet lui impose, sa descendance. Compter ces lectures ferait dire
+    // « un appel est parti » là où rien n'a été écrit — ce que les essais de ce
+    // fichier vérifient précisément, geste par geste.
+    if ((init?.method ?? "GET") !== "GET")
+      appels.push({
+        url: String(chemin),
+        methode: init?.method ?? "GET",
+        corps:
+          init?.body && typeof init.body === "string"
+            ? (JSON.parse(init.body) as unknown)
+            : undefined,
+      })
+    // **La fiche d'une image demande sa génération** (`C4`) : c'est elle, le
+    // volet de cet onglet depuis qu'il n'y en a plus qu'un dans le produit. Le
+    // double rend donc une génération plausible plutôt qu'un objet vide — un
+    // objet vide n'est pas ce que le serveur renvoie, et l'écran n'a pas à s'en
+    // défendre.
+    const url = String(chemin)
+    const charge = url.includes("/generations/")
+      ? { demande: { prompt: "" }, hors_plafond: [], pris: [], emplacements: [] }
+      : url.endsWith("/lineage")
+        ? { parent: null, enfants: [], soeurs: [] }
+        : url.endsWith("/imposed")
+          ? { impose: null, echelle: "", nature: "" }
+          : {}
+    return { ok: true, status: 200, json: async () => charge } as Response
   })
   return { fetchDouble, appels }
 }
@@ -155,8 +181,14 @@ function monter(cases: Case[] = [CASE_SUD]) {
     onArmer: vi.fn(),
     onOuvrirCase: vi.fn(),
     onEcarter: vi.fn(),
+    onReinjecter: vi.fn(),
+    onReglages: vi.fn(),
     onErreur: vi.fn(),
   }
+  // **Le volet de cet onglet est la fiche du produit depuis `C4`** : il n'y a
+  // plus qu'un volet de fiche d'image, et c'est `Fiche.tsx`. Elle lit deux
+  // choses de plus que l'ancien volet — la liste vivante des sujets, pour dire
+  // de qui l'image est le corps, et l'univers du jeu.
   render(
     <ImagesDuSujet
       personnage={personnage(cases)}
@@ -164,6 +196,8 @@ function monter(cases: Case[] = [CASE_SUD]) {
       pieces={[
         { identifiant: "casque", nom: "le casque", emplacement: "tete", cree_le: 0 } as never,
       ]}
+      personnages={[personnage(cases)]}
+      univers={UNIVERS_VIDE}
       {...rappels}
     />,
   )
@@ -358,19 +392,28 @@ describe("les trois marques", () => {
   })
 })
 
+// **Le volet de cet onglet est `Fiche.tsx`** depuis `C4` : il y avait deux
+// volets de fiche d'image dans le produit, il n'en reste qu'un. Ces essais-ci
+// disent la même chose qu'avant — sur quelle image le volet s'ouvre, et qu'il
+// suit celle qu'on choisit — mais dans les mots de la fiche.
+const laFiche = () => document.querySelector("[data-panneau]") as HTMLElement
+
 describe("le volet de l'image", () => {
   test("il ouvre sur la retenue de la pose dépliée, et la nomme", () => {
     monter()
-    const volet = document.querySelector("[data-volet-de-l-image]") as HTMLElement
-    expect(within(volet).getByText("L'image retenue")).toBeTruthy()
-    expect(within(volet).getByText("gpt-image-2")).toBeTruthy()
+    expect(within(laFiche()).getByAltText("image b")).toBeTruthy()
+    expect(within(laFiche()).getByText("gpt-image-2")).toBeTruthy()
+    // De quelle case on parle — sans quoi le volet décrit « une image » et
+    // l'on ne sait laquelle des trois de la rangée.
+    expect(
+      document.querySelector("[data-identite-de-l-image]")?.textContent,
+    ).toContain("repos")
   })
 
-  test("choisir une gardée change le volet, qui cesse de dire « retenue »", () => {
+  test("choisir une gardée change le volet, qui suit l'image choisie", () => {
     monter()
     fireEvent.click(screen.getByLabelText("image a"))
-    const volet = document.querySelector("[data-volet-de-l-image]") as HTMLElement
-    expect(within(volet).getByText("L'image choisie")).toBeTruthy()
+    expect(within(laFiche()).getByAltText("image a")).toBeTruthy()
   })
 
   test("« La retoucher » ouvre l'image dans ses tables", () => {
@@ -478,7 +521,7 @@ describe("les calques", () => {
     // Le calque de `c` a pris la place de celui de `b` : un calque appartient à
     // l'image sur laquelle il a été calculé, jamais à la case.
     expect(section.querySelectorAll("img")).toHaveLength(1)
-    const volet = document.querySelector("[data-volet-de-l-image]") as HTMLElement
+    const volet = document.querySelector("[data-panneau]") as HTMLElement
     expect(within(volet).getByAltText("image c")).toBeTruthy()
   })
 

@@ -50,9 +50,11 @@ import {
   type Collection,
   type Echelle,
   type GroupeDeRangement,
+  type Asset,
   type Personnage,
   type Piece,
   type Pose,
+  type Role,
   type EmplacementCorps,
   type Univers,
   type VestiaireDuJeu,
@@ -670,6 +672,12 @@ export function PageDuSujet(proprietes: {
   onOuvrirLaBande: (bande: string) => void
   onSuperposition: (identifiant: string) => void
   onSupprimer: (identifiants: string[]) => void
+  /** Les deux rôles que la fiche d'une image porte (`C4`) : renvoyer l'image au
+   *  générateur, et reprendre les réglages de sa génération. Ils traversent
+   *  cette page parce que la fiche est montée dans *Ses images* depuis que le
+   *  produit n'a plus qu'un seul volet de fiche d'image. */
+  onReinjecter: (asset: string, role: Role) => void
+  onReglages: (asset: Asset) => void
   /** Ouvre la grille du jeu pour ce sujet (`B13`) — une profondeur de plus de
    *  cette page, comme la matrice. */
   onGrille: () => void
@@ -969,10 +977,14 @@ export function PageDuSujet(proprietes: {
             personnage={ouvert}
             plan={sienPlan}
             pieces={proprietes.pieces}
+            personnages={proprietes.personnages}
+            univers={proprietes.univers}
             onArmer={proprietes.onArmer}
             onOuvrirCase={proprietes.onOuvrirCase}
             onRegardee={setRegardee}
             onEcarter={proprietes.onSupprimer}
+            onReinjecter={proprietes.onReinjecter}
+            onReglages={proprietes.onReglages}
             onErreur={echouer}
           />
         )}

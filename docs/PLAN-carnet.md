@@ -2487,9 +2487,30 @@ galerie entière. Ce qui en sort devient un écran, comme les vingt et un autres
 
 ### Critères d'acceptation
 
-- [ ] La galerie est un fichier, pas une partie d'`App.tsx`.
-- [ ] Un seul volet de fiche d'image dans tout le produit.
-- [ ] `App.tsx` passe sous 3 000 lignes.
+- [x] La galerie est un fichier, pas une partie d'`App.tsx`.
+      *`interface/src/composants/Galerie.tsx` — l'écran, son crochet d'état, sa
+      grille, sa cible, ses réinjections. `App.tsx` n'en garde que la condition
+      de montage.*
+- [x] Un seul volet de fiche d'image dans tout le produit.
+      *`Fiche.tsx` reste — c'est le plus complet (recette, filiation,
+      réinjection, corps d'une case, ce que le projet impose) et c'est ce que
+      dessine la colonne de droite de `Galerie.dc.html`. Le volet écrit en clair
+      dans `ImagesDuSujet.tsx` est parti ; ce que lui seul savait faire est
+      relogé dans la fiche derrière des rappels facultatifs — de quelle case on
+      parle, l'angle à confirmer, la variante, l'écart. Une porte est abandonnée
+      et c'est voulu : « Reprendre dans l'établi » n'a pas de sens dans
+      l'établi.*
+- [x] `App.tsx` passe sous 3 000 lignes.
+      *5 337 → 2 970. Sont sortis avec la galerie les blocs qui ne parlaient
+      d'aucun écran : `flux.ts`, `lieux-noms.ts`, `paiement.ts`,
+      `relectures.ts`, `gestes.ts`, `vestiaire.ts`, `BarreEtat.tsx`.*
+
+⚠️ **Ce qui n'est pas fait, et qui reste à `C4` ou à sa suite** : la galerie est
+un fichier, elle n'est pas encore *en papier*. `Galerie.dc.html` dessine trois
+colonnes claires ; le fichier sorti d'`App.tsx` porte encore les couleurs de
+l'ancien châssis, comme les huit fichiers qu'il monte. `essai_jetons.py` les
+compte tous les deux — c'est la seule tranche du bloc où le compte de fichiers
+**monte**, de 31 à 33 : `App.tsx` cachait ces surfaces au banc.
 
 ### Bloquée par
 

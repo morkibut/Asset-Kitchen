@@ -78,6 +78,11 @@ export function Fiche({
   onOuvrirLEtabli,
   onRetoucher,
   onOuvrir,
+  identite,
+  directionsAConfirmer,
+  onDirection,
+  onVariante,
+  onEcarter,
 }: {
   asset: Asset
   /** Le plan du jeu et ses personnages, pour désigner cette image comme le
@@ -104,10 +109,36 @@ export function Fiche({
    *  la retouche, qui s'ouvre sur n'importe quelle image. Le découpage n'a
    *  plus de porte à lui : c'est une fabrique de la retouche, et on ne le
    *  cherche plus. */
-  onOuvrirLEtabli: () => void
+  /** ⚠️ **Absent quand on est déjà dans l'établi** (`C4`) : la fiche est montée
+   *  dans *Ses images*, qui **est** l'établi de la chose. Un bouton qui ouvre
+   *  l'écran où l'on se trouve ne mène nulle part. */
+  onOuvrirLEtabli?: () => void
   onRetoucher: () => void
   /** Remonter ou descendre la filiation sans quitter le panneau. */
   onOuvrir: (identifiant: string) => void
+  // ── `C4` · ce que le volet d'`ImagesDuSujet` savait faire ────────────────
+  //
+  // **Il y avait deux volets de fiche d'image dans le produit** — celui-ci, et
+  // un second écrit en clair dans `ImagesDuSujet.tsx`, même métier, deux
+  // surfaces. Le second est parti ; les quatre choses qu'il savait faire et que
+  // celui-ci ne savait pas sont ici, **derrière des rappels facultatifs** : sur
+  // la galerie, personne ne les passe, et la fiche est exactement ce qu'elle
+  // était. Sur la page d'un sujet, on sait de quelle case on parle, et elles
+  // paraissent.
+  /** De quoi cette image est l'image — *le pèlerin, repos, vers l'est*. Le
+   *  volet d'avant l'écrivait parce qu'une rangée de cinq vignettes ne dit pas
+   *  laquelle est décrite. */
+  identite?: string | null
+  /** Les angles que le jeu déclare pour la pose de cette image, quand elle ne
+   *  dit pas d'où elle regarde. **Le seul endroit d'où l'on confirme** : c'est
+   *  le seul où l'on sait de quelle case il s'agit. */
+  directionsAConfirmer?: readonly { identifiant: string; nom: string }[]
+  onDirection?: (direction: string) => void
+  /** Redemander la même case au générateur. */
+  onVariante?: () => void
+  /** **Écarter est un jugement, pas un effacement.** Le geste passe par le
+   *  parent, qui est le seul à porter le bandeau *la rendre*. */
+  onEcarter?: () => void
 }) {
   const [montrerBrut, setMontrerBrut] = useState(false)
   /** La génération de cette image, **lue une fois pour la fiche entière** (U8) :
@@ -193,6 +224,16 @@ export function Fiche({
           {asset.label}
         </p>
 
+        {/* **De quelle image on parle** (`C4`) — sans quoi la fiche décrit « une
+            image » et l'on ne sait laquelle des cinq de la rangée. Écrit
+            seulement là où la case est connue : sur la galerie, c'est le label
+            juste au-dessus qui la nomme. */}
+        {identite && (
+          <p data-identite-de-l-image className="text-[11.5px] text-texte-2">
+            {identite}
+          </p>
+        )}
+
         {/* **Qui a dessiné cette image** (US-123). Une ligne de provenance, au
             même titre que le coût : elle se lit, elle ne se règle pas — donc
             aucun libellé, aucun pointillé, rien à survoler. L'identifiant
@@ -219,6 +260,37 @@ export function Fiche({
           personnages={personnages}
           onErreur={onErreur}
         />
+
+        {/* **La direction, quand l'image ne la dit pas** (`C4`, relogé du volet
+            d'`ImagesDuSujet`). Le seul endroit d'où l'on confirme, parce que
+            c'est le seul où l'on sait de quelle case on parle. Un clic la
+            range. */}
+        {asset.direction === null &&
+          asset.pose &&
+          directionsAConfirmer &&
+          directionsAConfirmer.length > 0 && (
+            <div className="flex flex-col gap-1.5 border border-epingle/40 bg-epingle/[.07] p-2">
+              <p className="mesure text-[10px] text-epingle">
+                Sa direction est à confirmer
+              </p>
+              <p className="text-[11px] leading-4 text-texte-3">
+                Elle a été faite avant que le jeu ne déclare ses angles.
+                L'atelier ne la devine pas.
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {directionsAConfirmer.map((d) => (
+                  <button
+                    key={d.identifiant}
+                    type="button"
+                    onClick={() => onDirection?.(d.identifiant)}
+                    className="mesure rounded-[2px] border border-bord bg-fond-2 px-2 py-0.5 text-[10px] text-texte hover:border-texte-3"
+                  >
+                    {d.nom}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
         {/* **Le texte avant la filiation, et après le jugement.** On juge une
             image en la regardant ; on lit son texte quand on se demande d'où
@@ -279,12 +351,14 @@ export function Fiche({
             image qui n'appartient à personne n'a que la seconde — et le grisé
             de la première porte sa raison, comme partout ailleurs. */}
         <div className="mt-auto flex flex-col gap-1 border-t border-bord pt-2">
-          <Bouton
-            inactif={!asset.personnage}
-            onClick={onOuvrirLEtabli}
-            enfants="Reprendre dans l'établi"
-          />
-          {!asset.personnage && (
+          {onOuvrirLEtabli && (
+            <Bouton
+              inactif={!asset.personnage}
+              onClick={onOuvrirLEtabli}
+              enfants="Reprendre dans l'établi"
+            />
+          )}
+          {onOuvrirLEtabli && !asset.personnage && (
             <Raison texte="cette image n'appartient à aucune chose du jeu — la rattacher plus haut lui ouvre son établi" />
           )}
           {/* **Le bouton nomme ce qu'il ouvre** (`B25`) : il disait *Ouvrir les
@@ -293,6 +367,27 @@ export function Fiche({
               partout ailleurs — *Ses images*, le comparateur —, et deux noms
               pour un seul écran se lisent comme deux écrans. */}
           <Bouton onClick={onRetoucher} enfants="La retoucher" />
+          {/* **Les deux gestes de la case** (`C4`, relogés du volet
+              d'`ImagesDuSujet`). Redemander la même case, et écarter celle-ci.
+              Ils n'existent que là où l'on sait de quelle case on parle. */}
+          {onVariante && (
+            <Bouton onClick={onVariante} enfants="En générer une variante" />
+          )}
+          {onEcarter && (
+            <>
+              <button
+                type="button"
+                onClick={onEcarter}
+                className="mesure mt-1 text-[10px] text-ancien-echec hover:text-texte"
+              >
+                L'écarter
+              </button>
+              <p className="text-[11px] leading-4 text-texte-3">
+                Écarter est un jugement, pas un effacement : le fichier reste sur
+                le disque et la dépense reste au journal.
+              </p>
+            </>
+          )}
           <a
             href={api.telechargementAsset(asset.identifiant, montrerBrut)}
             download
