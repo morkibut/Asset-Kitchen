@@ -70,6 +70,25 @@ export const NOM_DANS_LE_CARNET: Record<string, string> = {
   equipement: "Les équipements",
 }
 
+/**
+ * Les cinq familles, sans article — reprises de l'ancien `Codex.tsx` (`C3`),
+ * qui les portait seul avant que le carnet et `Famille.tsx` ne les montrent
+ * chacun à leur tour. `NOM_DANS_LE_CARNET` ci-dessus porte l'article pour la
+ * ligne du carnet ; ces noms-ci servent au fil d'Ariane, qui n'en veut pas.
+ */
+export const FAMILLES = [
+  { cle: "personnages", nom: "Personnages" },
+  { cle: "decors", nom: "Décors" },
+  { cle: "objets", nom: "Objets" },
+  { cle: "interface", nom: "Interface" },
+  { cle: "equipement", nom: "Équipement" },
+] as const
+
+/** Le nom d'une famille ou d'un équipement pour le fil d'Ariane, sans article. */
+export const NOM_DE_LA_RUBRIQUE: Record<string, string> = Object.fromEntries(
+  FAMILLES.map((f) => [f.cle, f.nom]),
+)
+
 /** Ce qu'une ligne de famille montre. */
 export type LigneDeFamille = {
   cle: string

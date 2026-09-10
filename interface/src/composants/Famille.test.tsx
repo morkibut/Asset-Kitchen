@@ -12,7 +12,7 @@ import { useState } from "react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { EcranFamille, GLISSE_DES_SUJETS } from "./Famille"
-import type { GrilleDeFamille, SujetDeLaGrille } from "../api"
+import type { GrilleDeFamille, Personnage, SujetDeLaGrille } from "../api"
 
 afterEach(() => {
   cleanup()
@@ -157,6 +157,35 @@ function construireDouble() {
         bibliotheque: BIBLIOTHEQUE_VIDE,
       })
     }
+    if (methode === "POST" && url === "/api/characters") {
+      const { nom, famille } = corps as { nom: string; famille: string | null }
+      return rendre({
+        personnage: {
+          identifiant: nom.toLowerCase().replace(/\s+/g, "-"),
+          projet: "le-marais",
+          nom,
+          description: "",
+          ecartees: [],
+          concept_arts: [],
+          references_ecartees: [],
+          cree_le: 0,
+          cases: [],
+          plan: [],
+          type: "",
+          ambiance: "",
+          prend: "tout",
+          textes: {},
+          eteints: [],
+          references: [],
+          ajoutees: [],
+          directions_ecartees: {},
+          hors_calibrage: [],
+          famille: famille ?? "personnages",
+          equipable: (famille ?? "personnages") === "personnages",
+          pieces: [],
+        },
+      })
+    }
     return rendre({})
   })
   return { fetchDouble, appels }
@@ -174,9 +203,9 @@ function Controle(props: {
   creerUnGroupe?: number
   surRange: () => void
   surReglages: () => void
-  surAjouter: () => void
   surErreur: (r: string) => void
   onOuvrir?: (identifiant: string) => void
+  onCree?: (personnage: Personnage) => void
 }) {
   const [glisses, setGlisses] = useState<readonly string[] | null>(null)
   return (
@@ -195,9 +224,9 @@ function Controle(props: {
       creerUnGroupe={props.creerUnGroupe ?? 0}
       surRange={props.surRange}
       surReglages={props.surReglages}
-      surAjouter={props.surAjouter}
       surErreur={props.surErreur}
       onOuvrir={props.onOuvrir ?? (() => {})}
+      onCree={props.onCree ?? (() => {})}
     />
   )
 }
@@ -210,7 +239,6 @@ function monter(surplus: { collection?: string | null; creerUnGroupe?: number } 
     surGroupes: vi.fn(),
     surRange: vi.fn(),
     surReglages: vi.fn(),
-    surAjouter: vi.fn(),
     surErreur: vi.fn(),
     onOuvrir: vi.fn(),
   }
@@ -510,7 +538,6 @@ describe("la collection ouverte dans le carnet", () => {
       rafraichi: 0,
       surRange: vi.fn(),
       surReglages: vi.fn(),
-      surAjouter: vi.fn(),
       surErreur: vi.fn(),
     }
 
@@ -556,6 +583,62 @@ describe("nommer une collection sans rien avoir choisi", () => {
   })
 })
 
+// ── Nommer, c'est créer (C3 : le champ qui nommait dans le codex vit ici) ────
+
+describe("le bouton « Ajouter » nomme et crée sur-le-champ", () => {
+  test("écrire un nom et valider crée la chose et ouvre sa fiche", async () => {
+    const { fetchDouble, appels } = construireDouble()
+    vi.stubGlobal("fetch", fetchDouble)
+    const onOuvrir = vi.fn()
+    render(
+      <Controle
+        surGlisser={vi.fn()}
+        surGroupes={vi.fn()}
+        rafraichi={0}
+        surRange={vi.fn()}
+        surReglages={vi.fn()}
+        surErreur={vi.fn()}
+        onOuvrir={onOuvrir}
+      />,
+    )
+
+    await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter un personnage" }))
+
+    const champ = screen.getByLabelText("Nom de la chose du jeu à créer")
+    fireEvent.change(champ, { target: { value: "Le nain" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() =>
+      expect(appels.some((a) => a.methode === "POST" && a.url === "/api/characters")).toBe(true),
+    )
+    const creation = appels.find((a) => a.methode === "POST" && a.url === "/api/characters")!
+    expect((creation.corps as { nom: string; famille: string | null }).nom).toBe("Le nain")
+    expect((creation.corps as { famille: string | null }).famille).toBe("personnages")
+
+    await waitFor(() => expect(onOuvrir).toHaveBeenCalledWith("le-nain"))
+  })
+
+  test("un nom vide ne part pas", async () => {
+    const { fetchDouble, appels } = construireDouble()
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Controle {...{
+      surGlisser: vi.fn(),
+      surGroupes: vi.fn(),
+      rafraichi: 0,
+      surRange: vi.fn(),
+      surReglages: vi.fn(),
+      surErreur: vi.fn(),
+    }} />)
+
+    await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter un personnage" }))
+    fireEvent.keyDown(screen.getByLabelText("Nom de la chose du jeu à créer"), { key: "Enter" })
+
+    expect(appels.some((a) => a.methode === "POST" && a.url === "/api/characters")).toBe(false)
+  })
+})
+
 describe("une réponse tronquée", () => {
   test("le carnet reçoit une liste vide, jamais `undefined`", async () => {
     // Le double de `fetch` d'`App.test.tsx` rend `{}` pour une route qu'il ne
@@ -573,7 +656,6 @@ describe("une réponse tronquée", () => {
         rafraichi={0}
         surRange={vi.fn()}
         surReglages={vi.fn()}
-        surAjouter={vi.fn()}
         surErreur={vi.fn()}
       />,
     )

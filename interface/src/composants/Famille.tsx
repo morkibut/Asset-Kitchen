@@ -51,6 +51,7 @@ import {
   type FiltreDeFamille,
   type GrilleDeFamille,
   type GroupeDeRangement,
+  type Personnage,
   type SujetDeLaGrille,
 } from "../api"
 
@@ -69,6 +70,15 @@ const MOTS_DE_FAMILLE: Record<string, { pluriel: string; singulier: string }> = 
 
 function motsDe(famille: string): { pluriel: string; singulier: string } {
   return MOTS_DE_FAMILLE[famille] ?? { pluriel: famille, singulier: famille }
+}
+
+/** L'exemple que porte le champ qui nomme, famille par famille (repris de
+ *  l'ancien codex, `C3`) — **un exemple, pas une étiquette**. */
+const PLACEHOLDER_DE_LA_FAMILLE: Record<string, string> = {
+  personnages: "nommer une chose du jeu",
+  decors: "les cavernes du nord, une salle du trône…",
+  objets: "un tonneau cerclé de fer, un coffre…",
+  interface: "un bouton, un cadre, une jauge…",
 }
 
 /** Les trois onglets à zéro — ce qu'on montre pendant le chargement et après un
@@ -437,9 +447,9 @@ export function EcranFamille({
   creerUnGroupe,
   surRange,
   surReglages,
-  surAjouter,
   surErreur,
   onOuvrir,
+  onCree,
 }: {
   /** La clé de la famille : "personnages", "objets", "decors", "interface". */
   famille: string
@@ -477,13 +487,49 @@ export function EcranFamille({
   /** À appeler après un rangement fait ici, pour que le parent relise l'arbre. */
   surRange: () => void
   surReglages: () => void
-  surAjouter: () => void
   surErreur: (raison: string) => void
   /** Ouvrir la fiche du sujet — ce que le clic fait par défaut, hors du mode
    *  sélection. */
   onOuvrir: (identifiant: string) => void
+  /** **La chose créée se fond dans la liste vivante avant qu'on l'ouvre**
+   *  (`C3`, repris du geste de l'ancien codex) : sans ce rappel, `onOuvrir`
+   *  désignerait un identifiant que `personnages` ne connaît pas encore, et la
+   *  page resterait introuvable jusqu'au prochain message du flux. */
+  onCree: (personnage: Personnage) => void
 }) {
   const mots = motsDe(famille)
+
+  /** **Nommer, c'est créer** (US-115) — le geste que le codex portait seul
+   *  avant `C3`. Écrire un nom crée la chose sur-le-champ, sans formulaire et
+   *  sans un centime, et l'ouvre aussitôt : on la nomme pour la décrire, pas
+   *  pour la ranger. */
+  const [creationOuverte, setCreationOuverte] = useState(false)
+  const [nomDeLaCreation, setNomDeLaCreation] = useState("")
+  const [creationEnCours, setCreationEnCours] = useState(false)
+  const champDeCreation = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!creationOuverte) return
+    const trame = requestAnimationFrame(() => champDeCreation.current?.focus())
+    return () => cancelAnimationFrame(trame)
+  }, [creationOuverte])
+
+  const creer = async () => {
+    const propre = nomDeLaCreation.trim()
+    if (!propre) return
+    setCreationEnCours(true)
+    try {
+      const { personnage } = await api.creerPersonnage(propre, "", famille)
+      setNomDeLaCreation("")
+      setCreationOuverte(false)
+      onCree(personnage)
+      onOuvrir(personnage.identifiant)
+    } catch (erreur) {
+      surErreur(erreur instanceof Error ? erreur.message : String(erreur))
+    } finally {
+      setCreationEnCours(false)
+    }
+  }
 
   const [recherche, setRecherche] = useState("")
   const [filtre, setFiltre] = useState<FiltreDeFamille>("tous")
@@ -569,6 +615,14 @@ export function EcranFamille({
   const total = donnee?.total ?? 0
   const filtres = donnee?.filtres ?? AUCUN_COMPTE
   const groupeOuvert = groupes.find((g) => g.identifiant === collection) ?? null
+
+  // **Un monde vide n'a qu'un geste à proposer** (repris de l'ancien codex,
+  // `C3`) : sur la famille entière, sans filtre ni recherche, le champ qui
+  // nomme s'ouvre de lui-même plutôt que d'attendre un clic sur « Ajouter ».
+  useEffect(() => {
+    if (donnee && donnee.total === 0 && collection === null && filtre === "tous" && !recherche.trim())
+      setCreationOuverte(true)
+  }, [donnee, collection, filtre, recherche])
 
   const choisirCollection = useCallback((f: FiltreDeFamille) => {
     setFiltre(f)
@@ -739,24 +793,43 @@ export function EcranFamille({
                 : "Aucune collection encore. Une collection range sans contraindre."}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-[8px]">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-[8px]">
             <button
               type="button"
               onClick={surReglages}
-              className="flex h-[34px] items-center gap-[4px] rounded-7 border border-trait bg-carte px-[14px] text-[13px] text-encre transition-colors duration-120 hover:border-contour"
+              className="flex h-[34px] shrink-0 items-center gap-[4px] rounded-7 border border-trait bg-carte px-[14px] text-[13px] text-encre transition-colors duration-120 hover:border-contour"
             >
               <span>Réglages de la famille</span>
               <span aria-hidden className="text-encre-4">
                 ›
               </span>
             </button>
-            <button
-              type="button"
-              onClick={surAjouter}
-              className="h-[34px] rounded-7 bg-signal px-[14px] text-[13px] text-encre-sur-signal transition-colors duration-120 hover:bg-echec"
-            >
-              Ajouter un {mots.singulier}
-            </button>
+            {creationOuverte ? (
+              <>
+                <input
+                  ref={champDeCreation}
+                  value={nomDeLaCreation}
+                  onChange={(e) => setNomDeLaCreation(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void creer()
+                    if (e.key === "Escape") setCreationOuverte(false)
+                  }}
+                  disabled={creationEnCours}
+                  placeholder={PLACEHOLDER_DE_LA_FAMILLE[famille] ?? "nommer une chose du jeu"}
+                  aria-label="Nom de la chose du jeu à créer"
+                  className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre outline-none"
+                />
+                <span className="shrink-0 text-[11px] text-encre-4">Entrée le crée</span>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCreationOuverte(true)}
+                className="h-[34px] shrink-0 rounded-7 bg-signal px-[14px] text-[13px] text-encre-sur-signal transition-colors duration-120 hover:bg-echec"
+              >
+                Ajouter un {mots.singulier}
+              </button>
+            )}
           </div>
         </div>
 

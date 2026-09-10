@@ -3785,7 +3785,7 @@ async function ouvrirLEtabli(nom?: string) {
   const carnet = document.querySelector("[data-carnet]")
   if (carnet) {
     const rangee = within(carnet as HTMLElement).queryByRole("button", {
-      name: /^Personnages/,
+      name: /personnages/i,
     })
     if (rangee) fireEvent.click(rangee)
   }
@@ -3855,19 +3855,6 @@ const NOM_DE_LA_TABLE_A_L_ECRAN: Record<string, string> = {
 }
 
 const nomDeLaTable = (cle: string) => NOM_DE_LA_TABLE_A_L_ECRAN[cle] ?? cle
-
-/** Une rubrique de la colonne du codex — les poses, l'équipement, une famille.
- *
- *  Les deux listes que le jeu impose à plusieurs — le plan de poses, le
- *  vestiaire — vivaient dans la colonne de gauche de l'écran des personnages.
- *  Elles sont montées dans le codex avec E2, parce qu'elles ne sont la colonne
- *  de personne en particulier. */
-async function ouvrirLaRubrique(nom: string) {
-  fireEvent.click(await screen.findByRole("tab", { name: "Créer" }))
-  const cadre = await cadreDuCodex()
-  fireEvent.click(within(cadre).getByRole("button", { name: new RegExp(`^${nom}`) }))
-  return within(cadre)
-}
 
 /** Les réglages de l'appel, dépliés.
  *
@@ -6233,14 +6220,13 @@ describe("l'écran des personnages", () => {
     fireEvent.change(nommer, { target: { value: "Le nain" } })
     fireEvent.keyDown(nommer, { key: "Enter" })
 
-    // La chose créée s'ouvre : on la nomme pour la décrire, pas pour la ranger.
-    //
-    // **Le champ a changé d'écran en `B10`, pas de rôle** : la description
-    // s'écrivait dans la colonne d'identité de la matrice, elle est maintenant
-    // sur la fiche du sujet, qui est la première chose qu'on voit en l'ouvrant.
-    // C'est ce que la tranche livre ; ce que cet essai mesure — *elle s'écrit
-    // une fois et part avec chaque génération* — est inchangé.
-    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir son établi" }))
+    // La chose créée s'ouvre directement sur sa fiche : on la nomme pour la
+    // décrire, pas pour la ranger. **Le champ a changé d'écran en `B10`, pas de
+    // rôle** : la description s'écrivait dans la colonne d'identité de la
+    // matrice, elle est maintenant sur la fiche du sujet, qui est la première
+    // chose qu'on voit en l'ouvrant — sans détour par ses cases. C'est ce que
+    // la tranche livre ; ce que cet essai mesure — *elle s'écrit une fois et
+    // part avec chaque génération* — est inchangé.
     const description = await screen.findByLabelText("Description du sujet")
     fireEvent.change(description, {
       target: { value: "un forgeron nain à la barbe tressée" },
@@ -11537,28 +11523,10 @@ describe("les palettes et les ambiances", () => {
     )
   })
 
-  test("le codex écrit l'ambiance de chaque chose, et les trous se voient", async () => {
-    // **Le second endroit où l'on répond à « qui utilise quoi ».** Le panneau
-    // d'une ambiance dit qui s'en sert ; le codex dit, chose par chose, laquelle
-    // chacune porte — c'est déjà l'endroit où la liste de tout le jeu s'affiche.
-    const double = serveurDouble({
-      personnages: [
-        personnage("Le rôdeur", { ambiance: "marais-de-cendre" }),
-        personnage("Le nain"),
-      ],
-      ambiances: [ambianceDouble("Marais de cendre")],
-    })
-    await monter(double.fetchDouble)
-    fireEvent.click(await screen.findByRole("tab", { name: "Créer" }))
-    const cadre = await cadreDuCodex()
-
-    expect(await within(cadre).findByText("Marais de cendre")).toBeTruthy()
-    // **Ce qui n'en a pas ne se grise pas** : « aucune » n'est pas un manque —
-    // une chose sans ambiance prend le style du jeu, ce qui est le cas courant.
-    const cartes = within(cadre).getAllByRole("article")
-    expect(cartes.length).toBe(2)
-    expect(cartes[1].textContent).not.toContain("Marais de cendre")
-  })
+  // ⚠️ **L'essai sur l'ambiance affichée carte par carte est parti avec
+  // `Codex.tsx` (`C3`)** : c'était sa colonne des choses (`ListeDesChoses`),
+  // qui n'a pas d'équivalent sur ce point dans `Famille.tsx` — à rouvrir si le
+  // besoin s'en fait sentir.
 
   test("sans ambiance dans le jeu, la fiche dit où en fabriquer", async () => {
     const double = serveurDouble({ personnages: [personnage("Le nain")] })
@@ -13015,32 +12983,11 @@ describe("la vitrine", () => {
   })
 
   // ── « L'écran s'ouvre depuis le codex et depuis une fiche » ────────────────
-
-  test("le codex ouvre la vitrine sur le monde entier", async () => {
-    // **Trois nains côte à côte disent tout de suite s'ils viennent du même
-    // monde.** C'est le cinquième verbe du codex : il montre.
-    const double = serveurDouble({
-      personnages: [avecUneImage("Balthazar"), avecUneImage("Le nain")],
-    })
-    await monter(double.fetchDouble)
-    fireEvent.click(await screen.findByRole("tab", { name: "Créer" }))
-    const cadre = await cadreDuCodex()
-
-    fireEvent.click(
-      within(cadre).getByRole("button", { name: "voir tout le monde en grand ›" }),
-    )
-
-    const vitrine = within(
-      await waitFor(() => {
-        const trouvee = document.querySelector("[data-vitrine]")
-        if (!trouvee) throw new Error("la vitrine ne s'est pas ouverte")
-        return trouvee as HTMLElement
-      }),
-    )
-    // Une image par chose, et c'est le nom de la chose qu'on lit.
-    expect(await vitrine.findByAltText("Balthazar")).toBeTruthy()
-    expect(vitrine.getByAltText("Le nain")).toBeTruthy()
-  })
+  //
+  // ⚠️ **« voir tout le monde en grand » est parti avec `Codex.tsx` (`C3`)** :
+  // c'était un bouton de sa colonne des choses (`ListeDesChoses`), sans
+  // équivalent dans `Famille.tsx` — à rouvrir si le besoin s'en fait sentir.
+  // Reste la porte depuis une fiche, ci-dessous.
 
   test("la fiche ouvre la vitrine sur les poses de cette chose", async () => {
     const double = serveurDouble({ personnages: [avecUneImage("Balthazar")] })

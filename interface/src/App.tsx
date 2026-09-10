@@ -812,6 +812,28 @@ export function App() {
    *  demander le nom, et un compteur plutôt qu'un drapeau — deux clics de suite
    *  doivent rouvrir le champ deux fois (le patron de `nommer`, E19). */
   const [creerUnGroupe, setCreerUnGroupe] = useState(0)
+  /** Nommer une chose depuis le repos de l'onglet Créer (`C3`), sans passer
+   *  par le carnet : le même geste que la grille d'une famille propose déjà
+   *  (`Famille.tsx`), posé ici en un seul champ. Créée sans famille précisée,
+   *  la chose tombe en "personnages" côté serveur (défaut de `POST
+   *  /api/characters`), comme au repos de l'ancien codex. */
+  const [nomDeLaCreationRapide, setNomDeLaCreationRapide] = useState("")
+  const [creationRapideEnCours, setCreationRapideEnCours] = useState(false)
+  const creerRapidement = async () => {
+    const propre = nomDeLaCreationRapide.trim()
+    if (!propre) return
+    setCreationRapideEnCours(true)
+    try {
+      const { personnage } = await api.creerPersonnage(propre, "")
+      setNomDeLaCreationRapide("")
+      fondrePersonnage(personnage)
+      setChoseOuverte(personnage.identifiant)
+    } catch (erreur) {
+      setPanne(erreur instanceof Error ? erreur.message : String(erreur))
+    } finally {
+      setCreationRapideEnCours(false)
+    }
+  }
 
   /** Lâcher les sujets traînés dans un groupe du carnet.
    *
@@ -4323,9 +4345,18 @@ export function App() {
           className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-fond-0 p-4"
         >
           <p className="mesure max-w-[420px] text-center text-[12px] leading-5 text-texte-3">
-            Choisis une famille dans le carnet à gauche, ou écris directement ce
-            que tu veux fabriquer.
+            Choisis une famille dans le carnet à gauche, nomme une chose du jeu,
+            ou écris directement ce que tu veux fabriquer.
           </p>
+          <input
+            value={nomDeLaCreationRapide}
+            onChange={(e) => setNomDeLaCreationRapide(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") void creerRapidement() }}
+            disabled={creationRapideEnCours}
+            placeholder="nommer une chose du jeu"
+            aria-label="Nom de la chose du jeu à créer"
+            className="mesure h-[34px] w-full max-w-[380px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre outline-none"
+          />
           {barreQuiPaie}
         </div>
       )}

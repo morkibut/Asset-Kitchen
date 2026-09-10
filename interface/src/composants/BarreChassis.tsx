@@ -31,7 +31,11 @@ export type Onglet = "univers" | "codex" | "galerie"
  *  même chose finiraient par diverger. */
 export const ONGLETS: readonly { cle: Onglet; nom: string }[] = [
   { cle: "univers", nom: "Univers" },
-  { cle: "codex", nom: "Codex" },
+  // **Codex.tsx est parti (`C3`)** : sa colonne des familles était le carnet,
+  // sa grille était celle d'une famille. Ce qui reste au repos de cet onglet
+  // est la barre qui paie, sans famille propre — « Créer » le dit mieux que
+  // le nom d'un écran disparu.
+  { cle: "codex", nom: "Créer" },
   { cle: "galerie", nom: "Galerie" },
 ]
 
