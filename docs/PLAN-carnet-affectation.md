@@ -58,6 +58,35 @@ entière — les `[VERY-EASY]` sont des sous-tâches, pas des tranches.
 
 ---
 
+## Les 9 tranches `C` — la sortie de l'ancien châssis
+
+*Classées le 10 septembre 2026, mesurées fichier par fichier plutôt que sur la lecture seule
+du plan — deux relevés indépendants ont compté les lignes, les montages et les doublons avant
+ce classement.*
+
+| Tranche | Étiquette | Pourquoi |
+|---|---|---|
+| **C1** · le compteur de sortie, et les cinq portes des réglages | `[MEDIUM]` | le garde-fou se retourne (mécanique), mais les garde-fous de l'agent et la bibliothèque de mouvements manquent réellement à `Installation.tsx` — `Installation.tsx:1251` le dit lui-même en renvoyant vers l'ancien écran — et leur y donner une place est un assemblage, pas de la conception |
+| **C2** · l'univers s'efface | `[HARD]` | 8 200 lignes portées, dont `Toile`/`Tableau`/`Ambiances` (5 500 lignes) qui n'ont **aucun équivalent papier** nulle part ; et `Assistant.tsx` écrit le même endpoint que `ReglesDuJeu.tsx` (`api.reglerUnivers`), donc un vrai arbitrage précède le portage |
+| **C3** · le codex s'efface | `[MEDIUM]` | retirer `Codex.tsx` est mécanique, mais le seul chemin qui **crée** une pièce d'équipement vit dans son `Vestiaire` (`Personnages.tsx:728`) et n'a pas d'équivalent dans `Emplois.tsx`/`Emploi.tsx`, qui ne savent qu'exploiter l'existant — ce geste se reloge avant que le codex parte |
+| **C4** · la galerie passe au papier | `[VERY-HARD]` | la galerie n'est pas un fichier mais 2 000 lignes écrites en clair dans `App.tsx` (réinjection comprise), qui montent huit fichiers autour d'elle ; c'est la surface la plus couverte des 721 essais d'écran, et un doublon vrai (`Fiche.tsx` / le volet de `ImagesDuSujet.tsx`) doit se trancher au passage |
+| **C5** · l'envoi, le clip, le montage | `[MEDIUM]` | trois écrans portés sur un patron déjà connu ; la seule décision — le sort d'un clip écarté, que deux planches se contredisent depuis le 6 septembre sans jamais avoir été arbitré — est le point dur, pas la tranche entière |
+| **C6** · l'établi d'un sujet | `[MEDIUM]` | ~7 250 lignes sur cinq fichiers, mais aucune décision neuve : le patron des onglets de `PageDuSujet.tsx` existe déjà (`B10`, `B11`, `B19`), et `Calque.tsx`/`Calibrage.tsx` n'ont aucun second lecteur qui les disputerait |
+| **C7** · l'atelier d'une animation | `[MEDIUM]` | les moteurs sont déjà ceux de `Retouche.tsx` depuis `B26` ; il ne reste que le châssis autour à reporter en papier |
+| **C8** · les dépenses, la découpe, la différence | `[MEDIUM]` | `Depenses.tsx` affiche des nombres déjà calculés (patron `B5`/`B13`) ; `Decoupe.tsx`/`Superposition.tsx` sont déjà montées comme fabriques depuis la retouche neuve (`B24`), seul leur propre châssis reste ancien |
+| **C9** · la barre tombe | `[VERY-HARD]` | c'est la tranche qui doit faire passer les 721 essais d'écran **sans qu'une assertion bouge** en changeant leur seul point d'entrée (`leLieu()`), tout en changeant le sens de `racine()` dans `lieux.ts` — exactement la définition du grade au tableau |
+
+**Compte du bloc C** : 2 `[VERY-HARD]`, 1 `[HARD]`, 6 `[MEDIUM]`, 0 `[EASY]`, 0 `[VERY-EASY]` en
+tranche entière.
+
+⚠️ **Contrôle de vraisemblance, fait et assumé** : 3 tranches sur 9 sortent `[HARD]` ou
+au-dessus — tout juste au tiers. Reprises une par une plutôt que rabotées d'office, parce que
+ce bloc n'est pas une tranche de fonctionnalité ordinaire : c'est le bloc qui referme les
+décisions que `B0` avait laissées ouvertes, et chacune des trois a une raison précise, citée
+dans sa ligne — pas la taille du fichier qu'elle touche.
+
+---
+
 ## Les points durs qui montent d'un cran
 
 Une tranche `[MEDIUM]` peut contenir une heure de travail qui, elle, demande Opus. Ces
@@ -74,6 +103,10 @@ morceaux-là se sortent et se traitent à part, avant le reste de la tranche.
 | **B20** | la géométrie du recalage image par image, sans casser l'invariant « un calque reste solidaire de sa pose » | `[HARD]` |
 | **B23** | la convention de coordonnées des quatre surfaces — un pixel visé doit tomber au même endroit dans l'ancien et le neuf | `[HARD]` |
 | **B25** | fondre `"case"`, `"tables"` et `"retouche"` en un seul genre de lieu, sans perdre une porte au passage | `[HARD]` |
+| **C2** | l'arbitrage entre `Assistant.tsx` et `ReglesDuJeu.tsx` — quel geste de l'assistant survit, une fois qu'il n'écrit plus deux fois le même endpoint | `[HARD]` |
+| **C4** | l'arbitrage entre `Fiche.tsx` et le volet de `ImagesDuSujet.tsx` — lequel des deux reste le volet d'image du produit, et ce qu'il doit couvrir de l'autre | `[HARD]` |
+| **C5** | trancher la contradiction entre `Clip.dc.html` et `Clips.dc.html` sur le sort d'un clip écarté | `[HARD]` |
+| **C9** | fixer la forme finale de `racine()` dans `lieux.ts` une fois les onglets retirés, et vérifier que `leLieu()` retrouve chacun des 721 essais sans qu'une assertion change | `[HARD]` |
 
 ---
 
@@ -89,6 +122,10 @@ Haiku est sans risque, et c'est là que l'économie se fait vraiment.
 | **B16** | poser à l'écran les sept tables et les deux fabriques, une fois la grammaire du carnet livrée par `B0` | `[EASY]` |
 | **partout** | écrire les essais d'un comportement déjà décrit par un critère d'acceptation | `[VERY-EASY]` |
 | **partout** | le rôle *relevé* de la flotte : mesurer, citer fichier et ligne, compter | `[EASY]` |
+| **C1** | retourner `essai_jetons.py` d'une liste blanche à un compte de restants, une fois la forme choisie | `[VERY-EASY]` |
+| **C6** | reporter `Planche.tsx` / `Vitrine.tsx` / `Calibrage.tsx` dans l'onglet *Fiche* de `PageDuSujet.tsx`, sur le patron déjà posé par `B10`/`B11`/`B19` | `[EASY]` |
+| **C7** | reporter le châssis de `AtelierDeBande.tsx` en papier — les moteurs sont déjà ceux de `Retouche.tsx` depuis `B26` | `[EASY]` |
+| **C8** | `Depenses.tsx` — un affichage de nombres déjà calculés, comme `B5`/`B13` | `[EASY]` |
 
 ---
 

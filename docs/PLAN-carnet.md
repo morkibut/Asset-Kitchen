@@ -1,5 +1,12 @@
 # Plan — V4, le carnet : la refonte de l'interface
 
+> ⚠️ **Ce plan a deux blocs, et le premier ne suffisait pas.** `D0` et `B0` à `B27` sont closes,
+> et elles ont refait **21 écrans sur 54**. Le 10 septembre 2026, l'auteur a constaté à l'écran
+> ce que ces tranches ne pouvaient pas dire : l'application montre les deux interfaces à la
+> fois. Les tranches qui manquaient sont écrites plus bas — **`C1` à `C9`, la sortie de
+> l'ancien châssis** —, avec le relevé qui les motive. **Tant qu'elles ne sont pas tenues,
+> cette version n'est pas close**, quoi qu'en dise le compte de ses tranches.
+>
 > **Source** : les planches de `docs/pistes-2026-09-04/carnet/`, relevées une par une le
 > 6 septembre 2026 — elles étaient 43 ce jour-là. **Ce sont elles qui font foi**, tranché par
 > l'auteur le même jour — sur ce qu'il faut construire *et* sur ce à quoi ça ressemble.
@@ -195,7 +202,9 @@ une couleur, c'est un trio** — un fond, un trait, une encre. `B0` reprend les 
 
 ## Les tranches
 
-23 tranches, plus `D0`. Chacune traverse toutes les couches et se démontre seule.
+28 tranches `B`, plus `D0` — le compte a bougé deux fois : `B23` à `B27` sont nées du
+déménagement de la retouche, après coup. Puis `C1` à `C9`, plus bas, pour la sortie de
+l'ancien châssis. Chacune traverse toutes les couches et se démontre seule.
 
 ---
 
@@ -2259,6 +2268,352 @@ de `B25` — deux états montent de `EcranEtabli` jusqu'à `App.tsx`, relayés p
 
 ---
 
+# La sortie de l'ancien châssis — `C1` à `C9`
+
+> **Ouvert le 10 septembre 2026, après un constat de l'auteur à l'écran** : l'application
+> montre les deux interfaces à la fois. Le carnet clair à gauche, et à droite l'ancien écran
+> sombre avec ses trois onglets.
+
+## Pourquoi ce bloc existe
+
+La V4 a été déclarée close le 9 septembre 2026, *29 tranches sur 29*, sur la promesse écrite
+en tête de ce plan : **« les trois onglets tombent, un carnet de 300 px les remplace »**. Les
+trois onglets n'étaient pas tombés, et ils ne pouvaient pas tomber : **aucune des 29 tranches
+n'avait ce retrait pour objet.**
+
+Ce n'est pas un oubli d'exécution, c'est un trou dans le plan lui-même, et il a une source
+datée. `B0` décide *« le châssis neuf à côté de l'ancien »* (§ `B0`) — une étape, assumée,
+qui permettait aux essais de continuer de naviguer pendant la construction. **Rien n'a jamais
+été chargé de refermer cette parenthèse.** Le mot `BarreChassis` n'apparaît nulle part dans ce
+document ; la galerie en est explicitement sortie (§ `B25`, *« son retrait appartient à la
+refonte de `Galerie.dc.html`, qui n'est pas dans ce plan »*).
+
+**Le même défaut, en plus petit, a déjà coûté cinq tranches.** `B16` avait décidé que l'écran
+neuf doublerait l'ancien *« le temps d'un déménagement »* et confié ce déménagement à
+`B17`/`B18` ; les deux se sont closes sans le faire, parce que personne ne l'avait chargé dans
+une tranche. Il a fallu `B23` à `B27` pour rattraper **la retouche seule**. Ce bloc-ci fait le
+même travail pour tout le reste.
+
+**La règle qui en sort, et qui vaut pour les versions suivantes** : une tranche qui écrit un
+écran neuf nomme, dans ses critères, **le fichier ancien qu'elle retire**. Si elle ne le retire
+pas, elle dit dans quelle tranche il part, et cette tranche existe.
+
+## Ce que mesure ce bloc
+
+Relevé du 10 septembre 2026, fichier par fichier, chaque montage vérifié dans le code :
+
+| | fichiers | lignes |
+|---|---|---|
+| Écrans du carnet livrés par `D0`-`B27` | 21 | 17 889 |
+| Écrans restés sur l'ancien châssis | 33 | 41 059 |
+
+**30 % de l'interface est en papier.** Restent **18 écrans entiers** atteignables, plus la
+galerie, écrite en clair dans `App.tsx` (`:4059-4260`, `:5165`).
+
+**Quatre doublons vivants** — deux écrans qui font le même métier, tous deux montés :
+
+| L'ancien | Le neuf | Ce qui le prouve |
+|---|---|---|
+| `Codex.tsx` | `Famille.tsx` | deux listes de sujets, deux portes |
+| `EcranReglages.tsx` | `Installation.tsx` | `App.tsx:3651` : *« les cinq autres portes mènent toujours à `EcranReglages` »* |
+| `Assistant.tsx` | `ReglesDuJeu.tsx` mode réglages | les deux appellent `api.reglerUnivers` |
+| `Fiche.tsx` | le volet de `ImagesDuSujet.tsx` | même métier, deux surfaces |
+
+**Et le carnet renvoie lui-même vers l'ancien** : *Les règles* ouvre `EcranUnivers`
+(`App.tsx:3636`), *La galerie* ouvre l'ancienne grille (`App.tsx:3638`). Retirer la barre du
+haut sans traiter ces deux portes ne ferait que rendre l'ancien inatteignable **sans le
+retirer**.
+
+## Ce qui est déjà en place, et qu'on ne refait pas
+
+- **La pile de lieux est branchée pour de bon.** `lieux.ts` pilote la navigation par 34 appels
+  à `setPile` ; les anciens booléens d'ouverture n'existent plus comme états, ce sont des
+  valeurs dérivées. Huit états restent hors pile, listés en `C9`.
+- **Les essais d'écran sont prêts.** Les 721 essais naviguent par `leLieu()`
+  (`App.test.tsx:3838`), écrite en `B0` **pour ce jour-ci** : *« la tranche qui les retire
+  casserait soixante et un essais d'un coup »*. Changer cette fonction seule bascule tout.
+- **Les planches existent.** Sur les écrans restants, presque tous ont déjà leur version
+  papier dessinée. Trois n'en ont pas : l'assistant, l'import, le calibrage — elles se
+  dessinent dans leur tranche, elles ne la bloquent pas.
+
+## Le garde-fou de ce bloc
+
+`essais/essai_jetons.py` tient `LES_FICHIERS_DU_CARNET`, une liste **blanche** qui grandit.
+Elle a mesuré l'avancement tant qu'il fallait ajouter ; elle ne mesure pas ce qui reste.
+
+**`C1` la retourne** : la liste des fichiers **encore anciens** devient explicite, le banc
+l'imprime, et chaque tranche de ce bloc en retire des lignes. Le jour où elle est vide, la
+liste blanche disparaît avec elle et le banc tient le dépôt entier. Un fichier ne peut plus
+sortir de l'ancien sans que le chiffre bouge, et une tranche ne peut plus se clore sur une
+liste inchangée.
+
+## L'ordre
+
+Le retrait de la barre du haut est **nécessairement le dernier** : tant qu'un seul écran n'a
+pas de maison en papier, la barre est le seul chemin qui y mène.
+
+| Rang | Tranche | Pourquoi là |
+|---|---|---|
+| **1** | `C1` | le garde-fou d'abord, sinon on ne saura pas mesurer ce bloc — et une porte fermée pour presque rien |
+| **2** | `C2`, `C3` | les deux racines anciennes vers lesquelles le carnet renvoie encore |
+| **3** | `C4`, `C5` | la galerie et ce qui s'ouvre depuis elle — le plus gros morceau |
+| **4** | `C6`, `C7`, `C8` | l'établi d'un sujet, l'atelier d'une animation, les dépenses |
+| **5** | `C9` | la barre tombe, et l'ancien vocabulaire avec elle |
+
+`C4` et `C6` sont les deux gros ; les autres sont du portage.
+
+---
+
+## C1 · Le compteur de sortie, et les cinq portes des réglages
+
+**Planche** : `Installation.dc.html` (déjà tenue par `B15`)
+
+### Ce qu'on livre
+
+Deux choses courtes, et la première conditionne tout le bloc.
+
+- **Le garde-fou se retourne.** `essais/essai_jetons.py` imprime la liste des fichiers encore
+  sur l'ancien châssis et leur compte de lignes. C'est ce chiffre-là que les tranches
+  suivantes font descendre, et il part de 33 fichiers / 41 059 lignes.
+- **Les réglages n'ont plus qu'une porte.** `App.tsx:3651` dit lui-même que cinq portes sur
+  six mènent encore à `EcranReglages`. Les cinq basculent sur `Installation.tsx`, qui les
+  couvre déjà. `EcranReglages.tsx`, `Secrets.tsx` et `Mouvements.tsx` quittent le dépôt une
+  fois leurs derniers réglages relogés — et il faut vérifier lesquels, parce que
+  `Assistant.tsx:3248` monte `Secrets` de son côté.
+
+### Critères d'acceptation
+
+- [ ] `py essais/essai_jetons.py` imprime le compte des fichiers anciens, et il diminue.
+- [ ] Aucune porte du produit n'ouvre `EcranReglages` ; les trois fichiers sont partis.
+- [ ] Tout réglage qui vivait dans les trois fichiers a un endroit dans `Installation.tsx`, ou
+      la tranche écrit lequel est retiré et pourquoi.
+
+### Bloquée par
+
+- rien
+
+---
+
+## C2 · L'univers s'efface
+
+**Planches** : `Toile.dc.html`, `Systeme.dc.html`. **À dessiner** : l'assistant.
+
+### Ce qu'on livre
+
+L'onglet *Univers* et ses quatre côtés — c'est le premier des deux endroits où le carnet
+renvoie encore vers l'ancien (`App.tsx:3636`, la ligne *Les règles*).
+
+`Univers.tsx` (442), `Toile.tsx` (2 842), `Tableau.tsx` (1 599), `Ambiances.tsx` (1 070) et
+`Assistant.tsx` (3 258) passent au papier ou disparaissent. ⚠️ **`Assistant.tsx` est un
+doublon vrai** : il écrit `api.reglerUnivers`, exactement comme `ReglesDuJeu.tsx:860`. Ce
+n'est donc pas un portage, c'est un arbitrage — ce que l'assistant sait faire et que les
+règles du jeu ne savent pas se relève avant de le retirer.
+
+### Critères d'acceptation
+
+- [ ] La ligne *Les règles du jeu* du carnet n'ouvre plus `EcranUnivers`.
+- [ ] Un seul écran écrit `api.reglerUnivers`.
+- [ ] Ce que l'assistant savait faire est relevé point par point, et chaque point est soit
+      relogé, soit retiré avec sa raison écrite.
+
+### Bloquée par
+
+- `C1`
+
+---
+
+## C3 · Le codex s'efface
+
+**Planche** : `Familles.dc.html`
+
+### Ce qu'on livre
+
+`Codex.tsx` (1 250) ne fait plus rien que le carnet et `Famille.tsx` ne fassent déjà : sa
+colonne des familles est le carnet, sa colonne des sujets est la grille d'une famille. Il part.
+
+⚠️ **Un chemin de création passe encore par lui**, et il n'a pas d'équivalent neuf : le
+`Vestiaire` de `Personnages.tsx:728`, monté par `Codex.tsx:251`, est **le seul endroit qui
+crée une pièce d'équipement**. `Emplois.tsx` et `Emploi.tsx` ne savent qu'exploiter des
+pièces existantes. Ce geste se reloge avant que le codex parte, sans quoi on ne peut plus
+créer d'équipement du tout.
+
+### Critères d'acceptation
+
+- [ ] L'onglet *Codex* n'existe plus, `Codex.tsx` est parti.
+- [ ] Créer une pièce d'équipement se fait depuis un écran du carnet, et un essai le montre.
+
+### Bloquée par
+
+- `C1`
+
+---
+
+## C4 · La galerie passe au papier
+
+**Planche** : `Galerie.dc.html`
+
+### Ce qu'on livre
+
+Le second endroit où le carnet renvoie vers l'ancien (`App.tsx:3638`), et le plus gros morceau
+du bloc. La galerie n'est pas un fichier : elle est **écrite en clair dans `App.tsx`** —
+`Grille` (`:5165`), `Cible` (`:4992`), `BarreEtat` (`:5339`), `Reinjections` (`:5064`) — et
+elle monte huit fichiers autour d'elle : `Arbre` (378), `BarreOutils` (426), `ChampPrompt`
+(331), `PanneauReglages` (711), `Fiche` (1 178), `FicheDuClip` (310), `Tuile` (672), `Import`
+(249), `Depliage` (277).
+
+⚠️ **`Fiche.tsx` est un doublon vrai** du volet de `ImagesDuSujet.tsx` — même métier, deux
+surfaces. Un seul des deux reste.
+
+⚠️ **C'est aussi la tranche qui dégonfle `App.tsx`** : 5 405 lignes aujourd'hui, dont la
+galerie entière. Ce qui en sort devient un écran, comme les vingt et un autres.
+
+### Critères d'acceptation
+
+- [ ] La galerie est un fichier, pas une partie d'`App.tsx`.
+- [ ] Un seul volet de fiche d'image dans tout le produit.
+- [ ] `App.tsx` passe sous 3 000 lignes.
+
+### Bloquée par
+
+- `C1`
+
+---
+
+## C5 · L'envoi, le clip, le montage
+
+**Planches** : `Envoi.dc.html`, `Clip.dc.html`, `Clips.dc.html`, `Animation-chaine.dc.html`
+
+### Ce qu'on livre
+
+Les trois écrans qui s'ouvrent depuis la galerie : `Envoi.tsx` (1 373), `Clip.tsx` (1 436),
+`Montage.tsx` (1 331), plus `Planche.tsx` (593).
+
+⚠️ **Une contradiction entre deux planches reste à trancher ici**, elle est relevée depuis le
+6 septembre et n'a jamais été arbitrée : `Clip.dc.html` écrit qu'un clip écarté se rend quand
+on veut ; `Clips.dc.html` décrit un jeter définitif qui emporte les bandes déjà taillées.
+
+### Critères d'acceptation
+
+- [ ] Les quatre fichiers sont en papier ou partis.
+- [ ] Le sort d'un clip écarté est tranché, écrit, et tenu par un essai.
+
+### Bloquée par
+
+- `C4`
+
+---
+
+## C6 · L'établi d'un sujet
+
+**Planches** : `Fiche.dc.html`, `Grille.dc.html`, `Finesse.dc.html`. **À dessiner** : le
+calibrage.
+
+### Ce qu'on livre
+
+`Personnages.tsx` (3 438) est monté **par un écran neuf** : `PageDuSujet.tsx:855` en fait son
+onglet *Fiche*. C'est le cas le plus trompeur du dépôt — l'écran a l'air refait, et son
+contenu est l'ancien châssis. Il emmène avec lui `FicheChose.tsx` (1 070), `Vitrine.tsx`
+(399), `Planche.tsx` (593), `Calibrage.tsx` (904) et `Calque.tsx` (854).
+
+### Critères d'acceptation
+
+- [ ] Les quatre onglets d'un sujet sont en papier, celui-là compris.
+- [ ] `Personnages.tsx` est parti.
+
+### Bloquée par
+
+- `C3`
+
+---
+
+## C7 · L'atelier d'une animation
+
+**Planches** : `Atelier-animation.dc.html`, `Animations.dc.html`
+
+### Ce qu'on livre
+
+`AtelierDeBande.tsx` (2 842) et `Mouvements.tsx` (331). ⚠️ `B26` y a déjà fait entrer les
+postes de `Retouche.tsx` : les moteurs sont neufs, **le châssis autour ne l'est pas**.
+
+### Critères d'acceptation
+
+- [ ] L'atelier d'une animation est en papier, et il règle les mêmes moteurs qu'avant.
+
+### Bloquée par
+
+- `C5`
+
+---
+
+## C8 · Les dépenses, la découpe, la différence
+
+**Planches** : `Depenses.dc.html`, `atelier-decoupe.dc.html`, `atelier-difference.dc.html`
+
+### Ce qu'on livre
+
+Les trois derniers écrans anciens : `Depenses.tsx` (964), `Decoupe.tsx` (790),
+`Superposition.tsx` (991). ⚠️ Les deux derniers sont montés **depuis la retouche neuve**
+(`App.tsx:4664`, `Retouche.tsx:4139`) — même piège qu'en `C6`.
+
+### Critères d'acceptation
+
+- [ ] Aucun écran ancien n'est plus monté depuis un écran du carnet.
+
+### Bloquée par
+
+- `C4`
+
+---
+
+## C9 · La barre tombe
+
+**Planches** : `Navigation.dc.html`, `Barre.dc.html`
+
+### Ce qu'on livre
+
+La dernière, et elle ne peut être que la dernière.
+
+- **`BarreChassis.tsx` (476) part.** Elle est rendue sans condition à `App.tsx:3661`, au-dessus
+  de tout — y compris au-dessus des écrans déjà en papier. C'est elle que l'auteur voit.
+- **Le fil d'Ariane trouve sa place** : il vit aujourd'hui dans les 44 px de la barre.
+- **`racine()` change de sens.** `lieux.ts` rend encore `"univers" | "codex" |
+  "tableau-de-bord" | "galerie"` — trois de ces quatre racines sont des onglets qui n'existent
+  plus après `C2` et `C3`.
+- **`leLieu()` bascule** (`App.test.tsx:3838`) : elle clique une ligne du carnet au lieu d'un
+  onglet. C'est le geste que `B0` a préparé.
+- **Les huit états d'ouverture hors pile rentrent** : `depliage`, `reglagesOuverts`,
+  `choixDuJeu`, `tourAOuvrir`, `ficheClip`, `reglagesDeFamille`, `reglagesOuvertsDansLaBarre`,
+  `matriceDuSujet`.
+- **Le vocabulaire de l'ancien s'en va** : les jetons `ancien-*` de `index.css`, le réglage
+  `palette: "ancien" | "papier"` de `chassis.tsx`, et la phrase de `index.css:22` qui nomme
+  encore les écrans d'avant.
+- **La liste blanche disparaît** : `essai_jetons.py` tient le dépôt entier.
+
+### Critères d'acceptation
+
+- [ ] Aucun onglet dans le produit. Le carnet est le seul chemin.
+- [ ] `grep -r "ancien-" interface/src` ne rend rien.
+- [ ] `essais/essai_jetons.py` ne connaît plus de liste blanche, et passe.
+- [ ] Les 721 essais d'écran passent sans qu'aucune assertion de contenu ait changé.
+- [ ] **Vérifié au navigateur, sur un second atelier** : aucun écran sombre nulle part.
+
+### Bloquée par
+
+- `C2`, `C3`, `C4`, `C5`, `C6`, `C7`, `C8` — toutes.
+
+---
+
+## Ce que ce bloc ne rattrape pas
+
+Les **huit gestes perdus** par le déménagement de la retouche (§ `B27`, tableau *Ce que le
+déménagement laisse derrière*) restent perdus : vider une seule place, réveiller une table
+endormie, le miroir à direction tapée, les poches de fond une par une, la grille retrouvée du
+modèle, la liste des taches, trois lectures du recadrage, le compte des crans qui changent
+l'image. Ils ont été tranchés un par un en `B27` et ce bloc ne les rouvre pas — mais **ils
+sont perdus, pas rangés ailleurs**, et l'auteur doit le savoir en les cherchant.
+
+---
+
 ## Les agents, et qui fait quoi
 
 Sept rôles. Un agent ne tient qu'un rôle, et **le relecteur passe toujours en dernier** — sans
@@ -2284,8 +2639,9 @@ lui, deux fiches écrites en parallèle se contredisent sans que personne ne le 
 - **L'auteur travaille dans le dépôt pendant la séance.** Avant de diagnostiquer un écart,
   vérifier qu'il ne vient pas de son édition en cours.
 
-**Quel modèle sur quelle tranche** : `docs/PLAN-carnet-affectation.md` classe les 24 tranches
-de `[VERY-EASY]` à `[VERY-HARD]`, avec les morceaux qui montent ou descendent d'un cran.
+**Quel modèle sur quelle tranche** : `docs/PLAN-carnet-affectation.md` classe les tranches —
+les 29 de `D0` à `B27`, et les 9 de `C1` à `C9` — de `[VERY-EASY]` à `[VERY-HARD]`, avec les
+morceaux qui montent ou descendent d'un cran.
 
 ---
 
