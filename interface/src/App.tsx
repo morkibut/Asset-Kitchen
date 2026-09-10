@@ -88,7 +88,7 @@ import { TableauDeBord } from "./composants/TableauDeBord"
 import { Ouverture } from "./composants/Ouverture"
 import { Installation } from "./composants/Installation"
 import { Sortie } from "./composants/Sortie"
-import { ReglesDuJeu } from "./composants/ReglesDuJeu"
+import { PanneauAtelier, ReglesDuJeu } from "./composants/ReglesDuJeu"
 import {
   PILE_INITIALE,
   dans,
@@ -108,7 +108,6 @@ import { PageDuSujet, type Onglet as OngletDuSujet } from "./composants/PageDuSu
 import { GrilleDuJeu } from "./composants/GrilleDuJeu"
 import { Comparer } from "./composants/Comparer"
 import { Retouche } from "./composants/Retouche"
-import { EcranReglages } from "./composants/EcranReglages"
 import { nomDuModele } from "./composants/Fiche"
 // ── `C4` · la galerie est un fichier ────────────────────────────────────────
 // Elle était écrite en clair ici ; elle a désormais son fichier, comme les
@@ -263,16 +262,15 @@ export function App() {
    *  et qui vaut pour tous les jeux. Le pied du carnet l'ouvre, d'où qu'on
    *  vienne — comme les dépenses et les règles.
    *
-   *  ⚠️ **`EcranReglages` n'a pas disparu pour autant** : il porte encore les
-   *  garde-fous de l'agent, le dossier du jeu et la bibliothèque de
-   *  mouvements, que `B15` ne reprend pas. `C1` a basculé trois des cinq
-   *  portes qui y menaient sur ce lieu-ci. Les deux autres — les boutons
-   *  « Réglages » et l'état de la clé, tous deux dans la barre — restent sur
-   *  l'ancien panneau : une trentaine d'essais vérifient par le premier
-   *  l'agent, le dossier et les mouvements, et un essai tient le second
-   *  précisément sur `EcranReglages` ; aucun des deux réglages n'a de maison
-   *  neuve. Ils rejoignent le lien nommé que l'écran neuf porte lui-même vers
-   *  l'ancien panneau. */
+   *  ⚠️ **Trois réglages n'ont jamais rejoint ce lieu-ci** : les garde-fous
+   *  de l'agent, le dossier du jeu et la bibliothèque de mouvements, que
+   *  `B15` ne reprend pas — ils sont d'un jeu, pas de la machine. `C1` a
+   *  basculé trois des cinq portes de l'ancien `EcranReglages.tsx` sur ce
+   *  lieu-ci ; `D1` a fermé les deux dernières, retiré `EcranReglages.tsx` et
+   *  `Secrets.tsx` pour de bon, et relogé les quatre blocs — agent, dossier,
+   *  mouvements, état de la clé — en papier dans `PanneauAtelier`
+   *  (`ReglesDuJeu.tsx`), ouvert par les boutons « Réglages » et l'état de la
+   *  clé de la barre. */
   const installationOuverte = dans(pile, "installation")
   const setInstallationOuverte = (ouvert: boolean) =>
     setPile((p) =>
@@ -1961,12 +1959,10 @@ export function App() {
         surLeGuide={() => ouvrirGuide()}
         /* **Le pied du carnet ouvrait déjà le lieu neuf** (`B15`) ; `C1` a
            basculé ici trois des cinq autres portes qui menaient encore à
-           `EcranReglages`. Restent trois chemins vers l'ancien panneau : les
-           boutons « Réglages » et l'état de la clé, tous deux dans la barre —
-           l'un tenu par une trentaine d'essais sur l'agent, le dossier et les
-           mouvements, l'autre par un essai qui vérifie qu'il mène au tiroir —,
-           et le lien que `Installation.tsx` porte lui-même. Aucun des trois
-           réglages qu'ils portent n'a de maison neuve. */
+           `EcranReglages`. `D1` a fermé les deux dernières — les boutons
+           « Réglages » et l'état de la clé, tous deux dans la barre —, en
+           relogeant l'agent, le dossier, les mouvements et l'état de la clé
+           dans `PanneauAtelier` (`ReglesDuJeu.tsx`), en papier. */
         surLInstallation={() => setInstallationOuverte(true)}
         atelierMuet={!liaison}
         cleAbsente={etat ? !etat.secrets.some((t) => t.pret) : false}
@@ -2000,11 +1996,10 @@ export function App() {
         bascules={depensesOuvertes ? [] : bascules}
         onBasculer={(cle) => setReplies((r) => ({ ...r, [cle]: !r[cle] }))}
         fente={fente}
-        // **Ce bouton-ci reste sur l'ancien panneau** : c'est le seul chemin,
-        // aujourd'hui tenu par une trentaine d'essais, vers les garde-fous de
-        // l'agent, le dossier du jeu et les mouvements — ce
-        // qu'`Installation.tsx` ne reprend pas encore. Le rediriger aurait
-        // rendu ces trois réglages introuvables en un clic.
+        // **Ce bouton-ci ouvre `PanneauAtelier`** (`D1`, `ReglesDuJeu.tsx`) :
+        // les garde-fous de l'agent, le dossier du jeu et les mouvements —
+        // ce qu'`Installation.tsx` ne reprend pas, parce que ce sont des
+        // réglages d'un jeu, pas de la machine.
         onReglages={() => setReglagesOuverts(true)}
         onGuide={() => ouvrirGuide()}
       />
@@ -2935,7 +2930,7 @@ export function App() {
       )}
 
       {reglagesOuverts && etat && (
-        <EcranReglages
+        <PanneauAtelier
           tiroirs={etat.secrets}
           agent={etat.agent}
           // **Le catalogue entier, filtré par l'écran** (F6). Le garde-fou du

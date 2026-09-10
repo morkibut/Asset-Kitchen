@@ -35,8 +35,8 @@
  *   sont même plus dans `App.tsx` : `C4` les a descendus dans `Galerie.tsx`,
  *   où ils appartiennent.
  * - `reglagesDeFamille`, `reglagesOuverts` — **deux fenêtres posées sur
- *   l'écran où l'on est.** La seconde ouvre `EcranReglages.tsx`, qui doit
- *   partir : lui donner un étage du fil serait bâtir sur ce qu'on démolit.
+ *   l'écran où l'on est.** La seconde ouvre `PanneauAtelier` (`D1`,
+ *   `ReglesDuJeu.tsx`) — un panneau posé par-dessus, pas un étage du fil.
  * - `reglagesOuvertsDansLaBarre` — **un repli**, tenu par `usePli` et gardé
  *   d'une séance à l'autre. Un repli n'est pas un étage.
  * - `matriceDuSujet` — **un volet de la page d'un sujet**, comme

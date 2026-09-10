@@ -99,13 +99,11 @@ LA_GEOMETRIE_D_AVANT = (
     "interface/src/composants/ChampPrompt.tsx",
     "interface/src/composants/chassis.tsx",
     "interface/src/composants/Depliage.tsx",
-    "interface/src/composants/EcranReglages.tsx",
     "interface/src/composants/Fiche.tsx",
     "interface/src/composants/FicheDuClip.tsx",
     "interface/src/composants/Galerie.tsx",
     "interface/src/composants/Import.tsx",
     "interface/src/composants/PanneauReglages.tsx",
-    "interface/src/composants/Secrets.tsx",
     "interface/src/composants/Tableau.tsx",
     "interface/src/composants/Toile.tsx",
     "interface/src/composants/Tuile.tsx",
@@ -144,8 +142,9 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # porte ; Secrets reste tant qu'EcranReglages.tsx le monte.
     # `Mouvements.tsx` est sorti en `C7`, avec `AtelierDeBande.tsx` — même
     # geste, même écran de réglages.
-    "interface/src/composants/EcranReglages.tsx",
-    "interface/src/composants/Secrets.tsx",
+    # D1 — les deux derniers chemins retirés : `EcranReglages.tsx` et
+    # `Secrets.tsx` sont partis pour de bon, leur contenu relogé en papier
+    # dans `ReglesDuJeu.tsx`.
     # C2 — `Assistant.tsx` est parti : c'était le doublon vrai de
     # `ReglesDuJeu.tsx`, et le relevé de ses douze étapes est en tête de ce
     # fichier-là. Restent les trois côtés d'inspiration de l'onglet Univers.

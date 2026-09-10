@@ -69,7 +69,7 @@
  * | 10a · Le modèle de chaque famille | `ReglagesDeFamille.tsx`, table 3b |
  * | 10b · `modele_planche` et `modele_edition` | **retirés.** Deux surcharges pour deux gestes rares — un lot d'attitudes qui part, un corps qui se retouche. Sans elles le catalogue décide, ce qui est déjà la règle écrite partout ailleurs (« le catalogue décide du reste »), et la fiche de chaque image dit quel modèle a servi. Un troisième endroit qui règle un modèle aurait été le défaut que cette tranche répare |
  * | 11 · Le détourage de départ | `Retouche.tsx` — il y pose le défaut de la nature *et* celui de la famille, depuis la passe qu'on vient de régler sur une vraie image |
- * | 12 · Les fournisseurs (le tiroir des clés) | `Installation.tsx`, étape « Les images » ; le tiroir lui-même reste `Secrets.tsx`, monté par `EcranReglages.tsx` |
+ * | 12 · Les fournisseurs (le tiroir des clés) | `Installation.tsx`, étape « Les images » ; le tiroir lui-même vit maintenant dans `PanneauAtelier`, plus bas dans ce fichier (`D1`) |
  *
  * Et deux choses qui n'étaient pas des étapes :
  *
@@ -95,7 +95,7 @@
  * l'atelier d'animation l'était déjà.
  */
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   AUCUNE_CIBLE,
   CE_QUE_LA_METHODE_REND,
@@ -103,17 +103,29 @@ import {
   NOM_DE_LA_METHODE,
   Refus,
   api,
+  dollars,
+  estArgent,
   paliersDeCouleurs,
+  quantite,
   type CeQueLAtelierEcrit,
   type Champ,
+  type EtatAgent,
+  type EtatSecret,
   type Etiquette,
   type FondPropose,
+  type GardeFous,
   type Methode,
+  type Modele,
   type Style,
   type TailleDImage,
+  type Tiroir,
   type Univers,
   type VueDuJeu,
 } from "../api"
+import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./chassis"
+import { nomDuModele } from "./Fiche"
+import { BlocMouvements } from "./Mouvements"
+import { PANNEAU } from "./Infobulle"
 
 // ── Les quatre étapes ────────────────────────────────────────────────────────
 
@@ -965,6 +977,482 @@ function ReglesDAilleurs({ univers }: { univers: Univers }) {
         ))}
       </ul>
     </section>
+  )
+}
+
+// ── L'atelier — l'agent, le dossier, les mouvements, la clé (D1) ────────────
+//
+// `EcranReglages.tsx` (433 lignes) et `Secrets.tsx` (184 lignes) sont partis
+// avec `D1` : les deux boutons qui les ouvraient encore — « Réglages » et
+// l'état de la clé, tous deux dans la barre — menaient à un panneau écrit sur
+// l'ancien châssis sombre, dernier des cinq que `C1` n'avait pas basculé.
+//
+// **La décision de la tranche, tranchée ici** : ces trois réglages sont d'un
+// jeu, pas de la machine — le cadre de l'agent qui code, le dossier où il
+// pose ses fichiers, le vocabulaire des mouvements — et ils ne rejoignent
+// donc pas `Installation.tsx`, le seul lieu qui ne parle d'aucun jeu. Aucune
+// planche du dossier de conception ne les dessine ; la lecture la plus simple
+// à vérifier est de les poser ici, dans le fichier qui porte déjà les
+// réglages d'un jeu — en papier, pas en écran de plus : le même panneau
+// posé par-dessus, mot pour mot, recoloré.
+//
+// **`BlocMouvements` ne bouge pas** : il est déjà en papier depuis `C7`
+// (`Mouvements.tsx`), et ce panneau se contente de le monter.
+
+/** Le titre d'un bloc de l'atelier — la même forme que celle de
+ *  `Mouvements.tsx`, recopiée pour la même raison qu'elle donne : un détail de
+ *  mise en page privé à ce panneau n'a pas à devenir une pièce du châssis. */
+function TitreDeLAtelier({ children }: { children: ReactNode }) {
+  return (
+    <h3 className="mt-[34px] mb-[14px] border-b border-trait pb-[8px] text-[10.5px] uppercase tracking-[.14em] text-encre-3">
+      {children}
+    </h3>
+  )
+}
+
+/** Le carré ●/○ d'un garde-fou — la forme du choix sélectionné ailleurs sur
+ *  cet écran (`Choix`), posée sur un interrupteur plutôt qu'une carte. */
+function Interrupteur({
+  actif,
+  nom,
+  onBasculer,
+}: {
+  actif: boolean
+  nom: string
+  onBasculer: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={actif}
+      aria-label={`${nom} — ${actif ? "actif" : "inactif"}`}
+      onClick={onBasculer}
+      className={[
+        "h-[26px] w-[26px] shrink-0 rounded-7 border text-[11px] transition-colors duration-120",
+        actif
+          ? "border-signal bg-ligne-ouverte text-signal"
+          : "border-trait bg-carte text-encre-3 hover:bg-papier-cote",
+      ].join(" ")}
+    >
+      {actif ? "●" : "○"}
+    </button>
+  )
+}
+
+// ── Le tiroir à secrets, et l'état de la clé ────────────────────────────────
+
+function BlocSecrets({
+  tiroirs,
+  onDeposee,
+}: {
+  tiroirs: Tiroir[]
+  onDeposee: (tiroirs: Tiroir[]) => void
+}) {
+  return (
+    <>
+      <TitreDeLAtelier>Les fournisseurs</TitreDeLAtelier>
+      <p className="text-[12.5px] leading-[1.5] text-encre-2">
+        Ce qu'un fournisseur demande se dépose une fois, et l'atelier ne le
+        réaffiche plus jamais. Tout est écrit dans{" "}
+        <span className="text-[11.5px] text-encre">.env</span>, qui n'est
+        jamais versionné.{" "}
+        <strong className="text-encre">Déposer chez l'un ne touche à aucun autre</strong>,
+        et retirer ne grise que ses modèles : ses images et ses lignes de
+        dépense restent.
+      </p>
+
+      <div className="mt-[14px] flex flex-col gap-[22px]">
+        {tiroirs.map((tiroir) => (
+          <PlaceDunFournisseur key={tiroir.fournisseur} tiroir={tiroir} onChange={onDeposee} />
+        ))}
+      </div>
+    </>
+  )
+}
+
+function PlaceDunFournisseur({
+  tiroir,
+  onChange,
+}: {
+  tiroir: Tiroir
+  onChange: (tiroirs: Tiroir[]) => void
+}) {
+  return (
+    <section className="flex flex-col gap-[8px]">
+      <div className="flex items-baseline gap-[8px]">
+        <span className="text-[12.5px] text-encre">{tiroir.fournisseur}</span>
+        <span className={["text-[10.5px]", tiroir.pret ? "text-encre-ok" : "text-encre-4"].join(" ")}>
+          {tiroir.pret ? "prêt" : "en attente"}
+        </span>
+      </div>
+
+      {/* **Un tiroir vide se dit, il ne se cache pas.** Sans cette ligne, un
+          fournisseur sans secret paraîtrait comme un fournisseur mal réglé. */}
+      {tiroir.secrets.length === 0 ? (
+        <p className="text-[11.5px] leading-[1.5] text-encre-4">
+          Ce fournisseur ne demande rien — ni compte, ni clé. Il est
+          utilisable tel quel.
+        </p>
+      ) : (
+        <>
+          {tiroir.manque && <Raison texte={tiroir.manque} papier />}
+          {tiroir.secrets.map((secret) => (
+            <UnePlace key={secret.nom} secret={secret} onChange={onChange} />
+          ))}
+        </>
+      )}
+    </section>
+  )
+}
+
+function UnePlace({
+  secret,
+  onChange,
+}: {
+  secret: EtatSecret
+  onChange: (tiroirs: Tiroir[]) => void
+}) {
+  const [saisie, setSaisie] = useState("")
+  const [refus, setRefus] = useState<string | null>(null)
+  const [enCours, setEnCours] = useState(false)
+
+  const agir = async (quoi: () => Promise<{ tiroirs: Tiroir[] }>) => {
+    setEnCours(true)
+    setRefus(null)
+    try {
+      onChange((await quoi()).tiroirs)
+      setSaisie("")
+    } catch (erreur) {
+      setRefus(erreur instanceof Error ? erreur.message : "refusé")
+    } finally {
+      setEnCours(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-[8px]">
+      <div className="flex flex-wrap items-baseline gap-x-[8px] text-[10.5px]">
+        <span className="text-encre-2">{secret.libelle}</span>
+        {secret.presente ? (
+          <span className="text-encre-4">
+            …{secret.apercu} · {secret.origine}
+          </span>
+        ) : (
+          secret.ou && <span className="text-encre-4">{secret.ou}</span>
+        )}
+      </div>
+
+      <div className="flex items-start gap-[8px]">
+        <input
+          type="password"
+          value={saisie}
+          aria-label={secret.libelle}
+          placeholder={secret.presente ? "remplacer…" : "…"}
+          onChange={(e) => setSaisie(e.target.value)}
+          onKeyDown={(e) =>
+            e.key === "Enter" &&
+            saisie.trim().length >= 8 &&
+            void agir(() => api.deposerSecret(secret.nom, saisie.trim()))
+          }
+          className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-papier-cote px-[14px] text-[12.5px] text-encre placeholder:text-eteint"
+        />
+        <Bouton
+          papier
+          principal
+          inactif={saisie.trim().length < 8 || enCours}
+          onClick={() => void agir(() => api.deposerSecret(secret.nom, saisie.trim()))}
+          enfants={secret.presente ? "Remplacer" : "Déposer"}
+        />
+        {/* **Retirer ne se propose que si ça retire vraiment.** Une valeur
+            venue de l'environnement de la machine ne s'enlève pas d'ici, et un
+            bouton qui semblerait le faire serait pire que pas de bouton du
+            tout. */}
+        {secret.retirable && (
+          <button
+            type="button"
+            disabled={enCours}
+            onClick={() => void agir(() => api.retirerSecret(secret.nom))}
+            title="ses modèles se grisent — ses images et ses lignes de dépense restent"
+            className="h-[34px] shrink-0 rounded-7 border border-trait px-[8px] text-[10.5px] text-encre-4 transition-colors duration-120 hover:text-echec disabled:cursor-not-allowed"
+          >
+            retirer
+          </button>
+        )}
+      </div>
+      <Raison texte={refus} papier />
+    </div>
+  )
+}
+
+// ── L'agent ─────────────────────────────────────────────────────────────────
+
+function BlocAgent({
+  agent,
+  modeles,
+  onAgent,
+}: {
+  agent: EtatAgent
+  modeles: Modele[]
+  onAgent: (agent: EtatAgent) => void
+}) {
+  const [refus, setRefus] = useState<string | null>(null)
+  const cadre = agent.garde_fous
+  const compte = agent.consommation
+  // Le curseur bouge sous le doigt ; seul le relâchement écrit. Même règle
+  // que les curseurs de la recette : un réglage qui coûte un aller-retour ne
+  // part pas à chaque pixel parcouru.
+  const [plafond, setPlafond] = useState(cadre.plafond)
+
+  const poser = async (champs: Partial<GardeFous>) => {
+    setRefus(null)
+    try {
+      onAgent(await api.reglerAgent(champs))
+    } catch (erreur) {
+      setRefus(erreur instanceof Error ? erreur.message : "réglage refusé")
+    }
+  }
+
+  return (
+    <>
+      <TitreDeLAtelier>L'agent</TitreDeLAtelier>
+      <p className="text-[12.5px] leading-[1.5] text-encre-2">
+        Un agent qui code le jeu appelle l'atelier par le serveur MCP, sur{" "}
+        <span className="text-[11.5px] text-encre">/mcp</span>. Il ne demande
+        jamais d'autorisation — ces deux garde-fous sont ce qui tient sa
+        place, et ils prennent effet à son appel suivant.
+      </p>
+
+      {/* Le compteur, discret et permanent. Il est ici, à côté du réglage
+          qu'il fait relever : lu ailleurs, il faudrait revenir. */}
+      <dl className="mt-[14px] grid grid-cols-[auto_1fr] gap-x-[14px] gap-y-[4px] rounded-7 border border-trait bg-papier-cote px-[14px] py-[8px] text-[11px]">
+        <dt className="text-encre-4">cette séance</dt>
+        <dd className="text-encre-2">
+          {compte.generations} image{compte.generations > 1 ? "s" : ""}
+          {compte.reste !== null && ` · ${compte.reste} avant le plafond`}
+        </dd>
+        {/* « dépensé par l'agent », et pas « dépensé » : ce montant ne compte
+            que les appels venus du serveur MCP. */}
+        <dt className="text-encre-4">dépensé par l'agent</dt>
+        <dd className="text-encre-2">{dollars(compte.depense_usd)}</dd>
+        {/* Et ce qu'il a consommé sans argent, compté à part. */}
+        {compte.consomme.map((ligne) => (
+          <Fragment key={ligne.unite}>
+            <dt className="text-encre-4">consommé sans argent</dt>
+            <dd className="text-encre-2">{quantite(ligne.quantite, ligne.unite)}</dd>
+          </Fragment>
+        ))}
+      </dl>
+
+      <div className="mt-[14px] flex flex-col gap-[8px]">
+        <div className="flex items-center gap-[8px]">
+          <Interrupteur
+            actif={cadre.plafond_actif}
+            nom="Plafond de la séance"
+            onBasculer={() => void poser({ plafond_actif: !cadre.plafond_actif })}
+          />
+          <Libelle aide="agent.plafond" papier eteint={!cadre.plafond_actif}>
+            Plafond de la séance
+          </Libelle>
+        </div>
+        <Curseur
+          papier
+          libelle="le plafond de la séance"
+          valeur={plafond}
+          min={1}
+          max={200}
+          unite=" images"
+          inactif={!cadre.plafond_actif}
+          onChange={setPlafond}
+          onFini={(v) => void poser({ plafond: v })}
+        />
+      </div>
+
+      <div className="mt-[14px] flex flex-col gap-[8px]">
+        <div className="flex items-center gap-[8px]">
+          <Interrupteur
+            actif={cadre.modele_actif}
+            nom="Modèle d'exploration"
+            onBasculer={() => void poser({ modele_actif: !cadre.modele_actif })}
+          />
+          <Libelle aide="agent.modele" papier eteint={!cadre.modele_actif}>
+            Modèle d'exploration
+          </Libelle>
+        </div>
+        {/* Le nom seulement quand la liste ne le porte pas. */}
+        {!modeles.some((m) => m.identifiant === cadre.modele) && (
+          <p className="text-[10.5px] leading-[1.4] text-encre-4" title={cadre.modele}>
+            {nomDuModele(cadre.modele)}
+            {Object.entries(cadre.options).map(([nom, valeur]) => (
+              <span key={nom}> · {nom} {valeur}</span>
+            ))}
+          </p>
+        )}
+
+        <ChoixDuGratuit
+          modeles={modeles}
+          choisi={cadre.modele}
+          eteint={!cadre.modele_actif}
+          onChoisir={(modele) => void poser({ modele })}
+        />
+      </div>
+
+      <Raison texte={refus} papier />
+    </>
+  )
+}
+
+/**
+ * Parmi quoi le modèle d'exploration se choisit — **les gratuits, et eux
+ * seuls**. La liste ne contient aucun modèle payant, et ce n'est pas un
+ * filtre d'affichage : c'est ce que le garde-fou *est*.
+ */
+function ChoixDuGratuit({
+  modeles,
+  choisi,
+  eteint,
+  onChoisir,
+}: {
+  modeles: Modele[]
+  choisi: string
+  eteint: boolean
+  onChoisir: (modele: string) => void
+}) {
+  const gratuits = modeles.filter((m) => !estArgent(m.unite) && !m.refus)
+  if (gratuits.length === 0)
+    return (
+      <p className="text-[10.5px] leading-[1.4] text-encre-4">
+        aucun modèle gratuit dans cet atelier — le garde-fou n'a rien à
+        imposer
+      </p>
+    )
+
+  return (
+    <div className="mt-[4px] flex flex-wrap gap-[4px]">
+      {gratuits.map((modele) => (
+        <button
+          key={modele.identifiant}
+          type="button"
+          disabled={eteint}
+          onClick={() => onChoisir(modele.identifiant)}
+          aria-pressed={modele.identifiant === choisi}
+          title={modele.identifiant}
+          className={[
+            "h-[26px] min-w-[34px] shrink-0 whitespace-nowrap rounded-7 border px-[8px] text-[11.5px] transition-colors duration-120",
+            modele.identifiant === choisi
+              ? "border-signal bg-ligne-ouverte text-signal"
+              : "border-trait bg-carte text-encre-3 hover:bg-papier-cote",
+            eteint ? "opacity-40" : "",
+          ].join(" ")}
+        >
+          {libelleModele(modele)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── Les dossiers ────────────────────────────────────────────────────────────
+
+function BlocDossiers({
+  agent,
+  onAgent,
+}: {
+  agent: EtatAgent
+  onAgent: (agent: EtatAgent) => void
+}) {
+  const [dossier, setDossier] = useState(agent.garde_fous.dossier_jeu)
+  const [refus, setRefus] = useState<string | null>(null)
+  const change = dossier.trim() !== agent.garde_fous.dossier_jeu
+
+  const poser = async () => {
+    setRefus(null)
+    try {
+      onAgent(await api.reglerAgent({ dossier_jeu: dossier.trim() }))
+    } catch (erreur) {
+      setRefus(erreur instanceof Error ? erreur.message : "réglage refusé")
+    }
+  }
+
+  return (
+    <>
+      <TitreDeLAtelier>Les dossiers</TitreDeLAtelier>
+      <div className="flex flex-col gap-[8px]">
+        <Libelle aide="agent.dossier" papier>
+          Dossier du jeu
+        </Libelle>
+        <div className="flex items-start gap-[8px]">
+          <input
+            value={dossier}
+            onChange={(e) => setDossier(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && change && poser()}
+            placeholder="C:\\Jeux\\mon-jeu\\assets"
+            className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-papier-cote px-[14px] text-[11.5px] text-encre placeholder:text-eteint"
+          />
+          <Bouton papier inactif={!change} onClick={poser} enfants="Poser" />
+        </div>
+      </div>
+      <Raison texte={refus} papier />
+    </>
+  )
+}
+
+/**
+ * Le panneau posé par-dessus le carnet — **le même que celui d'`EcranReglages.tsx`,
+ * recoloré en papier**, ouvert par les deux derniers chemins de la barre :
+ * le bouton « Réglages » et l'état de la clé.
+ */
+export function PanneauAtelier({
+  tiroirs,
+  agent,
+  modeles,
+  onDeposee,
+  onAgent,
+  onFermer,
+}: {
+  tiroirs: Tiroir[]
+  agent: EtatAgent
+  modeles: Modele[]
+  onDeposee: () => void
+  onAgent: (agent: EtatAgent) => void
+  onFermer: () => void
+}) {
+  useEffect(() => {
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onFermer()
+    }
+    window.addEventListener("keydown", surTouche)
+    return () => window.removeEventListener("keydown", surTouche)
+  }, [onFermer])
+
+  return (
+    <div
+      data-reglages
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-papier/85 py-[34px]"
+      onClick={onFermer}
+    >
+      <section
+        onClick={(e) => e.stopPropagation()}
+        {...PANNEAU}
+        // **Déclaré comme une fenêtre posée par-dessus.** Sans ces trois
+        // mots, un lecteur d'écran continue d'annoncer la page du dessous
+        // comme si elle était encore atteignable.
+        role="dialog"
+        aria-modal="true"
+        aria-label="Réglages"
+        className="w-[380px] rounded-8 border border-contour bg-carte p-[22px]"
+      >
+        <h2 className="font-serif text-[25px] leading-tight text-encre">Réglages</h2>
+
+        <BlocSecrets tiroirs={tiroirs} onDeposee={() => onDeposee()} />
+        <BlocAgent agent={agent} modeles={modeles} onAgent={onAgent} />
+        <BlocDossiers agent={agent} onAgent={onAgent} />
+        <BlocMouvements />
+
+        <div className="mt-[22px] flex justify-end">
+          <Bouton papier onClick={onFermer} enfants="Fermer — Échap" />
+        </div>
+      </section>
+    </div>
   )
 }
 

@@ -315,12 +315,12 @@ export function EnTeteDeSurface({
             d'interrogation, et ce sont les mots qui restent (B-5).
 
             ⚠️ **Ils doublent deux lignes du pied du carnet, et c'est
-            provisoire.** *Réglages* ouvre `EcranReglages.tsx`, qui porte
-            encore les garde-fous de l'agent, le dossier du jeu et les
-            mouvements — ce qu'`Installation.tsx` ne reprend pas. *Guide* ouvre
-            le même guide que le pied. Les deux partiront avec
-            `EcranReglages.tsx`, pas avant : le retirer ici rendrait trois
-            réglages introuvables. */}
+            provisoire.** *Réglages* ouvre `PanneauAtelier` (`D1`,
+            `ReglesDuJeu.tsx`), qui porte les garde-fous de l'agent, le
+            dossier du jeu, les mouvements et l'état de la clé — ce
+            qu'`Installation.tsx` ne reprend pas, parce que ce sont des
+            réglages d'un jeu, pas de la machine. *Guide* ouvre le même guide
+            que le pied. */}
         <div className="flex shrink-0 items-center gap-[8px] border-l border-trait pl-[14px]">
           <button
             type="button"

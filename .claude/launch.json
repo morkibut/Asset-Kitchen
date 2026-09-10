@@ -408,6 +408,14 @@
         "essais/atelier_jetable_verif_c9.py"
       ],
       "port": 8496
+    },
+    {
+      "name": "atelier-jetable-d1",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_d1.py"
+      ],
+      "port": 8497
     }
   ]
 }

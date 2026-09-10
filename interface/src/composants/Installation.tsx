@@ -48,10 +48,11 @@
  * ce que le catalogue lui sert.
  *
  * **Ce que cet écran ne reprend pas** : les garde-fous de l'agent et la
- * bibliothèque de mouvements, qui vivent dans `EcranReglages.tsx`. Un lien
- * nommé y mène depuis le pied — le retirer aurait rendu l'agent injoignable,
- * ce qui est exactement la branche morte que `lieux.ts` raconte dans son
- * en-tête.
+ * bibliothèque de mouvements, qui vivent dans `PanneauAtelier` (`D1`,
+ * `ReglesDuJeu.tsx`) — ce sont des réglages d'un jeu, pas de la machine. Un
+ * lien nommé y mène depuis le pied — le retirer aurait rendu l'agent
+ * injoignable, ce qui est exactement la branche morte que `lieux.ts` raconte
+ * dans son en-tête.
  */
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
