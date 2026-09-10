@@ -85,20 +85,21 @@ export function EcranVitrine({
   return (
     <div data-vitrine className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_380px]">
       {/* ── Comment on regarde ───────────────────────────────────────────── */}
-      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-bord bg-fond-1 p-3">
+      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-trait bg-papier-cote p-3">
         <div className="flex flex-col gap-1">
-          <Libelle>la taille</Libelle>
+          <Libelle papier>la taille</Libelle>
           <Segments<string>
+            papier
             valeurs={ECHELLES.map(String)}
             valeur={String(echelle)}
             onChange={(v) => setEchelle(Number(v) as Echelle)}
             libelles={Object.fromEntries(ECHELLES.map((e) => [String(e), `×${e}`]))}
           />
-          <Raison texte="multiples entiers seulement — un sprite agrandi d'une fois et demie fabrique des pixels qui n'existent pas" />
+          <Raison papier texte="multiples entiers seulement — un sprite agrandi d'une fois et demie fabrique des pixels qui n'existent pas" />
         </div>
 
         <div className="flex flex-col gap-1">
-          <Libelle>le fond</Libelle>
+          <Libelle papier>le fond</Libelle>
           {/* **Aucune couleur libre.** Un fond de vitrine se choisit dans ce que
               le projet possède déjà — sa palette et sa bible. Un sélecteur libre
               transformerait cet écran en outil de maquillage : on trouverait
@@ -116,23 +117,23 @@ export function EcranVitrine({
                 className={[
                   "h-[26px] w-[26px] rounded-[2px] border",
                   autre.genre === "damier" ? "damier" : "",
-                  rang === fond ? "border-lumiere" : "border-bord hover:border-bord-fort",
+                  rang === fond ? "border-encre-4" : "border-trait hover:border-contour",
                 ].join(" ")}
               />
             ))}
           </div>
-          <Raison texte={choisi?.raison ?? ""} />
+          <Raison papier texte={choisi?.raison ?? ""} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <Libelle>ce qu'on montre</Libelle>
+          <Libelle papier>ce qu'on montre</Libelle>
           <button
             type="button"
             aria-pressed={ensemble}
             onClick={() => setEnsemble(!ensemble)}
             className={[
-              "mesure h-[26px] rounded-[2px] border border-bord px-2 text-left text-[10px]",
-              ensemble ? "text-ancien-signal" : "text-texte-3 hover:text-texte-2",
+              "mesure h-[26px] rounded-[2px] border border-trait px-2 text-left text-[10px]",
+              ensemble ? "text-signal" : "text-encre-4 hover:text-encre-3",
             ].join(" ")}
           >
             toutes ses poses à la même échelle
@@ -142,21 +143,21 @@ export function EcranVitrine({
         {/* **La place du mouvement est réservée et grisée avec sa raison**,
             plutôt qu'occupée par un lecteur posé sur zéro image. */}
         <div className="flex flex-col gap-1">
-          <Libelle>le mouvement</Libelle>
+          <Libelle papier>le mouvement</Libelle>
           <button
             type="button"
             disabled
-            className="mesure h-[26px] cursor-not-allowed rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-3"
+            className="mesure h-[26px] cursor-not-allowed rounded-[2px] border border-trait bg-carte px-2 text-left text-[10px] text-encre-4"
           >
             lire le cycle
           </button>
-          <Raison texte={vitrine.mouvement.raison} />
+          <Raison papier texte={vitrine.mouvement.raison} />
         </div>
 
         <button
           type="button"
           onClick={onFermer}
-          className="mesure mt-2 h-[26px] rounded-[2px] border border-bord px-2 text-[10px] text-texte-3 hover:text-ancien-signal"
+          className="mesure mt-2 h-[26px] rounded-[2px] border border-trait px-2 text-[10px] text-encre-4 hover:text-signal"
         >
           Fermer la vitrine — Échap
         </button>
@@ -173,7 +174,7 @@ export function EcranVitrine({
         }
       >
         {images.length === 0 ? (
-          <p className="max-w-[504px] text-center font-serif text-[32px] leading-tight text-texte-3">
+          <p className="max-w-[504px] text-center font-serif text-[32px] leading-tight text-encre-4">
             Rien n'est encore fait pour cette chose.
           </p>
         ) : ensemble ? (
@@ -213,9 +214,9 @@ export function EcranVitrine({
       </div>
 
       {/* ── La matrice, pour changer de sujet sans refermer ──────────────── */}
-      <aside className="defile flex min-h-0 flex-col gap-2 overflow-y-auto border-l border-bord bg-fond-1 p-3">
-        <Libelle>{personnage ? "Sa matrice" : "Le monde"}</Libelle>
-        <Raison texte="on change de sujet sans refermer" />
+      <aside className="defile flex min-h-0 flex-col gap-2 overflow-y-auto border-l border-trait bg-papier-cote p-3">
+        <Libelle papier>{personnage ? "Sa matrice" : "Le monde"}</Libelle>
+        <Raison papier texte="on change de sujet sans refermer" />
         <ul className="flex flex-col">
           {(personnage ? plan : []).map((pose) => {
             const dedans = images.filter((i) => i.pose === pose.identifiant)
@@ -223,7 +224,7 @@ export function EcranVitrine({
             return (
               <li
                 key={pose.identifiant}
-                className="mesure flex h-[26px] items-center gap-2 text-[11px] text-texte-2"
+                className="mesure flex h-[26px] items-center gap-2 text-[11px] text-encre-3"
               >
                 <button
                   type="button"
@@ -234,14 +235,14 @@ export function EcranVitrine({
                     }
                   }}
                   disabled={dedans.length === 0}
-                  className="min-w-0 flex-1 truncate text-left hover:text-ancien-signal disabled:text-texte-3 disabled:hover:text-texte-3"
+                  className="min-w-0 flex-1 truncate text-left hover:text-signal disabled:text-encre-4 disabled:hover:text-encre-4"
                 >
                   {pose.nom}
                 </button>
                 <span
                   className={[
                     "shrink-0 text-[10px]",
-                    ecart ? "text-epingle" : "text-texte-3",
+                    ecart ? "text-encre-attention" : "text-encre-4",
                   ].join(" ")}
                 >
                   {ecart
@@ -258,19 +259,19 @@ export function EcranVitrine({
             images.map((image) => (
               <li
                 key={image.asset}
-                className="mesure flex h-[26px] items-center gap-2 text-[11px] text-texte-2"
+                className="mesure flex h-[26px] items-center gap-2 text-[11px] text-encre-3"
               >
                 <button
                   type="button"
                   onClick={() => setRegardee(image.asset)}
-                  className="min-w-0 flex-1 truncate text-left hover:text-ancien-signal"
+                  className="min-w-0 flex-1 truncate text-left hover:text-signal"
                 >
                   {image.chose}
                 </button>
                 <span
                   className={[
                     "shrink-0 text-[10px]",
-                    image.hors_taille ? "text-epingle" : "text-texte-3",
+                    image.hors_taille ? "text-encre-attention" : "text-encre-4",
                   ].join(" ")}
                 >
                   {image.largeur} px
@@ -282,12 +283,12 @@ export function EcranVitrine({
             jauges restent celles du codex, et une image en écart porte la
             couleur des écarts, jamais celle d'un échec : un jeu en cours de
             fabrication n'échoue pas. */}
-        <p className="mesure border-t border-bord pt-2 text-[10px] text-texte-3">
+        <p className="mesure border-t border-trait pt-2 text-[10px] text-encre-4">
           {images.filter((i) => i.hors_taille).length > 0
             ? `${images.filter((i) => i.hors_taille).length} image${images.filter((i) => i.hors_taille).length > 1 ? "s" : ""} hors taille commune — ${vitrine.taille_commune} px`
             : `toutes à ${vitrine.taille_commune || "—"} px`}
         </p>
-        <Raison texte="la vitrine ne compte pas — elle marque ce qu'elle voit" />
+        <Raison papier texte="la vitrine ne compte pas — elle marque ce qu'elle voit" />
       </aside>
     </div>
   )
@@ -360,10 +361,10 @@ function Sujet({
         aria-label={`Regarder ${nom}`}
         className={[
           "rounded-[2px] border p-1 transition-colors duration-[80ms]",
-          regardee ? "border-lumiere" : "border-transparent hover:border-bord",
+          regardee ? "border-encre-4" : "border-transparent hover:border-trait",
           // **Le coin doré dit « hors taille commune »** : la couleur des
           // écarts, pas celle d'un échec.
-          image.hors_taille ? "border-epingle" : "",
+          image.hors_taille ? "border-trait-attention" : "",
         ].join(" ")}
       >
         {asset && (
@@ -377,7 +378,7 @@ function Sujet({
           />
         )}
       </button>
-      <figcaption className="mesure text-center text-[9.5px] text-texte-3">
+      <figcaption className="mesure text-center text-[9.5px] text-encre-4">
         {nom} · {image.largeur} × {image.hauteur}
         {image.hors_taille && " — hors taille commune"}
         {/* **Ce qui n'est pas à l'échelle des autres le dit.** Sans cette
@@ -387,7 +388,7 @@ function Sujet({
         {reduite < 1 && (
           <>
             <br />
-            <span className="text-epingle">
+            <span className="text-encre-attention">
               ramenée à {Math.round(image.largeur * reduite)} px pour tenir dans
               la comparaison
             </span>

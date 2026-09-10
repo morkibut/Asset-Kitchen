@@ -29,7 +29,7 @@ import {
   type CaseDePlanche,
 } from "../api"
 import { Bouton, Libelle, Raison } from "./chassis"
-import { faitesDeLaCase } from "./Personnages"
+import { faitesDeLaCase } from "./EtabliDuSujet"
 
 export function EcranPlanche({
   personnage,

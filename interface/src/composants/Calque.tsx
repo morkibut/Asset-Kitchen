@@ -325,9 +325,9 @@ export function PanneauCalque({
   return (
     <aside
       {...PANNEAU}
-      className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1"
+      className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-trait bg-papier-cote"
     >
-      <EnTetePanneau>
+      <EnTetePanneau papier>
         {piece} · {pose}
         {/* **Refaire le calage à la main** (G16, US-503). À droite du titre,
             parce que c'est un geste sur la carte entière et non sur l'un de ses
@@ -339,7 +339,7 @@ export function PanneauCalque({
             type="button"
             onClick={onSuperposition}
             title="Refaire la superposition à la main, sans rien repayer"
-            className="mesure ml-auto px-1 text-[10px] normal-case text-texte-3 hover:text-texte"
+            className="mesure ml-auto px-1 text-[10px] normal-case text-encre-4 hover:text-encre"
           >
             superposition ›
           </button>
@@ -380,13 +380,14 @@ export function PanneauCalque({
             phrase aurait laissé croire qu'on regarde le fichier rangé. */}
         {arriveePossible && (
           <div className="flex flex-col gap-2">
-            <Libelle>Ce qu'on regarde</Libelle>
+            <Libelle papier>Ce qu'on regarde</Libelle>
             <Segments<string>
+              papier
               valeurs={["calque", "brut"] as const}
               valeur={arrivee ? "brut" : "calque"}
               onChange={(quoi) => setArrivee(quoi === "brut")}
             />
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10px] leading-4 text-encre-4">
               {arrivee
                 ? "la case telle qu'elle est arrivée du modèle, avant que l'atelier ne la mette à l'échelle et ne la cale sur le corps"
                 : "le vêtement seul, découpé par différence avec le corps"}
@@ -400,8 +401,9 @@ export function PanneauCalque({
             au-dessus de son image seraient du cadrage affiché. */}
         {difference && !arrivee && (
           <div className="flex flex-col gap-2">
-            <Libelle>Ce que la main tient</Libelle>
+            <Libelle papier>Ce que la main tient</Libelle>
             <Segments<Outil>
+              papier
               valeurs={["zone", "affinage", "retouche"] as const}
               valeur={outil}
               onChange={setOutil}
@@ -479,7 +481,7 @@ export function PanneauCalque({
                   )
                   .join(" ")}
                 fill="none"
-                stroke="var(--signal)"
+                stroke="var(--color-signal)"
                 strokeWidth={(2 * rayon + 1) * echelle}
                 /* **Bouts et joints carrés depuis U11**, parce que le pinceau
                     du serveur l'est : c'est la même fonction qui peint ici et
@@ -501,7 +503,7 @@ export function PanneauCalque({
               <div
                 className={[
                   "pointer-events-none absolute border",
-                  outil === "zone" ? "border-ancien-signal" : "border-bord-fort",
+                  outil === "zone" ? "border-signal" : "border-contour",
                 ].join(" ")}
                 style={{
                   left: zone[0] * echelle,
@@ -528,7 +530,7 @@ export function PanneauCalque({
                   onPointerUp={finir}
                   onPointerCancel={finir}
                   aria-label="Retailler la zone"
-                  className="absolute h-2.5 w-2.5 cursor-nwse-resize bg-ancien-signal"
+                  className="absolute h-2.5 w-2.5 cursor-nwse-resize bg-signal"
                   style={{
                     left: (zone[2] + 1) * echelle - 5,
                     top: (zone[3] + 1) * echelle - 5,
@@ -547,11 +549,13 @@ export function PanneauCalque({
         {outil !== "zone" && !arrivee && (
           <div className="flex flex-wrap items-center gap-2">
             <Segments<string>
+              papier
               valeurs={["garder", "ôter"] as const}
               valeur={garde ? "garder" : "ôter"}
               onChange={(quoi) => setGarde(quoi === "garder")}
             />
             <Segments<number>
+              papier
               valeurs={RAYONS}
               valeur={rayon}
               onChange={setRayon}
@@ -565,7 +569,7 @@ export function PanneauCalque({
             qui la vide à droite. « Chaque couche s'annule » (C4) n'est donc pas
             trois boutons à trouver, c'est le même à la même place. */}
         <div className="flex items-center gap-2">
-          <span className="mesure text-[10px] text-texte-3">
+          <span className="mesure text-[10px] text-encre-4">
             {outil === "zone"
               ? zone
                 ? `zone ${zone[2] - zone[0] + 1} × ${zone[3] - zone[1] + 1} px`
@@ -591,7 +595,7 @@ export function PanneauCalque({
               title="maintenir pour voir le calque tel que la différence l'avait rendu — rien n'est changé, et rien n'est redemandé au fournisseur"
               className={[
                 "mesure ml-auto px-1 text-[10px]",
-                avant ? "text-ancien-signal-clair" : "text-ancien-signal hover:text-ancien-signal-clair",
+                avant ? "text-signal" : "text-signal hover:opacity-70",
               ].join(" ")}
             >
               {avant ? "Avant" : "Avant ›"}
@@ -614,7 +618,7 @@ export function PanneauCalque({
                   : "la couche est vidée d'un coup, l'autre ne bouge pas — rien n'est redemandé au fournisseur"
               }
               className={[
-                "mesure px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair",
+                "mesure px-1 text-[10px] text-signal hover:opacity-70",
                 mainPosee ? "" : "ml-auto",
               ].join(" ")}
             >
@@ -642,7 +646,7 @@ export function PanneauCalque({
           disabled={rejeu}
           onClick={() => void recaler()}
           title="la planche payée est relue et l'alignement recalculé — aucune image n'est redemandée, et rien ne naît ni ne meurt"
-          className="mesure self-start px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
+          className="mesure self-start px-1 text-[10px] text-signal hover:opacity-70 disabled:text-encre-4"
         >
           {rejeu ? "Recalage…" : "Recaler depuis la planche ›"}
         </button>
@@ -651,7 +655,7 @@ export function PanneauCalque({
             trois et que rien d'autre ne dirait ce que la main est en train de
             faire. C'est la place de la ligne d'aide de C3, tenue par l'outil au
             lieu d'être écrite trois fois. */}
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10px] leading-4 text-encre-4">
           {outil === "zone" ? (
             <>
               Glisser trace une zone, la traîner la déplace, le coin la retaille.
@@ -676,7 +680,7 @@ export function PanneauCalque({
         </p>
 
         <div className="mt-auto flex justify-end pt-2">
-          <Bouton onClick={onFermer} enfants="Fermer" />
+          <Bouton papier onClick={onFermer} enfants="Fermer" />
         </div>
       </div>
     </aside>
@@ -716,8 +720,8 @@ function Jugement({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle>Ce qu'on garde</Libelle>
-      <p className="mesure text-[10px] leading-4 text-texte-3">
+      <Libelle papier>Ce qu'on garde</Libelle>
+      <p className="mesure text-[10px] leading-4 text-encre-4">
         {retenu
           ? "c'est ce calque-ci qui part dans le jeu, et qui sert de référence à cette pièce."
           : "un autre calque de cette case part dans le jeu — le favori d'abord, sinon le plus récent. Marque celui-ci favori pour que ce soit lui."}
@@ -734,8 +738,8 @@ function Jugement({
           className={[
             "mesure h-[26px] rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
             asset.favori
-              ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
-              : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+              ? "border-signal bg-signal/13 text-signal"
+              : "border-trait bg-carte text-encre-3 hover:bg-carte",
           ].join(" ")}
         >
           {asset.favori ? "◤ favori" : "favori"}
@@ -745,7 +749,7 @@ function Jugement({
             type="button"
             onClick={onSupprimer}
             title="l'image part à la corbeille — le pied de l'écran propose de la rendre"
-            className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+            className="mesure ml-auto h-[26px] px-1 text-[10px] text-encre-4 hover:text-echec"
           >
             {/* **« Cette image », et non « Supprimer » tout court.** La
                 colonne de gauche du même écran porte déjà un *Supprimer* —
@@ -779,13 +783,13 @@ function Mesures({
   const part = (valeur: number) => `${(valeur * 100).toFixed(1).replace(".", ",")} %`
   return (
     <section className="flex flex-col gap-1.5">
-      <Libelle>Ce qui a bougé</Libelle>
+      <Libelle papier>Ce qui a bougé</Libelle>
       {/* **La dérive est nommée, pas devinée** (US-148). Quand l'échelle a fait
           renoncer au calque, la phrase le dit ici, à l'endroit même où l'on
           cherche pourquoi il n'y en a pas — et elle nomme le chiffre qui a
           décidé. */}
       {!calque && (
-        <p className="mesure text-[10px] leading-4 text-texte-2">
+        <p className="mesure text-[10px] leading-4 text-encre-3">
           Aucun calque : le sujet est revenu à{" "}
           {mesures.echelle.toFixed(2).replace(".", ",")}× de la taille envoyée.
           Ce qui revient est gardé comme un corps habillé — il s'exporte, il ne
@@ -847,8 +851,8 @@ function Ligne({
           : undefined
       }
     >
-      <dt className={pire ? "text-texte-2" : "text-texte-3"}>{nom}</dt>
-      <dd className={pire ? "text-texte" : "text-texte-2"}>{valeur}</dd>
+      <dt className={pire ? "text-encre-3" : "text-encre-4"}>{nom}</dt>
+      <dd className={pire ? "text-encre" : "text-encre-3"}>{valeur}</dd>
     </div>
   )
 }

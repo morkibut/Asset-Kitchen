@@ -274,8 +274,8 @@ export function FicheDeLaChose({
       data-fiche
       className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_380px]"
     >
-      <aside className="defile flex min-h-0 flex-col gap-1 overflow-y-auto border-r border-bord bg-fond-1 p-3">
-        <Libelle>sa fiche</Libelle>
+      <aside className="defile flex min-h-0 flex-col gap-1 overflow-y-auto border-r border-trait bg-papier-cote p-3">
+        <Libelle papier>sa fiche</Libelle>
         {BLOCS.map(({ clef, aide }) => (
           <button
             key={clef}
@@ -294,7 +294,7 @@ export function FicheDeLaChose({
             // qu'un résumé coupé : on ne sait plus où l'on va.
             className={[
               "mesure flex h-[34px] w-full items-center gap-1.5 rounded-[2px] px-1.5 text-left text-[11px] transition-colors duration-[80ms]",
-              enVue === clef ? "bg-fond-3 text-texte" : "text-texte-2 hover:bg-fond-2",
+              enVue === clef ? "bg-carte text-encre" : "text-encre-3 hover:bg-carte",
             ].join(" ")}
           >
             <span className="min-w-0 flex-1 truncate">{titreDuBloc(aide)}</span>
@@ -304,8 +304,8 @@ export function FicheDeLaChose({
               className={[
                 "shrink-0 text-[9.5px]",
                 clef === "faites" && faites === tenues.length && tenues.length > 0
-                  ? "text-ancien-ok"
-                  : "text-texte-3",
+                  ? "text-ok"
+                  : "text-encre-4",
               ].join(" ")}
             >
               {etatDuBloc(clef)}
@@ -320,7 +320,7 @@ export function FicheDeLaChose({
         <button
           type="button"
           onClick={onCalibrage}
-          className="mesure mt-2 flex h-[26px] w-full items-center gap-2 border-t border-bord px-2 pt-2 text-left text-[10px] text-texte-3 hover:text-ancien-signal"
+          className="mesure mt-2 flex h-[26px] w-full items-center gap-2 border-t border-trait px-2 pt-2 text-left text-[10px] text-encre-4 hover:text-signal"
         >
           <span className="min-w-0 flex-1 truncate">le calibrage</span>
           {cale && (
@@ -335,7 +335,7 @@ export function FicheDeLaChose({
         <button
           type="button"
           onClick={onFermer}
-          className="mesure mt-2 h-[26px] rounded-[2px] border border-bord px-2 text-[10px] text-texte-3 hover:text-ancien-signal"
+          className="mesure mt-2 h-[26px] rounded-[2px] border border-trait px-2 text-[10px] text-encre-4 hover:text-signal"
         >
           Fermer la fiche — Échap
         </button>
@@ -349,11 +349,11 @@ export function FicheDeLaChose({
         {/* ── Le bandeau d'identité ────────────────────────────────────────
             **Une fiche montre la chose dont elle est la fiche.** Elle n'en
             montrait rien : ni image, ni nom sur sa propre surface. */}
-        <div className="flex shrink-0 items-start gap-4 border-b border-bord p-4">
+        <div className="flex shrink-0 items-start gap-4 border-b border-trait p-4">
           <div className="flex w-[96px] shrink-0 flex-col gap-1">
             <span
               data-portrait
-              className="damier flex h-[96px] w-[96px] items-center justify-center overflow-hidden rounded-[1px] border border-bord"
+              className="damier flex h-[96px] w-[96px] items-center justify-center overflow-hidden rounded-[1px] border border-trait"
             >
               {portrait && (
                 <img
@@ -366,7 +366,7 @@ export function FicheDeLaChose({
                 />
               )}
             </span>
-            <span className="mesure w-[96px] text-center text-[9.5px] leading-4 text-texte-3">
+            <span className="mesure w-[96px] text-center text-[9.5px] leading-4 text-encre-4">
               {portrait
                 ? `sa pose « ${portrait.pose} »`
                 : "aucune image encore"}
@@ -376,15 +376,15 @@ export function FicheDeLaChose({
             {/* **Le seul emploi de la police à empattements sur cet écran**, et
                 c'est un nom, pas une mesure : le grand chiffre à empattements
                 qui occupait cette place est parti là où les chiffres vont. */}
-            <h1 className="truncate font-serif text-[32px] leading-[1.05] text-texte">
+            <h1 className="truncate font-serif text-[32px] leading-[1.05] text-encre">
               {personnage.nom}
             </h1>
-            <p className="mesure text-[11px] leading-5 text-texte-2">
+            <p className="mesure text-[11px] leading-5 text-encre-3">
               {faites} case{faites > 1 ? "s" : ""} sur {tenues.length}
               {references && ` · ${references.disponibles} image${references.disponibles > 1 ? "s" : ""} d'exemple`}
               {habillage?.cible_px ? ` · pixel de ${habillage.cible_px} px` : ""}
             </p>
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10px] leading-4 text-encre-4">
               {personnage.ambiance
                 ? habillage?.ambiance?.nom ?? "son ambiance"
                 : "aucune ambiance"}
@@ -392,7 +392,7 @@ export function FicheDeLaChose({
               <button
                 type="button"
                 onClick={onVitrine}
-                className="text-ancien-signal hover:text-ancien-signal-clair"
+                className="text-signal hover:opacity-70"
               >
                 la voir en grand ›
               </button>
@@ -410,9 +410,10 @@ export function FicheDeLaChose({
           ref={(n) => {
             sections.current.sujet = n
           }}
-          className="flex flex-col gap-3 border-b border-bord p-4"
+          className="flex flex-col gap-3 border-b border-trait p-4"
         >
           <EnTeteDeSection
+            papier
             aide="codex.chose.sujet"
             compte={`${personnage.description.length} lettres`}
           />
@@ -424,9 +425,10 @@ export function FicheDeLaChose({
           ref={(n) => {
             sections.current.habillage = n
           }}
-          className="flex flex-col gap-3 border-b border-bord p-4"
+          className="flex flex-col gap-3 border-b border-trait p-4"
         >
           <EnTeteDeSection
+            papier
             aide="codex.chose.habillage"
             compte={
               habillage
@@ -442,9 +444,10 @@ export function FicheDeLaChose({
           ref={(n) => {
             sections.current.exemples = n
           }}
-          className="flex flex-col gap-3 border-b border-bord p-4"
+          className="flex flex-col gap-3 border-b border-trait p-4"
         >
           <EnTeteDeSection
+            papier
             aide="codex.chose.exemples"
             compte={
               references
@@ -471,9 +474,10 @@ export function FicheDeLaChose({
           ref={(n) => {
             sections.current.poses = n
           }}
-          className="flex flex-col gap-3 border-b border-bord p-4"
+          className="flex flex-col gap-3 border-b border-trait p-4"
         >
           <EnTeteDeSection
+            papier
             aide="codex.chose.poses"
             compte={
               rangees > 0
@@ -492,6 +496,7 @@ export function FicheDeLaChose({
           className="flex flex-col gap-3 p-4"
         >
           <EnTeteDeSection
+            papier
             aide="codex.chose.faites"
             compte={`${faites} case${faites > 1 ? "s" : ""} sur ${tenues.length}`}
           />
@@ -513,8 +518,8 @@ export function FicheDeLaChose({
           seconde planche contact, ce que le produit s'interdit — il n'a qu'une
           galerie d'images, et les images faites vivent à trois centimètres de
           là, dans la section qui les porte. */}
-      <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-l border-bord bg-fond-1 p-3">
-        <EnTeteDeSection aide="codex.chose.matrice" />
+      <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-l border-trait bg-papier-cote p-3">
+        <EnTeteDeSection papier aide="codex.chose.matrice" />
         <MatriceCompacte personnage={personnage} plan={plan} />
       </aside>
     </div>
@@ -559,13 +564,13 @@ function CeQuIlEst({
         onBlur={() => {
           if (texte !== personnage.description) void onPoser({ description: texte })
         }}
-        className="mesure w-full max-w-[720px] resize-y rounded-[2px] border border-bord bg-fond-1 p-2 text-[11.5px] leading-5 text-texte placeholder:text-texte-3"
+        className="mesure w-full max-w-[720px] resize-y rounded-[2px] border border-trait bg-papier-cote p-2 text-[11.5px] leading-5 text-encre placeholder:text-encre-4"
       />
       {/* **Le manque se constate, il ne s'écrit plus dans la fente des refus**
           (R8) : ce qui part vide est un fait sur la chose, pas un refus. Il est
           donc dans le gris de lecture, comme le propos au-dessus. */}
       {!personnage.description && (
-        <p className="mesure text-[10px] leading-4 text-texte-2">
+        <p className="mesure text-[10px] leading-4 text-encre-3">
           aucun signalement — chaque appel part sans dire de quoi il s'agit
         </p>
       )}
@@ -592,7 +597,7 @@ function CeQuiLHabille({
   return (
     <div className="flex flex-col gap-3">
       {habillage.ambiance && (
-        <p className="mesure text-[10px] leading-4 text-texte-2">
+        <p className="mesure text-[10px] leading-4 text-encre-3">
           ambiance {habillage.ambiance.nom} — elle remplace le monde, l'éclairage
           et le trait ; le corriger là-bas le corrige pour tout ce qui s'en sert
         </p>
@@ -608,18 +613,18 @@ function CeQuiLHabille({
           donc au modèle une grille de 64 pendant que l'atelier ramène l'image
           sur 128. La fiche ne corrige rien : elle rend la faute impossible à ne
           pas voir. */}
-      <div className="flex flex-col gap-1 border-t border-bord pt-3">
+      <div className="flex flex-col gap-1 border-t border-trait pt-3">
         <div className="mesure flex items-baseline gap-2 text-[10px]">
-          <span className="w-[80px] shrink-0 text-texte-2">taille</span>
-          <span className="text-texte-2">
+          <span className="w-[80px] shrink-0 text-encre-3">taille</span>
+          <span className="text-encre-3">
             {habillage.cible_px
               ? `${habillage.cible_px} px de grille`
               : "aucune grille imposée"}
           </span>
-          <span className="text-texte-3">verrouillé</span>
+          <span className="text-encre-4">verrouillé</span>
         </div>
         {habillage.desaccord.length > 0 && (
-          <p className="mesure text-[10px] leading-4 text-ancien-echec">
+          <p className="mesure text-[10px] leading-4 text-echec">
             {habillage.desaccord.map((nom) => NOM_CHAMP[nom] ?? nom).join(" et ")}{" "}
             {habillage.desaccord.length > 1 ? "annoncent" : "annonce"} une autre
             grille dans le texte qui part — la bible se corrige dans l'Univers.
@@ -629,11 +634,11 @@ function CeQuiLHabille({
 
       {habillage.palette && (
         <div className="mesure flex items-baseline gap-2 text-[10px]">
-          <span className="w-[80px] shrink-0 text-texte-2">palette</span>
-          <span className="text-texte-2">
+          <span className="w-[80px] shrink-0 text-encre-3">palette</span>
+          <span className="text-encre-3">
             {habillage.palette.nom} — {habillage.palette.couleurs} couleurs
           </span>
-          <span className="text-texte-3">son ambiance</span>
+          <span className="text-encre-4">son ambiance</span>
         </div>
       )}
     </div>
@@ -659,13 +664,13 @@ function ChampDeStyle({
             § Color) : le gris le plus sourd porte l'indisponible, la méta et la
             raison — trois choses qu'autre chose redit ailleurs. Rien ne redit
             le nom d'un champ ; il est donc au gris de lecture. */}
-        <span className="mesure w-[80px] shrink-0 text-[10px] text-texte-2">
+        <span className="mesure w-[80px] shrink-0 text-[10px] text-encre-3">
           {NOM_CHAMP[champ.nom] ?? champ.nom}
         </span>
         {/* **L'origine est lisible sans clic** : c'est le seul moyen de savoir
             si corriger ici serait une exception ou une redite. Elle, en
             revanche, est bien une méta — le texte juste à côté la redit. */}
-        <span className="mesure text-[9.5px] text-texte-3">
+        <span className="mesure text-[9.5px] text-encre-4">
           {ORIGINE[champ.origine]}
           {champ.ambiance ? ` · ${champ.ambiance}` : ""}
           {champ.ouvert ? "" : " · fermé aux ambiances"}
@@ -674,7 +679,7 @@ function ChampDeStyle({
           <button
             type="button"
             onClick={() => void onPoser({ rallumer: champ.nom })}
-            className="mesure ml-auto px-1 text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
+            className="mesure ml-auto px-1 text-[9.5px] text-signal hover:opacity-70"
           >
             rallumer
           </button>
@@ -683,7 +688,7 @@ function ChampDeStyle({
             type="button"
             onClick={() => void onPoser({ eteindre: champ.nom })}
             title="ce champ ne partira plus pour cette chose — un refus écrit, pas une case vide"
-            className="mesure ml-auto px-1 text-[9.5px] text-texte-3 hover:text-ancien-echec"
+            className="mesure ml-auto px-1 text-[9.5px] text-encre-4 hover:text-echec"
           >
             éteindre
           </button>
@@ -692,7 +697,7 @@ function ChampDeStyle({
 
       {champ.origine === "eteint" ? (
         // Le texte qui serait parti, barré : on voit ce à quoi on a renoncé.
-        <p className="mesure max-w-[720px] text-[11px] leading-5 text-texte-3 line-through">
+        <p className="mesure max-w-[720px] text-[11px] leading-5 text-encre-4 line-through">
           {champ.remplace || "—"}
         </p>
       ) : (
@@ -706,7 +711,7 @@ function ChampDeStyle({
             if (brouillon !== champ.texte)
               void onPoser({ textes: { [champ.nom]: brouillon } })
           }}
-          className="mesure w-full max-w-[720px] resize-y rounded-[2px] border border-bord bg-fond-1 p-2 text-[11px] leading-5 text-texte placeholder:text-texte-3"
+          className="mesure w-full max-w-[720px] resize-y rounded-[2px] border border-trait bg-papier-cote p-2 text-[11px] leading-5 text-encre placeholder:text-encre-4"
         />
       )}
 
@@ -714,7 +719,7 @@ function ChampDeStyle({
           remplace** : on doit pouvoir lire ce à quoi on a renoncé sans aller
           le chercher ailleurs. */}
       {champ.origine === "ici" && champ.remplace && (
-        <p className="mesure max-w-[720px] text-[10px] leading-4 text-texte-3 line-through">
+        <p className="mesure max-w-[720px] text-[10px] leading-4 text-encre-4 line-through">
           {champ.remplace}
         </p>
       )}
@@ -753,7 +758,7 @@ function SesReferences({
   return (
     <div className="flex flex-col gap-3">
       {references.lignes.length === 0 ? (
-        <p className="mesure text-[10px] leading-4 text-texte-2">
+        <p className="mesure text-[10px] leading-4 text-encre-3">
           Aucune encore. Dix-sept appels payés sur vingt-huit sont partis sans
           une seule image de référence, sur des modèles qui en acceptent
           quatorze.
@@ -781,8 +786,8 @@ function SesReferences({
       {/* **L'atelier propose de lui-même**, et il ne décide pas : il propose,
           avec la provenance écrite, et une proposition se refuse d'un clic. */}
       {references.propositions.length > 0 && (
-        <div className="flex flex-col gap-1 border-t border-bord pt-2">
-          <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+        <div className="flex flex-col gap-1 border-t border-trait pt-2">
+          <span className="mesure text-[9.5px] tracking-[.11em] text-encre-4 uppercase">
             proposées, d'après ce qui est fait
           </span>
           <ul className="flex flex-col">
@@ -801,7 +806,7 @@ function SesReferences({
         </div>
       )}
 
-      <p className="mesure text-[10px] leading-4 text-texte-2">
+      <p className="mesure text-[10px] leading-4 text-encre-3">
         la planche des quatre directions viendra avec la planche d'une pose : les
         angles existent, l'image qui les montre ensemble pas encore
       </p>
@@ -835,14 +840,14 @@ function LigneReference({
 
   return (
     <li
-      className="flex h-[38px] items-center gap-2.5 border-b border-bord last:border-b-0"
+      className="flex h-[38px] items-center gap-2.5 border-b border-trait last:border-b-0"
       onPointerEnter={visee.entrer}
       onPointerLeave={visee.sortir}
     >
       <span
         data-vignette-exemple
         className={[
-          "damier h-[30px] w-[30px] shrink-0 overflow-hidden rounded-[1px] border border-bord",
+          "damier h-[30px] w-[30px] shrink-0 overflow-hidden rounded-[1px] border border-trait",
           ligne.ecartee ? "opacity-40" : "",
         ].join(" ")}
       >
@@ -857,10 +862,10 @@ function LigneReference({
           />
         )}
       </span>
-      <span className="mesure min-w-0 flex-1 truncate text-[11px] text-texte-2">
+      <span className="mesure min-w-0 flex-1 truncate text-[11px] text-encre-3">
         {ligne.provenance}
       </span>
-      <span className="mesure shrink-0 truncate text-[9.5px] text-texte-3">
+      <span className="mesure shrink-0 truncate text-[9.5px] text-encre-4">
         {ligne.detail}
       </span>
       {action && (
@@ -871,8 +876,8 @@ function LigneReference({
           className={[
             "mesure shrink-0 px-1 text-[10px]",
             action.ton === "signal"
-              ? "text-ancien-signal hover:text-ancien-signal-clair"
-              : "text-texte-3 hover:text-ancien-echec",
+              ? "text-signal hover:opacity-70"
+              : "text-encre-4 hover:text-echec",
           ].join(" ")}
         >
           {action.mot}
@@ -904,28 +909,28 @@ function CeQuOnLuiReclame({
         {tenues.map((pose) => (
           <li
             key={pose.identifiant}
-            className="mesure flex h-[26px] items-center gap-2 border-b border-bord text-[11px] text-texte-2 last:border-b-0"
+            className="mesure flex h-[26px] items-center gap-2 border-b border-trait text-[11px] text-encre-3 last:border-b-0"
           >
             <span className="min-w-0 flex-1 truncate">{pose.nom}</span>
-            <span className="shrink-0 text-[10px] text-texte-3">
+            <span className="shrink-0 text-[10px] text-encre-4">
               {pose.images} image{pose.images > 1 ? "s" : ""}
             </span>
-            <span className="shrink-0 text-[9.5px] text-texte-3">
+            <span className="shrink-0 text-[9.5px] text-encre-4">
               {origines[pose.identifiant] === "ici" ? "ajoutée ici" : "de son type"}
             </span>
           </li>
         ))}
       </ul>
       {rangees.length > 0 && (
-        <div className="flex flex-col gap-1 border-t border-bord pt-2">
-          <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+        <div className="flex flex-col gap-1 border-t border-trait pt-2">
+          <span className="mesure text-[9.5px] tracking-[.11em] text-encre-4 uppercase">
             rangé — pas pour cette chose
           </span>
           <div className="flex flex-wrap gap-2">
             {rangees.map((pose) => (
               <span
                 key={pose.identifiant}
-                className="mesure h-[24px] rounded-[2px] border border-bord px-2 text-[10px] leading-[22px] text-texte-3 line-through opacity-60"
+                className="mesure h-[24px] rounded-[2px] border border-trait px-2 text-[10px] leading-[22px] text-encre-4 line-through opacity-60"
               >
                 {pose.nom}
               </span>
@@ -974,11 +979,11 @@ function CeQuiEstFait({
       <button
         type="button"
         onClick={onVitrine}
-        className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+        className="mesure self-start text-[10px] text-signal hover:opacity-70"
       >
         les voir toutes en grand, l'une après l'autre ›
       </button>
-      <p className="mesure text-[10px] leading-4 text-texte-2">
+      <p className="mesure text-[10px] leading-4 text-encre-3">
         sur le fond que la bible décrit, à des multiples entiers — rien n'est
         fabriqué ni modifié
       </p>
@@ -998,7 +1003,7 @@ function CaseFaite({ nom, image }: { nom: string; image: Asset | null }) {
       <span
         data-case-faite
         className={[
-          "damier flex h-[56px] w-[56px] items-center justify-center overflow-hidden rounded-[1px] border border-bord",
+          "damier flex h-[56px] w-[56px] items-center justify-center overflow-hidden rounded-[1px] border border-trait",
           image ? "" : "border-dashed",
         ].join(" ")}
       >
@@ -1013,7 +1018,7 @@ function CaseFaite({ nom, image }: { nom: string; image: Asset | null }) {
           />
         )}
       </span>
-      <figcaption className="mesure w-[56px] truncate text-center text-[9.5px] text-texte-3">
+      <figcaption className="mesure w-[56px] truncate text-center text-[9.5px] text-encre-4">
         {nom}
       </figcaption>
     </figure>
@@ -1046,13 +1051,13 @@ function MatriceCompacte({
           return (
             <li
               key={pose.identifiant}
-              className="mesure flex h-[26px] items-center gap-2 text-[11px] text-texte-2"
+              className="mesure flex h-[26px] items-center gap-2 text-[11px] text-encre-3"
             >
               <span className="min-w-0 flex-1 truncate">{pose.nom}</span>
               <span
                 className={[
                   "shrink-0 text-[10px]",
-                  combien >= pose.images ? "text-ancien-ok" : "text-texte-3",
+                  combien >= pose.images ? "text-ok" : "text-encre-4",
                 ].join(" ")}
               >
                 {combien} / {pose.images}
@@ -1061,7 +1066,7 @@ function MatriceCompacte({
           )
         })}
       </ul>
-      <p className="mesure border-t border-bord pt-2 text-[10px] text-texte-3">
+      <p className="mesure border-t border-trait pt-2 text-[10px] text-encre-4">
         {faites} / {tenues.length}
         {rangees > 0 && ` · ${rangees} rangée${rangees > 1 ? "s" : ""}`}
       </p>

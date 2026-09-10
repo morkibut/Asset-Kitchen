@@ -7602,7 +7602,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     // montrait deux vignettes identiques et laissait deviner.
     const vignettes = ecran.getAllByRole("button", { name: "Ouvrir casque · repos" })
     expect(vignettes).toHaveLength(2)
-    const marquees = vignettes.filter((v) => v.className.includes("outline-ancien-signal"))
+    const marquees = vignettes.filter((v) => v.className.includes("outline-signal"))
     expect(marquees).toHaveLength(1)
   })
 
@@ -7621,7 +7621,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     expect(
       ecran
         .getByRole("button", { name: "Ouvrir casque · repos" })
-        .className.includes("outline-ancien-signal"),
+        .className.includes("outline-signal"),
     ).toBe(false)
   })
 
@@ -7750,7 +7750,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
       name: /Ouvrir un nain au repos/,
     })
     expect(
-      vignettes.filter((v) => v.querySelector("img.outline-ancien-signal")),
+      vignettes.filter((v) => v.querySelector("img.outline-signal")),
     ).toHaveLength(1)
 
     fireEvent.click(ecran.getByRole("button", { name: "Garder un nain au repos" }))
@@ -11702,14 +11702,14 @@ describe("la fiche d'une chose du jeu", () => {
   })
 
   test("le nom d'un réglage n'est pas écrit dans le gris le plus sourd", async () => {
-    // `docs/DESIGN.md` § Color : `--texte-3` porte le grisé, la méta et la
+    // `docs/DESIGN.md` § Color : `--encre-4` porte le grisé, la méta et la
     // raison — trois choses qu'autre chose redit ailleurs. **Rien ne redit le
     // nom d'un champ de style**, il n'est donc pas un grisé.
     const { fiche } = await ouvrirLaFiche()
 
     const nom = await fiche.findByText("monde")
-    expect(nom.className).toContain("text-texte-2")
-    expect(nom.className).not.toContain("text-texte-3")
+    expect(nom.className).toContain("text-encre-3")
+    expect(nom.className).not.toContain("text-encre-4")
   })
 
   test("le compte des cases est calculé une fois, et tout ce qui l'écrit s'accorde", async () => {

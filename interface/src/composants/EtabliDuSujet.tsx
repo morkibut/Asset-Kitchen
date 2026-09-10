@@ -1,6 +1,13 @@
-// L'écran Personnages — qui il y a dans ce jeu, ce que chacun réclame, et ce
+// L'établi d'un sujet — qui il y a dans ce jeu, ce que chacun réclame, et ce
 // qui manque.
 //
+// **Ce fichier s'appelait `Personnages.tsx` (`C6`).** Il en reprend le contenu
+// mot pour mot, ses jetons de couleur migrés vers le papier — comme `C5` l'a
+// déjà fait pour `Planche.tsx`, la géométrie (tailles, arrondis) reste celle
+// de l'ancien châssis, à redessiner tranche à part. `PageDuSujet.tsx` le monte
+// comme la profondeur suivante de *Sa fiche*, sous « Ses cases, une par une ».
+//
+
 // « Savoir d'un coup d'œil ce qui est fait et ce qui ne l'est pas, afin de
 // savoir quoi lancer sans tenir la liste dans ma tête » (US-119). C'est la
 // contrepartie de l'Atelier, une fois de plus : l'Atelier fabrique une image,
@@ -378,7 +385,7 @@ export function EcranEtabli({
     // identiques imbriqués auraient fait dire au premier `querySelector` venu
     // autre chose selon la profondeur ouverte. Cette matrice garde le sien,
     // `data-matrice`, pour ce qui veut la viser *elle*.
-    <div data-matrice data-univers className="flex min-h-0 min-w-0 flex-col bg-fond-0">
+    <div data-matrice data-univers className="flex min-h-0 min-w-0 flex-col bg-papier">
       {/* ⚠️ **L'outil en plein cadre est parti d'ici** (`B25`). Une case pleine
           ouvrait l'ancien écran des tables *dans* cette matrice, comme une
           profondeur de plus du même endroit ; elle ouvre maintenant la retouche,
@@ -557,15 +564,15 @@ export function PlanDuJeu({
 
   return (
     <section className="flex flex-col gap-1.5">
-      <Libelle>Les attitudes du jeu</Libelle>
-      <p className="mesure text-[10px] leading-4 text-texte-3">
+      <Libelle papier>Les attitudes du jeu</Libelle>
+      <p className="mesure text-[10px] leading-4 text-encre-4">
         Écrite une fois pour le jeu entier — c'est elle qui permet de comparer
         deux personnages ligne à ligne. Ajouter une attitude ajoute une case
         vide à chacun, jamais une génération.
       </p>
 
       {plan.length === 0 ? (
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10px] leading-4 text-encre-4">
           Le plan est vide : aucun personnage n'a de case à remplir.
         </p>
       ) : (
@@ -590,9 +597,10 @@ export function PlanDuJeu({
           }}
           placeholder="nommer une attitude"
           aria-label="Nom de l'attitude à ajouter"
-          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-trait bg-carte px-2 text-[11px] text-encre placeholder:text-encre-4"
         />
         <Bouton
+          papier
           inactif={!nom.trim()}
           onClick={() => void ajouter()}
           enfants="Ajouter une attitude"
@@ -673,7 +681,7 @@ function LignePose({
           if (e.key === "Enter") (e.target as HTMLInputElement).blur()
         }}
         aria-label={`Nom de l'attitude ${pose.nom}`}
-        className="mesure h-[24px] w-[110px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-texte-2 hover:border-bord focus:border-bord-fort focus:bg-fond-2"
+        className="mesure h-[24px] w-[110px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-encre-3 hover:border-trait focus:border-contour focus:bg-carte"
       />
       <input
         value={consigne}
@@ -685,7 +693,7 @@ function LignePose({
         placeholder={`${pose.nom} — part tel quel`}
         aria-label={`Ce que « ${pose.nom} » dit au modèle`}
         title="en anglais : c'est ce texte-là qui part, et il ne se retape jamais sur chaque direction"
-        className="champ h-[24px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-texte-3 hover:border-bord focus:border-bord-fort focus:bg-fond-2 focus:text-texte-2"
+        className="champ h-[24px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-encre-4 hover:border-trait focus:border-contour focus:bg-carte focus:text-encre-3"
       />
       <input
         type="number"
@@ -694,7 +702,7 @@ function LignePose({
         value={pose.images}
         onChange={(e) => void regler(Number(e.target.value))}
         aria-label={`Images demandées pour ${pose.nom}`}
-        className="mesure h-[24px] w-[46px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-right text-[10px] text-texte-2"
+        className="mesure h-[24px] w-[46px] shrink-0 rounded-[2px] border border-trait bg-carte px-1 text-right text-[10px] text-encre-3"
       />
       <button
         type="button"
@@ -707,7 +715,7 @@ function LignePose({
         }}
         aria-label={`Retirer l'attitude ${pose.nom}`}
         title="les images déjà faites restent"
-        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+        className="mesure shrink-0 px-1 text-[10px] text-encre-4 hover:text-echec"
       >
         ×
       </button>
@@ -771,22 +779,22 @@ export function Vestiaire({
 
   return (
     <section className="flex flex-col gap-1.5">
-      <Libelle>Ce qu'on porte</Libelle>
-      <p className="mesure text-[10px] leading-4 text-texte-3">
+      <Libelle papier>Ce qu'on porte</Libelle>
+      <p className="mesure text-[10px] leading-4 text-encre-4">
         Décrite une fois pour le jeu entier, une pièce se pose sur n'importe
         lequel de ses personnages. Elle n'a pas d'image à elle : elle n'apparaît
         que sur un corps.
       </p>
 
       {groupes.length === 0 ? (
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10px] leading-4 text-encre-4">
           Aucune pièce — et aucun emplacement. Les deux se créent en nommant.
         </p>
       ) : (
         groupes.map((groupe) => (
           <div key={groupe.cle} className="flex flex-col">
             <div className="flex items-center gap-2 pt-1">
-              <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+              <span className="mesure text-[9.5px] tracking-[.11em] text-encre-4 uppercase">
                 {groupe.nom}
               </span>
               {groupe.cle && (
@@ -800,7 +808,7 @@ export function Vestiaire({
                   }}
                   aria-label={`Retirer l'emplacement ${groupe.nom}`}
                   title="les pièces qui l'occupaient restent — jamais de cascade"
-                  className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+                  className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-echec"
                 >
                   ×
                 </button>
@@ -827,7 +835,7 @@ export function Vestiaire({
           }}
           placeholder="nommer une pièce"
           aria-label="Nom de la pièce à ajouter"
-          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-trait bg-carte px-2 text-[11px] text-encre placeholder:text-encre-4"
         />
         <input
           value={ou}
@@ -840,9 +848,10 @@ export function Vestiaire({
           // sans une ligne de plus (séance du 29 août 2026).
           placeholder="tête, dos…"
           aria-label="Emplacement de la pièce sur le corps — créé s'il n'existe pas"
-          className="mesure h-[34px] w-[86px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[34px] w-[86px] shrink-0 rounded-[2px] border border-trait bg-carte px-2 text-[11px] text-encre placeholder:text-encre-4"
         />
         <Bouton
+          papier
           inactif={!nom.trim()}
           onClick={() => void ajouter()}
           enfants="Ajouter"
@@ -887,7 +896,7 @@ function LignePiece({
   }
 
   return (
-    <div className="flex flex-col gap-1 border-b border-bord py-1.5">
+    <div className="flex flex-col gap-1 border-b border-trait py-1.5">
       <div className="flex items-center gap-2">
         <input
           value={nom}
@@ -898,7 +907,7 @@ function LignePiece({
             void regler({ nom: propre })
           }}
           aria-label={`Nom de la pièce ${piece.nom}`}
-          className="mesure h-[24px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11.5px] text-texte-2 hover:border-bord focus:border-bord focus:bg-fond-2"
+          className="mesure h-[24px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11.5px] text-encre-3 hover:border-trait focus:border-trait focus:bg-carte"
         />
         {/* **La portée, déclarée** (US-139). Un `select` et non deux boutons :
             la liste est close, et l'auteur choisit dans ce qui existe. */}
@@ -907,7 +916,7 @@ function LignePiece({
           onChange={(e) => void regler({ portee: e.target.value as Portee })}
           aria-label={`Portée de ${piece.nom}`}
           title="contenue : elle tient dans la silhouette du corps. agrandit : elle en déborde (cape, arme longue), et la planche part alors avec de la marge. L'atelier ne le devine pas."
-          className="mesure h-[24px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+          className="mesure h-[24px] shrink-0 rounded-[2px] border border-trait bg-carte px-1 text-[10px] text-encre-3"
         >
           <option value="contenue">contenue</option>
           <option value="agrandit">agrandit</option>
@@ -922,7 +931,7 @@ function LignePiece({
           }}
           aria-label={`Retirer la pièce ${piece.nom}`}
           title="ses calques restent — jamais de cascade"
-          className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+          className="mesure shrink-0 px-1 text-[10px] text-encre-4 hover:text-echec"
         >
           ×
         </button>
@@ -937,7 +946,7 @@ function LignePiece({
         rows={2}
         placeholder="ce qu'elle est — ce texte part dans le prompt"
         aria-label={`Description de ${piece.nom}`}
-        className="mesure w-full resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11px] leading-4 text-texte placeholder:text-texte-3"
+        className="mesure w-full resize-none rounded-[2px] border border-trait bg-carte px-2 py-1 text-[11px] leading-4 text-encre placeholder:text-encre-4"
       />
       <SurQuiElleEstPosee piece={piece} />
     </div>
@@ -972,7 +981,7 @@ function SurQuiElleEstPosee({ piece }: { piece: Piece }) {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="mesure text-[10px] leading-4 text-texte-3">
+      <p className="mesure text-[10px] leading-4 text-encre-4">
         {portee.candidats === 0
           ? "Aucune chose du jeu ne peut la porter — une pièce se pose sur un corps."
           : `Posée sur ${portee.posee} personnage${
@@ -988,12 +997,12 @@ function SurQuiElleEstPosee({ piece }: { piece: Piece }) {
             >
               <span
                 className={
-                  qui.poses.length > 0 ? "text-texte-2" : "text-texte-3"
+                  qui.poses.length > 0 ? "text-encre-3" : "text-encre-4"
                 }
               >
                 {qui.nom}
               </span>
-              <span className="min-w-0 flex-1 truncate text-texte-3">
+              <span className="min-w-0 flex-1 truncate text-encre-4">
                 {qui.poses.length > 0
                   ? qui.poses.join(" · ")
                   : "pas encore posée"}
@@ -1082,8 +1091,8 @@ function Fiche({
       // § Typography, règle 1). **Rien de plus** — le codex porte déjà le champ
       // qui nomme et son explication, et les redire ici en ferait un doublon.
       <div className="flex min-h-0 flex-1 items-center justify-center p-8">
-        <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
-          Ce jeu n'a encore personne. <em className="text-texte-2">Nomme le premier.</em>
+        <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-encre-4">
+          Ce jeu n'a encore personne. <em className="text-encre-3">Nomme le premier.</em>
         </p>
       </div>
     )
@@ -1103,7 +1112,7 @@ function Fiche({
     <div className="grid min-h-0 flex-1 grid-cols-[300px_minmax(0,1fr)]">
       <aside
         {...PANNEAU}
-        className="defile flex min-h-0 flex-col gap-5 overflow-y-auto border-r border-bord bg-fond-1 p-3"
+        className="defile flex min-h-0 flex-col gap-5 overflow-y-auto border-r border-trait bg-papier-cote p-3"
       >
         <Identite
           personnage={personnage}
@@ -1208,33 +1217,34 @@ function Sortie({
   }
 
   return (
-    <section className="flex flex-col gap-2 border-t border-bord pt-4">
-      <Libelle>Sortir vers le jeu</Libelle>
+    <section className="flex flex-col gap-2 border-t border-trait pt-4">
+      <Libelle papier>Sortir vers le jeu</Libelle>
       <div className="flex items-center gap-3">
         <Bouton
+          papier
           inactif={raison !== null || enCours}
           onClick={() => void sortir()}
           titre={raison ?? dossierJeu}
           enfants={enCours ? "Sortie…" : "Poser dans le dossier du jeu"}
         />
-        <span className="mesure min-w-0 flex-1 truncate text-[10px] text-texte-3">
+        <span className="mesure min-w-0 flex-1 truncate text-[10px] text-encre-4">
           {raison ?? dossierJeu}
         </span>
       </div>
-      <p className="mesure text-[10px] leading-4 text-texte-3">
+      <p className="mesure text-[10px] leading-4 text-encre-4">
         Un fichier par attitude et par pièce, plus un descriptif qui dit ce
         qu'est chacun. C'est le rendu qui part ; l'image payée reste ici.
       </p>
       {sortie && (
-        <p className="mesure text-[10px] leading-4 text-texte-2">
+        <p className="mesure text-[10px] leading-4 text-encre-3">
           {sortie.compte} fichiers posés dans{" "}
-          <span className="text-texte">{sortie.dossier}</span>. Rien n'a été
+          <span className="text-encre">{sortie.dossier}</span>. Rien n'a été
           écrasé.
         </p>
       )}
       {refus && (
-        <p className="mesure flex items-center gap-1.5 text-[10px] text-ancien-echec">
-          <span aria-hidden className="inline-block h-px w-2 bg-ancien-echec" />
+        <p className="mesure flex items-center gap-1.5 text-[10px] text-echec">
+          <span aria-hidden className="inline-block h-px w-2 bg-echec" />
           {refus}
         </p>
       )}
@@ -1280,7 +1290,7 @@ function Colonnes({
   ]
   return (
     <section className="flex flex-col gap-1.5">
-      <Libelle>La colonne qu'on lit</Libelle>
+      <Libelle papier>La colonne qu'on lit</Libelle>
       <div className="flex flex-wrap items-center gap-1.5">
         <Onglet actif={colonne === null} onClick={() => onColonne(null)}>
           le corps
@@ -1300,7 +1310,7 @@ function Colonnes({
 }
 
 /** Le rang de 26 px de l'arbre, couché. Aucune grammaire neuve : actif sur
- *  `--fond-3`, survol `--fond-2`, 80 ms. */
+ *  `--carte`, survol `--ligne-ouverte`, 80 ms. */
 function Onglet({
   actif,
   onClick,
@@ -1318,8 +1328,8 @@ function Onglet({
       className={[
         "mesure h-[26px] rounded-[2px] px-2 text-[10px] transition-colors duration-[80ms]",
         actif
-          ? "bg-fond-3 text-texte"
-          : "bg-fond-1 text-texte-3 hover:bg-fond-2 hover:text-texte-2",
+          ? "bg-carte text-encre"
+          : "bg-papier-cote text-encre-4 hover:bg-ligne-ouverte hover:text-encre-3",
       ].join(" ")}
     >
       {children}
@@ -1423,7 +1433,7 @@ function Identite({
           else setNom(personnage.nom)
         }}
         aria-label="Nom du personnage"
-        className="w-full min-w-0 rounded-[2px] border border-transparent bg-transparent px-1 text-[15px] leading-none text-texte hover:border-bord focus:border-bord-fort focus:bg-fond-1"
+        className="w-full min-w-0 rounded-[2px] border border-transparent bg-transparent px-1 text-[15px] leading-none text-encre hover:border-trait focus:border-contour focus:bg-papier-cote"
       />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         {/* **Un clic sur « sa fiche » ouvre l'écran plein cadre** (E12). Le
@@ -1433,7 +1443,7 @@ function Identite({
           type="button"
           onClick={onFiche}
           title="ce qu'elle est, ce qui l'habille, ses images de référence — rien de tout ça ne coûte"
-          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
         >
           sa fiche ›
         </button>
@@ -1444,7 +1454,7 @@ function Identite({
           type="button"
           onClick={onVitrine}
           title="voir ce que ça donne, en grand, sur le fond que la bible décrit"
-          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
         >
           la vitrine ›
         </button>
@@ -1456,7 +1466,7 @@ function Identite({
           type="button"
           onClick={onCalibrage}
           title="toutes ses poses empilées dans la même case — c'est comme ça qu'on voit qu'il rapetisse en frappant"
-          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
         >
           le calibrage ›
         </button>
@@ -1476,7 +1486,7 @@ function Identite({
             }
           }}
           title="ses images restent, marquées « personnage supprimé »"
-          className="mesure ml-auto shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+          className="mesure ml-auto shrink-0 px-1 text-[10px] text-encre-4 hover:text-echec"
         >
           Supprimer
         </button>
@@ -1493,12 +1503,12 @@ function Identite({
           leur case. C'est ce que dit l'explication, parce que c'est la première
           crainte qu'un tel réglage inspire. */}
       <div className="flex flex-col gap-1">
-        <Libelle>Type d'objet</Libelle>
+        <Libelle papier>Type d'objet</Libelle>
         <select
           value={personnage.type ?? ""}
           aria-label="Type d'objet"
           onChange={(e) => void poser({ type: e.target.value })}
-          className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-1 px-1 text-[11px] text-texte-2"
+          className="mesure h-[26px] rounded-[2px] border border-trait bg-papier-cote px-1 text-[11px] text-encre-3"
         >
           <option value="">aucun — suit le plan du jeu</option>
           {types.map((type) => (
@@ -1509,7 +1519,7 @@ function Identite({
             </option>
           ))}
         </select>
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10px] leading-4 text-encre-4">
           Il décide des attitudes qu'on lui demande. En changer ne déplace aucune
           image : chacune garde l'attitude qu'on lui a donnée.
         </p>
@@ -1530,9 +1540,9 @@ function Identite({
           c'est la bascule de « + personnage », et non le grisé qui porte sa
           raison. L'endroit où l'on en fabrique est nommé à la place. */}
       <div className="flex flex-col gap-1">
-        <Libelle>Son ambiance</Libelle>
+        <Libelle papier>Son ambiance</Libelle>
         {ambiances.length === 0 ? (
-          <p className="mesure text-[10px] leading-4 text-texte-3">
+          <p className="mesure text-[10px] leading-4 text-encre-4">
             Ce jeu n'a encore aucune ambiance. Elles se fabriquent dans
             l'onglet Univers, côté Ambiances et couleurs.
           </p>
@@ -1542,7 +1552,7 @@ function Identite({
               value={personnage.ambiance ?? ""}
               aria-label="Son ambiance"
               onChange={(e) => void poser({ ambiance: e.target.value })}
-              className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-1 px-1 text-[11px] text-texte-2"
+              className="mesure h-[26px] rounded-[2px] border border-trait bg-papier-cote px-1 text-[11px] text-encre-3"
             >
               <option value="">aucune — le style du jeu</option>
               {ambiances.map((ambiance) => (
@@ -1562,7 +1572,7 @@ function Identite({
                 value={personnage.prend ?? "tout"}
                 aria-label="Ce qu'elle prend à son ambiance"
                 onChange={(e) => void poser({ prend: e.target.value })}
-                className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-1 px-1 text-[11px] text-texte-2"
+                className="mesure h-[26px] rounded-[2px] border border-trait bg-papier-cote px-1 text-[11px] text-encre-3"
               >
                 {CE_QU_ON_PREND.map((quoi) => (
                   <option key={quoi} value={quoi}>
@@ -1571,7 +1581,7 @@ function Identite({
                 ))}
               </select>
             )}
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10px] leading-4 text-encre-4">
               La palette agit au retour, sur la machine : rien n'est payé, et ce
               qui est déjà fait suit.
             </p>
@@ -1580,7 +1590,7 @@ function Identite({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Libelle>Description</Libelle>
+        <Libelle papier>Description</Libelle>
         {/* **La boîte suit le texte** — corrigé le 31 août 2026. C'est le texte
             le plus cher du produit : il repart avec chaque image de cette
             chose, donc il décide de ce qu'on paie et de ce qu'on obtient. Il
@@ -1600,9 +1610,9 @@ function Identite({
           lignesMax={16}
           placeholder="ce qu'il faut redire au modèle à chaque image de ce personnage"
           aria-label="Description du personnage"
-          className="mesure w-full rounded-[2px] border border-bord bg-fond-1 p-2 text-[11px] leading-5 text-texte placeholder:text-texte-3"
+          className="mesure w-full rounded-[2px] border border-trait bg-papier-cote p-2 text-[11px] leading-5 text-encre placeholder:text-encre-4"
         />
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10px] leading-4 text-encre-4">
           Elle part avec chaque image de ce personnage. Écrite ici une fois,
           elle ne se retape jamais dans un prompt.
         </p>
@@ -1896,7 +1906,7 @@ function Cases({
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center gap-3">
-        <Libelle>{piece ? `${piece.nom} — pose par pose` : "Ce qu'il lui faut"}</Libelle>
+        <Libelle papier>{piece ? `${piece.nom} — pose par pose` : "Ce qu'il lui faut"}</Libelle>
         {/* **L'ordre est un choix, et le plan reste le défaut** (C4, US-152).
             Le plan du jeu est l'ordre de l'auteur, et c'est le seul dans lequel
             une case *vide* se lit — la colonne dit d'abord ce qui manque. Le
@@ -1908,6 +1918,7 @@ function Cases({
         {piece && (
           <div className="ml-auto">
             <Segments<Ordre>
+              papier
               valeurs={["attitude", "pire"] as const}
               valeur={ordre}
               onChange={setOrdre}
@@ -1926,6 +1937,7 @@ function Cases({
         {!piece && reclame.length > 0 && (
           <div className="ml-auto">
             <Segments<CalqueDeLaMatrice>
+              papier
               valeurs={["images", "animations"] as const}
               valeur={calqueMatrice}
               onChange={setCalqueMatrice}
@@ -1945,7 +1957,7 @@ function Cases({
           ses directions porte une bande : ce ne sont pas les mêmes comptes, et
           leur écart est très exactement ce qu'on vient voir. */}
       {!piece && reclame.length > 0 && (
-        <p className="mesure text-[9.5px] leading-4 text-texte-3">
+        <p className="mesure text-[9.5px] leading-4 text-encre-4">
           {calqueMatrice === "images"
             ? "des attitudes dont toutes les images sont faites — une animation "
               + "manquante ne s'y voit pas, elle se lit sur l'autre calque"
@@ -1959,7 +1971,7 @@ function Cases({
         // rangée grisée, qui lui promettrait qu'elle en aura une un jour. Elle
         // ne bouge pas, elle se raccorde, et la phrase le dit plutôt que de
         // laisser une liste vide passer pour un oubli.
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10px] leading-4 text-encre-4">
           {personnage.type && SANS_ATTITUDES.includes(personnage.type)
             ? `Un ${personnage.type} n'a pas d'attitudes : il ne bouge pas, il se `
               + `raccorde. Une seule image le remplit.`
@@ -2085,7 +2097,7 @@ function Cases({
       {calqueMatrice === "images" &&
         (piece ? lot.length >= 1 && lot.every((p) => cases[p.identifiant]?.corps) : lot.length >= 2) && (
         <div className="flex items-center gap-2 pt-1">
-          <span className="mesure text-[10px] text-texte-3">
+          <span className="mesure text-[10px] text-encre-4">
             {lot.length} {lot.length > 1 ? "attitudes" : "attitude"}, un seul appel
           </span>
           <button
@@ -2095,7 +2107,7 @@ function Cases({
               setCochees([])
             }}
             title="prépare la planche dans l'atelier — rien n'est dépensé ici"
-            className="mesure ml-auto px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+            className="mesure ml-auto px-1 text-[10px] text-signal hover:opacity-70"
           >
             {piece ? "Habiller ensemble ›" : "Fabriquer ensemble ›"}
           </button>
@@ -2111,7 +2123,7 @@ function Cases({
       {calqueMatrice === "animations" &&
         personnage.cases.some((c) => c.bandes.length > 0) && (
         <div className="flex items-center gap-2 pt-1">
-          <span className="mesure text-[10px] text-texte-3">
+          <span className="mesure text-[10px] text-encre-4">
             planche de sprites, son descriptif, et une image qui tourne
           </span>
           <button
@@ -2119,7 +2131,7 @@ function Cases({
             disabled={sort}
             onClick={() => void sortirLesAnimations()}
             title="toutes ses animations, dans une seule archive — rien n'est dépensé"
-            className="mesure ml-auto px-1 text-[10px] text-texte-2 hover:text-texte disabled:opacity-40"
+            className="mesure ml-auto px-1 text-[10px] text-encre-3 hover:text-encre disabled:opacity-40"
           >
             {sort ? "…" : "Sortir ses animations ›"}
           </button>
@@ -2136,8 +2148,8 @@ function Cases({
           **Un clic la dérange**, et c'est le même geste qu'à la coche : la
           liste des tenues repart au serveur avec celle-ci en plus. */}
       {ecartees.length > 0 && (
-        <div className="flex flex-col gap-1 border-t border-bord pt-2">
-          <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+        <div className="flex flex-col gap-1 border-t border-trait pt-2">
+          <span className="mesure text-[9.5px] tracking-[.11em] text-encre-4 uppercase">
             rangé — pas pour cette chose
           </span>
           <div className="flex flex-wrap items-center gap-2">
@@ -2147,7 +2159,7 @@ function Cases({
                 type="button"
                 onClick={() => void cocher(pose.identifiant, true)}
                 title="lui rendre cette attitude"
-                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[10px] text-texte-3 line-through decoration-texte-3/60 opacity-60 hover:bg-fond-2 hover:text-texte-2 hover:no-underline hover:opacity-100"
+                className="mesure h-[24px] rounded-[2px] border border-trait bg-papier-cote px-2 text-[10px] text-encre-4 line-through decoration-encre-4/60 opacity-60 hover:bg-ligne-ouverte hover:text-encre-3 hover:no-underline hover:opacity-100"
               >
                 {pose.nom}
               </button>
@@ -2217,9 +2229,9 @@ function AjoutDePose({
         placeholder="une attitude pour elle seule…"
         aria-label={`Ajouter une attitude à ${personnage.nom}`}
         title="elle n'existera que pour cette chose — les autres du même type ne la verront pas"
-        className="champ h-[26px] w-[240px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[11px] text-texte placeholder:text-texte-3"
+        className="champ h-[26px] w-[240px] rounded-[2px] border border-trait bg-papier-cote px-2 text-[11px] text-encre placeholder:text-encre-4"
       />
-      <span className="mesure text-[9.5px] text-texte-3">
+      <span className="mesure text-[9.5px] text-encre-4">
         pour cette chose seule — rien n'est fabriqué
       </span>
     </div>
@@ -2325,7 +2337,7 @@ function LigneCase({
   const miroirs = useMiroirsDeLAttitude(angles)
 
   return (
-    <li className="flex flex-col border-b border-bord">
+    <li className="flex flex-col border-b border-trait">
     <div className="flex min-h-[52px] items-center gap-3 px-1 py-1">
       <input
         type="checkbox"
@@ -2333,17 +2345,17 @@ function LigneCase({
         onChange={(e) => onCocher(e.target.checked)}
         aria-label={`Faire partir ${pose.nom} avec les autres`}
         title="cochées ensemble, elles partent en une seule planche"
-        className="shrink-0 accent-ancien-signal"
+        className="shrink-0 accent-signal"
       />
       <span className="flex w-[110px] shrink-0 flex-col justify-center">
-        <span className="truncate text-[11.5px] text-texte-2">{pose.nom}</span>
+        <span className="truncate text-[11.5px] text-encre-3">{pose.nom}</span>
         {/* **L'origine, et seulement quand elle apprend quelque chose.** La
             venue du type est le cas ordinaire — l'écrire sur chaque ligne
             aurait fait six mentions identiques que personne ne lit. Ce qu'on a
             ajouté ici, lui, est une décision, et il se rappelle. */}
         {origine === "ici" && (
           <span
-            className="mesure text-[9px] leading-3 text-texte-3"
+            className="mesure text-[9px] leading-3 text-encre-4"
             title="ajoutée sur cette chose seule — changer son type ne l'emporte pas"
           >
             ajoutée ici
@@ -2360,7 +2372,7 @@ function LigneCase({
           rangée dit alors ce qui manque, par son nom. */}
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
         {aDesDirections ? (
-          <span className="mesure text-[10px] leading-4 text-texte-3">
+          <span className="mesure text-[10px] leading-4 text-encre-4">
             {angles.length === 0
               ? "aucune direction — tout est rangé"
               : vides.length > 0
@@ -2386,7 +2398,7 @@ function LigneCase({
               />
             ))}
             {images.length === 0 && (
-              <span className="mesure text-[10px] text-texte-3">rien encore</span>
+              <span className="mesure text-[10px] text-encre-4">rien encore</span>
             )}
           </>
         )}
@@ -2410,7 +2422,7 @@ function LigneCase({
       <span
         className={[
           "mesure shrink-0 text-[9.5px]",
-          faite ? "text-ancien-ok" : "text-texte-3",
+          faite ? "text-ok" : "text-encre-4",
         ].join(" ")}
         title={
           aDesDirections
@@ -2433,7 +2445,7 @@ function LigneCase({
           onClick={onPlanche}
           aria-label={`Ouvrir la planche de ${pose.nom}`}
           title={`${angles.length} directions, un seul appel — on voit ce qu'on achète avant de payer`}
-          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
         >
           la planche ›
         </button>
@@ -2446,7 +2458,7 @@ function LigneCase({
         onClick={onArmer}
         aria-label={`Fabriquer ${pose.nom}`}
         title="prépare le prompt dans l'atelier — rien n'est dépensé ici"
-        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
       >
         Fabriquer ›
       </button>
@@ -2460,7 +2472,7 @@ function LigneCase({
         onClick={onAnimer}
         aria-label={`Animer ${pose.nom}`}
         title="ouvre l'écran qui commande un clip — rien n'est dépensé ici"
-        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
       >
         Animer ›
       </button>
@@ -2478,7 +2490,7 @@ function LigneCase({
             ? "elle n'existe que sur cette chose — ses images restent en bibliothèque"
             : "ce personnage n'a pas besoin de cette attitude"
         }
-        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+        className="mesure shrink-0 px-1 text-[10px] text-encre-4 hover:text-echec"
       >
         ×
       </button>
@@ -2489,7 +2501,7 @@ function LigneCase({
         l'idée devient visible, et c'est ce qui permet enfin de dire qu'il
         manque le nord. */}
     {aDesDirections && (
-      <ul className="flex flex-col border-t border-bord/60 bg-fond-1/40">
+      <ul className="flex flex-col border-t border-trait/60 bg-papier-cote/60">
         {angles.map((angle) => (
           <SousLigneDirection
             key={angle.identifiant}
@@ -2515,7 +2527,7 @@ function LigneCase({
             à se rappeler ce qu'on a rangé. La portée est écrite, parce que
             dérangée au jeu et dérangée ici ne sont pas le même geste. */}
         {rangees.length > 0 && (
-          <li className="flex items-center gap-2 border-t border-bord px-1 py-1 pl-[26px]">
+          <li className="flex items-center gap-2 border-t border-trait px-1 py-1 pl-[26px]">
             {rangees.map((angle) => (
               <button
                 key={angle.identifiant}
@@ -2527,12 +2539,12 @@ function LigneCase({
                     ? "rangée sur cette chose seule"
                     : "rangée sur l'attitude, pour tout le jeu"
                 }
-                className="mesure text-[10px] text-texte-3 line-through opacity-60 hover:text-ancien-signal hover:no-underline hover:opacity-100"
+                className="mesure text-[10px] text-encre-4 line-through opacity-60 hover:text-signal hover:no-underline hover:opacity-100"
               >
                 {angle.nom}
               </button>
             ))}
-            <span className="mesure text-[9px] text-texte-3">
+            <span className="mesure text-[9px] text-encre-4">
               rangées — un clic les rend
             </span>
           </li>
@@ -2542,7 +2554,7 @@ function LigneCase({
             reste montrée plutôt que de retomber en silence dans la première
             colonne venue. Jamais de cascade, ici comme partout. */}
         {(case_?.sans_direction.length ?? 0) > 0 && (
-          <li className="mesure flex items-center gap-2 border-t border-bord px-1 py-1 pl-[26px] text-[10px] text-texte-3">
+          <li className="mesure flex items-center gap-2 border-t border-trait px-1 py-1 pl-[26px] text-[10px] text-encre-4">
             {case_?.sans_direction.length} image
             {(case_?.sans_direction.length ?? 0) > 1 ? "s" : ""} rangée
             {(case_?.sans_direction.length ?? 0) > 1 ? "s" : ""} dans une
@@ -2655,8 +2667,8 @@ function SousLigneDirection({
   const faite = angle.images.length >= angle.demandees
 
   return (
-    <li className="flex min-h-[52px] items-center gap-3 border-t border-bord/40 px-1 py-1 pl-[26px]">
-      <span className="w-[92px] shrink-0 truncate text-[11px] text-texte-3">
+    <li className="flex min-h-[52px] items-center gap-3 border-t border-trait/40 px-1 py-1 pl-[26px]">
+      <span className="w-[92px] shrink-0 truncate text-[11px] text-encre-4">
         {angle.nom}
       </span>
 
@@ -2684,7 +2696,7 @@ function SousLigneDirection({
                 }
                 aria-label={`Direction de ${asset.label}`}
                 title="faite avant les directions — le produit ne devine pas la sienne"
-                className="mesure h-[16px] w-[44px] rounded-[2px] border border-epingle/60 bg-fond-2 px-0.5 text-[8px] text-epingle"
+                className="mesure h-[16px] w-[44px] rounded-[2px] border border-trait-attention/60 bg-carte px-0.5 text-[8px] text-encre-attention"
               >
                 <option value="">à confirmer</option>
                 {angles.map((autre) => (
@@ -2697,7 +2709,7 @@ function SousLigneDirection({
           </span>
         ))}
         {angle.images.length === 0 && (
-          <span className="mesure text-[10px] text-texte-3">rien encore</span>
+          <span className="mesure text-[10px] text-encre-4">rien encore</span>
         )}
       </div>
 
@@ -2708,7 +2720,7 @@ function SousLigneDirection({
       <span
         className={[
           "mesure shrink-0 text-[9.5px]",
-          faite ? "text-ancien-ok" : "text-texte-3",
+          faite ? "text-ok" : "text-encre-4",
         ].join(" ")}
       >
         {angle.images.length} / {angle.demandees}
@@ -2726,7 +2738,7 @@ function SousLigneDirection({
           onClick={() => onRetourner?.(miroirDepuis, angle.identifiant)}
           aria-label={`Retourner vers ${angle.nom} pour ${pose.nom}`}
           title="la même image, vue de l'autre côté"
-          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
         >
           Retourner › gratuit
         </button>
@@ -2737,7 +2749,7 @@ function SousLigneDirection({
         onClick={onArmer}
         aria-label={`Fabriquer ${pose.nom} vers ${angle.nom}`}
         title="prépare le prompt dans l'atelier — l'attitude et la direction, chacune écrite une fois"
-        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
       >
         Fabriquer ›
       </button>
@@ -2747,7 +2759,7 @@ function SousLigneDirection({
         onClick={onAnimer}
         aria-label={`Animer ${pose.nom} vers ${angle.nom}`}
         title="ouvre l'écran qui commande un clip — l'attitude et l'angle sont déjà visés"
-        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
       >
         Animer ›
       </button>
@@ -2757,7 +2769,7 @@ function SousLigneDirection({
         onClick={onRanger}
         aria-label={`Ranger ${angle.nom} pour ${pose.nom}`}
         title="cette chose ne réclame pas cet angle — elle reste montrée, barrée, et un clic la rend"
-        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+        className="mesure shrink-0 px-1 text-[10px] text-encre-4 hover:text-echec"
       >
         ×
       </button>
@@ -2813,19 +2825,19 @@ function LigneAnimee({
   const vides = angles.filter((a) => a.bandes.length === 0)
 
   return (
-    <li className="flex flex-col border-b border-bord">
+    <li className="flex flex-col border-b border-trait">
       <div className="flex min-h-[52px] items-center gap-3 px-1 py-1">
         {/* La place de la coche de l'autre calque, tenue vide : les deux
             calques se superposent au pixel près quand on bascule, et le nom des
             attitudes ne saute pas d'un cran. */}
         <span aria-hidden className="w-[13px] shrink-0" />
         <span className="flex w-[110px] shrink-0 flex-col justify-center">
-          <span className="truncate text-[11.5px] text-texte-2">{pose.nom}</span>
+          <span className="truncate text-[11.5px] text-encre-3">{pose.nom}</span>
         </span>
 
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           {aDesDirections ? (
-            <span className="mesure text-[10px] leading-4 text-texte-3">
+            <span className="mesure text-[10px] leading-4 text-encre-4">
               {angles.length === 0
                 ? "aucune direction — tout est rangé"
                 : vides.length > 0
@@ -2845,7 +2857,7 @@ function LigneAnimee({
                 />
               ))}
               {bandes.length === 0 && (
-                <span className="mesure text-[10px] text-texte-3">
+                <span className="mesure text-[10px] text-encre-4">
                   rien ne bouge encore
                 </span>
               )}
@@ -2860,7 +2872,7 @@ function LigneAnimee({
         <span
           className={[
             "mesure shrink-0 text-[9.5px]",
-            faite ? "text-ancien-ok" : "text-texte-3",
+            faite ? "text-ok" : "text-encre-4",
           ].join(" ")}
           title={
             aDesDirections
@@ -2876,7 +2888,7 @@ function LigneAnimee({
           onClick={onAnimer}
           aria-label={`Animer ${pose.nom}`}
           title="ouvre l'écran qui commande un clip — l'image de départ y est déjà proposée"
-          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
         >
           Animer ›
         </button>
@@ -2886,7 +2898,7 @@ function LigneAnimee({
           Même découpe que les images, et pour la même raison exactement : sans
           elle on ne saurait pas dire qu'il manque la marche vers le nord. */}
       {aDesDirections && (
-        <ul className="flex flex-col border-t border-bord/60 bg-fond-1/40">
+        <ul className="flex flex-col border-t border-trait/60 bg-papier-cote/60">
           {angles.map((angle) => (
             <SousLigneAnimee
               key={angle.identifiant}
@@ -2929,8 +2941,8 @@ function SousLigneAnimee({
   const faite = angle.bandes.length >= 1
 
   return (
-    <li className="flex min-h-[52px] items-center gap-3 border-t border-bord/40 px-1 py-1 pl-[26px]">
-      <span className="w-[92px] shrink-0 truncate text-[11px] text-texte-3">
+    <li className="flex min-h-[52px] items-center gap-3 border-t border-trait/40 px-1 py-1 pl-[26px]">
+      <span className="w-[92px] shrink-0 truncate text-[11px] text-encre-4">
         {angle.nom}
       </span>
 
@@ -2946,7 +2958,7 @@ function SousLigneAnimee({
           />
         ))}
         {angle.bandes.length === 0 && (
-          <span className="mesure text-[10px] text-texte-3">
+          <span className="mesure text-[10px] text-encre-4">
             rien ne bouge encore
           </span>
         )}
@@ -2955,7 +2967,7 @@ function SousLigneAnimee({
       <span
         className={[
           "mesure shrink-0 text-[9.5px]",
-          faite ? "text-ancien-ok" : "text-texte-3",
+          faite ? "text-ok" : "text-encre-4",
         ].join(" ")}
       >
         {angle.bandes.length} / 1
@@ -2966,7 +2978,7 @@ function SousLigneAnimee({
         onClick={onAnimer}
         aria-label={`Animer ${pose.nom} vers ${angle.nom}`}
         title="ouvre l'écran qui commande un clip — l'attitude et l'angle sont déjà visés"
-        className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+        className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
       >
         Animer ›
       </button>
@@ -3012,7 +3024,7 @@ function VignetteDeBande({
         onClick={() => onOuvrir(bande.identifiant)}
         aria-label={`Retravailler l'animation ${bande.nom}`}
         title="ouvre son atelier — ses images une par une, avec tous ses réglages"
-        className="border border-transparent hover:border-ancien-signal"
+        className="border border-transparent hover:border-signal"
       >
         <BandeQuiTourne
           bande={bande}
@@ -3025,7 +3037,7 @@ function VignetteDeBande({
         onClick={() => onMonter(bande.clip)}
         aria-label={`Ouvrir le clip dont vient ${bande.nom}`}
         title="remonte au clip qui l'a fournie — il est payé, et il peut en donner d'autres"
-        className="mesure w-[52px] truncate text-center text-[8.5px] text-texte-3 hover:text-ancien-signal"
+        className="mesure w-[52px] truncate text-center text-[8.5px] text-encre-4 hover:text-signal"
       >
         {bande.nom}
       </button>
@@ -3034,7 +3046,7 @@ function VignetteDeBande({
         onClick={() => onDetacher(bande.identifiant)}
         aria-label={`Retirer cette animation de la case ${pose}`}
         title="la bande et son clip restent — c'est la case qu'on vide"
-        className="mesure absolute top-0 right-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-ancien-echec"
+        className="mesure absolute top-0 right-0 hidden bg-papier/80 px-1 text-[10px] text-encre-4 group-hover:block hover:text-echec"
       >
         ×
       </button>
@@ -3093,7 +3105,7 @@ function VignetteDeCase({
           alt={asset.label}
           className={[
             "damier h-[44px] w-[44px] object-contain",
-            retenu && concurrence ? "outline outline-1 outline-ancien-signal" : "",
+            retenu && concurrence ? "outline outline-1 outline-signal" : "",
           ].join(" ")}
           style={{ imageRendering: "pixelated" }}
         />
@@ -3114,7 +3126,7 @@ function VignetteDeCase({
         onClick={() => onDesigner(asset.identifiant)}
         aria-label={`Retirer cette image de la case ${pose}`}
         title="l'image reste en bibliothèque — c'est la case qu'on vide"
-        className="mesure absolute right-0 bottom-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-ancien-echec"
+        className="mesure absolute right-0 bottom-0 hidden bg-papier/80 px-1 text-[10px] text-encre-4 group-hover:block hover:text-echec"
       >
         ×
       </button>
@@ -3165,8 +3177,8 @@ function LigneCalque({
   return (
     <li
       className={[
-        "flex min-h-[52px] items-center gap-3 border-b border-bord px-1 py-1",
-        habillable ? "" : "text-texte-3",
+        "flex min-h-[52px] items-center gap-3 border-b border-trait px-1 py-1",
+        habillable ? "" : "text-encre-4",
       ].join(" ")}
     >
       <input
@@ -3180,9 +3192,9 @@ function LigneCalque({
             ? "cochées ensemble, elles partent en une seule planche"
             : "cette attitude n'a pas encore de corps"
         }
-        className="shrink-0 accent-ancien-signal disabled:opacity-40"
+        className="shrink-0 accent-signal disabled:opacity-40"
       />
-      <span className="w-[110px] shrink-0 truncate text-[11.5px] text-texte-2">
+      <span className="w-[110px] shrink-0 truncate text-[11.5px] text-encre-3">
         {pose.nom}
       </span>
 
@@ -3199,7 +3211,7 @@ function LigneCalque({
           />
         ))}
         {calques.length === 0 && (
-          <span className="mesure text-[10px] text-texte-3">
+          <span className="mesure text-[10px] text-encre-4">
             {habillable
               ? "rien encore"
               : `« ${pose.nom} » n'a pas encore de corps — une pièce se pose sur un corps`}
@@ -3223,7 +3235,7 @@ function LigneCalque({
           onClick={onArmer}
           aria-label={`Habiller ${pose.nom} de ${piece.nom}`}
           title="prépare la planche dans l'atelier — rien n'est dépensé ici"
-          className="mesure shrink-0 px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
         >
           Habiller ›
         </button>
@@ -3282,7 +3294,7 @@ function Superposition({
         aria-label={`Ouvrir ${calque.label}`}
         className={[
           "damier relative block h-[44px] w-[44px]",
-          retenu && concurrence ? "outline outline-1 outline-ancien-signal" : "",
+          retenu && concurrence ? "outline outline-1 outline-signal" : "",
         ].join(" ")}
       >
         {dessous && empile && (
@@ -3358,7 +3370,7 @@ function CoinFavori({
       <span
         className={[
           "absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-l-transparent",
-          asset.favori ? "border-t-ancien-signal" : "border-t-texte-3/60",
+          asset.favori ? "border-t-signal" : "border-t-texte-3/60",
         ].join(" ")}
       />
     </button>
@@ -3382,7 +3394,7 @@ function MesuresDuCalque({ calque }: { calque: Asset | undefined }) {
   const part = (valeur: number) => `${(valeur * 100).toFixed(1).replace(".", ",")} %`
   return (
     <span
-      className="mesure shrink-0 text-right text-[9.5px] text-texte-3"
+      className="mesure shrink-0 text-right text-[9.5px] text-encre-4"
       title="mesuré au dépliage de la planche — ces chiffres n'empêchent jamais de garder"
     >
       <span className="block">
@@ -3423,7 +3435,7 @@ function MesuresDuLot({ case_ }: { case_: Case | undefined }) {
   if (!lot) return null
   return (
     <span
-      className="mesure shrink-0 text-right text-[9.5px] text-texte-3"
+      className="mesure shrink-0 text-right text-[9.5px] text-encre-4"
       title="mesuré au dépliage du lot — ces chiffres n'empêchent jamais de garder"
     >
       <span className="block">

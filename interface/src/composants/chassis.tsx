@@ -342,6 +342,7 @@ export function EnTeteDeSection({
   aide,
   titre,
   compte,
+  papier = false,
 }: {
   /** La clef de l'entrée du recueil. Elle donne le nom **et** le propos. */
   aide: string
@@ -351,18 +352,26 @@ export function EnTeteDeSection({
   /** Le compte de la section, aligné à droite. **Écrit une fois** : c'est la
    *  correction de R8, où le même compte figurait à trois endroits. */
   compte?: ReactNode
+  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
+   *  comme sur `Bouton`, `Libelle`, `Raison` et `Segments` — les écrans qui
+   *  ne le passent pas gardent l'en-tête d'aujourd'hui, à l'identique. */
+  papier?: boolean
 }) {
   const entree = explication(aide)
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline gap-3">
-        <Libelle aide={aide}>{titre ?? entree?.nom ?? aide}</Libelle>
+        <Libelle aide={aide} papier={papier}>{titre ?? entree?.nom ?? aide}</Libelle>
         {compte && (
-          <span className="mesure ml-auto text-[10px] text-texte-3">{compte}</span>
+          <span className={`mesure ml-auto text-[10px] ${papier ? "text-encre-4" : "text-texte-3"}`}>
+            {compte}
+          </span>
         )}
       </div>
       {entree && (
-        <p className="max-w-[64ch] text-[11.5px] leading-[1.5] text-texte-2">
+        <p
+          className={`max-w-[64ch] text-[11.5px] leading-[1.5] ${papier ? "text-encre-3" : "text-texte-2"}`}
+        >
           {entree.quoi}
         </p>
       )}

@@ -62,7 +62,7 @@ import {
 import type { Fente } from "./BarreChassis"
 import { vignetteAsset } from "./Apercu"
 import { comptes, portraitDe } from "./FicheChose"
-import { EcranEtabli } from "./Personnages"
+import { EcranEtabli } from "./EtabliDuSujet"
 import { ImagesDuSujet } from "./ImagesDuSujet"
 import { AnimationsDuSujet } from "./AnimationsDuSujet"
 import { EssaiDuSujet } from "./EssaiDuSujet"
