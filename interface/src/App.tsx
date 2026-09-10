@@ -28,9 +28,7 @@ import {
   libelleDEmploi,
   Refus,
   type Action,
-  type Asset,
   type Envoi,
-  type LigneQuiPart,
   type Tri,
   type Bibliotheque,
   type GroupeDeRangement,
@@ -40,19 +38,15 @@ import {
   type Modele,
   type Reinjection,
   type Reserve,
-  type Role,
   type Carte,
   type Lien,
   type Fabrique,
   type Teinte,
   type CompteReferences,
-  type Emplacement,
   type EmplacementCorps,
   type Personnage,
   type Piece,
-  type GenreDEmploi,
   type MatriceDesCalquesAnimes,
-  type TenueDuCalque,
   type VestiaireDuJeu,
   type Pose,
   type Univers,
@@ -74,7 +68,7 @@ import {
   Libelle,
   usePli,
 } from "./composants/chassis"
-import { ChampPrompt, type EnVol } from "./composants/ChampPrompt"
+import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { Emplois } from "./composants/Emplois"
@@ -123,6 +117,10 @@ import { nomDuModele } from "./composants/Fiche"
 // écrans lui empruntent — la cible et les réinjections vivent dans la barre qui
 // paie, et `fondreAsset` sert au flux d'événements.
 import { fondre, useFlux } from "./flux"
+import { useGestes } from "./gestes"
+import { useVestiaire } from "./vestiaire"
+import { useRelectures } from "./relectures"
+import { usePaiement } from "./paiement"
 import { nommerLeLieu } from "./lieux-noms"
 import { BarreEtat, type Repli } from "./composants/BarreEtat"
 import { Cible, Galerie, Grille, Reinjections, useGalerie } from "./composants/Galerie"
@@ -139,7 +137,6 @@ import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
 import { EcranUnivers, type Cote } from "./composants/Univers"
 import { type Vue as VueUnivers } from "./composants/Tableau"
 
-type Geste = "Réglages" | "Réessayer"
 
 const BIBLIOTHEQUE_VIDE: Bibliotheque = {
   courant: null,
@@ -148,19 +145,6 @@ const BIBLIOTHEQUE_VIDE: Bibliotheque = {
   sans_projet: { assets: 0, total_usd: 0 },
   total_usd: 0,
 }
-
-
-// **Le temps qu'on laisse à la frappe de se poser** (M3). Corriger une ligne de
-// la fenêtre de confirmation écrit dans le tri, et le tri commande la demande
-// qui dit ce qui part : sans repos, un mot de dix lettres partait en dix
-// allers-retours enchaînés. Ce n'est pas un nouveau réglage — 200 ms est déjà ce
-// que le produit appelle *« la main s'est arrêtée »*, à l'infobulle comme à la
-// table d'inspiration.
-//
-// **Il ne s'applique jamais à l'ouverture** : on ouvre la fenêtre pour voir ce
-// qui part, et la faire attendre un cinquième de seconde pour rien serait payer
-// la réparation avec la chose qu'elle répare.
-const REPOS_FRAPPE = 200
 
 
 
@@ -882,127 +866,6 @@ export function App() {
         : sortir(p, "calques-animes"),
     )
 
-  // ── Les gestes du vestiaire (`B19`) ───────────────────────────────────────
-  //
-  // **Les écrans ne parlent pas au serveur.** `Emplois`, `Emploi` et le
-  // vestiaire d'une fiche remontent leurs gestes ici, comme `GrilleDuJeu` le
-  // fait déjà : un écran qui appelle lui-même finit par relire lui-même, et deux
-  // relectures ne rendent pas le même instant.
-  //
-  // **Chacun relit les deux** — le vestiaire résolu *et* la production. Un
-  // emploi qui change modifie ce qu'un sujet porte (`Personnage.pieces`), et
-  // ne relire que le vestiaire aurait laissé la fiche du porteur avec la liste
-  // d'avant jusqu'au prochain changement de jeu.
-  const apresUnGesteDuVestiaire = async () => {
-    await relireLeVestiaire()
-    await relireProduction()
-  }
-
-  // ── Les gestes des calques d'animation (`B20`) ───────────────────────────
-  //
-  // Même règle que ci-dessus : l'écran ne parle pas au serveur, il remonte. Les
-  // trois relisent **la matrice seule** — habiller ne change ni le vestiaire ni
-  // la production, puisque aucun calque n'est créé et aucune pièce n'est
-  // attribuée. Relire les trois aurait fait payer deux balayages pour rien.
-
-  const habillerUneBande = async (bande: string, tenue: TenueDuCalque) => {
-    try {
-      await api.habillerLaBande(
-        bande,
-        calquesAnimesLieu?.piece ?? "",
-        tenue,
-      )
-      await relireLesCalquesAnimes()
-    } catch (erreur) {
-      echouer(erreur, "le calque n'a pas pu être posé")
-    }
-  }
-
-  const reglerUnCalqueAnime = async (
-    habillee: string,
-    tenue: TenueDuCalque,
-  ) => {
-    try {
-      await api.reglerLeCalqueAnime(habillee, tenue)
-      await relireLesCalquesAnimes()
-    } catch (erreur) {
-      echouer(erreur, "la façon de suivre a été refusée")
-    }
-  }
-
-  const deshabillerUneBande = async (habillee: string) => {
-    try {
-      await api.deshabillerLaBande(habillee)
-      await relireLesCalquesAnimes()
-    } catch (erreur) {
-      echouer(erreur, "le calque n'a pas pu être retiré")
-    }
-  }
-
-  const ajouterUnEmploi = async (
-    piece: string,
-    corps: { genre: GenreDEmploi; porteur?: string; nom?: string },
-  ) => {
-    try {
-      await api.ajouterEmploi(piece, corps)
-      await apresUnGesteDuVestiaire()
-    } catch (erreur) {
-      echouer(erreur, "l'emploi a été refusé")
-    }
-  }
-
-  const reglerUnEmploi = async (
-    piece: string,
-    emploi: string,
-    champs: {
-      nom?: string
-      emplacement?: string
-      devant?: boolean
-      description?: string
-    },
-  ) => {
-    try {
-      await api.reglerEmploi(piece, emploi, champs)
-      await apresUnGesteDuVestiaire()
-    } catch (erreur) {
-      echouer(erreur, "le réglage a été refusé")
-    }
-  }
-
-  const retirerUnEmploi = async (piece: string, emploi: string) => {
-    try {
-      await api.retirerEmploi(piece, emploi)
-      // **On referme l'emploi si c'est celui qu'on regardait** — sinon l'écran
-      // resterait ouvert sur quelque chose qui n'existe plus, et le fil le
-      // nommerait encore.
-      if (emploiOuvertLieu?.emploi === emploi) ouvrirLEmploi(null)
-      await apresUnGesteDuVestiaire()
-    } catch (erreur) {
-      echouer(erreur, "le retrait a été refusé")
-    }
-  }
-
-  /** **Nommer une pièce depuis la fiche de qui la porte l'attribue d'emblée** —
-   *  le premier critère de la tranche, en un seul aller-retour. */
-  const donnerUnePiece = async (nom: string, porteur: string) => {
-    try {
-      await api.ajouterPiece({ nom, porteur })
-      await apresUnGesteDuVestiaire()
-    } catch (erreur) {
-      echouer(erreur, "la pièce a été refusée")
-    }
-  }
-
-  const retirerLaPiece = async (piece: string) => {
-    try {
-      await api.retirerPiece(piece)
-      ouvrirLaPiece(null)
-      await apresUnGesteDuVestiaire()
-    } catch (erreur) {
-      echouer(erreur, "le retrait a été refusé")
-    }
-  }
-
   /** La pièce et l'emploi ouverts, **relus dans le vestiaire vivant** — même
    *  raison que `choseOuverte` : une pièce retirée referme sa page, et un
    *  emploi renommé y suit son nom sans qu'on écrive un mot. */
@@ -1383,207 +1246,35 @@ export function App() {
   // recomposée ici, et c'est le chemin que la soumission emprunte.
 
 
-  // ── Les clips gardés, relus depuis le dépôt (B22) ─────────────────────────
-  //
-  // Comme la grille, elle se redemande au changement de jeu et **seulement**
-  // alors : un clip payé ne change jamais une fois arrivé, et le rejouer à
-  // chaque rendu ferait un aller-retour pour rien. Sans jeu ouvert, il n'y a
-  // rien à demander — la galerie d'aucun jeu ne montre les clips de tous.
 
-  const relireClipsDuJeu = useCallback(async () => {
-    if (!bibliotheque.courant) {
-      setClipsDuJeu([])
-      return
-    }
-    try {
-      // **Une réponse se lit, elle ne se croit pas.** Le double de `fetch` des
-      // essais d'écran rend `{}` pour une route qu'il ne connaît pas encore —
-      // `clips` y vaudrait `undefined`, et `clipsDuJeu` doit rester une liste
-      // quoi qu'il arrive : `entrees` la parcourt sans se demander si elle
-      // existe.
-      const recu = await api.clips(bibliotheque.courant)
-      setClipsDuJeu(recu.clips ?? [])
-    } catch (erreur) {
-      echouer(erreur, "les clips du jeu ne répondent pas")
-    }
-  }, [bibliotheque.courant])
-
-  useEffect(() => {
-    void relireClipsDuJeu()
-  }, [relireClipsDuJeu])
-
-  // ── Le tableau d'inspiration ──────────────────────────────────────────────
-  //
-  // Il se redemande quand le projet ouvert change, et **seulement** alors : le
-  // tableau appartient à son projet, et un tableau tenu en mémoire pendant qu'on
-  // change d'univers montrerait les inspirations d'un autre jeu.
-
-  // **Les groupes ne se tiennent pas à côté des cartes.** La route les rend, et
-  // c'est juste au chargement ; mais depuis T8 composer *écrit* un groupe à
-  // chaque glissement, et une liste posée une fois serait fausse avant la fin du
-  // premier geste. Elle se lit donc sur les cartes que l'écran tient — mêmes
-  // cartes, même règle, une seule liste (`Tableau.tsx` § `groupesDe`).
-  const relireTableau = useCallback(async () => {
-    try {
-      const toile = await api.tableau()
-      setCartes(toile.cartes)
-      setLiens(toile.liens)
-      setTeintes(toile.teintes)
-      setFabriques(toile.fabriques ?? {})
-    } catch (erreur) {
-      echouer(erreur, "le tableau ne répond pas")
-    }
-  }, [bibliotheque.courant])
-
-  useEffect(() => {
-    void relireTableau()
-  }, [relireTableau])
-
-  /** **Un personnage se fond par identifiant, jamais ne s'empile.**
-   *
-   *  Il arrive par deux chemins qui se croisent — la réponse de l'appel et
-   *  l'annonce du flux —, comme une génération en T1 et une carte en T4. Une
-   *  seule fonte, appelée des deux côtés : deux fusions écrites à deux endroits
-   *  finiraient par ne plus traiter le même cas (`docs/PIEGES.md`). */
-  const fondrePersonnage = useCallback(
-    (recu: Personnage & { supprime?: boolean }) =>
-      setPersonnages((liste) => {
-        if (recu.projet !== vivant.current.courant)
-          return liste.filter((p) => p.identifiant !== recu.identifiant)
-        if (recu.supprime)
-          return liste.filter((p) => p.identifiant !== recu.identifiant)
-        return liste.some((p) => p.identifiant === recu.identifiant)
-          ? liste.map((p) => (p.identifiant === recu.identifiant ? recu : p))
-          : [...liste, recu]
-      }),
-    [],
-  )
-
-  // ── Le plan et les personnages ────────────────────────────────────────────
-  //
-  // Redemandés quand le projet ouvert change, et **seulement** alors — comme le
-  // tableau : un plan appartient à son jeu, et celui d'un autre univers n'a rien
-  // à faire à l'écran. Les deux arrivent **en un seul aller-retour** : une
-  // colonne de cases n'existe que par le plan qui la nomme.
-  const relireProduction = useCallback(async () => {
-    try {
-      const production = await api.production()
-      setPlan(production.plan)
-      setPersonnages(production.personnages)
-      setEmplacements(production.emplacements)
-      setPieces(production.pieces)
-    } catch (erreur) {
-      echouer(erreur, "les personnages ne répondent pas")
-    }
-  }, [bibliotheque.courant])
-
-  /** Relire le vestiaire résolu (`B19`).
-   *
-   *  **Un second aller-retour, et il est assumé** : il balaie les calques du
-   *  jeu pour retrouver qui porte les pièces d'avant la tranche, et le coller à
-   *  `production()` aurait fait payer ce balayage à chaque ouverture de page.
-   *  Il se redemande au changement de jeu et après chaque geste sur un emploi —
-   *  jamais en continu. */
-  const relireLeVestiaire = useCallback(async () => {
-    try {
-      setVestiaireDuJeu(await api.emploisDuJeu())
-    } catch (erreur) {
-      echouer(erreur, "le vestiaire ne répond pas")
-    }
-  }, [bibliotheque.courant])
-
-  useEffect(() => {
-    void relireLeVestiaire()
-  }, [relireLeVestiaire])
-
-  /** La matrice des calques d'animation (`B20`), **demandée seulement quand
-   *  l'écran est ouvert**.
-   *
-   *  Elle lit les bandes et les calques d'un porteur ; la charger au démarrage
-   *  ferait payer ce balayage à tout le produit pour un écran que presque
-   *  personne n'ouvre. C'est le même partage que `vestiaire` et
-   *  `vestiaire_du_jeu` côté serveur, et pour la même raison. */
-  const relireLesCalquesAnimes = useCallback(async () => {
-    if (!calquesAnimesLieu) {
-      setCalquesAnimes(null)
-      return
-    }
-    try {
-      setCalquesAnimes(
-        await api.calquesAnimes(
-          calquesAnimesLieu.piece,
-          calquesAnimesLieu.porteur,
-        ),
-      )
-    } catch (erreur) {
-      echouer(erreur, "les calques d'animation ne répondent pas")
-    }
-  }, [calquesAnimesLieu?.piece, calquesAnimesLieu?.porteur])
-
-  useEffect(() => {
-    void relireLesCalquesAnimes()
-  }, [relireLesCalquesAnimes])
-
-  useEffect(() => {
-    void relireProduction()
-  }, [relireProduction])
-
-  // ── L'univers, redemandé au changement de jeu (B4) ────────────────────────
-  //
-  // **Le bug de bascule que l'ouverture devait réparer.** `univers` — la
-  // bible, la taille de pixel, la palette, les grisés qui en dérivent — ne
-  // vivait que du premier message du flux et de l'événement `univers` posé
-  // par un réglage : changer de jeu (`ouvrirProjet`) rechargeait la
-  // bibliothèque, jamais lui. L'écran gardait donc la bible et la taille de
-  // pixel du jeu précédent jusqu'à ce que le flux se rebranche — un
-  // rechargement de page, en pratique.
-  //
-  // **De quel jeu `univers` parle en ce moment** — pas un `bibliotheque.courant`
-  // d'avant, un vrai ref posé par les deux messages qui remplissent `univers` :
-  // le premier message du flux et l'événement `univers` d'un réglage. Sans lui,
-  // l'effet du dessous relirait l'univers à *chaque* montage — y compris le
-  // tout premier, où le flux vient tout juste de le servir — et un double de
-  // test qui ne sait répondre qu'un univers par défaut à `GET /universe`
-  // écraserait alors ce que le premier message venait d'installer.
-  const projetDeLUnivers = useRef<string | null>(null)
-
-  const relireUnivers = useCallback(async () => {
-    try {
-      const recu = await api.univers()
-      // **Une réponse qui arrive après qu'on ait changé une seconde fois de
-      // jeu est une réponse périmée** — même piège que la carte et l'asset
-      // qui se fondent par identifiant : elle porte le projet qu'elle
-      // visait, pas celui qu'on regarde maintenant. `""` est la forme que le
-      // serveur donne à « sans projet » ici, faute d'un identifiant à
-      // renvoyer.
-      if ((recu.projet || null) !== vivant.current.courant) return
-      setUnivers(recu.univers)
-      projetDeLUnivers.current = recu.projet || null
-    } catch {
-      // Muet, comme `relireEtat` : l'univers vrai revient de toute façon au
-      // prochain rebranchement du flux.
-    }
-  }, [])
-
-  useEffect(() => {
-    if (projetDeLUnivers.current === bibliotheque.courant) return
-    void relireUnivers()
-  }, [relireUnivers, bibliotheque.courant])
-
-  /** Redemander ce que le serveur grise — et lui seul.
-   *
-   *  La quantification s'allume quand une palette existe (US-65), et c'est le
-   *  serveur qui écrit cette phrase-là. L'écran pourrait la déduire de
-   *  `univers.palette` ; il ne le fait pas, parce que « l'interface affiche la
-   *  raison qu'elle reçoit, elle ne rejoue jamais la règle de son côté ». */
-  const relireEtat = useCallback(async () => {
-    try {
-      setEtat(await api.etat())
-    } catch {
-      // Muet : l'état complet revient de toute façon au prochain rebranchement
-      // du flux, et une panne a déjà sa phrase ailleurs.
-    }
-  }, [])
+  // ── Ce que l'écran redemande au serveur (`C4`) ────────────────────────────
+  const {
+    fondrePersonnage,
+    projetDeLUnivers,
+    relireEtat,
+    relireLeVestiaire,
+    relireLesCalquesAnimes,
+    relireProduction,
+    relireTableau,
+  } = useRelectures({
+    bibliotheque,
+    calquesAnimesLieu,
+    echouer,
+    setCalquesAnimes,
+    setCartes,
+    setClipsDuJeu,
+    setEmplacements,
+    setEtat,
+    setFabriques,
+    setLiens,
+    setPersonnages,
+    setPieces,
+    setPlan,
+    setTeintes,
+    setUnivers,
+    setVestiaireDuJeu,
+    vivant,
+  })
 
   /** L'univers tel que l'onglet le tient, en une chaîne. Un `ref` et non un
    *  état : il ne rend rien, il ne sert qu'à répondre « est-ce que ce message
@@ -1641,634 +1332,102 @@ export function App() {
     setOptions((precedentes) => ({ ...defaut.options, ...precedentes }))
   }, [defaut, modeleChoisi])
 
-  // **Ce qui fait qu'un appel est le même, et rien de plus** (M5).
+  // ── Ce qui part, et ce que ça coûte (`C4`) ────────────────────────────────
   //
-  // Ce que l'auteur **vise et écrit** : le texte, ce qu'il interdit, le modèle,
-  // l'échelle, le nombre de variations, le jeu, et la case du monde qu'il
-  // remplit. Changer l'un de ceux-là, c'est demander autre chose — et les
-  // corrections de la demande d'avant n'ont plus de sens.
-  //
-  // **Ce qui n'y entre pas est aussi une décision.** Les images jointes n'y sont
-  // pas : en ajouter une, ou en décocher une, est une correction *de cet
-  // appel-ci* et non un appel neuf — c'est très exactement le geste que la
-  // tranche rend possible, et l'y mettre viderait le tri au moment de s'en
-  // servir. La bible du jeu n'y est pas non plus : elle change ce qui part, elle
-  // ne change pas ce qu'on demande.
-  //
-  // Le séparateur est un caractère qu'aucun de ces champs ne peut porter : sans
-  // lui, deux repères mis bout à bout feraient deux appels différents lus comme
-  // un seul.
-  const signatureDeLAppel = [
-    prompt,
-    promptNegatif,
-    modele?.identifiant ?? "",
-    echelle,
-    String(variations),
-    bibliotheque.courant ?? "",
-    String(repris),
-    cible?.personnage ?? "",
-    cible?.piece ?? "",
-    cible?.direction ?? "",
-    posesCible.map((p) => p.identifiant).join("·"),
-    directionsCible.join("·"),
-  ].join("␟")
-
-
-  // ── La raison qui rend générer inactif ────────────────────────────────────
-
-  // Le refus porte **son geste** : chaque raison sait où elle mène, quand il y
-  // a un endroit où aller. « Le grisé porte sa raison — jamais une infobulle. »
-  const refus = useMemo<{ texte: string; geste?: Geste } | null>(() => {
-    if (panne) return { texte: panne }
-    if (!liaison) return { texte: "l'atelier ne répond pas" }
-    if (modeles.length === 0)
-      return { texte: "le catalogue n'a jamais été reçu", geste: "Réessayer" }
-    if (!modele) return { texte: "aucun modèle choisi" }
-    // **Ce qui manque appartient au modèle choisi, plus au produit** (F1).
-    // Jusqu'à la V2.2, l'absence de clé éteignait le bouton quel que soit le
-    // modèle : il n'y avait qu'un fournisseur, et c'était juste. Un fournisseur
-    // ne demande désormais ni compte ni clé — refuser au nom de la clé d'un
-    // autre serait un refus faux, et un refus faux est ce qui fait douter de
-    // tous les autres. La phrase du fournisseur arrive donc dans `refus`, écrite
-    // par le serveur, comme toutes les raisons de grisé depuis T1.
-    if (modele.refus)
-      return {
-        texte: modele.refus.startsWith("aucune clé")
-          ? modele.refus
-          : `${modele.nom} ${modele.refus}`,
-        geste: modele.refus.startsWith("aucune clé") ? "Réglages" : undefined,
-      }
-    if (!prompt.trim()) return { texte: "aucun prompt" }
-    // Hors ligne, générer reste **actif** : « l'échec ne survient qu'au moment
-    // où on génère, jamais à l'ouverture » (US-95).
-    return null
-  }, [panne, liaison, modeles, modele, prompt])
-
-  // ── Générer ───────────────────────────────────────────────────────────────
-
-  /** La série qu'on est en train de refaire — **une chose et une pose**.
-   *
-   *  C'est elle que la case « ne plus me le montrer » retient. Dès qu'on change
-   *  de l'une ou de l'autre, l'écran revient : relire dix fois la même chose est
-   *  une punition, relire la première d'une série ne l'est pas.
-   *
-   *  **`null` quand aucune case n'est visée, et c'est un bug payé en argent
-   *  réel** (signalé le 31 août 2026). Sans chose du jeu, les trois morceaux
-   *  sont vides : *toutes* les générations libres partageaient donc la même clé,
-   *  dans tous les jeux. Cocher la case une seule fois éteignait l'écran de
-   *  confirmation pour chacune d'elles jusqu'au rechargement de l'onglet — et le
-   *  clic suivant sur Générer partait droit à la dépense, sans rien montrer.
-   *  C'était très exactement la case « pour toujours » que le produit s'interdit,
-   *  atteinte par accident. Une série est une *répétition* ; un texte écrit à la
-   *  main n'en est pas une, donc il n'y a rien à sauter. */
-  const serie = cible
-    ? [cible.personnage, cible.poses.join("·"), cible.piece ?? ""].join("|")
-    : null
-
-  /** Le bouton de la barre qui paie — **il n'envoie plus, il fait relire** (E14).
-   *
-   *  L'écran de confirmation s'intercale entre le bouton et la dépense. Il se
-   *  saute pour la série en cours, et seulement pour elle : une case définitive
-   *  éteindrait le seul écran qui montre ce qui part, et on la cocherait le
-   *  premier jour, quand on ne sait pas encore qu'on en aura besoin. */
-  /** Ce qui est **payé et pas encore arrivé**, tous lots confondus.
-   *
-   *  Le chantier tenait déjà sa place dans la grille de la galerie, avant même
-   *  que l'image existe. Mais on paie aussi depuis le codex et depuis l'établi,
-   *  et là rien ne bougeait : l'auteur dépensait, l'écran restait immobile, et
-   *  il recliquait — ce qui repayait. Deux endroits le disent maintenant, et ils
-   *  se partagent le travail : le **bloc en route** prend la place du bouton là
-   *  où l'on vient de payer, la **pastille de l'onglet Galerie** suit d'un lieu
-   *  à l'autre.
-   *
-   *  Les échecs n'y sont pas : ils ont leur propre locataire dans la fente, le
-   *  revers, et deux tenants à la fois est ce que la fente s'interdit. */
-
-  const enRoute = chantier.flatMap((generation) =>
-    generation.emplacements.filter(
-      (e) => e.statut === "en_attente" || e.statut === "en_cours",
-    ),
-  )
-
-  /** Le plus ancien départ encore en route — `null` tant que tout attend en
-   *  file chez le fournisseur.
-   *
-   *  **C'est lui que la jauge mesure, et c'est le bon.** Les emplacements d'un
-   *  lot partent *ensemble* — `atelier/services/generation.py`, « un
-   *  emplacement, un appel, tous en parallèle » —, donc ils partagent leur
-   *  attente et le plus ancien est celui dont on attend la fin. Quand deux lots
-   *  se chevauchent, la barre suit le premier ; il arrive, et elle passe au
-   *  suivant sans jamais reculer. */
-  const plusAncien = enRoute.reduce<Emplacement | null>(
-    (ancien, emplacement) =>
-      emplacement.demarre_le !== null &&
-      (ancien === null ||
-        ancien.demarre_le === null ||
-        emplacement.demarre_le < ancien.demarre_le)
-        ? emplacement
-        : ancien,
-    null,
-  )
-
-  const enVol: EnVol | null =
-    enRoute.length === 0
-      ? null
-      : {
-          images: enRoute.length,
-          demarreLe: plusAncien?.demarre_le ?? null,
-          attendue: plusAncien?.duree_attendue_s ?? 0,
-        }
-
-  /** **Ce qui part, réduit à une chaîne** (U1). Deux appels qui rendraient la
-   *  même chaîne sont la même intention, et se partagent donc un identifiant ;
-   *  dès qu'un caractère change, l'intention est neuve et l'identifiant l'est
-   *  aussi. C'est la liste exacte du corps envoyé par `payer` — un champ oublié
-   *  ici ferait passer deux appels différents pour un seul, et le serveur
-   *  refuserait le second sans rien dire.
-   *
-   *  **Ce n'est pas un `useMemo`** : elle se lit dans `payer`, une fois, au
-   *  moment du clic. La mémoriser à chaque rendu coûterait un `JSON.stringify`
-   *  par frappe dans le champ de prompt, pour une valeur qu'on ne regarde qu'en
-   *  payant. */
-  const signatureEnvoi = () =>
-    JSON.stringify([
-      cible?.personnage ?? null,
-      !cases || enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
-      cases ? null : (cible?.direction ?? null),
-      enPlanche ? directionsCible : null,
-      cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
-      cible?.piece ?? null,
-      ecarteesGeneration,
-      modele?.identifiant ?? null,
-      prompt.trim(),
-      promptNegatif.trim(),
-      proportions,
-      cases ? 1 : variations,
-      options,
-      reinjections,
-      echelle,
-      repris,
-      tri,
-    ])
-
-  /** L'identifiant de l'intention courante — le même tant que rien de ce qui
-   *  part n'a changé, et **c'est lui qui empêche le second clic de payer**. */
-  const identifiantDeLIntention = () => {
-    const signature = signatureEnvoi()
-    if (intention.current?.signature !== signature)
-      intention.current = {
-        signature,
-        identifiant: crypto.randomUUID().replace(/-/g, ""),
-      }
-    return intention.current.identifiant
-  }
-
-  /** Refermer la fenêtre de confirmation, **et ce qui s'est posé par-dessus**
-   *  (M5).
-   *
-   *  Le choix d'une référence est un état de cette fenêtre-là, pas du produit :
-   *  le laisser derrière rouvrirait la grille à la prochaine ouverture, devant
-   *  un appel qui n'a rien demandé. Les quatre façons de sortir passent donc
-   *  ici — le bouton, Échap, l'onglet, et reprendre le texte à la main. */
-  const fermerCeQuiPart = () => {
-    setEnvoiOuvert(false)
-    setChoixDeReference(false)
-  }
-
-  const generer = () => {
-    if (refus || !modele) return
-    // L'échec d'avant appartenait à l'appel d'avant.
-    setEchecDuPaiement(null)
-    // **Pas de série, pas de saut.** `serie` vaut `null` quand aucune case n'est
-    // visée, et `serieSautee` vaut `null` quand rien n'a été sauté : les
-    // comparer sans ce garde-fou rendait vrai « rien saute rien », et l'écran
-    // disparaissait pour toutes les générations libres.
-    if (serie !== null && serieSautee === serie) {
-      void payer()
-      return
-    }
-    // **Le tri repart de rien dès que l'appel change** (M5, révisant E14).
-    //
-    // La règle disait *à chaque ouverture*, et elle visait un vrai danger : un
-    // réglage qui traînerait d'un appel au suivant. Elle reste. Ce qui change
-    // est **ce qu'elle appelle un autre appel** — sortir chercher une image et
-    // revenir n'en est pas un. Ce qu'on a éteint pour *cet* appel-ci vaut
-    // encore pour lui ; ce qu'on avait éteint pour un autre ne le suit pas.
-    if (triDe !== signatureDeLAppel) {
-      setTri(TRI_VIDE)
-      setTriDe(signatureDeLAppel)
-    }
-    setEnvoiOuvert(true)
-  }
-
-  const payer = async () => {
-    if (refus || !modele) return
-    // **Le verrou qui arrête le second clic** (U1). Lu et écrit dans le même
-    // tour de boucle, avant tout `await` : c'est la seule façon d'arrêter deux
-    // clics partis dans la même image de rendu, que le drapeau d'état
-    // n'attraperait pas — il n'est vrai qu'au rendu suivant.
-    if (paiementEnCours.current) return
-    paiementEnCours.current = true
-    setEnPaiement(true)
-    setEchecDuPaiement(null)
-    // **Un identifiant par intention** : le même pour deux clics sur le même
-    // envoi, neuf dès que ce qui part change. C'est lui qui empêche une double
-    // soumission de facturer deux fois — le serveur rend *déjà soumise* et ne
-    // facture rien quand il le revoit.
-    const identifiant = identifiantDeLIntention()
-    const retenues = Object.fromEntries(
-      Object.entries(options).filter(([nom]) => nom in modele.options),
-    )
-    try {
-      const generation = await api.generer({
-        // **La case visée, quand la matrice a armé** (US-120). L'image qui
-        // reviendra y tombera d'elle-même : personne n'a à la ranger, et une
-        // relance de cet appel visera toujours la même case.
-        personnage: cible?.personnage ?? null,
-        // **Une case ou N, et la même route** (US-128). Il n'existe qu'un seul
-        // endroit d'où l'on paie dans tout le produit : une seconde route pour
-        // les lots en aurait fait deux, et l'invariant de C1 serait tombé le
-        // jour où elle serait apparue. C'est le compte qui décide, pas l'écran.
-        // **Une planche de pose garde sa pose** : c'est elle qui porte
-        // l'attitude commune aux N cases, et les directions qui les
-        // distinguent partent à côté.
-        pose:
-          !cases || enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
-        // **Et sous quel angle** (E10). L'image qui reviendra tombe dans la
-        // case *et* dans la direction, sans que personne ait à l'y ranger. Vide
-        // pour un lot, qui vise N cases : c'est `poses` qui les nomme.
-        direction: cases ? null : (cible?.direction ?? null),
-        // **Les angles d'une planche de pose** (E13). Chaque case sait déjà
-        // dans quelle direction son image se rangera — le rangement cesse
-        // d'être un geste séparé qu'on peut oublier, puisque c'est une
-        // condition de l'appel.
-        directions: enPlanche ? directionsCible : null,
-        poses:
-          cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
-        // **La pièce que cet appel pose** (C3, US-140). Elle fait de la planche
-        // une planche d'*équipement* : elle part pleine des corps que `poses`
-        // désigne, et ce qui revient est comparé case par case à ce qui est
-        // parti. Sans elle, la même route crée des corps — c'est C2.
-        piece: cible?.piece ?? null,
-        // **Ce que cette génération-ci écarte.** `null` laisse parler les deux
-        // portées durables — c'est ce que reçoit un agent, qui n'a pas de
-        // panneau devant lui.
-        references_ecartees: ecarteesGeneration,
-        modele: modele.identifiant,
-        prompt: prompt.trim(),
-        prompt_negatif: promptNegatif.trim(),
-        proportions,
-        // **Un lot part en un seul appel, et l'écran envoie ce qu'il affiche.**
-        // Le segment est éteint quand un lot est armé, mais la valeur d'avant
-        // vit encore dans l'état : sans cette ligne, un « 4 » choisi puis un lot
-        // coché enverraient 4 pendant que l'écran montre 1 — et le refus
-        // arriverait après le clic qui paie, ce que le grisé existe pour éviter.
-        variations: cases ? 1 : variations,
-        options: retenues,
-        identifiant,
-        references: reinjections,
-        // Le sujet : c'est lui qui décide des artworks qui partent, du modèle
-        // par défaut et de la part de case que l'image occupera.
-        echelle,
-        // **Le texte part mot pour mot** (US-160). Il ne touche qu'au texte :
-        // l'échelle ci-dessus décide toujours des artworks, du modèle par
-        // défaut et de l'occupation, et le gabarit d'un lot part toujours.
-        repris,
-        // **Ce que l'écran de confirmation a trié** (E14). Il ne remonte nulle
-        // part : le prochain appel repart des réglages, comme si de rien
-        // n'était.
-        tri,
-        // **La palette en image**, quand la case est cochée : une bande de
-        // pastilles qui occupe une des places de référence du modèle.
-        palette: tri.allumes.includes("options.palette"),
-      })
-      // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
-      setChantier((liste) => fondre(liste, generation))
-      // L'avis de cette génération-là est parti avec elle : le suivant se
-      // reprend aux portées durables, comme au premier prompt de la séance.
-      setEcarteesGeneration(null)
-      // L'écran de confirmation se referme avec l'appel qu'il a relu, et le tri
-      // part avec lui. **Ici il part pour de bon** (M5) : l'appel est parti,
-      // donc il n'y a plus d'appel dont ces corrections-là seraient les
-      // corrections. C'est la différence avec un aller-retour.
-      fermerCeQuiPart()
-      setTri(TRI_VIDE)
-      setTriDe(null)
-      // **La cible se désarme dès que l'appel est parti.** C'est une intention
-      // qui vaut pour *cette* génération : la garder enverrait l'image suivante
-      // — un tonneau, un décor — dans la case d'un personnage, sans que rien
-      // ne l'ait demandé. On réarme d'un clic depuis la matrice.
-      setCible(null)
-      // **L'intention est consommée** (U1). Le même identifiant réemployé après
-      // un appel parti ferait rendre *déjà soumise* par le serveur : deux images
-      // volontairement identiques, demandées deux fois de suite, n'en feraient
-      // qu'une, et rien ne le dirait.
-      intention.current = null
-    } catch (erreur) {
-      // **L'identifiant reste**, et c'est voulu : rien n'a été enregistré côté
-      // serveur, donc réessayer est la *même* intention. Le bouton redevient
-      // cliquable — c'est le seul cas où il le redevient.
-      setEchecDuPaiement(
-        erreur instanceof Refus ? erreur.message : "génération refusée",
-      )
-    } finally {
-      paiementEnCours.current = false
-      setEnPaiement(false)
-    }
-  }
-
-  // ── Ce que l'écran de confirmation montre ─────────────────────────────────
-  //
-  // **Un aller-retour, et il porte le texte et le prix ensemble.** Un écran qui
-  // demanderait son texte à une route et son prix à une autre finirait par
-  // afficher un texte d'avant à côté d'un prix d'après. Rien n'est facturé, rien
-  // n'est enregistré, et l'appel ne sort pas de la machine.
-  //
-  // **Et la demande attend que la frappe se pose** (M3). Corriger une ligne
-  // écrit dans le tri, qui est une dépendance d'ici : un mot de dix lettres
-  // partait en dix allers-retours enchaînés. Le repos vaut pour tout ce qui
-  // change pendant que la fenêtre est ouverte, et pour rien à l'ouverture — la
-  // première demande part sur-le-champ.
-  useEffect(() => {
-    if (!envoiOuvert || !modele) {
-      // Fenêtre fermée : la prochaine ouverture repart sans attendre.
-      ouverture.current = true
-      return
-    }
-    let vivant = true
-    const attente = ouverture.current ? 0 : REPOS_FRAPPE
-    ouverture.current = false
-    const minuterie = window.setTimeout(() => {
-      void api
-        .envoi({
-          prompt: prompt.trim(),
-          modele: modele.identifiant,
-          projet: bibliotheque.courant,
-          echelle,
-          personnage: cible?.personnage ?? null,
-          pose: !cases || enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
-          direction: cases ? null : (cible?.direction ?? null),
-          directions: enPlanche ? directionsCible : null,
-          poses:
-            cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
-          piece: cible?.piece ?? null,
-          references: reinjections,
-          references_ecartees: ecarteesGeneration,
-          variations: cases ? 1 : variations,
-          repris,
-          tri,
-          // **Ce que l'auteur interdit de sa main** (D3) : le fond du jeu s'y
-          // ajoute, et sans lui l'écran montrerait l'interdiction du produit
-          // seule là où l'appel en enverra deux.
-          prompt_negatif: promptNegatif.trim(),
-        })
-        .then((recu) => {
-          if (!vivant) return
-          setEnvoi(recu)
-        })
-        .catch((erreur) => {
-          if (!vivant) return
-          setEnvoi(null)
-          echouer(erreur, "l'atelier ne dit pas ce qui partirait")
-        })
-    }, attente)
-    return () => {
-      vivant = false
-      window.clearTimeout(minuterie)
-    }
-    // Les poses et les directions **jointes** et non les tableaux : ils se
-    // refabriquent à chaque rendu, et deux appels de même taille sur des cases
-    // différentes n'enverraient pas les mêmes consignes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    envoiOuvert,
-    modele?.identifiant,
-    prompt,
-    repris,
-    echelle,
-    variations,
-    bibliotheque.courant,
-    cible?.personnage,
-    cible?.piece,
-    cible?.direction,
-    cible?.poses.join("·"),
-    directionsCible.join("·"),
-    enPlanche,
+  // La signature d'un appel, la raison qui grise *Générer*, la fenêtre de
+  // confirmation et le paiement vivent dans `paiement.ts`. `App` leur passe ce
+  // qu'ils lisent, et leur reprend les cinq choses que l'écran montre.
+  const { enVol, fermerCeQuiPart, generer, payer, refus, serie } = usePaiement({
+    bibliotheque,
     cases,
-    reinjections,
+    chantier,
+    setChantier,
+    cible,
+    setCible,
+    directionsCible,
     ecarteesGeneration,
-    tri,
+    setEcarteesGeneration,
+    echelle,
+    echouer,
+    enPlanche,
+    setEnvoi,
+    envoiOuvert,
+    setEnvoiOuvert,
+    setEnPaiement,
+    paiementEnCours,
+    intention,
+    liaison,
+    modele,
+    modeles,
+    panne,
+    options,
+    ouverture,
+    posesCible,
+    prompt,
     promptNegatif,
+    proportions,
+    reinjections,
+    repris,
+    serieSautee,
+    setChoixDeReference,
+    setEchecDuPaiement,
+    tri,
+    setTri,
+    triDe,
+    setTriDe,
     univers,
-  ])
-
-  /** **Garder une correction sur la chose du jeu — le second geste** (E14).
-   *
-   *  Corriger vaut pour cet appel ; garder est écrit, séparé, et il passe par la
-   *  fiche de la chose, qui est le seul endroit où un texte durable s'écrit.
-   *  Sans cette séparation, la dixième image d'un personnage serait fabriquée
-   *  avec les réglages du neuvième essai, sans que personne l'ait décidé. */
-  const garderLeTexte = async (ligne: LigneQuiPart) => {
-    if (!cible?.personnage || !ligne.gardable) return
-    try {
-      if (ligne.groupe === "sujet") {
-        await api.reglerPersonnage(cible.personnage, { description: ligne.texte })
-      } else {
-        await api.reglerPersonnage(cible.personnage, {
-          textes: { [ligne.nom]: ligne.texte },
-        })
-      }
-      // La correction est désormais dans la fiche : la garder aussi dans le tri
-      // en ferait une seconde vérité, et l'écran montrerait « corrigé pour cet
-      // appel » sur un texte qui est devenu celui de la chose.
-      setTri((deja) => {
-        const restant = { ...deja.textes }
-        delete restant[ligne.clef]
-        return { ...deja, textes: restant }
-      })
-      await relireProduction()
-    } catch (erreur) {
-      echouer(erreur, "le texte n'a pas pu être gardé")
-    }
-  }
-
-  /** Armer l'atelier sur une case (US-120).
-   *
-   *  **Rien n'est dépensé ici.** Le prompt reçoit le signalement du personnage
-   *  et le nom de l'attitude — c'est très exactement ce qu'on ne veut plus
-   *  retaper (US-115) —, la case est retenue, et l'écran rend la main. C'est le
-   *  bouton Générer de l'atelier qui paie.
-   *
-   *  Le prompt est **remplacé**, pas complété : cliquer « Fabriquer » sur une
-   *  case est sans ambiguïté, et laisser dessous un début de phrase écrit pour
-   *  autre chose ferait partir les deux ensemble.
-   *
-   *  Le **sujet**, lui, n'est pas touché : c'est le choix de l'auteur, et le
-   *  produit ne devine pas à sa place — il n'y a pas de famille « personnages »
-   *  imposée dans un barème qu'il a pu renommer.
-   */
-  const armer = async (
-    personnage: Personnage,
-    poses: Pose[],
-    piece?: Piece | null,
-    direction?: string | null,
-    directions?: string[] | null,
-  ) => {
-    if (poses.length === 0) return
-    // **Une planche de pose vise N angles d'une seule attitude** (E13). Deux ou
-    // plus, et l'appel se plie ; une seule, et c'est la case de C1 — que
-    // `direction` désigne, et qui n'a jamais changé.
-    const angles = directions && directions.length >= 2 ? directions : null
-    setCible({
-      personnage: personnage.identifiant,
-      poses: poses.map((p) => p.identifiant),
-      piece: piece?.identifiant ?? null,
-      // **Et sous quel angle** (E10) : la case visée est une pose *dans une
-      // direction*, et c'est elle que l'appel remplira.
-      direction: angles ? null : (direction ?? null),
-      directions: angles,
-    })
-    // **Le champ reçoit le signalement, et lui seul** — écrit par le serveur
-    // depuis C5, réduit à ce qu'on dessine depuis E14. La consigne de l'attitude
-    // et celle de l'angle sont une ligne à part, composée par le chemin de
-    // l'envoi, avec leur propre origine et leur propre interrupteur : les coller
-    // ici aurait obligé l'écran de confirmation à deviner où finit le
-    // signalement et où commence la pose.
-    //
-    // **Un refus n'empêche pas d'armer.** La case est visée, l'atelier est
-    // ouvert, et le champ reste à écrire : c'est un geste local et gratuit, pas
-    // une dépense — le vider et laisser la main est moins coûteux que de
-    // renvoyer l'auteur d'où il vient.
-    try {
-      const recu = await api.sujetDeCase({
-        personnage: personnage.identifiant,
-        piece: piece?.identifiant ?? null,
-        projet: bibliotheque.courant,
-      })
-      setPrompt(recu.sujet)
-      // **Ce qui est devinable est prérempli avec sa provenance**, et se défait
-      // d'un clic (E2). Le revers de la règle du grisé, qui dit sa raison
-      // depuis T1 : un champ prérempli n'est pas un champ décidé.
-      setProvenance(
-        piece
-          ? "proposé, d'après la description de la pièce · modifiable"
-          : angles
-            ? `proposé, d'après son signalement · les consignes des ${angles.length} directions partent case par case · modifiable`
-            : poses.length > 1
-              ? `proposé, d'après son signalement · les consignes des ${poses.length} poses partent case par case · modifiable`
-              : "proposé, d'après son signalement · la consigne de l'attitude part à côté · modifiable",
-      )
-    } catch {
-      setPrompt("")
-      setProvenance(null)
-    }
-    // **Armer rend la main à l'atelier.** Ce qui vient d'être posé dans le
-    // champ est un *sujet*, pas un texte complet : le laisser en mode repris
-    // ferait partir un signalement de personnage sans la bible ni les
-    // consignes de planche — c'est-à-dire sans rien de ce que la matrice
-    // arme.
-    setRepris(false)
-    // **Armer ne déplace plus personne.** Le geste dit « pour cette case-là »,
-    // et la barre qui paie est déjà sous la main : elle est au pied de
-    // l'établi, à quelques pixels de la case qu'on vient d'armer. Jusqu'en E2
-    // il fallait retourner à la galerie, seul endroit qui portait un champ.
-  }
+    variations,
+  })
 
 
-  // ── Réinjecter ────────────────────────────────────────────────────────────
+  // ── Les gestes du vestiaire et des calques d'animation (`C4`) ─────────────
+  const {
+    ajouterUnEmploi,
+    deshabillerUneBande,
+    donnerUnePiece,
+    habillerUneBande,
+    reglerUnCalqueAnime,
+    reglerUnEmploi,
+    retirerLaPiece,
+    retirerUnEmploi,
+  } = useVestiaire({
+    calquesAnimesLieu,
+    echouer,
+    emploiOuvertLieu,
+    ouvrirLEmploi,
+    ouvrirLaPiece,
+    relireLeVestiaire,
+    relireLesCalquesAnimes,
+    relireProduction,
+  })
 
-  /** Faire repartir une image avec le prochain appel.
-   *
-   *  **Le geste va où son effet se voit** (E2). La bande *Repart avec* et le
-   *  champ de prompt vivent au pied du codex et de l'établi, et plus dans la
-   *  galerie — qui juge et ne paie jamais. Réinjecter depuis la fiche d'une
-   *  image sans changer d'onglet laisserait l'auteur devant un geste dont rien
-   *  n'a bougé à l'écran, ce que le produit refuse partout ailleurs. */
-  const reinjecter = (asset: string, role: Role) => {
-    setReinjections((deja) => [
-      ...deja.filter((r) => r.asset !== asset),
-      { asset, role },
-    ])
-    setOnglet("codex")
-  }
-
-  /** **Échap referme le choix, et lui seul** (M5).
-   *
-   *  La fenêtre de confirmation écoute Échap pour se fermer, et elle reste
-   *  montée derrière : sans ce garde, une seule pression aurait refermé les
-   *  deux, ramenant l'auteur au prompt alors qu'il renonçait seulement à
-   *  joindre une image. En capture, et il arrête ce qu'il consomme.
-   *
-   *  ⚠️ **Et il rend la main à ce qui est encore au-dessus.** L'aperçu écoute
-   *  Échap de la même façon, sur la même fenêtre : *arrêter la propagation* ne
-   *  suffit pas entre deux écouteurs posés sur le même endroit — les deux se
-   *  déclenchent, et une seule pression refermait l'image en grand **et** la
-   *  grille. La marque qu'il laisse, elle, se voit : une touche déjà consommée
-   *  ne se reprend pas. On regarde une image en grand avant de la choisir ; ce
-   *  qu'on referme d'abord est donc l'image. */
-  useEffect(() => {
-    if (!choixDeReference) return
-    const touche = (evenement: KeyboardEvent) => {
-      if (evenement.key !== "Escape" || evenement.defaultPrevented) return
-      evenement.stopPropagation()
-      setChoixDeReference(false)
-    }
-    window.addEventListener("keydown", touche, true)
-    return () => window.removeEventListener("keydown", touche, true)
-  }, [choixDeReference])
-
-  /** **Ajouter une référence sans quitter la fenêtre de confirmation** (M5).
-   *
-   *  C'est `reinjecter` **moins le changement d'onglet**, et l'écart tient à la
-   *  règle qui l'avait imposé : *le geste va où son effet se voit*. Depuis la
-   *  fiche d'une image de la galerie, l'effet est ailleurs — d'où le
-   *  déplacement. Ici, l'effet est **sous les yeux** : l'image entre dans la
-   *  liste des images jointes qu'on est en train de lire, le compte monte d'une,
-   *  et le prix suit. Il n'y a rien à aller voir.
-   *
-   *  **Elle entre en *référence***, c'est-à-dire *le même sujet, déjà dessiné* :
-   *  c'est ce qu'on veut dans le cas qui a fait la tranche — on lit ce qui part,
-   *  on s'aperçoit qu'une image manque. Le rôle se change là où il se change
-   *  déjà, dans la bande *Repart avec* au pied du codex, et ce détour-là ne
-   *  coûte plus rien depuis que les corrections survivent à la sortie. */
-  const ajouterUneReference = (asset: string) => {
-    setReinjections((deja) => [
-      ...deja.filter((r) => r.asset !== asset),
-      { asset, role: "reference" as Role },
-    ])
-    setChoixDeReference(false)
-  }
-
-  /** Le quatrième rôle : reprendre les réglages, sans envoyer d'image.
-   *
-   *  **Le texte revient repris, quoi qu'il ait été** (US-160). `demande.prompt`
-   *  est le prompt tel qu'il *est parti* — bible repliée en tête et consignes
-   *  de planche en queue comprises. Le reposer en mode atelier le ferait
-   *  rhabiller une seconde fois : la bible partirait en double, et la planche
-   *  demanderait deux grilles. Ce que l'auteur reprend, c'est l'appel — donc il
-   *  repart identique. */
-  const reprendreReglages = async (asset: Asset) => {
-    try {
-      const generation = await api.generation(asset.generation)
-      setPrompt(generation.demande.prompt)
-      setRepris(true)
-      setPromptNegatif(generation.demande.prompt_negatif)
-      setProportions(generation.demande.proportions)
-      setVariations(generation.demande.variations)
-      setModeleChoisi(generation.modele)
-      setOptions(
-        Object.fromEntries(
-          Object.entries(generation.demande.options).map(([n, v]) => [n, String(v)]),
-        ),
-      )
-      // Même règle que la réinjection : le texte repris se lit dans le champ,
-      // et le champ n'est pas ici.
-      setOnglet("codex")
-    } catch (erreur) {
-      echouer(erreur, "réglages illisibles")
-    }
-  }
-
+  // ── Les gestes qui arment l'appel suivant (`C4`) ──────────────────────────
+  const {
+    ajouterUneReference,
+    armer,
+    garderLeTexte,
+    reinjecter,
+    reprendreReglages,
+  } = useGestes({
+    bibliotheque,
+    choixDeReference,
+    cible,
+    echouer,
+    relireProduction,
+    setChoixDeReference,
+    setCible,
+    setModeleChoisi,
+    setOnglet,
+    setOptions,
+    setPrompt,
+    setPromptNegatif,
+    setProportions,
+    setProvenance,
+    setReinjections,
+    setRepris,
+    setTri,
+    setVariations,
+  })
   // ── L'écran ───────────────────────────────────────────────────────────────
 
   const redemanderCatalogue = async () => {
@@ -3473,6 +2632,11 @@ export function App() {
           vestiaire={vestiaireDuJeu}
           onPiece={(piece) => ouvrirLaPiece(piece)}
           onCreerPiece={(nom) => void donnerUnePiece(nom, choseOuverte.identifiant)}
+          /* **Les deux rôles de la fiche d'une image** (`C4`) : elle est montée
+             dans *Ses images* depuis que le produit n'a plus qu'un seul volet de
+             fiche, et ces deux gestes-là sont les siens depuis toujours. */
+          onReinjecter={reinjecter}
+          onReglages={(asset) => void reprendreReglages(asset)}
           onRetirerLEmploi={(piece, emploi) => void retirerUnEmploi(piece, emploi)}
         />
       )}
