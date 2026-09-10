@@ -2578,8 +2578,8 @@ contenu est l'ancien châssis. Il emmène avec lui `FicheChose.tsx` (1 070), `Vi
 
 ### Critères d'acceptation
 
-- [ ] Les quatre onglets d'un sujet sont en papier, celui-là compris.
-- [ ] `Personnages.tsx` est parti.
+- [x] Les quatre onglets d'un sujet sont en papier, celui-là compris.
+- [x] `Personnages.tsx` est parti — renommé `EtabliDuSujet.tsx`, jetons migrés.
 
 ### Bloquée par
 
