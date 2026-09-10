@@ -87,6 +87,32 @@ dans sa ligne — pas la taille du fichier qu'elle touche.
 
 ---
 
+## Les 6 tranches `D` — le dernier châssis
+
+*Classées le 10 septembre 2026, à la clôture de `C1`-`C9`, sur le relevé fichier par fichier de
+`docs/PLAN-carnet.md` § « Le dernier châssis ».*
+
+| Tranche | Étiquette | Pourquoi |
+|---|---|---|
+| **D1** · les cinq portes des réglages, la dernière | `[MEDIUM]` | deux fichiers, aucune route neuve — mais un vrai choix de maison pour trois réglages de jeu qu'`Installation.tsx` ne reprend pas, à trancher sur la maquette avant de coder |
+| **D2** · l'inspiration de l'univers | `[HARD]` | 5 892 lignes, dont la géométrie de la toile et dix teintes d'îlot à recalibrer pour un fond clair — un dessin, comme `C2` avant elle, mais guidé cette fois par une planche déjà écrite (`Toile.dc.html`) |
+| **D3** · la galerie, dessinée | `[HARD]` | 3 377 lignes sur la surface la plus couverte par les essais d'écran ; le dessin suit `Galerie.dc.html`, déjà tranché — le risque est la régression, pas la décision |
+| **D4** · les outils de la galerie | `[MEDIUM]` | quatre portages sur un patron connu, plus `Import.tsx` sans planche connue — comme `Calibrage.tsx` en `C6`, ça se dessine dans la tranche sans la bloquer |
+| **D5** · le repos de l'onglet Créer | `[MEDIUM]` | même geste que `C4` pour la galerie, à plus petite échelle : sortir `barreQuiPaie` de `App.tsx` en fichier, puis la porter — aucune décision neuve |
+| **D6** · le dernier châssis tombe | `[VERY-HARD]` | 27 fichiers importent encore `chassis.tsx` ; démêler ce qui reste sombre de ce qui porte déjà `papier={true}`, et fixer le sort du fichier lui-même, sans casser la suite complète d'essais |
+
+**Compte du bloc D** : 1 `[VERY-HARD]`, 2 `[HARD]`, 3 `[MEDIUM]`, 0 `[EASY]`, 0 `[VERY-EASY]` en
+tranche entière.
+
+⚠️ **Contrôle de vraisemblance** : 3 tranches sur 6 sortent `[HARD]` ou au-dessus — la moitié,
+au-dessus du tiers de garde. Assumé pour la même raison que le bloc `C` : `D2`, `D3` et `D6`
+sont les trois tranches qui touchent soit un dessin sans équivalent papier direct (`D2`), soit
+la surface la plus testée du produit (`D3`), soit les 27 importeurs de `chassis.tsx` à la fois
+(`D6`). `D1`, `D4`, `D5` — la moitié restante — sont `[MEDIUM]`, jamais plus haut : aucune
+n'ajoute de schéma, d'invariant transverse, ni ne touche à l'argent, à un secret ou au disque.
+
+---
+
 ## Les points durs qui montent d'un cran
 
 Une tranche `[MEDIUM]` peut contenir une heure de travail qui, elle, demande Opus. Ces

@@ -2743,7 +2743,8 @@ lui, deux fiches écrites en parallèle se contredisent sans que personne ne le 
   vérifier qu'il ne vient pas de son édition en cours.
 
 **Quel modèle sur quelle tranche** : `docs/PLAN-carnet-affectation.md` classe les tranches —
-les 29 de `D0` à `B27`, et les 9 de `C1` à `C9` — de `[VERY-EASY]` à `[VERY-HARD]`, avec les
+les 29 de `D0` à `B27`, les 9 de `C1` à `C9`, et les 6 de `D1` à `D6` — de `[VERY-EASY]` à
+`[VERY-HARD]`, avec les
 morceaux qui montent ou descendent d'un cran.
 
 ---
@@ -2789,3 +2790,253 @@ phrase, et ils coûteront cher s'ils sont découverts en cours de construction.
   disparu et une est neuve depuis son écriture.
 - **Le report d'un calque d'une pose à une autre** — la planche de la différence dit elle-même
   que ce n'est peut-être pas faisable honnêtement. C'est une étude, pas un ticket.
+
+---
+
+# Le dernier châssis — `D1` à `D6`
+
+> **Ouvert le 10 septembre 2026, à la clôture de `C1`-`C9`.** La barre à trois onglets est
+> tombée et le carnet est le seul chemin — mais `essai_jetons.py` compte encore **18 fichiers,
+> 13 921 lignes** qui tournent sur les couleurs et les composants de l'ancien châssis, atteints
+> maintenant *depuis* le carnet plutôt que depuis la barre. `C1`-`C9` a retiré le dernier
+> couloir ; ce bloc vide les pièces qui restent au bout.
+
+## Pourquoi ce bloc existe
+
+`C1`-`C9` mesurait *comment on entre* dans un écran — la barre, ses onglets, la pile de lieux.
+Ce bloc mesure *ce que l'écran montre une fois entré* : ses couleurs, ses composants, ses
+tailles. Les deux mesures sont indépendantes, et `essai_jetons.py` le dit lui-même dans les
+commentaires de `LES_FICHIERS_DE_L_ANCIEN_CHASSIS` : plusieurs des 18 sont déjà atteints par le
+carnet depuis `C1`-`C9`, et restent sur la liste uniquement parce que personne n'a encore
+redessiné ce qu'ils affichent.
+
+C'est la promesse de `D0` (*« le système de design réécrit »*, 6 septembre 2026) qui reste
+inachevée : un système de jetons fermé n'a de valeur que si tout l'écran y tient, et un tiers
+de `interface/src` n'y tenait pas encore au moment d'ouvrir ce bloc.
+
+## Ce que mesure ce bloc
+
+Relevé du 10 septembre 2026, à la clôture de `C9`, fichier par fichier :
+
+| | fichiers | lignes |
+|---|---|---|
+| Écrans encore sur l'ancien châssis | 18 | 13 921 |
+
+**Deux natures différentes, mêlées dans le même compte** :
+
+- **Un pur portage de jetons** — la couleur et la taille changent, la structure ne bouge pas.
+  C'est le cas de la plupart des fichiers hérités de `C1`, `C3`, `C4`, `C6`, `C7`.
+- **Un vrai dessin** — la géométrie elle-même ne tient dans aucune largeur fermée de
+  `docs/DESIGN.md`, et une maquette existe ou doit se faire. `essai_jetons.py` le nomme
+  explicitement pour `Univers.tsx`, `Toile.tsx`, `Tableau.tsx`, `Ambiances.tsx` : *« leur
+  passage au papier n'est pas un portage de jetons, c'est un dessin »*.
+
+Chaque tranche ci-dessous dit de laquelle des deux elle relève.
+
+## Ce qui est déjà en place, et qu'on ne refait pas
+
+- **La plupart des planches existent.** `Toile.dc.html`, `Galerie.dc.html` et les planches des
+  écrans de réglages sont déjà dessinées. Seul `Import.tsx` (§ `D4`) n'a pas de planche papier
+  connue — il se dessine dans sa tranche, il ne la bloque pas.
+- **Le vocabulaire additif de `chassis.tsx` est posé.** `Bouton`, `Libelle`, `Raison`,
+  `Segments`, `Curseur`, `EnTetePanneau` portent déjà une prop `papier` (posée en `C5`-`C7`) ;
+  les tranches de ce bloc qui ne font qu'un portage de jetons s'appuient dessus, elles ne la
+  réinventent pas.
+- **27 fichiers importent encore `chassis.tsx`.** La plupart pour son vocabulaire papier
+  (`Montage.tsx`, `Envoi.tsx`, `Clip.tsx`, `Planche.tsx`, `EtabliDuSujet.tsx`…) : `chassis.tsx`
+  reste après ce bloc, seule sa part sombre en sort (§ `D6`).
+
+## Le garde-fou de ce bloc
+
+`LES_FICHIERS_DE_L_ANCIEN_CHASSIS`, retournée par `C1`, continue de servir : chaque tranche en
+retire ses fichiers, avec le même commentaire daté que `C1`-`C9` a posé. Le jour où elle est
+vide, `chassis.tsx` lui-même en sort en dernier (`D6`), et la liste disparaît avec elle —
+`essai_jetons.py` tient alors le dépôt entier sans liste blanche ni liste noire.
+
+## L'ordre
+
+| Rang | Tranche | Pourquoi là |
+|---|---|---|
+| **1** | `D1` | le plus petit, et ferme une promesse ouverte par `C1` (les cinq portes des réglages) |
+| **2** | `D2`, `D5` | indépendantes l'une de l'autre et du reste — partent en parallèle |
+| **3** | `D3` | la galerie elle-même : le plus gros dessin, `Fiche.tsx` inclus |
+| **4** | `D4` | les outils de la galerie, une fois `D3` posée à côté d'eux |
+| **5** | `D6` | le dernier châssis tombe — bloquée par tout le reste |
+
+`D2` et `D3` sont les deux dessins ; `D1`, `D4`, `D5` sont surtout du portage.
+
+---
+
+## D1 · Les cinq portes des réglages, la dernière
+
+`C1` a basculé trois des cinq portes vers `EcranReglages` sur `Installation.tsx`. Restent deux
+chemins et un fichier : les boutons « Réglages » et l'état de la clé dans la barre
+(`App.tsx:1962-1970`), qui ouvrent encore `EcranReglages.tsx` (433 lignes) — lequel monte
+`Secrets.tsx` (184 lignes).
+
+### Ce qu'on livre
+
+- Une maison papier pour les trois réglages qu'`Installation.tsx` ne reprend pas : les
+  garde-fous de l'agent, le dossier du jeu, la bibliothèque de mouvements — plus l'état de la
+  clé que `Secrets.tsx` affiche.
+- **Décision ouverte, à trancher dans la tranche** : ces trois réglages sont d'un jeu, pas de
+  la machine — ils ne rejoignent donc pas `Installation.tsx` tel quel. La maquette du dossier
+  de conception, si elle en montre un, prime ; à défaut, la lecture la plus simple à vérifier
+  est un onglet de plus sur l'écran qui porte déjà les réglages d'un jeu (`ReglesDuJeu.tsx`).
+- `EcranReglages.tsx` et `Secrets.tsx` retirés, et les deux derniers appels dans `App.tsx`
+  redirigés vers la maison neuve.
+
+### Critères d'acceptation
+
+- Les garde-fous de l'agent, le dossier du jeu et la bibliothèque de mouvements restent
+  réglables — la trentaine d'essais qui les verrouille passe sans qu'une assertion de contenu
+  bouge, seul le chemin pour y entrer change.
+- L'état de la clé reste visible et son essai dédié passe, sur son nouveau chemin.
+- `EcranReglages.tsx` et `Secrets.tsx` n'existent plus ; `LES_FICHIERS_DE_L_ANCIEN_CHASSIS` en
+  perd deux lignes.
+
+### Bloquée par
+
+- Aucune.
+
+---
+
+## D2 · L'inspiration de l'univers
+
+`Univers.tsx` (381), `Toile.tsx` (2842), `Tableau.tsx` (1599), `Ambiances.tsx` (1070) — les
+trois côtés d'inspiration de l'onglet Univers, restés en place depuis que `C2` a retiré leur
+doublon (`Assistant.tsx`). Le plus gros dessin du bloc : dix teintes d'îlot calibrées pour un
+fond sombre, une géométrie de toile qui ne tient dans aucune largeur fermée de
+`docs/DESIGN.md`.
+
+### Ce qu'on livre
+
+- La carte, la réserve et le menu d'un îlot redessinés sur le papier de `Toile.dc.html`.
+- Dix teintes d'îlot papier, à 4,6:1 sur le fond clair — la fabrique unique qui les calcule
+  (`interface/src/api.ts`) change de dix couleurs, pas de forme.
+- `Univers.tsx`, `Tableau.tsx`, `Ambiances.tsx` portés au vocabulaire papier de `chassis.tsx`.
+
+### Critères d'acceptation
+
+- `essai_jetons.py` : plus aucune couleur en clair dans les quatre fichiers, plus aucune taille
+  ni arrondi hors des listes fermées de `docs/DESIGN.md` — donc sortis aussi de
+  `LA_GEOMETRIE_D_AVANT`, pas seulement de `LES_FICHIERS_DE_L_ANCIEN_CHASSIS`.
+- Aperçu navigateur comparé à `Toile.dc.html` : carte, réserve, menu d'îlot, les dix teintes.
+- Les essais qui naviguent l'onglet Univers passent sans qu'une assertion de contenu bouge.
+
+### Bloquée par
+
+- Aucune.
+
+---
+
+## D3 · La galerie, dessinée
+
+`C4` a sorti la galerie d'`App.tsx` en fichier — une extraction, pas un dessin, comme le
+commentaire du garde-fou le dit lui-même. Ce qui reste : la redessiner sur le papier de
+`Galerie.dc.html`. `Galerie.tsx` (1348), `BarreEtat.tsx` (84), `Tuile.tsx` (672) et `Fiche.tsx`
+(1273, le volet d'image monté par la galerie et par `PageDuSujet`).
+
+### Ce qu'on livre
+
+- La grille, sa cible, ses réinjections et la barre d'état du châssis redessinées sur le papier
+  de `Galerie.dc.html`.
+- Le volet `Fiche.tsx` porté au vocabulaire papier — sans toucher aux rappels facultatifs qu'il
+  garde pour `PageDuSujet` (l'angle à confirmer, la variante, l'écart).
+
+### Critères d'acceptation
+
+- `essai_jetons.py` : les quatre fichiers sortent de `LES_FICHIERS_DE_L_ANCIEN_CHASSIS`.
+- Aperçu navigateur comparé à `Galerie.dc.html`.
+- Les essais de la galerie et de `Fiche.tsx` passent sans qu'une assertion de contenu bouge ;
+  `data-identite-de-l-image` et les callbacks facultatifs de `Fiche.tsx` restent intacts.
+
+### Bloquée par
+
+- Aucune, mais partage `Fiche.tsx` et `Galerie.tsx` avec `D4` — ne pas lancer les deux en même
+  temps sur ces fichiers.
+
+---
+
+## D4 · Les outils de la galerie
+
+`Arbre.tsx` (378, l'arbre des collections), `BarreOutils.tsx` (426), `Import.tsx` (249),
+`Depliage.tsx` (277), `FicheDuClip.tsx` (311, qui importe déjà `nomDuModele` de `Fiche.tsx`).
+Du portage pour les quatre premiers ; `Import.tsx` n'a pas de planche papier connue et se
+dessine dans la tranche — comme `Calibrage.tsx` en `C6`.
+
+### Ce qu'on livre
+
+- Les cinq fichiers portés au vocabulaire papier de `chassis.tsx`.
+- Une version papier de l'écran d'import, dessinée sur la lecture la plus simple à vérifier
+  s'il n'existe pas de planche au moment d'ouvrir la tranche.
+
+### Critères d'acceptation
+
+- `essai_jetons.py` : les cinq fichiers sortent de `LES_FICHIERS_DE_L_ANCIEN_CHASSIS`.
+- Aperçu navigateur de l'arbre, de la barre d'outils, de l'import et du dépliage.
+- Les essais qui verrouillent ces cinq écrans passent sans qu'une assertion de contenu bouge.
+
+### Bloquée par
+
+- `D3` — voir la note de partage de fichiers ci-dessus.
+
+---
+
+## D5 · Le repos de l'onglet Créer
+
+`ChampPrompt.tsx` (331) et `PanneauReglages.tsx` (711) ne sont montés nulle part en fichier
+propre : ils vivent en clair dans `App.tsx` (`barreQuiPaie`, `:1599-1721`), la barre qui paie —
+*« une seule dans tout le produit »* — avec le champ de prompt et les réglages de l'appel.
+Même geste que `C4` pour la galerie : sortir de `App.tsx` ce qui y est resté caché, puis le
+redessiner.
+
+### Ce qu'on livre
+
+- `barreQuiPaie` sortie d'`App.tsx` en fichier propre, aux côtés de `ChampPrompt.tsx` et
+  `PanneauReglages.tsx`, tous trois au vocabulaire papier.
+- `App.tsx` perd les ~120 lignes de `barreQuiPaie` — comptées comme sorties de l'ancien
+  châssis, comme `C4` l'a fait pour la galerie.
+
+### Critères d'acceptation
+
+- `essai_jetons.py` : les deux fichiers sortent de `LES_FICHIERS_DE_L_ANCIEN_CHASSIS`, et le
+  compte ne baisse pas artificiellement — si `barreQuiPaie` devient un fichier neuf, il entre
+  dans le compte comme `Galerie.tsx` y est entré en `C4`, puis en sort dans la même tranche.
+- Aperçu navigateur : le prompt, les réglages de l'appel, le coût attendu, sur l'écran où la
+  barre qui paie est montée.
+- Les essais qui verrouillent la génération d'image passent sans qu'une assertion de contenu
+  bouge.
+
+### Bloquée par
+
+- Aucune.
+
+---
+
+## D6 · Le dernier châssis tombe
+
+`chassis.tsx` (1352 lignes) — la dernière ligne de `LES_FICHIERS_DE_L_ANCIEN_CHASSIS`, et la
+seule qui ne se dessine pas : 27 fichiers l'importent encore, la plupart pour son vocabulaire
+papier additif (`Bouton`, `Libelle`, `Raison`, `Segments`, `Curseur`, `EnTetePanneau` avec
+`papier={true}`). Ce que cette tranche retire, c'est ce qui reste *sans* la prop — la part
+sombre que `D1` à `D5` auront fini de désarmer.
+
+### Ce qu'on livre
+
+- Chaque usage de `chassis.tsx` sans `papier={true}` retiré ou basculé, une fois `D1`-`D5`
+  fermées.
+- `chassis.tsx` lui-même : soit purement papier et renommé pour le dire, soit réduit au strict
+  vocabulaire additif qui sert encore — décision à trancher dans la tranche, sur la lecture la
+  plus simple à vérifier.
+
+### Critères d'acceptation
+
+- `essai_jetons.py` : `LES_FICHIERS_DE_L_ANCIEN_CHASSIS` est vide ; le garde-fou en tire les
+  conséquences (liste retirée ou verdict qui le dit).
+- Aucune couleur, taille ou arrondi sombre ne reste atteignable dans `interface/src`.
+- La suite complète d'essais passe, `npx tsc -b` est propre.
+
+### Bloquée par
+
+- `D1`, `D2`, `D3`, `D4`, `D5` — toutes.
