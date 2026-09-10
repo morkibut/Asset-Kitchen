@@ -41,9 +41,9 @@ import { EcranDepliage } from "./Depliage"
 import { EcranMontage } from "./Montage"
 import { Fiche } from "./Fiche"
 import { FicheDuClip } from "./FicheDuClip"
-import type { Onglet } from "./BarreChassis"
+import type { Racine } from "../lieux"
 import type { Table } from "../recette"
-import type { Fente } from "./BarreChassis"
+import type { Fente } from "./EnTeteDeSurface"
 import type { Annulation } from "./BarreOutils"
 import { fondre, type Vivant } from "../flux"
 import { useDepot } from "./Tableau"
@@ -86,16 +86,16 @@ export function Cible({
       <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
         Pour
       </span>
-      <span className="flex flex-wrap items-center gap-1.5 rounded-[2px] border border-ancien-signal bg-ancien-signal/13 py-1 pr-1 pl-2">
+      <span className="flex flex-wrap items-center gap-1.5 rounded-[2px] border border-signal-froid bg-signal-froid/13 py-1 pr-1 pl-2">
         <span className="text-[11.5px] text-texte">{personnage.nom}</span>
         {poses.map((pose) => (
           <span key={pose.identifiant} className="flex items-center">
-            <span className="mesure text-[10px] text-ancien-signal">{pose.nom}</span>
+            <span className="mesure text-[10px] text-signal-froid">{pose.nom}</span>
             <button
               type="button"
               onClick={() => onRetirer(pose)}
               aria-label={`Retirer ${pose.nom} de ce qui part`}
-              className="mesure px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+              className="mesure px-1 text-[10px] text-texte-3 hover:text-echec-froid"
             >
               ×
             </button>
@@ -117,7 +117,7 @@ export function Cible({
           type="button"
           onClick={onDesarmer}
           aria-label="Ne plus viser ces cases"
-          className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+          className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-echec-froid"
         >
           tout retirer
         </button>
@@ -226,7 +226,7 @@ function UneReinjection({
         type="button"
         onClick={() => onRetirer(asset)}
         aria-label="Retirer la réinjection"
-        className="mesure px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+        className="mesure px-1 text-[10px] text-texte-3 hover:text-echec-froid"
       >
         ×
       </button>
@@ -301,7 +301,7 @@ export function Grille({
         <button
           type="button"
           onClick={onRetirerFiltre}
-          className="mesure text-[11px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure text-[11px] text-signal-froid hover:text-signal-froid-clair"
         >
           Retirer le filtre ›
         </button>
@@ -398,7 +398,7 @@ function autresDuLot(entrees: Entree[], entree: Entree): number {
  *  entrer sa première image, et une surface qui n'accepterait le dépôt qu'une
  *  fois pleine serait fermée quand elle sert le plus. */
 const cadreDepot = (survole: boolean) =>
-  survole ? "outline outline-1 -outline-offset-1 outline-ancien-signal" : ""
+  survole ? "outline outline-1 -outline-offset-1 outline-signal-froid" : ""
 
 /** La grille se nomme, dans ses trois états.
  *
@@ -1039,7 +1039,7 @@ export function Galerie({
   reprendreReglages,
   setChantier,
   setChoseOuverte,
-  setOnglet,
+  poserLaRacine,
   setPanne,
   univers,
 }: {
@@ -1059,7 +1059,7 @@ export function Galerie({
   reprendreReglages: (asset: Asset) => void
   setChantier: React.Dispatch<React.SetStateAction<Generation[]>>
   setChoseOuverte: (sujet: string | null) => void
-  setOnglet: (prochain: Onglet) => void
+  poserLaRacine: (prochaine: Racine) => void
   setPanne: React.Dispatch<React.SetStateAction<string | null>>
   univers: Univers
 }) {
@@ -1250,7 +1250,7 @@ export function Galerie({
               <button
                 type="button"
                 onClick={chargerLaSuiteGrille}
-                className="mesure ml-auto text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+                className="mesure ml-auto text-[10px] text-signal-froid hover:text-signal-froid-clair"
               >
                 Charger la suite ›
               </button>
@@ -1293,7 +1293,7 @@ export function Galerie({
                  lecture — on va quelque part, puis on y descend. */
               onOuvrirLEtabli={() => {
                 if (!ouverte.personnage) return
-                setOnglet("codex")
+                poserLaRacine("codex")
                 setChoseOuverte(ouverte.personnage)
                 ouvrirLaRetouche(ouverte.identifiant)
               }}
@@ -1330,7 +1330,7 @@ export function Galerie({
                  qu'`A12` tient déjà. */
               onOuvrirLaBande={(identifiant) => {
                 setFicheClip(null)
-                setOnglet("codex")
+                poserLaRacine("codex")
                 ouvrirLAtelierDeBande(identifiant)
               }}
               /* Le sprite de départ s'ouvre comme une image, **et sa fiche

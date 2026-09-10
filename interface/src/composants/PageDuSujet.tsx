@@ -59,7 +59,7 @@ import {
   type Univers,
   type VestiaireDuJeu,
 } from "../api"
-import type { Fente } from "./BarreChassis"
+import type { Fente } from "./EnTeteDeSurface"
 import { vignetteAsset } from "./Apercu"
 import { comptes, portraitDe } from "./FicheChose"
 import { EcranEtabli } from "./EtabliDuSujet"

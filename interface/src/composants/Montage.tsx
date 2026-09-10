@@ -1111,7 +1111,7 @@ function Pellicule({
                 // pas. Mesuré au navigateur, l'encadré des images retenues ne
                 // s'était **jamais** dessiné — une couleur inconnue ne fait pas
                 // d'erreur, elle ne fait rien.
-                outline: prise ? "1px solid var(--color-ancien-signal)" : undefined,
+                outline: prise ? "1px solid var(--color-signal-froid)" : undefined,
                 outlineOffset: "-1px",
                 opacity: prise || misee ? 1 : 0.55,
               }}
@@ -1281,7 +1281,7 @@ function Retenues({
           className="rounded-[2px] border p-0.5"
           style={{
             borderColor:
-              place === rang ? "var(--color-ancien-signal)" : "var(--color-bord)",
+              place === rang ? "var(--color-signal-froid)" : "var(--color-bord)",
             background: "var(--color-fond-1)",
           }}
         >

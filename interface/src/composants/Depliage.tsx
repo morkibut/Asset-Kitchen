@@ -76,7 +76,7 @@ export function EcranDepliage({
         <button
           type="button"
           onClick={onFermer}
-          className="mesure ml-auto text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure ml-auto text-[10px] text-signal-froid hover:text-signal-froid-clair"
         >
           Revenir
         </button>

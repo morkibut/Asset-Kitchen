@@ -345,7 +345,7 @@ function ChoixDuGratuit({
           className={[
             "mesure h-[24px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
             modele.identifiant === choisi
-              ? "border-ancien-signal bg-fond-3 text-texte"
+              ? "border-signal-froid bg-fond-3 text-texte"
               : "border-bord bg-fond-2 text-texte-3 hover:bg-fond-3",
             eteint ? "opacity-40" : "",
           ].join(" ")}
@@ -423,7 +423,7 @@ function Interrupteur({
       className={[
         "mesure h-[26px] w-[26px] shrink-0 rounded-[2px] border text-[10px] transition-colors duration-[80ms]",
         actif
-          ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
+          ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
           : "border-bord bg-fond-2 text-texte-3 hover:bg-fond-3",
       ].join(" ")}
     >

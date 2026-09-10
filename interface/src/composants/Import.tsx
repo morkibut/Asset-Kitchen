@@ -125,7 +125,7 @@ export function Importer({ etat }: { etat: Import }) {
         {...surLeChoix.declencheurs}
         className={[
           "mesure whitespace-nowrap text-[10px] transition-colors duration-[80ms]",
-          etat.traiter ? "text-ancien-signal" : "text-texte-3 hover:text-texte-2",
+          etat.traiter ? "text-signal-froid" : "text-texte-3 hover:text-texte-2",
         ].join(" ")}
       >
         <span
@@ -194,14 +194,14 @@ export function CeQuiNEstPasEntre({
           key={`${une.nom}-${rang}`}
           className={[
             "mesure flex h-[24px] shrink-0 items-center gap-2 text-[10px]",
-            une.genre === "refus" ? "text-ancien-echec" : "text-epingle",
+            une.genre === "refus" ? "text-echec-froid" : "text-epingle",
           ].join(" ")}
         >
           <span
             aria-hidden
             className={[
               "inline-block h-px w-2",
-              une.genre === "refus" ? "bg-ancien-echec" : "bg-epingle",
+              une.genre === "refus" ? "bg-echec-froid" : "bg-epingle",
             ].join(" ")}
           />
           {une.genre === "refus" ? (
@@ -217,7 +217,7 @@ export function CeQuiNEstPasEntre({
                   onOuvrir(une.asset.identifiant)
                   etat.oublier(rang)
                 }}
-                className="shrink-0 text-ancien-signal hover:text-ancien-signal-clair"
+                className="shrink-0 text-signal-froid hover:text-signal-froid-clair"
               >
                 La voir ›
               </button>
@@ -228,7 +228,7 @@ export function CeQuiNEstPasEntre({
                   etat.oublier(rang)
                   void etat.entrer(une.fichier, true)
                 }}
-                className="shrink-0 text-ancien-signal hover:text-ancien-signal-clair"
+                className="shrink-0 text-signal-froid hover:text-signal-froid-clair"
               >
                 Importer quand même ›
               </button>

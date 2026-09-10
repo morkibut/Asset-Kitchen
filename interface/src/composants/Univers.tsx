@@ -39,7 +39,7 @@ import {
   type Personnage,
   type Teinte,
 } from "../api"
-import type { Fente } from "./BarreChassis"
+import type { Fente } from "./EnTeteDeSurface"
 import { DECOUPER, Reserve, Tableau, useCollage, type Vue } from "./Tableau"
 import { EcranDecoupe } from "./Decoupe"
 import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"

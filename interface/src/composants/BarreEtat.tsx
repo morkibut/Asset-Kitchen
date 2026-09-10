@@ -40,12 +40,12 @@ export function BarreEtat({
   // arrêté (liaison rompue), le fournisseur est injoignable (repli), ou tout
   // va bien. La première l'emporte — sans serveur, le reste ne veut rien dire.
   const [couleur, texte] = !liaison
-    ? ["var(--color-ancien-echec)", "l'atelier ne répond pas"]
+    ? ["var(--color-echec-froid)", "l'atelier ne répond pas"]
     : panne
-      ? ["var(--color-ancien-echec)", panne]
+      ? ["var(--color-echec-froid)", panne]
       : catalogue.repli
         ? ["var(--color-epingle)", "hors ligne"]
-        : ["var(--color-ancien-ok)", "en ligne"]
+        : ["var(--color-ok-froid)", "en ligne"]
 
   const assets =
     bibliotheque.projets.reduce((somme, p) => somme + p.assets, 0) +

@@ -179,7 +179,7 @@ export function Raison({
         <button
           type="button"
           onClick={onAller}
-          className={papier ? "text-signal hover:opacity-70" : "text-ancien-signal hover:text-ancien-signal-clair"}
+          className={papier ? "text-signal hover:opacity-70" : "text-signal-froid hover:text-signal-froid-clair"}
         >
           {ouAller} ›
         </button>
@@ -222,7 +222,7 @@ export function Revers({
         type="button"
         onClick={onGeste}
         disabled={enCours}
-        className="text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
+        className="text-signal-froid hover:text-signal-froid-clair disabled:text-texte-3"
       >
         {enCours ? "…" : `${geste} ›`}
       </button>
@@ -467,7 +467,7 @@ function Valeur({ etat }: { etat: string | null | undefined }) {
     <span
       className={[
         "mesure ml-auto max-w-[60%] truncate pl-2 text-[9.5px]",
-        etat ? "text-ancien-signal" : "text-texte-3",
+        etat ? "text-signal-froid" : "text-texte-3",
       ].join(" ")}
     >
       {etat || "—"}
@@ -590,7 +590,7 @@ export function Bouton({
     : inactif
       ? "border border-bord bg-fond-2 text-texte-3"
       : principal
-        ? "bg-ancien-signal text-fond-0 hover:bg-ancien-signal-clair font-medium"
+        ? "bg-signal-froid text-fond-0 hover:bg-signal-froid-clair font-medium"
         : "border border-bord-fort bg-fond-2 text-texte hover:bg-fond-3"
   return (
     <button
@@ -673,7 +673,7 @@ export function Segments<T extends string | number>({
                 : grise
                   ? "border-bord bg-fond-2 text-texte-3"
                   : choisi
-                    ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
+                    ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
                     : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
             ].join(" ")}
           >
@@ -956,13 +956,13 @@ export function Etape({
       aria-hidden
       className={[
         "inline-block h-[9px] w-[9px] shrink-0 rounded-[2px] border",
-        active && !grise ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort bg-fond-2",
+        active && !grise ? "border-signal-froid bg-signal-froid" : "border-bord-fort bg-fond-2",
       ].join(" ")}
     />
   )
   const style = [
     "mesure flex h-[26px] items-center gap-2 text-left text-[9.5px] tracking-[.11em] uppercase transition-colors duration-[80ms]",
-    grise ? "text-texte-3" : active ? "text-ancien-signal" : "text-texte-3 hover:text-texte-2",
+    grise ? "text-texte-3" : active ? "text-signal-froid" : "text-texte-3 hover:text-texte-2",
   ].join(" ")
 
   return (
@@ -1081,7 +1081,7 @@ export function Jauge({
       )}
       <span className="block h-[2px] w-full overflow-hidden bg-bord">
         <span
-          className="block h-full bg-ancien-signal transition-[width] duration-[240ms] ease-linear"
+          className="block h-full bg-signal-froid transition-[width] duration-[240ms] ease-linear"
           style={{ width: `${part(ecoule, attendue, enAttente) * 100}%` }}
         />
       </span>
@@ -1279,17 +1279,16 @@ export function Point({ couleur }: { couleur: string }) {
  *
  * **Elle a été mise en commun par `B27`, quand elle avait deux appelants** :
  * l'assistant sur le châssis sombre, `Retouche.tsx` sur le papier du carnet.
- * L'assistant est parti avec `C2` ; la pièce garde ses deux palettes, parce
- * que le calcul ne varie pas d'un appelant à l'autre — deux implémentations
- * vivantes auraient fini par ne plus compter le même rapport — et que seuls
- * les jetons de couleur et les deux tailles du dessin le font, par `palette`.
+ * L'assistant est parti avec `C2`, et son réglage `palette` avec lui en `C9` :
+ * il ne restait qu'une valeur employée. Elle ne se dessine plus que sur le
+ * papier, et le jour où un second appelant sombre revient, c'est un réglage à
+ * rouvrir — pas une branche morte à garder au chaud.
  */
 export function EchantillonDeHauteur({
   occupation,
   cible,
   haut = 84,
   largeur = 56,
-  palette = "ancien",
 }: {
   occupation: number
   cible: number
@@ -1298,10 +1297,6 @@ export function EchantillonDeHauteur({
   haut?: number
   /** La largeur du cadre, en points d'écran — même raison que `haut`. */
   largeur?: number
-  /** **L'ancien châssis sombre**, ou **le papier du carnet** (`Retouche.tsx`,
-   *  repris en `B26`) : les deux appelants ne partagent pas le même système de
-   *  jetons, et c'est la seule chose qui doit varier entre eux. */
-  palette?: "ancien" | "papier"
 }) {
   const enPersonnages = Math.max(1, occupation) / 100
   // **L'échelle du dessin est le plus grand des deux** — le sujet ou le
@@ -1315,18 +1310,15 @@ export function EchantillonDeHauteur({
   const depasse = occupation > 100
   const nombre = (n: number) =>
     n.toLocaleString("fr-FR", { maximumFractionDigits: 2 })
-  const surPapier = palette === "papier"
   return (
-    <div className={`flex items-end ${surPapier ? "gap-[14px]" : "gap-3"}`}>
+    <div className={"flex items-end gap-[14px]"}>
       <span
         aria-hidden
-        className={`relative flex shrink-0 items-end justify-center border ${
-          surPapier ? "border-trait bg-papier-cote" : "border-bord-fort bg-fond-0"
-        }`}
+        className={"relative flex shrink-0 items-end justify-center border border-trait bg-papier-cote"}
         style={{ height: `${haut}px`, width: `${largeur}px` }}
       >
         <span
-          className={`block w-full ${surPapier ? "bg-encre-4" : "bg-texte-3"}`}
+          className={"block w-full bg-encre-4"}
           style={{ height: `${hSujet}px` }}
         />
         {/* **La hauteur d'un personnage, en pointillé.** Dessinée seulement
@@ -1341,18 +1333,14 @@ export function EchantillonDeHauteur({
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
         <span
-          className={`leading-tight ${
-            surPapier ? "text-[12px] text-encre-2" : "text-[11.5px] text-texte-2"
-          }`}
+          className={"text-[12px] leading-tight text-encre-2"}
         >
           {depasse
             ? `${nombre(enPersonnages)} personnages de haut`
             : `${occupation} % d'un personnage`}
         </span>
         <span
-          className={`mesure leading-tight ${
-            surPapier ? "text-[10.5px] text-encre-4" : "text-[9.5px] text-texte-3"
-          }`}
+          className={"mesure text-[10.5px] leading-tight text-encre-4"}
         >
           {sujet === carres
             ? `l'image revient en ${carres} carrés de côté`

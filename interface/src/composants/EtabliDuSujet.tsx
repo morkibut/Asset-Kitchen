@@ -63,7 +63,7 @@ import {
   type Sortie as SortieAuJeu,
   type Vestiaire,
 } from "../api"
-import type { Fente } from "./BarreChassis"
+import type { Fente } from "./EnTeteDeSurface"
 import { BandeQuiTourne, sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
 import { Bouton, Libelle, Segments, ZoneTexte } from "./chassis"

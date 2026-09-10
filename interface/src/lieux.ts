@@ -25,6 +25,26 @@
  * une sélection : ce sont des états de l'écran où l'on est, pas des
  * endroits où l'on va. Les mettre ici gonflerait la pile sans rien dire de
  * plus, et le fil se mettrait à annoncer des étages qu'on n'a pas descendus.
+ *
+ * **Les huit qui restent dehors, nommés une fois pour toutes** (`C9`). Le plan
+ * du bloc demandait de les faire entrer ; le relevé les a repris un par un, et
+ * les huit tombent sous la règle du paragraphe ci-dessus — le tri est écrit
+ * ici pour qu'on ne repose pas la question :
+ *
+ * - `depliage`, `ficheClip` — **la colonne de droite de la galerie.** Ils ne
+ *   sont même plus dans `App.tsx` : `C4` les a descendus dans `Galerie.tsx`,
+ *   où ils appartiennent.
+ * - `reglagesDeFamille`, `reglagesOuverts` — **deux fenêtres posées sur
+ *   l'écran où l'on est.** La seconde ouvre `EcranReglages.tsx`, qui doit
+ *   partir : lui donner un étage du fil serait bâtir sur ce qu'on démolit.
+ * - `reglagesOuvertsDansLaBarre` — **un repli**, tenu par `usePli` et gardé
+ *   d'une séance à l'autre. Un repli n'est pas un étage.
+ * - `matriceDuSujet` — **un volet de la page d'un sujet**, comme
+ *   `ongletDuSujet` à côté de lui : `B25` l'a monté hors de la page pour
+ *   qu'elle ne l'oublie pas en se démontant, et l'a dit en toutes lettres.
+ * - `tourAOuvrir`, `choixDuJeu` — **la fenêtre entière, avant qu'un jeu soit
+ *   ouvert.** Le § *L'installation* ci-dessous le tranchait déjà pour le tour
+ *   de première ouverture ; le choix du jeu est le même geste.
  */
 
 import type { Bande, Carte } from "./api"
@@ -35,9 +55,24 @@ import type { CibleDuClip } from "./composants/Clip"
 /**
  * Les quatre racines — ce sur quoi une pile repose toujours.
  *
- * Trois viennent des onglets d'avant, et **le tableau de bord est le seul lieu
- * neuf de `B0`** : c'est la balle traçante. Si le carnet, la pile et l'aide de
- * navigation des essais tiennent sur lui, ils tiendront sur les vingt autres.
+ * **Ce ne sont plus les onglets, ce sont les quatre lignes de racine du
+ * carnet** (`C9`). Trois d'entre elles portaient le nom d'un onglet parce
+ * qu'elles en venaient ; la barre est tombée, et chacune se nomme désormais par
+ * la ligne qui l'ouvre :
+ *
+ * | racine | la ligne du carnet |
+ * |---|---|
+ * | `tableau-de-bord` | le nom du jeu, tout en haut |
+ * | `univers` | *La toile de l'univers* |
+ * | `codex` | *Fabriquer une image* |
+ * | `galerie` | *La galerie* |
+ *
+ * ⚠️ **Une racine sans ligne dans le carnet est une racine injoignable**, et
+ * c'est la panne exacte que `B0` a payée sur `decoupeOuverte`. C'est pourquoi
+ * `C9` a ajouté *Fabriquer une image* : `codex` avait perdu sa seule porte avec
+ * l'onglet *Créer*. Les deux noms qui ne se lisent plus nulle part à l'écran —
+ * `univers`, `codex` — restent tels quels ici : les renommer touchait soixante
+ * emplois pour ne rien changer de ce que le produit fait.
  */
 export type Racine = "tableau-de-bord" | "galerie" | "univers" | "codex"
 
@@ -176,7 +211,20 @@ export const PILE_INITIALE: readonly Lieu[] = [{ genre: "galerie" }]
 
 // ── Lire la pile ────────────────────────────────────────────────────────────
 
-/** La racine sur laquelle la pile repose. */
+/**
+ * La racine sur laquelle la pile repose — **et rien d'autre.**
+ *
+ * Elle rendait « quel onglet est allumé », et son seul appelant en tirait un
+ * `Onglet` : le tableau de bord n'en étant pas un, il se faisait passer pour la
+ * galerie. `C9` a retiré la barre, et avec elle ce mensonge — `App.tsx` lit
+ * maintenant la racine telle quelle, et le carnet l'écrit sur lui-même
+ * (`data-racine`) parce qu'il n'allume, lui, que la ligne la plus profonde.
+ *
+ * La chaîne de `||` reste, et elle n'est pas de la superstition : une pile
+ * arrive d'un `useState` que rien n'empêche de reposer sur autre chose qu'une
+ * racine, et un défaut vaut mieux qu'un `undefined` qui traverserait trente
+ * conditions de rendu.
+ */
 export function racine(pile: readonly Lieu[]): Racine {
   const bas = pile[0]?.genre
   return bas === "univers" || bas === "codex" || bas === "tableau-de-bord"
@@ -302,7 +350,8 @@ export type Annuaire = (
  *
  * **Le nom du jeu n'est pas un lieu**, c'est le contexte : il ne paraît que
  * quand il y a un fil, et il ramène à la racine. Une racine au repos ne donne
- * donc aucun fil — c'est la barre qui porte alors le nom du jeu, comme avant.
+ * donc aucun fil — c'est le total de l'en-tête qui porte alors le nom du jeu,
+ * et le carnet qui le porte en grand.
  */
 export function filDAriane(
   pile: readonly Lieu[],

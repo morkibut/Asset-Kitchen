@@ -286,7 +286,7 @@ export function PanneauReglages({
                   className={[
                     "mesure h-[26px] rounded-[2px] border px-2 text-[11.5px] transition-colors duration-[80ms]",
                     e.nom === echelle
-                      ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
+                      ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
                       : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
                   ].join(" ")}
                 >
@@ -336,7 +336,7 @@ export function PanneauReglages({
               className={[
                 "text-right",
                 (compte?.total ?? references) > (choisi?.references_max ?? 0)
-                  ? "text-ancien-echec"
+                  ? "text-echec-froid"
                   : "text-texte-2",
               ].join(" ")}
             >
@@ -349,7 +349,7 @@ export function PanneauReglages({
             {compte && compte.artworks > 0 && (
               <>
                 <dt className="text-texte-3">dont artworks</dt>
-                <dd className="text-right text-ancien-signal">
+                <dd className="text-right text-signal-froid">
                   {compte.artworks}
                   {compte.famille ? ` · ${NOM_FAMILLE[compte.famille]} + tous` : " · tous"}
                 </dd>
@@ -363,7 +363,7 @@ export function PanneauReglages({
             {compte && compte.gabarit > 0 && (
               <>
                 <dt className="text-texte-3">dont gabarit</dt>
-                <dd className="text-right text-ancien-signal">
+                <dd className="text-right text-signal-froid">
                   1 · les {cases} cases vides
                 </dd>
               </>
@@ -435,7 +435,7 @@ function LigneModele({
         <span
           className={[
             "text-[11.5px] leading-tight",
-            grise ? "text-texte-3" : choisi ? "text-ancien-signal" : "text-texte",
+            grise ? "text-texte-3" : choisi ? "text-signal-froid" : "text-texte",
           ].join(" ")}
         >
           {modele.nom}
@@ -566,7 +566,7 @@ function References({
                     "mesure h-[18px] w-[18px] shrink-0 rounded-[2px] border text-[10px] transition-colors duration-[80ms]",
                     ecartee
                       ? "border-bord bg-fond-1 text-texte-3"
-                      : "border-ancien-signal bg-ancien-signal/13 text-ancien-signal",
+                      : "border-signal-froid bg-signal-froid/13 text-signal-froid",
                   ].join(" ")}
                 >
                   {ecartee ? "" : "✓"}
@@ -599,7 +599,7 @@ function References({
                         key={large}
                         type="button"
                         onClick={() => void poser(large, ligne.asset, false)}
-                        className="mesure ml-auto text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
+                        className="mesure ml-auto text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
                       >
                         rendre au {large === "projet" ? "projet" : "personnage"}
                       </button>

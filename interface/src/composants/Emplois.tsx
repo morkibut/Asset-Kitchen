@@ -127,7 +127,7 @@ function LigneDEmploi({
             <span className="text-[10.5px] text-encre-4">lu sur ses images</span>
           )}
           {emploi.orphelin && (
-            <span className="text-[10.5px] text-ancien-echec">
+            <span className="text-[10.5px] text-echec-froid">
               ce porteur n'est plus dans le jeu
             </span>
           )}
@@ -427,7 +427,7 @@ export function Emplois({
         <button
           type="button"
           onClick={onRetirerLaPiece}
-          className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-ancien-echec transition-colors duration-120 hover:border-encre-4"
+          className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-echec-froid transition-colors duration-120 hover:border-encre-4"
         >
           La retirer du jeu
         </button>

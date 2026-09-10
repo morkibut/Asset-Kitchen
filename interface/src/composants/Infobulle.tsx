@@ -283,7 +283,7 @@ export function useInfobulle(
             fermer()
             ouvrirGuide(cle)
           }}
-          className="shrink-0 text-ancien-signal hover:text-ancien-signal-clair"
+          className="shrink-0 text-signal-froid hover:text-signal-froid-clair"
         >
           Le guide ›
         </button>

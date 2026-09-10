@@ -16,13 +16,13 @@
    part ailleurs** —, et c'est dans les ateliers de retouche, la galerie et
    l'essai que ça se verra en premier si ça gêne.
 
-   **Deux systèmes cohabitent ici, et c'est voulu.** Le carnet, la surface et
-   la barre sont bâtis sur les jetons de papier ci-dessous. Les écrans qui
-   n'ont pas encore été redessinés — la galerie, le codex, l'univers —
-   continuent de tourner sur l'ancien châssis chaud et sombre, dont
-   les jetons sont plus bas, préfixés `ancien-`. Chaque tranche de la V4 en
-   déplace un, et le préfixe dit d'un coup d'œil ce qui reste à faire.
-   L'ancien système est décrit dans
+   **Deux systèmes cohabitent ici, et c'est voulu.** Le carnet, la surface, son
+   en-tête et la barre sont bâtis sur les jetons de papier ci-dessous. Les
+   écrans qui n'ont pas encore été redessinés — la galerie, la toile de
+   l'univers et ses côtés — continuent de tourner sur le châssis chaud et
+   sombre, dont les jetons sont plus bas. Chaque tranche de la V4 en déplace
+   un ; ce qui reste se compte dans `essais/essai_jetons.py`, § *Le compte de
+   sortie*, et plus par un préfixe. Le châssis sombre est décrit dans
    `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`.
 
    Un jeton se déclare **une fois, ici**. Deux directions se vérifient, et
@@ -137,17 +137,20 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   L'ancien châssis — chaud et sombre, décrit par
+   Le châssis sombre — chaud et sombre, décrit par
    `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`.
 
-   **Il n'est pas là par nostalgie : il fait tourner quarante écrans.** La V4
-   les redessine un par un, et chaque tranche vide un peu ce bloc. Le préfixe
-   `ancien-` est là pour ça — `bg-ancien-signal` dans un fichier dit « cet
-   écran n'a pas encore été repris », et ça se compte d'un `grep`.
+   **Il n'est pas là par nostalgie : il fait tourner les écrans que la V4 n'a
+   pas encore redessinés.** Chaque tranche en vide un peu ce bloc, et ce qui
+   reste se compte dans `essais/essai_jetons.py`, § *Le compte de sortie*.
 
    Trois noms seulement se disputaient avec le carnet — `signal`, `ok`,
    `echec` — et c'est le carnet qui les garde : ce sont les mots du document de
-   design, et un écran neuf qui écrit `bg-signal` doit obtenir du rouille.
+   design, et un écran neuf qui écrit `bg-signal` doit obtenir du rouille. Le
+   châssis sombre porte donc les mêmes trois, suffixés `-froid` : c'est ce que
+   ces bleus et ces verts sont à côté du rouille du papier. Le suffixe ne dit
+   plus « pas encore repris » — il dit sur quel châssis la couleur se pose,
+   et il restera vrai le jour où plus rien ne l'emploiera.
    ───────────────────────────────────────────────────────────────────────────── */
 
 @theme {
@@ -162,12 +165,12 @@
   --color-texte-2: #98a2ac;
   --color-texte-3: #5e6771;
 
-  --color-ancien-signal: #49b3ce;
-  --color-ancien-signal-clair: #8ed8e8;
+  --color-signal-froid: #49b3ce;
+  --color-signal-froid-clair: #8ed8e8;
   --color-lumiere: #eaf4f8;
-  --color-ancien-ok: #5fa871;
+  --color-ok-froid: #5fa871;
   --color-epingle: #c8a03c;
-  --color-ancien-echec: #cb6c65;
+  --color-echec-froid: #cb6c65;
 
   /* Les dix teintes d'îlot — `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`
      § Les dix teintes de rangement. **Le seul endroit du produit où une couleur
@@ -291,7 +294,7 @@ body {
 }
 
 /* Le curseur — ajouté en T2, seul contrôle neuf de l'ancien châssis. Aucune
-   couleur de plus : rail en `--color-bord`, poignée en `--color-ancien-signal`. */
+   couleur de plus : rail en `--color-bord`, poignée en `--color-signal-froid`. */
 .curseur {
   appearance: none;
   background: transparent;
@@ -308,11 +311,11 @@ body {
   height: 12px;
   width: 12px;
   border-radius: 9999px;
-  background: var(--color-ancien-signal);
+  background: var(--color-signal-froid);
   transition: background 80ms;
 }
 .curseur:hover::-webkit-slider-thumb {
-  background: var(--color-ancien-signal-clair);
+  background: var(--color-signal-froid-clair);
 }
 .curseur:disabled::-webkit-slider-thumb {
   background: var(--color-texte-3);
@@ -327,7 +330,7 @@ body {
   width: 12px;
   border: 0;
   border-radius: 9999px;
-  background: var(--color-ancien-signal);
+  background: var(--color-signal-froid);
 }
 
 /* Le même curseur, sur le papier — rail en `--contour`, poignée en `--signal`,

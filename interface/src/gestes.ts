@@ -20,7 +20,7 @@ import {
   type Role,
   type Tri,
 } from "./api"
-import type { Onglet } from "./composants/BarreChassis"
+import type { Racine } from "./lieux"
 import type { CibleDeLAppel } from "./paiement"
 
 type Pose_<T> = React.Dispatch<React.SetStateAction<T>>
@@ -34,7 +34,7 @@ export type CeQueLesGestesLisent = {
   setChoixDeReference: (ouvert: boolean) => void
   setCible: Pose_<CibleDeLAppel | null>
   setModeleChoisi: Pose_<string | null>
-  setOnglet: (prochain: Onglet) => void
+  poserLaRacine: (prochaine: Racine) => void
   setOptions: Pose_<Record<string, string>>
   setPrompt: Pose_<string>
   setPromptNegatif: Pose_<string>
@@ -55,7 +55,7 @@ export function useGestes({
   setChoixDeReference,
   setCible,
   setModeleChoisi,
-  setOnglet,
+  poserLaRacine,
   setOptions,
   setPrompt,
   setPromptNegatif,
@@ -193,7 +193,7 @@ export function useGestes({
       ...deja.filter((r) => r.asset !== asset),
       { asset, role },
     ])
-    setOnglet("codex")
+    poserLaRacine("codex")
   }
 
   /** **Échap referme le choix, et lui seul** (M5).
@@ -267,7 +267,7 @@ export function useGestes({
       )
       // Même règle que la réinjection : le texte repris se lit dans le champ,
       // et le champ n'est pas ici.
-      setOnglet("codex")
+      poserLaRacine("codex")
     } catch (erreur) {
       echouer(erreur, "réglages illisibles")
     }

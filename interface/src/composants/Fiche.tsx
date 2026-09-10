@@ -338,7 +338,7 @@ export function Fiche({
                   )
                 }
               }}
-              className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+              className="mesure self-start text-[10px] text-signal-froid hover:text-signal-froid-clair"
             >
               Le remettre sur l'univers du projet ›
             </button>
@@ -378,7 +378,7 @@ export function Fiche({
               <button
                 type="button"
                 onClick={onEcarter}
-                className="mesure mt-1 text-[10px] text-ancien-echec hover:text-texte"
+                className="mesure mt-1 text-[10px] text-echec-froid hover:text-texte"
               >
                 L'écarter
               </button>
@@ -391,7 +391,7 @@ export function Fiche({
           <a
             href={api.telechargementAsset(asset.identifiant, montrerBrut)}
             download
-            className="mesure mt-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+            className="mesure mt-1 text-[10px] text-signal-froid hover:text-signal-froid-clair"
           >
             PNG ↓
           </a>
@@ -752,7 +752,7 @@ function LeTexteQuiLAFaite({
           <button
             type="button"
             onClick={() => onOuvrir(asset.parent!)}
-            className="mesure text-[10px] text-ancien-signal underline-offset-2 hover:underline"
+            className="mesure text-[10px] text-signal-froid underline-offset-2 hover:underline"
           >
             aller la lire ›
           </button>
@@ -811,7 +811,7 @@ function LeTexteQuiLAFaite({
               .then(() => setCopie(true))
               .catch(() => setCopie(false))
           }}
-          className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure self-start text-[10px] text-signal-froid hover:text-signal-froid-clair"
         >
           {copie ? "copié" : "copier le texte"}
         </button>
@@ -859,7 +859,7 @@ function Jugement({
           className={[
             "mesure h-[26px] rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
             asset.favori
-              ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
+              ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
               : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
           ].join(" ")}
         >
@@ -887,7 +887,7 @@ function Jugement({
         <button
           type="button"
           onClick={onSupprimer}
-          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
+          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec-froid"
         >
           Supprimer
         </button>
@@ -1091,7 +1091,7 @@ function Descendance({
             <button
               type="button"
               onClick={() => onOuvrir(filiation.parent!.identifiant)}
-              className="mesure flex items-center gap-1.5 text-left text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+              className="mesure flex items-center gap-1.5 text-left text-[10px] text-signal-froid hover:text-signal-froid-clair"
             >
               <span aria-hidden>↑</span>
               <span className="truncate">{filiation.parent.label}</span>
@@ -1114,7 +1114,7 @@ function Descendance({
                   key={enfant.identifiant}
                   type="button"
                   onClick={() => onOuvrir(enfant.identifiant)}
-                  className="mesure flex items-center gap-1.5 text-left text-[10px] text-texte-2 hover:text-ancien-signal"
+                  className="mesure flex items-center gap-1.5 text-left text-[10px] text-texte-2 hover:text-signal-froid"
                 >
                   <span aria-hidden>↓</span>
                   <span className="truncate">{enfant.label}</span>

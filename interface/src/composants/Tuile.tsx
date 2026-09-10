@@ -191,7 +191,7 @@ export function Tuile({
         // désormais bornée par sa colonne, et c'est à son contenu de tenir
         // dedans.
         "arrivee relative flex min-w-0 flex-col border",
-        rate ? "border-ancien-echec/45 bg-ancien-echec/5" : "border-bord bg-fond-2",
+        rate ? "border-echec-froid/45 bg-echec-froid/5" : "border-bord bg-fond-2",
         // L'anneau du sélectionné — « la lampe de la table », `docs/design-motifs.md`
         // § La tuile. Aucune couleur de plus dans la grille.
         selectionnee ? "shadow-[0_0_0_2px_var(--color-lumiere)]" : "",
@@ -294,7 +294,7 @@ export function Tuile({
           <button
             type="button"
             onClick={() => onChoisir(lot.identifiant, emplacement.rang)}
-            className="mesure self-start text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
+            className="mesure self-start text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
           >
             Choisir ce qu'on garde
           </button>
@@ -302,7 +302,7 @@ export function Tuile({
           <button
             type="button"
             onClick={() => onRelancer(lot.identifiant, emplacement.rang)}
-            className="mesure self-start text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
+            className="mesure self-start text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
           >
             Relancer
           </button>
@@ -469,7 +469,7 @@ function CeQueLeClipDit({
           type="button"
           onClick={onGarder}
           title="les autres quittent la galerie et restent au journal des dépenses"
-          className="mesure self-start text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure self-start text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
         >
           Garder celui-ci · jeter {autresDuLot} autre
           {autresDuLot > 1 ? "s" : ""}
@@ -484,7 +484,7 @@ function CeQueLeClipDit({
           type="button"
           onClick={onDecouper}
           title="rien n'y dépense : le clip est déjà payé"
-          className="mesure self-start text-[9.5px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure self-start text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
         >
           Découper ›
         </button>
@@ -571,7 +571,7 @@ function Mesures({ asset, serree }: { asset: Asset; serree: boolean }) {
         onClick={(e) => e.stopPropagation()}
         title="télécharger le PNG"
         aria-label="télécharger le PNG"
-        className="ml-auto shrink-0 text-ancien-signal hover:text-ancien-signal-clair"
+        className="ml-auto shrink-0 text-signal-froid hover:text-signal-froid-clair"
       >
         {serree ? "↓" : "PNG ↓"}
       </a>
@@ -609,7 +609,7 @@ function Pastille({
           ? // `--signal-clair`, nommé pour cet emploi au § Palette. Une
             // troisième couleur de pastille aurait été une couleur de plus
             // dans la grille ; celle-ci est déjà celle du survol du signal.
-            ["agent", "text-ancien-signal-clair"]
+            ["agent", "text-signal-froid-clair"]
           : asset?.epingle
             ? ["réglé", "text-epingle"]
             : [null, ""]
@@ -627,7 +627,7 @@ function CoinFavori() {
   return (
     <span
       aria-label="favori"
-      className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-ancien-signal border-l-transparent"
+      className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-signal-froid border-l-transparent"
     />
   )
 }
@@ -636,7 +636,7 @@ function CoinFavori() {
 function Raté({ raison }: { raison: string | null }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center p-3">
-      <p className="text-center text-[11.5px] leading-snug text-ancien-echec">
+      <p className="text-center text-[11.5px] leading-snug text-echec-froid">
         {raison ?? "échec sans raison connue"}
       </p>
     </div>

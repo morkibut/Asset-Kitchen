@@ -1560,7 +1560,6 @@ export function ReglagesDeLaGrille({
         cible={grille.cible}
         haut={64}
         largeur={34}
-        palette="papier"
       />
 
       {!sansAncrage && (

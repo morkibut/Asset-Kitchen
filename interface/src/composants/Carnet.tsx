@@ -142,12 +142,30 @@ function Ligne({
   compte,
   ouverte,
   decale,
+  dit,
+  pastille,
   onAller,
 }: {
   nom: string
   compte?: string | null
   ouverte?: boolean
   decale?: boolean
+  /** Le nom que la ligne **fait entendre**, quand il diffère de celui qu'elle
+   *  montre. Un seul cas aujourd'hui : la galerie pendant qu'un lot est en
+   *  route. La pastille se lit du coin de l'œil, mais elle ne se dit pas —
+   *  mesuré en écrivant l'essai, le calcul du nom accessible ne descend pas
+   *  chercher l'`aria-label` d'un enfant, et un nombre sans son unité est la
+   *  seule chose du carnet qu'on ne pourrait pas comprendre en l'écoutant.
+   *
+   *  `undefined` partout ailleurs : **un nom accessible qu'on n'a pas besoin
+   *  de réécrire ne se réécrit pas**, sinon il finit par diverger du mot
+   *  affiché. */
+  dit?: string
+  /** Ce qui est payé et pas encore arrivé — **jamais un compte de plus**, mais
+   *  ce qu'on attend. Plein, et non un chiffre en rouille : c'est ce qui le
+   *  rend visible du coin de l'œil depuis un autre écran, et c'est tout son
+   *  métier. */
+  pastille?: number | null
   onAller: () => void
 }) {
   return (
@@ -155,6 +173,7 @@ function Ligne({
       type="button"
       onClick={onAller}
       aria-current={ouverte ? "true" : undefined}
+      aria-label={dit}
       data-ligne-du-carnet
       className={[
         "flex h-[30px] w-full shrink-0 items-center gap-[8px] text-left text-[14px]",
@@ -166,6 +185,14 @@ function Ligne({
       ].join(" ")}
     >
       <span className="truncate">{nom}</span>
+      {pastille != null && pastille > 0 && (
+        <span
+          aria-hidden
+          className="mesure shrink-0 rounded-5 border border-signal px-[4px] text-[10.5px] text-signal"
+        >
+          {pastille}
+        </span>
+      )}
       {compte != null && (
         <span className="mesure ml-auto shrink-0 text-[11px] text-encre-4">
           {compte}
@@ -280,9 +307,11 @@ export function Carnet({
   regles,
   lignesEcrites,
   images,
+  enRoute,
   depense,
   autresJeux,
   ouvert,
+  racine,
   surLeJeu,
   surLaFamille,
   surLaCollection,
@@ -290,6 +319,7 @@ export function Carnet({
   surDeposer,
   surLesRegles,
   surLesReglesDuJeu,
+  surLaCreation,
   surLaGalerie,
   surLesDepenses,
   surLaSortie,
@@ -331,10 +361,17 @@ export function Carnet({
    *  pas : l'atelier les écrit depuis l'allure et la vue choisies. */
   lignesEcrites: number | null
   images: number
+  /** Combien d'images sont payées et pas encore arrivées — **zéro la plupart
+   *  du temps**, et alors rien ne paraît. La pastille suit d'un lieu à l'autre :
+   *  le bloc « en route » du champ de prompt ne se voit que là où l'on a payé,
+   *  et c'est ailleurs qu'on croit que rien ne s'est passé. */
+  enRoute?: number
   depense: number
   autresJeux: readonly AutreJeu[]
   /** Le lieu où l'on est, pour que la ligne le dise. */
   ouvert: string | null
+  /** La surface de repos sur laquelle la pile est posée. */
+  racine: string
   surLeJeu: () => void
   surLaFamille: (cle: string) => void
   /** Ouvrir un groupe sous la famille, ou revenir à « Tous » avec `null`. */
@@ -347,6 +384,9 @@ export function Carnet({
   /** Rouvrir le parcours des quatre étapes (`B14`) — les mêmes écrans qu'à la
    *  création, et les mêmes écritures. */
   surLesReglesDuJeu: () => void
+  /** Demander une image — **l'un des deux endroits d'où l'argent part**,
+   *  l'autre étant l'établi d'un sujet. */
+  surLaCreation: () => void
   surLaGalerie: () => void
   surLesDepenses: () => void
   /** La sortie (`B21`) — l'écran d'où les fichiers du jeu s'en vont. */
@@ -377,6 +417,12 @@ export function Carnet({
     <nav
       aria-label="Le carnet"
       data-carnet
+      /* La surface de repos sous la ligne allumée. **Le carnet n'allume que la
+         ligne la plus profonde** — la famille ouverte, les dépenses —, et la
+         racine sur laquelle elle repose ne se lit donc nulle part à l'écran.
+         Les essais de navigation la lisent ici, comme ils lisaient l'onglet
+         allumé avant `C9`. */
+      data-racine={racine}
       className="flex h-full w-[300px] shrink-0 flex-col border-r border-trait bg-papier-cote"
     >
       <div className="defile flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -547,10 +593,28 @@ export function Carnet({
 
         {/* ── Toutes les images ───────────────────────────────────────────── */}
         <EnTete enfants="Toutes les images" />
+        {/* **Demander une image, et c'est une ligne de plus que la planche**
+            (`Navigation.dc.html` en compte dix). La planche dit « la barre pour
+            faire quelque chose » ; mais la surface où l'on écrit ce qu'on veut
+            fabriquer est un lieu — l'un des deux d'où l'argent part —, et elle
+            n'avait plus de porte du tout une fois l'onglet *Créer* tombé
+            (`C9`). Une racine sans ligne dans le carnet est une racine
+            injoignable, et c'est très exactement la panne que `B0` a payée. */}
+        <Ligne
+          nom="Fabriquer une image"
+          ouverte={ouvert === "creer"}
+          onAller={surLaCreation}
+        />
         <Ligne
           nom="La galerie"
           compte={String(images)}
           ouverte={ouvert === "galerie"}
+          pastille={enRoute}
+          dit={
+            enRoute
+              ? `La galerie · ${enRoute === 1 ? "1 image en route" : `${enRoute} images en route`}`
+              : undefined
+          }
           onAller={surLaGalerie}
         />
         <Ligne

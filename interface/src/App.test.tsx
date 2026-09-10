@@ -3890,10 +3890,72 @@ async function ouvrirLesReglagesDeLAppel() {
  * cet onglet est le seul endroit qui dise qu'on a payé. Le piège tenait dans
  * chaque essai ; il tient maintenant ici, une fois.
  */
+/**
+ * Les trois racines, et la ligne du carnet qui y mène (`C9`).
+ *
+ * ⚠️ Chaque nom est **un préfixe**, jamais le libellé entier : une ligne du
+ * carnet porte son compte à droite, et son nom accessible est donc
+ * `La galerie 45`. Le compte change d'un essai à l'autre ; le nom, non.
+ */
+const LIGNE_DU_CARNET: Record<string, RegExp> = {
+  Galerie: /^La galerie/,
+  Univers: /^La toile de l'univers/,
+  Créer: /^Fabriquer une image/,
+}
+
+/** Le genre de lieu que chaque racine pose au bas de la pile — ce que la barre
+ *  disait par son onglet allumé, et que le carnet écrit sur lui-même. */
+const RACINE_DU_LIEU: Record<string, string> = {
+  Galerie: "galerie",
+  Univers: "univers",
+  Créer: "codex",
+}
+
+/** La clé de `LIGNE_DU_CARNET` que désigne un nom d'essai, ou `null` si ce
+ *  n'est pas une racine. Les motifs sont acceptés parce que le nom de la
+ *  galerie porte le compte de ce qui est en route. */
+function laRacineDite(nom: string | RegExp): string | null {
+  if (typeof nom === "string") return nom in LIGNE_DU_CARNET ? nom : null
+  return /galerie/i.test(nom.source) ? "Galerie" : null
+}
+
 function leLieu(nom: string | RegExp): HTMLElement {
-  return screen.getByRole("tab", {
-    name: nom === "Galerie" ? /^Galerie/ : nom,
-  })
+  const cle = laRacineDite(nom)
+  // **Les trois racines sont des lignes du carnet** depuis `C9`. Les onglets
+  // qui restent sont ceux d'un écran — les côtés de l'univers, les quatre
+  // volets de la page d'un sujet —, et ceux-là se désignent toujours par leur
+  // rôle : ce ne sont pas des lieux, c'est un seul lieu vu de quatre côtés.
+  if (!cle) return screen.getByRole("tab", { name: nom })
+  // Un motif écrit pour l'onglet — `/^Galerie · 1 image en route$/` — vise la
+  // même chose que la ligne, sous son ancien nom. On le retaille plutôt que
+  // de réécrire les essais qui le portent.
+  const vise =
+    typeof nom === "string"
+      ? LIGNE_DU_CARNET[cle]
+      : new RegExp(nom.source.replace(/Galerie/, "La galerie"), nom.flags)
+  return screen.getByRole("button", { name: vise })
+}
+
+/**
+ * Est-on ici ? — `"true"` ou `"false"`, comme l'`aria-selected` d'avant.
+ *
+ * **Une racine ne se lit plus sur sa ligne, et c'est le carnet qui a raison.**
+ * Le carnet n'allume qu'**une** ligne, la plus profonde : ouvrir Les
+ * personnages allume Les personnages, pas la racine sous elle. L'onglet, lui,
+ * restait allumé sous tout — c'est ce que ces essais mesuraient, et le carnet
+ * l'écrit sur lui-même (`data-racine`).
+ *
+ * Un onglet d'écran, lui, se lit toujours sur lui-même.
+ */
+function ouverture(nom: string | RegExp): string {
+  const cle = laRacineDite(nom)
+  if (cle) {
+    const carnet = document.querySelector("[data-carnet]")
+    return carnet?.getAttribute("data-racine") === RACINE_DU_LIEU[cle]
+      ? "true"
+      : "false"
+  }
+  return leLieu(nom).getAttribute("aria-selected") ?? "false"
 }
 
 /** Aller quelque part. **C'est ce que trente-huit essais voulaient dire.** */
@@ -5950,7 +6012,7 @@ describe("l'aperçu", () => {
     expect(apercu()).toBeNull()
     // L'onglet est resté ouvert derrière : une pression, un geste.
     expect(
-      leLieu("Univers").getAttribute("aria-selected"),
+      ouverture("Univers"),
     ).toBe("true")
   })
 
@@ -6326,7 +6388,7 @@ describe("l'écran des personnages", () => {
     // champ ; c'est fini, et l'onglet ne bouge pas.
     await waitFor(() =>
       expect(
-        leLieu("Créer").getAttribute("aria-selected"),
+        ouverture("Créer"),
       ).toBe("true"),
     )
     // Le signalement est écrit à la place de l'auteur — c'est ce qu'il ne veut
@@ -6364,7 +6426,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(ecran.getByRole("button", { name: "Fabriquer repos" }))
     await waitFor(() =>
       expect(
-        leLieu("Créer").getAttribute("aria-selected"),
+        ouverture("Créer"),
       ).toBe("true"),
     )
     await payer()
@@ -6411,7 +6473,7 @@ describe("l'écran des personnages", () => {
 
     await waitFor(() =>
       expect(
-        leLieu("Créer").getAttribute("aria-selected"),
+        ouverture("Créer"),
       ).toBe("true"),
     )
 
@@ -6444,7 +6506,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
       expect(
-        leLieu("Créer").getAttribute("aria-selected"),
+        ouverture("Créer"),
       ).toBe("true"),
     )
 
@@ -6484,7 +6546,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
       expect(
-        leLieu("Créer").getAttribute("aria-selected"),
+        ouverture("Créer"),
       ).toBe("true"),
     )
 
@@ -6542,7 +6604,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
       expect(
-        leLieu("Créer").getAttribute("aria-selected"),
+        ouverture("Créer"),
       ).toBe("true"),
     )
 
@@ -7788,7 +7850,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     // **Aucune ne refuse, et aucune ne s'alarme.** `--echec` veut dire *ce qui
     // échoue ou ce qui détruit*, et un calque gardé n'échoue pas.
     expect(
-      document.querySelector("[data-univers] .text-ancien-echec"),
+      document.querySelector("[data-univers] .text-echec-froid"),
     ).toBeNull()
   })
 
@@ -8422,24 +8484,25 @@ describe("les trois onglets", () => {
   })
 
   const onglet = (nom: string) => leLieu(nom)
-  const allume = (nom: string) => onglet(nom).getAttribute("aria-selected") === "true"
+  const allume = (nom: string) => ouverture(nom) === "true"
 
   // ── « Trois onglets, et un seul allumé à la fois ; aucun écran ne se
   //     superpose à un autre » ────────────────────────────────────────────────
 
-  test("les trois onglets sont là dans l'ordre du travail, et un seul est allumé", async () => {
+  test("les trois racines sont des lignes du carnet, et une seule est ouverte", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    // L'ordre n'est ni alphabétique ni arbitraire : on pose ce qui s'applique à
-    // tout, on déclare ce que le monde contient, on regarde ce qu'on a produit.
-    expect(screen.getAllByRole("tab").map((o) => o.textContent)).toEqual([
-      "Univers",
-      "Créer",
-      "Galerie",
-    ])
+    // **Aucun onglet de navigation dans le produit** (`C9`) : la barre de tête
+    // et ses trois onglets sont partis, le carnet est le seul chemin. Ce qui
+    // porte encore le rôle `tab` est un bandeau *dans* un écran — les côtés de
+    // l'univers, les quatre volets de la page d'un sujet —, et aucun d'eux
+    // n'est monté sur la galerie au repos.
+    expect(screen.queryAllByRole("tab")).toHaveLength(0)
+    for (const nom of ["Univers", "Créer", "Galerie"])
+      expect(leLieu(nom).hasAttribute("data-ligne-du-carnet")).toBe(true)
 
-    // La galerie est l'onglet de repos : c'est l'écran qu'on regardait déjà en
+    // La galerie est la racine de repos : c'est l'écran qu'on regardait déjà en
     // arrivant, et un produit ne change pas d'accueil pour se réorganiser.
     expect(allume("Galerie")).toBe(true)
     expect(allume("Univers")).toBe(false)
@@ -8662,10 +8725,10 @@ describe("les trois onglets", () => {
     expect(groupe.contains(guide)).toBe(true)
     expect(groupe.className).toContain("border-l")
 
-    // Et rien de ce qui touche au travail n'est dedans : les trois onglets
-    // vivent ailleurs dans la bande.
+    // Et rien de ce qui touche au travail n'est dedans : les trois racines
+    // vivent dans le carnet, et plus dans la bande (`C9`).
     for (const nom of ["Univers", "Créer", "Galerie"])
-      expect(groupe.contains(onglet(nom))).toBe(false)
+      expect(groupe.contains(leLieu(nom))).toBe(false)
   })
 
   test("le catalogue se redemande depuis la barre d'état, où il se lit déjà", async () => {
@@ -8685,17 +8748,20 @@ describe("les trois onglets", () => {
   // ── « Aucune bande du produit ne porte une hauteur hors de 44 · 38 · 34 ·
   //     30 · 26, et les deux exceptions sont les seules » ─────────────────────
 
-  test("la barre de tête fait 44, les onglets 26, les boutons 34", async () => {
+  test("l'en-tête de la surface fait 34, ses contrôles 22, les lignes du carnet 30", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
     const classes = (e: Element) => e.className
-    expect(classes(document.querySelector("header") as Element)).toContain("h-[44px]")
-    expect(classes(onglet("Galerie"))).toContain("h-[26px]")
+    // **34 et plus 44** (`C9`) : la bande ne porte plus les trois onglets, donc
+    // plus rien qui demande la hauteur d'un contrôle plein. 44 n'était d'ailleurs
+    // dans aucune des listes fermées de `docs/DESIGN.md` § Spacing.
+    expect(classes(document.querySelector("header") as Element)).toContain("h-[34px]")
+    expect(classes(leLieu("Galerie"))).toContain("h-[30px]")
     expect(classes(screen.getByRole("button", { name: "Réglages" }))).toContain(
-      "h-[34px]",
+      "h-[22px]",
     )
-    expect(classes(screen.getByRole("button", { name: "arbre" }))).toContain("h-[26px]")
+    expect(classes(screen.getByRole("button", { name: "arbre" }))).toContain("h-[22px]")
 
     // Le champ de saisie est la première des deux exceptions nommées : 56 px,
     // parce que ce n'est pas une bande mais une zone de saisie sur plusieurs
@@ -8937,7 +9003,7 @@ describe("l'écran des dépenses", () => {
     )
     // On retombe là d'où l'on venait, pas ailleurs : l'onglet n'a pas bougé.
     expect(
-      leLieu("Galerie").getAttribute("aria-selected"),
+      ouverture("Galerie"),
     ).toBe("true")
   })
 
@@ -8947,7 +9013,7 @@ describe("l'écran des dépenses", () => {
     // L'écran est une profondeur, pas un quatrième onglet : les trois restent
     // là, et celui d'où l'on vient reste allumé.
     expect(
-      leLieu("Galerie").getAttribute("aria-selected"),
+      ouverture("Galerie"),
     ).toBe("true")
 
     const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
@@ -10201,7 +10267,7 @@ describe("le châssis des tables", () => {
     // entre deux colonnes de réglages mentirait sur ce qu'elle fait.
     expect(await screen.findByText("Ce qui sortira")).toBeTruthy()
     expect(
-      leLieu("Créer").getAttribute("aria-selected"),
+      ouverture("Créer"),
     ).toBe("true")
   })
 
@@ -10495,7 +10561,7 @@ describe("la galerie dégraissée", () => {
     fireEvent.click(screen.getByRole("button", { name: "La retoucher" }))
     expect(await screen.findByRole("button", { name: /^Détourer/ })).toBeTruthy()
     expect(
-      leLieu("Galerie").getAttribute("aria-selected"),
+      ouverture("Galerie"),
     ).toBe("true")
   })
 
@@ -10546,7 +10612,7 @@ describe("la galerie dégraissée", () => {
     // dit, et l'onglet a changé.
     await waitFor(() =>
       expect(
-        leLieu("Créer").getAttribute("aria-selected"),
+        ouverture("Créer"),
       ).toBe("true"),
     )
     const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
@@ -14608,12 +14674,14 @@ describe("l'écran de confirmation", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
     fireEvent.click(await screen.findByRole("button", { name: /^Payer et lancer/ }))
 
-    const onglet = await screen.findByRole("tab", { name: /^Galerie · 1 image en route$/ })
-    expect(onglet.textContent).toContain("1")
+    const ligne = await screen.findByRole("button", {
+      name: /^La galerie · 1 image en route$/,
+    })
+    expect(ligne.textContent).toContain("1")
 
     // On part à l'Univers : la barre de prompt n'y est pas, donc le bloc en
-    // route non plus. La pastille, elle, est dans la barre de tête — rendue sur
-    // les trois lieux.
+    // route non plus. La pastille, elle, est dans le carnet — rendu partout
+    // (`C9` : elle était dans la barre de tête, sur l'onglet *Galerie*).
     allerA("Univers")
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull())
     expect(
@@ -15464,7 +15532,7 @@ describe("l'argent ne part qu'une fois", () => {
 
       allerA(onglet)
       await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
-      expect(leLieu(onglet).getAttribute("aria-selected")).toBe(
+      expect(ouverture(onglet)).toBe(
         "true",
       )
       expect(
@@ -19626,7 +19694,7 @@ describe("A12 — la matrice sur deux calques", () => {
       return montage
     })
     // Et c'est bien **ce clip-là** qu'on est allé chercher.
-    expect(leLieu(/^Galerie/).getAttribute("aria-selected")).toBe("true")
+    expect(ouverture(/^Galerie/)).toBe("true")
   })
 
   // ── « Retirer une bande ne supprime ni la bande, ni le clip » ─────────────

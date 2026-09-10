@@ -58,12 +58,11 @@ import {
   useApercu,
 } from "./composants/Apercu"
 import {
-  BarreChassis,
+  EnTeteDeSurface,
   type Bascule,
   type Fente,
-  type Onglet,
   type Segment,
-} from "./composants/BarreChassis"
+} from "./composants/EnTeteDeSurface"
 import {
   Libelle,
   usePli,
@@ -311,17 +310,44 @@ export function App() {
     }
   }, [])
 
-  /** Le tableau de bord est **le seul lieu neuf de `B0`**, et il n'est pas un
-   *  onglet : c'est le lieu du jeu entier, et le seul chemin de retour. Les
-   *  trois onglets restent, et leurs écrans avec eux, jusqu'à ce que chaque
-   *  tranche de la V4 les reprenne un par un. */
+  /** Le tableau de bord est **le seul lieu neuf de `B0`** : c'est le lieu du
+   *  jeu entier, et le seul chemin de retour. */
   const tableauDeBord = racine(pile) === "tableau-de-bord"
-  const onglet: Onglet = tableauDeBord
-    ? "galerie"
-    : (racine(pile) as Exclude<Racine, "tableau-de-bord">)
-  /** Changer d'onglet **repose la pile**, donc remonte de toute profondeur —
-   *  ce que le bloc `onOnglet` faisait à la main en neuf appels. */
-  const setOnglet = (prochain: Onglet) => setPile(poser(prochain))
+  /** **La surface de repos sur laquelle la pile est posée** — ce que `racine()`
+   *  rend, sans détour.
+   *
+   *  Avant `C9` cette ligne mentait : elle rendait `"galerie"` quand on était
+   *  sur le tableau de bord, parce qu'un onglet devait bien être allumé et
+   *  qu'aucun ne s'appelait comme lui. Les onglets sont partis avec
+   *  `BarreChassis.tsx`, et avec eux le besoin de mentir. */
+  const surface = racine(pile)
+  /** Aller ailleurs **repose la pile**, donc remonte de toute profondeur. */
+  const poserLaRacine = (prochaine: Racine) => setPile(poser(prochaine))
+
+  /**
+   * Le geste qui dit « ailleurs » — **une ligne de racine du carnet.**
+   *
+   * C'était `onOnglet` jusqu'à `C9`, et il faisait neuf appels à la main. Huit
+   * sont devenus inutiles le jour où la pile est devenue la seule vérité :
+   * reposer la pile ferme du même coup les dépenses, le clip, la retouche, la
+   * chose ouverte et la carte découpée, qui en sont tous dérivés.
+   *
+   * **Les deux qui restent ne sont pas dans la pile, et c'est voulu.** L'écran
+   * de confirmation de l'envoi est un moment, pas un endroit — le laisser
+   * ouvert derrière une autre racine, c'est l'écran enfermé qu'aucun onglet ne
+   * pouvait fermer (U1). La fente dit ce que le *dernier geste* a donné : le
+   * geste suivant est celui-ci.
+   *
+   * ⚠️ **Le tri, lui, ne part pas avec.** Il partait, et c'est ce qui mettait
+   * l'auteur devant un choix que personne n'avait voulu lui imposer (M5) :
+   * garder ses corrections, ou sortir chercher l'image dont il venait de voir
+   * qu'elle manquait.
+   */
+  const allerA = (prochaine: Racine) => {
+    fermerCeQuiPart()
+    setFente(null)
+    poserLaRacine(prochaine)
+  }
 
   // **L'écran des dépenses est une profondeur, pas un quatrième onglet** (E18).
   // Il s'ouvre depuis le total de la barre de tête, et le fil dit d'où l'on
@@ -1073,11 +1099,11 @@ export function App() {
       ? "depenses"
       : tableauDeBord
         ? "tableau-de-bord"
-        : onglet === "univers"
+        : surface === "univers"
           ? coteUnivers
           : retoucheOuverte
             ? "tables"
-            : onglet === "galerie" && selection.length === 1
+            : surface === "galerie" && selection.length === 1
               ? "case"
               : montageOuvert
                 ? "montage"
@@ -1100,7 +1126,7 @@ export function App() {
                         // elle, et lui en écrire est le travail de sa tranche,
                         // pas de B9. Mieux vaut les explications du voisin le
                         // plus proche qu'un volet vide.
-                        onglet === "codex"
+                        surface === "codex"
                         ? "codex"
                         : "galerie"
 
@@ -1172,7 +1198,7 @@ export function App() {
     mesurerCentre,
     replies.arbre,
     fiche,
-    onglet,
+    surface,
     retoucheOuverte,
   ])
 
@@ -1417,7 +1443,7 @@ export function App() {
     setChoixDeReference,
     setCible,
     setModeleChoisi,
-    setOnglet,
+    poserLaRacine,
     setOptions,
     setPrompt,
     setPromptNegatif,
@@ -1451,7 +1477,7 @@ export function App() {
       : null
 
 
-  // ── Ce que la barre du châssis lit de l'onglet ouvert ─────────────────────
+  // ── Ce que le carnet et l'en-tête lisent de la surface ouverte ───────────
 
   const projetCourant =
     bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant) ?? null
@@ -1500,17 +1526,17 @@ export function App() {
    *  colonne, et une bascule pour une colonne absente mentirait sur ce que
    *  l'écran contient (`docs/DESIGN.md` § Layout). */
   const bascules: Bascule[] =
-    onglet === "codex" && !choseOuverteId && !familleOuverte
+    surface === "codex" && !choseOuverteId && !familleOuverte
       ? // **Plus de colonnes à replier ici** (`C3`) : l'ancien codex en avait
         // deux, la surface de repos n'en a plus aucune — elle ne porte que la
         // barre qui paie.
         []
-      : onglet === "galerie"
+      : surface === "galerie"
       ? // **Une seule colonne repliable depuis E4** : celle de l'arbre. Celle
         // des réglages est partie avec ce qui paie, et une bascule pour une
         // colonne absente mentirait sur ce que l'écran contient.
         [{ cle: "arbre", nom: "arbre", repliee: replies.arbre }]
-      : onglet === "univers"
+      : surface === "univers"
         ? // **La colonne de l'univers n'existe plus** (E7) : ses cinq réglages
           // ont un côté à eux, qui prend l'écran entier. Ne reste que la
           // réserve, et seulement en vue toile — sans elle il n'y a pas de
@@ -1869,6 +1895,11 @@ export function App() {
           ).length
         }
         images={projetCourant?.assets ?? 0}
+        // **La moitié du retour qui traverse les lieux.** Le bloc « en route »
+        // vit dans la barre de prompt, donc sur la surface où l'on a payé ; le
+        // carnet, lui, est rendu partout, et c'est loin du champ qu'on doute le
+        // plus. Cette pastille vivait dans l'onglet *Galerie* jusqu'à `C9`.
+        enRoute={enVol?.images ?? 0}
         depense={
           projetCourant ? projetCourant.total_usd : bibliotheque.sans_projet.total_usd
         }
@@ -1884,17 +1915,18 @@ export function App() {
               ? "depenses"
               : reglesOuvertes
                 ? "regles"
-                : onglet === "univers"
+                : surface === "univers"
                 ? "univers"
                 : familleOuverte
                   ? familleOuverte
-                  : onglet === "codex"
-                    ? // **La surface de repos de « Créer » ne nomme plus de
-                      // famille** (`C3`) : rien à allumer dans le carnet quand
-                      // on y est sans avoir choisi de famille.
-                      null
+                  : surface === "codex"
+                    ? // **La surface de repos de « Créer »** (`C3`) — elle ne
+                      // nomme aucune famille, et c'est sa propre ligne du
+                      // carnet qui s'allume depuis `C9`.
+                      "creer"
                     : "galerie"
         }
+        racine={racine(pile)}
         surLeJeu={() => setPile(poser("tableau-de-bord"))}
         surLaFamille={ouvrirLaFamille}
         surLaCollection={(cle, collection) => {
@@ -1906,9 +1938,14 @@ export function App() {
           setCreerUnGroupe((n) => n + 1)
         }}
         surDeposer={(collection) => void deposerDansLaCollection(collection)}
-        surLesRegles={() => setPile(poser("univers"))}
+        surLesRegles={() => allerA("univers")}
         surLesReglesDuJeu={() => setReglesOuvertes(true)}
-        surLaGalerie={() => setPile(poser("galerie"))}
+        // **Demander une image** — la surface où l'on écrit ce qu'on veut
+        // fabriquer. Elle n'avait plus de porte du tout une fois l'onglet
+        // *Créer* tombé (`C9`), et une racine sans ligne dans le carnet est
+        // une racine injoignable.
+        surLaCreation={() => allerA("codex")}
+        surLaGalerie={() => allerA("galerie")}
         surLesDepenses={() => {
           setFente(null)
           setDepensesOuvertes(true)
@@ -1935,84 +1972,41 @@ export function App() {
         cleAbsente={etat ? !etat.secrets.some((t) => t.pret) : false}
       />
 
-      <div className="grid min-w-0 flex-1 grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
-      <BarreChassis
-        onglet={onglet}
-        onOnglet={(prochain) => {
-          // **Changer d'onglet remonte de toute profondeur.** Le fil dit où
-          // l'on est ; cliquer un onglet est le geste qui dit « ailleurs ».
-          // Laisser la découpe ouverte derrière un autre onglet rendrait le
-          // produit à ce qu'il vient de quitter — un écran par-dessus un autre.
-          //
-          // **L'écran de confirmation manquait à la liste** (U1). Cliquer
-          // *Galerie* changeait le fil d'Ariane et le laissait en place : on
-          // était enfermé dans un écran qu'aucun onglet ne pouvait fermer.
-          //
-          // **Le tri, lui, ne part plus avec lui** (M5). Il partait, et c'est ce
-          // qui mettait l'auteur devant un choix que personne n'avait voulu lui
-          // imposer : garder ses corrections, ou sortir chercher l'image dont il
-          // venait de voir qu'elle manquait. Sortir n'est pas demander autre
-          // chose — c'est `signatureDeLAppel` qui dit ce qu'est un autre appel,
-          // et elle est relue à la réouverture.
-          setCarteDecoupee(null)
-          setDepensesOuvertes(false)
-          setClipOuvert(null)
-          fermerCeQuiPart()
-          setChoseOuverte(null)
-          ouvrirLaRetouche(null)
-          setFente(null)
-          setOnglet(prochain)
-        }}
+      <div className="grid min-w-0 flex-1 grid-rows-[34px_minmax(0,1fr)_26px] bg-fond-0">
+      {/* **L'en-tête de la surface** (`C9`) — 34 px de papier, à la place des
+          44 px de `BarreChassis.tsx`. Elle porte les six choses que la barre
+          portait en dehors des onglets ; les onglets, eux, sont partis avec
+          elle : le carnet est le seul chemin. */}
+      <EnTeteDeSurface
         chemin={chemin}
         // **Le nom du jeu ne s'écrit qu'une fois dans la bande.** Déployé, le
         // fil le porte à son premier étage ; sans fil, c'est le total qui le
-        // porte. C'est la différence entre les deux croquis de
-        // `docs/maquettes-v2.1/01-structure.html` — celui de la galerie et
-        // celui de l'établi.
+        // porte.
         nomDuJeu={chemin.length ? null : (projetCourant?.nom ?? "sans projet")}
         montant={dollars(
           projetCourant ? projetCourant.total_usd : bibliotheque.sans_projet.total_usd,
         )}
-        // **Le total ouvre l'écran qui l'explique.** Il portait sa raison de
-        // grisé tant que cet écran n'existait pas ; il l'a perdue en E18, qui
-        // est très exactement l'endroit où elle devait disparaître.
+        // **Le total ouvre l'écran qui l'explique.**
         onDepenses={() => {
           setFente(null)
           setDepensesOuvertes(true)
         }}
-        // **L'état de la clé, dès la première seconde** (E19). Il vivait dans
-        // la barre du bas ; il monte ici, et il n'y est écrit **qu'une fois** —
-        // la même valeur à deux endroits est deux endroits à tenir d'accord.
-        // **Avec quoi on peut produire** (F3), et non plus *ce qui manque* :
-        // la barre lit le tiroir entier, un fournisseur par place, et elle ne
-        // dit « aucune clé » que si aucun n'est utilisable — ce qui n'arrive
-        // plus, puisqu'il en reste toujours un.
+        // **L'état de la clé, dès la première seconde** (E19), lu une seule
+        // fois : la même valeur à deux endroits est deux endroits à tenir
+        // d'accord. **Avec quoi on peut produire** (F3), et non plus ce qui
+        // manque.
         tiroirs={etat?.secrets ?? null}
-        // **Trois portes, une seule pièce** : ce mot-ci, l'étape « Les
-        // fournisseurs » de l'assistant, et le bouton qui paie éteint mènent
-        // tous les trois au champ où la clé habite. Reste sur l'ancien panneau
-        // pour la même raison que « Réglages » juste en dessous : un essai le
-        // tient déjà (« la barre du haut dit combien de fournisseurs sont
-        // prêts, et mène au tiroir »), et `Installation.tsx` n'a pas encore ce
-        // que `/install` doit lui rendre pour s'ouvrir sans casser dans ce
-        // contexte-là.
         onReglagesCle={() => setReglagesOuverts(true)}
         bascules={depensesOuvertes ? [] : bascules}
         onBasculer={(cle) => setReplies((r) => ({ ...r, [cle]: !r[cle] }))}
         fente={fente}
-        // **Ce bouton-ci reste sur l'ancien panneau, seul des cinq** : c'est
-        // le seul chemin, aujourd'hui testé par une trentaine d'essais, vers
-        // les garde-fous de l'agent, le dossier du jeu et les mouvements —
-        // ce qu'`Installation.tsx` ne reprend pas encore (voir la note sur
-        // `installationOuverte` plus haut). Le rediriger aurait rendu ces
-        // trois réglages introuvables en un clic, exactement ce que `B15`
-        // refusait déjà de faire.
+        // **Ce bouton-ci reste sur l'ancien panneau** : c'est le seul chemin,
+        // aujourd'hui tenu par une trentaine d'essais, vers les garde-fous de
+        // l'agent, le dossier du jeu et les mouvements — ce
+        // qu'`Installation.tsx` ne reprend pas encore. Le rediriger aurait
+        // rendu ces trois réglages introuvables en un clic.
         onReglages={() => setReglagesOuverts(true)}
         onGuide={() => ouvrirGuide()}
-        // **La moitié du retour qui traverse les onglets.** Le bloc en route
-        // vit dans la barre de prompt, donc sur la galerie seule ; celle-ci est
-        // rendue partout, et c'est loin du champ qu'on doute le plus.
-        enVol={enVol?.images ?? 0}
       />
 
       {/* **La découpe est une profondeur de la galerie, pas un écran posé
@@ -2119,7 +2113,7 @@ export function App() {
              referme : ce qu'on voulait faire est fait. */
           onCommande={(clips) => {
             setClipOuvert(null)
-            setOnglet("galerie")
+            poserLaRacine("galerie")
             setChantier((liste) =>
               clips.reduce((tenue, clip) => fondre(tenue, clip), liste),
             )
@@ -2318,7 +2312,7 @@ export function App() {
           Elle a son fichier depuis `C4` : `composants/Galerie.tsx`. Ce qui suit
           n'est plus que la condition de son montage — la même qu'avant, aux
           mêmes mots. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && onglet === "galerie" &&
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && surface === "galerie" &&
         !imageDeLaRetouche && (
         <Galerie
           g={galerie}
@@ -2335,7 +2329,7 @@ export function App() {
           reprendreReglages={reprendreReglages}
           setChantier={setChantier}
           setChoseOuverte={setChoseOuverte}
-          setOnglet={setOnglet}
+          poserLaRacine={poserLaRacine}
           setPanne={setPanne}
           univers={univers}
         />
@@ -2351,7 +2345,7 @@ export function App() {
           existait parce que le côté Réglages avait besoin de savoir quelles
           façons de réduire cette machine-ci sait faire. Les deux côtés qui
           restent ne lisent que le tableau. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "univers" && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "univers" && (
         <EcranUnivers
           cartes={cartes}
           liens={liens}
@@ -2431,7 +2425,7 @@ export function App() {
           surface ne porte plus qu'elle, sans colonnes. */}
       {/* ⚠️ **Et pas non plus quand une pièce est ouverte** (`B19`) : la page
           d'une pièce se pose ici comme la grille d'une famille. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && (
         <div
           data-codex
           className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-fond-0 p-4"
@@ -2457,7 +2451,7 @@ export function App() {
           matrice pour la raison du montage : les deux ne peuvent pas être
           ouverts ensemble, on ne corrige pas une animation depuis un écran
           qui en montre douze. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && bandeOuverte && etat ? (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && bandeOuverte && etat ? (
         montageDeLaBande ? (
         /* **Le montage rouvert sur cette animation** (V3.03.3). Il prend la
            place de l'atelier, comme l'atelier prend celle de la matrice : ce
@@ -2499,7 +2493,7 @@ export function App() {
         )
       ) : null}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && !bandeOuverte && !sujetDeLaGrille && !sujetDuComparateur && !imageDeLaRetouche && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && choseOuverte && !bandeOuverte && !sujetDeLaGrille && !sujetDuComparateur && !imageDeLaRetouche && (
         /* **La page du sujet, et non plus sa matrice** (B10) : on arrive sur la
            chose, quatre onglets sur un seul écran. La matrice est devenue une
            profondeur de cette page — elle porte encore le vestiaire, les
@@ -2569,7 +2563,7 @@ export function App() {
              `App` sait qu'il existe des onglets — la matrice, elle, ne fait
              que nommer un clip. */
           onMonterLaBande={(clip) => {
-            setOnglet("galerie")
+            poserLaRacine("galerie")
             setMontageOuvert(clip)
           }}
           /* **Et la vignette, elle, ouvre l'animation** (A7) — sans changer
@@ -2642,7 +2636,7 @@ export function App() {
       )}
 
       {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord &&
-        (onglet === "galerie" || onglet === "codex") &&
+        (surface === "galerie" || surface === "codex") &&
         imageDeLaRetouche && etat && !bandeOuverte && (
         /* **La retouche** (B16) — la chaîne redessinée sur le papier du
            carnet : huit tables dans leur ordre, un trait, deux fabriques à
@@ -2683,7 +2677,7 @@ export function App() {
           retour={
             emploiOuvert
               ? libelleDEmploi(emploiOuvert)
-              : onglet === "galerie"
+              : surface === "galerie"
                 ? "La galerie"
                 : "Ses images"
           }
@@ -2719,7 +2713,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && sujetDeLaGrille && !bandeOuverte && !imageDeLaRetouche && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && sujetDeLaGrille && !bandeOuverte && !imageDeLaRetouche && (
         /* **La grille du jeu** (B13) — une profondeur de plus de la page d'un
            sujet, comme la matrice l'était déjà avant B10. Elle ne dépense
            rien : pas de barre qui paie. */
@@ -2735,7 +2729,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && sujetDuComparateur && !bandeOuverte && !imageDeLaRetouche && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && sujetDuComparateur && !bandeOuverte && !imageDeLaRetouche && (
         /* **Comparer** (B13) — deux sujets côte à côte, ou deux images d'un
            même sujet. Elle non plus ne dépense rien. */
         <Comparer
@@ -2771,7 +2765,7 @@ export function App() {
       {!depensesOuvertes &&
         !envoiOuvert &&
         !clipOuvert &&
-        onglet === "codex" &&
+        surface === "codex" &&
         !bandeOuverte &&
         !imageDeLaRetouche &&
         pieceEtSesEmplois &&
@@ -2793,7 +2787,7 @@ export function App() {
       {!depensesOuvertes &&
         !envoiOuvert &&
         !clipOuvert &&
-        onglet === "codex" &&
+        surface === "codex" &&
         !bandeOuverte &&
         /* **Et la retouche passe devant les deux** (`B25`) : *retoucher ce
            calque* descend d'un cran de plus, et deux surfaces à la fois
@@ -2855,7 +2849,7 @@ export function App() {
       {!depensesOuvertes &&
         !envoiOuvert &&
         !clipOuvert &&
-        onglet === "codex" &&
+        surface === "codex" &&
         !bandeOuverte &&
         calquesAnimesLieu &&
         calquesAnimes && (

@@ -298,7 +298,7 @@ function BandeDeCeClip({
     <button
       type="button"
       onClick={() => onOuvrirLaBande(bande.identifiant)}
-      className="mesure flex min-w-0 items-baseline gap-x-2 gap-y-0.5 text-left text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+      className="mesure flex min-w-0 items-baseline gap-x-2 gap-y-0.5 text-left text-[10px] text-signal-froid hover:text-signal-froid-clair"
       title="ouvrir cette animation dans l'atelier"
     >
       <span className="truncate">{bande.nom}</span>

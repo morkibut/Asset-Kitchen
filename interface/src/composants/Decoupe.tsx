@@ -39,7 +39,7 @@ import {
   type LectureDePalette,
   type ModeDecoupe,
 } from "../api"
-import type { Fente } from "./BarreChassis"
+import type { Fente } from "./EnTeteDeSurface"
 import { PANNEAU } from "./Infobulle"
 
 /** En dessous, un rectangle est un clic qui a glissé, pas une intention. En

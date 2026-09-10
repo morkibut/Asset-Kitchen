@@ -50,6 +50,7 @@ function monter(surplus: Partial<Parameters<typeof Carnet>[0]> = {}) {
     surDeposer: vi.fn(),
     surLesRegles: vi.fn(),
     surLesReglesDuJeu: vi.fn(),
+    surLaCreation: vi.fn(),
     surLaGalerie: vi.fn(),
     surLesDepenses: vi.fn(),
     surLaSortie: vi.fn(),
@@ -77,6 +78,7 @@ function monter(surplus: Partial<Parameters<typeof Carnet>[0]> = {}) {
       depense={0}
       autresJeux={[]}
       ouvert={null}
+      racine="galerie"
       {...rappels}
       {...surplus}
     />,
