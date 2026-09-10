@@ -97,14 +97,20 @@ LA_GEOMETRIE_D_AVANT = (
     # `Toile.tsx`, `Tableau.tsx`, `Ambiances.tsx` : les trois côtés
     # d'inspiration ont changé de couleur **et** de géométrie du même coup, ce
     # qui est le premier écran du bloc `D` à sortir des deux listes à la fois.
+    #
+    # `D3` en a retiré quatre de plus le 11 septembre 2026 — `Galerie.tsx`,
+    # `BarreEtat.tsx`, `Tuile.tsx`, `Fiche.tsx` : la galerie était le second
+    # dessin du bloc, et elle sort elle aussi des deux listes du même geste. Ce
+    # qui l'a fait sortir de celle-ci : la marge de la surface passée de 16 à
+    # 30 et sa gouttière de 9 à 14 — les deux valeurs du § Spacing —, les
+    # arrondis de 2 px devenus 5 et 7, les 8.5, 9.5 et 10 px de texte remontés
+    # à 10.5, les 32 px de serif ramenés à 25 — la serif ne descend jamais sous
+    # 25 —, et les 80 ms devenus 120.
     "interface/src/composants/Arbre.tsx",
-    "interface/src/composants/BarreEtat.tsx",
     "interface/src/composants/BarreOutils.tsx",
     "interface/src/composants/chassis.tsx",
     "interface/src/composants/Depliage.tsx",
-    "interface/src/composants/Fiche.tsx",
     "interface/src/composants/FicheDuClip.tsx",
-    "interface/src/composants/Galerie.tsx",
     "interface/src/composants/Import.tsx",
     # `BarreQuiPaie.tsx` (`D5`) : sortie en fichier propre le 11 septembre
     # 2026, aux côtés de `ChampPrompt.tsx` et `PanneauReglages.tsx`, qui ont
@@ -115,7 +121,6 @@ LA_GEOMETRIE_D_AVANT = (
     "interface/src/composants/BarreQuiPaie.tsx",
     "interface/src/composants/ChampPrompt.tsx",
     "interface/src/composants/PanneauReglages.tsx",
-    "interface/src/composants/Tuile.tsx",
     # ── Sortis du châssis sombre, mais pas de sa géométrie ───────────────────
     # `C5`, `C6` et `C7` l'ont écrit en toutes lettres : leurs jetons de couleur
     # sont ceux du papier, leurs tailles sont celles d'avant.
@@ -181,11 +186,19 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # de ce bloc où le compte monte** : ce ne sont pas des lignes neuves, ce
     # sont des lignes qu'`App.tsx` cachait. Les redessiner sur le papier de
     # `Galerie.dc.html` est un dessin, pas une extraction — il vient après.
-    "interface/src/composants/Galerie.tsx",
-    "interface/src/composants/BarreEtat.tsx",
+    #
+    # D3 — **il est venu, le 11 septembre 2026.** `Galerie.tsx`, `BarreEtat.tsx`,
+    # `Tuile.tsx` et `Fiche.tsx` sont partis d'ici **et** de
+    # `LA_GEOMETRIE_D_AVANT`, comme `D2` avant eux : la grille, sa cible, ses
+    # réinjections, sa tuile, le volet d'image et le pied du châssis sont
+    # dessinés sur le papier de la planche. Trois choix méritent d'être écrits :
+    # le liseré rouille intérieur remplace l'anneau `--lumiere` du sélectionné,
+    # le damier ne se pose plus que sur ce qui est **détouré** — ailleurs c'est
+    # `--pourtour`, le gris neutre, « derrière une image et nulle part
+    # ailleurs » —, et les deux bandes de pied empilées n'en font plus qu'une,
+    # parce que le trait sépare des panneaux et non des lignes.
     "interface/src/composants/Arbre.tsx",
     "interface/src/composants/BarreOutils.tsx",
-    "interface/src/composants/Tuile.tsx",
     "interface/src/composants/Import.tsx",
     "interface/src/composants/Depliage.tsx",
     "interface/src/composants/FicheDuClip.tsx",
@@ -194,8 +207,9 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # même métier, deux surfaces. Le second est parti, et ce que lui seul savait
     # faire — de quelle case on parle, l'angle à confirmer, la variante, l'écart
     # — vit maintenant ici, derrière des rappels facultatifs. `Fiche.tsx` est
-    # donc montée par la galerie **et** par *Ses images*.
-    "interface/src/composants/Fiche.tsx",
+    # donc montée par la galerie **et** par *Ses images*, et c'est ce qui a
+    # décidé la forme de son passage au papier en `D3` : les rappels
+    # facultatifs n'ont pas été touchés, seuls ses jetons et ses tailles.
     # D5 — la barre qui paie : sortie d'`App.tsx` en fichier propre le
     # 11 septembre 2026, avec `ChampPrompt.tsx` et `PanneauReglages.tsx` —
     # deux fichiers qui n'étaient pas la galerie, et que le plan d'alors lui

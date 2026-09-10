@@ -2930,7 +2930,7 @@ fond sombre, une géométrie de toile qui ne tient dans aucune largeur fermée d
 
 ---
 
-## D3 · La galerie, dessinée
+## D3 · La galerie, dessinée — **tenue le 11 septembre 2026**
 
 `C4` a sorti la galerie d'`App.tsx` en fichier — une extraction, pas un dessin, comme le
 commentaire du garde-fou le dit lui-même. Ce qui reste : la redessiner sur le papier de
@@ -2955,6 +2955,39 @@ commentaire du garde-fou le dit lui-même. Ce qui reste : la redessiner sur le p
 
 - Aucune, mais partage `Fiche.tsx` et `Galerie.tsx` avec `D4` — ne pas lancer les deux en même
   temps sur ces fichiers.
+
+### Ce qui a été fait, et les trois choix de dessin
+
+Les quatre fichiers sont sortis de `LES_FICHIERS_DE_L_ANCIEN_CHASSIS` **et** de
+`LA_GEOMETRIE_D_AVANT`, comme `D2` avant eux — le second écran du bloc à sortir des deux
+listes du même geste. Le compte de sortie tombe à **6 fichiers, 3 025 lignes**.
+
+Trois décisions valent d'être écrites, parce qu'elles ne se déduisent pas de la planche :
+
+1. **Le damier ne se pose plus que sur ce qui est détouré.** Ailleurs — une image encore brute,
+   un clip, un emplacement qui attend —, c'est `--pourtour`, le gris neutre. C'est la règle des
+   onze pièces prise au mot (*le damier dit transparent, le gris dit pas encore détouré*) ;
+   l'ancien châssis damait les deux sans distinction, et promettait donc une transparence qui
+   n'existait pas. Vrai de la tuile **et** de la visionneuse de la fiche.
+2. **Le liseré rouille intérieur remplace l'anneau `--lumiere`** du sélectionné — `.tuile-on`
+   de la planche, deux pixels posés en `outline` à l'intérieur du bord, donc rien n'est déplacé
+   dans la grille. `--lumiere` n'a plus d'emploi, et `essai_jetons.py` le dit.
+3. **Les deux bandes de pied n'en font plus qu'une.** Le châssis sombre empilait deux rangées de
+   26 px, chacune avec son trait — deux traits pour un seul pied, quand « le trait sépare des
+   panneaux, pas des lignes ». La planche montre une seule bande : à gauche ce que la grille
+   cache, à droite « aucun appel ne part d'ici ». Aucun mot n'a changé.
+
+Et deux nombres de la géométrie d'avant : la marge de la surface passe de 16 à **30**, sa
+gouttière de 9 à **14** — les deux valeurs du § Spacing —, ce qui déplace aussi le seuil du
+grisé du zoom, qui se calcule sur elles.
+
+⚠️ **La galerie peint sa propre surface** (`bg-papier` sur son `<main>`) : elle est posée dans
+une case d'`App.tsx` qui porte encore `--fond-0`, et sans ça la grille du carnet flotterait sur
+du presque-noir jusqu'à `D6`.
+
+**Vérifié** : `essai_jetons.py` — *Rien à refuser* ; `npx tsc -b` propre ; `npx vitest run`
+entier ; et au navigateur sur `essais/atelier_jetable_verif_d3.py` (port 8500, douze images
+collées à la main, six détourées, aucun appel payé), comparé à `Galerie.dc.html`.
 
 ---
 

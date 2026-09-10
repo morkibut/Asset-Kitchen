@@ -4,6 +4,13 @@
 // qu'elle n'est pas la galerie : elle est le pied de l'ancien châssis, et le
 // jour où celui-ci tombe, elle tombe avec lui — d'un fichier, pas d'un bloc
 // perdu au milieu de six mille lignes.
+//
+// **Portée au papier le 11 septembre 2026 (`D3`)**, avec la galerie : le pied
+// est un trait de `--trait` sur `--papier-cote`, ses mesures en mono 10.5, et
+// les trois états du monde reprennent les trois signaux du carnet — le vert de
+// `--ok`, le rouille sombre de `--echec`, et l'encre d'attention pour un
+// catalogue en repli, qui n'est ni une réussite ni un échec (`docs/DESIGN.md`
+// § Un signal qui se pose est un trio).
 
 import { heure, type Bibliotheque, type Etat } from "../api"
 import { Point } from "./chassis"
@@ -40,12 +47,12 @@ export function BarreEtat({
   // arrêté (liaison rompue), le fournisseur est injoignable (repli), ou tout
   // va bien. La première l'emporte — sans serveur, le reste ne veut rien dire.
   const [couleur, texte] = !liaison
-    ? ["var(--color-echec-froid)", "l'atelier ne répond pas"]
+    ? ["var(--color-echec)", "l'atelier ne répond pas"]
     : panne
-      ? ["var(--color-echec-froid)", panne]
+      ? ["var(--color-echec)", panne]
       : catalogue.repli
-        ? ["var(--color-epingle)", "hors ligne"]
-        : ["var(--color-ok-froid)", "en ligne"]
+        ? ["var(--color-encre-attention)", "hors ligne"]
+        : ["var(--color-ok)", "en ligne"]
 
   const assets =
     bibliotheque.projets.reduce((somme, p) => somme + p.assets, 0) +
@@ -55,20 +62,22 @@ export function BarreEtat({
   // pourquoi, quand le port a su le dire en français. Il ne prédit jamais ce
   // qui va casser : ça, c'est la fente sous le bouton Générer.
   return (
-    <footer className="mesure flex items-center gap-4 border-t border-bord bg-fond-1 px-4 text-[10px] text-texte-3">
+    <footer className="mesure flex h-[26px] shrink-0 items-center gap-[14px] border-t border-trait bg-papier-cote px-4 text-[10.5px] text-encre-4">
       <span className="flex items-center gap-1.5">
         <Point couleur={couleur} />
         {texte}
       </span>
       {catalogue.repli && catalogue.recu_le > 0 && (
-        <span className="text-epingle">catalogue du {heure(catalogue.recu_le)}</span>
+        <span className="text-encre-attention">
+          catalogue du {heure(catalogue.recu_le)}
+        </span>
       )}
       {catalogue.repli && catalogue.raison && <span>{catalogue.raison}</span>}
       <button
         type="button"
         onClick={onRelireCatalogue}
         title="Redemander le catalogue des modèles"
-        className="transition-colors duration-[80ms] hover:text-texte-2"
+        className="transition-colors duration-120 hover:text-encre-2"
       >
         {etat?.catalogue.modeles ?? 0} modèles
       </button>

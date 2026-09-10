@@ -9,6 +9,18 @@
 // quatre rôles. Aucune rubrique n'y est arrivée vide : montrer du cadrage au
 // lieu de servir le geste est le reproche qui a fait écarter
 // `docs/maquette-atelier.html`.
+//
+// **Portée au papier le 11 septembre 2026 (`D3`)**, d'après la colonne de
+// droite de `docs/pistes-2026-09-04/carnet/Galerie.dc.html`. Rien n'y a changé
+// de contenu ni de structure : les jetons, les tailles, les arrondis et les
+// durées seulement — et le vocabulaire papier de `chassis.tsx`, en passant
+// `papier` à `Bloc`, `Bouton`, `Libelle`, `Raison`, `Segments` et
+// `EnTetePanneau`, tel qu'il a été posé en `C5`-`C7`.
+//
+// ⚠️ **Les rappels facultatifs n'ont pas bougé** : `identite`,
+// `directionsAConfirmer`, `onDirection`, `onVariante` et `onEcarter` servent
+// *Ses images* (`PageDuSujet`) et personne d'autre — la galerie n'en passe
+// aucun. `data-identite-de-l-image` reste posé au même endroit.
 
 import { Fragment, useEffect, useState } from "react"
 import {
@@ -191,15 +203,18 @@ export function Fiche({
   return (
     <aside
       {...PANNEAU}
-      className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1"
+      /* **Aucune animation d'entrée ici** : c'est la colonne qui glisse, sur les
+         220 ms du § Motion, et le volet arriverait une seconde fois par-dessus
+         son propre mouvement. Une seule chose bouge à la fois. */
+      className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-trait bg-papier-cote"
     >
-      <EnTetePanneau>
+      <EnTetePanneau papier>
         <span className="truncate">Fiche</span>
         <button
           type="button"
           onClick={onFermer}
           aria-label="Fermer la fiche"
-          className="ml-auto text-texte-3 transition-colors duration-[80ms] hover:text-texte"
+          className="ml-auto text-encre-4 transition-colors duration-120 hover:text-encre"
         >
           ✕
         </button>
@@ -220,7 +235,7 @@ export function Fiche({
       />
 
       <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
-        <p className="truncate text-[11.5px] text-texte-2" title={asset.label}>
+        <p className="truncate text-[11.5px] text-encre-2" title={asset.label}>
           {asset.label}
         </p>
 
@@ -229,7 +244,7 @@ export function Fiche({
             seulement là où la case est connue : sur la galerie, c'est le label
             juste au-dessus qui la nomme. */}
         {identite && (
-          <p data-identite-de-l-image className="text-[11.5px] text-texte-2">
+          <p data-identite-de-l-image className="text-[11.5px] text-encre-2">
             {identite}
           </p>
         )}
@@ -239,7 +254,7 @@ export function Fiche({
             aucun libellé, aucun pointillé, rien à survoler. L'identifiant
             exact plutôt que le nom du catalogue : c'est lui qu'on redemande, et
             il reste vrai quand le catalogue est hors ligne. */}
-        <p className="mesure truncate text-[10px] text-texte-3" title={asset.modele}>
+        <p className="mesure truncate text-[10.5px] text-encre-4" title={asset.modele}>
           {nomDuModele(asset.modele)}
         </p>
 
@@ -269,11 +284,11 @@ export function Fiche({
           asset.pose &&
           directionsAConfirmer &&
           directionsAConfirmer.length > 0 && (
-            <div className="flex flex-col gap-1.5 border border-epingle/40 bg-epingle/[.07] p-2">
-              <p className="mesure text-[10px] text-epingle">
+            <div className="flex flex-col gap-1.5 rounded-5 border border-trait-attention bg-fond-attention p-2">
+              <p className="mesure text-[10.5px] text-encre-attention">
                 Sa direction est à confirmer
               </p>
-              <p className="text-[11px] leading-4 text-texte-3">
+              <p className="text-[11px] leading-4 text-encre-3">
                 Elle a été faite avant que le jeu ne déclare ses angles.
                 L'atelier ne la devine pas.
               </p>
@@ -283,7 +298,7 @@ export function Fiche({
                     key={d.identifiant}
                     type="button"
                     onClick={() => onDirection?.(d.identifiant)}
-                    className="mesure rounded-[2px] border border-bord bg-fond-2 px-2 py-0.5 text-[10px] text-texte hover:border-texte-3"
+                    className="mesure rounded-5 border border-contour bg-carte px-2 py-0.5 text-[10.5px] text-encre-controle hover:border-encre-3"
                   >
                     {d.nom}
                   </button>
@@ -322,9 +337,9 @@ export function Fiche({
             fait. Elle ne coûte rien — aucun appel payant, aucun rendu recalculé
             avant qu'on le regarde. */}
         {asset.epingle && !univers.vide && (
-          <div className="mt-4 flex flex-col gap-1 border-t border-bord pt-2">
-            <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-epingle">
-              <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+          <div className="mt-4 flex flex-col gap-1 border-t border-trait pt-2">
+            <p className="mesure flex items-center gap-1.5 text-[10.5px] leading-4 text-encre-attention">
+              <span aria-hidden className="inline-block h-px w-2 bg-encre-attention" />
               réglé à la main — un changement de palette le saute
             </p>
             <button
@@ -338,7 +353,7 @@ export function Fiche({
                   )
                 }
               }}
-              className="mesure self-start text-[10px] text-signal-froid hover:text-signal-froid-clair"
+              className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
             >
               Le remettre sur l'univers du projet ›
             </button>
@@ -350,39 +365,43 @@ export function Fiche({
             l'établi de la chose à qui elle appartient, et les tables. » Une
             image qui n'appartient à personne n'a que la seconde — et le grisé
             de la première porte sa raison, comme partout ailleurs. */}
-        <div className="mt-auto flex flex-col gap-1 border-t border-bord pt-2">
+        <div className="mt-auto flex flex-col gap-1 border-t border-trait pt-2">
           {onOuvrirLEtabli && (
             <Bouton
               inactif={!asset.personnage}
               onClick={onOuvrirLEtabli}
               enfants="Reprendre dans l'établi"
+              papier
             />
           )}
           {onOuvrirLEtabli && !asset.personnage && (
-            <Raison texte="cette image n'appartient à aucune chose du jeu — la rattacher plus haut lui ouvre son établi" />
+            <Raison
+              texte="cette image n'appartient à aucune chose du jeu — la rattacher plus haut lui ouvre son établi"
+              papier
+            />
           )}
           {/* **Le bouton nomme ce qu'il ouvre** (`B25`) : il disait *Ouvrir les
               tables* et ouvre la retouche depuis que les six portes n'en font
               qu'une. *La retoucher* est le mot que le produit emploie déjà
               partout ailleurs — *Ses images*, le comparateur —, et deux noms
               pour un seul écran se lisent comme deux écrans. */}
-          <Bouton onClick={onRetoucher} enfants="La retoucher" />
+          <Bouton onClick={onRetoucher} enfants="La retoucher" papier />
           {/* **Les deux gestes de la case** (`C4`, relogés du volet
               d'`ImagesDuSujet`). Redemander la même case, et écarter celle-ci.
               Ils n'existent que là où l'on sait de quelle case on parle. */}
           {onVariante && (
-            <Bouton onClick={onVariante} enfants="En générer une variante" />
+            <Bouton onClick={onVariante} enfants="En générer une variante" papier />
           )}
           {onEcarter && (
             <>
               <button
                 type="button"
                 onClick={onEcarter}
-                className="mesure mt-1 text-[10px] text-echec-froid hover:text-texte"
+                className="mesure mt-1 text-[10.5px] text-echec hover:text-encre"
               >
                 L'écarter
               </button>
-              <p className="text-[11px] leading-4 text-texte-3">
+              <p className="text-[11px] leading-4 text-encre-3">
                 Écarter est un jugement, pas un effacement : le fichier reste sur
                 le disque et la dépense reste au journal.
               </p>
@@ -391,7 +410,7 @@ export function Fiche({
           <a
             href={api.telechargementAsset(asset.identifiant, montrerBrut)}
             download
-            className="mesure mt-1 text-[10px] text-signal-froid hover:text-signal-froid-clair"
+            className="mesure mt-1 text-[10.5px] text-signal hover:opacity-70"
           >
             PNG ↓
           </a>
@@ -453,11 +472,12 @@ function ImposeParLeProjet({
       <Bloc
         cle="fiche.impose"
         aide="fiche.impose"
+        papier
         titre="Imposé par le projet"
         etat="on ne sait pas"
         mesure="la génération n'est plus sur le disque"
       >
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10.5px] leading-4 text-encre-4">
           Sa génération n'est plus sur le disque, et le produit ne devine pas :
           « rien d'imposé » serait une réponse différente, et fausse.
         </p>
@@ -562,6 +582,7 @@ function ImposeParLeProjet({
     <Bloc
       cle="fiche.impose"
       aide="fiche.impose"
+      papier
       titre="Imposé par le projet"
       /* Replié, le bloc porte les trois valeurs du projet — c'est ce qui permet
          de lire la fiche entière sans rien ouvrir. Ouvert, il garde sous les
@@ -577,17 +598,17 @@ function ImposeParLeProjet({
       <ul className="flex flex-col gap-[3px]">
         {lignes.map((ligne) => (
           <li key={ligne.quoi} className="flex items-baseline gap-2">
-            <span className="text-[11px] text-texte-2">{ligne.quoi}</span>
-            <span className="mesure ml-auto text-[10px] text-texte">{ligne.valeur}</span>
+            <span className="text-[11px] text-encre-2">{ligne.quoi}</span>
+            <span className="mesure ml-auto text-[10.5px] text-encre">{ligne.valeur}</span>
             {/* **Le distinguo est la moitié de la rubrique** : sans lui, une
                 valeur affichée ne dit pas si elle vient du projet ou de la main
-                de l'auteur, et c'est exactement la question posée. Le token
-                `epingle` est celui qui porte déjà « réglé à la main » plus bas
-                dans cette même fiche. */}
+                de l'auteur, et c'est exactement la question posée. L'encre
+                d'attention est celle qui porte déjà « réglé à la main » plus
+                bas dans cette même fiche. */}
             <span
               className={[
-                "mesure w-[76px] shrink-0 text-right text-[9.5px]",
-                ligne.main ? "text-epingle" : "text-texte-3",
+                "mesure w-[70px] shrink-0 text-right text-[10.5px]",
+                ligne.main ? "text-encre-attention" : "text-encre-4",
               ].join(" ")}
             >
               {ligne.main ? "réglé à la main" : "appliqué"}
@@ -673,7 +694,7 @@ function SansLeStyleDuJeu({ generation }: { generation: Generation | null }) {
   if (laissees.length === 0) return null
 
   return (
-    <p className="mesure text-[10px] leading-4 text-texte-3">
+    <p className="mesure text-[10.5px] leading-4 text-encre-4">
       partie sans le style du jeu — {laissees.length}{" "}
       {laissees.length === 1 ? "image n'a" : "images n'ont"} pas suivi, ce modèle
       n'en accepte pas
@@ -695,7 +716,7 @@ function PrisDeLAmbiance({ generation }: { generation: Generation | null }) {
   const pris = (generation?.pris ?? []).map((quoi) => dit[quoi] ?? quoi)
 
   return (
-    <p className="mesure text-[10px] leading-4 text-texte-3">
+    <p className="mesure text-[10.5px] leading-4 text-encre-4">
       d'après « {nom} » — {pris.length ? pris.join(", ") : "rien de repris"}
     </p>
   )
@@ -741,18 +762,19 @@ function LeTexteQuiLAFaite({
     return (
       <Bloc
         cle="fiche.prompt"
+        papier
         titre="Son texte"
         etat="vient d'une autre image"
         mesure="le texte est sur sa parente"
       >
-        <p className="text-[11px] leading-snug text-texte-2">
+        <p className="text-[11px] leading-snug text-encre-2">
           Cette image est née d'une autre — une planche découpée, un calque posé.
           Le texte qui l'a fabriquée est écrit là-bas, sur l'image dont elle
           descend.{" "}
           <button
             type="button"
             onClick={() => onOuvrir(asset.parent!)}
-            className="mesure text-[10px] text-signal-froid underline-offset-2 hover:underline"
+            className="mesure text-[10.5px] text-signal underline-offset-2 hover:underline"
           >
             aller la lire ›
           </button>
@@ -767,8 +789,8 @@ function LeTexteQuiLAFaite({
   // décrite.
   if (!parti)
     return (
-      <Bloc cle="fiche.prompt" titre="Son texte" etat="aucun texte">
-        <p className="text-[11px] leading-snug text-texte-2">
+      <Bloc cle="fiche.prompt" papier titre="Son texte" etat="aucun texte">
+        <p className="text-[11px] leading-snug text-encre-2">
           {asset.modele === "import"
             ? "Cette image est entrée par import : personne ne l'a décrite ici."
             : asset.modele === "clip"
@@ -782,6 +804,7 @@ function LeTexteQuiLAFaite({
   return (
     <Bloc
       cle="fiche.prompt"
+      papier
       titre="Son texte"
       /* Replié, il porte son début : c'est ce qui permet de reconnaître une
          image dans une fiche sans rien ouvrir. Ouvert, il porte sa longueur —
@@ -796,7 +819,7 @@ function LeTexteQuiLAFaite({
             portée du défilement, pour un texte qu'on lit une fois. */}
         <p
           data-prompt-parti
-          className="defile max-h-[220px] overflow-y-auto rounded-[2px] border border-bord bg-fond-0 p-2 text-[11px] leading-snug whitespace-pre-wrap text-texte-2"
+          className="defile max-h-[300px] overflow-y-auto rounded-5 border border-trait bg-carte p-2 text-[11px] leading-snug whitespace-pre-wrap text-encre-2"
         >
           {parti}
         </p>
@@ -811,7 +834,7 @@ function LeTexteQuiLAFaite({
               .then(() => setCopie(true))
               .catch(() => setCopie(false))
           }}
-          className="mesure self-start text-[10px] text-signal-froid hover:text-signal-froid-clair"
+          className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
         >
           {copie ? "copié" : "copier le texte"}
         </button>
@@ -851,16 +874,16 @@ function Jugement({
   }
 
   return (
-    <div className="flex flex-col gap-2 border-t border-bord pt-2">
+    <div className="flex flex-col gap-2 border-t border-trait pt-2">
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={basculerFavori}
           className={[
-            "mesure h-[26px] rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
+            "mesure h-[26px] rounded-7 border px-2 text-[11px] transition-colors duration-120",
             asset.favori
-              ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
-              : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+              ? "border-signal bg-ligne-ouverte text-signal"
+              : "border-contour bg-carte text-encre-3 hover:bg-papier-cote",
           ].join(" ")}
         >
           {asset.favori ? "◤ favori" : "favori"}
@@ -869,10 +892,10 @@ function Jugement({
             derrière, avec son unité (F2). La fiche est le seul des deux
             endroits qui ait la place des deux : la tuile ne porte que le
             premier. */}
-        <span className="mesure text-[10px] text-texte-3">
+        <span className="mesure text-[10.5px] text-encre-4">
           {depense(asset.consomme, asset.unite)}
           {!estArgent(asset.unite) && asset.consomme > 0 && (
-            <span className="text-texte-3">
+            <span className="text-encre-4">
               {" "}
               · {quantite(asset.consomme, asset.unite)}
             </span>
@@ -887,14 +910,14 @@ function Jugement({
         <button
           type="button"
           onClick={onSupprimer}
-          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec-froid"
+          className="mesure ml-auto h-[26px] px-1 text-[10.5px] text-encre-4 hover:text-echec"
         >
           Supprimer
         </button>
       </div>
 
       <div className="flex flex-col gap-1">
-        <Libelle aide="fiche.reinjecter">Réinjecter</Libelle>
+        <Libelle aide="fiche.reinjecter" papier>Réinjecter</Libelle>
         <div className="flex flex-wrap gap-1">
           {ROLES.map(({ role, libelle, explique }) => (
             <button
@@ -902,7 +925,7 @@ function Jugement({
               type="button"
               onClick={() => onReinjecter(role)}
               title={explique}
-              className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte-2 hover:bg-fond-3"
+              className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-3 hover:bg-papier-cote"
             >
               {libelle}
             </button>
@@ -913,7 +936,7 @@ function Jugement({
             type="button"
             onClick={onReglages}
             title="reprendre prompt, modèle et réglages"
-            className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte-2 hover:bg-fond-3"
+            className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-3 hover:bg-papier-cote"
           >
             jeu de réglages
           </button>
@@ -961,11 +984,11 @@ function CaseDeLAsset({
   }
 
   return (
-    <div className="flex flex-col gap-1 border-t border-bord pt-2">
-      <Libelle aide="fiche.personnage">Corps de</Libelle>
+    <div className="flex flex-col gap-1 border-t border-trait pt-2">
+      <Libelle aide="fiche.personnage" papier>Corps de</Libelle>
 
       {personnages.length === 0 ? (
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10.5px] leading-4 text-encre-4">
           Aucun personnage dans ce jeu. Une image devient un corps quand un
           personnage l'attend — l'écran Personnages en crée un.
         </p>
@@ -986,7 +1009,7 @@ function CaseDeLAsset({
                 return onErreur("ce personnage ne tient aucune attitude")
               void designer(choisi, premiere.identifiant)
             }}
-            className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-1 text-[11px] text-texte-2"
+            className="mesure h-[26px] min-w-0 flex-1 rounded-5 border border-contour bg-carte px-1 text-[11px] text-encre-2"
           >
             <option value="">aucun</option>
             {personnages.map((p) => (
@@ -1003,7 +1026,7 @@ function CaseDeLAsset({
             onChange={(e) =>
               void designer(asset.personnage ?? null, e.target.value || null)
             }
-            className="mesure h-[26px] w-[120px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[11px] text-texte-2 disabled:text-texte-3"
+            className="mesure h-[26px] w-[128px] shrink-0 rounded-5 border border-contour bg-carte px-1 text-[11px] text-encre-2 disabled:text-eteint"
           >
             {!porteur && <option value="">—</option>}
             {tenues.map((pose) => (
@@ -1016,7 +1039,7 @@ function CaseDeLAsset({
       )}
 
       {asset.personnage_supprime && (
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10.5px] leading-4 text-encre-4">
           personnage supprimé — l'image reste, sa case n'existe plus
         </p>
       )}
@@ -1084,28 +1107,28 @@ function Descendance({
     .join(" · ")
 
   return (
-    <div className="border-t border-bord pt-2">
-      <Bloc cle="fiche.filiation" titre="Filiation" etat={resume}>
+    <div className="border-t border-trait pt-2">
+      <Bloc cle="fiche.filiation" papier titre="Filiation" etat={resume}>
         <div className="flex flex-col gap-1">
           {filiation.parent && (
             <button
               type="button"
               onClick={() => onOuvrir(filiation.parent!.identifiant)}
-              className="mesure flex items-center gap-1.5 text-left text-[10px] text-signal-froid hover:text-signal-froid-clair"
+              className="mesure flex items-center gap-1.5 text-left text-[10.5px] text-signal hover:opacity-70"
             >
               <span aria-hidden>↑</span>
               <span className="truncate">{filiation.parent.label}</span>
             </button>
           )}
           {filiation.parent_supprime && (
-            <p className="mesure flex items-center gap-1.5 text-[10px] text-epingle">
-              <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+            <p className="mesure flex items-center gap-1.5 text-[10.5px] text-encre-attention">
+              <span aria-hidden className="inline-block h-px w-2 bg-encre-attention" />
               parent supprimé — {filiation.parent_identifiant}
             </p>
           )}
           {filiation.enfants.length > 0 && (
             <div className="flex flex-col gap-[2px]">
-              <span className="mesure text-[10px] text-texte-3">
+              <span className="mesure text-[10.5px] text-encre-4">
                 {filiation.enfants.length} descendant
                 {filiation.enfants.length > 1 ? "s" : ""}
               </span>
@@ -1114,7 +1137,7 @@ function Descendance({
                   key={enfant.identifiant}
                   type="button"
                   onClick={() => onOuvrir(enfant.identifiant)}
-                  className="mesure flex items-center gap-1.5 text-left text-[10px] text-texte-2 hover:text-signal-froid"
+                  className="mesure flex items-center gap-1.5 text-left text-[10.5px] text-encre-2 hover:text-signal"
                 >
                   <span aria-hidden>↓</span>
                   <span className="truncate">{enfant.label}</span>
@@ -1162,11 +1185,19 @@ function Visionneuse({
           **largeur** et non sur la hauteur : `aspect-ratio` cède devant
           `max-height`, le navigateur rabote la hauteur sans redéduire la
           largeur, et le damier cesse d'être carré. C'est la leçon déjà payée
-          sur le cadre de l'écran Découpe. */}
+          sur le cadre de l'écran Découpe.
+
+          **Le fond dit lequel des deux on regarde** (`D3`, même règle que sur
+          la tuile) : le damier du papier sur un rendu détouré — il dit
+          *transparent* —, le gris neutre de `--pourtour` sur le brut et sur ce
+          qui n'a subi aucune passe. Le damier de 16 px de l'ancien châssis part
+          avec lui : celui du carnet fait 14 px, et il n'y en a qu'un. */}
       <div
         onPointerEnter={visee.entrer}
         onPointerLeave={visee.sortir}
-        className="damier damier-fiche relative mx-auto aspect-square w-full max-w-[46vh] border border-bord"
+        className={`relative mx-auto aspect-square w-full max-w-[46vh] rounded-5 border border-trait ${
+          traite && !brut ? "damier-papier" : "bg-pourtour"
+        }`}
       >
         <img
           src={sujet.src}
@@ -1184,11 +1215,12 @@ function Visionneuse({
             valeurs={["rendu", "brut"] as const}
             valeur={brut ? "brut" : "rendu"}
             onChange={(quoi) => onBrut(quoi === "brut")}
+            papier
           />
         ) : (
-          <span className="mesure text-[10px] text-texte-3">brut</span>
+          <span className="mesure text-[10.5px] text-encre-4">brut</span>
         )}
-        <span className="mesure ml-auto text-[10px] text-texte-3">{dimensions}</span>
+        <span className="mesure ml-auto text-[10.5px] text-encre-4">{dimensions}</span>
       </div>
     </div>
   )
@@ -1242,18 +1274,18 @@ function RecetteEnLecture({ recette }: { recette: Recette }) {
   const posees = places.filter(([, valeur]) => valeur !== null)
 
   return (
-    <div className="flex flex-col gap-1 border-t border-bord pt-2">
-      <Libelle aide="fiche.recette">Sa recette</Libelle>
+    <div className="flex flex-col gap-1 border-t border-trait pt-2">
+      <Libelle aide="fiche.recette" papier>Sa recette</Libelle>
       {posees.length === 0 ? (
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10.5px] leading-4 text-encre-4">
           Rien n'est posé : cette image est celle qui est arrivée du fournisseur.
         </p>
       ) : (
-        <dl className="mesure grid grid-cols-[auto_1fr] gap-x-3 text-[10px]">
+        <dl className="mesure grid grid-cols-[auto_1fr] gap-x-3 text-[10.5px]">
           {posees.map(([nom, valeur]) => (
             <Fragment key={nom}>
-              <dt className="text-texte-3">{nom}</dt>
-              <dd className="text-right text-texte-2">{valeur}</dd>
+              <dt className="text-encre-4">{nom}</dt>
+              <dd className="text-right text-encre-2">{valeur}</dd>
             </Fragment>
           ))}
         </dl>

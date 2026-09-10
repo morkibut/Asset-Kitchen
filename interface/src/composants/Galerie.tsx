@@ -6,6 +6,13 @@
 // ne porte son nom. Elle est désormais un écran comme les vingt et un autres du
 // carnet — un fichier, une planche (`docs/pistes-2026-09-04/carnet/Galerie.dc.html`).
 //
+// **Et elle est dessinée sur cette planche depuis `D3`** (11 septembre 2026).
+// `C4` l'avait sortie d'`App.tsx` sans y toucher : elle est passée au papier ce
+// jour-là, avec `Tuile.tsx`, `Fiche.tsx` et `BarreEtat.tsx` — sa grille, sa
+// cible, ses réinjections et son pied. Deux nombres de la géométrie d'avant
+// tombent avec eux : la marge de la surface passe de 16 à **30** et la gouttière
+// de 9 à **14**, les deux valeurs que `docs/DESIGN.md` § Spacing déclare.
+//
 // **Une seule grille dans tout le produit** (US-31). Celle qui sert à réutiliser
 // est exactement celle qui sert à organiser : mêmes filtres, même recherche,
 // même sélection multiple. Elle est faite d'assets — la bibliothèque —, et un
@@ -82,20 +89,20 @@ export function Cible({
   if (!personnage || poses.length === 0) return null
   const lot = poses.length >= 2
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-bord bg-fond-1 px-4 pt-3">
-      <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+    <div className="flex flex-wrap items-center gap-2 border-b border-trait bg-carte px-4 pt-3">
+      <span className="mesure text-[10.5px] tracking-[.14em] text-encre-4 uppercase">
         Pour
       </span>
-      <span className="flex flex-wrap items-center gap-1.5 rounded-[2px] border border-signal-froid bg-signal-froid/13 py-1 pr-1 pl-2">
-        <span className="text-[11.5px] text-texte">{personnage.nom}</span>
+      <span className="flex flex-wrap items-center gap-1.5 rounded-5 border border-signal bg-ligne-ouverte py-1 pr-1 pl-2">
+        <span className="text-[11.5px] text-encre">{personnage.nom}</span>
         {poses.map((pose) => (
           <span key={pose.identifiant} className="flex items-center">
-            <span className="mesure text-[10px] text-signal-froid">{pose.nom}</span>
+            <span className="mesure text-[10.5px] text-signal">{pose.nom}</span>
             <button
               type="button"
               onClick={() => onRetirer(pose)}
               aria-label={`Retirer ${pose.nom} de ce qui part`}
-              className="mesure px-1 text-[10px] text-texte-3 hover:text-echec-froid"
+              className="mesure px-1 text-[10.5px] text-encre-4 hover:text-echec"
             >
               ×
             </button>
@@ -108,7 +115,7 @@ export function Cible({
           fait d'habitude — neuf cases, un seul appel — et l'écrire coûte moins
           cher que de le faire deviner. */}
       {lot && (
-        <span className="mesure text-[10px] text-texte-3">
+        <span className="mesure text-[10.5px] text-encre-4">
           {poses.length} attitudes, un seul appel
         </span>
       )}
@@ -117,7 +124,7 @@ export function Cible({
           type="button"
           onClick={onDesarmer}
           aria-label="Ne plus viser ces cases"
-          className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-echec-froid"
+          className="mesure ml-auto px-1 text-[10.5px] text-encre-4 hover:text-echec"
         >
           tout retirer
         </button>
@@ -148,8 +155,8 @@ export function Reinjections({
 }) {
   if (reinjections.length === 0) return null
   return (
-    <div className="flex items-center gap-2 border-b border-bord bg-fond-1 px-4 pt-3">
-      <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+    <div className="flex items-center gap-2 border-b border-trait bg-carte px-4 pt-3">
+      <span className="mesure text-[10.5px] tracking-[.14em] text-encre-4 uppercase">
         Repart avec
       </span>
       <div className="flex flex-wrap items-center gap-2">
@@ -194,7 +201,7 @@ function UneReinjection({
   const visee = useVisee(connu ? sujetAsset(connu) : null)
   return (
     <span
-      className="flex items-center gap-1.5 rounded-[2px] border border-bord bg-fond-2 py-1 pr-1 pl-1"
+      className="flex items-center gap-1.5 rounded-5 border border-contour bg-carte py-1 pr-1 pl-1"
       onPointerEnter={visee.entrer}
       onPointerLeave={visee.sortir}
     >
@@ -208,7 +215,7 @@ function UneReinjection({
           // fichier entier — c'est ce qu'Espace doit ouvrir.
           src={vignetteAsset(connu, 256)}
           alt=""
-          className="damier h-6 w-6 object-contain"
+          className="damier-papier h-6 w-6 rounded-5 object-contain"
           style={{ imageRendering: "pixelated" }}
         />
       )}
@@ -216,7 +223,7 @@ function UneReinjection({
         aria-label="Rôle de la réinjection"
         value={role}
         onChange={(e) => onRole(asset, e.target.value as Role)}
-        className="mesure bg-transparent text-[10px] text-texte-2"
+        className="mesure bg-transparent text-[10.5px] text-encre-2"
       >
         <option value="reference">référence</option>
         <option value="edition">source d'édition</option>
@@ -226,7 +233,7 @@ function UneReinjection({
         type="button"
         onClick={() => onRetirer(asset)}
         aria-label="Retirer la réinjection"
-        className="mesure px-1 text-[10px] text-texte-3 hover:text-echec-froid"
+        className="mesure px-1 text-[10.5px] text-encre-4 hover:text-echec"
       >
         ×
       </button>
@@ -293,15 +300,15 @@ export function Grille({
       <div
         {...depot.props}
         {...NOMMEE}
-        className={`flex flex-1 flex-col items-center justify-center gap-3 p-4 ${cadreDepot(depot.survole)}`}
+        className={`flex flex-1 flex-col items-center justify-center gap-3 px-[30px] py-[22px] ${cadreDepot(depot.survole)}`}
       >
-        <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
+        <p className="max-w-[380px] text-center font-serif text-[25px] leading-tight text-encre-3">
           Rien ne répond à ce filtre.
         </p>
         <button
           type="button"
           onClick={onRetirerFiltre}
-          className="mesure text-[11px] text-signal-froid hover:text-signal-froid-clair"
+          className="mesure text-[11px] text-signal hover:opacity-70"
         >
           Retirer le filtre ›
         </button>
@@ -310,10 +317,10 @@ export function Grille({
       <div
         {...depot.props}
         {...NOMMEE}
-        className={`flex flex-1 items-center justify-center p-4 ${cadreDepot(depot.survole)}`}
+        className={`flex flex-1 items-center justify-center px-[30px] py-[22px] ${cadreDepot(depot.survole)}`}
       >
-        <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
-          Rien n'est encore sorti d'ici. <em className="text-texte-2">Écris.</em>
+        <p className="max-w-[380px] text-center font-serif text-[25px] leading-tight text-encre-3">
+          Rien n'est encore sorti d'ici. <em className="text-encre">Écris.</em>
         </p>
       </div>
     )
@@ -323,10 +330,10 @@ export function Grille({
     <div
       {...depot.props}
       {...NOMMEE}
-      className={`defile min-h-0 flex-1 overflow-y-auto p-4 ${cadreDepot(depot.survole)}`}
+      className={`defile min-h-0 flex-1 overflow-y-auto px-[30px] py-[22px] ${cadreDepot(depot.survole)}`}
     >
       <div
-        className="grid gap-[9px]"
+        className="grid gap-[14px]"
         style={{
           gridTemplateColumns: `repeat(auto-fill, minmax(${CRANS[zoom]}px, 1fr))`,
         }}
@@ -391,14 +398,16 @@ function autresDuLot(entrees: Entree[], entree: Entree): number {
  *  produit où l'on juge : un calque par-dessus les images cacherait ce qu'on
  *  est en train de regarder au moment précis où l'on décide où déposer. Le
  *  `--signal` posé en `inset` dit « ici » sans rien recouvrir, et il ne déplace
- *  rien — un `outline` ne prend pas de place dans la mise en page.
+ *  rien — un `outline` ne prend pas de place dans la mise en page. **Le rouille
+ *  du papier depuis `D3`**, et c'est le même trait que celui du dépôt sur la
+ *  planche `Galerie.dc.html`.
  *
  *  Écrit une fois pour les trois états de la grille : pleine, filtrée à vide,
  *  et vide. Une bibliothèque vide est très exactement le moment où l'on fait
  *  entrer sa première image, et une surface qui n'accepterait le dépôt qu'une
  *  fois pleine serait fermée quand elle sert le plus. */
 const cadreDepot = (survole: boolean) =>
-  survole ? "outline outline-1 -outline-offset-1 outline-signal-froid" : ""
+  survole ? "outline outline-1 -outline-offset-1 outline-signal" : ""
 
 /** La grille se nomme, dans ses trois états.
  *
@@ -416,8 +425,16 @@ const NOMMEE = { role: "region", "aria-label": "Grille des images" } as const
 // Le padding de la zone centrale et la gouttière de la grille, `docs/DESIGN.md`
 // § Spacing. Ils servent à répondre à une seule question : **combien de tuiles
 // de ce cran tiennent côte à côte ?**
-const PADDING = 16
-const GOUTTIERE = 9
+//
+// **Les deux valeurs déclarées, depuis `D3`** : 30 est la marge de la surface,
+// 14 sa gouttière — les deux nombres que le § Spacing écrit noir sur blanc. Le
+// châssis sombre y mettait 16 et 9, qui ne sont dans aucune des listes fermées ;
+// la planche `Galerie.dc.html` dessine 24/30 de marge et 9 de gouttière, et
+// c'est la valeur déclarée qui l'emporte quand les deux disent presque la même
+// chose. Ils doivent rester d'accord avec les classes de la grille juste
+// au-dessus : c'est cette égalité-là qui rend vrai le grisé du zoom.
+const PADDING = 30
+const GOUTTIERE = 14
 
 // **Le plafond de la grille** (B3), identique à `PAR_DEFAUT` côté serveur
 // (`atelier/services/bibliotheque.py`). « Charger la suite » ne fait que le
@@ -547,7 +564,7 @@ export function useGalerie({
   // du zoom mentirait sans que rien ne le dise.
   //
   // **Trois moments, et il n'y en a pas d'autre** : au montage, quand la fenêtre
-  // change de taille, et quand la transition de 160 ms sur les colonnes s'achève
+  // change de taille, et quand la transition de 220 ms sur les colonnes s'achève
   // — c'est-à-dire quand un panneau s'est replié ou que la fiche s'est ouverte.
   // Mesurer au moment où l'on replie donnerait la largeur d'**avant** : la
   // transition n'a pas commencé, et c'est l'arrivée qui compte.
@@ -575,8 +592,8 @@ export function useGalerie({
   // lieu de s'y ajouter. Vu au navigateur, jamais au banc, parce qu'une main
   // humaine met plus d'un rendu entre deux clics.
   //
-  // La déduire tient aussi la promesse de `docs/DESIGN.md` : l'anneau
-  // `--lumiere` dit « sélectionné », et il n'a plus qu'un seul sens.
+  // La déduire tient aussi la promesse de `docs/DESIGN.md` : le liseré rouille
+  // d'une tuile dit « sélectionné », et il n'a plus qu'un seul sens.
   const fiche = selection.length === 1 ? selection[0] : null
 
   // ── La grille ─────────────────────────────────────────────────────────────
@@ -862,7 +879,7 @@ export function useGalerie({
                     )
                   setFente(null)
                 }}
-                className="underline underline-offset-2 hover:text-texte"
+                className="underline underline-offset-2 hover:text-encre"
               >
                 les rendre
               </button>
@@ -1099,11 +1116,12 @@ export function Galerie({
     zoomRendu,
   } = g
 
-  /* Quatre colonnes, largeurs absolues, et 160 ms sur la largeur quand
-      l'une se replie ou que la fiche s'ouvre — `docs/DESIGN.md` § Motion,
-      « tu n'as pas perdu ta place ». Les panneaux restent montés : replier
-      n'est pas fermer, et retrouver un panneau où on l'avait laissé fait
-      partie de ce que le mouvement promet.
+  /* Quatre colonnes, largeurs absolues, et 220 ms sur la largeur quand
+      l'une se replie ou que la fiche s'ouvre — la durée du § Motion pour
+      « un volet entre ou sort », depuis `D3` : 160 ms n'était dans aucune
+      des quatre. Les panneaux restent montés : replier n'est pas fermer, et
+      retrouver un panneau où on l'avait laissé fait partie de ce que le
+      mouvement promet.
 
       **Chaque case est `flex`, et c'est ce qui borne le panneau qu'elle
       porte** — `docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Six
@@ -1134,11 +1152,16 @@ export function Galerie({
 
   return (
       <main
-        className="grid min-h-0"
+        /* **Le papier commence ici** (`D3`). La galerie est posée dans une case
+           d'`App.tsx` qui porte encore le fond de l'ancien châssis ; elle peint
+           donc sa propre surface plutôt que d'attendre que `D6` fasse tomber
+           celui du dessous — sans quoi la grille du carnet flotterait sur du
+           presque-noir. */
+        className="grid min-h-0 bg-papier"
         onTransitionEnd={mesurerCentre}
         style={{
           gridTemplateColumns: colonnes,
-          transition: "grid-template-columns 160ms ease-in-out",
+          transition: "grid-template-columns 220ms var(--ease-entree)",
         }}
       >
         <div className="flex min-h-0 overflow-hidden">
@@ -1238,35 +1261,44 @@ export function Galerie({
           />
           )}
 
-          {/* **La grille dit quand elle est coupée** (B3). Elle s'arrêtait à
-              200 images sans le dire, et l'auteur croyait avoir tout vu — une
-              liste tronquée qui ne le dit pas ment en silence (`docs/DESIGN.md`
-              § Les six règles, 6). Absent tant que tout ce qui répond au
-              filtre est déjà montré. */}
-          {totalGrille !== null && grille.length < totalGrille && (
-            <p className="mesure flex h-[26px] shrink-0 items-center gap-1.5 border-t border-bord px-4 text-[10px] text-texte-3">
-              <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
-              {`${grille.length} montrées sur ${totalGrille}`}
-              <button
-                type="button"
-                onClick={chargerLaSuiteGrille}
-                className="mesure ml-auto text-[10px] text-signal-froid hover:text-signal-froid-clair"
-              >
-                Charger la suite ›
-              </button>
-            </p>
-          )}
+          {/* **Un seul pied, deux faits, et c'est le dessin de la planche**
+              (`D3`, `Galerie.dc.html`) : à gauche ce que la grille montre et ce
+              qu'elle cache, à droite le rappel qu'on ne paie pas ici. Le châssis
+              sombre en faisait deux bandes de 26 px empilées, chacune avec son
+              trait — deux traits pour un seul pied, quand « le trait sépare des
+              panneaux, pas des lignes » (`docs/DESIGN.md` § Les traits).
 
-          {/* **Le pied de la galerie dit qu'aucun appel ne part d'ici** (E4).
-              De quoi savoir d'un coup d'œil dans quelle moitié du produit on se
+              À gauche, **la grille dit quand elle est coupée** (B3). Elle
+              s'arrêtait à 200 images sans le dire, et l'auteur croyait avoir
+              tout vu — une liste tronquée qui ne le dit pas ment en silence
+              (§ Les six règles, 6). Absent tant que tout ce qui répond au filtre
+              est déjà montré, et la moitié droite reste alors seule.
+
+              À droite, **le pied dit qu'aucun appel ne part d'ici** (E4). De
+              quoi savoir d'un coup d'œil dans quelle moitié du produit on se
               trouve : ici on juge et on range, on ne paie jamais. La phrase
               tient la place de la barre qui paie, et c'est son absence qui est
-              le message — la même règle que la barre d'état d'une table. */}
-          <p className="mesure flex h-[26px] shrink-0 items-center gap-1.5 border-t border-bord px-4 text-[10px] text-texte-3">
-            <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
-            aucun appel ne part d'ici — on paie depuis le codex et depuis
-            l'établi d'une chose du jeu
-          </p>
+              le message. */}
+          <div className="flex shrink-0 items-center justify-between gap-[22px] border-t border-trait px-[30px] py-[14px] text-[12.5px] text-encre-3">
+            {totalGrille !== null && grille.length < totalGrille ? (
+              <span className="mesure flex items-center gap-2 text-[11px] text-encre-4">
+                {`${grille.length} montrées sur ${totalGrille}`}
+                <button
+                  type="button"
+                  onClick={chargerLaSuiteGrille}
+                  className="mesure text-[11px] text-signal hover:opacity-70"
+                >
+                  Charger la suite ›
+                </button>
+              </span>
+            ) : (
+              <span />
+            )}
+            <span className="text-right">
+              aucun appel ne part d'ici — on paie depuis le codex et depuis
+              l'établi d'une chose du jeu
+            </span>
+          </div>
         </section>
 
         <div className="flex min-h-0 overflow-hidden">

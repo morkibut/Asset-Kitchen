@@ -426,6 +426,14 @@
       "port": 8498
     },
     {
+      "name": "atelier-jetable-verif-d3",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_verif_d3.py"
+      ],
+      "port": 8500
+    },
+    {
       "name": "atelier-jetable-d5",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [

@@ -1076,6 +1076,7 @@ export function Jauge({
   attendue,
   compteur = true,
   seuil = 0,
+  papier = false,
 }: {
   /** L'instant du départ, en secondes Unix. `null` — pas encore parti. */
   demarreLe: number | null
@@ -1085,6 +1086,10 @@ export function Jauge({
   compteur?: boolean
   /** Sous cette durée, la jauge ne paraît pas du tout. En secondes. */
   seuil?: number
+  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
+   *  comme sur `Bouton`, `Libelle`, `Raison`, `Segments` et `Curseur` — posé en
+   *  `D3` pour la tuile de la galerie, qui porte la jauge sur du papier. */
+  papier?: boolean
 }) {
   const ecoule = useEcoule(demarreLe)
 
@@ -1096,13 +1101,19 @@ export function Jauge({
   return (
     <>
       {compteur && (
-        <span className="mesure text-[8.5px] text-texte-2">
+        <span
+          className={
+            papier ? "mesure text-[10.5px] text-papier" : "mesure text-[8.5px] text-texte-2"
+          }
+        >
           {enAttente ? "en file" : `${secondes(ecoule)} / ~${secondes(attendue)}`}
         </span>
       )}
-      <span className="block h-[2px] w-full overflow-hidden bg-bord">
+      <span
+        className={`block h-[2px] w-full overflow-hidden ${papier ? "bg-contour" : "bg-bord"}`}
+      >
         <span
-          className="block h-full bg-signal-froid transition-[width] duration-[240ms] ease-linear"
+          className={`block h-full transition-[width] duration-[240ms] ease-linear ${papier ? "bg-signal" : "bg-signal-froid"}`}
           style={{ width: `${part(ecoule, attendue, enAttente) * 100}%` }}
         />
       </span>

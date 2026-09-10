@@ -13,8 +13,24 @@
 // portera) : l'image ne se glisse donc pas à côté de son attente, elle la
 // remplace. C'est ce qui rend vraie, sans machinerie, la phrase du design.
 //
-// Rayon 0, aucune ombre : le bord de la tuile et le bord du sprite sont la même
-// sorte de ligne, et la grille se lit comme une planche contact.
+// **Dessinée sur le papier depuis `D3`** (11 septembre 2026), d'après
+// `docs/pistes-2026-09-04/carnet/Galerie.dc.html` :
+//
+// - **arrondi 5**, celui que la planche donne à toutes ses vignettes. Le châssis
+//   sombre tenait le rayon 0 — « le bord de la tuile et le bord du sprite sont
+//   la même sorte de ligne » — et l'argument ne survit pas au papier : sur un
+//   fond clair, c'est le pourtour neutre qui sépare l'image de la page, pas
+//   l'angle vif ;
+// - **derrière l'image, `--pourtour`** — le gris neutre à 15 % de réflectance,
+//   « derrière une image, et nulle part ailleurs » ;
+// - **le damier là où il veut dire quelque chose** : une image détourée montre
+//   sa transparence, une image encore brute montre le gris. C'est la règle des
+//   onze pièces prise au mot — *le damier dit transparent, le gris dit pas
+//   encore détouré* —, et le châssis sombre damait les deux sans distinction ;
+// - **le liseré rouille pour ce qui est choisi**, posé en `outline` intérieur,
+//   comme `.tuile-on` sur la planche.
+//
+// Aucune ombre : la grille se lit toujours comme une planche contact.
 
 import { useEffect, useState } from "react"
 import {
@@ -128,6 +144,12 @@ export function Tuile({
    *  l'extraction n'a pas pu se faire — le décodeur manque —, la tuile dit
    *  pourquoi et reste une tuile ordinaire. Le clip, lui, reste payé. */
   const clip = lot?.clip ?? null
+  /** **Le damier ne se pose que sur ce qui est détouré** (`D3`). Sans passe de
+   *  détourage, l'image est celle qui est arrivée du fournisseur : elle est
+   *  opaque, et le damier promettrait alors une transparence qui n'existe pas.
+   *  Elle se juge donc sur `--pourtour`, le gris neutre, comme la planche la
+   *  dessine. */
+  const detouree = asset !== null && asset.recette.passes.length > 0
   const clipArrive =
     clip !== null && (entree.sorte === "clip" || emplacement?.statut === "reussie")
   const clipEnImages = clipArrive && clip.images > 0
@@ -190,11 +212,12 @@ export function Tuile({
         // sur la voisine. Mesuré au navigateur le 31 août 2026. La tuile est
         // désormais bornée par sa colonne, et c'est à son contenu de tenir
         // dedans.
-        "arrivee relative flex min-w-0 flex-col border",
-        rate ? "border-echec-froid/45 bg-echec-froid/5" : "border-bord bg-fond-2",
-        // L'anneau du sélectionné — « la lampe de la table », `docs/design-motifs.md`
-        // § La tuile. Aucune couleur de plus dans la grille.
-        selectionnee ? "shadow-[0_0_0_2px_var(--color-lumiere)]" : "",
+        "arrivee relative flex min-w-0 flex-col overflow-hidden rounded-5 border",
+        rate ? "border-trait-echec bg-fond-echec" : "border-trait bg-carte",
+        // Le liseré du sélectionné — `.tuile-on` de `Galerie.dc.html` : deux
+        // pixels de rouille posés **à l'intérieur** du bord, donc rien n'est
+        // déplacé dans la grille. Aucune couleur de plus ici.
+        selectionnee ? "outline-2 -outline-offset-2 outline-signal" : "",
       ].join(" ")}
     >
       {/* **Deux noms pour deux surfaces, jamais le même deux fois.** L'image et
@@ -223,7 +246,9 @@ export function Tuile({
           if (attend && lot && emplacement) onChoisir(lot.identifiant, emplacement.rang)
         }}
         aria-label={attend ? "Ouvrir la planche" : "Ouvrir la fiche"}
-        className="relative aspect-square w-full cursor-pointer overflow-hidden disabled:cursor-default"
+        className={`relative aspect-square w-full cursor-pointer overflow-hidden disabled:cursor-default ${
+          detouree ? "damier-papier" : "bg-pourtour"
+        }`}
       >
         {source && !(clipEnImages && survolee) && (
           <img
@@ -236,7 +261,7 @@ export function Tuile({
             // 3,8 s — en local, sans réseau.
             loading="lazy"
             decoding="async"
-            className="damier h-full w-full object-contain"
+            className="h-full w-full object-contain"
             style={{ imageRendering: "pixelated" }}
           />
         )}
@@ -258,6 +283,7 @@ export function Tuile({
             <Jauge
               demarreLe={emplacement.demarre_le}
               attendue={emplacement.duree_attendue_s}
+              papier
             />
           </div>
         )}
@@ -271,8 +297,8 @@ export function Tuile({
         {asset?.favori && <CoinFavori />}
       </button>
 
-      <figcaption className="flex min-h-[38px] flex-col justify-center gap-[3px] border-t border-bord px-2 py-1.5">
-        <span className="truncate text-[11.5px] text-texte" title={titre}>
+      <figcaption className="flex min-h-[34px] flex-col justify-center gap-[4px] border-t border-trait px-2 py-1.5">
+        <span className="truncate text-[11.5px] text-encre" title={titre}>
           {titre}
         </span>
         {clipArrive && lot ? (
@@ -294,7 +320,7 @@ export function Tuile({
           <button
             type="button"
             onClick={() => onChoisir(lot.identifiant, emplacement.rang)}
-            className="mesure self-start text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
+            className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
           >
             Choisir ce qu'on garde
           </button>
@@ -302,14 +328,14 @@ export function Tuile({
           <button
             type="button"
             onClick={() => onRelancer(lot.identifiant, emplacement.rang)}
-            className="mesure self-start text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
+            className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
           >
             Relancer
           </button>
         ) : asset ? (
           <Mesures asset={asset} serree={serree} />
         ) : (
-          <span className="mesure text-[9.5px] text-texte-3">en attente</span>
+          <span className="mesure text-[10.5px] text-encre-4">en attente</span>
         )}
       </figcaption>
     </figure>
@@ -377,7 +403,7 @@ function PelliculeAuSurvol({
   return (
     <div
       aria-hidden
-      className="damier absolute inset-0"
+      className="absolute inset-0"
       style={{
         backgroundImage: `url(${api.contactDuClip(identifiant)})`,
         backgroundRepeat: "no-repeat",
@@ -405,7 +431,11 @@ function CoinDeLecture({ clip }: { clip: { images: number; cadence: number } }) 
   return (
     <span
       aria-hidden
-      className="mesure absolute bottom-1.5 left-1.5 flex items-center gap-1 bg-fond-0/82 px-1 py-px text-[8.5px] text-texte-2"
+      /* Le coin de lecture est **la seule marque sombre de la tuile**, et c'est
+         la planche qui le veut : un galet d'encre à 72 %, arrondi 8, écrit en
+         papier — il se pose sur l'image, jamais sur le châssis, et l'encre du
+         papier y serait illisible sur un sprite clair. */
+      className="mesure absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-8 bg-encre/72 px-1 py-px text-[10.5px] text-papier"
     >
       <svg width="6" height="7" viewBox="0 0 6 7" fill="currentColor">
         <polygon points="0,0 6,3.5 0,7" />
@@ -445,7 +475,7 @@ function CeQueLeClipDit({
   if (!clip) return null
   return (
     <>
-      <div className="mesure flex min-w-0 items-center gap-1.5 text-[11px] text-texte-2">
+      <div className="mesure flex min-w-0 items-center gap-1.5 text-[11px] text-encre-2">
         <span className="min-w-0 truncate">
           {clip.images > 0
             ? `${clip.images} images · ${clip.cadence.toFixed(0)} i/s`
@@ -469,7 +499,7 @@ function CeQueLeClipDit({
           type="button"
           onClick={onGarder}
           title="les autres quittent la galerie et restent au journal des dépenses"
-          className="mesure self-start text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
+          className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
         >
           Garder celui-ci · jeter {autresDuLot} autre
           {autresDuLot > 1 ? "s" : ""}
@@ -484,7 +514,7 @@ function CeQueLeClipDit({
           type="button"
           onClick={onDecouper}
           title="rien n'y dépense : le clip est déjà payé"
-          className="mesure self-start text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
+          className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
         >
           Découper ›
         </button>
@@ -496,8 +526,9 @@ function CeQueLeClipDit({
 /** Une tuile porte au maximum un nom et trois mesures. Au-delà, c'est la fiche
  *  qui prend le relais — c'est la règle qui empêche la grille de se charger.
  *
- *  **`--texte-2` et 11 px, et c'est la règle du projet qui l'impose** — corrigé
- *  le 31 août 2026. `--texte-3` était alors sous le seuil de lisibilité
+ *  **`--encre-2` et 11 px, et c'est la règle du projet qui l'impose** — corrigé
+ *  le 31 août 2026, sur `--texte-2` qui était alors l'encre courante du châssis
+ *  sombre. `--texte-3` était alors sous le seuil de lisibilité
  *  *délibérément*
  *  (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Typography), et la
  *  phrase qui l'autorisait disait à quelle
@@ -511,7 +542,7 @@ function Mesures({ asset, serree }: { asset: Asset; serree: boolean }) {
   return (
     <div
       data-mesures
-      className="mesure flex min-w-0 items-center gap-1.5 text-[11px] text-texte-2"
+      className="mesure flex min-w-0 items-center gap-1.5 text-[11px] text-encre-2"
     >
       {/* Les dimensions **du rendu** quand il y en a un : c'est l'image qu'on
           regarde, donc c'est elle qu'on mesure.
@@ -571,7 +602,7 @@ function Mesures({ asset, serree }: { asset: Asset; serree: boolean }) {
         onClick={(e) => e.stopPropagation()}
         title="télécharger le PNG"
         aria-label="télécharger le PNG"
-        className="ml-auto shrink-0 text-signal-froid hover:text-signal-froid-clair"
+        className="ml-auto shrink-0 text-signal hover:opacity-70"
       >
         {serree ? "↓" : "PNG ↓"}
       </a>
@@ -602,21 +633,24 @@ function Pastille({
   // inattendue ; qu'elle ait aussi été retouchée se lit dans sa fiche.
   const [mot, teinte] =
     emplacement?.statut === "interrompue"
-      ? ["interrompu", "text-epingle"]
+      ? ["interrompu", "text-encre-attention"]
       : asset?.parent_supprime
-        ? ["parent supprimé", "text-epingle"]
+        ? ["parent supprimé", "text-encre-attention"]
         : asset?.provenance === "agent"
-          ? // `--signal-clair`, nommé pour cet emploi au § Palette. Une
-            // troisième couleur de pastille aurait été une couleur de plus
-            // dans la grille ; celle-ci est déjà celle du survol du signal.
-            ["agent", "text-signal-froid-clair"]
+          ? // Le rouille, et c'est la seule fois qu'une pastille le porte : ce
+            // qu'un agent a posé se lit comme ce que le produit fait — et le
+            // rouille ne se pose ici qu'en encre, jamais en fond.
+            ["agent", "text-signal"]
           : asset?.epingle
-            ? ["réglé", "text-epingle"]
+            ? ["réglé", "text-encre-attention"]
             : [null, ""]
   if (!mot) return null
   return (
+    // **Une étiquette de papier posée sur l'image**, comme la marque *calque*
+    // de `Galerie.dc.html` : une carte claire plutôt qu'un voile sombre — le
+    // mot y garde sa couleur, et l'encre d'attention reste lisible.
     <span
-      className={`mesure absolute top-1.5 left-1.5 bg-fond-0/82 px-1 py-px text-[8.5px] ${teinte}`}
+      className={`mesure absolute top-1.5 left-1.5 rounded-5 bg-carte px-1 py-px text-[10.5px] ${teinte}`}
     >
       {mot}
     </span>
@@ -627,7 +661,7 @@ function CoinFavori() {
   return (
     <span
       aria-label="favori"
-      className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-signal-froid border-l-transparent"
+      className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-signal border-l-transparent"
     />
   )
 }
@@ -636,7 +670,7 @@ function CoinFavori() {
 function Raté({ raison }: { raison: string | null }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center p-3">
-      <p className="text-center text-[11.5px] leading-snug text-echec-froid">
+      <p className="text-center text-[11.5px] leading-snug text-echec">
         {raison ?? "échec sans raison connue"}
       </p>
     </div>
@@ -651,9 +685,10 @@ function Raté({ raison }: { raison: string | null }) {
  * payée — et l'état n'est pas subi, il attend un geste. Le bandeau se pose donc
  * **en bas**, sur un fond posé, et laisse la planche visible.
  *
- * En `--epingle`, comme « interrompu » et « réglé à la main » : arrêté à un
- * instant, que le système ne bougera pas tout seul, et que seul un geste de
- * l'auteur relance. C'est très exactement cette définition-là.
+ * **Le trio d'attention** — fond, trait, encre —, comme « interrompu » et
+ * « réglé à la main » depuis `D2` : arrêté à un instant, que le système ne
+ * bougera pas tout seul, et que seul un geste de l'auteur relance. C'est très
+ * exactement cette définition-là, et le carnet n'a pas de quatrième signal.
  */
 function Attend({ pliage }: { pliage: NonNullable<Generation["pliage"]> }) {
   const pleines = pliage.pleines?.length ?? 0
@@ -662,9 +697,9 @@ function Attend({ pliage }: { pliage: NonNullable<Generation["pliage"]> }) {
       ? `${pliage.surplus} de trop`
       : `${pleines} case${pleines > 1 ? "s" : ""} pleine${pleines > 1 ? "s" : ""}`
   return (
-    <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-fond-0/85 px-2 py-1">
-      <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
-      <span className="mesure truncate text-[9.5px] text-epingle">
+    <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 border-t border-trait-attention bg-fond-attention px-2 py-1">
+      <span aria-hidden className="inline-block h-px w-2 bg-encre-attention" />
+      <span className="mesure truncate text-[10.5px] text-encre-attention">
         {pliage.trouvees} sujets · {mot}
       </span>
     </div>
