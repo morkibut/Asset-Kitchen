@@ -553,6 +553,69 @@ def test_oublier_une_bande_laisse_le_clip_et_ses_images(client_video, clip):
     )
 
 
+def test_ecarter_le_clip_source_d_une_bande_ne_touche_pas_la_bande(
+    client_video, animateur
+):
+    """*Le sort d'un clip écarté, tranché.* (C5)
+
+    Deux planches du carnet se contredisaient sans qu'aucune tranche
+    n'arbitre : `Clip.dc.html` écrit qu'un clip écarté se rend quand on veut,
+    `Clips.dc.html` décrit un jeter définitif qui emporterait les bandes déjà
+    taillées dedans.
+
+    Le produit tranche pour la réversibilité, et ce n'était même pas à
+    décider ailleurs — `/api/clips/keep` (`A9`) pose déjà `jete` comme un
+    simple drapeau, jamais une suppression, et le journal des dépenses garde
+    un clip jeté au même titre qu'un clip gardé. Le seul angle que ces
+    essais-là ne couvraient pas est celui où les deux planches divergeaient
+    vraiment : une bande **déjà taillée** dans le clip qu'on écarte. Cet essai
+    le couvre — écarter ne la touche pas, et la rendre ne change rien de plus,
+    parce que rien n'était parti.
+    """
+    animateur.octets = clip_connu()
+    animateur.facture = 0.067
+    sprite = un_sprite(client_video)
+    personnage = un_personnage(client_video)
+    client_video.put(
+        f"/api/assets/{sprite}/character",
+        json={"personnage": personnage, "pose": "marche"},
+    )
+    lot = client_video.post(
+        "/api/clips",
+        json={
+            "modele": MELE.identifiant,
+            "mouvement": "marche",
+            "asset": sprite,
+            "nombre": 2,
+        },
+    ).json()["clips"]
+    for _ in range(300):
+        arrives = client_video.get("/api/clips").json()["clips"]
+        if arrives and all(c["statut"] == "reussie" for c in arrives):
+            break
+        client_video.get("/api/status")
+    garde, ecarte = [c["identifiant"] for c in lot]
+
+    # Une bande est taillée dans le clip qui va être écarté — le cas précis où
+    # `Clips.dc.html` promettait de la jeter avec lui.
+    bande = client_video.post(
+        "/api/strips", json={"clip": ecarte, "nom": "marche", "images": [0, 4, 8]}
+    ).json()
+
+    client_video.post("/api/clips/keep", json={"garde": garde, "jette": [ecarte]})
+
+    # Écartée, la bande est toujours là — au clip près, à l'identifiant près.
+    bandes = client_video.get("/api/strips", params={"clip": ecarte}).json()["bandes"]
+    assert [b["identifiant"] for b in bandes] == [bande["identifiant"]]
+
+    # La rendre ne change rien de plus : rien n'avait à revenir.
+    client_video.post("/api/clips/restore", json={"clips": [ecarte]})
+    bandes_apres = client_video.get(
+        "/api/strips", params={"clip": ecarte}
+    ).json()["bandes"]
+    assert bandes_apres == bandes
+
+
 # ── Ce qui sort est ce que l'aperçu montrait ────────────────────────────────
 
 
