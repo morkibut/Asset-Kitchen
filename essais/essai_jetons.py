@@ -27,11 +27,20 @@ dans le document sans qu'aucun écran s'en serve encore.
 
 **Et les tailles, dans les fichiers neufs seulement.** `docs/DESIGN.md` ferme
 cinq listes — les écarts, les hauteurs, les largeurs, les tailles de texte, les
-arrondis — et une sixième, les durées. Les quarante écrans d'avant les
-enfreignent tous, et les rouvrir un par un est le travail des tranches de la V4,
-pas d'un banc. Le garde-fou ne tient donc que `LES_FICHIERS_DU_CARNET`, et
-**cette liste grandit d'une tranche à l'autre** : c'est elle qui mesure
-l'avancement de la refonte.
+arrondis — et une sixième, les durées. Les écrans d'avant les enfreignent
+tous, et les rouvrir un par un est le travail des tranches de la V4, pas d'un
+banc. Le garde-fou ne tient donc que `LES_FICHIERS_DU_CARNET` aux listes
+fermées.
+
+**Et un troisième compte, ajouté en `C1` : ce qui reste à sortir.**
+`LES_FICHIERS_DU_CARNET` a mesuré l'avancement tant qu'il fallait l'agrandir ;
+il ne mesure plus ce qui reste, une fois qu'ajouter un fichier de plus n'y
+change presque rien. `LES_FICHIERS_DE_L_ANCIEN_CHASSIS` fait le sens inverse :
+elle nomme ce qui tourne **encore** sur l'ancien châssis, le banc l'imprime
+avec son compte de lignes, et chaque tranche de `docs/PLAN-carnet.md` § *La
+sortie de l'ancien châssis* en retire des noms. Le relevé du 10 septembre
+2026 partait de 33 fichiers ; le jour où cette liste est vide, elle disparaît
+avec `LES_FICHIERS_DU_CARNET` et le banc tient le dépôt entier.
 
 Il ne coûte rien : ni clé, ni réseau, ni atelier lancé, ni navigateur.
 
@@ -94,6 +103,62 @@ LES_FICHIERS_DU_CARNET = (
 # fichier reste couvert par le Sens 1 (`sources()` le scanne comme les
 # autres) : un jeton de couleur qu'il emploierait sans le déclarer serait
 # toujours refusé.
+
+# **Les fichiers de l'ancien châssis — ceux que la V4 n'a pas encore
+# retirés.** Le sens inverse de la liste ci-dessus : chaque tranche de
+# `docs/PLAN-carnet.md` § *La sortie de l'ancien châssis* (`C1` à `C9`) en
+# retire des noms, jamais l'inverse — un fichier ne rentre pas ici une fois
+# sorti. Deux pièces partagées entre l'ancien et le neuf n'y figurent pas,
+# `Infobulle.tsx` et `Apercu.tsx` : des écrans du carnet les montent déjà
+# (`GrilleDuJeu.tsx`, `PageDuSujet.tsx`, `Retouche.tsx`…), les retirer
+# casserait ce qui est déjà livré.
+LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
+    # C1 — les réglages : EcranReglages et Mouvements perdent leur dernière
+    # porte ; Secrets reste tant qu'Assistant.tsx le monte de son côté.
+    "interface/src/composants/EcranReglages.tsx",
+    "interface/src/composants/Secrets.tsx",
+    "interface/src/composants/Mouvements.tsx",
+    # C2 — l'univers et ses quatre côtés, plus l'assistant, doublon vrai de
+    # ReglesDuJeu.tsx.
+    "interface/src/composants/Univers.tsx",
+    "interface/src/composants/Toile.tsx",
+    "interface/src/composants/Tableau.tsx",
+    "interface/src/composants/Ambiances.tsx",
+    "interface/src/composants/Assistant.tsx",
+    # C3 — le codex.
+    "interface/src/composants/Codex.tsx",
+    # C4 — la galerie, écrite en clair dans App.tsx, et ce qu'elle monte.
+    "interface/src/composants/Arbre.tsx",
+    "interface/src/composants/BarreOutils.tsx",
+    "interface/src/composants/ChampPrompt.tsx",
+    "interface/src/composants/PanneauReglages.tsx",
+    "interface/src/composants/Fiche.tsx",
+    "interface/src/composants/FicheDuClip.tsx",
+    "interface/src/composants/Tuile.tsx",
+    "interface/src/composants/Import.tsx",
+    "interface/src/composants/Depliage.tsx",
+    # C5 — l'envoi, le clip, le montage.
+    "interface/src/composants/Envoi.tsx",
+    "interface/src/composants/Clip.tsx",
+    "interface/src/composants/Montage.tsx",
+    "interface/src/composants/Planche.tsx",
+    # C6 — l'établi d'un sujet, monté par PageDuSujet.tsx mais lui-même resté
+    # sur l'ancien châssis.
+    "interface/src/composants/Personnages.tsx",
+    "interface/src/composants/FicheChose.tsx",
+    "interface/src/composants/Vitrine.tsx",
+    "interface/src/composants/Calibrage.tsx",
+    "interface/src/composants/Calque.tsx",
+    # C7 — l'atelier d'une animation.
+    "interface/src/composants/AtelierDeBande.tsx",
+    # C8 — les dépenses, la découpe, la différence.
+    "interface/src/composants/Depenses.tsx",
+    "interface/src/composants/Decoupe.tsx",
+    "interface/src/composants/Superposition.tsx",
+    # C9 — la barre elle-même, et le réglage de palette qu'elle porte.
+    "interface/src/composants/BarreChassis.tsx",
+    "interface/src/composants/chassis.tsx",
+)
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────
 
@@ -351,6 +416,41 @@ def main() -> int:
     lignes.append(
         f"  {len(LES_FICHIERS_DU_CARNET)} fichiers du carnet tenus aux listes fermées."
     )
+    lignes.append("")
+
+    # ── Le compte de sortie ──────────────────────────────────────────────────
+    lignes.append("Le compte de sortie · ce qui tourne encore sur l'ancien châssis")
+    lignes.append("-" * 58)
+    total_lignes_anciennes = 0
+    manquants = []
+    for relatif in LES_FICHIERS_DE_L_ANCIEN_CHASSIS:
+        chemin = RACINE / relatif
+        if not chemin.exists():
+            manquants.append(relatif)
+            continue
+        compte = len(chemin.read_text(encoding="utf-8").splitlines())
+        total_lignes_anciennes += compte
+        lignes.append(f"    · {relatif} — {compte} lignes")
+    lignes.append("")
+    lignes.append(
+        f"  {len(LES_FICHIERS_DE_L_ANCIEN_CHASSIS)} fichiers encore sur l'ancien"
+        f" châssis, {total_lignes_anciennes} lignes au total."
+    )
+    lignes.append(
+        "  Départ du 10 septembre 2026 : 33 fichiers / 41 059 lignes. Ce chiffre ne"
+    )
+    lignes.append(
+        "  peut que descendre : `C2` à `C9` retirent des noms de la liste, jamais"
+    )
+    lignes.append("  l'inverse.")
+    if manquants:
+        lignes.append("")
+        lignes.append(
+            "  Fichiers déjà partis mais encore dans la liste — retire-les de"
+            " LES_FICHIERS_DE_L_ANCIEN_CHASSIS :"
+        )
+        for relatif in manquants:
+            lignes.append(f"    · {relatif}")
     lignes.append("")
 
     # ── Sens 1 ───────────────────────────────────────────────────────────────

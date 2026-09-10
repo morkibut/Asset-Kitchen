@@ -371,9 +371,15 @@ export function App() {
    *  vienne — comme les dépenses et les règles.
    *
    *  ⚠️ **`EcranReglages` n'a pas disparu pour autant** : il porte encore les
-   *  garde-fous de l'agent et la bibliothèque de mouvements, que `B15` ne
-   *  reprend pas, et cinq autres portes y mènent. Seul le pied du carnet
-   *  bascule ici ; l'écran neuf porte un lien nommé vers l'ancien panneau. */
+   *  garde-fous de l'agent, le dossier du jeu et la bibliothèque de
+   *  mouvements, que `B15` ne reprend pas. `C1` a basculé trois des cinq
+   *  portes qui y menaient sur ce lieu-ci. Les deux autres — les boutons
+   *  « Réglages » et l'état de la clé, tous deux dans la barre — restent sur
+   *  l'ancien panneau : une trentaine d'essais vérifient par le premier
+   *  l'agent, le dossier et les mouvements, et un essai tient le second
+   *  précisément sur `EcranReglages` ; aucun des deux réglages n'a de maison
+   *  neuve. Ils rejoignent le lien nommé que l'écran neuf porte lui-même vers
+   *  l'ancien panneau. */
   const installationOuverte = dans(pile, "installation")
   const setInstallationOuverte = (ouvert: boolean) =>
     setPile((p) =>
@@ -3419,7 +3425,7 @@ export function App() {
         onAller={
           refus?.geste === "Réessayer"
             ? redemanderCatalogue
-            : () => setReglagesOuverts(true)
+            : () => setInstallationOuverte(true)
         }
         revers={revers}
         provenance={
@@ -3555,7 +3561,7 @@ export function App() {
         }}
         onFermer={() => setChoixDuJeu(null)}
         onGuide={() => ouvrirGuide()}
-        onInstallation={() => setReglagesOuverts(true)}
+        onInstallation={() => setInstallationOuverte(true)}
         onErreur={setPanne}
       />
     )
@@ -3648,10 +3654,14 @@ export function App() {
         surCommencerUnJeu={() => setChoixDuJeu("creer")}
         surLaBarre={ouvrirBarre}
         surLeGuide={() => ouvrirGuide()}
-        /* **Le pied du carnet est la seule porte qui bascule sur le lieu neuf**
-           (`B15`). Les cinq autres mènent toujours à `EcranReglages`, qui porte
-           l'agent et les mouvements ; les repointer toutes aurait rendu l'agent
-           injoignable — la branche morte que `lieux.ts` raconte en tête. */
+        /* **Le pied du carnet ouvrait déjà le lieu neuf** (`B15`) ; `C1` a
+           basculé ici trois des cinq autres portes qui menaient encore à
+           `EcranReglages`. Restent trois chemins vers l'ancien panneau : les
+           boutons « Réglages » et l'état de la clé, tous deux dans la barre —
+           l'un tenu par une trentaine d'essais sur l'agent, le dossier et les
+           mouvements, l'autre par un essai qui vérifie qu'il mène au tiroir —,
+           et le lien que `Installation.tsx` porte lui-même. Aucun des trois
+           réglages qu'ils portent n'a de maison neuve. */
         surLInstallation={() => setInstallationOuverte(true)}
         atelierMuet={!liaison}
         cleAbsente={etat ? !etat.secrets.some((t) => t.pret) : false}
@@ -3712,11 +3722,23 @@ export function App() {
         tiroirs={etat?.secrets ?? null}
         // **Trois portes, une seule pièce** : ce mot-ci, l'étape « Les
         // fournisseurs » de l'assistant, et le bouton qui paie éteint mènent
-        // tous les trois au champ où la clé habite.
+        // tous les trois au champ où la clé habite. Reste sur l'ancien panneau
+        // pour la même raison que « Réglages » juste en dessous : un essai le
+        // tient déjà (« la barre du haut dit combien de fournisseurs sont
+        // prêts, et mène au tiroir »), et `Installation.tsx` n'a pas encore ce
+        // que `/install` doit lui rendre pour s'ouvrir sans casser dans ce
+        // contexte-là.
         onReglagesCle={() => setReglagesOuverts(true)}
         bascules={depensesOuvertes ? [] : bascules}
         onBasculer={(cle) => setReplies((r) => ({ ...r, [cle]: !r[cle] }))}
         fente={fente}
+        // **Ce bouton-ci reste sur l'ancien panneau, seul des cinq** : c'est
+        // le seul chemin, aujourd'hui testé par une trentaine d'essais, vers
+        // les garde-fous de l'agent, le dossier du jeu et les mouvements —
+        // ce qu'`Installation.tsx` ne reprend pas encore (voir la note sur
+        // `installationOuverte` plus haut). Le rediriger aurait rendu ces
+        // trois réglages introuvables en un clic, exactement ce que `B15`
+        // refusait déjà de faire.
         onReglages={() => setReglagesOuverts(true)}
         onGuide={() => ouvrirGuide()}
         // **La moitié du retour qui traverse les onglets.** Le bloc en route
@@ -4894,7 +4916,7 @@ export function App() {
             if (ou === "codex") setPile(poser("codex"))
             else if (ou === "univers") setPile(poser("univers"))
             else if (ou === "depenses") setDepensesOuvertes(true)
-            else if (ou === "reglages") setReglagesOuverts(true)
+            else if (ou === "reglages") setInstallationOuverte(true)
             else if (ou === "jeux") setChoixDuJeu("jeux")
             else setPile(poser("galerie"))
           }}
