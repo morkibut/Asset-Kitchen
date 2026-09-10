@@ -39,7 +39,7 @@ from atelier.domaine.projet import Collection, Projet
 
 # Change à chaque évolution du schéma. L'index est alors jeté et refait depuis
 # les fichiers : c'est le geste normal, pas un incident.
-VERSION = 11
+VERSION = 12
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS generations (
