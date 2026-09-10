@@ -25,23 +25,27 @@ une pièce pas encore dessinée, soit un jeton mort, et **seul un humain sait
 lequel**. Le carnet en déclare naturellement d'avance — l'étiquette verte est
 dans le document sans qu'aucun écran s'en serve encore.
 
-**Et les tailles, dans les fichiers neufs seulement.** `docs/DESIGN.md` ferme
-cinq listes — les écarts, les hauteurs, les largeurs, les tailles de texte, les
-arrondis — et une sixième, les durées. Les écrans d'avant les enfreignent
-tous, et les rouvrir un par un est le travail des tranches de la V4, pas d'un
-banc. Le garde-fou ne tient donc que `LES_FICHIERS_DU_CARNET` aux listes
-fermées.
+**Et les tailles.** `docs/DESIGN.md` ferme cinq listes — les écarts, les
+hauteurs, les largeurs, les tailles de texte, les arrondis — et une sixième,
+les durées. **Elles s'appliquent à `interface/src` en entier**, et c'est ce que
+`C9` a changé : jusque-là le banc tenait une **liste blanche**,
+`LES_FICHIERS_DU_CARNET`, et ne mesurait que les fichiers qu'on y avait
+inscrits. Une liste blanche se trompe toujours du même côté — un fichier neuf
+n'était tenu que si quelqu'un pensait à l'y ajouter, et personne ne voit qu'un
+nom manque.
+
+À sa place, `LA_GEOMETRIE_D_AVANT` : la même liste de fichiers, à l'envers. Le
+banc tient **tout**, sauf ce qu'elle nomme — les écrans dont la géométrie est
+encore celle du châssis sombre, 10 px de texte, arrondis de 2 px, durées de
+80 ms. Un fichier neuf est donc tenu d'office, et cette liste ne fait que
+maigrir : le banc dit lui-même quand un de ses noms est devenu propre.
 
 **Et un troisième compte, ajouté en `C1` : ce qui reste à sortir.**
-`LES_FICHIERS_DU_CARNET` a mesuré l'avancement tant qu'il fallait l'agrandir ;
-il ne mesure plus ce qui reste, une fois qu'ajouter un fichier de plus n'y
-change presque rien. `LES_FICHIERS_DE_L_ANCIEN_CHASSIS` fait le sens inverse :
-elle nomme ce qui tourne **encore** sur l'ancien châssis, le banc l'imprime
-avec son compte de lignes, et chaque tranche du bloc en retire des noms — le
-bloc, c'est `docs/PLAN-carnet.md` § *La sortie de l'ancien châssis*.
-Le relevé du 10 septembre
-2026 partait de 33 fichiers ; le jour où cette liste est vide, elle disparaît
-avec `LES_FICHIERS_DU_CARNET` et le banc tient le dépôt entier.
+`LES_FICHIERS_DE_L_ANCIEN_CHASSIS` nomme ce qui tourne **encore** sur le
+châssis sombre — sa couleur, pas sa géométrie —, le banc l'imprime avec son
+compte de lignes, et chaque tranche du bloc en retire des noms ; le bloc, c'est
+`docs/PLAN-carnet.md` § *La sortie de l'ancien châssis*. Le relevé du
+10 septembre 2026 partait de 33 fichiers.
 
 Il ne coûte rien : ni clé, ni réseau, ni atelier lancé, ni navigateur.
 
@@ -61,57 +65,71 @@ CSS = SRC / "index.css"
 
 # ── Ce que le garde-fou tient ───────────────────────────────────────────────
 
-# **Les fichiers du carnet — ceux que la V4 a déjà écrits.** Un fichier entre
-# ici le jour où sa tranche le livre, et il n'en sort jamais. Les autres écrans
-# tournent encore sur l'ancien châssis : les mesurer aux listes du carnet
-# rendrait quarante refus qu'on ne saurait pas traiter, et un garde-fou qu'on
-# désactive n'en est plus un.
-LES_FICHIERS_DU_CARNET = (
-    "interface/src/lieux.ts",
-    "interface/src/composants/Carnet.tsx",
-    "interface/src/composants/TableauDeBord.tsx",
-    "interface/src/composants/Ouverture.tsx",
-    "interface/src/composants/Barre.tsx",
-    "interface/src/composants/Guide.tsx",
-    "interface/src/composants/Famille.tsx",
-    "interface/src/composants/ReglagesDeFamille.tsx",
-    "interface/src/composants/PageDuSujet.tsx",
-    "interface/src/composants/ImagesDuSujet.tsx",
-    "interface/src/composants/AnimationsDuSujet.tsx",
-    "interface/src/composants/ReglesDuJeu.tsx",
-    "interface/src/composants/Installation.tsx",
-    "interface/src/composants/GrilleDuJeu.tsx",
-    "interface/src/composants/Comparer.tsx",
-    # B19 — le vestiaire : la page d'une pièce, celle d'un emploi, et ce qu'un
-    # sujet porte dans sa fiche.
-    "interface/src/composants/Emplois.tsx",
-    "interface/src/composants/Emploi.tsx",
-    "interface/src/composants/VestiaireDuSujet.tsx",
-    # B20 — les calques d'animation : le calque de la pose, reposé image par image
-    "interface/src/composants/CalquesAnimes.tsx",
-    "interface/src/composants/Retouche.tsx",
-    # B12 — l'essai : le quatrième onglet de la page d'un sujet, celui où le
-    # personnage se joue au clavier.
-    "interface/src/composants/EssaiDuSujet.tsx",
-    # B21 — la sortie : le seul écran d'où les fichiers du jeu s'en vont.
-    "interface/src/composants/Sortie.tsx",
-    # C8 — les dépenses, la découpe, la différence : les trois derniers écrans
-    # anciens indépendants. Les deux dernières sont montées depuis
-    # `Retouche.tsx`, déjà du carnet — c'était le piège de cette tranche,
-    # le même qu'en `C6` : l'écran conteneur avait l'air neuf, ce qu'il
-    # ouvrait par-dessus ne l'était pas.
-    "interface/src/composants/Depenses.tsx",
-    "interface/src/composants/Decoupe.tsx",
-    "interface/src/composants/Superposition.tsx",
+# **La géométrie d'avant — ce que le banc ne mesure pas encore aux listes
+# fermées de `docs/DESIGN.md`.** C'est la seule liste qui reste, et elle
+# remplace `LES_FICHIERS_DU_CARNET`, qui était une **liste blanche** : le banc
+# ne tenait alors que les fichiers qu'on y avait inscrits, et un écran neuf
+# passait au travers tant que personne ne pensait à l'y ajouter. Ici c'est
+# l'inverse — tout `interface/src` est tenu, sauf ces noms-là.
+#
+# Un nom n'y entre pas parce qu'il est vieux : il y entre parce qu'il écrit
+# aujourd'hui des tailles hors des six listes fermées — 10 px de texte,
+# arrondis de 2 px, durées de 80 ms, largeurs libres. Les rouvrir une à une est
+# un **dessin**, pas un renommage de jeton : c'est ce que `C5`, `C6` et `C7`
+# ont écrit chacun pour leur écran en le sortant du châssis sombre sans
+# toucher à sa géométrie. Le banc dit lui-même, plus bas, quand un de ces noms
+# est devenu propre — la liste ne fait que maigrir.
+LA_GEOMETRIE_D_AVANT = (
+    # Les trois qui ne sont pas des écrans. `api.ts` et `recette.ts` portent une
+    # couleur en clair chacun, et ce sont des **valeurs du domaine** — un fond
+    # de rendu, un blanc de référence —, pas des jetons de design : la règle
+    # « une couleur se déclare dans index.css » ne les vise pas, et le banc ne
+    # sait pas encore faire la différence.
+    "interface/src/api.ts",
+    "interface/src/recette.ts",
+    # `App.tsx` porte encore, en clair dans son JSX, le repli des réglages de la
+    # barre, l'écran de confirmation et la surface de repos de « Fabriquer une
+    # image ». Ils sortiront avec les fichiers qui les reprendront.
+    "interface/src/App.tsx",
+    # ── Les écrans encore sur le châssis sombre ──────────────────────────────
+    "interface/src/composants/Ambiances.tsx",
+    "interface/src/composants/Arbre.tsx",
+    "interface/src/composants/BarreEtat.tsx",
+    "interface/src/composants/BarreOutils.tsx",
+    "interface/src/composants/ChampPrompt.tsx",
+    "interface/src/composants/chassis.tsx",
+    "interface/src/composants/Depliage.tsx",
+    "interface/src/composants/EcranReglages.tsx",
+    "interface/src/composants/Fiche.tsx",
+    "interface/src/composants/FicheDuClip.tsx",
+    "interface/src/composants/Galerie.tsx",
+    "interface/src/composants/Import.tsx",
+    "interface/src/composants/PanneauReglages.tsx",
+    "interface/src/composants/Secrets.tsx",
+    "interface/src/composants/Tableau.tsx",
+    "interface/src/composants/Toile.tsx",
+    "interface/src/composants/Tuile.tsx",
+    "interface/src/composants/Univers.tsx",
+    # ── Sortis du châssis sombre, mais pas de sa géométrie ───────────────────
+    # `C5`, `C6` et `C7` l'ont écrit en toutes lettres : leurs jetons de couleur
+    # sont ceux du papier, leurs tailles sont celles d'avant.
+    "interface/src/composants/AtelierDeBande.tsx",
+    "interface/src/composants/Clip.tsx",
+    "interface/src/composants/Envoi.tsx",
+    "interface/src/composants/EtabliDuSujet.tsx",
+    "interface/src/composants/FicheChose.tsx",
+    "interface/src/composants/Montage.tsx",
+    "interface/src/composants/Mouvements.tsx",
+    "interface/src/composants/Planche.tsx",
+    "interface/src/composants/Vitrine.tsx",
+    "interface/src/composants/Calibrage.tsx",
+    "interface/src/composants/Calque.tsx",
+    # ── Les deux pièces partagées ────────────────────────────────────────────
+    # Des écrans du carnet les montent déjà, et des écrans d'avant aussi : elles
+    # ne peuvent changer de géométrie que le jour où les seconds sont partis.
+    "interface/src/composants/Apercu.tsx",
+    "interface/src/composants/Infobulle.tsx",
 )
-# `interface/src/recette.ts` (B26) n'entre pas ici : ce n'est pas un écran —
-# aucun rendu, aucune classe Tailwind — c'est le vocabulaire du domaine que
-# `Retouche.tsx` emprunte. Les listes fermées de `docs/DESIGN.md` § Spacing,
-# Typography, Layout, Motion décrivent ce qu'un écran a le droit d'écrire ;
-# elles n'ont rien à dire d'une fonction pure ou d'un état de la main. Le
-# fichier reste couvert par le Sens 1 (`sources()` le scanne comme les
-# autres) : un jeton de couleur qu'il emploierait sans le déclarer serait
-# toujours refusé.
 
 # **Les fichiers de l'ancien châssis — ceux que la V4 n'a pas encore
 # retirés.** Le sens inverse de la liste ci-dessus : chaque tranche de
@@ -146,7 +164,7 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # C3 — le codex : parti (`Codex.tsx`, retiré le 10 septembre 2026). Sa
     # colonne des familles était le carnet, sa grille celle d'une famille ;
     # créer une pièce d'équipement se fait depuis la fiche de qui la porte
-    # (`VestiaireDuSujet.tsx`, déjà dans `LES_FICHIERS_DU_CARNET`).
+    # (`VestiaireDuSujet.tsx`).
     # C4 — la galerie. **Elle est un fichier depuis le 10 septembre 2026** :
     # elle était écrite en clair dans `App.tsx`, et le banc ne la voyait donc
     # pas — ni sa grille, ni sa cible, ni ses réinjections, ni la barre d'état
@@ -179,7 +197,7 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # jetons sont ceux du papier ; `Bouton`, `Libelle`, `Raison`, `Segments` et
     # `Curseur` de `chassis.tsx` portent pour ça un second habillage, additif,
     # derrière une prop `papier` — `chassis.tsx` lui-même reste ici, C9 le
-    # sortira. ⚠️ Ils ne rejoignent pas `LES_FICHIERS_DU_CARNET` : leurs tailles
+    # sortira. ⚠️ Ils restent dans `LA_GEOMETRIE_D_AVANT` : leurs tailles
     # restent celles de l'ancien châssis (10 px, 22 px, arrondis de 1 et 2 px…),
     # hors des listes fermées de `docs/DESIGN.md` — les rouvrir une à une est le
     # dessin qu'`Envoi.dc.html`, `Clip.dc.html` et `Animation-chaine.dc.html`
@@ -191,16 +209,15 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # renommé `EtabliDuSujet.tsx` plutôt que retiré : `EcranEtabli` et ses
     # fonctions pures (`faitesDeLaCase`, `posesTenues`…) restent employées par
     # `Fiche.tsx` et `Planche.tsx`. Comme `C5` : géométrie inchangée, ne
-    # rejoint pas `LES_FICHIERS_DU_CARNET`.
+    # reste dans `LA_GEOMETRIE_D_AVANT`.
     # C7 — l'atelier d'une animation : `AtelierDeBande.tsx` et
     # `Mouvements.tsx` sont sortis ensemble, le 10 septembre 2026. ⚠️ Comme
     # `C5` : les postes de la recette viennent déjà de `Retouche.tsx` (`B26`),
     # donc les moteurs étaient déjà neufs — seul le châssis autour l'était
-    # encore. Ils ne rejoignent pas `LES_FICHIERS_DU_CARNET` : leurs tailles
-    # restent celles de l'ancien châssis, pas encore ouvertes une à une contre
+    # encore. Ils restent dans `LA_GEOMETRIE_D_AVANT` : leurs tailles
+    # restent celles du châssis sombre, pas encore ouvertes une à une contre
     # les listes fermées de `docs/DESIGN.md`.
     # C9 — la barre elle-même, et le réglage de palette qu'elle porte.
-    "interface/src/composants/BarreChassis.tsx",
     "interface/src/composants/chassis.tsx",
 )
 
@@ -458,7 +475,8 @@ def main() -> int:
         f"  {len(declares)} jetons de couleur déclarés dans interface/src/index.css."
     )
     lignes.append(
-        f"  {len(LES_FICHIERS_DU_CARNET)} fichiers du carnet tenus aux listes fermées."
+        f"  {len(LA_GEOMETRIE_D_AVANT)} fichiers portent encore la géométrie d'avant,"
+        " et sont seuls hors des listes fermées."
     )
     lignes.append("")
 
@@ -522,15 +540,23 @@ def main() -> int:
         lignes.append("  Tous les noms de couleur employés sont déclarés.")
     lignes.append("")
 
-    for relatif in LES_FICHIERS_DU_CARNET:
-        chemin = RACINE / relatif
-        if not chemin.exists():
-            fautes.append(f"{relatif} — le fichier n'existe pas")
+    # **Tout `interface/src`, sauf la géométrie d'avant.** L'inverse de la
+    # liste blanche d'avant `C9` : un fichier neuf est tenu sans que personne
+    # ait eu à l'inscrire quelque part.
+    tenus = 0
+    devenus_propres = []
+    for chemin in sources():
+        relatif = chemin.relative_to(RACINE).as_posix()
+        trouvees = hors_des_listes(relatif, chemin.read_text(encoding="utf-8"))
+        if relatif in LA_GEOMETRIE_D_AVANT:
+            if not trouvees:
+                devenus_propres.append(relatif)
             continue
-        fautes.extend(hors_des_listes(relatif, chemin.read_text(encoding="utf-8")))
+        tenus += 1
+        fautes.extend(trouvees)
 
     hors = [f for f in fautes if f not in jetons_non_declares(declares, comptes, ou)]
-    lignes.append("Sens 1 bis · les listes fermées, dans les fichiers du carnet")
+    lignes.append("Sens 1 bis · les listes fermées, dans tout interface/src")
     lignes.append("-" * 58)
     if hors:
         lignes.append("")
@@ -538,9 +564,17 @@ def main() -> int:
             lignes.append(f"  HORS LISTE  {faute}")
     else:
         lignes.append(
-            "  Aucune couleur en clair, aucune taille, aucun arrondi, aucune durée"
+            f"  {tenus} fichiers tenus : aucune couleur en clair, aucune taille,"
         )
-        lignes.append("  hors des listes de docs/DESIGN.md.")
+        lignes.append("  aucun arrondi, aucune durée hors des listes de docs/DESIGN.md.")
+    if devenus_propres:
+        lignes.append("")
+        lignes.append(
+            "  Devenus propres — retire-les de LA_GEOMETRIE_D_AVANT, le banc les"
+            " tiendra :"
+        )
+        for relatif in devenus_propres:
+            lignes.append(f"    · {relatif}")
     lignes.append("")
 
     # ── Sens 2 ───────────────────────────────────────────────────────────────
@@ -567,9 +601,9 @@ def main() -> int:
         )
     else:
         lignes.append(
-            "  Rien à refuser. Le code n'écrit que ce que la liste déclare, et les"
+            "  Rien à refuser. Le code n'écrit que ce que la liste déclare, et tout"
         )
-        lignes.append("  fichiers du carnet tiennent dans les listes fermées.")
+        lignes.append("  interface/src tient dans les listes fermées, sauf la géométrie d'avant.")
     lignes.append(
         f"  {len(inemployes)} jeton(s) déclaré(s) et inemployé(s) — à lire, pas à corriger."
     )

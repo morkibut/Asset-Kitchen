@@ -2328,10 +2328,13 @@ retirer**.
 
 - **La pile de lieux est branchée pour de bon.** `lieux.ts` pilote la navigation par 34 appels
   à `setPile` ; les anciens booléens d'ouverture n'existent plus comme états, ce sont des
-  valeurs dérivées. Huit états restent hors pile, listés en `C9`.
-- **Les essais d'écran sont prêts.** Les 721 essais naviguent par `leLieu()`
-  (`App.test.tsx:3838`), écrite en `B0` **pour ce jour-ci** : *« la tranche qui les retire
-  casserait soixante et un essais d'un coup »*. Changer cette fonction seule bascule tout.
+  valeurs dérivées. Huit états restent hors pile — `C9` les a repris un par un et **les
+  laisse dehors**, avec la raison de chacun en tête de `lieux.ts`.
+- **Les essais d'écran sont prêts.** Les essais naviguent par `leLieu()`, écrite en `B0`
+  **pour ce jour-ci** : *« la tranche qui les retire casserait soixante et un essais d'un
+  coup »*. Le pari a tenu — `C9` a changé cette fonction seule, plus `ouverture()` à côté
+  d'elle, et les 620 essais d'`App.test.tsx` ont basculé sans qu'une assertion de contenu
+  bouge.
 - **Les planches existent.** Sur les écrans restants, presque tous ont déjà leur version
   papier dessinée. Trois n'en ont pas : l'assistant, l'import, le calibrage — elles se
   dessinent dans leur tranche, elles ne la bloquent pas.
@@ -2457,8 +2460,10 @@ créer d'équipement du tout.
 
 ### Critères d'acceptation
 
-- [ ] L'onglet *Codex* n'existe plus, `Codex.tsx` est parti.
-- [ ] Créer une pièce d'équipement se fait depuis un écran du carnet, et un essai le montre.
+- [x] L'onglet *Codex* n'existe plus, `Codex.tsx` est parti. ⚠️ Sa **surface de repos** est
+      restée jusqu'à `C9`, sous le nom *Créer* : c'est l'un des deux endroits d'où l'argent
+      part. Elle a maintenant sa ligne du carnet, *Fabriquer une image*.
+- [x] Créer une pièce d'équipement se fait depuis un écran du carnet, et un essai le montre.
 
 ### Bloquée par
 
@@ -2652,11 +2657,48 @@ La dernière, et elle ne peut être que la dernière.
 
 ### Critères d'acceptation
 
-- [ ] Aucun onglet dans le produit. Le carnet est le seul chemin.
-- [ ] `grep -r "ancien-" interface/src` ne rend rien.
-- [ ] `essais/essai_jetons.py` ne connaît plus de liste blanche, et passe.
-- [ ] Les 721 essais d'écran passent sans qu'aucune assertion de contenu ait changé.
+- [x] Aucun onglet dans le produit. Le carnet est le seul chemin. `BarreChassis.tsx` est
+      parti ; `EnTeteDeSurface.tsx` (34 px de papier) reprend ses six autres pièces — le fil,
+      la fente, le total, l'état des fournisseurs, les bascules, *Réglages · Guide*. Le rôle
+      `tab` survit dans six **bandeaux d'un écran** — les côtés de l'univers, les quatre
+      volets de la page d'un sujet, le filtre d'une famille : ce ne sont pas des lieux, c'est
+      un lieu vu de plusieurs côtés, et les planches les dessinent ainsi.
+- [x] `grep -r "ancien-" interface/src` ne rend rien. Les quatre jetons sont renommés
+      `signal-froid`, `signal-froid-clair`, `ok-froid`, `echec-froid` : le suffixe dit sur
+      quel châssis la couleur se pose, et non plus « pas encore repris ».
+- [x] `essais/essai_jetons.py` ne connaît plus de liste blanche, et passe.
+      `LES_FICHIERS_DU_CARNET` est remplacée par `LA_GEOMETRIE_D_AVANT`, la même liste à
+      l'envers : le banc tient **tout `interface/src`** sauf ce qu'elle nomme, un fichier
+      neuf est donc tenu d'office, et le banc dit lui-même quand un de ses noms est devenu
+      propre. 35 fichiers tenus, contre 25 inscrits avant.
+- [x] Les 1 168 essais passent, dont les 620 d'`App.test.tsx`. **Trois assertions de
+      navigation ont changé, aucune de contenu** : `leLieu()` désigne une ligne du carnet et
+      non plus un onglet ; `ouverture()` lit la racine sur le carnet (`data-racine`) parce
+      qu'il n'allume que la ligne la plus profonde ; et les deux essais qui mesuraient la
+      barre elle-même mesurent la bande qui la remplace (34 px au lieu de 44).
 - [ ] **Vérifié au navigateur, sur un second atelier** : aucun écran sombre nulle part.
+
+### Ce que la tranche a tranché, et pourquoi
+
+- **Une ligne de plus dans le carnet : *Fabriquer une image*.** La racine `codex` n'avait
+  plus qu'une porte, l'onglet *Créer*. Une racine sans ligne dans le carnet est injoignable —
+  la panne exacte que `B0` a payée sur `decoupeOuverte`.
+- **Les huit états d'ouverture restent hors de la pile**, et c'est écrit une fois pour toutes
+  en tête de `lieux.ts`. Repris un par un, les huit tombent sous le § *Ce qui n'est pas un
+  lieu* que `B0` a posé et que `B25` a confirmé : deux ne sont plus dans `App.tsx` (`C4` les a
+  descendus dans `Galerie.tsx`), deux sont des fenêtres posées sur l'écran, un est un repli
+  gardé par `usePli`, un est un volet de la page d'un sujet, et les deux derniers prennent la
+  fenêtre entière avant qu'un jeu soit ouvert. Les faire entrer aurait fait annoncer au fil
+  des étages qu'on n'a pas descendus.
+- **`racine()` garde sa signature, et change de sens.** Les quatre racines ne sont plus les
+  onglets mais les quatre lignes de racine du carnet ; `App.tsx` lit la racine telle quelle,
+  au lieu de la faire passer pour un onglet — le tableau de bord se disait « galerie ».
+  Renommer les genres `univers` et `codex` touchait soixante emplois sans rien changer de ce
+  que le produit fait.
+- **Le réglage `palette` de `EchantillonDeHauteur` est parti** : son seul appelant est sur le
+  papier depuis que l'assistant a quitté le dépôt en `C2`. ⚠️ **La prop `papier` de `Bouton`,
+  `Libelle`, `Raison`, `Segments` et `Curseur` reste**, et c'est un compromis assumé : dix-huit
+  écrans tournent encore sur le châssis sombre et la lisent. Elle part avec eux.
 
 ### Bloquée par
 
