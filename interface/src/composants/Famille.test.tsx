@@ -176,6 +176,7 @@ function Controle(props: {
   surReglages: () => void
   surAjouter: () => void
   surErreur: (r: string) => void
+  onOuvrir?: (identifiant: string) => void
 }) {
   const [glisses, setGlisses] = useState<readonly string[] | null>(null)
   return (
@@ -196,6 +197,7 @@ function Controle(props: {
       surReglages={props.surReglages}
       surAjouter={props.surAjouter}
       surErreur={props.surErreur}
+      onOuvrir={props.onOuvrir ?? (() => {})}
     />
   )
 }
@@ -210,6 +212,7 @@ function monter(surplus: { collection?: string | null; creerUnGroupe?: number } 
     surReglages: vi.fn(),
     surAjouter: vi.fn(),
     surErreur: vi.fn(),
+    onOuvrir: vi.fn(),
   }
   render(<Controle {...rappels} rafraichi={0} {...surplus} />)
   return { ...rappels, appels }
@@ -218,6 +221,11 @@ function monter(surplus: { collection?: string | null; creerUnGroupe?: number } 
 const grille = () => document.querySelector("[data-grille-de-sujets]") as HTMLElement
 const carte = (identifiant: string) =>
   document.querySelector(`[data-carte-de-sujet="${identifiant}"]`) as HTMLElement
+
+/** Le clic ouvre par défaut (B9 corrigé le 10 septembre 2026) : les essais de
+ *  sélection et de rangement entrent d'abord dans le mode dédié, exactement
+ *  comme le ferait quelqu'un qui veut ranger plusieurs sujets d'un coup. */
+const activerLaSelection = () => fireEvent.click(screen.getByRole("button", { name: "Sélection" }))
 
 const appelsDeFamille = (appels: { url: string }[]) =>
   appels.filter((a) => a.url.startsWith("/api/characters/families/"))
@@ -314,15 +322,31 @@ describe("la recherche et les filtres partent au serveur", () => {
   })
 })
 
-describe("la sélection", () => {
-  test("cliquer une carte la choisit, recliquer la déchoisit", async () => {
-    monter()
+describe("le clic ouvre par défaut", () => {
+  test("cliquer une carte hors du mode sélection ouvre le sujet, et ne le choisit pas", async () => {
+    const { onOuvrir } = monter()
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
 
     const bouton = carte("a")
     expect(bouton.getAttribute("aria-pressed")).toBe("false")
     fireEvent.click(bouton)
+    expect(onOuvrir).toHaveBeenCalledWith("a")
+    expect(bouton.getAttribute("aria-pressed")).toBe("false")
+    expect(document.querySelector("[data-barre-de-masse]")).toBeNull()
+  })
+})
+
+describe("la sélection", () => {
+  test("le bouton « Sélection » arme le mode : cliquer une carte la choisit, recliquer la déchoisit", async () => {
+    const { onOuvrir } = monter()
+    await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    activerLaSelection()
+
+    const bouton = carte("a")
+    expect(bouton.getAttribute("aria-pressed")).toBe("false")
+    fireEvent.click(bouton)
     expect(bouton.getAttribute("aria-pressed")).toBe("true")
+    expect(onOuvrir).not.toHaveBeenCalled()
     fireEvent.click(bouton)
     expect(bouton.getAttribute("aria-pressed")).toBe("false")
   })
@@ -330,6 +354,7 @@ describe("la sélection", () => {
   test("la barre de masse ne paraît qu'avec une sélection, et « Ne rien choisir » la vide", async () => {
     monter()
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    activerLaSelection()
 
     expect(document.querySelector("[data-barre-de-masse]")).toBeNull()
     fireEvent.click(carte("a"))
@@ -338,6 +363,17 @@ describe("la sélection", () => {
     expect(barre.closest("[data-barre-de-masse]")?.textContent).toContain("choisi")
 
     fireEvent.click(barre)
+    expect(document.querySelector("[data-barre-de-masse]")).toBeNull()
+  })
+
+  test("couper le mode sélection vide ce qui était choisi", async () => {
+    monter()
+    await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    activerLaSelection()
+    fireEvent.click(carte("a"))
+    expect(await screen.findByRole("button", { name: "Ne rien choisir" })).toBeTruthy()
+
+    activerLaSelection() // recliquer « Sélection » coupe le mode
     expect(document.querySelector("[data-barre-de-masse]")).toBeNull()
   })
 })
@@ -351,6 +387,7 @@ describe("le glisser-déposer", () => {
   test("glisser une carte non choisie ne fait porter le geste que sur elle", async () => {
     const { surGlisser } = monter()
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    activerLaSelection()
 
     fireEvent.click(carte("a")) // « a » est choisie…
     glisserDepuis(carte("c")) // …mais on attrape « c », qui ne l'est pas.
@@ -365,6 +402,7 @@ describe("le glisser-déposer", () => {
   test("la collection visée annonce « déjà + arrivants » pendant le survol", async () => {
     monter()
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    activerLaSelection()
 
     fireEvent.click(carte("a")) // déjà dans « Les boss »
     fireEvent.click(carte("c")) // pas dans « Les boss »
@@ -381,6 +419,7 @@ describe("le glisser-déposer", () => {
   test("un sujet déjà rangé ne compte pas dans les arrivants, et lâcher range chaque sujet puis relit la grille", async () => {
     const { appels, surRange } = monter()
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    activerLaSelection()
 
     fireEvent.click(carte("a")) // déjà dans « Les boss »
     fireEvent.click(carte("c")) // pas dans « Les boss »

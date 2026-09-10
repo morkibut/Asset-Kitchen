@@ -439,6 +439,7 @@ export function EcranFamille({
   surReglages,
   surAjouter,
   surErreur,
+  onOuvrir,
 }: {
   /** La clé de la famille : "personnages", "objets", "decors", "interface". */
   famille: string
@@ -478,6 +479,9 @@ export function EcranFamille({
   surReglages: () => void
   surAjouter: () => void
   surErreur: (raison: string) => void
+  /** Ouvrir la fiche du sujet — ce que le clic fait par défaut, hors du mode
+   *  sélection. */
+  onOuvrir: (identifiant: string) => void
 }) {
   const mots = motsDe(famille)
 
@@ -485,6 +489,12 @@ export function EcranFamille({
   const [filtre, setFiltre] = useState<FiltreDeFamille>("tous")
   const [limite, setLimite] = useState(120)
   const [vue, setVue] = useState<"grille" | "liste" | "poses">("grille")
+  /** **Le clic ouvre par défaut.** Ranger est un geste choisi, pas la
+   *  réponse au premier clic sur une carte : sans ce bouton, un clic pour
+   *  regarder un sujet le sélectionnait à la place de l'ouvrir. Couper le
+   *  mode vide la sélection — une sélection qu'on ne voit plus n'a plus de
+   *  sens. */
+  const [modeSelection, setModeSelection] = useState(false)
   const [selection, setSelection] = useState<string[]>([])
   const [donnee, setDonnee] = useState<GrilleDeFamille | null>(null)
   const [version, setVersion] = useState(0)
@@ -575,6 +585,25 @@ export function EcranFamille({
       avant.includes(identifiant) ? avant.filter((id) => id !== identifiant) : [...avant, identifiant],
     )
   }, [])
+
+  /** Couper le mode sélection referme aussi le panneau « Ranger dans… » et
+   *  vide ce qui était choisi — rouvrir le mode repart d'une page blanche. */
+  const basculerModeSelection = useCallback(() => {
+    setModeSelection((v) => !v)
+    setSelection([])
+    setRangerOuvert(false)
+  }, [])
+
+  /** Le clic sur une carte : ouvrir le sujet hors du mode sélection, le
+   *  choisir dedans. Un seul geste, deux sens selon le mode — jamais les
+   *  deux à la fois. */
+  const surClicDeCarte = useCallback(
+    (identifiant: string) => {
+      if (modeSelection) basculerChoix(identifiant)
+      else onOuvrir(identifiant)
+    },
+    [modeSelection, basculerChoix, onOuvrir],
+  )
 
   /** Ce que chaque collection du jeu gagnerait si on lâchait `ids` dessus.
    *
@@ -774,6 +803,20 @@ export function EcranFamille({
               Sans description <span className="mesure ml-[4px]">{filtres["sans-description"]}</span>
             </Onglet>
           </div>
+
+          <button
+            type="button"
+            aria-pressed={modeSelection}
+            onClick={basculerModeSelection}
+            className={[
+              "ml-auto flex h-[34px] shrink-0 items-center gap-[4px] rounded-7 border px-[14px] text-[13px] transition-colors duration-120",
+              modeSelection
+                ? "border-signal bg-ligne-ouverte text-signal"
+                : "border-trait bg-carte text-encre hover:border-contour",
+            ].join(" ")}
+          >
+            Sélection
+          </button>
         </div>
 
         {/* ── Nommer une collection sans rien avoir choisi ────────────────── */}
@@ -863,7 +906,7 @@ export function EcranFamille({
                 key={sujet.identifiant}
                 sujet={sujet}
                 choisi={selection.includes(sujet.identifiant)}
-                onChoisir={() => basculerChoix(sujet.identifiant)}
+                onChoisir={() => surClicDeCarte(sujet.identifiant)}
                 onPrendreEnMain={prendreEnMain(sujet.identifiant)}
                 onFinDeGlissement={finDeGlissement}
               />
@@ -881,7 +924,7 @@ export function EcranFamille({
                 key={sujet.identifiant}
                 sujet={sujet}
                 choisi={selection.includes(sujet.identifiant)}
-                onChoisir={() => basculerChoix(sujet.identifiant)}
+                onChoisir={() => surClicDeCarte(sujet.identifiant)}
                 onPrendreEnMain={prendreEnMain(sujet.identifiant)}
                 onFinDeGlissement={finDeGlissement}
               />

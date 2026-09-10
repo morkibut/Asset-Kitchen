@@ -4370,6 +4370,7 @@ export function App() {
             setNommer((n) => n + 1)
           }}
           surErreur={setPanne}
+          onOuvrir={setChoseOuverte}
         />
       )}
 
