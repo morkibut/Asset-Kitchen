@@ -14102,8 +14102,10 @@ describe("l'écran de confirmation", () => {
     expect(prix).toHaveLength(2)
     // La cochée est en doré — la couleur de tout écart du produit ; la décochée
     // garde son prix en gris : c'est ce qu'elle coûterait si on la rallumait.
-    expect(prix[0].className).toContain("text-epingle")
-    expect(prix[1].className).toContain("text-texte-3")
+    // (C5 : `Envoi.tsx` est passé aux jetons du papier — `text-epingle` y est
+    // devenu `text-encre-attention`, `text-texte-3` `text-encre-4`.)
+    expect(prix[0].className).toContain("text-encre-attention")
+    expect(prix[1].className).toContain("text-encre-4")
   })
 
   test("la palette cochée se compte dans les images, et le dit à leur place", async () => {

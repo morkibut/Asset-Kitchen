@@ -121,26 +121,26 @@ export function EcranPlanche({
   return (
     <div
       data-planche
-      className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_380px] bg-fond-0"
+      className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_380px] bg-papier"
     >
       {/* ── Les réglages ───────────────────────────────────────────────────
           Ce que l'atelier a décidé, montré et non modifiable : la grille se
           déduit du nombre de cases, et la changer casserait le rangement de ce
           qui revient. */}
-      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-bord p-4">
+      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-trait p-4">
         <div className="flex items-baseline gap-2">
-          <Libelle>la planche</Libelle>
+          <Libelle papier>la planche</Libelle>
           <button
             type="button"
             onClick={onFermer}
             title="Échap ramène à l'établi"
-            className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-texte"
+            className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-encre"
           >
             ‹ l'établi
           </button>
         </div>
 
-        {refus && <Raison texte={refus} />}
+        {refus && <Raison papier texte={refus} />}
 
         {lu && (
           <>
@@ -156,7 +156,7 @@ export function EcranPlanche({
               />
               {/* **Écrite par l'atelier, montrée, non modifiable** — avec sa
                   raison, comme tout ce qui est indisponible dans ce produit. */}
-              <p className="mesure pt-1 text-[9.5px] leading-4 text-texte-3">
+              <p className="mesure pt-1 text-[9.5px] leading-4 text-encre-4">
                 la grille se déduit du nombre de cases, et elle n'est pas
                 modifiable : c'est elle qui permet de découper le retour sans
                 deviner.
@@ -164,7 +164,7 @@ export function EcranPlanche({
                   <>
                     {" "}
                     La cible du jeu est{" "}
-                    <span className="text-texte-2">
+                    <span className="text-encre-3">
                       {lu.geometrie.cible_px} px
                     </span>{" "}
                     — un sujet revient {lu.geometrie.fois_la_cible} fois plus
@@ -179,12 +179,12 @@ export function EcranPlanche({
                 ni les artworks du jeu, ni les concept arts de la chose, ni le
                 dédoublonnage entre les trois. */}
             <section className="flex flex-col gap-1.5">
-              <Libelle>les images jointes</Libelle>
+              <Libelle papier>les images jointes</Libelle>
               <Mesure
                 nom="partent avec l'appel"
                 valeur={`${lu.jointes.total}`}
               />
-              <p className="mesure text-[9.5px] leading-4 text-texte-3">
+              <p className="mesure text-[9.5px] leading-4 text-encre-4">
                 {[
                   lu.jointes.gabarit
                     ? `${lu.jointes.gabarit} gabarit de grille`
@@ -222,9 +222,9 @@ export function EcranPlanche({
                 et un fichier entier du produit ne décrit qu'elle. L'écran, lui,
                 n'avait pas été rouvert. */}
             <section className="flex flex-col gap-1.5">
-              <Libelle>ce qui entre en bibliothèque</Libelle>
-              <p className="mesure text-[10px] leading-4 text-texte-3">
-                la planche <span className="text-texte-2">y entre</span>, et
+              <Libelle papier>ce qui entre en bibliothèque</Libelle>
+              <p className="mesure text-[10px] leading-4 text-encre-4">
+                la planche <span className="text-encre-3">y entre</span>, et
                 elle porte le prix de l'appel — ses {lu.geometrie.cases}{" "}
                 morceaux entrent à côté, chacun dans sa direction, sans prix
                 propre. Ce qui a été payé se regarde donc en entier : la feuille
@@ -235,12 +235,12 @@ export function EcranPlanche({
             {/* ── Ce que refaire coûte, nommé avant de lancer ────────────── */}
             {retenu === "refaire" && lu.deja_pleines.length > 0 && (
               <section className="flex flex-col gap-1.5">
-                <Libelle>ce que refaire coûte</Libelle>
-                <p className="mesure text-[10px] leading-4 text-texte-3">
+                <Libelle papier>ce que refaire coûte</Libelle>
+                <p className="mesure text-[10px] leading-4 text-encre-4">
                   {lu.deja_pleines.length} case
                   {lu.deja_pleines.length > 1 ? "s sont" : " est"} déjà pleine
                   {lu.deja_pleines.length > 1 ? "s" : ""} —{" "}
-                  <span className="text-texte-2">
+                  <span className="text-encre-3">
                     {lu.deja_pleines.join(" · ")}
                   </span>
                   . L'ancienne image ne disparaît pas : elle reste en
@@ -258,10 +258,10 @@ export function EcranPlanche({
         {lu && (
           <>
             <div className="flex items-baseline gap-2">
-              <h2 className="text-[13px] text-texte">
+              <h2 className="text-[13px] text-encre">
                 la planche de {lu.pose_nom}
               </h2>
-              <span className="mesure text-[10px] text-texte-3">
+              <span className="mesure text-[10px] text-encre-4">
                 {lu.geometrie.cases} case{lu.geometrie.cases > 1 ? "s" : ""}
                 {lu.deja_pleines.length > 0 &&
                   ` · ${lu.deja_pleines.length} déjà pleine${
@@ -278,7 +278,7 @@ export function EcranPlanche({
                   type="button"
                   onClick={onVitrine}
                   title="voir en grand ce qui est déjà fait, avant de le refaire"
-                  className="mesure ml-auto px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+                  className="mesure ml-auto px-1 text-[10px] text-signal hover:opacity-70"
                 >
                   la vitrine ›
                 </button>
@@ -286,11 +286,11 @@ export function EcranPlanche({
             </div>
 
             {lu.cases.length < 2 && (
-              <Raison texte="ce jeu ne déclare qu'une direction pour cette pose — il n'y a rien à plier, et un appel simple suffit" />
+              <Raison papier texte="ce jeu ne déclare qu'une direction pour cette pose — il n'y a rien à plier, et un appel simple suffit" />
             )}
 
             {/* ── Les cases, dans l'ordre de lecture de la grille ────────── */}
-            <ul className="flex flex-col border-t border-bord">
+            <ul className="flex flex-col border-t border-trait">
               {lu.cases.map((cellule) => (
                 <LigneDeCase
                   key={cellule.direction}
@@ -302,7 +302,7 @@ export function EcranPlanche({
 
             {/* ── Ce qu'on peut demander ─────────────────────────────────── */}
             <section className="flex flex-col gap-2">
-              <Libelle>ce qu'on peut demander</Libelle>
+              <Libelle papier>ce qu'on peut demander</Libelle>
               <ul className="flex flex-col">
                 {lu.choix.map((ligne) => (
                   <LigneDeChoix
@@ -318,9 +318,9 @@ export function EcranPlanche({
                   n'est pas un détail : elle explique pourquoi il n'y a qu'un
                   prix d'appel ici plutôt qu'un par nombre de cases. */}
               {lu.prix.mesure ? (
-                <p className="mesure text-[9.5px] leading-4 text-texte-3">
+                <p className="mesure text-[9.5px] leading-4 text-encre-4">
                   une planche coûte le prix d'{" "}
-                  <span className="text-texte-2">un appel</span>, quel que soit
+                  <span className="text-encre-3">un appel</span>, quel que soit
                   ce qu'elle porte : {dollars(lu.prix.prix)} en médiane sur{" "}
                   {lu.prix.appels} appels{" "}
                   {lu.prix.origine === "ici"
@@ -332,7 +332,7 @@ export function EcranPlanche({
                     <>
                       {" "}
                       Le prix est celui de{" "}
-                      <span className="text-texte-2">{lu.modele}</span>, le
+                      <span className="text-encre-3">{lu.modele}</span>, le
                       modèle de planche du jeu ; la barre qui paie garde celui
                       que vous y avez choisi.
                     </>
@@ -359,7 +359,7 @@ export function EcranPlanche({
                       à six cases : de {dollars(lu.banc.bas)} à{" "}
                       {dollars(lu.banc.haut)}, sans que le nombre de cases
                       explique l'écart —{" "}
-                      <span className="text-texte-2">
+                      <span className="text-encre-3">
                         deux appels identiques s'écartent plus que deux tailles
                         de planche
                       </span>
@@ -369,7 +369,7 @@ export function EcranPlanche({
                   )}
                 </p>
               ) : (
-                <p className="mesure text-[9.5px] leading-4 text-texte-3">
+                <p className="mesure text-[9.5px] leading-4 text-encre-4">
                   aucun appel de planche n'a encore été mesuré dans ce dépôt —
                   les prix restent inconnus plutôt que devinés.
                 </p>
@@ -378,8 +378,8 @@ export function EcranPlanche({
 
             {/* ── Ce qui part, et ce qu'un compte faux coûterait ─────────── */}
             {choix && (
-              <section className="flex flex-col gap-1.5 border-t border-bord pt-4">
-                <Bouton
+              <section className="flex flex-col gap-1.5 border-t border-trait pt-4">
+                <Bouton papier
                   principal
                   inactif={Boolean(choix.refus) || partantes.length === 0}
                   onClick={armer}
@@ -404,14 +404,14 @@ export function EcranPlanche({
                     treize du banc d'animation étaient refusées pour un sujet en
                     trop, soit 31 % des appels payés perdus sur un geste dont
                     c'est le régime normal. */}
-                <p className="mesure text-[9.5px] leading-4 text-texte-3">
+                <p className="mesure text-[9.5px] leading-4 text-encre-4">
                   armer pose la planche dans la barre qui paie, en bas : c'est
                   elle qui envoie, ici comme partout ailleurs. Un jet unique — le
                   modèle n'en rend pas deux. S'il revient{" "}
-                  <span className="text-texte-2">moins</span> de sujets que de
+                  <span className="text-encre-3">moins</span> de sujets que de
                   cases, rien n'entre et la planche entière se relance, au prix
                   plein ; s'il en revient{" "}
-                  <span className="text-texte-2">plus</span>, rien n'est jeté —
+                  <span className="text-encre-3">plus</span>, rien n'est jeté —
                   la planche s'ouvre avec ses sujets mesurés, et on écarte ceux
                   qu'on ne veut pas.
                 </p>
@@ -422,9 +422,9 @@ export function EcranPlanche({
       </section>
 
       {/* ── La matrice — on change de pose sans refermer ──────────────────── */}
-      <aside className="defile flex min-h-0 flex-col gap-1 overflow-y-auto border-l border-bord p-4">
-        <Libelle>sa matrice</Libelle>
-        <p className="mesure pb-1 text-[9.5px] leading-4 text-texte-3">
+      <aside className="defile flex min-h-0 flex-col gap-1 overflow-y-auto border-l border-trait p-4">
+        <Libelle papier>sa matrice</Libelle>
+        <p className="mesure pb-1 text-[9.5px] leading-4 text-encre-4">
           on change de pose sans refermer
         </p>
         <ul className="flex flex-col">
@@ -443,12 +443,12 @@ export function EcranPlanche({
                     className={[
                       "mesure flex h-[44px] w-full items-center gap-2 rounded-[2px] px-2 text-left text-[11px] transition-colors duration-[80ms]",
                       attitude.identifiant === pose
-                        ? "bg-fond-3 text-texte"
-                        : "text-texte-2 hover:bg-fond-2 hover:text-texte",
+                        ? "bg-carte text-encre"
+                        : "text-encre-3 hover:bg-carte hover:text-encre",
                     ].join(" ")}
                   >
                     <span className="flex-1 truncate">{attitude.nom}</span>
-                    <span className="text-[10px] text-texte-3">
+                    <span className="text-[10px] text-encre-4">
                       {faitesDeLaCase(case_)} / {case_?.demandees ?? 0}
                     </span>
                   </button>
@@ -468,8 +468,8 @@ export function EcranPlanche({
 function Mesure({ nom, valeur }: { nom: string; valeur: string }) {
   return (
     <div className="mesure flex h-[24px] items-center gap-2 text-[10px]">
-      <span className="flex-1 text-texte-3">{nom}</span>
-      <span className="text-texte">{valeur}</span>
+      <span className="flex-1 text-encre-4">{nom}</span>
+      <span className="text-encre">{valeur}</span>
     </div>
   )
 }
@@ -491,7 +491,7 @@ function LigneDeCase({
   part: boolean
 }) {
   return (
-    <li className="flex items-start gap-3 border-b border-bord py-2">
+    <li className="flex items-start gap-3 border-b border-trait py-2">
       <span
         aria-hidden
         title={
@@ -504,16 +504,16 @@ function LigneDeCase({
         className={[
           "mt-[3px] h-[9px] w-[9px] shrink-0 rounded-[1px]",
           part
-            ? "border border-dashed border-ancien-signal"
+            ? "border border-dashed border-signal"
             : cellule.pleine
-              ? "bg-texte-3"
-              : "border border-bord",
+              ? "bg-encre-4"
+              : "border border-trait",
         ].join(" ")}
       />
-      <span className="mesure w-[72px] shrink-0 text-[11px] text-texte">
+      <span className="mesure w-[72px] shrink-0 text-[11px] text-encre">
         {cellule.nom}
       </span>
-      <span className="mesure w-[86px] shrink-0 text-[10px] text-texte-3">
+      <span className="mesure w-[86px] shrink-0 text-[10px] text-encre-4">
         {cellule.pleine
           ? part
             ? "sera refaite"
@@ -522,14 +522,14 @@ function LigneDeCase({
               }`
           : "vide"}
       </span>
-      <span className="min-w-0 flex-1 text-[11px] leading-4 text-texte-2">
+      <span className="min-w-0 flex-1 text-[11px] leading-4 text-encre-3">
         {cellule.texte || (
-          <span className="text-texte-3">
+          <span className="text-encre-4">
             — pas de consigne : cette planche n'a qu'une case
           </span>
         )}
       </span>
-      <span className="mesure shrink-0 text-[9.5px] text-texte-3">
+      <span className="mesure shrink-0 text-[9.5px] text-encre-4">
         L{cellule.ligne + 1} C{cellule.colonne + 1}
       </span>
     </li>
@@ -562,29 +562,29 @@ function LigneDeChoix({
         className={[
           "mesure flex h-[26px] w-full items-center gap-2 rounded-[2px] px-2 text-left text-[10px] transition-colors duration-[80ms]",
           ligne.refus
-            ? "cursor-not-allowed text-texte-3"
+            ? "cursor-not-allowed text-encre-4"
             : retenu
-              ? "bg-fond-3 text-texte"
-              : "text-texte-2 hover:bg-fond-2 hover:text-texte",
+              ? "bg-carte text-encre"
+              : "text-encre-3 hover:bg-carte hover:text-encre",
         ].join(" ")}
       >
         <span className="flex-1 truncate">{ligne.quoi}</span>
         {/* **L'étayage à côté du prix**, jamais ailleurs : un gain annoncé sur
             une mesure unique est un gain encadré, pas un gain affirmé. */}
-        <span className="w-[92px] shrink-0 text-right text-texte-3">
+        <span className="w-[92px] shrink-0 text-right text-encre-4">
           {ligne.appels} appel{ligne.appels > 1 ? "s" : ""}
         </span>
         <span className="w-[64px] shrink-0 text-right">
           {ligne.mesure && ligne.cases > 0 ? dollars(ligne.prix) : "?"}
         </span>
-        <span className="w-[92px] shrink-0 text-right text-texte-3">
+        <span className="w-[92px] shrink-0 text-right text-encre-4">
           {ligne.mesure && ligne.cases > 0
             ? `${dollars(ligne.par_image)} l'image`
             : ""}
         </span>
       </button>
       {ligne.refus && (
-        <p className="mesure px-2 pb-1 text-[9.5px] leading-4 text-texte-3">
+        <p className="mesure px-2 pb-1 text-[9.5px] leading-4 text-encre-4">
           {ligne.refus}
         </p>
       )}

@@ -156,21 +156,30 @@ export function Raison({
   texte,
   ouAller,
   onAller,
+  papier = false,
 }: {
   texte: string | null
   ouAller?: string
   onAller?: () => void
+  /** L'écran qui l'emploie tourne sur le châssis clair (V4), pas sur l'ancien
+   *  châssis chaud et sombre — `docs/DESIGN.md` § Le papier. Additif : par
+   *  défaut, rien ne change pour les écrans qui ne le passent pas. */
+  papier?: boolean
 }) {
   if (!texte) return null
   return (
-    <p className="mesure mt-1 flex items-center gap-1.5 text-[10px] leading-4 text-texte-3">
-      <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
+    <p
+      className={`mesure mt-1 flex items-center gap-1.5 text-[10px] leading-4 ${
+        papier ? "text-encre-4" : "text-texte-3"
+      }`}
+    >
+      <span aria-hidden className={`inline-block h-px w-2 ${papier ? "bg-encre-4" : "bg-texte-3"}`} />
       <span>{texte}</span>
       {ouAller && onAller && (
         <button
           type="button"
           onClick={onAller}
-          className="text-ancien-signal hover:text-ancien-signal-clair"
+          className={papier ? "text-signal hover:opacity-70" : "text-ancien-signal hover:text-ancien-signal-clair"}
         >
           {ouAller} ›
         </button>
@@ -245,6 +254,7 @@ export function Libelle({
   children,
   aide,
   eteint = false,
+  papier = false,
 }: {
   children: ReactNode
   aide?: string
@@ -253,6 +263,9 @@ export function Libelle({
    *  un second gabarit de libellé serait un second endroit où poser le
    *  pointillé, donc un endroit où l'oublier. */
   eteint?: boolean
+  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
+   *  comme sur `Raison` et `Bouton`. */
+  papier?: boolean
 }) {
   const { presente, ancre, declencheurs, bulle } = useInfobulle(aide)
   // **`w-fit`, et c'est la poignée qui en dépend.** Un `<span>` posé dans un
@@ -265,11 +278,20 @@ export function Libelle({
   // dans le même panneau. « Le libellé est la cible » ne tient que si la cible
   // *est* le libellé. Une largeur en `fit-content` neutralise l'étirement sans
   // toucher à l'alignement, donc sans défaire l'`items-baseline` des rangées.
-  const base = `w-fit text-[11px] ${eteint ? "text-texte-3" : "text-texte-2"}`
+  const base = papier
+    ? `w-fit text-[11px] ${eteint ? "text-eteint" : "text-encre-3"}`
+    : `w-fit text-[11px] ${eteint ? "text-texte-3" : "text-texte-2"}`
+  // Le pointillé de l'ancien châssis se lit en `--bord-fort` — invisible sur le
+  // papier, où le trait équivalent est `--contour`. Recomposé ici plutôt que
+  // dans `Infobulle.tsx`, qui sert aussi les vingt écrans qui n'ont pas changé
+  // de châssis.
+  const pointille = papier
+    ? "cursor-help underline decoration-dotted decoration-contour underline-offset-[3px] hover:decoration-encre-3"
+    : POINTILLE
   if (!presente) return <span className={base}>{children}</span>
   return (
     <>
-      <span ref={ancre as Ref<HTMLSpanElement>} {...declencheurs} className={`${base} ${POINTILLE}`}>
+      <span ref={ancre as Ref<HTMLSpanElement>} {...declencheurs} className={`${base} ${pointille}`}>
         {children}
       </span>
       {bulle}
@@ -521,20 +543,32 @@ export function Bouton({
   inactif = false,
   onClick,
   titre,
+  papier = false,
 }: {
   enfants: ReactNode
   principal?: boolean
   inactif?: boolean
   onClick?: () => void
   titre?: string
+  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
+   *  comme sur `Raison` et `Libelle` — les écrans qui ne le passent pas
+   *  gardent le bouton d'aujourd'hui, à l'identique. */
+  papier?: boolean
 }) {
-  const base =
-    "h-[34px] rounded-[2px] px-3 text-[13px] transition-colors duration-[80ms] disabled:cursor-not-allowed"
-  const couleurs = inactif
-    ? "border border-bord bg-fond-2 text-texte-3"
-    : principal
-      ? "bg-ancien-signal text-fond-0 hover:bg-ancien-signal-clair font-medium"
-      : "border border-bord-fort bg-fond-2 text-texte hover:bg-fond-3"
+  const base = papier
+    ? "h-[34px] rounded-7 px-3 text-[13px] transition-colors duration-[80ms] disabled:cursor-not-allowed"
+    : "h-[34px] rounded-[2px] px-3 text-[13px] transition-colors duration-[80ms] disabled:cursor-not-allowed"
+  const couleurs = papier
+    ? inactif
+      ? "border border-trait bg-papier-cote text-eteint"
+      : principal
+        ? "border border-signal bg-signal text-encre-sur-signal hover:opacity-90 font-medium"
+        : "border border-contour bg-carte text-encre-controle hover:bg-papier-cote"
+    : inactif
+      ? "border border-bord bg-fond-2 text-texte-3"
+      : principal
+        ? "bg-ancien-signal text-fond-0 hover:bg-ancien-signal-clair font-medium"
+        : "border border-bord-fort bg-fond-2 text-texte hover:bg-fond-3"
   return (
     <button
       type="button"
@@ -557,6 +591,7 @@ export function Segments<T extends string | number>({
   indisponibles = [],
   libelles,
   plusieursRangees = false,
+  papier = false,
 }: {
   valeurs: readonly T[]
   valeur: T
@@ -585,6 +620,9 @@ export function Segments<T extends string | number>({
    *  réglages. À cette largeur-là, aucune taille de segment ne fait tenir neuf
    *  valeurs sur une rangée — vérifié au navigateur avant d'en arriver là. */
   plusieursRangees?: boolean
+  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
+   *  comme sur `Bouton`, `Libelle` et `Raison`. */
+  papier?: boolean
 }) {
   return (
     <div className={plusieursRangees ? "flex flex-wrap gap-1" : "flex gap-1"}>
@@ -602,12 +640,18 @@ export function Segments<T extends string | number>({
               // sort de la hauteur de sa bande, et une bande de la liste
               // fermée ne grandit pas. Trouvé au navigateur en tenant E5, sur
               // « côte à côte » dans un comparateur devenu étroit.
-              "mesure h-[26px] min-w-[34px] shrink-0 whitespace-nowrap rounded-[2px] border px-2 text-[11.5px] transition-colors duration-[80ms]",
-              grise
-                ? "border-bord bg-fond-2 text-texte-3"
-                : choisi
-                  ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
-                  : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+              `mesure h-[26px] min-w-[34px] shrink-0 whitespace-nowrap border px-2 text-[11.5px] transition-colors duration-[80ms] ${papier ? "rounded-7" : "rounded-[2px]"}`,
+              papier
+                ? grise
+                  ? "border-trait bg-papier-cote text-eteint"
+                  : choisi
+                    ? "border-signal bg-ligne-ouverte text-signal"
+                    : "border-trait bg-carte text-encre-3 hover:bg-papier-cote"
+                : grise
+                  ? "border-bord bg-fond-2 text-texte-3"
+                  : choisi
+                    ? "border-ancien-signal bg-ancien-signal/13 text-ancien-signal"
+                    : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
             ].join(" ")}
           >
             {libelles?.[String(v)] ?? v}
@@ -670,6 +714,7 @@ export function Curseur({
   inactif = false,
   crans,
   libelle,
+  papier = false,
 }: {
   valeur: number
   min: number
@@ -694,6 +739,9 @@ export function Curseur({
    *  champ s'appelle *valeur*, ce qui suffit à le trouver mais pas à savoir
    *  lequel on tient quand il y en a cinq dans la colonne. */
   libelle?: string
+  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
+   *  comme sur `Bouton`, `Libelle`, `Raison` et `Segments`. */
+  papier?: boolean
 }) {
   /** Le cran le plus proche, ou la valeur telle quelle. */
   const arrondir = (brute: number) =>
@@ -762,7 +810,7 @@ export function Curseur({
             setRamene(null)
             champ.current?.focus()
           }}
-          className="curseur h-[26px] min-w-0 flex-1"
+          className={papier ? "curseur-papier h-[26px] min-w-0 flex-1" : "curseur h-[26px] min-w-0 flex-1"}
         />
         <input
           ref={champ}
@@ -792,14 +840,22 @@ export function Curseur({
           // abandonnée resterait à l'écran sans agir : le champ dirait une
           // chose et l'image en montrerait une autre.
           onBlur={(e) => ecrit !== null && valider(e.target.value)}
-          className={[
-            "mesure w-[46px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-right text-[10px] tabular-nums",
-            "hover:border-bord focus:border-bord-fort focus:bg-fond-2 focus:outline-none",
-            inactif ? "text-texte-3" : "text-texte-2",
-          ].join(" ")}
+          className={
+            papier
+              ? [
+                  "mesure w-[46px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-right text-[10px] tabular-nums",
+                  "hover:border-trait focus:border-contour focus:bg-carte focus:outline-none",
+                  inactif ? "text-eteint" : "text-encre-3",
+                ].join(" ")
+              : [
+                  "mesure w-[46px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-right text-[10px] tabular-nums",
+                  "hover:border-bord focus:border-bord-fort focus:bg-fond-2 focus:outline-none",
+                  inactif ? "text-texte-3" : "text-texte-2",
+                ].join(" ")
+          }
         />
       </div>
-      {ramene && <Raison texte={ramene} />}
+      {ramene && <Raison texte={ramene} papier={papier} />}
     </div>
   )
 }

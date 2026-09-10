@@ -451,9 +451,9 @@ export function EcranMontage({
 
   if (refus && !montage) {
     return (
-      <div className="flex min-h-0 flex-1 items-start justify-center bg-fond-0 p-8">
+      <div className="flex min-h-0 flex-1 items-start justify-center bg-papier p-8">
         <div className="w-[520px]">
-          <Raison texte={refus} ouAller="revenir" onAller={onFermer} />
+          <Raison papier texte={refus} ouAller="revenir" onAller={onFermer} />
         </div>
       </div>
     )
@@ -461,8 +461,8 @@ export function EcranMontage({
 
   if (!montage) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center bg-fond-0">
-        <p className="mesure text-[11px] text-texte-3">le clip s'ouvre…</p>
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-papier">
+        <p className="mesure text-[11px] text-encre-4">le clip s'ouvre…</p>
       </div>
     )
   }
@@ -472,15 +472,15 @@ export function EcranMontage({
   return (
     <div
       data-montage
-      className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_380px] bg-fond-0"
+      className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_380px] bg-papier"
     >
       {/* ── Les deux boucles, la pellicule, ce qui est retenu ─────────────── */}
       <section className="defile flex min-h-0 flex-col gap-4 overflow-y-auto p-5">
         <div className="flex items-baseline gap-3">
-          <h2 className="text-[13px] text-texte">
+          <h2 className="text-[13px] text-encre">
             {montage.clip.mouvement || "ce clip"}
           </h2>
-          <span className="mesure text-[10px] text-texte-3">
+          <span className="mesure text-[10px] text-encre-4">
             {montage.clip.images} images · {montage.clip.secondes} s ·{" "}
             {montage.clip.montant_dit}
           </span>
@@ -488,13 +488,13 @@ export function EcranMontage({
             type="button"
             onClick={onFermer}
             title="Échap referme — les bandes gardées sont déjà rangées"
-            className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-texte"
+            className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-encre"
           >
             ‹ revenir
           </button>
         </div>
 
-        {refus && <Raison texte={refus} ouAller="fermer" onAller={() => setRefus(null)} />}
+        {refus && <Raison papier texte={refus} ouAller="fermer" onAller={() => setRefus(null)} />}
 
         <div className="grid grid-cols-2 gap-4">
           <Boucle
@@ -514,7 +514,7 @@ export function EcranMontage({
                     ? "revenir aux images retenues, à la vitesse de la bande"
                     : "la vidéo telle qu'elle est arrivée — son rythme, ses fondus"
                 }
-                className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+                className="mesure text-[10px] text-signal hover:opacity-70"
               >
                 {enVideo ? "les images ›" : "la vidéo entière ›"}
               </button>
@@ -562,8 +562,8 @@ export function EcranMontage({
           </Boucle>
         </div>
 
-        <p className="mesure max-w-[70ch] text-[10px] leading-4 text-texte-3">
-          Les deux regardent la <b className="text-texte-2">même chose</b> — les
+        <p className="mesure max-w-[70ch] text-[10px] leading-4 text-encre-4">
+          Les deux regardent la <b className="text-encre-3">même chose</b> — les
           images retenues, telles que le modèle les a rendues, fond compris. On
           découpe d'abord ; le traitement viendra dans l'atelier d'une animation,
           où chaque frame se règle avec les tables.
@@ -598,19 +598,19 @@ export function EcranMontage({
           <button
             type="button"
             onClick={() => setRetenues([])}
-            className="rounded-[2px] border border-bord bg-fond-2 px-3 py-2 text-left hover:bg-fond-3"
+            className="rounded-[2px] border border-trait bg-carte px-3 py-2 text-left hover:bg-carte"
           >
-            <span className="mesure block text-[9.5px] uppercase tracking-wide text-texte-3">
+            <span className="mesure block text-[9.5px] uppercase tracking-wide text-encre-4">
               repartir de zéro
             </span>
-            <span className="text-[11px] text-texte">
+            <span className="text-[11px] text-encre">
               ne garder aucune image — et les choisir une par une
             </span>
           </button>
         </div>
-        <p className="mesure max-w-[74ch] text-[10px] leading-4 text-texte-3">
+        <p className="mesure max-w-[74ch] text-[10px] leading-4 text-encre-4">
           Les deux propositions sont calculées à l'ouverture et ne coûtent rien.{" "}
-          <b className="text-texte-2">Elles ne décident de rien</b> : elles disent
+          <b className="text-encre-3">Elles ne décident de rien</b> : elles disent
           où regarder, et ce qu'elles posent se corrige ensuite image par image.
         </p>
 
@@ -619,11 +619,11 @@ export function EcranMontage({
           rang={rang}
           onRetirer={basculer}
         />
-        <p className="mesure max-w-[74ch] text-[10px] leading-4 text-texte-3">
-          C'est <b className="text-texte-2">exactement</b> ce qui sera monté, dans
+        <p className="mesure max-w-[74ch] text-[10px] leading-4 text-encre-4">
+          C'est <b className="text-encre-3">exactement</b> ce qui sera monté, dans
           cet ordre. Un clic sur une vignette la retire ; un clic sur la pellicule
           en ajoute une.{" "}
-          <b className="text-texte-2">
+          <b className="text-encre-3">
             Rien n'oblige à ce qu'elles soient régulièrement espacées
           </b>{" "}
           — un cycle de marche peut demander deux images serrées au moment du
@@ -633,19 +633,19 @@ export function EcranMontage({
       </section>
 
       {/* ── Ce qu'on garde ────────────────────────────────────────────────── */}
-      <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-l border-bord p-4">
+      <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-l border-trait p-4">
         {/* **Ce qu'on remonte, dit une fois** (V3.03.3). Le nom n'est pas un
             champ ici : on ne baptise pas une animation qui en porte déjà un, et
             un champ qui n'écrirait rien serait un contrôle mort. */}
         {reprise ? (
           <>
-            <Libelle aide="bande.nom">on remonte cette animation</Libelle>
-            <p data-on-remonte className="text-[13px] text-texte">
+            <Libelle papier aide="bande.nom">on remonte cette animation</Libelle>
+            <p data-on-remonte className="text-[13px] text-encre">
               {reprise.bande.nom}
             </p>
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10px] leading-4 text-encre-4">
               Elle en portait{" "}
-              <b className="text-texte-2">
+              <b className="text-encre-3">
                 {reprise.bande.compte} image
                 {reprise.bande.compte > 1 ? "s" : ""}
               </b>
@@ -655,26 +655,26 @@ export function EcranMontage({
           </>
         ) : (
           <>
-            <Libelle aide="bande.nom">cette animation</Libelle>
+            <Libelle papier aide="bande.nom">cette animation</Libelle>
             <input
               value={nom}
               onChange={(e) => setNom(e.target.value)}
               aria-label="Le nom de l'animation"
               placeholder="repos, marche, attaque…"
-              className="h-[30px] rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[12px] text-texte"
+              className="h-[30px] rounded-[2px] border border-contour bg-carte px-2 text-[12px] text-encre"
             />
 
             <div className="flex items-baseline justify-between">
-              <span className="mesure text-[10px] text-texte-3">
+              <span className="mesure text-[10px] text-encre-4">
                 Remplit la case
               </span>
-              <span className="mesure text-[10px] text-ancien-signal-clair">
+              <span className="mesure text-[10px] text-signal">
                 {pose
                   ? `${pose}${direction ? ` · ${direction}` : ""}`
                   : "aucune — brouillon"}
               </span>
             </div>
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10px] leading-4 text-encre-4">
               {pose
                 ? "Elle remplira cette case du plan de poses."
                 : "Une bande sans case reste un brouillon, et un brouillon ne bloque rien : on garde d'abord, on range ensuite."}
@@ -686,7 +686,7 @@ export function EcranMontage({
                   setPose(pose ? null : montage.clip.pose)
                   setDirection(pose ? null : montage.clip.direction)
                 }}
-                className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+                className="mesure self-start text-[10px] text-signal hover:opacity-70"
               >
                 {pose ? "en faire un brouillon" : `viser ${montage.clip.pose} ›`}
               </button>
@@ -694,8 +694,8 @@ export function EcranMontage({
           </>
         )}
 
-        <div className="mt-2 border-t border-bord pt-3">
-          <Libelle aide="bande.cadre">le cadre — la fenêtre commune</Libelle>
+        <div className="mt-2 border-t border-trait pt-3">
+          <Libelle papier aide="bande.cadre">le cadre — la fenêtre commune</Libelle>
         </div>
         {/* ⚠️ **Sur une reprise, le cadre se lit et ne se règle pas.** Le
             rectangle gardé porte quatre nombres mesurés ; le changer d'ici ne
@@ -703,16 +703,16 @@ export function EcranMontage({
             distingue pas d'un choix cassé. La fenêtre se reprend dans l'atelier
             de l'animation, où le bouton dit ce qu'elle coûte. */}
         {reprise ? (
-          <p data-cadre-en-lecture className="mesure text-[10px] leading-4 text-texte-3">
+          <p data-cadre-en-lecture className="mesure text-[10px] leading-4 text-encre-4">
             {/* La phrase vient du serveur, avec le cadre : deux vocabulaires de
                 la même mesure finiraient par ne plus dire la même chose. */}
             {reprise.bande.cadre.mot ? <>{reprise.bande.cadre.mot}. </> : null}
             Il ne se règle pas ici :{" "}
-            <b className="text-texte-2">la fenêtre se reprend dans l'atelier de
+            <b className="text-encre-3">la fenêtre se reprend dans l'atelier de
             l'animation</b>, où l'écran dit les vingt secondes que ça coûte.
           </p>
         ) : (
-        <Segments
+        <Segments papier
           valeurs={["clip", "bande", "main"] as const}
           valeur={cadre}
           onChange={(choisi) => {
@@ -730,18 +730,18 @@ export function EcranMontage({
         )}
         {!reprise && (
           <>
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10px] leading-4 text-encre-4">
               pris sur le clip entier — toutes ses bandes ont la même assise
             </p>
             {montage?.fenetre && (
-              <p className="mesure text-[10px] text-texte-2">
+              <p className="mesure text-[10px] text-encre-3">
                 {montage.fenetre.largeur} × {montage.fenetre.hauteur}, pris sur{" "}
                 {montage.fenetre.images}{" "}
                 {montage.fenetre.images > 1 ? "images" : "image"}
               </p>
             )}
             {cadre === "main" && cadreMain && (
-              <p className="mesure text-[10px] leading-4 text-texte-3">
+              <p className="mesure text-[10px] leading-4 text-encre-4">
                 le rectangle se posera au montage de la bande — l'atelier d'une
                 animation le reprendra.
               </p>
@@ -750,13 +750,13 @@ export function EcranMontage({
               type="button"
               disabled={reprend}
               onClick={reprendreLeCadre}
-              className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
+              className="mesure self-start text-[10px] text-signal hover:opacity-70 disabled:text-encre-4"
             >
               {reprend
                 ? "il remesure les images du clip…"
                 : "reprendre le cadre sur tout le clip ›"}
             </button>
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10px] leading-4 text-encre-4">
               Il remesure les {montage.clip.images} images une par une : comptez
               une vingtaine de secondes sur un clip de cinq secondes. C'est pour
               ça que c'est un bouton et pas un automatisme.
@@ -764,10 +764,10 @@ export function EcranMontage({
           </>
         )}
 
-        <div className="mt-2 border-t border-bord pt-3">
-          <Libelle aide="bande.vitesse">le jeu</Libelle>
+        <div className="mt-2 border-t border-trait pt-3">
+          <Libelle papier aide="bande.vitesse">le jeu</Libelle>
         </div>
-        <Curseur
+        <Curseur papier
           libelle="Vitesse"
           valeur={cadence}
           min={2}
@@ -775,14 +775,14 @@ export function EcranMontage({
           unite=" images / s"
           onChange={setCadence}
         />
-        <Segments
+        <Segments papier
           valeurs={["boucle", "aller-retour"] as const}
           valeur={sens}
           onChange={setSens}
           libelles={{ boucle: "en boucle", "aller-retour": "aller-retour" }}
         />
-        <p className="mesure text-[10px] leading-4 text-texte-3">
-          Cette vitesse est <b className="text-texte-2">celle qui partira dans le
+        <p className="mesure text-[10px] leading-4 text-encre-4">
+          Cette vitesse est <b className="text-encre-3">celle qui partira dans le
           jeu</b>. Un second réglage à l'export finirait par la contredire.
         </p>
 
@@ -792,22 +792,22 @@ export function EcranMontage({
             appartiennent à l'écran d'où l'on vient. */}
         {!reprise && bandes.length > 0 && (
           <>
-            <div className="mt-2 border-t border-bord pt-3">
-              <Libelle aide="bande.gardees">gardées de ce clip</Libelle>
+            <div className="mt-2 border-t border-trait pt-3">
+              <Libelle papier aide="bande.gardees">gardées de ce clip</Libelle>
             </div>
             <ul className="flex flex-col gap-1">
               {bandes.map((bande) => (
                 <li
                   key={bande.identifiant}
-                  className="flex items-baseline gap-2 rounded-[2px] border border-bord bg-fond-2 px-2 py-1.5"
+                  className="flex items-baseline gap-2 rounded-[2px] border border-trait bg-carte px-2 py-1.5"
                 >
-                  <span className="text-[11px] text-texte">{bande.nom}</span>
-                  <span className="mesure text-[10px] text-texte-3">
+                  <span className="text-[11px] text-encre">{bande.nom}</span>
+                  <span className="mesure text-[10px] text-encre-4">
                     {bande.pose
                       ? `${bande.pose}${bande.direction ? ` · ${bande.direction}` : ""}`
                       : "brouillon"}
                   </span>
-                  <span className="mesure ml-auto text-[10px] text-texte-3">
+                  <span className="mesure ml-auto text-[10px] text-encre-4">
                     {bande.compte} images
                   </span>
                   <button
@@ -816,7 +816,7 @@ export function EcranMontage({
                     onClick={() => void sortir(bande.identifiant)}
                     aria-label={`Sortir l'animation ${bande.nom}`}
                     title="planche de sprites, son descriptif, et une image qui tourne"
-                    className="mesure text-[10px] text-texte-3 hover:text-texte disabled:opacity-40"
+                    className="mesure text-[10px] text-encre-4 hover:text-encre disabled:opacity-40"
                   >
                     {sort === bande.identifiant ? "…" : "Sortir ›"}
                   </button>
@@ -824,7 +824,7 @@ export function EcranMontage({
                     type="button"
                     onClick={() => void oublier(bande.identifiant)}
                     aria-label={`Effacer la bande ${bande.nom}`}
-                    className="mesure text-[10px] text-texte-3 hover:text-ancien-signal"
+                    className="mesure text-[10px] text-encre-4 hover:text-signal"
                   >
                     ×
                   </button>
@@ -838,11 +838,11 @@ export function EcranMontage({
             celle-ci n'en ajoute aucune : l'afficher ici ferait croire qu'on va
             payer un cran de plus. */}
         {!reprise && (
-          <div className="mt-2 rounded-[2px] border border-bord bg-fond-2 p-3">
-            <p className="text-[15px] text-texte">
+          <div className="mt-2 rounded-[2px] border border-trait bg-carte p-3">
+            <p className="text-[15px] text-encre">
               {dollars(montage.prix.par_bande)}
             </p>
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10px] leading-4 text-encre-4">
               par animation gardée — le clip a coûté {dollars(montage.prix.clip)},
               et{" "}
               {montage.prix.bandes === 0
@@ -862,7 +862,7 @@ export function EcranMontage({
               seul bouton, et son libellé nomme l'animation pour qu'aucun doute
               ne subsiste au moment où on l'écrit. */}
           {reprise ? (
-            <Bouton
+            <Bouton papier
               principal
               inactif={retenues.length === 0}
               onClick={() => void reprendre()}
@@ -873,7 +873,7 @@ export function EcranMontage({
               }
             />
           ) : (
-            <Bouton
+            <Bouton papier
               principal
               inactif={retenues.length === 0 || !nom.trim()}
               onClick={() => void garder()}
@@ -887,13 +887,13 @@ export function EcranMontage({
             />
           )}
         </div>
-        <p className="mesure text-[10px] leading-4 text-texte-3">
-          <b className="text-texte-2">Rien sur cet écran ne dépense.</b> Le clip
+        <p className="mesure text-[10px] leading-4 text-encre-4">
+          <b className="text-encre-3">Rien sur cet écran ne dépense.</b> Le clip
           est payé. Découpez, recommencez, changez d'avis.
           {reprise && (
             <>
               {" "}
-              <b className="text-texte-2">Revenir sans reprendre</b> laisse
+              <b className="text-encre-3">Revenir sans reprendre</b> laisse
               l'animation telle qu'elle est.
             </>
           )}
@@ -951,13 +951,13 @@ function Boucle({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline gap-2">
-        <span className="mesure text-[10px] text-texte-2">{titre}</span>
-        <b className="mesure text-[10px] font-normal text-texte-3">{question}</b>
+        <span className="mesure text-[10px] text-encre-3">{titre}</span>
+        <b className="mesure text-[10px] font-normal text-encre-4">{question}</b>
         {geste && <span className="ml-auto">{geste}</span>}
       </div>
-      <div className="relative flex h-[240px] items-center justify-center overflow-hidden rounded-[2px] border border-bord bg-fond-1">
+      <div className="relative flex h-[240px] items-center justify-center overflow-hidden rounded-[2px] border border-trait bg-papier-cote">
         {children}
-        <span className="mesure absolute bottom-1 right-1 rounded-[2px] bg-fond-0/80 px-1 text-[9px] text-texte-3">
+        <span className="mesure absolute bottom-1 right-1 rounded-[2px] bg-papier/80 px-1 text-[9px] text-encre-4">
           {badge}
         </span>
       </div>
@@ -1062,7 +1062,7 @@ function Pellicule({
       <div
         ref={ruban}
         data-pellicule
-        className="relative flex select-none overflow-hidden rounded-[2px] border border-bord bg-fond-1"
+        className="relative flex select-none overflow-hidden rounded-[2px] border border-trait bg-papier-cote"
         style={{ height: RUBAN }}
       >
         {Array.from({ length: images }, (_, numero) => {
@@ -1095,7 +1095,7 @@ function Pellicule({
               tabIndex={numero === curseur ? 0 : -1}
               onMouseEnter={() => onSurvol(numero)}
               onClick={() => onBasculer(numero)}
-              className="shrink-0 border-r border-fond-0/40 last:border-r-0"
+              className="shrink-0 border-r border-papier/40 last:border-r-0"
               style={{
                 width: `${100 / images}%`,
                 height: RUBAN,
@@ -1126,7 +1126,7 @@ function Pellicule({
                 <span
                   aria-hidden
                   data-mise-de-cote={numero}
-                  className="pointer-events-none block h-[2px] w-full bg-ancien-ok"
+                  className="pointer-events-none block h-[2px] w-full bg-ok"
                   style={{ marginTop: RUBAN - 2 }}
                 />
               )}
@@ -1135,7 +1135,7 @@ function Pellicule({
         })}
         {retenues.length > 0 && (
           <div
-            className="pointer-events-none absolute inset-y-0 border border-ancien-signal"
+            className="pointer-events-none absolute inset-y-0 border border-signal"
             style={{
               left: `${(debut / images) * 100}%`,
               width: `${((fin - debut + 1) / images) * 100}%`,
@@ -1144,27 +1144,27 @@ function Pellicule({
             <span
               data-poignee="gauche"
               onMouseDown={tirer("gauche")}
-              className="pointer-events-auto absolute inset-y-0 -left-1 w-2 cursor-ew-resize bg-ancien-signal/60"
+              className="pointer-events-auto absolute inset-y-0 -left-1 w-2 cursor-ew-resize bg-signal/60"
             />
             <span
               data-poignee="droite"
               onMouseDown={tirer("droite")}
-              className="pointer-events-auto absolute inset-y-0 -right-1 w-2 cursor-ew-resize bg-ancien-signal/60"
+              className="pointer-events-auto absolute inset-y-0 -right-1 w-2 cursor-ew-resize bg-signal/60"
             />
           </div>
         )}
         <span
-          className="pointer-events-none absolute inset-y-0 w-px bg-texte"
+          className="pointer-events-none absolute inset-y-0 w-px bg-encre"
           style={{ left: `${((curseur + 0.5) / images) * 100}%` }}
         />
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="mesure text-[10px] text-texte-3">image 0</span>
-        <span className="mesure text-[10px] text-texte-2">
+        <span className="mesure text-[10px] text-encre-4">image 0</span>
+        <span className="mesure text-[10px] text-encre-3">
           {retenues.length} {retenues.length > 1 ? "images retenues" : "image retenue"}
         </span>
-        <span className="mesure text-[10px] text-texte-3">image {images - 1}</span>
+        <span className="mesure text-[10px] text-encre-4">image {images - 1}</span>
       </div>
 
       {/* **La loupe, parce qu'à sept pixels de large on ne sait pas ce qu'on
@@ -1178,7 +1178,7 @@ function Pellicule({
       <div className="flex items-center gap-2">
         <div
           data-loupe
-          className="shrink-0 rounded-[2px] border border-bord-fort"
+          className="shrink-0 rounded-[2px] border border-contour"
           style={{
             width: contact.cote,
             height: contact.cote,
@@ -1189,7 +1189,7 @@ function Pellicule({
           }}
         />
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="mesure text-[10px] text-texte-3">image {regarde}</span>
+          <span className="mesure text-[10px] text-encre-4">image {regarde}</span>
 
           {/* **Le second geste de la pellicule** (A13), et il est ici plutôt que
               sur le ruban : à sept pixels de large, une cellule ne porte pas
@@ -1204,7 +1204,7 @@ function Pellicule({
             onClick={() => onPrelever(regarde)}
             aria-label={`Mettre l'image ${regarde} de côté`}
             title="elle entre en bibliothèque — rien n'est dépensé, et les images retenues ne bougent pas"
-            className="mesure w-fit px-1 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+            className="mesure w-fit px-1 text-[10px] text-signal hover:opacity-70"
           >
             Mettre de côté ›
           </button>
@@ -1214,7 +1214,7 @@ function Pellicule({
               refus — le produit signale ce dont il est certain, les mêmes octets
               deux fois, et l'auteur décide. */}
           {misDeCote && (
-            <span className="mesure text-[9.5px] leading-4 text-texte-3">
+            <span className="mesure text-[9.5px] leading-4 text-encre-4">
               {misDeCote.doublon
                 ? `l'image ${misDeCote.numero} était déjà en bibliothèque — `
                   + `« ${misDeCote.doublon.label} »`
@@ -1239,12 +1239,12 @@ function Indice({
     <button
       type="button"
       onClick={onPoser}
-      className="rounded-[2px] border border-bord bg-fond-2 px-3 py-2 text-left hover:bg-fond-3"
+      className="rounded-[2px] border border-trait bg-carte px-3 py-2 text-left hover:bg-carte"
     >
-      <span className="mesure block text-[9.5px] uppercase tracking-wide text-texte-3">
+      <span className="mesure block text-[9.5px] uppercase tracking-wide text-encre-4">
         l'atelier a remarqué
       </span>
-      <span className="text-[11px] text-texte">{proposition.mot}</span>
+      <span className="text-[11px] text-encre">{proposition.mot}</span>
     </button>
   )
 }
@@ -1263,7 +1263,7 @@ function Retenues({
 }) {
   if (retenues.length === 0) {
     return (
-      <p className="mesure rounded-[2px] border border-dashed border-bord p-3 text-[10px] text-texte-3">
+      <p className="mesure rounded-[2px] border border-dashed border-trait p-3 text-[10px] text-encre-4">
         aucune image retenue — cliquez la pellicule, ou posez une des deux
         propositions
       </p>
@@ -1285,7 +1285,7 @@ function Retenues({
             background: "var(--color-fond-1)",
           }}
         >
-          <span className="mesure block px-2 py-4 text-[10px] text-texte-3">
+          <span className="mesure block px-2 py-4 text-[10px] text-encre-4">
             {numero}
           </span>
         </button>

@@ -2531,10 +2531,32 @@ Les trois écrans qui s'ouvrent depuis la galerie : `Envoi.tsx` (1 373), `Clip.t
 6 septembre et n'a jamais été arbitrée : `Clip.dc.html` écrit qu'un clip écarté se rend quand
 on veut ; `Clips.dc.html` décrit un jeter définitif qui emporte les bandes déjà taillées.
 
+**Tranché : la réversibilité.** `Animation-chaine.dc.html` — la planche qui pose la chaîne
+entière — dit la même chose que `Clip.dc.html` : « le geste s'annule ». Et le produit avait
+déjà tranché ailleurs sans le savoir : `/api/clips/keep` et `/api/clips/restore` (`A9`)
+existaient déjà avec ce contrat — `jete` est un simple drapeau, jamais une suppression, un clip
+écarté reste au journal des dépenses et se rend « quand tu veux » (`aide.ts` § `clip.lot`), et
+rien de tout ça ne touchait aux bandes. C'est le même invariant que le chutier d'une bande
+(`AtelierDeBande.tsx`, V3.03.3) : *rien n'est perdu tant que le geste n'est pas écrit*. Ce qui
+manquait n'était pas l'arbitrage, déjà fait, mais l'essai qui tient le cas précis où les deux
+planches divergeaient — une bande **déjà taillée** dans le clip qu'on écarte. `tests/test_a10.py
+::test_ecarter_le_clip_source_d_une_bande_ne_touche_pas_la_bande` le couvre : écarter le clip
+ne touche pas la bande, la rendre ne change rien de plus.
+
 ### Critères d'acceptation
 
-- [ ] Les quatre fichiers sont en papier ou partis.
-- [ ] Le sort d'un clip écarté est tranché, écrit, et tenu par un essai.
+- [x] Les quatre fichiers sont en papier ou partis.
+      *Couleurs converties aux jetons du papier (`papier`, `carte`, `trait`, `contour`,
+      `encre*`, `signal`, `ok`, `echec`) — plus aucun jeton de l'ancien châssis dans les
+      quatre fichiers. `Bouton`, `Libelle`, `Raison`, `Segments` et `Curseur` de
+      `chassis.tsx` portent pour ça une prop `papier`, additive : les vingt écrans qui ne
+      la passent pas gardent leur rendu à l'identique. ⚠️ **Ce qui n'est pas fait** : ils ne
+      rejoignent pas `LES_FICHIERS_DU_CARNET` — leurs tailles restent celles de l'ancien
+      châssis (10 px, 22 px, arrondis de 1 et 2 px…), hors des listes fermées de
+      `docs/DESIGN.md`. Les rouvrir une à une est un dessin, pas un renommage de jeton — le
+      même partage que celui que `C4` avait posé pour la galerie.*
+- [x] Le sort d'un clip écarté est tranché, écrit, et tenu par un essai.
+      *Voir plus haut. `tests/test_a10.py::test_ecarter_le_clip_source_d_une_bande_ne_touche_pas_la_bande`.*
 
 ### Bloquée par
 

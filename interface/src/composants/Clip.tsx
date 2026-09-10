@@ -405,17 +405,17 @@ export function EcranClip({
   return (
     <div
       data-clip
-      className="grid min-h-0 flex-1 grid-cols-[280px_minmax(0,1fr)_380px] bg-fond-0"
+      className="grid min-h-0 flex-1 grid-cols-[280px_minmax(0,1fr)_380px] bg-papier"
     >
       {/* ── L'image de départ et le mouvement ─────────────────────────────── */}
-      <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-r border-bord p-4">
+      <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-r border-trait p-4">
         <div className="flex items-baseline gap-2">
-          <Libelle aide="clip.depart">l'image de départ</Libelle>
+          <Libelle papier aide="clip.depart">l'image de départ</Libelle>
           <button
             type="button"
             onClick={onFermer}
             title="Échap revient sans rien dépenser"
-            className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-texte"
+            className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-encre"
           >
             ‹ revenir
           </button>
@@ -423,12 +423,12 @@ export function EcranClip({
 
         <ImageDeDepartVue asset={image} />
 
-        <p className="text-[11px] leading-relaxed text-texte-2">
+        <p className="text-[11px] leading-relaxed text-encre-3">
           {choisie
             ? `${choisie.label} — choisie à la main.`
             : (depart?.raison ?? "…")}
         </p>
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10px] leading-4 text-encre-4">
           Le sprite est agrandi sur la toile du format demandé avant de partir :
           un modèle qui rend du grand format inventerait tout ce qu'il ne voit
           pas d'un sprite de soixante-quatre pixels.
@@ -437,7 +437,7 @@ export function EcranClip({
         <button
           type="button"
           onClick={() => setChoixOuvert((o) => !o)}
-          className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+          className="mesure self-start text-[10px] text-signal hover:opacity-70"
         >
           {choixOuvert ? "fermer la bibliothèque" : "changer d'image ›"}
         </button>
@@ -451,14 +451,14 @@ export function EcranClip({
           />
         )}
 
-        <div className="mt-2 border-t border-bord pt-3">
-          <Libelle aide="mouvement.texte">le mouvement</Libelle>
+        <div className="mt-2 border-t border-trait pt-3">
+          <Libelle papier aide="mouvement.texte">le mouvement</Libelle>
         </div>
         <select
           value={mouvement ?? ""}
           onChange={(e) => setMouvement(e.target.value || null)}
           aria-label="Le mouvement"
-          className="mesure h-[30px] rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[11px] text-texte"
+          className="mesure h-[30px] rounded-[2px] border border-contour bg-carte px-2 text-[11px] text-encre"
         >
           <option value="">— aucun —</option>
           {mouvements.map((m) => (
@@ -474,11 +474,11 @@ export function EcranClip({
             mouvement, pas le texte. */}
         <p
           data-texte-du-clip
-          className="mesure rounded-[2px] border border-bord bg-fond-2 p-2 text-[10.5px] leading-4 text-texte-2"
+          className="mesure rounded-[2px] border border-trait bg-carte p-2 text-[10.5px] leading-4 text-encre-3"
         >
           {texte || "choisissez un mouvement pour lire ce qui partira"}
         </p>
-        <p className="mesure text-[10px] leading-4 text-texte-3">
+        <p className="mesure text-[10px] leading-4 text-encre-4">
           C'est le texte anglais du mouvement, écrit une fois dans les Réglages
           et jamais retapé ici. Le corriger pour tous les clips suivants se fait
           là-bas.
@@ -488,20 +488,20 @@ export function EcranClip({
       {/* ── Ce qu'on va recevoir, et dans quel format ──────────────────────── */}
       <section className="defile flex min-h-0 flex-col gap-4 overflow-y-auto p-5">
         <div>
-          <h2 className="text-[15px] text-texte">
+          <h2 className="text-[15px] text-encre">
             Animer {personnage.nom}
             {pose ? ` — ${pose.nom}${ou}` : ""}
           </h2>
-          <p className="mt-1 text-[12px] leading-relaxed text-texte-2">
+          <p className="mt-1 text-[12px] leading-relaxed text-encre-3">
             Un clip part d'une image et revient en vidéo. Vous en découperez
             ensuite autant d'animations que vous voudrez, sans repayer.
           </p>
         </div>
 
-        <table className="w-full text-[11.5px] leading-relaxed text-texte-2">
+        <table className="w-full text-[11.5px] leading-relaxed text-encre-3">
           <tbody>
             <tr>
-              <td className="w-[130px] py-1 align-top text-texte">Un clip</td>
+              <td className="w-[130px] py-1 align-top text-encre">Un clip</td>
               <td className="py-1">
                 {secondes} seconde{secondes > 1 ? "s" : ""},{" "}
                 {PROPORTIONS.find((p) => p.cle === proportions)?.nom ?? proportions},{" "}
@@ -509,7 +509,7 @@ export function EcranClip({
               </td>
             </tr>
             <tr>
-              <td className="py-1 align-top text-texte">Ses images</td>
+              <td className="py-1 align-top text-encre">Ses images</td>
               <td className="py-1">
                 {/* **Le compte réel, quand le modèle en impose un.** Celui de la
                     maison n'accepte que certains nombres d'images et arrondit
@@ -518,7 +518,7 @@ export function EcranClip({
                     calculent finiraient par ne plus donner le même nombre. */}
                 {choisi?.images_par_duree?.[String(secondes)] ? (
                   <>
-                    <strong className="text-texte">
+                    <strong className="text-encre">
                       {choisi.images_par_duree[String(secondes)]} images
                     </strong>{" "}
                     — le moteur n'accepte que certains comptes et prend celui du
@@ -530,7 +530,7 @@ export function EcranClip({
                 {catalogue?.decodeur && (
                   <>
                     {" "}
-                    <span className="text-epingle">{catalogue.decodeur}</span> —
+                    <span className="text-encre-attention">{catalogue.decodeur}</span> —
                     le clip s'achète quand même, il reste payé, et ses images se
                     tireront le jour où ce qui manque sera là.
                   </>
@@ -538,17 +538,17 @@ export function EcranClip({
               </td>
             </tr>
             <tr>
-              <td className="py-1 align-top text-texte">L'attente</td>
+              <td className="py-1 align-top text-encre">L'attente</td>
               <td className="py-1">
                 {attenteDuLot === null ? (
                   <>
-                    deux minutes environ. <strong className="text-texte">Vous
+                    deux minutes environ. <strong className="text-encre">Vous
                     pouvez fermer l'atelier</strong> : le clip continue de se
                     fabriquer chez le fournisseur, et vous le retrouverez.
                   </>
                 ) : (
                   <>
-                    <strong className="text-texte">
+                    <strong className="text-encre">
                       {duree(attenteDuLot)}
                     </strong>{" "}
                     {nombre > 1 ? "pour les " + nombre + " ensemble" : "environ"}.{" "}
@@ -559,7 +559,7 @@ export function EcranClip({
                         fenêtre qui travaille —, mais la carte graphique est
                         prise, et laisser la phrase d'à côté le passerait sous
                         silence. */}
-                    Il se fabrique <strong className="text-texte">sur cette
+                    Il se fabrique <strong className="text-encre">sur cette
                     machine</strong>, dans la fenêtre du moteur. Vous pouvez
                     fermer l'atelier ; ne fermez pas celle-là, et attendez-vous à
                     ce que le reste de l'ordinateur rame pendant ce temps.
@@ -570,15 +570,15 @@ export function EcranClip({
           </tbody>
         </table>
 
-        <p className="rounded-[2px] border-l-2 border-ancien-signal bg-fond-2 p-3 text-[11.5px] leading-relaxed text-texte-2">
-          <strong className="text-texte">Ce clip n'hérite que de votre
+        <p className="rounded-[2px] border-l-2 border-signal bg-carte p-3 text-[11.5px] leading-relaxed text-encre-3">
+          <strong className="text-encre">Ce clip n'hérite que de votre
           sprite.</strong> Ni les textes du jeu, ni ses images d'ambiance ne
           partent avec lui : un modèle vidéo ne prend qu'une seule image, et
           c'est celle du personnage.
         </p>
 
-        <div className="flex flex-col gap-2 border-t border-bord pt-4">
-          <Libelle aide="clip.format">le format</Libelle>
+        <div className="flex flex-col gap-2 border-t border-trait pt-4">
+          <Libelle papier aide="clip.format">le format</Libelle>
           <Choix
             valeurs={DUREES.map((d) => ({
               cle: String(d),
@@ -597,24 +597,24 @@ export function EcranClip({
             valeur={resolution}
             onChange={setResolution}
           />
-          <p className="mesure text-[10px] leading-4 text-texte-3">
+          <p className="mesure text-[10px] leading-4 text-encre-4">
             Le carré coûte près de moitié moins que le format large et cadre
             mieux un personnage seul. Le prix se recalcule à chaque changement,
             à droite.
           </p>
         </div>
 
-        <div className="flex flex-col gap-2 border-t border-bord pt-4">
-          <Libelle aide="clip.lot">combien de clips</Libelle>
+        <div className="flex flex-col gap-2 border-t border-trait pt-4">
+          <Libelle papier aide="clip.lot">combien de clips</Libelle>
           <Choix
             valeurs={LOTS.map((n) => ({ cle: String(n), nom: String(n) }))}
             valeur={String(nombre)}
             onChange={(v) => setNombre(Number(v))}
           />
-          <p className="mesure text-[10px] leading-4 text-texte-3">
+          <p className="mesure text-[10px] leading-4 text-encre-4">
             Un même texte ne rend jamais deux fois le même clip. En lancer
             plusieurs et n'en garder qu'un est un geste ordinaire ici — et{" "}
-            <strong className="text-texte-2">
+            <strong className="text-encre-3">
               chacun se paie, y compris ceux qu'on jette
             </strong>
             . Ils reviennent un par un, et chacun se voit dès son arrivée.
@@ -623,11 +623,11 @@ export function EcranClip({
       </section>
 
       {/* ── Qui peut le faire, et pour combien ─────────────────────────────── */}
-      <aside className="defile flex min-h-0 flex-col gap-2 overflow-y-auto border-l border-bord p-4">
-        <Libelle aide="clip.prix">qui peut le faire</Libelle>
+      <aside className="defile flex min-h-0 flex-col gap-2 overflow-y-auto border-l border-trait p-4">
+        <Libelle papier aide="clip.prix">qui peut le faire</Libelle>
 
         {catalogue === null && (
-          <p className="mesure text-[10px] text-texte-3">on demande…</p>
+          <p className="mesure text-[10px] text-encre-4">on demande…</p>
         )}
         {/* ── Le filtre, puis les modèles, puis le bouton (V3.01.2) ──────────────── */}
         {/* **L'interrupteur « seulement ce qui peut partir », allumé.**
@@ -638,29 +638,29 @@ export function EcranClip({
           aria-pressed={seulementPossibles}
           onClick={() => setSeulementPossibles((v) => !v)}
           data-filtre-modeles
-          className="mesure flex items-center gap-2 rounded-[2px] border border-bord bg-fond-2 px-2 py-1.5 text-left text-[10px] text-texte-2 hover:border-bord-fort hover:text-texte"
+          className="mesure flex items-center gap-2 rounded-[2px] border border-trait bg-carte px-2 py-1.5 text-left text-[10px] text-encre-3 hover:border-contour hover:text-encre"
         >
           <span
             aria-hidden
             className={[
               "block h-[9px] w-[9px] rounded-[1px] border",
-              seulementPossibles ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort",
+              seulementPossibles ? "border-signal bg-signal" : "border-contour",
             ].join(" ")}
           />
           <span className="flex-1">seulement ce qui peut partir</span>
           {grisesMasquees > 0 && (
-            <span className="text-texte-3">
+            <span className="text-encre-4">
               {grisesMasquees} masqué{grisesMasquees > 1 ? "s" : ""}
             </span>
           )}
         </button>
 
         {catalogue?.modeles.length === 0 && (
-          <Raison texte={catalogue.raison ?? catalogue.manque ?? "aucun modèle vidéo"} />
+          <Raison papier texte={catalogue.raison ?? catalogue.manque ?? "aucun modèle vidéo"} />
         )}
 
         {modelesVisibles.length === 0 && catalogue !== null && (
-          <Raison texte="aucun modèle ne peut partir — éteignez le filtre pour lire pourquoi" />
+          <Raison papier texte="aucun modèle ne peut partir — éteignez le filtre pour lire pourquoi" />
         )}
 
         <ul className="flex flex-col gap-2">
@@ -687,14 +687,14 @@ export function EcranClip({
           />
         )}
 
-        <div className="mt-3 flex flex-col gap-2 border-t border-bord pt-3">
+        <div className="mt-3 flex flex-col gap-2 border-t border-trait pt-3">
           {/* **Le bouton ouvre le tiroir de relecture (V3.01.1) au lieu
               d'envoyer** : l'argent ne part plus d'un écran plein de réglages,
               il part d'un écran qui ne montre que ce qui part. C'est le
               bouton du tiroir qui porte le montant, et son libellé est le
               même — on ne change pas de verbe pour passer de la commande à
               sa confirmation. */}
-          <Bouton
+          <Bouton papier
             principal
             inactif={empeche !== null || enVol}
             onClick={() => setConfirmer(true)}
@@ -706,12 +706,12 @@ export function EcranClip({
                   (cout === null ? "" : ` · ${cout}`)
             }
           />
-          <Raison texte={empeche} />
-          <Raison texte={refus} />
+          <Raison papier texte={empeche} />
+          <Raison papier texte={refus} />
           {attente ? (
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10px] leading-4 text-encre-4">
               Ce clip ne coûte rien : il se fabrique sur votre machine.{" "}
-              <strong className="text-texte-2">
+              <strong className="text-encre-3">
                 Ce qu'il coûte est ce temps-là
               </strong>
               , et pendant qu'il tourne la carte graphique est prise.{" "}
@@ -721,8 +721,8 @@ export function EcranClip({
               {attente.mesure}.
             </p>
           ) : (
-            <p className="mesure text-[10px] leading-4 text-texte-3">
-              Ce montant est une <strong className="text-texte-2">estimation
+            <p className="mesure text-[10px] leading-4 text-encre-4">
+              Ce montant est une <strong className="text-encre-3">estimation
               haute</strong>. Ce qui sera enregistré est ce que la facture dira, et
               l'écart mesuré va jusqu'à moitié moins.
             </p>
@@ -818,24 +818,24 @@ function ConfirmationClip({
   return (
     <div
       data-confirmation-clip
-      className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_380px] bg-fond-0"
+      className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_380px] bg-papier"
     >
       {/* ── Ce qui part : l'image, le format, le lot ──────────────────────── */}
-      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-bord p-4">
+      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-trait p-4">
         <div className="flex items-baseline gap-2">
-          <Libelle>ce qui part</Libelle>
+          <Libelle papier>ce qui part</Libelle>
           <button
             type="button"
             onClick={onRevenir}
             title="Échap revient sans rien dépenser"
-            className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-texte"
+            className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-encre"
           >
             ‹ revenir
           </button>
         </div>
 
         <div className="flex flex-col gap-2">
-          <Libelle aide="clip.depart">l'image de départ</Libelle>
+          <Libelle papier aide="clip.depart">l'image de départ</Libelle>
           <ImageDeDepartVue asset={image} />
           {/* **Obligatoire, et ce n'est pas un détail qu'on replie.** Un
               modèle vidéo n'accepte qu'une image, et aucun plafond ne la fait
@@ -843,15 +843,15 @@ function ConfirmationClip({
               qui ne voudrait rien dire serait un mensonge de forme. La seule
               question qui reste est laquelle — et « changer d'image » y
               répond. */}
-          <p className="mesure text-[10px] leading-4 text-texte-2">
-            <strong className="text-texte">elle est obligatoire et ne cède
+          <p className="mesure text-[10px] leading-4 text-encre-3">
+            <strong className="text-encre">elle est obligatoire et ne cède
             jamais</strong> — un modèle vidéo n'en accepte qu'une, et la retirer
             ne veut rien dire. Vous pouvez seulement la changer.
           </p>
           <button
             type="button"
             onClick={() => setChoixOuvert((o) => !o)}
-            className="mesure self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+            className="mesure self-start text-[10px] text-signal hover:opacity-70"
           >
             {choixOuvert ? "fermer la bibliothèque" : "changer d'image ›"}
           </button>
@@ -865,9 +865,9 @@ function ConfirmationClip({
           )}
         </div>
 
-        <div className="flex flex-col gap-1 border-t border-bord pt-4">
-          <Libelle>le format</Libelle>
-          <ul className="mesure flex flex-col gap-1 text-[10px] text-texte-2">
+        <div className="flex flex-col gap-1 border-t border-trait pt-4">
+          <Libelle papier>le format</Libelle>
+          <ul className="mesure flex flex-col gap-1 text-[10px] text-encre-3">
             <li>
               {secondes} seconde{secondes > 1 ? "s" : ""} · {proportion} ·{" "}
               {taille}
@@ -875,15 +875,15 @@ function ConfirmationClip({
           </ul>
         </div>
 
-        <div className="flex flex-col gap-1 border-t border-bord pt-4">
-          <Libelle>combien de clips</Libelle>
-          <ul className="mesure flex flex-col gap-1 text-[10px] text-texte-2">
+        <div className="flex flex-col gap-1 border-t border-trait pt-4">
+          <Libelle papier>combien de clips</Libelle>
+          <ul className="mesure flex flex-col gap-1 text-[10px] text-encre-3">
             <li>
               {nombre} clip{nombre > 1 ? "s" : ""}
               {nombre > 1 && (
                 <>
                   {" "}
-                  — <strong className="text-texte">chacun se paie</strong>, y
+                  — <strong className="text-encre">chacun se paie</strong>, y
                   compris ceux qu'on jettera après
                 </>
               )}
@@ -894,7 +894,7 @@ function ConfirmationClip({
 
       {/* ── Ce qui part, mot pour mot ─────────────────────────────────────── */}
       <section className="defile flex min-h-0 flex-col gap-3 overflow-y-auto p-5">
-        <Libelle>ce qui part, mot pour mot</Libelle>
+        <Libelle papier>ce qui part, mot pour mot</Libelle>
 
         {champOuvert ? (
           <textarea
@@ -907,12 +907,12 @@ function ConfirmationClip({
             rows={6}
             aria-label="Corriger le texte du clip, pour cet appel"
             data-correction-clip
-            className="mesure min-h-[120px] resize-y rounded-[2px] border border-ancien-signal bg-fond-2 px-2 py-1 text-[10.5px] leading-[1.45] text-texte"
+            className="mesure min-h-[120px] resize-y rounded-[2px] border border-signal bg-carte px-2 py-1 text-[10.5px] leading-[1.45] text-encre"
           />
         ) : (
           <p
             data-texte-confirme
-            className="mesure whitespace-pre-wrap rounded-[2px] border border-bord bg-fond-2 p-2 text-[10.5px] leading-[1.45] text-texte-2"
+            className="mesure whitespace-pre-wrap rounded-[2px] border border-trait bg-carte p-2 text-[10.5px] leading-[1.45] text-encre-3"
           >
             {texteFinal}
           </p>
@@ -920,7 +920,7 @@ function ConfirmationClip({
 
         <div className="flex items-baseline gap-2">
           {corrigee && (
-            <span className="mesure text-[9.5px] leading-4 text-epingle">
+            <span className="mesure text-[9.5px] leading-4 text-encre-attention">
               corrigé pour cet appel seulement
             </span>
           )}
@@ -937,7 +937,7 @@ function ConfirmationClip({
                   onRemettre()
                   setChampOuvert(false)
                 }}
-                className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+                className="mesure text-[10px] text-signal hover:opacity-70"
               >
                 remettre le texte du mouvement
               </button>
@@ -948,13 +948,13 @@ function ConfirmationClip({
                 setBrouillon(null)
                 setChampOuvert((o) => !o)
               }}
-              className="mesure text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+              className="mesure text-[10px] text-signal hover:opacity-70"
             >
               {champOuvert ? "fermer" : "corriger"}
             </button>
           </span>
         </div>
-        <p className="mesure text-[9.5px] leading-4 text-texte-3">
+        <p className="mesure text-[9.5px] leading-4 text-encre-4">
           {corrigee
             ? "la correction part avec ce clip — le mouvement de la bibliothèque ne bouge pas. Le corriger pour tous les clips suivants se fait dans les Réglages."
             : "c'est le texte du mouvement, écrit une fois dans la bibliothèque et jamais retapé ici — ce qui est lu ici part mot pour mot."}
@@ -962,24 +962,24 @@ function ConfirmationClip({
       </section>
 
       {/* ── Le modèle, le montant du lot, et le bouton qui part ───────────── */}
-      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-bord p-4">
+      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-trait p-4">
         <div className="flex flex-col gap-1">
-          <Libelle aide="clip.prix">le modèle</Libelle>
-          <span className="text-[12.5px] text-texte">{modele.nom}</span>
-          <span className="mesure text-[10px] text-texte-3">
+          <Libelle papier aide="clip.prix">le modèle</Libelle>
+          <span className="text-[12.5px] text-encre">{modele.nom}</span>
+          <span className="mesure text-[10px] text-encre-4">
             {modele.fournisseur}
           </span>
         </div>
 
         {attenteDuLot !== null ? (
           <>
-            <span className="mesure text-[11.5px] text-texte">
+            <span className="mesure text-[11.5px] text-encre">
               ≈ {duree(attenteDuLot)}
-              <span className="ml-1.5 text-[9.5px] text-texte-3">
+              <span className="ml-1.5 text-[9.5px] text-encre-4">
                 sur votre carte · gratuit{nombre > 1 ? ` · ${nombre} clips` : ""}
               </span>
             </span>
-            <p className="mesure text-[9.5px] leading-4 text-texte-3">
+            <p className="mesure text-[9.5px] leading-4 text-encre-4">
               {attente?.images} images à {attente?.mesure} — et le premier clip
               charge le modèle en mémoire, les suivants non
               {attente?.premier
@@ -989,33 +989,33 @@ function ConfirmationClip({
           </>
         ) : montant !== null ? (
           <>
-            <span className="mesure text-[11.5px] text-texte">
+            <span className="mesure text-[11.5px] text-encre">
               ≈ {dollars(montant)}
-              <span className="ml-1.5 text-[9.5px] text-texte-3">
+              <span className="ml-1.5 text-[9.5px] text-encre-4">
                 {modele.prix.nature}
                 {nombre > 1 ? ` · ${nombre} clips` : ""}
               </span>
             </span>
-            <p className="mesure text-[9.5px] leading-4 text-texte-3">
+            <p className="mesure text-[9.5px] leading-4 text-encre-4">
               {modele.prix.formule}
             </p>
-            <p className="mesure text-[9.5px] leading-4 text-texte-3">
+            <p className="mesure text-[9.5px] leading-4 text-encre-4">
               {modele.mesure ||
                 "ce dépôt n'a encore rien mesuré de ce modèle — proposé, jamais éprouvé"}
             </p>
-            <p className="mesure text-[9.5px] leading-4 text-texte-3">
+            <p className="mesure text-[9.5px] leading-4 text-encre-4">
               estimation haute : ce qui s'enregistrera est ce que la facture
               dira, et l'écart mesuré va jusqu'à moitié moins.
             </p>
           </>
         ) : (
-          <p className="mesure text-[9.5px] leading-4 text-texte-3">
+          <p className="mesure text-[9.5px] leading-4 text-encre-4">
             {modele.grise ?? "le prix n'a pas pu être relu"}
           </p>
         )}
 
-        <section className="mt-auto flex flex-col gap-2 border-t border-bord pt-3">
-          <Bouton
+        <section className="mt-auto flex flex-col gap-2 border-t border-trait pt-3">
+          <Bouton papier
             principal
             inactif={Boolean(refus) || !texteFinal || enVol}
             onClick={onPartir}
@@ -1028,18 +1028,18 @@ function ConfirmationClip({
                     (cout === null ? "" : ` · ${cout}`)
             }
           />
-          <Raison texte={!texteFinal ? "un clip part d'un texte — écrivez-en un" : null} />
+          <Raison papier texte={!texteFinal ? "un clip part d'un texte — écrivez-en un" : null} />
           <button
             type="button"
             onClick={onRevenir}
             disabled={enVol}
-            className="mesure h-[26px] text-[10px] text-texte-3 hover:text-texte-2 disabled:cursor-not-allowed"
+            className="mesure h-[26px] text-[10px] text-encre-4 hover:text-encre-3 disabled:cursor-not-allowed"
           >
             {enVol
               ? "l'appel est parti — il ne se rattrape plus"
               : "Revenir sans rien dépenser"}
           </button>
-          <p className="mesure text-[9.5px] leading-4 text-texte-3">
+          <p className="mesure text-[9.5px] leading-4 text-encre-4">
             rien n'est consommé tant que ce bouton n'est pas pressé.
           </p>
         </section>
@@ -1053,20 +1053,20 @@ function ImageDeDepartVue({ asset }: { asset: Asset | null }) {
   const visee = useVisee(asset ? sujetAsset(asset) : null)
   if (!asset)
     return (
-      <div className="flex aspect-square w-full items-center justify-center border border-bord bg-fond-2">
-        <span className="mesure text-[10px] text-texte-3">aucune image</span>
+      <div className="flex aspect-square w-full items-center justify-center border border-trait bg-carte">
+        <span className="mesure text-[10px] text-encre-4">aucune image</span>
       </div>
     )
   return (
     <div
       onPointerEnter={visee.entrer}
       onPointerLeave={visee.sortir}
-      className="aspect-square w-full overflow-hidden border border-bord bg-fond-2"
+      className="aspect-square w-full overflow-hidden border border-trait bg-carte"
     >
       <img
         src={vignetteAsset(asset, 512)}
         alt={asset.label}
-        className="damier h-full w-full object-contain"
+        className="damier-papier h-full w-full object-contain"
         style={{ imageRendering: "pixelated" }}
       />
     </div>
@@ -1098,13 +1098,13 @@ function ChoixDansLaBibliotheque({
   }, [recherche])
 
   return (
-    <div className="flex flex-col gap-2 border border-bord bg-fond-2 p-2">
+    <div className="flex flex-col gap-2 border border-trait bg-carte p-2">
       <input
         value={recherche}
         onChange={(e) => setRecherche(e.target.value)}
         placeholder="chercher une image"
         aria-label="Chercher une image de départ"
-        className="mesure h-[26px] rounded-[2px] border border-bord-fort bg-fond-0 px-2 text-[10.5px] text-texte placeholder:text-texte-3"
+        className="mesure h-[26px] rounded-[2px] border border-contour bg-papier px-2 text-[10.5px] text-encre placeholder:text-encre-4"
       />
       <ul className="defile grid max-h-[240px] grid-cols-3 gap-1 overflow-y-auto">
         {(assets ?? []).map((asset) => (
@@ -1113,13 +1113,13 @@ function ChoixDansLaBibliotheque({
               type="button"
               onClick={() => onChoisir(asset)}
               title={asset.label}
-              className="block aspect-square w-full overflow-hidden border border-bord hover:border-ancien-signal"
+              className="block aspect-square w-full overflow-hidden border border-trait hover:border-signal"
             >
               <img
                 src={vignetteAsset(asset, 128)}
                 alt={asset.label}
                 loading="lazy"
-                className="damier h-full w-full object-contain"
+                className="damier-papier h-full w-full object-contain"
                 style={{ imageRendering: "pixelated" }}
               />
             </button>
@@ -1127,7 +1127,7 @@ function ChoixDansLaBibliotheque({
         ))}
       </ul>
       {assets?.length === 0 && (
-        <p className="mesure text-[10px] text-texte-3">aucune image ici</p>
+        <p className="mesure text-[10px] text-encre-4">aucune image ici</p>
       )}
     </div>
   )
@@ -1165,10 +1165,10 @@ function CarteModele({
       className={[
         "flex flex-col gap-1 rounded-[2px] border p-2 transition-colors duration-[80ms]",
         grise
-          ? "border-bord bg-fond-2 opacity-60"
+          ? "border-trait bg-carte opacity-60"
           : choisi
-            ? "border-ancien-signal bg-fond-2"
-            : "border-bord bg-fond-2 hover:border-bord-fort",
+            ? "border-signal bg-carte"
+            : "border-trait bg-carte hover:border-contour",
       ].join(" ")}
     >
       <div className="flex items-start gap-1.5">
@@ -1182,23 +1182,23 @@ function CarteModele({
           aria-label={`Choisir ${modele.nom}`}
           className="flex min-w-0 flex-1 flex-col gap-1 rounded-[1px] text-left"
         >
-          <span className="text-[12.5px] text-texte">{modele.nom}</span>
+          <span className="text-[12.5px] text-encre">{modele.nom}</span>
 
           {attente ? (
             // **Un temps à la place d'un montant, et le mot « gratuit » avec.**
             // Écrire « ≈ 4 min » tout seul se lirait comme un délai de
             // livraison ; c'est un coût, et l'unité seule ne le dit pas.
-            <span className="mesure text-[11.5px] text-texte">
+            <span className="mesure text-[11.5px] text-encre">
               ≈ {duree(attenteDeLot(attente, nombre) ?? 0)}
-              <span className="ml-1.5 text-[9.5px] text-texte-3">
+              <span className="ml-1.5 text-[9.5px] text-encre-4">
                 sur votre carte · gratuit
                 {nombre > 1 ? ` · ${nombre} clips` : ""}
               </span>
             </span>
           ) : modele.prix.montant !== null ? (
-            <span className="mesure text-[11.5px] text-texte">
+            <span className="mesure text-[11.5px] text-encre">
               ≈ {dollars(modele.prix.montant * nombre)}
-              <span className="ml-1.5 text-[9.5px] text-texte-3">
+              <span className="ml-1.5 text-[9.5px] text-encre-4">
                 {modele.prix.nature}
                 {nombre > 1 ? ` · ${nombre} clips` : ""}
               </span>
@@ -1206,7 +1206,7 @@ function CarteModele({
           ) : (
             // La carte est grisée : il n'y a pas d'estimation à montrer, et
             // une phrase creuse vaudrait un prix. La raison est dans le pli.
-            <span className="mesure text-[10px] leading-4 text-texte-3">
+            <span className="mesure text-[10px] leading-4 text-encre-4">
               ne peut pas partir — dépliez pour lire pourquoi
             </span>
           )}
@@ -1220,24 +1220,24 @@ function CarteModele({
           aria-expanded={deplie}
           aria-label={`${deplie ? "replier" : "déplier"} ce qu'on sait de ${modele.nom}`}
           onClick={() => setDeplie((d) => !d)}
-          className="mesure mt-0.5 flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[2px] border border-bord text-[10px] text-texte-2 hover:border-bord-fort hover:text-texte"
+          className="mesure mt-0.5 flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[2px] border border-trait text-[10px] text-encre-3 hover:border-contour hover:text-encre"
         >
           {deplie ? "▴" : "▾"}
         </button>
       </div>
 
       {deplie && (
-        <div className="flex flex-col gap-1 border-t border-bord pt-1.5">
+        <div className="flex flex-col gap-1 border-t border-trait pt-1.5">
           {/* **La raison du grisage d'abord, quand il y en a une** : c'est
               elle qu'on vient chercher en dépliant cette carte-là. */}
           {grise && (
-            <span className="mesure text-[9.5px] leading-4 text-epingle">
+            <span className="mesure text-[9.5px] leading-4 text-encre-attention">
               {modele.grise}
             </span>
           )}
 
           {!grise && attente && (
-            <span className="mesure text-[9.5px] leading-4 text-texte-3">
+            <span className="mesure text-[9.5px] leading-4 text-encre-4">
               {attente.images} images à {attente.mesure}
             </span>
           )}
@@ -1245,11 +1245,11 @@ function CarteModele({
             <>
               {/* **La formule, sous le montant.** Un prix vidéo se calcule ; un
                   prix qu'on ne peut pas refaire de tête n'est pas vérifiable. */}
-              <span className="mesure text-[9.5px] leading-4 text-texte-3">
+              <span className="mesure text-[9.5px] leading-4 text-encre-4">
                 {modele.prix.formule}
               </span>
               {modele.prix.montant === null && (
-                <span className="mesure text-[9.5px] leading-4 text-epingle">
+                <span className="mesure text-[9.5px] leading-4 text-encre-attention">
                   {modele.grise}
                 </span>
               )}
@@ -1261,7 +1261,7 @@ function CarteModele({
               seconde et qu'aucune mesure automatique ne le voit — est le genre
               de fait qui se perd dans un document et qui se lit ici. */}
           {modele.duree_conseillee > 0 && (
-            <span className="mesure text-[9.5px] leading-4 text-epingle">
+            <span className="mesure text-[9.5px] leading-4 text-encre-attention">
               conseillé : {modele.duree_conseillee} seconde
               {modele.duree_conseillee > 1 ? "s" : ""} — {modele.raison_de_la_duree}
             </span>
@@ -1270,7 +1270,7 @@ function CarteModele({
           {/* **Ce que ce dépôt a mesuré, et rien d'autre.** Vide veut dire *on
               n'en sait rien*, et l'écrire vaut mieux que de laisser croire
               qu'un modèle proposé a été éprouvé. */}
-          <span className="mesure text-[9.5px] leading-4 text-texte-3">
+          <span className="mesure text-[9.5px] leading-4 text-encre-4">
             {modele.mesure ||
               "ce dépôt n'a encore rien mesuré de ce modèle — proposé, jamais éprouvé"}
           </span>
@@ -1331,14 +1331,14 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
   return (
     <div
       data-moteur
-      className="mt-2 flex flex-col gap-2 rounded-[2px] border border-bord bg-fond-2 p-2"
+      className="mt-2 flex flex-col gap-2 rounded-[2px] border border-trait bg-carte p-2"
     >
       <div className="flex items-baseline gap-2">
-        <Libelle aide="clip.moteur">la carte de cette machine</Libelle>
+        <Libelle papier aide="clip.moteur">la carte de cette machine</Libelle>
         <button
           type="button"
           onClick={relire}
-          className="mesure ml-auto text-[9.5px] text-texte-3 hover:text-texte"
+          className="mesure ml-auto text-[9.5px] text-encre-4 hover:text-encre"
         >
           revoir
         </button>
@@ -1347,7 +1347,7 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
       {/* Ce qu'elle est, quand elle répond. Une attente sans sa machine ne veut
           rien dire — la même mesure sur une autre carte donnerait autre chose. */}
       {etat.carte && (
-        <span className="mesure text-[9.5px] leading-4 text-texte-3">
+        <span className="mesure text-[9.5px] leading-4 text-encre-4">
           {etat.carte} · {gigas(etat.memoire_libre_go)} libres
         </span>
       )}
@@ -1357,7 +1357,7 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
       {etat.phrase && (
         <p
           data-moteur-phrase
-          className="mesure text-[10px] leading-4 text-texte-2"
+          className="mesure text-[10px] leading-4 text-encre-3"
         >
           {etat.phrase}
         </p>
@@ -1369,7 +1369,7 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
               Vingt-six gigaoctets ne se descendent pas dans le dos de quelqu'un,
               et la licence est une question qu'on se pose avant, jamais après :
               ce qui descend ici finira dans un jeu vendu. */}
-          <ul className="mesure flex flex-col gap-0.5 text-[9.5px] leading-4 text-texte-3">
+          <ul className="mesure flex flex-col gap-0.5 text-[9.5px] leading-4 text-encre-4">
             {etat.manquants.map((fichier) => (
               <li key={fichier.nom} className="flex gap-2">
                 <span className="truncate" title={fichier.nom}>
@@ -1381,7 +1381,7 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
               </li>
             ))}
           </ul>
-          <Bouton
+          <Bouton papier
             inactif={enCours}
             onClick={() => void rapatrier()}
             enfants={
@@ -1390,14 +1390,14 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
                 : `Télécharger · ${gigas(etat.go_a_telecharger)}`
             }
           />
-          <p className="mesure text-[9.5px] leading-4 text-texte-3">
+          <p className="mesure text-[9.5px] leading-4 text-encre-4">
             Une seule fois, puis plus jamais. Un téléchargement coupé se reprend
             là où il s'est arrêté : relancez, rien n'est perdu.
           </p>
         </>
       )}
 
-      <Raison texte={refus} />
+      <Raison papier texte={refus} />
     </div>
   )
 }
@@ -1424,8 +1424,8 @@ function Choix({
           className={[
             "mesure h-[26px] rounded-[2px] px-2 text-[10.5px] transition-colors duration-[80ms]",
             v.cle === valeur
-              ? "bg-ancien-signal text-fond-0"
-              : "border border-bord bg-fond-2 text-texte-2 hover:text-texte",
+              ? "bg-signal text-papier"
+              : "border border-trait bg-carte text-encre-3 hover:text-encre",
           ].join(" ")}
         >
           {v.nom}
