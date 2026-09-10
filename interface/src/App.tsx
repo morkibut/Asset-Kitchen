@@ -24,12 +24,8 @@ import {
 import {
   api,
   dollars,
-  ecouter,
-  filtreActif,
   FILTRE_VIDE,
-  heure,
   libelleDEmploi,
-  poserLeFichier,
   Refus,
   type Action,
   type Asset,
@@ -39,7 +35,6 @@ import {
   type Bibliotheque,
   type GroupeDeRangement,
   type Etat,
-  type Filtre,
   type Bande,
   type Generation,
   type Modele,
@@ -66,12 +61,8 @@ import {
 import {
   Apercu,
   fermerApercu,
-  sujetAsset,
   useApercu,
-  useVisee,
-  vignetteAsset,
 } from "./composants/Apercu"
-import { Arbre } from "./composants/Arbre"
 import {
   BarreChassis,
   type Bascule,
@@ -79,14 +70,9 @@ import {
   type Onglet,
   type Segment,
 } from "./composants/BarreChassis"
-import { BarreOutils, type Annulation } from "./composants/BarreOutils"
 import {
-  CRANS,
   Libelle,
-  Point,
   usePli,
-  ZOOMS,
-  type Zoom,
 } from "./composants/chassis"
 import { ChampPrompt, type EnVol } from "./composants/ChampPrompt"
 import { EcranClip, type CibleDuClip } from "./composants/Clip"
@@ -99,7 +85,6 @@ import {
   EQUIPEMENT,
   FAMILLES,
   NOM_DANS_LE_CARNET,
-  NOM_DE_LA_RUBRIQUE,
   derniersJeux,
   type LigneDeFamille,
   type LigneDePiece,
@@ -121,7 +106,6 @@ import {
   racine,
   remonterA,
   sortir,
-  type Annuaire,
   type Lieu,
   type Racine,
 } from "./lieux"
@@ -132,25 +116,29 @@ import { GrilleDuJeu } from "./composants/GrilleDuJeu"
 import { Comparer } from "./composants/Comparer"
 import { Retouche } from "./composants/Retouche"
 import { EcranReglages } from "./composants/EcranReglages"
-import { Fiche, nomDuModele } from "./composants/Fiche"
-import { FicheDuClip } from "./composants/FicheDuClip"
+import { nomDuModele } from "./composants/Fiche"
+// ── `C4` · la galerie est un fichier ────────────────────────────────────────
+// Elle était écrite en clair ici ; elle a désormais son fichier, comme les
+// vingt et un autres écrans du carnet. `App` n'en garde que ce que les autres
+// écrans lui empruntent — la cible et les réinjections vivent dans la barre qui
+// paie, et `fondreAsset` sert au flux d'événements.
+import { fondre, useFlux } from "./flux"
+import { nommerLeLieu } from "./lieux-noms"
+import { BarreEtat, type Repli } from "./composants/BarreEtat"
+import { Cible, Galerie, Grille, Reinjections, useGalerie } from "./composants/Galerie"
 // ⚠️ **`EcranTables` n'est plus monté nulle part** (`B25`) : les six portes de
 // la retouche mènent toutes à `Retouche.tsx`. Il ne reste de ce fichier que le
 // type de la table qu'une porte demande — il s'en ira avec lui en `B26`.
 import type { Table } from "./recette"
-import { EcranDepliage } from "./composants/Depliage"
 import { EcranAtelierDeBande } from "./composants/AtelierDeBande"
 import { EcranMontage } from "./composants/Montage"
-import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { VoletGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import type { Explication } from "./aide"
 import { Barre, fermerBarre, ouvrirBarre, useBarre } from "./composants/Barre"
 import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
-import { Tuile, type Entree } from "./composants/Tuile"
 import { EcranUnivers, type Cote } from "./composants/Univers"
-import { useDepot, type Vue as VueUnivers } from "./composants/Tableau"
+import { type Vue as VueUnivers } from "./composants/Tableau"
 
-type Repli = { repli: boolean; raison: string | null; recu_le: number }
 type Geste = "Réglages" | "Réessayer"
 
 const BIBLIOTHEQUE_VIDE: Bibliotheque = {
@@ -161,35 +149,6 @@ const BIBLIOTHEQUE_VIDE: Bibliotheque = {
   total_usd: 0,
 }
 
-/** Poser une génération dans la liste **sans jamais la doubler**.
- *
- *  Deux chemins amènent la même génération à l'écran, et ils se croisent : la
- *  réponse du POST, et l'annonce du flux — que le serveur publie dès qu'il a
- *  enregistré, donc *avant* que le POST ne soit revenu. Insérer sans regarder
- *  d'un côté et fondre de l'autre laissait deux copies de tout ce qui était
- *  lancé depuis cet onglet. Elles restaient jumelles — la mise à jour les
- *  touchait toutes les deux — mais la clé React devenait double, et une clé
- *  double laisse des tuiles orphelines que le rendu suivant ne retire plus.
- *
- *  Le défaut ne survivait à aucun rechargement : le message d'état remplace la
- *  liste entière par celle du serveur, qui, lui, n'a jamais rien doublé. C'est
- *  ce qui l'a rendu invisible jusqu'à une séance faite au navigateur.
- */
-const fondre = (liste: Generation[], recue: Generation): Generation[] =>
-  liste.some((g) => g.identifiant === recue.identifiant)
-    ? liste.map((g) => (g.identifiant === recue.identifiant ? recue : g))
-    : [recue, ...liste]
-
-// « Zoom 1× / 2× / 4× — un niveau indisponible à la largeur courante est
-// **grisé, pas caché** » (`docs/DESIGN.md` § Layout). Les crans eux-mêmes vivent
-// dans le châssis : ce sont ceux des vignettes du tableau d'inspiration, et un
-// seul vocabulaire de taille traverse tout le produit.
-//
-// Le padding de la zone centrale et la gouttière de la grille, `docs/DESIGN.md`
-// § Spacing. Ils servent à répondre à une seule question : **combien de tuiles
-// de ce cran tiennent côte à côte ?**
-const PADDING = 16
-const GOUTTIERE = 9
 
 // **Le temps qu'on laisse à la frappe de se poser** (M3). Corriger une ligne de
 // la fenêtre de confirmation écrit dans le tri, et le tri commande la demande
@@ -203,27 +162,7 @@ const GOUTTIERE = 9
 // la réparation avec la chose qu'elle répare.
 const REPOS_FRAPPE = 200
 
-// **Le plafond de la grille** (B3), identique à `PAR_DEFAUT` côté serveur
-// (`atelier/services/bibliotheque.py`). « Charger la suite » ne fait que le
-// faire monter : la même requête, plus large, jamais un second appel qui
-// s'additionnerait à la première page.
-const TAILLE_PAGE_GRILLE = 200
 
-/**
- * Un cran tient-il à cette largeur ?
- *
- * **Il faut deux colonnes, pas une.** Trouvé en ouvrant l'atelier, jamais au
- * banc : `minmax(cran, 1fr)` accepte une colonne unique et l'**étire** jusqu'au
- * bord — à 4× sur une colonne de 1060 px, une seule tuile occupait 1028 px, soit
- * huit fois la taille de repos pour un contrôle qui en annonce quatre. Une
- * grille d'une colonne n'est plus une planche contact, c'est une visionneuse, et
- * ce n'est pas ce que le zoom promet.
- *
- * **1× est toujours disponible.** C'est l'état de repos du produit, et quelque
- * chose doit se rendre : le griser laisserait la grille sans cran valide.
- */
-const tient = (cran: Zoom, largeur: number): boolean =>
-  cran === 1 || 2 * CRANS[cran] + GOUTTIERE <= largeur - 2 * PADDING
 
 export function App() {
   const [etat, setEtat] = useState<Etat | null>(null)
@@ -259,37 +198,13 @@ export function App() {
    *  jusqu'au premier rechargement. Relue à l'ouverture du jeu — un clip payé
    *  ne change jamais, une relecture régulière n'apprendrait rien de plus. */
   const [clipsDuJeu, setClipsDuJeu] = useState<Generation[]>([])
-  /** La planche dont on choisit ce qu'on garde (R6) — **par identifiant, jamais
-   *  par objet**. La génération vit dans le chantier, que le flux tient à jour :
-   *  en garder une copie ici ferait un second exemplaire qui vieillirait pendant
-   *  qu'on regarde, et l'écran trancherait sur des mesures périmées. */
-  const [depliage, setDepliage] = useState<{
-    generation: string
-    rang: number
-  } | null>(null)
-  // La bibliothèque telle que le serveur l'a filtrée. C'est **lui** qui filtre :
-  // la recherche doit porter sur tout, pas sur ce que cet onglet a en mémoire.
-  const [grille, setGrille] = useState<Asset[]>([])
-  // **Ce que le filtre courant rendrait sans plafond** (B3). La grille
-  // s'arrêtait à 200 sans le dire — l'auteur croyait avoir tout vu. `null`
-  // tant que le premier `GET /assets` n'a pas répondu : on ne compare jamais
-  // une grille encore vide à un total qu'on n'a pas encore lu.
-  const [totalGrille, setTotalGrille] = useState<number | null>(null)
-  const [limiteGrille, setLimiteGrille] = useState(TAILLE_PAGE_GRILLE)
   const [bibliotheque, setBibliotheque] = useState<Bibliotheque>(BIBLIOTHEQUE_VIDE)
-  const [filtre, setFiltre] = useState<Filtre>(FILTRE_VIDE)
-  /** La famille qu'on regarde dans la galerie, `""` pour toutes, `"aucune"`
-   *  pour ce qui n'appartient à aucune chose du jeu (E4), `"clips"` pour eux
-   *  seuls — distinct des familles, parce qu'un clip n'en a aucune (B22). */
-  const [famille, setFamille] = useState("")
-  const [selection, setSelection] = useState<string[]>([])
-  const [annulation, setAnnulation] = useState<Annulation | null>(null)
-  // **Le seul geste du produit dont le résultat n'arrive pas par le flux** :
-  // une archive ne s'annonce pas, elle se télécharge. Ce drapeau ne sert
-  // qu'à empêcher un second clic pendant que le premier fabrique le ZIP —
-  // deux archives identiques dans les téléchargements pour un double-clic.
-  const [exportEnCours, setExportEnCours] = useState(false)
   const [panne, setPanne] = useState<string | null>(null)
+  /** Ce qu'on montre d'un refus : ce que le serveur a su dire en français,
+   *  sinon la phrase de repli. Écrit ici, tout en haut, parce que la galerie
+   *  s'en sert dès son crochet (`C4`). */
+  const echouer = (erreur: unknown, defaut_: string) =>
+    setPanne(erreur instanceof Refus ? erreur.message : defaut_)
   // **L'échec d'un appel n'est pas une panne de l'atelier** (U1). Les deux
   // vivaient dans le même état, et une génération refusée grisait donc le
   // bouton qui paie jusqu'à ce qu'un autre geste relise le catalogue : le seul
@@ -462,16 +377,6 @@ export function App() {
       clip ? entrer(p, { genre: "montage", clip }) : sortir(p, "montage"),
     )
 
-  /** **Le clip dont la fiche est ouverte** (V3.02) — l'identifiant de sa
-   *  génération, ou rien.
-   *
-   *  La même colonne que la fiche d'une image, pour ce que la galerie garde
-   *  sans que ce soit une image : un clip se regarde maintenant d'un clic,
-   *  comme elle — et le clic ne fait rien d'autre. C'est un état à part, et
-   *  non une sélection : les gestes de la barre d'outils — favori, supprimer,
-   *  exporter — sont des gestes d'image, et une clé de clip qui s'y mêlerait
-   *  ferait « supprimer » tenter d'effacer une vidéo payée. */
-  const [ficheClip, setFicheClip] = useState<string | null>(null)
   // **L'atelier d'une animation gardée** (A7). Il prend la place de la
   // matrice, comme le montage prend celle de la galerie : on y entre depuis
   // la vignette de l'animation, et rien n'y dépense.
@@ -543,6 +448,66 @@ export function App() {
   // vers l'atelier, et le serveur renverrait l'état complet à chaque fois.
   const [plan, setPlan] = useState<Pose[]>([])
   const [personnages, setPersonnages] = useState<Personnage[]>([])
+
+  // **Ce que le flux a besoin de savoir, sans le faire se rebrancher.**
+  //
+  // L'abonnement est ouvert **une fois par onglet**, et il le reste : c'est la
+  // promesse de T1, « on se branche une fois, on écoute ». Mettre le filtre, le
+  // projet ouvert ou les proportions dans les dépendances de l'effet aurait
+  // fermé la liaison et en aurait rouvert une à chaque changement — donc à
+  // chaque frappe dans le champ de recherche —, et le serveur aurait renvoyé
+  // l'état complet à chaque fois. Un ref porte donc ce qui bouge, et l'effet ne
+  // dépend de rien.
+  const vivant = useRef({
+    filtre: FILTRE_VIDE,
+    courant: null as string | null,
+    relireCatalogue: async () => {},
+    relireGrille: async () => {},
+    relireEtat: async () => {},
+    fondrePersonnage: (_recu: Personnage & { supprime?: boolean }) => {},
+    relireProduction: async () => {},
+    relireLeVestiaire: async () => {},
+    personnages: [] as Personnage[],
+  })
+
+  // ── La galerie (`C4`) ─────────────────────────────────────────────────────
+  //
+  // **Elle est un fichier, plus une partie de celui-ci.** Ce qu'elle tient — sa
+  // grille, son filtre, sa sélection, son zoom, ses jugements — vit dans
+  // `composants/Galerie.tsx`. `App` ne lui passe que ce qui ne lui appartient
+  // pas et qu'elle lit, et lui reprend ce que les autres écrans lui empruntent :
+  // supprimer une image se fait aussi depuis la matrice d'un sujet, et la barre
+  // du châssis compte ce que la grille montre.
+  const galerie = useGalerie({
+    bibliotheque,
+    chantier,
+    setChantier,
+    clipsDuJeu,
+    echouer,
+    setPanne,
+    setFente,
+    replies,
+    vivant,
+  })
+  const {
+    entree,
+    entrees,
+    fiche,
+    ficheClip,
+    filtre,
+    grille,
+    mesurerCentre,
+    relancer,
+    relireGrille,
+    rendre,
+    selection,
+    setDepliage,
+    setFiltre,
+    setGrille,
+    setSelection,
+    supprimer,
+    zoomRendu,
+  } = galerie
   // **Le vestiaire du projet** (C3) — l'autre axe de la même matrice, tenu ici
   // pour la raison du plan : un seul endroit écoute le flux, pour toute la vie
   // de l'onglet. Il arrive dans le même aller-retour que le plan et les
@@ -1176,16 +1141,6 @@ export function App() {
   // La découpe d'une planche reste joignable — par la barre des tables, qui
   // est son vrai chemin depuis `E3`.
 
-  /** Le zoom de la grille — 1× / 2× / 4×, `docs/DESIGN.md` § Layout. Il n'est
-   *  ni sauvegardé ni partagé : c'est un réglage de coup d'œil, pas une
-   *  propriété de la bibliothèque. */
-  const [zoom, setZoom] = useState<Zoom>(1)
-  /** La largeur de la colonne centrale, **mesurée**. C'est elle qui décide
-   *  quels crans de zoom tiennent. Zéro veut dire « pas encore mesurée » et non
-   *  « nulle » : rien n'est grisé tant qu'on n'a pas regardé. */
-  const [largeurCentre, setLargeurCentre] = useState(0)
-  const centre = useRef<HTMLElement>(null)
-
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
   const [promptNegatif, setPromptNegatif] = useState("")
@@ -1205,43 +1160,6 @@ export function App() {
    *  occupera. Vide est permis — un univers vide ne contraint rien (US-57). */
   const [echelle, setEchelle] = useState("")
 
-  const dernierClic = useRef<string | null>(null)
-
-  /** **Faire entrer une image depuis l'écran** (R3). Le bouton de la barre
-   *  d'outils et le dépôt sur la grille passent tous les deux par ici, donc par
-   *  le même service que l'outil MCP : il n'y a qu'un endroit du produit qui
-   *  fasse entrer une image, et il n'a pas bougé. */
-  const entree = useImport({
-    onErreur: (raison) => setPanne(raison),
-    onEntree: () => void vivant.current.relireGrille(),
-  })
-
-  // ── La largeur de la colonne centrale, mesurée ────────────────────────────
-  //
-  // **On regarde la colonne, on ne la recalcule pas.** Les largeurs du § Layout
-  // sont déjà écrites une fois, dans `colonnes` ; les soustraire à nouveau ici
-  // en ferait une seconde vérité, et le jour où l'une des deux bouge, le grisé
-  // du zoom mentirait sans que rien ne le dise.
-  //
-  // **Trois moments, et il n'y en a pas d'autre** : au montage, quand la fenêtre
-  // change de taille, et quand la transition de 160 ms sur les colonnes s'achève
-  // — c'est-à-dire quand un panneau s'est replié ou que la fiche s'est ouverte.
-  // Mesurer au moment où l'on replie donnerait la largeur d'**avant** : la
-  // transition n'a pas commencé, et c'est l'arrivée qui compte.
-  //
-  // Pas de `ResizeObserver` : ses rappels sont livrés par la boucle de rendu, et
-  // un onglet qui ne compose pas ses images ne les livre jamais — vu le 27 août
-  // au navigateur, où le grisé du zoom n'est **jamais** apparu. Un rectangle se
-  // lit à la demande, dans tous les cas.
-  const mesurerCentre = useCallback(() => {
-    const largeur = centre.current?.getBoundingClientRect().width ?? 0
-    setLargeurCentre((deja) => (Math.abs(deja - largeur) < 1 ? deja : largeur))
-  }, [])
-
-  useEffect(() => {
-    window.addEventListener("resize", mesurerCentre)
-    return () => window.removeEventListener("resize", mesurerCentre)
-  }, [mesurerCentre])
 
   // **Le guide s'ouvre sur `?`**, et se ferme sur Échap comme tout écran du
   // produit. Jamais quand on est en train d'écrire : le champ de prompt et les
@@ -1372,38 +1290,7 @@ export function App() {
     }
   }, [barreOuverte, bibliotheque.courant])
 
-  // **Ce que le flux a besoin de savoir, sans le faire se rebrancher.**
-  //
-  // L'abonnement est ouvert **une fois par onglet**, et il le reste : c'est la
-  // promesse de T1, « on se branche une fois, on écoute ». Mettre le filtre, le
-  // projet ouvert ou les proportions dans les dépendances de l'effet aurait
-  // fermé la liaison et en aurait rouvert une à chaque changement — donc à
-  // chaque frappe dans le champ de recherche —, et le serveur aurait renvoyé
-  // l'état complet à chaque fois. Un ref porte donc ce qui bouge, et l'effet ne
-  // dépend de rien.
-  const vivant = useRef({
-    filtre: FILTRE_VIDE,
-    courant: null as string | null,
-    relireCatalogue: async () => {},
-    relireGrille: async () => {},
-    relireEtat: async () => {},
-    fondrePersonnage: (_recu: Personnage & { supprime?: boolean }) => {},
-    relireProduction: async () => {},
-    relireLeVestiaire: async () => {},
-    personnages: [] as Personnage[],
-  })
 
-  // **La fiche n'est pas un état : c'est la sélection quand elle vaut un.**
-  //
-  // Les tenir tous les deux, c'était deux vérités sur la même chose — et elles
-  // ont divergé au premier clic un peu vif : deux clics dans le même tick
-  // lisaient la même sélection périmée, et le second effaçait le premier au
-  // lieu de s'y ajouter. Vu au navigateur, jamais au banc, parce qu'une main
-  // humaine met plus d'un rendu entre deux clics.
-  //
-  // La déduire tient aussi la promesse de `docs/DESIGN.md` : l'anneau
-  // `--lumiere` dit « sélectionné », et il n'a plus qu'un seul sens.
-  const fiche = selection.length === 1 ? selection[0] : null
 
   // **Et à chaque geste qui change la largeur.** Le repli d'un panneau et
   // l'ouverture de la fiche déplacent les colonnes ; la transition de 160 ms
@@ -1425,9 +1312,6 @@ export function App() {
     onglet,
     retoucheOuverte,
   ])
-
-  const echouer = (erreur: unknown, defaut_: string) =>
-    setPanne(erreur instanceof Refus ? erreur.message : defaut_)
 
   // ── Ce que l'atelier sait de lui-même ─────────────────────────────────────
 
@@ -1498,41 +1382,6 @@ export function App() {
   // La composition n'a pas bougé d'un mot : elle est **demandée**, jamais
   // recomposée ici, et c'est le chemin que la soumission emprunte.
 
-  // ── La grille ─────────────────────────────────────────────────────────────
-  //
-  // Elle se redemande quand le filtre change, et **seulement** alors. Le
-  // filtrage vit côté serveur : le rejouer ici sur les deux cents assets que cet
-  // onglet a en mémoire ferait dire à la recherche autre chose qu'à la
-  // bibliothèque, et c'est exactement la divergence relevée chez SpriteCook.
-
-  const relireGrille = useCallback(async () => {
-    try {
-      const { assets, total } = await api.assets({
-        ...filtre,
-        sansProjet: bibliotheque.courant === null,
-        limite: limiteGrille,
-      })
-      setGrille(assets)
-      setTotalGrille(total)
-    } catch (erreur) {
-      echouer(erreur, "la bibliothèque ne répond pas")
-    }
-  }, [filtre, bibliotheque.courant, limiteGrille])
-
-  useEffect(() => {
-    void relireGrille()
-  }, [relireGrille])
-
-  // **Changer de filtre repart de la première page** (B3) : sans ça, une
-  // recherche neuve hériterait du plafond agrandi par « Charger la suite »
-  // sur la recherche précédente, et montrerait quatre cents images d'un
-  // sujet qui n'en a que huit.
-  useEffect(() => {
-    setLimiteGrille(TAILLE_PAGE_GRILLE)
-  }, [filtre, bibliotheque.courant])
-
-  const chargerLaSuiteGrille = () =>
-    setLimiteGrille((limite) => limite + TAILLE_PAGE_GRILLE)
 
   // ── Les clips gardés, relus depuis le dépôt (B22) ─────────────────────────
   //
@@ -1756,219 +1605,26 @@ export function App() {
     personnages,
   }
 
-  // ── Le flux d'événements ──────────────────────────────────────────────────
-  //
-  // Plus aucun sondage. On se branche une fois, on écoute, et l'atelier dit ce
-  // qu'il fait au moment où il le fait. Le premier message est l'état complet :
-  // c'est lui qui fait qu'un onglet rouvert retrouve les images produites
-  // pendant son absence — et `EventSource` se rebranche seul, donc une veille
-  // de machine ou un redémarrage du serveur se rattrapent sans rien recharger.
-
-  useEffect(() => {
-    return ecouter({
-      etat: (recu) => {
-        setEtat(recu)
-        // **L'atelier neuf ouvrait l'assistant** (E19) — retiré par `C2` avec
-        // lui. Le premier lancement a déjà son écran depuis `B15` : le tour du
-        // propriétaire (`Installation` en mode « première »), qui prend la
-        // fenêtre entière et que le serveur n'annonce que sur un atelier qui
-        // n'a rien produit. Deux écrans qui s'ouvrent seuls à la même minute
-        // étaient un de trop.
-        setBibliotheque(recu.bibliotheque)
-        setUnivers(recu.univers ?? UNIVERS_VIDE)
-        projetDeLUnivers.current = recu.bibliotheque.courant
-        empreinteUnivers.current = JSON.stringify(recu.univers ?? UNIVERS_VIDE)
-        if (recu.generations) setChantier(recu.generations)
-        if (recu.assets) setGrille(recu.assets)
-        // Ce message part **une fois par abonnement**, donc à chaque
-        // rebranchement. Son catalogue fait autorité sur celui que l'onglet
-        // gardait : sans ça, un serveur redémarré pendant une veille laisse la
-        // barre d'état dater une photo qui n'existe plus.
-        setCatalogueRepli(recu.catalogue)
-        // Et son arrivée **prouve** que l'atelier répond : une panne posée
-        // pendant son absence est un fait périmé.
-        setPanne(null)
-      },
-      // **Scopé au jeu ouvert, comme l'asset juste au-dessus** (B4). Une
-      // génération qui tourne dans un autre projet — un autre onglet, ou
-      // l'agent — arrive sur le même flux : elle n'a rien à faire dans le
-      // chantier qu'on regarde, ni à y rester si on vient de changer de jeu.
-      generation: (recue) =>
-        setChantier((liste) =>
-          recue.projet === vivant.current.courant
-            ? fondre(liste, recue)
-            : liste.filter((g) => g.identifiant !== recue.identifiant),
-        ),
-      asset: (recu) => {
-        setGrille((liste) =>
-          fondreAsset(liste, recu, vivant.current.filtre, vivant.current.courant),
-        )
-        // **Une image qui porte une case peut la remplir ou la vider**, et les
-        // cases se calculent sur les assets — que cet onglet ne tient pas : il
-        // n'en a qu'une page, filtrée sur autre chose. On redemande donc, et
-        // seulement pour les images qui **concernent** une case : celle qui en
-        // porte une, et celle qui vient d'en quitter une, reconnue parce que la
-        // matrice la montre encore.
-        const concerne =
-          recu.personnage ||
-          vivant.current.personnages.some((p) =>
-            p.cases.some((c) =>
-              c.images.some((i) => i.identifiant === recu.identifiant),
-            ),
-          )
-        if (concerne) void vivant.current.relireProduction()
-      },
-      bibliotheque: setBibliotheque,
-      // **Une carte se fond par identifiant, jamais ne s'empile.** Elle arrive
-      // par deux chemins qui se croisent — la réponse du POST et l'annonce du
-      // flux —, exactement comme une génération en T1. Et comme un asset, elle
-      // doit être confrontée à ce qu'on regarde : une carte d'un autre projet
-      // n'entre pas dans le tableau du projet ouvert.
-      carte: (recue) =>
-        setCartes((liste) => {
-          if (recue.projet !== vivant.current.courant)
-            return liste.filter((c) => c.identifiant !== recue.identifiant)
-          if (recue.oubliee)
-            return liste.filter((c) => c.identifiant !== recue.identifiant)
-          return liste.some((c) => c.identifiant === recue.identifiant)
-            ? liste.map((c) => (c.identifiant === recue.identifiant ? recue : c))
-            : [recue, ...liste]
-        }),
-      // **Un lien est né, a été nommé, ou coupé.** Il se fond par identifiant,
-      // jamais ne s'empile : il arrive par deux chemins qui se croisent — la
-      // réponse du POST et l'annonce du flux —, exactement comme une génération
-      // en T1 et comme une carte en T4. Un lien coupé porte `coupe`, et un lien
-      // dont une extrémité a disparu arrive par ce message-là, coupé : c'est le
-      // serveur qui tient la règle, l'écran ne la rejoue jamais.
-      lien: (recu) =>
-        setLiens((liste) => {
-          if (recu.projet !== vivant.current.courant)
-            return liste.filter((un) => un.identifiant !== recu.identifiant)
-          if (recu.coupe)
-            return liste.filter((un) => un.identifiant !== recu.identifiant)
-          return liste.some((un) => un.identifiant === recu.identifiant)
-            ? liste.map((un) => (un.identifiant === recu.identifiant ? recu : un))
-            : [...liste, recu]
-        }),
-      // **Un personnage se fond par identifiant, jamais ne s'empile** — même
-      // règle que la carte et le lien, et pour la même raison : il arrive par
-      // deux chemins qui se croisent, la réponse de l'appel et l'annonce du
-      // flux. Un personnage supprimé porte `supprime`, et il est confronté au
-      // projet ouvert comme tout ce qui appartient à un projet.
-      personnage: (recu) => vivant.current.fondrePersonnage(recu),
-      // Ce que le projet n'envoie plus. Un genre à lui : `univers` fait
-      // redemander l'état *et* le catalogue depuis T4, et une case décochée n'a
-      // aucune raison de coûter deux appels réseau.
-      references: (recu) => {
-        if (recu.projet !== vivant.current.courant) return
-        void vivant.current.relireCatalogue()
-      },
-      // **Le plan arrive entier**, et il remplace : il est court, et une pose
-      // retirée ne se devinerait pas d'un message qui ne porterait que les
-      // ajouts. Une pose ajoutée fait paraître une case chez chaque personnage
-      // sans qu'aucun personnage soit annoncé — c'est ce que « le plan décide,
-      // le personnage soustrait » veut dire, vu du flux.
-      //
-      // **Et depuis E9, ce que chaque chose réclame est calculé par le
-      // serveur** : le type décide de la liste, la chose la complète, et la
-      // règle a quatre branches. L'écran ne la rejoue pas — il redemande la
-      // production, qui rend le plan et les choses **en un seul aller-retour**,
-      // exactement comme au premier chargement. Poser le plan seul aurait
-      // laissé les choses avec la liste d'avant, et une attitude neuve ne
-      // serait apparue nulle part.
-      plan: (recu) => {
-        if (recu.projet !== vivant.current.courant) return
-        setPlan(recu.plan)
-        void vivant.current.relireProduction()
-      },
-      // **Les directions arrivent entières**, comme le plan et pour les mêmes
-      // deux raisons : la liste est courte, et une direction retirée ne se
-      // devinerait pas d'un message qui ne porterait que les ajouts. Les cases
-      // se redemandent avec, parce qu'une case est une pose *dans une
-      // direction* : poser la liste seule aurait laissé les rangées d'avant.
-      directions: (recu) => {
-        if (recu.projet !== vivant.current.courant) return
-        void vivant.current.relireProduction()
-      },
-      // **Le vestiaire arrive entier**, et il remplace — même règle que le plan,
-      // et pour les mêmes deux raisons : il est court, et une pièce retirée ne se
-      // devinerait pas d'un message qui ne porterait que les ajouts. Un genre à
-      // lui plutôt qu'un champ sur `univers`, qui fait redemander l'état *et* le
-      // catalogue depuis T4 : renommer une pièce n'a aucune raison de coûter deux
-      // appels réseau.
-      vestiaire: (recu) => {
-        if (recu.projet !== vivant.current.courant) return
-        setEmplacements(recu.emplacements)
-        setPieces(recu.pieces)
-        // **Et le vestiaire résolu avec** (`B19`) : une pièce ajoutée depuis la
-        // fiche d'un sujet arrive par ce message-là, et sans cette relecture sa
-        // page ne la verrait qu'au prochain changement de jeu. On redemande
-        // plutôt que de recomposer ici : le compte d'un emploi se lit sur les
-        // calques, et l'écran ne les a pas.
-        void vivant.current.relireLeVestiaire()
-      },
-      // **Une bande a bougé, et une case du calque animé change avec** (A12).
-      //
-      // On ne pose pas la bande ici : ce que l'écran lit sont les **cases**, et
-      // c'est le serveur qui les compose — recopier la bande dans la bonne case
-      // à la main serait un second calcul de la matrice, celui-là même que le
-      // dépôt refuse partout ailleurs. On redemande donc le plan, comme les
-      // directions le font juste au-dessus et pour la même raison.
-      //
-      // **Une bande sans personnage ne concerne aucune matrice** : un brouillon
-      // gardé dans la galerie n'a pas à faire travailler le codex.
-      bande: (recu) => {
-        if (!recu.personnage) return
-        void vivant.current.relireProduction()
-      },
-      // Un seul message pour un lot entier : palette recalculée, réglage posé,
-      // ou balayage terminé. La grille se redemande alors — c'est le troisième
-      // et dernier appel que l'interface refait d'elle-même, et il porte sur des
-      // rendus dont l'empreinte vient de changer.
-      univers: (recu) => {
-        if (recu.projet !== vivant.current.courant) return
-        setUnivers(recu.univers)
-        projetDeLUnivers.current = recu.projet
-        setTeintes(recu.teintes)
-        // Un balayage a changé des recettes, donc des empreintes, donc les
-        // adresses des rendus : la grille se redemande une fois, pour le lot.
-        if (recu.realignes) void vivant.current.relireGrille()
-        // **Deux appels réseau, et seulement si l'univers a vraiment changé.**
-        // Ce message porte désormais aussi les teintes d'îlot (T9), qui ne sont
-        // pas dans l'univers et ne changent ni le grisé ni ce qui partira :
-        // colorer un îlot aurait redemandé l'état *et* le catalogue pour une
-        // couleur. La règle des deux lignes ci-dessous n'a pas bougé — c'est sa
-        // condition qui manquait, parce que jusqu'ici « un message `univers` est
-        // arrivé » et « l'univers a changé » étaient la même chose.
-        const signature = JSON.stringify(recu.univers)
-        if (signature === empreinteUnivers.current) return
-        empreinteUnivers.current = signature
-        // Et le grisé de la quantification suit la palette : c'est le serveur
-        // qui l'écrit, l'écran ne rejoue jamais la règle.
-        void vivant.current.relireEtat()
-        // **Et le catalogue, parce que promouvoir change ce qui partira.**
-        // Trouvé en ouvrant l'atelier, pas au banc : le bloc « Ce qui part »
-        // annonçait zéro référence alors que le serveur en comptait une, et il
-        // ne se corrigeait qu'au premier changement de sujet. La règle de T1
-        // n'avait pas bougé — « le catalogue se redemande parce que le grisé de
-        // chaque modèle dépend de la demande en cours » —, c'est la demande qui
-        // a gagné une composante que l'écran ne pilote pas.
-        void vivant.current.relireCatalogue()
-      },
-      catalogue: (recu) => {
-        setCatalogueRepli(recu)
-        // Le repli change ce que chaque modèle peut honorer : la liste, elle,
-        // se redemande — c'est le serveur qui écrit les raisons du grisé.
-        void vivant.current.relireCatalogue()
-      },
-      // **Le cadre de l'agent bouge sans que l'écran ait rien fait** : c'est
-      // l'agent qui dépense, et c'est un autre onglet qui a peut-être relevé le
-      // plafond. Rien d'autre à redemander — la charge porte le cadre entier et
-      // sa consommation, et rien ici ne les recalcule.
-      agent: (agent) => setEtat((e) => (e ? { ...e, agent } : e)),
-      liaison: setLiaison,
-    })
-  }, [])
+  // ── Le flux d'événements — branché dans `flux.ts` depuis `C4` ─────────────
+  useFlux({
+    vivant,
+    empreinteUnivers,
+    projetDeLUnivers,
+    setBibliotheque,
+    setCartes,
+    setCatalogueRepli,
+    setChantier,
+    setEmplacements,
+    setEtat,
+    setGrille,
+    setLiaison,
+    setLiens,
+    setPanne,
+    setPieces,
+    setPlan,
+    setTeintes,
+    setUnivers,
+  })
 
   // ── Le modèle choisi reste choisi ─────────────────────────────────────────
   // Même devenu invalide : c'est générer qui devient inactif, avec sa raison.
@@ -2017,113 +1673,6 @@ export function App() {
     directionsCible.join("·"),
   ].join("␟")
 
-  // ── Ce que la grille montre ───────────────────────────────────────────────
-
-  // **Le filtre « clips »** (B22) : distinct des familles, parce qu'un clip
-  // n'en a aucune — le rejouer aux mêmes places que « personnages » ou
-  // « décors » ferait passer pour une famille ce qui n'en est pas une.
-  const clipsSeuls = famille === "clips"
-
-  const entrees = useMemo<Entree[]>(() => {
-    const parCle = new Map<string, Entree>()
-    if (!filtreActif(filtre)) {
-      // **Les clips gardés, relus depuis le dépôt** (B22), avant le chantier
-      // pour que celui-ci les recouvre à la même clé s'il en tient une
-      // version plus fraîche — encore en cours, ou pas encore départagée. Un
-      // clip n'a pas de famille : il ne paraît que sous « Toutes » ou sous
-      // le filtre qui lui est dédié.
-      if (famille === "" || clipsSeuls) {
-        for (const generation of clipsDuJeu) {
-          if (generation.clip?.jete) continue
-          const emplacement = generation.emplacements[0]
-          const rang = emplacement?.rang ?? 0
-          const cle = `${generation.identifiant}-${rang}`
-          parCle.set(cle, {
-            cle,
-            date: generation.cree_le,
-            rang,
-            sorte: "clip",
-            generation,
-          })
-        }
-      }
-      // Le chantier ensuite : il tient sa place **avant** que l'image n'existe.
-      // Il ne paraît pas quand un filtre est posé — un lot qui n'est pas encore
-      // arrivé n'a rien à quoi un filtre puisse s'appliquer, et le faire
-      // apparaître dans une recherche mentirait sur ce qu'elle a trouvé.
-      for (const generation of chantier) {
-        // **Le chantier d'un autre jeu ne montre rien ici** (B4). Le flux
-        // filtre déjà ce qui arrive en direct ; ce garde-ci couvre ce qui
-        // était déjà dans le chantier **avant** un changement de jeu — le
-        // premier message du flux ne se rejoue pas à la bascule, seuls les
-        // faits qui suivent le sont.
-        if (generation.projet !== bibliotheque.courant) continue
-        // **Une planche qui attend un choix garde sa place** (R6). Elle est
-        // réussie — payée, arrivée, entière — mais rien n'est entré en
-        // bibliothèque : sans cette ligne, sa tuile disparaîtrait à l'arrivée
-        // et aucun asset ne prendrait le relais. L'auteur verrait son appel
-        // s'évanouir sous ses yeux, ce qui est exactement le gâchis silencieux
-        // que la tranche répare.
-        const attend = generation.pliage?.attend_un_choix === true
-        // **Un clip garde sa place à l'arrivée** (A9), et pour la raison même
-        // qui la garde à une planche : il n'entre pas en bibliothèque — ce
-        // n'est pas une image —, donc aucun asset ne prendrait le relais. Sans
-        // cette ligne, la tuile d'un clip payé disparaîtrait sous les yeux de
-        // l'auteur à la seconde où il arrive.
-        //
-        // **Jeté, il s'en va** : c'est tout le sens du geste. Il reste au
-        // journal des dépenses, où l'argent, lui, ne s'efface jamais.
-        const clip = generation.clip ?? null
-        if (clip?.jete) continue
-        // **Un clip n'a pas de famille** (B22) : le filtre « Clips » le garde,
-        // un filtre de famille précis l'exclut comme il exclurait n'importe
-        // quelle image qui n'est pas la sienne. Ce qui n'est pas un clip ne
-        // gagne ni ne perd rien ici — c'est la règle d'avant B22.
-        if (clip && famille && famille !== "clips") continue
-        if (!clip && clipsSeuls) continue
-        for (const emplacement of generation.emplacements) {
-          if (emplacement.statut === "reussie" && !attend && !clip) continue
-          const cle = `${generation.identifiant}-${emplacement.rang}`
-          parCle.set(cle, {
-            cle,
-            date: generation.cree_le,
-            rang: emplacement.rang,
-            sorte: "emplacement",
-            generation,
-            emplacement,
-          })
-        }
-      }
-    }
-    // Puis la bibliothèque : un asset **remplace** l'emplacement qui l'attendait,
-    // à la même clé et donc à la même place. Absente du tout quand seuls les
-    // clips sont demandés — un clip n'étant pas un asset, aucun des deux ne se
-    // recouvrent jamais, mais autant ne pas parcourir la grille pour rien.
-    if (!clipsSeuls) {
-      for (const asset of grille) {
-        // **Le filtre par famille se pose ici, sur la grille chargée** (E4). Ce
-        // n'est pas un filtre de serveur comme la recherche ou la collection : la
-        // famille d'une image est celle de la chose du jeu à qui elle appartient,
-        // et la seule famille qui existe aujourd'hui est *personnages*. Le jour
-        // où les quatre autres portent des choses (E15), il descendra au serveur
-        // avec elles — d'ici là, le poser en bas lui ferait porter une requête
-        // pour une distinction qui n'existe pas encore.
-        if (famille === "aucune" && asset.personnage) continue
-        if (famille === "personnages" && !asset.personnage) continue
-        if (famille && famille !== "aucune" && famille !== "personnages") continue
-        parCle.set(asset.identifiant, {
-          cle: asset.identifiant,
-          date: asset.cree_le,
-          rang: asset.rang,
-          sorte: "asset",
-          asset,
-        })
-      }
-    }
-    return [...parCle.values()].sort(
-      (a, b) => b.date - a.date || a.rang - b.rang,
-    )
-  }, [chantier, clipsDuJeu, grille, filtre, famille, clipsSeuls, bibliotheque.courant])
 
   // ── La raison qui rend générer inactif ────────────────────────────────────
 
@@ -2194,19 +1743,6 @@ export function App() {
    *
    *  Les échecs n'y sont pas : ils ont leur propre locataire dans la fente, le
    *  revers, et deux tenants à la fois est ce que la fente s'interdit. */
-  /** La planche ouverte, relue dans le chantier — la seule vérité (R6).
-   *
-   *  Elle disparaît d'elle-même quand le lot cesse d'attendre : le dépliage
-   *  fait, la génération revient sans `attend_un_choix`, et l'écran se referme
-   *  sans que personne ait à le fermer. */
-  const plancheAChoisir = depliage
-    ? (() => {
-        const lot = chantier.find((g) => g.identifiant === depliage.generation)
-        return lot?.pliage?.attend_un_choix
-          ? { generation: lot, rang: depliage.rang }
-          : null
-      })()
-    : null
 
   const enRoute = chantier.flatMap((generation) =>
     generation.emplacements.filter(
@@ -2638,182 +2174,6 @@ export function App() {
     // il fallait retourner à la galerie, seul endroit qui portait un champ.
   }
 
-  const relancer = async (identifiant: string, rang: number) => {
-    try {
-      const generation = await api.relancer(identifiant, rang)
-      setChantier((liste) => fondre(liste, generation))
-    } catch (erreur) {
-      echouer(erreur, "relance refusée")
-    }
-  }
-
-  // ── Juger : sélectionner, marquer, jeter ──────────────────────────────────
-
-  const ouvrir = (identifiant: string, evenement?: React.MouseEvent) => {
-    const multiple = evenement?.ctrlKey || evenement?.metaKey
-    const etendue = evenement?.shiftKey
-    if (multiple) {
-      // La forme fonctionnelle, et pas la valeur du rendu courant : deux clics
-      // rapprochés partagent le même rendu, donc la même sélection périmée.
-      setSelection((precedente) =>
-        precedente.includes(identifiant)
-          ? precedente.filter((i) => i !== identifiant)
-          : [...precedente, identifiant],
-      )
-    } else if (etendue && dernierClic.current) {
-      const cles = entrees.map((e) => e.cle)
-      const depart = cles.indexOf(dernierClic.current)
-      const arrivee = cles.indexOf(identifiant)
-      if (depart >= 0 && arrivee >= 0) {
-        const [a, b] = depart < arrivee ? [depart, arrivee] : [arrivee, depart]
-        setSelection(
-          cles
-            .slice(a, b + 1)
-            .filter((cle) => grille.some((g) => g.identifiant === cle)),
-        )
-      }
-    } else {
-      setSelection([identifiant])
-    }
-    dernierClic.current = identifiant
-  }
-
-  /** **Ce qui vient d'être jeté**, ou rien — pour que celui qui l'a jeté puisse
-   *  le rendre sans dépendre d'un état lu au prochain rendu. */
-  const supprimer = async (identifiants: string[]): Promise<string[] | null> => {
-    if (identifiants.length === 0) return null
-    try {
-      const rendu = await api.supprimerAssets(identifiants)
-      setAnnulation({ identifiants: rendu.supprimes, expireLe: rendu.expire_le })
-      setSelection([])
-      await relireGrille()
-      return rendu.supprimes
-    } catch (erreur) {
-      echouer(erreur, "suppression refusée")
-      return null
-    }
-  }
-
-  /** Rendre ce qui a été jeté. **Les identifiants sont passés, jamais relus** :
-   *  un compte rendu posé au moment de la suppression garderait sinon la valeur
-   *  d'`annulation` telle qu'elle était *avant* — c'est-à-dire vide, et le
-   *  geste ne ferait rien. Constaté au navigateur le 4 septembre 2026. */
-  const rendre = async (identifiants: string[]) => {
-    try {
-      await api.restaurer(identifiants)
-      setAnnulation(null)
-      await relireGrille()
-    } catch (erreur) {
-      setAnnulation(null)
-      echouer(erreur, "annulation refusée")
-    }
-  }
-
-  const annuler = async () => {
-    if (!annulation) return
-    await rendre(annulation.identifiants)
-  }
-
-  /** **Garder ce clip-là, et jeter les autres du même geste** (A9).
-   *
-   *  Les autres se lisent sur le lot que le serveur a écrit, jamais sur une
-   *  ressemblance : quatre clips lancés d'un coup partagent leur texte et leur
-   *  minute, et les rapprocher là-dessus jetterait la mauvaise vidéo payée le
-   *  jour où l'auteur relance exactement la même chose.
-   *
-   *  **Le compte rendu porte le geste qui rend**, comme la suppression depuis
-   *  l'établi : le bandeau d'annulation de la barre d'outils décompte huit
-   *  secondes, et ce geste-ci n'expire pas — un clip écarté est toujours là,
-   *  au journal, et se remontre quand on veut. Un compte à rebours mentirait. */
-  const garderLeClip = (identifiant: string) => {
-    const clip = chantier.find((g) => g.identifiant === identifiant)
-    const lot = clip?.clip?.lot
-    if (!lot) return
-    const autres = chantier
-      .filter(
-        (g) =>
-          g.clip?.lot === lot &&
-          !g.clip.jete &&
-          g.identifiant !== identifiant,
-      )
-      .map((g) => g.identifiant)
-    if (autres.length === 0) return
-    void api
-      .garderClip(identifiant, autres)
-      .then(({ garde, jetes }) => {
-        setChantier((liste) =>
-          [garde, ...jetes].reduce((tenue, recu) => fondre(tenue, recu), liste),
-        )
-        setFente({
-          ton: "ok",
-          texte: (
-            <>
-              {jetes.length} clip{jetes.length > 1 ? "s" : ""} écarté
-              {jetes.length > 1 ? "s" : ""} — ils restent au journal des
-              dépenses,{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  void api
-                    .rendreClips(autres)
-                    .then(({ clips }) =>
-                      setChantier((liste) =>
-                        clips.reduce((tenue, recu) => fondre(tenue, recu), liste),
-                      ),
-                    )
-                  setFente(null)
-                }}
-                className="underline underline-offset-2 hover:text-texte"
-              >
-                les rendre
-              </button>
-            </>
-          ),
-        })
-      })
-      .catch((erreur) => echouer(erreur, "le clip n'a pas pu être gardé"))
-  }
-
-  const marquerFavori = async (identifiants: string[], favori: boolean) => {
-    try {
-      await api.favori(identifiants, favori)
-      await relireGrille()
-    } catch (erreur) {
-      echouer(erreur, "favori refusé")
-    }
-  }
-
-  /** L'export d'une sélection (US-76).
-   *
-   *  **La sélection reste après coup**, contrairement au rangement qui la vide :
-   *  exporter ne change rien à la bibliothèque, donc rien ne justifie de perdre
-   *  ce qu'on avait sous la main — on exporte souvent deux fois de suite, une
-   *  fois pour le jeu et une fois pour l'archive.
-   */
-  const exporter = async () => {
-    if (exportEnCours) return
-    setExportEnCours(true)
-    try {
-      poserLeFichier(await api.exporter(selection))
-    } catch (erreur) {
-      echouer(erreur, "export refusé")
-    } finally {
-      setExportEnCours(false)
-    }
-  }
-
-  const ranger = async (rangement: {
-    projet?: string | null
-    collection?: string | null
-  }) => {
-    try {
-      await api.ranger(selection, rangement)
-      setSelection([])
-      await relireGrille()
-    } catch (erreur) {
-      echouer(erreur, "rangement refusé")
-    }
-  }
 
   // ── Réinjecter ────────────────────────────────────────────────────────────
 
@@ -2931,59 +2291,6 @@ export function App() {
         }
       : null
 
-  // **Trois colonnes depuis E4** — `240px · 1fr · 380px` : où ça se range, la
-  // grille d'assets, la fiche d'une image. C'est l'ancien atelier **moins sa
-  // colonne de réglages de 300 px**, qui suit la barre qui paie : la galerie ne
-  // paie plus, donc elle n'a rien à régler avant de payer.
-  const colonnes = [
-    `${replies.arbre ? 0 : 240}px`,
-    "minmax(0,1fr)",
-    `${fiche || ficheClip ? 380 : 0}px`,
-  ].join(" ")
-
-  const ouverte = fiche ? grille.find((a) => a.identifiant === fiche) : undefined
-
-  /** **Le clip dont la fiche est ouverte**, relu dans ce que la galerie tient
-   *  déjà — jamais un aller-retour pour ouvrir : la fiche se bâtit de ce qui
-   *  est sous les yeux, comme la fiche d'une image. */
-  const clipEnFiche = ficheClip
-    ? entrees.find(
-        (e): e is Extract<Entree, { sorte: "emplacement" }> =>
-          e.sorte === "emplacement" &&
-          e.generation.identifiant === ficheClip &&
-          e.generation.clip != null,
-      )
-    : undefined
-  /** La fiche d'un clip disparaît avec sa tuile : un clip jeté quitte la
-   *  grille, et une colonne ouverte sur ce qui n'existe plus serait une porte
-   *  sur un mur. On referme alors, silencieusement, comme la fiche d'une image
-   *  supprimée. */
-  useEffect(() => {
-    if (!ficheClip) return
-    const presente = entrees.some(
-      (e) => e.sorte === "emplacement" && e.generation.identifiant === ficheClip,
-    )
-    if (!presente) setFicheClip(null)
-  }, [entrees, ficheClip])
-
-  // **Un cran est indisponible quand la colonne est trop étroite pour lui**, et
-  // c'est une largeur mesurée qui le dit — pas une soustraction refaite ici à
-  // partir des largeurs du § Layout, qui serait une seconde vérité sur la même
-  // chose. Tant que rien n'a été mesuré, rien n'est grisé : **zéro n'est pas
-  // une largeur, c'est l'absence de mesure**, exactement comme le `0×0` d'une
-  // carte qui n'a pas abouti.
-  const indisponibles = largeurCentre
-    ? ZOOMS.filter((cran) => !tient(cran, largeurCentre))
-    : []
-
-  // **Le cran choisi reste choisi**, même devenu trop grand — c'est la règle
-  // du modèle du catalogue (US-9), et il n'y a aucune raison d'en avoir deux.
-  // Mais une grille doit rendre quelque chose : elle rend donc au plus grand
-  // cran qui tient, et la barre d'outils **dit** que c'est ce qui se passe.
-  // Sans cette phrase, le contrôle annoncerait 4× sur des tuiles de 400 px.
-  const zoomRendu = indisponibles.includes(zoom)
-    ? ([...ZOOMS].reverse().find((cran) => !indisponibles.includes(cran)) ?? 1)
-    : zoom
 
   // ── Ce que la barre du châssis lit de l'onglet ouvert ─────────────────────
 
@@ -3054,168 +2361,6 @@ export function App() {
           : []
         : []
 
-  /**
-   * Comment un lieu se nomme dans le fil — **la seule chose que l'écran ajoute
-   * à la pile.**
-   *
-   * Avant `B0`, ce bloc faisait cent lignes et six ternaires imbriqués : il
-   * *devinait* où l'on était en interrogeant dix états d'ouverture les uns
-   * après les autres, dans un ordre de priorité qui n'était écrit nulle part.
-   * Maintenant la pile dit où l'on est, et ceci dit seulement comment ça
-   * s'écrit.
-   *
-   * **Un lieu peut nommer plusieurs étages**, et c'est ce qui garde la pile
-   * courte : l'écran des tables ouvert sur une image de la galerie dit
-   * `Galerie › tonneau-cerclé-02 › Détourage` à lui seul. Le dernier nom est
-   * *cet* étage ; ceux d'avant sont le chemin qui y mène.
-   *
-   * **Les noms sont relus à chaque rendu, jamais gardés dans la pile** : un
-   * sujet renommé garderait sinon son ancien nom dans le fil jusqu'à ce qu'on
-   * remonte.
-   */
-  const nommerLeLieu: Annuaire = (ou, _profondeur, dedans) => {
-    switch (ou.genre) {
-      // Une racine au repos ne donne aucun fil : c'est la barre qui porte
-      // alors le nom du jeu. **Depuis `C3`, le codex n'a plus de famille à
-      // lui** : sa seule surface de repos est la barre qui paie, sans nom
-      // propre. Il ne nomme donc plus que la chose ouverte au-dessus de lui,
-      // quand il y en a une.
-      case "codex": {
-        // La grille d'une famille nomme déjà l'étage quand elle est ouverte —
-        // deux noms pour un seul endroit feraient un fil qui se répète. La page
-        // d'une pièce (`B19`) fait pareil : sans cette garde, le fil disait
-        // « Personnages › Équipement › Epée », en annonçant un étage qu'on n'a
-        // pas descendu.
-        if (dedans.some((l) => l.genre === "famille" || l.genre === "piece"))
-          return null
-        const sujet = dedans.find((l) => l.genre === "sujet")
-        const chose =
-          sujet && sujet.genre === "sujet"
-            ? personnages.find((p) => p.identifiant === sujet.sujet)
-            : null
-        return chose ? (NOM_DE_LA_RUBRIQUE[chose.famille ?? "personnages"] ?? "Personnages") : null
-      }
-      // La grille d'une famille (`B9`). Elle nomme l'étage à la place du codex
-      // qui la porte : c'est elle qui sait *laquelle*, et le `case "codex"`
-      // ci-dessus le devinait d'un état posé à côté de la pile. Le groupe
-      // ouvert donne un second nom — « Les personnages › Les boss » —, parce
-      // qu'un fil qui dirait toujours *Tous* mentirait dès qu'on ouvre un
-      // groupe.
-      case "famille": {
-        const nom = NOM_DE_LA_RUBRIQUE[ou.famille] ?? ou.famille
-        const groupe = groupesDeLaFamille.find(
-          (g) => g.identifiant === collectionOuverte,
-        )
-        return groupe ? [nom, groupe.nom] : nom
-      }
-
-      case "galerie":
-      case "univers":
-      case "tableau-de-bord":
-        return null
-
-      case "depenses":
-        return "Les dépenses"
-
-      // Les règles du jeu (`B14`) — **un nom, pas deux**. Les quatre étapes ne
-      // sont pas des étages : on ne les descend pas, on les choisit, et un fil
-      // qui les annoncerait ferait croire à une profondeur qui n'existe pas.
-      case "regles":
-        return "Les règles du jeu"
-
-      // L'installation (`B15`) — **un nom, pas quatre**, exactement pour la
-      // raison ci-dessus. Et le nom du jeu la précède quand même dans le fil :
-      // c'est le comportement des dépenses et des règles, qui s'ouvrent aussi
-      // de partout. Changer l'un demanderait de changer les trois.
-      case "installation":
-        return "L'installation"
-
-      // La sortie (`B21`) — même règle que les trois au-dessus : un nom, et le
-      // nom du jeu le précède, parce qu'on l'ouvre de partout.
-      case "sortie":
-        return "La sortie"
-
-      // *Inspiration* et non *Univers* : ce ne sont pas les mêmes images, et le
-      // produit ne les confond nulle part.
-      case "carte":
-        return ["Inspiration", ou.carte.groupe || ou.carte.identifiant, "Découpage"]
-
-      case "sujet": {
-        const chose = personnages.find((p) => p.identifiant === ou.sujet)
-        return chose ? chose.nom : null
-      }
-
-      // Une pièce d'équipement (`B19`) — **deux noms depuis un seul lieu**, comme
-      // la grille d'une famille : *Les équipements › Epée*. Le codex qui la porte
-      // ne nomme rien de son côté (voir sa garde ci-dessus) : deux noms pour un
-      // seul endroit feraient un fil qui se répète.
-      case "piece": {
-        const sienne = pieces.find((p) => p.identifiant === ou.piece)
-        return sienne ? [NOM_DE_LA_RUBRIQUE.equipement ?? "Équipement", sienne.nom] : null
-      }
-      // Un emploi de cette pièce-là (`B19`). Son libellé se compose comme à
-      // l'écran quand l'auteur ne lui en a pas donné : un fil qui dirait
-      // « porte-le-goliath » ne serait pas un fil.
-      case "emploi": {
-        const sien = vestiaireDuJeu?.pieces
-          .find((p) => p.piece.identifiant === ou.piece)
-          ?.emplois.find((e) => e.identifiant === ou.emploi)
-        return sien ? sien.nom || libelleDEmploi(sien) : null
-      }
-
-      // Les calques d'animation d'un emploi (`B20`) — une profondeur de plus,
-      // et son nom ne dépend d'aucune lecture : il dit ce que l'écran montre.
-      case "calques-animes":
-        return "Ses animations"
-
-      // La grille du jeu, et comparer (`B13`) — deux profondeurs de plus de
-      // la page d'un sujet, chacune avec son propre dernier nom.
-      case "grille": {
-        const chose = personnages.find((p) => p.identifiant === ou.sujet)
-        return chose ? [chose.nom, "Sur la grille du jeu"] : null
-      }
-      case "comparer": {
-        const chose = personnages.find((p) => p.identifiant === ou.sujet)
-        return chose ? [chose.nom, "Comparer"] : null
-      }
-
-      // La retouche (`B16`) — le troisième de ces écrans, et le seul des trois
-      // qui écrive. Son dernier nom est *La retouche* et non la table ouverte :
-      // la table est un état de l'écran, pas une profondeur de la pile
-      // (`lieux.ts`, « ce qui n'est pas un lieu »).
-      //
-      // **Deux noms depuis un sujet, trois depuis la galerie** (`B25`). Sous un
-      // sujet, c'est lui qui nomme son étage — *Le goliath › tonneau-02 › La
-      // retouche*. Sur la galerie, personne ne le fait au-dessus : le lieu porte
-      // alors le mot *Galerie* lui-même, exactement ce que l'ancien genre
-      // `"tables"` écrivait. **C'est la racine qui décide, pas l'endroit où
-      // l'image a été trouvée** : une image née d'une découpe se relit dans la
-      // grille tout en étant ouverte sous un sujet, et lui coller *Galerie*
-      // annoncerait un étage qu'on n'a pas descendu.
-      case "retouche": {
-        const image =
-          choseOuverte?.cases
-            .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
-            .find((a) => a.identifiant === ou.asset) ??
-          grille.find((a) => a.identifiant === ou.asset)
-        const nom = image ? image.label || image.identifiant : ou.asset
-        return racine(dedans) === "galerie"
-          ? ["Galerie", nom, "La retouche"]
-          : [nom, "La retouche"]
-      }
-
-      // Les trois écrans qui recouvrent le produit n'ont pas de fil : ils ne
-      // sont pas un endroit où l'on est descendu, ils sont ce qui se passe.
-      case "clip":
-      case "envoi":
-      case "reference":
-      case "montage":
-      case "bande":
-      case "montage-de-bande":
-        return null
-    }
-  }
-
   /** Le fil d'Ariane, **lu depuis la pile et de nulle part ailleurs**.
    *
    *  Chaque étage ramène à sa profondeur, sauf le dernier, qui est l'étage où
@@ -3224,7 +2369,15 @@ export function App() {
   const chemin: Segment[] = filDAriane(
     pile,
     projetCourant?.nom ?? "sans projet",
-    nommerLeLieu,
+    nommerLeLieu({
+      choseOuverte,
+      collectionOuverte,
+      groupesDeLaFamille,
+      grille,
+      personnages,
+      pieces,
+      vestiaireDuJeu,
+    }),
   ).map((etage) => ({
     libelle: etage.libelle,
     onAller:
@@ -4002,251 +3155,31 @@ export function App() {
         />
       )}
 
-      {/* Quatre colonnes, largeurs absolues, et 160 ms sur la largeur quand
-          l'une se replie ou que la fiche s'ouvre — `docs/DESIGN.md` § Motion,
-          « tu n'as pas perdu ta place ». Les panneaux restent montés : replier
-          n'est pas fermer, et retrouver un panneau où on l'avait laissé fait
-          partie de ce que le mouvement promet.
-
-          **Chaque case est `flex`, et c'est ce qui borne le panneau qu'elle
-          porte** — `docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Six
-          règles de comportement, la première. Une case
-          de grille est haute comme sa piste, mais un `aside` posé dedans en
-          bloc reste haut comme *son contenu* : son `overflow-y-auto` intérieur
-          n'a alors rien à contraindre, et l'`overflow-hidden` de la case rogne
-          en silence. Mesuré au navigateur le 27 août 2026 : 300 px coupés dans
-          les réglages, 660 px dans la fiche — la filiation entière hors
-          d'atteinte. En `flex`, l'`aside` est étiré, exactement comme sur
-          l'écran Univers, seul panneau du produit qui défilait.
-
-          **Elle n'est plus le fond du produit, elle est un onglet.** Jusqu'à la
-          V2.1 cette grille était toujours montée et les autres écrans venaient
-          se poser dessus ; c'est elle, désormais, qui se retire quand un autre
-          onglet est allumé. Ce qu'elle tient — la grille, l'arbre, le tableau —
-          vit de toute façon dans `App`, et lui survit. */}
-      {/* **Et elle se retire quand la retouche s'ouvre** — corrigé le 31 août
-          2026. Elle restait montée sous la table de retouche : invisible, mais
-          vivante. Mesuré au navigateur — 152 commandes atteignables à la
-          Tabulation, dont 83 hors de l'écran, appartenant toutes à la grille du
-          dessous, « Supprimer la sélection » comprise : on la traversait à
-          l'aveugle. Et les 54 px dont la page débordait faisaient reparaître sa
-          barre tout en bas de la table, ce que la règle « un panneau est borné
-          par l'écran, jamais par son contenu » interdit. La retirer répare les
-          deux d'un coup, et elle ne perd rien en partant : ce qu'elle tient vit
-          dans `App`, pas dans son montage. */}
+      {/* ── La galerie (`C4`) ───────────────────────────────────────────────
+          Elle a son fichier depuis `C4` : `composants/Galerie.tsx`. Ce qui suit
+          n'est plus que la condition de son montage — la même qu'avant, aux
+          mêmes mots. */}
       {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && onglet === "galerie" &&
         !imageDeLaRetouche && (
-      <main
-        className="grid min-h-0"
-        onTransitionEnd={mesurerCentre}
-        style={{
-          gridTemplateColumns: colonnes,
-          transition: "grid-template-columns 160ms ease-in-out",
-        }}
-      >
-        <div className="flex min-h-0 overflow-hidden">
-          <Arbre
-            bibliotheque={bibliotheque}
-            collection={filtre.collection}
-            onCollection={(collection) => setFiltre((f) => ({ ...f, collection }))}
-            onErreur={setPanne}
-            onRelancer={relancer}
-          />
-        </div>
-
-
-        {/* `min-w-0` **et** `min-h-0` : une piste de grille en `minmax(0,1fr)`
-            n'empêche pas son contenu de l'élargir — c'est l'élément posé dedans
-            qui vaut `min-width: auto`, donc la largeur de ce qu'il contient. Une
-            barre d'outils trop pleine faisait alors glisser la page entière sur
-            la droite, en-tête et pied compris. Constaté au navigateur le 27 août
-            2026, à la première sélection. */}
-        <section ref={centre} className="flex min-h-0 min-w-0 flex-col">
-          <BarreOutils
-            recherche={filtre.recherche}
-            onRecherche={(recherche) => setFiltre((f) => ({ ...f, recherche }))}
-            favoris={filtre.favoris}
-            onFavoris={(favoris) => setFiltre((f) => ({ ...f, favoris }))}
-            famille={famille}
-            onFamille={setFamille}
-            collection={filtre.collection}
-            collections={bibliotheque.collections}
-            projets={bibliotheque.projets}
-            selection={selection}
-            onRanger={ranger}
-            onFavori={(favori) => void marquerFavori(selection, favori)}
-            onSupprimer={() => void supprimer(selection)}
-            onVider={() => setSelection([])}
-            entree={entree}
-            onExporter={() => void exporter()}
-            exportEnCours={exportEnCours}
-            annulation={annulation}
-            onAnnuler={annuler}
-            compte={grille.length}
-            zoom={zoom}
-            onZoom={setZoom}
-            zoomsIndisponibles={indisponibles}
-            zoomRendu={zoomRendu}
-          />
-          {/* Ce qui n'est pas entré — un refus qui nomme le fichier, un doublon
-              qui propose. **Au-dessus de la grille et non dans la barre d'état** :
-              un import refusé ne doit pas griser Générer, et la barre d'état est
-              le seul endroit du produit qui le ferait. */}
-          <CeQuiNEstPasEntre
-            etat={entree}
-            onOuvrir={(identifiant) => setSelection([identifiant])}
-          />
-          {/* **L'écran du choix prend la place de la grille** (R6), il ne se
-              pose pas dessus : c'est la profondeur suivante du même endroit,
-              exactement comme un outil dans l'établi. Le pied de la galerie
-              reste sous lui, et sa phrase est plus vraie que jamais — écarter
-              un sujet ne rappelle personne. */}
-          {/* **Et le montage prend la même place** (A10), pour la même raison
-              exactement : découper un clip est la profondeur suivante de la
-              galerie, on y entre depuis la tuile du clip, et rien n'y dépense.
-              Il passe avant le choix d'une planche parce que les deux ne
-              peuvent pas être ouverts ensemble — on n'ouvre pas un montage
-              depuis un écran de choix. */}
-          {montageOuvert ? (
-            <EcranMontage
-              clip={montageOuvert}
-              onFermer={() => setMontageOuvert(null)}
-              onErreur={(raison) => setPanne(raison)}
-            />
-          ) : plancheAChoisir ? (
-            <EcranDepliage
-              generation={plancheAChoisir.generation}
-              rang={plancheAChoisir.rang}
-              onFini={(rendue) => {
-                setDepliage(null)
-                setChantier((liste) => fondre(liste, rendue))
-              }}
-              onFermer={() => setDepliage(null)}
-              onErreur={echouer}
-            />
-          ) : (
-          <Grille
-            entrees={entrees}
-            selection={selection}
-            filtre={filtre}
-            zoom={zoomRendu}
-            entree={entree}
-            onRelancer={relancer}
-            onChoisir={(generation, rang) => setDepliage({ generation, rang })}
-            onOuvrir={ouvrir}
-            onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
-            onGarderLeClip={garderLeClip}
-            onDecouperLeClip={setMontageOuvert}
-            onOuvrirLeClip={setFicheClip}
-          />
-          )}
-
-          {/* **La grille dit quand elle est coupée** (B3). Elle s'arrêtait à
-              200 images sans le dire, et l'auteur croyait avoir tout vu — une
-              liste tronquée qui ne le dit pas ment en silence (`docs/DESIGN.md`
-              § Les six règles, 6). Absent tant que tout ce qui répond au
-              filtre est déjà montré. */}
-          {totalGrille !== null && grille.length < totalGrille && (
-            <p className="mesure flex h-[26px] shrink-0 items-center gap-1.5 border-t border-bord px-4 text-[10px] text-texte-3">
-              <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
-              {`${grille.length} montrées sur ${totalGrille}`}
-              <button
-                type="button"
-                onClick={chargerLaSuiteGrille}
-                className="mesure ml-auto text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
-              >
-                Charger la suite ›
-              </button>
-            </p>
-          )}
-
-          {/* **Le pied de la galerie dit qu'aucun appel ne part d'ici** (E4).
-              De quoi savoir d'un coup d'œil dans quelle moitié du produit on se
-              trouve : ici on juge et on range, on ne paie jamais. La phrase
-              tient la place de la barre qui paie, et c'est son absence qui est
-              le message — la même règle que la barre d'état d'une table. */}
-          <p className="mesure flex h-[26px] shrink-0 items-center gap-1.5 border-t border-bord px-4 text-[10px] text-texte-3">
-            <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
-            aucun appel ne part d'ici — on paie depuis le codex et depuis
-            l'établi d'une chose du jeu
-          </p>
-        </section>
-
-        <div className="flex min-h-0 overflow-hidden">
-          {ouverte && etat && (
-            <Fiche
-              asset={ouverte}
-              univers={univers}
-              plan={plan}
-              personnages={personnages}
-              onFermer={() => setSelection([])}
-              onErreur={setPanne}
-              onReinjecter={(role) => reinjecter(ouverte.identifiant, role)}
-              onReglages={() => void reprendreReglages(ouverte)}
-              onSupprimer={() => void supprimer([ouverte.identifiant])}
-              // **Les deux portes** (E4). L'établi de la chose à qui l'image
-              // appartient — un onglet plus loin, à la profondeur de la
-              // chose —, et la retouche, qui s'ouvre sur n'importe quelle
-              // image sans quitter la galerie.
-              /* ⚠️ **Le lieu d'abord, la profondeur ensuite** — depuis `B0`.
-                 Poser une racine repose la pile, donc efface ce qui était
-                 au-dessus : descendre puis changer de lieu perdait la
-                 descente. Avec douze états indépendants l'ordre ne comptait
-                 pas ; avec une pile il compte, et c'est le bon sens de
-                 lecture — on va quelque part, puis on y descend. */
-              onOuvrirLEtabli={() => {
-                if (!ouverte.personnage) return
-                setOnglet("codex")
-                setChoseOuverte(ouverte.personnage)
-                ouvrirLaRetouche(ouverte.identifiant)
-              }}
-              // **La porte de la galerie mène à la retouche** (`B25`), et sans
-              // quitter la galerie : c'est la seule des six qui serve des images
-              // n'appartenant à aucune chose du jeu, et l'écran sait les ouvrir
-              // depuis cette tranche.
-              onRetoucher={() => ouvrirLaRetouche(ouverte.identifiant)}
-              onOuvrir={(identifiant) => setSelection([identifiant])}
-            />
-          )}
-          {clipEnFiche && (
-            <FicheDuClip
-              generation={clipEnFiche.generation}
-              plan={plan}
-              personnages={personnages}
-              depart={
-                grille.find(
-                  (a) =>
-                    a.identifiant === (clipEnFiche.generation.clip?.depart ?? ""),
-                ) ?? null
-              }
-              onFermer={() => setFicheClip(null)}
-              /* **Découper se prend d'ici comme de la tuile** (V3.02), et il
-                 referme la fiche : le montage prend la place de la grille, et
-                 deux lecteurs du même clip ne luttent pas pour l'œil. */
-              onDecouper={() => {
-                setFicheClip(null)
-                setMontageOuvert(clipEnFiche.generation.identifiant)
-              }}
-              /* **Une bande du clip s'ouvre dans l'atelier d'une animation**
-                 (A7). C'est un autre onglet : la matrice vit au codex, et seul
-                 `App` sait qu'il existe des onglets — comme le passage inverse,
-                 qu'`A12` tient déjà. */
-              onOuvrirLaBande={(identifiant) => {
-                setFicheClip(null)
-                setOnglet("codex")
-                ouvrirLAtelierDeBande(identifiant)
-              }}
-              /* Le sprite de départ s'ouvre comme une image, **et sa fiche
-                 remplace celle du clip** : la colonne est une porte, jamais
-                 deux panneaux empilés sur la même question. */
-              onOuvrir={(identifiant) => {
-                setFicheClip(null)
-                setSelection([identifiant])
-              }}
-            />
-          )}
-        </div>
-      </main>
+        <Galerie
+          g={galerie}
+          bibliotheque={bibliotheque}
+          echouer={echouer}
+          etat={etat}
+          montageOuvert={montageOuvert}
+          setMontageOuvert={setMontageOuvert}
+          ouvrirLAtelierDeBande={ouvrirLAtelierDeBande}
+          ouvrirLaRetouche={ouvrirLaRetouche}
+          personnages={personnages}
+          plan={plan}
+          reinjecter={reinjecter}
+          reprendreReglages={reprendreReglages}
+          setChantier={setChantier}
+          setChoseOuverte={setChoseOuverte}
+          setOnglet={setOnglet}
+          setPanne={setPanne}
+          univers={univers}
+        />
       )}
 
       {/* **Les deux autres onglets, dans la même case de grille.** Ils ne
@@ -4876,462 +3809,3 @@ export function App() {
   )
 }
 
-/** Fondre un asset annoncé dans la grille — et l'en **retirer** quand il l'a
- *  quittée.
- *
- *  Trois façons de la quitter, et elles se lisent toutes sur l'objet reçu : il
- *  est supprimé, il a changé de projet, ou il ne répond plus au filtre posé.
- *  Le manque de la troisième s'est vu tout de suite au navigateur — supprimer un
- *  projet détache ses assets, chaque détachement est annoncé, et les trois
- *  détachés venaient s'installer dans la grille du projet **ouvert**, qui n'est
- *  pas le leur.
- *
- *  Ce que cette fonction refuse de trancher, c'est **la recherche** : elle vit
- *  sur le serveur, et la rejouer ici ferait dire à la grille autre chose qu'à la
- *  bibliothèque. Sous recherche, un asset inconnu n'entre pas — on redemande. */
-function fondreAsset(
-  liste: Asset[],
-  recu: Asset,
-  filtre: Filtre,
-  courant: string | null,
-): Asset[] {
-  const dehors =
-    recu.supprime_le !== null ||
-    recu.projet !== courant ||
-    (filtre.collection !== null && recu.collection !== filtre.collection) ||
-    (filtre.favoris && !recu.favori)
-  if (dehors) return liste.filter((a) => a.identifiant !== recu.identifiant)
-  if (liste.some((a) => a.identifiant === recu.identifiant))
-    return liste.map((a) => (a.identifiant === recu.identifiant ? recu : a))
-  if (filtre.recherche.trim()) return liste
-  return [recu, ...liste].sort((a, b) => b.cree_le - a.cree_le || a.rang - b.rang)
-}
-
-// ── La case visée ───────────────────────────────────────────────────────────
-
-/**
- * Pour quelle case le prochain appel partira (US-120).
- *
- * **La bande n'existe que quand l'atelier est armé** — même règle que celle des
- * réinjections, juste au-dessus : une rangée vide en permanence au-dessus du
- * prompt serait du cadrage affiché, et le prompt est l'endroit où l'atelier
- * s'ouvre.
- *
- * Elle est là parce qu'une intention invisible est une intention qu'on oublie :
- * ce qui décide où l'image ira doit se lire au moment où l'on appuie, à côté du
- * bouton qui paie. Et elle se défait d'un clic — armer n'est pas s'engager.
- */
-function Cible({
-  personnage,
-  poses,
-  onRetirer,
-  onDesarmer,
-}: {
-  /** **Relus dans les listes vivantes**, jamais gardés au moment de l'armement :
-   *  un personnage supprimé ou une pose retirée du plan font disparaître la
-   *  bande, ce qui est exactement ce qu'il faut — la case n'existe plus. */
-  personnage: Personnage | null
-  /** Une case, ou N depuis C2. **Le nom du personnage ne se répète pas** : il
-   *  est écrit une fois, et les attitudes suivent — un lot n'en vise qu'un. */
-  poses: Pose[]
-  onRetirer: (pose: Pose) => void
-  onDesarmer: () => void
-}) {
-  if (!personnage || poses.length === 0) return null
-  const lot = poses.length >= 2
-  return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-bord bg-fond-1 px-4 pt-3">
-      <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
-        Pour
-      </span>
-      <span className="flex flex-wrap items-center gap-1.5 rounded-[2px] border border-ancien-signal bg-ancien-signal/13 py-1 pr-1 pl-2">
-        <span className="text-[11.5px] text-texte">{personnage.nom}</span>
-        {poses.map((pose) => (
-          <span key={pose.identifiant} className="flex items-center">
-            <span className="mesure text-[10px] text-ancien-signal">{pose.nom}</span>
-            <button
-              type="button"
-              onClick={() => onRetirer(pose)}
-              aria-label={`Retirer ${pose.nom} de ce qui part`}
-              className="mesure px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
-            >
-              ×
-            </button>
-          </span>
-        ))}
-      </span>
-      {/* **Un lot le dit en toutes lettres, au-dessus du bouton qui paie.**
-          C'est la phrase du § Le grisé porte sa raison prise par l'autre bout :
-          ici rien n'est refusé, mais ce qui va se passer n'est pas ce qu'on
-          fait d'habitude — neuf cases, un seul appel — et l'écrire coûte moins
-          cher que de le faire deviner. */}
-      {lot && (
-        <span className="mesure text-[10px] text-texte-3">
-          {poses.length} attitudes, un seul appel
-        </span>
-      )}
-      {lot && (
-        <button
-          type="button"
-          onClick={onDesarmer}
-          aria-label="Ne plus viser ces cases"
-          className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
-        >
-          tout retirer
-        </button>
-      )}
-    </div>
-  )
-}
-
-// ── Les images réinjectées ──────────────────────────────────────────────────
-
-/**
- * Ce qui repartira avec l'appel (US-12).
- *
- * La bande n'existe que quand il y a quelque chose dedans : une rangée vide en
- * permanence au-dessus du prompt serait du cadrage affiché, et le prompt est
- * l'endroit où l'atelier s'ouvre.
- */
-function Reinjections({
-  reinjections,
-  grille,
-  onRetirer,
-  onRole,
-}: {
-  reinjections: Reinjection[]
-  grille: Asset[]
-  onRetirer: (asset: string) => void
-  onRole: (asset: string, role: Role) => void
-}) {
-  if (reinjections.length === 0) return null
-  return (
-    <div className="flex items-center gap-2 border-b border-bord bg-fond-1 px-4 pt-3">
-      <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
-        Repart avec
-      </span>
-      <div className="flex flex-wrap items-center gap-2">
-        {reinjections.map(({ asset, role }) => (
-          <UneReinjection
-            key={asset}
-            connu={grille.find((a) => a.identifiant === asset)}
-            asset={asset}
-            role={role}
-            onRetirer={onRetirer}
-            onRole={onRole}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/**
- * Une réinjection : sa vignette, son rôle, son retrait.
- *
- * **Deux corrections du 31 août 2026 (E0), et la même cause.** La vignette
- * demandait son image à `api.rendu` en direct, alors que `sujetAsset` est le
- * seul endroit du produit qui nomme l'adresse de l'image d'un asset : un asset
- * sans recette n'a pas de rendu, et la bande montrait donc un trou là où la
- * grille montre l'image. Et la barre d'espace ne l'atteignait pas, faute d'un
- * composant où poser la visée — un hook ne s'appelle pas dans une boucle.
- */
-function UneReinjection({
-  connu,
-  asset,
-  role,
-  onRetirer,
-  onRole,
-}: {
-  connu: Asset | undefined
-  asset: string
-  role: Role
-  onRetirer: (asset: string) => void
-  onRole: (asset: string, role: Role) => void
-}) {
-  const visee = useVisee(connu ? sujetAsset(connu) : null)
-  return (
-    <span
-      className="flex items-center gap-1.5 rounded-[2px] border border-bord bg-fond-2 py-1 pr-1 pl-1"
-      onPointerEnter={visee.entrer}
-      onPointerLeave={visee.sortir}
-    >
-      {connu && (
-        <img
-          // **Vingt-quatre pixels ne demandent pas un fichier de deux
-          // mégaoctets** — corrigé le 31 août 2026, en même temps que la
-          // grille. Le cran demandé est celui de la grille au repos : la
-          // vignette est déjà dans le cache du navigateur, et la bande ne
-          // coûte alors rien du tout. Ce que le pointeur vise, lui, reste le
-          // fichier entier — c'est ce qu'Espace doit ouvrir.
-          src={vignetteAsset(connu, 256)}
-          alt=""
-          className="damier h-6 w-6 object-contain"
-          style={{ imageRendering: "pixelated" }}
-        />
-      )}
-      <select
-        aria-label="Rôle de la réinjection"
-        value={role}
-        onChange={(e) => onRole(asset, e.target.value as Role)}
-        className="mesure bg-transparent text-[10px] text-texte-2"
-      >
-        <option value="reference">référence</option>
-        <option value="edition">source d'édition</option>
-        <option value="style">guide de style</option>
-      </select>
-      <button
-        type="button"
-        onClick={() => onRetirer(asset)}
-        aria-label="Retirer la réinjection"
-        className="mesure px-1 text-[10px] text-texte-3 hover:text-ancien-echec"
-      >
-        ×
-      </button>
-    </span>
-  )
-}
-
-// ── La grille ───────────────────────────────────────────────────────────────
-
-function Grille({
-  entrees,
-  selection,
-  filtre,
-  zoom,
-  entree,
-  onRelancer,
-  onChoisir,
-  onOuvrir,
-  onRetirerFiltre,
-  onGarderLeClip,
-  onDecouperLeClip,
-  onOuvrirLeClip,
-}: {
-  entrees: Entree[]
-  selection: string[]
-  filtre: Filtre
-  /** Le cran **rendu**, pas le cran choisi : à une largeur où le choix ne tient
-   *  pas, la grille rend le plus grand qui tienne, et la barre d'outils le dit. */
-  zoom: Zoom
-  /** Faire entrer une image en la déposant ici (US-167). */
-  entree: Import
-  onRelancer: (generation: string, rang: number) => void
-  /** **Ouvrir le choix d'une planche qui attend** (R6). Elle est arrivée et
-   *  payée ; ce qui lui manque est une décision, et ce geste ne dépense rien. */
-  onChoisir: (generation: string, rang: number) => void
-  onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
-  onRetirerFiltre: () => void
-  /** **Garder ce clip-là, jeter les autres du même geste** (A9). Absent là où
-   *  la grille sert à désigner plutôt qu'à juger — on ne jette pas trois vidéos
-   *  payées en cherchant une image de référence. */
-  onGarderLeClip?: (generation: string) => void
-  /** **Ouvrir le montage de ce clip** (A10). Absent pour la même raison que le
-   *  geste d'au-dessus : une grille qui sert à désigner une image de référence
-   *  n'a pas à ouvrir un écran de découpage. */
-  onDecouperLeClip?: (generation: string) => void
-  /** **Ouvrir la fiche de ce clip** (V3.02), dans la même colonne que la fiche
-   *  d'une image. Absent là où la grille ne montre pas de clips. */
-  onOuvrirLeClip?: (generation: string) => void
-}) {
-  // **La même mécanique de dépôt que le tableau d'inspiration**, réemployée
-  // telle quelle : c'est le geste, pas la surface, qui décide de la forme. Un
-  // texte lâché ici ne fait rien — la bibliothèque n'a pas de carte texte —, et
-  // ne rien faire est la bonne réponse plutôt qu'un refus.
-  const depot = useDepot(
-    (fichier) => void entree.entrer(fichier),
-    () => {},
-  )
-  // **Deux états vides, et ce ne sont pas les mêmes** (US-34, US-35). Une
-  // bibliothèque vide invite à écrire ; un filtre sans résultat est une impasse,
-  // et une impasse doit porter le geste qui en sort — sinon la grille est muette
-  // au moment précis où elle devrait aider.
-  if (entrees.length === 0) {
-    return filtreActif(filtre) ? (
-      <div
-        {...depot.props}
-        {...NOMMEE}
-        className={`flex flex-1 flex-col items-center justify-center gap-3 p-4 ${cadreDepot(depot.survole)}`}
-      >
-        <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
-          Rien ne répond à ce filtre.
-        </p>
-        <button
-          type="button"
-          onClick={onRetirerFiltre}
-          className="mesure text-[11px] text-ancien-signal hover:text-ancien-signal-clair"
-        >
-          Retirer le filtre ›
-        </button>
-      </div>
-    ) : (
-      <div
-        {...depot.props}
-        {...NOMMEE}
-        className={`flex flex-1 items-center justify-center p-4 ${cadreDepot(depot.survole)}`}
-      >
-        <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
-          Rien n'est encore sorti d'ici. <em className="text-texte-2">Écris.</em>
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div
-      {...depot.props}
-      {...NOMMEE}
-      className={`defile min-h-0 flex-1 overflow-y-auto p-4 ${cadreDepot(depot.survole)}`}
-    >
-      <div
-        className="grid gap-[9px]"
-        style={{
-          gridTemplateColumns: `repeat(auto-fill, minmax(${CRANS[zoom]}px, 1fr))`,
-        }}
-      >
-        {entrees.map((entree) => (
-          <Tuile
-            key={entree.cle}
-            entree={entree}
-            selectionnee={selection.includes(entree.cle)}
-            // **Deux tailles servies, pas trois, et jamais la largeur rendue.**
-            // Une case d'`auto-fill` mesure entre son cran et presque deux
-            // fois son cran ; demander 256 px au cran 1 couvre donc la case la
-            // plus large **et** un écran à deux points par pixel, sans jamais
-            // agrandir une vignette. Une adresse par largeur de fenêtre, elle,
-            // viderait le cache du navigateur à chaque repli de panneau.
-            cote={Math.max(256, CRANS[zoom])}
-            zoom={zoom}
-            onRelancer={onRelancer}
-            onChoisir={onChoisir}
-            onOuvrir={onOuvrir}
-            /* **Combien d'autres clips du même geste sont encore montrés.** Il
-               se compte sur les entrées de la grille, la seule vérité de cet
-               écran : un clip déjà jeté n'y est plus, donc il ne se compte
-               plus, et le bouton disparaît de lui-même quand il ne reste
-               qu'un clip du lot. */
-            autresDuLot={autresDuLot(entrees, entree)}
-            onGarderLeClip={onGarderLeClip}
-            onDecouperLeClip={onDecouperLeClip}
-            onOuvrirLeClip={onOuvrirLeClip}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/** Combien d'autres clips du même geste la grille montre encore (A9).
- *
- *  **Sur le lot écrit par le serveur, jamais sur une ressemblance.** Quatre
- *  clips lancés d'un coup partagent leur texte et leur minute ; les rapprocher
- *  là-dessus marcherait presque toujours, et jetterait la mauvaise vidéo payée
- *  le jour où l'auteur relance exactement la même chose. */
-function autresDuLot(entrees: Entree[], entree: Entree): number {
-  // **`"clip"` compte aussi** (B22) : un lot pas encore départagé peut
-  // survivre à la fermeture du chantier, un clip de chaque côté du départage
-  // — un dans le chantier qui vient d'arriver, l'autre déjà relu depuis le
-  // dépôt après un rechargement.
-  if (entree.sorte === "asset") return 0
-  const lot = entree.generation.clip?.lot
-  if (!lot) return 0
-  return entrees.filter(
-    (autre) =>
-      autre.sorte !== "asset" &&
-      autre.generation.clip?.lot === lot &&
-      autre.generation.identifiant !== entree.generation.identifiant,
-  ).length
-}
-
-/** Ce que la grille montre quand un fichier la survole.
- *
- *  **Un liseré intérieur, jamais un voile.** La grille est la seule surface du
- *  produit où l'on juge : un calque par-dessus les images cacherait ce qu'on
- *  est en train de regarder au moment précis où l'on décide où déposer. Le
- *  `--signal` posé en `inset` dit « ici » sans rien recouvrir, et il ne déplace
- *  rien — un `outline` ne prend pas de place dans la mise en page.
- *
- *  Écrit une fois pour les trois états de la grille : pleine, filtrée à vide,
- *  et vide. Une bibliothèque vide est très exactement le moment où l'on fait
- *  entrer sa première image, et une surface qui n'accepterait le dépôt qu'une
- *  fois pleine serait fermée quand elle sert le plus. */
-const cadreDepot = (survole: boolean) =>
-  survole ? "outline outline-1 -outline-offset-1 outline-ancien-signal" : ""
-
-/** La grille se nomme, dans ses trois états.
- *
- *  **Parce qu'elle reçoit un dépôt** : une surface où l'on peut lâcher un
- *  fichier doit pouvoir être désignée autrement que par la vue — c'est la même
- *  raison qui a nommé le dépliant du prompt. Le nom est le même pour les trois
- *  états, parce que c'est la même surface : pleine, filtrée à vide, ou vide. */
-const NOMMEE = { role: "region", "aria-label": "Grille des images" } as const
-
-// ── La barre d'état ─────────────────────────────────────────────────────────
-
-function BarreEtat({
-  etat,
-  catalogue,
-  panne,
-  liaison,
-  bibliotheque,
-  onRelireCatalogue,
-}: {
-  etat: Etat | null
-  catalogue: Repli
-  panne: string | null
-  liaison: boolean
-  bibliotheque: Bibliotheque
-  /** **Le geste vient rejoindre l'état qu'il change.** La barre de tête portait
-   *  un bouton `Catalogue` de même poids que les onglets, alors qu'il ne
-   *  changeait rien de ce qu'on regarde : il redemandait la liste des modèles.
-   *  La V2.1 lui retire cette place — trois onglets, pas cinq boutons — et le
-   *  pose ici, sur le compte de modèles, qui est déjà l'endroit du produit qui
-   *  dit ce que le catalogue contient et de quand il date. */
-  onRelireCatalogue: () => void
-}) {
-  // Trois choses différentes, et il ne faut pas les confondre : l'atelier est
-  // arrêté (liaison rompue), le fournisseur est injoignable (repli), ou tout
-  // va bien. La première l'emporte — sans serveur, le reste ne veut rien dire.
-  const [couleur, texte] = !liaison
-    ? ["var(--color-ancien-echec)", "l'atelier ne répond pas"]
-    : panne
-      ? ["var(--color-ancien-echec)", panne]
-      : catalogue.repli
-        ? ["var(--color-epingle)", "hors ligne"]
-        : ["var(--color-ancien-ok)", "en ligne"]
-
-  const assets =
-    bibliotheque.projets.reduce((somme, p) => somme + p.assets, 0) +
-    bibliotheque.sans_projet.assets
-
-  // Deux altitudes, deux métiers : le pied porte **l'état du monde** — et
-  // pourquoi, quand le port a su le dire en français. Il ne prédit jamais ce
-  // qui va casser : ça, c'est la fente sous le bouton Générer.
-  return (
-    <footer className="mesure flex items-center gap-4 border-t border-bord bg-fond-1 px-4 text-[10px] text-texte-3">
-      <span className="flex items-center gap-1.5">
-        <Point couleur={couleur} />
-        {texte}
-      </span>
-      {catalogue.repli && catalogue.recu_le > 0 && (
-        <span className="text-epingle">catalogue du {heure(catalogue.recu_le)}</span>
-      )}
-      {catalogue.repli && catalogue.raison && <span>{catalogue.raison}</span>}
-      <button
-        type="button"
-        onClick={onRelireCatalogue}
-        title="Redemander le catalogue des modèles"
-        className="transition-colors duration-[80ms] hover:text-texte-2"
-      >
-        {etat?.catalogue.modeles ?? 0} modèles
-      </button>
-      {/* **La clé est montée dans la barre du haut** (E19), et elle n'est plus
-          ici : elle est le seul préalable dur du produit, elle se lit dès la
-          première seconde, et la même valeur à deux endroits serait deux
-          endroits à tenir d'accord. */}
-      <span className="ml-auto">
-        {assets} asset{assets > 1 ? "s" : ""}
-      </span>
-    </footer>
-  )
-}
