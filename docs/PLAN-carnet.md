@@ -2598,7 +2598,7 @@ postes de `Retouche.tsx` : les moteurs sont neufs, **le châssis autour ne l'est
 
 ### Critères d'acceptation
 
-- [ ] L'atelier d'une animation est en papier, et il règle les mêmes moteurs qu'avant.
+- [x] L'atelier d'une animation est en papier, et il règle les mêmes moteurs qu'avant.
 
 ### Bloquée par
 

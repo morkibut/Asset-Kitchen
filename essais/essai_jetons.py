@@ -124,9 +124,10 @@ LES_FICHIERS_DU_CARNET = (
 LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # C1 — les réglages : EcranReglages et Mouvements perdent leur dernière
     # porte ; Secrets reste tant qu'EcranReglages.tsx le monte.
+    # `Mouvements.tsx` est sorti en `C7`, avec `AtelierDeBande.tsx` — même
+    # geste, même écran de réglages.
     "interface/src/composants/EcranReglages.tsx",
     "interface/src/composants/Secrets.tsx",
-    "interface/src/composants/Mouvements.tsx",
     # C2 — `Assistant.tsx` est parti : c'était le doublon vrai de
     # `ReglesDuJeu.tsx`, et le relevé de ses douze étapes est en tête de ce
     # fichier-là. Restent les trois côtés d'inspiration de l'onglet Univers.
@@ -184,15 +185,20 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # dessin qu'`Envoi.dc.html`, `Clip.dc.html` et `Animation-chaine.dc.html`
     # posent, pas un renommage de jeton. Compté ici comme sorti quand même :
     # c'est la couleur du châssis que ce bloc mesure, pas encore sa géométrie.
-    # C6 — l'établi d'un sujet, monté par PageDuSujet.tsx mais lui-même resté
-    # sur l'ancien châssis.
-    "interface/src/composants/Personnages.tsx",
-    "interface/src/composants/FicheChose.tsx",
-    "interface/src/composants/Vitrine.tsx",
-    "interface/src/composants/Calibrage.tsx",
-    "interface/src/composants/Calque.tsx",
-    # C7 — l'atelier d'une animation.
-    "interface/src/composants/AtelierDeBande.tsx",
+    # C6 — l'établi d'un sujet : sorti le 10 septembre 2026. ⚠️ Le piège nommé
+    # par le plan — `Personnages.tsx` était monté par `PageDuSujet.tsx`, un
+    # écran neuf, et son contenu restait l'ancien châssis intégral. Il est
+    # renommé `EtabliDuSujet.tsx` plutôt que retiré : `EcranEtabli` et ses
+    # fonctions pures (`faitesDeLaCase`, `posesTenues`…) restent employées par
+    # `Fiche.tsx` et `Planche.tsx`. Comme `C5` : géométrie inchangée, ne
+    # rejoint pas `LES_FICHIERS_DU_CARNET`.
+    # C7 — l'atelier d'une animation : `AtelierDeBande.tsx` et
+    # `Mouvements.tsx` sont sortis ensemble, le 10 septembre 2026. ⚠️ Comme
+    # `C5` : les postes de la recette viennent déjà de `Retouche.tsx` (`B26`),
+    # donc les moteurs étaient déjà neufs — seul le châssis autour l'était
+    # encore. Ils ne rejoignent pas `LES_FICHIERS_DU_CARNET` : leurs tailles
+    # restent celles de l'ancien châssis, pas encore ouvertes une à une contre
+    # les listes fermées de `docs/DESIGN.md`.
     # C9 — la barre elle-même, et le réglage de palette qu'elle porte.
     "interface/src/composants/BarreChassis.tsx",
     "interface/src/composants/chassis.tsx",

@@ -25,7 +25,7 @@ import { api, type BaseMouvements, type Mouvement } from "../api"
 import { Bouton, Libelle, Raison } from "./chassis"
 
 const CHAMP =
-  "mesure h-[30px] min-w-0 rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+  "mesure h-[30px] min-w-0 rounded-[2px] border border-contour bg-carte px-2 text-[11px] text-encre placeholder:text-eteint"
 
 export function BlocMouvements() {
   const [base, setBase] = useState<BaseMouvements | null>(null)
@@ -57,16 +57,16 @@ export function BlocMouvements() {
   return (
     <>
       <Titre>Les mouvements</Titre>
-      <p className="text-[12.5px] leading-relaxed text-texte-2">
-        Un mouvement dit <strong className="text-texte">ce qu'une pose devient
+      <p className="text-[12.5px] leading-relaxed text-encre-2">
+        Un mouvement dit <strong className="text-encre">ce qu'une pose devient
         quand on l'anime</strong> : un cycle qui boucle au lieu d'une attitude
         figée, une cadence, et les directions où il a un sens. Une case du plan
         de poses hérite du mouvement qui porte son nom, sans rien relier à la
         main — et deux clips du même mouvement partent avec exactement le même
         texte.
       </p>
-      <p className="mt-2 text-[12.5px] leading-relaxed text-texte-2">
-        Cette liste-ci <strong className="text-texte">appartient à l'atelier</strong>,
+      <p className="mt-2 text-[12.5px] leading-relaxed text-encre-2">
+        Cette liste-ci <strong className="text-encre">appartient à l'atelier</strong>,
         pas à un jeu : elle suit tous les projets suivants. Rien ici ne part
         chez un fournisseur et rien ici ne coûte.
       </p>
@@ -95,14 +95,14 @@ export function BlocMouvements() {
           une raison : sans elle, masquer serait irréversible, et un geste
           irréversible sur du vocabulaire livré n'a aucune raison d'être. */}
       {base.masques.length > 0 && (
-        <p className="mesure mt-2 flex flex-wrap items-center gap-2 text-[10px] text-texte-3">
+        <p className="mesure mt-2 flex flex-wrap items-center gap-2 text-[10px] text-encre-3">
           <span>masqués</span>
           {base.masques.map((mouvement) => (
             <button
               key={mouvement.identifiant}
               type="button"
               onClick={() => poser(api.montrerMouvement(mouvement.identifiant))}
-              className="rounded-[2px] border border-bord px-1.5 py-0.5 text-texte-2 hover:text-ancien-signal"
+              className="rounded-[2px] border border-trait px-1.5 py-0.5 text-encre-2 hover:text-signal"
             >
               {mouvement.nom} · remontrer
             </button>
@@ -110,7 +110,7 @@ export function BlocMouvements() {
         </p>
       )}
 
-      <Raison texte={refus} />
+      <Raison texte={refus} papier />
 
       {fabrique ? (
         <Fabrique
@@ -122,7 +122,7 @@ export function BlocMouvements() {
         />
       ) : (
         <div className="mt-3">
-          <Bouton onClick={() => setFabrique(true)} enfants="Nommer un mouvement" />
+          <Bouton papier onClick={() => setFabrique(true)} enfants="Nommer un mouvement" />
         </div>
       )}
     </>
@@ -137,7 +137,7 @@ export function BlocMouvements() {
  *  disent « section » partout dans le produit ; aucune typographie neuve ici. */
 function Titre({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mesure mt-7 mb-3 border-b border-bord pb-1.5 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+    <h3 className="mesure mt-7 mb-3 border-b border-trait pb-1.5 text-[9.5px] tracking-[.11em] text-encre-3 uppercase">
       {children}
     </h3>
   )
@@ -180,13 +180,13 @@ function Ligne({
     Number(cadence) !== mouvement.cadence
 
   return (
-    <li className="rounded-[2px] border border-bord bg-fond-2 px-2.5 py-1.5">
+    <li className="rounded-[2px] border border-trait bg-carte px-2.5 py-1.5">
       <div className="flex items-baseline gap-2">
         <button
           type="button"
           onClick={onOuvrir}
           aria-expanded={ouvert}
-          className="text-[12.5px] text-texte hover:text-ancien-signal"
+          className="text-[12.5px] text-encre hover:text-signal"
         >
           {mouvement.nom}
         </button>
@@ -198,7 +198,7 @@ function Ligne({
             nommé ici
           </span>
         )}
-        <span className="mesure ml-auto text-[10px] text-texte-3">
+        <span className="mesure ml-auto text-[10px] text-encre-3">
           {mouvement.cadence} i/s
           {mouvement.directions.length > 0 &&
             ` · ${mouvement.directions.join(", ")}`}
@@ -207,14 +207,14 @@ function Ligne({
 
       {/* Le texte anglais est visible sans déplier : **c'est lui qui part**, et
           c'est la seule chose que l'auteur vient vérifier ici. */}
-      <p className="mesure mt-0.5 truncate text-[10px] text-texte-3" title={mouvement.texte}>
+      <p className="mesure mt-0.5 truncate text-[10px] text-encre-3" title={mouvement.texte}>
         {mouvement.texte}
       </p>
 
       {ouvert && (
-        <div className="mt-2 flex flex-col gap-2 border-t border-bord pt-2">
+        <div className="mt-2 flex flex-col gap-2 border-t border-trait pt-2">
           <label className="flex flex-col gap-1">
-            <Libelle aide="mouvement.nom">Nom</Libelle>
+            <Libelle aide="mouvement.nom" papier>Nom</Libelle>
             <input
               value={nom}
               onChange={(e) => setNom(e.target.value)}
@@ -222,7 +222,7 @@ function Ligne({
             />
           </label>
           <label className="flex flex-col gap-1">
-            <Libelle aide="mouvement.texte">Ce qui part au modèle</Libelle>
+            <Libelle aide="mouvement.texte" papier>Ce qui part au modèle</Libelle>
             <textarea
               value={texte}
               rows={2}
@@ -231,24 +231,25 @@ function Ligne({
             />
           </label>
           <label className="flex items-baseline gap-2">
-            <Libelle aide="mouvement.cadence">Cadence</Libelle>
+            <Libelle aide="mouvement.cadence" papier>Cadence</Libelle>
             <input
               value={cadence}
               inputMode="decimal"
               onChange={(e) => setCadence(e.target.value)}
               className={`${CHAMP} w-[64px]`}
             />
-            <span className="mesure text-[10px] text-texte-3">images par seconde</span>
+            <span className="mesure text-[10px] text-encre-3">images par seconde</span>
           </label>
           <div className="flex justify-between gap-2">
             <button
               type="button"
               onClick={() => void onMasquer()}
-              className="mesure text-[10px] text-texte-3 hover:text-ancien-signal"
+              className="mesure text-[10px] text-encre-3 hover:text-signal"
             >
               {mouvement.livre ? "masquer — il se remontre" : "masquer — il s'en va"}
             </button>
             <Bouton
+              papier
               inactif={!change}
               principal
               onClick={() =>
@@ -283,9 +284,9 @@ function Fabrique({
   const complet = nom.trim().length > 0 && texte.trim().length > 0
 
   return (
-    <div className="mt-3 flex flex-col gap-2 rounded-[2px] border border-bord-fort bg-fond-2 p-2.5">
+    <div className="mt-3 flex flex-col gap-2 rounded-[2px] border border-contour bg-carte p-2.5">
       <label className="flex flex-col gap-1">
-        <Libelle aide="mouvement.nom">Nom</Libelle>
+        <Libelle aide="mouvement.nom" papier>Nom</Libelle>
         <input
           autoFocus
           value={nom}
@@ -295,7 +296,7 @@ function Fabrique({
         />
       </label>
       <label className="flex flex-col gap-1">
-        <Libelle aide="mouvement.texte">Ce qui part au modèle</Libelle>
+        <Libelle aide="mouvement.texte" papier>Ce qui part au modèle</Libelle>
         <textarea
           value={texte}
           rows={2}
@@ -305,7 +306,7 @@ function Fabrique({
         />
       </label>
       <label className="flex items-baseline gap-2">
-        <Libelle aide="mouvement.cadence">Cadence</Libelle>
+        <Libelle aide="mouvement.cadence" papier>Cadence</Libelle>
         <input
           value={cadence}
           inputMode="decimal"
@@ -313,11 +314,12 @@ function Fabrique({
           onChange={(e) => setCadence(e.target.value)}
           className={`${CHAMP} w-[64px]`}
         />
-        <span className="mesure text-[10px] text-texte-3">images par seconde</span>
+        <span className="mesure text-[10px] text-encre-3">images par seconde</span>
       </label>
       <div className="flex justify-end gap-2">
-        <Bouton onClick={onFermer} enfants="Laisser" />
+        <Bouton papier onClick={onFermer} enfants="Laisser" />
         <Bouton
+          papier
           principal
           inactif={!complet}
           onClick={() =>

@@ -230,9 +230,23 @@ export function Revers({
   )
 }
 
-export function EnTetePanneau({ children }: { children: ReactNode }) {
+export function EnTetePanneau({
+  children,
+  papier = false,
+}: {
+  children: ReactNode
+  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
+   *  comme sur `Bouton`, `Libelle`, `Raison`, `Segments` et `Curseur`. */
+  papier?: boolean
+}) {
   return (
-    <div className="mesure flex h-[30px] shrink-0 items-center border-b border-bord px-2 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+    <div
+      className={
+        papier
+          ? "mesure flex h-[30px] shrink-0 items-center border-b border-trait px-2 text-[9.5px] tracking-[.11em] text-encre-4 uppercase"
+          : "mesure flex h-[30px] shrink-0 items-center border-b border-bord px-2 text-[9.5px] tracking-[.11em] text-texte-3 uppercase"
+      }
+    >
       {children}
     </div>
   )
