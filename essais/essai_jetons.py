@@ -95,6 +95,14 @@ LES_FICHIERS_DU_CARNET = (
     "interface/src/composants/EssaiDuSujet.tsx",
     # B21 — la sortie : le seul écran d'où les fichiers du jeu s'en vont.
     "interface/src/composants/Sortie.tsx",
+    # C8 — les dépenses, la découpe, la différence : les trois derniers écrans
+    # anciens indépendants. Les deux dernières sont montées depuis
+    # `Retouche.tsx`, déjà du carnet — c'était le piège de cette tranche,
+    # le même qu'en `C6` : l'écran conteneur avait l'air neuf, ce qu'il
+    # ouvrait par-dessus ne l'était pas.
+    "interface/src/composants/Depenses.tsx",
+    "interface/src/composants/Decoupe.tsx",
+    "interface/src/composants/Superposition.tsx",
 )
 # `interface/src/recette.ts` (B26) n'entre pas ici : ce n'est pas un écran —
 # aucun rendu, aucune classe Tailwind — c'est le vocabulaire du domaine que
@@ -166,11 +174,16 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # *Créer* et l'établi d'un sujet.
     "interface/src/composants/ChampPrompt.tsx",
     "interface/src/composants/PanneauReglages.tsx",
-    # C5 — l'envoi, le clip, le montage.
-    "interface/src/composants/Envoi.tsx",
-    "interface/src/composants/Clip.tsx",
-    "interface/src/composants/Montage.tsx",
-    "interface/src/composants/Planche.tsx",
+    # C5 — l'envoi, le clip, le montage : sortis le 10 septembre 2026. Leurs
+    # jetons sont ceux du papier ; `Bouton`, `Libelle`, `Raison`, `Segments` et
+    # `Curseur` de `chassis.tsx` portent pour ça un second habillage, additif,
+    # derrière une prop `papier` — `chassis.tsx` lui-même reste ici, C9 le
+    # sortira. ⚠️ Ils ne rejoignent pas `LES_FICHIERS_DU_CARNET` : leurs tailles
+    # restent celles de l'ancien châssis (10 px, 22 px, arrondis de 1 et 2 px…),
+    # hors des listes fermées de `docs/DESIGN.md` — les rouvrir une à une est le
+    # dessin qu'`Envoi.dc.html`, `Clip.dc.html` et `Animation-chaine.dc.html`
+    # posent, pas un renommage de jeton. Compté ici comme sorti quand même :
+    # c'est la couleur du châssis que ce bloc mesure, pas encore sa géométrie.
     # C6 — l'établi d'un sujet, monté par PageDuSujet.tsx mais lui-même resté
     # sur l'ancien châssis.
     "interface/src/composants/Personnages.tsx",
@@ -180,10 +193,6 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     "interface/src/composants/Calque.tsx",
     # C7 — l'atelier d'une animation.
     "interface/src/composants/AtelierDeBande.tsx",
-    # C8 — les dépenses, la découpe, la différence.
-    "interface/src/composants/Depenses.tsx",
-    "interface/src/composants/Decoupe.tsx",
-    "interface/src/composants/Superposition.tsx",
     # C9 — la barre elle-même, et le réglage de palette qu'elle porte.
     "interface/src/composants/BarreChassis.tsx",
     "interface/src/composants/chassis.tsx",

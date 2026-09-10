@@ -12,9 +12,13 @@
 // seul, le résultat —, et ce ne sont pas des dispositions l'une de l'autre.
 //
 // **Rien ici ne coûte un centime.** Les deux images sont déjà payées ; changer
-// le calage, le seuil ou le rectangle coûte des millisecondes. Avant, un
-// recalage raté n'avait aucun recours : le calque était perdu et il fallait
-// relancer une génération.
+// le calage, le seuil ou le rectangle coûte des millisecondes.
+//
+// **Passé au papier en `C8`.** Montée depuis `Retouche.tsx`, qui est déjà du
+// carnet ; c'est ce fichier-ci qui ne l'était pas encore. Le vocabulaire de
+// réglage (`Champ`, `Choix`, `Glissiere`, `Pourquoi`) n'est pas partagé avec
+// `Decoupe.tsx` : chaque fabrique tient le sien, comme `Retouche.tsx` tient
+// déjà le sien pour ses tables.
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
@@ -27,44 +31,118 @@ import {
   type OuvertureSuperposition,
   type Superposition,
 } from "../api"
-import {
-  Curseur,
-  EnTetePanneau,
-  Libelle,
-  NomDuReglage,
-  Raison,
-  Segments,
-} from "./chassis"
 import { PANNEAU } from "./Infobulle"
 
-/** Un réglage : son libellé à gauche, sa commande à droite.
- *
- *  **Repris de `Places.tsx` tel quel** (`B26`) : cet écran-ci est le dernier à
- *  s'en servir, et le fichier qui le portait part avec l'ancien châssis. Le
- *  descendre dans le module de vocabulaire n'aurait servi à rien — c'est du
- *  balisage, et il n'a plus qu'un lecteur. Il repartira le jour où la
- *  superposition passera au papier du carnet. */
-function Reglage({
-  libelle,
-  aide,
-  children,
+// ── Le petit vocabulaire de cet écran ───────────────────────────────────────
+
+function EnTete({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mesure flex h-[30px] shrink-0 items-center border-b border-trait px-[8px] text-[10.5px] tracking-[0.14em] text-encre-4 uppercase">
+      {children}
+    </div>
+  )
+}
+
+function Champ({ libelle, children }: { libelle: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline gap-[8px]">
+      <span className="w-[128px] shrink-0 text-[11px] text-encre-2">{libelle}</span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  )
+}
+
+/** « Le grisé porte sa raison. » Une ligne sœur, mono 10,5 px, tiret de 8 px,
+ *  avec un lien souligné quand il y a un endroit où aller — jamais en rouille,
+ *  réservé au bouton qui fabrique et au chiffre qui coûte. */
+function Pourquoi({
+  texte,
+  geste,
+  onGeste,
 }: {
-  libelle: string
-  aide?: string
-  children: React.ReactNode
+  texte: string
+  geste?: string
+  onGeste?: () => void
 }) {
   return (
-    <div className="flex items-baseline gap-3">
-      <span className="w-[104px] shrink-0">
-        <Libelle aide={aide}>{libelle}</Libelle>
+    <p className="mesure flex flex-wrap items-baseline gap-[6px] text-[10.5px] leading-4 text-encre-4">
+      <span aria-hidden className="mt-[8px] inline-block h-px w-[8px] shrink-0 bg-contour" />
+      <span className="min-w-0">{texte}</span>
+      {geste && onGeste && (
+        <button
+          type="button"
+          onClick={onGeste}
+          className="text-encre-2 underline decoration-pointille underline-offset-2 transition-colors duration-120 hover:text-encre"
+        >
+          {geste} ›
+        </button>
+      )}
+    </p>
+  )
+}
+
+/** Un curseur, et sa valeur qui s'écrit à côté. */
+function Glissiere({
+  valeur,
+  min,
+  max,
+  unite = "",
+  onChange,
+}: {
+  valeur: number
+  min: number
+  max: number
+  unite?: string
+  onChange: (v: number) => void
+}) {
+  return (
+    <div className="flex items-center gap-[8px]">
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={valeur}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="curseur h-[22px] min-w-0 flex-1"
+      />
+      <span className="mesure w-[54px] shrink-0 text-right text-[10.5px] text-encre-2">
+        {valeur}
+        {unite}
       </span>
-      {/* **Le nom descend jusqu'au contrôle** (U3). Le champ où une valeur
-          s'écrit a besoin d'un nom pour être trouvable, et ce nom est déjà
-          écrit à gauche : le faire redire à chaque emploi aurait fabriqué
-          autant d'occasions de le laisser diverger de ce qui s'affiche. */}
-      <div className="min-w-0 flex-1">
-        <NomDuReglage.Provider value={libelle}>{children}</NomDuReglage.Provider>
-      </div>
+    </div>
+  )
+}
+
+/** Le segmenté — la même grammaire que les tables de `Retouche.tsx`. */
+function Choix<T extends string>({
+  valeurs,
+  valeur: courante,
+  libelles,
+  onChange,
+}: {
+  valeurs: readonly T[]
+  valeur: T
+  libelles?: Partial<Record<string, string>>
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="flex flex-wrap gap-[4px]">
+      {valeurs.map((v) => (
+        <button
+          key={v}
+          type="button"
+          aria-pressed={courante === v}
+          onClick={() => onChange(v)}
+          className={[
+            "h-[26px] rounded-7 border px-[8px] text-[12px] transition-colors duration-120",
+            courante === v
+              ? "border-encre-4 bg-carte font-medium text-encre"
+              : "border-trait bg-carte text-encre-3 hover:border-encre-4 hover:text-encre",
+          ].join(" ")}
+        >
+          {libelles?.[v] ?? v}
+        </button>
+      ))}
     </div>
   )
 }
@@ -78,11 +156,11 @@ type Fond = (typeof FONDS)[number]
 
 const COULEUR_DE_FOND: Record<Fond, string | undefined> = {
   damier: undefined,
-  blanc: "#ffffff",
-  noir: "#000000",
-  rose: "#ff2d95",
-  bleu: "#1e6fff",
-  vert: "#12c46a",
+  blanc: "var(--color-diag-blanc)",
+  noir: "var(--color-diag-noir)",
+  rose: "var(--color-diag-rose)",
+  bleu: "var(--color-diag-bleu)",
+  vert: "var(--color-diag-vert)",
 }
 
 /** Les trois modes de couleur du dessous. `teinte` repeint tous ses pixels
@@ -106,10 +184,7 @@ const FILTRE: Record<Teinte, string | undefined> = {
 /** Un cran, sa touche, et le pas — écrits sous le rail qu'ils commandent.
  *
  *  **La touche est aussi le bouton**, et c'est ce qui fait qu'une seule chose à
- *  l'écran fait deux métiers : elle enseigne et elle agit. Un raccourci écrit
- *  dans une aide n'est jamais lu ; dessiné sous le réglage qu'il commande, il
- *  se voit au moment où on en a besoin.
- */
+ *  l'écran fait deux métiers : elle enseigne et elle agit. */
 function Cran({
   libelle,
   valeur,
@@ -120,7 +195,6 @@ function Cran({
   touches,
   onChange,
   onFini,
-  aide,
   note,
 }: {
   libelle: string
@@ -132,16 +206,15 @@ function Cran({
   touches: [string, string]
   onChange: (v: number) => void
   onFini: (v: number) => void
-  aide?: string
   note?: string
 }) {
   const borner = (v: number) => Math.max(min, Math.min(max, v))
   const bouger = (sens: number, dix: boolean) =>
     onFini(borner(Number((valeur + sens * pas * (dix ? 10 : 1)).toFixed(3))))
   return (
-    <div className="flex flex-col gap-1">
-      <Reglage libelle={libelle} aide={aide}>
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-[4px]">
+      <Champ libelle={libelle}>
+        <div className="flex items-center gap-[8px]">
           <input
             type="range"
             min={min}
@@ -160,16 +233,16 @@ function Cran({
             step={pas}
             aria-label={`${libelle}, en chiffres`}
             onChange={(e) => onFini(borner(Number(e.target.value)))}
-            className="mesure h-[26px] w-[64px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-right text-[10px] text-texte"
+            className="mesure h-[26px] w-[70px] shrink-0 rounded-5 border border-trait bg-carte px-[4px] text-right text-[10.5px] text-encre"
           />
         </div>
-      </Reglage>
-      <div className="mesure flex items-center gap-1 pl-[116px] text-[10px] text-texte-3">
+      </Champ>
+      <div className="mesure flex items-center gap-[4px] pl-[128px] text-[10.5px] text-encre-4">
         <button
           type="button"
           aria-label={`${libelle} — ${touches[0]}`}
           onClick={(e) => bouger(-1, e.shiftKey)}
-          className="h-[24px] w-[24px] rounded-[2px] border border-bord bg-fond-2 hover:text-ancien-signal"
+          className="h-[22px] w-[22px] rounded-5 border border-trait bg-carte hover:border-encre-4 hover:text-encre"
         >
           {touches[0]}
         </button>
@@ -177,7 +250,7 @@ function Cran({
           type="button"
           aria-label={`${libelle} — ${touches[1]}`}
           onClick={(e) => bouger(1, e.shiftKey)}
-          className="h-[24px] w-[24px] rounded-[2px] border border-bord bg-fond-2 hover:text-ancien-signal"
+          className="h-[22px] w-[22px] rounded-5 border border-trait bg-carte hover:border-encre-4 hover:text-encre"
         >
           {touches[1]}
         </button>
@@ -185,7 +258,7 @@ function Cran({
           {pas}
           {unite} · Maj ×10
         </span>
-        {note && <span className="ml-auto text-epingle">{note}</span>}
+        {note && <span className="ml-auto text-signal">{note}</span>}
       </div>
     </div>
   )
@@ -207,10 +280,10 @@ function Mesures({ mesures }: { mesures: MesuresCalque }) {
       {lignes.map(([nom, valeur]) => (
         <li
           key={nom}
-          className="mesure flex h-[24px] items-center gap-2 text-[10px] text-texte-3"
+          className="mesure flex h-[22px] items-center gap-[8px] text-[10.5px] text-encre-4"
         >
           <span>{nom}</span>
-          <span className="ml-auto text-texte-2">{valeur}</span>
+          <span className="ml-auto text-encre-2">{valeur}</span>
         </li>
       ))}
     </ul>
@@ -252,10 +325,8 @@ export function EcranSuperposition({
     api
       .ouvrirSuperposition(asset.identifiant)
       .then((recu) => {
-        // **Un serveur plus vieux que l'écran répond sans se plaindre.** C'est
-        // le piège que E3 a payé : le double rendait « {} » en 200, la table
-        // lisait dedans, et l'application entière disparaissait. On regarde
-        // donc la forme avant de s'y fier.
+        // **Un serveur plus vieux que l'écran répond sans se plaindre.** On
+        // regarde donc la forme avant de s'y fier.
         if (!vivant || !recu?.pose) return
         setOuverture(recu)
         setPose(recu.pose)
@@ -269,11 +340,8 @@ export function EcranSuperposition({
 
   // ── Les trois vues sont vivantes ──────────────────────────────────────────
   //
-  // **Déplacer le dessus d'un pixel les met toutes à jour.** C'est ce qui
-  // permet de caler en regardant le résultat plutôt que le travail, et c'est la
-  // raison d'être de cette disposition à trois panneaux. L'aperçu se redemande
-  // au **relâchement**, jamais à chaque cran : c'est la règle du curseur de la
-  // recette, et elle vaut ici pour la même raison — le serveur sérialise.
+  // **Déplacer le dessus d'un pixel les met toutes à jour.** L'aperçu se
+  // redemande au **relâchement**, jamais à chaque cran : le serveur sérialise.
   const rafraichir = useCallback(
     (suivante: Superposition) => {
       if (!suivante.dessus || !suivante.dessous) return
@@ -299,10 +367,7 @@ export function EcranSuperposition({
     pose.dy,
     pose.seuil,
     pose.rectangle,
-    // **Changer d'image du dessus change tout ce qui en découle** (G16) :
-    // sans cette ligne, la bascule aurait laissé les trois vues sur le calcul
-    // d'avant, et l'écran aurait montré autre chose que ce qu'il allait
-    // fabriquer.
+    // **Changer d'image du dessus change tout ce qui en découle** (G16).
     pose.dessus_arrivee,
   ])
 
@@ -317,11 +382,7 @@ export function EcranSuperposition({
     if (!pret) return
     setRecalage(true)
     try {
-      const trouve = await api.recalerSuperposition(
-        pose.dessus,
-        pose.dessous,
-        pose.dessus_arrivee,
-      )
+      const trouve = await api.recalerSuperposition(pose.dessus, pose.dessous, pose.dessus_arrivee)
       poser({ echelle: trouve.echelle, dx: trouve.dx, dy: trouve.dy })
     } catch (erreur) {
       onErreur(String(erreur))
@@ -345,45 +406,33 @@ export function EcranSuperposition({
   const simple = [0.25, 0.5, 1, 2, 3, 4].some((v) => Math.abs(pose.echelle - v) < 1e-6)
 
   return (
-    <div data-superposition className="grid min-h-0 min-w-0 flex-1 grid-cols-[380px_minmax(0,1fr)_380px]">
+    <div
+      data-superposition
+      className="grid min-h-0 min-w-0 flex-1 grid-cols-[380px_minmax(0,1fr)_380px] bg-papier"
+    >
       {/* ── La colonne de gauche ─────────────────────────────────────────── */}
-      <aside {...PANNEAU} className="flex min-h-0 flex-col border-r border-bord bg-fond-1">
-        <EnTetePanneau>superposition</EnTetePanneau>
-        <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+      <aside {...PANNEAU} className="flex min-h-0 flex-col border-r border-trait bg-papier-cote">
+        <EnTete>superposition</EnTete>
+        <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[8px]">
           {/* Les deux images. Le dessus se déplace, le dessous ne bouge pas. */}
-          <div className="flex flex-col gap-1">
-            <Libelle aide="superposition.images">les deux images</Libelle>
+          <div className="flex flex-col gap-[4px]">
+            <p className="text-[11px] text-encre-2">les deux images</p>
             <ImageChoisie
               asset={dessus}
-              role={
-                pose.dessus_arrivee
-                  ? "DESSUS · TEL QU'IL EST ARRIVÉ"
-                  : "DESSUS · SE DÉPLACE"
-              }
+              role={pose.dessus_arrivee ? "DESSUS · TEL QU'IL EST ARRIVÉ" : "DESSUS · SE DÉPLACE"}
               actif
               arrivee={pose.dessus_arrivee}
               onChanger={() => setChoisir("dessus")}
             />
-            {/* **De quelle image du dessus on part** (G16, US-503). Elle ne
-                paraît que là où la question se pose vraiment : un vêtement
-                sorti d'une planche, dont le fichier rangé est *déjà* mis à
-                l'échelle et calé sur son corps. Repartir de là pour refaire le
-                calage reviendrait à repartir du résultat qu'on veut défaire —
-                c'est pourquoi le défaut est *telle qu'elle est arrivée*, et
-                non l'inverse. Partout ailleurs, les deux sont le même fichier
-                et la rangée n'a rien à dire. */}
+            {/* **De quelle image du dessus on part** (G16, US-503). */}
             {ouverture?.arrivee_possible && (
-              <div className="flex flex-col gap-1 pt-1">
-                <Segments<string>
+              <div className="flex flex-col gap-[4px] pt-[4px]">
+                <Choix<string>
                   valeurs={["telle qu'arrivée", "telle que rangée"] as const}
-                  valeur={
-                    pose.dessus_arrivee ? "telle qu'arrivée" : "telle que rangée"
-                  }
-                  onChange={(quoi) =>
-                    poser({ dessus_arrivee: quoi === "telle qu'arrivée" })
-                  }
+                  valeur={pose.dessus_arrivee ? "telle qu'arrivée" : "telle que rangée"}
+                  onChange={(quoi) => poser({ dessus_arrivee: quoi === "telle qu'arrivée" })}
                 />
-                <span className="mesure text-[10px] leading-4 text-texte-3">
+                <span className="mesure text-[10.5px] leading-4 text-encre-4">
                   {pose.dessus_arrivee
                     ? "la case telle que le modèle l'a rendue — c'est d'elle qu'on repart pour refaire le calage"
                     : "le vêtement déjà découpé et calé : refaire le calage sur lui repartirait du résultat"}
@@ -392,29 +441,19 @@ export function EcranSuperposition({
             )}
             <button
               type="button"
-              onClick={() =>
-                poser({ dessus: pose.dessous, dessous: pose.dessus })
-              }
-              className="mesure h-6 self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+              onClick={() => poser({ dessus: pose.dessous, dessous: pose.dessus })}
+              className="mesure h-[22px] self-start text-[10.5px] text-encre-2 underline decoration-pointille underline-offset-2 hover:text-encre"
             >
               ↕ échanger
             </button>
             {dessous ? (
-              <ImageChoisie
-                asset={dessous}
-                role="DESSOUS · FIXE"
-                onChanger={() => setChoisir("dessous")}
-              />
+              <ImageChoisie asset={dessous} role="DESSOUS · FIXE" onChanger={() => setChoisir("dessous")} />
             ) : (
-              // **Sans dessous, il faut un moyen d'en choisir un.** La rangée
-              // qui porte « changer › » n'existe que quand l'image existe : la
-              // raison est donc le bouton, comme l'alerte du détourage juste en
-              // dessous — trouvé au navigateur en tenant E6, où l'outil
-              // s'ouvrait sans aucune porte vers sa seconde image.
+              // **Sans dessous, il faut un moyen d'en choisir un.**
               <button
                 type="button"
                 onClick={() => setChoisir("dessous")}
-                className="mesure h-[26px] rounded-[2px] border border-bord-fort px-2 text-left text-[10px] text-texte-2 hover:text-ancien-signal"
+                className="mesure h-[26px] rounded-5 border border-encre-4 px-[8px] text-left text-[10.5px] text-encre-2 hover:text-encre"
               >
                 choisir l'image du dessous — celle sur laquelle on pose ›
               </button>
@@ -422,9 +461,11 @@ export function EcranSuperposition({
           </div>
 
           {choisir && (
-            <div className="flex flex-col gap-1 border-t border-bord pt-2">
-              <Libelle>choisir {choisir === "dessus" ? "le dessus" : "le dessous"}</Libelle>
-              <div className="flex flex-wrap gap-1">
+            <div className="flex flex-col gap-[4px] border-t border-trait pt-[8px]">
+              <p className="text-[11px] text-encre-2">
+                choisir {choisir === "dessus" ? "le dessus" : "le dessous"}
+              </p>
+              <div className="flex flex-wrap gap-[4px]">
                 {soeurs.map((soeur) => (
                   <button
                     key={soeur.identifiant}
@@ -441,12 +482,12 @@ export function EcranSuperposition({
                         )
                         .then(setOuverture)
                     }}
-                    className="rounded-[2px] border border-transparent p-[2px] hover:border-bord"
+                    className="rounded-5 border border-transparent p-[4px] hover:border-trait"
                   >
                     <img
                       src={api.rendu(soeur.identifiant, soeur.empreinte)}
                       alt={soeur.label}
-                      className="damier h-[38px] w-[38px] object-contain"
+                      className="damier-papier h-[54px] w-[54px] object-contain"
                       style={{ imageRendering: "pixelated" }}
                     />
                   </button>
@@ -455,71 +496,55 @@ export function EcranSuperposition({
             </div>
           )}
 
-          {/* « Avant de caler » — l'état du détourage des deux images.
-              **L'alerte nomme la conséquence et elle est aussi le bouton.** */}
+          {/* « Avant de caler » — l'état du détourage des deux images. */}
           {ouverture && (
-            <div className="flex flex-col gap-1 border-t border-bord pt-2">
-              <Libelle aide="superposition.detourage">avant de caler</Libelle>
-              <span className="mesure text-[10px] text-texte-3">
+            <div className="flex flex-col gap-[4px] border-t border-trait pt-[8px]">
+              <p className="text-[11px] text-encre-2">avant de caler</p>
+              <span className="mesure text-[10.5px] text-encre-4">
                 le dessous · {ouverture.passes_dessous} passe
                 {ouverture.passes_dessous > 1 ? "s" : ""} — le dessus ·{" "}
                 {ouverture.passes_dessus} passe{ouverture.passes_dessus > 1 ? "s" : ""}
               </span>
               {ouverture.sans_alpha && (
-                <>
-                  <Raison texte="sans alpha sur le dessus, le calque prendrait tout le fond" />
-                  <button
-                    type="button"
-                    disabled={!dessous || ouverture.passes_dessous === 0}
-                    onClick={() =>
-                      void api
-                        .heriterDetourage(pose.dessus, pose.dessous)
-                        .then(() => api.ouvrirSuperposition(pose.dessus, pose.dessous))
-                        .then((recu) => {
-                          setOuverture(recu)
-                          rafraichir(pose)
-                        })
-                        .catch((erreur) => onErreur(String(erreur)))
-                    }
-                    className="mesure h-6 self-start text-[10px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
-                  >
-                    reprendre les {ouverture.passes_dessous} passes du dessous ›
-                  </button>
-                </>
+                <Pourquoi
+                  texte="sans alpha sur le dessus, le calque prendrait tout le fond"
+                  geste={
+                    !dessous || ouverture.passes_dessous === 0
+                      ? undefined
+                      : `reprendre les ${ouverture.passes_dessous} passes du dessous`
+                  }
+                  onGeste={() =>
+                    void api
+                      .heriterDetourage(pose.dessus, pose.dessous)
+                      .then(() => api.ouvrirSuperposition(pose.dessus, pose.dessous))
+                      .then((recu) => {
+                        setOuverture(recu)
+                        rafraichir(pose)
+                      })
+                      .catch((erreur) => onErreur(String(erreur)))
+                  }
+                />
               )}
             </div>
           )}
 
-          {/* Les deux blocs « voir » ne changent que l'affichage : rien de tout
-              ça ne touche à ce qui sort, et l'en-tête le dit. */}
-          <div className="flex flex-col gap-2 border-t border-bord pt-2">
-            <Libelle aide="superposition.voir">voir le dessous — ne change pas la sortie</Libelle>
-            <Segments
-              valeurs={TEINTES}
-              valeur={teinte}
-              libelles={LIBELLE_TEINTE}
-              onChange={setTeinte}
-            />
-            <Reglage libelle="opacité">
-              <Curseur valeur={opaciteDessous} min={0} max={100} unite=" %" onChange={setOpaciteDessous} />
-            </Reglage>
-            <Reglage libelle="le dessus">
-              <Curseur valeur={opaciteDessus} min={0} max={100} unite=" %" onChange={setOpaciteDessus} />
-            </Reglage>
+          {/* Les deux blocs « voir » ne changent que l'affichage. */}
+          <div className="flex flex-col gap-[8px] border-t border-trait pt-[8px]">
+            <p className="text-[11px] text-encre-2">voir le dessous — ne change pas la sortie</p>
+            <Choix valeurs={TEINTES} valeur={teinte} libelles={LIBELLE_TEINTE} onChange={setTeinte} />
+            <Champ libelle="opacité">
+              <Glissiere valeur={opaciteDessous} min={0} max={100} unite=" %" onChange={setOpaciteDessous} />
+            </Champ>
+            <Champ libelle="le dessus">
+              <Glissiere valeur={opaciteDessus} min={0} max={100} unite=" %" onChange={setOpaciteDessus} />
+            </Champ>
           </div>
 
-          {/* Le calage. **Recaler est un bouton, pas un mode** : on est toujours
-              en manuel, il remplit les trois valeurs et s'arrête là. */}
-          <div className="flex flex-col gap-2 border-t border-bord pt-2">
-            <Libelle aide="superposition.calage">le calage du dessus</Libelle>
-            {/* **Ce qui a été fait avant que le calage commence** (M1). Le
-                dessus plus grand que le cadre y entre entier, réduit pour
-                tenir — et sans cette phrase on lirait « × 1,00 » en croyant
-                que l'image part de sa taille d'arrivée. Elle ne paraît que
-                lorsqu'il y a eu réduction : dans le cas courant, il n'y a rien
-                à dire. */}
+          {/* Le calage. **Recaler est un bouton, pas un mode.** */}
+          <div className="flex flex-col gap-[8px] border-t border-trait pt-[8px]">
+            <p className="text-[11px] text-encre-2">le calage du dessus</p>
             {apercu?.cadrage.ramene && (
-              <Raison
+              <Pourquoi
                 texte={
                   `le dessus a été ramené au cadre — ${apercu.cadrage.source_largeur}×` +
                   `${apercu.cadrage.source_hauteur} réduit à ` +
@@ -532,13 +557,12 @@ export function EcranSuperposition({
               type="button"
               disabled={!pret || recalage}
               onClick={() => void recaler()}
-              className="mesure h-[34px] w-full rounded-[2px] border border-bord-fort bg-fond-2 text-[11.5px] text-texte-2 hover:text-ancien-signal disabled:text-texte-3"
+              className="h-[34px] w-full rounded-7 border border-encre-4 bg-carte text-[11.5px] text-encre-2 transition-colors duration-120 hover:text-encre disabled:text-eteint"
             >
               {recalage ? "cherche…" : "Recaler"}
             </button>
             <Cran
               libelle="échelle"
-              aide="superposition.echelle"
               valeur={pose.echelle}
               unite=""
               min={0.25}
@@ -551,7 +575,6 @@ export function EcranSuperposition({
             />
             <Cran
               libelle="horizontal"
-              aide="superposition.decalage"
               valeur={pose.dx}
               unite=" px"
               min={-2048}
@@ -575,79 +598,72 @@ export function EcranSuperposition({
             <button
               type="button"
               onClick={() => poser({ echelle: 1, dx: 0, dy: 0 })}
-              className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-ancien-signal"
+              className="mesure h-[22px] self-start text-[10.5px] text-encre-3 hover:text-encre-2"
             >
               remettre à zéro ›
             </button>
           </div>
 
           {/* Ce qu'on garde du dessus. Le rectangle sert deux fois. */}
-          <div className="flex flex-col gap-2 border-t border-bord pt-2">
-            <Libelle aide="superposition.seuil">ce qu'on garde du dessus</Libelle>
-            <Reglage libelle="seuil" aide="superposition.seuil">
-              <Curseur
+          <div className="flex flex-col gap-[8px] border-t border-trait pt-[8px]">
+            <p className="text-[11px] text-encre-2">ce qu'on garde du dessus</p>
+            <Champ libelle="seuil">
+              <Glissiere
                 valeur={pose.seuil}
                 min={0}
                 max={255}
-                onChange={(seuil) => setPose((d) => ({ ...d, seuil }))}
-                onFini={(seuil) => poser({ seuil })}
+                onChange={(seuil) => poser({ seuil })}
               />
-            </Reglage>
-            <Raison texte="de combien une couleur doit changer pour compter comme changée" />
+            </Champ>
+            <Pourquoi texte="de combien une couleur doit changer pour compter comme changée" />
             {pose.rectangle && (
               <button
                 type="button"
                 onClick={() => poser({ rectangle: null })}
-                className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-ancien-echec"
+                className="mesure h-[22px] self-start text-[10.5px] text-encre-3 hover:text-echec"
               >
                 × le rectangle — {pose.rectangle[2] - pose.rectangle[0] + 1}×
                 {pose.rectangle[3] - pose.rectangle[1] + 1}
               </button>
             )}
             {!pose.rectangle && (
-              <Raison texte="aucun rectangle — glisse-en un sur l'image pour borner ce qui part" />
+              <Pourquoi texte="aucun rectangle — glisse-en un sur l'image pour borner ce qui part" />
             )}
           </div>
 
           {/* Ce qu'on en sort. Les deux se cochent au lieu de s'exclure. */}
-          <div className="flex flex-col gap-2 border-t border-bord pt-2">
-            <Libelle aide="superposition.sorties">ce qu'on en sort</Libelle>
+          <div className="flex flex-col gap-[8px] border-t border-trait pt-[8px]">
+            <p className="text-[11px] text-encre-2">ce qu'on en sort</p>
             {(
               [
                 ["calque", "ce que le dessus ajoute · va au vestiaire"],
                 ["aplat", "les deux fondues · un asset ordinaire"],
               ] as const
             ).map(([nom, quoi]) => (
-              <label key={nom} className="flex items-start gap-2 text-[11.5px] text-texte-2">
+              <label key={nom} className="flex items-start gap-[8px] text-[11px] text-encre-2">
                 <input
                   type="checkbox"
                   checked={sorties.includes(nom)}
                   onChange={(e) =>
                     setSorties((deja) =>
-                      e.target.checked
-                        ? [...deja, nom]
-                        : deja.filter((s) => s !== nom),
+                      e.target.checked ? [...deja, nom] : deja.filter((s) => s !== nom),
                     )
                   }
-                  className="mt-[3px]"
+                  className="mt-[4px]"
                 />
                 <span>
                   {nom}
-                  <span className="mesure block text-[10px] text-texte-3">{quoi}</span>
+                  <span className="mesure block text-[10.5px] text-encre-4">{quoi}</span>
                 </span>
               </label>
             ))}
-            <label className="flex items-center gap-2 text-[11.5px] text-texte-2">
-              <input
-                type="checkbox"
-                checked={garder}
-                onChange={(e) => setGarder(e.target.checked)}
-              />
+            <label className="flex items-center gap-[8px] text-[11px] text-encre-2">
+              <input type="checkbox" checked={garder} onChange={(e) => setGarder(e.target.checked)} />
               enregistrer ces réglages
             </label>
             {ouverture?.repris && (
-              <div className="flex flex-col gap-1">
-                <Raison texte={`repris de « ${ouverture.repris.depuis} »`} />
+              <div className="flex flex-col gap-[4px]">
+                <Pourquoi texte={`repris de « ${ouverture.repris.depuis} »`} />
                 <button
                   type="button"
                   onClick={() =>
@@ -659,7 +675,7 @@ export function EcranSuperposition({
                       })
                       .catch((erreur) => onErreur(String(erreur)))
                   }
-                  className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-ancien-signal"
+                  className="mesure h-[22px] self-start text-[10.5px] text-encre-3 hover:text-encre-2"
                 >
                   repartir de zéro ›
                 </button>
@@ -668,8 +684,8 @@ export function EcranSuperposition({
           </div>
 
           {apercu && (
-            <div className="border-t border-bord pt-2">
-              <Libelle aide="superposition.mesures">ce que la comparaison a mesuré</Libelle>
+            <div className="border-t border-trait pt-[8px]">
+              <p className="mb-[4px] text-[11px] text-encre-2">ce que la comparaison a mesuré</p>
               <Mesures mesures={apercu.mesures} />
             </div>
           )}
@@ -677,19 +693,19 @@ export function EcranSuperposition({
 
         {/* Le pied porte l'état et le geste. **Rien n'est détruit : rien n'est
             encore fabriqué.** */}
-        <div className="flex shrink-0 flex-col border-t border-bord">
+        <div className="flex shrink-0 flex-col border-t border-trait">
           <button
             type="button"
             disabled={!pret || sorties.length === 0}
             onClick={() => void fabriquer()}
-            className="mesure h-[34px] px-3 text-left text-[11.5px] text-ancien-signal hover:text-ancien-signal-clair disabled:text-texte-3"
+            className="h-[34px] bg-signal px-[14px] text-left text-[11.5px] text-encre-sur-signal transition-colors duration-120 hover:opacity-90 disabled:bg-carte disabled:text-eteint"
           >
             Fabriquer — {sorties.length} image{sorties.length > 1 ? "s" : ""} ›
           </button>
           <button
             type="button"
             onClick={() => poser({ echelle: 1, dx: 0, dy: 0, rectangle: null, main: [] })}
-            className="mesure h-[26px] border-t border-bord px-3 text-left text-[10px] text-texte-3 hover:text-ancien-echec"
+            className="mesure h-[26px] border-t border-trait px-[8px] text-left text-[10.5px] text-encre-3 hover:text-echec"
           >
             Tout défaire ›
           </button>
@@ -698,7 +714,7 @@ export function EcranSuperposition({
 
       {/* ── Le travail ───────────────────────────────────────────────────── */}
       <div className="flex min-h-0 min-w-0 flex-col">
-        <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+        <div className="flex min-h-0 flex-1 items-center justify-center p-[22px]">
           <CadreDuTravail
             dessous={dessous}
             dessus={dessus}
@@ -710,59 +726,51 @@ export function EcranSuperposition({
             onRectangle={(rectangle) => poser({ rectangle })}
           />
         </div>
-        <div className="mesure flex h-[38px] shrink-0 items-center gap-3 border-t border-bord bg-fond-1 px-4 text-[10px] text-texte-3">
+        <div className="mesure flex h-[34px] shrink-0 items-center gap-[14px] border-t border-trait bg-papier-cote px-[14px] text-[10.5px] text-encre-4">
           <span className="whitespace-nowrap">
             × {pose.echelle.toFixed(3)} · {pose.dx >= 0 ? "+" : ""}
             {pose.dx} · {pose.dy >= 0 ? "+" : ""}
             {pose.dy}
           </span>
           {apercu && (
-            <span className="whitespace-nowrap">
-              ajout {Math.round(apercu.mesures.ajout * 100)} %
-            </span>
+            <span className="whitespace-nowrap">ajout {Math.round(apercu.mesures.ajout * 100)} %</span>
           )}
-          <span className="ml-auto whitespace-nowrap text-texte-3">
-            aucun appel ne part d'ici
-          </span>
+          <span className="ml-auto whitespace-nowrap text-encre-4">aucun appel ne part d'ici</span>
         </div>
       </div>
 
       {/* ── Les deux rendus ──────────────────────────────────────────────── */}
-      <aside {...PANNEAU} className="flex min-h-0 flex-col border-l border-bord bg-fond-1">
-        <EnTetePanneau>ce qui en sortira</EnTetePanneau>
-        <div className="defile flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
-          <Libelle aide="superposition.fond">le calque seul</Libelle>
+      <aside {...PANNEAU} className="flex min-h-0 flex-col border-l border-trait bg-papier-cote">
+        <EnTete>ce qui en sortira</EnTete>
+        <div className="defile flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto p-[8px]">
+          <p className="text-[11px] text-encre-2">le calque seul</p>
           <div
-            className={COULEUR_DE_FOND[fond] ? "" : "damier"}
+            className={COULEUR_DE_FOND[fond] ? "" : "damier-papier"}
             style={{ background: COULEUR_DE_FOND[fond] }}
           >
             {apercu ? (
               <img
                 src={apercu.calque}
                 alt="le calque seul"
-                className="h-[180px] w-full object-contain"
+                className="h-[128px] w-full object-contain"
                 style={{ imageRendering: "pixelated" }}
               />
             ) : (
-              <div className="h-[180px]" />
+              <div className="h-[128px]" />
             )}
           </div>
-          <Segments valeurs={FONDS} valeur={fond} onChange={setFond} />
-          <Raison texte="un aplat vif fait sauter aux yeux les pixels oubliés — sur le damier ils se confondent" />
+          <Choix valeurs={FONDS} valeur={fond} onChange={setFond} />
+          <Pourquoi texte="un aplat vif fait sauter aux yeux les pixels oubliés — sur le damier ils se confondent" />
 
-          <div className="border-t border-bord pt-2">
-            <Libelle aide="superposition.resultat">le résultat</Libelle>
+          <div className="border-t border-trait pt-[8px]">
+            <p className="text-[11px] text-encre-2">le résultat</p>
           </div>
-          <div className="damier">
+          <div className="damier-papier">
             {apercu && (
               <img
-                src={
-                  masque && dessous
-                    ? api.rendu(dessous.identifiant, dessous.empreinte)
-                    : apercu.aplat
-                }
+                src={masque && dessous ? api.rendu(dessous.identifiant, dessous.empreinte) : apercu.aplat}
                 alt="le résultat"
-                className="h-[180px] w-full object-contain"
+                className="h-[128px] w-full object-contain"
                 style={{ imageRendering: "pixelated" }}
               />
             )}
@@ -772,11 +780,11 @@ export function EcranSuperposition({
             onPointerDown={() => setMasque(true)}
             onPointerUp={() => setMasque(false)}
             onPointerLeave={() => setMasque(false)}
-            className="mesure h-[24px] self-start rounded-[2px] border border-bord-fort px-2 text-[10px] text-texte-2 hover:text-ancien-signal"
+            className="mesure h-[22px] self-start rounded-5 border border-encre-4 px-[8px] text-[10.5px] text-encre-2 hover:text-encre"
           >
             masquer le calque
           </button>
-          <Raison texte="l'avant/après — c'est ce qui dit si la pièce tient sur le corps" />
+          <Pourquoi texte="l'avant/après — c'est ce qui dit si la pièce tient sur le corps" />
         </div>
       </aside>
     </div>
@@ -794,38 +802,31 @@ function ImageChoisie({
   asset: Asset
   role: string
   actif?: boolean
-  /** **Montrer ce qui part, et non ce qui est rangé** (G16). Quand la table
-   *  travaille sur la case telle qu'elle est arrivée, la vignette la montre :
-   *  une vignette du calque au-dessus d'un calcul fait sur autre chose serait
-   *  le genre de mensonge tranquille que cette version répare. */
+  /** **Montrer ce qui part, et non ce qui est rangé** (G16). */
   arrivee?: boolean
   onChanger: () => void
 }) {
   return (
     <div
       className={[
-        "flex items-center gap-2 rounded-[2px] border p-1",
-        actif ? "border-lumiere" : "border-bord",
+        "flex items-center gap-[8px] rounded-5 border p-[4px]",
+        actif ? "border-signal" : "border-trait",
       ].join(" ")}
     >
       <img
-        src={
-          arrivee
-            ? api.arrivee(asset.identifiant)
-            : api.rendu(asset.identifiant, asset.empreinte)
-        }
+        src={arrivee ? api.arrivee(asset.identifiant) : api.rendu(asset.identifiant, asset.empreinte)}
         alt={asset.label}
-        className="damier h-[38px] w-[38px] shrink-0 object-contain"
+        className="damier-papier h-[54px] w-[54px] shrink-0 object-contain"
         style={{ imageRendering: "pixelated" }}
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[11.5px] text-texte">{asset.label}</span>
-        <span className="mesure block text-[10px] text-texte-3">{role}</span>
+        <span className="block truncate text-[11px] text-encre">{asset.label}</span>
+        <span className="mesure block text-[10.5px] text-encre-4">{role}</span>
       </span>
       <button
         type="button"
         onClick={onChanger}
-        className="mesure shrink-0 text-[10px] text-ancien-signal hover:text-ancien-signal-clair"
+        className="mesure shrink-0 text-[10.5px] text-encre-2 underline decoration-pointille underline-offset-2 hover:text-encre"
       >
         changer ›
       </button>
@@ -853,8 +854,7 @@ function CadreDuTravail({
   dessus: Asset
   pose: Superposition
   /** Où le serveur pose le dessus dans le cadre (M1). `null` tant que le
-   *  premier aperçu n'est pas revenu — l'image tient alors la place entière,
-   *  comme avant. */
+   *  premier aperçu n'est pas revenu. */
   cadrage: Cadrage | null
   teinte: Teinte
   opaciteDessous: number
@@ -864,7 +864,7 @@ function CadreDuTravail({
   const [trace, setTrace] = useState<[number, number, number, number] | null>(null)
   if (!dessous) {
     return (
-      <p className="mesure text-[10px] text-texte-3">
+      <p className="mesure text-[10.5px] text-encre-4">
         choisis une seconde image — une superposition en demande deux
       </p>
     )
@@ -916,26 +916,14 @@ function CadreDuTravail({
         src={api.rendu(dessous.identifiant, dessous.empreinte)}
         alt={dessous.label}
         draggable={false}
-        className="damier h-full w-full object-contain select-none"
+        className="damier-papier h-full w-full object-contain select-none"
         style={{
           imageRendering: "pixelated",
           opacity: opaciteDessous / 100,
           filter: FILTRE[teinte],
         }}
       />
-      {/* **Le dessus tel qu'il part au calcul, pas tel qu'il est rangé** (G16).
-          Sans cette ligne, le cadre où l'on trace le rectangle montrait le
-          vêtement déjà découpé pendant que le serveur travaillait sur la case
-          telle qu'elle est arrivée : on découpait sur une image, et l'atelier
-          coupait dans une autre. Trouvé en usage le 4 septembre 2026 — la
-          vignette de gauche avait été corrigée, le grand cadre non.
-
-          **Et posé là où le serveur le pose** (M1). Le calque enveloppant porte
-          l'échelle et le décalage — il fait la taille du cadre, donc ses
-          pour-cent de déplacement sont ceux du serveur ; l'image, dedans, prend
-          la place que le cadrage lui donne. Un `object-contain` seul mentait des
-          deux côtés à la fois : il réduisait ce que le serveur coupait, et il
-          agrandissait ce que le serveur laissait dans son coin. */}
+      {/* **Le dessus tel qu'il part au calcul, pas tel qu'il est rangé** (G16). */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -944,18 +932,12 @@ function CadreDuTravail({
         }}
       >
         <img
-          src={
-            pose.dessus_arrivee
-              ? api.arrivee(dessus.identifiant)
-              : api.rendu(dessus.identifiant, dessus.empreinte)
-          }
+          src={pose.dessus_arrivee ? api.arrivee(dessus.identifiant) : api.rendu(dessus.identifiant, dessus.empreinte)}
           alt={dessus.label}
           draggable={false}
           data-dessus-cadre
           className={
-            cadrage
-              ? "absolute select-none"
-              : "absolute inset-0 h-full w-full object-contain select-none"
+            cadrage ? "absolute select-none" : "absolute inset-0 h-full w-full object-contain select-none"
           }
           style={
             cadrage
@@ -964,10 +946,7 @@ function CadreDuTravail({
                   top: `${(cadrage.sommet / hauteur) * 100}%`,
                   width: `${(cadrage.largeur / largeur) * 100}%`,
                   height: `${(cadrage.hauteur / hauteur) * 100}%`,
-                  // **Lissé quand l'image a été réduite, net sinon.** Le serveur
-                  // réduit en moyenne de surface ; demander au navigateur le
-                  // plus proche voisin sur la même réduction montrerait un autre
-                  // dessin que celui qui est mesuré.
+                  // **Lissé quand l'image a été réduite, net sinon.**
                   imageRendering: cadrage.ramene ? "auto" : "pixelated",
                 }
               : { imageRendering: "pixelated" }
@@ -983,7 +962,7 @@ function CadreDuTravail({
             width: `${((Math.abs(dessine[2] - dessine[0]) + 1) / largeur) * 100}%`,
             height: `${((Math.abs(dessine[3] - dessine[1]) + 1) / hauteur) * 100}%`,
           }}
-          className="pointer-events-none absolute border border-lumiere"
+          className="pointer-events-none absolute border-2 border-signal"
         />
       )}
     </div>

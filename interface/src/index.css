@@ -49,6 +49,18 @@
   --color-apercu-pierre: #7a746c;
   --color-apercu-eau: #3a5c7a;
 
+  /* ── Les fonds de diagnostic de la superposition — même règle ─────────────── */
+  /* Cinq aplats vifs, à la place du damier, pour repérer les pixels oubliés
+     d'un calque — ceux qui auraient dû partir avec le corps et sont restés
+     accrochés. Sur le damier ils se confondent ; sur un aplat vif ils sautent
+     aux yeux. Aucun sujet ne s'y peint, exactement comme les fonds d'aperçu du
+     contour ci-dessus — c'est le même besoin, dans `Superposition.tsx` (`C8`). */
+  --color-diag-blanc: #ffffff;
+  --color-diag-noir: #000000;
+  --color-diag-rose: #ff2d95;
+  --color-diag-bleu: #1e6fff;
+  --color-diag-vert: #12c46a;
+
   /* ── Les traits — le trait sépare des panneaux, pas des lignes ────────────── */
   --color-trait-faible: #ece6db;
   --color-trait: #e2dbd0;
@@ -316,6 +328,48 @@ body {
   border: 0;
   border-radius: 9999px;
   background: var(--color-ancien-signal);
+}
+
+/* Le même curseur, sur le papier — rail en `--contour`, poignée en `--signal`,
+   comme `.curseur` sur l'ancien châssis. Une classe à part plutôt qu'une
+   variable réutilisée : les deux jeux de couleurs cohabitent, et l'ancien
+   curseur ne doit rien perdre au passage. */
+.curseur-papier {
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.curseur-papier::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--color-contour);
+  border-radius: 9999px;
+}
+.curseur-papier::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -5px;
+  height: 12px;
+  width: 12px;
+  border-radius: 9999px;
+  background: var(--color-signal);
+  transition: background 80ms;
+}
+.curseur-papier:hover::-webkit-slider-thumb {
+  opacity: 0.85;
+}
+.curseur-papier:disabled::-webkit-slider-thumb {
+  background: var(--color-eteint);
+}
+.curseur-papier::-moz-range-track {
+  height: 2px;
+  background: var(--color-contour);
+  border-radius: 9999px;
+}
+.curseur-papier::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-signal);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

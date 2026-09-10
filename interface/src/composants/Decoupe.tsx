@@ -1,20 +1,12 @@
 // L'écran Découpe — une planche multi-sprites, et les rectangles qui en sortiront.
 //
-// **Un écran, pas un panneau**, et c'est le geste qui le dit : on dessine des
-// rectangles sur une image de mille pixels, et la fiche en fait 380. Il couvre
-// donc l'atelier, comme l'écran Univers, au lieu de s'y ajouter — et il vient de
-// la fiche, où le geste commence, plutôt que d'une barre d'outils : on découpe
-// **une** image, jamais une sélection.
+// **Une fabrique, posée dans la retouche.** Elle ne règle pas l'image ouverte :
+// elle en écrit d'autres, et `Retouche.tsx` lui réserve tout le cadre de travail
+// dès qu'on choisit sa table — la règle de `B24`. On dessine des rectangles sur
+// une image de mille pixels, et la colonne de droite en fait 380, la largeur de
+// réglages du produit (`docs/DESIGN.md` § Layout).
 //
-// **Deux colonnes, `1fr · 380px`, et l'image passe à gauche.** L'univers montre
-// ses réglages à gauche parce que c'est son sujet ; ici le sujet est la planche,
-// et 380 reste la colonne de réglages du produit (`docs/DESIGN.md` § Layout).
-//
-// **Sa fente de refus est celle du châssis, depuis la V2.1.** Il en portait une
-// à lui parce qu'il couvrait l'atelier : une raison envoyée à la barre d'état
-// se serait rendue *derrière* lui, donc invisible au moment précis où elle
-// compte. Devenu une profondeur de la galerie, il ne couvre plus rien — et une
-// seule bande dit ce que le dernier geste a donné, quel que soit l'écran.
+// **Sa fente de refus est celle du châssis**, passée par `onFente`.
 //
 // **La détection ne décide de rien.** Elle propose ; l'auteur ajoute, retire,
 // redessine, et ce qui part est sa liste. C'est cette séparation, et rien
@@ -23,15 +15,18 @@
 // ── Deux portes d'entrée depuis le 1ᵉʳ septembre 2026 ────────────────────────
 //
 // **Cet écran s'ouvre aussi sur une carte du tableau d'inspiration**, et ce qui
-// en sort est alors des cartes (maquette `06bis-decouper-une-carte.html`). La
-// demande de l'auteur était précise : *j'importe un artwork qui contient trois
-// personnages sur un fond, je veux en faire trois*.
+// en sort est alors des cartes. La demande de l'auteur était précise :
+// *j'importe un artwork qui contient trois personnages sur un fond, je veux en
+// faire trois*.
 //
 // **Ce qui traverse la frontière des deux familles d'images est l'outil, jamais
 // l'image.** Un morceau de carte est une carte : il ne s'exporte pas, ne compte
 // pas dans la bibliothèque, et n'a ni recette ni rendu. C'est pour ça que le
 // sujet est une **union nommée** et non un objet flou — le type dit laquelle
 // des deux familles on découpe, et ce que le geste rendra.
+//
+// **Passé au papier en `C8`.** Montée depuis `Retouche.tsx`, qui est déjà du
+// carnet ; c'est ce fichier-ci qui ne l'était pas encore.
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
@@ -44,7 +39,6 @@ import {
   type LectureDePalette,
   type ModeDecoupe,
 } from "../api"
-import { Bouton, Curseur, EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
 import type { Fente } from "./BarreChassis"
 import { PANNEAU } from "./Infobulle"
 
@@ -52,10 +46,10 @@ import { PANNEAU } from "./Infobulle"
  *  pixels de la planche — la même unité que tout le reste de cet écran. */
 const COTE_UTILE = 4
 
-/** Le padding de la zone qui porte la planche — `docs/DESIGN.md` § Spacing,
- *  padding de zone centrale. Retiré de la place avant de calculer l'échelle :
- *  une planche qui remplirait la zone entière toucherait ses bords. */
-const PADDING_ZONE = 16
+/** Le padding de la zone qui porte la planche — `docs/DESIGN.md` § Spacing.
+ *  Retiré de la place avant de calculer l'échelle : une planche qui remplirait
+ *  la zone entière toucherait ses bords. */
+const PADDING_ZONE = 14
 
 const LIBELLES: Partial<Record<string, string>> = {
   auto: "zones opaques",
@@ -64,8 +58,7 @@ const LIBELLES: Partial<Record<string, string>> = {
 }
 
 /** Au-delà, l'écran annonce ce que la détection a coûté (`B18`) — jamais
- *  avant, pour ne pas alarmer sur ce qui se sent à peine. Même seuil que le
- *  reste de l'atelier des moteurs. */
+ *  avant, pour ne pas alarmer sur ce qui se sent à peine. */
 const SEUIL_LENT_MS = 240
 
 /**
@@ -73,20 +66,16 @@ const SEUIL_LENT_MS = 240
  * confondues**.
  *
  * Le rappel de fin vit dans l'union plutôt qu'à côté, parce que les deux
- * familles ne rendent pas la même chose et que l'asymétrie mérite d'être dite :
- * une planche rend des assets qu'on ouvre tout de suite dans leur fiche, une
- * carte rend des cartes qui arrivent dans la réserve. Un seul rappel qui
- * accepterait les deux obligerait chaque appelant à vérifier ce qu'il reçoit.
+ * familles ne rendent pas la même chose : une planche rend des assets qu'on
+ * ouvre tout de suite dans leur fiche, une carte rend des cartes qui arrivent
+ * dans la réserve.
  */
 export type SujetDecoupe =
   | {
       famille: "planche"
       planche: Asset
-      /** Ce que la découpe a produit. L'écran de l'atelier les a déjà reçues
-       *  par le flux — elles arrivent une par une, comme les variations d'un
-       *  appel ; ce rappel-ci sert à **fermer sur la première découpe**,
-       *  ouverte dans sa fiche, pour qu'on voie tout de suite ce qu'on vient de
-       *  fabriquer. */
+      /** Ce que la découpe a produit — fermer sur la première découpe, ouverte
+       *  dans sa fiche. */
       onDecoupe: (decoupes: Asset[]) => void
     }
   | {
@@ -116,33 +105,20 @@ export function EcranDecoupe({
    *  ferait le comportement ordinaire. */
   const [remplacer, setRemplacer] = useState(false)
 
-  /** Ce que la palette lit de cette carte, et l'image qui le montre.
-   *
-   *  **L'aperçu est ici et pas dans le menu d'une carte**, et il y a une mesure
-   *  derrière ce choix : le menu s'ouvre au survol, il est borné par l'écran, et
-   *  sur une carte du bas de la grille il ne fait que 206 px de haut. L'image y
-   *  défilait dans un hublot plus petit qu'elle. Ici elle occupe la moitié
-   *  gauche de l'écran, à la taille où l'on voit ce qui est écarté — et c'est
-   *  l'endroit où l'on peut agir dessus, puisqu'on y découpe.
-   *
-   *  Le menu, lui, garde le chiffre et sa phrase : la question « est-ce que mon
-   *  fond pollue ma palette ? » se répond en un mot, et un mot tient partout. */
+  /** Ce que la palette lit de cette carte, et l'image qui le montre. */
   const [lecture, setLecture] = useState<LectureDePalette | null>(null)
   const [magenta, setMagenta] = useState(false)
 
   const [boites, setBoites] = useState<Boite[]>([])
   const [detectee, setDetectee] = useState<Decoupable | null>(null)
   const [choisie, setChoisie] = useState<number | null>(null)
-  const setRefus = (texte: string) =>
-    onFente(texte ? { ton: "echec", texte } : null)
+  const setRefus = (texte: string) => onFente(texte ? { ton: "echec", texte } : null)
   const [enCours, setEnCours] = useState(false)
 
   /** L'image à découper, ses mesures et son nom — quelle que soit sa famille.
    *
-   *  **L'image est la brute, jamais un rendu.** Le rendu d'un asset peut être un
-   *  sprite de 64 px là où la planche en fait 1024, et des rectangles posés
-   *  dessus ne désigneraient plus rien de découpable. Une carte n'a pas de
-   *  rendu du tout : son image *est* ce qu'on découpera. */
+   *  **L'image est la brute, jamais un rendu.** Une carte n'a pas de rendu du
+   *  tout : son image *est* ce qu'on découpera. */
   const vu =
     sujet.famille === "planche"
       ? {
@@ -150,11 +126,7 @@ export function EcranDecoupe({
           largeur: sujet.planche.largeur,
           hauteur: sujet.planche.hauteur,
           alt: sujet.planche.label,
-          image: api.rendu(
-            sujet.planche.identifiant,
-            sujet.planche.empreinte,
-            true,
-          ),
+          image: api.rendu(sujet.planche.identifiant, sujet.planche.empreinte, true),
           quoi: "asset",
         }
       : {
@@ -169,10 +141,7 @@ export function EcranDecoupe({
   // ── La proposition ────────────────────────────────────────────────────────
   //
   // Elle se redemande à chaque cran de réglage, et **elle remplace la liste** :
-  // c'est ce qu'un changement de mode veut dire. Ce qu'on avait dessiné à la
-  // main disparaît alors — d'où la ligne qui le dit sous les réglages, plutôt
-  // qu'une confirmation qui couperait le geste en deux.
-
+  // c'est ce qu'un changement de mode veut dire.
   const famille = sujet.famille
   const proposer = useCallback(async () => {
     const reglage = { mode, colonnes, lignes, cote_min: coteMin }
@@ -214,10 +183,7 @@ export function EcranDecoupe({
     }
   }
 
-  // La touche Suppr retire le rectangle choisi — le geste attendu quand on vient
-  // d'en cliquer un. Posée sur la fenêtre : le rectangle choisi n'est pas un
-  // champ, il n'a pas le focus, et exiger un clic sur une croix de 10 px pour
-  // retirer douze faux positifs serait douze fois trop cher.
+  // La touche Suppr retire le rectangle choisi.
   useEffect(() => {
     const touche = (evenement: KeyboardEvent) => {
       if (evenement.key === "Escape") return onFermer()
@@ -230,10 +196,7 @@ export function EcranDecoupe({
     return () => window.removeEventListener("keydown", touche)
   }, [choisie, onFermer])
 
-  // **Demandée d'entrée, et une seule fois.** Cet écran s'ouvre par un clic,
-  // pas par un survol : une mesure au chargement est du même ordre que la
-  // détection, qui part déjà toute seule. Elle ne concerne que les cartes — un
-  // asset produit ne nourrit aucune palette.
+  // **Demandée d'entrée, et une seule fois.** Ne concerne que les cartes.
   const carte = sujet.famille === "carte" ? sujet.carte : null
   useEffect(() => {
     if (!carte) return
@@ -241,8 +204,6 @@ export function EcranDecoupe({
     void api
       .lectureDePalette(carte.identifiant)
       .then((lu) => vivant && setLecture(lu))
-      // **Un aperçu qui manque ne fait pas de fente.** Ce n'est pas le sujet de
-      // l'écran ; il découpe, et il découpe très bien sans savoir ça.
       .catch(() => undefined)
     return () => {
       vivant = false
@@ -252,14 +213,7 @@ export function EcranDecoupe({
   const corrigee = detectee !== null && !memesBoites(boites, detectee.boites)
 
   return (
-    // **Une profondeur de la galerie, plus un écran posé dessus.** Il occupait
-    // tout l'écran en `fixed`, avec son propre en-tête de 44 px : son nom, le
-    // label de la planche, ses dimensions, sa fente de refus, et un bouton pour
-    // revenir. Le nom et le label sont désormais dans le fil d'Ariane de la
-    // barre du châssis — `Cœur de pierre › Galerie › tonneau-cerclé-02 ›
-    // Découpage` —, la fente est celle du châssis, et le retour se fait par le
-    // fil, dont chaque segment ramène à son étage.
-    <div data-decoupe className="flex min-h-0 flex-col bg-fond-0">
+    <div data-decoupe className="flex min-h-0 flex-1 flex-col bg-papier">
       <div className="flex min-h-0 flex-1">
         <Planche
           vu={
@@ -278,72 +232,50 @@ export function EcranDecoupe({
 
         <aside
           {...PANNEAU}
-          className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1"
+          className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-trait bg-papier-cote"
         >
-          <EnTetePanneau>
+          <div className="mesure flex h-[30px] shrink-0 items-center border-b border-trait px-[8px] text-[10.5px] tracking-[0.14em] text-encre-4 uppercase">
             Ce qui sortira
-            {/* Les dimensions de la planche viennent d'ici : l'en-tête de
-                panneau est déjà l'endroit du produit où l'on lit ce que
-                l'image est, et le fil d'Ariane porte des noms, pas des
-                mesures. */}
             <span className="ml-auto normal-case tracking-normal">
               {vu.largeur}×{vu.hauteur}
             </span>
-          </EnTetePanneau>
+          </div>
 
-          <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
+          <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[8px]">
             {/* **La réponse à la question qui amène ici.** Une planche trouvée
                 porte trois personnages sur un fond ; on vient la couper en
-                croyant que c'est le fond qui salit la palette. Ce n'est pas le
-                fond — il est déjà écarté. Ce sont les voisins. Le dire avant de
-                dessiner un rectangle évite un découpage pour rien. */}
+                croyant que c'est le fond qui salit la palette. Ce ne sont pas
+                le fond — il est déjà écarté. Ce sont les voisins. */}
             {lecture && (
-              <div className="flex flex-col gap-1.5 border-b border-bord pb-3">
-                <Libelle aide="carte.lecture">Ce que la palette y lit</Libelle>
+              <div className="flex flex-col gap-[6px] border-b border-trait pb-[14px]">
+                <p className="text-[11px] text-encre-2">Ce que la palette y lit</p>
                 {lecture.entiere ? (
-                  <p className="text-[11.5px] leading-snug text-texte-2">
+                  <p className="text-[11px] leading-snug text-encre-2">
                     Rien n'est mis de côté : l'image entière donne ses couleurs.
                     C'est ce qui arrive à une matière ou à une texture, qui n'ont
                     pas de fond.
                   </p>
                 ) : (
                   <>
-                    {/* **« Le reste » n'existe pas toujours, et la phrase le
-                        disait quand même** (G1). Mesuré le 3 septembre 2026 sur
-                        les dix artworks officiels du dépôt : trois sont lus à
-                        100,0 % — le détourage n'y écarte rien du tout. La phrase
-                        annonçait alors « 100 % … le reste est écarté », qui se
-                        contredit dans sa propre longueur. Elle se dédouble donc
-                        au lieu de supposer un reste. */}
-                    <p className="text-[11.5px] leading-snug text-texte-2">
-                      <span className="mesure text-texte">{lecture.part} %</span>{" "}
+                    <p className="text-[11px] leading-snug text-encre-2">
+                      <span className="mesure text-encre">{lecture.part} %</span>{" "}
                       de l'image {carte?.officiel ? "donne" : "donnerait"} ses
                       couleurs au jeu.{" "}
                       {lecture.part >= 100
                         ? "Rien n'en est écarté : le détourage n'a trouvé aucun fond à retirer."
                         : "Le reste — le fond — est écarté tout seul."}
                     </p>
-                    {/* **Et la case ne s'offre pas quand il n'y a rien à
-                        montrer** : à 100 %, l'image se couvrirait de rien, et
-                        une case qui ne change pas l'image est pire qu'une case
-                        absente — on la coche deux fois avant de conclure qu'elle
-                        est cassée. */}
                     {lecture.part < 100 && (
                       <button
                         type="button"
                         aria-pressed={magenta}
                         onClick={() => setMagenta(!magenta)}
-                        className="flex items-start gap-2 text-left text-[11.5px] leading-snug text-texte-2 hover:text-texte"
+                        className="flex items-start gap-[8px] text-left text-[11px] text-encre-2 hover:text-encre"
                       >
-                        <span
-                          aria-hidden
-                          className={`mt-[3px] block h-[14px] w-[14px] shrink-0 rounded-[2px] border ${
-                            magenta ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort"
-                          }`}
-                        />
+                        <Case cochee={magenta} />
                         <span>
                           me le montrer sur l'image
-                          <span className="mesure block text-[9.5px] text-texte-3">
+                          <span className="mesure block text-[10.5px] text-encre-4">
                             en magenta, ce qui ne compte pas
                           </span>
                         </span>
@@ -354,9 +286,9 @@ export function EcranDecoupe({
               </div>
             )}
 
-            <div className="flex flex-col gap-1">
-              <Libelle aide="decoupe.mode">Détection</Libelle>
-              <Segments
+            <div className="flex flex-col gap-[4px]">
+              <p className="text-[11px] text-encre-2">Détection</p>
+              <Choix
                 valeurs={["auto", "grille", "gouttieres"] as const}
                 valeur={mode}
                 onChange={setMode}
@@ -365,44 +297,33 @@ export function EcranDecoupe({
             </div>
 
             {mode === "auto" && (
-              <Reglage libelle="taille minimale" aide="decoupe.taille_min">
-                <Curseur
-                  valeur={coteMin}
-                  min={0}
-                  max={128}
-                  unite=" px"
-                  onChange={setCoteMin}
-                />
-              </Reglage>
+              <Champ libelle="taille minimale">
+                <Glissiere valeur={coteMin} min={0} max={128} unite=" px" onChange={setCoteMin} />
+              </Champ>
             )}
 
             {mode === "grille" && (
               <>
-                <Reglage libelle="colonnes" aide="decoupe.colonnes">
-                  <Curseur
-                    valeur={colonnes}
-                    min={1}
-                    max={16}
-                    onChange={setColonnes}
-                  />
-                </Reglage>
-                <Reglage libelle="lignes" aide="decoupe.lignes">
-                  <Curseur valeur={lignes} min={1} max={16} onChange={setLignes} />
-                </Reglage>
+                <Champ libelle="colonnes">
+                  <Glissiere valeur={colonnes} min={1} max={16} onChange={setColonnes} />
+                </Champ>
+                <Champ libelle="lignes">
+                  <Glissiere valeur={lignes} min={1} max={16} onChange={setLignes} />
+                </Champ>
               </>
             )}
 
             {mode === "gouttieres" && (
-              <p className="text-[11.5px] leading-snug text-texte-2">
+              <p className="text-[11px] leading-snug text-encre-2">
                 Cherche les rangées et les colonnes entièrement d'une seule
                 couleur, et coupe là — rien à régler.
               </p>
             )}
 
-            <Raison texte={detectee?.raison ?? null} />
+            <Pourquoi texte={detectee?.raison ?? null} />
 
             {detectee && (detectee.duree_ms ?? 0) > SEUIL_LENT_MS && (
-              <p className="mesure text-[10px] leading-4 text-texte-3">
+              <p className="mesure text-[10.5px] leading-4 text-encre-4">
                 détection : {Math.round(detectee.duree_ms ?? 0)} ms
               </p>
             )}
@@ -410,8 +331,8 @@ export function EcranDecoupe({
             {/* Ce que la détection ne peut pas savoir se dit ici, avant qu'on
                 s'en aperçoive : dessiner remplace la détection, changer de
                 réglage remplace ce qu'on a dessiné. */}
-            <p className="mesure flex items-start gap-1.5 text-[10px] leading-4 text-texte-3">
-              <span aria-hidden className="mt-[7px] inline-block h-px w-2 shrink-0 bg-texte-3" />
+            <p className="mesure flex items-start gap-[6px] text-[10.5px] leading-4 text-encre-4">
+              <span aria-hidden className="mt-[8px] inline-block h-px w-[8px] shrink-0 bg-contour" />
               <span>
                 {corrigee
                   ? "corrigé à la main — changer un réglage relancera la détection"
@@ -430,69 +351,53 @@ export function EcranDecoupe({
             />
           </div>
 
-          <div className="flex flex-col gap-1 border-t border-bord p-2">
-            {/* **Recadrer, c'est découper en un seul rectangle** — et sans
-                cette case, ça coûterait cinq mouvements : découper, retrouver
-                le morceau dans la réserve, le poser, le promouvoir avec sa
-                famille, retirer l'ancienne. Oublier le cinquième ferait compter
-                les deux dans la palette.
-
-                **Proposée seulement quand il n'y a qu'un rectangle**, parce qu'à
-                plusieurs la question n'a pas de réponse : un morceau parmi
-                plusieurs ne peut pas prétendre être l'originale. */}
+          <div className="flex flex-col gap-[4px] border-t border-trait p-[8px]">
+            {/* **Recadrer, c'est découper en un seul rectangle.** Proposée
+                seulement quand il n'y a qu'un rectangle : à plusieurs la
+                question n'a pas de réponse. */}
             {sujet.famille === "carte" && boites.length === 1 && (
               <button
                 type="button"
                 aria-pressed={remplacer}
                 onClick={() => setRemplacer(!remplacer)}
-                className="mb-1 flex items-start gap-2 text-left text-[11.5px] leading-snug text-texte-2 hover:text-texte"
+                className="mb-[4px] flex items-start gap-[8px] text-left text-[11px] text-encre-2 hover:text-encre"
               >
-                <span
-                  aria-hidden
-                  className={`mt-[3px] block h-[14px] w-[14px] shrink-0 rounded-[2px] border ${
-                    remplacer ? "border-ancien-signal bg-ancien-signal" : "border-bord-fort"
-                  }`}
-                />
+                <Case cochee={remplacer} />
                 <span>
                   ce morceau prend la place de l'originale
-                  <span className="mesure block text-[9.5px] text-texte-3">
+                  <span className="mesure block text-[10.5px] text-encre-4">
                     il hérite de sa promotion, sa famille, son groupe et sa place
                     — et l'originale s'en va
                   </span>
                 </span>
               </button>
             )}
-            <div className="flex items-center gap-2">
-              <Bouton
-                principal
-                inactif={boites.length === 0 || enCours}
-                onClick={decouper}
-                enfants={
-                  enCours
-                    ? "…"
-                    : `Découper en ${boites.length} ${vu.quoi}${boites.length > 1 ? "s" : ""}`
-                }
-              />
+            <div className="flex items-center gap-[8px]">
+              <button
+                type="button"
+                disabled={boites.length === 0 || enCours}
+                onClick={() => void decouper()}
+                className="h-[34px] rounded-7 bg-signal px-[14px] text-[13px] text-encre-sur-signal transition-colors duration-120 hover:opacity-90 disabled:bg-carte disabled:text-eteint"
+              >
+                {enCours
+                  ? "…"
+                  : `Découper en ${boites.length} ${vu.quoi}${boites.length > 1 ? "s" : ""}`}
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   setBoites([])
                   setChoisie(null)
                 }}
-                className="mesure ml-auto text-[10px] text-texte-3 hover:text-texte-2"
+                className="mesure ml-auto text-[10.5px] text-encre-3 hover:text-encre-2"
               >
                 Tout retirer
               </button>
             </div>
-            {boites.length === 0 && (
-              <Raison texte="aucun rectangle — il n'y a rien à découper" />
-            )}
-            {/* Ce que les morceaux deviennent, dit avant de cliquer. La réserve
-                *est* l'endroit de ce qui n'est pas rangé, et promouvoir reste
-                un geste : quatre promotions automatiques seraient quatre
-                artworks que personne n'a choisis. */}
+            {boites.length === 0 && <Pourquoi texte="aucun rectangle — il n'y a rien à découper" />}
+            {/* Ce que les morceaux deviennent, dit avant de cliquer. */}
             {sujet.famille === "carte" && boites.length > 0 && !remplacer && (
-              <Raison texte="les morceaux arrivent dans la réserve, non promus — l'originale reste où elle est" />
+              <Pourquoi texte="les morceaux arrivent dans la réserve, non promus — l'originale reste où elle est" />
             )}
           </div>
         </aside>
@@ -501,14 +406,113 @@ export function EcranDecoupe({
   )
 }
 
+// ── Le petit vocabulaire de cet écran ───────────────────────────────────────
+
+/** Une case à cocher dessinée — le geste est porté par un bouton entier
+ *  (`aria-pressed`), pas par le carré seul : la cible cliquable est toute la
+ *  ligne, texte compris. */
+function Case({ cochee }: { cochee: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={[
+        "mt-[4px] block h-[14px] w-[14px] shrink-0 rounded-5 border",
+        cochee ? "border-encre-4 bg-encre-4" : "border-encre-4 bg-transparent",
+      ].join(" ")}
+    />
+  )
+}
+
+function Champ({ libelle, children }: { libelle: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-[4px]">
+      <p className="text-[11px] text-encre-2">{libelle}</p>
+      {children}
+    </div>
+  )
+}
+
+/** « Le grisé porte sa raison. » Une ligne sœur, mono 10,5 px, tiret de 8 px. */
+function Pourquoi({ texte }: { texte: string | null }) {
+  if (!texte) return null
+  return (
+    <p className="mesure flex items-start gap-[6px] text-[10.5px] leading-4 text-encre-4">
+      <span aria-hidden className="mt-[8px] inline-block h-px w-[8px] shrink-0 bg-contour" />
+      <span>{texte}</span>
+    </p>
+  )
+}
+
+/** Le segmenté — la même grammaire que les tables de `Retouche.tsx`. */
+function Choix<T extends string>({
+  valeurs,
+  valeur: courante,
+  libelles,
+  onChange,
+}: {
+  valeurs: readonly T[]
+  valeur: T
+  libelles?: Partial<Record<string, string>>
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="flex flex-wrap gap-[4px]">
+      {valeurs.map((v) => (
+        <button
+          key={v}
+          type="button"
+          aria-pressed={courante === v}
+          onClick={() => onChange(v)}
+          className={[
+            "h-[26px] rounded-7 border px-[8px] text-[12px] transition-colors duration-120",
+            courante === v
+              ? "border-encre-4 bg-carte font-medium text-encre"
+              : "border-trait bg-carte text-encre-3 hover:border-encre-4 hover:text-encre",
+          ].join(" ")}
+        >
+          {libelles?.[v] ?? v}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** Un curseur, et sa valeur qui s'écrit à côté. */
+function Glissiere({
+  valeur,
+  min,
+  max,
+  unite = "",
+  onChange,
+}: {
+  valeur: number
+  min: number
+  max: number
+  unite?: string
+  onChange: (v: number) => void
+}) {
+  return (
+    <div className="flex items-center gap-[8px]">
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={valeur}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="curseur h-[22px] min-w-0 flex-1"
+      />
+      <span className="mesure w-[54px] shrink-0 text-right text-[10.5px] text-encre-2">
+        {valeur}
+        {unite}
+      </span>
+    </div>
+  )
+}
+
 // ── La planche, et les rectangles dessus ────────────────────────────────────
 
 /**
  * L'image **brute**, à sa taille d'affichage, et les rectangles par-dessus.
- *
- * Brute et jamais rendue : le rendu peut être un sprite de 64 px là où la
- * planche en fait 1024, et des rectangles posés dessus ne désigneraient plus
- * rien de découpable. C'est la même image que le serveur découpera.
  *
  * **Les coordonnées vivent en pixels de planche, jamais en pixels d'écran.**
  * L'image est mise à l'échelle pour tenir dans la place disponible ; tout ce
@@ -522,9 +526,6 @@ function Planche({
   onChoisir,
   onDessiner,
 }: {
-  /** Ce que le sujet donne à voir — ses mesures, son image, son nom. **La
-   *  planche n'est plus un asset**, parce que ce cadre découpe aussi une carte
-   *  du tableau, et qu'une carte n'a ni recette ni rendu. */
   vu: { largeur: number; hauteur: number; alt: string; image: string }
   boites: Boite[]
   choisie: number | null
@@ -538,18 +539,11 @@ function Planche({
 
   // ── La taille du cadre, calculée et non déléguée au CSS ───────────────────
   //
-  // **`aspect-ratio` cède devant `max-height`, et le rectangle ment.** Première
-  // version : `width: 100%` plus `aspect-ratio` plus `max-h-full`. Sur une
-  // planche carrée de 1024 px dans une zone de 1420 × 906, le navigateur donne
-  // 1420 de large, en déduit 1420 de haut, puis **rabote la hauteur à 874 sans
-  // redéduire la largeur** — le cadre fait 1388 × 874 pour une image carrée.
-  // L'image, elle, reste centrée par `object-contain` : les rectangles, posés
-  // en pourcentage du **cadre**, se décalent alors de l'image qu'ils désignent.
-  // Vu en mesurant le cadre au navigateur, jamais à l'œil.
-  //
-  // On tient donc la mise à l'échelle nous-mêmes : un seul facteur, celui qui
-  // fait entrer la planche dans la place, et le cadre **est** l'image. Les
-  // pourcentages redeviennent exacts, et la conversion clic → pixel aussi.
+  // `aspect-ratio` cède devant `max-height` sur une planche carrée : le
+  // navigateur donne une largeur, en déduit une hauteur, puis rabote la
+  // hauteur sans redéduire la largeur — le cadre ne serait plus l'image, et
+  // les rectangles, posés en pourcentage du cadre, se décaleraient de ce
+  // qu'ils désignent. On tient donc la mise à l'échelle nous-mêmes.
   const mesurerPlace = useCallback(() => {
     const vue = zone.current
     if (!vue) return
@@ -585,11 +579,11 @@ function Planche({
   return (
     <section
       ref={zone}
-      className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4"
+      className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-[14px]"
     >
       <div
         ref={cadre}
-        className="damier relative border border-bord select-none"
+        className="damier-papier relative border border-trait select-none"
         style={{
           width: Math.max(1, Math.floor(vu.largeur * facteur)),
           height: Math.max(1, Math.floor(vu.hauteur * facteur)),
@@ -611,7 +605,7 @@ function Planche({
           if (!debut) return
           const boite = entre(debut, enPixels(evenement))
           // Un clic n'est pas un rectangle : sous quatre pixels de côté, c'est
-          // le geste « je choisis » ou « je désélectionne », pas « j'ajoute ».
+          // le geste « je choisis » ou « je désélectionne ».
           if (boite[2] - boite[0] < COTE_UTILE || boite[3] - boite[1] < COTE_UTILE) {
             if (evenement.target === evenement.currentTarget) onChoisir(null)
             return
@@ -637,22 +631,13 @@ function Planche({
             onChoisir={() => onChoisir(rang)}
           />
         ))}
-        {trace && (
-          <Rectangle
-            boite={trace}
-            vu={vu}
-            numero={boites.length + 1}
-            choisi
-          />
-        )}
+        {trace && <Rectangle boite={trace} vu={vu} numero={boites.length + 1} choisi />}
       </div>
     </section>
   )
 }
 
-/** Un rectangle sur la planche. **La même grammaire que la tuile** : l'anneau
- *  `--lumiere` ne veut dire que « choisi », et le numéro est un fait mesuré,
- *  donc en mono. Aucune couleur supplémentaire n'entre ici. */
+/** Un rectangle sur la planche. Le numéro est un fait mesuré, donc en mono. */
 function Rectangle({
   boite,
   vu,
@@ -661,8 +646,6 @@ function Rectangle({
   onChoisir,
 }: {
   boite: Boite
-  /** Les mesures de l'image dessous, et rien d'autre : le rectangle se place en
-   *  pourcentage, il n'a que faire de la famille de ce qu'il découpe. */
   vu: { largeur: number; hauteur: number }
   numero: number
   choisi: boolean
@@ -685,13 +668,13 @@ function Rectangle({
         height: `${((y1 - y0 + 1) / vu.hauteur) * 100}%`,
       }}
       className={[
-        "absolute block border transition-colors duration-[80ms]",
+        "absolute block border transition-colors duration-120",
         choisi
-          ? "border-lumiere shadow-[0_0_0_1px_var(--color-lumiere)]"
-          : "border-ancien-signal hover:border-ancien-signal-clair",
+          ? "border-2 border-signal shadow-[0_0_0_2px_var(--color-carte)]"
+          : "border-signal/70 hover:border-signal",
       ].join(" ")}
     >
-      <span className="mesure absolute top-0 left-0 bg-[rgba(11,13,16,.82)] px-1 text-[8.5px] leading-[13px] text-texte-2">
+      <span className="mesure absolute top-0 left-0 bg-encre px-[4px] text-[10.5px] leading-[13px] text-papier">
         {numero}
       </span>
     </button>
@@ -701,8 +684,8 @@ function Rectangle({
 // ── La liste ────────────────────────────────────────────────────────────────
 
 /** Ce qui sortira, et dans quel ordre. La liste **est** la numérotation posée
- *  sur l'image : les deux se lisent ensemble, et le serveur garde cet ordre —
- *  le réordonner de son côté ferait mentir les numéros au moment du clic. */
+ *  sur l'image : le serveur garde cet ordre — le réordonner de son côté ferait
+ *  mentir les numéros au moment du clic. */
 function ListeBoites({
   boites,
   choisie,
@@ -716,26 +699,28 @@ function ListeBoites({
 }) {
   if (boites.length === 0) return null
   return (
-    <div className="flex flex-col gap-[2px] border-t border-bord pt-2">
-      <Libelle>{boites.length} rectangle{boites.length > 1 ? "s" : ""}</Libelle>
+    <div className="flex flex-col gap-[2px] border-t border-trait pt-[8px]">
+      <p className="text-[11px] text-encre-2">
+        {boites.length} rectangle{boites.length > 1 ? "s" : ""}
+      </p>
       {boites.map((boite, rang) => (
         <div
           key={rang}
           className={[
-            "mesure flex items-center gap-2 rounded-[2px] px-1 text-[10px]",
-            rang === choisie ? "bg-fond-3 text-texte" : "text-texte-3",
+            "mesure flex items-center gap-[8px] rounded-5 px-[4px] text-[10.5px]",
+            rang === choisie ? "bg-ligne-ouverte text-encre" : "text-encre-3",
           ].join(" ")}
         >
           <button
             type="button"
             onClick={() => onChoisir(rang)}
-            className="flex flex-1 items-center gap-2 text-left hover:text-texte-2"
+            className="flex flex-1 items-center gap-[8px] text-left hover:text-encre-2"
           >
-            <span className="w-4 shrink-0">{rang + 1}</span>
+            <span className="w-[14px] shrink-0">{rang + 1}</span>
             <span>
               {boite[2] - boite[0] + 1}×{boite[3] - boite[1] + 1}
             </span>
-            <span className="text-texte-3">
+            <span className="text-encre-3">
               @ {boite[0]},{boite[1]}
             </span>
           </button>
@@ -743,7 +728,7 @@ function ListeBoites({
             type="button"
             onClick={() => onRetirer(rang)}
             aria-label={`Retirer le rectangle ${rang + 1}`}
-            className="shrink-0 px-1 hover:text-ancien-echec"
+            className="shrink-0 px-[4px] hover:text-echec"
           >
             ✕
           </button>
@@ -753,31 +738,9 @@ function ListeBoites({
   )
 }
 
-// ── Le gabarit d'un réglage — le même que dans la fiche ─────────────────────
-
-function Reglage({
-  libelle,
-  aide,
-  children,
-}: {
-  libelle: string
-  /** La clé de l'entrée du corpus (`src/aide.ts`), s'il y en a une. Le libellé
-   *  devient alors sa propre poignée ; sans clé, rien ne se marque. */
-  aide?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <Libelle aide={aide}>{libelle}</Libelle>
-      {children}
-    </div>
-  )
-}
-
 // ── Outils ──────────────────────────────────────────────────────────────────
 
-const borner = (valeur: number, taille: number) =>
-  Math.max(0, Math.min(taille - 1, valeur))
+const borner = (valeur: number, taille: number) => Math.max(0, Math.min(taille - 1, valeur))
 
 const entre = (a: [number, number], b: [number, number]): Boite => [
   Math.min(a[0], b[0]),
