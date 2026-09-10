@@ -462,12 +462,26 @@ export const ouvrirPli = ouvrir
 /** La valeur d'un bloc replié. `null` — rien de posé — se dit par le tiret du
  *  produit, en `--texte-3` ; un réglage posé se dit en `--signal`, la couleur
  *  de ce qui est choisi partout ailleurs. */
-function Valeur({ etat }: { etat: string | null | undefined }) {
+function Valeur({
+  etat,
+  papier = false,
+}: {
+  etat: string | null | undefined
+  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
+   *  comme sur `Bouton`, `Libelle`, `Raison` et `Segments`. */
+  papier?: boolean
+}) {
   return (
     <span
       className={[
         "mesure ml-auto max-w-[60%] truncate pl-2 text-[9.5px]",
-        etat ? "text-signal-froid" : "text-texte-3",
+        papier
+          ? etat
+            ? "text-signal"
+            : "text-encre-4"
+          : etat
+            ? "text-signal-froid"
+            : "text-texte-3",
       ].join(" ")}
     >
       {etat || "—"}
@@ -496,6 +510,7 @@ export function Bloc({
   etat,
   mesure,
   aide,
+  papier = false,
   children,
 }: {
   /** L'identité du bloc dans le repli global. Stable d'un asset à l'autre. */
@@ -517,10 +532,16 @@ export function Bloc({
    *  catalogue » pendant qu'on choisit un modèle. Les deux ne cohabitent
    *  jamais : ils occupent la même fente. */
   mesure?: string | null
+  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
+   *  comme sur `Bouton`, `Libelle`, `Raison`, `Segments` et `Curseur`. */
+  papier?: boolean
   children: ReactNode
 }) {
   const ouvert = useOuvert(cle)
   const infobulle = useInfobulle(aide, { epinglable: false })
+  const pointille = papier
+    ? "cursor-help underline decoration-dotted decoration-contour underline-offset-[3px] hover:decoration-encre-3"
+    : POINTILLE
   return (
     <section className="flex flex-col gap-1.5">
       <button
@@ -528,7 +549,7 @@ export function Bloc({
         onClick={() => basculer(cle)}
         aria-expanded={ouvert}
         {...infobulle.declencheurs}
-        className="-mx-1 flex h-[26px] items-center rounded-[2px] px-1 text-left transition-colors duration-[80ms] hover:bg-fond-3"
+        className={`-mx-1 flex h-[26px] items-center rounded-[2px] px-1 text-left transition-colors duration-[80ms] ${papier ? "hover:bg-papier-cote" : "hover:bg-fond-3"}`}
       >
         <span
           ref={infobulle.ancre as Ref<HTMLSpanElement>}
@@ -536,18 +557,18 @@ export function Bloc({
           // bornée à son mot **quelle que soit l'orientation du parent**. Cette
           // rangée-ci est en `flex … items-center`, donc contente aujourd'hui —
           // la classe dit qu'elle le restera si la rangée devient une colonne.
-          className={`w-fit text-[11px] text-texte-2 ${infobulle.presente ? POINTILLE : ""}`}
+          className={`w-fit text-[11px] ${papier ? "text-encre-3" : "text-texte-2"} ${infobulle.presente ? pointille : ""}`}
         >
           {titre}
         </span>
         {ouvert ? (
           mesure && (
-            <span className="mesure ml-auto truncate pl-2 text-[9.5px] text-texte-3">
+            <span className={`mesure ml-auto truncate pl-2 text-[9.5px] ${papier ? "text-encre-4" : "text-texte-3"}`}>
               {mesure}
             </span>
           )
         ) : (
-          <Valeur etat={etat} />
+          <Valeur etat={etat} papier={papier} />
         )}
       </button>
       {/* Hors du bouton, exprès : la bulle porte le lien « Le guide › », et un

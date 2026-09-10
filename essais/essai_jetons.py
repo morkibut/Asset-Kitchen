@@ -87,22 +87,30 @@ LA_GEOMETRIE_D_AVANT = (
     # sait pas encore faire la différence.
     "interface/src/api.ts",
     "interface/src/recette.ts",
-    # `App.tsx` porte encore, en clair dans son JSX, le repli des réglages de la
-    # barre, l'écran de confirmation et la surface de repos de « Fabriquer une
-    # image ». Ils sortiront avec les fichiers qui les reprendront.
+    # `App.tsx` porte encore, en clair dans son JSX, l'écran de confirmation et
+    # la surface de repos de « Fabriquer une image ». Ils sortiront avec les
+    # fichiers qui les reprendront. Le repli des réglages de la barre est
+    # parti avec `BarreQuiPaie.tsx` (`D5`).
     "interface/src/App.tsx",
     # ── Les écrans encore sur le châssis sombre ──────────────────────────────
     "interface/src/composants/Ambiances.tsx",
     "interface/src/composants/Arbre.tsx",
     "interface/src/composants/BarreEtat.tsx",
     "interface/src/composants/BarreOutils.tsx",
-    "interface/src/composants/ChampPrompt.tsx",
     "interface/src/composants/chassis.tsx",
     "interface/src/composants/Depliage.tsx",
     "interface/src/composants/Fiche.tsx",
     "interface/src/composants/FicheDuClip.tsx",
     "interface/src/composants/Galerie.tsx",
     "interface/src/composants/Import.tsx",
+    # `BarreQuiPaie.tsx` (`D5`) : sortie en fichier propre le 11 septembre
+    # 2026, aux côtés de `ChampPrompt.tsx` et `PanneauReglages.tsx`, qui ont
+    # basculé au vocabulaire papier — leurs tailles restent celles de l'ancien
+    # châssis (10 px, arrondis de 2 et 3 px…), pas encore ouvertes une à une
+    # contre les listes fermées de `docs/DESIGN.md` : c'est le même compromis
+    # que `C5` à `C7`.
+    "interface/src/composants/BarreQuiPaie.tsx",
+    "interface/src/composants/ChampPrompt.tsx",
     "interface/src/composants/PanneauReglages.tsx",
     "interface/src/composants/Tableau.tsx",
     "interface/src/composants/Toile.tsx",
@@ -186,12 +194,13 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # — vit maintenant ici, derrière des rappels facultatifs. `Fiche.tsx` est
     # donc montée par la galerie **et** par *Ses images*.
     "interface/src/composants/Fiche.tsx",
-    # ⚠️ **Ces deux-là ne sont pas la galerie**, et le plan les lui attribuait :
-    # la barre qui paie a quitté la galerie en `E4` — on ne paie plus d'ici. Ils
-    # partiront avec les deux surfaces qui la portent, le repos de l'onglet
-    # *Créer* et l'établi d'un sujet.
-    "interface/src/composants/ChampPrompt.tsx",
-    "interface/src/composants/PanneauReglages.tsx",
+    # D5 — la barre qui paie : sortie d'`App.tsx` en fichier propre le
+    # 11 septembre 2026, avec `ChampPrompt.tsx` et `PanneauReglages.tsx` —
+    # deux fichiers qui n'étaient pas la galerie, et que le plan d'alors lui
+    # attribuait par erreur : la barre qui paie a quitté la galerie en `E4`.
+    # Les trois tournent maintenant sur le papier ; `BarreQuiPaie.tsx`, le
+    # fichier neuf, n'entre pas ici — il est écrit papier dès sa création,
+    # comme `C4` l'a documenté pour ce cas.
     # C5 — l'envoi, le clip, le montage : sortis le 10 septembre 2026. Leurs
     # jetons sont ceux du papier ; `Bouton`, `Libelle`, `Raison`, `Segments` et
     # `Curseur` de `chassis.tsx` portent pour ça un second habillage, additif,

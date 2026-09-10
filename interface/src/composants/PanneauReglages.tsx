@@ -152,7 +152,7 @@ export function PanneauReglages({
     // laisse. Aucune largeur imposée — elles se partagent ce qu'il y a.
     <div
       {...PANNEAU}
-      className="defile max-h-[40vh] overflow-y-auto border-b border-bord bg-fond-1 px-4 py-3"
+      className="defile max-h-[40vh] overflow-y-auto border-b border-trait bg-carte px-4 py-3"
     >
       <div className="grid grid-cols-3 items-start gap-x-6 gap-y-4">
         {/* ── Le modèle ─────────────────────────────────────────────────────
@@ -170,6 +170,7 @@ export function PanneauReglages({
           titre="Modèle"
           aide="reglages.modele"
           etat={choisi?.nom ?? null}
+          papier
           // Le compteur suit ce qu'on voit. « 48 au catalogue » au-dessus d'une
           // liste de huit annonçait une liste qui n'était pas là. Il compte
           // **les résultats du filtre**, jamais les lignes rendues : l'épinglé
@@ -185,10 +186,10 @@ export function PanneauReglages({
               value={filtre}
               onChange={(e) => setFiltre(e.target.value)}
               placeholder="filtrer"
-              className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+              className="mesure h-[26px] rounded-[2px] border border-trait bg-papier-cote px-2 text-[11px] text-encre placeholder:text-encre-4"
             />
 
-            <ul className="max-h-[280px] overflow-y-auto rounded-[2px] border border-bord">
+            <ul className="max-h-[280px] overflow-y-auto rounded-[2px] border border-trait">
               {epingle && (
                 <LigneModele
                   modele={epingle}
@@ -206,7 +207,7 @@ export function PanneauReglages({
                 />
               ))}
               {correspondances.length === 0 && (
-                <li className="mesure px-2 py-3 text-[10px] text-texte-3">
+                <li className="mesure px-2 py-3 text-[10px] text-encre-4">
                   aucun modèle ne porte ce nom
                 </li>
               )}
@@ -216,8 +217,9 @@ export function PanneauReglages({
 
         {/* ── Le cadrage ────────────────────────────────────────────────── */}
         <section className="flex flex-col gap-1.5">
-          <Libelle aide="reglages.proportions">Proportions</Libelle>
+          <Libelle papier aide="reglages.proportions">Proportions</Libelle>
           <Segments
+            papier
             valeurs={["1:1", "3:2", "2:3", "16:9"] as const}
             valeur={proportions}
             onChange={onProportions}
@@ -232,8 +234,9 @@ export function PanneauReglages({
         </section>
 
         <section className="flex flex-col gap-1.5">
-          <Libelle aide="reglages.variations">Variations</Libelle>
+          <Libelle papier aide="reglages.variations">Variations</Libelle>
           <Segments
+            papier
             valeurs={[1, 2, 4] as const}
             valeur={cases ? 1 : variations}
             onChange={onVariations}
@@ -245,6 +248,7 @@ export function PanneauReglages({
             indisponibles={cases ? ([2, 4] as const) : []}
           />
           <Raison
+            papier
             texte={
               cases
                 ? // **« cases » et non « attitudes »** (E13) : une planche de
@@ -270,9 +274,9 @@ export function PanneauReglages({
         {univers.bareme.length > 0 && (
           <section className="flex flex-col gap-1.5">
             <div className="flex items-baseline justify-between">
-              <Libelle aide="reglages.sujet">Sujet</Libelle>
+              <Libelle papier aide="reglages.sujet">Sujet</Libelle>
               {echelleLue && (
-                <span className="mesure text-[9.5px] text-texte-3">
+                <span className="mesure text-[9.5px] text-encre-4">
                   {echelleLue.occupation} % de la case
                 </span>
               )}
@@ -286,8 +290,8 @@ export function PanneauReglages({
                   className={[
                     "mesure h-[26px] rounded-[2px] border px-2 text-[11.5px] transition-colors duration-[80ms]",
                     e.nom === echelle
-                      ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
-                      : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+                      ? "border-signal bg-ligne-ouverte text-signal"
+                      : "border-trait bg-papier-cote text-encre-3 hover:bg-ligne-ouverte",
                   ].join(" ")}
                 >
                   {e.nom}
@@ -295,7 +299,7 @@ export function PanneauReglages({
               ))}
             </div>
             {!echelle && (
-              <Raison texte="aucun sujet — seules les planches « tous » partiront" />
+              <Raison papier texte="aucun sujet — seules les planches « tous » partiront" />
             )}
           </section>
         )}
@@ -306,8 +310,9 @@ export function PanneauReglages({
             .filter((o) => o.genre === "choix" && o.valeurs.length > 0)
             .map((option) => (
               <section key={option.nom} className="flex flex-col gap-1.5">
-                <Libelle>{option.nom}</Libelle>
+                <Libelle papier>{option.nom}</Libelle>
                 <Segments
+                  papier
                   valeurs={option.valeurs}
                   valeur={options[option.nom] ?? option.valeurs[0]}
                   onChange={(v) => onOptions({ ...options, [option.nom]: v })}
@@ -316,8 +321,8 @@ export function PanneauReglages({
             ))}
 
         {/* ── Qu'est-ce qui part avec ? ─────────────────────────────────── */}
-        <section className="rounded-[2px] border border-bord bg-fond-2 p-2">
-          <div className="mesure mb-1.5 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+        <section className="rounded-[2px] border border-trait bg-papier-cote p-2">
+          <div className="mesure mb-1.5 text-[9.5px] tracking-[.11em] text-encre-4 uppercase">
             Ce qui part
           </div>
           <dl className="mesure grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
@@ -327,17 +332,17 @@ export function PanneauReglages({
                 aussi le défilement, qu'un catalogue de quarante-huit rend
                 inévitable. C'est enfin ce qui rend lisible le « n / max » juste
                 dessous — ce plafond est le sien. */}
-            <dt className="text-texte-3">modèle</dt>
-            <dd className="text-right break-words text-texte-2">
+            <dt className="text-encre-4">modèle</dt>
+            <dd className="text-right break-words text-encre-3">
               {choisi?.nom ?? "aucun"}
             </dd>
-            <dt className="text-texte-3">références</dt>
+            <dt className="text-encre-4">références</dt>
             <dd
               className={[
                 "text-right",
                 (compte?.total ?? references) > (choisi?.references_max ?? 0)
-                  ? "text-echec-froid"
-                  : "text-texte-2",
+                  ? "text-echec"
+                  : "text-encre-3",
               ].join(" ")}
             >
               {compte?.total ?? references} / {choisi?.references_max ?? 0}
@@ -348,8 +353,8 @@ export function PanneauReglages({
                 et c'est cette ligne-ci qui le dit. */}
             {compte && compte.artworks > 0 && (
               <>
-                <dt className="text-texte-3">dont artworks</dt>
-                <dd className="text-right text-signal-froid">
+                <dt className="text-encre-4">dont artworks</dt>
+                <dd className="text-right text-signal">
                   {compte.artworks}
                   {compte.famille ? ` · ${NOM_FAMILLE[compte.famille]} + tous` : " · tous"}
                 </dd>
@@ -362,25 +367,25 @@ export function PanneauReglages({
                 planche sans dire à quoi elle ressemble. */}
             {compte && compte.gabarit > 0 && (
               <>
-                <dt className="text-texte-3">dont gabarit</dt>
-                <dd className="text-right text-signal-froid">
+                <dt className="text-encre-4">dont gabarit</dt>
+                <dd className="text-right text-signal">
                   1 · les {cases} cases vides
                 </dd>
               </>
             )}
-            <dt className="text-texte-3">projet</dt>
-            <dd className="text-right text-texte-2">{projet ?? "aucun"}</dd>
-            <dt className="text-texte-3">bible</dt>
-            <dd className="text-right text-texte-2">
+            <dt className="text-encre-4">projet</dt>
+            <dd className="text-right text-encre-3">{projet ?? "aucun"}</dd>
+            <dt className="text-encre-4">bible</dt>
+            <dd className="text-right text-encre-3">
               {univers.bible.filter((c) => c.actif && c.texte.trim()).length || "—"}
               {univers.bible.some((c) => c.actif && c.texte.trim()) ? " champs" : ""}
             </dd>
-            <dt className="text-texte-3">palette</dt>
-            <dd className="text-right text-texte-2">
+            <dt className="text-encre-4">palette</dt>
+            <dd className="text-right text-encre-3">
               {univers.palette.length ? `${univers.palette.length} couleurs` : "—"}
             </dd>
-            <dt className="text-texte-3">grille imposée</dt>
-            <dd className="text-right text-texte-2">{univers.cible_px} px</dd>
+            <dt className="text-encre-4">grille imposée</dt>
+            <dd className="text-right text-encre-3">{univers.cible_px} px</dd>
             <CoutAttendu
               cout={cout}
               cases={cases}
@@ -420,8 +425,8 @@ function LigneModele({
   return (
     <li
       className={[
-        "border-b border-bord last:border-b-0",
-        epingle ? "border-b-bord-fort" : "",
+        "border-b border-trait last:border-b-0",
+        epingle ? "border-b-contour" : "",
       ].join(" ")}
     >
       <button
@@ -429,13 +434,13 @@ function LigneModele({
         onClick={onChoisir}
         className={[
           "flex w-full flex-col items-start gap-0.5 px-2 py-1.5 text-left transition-colors duration-[80ms]",
-          choisi ? "bg-fond-3" : "hover:bg-fond-3",
+          choisi ? "bg-ligne-ouverte" : "hover:bg-papier-cote",
         ].join(" ")}
       >
         <span
           className={[
             "text-[11.5px] leading-tight",
-            grise ? "text-texte-3" : choisi ? "text-signal-froid" : "text-texte",
+            grise ? "text-encre-4" : choisi ? "text-signal" : "text-encre",
           ].join(" ")}
         >
           {modele.nom}
@@ -452,7 +457,7 @@ function LigneModele({
             semaine dernière n'est pas fausse, elle est datée — et c'est ce que
             l'auteur doit pouvoir lire avant de choisir. */}
         {modele.fournisseur ? (
-          <span className="mesure text-[9.5px] leading-tight text-texte-3">
+          <span className="mesure text-[9.5px] leading-tight text-encre-4">
             {modele.fournisseur}
             {modele.repli && modele.recu_le > 0
               ? ` · relevé le ${JOUR.format(new Date(modele.recu_le * 1000))}`
@@ -460,9 +465,9 @@ function LigneModele({
           </span>
         ) : null}
         {grise ? (
-          <Raison texte={modele.refus} />
+          <Raison papier texte={modele.refus} />
         ) : (
-          <span className="mesure text-[9.5px] text-texte-3">
+          <span className="mesure text-[9.5px] text-encre-4">
             {modele.references_max} réfs · ×{modele.variations_max}
           </span>
         )}
@@ -542,8 +547,8 @@ function References({
   }
 
   return (
-    <div className="mt-2 flex flex-col gap-1 border-t border-bord pt-2">
-      <div className="mesure text-[9.5px] leading-4 text-texte-3">
+    <div className="mt-2 flex flex-col gap-1 border-t border-trait pt-2">
+      <div className="mesure text-[9.5px] leading-4 text-encre-4">
         la portée la plus étroite l'emporte — cette génération, puis ce
         personnage, puis le projet
       </div>
@@ -565,8 +570,8 @@ function References({
                   className={[
                     "mesure h-[18px] w-[18px] shrink-0 rounded-[2px] border text-[10px] transition-colors duration-[80ms]",
                     ecartee
-                      ? "border-bord bg-fond-1 text-texte-3"
-                      : "border-signal-froid bg-signal-froid/13 text-signal-froid",
+                      ? "border-trait bg-carte text-encre-4"
+                      : "border-signal bg-ligne-ouverte text-signal",
                   ].join(" ")}
                 >
                   {ecartee ? "" : "✓"}
@@ -574,7 +579,7 @@ function References({
                 <span
                   className={[
                     "mesure min-w-0 flex-1 truncate text-[9.5px]",
-                    ecartee ? "text-texte-3 line-through" : "text-texte-2",
+                    ecartee ? "text-encre-4 line-through" : "text-encre-3",
                   ].join(" ")}
                   title={ligne.asset}
                 >
@@ -584,7 +589,7 @@ function References({
 
               {ecartee && (
                 <div className="flex items-center gap-1 pl-[24px]">
-                  <span className="mesure text-[9.5px] text-texte-3">
+                  <span className="mesure text-[9.5px] text-encre-4">
                     écartée · {portee}
                   </span>
                   {/* **Élargir la portée**, jamais la deviner. Sans case
@@ -599,7 +604,7 @@ function References({
                         key={large}
                         type="button"
                         onClick={() => void poser(large, ligne.asset, false)}
-                        className="mesure ml-auto text-[9.5px] text-signal-froid hover:text-signal-froid-clair"
+                        className="mesure ml-auto text-[9.5px] text-signal hover:opacity-70"
                       >
                         rendre au {large === "projet" ? "projet" : "personnage"}
                       </button>
@@ -608,7 +613,7 @@ function References({
                         key={large}
                         type="button"
                         onClick={() => void poser(large, ligne.asset, true)}
-                        className="mesure text-[9.5px] text-texte-3 hover:text-texte-2"
+                        className="mesure text-[9.5px] text-encre-4 hover:text-encre-3"
                       >
                         + {large}
                       </button>
@@ -666,9 +671,9 @@ export function CoutAttendu({
   const combien = (valeur: number) => `≈ ${quantite(valeur, unite)}`
   return (
     <>
-      <dt className="text-texte-3">{argent ? "coût attendu" : "ce qu'il prendra"}</dt>
+      <dt className="text-encre-4">{argent ? "coût attendu" : "ce qu'il prendra"}</dt>
       <dd
-        className="text-right text-texte-2"
+        className="text-right text-encre-3"
         title={
           cout === null
             ? "ce modèle n'a encore rien consommé sur cette machine"
@@ -683,9 +688,9 @@ export function CoutAttendu({
       </dd>
       {cases > 0 && (
         <>
-          <dt className="text-texte-3">un compte faux</dt>
+          <dt className="text-encre-4">un compte faux</dt>
           <dd
-            className="text-right text-texte-2"
+            className="text-right text-encre-3"
             title="le lot entier est refusé, rien n'entre, et il se relance au prix plein"
           >
             {/* « à repayer » chez un fournisseur qui facture, « à reprendre »

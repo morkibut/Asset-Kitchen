@@ -80,9 +80,9 @@ function EnRoute({ images, demarreLe, attendue }: EnVol) {
   return (
     <div
       role="status"
-      className="relative flex h-[34px] shrink-0 items-center overflow-hidden whitespace-nowrap rounded-[2px] border border-signal-froid bg-fond-2 px-3"
+      className="relative flex h-[34px] shrink-0 items-center overflow-hidden whitespace-nowrap rounded-[2px] border border-signal bg-papier-cote px-3"
     >
-      <span className="mesure text-[11px] text-signal-froid">
+      <span className="mesure text-[11px] text-signal">
         {images === 1 ? "1 image en route" : `${images} images en route`}
         {demarreLe === null
           ? " · en file"
@@ -179,7 +179,7 @@ export function ChampPrompt({
   }
 
   return (
-    <div className="flex flex-col gap-2 border-b border-bord bg-fond-1 p-4">
+    <div className="flex flex-col gap-2 border-b border-trait bg-carte p-4">
       <textarea
         ref={champ}
         value={prompt}
@@ -192,9 +192,9 @@ export function ChampPrompt({
             : "Décris ce que tu veux fabriquer."
         }
         className={[
-          "resize-y rounded-[3px] border px-3 py-2 placeholder:text-texte-3",
+          "resize-y rounded-[3px] border px-3 py-2 placeholder:text-encre-4",
           repris
-            ? "mesure min-h-[120px] leading-relaxed border-signal-froid bg-fond-2 text-[11.5px] text-texte"
+            ? "mesure min-h-[120px] leading-relaxed border-signal bg-papier-cote text-[11.5px] text-encre"
             : // **56 px, la première des deux exceptions nommées à la liste
               // fermée des hauteurs** (`docs/DESIGN.md` § Spacing) : ce n'est
               // pas une bande, c'est une zone de saisie sur plusieurs lignes.
@@ -205,20 +205,20 @@ export function ChampPrompt({
               // `leading-relaxed` (1,625 → 22 px) les deux mêmes lignes en
               // faisaient 62, et le `min-h` n'y pouvait rien — il est un
               // minimum, pas une hauteur.
-              "min-h-[56px] leading-[19px] border-bord-fort bg-fond-2 text-[13.5px] text-texte",
+              "min-h-[56px] leading-[19px] border-contour bg-papier-cote text-[13.5px] text-encre",
         ].join(" ")}
       />
 
       {/* La ligne de provenance, **sous le champ** : elle parle de ce qui est
           écrit dedans, pas de ce qui va partir. */}
       {provenance && (
-        <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-texte-3">
-          <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
+        <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-encre-4">
+          <span aria-hidden className="inline-block h-px w-2 bg-encre-4" />
           <span>{provenance.texte}</span>
           <button
             type="button"
             onClick={provenance.onDefaire}
-            className="text-signal-froid hover:text-signal-froid-clair"
+            className="text-signal hover:opacity-70"
           >
             défaire ›
           </button>
@@ -232,7 +232,7 @@ export function ChampPrompt({
           onKeyDown={toucheGenerer}
           rows={1}
           placeholder="Ce que tu ne veux pas."
-          className="min-h-[34px] resize-y rounded-[3px] border border-bord bg-fond-2 px-3 py-2 text-[12.5px] leading-[16px] text-texte-2 placeholder:text-texte-3"
+          className="min-h-[34px] resize-y rounded-[3px] border border-trait bg-papier-cote px-3 py-2 text-[12.5px] leading-[16px] text-encre-3 placeholder:text-encre-4"
         />
       )}
 
@@ -240,13 +240,13 @@ export function ChampPrompt({
           l'écran de confirmation, sous le texte assemblé ; rendre la main vit
           ici, parce que c'est ce champ-là qui change de nature. */}
       {repris && (
-        <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-signal-froid">
-          <span aria-hidden className="inline-block h-px w-2 bg-signal-froid" />
+        <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-signal">
+          <span aria-hidden className="inline-block h-px w-2 bg-signal" />
           <span>le texte part exactement tel qu'il est écrit ici</span>
           <button
             type="button"
             onClick={onRendre}
-            className="text-signal-froid hover:text-signal-froid-clair"
+            className="text-signal hover:opacity-70"
           >
             Rendre la main à l'atelier ›
           </button>
@@ -261,7 +261,7 @@ export function ChampPrompt({
           // quand la colonne est étroite. **Avec un plancher** — sans lui il
           // tombait à zéro pixel, mesuré au navigateur : un contrôle réduit à
           // rien n'est plus un contrôle, c'est une panne silencieuse.
-          className="mesure h-[34px] min-w-[3.5rem] truncate text-[10px] text-texte-3 hover:text-texte-2"
+          className="mesure h-[34px] min-w-[3.5rem] truncate text-[10px] text-encre-4 hover:text-encre-3"
         >
           {negatifOuvert ? "− " : "+ "}prompt négatif
           {promptNegatif && !negatifOuvert ? " ·" : ""}
@@ -275,7 +275,7 @@ export function ChampPrompt({
           {enVol && enVol.images > 0 ? (
             <EnRoute {...enVol} />
           ) : (
-            <Bouton principal inactif={refus !== null || enPaiement} onClick={onGenerer} enfants={
+            <Bouton papier principal inactif={refus !== null || enPaiement} onClick={onGenerer} enfants={
               enPaiement
                 ? "Paiement en cours…"
                 : variations > 1 ? `Générer ${variations} variations` : "Générer"
@@ -292,13 +292,13 @@ export function ChampPrompt({
               disponible. Le bloc au-dessus continue de dire ce qui est en
               route ; la fente dit ce qu'on peut faire ensuite, comme toujours. */}
           {refus ? (
-            <Raison texte={refus} ouAller={ouAller} onAller={onAller} />
+            <Raison papier texte={refus} ouAller={ouAller} onAller={onAller} />
           ) : echec ? (
             /* **Un appel raté est un locataire de la fente** (U1), et il passe
                 avant le revers et avant le départ en cours : c'est la dernière
                 chose qui s'est produite, et c'est celle qui décide du geste
                 suivant. Il ne grise rien — relancer est le bon geste. */
-            <p className="mesure mt-1 text-[10px] leading-4 text-echec-froid">
+            <p className="mesure mt-1 text-[10px] leading-4 text-echec">
               {echec} — rien n'a été facturé.
             </p>
           ) : revers ? (
@@ -317,12 +317,12 @@ export function ChampPrompt({
               type="button"
               onClick={onGenerer}
               disabled={enPaiement}
-              className="mesure mt-1 text-[10px] text-signal-froid hover:text-signal-froid-clair disabled:cursor-not-allowed disabled:text-texte-3"
+              className="mesure mt-1 text-[10px] text-signal hover:opacity-70 disabled:cursor-not-allowed disabled:text-encre-4"
             >
               {enPaiement ? "paiement en cours…" : "Générer encore ›"}
             </button>
           ) : (
-            <p className="mesure mt-1 text-[10px] text-texte-3">Ctrl + Entrée</p>
+            <p className="mesure mt-1 text-[10px] text-encre-4">Ctrl + Entrée</p>
           )}
         </div>
       </div>

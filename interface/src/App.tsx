@@ -63,11 +63,8 @@ import {
   type Fente,
   type Segment,
 } from "./composants/EnTeteDeSurface"
-import {
-  Libelle,
-  usePli,
-} from "./composants/chassis"
-import { ChampPrompt } from "./composants/ChampPrompt"
+import { Libelle } from "./composants/chassis"
+import { BarreQuiPaie } from "./composants/BarreQuiPaie"
 import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { Emplois } from "./composants/Emplois"
@@ -108,7 +105,6 @@ import { PageDuSujet, type Onglet as OngletDuSujet } from "./composants/PageDuSu
 import { GrilleDuJeu } from "./composants/GrilleDuJeu"
 import { Comparer } from "./composants/Comparer"
 import { Retouche } from "./composants/Retouche"
-import { nomDuModele } from "./composants/Fiche"
 // ── `C4` · la galerie est un fichier ────────────────────────────────────────
 // Elle était écrite en clair ici ; elle a désormais son fichier, comme les
 // vingt et un autres écrans du carnet. `App` n'en garde que ce que les autres
@@ -121,7 +117,7 @@ import { useRelectures } from "./relectures"
 import { usePaiement } from "./paiement"
 import { nommerLeLieu } from "./lieux-noms"
 import { BarreEtat, type Repli } from "./composants/BarreEtat"
-import { Cible, Galerie, Grille, Reinjections, useGalerie } from "./composants/Galerie"
+import { Galerie, Grille, useGalerie } from "./composants/Galerie"
 // ⚠️ **`EcranTables` n'est plus monté nulle part** (`B25`) : les six portes de
 // la retouche mènent toutes à `Retouche.tsx`. Il ne reste de ce fichier que le
 // type de la table qu'une porte demande — il s'en ira avec lui en `B26`.
@@ -131,7 +127,6 @@ import { EcranMontage } from "./composants/Montage"
 import { VoletGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import type { Explication } from "./aide"
 import { Barre, fermerBarre, ouvrirBarre, useBarre } from "./composants/Barre"
-import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
 import { EcranUnivers, type Cote } from "./composants/Univers"
 import { type Vue as VueUnivers } from "./composants/Tableau"
 
@@ -924,10 +919,6 @@ export function App() {
       asset ? entrer(p, { genre: "retouche", asset }) : sortir(p, "retouche"),
     )
   }
-  /** Les réglages de l'appel, repliés au pied de la barre qui paie. Le repli
-   *  vit dans le registre du châssis comme tous les autres : il survit au
-   *  changement d'onglet, qui démonte l'écran (E1). */
-  const [reglagesOuvertsDansLaBarre, setReglagesDansLaBarre] = usePli("barre.reglages")
   /** D'où vient ce qui est écrit dans le champ, quand ce n'est pas l'auteur.
    *  Posée en armant une case vide, effacée dès qu'on écrit dedans : un texte
    *  qu'on a repris à la main n'est plus une proposition. */
@@ -1582,171 +1573,102 @@ export function App() {
           },
   }))
 
-  /**
-   * La barre qui paie — **une seule dans tout le produit** (E2).
-   *
-   * Elle vivait au-dessus de la grille de la galerie, parce que la galerie
-   * *était* l'atelier. La V2.1 la décolle de cet écran-là : elle appartient au
-   * châssis, elle sert les deux lieux d'où l'argent part — l'établi d'une chose
-   * et le codex —, et **elle se retire de tout écran incapable de dépenser**.
-   *
-   * C'est ce qui donne à la galerie son métier propre : on y juge, on n'y paie
-   * jamais. Deux champs de saisie auraient fini par accepter deux textes
-   * différents pour la même intention.
-   */
+  /** La barre qui paie — **une seule dans tout le produit** (E2), sortie en
+   *  fichier propre en `D5` : `composants/BarreQuiPaie.tsx`. Elle sert les
+   *  deux lieux d'où l'argent part — l'établi d'une chose et le repos de
+   *  l'onglet Créer —, et se retire de tout écran incapable de dépenser. */
   const barreQuiPaie = (
-    <div className="flex shrink-0 flex-col">
-      {/* **Les réglages de l'appel suivent la barre qui paie** (E4, A-25). Ils
-          tenaient une colonne de 300 px ouverte en permanence dans la galerie,
-          *même quand on n'y touchait pas* — et sur l'écran dont le métier est
-          de juger. Ils se replient maintenant sur une ligne qui dit ce qu'ils
-          valent, à côté du champ qui paie.
-
-          **La colonne ne disparaît pas encore, elle se replie**, et la nuance
-          est écrite en A-25 : les réglages hérités d'une chose du jeu arrivent
-          en E12, l'écran de confirmation qui les montre avant de payer en E14.
-          D'ici là, les retirer retirerait le seul endroit où l'on choisit un
-          modèle. */}
-      {reglagesOuvertsDansLaBarre && (
-        <PanneauReglages
-          modeles={modeles}
-          choisi={modele}
-          onChoisir={setModeleChoisi}
-          proportions={proportions}
-          onProportions={setProportions}
-          variations={variations}
-          onVariations={setVariations}
-          options={options}
-          onOptions={setOptions}
-          references={reinjections.length}
-          projet={projetCourant?.nom ?? null}
-          univers={univers}
-          echelle={echelle}
-          onEchelle={setEchelle}
-          compte={compteReferences}
-          cout={modele ? (couts[modele.identifiant] ?? null) : null}
-          reserve={modele ? (reserves[modele.fournisseur] ?? null) : null}
-          // Combien de cases le lot armé demande, ou zéro. Le panneau en tire
-          // deux choses : ce que le lot coûte — **un appel, pas N** — et ce
-          // qu'un compte faux coûterait.
-          cases={cases}
-          cible={personnageCible}
-          ecarteesGeneration={ecarteesGeneration}
-          onEcarterGeneration={setEcarteesGeneration}
-          onErreur={setPanne}
-        />
-      )}
-      <Cible
-        personnage={personnageCible}
-        poses={posesCible}
-        onRetirer={(pose) =>
-          setCible((precedente) => {
-            // La forme fonctionnelle, jamais la valeur du rendu : deux retraits
-            // rapprochés partagent le même rendu, donc la même liste périmée,
-            // et le second effacerait le premier.
-            const restantes =
-              precedente?.poses.filter((p) => p !== pose.identifiant) ?? []
-            return restantes.length && precedente
-              ? { ...precedente, poses: restantes }
-              : null
-          })
-        }
-        onDesarmer={() => setCible(null)}
-      />
-      <Reinjections
-        reinjections={reinjections}
-        grille={grille}
-        onRetirer={(asset) =>
-          setReinjections((deja) => deja.filter((r) => r.asset !== asset))
-        }
-        onRole={(asset, role) => reinjecter(asset, role)}
-      />
-      {/* La ligne qui ouvre les réglages, et qui **dit ce qu'ils valent quand
-          ils sont fermés** — c'est la règle du bloc repliable, appliquée au
-          plus gros panneau du produit. */}
-      <button
-        type="button"
-        onClick={setReglagesDansLaBarre}
-        aria-expanded={reglagesOuvertsDansLaBarre}
-        className="mesure flex h-[26px] shrink-0 items-center gap-2 border-b border-bord bg-fond-1 px-4 text-left text-[10px] text-texte-3 hover:text-texte-2"
-      >
-        <span aria-hidden>{reglagesOuvertsDansLaBarre ? "−" : "+"}</span>
-        <span>réglages de l'appel</span>
-        <span className="text-texte-2">
-          {modele ? nomDuModele(modele.identifiant) : "aucun modèle"} · {proportions} ·{" "}
-          {variations} variation{variations > 1 ? "s" : ""}
-        </span>
-      </button>
-
-      {/* **Ce que ça va coûter, au pied de ce qui paie** (E2). Le chiffre
-          vivait dans la colonne de réglages de 300 px, qui n'existe que dans la
-          galerie — et la galerie ne paie plus. Il suit donc la barre, parce que
-          le prix se lit au moment où l'on décide, jamais deux écrans plus
-          loin. */}
-      <dl className="mesure grid grid-cols-[auto_1fr] gap-x-3 border-b border-bord bg-fond-1 px-4 pt-3 text-[10px]">
-        <CoutAttendu
-          cout={modele ? (couts[modele.identifiant] ?? null) : null}
-          cases={cases}
-          variations={variations}
-          unite={modele?.unite}
-          reserve={modele ? (reserves[modele.fournisseur] ?? null) : null}
-        />
-      </dl>
-      <ChampPrompt
-        prompt={prompt}
-        onPrompt={(texte) => {
-          setPrompt(texte)
-          // Écrire dedans en fait le texte de l'auteur : la provenance ne
-          // décrit plus rien, et la garder mentirait sur qui l'a écrit.
-          setProvenance(null)
-        }}
-        promptNegatif={promptNegatif}
-        onPromptNegatif={setPromptNegatif}
-        repris={repris}
-        /* Rendre la main : le champ redevient le sujet seul. **Il ne se vide
-           pas** — on ne perd pas ce qui a été écrit —, et l'atelier reprend son
-           habillage par-dessus. Reprendre, lui, s'est déplacé avec le texte
-           assemblé : il vit dans l'écran de confirmation, sous ce qui part mot
-           pour mot (E14). */
-        onRendre={() => setRepris(false)}
-        refus={refus?.texte ?? null}
-        ouAller={refus?.geste}
-        onAller={
-          refus?.geste === "Réessayer"
-            ? redemanderCatalogue
-            : () => setInstallationOuverte(true)
-        }
-        revers={revers}
-        provenance={
-          provenance
-            ? {
-                texte: provenance,
-                // **Se défaire ne change rien au réglage durable** : c'est le
-                // texte de cet appel-ci qui s'efface, pas la consigne de la
-                // pose ni le signalement de la chose.
-                onDefaire: () => {
-                  setPrompt("")
-                  setProvenance(null)
-                },
-              }
+    <BarreQuiPaie
+      modeles={modeles}
+      modele={modele}
+      onChoisirModele={setModeleChoisi}
+      proportions={proportions}
+      onProportions={setProportions}
+      variations={variations}
+      onVariations={setVariations}
+      options={options}
+      onOptions={setOptions}
+      reinjections={reinjections}
+      grille={grille}
+      onRetirerReinjection={(asset) =>
+        setReinjections((deja) => deja.filter((r) => r.asset !== asset))
+      }
+      onRoleReinjection={(asset, role) => reinjecter(asset, role)}
+      projetNom={projetCourant?.nom ?? null}
+      univers={univers}
+      echelle={echelle}
+      onEchelle={setEchelle}
+      compteReferences={compteReferences}
+      cout={modele ? (couts[modele.identifiant] ?? null) : null}
+      reserve={modele ? (reserves[modele.fournisseur] ?? null) : null}
+      // Combien de cases le lot armé demande, ou zéro. La barre en tire
+      // deux choses : ce que le lot coûte — **un appel, pas N** — et ce
+      // qu'un compte faux coûterait.
+      cases={cases}
+      personnageCible={personnageCible}
+      posesCible={posesCible}
+      onRetirerPose={(pose) =>
+        setCible((precedente) => {
+          // La forme fonctionnelle, jamais la valeur du rendu : deux retraits
+          // rapprochés partagent le même rendu, donc la même liste périmée,
+          // et le second effacerait le premier.
+          const restantes =
+            precedente?.poses.filter((p) => p !== pose.identifiant) ?? []
+          return restantes.length && precedente
+            ? { ...precedente, poses: restantes }
             : null
-        }
-        onGenerer={generer}
-        /* **Le raccourci porte le même verrou** (U1). Quand la série est
-           sautée, ce bouton-ci paie sans passer par l'écran de confirmation :
-           il doit donc dire qu'il paie et refuser le second clic exactement
-           comme l'autre. */
-        enPaiement={enPaiement}
-        /* **Et le raccourci a besoin du même retour** : quand la série est
-           sautée, il n'y a pas d'écran de confirmation où lire l'échec. */
-        echec={echecDuPaiement}
-        variations={variations}
-        /* **Ce qui est parti se voit là où l'on a payé.** Le chantier ne
-           paraissait que dans la grille de la galerie ; le codex et l'établi,
-           d'où l'on paie aussi, ne montraient rien du tout. */
-        enVol={enVol}
-      />
-    </div>
+        })
+      }
+      onDesarmer={() => setCible(null)}
+      ecarteesGeneration={ecarteesGeneration}
+      onEcarterGeneration={setEcarteesGeneration}
+      onErreur={setPanne}
+      prompt={prompt}
+      onPrompt={(texte) => {
+        setPrompt(texte)
+        // Écrire dedans en fait le texte de l'auteur : la provenance ne
+        // décrit plus rien, et la garder mentirait sur qui l'a écrit.
+        setProvenance(null)
+      }}
+      promptNegatif={promptNegatif}
+      onPromptNegatif={setPromptNegatif}
+      repris={repris}
+      /* Rendre la main : le champ redevient le sujet seul. **Il ne se vide
+         pas** — on ne perd pas ce qui a été écrit —, et l'atelier reprend son
+         habillage par-dessus. Reprendre, lui, s'est déplacé avec le texte
+         assemblé : il vit dans l'écran de confirmation, sous ce qui part mot
+         pour mot (E14). */
+      onRendre={() => setRepris(false)}
+      refus={refus?.texte ?? null}
+      ouAller={refus?.geste}
+      onAller={
+        refus?.geste === "Réessayer"
+          ? redemanderCatalogue
+          : () => setInstallationOuverte(true)
+      }
+      revers={revers}
+      provenance={provenance}
+      onDefaireProvenance={() => {
+        // **Se défaire ne change rien au réglage durable** : c'est le
+        // texte de cet appel-ci qui s'efface, pas la consigne de la
+        // pose ni le signalement de la chose.
+        setPrompt("")
+        setProvenance(null)
+      }}
+      onGenerer={generer}
+      /* **Le raccourci porte le même verrou** (U1). Quand la série est
+         sautée, ce bouton-ci paie sans passer par l'écran de confirmation :
+         il doit donc dire qu'il paie et refuser le second clic exactement
+         comme l'autre. */
+      enPaiement={enPaiement}
+      /* **Et le raccourci a besoin du même retour** : quand la série est
+         sautée, il n'y a pas d'écran de confirmation où lire l'échec. */
+      echec={echecDuPaiement}
+      /* **Ce qui est parti se voit là où l'on a payé.** Le chantier ne
+         paraissait que dans la grille de la galerie ; le codex et l'établi,
+         d'où l'on paie aussi, ne montraient rien du tout. */
+      enVol={enVol}
+    />
   )
 
   /** Ouvrir un jeu — carnet, ouverture, et l'ancien `Arbre` un jour.
