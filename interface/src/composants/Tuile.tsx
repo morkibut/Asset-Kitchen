@@ -42,7 +42,7 @@ import {
   type Generation,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
-import { Jauge, type Zoom } from "./chassis"
+import { Jauge, type Zoom } from "./pieces"
 
 /**
  * Ce que la grille itère. Un asset, un emplacement qui l'attend encore, ou un
@@ -283,7 +283,6 @@ export function Tuile({
             <Jauge
               demarreLe={emplacement.demarre_le}
               attendue={emplacement.duree_attendue_s}
-              papier
             />
           </div>
         )}

@@ -38,7 +38,7 @@ import {
   type Role,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
-import { CRANS, ZOOMS, type Zoom } from "./chassis"
+import { CRANS, ZOOMS, type Zoom } from "./pieces"
 import { useImport, type Import } from "./Import"
 import { Tuile, type Entree } from "./Tuile"
 import { Arbre } from "./Arbre"

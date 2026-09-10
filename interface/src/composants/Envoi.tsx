@@ -49,7 +49,7 @@ import {
   type PlancheQuiPart,
   type Tri,
 } from "../api"
-import { Bouton, Libelle, LigneReserve, Raison } from "./chassis"
+import { Bouton, Libelle, LigneReserve, Raison } from "./pieces"
 import { sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 
 /** Le tri de départ — **rien**. Il ne porte que des écarts, jamais un état
@@ -201,7 +201,7 @@ export function EcranEnvoi({
           avant d'être descendu jusqu'à lui. */}
       <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-trait p-4">
         <div className="flex items-baseline gap-2">
-          <Libelle papier>ce qui part</Libelle>
+          <Libelle>ce qui part</Libelle>
           <button
             type="button"
             onClick={onFermer}
@@ -212,7 +212,7 @@ export function EcranEnvoi({
           </button>
         </div>
 
-        {refus && <Raison papier texte={refus} />}
+        {refus && <Raison texte={refus} />}
 
         {envoi && (
           <>
@@ -286,7 +286,7 @@ export function EcranEnvoi({
                 produit : *ce n'est pas de ça qu'on parle en ce moment*. */}
             {envoi.retour.length > 0 && (
               <section className="flex flex-col gap-1 border-t border-trait pt-4">
-                <Libelle papier>ce qui se passe au retour</Libelle>
+                <Libelle>ce qui se passe au retour</Libelle>
                 <ul className="flex flex-col">
                   {envoi.retour.map((ligne) => (
                     <li
@@ -335,7 +335,7 @@ export function EcranEnvoi({
               >
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-baseline gap-2">
-                    <Libelle papier>{partie.nom}</Libelle>
+                    <Libelle>{partie.nom}</Libelle>
                     {partie.titre && (
                       <span className="mesure text-[9.5px] text-encre-4">
                         part sous « {partie.titre} »
@@ -353,7 +353,7 @@ export function EcranEnvoi({
                   return (
                     <div key={groupe} className="flex flex-col gap-2">
                       <div className="flex items-baseline gap-2">
-                        <Libelle papier>{NOM_DU_GROUPE[groupe] ?? groupe}</Libelle>
+                        <Libelle>{NOM_DU_GROUPE[groupe] ?? groupe}</Libelle>
                         <span className="mesure text-[9.5px] text-encre-4">
                           {miennes.filter((l) => l.allumee).length} sur{" "}
                           {miennes.length}
@@ -383,7 +383,7 @@ export function EcranEnvoi({
         {envoi && (
           <section className="flex flex-col gap-2">
             <div className="flex items-baseline gap-2">
-              <Libelle papier>les images jointes</Libelle>
+              <Libelle>les images jointes</Libelle>
               <span className="mesure text-[9.5px] text-encre-4">
                 {envoi.images.cochees} cochée
                 {envoi.images.cochees > 1 ? "s" : ""}
@@ -485,7 +485,7 @@ export function EcranEnvoi({
         {/* ── Les options que le modèle sait faire ─────────────────────────── */}
         {envoi && envoi.options.length > 0 && (
           <section className="flex flex-col gap-2">
-            <Libelle papier>les options</Libelle>
+            <Libelle>les options</Libelle>
             <ul className="flex flex-col border-t border-trait">
               {envoi.options.map((option) => (
                 <LigneOption
@@ -509,7 +509,7 @@ export function EcranEnvoi({
 
       {/* ── Ce qui part, mot pour mot ──────────────────────────────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-trait p-4">
-        <Libelle papier>ce qui part, mot pour mot</Libelle>
+        <Libelle>ce qui part, mot pour mot</Libelle>
         {envoi && (
           <>
             {/* **Le pavé se coupe là où le texte se coupe** (R7). C'était un
@@ -668,7 +668,7 @@ export function EcranEnvoi({
               {/* **Le bouton qui paie refuse le second clic** (U1). Le mot
                   change autant que l'état : un bouton grisé qui garde son
                   libellé se lit comme un refus, alors que c'est une attente. */}
-              <Bouton papier
+              <Bouton
                 principal
                 inactif={Boolean(refus) || !envoi || enPaiement}
                 onClick={onPayer}
@@ -770,7 +770,7 @@ function SectionFond({
   const propose = fond.propose
   return (
     <section className="flex flex-col gap-2">
-      <Libelle papier>le fond</Libelle>
+      <Libelle>le fond</Libelle>
       <div className="flex flex-col gap-2 border-t border-trait pt-2">
         <div className="flex items-center gap-2">
           {/* ⚠️ **Le damier quand il n'y a pas de fond**, la même correction
@@ -825,7 +825,7 @@ function SectionFond({
         </div>
 
         {fond.corrige && (
-          <Raison papier texte="corrigé pour cet appel seulement — le jeu garde le sien" />
+          <Raison texte="corrigé pour cet appel seulement — le jeu garde le sien" />
         )}
 
         {/* **La proposition n'apparaît que si elle ajoute quelque chose** : la
@@ -865,7 +865,7 @@ function SectionFond({
             </p>
           </div>
         ) : (
-          <Raison papier texte="rien n'est interdit à ce modèle — pose un fond, et la couleur lui sera interdite sur le sujet" />
+          <Raison texte="rien n'est interdit à ce modèle — pose un fond, et la couleur lui sera interdite sur le sujet" />
         )}
       </div>
     </section>
@@ -1366,7 +1366,7 @@ function LigneOption({
         <p className="mesure text-[10.5px] leading-[1.45] text-encre-3">
           {option.texte}
         </p>
-        {option.refus && <Raison papier texte={`indisponible : ${option.refus}`} />}
+        {option.refus && <Raison texte={`indisponible : ${option.refus}`} />}
       </div>
     </li>
   )

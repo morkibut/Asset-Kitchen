@@ -20,11 +20,11 @@
 //
 // **Porté au papier le 11 septembre 2026 (`D4`)**, sans planche connue — même
 // dessin, même geste, seuls ses jetons et ses tailles passent au vocabulaire
-// de `chassis.tsx` et aux listes fermées de `docs/DESIGN.md`.
+// de `pieces.tsx` et aux listes fermées de `docs/DESIGN.md`.
 
 import { useState } from "react"
 import { api, type Generation, type MesuresLot } from "../api"
-import { Bouton, Raison } from "./chassis"
+import { Bouton, Raison } from "./pieces"
 
 export function EcranDepliage({
   generation,
@@ -118,7 +118,6 @@ export function EcranDepliage({
                 ? `il en reste ${gardees - demandees} de trop — ${demandees} cases à remplir`
                 : `il en manque ${demandees - gardees} — ${demandees} cases à remplir`
             }
-            papier
           />
         )}
         <span className="mesure ml-auto text-[10.5px] text-encre-4">
@@ -126,7 +125,6 @@ export function EcranDepliage({
         </span>
         <Bouton
           principal
-          papier
           inactif={!juste || enCours}
           onClick={() => void valider()}
           titre={
@@ -172,7 +170,7 @@ function Phrase({ pliage }: { pliage: NonNullable<Generation["pliage"]> }) {
           Les garder ferait entrer du fond.
         </p>
       )}
-      <Raison texte="rien n'est entré en bibliothèque tant que vous n'avez pas tranché" papier />
+      <Raison texte="rien n'est entré en bibliothèque tant que vous n'avez pas tranché" />
     </div>
   )
 }

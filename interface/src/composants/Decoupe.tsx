@@ -499,7 +499,7 @@ function Glissiere({
         max={max}
         value={valeur}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="curseur h-[22px] min-w-0 flex-1"
+        className="curseur-papier h-[22px] min-w-0 flex-1"
       />
       <span className="mesure w-[54px] shrink-0 text-right text-[10.5px] text-encre-2">
         {valeur}

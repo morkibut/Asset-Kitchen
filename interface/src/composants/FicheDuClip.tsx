@@ -23,8 +23,8 @@
 //
 // **Portée au papier le 11 septembre 2026 (`D4`)**, au mot près sur la même
 // colonne que `Fiche.tsx` (`D3`) : mêmes jetons, mêmes tailles, le même
-// vocabulaire papier de `chassis.tsx`, en passant `papier` à `Bouton`,
-// `EnTetePanneau` et `Libelle`.
+// vocabulaire papier de `pieces.tsx` pour `Bouton`, `EnTetePanneau` et
+// `Libelle`.
 
 import { useEffect, useState } from "react"
 import {
@@ -37,7 +37,7 @@ import {
   type Pose,
 } from "../api"
 import { vignetteAsset } from "./Apercu"
-import { Bouton, EnTetePanneau, Libelle } from "./chassis"
+import { Bouton, EnTetePanneau, Libelle } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { PANNEAU } from "./Infobulle"
 
@@ -101,7 +101,7 @@ export function FicheDuClip({
       data-fiche-clip={generation.identifiant}
       className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-trait bg-papier-cote"
     >
-      <EnTetePanneau papier>
+      <EnTetePanneau>
         <span className="truncate">Le clip</span>
         <button
           type="button"
@@ -144,7 +144,7 @@ export function FicheDuClip({
 
         {clip.images > 0 ? (
           <div className="flex flex-col gap-1 border-t border-trait pt-2">
-            <Libelle aide="clip.fiche" papier>ce qu'il porte</Libelle>
+            <Libelle aide="clip.fiche">ce qu'il porte</Libelle>
             <p className="mesure text-[10.5px] leading-4 text-encre-2">
               {clip.images} images · {clip.cadence.toFixed(0)} i/s ·{" "}
               {clip.secondes} s demandées · {clip.proportions} · {clip.resolution}
@@ -152,7 +152,7 @@ export function FicheDuClip({
           </div>
         ) : (
           <div className="flex flex-col gap-1 border-t border-trait pt-2">
-            <Libelle aide="clip.fiche" papier>ce qu'il porte</Libelle>
+            <Libelle aide="clip.fiche">ce qu'il porte</Libelle>
             <p className="mesure text-[10.5px] leading-4 text-encre-4">
               {clip.extraction_refus ?? "images non tirées"} — le clip, lui, reste
               payé et se découpera quand ce qui manque sera installé.
@@ -161,7 +161,7 @@ export function FicheDuClip({
         )}
 
         <div className="flex flex-col gap-1 border-t border-trait pt-2">
-          <Libelle aide="clip.fiche" papier>ce qu'il a coûté</Libelle>
+          <Libelle aide="clip.fiche">ce qu'il a coûté</Libelle>
           <p className="mesure text-[10.5px] leading-4 text-encre-2">
             {depense(generation.consomme, generation.unite)}
           </p>
@@ -199,7 +199,7 @@ export function FicheDuClip({
               />
             </button>
             <div className="flex min-w-0 flex-col gap-1">
-              <Libelle aide="clip.fiche" papier>le sprite dont il part</Libelle>
+              <Libelle aide="clip.fiche">le sprite dont il part</Libelle>
               <p className="mesure truncate text-[10.5px] leading-4 text-encre-4">
                 {depart.label}
               </p>
@@ -208,7 +208,7 @@ export function FicheDuClip({
         )}
 
         <div className="flex flex-col gap-1 border-t border-trait pt-2">
-          <Libelle aide="clip.fiche" papier>les bandes qu'il a faites</Libelle>
+          <Libelle aide="clip.fiche">les bandes qu'il a faites</Libelle>
           {bandes === null ? null : bandes.length === 0 ? (
             <p className="mesure text-[10.5px] leading-4 text-encre-4">
               aucune bande gardée — découper ce clip en fera la première.
@@ -231,7 +231,7 @@ export function FicheDuClip({
             dépense : le clip est déjà payé, et c'est la même phrase que le
             pied du montage. */}
         <div className="mt-auto flex flex-col gap-1 border-t border-trait pt-2">
-          <Bouton onClick={onDecouper} enfants="Découper ›" papier />
+          <Bouton onClick={onDecouper} enfants="Découper ›" />
           <p className="mesure text-[10.5px] leading-4 text-encre-4">
             rien ici ne dépense — le clip est déjà payé, et garder ou jeter
             restent les gestes de la grille.
@@ -262,7 +262,7 @@ function CaseDuClip({
   if (bits.length === 0 && !mouvement) return null
   return (
     <div className="flex flex-col gap-1 border-t border-trait pt-2">
-      <Libelle aide="clip.fiche" papier>ce qu'il anime</Libelle>
+      <Libelle aide="clip.fiche">ce qu'il anime</Libelle>
       {bits.length > 0 && (
         <p
           className="mesure truncate text-[10.5px] leading-4 text-encre-2"

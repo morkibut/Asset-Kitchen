@@ -28,7 +28,7 @@ import {
   type ChoixDePlanche,
   type CaseDePlanche,
 } from "../api"
-import { Bouton, Libelle, Raison } from "./chassis"
+import { Bouton, Libelle, Raison } from "./pieces"
 import { faitesDeLaCase } from "./EtabliDuSujet"
 
 export function EcranPlanche({
@@ -129,7 +129,7 @@ export function EcranPlanche({
           qui revient. */}
       <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-trait p-4">
         <div className="flex items-baseline gap-2">
-          <Libelle papier>la planche</Libelle>
+          <Libelle>la planche</Libelle>
           <button
             type="button"
             onClick={onFermer}
@@ -140,7 +140,7 @@ export function EcranPlanche({
           </button>
         </div>
 
-        {refus && <Raison papier texte={refus} />}
+        {refus && <Raison texte={refus} />}
 
         {lu && (
           <>
@@ -179,7 +179,7 @@ export function EcranPlanche({
                 ni les artworks du jeu, ni les concept arts de la chose, ni le
                 dédoublonnage entre les trois. */}
             <section className="flex flex-col gap-1.5">
-              <Libelle papier>les images jointes</Libelle>
+              <Libelle>les images jointes</Libelle>
               <Mesure
                 nom="partent avec l'appel"
                 valeur={`${lu.jointes.total}`}
@@ -222,7 +222,7 @@ export function EcranPlanche({
                 et un fichier entier du produit ne décrit qu'elle. L'écran, lui,
                 n'avait pas été rouvert. */}
             <section className="flex flex-col gap-1.5">
-              <Libelle papier>ce qui entre en bibliothèque</Libelle>
+              <Libelle>ce qui entre en bibliothèque</Libelle>
               <p className="mesure text-[10px] leading-4 text-encre-4">
                 la planche <span className="text-encre-3">y entre</span>, et
                 elle porte le prix de l'appel — ses {lu.geometrie.cases}{" "}
@@ -235,7 +235,7 @@ export function EcranPlanche({
             {/* ── Ce que refaire coûte, nommé avant de lancer ────────────── */}
             {retenu === "refaire" && lu.deja_pleines.length > 0 && (
               <section className="flex flex-col gap-1.5">
-                <Libelle papier>ce que refaire coûte</Libelle>
+                <Libelle>ce que refaire coûte</Libelle>
                 <p className="mesure text-[10px] leading-4 text-encre-4">
                   {lu.deja_pleines.length} case
                   {lu.deja_pleines.length > 1 ? "s sont" : " est"} déjà pleine
@@ -286,7 +286,7 @@ export function EcranPlanche({
             </div>
 
             {lu.cases.length < 2 && (
-              <Raison papier texte="ce jeu ne déclare qu'une direction pour cette pose — il n'y a rien à plier, et un appel simple suffit" />
+              <Raison texte="ce jeu ne déclare qu'une direction pour cette pose — il n'y a rien à plier, et un appel simple suffit" />
             )}
 
             {/* ── Les cases, dans l'ordre de lecture de la grille ────────── */}
@@ -302,7 +302,7 @@ export function EcranPlanche({
 
             {/* ── Ce qu'on peut demander ─────────────────────────────────── */}
             <section className="flex flex-col gap-2">
-              <Libelle papier>ce qu'on peut demander</Libelle>
+              <Libelle>ce qu'on peut demander</Libelle>
               <ul className="flex flex-col">
                 {lu.choix.map((ligne) => (
                   <LigneDeChoix
@@ -379,7 +379,7 @@ export function EcranPlanche({
             {/* ── Ce qui part, et ce qu'un compte faux coûterait ─────────── */}
             {choix && (
               <section className="flex flex-col gap-1.5 border-t border-trait pt-4">
-                <Bouton papier
+                <Bouton
                   principal
                   inactif={Boolean(choix.refus) || partantes.length === 0}
                   onClick={armer}
@@ -423,7 +423,7 @@ export function EcranPlanche({
 
       {/* ── La matrice — on change de pose sans refermer ──────────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-1 overflow-y-auto border-l border-trait p-4">
-        <Libelle papier>sa matrice</Libelle>
+        <Libelle>sa matrice</Libelle>
         <p className="mesure pb-1 text-[9.5px] leading-4 text-encre-4">
           on change de pose sans refermer
         </p>

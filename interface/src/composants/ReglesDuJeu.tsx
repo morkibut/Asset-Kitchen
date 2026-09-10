@@ -122,7 +122,7 @@ import {
   type Univers,
   type VueDuJeu,
 } from "../api"
-import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./chassis"
+import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { BlocMouvements } from "./Mouvements"
 import { PANNEAU } from "./Infobulle"
@@ -552,7 +552,7 @@ function SonAllure({
               className="h-[26px] w-[34px] shrink-0 rounded-5 border border-trait bg-carte"
             />
           ) : (
-            <span className="damier relative h-[26px] w-[34px] shrink-0 overflow-hidden rounded-5 border border-trait">
+            <span className="damier-papier relative h-[26px] w-[34px] shrink-0 overflow-hidden rounded-5 border border-trait">
               {/* Le sélecteur est transparent par-dessus le damier : il
                   s'ouvre sur la couleur proposée quand il y en a une, et sur
                   ce que le navigateur met par défaut quand il n'y en a pas.
@@ -1095,7 +1095,7 @@ function PlaceDunFournisseur({
         </p>
       ) : (
         <>
-          {tiroir.manque && <Raison texte={tiroir.manque} papier />}
+          {tiroir.manque && <Raison texte={tiroir.manque} />}
           {tiroir.secrets.map((secret) => (
             <UnePlace key={secret.nom} secret={secret} onChange={onChange} />
           ))}
@@ -1157,7 +1157,6 @@ function UnePlace({
           className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-papier-cote px-[14px] text-[12.5px] text-encre placeholder:text-eteint"
         />
         <Bouton
-          papier
           principal
           inactif={saisie.trim().length < 8 || enCours}
           onClick={() => void agir(() => api.deposerSecret(secret.nom, saisie.trim()))}
@@ -1179,7 +1178,7 @@ function UnePlace({
           </button>
         )}
       </div>
-      <Raison texte={refus} papier />
+      <Raison texte={refus} />
     </div>
   )
 }
@@ -1250,12 +1249,11 @@ function BlocAgent({
             nom="Plafond de la séance"
             onBasculer={() => void poser({ plafond_actif: !cadre.plafond_actif })}
           />
-          <Libelle aide="agent.plafond" papier eteint={!cadre.plafond_actif}>
+          <Libelle aide="agent.plafond" eteint={!cadre.plafond_actif}>
             Plafond de la séance
           </Libelle>
         </div>
         <Curseur
-          papier
           libelle="le plafond de la séance"
           valeur={plafond}
           min={1}
@@ -1274,7 +1272,7 @@ function BlocAgent({
             nom="Modèle d'exploration"
             onBasculer={() => void poser({ modele_actif: !cadre.modele_actif })}
           />
-          <Libelle aide="agent.modele" papier eteint={!cadre.modele_actif}>
+          <Libelle aide="agent.modele" eteint={!cadre.modele_actif}>
             Modèle d'exploration
           </Libelle>
         </div>
@@ -1296,7 +1294,7 @@ function BlocAgent({
         />
       </div>
 
-      <Raison texte={refus} papier />
+      <Raison texte={refus} />
     </>
   )
 }
@@ -1377,7 +1375,7 @@ function BlocDossiers({
     <>
       <TitreDeLAtelier>Les dossiers</TitreDeLAtelier>
       <div className="flex flex-col gap-[8px]">
-        <Libelle aide="agent.dossier" papier>
+        <Libelle aide="agent.dossier">
           Dossier du jeu
         </Libelle>
         <div className="flex items-start gap-[8px]">
@@ -1388,10 +1386,10 @@ function BlocDossiers({
             placeholder="C:\\Jeux\\mon-jeu\\assets"
             className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-papier-cote px-[14px] text-[11.5px] text-encre placeholder:text-eteint"
           />
-          <Bouton papier inactif={!change} onClick={poser} enfants="Poser" />
+          <Bouton inactif={!change} onClick={poser} enfants="Poser" />
         </div>
       </div>
-      <Raison texte={refus} papier />
+      <Raison texte={refus} />
     </>
   )
 }
@@ -1449,7 +1447,7 @@ export function PanneauAtelier({
         <BlocMouvements />
 
         <div className="mt-[22px] flex justify-end">
-          <Bouton papier onClick={onFermer} enfants="Fermer — Échap" />
+          <Bouton onClick={onFermer} enfants="Fermer — Échap" />
         </div>
       </section>
     </div>

@@ -2795,6 +2795,10 @@ phrase, et ils coûteront cher s'ils sont découverts en cours de construction.
 
 # Le dernier châssis — `D1` à `D6`
 
+> ✅ **Clos le 11 septembre 2026.** Les six tranches sont tenues, le compte de sortie est à
+> zéro et la liste a disparu du garde-fou avec son dernier nom. Le bilan du bloc est en fin de
+> fichier, § *Le bloc `D1`-`D6` est clos*.
+
 > **Ouvert le 10 septembre 2026, à la clôture de `C1`-`C9`.** La barre à trois onglets est
 > tombée et le carnet est le seul chemin — mais `essai_jetons.py` compte encore **18 fichiers,
 > 13 921 lignes** qui tournent sur les couleurs et les composants de l'ancien châssis, atteints
@@ -2867,7 +2871,7 @@ vide, `chassis.tsx` lui-même en sort en dernier (`D6`), et la liste disparaît 
 
 ---
 
-## D1 · Les cinq portes des réglages, la dernière
+## D1 · Les cinq portes des réglages, la dernière — **tenue le 10 septembre 2026**
 
 `C1` a basculé trois des cinq portes vers `EcranReglages` sur `Installation.tsx`. Restent deux
 chemins et un fichier : les boutons « Réglages » et l'état de la clé dans la barre
@@ -2901,7 +2905,7 @@ chemins et un fichier : les boutons « Réglages » et l'état de la clé dans l
 
 ---
 
-## D2 · L'inspiration de l'univers
+## D2 · L'inspiration de l'univers — **tenue le 11 septembre 2026**
 
 `Univers.tsx` (381), `Toile.tsx` (2842), `Tableau.tsx` (1599), `Ambiances.tsx` (1070) — les
 trois côtés d'inspiration de l'onglet Univers, restés en place depuis que `C2` a retiré leur
@@ -2991,7 +2995,7 @@ collées à la main, six détourées, aucun appel payé), comparé à `Galerie.d
 
 ---
 
-## D4 · Les outils de la galerie
+## D4 · Les outils de la galerie — **tenue le 11 septembre 2026**
 
 `Arbre.tsx` (378, l'arbre des collections), `BarreOutils.tsx` (426), `Import.tsx` (249),
 `Depliage.tsx` (277), `FicheDuClip.tsx` (311, qui importe déjà `nomDuModele` de `Fiche.tsx`).
@@ -3016,7 +3020,7 @@ dessine dans la tranche — comme `Calibrage.tsx` en `C6`.
 
 ---
 
-## D5 · Le repos de l'onglet Créer
+## D5 · Le repos de l'onglet Créer — **tenue le 11 septembre 2026**
 
 `ChampPrompt.tsx` (331) et `PanneauReglages.tsx` (711) ne sont montés nulle part en fichier
 propre : ils vivent en clair dans `App.tsx` (`barreQuiPaie`, `:1599-1721`), la barre qui paie —
@@ -3047,7 +3051,7 @@ redessiner.
 
 ---
 
-## D6 · Le dernier châssis tombe
+## D6 · Le dernier châssis tombe — **tenue le 11 septembre 2026**
 
 `chassis.tsx` (1352 lignes) — la dernière ligne de `LES_FICHIERS_DE_L_ANCIEN_CHASSIS`, et la
 seule qui ne se dessine pas : 27 fichiers l'importent encore, la plupart pour son vocabulaire
@@ -3073,3 +3077,120 @@ sombre que `D1` à `D5` auront fini de désarmer.
 ### Bloquée par
 
 - `D1`, `D2`, `D3`, `D4`, `D5` — toutes.
+
+### Ce qui a été fait, et la décision sur le sort du fichier
+
+**Le relevé d'abord.** Composant par composant, appelant par appelant : sur les 133 emplois de
+`Bouton`, `Libelle`, `Raison`, `Segments`, `Curseur`, `EnTetePanneau`, `EnTeteDeSection`,
+`Bloc` et `Jauge`, **aucun ne voulait plus la branche sombre**. Les seuls qui ne passaient pas
+`papier` étaient soit des homonymes locaux — `Sortie.tsx`, `Depenses.tsx` et `Installation.tsx`
+définissent chacun leur propre `Bloc` ou `Bouton` —, soit quatre oublis sur des écrans pourtant
+clairs : deux `Jauge` (`ChampPrompt.tsx`, `Ambiances.tsx`), un `Revers` et deux `LigneReserve`,
+qui n'avaient pas de prop du tout, et un `Libelle` sur la dernière surface sombre d'`App.tsx`.
+
+**La décision : purement papier, et renommé.** Une prop qui ne peut plus valoir qu'une chose
+est un endroit où se tromper, et une branche qu'aucun écran n'atteint est du code qu'aucun
+essai ne tient. La branche sombre est partie, la prop avec elle, et
+`interface/src/composants/chassis.tsx` est devenu **`interface/src/composants/pieces.tsx`** —
+le nom du § *Les onze pièces* de `docs/DESIGN.md`, qui est ce que le fichier contient. Les
+29 fichiers qui l'importent suivent.
+
+**Trois exports n'avaient plus aucun appelant** et sont partis avec : le composant `Etape` (la
+place de recette de l'ancien établi, remplacée par `Retouche.tsx` en `B26`), le contexte
+`NomDuReglage` que personne ne fournissait — `Curseur` lisait donc toujours `undefined` —, et
+`ouvrirPli`.
+
+**Et la géométrie du fichier est passée aux listes fermées du même geste**, ce qui l'a sorti de
+`LA_GEOMETRIE_D_AVANT` aussi : 9.5 et 8.5 px de texte remontés à 10.5 (rien ne descend sous
+10.5), arrondis de 2 px devenus 5, 80 ms devenus 120, le carré du point de la barre d'état de 5
+à 4 px avec l'arrondi de `Carnet.tsx`, et le champ de nombre du curseur de 46 à **70 px** — la
+seule largeur de petit contrôle déclarée.
+
+⚠️ **La jauge n'est plus rouille.** Elle était deux pixels de `--signal` ; elle est un filet
+d'un pixel en `--encre-3` sur `--trait-faible`. Ce n'est pas un choix neuf : c'est exactement ce
+que `Retouche.tsx` avait déjà tranché pour sa propre jauge, en toutes lettres — *« les planches
+disent deux pixels ; elles décrivent la barre du châssis sombre, où un pixel de cyan disparaît.
+Sur le papier, un filet d'un pixel est le vocabulaire du carnet, et 2 n'est pas dans la liste
+fermée des écarts »*. Les deux jauges du produit disent enfin la même chose, et le rouille
+redevient ce que la règle dit qu'il est : **le bouton qui dépense, un seul par écran** — un fond
+rouille de plus dans le même fichier en aurait fait un second.
+
+### Les cinq derniers restes de sombre, hors de `chassis.tsx`
+
+Le compte de sortie ne mesurait que la **couleur d'un écran**, pas ce qu'un écran clair montait
+depuis ailleurs. Ces cinq-là étaient donc atteignables sans figurer nulle part :
+
+1. **La bulle d'explication** (`Infobulle.tsx`) — presque noire, au survol de n'importe quel
+   libellé pointillé du produit : le reste le plus visible de l'ancien châssis, et sur tous les
+   écrans à la fois. Elle est en `--carte` sur `--trait`, « Le guide › » en rouille. Du même
+   geste, **le pointillé n'a plus qu'une définition** : `POINTILLE` est passé au papier, et les
+   deux copies que `pieces.tsx` et `Import.tsx` en gardaient chacun ont disparu.
+2. **L'aperçu plein écran** (`Apercu.tsx`) — fond en `--encre/92`, pied en `--papier`.
+3. **Le damier de transparence** — il y en avait deux, `.damier` (ancien châssis) et
+   `.damier-papier` ; **dix-huit surfaces employaient encore le premier**, sur neuf écrans tous
+   clairs. Il n'y en a plus qu'un, et `--damier-a`/`--damier-b` ne servent plus.
+4. **Le curseur de l'écran de découpe**, seul emploi restant de `.curseur`, le rail bleu ; la
+   classe est partie avec lui.
+5. **Quatre couleurs posées à la main** : trois dans le montage d'une animation (`Montage.tsx`,
+   en `style=` et non en classe, donc invisibles au relevé de classes) et la surface *choisir
+   une image de référence* d'`App.tsx`, qui montait la grille papier sous un en-tête sombre.
+   Plus `bg-fond-2`/`bg-fond-1` dans `TableauDeBord.tsx`, `border-t-texte-3` dans
+   `EtabliDuSujet.tsx`, `text-echec-froid` dans `Emplois.tsx`.
+
+**Résultat mesurable** : `essai_jetons.py` nomme désormais les **seize jetons du châssis
+sombre** dans son sens 2 — *déclaré, et rien ne l'emploie*. C'est précisément ce que
+`index.css` annonçait en `C9` : *« le suffixe restera vrai le jour où plus rien ne
+l'emploiera »*. Ils restent écrits, non supprimés : le sens 2 ne refuse rien, il rend un compte,
+et les effacer se décide à part.
+
+**Vérifié** : `essai_jetons.py` — *Rien à refuser*, le compte de sortie est clos et la liste
+retirée du script ; `npx tsc -b` propre ; `npx vitest run` — **1 168 essais, tous verts** (deux
+sélecteurs de classe ont changé dans `App.test.tsx`, aucune assertion de contenu) ; et au
+navigateur sur `essais/atelier_jetable_verif_d6.py` (port 8502, un personnage, un objet, un
+décor, une pièce portée, un clip et une bande, aucun appel payé). La lecture à l'œil est
+doublée d'**un balayage par script** : sur chaque écran, un parcours de tous les éléments du
+document qui compare `backgroundColor`, `color`, les quatre bordures, `outline`, `fill`,
+`stroke` et `textDecorationColor` aux seize valeurs sombres. Galerie, toile de l'univers, page
+et établi d'un sujet, règles du jeu, réglages, atelier d'une animation, montage, dépenses,
+bulle d'explication, aperçu plein écran : **zéro à chaque écran**.
+
+---
+
+## Le bloc `D1`-`D6` est clos — 11 septembre 2026
+
+`C1`-`C9` avait retiré le dernier couloir ; ce bloc a vidé les pièces au bout. **Le compte de
+sortie est à zéro**, et il n'existe plus : la liste `LES_FICHIERS_DE_L_ANCIEN_CHASSIS`, ouverte
+par `C1` à 33 fichiers et 41 059 lignes, est partie de `essai_jetons.py` avec son dernier nom.
+Le banc tient maintenant `interface/src` en entier sans liste blanche ni liste noire de
+couleur ; ce qui reste de listé, `LA_GEOMETRIE_D_AVANT`, ne parle plus que de **tailles**, et
+elle a maigri d'un nom au passage, de 20 à 19.
+
+Ce que le bloc a réellement mesuré, et qui n'était pas ce qu'on croyait en l'ouvrant : le
+compte de sortie ne voyait que la **couleur écrite dans un écran**. Il ne voyait pas ce qu'un
+écran clair montait depuis ailleurs — une bulle, un damier, un curseur, une couleur posée en
+`style=`. Les cinq derniers restes de sombre du produit étaient tous de cette nature, et aucun
+ne figurait dans la liste. **C'est le sens 2 du garde-fou qui les a trouvés, pas la liste** :
+un jeton déclaré que personne n'emploie est une preuve ; une liste tenue à la main est une
+promesse.
+
+Le produit est en papier, d'un bout à l'autre. Les seize jetons du châssis sombre sont
+déclarés dans `index.css` et **inemployés** — `essai_jetons.py` les nomme tous les seize.
+
+| Tranche | Ce qu'elle a sorti | Tenue le |
+|---|---|---|
+| `D1` | les deux dernières portes des réglages — `EcranReglages.tsx`, `Secrets.tsx` | 10 sept. 2026 |
+| `D2` | l'inspiration de l'univers — `Univers.tsx`, `Toile.tsx`, `Tableau.tsx`, `Ambiances.tsx` | 11 sept. 2026 |
+| `D3` | la galerie, dessinée — `Galerie.tsx`, `BarreEtat.tsx`, `Tuile.tsx`, `Fiche.tsx` | 11 sept. 2026 |
+| `D4` | les outils de la galerie — `Arbre.tsx`, `BarreOutils.tsx`, `Depliage.tsx`, `FicheDuClip.tsx`, `Import.tsx` | 11 sept. 2026 |
+| `D5` | le repos de l'onglet Créer — `BarreQuiPaie.tsx`, `ChampPrompt.tsx`, `PanneauReglages.tsx` | 11 sept. 2026 |
+| `D6` | le dernier châssis — `chassis.tsx` devenu `pieces.tsx`, et les cinq restes hors liste | 11 sept. 2026 |
+
+### Ce que ce bloc ne referme pas
+
+- **La géométrie de dix-neuf fichiers.** `LA_GEOMETRIE_D_AVANT` les nomme : leurs couleurs sont
+  celles du papier, leurs tailles sont celles d'avant — 10 px de texte, arrondis de 2 px,
+  largeurs libres. Les rouvrir une à une est un **dessin**, pas un renommage de jeton, et c'est
+  le travail que `D2`, `D3` et `D4` ont fait pour leurs écrans à eux. Le banc dit lui-même quand
+  un de ces noms est devenu propre.
+- **Les seize jetons sombres d'`index.css`.** Ils sont déclarés et morts. Les effacer est un
+  geste à part, et il coûte la trace de ce que la V4 a remplacé.

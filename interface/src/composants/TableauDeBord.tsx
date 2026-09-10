@@ -131,7 +131,7 @@ export function TableauDeBord({
                 {/* La barre ne paraît que si le serveur a un compte à en
                     tirer — une famille sans sujet n'a rien à mesurer. */}
                 {detail && detail.complet != null && (
-                  <span className="block h-[4px] overflow-hidden rounded-5 bg-fond-2">
+                  <span className="block h-[4px] overflow-hidden rounded-5 bg-trait-faible">
                     <span
                       className="block h-full rounded-5 bg-ok"
                       style={{ width: `${Math.round(detail.complet * 100)}%` }}
@@ -214,7 +214,7 @@ export function TableauDeBord({
               <button
                 type="button"
                 onClick={surAllerDecouper}
-                className="h-[34px] self-start rounded-7 border border-trait bg-fond-1 px-[14px] text-[12.5px] text-encre transition-colors duration-120 hover:border-contour"
+                className="h-[34px] self-start rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre transition-colors duration-120 hover:border-contour"
               >
                 Aller la découper
               </button>

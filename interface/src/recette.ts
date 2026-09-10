@@ -8,7 +8,7 @@
 // l'écran neuf, et deux définitions d'un même fait finissent toujours par
 // diverger — la leçon que `B18` a payée sur `palette.py`.
 //
-// **Ce fichier n'importe aucun écran** : ni `chassis.tsx`, ni un composant, ni
+// **Ce fichier n'importe aucun écran** : ni `pieces.tsx`, ni un composant, ni
 // React autrement que pour ses trois crochets. C'est ce qui le rend lisible par
 // l'atelier d'une animation comme par la retouche, sans traîner l'un chez
 // l'autre.

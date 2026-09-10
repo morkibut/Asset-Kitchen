@@ -263,18 +263,18 @@ export function useInfobulle(
       // `requestAnimationFrame` ne se déclenche pas dans un onglet qui ne
       // compose pas ses images, et la bulle resterait à `opacity: 0`.
       className={[
-        "paraitre defile fixed z-50 overflow-y-auto rounded-[2px] border border-bord-fort bg-fond-1 px-3 pt-2.5 pb-2",
-        "shadow-[0_6px_20px_rgba(0,0,0,.45)]",
+        "paraitre defile fixed z-50 overflow-y-auto rounded-[2px] border border-trait bg-carte px-3 pt-2.5 pb-2",
+        "shadow-[0_4px_18px_rgba(0,0,0,.12)]",
       ].join(" ")}
     >
       {/* Ce que c'est — une phrase, jamais deux. */}
-      <p className="text-[12px] leading-[1.5] text-texte">{entree.quoi}</p>
+      <p className="text-[12px] leading-[1.5] text-encre">{entree.quoi}</p>
       {/* Ce que ça change — la ligne obligatoire, celle qui porte tout le
           poids. « Rien à la génération. » est une réponse, et la plus utile. */}
-      <p className="mt-2 text-[12px] leading-[1.5] text-texte-2">{entree.change}</p>
+      <p className="mt-2 text-[12px] leading-[1.5] text-encre-3">{entree.change}</p>
       {/* D'où ça sort — en mono, parce que l'origine d'un défaut est un fait
           sur le monde, et que ce produit rend tout fait en mono. */}
-      <div className="mesure mt-2.5 flex items-center justify-between gap-3 border-t border-bord pt-2 text-[10px] text-texte-3">
+      <div className="mesure mt-2.5 flex items-center justify-between gap-3 border-t border-trait pt-2 text-[10px] text-encre-4">
         <span className="truncate">{entree.origine}</span>
         <button
           type="button"
@@ -283,7 +283,7 @@ export function useInfobulle(
             fermer()
             ouvrirGuide(cle)
           }}
-          className="shrink-0 text-signal-froid hover:text-signal-froid-clair"
+          className="shrink-0 text-signal hover:opacity-70"
         >
           Le guide ›
         </button>
@@ -297,12 +297,15 @@ export function useInfobulle(
 /**
  * Le pointillé — la seule marque que ce motif ajoute au châssis au repos.
  *
- * `--bord-fort`, `underline-offset: 3px`. Même token que la poignée de barre de
- * défilement, et pour exactement le même métier : *il y a plus ici*. `--bord`
- * est sous le seuil où l'œil le trouve, `--bord-fort` est au-dessus quand on
- * cherche et en dessous quand on travaille. C'est aussi le trait que le
- * navigateur pose sous `<abbr>` depuis toujours — la seule décoration du
- * produit qui se comprenne sans être apprise.
+ * `--contour`, `underline-offset: 3px`, et `--encre-3` au survol. Le métier est
+ * celui-là : *il y a plus ici*. `--trait` est sous le seuil où l'œil le trouve,
+ * `--contour` est au-dessus quand on cherche et en dessous quand on travaille.
+ * C'est aussi le trait que le navigateur pose sous `<abbr>` depuis toujours — la
+ * seule décoration du produit qui se comprenne sans être apprise.
+ *
+ * *Il se lisait en `--bord-fort` sur le châssis sombre, et trois fichiers en
+ * gardaient chacun leur copie papier (`pieces.tsx`, `Import.tsx`). `D6` a porté
+ * celui-ci au papier, et les copies sont parties : une marque, un endroit.*
  */
 export const POINTILLE =
-  "cursor-help underline decoration-dotted decoration-bord-fort underline-offset-[3px] hover:decoration-texte-3"
+  "cursor-help underline decoration-dotted decoration-contour underline-offset-[3px] hover:decoration-encre-3"

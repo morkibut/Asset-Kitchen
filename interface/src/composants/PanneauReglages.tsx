@@ -22,7 +22,7 @@ import {
   type Reserve,
   type Univers,
 } from "../api"
-import { Bloc, Libelle, LigneReserve, Raison, Segments } from "./chassis"
+import { Bloc, Libelle, LigneReserve, Raison, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
 
 /** La date d'une photo de catalogue (F1). Le jour et le mois suffisent : ce
@@ -170,7 +170,6 @@ export function PanneauReglages({
           titre="Modèle"
           aide="reglages.modele"
           etat={choisi?.nom ?? null}
-          papier
           // Le compteur suit ce qu'on voit. « 48 au catalogue » au-dessus d'une
           // liste de huit annonçait une liste qui n'était pas là. Il compte
           // **les résultats du filtre**, jamais les lignes rendues : l'épinglé
@@ -217,9 +216,8 @@ export function PanneauReglages({
 
         {/* ── Le cadrage ────────────────────────────────────────────────── */}
         <section className="flex flex-col gap-1.5">
-          <Libelle papier aide="reglages.proportions">Proportions</Libelle>
+          <Libelle aide="reglages.proportions">Proportions</Libelle>
           <Segments
-            papier
             valeurs={["1:1", "3:2", "2:3", "16:9"] as const}
             valeur={proportions}
             onChange={onProportions}
@@ -234,9 +232,8 @@ export function PanneauReglages({
         </section>
 
         <section className="flex flex-col gap-1.5">
-          <Libelle papier aide="reglages.variations">Variations</Libelle>
+          <Libelle aide="reglages.variations">Variations</Libelle>
           <Segments
-            papier
             valeurs={[1, 2, 4] as const}
             valeur={cases ? 1 : variations}
             onChange={onVariations}
@@ -248,7 +245,6 @@ export function PanneauReglages({
             indisponibles={cases ? ([2, 4] as const) : []}
           />
           <Raison
-            papier
             texte={
               cases
                 ? // **« cases » et non « attitudes »** (E13) : une planche de
@@ -274,7 +270,7 @@ export function PanneauReglages({
         {univers.bareme.length > 0 && (
           <section className="flex flex-col gap-1.5">
             <div className="flex items-baseline justify-between">
-              <Libelle papier aide="reglages.sujet">Sujet</Libelle>
+              <Libelle aide="reglages.sujet">Sujet</Libelle>
               {echelleLue && (
                 <span className="mesure text-[9.5px] text-encre-4">
                   {echelleLue.occupation} % de la case
@@ -299,7 +295,7 @@ export function PanneauReglages({
               ))}
             </div>
             {!echelle && (
-              <Raison papier texte="aucun sujet — seules les planches « tous » partiront" />
+              <Raison texte="aucun sujet — seules les planches « tous » partiront" />
             )}
           </section>
         )}
@@ -310,9 +306,8 @@ export function PanneauReglages({
             .filter((o) => o.genre === "choix" && o.valeurs.length > 0)
             .map((option) => (
               <section key={option.nom} className="flex flex-col gap-1.5">
-                <Libelle papier>{option.nom}</Libelle>
+                <Libelle>{option.nom}</Libelle>
                 <Segments
-                  papier
                   valeurs={option.valeurs}
                   valeur={options[option.nom] ?? option.valeurs[0]}
                   onChange={(v) => onOptions({ ...options, [option.nom]: v })}
@@ -465,7 +460,7 @@ function LigneModele({
           </span>
         ) : null}
         {grise ? (
-          <Raison papier texte={modele.refus} />
+          <Raison texte={modele.refus} />
         ) : (
           <span className="mesure text-[9.5px] text-encre-4">
             {modele.references_max} réfs · ×{modele.variations_max}

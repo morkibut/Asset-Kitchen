@@ -13,7 +13,7 @@
 // § Un signal qui se pose est un trio).
 
 import { heure, type Bibliotheque, type Etat } from "../api"
-import { Point } from "./chassis"
+import { Point } from "./pieces"
 
 /** Ce que l'atelier sait du catalogue des modèles : est-il en repli, pourquoi,
  *  et de quand date ce qu'il montre. */

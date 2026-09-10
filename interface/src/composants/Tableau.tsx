@@ -47,7 +47,7 @@ import {
   type Teinte,
 } from "../api"
 import { mots, sujetCarte, useVisee } from "./Apercu"
-import { Libelle, Raison, Segments, ZoneTexte } from "./chassis"
+import { Libelle, Raison, Segments, ZoneTexte } from "./pieces"
 
 const SPAN: Record<number, string> = { 1: "span 1", 2: "span 2", 4: "span 4" }
 
@@ -724,8 +724,8 @@ export function BarreTableau({
               « + note » nommerait une chose au lieu d'un geste. */}
           <span className="text-signal">+</span> note
         </button>
-        <Libelle papier aide="tableau.vue">Vue</Libelle>
-        <Segments papier
+        <Libelle aide="tableau.vue">Vue</Libelle>
+        <Segments
           valeurs={["grille", "toile"] as const}
           valeur={vue}
           onChange={onVue}
@@ -1245,7 +1245,7 @@ function LectureDePalette({
   return (
     <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
       <div className="flex items-center justify-between gap-2">
-        <Libelle papier aide="carte.lecture">Ce que la palette y lit</Libelle>
+        <Libelle aide="carte.lecture">Ce que la palette y lit</Libelle>
         {!lu && (
           <button
             type="button"
@@ -1381,7 +1381,7 @@ function Reglages({
           ni porter une explication — c'est exactement ce qui a rendu `groupe`
           incomprehensible. */}
       <div className="flex flex-col gap-1">
-        <Libelle papier aide="carte.groupe">Groupe</Libelle>
+        <Libelle aide="carte.groupe">Groupe</Libelle>
         <input
           value={groupe}
           placeholder="aucun"
@@ -1400,7 +1400,7 @@ function Reglages({
         />
       </div>
       <div className="flex flex-col gap-1">
-        <Libelle papier aide="carte.note">Note</Libelle>
+        <Libelle aide="carte.note">Note</Libelle>
         <textarea
           value={note}
           placeholder="—"
@@ -1412,8 +1412,8 @@ function Reglages({
       </div>
 
       <div className="flex items-center justify-between">
-        <Libelle papier aide="carte.taille">Taille</Libelle>
-        <Segments papier
+        <Libelle aide="carte.taille">Taille</Libelle>
+        <Segments
           valeurs={[1, 2, 4] as const}
           valeur={carte.taille}
           onChange={(taille) => void regler({ taille })}
@@ -1429,7 +1429,7 @@ function Reglages({
       {carte.genre === "texte" && (
         <div className="flex flex-col gap-2 border-t border-trait pt-2">
           <div className="flex flex-col gap-1">
-            <Libelle papier aide="note.texte">Texte</Libelle>
+            <Libelle aide="note.texte">Texte</Libelle>
             {/* **C'est le seul endroit où le texte entier se relit** — la
                 carte, elle, en montre ce qu'un carré peut en montrer. Trois
                 lignes n'y suffisaient donc pas : le document de présentation
@@ -1447,7 +1447,7 @@ function Reglages({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Libelle papier aide="note.teinte">Teinte de la note</Libelle>
+            <Libelle aide="note.teinte">Teinte de la note</Libelle>
             <Pastilles
               teinte={carte.teinte}
               onChoisir={(teinte) => void regler({ teinte })}
@@ -1458,7 +1458,7 @@ function Reglages({
 
       {carte.genre === "image" && personnages.length > 0 && (
         <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
-          <Libelle papier aide="carte.concept">Concept art de</Libelle>
+          <Libelle aide="carte.concept">Concept art de</Libelle>
           {/* **Une carte désignée reste où elle est** (US-124) : aucune copie,
               aucun second rangement. Et elle peut servir à plusieurs — d'où des
               bascules, et non un choix unique. */}
@@ -1505,7 +1505,7 @@ function Reglages({
       {carte.genre === "image" && (
         <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
           <div className="flex items-center justify-between">
-            <Libelle papier aide="carte.officiel">Artwork officiel</Libelle>
+            <Libelle aide="carte.officiel">Artwork officiel</Libelle>
             <button
               type="button"
               onClick={() => void promouvoir(!carte.officiel)}
@@ -1524,11 +1524,11 @@ function Reglages({
             </button>
           </div>
           {carte.statut !== "prete" && (
-            <Raison papier texte="cette image n'est pas encore arrivée" />
+            <Raison texte="cette image n'est pas encore arrivée" />
           )}
           {carte.officiel && (
             <>
-              <Libelle papier aide="carte.famille">Famille</Libelle>
+              <Libelle aide="carte.famille">Famille</Libelle>
               <div className="flex flex-wrap gap-1">
                 {FAMILLES.map((famille) => (
                   <button

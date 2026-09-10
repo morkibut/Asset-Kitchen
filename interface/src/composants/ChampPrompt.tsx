@@ -19,7 +19,7 @@
 
 import { useEffect, useRef } from "react"
 import { secondes } from "../api"
-import { Bouton, Jauge, Raison, Revers, useEcoule, usePli } from "./chassis"
+import { Bouton, Jauge, Raison, Revers, useEcoule, usePli } from "./pieces"
 
 /** Ce qui est payé et pas encore arrivé. `null` la plupart du temps. */
 export type EnVol = {
@@ -275,7 +275,7 @@ export function ChampPrompt({
           {enVol && enVol.images > 0 ? (
             <EnRoute {...enVol} />
           ) : (
-            <Bouton papier principal inactif={refus !== null || enPaiement} onClick={onGenerer} enfants={
+            <Bouton principal inactif={refus !== null || enPaiement} onClick={onGenerer} enfants={
               enPaiement
                 ? "Paiement en cours…"
                 : variations > 1 ? `Générer ${variations} variations` : "Générer"
@@ -292,7 +292,7 @@ export function ChampPrompt({
               disponible. Le bloc au-dessus continue de dire ce qui est en
               route ; la fente dit ce qu'on peut faire ensuite, comme toujours. */}
           {refus ? (
-            <Raison papier texte={refus} ouAller={ouAller} onAller={onAller} />
+            <Raison texte={refus} ouAller={ouAller} onAller={onAller} />
           ) : echec ? (
             /* **Un appel raté est un locataire de la fente** (U1), et il passe
                 avant le revers et avant le départ en cours : c'est la dernière

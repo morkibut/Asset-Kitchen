@@ -40,12 +40,15 @@ encore celle du châssis sombre, 10 px de texte, arrondis de 2 px, durées de
 80 ms. Un fichier neuf est donc tenu d'office, et cette liste ne fait que
 maigrir : le banc dit lui-même quand un de ses noms est devenu propre.
 
-**Et un troisième compte, ajouté en `C1` : ce qui reste à sortir.**
-`LES_FICHIERS_DE_L_ANCIEN_CHASSIS` nomme ce qui tourne **encore** sur le
-châssis sombre — sa couleur, pas sa géométrie —, le banc l'imprime avec son
-compte de lignes, et chaque tranche du bloc en retire des noms ; le bloc, c'est
-`docs/PLAN-carnet.md` § *La sortie de l'ancien châssis*. Le relevé du
-10 septembre 2026 partait de 33 fichiers.
+**Le troisième compte est clos.** `LES_FICHIERS_DE_L_ANCIEN_CHASSIS`, ajoutée en
+`C1`, nommait ce qui tournait encore sur le châssis sombre — sa couleur, pas sa
+géométrie —, et chaque tranche de `C1`-`C9` puis de `D1`-`D6` en retirait des
+noms : 33 fichiers et 41 059 lignes le 10 septembre 2026, zéro le 11. `D6` a
+sorti le dernier (`chassis.tsx`, devenu `interface/src/composants/pieces.tsx`) et
+**la liste est partie avec lui** : ce banc tient le dépôt entier sans liste
+blanche ni liste noire de couleur. Les jetons du châssis sombre restent déclarés
+dans `index.css` et plus rien ne les emploie — c'est le sens 2 qui le dit
+maintenant, pas une liste tenue à la main.
 
 Il ne coûte rien : ni clé, ni réseau, ni atelier lancé, ni navigateur.
 
@@ -114,7 +117,14 @@ LA_GEOMETRIE_D_AVANT = (
     # jetons, les mêmes tailles. La colonne de l'arbre passe de 240 à
     # **300 px** — la largeur du « carnet » de `docs/DESIGN.md` § Largeurs de
     # colonne, fixe, toujours là.
-    "interface/src/composants/chassis.tsx",
+    #
+    # `D6` a retiré `chassis.tsx` des **deux** listes, le 11 septembre 2026 : le
+    # fichier est devenu `pieces.tsx`, purement papier, et ses tailles sont
+    # passées aux listes fermées du même geste — 9.5 et 8.5 px de texte remontés
+    # à 10.5, les arrondis de 2 px devenus 5, les 80 ms devenus 120, la barre de
+    # la jauge ramenée au filet d'un pixel de `Retouche.tsx`, et le champ de
+    # nombre du curseur de 46 à 70 px, la seule largeur de petit contrôle
+    # déclarée.
     # `BarreQuiPaie.tsx` (`D5`) : sortie en fichier propre le 11 septembre
     # 2026, aux côtés de `ChampPrompt.tsx` et `PanneauReglages.tsx`, qui ont
     # basculé au vocabulaire papier — leurs tailles restent celles de l'ancien
@@ -139,117 +149,14 @@ LA_GEOMETRIE_D_AVANT = (
     "interface/src/composants/Calibrage.tsx",
     "interface/src/composants/Calque.tsx",
     # ── Les deux pièces partagées ────────────────────────────────────────────
-    # Des écrans du carnet les montent déjà, et des écrans d'avant aussi : elles
-    # ne peuvent changer de géométrie que le jour où les seconds sont partis.
+    # Elles étaient les deux dernières à porter les **couleurs** de l'ancien
+    # châssis alors que plus un seul écran n'était sombre : `D6` les a portées au
+    # papier — la bulle en `--carte` sur `--trait`, le fond d'aperçu en
+    # `--encre/92`, son pied en `--papier`. Leur **géométrie** reste celle
+    # d'avant : la bulle porte un arrondi de 2 px et son ombre s'écrit en clair,
+    # et c'est un dessin à rouvrir, pas un renommage de jeton.
     "interface/src/composants/Apercu.tsx",
     "interface/src/composants/Infobulle.tsx",
-)
-
-# **Les fichiers de l'ancien châssis — ceux que la V4 n'a pas encore
-# retirés.** Le sens inverse de la liste ci-dessus : chaque tranche de
-# `docs/PLAN-carnet.md` § *La sortie de l'ancien châssis* (`C1` à `C9`) en
-# retire des noms, jamais l'inverse — un fichier ne rentre pas ici une fois
-# sorti. Deux pièces partagées entre l'ancien et le neuf n'y figurent pas,
-# `Infobulle.tsx` et `Apercu.tsx` : des écrans du carnet les montent déjà
-# (`GrilleDuJeu.tsx`, `PageDuSujet.tsx`, `Retouche.tsx`…), les retirer
-# casserait ce qui est déjà livré.
-LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
-    # C1 — les réglages : EcranReglages et Mouvements perdent leur dernière
-    # porte ; Secrets reste tant qu'EcranReglages.tsx le monte.
-    # `Mouvements.tsx` est sorti en `C7`, avec `AtelierDeBande.tsx` — même
-    # geste, même écran de réglages.
-    # D1 — les deux derniers chemins retirés : `EcranReglages.tsx` et
-    # `Secrets.tsx` sont partis pour de bon, leur contenu relogé en papier
-    # dans `ReglesDuJeu.tsx`.
-    # C2 — `Assistant.tsx` est parti : c'était le doublon vrai de
-    # `ReglesDuJeu.tsx`, et le relevé de ses douze étapes est en tête de ce
-    # fichier-là. Restent les trois côtés d'inspiration de l'onglet Univers.
-    #
-    # D2 — les trois côtés d'inspiration sont partis le 11 septembre 2026, et
-    # ils sont partis d'ici **et** de `LA_GEOMETRIE_D_AVANT` : c'est le premier
-    # écran du bloc à sortir des deux listes du même geste, parce que son
-    # passage au papier était un dessin et pas un portage de jetons.
-    #
-    # **Les dix teintes d'îlot ont été refaites**, et le principe s'est
-    # retourné plutôt que changé : elles étaient claires sur un fond presque
-    # noir — « dix à 4,6 : 1 sur `--color-fond-2` » —, elles sont maintenant
-    # sombres sur du papier, à 4,6 : 1 sur `--color-papier`. Le nom d'un îlot
-    # s'écrit donc dessus en `--color-papier`, et la conditionnelle du bandeau
-    # de `Toile.tsx` reste vraie à l'envers. Leur teinte et leur saturation
-    # viennent des onze pastilles du menu d'îlot de `Toile.dc.html` ; seule
-    # leur clarté est calculée.
-    # C3 — le codex : parti (`Codex.tsx`, retiré le 10 septembre 2026). Sa
-    # colonne des familles était le carnet, sa grille celle d'une famille ;
-    # créer une pièce d'équipement se fait depuis la fiche de qui la porte
-    # (`VestiaireDuSujet.tsx`).
-    # C4 — la galerie. **Elle est un fichier depuis le 10 septembre 2026** :
-    # elle était écrite en clair dans `App.tsx`, et le banc ne la voyait donc
-    # pas — ni sa grille, ni sa cible, ni ses réinjections, ni la barre d'état
-    # du châssis. Elle entre ici avec `BarreEtat.tsx`, et **c'est la seule fois
-    # de ce bloc où le compte monte** : ce ne sont pas des lignes neuves, ce
-    # sont des lignes qu'`App.tsx` cachait. Les redessiner sur le papier de
-    # `Galerie.dc.html` est un dessin, pas une extraction — il vient après.
-    #
-    # D3 — **il est venu, le 11 septembre 2026.** `Galerie.tsx`, `BarreEtat.tsx`,
-    # `Tuile.tsx` et `Fiche.tsx` sont partis d'ici **et** de
-    # `LA_GEOMETRIE_D_AVANT`, comme `D2` avant eux : la grille, sa cible, ses
-    # réinjections, sa tuile, le volet d'image et le pied du châssis sont
-    # dessinés sur le papier de la planche. Trois choix méritent d'être écrits :
-    # le liseré rouille intérieur remplace l'anneau `--lumiere` du sélectionné,
-    # le damier ne se pose plus que sur ce qui est **détouré** — ailleurs c'est
-    # `--pourtour`, le gris neutre, « derrière une image et nulle part
-    # ailleurs » —, et les deux bandes de pied empilées n'en font plus qu'une,
-    # parce que le trait sépare des panneaux et non des lignes.
-    # **Un seul volet de fiche d'image dans le produit** (`C4`). Il y en avait
-    # deux : celui-ci, et un second écrit en clair dans `ImagesDuSujet.tsx` —
-    # même métier, deux surfaces. Le second est parti, et ce que lui seul savait
-    # faire — de quelle case on parle, l'angle à confirmer, la variante, l'écart
-    # — vit maintenant ici, derrière des rappels facultatifs. `Fiche.tsx` est
-    # donc montée par la galerie **et** par *Ses images*, et c'est ce qui a
-    # décidé la forme de son passage au papier en `D3` : les rappels
-    # facultatifs n'ont pas été touchés, seuls ses jetons et ses tailles.
-    #
-    # D4 — **les outils de la galerie, le 11 septembre 2026.** `Arbre.tsx`,
-    # `BarreOutils.tsx`, `Depliage.tsx` et `FicheDuClip.tsx` sont partis d'ici
-    # **et** de `LA_GEOMETRIE_D_AVANT`, comme `D3` avant eux : aucune planche
-    # ne les dessine — `Galerie.dc.html` ne couvre que la grille, la tuile, la
-    # fiche et le pied —, donc même structure, mêmes gestes, seuls les jetons
-    # et les tailles changent. `Import.tsx` les accompagne sans planche connue,
-    # dessiné sur la lecture la plus simple à vérifier : la forme que
-    # `BarreOutils.tsx` donne déjà à ses propres contrôles.
-    # D5 — la barre qui paie : sortie d'`App.tsx` en fichier propre le
-    # 11 septembre 2026, avec `ChampPrompt.tsx` et `PanneauReglages.tsx` —
-    # deux fichiers qui n'étaient pas la galerie, et que le plan d'alors lui
-    # attribuait par erreur : la barre qui paie a quitté la galerie en `E4`.
-    # Les trois tournent maintenant sur le papier ; `BarreQuiPaie.tsx`, le
-    # fichier neuf, n'entre pas ici — il est écrit papier dès sa création,
-    # comme `C4` l'a documenté pour ce cas.
-    # C5 — l'envoi, le clip, le montage : sortis le 10 septembre 2026. Leurs
-    # jetons sont ceux du papier ; `Bouton`, `Libelle`, `Raison`, `Segments` et
-    # `Curseur` de `chassis.tsx` portent pour ça un second habillage, additif,
-    # derrière une prop `papier` — `chassis.tsx` lui-même reste ici, C9 le
-    # sortira. ⚠️ Ils restent dans `LA_GEOMETRIE_D_AVANT` : leurs tailles
-    # restent celles de l'ancien châssis (10 px, 22 px, arrondis de 1 et 2 px…),
-    # hors des listes fermées de `docs/DESIGN.md` — les rouvrir une à une est le
-    # dessin qu'`Envoi.dc.html`, `Clip.dc.html` et `Animation-chaine.dc.html`
-    # posent, pas un renommage de jeton. Compté ici comme sorti quand même :
-    # c'est la couleur du châssis que ce bloc mesure, pas encore sa géométrie.
-    # C6 — l'établi d'un sujet : sorti le 10 septembre 2026. ⚠️ Le piège nommé
-    # par le plan — `Personnages.tsx` était monté par `PageDuSujet.tsx`, un
-    # écran neuf, et son contenu restait l'ancien châssis intégral. Il est
-    # renommé `EtabliDuSujet.tsx` plutôt que retiré : `EcranEtabli` et ses
-    # fonctions pures (`faitesDeLaCase`, `posesTenues`…) restent employées par
-    # `Fiche.tsx` et `Planche.tsx`. Comme `C5` : géométrie inchangée, ne
-    # reste dans `LA_GEOMETRIE_D_AVANT`.
-    # C7 — l'atelier d'une animation : `AtelierDeBande.tsx` et
-    # `Mouvements.tsx` sont sortis ensemble, le 10 septembre 2026. ⚠️ Comme
-    # `C5` : les postes de la recette viennent déjà de `Retouche.tsx` (`B26`),
-    # donc les moteurs étaient déjà neufs — seul le châssis autour l'était
-    # encore. Ils restent dans `LA_GEOMETRIE_D_AVANT` : leurs tailles
-    # restent celles du châssis sombre, pas encore ouvertes une à une contre
-    # les listes fermées de `docs/DESIGN.md`.
-    # C9 — la barre elle-même, et le réglage de palette qu'elle porte.
-    "interface/src/composants/chassis.tsx",
 )
 
 # ── Les listes fermées de `docs/DESIGN.md` ──────────────────────────────────
@@ -511,45 +418,24 @@ def main() -> int:
     )
     lignes.append("")
 
-    # ── Le compte de sortie ──────────────────────────────────────────────────
-    lignes.append("Le compte de sortie · ce qui tourne encore sur l'ancien châssis")
+    # ── Le compte de sortie, clos ────────────────────────────────────────────
+    #
+    # Il n'y a plus de liste à imprimer. `LES_FICHIERS_DE_L_ANCIEN_CHASSIS`
+    # comptait 33 fichiers et 41 059 lignes le 10 septembre 2026 ; `C1`-`C9` puis
+    # `D1`-`D6` en ont retiré les noms un à un, et `D6` a sorti le dernier le
+    # 11 septembre. **Ce qui remplace le compte, c'est le sens 2** : les jetons
+    # du châssis sombre sont toujours déclarés dans `index.css`, plus rien ne les
+    # emploie, et c'est le banc lui-même qui le constate — pas une liste tenue à
+    # la main.
+    lignes.append("Le compte de sortie · clos le 11 septembre 2026")
     lignes.append("-" * 58)
-    total_lignes_anciennes = 0
-    manquants = []
-    for relatif in LES_FICHIERS_DE_L_ANCIEN_CHASSIS:
-        chemin = RACINE / relatif
-        if not chemin.exists():
-            manquants.append(relatif)
-            continue
-        compte = len(chemin.read_text(encoding="utf-8").splitlines())
-        total_lignes_anciennes += compte
-        lignes.append(f"    · {relatif} — {compte} lignes")
-    lignes.append("")
-    lignes.append(
-        f"  {len(LES_FICHIERS_DE_L_ANCIEN_CHASSIS)} fichiers encore sur l'ancien"
-        f" châssis, {total_lignes_anciennes} lignes au total."
-    )
-    lignes.append(
-        "  Départ du 10 septembre 2026 : 33 fichiers / 41 059 lignes. Ce chiffre"
-    )
-    lignes.append(
-        "  descend : `C2` à `C9` retirent des noms de la liste. Une seule exception,"
-    )
-    lignes.append(
-        "  `C4` : la galerie était écrite en clair dans `App.tsx`, invisible au banc ;"
-    )
-    lignes.append(
-        "  la sortir en fichier l'a rendue comptable. Deux noms de plus, pas une"
-    )
-    lignes.append("  ligne de plus.")
-    if manquants:
-        lignes.append("")
-        lignes.append(
-            "  Fichiers déjà partis mais encore dans la liste — retire-les de"
-            " LES_FICHIERS_DE_L_ANCIEN_CHASSIS :"
-        )
-        for relatif in manquants:
-            lignes.append(f"    · {relatif}")
+    lignes.append("  Plus un fichier d'`interface/src` ne tourne sur les couleurs de")
+    lignes.append("  l'ancien châssis. Départ du 10 septembre 2026 : 33 fichiers /")
+    lignes.append("  41 059 lignes ; `D6` a sorti le dernier — `chassis.tsx`, devenu")
+    lignes.append("  `interface/src/composants/pieces.tsx`, purement papier. La liste a")
+    lignes.append("  disparu avec lui : ce banc tient le dépôt entier sans liste blanche")
+    lignes.append("  ni liste noire de couleur. Les jetons du châssis sombre restent")
+    lignes.append("  déclarés et inemployés — le sens 2 les nomme, plus bas.")
     lignes.append("")
 
     # ── Sens 1 ───────────────────────────────────────────────────────────────

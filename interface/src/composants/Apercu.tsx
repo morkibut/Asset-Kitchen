@@ -148,7 +148,7 @@ export function BandeQuiTourne({
   if (!bande.case_largeur || !bande.case_hauteur || compte === 0) {
     return (
       <span
-        className="mesure flex items-center justify-center border border-bord bg-fond-2 text-[9px] text-texte-3"
+        className="mesure flex items-center justify-center border border-trait bg-papier-cote text-[9px] text-encre-4"
         style={{ width: cote, height: cote }}
         title={titre}
       >
@@ -168,7 +168,7 @@ export function BandeQuiTourne({
     <span
       data-bande-qui-tourne={bande.identifiant}
       title={titre}
-      className="inline-flex shrink-0 items-center justify-center overflow-hidden border border-bord bg-fond-2"
+      className="inline-flex shrink-0 items-center justify-center overflow-hidden border border-trait bg-papier-cote"
       style={{ width: cote, height: cote }}
     >
       <span
@@ -501,7 +501,7 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
         role="dialog"
         aria-modal
         aria-label="Aperçu"
-        className="fixed inset-0 z-50 flex flex-col bg-fond-0/92"
+        className="fixed inset-0 z-50 flex flex-col bg-encre/92"
       >
         {/* **Une colonne de prose bornée à 504 px, et elle défile.** C'est la
             seconde et dernière surface du produit qui a le droit à une largeur
@@ -522,15 +522,15 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
           }}
           className="defile min-h-0 flex-1 overflow-y-auto px-6 py-10"
         >
-          <p className="mx-auto max-w-[504px] text-[13.5px] leading-relaxed whitespace-pre-wrap text-texte">
+          <p className="mx-auto max-w-[504px] text-[13.5px] leading-relaxed whitespace-pre-wrap text-papier">
             {sujet.prose}
           </p>
         </div>
-        <footer className="flex h-[26px] shrink-0 items-center gap-3 border-t border-bord bg-fond-1 px-4">
-          <span className="min-w-0 truncate text-[11.5px] text-texte" title={sujet.titre}>
+        <footer className="flex h-[26px] shrink-0 items-center gap-3 border-t border-trait bg-papier px-4">
+          <span className="min-w-0 truncate text-[11.5px] text-encre" title={sujet.titre}>
             {sujet.titre}
           </span>
-          <div className="mesure ml-auto flex shrink-0 items-center gap-3 text-[10px] text-texte-3">
+          <div className="mesure ml-auto flex shrink-0 items-center gap-3 text-[10px] text-encre-4">
             <span>{mots(sujet.prose)} mots</span>
             <span>Espace ou Échap · fermer</span>
           </div>
@@ -543,7 +543,7 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
       role="dialog"
       aria-modal
       aria-label="Aperçu"
-      className="fixed inset-0 z-50 flex flex-col bg-fond-0/92"
+      className="fixed inset-0 z-50 flex flex-col bg-encre/92"
     >
       <div
         ref={scene}
@@ -594,7 +594,7 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
           // une boîte qui ment décale ce qu'on pose dessus, et ici c'est le
           // damier qui dirait une transparence au mauvais endroit.
           <div
-            className="damier damier-apercu absolute top-1/2 left-1/2"
+            className="damier-papier damier-apercu absolute top-1/2 left-1/2"
             style={{
               width: sujet.largeur * facteur,
               height: sujet.hauteur * facteur,
@@ -618,7 +618,7 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
               src={sujet.src}
               alt={sujet.titre}
               draggable={false}
-              className="damier damier-apercu max-h-full max-w-full object-contain select-none"
+              className="damier-papier damier-apercu max-h-full max-w-full object-contain select-none"
               style={rendu}
             />
           </div>
@@ -628,11 +628,11 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
       {/* 26 px — la hauteur de la barre d'état, à la place de la barre d'état.
           Aucune hauteur neuve, et l'œil retrouve les mesures là où il les lit
           d'habitude. */}
-      <footer className="flex h-[26px] shrink-0 items-center gap-3 border-t border-bord bg-fond-1 px-4">
-        <span className="min-w-0 truncate text-[11.5px] text-texte" title={sujet.titre}>
+      <footer className="flex h-[26px] shrink-0 items-center gap-3 border-t border-trait bg-papier px-4">
+        <span className="min-w-0 truncate text-[11.5px] text-encre" title={sujet.titre}>
           {sujet.titre}
         </span>
-        <div className="mesure ml-auto flex shrink-0 items-center gap-3 text-[10px] text-texte-3">
+        <div className="mesure ml-auto flex shrink-0 items-center gap-3 text-[10px] text-encre-4">
           {mesure && (
             <span>
               {sujet.largeur}×{sujet.hauteur}

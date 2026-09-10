@@ -13,9 +13,10 @@
 // **Portée au papier le 11 septembre 2026 (`D3`)**, d'après la colonne de
 // droite de `docs/pistes-2026-09-04/carnet/Galerie.dc.html`. Rien n'y a changé
 // de contenu ni de structure : les jetons, les tailles, les arrondis et les
-// durées seulement — et le vocabulaire papier de `chassis.tsx`, en passant
-// `papier` à `Bloc`, `Bouton`, `Libelle`, `Raison`, `Segments` et
-// `EnTetePanneau`, tel qu'il a été posé en `C5`-`C7`.
+// durées seulement — et le vocabulaire papier de `pieces.tsx` pour `Bloc`,
+// `Bouton`, `Libelle`, `Raison`, `Segments` et `EnTetePanneau`. *(Il s'obtenait
+// par une prop `papier` jusqu'à `D6`, qui a retiré l'autre branche : c'est
+// désormais le seul habillage de ces pièces.)*
 //
 // ⚠️ **Les rappels facultatifs n'ont pas bougé** : `identite`,
 // `directionsAConfirmer`, `onDirection`, `onVariante` et `onEcarter` servent
@@ -42,7 +43,7 @@ import {
   type Univers,
 } from "../api"
 import { sujetAsset, useVisee } from "./Apercu"
-import { Bloc, Bouton, EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
+import { Bloc, Bouton, EnTetePanneau, Libelle, Raison, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
 import { posesTenues } from "./EtabliDuSujet"
 import { MOTEUR, RESUME } from "../recette"
@@ -208,7 +209,7 @@ export function Fiche({
          son propre mouvement. Une seule chose bouge à la fois. */
       className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-trait bg-papier-cote"
     >
-      <EnTetePanneau papier>
+      <EnTetePanneau>
         <span className="truncate">Fiche</span>
         <button
           type="button"
@@ -371,13 +372,11 @@ export function Fiche({
               inactif={!asset.personnage}
               onClick={onOuvrirLEtabli}
               enfants="Reprendre dans l'établi"
-              papier
             />
           )}
           {onOuvrirLEtabli && !asset.personnage && (
             <Raison
               texte="cette image n'appartient à aucune chose du jeu — la rattacher plus haut lui ouvre son établi"
-              papier
             />
           )}
           {/* **Le bouton nomme ce qu'il ouvre** (`B25`) : il disait *Ouvrir les
@@ -385,12 +384,12 @@ export function Fiche({
               qu'une. *La retoucher* est le mot que le produit emploie déjà
               partout ailleurs — *Ses images*, le comparateur —, et deux noms
               pour un seul écran se lisent comme deux écrans. */}
-          <Bouton onClick={onRetoucher} enfants="La retoucher" papier />
+          <Bouton onClick={onRetoucher} enfants="La retoucher" />
           {/* **Les deux gestes de la case** (`C4`, relogés du volet
               d'`ImagesDuSujet`). Redemander la même case, et écarter celle-ci.
               Ils n'existent que là où l'on sait de quelle case on parle. */}
           {onVariante && (
-            <Bouton onClick={onVariante} enfants="En générer une variante" papier />
+            <Bouton onClick={onVariante} enfants="En générer une variante" />
           )}
           {onEcarter && (
             <>
@@ -472,7 +471,6 @@ function ImposeParLeProjet({
       <Bloc
         cle="fiche.impose"
         aide="fiche.impose"
-        papier
         titre="Imposé par le projet"
         etat="on ne sait pas"
         mesure="la génération n'est plus sur le disque"
@@ -582,7 +580,6 @@ function ImposeParLeProjet({
     <Bloc
       cle="fiche.impose"
       aide="fiche.impose"
-      papier
       titre="Imposé par le projet"
       /* Replié, le bloc porte les trois valeurs du projet — c'est ce qui permet
          de lire la fiche entière sans rien ouvrir. Ouvert, il garde sous les
@@ -762,7 +759,6 @@ function LeTexteQuiLAFaite({
     return (
       <Bloc
         cle="fiche.prompt"
-        papier
         titre="Son texte"
         etat="vient d'une autre image"
         mesure="le texte est sur sa parente"
@@ -789,7 +785,7 @@ function LeTexteQuiLAFaite({
   // décrite.
   if (!parti)
     return (
-      <Bloc cle="fiche.prompt" papier titre="Son texte" etat="aucun texte">
+      <Bloc cle="fiche.prompt" titre="Son texte" etat="aucun texte">
         <p className="text-[11px] leading-snug text-encre-2">
           {asset.modele === "import"
             ? "Cette image est entrée par import : personne ne l'a décrite ici."
@@ -804,7 +800,6 @@ function LeTexteQuiLAFaite({
   return (
     <Bloc
       cle="fiche.prompt"
-      papier
       titre="Son texte"
       /* Replié, il porte son début : c'est ce qui permet de reconnaître une
          image dans une fiche sans rien ouvrir. Ouvert, il porte sa longueur —
@@ -917,7 +912,7 @@ function Jugement({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Libelle aide="fiche.reinjecter" papier>Réinjecter</Libelle>
+        <Libelle aide="fiche.reinjecter">Réinjecter</Libelle>
         <div className="flex flex-wrap gap-1">
           {ROLES.map(({ role, libelle, explique }) => (
             <button
@@ -985,7 +980,7 @@ function CaseDeLAsset({
 
   return (
     <div className="flex flex-col gap-1 border-t border-trait pt-2">
-      <Libelle aide="fiche.personnage" papier>Corps de</Libelle>
+      <Libelle aide="fiche.personnage">Corps de</Libelle>
 
       {personnages.length === 0 ? (
         <p className="mesure text-[10.5px] leading-4 text-encre-4">
@@ -1108,7 +1103,7 @@ function Descendance({
 
   return (
     <div className="border-t border-trait pt-2">
-      <Bloc cle="fiche.filiation" papier titre="Filiation" etat={resume}>
+      <Bloc cle="fiche.filiation" titre="Filiation" etat={resume}>
         <div className="flex flex-col gap-1">
           {filiation.parent && (
             <button
@@ -1215,7 +1210,6 @@ function Visionneuse({
             valeurs={["rendu", "brut"] as const}
             valeur={brut ? "brut" : "rendu"}
             onChange={(quoi) => onBrut(quoi === "brut")}
-            papier
           />
         ) : (
           <span className="mesure text-[10.5px] text-encre-4">brut</span>
@@ -1275,7 +1269,7 @@ function RecetteEnLecture({ recette }: { recette: Recette }) {
 
   return (
     <div className="flex flex-col gap-1 border-t border-trait pt-2">
-      <Libelle aide="fiche.recette" papier>Sa recette</Libelle>
+      <Libelle aide="fiche.recette">Sa recette</Libelle>
       {posees.length === 0 ? (
         <p className="mesure text-[10.5px] leading-4 text-encre-4">
           Rien n'est posé : cette image est celle qui est arrivée du fournisseur.

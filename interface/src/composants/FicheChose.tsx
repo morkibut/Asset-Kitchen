@@ -55,7 +55,7 @@ import {
   type ReferencesDeLaChose,
 } from "../api"
 import { explication } from "../aide"
-import { EnTeteDeSection, Libelle } from "./chassis"
+import { EnTeteDeSection, Libelle } from "./pieces"
 import { sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 
 /** Les cinq blocs, dans l'ordre où leur contenu part vers le modèle.
@@ -275,7 +275,7 @@ export function FicheDeLaChose({
       className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_380px]"
     >
       <aside className="defile flex min-h-0 flex-col gap-1 overflow-y-auto border-r border-trait bg-papier-cote p-3">
-        <Libelle papier>sa fiche</Libelle>
+        <Libelle>sa fiche</Libelle>
         {BLOCS.map(({ clef, aide }) => (
           <button
             key={clef}
@@ -353,7 +353,7 @@ export function FicheDeLaChose({
           <div className="flex w-[96px] shrink-0 flex-col gap-1">
             <span
               data-portrait
-              className="damier flex h-[96px] w-[96px] items-center justify-center overflow-hidden rounded-[1px] border border-trait"
+              className="damier-papier flex h-[96px] w-[96px] items-center justify-center overflow-hidden rounded-[1px] border border-trait"
             >
               {portrait && (
                 <img
@@ -413,7 +413,6 @@ export function FicheDeLaChose({
           className="flex flex-col gap-3 border-b border-trait p-4"
         >
           <EnTeteDeSection
-            papier
             aide="codex.chose.sujet"
             compte={`${personnage.description.length} lettres`}
           />
@@ -428,7 +427,6 @@ export function FicheDeLaChose({
           className="flex flex-col gap-3 border-b border-trait p-4"
         >
           <EnTeteDeSection
-            papier
             aide="codex.chose.habillage"
             compte={
               habillage
@@ -447,7 +445,6 @@ export function FicheDeLaChose({
           className="flex flex-col gap-3 border-b border-trait p-4"
         >
           <EnTeteDeSection
-            papier
             aide="codex.chose.exemples"
             compte={
               references
@@ -477,7 +474,6 @@ export function FicheDeLaChose({
           className="flex flex-col gap-3 border-b border-trait p-4"
         >
           <EnTeteDeSection
-            papier
             aide="codex.chose.poses"
             compte={
               rangees > 0
@@ -496,7 +492,6 @@ export function FicheDeLaChose({
           className="flex flex-col gap-3 p-4"
         >
           <EnTeteDeSection
-            papier
             aide="codex.chose.faites"
             compte={`${faites} case${faites > 1 ? "s" : ""} sur ${tenues.length}`}
           />
@@ -519,7 +514,7 @@ export function FicheDeLaChose({
           galerie d'images, et les images faites vivent à trois centimètres de
           là, dans la section qui les porte. */}
       <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-l border-trait bg-papier-cote p-3">
-        <EnTeteDeSection papier aide="codex.chose.matrice" />
+        <EnTeteDeSection aide="codex.chose.matrice" />
         <MatriceCompacte personnage={personnage} plan={plan} />
       </aside>
     </div>
@@ -847,7 +842,7 @@ function LigneReference({
       <span
         data-vignette-exemple
         className={[
-          "damier h-[30px] w-[30px] shrink-0 overflow-hidden rounded-[1px] border border-trait",
+          "damier-papier h-[30px] w-[30px] shrink-0 overflow-hidden rounded-[1px] border border-trait",
           ligne.ecartee ? "opacity-40" : "",
         ].join(" ")}
       >
@@ -1003,7 +998,7 @@ function CaseFaite({ nom, image }: { nom: string; image: Asset | null }) {
       <span
         data-case-faite
         className={[
-          "damier flex h-[56px] w-[56px] items-center justify-center overflow-hidden rounded-[1px] border border-trait",
+          "damier-papier flex h-[56px] w-[56px] items-center justify-center overflow-hidden rounded-[1px] border border-trait",
           image ? "" : "border-dashed",
         ].join(" ")}
       >

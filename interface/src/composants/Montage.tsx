@@ -43,7 +43,7 @@ import {
   type PropositionDeRythme,
 } from "../api"
 import { remonterLaBande } from "./AtelierDeBande"
-import { Bouton, Curseur, Libelle, Raison, Segments } from "./chassis"
+import { Bouton, Curseur, Libelle, Raison, Segments } from "./pieces"
 
 /** La hauteur du ruban, et la largeur d'une tranche. **Sept pixels**, comme la
  *  maquette : c'est ce qui fait tenir cent vingt images sans défilement, et
@@ -453,7 +453,7 @@ export function EcranMontage({
     return (
       <div className="flex min-h-0 flex-1 items-start justify-center bg-papier p-8">
         <div className="w-[520px]">
-          <Raison papier texte={refus} ouAller="revenir" onAller={onFermer} />
+          <Raison texte={refus} ouAller="revenir" onAller={onFermer} />
         </div>
       </div>
     )
@@ -494,7 +494,7 @@ export function EcranMontage({
           </button>
         </div>
 
-        {refus && <Raison papier texte={refus} ouAller="fermer" onAller={() => setRefus(null)} />}
+        {refus && <Raison texte={refus} ouAller="fermer" onAller={() => setRefus(null)} />}
 
         <div className="grid grid-cols-2 gap-4">
           <Boucle
@@ -639,7 +639,7 @@ export function EcranMontage({
             un champ qui n'écrirait rien serait un contrôle mort. */}
         {reprise ? (
           <>
-            <Libelle papier aide="bande.nom">on remonte cette animation</Libelle>
+            <Libelle aide="bande.nom">on remonte cette animation</Libelle>
             <p data-on-remonte className="text-[13px] text-encre">
               {reprise.bande.nom}
             </p>
@@ -655,7 +655,7 @@ export function EcranMontage({
           </>
         ) : (
           <>
-            <Libelle papier aide="bande.nom">cette animation</Libelle>
+            <Libelle aide="bande.nom">cette animation</Libelle>
             <input
               value={nom}
               onChange={(e) => setNom(e.target.value)}
@@ -695,7 +695,7 @@ export function EcranMontage({
         )}
 
         <div className="mt-2 border-t border-trait pt-3">
-          <Libelle papier aide="bande.cadre">le cadre — la fenêtre commune</Libelle>
+          <Libelle aide="bande.cadre">le cadre — la fenêtre commune</Libelle>
         </div>
         {/* ⚠️ **Sur une reprise, le cadre se lit et ne se règle pas.** Le
             rectangle gardé porte quatre nombres mesurés ; le changer d'ici ne
@@ -712,7 +712,7 @@ export function EcranMontage({
             l'animation</b>, où l'écran dit les vingt secondes que ça coûte.
           </p>
         ) : (
-        <Segments papier
+        <Segments
           valeurs={["clip", "bande", "main"] as const}
           valeur={cadre}
           onChange={(choisi) => {
@@ -765,9 +765,9 @@ export function EcranMontage({
         )}
 
         <div className="mt-2 border-t border-trait pt-3">
-          <Libelle papier aide="bande.vitesse">le jeu</Libelle>
+          <Libelle aide="bande.vitesse">le jeu</Libelle>
         </div>
-        <Curseur papier
+        <Curseur
           libelle="Vitesse"
           valeur={cadence}
           min={2}
@@ -775,7 +775,7 @@ export function EcranMontage({
           unite=" images / s"
           onChange={setCadence}
         />
-        <Segments papier
+        <Segments
           valeurs={["boucle", "aller-retour"] as const}
           valeur={sens}
           onChange={setSens}
@@ -793,7 +793,7 @@ export function EcranMontage({
         {!reprise && bandes.length > 0 && (
           <>
             <div className="mt-2 border-t border-trait pt-3">
-              <Libelle papier aide="bande.gardees">gardées de ce clip</Libelle>
+              <Libelle aide="bande.gardees">gardées de ce clip</Libelle>
             </div>
             <ul className="flex flex-col gap-1">
               {bandes.map((bande) => (
@@ -862,7 +862,7 @@ export function EcranMontage({
               seul bouton, et son libellé nomme l'animation pour qu'aucun doute
               ne subsiste au moment où on l'écrit. */}
           {reprise ? (
-            <Bouton papier
+            <Bouton
               principal
               inactif={retenues.length === 0}
               onClick={() => void reprendre()}
@@ -873,7 +873,7 @@ export function EcranMontage({
               }
             />
           ) : (
-            <Bouton papier
+            <Bouton
               principal
               inactif={retenues.length === 0 || !nom.trim()}
               onClick={() => void garder()}
@@ -1111,7 +1111,7 @@ function Pellicule({
                 // pas. Mesuré au navigateur, l'encadré des images retenues ne
                 // s'était **jamais** dessiné — une couleur inconnue ne fait pas
                 // d'erreur, elle ne fait rien.
-                outline: prise ? "1px solid var(--color-signal-froid)" : undefined,
+                outline: prise ? "1px solid var(--color-signal)" : undefined,
                 outlineOffset: "-1px",
                 opacity: prise || misee ? 1 : 0.55,
               }}
@@ -1281,8 +1281,8 @@ function Retenues({
           className="rounded-[2px] border p-0.5"
           style={{
             borderColor:
-              place === rang ? "var(--color-signal-froid)" : "var(--color-bord)",
-            background: "var(--color-fond-1)",
+              place === rang ? "var(--color-signal)" : "var(--color-trait)",
+            background: "var(--color-carte)",
           }}
         >
           <span className="mesure block px-2 py-4 text-[10px] text-encre-4">

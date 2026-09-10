@@ -16,12 +16,12 @@
 // vérifier est celle qui coûte le moins de décisions neuves : reprendre au mot
 // près la forme que `BarreOutils.tsx` donne déjà à ses propres contrôles —
 // mêmes hauteurs, même bouton, même bandeau de refus au-dessus de la grille —,
-// et l'habiller du vocabulaire papier de `chassis.tsx` et des listes fermées
+// et l'habiller du vocabulaire papier de `pieces.tsx` et des listes fermées
 // de `docs/DESIGN.md`. Rien n'y change de structure ni de texte.
 
 import { useState, type Ref } from "react"
 import { api, Refus, type Asset } from "../api"
-import { useInfobulle } from "./Infobulle"
+import { POINTILLE, useInfobulle } from "./Infobulle"
 
 /** Ce qui n'est pas entré, et pourquoi. **Une entrée par fichier**, parce que
  *  c'est ce que « chacun avec son propre sort » veut dire : dix fichiers
@@ -118,13 +118,6 @@ export type Import = ReturnType<typeof useImport>
  *  Il est ancré à droite, contre l'export, et pour la raison qui y a mis
  *  l'export : ce sont les deux portes de la bibliothèque, et une porte qui se
  *  déplace est une porte qu'on cherche. */
-// Le pointillé du papier — même métier que `POINTILLE`, sur `--contour` et
-// `--encre-3` plutôt que sur `--bord-fort` et `--texte-3`. Recomposé ici comme
-// `chassis.tsx` le fait pour `Libelle` et `Bloc` : `Infobulle.tsx` sert aussi
-// les écrans qui n'ont pas changé de châssis, et son `POINTILLE` reste le leur.
-const POINTILLE_PAPIER =
-  "cursor-help underline decoration-dotted decoration-contour underline-offset-[3px] hover:decoration-encre-3"
-
 export function Importer({ etat }: { etat: Import }) {
   // **Ni l'un ni l'autre n'épingle** : leur clic est déjà pris — le premier
   // bascule le sort de ce qui entre, le second ouvre le sélecteur de fichiers.
@@ -145,7 +138,7 @@ export function Importer({ etat }: { etat: Import }) {
       >
         <span
           ref={surLeChoix.ancre as Ref<HTMLSpanElement>}
-          className={`w-fit ${surLeChoix.presente ? POINTILLE_PAPIER : ""}`}
+          className={`w-fit ${surLeChoix.presente ? POINTILLE : ""}`}
         >
           {etat.traiter ? "traitée" : "brute"}
         </span>
@@ -160,7 +153,7 @@ export function Importer({ etat }: { etat: Import }) {
       >
         <span
           ref={surLeBouton.ancre as Ref<HTMLSpanElement>}
-          className={surLeBouton.presente ? POINTILLE_PAPIER : ""}
+          className={surLeBouton.presente ? POINTILLE : ""}
         >
           Importer
         </span>

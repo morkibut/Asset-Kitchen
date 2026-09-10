@@ -63,7 +63,7 @@ import {
   type Fente,
   type Segment,
 } from "./composants/EnTeteDeSurface"
-import { Libelle } from "./composants/chassis"
+import { Libelle } from "./composants/pieces"
 import { BarreQuiPaie } from "./composants/BarreQuiPaie"
 import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
@@ -2145,12 +2145,12 @@ export function App() {
              ne s'effacent nulle part — la fenêtre de confirmation elle-même les
              laisse. Une surface qui les recouvrirait dirait qu'on a quitté
              l'atelier, alors qu'on est au milieu d'un geste. */
-          className="fixed inset-x-0 bottom-[26px] top-[44px] z-40 flex flex-col bg-fond-0"
+          className="fixed inset-x-0 bottom-[26px] top-[44px] z-40 flex flex-col bg-papier"
         >
-          <div className="flex items-baseline gap-3 border-b border-bord px-4 py-3">
+          <div className="flex items-baseline gap-3 border-b border-trait px-4 py-3">
             <Libelle>choisir une image de référence</Libelle>
-            <span className="mesure text-[9.5px] leading-4 text-texte-3">
-              elle entre en <span className="text-texte-2">référence</span> —
+            <span className="mesure text-[9.5px] leading-4 text-encre-4">
+              elle entre en <span className="text-encre-3">référence</span> —
               *le même sujet, déjà dessiné* — et rien de ce que tu viens de
               corriger ne bouge. Aucun appel ne part d'ici.
             </span>
@@ -2166,13 +2166,13 @@ export function App() {
               }
               aria-label="Chercher une image à joindre"
               placeholder="Chercher"
-              className="mesure ml-auto h-[24px] w-[220px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte placeholder:text-texte-3"
+              className="mesure ml-auto h-[24px] w-[220px] rounded-[2px] border border-contour bg-carte px-2 text-[10px] text-encre placeholder:text-eteint"
             />
             <button
               type="button"
               onClick={() => setChoixDeReference(false)}
               title="Échap revient à ce qui part"
-              className="mesure px-1 text-[10px] text-texte-3 hover:text-texte"
+              className="mesure px-1 text-[10px] text-encre-4 hover:text-encre"
             >
               ‹ revenir
             </button>
@@ -2345,9 +2345,9 @@ export function App() {
       {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && (
         <div
           data-codex
-          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-fond-0 p-4"
+          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-papier p-4"
         >
-          <p className="mesure max-w-[420px] text-center text-[12px] leading-5 text-texte-3">
+          <p className="mesure max-w-[420px] text-center text-[12px] leading-5 text-encre-4">
             Choisis une famille dans le carnet à gauche, nomme une chose du jeu,
             ou écris directement ce que tu veux fabriquer.
           </p>
@@ -2519,7 +2519,7 @@ export function App() {
                         void rendre(jetes)
                         setFente(null)
                       }}
-                      className="underline underline-offset-2 hover:text-texte"
+                      className="underline underline-offset-2 hover:text-encre"
                     >
                       la rendre
                     </button>

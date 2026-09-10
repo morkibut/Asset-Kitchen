@@ -66,7 +66,7 @@ import {
 import type { Fente } from "./EnTeteDeSurface"
 import { BandeQuiTourne, sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
-import { Bouton, Libelle, Segments, ZoneTexte } from "./chassis"
+import { Bouton, Libelle, Segments, ZoneTexte } from "./pieces"
 import { PANNEAU } from "./Infobulle"
 import { FicheDeLaChose } from "./FicheChose"
 import { EcranCalibrage } from "./Calibrage"
@@ -564,7 +564,7 @@ export function PlanDuJeu({
 
   return (
     <section className="flex flex-col gap-1.5">
-      <Libelle papier>Les attitudes du jeu</Libelle>
+      <Libelle>Les attitudes du jeu</Libelle>
       <p className="mesure text-[10px] leading-4 text-encre-4">
         Écrite une fois pour le jeu entier — c'est elle qui permet de comparer
         deux personnages ligne à ligne. Ajouter une attitude ajoute une case
@@ -600,7 +600,6 @@ export function PlanDuJeu({
           className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-trait bg-carte px-2 text-[11px] text-encre placeholder:text-encre-4"
         />
         <Bouton
-          papier
           inactif={!nom.trim()}
           onClick={() => void ajouter()}
           enfants="Ajouter une attitude"
@@ -779,7 +778,7 @@ export function Vestiaire({
 
   return (
     <section className="flex flex-col gap-1.5">
-      <Libelle papier>Ce qu'on porte</Libelle>
+      <Libelle>Ce qu'on porte</Libelle>
       <p className="mesure text-[10px] leading-4 text-encre-4">
         Décrite une fois pour le jeu entier, une pièce se pose sur n'importe
         lequel de ses personnages. Elle n'a pas d'image à elle : elle n'apparaît
@@ -851,7 +850,6 @@ export function Vestiaire({
           className="mesure h-[34px] w-[86px] shrink-0 rounded-[2px] border border-trait bg-carte px-2 text-[11px] text-encre placeholder:text-encre-4"
         />
         <Bouton
-          papier
           inactif={!nom.trim()}
           onClick={() => void ajouter()}
           enfants="Ajouter"
@@ -1218,10 +1216,9 @@ function Sortie({
 
   return (
     <section className="flex flex-col gap-2 border-t border-trait pt-4">
-      <Libelle papier>Sortir vers le jeu</Libelle>
+      <Libelle>Sortir vers le jeu</Libelle>
       <div className="flex items-center gap-3">
         <Bouton
-          papier
           inactif={raison !== null || enCours}
           onClick={() => void sortir()}
           titre={raison ?? dossierJeu}
@@ -1290,7 +1287,7 @@ function Colonnes({
   ]
   return (
     <section className="flex flex-col gap-1.5">
-      <Libelle papier>La colonne qu'on lit</Libelle>
+      <Libelle>La colonne qu'on lit</Libelle>
       <div className="flex flex-wrap items-center gap-1.5">
         <Onglet actif={colonne === null} onClick={() => onColonne(null)}>
           le corps
@@ -1503,7 +1500,7 @@ function Identite({
           leur case. C'est ce que dit l'explication, parce que c'est la première
           crainte qu'un tel réglage inspire. */}
       <div className="flex flex-col gap-1">
-        <Libelle papier>Type d'objet</Libelle>
+        <Libelle>Type d'objet</Libelle>
         <select
           value={personnage.type ?? ""}
           aria-label="Type d'objet"
@@ -1540,7 +1537,7 @@ function Identite({
           c'est la bascule de « + personnage », et non le grisé qui porte sa
           raison. L'endroit où l'on en fabrique est nommé à la place. */}
       <div className="flex flex-col gap-1">
-        <Libelle papier>Son ambiance</Libelle>
+        <Libelle>Son ambiance</Libelle>
         {ambiances.length === 0 ? (
           <p className="mesure text-[10px] leading-4 text-encre-4">
             Ce jeu n'a encore aucune ambiance. Elles se fabriquent dans
@@ -1590,7 +1587,7 @@ function Identite({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Libelle papier>Description</Libelle>
+        <Libelle>Description</Libelle>
         {/* **La boîte suit le texte** — corrigé le 31 août 2026. C'est le texte
             le plus cher du produit : il repart avec chaque image de cette
             chose, donc il décide de ce qu'on paie et de ce qu'on obtient. Il
@@ -1906,7 +1903,7 @@ function Cases({
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center gap-3">
-        <Libelle papier>{piece ? `${piece.nom} — pose par pose` : "Ce qu'il lui faut"}</Libelle>
+        <Libelle>{piece ? `${piece.nom} — pose par pose` : "Ce qu'il lui faut"}</Libelle>
         {/* **L'ordre est un choix, et le plan reste le défaut** (C4, US-152).
             Le plan du jeu est l'ordre de l'auteur, et c'est le seul dans lequel
             une case *vide* se lit — la colonne dit d'abord ce qui manque. Le
@@ -1918,7 +1915,6 @@ function Cases({
         {piece && (
           <div className="ml-auto">
             <Segments<Ordre>
-              papier
               valeurs={["attitude", "pire"] as const}
               valeur={ordre}
               onChange={setOrdre}
@@ -1937,7 +1933,6 @@ function Cases({
         {!piece && reclame.length > 0 && (
           <div className="ml-auto">
             <Segments<CalqueDeLaMatrice>
-              papier
               valeurs={["images", "animations"] as const}
               valeur={calqueMatrice}
               onChange={setCalqueMatrice}
@@ -3104,7 +3099,7 @@ function VignetteDeCase({
           src={sujetAsset(asset).src}
           alt={asset.label}
           className={[
-            "damier h-[44px] w-[44px] object-contain",
+            "damier-papier h-[44px] w-[44px] object-contain",
             retenu && concurrence ? "outline outline-1 outline-signal" : "",
           ].join(" ")}
           style={{ imageRendering: "pixelated" }}
@@ -3293,7 +3288,7 @@ function Superposition({
         }
         aria-label={`Ouvrir ${calque.label}`}
         className={[
-          "damier relative block h-[44px] w-[44px]",
+          "damier-papier relative block h-[44px] w-[44px]",
           retenu && concurrence ? "outline outline-1 outline-signal" : "",
         ].join(" ")}
       >
@@ -3370,7 +3365,7 @@ function CoinFavori({
       <span
         className={[
           "absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-l-transparent",
-          asset.favori ? "border-t-signal" : "border-t-texte-3/60",
+          asset.favori ? "border-t-signal" : "border-t-eteint",
         ].join(" ")}
       />
     </button>

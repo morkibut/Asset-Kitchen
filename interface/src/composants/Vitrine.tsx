@@ -18,7 +18,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { api, type Personnage, type Pose, type Vitrine as VitrineDuJeu } from "../api"
 import { sujetAsset } from "./Apercu"
-import { Libelle, Raison, Segments } from "./chassis"
+import { Libelle, Raison, Segments } from "./pieces"
 
 /** **Des multiples entiers, et rien d'autre.** C'est la seule règle dure de cet
  *  écran, et elle vient de ce qu'est le pixel art : un sprite de 128 px agrandi
@@ -87,19 +87,18 @@ export function EcranVitrine({
       {/* ── Comment on regarde ───────────────────────────────────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-trait bg-papier-cote p-3">
         <div className="flex flex-col gap-1">
-          <Libelle papier>la taille</Libelle>
+          <Libelle>la taille</Libelle>
           <Segments<string>
-            papier
             valeurs={ECHELLES.map(String)}
             valeur={String(echelle)}
             onChange={(v) => setEchelle(Number(v) as Echelle)}
             libelles={Object.fromEntries(ECHELLES.map((e) => [String(e), `×${e}`]))}
           />
-          <Raison papier texte="multiples entiers seulement — un sprite agrandi d'une fois et demie fabrique des pixels qui n'existent pas" />
+          <Raison texte="multiples entiers seulement — un sprite agrandi d'une fois et demie fabrique des pixels qui n'existent pas" />
         </div>
 
         <div className="flex flex-col gap-1">
-          <Libelle papier>le fond</Libelle>
+          <Libelle>le fond</Libelle>
           {/* **Aucune couleur libre.** Un fond de vitrine se choisit dans ce que
               le projet possède déjà — sa palette et sa bible. Un sélecteur libre
               transformerait cet écran en outil de maquillage : on trouverait
@@ -116,17 +115,17 @@ export function EcranVitrine({
                 style={autre.couleur ? { background: autre.couleur } : undefined}
                 className={[
                   "h-[26px] w-[26px] rounded-[2px] border",
-                  autre.genre === "damier" ? "damier" : "",
+                  autre.genre === "damier" ? "damier-papier" : "",
                   rang === fond ? "border-encre-4" : "border-trait hover:border-contour",
                 ].join(" ")}
               />
             ))}
           </div>
-          <Raison papier texte={choisi?.raison ?? ""} />
+          <Raison texte={choisi?.raison ?? ""} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <Libelle papier>ce qu'on montre</Libelle>
+          <Libelle>ce qu'on montre</Libelle>
           <button
             type="button"
             aria-pressed={ensemble}
@@ -143,7 +142,7 @@ export function EcranVitrine({
         {/* **La place du mouvement est réservée et grisée avec sa raison**,
             plutôt qu'occupée par un lecteur posé sur zéro image. */}
         <div className="flex flex-col gap-1">
-          <Libelle papier>le mouvement</Libelle>
+          <Libelle>le mouvement</Libelle>
           <button
             type="button"
             disabled
@@ -151,7 +150,7 @@ export function EcranVitrine({
           >
             lire le cycle
           </button>
-          <Raison papier texte={vitrine.mouvement.raison} />
+          <Raison texte={vitrine.mouvement.raison} />
         </div>
 
         <button
@@ -167,7 +166,7 @@ export function EcranVitrine({
       <div
         className={[
           "defile flex min-h-0 min-w-0 flex-col items-center gap-4 overflow-auto p-6",
-          choisi?.genre === "damier" ? "damier" : "",
+          choisi?.genre === "damier" ? "damier-papier" : "",
         ].join(" ")}
         style={
           choisi?.couleur ? { background: choisi.couleur } : undefined
@@ -215,8 +214,8 @@ export function EcranVitrine({
 
       {/* ── La matrice, pour changer de sujet sans refermer ──────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-2 overflow-y-auto border-l border-trait bg-papier-cote p-3">
-        <Libelle papier>{personnage ? "Sa matrice" : "Le monde"}</Libelle>
-        <Raison papier texte="on change de sujet sans refermer" />
+        <Libelle>{personnage ? "Sa matrice" : "Le monde"}</Libelle>
+        <Raison texte="on change de sujet sans refermer" />
         <ul className="flex flex-col">
           {(personnage ? plan : []).map((pose) => {
             const dedans = images.filter((i) => i.pose === pose.identifiant)
@@ -288,7 +287,7 @@ export function EcranVitrine({
             ? `${images.filter((i) => i.hors_taille).length} image${images.filter((i) => i.hors_taille).length > 1 ? "s" : ""} hors taille commune — ${vitrine.taille_commune} px`
             : `toutes à ${vitrine.taille_commune || "—"} px`}
         </p>
-        <Raison papier texte="la vitrine ne compte pas — elle marque ce qu'elle voit" />
+        <Raison texte="la vitrine ne compte pas — elle marque ce qu'elle voit" />
       </aside>
     </div>
   )

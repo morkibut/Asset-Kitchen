@@ -35,7 +35,7 @@ import {
   type Trait,
 } from "../api"
 import { sujetAsset } from "./Apercu"
-import { Bouton, EnTetePanneau, Libelle, Segments } from "./chassis"
+import { Bouton, EnTetePanneau, Libelle, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
 
 /** Le côté du cadre où l'on regarde le calque. Assez grand pour juger un
@@ -327,7 +327,7 @@ export function PanneauCalque({
       {...PANNEAU}
       className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-trait bg-papier-cote"
     >
-      <EnTetePanneau papier>
+      <EnTetePanneau>
         {piece} · {pose}
         {/* **Refaire le calage à la main** (G16, US-503). À droite du titre,
             parce que c'est un geste sur la carte entière et non sur l'un de ses
@@ -380,9 +380,8 @@ export function PanneauCalque({
             phrase aurait laissé croire qu'on regarde le fichier rangé. */}
         {arriveePossible && (
           <div className="flex flex-col gap-2">
-            <Libelle papier>Ce qu'on regarde</Libelle>
+            <Libelle>Ce qu'on regarde</Libelle>
             <Segments<string>
-              papier
               valeurs={["calque", "brut"] as const}
               valeur={arrivee ? "brut" : "calque"}
               onChange={(quoi) => setArrivee(quoi === "brut")}
@@ -401,9 +400,8 @@ export function PanneauCalque({
             au-dessus de son image seraient du cadrage affiché. */}
         {difference && !arrivee && (
           <div className="flex flex-col gap-2">
-            <Libelle papier>Ce que la main tient</Libelle>
+            <Libelle>Ce que la main tient</Libelle>
             <Segments<Outil>
-              papier
               valeurs={["zone", "affinage", "retouche"] as const}
               valeur={outil}
               onChange={setOutil}
@@ -440,7 +438,7 @@ export function PanneauCalque({
               : `Zone du calque ${piece} sur ${pose}`
           }
           className={[
-            "damier relative shrink-0 touch-none select-none",
+            "damier-papier relative shrink-0 touch-none select-none",
             arrivee ? "" : "cursor-crosshair",
           ].join(" ")}
           style={{ width: CADRE, height: haut }}
@@ -549,13 +547,11 @@ export function PanneauCalque({
         {outil !== "zone" && !arrivee && (
           <div className="flex flex-wrap items-center gap-2">
             <Segments<string>
-              papier
               valeurs={["garder", "ôter"] as const}
               valeur={garde ? "garder" : "ôter"}
               onChange={(quoi) => setGarde(quoi === "garder")}
             />
             <Segments<number>
-              papier
               valeurs={RAYONS}
               valeur={rayon}
               onChange={setRayon}
@@ -680,7 +676,7 @@ export function PanneauCalque({
         </p>
 
         <div className="mt-auto flex justify-end pt-2">
-          <Bouton papier onClick={onFermer} enfants="Fermer" />
+          <Bouton onClick={onFermer} enfants="Fermer" />
         </div>
       </div>
     </aside>
@@ -720,7 +716,7 @@ function Jugement({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle papier>Ce qu'on garde</Libelle>
+      <Libelle>Ce qu'on garde</Libelle>
       <p className="mesure text-[10px] leading-4 text-encre-4">
         {retenu
           ? "c'est ce calque-ci qui part dans le jeu, et qui sert de référence à cette pièce."
@@ -783,7 +779,7 @@ function Mesures({
   const part = (valeur: number) => `${(valeur * 100).toFixed(1).replace(".", ",")} %`
   return (
     <section className="flex flex-col gap-1.5">
-      <Libelle papier>Ce qui a bougé</Libelle>
+      <Libelle>Ce qui a bougé</Libelle>
       {/* **La dérive est nommée, pas devinée** (US-148). Quand l'échelle a fait
           renoncer au calque, la phrase le dit ici, à l'endroit même où l'on
           cherche pourquoi il n'y en a pas — et elle nomme le chiffre qui a

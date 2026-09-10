@@ -22,7 +22,7 @@ import type {
   Role,
   Univers,
 } from "../api"
-import { usePli } from "./chassis"
+import { usePli } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { Cible, Reinjections } from "./Galerie"
 import { ChampPrompt, type EnVol } from "./ChampPrompt"

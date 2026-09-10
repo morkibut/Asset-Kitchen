@@ -14,12 +14,12 @@
 // **Portée au papier le 11 septembre 2026 (`D4`)**, avec `Arbre.tsx` : aucune
 // planche ne la dessine — `Galerie.dc.html` (`D3`) ne couvre que la grille, la
 // tuile, la fiche et le pied. Même structure, même hauteur de 34 px ; seuls
-// ses jetons et ses tailles passent au vocabulaire papier de `chassis.tsx` et
+// ses jetons et ses tailles passent au vocabulaire papier de `pieces.tsx` et
 // aux listes fermées de `docs/DESIGN.md`.
 
 import { useEffect, useState } from "react"
 import type { Collection, Projet } from "../api"
-import { LIBELLES_ZOOM, Segments, ZOOMS, type Zoom } from "./chassis"
+import { LIBELLES_ZOOM, Segments, ZOOMS, type Zoom } from "./pieces"
 import { Importer, type Import } from "./Import"
 
 export type Annulation = { identifiants: string[]; expireLe: number }
@@ -203,7 +203,6 @@ export function BarreOutils({
               onChange={onZoom}
               indisponibles={zoomsIndisponibles}
               libelles={LIBELLES_ZOOM}
-              papier
             />
             {/* Le seul endroit où le produit dit qu'il rend autre chose que ce qui
                 est choisi. Il le dit plutôt que de corriger en silence : le cran

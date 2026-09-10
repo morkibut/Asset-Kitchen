@@ -1,10 +1,16 @@
-// Le châssis : les quelques pièces que tout le reste réutilise.
-// Elles portent les hauteurs de contrôle de `docs/DESIGN.md` § Spacing —
-// c'est cette grille de densité, pas les marges, qui fait l'instrument.
+// Les pièces : les quelques contrôles que tout le reste réutilise —
+// `docs/DESIGN.md` § Les onze pièces. Elles portent les hauteurs de contrôle du
+// § Spacing : c'est cette grille de densité, pas les marges, qui fait
+// l'instrument.
+//
+// **Le fichier s'appelait `chassis.tsx`, et il portait deux habillages** : celui
+// du châssis chaud et sombre, et celui du papier du carnet, derrière une prop
+// `papier` posée au fil de `C5`-`D5`. `D6` a retiré le premier — plus un seul
+// écran du produit ne le demandait —, donc la prop n'avait plus qu'une valeur.
+// Une prop qui ne peut valoir qu'une chose est un endroit où se tromper : elle
+// est partie avec la branche, et le fichier porte enfin le nom de ce qu'il est.
 
 import {
-  createContext,
-  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -102,13 +108,13 @@ export function phrasesDeReserve(reserve: Reserve): string[] {
  *  seul des trois qui demande une décision — attendre demain, ou payer. */
 export function LigneReserve({ reserve }: { reserve: Reserve }) {
   return (
-    <p className="mesure text-[9.5px] leading-4 text-texte-3">
+    <p className="mesure text-[10.5px] leading-4 text-encre-4">
       {phrasesDeReserve(reserve).map((phrase, rang) => (
         <span
           key={phrase}
           className={
             rang === phrasesDeReserve(reserve).length - 1 && reserve.manque
-              ? "text-epingle"
+              ? "text-encre-attention"
               : undefined
           }
         >
@@ -156,31 +162,18 @@ export function Raison({
   texte,
   ouAller,
   onAller,
-  papier = false,
 }: {
   texte: string | null
   ouAller?: string
   onAller?: () => void
-  /** L'écran qui l'emploie tourne sur le châssis clair (V4), pas sur l'ancien
-   *  châssis chaud et sombre — `docs/DESIGN.md` § Le papier. Additif : par
-   *  défaut, rien ne change pour les écrans qui ne le passent pas. */
-  papier?: boolean
 }) {
   if (!texte) return null
   return (
-    <p
-      className={`mesure mt-1 flex items-center gap-1.5 text-[10px] leading-4 ${
-        papier ? "text-encre-4" : "text-texte-3"
-      }`}
-    >
-      <span aria-hidden className={`inline-block h-px w-2 ${papier ? "bg-encre-4" : "bg-texte-3"}`} />
+    <p className="mesure mt-1 flex items-center gap-1.5 text-[10.5px] leading-4 text-encre-4">
+      <span aria-hidden className="inline-block h-px w-2 bg-encre-4" />
       <span>{texte}</span>
       {ouAller && onAller && (
-        <button
-          type="button"
-          onClick={onAller}
-          className={papier ? "text-signal hover:opacity-70" : "text-signal-froid hover:text-signal-froid-clair"}
-        >
+        <button type="button" onClick={onAller} className="text-signal hover:opacity-70">
           {ouAller} ›
         </button>
       )}
@@ -198,10 +191,12 @@ export function Raison({
  * 10 px, lien `--signal` pour le geste. Ce qui change est le mot : le grisé dit
  * *pourquoi c'est fermé*, le revers dit *ce qui va casser*.
  *
- * En `--epingle` et non `--info` : arrêté à un instant, que le système ne
+ * En `--encre-attention` et non `--info` : arrêté à un instant, que le système ne
  * bougera pas tout seul, et que seul un geste de l'auteur relance — exactement
  * la définition que partagent « réglé à la main » et « interrompu ».
- * `docs/design-motifs.md`.
+ * `docs/design-motifs.md`. *(C'était `--epingle` sur le châssis sombre ; le
+ * papier dit la même chose en `--encre-attention`, comme `Envoi.tsx` depuis
+ * `C5`.)*
  */
 export function Revers({
   texte,
@@ -215,14 +210,14 @@ export function Revers({
   enCours?: boolean
 }) {
   return (
-    <p className="mesure mt-1 flex items-center gap-1.5 text-[10px] leading-4 whitespace-nowrap text-epingle">
-      <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+    <p className="mesure mt-1 flex items-center gap-1.5 text-[10.5px] leading-4 whitespace-nowrap text-encre-attention">
+      <span aria-hidden className="inline-block h-px w-2 bg-encre-attention" />
       <span>{texte}</span>
       <button
         type="button"
         onClick={onGeste}
         disabled={enCours}
-        className="text-signal-froid hover:text-signal-froid-clair disabled:text-texte-3"
+        className="text-signal hover:opacity-70 disabled:text-eteint"
       >
         {enCours ? "…" : `${geste} ›`}
       </button>
@@ -230,23 +225,9 @@ export function Revers({
   )
 }
 
-export function EnTetePanneau({
-  children,
-  papier = false,
-}: {
-  children: ReactNode
-  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
-   *  comme sur `Bouton`, `Libelle`, `Raison`, `Segments` et `Curseur`. */
-  papier?: boolean
-}) {
+export function EnTetePanneau({ children }: { children: ReactNode }) {
   return (
-    <div
-      className={
-        papier
-          ? "mesure flex h-[30px] shrink-0 items-center border-b border-trait px-2 text-[9.5px] tracking-[.11em] text-encre-4 uppercase"
-          : "mesure flex h-[30px] shrink-0 items-center border-b border-bord px-2 text-[9.5px] tracking-[.11em] text-texte-3 uppercase"
-      }
-    >
+    <div className="mesure flex h-[30px] shrink-0 items-center border-b border-trait px-2 text-[10.5px] tracking-[.11em] text-encre-4 uppercase">
       {children}
     </div>
   )
@@ -268,7 +249,6 @@ export function Libelle({
   children,
   aide,
   eteint = false,
-  papier = false,
 }: {
   children: ReactNode
   aide?: string
@@ -277,9 +257,6 @@ export function Libelle({
    *  un second gabarit de libellé serait un second endroit où poser le
    *  pointillé, donc un endroit où l'oublier. */
   eteint?: boolean
-  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
-   *  comme sur `Raison` et `Bouton`. */
-  papier?: boolean
 }) {
   const { presente, ancre, declencheurs, bulle } = useInfobulle(aide)
   // **`w-fit`, et c'est la poignée qui en dépend.** Un `<span>` posé dans un
@@ -292,20 +269,11 @@ export function Libelle({
   // dans le même panneau. « Le libellé est la cible » ne tient que si la cible
   // *est* le libellé. Une largeur en `fit-content` neutralise l'étirement sans
   // toucher à l'alignement, donc sans défaire l'`items-baseline` des rangées.
-  const base = papier
-    ? `w-fit text-[11px] ${eteint ? "text-eteint" : "text-encre-3"}`
-    : `w-fit text-[11px] ${eteint ? "text-texte-3" : "text-texte-2"}`
-  // Le pointillé de l'ancien châssis se lit en `--bord-fort` — invisible sur le
-  // papier, où le trait équivalent est `--contour`. Recomposé ici plutôt que
-  // dans `Infobulle.tsx`, qui sert aussi les vingt écrans qui n'ont pas changé
-  // de châssis.
-  const pointille = papier
-    ? "cursor-help underline decoration-dotted decoration-contour underline-offset-[3px] hover:decoration-encre-3"
-    : POINTILLE
+  const base = `w-fit text-[11px] ${eteint ? "text-eteint" : "text-encre-3"}`
   if (!presente) return <span className={base}>{children}</span>
   return (
     <>
-      <span ref={ancre as Ref<HTMLSpanElement>} {...declencheurs} className={`${base} ${pointille}`}>
+      <span ref={ancre as Ref<HTMLSpanElement>} {...declencheurs} className={`${base} ${POINTILLE}`}>
         {children}
       </span>
       {bulle}
@@ -342,7 +310,6 @@ export function EnTeteDeSection({
   aide,
   titre,
   compte,
-  papier = false,
 }: {
   /** La clef de l'entrée du recueil. Elle donne le nom **et** le propos. */
   aide: string
@@ -352,26 +319,18 @@ export function EnTeteDeSection({
   /** Le compte de la section, aligné à droite. **Écrit une fois** : c'est la
    *  correction de R8, où le même compte figurait à trois endroits. */
   compte?: ReactNode
-  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
-   *  comme sur `Bouton`, `Libelle`, `Raison` et `Segments` — les écrans qui
-   *  ne le passent pas gardent l'en-tête d'aujourd'hui, à l'identique. */
-  papier?: boolean
 }) {
   const entree = explication(aide)
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline gap-3">
-        <Libelle aide={aide} papier={papier}>{titre ?? entree?.nom ?? aide}</Libelle>
+        <Libelle aide={aide}>{titre ?? entree?.nom ?? aide}</Libelle>
         {compte && (
-          <span className={`mesure ml-auto text-[10px] ${papier ? "text-encre-4" : "text-texte-3"}`}>
-            {compte}
-          </span>
+          <span className="mesure ml-auto text-[10.5px] text-encre-4">{compte}</span>
         )}
       </div>
       {entree && (
-        <p
-          className={`max-w-[64ch] text-[11.5px] leading-[1.5] ${papier ? "text-encre-3" : "text-texte-2"}`}
-        >
+        <p className="max-w-[64ch] text-[11.5px] leading-[1.5] text-encre-3">
           {entree.quoi}
         </p>
       )}
@@ -408,12 +367,6 @@ function prevenirTous() {
 function basculer(cle: string) {
   if (ouverts.has(cle)) ouverts.delete(cle)
   else ouverts.add(cle)
-  prevenirTous()
-}
-
-function ouvrir(cle: string) {
-  if (ouverts.has(cle)) return
-  ouverts.add(cle)
   prevenirTous()
 }
 
@@ -456,32 +409,15 @@ export function usePli(cle: string): [boolean, () => void] {
   return [useOuvert(cle), () => basculer(cle)]
 }
 
-/** Ouvrir un pli sans le basculer — pour le geste qui *implique* de voir. */
-export const ouvrirPli = ouvrir
-
 /** La valeur d'un bloc replié. `null` — rien de posé — se dit par le tiret du
- *  produit, en `--texte-3` ; un réglage posé se dit en `--signal`, la couleur
+ *  produit, en `--encre-4` ; un réglage posé se dit en `--signal`, la couleur
  *  de ce qui est choisi partout ailleurs. */
-function Valeur({
-  etat,
-  papier = false,
-}: {
-  etat: string | null | undefined
-  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
-   *  comme sur `Bouton`, `Libelle`, `Raison` et `Segments`. */
-  papier?: boolean
-}) {
+function Valeur({ etat }: { etat: string | null | undefined }) {
   return (
     <span
       className={[
-        "mesure ml-auto max-w-[60%] truncate pl-2 text-[9.5px]",
-        papier
-          ? etat
-            ? "text-signal"
-            : "text-encre-4"
-          : etat
-            ? "text-signal-froid"
-            : "text-texte-3",
+        "mesure ml-auto max-w-[60%] truncate pl-2 text-[10.5px]",
+        etat ? "text-signal" : "text-encre-4",
       ].join(" ")}
     >
       {etat || "—"}
@@ -510,7 +446,6 @@ export function Bloc({
   etat,
   mesure,
   aide,
-  papier = false,
   children,
 }: {
   /** L'identité du bloc dans le repli global. Stable d'un asset à l'autre. */
@@ -532,16 +467,10 @@ export function Bloc({
    *  catalogue » pendant qu'on choisit un modèle. Les deux ne cohabitent
    *  jamais : ils occupent la même fente. */
   mesure?: string | null
-  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
-   *  comme sur `Bouton`, `Libelle`, `Raison`, `Segments` et `Curseur`. */
-  papier?: boolean
   children: ReactNode
 }) {
   const ouvert = useOuvert(cle)
   const infobulle = useInfobulle(aide, { epinglable: false })
-  const pointille = papier
-    ? "cursor-help underline decoration-dotted decoration-contour underline-offset-[3px] hover:decoration-encre-3"
-    : POINTILLE
   return (
     <section className="flex flex-col gap-1.5">
       <button
@@ -549,7 +478,7 @@ export function Bloc({
         onClick={() => basculer(cle)}
         aria-expanded={ouvert}
         {...infobulle.declencheurs}
-        className={`-mx-1 flex h-[26px] items-center rounded-[2px] px-1 text-left transition-colors duration-[80ms] ${papier ? "hover:bg-papier-cote" : "hover:bg-fond-3"}`}
+        className="-mx-1 flex h-[26px] items-center rounded-5 px-1 text-left transition-colors duration-120 hover:bg-papier-cote"
       >
         <span
           ref={infobulle.ancre as Ref<HTMLSpanElement>}
@@ -557,18 +486,18 @@ export function Bloc({
           // bornée à son mot **quelle que soit l'orientation du parent**. Cette
           // rangée-ci est en `flex … items-center`, donc contente aujourd'hui —
           // la classe dit qu'elle le restera si la rangée devient une colonne.
-          className={`w-fit text-[11px] ${papier ? "text-encre-3" : "text-texte-2"} ${infobulle.presente ? pointille : ""}`}
+          className={`w-fit text-[11px] text-encre-3 ${infobulle.presente ? POINTILLE : ""}`}
         >
           {titre}
         </span>
         {ouvert ? (
           mesure && (
-            <span className={`mesure ml-auto truncate pl-2 text-[9.5px] ${papier ? "text-encre-4" : "text-texte-3"}`}>
+            <span className="mesure ml-auto truncate pl-2 text-[10.5px] text-encre-4">
               {mesure}
             </span>
           )
         ) : (
-          <Valeur etat={etat} papier={papier} />
+          <Valeur etat={etat} />
         )}
       </button>
       {/* Hors du bouton, exprès : la bulle porte le lien « Le guide › », et un
@@ -587,32 +516,20 @@ export function Bouton({
   inactif = false,
   onClick,
   titre,
-  papier = false,
 }: {
   enfants: ReactNode
   principal?: boolean
   inactif?: boolean
   onClick?: () => void
   titre?: string
-  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
-   *  comme sur `Raison` et `Libelle` — les écrans qui ne le passent pas
-   *  gardent le bouton d'aujourd'hui, à l'identique. */
-  papier?: boolean
 }) {
-  const base = papier
-    ? "h-[34px] rounded-7 px-3 text-[13px] transition-colors duration-[80ms] disabled:cursor-not-allowed"
-    : "h-[34px] rounded-[2px] px-3 text-[13px] transition-colors duration-[80ms] disabled:cursor-not-allowed"
-  const couleurs = papier
-    ? inactif
-      ? "border border-trait bg-papier-cote text-eteint"
-      : principal
-        ? "border border-signal bg-signal text-encre-sur-signal hover:opacity-90 font-medium"
-        : "border border-contour bg-carte text-encre-controle hover:bg-papier-cote"
-    : inactif
-      ? "border border-bord bg-fond-2 text-texte-3"
-      : principal
-        ? "bg-signal-froid text-fond-0 hover:bg-signal-froid-clair font-medium"
-        : "border border-bord-fort bg-fond-2 text-texte hover:bg-fond-3"
+  const base =
+    "h-[34px] rounded-7 px-3 text-[13px] transition-colors duration-120 disabled:cursor-not-allowed"
+  const couleurs = inactif
+    ? "border border-trait bg-papier-cote text-eteint"
+    : principal
+      ? "border border-signal bg-signal text-encre-sur-signal hover:opacity-90 font-medium"
+      : "border border-contour bg-carte text-encre-controle hover:bg-papier-cote"
   return (
     <button
       type="button"
@@ -635,7 +552,6 @@ export function Segments<T extends string | number>({
   indisponibles = [],
   libelles,
   plusieursRangees = false,
-  papier = false,
 }: {
   valeurs: readonly T[]
   valeur: T
@@ -664,9 +580,6 @@ export function Segments<T extends string | number>({
    *  réglages. À cette largeur-là, aucune taille de segment ne fait tenir neuf
    *  valeurs sur une rangée — vérifié au navigateur avant d'en arriver là. */
   plusieursRangees?: boolean
-  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
-   *  comme sur `Bouton`, `Libelle` et `Raison`. */
-  papier?: boolean
 }) {
   return (
     <div className={plusieursRangees ? "flex flex-wrap gap-1" : "flex gap-1"}>
@@ -684,18 +597,12 @@ export function Segments<T extends string | number>({
               // sort de la hauteur de sa bande, et une bande de la liste
               // fermée ne grandit pas. Trouvé au navigateur en tenant E5, sur
               // « côte à côte » dans un comparateur devenu étroit.
-              `mesure h-[26px] min-w-[34px] shrink-0 whitespace-nowrap border px-2 text-[11.5px] transition-colors duration-[80ms] ${papier ? "rounded-7" : "rounded-[2px]"}`,
-              papier
-                ? grise
-                  ? "border-trait bg-papier-cote text-eteint"
-                  : choisi
-                    ? "border-signal bg-ligne-ouverte text-signal"
-                    : "border-trait bg-carte text-encre-3 hover:bg-papier-cote"
-                : grise
-                  ? "border-bord bg-fond-2 text-texte-3"
-                  : choisi
-                    ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
-                    : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+              "mesure h-[26px] min-w-[34px] shrink-0 rounded-7 whitespace-nowrap border px-2 text-[11.5px] transition-colors duration-120",
+              grise
+                ? "border-trait bg-papier-cote text-eteint"
+                : choisi
+                  ? "border-signal bg-ligne-ouverte text-signal"
+                  : "border-trait bg-carte text-encre-3 hover:bg-papier-cote",
             ].join(" ")}
           >
             {libelles?.[String(v)] ?? v}
@@ -738,15 +645,6 @@ export function Segments<T extends string | number>({
  * Il n'introduit aucune couleur : rail en `--bord`, curseur en `--signal`,
  * valeur en mono à droite comme toute mesure du produit.
  */
-/** Le nom du réglage qu'on est en train de rendre (U3).
- *
- *  **Une seule ligne à écrire plutôt que dix-sept.** Le champ où une valeur
- *  s'écrit a besoin d'un nom pour être trouvable — cinq champs de nombre dans
- *  une colonne se ressemblent tous —, et ce nom est déjà écrit à gauche du
- *  contrôle, dans la rangée qui le porte. Le lui faire redire à chaque emploi
- *  aurait fabriqué dix-sept occasions de le laisser diverger du libellé visible. */
-export const NomDuReglage = createContext<string | undefined>(undefined)
-
 export function Curseur({
   valeur,
   min,
@@ -758,7 +656,6 @@ export function Curseur({
   inactif = false,
   crans,
   libelle,
-  papier = false,
 }: {
   valeur: number
   min: number
@@ -783,9 +680,6 @@ export function Curseur({
    *  champ s'appelle *valeur*, ce qui suffit à le trouver mais pas à savoir
    *  lequel on tient quand il y en a cinq dans la colonne. */
   libelle?: string
-  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
-   *  comme sur `Bouton`, `Libelle`, `Raison` et `Segments`. */
-  papier?: boolean
 }) {
   /** Le cran le plus proche, ou la valeur telle quelle. */
   const arrondir = (brute: number) =>
@@ -808,7 +702,6 @@ export function Curseur({
   // la frappe suivante.
   const [ramene, setRamene] = useState<string | null>(null)
   const champ = useRef<HTMLInputElement>(null)
-  const nom = libelle ?? useContext(NomDuReglage)
 
   const valider = (texte: string) => {
     setEcrit(null)
@@ -854,13 +747,13 @@ export function Curseur({
             setRamene(null)
             champ.current?.focus()
           }}
-          className={papier ? "curseur-papier h-[26px] min-w-0 flex-1" : "curseur h-[26px] min-w-0 flex-1"}
+          className="curseur-papier h-[26px] min-w-0 flex-1"
         />
         <input
           ref={champ}
           type="text"
           inputMode="numeric"
-          aria-label={nom ? `${nom}, en chiffres` : "Valeur, en chiffres"}
+          aria-label={libelle ? `${libelle}, en chiffres` : "Valeur, en chiffres"}
           disabled={inactif}
           value={ecrit ?? `${valeur}${unite}`}
           onChange={(e) => {
@@ -884,165 +777,19 @@ export function Curseur({
           // abandonnée resterait à l'écran sans agir : le champ dirait une
           // chose et l'image en montrerait une autre.
           onBlur={(e) => ecrit !== null && valider(e.target.value)}
-          className={
-            papier
-              ? [
-                  "mesure w-[46px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-right text-[10px] tabular-nums",
-                  "hover:border-trait focus:border-contour focus:bg-carte focus:outline-none",
-                  inactif ? "text-eteint" : "text-encre-3",
-                ].join(" ")
-              : [
-                  "mesure w-[46px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-right text-[10px] tabular-nums",
-                  "hover:border-bord focus:border-bord-fort focus:bg-fond-2 focus:outline-none",
-                  inactif ? "text-texte-3" : "text-texte-2",
-                ].join(" ")
-          }
+          className={[
+            // 70, la seule largeur de petit contrôle déclarée
+            // (`docs/DESIGN.md` § Spacing) : le champ tenait 46 px sur le
+            // châssis sombre, une largeur libre que les listes fermées ne
+            // connaissent pas.
+            "mesure w-[70px] shrink-0 rounded-5 border border-transparent bg-transparent px-1 text-right text-[10.5px] tabular-nums",
+            "hover:border-trait focus:border-contour focus:bg-carte focus:outline-none",
+            inactif ? "text-eteint" : "text-encre-3",
+          ].join(" ")}
         />
       </div>
-      {ramene && <Raison texte={ramene} papier={papier} />}
+      {ramene && <Raison texte={ramene} />}
     </div>
-  )
-}
-
-/**
- * Une place de la recette est-elle remplie ou vide ?
- *
- * Pas une case à cocher du système : un titre de section cliquable, dont l'état
- * se lit à la couleur du texte et à un liseré. La recette a huit places — cinq
- * quand ce commentaire a été écrit ; les contours et la main s'y sont ajoutés
- * en E5, le retournement en B1 —,
- * et autant de cases à cocher alignées dans un panneau de 380 px
- * ressembleraient à un formulaire — or ce panneau est un établi.
- *
- * **C'est le cas particulier du bloc repliable**, et la rangée porte deux actes
- * qui ne sont pas le même : le carré dit *posé ou pas* — ça change l'asset —,
- * le titre dit *montré ou pas* — ça ne change que l'écran. Une étape qui n'est
- * pas posée n'a rien à replier : toute sa rangée la pose, comme avant. Mesuré
- * le 27 août 2026 : cinq étapes posées tenaient 522 px dans une colonne qui en
- * offre 650, et le seul moyen de les garder posées était de les subir.
- *
- * **Poser une étape l'ouvre** — c'est le même geste, on demande ses contrôles
- * en la posant. Rien d'autre ne s'ouvre tout seul : l'en-tête dit déjà l'état,
- * donc rien n'a besoin de s'ouvrir pour se faire remarquer.
- */
-export function Etape({
-  cle,
-  titre,
-  active,
-  onBasculer,
-  etat,
-  raison,
-  aide,
-  children,
-}: {
-  /** L'identité de l'étape dans le repli global. Stable d'un asset à l'autre :
-   *  on ne veut pas rouvrir cinq blocs à chaque image regardée. */
-  cle: string
-  titre: string
-  active: boolean
-  onBasculer: () => void
-  /** La clé de l'entrée du corpus. **Une étape est un réglage**, et le plus
-   *  structurant de tous : elle décide qu'une place de la recette est occupée.
-   *  Documenter `tache minimale` sans documenter `Nettoyage des bords`
-   *  laisserait le parent plus opaque que son enfant.
-   *
-   *  N'épingle pas, comme le titre d'un `Bloc` : le clic de la rangée est déjà
-   *  pris — il pose l'étape, ou la replie. */
-  aide?: string
-  /** Le réglage posé, dit en une ligne — ce que l'en-tête porte une fois
-   *  replié. Ignoré tant que l'étape n'est pas posée : il n'y a rien à dire. */
-  etat?: string | null
-  raison?: string | null
-  children?: ReactNode
-}) {
-  const grise = Boolean(raison)
-  const ouvert = useOuvert(cle)
-  const montre = active && !grise && ouvert
-  const infobulle = useInfobulle(aide, { epinglable: false })
-
-  // **Le pointillé reste sur une étape grisée.** Le § L'infobulle le tranche :
-  // *pourquoi c'est fermé* n'est pas *à quoi ça sert*, et les deux cohabitent —
-  // la raison dans sa fente, permanente ; l'explication au survol.
-  const nom = (
-    <span
-      ref={infobulle.ancre as Ref<HTMLSpanElement>}
-      className={`truncate ${infobulle.presente ? POINTILLE : ""}`}
-    >
-      {titre}
-    </span>
-  )
-
-  const carre = (
-    <span
-      aria-hidden
-      className={[
-        "inline-block h-[9px] w-[9px] shrink-0 rounded-[2px] border",
-        active && !grise ? "border-signal-froid bg-signal-froid" : "border-bord-fort bg-fond-2",
-      ].join(" ")}
-    />
-  )
-  const style = [
-    "mesure flex h-[26px] items-center gap-2 text-left text-[9.5px] tracking-[.11em] uppercase transition-colors duration-[80ms]",
-    grise ? "text-texte-3" : active ? "text-signal-froid" : "text-texte-3 hover:text-texte-2",
-  ].join(" ")
-
-  return (
-    <section className="flex flex-col gap-1.5 border-t border-bord pt-2 first:border-t-0 first:pt-0">
-      {active && !grise ? (
-        // Posée : le carré la dépose, le reste de la rangée la replie. Le carré
-        // fait 9 px mais sa cible en fait 26 — la hauteur de rangée du produit.
-        <div className="flex items-center">
-          <button
-            type="button"
-            onClick={onBasculer}
-            aria-label={`Retirer ${titre} de la recette`}
-            className="-ml-1 flex h-[26px] w-[22px] items-center justify-center rounded-[2px] transition-colors duration-[80ms] hover:bg-fond-3"
-          >
-            {carre}
-          </button>
-          <button
-            type="button"
-            onClick={() => basculer(cle)}
-            aria-expanded={ouvert}
-            {...infobulle.declencheurs}
-            className={`${style} -mr-1 min-w-0 flex-1 rounded-[2px] pr-1 hover:bg-fond-3`}
-          >
-            {nom}
-            {!ouvert && <Valeur etat={etat} />}
-          </button>
-        </div>
-      ) : (
-        // Pas posée, ou grisée : rien à replier, toute la rangée la pose.
-        //
-        // **`aria-disabled` et non `disabled`, et c'est le motif qui l'exige.**
-        // Un contrôle grisé garde son pointillé — *pourquoi c'est fermé* n'est
-        // pas *à quoi ça sert* —, or un `<button disabled>` ne dispatche aucun
-        // événement de souris, pas même sur ses enfants : l'explication d'une
-        // étape grisée serait donc la seule du produit à ne jamais s'ouvrir,
-        // et c'est précisément celle qu'on cherche à ce moment-là. Le refus
-        // reste entier : le clic ne fait rien, et la raison est dans sa fente,
-        // juste dessous.
-        <button
-          type="button"
-          aria-disabled={grise}
-          onClick={() => {
-            if (grise) return
-            ouvrir(cle)
-            onBasculer()
-          }}
-          {...infobulle.declencheurs}
-          className={style}
-        >
-          {carre}
-          {nom}
-        </button>
-      )}
-      {/* Hors des boutons, exprès : la bulle porte le lien « Le guide › », et un
-          bouton dans un bouton est invalide. Elle est en `fixed`, donc sa place
-          à l'écran ne doit rien à l'endroit où elle est rendue. */}
-      {infobulle.bulle}
-      {grise ? <Raison texte={raison ?? null} /> : montre ? children : null}
-    </section>
   )
 }
 
@@ -1052,7 +799,17 @@ export function Etape({
  * La jauge du produit — **déterminée**, `docs/DESIGN.md` § Motion : « ça
  * travaille, et voilà où ça en est ». Le seul mouvement continu du produit, et
  * il n'y en a qu'un : une génération dans la grille et une retouche **dans les
- * tables** portent la même barre, aux mêmes 2 px, dans la même couleur.
+ * tables** portent la même barre, de la même épaisseur, dans la même couleur.
+ *
+ * **Un filet d'un pixel en `--encre-3`, et non deux pixels de rouille** (`D6`).
+ * Les planches disent « deux pixels de haut » ; elles décrivent la barre du
+ * châssis sombre, où un pixel de cyan disparaît. Sur le papier, un filet d'un
+ * pixel *est* le vocabulaire du carnet — c'est l'épaisseur de tous ses traits —
+ * et 2 n'est pas dans la liste fermée des écarts. C'est exactement ce que
+ * `Retouche.tsx` avait déjà tranché pour sa propre jauge en `B26` ; les deux
+ * disent maintenant la même chose. Le rouille, lui, reste ce qu'il est partout
+ * ailleurs : **le bouton qui dépense, un seul par écran** — une barre d'attente
+ * en fond rouille en aurait fait un second.
  *
  * *La phrase disait « une retouche dans la fiche » ; la retouche a quitté la
  * fiche pour les tables en `E4`, le 31 août 2026, et l'exemple désignait depuis
@@ -1076,7 +833,6 @@ export function Jauge({
   attendue,
   compteur = true,
   seuil = 0,
-  papier = false,
 }: {
   /** L'instant du départ, en secondes Unix. `null` — pas encore parti. */
   demarreLe: number | null
@@ -1086,10 +842,6 @@ export function Jauge({
   compteur?: boolean
   /** Sous cette durée, la jauge ne paraît pas du tout. En secondes. */
   seuil?: number
-  /** Châssis clair (V4) au lieu de l'ancien châssis chaud et sombre. Additif,
-   *  comme sur `Bouton`, `Libelle`, `Raison`, `Segments` et `Curseur` — posé en
-   *  `D3` pour la tuile de la galerie, qui porte la jauge sur du papier. */
-  papier?: boolean
 }) {
   const ecoule = useEcoule(demarreLe)
 
@@ -1101,19 +853,13 @@ export function Jauge({
   return (
     <>
       {compteur && (
-        <span
-          className={
-            papier ? "mesure text-[10.5px] text-papier" : "mesure text-[8.5px] text-texte-2"
-          }
-        >
+        <span className="mesure text-[10.5px] text-papier">
           {enAttente ? "en file" : `${secondes(ecoule)} / ~${secondes(attendue)}`}
         </span>
       )}
-      <span
-        className={`block h-[2px] w-full overflow-hidden ${papier ? "bg-contour" : "bg-bord"}`}
-      >
+      <span className="block h-px w-full overflow-hidden bg-trait-faible">
         <span
-          className={`block h-full transition-[width] duration-[240ms] ease-linear ${papier ? "bg-signal" : "bg-signal-froid"}`}
+          className="block h-full bg-encre-3 transition-[width] duration-220 ease-linear"
           style={{ width: `${part(ecoule, attendue, enAttente) * 100}%` }}
         />
       </span>
@@ -1134,7 +880,7 @@ const depuis = (horodatage: number | null) =>
  * dépôt refuse partout ailleurs.
  *
  * Le quart de seconde n'est pas un réglage de confort : la barre transitionne
- * sur 240 ms (§ Motion), et rafraîchir plus vite ne ferait qu'écraser une
+ * sur 220 ms (§ Motion), et rafraîchir plus vite ne ferait qu'écraser une
  * transition en cours par la suivante.
  */
 export function useEcoule(demarreLe: number | null): number {
@@ -1279,12 +1025,14 @@ export function rectangleDeLImage(
   }
 }
 
-/** Le point de la barre d'état. Seul endroit du produit avec un rayon plein. */
+/** Le point de la barre d'état. Quatre pixels et un arrondi de 5 — la pastille
+ *  du pied du carnet, la même que `Carnet.tsx` (`D6` : elle en faisait 5 avec un
+ *  rayon plein, deux valeurs hors des listes fermées de `docs/DESIGN.md`). */
 export function Point({ couleur }: { couleur: string }) {
   return (
     <span
       aria-hidden
-      className="inline-block h-[5px] w-[5px] rounded-full"
+      className="inline-block h-[4px] w-[4px] rounded-5"
       style={{ background: couleur }}
     />
   )

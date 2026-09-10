@@ -48,7 +48,7 @@
 
 import { useEffect, useState, type ReactNode, type Ref } from "react"
 import { api, type Calibrage, type Personnage, type PoseCalee } from "../api"
-import { Bouton, EnTeteDeSection, Libelle, Raison } from "./chassis"
+import { Bouton, EnTeteDeSection, Libelle, Raison } from "./pieces"
 import { PANNEAU, POINTILLE, useInfobulle } from "./Infobulle"
 
 /** Les deux façons de regarder l'empilement.
@@ -183,7 +183,6 @@ export function EcranCalibrage({
             n'était accrochée à rien —, et le pointillé sous le nom ouvre sa
             version longue. */}
         <EnTeteDeSection
-          papier
           aide="etabli.calibrage"
           compte={
             lu
@@ -198,7 +197,7 @@ export function EcranCalibrage({
           }
         />
 
-        {refus && <Raison papier texte={refus} />}
+        {refus && <Raison texte={refus} />}
 
         {lu && (
           <>
@@ -224,7 +223,7 @@ export function EcranCalibrage({
                   coupé par un retour à la ligne : on sait maintenant ce qu'on va
                   obtenir et ce qu'on va perdre avant d'avoir la main sur la
                   souris. */}
-              <Libelle papier>ce que ça donnerait</Libelle>
+              <Libelle>ce que ça donnerait</Libelle>
               {lu.commune > 0 ? (
                 <div className="flex flex-col">
                   <Fait nom="hauteur commune" valeur={`${lu.commune} px sur ${lu.cible}`} />
@@ -258,7 +257,6 @@ export function EcranCalibrage({
                   justement celui qu'on veut vérifier d'un coup d'œil avant
                   d'appuyer. */}
               <Bouton
-                papier
                 principal
                 inactif={raisonDuBouton !== null}
                 onClick={() =>
@@ -272,7 +270,7 @@ export function EcranCalibrage({
               {/* **La fente permanente, et elle ne sert qu'à ça** : dire
                   pourquoi le bouton est éteint. Il s'éteignait déjà, dans le
                   seul cas dégénéré, et il s'éteignait **muet**. */}
-              <Raison papier texte={raisonDuBouton} />
+              <Raison texte={raisonDuBouton} />
 
               {/* **L'outil propose, il ne décide pas.** Il ne devine pas qu'une
                   pose est couchée : il voit qu'elle est très en dehors des
@@ -302,7 +300,7 @@ export function EcranCalibrage({
 
             {/* ── Les poses ───────────────────────────────────────────────── */}
             <section className="flex flex-col gap-1">
-              <Libelle papier>Les poses</Libelle>
+              <Libelle>Les poses</Libelle>
               <ul className="flex flex-col">
                 {lu.poses.map((pose) => (
                   <LignePose
@@ -315,14 +313,14 @@ export function EcranCalibrage({
                 ))}
               </ul>
               {lu.poses.length === 0 && (
-                <Raison papier texte="aucune pose de cette chose n'a encore de corps — il n'y a rien à empiler" />
+                <Raison texte="aucune pose de cette chose n'a encore de corps — il n'y a rien à empiler" />
               )}
             </section>
 
             {/* ── La reprise à la main ────────────────────────────────────── */}
             {courante && (
               <section className="flex flex-col gap-1.5">
-                <Libelle papier>{courante.pose} — sa taille</Libelle>
+                <Libelle>{courante.pose} — sa taille</Libelle>
                 <Reglage
                   nom="occupation"
                   aide="calibrage.occupation"
@@ -406,7 +404,7 @@ export function EcranCalibrage({
 
             {/* ── Voir ────────────────────────────────────────────────────── */}
             <section className="flex flex-col gap-1.5">
-              <Libelle papier>Voir</Libelle>
+              <Libelle>Voir</Libelle>
               <div className="flex items-center gap-1.5">
                 {(["toutes", "seules"] as const).map((quoi) => (
                   <button
@@ -576,7 +574,7 @@ function LignePose({
           pleine — six timbres-poste ne valent pas six fichiers entiers. */}
       <span
         data-silhouette
-        className="damier flex h-[26px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-[1px] border border-trait"
+        className="damier-papier flex h-[26px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-[1px] border border-trait"
       >
         <img
           src={api.vignette(pose.asset, pose.empreinte, 64)}
@@ -652,7 +650,7 @@ function Reglage({
   return (
     <div className="flex items-center gap-2">
       <span className="w-[74px] shrink-0">
-        <Libelle papier aide={aide}>{nom}</Libelle>
+        <Libelle aide={aide}>{nom}</Libelle>
       </span>
       <input
         type="number"
@@ -814,7 +812,7 @@ function Empilement({
       </span>
       <div
         data-canevas={apres ? "apres" : "aujourdhui"}
-        className="damier relative"
+        className="damier-papier relative"
         style={{ width: cote, height: cote }}
       >
         {montrees.map(({ pose, etat }) => (

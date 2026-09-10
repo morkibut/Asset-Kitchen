@@ -15,7 +15,7 @@
 // **Portée au papier le 11 septembre 2026 (`D4`)**, avec `BarreOutils.tsx` :
 // aucune planche ne la dessine — `Galerie.dc.html` (`D3`) ne couvre que la
 // grille, la tuile, la fiche et le pied. Le porche reste donc celui d'avant :
-// mêmes rangées, même structure, le vocabulaire papier de `chassis.tsx` et les
+// mêmes rangées, même structure, le vocabulaire papier de `pieces.tsx` et les
 // listes fermées de `docs/DESIGN.md`. Sa largeur passe de 240 à **300** — la
 // colonne « le carnet », fixe, toujours là.
 //
@@ -33,7 +33,7 @@ import {
   type Bibliotheque,
   type Journal,
 } from "../api"
-import { EnTetePanneau, Raison } from "./chassis"
+import { EnTetePanneau, Raison } from "./pieces"
 
 export function Arbre({
   bibliotheque,
@@ -97,7 +97,7 @@ export function Arbre({
       data-carnet
       className="flex min-h-0 w-[300px] shrink-0 flex-col border-r border-trait bg-papier-cote"
     >
-      <EnTetePanneau papier>
+      <EnTetePanneau>
         <span>Projet</span>
         <span className="mesure ml-auto text-encre-4">
           {dollars(bibliotheque.total_usd)}
@@ -214,7 +214,7 @@ export function Arbre({
               placeholder={nouveau === "projet" ? "nom du projet" : "nom de la collection"}
               className="h-[34px] rounded-5 border border-contour bg-carte px-2 text-[12px] text-encre placeholder:text-encre-4"
             />
-            <Raison texte="Entrée pour créer, Échap pour renoncer" papier />
+            <Raison texte="Entrée pour créer, Échap pour renoncer" />
           </div>
         )}
 

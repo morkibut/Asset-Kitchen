@@ -86,14 +86,14 @@ import {
   type Univers,
 } from "../api"
 import { imageAsset, sujetAsset, useVisee } from "./Apercu"
-// **Trois fonctions pures, et rien d'autre de `chassis.tsx`.** Aucun fichier du
+// **Trois fonctions pures, et rien d'autre de `pieces.tsx`.** Aucun fichier du
 // carnet n'importe ce module — il porte le balisage de l'ancien châssis, et ses
 // couleurs ne sont pas celles du papier. Ces trois-là n'ont ni balise ni jeton :
 // c'est la courbe de la jauge, le battement qui la nourrit, et le rectangle que
 // l'image occupe vraiment dans la surface qui reçoit un geste. Les réécrire
 // aurait fabriqué **deux vérités sur la même attente**, et c'est précisément la
 // panne que cette tranche répare ailleurs.
-import { EchantillonDeHauteur, part, rectangleDeLImage, useEcoule } from "./chassis"
+import { EchantillonDeHauteur, part, rectangleDeLImage, useEcoule } from "./pieces"
 import { EcranSuperposition } from "./Superposition"
 // **Le vocabulaire vient d'un module sans écran** (`B26`). Les listes fermées,
 // les fonctions pures et les trois crochets de la recette ne sont pas du
@@ -453,7 +453,7 @@ function Choix<T extends string | number>({
  *  nombre de droite était en lecture seule : refaire à la souris un réglage
  *  qu'on a noté sur l'image d'à côté est une punition, et c'était un critère
  *  déjà coché du lot `U` que le déménagement de `B25` avait fait retomber.
- *  Le comportement est celui de `Curseur` (`chassis.tsx`), repris et non
+ *  Le comportement est celui de `Curseur` (`pieces.tsx`), repris et non
  *  réinventé : Entrée valide, Échap rend la valeur d'avant, quitter le champ
  *  vaut Entrée, une valeur hors bornes est **ramenée** — jamais refusée — et la
  *  ligne dessous dit laquelle. Taper un chiffre pendant qu'on tient la
@@ -3141,7 +3141,7 @@ export function ToileDeLaMain({
         }
         alt={asset.label}
         draggable={false}
-        className="damier h-full w-full object-contain select-none"
+        className="damier-papier h-full w-full object-contain select-none"
         style={{ imageRendering: "pixelated" }}
       />
 
@@ -3260,7 +3260,7 @@ export function PipetteSurImage({
         src={api.rendu(asset.identifiant, asset.empreinte, true)}
         alt={asset.label}
         draggable={false}
-        className="damier h-full w-full object-contain select-none"
+        className="damier-papier h-full w-full object-contain select-none"
         style={{ imageRendering: "pixelated" }}
       />
       {point && (
@@ -3364,7 +3364,7 @@ export function TraceSurImage({
         src={api.rendu(asset.identifiant, asset.empreinte, true)}
         alt={asset.label}
         draggable={false}
-        className="damier h-full w-full object-contain select-none"
+        className="damier-papier h-full w-full object-contain select-none"
         style={{ imageRendering: "pixelated" }}
       />
       {montree.length > 1 && (
@@ -3483,7 +3483,7 @@ export function CadreDeRecadrage({
         src={api.rendu(asset.identifiant, asset.empreinte, true)}
         alt={asset.label}
         draggable={false}
-        className="damier h-full w-full object-contain select-none"
+        className="damier-papier h-full w-full object-contain select-none"
         style={{ imageRendering: "pixelated" }}
       />
       {/* **Ce qui est jeté est assombri, pas masqué** — c'est le but : on voit
@@ -4294,7 +4294,7 @@ export function Retouche({
                         ),
                       )}
                       style={{ imageRendering: "pixelated" }}
-                      className="damier block max-h-full min-w-0 object-contain"
+                      className="damier-papier block max-h-full min-w-0 object-contain"
                     />
                     <figcaption className="mesure text-[10.5px] text-carte">
                       témoin ·{" "}
@@ -4431,7 +4431,7 @@ export function Retouche({
                       height={Math.max(1, Math.round(hauteurVue * facteur))}
                       style={{ imageRendering: "pixelated" }}
                       className={[
-                        montreUnFond ? "" : "damier",
+                        montreUnFond ? "" : "damier-papier",
                         "block h-full w-full object-contain",
                       ].join(" ")}
                     />
@@ -4604,7 +4604,7 @@ function SoeurDuCarnet({
       <img
         src={sujetAsset(asset).src}
         alt={asset.label}
-        className="damier h-[54px] w-[54px] object-contain"
+        className="damier-papier h-[54px] w-[54px] object-contain"
         style={{ imageRendering: "pixelated" }}
       />
     </button>

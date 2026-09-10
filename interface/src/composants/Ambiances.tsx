@@ -27,7 +27,7 @@ import {
   type RetoucheDePalette,
   type SourceDePalette,
 } from "../api"
-import { Curseur, Jauge, Libelle, Raison, Segments } from "./chassis"
+import { Curseur, Jauge, Libelle, Raison, Segments } from "./pieces"
 
 /** Ce qu'un onglet du panneau montre. Les mêmes quatre pour une ambiance, les
  *  mêmes quatre pour une palette : c'est le même geste — ouvrir une partie —,
@@ -247,7 +247,7 @@ function ListeDAmbiances({
 }) {
   return (
     <section className="flex flex-col gap-1">
-      <Libelle papier>les ambiances</Libelle>
+      <Libelle>les ambiances</Libelle>
       <ul className="flex flex-col">
         {ambiances.map((ambiance) => (
           <li key={ambiance.identifiant}>
@@ -310,7 +310,7 @@ function ListeDePalettes({
 }) {
   return (
     <section className="flex flex-col gap-1">
-      <Libelle papier>les palettes</Libelle>
+      <Libelle>les palettes</Libelle>
       <ul className="flex flex-col">
         {/* **Celle du jeu en tête, et elle n'est pas un objet à part** : le
             projet *est* l'ambiance générale du jeu. Elle ne s'ouvre pas ici —
@@ -439,7 +439,7 @@ function PanneauPalette({
           palette garde alors ses couleurs — c'est un résultat rangé, il ne
           s'évapore pas — et affiche que sa source a disparu. */}
       {palette.sources_perdues.length > 0 && (
-        <Raison papier
+        <Raison
           texte={`${palette.sources_perdues.join(", ")} — cette source a disparu ; les couleurs, elles, restent`}
         />
       )}
@@ -492,8 +492,8 @@ function LesSources({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle papier>1 · les sources</Libelle>
-      <Raison papier texte="la première décide de ce que la proportion prélève ; les suivantes fournissent le reste" />
+      <Libelle>1 · les sources</Libelle>
+      <Raison texte="la première décide de ce que la proportion prélève ; les suivantes fournissent le reste" />
       <ul className="flex flex-wrap items-center gap-2">
         {palette.sources.map((source, rang) => (
           <li key={`${source.genre}-${source.reference}-${rang}`}>
@@ -600,12 +600,12 @@ function LaFusion({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle papier>2 · la fusion</Libelle>
+      <Libelle>2 · la fusion</Libelle>
       {seule ? (
         // **Une source seule donne toute la palette** : le curseur n'a rien à
         // partager. Grisé avec sa raison, jamais caché — on apprend qu'il
         // existe, et on sait pourquoi il ne sert pas encore.
-        <Raison papier texte="une seule source — tout vient d'elle ; ajoute-en une seconde pour doser" />
+        <Raison texte="une seule source — tout vient d'elle ; ajoute-en une seconde pour doser" />
       ) : (
         <div className="flex flex-col gap-1">
           <div className="mesure flex items-center gap-2 text-[10.5px] text-encre-4">
@@ -616,7 +616,7 @@ function LaFusion({
               {" »"}
             </span>
           </div>
-          <Curseur papier
+          <Curseur
             libelle="la proportion"
             valeur={duJeu}
             min={0}
@@ -632,7 +632,7 @@ function LaFusion({
           <span className="w-[128px] text-encre-3">L'attraction</span>
           <span>{attraction} %</span>
         </div>
-        <Curseur papier
+        <Curseur
           libelle="l'attraction"
           valeur={attraction}
           min={0}
@@ -644,7 +644,7 @@ function LaFusion({
         {/* **Le grisé porte sa raison**, et celle-ci est mesurée : à « tout de
             la première source », il ne reste aucune couleur à tirer, et les
             cinq valeurs rendent le même fichier. */}
-        <Raison papier
+        <Raison
           texte={
             palette.attraction_inerte
               ? "tout vient déjà de la première source — il ne reste aucune couleur à rapprocher"
@@ -672,9 +672,9 @@ function LesRetouches({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle papier>3 · les retouches</Libelle>
+      <Libelle>3 · les retouches</Libelle>
       {palette.retouches.length === 0 ? (
-        <Raison papier texte="aucune — la palette est exactement ce que ses sources donnent" />
+        <Raison texte="aucune — la palette est exactement ce que ses sources donnent" />
       ) : (
         <ul className="flex flex-col gap-1">
           {palette.retouches.map((retouche, rang) => (
@@ -756,7 +756,7 @@ function LaPaletteRendue({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle papier>
+      <Libelle>
         la palette rendue — {palette.rendue.length} couleur
         {palette.rendue.length > 1 ? "s" : ""}
       </Libelle>
@@ -843,7 +843,7 @@ function LApercu({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle papier>l'aperçu — la palette posée sur de vraies images</Libelle>
+      <Libelle>l'aperçu — la palette posée sur de vraies images</Libelle>
       <div className="flex flex-wrap gap-4">
         {apercu.images.map((image) => (
           <figure key={image.asset} className="flex flex-col items-center gap-1">
@@ -907,7 +907,7 @@ function PanneauAmbiance({
     <section className="flex flex-col gap-4">
       <EnTete nom={ambiance.nom} onSupprimer={onSupprimer} />
 
-      <Segments<Onglet> papier
+      <Segments<Onglet>
         valeurs={["sa palette", "ses références", "ses trois cases", "qui s'en sert"]}
         valeur={onglet}
         onChange={setOnglet}
@@ -934,7 +934,7 @@ function PanneauAmbiance({
               </option>
             ))}
           </select>
-          <Raison papier texte="la palette agit toujours au retour, sur la machine, sans rien payer et rétroactivement" />
+          <Raison texte="la palette agit toujours au retour, sur la machine, sans rien payer et rétroactivement" />
           {palette && (
             <ul className="flex flex-wrap gap-1 pt-1">
               {palette.rendue.map((couleur) => (
@@ -949,7 +949,7 @@ function PanneauAmbiance({
 
       {onglet === "ses références" && (
         <div className="flex flex-col gap-2">
-          <Raison papier texte="elles partent en image avec les générations qui utilisent l'ambiance, et prennent les places que le projet aurait remplies" />
+          <Raison texte="elles partent en image avec les générations qui utilisent l'ambiance, et prennent les places que le projet aurait remplies" />
           {ambiance.references.length === 0 ? (
             <p className="mesure text-[10.5px] leading-4 text-encre-4">
               Aucune encore. Une carte du tableau d'inspiration se désigne ici —
@@ -1002,8 +1002,8 @@ function PanneauAmbiance({
           ))}
           {/* **Ce qui lui est fermé, dit ici** plutôt que laissé à chercher :
               c'est le grisé qui porte sa raison, appliqué à une absence. */}
-          <Raison papier texte="la vue et la technique ne s'ouvrent pas à une ambiance — elles portent la mécanique du jeu, et des images qui ne rentrent pas ne se verraient qu'après avoir payé" />
-          <Raison papier texte="l'époque et le rendu restent au jeu — un coin plus sombre reste du même siècle et du même pixel art" />
+          <Raison texte="la vue et la technique ne s'ouvrent pas à une ambiance — elles portent la mécanique du jeu, et des images qui ne rentrent pas ne se verraient qu'après avoir payé" />
+          <Raison texte="l'époque et le rendu restent au jeu — un coin plus sombre reste du même siècle et du même pixel art" />
         </div>
       )}
 
@@ -1053,7 +1053,7 @@ function CaseDeTexte({
 
   return (
     <div className="flex flex-col gap-1">
-      <Libelle papier>{libelle}</Libelle>
+      <Libelle>{libelle}</Libelle>
       <textarea
         value={brouillon}
         rows={2}

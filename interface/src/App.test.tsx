@@ -32,7 +32,7 @@ import {
 } from "@testing-library/react"
 import { App } from "./App"
 import { reinitialiserApercu } from "./composants/Apercu"
-import { toutReplier } from "./composants/chassis"
+import { toutReplier } from "./composants/pieces"
 import { LIGNES_AU_PLUS } from "./composants/Carnet"
 import { reinitialiserGuide } from "./composants/Guide"
 import { reinitialiserPressePapier } from "./recette"
@@ -7852,7 +7852,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     // **Aucune ne refuse, et aucune ne s'alarme.** `--echec` veut dire *ce qui
     // échoue ou ce qui détruit*, et un calque gardé n'échoue pas.
     expect(
-      document.querySelector("[data-univers] .text-echec-froid"),
+      document.querySelector("[data-univers] .text-echec"),
     ).toBeNull()
   })
 
@@ -10026,7 +10026,7 @@ describe("le châssis des tables", () => {
 
   // ✅ **L'échantillon de la hauteur est rattrapé** (`B26`, 9 septembre 2026).
   // Il était parti avec l'ancien écran en `B25` ; `EchantillonDeLaHauteur`
-  // (`Retouche.tsx`) reprend `EchantillonDeHauteur` (`chassis.tsx`) au calcul
+  // (`Retouche.tsx`) reprend `EchantillonDeHauteur` (`pieces.tsx`) au calcul
   // près — le sujet dessiné dans sa case, la hauteur d'un personnage en
   // pointillé dès qu'on la dépasse, et les deux lectures (« 3 personnages de
   // haut », « l'image revient en 192 carrés de côté »). Seules les couleurs
@@ -15952,7 +15952,7 @@ describe("la main peint carré, et là où on la pose", () => {
 // U3 · Un curseur prend un chiffre — **déménagé d'ici en `B25`**
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// ⚠️ Les six essais de cette étape éprouvaient `Curseur` (`chassis.tsx`) à
+// ⚠️ Les six essais de cette étape éprouvaient `Curseur` (`pieces.tsx`) à
 // travers la table du détourage de l'ancien écran : le champ où la valeur
 // s'écrit, Entrée, Échap, la valeur ramenée dans ses bornes, et le chiffre
 // tapé pendant qu'on tient la glissière.
@@ -16554,7 +16554,7 @@ describe("la palette se règle sans faire attendre", () => {
   const apercus = (appels: { url: string }[]) =>
     appels.filter((a) => a.url.includes("/preview")).length
 
-  const laJauge = () => document.querySelector("[data-attente-palette] span.bg-bord")
+  const laJauge = () => document.querySelector("[data-attente-palette] span.bg-trait-faible")
 
   /** Poser l'attraction par son champ de nombre — un seul envoi, comme un
    *  relâchement de curseur (U3). Plus sûr qu'un `mouseUp` simulé, et c'est

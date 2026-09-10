@@ -42,7 +42,7 @@ import {
   type Univers,
 } from "../api"
 import { rangDeLaBande } from "./Apercu"
-import { Curseur, EnTetePanneau, Libelle } from "./chassis"
+import { Curseur, EnTetePanneau, Libelle } from "./pieces"
 import { PANNEAU } from "./Infobulle"
 // **Les six postes viennent de la retouche** (`B26`). L'atelier d'une animation
 // montait jusqu'ici les six panneaux de l'ancien châssis ; celui-ci s'en va, et
@@ -1111,7 +1111,7 @@ export function EcranAtelierDeBande({
         className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-r border-trait bg-papier-cote p-3"
       >
         <div className="flex items-baseline gap-2">
-          <EnTetePanneau papier>{bande.nom}</EnTetePanneau>
+          <EnTetePanneau>{bande.nom}</EnTetePanneau>
           <button
             type="button"
             onClick={onFermer}
@@ -1262,7 +1262,7 @@ export function EcranAtelierDeBande({
         className="flex min-h-0 flex-col border-l border-trait bg-papier-cote"
       >
         <div className="flex items-baseline gap-2 pr-2">
-          <EnTetePanneau papier>Ses images</EnTetePanneau>
+          <EnTetePanneau>Ses images</EnTetePanneau>
           {/* **Les deux boutons du choix** (V3.03.2). Ils sont là pour le
               clavier autant que pour la souris : la maj-clic et le ctrl-clic
               existent, mais aucun des deux ne se fait sans souris, et *tout se
@@ -1524,7 +1524,7 @@ function CorrectionDeLImage({
   return (
     <div className="flex w-full max-w-[520px] flex-col gap-2">
       <div className="flex items-baseline gap-2">
-        <Libelle aide="codex.bande.image" papier>l'image choisie</Libelle>
+        <Libelle aide="codex.bande.image">l'image choisie</Libelle>
         <span className="mesure ml-auto text-[10px] text-encre-3">
           image {prise.numero}
           {melangee && (
@@ -1632,7 +1632,6 @@ function CorrectionDeLImage({
       )}
 
       <Curseur
-        papier
         libelle="L'image d'avant, en transparence"
         valeur={pelure}
         min={0}
@@ -1936,7 +1935,7 @@ function LeChutier({
       className="flex shrink-0 flex-col gap-1 border-t border-trait p-2"
     >
       <div className="flex items-baseline gap-2">
-        <Libelle aide="bande.chutier" papier>le chutier</Libelle>
+        <Libelle aide="bande.chutier">le chutier</Libelle>
         <button
           type="button"
           onClick={onAllerAuClip}
@@ -2110,7 +2109,7 @@ function PelliculeDuClip({
       className="flex min-h-0 flex-col gap-3 p-4"
     >
       <div className="flex items-baseline gap-2">
-        <EnTetePanneau papier>les images du clip</EnTetePanneau>
+        <EnTetePanneau>les images du clip</EnTetePanneau>
         <span className="mesure text-[10px] text-encre-3">
           {images} images
         </span>
@@ -2217,7 +2216,7 @@ function RepriseDuMontage({
 }) {
   return (
     <div data-reprise-du-montage className="flex flex-col gap-1">
-      <Libelle aide="bande.montage" papier>le découpage</Libelle>
+      <Libelle aide="bande.montage">le découpage</Libelle>
       <button
         type="button"
         disabled={melangee || bloquee}
@@ -2359,7 +2358,6 @@ function Lecteur({
         </span>
       </div>
       <Curseur
-        papier
         libelle="Vitesse"
         valeur={cadence}
         min={1}
@@ -2401,7 +2399,7 @@ function TableDeLaFrame({
       className="flex flex-col gap-2 border-t border-trait pt-2"
     >
       <div className="flex items-baseline gap-2">
-        <EnTetePanneau papier>{nom}</EnTetePanneau>
+        <EnTetePanneau>{nom}</EnTetePanneau>
         {separe && (
           <span
             title="les images choisies n'ont pas la même valeur ici"
@@ -2462,7 +2460,7 @@ function ReglagesDeLaFrame({
       data-images-choisies={choisies}
       className="flex flex-col gap-3 border-t border-trait pt-2"
     >
-      <Libelle aide="bande.recette" papier>
+      <Libelle aide="bande.recette">
         {plusieurs
           ? `la recette de ces ${choisies} images`
           : sienne
@@ -2622,7 +2620,7 @@ function ReglagesDeLaBande({
 }) {
   return (
     <div className="flex flex-col gap-1 border-t border-trait pt-2">
-      <Libelle aide="bande.recette" papier>ce qui vaut pour l'animation</Libelle>
+      <Libelle aide="bande.recette">ce qui vaut pour l'animation</Libelle>
       <div className="mt-1 flex items-center gap-2">
         <span className="mesure text-[10px] text-encre-3">sens de lecture</span>
         {(["boucle", "aller-retour"] as const).map((choix) => (
@@ -2675,7 +2673,7 @@ function FenetreDeLaBande({
   const pose = droite > gauche && bas > sommet
   return (
     <div data-fenetre className="flex flex-col gap-1 border-t border-trait pt-2">
-      <Libelle aide="bande.cadre" papier>la fenêtre commune</Libelle>
+      <Libelle aide="bande.cadre">la fenêtre commune</Libelle>
       <p className="mesure text-[10px] leading-4 text-encre-3">
         {pose ? (
           <>
@@ -2748,7 +2746,7 @@ function RecetteEnregistree({
   const plusieurs = choisies > 1
   return (
     <label className="mesure flex flex-col gap-1 border-t border-trait pt-2 text-[10px] text-encre-3">
-      <Libelle aide="fiche.recettes" papier>une recette enregistrée</Libelle>
+      <Libelle aide="fiche.recettes">une recette enregistrée</Libelle>
       <select
         value=""
         onChange={(evenement) => {
@@ -2813,7 +2811,7 @@ function ChoixDeLAncrage({
 }) {
   return (
     <div className="flex flex-col gap-1 border-t border-trait pt-2">
-      <Libelle aide="grille.ancrage" papier>par où l'animation tient</Libelle>
+      <Libelle aide="grille.ancrage">par où l'animation tient</Libelle>
       <div
         data-ancrages
         role="radiogroup"

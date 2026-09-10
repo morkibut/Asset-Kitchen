@@ -22,7 +22,7 @@
 
 import { useEffect, useState } from "react"
 import { api, type BaseMouvements, type Mouvement } from "../api"
-import { Bouton, Libelle, Raison } from "./chassis"
+import { Bouton, Libelle, Raison } from "./pieces"
 
 const CHAMP =
   "mesure h-[30px] min-w-0 rounded-[2px] border border-contour bg-carte px-2 text-[11px] text-encre placeholder:text-eteint"
@@ -110,7 +110,7 @@ export function BlocMouvements() {
         </p>
       )}
 
-      <Raison texte={refus} papier />
+      <Raison texte={refus} />
 
       {fabrique ? (
         <Fabrique
@@ -122,7 +122,7 @@ export function BlocMouvements() {
         />
       ) : (
         <div className="mt-3">
-          <Bouton papier onClick={() => setFabrique(true)} enfants="Nommer un mouvement" />
+          <Bouton onClick={() => setFabrique(true)} enfants="Nommer un mouvement" />
         </div>
       )}
     </>
@@ -214,7 +214,7 @@ function Ligne({
       {ouvert && (
         <div className="mt-2 flex flex-col gap-2 border-t border-trait pt-2">
           <label className="flex flex-col gap-1">
-            <Libelle aide="mouvement.nom" papier>Nom</Libelle>
+            <Libelle aide="mouvement.nom">Nom</Libelle>
             <input
               value={nom}
               onChange={(e) => setNom(e.target.value)}
@@ -222,7 +222,7 @@ function Ligne({
             />
           </label>
           <label className="flex flex-col gap-1">
-            <Libelle aide="mouvement.texte" papier>Ce qui part au modèle</Libelle>
+            <Libelle aide="mouvement.texte">Ce qui part au modèle</Libelle>
             <textarea
               value={texte}
               rows={2}
@@ -231,7 +231,7 @@ function Ligne({
             />
           </label>
           <label className="flex items-baseline gap-2">
-            <Libelle aide="mouvement.cadence" papier>Cadence</Libelle>
+            <Libelle aide="mouvement.cadence">Cadence</Libelle>
             <input
               value={cadence}
               inputMode="decimal"
@@ -249,7 +249,6 @@ function Ligne({
               {mouvement.livre ? "masquer — il se remontre" : "masquer — il s'en va"}
             </button>
             <Bouton
-              papier
               inactif={!change}
               principal
               onClick={() =>
@@ -286,7 +285,7 @@ function Fabrique({
   return (
     <div className="mt-3 flex flex-col gap-2 rounded-[2px] border border-contour bg-carte p-2.5">
       <label className="flex flex-col gap-1">
-        <Libelle aide="mouvement.nom" papier>Nom</Libelle>
+        <Libelle aide="mouvement.nom">Nom</Libelle>
         <input
           autoFocus
           value={nom}
@@ -296,7 +295,7 @@ function Fabrique({
         />
       </label>
       <label className="flex flex-col gap-1">
-        <Libelle aide="mouvement.texte" papier>Ce qui part au modèle</Libelle>
+        <Libelle aide="mouvement.texte">Ce qui part au modèle</Libelle>
         <textarea
           value={texte}
           rows={2}
@@ -306,7 +305,7 @@ function Fabrique({
         />
       </label>
       <label className="flex items-baseline gap-2">
-        <Libelle aide="mouvement.cadence" papier>Cadence</Libelle>
+        <Libelle aide="mouvement.cadence">Cadence</Libelle>
         <input
           value={cadence}
           inputMode="decimal"
@@ -317,9 +316,8 @@ function Fabrique({
         <span className="mesure text-[10px] text-encre-3">images par seconde</span>
       </label>
       <div className="flex justify-end gap-2">
-        <Bouton papier onClick={onFermer} enfants="Laisser" />
+        <Bouton onClick={onFermer} enfants="Laisser" />
         <Bouton
-          papier
           principal
           inactif={!complet}
           onClick={() =>

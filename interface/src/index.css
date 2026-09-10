@@ -185,6 +185,14 @@
    ces bleus et ces verts sont à côté du rouille du papier. Le suffixe ne dit
    plus « pas encore repris » — il dit sur quel châssis la couleur se pose,
    et il restera vrai le jour où plus rien ne l'emploiera.
+
+   ⚠️ **Ce jour est arrivé, le 11 septembre 2026 (`D6`).** Plus une ligne
+   d'`interface/src` n'emploie les seize jetons de ce bloc, et `essai_jetons.py`
+   les nomme désormais tous les dix-huit dans son sens 2 — « déclaré, et rien ne
+   l'emploie ». Ils restent écrits ici et non supprimés : le sens 2 ne refuse
+   rien, il rend un compte, et cette liste-là est la trace de ce que la V4 a
+   remplacé. Les effacer se décide à part, quand plus personne n'aura besoin de
+   lire à côté ce que le papier a repris.
    ───────────────────────────────────────────────────────────────────────────── */
 
 @theme {
@@ -260,10 +268,10 @@ body {
 /* ─────────────────────────────────────────────────────────────────────────────
    Le damier — il dit « transparent », jamais un décor.
 
-   Deux jeux : celui du papier (14 px, `docs/DESIGN.md` § Le papier) et celui de
-   l'ancien châssis, que les écrans pas encore repris emploient. Ils portent des
-   classes différentes pour qu'aucun écran ne change d'apparence sans qu'on
-   l'ait voulu.
+   **Un seul jeu depuis `D6`** : celui du papier, 14 px, `docs/DESIGN.md` § Le
+   papier. Il y en avait deux — le second, en `--damier-a`/`--damier-b`, était
+   celui de l'ancien châssis, et il restait sur dix-huit surfaces d'écrans
+   pourtant devenus clairs.
    ───────────────────────────────────────────────────────────────────────────── */
 .damier-papier {
   background-image:
@@ -274,19 +282,6 @@ body {
   background-size: 14px 14px;
   background-position: 0 0, 0 7px, 7px -7px, -7px 0;
   background-color: var(--color-damier-clair);
-}
-
-/* Le damier alpha de l'ancien châssis — écart volontairement faible entre les
-   deux tons, pour qu'il ne devienne pas un motif que l'œil suit. */
-.damier {
-  background-image:
-    linear-gradient(45deg, var(--color-damier-b) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--color-damier-b) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--color-damier-b) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--color-damier-b) 75%);
-  background-size: 12px 12px;
-  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
-  background-color: var(--color-damier-a);
 }
 
 /* Le damier de la fiche : 16 px, contre 12 sur une tuile. La zone est quatre
@@ -306,50 +301,11 @@ body {
   background-position: 0 0, 0 12px, 12px -12px, -12px 0;
 }
 
-/* Le curseur — ajouté en T2, seul contrôle neuf de l'ancien châssis. Aucune
-   couleur de plus : rail en `--color-bord`, poignée en `--color-signal-froid`. */
-.curseur {
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
-}
-.curseur::-webkit-slider-runnable-track {
-  height: 2px;
-  background: var(--color-bord);
-  border-radius: 9999px;
-}
-.curseur::-webkit-slider-thumb {
-  appearance: none;
-  margin-top: -5px;
-  height: 12px;
-  width: 12px;
-  border-radius: 9999px;
-  background: var(--color-signal-froid);
-  transition: background 80ms;
-}
-.curseur:hover::-webkit-slider-thumb {
-  background: var(--color-signal-froid-clair);
-}
-.curseur:disabled::-webkit-slider-thumb {
-  background: var(--color-texte-3);
-}
-.curseur::-moz-range-track {
-  height: 2px;
-  background: var(--color-bord);
-  border-radius: 9999px;
-}
-.curseur::-moz-range-thumb {
-  height: 12px;
-  width: 12px;
-  border: 0;
-  border-radius: 9999px;
-  background: var(--color-signal-froid);
-}
-
-/* Le même curseur, sur le papier — rail en `--contour`, poignée en `--signal`,
-   comme `.curseur` sur l'ancien châssis. Une classe à part plutôt qu'une
-   variable réutilisée : les deux jeux de couleurs cohabitent, et l'ancien
-   curseur ne doit rien perdre au passage. */
+/* Le curseur — ajouté en T2, rail en `--contour`, poignée en `--signal`. Aucune
+   couleur de plus. **Il y en avait deux jusqu'à `D6`** : celui-ci et `.curseur`,
+   le rail bleu du châssis sombre, que seul l'écran de découpe employait encore.
+   Le nom garde son suffixe : le renommer aurait touché sept écrans pour ne rien
+   dire de plus. */
 .curseur-papier {
   appearance: none;
   background: transparent;

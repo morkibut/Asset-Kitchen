@@ -83,7 +83,7 @@ import {
   useSurvol,
   type Vue,
 } from "./Tableau"
-import { Libelle, Raison } from "./chassis"
+import { Libelle, Raison } from "./pieces"
 
 // ── Les mesures de l'îlot ───────────────────────────────────────────────────
 //
@@ -2320,7 +2320,7 @@ function NoeudIlot({ data }: NodeProps) {
           className="nodrag nopan"
         >
           <div className="paraitre flex w-[300px] flex-col gap-1.5 rounded-8 border border-trait bg-papier-cote p-2">
-            <Libelle papier aide="ilot.teinte">Teinte de l'îlot</Libelle>
+            <Libelle aide="ilot.teinte">Teinte de l'îlot</Libelle>
             <Pastilles teinte={teinte} onChoisir={(t) => cadre.onTeinterIlot(nom, t)} />
 
             {/* **Les deux gestes de fabrication du tableau** (E7), **ouverts
@@ -2387,7 +2387,7 @@ function NoeudIlot({ data }: NodeProps) {
                   </button>
                 </p>
               ) : (
-                <Raison papier texte="elles vivent dans l'onglet Univers, côté Ambiances et couleurs — et survivent au paquet" />
+                <Raison texte="elles vivent dans l'onglet Univers, côté Ambiances et couleurs — et survivent au paquet" />
               )}
             </div>
           </div>
@@ -2689,7 +2689,7 @@ function PavéLien({ lien, cadre }: { lien: Lien; cadre: Cadre }) {
   return (
     <>
       <div className="flex flex-col gap-1">
-        <Libelle papier aide="lien.mot">Mot</Libelle>
+        <Libelle aide="lien.mot">Mot</Libelle>
         <input
           value={mot}
           placeholder="aucun"
@@ -2699,7 +2699,7 @@ function PavéLien({ lien, cadre }: { lien: Lien; cadre: Cadre }) {
         />
       </div>
       <div className="flex items-center justify-between gap-2">
-        <Libelle papier aide="lien.pointe">Pointe</Libelle>
+        <Libelle aide="lien.pointe">Pointe</Libelle>
         <button
           type="button"
           aria-pressed={lien.pointe}

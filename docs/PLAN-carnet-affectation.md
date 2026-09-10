@@ -6,6 +6,10 @@
 >
 > Le classement est fait sur ce que la tranche demande **au moment de l'écrire**, pas sur sa
 > valeur ni sur sa taille.
+>
+> **44 tranches en trois blocs** : les 29 de `D0` à `B27` — la refonte elle-même —, les 9 de
+> `C1` à `C9` — la sortie de l'ancien châssis —, et les 6 de `D1` à `D6` — le dernier châssis.
+> Chaque bloc porte son propre tableau et son propre compte, plus bas.
 
 ## Les cinq étiquettes
 
@@ -90,7 +94,17 @@ dans sa ligne — pas la taille du fichier qu'elle touche.
 ## Les 6 tranches `D` — le dernier châssis
 
 *Classées le 10 septembre 2026, à la clôture de `C1`-`C9`, sur le relevé fichier par fichier de
-`docs/PLAN-carnet.md` § « Le dernier châssis ».*
+`docs/PLAN-carnet.md` § « Le dernier châssis ». **Les six sont tenues le 11 septembre 2026**,
+`D1` la veille.*
+
+✅ **Le classement s'est vérifié à l'usage sur une seule tranche, et c'est `D6`.** Elle est
+sortie `[VERY-HARD]` sur le nombre d'importeurs ; ce n'est pas ce qui a coûté. Les 133 emplois
+de la prop `papier` se retirent par script, et les 29 imports par un renommage. Ce qui a demandé
+Opus est ailleurs, et c'est ce que le classement n'avait pas vu : décider si le fichier gardait
+deux branches ou une, et **trouver les cinq restes de sombre que le compte de sortie ne voyait
+pas** — une bulle, un damier, un curseur, deux couleurs posées en `style=`. Aucun ne figurait
+sur aucune liste. Le point dur d'une tranche de refonte n'est pas le volume : c'est ce que le
+garde-fou ne mesure pas.
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|

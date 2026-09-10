@@ -9,7 +9,7 @@
  * ce qu'il documente.
  *
  * **Il n'a aucune liste à lui.** Ce qu'il affiche vient de `entree.ou` — le
- * même champ que `chassis.tsx` et chaque bulle lisent déjà pour `nom`/`quoi` —
+ * même champ que `pieces.tsx` et chaque bulle lisent déjà pour `nom`/`quoi` —
  * et de l'écran que `App.tsx` calcule depuis la pile de lieux. Ajouter une
  * entrée au corpus avec le bon `ou` la fait paraître ici sans toucher ce
  * fichier.

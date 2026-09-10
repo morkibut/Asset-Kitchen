@@ -69,7 +69,7 @@ import {
   type Pose,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
-import { Bouton, Libelle, Raison } from "./chassis"
+import { Bouton, Libelle, Raison } from "./pieces"
 
 /** La case qu'on vient animer. **La pose peut manquer** : on anime aussi un
  *  personnage sans viser d'attitude — c'est alors son portrait qui part. */
@@ -410,7 +410,7 @@ export function EcranClip({
       {/* ── L'image de départ et le mouvement ─────────────────────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-r border-trait p-4">
         <div className="flex items-baseline gap-2">
-          <Libelle papier aide="clip.depart">l'image de départ</Libelle>
+          <Libelle aide="clip.depart">l'image de départ</Libelle>
           <button
             type="button"
             onClick={onFermer}
@@ -452,7 +452,7 @@ export function EcranClip({
         )}
 
         <div className="mt-2 border-t border-trait pt-3">
-          <Libelle papier aide="mouvement.texte">le mouvement</Libelle>
+          <Libelle aide="mouvement.texte">le mouvement</Libelle>
         </div>
         <select
           value={mouvement ?? ""}
@@ -578,7 +578,7 @@ export function EcranClip({
         </p>
 
         <div className="flex flex-col gap-2 border-t border-trait pt-4">
-          <Libelle papier aide="clip.format">le format</Libelle>
+          <Libelle aide="clip.format">le format</Libelle>
           <Choix
             valeurs={DUREES.map((d) => ({
               cle: String(d),
@@ -605,7 +605,7 @@ export function EcranClip({
         </div>
 
         <div className="flex flex-col gap-2 border-t border-trait pt-4">
-          <Libelle papier aide="clip.lot">combien de clips</Libelle>
+          <Libelle aide="clip.lot">combien de clips</Libelle>
           <Choix
             valeurs={LOTS.map((n) => ({ cle: String(n), nom: String(n) }))}
             valeur={String(nombre)}
@@ -624,7 +624,7 @@ export function EcranClip({
 
       {/* ── Qui peut le faire, et pour combien ─────────────────────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-2 overflow-y-auto border-l border-trait p-4">
-        <Libelle papier aide="clip.prix">qui peut le faire</Libelle>
+        <Libelle aide="clip.prix">qui peut le faire</Libelle>
 
         {catalogue === null && (
           <p className="mesure text-[10px] text-encre-4">on demande…</p>
@@ -656,11 +656,11 @@ export function EcranClip({
         </button>
 
         {catalogue?.modeles.length === 0 && (
-          <Raison papier texte={catalogue.raison ?? catalogue.manque ?? "aucun modèle vidéo"} />
+          <Raison texte={catalogue.raison ?? catalogue.manque ?? "aucun modèle vidéo"} />
         )}
 
         {modelesVisibles.length === 0 && catalogue !== null && (
-          <Raison papier texte="aucun modèle ne peut partir — éteignez le filtre pour lire pourquoi" />
+          <Raison texte="aucun modèle ne peut partir — éteignez le filtre pour lire pourquoi" />
         )}
 
         <ul className="flex flex-col gap-2">
@@ -694,7 +694,7 @@ export function EcranClip({
               bouton du tiroir qui porte le montant, et son libellé est le
               même — on ne change pas de verbe pour passer de la commande à
               sa confirmation. */}
-          <Bouton papier
+          <Bouton
             principal
             inactif={empeche !== null || enVol}
             onClick={() => setConfirmer(true)}
@@ -706,8 +706,8 @@ export function EcranClip({
                   (cout === null ? "" : ` · ${cout}`)
             }
           />
-          <Raison papier texte={empeche} />
-          <Raison papier texte={refus} />
+          <Raison texte={empeche} />
+          <Raison texte={refus} />
           {attente ? (
             <p className="mesure text-[10px] leading-4 text-encre-4">
               Ce clip ne coûte rien : il se fabrique sur votre machine.{" "}
@@ -823,7 +823,7 @@ function ConfirmationClip({
       {/* ── Ce qui part : l'image, le format, le lot ──────────────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-trait p-4">
         <div className="flex items-baseline gap-2">
-          <Libelle papier>ce qui part</Libelle>
+          <Libelle>ce qui part</Libelle>
           <button
             type="button"
             onClick={onRevenir}
@@ -835,7 +835,7 @@ function ConfirmationClip({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Libelle papier aide="clip.depart">l'image de départ</Libelle>
+          <Libelle aide="clip.depart">l'image de départ</Libelle>
           <ImageDeDepartVue asset={image} />
           {/* **Obligatoire, et ce n'est pas un détail qu'on replie.** Un
               modèle vidéo n'accepte qu'une image, et aucun plafond ne la fait
@@ -866,7 +866,7 @@ function ConfirmationClip({
         </div>
 
         <div className="flex flex-col gap-1 border-t border-trait pt-4">
-          <Libelle papier>le format</Libelle>
+          <Libelle>le format</Libelle>
           <ul className="mesure flex flex-col gap-1 text-[10px] text-encre-3">
             <li>
               {secondes} seconde{secondes > 1 ? "s" : ""} · {proportion} ·{" "}
@@ -876,7 +876,7 @@ function ConfirmationClip({
         </div>
 
         <div className="flex flex-col gap-1 border-t border-trait pt-4">
-          <Libelle papier>combien de clips</Libelle>
+          <Libelle>combien de clips</Libelle>
           <ul className="mesure flex flex-col gap-1 text-[10px] text-encre-3">
             <li>
               {nombre} clip{nombre > 1 ? "s" : ""}
@@ -894,7 +894,7 @@ function ConfirmationClip({
 
       {/* ── Ce qui part, mot pour mot ─────────────────────────────────────── */}
       <section className="defile flex min-h-0 flex-col gap-3 overflow-y-auto p-5">
-        <Libelle papier>ce qui part, mot pour mot</Libelle>
+        <Libelle>ce qui part, mot pour mot</Libelle>
 
         {champOuvert ? (
           <textarea
@@ -964,7 +964,7 @@ function ConfirmationClip({
       {/* ── Le modèle, le montant du lot, et le bouton qui part ───────────── */}
       <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-trait p-4">
         <div className="flex flex-col gap-1">
-          <Libelle papier aide="clip.prix">le modèle</Libelle>
+          <Libelle aide="clip.prix">le modèle</Libelle>
           <span className="text-[12.5px] text-encre">{modele.nom}</span>
           <span className="mesure text-[10px] text-encre-4">
             {modele.fournisseur}
@@ -1015,7 +1015,7 @@ function ConfirmationClip({
         )}
 
         <section className="mt-auto flex flex-col gap-2 border-t border-trait pt-3">
-          <Bouton papier
+          <Bouton
             principal
             inactif={Boolean(refus) || !texteFinal || enVol}
             onClick={onPartir}
@@ -1028,7 +1028,7 @@ function ConfirmationClip({
                     (cout === null ? "" : ` · ${cout}`)
             }
           />
-          <Raison papier texte={!texteFinal ? "un clip part d'un texte — écrivez-en un" : null} />
+          <Raison texte={!texteFinal ? "un clip part d'un texte — écrivez-en un" : null} />
           <button
             type="button"
             onClick={onRevenir}
@@ -1334,7 +1334,7 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
       className="mt-2 flex flex-col gap-2 rounded-[2px] border border-trait bg-carte p-2"
     >
       <div className="flex items-baseline gap-2">
-        <Libelle papier aide="clip.moteur">la carte de cette machine</Libelle>
+        <Libelle aide="clip.moteur">la carte de cette machine</Libelle>
         <button
           type="button"
           onClick={relire}
@@ -1381,7 +1381,7 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
               </li>
             ))}
           </ul>
-          <Bouton papier
+          <Bouton
             inactif={enCours}
             onClick={() => void rapatrier()}
             enfants={
@@ -1397,7 +1397,7 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
         </>
       )}
 
-      <Raison papier texte={refus} />
+      <Raison texte={refus} />
     </div>
   )
 }

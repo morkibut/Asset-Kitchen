@@ -967,7 +967,7 @@ describe("le grossissement libre entre 1 et 250 % (B24, déménagé de Tables.ts
 // noté sur l'image d'à côté est une punition, et aucun logiciel d'image ne
 // l'impose.
 //
-// Le comportement est celui de `Curseur` (`chassis.tsx`), repris et non
+// Le comportement est celui de `Curseur` (`pieces.tsx`), repris et non
 // réinventé. Un seul composant porte les vingt-deux glissières de l'écran : les
 // essais l'éprouvent donc par un de ses emplois, pas par les vingt-deux.
 
