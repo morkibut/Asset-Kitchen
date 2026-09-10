@@ -400,6 +400,14 @@
         "essais/atelier_jetable_b18_couleurs.py"
       ],
       "port": 8491
+    },
+    {
+      "name": "atelier-jetable-verif-c9",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_verif_c9.py"
+      ],
+      "port": 8496
     }
   ]
 }
