@@ -93,7 +93,10 @@ LA_GEOMETRIE_D_AVANT = (
     # parti avec `BarreQuiPaie.tsx` (`D5`).
     "interface/src/App.tsx",
     # ── Les écrans encore sur le châssis sombre ──────────────────────────────
-    "interface/src/composants/Ambiances.tsx",
+    # `D2` en a retiré quatre le 11 septembre 2026 — `Univers.tsx`,
+    # `Toile.tsx`, `Tableau.tsx`, `Ambiances.tsx` : les trois côtés
+    # d'inspiration ont changé de couleur **et** de géométrie du même coup, ce
+    # qui est le premier écran du bloc `D` à sortir des deux listes à la fois.
     "interface/src/composants/Arbre.tsx",
     "interface/src/composants/BarreEtat.tsx",
     "interface/src/composants/BarreOutils.tsx",
@@ -112,10 +115,7 @@ LA_GEOMETRIE_D_AVANT = (
     "interface/src/composants/BarreQuiPaie.tsx",
     "interface/src/composants/ChampPrompt.tsx",
     "interface/src/composants/PanneauReglages.tsx",
-    "interface/src/composants/Tableau.tsx",
-    "interface/src/composants/Toile.tsx",
     "interface/src/composants/Tuile.tsx",
-    "interface/src/composants/Univers.tsx",
     # ── Sortis du châssis sombre, mais pas de sa géométrie ───────────────────
     # `C5`, `C6` et `C7` l'ont écrit en toutes lettres : leurs jetons de couleur
     # sont ceux du papier, leurs tailles sont celles d'avant.
@@ -157,17 +157,19 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # `ReglesDuJeu.tsx`, et le relevé de ses douze étapes est en tête de ce
     # fichier-là. Restent les trois côtés d'inspiration de l'onglet Univers.
     #
-    # ⚠️ **Leur passage au papier n'est pas un portage de jetons, c'est un
-    # dessin.** Les dix teintes d'îlot (`--color-ilot-…`) sont calibrées pour
-    # un fond sombre — « dix à 4,6 : 1 sur `--color-fond-2` », dit
-    # `index.css` —, et la géométrie de la toile (la carte, la réserve, le
-    # menu d'un îlot) ne tient dans aucune des largeurs fermées de
-    # `docs/DESIGN.md` § Spacing. `Toile.dc.html` dessine la version papier ;
-    # la reconstruire demande sa propre tranche, pas la fin de celle-ci.
-    "interface/src/composants/Univers.tsx",
-    "interface/src/composants/Toile.tsx",
-    "interface/src/composants/Tableau.tsx",
-    "interface/src/composants/Ambiances.tsx",
+    # D2 — les trois côtés d'inspiration sont partis le 11 septembre 2026, et
+    # ils sont partis d'ici **et** de `LA_GEOMETRIE_D_AVANT` : c'est le premier
+    # écran du bloc à sortir des deux listes du même geste, parce que son
+    # passage au papier était un dessin et pas un portage de jetons.
+    #
+    # **Les dix teintes d'îlot ont été refaites**, et le principe s'est
+    # retourné plutôt que changé : elles étaient claires sur un fond presque
+    # noir — « dix à 4,6 : 1 sur `--color-fond-2` » —, elles sont maintenant
+    # sombres sur du papier, à 4,6 : 1 sur `--color-papier`. Le nom d'un îlot
+    # s'écrit donc dessus en `--color-papier`, et la conditionnelle du bandeau
+    # de `Toile.tsx` reste vraie à l'envers. Leur teinte et leur saturation
+    # viennent des onze pastilles du menu d'îlot de `Toile.dc.html` ; seule
+    # leur clarté est calculée.
     # C3 — le codex : parti (`Codex.tsx`, retiré le 10 septembre 2026). Sa
     # colonne des familles était le carnet, sa grille celle d'une famille ;
     # créer une pièce d'équipement se fait depuis la fiche de qui la porte

@@ -1728,8 +1728,8 @@ function Plan({
   return (
     <section
       className={[
-        "flex min-h-0 min-w-0 flex-1 flex-col border-l border-bord",
-        depot.survole ? "bg-fond-2" : "bg-fond-0",
+        "flex min-h-0 min-w-0 flex-1 flex-col border-l border-trait",
+        depot.survole ? "bg-carte" : "bg-papier",
       ].join(" ")}
     >
       {/* **En toile, `+ note` pose le brouillon au centre de ce que l'écran
@@ -1842,7 +1842,7 @@ function Plan({
               variant={BackgroundVariant.Dots}
               gap={24}
               size={1}
-              color="var(--color-bord)"
+              color="var(--color-contour)"
             />
             {/* **La pointe, définie une fois pour toutes les arêtes.** Un
                 marqueur par lien serait autant de définitions identiques dans le
@@ -1859,7 +1859,7 @@ function Plan({
                   refY="3"
                   orient="auto"
                 >
-                  <path d="M0,0 L6,3 L0,6 z" fill="var(--color-bord-fort)" />
+                  <path d="M0,0 L6,3 L0,6 z" fill="var(--color-pointille)" />
                 </marker>
               </defs>
             </svg>
@@ -1867,7 +1867,7 @@ function Plan({
         </CADRE.Provider>
 
         {!crans ? (
-          <p className="mesure pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] text-texte-3">
+          <p className="mesure pointer-events-none absolute inset-0 flex items-center justify-center text-[10.5px] text-encre-4">
             la toile se règle sur la grille…
           </p>
         ) : (
@@ -1905,10 +1905,10 @@ function surLaReserve(pointeur: Place): boolean {
 function ToileNue() {
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 p-8">
-      <p className="text-center font-serif text-[28px] leading-tight text-texte-2">
-        La toile est nue. <span className="italic text-texte">Tire une carte.</span>
+      <p className="text-center font-serif text-[25px] leading-tight text-encre-3">
+        La toile est nue. <span className="italic text-encre">Tire une carte.</span>
       </p>
-      <p className="mesure max-w-[420px] text-center text-[10px] leading-relaxed text-texte-3">
+      <p className="mesure max-w-[380px] text-center text-[10.5px] leading-relaxed text-encre-4">
         Ce que tu poses ici garde sa place. Lâche-la dans un îlot et son groupe
         s'écrit ; lâche-la à côté et elle reste posée sans être classée.
       </p>
@@ -1967,13 +1967,13 @@ function SixPoints({ encre }: { encre: string }) {
   return (
     <span
       aria-hidden
-      className="grid h-3 w-3 shrink-0 grid-cols-2 grid-rows-3 place-content-center place-items-center gap-[2px] p-px"
+      className="grid h-3 w-3 shrink-0 grid-cols-2 grid-rows-3 place-content-center place-items-center gap-[4px] p-px"
     >
       {[0, 1, 2, 3, 4, 5].map((rang) => (
         <i
           key={rang}
           style={{ background: encre }}
-          className="block h-[3px] w-[3px] rounded-full"
+          className="block h-[4px] w-[4px] rounded-full"
         />
       ))}
     </span>
@@ -1984,21 +1984,23 @@ function SixPoints({ encre }: { encre: string }) {
  * L'îlot — un cadre, un bandeau, un nom, un compte, deux prises.
  *
  * « L'îlot est du châssis, pas un objet dessiné » (`docs/DESIGN.md`) : cadre de
- * 1 px, rayon 2 comme la carte, fond de la même teinte à **16 %**, titre en mono
- * 10 px parce que c'est un fait sur ce qu'il contient et pas une légende. Sans
- * teinte il porte celle du châssis — `--bord-fort`, `--fond-1` à 40 % —, et ce
- * n'est pas un provisoire : c'est ce que ce document dit qu'il est.
+ * 1 px, rayon 5 comme la carte, fond de la même teinte à **16 %**, titre en mono
+ * 10,5 px parce que c'est un fait sur ce qu'il contient et pas une légende. Sans
+ * teinte il porte celle du carnet — `--pointille`, `--papier-cote` à 40 % —, et
+ * ce n'est pas un provisoire : c'est ce que `Toile.dc.html` dessine.
  *
  * **Le bandeau est en teinte pleine, et c'est lui qui décide de la couleur de
  * son texte** (28 août 2026, `docs/design-motifs.md` § La toile révisée). La
  * bande de 20 px était transparente et le nom portait la teinte sur un fond à
- * 8 % : un îlot ne se nommait de loin que si on savait déjà où regarder. Un
- * bandeau teinté est clair, donc le nom s'y pose en `--fond-0`, qui vaut 5,2 : 1
- * sur les dix ; `--bord-fort` est sombre, donc le nom y reste en `--texte`, à
- * 8,4 : 1. **C'est la seule conditionnelle que la toile s'autorise, et elle est
- * mécanique, pas décorative** : `--fond-0` sur `--bord-fort` vaut 1,9 : 1,
- * c'est-à-dire illisible. Le compte est cette encre à 90 %, la prise de lien à
- * 55 % — un seul nombre pour les deux cas, à trois endroits.
+ * 8 % : un îlot ne se nommait de loin que si on savait déjà où regarder.
+ *
+ * **La conditionnelle a survécu au passage au papier, en changeant de sens**
+ * (`D2`). Les dix teintes sont maintenant plus **sombres** que le papier — voir
+ * `index.css` —, donc le nom s'y pose en `--papier`, à 4,6 : 1 sur chacune des
+ * dix ; `--pointille` est clair, donc le nom y reste en `--encre`, à 9 : 1.
+ * **Elle est mécanique, pas décorative** : `--papier` sur `--pointille` vaut
+ * 1,4 : 1, c'est-à-dire illisible. Le compte est cette encre à 90 %, la prise de
+ * lien à 55 % — un seul nombre pour les deux cas, à trois endroits.
  *
  * **Deux échelles, et le bandeau appartient à celle de l'écran.** Sa boîte est
  * du plan ; son nom, son compte et ses deux prises sont des lectures et des
@@ -2065,9 +2067,9 @@ function NoeudIlot({ data }: NodeProps) {
   const perd = !part && !!geste && geste.depuis === nom && geste.vers !== nom
 
   /** La couleur de la surface — la teinte, le châssis, ou ce qui s'en va. */
-  const surface = part ? "var(--color-echec-froid)" : (couleur ?? "var(--color-bord-fort)")
+  const surface = part ? "var(--color-echec)" : (couleur ?? "var(--color-pointille)")
   /** L'encre du bandeau, et c'est le bandeau qui la décide. */
-  const encre = part || couleur ? "var(--color-fond-0)" : "var(--color-texte)"
+  const encre = part || couleur ? "var(--color-papier)" : "var(--color-encre)"
 
   // **Le trait porte le message, et la couleur reste réservée.** La seule
   // couleur disponible pour dire *ça s'en va* est `--echec` ; la dépenser sur un
@@ -2077,14 +2079,14 @@ function NoeudIlot({ data }: NodeProps) {
   // emprunter un mot à la sémantique, et le fond vidé le redit sur toute la
   // surface, là où l'œil est réellement posé pendant qu'on tire.
   const fond = part
-    ? "color-mix(in srgb, var(--color-echec-froid) 8%, transparent)"
+    ? "color-mix(in srgb, var(--color-echec) 8%, transparent)"
     : perd
       ? "transparent"
       : accueille
         ? `color-mix(in srgb, ${surface} 28%, transparent)`
         : couleur
           ? `color-mix(in srgb, ${couleur} 16%, transparent)`
-          : "color-mix(in srgb, var(--color-fond-1) 40%, transparent)"
+          : "color-mix(in srgb, var(--color-papier-cote) 40%, transparent)"
 
   // **Le compte est l'argument, et il était déjà là.** Montrer la valeur
   // *future* au lieu de la valeur courante ne demande ni surface, ni couleur, ni
@@ -2137,7 +2139,7 @@ function NoeudIlot({ data }: NodeProps) {
           borderStyle: perd ? "dashed" : "solid",
           background: fond,
         }}
-        className="absolute right-0 bottom-0 left-0 rounded-[2px] border transition-colors duration-[80ms]"
+        className="absolute right-0 bottom-0 left-0 rounded-5 border transition-colors duration-[120ms]"
       />
 
       {/* **Le bandeau, en pixels d'écran** — voir `ancreEcran`. Sa largeur est
@@ -2222,7 +2224,7 @@ function NoeudIlot({ data }: NodeProps) {
           // la main et le fond à une fois — la parallaxe qu'on a vue. Voir
           // `Poignee` pour la raison technique, qui est la même aux quatre
           // endroits.
-          className="mesure nodrag nopan absolute flex cursor-grab items-center gap-1.5 rounded-t-[2px] px-1.5 text-[10px] active:cursor-grabbing"
+          className="mesure nodrag nopan absolute flex cursor-grab items-center gap-1.5 rounded-t-5 px-1.5 text-[10.5px] active:cursor-grabbing"
         >
           {/* **La prise de déplacement, et elle est permanente.** *Le survol
               révèle* garde ses raisons partout ailleurs ; ici les six points
@@ -2277,7 +2279,7 @@ function NoeudIlot({ data }: NodeProps) {
               isConnectableStart
               isConnectableEnd={false}
               style={{ borderColor: `color-mix(in srgb, ${encre} 55%, transparent)` }}
-              className="!relative !ml-1.5 !h-3 !w-3 !min-w-0 !shrink-0 !transform-none !cursor-crosshair !rounded-full !border !bg-transparent !opacity-100 !transition !duration-[80ms] hover:!border-signal-froid"
+              className="!relative !ml-1.5 !h-3 !w-3 !min-w-0 !shrink-0 !transform-none !cursor-crosshair !rounded-full !border !bg-transparent !opacity-100 !transition !duration-[120ms] hover:!border-signal"
             />
           )}
           <Ancrage />
@@ -2317,8 +2319,8 @@ function NoeudIlot({ data }: NodeProps) {
           onPointerLeave={() => cadre.onSurvol(cle, false)}
           className="nodrag nopan"
         >
-          <div className="paraitre flex w-[240px] flex-col gap-1.5 rounded-[2px] border border-bord bg-fond-1 p-2">
-            <Libelle aide="ilot.teinte">Teinte de l'îlot</Libelle>
+          <div className="paraitre flex w-[300px] flex-col gap-1.5 rounded-8 border border-trait bg-papier-cote p-2">
+            <Libelle papier aide="ilot.teinte">Teinte de l'îlot</Libelle>
             <Pastilles teinte={teinte} onChoisir={(t) => cadre.onTeinterIlot(nom, t)} />
 
             {/* **Les deux gestes de fabrication du tableau** (E7), **ouverts
@@ -2337,7 +2339,7 @@ function NoeudIlot({ data }: NodeProps) {
                 s'excuser après. La question « ce paquet a-t-il déjà une
                 palette ? » est celle que le bandeau pose déjà pour porter sa
                 marque, et elle n'a qu'une réponse — celle du serveur. */}
-            <div className="mt-1 flex flex-col gap-1 border-t border-bord pt-2">
+            <div className="mt-1 flex flex-col gap-1 border-t border-trait pt-2">
               <button
                 type="button"
                 onClick={() => cadre.onFairePalette(nom)}
@@ -2346,7 +2348,7 @@ function NoeudIlot({ data }: NodeProps) {
                     ? "elle existe déjà — ce geste y mène, il n'en fait pas une seconde"
                     : "l'atelier lit les couleurs de ces images — rien n'est payé"
                 }
-                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-2 hover:text-signal-froid"
+                className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-left text-[10.5px] text-encre-3 hover:text-signal"
               >
                 {fait?.palette ? "ouvrir sa palette ›" : "faire une palette de ce paquet"}
               </button>
@@ -2358,7 +2360,7 @@ function NoeudIlot({ data }: NodeProps) {
                     ? "elle existe déjà — ce geste y mène, il n'en fait pas une seconde"
                     : "la palette, l'ambiance qui la porte, et il ne reste qu'à écrire les trois cases"
                 }
-                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-2 hover:text-signal-froid"
+                className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-left text-[10.5px] text-encre-3 hover:text-signal"
               >
                 {fait?.ambiance
                   ? "ouvrir son ambiance ›"
@@ -2373,19 +2375,19 @@ function NoeudIlot({ data }: NodeProps) {
                 <p
                   data-fabrique-faite
                   role="status"
-                  className="mesure text-[10px] leading-snug text-texte-2"
+                  className="mesure text-[10.5px] leading-snug text-encre-3"
                 >
                   {cadre.fabrique.texte} —{" "}
                   <button
                     type="button"
                     onClick={() => cadre.onAllerAuxAmbiances(cadre.fabrique!.cible)}
-                    className="text-signal-froid underline-offset-2 hover:underline"
+                    className="text-signal underline-offset-2 hover:underline"
                   >
                     aller la voir ›
                   </button>
                 </p>
               ) : (
-                <Raison texte="elles vivent dans l'onglet Univers, côté Ambiances et couleurs — et survivent au paquet" />
+                <Raison papier texte="elles vivent dans l'onglet Univers, côté Ambiances et couleurs — et survivent au paquet" />
               )}
             </div>
           </div>
@@ -2431,7 +2433,7 @@ function NoeudBrouillon({ positionAbsoluteX, positionAbsoluteY }: NodeProps) {
       // `nopan` avec les deux autres : sélectionner son texte à la souris
       // déplaçait le plan sous le champ, et la note s'en allait de l'écran
       // pendant qu'on la relisait.
-      className="nodrag nowheel nopan h-full w-full resize-none rounded-[2px] border border-lumiere bg-fond-2 p-3 text-[12.5px] leading-relaxed text-texte shadow-[0_0_0_2px_var(--color-lumiere)] placeholder:text-texte-3"
+      className="nodrag nowheel nopan h-full w-full resize-none rounded-7 border border-signal bg-carte p-3 text-[12.5px] leading-relaxed text-encre shadow-[0_0_0_2px_var(--color-signal)] placeholder:text-encre-4"
     />
   )
 }
@@ -2525,7 +2527,7 @@ function NoeudCarte({ data }: NodeProps) {
           position={Position.Right}
           isConnectableStart
           isConnectableEnd={false}
-          className="!top-[-6px] !left-0 !h-3 !w-3 !min-w-0 !transform-none !cursor-crosshair !rounded-full !border !border-bord-fort !bg-fond-2 !opacity-100 !transition !duration-[80ms] hover:!border-signal-froid"
+          className="!top-[-6px] !left-0 !h-3 !w-3 !min-w-0 !transform-none !cursor-crosshair !rounded-full !border !border-contour !bg-carte !opacity-100 !transition !duration-[120ms] hover:!border-signal"
         />
       </div>
       <Ancrage />
@@ -2586,7 +2588,7 @@ function AreteLien({ id, source, target, data }: EdgeProps) {
         path={`M ${un.x},${un.y} L ${deux.x},${deux.y}`}
         markerEnd={lien.pointe ? `url(#${POINTE})` : undefined}
         style={{
-          stroke: ouvert ? "var(--color-texte-2)" : "var(--color-bord-fort)",
+          stroke: ouvert ? "var(--color-encre-3)" : "var(--color-pointille)",
           strokeWidth: 1,
         }}
         // Le survol passe par la zone d'écoute de la librairie, qui la pose sur
@@ -2617,7 +2619,7 @@ function AreteLien({ id, source, target, data }: EdgeProps) {
                 transform: "translate(-50%, -50%)",
                 pointerEvents: "all",
               }}
-              className="mesure nodrag nopan rounded-[2px] bg-fond-0 px-1 text-[10px] whitespace-nowrap text-texte-2"
+              className="mesure nodrag nopan rounded-5 bg-papier px-1 text-[10.5px] whitespace-nowrap text-encre-3"
             >
               {lien.mot}
             </button>
@@ -2642,7 +2644,7 @@ function AreteLien({ id, source, target, data }: EdgeProps) {
                 transform: "translate(-50%, -50%)",
                 pointerEvents: "all",
               }}
-              className="nodrag nopan h-[20px] w-[20px] rounded-[2px]"
+              className="nodrag nopan h-[22px] w-[22px] rounded-5"
             />
           </div>
         )}
@@ -2657,7 +2659,7 @@ function AreteLien({ id, source, target, data }: EdgeProps) {
               transform: `translate(-50%, 0) translate(${milieu.x}px, ${milieu.y + GOUTTIERE}px)`,
               pointerEvents: "all",
             }}
-            className="paraitre nodrag nopan flex min-w-[240px] flex-col gap-2 rounded-[2px] border border-bord bg-fond-1 p-2"
+            className="paraitre nodrag nopan flex min-w-[300px] flex-col gap-2 rounded-8 border border-trait bg-papier-cote p-2"
           >
             <PavéLien lien={lien} cadre={cadre} />
           </div>
@@ -2687,36 +2689,36 @@ function PavéLien({ lien, cadre }: { lien: Lien; cadre: Cadre }) {
   return (
     <>
       <div className="flex flex-col gap-1">
-        <Libelle aide="lien.mot">Mot</Libelle>
+        <Libelle papier aide="lien.mot">Mot</Libelle>
         <input
           value={mot}
           placeholder="aucun"
           onChange={(e) => setMot(e.target.value)}
           onBlur={() => mot !== lien.mot && cadre.onReglerLien(lien, { mot })}
-          className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[26px] rounded-7 border border-trait bg-carte px-2 text-[11px] text-encre placeholder:text-encre-4"
         />
       </div>
       <div className="flex items-center justify-between gap-2">
-        <Libelle aide="lien.pointe">Pointe</Libelle>
+        <Libelle papier aide="lien.pointe">Pointe</Libelle>
         <button
           type="button"
           aria-pressed={lien.pointe}
           onClick={() => cadre.onReglerLien(lien, { pointe: !lien.pointe })}
           className={[
-            "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
+            "mesure h-[26px] rounded-7 border px-2 text-[10.5px] transition-colors duration-[120ms]",
             lien.pointe
-              ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
-              : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+              ? "border-signal bg-ligne-ouverte text-signal"
+              : "border-trait bg-carte text-encre-3 hover:bg-papier-cote",
           ].join(" ")}
         >
           {lien.pointe ? "pointe à l'arrivée" : "sans pointe"}
         </button>
       </div>
-      <div className="flex items-center border-t border-bord pt-2">
+      <div className="flex items-center border-t border-trait pt-2">
         <button
           type="button"
           onClick={() => cadre.onCouperLien(lien)}
-          className="mesure ml-auto text-[10px] text-texte-3 hover:text-echec-froid"
+          className="mesure ml-auto text-[10.5px] text-encre-4 hover:text-echec"
         >
           Couper
         </button>
@@ -2774,7 +2776,7 @@ function Poignee({
       type="button"
       aria-label="Régler la largeur sur la toile"
       style={{ pointerEvents: "auto" }}
-      className="nodrag nopan absolute -top-[5px] -left-[5px] h-[10px] w-[10px] cursor-ew-resize rounded-[2px] border border-bord-fort bg-fond-3 opacity-0 transition duration-[80ms] group-hover:opacity-100 hover:border-signal-froid focus-visible:opacity-100"
+      className="nodrag nopan absolute -top-[5px] -left-[5px] h-[8px] w-[8px] cursor-ew-resize rounded-5 border border-contour bg-carte opacity-0 transition duration-[120ms] group-hover:opacity-100 hover:border-signal focus-visible:opacity-100"
       onPointerDown={(evenement) => {
         evenement.stopPropagation()
         evenement.currentTarget.setPointerCapture(evenement.pointerId)

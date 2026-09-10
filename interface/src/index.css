@@ -111,6 +111,40 @@
   --color-etiquette-encre-ok: #45613b;
   --color-etiquette-fond-echec: #f4e2dc;
 
+  /* ── Les dix teintes d'îlot — le seul endroit où une couleur ne dit rien ─── */
+  /* Un îlot ou une note en porte une **parce que l'auteur l'a choisie**, jamais
+     parce qu'un état la commande. C'est pour ça qu'elles sont dix et non
+     quatre, et qu'aucune ne s'appelle « ok » ni « échec ».
+
+     **Refaites pour le papier le 11 septembre 2026** (`D2`), et c'est le
+     second des deux trous que `docs/DESIGN.md` nommait. Les dix d'avant
+     étaient claires sur un fond presque noir — 4,6 : 1 sur `--color-fond-2` ;
+     posées sur du papier elles tombaient à 2 : 1, et le nom écrit dessus avec
+     elles.
+
+     Le principe ne change pas, il se retourne : **la teinte est maintenant
+     plus sombre que le fond**, et les dix sont à 4,6 : 1 sur `--color-papier`
+     — le même contraste, du même côté pour toutes. Deux conséquences voulues :
+     le bandeau d'un îlot s'écrit en `--color-papier`, qui vaut alors ce même
+     4,6 : 1 sur n'importe laquelle des dix ; et les dix ne se distinguent plus
+     que par leur teinte et leur saturation, jamais par leur clarté — ce qui
+     est exactement ce qu'on demande à un rangement qui ne veut rien dire.
+
+     La teinte et la saturation de chacune viennent des onze pastilles de
+     `docs/pistes-2026-09-04/carnet/Toile.dc.html` § *le menu d'un îlot* ;
+     seule la clarté est calculée. L'ordre est celui des pastilles à l'écran :
+     il suit la roue, il ne se trie pas alphabétiquement. */
+  --color-ilot-ardoise: #656f7a;
+  --color-ilot-pervenche: #5d6aa8;
+  --color-ilot-iris: #7562ab;
+  --color-ilot-lavande: #7f619f;
+  --color-ilot-prune: #85637d;
+  --color-ilot-mauve: #8e6076;
+  --color-ilot-bruyere: #8d6554;
+  --color-ilot-mousse: #63725c;
+  --color-ilot-lichen: #687252;
+  --color-ilot-paille: #7c6d41;
+
   /* ── Les trois familles — un système de rôles, pas de goût ────────────────── */
   /* Une serif pour ce qui se lit une fois, une sans pour ce qui se lit tout le
      temps, une chasse fixe pour tout ce qui se compte.
@@ -172,30 +206,9 @@
   --color-epingle: #c8a03c;
   --color-echec-froid: #cb6c65;
 
-  /* Les dix teintes d'îlot — `docs/archive/DESIGN-chassis-chaud-2026-09-04.md`
-     § Les dix teintes de rangement. **Le seul endroit du produit où une couleur
-     ne veut rien dire** : un îlot ou une note en porte une parce que l'auteur
-     l'a choisie, jamais parce qu'un état la commande. Saturation plafonnée à
-     30 % quand les quatre sémantiques vivent entre 40 et 55 %, et toutes les
-     dix à 4,6 : 1 sur `--color-fond-2`.
-
-     ⚠️ **Elles ont été choisies pour un fond presque noir, et le carnet est du
-     papier.** `docs/DESIGN.md` § Deux trous, et ils sont réels : elles sont à
-     refaire, et c'est la tranche de la toile qui les refera. D'ici là elles
-     servent la toile telle qu'elle est.
-
-     L'ordre est celui du document, et c'est celui des pastilles à l'écran : il
-     suit la roue, il ne se trie pas alphabétiquement. */
-  --color-ilot-ardoise: #6686ad;
-  --color-ilot-pervenche: #7781b6;
-  --color-ilot-iris: #847db9;
-  --color-ilot-lavande: #9577b6;
-  --color-ilot-prune: #a76fb2;
-  --color-ilot-mauve: #b16da4;
-  --color-ilot-bruyere: #b2708f;
-  --color-ilot-mousse: #788b4b;
-  --color-ilot-lichen: #678f4d;
-  --color-ilot-paille: #878748;
+  /* **Les dix teintes d'îlot sont remontées dans le bloc du papier** (`D2`,
+     11 septembre 2026) : elles servent la toile, la toile est en papier, et
+     une couleur calibrée pour un fond clair n'a plus rien à faire ici. */
 
   --color-damier-a: #191e24;
   --color-damier-b: #14181d;

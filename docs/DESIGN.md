@@ -220,15 +220,25 @@ ce qui est exactement la condition qui fausse le jugement.
 
 ### Deux trous, et ils sont réels
 
-Le comptage les a trouvés, les planches ne les couvrent pas, et ils se posent avant `B0`.
+Le comptage les a trouvés, les planches ne les couvraient pas. **Les deux sont fermés depuis le
+11 septembre 2026**, par la tranche qui a porté la toile au papier (`D2`) — l'historique reste
+écrit parce que c'est lui qui explique les valeurs.
 
-1. **Il n'y a pas de couleur pour *réglé à la main*.** Le produit a la notion : un asset porte
-   un champ `epingle`, et l'ancien système lui donnait une couleur à lui. Les trois signaux du
-   carnet n'en laissent pas de place. Soit la marque cesse d'être une couleur, soit une
-   quatrième entre.
-2. **Les dix teintes d'îlot de la toile ne sont pas dans les planches.** Les dix actuelles ont
-   été choisies pour un fond presque noir ; sur du papier, elles sont à refaire. `Toile.dc.html`
-   montre des îlots teintés sans donner leurs valeurs.
+1. ~~**Il n'y a pas de couleur pour *réglé à la main*.**~~ **Fermé le 11 septembre 2026
+   (`D2`), et sans quatrième signal.** Le produit a la notion : un asset porte un champ
+   `epingle`, et l'ancien système lui donnait une couleur à lui. Elle est reprise par le
+   **trio d'attention** — `--fond-attention`, `--trait-attention`, `--encre-attention` —, qui
+   était déjà déclaré et qui dit exactement la même chose : *ceci a été touché à la main, et ce
+   n'est ni une réussite ni un échec*. La marque reste donc une couleur, et la liste des
+   signaux ne bouge pas.
+2. ~~**Les dix teintes d'îlot de la toile ne sont pas dans les planches.**~~ **Fermé le
+   11 septembre 2026 (`D2`).** Les dix d'avant avaient été choisies pour un fond presque noir.
+   Le principe s'est retourné plutôt que changé : elles sont maintenant **plus sombres que le
+   papier**, toutes les dix à 4,6 : 1 sur `--papier` — donc le nom d'un îlot s'écrit dessus en
+   `--papier`, à ce même contraste, et les dix ne se distinguent plus que par leur teinte et
+   leur saturation. Leur teinte et leur saturation viennent des onze pastilles du menu d'îlot
+   de `Toile.dc.html`, qui les dessine ; seule leur clarté est calculée. Les valeurs sont dans
+   `interface/src/index.css`.
 
 ---
 

@@ -412,7 +412,7 @@ export function BrouillonNote({
         onAbandon()
       }}
       onBlur={(evenement) => onEcrire(evenement.target.value)}
-      className="aspect-square w-full resize-none rounded-[2px] border border-lumiere bg-fond-2 p-3 text-[12.5px] leading-relaxed text-texte shadow-[0_0_0_2px_var(--color-lumiere)] placeholder:text-texte-3"
+      className="aspect-square w-full resize-none rounded-7 border border-signal bg-carte p-3 text-[12.5px] leading-relaxed text-encre shadow-[0_0_0_2px_var(--color-signal)] placeholder:text-encre-4"
     />
   )
 }
@@ -452,7 +452,7 @@ export function Tableau({
       {...depot.props}
       className={[
         "flex min-h-0 min-w-0 flex-1 flex-col",
-        depot.survole ? "bg-fond-2" : "bg-fond-0",
+        depot.survole ? "bg-carte" : "bg-papier",
       ].join(" ")}
     >
       <BarreTableau
@@ -548,13 +548,13 @@ export function Reserve({
         onDepot(evenement.dataTransfer.getData(GLISSE_CARTE))
       }}
       className={[
-        "flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord",
-        depot.survole ? "bg-fond-2" : "bg-fond-1",
+        "flex min-h-0 w-[380px] shrink-0 flex-col border-l border-trait",
+        depot.survole ? "bg-carte" : "bg-papier-cote",
       ].join(" ")}
     >
-      <div className="mesure flex h-[30px] shrink-0 items-center gap-2 border-b border-bord px-2 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+      <div className="mesure flex h-[30px] shrink-0 items-center gap-2 border-b border-trait px-2 text-[10.5px] tracking-[.11em] text-encre-4 uppercase">
         Réserve
-        <span className="tracking-normal text-texte-2 normal-case">
+        <span className="tracking-normal text-encre-3 normal-case">
           {enReserve.length} à classer
         </span>
       </div>
@@ -571,10 +571,10 @@ export function Reserve({
         cadre={cadre}
         vide={
           <div className="flex flex-col items-center gap-2 pt-10">
-            <p className="text-center font-serif text-[20px] leading-tight text-texte-2">
+            <p className="text-center font-serif text-[25px] leading-tight text-encre-3">
               Tout est classé.
             </p>
-            <p className="mesure max-w-[280px] text-center text-[9.5px] leading-relaxed text-texte-3">
+            <p className="mesure max-w-[300px] text-center text-[10.5px] leading-relaxed text-encre-4">
               Ce que tu colleras maintenant paraîtra ici, jamais au milieu d'un
               îlot qu'on vient de faire.
             </p>
@@ -598,8 +598,11 @@ function BandeauDoublon({
   const { doublon, setDoublon, collerFichier } = collage
   if (!doublon) return null
   return (
-    <div className="mesure flex h-[38px] shrink-0 items-center gap-2 border-b border-bord bg-fond-1 px-4 text-[10px] text-epingle">
-      <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+    // **Un signal se pose en trio, jamais en couleur seule** (`docs/DESIGN.md`) :
+    // le fond d'attention seul sur du papier ne se distingue pas de la bande
+    // d'à côté, et c'est son trait qui le détache.
+    <div className="mesure flex h-[34px] shrink-0 items-center gap-2 border-b border-trait-attention bg-fond-attention px-4 text-[10.5px] text-encre-attention">
+      <span aria-hidden className="inline-block h-px w-2 bg-encre-attention" />
       <span>« {doublon.nom} » est déjà sur le tableau</span>
       <button
         type="button"
@@ -607,11 +610,11 @@ function BandeauDoublon({
           onChoisir(doublon.carte.identifiant)
           setDoublon(null)
         }}
-        className="text-signal-froid hover:text-signal-froid-clair"
+        className="text-signal hover:opacity-70"
       >
         La voir ›
       </button>
-      <span className="text-texte-3">·</span>
+      <span className="text-encre-4">·</span>
       <button
         type="button"
         onClick={() => {
@@ -630,7 +633,7 @@ function BandeauDoublon({
             )
           })()
         }}
-        className="text-signal-froid hover:text-signal-froid-clair"
+        className="text-signal hover:opacity-70"
       >
         Importer quand même ›
       </button>
@@ -685,21 +688,21 @@ export function BarreTableau({
   const artworks = cartes.filter((c) => c.artwork).length
   const groupes = groupesDe(cartes)
   return (
-    <div className="flex h-[38px] shrink-0 items-center gap-3 border-b border-bord bg-fond-1 px-4">
+    <div className="flex h-[34px] shrink-0 items-center gap-3 border-b border-trait bg-papier-cote px-4">
       {debut}
-      <span className="mesure shrink-0 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+      <span className="mesure shrink-0 text-[10.5px] tracking-[.11em] text-encre-4 uppercase">
         Tableau
       </span>
-      <span className="mesure shrink-0 text-[10px] text-texte-2">
+      <span className="mesure shrink-0 text-[10.5px] text-encre-3">
         {cartes.length} carte{cartes.length > 1 ? "s" : ""}
       </span>
       {artworks > 0 && (
-        <span className="mesure shrink-0 text-[10px] text-signal-froid">
+        <span className="mesure shrink-0 text-[10.5px] text-signal">
           {artworks} artwork{artworks > 1 ? "s" : ""} officiel{artworks > 1 ? "s" : ""}
         </span>
       )}
       {groupes.length > 0 && (
-        <span className="mesure min-w-0 truncate text-[10px] text-texte-3">
+        <span className="mesure min-w-0 truncate text-[10.5px] text-encre-4">
           {groupes.join(" · ")}
         </span>
       )}
@@ -708,21 +711,21 @@ export function BarreTableau({
           élargit la colonne, puis la page — et pousse hors de l'écran ce qui est
           ancré à droite. */}
       <div className="ml-auto flex shrink-0 items-center gap-3">
-        {/* **À gauche du segment *Vue*, en bouton compact de 24 px.** Le `+`
+        {/* **À gauche du segment *Vue*, en bouton compact de 26 px.** Le `+`
             est celui de l'arbre — l'un des trois glyphes du produit, et pas un
             quatrième : ce bouton en réemploie un, il n'en ouvre pas. */}
         <button
           type="button"
           onClick={onNote}
-          className="mesure flex h-[24px] items-center gap-1.5 rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[11.5px] text-texte transition-colors duration-[80ms] hover:bg-fond-3"
+          className="mesure flex h-[26px] items-center gap-1.5 rounded-7 border border-contour bg-carte px-2 text-[11.5px] text-encre transition-colors duration-[120ms] hover:bg-papier-cote"
         >
           {/* Le `+` reste lisible à l'assistance : il fait partie du libellé,
               et un nom accessible qui dirait « note » là où l'écran dit
               « + note » nommerait une chose au lieu d'un geste. */}
-          <span className="text-signal-froid">+</span> note
+          <span className="text-signal">+</span> note
         </button>
-        <Libelle aide="tableau.vue">Vue</Libelle>
-        <Segments
+        <Libelle papier aide="tableau.vue">Vue</Libelle>
+        <Segments papier
           valeurs={["grille", "toile"] as const}
           valeur={vue}
           onChange={onVue}
@@ -744,8 +747,8 @@ export function BarreTableau({
  * marque : c'est la couleur montrée.
  *
  * **La dernière n'est pas une teinte de plus, c'est l'absence de teinte
- * montrée.** Un îlot sans couleur porte celle du châssis — `--fond-2` bordé
- * `--bord` —, et `docs/DESIGN.md` dit que c'est *ce qu'il est*, pas un réglage
+ * montrée.** Un îlot sans couleur porte celle du carnet — `--pointille` bordé
+ * de pointillé —, et `docs/DESIGN.md` dit que c'est *ce qu'il est*, pas un réglage
  * manquant. La rendre évite un glyphe en forme de croix, et la liste close du
  * domaine ne bouge pas d'un nom : `atelier/domaine/teinte.py` tient les dix, et
  * le vide reste ce qu'il a toujours été — une valeur.
@@ -776,11 +779,16 @@ export function Pastilles({
           onClick={() => onChoisir(valeur)}
           style={valeur ? { background: COULEUR_TEINTE[valeur] } : undefined}
           className={[
-            "h-5 w-5 rounded-[2px] border transition-colors duration-[80ms]",
-            valeur ? "border-bord" : "border-bord bg-fond-2",
+            // 22 px, la plus petite hauteur de contrôle du carnet — c'est la
+            // taille des onze pastilles de `Toile.dc.html`.
+            "h-[22px] w-[22px] rounded-5 border transition-colors duration-[120ms]",
+            // **La onzième se distingue par son trait, pas par sa couleur** :
+            // un aplat de papier au milieu de dix aplats de teinte se lirait
+            // comme une teinte très pâle. Pointillé, elle se lit comme un vide.
+            valeur ? "border-trait" : "border-dashed border-pointille bg-carte",
             // L'anneau de la chose choisie, et il n'en existe qu'un dans le
-            // produit : `--lumiere` ne veut dire que ça.
-            teinte === valeur ? "ring-2 ring-lumiere" : "",
+            // produit : le rouille ne veut dire que ça ici.
+            teinte === valeur ? "ring-2 ring-signal" : "",
           ].join(" ")}
         />
       ))}
@@ -802,10 +810,10 @@ export function groupesDe(cartes: Carte[]): string[] {
 function Vide() {
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-8">
-      <p className="font-serif text-[32px] leading-tight text-texte-2">
-        Le tableau est vide. <span className="italic text-texte">Colle.</span>
+      <p className="font-serif text-[25px] leading-tight text-encre-3">
+        Le tableau est vide. <span className="italic text-encre">Colle.</span>
       </p>
-      <p className="mesure max-w-[420px] text-center text-[10px] leading-relaxed text-texte-3">
+      <p className="mesure max-w-[380px] text-center text-[10.5px] leading-relaxed text-encre-4">
         Une image devient une carte. Une adresse fait paraître une carte en
         attente, et l'image arrive ensuite. Un texte devient une note au milieu
         des images.
@@ -916,7 +924,7 @@ export function CarteTuile({
               // révisée). La visibilité se gagne à l'opacité, jamais à la
               // saturation, qui reste plafonnée à 30 % — c'est elle seule qui
               // sépare un rangement d'un état.
-              background: `color-mix(in srgb, ${couleur} 16%, var(--color-fond-2))`,
+              background: `color-mix(in srgb, ${couleur} 16%, var(--color-carte))`,
               ...(choisie ? {} : { borderColor: couleur }),
             }
           : {}),
@@ -933,8 +941,8 @@ export function CarteTuile({
         // `relative` et **pas** `overflow-hidden` : le menu se pose par-dessus
         // les voisines, donc il doit pouvoir sortir de la carte. Le rognage des
         // coins descend sur l'image, qui est la seule chose à rogner.
-        "relative flex flex-col rounded-[2px] border bg-fond-2 transition-colors duration-[80ms]",
-        choisie ? "border-lumiere shadow-[0_0_0_2px_var(--color-lumiere)]" : "border-bord",
+        "relative flex flex-col rounded-5 border bg-carte transition-colors duration-[120ms]",
+        choisie ? "border-signal shadow-[0_0_0_2px_var(--color-signal)]" : "border-trait",
         // La carte ouverte passe devant ses voisines, et devant le menu d'une
         // autre qui serait en train de s'effacer.
         ouvert ? "z-20" : "z-0",
@@ -951,7 +959,7 @@ export function CarteTuile({
         }}
         aria-label={carte.genre === "texte" ? "Ouvrir la note" : "Ouvrir la carte"}
         className={[
-          "relative block w-full overflow-hidden rounded-t-[2px]",
+          "relative block w-full overflow-hidden rounded-t-5",
           // Sur la toile, l'image prend ce que le pied laisse : c'est le nœud
           // qui porte la hauteur, et elle a été calculée sur le rapport.
           plan ? "min-h-0 flex-1" : "",
@@ -981,7 +989,7 @@ export function CarteTuile({
           <p
             ref={texte}
             className={[
-              "defile overflow-y-auto p-3 text-left text-[12.5px] leading-relaxed whitespace-pre-wrap text-texte",
+              "defile overflow-y-auto p-3 text-left text-[12.5px] leading-relaxed whitespace-pre-wrap text-encre",
               plan ? "h-full" : "aspect-square",
             ].join(" ")}
           >
@@ -991,8 +999,15 @@ export function CarteTuile({
           <img
             src={api.imageCarte(carte.identifiant, carte.empreinte)}
             alt={carte.note || carte.source || "carte"}
+            // **Le gris neutre, et pas le damier** (`D2`). C'est ce que
+            // `Toile.dc.html` dessine derrière chaque vignette, et c'est la
+            // raison d'être de `--pourtour` : cet écran-ci sert à *juger des
+            // couleurs* — c'est de ces images-là que la palette du jeu est
+            // lue —, et le papier autour fausse ce jugement. Le damier dit la
+            // transparence ; ici on ne cherche pas la transparence, et il
+            // ajoutait un motif sous une image qu'on regarde pour sa couleur.
             className={[
-              "damier w-full object-contain",
+              "w-full bg-pourtour object-contain",
               plan ? "h-full" : "aspect-square",
             ].join(" ")}
           />
@@ -1005,28 +1020,28 @@ export function CarteTuile({
         {carte.artwork && (
           <span
             aria-label="artwork officiel"
-            className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-signal-froid border-l-transparent"
+            className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-signal border-l-transparent"
           />
         )}
 
         {/* **Ce qui sert, et ce qui dort** (US-125). Une forme, comme
             au-dessus, parce que c'est encore l'auteur qui l'a posée — et à
             l'autre coin, parce qu'une carte peut être les deux. La teinte est
-            celle de l'épingle : « réglé à la main », qui est exactement ce
+            celle de l'attention : « réglé à la main », qui est exactement ce
             qu'une désignation est. */}
         {designeurs.length > 0 && (
           <span
             aria-label={`concept art de ${designeurs.map((p) => p.nom).join(", ")}`}
-            className="absolute top-0 left-0 h-0 w-0 border-t-[13px] border-r-[13px] border-t-epingle border-r-transparent"
+            className="absolute top-0 left-0 h-0 w-0 border-t-[13px] border-r-[13px] border-t-encre-attention border-r-transparent"
           />
         )}
       </button>
 
-      <div className="mesure flex shrink-0 items-center gap-1.5 border-t border-bord px-1.5 py-1 text-[9.5px] text-texte-3">
+      <div className="mesure flex shrink-0 items-center gap-1.5 border-t border-trait px-1.5 py-1 text-[10.5px] text-encre-4">
         {carte.artwork ? (
-          <span className="text-signal-froid">{NOM_FAMILLE[carte.famille]}</span>
+          <span className="text-signal">{NOM_FAMILLE[carte.famille]}</span>
         ) : designeurs.length > 0 ? (
-          <span className="truncate text-epingle">
+          <span className="truncate text-encre-attention">
             {designeurs.map((p) => p.nom).join(" · ")}
           </span>
         ) : carte.groupe ? (
@@ -1039,7 +1054,7 @@ export function CarteTuile({
             rien à annoncer, et l'annoncer quand même ferait de la mesure un
             décor. */}
         {carte.genre === "texte" && parts > 1 && (
-          <span className="shrink-0 text-texte-3">
+          <span className="shrink-0 text-encre-4">
             {mots(carte.texte)} mots · 1/{parts} visible
           </span>
         )}
@@ -1048,7 +1063,7 @@ export function CarteTuile({
             trois images côte à côte pour voir si elles vont ensemble — et il
             n'existe aucune autre marque à l'écran qui le distingue d'un îlot
             d'une seule carte. */}
-        {plan && !carte.groupe && <span className="text-texte-3 italic">posée</span>}
+        {plan && !carte.groupe && <span className="text-encre-4 italic">posée</span>}
         <span className="ml-auto">{carte.taille}×</span>
       </div>
 
@@ -1158,7 +1173,7 @@ function Menu({
       ref={boite}
       style={place.hauteurMax ? { maxHeight: place.hauteurMax } : undefined}
       className={[
-        "absolute z-30 min-w-[240px] rounded-[2px] border border-bord bg-fond-1",
+        "absolute z-30 min-w-[300px] rounded-8 border border-trait bg-papier-cote",
         // Le fondu : le menu paraît **sans clic**, donc sans geste qui dise
         // qu'on l'a demandé. 80 ms suffisent à dire « ceci est venu se poser
         // par-dessus » plutôt que « la grille s'est recomposée » — c'est ce que
@@ -1166,7 +1181,7 @@ function Menu({
         // close du § Motion.
         "paraitre",
         place.hauteurMax ? "defile overflow-y-auto" : "",
-        place.haut ? "bottom-full mb-[3px]" : "top-full mt-[3px]",
+        place.haut ? "bottom-full mb-[4px]" : "top-full mt-[4px]",
         place.gauche ? "right-0" : "left-0",
       ].join(" ")}
     >
@@ -1228,15 +1243,15 @@ function LectureDePalette({
   }
 
   return (
-    <div className="flex flex-col gap-1.5 border-t border-bord pt-2">
+    <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
       <div className="flex items-center justify-between gap-2">
-        <Libelle aide="carte.lecture">Ce que la palette y lit</Libelle>
+        <Libelle papier aide="carte.lecture">Ce que la palette y lit</Libelle>
         {!lu && (
           <button
             type="button"
             onClick={() => void mesurer()}
             disabled={enCours}
-            className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte-2 transition-colors duration-[80ms] hover:bg-fond-3 disabled:text-texte-3"
+            className="mesure h-[26px] rounded-7 border border-trait bg-carte px-2 text-[10.5px] text-encre-3 transition-colors duration-[120ms] hover:bg-papier-cote disabled:text-encre-4"
           >
             {enCours ? "…" : "regarder"}
           </button>
@@ -1245,7 +1260,7 @@ function LectureDePalette({
 
       {lu &&
         (lu.entiere ? (
-          <p className="text-[11.5px] leading-snug text-texte-2">
+          <p className="text-[11.5px] leading-snug text-encre-3">
             Rien n'a été mis de côté : l'image entière donne ses couleurs. C'est
             ce qui arrive à une matière ou à une texture, qui n'ont pas de fond.
           </p>
@@ -1253,8 +1268,8 @@ function LectureDePalette({
           /* **« Le reste » n'existe pas toujours** (G1) — voir la même phrase
              dans l'écran de découpe : trois des dix artworks officiels du dépôt
              sont lus à 100,0 %, et il n'y a alors rien à écarter. */
-          <p className="text-[11.5px] leading-snug text-texte-2">
-            <span className="mesure text-texte">{lu.part} %</span> de l'image
+          <p className="text-[11.5px] leading-snug text-encre-3">
+            <span className="mesure text-encre">{lu.part} %</span> de l'image
             donne ses couleurs au jeu.{" "}
             {lu.part >= 100
               ? "Rien n'en est écarté : le détourage n'a trouvé aucun fond à retirer."
@@ -1270,7 +1285,7 @@ function LectureDePalette({
           une carte lue à 100 %, l'image en grand serait entièrement sans
           magenta, et la ligne enverrait chercher une absence. */}
       {lu && !lu.entiere && lu.part < 100 && (
-        <p className="mesure text-[9.5px] leading-snug text-texte-3">
+        <p className="mesure text-[10.5px] leading-snug text-encre-4">
           Découper le montre en magenta, sur l'image en grand.
         </p>
       )}
@@ -1290,19 +1305,19 @@ function Attente({ carte, plan = false }: { carte: Carte; plan?: boolean }) {
       className={[
         "flex w-full flex-col justify-center gap-1.5 p-3 text-left",
         plan ? "h-full" : "aspect-square",
-        echouee ? "bg-echec-froid/5" : "bg-fond-2",
+        echouee ? "bg-fond-echec" : "bg-carte",
       ].join(" ")}
     >
       <span
-        className={["mesure text-[10px]", echouee ? "text-echec-froid" : "text-epingle"].join(" ")}
+        className={["mesure text-[10.5px]", echouee ? "text-echec" : "text-encre-attention"].join(" ")}
       >
         {echouee ? "pas arrivée" : "en attente…"}
       </span>
-      <span className="mesure break-all text-[9.5px] leading-snug text-texte-3">
+      <span className="mesure break-all text-[10.5px] leading-snug text-encre-4">
         {carte.source}
       </span>
       {carte.raison && (
-        <span className="mesure text-[9.5px] leading-snug text-echec-froid">{carte.raison}</span>
+        <span className="mesure text-[10.5px] leading-snug text-echec">{carte.raison}</span>
       )}
     </div>
   )
@@ -1366,7 +1381,7 @@ function Reglages({
           ni porter une explication — c'est exactement ce qui a rendu `groupe`
           incomprehensible. */}
       <div className="flex flex-col gap-1">
-        <Libelle aide="carte.groupe">Groupe</Libelle>
+        <Libelle papier aide="carte.groupe">Groupe</Libelle>
         <input
           value={groupe}
           placeholder="aucun"
@@ -1381,24 +1396,24 @@ function Reglages({
             e.preventDefault()
             e.currentTarget.blur()
           }}
-          className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[26px] rounded-7 border border-trait bg-carte px-2 text-[11px] text-encre placeholder:text-encre-4"
         />
       </div>
       <div className="flex flex-col gap-1">
-        <Libelle aide="carte.note">Note</Libelle>
+        <Libelle papier aide="carte.note">Note</Libelle>
         <textarea
           value={note}
           placeholder="—"
           rows={2}
           onChange={(e) => setNote(e.target.value)}
           onBlur={() => note !== carte.note && void regler({ note })}
-          className="resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11.5px] leading-snug text-texte placeholder:text-texte-3"
+          className="resize-none rounded-7 border border-trait bg-carte px-2 py-1 text-[11.5px] leading-snug text-encre placeholder:text-encre-4"
         />
       </div>
 
       <div className="flex items-center justify-between">
-        <Libelle aide="carte.taille">Taille</Libelle>
-        <Segments
+        <Libelle papier aide="carte.taille">Taille</Libelle>
+        <Segments papier
           valeurs={[1, 2, 4] as const}
           valeur={carte.taille}
           onChange={(taille) => void regler({ taille })}
@@ -1412,9 +1427,9 @@ function Reglages({
           symétrique exacte du bloc *Artwork officiel*, qui n'existe que pour une
           image. */}
       {carte.genre === "texte" && (
-        <div className="flex flex-col gap-2 border-t border-bord pt-2">
+        <div className="flex flex-col gap-2 border-t border-trait pt-2">
           <div className="flex flex-col gap-1">
-            <Libelle aide="note.texte">Texte</Libelle>
+            <Libelle papier aide="note.texte">Texte</Libelle>
             {/* **C'est le seul endroit où le texte entier se relit** — la
                 carte, elle, en montre ce qu'un carré peut en montrer. Trois
                 lignes n'y suffisaient donc pas : le document de présentation
@@ -1428,11 +1443,11 @@ function Reglages({
               onBlur={() =>
                 void (texte.trim() && texte !== carte.texte && regler({ texte }))
               }
-              className="rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11.5px] leading-snug text-texte"
+              className="rounded-7 border border-trait bg-carte px-2 py-1 text-[11.5px] leading-snug text-encre"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Libelle aide="note.teinte">Teinte de la note</Libelle>
+            <Libelle papier aide="note.teinte">Teinte de la note</Libelle>
             <Pastilles
               teinte={carte.teinte}
               onChoisir={(teinte) => void regler({ teinte })}
@@ -1442,8 +1457,8 @@ function Reglages({
       )}
 
       {carte.genre === "image" && personnages.length > 0 && (
-        <div className="flex flex-col gap-1.5 border-t border-bord pt-2">
-          <Libelle aide="carte.concept">Concept art de</Libelle>
+        <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
+          <Libelle papier aide="carte.concept">Concept art de</Libelle>
           {/* **Une carte désignée reste où elle est** (US-124) : aucune copie,
               aucun second rangement. Et elle peut servir à plusieurs — d'où des
               bascules, et non un choix unique. */}
@@ -1473,10 +1488,10 @@ function Reglages({
                     }
                   }}
                   className={[
-                    "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
+                    "mesure h-[26px] rounded-7 border px-2 text-[10.5px] transition-colors duration-[120ms]",
                     designe
-                      ? "border-epingle bg-epingle/13 text-epingle"
-                      : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+                      ? "border-trait-attention bg-fond-attention text-encre-attention"
+                      : "border-trait bg-carte text-encre-3 hover:bg-papier-cote",
                   ].join(" ")}
                 >
                   {personnage.nom}
@@ -1488,32 +1503,32 @@ function Reglages({
       )}
 
       {carte.genre === "image" && (
-        <div className="flex flex-col gap-1.5 border-t border-bord pt-2">
+        <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
           <div className="flex items-center justify-between">
-            <Libelle aide="carte.officiel">Artwork officiel</Libelle>
+            <Libelle papier aide="carte.officiel">Artwork officiel</Libelle>
             <button
               type="button"
               onClick={() => void promouvoir(!carte.officiel)}
               disabled={carte.statut !== "prete"}
               aria-pressed={carte.officiel}
               className={[
-                "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
+                "mesure h-[26px] rounded-7 border px-2 text-[10.5px] transition-colors duration-[120ms]",
                 carte.statut !== "prete"
-                  ? "border-bord bg-fond-2 text-texte-3"
+                  ? "border-trait bg-carte text-encre-4"
                   : carte.officiel
-                    ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
-                    : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+                    ? "border-signal bg-ligne-ouverte text-signal"
+                    : "border-trait bg-carte text-encre-3 hover:bg-papier-cote",
               ].join(" ")}
             >
               {carte.officiel ? "promue" : "promouvoir"}
             </button>
           </div>
           {carte.statut !== "prete" && (
-            <Raison texte="cette image n'est pas encore arrivée" />
+            <Raison papier texte="cette image n'est pas encore arrivée" />
           )}
           {carte.officiel && (
             <>
-              <Libelle aide="carte.famille">Famille</Libelle>
+              <Libelle papier aide="carte.famille">Famille</Libelle>
               <div className="flex flex-wrap gap-1">
                 {FAMILLES.map((famille) => (
                   <button
@@ -1521,17 +1536,17 @@ function Reglages({
                     type="button"
                     onClick={() => void promouvoir(true, famille as Famille)}
                     className={[
-                      "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
+                      "mesure h-[26px] rounded-7 border px-2 text-[10.5px] transition-colors duration-[120ms]",
                       carte.famille === famille
-                        ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
-                        : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+                        ? "border-signal bg-ligne-ouverte text-signal"
+                        : "border-trait bg-carte text-encre-3 hover:bg-papier-cote",
                     ].join(" ")}
                   >
                     {NOM_FAMILLE[famille]}
                   </button>
                 ))}
               </div>
-              <p className="mesure text-[9.5px] leading-snug text-texte-3">
+              <p className="mesure text-[10.5px] leading-snug text-encre-4">
                 {carte.famille === "tous"
                   ? "part avec toutes les générations"
                   : `ne part qu'avec les sujets de la famille ${NOM_FAMILLE[carte.famille]}`}
@@ -1544,7 +1559,7 @@ function Reglages({
         </div>
       )}
 
-      <div className="flex items-center gap-2 border-t border-bord pt-2">
+      <div className="flex items-center gap-2 border-t border-trait pt-2">
         {/* **Découper est un lien, pas un bouton** : il ne règle rien ici, il
             emmène ailleurs — la même grammaire que « Réessayer › », et le
             chevron le dit. Il ne paraît que sur une image arrivée : découper
@@ -1553,7 +1568,7 @@ function Reglages({
           <button
             type="button"
             onClick={() => decouper(carte)}
-            className="mesure text-[10px] text-signal-froid hover:text-signal-froid-clair"
+            className="mesure text-[10.5px] text-signal hover:opacity-70"
           >
             Découper ›
           </button>
@@ -1566,7 +1581,7 @@ function Reglages({
                 .reessayerCarte(carte.identifiant)
                 .catch((e) => echouer(e, "récupération refusée"))
             }
-            className="mesure text-[10px] text-signal-froid hover:text-signal-froid-clair"
+            className="mesure text-[10.5px] text-signal hover:opacity-70"
           >
             Réessayer ›
           </button>
@@ -1576,7 +1591,7 @@ function Reglages({
             href={carte.source}
             target="_blank"
             rel="noreferrer"
-            className="mesure truncate text-[10px] text-texte-3 hover:text-signal-froid"
+            className="mesure truncate text-[10.5px] text-encre-4 hover:text-signal"
             title={carte.source}
           >
             {carte.source}
@@ -1589,7 +1604,7 @@ function Reglages({
               .oublierCarte(carte.identifiant)
               .catch((e) => echouer(e, "suppression refusée"))
           }
-          className="mesure ml-auto text-[10px] text-texte-3 hover:text-echec-froid"
+          className="mesure ml-auto text-[10.5px] text-encre-4 hover:text-echec"
         >
           Retirer
         </button>

@@ -14,7 +14,7 @@
 // quelle, pour ce qu'elle nomme déjà.
 //
 // **Et chacune des deux colonnes se replie par choix.** Même bascule qu'à
-// l'atelier, même case de grille qui tombe à zéro, mêmes 160 ms sur la largeur
+// l'atelier, même case de grille qui tombe à zéro, mêmes 220 ms sur la largeur
 // (`docs/DESIGN.md` § Motion) : repliées toutes les deux, la toile tient la
 // largeur de l'écran. **Replier n'est pas fermer** — les deux panneaux restent
 // montés, et la réserve garde ses 380 px sous une case qui les rogne. C'est ce
@@ -177,7 +177,7 @@ export function EcranUnivers({
     // champ de la galerie, resté focalisé sur l'autre onglet depuis le
     // démarrage. La marque reste utile après la V2.1 : les onglets se
     // démontent, mais le focus, lui, se rétablit au retour.
-    <div data-univers className="flex min-h-0 flex-col bg-fond-0">
+    <div data-univers className="flex min-h-0 flex-col bg-papier">
       {/* **Plus d'en-tête à lui.** Il en portait un de 44 px — son nom, ses
           bascules de repli, sa fente de refus, et un bouton pour retourner à
           l'atelier. Les trois premiers sont montés dans la barre du châssis,
@@ -236,7 +236,7 @@ export function EcranUnivers({
             className="grid min-h-0 flex-1"
             style={{
               gridTemplateColumns: colonnes,
-              transition: "grid-template-columns 160ms ease-in-out",
+              transition: "grid-template-columns 220ms var(--ease-entree)",
             }}
           >
             <div className="flex min-h-0 min-w-0 overflow-hidden">
@@ -326,13 +326,22 @@ const COTES: readonly { cle: Cote; nom: string }[] = [
 ]
 
 /** Les deux mots, sans leur bande — pour les poser dans une barre qui existe
- *  déjà. **Deux bandes empilées au-dessus du travail, jamais trois** : celle du
- *  châssis fait 44 px, celle-ci 38, et le côté Inspiration n'en ajoute pas une
- *  troisième pour ses mots (`docs/maquettes-v2.1/06-univers.html`, au
- *  paragraphe « La forme retenue — trois côtés, jamais deux à la fois »). */
+ *  déjà. **Une seule bande au-dessus du travail** : le côté Inspiration n'en
+ *  ajoute pas une seconde pour ses mots.
+ *
+ *  **Sur un rail, pas côte à côte** (`D2`) : `Toile.dc.html` dessine les deux
+ *  mots dans une piste creuse — `--ligne-ouverte` —, et le mot allumé est une
+ *  carte posée dessus. C'est la même forme que les segments du carnet, à ceci
+ *  près qu'elle porte des mots et non des valeurs ; la piste est ce qui dit
+ *  qu'il y en a deux et qu'un seul peut être allumé. Deux boutons sans rail
+ *  disaient la même chose, mais seulement à qui les avait déjà cliqués. */
 export function Cotes({ cote, onCote }: { cote: Cote; onCote: (cote: Cote) => void }) {
   return (
-    <div role="tablist" aria-label="Les deux côtés de l'univers" className="flex shrink-0 items-center gap-1">
+    <div
+      role="tablist"
+      aria-label="Les deux côtés de l'univers"
+      className="flex shrink-0 items-center gap-1 rounded-8 bg-ligne-ouverte p-[4px]"
+    >
       {COTES.map(({ cle, nom }) => (
         <button
           key={cle}
@@ -341,10 +350,10 @@ export function Cotes({ cote, onCote }: { cote: Cote; onCote: (cote: Cote) => vo
           aria-selected={cote === cle}
           onClick={() => onCote(cle)}
           className={[
-            "h-[26px] rounded-[2px] px-2 text-[11.5px] transition-colors duration-[80ms]",
+            "h-[22px] rounded-7 px-2 text-[12.5px] transition-colors duration-[120ms]",
             cote === cle
-              ? "bg-fond-3 text-texte"
-              : "text-texte-3 hover:bg-fond-2 hover:text-texte-2",
+              ? "border border-contour bg-carte font-medium text-encre"
+              : "text-encre-3 hover:text-encre",
           ].join(" ")}
         >
           {nom}
@@ -355,7 +364,7 @@ export function Cotes({ cote, onCote }: { cote: Cote; onCote: (cote: Cote) => vo
 }
 
 /** La barre des côtés quand le côté allumé n'en a pas déjà une. Même hauteur —
- *  38 px, celle de toute barre d'outils du produit —, mêmes mots. */
+ *  34 px, celle de toute barre d'outils du carnet —, mêmes mots. */
 function BarreDesCotes({
   cote,
   onCote,
@@ -366,7 +375,7 @@ function BarreDesCotes({
   children?: ReactNode
 }) {
   return (
-    <div className="flex h-[38px] shrink-0 items-center gap-3 border-b border-bord bg-fond-1 px-4">
+    <div className="flex h-[34px] shrink-0 items-center gap-3 border-b border-trait bg-papier-cote px-4">
       <Cotes cote={cote} onCote={onCote} />
       {children}
     </div>

@@ -144,7 +144,7 @@ export function CoteAmbiancesEtCouleurs({
     // colonne ne porte que des noms et des comptes, et une largeur inventée
     // pour elle aurait ouvert la porte à toutes les autres.
     <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)]">
-      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-bord bg-fond-1 p-3">
+      <aside className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-trait bg-papier-cote p-3">
         <ListeDAmbiances
           ambiances={cote.ambiances}
           ouvert={ouvert}
@@ -166,7 +166,7 @@ export function CoteAmbiancesEtCouleurs({
         {/* Deux pixels réservés en permanence : une jauge qui pousserait le
             panneau vers le bas en paraissant ferait sauter ce qu'on regarde,
             et c'est précisément le geste où l'œil est resté sur les couleurs. */}
-        <div data-attente-palette className="mb-3 h-[2px] shrink-0">
+        <div data-attente-palette className="mb-3 h-[4px] shrink-0">
           {enVol && (
             <Jauge
               demarreLe={enVol.depuis}
@@ -214,12 +214,12 @@ export function CoteAmbiancesEtCouleurs({
 function Vide() {
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center p-8">
-      <div className="flex max-w-[504px] flex-col items-center gap-3 text-center">
-        <p className="font-serif text-[32px] leading-tight text-texte-3">
+      <div className="flex max-w-[380px] flex-col items-center gap-3 text-center">
+        <p className="font-serif text-[25px] leading-tight text-encre-4">
           Un jeu n'a pas un seul style.{" "}
-          <em className="text-texte-2">Nomme le premier coin.</em>
+          <em className="text-encre-3">Nomme le premier coin.</em>
         </p>
-        <p className="mesure text-[10px] leading-relaxed text-texte-3">
+        <p className="mesure text-[10.5px] leading-relaxed text-encre-4">
           Une ambiance dit une fois ce qu'un coin du jeu a de différent — le
           marais plus gris, les monstres plus froids — et sert autant de fois
           qu'on veut. Une palette est la liste de couleurs qu'elle emploie ;
@@ -247,7 +247,7 @@ function ListeDAmbiances({
 }) {
   return (
     <section className="flex flex-col gap-1">
-      <Libelle>les ambiances</Libelle>
+      <Libelle papier>les ambiances</Libelle>
       <ul className="flex flex-col">
         {ambiances.map((ambiance) => (
           <li key={ambiance.identifiant}>
@@ -261,20 +261,20 @@ function ListeDAmbiances({
                 onOuvrir({ genre: "ambiance", identifiant: ambiance.identifiant })
               }
               className={[
-                "mesure flex h-[26px] w-full items-center gap-2 rounded-[2px] px-2 text-left text-[10px] transition-colors duration-[80ms]",
+                "mesure flex h-[26px] w-full items-center gap-2 rounded-5 px-2 text-left text-[10.5px] transition-colors duration-[120ms]",
                 ouvert?.genre === "ambiance" &&
                 ouvert.identifiant === ambiance.identifiant
-                  ? "bg-fond-3"
-                  : "hover:bg-fond-2",
+                  ? "bg-carte"
+                  : "hover:bg-papier-cote",
               ].join(" ")}
             >
-              <span className="min-w-0 flex-1 truncate text-[11.5px] text-texte">
+              <span className="min-w-0 flex-1 truncate text-[11.5px] text-encre">
                 {ambiance.nom}
               </span>
               {/* **Qui s'en sert, dès la liste** : c'est la question qu'on se
                   pose avant d'en ouvrir une, et la faire ouvrir pour y répondre
                   aurait coûté un clic par ambiance. */}
-              <span className="shrink-0 text-texte-3">
+              <span className="shrink-0 text-encre-4">
                 {ambiance.emplois.length === 0
                   ? "personne"
                   : `${ambiance.emplois.length} chose${ambiance.emplois.length > 1 ? "s" : ""}`}
@@ -310,18 +310,18 @@ function ListeDePalettes({
 }) {
   return (
     <section className="flex flex-col gap-1">
-      <Libelle>les palettes</Libelle>
+      <Libelle papier>les palettes</Libelle>
       <ul className="flex flex-col">
         {/* **Celle du jeu en tête, et elle n'est pas un objet à part** : le
             projet *est* l'ambiance générale du jeu. Elle ne s'ouvre pas ici —
             elle se règle à l'étape « Références et couleurs » de l'assistant, où ses
             sources vivent —,
             et le dire évite d'aller la chercher dans deux endroits. */}
-        <li className="mesure flex h-[26px] items-center gap-2 px-2 text-[10px]">
-          <span className="min-w-0 flex-1 truncate text-[11.5px] text-texte-2">
+        <li className="mesure flex h-[26px] items-center gap-2 px-2 text-[10.5px]">
+          <span className="min-w-0 flex-1 truncate text-[11.5px] text-encre-3">
             du jeu
           </span>
-          <span className="shrink-0 text-texte-3">
+          <span className="shrink-0 text-encre-4">
             {duJeu.length ? `${duJeu.length} couleurs` : "aucune encore"}
           </span>
         </li>
@@ -337,17 +337,17 @@ function ListeDePalettes({
                 onOuvrir({ genre: "palette", identifiant: palette.identifiant })
               }
               className={[
-                "mesure flex h-[26px] w-full items-center gap-2 rounded-[2px] px-2 text-left text-[10px] transition-colors duration-[80ms]",
+                "mesure flex h-[26px] w-full items-center gap-2 rounded-5 px-2 text-left text-[10.5px] transition-colors duration-[120ms]",
                 ouvert?.genre === "palette" &&
                 ouvert.identifiant === palette.identifiant
-                  ? "bg-fond-3"
-                  : "hover:bg-fond-2",
+                  ? "bg-carte"
+                  : "hover:bg-papier-cote",
               ].join(" ")}
             >
-              <span className="min-w-0 flex-1 truncate text-[11.5px] text-texte">
+              <span className="min-w-0 flex-1 truncate text-[11.5px] text-encre">
                 {palette.nom}
               </span>
-              <span className="shrink-0 text-texte-3">
+              <span className="shrink-0 text-encre-4">
                 {palette.rendue.length} · {palette.sources.length} src
               </span>
             </button>
@@ -397,7 +397,7 @@ function ChampQuiCree({
           onErreur(String(erreur))
         }
       }}
-      className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte placeholder:text-texte-3"
+      className="mesure h-[26px] rounded-7 border border-trait bg-carte px-2 text-[10.5px] text-encre placeholder:text-encre-4"
     />
   )
 }
@@ -439,7 +439,7 @@ function PanneauPalette({
           palette garde alors ses couleurs — c'est un résultat rangé, il ne
           s'évapore pas — et affiche que sa source a disparu. */}
       {palette.sources_perdues.length > 0 && (
-        <Raison
+        <Raison papier
           texte={`${palette.sources_perdues.join(", ")} — cette source a disparu ; les couleurs, elles, restent`}
         />
       )}
@@ -460,14 +460,14 @@ function PanneauPalette({
 function EnTete({ nom, onSupprimer }: { nom: string; onSupprimer: () => void }) {
   return (
     <div className="flex items-center gap-3">
-      <h2 className="min-w-0 flex-1 truncate text-[15px] leading-none text-texte">
+      <h2 className="min-w-0 flex-1 truncate text-[15px] leading-none text-encre">
         {nom}
       </h2>
       <button
         type="button"
         onClick={onSupprimer}
         title="aucune image ne bouge — ce qui s'en servait retombe sur le jeu"
-        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec-froid"
+        className="mesure shrink-0 px-1 text-[10.5px] text-encre-4 hover:text-echec"
       >
         Supprimer
       </button>
@@ -492,12 +492,12 @@ function LesSources({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle>1 · les sources</Libelle>
-      <Raison texte="la première décide de ce que la proportion prélève ; les suivantes fournissent le reste" />
+      <Libelle papier>1 · les sources</Libelle>
+      <Raison papier texte="la première décide de ce que la proportion prélève ; les suivantes fournissent le reste" />
       <ul className="flex flex-wrap items-center gap-2">
         {palette.sources.map((source, rang) => (
           <li key={`${source.genre}-${source.reference}-${rang}`}>
-            <span className="mesure inline-flex h-[26px] items-center gap-1 rounded-[2px] border border-bord bg-fond-1 px-2 text-[10px] text-texte-2">
+            <span className="mesure inline-flex h-[26px] items-center gap-1 rounded-7 border border-trait bg-papier-cote px-2 text-[10.5px] text-encre-3">
               {nomDeSource(source, palettes)}
               <button
                 type="button"
@@ -505,7 +505,7 @@ function LesSources({
                 onClick={() =>
                   poser(palette.sources.filter((_, autre) => autre !== rang))
                 }
-                className="px-1 text-texte-3 hover:text-echec-froid"
+                className="px-1 text-encre-4 hover:text-echec"
               >
                 ×
               </button>
@@ -520,7 +520,7 @@ function LesSources({
           onClick={() =>
             poser([...palette.sources, { genre: "officiels", reference: "" }])
           }
-          className="mesure h-[26px] rounded-[2px] border border-bord px-2 text-[10px] text-texte-2 hover:text-signal-froid"
+          className="mesure h-[26px] rounded-7 border border-trait px-2 text-[10.5px] text-encre-3 hover:text-signal"
         >
           + les images officielles du jeu
         </button>
@@ -534,7 +534,7 @@ function LesSources({
               { genre: "palette", reference: e.target.value },
             ])
           }}
-          className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+          className="mesure h-[26px] rounded-7 border border-trait bg-carte px-1 text-[10.5px] text-encre-3"
         >
           <option value="">+ une autre palette…</option>
           {palettes
@@ -561,7 +561,7 @@ function LesSources({
             ])
             setPaquet("")
           }}
-          className="mesure h-[26px] w-[200px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte placeholder:text-texte-3"
+          className="mesure h-[26px] w-[300px] rounded-7 border border-trait bg-carte px-2 text-[10.5px] text-encre placeholder:text-encre-4"
         />
       </div>
     </div>
@@ -600,23 +600,23 @@ function LaFusion({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle>2 · la fusion</Libelle>
+      <Libelle papier>2 · la fusion</Libelle>
       {seule ? (
         // **Une source seule donne toute la palette** : le curseur n'a rien à
         // partager. Grisé avec sa raison, jamais caché — on apprend qu'il
         // existe, et on sait pourquoi il ne sert pas encore.
-        <Raison texte="une seule source — tout vient d'elle ; ajoute-en une seconde pour doser" />
+        <Raison papier texte="une seule source — tout vient d'elle ; ajoute-en une seconde pour doser" />
       ) : (
         <div className="flex flex-col gap-1">
-          <div className="mesure flex items-center gap-2 text-[10px] text-texte-3">
-            <span className="w-[110px] text-texte-2">La proportion</span>
+          <div className="mesure flex items-center gap-2 text-[10.5px] text-encre-4">
+            <span className="w-[128px] text-encre-3">La proportion</span>
             <span>
               {duJeu} sur {palette.couleurs} viennent de {"« "}
               {palette.sources[0] ? "la première source" : "rien"}
               {" »"}
             </span>
           </div>
-          <Curseur
+          <Curseur papier
             libelle="la proportion"
             valeur={duJeu}
             min={0}
@@ -628,11 +628,11 @@ function LaFusion({
       )}
 
       <div className="flex flex-col gap-1">
-        <div className="mesure flex items-center gap-2 text-[10px] text-texte-3">
-          <span className="w-[110px] text-texte-2">L'attraction</span>
+        <div className="mesure flex items-center gap-2 text-[10.5px] text-encre-4">
+          <span className="w-[128px] text-encre-3">L'attraction</span>
           <span>{attraction} %</span>
         </div>
-        <Curseur
+        <Curseur papier
           libelle="l'attraction"
           valeur={attraction}
           min={0}
@@ -644,7 +644,7 @@ function LaFusion({
         {/* **Le grisé porte sa raison**, et celle-ci est mesurée : à « tout de
             la première source », il ne reste aucune couleur à tirer, et les
             cinq valeurs rendent le même fichier. */}
-        <Raison
+        <Raison papier
           texte={
             palette.attraction_inerte
               ? "tout vient déjà de la première source — il ne reste aucune couleur à rapprocher"
@@ -672,24 +672,24 @@ function LesRetouches({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle>3 · les retouches</Libelle>
+      <Libelle papier>3 · les retouches</Libelle>
       {palette.retouches.length === 0 ? (
-        <Raison texte="aucune — la palette est exactement ce que ses sources donnent" />
+        <Raison papier texte="aucune — la palette est exactement ce que ses sources donnent" />
       ) : (
         <ul className="flex flex-col gap-1">
           {palette.retouches.map((retouche, rang) => (
             <li
               key={`${retouche.geste}-${retouche.couleur}-${rang}`}
-              className="mesure flex h-[26px] items-center gap-2 text-[10px] text-texte-2"
+              className="mesure flex h-[26px] items-center gap-2 text-[10.5px] text-encre-3"
             >
-              <span className="w-[70px] shrink-0 text-texte-3">
+              <span className="w-[70px] shrink-0 text-encre-4">
                 {NOM_DU_GESTE[retouche.geste]}
               </span>
               <Carre couleur={retouche.couleur} />
               <span className="min-w-0 flex-1 truncate">{retouche.couleur}</span>
               {retouche.remplacement && (
                 <>
-                  <span className="text-texte-3">→</span>
+                  <span className="text-encre-4">→</span>
                   <Carre couleur={retouche.remplacement} />
                 </>
               )}
@@ -697,7 +697,7 @@ function LesRetouches({
                 type="button"
                 aria-label={`Défaire ${NOM_DU_GESTE[retouche.geste]} ${retouche.couleur}`}
                 onClick={() => defaire(rang)}
-                className="shrink-0 px-1 text-texte-3 hover:text-echec-froid"
+                className="shrink-0 px-1 text-encre-4 hover:text-echec"
               >
                 ×
               </button>
@@ -720,7 +720,7 @@ function Carre({ couleur }: { couleur: string }) {
     <span
       aria-hidden
       style={{ background: couleur }}
-      className="inline-block h-[14px] w-[14px] shrink-0 rounded-[1px] border border-bord"
+      className="inline-block h-[14px] w-[14px] shrink-0 rounded-5 border border-trait"
     />
   )
 }
@@ -756,7 +756,7 @@ function LaPaletteRendue({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle>
+      <Libelle papier>
         la palette rendue — {palette.rendue.length} couleur
         {palette.rendue.length > 1 ? "s" : ""}
       </Libelle>
@@ -770,30 +770,30 @@ function LaPaletteRendue({
               onClick={() => basculer(pastille)}
               style={{ background: pastille.couleur }}
               className={[
-                "relative h-[30px] w-[30px] rounded-[2px] border transition-opacity duration-[80ms]",
+                "relative h-[30px] w-[30px] rounded-5 border transition-opacity duration-[120ms]",
                 pastille.retiree
-                  ? "border-echec-froid opacity-40"
-                  : "border-bord hover:border-bord-fort",
+                  ? "border-echec opacity-40"
+                  : "border-trait hover:border-contour",
               ].join(" ")}
             >
               {/* La lettre de provenance, posée sur la pastille — J, A ou M.
                   Un mot n'aurait pas tenu sur 30 px, et une couleur de bordure
                   aurait été un troisième vocabulaire de couleur à apprendre. */}
-              <span className="mesure absolute bottom-px right-[3px] text-[8px] leading-none text-fond-1 mix-blend-difference">
+              <span className="mesure absolute bottom-px right-[3px] text-[10.5px] leading-none text-papier mix-blend-difference">
                 {LETTRE[pastille.venue]}
               </span>
               {/* **Barrée, et visiblement** : le trait traverse la pastille. */}
               {pastille.retiree && (
                 <span
                   aria-hidden
-                  className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 rotate-[-30deg] bg-echec-froid"
+                  className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 rotate-[-30deg] bg-echec"
                 />
               )}
             </button>
           </li>
         ))}
       </ul>
-      <p className="mesure text-[9.5px] leading-4 text-texte-3">
+      <p className="mesure text-[10.5px] leading-4 text-encre-4">
         J venue de la première source · A venue des suivantes · M posée à la main
         · une pastille barrée est retirée, montrée et non cachée
       </p>
@@ -843,7 +843,7 @@ function LApercu({
 
   return (
     <div className="flex flex-col gap-2">
-      <Libelle>l'aperçu — la palette posée sur de vraies images</Libelle>
+      <Libelle papier>l'aperçu — la palette posée sur de vraies images</Libelle>
       <div className="flex flex-wrap gap-4">
         {apercu.images.map((image) => (
           <figure key={image.asset} className="flex flex-col items-center gap-1">
@@ -851,17 +851,17 @@ function LApercu({
               <img
                 src={image.du_jeu}
                 alt={`${image.nom} avec les couleurs du jeu`}
-                className="h-[96px] w-[96px] rounded-[2px] border border-bord object-contain"
+                className="h-[128px] w-[128px] rounded-5 border border-trait object-contain"
                 style={{ imageRendering: "pixelated" }}
               />
               <img
                 src={image.de_la_palette}
                 alt={`${image.nom} avec ${palette.nom}`}
-                className="h-[96px] w-[96px] rounded-[2px] border border-bord-fort object-contain"
+                className="h-[128px] w-[128px] rounded-5 border border-contour object-contain"
                 style={{ imageRendering: "pixelated" }}
               />
             </div>
-            <figcaption className="mesure max-w-[200px] truncate text-[9.5px] text-texte-3">
+            <figcaption className="mesure w-full truncate text-[10.5px] text-encre-4">
               {image.nom} — du jeu, puis {palette.nom}
             </figcaption>
           </figure>
@@ -869,7 +869,7 @@ function LApercu({
       </div>
       {/* **Combien de couleurs ne servent à rien**, dit en clair. Le produit
           constate — il ne conseille pas de les retirer. */}
-      <p className="mesure text-[9.5px] text-texte-3">
+      <p className="mesure text-[10.5px] text-encre-4">
         {apercu.employees.length} des {apercu.couleurs.length} employées par ces
         images — {apercu.couleurs.length - apercu.employees.length} ne servent à
         aucune
@@ -907,7 +907,7 @@ function PanneauAmbiance({
     <section className="flex flex-col gap-4">
       <EnTete nom={ambiance.nom} onSupprimer={onSupprimer} />
 
-      <Segments<Onglet>
+      <Segments<Onglet> papier
         valeurs={["sa palette", "ses références", "ses trois cases", "qui s'en sert"]}
         valeur={onglet}
         onChange={setOnglet}
@@ -925,7 +925,7 @@ function PanneauAmbiance({
             value={ambiance.palette}
             aria-label="La palette de cette ambiance"
             onChange={(e) => onRegler({ palette: e.target.value })}
-            className="mesure h-[26px] w-[240px] rounded-[2px] border border-bord bg-fond-1 px-1 text-[11px] text-texte-2"
+            className="mesure h-[26px] w-[300px] rounded-7 border border-trait bg-papier-cote px-1 text-[11px] text-encre-3"
           >
             <option value="">aucune — les couleurs du jeu</option>
             {palettes.map((autre) => (
@@ -934,7 +934,7 @@ function PanneauAmbiance({
               </option>
             ))}
           </select>
-          <Raison texte="la palette agit toujours au retour, sur la machine, sans rien payer et rétroactivement" />
+          <Raison papier texte="la palette agit toujours au retour, sur la machine, sans rien payer et rétroactivement" />
           {palette && (
             <ul className="flex flex-wrap gap-1 pt-1">
               {palette.rendue.map((couleur) => (
@@ -949,9 +949,9 @@ function PanneauAmbiance({
 
       {onglet === "ses références" && (
         <div className="flex flex-col gap-2">
-          <Raison texte="elles partent en image avec les générations qui utilisent l'ambiance, et prennent les places que le projet aurait remplies" />
+          <Raison papier texte="elles partent en image avec les générations qui utilisent l'ambiance, et prennent les places que le projet aurait remplies" />
           {ambiance.references.length === 0 ? (
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10.5px] leading-4 text-encre-4">
               Aucune encore. Une carte du tableau d'inspiration se désigne ici —
               elle reste où elle est, aucune copie n'est faite.
             </p>
@@ -960,9 +960,9 @@ function PanneauAmbiance({
               {ambiance.references.map((reference) => (
                 <li
                   key={reference}
-                  className="mesure inline-flex h-[26px] items-center gap-1 rounded-[2px] border border-bord bg-fond-1 px-2 text-[10px] text-texte-2"
+                  className="mesure inline-flex h-[26px] items-center gap-1 rounded-7 border border-trait bg-papier-cote px-2 text-[10.5px] text-encre-3"
                 >
-                  <span className="max-w-[180px] truncate">{reference}</span>
+                  <span className="max-w-[128px] truncate">{reference}</span>
                   <button
                     type="button"
                     aria-label={`Retirer la référence ${reference}`}
@@ -973,7 +973,7 @@ function PanneauAmbiance({
                         ),
                       })
                     }
-                    className="px-1 text-texte-3 hover:text-echec-froid"
+                    className="px-1 text-encre-4 hover:text-echec"
                   >
                     ×
                   </button>
@@ -1002,15 +1002,15 @@ function PanneauAmbiance({
           ))}
           {/* **Ce qui lui est fermé, dit ici** plutôt que laissé à chercher :
               c'est le grisé qui porte sa raison, appliqué à une absence. */}
-          <Raison texte="la vue et la technique ne s'ouvrent pas à une ambiance — elles portent la mécanique du jeu, et des images qui ne rentrent pas ne se verraient qu'après avoir payé" />
-          <Raison texte="l'époque et le rendu restent au jeu — un coin plus sombre reste du même siècle et du même pixel art" />
+          <Raison papier texte="la vue et la technique ne s'ouvrent pas à une ambiance — elles portent la mécanique du jeu, et des images qui ne rentrent pas ne se verraient qu'après avoir payé" />
+          <Raison papier texte="l'époque et le rendu restent au jeu — un coin plus sombre reste du même siècle et du même pixel art" />
         </div>
       )}
 
       {onglet === "qui s'en sert" && (
         <div className="flex flex-col gap-2">
           {ambiance.emplois.length === 0 ? (
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10.5px] leading-4 text-encre-4">
               Personne encore. Une chose du jeu la désigne sur sa fiche — jamais
               par la collection où elle est rangée : une collection est un
               dossier, et un rangement ne change pas un style.
@@ -1020,10 +1020,10 @@ function PanneauAmbiance({
               {ambiance.emplois.map((emploi) => (
                 <li
                   key={emploi.identifiant}
-                  className="mesure flex h-[26px] items-center gap-2 border-b border-bord text-[11px] text-texte-2 last:border-b-0"
+                  className="mesure flex h-[26px] items-center gap-2 border-b border-trait text-[11px] text-encre-3 last:border-b-0"
                 >
                   <span className="min-w-0 flex-1 truncate">{emploi.nom}</span>
-                  <span className="shrink-0 text-[10px] text-texte-3">
+                  <span className="shrink-0 text-[10.5px] text-encre-4">
                     lui prend {NOM_DE_CE_QU_ON_PREND[emploi.prend] ?? emploi.prend}
                   </span>
                 </li>
@@ -1053,7 +1053,7 @@ function CaseDeTexte({
 
   return (
     <div className="flex flex-col gap-1">
-      <Libelle>{libelle}</Libelle>
+      <Libelle papier>{libelle}</Libelle>
       <textarea
         value={brouillon}
         rows={2}
@@ -1063,7 +1063,7 @@ function CaseDeTexte({
         onBlur={() => {
           if (brouillon !== texte) onPoser(brouillon)
         }}
-        className="mesure w-full max-w-[560px] resize-y rounded-[2px] border border-bord bg-fond-1 p-2 text-[11px] leading-5 text-texte placeholder:text-texte-3"
+        className="mesure w-full max-w-[880px] resize-y rounded-7 border border-trait bg-papier-cote p-2 text-[11px] leading-5 text-encre placeholder:text-encre-4"
       />
     </div>
   )

@@ -2651,6 +2651,12 @@ export const TEINTES = [
  *  et le jour où le document déplace une teinte d'un point, l'un des deux
  *  l'aurait suivie sans l'autre.
  *
+ *  **Et c'est ce qui a rendu `D2` gratuit de ce côté-ci** (11 septembre 2026) :
+ *  les dix teintes ont été refaites pour le fond clair du carnet — plus sombres
+ *  que le papier, à 4,6 : 1 sur lui — et cette fabrique n'a pas bougé d'un
+ *  caractère. Les dix noms sont les mêmes, les dix renvois aussi ; seules les
+ *  dix valeurs de `index.css` ont changé.
+ *
  *  Un tableau plutôt que des classes Tailwind parce que la teinte arrive du
  *  serveur : `bg-ilot-${teinte}` ne se compile pas — Tailwind lit des classes
  *  écrites en toutes lettres, et une classe composée à l'exécution n'existe

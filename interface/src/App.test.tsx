@@ -5851,7 +5851,9 @@ describe("l'agent, vu de l'atelier", () => {
     expect(carte().getAttribute("style")).toContain("border-color")
 
     fireEvent.click(screen.getByRole("button", { name: "Ouvrir la note" }))
-    await waitFor(() => expect(carte().className).toContain("border-lumiere"))
+    // `border-signal` depuis `D2` : sur le papier, l'anneau de la chose
+    // choisie est le rouille — `--lumiere` était le jeton du châssis sombre.
+    await waitFor(() => expect(carte().className).toContain("border-signal"))
     // Choisie : le bord est à l'anneau, **le fond garde sa teinte**.
     expect(carte().getAttribute("style")).toContain("--color-ilot-prune")
     expect(carte().getAttribute("style")).not.toContain("border-color")
@@ -9240,7 +9242,7 @@ describe("les trois côtés de l'univers", () => {
   // `Assistant.tsx`, doublon vrai du parcours des règles du jeu, et il est
   // parti avec lui.
 
-  test("deux côtés, un seul allumé, sous une seule barre de 38 px", async () => {
+  test("deux côtés, un seul allumé, sous une seule barre de 34 px", async () => {
     await ouvrir()
 
     expect(
@@ -9253,13 +9255,14 @@ describe("les trois côtés de l'univers", () => {
     expect(cote("Inspiration").getAttribute("aria-selected")).toBe("true")
     expect(cote("Ambiances et couleurs").getAttribute("aria-selected")).toBe("false")
 
-    // **Deux bandes au-dessus du travail, jamais trois.** Celle du châssis fait
-    // 44 px, celle-ci 38, et les deux côtés vivent *dans* la seconde.
-    // On remonte jusqu'à la bande qui la porte, en lisant la classe plutôt
-    // qu'en écrivant un sélecteur : les crochets de Tailwind doivent être
-    // échappés en CSS, et cet échappement-là s'est déjà perdu une fois.
+    // **Une seule bande au-dessus du travail.** Elle fait 34 px depuis `D2` —
+    // la hauteur de contrôle du carnet, celle de toute barre d'outils du
+    // produit ; la barre du châssis sombre qui la surmontait est partie en
+    // `C9`. On remonte jusqu'à la bande qui la porte, en lisant la classe
+    // plutôt qu'en écrivant un sélecteur : les crochets de Tailwind doivent
+    // être échappés en CSS, et cet échappement-là s'est déjà perdu une fois.
     let barre: HTMLElement | null = cote("Inspiration")
-    while (barre && !barre.className.includes("h-[38px]")) barre = barre.parentElement
+    while (barre && !barre.className.includes("h-[34px]")) barre = barre.parentElement
     expect(barre).toBeTruthy()
 
     fireEvent.click(cote("Ambiances et couleurs"))
