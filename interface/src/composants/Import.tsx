@@ -10,10 +10,18 @@
 // donc onze images qui entrent et un refus qui nomme la douzième. Un lot unique
 // aurait fait attendre les onze premières que la douzième soit lue, et aurait
 // dû inventer une forme de réponse partielle.
+//
+// **Portée au papier le 11 septembre 2026 (`D4`)**, sans planche connue — la
+// même situation que `Calibrage.tsx` en `C6`. La lecture la plus simple à
+// vérifier est celle qui coûte le moins de décisions neuves : reprendre au mot
+// près la forme que `BarreOutils.tsx` donne déjà à ses propres contrôles —
+// mêmes hauteurs, même bouton, même bandeau de refus au-dessus de la grille —,
+// et l'habiller du vocabulaire papier de `chassis.tsx` et des listes fermées
+// de `docs/DESIGN.md`. Rien n'y change de structure ni de texte.
 
 import { useState, type Ref } from "react"
 import { api, Refus, type Asset } from "../api"
-import { POINTILLE, useInfobulle } from "./Infobulle"
+import { useInfobulle } from "./Infobulle"
 
 /** Ce qui n'est pas entré, et pourquoi. **Une entrée par fichier**, parce que
  *  c'est ce que « chacun avec son propre sort » veut dire : dix fichiers
@@ -110,6 +118,13 @@ export type Import = ReturnType<typeof useImport>
  *  Il est ancré à droite, contre l'export, et pour la raison qui y a mis
  *  l'export : ce sont les deux portes de la bibliothèque, et une porte qui se
  *  déplace est une porte qu'on cherche. */
+// Le pointillé du papier — même métier que `POINTILLE`, sur `--contour` et
+// `--encre-3` plutôt que sur `--bord-fort` et `--texte-3`. Recomposé ici comme
+// `chassis.tsx` le fait pour `Libelle` et `Bloc` : `Infobulle.tsx` sert aussi
+// les écrans qui n'ont pas changé de châssis, et son `POINTILLE` reste le leur.
+const POINTILLE_PAPIER =
+  "cursor-help underline decoration-dotted decoration-contour underline-offset-[3px] hover:decoration-encre-3"
+
 export function Importer({ etat }: { etat: Import }) {
   // **Ni l'un ni l'autre n'épingle** : leur clic est déjà pris — le premier
   // bascule le sort de ce qui entre, le second ouvre le sélecteur de fichiers.
@@ -124,13 +139,13 @@ export function Importer({ etat }: { etat: Import }) {
         onClick={() => etat.setTraiter(!etat.traiter)}
         {...surLeChoix.declencheurs}
         className={[
-          "mesure whitespace-nowrap text-[10px] transition-colors duration-[80ms]",
-          etat.traiter ? "text-signal-froid" : "text-texte-3 hover:text-texte-2",
+          "mesure whitespace-nowrap text-[10.5px] transition-colors duration-120",
+          etat.traiter ? "text-signal" : "text-encre-4 hover:text-encre-2",
         ].join(" ")}
       >
         <span
           ref={surLeChoix.ancre as Ref<HTMLSpanElement>}
-          className={`w-fit ${surLeChoix.presente ? POINTILLE : ""}`}
+          className={`w-fit ${surLeChoix.presente ? POINTILLE_PAPIER : ""}`}
         >
           {etat.traiter ? "traitée" : "brute"}
         </span>
@@ -141,11 +156,11 @@ export function Importer({ etat }: { etat: Import }) {
           n'ait à tenir une référence sur un élément qu'il ne rend pas. */}
       <label
         {...surLeBouton.declencheurs}
-        className="mesure h-[26px] cursor-pointer rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[11px] leading-[24px] text-texte transition-colors duration-[80ms] hover:bg-fond-3"
+        className="mesure h-[26px] cursor-pointer rounded-7 border border-contour bg-carte px-2 text-[11px] leading-[24px] text-encre transition-colors duration-120 hover:bg-papier-cote"
       >
         <span
           ref={surLeBouton.ancre as Ref<HTMLSpanElement>}
-          className={surLeBouton.presente ? POINTILLE : ""}
+          className={surLeBouton.presente ? POINTILLE_PAPIER : ""}
         >
           Importer
         </span>
@@ -188,20 +203,20 @@ export function CeQuiNEstPasEntre({
 }) {
   if (etat.attente.length === 0) return null
   return (
-    <div className="defile flex max-h-[76px] shrink-0 flex-col overflow-y-auto border-b border-bord bg-fond-1 px-4 py-1">
+    <div className="defile flex max-h-20 shrink-0 flex-col overflow-y-auto border-b border-trait bg-papier-cote px-4 py-1">
       {etat.attente.map((une, rang) => (
         <p
           key={`${une.nom}-${rang}`}
           className={[
-            "mesure flex h-[24px] shrink-0 items-center gap-2 text-[10px]",
-            une.genre === "refus" ? "text-echec-froid" : "text-epingle",
+            "mesure flex h-[26px] shrink-0 items-center gap-2 text-[10.5px]",
+            une.genre === "refus" ? "text-echec" : "text-encre-attention",
           ].join(" ")}
         >
           <span
             aria-hidden
             className={[
               "inline-block h-px w-2",
-              une.genre === "refus" ? "bg-echec-froid" : "bg-epingle",
+              une.genre === "refus" ? "bg-echec" : "bg-encre-attention",
             ].join(" ")}
           />
           {une.genre === "refus" ? (
@@ -217,18 +232,18 @@ export function CeQuiNEstPasEntre({
                   onOuvrir(une.asset.identifiant)
                   etat.oublier(rang)
                 }}
-                className="shrink-0 text-signal-froid hover:text-signal-froid-clair"
+                className="shrink-0 text-signal hover:opacity-70"
               >
                 La voir ›
               </button>
-              <span className="text-texte-3">·</span>
+              <span className="text-encre-4">·</span>
               <button
                 type="button"
                 onClick={() => {
                   etat.oublier(rang)
                   void etat.entrer(une.fichier, true)
                 }}
-                className="shrink-0 text-signal-froid hover:text-signal-froid-clair"
+                className="shrink-0 text-signal hover:opacity-70"
               >
                 Importer quand même ›
               </button>
@@ -238,7 +253,7 @@ export function CeQuiNEstPasEntre({
             type="button"
             onClick={() => etat.oublier(rang)}
             aria-label={`Oublier « ${une.nom} »`}
-            className="ml-auto shrink-0 text-texte-3 hover:text-texte-2"
+            className="ml-auto shrink-0 text-encre-4 hover:text-encre-2"
           >
             ✕
           </button>

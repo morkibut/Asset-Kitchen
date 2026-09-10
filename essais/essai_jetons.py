@@ -106,12 +106,15 @@ LA_GEOMETRIE_D_AVANT = (
     # arrondis de 2 px devenus 5 et 7, les 8.5, 9.5 et 10 px de texte remontés
     # à 10.5, les 32 px de serif ramenés à 25 — la serif ne descend jamais sous
     # 25 —, et les 80 ms devenus 120.
-    "interface/src/composants/Arbre.tsx",
-    "interface/src/composants/BarreOutils.tsx",
+    #
+    # `D4` en a retiré quatre de plus le 11 septembre 2026 — `Arbre.tsx`,
+    # `BarreOutils.tsx`, `Depliage.tsx`, `FicheDuClip.tsx` : les outils de la
+    # galerie, portés sans planche propre — `Galerie.dc.html` ne couvre que la
+    # grille, la tuile, la fiche et le pied. Même geste que `D3` : les mêmes
+    # jetons, les mêmes tailles. La colonne de l'arbre passe de 240 à
+    # **300 px** — la largeur du « carnet » de `docs/DESIGN.md` § Largeurs de
+    # colonne, fixe, toujours là.
     "interface/src/composants/chassis.tsx",
-    "interface/src/composants/Depliage.tsx",
-    "interface/src/composants/FicheDuClip.tsx",
-    "interface/src/composants/Import.tsx",
     # `BarreQuiPaie.tsx` (`D5`) : sortie en fichier propre le 11 septembre
     # 2026, aux côtés de `ChampPrompt.tsx` et `PanneauReglages.tsx`, qui ont
     # basculé au vocabulaire papier — leurs tailles restent celles de l'ancien
@@ -197,11 +200,6 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # `--pourtour`, le gris neutre, « derrière une image et nulle part
     # ailleurs » —, et les deux bandes de pied empilées n'en font plus qu'une,
     # parce que le trait sépare des panneaux et non des lignes.
-    "interface/src/composants/Arbre.tsx",
-    "interface/src/composants/BarreOutils.tsx",
-    "interface/src/composants/Import.tsx",
-    "interface/src/composants/Depliage.tsx",
-    "interface/src/composants/FicheDuClip.tsx",
     # **Un seul volet de fiche d'image dans le produit** (`C4`). Il y en avait
     # deux : celui-ci, et un second écrit en clair dans `ImagesDuSujet.tsx` —
     # même métier, deux surfaces. Le second est parti, et ce que lui seul savait
@@ -210,6 +208,15 @@ LES_FICHIERS_DE_L_ANCIEN_CHASSIS = (
     # donc montée par la galerie **et** par *Ses images*, et c'est ce qui a
     # décidé la forme de son passage au papier en `D3` : les rappels
     # facultatifs n'ont pas été touchés, seuls ses jetons et ses tailles.
+    #
+    # D4 — **les outils de la galerie, le 11 septembre 2026.** `Arbre.tsx`,
+    # `BarreOutils.tsx`, `Depliage.tsx` et `FicheDuClip.tsx` sont partis d'ici
+    # **et** de `LA_GEOMETRIE_D_AVANT`, comme `D3` avant eux : aucune planche
+    # ne les dessine — `Galerie.dc.html` ne couvre que la grille, la tuile, la
+    # fiche et le pied —, donc même structure, mêmes gestes, seuls les jetons
+    # et les tailles changent. `Import.tsx` les accompagne sans planche connue,
+    # dessiné sur la lecture la plus simple à vérifier : la forme que
+    # `BarreOutils.tsx` donne déjà à ses propres contrôles.
     # D5 — la barre qui paie : sortie d'`App.tsx` en fichier propre le
     # 11 septembre 2026, avec `ChampPrompt.tsx` et `PanneauReglages.tsx` —
     # deux fichiers qui n'étaient pas la galerie, et que le plan d'alors lui

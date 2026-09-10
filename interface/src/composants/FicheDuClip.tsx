@@ -20,6 +20,11 @@
 // **Ce qui ne s'écrit pas ici.** Garder et jeter restent les gestes de la
 // grille : le chemin de suppression du produit est unique, et la fiche ne le
 // contourne pas.
+//
+// **Portée au papier le 11 septembre 2026 (`D4`)**, au mot près sur la même
+// colonne que `Fiche.tsx` (`D3`) : mêmes jetons, mêmes tailles, le même
+// vocabulaire papier de `chassis.tsx`, en passant `papier` à `Bouton`,
+// `EnTetePanneau` et `Libelle`.
 
 import { useEffect, useState } from "react"
 import {
@@ -94,15 +99,15 @@ export function FicheDuClip({
     <aside
       {...PANNEAU}
       data-fiche-clip={generation.identifiant}
-      className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1"
+      className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-trait bg-papier-cote"
     >
-      <EnTetePanneau>
+      <EnTetePanneau papier>
         <span className="truncate">Le clip</span>
         <button
           type="button"
           onClick={onFermer}
           aria-label="Fermer la fiche"
-          className="ml-auto text-texte-3 transition-colors duration-[80ms] hover:text-texte"
+          className="ml-auto text-encre-4 transition-colors duration-120 hover:text-encre"
         >
           ✕
         </button>
@@ -112,7 +117,7 @@ export function FicheDuClip({
           le clip, et ce qu'on vient voir reste sous les yeux. Elle ne démarre
           pas en silence sur un écran plein de lecteurs : elle est la vignette
           de la fiche, et elle tourne — muette — comme la boucle du montage. */}
-      <div className="flex items-center justify-center bg-fond-0 px-2 py-2">
+      <div className="flex items-center justify-center bg-pourtour px-2 py-2">
         <video
           key={generation.identifiant}
           src={api.videoDuClip(generation.identifiant)}
@@ -121,7 +126,7 @@ export function FicheDuClip({
           autoPlay
           muted
           aria-label="la vidéo du clip, telle qu'elle est arrivée"
-          className="damier max-h-[240px] w-auto object-contain"
+          className="max-h-60 w-auto object-contain"
         />
       </div>
 
@@ -130,41 +135,41 @@ export function FicheDuClip({
             image, où l'on lit d'où l'image vient. Ici c'est le texte anglais
             qui est parti, corrigé ou non par le tiroir : c'est lui, et
             personne d'autre, qui a écrit ce mouvement. */}
-        <p className="truncate text-[11.5px] text-texte-2" title={generation.demande.prompt}>
+        <p className="truncate text-[11.5px] text-encre-2" title={generation.demande.prompt}>
           {generation.demande.prompt}
         </p>
-        <p className="mesure truncate text-[10px] text-texte-3" title={generation.modele}>
+        <p className="mesure truncate text-[10.5px] text-encre-4" title={generation.modele}>
           {nomDuModele(generation.modele)}
         </p>
 
         {clip.images > 0 ? (
-          <div className="flex flex-col gap-1 border-t border-bord pt-2">
-            <Libelle aide="clip.fiche">ce qu'il porte</Libelle>
-            <p className="mesure text-[10px] leading-4 text-texte-2">
+          <div className="flex flex-col gap-1 border-t border-trait pt-2">
+            <Libelle aide="clip.fiche" papier>ce qu'il porte</Libelle>
+            <p className="mesure text-[10.5px] leading-4 text-encre-2">
               {clip.images} images · {clip.cadence.toFixed(0)} i/s ·{" "}
               {clip.secondes} s demandées · {clip.proportions} · {clip.resolution}
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-1 border-t border-bord pt-2">
-            <Libelle aide="clip.fiche">ce qu'il porte</Libelle>
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+          <div className="flex flex-col gap-1 border-t border-trait pt-2">
+            <Libelle aide="clip.fiche" papier>ce qu'il porte</Libelle>
+            <p className="mesure text-[10.5px] leading-4 text-encre-4">
               {clip.extraction_refus ?? "images non tirées"} — le clip, lui, reste
               payé et se découpera quand ce qui manque sera installé.
             </p>
           </div>
         )}
 
-        <div className="flex flex-col gap-1 border-t border-bord pt-2">
-          <Libelle aide="clip.fiche">ce qu'il a coûté</Libelle>
-          <p className="mesure text-[10px] leading-4 text-texte-2">
+        <div className="flex flex-col gap-1 border-t border-trait pt-2">
+          <Libelle aide="clip.fiche" papier>ce qu'il a coûté</Libelle>
+          <p className="mesure text-[10.5px] leading-4 text-encre-2">
             {depense(generation.consomme, generation.unite)}
           </p>
           {/* **Relu ou non, en toutes lettres** (A9) : le montant enregistré dit
               s'il a été relu chez le fournisseur ou déduit d'ailleurs, et un
               zéro faute de réponse ne s'écrit pas comme un zéro gratuit. */}
           <p
-            className="mesure text-[10px] leading-4 text-texte-3"
+            className="mesure text-[10.5px] leading-4 text-encre-4"
             title={clip.montant_dit}
           >
             {clip.montant_dit}
@@ -178,7 +183,7 @@ export function FicheDuClip({
         />
 
         {depart && (
-          <div className="flex items-center gap-2 border-t border-bord pt-2">
+          <div className="flex items-center gap-2 border-t border-trait pt-2">
             <button
               type="button"
               onClick={() => onOuvrir(depart.identifiant)}
@@ -189,23 +194,23 @@ export function FicheDuClip({
               <img
                 src={vignetteAsset(depart, 96)}
                 alt={depart.label}
-                className="damier h-[72px] w-[72px] border border-bord object-contain"
+                className="damier-papier h-[54px] w-[54px] rounded-5 border border-trait object-contain"
                 style={{ imageRendering: "pixelated" }}
               />
             </button>
             <div className="flex min-w-0 flex-col gap-1">
-              <Libelle aide="clip.fiche">le sprite dont il part</Libelle>
-              <p className="mesure truncate text-[10px] leading-4 text-texte-3">
+              <Libelle aide="clip.fiche" papier>le sprite dont il part</Libelle>
+              <p className="mesure truncate text-[10.5px] leading-4 text-encre-4">
                 {depart.label}
               </p>
             </div>
           </div>
         )}
 
-        <div className="flex flex-col gap-1 border-t border-bord pt-2">
-          <Libelle aide="clip.fiche">les bandes qu'il a faites</Libelle>
+        <div className="flex flex-col gap-1 border-t border-trait pt-2">
+          <Libelle aide="clip.fiche" papier>les bandes qu'il a faites</Libelle>
           {bandes === null ? null : bandes.length === 0 ? (
-            <p className="mesure text-[10px] leading-4 text-texte-3">
+            <p className="mesure text-[10.5px] leading-4 text-encre-4">
               aucune bande gardée — découper ce clip en fera la première.
             </p>
           ) : (
@@ -225,9 +230,9 @@ export function FicheDuClip({
             tuile — la fiche n'interdit pas le chemin court — et rien ne
             dépense : le clip est déjà payé, et c'est la même phrase que le
             pied du montage. */}
-        <div className="mt-auto flex flex-col gap-1 border-t border-bord pt-2">
-          <Bouton onClick={onDecouper} enfants="Découper ›" />
-          <p className="mesure text-[10px] leading-4 text-texte-3">
+        <div className="mt-auto flex flex-col gap-1 border-t border-trait pt-2">
+          <Bouton onClick={onDecouper} enfants="Découper ›" papier />
+          <p className="mesure text-[10.5px] leading-4 text-encre-4">
             rien ici ne dépense — le clip est déjà payé, et garder ou jeter
             restent les gestes de la grille.
           </p>
@@ -256,11 +261,11 @@ function CaseDuClip({
   const mouvement = generation.demande.mouvement
   if (bits.length === 0 && !mouvement) return null
   return (
-    <div className="flex flex-col gap-1 border-t border-bord pt-2">
-      <Libelle aide="clip.fiche">ce qu'il anime</Libelle>
+    <div className="flex flex-col gap-1 border-t border-trait pt-2">
+      <Libelle aide="clip.fiche" papier>ce qu'il anime</Libelle>
       {bits.length > 0 && (
         <p
-          className="mesure truncate text-[10px] leading-4 text-texte-2"
+          className="mesure truncate text-[10.5px] leading-4 text-encre-2"
           title={[generation.personnage, generation.pose, generation.direction ?? ""]
             .filter(Boolean)
             .join(" · ")}
@@ -269,7 +274,7 @@ function CaseDuClip({
         </p>
       )}
       {mouvement && (
-        <p className="mesure truncate text-[10px] leading-4 text-texte-3">
+        <p className="mesure truncate text-[10.5px] leading-4 text-encre-4">
           mouvement : {mouvement}
         </p>
       )}
@@ -298,14 +303,14 @@ function BandeDeCeClip({
     <button
       type="button"
       onClick={() => onOuvrirLaBande(bande.identifiant)}
-      className="mesure flex min-w-0 items-baseline gap-x-2 gap-y-0.5 text-left text-[10px] text-signal-froid hover:text-signal-froid-clair"
+      className="mesure flex min-w-0 items-baseline gap-x-2 gap-y-0.5 text-left text-[10.5px] text-signal hover:opacity-70"
       title="ouvrir cette animation dans l'atelier"
     >
       <span className="truncate">{bande.nom}</span>
       {!bande.brouillon && caseNom && (
-        <span className="truncate text-texte-3">{caseNom}</span>
+        <span className="truncate text-encre-4">{caseNom}</span>
       )}
-      {bande.melangee && <span className="shrink-0 text-texte-3">mélangée</span>}
+      {bande.melangee && <span className="shrink-0 text-encre-4">mélangée</span>}
     </button>
   )
 }

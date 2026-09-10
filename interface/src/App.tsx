@@ -1890,7 +1890,7 @@ export function App() {
         cleAbsente={etat ? !etat.secrets.some((t) => t.pret) : false}
       />
 
-      <div className="grid min-w-0 flex-1 grid-rows-[34px_minmax(0,1fr)_26px] bg-fond-0">
+      <div className="grid min-w-0 flex-1 grid-rows-[34px_minmax(0,1fr)_26px] bg-papier">
       {/* **L'en-tête de la surface** (`C9`) — 34 px de papier, à la place des
           44 px de `BarreChassis.tsx`. Elle porte les six choses que la barre
           portait en dehors des onglets ; les onglets, eux, sont partis avec

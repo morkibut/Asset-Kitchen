@@ -1,4 +1,5 @@
-// L'arbre — 240 px, la première colonne de `docs/DESIGN.md` § Layout.
+// L'arbre — 300 px, la colonne du carnet de `docs/DESIGN.md` § Largeurs de
+// colonne.
 //
 // Elle naît avec la bibliothèque (T3). L'afficher plus tôt aurait montré du
 // cadrage au lieu de servir le geste — c'est exactement ce qui a fait écarter
@@ -11,8 +12,16 @@
 // dans la grille il salirait ce qu'on peut réutiliser (US-23), nulle part il
 // empêcherait d'expliquer une facture (US-24).
 //
+// **Portée au papier le 11 septembre 2026 (`D4`)**, avec `BarreOutils.tsx` :
+// aucune planche ne la dessine — `Galerie.dc.html` (`D3`) ne couvre que la
+// grille, la tuile, la fiche et le pied. Le porche reste donc celui d'avant :
+// mêmes rangées, même structure, le vocabulaire papier de `chassis.tsx` et les
+// listes fermées de `docs/DESIGN.md`. Sa largeur passe de 240 à **300** — la
+// colonne « le carnet », fixe, toujours là.
+//
 // Rangée de 26 px, compteur en mono, aucune couleur de plus : `--signal` pour
-// l'élément ouvert, `--echec` pour un raté, `--epingle` pour un interrompu.
+// l'élément ouvert, `--echec` pour un raté, `--encre-attention` pour un
+// interrompu.
 
 import { useEffect, useState } from "react"
 import {
@@ -84,10 +93,13 @@ export function Arbre({
   }
 
   return (
-    <aside className="flex min-h-0 w-[240px] shrink-0 flex-col border-r border-bord bg-fond-1">
-      <EnTetePanneau>
+    <aside
+      data-carnet
+      className="flex min-h-0 w-[300px] shrink-0 flex-col border-r border-trait bg-papier-cote"
+    >
+      <EnTetePanneau papier>
         <span>Projet</span>
-        <span className="mesure ml-auto text-texte-3">
+        <span className="mesure ml-auto text-encre-4">
           {dollars(bibliotheque.total_usd)}
         </span>
       </EnTetePanneau>
@@ -115,8 +127,8 @@ export function Arbre({
                   ce produit n'a aucune surface modale, et le compte vient de
                   l'arbre — que le serveur a compté. */}
               {aSupprimer === projet.identifiant && (
-                <div className="flex flex-col gap-1 border-l-2 border-echec-froid bg-echec-froid/5 px-2 py-1.5">
-                  <p className="mesure text-[10px] leading-4 text-texte-2">
+                <div className="flex flex-col gap-1 border-l-2 border-trait-echec bg-fond-echec px-2 py-1.5">
+                  <p className="mesure text-[10.5px] leading-4 text-encre-3">
                     {projet.assets === 0
                       ? "aucun asset — rien à détacher"
                       : `${projet.assets} asset${projet.assets > 1 ? "s" : ""} seront détachés, pas détruits`}
@@ -125,14 +137,14 @@ export function Arbre({
                     <button
                       type="button"
                       onClick={() => void supprimer(projet.identifiant)}
-                      className="mesure text-[10px] text-echec-froid hover:text-texte"
+                      className="mesure text-[10.5px] text-echec hover:text-encre"
                     >
                       Supprimer ›
                     </button>
                     <button
                       type="button"
                       onClick={() => setASupprimer(null)}
-                      className="mesure text-[10px] text-texte-3 hover:text-texte-2"
+                      className="mesure text-[10.5px] text-encre-4 hover:text-encre-2"
                     >
                       Garder
                     </button>
@@ -163,7 +175,7 @@ export function Arbre({
           }}
         >
           {collections.length === 0 ? (
-            <p className="px-2 py-1 text-[11px] text-texte-3">
+            <p className="px-2 py-1 text-[11px] text-encre-4">
               rien encore — une collection regroupe sans contraindre
             </p>
           ) : (
@@ -200,9 +212,9 @@ export function Arbre({
                 if (e.key === "Escape") setNouveau(null)
               }}
               placeholder={nouveau === "projet" ? "nom du projet" : "nom de la collection"}
-              className="h-[34px] rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[12px] text-texte placeholder:text-texte-3"
+              className="h-[34px] rounded-5 border border-contour bg-carte px-2 text-[12px] text-encre placeholder:text-encre-4"
             />
-            <Raison texte="Entrée pour créer, Échap pour renoncer" />
+            <Raison texte="Entrée pour créer, Échap pour renoncer" papier />
           </div>
         )}
 
@@ -233,7 +245,7 @@ function Rangee({
     <div
       className={[
         "group flex h-[26px] items-center gap-2 border-l-2 pr-1 pl-2",
-        ouverte ? "border-signal-froid bg-fond-2" : "border-transparent",
+        ouverte ? "border-signal bg-carte" : "border-transparent",
       ].join(" ")}
     >
       <button
@@ -241,17 +253,17 @@ function Rangee({
         onClick={onOuvrir}
         className={[
           "min-w-0 flex-1 truncate text-left text-[12px]",
-          ouverte ? "text-texte" : "text-texte-2 hover:text-texte",
+          ouverte ? "text-encre" : "text-encre-2 hover:text-encre",
         ].join(" ")}
       >
         {nom}
       </button>
       {mesure && (
-        <span className="mesure hidden text-[9.5px] text-texte-3 group-hover:inline">
+        <span className="mesure hidden text-[10.5px] text-encre-4 group-hover:inline">
           {mesure}
         </span>
       )}
-      <span className="mesure w-6 shrink-0 text-right text-[9.5px] text-texte-3">
+      <span className="mesure w-6 shrink-0 text-right text-[10.5px] text-encre-4">
         {compte}
       </span>
       {onSupprimer && (
@@ -259,7 +271,7 @@ function Rangee({
           type="button"
           onClick={onSupprimer}
           aria-label={`Supprimer ${nom}`}
-          className="mesure w-3 shrink-0 text-[10px] text-transparent group-hover:text-texte-3 hover:!text-echec-froid"
+          className="mesure w-3 shrink-0 text-[10.5px] text-transparent group-hover:text-encre-4 hover:!text-echec"
         >
           ×
         </button>
@@ -278,14 +290,14 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <section className="flex flex-col border-b border-bord py-1">
-      <div className="mesure flex h-[26px] items-center px-2 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+    <section className="flex flex-col border-b border-trait py-1">
+      <div className="mesure flex h-[26px] items-center px-2 text-[10.5px] tracking-[.11em] text-encre-4 uppercase">
         <span>{titre}</span>
         <button
           type="button"
           onClick={onAjouter}
           aria-label={`Nouvelle entrée dans ${titre}`}
-          className="ml-auto text-[12px] text-texte-3 hover:text-signal-froid"
+          className="ml-auto text-[12px] text-encre-4 hover:text-signal"
         >
           +
         </button>
@@ -331,7 +343,7 @@ function JournalDuProjet({
 
   return (
     <section className="flex flex-col py-1">
-      <div className="mesure flex h-[26px] items-center gap-2 px-2 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+      <div className="mesure flex h-[26px] items-center gap-2 px-2 text-[10.5px] tracking-[.11em] text-encre-4 uppercase">
         <span>Journal</span>
         <span className="ml-auto normal-case tracking-normal">
           {journal.rates} raté{journal.rates > 1 ? "s" : ""} ·{" "}
@@ -343,20 +355,20 @@ function JournalDuProjet({
           appel.rates.map((rate) => (
             <div
               key={`${appel.identifiant}-${rate.rang}`}
-              className="flex flex-col gap-[2px] border-l border-bord pl-2"
+              className="flex flex-col gap-[2px] border-l border-trait pl-2"
             >
-              <span className="truncate text-[11px] text-texte-2" title={appel.prompt}>
+              <span className="truncate text-[11px] text-encre-2" title={appel.prompt}>
                 {appel.prompt}
               </span>
               <span
                 className={[
-                  "mesure text-[9.5px] leading-4",
-                  rate.statut === "interrompue" ? "text-epingle" : "text-echec-froid",
+                  "mesure text-[10.5px] leading-4",
+                  rate.statut === "interrompue" ? "text-encre-attention" : "text-echec",
                 ].join(" ")}
               >
                 {rate.raison ?? "échec sans raison connue"}
               </span>
-              <span className="mesure flex items-center gap-2 text-[9.5px] text-texte-3">
+              <span className="mesure flex items-center gap-2 text-[10.5px] text-encre-4">
                 <span>{heure(appel.cree_le)}</span>
                 {/* « gratuit », jamais « $0,0000 » (F2) — même règle que sur
                     la tuile et dans les dépenses. */}
@@ -364,7 +376,7 @@ function JournalDuProjet({
                 <button
                   type="button"
                   onClick={() => onRelancer(appel.identifiant, rate.rang)}
-                  className="ml-auto text-signal-froid hover:text-signal-froid-clair"
+                  className="ml-auto text-signal hover:opacity-70"
                 >
                   Relancer ›
                 </button>

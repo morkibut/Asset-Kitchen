@@ -17,6 +17,10 @@
 // délibéré : au moment où il s'ouvre, aucune image n'est entrée en
 // bibliothèque — c'est même tout l'enjeu. Il découpe donc lui-même, dans
 // l'image de la planche, aux boîtes que l'arrivée a mesurées.
+//
+// **Porté au papier le 11 septembre 2026 (`D4`)**, sans planche connue — même
+// dessin, même geste, seuls ses jetons et ses tailles passent au vocabulaire
+// de `chassis.tsx` et aux listes fermées de `docs/DESIGN.md`.
 
 import { useState } from "react"
 import { api, type Generation, type MesuresLot } from "../api"
@@ -66,17 +70,17 @@ export function EcranDepliage({
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-col bg-fond-0">
-      <header className="flex h-[44px] shrink-0 items-center gap-3 border-b border-bord px-4">
-        <h2 className="text-[13px] text-texte">Ce que la planche a rendu</h2>
-        <span className="mesure text-[10px] text-texte-3">
+    <div className="flex min-h-0 min-w-0 flex-col bg-papier">
+      <header className="flex h-[34px] shrink-0 items-center gap-3 border-b border-trait bg-papier-cote px-4">
+        <h2 className="text-[13px] text-encre">Ce que la planche a rendu</h2>
+        <span className="mesure text-[10.5px] text-encre-4">
           {mesures.length} sujet{mesures.length > 1 ? "s" : ""} · {demandees} demandé
           {demandees > 1 ? "s" : ""}
         </span>
         <button
           type="button"
           onClick={onFermer}
-          className="mesure ml-auto text-[10px] text-signal-froid hover:text-signal-froid-clair"
+          className="mesure ml-auto text-[10.5px] text-signal hover:opacity-70"
         >
           Revenir
         </button>
@@ -103,8 +107,8 @@ export function EcranDepliage({
         </ul>
       </div>
 
-      <footer className="flex h-[52px] shrink-0 items-center gap-3 border-t border-bord px-4">
-        <span className="mesure text-[10.5px] text-texte-2">
+      <footer className="flex shrink-0 items-center gap-3 border-t border-trait bg-papier-cote px-4 py-[14px]">
+        <span className="mesure text-[10.5px] text-encre-2">
           {gardees} gardé{gardees > 1 ? "s" : ""} sur {mesures.length}
         </span>
         {!juste && (
@@ -114,13 +118,15 @@ export function EcranDepliage({
                 ? `il en reste ${gardees - demandees} de trop — ${demandees} cases à remplir`
                 : `il en manque ${demandees - gardees} — ${demandees} cases à remplir`
             }
+            papier
           />
         )}
-        <span className="mesure ml-auto text-[10px] text-texte-3">
+        <span className="mesure ml-auto text-[10.5px] text-encre-4">
           rien ne repart chez le fournisseur
         </span>
         <Bouton
           principal
+          papier
           inactif={!juste || enCours}
           onClick={() => void valider()}
           titre={
@@ -145,9 +151,9 @@ export function EcranDepliage({
 function Phrase({ pliage }: { pliage: NonNullable<Generation["pliage"]> }) {
   const pleines = pliage.pleines ?? []
   return (
-    <div className="flex flex-col gap-1.5 border border-bord bg-fond-1 px-3 py-2.5">
+    <div className="flex flex-col gap-1.5 rounded-5 border border-trait bg-carte px-3 py-2.5">
       {pliage.surplus > 0 && (
-        <p className="text-[12px] text-texte">
+        <p className="text-[12px] text-encre">
           <strong className="font-medium">
             {pliage.surplus} sujet{pliage.surplus > 1 ? "s" : ""} de trop
           </strong>{" "}
@@ -156,7 +162,7 @@ function Phrase({ pliage }: { pliage: NonNullable<Generation["pliage"]> }) {
         </p>
       )}
       {pleines.length > 0 && (
-        <p className="text-[12px] text-texte">
+        <p className="text-[12px] text-encre">
           <strong className="font-medium">
             {pleines.length} sujet{pleines.length > 1 ? "s" : ""} remplit
             {pleines.length > 1 ? "ssent" : ""} presque toute{" "}
@@ -166,7 +172,7 @@ function Phrase({ pliage }: { pliage: NonNullable<Generation["pliage"]> }) {
           Les garder ferait entrer du fond.
         </p>
       )}
-      <Raison texte="rien n'est entré en bibliothèque tant que vous n'avez pas tranché" />
+      <Raison texte="rien n'est entré en bibliothèque tant que vous n'avez pas tranché" papier />
     </div>
   )
 }
@@ -217,12 +223,12 @@ function Sujet({
             : `sujet n° ${numero} — cliquez pour l'écarter`
         }
         className={[
-          "flex cursor-pointer flex-col border transition-colors duration-[80ms]",
+          "flex cursor-pointer flex-col overflow-hidden rounded-5 border transition-colors duration-120",
           ecarte
-            ? "border-bord bg-fond-1 opacity-40"
+            ? "border-trait bg-carte opacity-40"
             : pleine
-              ? "border-epingle/60 bg-epingle/5"
-              : "border-bord bg-fond-2 hover:border-bord-fort",
+              ? "border-trait-attention bg-fond-attention"
+              : "border-trait bg-carte hover:border-contour",
         ].join(" ")}
       >
         {/* **La planche entière, cadrée par la fenêtre.** Un `transform` plutôt
@@ -230,7 +236,7 @@ function Sujet({
             planche, que le serveur n'envoie nulle part — et l'écran n'a aucune
             raison de la lui demander alors qu'il tient déjà la boîte. */}
         <span
-          className="relative block overflow-hidden bg-fond-1"
+          className="relative block overflow-hidden bg-pourtour"
           style={{ width: COTE, height: COTE }}
         >
           <img
@@ -253,13 +259,13 @@ function Sujet({
             }}
           />
         </span>
-        <span className="flex items-center gap-1.5 border-t border-bord px-1.5 py-1">
-          <span className="mesure text-[9.5px] text-texte-2">n° {numero}</span>
+        <span className="flex items-center gap-1.5 border-t border-trait px-1.5 py-1">
+          <span className="mesure text-[10.5px] text-encre-2">n° {numero}</span>
           {remplissage !== undefined && (
             <span
               className={[
-                "mesure ml-auto text-[9.5px]",
-                pleine ? "text-epingle" : "text-texte-3",
+                "mesure ml-auto text-[10.5px]",
+                pleine ? "text-encre-attention" : "text-encre-4",
               ].join(" ")}
               title={
                 pleine

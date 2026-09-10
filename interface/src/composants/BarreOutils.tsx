@@ -1,4 +1,4 @@
-// La barre d'outils de la grille — 38 px, `docs/DESIGN.md` § Spacing.
+// La barre d'outils de la grille — 34 px, `docs/DESIGN.md` § Spacing.
 //
 // Elle porte ce qui agit sur **la grille** : chercher, filtrer, et ce qu'on
 // fait d'une sélection. Rien de ce qui agit sur une image seule n'est ici —
@@ -8,8 +8,14 @@
 // close du § Motion n'a nulle part où être un bandeau : le 27 août, le repli
 // hors ligne a été sorti d'un bandeau au motif qu'un bandeau est du châssis en
 // travers de la grille. Il se pose donc dans une fente qui existe déjà, dans
-// **la même forme que la fente sous Générer** — tiret de 8 px, mono 10 px, lien
-// `--signal` pour le geste — et il n'ajoute aucune hauteur.
+// **la même forme que la fente sous Générer** — tiret de 8 px, mono 10.5 px,
+// lien `--signal` pour le geste — et il n'ajoute aucune hauteur.
+//
+// **Portée au papier le 11 septembre 2026 (`D4`)**, avec `Arbre.tsx` : aucune
+// planche ne la dessine — `Galerie.dc.html` (`D3`) ne couvre que la grille, la
+// tuile, la fiche et le pied. Même structure, même hauteur de 34 px ; seuls
+// ses jetons et ses tailles passent au vocabulaire papier de `chassis.tsx` et
+// aux listes fermées de `docs/DESIGN.md`.
 
 import { useEffect, useState } from "react"
 import type { Collection, Projet } from "../api"
@@ -89,7 +95,7 @@ export function BarreOutils({
   zoomRendu: Zoom
 }) {
   return (
-    <div className="flex h-[38px] shrink-0 items-center gap-3 border-b border-bord bg-fond-1 px-4">
+    <div className="flex h-[34px] shrink-0 items-center gap-3 border-b border-trait bg-papier-cote px-4">
       {/* **Deux blocs, et un seul cède.** Celui-ci porte tout ce qui varie — la
           sélection ajoute cinq contrôles d'un coup —, et il est le seul à
           pouvoir rétrécir.
@@ -124,7 +130,7 @@ export function BarreOutils({
           d'Ariane de la barre du haut, qui cède en dernier parce qu'il porte ce
           qui ne se devine pas. */}
       <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto overflow-y-hidden">
-        <div className="flex min-w-[96px] shrink items-center gap-2 overflow-x-auto overflow-y-hidden">
+        <div className="flex min-w-24 shrink items-center gap-2 overflow-x-auto overflow-y-hidden">
           {/* **Chercher et filtrer ne disparaissent jamais.** Une sélection ajoute
               des gestes ; elle ne prend pas la place de ceux qui étaient là. Sans
               ça, ouvrir une fiche — qui sélectionne — effacerait le filtre posé, et
@@ -135,7 +141,7 @@ export function BarreOutils({
             onChange={(e) => onRecherche(e.target.value)}
             placeholder="Chercher"
             aria-label="Chercher dans la bibliothèque"
-            className="mesure h-[26px] w-[160px] min-w-[72px] shrink rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+            className="mesure h-[26px] w-40 min-w-18 shrink rounded-5 border border-trait bg-carte px-2 text-[11px] text-encre placeholder:text-encre-4"
           />
           {/* **Le filtre par famille, et sa dernière valeur** (E4). Il range la
               grille par ce que les images appartiennent — et il a **une valeur
@@ -151,7 +157,7 @@ export function BarreOutils({
             // manque de place, un filtre dont le nom se rogne vaut mieux qu'un
             // geste de sélection qui sort du cadre. La liste déroulée, elle,
             // montre les noms entiers — ce n'est pas elle qui est bornée.
-            className="mesure h-[26px] w-[160px] min-w-[104px] shrink rounded-[2px] border border-bord bg-fond-2 px-1 text-[11px] text-texte-2"
+            className="mesure h-[26px] w-40 min-w-26 shrink rounded-5 border border-trait bg-carte px-1 text-[11px] text-encre-2"
           >
             <option value="">toutes les familles</option>
             <option value="personnages">personnages</option>
@@ -174,20 +180,20 @@ export function BarreOutils({
             type="button"
             onClick={() => onFavoris(!favoris)}
             className={[
-              "mesure h-[26px] shrink-0 rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
+              "mesure h-[26px] shrink-0 rounded-7 border px-2 text-[11px] transition-colors duration-120",
               favoris
-                ? "border-signal-froid bg-signal-froid/13 text-signal-froid"
-                : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+                ? "border-signal bg-ligne-ouverte text-signal"
+                : "border-trait bg-carte text-encre-2 hover:bg-papier-cote",
             ].join(" ")}
           >
             Favoris
           </button>
-          <span className="mesure shrink-0 text-[10px] text-texte-3">
+          <span className="mesure shrink-0 text-[10.5px] text-encre-4">
             {compte} image{compte > 1 ? "s" : ""}
           </span>
   
           {/* **Le zoom de la grille**, dans la fente qui existe déjà : aucune
-              hauteur neuve sur une barre de 38 px. Trois crans, les mêmes que les
+              hauteur neuve sur une barre de 34 px. Trois crans, les mêmes que les
               vignettes du tableau — un seul vocabulaire de taille dans tout le
               produit, et les deux contrôles ne cohabitent jamais. */}
           <div className="flex shrink-0 items-center gap-2">
@@ -197,14 +203,15 @@ export function BarreOutils({
               onChange={onZoom}
               indisponibles={zoomsIndisponibles}
               libelles={LIBELLES_ZOOM}
+              papier
             />
             {/* Le seul endroit où le produit dit qu'il rend autre chose que ce qui
                 est choisi. Il le dit plutôt que de corriger en silence : le cran
                 reste celui qu'on a posé, et il redeviendra vrai dès que la colonne
                 aura repris sa largeur — un panneau replié, la fiche fermée. */}
             {zoomRendu !== zoom && (
-              <span className="mesure flex items-center gap-1.5 whitespace-nowrap text-[10px] text-texte-3">
-                <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
+              <span className="mesure flex items-center gap-1.5 whitespace-nowrap text-[10.5px] text-encre-4">
+                <span aria-hidden className="inline-block h-px w-2 bg-encre-4" />
                 {zoom}× ne tient pas ici — rendu en {zoomRendu}×
               </span>
             )}
@@ -217,8 +224,8 @@ export function BarreOutils({
             veut en faire quelque chose tout de suite. */}
         {selection.length > 0 && (
           <div className="flex shrink-0 items-center gap-2">
-            <span aria-hidden className="h-4 w-px shrink-0 bg-bord" />
-            <span className="mesure shrink-0 text-[10px] text-texte-2">
+            <span aria-hidden className="h-4 w-px shrink-0 bg-trait" />
+            <span className="mesure shrink-0 text-[10.5px] text-encre-2">
               {selection.length} sélectionné{selection.length > 1 ? "s" : ""}
             </span>
             <ChoixRangement
@@ -231,7 +238,7 @@ export function BarreOutils({
               type="button"
               onClick={() => onFavori(true)}
               aria-label="Marquer la sélection en favori"
-              className="mesure h-[26px] shrink-0 px-1 text-[10px] text-texte-2 hover:text-signal-froid"
+              className="mesure h-[26px] shrink-0 px-1 text-[10.5px] text-encre-2 hover:text-signal"
             >
               Favori
             </button>
@@ -239,14 +246,14 @@ export function BarreOutils({
               type="button"
               onClick={onSupprimer}
               aria-label="Supprimer la sélection"
-              className="mesure h-[26px] shrink-0 px-1 text-[10px] text-texte-2 hover:text-echec-froid"
+              className="mesure h-[26px] shrink-0 px-1 text-[10.5px] text-encre-2 hover:text-echec"
             >
               Supprimer
             </button>
             <button
               type="button"
               onClick={onVider}
-              className="mesure h-[26px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-texte-2"
+              className="mesure h-[26px] shrink-0 px-1 text-[10.5px] text-encre-4 hover:text-encre-2"
             >
               Désélectionner
             </button>
@@ -277,10 +284,10 @@ export function BarreOutils({
 /**
  * « Exporter la sélection », et sa raison quand il n'y a rien à exporter.
  *
- * La raison se pose **à côté** et non dessous : la barre fait 38 px, et le §
+ * La raison se pose **à côté** et non dessous : la barre fait 34 px, et le §
  * Layout de `docs/DESIGN.md` interdit d'ajouter une hauteur ici. C'est la forme
  * qu'a déjà prise le grisé du zoom dans cette même barre — tiret de 8 px, mono
- * 10 px, `--texte-3` —, donc rien de neuf à apprendre pour l'œil.
+ * 10.5 px, `--encre-4` —, donc rien de neuf à apprendre pour l'œil.
  *
  * Elle est permanente et jamais au survol : « le produit interdit de proposer
  * puis refuser, l'apparence doit donc dire pourquoi sans qu'on ait à chercher ».
@@ -298,8 +305,8 @@ function Exporter({
   return (
     <span className="flex items-center gap-1.5">
       {vide && (
-        <span className="mesure flex items-center gap-1.5 whitespace-nowrap text-[10px] text-texte-3">
-          <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
+        <span className="mesure flex items-center gap-1.5 whitespace-nowrap text-[10.5px] text-encre-4">
+          <span aria-hidden className="inline-block h-px w-2 bg-encre-4" />
           aucune image sélectionnée
         </span>
       )}
@@ -309,11 +316,11 @@ function Exporter({
         disabled={vide || enCours}
         aria-label="Exporter la sélection"
         className={[
-          "mesure h-[26px] rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
+          "mesure h-[26px] rounded-7 border px-2 text-[11px] transition-colors duration-120",
           "disabled:cursor-not-allowed",
           vide || enCours
-            ? "border-bord bg-fond-2 text-texte-3"
-            : "border-bord-fort bg-fond-2 text-texte hover:bg-fond-3",
+            ? "border-trait bg-carte text-encre-4"
+            : "border-contour bg-carte text-encre hover:bg-papier-cote",
         ].join(" ")}
       >
         {/* Le compte est **dans** le bouton : c'est ce qui va sortir, et le
@@ -352,15 +359,15 @@ function FenteAnnulation({
   const combien = annulation.identifiants.length
 
   return (
-    <p className="mesure arrivee flex items-center gap-1.5 text-[10px] leading-4 whitespace-nowrap text-epingle">
-      <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+    <p className="mesure arrivee flex items-center gap-1.5 text-[10.5px] leading-4 whitespace-nowrap text-encre-attention">
+      <span aria-hidden className="inline-block h-px w-2 bg-encre-attention" />
       <span>
         {combien} supprimé{combien > 1 ? "s" : ""} · {Math.ceil(reste)} s
       </span>
       <button
         type="button"
         onClick={onAnnuler}
-        className="text-signal-froid hover:text-signal-froid-clair"
+        className="text-signal hover:opacity-70"
       >
         Annuler ›
       </button>
@@ -406,7 +413,7 @@ function ChoixRangement({
         if (genre === "collection") onRanger({ collection: identifiant || null })
         e.target.value = ""
       }}
-      className="mesure h-[26px] w-[104px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[11px] text-texte-2"
+      className="mesure h-[26px] w-26 shrink-0 rounded-5 border border-trait bg-carte px-1 text-[11px] text-encre-2"
     >
       <option value="">Ranger…</option>
       {projets.map((p) => (
