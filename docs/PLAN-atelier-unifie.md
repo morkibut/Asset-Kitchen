@@ -140,6 +140,14 @@ ou une frame, puis retrouver la liste avec la sélection conservée.
   la correction ciblée ne modifie pas silencieusement les autres frames.
 - [ ] Réglages avancés, recettes nommées, calques, annulation et réouverture sont repris ;
   une liste de noms d'outils ou des panneaux vides ne constituent pas une livraison.
+- [ ] Le choix d'une table reste accessible pendant le défilement de ses réglages ; la
+  composition par calques et les ateliers de fabrication ont des accès distincts.
+- [ ] Une planche se découpe par détection, grille ou rectangles manuels : relire les zones,
+  nommer les sorties, créer plusieurs images et reprendre le découpage depuis sa source.
+  Les découpes issues de la toile y restent ; la planche originale est conservée.
+- [ ] Extraire un élément permet de proposer un calage des parties communes, d'ajuster
+  position, échelle et opacité, puis de garder ou retirer des pixels à la main. Refermer et
+  rouvrir restitue sources, masque et composition ; la portée sur les frames reste explicite.
 
 ## AU5 · La révision remplace le bon asset dans Godot
 
@@ -314,10 +322,12 @@ reportées après les nouveaux moteurs, les tuiles ou le son.
 |---|---|---|
 | Création manuelle, import, génération, variantes et export | Univers / Assets, puis résultat concerné ; MCP facultatif | AU2–AU3 et AU5 |
 | Toile : images, textes, notes, îlots, liens et organisation spatiale | Univers → Toile, à côté des règles visuelles | AU2, dès le changement de navigation |
-| Détourage et masques, recadrage, grille et réduction | Image ou frame → outils de retouche | AU4 |
+| Détourage et masques, recadrage, grille et réduction | Image ou frame → tables ; « Pixelisation » pour la réduction | AU4 |
 | Couleurs, palette, nettoyage, contours et transformations | Même atelier de retouche, avec réglages avancés accessibles | AU4 |
-| Calques, sélection, peinture et gomme au pixel | Même atelier, image ou frame sélectionnée | AU4 |
-| Découpe, chutier, sélection, ordre, duplication et suppression de frames | Animation → montage, puis retouche de la frame | AU4 |
+| Calques, sélection, peinture et gomme au pixel | Composition distincte des tables, même image ou frame | AU4 |
+| Découpe d'une image en plusieurs images | Image, frame ou carte → atelier de découpe → sorties relues | AU4 ; accès toile maintenu dès AU2 |
+| Extraction par différence après calage | Deux images → Extraire un élément → masque → calque du personnage | AU4 |
+| Chutier, sélection, ordre, duplication et suppression de frames | Animation → montage, puis retouche de la frame | AU4 |
 | Cadence, boucle, cadrage commun, pivot, comparaison et prévisualisation | Animation → montage / aperçu pour le jeu | AU4–AU5 |
 | Recettes nommées, sauvegarde, réouverture et portée des modifications | Dans les outils concernés, sans refaire les réglages | AU4 |
 | Équipements et capacités spécialisées déjà livrées | Contexte du sujet et accès conservé jusqu'à reprise vérifiée | AU2 / AU12 |

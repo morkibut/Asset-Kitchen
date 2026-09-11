@@ -1,12 +1,13 @@
 /* Maquette autonome. Les données réelles, l'API et les fournisseurs ne sont jamais ouverts. */
 (() => {
   'use strict';
-  const KEY = 'asset-kitchen-prototype-02-v1';
+  const testSession = new URLSearchParams(location.search).get('essai');
+  const KEY = 'asset-kitchen-prototype-02-v1'+(testSession?':'+testSession.slice(0,80):'');
   const IMAGE = '../../interface/public/vignettes/taille-64.png';
   const FAMILIES = ['Personnages', 'Objets', 'Décors', 'Interface', 'Équipement'];
   const DIRECTIONS = ['Sud', 'Ouest', 'Est', 'Nord'];
-  const TOOLS = ['Main', 'Détourage', 'Recadrage', 'Grille', 'Couleurs', 'Nettoyage', 'Contour', 'Retourner', 'Calques', 'Découpe', 'Différence'];
-  const NAMES = {home:'Le jeu', universe:'Univers & toile', library:'Les assets', subject:'Fiche de l’asset', editor:'Retouche', jobs:'Fabrications', delivery:'Livrer au jeu', settings:'Réglages', guide:'Essayer la maquette', compare:'Comparer', source:'Source 3D', remarks:'Vos remarques'};
+  const TOOLS = ['Main', 'Détourage', 'Recadrage', 'Pixelisation', 'Couleurs', 'Nettoyage', 'Contour', 'Retourner'];
+  const NAMES = {home:'Le jeu', universe:'Univers & toile', library:'Les assets', subject:'Fiche de l’asset', editor:'Retouche', jobs:'Fabrications', delivery:'Livrer au jeu', settings:'Réglages', guide:'Essayer la maquette', compare:'Comparer', source:'Source 3D', remarks:'Vos remarques',slice:'Découper une image',extract:'Extraire un élément'};
   const clone = x => JSON.parse(JSON.stringify(x));
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const id = () => globalThis.crypto?.randomUUID?.() || `demo-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -28,7 +29,7 @@
   try { const saved=JSON.parse(localStorage.getItem(KEY)); state=saved?.version===1?saved:seed(); } catch {state=seed();}
   let page='home', subjectId='pelerin', tab='animations', settingsTab='universe', resultId=null;
   let draft=null, dirty=false, selectedFrames=[0], cursor=0, tool='Main', scope='frame', playing=null, undo=[], redo=[];
-  let filter='', family='', favoriteOnly=false, canvasSelected=null, linkFrom=null, compareIds=[];
+  let filter='', family='', favoriteOnly=false, canvasSelected=null, linkFrom=null, compareIds=[], inspector='retouch';
   let request=null, feedbackContext=null, confirmAction=null, messageTimer=null, storageWarned=false;
   const $ = (selector,base=document) => base.querySelector(selector);
   const $$ = (selector,base=document) => [...base.querySelectorAll(selector)];
@@ -37,7 +38,7 @@
   const reference=new Image(); reference.src=IMAGE;
   spriteSheet.onload=()=>drawAll(); reference.onload=()=>drawAll();
   function save() {
-    try {localStorage.setItem(KEY,JSON.stringify(state));}
+    try {localStorage.setItem(KEY,JSON.stringify(state,(key,value)=>key==='undo'?[]:value));}
     catch {if(!storageWarned){storageWarned=true; toast('Stockage du navigateur indisponible ou plein : cette séance reste en mémoire. Exportez vos remarques avant de fermer.');}}
   }
   function toast(text) { $('#message').textContent=text; clearTimeout(messageTimer); messageTimer=setTimeout(()=>$('#message').textContent='',6500); }
@@ -61,21 +62,28 @@
     else action();
   }
   function navigate(target) {leave(()=>{stop();page=target;render();main.focus({preventScroll:true});});}
+  let renderedPage=null;
   function render() {
+    const pageChanged=renderedPage!==page;renderedPage=page;
+    document.body.classList.toggle('editing',page==='editor');
+    document.body.classList.toggle('working',page==='slice'||page==='extract');
     const pending=state.jobs.filter(j=>j.status==='En attente').length;
     $('#sidebar').innerHTML=`<div class="brand">Asset Kitchen</div><div class="game"><div class="label">Le jeu ouvert</div><h3>${esc(state.game.name)}</h3><small>Pixel art · ${state.game.size} px · ${state.subjects.length} assets</small></div>
       <nav aria-label="Atelier">${[['home','Le jeu'],['universe','Univers & toile'],['library','Les assets'],['jobs',`Fabrications${pending?' · '+pending:''}`],['delivery','Livrer au jeu']].map(([p,n])=>go(n,p,page===p?'aria-current="page"':'')).join('')}</nav>
       <nav aria-label="Préférences">${go('Réglages', 'settings',page==='settings'?'aria-current="page"':'')}${go('Essayer la maquette','guide',page==='guide'?'aria-current="page"':'')}${go(`Vos remarques · ${state.remarks.length}`,'remarks')}</nav>
       <div class="sidefoot"><p class="small">Vos essais restent dans ce navigateur. Les images sont des exemples du dépôt. Polices de repli si absentes.</p><a href="couverture.md">Couverture et limites</a><br><a href="../pistes-2026-09-04/carnet/Sommaire.html">Planches de référence</a></div>`;
-    const views={home,universe,library,subject,editor,jobs,delivery,settings,guide,compare,source,remarks};
+    const views={home,universe,library,subject,editor,jobs,delivery,settings,guide,compare,source,remarks,...ateliers.views};
     main.innerHTML=`<div class="crumb">${esc(state.game.name)} / ${esc(NAMES[page])}</div>${views[page]()}`;
     if(page==='editor') {
-      $$('[name]', $('#tool-content')).forEach(el=>{const v=draft.recipe.settings[`${tool}:${el.name}`];if(v!==undefined&&!el.dataset.recipe&&!el.dataset.setting)el.value=v;});
-      if(!draft.animated){$$('[data-action="duplicate"],[data-action="move-frame"],[data-action="select-all"],[data-action="remove-frame"]').forEach(b=>b.disabled=true);$('#scope').disabled=true;}
+      if($('#tool-content'))$$('[name]', $('#tool-content')).forEach(el=>{const v=draft.recipe.settings[`${tool}:${el.name}`];if(v!==undefined&&!el.dataset.recipe&&!el.dataset.setting)el.value=v;});
+      if(!draft.animated){$$('[data-action="duplicate"],[data-action="move-frame"],[data-action="select-all"],[data-action="remove-frame"]').forEach(b=>b.disabled=true);if($('#scope'))$('#scope').disabled=true;}
       drawAll();
     }
     if(page==='universe') wireCanvas();
     if(page==='compare') drawComparisons();
+    drawResultPreviews();
+    ateliers.afterRender(page);
+    if(pageChanged){window.scrollTo(0,0);main.scrollTop=0;}
   }
   function home() {
     const total=state.subjects.reduce((n,s)=>n+s.results.length,0), chosen=state.subjects.flatMap(s=>s.results).filter(r=>r.chosen).length;
@@ -87,6 +95,7 @@
   function library() {
     const subjects=state.subjects.filter(s=>(!family||s.family===family)&&(!favoriteOnly||s.results.some(r=>r.favorite))&&`${s.name} ${s.description}`.toLowerCase().includes(filter.toLowerCase()));
     return heading('Les assets','Personnages, objets, décors, interface et équipements partagent la même bibliothèque.',button('Créer un asset','new-subject'))+
+      `<div class="toolbar">${button('Découper une image','open-slice')}${button('Extraire un élément','open-extract')}</div>`+
       `<div class="toolbar"><label>Rechercher <input id="search" value="${esc(filter)}" placeholder="Nom ou description"></label><label>Famille <select id="family"><option value="">Toutes</option>${option(FAMILIES,family)}</select></label><label><input id="favorites" type="checkbox" ${favoriteOnly?'checked':''}> Avec un favori</label></div>
       <div class="three">${subjects.map(s=>`<article class="surface asset-card"><div class="sprite"><img src="${esc(s.image||IMAGE)}" alt="Exemple visuel — ${esc(s.name)}"></div><div><div class="label">${esc(s.family)} · ${esc(s.goal)}</div><h2>${esc(s.name)}</h2><p class="small">${s.results.length} résultats · ${s.results.filter(r=>r.chosen).length} retenus pour le jeu</p></div><div class="row">${button('Ouvrir','subject',`data-id="${s.id}"`)}</div></article>`).join('')}</div>
       ${!subjects.length?`<div class="empty"><h2>Aucun asset ici</h2><p>Essayez une autre recherche ou créez le premier.</p>${button('Créer un asset','new-subject')}</div>`:''}
@@ -96,16 +105,16 @@
     const s=currentSubject();
     return heading(s.name,`${esc(s.family)} · ${esc(s.goal)}`,button('Importer','import')+button('Fabriquer…','request','class="rust"'))+
       `<div class="subject"><div class="sprite">${s.image||s.results.some(r=>!r.animated)?`<img src="${esc(s.image||IMAGE)}" alt="Référence du sujet">`:'<small>Référence<br>à créer</small>'}</div><div><p>${esc(s.description)}</p><div class="row wrap"><span class="tag">${s.results.length} résultats</span><span class="tag">${s.results.filter(r=>r.chosen).length} pour le jeu</span>${button('Modifier la fiche','edit-subject')}</div></div></div>
-      <div class="tabs">${[['animations','Animations'],['images','Images fixes'],['sources','Sources & clips'],['equipment','Équipement'],['brief','Objectif & règles']].map(([t,n])=>button(n,'tab',`data-tab="${t}" aria-pressed="${tab===t}"`)).join('')}</div>${subjectTab(s)}`;
+      <div class="tabs">${[['animations','Animations'],['images','Images fixes'],['sources','Sources & clips'],['equipment','Équipement'],['brief','Objectif & règles']].map(([t,n])=>button(n,'tab',`data-tab="${t}" aria-pressed="${tab===t}"`)).join('')}</div><div class="toolbar">${button('Découper une image','open-slice')}${button('Extraire un élément','open-extract')}</div>${subjectTab(s)}`;
   }
   function resultCard(r) {
-    return `<article class="surface asset-card"><div class="row between"><h3>${esc(r.title)}</h3><span class="tag">v${r.revision}</span></div><div class="sprite"><img src="${esc(r.image||IMAGE)}" alt="${r.image?'Image importée':'Exemple du résultat'}"></div><p class="small">${r.animated?r.frames.length+' frames · '+r.recipe.fps+' i/s':'Image fixe'} · ${esc(r.provenance)}</p><div class="row wrap">${button('Retoucher','edit-result',`data-id="${r.id}"`)}${button(r.favorite?'★ Favori':'☆ Favori','favorite',`data-id="${r.id}" aria-pressed="${r.favorite}"`)}${button(r.chosen?'Retenu pour le jeu':'Choisir pour le jeu','choose',`data-id="${r.id}" aria-pressed="${r.chosen}"`)}</div><div class="row wrap">${button('Comparer','compare-add',`data-id="${r.id}"`)}${button('Écarter','discard-result',`data-id="${r.id}" class="quiet"`)}</div></article>`;
+    return `<article class="surface asset-card"><div class="row between"><h3>${esc(r.title)}</h3><span class="tag">v${r.revision}</span></div><div class="sprite"><canvas class="result-preview" width="64" height="64" data-result-preview="${r.id}" aria-label="Aperçu de ${esc(r.title)}"></canvas></div><p class="small">${r.animated?r.frames.length+' frames · '+r.recipe.fps+' i/s':'Image fixe'} · ${esc(r.provenance)}</p><div class="row wrap">${button('Retoucher','edit-result',`data-id="${r.id}"`)}${button(r.favorite?'★ Favori':'☆ Favori','favorite',`data-id="${r.id}" aria-pressed="${r.favorite}"`)}${button(r.chosen?'Retenu pour le jeu':'Choisir pour le jeu','choose',`data-id="${r.id}" aria-pressed="${r.chosen}"`)}</div><div class="row wrap">${button('Comparer','compare-add',`data-id="${r.id}"`)}${ateliers.resultActions(r)}${button('Écarter','discard-result',`data-id="${r.id}" class="quiet"`)}</div></article>`;
   }
   function subjectTab(s) {
     if(tab==='animations') return `<div class="row between"><h2>Les mouvements utiles au jeu</h2>${button('Choisir mouvements & directions','objectives')}</div><div class="table-wrap"><table class="matrix"><thead><tr><th>Mouvement</th>${s.directions.map(d=>`<th>${esc(d)}</th>`).join('')}</tr></thead><tbody>${s.movements.map(m=>`<tr><td>${esc(m)}</td>${s.directions.map(d=>{const r=s.results.find(r=>r.animated&&r.title===`${m} · ${d}`);return `<td>${r?button(r.chosen?'Retenu · ouvrir':'À regarder','edit-result',`data-id="${r.id}"`):button('À créer','request',`data-movement="${esc(m)}" data-direction="${esc(d)}" class="missing"`)}</td>`;}).join('')}</tr>`).join('')}</tbody></table></div><p class="note">Une image fixe ne remplit jamais une case d’animation. Créez seulement les mouvements utiles.</p><div class="two">${s.results.filter(r=>r.animated).map(resultCard).join('')}</div>`;
     if(tab==='images') return `<div class="row between"><div><h2>Images fixes & références</h2><p>Portrait, illustration, objet ou pose isolée : ce sont des sorties à part entière.</p></div>${button('Fabriquer une image','request','data-kind="image"')}</div><div class="two">${s.results.filter(r=>!r.animated).map(resultCard).join('')}</div>`;
     if(tab==='sources') return `<div class="two"><section class="surface"><h2>Images et clips</h2><p>Une source reste disponible après les retouches. Importez une image réelle pour tester le parcours ; le clip ci-dessous est représenté par une séquence de démonstration.</p>${button('Importer une image ou un clip','import')}<div class="line"><strong>Clip de marche · exemple</strong><p class="small">Séquence préparée depuis un banc existant du dépôt.</p>${button('Découper en animation','sample-clip')}</div></section><section class="surface"><h2>Modèle 3D réutilisable</h2><p>Un modèle, son rig, ses mouvements et plusieurs rendus vers les sprites.</p>${go('Explorer le parcours 3D','source')}</section></div>`;
-    if(tab==='equipment') return `<div class="surface"><h2>Ce que le personnage porte</h2><p>Un équipement garde ses emplois : porté, au sol, icône. Le calque porté s’attache à un corps et à une animation.</p>${button('Associer une pièce','equipment')}<div class="space">${s.equipment.length?s.equipment.map((e,i)=>`<div class="line row between"><span>${esc(e)} · main droite · emploi porté</span>${button('Retirer','remove-equipment',`data-index="${i}"`)}</div>`).join(''):'<p class="muted">Aucune pièce associée à ce sujet.</p>'}</div>${demo('L’association et sa relecture fonctionnent. Le calage visuel, l’extraction par différence et les calques animés complexes restent à détailler ; leurs outils actuels doivent être conservés.')}</div>`;
+    if(tab==='equipment') return `<div class="surface"><h2>Ce que le personnage porte</h2><p>Un équipement garde ses emplois : porté, au sol, icône. Le calque porté s’attache à une pose précise.</p><div class="row">${button('Associer une pièce','equipment')}${button('Extraire un élément','open-extract')}</div><div class="space">${s.equipment.length?s.equipment.map((e,i)=>`<div class="line row between"><span>${esc(e)} · main droite · emploi porté</span>${button('Retirer','remove-equipment',`data-index="${i}"`)}</div>`).join(''):'<p class="muted">Aucune pièce associée à ce sujet.</p>'}</div>${demo('Le calage et le masque se manipulent dans « Extraire un élément ». Un calque peut viser une frame ; son suivi automatique sur une animation et ses emplois multiples restent à détailler.')}</div>`;
     return `<div class="two"><section class="surface"><h2>Ce que je veux obtenir</h2><p>${esc(s.goal)} · ${s.movements.map(esc).join(', ')} · ${s.directions.map(esc).join(', ')}</p>${button('Modifier l’objectif','objectives')}<h3 class="space">Consignes du sujet</h3><p>${esc(s.description)}</p>${button('Modifier la fiche','edit-subject')}</section><section class="surface"><h2>Hérité de l’univers</h2><p>${esc(state.game.style)}</p><p>Grille : ${state.game.size} px. Les références choisies seront relues avant chaque envoi.</p>${go('Règles du jeu','settings')}</section></div>`;
   }
   function universe() {
@@ -148,26 +157,24 @@
       <div class="toolbar">${button('Tout sélectionner','select-all')}${button('Dupliquer','duplicate')}${button('← Avancer','move-frame','data-delta="-1"')}${button('Reculer →','move-frame','data-delta="1"')}${button('Retirer','remove-frame',draft.frames.length>selectedFrames.length?'':'disabled')}${button('Extraire une image','extract-frame',draft.animated?'':'disabled')}</div>
       ${draft.animated?`<div class="two">${field('Vitesse (images/s)',input('fps',draft.recipe.fps,'number','min="1" max="60" data-recipe="fps"'))}<label class="row"><input type="checkbox" data-recipe="loop" ${draft.recipe.loop?'checked':''}> Boucler</label></div>`:''}
       ${demo('Lecture, ordre des frames, peinture, annulation et sauvegarde fonctionnent. La séquence visuelle est un exemple. Les filtres sont des aperçus simplifiés, pas les moteurs de retouche de l’app.')}</section>
-      <section class="surface"><div class="label">Les tables de retouche</div><h2>Corriger le résultat</h2><div class="tool-tabs">${TOOLS.map(t=>button(t,'tool',`data-tool="${t}" aria-pressed="${tool===t}" class="${tool===t?'chosen':''}"`)).join('')}</div>
+      <section class="surface editor-inspector"><div class="inspector-head"><div class="row between"><h2>Le résultat</h2><div class="row">${button('Retouche','inspector','data-value="retouch" aria-pressed="'+(inspector==='retouch')+'"')}${button('Calques','inspector','data-value="layers" aria-pressed="'+(inspector==='layers')+'"')}</div></div>${inspector==='retouch'?field('Table de retouche',`<select id="table-select">${option(TOOLS,tool)}</select>`):'<p class="small">Les calques composent l’image. Ils restent indépendants des tables.</p>'}</div><div class="inspector-content">${inspector==='layers'?ateliers.layersPanel(draft):`
       ${field('Appliquer les prochains gestes à',`<select id="scope">${option(['Cette frame','Les frames sélectionnées','Toute l’animation'],{frame:'Cette frame',selection:'Les frames sélectionnées',all:'Toute l’animation'}[scope])}</select>`)}<p class="small">La peinture suit cette portée. Vitesse, boucle et aperçu des filtres concernent le résultat entier dans cette version de la maquette.</p>
-      <div id="tool-content">${toolPanel()}</div><hr><div class="row wrap">${button('Nommer une recette','save-recipe')}${button('Réappliquer une recette','load-recipe')}</div></section></div>`;
+      <div id="tool-content">${toolPanel()}</div><details><summary>Recettes réutilisables</summary><div class="row wrap space">${button('Nommer une recette','save-recipe')}${button('Réappliquer une recette','load-recipe')}</div></details>`}</div><div class="inspector-foot"><div class="label">Partir de cette ${draft.animated?'frame':'image'}</div><div class="row wrap">${button('Découper une image','open-slice','data-current="true"')}${button('Extraire un élément','open-extract','data-current="true"')}</div></div></section></div>`;
   }
   const range=(label,key,min,max)=>field(`${label} · ${draft.recipe[key]}`,input(key,draft.recipe[key],'range',`min="${min}" max="${max}" data-recipe="${key}"`));
   function toolPanel() {
-    if(tool==='Main') return `<h3 class="space">La main</h3><p class="small">Peignez directement dans l’aperçu. Chaque geste se garde sur un calque séparé de la source.</p>${range('Taille du pinceau','brush',1,8)}${field('Couleur du pinceau',input('colour',draft.recipe.colour,'color','data-recipe="colour"'))}<label class="row"><input type="checkbox" data-recipe="erase" ${draft.recipe.erase?'checked':''}> Gomme du calque peint</label>${button('Effacer les traits de la portée','clear-strokes','class="space"')}`;
+    if(tool==='Main') return `<p class="small">Calque actif : <strong>${esc(ateliers.activeLayer(draft).name)}</strong></p>${range('Taille du pinceau','brush',1,8)}${field('Couleur du pinceau',input('colour',draft.recipe.colour,'color','data-recipe="colour"'))}<label class="row"><input type="checkbox" data-recipe="erase" ${draft.recipe.erase?'checked':''}> Gomme du calque actif</label>${button('Effacer les traits de la portée','clear-strokes','class="space"')}<p class="small space">Peignez dans l’aperçu. La source reste intacte.</p>`;
     if(tool==='Détourage') return `<h3 class="space">Détourage</h3>${field('Méthode',select('background',['Conserver','Couleur du fond','Modèle CPU'],draft.recipe.background).replace('<select','<select data-recipe="background"'))}${draft.recipe.background==='Couleur du fond'?genericRange('Tolérance',0,100,20):'<p class="small">La tolérance de couleur ne s’applique pas à cette méthode.</p>'}${draft.recipe.background==='Modèle CPU'?field('Moteur',select('engine',['isnet-general-use','u2net'],'isnet-general-use')):''}${demo('La disposition et la disponibilité des réglages sont testables. Aucun modèle de détourage ne tourne dans cette maquette ; l’image de départ reste identique.')}`;
     if(tool==='Recadrage') return `<h3 class="space">Cadre commun</h3>${range('Marge dans l’aperçu','crop',0,16)}${field('Ancrage',select('anchor',['Centre','Pieds','Origine commune'],'Pieds'))}${demo('La marge modifie l’aperçu. Le cadre commun, la boîte de sélection et le pivot doivent être éprouvés avec les vrais clips pendant AU4/AU5.')}`;
-    if(tool==='Grille') return `<h3 class="space">Grille & réduction</h3>${field('Taille de sortie',select('size',[16,32,48,64,96,128].map(String),String(draft.recipe.size)).replace('<select','<select data-recipe="size"'))}<label class="row"><input type="checkbox" data-recipe="grid" ${draft.recipe.grid?'checked':''}> Montrer les repères</label>${demo('Le choix de taille est gardé. L’aperçu reste sur une toile de 64 px pour tester les gestes ; pas de conversion exportable.')}`;
+    if(tool==='Pixelisation') return `<h3 class="space">Pixelisation</h3>${field('Taille de sortie',select('size',[16,32,48,64,96,128].map(String),String(draft.recipe.size)).replace('<select','<select data-recipe="size"'))}<label class="row"><input type="checkbox" data-recipe="grid" ${draft.recipe.grid?'checked':''}> Montrer la grille de repères</label>${demo('La grille de repères est une aide visuelle. L’aperçu de retouche reste en 64 px ; le choix de sortie est mémorisé, sans conversion exportable.')}`;
     if(tool==='Couleurs') return `<h3 class="space">Palette</h3>${range('Lumière','brightness',40,160)}${range('Saturation','saturation',0,200)}${field('Palette',select('palette',['Univers','Image','Palette personnalisée'],'Univers'))}<div class="swatches">${['#221f1b','#5c7a52','#a8492c','#f7f3ec'].map(c=>`<span class="swatch" style="background:${c}"></span>`).join('')}</div>${demo('Lumière et saturation changent l’aperçu. La quantification exacte, la pipette et la substitution de teinte restent celles des tables existantes.')}`;
     if(tool==='Nettoyage') return `<h3 class="space">Nettoyer les pixels</h3>${genericRange('Îlots isolés',0,8,1)}${genericRange('Grésil temporel',0,100,20)}${demo('Réglages mémorisés pour évaluer leur place. Aucun nettoyage n’est appliqué aux pixels du prototype.')}`;
     if(tool==='Contour') return `<h3 class="space">Contour</h3>${genericRange('Épaisseur',0,4,1)}${field('Placement',select('placement',['Intérieur','Extérieur'],'Extérieur'))}${demo('Réglages mémorisés ; le contour final n’est pas calculé dans cette maquette.')}`;
     if(tool==='Retourner') return `<h3 class="space">Orientation</h3><label class="row"><input type="checkbox" data-recipe="flip" ${draft.recipe.flip?'checked':''}> Miroir horizontal</label><p class="note">Le miroir s’applique au rendu et au calque peint. Il ne crée pas une nouvelle direction dans le plan du sujet.</p>`;
-    if(tool==='Calques') return `<h3 class="space">Calques</h3><div class="line">Source · conservée</div><div class="line">Retouche peinte · ${draft.frames.reduce((n,f)=>n+f.strokes.length,0)} traits</div>${range('Opacité de la retouche','opacity',0,100)}${demo('Source et peinture sont séparées. Pile arbitraire, sélection, masques et calques d’équipement restent à détailler ; ils ne sont pas supprimés du produit.')}`;
-    if(tool==='Découpe') return `<h3 class="space">Prélever et monter</h3><p>Utilisez la bande sous l’image : sélectionner, dupliquer, déplacer, retirer ou extraire une frame fixe.</p>${button('Extraire la frame ouverte','extract-frame',draft.animated?'':'disabled')}${demo('La sélection temporelle est manipulable. Le découpage d’une planche en cellules et le découpage libre d’image nécessitent encore leur maquette détaillée.')}`;
-    return `<h3 class="space">Différence & équipement</h3><p>Comparer l’image de base et sa variante, puis corriger à la main la pièce extraite.</p>${button('Comparer à la source','compare-source')}${demo('La comparaison s’ouvre. L’extraction et ses masques ne sont pas simulés par un faux résultat : leur interaction reste à reprendre depuis les tables actuelles.')}`;
+    return '';
   }
   function genericRange(name,min,max,value) {const key=`${tool}:${name}`;return field(name,input(name,draft.recipe.settings[key]??value,'range',`min="${min}" max="${max}" data-setting="${esc(key)}"`));}
-  function openEditor(r) {stop();resultId=r.id;draft=clone(r);dirty=false;cursor=0;selectedFrames=[0];undo=[];redo=[];page='editor';render();}
+  function openEditor(r) {stop();resultId=r.id;draft=clone(r);ateliers.ensureLayers(draft);dirty=false;cursor=0;selectedFrames=[0];undo=[];redo=[];page='editor';render();}
   function snapshot() {undo.push(clone(draft));if(undo.length>40)undo.shift();redo=[];}
   function changed() {dirty=true;const n=$('#dirty');if(n){n.textContent='Modifications à garder';n.className='dirty';}}
   function targetFrames() {return scope==='all'?draft.frames:scope==='selection'?selectedFrames.map(i=>draft.frames[i]):[draft.frames[cursor]];}
@@ -182,22 +189,23 @@
     const f=r.frames[Math.min(index,r.frames.length-1)],rec=raw?freshRecipe():r.recipe;
     ctx.save();if(rec.flip){ctx.translate(64,0);ctx.scale(-1,1);}ctx.filter=`brightness(${rec.brightness}%) saturate(${rec.saturation}%)`;
     const inset=Number(rec.crop)||0;
-    if((r.animated||r.sourceAnimation)&&spriteSheet.complete&&spriteSheet.naturalWidth){const w=spriteSheet.naturalWidth/5,h=spriteSheet.naturalHeight;ctx.drawImage(spriteSheet,f.source%5*w,0,w,h,12+inset/2,inset,40-inset,64-2*inset);}
-    else {const im=r.image?cachedImage(r.image):reference;if(im.complete&&im.naturalWidth)ctx.drawImage(im,inset,inset,64-2*inset,64-2*inset);}
+    const fit=im=>{if(!im.complete||!im.naturalWidth)return;const factor=(64-2*inset)/Math.max(im.naturalWidth,im.naturalHeight),w=im.naturalWidth*factor,h=im.naturalHeight*factor;ctx.drawImage(im,(64-w)/2,(64-h)/2,w,h);};
+    if(f.image)fit(cachedImage(f.image));
+    else if((r.animated||r.sourceAnimation)&&spriteSheet.complete&&spriteSheet.naturalWidth){const w=spriteSheet.naturalWidth/5,h=spriteSheet.naturalHeight;ctx.drawImage(spriteSheet,f.source%5*w,0,w,h,12+inset/2,inset,40-inset,64-2*inset);}
+    else fit(r.image?cachedImage(r.image):reference);
     ctx.filter='none';
-    if(!raw){const layer=document.createElement('canvas');layer.width=layer.height=64;const pen=layer.getContext('2d');
-      f.strokes.forEach(s=>{pen.globalCompositeOperation=s.erase?'destination-out':'source-over';pen.fillStyle=s.colour;s.points.forEach(p=>pen.fillRect(p.x-Math.floor(s.size/2),p.y-Math.floor(s.size/2),s.size,s.size));});
-      ctx.globalAlpha=rec.opacity/100;ctx.drawImage(layer,0,0);}
+    if(!raw)ateliers.drawLayers(ctx,r,f,cachedImage);
     ctx.restore();
     if(rec.grid&&!raw){ctx.strokeStyle='#6d675e';ctx.globalAlpha=.4;ctx.lineWidth=.2;for(let p=8;p<64;p+=8){ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,64);ctx.moveTo(0,p);ctx.lineTo(64,p);ctx.stroke();}ctx.globalAlpha=1;}
   }
   const imageCache=new Map();
-  function cachedImage(url){if(!imageCache.has(url)){const im=new Image();im.onload=()=>{drawAll();if(page==='compare')drawComparisons();};im.src=url;imageCache.set(url,im);}return imageCache.get(url);}
+  function cachedImage(url){if(!imageCache.has(url)){const im=new Image();im.onload=()=>{drawAll();drawResultPreviews();if(page==='compare')drawComparisons();};im.src=url;imageCache.set(url,im);}return imageCache.get(url);}
+  function drawResultPreviews() {$$('[data-result-preview]').forEach(c=>drawFrame(c,currentSubject().results.find(r=>r.id===c.dataset.resultPreview),0));}
   function drawAll() {if(page==='editor'&&draft){drawFrame($('#pixels'),draft,cursor);$$('[data-frame]').forEach(c=>drawFrame(c,draft,Number(c.dataset.frame)));wirePaint();}}
   function wirePaint() {
     const canvas=$('#pixels');if(!canvas||canvas.dataset.wired)return;canvas.dataset.wired='yes';
-    canvas.addEventListener('pointerdown',e=>{if(tool!=='Main'||e.button!==0){toast('Choisissez la table « Main » pour peindre.');return;}stop();if(scope==='frame')selectedFrames=[cursor];snapshot();
-      const rect=canvas.getBoundingClientRect(),frames=targetFrames();const stroke={colour:draft.recipe.colour,size:Number(draft.recipe.brush),erase:draft.recipe.erase,points:[]};
+    canvas.addEventListener('pointerdown',e=>{if(tool!=='Main'||e.button!==0){toast('Choisissez la table « Main » pour peindre.');return;}const active=ateliers.activeLayer(draft);if(active.locked||!active.visible||active.kind!=='paint'){toast('Choisissez un calque de peinture visible et déverrouillé.');return;}stop();if(scope==='frame')selectedFrames=[cursor];snapshot();
+      const rect=canvas.getBoundingClientRect(),frames=targetFrames();const stroke={layer:active.id,colour:draft.recipe.colour,size:Number(draft.recipe.brush),erase:draft.recipe.erase,points:[]};
       frames.forEach(f=>f.strokes.push(clone(stroke)));canvas.setPointerCapture(e.pointerId);
       const point=ev=>{let x=Math.floor((ev.clientX-rect.left)/rect.width*64),y=Math.floor((ev.clientY-rect.top)/rect.height*64);if(draft.recipe.flip)x=63-x;
         if(x<0||x>=64||y<0||y>=64)return;frames.forEach(f=>f.strokes[f.strokes.length-1].points.push({x,y}));changed();drawAll();};
@@ -241,7 +249,7 @@
   }
   const SCENARIOS=[['manual','library','Créer sans MCP','Créez un personnage, choisissez un mouvement, fabriquez une référence puis une animation simulée.'],['canvas','universe','Composer un univers','Ajoutez une note et un îlot, associez-les, déplacez l’îlot et rouvrez la toile.'],['retouch','subject','Corriger une animation','Ouvrez la marche du pèlerin, dupliquez une frame, peignez, changez la vitesse, gardez puis rouvrez.'],['deliver','delivery','Livrer et remplacer','Retenez un résultat, simulez une livraison, puis testez un conflit.'],['agent','jobs','Déléguer à l’agent','Simulez une demande, un échec et une reprise. Vérifiez que tout reste retrouvable.'],['local','settings','Choisir un moyen de fabrication','Rendez un moteur indisponible et vérifiez les choix proposés avant l’envoi.']];
   function guide() {return heading('Essayer avant de construire','Une visite par gestes. Cochez ce que vous avez essayé et notez ce qui vous gêne.')+
-    `<div class="two">${SCENARIOS.map(([key,target,title,desc])=>`<section class="surface"><h2>${title}</h2><p>${desc}</p><div class="row between">${go('Essayer',target)}<label><input type="checkbox" data-check="${key}" ${state.checks[key]?'checked':''}> Essayé</label></div></section>`).join('')}</div><section class="surface space"><h2>La limite de cette version</h2><p>Les grandes zones sont navigables, les parcours centraux se manipulent. Cela ne signifie pas que toutes les tables avancées ont déjà leur détail complet.</p><p>Sélections et masques avancés, calage d’équipement, découpe libre, installation détaillée, tuiles et son restent explicitement à compléter.</p><a href="couverture.md">Lire l’inventaire de couverture</a> · ${button('Exporter mes remarques','export-feedback')}</section>`;}
+    `<div class="two">${SCENARIOS.map(([key,target,title,desc])=>`<section class="surface"><h2>${title}</h2><p>${desc}</p><div class="row between">${go('Essayer',target)}<label><input type="checkbox" data-check="${key}" ${state.checks[key]?'checked':''}> Essayé</label></div></section>`).join('')}<section class="surface"><h2>Une planche, plusieurs images</h2><p>Chargez l’exemple, détectez les quatre zones, déplacez un cadre et nommez les sorties. Créez des images, des assets séparés ou une animation.</p>${button('Essayer la découpe','open-slice')}</section><section class="surface"><h2>Un sac extrait en calque</h2><p>Chargez l’exemple, proposez un alignement, corrigez le masque puis gardez le calque. Masquez-le dans la composition et reprenez son extraction depuis la bibliothèque.</p>${button('Essayer l’extraction','open-extract')}</section></div><section class="surface space"><h2>La limite de cette version</h2><p>La découpe, le calage, le masque peint et la composition se manipulent et se rouvrent. Les calculs sont simplifiés pour tester ces gestes.</p><p>Sélections avancées, calques qui suivent une animation, réglages complets des moteurs de retouche, installation détaillée, tuiles et son restent à compléter.</p><a href="couverture.md">Lire l’inventaire de couverture</a> · ${button('Exporter mes remarques','export-feedback')}</section>`;}
   function remarks() {return heading('Vos remarques','Décrivez ce que vous vouliez faire et ce qui vous a empêché de le faire.',button('Ajouter une remarque','feedback')+button('Exporter les remarques','export-feedback'))+
     (state.remarks.length?state.remarks.slice().reverse().map(r=>`<section class="surface space"><div class="row between"><strong>${esc(r.context)}</strong><span class="tag">${esc(r.kind)}</span></div><p class="space">${esc(r.text)}</p><small>${new Date(r.date).toLocaleString('fr-FR')}</small></section>`).join(''):'<div class="empty"><h2>Rien de noté pour l’instant</h2><p>Le bouton « Noter une remarque » reste disponible en haut de chaque écran.</p></div>')+`<details class="space"><summary>Recommencer les essais</summary><p>Cette action efface uniquement les données fictives de cette maquette dans ce navigateur. Exportez vos remarques avant.</p>${button('Réinitialiser la démonstration','reset')}</details>`;}
   function compare() {
@@ -304,6 +312,10 @@
     const text=`# Essai de la maquette Asset Kitchen\n\n${new Date().toLocaleString('fr-FR')}\n\n`+SCENARIOS.map(([k,,t])=>`- [${state.checks[k]?'x':' '}] ${t}`).join('\n')+'\n\n'+state.remarks.map(r=>`## ${r.context} · ${r.kind}\n\n${r.text}\n`).join('\n');
     modal('Remarques prêtes à transmettre',field('Texte à copier',`<textarea id="feedback-export" rows="14" readonly>${esc(text)}</textarea>`)+`<p class="small">Copiez ce texte dans notre conversation. Vous pouvez aussi le télécharger si votre navigateur le permet.</p>`,button('Tout sélectionner','select-feedback')+button('Télécharger le Markdown','download-feedback'));
   }
+  const ateliers=window.creerAteliersMaquette({state:()=>state,subject:currentSubject,draft:()=>draft,result:currentResult,frame:()=>cursor,
+    id,clone,esc,button,field,input,select,option,heading,demo,modal,toast,save,render,snapshot,changed,openEditor,createResult:result,drawFrame,redraw:drawAll,
+    go:p=>leave(()=>{stop();page=p;render();}),leave:fn=>leave(()=>{stop();Promise.resolve(fn()).catch(error=>{console.error(error);toast('Cette source n’a pas pu être ouverte.');});}),setSubject:key=>{subjectId=key;},imagesTab:()=>{tab='images';},showLayers:()=>{inspector='layers';},
+    open:p=>{stop();page=p;render();},image:IMAGE});
   const handlers={
     close:()=>dialog.close(),
     'new-subject':()=>subjectForm(), 'edit-subject':()=>subjectForm(true),
@@ -332,22 +344,23 @@
     'save-leave':()=>{saveEditor();dialog.close();confirmAction?.();confirmAction=null;},
     'discard-leave':()=>{dirty=false;draft=null;dialog.close();confirmAction?.();confirmAction=null;},
     tool:el=>{tool=el.dataset.tool;render();},
+    inspector:el=>{inspector=el.dataset.value;render();},
     frame:(el,e)=>{stop();cursor=Number(el.dataset.index);if(e.ctrlKey||e.metaKey){selectedFrames=selectedFrames.includes(cursor)?selectedFrames.filter(i=>i!==cursor):[...selectedFrames,cursor];if(!selectedFrames.length)selectedFrames=[cursor];}else selectedFrames=[cursor];render();},
     'select-all':()=>{selectedFrames=draft.frames.map((_,i)=>i);render();},
-    duplicate:()=>{stop();snapshot();const originals=selectedFrames.slice().sort((a,b)=>a-b),added=[];let shift=0;for(const i of originals){const copy=clone(draft.frames[i+shift]);copy.id=id();draft.frames.splice(i+shift+1,0,copy);added.push(i+shift+1);shift++;}selectedFrames=added;cursor=added[0];changed();render();},
+    duplicate:()=>{stop();snapshot();const originals=selectedFrames.slice().sort((a,b)=>a-b),added=[];let shift=0;for(const i of originals){const source=draft.frames[i+shift],copy=clone(source);copy.id=id();draft.frames.splice(i+shift+1,0,copy);draft.layers.push(...draft.layers.filter(l=>l.frameId===source.id).map(l=>({...clone(l),id:id(),name:l.name+' · copie de frame',frameId:copy.id,sourceResultId:l.resultId||l.sourceResultId,resultId:null})));added.push(i+shift+1);shift++;}selectedFrames=added;cursor=added[0];changed();render();},
     'move-frame':el=>{if(selectedFrames.length!==1){toast('Choisissez une seule frame pour la déplacer.');return;}const from=selectedFrames[0],to=from+Number(el.dataset.delta);if(to<0||to>=draft.frames.length)return;stop();snapshot();const [f]=draft.frames.splice(from,1);draft.frames.splice(to,0,f);cursor=to;selectedFrames=[to];changed();render();},
-    'remove-frame':()=>{if(selectedFrames.length>=draft.frames.length)return;stop();snapshot();draft.frames=draft.frames.filter((_,i)=>!selectedFrames.includes(i));cursor=Math.min(cursor,draft.frames.length-1);selectedFrames=[cursor];changed();render();},
-    'extract-frame':()=>{const r=result(`${draft.title} · frame ${cursor+1}`,false);r.frames=[clone(draft.frames[cursor])];r.recipe=clone(draft.recipe);r.sourceAnimation=true;r.provenance='Frame extraite dans la maquette';currentSubject().results.push(r);save();toast('Image fixe ajoutée à l’onglet Images fixes. Les retouches de l’animation restent à garder.');},
+    'remove-frame':()=>{if(selectedFrames.length>=draft.frames.length)return;stop();snapshot();draft.frames=draft.frames.filter((_,i)=>!selectedFrames.includes(i));draft.layers=draft.layers.filter(l=>!l.frameId||draft.frames.some(f=>f.id===l.frameId));if(!draft.layers.some(l=>l.id===draft.activeLayer))draft.activeLayer=draft.layers[0]?.id;cursor=Math.min(cursor,draft.frames.length-1);selectedFrames=[cursor];changed();render();},
+    'extract-frame':()=>{const r=result(`${draft.title} · frame ${cursor+1}`,false);r.frames=[clone(draft.frames[cursor])];r.recipe=clone(draft.recipe);r.layers=clone(draft.layers);r.image=draft.image;r.sourceAnimation=true;r.provenance='Frame extraite dans la maquette';currentSubject().results.push(r);save();toast('Image fixe ajoutée à l’onglet Images fixes, avec ses calques. Les retouches de l’animation restent à garder.');},
     undo:()=>{if(!undo.length)return;stop();redo.push(clone(draft));draft=undo.pop();cursor=Math.min(cursor,draft.frames.length-1);selectedFrames=[cursor];changed();render();},
     redo:()=>{if(!redo.length)return;stop();undo.push(clone(draft));draft=redo.pop();cursor=Math.min(cursor,draft.frames.length-1);selectedFrames=[cursor];changed();render();},
     play,
-    'clear-strokes':()=>{snapshot();targetFrames().forEach(f=>f.strokes=[]);changed();render();},
+    'clear-strokes':()=>{const layer=ateliers.activeLayer(draft);if(layer.locked){toast('Ce calque est verrouillé.');return;}snapshot();targetFrames().forEach(f=>f.strokes=f.strokes.filter(s=>(s.layer||'paint')!==layer.id));changed();render();},
     'save-recipe':()=>modal('Nommer cette recette',field('Nom de la recette',input('recipe-name','Retouche du marais')),button('Garder la recette','confirm-recipe')),
     'confirm-recipe':()=>{const name=value('recipe-name').trim();if(!name)return;state.recipes.push({id:id(),name,recipe:clone(draft.recipe)});save();dialog.close();toast('Recette nommée gardée. Elle contient les réglages, pas les traits propres aux frames.');},
     'load-recipe':()=>modal('Réappliquer une recette',state.recipes.length?field('Recette',`<select name="recipe-id">${state.recipes.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select>`):'<p>Aucune recette nommée. Gardez d’abord les réglages d’un résultat.</p>',button('Appliquer au résultat','apply-recipe',state.recipes.length?'':'disabled')),
     'apply-recipe':()=>{snapshot();draft.recipe=clone(state.recipes.find(r=>r.id===value('recipe-id')).recipe);changed();dialog.close();render();},
     import:()=>importForm(false),'upload-image':()=>upload(false),'upload-canvas':()=>upload(true),
-    'sample-clip':()=>{dialog.close();const r=result('Bande extraite du clip de démonstration');currentSubject().results.push(r);save();openEditor(r);tool='Découpe';render();},
+    'sample-clip':()=>{dialog.close();const r=result('Bande extraite du clip de démonstration');currentSubject().results.push(r);save();openEditor(r);tool='Main';render();},
     equipment:()=>modal('Associer une pièce',field('Pièce',select('equipment',['La lanterne','Cape de voyage','Sac de voyage'],'La lanterne')),button('Associer au personnage','save-equipment')),
     'save-equipment':()=>{const s=currentSubject(),v=value('equipment');if(!s.equipment.includes(v))s.equipment.push(v);save();dialog.close();render();},
     'remove-equipment':el=>{currentSubject().equipment.splice(Number(el.dataset.index),1);save();render();},
@@ -380,7 +393,7 @@
   document.addEventListener('click',async e=>{
     const el=e.target.closest('button');if(!el||el.disabled)return;
     if(el.dataset.page){navigate(el.dataset.page);return;}
-    const action=handlers[el.dataset.action];if(action){try{await action(el,e);}catch(error){console.error(error);toast('Ce geste de la maquette a rencontré une erreur. Vous pouvez noter le parcours pour le corriger.');}}
+    const action=handlers[el.dataset.action]||ateliers.handlers[el.dataset.action];if(action){try{await action(el,e);}catch(error){console.error(error);toast('Ce geste de la maquette a rencontré une erreur. Vous pouvez noter le parcours pour le corriger.');}}
   });
   function updateRecipe(el) {
     stop();if(!el.dataset.editing){snapshot();el.dataset.editing='yes';}
@@ -389,6 +402,8 @@
   }
   document.addEventListener('change',e=>{
     const el=e.target;
+    if(ateliers.change(el))return;
+    if(el.id==='table-select'){tool=el.value;render();return;}
     if(el.dataset.recipe){updateRecipe(el);render();}
     else if(el.dataset.setting){snapshot();draft.recipe.settings[el.dataset.setting]=Number(el.value);changed();}
     else if(page==='editor'&&el.closest('#tool-content')&&el.name){snapshot();draft.recipe.settings[`${tool}:${el.name}`]=el.value;changed();}
@@ -399,8 +414,9 @@
     else if(el.id==='local-ready'||el.id==='api-ready'){state.providers[el.id==='local-ready'?'local':'api']=el.checked;save();}
     else if(el.dataset.check){state.checks[el.dataset.check]=el.checked;save();}
   });
-  document.addEventListener('input',e=>{if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
+  document.addEventListener('input',e=>{if(ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
   window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
   document.addEventListener('keydown',e=>{if(page==='editor'&&!dialog.open&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();handlers[e.shiftKey?'redo':'undo']();}});
+  if(testSession)$('.prototype span').textContent='SESSION D’ESSAI SÉPARÉE · données de démonstration · aucun appel IA ni accès au jeu';
   save();render();
 })();

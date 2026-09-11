@@ -417,3 +417,57 @@ n'a été exécuté. La matière visuelle est reprise de fichiers déjà présen
 
 Syntaxe JavaScript et liens documentaires vérifiés. **Corpus de démarrage : 161,3 Ko,
 −30,6 Ko par rapport au relevé de référence** ; le détail de couverture reste dans l'annexe.
+
+### Complément — tables, composition, découpe et extraction
+
+Les retours de l'auteur lèvent une erreur d'organisation de la seconde maquette : elle
+rangeait découpe, différence et calques parmi les tables de recette. Le code existant
+confirme la distinction : la découpe fabrique plusieurs images ; le calque conserve une
+différence recalée et une correction manuelle. Ces parcours méritent leur propre espace.
+« Grille » devient **Pixelisation** pour la table de réduction, sans renommer les grilles
+de découpe ou les repères. L'identité de DESIGN.md reste inchangée.
+
+L'inventaire de couverture décrit les capacités et leurs limites. Les exigences sont
+précisées dans US-536, puis dans AU4 ; l'affectation conserve MEDIUM pour cette composition
+de mécanismes existants. Aucun écran du produit n'est remplacé par le prototype.
+
+**Preuves navigateur de ce complément**, dans une séance de démonstration séparée :
+
+- Sélecteur de table, panneau Calques et sauvegarde d'un calque nommé « Reflet lanterne ».
+- Planche d'essai : quatre zones détectées. Nom et X modifiés, relecture, quatre images
+  créées avec original conservé, reprise depuis un résultat : quatre zones et X=30 relus.
+- Souris : zone déplacée de X=30/Y=14 à X=40/Y=20 ; taille passée de 47×94 à 56×102 ;
+  rectangle libre 22×22 ajouté, puis annulé. Les quatre zones donnent une animation de
+  quatre frames. L'extraction depuis la frame 2 reprend bien cette frame comme base.
+- Exemple équipé : proposition X=0/Y=0/échelle=100 %, 1 147 pixels isolés. Un trait Garder
+  passe à 1 172 ; Annuler revient à 1 147. Nouvelle correction gardée, rechargement complet,
+  réouverture : 1 172 pixels et le trait manuel sont retrouvés. L'opacité de superposition
+  à zéro ne change pas ce compte, car elle sert seulement au calage visuel.
+- Composition : calque décalé de 7 pixels et masqué, puis enregistré. Reprendre l'extraction,
+  la renommer et la garder conserve le déplacement et la visibilité ; la pile reste à
+  deux calques, sans duplication de l'élément corrigé.
+- Frame équipée : choix de la variante en bibliothèque, ajout sur la frame 3 d'une bande,
+  duplication en frame 4 avec copie de son calque ; Annuler restitue cinq frames et trois
+  calques. La copie de calque se règle indépendamment ; son masque d'extraction reste celui
+  de l'élément source, sans lien de modification automatique sur les copies.
+- Toile : l'atelier propose seulement des cartes en sortie. Quatre découpes et leur
+  nouvelle planche originale s'ajoutent aux trois cartes existantes ; le nombre d'assets
+  reste à deux. Aucun appel IA et aucune erreur JavaScript relevée sur ces parcours.
+
+**Points à continuer d'éprouver :** changement rapide de calque/table, sélection et pipette,
+gouttières de découpe, remplacement explicite d'un ancien découpage, placement de grands
+lots sur la toile, éléments par pose et emplois d'équipement. Le recalage et la différence
+du prototype restent des calculs de démonstration ; ce test sur une copie modifiée ne
+mesure pas la robustesse sur des personnages générés séparément.
+
+Le navigateur utilisé pour ce complément mesure **1280 × 720** : le sélecteur de table
+et les accès aux ateliers restent visibles, avec un document de 720 px de haut. Les longues
+listes et les réglages défilent dans leur panneau. Une peinture pendant la lecture fixe
+la frame 3 ; le calque « Reflet lanterne » est retrouvé après rechargement. Les nouvelles
+interfaces d'import de fichiers n'ont pas été exercées ; les essais utilisent les images
+déjà présentes dans le dépôt, les exemples et le choix dans la bibliothèque.
+
+Contrôles : syntaxe des deux scripts et `git diff --check` sans erreur ; **1 753 renvois
+documentaires résolus**. **Corpus de démarrage : 161,7 Ko, −30,3 Ko par rapport au relevé
+de référence**. La mesure a été écrite dans un emplacement temporaire pour préserver ce
+relevé. Les tests et moteurs de l'application réelle ne sont pas concernés par ce complément.

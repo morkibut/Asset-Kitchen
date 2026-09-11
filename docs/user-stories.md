@@ -954,3 +954,9 @@ de poses fixes et l'exclusion générale du local ; elles n'effacent aucun résu
 - **US-534** — En tant qu'auteur, je veux créer mon univers et mes assets, fixes ou animés, les retoucher et les exporter entièrement depuis l'interface sans MCP, afin de travailler seul aussi bien qu'avec un agent.
 - **US-535** — En tant qu'auteur, je veux conserver la toile de mon univers avec images, textes, notes, îlots et liens, afin d'explorer et d'organiser mes idées sans réduire l'univers à des réglages.
 - **US-536** — En tant qu'auteur, je veux retrouver toutes les capacités de retouche existantes sur mes images, animations et frames, avec une portée d'action claire, afin de bénéficier d'une interface plus simple sans perdre mes outils.
+  La composition par calques reste distincte des tables. Une planche se découpe par détection,
+  grille ou rectangles manuels en images nommées ; une carte de la toile produit des cartes.
+  Extraire un élément permet de caler base et variante par leurs parties communes, de régler
+  position, échelle et opacité de superposition, puis de choisir les pixels à garder ou retirer.
+  La source, le calage et le masque se rouvrent pour corriger l'élément sans tout recommencer.
+  Un calque de pose ne devient pas implicitement un équipement qui suit toute une animation.

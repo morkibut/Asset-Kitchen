@@ -11,34 +11,43 @@ Les limites sont affichées sur les écrans concernés, pas seulement dans ce do
 ## Comment l’essayer
 
 Ouvrir l’HTML dans un navigateur desktop, ou le servir avec un serveur statique local depuis
-la racine du dépôt. Il utilise deux fichiers voisins et des images locales, sans dépendance
-réseau. Le panneau **Essayer la maquette** propose six parcours courts. Commencer par
+la racine du dépôt. Il utilise une feuille CSS, deux scripts voisins et des images locales,
+sans dépendance réseau. Le panneau **Essayer la maquette** propose huit parcours. Commencer par
 **Créer sans MCP**, puis **Corriger une animation** et **Composer un univers**.
+
+Pour les derniers retours : essayer **Une planche, plusieurs images** et **Un sac extrait
+en calque**. Les deux ateliers proposent un exemple immédiat. Dans la retouche, le sélecteur
+de table reste en haut du panneau droit ; **Calques** ouvre la composition séparément.
 
 Le bouton **Noter une remarque** garde le contexte de l’écran. Les remarques s’exportent
 en texte Markdown copiable depuis **Vos remarques**, avec téléchargement facultatif selon
 le navigateur ; elles ne sont pas envoyées automatiquement.
 Les données de démonstration restent dans ce navigateur, pour cette adresse. Changer de
 navigateur, de port ou de mode d’ouverture peut ouvrir une autre séance. Si le stockage est
-indisponible ou plein, l’écran le signale ; la séance reste en mémoire jusqu’à sa fermeture.
+indisponible ou plein, l'écran le signale ; la séance reste en mémoire jusqu'à sa fermeture.
+Le paramètre facultatif `?essai=nom` ouvre un stockage de vérification séparé, signalé par
+le bandeau. Les tests de cette révision ont utilisé cette séance séparée des essais de l'auteur.
 
 ## Ce que l’on peut éprouver
 
 | Zone | Manipulations effectives dans la maquette | Simulation ou détail encore absent |
 |---|---|---|
 | Jeu | Vue d’ensemble, accès à l’univers, assets, fabrications et livraison | Création de plusieurs jeux et premier lancement à détailler |
-| Univers / toile | Ajouter note, image et îlot ; annoter ; associer une carte à un îlot ; déplacer carte ou îlot avec ses cartes ; relier ; zoomer ; retrouver les positions | Découpe de carte, extraction de palette, officialisation d’artwork et passage assisté vers les règles à compléter |
+| Univers / toile | Ajouter note, image et îlot ; annoter ; déplacer et relier ; zoomer ; retrouver les positions ; découper une image en cartes, original conservé | Extraction de palette, officialisation d'artwork, placement des grands lots et passage assisté vers les règles à compléter |
 | Bibliothèque | Créer un sujet, rechercher, filtrer les cinq familles actuelles, retrouver les résultats | Collections, tri fin, corbeille restaurable et vue de tous les résultats à compléter |
 | Objectif | Fixe, animé ou mixte ; mouvements et directions ; matrice qui distingue résultats fixes et animés | Couverture partagée réelle avec API et MCP dans AU2 |
 | Création manuelle | Fiche vide → référence → demande d’animation → relecture entière → fabrication → résultat | Les générations sont simulées et réemploient des images d’exemple |
 | Référence / import | Importer PNG, JPEG, WebP dans le navigateur, limite de démonstration à 2 Mo | Pas de téléversement au serveur ; clip représenté par une séquence préparée |
 | Fabrications | Origine manuelle ou agent ; attente, résultat, interruption, échec, reprise explicite ; résultat en bibliothèque | Ni travail distant, ni facturation, ni ordonnanceur réel |
 | Montage | Lecture, cadence, boucle, choix et sélection multiple de frames, ordre, duplication, retrait, extraction fixe | Pas de décodage d’un clip importé ni de détection automatique des temps clés |
-| Main | Peinture au pixel, gomme du calque peint, portée frame/sélection/animation, annuler/rétablir, opacité du calque | Sélection géométrique, masques avancés, pile libre et pipette à compléter |
+| Main | Peinture au pixel, gomme du calque actif, portée frame/sélection/animation, annuler/rétablir | Sélection géométrique, pipette et outils de peinture avancés à compléter |
+| Composition | Calques de peinture et d’image, ordre, duplication, nom, visibilité, verrouillage, opacité, déplacement d’image ; garder et rouvrir | Édition de formes, transformations avancées, fusion et suivi automatique sur une animation à compléter |
 | Recette | Miroir, marge, lumière, saturation et repères modifient l’aperçu ; recette nommée ; garder et rouvrir les réglages | Les filtres sont simplifiés. Les moteurs CPU actuels ne sont pas réécrits en JavaScript |
-| Tables avancées | Portes visibles vers détourage, grille, nettoyage, contour, découpe et différence ; contrôles conditionnels et réglages gardés | Leurs algorithmes ne tournent pas ici ; découpe libre, différence d’équipement, calibration et réglages fins restent à dessiner |
+| Tables avancées | Sélecteur permanent : Main, Détourage, Recadrage, Pixelisation, Couleurs, Nettoyage, Contour, Retourner ; contrôles conditionnels et réglages gardés | Moteurs de détourage, quantification, nettoyage et contour non exécutés ; calibration et réglages fins à compléter |
+| Découper une image | Source importée, bibliothèque, frame ou carte ; détection, grille, tracé/déplacement/redimensionnement des rectangles, champs numériques, nom et sélection ; relecture des crops ; images, assets séparés, animation ou cartes ; source conservée et découpage repris depuis un résultat | Détection simplifiée par séparations, pas reconnaissance de sujets ; gouttières, fusion de zones et remplacement choisi des anciennes sorties à détailler. Refaire une découpe crée de nouvelles sorties |
+| Extraire un élément | Base + variante ; proposition d’alignement, translation, échelle, opacité ; différence et masque Garder/Retirer ; aperçu seul/superposé/composé ; sauvegarde et reprise du calage et du masque depuis l’élément ou son calque | Démonstration en 128 px, recherche bornée de pixels communs ; pas reconnaissance sémantique, déformation ni calque qui suit automatiquement un mouvement. Pas de garantie sur des variantes différentes de l’exemple |
 | Comparer / juger | Comparer deux résultats ou source/retouche ; favori distinct du choix pour le jeu | Pas de comparaison synchronisée des animations complètes ni de grille de calibration |
-| Équipement | Associer et retirer une pièce, retrouver l’association | Calage, emplois détaillés, extraction et calques animés à compléter en s’appuyant sur l’existant |
+| Équipement | Associer une pièce ; extraire un élément et le placer en calque sur une frame précise ; corriger l’extraction sans doubler le calque ni perdre son placement | Emplois détaillés, associations entre plusieurs assets et calques animés à compléter en s’appuyant sur l’existant |
 | Livraison | Choisir les résultats, destination proposée, aperçu des formats, historique par révision, conflit fictif | Aucun PNG/JSON/SpriteFrames produit, aucun fichier du jeu écrit ; la preuve Godot reste AU1 |
 | Réglages | Règles de l’univers ; disponibilité indépendante des moteurs ; cadre de l’agent mémorisé et choix de méthode filtré | Pas de clé réelle ; profils de workflow descriptifs ; installations, quotas et états GPU à détailler |
 | Sources 3D | Modèle conservé → rig → demande de rendu ; plusieurs rendus d’une source | Parcours entièrement simulé, aucun appel à asset3d |
@@ -63,7 +72,7 @@ avec le carnet, les lieux, la retouche et la recette du code actuel.
 | Images, Animations, Animation-chaine | Onglets séparés, objectif et fabrication ; éprouver les cas mixtes |
 | Galerie, Comparer, Grille, Essai | Bibliothèque et comparaison ; compléter grille de cohérence, essai animé et calibration |
 | Retouche, Main, atelier-main, atelier-detourer, atelier-recadrer, atelier-reduire, atelier-couleurs, atelier-nettoyer, atelier-contour, atelier-retourner | Éditeur commun ; les limites des tables avancées sont listées ci-dessus |
-| atelier-decoupe, atelier-difference, Emplois, Emploi | Montage et équipement ; reprendre les outils dédiés avant tout remplacement de leurs écrans |
+| atelier-decoupe, atelier-difference, Emplois, Emploi | Découper une image et Extraire un élément sont des ateliers dédiés ; la composition reste dans l’éditeur. Emplois complets et réglages avancés à reprendre |
 | Clips, Clip, Atelier-animation | Sources et montage ; compléter vidéo brute, plages temporelles et états de préparation |
 | Envoi, Relecture | Préparation et écran entier de relecture, puis fabrications |
 | Sortie | Livraison ; confirmer le contrat réel dans Godot avant de figer le détail |
@@ -94,6 +103,15 @@ contrôles et de sauvegardes, puis tester son parcours de reprise.
    comprendre sans mode d’emploi.
 7. L’intégration 3D doit garder la source et proposer des rendus réutilisables ; elle ne doit
    pas imposer de comprendre ComfyUI pour fabriquer un personnage.
+8. Une découpe est une fabrication de nouvelles images ; elle ne doit pas être confondue
+   avec le recadrage d’une image ou le choix des frames d’un clip. La relecture nomme les
+   sorties et leur destination avant leur création.
+9. « Extraire un élément » décrit mieux le but que « Différence ». Le calage est une
+   proposition visuelle, puis le masque reste corrigeable, notamment quand le vêtement
+   remplace des pixels du corps. La maquette n’invente pas les pixels cachés du corps.
+10. Une seule table affichée réduit le défilement sans masquer sa portée. Les calques ont
+    une liste propre ; seuls les réglages du calque choisi se déplient. Vérifier à l’usage
+    que les changements fréquents de table et de calque restent confortables.
 
 ## Matière visuelle et périmètre technique
 
@@ -101,11 +119,20 @@ Le pèlerin fixe vient des vignettes déjà présentes dans l’interface. `marc
 une copie inchangée d’une planche du banc vidéo local du dépôt (cinq vues d’exemple). Son
 fond fait partie de l’image ; ce n’est pas une preuve de détourage. Aucun asset neuf n’a été
 généré pour ce travail. La taille d’aperçu de la retouche est 64 px, quelle que soit la taille
-de sortie sélectionnée : cette différence est affichée dans la table Grille.
+de sortie sélectionnée : cette différence est affichée dans la table Pixelisation.
 
-Le HTML, le CSS et le script sont indépendants de l’application. La sauvegarde ne touche
+La planche de découpe d’essai assemble quatre copies de la vignette. Le sac d’essai est
+une pièce dessinée en rectangles sur une copie du sprite de profil. Ce sont des supports
+pour éprouver les gestes, pas des résultats d’une génération IA. La découpe crée de vrais
+crops dans le navigateur ; l’extraction normalise ses deux sources en 128 px. Les images
+originales importées ne sont pas modifiées sur disque. La fidélité pleine résolution et
+les moteurs du produit doivent être vérifiés pendant leur raccord.
+
+Le HTML, le CSS et les scripts sont indépendants de l’application. La sauvegarde ne touche
 qu’une clé propre à la maquette dans le stockage du navigateur. Elle n’est pas un format
 de projet, ni une proposition de schéma pour le produit. La réinitialisation est explicite.
+Les paramètres et corrections sont persistants ; la pile d’annulation des ateliers dédiés
+reste limitée à la séance ouverte pour éviter de remplir le stockage avec des copies d’images.
 
 ## Vérifications de cette version
 

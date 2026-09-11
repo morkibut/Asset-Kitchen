@@ -6,6 +6,8 @@
 > n'est encore implémentée**. Étape immédiate : essayer les parcours de la maquette et compléter
 > les outils avant de remplacer les écrans concernés. Le premier développement reste **AU1**,
 > l'export d'une animation existante.
+> Retours intégrés dans la préparation UX : tables en sélecteur, composition séparée,
+> découpe et extraction manipulables. Les essais de l'auteur restent ouverts.
 > L'amendement RF est remplacé par cet ordre. La V4 reste le socle livré, avec les écarts
 > relevés dans la revue ; ni elle ni RF ne constituent une seconde file d'exécution.
 >

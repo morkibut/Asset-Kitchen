@@ -59,6 +59,14 @@ de détourage, recadrage, grille, couleurs, nettoyage et contour sont déjà exp
 retouche ; AU4 doit reprendre leurs contrôles et les outils de main, pas les remplacer par
 six intitulés. Ces décomptes proviennent d'une lecture, pas d'une exécution des suites.
 
+**Complément découpe / extraction / composition.** AU4 conserve son classement MEDIUM :
+les ateliers dédiés de découpe et de calque existent, avec services CPU, masque manuel et
+relecture ; ils ne sont pas des tables de la recette. Leur reprise et les accès depuis la toile
+s'ajoutent à l'inventaire. Le prototype reste MEDIUM : découpe par projections et recalage
+borné de pixels, sans modèle entraîné ni schéma du produit. La robustesse du calage sur de
+vraies variantes devra être mesurée avant de promettre un résultat automatique ; cette
+démonstration ne valide pas un nouveau moteur d'extraction ni un suivi de calque animé.
+
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
 | AU1 · Animation existante vers Godot | HARD | Écrit dans un projet externe et pose le contrat durable de livraison. |
