@@ -544,3 +544,23 @@ survit à un rechargement sans création de bande. La carte « Brume du marais �
 un accès au résultat depuis la toile. Syntaxe des scripts et vérification Git sans erreur ;
 **1 753 renvois documentaires résolus, corpus de démarrage 162,2 Ko, −29,7 Ko depuis le
 relevé de référence**, préservé grâce à une mesure temporaire.
+
+## Retours de 22 h 56 : emplois et montage
+
+Lecture du domaine équipement, des écrans Emploi/VestiaireDuSujet et des planches
+Emplois/Emploi : une pièce est réutilisable et un emploi porté est unique par couple
+pièce/personnage. Devant/derrière appartient à l'emploi. Attention : le commentaire ancien
+d'Emploi dit que B20 reste à construire ; le domaine calque_anime contient désormais
+ce suivi. Il recale un calque de pose sur chaque frame ou utilise un seul calage pour la
+bande, sans créer une image indépendante par direction. Le report concerne l'extension
+complète des variantes et placements, pas la suppression de cet existant.
+
+Essai navigateur : bande nommée « Pas prudent », liée explicitement au pèlerin, Marche,
+Ouest. Déplacement au clavier puis glisser-déposer natif : ordre final 1 → 3 → 2 → 4 → 5.
+Après sauvegarde et rechargement, les trois choix et l'ordre se retrouvent. Depuis le
+pèlerin, utiliser la pièce existante « La lanterne » ouvre sa fiche d'emploi sans copier
+de pièce. L'inventaire marque les calages non renseignés, et aucune frame n'est annoncée
+comme équipée par la seule présence d'une image de préparation.
+La réouverture retrouve « Main gauche » et « Derrière le corps ». Préparer une image
+depuis cet emploi propose bien la référence du pèlerin et sa mention dans la consigne.
+Aucune erreur JavaScript relevée sur ces parcours.

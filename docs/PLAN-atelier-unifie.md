@@ -172,6 +172,9 @@ ou une frame, puis retrouver la liste avec la sélection conservée.
 - [ ] Depuis un clip, choisir les frames, leur ordre, cadence et boucle permet de créer
   plusieurs bandes sans nouvel appel. Reprendre une bande retrouve ce montage ; les
   aperçus source et sortie restent synchronisés et les corrections existantes sont préservées.
+- [ ] Le nom libre de la bande ne détermine pas son classement : personnage, mouvement
+  et direction sont des choix explicites, conservés à la réouverture. L'ordre des frames
+  se change par glisser-déposer et au clavier.
 
 ## AU5 · La révision remplace le bon asset dans Godot
 
@@ -301,6 +304,16 @@ par l'auteur ou l'agent, avec recherche et réutilisation avant nouvelle génér
 - [ ] Un coffre animé n'exige aucun rig de personnage ; un portrait n'exige aucune animation.
 - [ ] Les réglages visuels hérités et leurs dérogations se lisent avant fabrication.
 - [ ] Les résultats se retrouvent, se corrigent et s'exportent par les mêmes portes.
+
+**Report équipement après le parcours principal, sans retrait de l'existant.** Les pièces,
+emplois par porteur, calques de pose et habillage animé existants restent à préserver dans
+AU2/AU4/AU12. Une image indépendante par direction ou frame et un calage manuel complet
+par frame constituent une évolution ultérieure, à découper après clarification du contrat
+de données. Elle ne remplace pas le recalage animé déjà présent.
+Son résultat attendu : une pièce réutilisable, des emplois distincts, des variantes
+requises et manquantes visibles sans faux comptes, la source et le placement exact de
+chaque calque, et une reprise fiable après changement du montage. Une animation absente
+du personnage ne crée pas artificiellement de frames d'équipement manquantes.
 
 ## AU13 · Des tuiles qui se raccordent dans Godot
 

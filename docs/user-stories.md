@@ -963,6 +963,10 @@ de poses fixes et l'exclusion générale du local ; elles n'effacent aucun résu
 - **US-537** — En tant qu'auteur, je veux créer un équipement depuis le personnage qui le porte,
   en générer des variantes avec sa référence, puis préparer son calage, afin de garder un
   parcours naturel du casque imaginé à son utilisation sur le personnage.
+  La pièce reste réutilisable : chaque porteur a son emploi, ses calques, son emplacement
+  et son ordre de superposition. Les variantes manquantes et placements par pose/frame
+  se distinguent des images de préparation ; leur gestion complète est une évolution
+  ultérieure, sans retrait de l'habillage animé existant.
 - **US-538** — En tant qu'auteur, je veux parcourir les assets par familles et collections,
   chercher et ranger une sélection, afin de retrouver mes choses dans un jeu volumineux.
 - **US-539** — En tant qu'auteur, je veux fabriquer librement une image, une vidéo ou une

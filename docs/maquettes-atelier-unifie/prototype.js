@@ -7,7 +7,7 @@
   const FAMILIES = ['Personnages', 'Monstres', 'Objets', 'Décors', 'Interface', 'Équipement'];
   const DIRECTIONS = ['Sud', 'Ouest', 'Est', 'Nord'];
   const TOOLS = ['Main', 'Détourage', 'Recadrage', 'Pixelisation', 'Couleurs', 'Nettoyage', 'Contour', 'Retourner'];
-  const NAMES = {gallery:'Galerie',montage:'Montage vidéo',home:'Le jeu', universe:'Univers & toile', library:'Les assets', subject:'Fiche de l’asset', editor:'Retouche', jobs:'Fabrications', delivery:'Livrer au jeu', settings:'Réglages', guide:'Essayer la maquette', compare:'Comparer', source:'Source 3D', remarks:'Vos remarques',slice:'Découper une image',extract:'Extraire un élément'};
+  const NAMES = {employment:'Emploi d’un équipement',gallery:'Galerie',montage:'Montage vidéo',home:'Le jeu', universe:'Univers & toile', library:'Les assets', subject:'Fiche de l’asset', editor:'Retouche', jobs:'Fabrications', delivery:'Livrer au jeu', settings:'Réglages', guide:'Essayer la maquette', compare:'Comparer', source:'Source 3D', remarks:'Vos remarques',slice:'Découper une image',extract:'Extraire un élément'};
   const clone = x => JSON.parse(JSON.stringify(x));
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const id = () => globalThis.crypto?.randomUUID?.() || `demo-${Date.now()}-${Math.random().toString(16).slice(2)}`;

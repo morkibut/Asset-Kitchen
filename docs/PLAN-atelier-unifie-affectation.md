@@ -109,6 +109,13 @@ le travail ; ils doivent être redécoupés avant codage, surtout les deux derni
 
 ## Règles d'exécution
 
+Complément de 22 h 56 : sélecteurs de rattachement et ordre des frames restent dans
+AU4 et la préparation UX MEDIUM. Le report « variantes et calages d'équipement par frame »
+est un point dur **HARD · Opus · réflexion moyenne**, hors des 14 tranches actives tant
+que son découpage n'est pas établi : les calques existants sont par pose, l'habillage B20
+porte déjà le suivi des bandes, et des images indépendantes par frame changeraient cette
+forme. La maquette ne tranche pas cette migration et ne simule aucun calage complet.
+
 Le complément de 22 h 28 ajoute les critères de collections, équipement contextualisé,
 fabrication libre et galerie à AU2/AU3, et précise le montage déjà prévu dans AU4.
 La préparation de ces écrans reste MEDIUM ; les affectations de production sont conservées.

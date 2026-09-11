@@ -245,3 +245,6 @@ dialog.wide-dialog { width:min(1080px,94vw); max-height:94vh }
 .mount-strip button { display:flex; flex-direction:column; align-items:center }
 .mount-strip canvas { width:64px; height:64px; image-rendering:pixelated }
 .mount-strip [aria-pressed=true] { border:2px solid var(--signal); background:var(--ouvert) }
+.ordered-frames button { cursor:grab; border:1px solid var(--contour) }
+.ordered-frames .dragging { opacity:.5 }
+.ordered-frames .drop-target { outline:2px solid var(--signal); background:var(--ouvert) }

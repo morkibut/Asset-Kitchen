@@ -138,6 +138,21 @@ reste limitée à la séance ouverte pour éviter de remplir le stockage avec de
 
 ### Complément demandé à 22 h 28
 
+**Itération de 22 h 56.** Le montage sépare nom libre, personnage/asset, mouvement et
+direction. Les frames sélectionnées disposent d'un ruban ordonné : glisser-déposer ou
+Alt + flèches change l'ordre, conservé dans le brouillon et la bande.
+
+Équipement : une pièce existante peut être employée par plusieurs personnages. La fiche
+d'emploi garde l'emplacement et le passage devant/derrière ; l'inventaire des poses et
+frames indique ce qui devra être préparé sans déclarer des calques terminés. Les images
+générées pour un emploi gardent son contexte. Le raccord des calques, le calcul des vrais
+manques et le placement exact par frame restent reportés ; cette vue ne remplace pas
+l'habillage animé déjà disponible dans le produit.
+
+La reprise du nettoyage des remarques corrige le premier nettoyage qui n'avait retiré que
+les neuf anciennes notes. La remarque sur les emplois reste active puisque son traitement
+complet est reporté ; les corrections de montage sont archivées.
+
 - Personnage → Équipement → Créer un équipement : fiche liée au personnage, références
   proposées dans l'envoi, génération simulée de variantes et retour au personnage.
 - Navigation par familles, dont Monstres, et collections nommées ; recherche, sélection
