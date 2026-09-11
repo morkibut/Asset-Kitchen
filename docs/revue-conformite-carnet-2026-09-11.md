@@ -1,0 +1,374 @@
+# Carnet — revue de conformité et des parcours, 11 septembre 2026
+
+> **Référence : le design déjà décidé**, dans `DESIGN.md` et les maquettes accessibles depuis
+> [Sommaire.html](pistes-2026-09-04/carnet/Sommaire.html). Aucune nouvelle direction graphique.
+> L'utilisateur a explicitement écarté `impeccable` pendant cette séance ; ses évaluations
+> ont été interrompues et ne servent pas de base à ce rapport.
+>
+> Ce document conserve les constats et les propositions, **pas un second plan ni un tableau
+> d'avancement**. Le découpage proposé est dans [PLAN-carnet.md](PLAN-carnet.md#amendement-rf--conformité-aux-maquettes-et-parcours).
+
+## Conclusion
+
+**La refonte a principalement sécurisé le déménagement des fonctions et le passage au papier.
+Elle n'a pas encore tenu la composition de plusieurs écrans.** La galerie le montre sans
+ambiguïté : le carnet neuf est posé à côté de l'ancien arbre ; son titre et sa hiérarchie
+dessinée manquent ; recherche, filtres et actions restent comprimés dans les anciennes barres.
+
+Le problème n'est donc pas de choisir un meilleur style. Il faut finir le style choisi,
+rendre les gestes prévus accessibles, et changer la façon de déclarer un écran conforme.
+Les moteurs déjà livrés, les données et les règles d'argent restent des acquis.
+
+## Ce qui a été examiné, et les limites
+
+- État Git de référence : `fd95508` ; aucune modification de l'application dans cette revue.
+- Inventaire du sommaire et des **49 fichiers HTML** présents dans le dossier au relevé.
+  Ce nombre inclut des documents de principes et de parcours : ce n'est pas 49 écrans à coder.
+- Lecture ciblée des composants, du montage de l'application, des garde-fous, du plan et de
+  son affectation ; comparaison approfondie de la galerie, de la fiche et du chemin de retouche.
+- Observation navigateur de la version servie sur **8420**, puis des sources actuelles sous
+  Vite sur **5174**, avec navigation galerie → fiche → retouche → galerie → famille.
+  Maquettes servies localement sur **8933**. Aucun clic de génération, aucune écriture de recette,
+  aucun déplacement, suppression ou export des données de l'auteur.
+- Le serveur 8420 sert un **build ancien**, avec les trois onglets Univers / Codex / Galerie.
+  Son HTML pointe les mêmes fichiers compilés que `interface/dist/index.html`, notamment
+  `index-BSJtoVIo.js`. Les sources actuelles montrent le carnet sur 5174.
+- L'atelier jetable existant n'a pas démarré : le Python 3.11 visé par `.venv` est inaccessible
+  dans cet environnement. La vue des sources a donc utilisé l'API déjà ouverte, en lecture.
+  Des réponses 404 et une famille vide malgré son compteur ont été observées dans ce montage
+  mixte : **elles ne prouvent pas un défaut du backend actuel** et ne sont pas classées comme tel.
+- La maquette Galerie est un dessin fixe de 1600 × 1000. L'application a notamment été
+  observée à 1280 × 720. Aucun écart au pixel près n'est annoncé entre ces captures : les
+  constats de structure sont recoupés dans le code. Les dessins fictifs des maquettes et les
+  images réelles ne sont pas comparés comme s'il s'agissait des mêmes données.
+
+**Cette revue est étayée, mais ce n'est pas une recette exhaustive des 49 HTML.** Les parties
+non rejouées sur un serveur à jour sont explicitement des contrôles à faire, pas des bugs prouvés.
+
+## Les écarts établis
+
+### R01 · La version regardée peut précéder la version du code — priorité haute
+
+**Preuve :** HTML de 8420, `interface/dist/index.html`, et écran à trois onglets ; les sources
+de `interface/src/App.tsx` montent déjà `Carnet`. Le build servi et les sources ne représentent
+donc pas la même interface. L'âge exact du serveur Python n'a pas été établi.
+
+**Friction :** une correction peut être présente dans Git sans être visible dans l'application
+que l'auteur utilise. Une revue peut alors comparer deux versions différentes sans le savoir.
+
+**Proposition :** ouvrir la recette de conformité par un lancement reproductible du même état
+de sources pour l'API et l'interface ; consigner commit, build, dimensions et jeu d'essai.
+Le lanceur existant est à vérifier avant d'en inventer un autre. Ne pas conclure que ce seul
+écart explique tous les griefs : les suivants existent aussi dans les sources actuelles.
+
+### R02 · Deux navigations de bibliothèque occupent la galerie — priorité haute
+
+**Attendu :** `Galerie.dc.html:53` pose carnet 300 px, surface, volet 380 px. Les autres jeux
+se choisissent depuis l'ouverture / le carnet, pas dans une seconde colonne permanente.
+
+**Présent :** le carnet est monté par `App.tsx`, puis `Galerie.tsx:938` ajoute sa propre colonne
+d'arbre de **240 px**, et `Galerie.tsx:1168` monte `Arbre`. `Arbre.tsx:98` réclame **300 px**
+dans cette piste de 240 ; le parent masque le débordement. Le navigateur montre bien les
+colonnes Carnet / Projets-Collections / Images / Fiche.
+
+**Friction :** espace de jugement réduit, changement de jeu proposé à deux endroits, et
+contrôles de l'arbre susceptibles d'être rognés. C'est un écart de composition, même si
+chaque couleur et chaque composant est individuellement valide.
+
+**Proposition :** retrouver la composition de la maquette ; reloger les fonctions encore
+portées par l'arbre avant de retirer cette seconde navigation. Conserver l'accès aux images
+sans jeu et aux échecs, sans leur laisser occuper une colonne supplémentaire par défaut.
+
+### R03 · La galerie a perdu son en-tête et ses niveaux de lecture — priorité haute
+
+**Attendu :** dans `Galerie.dc.html`, fil local, grand titre compté, phrase de rôle, portes
+« Apporter des images » et « Exporter vers le jeu », filtres comptés, puis bande de sélection.
+
+**Présent :** `Galerie.tsx:1154` entre directement dans sa grille ; sa section centrale commence
+par `BarreOutils` à la ligne 1185. Le bandeau global conserve dépenses, fournisseurs, arbre,
+Réglages et Guide (`App.tsx:1910`). Aucun titre de galerie ne remplace la hiérarchie dessinée.
+
+**Friction :** on doit déduire où l'on est des petits contrôles ; les tâches de l'atelier
+restent au premier plan alors que l'on cherche une image du jeu.
+
+**Proposition :** reprendre l'en-tête et les groupes de la maquette. Garder les fonctions
+globales à leurs portes déjà prévues dans le carnet et dans le guide. Vérifier aussi les
+autres surfaces qui montent encore le bandeau hérité.
+
+### R04 · Recherche, filtres et sélection se disputent une même rangée — priorité haute
+
+**Preuve :** `BarreOutils.tsx:105` impose une hauteur de 34 px ; les groupes internes défilent
+horizontalement, recherche et famille pouvant rétrécir. La famille est un menu déroulant,
+sans les comptes par famille dessinés dans `Galerie.dc.html`. Une seconde bande porte encore
+brut / import / export. Au navigateur à 1280 px, ouvrir la fiche comprime fortement les contrôles.
+
+**Friction :** sélectionner une image rend plus difficile le geste suivant. Les actions
+« Ranger dans une chose » et « Corriger les deux » de la maquette ne sont pas proposées dans
+cette barre ; son contrat `onRanger` porte projet / collection, pas le sujet (`BarreOutils.tsx:63`).
+
+**Proposition :** séparer la consultation de l'action sur la sélection comme dans la planche,
+afficher les comptes réellement calculés, et compléter les gestes de lot par les services
+existants. Une route de lot ne se crée que si le comportement existant ne suffit pas.
+
+### R05 · La fiche explique la mécanique avant de proposer le travail — priorité haute
+
+**Attendu :** une image, une courte table d'identité, les traitements appliqués, puis des portes
+stables vers Corriger, Voir en grand et la page du sujet (`Galerie.dc.html`).
+
+**Présent :** `Fiche.tsx:210` tient bien 380 px, mais la visite montre une grande image, les
+commandes favori / supprimer, quatre rôles de réinjection, le rattachement, le texte, l'héritage
+et la recette. Les portes « Reprendre dans l'établi » / « La retoucher » arrivent après.
+
+**Friction :** le premier écran de détails demande de comprendre référence, source d'édition,
+guide de style et jeu de réglages avant d'atteindre une correction courante.
+
+**Proposition :** reprendre la table et les portes de la maquette ; conserver les fonctions
+avancées dans une ouverture dédiée. Ne supprimer ni la filiation, ni le prompt réellement
+envoyé, ni la distinction entre réinjecter et retoucher. Montrer le nom réel du sujet dans sa porte.
+
+### R06 · Le système typographique est déclaré mais son chargement ne suit pas — priorité haute
+
+**Preuve :** `DESIGN.md` exige Instrument Serif, Instrument Sans, IBM Plex Mono et un chargement
+auto-hébergé. `interface/src/index.css:159` nomme IBM Plex Mono ; `interface/index.html:7`
+charge Google Fonts et demande **JetBrains Mono**. Aucun `@font-face` local n'a été trouvé
+dans les sources examinées.
+
+**Friction :** la police des mesures peut tomber sur une police de secours ; l'apparence
+dépend du réseau et de ce que la machine possède. Nommer une police dans un token ne la livre pas.
+
+**Proposition :** livrer les trois polices décidées localement, contrôler leur chargement réel
+avec un cache vierge hors réseau, puis comparer titres, labels, nombres et boutons au spécimen.
+
+### R07 · Dix-neuf exemptions empêchent de conclure sur la géométrie — priorité haute
+
+**Preuve :** `essais/essai_jetons.py:LA_GEOMETRIE_D_AVANT` et la fin du bloc D du plan nomment
+19 fichiers, dont **deux modules non visuels**, `api.ts` et `recette.ts`. Ce n'est donc pas
+« 19 écrans ». Parmi les surfaces : Envoi, Clip, Montage, AtelierDeBande, Calque, Calibrage,
+EtabliDuSujet, Planche, Vitrine, les pièces de saisie et d'aperçu. L'éditeur de bande emploie
+encore de nombreux textes à 10 px, sous le plancher de `DESIGN.md`.
+
+**Friction :** le passage d'un écran neuf à un atelier conserve un changement de densité,
+de taille et de hiérarchie, même avec le même fond papier.
+
+**Proposition :** traiter ces exemptions pendant le parcours propriétaire de chaque surface.
+Séparer les valeurs métier des contrôles visuels dans le garde-fou ; ne pas appliquer une
+substitution aveugle à toutes les dimensions de pixels du traitement d'image.
+
+### R08 · Le garde-fou vérifie des valeurs, pas la fidélité de l'écran — priorité haute
+
+**Preuve :** D3 est close avec comparaison navigateur annoncée et sortie des listes ; pourtant
+R02 à R05 restent. Les expressions `TAILLE`, `TEXTE`, `ARRONDI`, `DUREE` du banc ne décrivent
+ni l'arbre DOM ni la composition rendue. `TAILLE` examine des classes entre crochets ; il ne
+prouve pas les dimensions calculées de `gridTemplateColumns`, les écarts Tailwind ordinaires
+ou la largeur réellement disponible. La piste 240 et son enfant 300 en sont un cas concret.
+
+**Proposition :** garder ce banc et lui ajouter une preuve différente : captures comparables,
+géométrie des zones, présence des groupes attendus, accès aux actions et parcours réellement
+rejoué. Un test de couleur ne doit plus être interprété comme une recette de fidélité.
+
+### R09 · La retouche conserve du texte d'implémentation dans ses choix — priorité moyenne
+
+**Preuve :** en ouvrant Détourer, on lit la date du changement de défaut, des pourcentages
+d'accord, une taille de calcul et la licence du modèle, avant la suite des réglages. Le
+texte général répète que toute la chaîne est gratuite. La colonne « Ses sœurs » contient,
+depuis la galerie, des images de sujets différents : ce sont les voisines du filtre, pas
+nécessairement les attitudes du sujet courant. Ce fonctionnement est prévu par B25.
+
+**Friction :** le lecteur doit séparer la décision pratique du journal technique ; le mot
+« sœurs » devient ambigu selon la porte d'entrée.
+
+**Proposition :** montrer d'abord effet, disponibilité et temps ; garder les preuves détaillées
+dans le guide ou un détail à ouvrir. Nommer le contexte de la série (« images de cette sélection »
+ou « images de ce sujet ») sans changer le périmètre en silence. Les positions de la retouche
+restent celles des maquettes et des extensions déjà décidées.
+
+### R10 · Les textes et portes portent encore deux générations de vocabulaire — priorité moyenne
+
+**Preuve :** le pied de galerie visible dit « on paie depuis le codex et depuis l'établi » ;
+ces noms ne figurent plus comme tels dans le carnet. La tête propose Réglages et Guide en
+plus des portes du carnet. `App.tsx:1920` précise que Réglages ouvre les garde-fous, le dossier
+et les mouvements, alors que les règles du jeu et l'installation ont leurs écrans distincts.
+
+**Friction :** le texte recommande des destinations que l'auteur doit traduire. Le libellé
+« Réglages » ne dit ni sa portée ni ce qui le distingue des règles du jeu.
+
+**Proposition :** revoir les libellés et les chemins avec `Vocabulaire.dc.html` et
+`Navigation.dc.html`, puis reloger chaque réglage selon sa portée déjà décidée. La conservation
+de toutes les chaînes des anciens tests n'est pas un objectif lorsqu'elles contredisent le design.
+
+### R11 · La sortie a un écart assumé que « fidèle » doit distinguer d'un oubli — priorité moyenne
+
+**Preuve :** le rapport B21 dans le plan nomme deux restes de `Sortie.dc.html` : gabarit de
+nommage et bouton Choisir. `Sortie.tsx:367` fournit un champ de chemin et explique la limite
+du navigateur. L'aperçu et l'écriture partagent déjà la même logique : c'est un acquis à garder.
+
+**Proposition :** tester le chemin réel image retenue → aperçu → dépôt → seconde ouverture.
+Classer séparément le gabarit non livré et le choix de dossier limité par l'environnement.
+Ne pas dessiner un faux sélecteur fonctionnel, ni supprimer l'aperçu pour imiter une capture.
+Un éventuel sélecteur natif ou navigateur serveur demande une décision explicite de portée.
+
+### R12 · Le plan mélange programme, compte rendu et éléments périmés — priorité haute
+
+**Preuve :** le début de `PLAN-carnet.md` dit encore « deux blocs » et attend C1–C9 ; plus bas,
+D1–D6 sont déjà closes. Le fichier pèse **208 511 octets** avant cet amendement. `PLAN.md`
+pèse **71 254 octets** ; sa ligne V4 contient de longs comptes rendus alors que l'état devrait
+être lisible immédiatement. Le suivi et le journal existent déjà à côté.
+
+**Friction :** une session peut prendre la sortie d'un ancien fichier pour la fin de la refonte,
+rouvrir un travail fini ou omettre une limite explicitement écrite ailleurs. L'utilisateur
+doit reconstituer lui-même ce que « terminé » signifie.
+
+**Proposition :** corriger l'entrée périmée immédiatement ; conserver l'historique des étapes
+validées ; faire ensuite descendre leurs récits dans le suivi ou le journal propriétaire,
+avec contrôle des renvois. Ne pas ajouter un nouveau tableau d'avancement à ce rapport.
+
+## Parcours à éprouver avant de conclure qu'ils sont fluides
+
+Les lignes suivantes sont des **protocoles de recette**, pas des défauts tous reproduits.
+
+| Parcours | Le geste qui doit être naturel | Épreuve qui évite une fausse validation |
+|---|---|---|
+| Ouvrir un jeu | retrouver son travail et comprendre le prochain geste | build courant, jeu vide puis jeu fourni, réseau fournisseur coupé |
+| Chercher et agir en lot | filtrer, choisir deux images, les corriger ou les ranger | fiche ouverte, filtre sans résultat, sélection mixte image / clip explicitement traitée |
+| Faire une image d'un sujet | case visée → demande → relire → annuler ou envoyer → résultat | l'annulation conserve le brouillon ; la réception reste rattachée à la case ; fournisseur doublé |
+| Retoucher une série | régler, comparer, image suivante, revenir | conserver filtre / sélection / zoom / position utiles ; rouvrir un réglage différent du défaut |
+| Monter une animation | clip payé → ruban → réserve → retouche de frame → bande | laisser jouer pendant le geste ; rouvrir la bande avec ses réglages particuliers |
+| Habiller un sujet | pièce → emploi → calque → aperçu du porteur | conserver pose et direction ; ne pas confondre image fixe et bande animée |
+| Régler le jeu | trouver la bonne portée puis retourner au travail | défaut de famille et défaut de jeu distincts, pas de mutation d'images anciennes implicite |
+| Sortir vers le moteur | choisir ce qui sort, relire, déposer, recommencer | dossier jetable avec homonymes, collision et fichier étranger ; rien ne part avant le geste final |
+
+## Carte de couverture des références
+
+Inventaire pour guider la recette. **« À comparer » ne signifie pas « absent du produit ».**
+Les états et variantes internes à chaque HTML doivent être inventoriés au démarrage de sa tranche.
+
+| Références du sommaire | Correspondance actuelle à examiner | Niveau de cette revue |
+|---|---|---|
+| Main, Vocabulaire, Systeme, Navigation, Etats, Carte, Parcours | carnet, lieux, composants communs, guide et lancement | principes lus ; écarts transverses établis |
+| Ouverture, Accueil | Ouverture, TableauDeBord | lecture du plan ; recette réelle à compléter |
+| Barre, Guide | Barre, Guide, gestes et aide | portes observées ; détail à comparer |
+| Nouveau-jeu, Installation | ReglesDuJeu, Installation, PanneauAtelier | responsabilités lues ; parcours à rejouer |
+| Famille, Familles, Fiche, Images, Animations, Essai, Comparer, Grille | Famille, PageDuSujet et ses onglets, EssaiDuSujet, Comparer, GrilleDuJeu | sources et correspondances relevées ; pas de recette complète sur API à jour |
+| Animation-chaine, Clip, Clips, Atelier-animation | Clip, Galerie/FicheDuClip, Montage, AtelierDeBande | dettes de géométrie et transitions lues ; manipulation à vérifier |
+| Emplois, Emploi | Emplois, Emploi, CalquesAnimes, Calque, Calibrage | correspondance et exemptions relevées ; manipulation à vérifier |
+| Retouche et ateliers détourer, recadrer, réduire, couleurs, nettoyer, retourner, contour, main | Retouche et les postes partagés | ouverture et retour observés ; chaque moteur n'a pas été manipulé |
+| Ateliers découpe et différence | Decoupe, Superposition, Depliage | correspondance à recetter avec les fichiers produits |
+| Relecture | relectures et sortie | protocole à raccorder au chemin de livraison |
+| Toile | Univers, Toile, Tableau, Ambiances | plan et rôle lus ; composition à comparer |
+| Envoi | Envoi, intégration dans App, barre de demande | dette de géométrie et montage lus ; envoi payant non exécuté |
+| Galerie | Galerie, BarreOutils, Arbre, Tuile, Fiche | comparaison approfondie et visite navigateur |
+| Sortie, Depenses | Sortie, Depenses | code et écarts assumés lus ; dépôt non exécuté |
+| Finesse | choix de taille / rendu | capacité supplémentaire à distinguer de la simple conformité |
+| Decors, Tuiles | hors périmètre de la V4 décidé précédemment | ne deviennent pas des tranches du seul fait d'être au sommaire |
+
+Les fichiers non exposés comme une entrée du sommaire se classent lors de l'inventaire des
+variantes ; le sommaire a des clés historiques qui diffèrent parfois du nom du fichier.
+
+## Comment empêcher une nouvelle clôture trompeuse
+
+1. **Une référence par état d'écran**, identifiée par son fichier et sa variante, avec le
+   rectangle utile de la maquette. Les annotations autour du dessin ne sont pas des contrôles.
+2. **Une table d'écarts courte** : attendu, présent, décision, preuve. Statuts : conforme,
+   adaptation documentée, écart à corriger, hors périmètre. Ni « papier » ni « tests verts »
+   ne remplace « conforme ».
+3. **Deux preuves séparées** : la comparaison de composition, et le scénario de bout en bout.
+   Les tests de services protègent les données ; les essais DOM protègent les gestes ; une
+   inspection rendue protège dimensions, lisibilité et visibilité des actions.
+4. **Vérifier la composition à 1600 × 1000**, taille de la galerie dessinée, puis son usage
+   à 1280 × 720 et 1440 × 900. Ces deux dernières tailles sont des conditions de recette
+   proposées, pas un nouveau design mobile. Une maquette fixe n'établit pas sa propre adaptation.
+5. **Préparer des données stables** : jeu vide, jeu rempli, noms longs, nombreuses images,
+   échec de fournisseur, recette particulière, plusieurs bandes, fichier de destination existant.
+   Les essais de comparaison visuelle ne lancent aucun fournisseur.
+6. **À la fin de chaque tranche**, nommer les capacités serveur concernées et montrer leur
+   porte d'écran ; toute capacité auparavant visible reste accessible ou est retirée par décision.
+
+## Arbitrages à garder explicites
+
+- `DESIGN.md` normalise déjà certaines irrégularités des planches : tailles, espacements,
+  arrondis et polices locales. La fidélité ne signifie pas recopier leurs commentaires à 9 px.
+- `Galerie.dc.html` colore en rouille la porte gratuite vers le sujet ; `DESIGN.md` réserve
+  ce signal à l'action de lancement et au coût. **Recommandation : appliquer la règle de DESIGN**
+  et noter cette adaptation, sans modifier silencieusement toute la palette.
+- La colonne des sœurs à 128 px est une extension déjà déclarée dans DESIGN ; ce n'est pas
+  un écart à supprimer parce qu'une planche plus ancienne l'omet.
+- Les catalogues et moteurs déjà livrés ne se réduisent pas pour correspondre à une ancienne
+  liste dessinée. La composition doit accueillir les fonctions réelles sans inventer un style.
+- Le choix de dossier, le gabarit de sortie, Finesse, les décors et les tuiles ne se confondent
+  pas avec un défaut de CSS. Leur statut produit doit être tranché avant de les promettre.
+
+## Suggestions d'organisation
+
+- Garder **un plan actif**, son affectation et ce relevé de preuves ; éviter un nouveau plan
+  parallèle, un nouveau PRD ou un second document de design.
+- Alléger ensuite les entrées du plan général et les récits de tranches finies ; les invariants
+  restent en place et les renvois sont vérifiés après chaque déplacement.
+- Découper l'exécution par parcours démontrable. « Supprimer un fichier ancien » ou
+  « remplacer les couleurs » peut être un travail interne, pas le livrable final annoncé.
+- Employer des critères de résultat, pas « tous les tests sans changer une assertion » : une
+  assertion qui exige un libellé périmé doit évoluer, la preuve métier qu'elle portait doit rester.
+- Ne pas transformer l'audit en refonte technique générale : simplifier un montage ou extraire
+  un état seulement lorsque cela permet de tenir un des parcours et sa preuve de retour.
+
+## Vérification des documents produits
+
+- `git diff --check` : pas d'erreur d'espacement.
+- Contrôle des liens Markdown des documents touchés : aucun fichier ni ancrage manquant.
+- Banc `essai_docs.py`, lancé avec le Python 3.12 fourni par l'environnement : **1 050 renvois
+  entre documents, aucun cassé ; 682 renvois du code, un cassé préexistant**. Il vise le titre
+  « le menu d'un îlot » depuis `interface/src/index.css:134` ; la même référence existe dans HEAD.
+  Elle est signalée, sans modification du code dans cette revue.
+- **Corpus de démarrage : 194,4 Ko, +2,4 Ko par rapport au relevé précédent.** Cette variation
+  compare deux relevés, pas uniquement les ajouts de cette séance. L'augmentation est à
+  conserver dans le bilan ; elle renforce la proposition d'allègement des récits historiques.
+- Le relevé de mesures a été écrit dans un fichier temporaire dédié, sans remplacer la base
+  de comparaison du dépôt. Les suites de l'application n'ont pas été relancées : cette séance
+  change les documents et les consignes d'affectation, pas le comportement de l'application.
+
+## Complément — le produit à construire, après clarification de l'auteur
+
+Ce complément remplace le périmètre « conformité seulement » de la première revue.
+Le produit est desktop. Le design reste décidé, mais les maquettes peuvent évoluer.
+Le premier parcours est le personnage animé ; l'IA qui développe un jeu Godot le demande
+par le MCP de l'atelier. Les points ci-dessous viennent du code et des contrats lus,
+pas d'une validation du fonctionnement réel des moteurs.
+
+| Critique | Preuve ou limite | Conséquence proposée |
+|---|---|---|
+| Les maquettes organisent les outils davantage que le résultat du jeu | Fiche, images, animations et essai sont des portes séparées ; le besoin final se recompose de tête | Une page de personnage montre objectifs, couverture, sources et livraison ; les outils s'ouvrent depuis le résultat visé |
+| Le plan de poses fixes devient du travail inutile pour un personnage animé | L'auteur le signale ; `PageDuSujet.tsx` conserve fiche/images/animations/essai et la matrice en profondeur | Choisir fixe, animé ou mixte ; une référence technique n'est pas un livrable à compléter |
+| L'interface et le MCP ne couvrent plus le même parcours de production | `atelier/mcp/serveur.py` ne propose ni demande de clip ni montage/export de bande ; `export_character` appelle la sortie des images fixes | Faire de la boucle MCP → animation → Godot un premier critère de livraison, pas une annexe de fin de projet |
+| « Modèle gratuit d'exploration » ne couvre pas tous les besoins de l'agent | `docs/archi-fournisseur.md` réserve la production à l'interface ; le code impose un modèle via le service agent | Un cadre par capacité et par jeu autorise le travail autonome sans retirer les références ni basculer vers du payant en silence |
+| La préférence d'une animation n'est pas encore un contrat commun | `AnimationsDuSujet.tsx` démote les favoris concurrents côté client ; son commentaire précise que l'export ne lit pas ce champ | Centraliser le départage et distinguer préféré, sélectionné pour la livraison et effectivement livré |
+| La règle « pas de local » contredit déjà une fonction livrée | `maison.py` parle à ComfyUI, soumet un montage vidéo et garde son identifiant | Corriger les documents d'autorité avant d'étendre à l'image et à d'autres workflows |
+| Intégrer asset3d ne consiste pas à recopier son écran | Le voisin conserve modèle, squelette, rigs et rendus, avec plusieurs routes ; son PRD initial a été dépassé par ses phases ultérieures | Réutiliser ces capacités derrière un adaptateur, rattacher leurs sources au personnage et conserver une seule bibliothèque utilisateur |
+| Deux applications locales peuvent se croire seules sur le GPU | Les voies d'`asset3d/serveur/executeur.py` sont verrouillées dans son processus ; Maison ne partage pas ces verrous | File des travaux possédés, observation de la concurrence et aucune interruption globale d'un travail extérieur |
+| Rejouer un rendu 3D ne garantit pas de reproduire son ancienne version | Le contrat de rendu du projet voisin asset3d (fichier `CONTRAT-RENDU.md`) reprend les corrections du squelette du moment | Conserver la révision réellement utilisée et distinguer reproduction et rendu avec nouvelles corrections |
+| Un ZIP n'est pas la preuve d'une intégration au jeu | L'export de bandes existe, le parcours Godot confirmé reste à prouver | Ouvrir une scène réelle, vérifier cadence/boucle/pivot et une mise à jour sans références cassées |
+| Le suivi mélange état actuel et récits de livraison | La seule cellule V4 du tableau général dépassait vingt mille caractères | Conserver une ligne d'état lisible et déplacer le relevé détaillé en archive, sans effacer les enseignements |
+
+**Critique brève des maquettes :** la direction graphique est exploitable ; les difficultés
+se situent surtout dans la hiérarchie des actions, le morcellement du travail et l'absence
+d'un objectif de livraison visible. Les nouvelles maquettes doivent être jugées sur un
+parcours complet, avec états vides, attente, erreur, reprise et remplacement dans le jeu.
+Le nombre d'écrans dessinés ou de cases cochées ne suffit pas.
+
+Le [plan de l'atelier unifié](PLAN-atelier-unifie.md) reprend ces décisions. La
+[maquette interactive](maquettes-atelier-unifie/01-parcours.html) illustre le parcours ;
+ses données sont fictives, son sprite est un témoin fixe, ses contrôles de montage ne sont
+pas un nouvel éditeur et aucune livraison Godot n'y est réellement effectuée.
+
+### Vérifications de ce complément
+
+- Parcours simulé exercé au navigateur : demande, arrivée des bandes, retour au personnage,
+  choix d'une version, préparation et simulation d'une livraison partielle.
+- Fenêtres desktop : largeur de document égale à la fenêtre à 1280 et à 1600 pixels ;
+  commandes d'édition accessibles, visuel local chargé, aucune erreur JavaScript relevée.
+- Syntaxe du script de la maquette vérifiée. Les formulaires encore illustratifs et les
+  limites de la simulation sont nommés dans la page ; elle ne prouve pas une génération.
+- Banc documentaire : **1 749 renvois résolus, aucun cassé**. Le renvoi CSS préexistant
+  vers un titre absent est corrigé en simple référence à sa planche, sans changer le style.
+- **Corpus de démarrage : 159,4 Ko, −32,6 Ko par rapport au relevé précédent**. L'ancien
+  cadrage et le détail de la cellule V4 sont archivés ; les invariants restent au démarrage.
+- Aucun fournisseur, GPU ni projet Godot réel n'a été sollicité. Les suites de l'application
+  ne sont pas relancées pour ces documents, cette maquette et un commentaire CSS.

@@ -65,6 +65,13 @@ change une autre tranche.
 
 ## Product Context
 
+**Précision du 11 septembre 2026.** Le produit est une application desktop de fabrication
+d'assets pour un jeu développé avec un agent IA. L'auteur conserve l'identité graphique
+décidée et autorise de nouvelles compositions pour améliorer l'UX. Le comportement relève
+du PRD. La [maquette de parcours](maquettes-atelier-unifie/01-parcours.html) est une proposition
+interactive, avec données fictives et polices de repli si elles ne sont pas installées ;
+elle ne remplace pas les jetons ni le spécimen de ce document. Pas de déclinaison mobile.
+
 - **Quoi** : un atelier personnel de production d'assets 2D pour jeu vidéo. On définit
   l'univers d'un jeu une fois, puis on fabrique au cas par cas ses personnages, objets,
   décors, terrains, équipements et interface. Ce qui coûte se paie à l'image ; tout le reste

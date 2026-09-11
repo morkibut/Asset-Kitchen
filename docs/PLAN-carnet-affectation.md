@@ -10,6 +10,8 @@
 > **44 tranches en trois blocs** : les 29 de `D0` à `B27` — la refonte elle-même —, les 9 de
 > `C1` à `C9` — la sortie de l'ancien châssis —, et les 6 de `D1` à `D6` — le dernier châssis.
 > Chaque bloc porte son propre tableau et son propre compte, plus bas.
+> **Huit tranches RF supplémentaires sont proposées le 11 septembre 2026**, classées à la
+> fin de ce fichier. Les 44 classements historiques restent inchangés.
 
 ## Les cinq étiquettes
 
@@ -226,6 +228,80 @@ serveur leur sert.
 | Retourner | 9 | `[MEDIUM]` | huit sont triviaux, RotSprite ne l'est pas |
 | Contour | 6 | `[MEDIUM]` | le contour sur l'ensemble empilé demande de composer avant de tracer |
 | Découpe | 1 | `[EASY]` | les gouttières d'une planche générée, cas simple et fréquent |
+
+---
+
+## Amendement RF — les huit tranches proposées
+
+> Compagnon du bloc RF de `docs/PLAN-carnet.md`, **proposé, pas encore autorisé à l'exécution**.
+> Classement sur les sources observées le 11 septembre 2026 ; les noms de modèles reprennent
+> la grille du skill `/affecte`, sans prétendre qu'ils sont disponibles dans chaque environnement.
+
+### Mesures qui fondent ce classement
+
+Les points d'entrée suivants existent déjà : lecture et rangement d'assets, rattachement à un
+sujet, édition de recette, montage / bandes, réglages de jeu, aperçu et écriture de sortie.
+**Aucun nouveau schéma n'est requis pour les écarts visuels établis.** La nécessité éventuelle
+d'une route de lot se vérifie avant RF1, au lieu d'être supposée dans ce classement.
+
+Les surfaces candidates ci-dessous sont un périmètre initial, pas un devis de fichiers à modifier.
+Le relevé détaillé et les références de code sont dans la revue de conformité.
+
+| Tranche | Existant mesuré / périmètre initial | Ajout et preuves à préserver |
+|---|---|---|
+| RF0 | entrée HTML, CSS, lancement, ouverture et accueil ; fixture de galerie déjà écrite | polices locales et lancement de recette compatible ; réemployer la fixture avant d'en créer une autre |
+| RF1 | galerie, arbre, barre, tuile, fiche et montage global : 6 surfaces ; piste 240 / enfant 300 | composition et gestes de sélection ; essais de galerie dans la suite globale, sans nouvelle persistance supposée |
+| RF2 | famille, page, images, établi, barre, saisie, paramètres, envoi et intégration : 9 zones | continuité du brouillon et composition de l'envoi ; 22 déclarations de tests de famille et 34 de page repérées, plus les essais d'envoi |
+| RF3 | retouche, vocabulaire de recette, pièces partagées et portes d'entrée : 4 zones | hiérarchie des contrôles et preuve de coordonnées / reprise ; 99 déclarations de tests de retouche repérées |
+| RF4 | commande, fiche de clip, galerie, montage, bande, animations et essai : 7 surfaces | parcours et géométrie ; préserver tests de montage, rendu, réouverture, cadence et coût |
+| RF5 | emplois, emploi, calques animés, calque, calibrage, découpe et différence : 7 surfaces | géométrie et contexte porté ; préserver filiation et calcul de calage existants |
+| RF6 | règles, installation, univers, toile, tableau, ambiances, guide et barre : 8 surfaces | répartition des portes ; 25 déclarations de tests de règles et 38 d'installation repérées |
+| RF7 | sortie, dépenses et leurs portes : 3 zones ; aperçu / écriture déjà partagés | portée de la sélection et recette de dépôt ; 18 déclarations de tests de sortie repérées, plus protections serveur |
+
+Les comptes de tests sont des **déclarations textuelles repérées**, pas un résultat de suite
+exécutée ni le nombre de cas après paramétrage. Les surfaces se recouvrent : ne pas additionner
+ces chiffres pour annoncer un total de fichiers ou lancer des modifications concurrentes.
+
+### Classement
+
+| Tranche | Difficulté | Modèle | Réflexion | Pourquoi |
+|---|---|---|---|---|
+| **RF0** · Ouvrir la bonne version | `[MEDIUM]` | Sonnet | élevée | Le lancement reproductible et les données de recette doivent relier le build et l'API réellement exécutés, au-delà du simple chargement de polices. |
+| **RF1** · Retrouver et choisir en galerie | `[MEDIUM]` | Sonnet | élevée | Les données et les gestes existent, mais leurs compositions en lot et les portes de l'arbre doivent être rassemblées sans perte. |
+| **RF2** · Du sujet à son image | `[HARD]` | Opus | moyenne | La continuité de la demande traverse le seul écran autorisant cette dépense et doit conserver exactement ce qui est résolu avant paiement. |
+| **RF3** · Retoucher et poursuivre | `[MEDIUM]` | Sonnet | élevée | Les moteurs sont livrés et les changements portent sur leurs contrôles, leurs coordonnées affichées et la reprise de la série. |
+| **RF4** · Du clip à la bande | `[MEDIUM]` | Sonnet | élevée | Le travail fournisseur, le montage et la reprise sont déjà construits, et le changement ordonne leurs surfaces sans réécrire leur logique. |
+| **RF5** · Équipement et calque | `[MEDIUM]` | Sonnet | élevée | Le modèle d'emploi et le calage existent et il faut conserver leur contexte à travers les outils redessinés. |
+| **RF6** · Régler puis revenir | `[MEDIUM]` | Sonnet | élevée | Les formulaires existent, mais leur portée et leurs portes doivent être unifiées selon les décisions déjà prises. |
+| **RF7** · Livrer et relire le bilan | `[HARD]` | Opus | moyenne | Changer l'entrée et la portée d'une sortie touche ce qui sera écrit dans le dossier du jeu et doit conserver l'identité aperçu / dépôt. |
+
+**Compte RF :** 0 `[VERY-HARD]`, 2 `[HARD]`, 6 `[MEDIUM]`, 0 `[EASY]`, 0 `[VERY-EASY]`.
+Deux sur huit au-dessus de MEDIUM : le contrôle du tiers est respecté, sans reclasser l'historique.
+
+### Les points durs qui montent d'un cran
+
+| Dans | Le morceau | Traité en |
+|---|---|---|
+| RF1 | Cartographier les fonctions de l'ancien arbre et leur destination, sans perdre les images orphelines ni confondre collections d'images et de sujets. | `[HARD]` · Opus, moyenne |
+| RF3 | Vérifier la convention de coordonnées si la nouvelle disposition modifie le cadre de dessin, avant de déplacer les gestes. | `[HARD]` · Opus, moyenne |
+| RF4 | Revoir uniquement les transitions qui peuvent repayer un clip ou perdre le travail de montage. | `[HARD]` · Opus, moyenne |
+| RF6 | Si une porte relogée touche réellement à un secret ou au disque, isoler cette transition et ses protections avant le report visuel. | `[HARD]` · Opus, moyenne |
+
+Ces points sont des sous-tâches de l'exécution future, pas une demande de délégation pendant
+la présente revue. Ils se traitent séparément selon les règles d'affectation déjà posées.
+
+### Les morceaux qui descendent d'un cran
+
+| Dans | Le morceau | Traité en |
+|---|---|---|
+| RF0 | Charger localement les trois familles déjà décidées, une fois leurs fichiers et licences vérifiés. | `[EASY]` · Sonnet, faible |
+| RF2 | Reporter la composition et les tailles d'une page, une fois le contrat de demande verrouillé. | `[EASY]` · Sonnet, faible |
+| RF3–RF6 | Reporter les libellés et tailles validés dans une pièce existante, sans changer sa règle. | `[EASY]` · Sonnet, faible |
+| RF7 | Mettre en page le bilan et les dépenses à partir des réponses déjà servies, après validation de la portée. | `[EASY]` · Sonnet, faible |
+
+RF2 se prend d'abord par la conservation de la demande, RF7 par l'identité du lot annoncé et
+du lot écrit ; le report visuel suit. Le relecteur confronte composition, parcours et preuves,
+pas seulement les changements de tokens. Les règles historiques ci-dessous restent applicables.
 
 ---
 

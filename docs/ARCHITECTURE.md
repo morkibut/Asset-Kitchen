@@ -22,9 +22,11 @@ de lui-même** ; juger, c'est marquer favori ou supprimer, et ce qui est jugé l
 avant de partir dans le jeu, pas avant d'entrer dans la bibliothèque
 (`docs/PRD.md` fait foi sur ce point).
 
-Le moteur d'image est **une API, jamais un modèle local**. Ce n'est pas un compromis : c'est
-la seule famille de modèles qui sait **préserver l'identité d'un sujet** d'une génération à
-la suivante — la capacité sur laquelle repose toute la V2, et tout ce qui la suit.
+**Cap révisé le 11 septembre 2026 : API et modèles locaux, derrière des adaptateurs.**
+Le MCP existant est le point d'entrée de l'IA qui développe le jeu Godot ; l'interface
+desktop supervise les mêmes services. Les capacités locales déjà livrées et celles restant
+à intégrer sont distinguées dans [l'architecture de l'atelier unifié](archi-atelier-unifie.md).
+Les limites mesurées d'un ancien modèle ne constituent plus une exclusion générale du local.
 
 **Payante n'en est plus une condition, depuis `F1`** : le produit connaît plusieurs
 fournisseurs, dont un qui ne demande ni compte ni clé. Sur une machine où rien n'a été déposé,
@@ -39,19 +41,19 @@ le gratuit n'accepte aucune image en entrée, donc aucune référence.
 | **MySpriteAi** | outil local, ComfyUI au centre, tout dans le navigateur. Asset Kitchen n'embarque pas ComfyUI. |
 | **Un produit** | usage personnel. Pas de comptes, pas de crédits, pas de multi-utilisateur, pas de distribution, pas de galerie communautaire. |
 
-Le local reste disponible **hors de l'application** : ComfyUI ou MySpriteAi produisent
-une image, on l'importe dans Asset Kitchen. L'import est un citoyen de première classe ;
-l'intégration ne l'est pas.
+Les moteurs locaux tournent dans des services externes : ComfyUI pour les workflows,
+asset3d pour la fabrication et le rendu 3D. L'atelier les pilote et conserve leurs résultats.
+Il ne fusionne pas les dépôts ni leurs environnements. L'import reste une voie complète.
 
 ## 3 · Décisions de cadrage
 
 | Sujet | Décision | Pourquoi |
 |---|---|---|
 | Socle | Nouveau dépôt. Récupération ciblée, pas de fork. | Paradigme opposé à GAG, moteur opposé à MySpriteAi. |
-| Moteur d'image | **API seulement.** OpenRouter d'abord ; **plusieurs fournisseurs depuis F1**, voir la ligne suivante. | Cohérence d'identité impossible en local sur 8 Go — mesuré : Flux GGUF 1024 à 106,9 s/image sur cette machine. C'est le *local* qui est écarté, et cette moitié-là n'a jamais bougé. |
+| Moteur d'image | **API ou workflow local configuré**, extension décidée le 11 septembre 2026. | Les capacités et la qualité se vérifient par méthode ; les mesures historiques restent des résultats datés. |
 | Fournisseur | **Plusieurs adaptateurs depuis F1**, et OpenRouter reste celui qui porte les univers. Un modèle se nomme par son fournisseur **et** par son nom, les deux ensemble. | *Révisé le 1<sup>er</sup> septembre 2026.* La décision de départ tenait tant que la question était la couverture : 48 modèles de 11 éditeurs derrière un seul jeu de paramètres, et écrire trois adaptateurs pour ça aurait coûté trois fois le travail pour le même résultat. Elle est tombée sur une autre question — **le prix** : six relances en trente-deux minutes ont emporté le quart de tout l'argent dépensé ici, et un fournisseur qui ne demande ni compte ni clé change ce que ce geste coûte. Ce qui ne change pas : **aucun repli automatique de l'un sur l'autre**, et aucun mélange dans un même appel. |
 | Comptabilité | **Aucun compteur de crédits maison**, et ça n'a pas bougé. Mais le produit enregistre **ce que chaque appel a consommé, dans l'unité du fournisseur**, le totalise par projet, et tient son propre écran des dépenses depuis `E18`. | *Précisé le 1<sup>er</sup> septembre 2026.* Ce qui est écarté, c'est la **comptabilité parallèle** — recompter les crédits d'un fournisseur à sa place. Ce qui ne l'a jamais été, c'est enregistrer ce qu'on a soi-même dépensé : un tarif de catalogue mentait de plus du double, $0,019 annoncés contre $0,042 facturés. La réserve d'un fournisseur se lit chez lui quand il la dit, se compte ici quand il ne la dit pas, **et l'écran dit toujours lequel des deux**. |
-| Modèles locaux | **Aucun modèle _génératif_ local.** Hors application, import du résultat. Un modèle de **segmentation** sur processeur est admis comme moteur de détourage facultatif — c'est la ligne suivante. | Évite le gestionnaire de VRAM, les rechargements, les custom nodes. *Précisé en T2, pas contourné* : la règle vise ce qui **fabrique** une image, pas ce qui en découpe une, et le geste courant ne charge aucun modèle. |
+| Modèles locaux | **Services externes pilotés**, avec file et provenance ; modèle de segmentation CPU toujours facultatif. | La coordination GPU devient un travail explicite du nouveau plan ; la retouche courante reste indépendante des générations. |
 | Détourage | **Quatre moteurs**, et le remplissage depuis le bord reste le défaut : le **remplissage**, la **pipette** pour ce que le bord n'atteint pas, le **modèle** de segmentation — trois modèles au catalogue depuis `U13`, du rapide à l'intermédiaire au lourd —, et la **sélection magique** arrivée en V2.1, où l'on entoure grossièrement un sujet et l'atelier va chercher son bord dedans. Passes multiples dans les quatre cas. **Depuis `D1`, chaque moteur porte le durcissement qu'il demande** — zéro pour le remplissage, un pour la pipette, deux pour le modèle — et ce durcissement suit l'auteur quand il change de moteur, sans jamais réécrire une valeur qu'il a posée lui-même. | *Révisé le 27 août 2026, à la mesure ; le durcissement rattaché au moteur le 3 septembre 2026.* Le durcissement ne corrige pas un goût, il corrige une frange : le remplissage est binaire par construction et n'en laisse aucune, le modèle en laisse sur 95 % du sujet. Mesuré sur les 123 détourages du dépôt — à moteur égal, la nature de l'image ne décide presque rien. Tout ce que l'atelier produit arrive sur un fond plat : le remplissage suffit sur 44 images de six modèles, en 130 ms, sans modèle, sans téléchargement et hors ligne. Faire du modèle la dépendance par défaut aurait fait payer 180 Mo et un premier lancement en ligne pour un résultat que personne ne distinguerait. |
 | Post-traitement | Local, CPU, jamais sur le GPU. | Reprise de AD-9 de GAG. Un curseur doit répondre instantanément. |
 | Univers | Bible écrite à la main + planches de référence + palette extraite par calcul. | La palette sert **en entrée** (contrainte de quantification), pas en contrôle. |
@@ -435,11 +437,11 @@ d'une session.
 
 | Écarté | Raison | Réversible ? |
 |---|---|---|
-| ComfyUI dans l'application | coût d'intégration élevé, bénéfice nul une fois le moteur passé en API | oui, derrière le port fournisseur |
+| Modifier implicitement l'installation de ComfyUI | l'atelier doit préserver les autres workflows de l'auteur | le pilotage HTTP est dans le périmètre ; installation et mises à jour restent des gestes explicites |
 | Contrôle de conformité automatique | l'auteur juge mieux et plus vite | oui, la palette mesurée est déjà là |
 | Description du style par un modèle de vision | l'auteur décrit mieux son propre univers qu'un modèle ne le devine, et une bible est une décision, pas une observation | oui, le port existe dans GAG. *Raison réécrite le 2 septembre 2026 : « c'est de l'analyse d'image, écartée avec le reste » n'est plus vrai comme énoncé général — la V2.3 en fait, pour **retrouver la vraie taille de bloc** d'une image. Ce qui est écarté, c'est de faire **juger** par une machine, pas de faire **mesurer**.* |
 | UI Kit + éditeur 9-slice | 8 étapes, taxonomie, extraction — un produit à lui seul | oui, mais ce sera un chantier |
-| Paquets moteur Unity / Godot | entre le ZIP et le paquet, il n'y a que du glisser-déposer | oui |
+| Paquets pour tous les moteurs | le besoin confirmé est Godot via l'agent de développement | le pont Godot entre dans le plan du 11 septembre ; les autres moteurs restent ultérieurs |
 | Pack d'assets par genre | fabrique de la quantité — c'est le métier de GAG | non souhaitable |
 | Comptes, crédits, distribution | outil personnel | non souhaitable |
 | ~~Génération non-pixel-art~~ | — | **revenue dans le périmètre le 28 août 2026, et livrée.** La taille de pixel d'un univers accepte « aucune », la bible a gagné la vue et la technique de rendu, et le prompt exact se voit et se reprend |

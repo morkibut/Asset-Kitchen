@@ -197,6 +197,12 @@ Absents du catalogue image, contrairement à ce qu'on espérait : **Wan** (famil
 
 ### Serveur MCP — outils et garde-fous
 
+> **Extension décidée le 11 septembre 2026.** Le périmètre décrit ci-dessous est celui
+> des outils historiques. Le parcours de production animé demandé pour l'agent Godot
+> et son cadre par capacité sont définis dans `docs/archi-atelier-unifie.md` ; ils restent
+> à construire. L'ancienne idée « l'agent explore, l'interface seule produit » ne limite
+> plus le produit cible. Les garde-fous actuels restent appliqués jusqu'à leur migration.
+
 **Grain épais.** L'agent qui appelle ce serveur est en train de coder le jeu : son attention
 est ailleurs. Il dit ce qu'il veut, pas comment l'obtenir. Ce sont les **réglages par défaut
 du projet** qui rendent ça possible — modèle, résolution, palette, mode de détourage sont

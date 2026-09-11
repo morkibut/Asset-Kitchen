@@ -13,7 +13,13 @@
 
 **Écarté parce que l'auteur fait mieux.** Contrôle de conformité automatique. Description automatique du style. Routeur d'intention qui devinerait le type d'asset.
 
-**Écarté par coût de construction disproportionné.** Extraction de composants d'interface et éditeur de découpe en neuf zones. Paquets prêts à importer dans un moteur — entre l'archive et le paquet il n'y a que du glisser-déposer. Modèles locaux à l'intérieur de l'application : ils restent dehors, on importe leur résultat.
+**Écarté par coût de construction disproportionné.** Extraction de composants d'interface et éditeur de découpe en neuf zones. Paquets spécifiques à tous les moteurs à la fois.
+
+**Revenu dans le périmètre — 11 septembre 2026.** La génération locale pilotée depuis
+l'atelier et les sources 3D réutilisables sont demandées par l'auteur. Le jeu cible est
+Godot : son agent de développement demande les assets à l'atelier et récupère des fichiers
+utilisables. Le parcours ne peut donc plus s'arrêter à « il suffit de glisser le ZIP ».
+L'installation des moteurs reste un geste explicite ; l'import reste disponible.
 
 **Écarté de la V1, prévu ensuite.** ~~Génération autre que pixel art.~~ Tuiles qui se raccordent. ~~Personnage et ses poses préparées.~~ ~~Animation de sprites.~~ Son. *(Trois des cinq sont revenues, chacune avec son paragraphe daté plus bas ; il reste les tuiles et le son.)*
 

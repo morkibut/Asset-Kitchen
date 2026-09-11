@@ -14,7 +14,12 @@
 
 | Annexe | Ce qu'elle prolonge | On l'ouvre quand |
 |---|---|---|
-| `docs/PLAN-carnet.md` | le plan | **on construit une tranche de la V4** — c'est le plan de la version en cours, et le seul fichier de plan à ouvrir pour elle |
+| `docs/PLAN-atelier-unifie.md` | le plan | on ouvre une tranche du chantier actif : demande MCP de l'agent, animation, Godot, puis moteurs locaux et 3D |
+| `docs/PLAN-atelier-unifie-affectation.md` | le plan | on choisit le modèle et les points durs de la prochaine tranche AU |
+| `docs/archi-atelier-unifie.md` | l'architecture | on construit un contrat de demande, de travail, de source, d'intégration locale ou de livraison Godot |
+| `docs/maquettes-atelier-unifie/01-parcours.html` | le design, proposition | on essaie le parcours desktop proposé ; données simulées, aucun appel réel |
+| `docs/PLAN-carnet.md` | le plan historique | on vérifie une capacité déjà livrée ou un défaut à reprendre ; l'ordre actif est celui des tranches AU |
+| `docs/revue-conformite-carnet-2026-09-11.md` | le plan et le design, sans les remplacer | on examine les écarts maquettes / code et les preuves qui motivent l'amendement RF ; les observations navigateur et leurs limites y sont séparées des parcours restant à éprouver |
 | `docs/tranches/V4.md` | le plan | on reprend une tranche V4 déjà tenue : son plan **et** son rapport de tenue y sont réunis, un seul fichier suffit. *Les plans des tranches tenues y sont descendus le 6 septembre 2026* |
 | `docs/prd-criteres.md` | le PRD | on écrit un critère d'acceptation qui doit se raccrocher à une promesse du produit. *Descendu du PRD le 6 septembre 2026, où il pesait 28 % du document* |
 | `docs/prd-hors-perimetre.md` | le PRD | **une idée arrive, et on veut savoir si elle a déjà été écartée et sur quel argument**. Toute sa valeur est là, et elle ne sert à rien tant que la question ne se pose pas. *Descendu du PRD le 6 septembre 2026, où il pesait 38 % du document — la plus lourde des huit sections* |

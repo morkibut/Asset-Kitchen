@@ -17,8 +17,9 @@ Il tenait ici aussi jusqu'au 6 septembre 2026 : deux documents répondaient à l
 ce que la règle *une question, un document* interdit plus bas. La mise à jour de fin de tranche
 se fait donc désormais à **un seul endroit**.
 
-En un mot : **onze blocs tenus ou clos, un seul ouvert** — la V4, *le carnet*, dont le plan est
-`docs/PLAN-carnet.md` et les tranches `docs/tranches/V4.md`. Ce qu'une tranche a appris en se
+Le chantier actif est indiqué uniquement dans `docs/PLAN.md` ; depuis le 11 septembre 2026,
+son détail est dans `docs/PLAN-atelier-unifie.md`. La V4 reste le socle existant et ses
+critères historiques dans `docs/tranches/V4.md`. Ce qu'une tranche a appris en se
 construisant est dans `docs/status/etat.md` ; ses critères cochés dans `docs/tranches/<code>.md`.
 Rien de tout ça ne se lit pour ouvrir une tranche neuve.
 
@@ -423,7 +424,9 @@ deux vivent côte à côte.
   un peu différente. *Et le moteur par défaut du détourage par modèle* passe de `u2net` à
   `isnet-general-use` : une recette qui ne nomme aucun moteur — c'est-à-dire toute recette
   d'avant `U13` — retombe sur le nouveau et change. Celles qui nomment `u2net` ne bougent pas.
-- **Pas de ComfyUI dans l'application.** Le local reste dehors : on génère ailleurs, on importe.
+- **Génération locale autorisée depuis le 11 septembre 2026.** ComfyUI et asset3d restent
+  des moteurs externes, pilotés par des adaptateurs de l'atelier. Ne pas modifier leur
+  installation ni télécharger leurs poids implicitement. L'import reste disponible.
 - **Aucune clé en dur.** `.env` seul, jamais versionné ; `.env.example` documente les noms.
 
 ## Pièges connus → `docs/PIEGES.md`
@@ -458,7 +461,7 @@ reste à faire : tout cela vit déjà dans les fichiers, et la nouvelle session 
 
 **Le prompt de reprise s'ouvre sur l'en-tête de la tâche suivante.** Avant les trois lignes,
 une ligne d'en-tête qui donne, dans cet ordre : **le nom de la tâche, sa difficulté, et le
-modèle recommandé**, lus dans `docs/PLAN-carnet-affectation.md` — sans le rejuger à froid.
+modèle recommandé**, lus dans le fichier d'affectation du plan actif — sans le rejuger à froid.
 
 ```
 B1 · Le miroir — [MEDIUM] — Sonnet, réflexion élevée
@@ -475,6 +478,15 @@ Trois précisions :
   l'écrire, pas sa valeur ni sa taille.
 - **Une étape ne se poursuit pas sans cet arrêt.** On rend l'étape, on donne le prompt, et on
   attend — même quand la suite paraît évidente et même en mode automatique.
+
+## Avant de coder une tranche, vérifier son affectation
+
+Lire le classement de la prochaine tranche avant d'écrire du code ; si elle n'est pas classée,
+appliquer `/affecte` d'abord. Comparer le modèle actif au modèle et au niveau recommandés.
+S'ils correspondent, poursuivre ; sinon annoncer tranche, difficulté, modèle et réflexion,
+donner le prompt de reprise et attendre, sauf demande explicite de continuer ici. Ne pas
+répéter cet arrêt pour la même tranche dans la même conversation. Les points durs isolés
+suivent leur propre affectation ; les traiter séparément selon les règles du fichier compagnon.
 
 ## Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell
 

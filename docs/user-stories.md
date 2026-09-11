@@ -930,3 +930,24 @@ du 3 septembre 2026, et arbitrés le même jour.*
 ### La main sur une frame
 
 - **US-518** — En tant qu'auteur, je veux retoucher une frame à la main — retirer des pixels, en repeindre d'autres — comme sur une image de l'établi, afin qu'une frame ratée par le traitement se répare sans rien regénérer.
+
+## L'atelier unifié — 11 septembre 2026
+
+Ces stories prolongent le cadrage actuel du PRD. Elles remplacent l'obligation d'un plan
+de poses fixes et l'exclusion générale du local ; elles n'effacent aucun résultat existant.
+
+- **US-519** — En tant qu'auteur, je veux définir l'univers une fois et le retrouver dans chaque demande, humaine ou déléguée, afin que tous les assets appartiennent au même jeu.
+- **US-520** — En tant qu'auteur, je veux choisir images fixes, animations ou les deux, avec les seuls mouvements et directions nécessaires, afin de ne pas remplir des cases inutiles.
+- **US-521** — En tant qu'auteur, je veux importer ou générer une référence depuis l'asset, afin de commencer sans produire préalablement une collection de poses fixes.
+- **US-522** — En tant qu'auteur, je veux choisir parmi les méthodes capables de produire le résultat demandé, avec leurs limites et leur coût ou durée, afin de décider sans apprendre leur mécanique interne.
+- **US-523** — En tant qu'auteur, je veux comparer les versions d'une animation, choisir celle destinée au jeu et voir les manques réels, afin qu'une variante nouvelle ne remplace rien en silence.
+- **US-524** — En tant qu'auteur, je veux corriger une animation et retrouver mes réglages après fermeture, afin de reprendre le travail sans le refaire.
+- **US-525** — En tant qu'auteur, je veux prévisualiser et exporter exactement ma sélection, avec ses noms, dimensions, cadence et pivot, afin d'utiliser les mêmes sprites dans le jeu.
+- **US-526** — En tant qu'auteur, je veux suivre les travaux longs, continuer ailleurs et reprendre après interruption sans doublon, afin de ne perdre ni calcul ni résultat.
+- **US-527** — En tant qu'auteur, je veux choisir un procédé local nommé et vérifier ce qui lui manque, afin de fabriquer dans l'atelier avec mes installations existantes.
+- **US-528** — En tant qu'auteur, je veux conserver le modèle 3D, son squelette et ses rendus, afin de produire d'autres animations et angles sans recréer le personnage.
+- **US-529** — En tant qu'auteur, je veux retrouver objets, personnages, décors et interfaces dans le même univers, fixes ou animés selon leur besoin, afin de fabriquer tous les éléments du jeu.
+- **US-530** — En tant qu'auteur, je veux ensuite fabriquer des tuiles et des sons dans cet univers avec des outils adaptés, afin d'étendre le jeu sans changer de bibliothèque.
+- **US-531** — En tant qu'agent qui développe le jeu Godot, je veux demander un personnage animé, suivre son travail et récupérer les fichiers utilisables, afin d'intégrer les assets sans faire manipuler l'atelier à l'auteur à chaque demande.
+- **US-532** — En tant qu'auteur, je veux borner les méthodes, dépenses, tentatives et destinations permises à l'agent, afin qu'il puisse travailler seul à l'intérieur d'un cadre lisible.
+- **US-533** — En tant qu'agent, je veux réutiliser un résultat existant puis demander une révision ciblée et mettre à jour le jeu sans casser ses références, afin d'améliorer les assets pendant le développement.
