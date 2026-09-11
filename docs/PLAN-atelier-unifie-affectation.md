@@ -109,6 +109,12 @@ le travail ; ils doivent être redécoupés avant codage, surtout les deux derni
 
 ## Règles d'exécution
 
+Le complément de 22 h 28 ajoute les critères de collections, équipement contextualisé,
+fabrication libre et galerie à AU2/AU3, et précise le montage déjà prévu dans AU4.
+La préparation de ces écrans reste MEDIUM ; les affectations de production sont conservées.
+La fabrication libre de sources 3D suit les frontières et affectations AU9 à AU11 : sa
+fiche simulée dans la maquette ne constitue pas un adaptateur réalisé.
+
 Les retours d'essai de 21 h 49 enrichissent les critères AU2, AU3 et AU4 sans nouvelle
 tranche ni changement d'affectation. Leur simulation reste dans la préparation UX MEDIUM ;
 les garanties de stockage, de coût réel et de fidélité des traitements restent à réaliser

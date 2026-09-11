@@ -97,6 +97,12 @@ les mouvements et directions utiles, importe une référence et voit ce qui rest
   les vignettes séparent versions retenues, à juger et écartées. Le survol joue toute la
   bande centrée. La galerie conserve les filtres mouvement, direction et jugement.
 - [ ] Les équipements associés montrent un aperçu identifiable.
+- [ ] Les familles et collections existantes restent accessibles dans la navigation ;
+  rechercher, ranger une sélection et rouvrir une collection conserve son contenu (US-538).
+- [ ] Créer un équipement depuis le personnage conserve ce lien et propose sa référence
+  dans l'envoi ; les variantes et le retour au personnage restent accessibles (US-537).
+- [ ] La galerie distingue les résultats des fiches d'assets : filtres par média et
+  rattachement, ouverture et réutilisation sur la toile sans nouvelle fabrication (US-540).
 
 ## AU3 · De la demande de l'agent à une nouvelle animation
 
@@ -123,6 +129,9 @@ L'auteur voit la demande, sa source, ses réglages et son état dans le personna
 - [ ] La relecture montre le fournisseur et le modèle, le coût annoncé et les références
   en vignettes ; textes et images se modifient dans cette même relecture. L'envoi conserve
   ce qui a réellement été soumis, sans modifier implicitement les règles de l'univers.
+- [ ] Une fabrication libre d'image ou de vidéo ne demande aucun asset : paramètres,
+  références et règles activées se relisent ; le résultat entre en galerie et peut être
+  posé sur la toile ou rattaché ensuite (US-539, US-540). Les sources 3D suivent AU9–AU11.
 
 ## AU4 · Juger et corriger l'animation sans perdre le contexte
 
@@ -160,6 +169,9 @@ ou une frame, puis retrouver la liste avec la sélection conservée.
 - [ ] Toutes les tables permettent zoom et déplacement de la vue, distincts du déplacement
   du calque ; l'empreinte du pinceau suit le zoom. La portée explique quelles frames
   changent et qu'un élément fixe ne suit pas automatiquement le mouvement du personnage.
+- [ ] Depuis un clip, choisir les frames, leur ordre, cadence et boucle permet de créer
+  plusieurs bandes sans nouvel appel. Reprendre une bande retrouve ce montage ; les
+  aperçus source et sortie restent synchronisés et les corrections existantes sont préservées.
 
 ## AU5 · La révision remplace le bon asset dans Godot
 

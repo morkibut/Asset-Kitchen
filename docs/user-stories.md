@@ -960,3 +960,14 @@ de poses fixes et l'exclusion générale du local ; elles n'effacent aucun résu
   position, échelle et opacité de superposition, puis de choisir les pixels à garder ou retirer.
   La source, le calage et le masque se rouvrent pour corriger l'élément sans tout recommencer.
   Un calque de pose ne devient pas implicitement un équipement qui suit toute une animation.
+- **US-537** — En tant qu'auteur, je veux créer un équipement depuis le personnage qui le porte,
+  en générer des variantes avec sa référence, puis préparer son calage, afin de garder un
+  parcours naturel du casque imaginé à son utilisation sur le personnage.
+- **US-538** — En tant qu'auteur, je veux parcourir les assets par familles et collections,
+  chercher et ranger une sélection, afin de retrouver mes choses dans un jeu volumineux.
+- **US-539** — En tant qu'auteur, je veux fabriquer librement une image, une vidéo ou une
+  source 3D, choisir mes paramètres, références et l'emploi des règles de l'univers,
+  afin d'explorer sans devoir créer un asset au préalable.
+- **US-540** — En tant qu'auteur, je veux retrouver tous les résultats dans une galerie
+  filtrable et les poser sur la toile ou les rattacher à un asset, afin de réutiliser
+  mes explorations sans les perdre ni les fabriquer de nouveau.

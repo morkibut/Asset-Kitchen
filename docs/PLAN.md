@@ -10,6 +10,8 @@
 > découpe et extraction manipulables. L'auteur a essayé les six parcours le 11 septembre ;
 > ses retours de 21 h 49 sont intégrés (arborescence, relecture, aperçus, calage et zoom).
 > La nouvelle itération reste à essayer ; cela ne valide aucune tranche de production.
+> Complément de 22 h 28 : équipements contextualisés, collections, galerie, fabrication
+> libre et montage de clip sont maquettés ; les preuves et limites restent dans la couverture.
 > L'amendement RF est remplacé par cet ordre. La V4 reste le socle livré, avec les écarts
 > relevés dans la revue ; ni elle ni RF ne constituent une seconde file d'exécution.
 >

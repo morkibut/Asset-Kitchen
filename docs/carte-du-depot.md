@@ -317,6 +317,8 @@ desktop élargi est `docs/maquettes-atelier-unifie/02-atelier.html`, accompagné
 de `docs/maquettes-atelier-unifie/prototype.js`, des ateliers dédiés dans
 `docs/maquettes-atelier-unifie/ateliers.js`, de l'ergonomie partagée (arborescence,
 bibliothèque visuelle, relecture et zoom) dans `docs/maquettes-atelier-unifie/ergonomie.js` et de
+ses parcours de collections, fabrication libre, galerie et montage dans
+`docs/maquettes-atelier-unifie/parcours.js`, ainsi que de
 `docs/maquettes-atelier-unifie/couverture.md` ; il ne fait aucun appel fournisseur.
 `01-parcours.html` garde la proposition initiale. La sauvegarde du prototype reste propre
 au navigateur, indépendante des projets de l'application.

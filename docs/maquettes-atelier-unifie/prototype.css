@@ -233,3 +233,15 @@ dialog.wide-dialog { width:min(1080px,94vw); max-height:94vh }
 .rejected-strip { display:flex; flex-direction:column; border-left:1px solid var(--trait); padding-left:8px; margin-left:auto; gap:3px }
 .rejected-strip>small { color:var(--muted); font-size:10px }
 .generate-version { width:54px; min-height:54px; padding:4px; flex-shrink:0; border:1px dashed var(--contour); background:transparent; color:var(--muted); font-size:11px }
+.library-tree { padding-left:14px; border-left:1px solid var(--trait) }
+.library-tree summary { cursor:pointer; font-size:13px; padding:4px }
+.library-tree summary small { float:right }
+.library-tree button { font-size:12px; padding:4px 8px; min-height:26px }
+.gallery-item canvas,.asset-card>canvas { width:128px; height:128px; image-rendering:pixelated; object-fit:contain }
+.model-placeholder { height:128px; display:grid; place-content:center; text-align:center; font-size:40px; background:var(--cote) }
+.model-placeholder small { font-size:12px }
+#mount-source,#mount-preview { width:224px; height:224px; image-rendering:pixelated; background:var(--cote) }
+.mount-strip { display:flex; gap:8px; overflow:auto; margin:14px 0 }
+.mount-strip button { display:flex; flex-direction:column; align-items:center }
+.mount-strip canvas { width:64px; height:64px; image-rendering:pixelated }
+.mount-strip [aria-pressed=true] { border:2px solid var(--signal); background:var(--ouvert) }

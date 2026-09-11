@@ -136,6 +136,35 @@ reste limitée à la séance ouverte pour éviter de remplir le stockage avec de
 
 ## Vérifications de cette version
 
+### Complément demandé à 22 h 28
+
+- Personnage → Équipement → Créer un équipement : fiche liée au personnage, références
+  proposées dans l'envoi, génération simulée de variantes et retour au personnage.
+- Navigation par familles, dont Monstres, et collections nommées ; recherche, sélection
+  multiple, ajout à une collection, renommage et pagination de 24 assets. La bibliothèque
+  organise les fiches ; la galerie rassemble les résultats. Aucun banc de charge avec
+  des centaines d'assets n'a encore été exécuté sur ce prototype.
+- Fabrications → Fabriquer librement : image, vidéo ou source 3D fictive ; prompt,
+  résolution, graine, durée vidéo, références et règles de l'univers facultatives.
+  Relecture avant mise en file, résultat en galerie et dépôt facultatif sur la toile.
+- Galerie globale : recherche, filtres média et rattachement, aperçu, lecture du clip
+  d'exemple, rattachement d'une image libre à un asset et accès aux rendus 3D simulés.
+  Une carte de toile issue d'un résultat permet de le rouvrir.
+- Sources & clips ou galerie vidéo → Montage : sélection des frames, ordre, cadence,
+  boucle, aperçus synchronisés, destination et sauvegarde d'une bande. La source reste
+  disponible pour d'autres bandes. Reprendre le montage conserve les frames corrigées
+  encore sélectionnées ; le cadre commun est celui de l'exemple.
+- Les remarques reconnues du relevé transmis sont archivées automatiquement une seule
+  fois. L'export ne reprend que les actives ; l'historique permet de restaurer une remarque.
+
+**Limites à ne pas confondre avec des écrans livrés dans le produit :** la vidéo est une
+séquence de cinq images d'exemple, sans décodage d'un nouveau fichier vidéo ; la 3D est
+une fiche simulée, sans maillage ni moteur. Les prix, modèles et paramètres sont fictifs.
+Le choix de centaines de frames, le recadrage commun réglable, les profils réels et la
+gestion complète des collections restent à raccorder aux capacités existantes du produit.
+Le brouillon de montage se conserve par clip et par bande reprise ; rouvrir le même
+parcours le retrouve. « Créer l'animation » reste nécessaire pour ajouter la bande à l'asset.
+
 Les retours d'essai du 11 septembre à 21 h 49 sont intégrés : arborescence mouvement puis
 direction, vignettes retenues / à juger / écartées et galerie filtrable ; lecture des
 animations au survol ; équipements avec aperçu. Écarter conserve une version récupérable

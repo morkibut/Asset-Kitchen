@@ -510,3 +510,37 @@ sont retirés ; la galerie filtrable reste dessous. Essai navigateur : déplier 
 écarter sa version retenue, la remettre à juger puis la retenir de nouveau fonctionne.
 La capture confirme l'alignement compact ; le minimum desktop existant de 1 100 px reste
 applicable. Syntaxe JavaScript et vérification des espaces Git sans erreur.
+
+## Complément du relevé de 22 h 28
+
+Références de code consultées : Galerie, Arbre, navigation des familles et collections
+dans App, puis Montage. Le montage existant conserve le clip payé et peut en tirer
+plusieurs bandes ; ses deux aperçus sont synchronisés. Les collections organisent les
+choses du jeu, tandis que la galerie permet de réutiliser les résultats. L'équipement
+dans le produit a un domaine distinct : la fiche simplifiée de la maquette n'est pas une
+proposition de migration de ce domaine vers une famille générique.
+
+Essais dans une session séparée :
+
+- Créer « Casque » depuis le pèlerin ouvre sa fiche et une demande d'image avec la
+  référence « Le pèlerin » visible à la relecture. Simuler le résultat conserve la fiche.
+- Fabriquer librement « Brume du marais » en vidéo, avec dépôt sur la toile, produit une
+  entrée de galerie et une carte ; son clip d'exemple ouvre le montage.
+- Sélectionner les frames 5 → 3 → 1, nommer « Marche courte · Sud », choisir 6 images/s
+  et désactiver la boucle ; garder, recharger et reprendre retrouve ces choix. Le premier
+  essai a révélé des champs texte/numériques ignorés avant perte de focus ; la prise en
+  compte immédiate a été corrigée, puis le même parcours a été rejoué avec succès.
+- Créer la collection « Habitants du marais », y ranger le pèlerin, recharger et ouvrir
+  la collection depuis la navigation retrouve un asset.
+- Fabriquer une source 3D fictive avec une référence choisie en bibliothèque, filtrer la
+  galerie sur 3D, puis ouvrir la préparation des rendus mène au parcours 3D existant.
+
+Aucune erreur JavaScript relevée sur ces essais. Les médias sont des exemples, aucune
+génération réelle n'a été lancée. Les détails de couverture et les contrôles non éprouvés
+restent dans la couverture du prototype ; les critères de production AU restent ouverts.
+
+Complément de vérification : le brouillon « Brouillon conservé », avec trois frames,
+survit à un rechargement sans création de bande. La carte « Brume du marais » propose
+un accès au résultat depuis la toile. Syntaxe des scripts et vérification Git sans erreur ;
+**1 753 renvois documentaires résolus, corpus de démarrage 162,2 Ko, −29,7 Ko depuis le
+relevé de référence**, préservé grâce à une mesure temporaire.
