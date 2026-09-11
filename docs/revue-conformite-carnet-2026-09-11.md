@@ -501,3 +501,12 @@ fictif payant restent à exercer ; aucun tarif réel ni moteur IA n'a été test
 retenu désigne ici explicitement la version destinée au jeu : l'écarter ne promeut donc
 pas silencieusement une autre version. Cette distinction devra être conservée lors du
 raccord aux états de jugement existants.
+
+### Ajustement aux captures de la version actuelle
+
+Les volets de mouvement deviennent fins et les directions de simples rangées, avec
+retenue isolée à gauche et génération à droite. Les aperçus redondants dans les en-têtes
+sont retirés ; la galerie filtrable reste dessous. Essai navigateur : déplier Marche,
+écarter sa version retenue, la remettre à juger puis la retenir de nouveau fonctionne.
+La capture confirme l'alignement compact ; le minimum desktop existant de 1 100 px reste
+applicable. Syntaxe JavaScript et vérification des espaces Git sans erreur.

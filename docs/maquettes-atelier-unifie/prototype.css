@@ -212,3 +212,24 @@ dialog.wide-dialog { width:min(1080px,94vw); max-height:94vh }
 .brush-cursor { position:fixed; border:1px solid var(--encre); outline:1px solid var(--sur); pointer-events:none; z-index:20 }
 .zoom-viewport.panning,.zoom-viewport.panning canvas,.zoom-viewport.panning svg { cursor:grab }
 .zoom-controls [aria-pressed=true] { background:var(--ouvert); border-color:var(--muted) }
+.animation-tree>details { border:1px solid var(--contour); border-radius:12px; background:var(--carte); margin-bottom:8px; overflow:hidden }
+.animation-tree summary { min-height:46px; padding:8px 14px; gap:8px; background:transparent }
+.animation-tree .folder-title { min-width:0; font-size:25px }
+.movement-state { margin-left:auto }
+.direction-rows { padding:0 14px 14px }
+.direction-row { display:flex; align-items:flex-start; gap:8px; padding:8px 0; border-top:1px solid var(--trait) }
+.direction-name { width:54px; flex-shrink:0; padding-top:12px; font-size:12px }
+.direction-name small { display:block; margin-top:4px; color:var(--muted) }
+.retained-slot { min-width:66px; border-right:1px solid var(--contour); padding-right:8px; align-self:stretch }
+.no-retained { display:grid; place-content:center; width:54px; height:54px; border:1px dashed var(--contour); border-radius:7px; font-size:11px; text-align:center; color:var(--signal) }
+.versions-strip { display:flex; align-items:flex-start; gap:8px; flex:1; min-width:0; overflow-x:auto; padding-bottom:4px }
+.version-tile { width:56px; flex-shrink:0 }
+.version-tile .thumbnail { padding:0; margin:0; gap:3px; border:0; background:transparent; width:56px }
+.version-tile .thumbnail canvas { width:54px; height:54px; border:1px solid var(--trait); border-radius:7px; background:var(--cote) }
+.version-tile .thumbnail span { font-size:10px; color:var(--muted) }
+.judgment-buttons { display:flex; justify-content:center; margin-top:3px }
+.judgment-buttons button { min-height:16px; height:16px; width:18px; padding:0; font-size:10px; border-radius:0; border-color:var(--contour) }
+.judgment-buttons button[aria-pressed=true] { background:var(--ouvert); color:var(--encre) }
+.rejected-strip { display:flex; flex-direction:column; border-left:1px solid var(--trait); padding-left:8px; margin-left:auto; gap:3px }
+.rejected-strip>small { color:var(--muted); font-size:10px }
+.generate-version { width:54px; min-height:54px; padding:4px; flex-shrink:0; border:1px dashed var(--contour); background:transparent; color:var(--muted); font-size:11px }

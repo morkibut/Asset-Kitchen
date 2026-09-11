@@ -141,6 +141,12 @@ direction, vignettes retenues / à juger / écartées et galerie filtrable ; lec
 animations au survol ; équipements avec aperçu. Écarter conserve une version récupérable
 et ne choisit pas automatiquement une autre version pour le jeu.
 
+Après comparaison aux deux captures de l'auteur, seul le mouvement se replie : ses
+directions sont des rangées compactes, sans second volet ni vignettes dans l'en-tête.
+Chaque rangée réserve la retenue à gauche, aligne les autres versions, puis les écartées,
+et place « générer » à droite. Les trois petits boutons sous chaque vignette permettent
+de retenir, remettre à juger ou écarter ; leur intitulé est accessible et leur état indiqué.
+
 La relecture permet de modifier ensemble les textes, le modèle et les références visibles.
 Le modèle et son coût restent consultables sur la fabrication. Les noms DemoAPI/DemoLocal
 et les prix sont fictifs : aucun fournisseur n'est appelé. La bibliothèque propose recherche,
