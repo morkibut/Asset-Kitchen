@@ -193,9 +193,19 @@
       corps.globalCompositeOperation = 'source-over';
       const composition = toile();
       const contexte = composition.getContext('2d');
-      rendus.filter(({calque}) => calque.front === false).forEach(({calque, image}) => poser(contexte, image, calque));
+      // Une partie seulement peut passer derrière : sangles devant, sac derrière.
+      const parties = rendus.map(({calque,image}) => {
+        if (!calque.behind?.length) return {calque,avant:calque.front===false?null:image,arriere:calque.front===false?image:null};
+        const zone=toile(),z=zone.getContext('2d');
+        if(calque.front===false){z.fillStyle='#000';z.fillRect(0,0,TAILLE,TAILLE);}
+        for(const trait of calque.behind){z.globalCompositeOperation=trait.restore?'destination-out':'source-over';z.fillRect(Math.round(trait.x-trait.size/2),Math.round(trait.y-trait.size/2),Math.ceil(trait.size),Math.ceil(trait.size));}
+        const avant=toile(),arriere=toile();
+        for(const [c,operation] of [[avant,'destination-out'],[arriere,'destination-in']]){const ctx=c.getContext('2d');ctx.drawImage(image,0,0);ctx.globalCompositeOperation=operation;ctx.drawImage(zone,0,0);}
+        return {calque,avant,arriere};
+      });
+      parties.filter(p=>p.arriere).forEach(p=>poser(contexte,p.arriere,p.calque));
       contexte.drawImage(base, 0, 0);
-      rendus.filter(({calque}) => calque.front !== false).forEach(({calque, image}) => poser(contexte, image, calque));
+      parties.filter(p=>p.avant).forEach(p=>poser(contexte,p.avant,p.calque));
       const destination = canvas.getContext('2d');
       destination.save();
       destination.setTransform(1, 0, 0, 1, 0, 0);

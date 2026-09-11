@@ -347,7 +347,7 @@ de choisir un moteur ; le détail se recadre au moment de cette tranche.
 
 ## AU15 · Un équipement a son premier calque sur un personnage
 
-**User stories** : US-537, US-541, US-542, US-544. **Bloquée par** : AU4.
+**User stories** : US-537, US-541, US-542, US-544, US-545. **Bloquée par** : AU4.
 
 ### Ce qu'on livre
 
@@ -366,6 +366,12 @@ ne demande aucun fournisseur et pose le contrat réutilisé par les deux tranche
   sa source. Déplacement direct, valeurs et ordre devant ou derrière le corps se rouvrent.
 - [ ] Les masques d'occultation et l'ordre des couches permettent de corriger ce qui passe
   devant ou derrière ; l'original du corps et les autres emplois ne sont jamais modifiés.
+- [ ] En vue 3/4, l'ordre des images est expliqué indépendamment de l'orientation ; une
+  partie d'une pièce peut passer sous le personnage et une autre au-dessus, par frame.
+- [ ] Depuis la retouche, associer le rendu à une pièce distingue référence, personnage
+  équipé à extraire et calque transparent ; la cible est explicite et la source conservée.
+- [ ] La fiche de la pièce présente d'abord ses emplois et leurs porteurs ; les usages
+  à part ou en mise en scène restent distincts des calques portés, comme dans l'existant.
 - [ ] Retenir une variante ne détruit pas les autres ; une image équipée contenant le corps
   complet ne devient pas un calque superposable par simple changement d'étiquette.
 - [ ] UI et MCP lisent la même relation pièce → emploi → cible et le même état enregistré.
@@ -392,6 +398,14 @@ peut contrôler la bande en lecture. L'agent suit la même fabrication bornée q
   non produite n'invente aucun nombre de frames, une direction non demandée n'est pas un trou.
 - [ ] La relecture nomme les cibles et montre leurs corps de base, les références de la pièce,
   le fournisseur, le modèle et la consommation annoncée ; elle ne commande aucune combinaison.
+- [ ] La relecture distingue images ciblées, planches et appels : le pliage existant est
+  réutilisé sur les corps ou frames déjà rendus, quelle que soit leur origine. Capacité,
+  références et résolution viennent du catalogue ; le coût est par appel, pas par case.
+  Le dépliage conserve chaque correspondance et se reprend sans nouvelle génération.
+- [ ] Le chemin image par image annonce son nombre d'appels distinct. Une modification du
+  clip source n'est proposée qu'avec un workflow compatible ; réutiliser une graine ne
+  garantit pas le même mouvement. Les retours vidéo exigent une vérification des frames.
+  Les rendus 3D utilisent le pliage d'images tant qu'aucun véritable habillage 3D n'est fourni.
 - [ ] Une reprise ne refabrique pas les cibles terminées et n'écrase pas une variante retenue ;
   annulation, erreur partielle et soumission incertaine suivent les règles d'AU3.
 - [ ] Une correction manuelle de masque ou de placement s'applique à la portée choisie ;

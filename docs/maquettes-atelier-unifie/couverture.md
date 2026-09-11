@@ -148,6 +148,33 @@ reste limitée à la séance ouverte pour éviter de remplir le stockage avec de
 
 ## Vérifications de cette version
 
+### Retours de 23 h 53 · itération du 12 septembre
+
+- La fiche de pièce remet **Ses emplois** au premier plan, avec porteur, emplacement,
+  couverture et accès aux poses/calques. Les genres portés, image à part et mise en scène
+  reprennent B19 ; les deux derniers restent des déclarations, sans génération dédiée.
+- « Au-dessus / sous le personnage » désigne l'ordre des pixels, pas l'angle de caméra.
+  L'aide 3/4 et les pinceaux permettant de passer seulement une partie sous le corps
+  rendent l'occultation explicite ; le corps brut ne change pas.
+- La fabrication propose pliage ou appels séparés. Elle montre les images ciblées, les
+  planches envoyées, le nombre d'appels et l'estimation fictive par appel. Le regroupement
+  reprend le principe C3 ; sa capacité 4/6/9 cases est uniquement un réglage de maquette.
+  La simulation forme une vraie image de planche puis la découpe localement en conservant
+  les cibles. Revoir ou déplier le résultat n'appelle aucun fournisseur.
+- Les frames issues d'un clip ou de rendus 3D empruntent ce même chemin d'images. Aucun
+  workflow de modification vidéo ni habillage de maillage 3D n'est branché. L'interface
+  l'explique ; la réutilisation d'une seed n'est pas présentée comme un verrou du mouvement.
+- La retouche propose **Utiliser comme équipement…** : référence commune, personnage
+  équipé à extraire, ou calque transparent à ajuster. Pièce, porteur et cible sont explicites.
+  Le rendu courant est copié, les retouches gardées, et la source reste conservée.
+
+Éprouvé dans `essai=equipements-appels` : cinq frames donnent un appel avec six cases,
+deux appels avec quatre cases, cinq appels séparés ; génération simulée, dépliage réel
+et extraction aboutissent à cinq calques vérifiables. Attribution d'une référence puis
+d'une source équipée à Marche/Sud/frame 2, restauration de l'ancien calque, création d'un
+emploi porté et d'une icône déclarée. Occultation partielle utilisée au pinceau.
+La qualité sur des sprites 3/4 réels, une vidéo modifiée et de grands lots reste à éprouver.
+
 ### Équipements complets, après la précision de l'auteur
 
 Le report proposé à 22 h 56 est annulé. Le parcours part désormais d'une pièce commune,

@@ -625,3 +625,37 @@ Le choix d'un nouveau porteur montre les deux personnages avec leurs aperçus.
 Contrôle final : six scripts syntaxiquement valides, aucune erreur JavaScript dans les
 parcours décrits, `git diff --check` sans défaut ; 1 753 renvois documentaires résolus,
 corpus de démarrage 163,5 Ko, −28,5 Ko depuis le relevé de référence conservé.
+
+## Relevé de 23 h 53 · corrections du 12 septembre
+
+Lecture du domaine équipement, de `Emplois.tsx`, `Emploi.tsx` et du service équipement :
+B19 possède déjà trois genres d'emploi, un porteur unique par couple pièce/personnage,
+et une liste centrée sur les usages. Cette structure est conservée dans la proposition.
+Le pliage C3 compose les corps retenus dans une planche à géométrie connue, y compris
+pour une seule pose ; le dépliage produit les calques et ne refait pas l'appel. Son
+extension aux frames reste une tranche de production, pas une capacité serveur ajoutée ici.
+
+Le montage local ComfyUI conserve une graine de bruit mais part d'une image de départ.
+Cela ne constitue pas un port de modification d'un clip complet. La
+[documentation RandomNoise](https://docs.comfy.org/built-in-nodes/RandomNoise) décrit une
+graine qui reproduit le bruit ; en déduire un mouvement identique après changement de
+consigne serait injustifié. Aucun profil vidéo supplémentaire n'a été installé.
+
+Essai séparé `equipements-appels` : cinq frames ciblées annoncent un appel en planche de
+six cases, deux appels en capacité quatre, ou cinq appels individuels. Les estimations
+fictives affichées étaient respectivement 0,04 $, 0,08 $ et 0,20 $ au même prix d'appel.
+Le résultat regroupé a été déplié dans le navigateur, extrait et validé : 5/6 calques,
+la sixième cible étant l'image fixe volontairement exclue. Aucun appel réel.
+
+Une image retouchée est devenue référence d'une nouvelle pièce. La fiche montre ensuite
+« Ses emplois · 2 » : porté par le pèlerin, et icône d'inventaire déclarée à part.
+La même référence a été associée explicitement comme image équipée à Marche/Sud/frame 2
+du sac ; état « À extraire », puis restauration du calque précédent. Le pinceau d'ordre
+partiel a placé des pixels du sac sous le personnage, visible dans l'aperçu et rouvert.
+Pas d'erreur JavaScript relevée. Après rechargement, les deux emplois et la référence
+associée se retrouvent ; la planche équipée dépliée reste présente en galerie.
+La vérification visuelle sur plusieurs angles réels reste à faire.
+
+Contrôles de fin : les cinq scripts touchés passent leur vérification de syntaxe,
+`git diff --check` ne signale aucun défaut ; les 1 753 renvois documentaires sont valides.
+Corpus de démarrage : 163,6 Ko, −28,4 Ko par rapport au relevé de référence conservé.

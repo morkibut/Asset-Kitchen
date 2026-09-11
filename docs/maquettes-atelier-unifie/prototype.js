@@ -157,7 +157,7 @@
   }
   function editor() {
     if(!draft) return '<p>Aucun résultat ouvert.</p>'+go('Revenir aux assets','library');
-    return heading(draft.title,`${esc(currentSubject().name)} · version ${draft.revision} · <span id="dirty" class="${dirty?'dirty':''}">${dirty?'Modifications à garder':'Version gardée'}</span>`,go('Retour à l’asset','subject')+button('Garder les retouches','save-editor'))+
+    return heading(draft.title,`${esc(currentSubject().name)} · version ${draft.revision} · <span id="dirty" class="${dirty?'dirty':''}">${dirty?'Modifications à garder':'Version gardée'}</span>`,go('Retour à l’asset','subject')+button('Garder les retouches','save-editor')+button('Utiliser comme équipement…','eq-assign-image'))+
       `<div class="editor"><section><div class="toolbar">${button(playing?'Pause':'Lire','play',draft.animated?'':'disabled')}${button('Annuler','undo',undo.length?'':'disabled')}${button('Rétablir','redo',redo.length?'':'disabled')}${button('Comparer à la source','compare-source')}</div><div class="sprite editor-preview ${draft.recipe.grid?'grid':''}"><canvas id="pixels" width="64" height="64" aria-label="Image à retoucher, peindre avec la souris"></canvas></div>
       <p class="small" id="frame-status">Frame ${cursor+1} / ${draft.frames.length} · ${draft.animated?'clic : choisir · Ctrl ou ⌘ + clic : sélection multiple':'image fixe'}</p><div class="timeline" aria-label="Frames">${draft.frames.map((f,i)=>`<button class="frame" data-action="frame" data-index="${i}" aria-label="Frame ${i+1}" aria-pressed="${selectedFrames.includes(i)}"><canvas width="64" height="64" data-frame="${i}"></canvas><span>${i+1}</span></button>`).join('')}</div>
       <div class="toolbar">${button('Tout sélectionner','select-all')}${button('Dupliquer','duplicate')}${button('← Avancer','move-frame','data-delta="-1"')}${button('Reculer →','move-frame','data-delta="1"')}${button('Retirer','remove-frame',draft.frames.length>selectedFrames.length?'':'disabled')}${button('Extraire une image','extract-frame',draft.animated?'':'disabled')}</div>
@@ -328,6 +328,7 @@
     esc,button,field,input,select,modal,save,render,toast,clone,drawFrame,
     brush:key=>key==='pixels'?(tool==='Main'&&inspector==='retouch'?Number(draft?.recipe.brush):0):ateliers.brushSize()});
   parcours=window.creerParcoursMaquette({state:()=>state,subject:currentSubject,page:()=>page,esc,button,field,input,select,heading,modal,save,render,toast,id,clone,result,drawFrame,image:IMAGE,navigate,
+    editorSnapshot:()=>draft?{r:clone(draft),index:cursor,subjectId}:null,saveEditor,
     picker:(...args)=>ergonomie.openPicker(...args),sourceImage:r=>r.frames[0]?.image||r.image||IMAGE,
     request:requestForm,requestState:()=>request,
     openSubject:(sid,t='animations')=>{dialog.close();subjectId=sid;tab=t;navigate('subject');},

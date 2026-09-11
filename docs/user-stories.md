@@ -1001,3 +1001,14 @@ de poses fixes et l'exclusion générale du local ; elles n'effacent aucun résu
   Réordonner les frames ne permute pas leurs placements ; remplacer une animation signale
   les calques à revoir sans les supprimer. Les calques de pose et le suivi animé déjà gardés
   restent lisibles, sans prétendre qu'ils sont des variantes indépendantes par direction.
+- **US-545** — En tant qu'auteur, je veux associer une image ou frame depuis la retouche
+  à une pièce existante ou nouvelle, afin de réutiliser ce que j'ai déjà produit.
+  Je distingue une référence de la pièce, un personnage équipé dont le calque reste à
+  extraire, et un calque transparent à placer. Le porteur et la cible sont demandés quand
+  ils sont nécessaires ; les retouches utilisées et l'image d'origine restent conservées.
+
+Précisions du relevé de 23 h 53 pour US-541 et US-542 : la relecture distingue nombre
+d'images, de planches et d'appels et permet le regroupement avant découpe locale. Les
+images issues d'une vidéo ou d'un rendu 3D restent réutilisables. Reprendre une graine
+n'est pas une promesse de mouvement identique. L'ordre des calques explique ce qui cache
+quoi à l'écran et permet une pièce partiellement sous le personnage, même en vue 3/4.

@@ -112,7 +112,7 @@ Il peut travailler avec une génération distante ou avec les capacités de sa m
 ## User Stories → `docs/user-stories.md`
 
 Les stories historiques US-1 à US-518 restent dans [le catalogue](user-stories.md).
-Les stories US-519 à US-544 ajoutées le 11 septembre couvrent le nouvel atelier :
+Les stories US-519 à US-545 ajoutées les 11 et 12 septembre couvrent le nouvel atelier :
 objectif de production, sources, animation, reprise, export, travail long, procédés locaux,
 3D réutilisable, futures familles et boucle de production avec l'agent Godot.
 US-534 à US-536 garantissent explicitement le parcours sans MCP, la toile et les outils existants.
@@ -122,6 +122,7 @@ US-537 à US-540 précisent l'équipement créé depuis son personnage, les fami
 collections, la fabrication libre et la galerie de tous les résultats réutilisables sur la toile.
 US-541 à US-544 complètent les emplois d'équipement : couverture, correction par frame,
 combinaisons et reprise après modification de l'animation.
+US-545 relie une image déjà retouchée à un équipement sans perdre sa source.
 En cas de conflit, le présent cadrage prévaut ;
 les anciennes stories ne sont pas supprimées comme si elles n'avaient jamais été livrées.
 

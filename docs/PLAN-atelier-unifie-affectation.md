@@ -117,6 +117,14 @@ le travail ; ils doivent être redécoupés avant codage, surtout les deux derni
 
 ## Règles d'exécution
 
+Relevé du 11 septembre à 23 h 53 : AU15 reprend la liste des trois genres d'emploi
+déjà présente en B19 et précise l'association depuis la retouche et l'occultation partielle.
+AU16 réutilise le pliage/dépliage C3 plutôt qu'un appel imposé par frame ; il distingue
+la modification d'un clip, conditionnée à un profil compatible. Les affectations existantes
+restent valables : AU15 pose déjà les cibles et masques, AU16 raccorde les fabrications.
+La simulation des planches, de leur découpe et de l'attribution reste dans la préparation
+UX MEDIUM, sans modification du contrat de stockage de production ni appel fournisseur.
+
 Les sélecteurs de rattachement et l'ordre des frames restent dans AU4 et la préparation UX
 MEDIUM. La précision de l'auteur après 22 h 56 annule le report des équipements : AU15–AU17
 sont désormais requises, avant les nouveaux moteurs et les médias différés. La préparation

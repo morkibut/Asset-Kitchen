@@ -323,7 +323,9 @@ poses/directions/frames → tenues vit dans `docs/maquettes-atelier-unifie/equip
 navigation, couverture, relecture, placements, versions et raccords à la galerie et aux
 fabrications. `docs/maquettes-atelier-unifie/equipements-rendu.js` tient le dessin local
 des fixtures, l'extraction de pixels et le rendu Canvas des transformations, masques et
-compositions en 64 × 64 ; aucun de ces deux modules ne pilote les moteurs du produit.
+compositions en 64 × 64. `docs/maquettes-atelier-unifie/equipements-attribution.js` associe
+le rendu d'une retouche à une référence de pièce, une source équipée ou un calque ciblé,
+sans déplacer l'original ; aucun de ces modules ne pilote les moteurs du produit.
 Le périmètre testable et ses limites sont dans
 `docs/maquettes-atelier-unifie/couverture.md` ; il ne fait aucun appel fournisseur.
 `01-parcours.html` garde la proposition initiale. La sauvegarde du prototype reste propre
