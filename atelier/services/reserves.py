@@ -118,10 +118,9 @@ def _depuis(compte: Compte, maintenant: float) -> float:
     """Le début de la fenêtre de comptage, d'après l'heure de renouvellement.
 
     **Une seule heure est connue aujourd'hui, et c'est minuit.** Le jour où un
-    fournisseur en annoncera une autre — Cloudflare en F4 —, elle s'écrira ici,
-    à un endroit, plutôt que dans chaque adaptateur. Une heure qu'on ne sait pas
-    lire ne borne rien : on compte alors depuis toujours, ce qui est vrai et se
-    lit à l'écran.
+    fournisseur en annoncera une autre, elle s'écrira ici, à un endroit, plutôt
+    que dans chaque adaptateur. Une heure qu'on ne sait pas lire ne borne rien :
+    on compte alors depuis toujours, ce qui est vrai et se lit à l'écran.
     """
     if not compte.renouvellement:
         return 0.0

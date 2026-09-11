@@ -407,25 +407,25 @@
         "type": "epic",
         "parent": null,
         "title": "L'ouverture",
-        "status": "todo",
-        "status_raw": null,
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 0,
-          "total": 6
+          "total": 0
         },
         "source": "plan",
         "order": 24,
-        "blocked_by": "B0"
+        "blocked_by": null
       },
       {
-        "id": "B4.1",
-        "type": "check",
-        "parent": "B4",
-        "title": "La liste se trie par dernier travaillé, et cette date est servie par le serveur.",
-        "status": "todo",
-        "status_raw": null,
+        "id": "B5",
+        "type": "epic",
+        "parent": null,
+        "title": "Le tableau de bord du jeu",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
@@ -433,15 +433,16 @@
           "total": 0
         },
         "source": "plan",
-        "order": 25
+        "order": 25,
+        "blocked_by": "B0, B4 — tenue le 6 septembre 2026."
       },
       {
-        "id": "B4.2",
-        "type": "check",
-        "parent": "B4",
-        "title": "Changer de jeu recharge l'univers : la bible, la taille de pixel et les grisés suivent,",
-        "status": "todo",
-        "status_raw": null,
+        "id": "B6",
+        "type": "epic",
+        "parent": null,
+        "title": "La barre",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
@@ -449,15 +450,16 @@
           "total": 0
         },
         "source": "plan",
-        "order": 26
+        "order": 26,
+        "blocked_by": null
       },
       {
-        "id": "B4.3",
-        "type": "check",
-        "parent": "B4",
-        "title": "Le chantier ne montre que les générations du jeu ouvert.",
-        "status": "todo",
-        "status_raw": null,
+        "id": "B7",
+        "type": "epic",
+        "parent": null,
+        "title": "Le guide en volet, et les touches",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
@@ -465,30 +467,32 @@
           "total": 0
         },
         "source": "plan",
-        "order": 27
+        "order": 27,
+        "blocked_by": "B0 — tenue le 6 septembre 2026."
       },
       {
-        "id": "B4.4",
-        "type": "check",
-        "parent": "B4",
-        "title": "Le nom du jeu, en tête du carnet, déplie les cinq derniers jeux touchés et « Tous les",
-        "status": "todo",
-        "status_raw": null,
+        "id": "B8",
+        "type": "epic",
+        "parent": null,
+        "title": "La collection devient un vrai groupe",
+        "status": "done",
+        "status_raw": "tenue le 7 septembre 2026",
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
-          "total": 0
+          "done": 6,
+          "total": 6
         },
         "source": "plan",
-        "order": 28
+        "order": 28,
+        "blocked_by": null
       },
       {
-        "id": "B4.5",
+        "id": "B8.1",
         "type": "check",
-        "parent": "B4",
-        "title": "Supprimer un jeu reste possible — le geste existe aujourd'hui dans la colonne de la",
-        "status": "todo",
+        "parent": "B8",
+        "title": "Un sujet se range dans deux collections et reste dans les deux. *Tenu par `B8.4` :",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -500,11 +504,11 @@
         "order": 29
       },
       {
-        "id": "B4.6",
+        "id": "B8.2",
         "type": "check",
-        "parent": "B4",
-        "title": "Un jeu dont le dossier a été effacé du disque se relit ou se retire ; la route existe",
-        "status": "todo",
+        "parent": "B8",
+        "title": "Retirer une collection ne perd aucun sujet : ils redeviennent sans collection. *Tenu par",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -516,28 +520,27 @@
         "order": 30
       },
       {
-        "id": "B5",
-        "type": "epic",
-        "parent": null,
-        "title": "Le tableau de bord du jeu",
-        "status": "todo",
+        "id": "B8.3",
+        "type": "check",
+        "parent": "B8",
+        "title": "L'index se reconstruit du disque et retrouve les mêmes adhésions — les fichiers font",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 0,
-          "total": 6
+          "total": 0
         },
         "source": "plan",
-        "order": 31,
-        "blocked_by": "B0, B4"
+        "order": 31
       },
       {
-        "id": "B5.1",
+        "id": "B8.4",
         "type": "check",
-        "parent": "B5",
-        "title": "Une barre de complétude par famille, et le manque dit en clair sous chaque barre.",
-        "status": "todo",
+        "parent": "B8",
+        "title": "La recherche rend **deux groupes** : les sujets par leur nom et leur description, les",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -549,11 +552,11 @@
         "order": 32
       },
       {
-        "id": "B5.2",
+        "id": "B8.5",
         "type": "check",
-        "parent": "B5",
-        "title": "« Ce qui manque le plus » liste les manques toutes familles confondues, chacun avec son",
-        "status": "todo",
+        "parent": "B8",
+        "title": "Une collection ne range que des **sujets**. Le filtre `collection` de la galerie devient",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -565,11 +568,11 @@
         "order": 33
       },
       {
-        "id": "B5.3",
+        "id": "B8.6",
         "type": "check",
-        "parent": "B5",
-        "title": "Une jauge ne compte que ce qu'on peut fabriquer maintenant — l'invariant d'`E12` tient.",
-        "status": "todo",
+        "parent": "B8",
+        "title": "Les collections déjà écrites sur le disque se relisent sans perte. *Tenu par `B8.1` :",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -581,27 +584,28 @@
         "order": 34
       },
       {
-        "id": "B5.4",
-        "type": "check",
-        "parent": "B5",
-        "title": "Le manque n'a aucune couleur d'alerte et ne réclame rien.",
-        "status": "todo",
+        "id": "B9",
+        "type": "epic",
+        "parent": null,
+        "title": "La grille d'une famille",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
-          "total": 0
+          "done": 5,
+          "total": 5
         },
         "source": "plan",
-        "order": 35
+        "order": 35,
+        "blocked_by": "B0, B8"
       },
       {
-        "id": "B5.5",
+        "id": "B9.1",
         "type": "check",
-        "parent": "B5",
-        "title": "Un bandeau apparaît quand une feuille reçue attend d'être découpée, et disparaît sinon.",
-        "status": "todo",
+        "parent": "B9",
+        "title": "La grille tient 250 sujets sans ralentir : elle défile, elle ne recalcule pas ses",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -613,11 +617,11 @@
         "order": 36
       },
       {
-        "id": "B5.6",
+        "id": "B9.2",
         "type": "check",
-        "parent": "B5",
-        "title": "Cliquer le nom du jeu ramène ici depuis n'importe quel écran.",
-        "status": "todo",
+        "parent": "B9",
+        "title": "Faire glisser une sélection sur une collection montre le compte projeté avant le lâcher.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -629,28 +633,27 @@
         "order": 37
       },
       {
-        "id": "B6",
-        "type": "epic",
-        "parent": null,
-        "title": "La barre",
-        "status": "todo",
+        "id": "B9.3",
+        "type": "check",
+        "parent": "B9",
+        "title": "Les filtres portent leur compte, et « incomplets » se dérive de ce que la nature attend.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 0,
-          "total": 5
+          "total": 0
         },
         "source": "plan",
-        "order": 38,
-        "blocked_by": "B0"
+        "order": 38
       },
       {
-        "id": "B6.1",
+        "id": "B9.4",
         "type": "check",
-        "parent": "B6",
-        "title": "La barre ne paie et ne lance jamais rien : une action payante ouvre l'écran d'envoi déjà",
-        "status": "todo",
+        "parent": "B9",
+        "title": "Le panneau des réglages de famille écrit dans le modèle existant, sans nouvelle table.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -662,11 +665,11 @@
         "order": 39
       },
       {
-        "id": "B6.2",
+        "id": "B9.5",
         "type": "check",
-        "parent": "B6",
-        "title": "Ce qui ne peut pas se faire ne s'affiche pas du tout dans la barre — ni grisé, ni proposé.",
-        "status": "todo",
+        "parent": "B9",
+        "title": "Une seule grille d'assets dans tout le produit — celle-ci n'en est pas une seconde : elle",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -678,27 +681,28 @@
         "order": 40
       },
       {
-        "id": "B6.3",
-        "type": "check",
-        "parent": "B6",
-        "title": "La liste des actions est celle du serveur : ajouter une fonction au serveur la fait",
-        "status": "todo",
+        "id": "B10",
+        "type": "epic",
+        "parent": null,
+        "title": "La page d'un sujet",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
-          "total": 0
+          "done": 6,
+          "total": 6
         },
         "source": "plan",
-        "order": 41
+        "order": 41,
+        "blocked_by": "B0, B9"
       },
       {
-        "id": "B6.4",
+        "id": "B10.1",
         "type": "check",
-        "parent": "B6",
-        "title": "Les six verbes sont fixes : aller, créer, générer, travailler, sortir, régler.",
-        "status": "todo",
+        "parent": "B10",
+        "title": "La retenue est toujours en tête, quelle que soit sa date ; les gardées suivent en ordre",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -710,11 +714,11 @@
         "order": 42
       },
       {
-        "id": "B6.5",
+        "id": "B10.2",
         "type": "check",
-        "parent": "B6",
-        "title": "Un résultat « aller à » porte son contexte : de quel sujet, quelle pose, quelle",
-        "status": "todo",
+        "parent": "B10",
+        "title": "Retenir une image en démote une autre, et l'écart n'efface rien. — ⚠️ **la démotion se",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -726,28 +730,27 @@
         "order": 43
       },
       {
-        "id": "B7",
-        "type": "epic",
-        "parent": null,
-        "title": "Le guide en volet, et les touches",
-        "status": "todo",
+        "id": "B10.3",
+        "type": "check",
+        "parent": "B10",
+        "title": "Une direction vide se lit « à confirmer » et jamais « sud » ; un clic confirme. — le clic",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 0,
-          "total": 6
+          "total": 0
         },
         "source": "plan",
-        "order": 44,
-        "blocked_by": "B0"
+        "order": 44
       },
       {
-        "id": "B7.1",
+        "id": "B10.4",
         "type": "check",
-        "parent": "B7",
-        "title": "Les 157 entrées sont adressées à une ligne du carnet qui existe — un essai refuse un",
-        "status": "todo",
+        "parent": "B10",
+        "title": "La case « + générer » ne défile jamais. — troisième colonne de la grille, hors de la",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -759,11 +762,11 @@
         "order": 45
       },
       {
-        "id": "B7.2",
+        "id": "B10.5",
         "type": "check",
-        "parent": "B7",
-        "title": "`SANS_ENTREE` reste juste : ce qui n'a pas d'explication y est, et rien d'autre.",
-        "status": "todo",
+        "parent": "B10",
+        "title": "Les calques d'une image sont ceux de cette image, pas ceux de la pose — changer la",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -775,11 +778,11 @@
         "order": 46
       },
       {
-        "id": "B7.3",
+        "id": "B10.6",
         "type": "check",
-        "parent": "B7",
-        "title": "Une explication ne se recopie jamais : le volet, la bulle et la ligne sous un titre",
-        "status": "todo",
+        "parent": "B10",
+        "title": "Passer d'un onglet à l'autre ne recharge pas le carnet. — l'onglet est un état de la",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -791,27 +794,28 @@
         "order": 47
       },
       {
-        "id": "B7.4",
-        "type": "check",
-        "parent": "B7",
-        "title": "Le panneau des touches montre les touches de l'écran ouvert ; quand l'écran n'en a",
-        "status": "todo",
+        "id": "B11",
+        "type": "epic",
+        "parent": null,
+        "title": "Ses animations, et le départage",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
-          "total": 0
+          "done": 5,
+          "total": 5
         },
         "source": "plan",
-        "order": 48
+        "order": 48,
+        "blocked_by": "B10 — tenue."
       },
       {
-        "id": "B7.5",
+        "id": "B11.1",
         "type": "check",
-        "parent": "B7",
-        "title": "Une touche annoncée répond ; une touche qui ne répond pas encore n'est pas annoncée.",
-        "status": "todo",
+        "parent": "B11",
+        "title": "Une seule bande est retenue par case (pose × direction), et retenir bascule en un geste.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -823,11 +827,11 @@
         "order": 49
       },
       {
-        "id": "B7.6",
+        "id": "B11.2",
         "type": "check",
-        "parent": "B7",
-        "title": "Le volet ne porte jamais une raison de refus — elle reste sous le bouton grisé.",
-        "status": "todo",
+        "parent": "B11",
+        "title": "Écarter une bande ne la détruit pas : elle passe derrière la flèche, et la plus récente",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -839,28 +843,27 @@
         "order": 50
       },
       {
-        "id": "B8",
-        "type": "epic",
-        "parent": null,
-        "title": "La collection devient un vrai groupe",
-        "status": "todo",
+        "id": "B11.3",
+        "type": "check",
+        "parent": "B11",
+        "title": "Le tri par pose, direction et date ne demande aucune donnée nouvelle. — `cree_le`",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 0,
-          "total": 5
+          "total": 0
         },
         "source": "plan",
-        "order": 51,
-        "blocked_by": null
+        "order": 51
       },
       {
-        "id": "B8.1",
+        "id": "B11.4",
         "type": "check",
-        "parent": "B8",
-        "title": "Un sujet se range dans deux collections et reste dans les deux.",
-        "status": "todo",
+        "parent": "B11",
+        "title": "« À départager » est le seul rouge de l'écran. — même règle qu'`ImagesDuSujet.tsx` :",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -872,11 +875,11 @@
         "order": 52
       },
       {
-        "id": "B8.2",
+        "id": "B11.5",
         "type": "check",
-        "parent": "B8",
-        "title": "Retirer une collection ne perd aucun sujet : ils redeviennent sans collection.",
-        "status": "todo",
+        "parent": "B11",
+        "title": "Écarter une bande ne perd pas les retouches par frame qui lui sont attachées. — seul",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -888,27 +891,28 @@
         "order": 53
       },
       {
-        "id": "B8.3",
-        "type": "check",
-        "parent": "B8",
-        "title": "L'index se reconstruit du disque et retrouve les mêmes adhésions — les fichiers font",
-        "status": "todo",
+        "id": "B12",
+        "type": "epic",
+        "parent": null,
+        "title": "L'essai",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
-          "total": 0
+          "done": 4,
+          "total": 4
         },
         "source": "plan",
-        "order": 54
+        "order": 54,
+        "blocked_by": "B10, B11 — tenues."
       },
       {
-        "id": "B8.4",
+        "id": "B12.1",
         "type": "check",
-        "parent": "B8",
-        "title": "La recherche trouve un sujet par son nom, sa description et sa pose.",
-        "status": "todo",
+        "parent": "B12",
+        "title": "Le personnage se pilote au clavier, et la vitesse jouée est celle qui sortira à l'export.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -920,11 +924,11 @@
         "order": 55
       },
       {
-        "id": "B8.5",
+        "id": "B12.2",
         "type": "check",
-        "parent": "B8",
-        "title": "Les collections déjà écrites sur le disque se relisent sans perte.",
-        "status": "todo",
+        "parent": "B12",
+        "title": "Une animation qui manque le dit et laisse le personnage au repos — il ne joue jamais une",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -936,28 +940,27 @@
         "order": 56
       },
       {
-        "id": "B9",
-        "type": "epic",
-        "parent": null,
-        "title": "La grille d'une famille",
-        "status": "todo",
+        "id": "B12.3",
+        "type": "check",
+        "parent": "B12",
+        "title": "Le bouton « demander un clip » part d'ici pré-rempli avec la pose et la direction, et son",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 0,
-          "total": 5
+          "total": 0
         },
         "source": "plan",
-        "order": 57,
-        "blocked_by": "B0, B8"
+        "order": 57
       },
       {
-        "id": "B9.1",
+        "id": "B12.4",
         "type": "check",
-        "parent": "B9",
-        "title": "La grille tient 250 sujets sans ralentir : elle défile, elle ne recalcule pas ses",
-        "status": "todo",
+        "parent": "B12",
+        "title": "La scène se règle sans rien fabriquer et sans rien payer. *Fond (gris neutre, clair,",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -969,27 +972,28 @@
         "order": 58
       },
       {
-        "id": "B9.2",
-        "type": "check",
-        "parent": "B9",
-        "title": "Faire glisser une sélection sur une collection montre le compte projeté avant le lâcher.",
-        "status": "todo",
+        "id": "B13",
+        "type": "epic",
+        "parent": null,
+        "title": "La grille du jeu, et comparer",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
-          "total": 0
+          "done": 5,
+          "total": 5
         },
         "source": "plan",
-        "order": 59
+        "order": 59,
+        "blocked_by": "B10"
       },
       {
-        "id": "B9.3",
+        "id": "B13.1",
         "type": "check",
-        "parent": "B9",
-        "title": "Les filtres portent leur compte, et « incomplets » se dérive de ce que la nature attend.",
-        "status": "todo",
+        "parent": "B13",
+        "title": "Le zoom est entier et rien d'autre : ×1, ×2, ×4, ×8. *Les deux écrans partagent le",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1001,11 +1005,11 @@
         "order": 60
       },
       {
-        "id": "B9.4",
+        "id": "B13.2",
         "type": "check",
-        "parent": "B9",
-        "title": "Le panneau des réglages de famille écrit dans le modèle existant, sans nouvelle table.",
-        "status": "todo",
+        "parent": "B13",
+        "title": "Le plafond d'occupation affiché est celui que la taille de case permet vraiment.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1017,11 +1021,11 @@
         "order": 61
       },
       {
-        "id": "B9.5",
+        "id": "B13.3",
         "type": "check",
-        "parent": "B9",
-        "title": "Une seule grille d'assets dans tout le produit — celle-ci n'en est pas une seconde : elle",
-        "status": "todo",
+        "parent": "B13",
+        "title": "Comparer deux sujets ne coûte rien et ne modifie rien. *`Comparer.tsx` ne prend que",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1033,28 +1037,27 @@
         "order": 62
       },
       {
-        "id": "B10",
-        "type": "epic",
-        "parent": null,
-        "title": "La page d'un sujet",
-        "status": "todo",
+        "id": "B13.4",
+        "type": "check",
+        "parent": "B13",
+        "title": "Un écart hors norme porte l'action qui le corrige, avec son prix quand elle en a un.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 0,
-          "total": 6
+          "total": 0
         },
         "source": "plan",
-        "order": 63,
-        "blocked_by": "B0, B9"
+        "order": 63
       },
       {
-        "id": "B10.1",
+        "id": "B13.5",
         "type": "check",
-        "parent": "B10",
-        "title": "La retenue est toujours en tête, quelle que soit sa date ; les gardées suivent en ordre",
-        "status": "todo",
+        "parent": "B13",
+        "title": "Choisir deux fois le même sujet bascule en comparaison de deux de ses images.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1066,27 +1069,28 @@
         "order": 64
       },
       {
-        "id": "B10.2",
-        "type": "check",
-        "parent": "B10",
-        "title": "Retenir une image en démote une autre, et l'écart n'efface rien.",
-        "status": "todo",
+        "id": "B14",
+        "type": "epic",
+        "parent": null,
+        "title": "Les règles du jeu, en quatre étapes",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
-          "total": 0
+          "done": 7,
+          "total": 7
         },
         "source": "plan",
-        "order": 65
+        "order": 65,
+        "blocked_by": "B0 — tenue."
       },
       {
-        "id": "B10.3",
+        "id": "B14.1",
         "type": "check",
-        "parent": "B10",
-        "title": "Une direction vide se lit « à confirmer » et jamais « sud » ; un clic confirme.",
-        "status": "todo",
+        "parent": "B14",
+        "title": "Chacune des quatre étapes se saute, et le jeu se crée sans en régler une seule. *Vérifié",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1098,11 +1102,11 @@
         "order": 66
       },
       {
-        "id": "B10.4",
+        "id": "B14.2",
         "type": "check",
-        "parent": "B10",
-        "title": "La case « + générer » ne défile jamais.",
-        "status": "todo",
+        "parent": "B14",
+        "title": "L'écran montre le texte de caméra exact qui partira au modèle. *Il ne le recompose pas :",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1114,11 +1118,11 @@
         "order": 67
       },
       {
-        "id": "B10.5",
+        "id": "B14.3",
         "type": "check",
-        "parent": "B10",
-        "title": "Les calques d'une image sont ceux de cette image, pas ceux de la pose — changer la",
-        "status": "todo",
+        "parent": "B14",
+        "title": "Sans vue choisie, rien n'est écrit et l'écran le dit — le modèle décide seul. *Et le",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1130,11 +1134,11 @@
         "order": 68
       },
       {
-        "id": "B10.6",
+        "id": "B14.4",
         "type": "check",
-        "parent": "B10",
-        "title": "Passer d'un onglet à l'autre ne recharge pas le carnet.",
-        "status": "todo",
+        "parent": "B14",
+        "title": "Deux des trois doublons de consigne disparaissent, et un essai le mesure sur un envoi",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1146,28 +1150,27 @@
         "order": 69
       },
       {
-        "id": "B11",
-        "type": "epic",
-        "parent": null,
-        "title": "Ses animations, et le départage",
-        "status": "todo",
+        "id": "B14.5",
+        "type": "check",
+        "parent": "B14",
+        "title": "Deux jeux ne peuvent plus porter le même nom sans avertissement. *Un avertissement, pas",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 0,
-          "total": 5
+          "total": 0
         },
         "source": "plan",
-        "order": 70,
-        "blocked_by": "B10"
+        "order": 70
       },
       {
-        "id": "B11.1",
+        "id": "B14.6",
         "type": "check",
-        "parent": "B11",
-        "title": "Une seule bande est retenue par case (pose × direction), et retenir bascule en un geste.",
-        "status": "todo",
+        "parent": "B14",
+        "title": "Le dossier reste figé au nom de création, même si le nom change ensuite. *Acquis depuis",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1179,11 +1182,11 @@
         "order": 71
       },
       {
-        "id": "B11.2",
+        "id": "B14.7",
         "type": "check",
-        "parent": "B11",
-        "title": "Écarter une bande ne la détruit pas : elle passe derrière la flèche, et la plus récente",
-        "status": "todo",
+        "parent": "B14",
+        "title": "Le parcours rouvert écrit dans les mêmes réglages que le parcours de création. *Tenu par",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1195,27 +1198,28 @@
         "order": 72
       },
       {
-        "id": "B11.3",
-        "type": "check",
-        "parent": "B11",
-        "title": "Le tri par pose, direction et date ne demande aucune donnée nouvelle.",
-        "status": "todo",
+        "id": "B15",
+        "type": "epic",
+        "parent": null,
+        "title": "L'installation",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
-          "total": 0
+          "done": 6,
+          "total": 6
         },
         "source": "plan",
-        "order": 73
+        "order": 73,
+        "blocked_by": "B0 — tenue."
       },
       {
-        "id": "B11.4",
+        "id": "B15.1",
         "type": "check",
-        "parent": "B11",
-        "title": "« À départager » est le seul rouge de l'écran.",
-        "status": "todo",
+        "parent": "B15",
+        "title": "La clé se pose depuis l'écran, et le bouton de vérification annonce le nombre de modèles",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1227,11 +1231,11 @@
         "order": 74
       },
       {
-        "id": "B11.5",
+        "id": "B15.2",
         "type": "check",
-        "parent": "B11",
-        "title": "Écarter une bande ne perd pas les retouches par frame qui lui sont attachées.",
-        "status": "todo",
+        "parent": "B15",
+        "title": "Retirer une clé grise les modèles de ce fournisseur-là, et n'efface ni image ni dépense.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1243,28 +1247,27 @@
         "order": 75
       },
       {
-        "id": "B12",
-        "type": "epic",
-        "parent": null,
-        "title": "L'essai",
-        "status": "todo",
+        "id": "B15.3",
+        "type": "check",
+        "parent": "B15",
+        "title": "Un fournisseur injoignable grise ses modèles à lui, jamais ceux d'un autre. *Acquis depuis",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 0,
-          "total": 4
+          "total": 0
         },
         "source": "plan",
-        "order": 76,
-        "blocked_by": "B10, B11"
+        "order": 76
       },
       {
-        "id": "B12.1",
+        "id": "B15.4",
         "type": "check",
-        "parent": "B12",
-        "title": "Le personnage se pilote au clavier, et la vitesse jouée est celle qui sortira à l'export.",
-        "status": "todo",
+        "parent": "B15",
+        "title": "ComfyUI se détecte, son adresse se change, et le téléchargement des poids reprend après",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1276,11 +1279,11 @@
         "order": 77
       },
       {
-        "id": "B12.2",
+        "id": "B15.5",
         "type": "check",
-        "parent": "B12",
-        "title": "Une animation qui manque le dit et laisse le personnage au repos — il ne joue jamais une",
-        "status": "todo",
+        "parent": "B15",
+        "title": "Le dossier de travail se choisit, et l'écran dit ce qui s'y range. *Choisir **écrit une",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1292,11 +1295,11 @@
         "order": 78
       },
       {
-        "id": "B12.3",
+        "id": "B15.6",
         "type": "check",
-        "parent": "B12",
-        "title": "Le bouton « demander un clip » part d'ici pré-rempli avec la pose et la direction, et son",
-        "status": "todo",
+        "parent": "B15",
+        "title": "Sur une machine où rien n'a été déposé, une image arrive quand même. *Acquis depuis `F1`",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1308,11 +1311,28 @@
         "order": 79
       },
       {
-        "id": "B12.4",
+        "id": "B16",
+        "type": "epic",
+        "parent": null,
+        "title": "Les tables dans la grammaire du carnet",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 80,
+        "blocked_by": "B0"
+      },
+      {
+        "id": "B16.1",
         "type": "check",
-        "parent": "B12",
-        "title": "La scène se règle sans rien fabriquer et sans rien payer.",
-        "status": "todo",
+        "parent": "B16",
+        "title": "Les sept tables et les deux fabriques sont à l'écran, aucune n'est cachée. — **huit**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1321,31 +1341,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 80
+        "order": 81
       },
       {
-        "id": "B13",
-        "type": "epic",
-        "parent": null,
-        "title": "La grille du jeu, et comparer",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 5
-        },
-        "source": "plan",
-        "order": 81,
-        "blocked_by": "B10"
-      },
-      {
-        "id": "B13.1",
+        "id": "B16.2",
         "type": "check",
-        "parent": "B13",
-        "title": "Le zoom est entier et rien d'autre : ×1, ×2, ×4, ×8.",
-        "status": "todo",
+        "parent": "B16",
+        "title": "Un réglage grisé porte sa raison écrite à côté, et le geste qui le débloque.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1357,11 +1360,11 @@
         "order": 82
       },
       {
-        "id": "B13.2",
+        "id": "B16.3",
         "type": "check",
-        "parent": "B13",
-        "title": "Le plafond d'occupation affiché est celui que la taille de case permet vraiment.",
-        "status": "todo",
+        "parent": "B16",
+        "title": "Une jauge apparaît pendant un calcul de plus de 240 ms, et jamais avant.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1373,11 +1376,11 @@
         "order": 83
       },
       {
-        "id": "B13.3",
+        "id": "B16.4",
         "type": "check",
-        "parent": "B13",
-        "title": "Comparer deux sujets ne coûte rien et ne modifie rien.",
-        "status": "todo",
+        "parent": "B16",
+        "title": "Un jeu en style dessin peut poser une retouche à 1 024 et à 2 048. — la route **et** la",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1389,11 +1392,11 @@
         "order": 84
       },
       {
-        "id": "B13.4",
+        "id": "B16.5",
         "type": "check",
-        "parent": "B13",
-        "title": "Un écart hors norme porte l'action qui le corrige, avec son prix quand elle en a un.",
-        "status": "todo",
+        "parent": "B16",
+        "title": "Les six contradictions sont tranchées, chacune par un essai.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1405,11 +1408,11 @@
         "order": 85
       },
       {
-        "id": "B13.5",
+        "id": "B16.6",
         "type": "check",
-        "parent": "B13",
-        "title": "Choisir deux fois le même sujet bascule en comparaison de deux de ses images.",
-        "status": "todo",
+        "parent": "B16",
+        "title": "Une place s'éteint sans se vider ; une coordonnée ne voyage toujours pas.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1421,28 +1424,28 @@
         "order": 86
       },
       {
-        "id": "B14",
+        "id": "B17",
         "type": "epic",
         "parent": null,
-        "title": "Les règles du jeu, en quatre étapes",
-        "status": "todo",
-        "status_raw": null,
+        "title": "Les moteurs qui remplacent une génération",
+        "status": "done",
+        "status_raw": "tenue le 10 septembre 2026",
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
-          "total": 7
+          "done": 5,
+          "total": 5
         },
         "source": "plan",
         "order": 87,
-        "blocked_by": "B0"
+        "blocked_by": "B1 — c'est B1 qui pose la règle « une place neuve ne change pas l'empreinte »."
       },
       {
-        "id": "B14.1",
+        "id": "B17.1",
         "type": "check",
-        "parent": "B14",
-        "title": "Chacune des quatre étapes se saute, et le jeu se crée sans en régler une seule.",
-        "status": "todo",
+        "parent": "B17",
+        "title": "Un fichier exporté ne porte plus de magenta sous ses pixels transparents. *Le lit de",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1454,11 +1457,11 @@
         "order": 88
       },
       {
-        "id": "B14.2",
+        "id": "B17.2",
         "type": "check",
-        "parent": "B14",
-        "title": "L'écran montre le texte de caméra exact qui partira au modèle.",
-        "status": "todo",
+        "parent": "B17",
+        "title": "Une cape change de couleur sans une génération, et la silhouette est identique à",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1470,11 +1473,11 @@
         "order": 89
       },
       {
-        "id": "B14.3",
+        "id": "B17.3",
         "type": "check",
-        "parent": "B14",
-        "title": "Sans vue choisie, rien n'est écrit et l'écran le dit — le modèle décide seul.",
-        "status": "todo",
+        "parent": "B17",
+        "title": "Les quatre curseurs se posent avant la quantification, et un essai le vérifie sur",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1486,11 +1489,11 @@
         "order": 90
       },
       {
-        "id": "B14.4",
+        "id": "B17.4",
         "type": "check",
-        "parent": "B14",
-        "title": "Deux des trois doublons de consigne disparaissent, et un essai le mesure sur un envoi",
-        "status": "todo",
+        "parent": "B17",
+        "title": "Les recettes existantes rendent la même empreinte qu'avant. *Les 61 recettes du corpus figé",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1502,11 +1505,11 @@
         "order": 91
       },
       {
-        "id": "B14.5",
+        "id": "B17.5",
         "type": "check",
-        "parent": "B14",
-        "title": "Deux jeux ne peuvent plus porter le même nom sans avertissement.",
-        "status": "todo",
+        "parent": "B17",
+        "title": "Chaque moteur neuf est mesuré : temps de calcul, et ce qu'il épargne. *Sur une case de",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1516,361 +1519,6 @@
         },
         "source": "plan",
         "order": 92
-      },
-      {
-        "id": "B14.6",
-        "type": "check",
-        "parent": "B14",
-        "title": "Le dossier reste figé au nom de création, même si le nom change ensuite.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 93
-      },
-      {
-        "id": "B14.7",
-        "type": "check",
-        "parent": "B14",
-        "title": "Le parcours rouvert écrit dans les mêmes réglages que le parcours de création.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 94
-      },
-      {
-        "id": "B15",
-        "type": "epic",
-        "parent": null,
-        "title": "L'installation",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 6
-        },
-        "source": "plan",
-        "order": 95,
-        "blocked_by": "B0"
-      },
-      {
-        "id": "B15.1",
-        "type": "check",
-        "parent": "B15",
-        "title": "La clé se pose depuis l'écran, et le bouton de vérification annonce le nombre de modèles",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 96
-      },
-      {
-        "id": "B15.2",
-        "type": "check",
-        "parent": "B15",
-        "title": "Retirer une clé grise les modèles de ce fournisseur-là, et n'efface ni image ni dépense.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 97
-      },
-      {
-        "id": "B15.3",
-        "type": "check",
-        "parent": "B15",
-        "title": "Un fournisseur injoignable grise ses modèles à lui, jamais ceux d'un autre.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 98
-      },
-      {
-        "id": "B15.4",
-        "type": "check",
-        "parent": "B15",
-        "title": "ComfyUI se détecte, son adresse se change, et le téléchargement des poids reprend après",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 99
-      },
-      {
-        "id": "B15.5",
-        "type": "check",
-        "parent": "B15",
-        "title": "Le dossier de travail se choisit, et l'écran dit ce qui s'y range.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 100
-      },
-      {
-        "id": "B15.6",
-        "type": "check",
-        "parent": "B15",
-        "title": "Sur une machine où rien n'a été déposé, une image arrive quand même.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 101
-      },
-      {
-        "id": "B16",
-        "type": "epic",
-        "parent": null,
-        "title": "Les tables dans la grammaire du carnet",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 6
-        },
-        "source": "plan",
-        "order": 102,
-        "blocked_by": "B0"
-      },
-      {
-        "id": "B16.1",
-        "type": "check",
-        "parent": "B16",
-        "title": "Les sept tables et les deux fabriques sont à l'écran, aucune n'est cachée.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 103
-      },
-      {
-        "id": "B16.2",
-        "type": "check",
-        "parent": "B16",
-        "title": "Un réglage grisé porte sa raison écrite à côté, et le geste qui le débloque.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 104
-      },
-      {
-        "id": "B16.3",
-        "type": "check",
-        "parent": "B16",
-        "title": "Une jauge apparaît pendant un calcul de plus de 240 ms, et jamais avant.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 105
-      },
-      {
-        "id": "B16.4",
-        "type": "check",
-        "parent": "B16",
-        "title": "Un jeu en style dessin peut poser une retouche à 1 024 et à 2 048.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 106
-      },
-      {
-        "id": "B16.5",
-        "type": "check",
-        "parent": "B16",
-        "title": "Les six contradictions sont tranchées, chacune par un essai.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 107
-      },
-      {
-        "id": "B16.6",
-        "type": "check",
-        "parent": "B16",
-        "title": "Une place s'éteint sans se vider ; une coordonnée ne voyage toujours pas.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 108
-      },
-      {
-        "id": "B17",
-        "type": "epic",
-        "parent": null,
-        "title": "Les moteurs qui remplacent une génération",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 5
-        },
-        "source": "plan",
-        "order": 109,
-        "blocked_by": "B1 — c'est B1 qui pose la règle « une place neuve ne change pas l'empreinte »."
-      },
-      {
-        "id": "B17.1",
-        "type": "check",
-        "parent": "B17",
-        "title": "Un fichier exporté ne porte plus de magenta sous ses pixels transparents.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 110
-      },
-      {
-        "id": "B17.2",
-        "type": "check",
-        "parent": "B17",
-        "title": "Une cape change de couleur sans une génération, et la silhouette est identique à",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 111
-      },
-      {
-        "id": "B17.3",
-        "type": "check",
-        "parent": "B17",
-        "title": "Les quatre curseurs se posent avant la quantification, et un essai le vérifie sur",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 112
-      },
-      {
-        "id": "B17.4",
-        "type": "check",
-        "parent": "B17",
-        "title": "Les recettes existantes rendent la même empreinte qu'avant.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 113
-      },
-      {
-        "id": "B17.5",
-        "type": "check",
-        "parent": "B17",
-        "title": "Chaque moteur neuf est mesuré : temps de calcul, et ce qu'il épargne.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 114
       },
       {
         "id": "B18",
@@ -1886,7 +1534,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 115,
+        "order": 93,
         "blocked_by": "B16, B17"
       },
       {
@@ -1903,7 +1551,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 116
+        "order": 94
       },
       {
         "id": "B18.2",
@@ -1919,7 +1567,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 117
+        "order": 95
       },
       {
         "id": "B18.3",
@@ -1935,7 +1583,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 118
+        "order": 96
       },
       {
         "id": "B18.4",
@@ -1951,23 +1599,23 @@
           "total": 0
         },
         "source": "plan",
-        "order": 119
+        "order": 97
       },
       {
         "id": "B19",
         "type": "epic",
         "parent": null,
         "title": "Le vestiaire",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
+          "done": 6,
           "total": 6
         },
         "source": "plan",
-        "order": 120,
+        "order": 98,
         "blocked_by": "B10"
       },
       {
@@ -1975,7 +1623,362 @@
         "type": "check",
         "parent": "B19",
         "title": "Une pièce créée depuis la fiche d'un personnage lui est attribuée d'emblée.",
-        "status": "todo",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 99
+      },
+      {
+        "id": "B19.2",
+        "type": "check",
+        "parent": "B19",
+        "title": "Une pièce ne porte personne par défaut. *Nommée hors d'une fiche, elle naît **déclarée",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 100
+      },
+      {
+        "id": "B19.3",
+        "type": "check",
+        "parent": "B19",
+        "title": "Les emplacements de corps restent au jeu, jamais au personnage. *Acquis par construction",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 101
+      },
+      {
+        "id": "B19.4",
+        "type": "check",
+        "parent": "B19",
+        "title": "Les pièces déjà écrites sur le disque se relisent sans perte et sans porteur. *Trois",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 102
+      },
+      {
+        "id": "B19.5",
+        "type": "check",
+        "parent": "B19",
+        "title": "Un calque reste solidaire de sa pose — l'invariant de `C3` tient. *La matrice d'un emploi",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 103
+      },
+      {
+        "id": "B19.6",
+        "type": "check",
+        "parent": "B19",
+        "title": "Les 19 entrées du guide rangées sous `fabriques` trouvent leur écran. *Les **17** entrées",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 104
+      },
+      {
+        "id": "B20",
+        "type": "epic",
+        "parent": null,
+        "title": "Les calques d'animation",
+        "status": "done",
+        "status_raw": "tenue le 10 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 4,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 105,
+        "blocked_by": "B11, B19"
+      },
+      {
+        "id": "B20.1",
+        "type": "check",
+        "parent": "B20",
+        "title": "Une bande porte sa pièce, et une case sans animation du personnage reste vide sans",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 106
+      },
+      {
+        "id": "B20.2",
+        "type": "check",
+        "parent": "B20",
+        "title": "L'écran distingue « le calque tient » (recalé image par image) de « le calque glisse »",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 107
+      },
+      {
+        "id": "B20.3",
+        "type": "check",
+        "parent": "B20",
+        "title": "Le recalage ne coûte rien et ne rappelle aucun fournisseur. *Vérifiable plutôt",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 108
+      },
+      {
+        "id": "B20.4",
+        "type": "check",
+        "parent": "B20",
+        "title": "Un calage gardé à la main se réutilise sur la pièce suivante. *`ReglagesGardes` (`M1`)",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 109
+      },
+      {
+        "id": "B21",
+        "type": "epic",
+        "parent": null,
+        "title": "La sortie",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 110,
+        "blocked_by": "B10, B11"
+      },
+      {
+        "id": "B21.1",
+        "type": "check",
+        "parent": "B21",
+        "title": "L'arbre des fichiers se lit avant d'écrire, avec le compte et le poids total.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 111
+      },
+      {
+        "id": "B21.2",
+        "type": "check",
+        "parent": "B21",
+        "title": "Chaque fichier est marqué nouveau, remplacé ou inchangé face à la sortie précédente.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 112
+      },
+      {
+        "id": "B21.3",
+        "type": "check",
+        "parent": "B21",
+        "title": "Les quatre modes de collision existent, et « remplacer » en est un.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 113
+      },
+      {
+        "id": "B21.4",
+        "type": "check",
+        "parent": "B21",
+        "title": "Un panneau dit ce qui n'est pas prêt : sujets sans image, personnages à direction unique,",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 114
+      },
+      {
+        "id": "B21.5",
+        "type": "check",
+        "parent": "B21",
+        "title": "La sortie reste gratuite et fonctionne réseau coupé.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 115
+      },
+      {
+        "id": "B21.6",
+        "type": "check",
+        "parent": "B21",
+        "title": "Le format Aseprite ne gagne aucune clé de notre cru.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 116
+      },
+      {
+        "id": "B22",
+        "type": "epic",
+        "parent": null,
+        "title": "La galerie connaît les clips",
+        "status": "done",
+        "status_raw": "tenue le 8 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 117,
+        "blocked_by": "B0, B3 — tenues le 6 septembre 2026."
+      },
+      {
+        "id": "B22.1",
+        "type": "check",
+        "parent": "B22",
+        "title": "Un clip reste dans la galerie après la fermeture de son lot.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 118
+      },
+      {
+        "id": "B22.2",
+        "type": "check",
+        "parent": "B22",
+        "title": "Ouvrir la galerie ne télécharge aucune vidéo — seule la couverture arrive.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 119
+      },
+      {
+        "id": "B22.3",
+        "type": "check",
+        "parent": "B22",
+        "title": "Le survol joue les frames en boucle, sans son, et revient à la première en sortant.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 120
+      },
+      {
+        "id": "B22.4",
+        "type": "check",
+        "parent": "B22",
+        "title": "Un filtre « clips » existe, distinct des six familles.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -1987,11 +1990,11 @@
         "order": 121
       },
       {
-        "id": "B19.2",
+        "id": "B22.5",
         "type": "check",
-        "parent": "B19",
-        "title": "Une pièce ne porte personne par défaut.",
-        "status": "todo",
+        "parent": "B22",
+        "title": "La grille ne ralentit pas quand le jeu porte cent clips.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -2001,361 +2004,6 @@
         },
         "source": "plan",
         "order": 122
-      },
-      {
-        "id": "B19.3",
-        "type": "check",
-        "parent": "B19",
-        "title": "Les emplacements de corps restent au jeu, jamais au personnage.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 123
-      },
-      {
-        "id": "B19.4",
-        "type": "check",
-        "parent": "B19",
-        "title": "Les pièces déjà écrites sur le disque se relisent sans perte et sans porteur.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 124
-      },
-      {
-        "id": "B19.5",
-        "type": "check",
-        "parent": "B19",
-        "title": "Un calque reste solidaire de sa pose — l'invariant de `C3` tient.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 125
-      },
-      {
-        "id": "B19.6",
-        "type": "check",
-        "parent": "B19",
-        "title": "Les 19 entrées du guide rangées sous `fabriques` trouvent leur écran.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 126
-      },
-      {
-        "id": "B20",
-        "type": "epic",
-        "parent": null,
-        "title": "Les calques d'animation",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 4
-        },
-        "source": "plan",
-        "order": 127,
-        "blocked_by": "B11, B19"
-      },
-      {
-        "id": "B20.1",
-        "type": "check",
-        "parent": "B20",
-        "title": "Une bande porte sa pièce, et une case sans animation du personnage reste vide sans",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 128
-      },
-      {
-        "id": "B20.2",
-        "type": "check",
-        "parent": "B20",
-        "title": "L'écran distingue « le calque tient » (recalé image par image) de « le calque glisse »",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 129
-      },
-      {
-        "id": "B20.3",
-        "type": "check",
-        "parent": "B20",
-        "title": "Le recalage ne coûte rien et ne rappelle aucun fournisseur.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 130
-      },
-      {
-        "id": "B20.4",
-        "type": "check",
-        "parent": "B20",
-        "title": "Un calage gardé à la main se réutilise sur la pièce suivante.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 131
-      },
-      {
-        "id": "B21",
-        "type": "epic",
-        "parent": null,
-        "title": "La sortie",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 6
-        },
-        "source": "plan",
-        "order": 132,
-        "blocked_by": "B10, B11"
-      },
-      {
-        "id": "B21.1",
-        "type": "check",
-        "parent": "B21",
-        "title": "L'arbre des fichiers se lit avant d'écrire, avec le compte et le poids total.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 133
-      },
-      {
-        "id": "B21.2",
-        "type": "check",
-        "parent": "B21",
-        "title": "Chaque fichier est marqué nouveau, remplacé ou inchangé face à la sortie précédente.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 134
-      },
-      {
-        "id": "B21.3",
-        "type": "check",
-        "parent": "B21",
-        "title": "Les quatre modes de collision existent, et « remplacer » en est un.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 135
-      },
-      {
-        "id": "B21.4",
-        "type": "check",
-        "parent": "B21",
-        "title": "Un panneau dit ce qui n'est pas prêt : sujets sans image, personnages à direction unique,",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 136
-      },
-      {
-        "id": "B21.5",
-        "type": "check",
-        "parent": "B21",
-        "title": "La sortie reste gratuite et fonctionne réseau coupé.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 137
-      },
-      {
-        "id": "B21.6",
-        "type": "check",
-        "parent": "B21",
-        "title": "Le format Aseprite ne gagne aucune clé de notre cru.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 138
-      },
-      {
-        "id": "B22",
-        "type": "epic",
-        "parent": null,
-        "title": "La galerie connaît les clips",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 5
-        },
-        "source": "plan",
-        "order": 139,
-        "blocked_by": "B0, B3"
-      },
-      {
-        "id": "B22.1",
-        "type": "check",
-        "parent": "B22",
-        "title": "Un clip reste dans la galerie après la fermeture de son lot.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 140
-      },
-      {
-        "id": "B22.2",
-        "type": "check",
-        "parent": "B22",
-        "title": "Ouvrir la galerie ne télécharge aucune vidéo — seule la couverture arrive.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 141
-      },
-      {
-        "id": "B22.3",
-        "type": "check",
-        "parent": "B22",
-        "title": "Le survol joue les frames en boucle, sans son, et revient à la première en sortant.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 142
-      },
-      {
-        "id": "B22.4",
-        "type": "check",
-        "parent": "B22",
-        "title": "Un filtre « clips » existe, distinct des six familles.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 143
-      },
-      {
-        "id": "B22.5",
-        "type": "check",
-        "parent": "B22",
-        "title": "La grille ne ralentit pas quand le jeu porte cent clips.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 144
       }
     ],
     "sources": [
@@ -2411,7 +2059,7 @@
         "detail": ""
       }
     ],
-    "scanned_at": "2026-09-06"
+    "scanned_at": "2026-09-08"
   },
   "manual": {
     "items": [
@@ -3005,64 +2653,64 @@
   "milestones": [],
   "activity": [
     {
-      "hash": "52838d8",
-      "date": "2026-09-06",
-      "text": "V3.03.3 â€” la bande se monte"
+      "hash": "0d759cb",
+      "date": "2026-09-08",
+      "text": "Fusion â€” B20, les calques d'animation"
     },
     {
-      "hash": "3242b2c",
-      "date": "2026-09-05",
-      "text": "docs: AGENTS.md dit oÃ¹ en est vraiment le dÃ©pÃ´t"
+      "hash": "e5c517f",
+      "date": "2026-09-08",
+      "text": "Fusion â€” B21, la sortie"
     },
     {
-      "hash": "73ae3b4",
-      "date": "2026-09-05",
-      "text": "V3.03.2 â€” les tables se posent sur une sÃ©lection du ruban"
+      "hash": "fb21980",
+      "date": "2026-09-08",
+      "text": "B20 â€” les calques d'animation"
     },
     {
-      "hash": "2a47756",
-      "date": "2026-09-05",
-      "text": "V3.03.1 â€” le guide dit qu'une image peut porter sa recette"
+      "hash": "3c6c13e",
+      "date": "2026-09-08",
+      "text": "B21 â€” la sortie"
     },
     {
-      "hash": "adeb950",
-      "date": "2026-09-05",
-      "text": "V3.03.1 â€” â‘¡ l'atelier d'une animation passe aux tables"
+      "hash": "f2572fe",
+      "date": "2026-09-08",
+      "text": "Fusion â€” B12, l'essai"
     },
     {
-      "hash": "2f80544",
-      "date": "2026-09-05",
-      "text": "V3.03.1 â€” l'aperÃ§u applique les recettes de frame, et l'Ã©cran les pose"
+      "hash": "da97438",
+      "date": "2026-09-08",
+      "text": "B12 â€” l'essai : le personnage jouÃ© au clavier, Ã  la vitesse de l'export"
     },
     {
-      "hash": "d31f9f2",
-      "date": "2026-09-05",
-      "text": "V3.03.1 â€” le montage redevient brut"
+      "hash": "7a69abd",
+      "date": "2026-09-08",
+      "text": "Fusion â€” B17, les moteurs qui remplacent une gÃ©nÃ©ration"
     },
     {
-      "hash": "2c7fbec",
-      "date": "2026-09-05",
-      "text": "wip: V3.03.1 â€” le socle serveur des recettes de frame"
+      "hash": "b718f3a",
+      "date": "2026-09-08",
+      "text": "B17 â€” les moteurs qui remplacent une gÃ©nÃ©ration"
     },
     {
-      "hash": "8368128",
-      "date": "2026-09-05",
-      "text": "docs: le carnet des pistes de design â€” sÃ©ance du 4 septembre 2026"
+      "hash": "daf790e",
+      "date": "2026-09-08",
+      "text": "Fusion â€” B16, les tables dans la grammaire du carnet"
     },
     {
-      "hash": "837ec83",
-      "date": "2026-09-05",
-      "text": "feat: V3.02 â€” le clip a une fiche, comme une image"
+      "hash": "bd4bb73",
+      "date": "2026-09-08",
+      "text": "B16 â€” les tables dans la grammaire du carnet"
     },
     {
-      "hash": "38c5aed",
-      "date": "2026-09-05",
-      "text": "feat: V3.01.1 â€” le tiroir Â« ce qui part avec ce clip Â» se relit avant de partir"
+      "hash": "64f3129",
+      "date": "2026-09-08",
+      "text": "B19 â€” le vestiaire"
     },
     {
-      "hash": "c28cba8",
-      "date": "2026-09-05",
-      "text": "feat: A7 bis â€” le dÃ©tourage se rÃ¨gle, une recette s'applique, et la vidÃ©o se regarde"
+      "hash": "4b62fa1",
+      "date": "2026-09-08",
+      "text": "Fusion â€” B13, la grille du jeu et comparer"
     }
   ]
 }

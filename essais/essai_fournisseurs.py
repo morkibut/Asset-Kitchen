@@ -32,10 +32,15 @@ Sortie : ce journal, et `essais/fournisseurs.json` — à côté de `couverture.
 qui tient le même rôle pour OpenRouter. La fiche écrite, avec le verdict par
 fournisseur, vit dans `docs/releve-fournisseurs.md`.
 
-**Ce qui manque sans clé se dit, et ne se devine pas.** Cloudflare et Leonardo
-demandent des identifiants ; sans eux, l'essai écrit ce qu'il n'a pas pu
-mesurer plutôt que de recopier une documentation. Les noms attendus sont dans
-`.env.example`.
+**Ce qui manque sans clé se dit, et ne se devine pas.** Leonardo demande un
+identifiant ; sans lui, l'essai écrit ce qu'il n'a pas pu mesurer plutôt que
+de recopier une documentation. Le nom attendu est dans `.env.example`.
+
+**Cloudflare a été retiré du produit le 8 septembre 2026** — l'auteur ne
+souhaite plus l'utiliser ni l'intégrer (`docs/tranches/V2.2.md` § F4). Ce
+fichier ne l'interroge plus ; les mesures qu'il en avait faites le 31 août
+restent dans `docs/releve-fournisseurs.md` et `essais/fournisseurs.json`,
+telles quelles.
 """
 
 from __future__ import annotations
@@ -163,102 +168,6 @@ def pollinations() -> dict[str, Any]:
     }
 
 
-# ── Cloudflare Workers AI ────────────────────────────────────────────────────
-
-CLOUDFLARE_COMPTE = "CLOUDFLARE_ACCOUNT_ID"
-CLOUDFLARE_JETON = "CLOUDFLARE_API_TOKEN"
-
-
-def cloudflare() -> dict[str, Any]:
-    """Deux secrets, et c'est le fournisseur qui éprouve le tiroir pluriel de F3."""
-    titre("Cloudflare Workers AI — deux secrets attendus")
-
-    compte = os.environ.get(CLOUDFLARE_COMPTE, "").strip()
-    jeton = os.environ.get(CLOUDFLARE_JETON, "").strip()
-    if not (compte and jeton):
-        manque = [n for n, v in ((CLOUDFLARE_COMPTE, compte), (CLOUDFLARE_JETON, jeton)) if not v]
-        print(f"  non mesuré — il manque {', '.join(manque)}")
-        print("  (à déposer dans .env, jamais dans une conversation ni dans le code)")
-        return {
-            "fournisseur": "Cloudflare Workers AI",
-            "cle_requise": True,
-            "cle_presente": False,
-            "manque": manque,
-            "a_mesurer": [
-                "la liste des modèles image que le compte voit réellement",
-                "ce qu'une image consomme en neurones, mesuré et non calculé",
-                "la taille rendue par flux-1-schnell, qui ne déclare ni largeur ni hauteur",
-                "si les quatre images d'entrée de flux-2-dev passent bien en multipart",
-                "si flux-2-dev reprend le sujet de la référence, comme klein-4b l'a fait",
-            ],
-        }
-
-    base = f"https://api.cloudflare.com/client/v4/accounts/{compte}/ai"
-    entetes = {"Authorization": f"Bearer {jeton}"}
-    fiche: dict[str, Any] = {
-        "fournisseur": "Cloudflare Workers AI",
-        "cle_requise": True,
-        "cle_presente": True,
-    }
-
-    try:
-        reponse = httpx.get(
-            f"{base}/models/search",
-            params={"task": "Text-to-Image", "per_page": 100},
-            headers=entetes,
-            timeout=60,
-        )
-        brut = reponse.json()
-    except Exception as erreur:  # noqa: BLE001
-        print(f"  catalogue injoignable — {erreur}")
-        fiche["erreur_catalogue"] = str(erreur)
-        return fiche
-
-    if not brut.get("success"):
-        print(f"  catalogue refusé — {json.dumps(brut.get('errors'), ensure_ascii=False)[:200]}")
-        fiche["erreur_catalogue"] = brut.get("errors")
-        return fiche
-
-    modeles = []
-    for m in brut.get("result", []):
-        proprietes = {p.get("property_id"): p.get("value") for p in (m.get("properties") or [])}
-        entrees = _entrees_image(m)
-        modeles.append(
-            {
-                "identifiant": m.get("name"),
-                "description": (m.get("description") or "")[:160],
-                "references_max": entrees["combien"],
-                "chemin_reference": entrees["chemin"],
-                "proprietes": proprietes,
-            }
-        )
-    fiche["modeles"] = modeles
-    print(f"  {len(modeles)} modèles image déclarés par le compte")
-    for m in modeles:
-        print(
-            f"    {m['identifiant']:50} {m['references_max']:2} réf  ({m['chemin_reference']})"
-        )
-    return fiche
-
-
-def _entrees_image(modele: dict[str, Any]) -> dict[str, Any]:
-    """Combien d'images d'entrée ce modèle accepte, et **par quel chemin**.
-
-    Lu dans le schéma que Cloudflare publie avec chaque modèle, jamais deviné :
-    trois conventions coexistent chez eux — `image_b64` (une chaîne), `image`
-    (un tableau d'octets), et `input_image_0..n` (des fichiers en multipart).
-    """
-    schemas = modele.get("schema") or {}
-    entree = (schemas.get("input") or {}).get("properties") or {}
-    noms = set(entree)
-    multipart = sorted(n for n in noms if n.startswith("input_image_"))
-    if multipart:
-        return {"combien": len(multipart), "chemin": "octets, en multipart"}
-    if "image_b64" in noms or "image" in noms:
-        return {"combien": 1, "chemin": "octets, en base64 ou en tableau"}
-    return {"combien": 0, "chemin": "aucun"}
-
-
 # ── Leonardo ─────────────────────────────────────────────────────────────────
 
 LEONARDO_CLE = "LEONARDO_API_KEY"
@@ -331,10 +240,10 @@ def principal() -> int:
         if hasattr(flux, "reconfigure"):
             flux.reconfigure(encoding="utf-8", errors="replace")
 
-    print("Relevé F0 — trois fournisseurs, avant de décider lequel entre")
+    print("Relevé F0 — deux fournisseurs restants, Cloudflare retiré du produit")
     print("aucun appel payant ; au plus une image par cas éprouvé")
 
-    fiches = [pollinations(), cloudflare(), leonardo()]
+    fiches = [pollinations(), leonardo()]
 
     SORTIE.write_text(
         json.dumps({"releve_le": time.time(), "fournisseurs": fiches}, indent=1, ensure_ascii=False),
