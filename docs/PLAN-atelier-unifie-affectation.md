@@ -109,6 +109,11 @@ le travail ; ils doivent être redécoupés avant codage, surtout les deux derni
 
 ## Règles d'exécution
 
+Les retours d'essai de 21 h 49 enrichissent les critères AU2, AU3 et AU4 sans nouvelle
+tranche ni changement d'affectation. Leur simulation reste dans la préparation UX MEDIUM ;
+les garanties de stockage, de coût réel et de fidélité des traitements restent à réaliser
+dans les tranches de production concernées.
+
 La difficulté appartient au contrat qui change, pas au prestige d'un écran. Un HARD se
 découpe avant exécution ; les reports redescendent une fois l'invariant fixé. Les points
 durs se traitent séparément conformément au skill affecte. La revue confronte domaine,

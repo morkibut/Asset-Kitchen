@@ -53,6 +53,7 @@
   const demo=text=>`<p class="demo">${text}</p>`;
   const heading=(title,description,actions='')=>`<div class="heading"><div><h1>${esc(title)}</h1><p class="muted">${description}</p></div><div class="row wrap">${actions}</div></div>`;
   function modal(title,body,actions='') {
+    dialog.classList.remove('wide-dialog');
     dialog.innerHTML=`<div class="row between"><h2 id="dialog-title">${title}</h2>${button('Fermer','close','aria-label="Fermer la fenêtre"')}</div>${body}<footer>${actions}</footer>`;
     if(!dialog.open) dialog.showModal();
   }
@@ -64,6 +65,7 @@
   function navigate(target) {leave(()=>{stop();page=target;render();main.focus({preventScroll:true});});}
   let renderedPage=null;
   function render() {
+    ergonomie.beforeRender();
     const pageChanged=renderedPage!==page;renderedPage=page;
     document.body.classList.toggle('editing',page==='editor');
     document.body.classList.toggle('working',page==='slice'||page==='extract');
@@ -83,6 +85,7 @@
     if(page==='compare') drawComparisons();
     drawResultPreviews();
     ateliers.afterRender(page);
+    ergonomie.afterRender();
     if(pageChanged){window.scrollTo(0,0);main.scrollTop=0;}
   }
   function home() {
@@ -111,10 +114,10 @@
     return `<article class="surface asset-card"><div class="row between"><h3>${esc(r.title)}</h3><span class="tag">v${r.revision}</span></div><div class="sprite"><canvas class="result-preview" width="64" height="64" data-result-preview="${r.id}" aria-label="Aperçu de ${esc(r.title)}"></canvas></div><p class="small">${r.animated?r.frames.length+' frames · '+r.recipe.fps+' i/s':'Image fixe'} · ${esc(r.provenance)}</p><div class="row wrap">${button('Retoucher','edit-result',`data-id="${r.id}"`)}${button(r.favorite?'★ Favori':'☆ Favori','favorite',`data-id="${r.id}" aria-pressed="${r.favorite}"`)}${button(r.chosen?'Retenu pour le jeu':'Choisir pour le jeu','choose',`data-id="${r.id}" aria-pressed="${r.chosen}"`)}</div><div class="row wrap">${button('Comparer','compare-add',`data-id="${r.id}"`)}${ateliers.resultActions(r)}${button('Écarter','discard-result',`data-id="${r.id}" class="quiet"`)}</div></article>`;
   }
   function subjectTab(s) {
-    if(tab==='animations') return `<div class="row between"><h2>Les mouvements utiles au jeu</h2>${button('Choisir mouvements & directions','objectives')}</div><div class="table-wrap"><table class="matrix"><thead><tr><th>Mouvement</th>${s.directions.map(d=>`<th>${esc(d)}</th>`).join('')}</tr></thead><tbody>${s.movements.map(m=>`<tr><td>${esc(m)}</td>${s.directions.map(d=>{const r=s.results.find(r=>r.animated&&r.title===`${m} · ${d}`);return `<td>${r?button(r.chosen?'Retenu · ouvrir':'À regarder','edit-result',`data-id="${r.id}"`):button('À créer','request',`data-movement="${esc(m)}" data-direction="${esc(d)}" class="missing"`)}</td>`;}).join('')}</tr>`).join('')}</tbody></table></div><p class="note">Une image fixe ne remplit jamais une case d’animation. Créez seulement les mouvements utiles.</p><div class="two">${s.results.filter(r=>r.animated).map(resultCard).join('')}</div>`;
+    if(tab==='animations')return ergonomie.animations(s,resultCard);
+    if(tab==='equipment')return ergonomie.equipment(s);
     if(tab==='images') return `<div class="row between"><div><h2>Images fixes & références</h2><p>Portrait, illustration, objet ou pose isolée : ce sont des sorties à part entière.</p></div>${button('Fabriquer une image','request','data-kind="image"')}</div><div class="two">${s.results.filter(r=>!r.animated).map(resultCard).join('')}</div>`;
     if(tab==='sources') return `<div class="two"><section class="surface"><h2>Images et clips</h2><p>Une source reste disponible après les retouches. Importez une image réelle pour tester le parcours ; le clip ci-dessous est représenté par une séquence de démonstration.</p>${button('Importer une image ou un clip','import')}<div class="line"><strong>Clip de marche · exemple</strong><p class="small">Séquence préparée depuis un banc existant du dépôt.</p>${button('Découper en animation','sample-clip')}</div></section><section class="surface"><h2>Modèle 3D réutilisable</h2><p>Un modèle, son rig, ses mouvements et plusieurs rendus vers les sprites.</p>${go('Explorer le parcours 3D','source')}</section></div>`;
-    if(tab==='equipment') return `<div class="surface"><h2>Ce que le personnage porte</h2><p>Un équipement garde ses emplois : porté, au sol, icône. Le calque porté s’attache à une pose précise.</p><div class="row">${button('Associer une pièce','equipment')}${button('Extraire un élément','open-extract')}</div><div class="space">${s.equipment.length?s.equipment.map((e,i)=>`<div class="line row between"><span>${esc(e)} · main droite · emploi porté</span>${button('Retirer','remove-equipment',`data-index="${i}"`)}</div>`).join(''):'<p class="muted">Aucune pièce associée à ce sujet.</p>'}</div>${demo('Le calage et le masque se manipulent dans « Extraire un élément ». Un calque peut viser une frame ; son suivi automatique sur une animation et ses emplois multiples restent à détailler.')}</div>`;
     return `<div class="two"><section class="surface"><h2>Ce que je veux obtenir</h2><p>${esc(s.goal)} · ${s.movements.map(esc).join(', ')} · ${s.directions.map(esc).join(', ')}</p>${button('Modifier l’objectif','objectives')}<h3 class="space">Consignes du sujet</h3><p>${esc(s.description)}</p>${button('Modifier la fiche','edit-subject')}</section><section class="surface"><h2>Hérité de l’univers</h2><p>${esc(state.game.style)}</p><p>Grille : ${state.game.size} px. Les références choisies seront relues avant chaque envoi.</p>${go('Règles du jeu','settings')}</section></div>`;
   }
   function universe() {
@@ -200,7 +203,7 @@
   }
   const imageCache=new Map();
   function cachedImage(url){if(!imageCache.has(url)){const im=new Image();im.onload=()=>{drawAll();drawResultPreviews();if(page==='compare')drawComparisons();};im.src=url;imageCache.set(url,im);}return imageCache.get(url);}
-  function drawResultPreviews() {$$('[data-result-preview]').forEach(c=>drawFrame(c,currentSubject().results.find(r=>r.id===c.dataset.resultPreview),0));}
+  function drawResultPreviews() {$$('[data-result-preview]').forEach(c=>drawFrame(c,state.subjects.flatMap(s=>s.results).find(r=>r.id===c.dataset.resultPreview),0));}
   function drawAll() {if(page==='editor'&&draft){drawFrame($('#pixels'),draft,cursor);$$('[data-frame]').forEach(c=>drawFrame(c,draft,Number(c.dataset.frame)));wirePaint();}}
   function wirePaint() {
     const canvas=$('#pixels');if(!canvas||canvas.dataset.wired)return;canvas.dataset.wired='yes';
@@ -222,7 +225,7 @@
   function jobs() {
     return heading('Fabrications','Les demandes manuelles et celles de l’agent se retrouvent au même endroit.',button('Simuler une demande de l’agent','agent-request'))+
       demo('Les boutons ci-dessous font avancer ou échouer des travaux fictifs. Rien n’est envoyé à un fournisseur et les montants affichés ne sont pas des tarifs.')+
-      (state.jobs.length?state.jobs.slice().reverse().map(j=>`<section class="surface space"><div class="row between"><h2>${esc(j.title)}</h2><span class="tag">${esc(j.status)}</span></div><p>${esc(j.subjectName)} · ${esc(j.origin)} · ${esc(j.method)}</p><p class="small">${esc(j.brief)} · ${esc(j.estimate)}</p><div class="bar"><span style="width:${j.status==='Terminé'?100:j.status==='En attente'?35:0}%"></span></div><div class="row wrap space">${j.status==='En attente'?button('Simuler le résultat','job-finish',`data-id="${j.id}"`)+button('Simuler un échec','job-fail',`data-id="${j.id}"`)+button('Interrompre','job-cancel',`data-id="${j.id}"`):j.status==='Terminé'?button('Voir le résultat','job-open',`data-id="${j.id}"`):button('Reprendre explicitement','job-retry',`data-id="${j.id}"`)}</div>${j.status==='Échec'?'<p class="error space">Le moteur est devenu indisponible. Aucune relance automatique ; les sources et réglages sont conservés.</p>':''}</section>`).join(''):`<div class="empty"><h2>Aucune fabrication en cours</h2><p>Créez un asset à la main ou essayez la demande d’un agent.</p>${go('Ouvrir les assets','library')}</div>`);
+      (state.jobs.length?state.jobs.slice().reverse().map(j=>`<section class="surface space"><div class="row between"><h2>${esc(j.title)}</h2><span class="tag">${esc(j.status)}</span></div><p>${esc(j.subjectName)} · ${esc(j.origin)} · ${esc(j.model||j.method)}</p><p class="small">${esc(j.brief)} · ${esc(j.estimate)}</p>${button('Relire l’envoi','job-details',`data-id="${j.id}"`)}<div class="bar"><span style="width:${j.status==='Terminé'?100:j.status==='En attente'?35:0}%"></span></div><div class="row wrap space">${j.status==='En attente'?button('Simuler le résultat','job-finish',`data-id="${j.id}"`)+button('Simuler un échec','job-fail',`data-id="${j.id}"`)+button('Interrompre','job-cancel',`data-id="${j.id}"`):j.status==='Terminé'?button('Voir le résultat','job-open',`data-id="${j.id}"`):button('Reprendre explicitement','job-retry',`data-id="${j.id}"`)}</div>${j.status==='Échec'?'<p class="error space">Le moteur est devenu indisponible. Aucune relance automatique ; les sources et réglages sont conservés.</p>':''}</section>`).join(''):`<div class="empty"><h2>Aucune fabrication en cours</h2><p>Créez un asset à la main ou essayez la demande d’un agent.</p>${go('Ouvrir les assets','library')}</div>`);
   }
   function delivery() {
     const chosen=state.subjects.flatMap(s=>s.results.filter(r=>r.chosen).map(r=>({s,r})));
@@ -287,10 +290,11 @@
     captureRequest();const s=currentSubject();if(!request.movement){toast('Donnez un nom au résultat ou au mouvement.');return;}
     if(request.kind==='animation'&&!s.image&&!s.results.some(r=>!r.animated)&&!request.method.startsWith('3D')){toast('Une image de départ est nécessaire. Choisissez « Image fixe » pour préparer cette référence.');return;}
     const local=!request.method.startsWith('API');request.estimate=local?'Temps local inconnu sur votre machine · exemple sans frais':'0,20 $ fictif · aucun appel payant';
-    modal('Qu’est-ce qui part avec ?',`<p><strong>${esc(s.name)} · ${esc(request.movement)} · ${esc(request.direction)}</strong></p><div class="line"><span class="label">Univers</span><p>${esc(state.game.style)}</p></div><div class="line"><span class="label">Sujet</span><p>${esc(s.description)}</p></div><div class="line"><span class="label">Cette fabrication</span><p>${esc(request.brief)}</p></div><div class="line"><span class="label">Références & méthode</span><p>${request.kind==='animation'?'Image de départ du sujet':'Références du sujet si présentes'} · ${esc(request.method)}</p></div><p class="space">${esc(request.estimate)}</p>${demo('Cet écran entier rend l’envoi relisible. Dans la maquette, confirmer crée uniquement un travail fictif dans la liste.')}`,button('Modifier','back-request')+button('Lancer la simulation','send-request','class="rust"'));
+    return ergonomie.review(request);
   }
   function sendRequest() {
-    const s=currentSubject();state.jobs.push({id:id(),subjectId:s.id,subjectName:s.name,title:request.kind==='image'?request.movement:`${request.movement} · ${request.direction}`,origin:request.origin,method:request.method,kind:request.kind,brief:request.brief,estimate:request.estimate,status:'En attente',resultId:null});save();dialog.close();page='jobs';render();toast('Demande fictive ajoutée. Faites-la avancer depuis cette liste.');
+    if(!ergonomie.validateRequest(request))return;
+    const s=currentSubject();state.jobs.push({...clone(request),id:id(),subjectId:s.id,subjectName:s.name,title:request.kind==='image'?request.movement:`${request.movement} · ${request.direction}`,status:'En attente',resultId:null});save();dialog.close();page='jobs';render();toast('Demande fictive ajoutée avec le modèle, les textes et les images relus.');
   }
   function editCard(cardId) {
     const c=state.canvas.cards.find(c=>c.id===cardId);if(!c)return;canvasSelected=c.id;
@@ -315,7 +319,10 @@
   const ateliers=window.creerAteliersMaquette({state:()=>state,subject:currentSubject,draft:()=>draft,result:currentResult,frame:()=>cursor,
     id,clone,esc,button,field,input,select,option,heading,demo,modal,toast,save,render,snapshot,changed,openEditor,createResult:result,drawFrame,redraw:drawAll,
     go:p=>leave(()=>{stop();page=p;render();}),leave:fn=>leave(()=>{stop();Promise.resolve(fn()).catch(error=>{console.error(error);toast('Cette source n’a pas pu être ouverte.');});}),setSubject:key=>{subjectId=key;},imagesTab:()=>{tab='images';},showLayers:()=>{inspector='layers';},
-    open:p=>{stop();page=p;render();},image:IMAGE});
+    open:p=>{stop();page=p;render();},image:IMAGE,pickFromLibrary:(callback)=>ergonomie.openPicker(callback)});
+  const ergonomie=window.creerErgonomieMaquette({state:()=>state,subject:currentSubject,request:()=>request,ateliers:()=>ateliers,
+    esc,button,field,input,select,modal,save,render,toast,clone,drawFrame,
+    brush:key=>key==='pixels'?(tool==='Main'&&inspector==='retouch'?Number(draft?.recipe.brush):0):ateliers.brushSize()});
   const handlers={
     close:()=>dialog.close(),
     'new-subject':()=>subjectForm(), 'edit-subject':()=>subjectForm(true),
@@ -328,7 +335,7 @@
     request:el=>requestForm(el.dataset),
     'agent-request':()=>requestForm({},'Agent MCP · développe le jeu'),
     'review-request':reviewRequest,'back-request':showRequest,'send-request':sendRequest,
-    'job-finish':el=>{const j=state.jobs.find(j=>j.id===el.dataset.id),s=state.subjects.find(s=>s.id===j.subjectId);if(j.status!=='En attente')return;const r=result(j.title,j.kind==='animation');r.provenance='Résultat simulé · '+j.method;s.results.push(r);j.resultId=r.id;j.status='Terminé';if(j.method.startsWith('3D'))s.model3d.renders=(s.model3d.renders||0)+1;save();render();},
+    'job-finish':el=>{const j=state.jobs.find(j=>j.id===el.dataset.id),s=state.subjects.find(s=>s.id===j.subjectId);if(j.status!=='En attente')return;const r=result(j.title,j.kind==='animation');r.movement=j.movement;r.direction=j.direction;r.provenance='Résultat simulé · '+j.method;r.request=clone(j);s.results.push(r);j.resultId=r.id;j.status='Terminé';if(j.method.startsWith('3D'))s.model3d.renders=(s.model3d.renders||0)+1;save();render();},
     'job-fail':el=>{state.jobs.find(j=>j.id===el.dataset.id).status='Échec';save();render();},
     'job-cancel':el=>{state.jobs.find(j=>j.id===el.dataset.id).status='Interrompu';save();render();},
     'job-retry':el=>{const j=state.jobs.find(j=>j.id===el.dataset.id);j.status='En attente';save();render();toast('Reprise explicite de la même demande fictive.');},
@@ -336,8 +343,6 @@
     'edit-result':el=>leave(()=>openEditor(currentSubject().results.find(r=>r.id===el.dataset.id))),
     favorite:el=>{const r=currentSubject().results.find(r=>r.id===el.dataset.id);r.favorite=!r.favorite;save();render();},
     choose:el=>{const r=currentSubject().results.find(r=>r.id===el.dataset.id);r.chosen=!r.chosen;save();render();},
-    'discard-result':el=>{modal('Écarter ce résultat ?', '<p>Ce résultat sera retiré de la bibliothèque de démonstration et des choix de la prochaine livraison. Les livraisons passées conservent leur historique.</p>',button('Annuler','close')+button('Écarter','confirm-discard-result',`data-id="${el.dataset.id}"`));},
-    'confirm-discard-result':el=>{currentSubject().results=currentSubject().results.filter(r=>r.id!==el.dataset.id);compareIds=compareIds.filter(i=>i!==el.dataset.id);save();dialog.close();render();},
     'compare-add':el=>{if(!compareIds.includes(el.dataset.id))compareIds.push(el.dataset.id);compareIds=compareIds.slice(-2);page='compare';render();},
     'compare-source':()=>{modal('Source et retouche ouverte',`<div class="two"><section><h3>Source conservée</h3><div class="sprite compare-preview"><canvas id="raw-preview" width="64" height="64"></canvas></div></section><section><h3>Avec les retouches</h3><div class="sprite compare-preview"><canvas id="edited-preview" width="64" height="64"></canvas></div></section></div>`);drawFrame($('#raw-preview'),draft,cursor,true);drawFrame($('#edited-preview'),draft,cursor);},
     'save-editor':()=>{saveEditor();render();},
@@ -361,8 +366,6 @@
     'apply-recipe':()=>{snapshot();draft.recipe=clone(state.recipes.find(r=>r.id===value('recipe-id')).recipe);changed();dialog.close();render();},
     import:()=>importForm(false),'upload-image':()=>upload(false),'upload-canvas':()=>upload(true),
     'sample-clip':()=>{dialog.close();const r=result('Bande extraite du clip de démonstration');currentSubject().results.push(r);save();openEditor(r);tool='Main';render();},
-    equipment:()=>modal('Associer une pièce',field('Pièce',select('equipment',['La lanterne','Cape de voyage','Sac de voyage'],'La lanterne')),button('Associer au personnage','save-equipment')),
-    'save-equipment':()=>{const s=currentSubject(),v=value('equipment');if(!s.equipment.includes(v))s.equipment.push(v);save();dialog.close();render();},
     'remove-equipment':el=>{currentSubject().equipment.splice(Number(el.dataset.index),1);save();render();},
     'canvas-note':()=>{const card={id:id(),kind:'note',title:'Une nouvelle idée',text:'',x:150,y:150,island:''};state.canvas.cards.push(card);canvasSelected=card.id;save();render();editCard(card.id);},
     'canvas-image':()=>importForm(true),
@@ -393,7 +396,7 @@
   document.addEventListener('click',async e=>{
     const el=e.target.closest('button');if(!el||el.disabled)return;
     if(el.dataset.page){navigate(el.dataset.page);return;}
-    const action=handlers[el.dataset.action]||ateliers.handlers[el.dataset.action];if(action){try{await action(el,e);}catch(error){console.error(error);toast('Ce geste de la maquette a rencontré une erreur. Vous pouvez noter le parcours pour le corriger.');}}
+    const action=ergonomie.handlers[el.dataset.action]||handlers[el.dataset.action]||ateliers.handlers[el.dataset.action];if(action){try{await action(el,e);}catch(error){console.error(error);toast('Ce geste de la maquette a rencontré une erreur. Vous pouvez noter le parcours pour le corriger.');}}
   });
   function updateRecipe(el) {
     stop();if(!el.dataset.editing){snapshot();el.dataset.editing='yes';}
@@ -402,6 +405,7 @@
   }
   document.addEventListener('change',e=>{
     const el=e.target;
+    if(ergonomie.change(el,false))return;
     if(ateliers.change(el))return;
     if(el.id==='table-select'){tool=el.value;render();return;}
     if(el.dataset.recipe){updateRecipe(el);render();}
@@ -414,7 +418,7 @@
     else if(el.id==='local-ready'||el.id==='api-ready'){state.providers[el.id==='local-ready'?'local':'api']=el.checked;save();}
     else if(el.dataset.check){state.checks[el.dataset.check]=el.checked;save();}
   });
-  document.addEventListener('input',e=>{if(ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
+  document.addEventListener('input',e=>{if(ergonomie.change(e.target,true)||ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
   window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
   document.addEventListener('keydown',e=>{if(page==='editor'&&!dialog.open&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();handlers[e.shiftKey?'redo':'undo']();}});
   if(testSession)$('.prototype span').textContent='SESSION D’ESSAI SÉPARÉE · données de démonstration · aucun appel IA ni accès au jeu';

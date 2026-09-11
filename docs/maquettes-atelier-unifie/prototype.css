@@ -163,3 +163,52 @@ details { margin:14px 0 } summary { cursor:pointer }
 .workshop h3 { margin-top:14px }
 .result-mini { width:80px; height:80px; object-fit:contain; image-rendering:pixelated }
 @media (max-width:1250px) { .workshop { grid-template-columns:minmax(0,1fr) 330px } }
+.animation-tree>details { border-bottom:1px solid var(--contour); margin-bottom:14px }
+.animation-tree summary { display:flex; align-items:center; gap:14px; cursor:pointer; min-height:62px; padding:8px; background:var(--cote) }
+.animation-tree summary::before { content:'▸'; width:14px }
+.animation-tree details[open]>summary::before { content:'▾' }
+.folder-title { font:25px 'Instrument Serif',Georgia,serif; min-width:120px }
+.movement-thumbs { display:flex; align-items:center; gap:8px; flex:1 }
+.movement-thumbs>span { flex:1; min-width:0 }
+.movement-thumbs .row { gap:4px; flex-wrap:wrap }
+.animation-tree summary canvas { width:48px; height:48px; image-rendering:pixelated; object-fit:contain }
+.direction-folder { margin:8px 0 14px 30px; border-left:1px solid var(--contour); padding-left:14px }
+.direction-folder summary { background:var(--papier); padding:4px 8px }
+.version-buckets { display:grid; grid-template-columns:minmax(120px,1fr) minmax(160px,2fr) minmax(120px,1fr); gap:14px; padding:8px }
+.version-buckets>section { border-right:1px solid var(--trait); padding-right:8px; min-width:0 }
+.version-buckets .label { letter-spacing:.05em }
+.empty-version { display:block; padding:22px; color:var(--muted) }
+.thumbnail { display:flex; flex-direction:column; align-items:center; padding:4px; gap:4px; margin-top:8px }
+.thumbnail canvas { width:70px; height:70px; image-rendering:pixelated }
+.thumbnail span { font-size:11px }
+.gallery-filters { position:sticky; top:0; z-index:2; background:var(--papier); border-bottom:1px solid var(--trait); padding:8px 0 }
+.gallery-filters .field { margin:0 }
+.asset-card canvas { image-rendering:pixelated }
+dialog.wide-dialog { width:min(1080px,94vw); max-height:94vh }
+.picker-filters { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:14px }
+.image-picker { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; max-height:45vh; overflow:auto; padding:4px }
+.picker-card { display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px; min-width:0 }
+.picker-card canvas { width:112px; height:112px; image-rendering:pixelated }
+.picker-card[aria-pressed=true] { outline:2px solid var(--signal); background:var(--cote) }
+.picker-card strong,.picker-card small { overflow-wrap:anywhere }
+.review-references { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px }
+.review-references article { width:130px; display:flex; flex-direction:column; gap:4px }
+.review-references img { width:112px; height:112px; object-fit:contain; image-rendering:pixelated; background:var(--cote) }
+.review-references span { font-size:12px }
+.review-references button { font-size:12px; min-height:28px }
+.equipment-list { display:grid; gap:14px }
+.equipment-card { display:flex; align-items:center; gap:22px; border-top:1px solid var(--trait); padding:14px 0 }
+.equipment-card canvas,.missing-preview { width:96px; height:96px; image-rendering:pixelated; flex-shrink:0 }
+.missing-preview { display:grid; place-items:center; font-size:12px; color:var(--muted); background:var(--cote); text-align:center }
+.paired-control { display:grid; grid-template-columns:minmax(0,1fr) 84px; align-items:center; gap:14px }
+.paired-control input { min-width:0; width:100% }
+.sprite.has-zoom { display:block; overflow:visible; background:none }
+.zoom-controls { gap:8px; margin-bottom:8px; position:relative; z-index:1 }
+.zoom-controls input { width:76px; padding:4px; border:1px solid var(--contour); border-radius:7px }
+.zoom-controls .small { flex-basis:100% }
+.zoom-viewport { height:300px; width:100%; overflow:auto; position:relative; overscroll-behavior:contain; touch-action:none; border:1px solid var(--trait); background:repeating-conic-gradient(var(--damier1) 0% 25%,var(--damier2) 0% 50%) 0 0 / 28px 28px }
+.zoom-stage { display:flex; align-items:center; justify-content:center; width:max-content; min-width:100%; min-height:100%; padding:12px }
+.zoom-stage canvas,.zoom-stage svg { display:block; image-rendering:pixelated; margin:0 }
+.brush-cursor { position:fixed; border:1px solid var(--encre); outline:1px solid var(--sur); pointer-events:none; z-index:20 }
+.zoom-viewport.panning,.zoom-viewport.panning canvas,.zoom-viewport.panning svg { cursor:grab }
+.zoom-controls [aria-pressed=true] { background:var(--ouvert); border-color:var(--muted) }

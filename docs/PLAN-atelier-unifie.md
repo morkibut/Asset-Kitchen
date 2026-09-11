@@ -93,6 +93,10 @@ les mouvements et directions utiles, importe une référence et voit ce qui rest
 - [ ] L'univers garde un accès direct à sa toile existante : images, textes, notes, îlots
   et liens ; modifier une composition puis la rouvrir retrouve son contenu et sa disposition.
 - [ ] Créer un sujet et lui donner un objectif depuis l'interface ne demande aucun agent.
+- [ ] Les animations se parcourent par mouvement puis direction, comme des dossiers ;
+  les vignettes séparent versions retenues, à juger et écartées. Le survol joue toute la
+  bande centrée. La galerie conserve les filtres mouvement, direction et jugement.
+- [ ] Les équipements associés montrent un aperçu identifiable.
 
 ## AU3 · De la demande de l'agent à une nouvelle animation
 
@@ -116,6 +120,9 @@ L'auteur voit la demande, sa source, ses réglages et son état dans le personna
   déclenche pas une nouvelle fabrication. L'acceptation externe incertaine reste explicite.
 - [ ] L'agent reçoit une attente bornée puis un résultat exploitable ; l'UI montre le même état.
 - [ ] La livraison provisoire autorisée n'exige pas une intervention humaine à chaque image.
+- [ ] La relecture montre le fournisseur et le modèle, le coût annoncé et les références
+  en vignettes ; textes et images se modifient dans cette même relecture. L'envoi conserve
+  ce qui a réellement été soumis, sans modifier implicitement les règles de l'univers.
 
 ## AU4 · Juger et corriger l'animation sans perdre le contexte
 
@@ -148,6 +155,11 @@ ou une frame, puis retrouver la liste avec la sélection conservée.
 - [ ] Extraire un élément permet de proposer un calage des parties communes, d'ajuster
   position, échelle et opacité, puis de garder ou retirer des pixels à la main. Refermer et
   rouvrir restitue sources, masque et composition ; la portée sur les frames reste explicite.
+- [ ] Choisir une image ouvre une bibliothèque filtrable avec aperçus. Position et échelle
+  se règlent par curseur et valeur ; la variante se déplace aussi directement sur l'image.
+- [ ] Toutes les tables permettent zoom et déplacement de la vue, distincts du déplacement
+  du calque ; l'empreinte du pinceau suit le zoom. La portée explique quelles frames
+  changent et qu'un élément fixe ne suit pas automatiquement le mouvement du personnage.
 
 ## AU5 · La révision remplace le bon asset dans Godot
 

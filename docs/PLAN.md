@@ -7,7 +7,9 @@
 > les outils avant de remplacer les écrans concernés. Le premier développement reste **AU1**,
 > l'export d'une animation existante.
 > Retours intégrés dans la préparation UX : tables en sélecteur, composition séparée,
-> découpe et extraction manipulables. Les essais de l'auteur restent ouverts.
+> découpe et extraction manipulables. L'auteur a essayé les six parcours le 11 septembre ;
+> ses retours de 21 h 49 sont intégrés (arborescence, relecture, aperçus, calage et zoom).
+> La nouvelle itération reste à essayer ; cela ne valide aucune tranche de production.
 > L'amendement RF est remplacé par cet ordre. La V4 reste le socle livré, avec les écarts
 > relevés dans la revue ; ni elle ni RF ne constituent une seconde file d'exécution.
 >

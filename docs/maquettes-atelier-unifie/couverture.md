@@ -136,6 +136,23 @@ reste limitée à la séance ouverte pour éviter de remplir le stockage avec de
 
 ## Vérifications de cette version
 
+Les retours d'essai du 11 septembre à 21 h 49 sont intégrés : arborescence mouvement puis
+direction, vignettes retenues / à juger / écartées et galerie filtrable ; lecture des
+animations au survol ; équipements avec aperçu. Écarter conserve une version récupérable
+et ne choisit pas automatiquement une autre version pour le jeu.
+
+La relecture permet de modifier ensemble les textes, le modèle et les références visibles.
+Le modèle et son coût restent consultables sur la fabrication. Les noms DemoAPI/DemoLocal
+et les prix sont fictifs : aucun fournisseur n'est appelé. La bibliothèque propose recherche,
+filtres et vignettes pour les références, les sources d'extraction et les équipements.
+
+Position, échelle et opacité combinent curseur et valeur ; la variante se déplace directement.
+Le zoom commun aux tables, à la découpe et à l'extraction sépare déplacement de la vue et
+du calque. Le pinceau montre son empreinte à l'échelle. La question « Sur quelles images
+afficher cet élément ? » explique la portée et l'absence de suivi automatique du mouvement.
+Zoom, défilement et filtres restent des états de séance ; les images et réglages gardés
+restent dans le stockage propre à la maquette.
+
 Les essais navigateur détaillés sont consignés dans la
 [revue du 11 septembre](../revue-conformite-carnet-2026-09-11.md).
 Ils concernent uniquement les parcours de cette maquette. Les critères AU restent ouverts

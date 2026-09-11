@@ -471,3 +471,33 @@ Contrôles : syntaxe des deux scripts et `git diff --check` sans erreur ; **1 75
 documentaires résolus**. **Corpus de démarrage : 161,7 Ko, −30,3 Ko par rapport au relevé
 de référence**. La mesure a été écrite dans un emplacement temporaire pour préserver ce
 relevé. Les tests et moteurs de l'application réelle ne sont pas concernés par ce complément.
+
+## Retours de l'auteur à 21 h 49 et nouvelle itération
+
+L'auteur a coché les six parcours d'essai et signalé neuf difficultés. Leur traduction
+en critères de production est portée par AU2 à AU4 ; aucune tranche AU n'est cochée ici.
+La couverture décrit les nouvelles interactions et leurs limites.
+
+Essais navigateur dans une session de démonstration séparée, sans toucher aux remarques
+de l'auteur :
+
+- Création d'une animation après modification de la consigne et ajout d'une référence par
+  recherche « lanterne » : deux références et le texte modifié sont retrouvés dans
+  « Relire l'envoi » après rechargement, avec le modèle local de démonstration.
+- Arborescence : une version retenue et une à juger, puis passage de cette dernière dans
+  les écartées et retour à juger ; les filtres de galerie suivent ces changements. Le
+  survol d'une vignette passe de la frame 1 à la frame 5, avec le sprite entier visible.
+- Extraction à 400 % : un déplacement de 40 × 20 px à l'écran change X de 11 à 21 et Y
+  de −3 à 2. Les valeurs et curseurs restent synchronisés. Déplacer ensuite la vue change
+  seulement son défilement. Un pinceau de 5 px affiche une empreinte de 20 px à ce zoom.
+- Retouche : zoom à 800 %, soit un aperçu de 512 px pour une source de 64 px ; changer
+  de Main à Détourage conserve ce zoom. La découpe utilise le même composant de navigation,
+  mais son zoom n'a pas fait l'objet d'un essai distinct dans cette itération.
+- Équipement : filtre de famille, sélection de l'icône et association montrent son aperçu
+  dans la fiche. La portée de l'élément explique une frame ou un placement fixe sur toutes.
+
+Aucune erreur JavaScript relevée. Les imports depuis un fichier et le changement du prix
+fictif payant restent à exercer ; aucun tarif réel ni moteur IA n'a été testé. Le choix
+retenu désigne ici explicitement la version destinée au jeu : l'écarter ne promeut donc
+pas silencieusement une autre version. Cette distinction devra être conservée lors du
+raccord aux états de jugement existants.

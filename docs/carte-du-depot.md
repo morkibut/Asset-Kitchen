@@ -315,7 +315,8 @@ L'index SQLite (**jetable**), `agent.json` le cadre de l'agent — un fichier à
 Les contrats nouveaux sont dans `docs/archi-atelier-unifie.md`. Le prototype de parcours
 desktop élargi est `docs/maquettes-atelier-unifie/02-atelier.html`, accompagné de son CSS,
 de `docs/maquettes-atelier-unifie/prototype.js`, des ateliers dédiés dans
-`docs/maquettes-atelier-unifie/ateliers.js` et de
+`docs/maquettes-atelier-unifie/ateliers.js`, de l'ergonomie partagée (arborescence,
+bibliothèque visuelle, relecture et zoom) dans `docs/maquettes-atelier-unifie/ergonomie.js` et de
 `docs/maquettes-atelier-unifie/couverture.md` ; il ne fait aucun appel fournisseur.
 `01-parcours.html` garde la proposition initiale. La sauvegarde du prototype reste propre
 au navigateur, indépendante des projets de l'application.
