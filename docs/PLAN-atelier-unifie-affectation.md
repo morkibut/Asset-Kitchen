@@ -33,11 +33,14 @@ animations 32, retouche 100. Le nombre de cas exécutés peut différer avec le 
 | AU12 | familles, univers, images, import, animations | objectif animé pour un objet et parcours agent commun | 3 ensembles UI existants famille/sujet/galerie ; éviter une seconde bibliothèque |
 | AU13 | découpe et export d'images | contrat de tuiles raccordables et pont de carte Godot | pas de sous-système de tuiles livré relevé ; anciens plans seulement |
 | AU14 | savoir audio dans le projet voisin signalé par AGENTS | domaine audio, écoute, traitement et export | aucun pipeline audio dans l'atelier inspecté ; mesurer le voisin avant de figer le découpage |
+| AU15 | pièces, emplois, extraction C3 et calques de pose | cibles distinctes pose/direction/frame et compatibilité explicite | 4 surfaces : emploi, calque, bande et habillage ; 20 déclarations C3, 33 B20 et 22 dans l'écran CalquesAnimes |
+| AU16 | demandes suivies AU3, extraction, masque et suivi TIENT/GLISSE | couverture et traitement d'une sélection de cibles selon AU15 | reprise des mêmes surfaces avec montage et suivi de travail ; conserver corrections et identité des frames |
+| AU17 | superposition, export et livraison AU1/AU5 | tenue de plusieurs emplois et export synchronisé des couches | composition, bande et export ; pas de nouveau contrat de propriété des fichiers |
 
 Ces nombres décrivent des points d'intégration inspectés, pas un chiffrage exact des futurs
 fichiers modifiés. Tuiles et son sont des estimations provisoires à réévaluer avant exécution.
 
-## Les 14 tranches
+## Les 17 tranches
 
 **Préparation UX hors tranches de production — [MEDIUM], Sonnet, réflexion élevée.**
 Le premier prototype avait une navigation et des données fictives sans sauvegarde ; le
@@ -45,7 +48,7 @@ complément demande un état local, des gestes de toile et de montage et une rel
 fonctions, sans schéma serveur, fournisseur ni fichier du jeu. Son code est isolé du produit,
 et les essais sont des parcours de navigateur. Le raccord aux vrais outils se classe dans
 AU2 à AU4 ; le prototype ne paie pas à lui seul leur point dur. L'ajout de cette préparation
-ne reclasse aucune des quatorze tranches ci-dessous.
+ne reclasse aucune des quatorze tranches initiales ; les ajouts AU15–AU17 sont classés séparément.
 
 **Complément après validation de la simplicité de l'UI.** AU2, AU3 et AU4 sont renforcées
 par US-534 à US-536 : création sans MCP, toile et reprise complète des tables. Leurs
@@ -83,9 +86,12 @@ démonstration ne valide pas un nouveau moteur d'extraction ni un suivi de calqu
 | AU12 · Autres assets | MEDIUM | Applique le parcours commun aux familles existantes. |
 | AU13 · Tuiles | HARD | Le sous-système de raccords et la livraison d'une carte sont encore absents. |
 | AU14 · Son | HARD | Le média audio, son traitement et sa restitution n'existent pas encore ici. |
+| AU15 · Premier calque d'emploi | HARD | Étend l'identité des calques aux cibles de direction et de frame sans réinterpréter les données de pose existantes. |
+| AU16 · Couverture de l'emploi | MEDIUM | Applique les cibles établies par AU15 aux fabrications suivies, à la couverture et aux corrections par sélection. |
+| AU17 · Tenues et livraison | MEDIUM | Compose les emplois définis par AU15 et réutilise le contrat de livraison d'AU1 pour les couches synchronisées. |
 
-**Compte** : 6 HARD, 8 MEDIUM, aucun VERY-HARD/EASY/VERY-EASY.
-Le seuil indicatif d'un tiers a été revu : quatre HARD posent les contrats persistants du
+**Compte** : 7 HARD, 10 MEDIUM, aucun VERY-HARD/EASY/VERY-EASY.
+Le seuil indicatif d'un tiers a été revu : cinq HARD posent les contrats persistants du
 nouveau parcours et deux couvrent des médias non livrés. Les masquer en MEDIUM minorerait
 le travail ; ils doivent être redécoupés avant codage, surtout les deux derniers.
 
@@ -97,6 +103,7 @@ le travail ; ils doivent être redécoupés avant codage, surtout les deux derni
 | AU5 | Reprise après écriture partielle et conflit sur fichier modifié | HARD · Opus moyenne |
 | AU7 | Validation et versionnement des profils importés, sans exécution arbitraire ajoutée | HARD · Opus moyenne |
 | AU10 | Acceptation externe incertaine et compatibilité du contrat asset3d | HARD · Opus moyenne |
+| AU17 | Contrat durable de tenue et référence aux variantes, avant le branchement de son écran | HARD · Opus moyenne |
 
 ## Morceaux qui descendent après décision
 
@@ -106,15 +113,23 @@ le travail ; ils doivent être redécoupés avant codage, surtout les deux derni
 | AU2 | Présentation des objectifs et des états déjà calculés au serveur | EASY · Sonnet faible |
 | AU3 | Traduction des réponses métier en réponses MCP | EASY · Sonnet faible |
 | AU6 | Affichage de la file depuis ses états durables | EASY · Sonnet faible |
+| AU15 | Présentation d'un emploi et de ses cibles après fixation de leur identité et de leur relecture | EASY · Sonnet faible |
 
 ## Règles d'exécution
 
-Complément de 22 h 56 : sélecteurs de rattachement et ordre des frames restent dans
-AU4 et la préparation UX MEDIUM. Le report « variantes et calages d'équipement par frame »
-est un point dur **HARD · Opus · réflexion moyenne**, hors des 14 tranches actives tant
-que son découpage n'est pas établi : les calques existants sont par pose, l'habillage B20
-porte déjà le suivi des bandes, et des images indépendantes par frame changeraient cette
-forme. La maquette ne tranche pas cette migration et ne simule aucun calage complet.
+Les sélecteurs de rattachement et l'ordre des frames restent dans AU4 et la préparation UX
+MEDIUM. La précision de l'auteur après 22 h 56 annule le report des équipements : AU15–AU17
+sont désormais requises, avant les nouveaux moteurs et les médias différés. La préparation
+UX représente le parcours complet avec ses traitements simulés ; elle ne livre ni migration
+serveur ni qualité de génération. Les étiquettes des quatorze tranches initiales sont conservées.
+
+**AU15 se prend en deux morceaux.** D'abord le contrat **HARD · Opus · réflexion moyenne** :
+identité des cibles, relecture des calques de pose, variantes par direction/frame et corrections
+liées au bon résultat après montage. Ensuite le chemin import → extraction → placement →
+relecture descend en **MEDIUM · Sonnet · réflexion élevée**, en réutilisant les outils.
+Le code B20 a 33 déclarations d'essais, dont le partage d'un calque entre directions et les
+tenues TIENT/GLISSE : ce sont des garanties du mode historique à conserver, pas la preuve que
+des variantes indépendantes existent déjà. Ces nombres viennent d'une lecture, pas d'une exécution.
 
 Le complément de 22 h 28 ajoute les critères de collections, équipement contextualisé,
 fabrication libre et galerie à AU2/AU3, et précise le montage déjà prévu dans AU4.

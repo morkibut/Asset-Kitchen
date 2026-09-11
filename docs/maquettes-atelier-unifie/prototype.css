@@ -248,3 +248,27 @@ dialog.wide-dialog { width:min(1080px,94vw); max-height:94vh }
 .ordered-frames button { cursor:grab; border:1px solid var(--contour) }
 .ordered-frames .dragging { opacity:.5 }
 .ordered-frames .drop-target { outline:2px solid var(--signal); background:var(--ouvert) }
+.eq-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:22px }
+.eq-cards canvas,.eq-frame-strip canvas { width:80px; height:80px; image-rendering:pixelated }
+.eq-icon { display:inline-grid; place-items:center; width:64px; height:64px; background:var(--cote); font-size:38px; flex-shrink:0 }
+.eq-steps { display:flex; flex-wrap:wrap; gap:14px; margin:0 0 22px; color:var(--muted); font-size:12px }
+.eq-direction { margin:0 14px 14px }
+.eq-frame-strip { display:flex; overflow:auto; gap:14px; padding:14px 0 }
+.eq-frame-strip article { flex:0 0 102px }
+.eq-frame-strip article button { display:flex; flex-direction:column; gap:4px; align-items:center; width:100%; padding:4px; font-size:12px }
+.eq-frame-strip label { font-size:12px; display:block; margin-bottom:4px }
+.eq-frame-strip figure { margin:0; min-width:110px; max-width:150px; font-size:12px }
+.eq-editor { display:grid; grid-template-columns:minmax(260px,1fr) minmax(300px,360px); gap:22px; align-items:start }
+.eq-viewport { height:380px; overflow:auto; position:relative; background:repeating-conic-gradient(var(--damier1) 0% 25%,var(--damier2) 0% 50%) 0 0 / 28px 28px; border:1px solid var(--trait); touch-action:none; overscroll-behavior:contain }
+.eq-viewport canvas { display:block; image-rendering:pixelated; margin:14px auto; cursor:crosshair; max-width:none }
+#eq-brush { position:absolute; border:1px solid var(--encre); outline:1px solid var(--sur); pointer-events:none }
+.eq-sources { gap:8px }
+.eq-sources figure { margin:0; font-size:12px }
+.eq-sources img,.eq-sources canvas { width:100%; max-width:112px; image-rendering:pixelated; background:var(--cote) }
+.eq-editor .paired-control { gap:8px; grid-template-columns:minmax(0,1fr) 76px }
+.eq-wear { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--trait) }
+.eq-wear small { display:block }
+.eq-wear canvas { width:64px; height:64px; image-rendering:pixelated; background:var(--cote) }
+.eq-review-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px }
+.eq-review-grid figure { margin:0; font-size:12px }
+.eq-review-grid canvas { width:128px; height:128px; image-rendering:pixelated; background:var(--cote) }

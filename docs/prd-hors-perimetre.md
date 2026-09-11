@@ -21,6 +21,13 @@ Godot : son agent de développement demande les assets à l'atelier et récupèr
 utilisables. Le parcours ne peut donc plus s'arrêter à « il suffit de glisser le ZIP ».
 L'installation des moteurs reste un geste explicite ; l'import reste disponible.
 
+**Équipements complets — précision du 11 septembre 2026.** Le cadrage actuel du PRD
+demande les emplois par personnage, leurs calques par pose, direction et frame, puis la
+combinaison de ces calques. L'exclusion historique ci-dessous de certaines combinaisons
+en V2 ne s'applique pas à ce nouveau parcours : les images équipées servent à préparer
+des calques séparés, avec masques corrigeables, sans empiler des corps complets. Cette
+extension reste à construire ; elle ne prétend pas modifier les données V2 déjà conservées.
+
 **Écarté de la V1, prévu ensuite.** ~~Génération autre que pixel art.~~ Tuiles qui se raccordent. ~~Personnage et ses poses préparées.~~ ~~Animation de sprites.~~ Son. *(Trois des cinq sont revenues, chacune avec son paragraphe daté plus bas ; il reste les tuiles et le son.)*
 
 **Écarté par choix d'ergonomie.** Mobile et tablette : écran large uniquement, aucun point de rupture, aucun menu escamoté, aucune mise en page de repli. Corbeille : suppression avec annulation courte. ~~Écran séparé pour la bibliothèque~~ et ~~détourage par couleur~~ — les deux sont revenus le 31 août 2026, voir plus bas.

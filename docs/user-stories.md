@@ -961,12 +961,11 @@ de poses fixes et l'exclusion générale du local ; elles n'effacent aucun résu
   La source, le calage et le masque se rouvrent pour corriger l'élément sans tout recommencer.
   Un calque de pose ne devient pas implicitement un équipement qui suit toute une animation.
 - **US-537** — En tant qu'auteur, je veux créer un équipement depuis le personnage qui le porte,
-  en générer des variantes avec sa référence, puis préparer son calage, afin de garder un
-  parcours naturel du casque imaginé à son utilisation sur le personnage.
-  La pièce reste réutilisable : chaque porteur a son emploi, ses calques, son emplacement
-  et son ordre de superposition. Les variantes manquantes et placements par pose/frame
-  se distinguent des images de préparation ; leur gestion complète est une évolution
-  ultérieure, sans retrait de l'habillage animé existant.
+  ou lui attribuer une pièce existante, afin de garder le même casque ou la même épée dans
+  la nomenclature du jeu avec une apparence adaptée à chaque héros.
+  Chaque emploi appartient à un personnage et garde ses calques, son emplacement et son
+  ordre de superposition. Renommer l'épée commune ne fusionne pas les images de l'humain,
+  du nain et du mutant ; corriger un emploi ne modifie pas les autres.
 - **US-538** — En tant qu'auteur, je veux parcourir les assets par familles et collections,
   chercher et ranger une sélection, afin de retrouver mes choses dans un jeu volumineux.
 - **US-539** — En tant qu'auteur, je veux fabriquer librement une image, une vidéo ou une
@@ -975,3 +974,30 @@ de poses fixes et l'exclusion générale du local ; elles n'effacent aucun résu
 - **US-540** — En tant qu'auteur, je veux retrouver tous les résultats dans une galerie
   filtrable et les poser sur la toile ou les rattacher à un asset, afin de réutiliser
   mes explorations sans les perdre ni les fabriquer de nouveau.
+- **US-541** — En tant qu'auteur, je veux parcourir les calques d'un emploi par pose ou
+  mouvement, direction, animation et frame, puis fabriquer ou importer ceux qui manquent,
+  afin de couvrir les mouvements du personnage sans commander toutes ses combinaisons.
+  La demande utilise le corps de base correspondant et les références de la pièce ; elle
+  peut porter sur une sélection ou tous les manques réels. L'image du personnage équipé
+  est une source : l'extraction du calque, sa correction et son choix restent identifiables.
+  Les images fixes et les bandes ont des comptes distincts ; une animation absente n'invente
+  pas de frames à fabriquer. Le choix d'une variante ne supprime pas ses alternatives.
+- **US-542** — En tant qu'auteur, je veux régler le calque retenu sur sa frame de personnage,
+  voir son placement exact et corriger ses pixels, afin que l'équipement suive le mouvement.
+  Le déplacement direct, les valeurs de position et d'échelle, le masque et l'ordre devant
+  ou derrière le corps se conservent. Une action distingue cette frame, une sélection et la
+  bande ; le placement automatique proposé reste corrigeable. Une partie masquée du corps
+  n'est jamais effacée de l'original.
+- **US-543** — En tant qu'auteur, je veux activer et combiner les équipements préparés d'un
+  personnage, prévisualiser ses animations et exporter le résultat, afin de choisir ses
+  tenues sans régénérer le corps ni commander chaque combinaison possible.
+  L'aperçu montre aussi les manques et conflits ; une tenue incomplète ne se dit pas prête.
+  Le corps sans équipement reste accessible. Les calques séparés conservent les mêmes
+  repères et la même cadence pour être combinés dans le jeu ; les sprites assemblés restent
+  une sortie possible. L'agent peut demander les mêmes résultats que l'auteur.
+- **US-544** — En tant qu'auteur, je veux rouvrir un emploi et sa tenue après fermeture ou
+  changement du montage, afin de retrouver les calques sur les bonnes frames et corriger
+  seulement ce qui est devenu manquant ou incertain.
+  Réordonner les frames ne permute pas leurs placements ; remplacer une animation signale
+  les calques à revoir sans les supprimer. Les calques de pose et le suivi animé déjà gardés
+  restent lisibles, sans prétendre qu'ils sont des variantes indépendantes par direction.

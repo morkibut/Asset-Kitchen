@@ -3,7 +3,7 @@ window.creerErgonomieMaquette=api=>{
   'use strict';
   const {esc,button,field,input,select,modal,save,render,toast,clone}=api;
   const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-  const all=()=>[...api.state().subjects.flatMap(s=>s.results.map(r=>({s,r}))),...(api.state().media||[]).filter(r=>r.type==='Image').map(r=>({s:{id:'free',name:'Essais libres',family:'Essais libres'},r}))];
+  const all=()=>[...(api.extraImages?.()||[]),...api.state().subjects.flatMap(s=>s.results.map(r=>({s,r}))),...(api.state().media||[]).filter(r=>r.type==='Image').map(r=>({s:{id:'free',name:'Essais libres',family:'Essais libres'},r}))];
   const find=id=>all().find(x=>x.r.id===id);
   const status=r=>r.rejected?'Écarté':r.chosen?'Retenu':'Non jugé';
   const movement=r=>r.movement||r.title.split(' · ')[0];

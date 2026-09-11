@@ -7,7 +7,7 @@
   const FAMILIES = ['Personnages', 'Monstres', 'Objets', 'Décors', 'Interface', 'Équipement'];
   const DIRECTIONS = ['Sud', 'Ouest', 'Est', 'Nord'];
   const TOOLS = ['Main', 'Détourage', 'Recadrage', 'Pixelisation', 'Couleurs', 'Nettoyage', 'Contour', 'Retourner'];
-  const NAMES = {employment:'Emploi d’un équipement',gallery:'Galerie',montage:'Montage vidéo',home:'Le jeu', universe:'Univers & toile', library:'Les assets', subject:'Fiche de l’asset', editor:'Retouche', jobs:'Fabrications', delivery:'Livrer au jeu', settings:'Réglages', guide:'Essayer la maquette', compare:'Comparer', source:'Source 3D', remarks:'Vos remarques',slice:'Découper une image',extract:'Extraire un élément'};
+  const NAMES = {'equipment-frame':'Calque d’un équipement','equipment-compose':'Combiner les équipements',employment:'Emploi d’un équipement',gallery:'Galerie',montage:'Montage vidéo',home:'Le jeu', universe:'Univers & toile', library:'Les assets', subject:'Fiche de l’asset', editor:'Retouche', jobs:'Fabrications', delivery:'Livrer au jeu', settings:'Réglages', guide:'Essayer la maquette', compare:'Comparer', source:'Source 3D', remarks:'Vos remarques',slice:'Découper une image',extract:'Extraire un élément'};
   const clone = x => JSON.parse(JSON.stringify(x));
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const id = () => globalThis.crypto?.randomUUID?.() || `demo-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -108,6 +108,7 @@
   }
   function subject() {
     const s=currentSubject();
+    if(s.family==='Équipement')return parcours.pieceSheet(s);
     return (s.owner?button('Retour au personnage','owner-back',`data-id="${s.owner}"`):'')+heading(s.name,`${esc(s.family)} · ${esc(s.goal)}`,button('Importer','import')+button('Fabriquer…','request','class="rust"'))+
       `<div class="subject"><div class="sprite">${s.image||s.results.some(r=>!r.animated)?`<img src="${esc(s.image||IMAGE)}" alt="Référence du sujet">`:'<small>Référence<br>à créer</small>'}</div><div><p>${esc(s.description)}</p><div class="row wrap"><span class="tag">${s.results.length} résultats</span><span class="tag">${s.results.filter(r=>r.chosen).length} pour le jeu</span>${button('Modifier la fiche','edit-subject')}</div></div></div>
       <div class="tabs">${[['animations','Animations'],['images','Images fixes'],['sources','Sources & clips'],['equipment','Équipement'],['brief','Objectif & règles']].map(([t,n])=>button(n,'tab',`data-tab="${t}" aria-pressed="${tab===t}"`)).join('')}</div><div class="toolbar">${button('Découper une image','open-slice')}${button('Extraire un élément','open-extract')}</div>${subjectTab(s)}`;
@@ -322,10 +323,11 @@
     id,clone,esc,button,field,input,select,option,heading,demo,modal,toast,save,render,snapshot,changed,openEditor,createResult:result,drawFrame,redraw:drawAll,
     go:p=>leave(()=>{stop();page=p;render();}),leave:fn=>leave(()=>{stop();Promise.resolve(fn()).catch(error=>{console.error(error);toast('Cette source n’a pas pu être ouverte.');});}),setSubject:key=>{subjectId=key;},imagesTab:()=>{tab='images';},showLayers:()=>{inspector='layers';},
     open:p=>{stop();page=p;render();},image:IMAGE,pickFromLibrary:(callback)=>ergonomie.openPicker(callback)});
-  const ergonomie=window.creerErgonomieMaquette({state:()=>state,subject:currentSubject,request:()=>request,ateliers:()=>ateliers,
+  let parcours;
+  const ergonomie=window.creerErgonomieMaquette({extraImages:()=>parcours?.extraImages()||[],state:()=>state,subject:currentSubject,request:()=>request,ateliers:()=>ateliers,
     esc,button,field,input,select,modal,save,render,toast,clone,drawFrame,
     brush:key=>key==='pixels'?(tool==='Main'&&inspector==='retouch'?Number(draft?.recipe.brush):0):ateliers.brushSize()});
-  const parcours=window.creerParcoursMaquette({state:()=>state,subject:currentSubject,page:()=>page,esc,button,field,input,select,heading,modal,save,render,toast,id,clone,result,drawFrame,image:IMAGE,navigate,
+  parcours=window.creerParcoursMaquette({state:()=>state,subject:currentSubject,page:()=>page,esc,button,field,input,select,heading,modal,save,render,toast,id,clone,result,drawFrame,image:IMAGE,navigate,
     picker:(...args)=>ergonomie.openPicker(...args),sourceImage:r=>r.frames[0]?.image||r.image||IMAGE,
     request:requestForm,requestState:()=>request,
     openSubject:(sid,t='animations')=>{dialog.close();subjectId=sid;tab=t;navigate('subject');},
@@ -426,7 +428,7 @@
     else if(el.id==='local-ready'||el.id==='api-ready'){state.providers[el.id==='local-ready'?'local':'api']=el.checked;save();}
     else if(el.dataset.check){state.checks[el.dataset.check]=el.checked;save();}
   });
-  document.addEventListener('input',e=>{if(((e.target.dataset.parcours||e.target.name?.startsWith('mount-'))&&parcours.change(e.target))||ergonomie.change(e.target,true)||ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
+  document.addEventListener('input',e=>{if(((e.target.dataset.parcours||e.target.name?.startsWith('mount-')||e.target.name?.startsWith('eq-')||e.target.dataset.eqSetting)&&parcours.change(e.target))||ergonomie.change(e.target,true)||ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
   window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
   document.addEventListener('keydown',e=>{if(page==='editor'&&!dialog.open&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();handlers[e.shiftKey?'redo':'undo']();}});
   if(testSession)$('.prototype span').textContent='SESSION D’ESSAI SÉPARÉE · données de démonstration · aucun appel IA ni accès au jeu';

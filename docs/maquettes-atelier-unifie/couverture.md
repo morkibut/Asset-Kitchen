@@ -11,13 +11,16 @@ Les limites sont affichées sur les écrans concernés, pas seulement dans ce do
 ## Comment l’essayer
 
 Ouvrir l’HTML dans un navigateur desktop, ou le servir avec un serveur statique local depuis
-la racine du dépôt. Il utilise une feuille CSS, deux scripts voisins et des images locales,
+la racine du dépôt. Il utilise une feuille CSS, six scripts voisins et des images locales,
 sans dépendance réseau. Le panneau **Essayer la maquette** propose huit parcours. Commencer par
 **Créer sans MCP**, puis **Corriger une animation** et **Composer un univers**.
 
 Pour les derniers retours : essayer **Une planche, plusieurs images** et **Un sac extrait
 en calque**. Les deux ateliers proposent un exemple immédiat. Dans la retouche, le sélecteur
 de table reste en haut du panneau droit ; **Calques** ouvre la composition séparément.
+Pour les équipements complets, partir de **Personnage → Équipements** : créer une pièce,
+préparer ses calques dans son emploi, puis ouvrir **Combiner les équipements**. Employer
+la même pièce sur un autre héros permet d'essayer la séparation des adaptations.
 
 Le bouton **Noter une remarque** garde le contexte de l’écran. Les remarques s’exportent
 en texte Markdown copiable depuis **Vos remarques**, avec téléchargement facultatif selon
@@ -34,8 +37,8 @@ le bandeau. Les tests de cette révision ont utilisé cette séance séparée de
 |---|---|---|
 | Jeu | Vue d’ensemble, accès à l’univers, assets, fabrications et livraison | Création de plusieurs jeux et premier lancement à détailler |
 | Univers / toile | Ajouter note, image et îlot ; annoter ; déplacer et relier ; zoomer ; retrouver les positions ; découper une image en cartes, original conservé | Extraction de palette, officialisation d'artwork, placement des grands lots et passage assisté vers les règles à compléter |
-| Bibliothèque | Créer un sujet, rechercher, filtrer les cinq familles actuelles, retrouver les résultats | Collections, tri fin, corbeille restaurable et vue de tous les résultats à compléter |
-| Objectif | Fixe, animé ou mixte ; mouvements et directions ; matrice qui distingue résultats fixes et animés | Couverture partagée réelle avec API et MCP dans AU2 |
+| Bibliothèque | Créer un sujet, rechercher, filtrer par famille, créer et rouvrir une collection, y ranger une sélection ; galerie distincte de tous les résultats | Gestion complète des collections, tri fin et charge avec des centaines d'assets non vérifiés |
+| Objectif | Fixe, animé ou mixte ; dossiers de mouvements et rangées de directions ; résultats fixes et animés distincts | Couverture partagée réelle avec API et MCP dans AU2 |
 | Création manuelle | Fiche vide → référence → demande d’animation → relecture entière → fabrication → résultat | Les générations sont simulées et réemploient des images d’exemple |
 | Référence / import | Importer PNG, JPEG, WebP dans le navigateur, limite de démonstration à 2 Mo | Pas de téléversement au serveur ; clip représenté par une séquence préparée |
 | Fabrications | Origine manuelle ou agent ; attente, résultat, interruption, échec, reprise explicite ; résultat en bibliothèque | Ni travail distant, ni facturation, ni ordonnanceur réel |
@@ -47,8 +50,9 @@ le bandeau. Les tests de cette révision ont utilisé cette séance séparée de
 | Découper une image | Source importée, bibliothèque, frame ou carte ; détection, grille, tracé/déplacement/redimensionnement des rectangles, champs numériques, nom et sélection ; relecture des crops ; images, assets séparés, animation ou cartes ; source conservée et découpage repris depuis un résultat | Détection simplifiée par séparations, pas reconnaissance de sujets ; gouttières, fusion de zones et remplacement choisi des anciennes sorties à détailler. Refaire une découpe crée de nouvelles sorties |
 | Extraire un élément | Base + variante ; proposition d’alignement, translation, échelle, opacité ; différence et masque Garder/Retirer ; aperçu seul/superposé/composé ; sauvegarde et reprise du calage et du masque depuis l’élément ou son calque | Démonstration en 128 px, recherche bornée de pixels communs ; pas reconnaissance sémantique, déformation ni calque qui suit automatiquement un mouvement. Pas de garantie sur des variantes différentes de l’exemple |
 | Comparer / juger | Comparer deux résultats ou source/retouche ; favori distinct du choix pour le jeu | Pas de comparaison synchronisée des animations complètes ni de grille de calibration |
-| Équipement | Associer une pièce ; extraire un élément et le placer en calque sur une frame précise ; corriger l’extraction sans doubler le calque ni perdre son placement | Emplois détaillés, associations entre plusieurs assets et calques animés à compléter en s’appuyant sur l’existant |
-| Livraison | Choisir les résultats, destination proposée, aperçu des formats, historique par révision, conflit fictif | Aucun PNG/JSON/SpriteFrames produit, aucun fichier du jeu écrit ; la preuve Godot reste AU1 |
+| Équipement / emplois | Pièce commune, emplois indépendants par personnage ; poses, directions et frames ; génération simulée ciblée ou groupée, extraction de pixels, validation des superpositions, placements et masques par frame, historique restaurable ; base modifiée signalée ; calques accessibles depuis la galerie | Dessins de démonstration et imports ramenés à 64 px ; aucun moteur IA ni migration des données du produit ; reprise complète après changement de base et grands volumes encore à éprouver |
+| Tenues | Activer plusieurs équipements pendant la lecture, garder une combinaison et la rouvrir ; corps et calques séparés, aperçu des manques ; commandes de téléchargement PNG assemblé ou paquet JSON avec images | Téléchargements déclenchés, fichiers non inspectés ; aucun format final ni importeur Godot validé |
+| Livraison générale | Choisir les résultats, destination proposée, aperçu des formats, historique par révision, conflit fictif | Aucun fichier du jeu écrit ni SpriteFrames produit ; les téléchargements d'essai des équipements sont distincts de la preuve Godot AU1 |
 | Réglages | Règles de l’univers ; disponibilité indépendante des moteurs ; cadre de l’agent mémorisé et choix de méthode filtré | Pas de clé réelle ; profils de workflow descriptifs ; installations, quotas et états GPU à détailler |
 | Sources 3D | Modèle conservé → rig → demande de rendu ; plusieurs rendus d’une source | Parcours entièrement simulé, aucun appel à asset3d |
 | Tuiles / son | Place dans la feuille de route annoncée | Ateliers spécialisés à concevoir plus tard, aucun faux outil annoncé comme prêt |
@@ -72,7 +76,7 @@ avec le carnet, les lieux, la retouche et la recette du code actuel.
 | Images, Animations, Animation-chaine | Onglets séparés, objectif et fabrication ; éprouver les cas mixtes |
 | Galerie, Comparer, Grille, Essai | Bibliothèque et comparaison ; compléter grille de cohérence, essai animé et calibration |
 | Retouche, Main, atelier-main, atelier-detourer, atelier-recadrer, atelier-reduire, atelier-couleurs, atelier-nettoyer, atelier-contour, atelier-retourner | Éditeur commun ; les limites des tables avancées sont listées ci-dessus |
-| atelier-decoupe, atelier-difference, Emplois, Emploi | Découper une image et Extraire un élément sont des ateliers dédiés ; la composition reste dans l’éditeur. Emplois complets et réglages avancés à reprendre |
+| atelier-decoupe, atelier-difference, Emplois, Emploi | Découpe et extraction dédiées ; parcours d'équipement complet dans la maquette, de l'emploi aux calques et à la tenue. Le raccord au domaine existant et à B20 reste à construire |
 | Clips, Clip, Atelier-animation | Sources et montage ; compléter vidéo brute, plages temporelles et états de préparation |
 | Envoi, Relecture | Préparation et écran entier de relecture, puis fabrications |
 | Sortie | Livraison ; confirmer le contrat réel dans Godot avant de figer le détail |
@@ -81,9 +85,10 @@ avec le carnet, les lieux, la retouche et la recette du code actuel.
 | Navigation, Barre, Parcours, Vocabulaire, Systeme, Sommaire, l-atelier-en-carnet | Références transversales ; leurs fonctions se répartissent dans la navigation, les formulaires et le design conservé |
 | Tuiles | Périmètre futur maintenu, atelier à concevoir |
 
-La bibliothèque de mouvements, les collections, l’usage détaillé d’équipement, les règles de
-famille et les ateliers de carte ne sont **pas abandonnés** parce que cette version les
-dessine moins. Avant de remplacer une surface existante, compléter son inventaire de
+La bibliothèque de mouvements, la gestion complète des collections, les règles de famille
+et les ateliers de carte restent à détailler. L'équipement a désormais son parcours complet
+de démonstration ; cela ne remplace pas les capacités du produit. Avant de remplacer une
+surface existante, compléter son inventaire de
 contrôles et de sauvegardes, puis tester son parcours de reprise.
 
 ## Choix et critiques à éprouver avec l’auteur
@@ -117,8 +122,8 @@ contrôles et de sauvegardes, puis tester son parcours de reprise.
 
 Le pèlerin fixe vient des vignettes déjà présentes dans l’interface. `marche-demo.png` est
 une copie inchangée d’une planche du banc vidéo local du dépôt (cinq vues d’exemple). Son
-fond fait partie de l’image ; ce n’est pas une preuve de détourage. Aucun asset neuf n’a été
-généré pour ce travail. La taille d’aperçu de la retouche est 64 px, quelle que soit la taille
+fond fait partie de l’image ; ce n’est pas une preuve de détourage. Aucune génération IA n’a
+été lancée pour ce travail. La taille d’aperçu de la retouche est 64 px, quelle que soit la taille
 de sortie sélectionnée : cette différence est affichée dans la table Pixelisation.
 
 La planche de découpe d’essai assemble quatre copies de la vignette. Le sac d’essai est
@@ -128,6 +133,13 @@ crops dans le navigateur ; l’extraction normalise ses deux sources en 128 px. 
 originales importées ne sont pas modifiées sur disque. La fidélité pleine résolution et
 les moteurs du produit doivent être vérifiés pendant leur raccord.
 
+Les casques, sacs et armes du parcours d'équipement sont aussi dessinés localement sur les
+sprites d'exemple. Leurs images équipées, différences, masques et compositions sont de
+vraies manipulations de pixels dans un cadre de 64 × 64 ; elles ne prouvent ni la fidélité
+d'un modèle IA ni un suivi automatique du mouvement. Les imports de ce parcours sont
+également ramenés à 64 × 64. Les masques du corps s'appliquent avec l'équipement activé,
+sans modifier sa source ; un déplacement de vue reste distinct du placement du calque.
+
 Le HTML, le CSS et les scripts sont indépendants de l’application. La sauvegarde ne touche
 qu’une clé propre à la maquette dans le stockage du navigateur. Elle n’est pas un format
 de projet, ni une proposition de schéma pour le produit. La réinitialisation est explicite.
@@ -136,25 +148,54 @@ reste limitée à la séance ouverte pour éviter de remplir le stockage avec de
 
 ## Vérifications de cette version
 
+### Équipements complets, après la précision de l'auteur
+
+Le report proposé à 22 h 56 est annulé. Le parcours part désormais d'une pièce commune,
+passe par son emploi chez un personnage, puis ses calques de poses, directions et frames,
+et aboutit à une tenue composée. Une image du personnage équipé reste une source à
+extraire ; elle ne rend pas la couverture prête. Les équipements s'ajoutent au corps de
+base, sans commander une image pour chaque combinaison possible. La même pièce attribuée
+à un autre héros ouvre un emploi avec ses propres calques et placements.
+
+La fiche d'emploi permet de sélectionner les cibles, générer les images équipées simulées,
+extraire leurs différences puis relire les superpositions avant validation individuelle ou
+groupée. La frame s'ajuste par glisser-déposer et valeurs, avec position, échelle, rotation,
+opacité, ordre, masque du calque et masque du corps. L'historique conserve une version à
+restaurer. Les fabrications gardent le modèle fictif, la consigne et les images de base
+envoyées ; les nouveaux envois gardent aussi l'estimation annoncée, sans recalculer un prix
+inconnu pour les anciens. La galerie permet de retrouver un calque et de rouvrir sa frame.
+
+La session séparée `?essai=equipements-complets` a éprouvé trois pièces avec six calques
+chacune, la lecture avec trois équipements activés et la tenue « Exploration armée » gardée
+puis rechargée. Un second emploi de l'épée chez le nain commence à zéro sur cinq frames ;
+son placement X = 9, Y = −4 sur la frame 2 survit à la réouverture et à une restauration
+d'ancienne version sans modifier celui du pèlerin. Le détail des gestes et limites de
+vérification est dans la revue chronologique.
+
+Les deux commandes d'export ont été déclenchées sans erreur relevée ; les téléchargements
+n'ont pas été inspectés. Aucun résultat Godot ni format de livraison final n'est donc
+validé. Une base modifiée par miroir est bien signalée et ne peut pas être validée par une
+simple nouvelle extraction de son ancienne source. Le réordonnancement d'une bande déjà
+équipée, la reprise complète sur une nouvelle base et la charge avec des centaines de
+frames restent à tester. Les emplois et calques historiques
+du produit, dont B20 TIENT/GLISSE, sont préservés dans le plan, sans modification du code
+de production. Les garanties de stockage et d'intégration restent celles d'AU15–AU17 à venir.
+
+La remarque connue qui demandait emplois et calques complets est archivée une seule fois
+dans la maquette ; l'historique des remarques permet toujours de la restaurer.
+
 ### Complément demandé à 22 h 28
 
 **Itération de 22 h 56.** Le montage sépare nom libre, personnage/asset, mouvement et
 direction. Les frames sélectionnées disposent d'un ruban ordonné : glisser-déposer ou
 Alt + flèches change l'ordre, conservé dans le brouillon et la bande.
 
-Équipement : une pièce existante peut être employée par plusieurs personnages. La fiche
-d'emploi garde l'emplacement et le passage devant/derrière ; l'inventaire des poses et
-frames indique ce qui devra être préparé sans déclarer des calques terminés. Les images
-générées pour un emploi gardent son contexte. Le raccord des calques, le calcul des vrais
-manques et le placement exact par frame restent reportés ; cette vue ne remplace pas
-l'habillage animé déjà disponible dans le produit.
+Le premier inventaire d'emplois de cette itération est remplacé par le parcours complet
+décrit ci-dessus. Les corrections de montage et les anciennes remarques reconnues sont
+archivées ; le nettoyage ne supprime pas l'historique restaurable.
 
-La reprise du nettoyage des remarques corrige le premier nettoyage qui n'avait retiré que
-les neuf anciennes notes. La remarque sur les emplois reste active puisque son traitement
-complet est reporté ; les corrections de montage sont archivées.
-
-- Personnage → Équipement → Créer un équipement : fiche liée au personnage, références
-  proposées dans l'envoi, génération simulée de variantes et retour au personnage.
+- Personnage → Équipements → Créer une pièce et son emploi : prépare les cibles de ce
+  personnage ; l'identité de la pièce pourra être reprise dans un autre emploi.
 - Navigation par familles, dont Monstres, et collections nommées ; recherche, sélection
   multiple, ajout à une collection, renommage et pagination de 24 assets. La bibliothèque
   organise les fiches ; la galerie rassemble les résultats. Aucun banc de charge avec

@@ -72,6 +72,15 @@ retouche au pixel. Les recettes réutilisables, réglages avancés et comparaiso
 accessibles. L'organisation peut changer ; une capacité n'est pas supprimée pour alléger
 l'écran. L'action précise si elle modifie cette frame, une sélection ou toute la bande.
 
+**Les équipements servent à combiner, sans régénérer les combinaisons.** Une pièce,
+par exemple l'épée divine, garde son identité dans le jeu ; ses emplois chez un humain,
+un nain et un mutant possèdent des images adaptées à chaque personnage. Depuis celui-ci,
+l'auteur prépare les calques de chaque pose, direction et frame demandée, en partant
+d'images du personnage équipé ou de calques importés. Il vérifie l'extraction et le
+placement, puis superpose casque, sac et épée sur le corps de base. Les images de
+préparation ne remplacent pas les calques utilisables ; une combinaison ne demande aucun
+nouvel appel à l'IA. Ce parcours complet appartient au périmètre de l'atelier unifié.
+
 Le travail long reste visible pendant que l'auteur continue ailleurs. Une fermeture
 n'efface ni le résultat ni sa provenance. Après une interruption incertaine, l'atelier
 cherche le travail déjà soumis et explique ce qu'il sait avant toute nouvelle demande.
@@ -103,7 +112,7 @@ Il peut travailler avec une génération distante ou avec les capacités de sa m
 ## User Stories → `docs/user-stories.md`
 
 Les stories historiques US-1 à US-518 restent dans [le catalogue](user-stories.md).
-Les stories US-519 à US-540 ajoutées le 11 septembre couvrent le nouvel atelier :
+Les stories US-519 à US-544 ajoutées le 11 septembre couvrent le nouvel atelier :
 objectif de production, sources, animation, reprise, export, travail long, procédés locaux,
 3D réutilisable, futures familles et boucle de production avec l'agent Godot.
 US-534 à US-536 garantissent explicitement le parcours sans MCP, la toile et les outils existants.
@@ -111,6 +120,8 @@ US-536 distingue les tables de retouche, la composition par calques, la découpe
 planche en plusieurs images et l'extraction d'un élément après calage de deux images.
 US-537 à US-540 précisent l'équipement créé depuis son personnage, les familles et
 collections, la fabrication libre et la galerie de tous les résultats réutilisables sur la toile.
+US-541 à US-544 complètent les emplois d'équipement : couverture, correction par frame,
+combinaisons et reprise après modification de l'animation.
 En cas de conflit, le présent cadrage prévaut ;
 les anciennes stories ne sont pas supprimées comme si elles n'avaient jamais été livrées.
 
@@ -137,6 +148,8 @@ Le parcours prioritaire est jugé sur ces résultats observables :
   ouvrir le résultat dans une scène Godot, puis remplacer une animation sans perdre les autres.
 - Échouer puis reprendre sans perdre les réglages ni soumettre silencieusement un doublon.
 - Réutiliser un modèle 3D et son squelette pour un autre rendu sans régénérer le personnage.
+- Préparer séparément casque, sac et épée, puis jouer leurs combinaisons sans génération ;
+  l'emploi de la même épée sur un autre héros garde ses propres calques et placements.
 - Effectuer ces gestes dans une fenêtre desktop, avec retour au contexte précédent,
   sans action cachée par un panneau et sans contrôle qui ne produit aucun effet.
 

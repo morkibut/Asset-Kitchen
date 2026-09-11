@@ -1,6 +1,6 @@
 # Plan — atelier unifié, de la demande de l'agent au jeu Godot
 
-> PRD source : [PRD.md](PRD.md), US-519 à US-536. Ordre actif annoncé dans [PLAN.md](PLAN.md).
+> PRD source : [PRD.md](PRD.md), US-519 à US-544. Ordre actif annoncé dans [PLAN.md](PLAN.md).
 > Branche : `codex/atelier-unifie`, issue de la refonte existante.
 > Les objectifs desktop, animation prioritaire, moteurs locaux, asset3d et MCP pour l'agent
 > Godot ont été explicitement demandés. Le découpage ci-dessous est proposé en autonomie ;
@@ -24,8 +24,12 @@
 - Pas de réécriture générale : réutiliser génération, montage, recettes, exports et MCP.
   Les résultats anciens restent ouvrables. Chaque écran remplacé doit nommer les capacités
   qu'il reprend et fermer l'ancienne porte une fois celles-ci reprises.
+- Les équipements complets sont requis : une pièce commune, des emplois par personnage,
+  des calques ciblés et des tenues composées. La précision de l'auteur annule le report
+  envisagé à 22 h 56. Leur préparation UX couvre le parcours entier ; AU15 à AU17 portent
+  son implémentation, sans renuméroter ni déclarer livrées les tranches précédentes.
 
-## Les cinq jalons lisibles
+## Les six jalons lisibles
 
 **Préparation UX, avant de modifier les écrans du produit.** L'auteur essaie une maquette
 interactive des parcours, puis ses remarques précisent le contenu des tranches concernées.
@@ -38,6 +42,9 @@ Critères de passage à l'implémentation des écrans concernés :
 
 - [ ] L'auteur a essayé le parcours manuel personnage → animation → livraison et noté ses frictions.
 - [ ] Toile et retouche ont été essayées avec modification, fermeture et réouverture.
+- [ ] L'auteur peut essayer un équipement depuis sa pièce et son emploi jusqu'aux calques
+  de poses, directions et frames, puis combiner plusieurs équipements ; un simple inventaire
+  de préparations sans extraction, placement ni composition ne couvre pas ce parcours.
 - [ ] Chaque écran à remplacer possède un inventaire des fonctions actuelles reprises ; les
   détails manquants de la maquette sont complétés avant de fermer sa porte actuelle.
 - [ ] Les arbitrages de comportement sont reportés dans le PRD, ceux d'apparence dans le
@@ -48,12 +55,13 @@ de livraison. Les générations simulées ne constituent jamais une preuve d'int
 
 1. **Une animation existante arrive dans Godot via l'agent** — AU1.
 2. **L'auteur ou l'agent crée un personnage animé, avec les outils de correction complets** — AU2 à AU5.
-3. **Les fabrications locales s'enchaînent sans perdre le travail** — AU6 à AU8.
-4. **Une source 3D produit plusieurs animations et angles** — AU9 à AU11.
-5. **Le même atelier couvre les autres assets, puis tuiles et son** — AU12 à AU14.
+3. **Les équipements adaptés aux héros se combinent sans nouvelle génération** — AU15 à AU17.
+4. **Les fabrications locales s'enchaînent sans perdre le travail** — AU6 à AU8.
+5. **Une source 3D produit plusieurs animations et angles** — AU9 à AU11.
+6. **Le même atelier couvre les autres assets, puis tuiles et son** — AU12 à AU14.
 
-Ordre conseillé : AU1 → AU2 → AU3 → AU4 → AU5 → AU6 → AU7 → AU8 → AU9 → AU10 → AU11
-→ AU12 → AU13 → AU14. Les dépendances réelles sont indiquées par tranche.
+Ordre conseillé : AU1 → AU2 → AU3 → AU4 → AU5 → AU15 → AU16 → AU17 → AU6 → AU7 → AU8
+→ AU9 → AU10 → AU11 → AU12 → AU13 → AU14. Les dépendances réelles sont indiquées par tranche.
 Les tuiles et le son restent en deuxième temps, conformément à la demande.
 
 ## AU1 · Une animation existante arrive dans Godot
@@ -101,6 +109,7 @@ les mouvements et directions utiles, importe une référence et voit ce qui rest
   rechercher, ranger une sélection et rouvrir une collection conserve son contenu (US-538).
 - [ ] Créer un équipement depuis le personnage conserve ce lien et propose sa référence
   dans l'envoi ; les variantes et le retour au personnage restent accessibles (US-537).
+  L'accès existant reste disponible jusqu'à la reprise complète de ce parcours en AU15–AU17.
 - [ ] La galerie distingue les résultats des fiches d'assets : filtres par média et
   rattachement, ouverture et réutilisation sur la toile sans nouvelle fabrication (US-540).
 
@@ -305,16 +314,6 @@ par l'auteur ou l'agent, avec recherche et réutilisation avant nouvelle génér
 - [ ] Les réglages visuels hérités et leurs dérogations se lisent avant fabrication.
 - [ ] Les résultats se retrouvent, se corrigent et s'exportent par les mêmes portes.
 
-**Report équipement après le parcours principal, sans retrait de l'existant.** Les pièces,
-emplois par porteur, calques de pose et habillage animé existants restent à préserver dans
-AU2/AU4/AU12. Une image indépendante par direction ou frame et un calage manuel complet
-par frame constituent une évolution ultérieure, à découper après clarification du contrat
-de données. Elle ne remplace pas le recalage animé déjà présent.
-Son résultat attendu : une pièce réutilisable, des emplois distincts, des variantes
-requises et manquantes visibles sans faux comptes, la source et le placement exact de
-chaque calque, et une reprise fiable après changement du montage. Une animation absente
-du personnage ne crée pas artificiellement de frames d'équipement manquantes.
-
 ## AU13 · Des tuiles qui se raccordent dans Godot
 
 **User stories** : US-530, US-531. **Bloquée par** : AU12.
@@ -346,6 +345,90 @@ de choisir un moteur ; le détail se recadre au moment de cette tranche.
 - [ ] Un fichier silencieux ou invalide n'est pas annoncé comme un résultat prêt.
 - [ ] Le jeu lit le fichier exporté ; les travaux audio partagent le cadre et la file locale.
 
+## AU15 · Un équipement a son premier calque sur un personnage
+
+**User stories** : US-537, US-541, US-542, US-544. **Bloquée par** : AU4.
+
+### Ce qu'on livre
+
+Depuis un personnage, créer une pièce ou choisir l'épée commune, ouvrir son emploi, puis
+importer une image équipée ou un calque pour une pose fixe ou une frame précise. Extraire,
+corriger, placer et retenir ce calque, puis rouvrir le personnage équipé. Ce premier chemin
+ne demande aucun fournisseur et pose le contrat réutilisé par les deux tranches suivantes.
+
+### Critères d'acceptation
+
+- [ ] La même pièce possède des emplois distincts chez l'humain, le nain et le mutant ;
+  leur identité commune se renomme une fois, leurs images et placements restent indépendants.
+- [ ] Le calque vise un résultat de base précis : pose fixe et direction, ou bande,
+  direction et frame. Référence, image équipée et calque utilisable ont des états distincts.
+- [ ] Extraire conserve base, variante, masque et réglages ; un calque importé garde aussi
+  sa source. Déplacement direct, valeurs et ordre devant ou derrière le corps se rouvrent.
+- [ ] Les masques d'occultation et l'ordre des couches permettent de corriger ce qui passe
+  devant ou derrière ; l'original du corps et les autres emplois ne sont jamais modifiés.
+- [ ] Retenir une variante ne détruit pas les autres ; une image équipée contenant le corps
+  complet ne devient pas un calque superposable par simple changement d'étiquette.
+- [ ] UI et MCP lisent la même relation pièce → emploi → cible et le même état enregistré.
+- [ ] La compatibilité conserve les calques de pose historiques et B20 : TIENT recale chaque
+  frame, GLISSE garde un calage commun, la main reste prioritaire. Ces résultats restent
+  lisibles tels quels ; ils ne sont pas transformés en variantes directionnelles inventées.
+  Les emplois « à part » et « mise en scène » existants restent ouvrables.
+
+## AU16 · Toutes les poses et frames utiles portent leur équipement
+
+**User stories** : US-522, US-526, US-541, US-542, US-544. **Bloquée par** : AU15, AU3.
+
+### Ce qu'on livre
+
+Depuis l'emploi, parcourir mouvement ou pose → direction → version d'animation → frames,
+choisir une cible, une sélection ou les manques et fabriquer les images équipées. Les
+retours passent par extraction et correction pour devenir des calques retenus ; l'auteur
+peut contrôler la bande en lecture. L'agent suit la même fabrication bornée qu'en AU3.
+
+### Critères d'acceptation
+
+- [ ] Couverture fixe et animée restent distinctes : absente, à extraire, à vérifier,
+  prête, à revoir. Les vignettes et filtres conduisent au calque concerné ; une animation
+  non produite n'invente aucun nombre de frames, une direction non demandée n'est pas un trou.
+- [ ] La relecture nomme les cibles et montre leurs corps de base, les références de la pièce,
+  le fournisseur, le modèle et la consommation annoncée ; elle ne commande aucune combinaison.
+- [ ] Une reprise ne refabrique pas les cibles terminées et n'écrase pas une variante retenue ;
+  annulation, erreur partielle et soumission incertaine suivent les règles d'AU3.
+- [ ] Une correction manuelle de masque ou de placement s'applique à la portée choisie ;
+  la lecture utilise le bon calque sur chaque frame et ne confond pas des variantes de direction.
+- [ ] Les réemplois du même calque restent explicites et contrôlables ; « automatique »
+  signifie proposition de placement, jamais promesse de qualité ni validation de toute la bande.
+- [ ] Réordonner conserve l'identité des frames et leurs placements ; ajout, remplacement ou
+  changement de version signale les cibles à compléter ou revoir sans perdre les anciens calques.
+- [ ] Fermer pendant la lecture puis rouvrir retrouve sélection, sources et corrections
+  avec des valeurs différentes des défauts ; une image équipée seule ne remplit pas la couverture.
+
+## AU17 · Les tenues se combinent et arrivent dans Godot
+
+**User stories** : US-525, US-531, US-533, US-543, US-544. **Bloquée par** : AU16, AU5.
+
+### Ce qu'on livre
+
+Choisir casque, sac et épée préparés pour un personnage, activer ou désactiver chacun,
+juger les poses et animations puis conserver une tenue. Exporter les calques synchronisés
+pour les combiner dans le jeu, ou les sprites assemblés de la tenue choisie.
+
+### Critères d'acceptation
+
+- [ ] Les huit combinaisons de trois pièces, corps seul compris, se prévisualisent sans
+  appel fournisseur et sans modification des sources. La tenue garde des choix de calques
+  précis ; retenir ensuite une autre variante ne change pas une livraison en silence.
+- [ ] Ordre devant ou derrière le corps, masques et priorités se voient en lecture et se
+  conservent à la réouverture. Un conflit visuel se corrige sans régénérer la combinaison.
+- [ ] Une frame manquante ou à revoir reste visible et empêche d'annoncer la tenue prête ;
+  l'aperçu ne substitue pas silencieusement l'épée d'un autre emploi ou d'une autre direction.
+- [ ] Les couches exportées partagent cadre, pivot, ordre, cadence et boucle avec le corps ;
+  une scène Godot vérifie une combinaison puis le retrait d'une pièce, sans nouvelle fabrication.
+- [ ] La sortie assemblée correspond à l'aperçu. Les descriptifs Aseprite restent inchangés ;
+  composition et provenance vont dans le manifeste séparé, selon le contrat de livraison d'AU1.
+- [ ] L'auteur et l'agent peuvent retrouver une tenue, exporter ses couches ou sa composition
+  et remplacer la bonne livraison sans modifier les autres animations ni les emplois d'un autre héros.
+
 ## Comment fermer une tranche
 
 ### Ce qui doit être repris au fil du parcours
@@ -367,7 +450,7 @@ reportées après les nouveaux moteurs, les tuiles ou le son.
 | Chutier, sélection, ordre, duplication et suppression de frames | Animation → montage, puis retouche de la frame | AU4 |
 | Cadence, boucle, cadrage commun, pivot, comparaison et prévisualisation | Animation → montage / aperçu pour le jeu | AU4–AU5 |
 | Recettes nommées, sauvegarde, réouverture et portée des modifications | Dans les outils concernés, sans refaire les réglages | AU4 |
-| Équipements et capacités spécialisées déjà livrées | Contexte du sujet et accès conservé jusqu'à reprise vérifiée | AU2 / AU12 |
+| Équipements existants, emplois, calques et habillage animé | Personnage → équipement → emploi ; accès conservé jusqu'à reprise vérifiée | AU2 / AU4 puis AU15–AU17 |
 
 ### Preuves de clôture
 
@@ -381,8 +464,8 @@ payante automatique. Mettre à jour l'aide et le seul tableau d'état de PLAN.md
 
 L'amendement RF n'est plus une file de travail parallèle. Ses constats sont repris ainsi :
 RF0 (build et polices) accompagne la première preuve et la revue visuelle ; RF1–RF2
-(galerie et sujet) AU2–AU3 ; RF3–RF4 (retouche et animation) AU4 ; RF5 (équipement) reste
-une capacité à préserver dans AU2/AU12, pas un blocage pour une première marche ; RF6
+(galerie et sujet) AU2–AU3 ; RF3–RF4 (retouche et animation) AU4 ; RF5 (équipement) rejoint
+AU15–AU17 avec les capacités existantes préservées pendant la reprise ; RF6
 (réglages) AU3/AU7 ; RF7 (sortie) AU1/AU5. Les tranches déjà tenues restent historiques.
 Le pantin 2D et le dépliage généralisé sont différés ; leur utilité sera rejugée sur un
 besoin concret du jeu, sans les supprimer de l'historique.

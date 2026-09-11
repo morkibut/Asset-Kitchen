@@ -12,6 +12,8 @@
 > La nouvelle itération reste à essayer ; cela ne valide aucune tranche de production.
 > Complément de 22 h 28 : équipements contextualisés, collections, galerie, fabrication
 > libre et montage de clip sont maquettés ; les preuves et limites restent dans la couverture.
+> La précision suivante rend le parcours équipement complet obligatoire dans la maquette :
+> son implémentation est découpée en AU15–AU17, après AU5 ; le report de 22 h 56 est annulé.
 > L'amendement RF est remplacé par cet ordre. La V4 reste le socle livré, avec les écarts
 > relevés dans la revue ; ni elle ni RF ne constituent une seconde file d'exécution.
 >
@@ -57,7 +59,7 @@ construisant** dans `docs/status/etat.md`, ses **critères cochés** dans
 | **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **non ouverte** | ci-dessous |
 | **V4** — le carnet | Refonte déjà largement livrée ; sa conformité et ses parcours restent à corriger | **socle conservé, suite réorientée vers AU** ; les cases historiques ne sont pas décochées | `docs/PLAN-carnet.md` ; détail du relevé antérieur dans `docs/archive/etat-carnet-2026-09-10.md` |
 | **V5**, **V6** | Tuiles et son | **différés, cadrage initial en AU13/AU14**, à détailler avant exécution | `docs/PLAN-atelier-unifie.md` |
-| **Atelier unifié** — AU1 à AU14 | Production des assets par l'auteur et l'agent Godot, sources locales et 3D | **cadrage et prototype écrits ; AU1 à démarrer, 0 tranche implémentée** | `docs/PLAN-atelier-unifie.md` |
+| **Atelier unifié** — AU1 à AU17 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **cadrage et prototype écrits ; AU1 à démarrer, 0 tranche implémentée** | `docs/PLAN-atelier-unifie.md` |
 
 **226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 874 essais de
 serveur et 1 168 d'écran** tiennent le dépôt — comptés le 10 septembre 2026, et **aucun ne coûte
@@ -226,7 +228,7 @@ F0 : c'est un relevé, et un relevé n'a pas d'utilisateur qui le demande.
 ## L'ordre de ce qui reste, et les deux endroits où il se resserre
 
 > **Ordre historique jusqu'au 10 septembre 2026.** Le 11 septembre, la demande de l'auteur
-> le remplace par AU1 à AU14 dans [le plan de l'atelier unifié](PLAN-atelier-unifie.md).
+> le remplace par les tranches AU dans [le plan de l'atelier unifié](PLAN-atelier-unifie.md).
 > Les dépendances ci-dessous expliquent l'existant ; elles ne commandent plus la suite.
 
 ```

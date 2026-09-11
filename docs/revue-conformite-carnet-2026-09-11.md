@@ -564,3 +564,64 @@ comme équipée par la seule présence d'une image de préparation.
 La réouverture retrouve « Main gauche » et « Derrière le corps ». Préparer une image
 depuis cet emploi propose bien la référence du pèlerin et sa mention dans la consigne.
 Aucune erreur JavaScript relevée sur ces parcours.
+
+## Précision suivante : équipements complets et tenues combinables
+
+L'auteur précise le but et annule le report proposé : une pièce commune représente
+l'équipement du jeu, ses emplois portent les adaptations propres à chaque personnage,
+et les calques couvrent ses poses, directions et frames d'animation. Le gain recherché
+est de préparer chaque équipement séparément puis de combiner les calques, sans générer
+le personnage pour toutes les combinaisons possibles. Le plan ajoute AU15–AU17 ; aucune
+de ces tranches de production n'est déclarée livrée par les essais ci-dessous.
+
+Le parcours interactif remplace l'inventaire provisoire. Il propose sources équipées,
+extraction, contrôle des superpositions, correction par frame, versions, puis tenue et
+sorties d'essai. Le module de rendu dessine les équipements de démonstration ; ces images
+ne viennent pas d'un modèle IA. La séparation entre pièce et emploi est effective dans
+l'état du prototype, sans proposer sa sauvegarde locale comme schéma du futur produit.
+
+**Preuves navigateur, dans la session séparée `?essai=equipements-complets` :**
+
+- Depuis le pèlerin, créer « Casque », « Sac à dos » et « Épée divine ». Pour chacune,
+  générer six images équipées simulées, extraire les différences de pixels, relire les
+  superpositions en groupe puis valider les six calques.
+- Activer les trois équipements pendant que l'animation joue, sans arrêter la lecture.
+  Garder la tenue « Exploration armée », recharger et la rouvrir retrouve les trois cases
+  activées. Cet essai ne prétend pas avoir parcouru séparément les huit combinaisons.
+- Créer « Le nain », avec une bande Marche, Ouest, cinq frames ; lui attribuer la même
+  « Épée divine ». Son nouvel emploi commence à zéro sur cinq calques, sans hériter de la
+  couverture du pèlerin. Régler sa frame 2 à X = 9, Y = −4, garder puis recharger retrouve
+  ces valeurs. Le pèlerin est encore à X = 0, Y = 0 avant ses propres ajustements.
+- Déplacer directement le calque du pèlerin sur sa frame 2 donne X = 5, Y = 2. Le masque
+  montre une empreinte de pinceau de 12 pixels à l'écran au zoom 400 %. Valider puis rouvrir
+  retrouve les valeurs de placement ; ce geste ne change pas l'emploi du nain.
+- Régénérer la frame 2 du nain, puis restaurer la version précédente retrouve X = 9,
+  Y = −4 et l'état « Prêt ». La source nouvelle n'a pas effacé le travail précédent.
+- La galerie contient alors 22 entrées d'épée des deux héros et ouvre la bonne frame.
+  Le journal Fabrications montre le modèle fictif, la consigne et les images de base envoyées.
+- Modifier la base du nain par miroir horizontal puis garder fait passer son calque
+  d'épée de la frame 2 à « Base modifiée » ; sa validation est désactivée. Relancer
+  l'extraction depuis l'ancienne source ne retire pas l'alerte et ne réactive pas la validation.
+- Déclencher les deux exports ne lève pas d'erreur relevée. Les téléchargements n'ont pas
+  été inspectés : ni leur contenu, ni leur format final, ni un import dans Godot ne sont validés.
+
+**Limites de cette preuve.** Les calages, masques et compositions travaillent localement
+sur des PNG de 64 × 64 ; les imports sont ramenés à ce cadre. Les sources sont des fixtures
+sur lesquelles l'équipement est dessiné. Aucune génération IA, aucun moteur de suivi réel
+et aucun importeur Godot n'ont été exécutés. La reprise complète sur une nouvelle base,
+le réordonnancement d'une animation déjà équipée et la charge avec 300 frames n'ont pas
+encore été testés.
+Les calques de pose et emplois B20 existants sont conservés dans le plan ; leur relecture
+réelle n'est pas une propriété démontrée par ce prototype indépendant.
+
+Les six scripts passent la vérification de syntaxe JavaScript. La couverture distingue
+ces parcours éprouvés des traitements simulés et des contrôles encore absents.
+Le journal conserve désormais l'estimation annoncée sur les nouveaux envois ; une ancienne
+fabrication sans estimation reste inconnue, au lieu de recevoir un prix recalculé après coup.
+
+La fiche commune « Épée divine » a été ouverte depuis les équipements du pèlerin :
+elle présente les deux emplois séparés et leurs couvertures, puis les références communes.
+Le choix d'un nouveau porteur montre les deux personnages avec leurs aperçus.
+Contrôle final : six scripts syntaxiquement valides, aucune erreur JavaScript dans les
+parcours décrits, `git diff --check` sans défaut ; 1 753 renvois documentaires résolus,
+corpus de démarrage 163,5 Ko, −28,5 Ko depuis le relevé de référence conservé.
