@@ -35,10 +35,20 @@ dans le jeu. L'auteur prépare l'univers, supervise et corrige depuis la même a
 Ce fonctionnement concerne la création du jeu ; le jeu terminé n'a pas besoin de lancer
 une génération pour fonctionner.
 
+**Le parcours manuel est complet et indépendant du MCP.** L'auteur peut créer le jeu,
+composer son univers, créer un asset, importer ou générer ses sources, fabriquer ses images
+et animations, les retoucher puis les exporter sans connecter d'agent. Le MCP est une
+seconde façon de demander les mêmes fabrications, jamais un préalable de l'interface.
+
 Le jeu porte ses règles visuelles et ses références communes. Chaque asset possède une
 identité stable et un objectif explicite : images fixes, animations, ou les deux.
 Les mouvements et les directions utiles sont choisis pour ce besoin. Une case non
 demandée ne compte jamais comme du travail manquant.
+
+**L'univers reste aussi un espace créatif.** Sa toile conserve les images, les textes,
+les notes, les îlots et les liens que l'auteur organise librement. Elle reste accessible
+depuis l'univers, à côté de ses règles visuelles ; un formulaire de réglages ne la remplace
+pas. Les compositions existantes et leur organisation doivent se retrouver à la réouverture.
 
 Depuis cet asset, l'auteur importe ou génère une référence, puis choisit une méthode de
 fabrication disponible : génération distante, génération locale, import, ou rendu d'une
@@ -54,6 +64,13 @@ Tout résultat rejoint automatiquement la bibliothèque. L'auteur peut comparer,
 marquer favori, supprimer avec annulation et choisir ce qu'il souhaite exporter.
 Le choix pour le jeu reste explicite : une nouvelle variation n'écrase pas la précédente.
 Les originaux et les réglages conservés permettent de rouvrir et corriger sans régénérer.
+
+**Les capacités des tables de retouche sont conservées.** Depuis une image, une animation
+ou une frame, l'auteur accède aux outils utiles : montage, découpe, détourage et masques,
+recadrage, grille, couleurs et palette, nettoyage, contours, transformations, calques et
+retouche au pixel. Les recettes réutilisables, réglages avancés et comparaisons restent
+accessibles. L'organisation peut changer ; une capacité n'est pas supprimée pour alléger
+l'écran. L'action précise si elle modifie cette frame, une sélection ou toute la bande.
 
 Le travail long reste visible pendant que l'auteur continue ailleurs. Une fermeture
 n'efface ni le résultat ni sa provenance. Après une interruption incertaine, l'atelier
@@ -86,9 +103,10 @@ Il peut travailler avec une génération distante ou avec les capacités de sa m
 ## User Stories → `docs/user-stories.md`
 
 Les stories historiques US-1 à US-518 restent dans [le catalogue](user-stories.md).
-Les stories US-519 à US-533 ajoutées le 11 septembre couvrent le nouvel atelier :
+Les stories US-519 à US-536 ajoutées le 11 septembre couvrent le nouvel atelier :
 objectif de production, sources, animation, reprise, export, travail long, procédés locaux,
 3D réutilisable, futures familles et boucle de production avec l'agent Godot.
+US-534 à US-536 garantissent explicitement le parcours sans MCP, la toile et les outils existants.
 En cas de conflit, le présent cadrage prévaut ;
 les anciennes stories ne sont pas supprimées comme si elles n'avaient jamais été livrées.
 
@@ -99,6 +117,12 @@ Le parcours prioritaire est jugé sur ces résultats observables :
 
 - Depuis un jeu et un personnage vide, produire une animation demandée et l'exporter,
   sans remplir préalablement un plan de poses fixes.
+- Effectuer le parcours complet dans l'interface sans client MCP connecté ; aucun réglage
+  ou échange avec un agent n'est exigé pour fabriquer ou exporter.
+- Rouvrir une toile existante, déplacer une image, modifier une note et un îlot, puis
+  retrouver leur disposition et leurs liens après fermeture.
+- Reprendre les capacités des tables depuis une image et une frame, avec la portée du
+  traitement explicite ; les opérations sans équivalent bloquent le retrait de l'ancien accès.
 - Revenir dans le personnage après fermeture : retrouver les sources, les versions,
   les choix d'export et une correction enregistrée avec des réglages différents des défauts.
 - Lire la couverture des seuls mouvements et directions demandés ; un résultat absent,

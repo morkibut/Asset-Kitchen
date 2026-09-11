@@ -17,7 +17,7 @@
 | `docs/PLAN-atelier-unifie.md` | le plan | on ouvre une tranche du chantier actif : demande MCP de l'agent, animation, Godot, puis moteurs locaux et 3D |
 | `docs/PLAN-atelier-unifie-affectation.md` | le plan | on choisit le modèle et les points durs de la prochaine tranche AU |
 | `docs/archi-atelier-unifie.md` | l'architecture | on construit un contrat de demande, de travail, de source, d'intégration locale ou de livraison Godot |
-| `docs/maquettes-atelier-unifie/01-parcours.html` | le design, proposition | on essaie le parcours desktop proposé ; données simulées, aucun appel réel |
+| `docs/maquettes-atelier-unifie/02-atelier.html`, `docs/maquettes-atelier-unifie/couverture.md` | le design, proposition | on essaie la toile, la création manuelle, la retouche et la livraison ; inventaire des gestes interactifs, simulations et détails manquants. `01-parcours.html` garde la première proposition |
 | `docs/PLAN-carnet.md` | le plan historique | on vérifie une capacité déjà livrée ou un défaut à reprendre ; l'ordre actif est celui des tranches AU |
 | `docs/revue-conformite-carnet-2026-09-11.md` | le plan et le design, sans les remplacer | on examine les écarts maquettes / code et les preuves qui motivent l'amendement RF ; les observations navigateur et leurs limites y sont séparées des parcours restant à éprouver |
 | `docs/tranches/V4.md` | le plan | on reprend une tranche V4 déjà tenue : son plan **et** son rapport de tenue y sont réunis, un seul fichier suffit. *Les plans des tranches tenues y sont descendus le 6 septembre 2026* |

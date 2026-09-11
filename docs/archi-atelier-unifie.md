@@ -35,6 +35,10 @@ MCP conserve ses outils existants ; ses nouvelles opérations de production appe
 les mêmes services que l'API. Les noms d'outils sont anglais, le domaine et l'UI français.
 On expose des gestes complets, pas chaque nœud de ComfyUI ni chaque curseur de retouche.
 
+Le parcours desktop ne dépend jamais d'un client MCP. Les outils manuels fins et la toile
+créative restent des capacités de premier plan, même lorsqu'aucun outil agentique ne les
+expose. Un service partagé n'implique pas de remplacer leur interface par une commande d'agent.
+
 ## Objets et compatibilité
 
 - **Sujet** : identité dans un jeu ; les identifiants existants de personnage restent

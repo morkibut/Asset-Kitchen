@@ -354,7 +354,7 @@ parcours complet, avec états vides, attente, erreur, reprise et remplacement da
 Le nombre d'écrans dessinés ou de cases cochées ne suffit pas.
 
 Le [plan de l'atelier unifié](PLAN-atelier-unifie.md) reprend ces décisions. La
-[maquette interactive](maquettes-atelier-unifie/01-parcours.html) illustre le parcours ;
+[première maquette interactive](maquettes-atelier-unifie/01-parcours.html) illustre le parcours ;
 ses données sont fictives, son sprite est un témoin fixe, ses contrôles de montage ne sont
 pas un nouvel éditeur et aucune livraison Godot n'y est réellement effectuée.
 
@@ -372,3 +372,48 @@ pas un nouvel éditeur et aucune livraison Godot n'y est réellement effectuée.
   cadrage et le détail de la cellule V4 sont archivés ; les invariants restent au démarrage.
 - Aucun fournisseur, GPU ni projet Godot réel n'a été sollicité. Les suites de l'application
   ne sont pas relancées pour ces documents, cette maquette et un commentaire CSS.
+
+### Complément — essayer une maquette plus large avant de modifier le produit
+
+La [seconde maquette](maquettes-atelier-unifie/02-atelier.html) répond au besoin de tester
+les écrans et de découvrir les exigences manquantes. Elle garde la toile créative, la
+création manuelle complète sans MCP, la place des tables et une retouche manipulable.
+Son [inventaire de couverture](maquettes-atelier-unifie/couverture.md) répartit les 49
+planches de référence et distingue gestes réels, simulations et détails encore absents.
+Ce n'est pas une livraison des fonctions AU ni une maquette exhaustive de chaque table.
+
+**Ce que cet essai a déjà corrigé.** La première proposition faisait disparaître trop de
+capacités derrière sa simplicité ; les tables et la toile retrouvent des portes explicites.
+Dans la seconde, une cadence changée juste avant « Garder » revenait à sa valeur précédente :
+la saisie est désormais retenue immédiatement. Peindre pendant la lecture fixe la frame
+visée et rend sa sélection visible. Les remarques sont proposées en texte copiable, car
+l'événement de téléchargement du navigateur intégré n'a pas pu être confirmé.
+
+**Parcours exercés dans le navigateur :**
+
+- Sujet neuf sans MCP → refus explicite d'animer sans référence → image simulée → animation
+  simulée → échec → reprise explicite → résultat. L'origine affichée reste manuelle.
+- Montage : duplication d'une frame, lecture, peinture, cadence de 12 i/s, boucle désactivée,
+  sauvegarde, sortie et réouverture, puis rechargement complet. Six frames, le trait peint
+  et les réglages différents du défaut sont relus.
+- Toile : ajout et annotation d'une note, association à un îlot, position saisie, zoom à 60 %,
+  déplacement à la souris de l'îlot et de ses cartes d'un même delta, rechargement et relecture.
+- Livraison : choix d'un second résultat, aperçu et historique de deux révisions ; ouverture
+  d'un conflit fictif et choix de copie séparée, sans écriture dans le jeu.
+- Moteurs : indisponibilité locale, méthode API indisponible, envoi agent désactivé quand
+  aucun moyen autorisé n'est disponible ; réactivation indépendante du moteur local.
+- Source 3D : modèle et rig simulés, choix du rendu 3D puis résultat fictif en bibliothèque.
+- Remarques : note contextualisée, rechargement et export en texte copiable relus. Le
+  téléchargement reste dépendant du navigateur ; il n'est pas nécessaire pour transmettre
+  les notes.
+- Fenêtres desktop 1280 × 800 et 1600 × 1000 : aucun débordement horizontal du document
+  sur les surfaces observées ; la toile et la timeline gardent leur défilement propre.
+  Aucune erreur JavaScript relevée en console après les parcours.
+
+**Limites de vérification :** import de fichier utilisateur, gomme multi-frame, toutes les
+combinaisons de recettes, sélections avancées et toutes les transitions possibles n'ont pas
+été exercés. Aucun test de l'application réelle, appel fournisseur, GPU ou import Godot
+n'a été exécuté. La matière visuelle est reprise de fichiers déjà présents dans le dépôt.
+
+Syntaxe JavaScript et liens documentaires vérifiés. **Corpus de démarrage : 161,3 Ko,
+−30,6 Ko par rapport au relevé de référence** ; le détail de couverture reste dans l'annexe.

@@ -39,6 +39,26 @@ fichiers modifiés. Tuiles et son sont des estimations provisoires à réévalue
 
 ## Les 14 tranches
 
+**Préparation UX hors tranches de production — [MEDIUM], Sonnet, réflexion élevée.**
+Le premier prototype avait une navigation et des données fictives sans sauvegarde ; le
+complément demande un état local, des gestes de toile et de montage et une relecture des
+fonctions, sans schéma serveur, fournisseur ni fichier du jeu. Son code est isolé du produit,
+et les essais sont des parcours de navigateur. Le raccord aux vrais outils se classe dans
+AU2 à AU4 ; le prototype ne paie pas à lui seul leur point dur. L'ajout de cette préparation
+ne reclasse aucune des quatorze tranches ci-dessous.
+
+**Complément après validation de la simplicité de l'UI.** AU2, AU3 et AU4 sont renforcées
+par US-534 à US-536 : création sans MCP, toile et reprise complète des tables. Leurs
+étiquettes sont conservées : aucune réécriture de la toile ni nouveau schéma de retouche
+n'est demandé. Si la conception en impose un, sortir ce point dur avant de coder.
+
+Mesure complémentaire : la toile existe avec **39 déclarations d'essais géométriques**
+dans `interface/src/composants/Toile.test.tsx` ; ils ne montent pas l'écran et ne remplacent
+donc pas l'essai d'ouverture, modification et réouverture demandé par AU2. Les postes
+de détourage, recadrage, grille, couleurs, nettoyage et contour sont déjà exportés par la
+retouche ; AU4 doit reprendre leurs contrôles et les outils de main, pas les remplacer par
+six intitulés. Ces décomptes proviennent d'une lecture, pas d'une exécution des suites.
+
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
 | AU1 · Animation existante vers Godot | HARD | Écrit dans un projet externe et pose le contrat durable de livraison. |

@@ -313,7 +313,10 @@ L'index SQLite (**jetable**), `agent.json` le cadre de l'agent — un fichier à
 **Depuis le 11 septembre 2026**, l'ordre actif reste dans PLAN.md et le détail est dans
 `docs/PLAN-atelier-unifie.md`, accompagné de `docs/PLAN-atelier-unifie-affectation.md`.
 Les contrats nouveaux sont dans `docs/archi-atelier-unifie.md`. Le prototype de parcours
-desktop est `docs/maquettes-atelier-unifie/01-parcours.html` ; il ne fait aucun appel réel.
+desktop élargi est `docs/maquettes-atelier-unifie/02-atelier.html`, accompagné de son CSS,
+de son script et de `docs/maquettes-atelier-unifie/couverture.md` ; il ne fait aucun appel réel.
+`01-parcours.html` garde la proposition initiale. La sauvegarde du prototype reste propre
+au navigateur, indépendante des projets de l'application.
 Le plan du carnet ci-dessous se consulte pour l'existant, pas comme seconde file de travail.
 
 **L'autorité de chacun se lit dans `AGENTS.md § Les documents et leur autorité`**, qui

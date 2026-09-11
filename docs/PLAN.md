@@ -2,8 +2,10 @@
 
 > **PRD source** : `docs/PRD.md`. **Ordre actif depuis le 11 septembre 2026** :
 > [atelier unifié](PLAN-atelier-unifie.md), de la demande MCP de l'agent au sprite utilisé dans Godot.
-> Le cadrage, l'architecture et une maquette de parcours sont écrits ; **aucune tranche AU
-> n'est encore implémentée**. La prochaine est **AU1**, l'export d'une animation existante.
+> Le cadrage, l'architecture et une maquette interactive élargie sont écrits ; **aucune tranche AU
+> n'est encore implémentée**. Étape immédiate : essayer les parcours de la maquette et compléter
+> les outils avant de remplacer les écrans concernés. Le premier développement reste **AU1**,
+> l'export d'une animation existante.
 > L'amendement RF est remplacé par cet ordre. La V4 reste le socle livré, avec les écarts
 > relevés dans la revue ; ni elle ni RF ne constituent une seconde file d'exécution.
 >
