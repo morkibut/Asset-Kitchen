@@ -381,6 +381,16 @@ tranche seul. Ce qui suit ne dit que ce que chacun contient.
 
 ## Ce qui vient d'ailleurs
 
+Le parcours de l'atelier unifié prolonge ces modules ; ses contrats et les preuves de
+raccordement vivent dans [le relevé d'implémentation](releves/2026-09-12-implementation-atelier-unifie.md).
+`services/livraison.py` possède les révisions Godot, `services/travaux.py` les demandes
+suivies, `domaine/objectifs.py` les sorties demandées et `services/calques_cibles.py`
+les variantes d'équipement liées à une occurrence. Leurs façades API et MCP portent
+les mêmes noms, sans seconde règle métier. `composants/Livraisons.tsx`,
+`FabricationSuivie.tsx`, `ObjectifDuSujet.tsx` et `CalquesDeLEmploi.tsx` en sont les accès.
+`Prise.main_apres_placement` garde les nouvelles retouches dans la case affichée ;
+la Main historique de la recette conserve son ancien espace.
+
 | | |
 |---|---|
 | `screen_spritecook/` | 30 captures de SpriteCook — la référence d'ergonomie, écran par écran |

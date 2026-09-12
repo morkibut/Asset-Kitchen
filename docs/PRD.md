@@ -3,7 +3,8 @@
 > Recentré le 11 septembre 2026 à la demande de l'auteur. Ce document fait foi sur
 > l'usage ; l'architecture sur la construction, le plan sur l'ordre, le design sur l'apparence.
 > Le cadrage précédent est conservé dans [l'archive](archive/prd-avant-atelier-unifie.md).
-> Les décisions explicites du jour sont acquises ; les écrans proposés restent à éprouver.
+> Les décisions explicites sont acquises ; l'auteur a validé l'ensemble de la maquette
+> interactive le 12 septembre 2026 pour son implémentation dans le produit.
 
 ## Problème
 

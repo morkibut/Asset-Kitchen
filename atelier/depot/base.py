@@ -779,9 +779,13 @@ class Base:
         return [Asset.depuis_json(json.loads(l["contenu"])) for l in lignes]
 
     def assets_du_personnage(
-        self, personnage: str, *, projet: str | None = None
+        self, personnage: str, *, projet: str | None = None,
+        inclure_ecartes: bool = False,
     ) -> list[Asset]:
-        """Les images faites pour ce personnage — **jamais les supprimées**.
+        """Les images faites pour ce personnage — vivantes par défaut.
+
+        AU2 : `inclure_ecartes` rend aussi les versions rejetées à la lecture
+        d'un objectif ; le calcul les montre sans les compter comme produites.
 
         **`projet` n'est pas un confort, c'est le piège de B8.** Un identifiant
         de sujet n'est unique que par jeu : sans lui, les images du `pelerin`
@@ -802,7 +806,9 @@ class Base:
         L'ordre est celui de la grille — la plus fraîche d'abord —, parce que
         c'est la dernière image faite qui représente sa case.
         """
-        conditions = ["personnage = ?", "supprime_le IS NULL"]
+        conditions = ["personnage = ?"]
+        if not inclure_ecartes:
+            conditions.append("supprime_le IS NULL")
         arguments: list[Any] = [personnage]
         if projet is not None:
             conditions.append("(projet = ? OR projet IS NULL)")

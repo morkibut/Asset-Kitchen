@@ -38,6 +38,10 @@ export function TableauDeBord({
   surLaFamille,
   surDemanderUneImage,
   surAllerDecouper,
+  surLaToile,
+  surLesAssets,
+  surLesFabrications,
+  surLivrer,
 }: {
   jeu: string
   images: number
@@ -54,6 +58,10 @@ export function TableauDeBord({
   /** Mène à l'écran où cette feuille se découpe — **la galerie**, qui montre
    *  déjà sa tuile en attente ; B5 n'ajoute aucun lieu de plus. */
   surAllerDecouper: () => void
+  surLaToile?: () => void
+  surLesAssets?: () => void
+  surLesFabrications?: () => void
+  surLivrer?: () => void
 }) {
   const [bilan, setBilan] = useState<BilanDuJeu | null>(null)
 
@@ -105,6 +113,12 @@ export function TableauDeBord({
           Demander une image
         </button>
       </div>
+
+      {surLaToile && <div className="mt-[22px] grid grid-cols-2 gap-[14px]">
+        <section className="rounded-8 border border-trait bg-carte p-[22px]"><p className="mesure text-[10.5px] uppercase tracking-[0.14em] text-encre-4">Imaginer le monde</p><h2 className="mt-[8px] font-serif text-[25px] text-encre">L’univers commence sur la toile</h2><p className="mt-[8px] text-[13px] leading-[1.5] text-encre-3">Références, notes et îlots composent le monde. Les règles du jeu accompagnent ensuite les fabrications.</p><button onClick={surLaToile} className="mt-[14px] h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle">Ouvrir la toile</button></section>
+        <section className="rounded-8 border border-trait bg-carte p-[22px]"><p className="mesure text-[10.5px] uppercase tracking-[0.14em] text-encre-4">Fabriquer pour le jeu</p><h2 className="mt-[8px] font-serif text-[25px] text-encre">Des assets fixes et animés</h2><p className="mt-[8px] text-[13px] leading-[1.5] text-encre-3">Choisissez une chose du jeu, préparez ses mouvements et ses directions, puis retouchez ses images avant de les livrer.</p><div className="mt-[14px] flex flex-wrap gap-[8px]"><button onClick={surLesAssets} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle">Parcourir les assets</button><button onClick={surLivrer} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle">Préparer la livraison</button></div></section>
+        <button onClick={surLesFabrications} className="col-span-2 rounded-8 border border-trait bg-carte px-[22px] py-[14px] text-left text-[13px] text-encre-controle">Suivre les fabrications et reprendre les résultats →</button>
+      </div>}
 
       {/* ── Ce que le jeu contient, par famille ───────────────────────────── */}
       <h2 className="mesure mt-[34px] mb-[14px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
@@ -165,15 +179,15 @@ export function TableauDeBord({
               {(bilan?.manques ?? []).map((manque, rang) => (
                 <div
                   key={`${manque.sujet}-${manque.famille}-${rang}`}
-                  className="grid grid-cols-[64px_minmax(0,1fr)_92px_50px] items-center gap-[10px] rounded-5 p-[8px] text-[12.5px] text-encre-2"
+                  className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-[14px] rounded-5 p-[8px] text-[12.5px] text-encre-2"
                 >
                   <span className="mesure text-encre-3">
-                    {manque.quantite} pose{manque.quantite > 1 ? "s" : ""}
+                    {manque.quantite} {manque.nature === "animation" ? "animation" : "pose"}{manque.quantite > 1 ? "s" : ""}
                   </span>
                   <span className="truncate">{manque.phrase}</span>
                   <span className="truncate text-encre-3">{manque.famille}</span>
                   <span className="mesure text-right">
-                    {manque.cout_usd > 0 ? (
+                    {manque.cout_connu === false ? <span className="text-encre-4">à estimer</span> : manque.cout_usd > 0 ? (
                       <span className="text-signal">{dollars(manque.cout_usd)}</span>
                     ) : (
                       <span className="text-encre-4">rien</span>
@@ -185,16 +199,17 @@ export function TableauDeBord({
           )}
           {bilan && bilan.lot.images > 0 && (
             <p className="mt-[8px] text-[12px] leading-[1.45] text-encre-4">
-              Tout demander d'un coup : {bilan.lot.images} image
+              Pour les images fixes : {bilan.lot.images} image
               {bilan.lot.images > 1 ? "s" : ""} en {bilan.lot.feuilles} feuille
               {bilan.lot.feuilles > 1 ? "s" : ""} pliée
               {bilan.lot.feuilles > 1 ? "s" : ""},{" "}
               <span className="mesure text-signal">
-                ≈ {dollars(bilan.lot.cout_usd)}
+                {bilan.lot.cout_connu === false ? "coût à estimer" : `≈ ${dollars(bilan.lot.cout_usd)}`}
               </span>
               .
             </p>
           )}
+          {bilan && (bilan.lot.animations ?? 0) > 0 && <p className="mt-[8px] text-[12px] text-encre-4">{bilan.lot.animations} animation{(bilan.lot.animations ?? 0) > 1 ? "s" : ""} à fabriquer. Choisissez leur source et leur modèle pour préparer l’estimation.</p>}
         </div>
 
         {/* ── Une feuille en attente ────────────────────────────────────── */}

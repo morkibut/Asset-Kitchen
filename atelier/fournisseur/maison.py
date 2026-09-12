@@ -415,13 +415,26 @@ class MoteurDeLaMaison:
         self._etat = await self.visiter()
         return [modele_de_la_maison()]
 
-    async def soumettre(self, modele: ModeleVideo, demande: DemandeClip) -> str:
-        """Dépose l'image, envoie le montage, rend **le numéro du travail**.
+    async def observer_ressource(self) -> dict[str, Any]:
+        """Lit la file réelle sans interrompre ni installer quoi que ce soit."""
+        try:
+            file = await self._json("GET", "/queue", delai=DELAI_COURT)
+            if not isinstance(file.get("queue_running"), list) or not isinstance(file.get("queue_pending"), list):
+                raise ValueError("ComfyUI ne rend pas sa file complète")
+            travaux = []
+            for ligne in file["queue_running"] + file["queue_pending"]:
+                if not isinstance(ligne, list) or len(ligne) < 2:
+                    raise ValueError("un travail de la file ComfyUI est illisible")
+                travaux.append(str(ligne[1]))
+            return {"etat": "occupe" if travaux else "disponible", "travaux": travaux,
+                    "raison": "ComfyUI traite ou attend un calcul externe." if travaux else "La file ComfyUI est vide au moment de l'observation.",
+                    # La file vide ne prouve pas quels modèles sont en VRAM.
+                    "temperature": "inconnue"}
+        except Exception as erreur:
+            return {"etat": "inconnu", "travaux": [], "raison": f"La file ComfyUI n'est pas vérifiable : {erreur}", "temperature": "inconnue"}
 
-        Le numéro rentre avant la première seconde d'attente, exactement comme
-        chez le payant : ici il ne protège pas d'une dépense, il protège d'un
-        calcul de trois minutes qu'on referait pour rien.
-        """
+    async def verifier_preparation(self, modele: ModeleVideo, demande: DemandeClip) -> EtatDuMoteur:
+        """Refuse les prérequis connus manquants avant l'engagement de l'envoi."""
         etat = self._etat or await self.visiter()
         if not etat.allume:
             raise FournisseurIndisponible(etat.phrase)
@@ -431,6 +444,11 @@ class MoteurDeLaMaison:
                 f"il manque des fichiers de modèle et ils n'ont pas été "
                 f"téléchargés : {manque}"
             )
+        return etat
+
+    async def soumettre(self, modele: ModeleVideo, demande: DemandeClip) -> str:
+        """Dépose l'image et rend le numéro avant la première attente."""
+        etat = await self.verifier_preparation(modele, demande)
 
         largeur, hauteur = taille_demandee(demande.resolution, demande.proportions)
         nom_depose = await self._deposer_image(demande.image)

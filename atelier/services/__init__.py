@@ -59,6 +59,11 @@ from atelier.services.installation import ServiceInstallation
 from atelier.services.calques_animes import HabillageRefuse, ServiceCalquesAnimes
 from atelier.services.montage import ServiceMontage
 from atelier.services.sortie import ServiceSortie, SortieRefusee
+from atelier.services.livraison import ServiceLivraison
+from atelier.services.travaux import ServiceTravaux
+from atelier.services.file_locale import ServiceFileLocale
+from atelier.services.calques_cibles import ServiceCalquesCibles
+from atelier.services.travaux_equipement import ServiceTravauxEquipement
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import ChoixAttendu, CompteFaux, ServicePliage
@@ -255,6 +260,7 @@ class Atelier:
         # de la bibliothèque sur le même flux : c'est ce qui permet à
         # l'interface de n'ouvrir qu'une liaison.
         self.diffusion = Diffusion()
+        self.file_locale = ServiceFileLocale(self.fichiers, self.diffusion)
         self.catalogue = ServiceCatalogue(
             self.fournisseurs, self.fichiers, self.diffusion
         )
@@ -437,6 +443,7 @@ class Atelier:
             fabriques_animateurs
             or ([fabrique_animateur] if fabrique_animateur else ANIMATEURS),
             self.diffusion,
+            file_locale=self.file_locale,
         )
         # **Le montage, monté juste après l'animation** (A10), et il ne reçoit
         # ni l'animateur, ni le catalogue, ni un fournisseur : découper un clip
@@ -520,6 +527,16 @@ class Atelier:
         # lui est demandé plutôt que refait, et ce qui pose reste le geste de
         # l'agent. Elle n'apporte donc, elle non plus, ni fournisseur ni
         # catalogue : sortir reste du disque et du processeur.
+        self.livraison = ServiceLivraison(
+            self.base, self.fichiers, self.export, self.production, self.diffusion,
+        )
+        self.travaux = ServiceTravaux(self)
+        self.animation.avant_soumission_locale = self.travaux.autoriser_generation_locale
+        self.calques_cibles = ServiceCalquesCibles(
+            self.base, self.fichiers, self.production, self.equipement,
+            self.assets, self.montage, self.bibliotheque, self.diffusion,
+        )
+        self.travaux_equipement = ServiceTravauxEquipement(self)
         self.sortie = ServiceSortie(
             self.base,
             self.fichiers,

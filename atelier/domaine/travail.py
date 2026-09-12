@@ -1,0 +1,90 @@
+"""La demande complète d'animation et le cadre durable de délégation."""
+
+from __future__ import annotations
+
+import math
+import json
+from typing import Any
+
+from atelier.domaine.erreurs import ErreurAtelier
+
+
+class TravailRefuse(ErreurAtelier):
+    code = "travail_refuse"
+
+
+DEFAUTS = {
+    "reference_asset": None, "modele_image": None, "prompt_image": "",
+    "prompt_negatif_image": "", "proportions_image": "1:1", "resolution_image": None,
+    "references_image": [], "references_image_ecartees": [], "repris_image": False,
+    "options_image": {}, "options_video": {},
+    "secondes": 5, "resolution": "480p", "proportions": "1:1",
+    "nombre_images": 8, "cadence": 8.0, "sens": "boucle",
+    "livrer_provisoire": False, "plafond_image_usd": None,
+}
+
+
+def demande_normalisee(brute: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(brute, dict):
+        raise TravailRefuse("Une fabrication doit contenir des réglages nommés.")
+    obligatoires = {"cle", "personnage", "pose", "direction", "modele_video", "prompt_video"}
+    inconnus = set(brute) - obligatoires - set(DEFAUTS)
+    if inconnus:
+        raise TravailRefuse("Réglage de fabrication inconnu : " + ", ".join(sorted(inconnus)))
+    demande = {**DEFAUTS, **brute}
+    for nom in obligatoires:
+        if not isinstance(demande.get(nom), str) or (nom != "direction" and not demande[nom].strip()):
+            raise TravailRefuse(f"Préciser « {nom} » avant de préparer l'animation.")
+    if len(demande["cle"]) > 200:
+        raise TravailRefuse("La clé de demande ne doit pas dépasser 200 caractères.")
+    for nom in ("reference_asset", "modele_image", "resolution_image"):
+        if demande[nom] is not None and (not isinstance(demande[nom], str) or not demande[nom].strip()):
+            raise TravailRefuse(f"« {nom} » doit être un identifiant ou rester vide.")
+    for nom in ("prompt_image", "prompt_negatif_image", "proportions_image", "resolution", "proportions"):
+        if not isinstance(demande[nom], str):
+            raise TravailRefuse(f"« {nom} » doit être du texte.")
+    for nom in ("livrer_provisoire", "repris_image"):
+        if not isinstance(demande[nom], bool):
+            raise TravailRefuse(f"« {nom} » doit être activé ou désactivé.")
+    for nom, maximum in (("nombre_images", 64), ("secondes", 60)):
+        valeur = demande[nom]
+        if not isinstance(valeur, int) or isinstance(valeur, bool) or not 1 <= valeur <= maximum:
+            raise TravailRefuse(f"« {nom} » doit être un entier de 1 à {maximum}.")
+    cadence = demande["cadence"]
+    if isinstance(cadence, bool) or not isinstance(cadence, (int, float)) or not math.isfinite(cadence) or not 0.1 <= cadence <= 120:
+        raise TravailRefuse("La cadence doit être comprise entre 0,1 et 120 images par seconde.")
+    if demande["sens"] not in ("boucle", "aller-retour"):
+        raise TravailRefuse("Choisir boucle ou aller-retour pour le sens de lecture.")
+    montant = demande["plafond_image_usd"]
+    if montant is not None and (isinstance(montant, bool) or not isinstance(montant, (int, float)) or not math.isfinite(montant) or montant < 0):
+        raise TravailRefuse("La réservation de l'image doit être un montant positif ou nul.")
+    for nom in ("options_image", "options_video"):
+        if not isinstance(demande[nom], dict):
+            raise TravailRefuse(f"« {nom} » doit contenir des réglages nommés.")
+    for cle in ("references_image", "references_image_ecartees"):
+        if not isinstance(demande[cle], list) or any(not isinstance(r, str) for r in demande[cle]):
+            raise TravailRefuse("Les références d'image doivent être une liste d'identifiants.")
+    try:
+        return json.loads(json.dumps(demande, allow_nan=False))
+    except (ValueError, TypeError) as erreur:
+        raise TravailRefuse("Les réglages doivent contenir uniquement des valeurs JSON finies.") from erreur
+
+
+def cadre_valide(brut: dict[str, Any]) -> dict[str, Any]:
+    defauts = {"autoriser_local": True, "autoriser_payant": False, "modeles_image": [],
+               "modeles_video": [], "plafond_appels": 20, "plafond_usd": 0.0,
+               "livraison_provisoire": False}
+    if set(brut) - set(defauts):
+        raise TravailRefuse("Le cadre contient un réglage inconnu.")
+    cadre = {**defauts, **brut}
+    for cle in ("autoriser_local", "autoriser_payant", "livraison_provisoire"):
+        if not isinstance(cadre[cle], bool):
+            raise TravailRefuse(f"« {cle} » doit être activé ou désactivé.")
+    for cle in ("modeles_image", "modeles_video"):
+        if not isinstance(cadre[cle], list) or any(not isinstance(v, str) for v in cadre[cle]):
+            raise TravailRefuse("Les méthodes autorisées doivent être une liste de noms fournisseur:modèle.")
+    if isinstance(cadre["plafond_appels"], bool) or not isinstance(cadre["plafond_appels"], int) or cadre["plafond_appels"] < 0:
+        raise TravailRefuse("Le plafond d'appels doit être un entier positif ou nul.")
+    if isinstance(cadre["plafond_usd"], bool) or not isinstance(cadre["plafond_usd"], (int, float)) or not math.isfinite(cadre["plafond_usd"]) or cadre["plafond_usd"] < 0:
+        raise TravailRefuse("Le budget doit être un montant positif ou nul.")
+    return cadre

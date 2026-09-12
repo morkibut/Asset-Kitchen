@@ -60,6 +60,7 @@ from atelier.fournisseur.port import PortAnimateur
 from atelier.image import clip as decodeur
 from atelier.services.evenements import Diffusion
 from atelier.services.fournisseurs import indisponible_de
+from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu
 
 Fabrique = Callable[[], PortAnimateur]
 
@@ -82,6 +83,7 @@ class ServiceAnimation:
         fichiers: Fichiers,
         animateur: Fabrique | Sequence[Fabrique],
         diffusion: Diffusion | None = None,
+        file_locale=None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
@@ -101,6 +103,29 @@ class ServiceAnimation:
         self._recu_le: float = 0.0
         self._raison: str | None = None
         self._en_vol: set[asyncio.Task[None]] = set()
+        self._file_locale = file_locale
+        self._moteurs_locaux: dict[str, str] = {}
+        self.avant_soumission_locale = None
+        if file_locale is not None:
+            file_locale.inscrire_executeur("video", self._executer_local)
+            for fabrique in self._fabriques:
+                try:
+                    porte = fabrique()
+                except ErreurAtelier:
+                    continue
+                if hasattr(porte, "observer_ressource"):
+                    self._inscrire_moteur_local(porte)
+
+    def _inscrire_moteur_local(self, porte) -> str:
+        identifiant = porte.nom + "@" + str(getattr(porte, "adresse", "local"))
+        ancien = self._moteurs_locaux.get(porte.nom)
+        if ancien and ancien != identifiant:
+            self._file_locale.retirer_moteur_inutilise(ancien)
+        self._moteurs_locaux[porte.nom] = identifiant
+        async def inconnu():
+            return {"etat": "inconnu", "travaux": [], "raison": "Ce moteur ne publie pas l'occupation de sa ressource locale."}
+        self._file_locale.inscrire_moteur(identifiant, porte.nom, getattr(porte, "observer_ressource", inconnu))
+        return identifiant
 
     # ── Le catalogue vidéo ───────────────────────────────────────────────────
 
@@ -399,6 +424,22 @@ class ServiceAnimation:
         # laisse une commande sans travail, ce qui se lit ; dans l'autre ordre,
         # elle laisserait un travail payé que rien ne connaît.
         emplacement = generation.emplacements[0]
+        animateur = self._pour(modele)
+        if self._file_locale is not None and modele.de_la_maison:
+            ancienne = self._base.lire(generation.identifiant)
+            if ancienne and not self._file_locale.trouver("video:" + generation.identifiant):
+                raise DemandeRefusee("Cet identifiant désigne déjà une autre génération.")
+            moteur = self._inscrire_moteur_local(animateur)
+            etape = self._file_locale.preparer("video:" + generation.identifiant, nature="video",
+                moteur=moteur, modele=modele.identifiant, projet=projet, acteur=provenance,
+                parametres={"generation": generation.identifiant, "demande": generation.demande,
+                    "contexte": {"personnage": personnage, "pose": pose, "direction": direction,
+                                 "lot": lot, "depart": depart}}, entree=demande.image)
+            if ancienne:
+                return ancienne
+            self._sauver(generation)
+            await self._file_locale.lancer(etape["identifiant"])
+            return generation
         emplacement.statut = Statut.EN_COURS
         emplacement.demarre_le = time.time()
         emplacement.duree_attendue_s = self.attente_estimee(modele.identifiant)
@@ -422,6 +463,52 @@ class ServiceAnimation:
             tache.add_done_callback(self._en_vol.discard)
         return generation
 
+    async def _executer_local(self, etape: dict[str, Any]) -> dict[str, Any]:
+        """Exécuteur vidéo de la file commune ; les octets d'entrée sont figés."""
+        generation = self._clip(etape["parametres"]["generation"])
+        modele = self.modele(generation.modele)
+        animateur = self._pour(modele)
+        if self._inscrire_moteur_local(animateur) != etape["moteur"]:
+            raise SuiviLocalInterrompu("L'adresse du moteur a changé. Rétablir le moteur de cette demande avant de reprendre.")
+        if etape["travail_externe"]:
+            generation.clip.travail = etape["travail_externe"]
+            generation.clip.recupere = True
+            self._sauver(generation)
+        elif generation.clip.travail:
+            self._file_locale.connaitre_externe(etape["identifiant"], generation.clip.travail)
+        else:
+            if self.avant_soumission_locale is not None:
+                self.avant_soumission_locale(generation)
+            d = etape["parametres"]["demande"]
+            demande = DemandeClip(texte=d["prompt"], image=self._file_locale.entree(etape["identifiant"]),
+                secondes=d["secondes"], proportions=d["proportions"], resolution=d["resolution"], options=d["options"])
+            manque = indisponible_de(animateur)
+            if manque:
+                raise SansCle(manque)
+            refus = modele.refus(demande, self.annonce(modele, demande))
+            if refus:
+                raise DemandeRefusee(refus)
+            verifier = getattr(animateur, "verifier_preparation", None)
+            if verifier is not None:
+                await verifier(modele, demande)
+            self._file_locale.engager(etape["identifiant"])
+            generation.emplacements[0].statut = Statut.EN_COURS
+            generation.emplacements[0].demarre_le = time.time()
+            self._sauver(generation)
+            try:
+                numero = await animateur.soumettre(modele, demande)
+            except Exception as erreur:
+                raise AcceptationLocaleInconnue(f"Acceptation du calcul local incertaine : {erreur}") from erreur
+            self._file_locale.connaitre_externe(etape["identifiant"], numero)
+            generation.clip.travail = numero
+            self._sauver(generation)
+        termine = await self._attendre(generation.identifiant)
+        if not termine:
+            raise SuiviLocalInterrompu("Le moteur conserve peut-être le calcul. Reprendre le suivi avant de libérer sa place.")
+        relue = self._clip(generation.identifiant)
+        return {"generation": relue.identifiant, "reussie": relue.statut == Statut.REUSSIE,
+                "raison": relue.emplacements[0].raison or relue.clip.extraction_refus or ""}
+
     # ── Récupérer — le geste de l'auteur, jamais de l'atelier ────────────────
 
     async def recuperer(self, identifiant: str) -> Generation:
@@ -439,6 +526,12 @@ class ServiceAnimation:
         # refus qui parle de la mauvaise chose. L'appel est gratuit et déjà en
         # cache la seconde fois.
         await self.a_jour()
+        if self._file_locale is not None:
+            etape = self._file_locale.trouver("video:" + identifiant)
+            if etape:
+                await self._file_locale.lancer(etape["identifiant"], reprise=True)
+                await self._file_locale.attendre_fin(etape["identifiant"])
+                return self._clip(identifiant)
         generation = self._base.lire(identifiant)
         if generation is None:
             raise GenerationInconnue(identifiant)
@@ -535,14 +628,39 @@ class ServiceAnimation:
         """Jusqu'à ce que plus rien ne tourne. Pour les essais et les scripts."""
         while self._en_vol:
             await asyncio.gather(*tuple(self._en_vol), return_exceptions=True)
+        if self._file_locale is not None:
+            await self._file_locale.attendre_tout()
+
+    async def suivre(self, identifiant: str, *, reprise: bool = False) -> Generation:
+        """Suit ce seul numéro externe, pendant l'attente bornée habituelle.
+
+        Pour l'orchestrateur durable qui a commandé avec ``attendre=False``.
+        Une reprise consulte le même travail ; elle ne soumet aucune vidéo.
+        """
+        await self.a_jour()
+        if self._file_locale is not None:
+            etape = self._file_locale.trouver("video:" + identifiant)
+            if etape:
+                await self._file_locale.lancer(etape["identifiant"], reprise=reprise)
+                await self._file_locale.attendre_fin(etape["identifiant"])
+                return self._clip(identifiant)
+        generation = self._clip(identifiant)
+        if not generation.clip.travail:
+            raise ErreurAtelier("ce clip n'a pas de numéro de travail à suivre")
+        if generation.statut != Statut.REUSSIE:
+            await self._attendre(identifiant)
+        return self._clip(identifiant)
+
+    def etape_locale(self, identifiant: str) -> dict[str, Any] | None:
+        return self._file_locale.trouver("video:" + identifiant) if self._file_locale is not None else None
 
     # ── L'attente et l'encaissement ──────────────────────────────────────────
 
-    async def _attendre(self, identifiant: str) -> None:
+    async def _attendre(self, identifiant: str) -> bool:
         """Regarde où en est le travail, jusqu'à ce qu'il aboutisse ou trop tarde."""
         generation = self._base.lire(identifiant)
         if generation is None or generation.clip is None:  # pragma: no cover
-            return
+            return False
         animateur = self._pour_la_generation(generation)
         travail = generation.clip.travail
         reste = ATTENTE_MAX
@@ -553,7 +671,7 @@ class ServiceAnimation:
                 self._echouer(
                     generation, erreur.raison, getattr(erreur, "consomme", 0.0)
                 )
-                return
+                return False
             if etat.fini or etat.echoue:
                 break
             if reste <= 0:
@@ -566,10 +684,11 @@ class ServiceAnimation:
                     f"le clip n'est pas arrivé en {ATTENTE_MAX / 60:.0f} minutes — "
                     "il se fabrique peut-être encore, et « récupérer » ira le chercher",
                 )
-                return
+                return False
             await asyncio.sleep(CADENCE_ATTENTE)
             reste -= CADENCE_ATTENTE
         await self._encaisser(generation)
+        return True
 
     async def _encaisser(self, generation: Generation) -> None:
         """Le clip, son montant, son fichier, ses images — **dans cet ordre**.

@@ -36,9 +36,10 @@
  * annoncé une règle que le produit ne tient pas.
  */
 
-import { useState, type ReactNode } from "react"
-import type { Asset, Personnage, PieceEtSesEmplois, VestiaireDuJeu } from "../api"
+import { useEffect, useState, type ReactNode } from "react"
+import { api, type Asset, type Personnage, type PieceEtSesEmplois, type VestiaireDuJeu } from "../api"
 import { vignetteAsset } from "./Apercu"
+import { apiCalques, type CiblesEmploi } from "../api-calques"
 
 /** Ce qu'une pièce portée montre — la pièce, son emploi sur ce sujet-ci, et le
  *  calque retenu qui le représente. */
@@ -100,6 +101,7 @@ export function VestiaireDuSujet({
   onPiece,
   onCreerPiece,
   onRetirerLEmploi,
+  onEmploi,
 }: {
   personnage: Personnage
   /** Le vestiaire résolu du jeu, ou `null` tant qu'on ne le sait pas. La
@@ -110,8 +112,24 @@ export function VestiaireDuSujet({
   /** Nommer une pièce **que ce sujet porte** — un seul aller-retour. */
   onCreerPiece: (nom: string) => void
   onRetirerLEmploi: (piece: string, emploi: string) => void
+  onEmploi?: (piece: string, emploi: string) => void
 }) {
   const [nom, setNom] = useState("")
+  const [pieceCommune, setPieceCommune] = useState("")
+  const [attente, setAttente] = useState(false)
+  const [erreur, setErreur] = useState("")
+  const [precis, setPrecis] = useState<Record<string, CiblesEmploi>>({})
+  const liens = vestiaire ? ceQuIlPorte(personnage, vestiaire) : []
+  const signature = liens.map((p) => `${p.sien.piece.identifiant}:${p.emploi.identifiant}`).join("|")
+  useEffect(() => {
+    if (!onEmploi || !personnage.projet) return
+    let vivant = true
+    Promise.all(liens.map(async ({ sien, emploi }) => [sien.piece.identifiant, await apiCalques.cibles({ projet: personnage.projet, piece: sien.piece.identifiant, emploi: emploi.identifiant })] as const))
+      .then((r) => { if (vivant) setPrecis(Object.fromEntries(r)) })
+      .catch((e: unknown) => { if (vivant) setErreur(e instanceof Error ? e.message : "Impossible de relire les calques précis.") })
+    return () => { vivant = false }
+    // Les fichiers sont relus quand la fiche revient, ou quand ses emplois changent.
+  }, [personnage.identifiant, personnage.projet, signature, Boolean(onEmploi)])
 
   // **Ce qu'une famille ne peut pas avoir n'existe pas dans son établi** (E15).
   // Un décor n'a pas de vestiaire, et ce n'est pas une section grisée : elle
@@ -159,11 +177,11 @@ export function VestiaireDuSujet({
             >
               <button
                 type="button"
-                onClick={() => onPiece(sien.piece.identifiant)}
+                onClick={() => onEmploi ? onEmploi(sien.piece.identifiant, emploi.identifiant) : onPiece(sien.piece.identifiant)}
                 aria-label={`Ouvrir ${sien.piece.nom}`}
                 className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-8 border border-trait bg-pourtour transition-colors duration-120 hover:border-encre-4"
               >
-                {calque ? (
+                {precis[sien.piece.identifiant]?.variantes.some((v) => v.utilisable) ? <img src={apiCalques.image({ projet: personnage.projet, piece: sien.piece.identifiant, emploi: emploi.identifiant }, precis[sien.piece.identifiant].variantes.find((v) => v.utilisable)!)} alt={`${sien.piece.nom} sur ${personnage.nom}`} className="max-h-full max-w-full object-contain" /> : calque ? (
                   <img
                     src={vignetteAsset(calque, 300)}
                     alt={calque.label}
@@ -195,7 +213,7 @@ export function VestiaireDuSujet({
                 </button>
               </span>
               <span className="mesure text-[11px] text-encre-4">
-                {emploi.fait} / {emploi.attendu} ·{" "}
+                {precis[sien.piece.identifiant]?.variantes.length ? `${precis[sien.piece.identifiant].calques_retenus} calques précis retenus` : `${emploi.fait} / ${emploi.attendu}`} ·{" "}
                 {emploi.emplacement_nom || "sans emplacement"}
               </span>
             </div>
@@ -230,6 +248,8 @@ export function VestiaireDuSujet({
         Elle lui appartient dès qu'elle est nommée. Une pièce nommée ailleurs ne
         porte personne tant qu'on ne le dit pas.
       </p>
+      {onEmploi && vestiaire && <div className="mt-[14px] flex flex-col gap-[8px] border-t border-trait pt-[14px]"><label className="flex flex-col gap-[4px] text-[13px] text-encre">Ou utiliser une pièce commune du jeu<select aria-label="Pièce commune à attribuer" value={pieceCommune} onChange={(e) => setPieceCommune(e.target.value)} className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle"><option value="">Choisir une pièce existante…</option>{vestiaire.pieces.filter((p) => !portees.some((v) => v.sien.piece.identifiant === p.piece.identifiant)).map((p) => <option value={p.piece.identifiant} key={p.piece.identifiant}>{p.piece.nom}</option>)}</select></label><button disabled={!pieceCommune || attente} className="h-[34px] self-start rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle" onClick={async () => { setAttente(true); setErreur(""); try { const r = await api.ajouterEmploi(pieceCommune, { genre: "porte", porteur: personnage.identifiant }); onEmploi(pieceCommune, r.emploi.identifiant) } catch (e) { setErreur(e instanceof Error ? e.message : "La pièce n’a pas pu être attribuée.") } finally { setAttente(false) } }}>Créer son emploi pour {personnage.nom}</button><p className="text-[11px] text-encre-3">La pièce garde son identité commune. Ce personnage possède ses propres calques et placements.</p></div>}
+      {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
     </section>
   )
 }

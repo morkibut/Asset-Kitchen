@@ -8,6 +8,37 @@ export type Statut =
   | "echouee"
   | "interrompue"
 
+/** AU1 : le choix relu est un instantané, indépendant des favoris ultérieurs. */
+export type LiaisonGodot = { dossier: string; sous_dossier: string }
+export type FichierLivraison = {
+  chemin: string; role: string; etat: string; empreinte: string; octets: number
+}
+export type ApercuLivraison = {
+  jeton: string; projet: string; personnage: string; revision: string
+  dossier: string; fichiers: FichierLivraison[]; conflits: { chemin: string; raison: string }[]; pret: boolean
+  scene: string; sprite_frames: string; pivot?: { x: number; y: number }
+  animations: { identifiant?: string; bande?: string; nom: string; cadence?: number; compte?: number; boucle?: boolean }[]
+}
+export type LivraisonGodot = ApercuLivraison & {
+  etat?: "preparee" | "en_cours" | "interrompue" | "terminee"
+  prepare_le?: number; livre_le?: number; pivot?: { x: number; y: number }
+}
+
+export type SortieDemandee = { identifiant?: string; nature: "image" | "animation"; pose: string; direction: string; quantite: number }
+export type ObjectifProduction = {
+  sorties: SortieDemandee[]; largeur: number; hauteur: number; cadence: number
+  boucle: boolean; repere: { x: number; y: number }
+}
+export type CompteObjectif = { demande: number; produit: number; retenu: number; manquant: number; a_retenir: number }
+export type CaseObjectif = SortieDemandee & CompteObjectif & {
+  nom_pose: string; nom_direction: string; etat: "non-demande" | "manquant" | "produit" | "retenu"
+  versions: { retenues: (Asset | Bande)[]; a_juger: (Asset | Bande)[]; ecartees: (Asset | Bande)[] }
+}
+export type ObjectifDuPersonnage = {
+  personnage: string; objectif: ObjectifProduction; origine: "explicite" | "plan-existant"
+  couverture: { images: CompteObjectif; animations: CompteObjectif; cases: CaseObjectif[] }
+}
+
 export type Option = {
   nom: string
   genre: "choix" | "intervalle" | "booleen"
@@ -920,6 +951,10 @@ export type PropositionDeRythme = {
  *  réécrite. `dx` et `dy` sont **en pixels du sprite**, pas de la vidéo — un
  *  appui déplace d'un bloc, quelle que soit la taille du clip. */
 export type Prise = {
+  /** Identité de cette occurrence, conservée lors d’un déplacement. */
+  identifiant?: string
+  /** Retouches finales dans les coordonnées de la frame affichée. */
+  main_apres_placement?: Main | null
   numero: number
   clip: string
   dx: number
@@ -2201,6 +2236,7 @@ export type Case = {
 }
 
 export type Personnage = {
+  objectif?: ObjectifProduction | null
   identifiant: string
   projet: string
   nom: string
@@ -2534,6 +2570,8 @@ export type FamilleDuBilan = {
 /** Une ligne de « ce qui manque le plus » (B5) — **son coût compris**, la
  *  médiane mesurée sur ce modèle, jamais un tarif écrit à l'écran. */
 export type ManqueDuBilan = {
+  nature?: "image" | "animation"
+  cout_connu?: boolean
   quantite: number
   phrase: string
   famille: string
@@ -2545,7 +2583,7 @@ export type ManqueDuBilan = {
 export type BilanDuJeu = {
   familles: FamilleDuBilan[]
   manques: ManqueDuBilan[]
-  lot: { images: number; feuilles: number; cout_usd: number }
+  lot: { images: number; animations?: number; feuilles: number; cout_usd: number; cout_connu?: boolean }
 }
 
 // ── B6 · Ce que la barre propose ────────────────────────────────────────────
@@ -4445,7 +4483,7 @@ export class Refus extends Error {
   }
 }
 
-async function appeler<T>(chemin: string, init?: RequestInit): Promise<T> {
+export async function appeler<T>(chemin: string, init?: RequestInit): Promise<T> {
   let reponse: Response
   try {
     reponse = await fetch(`/api${chemin}`, {
@@ -4468,6 +4506,14 @@ async function appeler<T>(chemin: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  objectifPersonnage: (identifiant: string, projet: string) => appeler<ObjectifDuPersonnage>(`/characters/${encodeURIComponent(identifiant)}/objective?projet=${encodeURIComponent(projet)}`),
+  definirObjectifPersonnage: (identifiant: string, objectif: ObjectifProduction, projet: string) => appeler<ObjectifDuPersonnage>(`/characters/${encodeURIComponent(identifiant)}/objective`, { method: "PUT", body: JSON.stringify({ objectif, projet }) }),
+  liaisonGodot: (projet: string) => appeler<LiaisonGodot | null>(`/projects/${encodeURIComponent(projet)}/godot-link`),
+  associerGodot: (projet: string, liaison: LiaisonGodot) => appeler<LiaisonGodot>(`/projects/${encodeURIComponent(projet)}/godot-link`, { method: "PUT", body: JSON.stringify(liaison) }),
+  livraisonsGodot: (projet: string) => appeler<{ livraisons: LivraisonGodot[] }>(`/projects/${encodeURIComponent(projet)}/deliveries`),
+  prevoirLivraison: (projet: string, choix: { personnage: string; bandes: string[]; pivot_x?: number; pivot_y?: number; boucles?: Record<string, boolean> }) => appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/preview`, { method: "POST", body: JSON.stringify(choix) }),
+  livrerGodot: (projet: string, jeton: string) => appeler<LivraisonGodot>(`/projects/${encodeURIComponent(projet)}/deliveries`, { method: "POST", body: JSON.stringify({ jeton }) }),
+  reprendreLivraison: (projet: string, jeton: string) => appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/${encodeURIComponent(jeton)}/preview`, { method: "POST" }),
   etat: () => appeler<Etat>("/status"),
 
   /** Le catalogue, le grisé de chaque modèle, **et le compte de références**.
@@ -5294,8 +5340,12 @@ export const api = {
     appeler<Bande>(`/strips/${identifiant}/frame`, { method: "POST" }),
 
   /** Une bande de plus, taillée dans ce clip. **Rien n'est dépensé.** */
+  preleverFrameDeBande: (identifiant: string, rang: number, corps: { prises: Prise[]; recette: Recette }) =>
+    appeler<{ asset: Asset | null; doublon: Asset | null }>(`/strips/${encodeURIComponent(identifiant)}/frames/${rang}/pick`, { method: "POST", body: JSON.stringify(corps) }),
+
   garderLaBande: (corps: {
     clip: string
+    personnage?: string | null
     nom: string
     images: number[]
     cadence?: number
@@ -5313,10 +5363,11 @@ export const api = {
     identifiant: string,
     pose: string | null,
     direction: string | null = null,
+    personnage?: string | null,
   ) =>
     appeler<Bande>(`/strips/${identifiant}/case`, {
       method: "PUT",
-      body: JSON.stringify({ pose, direction }),
+      body: JSON.stringify({ pose, direction, ...(personnage !== undefined ? { personnage } : {}) }),
     }),
 
   renommerLaBande: (identifiant: string, nom: string) =>
@@ -6402,7 +6453,7 @@ export const api = {
   /** La planche de sprites d'une bande gardée. **Elle change sous la même
    *  adresse** quand la recette de la bande change — l'exact contraire d'un
    *  clip, qui ne change jamais —, donc le navigateur ne la garde pas. */
-  plancheDeLaBande: (identifiant: string) => `/api/strips/${identifiant}/sheet`,
+  plancheDeLaBande: (identifiant: string) => `/api/strips/${encodeURIComponent(identifiant)}/sheet`,
 
   // Le rendu change sous la même adresse à chaque cran de curseur : `version`
   // porte l'empreinte de la recette pour que le navigateur cherche une image

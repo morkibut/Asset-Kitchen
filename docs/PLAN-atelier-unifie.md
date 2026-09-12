@@ -40,9 +40,9 @@ ne compte pas comme une tranche AU livrée ; l'état de cette préparation vit d
 
 Critères de passage à l'implémentation des écrans concernés :
 
-- [ ] L'auteur a essayé le parcours manuel personnage → animation → livraison et noté ses frictions.
-- [ ] Toile et retouche ont été essayées avec modification, fermeture et réouverture.
-- [ ] L'auteur peut essayer un équipement depuis sa pièce et son emploi jusqu'aux calques
+- [x] L'auteur a essayé le parcours manuel personnage → animation → livraison et noté ses frictions.
+- [x] Toile et retouche ont été essayées avec modification, fermeture et réouverture.
+- [x] L'auteur peut essayer un équipement depuis sa pièce et son emploi jusqu'aux calques
   de poses, directions et frames, puis combiner plusieurs équipements ; un simple inventaire
   de préparations sans extraction, placement ni composition ne couvre pas ce parcours.
 - [ ] Chaque écran à remplacer possède un inventaire des fonctions actuelles reprises ; les
@@ -52,6 +52,10 @@ Critères de passage à l'implémentation des écrans concernés :
 
 La preuve technique AU1 reste le premier développement ; elle peut éclairer la maquette
 de livraison. Les générations simulées ne constituent jamais une preuve d'intégration.
+
+**Validation d'ensemble de l'auteur le 12 septembre 2026.** La maquette est approuvée pour
+implémentation complète. Les inventaires de capacités et les preuves de production restent
+obligatoires avant retrait des accès existants ; la validation du dessin ne les remplace pas.
 
 **Consolidation UX autorisée le 12 septembre.** La [revue comparative](revue-ux-complete-2026-09-12.md)
 alimente cette préparation, sans ouvrir de seconde file de production. Les trois premiers
@@ -112,11 +116,11 @@ C'est une première preuve gratuite du trajet complet, avant d'y brancher la gé
 
 ### Critères d'acceptation
 
-- [ ] Une demande MCP retrouve et exporte une animation existante sans appel fournisseur.
-- [ ] Le résultat renvoie les fichiers, leurs rôles et les paramètres nécessaires ; Godot
+- [x] Une demande MCP retrouve et exporte une animation existante sans appel fournisseur.
+- [x] Le résultat renvoie les fichiers, leurs rôles et les paramètres nécessaires ; Godot
   joue la bande avec le bon ordre, la cadence, la boucle et le pivot.
-- [ ] Relancer l'export ne remplace aucun fichier inconnu ; un dossier invalide est expliqué.
-- [ ] Une scène de démonstration s'ouvre réellement dans Godot ; son absence sur la machine
+- [x] Relancer l'export ne remplace aucun fichier inconnu ; un dossier invalide est expliqué.
+- [x] Une scène de démonstration s'ouvre réellement dans Godot ; son absence sur la machine
   est un contrôle non effectué, jamais une réussite déduite du manifeste.
 
 ## AU2 · Le personnage porte les animations utiles au jeu

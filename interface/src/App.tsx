@@ -34,6 +34,7 @@ import {
   type GroupeDeRangement,
   type Etat,
   type Bande,
+  type Asset,
   type Generation,
   type Modele,
   type Reinjection,
@@ -82,9 +83,13 @@ import {
 import { EcranFamille } from "./composants/Famille"
 import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
 import { TableauDeBord } from "./composants/TableauDeBord"
+import { BibliothequeDesAssets } from "./composants/BibliothequeDesAssets"
+import { Fabrications } from "./composants/Fabrications"
+import { DelegationDuJeu } from "./composants/DelegationDuJeu"
+import { TravailConserve } from "./composants/FabricationSuivie"
 import { Ouverture } from "./composants/Ouverture"
 import { Installation } from "./composants/Installation"
-import { Sortie } from "./composants/Sortie"
+import { Livraisons } from "./composants/Livraisons"
 import { PanneauAtelier, ReglesDuJeu } from "./composants/ReglesDuJeu"
 import {
   PILE_INITIALE,
@@ -105,6 +110,8 @@ import { PageDuSujet, type Onglet as OngletDuSujet } from "./composants/PageDuSu
 import { GrilleDuJeu } from "./composants/GrilleDuJeu"
 import { Comparer } from "./composants/Comparer"
 import { Retouche } from "./composants/Retouche"
+import { AssocierImageEquipement } from "./composants/AssocierImageEquipement"
+import { CadreDialogue } from "./composants/CadreDialogue"
 // ── `C4` · la galerie est un fichier ────────────────────────────────────────
 // Elle était écrite en clair ici ; elle a désormais son fichier, comme les
 // vingt et un autres écrans du carnet. `App` n'en garde que ce que les autres
@@ -221,6 +228,7 @@ export function App() {
   // rien n'ouvre se voit — `decoupeOuverte` avait sept écritures, toutes à
   // `null`, et son écran était injoignable depuis des jours.
   const [pile, setPile] = useState<Lieu[]>(() => [...PILE_INITIALE])
+  const [imageAEquiper, setImageAEquiper] = useState<Asset | null>(null)
 
   /** L'ouverture (B4) — **prend la fenêtre entière**, comme le parcours de
    *  création, et ce n'est pas un lieu de la pile : elle ne parle pas d'un
@@ -278,6 +286,8 @@ export function App() {
    *  l'installation. Ce qui la distingue de la dernière : elle appartient au
    *  jeu — son dossier est gardé avec lui, et son lot est fait de ses sujets. */
   const sortieOuverte = dans(pile, "sortie")
+  const delegationOuverte = dans(pile, "delegation")
+  const travailOuvert = lieu(pile, "travail")?.travail
   const setSortieOuverte = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "sortie" }) : sortir(p, "sortie")))
 
@@ -585,6 +595,9 @@ export function App() {
   // qui paie, il n'y a toujours qu'un seul endroit d'où l'argent part, et rien
   // n'est dépensé tant que le bouton *de cet écran-là* n'est pas pressé.
   const envoiOuvert = dans(pile, "envoi")
+  // Une profondeur de réglages ou de livraison occupe la surface centrale.
+  // Sa racine reste dans le fil, elle ne monte pas un second écran dessous.
+  const surfaceDisponible = !reglesOuvertes && !installationOuverte && !sortieOuverte && !delegationOuverte && !travailOuvert
   const setEnvoiOuvert = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "envoi" }) : sortir(p, "envoi")))
   const [envoi, setEnvoi] = useState<Envoi | null>(null)
@@ -743,16 +756,11 @@ export function App() {
    *  le geste qui dit « ailleurs », et c'est lui qui la referme. */
   const ouvrirLaFamille = (cle: string) => {
     setCollectionOuverte(null)
-    // ⚠️ **L'équipement n'est pas une famille de sujets**, et il ne l'est
-    // toujours pas après `B19` : `famille_du_type` ne connaît que les quatre
-    // autres, et une grille d'équipement serait vide à jamais. Ce que `B19`
-    // change est ailleurs — la ligne du carnet **déplie ses pièces** à la place
-    // des collections, qui ne veulent rien dire d'une pièce, et chacune ouvre sa
-    // page. Le contournement vers l'ancien codex est levé : ouvrir la ligne sans
-    // choisir de pièce repose simplement la pile sur le codex, et le carnet
-    // montre par quoi entrer.
+    // Une pièce possède des emplois, pas les cases d'un sujet. La bibliothèque
+    // lit donc les pièces directement ; l'ancienne grille de famille ne saurait
+    // pas les servir et renvoyait sur une surface de création vide.
     if (cle === "equipement") {
-      setPile(poser("codex"))
+      setPile([{ genre: "bibliotheque", famille: "equipement" }])
       return
     }
     setPile(entrer(poser("codex"), { genre: "famille", famille: cle }))
@@ -1115,8 +1123,10 @@ export function App() {
                         // elle, et lui en écrire est le travail de sa tranche,
                         // pas de B9. Mieux vaut les explications du voisin le
                         // plus proche qu'un volet vide.
-                        surface === "codex"
+                        surface === "codex" || surface === "bibliotheque"
                         ? "codex"
+                        : surface === "fabrications"
+                        ? "clip"
                         : "galerie"
 
   // ── B6 · La barre ─────────────────────────────────────────────────────────
@@ -1827,15 +1837,25 @@ export function App() {
         ouvert={
           // Une pièce ouverte allume la ligne des équipements — c'est elle
           // qui la déplie, et le fil dit la suite (`B19`).
-          pieceOuverte
+          sortieOuverte
+            ? "sortie"
+            : depensesOuvertes
+            ? "depenses"
+            : reglesOuvertes
+            ? "regles"
+            : installationOuverte
+            ? "installation"
+            : pieceOuverte
             ? EQUIPEMENT
+            : lieu(pile, "bibliotheque")?.famille === "equipement"
+            ? "equipement"
+            : surface === "bibliotheque"
+            ? "bibliotheque"
+            : surface === "fabrications"
+            ? "fabrications"
             : tableauDeBord
             ? "jeu"
-            : depensesOuvertes
-              ? "depenses"
-              : reglesOuvertes
-                ? "regles"
-                : surface === "univers"
+            : surface === "univers"
                 ? "univers"
                 : familleOuverte
                   ? familleOuverte
@@ -1848,6 +1868,9 @@ export function App() {
         }
         racine={racine(pile)}
         surLeJeu={() => setPile(poser("tableau-de-bord"))}
+        surLesAssets={() => allerA("bibliotheque")}
+        surLesFabrications={() => allerA("fabrications")}
+        surLAgent={() => setPile((p) => entrer(p, { genre: "delegation" }))}
         surLaFamille={ouvrirLaFamille}
         surLaCollection={(cle, collection) => {
           if (familleOuverte !== cle) ouvrirLaFamille(cle)
@@ -2003,7 +2026,7 @@ export function App() {
         !depensesOuvertes &&
         !envoiOuvert &&
         !clipOuvert && (
-          <Sortie
+          <Livraisons
             projet={projetCourant?.identifiant ?? null}
             onFerme={() => setSortieOuverte(false)}
             onErreur={(refus) => setPanne(refus.message)}
@@ -2203,7 +2226,7 @@ export function App() {
           Il prend la surface, jamais la fenêtre : le carnet reste à gauche. Il
           n'a pas de fil d'Ariane, parce qu'il est le haut du jeu — c'est de lui
           qu'on descend, et c'est vers lui qu'on remonte. */}
-      {tableauDeBord && !depensesOuvertes && !envoiOuvert && !clipOuvert && (
+      {surfaceDisponible && tableauDeBord && !depensesOuvertes && !envoiOuvert && !clipOuvert && (
         <TableauDeBord
           jeu={projetCourant?.nom ?? "sans projet"}
           images={projetCourant?.assets ?? 0}
@@ -2222,14 +2245,33 @@ export function App() {
           // **La galerie montre déjà la tuile en attente** (elle en tient le
           // chantier) : B5 n'ouvre donc aucun lieu de plus, elle y ramène.
           surAllerDecouper={() => setPile(poser("galerie"))}
+          surLaToile={() => allerA("univers")}
+          surLesAssets={() => allerA("bibliotheque")}
+          surLesFabrications={() => allerA("fabrications")}
+          surLivrer={() => setSortieOuverte(true)}
         />
+      )}
+
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "bibliotheque" && (
+        <BibliothequeDesAssets key={`${bibliotheque.courant}:${lieu(pile, "bibliotheque")?.famille ?? ""}`} familleInitiale={lieu(pile, "bibliotheque")?.famille} jeu={bibliotheque.courant ?? ""} pieces={pieces} personnages={personnages} rafraichi={grilleARelire}
+          onOuvrir={(id) => { setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
+          onPiece={ouvrirLaPiece} onFamille={ouvrirLaFamille} onGalerie={() => allerA("galerie")} />
+      )}
+
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && (
+        <Fabrications projet={bibliotheque.courant} chantier={chantier} clips={clipsDuJeu} personnages={personnages}
+          onBande={(id) => setPile(entrer(poser("codex"), { genre: "bande", bande: id }))}
+          onCreer={() => allerA("codex")} onGalerie={() => allerA("galerie")}
+          onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))}
+          onSujet={(id) => { setOngletDuSujet("animations"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
+          onDepenses={() => setDepensesOuvertes(true)} />
       )}
 
       {/* ── La galerie (`C4`) ───────────────────────────────────────────────
           Elle a son fichier depuis `C4` : `composants/Galerie.tsx`. Ce qui suit
           n'est plus que la condition de son montage — la même qu'avant, aux
           mêmes mots. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && surface === "galerie" &&
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && surface === "galerie" &&
         !imageDeLaRetouche && (
         <Galerie
           g={galerie}
@@ -2262,7 +2304,7 @@ export function App() {
           existait parce que le côté Réglages avait besoin de savoir quelles
           façons de réduire cette machine-ci sait faire. Les deux côtés qui
           restent ne lisent que le tableau. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "univers" && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "univers" && (
         <EcranUnivers
           cartes={cartes}
           liens={liens}
@@ -2300,7 +2342,7 @@ export function App() {
           deux écrans pour le même geste auraient été deux vérités sur ce qu'est
           une famille. Nommer une chose neuve se fait maintenant depuis cet
           écran lui-même — plus par un aller-retour vers le codex (`C3`). */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && familleOuverte && !choseOuverte && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && familleOuverte && !choseOuverte && (
         <EcranFamille
           famille={familleOuverte}
           nom={NOM_DANS_LE_CARNET[familleOuverte] ?? familleOuverte}
@@ -2342,7 +2384,7 @@ export function App() {
           surface ne porte plus qu'elle, sans colonnes. */}
       {/* ⚠️ **Et pas non plus quand une pièce est ouverte** (`B19`) : la page
           d'une pièce se pose ici comme la grille d'une famille. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && (
         <div
           data-codex
           className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-papier p-4"
@@ -2368,7 +2410,7 @@ export function App() {
           matrice pour la raison du montage : les deux ne peuvent pas être
           ouverts ensemble, on ne corrige pas une animation depuis un écran
           qui en montre douze. */}
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && bandeOuverte && etat ? (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && bandeOuverte && etat ? (
         montageDeLaBande ? (
         /* **Le montage rouvert sur cette animation** (V3.03.3). Il prend la
            place de l'atelier, comme l'atelier prend celle de la matrice : ce
@@ -2378,6 +2420,8 @@ export function App() {
            écrire. */
         <EcranMontage
           clip={montageDeLaBande.clip}
+          personnages={personnages}
+          onBande={(id) => { setMontageDeLaBande(null); setPile((p) => entrer(p, { genre: "bande", bande: id })) }}
           reprise={{
             bande: montageDeLaBande,
             onRepris: () => {
@@ -2410,7 +2454,7 @@ export function App() {
         )
       ) : null}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && choseOuverte && !bandeOuverte && !sujetDeLaGrille && !sujetDuComparateur && !imageDeLaRetouche && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && choseOuverte && !pieceOuverte && !bandeOuverte && !sujetDeLaGrille && !sujetDuComparateur && !imageDeLaRetouche && (
         /* **La page du sujet, et non plus sa matrice** (B10) : on arrive sur la
            chose, quatre onglets sur un seul écran. La matrice est devenue une
            profondeur de cette page — elle porte encore le vestiaire, les
@@ -2425,6 +2469,8 @@ export function App() {
           // la place de cette page, et une page démontée oublie le sien.
           onglet={ongletDuSujet}
           onOnglet={setOngletDuSujet}
+          clips={clipsDuJeu}
+          onObjectifChange={() => void relireProduction()}
           matrice={matriceDuSujet}
           onMatriceOuverte={setMatriceDuSujet}
           // **La colonne et le panneau d'un calque survivent au montage de la
@@ -2542,6 +2588,7 @@ export function App() {
              non l'équipement du jeu entier. */
           vestiaire={vestiaireDuJeu}
           onPiece={(piece) => ouvrirLaPiece(piece)}
+          onEmploiEquipement={(piece, emploi) => setPile((p) => entrer(entrer(p, { genre: "piece", piece }), { genre: "emploi", piece, emploi }))}
           onCreerPiece={(nom) => void donnerUnePiece(nom, choseOuverte.identifiant)}
           /* **Les deux rôles de la fiche d'une image** (`C4`) : elle est montée
              dans *Ses images* depuis que le produit n'a plus qu'un seul volet de
@@ -2552,7 +2599,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord &&
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord &&
         (surface === "galerie" || surface === "codex") &&
         imageDeLaRetouche && etat && !bandeOuverte && (
         /* **La retouche** (B16) — la chaîne redessinée sur le papier du
@@ -2601,6 +2648,7 @@ export function App() {
           tableDeLaPorte={tableDeLaPorte}
           onFermer={() => ouvrirLaRetouche(null)}
           onSoeur={(identifiant) => ouvrirLaRetouche(identifiant)}
+          onAssocierEquipement={bibliotheque.courant ? () => setImageAEquiper(imageDeLaRetouche) : undefined}
           decoupe={(fermerLaFabrique) => (
             <EcranDecoupe
               sujet={{
@@ -2630,7 +2678,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && sujetDeLaGrille && !bandeOuverte && !imageDeLaRetouche && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && sujetDeLaGrille && !bandeOuverte && !imageDeLaRetouche && (
         /* **La grille du jeu** (B13) — une profondeur de plus de la page d'un
            sujet, comme la matrice l'était déjà avant B10. Elle ne dépense
            rien : pas de barre qui paie. */
@@ -2646,7 +2694,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && sujetDuComparateur && !bandeOuverte && !imageDeLaRetouche && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && sujetDuComparateur && !bandeOuverte && !imageDeLaRetouche && (
         /* **Comparer** (B13) — deux sujets côte à côte, ou deux images d'un
            même sujet. Elle non plus ne dépense rien. */
         <Comparer
@@ -2679,7 +2727,7 @@ export function App() {
           barre qui paie, et c'est cette privation qui tient la promesse.
           L'emploi passe devant sa pièce — il est plus profond, et deux surfaces
           à la fois n'existent pas. */}
-      {!depensesOuvertes &&
+      {surfaceDisponible && !depensesOuvertes &&
         !envoiOuvert &&
         !clipOuvert &&
         surface === "codex" &&
@@ -2701,7 +2749,7 @@ export function App() {
           />
         )}
 
-      {!depensesOuvertes &&
+      {surfaceDisponible && !depensesOuvertes &&
         !envoiOuvert &&
         !clipOuvert &&
         surface === "codex" &&
@@ -2718,6 +2766,7 @@ export function App() {
            surfaces à la fois n'existent pas. */
         !calquesAnimesLieu && (
           <Emploi
+            projet={bibliotheque.courant ?? undefined}
             emploi={emploiOuvert}
             piece={pieceEtSesEmplois.piece}
             emplacements={emplacements}
@@ -2763,7 +2812,7 @@ export function App() {
           *Ses animations, image par image* — le calque de la pose, reposé sur
           chaque image de chaque bande. **Aucun bouton de cet écran ne
           dépense** : le recalage tourne sur la machine. */}
-      {!depensesOuvertes &&
+      {surfaceDisponible && !depensesOuvertes &&
         !envoiOuvert &&
         !clipOuvert &&
         surface === "codex" &&
@@ -2850,6 +2899,11 @@ export function App() {
           onFermer={fermerBarre}
         />
       )}
+
+      {delegationOuverte && !travailOuvert && bibliotheque.courant && <main className="defile min-h-0 flex-1 overflow-y-auto bg-papier p-[30px]"><div className="mb-[14px] flex justify-end"><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setPile((p) => sortir(p, "delegation"))}>Revenir</button></div><DelegationDuJeu projet={bibliotheque.courant} onAtelier={() => setReglagesOuverts(true)} onTravail={(t) => setPile((p) => entrer(p, { genre: "travail", travail: t.identifiant }))} /></main>}
+      {travailOuvert && bibliotheque.courant && <TravailConserve projet={bibliotheque.courant} identifiant={travailOuvert} personnages={personnages} onFermer={() => setPile((p) => sortir(p, "travail"))} onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))} onBande={(id) => setPile(entrer(poser("codex"), { genre: "bande", bande: id }))} />}
+
+      {imageAEquiper && bibliotheque.courant && <CadreDialogue titre="Associer cette image à un équipement" onFermer={() => setImageAEquiper(null)} enfants={<AssocierImageEquipement image={imageAEquiper} projet={bibliotheque.courant} onFermer={() => setImageAEquiper(null)} onAssocie={(piece, emploi) => { setImageAEquiper(null); setPile((p) => entrer(entrer(surface === "codex" ? sortir(p, "retouche") : poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi })) }} />} />}
 
       {reglagesOuverts && etat && (
         <PanneauAtelier

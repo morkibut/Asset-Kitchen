@@ -33,6 +33,7 @@ import base64
 import json
 import time
 import uuid
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -346,6 +347,7 @@ class ServiceMontage:
             recette,
             fenetre,
             poussees=[(p.dx, p.dy) for p in gardees],
+            mains_apres_placement=[p.main_apres_placement for p in gardees],
             recettes=recettes,
             individuelles=individuelles,
         )
@@ -413,6 +415,8 @@ class ServiceMontage:
         recette: Recette | None = None,
         pose: str | None = None,
         direction: str | None = None,
+        identifiant_bande: str | None = None,
+        personnage: str | None = None,
     ) -> Bande:
         """Une bande de plus, taillée dans ce clip. **Rien n'est dépensé.**
 
@@ -421,7 +425,17 @@ class ServiceMontage:
         produit emploie partout, et il évite de poser une question au moment où
         l'on découpe pour voir.
         """
+        if identifiant_bande:
+            existante = self._base.lire_bande(identifiant_bande)
+            if existante:
+                if existante.clip != identifiant:
+                    raise ErreurAtelier("cet identifiant de bande appartient à un autre clip")
+                return existante
         generation = self._clip(identifiant)
+        # Absent : provenance historique. Vide explicite : brouillon sans sujet.
+        cible = generation.personnage if personnage is None else personnage or None
+        if personnage is not None:
+            self._verifier_destination(generation.projet, cible, pose, direction)
         retenues = self._retenues(identifiant, images)
         propre = nom.strip()
         if not propre:
@@ -440,19 +454,19 @@ class ServiceMontage:
         planche = assembler(preparees, recette, fenetre)
 
         bande = Bande(
-            identifiant=uuid.uuid4().hex[:12],
+            identifiant=identifiant_bande or uuid.uuid4().hex[:12],
             clip=identifiant,
             nom=propre,
             # Toutes du clip qu'on découpe, et aucune poussée : c'est le geste
             # d'`A10`, inchangé. Ce qu'`A7` ajoute se pose **après**, sur la
             # bande gardée, et jamais au moment où on la taille.
-            prises=tuple(Prise(numero=int(n)) for n in images),
+            prises=tuple(Prise(numero=int(n), identifiant=uuid.uuid4().hex) for n in images),
             cadence=float(cadence),
             sens=sens,
             cadre=self._cadre_pose(cadre, fenetre),
             recette=recette,
             projet=generation.projet,
-            personnage=generation.personnage,
+            personnage=cible,
             pose=pose,
             direction=direction,
             case_largeur=planche.case_largeur,
@@ -507,7 +521,8 @@ class ServiceMontage:
         return bande
 
     def affecter(
-        self, identifiant: str, pose: str | None, direction: str | None = None
+        self, identifiant: str, pose: str | None, direction: str | None = None,
+        *, personnage: str | None = None,
     ) -> Bande:
         """La case du plan de poses que cette bande remplit — ou plus aucune.
 
@@ -517,6 +532,14 @@ class ServiceMontage:
         l'écran qui la déclenchera.
         """
         bande = self.bande(identifiant)
+        cible = bande.personnage if personnage is None else personnage or None
+        if personnage is not None:
+            self._verifier_destination(bande.projet, cible, pose, direction)
+        if cible != bande.personnage and bande.habillage is not None:
+            raise ErreurAtelier("retirez l’habillage de cette animation avant de changer son personnage")
+        # AU15 relit cette destination dans son empreinte de cible : les calques
+        # préparés pour l'ancien porteur passent à revoir, sans perdre leurs PNG.
+        bande.personnage = cible
         bande.pose = pose or None
         bande.direction = direction or None
         self._sauver(bande)
@@ -689,6 +712,39 @@ class ServiceMontage:
             },
         }
 
+    def prelevement_de_frame(
+        self, identifiant: str, rang: int, *,
+        prises: Sequence[Prise] | None = None, recette: Recette | None = None,
+    ) -> dict[str, Any]:
+        """Prélever le rendu courant sans enregistrer ni modifier la bande.
+
+        La même chaîne que l'aperçu applique recettes individuelles, placement
+        et Main finale. L'import doit conserver ces pixels, sans seconde recette.
+        """
+        bande = self.bande(identifiant)
+        courante = replace(
+            bande, prises=list(prises) if prises is not None else bande.prises,
+            recette=recette if recette is not None else bande.recette,
+        )
+        if not 0 <= rang < len(courante.prises):
+            raise ErreurAtelier("cette frame n'existe pas dans le montage courant")
+        planche = self._planche_de(courante)
+        pixels = en_rgba(planche.octets)
+        gauche = rang * planche.case_largeur
+        prise = courante.prises[rang]
+        return {
+            "octets": en_png(pixels[:, gauche:gauche + planche.case_largeur]),
+            "nom": f"{bande.nom} — frame {rang + 1} retouchée",
+            "projet": bande.projet,
+            "filiation": {
+                "bande": identifiant, "occurrence": prise.identifiant,
+                "clip": prise.clip or bande.clip, "image": prise.numero,
+                "personnage": bande.personnage, "pose": bande.pose,
+                "direction": bande.direction, "prise": prise.en_json(),
+                "recette": courante.recette.en_json(), "rendu_preleve": True,
+            },
+        }
+
     def planche(self, identifiant: str) -> bytes:
         """La planche de sprites de cette bande, **recalculée si le cache a sauté**.
 
@@ -739,6 +795,7 @@ class ServiceMontage:
             bande.recette,
             fenetre,
             poussees=[(p.dx, p.dy) for p in bande.prises],
+            mains_apres_placement=[p.main_apres_placement for p in bande.prises],
             recettes=recettes,
             individuelles=individuelles,
         )
@@ -1021,6 +1078,53 @@ class ServiceMontage:
             identifiant, cadre=self._cadre_pose(bande.cadre, fenetre)
         )
 
+    def identifier_prises(self, identifiant: str) -> Bande:
+        """Attribuer les identités avant de viser une occurrence avec un calque.
+
+        Une bande historique reste inchangée tant qu'aucun geste ne les demande.
+        Le rang ne sert qu'à cette attribution initiale, jamais à retrouver une
+        cible après réordre. Aucune planche ni recette n'est recalculée.
+        """
+        bande = self.bande(identifiant)
+        if all(p.identifiant for p in (*bande.prises, *bande.chutier)):
+            return bande
+        for nom in ("prises", "chutier"):
+            setattr(bande, nom, tuple(
+                p if p.identifiant else replace(p, identifiant=uuid.uuid5(
+                    uuid.NAMESPACE_URL, f"asset-kitchen:{identifiant}:{nom}:{rang}"
+                ).hex)
+                for rang, p in enumerate(getattr(bande, nom))
+            ))
+        self._sauver(bande)
+        return bande
+
+    def _verifier_destination(
+        self, projet: str | None, personnage: str | None,
+        pose: str | None, direction: str | None,
+    ) -> None:
+        """Le classement se valide avant toute écriture ; le clip reste la source.
+
+        La destination explicite d'AU4 ne peut pas emprunter le sujet d'un autre
+        jeu, ni inventer une case. Les anciens clients sans destination gardent
+        leur lecture historique, y compris les cases devenues orphelines.
+        """
+        if not personnage:
+            if pose or direction:
+                raise ErreurAtelier("choisissez un personnage avant le mouvement et la direction")
+            return
+        if not projet:
+            raise ErreurAtelier("ce clip doit appartenir à un jeu pour lui attribuer un personnage")
+        sujet = self._production.personnage(projet, personnage)
+        if not pose:
+            if direction:
+                raise ErreurAtelier("choisissez un mouvement avant la direction")
+            return
+        mouvement = next((p for p in sujet.tenues(self._production.plan_de(projet, sujet)) if p.identifiant == pose), None)
+        if mouvement is None:
+            raise ErreurAtelier("ce mouvement n’appartient pas au personnage choisi")
+        if direction and direction not in {d.identifiant for d in sujet.directions_tenues(mouvement, self._production.directions_du_jeu(projet))}:
+            raise ErreurAtelier("cette direction n’appartient pas à ce mouvement du personnage")
+
     def corriger(
         self,
         identifiant: str,
@@ -1048,6 +1152,20 @@ class ServiceMontage:
             raise ErreurAtelier(f"sens inconnu : {sens}")
         if cadence is not None and cadence <= 0:
             raise ErreurAtelier("une vitesse se compte en images par seconde")
+
+        # Une interface ancienne peut omettre l'identité. Cela produit de
+        # nouvelles occurrences, donc des cibles à revoir, plutôt que de
+        # déplacer silencieusement la peinture de l'ancienne frame.
+        if any(p.identifiant for p in (*bande.prises, *bande.chutier)):
+            if prises is not None:
+                prises = [p if p.identifiant else replace(p, identifiant=uuid.uuid4().hex) for p in prises]
+            if chutier is not None:
+                chutier = [p if p.identifiant else replace(p, identifiant=uuid.uuid4().hex) for p in chutier]
+        nouvelles = (*(prises if prises is not None else bande.prises),
+                     *(chutier if chutier is not None else bande.chutier))
+        ids = [p.identifiant for p in nouvelles if p.identifiant]
+        if len(set(ids)) != len(ids):
+            raise ErreurAtelier("chaque copie de frame doit avoir son propre identifiant")
 
         if prises is not None:
             # Le contrôle se fait **avant** d'écrire quoi que ce soit : une

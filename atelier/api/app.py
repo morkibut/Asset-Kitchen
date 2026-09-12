@@ -20,6 +20,12 @@ from atelier.api.bibliotheque import routeur as routeur_bibliotheque
 from atelier.api.gestes import routeur as routeur_gestes
 from atelier.api.production import routeur as routeur_production
 from atelier.api.sortie import routeur as routeur_sortie
+from atelier.api.livraison import routeur as routeur_livraison
+from atelier.api.travaux import routeur as routeur_travaux
+from atelier.api.file_locale import routeur as routeur_file_locale
+from atelier.services.file_locale import FileLocaleRefusee
+from atelier.api.calques_cibles import routeur as routeur_calques_cibles
+from atelier.api.travaux_equipement import routeur as routeur_travaux_equipement
 from atelier.api.routes import routeur
 from atelier.api.univers import routeur as routeur_univers
 from mcp.server.transport_security import TransportSecuritySettings
@@ -61,6 +67,8 @@ from atelier.services.production import (
 )
 from atelier.services.export import ExportRefuse
 from atelier.services.sortie import SortieRefusee
+from atelier.services.livraison import LivraisonRefusee
+from atelier.domaine.travail import TravailRefuse
 from atelier.services.univers import (
     CarteInconnue,
     CarteRefusee,
@@ -108,6 +116,9 @@ CODES = {
     # sortir » et « ce dossier existe déjà » sont des refus du produit, pas des
     # fautes d'appel — l'écran les affiche tels quels, en français.
     SortieRefusee: 409,
+    LivraisonRefusee: 409,
+    TravailRefuse: 409,
+    FileLocaleRefusee: 409,
     PersonnageInconnu: 404,
     PoseInconnue: 404,
     ProductionRefusee: 409,
@@ -171,7 +182,10 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
         # ligne, l'agent reçoit une erreur de transport à la première connexion,
         # et rien dans les journaux ne dit pourquoi.
         async with application_mcp.router.lifespan_context(application_mcp):
-            yield
+            try:
+                yield
+            finally:
+                await application.state.atelier.file_locale.fermer()
 
     application = FastAPI(
         title="Asset Kitchen",
@@ -209,6 +223,11 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # les quatre exports d'avant ne posaient pas — *qu'est-ce qui va être
     # écrit, et qu'est-ce qui a changé depuis la dernière fois ?*
     application.include_router(routeur_sortie, prefix="/api")
+    application.include_router(routeur_livraison, prefix="/api")
+    application.include_router(routeur_travaux, prefix="/api")
+    application.include_router(routeur_file_locale, prefix="/api")
+    application.include_router(routeur_calques_cibles, prefix="/api")
+    application.include_router(routeur_travaux_equipement, prefix="/api")
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

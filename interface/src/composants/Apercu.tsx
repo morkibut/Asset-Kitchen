@@ -158,12 +158,10 @@ export function BandeQuiTourne({
   }
 
   const rang = rangDeLaBande(pas, compte, bande.sens)
-  // **Au plus proche voisin, et à facteur entier** : un sprite lissé n'est plus
-  // un sprite, et un facteur fractionnaire déforme ses pixels carrés.
-  const facteur = Math.max(
-    1,
-    Math.floor(Math.min(cote / bande.case_hauteur, cote / bande.case_largeur)),
-  )
+    // Agrandir par un entier ; réduire si nécessaire pour montrer la frame
+    // entière. Le cadre commun conserve le centre de toute l'animation.
+    const ajuste = Math.min((cote - 2) / bande.case_hauteur, (cote - 2) / bande.case_largeur)
+    const facteur = ajuste < 1 ? ajuste : Math.floor(ajuste)
   return (
     <span
       data-bande-qui-tourne={bande.identifiant}

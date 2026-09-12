@@ -1175,6 +1175,18 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "reason": etat.raison,
         }
 
+    from atelier.mcp.livraison import installer_outils_livraison
+    installer_outils_livraison(serveur, atelier, _refus_lisible)
+    from atelier.mcp.objectifs import installer_outils_objectifs
+    installer_outils_objectifs(serveur, atelier, _refus_lisible, _projet_ouvert, _personnage)
+    from atelier.mcp.travaux import installer_outils_travaux
+    installer_outils_travaux(serveur, atelier, _refus_lisible)
+    from atelier.mcp.file_locale import installer_outils_file_locale
+    installer_outils_file_locale(serveur, atelier, _refus_lisible)
+    from atelier.mcp.calques_cibles import installer_calques_cibles
+    installer_calques_cibles(serveur, atelier, _refus_lisible)
+    from atelier.mcp.travaux_equipement import installer_travaux_equipement
+    installer_travaux_equipement(serveur, atelier, _refus_lisible)
     return serveur
 
 

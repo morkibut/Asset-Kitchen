@@ -41,6 +41,8 @@ import {
   type Montage,
   type Mouvement,
   type PropositionDeRythme,
+  type Prise,
+  type Personnage,
 } from "../api"
 import { remonterLaBande } from "./AtelierDeBande"
 import { Bouton, Curseur, Libelle, Raison, Segments } from "./pieces"
@@ -62,6 +64,8 @@ export function EcranMontage({
   reprise,
   onFermer,
   onErreur,
+  personnages,
+  onBande,
 }: {
   clip: string
   /** **On remonte une animation déjà gardée** (V3.03.3), au lieu d'en tailler
@@ -85,6 +89,8 @@ export function EcranMontage({
   }
   onFermer: () => void
   onErreur: (raison: string) => void
+  personnages?: Personnage[]
+  onBande?: (identifiant: string) => void
 }) {
   const [montage, setMontage] = useState<Montage | null>(null)
   const [refus, setRefus] = useState<string | null>(null)
@@ -97,7 +103,23 @@ export function EcranMontage({
   /** Les images retenues, **dans l'ordre où elles se jouent**. Rien n'oblige à
    *  ce qu'elles soient régulièrement espacées : c'est très exactement ce que
    *  cet écran apporte au produit. */
-  const [retenues, setRetenues] = useState<number[]>([])
+  const [occurrences, setOccurrences] = useState<Prise[]>([])
+  const retenues = occurrences.map((prise) => prise.numero)
+  const origine = useRef<Bande | null>(null)
+  const ordreManuel = useRef(false)
+  const setRetenues = useCallback((suivantes: number[] | ((avant: number[]) => number[])) => {
+    setOccurrences((avant) => {
+      const numeros = typeof suivantes === "function" ? suivantes(avant.map((prise) => prise.numero)) : suivantes
+      const reserve = [...avant, ...(origine.current?.prises ?? []), ...(origine.current?.chutier ?? [])]
+      const utilisees = new Set<string>()
+      return numeros.map((numero) => {
+        const trouvee = reserve.find((prise) => prise.numero === numero && (!prise.clip || prise.clip === clip) && !utilisees.has(prise.identifiant!))
+        const prise = trouvee ?? { numero, clip: "", dx: 0, dy: 0, identifiant: crypto.randomUUID() }
+        utilisees.add(prise.identifiant!)
+        return prise
+      })
+    })
+  }, [clip])
   const [nom, setNom] = useState("")
   const [cadence, setCadence] = useState(8)
   const [sens, setSens] = useState<"boucle" | "aller-retour">("boucle")
@@ -117,6 +139,7 @@ export function EcranMontage({
    *  gardée sans y toucher n'a aucun écart à afficher. */
   const [pose, setPose] = useState<string | null>(null)
   const [direction, setDirection] = useState<string | null>(null)
+  const [personnage, setPersonnage] = useState<string | null>(null)
 
   // ── Ce que le serveur répond ──────────────────────────────────────────────
   // **La vidéo n'est pas montrée d'emblée**, et c'est un arbitrage : ce qu'on
@@ -127,6 +150,7 @@ export function EcranMontage({
   const [enVideo, setEnVideo] = useState(false)
   const [bandes, setBandes] = useState<Bande[]>([])
   const [mouvements, setMouvements] = useState<Mouvement[]>([])
+  const [sujets, setSujets] = useState<Personnage[]>([])
   const [reprend, setReprend] = useState(false)
 
   // ── L'état de l'écran ─────────────────────────────────────────────────────
@@ -188,18 +212,24 @@ export function EcranMontage({
         setBandes(recu.bandes)
         setPose(recu.clip.pose)
         setDirection(recu.clip.direction)
+        setPersonnage(recu.clip.personnage)
         // **On remonte une animation gardée** (V3.03.3) : ce qui s'ouvre est
         // *son* découpage et *sa* vitesse, pas une proposition. Poser une
         // proposition par-dessus reviendrait à effacer le travail au moment
         // même où l'on vient le reprendre.
         const remonte = laReprise.current
         if (remonte) {
+          origine.current = { ...remonte.bande, prises: remonte.bande.prises.map((prise) => ({ ...prise, identifiant: prise.identifiant || crypto.randomUUID() })), chutier: remonte.bande.chutier.map((prise) => ({ ...prise, identifiant: prise.identifiant || crypto.randomUUID() })) }
+          ordreManuel.current = true
           setRetenues(
             remonte.bande.prises
               .filter((prise) => !prise.clip || prise.clip === clip)
               .map((prise) => prise.numero),
           )
           setNom(remonte.bande.nom)
+          setPersonnage(remonte.bande.personnage)
+          setPose(remonte.bande.pose)
+          setDirection(remonte.bande.direction)
           setCadence(remonte.bande.cadence)
           setSens(remonte.bande.sens)
           setCadre(remonte.bande.cadre.choix as "clip" | "bande" | "main")
@@ -249,6 +279,13 @@ export function EcranMontage({
     if (nomme?.cadence) setCadence(nomme.cadence)
   }, [mouvements, montage?.clip.mouvement])
 
+  useEffect(() => {
+    let vivant = true
+    if (personnages) { setSujets(personnages); return }
+    api.production().then((production) => { if (vivant) setSujets(production.personnages) }).catch(() => {})
+    return () => { vivant = false }
+  }, [personnages])
+
   // ── Le métronome ──────────────────────────────────────────────────────────
   //
   // **Un seul, et il commande les deux boucles.** Deux minuteurs partiraient
@@ -283,7 +320,7 @@ export function EcranMontage({
     setRetenues((deja) =>
       deja.includes(numero)
         ? deja.filter((n) => n !== numero)
-        : reprise
+        : reprise || ordreManuel.current
           ? [...deja, numero]
           : [...deja, numero].sort((a, b) => a - b),
     )
@@ -363,6 +400,7 @@ export function EcranMontage({
             : { choix: cadre },
         pose,
         direction,
+        personnage,
       })
       setBandes((deja) => [...deja, bande])
       // Le prix par bande vient de baisser : on redemande ce qui le porte
@@ -386,18 +424,23 @@ export function EcranMontage({
   const reprendre = async () => {
     if (!reprise || retenues.length === 0) return
     setRefus(null)
+    let montageEnregistre = false
     try {
-      const remonte = remonterLaBande(reprise.bande, clip, retenues)
+      const remonte = remonterLaBande(origine.current ?? reprise.bande, clip, retenues, occurrences.map((prise) => prise.identifiant))
       await api.corrigerLaBande(reprise.bande.identifiant, {
         prises: remonte.prises,
         chutier: remonte.chutier,
         cadence,
         sens,
       })
+      montageEnregistre = true
+      if (personnage !== reprise.bande.personnage || pose !== reprise.bande.pose || direction !== reprise.bande.direction)
+        await api.affecterLaBande(reprise.bande.identifiant, pose, direction, personnage)
       reprise.onRepris()
     } catch (erreur) {
       setRefus(
-        erreur instanceof Error ? erreur.message : "l'animation ne se reprend pas",
+        (montageEnregistre ? "Le montage est enregistré, mais le classement n’a pas changé. " : "") +
+        (erreur instanceof Error ? erreur.message : "l'animation ne se reprend pas"),
       )
     }
   }
@@ -468,6 +511,9 @@ export function EcranMontage({
   }
 
   const numero = retenues[rang] ?? retenues[0] ?? 0
+  const sujet = sujets.find((un) => un.identifiant === personnage)
+  const poses = sujet?.cases ?? []
+  const directions = poses.find((une) => une.pose === pose)?.directions ?? []
 
   return (
     <div
@@ -615,14 +661,20 @@ export function EcranMontage({
         </p>
 
         <Retenues
+          clip={clip}
+          occurrences={occurrences}
           retenues={retenues}
           rang={rang}
-          onRetirer={basculer}
+          onRetirer={(index) => setOccurrences((avant) => avant.filter((_, place) => place !== index))}
+          onDeplacer={(depart, arrivee) => {
+            ordreManuel.current = true
+            setOccurrences((avant) => { const apres = [...avant]; const [prise] = apres.splice(depart, 1); apres.splice(arrivee, 0, prise); return apres })
+          }}
         />
         <p className="mesure max-w-[74ch] text-[10px] leading-4 text-encre-4">
           C'est <b className="text-encre-3">exactement</b> ce qui sera monté, dans
           cet ordre. Un clic sur une vignette la retire ; un clic sur la pellicule
-          en ajoute une.{" "}
+          en ajoute une. Glissez une vignette pour changer l’ordre, ou utilisez Alt + flèche gauche / droite sur celle-ci.{" "}
           <b className="text-encre-3">
             Rien n'oblige à ce qu'elles soient régulièrement espacées
           </b>{" "}
@@ -693,6 +745,38 @@ export function EcranMontage({
             )}
           </>
         )}
+
+        <fieldset className="flex flex-col gap-[8px] border-t border-trait pt-[14px]">
+          <legend className="text-[13px] text-encre-2">Classement de l’animation</legend>
+          <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Personnage
+            <select aria-label="Personnage de l’animation" value={personnage ?? ""}
+              onChange={(event) => { setPersonnage(event.target.value || null); setPose(null); setDirection(null) }}
+              className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre">
+              <option value="">Aucun · brouillon libre</option>
+              {personnage && !sujet && <option value={personnage}>{personnage}</option>}
+              {sujets.map((un) => <option key={un.identifiant} value={un.identifiant}>{un.nom}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Mouvement / pose
+            <select aria-label="Mouvement de l’animation" value={pose ?? ""} disabled={!personnage}
+              onChange={(event) => { setPose(event.target.value || null); setDirection(null) }}
+              className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre disabled:opacity-50">
+              <option value="">À classer</option>
+              {pose && !poses.some((une) => une.pose === pose) && <option value={pose}>{pose} · ancien classement</option>}
+              {poses.map((une) => <option key={une.pose} value={une.pose}>{sujet?.plan.find((p) => p.identifiant === une.pose)?.nom || une.pose}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Direction
+            <select aria-label="Direction de l’animation" value={direction ?? ""} disabled={!pose || directions.length === 0}
+              onChange={(event) => setDirection(event.target.value || null)}
+              className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre disabled:opacity-50">
+              <option value="">{directions.length ? "Sans direction" : "Aucune direction prévue"}</option>
+              {direction && !directions.some((une) => une.identifiant === direction) && <option value={direction}>{direction} · ancien classement</option>}
+              {directions.map((une) => <option key={une.identifiant} value={une.identifiant}>{une.nom}</option>)}
+            </select>
+          </label>
+          <p className="text-[11px] text-encre-3">Le nom reste libre. Ce classement indique où retrouver l’animation ; son clip source reste conservé.</p>
+        </fieldset>
 
         <div className="mt-2 border-t border-trait pt-3">
           <Libelle aide="bande.cadre">le cadre — la fenêtre commune</Libelle>
@@ -820,6 +904,7 @@ export function EcranMontage({
                   >
                     {sort === bande.identifiant ? "…" : "Sortir ›"}
                   </button>
+                  {onBande && <button type="button" aria-label={`Retoucher l’animation ${bande.nom}`} onClick={() => onBande(bande.identifiant)} className="mesure text-[11px] text-encre-2 hover:text-signal">Retoucher ›</button>}
                   <button
                     type="button"
                     onClick={() => void oublier(bande.identifiant)}
@@ -1253,14 +1338,21 @@ function Indice({
  *  (V3.03) : il n'a plus la planche sous la main. Le liseré dit quelle image
  *  passe en ce moment. */
 function Retenues({
+  clip,
+  occurrences,
   retenues,
   rang,
   onRetirer,
+  onDeplacer,
 }: {
+  clip: string
+  occurrences: Prise[]
   retenues: number[]
   rang: number
   onRetirer: (numero: number) => void
+  onDeplacer: (depart: number, arrivee: number) => void
 }) {
+  const glissee = useRef<number | null>(null)
   if (retenues.length === 0) {
     return (
       <p className="mesure rounded-[2px] border border-dashed border-trait p-3 text-[10px] text-encre-4">
@@ -1270,12 +1362,22 @@ function Retenues({
     )
   }
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div aria-label="Ordre des frames retenues" className="flex flex-wrap gap-[8px]">
       {retenues.map((numero, place) => (
         <button
-          key={numero}
+          key={occurrences[place]?.identifiant || `${numero}-${place}`}
           type="button"
-          onClick={() => onRetirer(numero)}
+          onClick={() => onRetirer(place)}
+          draggable
+          onDragStart={(event) => { glissee.current = place; event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", String(place)) }}
+          onDragOver={(event) => { if (glissee.current !== null) event.preventDefault() }}
+          onDrop={(event) => { event.preventDefault(); if (glissee.current !== null) onDeplacer(glissee.current, place); glissee.current = null }}
+          onDragEnd={() => { glissee.current = null }}
+          onKeyDown={(event) => {
+            if (!event.altKey || !["ArrowLeft", "ArrowRight"].includes(event.key)) return
+            event.preventDefault(); event.stopPropagation()
+            onDeplacer(place, Math.max(0, Math.min(retenues.length - 1, place + (event.key === "ArrowLeft" ? -1 : 1))))
+          }}
           title={`Image ${numero} — un clic la retire`}
           aria-label={`Retirer l'image ${numero}`}
           className="rounded-[2px] border p-0.5"
@@ -1285,7 +1387,8 @@ function Retenues({
             background: "var(--color-carte)",
           }}
         >
-          <span className="mesure block px-2 py-4 text-[10px] text-encre-4">
+          <img src={api.imageDuClip(clip, numero)} alt="" draggable={false} className="h-[54px] w-[54px] object-contain" />
+          <span className="mesure block text-[11px] text-encre-4">
             {numero}
           </span>
         </button>

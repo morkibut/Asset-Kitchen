@@ -109,6 +109,19 @@ class ServiceSuperposition:
         tout ce que le produit devine.
         """
         haut = self._exiger(dessus)
+        # Rouvrir un résultat reprend sa fabrication exacte. Le PNG extrait
+        # n'est pas une nouvelle image équipée : les deux sources et le masque
+        # sont encore disponibles dans sa fiche non destructive.
+        if dessous is None and haut.superposition is not None:
+            pose = haut.superposition
+            source = self._exiger(pose.dessus)
+            bas = self._exiger(pose.dessous)
+            return {
+                "dessus": source.en_json(), "dessous": bas.en_json(),
+                "pose": pose.en_json(), "repris": None,
+                "arrivee_possible": self._arrivee_possible(source),
+                **self._etat_du_detourage(source, bas),
+            }
         nom_bas = dessous or (
             haut.superposition.dessous if haut.superposition is not None else ""
         )

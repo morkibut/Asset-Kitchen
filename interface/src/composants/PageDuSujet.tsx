@@ -58,6 +58,7 @@ import {
   type EmplacementCorps,
   type Univers,
   type VestiaireDuJeu,
+  type Generation,
 } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
 import { vignetteAsset } from "./Apercu"
@@ -67,17 +68,22 @@ import { ImagesDuSujet } from "./ImagesDuSujet"
 import { AnimationsDuSujet } from "./AnimationsDuSujet"
 import { EssaiDuSujet } from "./EssaiDuSujet"
 import { VestiaireDuSujet } from "./VestiaireDuSujet"
+import { ObjectifDuSujet } from "./ObjectifDuSujet"
+import { SourcesDuSujet } from "./SourcesDuSujet"
 
 /** Les quatre onglets, dans l'ordre de la planche. **Les quatre sont
  *  construits depuis `B12`** — le dernier, *L'essai*, était nommé bien avant
  *  d'exister, pour qu'un onglet ajouté plus tard ne déplace pas les trois
  *  autres et que la page ne change pas de forme à chaque tranche. */
-export type Onglet = "fiche" | "images" | "animations" | "essai"
+export type Onglet = "fiche" | "images" | "animations" | "sources" | "equipement" | "objectif" | "essai"
 
 const ONGLETS: readonly { clef: Onglet; nom: string }[] = [
   { clef: "fiche", nom: "Sa fiche" },
   { clef: "images", nom: "Ses images" },
   { clef: "animations", nom: "Ses animations" },
+  { clef: "sources", nom: "Sources & clips" },
+  { clef: "equipement", nom: "Équipements" },
+  { clef: "objectif", nom: "Objectif & règles" },
   { clef: "essai", nom: "L'essai" },
 ]
 
@@ -194,6 +200,7 @@ function SaFiche({
   dossierJeu,
   vestiaire,
   onPiece,
+  onEmploiEquipement,
   onCreerPiece,
   onRetirerLEmploi,
   onErreur,
@@ -210,6 +217,7 @@ function SaFiche({
   dossierJeu: string
   vestiaire: VestiaireDuJeu | null
   onPiece: (piece: string) => void
+  onEmploiEquipement?: (piece: string, emploi: string) => void
   onCreerPiece: (nom: string) => void
   onRetirerLEmploi: (piece: string, emploi: string) => void
   onErreur: (erreur: unknown, defaut: string) => void
@@ -472,6 +480,7 @@ function SaFiche({
           personnage={personnage}
           vestiaire={vestiaire}
           onPiece={onPiece}
+          onEmploi={onEmploiEquipement}
           onCreerPiece={onCreerPiece}
           onRetirerLEmploi={onRetirerLEmploi}
         />
@@ -689,6 +698,7 @@ export function PageDuSujet(proprietes: {
   vestiaire: VestiaireDuJeu | null
   /** Ouvrir la page d'une pièce. */
   onPiece: (piece: string) => void
+  onEmploiEquipement?: (piece: string, emploi: string) => void
   /** Nommer une pièce **que ce sujet porte** — elle lui est attribuée
    *  d'emblée, en un seul aller-retour. */
   onCreerPiece: (nom: string) => void
@@ -727,6 +737,8 @@ export function PageDuSujet(proprietes: {
   onColonne?: (identifiant: string | null) => void
   calque?: string | null
   onCalque?: (identifiant: string | null) => void
+  clips?: readonly Generation[]
+  onObjectifChange?: () => void
 }) {
   const { ouvert, plan, barreQuiPaie, onFente } = proprietes
   const [ongletTenuIci, setOngletTenuIci] = useState<Onglet>("fiche")
@@ -884,14 +896,14 @@ export function PageDuSujet(proprietes: {
               {ouvert.nom}
             </h1>
             <p className="text-[13px] text-encre-2">
-              {ouvert.type || "un sujet"} — ces quatre onglets sont le même écran.
+              {ouvert.type || "un sujet"} — images, animations et équipements d’un même asset.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-[14px]">
-          <div role="tablist" aria-label="La page du sujet" className="flex gap-[4px] self-start rounded-8 bg-papier-cote p-[4px]">
-            {ONGLETS.map(({ clef, nom }) => (
+        <div className="flex flex-wrap items-center justify-between gap-[14px]">
+          <div role="tablist" aria-label="La page du sujet" className="flex flex-wrap gap-[4px] self-start rounded-8 bg-papier-cote p-[4px]">
+            {ONGLETS.filter(({ clef }) => clef !== "equipement" || ouvert.equipable).map(({ clef, nom }) => (
               <button
                 key={clef}
                 type="button"
@@ -967,6 +979,7 @@ export function PageDuSujet(proprietes: {
             vestiaire={proprietes.vestiaire}
             onPiece={proprietes.onPiece}
             onCreerPiece={proprietes.onCreerPiece}
+            onEmploiEquipement={proprietes.onEmploiEquipement}
             onRetirerLEmploi={proprietes.onRetirerLEmploi}
             onErreur={echouer}
           />
@@ -1013,11 +1026,14 @@ export function PageDuSujet(proprietes: {
             onAnimations={() => setOnglet("animations")}
           />
         )}
+        {onglet === "sources" && <SourcesDuSujet personnage={ouvert} clips={proprietes.clips ?? []} onMontage={proprietes.onMonterLaBande} onAnimer={(pose, direction) => proprietes.onAnimer(ouvert, pose, direction)} />}
+        {onglet === "equipement" && <div className="defile min-h-0 flex-1 overflow-y-auto pb-[22px]"><VestiaireDuSujet personnage={ouvert} vestiaire={proprietes.vestiaire} onPiece={proprietes.onPiece} onEmploi={proprietes.onEmploiEquipement} onCreerPiece={proprietes.onCreerPiece} onRetirerLEmploi={proprietes.onRetirerLEmploi} /></div>}
+        {onglet === "objectif" && <div className="defile min-h-0 flex-1 overflow-y-auto pb-[22px]"><ObjectifDuSujet personnage={ouvert} projet={ouvert.projet} onChange={proprietes.onObjectifChange} /></div>}
       </div>
 
       {/* Voir l'en-tête : sur *L'essai*, la porte vers la dépense est dans
           l'onglet, et la barre se retire pour qu'il n'y ait qu'un rouille. */}
-      {onglet !== "essai" && barreQuiPaie}
+      {(onglet === "fiche" || onglet === "images" || onglet === "animations") && barreQuiPaie}
     </main>
   )
 }

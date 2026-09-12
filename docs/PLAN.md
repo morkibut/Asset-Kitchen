@@ -2,16 +2,13 @@
 
 > **PRD source** : `docs/PRD.md`. **Ordre actif depuis le 11 septembre 2026** :
 > [atelier unifié](PLAN-atelier-unifie.md), de la demande MCP de l'agent au sprite utilisé dans Godot.
-> Le cadrage, l'architecture et une maquette interactive élargie sont écrits ; **aucune tranche AU
-> n'est encore implémentée**. Étape immédiate : essayer les parcours de la maquette et compléter
-> les outils avant de remplacer les écrans concernés. Le premier développement reste **AU1**,
-> l'export d'une animation existante.
+> **L'auteur a validé toute la maquette interactive le 12 septembre 2026 et demandé son
+> implémentation complète en autonomie.** **AU1 est vérifiée**, y compris dans Godot réel.
+> AU2–AU4 et AU15 sont en intégration ; la file locale AU6 se construit.
+> Les critères de production restent ouverts jusqu'à leur vérification dans le produit.
 > Les retours d'essai et leurs limites sont consignés dans la
 > [couverture du prototype](maquettes-atelier-unifie/couverture.md).
 > Les équipements complets sont obligatoires : AU15–AU17, après AU5.
-> La consolidation autorisée le 12 septembre est éprouvée dans le prototype : reprise,
-> espace compact, bibliothèque, envois, équipements, toile et livraisons simulées.
-> Vidéo et 3D sont aussi éprouvées : de la source aux sprites, avec reprises et réglages.
 > L'amendement RF est remplacé par cet ordre. La V4 reste le socle livré, avec les écarts
 > relevés dans la revue ; ni elle ni RF ne constituent une seconde file d'exécution.
 >
@@ -57,7 +54,7 @@ construisant** dans `docs/status/etat.md`, ses **critères cochés** dans
 | **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **non ouverte** | ci-dessous |
 | **V4** — le carnet | Refonte déjà largement livrée ; sa conformité et ses parcours restent à corriger | **socle conservé, suite réorientée vers AU** ; les cases historiques ne sont pas décochées | `docs/PLAN-carnet.md` ; détail du relevé antérieur dans `docs/archive/etat-carnet-2026-09-10.md` |
 | **V5**, **V6** | Tuiles et son | **différés, cadrage initial en AU13/AU14**, à détailler avant exécution | `docs/PLAN-atelier-unifie.md` |
-| **Atelier unifié** — AU1 à AU17 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **cadrage et prototype écrits ; AU1 à démarrer, 0 tranche implémentée** | `docs/PLAN-atelier-unifie.md` |
+| **Atelier unifié** — AU1 à AU17 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **AU1 vérifiée ; AU2–AU4/AU15 en intégration, AU6 en construction** | `docs/PLAN-atelier-unifie.md` |
 
 **226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 874 essais de
 serveur et 1 168 d'écran** tiennent le dépôt — comptés le 10 septembre 2026, et **aucun ne coûte

@@ -15,9 +15,9 @@
  *  fois. Deux écrans parce que ce sont deux moments — on ne taille pas et on ne
  *  corrige pas avec la même main.
  *
- *  **La grammaire est celle des tables** (E3) : le réglage à gauche, la chose en
- *  grand au milieu, ses voisines à droite. Ici les voisines sont **les images de
- *  l'animation**, et le lecteur est sous elles.
+ *  **Le châssis AU4** garde l'image au centre, le ruban en bas et un sélecteur
+ *  de table fixe au-dessus du panneau de droite. La Main de chaque occurrence
+ *  vient après son placement ; les anciennes recettes restent inchangées.
  *
  *  ## Ce qui n'est pas automatique, et pourquoi
  *
@@ -33,6 +33,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   api,
   type Ancrage,
+  type Asset,
   type AtelierDeBande as AtelierRecu,
   type Bande,
   type CadrePose,
@@ -44,6 +45,10 @@ import {
 import { rangDeLaBande } from "./Apercu"
 import { Curseur, EnTetePanneau, Libelle } from "./pieces"
 import { PANNEAU } from "./Infobulle"
+import { avecPassage, mainDe, OPACITE, useEtatMain, type Table } from "../recette"
+import { useHistoriqueDeBande, type EtatDeBande } from "./historiqueDeBande"
+import { EcranDecoupe } from "./Decoupe"
+import { SourceDeFrame } from "./SourceDeFrame"
 // **Les six postes viennent de la retouche** (`B26`). L'atelier d'une animation
 // montait jusqu'ici les six panneaux de l'ancien châssis ; celui-ci s'en va, et
 // refaire cet écran-là n'était pas dans le périmètre du déménagement. Il gagne
@@ -56,6 +61,10 @@ import {
   ReglagesDuDetourage,
   ReglagesDuNettoyage,
   ReglagesDuRecadrage,
+  ReglagesDeLaMain,
+  ReglagesDuRetournement,
+  SelecteurDeTable,
+  ToileDeLaMain,
   type Poste,
 } from "./Retouche"
 
@@ -189,11 +198,8 @@ export function placesSeparees(recettes: (Recette | null)[]): string[] {
  *  ce qui a changé, et aucune table de cet écran ne touche à la main. Ce
  *  garde-fou est donc **au seul endroit qui pose une recette entière**.
  *
- *  ⚠️ **La table de la main n'arrive qu'en V3.03.4**, et la règle *« la main ne
- *  se pose que sur une image à la fois »* avec elle : aujourd'hui, un écran
- *  n'en pose aucune. Ce qui est tenu ici est le plus étroit et le seul qui soit
- *  atteignable — la route qui écrit une bande accepte déjà une main sur une
- *  prise. */
+ *  La Main finale d'AU4 vit séparément sur la prise. Le garde-fou reste requis
+ *  pour les recettes individuelles historiques, qui pouvaient déjà en porter. */
 const sansToucherALaMain = (rendue: Recette, dOrigine: Recette | null): Recette =>
   ({ ...rendue, main: dOrigine?.main ?? null })
 
@@ -265,19 +271,20 @@ export function remonterLaBande(
   bande: Bande,
   clip: string,
   retenues: number[],
+  occurrences?: (string | undefined)[],
 ): { prises: Prise[]; chutier: Prise[] } {
   const restantes = [...bande.prises]
   const reserve = [...bande.chutier]
-  const chercher = (ou: Prise[], numero: number) => {
+  const chercher = (ou: Prise[], numero: number, identifiant?: string) => {
     const la = ou.findIndex(
-      (prise) => prise.numero === numero && (prise.clip || bande.clip) === clip,
+      (prise) => prise.numero === numero && (prise.clip || bande.clip) === clip && (!identifiant || prise.identifiant === identifiant),
     )
     return la < 0 ? undefined : ou.splice(la, 1)[0]
   }
   const prises = retenues.map(
-    (numero) =>
-      chercher(restantes, numero) ??
-      chercher(reserve, numero) ?? { numero, clip: "", dx: 0, dy: 0 },
+    (numero, index) =>
+      chercher(restantes, numero, occurrences?.[index]) ??
+      chercher(reserve, numero, occurrences?.[index]) ?? { numero, clip: "", dx: 0, dy: 0, ...(occurrences?.[index] ? { identifiant: occurrences[index] } : {}) },
   )
   return { prises, chutier: auChutier(reserve, restantes, bande.clip) }
 }
@@ -368,7 +375,47 @@ export function EcranAtelierDeBande({
    *  ferait 160 px de large : plus petit que ce que l'écran montre déjà. Le
    *  même geste, la même barre, une échelle qui convient à ce qu'on regarde. */
   const [zoom, setZoom] = useState<number | null>(null)
+  const [table, setTable] = useState<Table>("detourage")
+  const [passeArmee, setPasseArmee] = useState<number | null>(null)
+  const [rectangleSource, setRectangleSource] = useState(false)
+  const [decoupe, setDecoupe] = useState<Asset | null>(null)
+  const [preleve, setPreleve] = useState(false)
+  const [messageDecoupe, setMessageDecoupe] = useState("")
+  const etatMain = useEtatMain(univers)
+  const framePeinte = useRef(0)
   const toile = useRef<HTMLDivElement | null>(null)
+  const espace = useRef<HTMLDivElement | null>(null)
+  const [surface, setSurface] = useState({ largeur: 420, hauteur: 420 })
+  const [deplacementVue, setDeplacementVue] = useState(false)
+  const pan = useRef<{ x: number; y: number; gauche: number; haut: number } | null>(null)
+  const restaurer = useCallback((etat: EtatDeBande) => {
+    setJoue(false)
+    setPrises(etat.prises)
+    setChutier(etat.chutier)
+    setRecette(etat.recette)
+    setCadence(etat.cadence)
+    setSens(etat.sens)
+  }, [])
+  const historique = useHistoriqueDeBande(identifiant, recu !== null, { prises, chutier, recette, cadence, sens }, restaurer)
+  useEffect(() => {
+    const element = espace.current
+    if (!element) return
+    const mesurer = () => { if (element.clientWidth && element.clientHeight) setSurface({ largeur: element.clientWidth, hauteur: element.clientHeight }) }
+    const mesure = new ResizeObserver(mesurer)
+    mesure.observe(element)
+    mesurer()
+    return () => mesure.disconnect()
+  }, [recu?.bande.identifiant, auClip])
+  useEffect(() => {
+    const debut = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || (event.target as HTMLElement)?.closest("input, textarea, select, button, [contenteditable=true]")) return
+      event.preventDefault(); setDeplacementVue(true)
+    }
+    const fin = () => { setDeplacementVue(false); pan.current = null }
+    const relache = (event: KeyboardEvent) => { if (event.code === "Space") fin() }
+    window.addEventListener("keydown", debut); window.addEventListener("keyup", relache); window.addEventListener("blur", fin)
+    return () => { window.removeEventListener("keydown", debut); window.removeEventListener("keyup", relache); window.removeEventListener("blur", fin) }
+  }, [])
 
   // **Dire une panne ne doit pas relancer l'aperçu.** L'écran d'accueil passe
   // une fonction neuve à chaque rendu ; la laisser dans les dépendances ferait
@@ -607,7 +654,7 @@ export function EcranAtelierDeBande({
       corrigerLaChoisie((prise) =>
         prise.numero === numero && prise.clip === clip
           ? prise
-          : { ...prise, numero, clip, recette: null },
+          : { ...prise, numero, clip, recette: null, main_apres_placement: null },
       ),
     [corrigerLaChoisie],
   )
@@ -746,7 +793,10 @@ export function EcranAtelierDeBande({
       setJoue(false)
       if (toutes) {
         setRecette((laBande) => sansToucherALaMain(nommee, laBande))
-        setPrises((liste) => liste.map((prise) => ({ ...prise, recette: null })))
+        setPrises((liste) => liste.map((prise) => ({
+          ...prise,
+          recette: prise.recette?.main ? sansToucherALaMain(nommee, prise.recette) : null,
+        })))
         return
       }
       setPrises((liste) =>
@@ -865,7 +915,7 @@ export function EcranAtelierDeBande({
       // `venu` reste celui de l'original : la copie porte la même recette, donc
       // le même écart, et le liseré paraît avec elle plutôt qu'à l'aperçu
       // suivant.
-      ordre.push({ prise: { ...prise }, venu: rang })
+      ordre.push({ prise: { ...prise, identifiant: crypto.randomUUID() }, venu: rang })
     })
     remonterLeRuban(ordre, { choix: neuves })
   }, [choisies, prises, imagesMax, remonterLeRuban])
@@ -974,12 +1024,8 @@ export function EcranAtelierDeBande({
    *  écrits pour ce cas — *on ne grise pas sur une ignorance* —, et ils se
    *  taisent alors sur ce qu'ils ne savent pas au lieu de l'inventer.
    *
-   *  ⚠️ **Quatre champs de `Poste` manquent, et ils manquent exprès** (`B26`) :
-   *  `asset` — donc aucune surface où viser un pixel, ni détourage à promouvoir
-   *  en défaut du projet —, `armee`/`onArmer` pour la même raison, `etatMain`
-   *  parce que la main arrive en V3.03.4, et `ouvrir` parce qu'il n'y a pas de
-   *  barre de places ici mais six postes empilés. Les postes montrent alors ce
-   *  qui est posé plutôt que d'offrir un bouton qui ne ferait rien. */
+   *  Les panneaux sont ceux de l'image. La Main reçoit une recette d'affichage
+   *  indépendante : ses gestes écrivent main_apres_placement sur une seule prise. */
   const poste: Poste | null = reglee
     ? {
         recette: reglee,
@@ -988,6 +1034,10 @@ export function EcranAtelierDeBande({
         regler: poserSurLaSelection,
         poser: poserSurLaSelection,
         mesures: null,
+        ouvrir: setTable,
+        etatMain,
+        armee: passeArmee,
+        onArmer: (passe) => { setJoue(false); setCourante(choisie); setSelection([choisie]); setPasseArmee(passe); setRectangleSource(false) },
       }
     : null
 
@@ -1032,6 +1082,20 @@ export function EcranAtelierDeBande({
       setEnregistre(false)
     }
   }, [recu, prises, chutier, recette, cadence, sens, onChangee, onErreur])
+
+  useEffect(() => {
+    const clavier = (event: KeyboardEvent) => {
+      if (decoupe) return
+      if (!(event.ctrlKey || event.metaKey)) return
+      if ((event.target as HTMLElement)?.closest("input, textarea, select, [contenteditable=true]")) return
+      const touche = event.key.toLowerCase()
+      if (touche === "s") { event.preventDefault(); if (!enregistre && change) void enregistrer() }
+      if (touche === "z") { event.preventDefault(); if (event.shiftKey) historique.refaire(); else historique.defaire() }
+      if (touche === "y") { event.preventDefault(); historique.refaire() }
+    }
+    window.addEventListener("keydown", clavier)
+    return () => window.removeEventListener("keydown", clavier)
+  }, [historique, enregistrer, enregistre, change, decoupe])
 
   // ── Reprendre la fenêtre commune ──────────────────────────────────────────
   //
@@ -1097,18 +1161,23 @@ export function EcranAtelierDeBande({
   const haut = bande.case_hauteur || 64
   // Au plus proche voisin et à facteur entier : un sprite lissé n'est plus un
   // sprite, et un facteur fractionnaire déforme ses pixels carrés.
-  const ajuste = Math.max(1, Math.floor(Math.min(420 / haut, 420 / large)))
+  const ajuste = Math.max(1, Math.floor(Math.min(surface.hauteur / haut, surface.largeur / large)))
   const facteur = zoom ?? ajuste
+
+  if (decoupe) return <div className="flex h-full min-h-0 flex-col">
+    <div className="flex shrink-0 items-center justify-between border-b border-trait p-[8px] text-[12px]"><span>Découpe de {decoupe.label}</span><button type="button" onClick={() => setDecoupe(null)}>Revenir à l’animation</button></div>
+    <EcranDecoupe sujet={{ famille: "planche", planche: decoupe, onDecoupe: (nees) => { setMessageDecoupe(`${nees.length} image${nees.length > 1 ? "s" : ""} ajoutée${nees.length > 1 ? "s" : ""} à la bibliothèque.`); setDecoupe(null); onChangee?.() } }} onFermer={() => setDecoupe(null)} onFente={(fente) => { if (fente?.ton === "echec") onErreur(String(fente.texte)) }} />
+  </div>
 
   return (
     <div
       data-atelier-de-bande={bande.identifiant}
-      className="grid h-full min-h-0 grid-cols-[340px_minmax(0,1fr)_280px]"
+      className="atelier-animation-unifie grid h-full min-h-0 grid-cols-[minmax(0,1fr)_380px] grid-rows-[minmax(0,1fr)_auto]"
     >
       {/* ── Les tables de la frame choisie ───────────────────────────────── */}
       <aside
         {...PANNEAU}
-        className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-r border-trait bg-papier-cote p-3"
+        className="col-start-2 row-span-2 flex min-h-0 flex-col gap-[14px] border-l border-trait bg-papier-cote p-[14px]"
       >
         <div className="flex items-baseline gap-2">
           <EnTetePanneau>{bande.nom}</EnTetePanneau>
@@ -1121,15 +1190,46 @@ export function EcranAtelierDeBande({
           </button>
         </div>
 
+        <SelecteurDeTable table={table} onTable={(suivante) => { setTable(suivante); setPasseArmee(null); setRectangleSource(false); if (suivante === "main") setSelection([choisie]) }} />
+        <div className="flex flex-wrap gap-[8px] text-[12px]">
+          <button type="button" disabled={preleve} onClick={async () => {
+            setJoue(false); setCourante(rang); setPreleve(true)
+            try { const recu = await api.preleverFrameDeBande(bande.identifiant, rang, { prises, recette: recette! }); const image = recu.asset ?? recu.doublon; if (image) setDecoupe(image) }
+            catch (e) { onErreur((e as Error).message) } finally { setPreleve(false) }
+          }} className="rounded-7 border border-trait px-[8px] py-[4px]">{preleve ? "Préparation…" : "Découper cette frame"}</button>
+          {table === "recadrage" && <button type="button" onClick={() => { setJoue(false); setCourante(choisie); setSelection([choisie]); setRectangleSource(true); setPasseArmee(null) }} className="rounded-7 border border-trait px-[8px] py-[4px]">Tracer le recadrage sur la source</button>}
+        </div>
+        {messageDecoupe && <p role="status" className="text-[12px] text-encre-3">{messageDecoupe}</p>}
+        <div className="flex flex-wrap items-center gap-[8px]">
+          <button type="button" onClick={() => void enregistrer()} disabled={!change || enregistre}
+            className="h-[34px] rounded-7 border border-signal bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">
+            {enregistre ? "on enregistre…" : "Enregistrer ›"}
+          </button>
+          <button type="button" onClick={historique.defaire} disabled={!historique.peutDefaire} title="Ctrl + Z"
+            className="h-[34px] rounded-7 border border-trait px-[8px] text-[12px] text-encre-2 disabled:opacity-50">Défaire</button>
+          <button type="button" onClick={historique.refaire} disabled={!historique.peutRefaire} title="Ctrl + Maj + Z"
+            className="h-[34px] rounded-7 border border-trait px-[8px] text-[12px] text-encre-2 disabled:opacity-50">Refaire</button>
+        </div>
+        <label className="flex items-center gap-[8px] text-[12px] text-encre-3">Appliquer à
+          <select aria-label="Portée des réglages" value={table === "main" ? "frame" : toutes ? "bande" : plusieurs ? "selection" : "frame"}
+            disabled={table === "main"} onChange={(event) => event.target.value === "bande" ? choisirToutes() : event.target.value === "frame" ? nEnChoisirQuUne() : undefined}
+            className="h-[30px] min-w-0 flex-1 rounded-7 border border-trait bg-carte px-[8px] text-encre">
+            <option value="frame">Frame {choisie + 1}</option>
+            <option value="selection" disabled={!plusieurs}>Sélection ({choisies.length})</option>
+            <option value="bande">Animation entière ({prises.length})</option>
+          </select>
+        </label>
+        <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
+
         <p className="mesure text-[10px] leading-4 text-encre-3">
           {compte} image{compte > 1 ? "s" : ""}, {cadence} par seconde —{" "}
-          {bande.secondes} s par tour.{" "}
+          {(Math.max(1, sens === "aller-retour" && compte > 1 ? compte * 2 - 2 : compte) / cadence).toFixed(2)} s par tour.{" "}
           {/* **Ce que règlent les tables, en une phrase et à chaque fois.** Trois
               portées possibles — une image, un lot, l'animation entière — et
               rien d'autre à l'écran ne les distingue : la même colonne, les
               mêmes curseurs. Sans cette phrase, un réglage posé sur douze images
               ressemble trait pour trait à un réglage posé sur une. */}
-          {plusieurs ? (
+          {table === "main" ? <span>La Main corrige une seule frame à la fois.</span> : plusieurs ? (
             toutes ? (
               <>
                 Les <b className="text-encre-2">{compte} images</b> sont
@@ -1165,6 +1265,7 @@ export function EcranAtelierDeBande({
         />
 
         <ReglagesDeLaFrame
+          table={table}
           poste={poste}
           sienne={laFrameAAuMine(choisie)}
           ancre={choisie + 1}
@@ -1175,6 +1276,20 @@ export function EcranAtelierDeBande({
           onReprendre={reprendreLaRecetteDeLaBande}
         />
 
+        {table === "main" && reglee && <div className="flex flex-col gap-[14px]">
+          <p className="text-[12px] leading-relaxed text-encre-3">Le pinceau agit uniquement sur la frame touchée. La lecture s’arrête au début du trait. Chaque frame garde ses propres calques et son masque.</p>
+          <ReglagesDeLaMain {...poste!} etatMain={etatMain} recette={{ ...reglee, main: prises[choisie]?.main_apres_placement ?? null }}
+            poser={(suivante) => { setJoue(false); setPrises((liste) => liste.map((prise, index) => index === choisie ? { ...prise, main_apres_placement: suivante.main } : prise)) }}
+            regler={(suivante) => { setJoue(false); setPrises((liste) => liste.map((prise, index) => index === choisie ? { ...prise, main_apres_placement: suivante.main } : prise)) }} />
+        </div>}
+        {table === "retournement" && poste && <ReglagesDuRetournement {...poste} />}
+
+        <details className="border-t border-trait pt-[14px]">
+          <summary className="cursor-pointer text-[13px] text-encre-2">Position, source et pelure d’oignon</summary>
+          <CorrectionDeLImage prise={prises[choisie]} clipDeLaBande={bande.clip} imagesParClip={recu.images_par_clip}
+            voisins={recu.clips_voisins} melangee={bande.melangee} pelure={pelure} onPelure={setPelure} onRemplacer={remplacer} onRemettreDroit={remettreDroit} />
+        </details>
+
         {change && (
           <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
             <p className="mesure text-[10px] leading-4 text-signal">
@@ -1182,14 +1297,6 @@ export function EcranAtelierDeBande({
               pas enregistré
             </p>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => void enregistrer()}
-                disabled={enregistre}
-                className="mesure border border-signal px-2 py-1 text-[10px] text-signal hover:bg-signal hover:text-encre-sur-signal disabled:opacity-50"
-              >
-                {enregistre ? "on enregistre…" : "Enregistrer ›"}
-              </button>
               <button
                 type="button"
                 onClick={annuler}
@@ -1200,6 +1307,7 @@ export function EcranAtelierDeBande({
             </div>
           </div>
         )}
+        </div>
       </aside>
 
       {/* ── La frame en grand, avec le zoom des tables ─────────────────────
@@ -1221,7 +1329,10 @@ export function EcranAtelierDeBande({
           onFermer={() => setAuClip(false)}
         />
       ) : (
-      <div className="flex min-h-0 flex-col items-center justify-center gap-3 p-4">
+      <div className="col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col gap-[14px] overflow-hidden p-[14px]">
+        {(passeArmee !== null || rectangleSource) && reglee && prises[choisie] ? <SourceDeFrame
+          source={api.imageDuClip(prises[choisie].clip || bande.clip, prises[choisie].numero)} recette={reglee} passe={passeArmee} rectangle={rectangleSource}
+          onRecette={(suite) => corrigerLaChoisie((prise) => ({ ...prise, recette: suite }))} onFermer={() => { setPasseArmee(null); setRectangleSource(false) }} /> : <>
         <ZoomDeLaFrame
           facteur={facteur}
           ajuste={ajuste}
@@ -1229,6 +1340,16 @@ export function EcranAtelierDeBande({
           onZoom={setZoom}
         />
 
+        <div ref={espace} data-vue-de-la-frame className="defile flex min-h-0 min-w-0 flex-1 items-start justify-start overflow-auto"
+          onWheel={(event) => { if (!event.ctrlKey) return; event.preventDefault(); setZoom(Math.max(1, Math.min(32, facteur + (event.deltaY < 0 ? 1 : -1)))) }}
+          onPointerDownCapture={(event) => {
+            if (!deplacementVue && event.button !== 1) return
+            event.preventDefault(); event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId)
+            pan.current = { x: event.clientX, y: event.clientY, gauche: event.currentTarget.scrollLeft, haut: event.currentTarget.scrollTop }
+          }}
+          onPointerMoveCapture={(event) => { if (!pan.current) return; event.stopPropagation(); event.currentTarget.scrollLeft = pan.current.gauche - event.clientX + pan.current.x; event.currentTarget.scrollTop = pan.current.haut - event.clientY + pan.current.y }}
+          onPointerUpCapture={(event) => { if (!pan.current) return; event.stopPropagation(); pan.current = null }}>
+        <div className="m-auto shrink-0">
         <CaseEnGrand
           ref={toile}
           planche={planche}
@@ -1240,26 +1361,29 @@ export function EcranAtelierDeBande({
           facteur={facteur}
           pelure={pelure}
           onPousser={pousser}
+          main={table === "main" && reglee ? <ToileDeLaMain
+            asset={{ identifiant: bande.identifiant, empreinte: "", label: `${bande.nom} · frame ${rang + 1}`, largeur: large, hauteur: haut, rendu_largeur: large, rendu_hauteur: haut }}
+            avant={false} etat={etatMain}
+            rendu={<span aria-hidden className="absolute inset-0" style={{ backgroundImage: `url(${planche})`, backgroundSize: `${large * compte * facteur}px ${haut * facteur}px`, backgroundPosition: `-${rang * large * facteur}px 0`, imageRendering: "pixelated" }} />}
+            onDebut={() => { framePeinte.current = rang; setJoue(false); setCourante(rang); setSelection([rang]) }}
+            onPassage={(trait) => setPrises((liste) => liste.map((prise, index) => {
+              if (index !== framePeinte.current) return prise
+              const main = mainDe({ ...reglee, main: prise.main_apres_placement ?? null })
+              const actif = etatMain.actif === OPACITE || main.calques[etatMain.actif] ? etatMain.actif : OPACITE
+              return { ...prise, main_apres_placement: avecPassage(main, actif, trait) }
+            }))}
+          /> : undefined}
         />
-
-        <CorrectionDeLImage
-          prise={prises[choisie]}
-          clipDeLaBande={bande.clip}
-          imagesParClip={recu.images_par_clip}
-          voisins={recu.clips_voisins}
-          melangee={bande.melangee}
-          pelure={pelure}
-          onPelure={setPelure}
-          onRemplacer={remplacer}
-          onRemettreDroit={remettreDroit}
-        />
+        </div></div>
+        <p className="text-[11px] text-encre-3">Ctrl + molette : zoom · Espace + glisser ou bouton central : déplacer la vue</p>
+        </>}
       </div>
       )}
 
       {/* ── Ses images, et le lecteur sous elles ─────────────────────────── */}
       <aside
         {...PANNEAU}
-        className="flex min-h-0 flex-col border-l border-trait bg-papier-cote"
+        className="col-start-1 row-start-2 flex max-h-[300px] min-h-0 min-w-0 flex-col overflow-y-auto border-t border-trait bg-papier-cote"
       >
         <div className="flex items-baseline gap-2 pr-2">
           <EnTetePanneau>Ses images</EnTetePanneau>
@@ -1304,10 +1428,10 @@ export function EcranAtelierDeBande({
           onDeplacer={deplacerVers}
         />
 
-        <div className="defile flex min-h-0 flex-1 flex-wrap content-start gap-1 overflow-y-auto p-2">
+        <div className="defile flex shrink-0 gap-[8px] overflow-x-auto p-[8px]">
           {prises.map((prise, index) => (
             <ImageDeLaBande
-              key={`${prise.clip}-${prise.numero}-${index}`}
+              key={prise.identifiant || `${prise.clip}-${prise.numero}-${index}`}
               prise={prise}
               index={index}
               planche={planche}
@@ -1333,7 +1457,7 @@ export function EcranAtelierDeBande({
           ))}
         </div>
 
-        <LeChutier
+        <details className="px-[8px]"><summary className="cursor-pointer text-[12px] text-encre-3">Chutier · {chutier.length} image{chutier.length > 1 ? "s" : ""}</summary><LeChutier
           chutier={chutier}
           clipDeLaBande={bande.clip}
           contact={recu.contact}
@@ -1343,7 +1467,7 @@ export function EcranAtelierDeBande({
           onInserer={insererDuChutier}
           onVider={viderDuChutier}
           onAllerAuClip={() => setAuClip(true)}
-        />
+        /></details>
 
         <Lecteur
           joue={joue}
@@ -1360,7 +1484,8 @@ export function EcranAtelierDeBande({
             corrige : les laisser à gauche, sous un titre qui dit « la recette
             de cette image », aurait fait croire qu'on règle une pose alors
             qu'on règle les douze. */}
-        <div className="defile flex shrink-0 flex-col gap-3 overflow-y-auto border-t border-trait p-2">
+        <details className="shrink-0 border-t border-trait p-[8px]"><summary className="cursor-pointer text-[12px] text-encre-3">Animation · boucle, repère et fenêtre commune</summary>
+        <div className="flex flex-col gap-[14px] pt-[8px]">
           {onReprendreLeMontage && (
             <RepriseDuMontage
               melangee={bande.melangee}
@@ -1389,7 +1514,7 @@ export function EcranAtelierDeBande({
             bloquee={change}
             onReprendre={() => void reprendreLeCadre()}
           />
-        </div>
+        </div></details>
       </aside>
     </div>
   )
@@ -1413,6 +1538,7 @@ const CaseEnGrand = (() => {
       facteur,
       pelure,
       onPousser,
+      main,
     }: {
       planche: string
       rang: number
@@ -1423,6 +1549,7 @@ const CaseEnGrand = (() => {
       facteur: number
       pelure: number
       onPousser: (dx: number, dy: number) => void
+      main?: React.ReactNode
     },
     ref: React.Ref<HTMLDivElement>,
   ) {
@@ -1448,6 +1575,7 @@ const CaseEnGrand = (() => {
         className="relative cursor-move border border-trait bg-pourtour outline-none focus:border-signal"
         style={{ width: large * facteur, height: haut * facteur }}
         onPointerDown={(evenement) => {
+          if (main) return
           evenement.currentTarget.setPointerCapture(evenement.pointerId)
           depart.current = { x: evenement.clientX, y: evenement.clientY }
         }}
@@ -1481,7 +1609,7 @@ const CaseEnGrand = (() => {
             style={{ ...fond(precedent), opacity: pelure / 100 }}
           />
         )}
-        <span className="absolute left-0 top-0" style={fond(rang)} />
+        {main ?? <span className="absolute left-0 top-0" style={fond(rang)} />}
       </div>
     )
   }
@@ -1687,7 +1815,7 @@ function ImageDeLaBande({
   onDeposer: () => void
 }) {
   const cote = 64
-  const facteur = Math.max(1, Math.floor(Math.min(cote / haut, cote / large)))
+  const facteur = Math.min(cote / haut, cote / large)
   // **Une recette égale à celle de la bande ne s'annonce pas** : le serveur rend
   // une liste de places vide, et un liseré posé là dirait qu'il s'est passé
   // quelque chose alors que rien n'a changé.
@@ -1783,6 +1911,8 @@ function ImageDeLaBande({
           {prise.dx},{prise.dy}
         </span>
       )}
+      {prise.main_apres_placement && <span data-main-sur-frame title="Cette frame porte une retouche à la main"
+        className="absolute right-0 top-0 bg-carte px-[4px] text-[10.5px] text-signal">main</span>}
     </button>
   )
 }
@@ -2427,6 +2557,7 @@ function TableDeLaFrame({
  *  recette ont déjà un mot français ailleurs ; les réécrire donnerait deux
  *  vocabulaires de la même chose, et celui de l'écran finirait par mentir. */
 function ReglagesDeLaFrame({
+  table,
   poste,
   sienne,
   ancre,
@@ -2436,6 +2567,7 @@ function ReglagesDeLaFrame({
   ecart,
   onReprendre,
 }: {
+  table: Table
   /** Ce que les postes attendent, ou rien tant que la recette n'est pas lue. */
   poste: Poste | null
   /** L'image a-t-elle sa recette à elle ? Le titre et le bouton en dépendent. */
@@ -2452,6 +2584,7 @@ function ReglagesDeLaFrame({
   onReprendre: () => void
 }) {
   if (!poste) return null
+  if (table === "main") return null
   const plusieurs = choisies > 1
   const separe = (nom: string) => separes.includes(nom)
   return (
@@ -2544,7 +2677,7 @@ function ReglagesDeLaFrame({
 
           **La main n'y est pas** : elle arrive en V3.03.4. Une table vide qui
           annoncerait sa place ferait attendre un geste qui n'existe pas. */}
-      <TableDeLaFrame nom="détourage" separe={separe("détourage")}>
+      <div hidden={table !== "detourage"}><TableDeLaFrame nom="détourage" separe={separe("détourage")}>
         {/* ⚠️ **Une recette de jeu peut n'avoir aucune passe**, et l'écran
             n'offrait alors aucun moyen d'en ajouter : le fond restait, et il
             n'y avait rien à régler. Signalé par l'auteur le 4 septembre 2026.
@@ -2564,25 +2697,25 @@ function ReglagesDeLaFrame({
               ? "Ce qui change ici ne vaut que pour l'image regardée."
               : "Ce qui change ici vaut pour toutes les images de l'animation."}
         </p>
-      </TableDeLaFrame>
-      <TableDeLaFrame nom="recadrage" separe={separe("recadrage")}>
+      </TableDeLaFrame></div>
+      <div hidden={table !== "recadrage"}><TableDeLaFrame nom="recadrage" separe={separe("recadrage")}>
         <ReglagesDuRecadrage {...poste} />
-      </TableDeLaFrame>
-      <TableDeLaFrame nom="grille" separe={separe("grille")}>
+      </TableDeLaFrame></div>
+      <div hidden={table !== "grille"}><TableDeLaFrame nom="grille" separe={separe("grille")}>
         {/* L'ancrage est rendu à droite, avec la vitesse et le sens : il tient
             de la bande entière, et un ancrage par image ferait sauter le sujet
             d'une frame à l'autre. */}
         <ReglagesDeLaGrille {...poste} sansAncrage />
-      </TableDeLaFrame>
-      <TableDeLaFrame nom="quantification" separe={separe("quantification")}>
+      </TableDeLaFrame></div>
+      <div hidden={table !== "quantification"}><TableDeLaFrame nom="quantification" separe={separe("quantification")}>
         <ReglagesDesCouleurs {...poste} />
-      </TableDeLaFrame>
-      <TableDeLaFrame nom="bords" separe={separe("bords")}>
+      </TableDeLaFrame></div>
+      <div hidden={table !== "bords"}><TableDeLaFrame nom="bords" separe={separe("bords")}>
         <ReglagesDuNettoyage {...poste} />
-      </TableDeLaFrame>
-      <TableDeLaFrame nom="contours" separe={separe("contours")}>
+      </TableDeLaFrame></div>
+      <div hidden={table !== "contours"}><TableDeLaFrame nom="contours" separe={separe("contours")}>
         <ReglagesDuContour {...poste} />
-      </TableDeLaFrame>
+      </TableDeLaFrame></div>
 
       {/* ⚠️ **La table de la main n'est pas ici, et sa phrase non plus.**
           Le plan la veut grisée avec sa raison sur une sélection de plusieurs

@@ -22784,7 +22784,7 @@ describe("B0 — le socle du carnet", () => {
     // « Ce qui manque le plus » : la ligne, son coût, et le total du lot —
     // annoncé avant de cliquer.
     expect(within(tableau).getByText("« Le pèlerin » n'a pas 1 pose.")).toBeTruthy()
-    expect(within(tableau).getByText(/Tout demander d'un coup/)).toBeTruthy()
+    expect(within(tableau).getByText(/Pour les images fixes/)).toBeTruthy()
   })
 
   test("un manque gratuit s'affiche « rien », sans couleur d'alerte ni prix", async () => {

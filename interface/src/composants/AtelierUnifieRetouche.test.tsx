@@ -1,0 +1,127 @@
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { afterEach, expect, test, vi } from "vitest"
+import { api, RECETTE_VIDE, UNIVERS_VIDE, type Asset, type AtelierDeBande, type Bande, type EtatTraitement } from "../api"
+import { EcranAtelierDeBande, remonterLaBande } from "./AtelierDeBande"
+import { EcranMontage } from "./Montage"
+
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+
+const traitement = { moteurs: [], silhouettes: [], reductions: [], recettes: [], quantification: { raison: null, note: "" } } as unknown as EtatTraitement
+function fixture(): AtelierDeBande {
+  return {
+    bande: {
+      identifiant: "bande-main", nom: "marche", clip: "clip-source", prises: [0, 1, 2].map((numero) => ({ numero, clip: "", identifiant: `occurrence-${numero}`, dx: 3, dy: 0 })), chutier: [],
+      recette: { ...RECETTE_VIDE }, cadence: 2, sens: "boucle", case_largeur: 32, case_hauteur: 32,
+      cadre: { choix: "clip" }, melangee: false, secondes: 1.5,
+    },
+    planche: "data:image/png;base64,AAAA", images_par_clip: { "clip-source": 3 }, clips_voisins: [],
+    cadre: { choix: "clip", a_jour: true }, ecarts: [], contact: { cote: 96, colonnes: 16 }, images_max: 64,
+  } as unknown as AtelierDeBande
+}
+
+test("la Main touche la frame visible pendant la lecture, se défait et se retrouve après fermeture", async () => {
+  let disque = fixture()
+  vi.spyOn(api, "ouvrirLaBande").mockImplementation(async () => structuredClone(disque))
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  const garder = vi.spyOn(api, "corrigerLaBande").mockImplementation(async (_id, corps) => {
+    disque = { ...disque, bande: { ...disque.bande, ...structuredClone(corps) } as Bande }
+    return disque.bande
+  })
+  vi.stubGlobal("PointerEvent", MouseEvent)
+  HTMLElement.prototype.setPointerCapture = vi.fn()
+  const props = { identifiant: "bande-main", univers: UNIVERS_VIDE, traitement, onFermer: vi.fn(), onErreur: vi.fn() }
+  const vue = render(<EcranAtelierDeBande {...props} />)
+  fireEvent.change(await screen.findByLabelText("Outil de retouche"), { target: { value: "main" } })
+  fireEvent.click(screen.getByRole("button", { name: /^ôter$/ }))
+  await waitFor(() => expect(document.querySelector("[data-case-en-grand]")?.getAttribute("data-case-en-grand")).toBe("1"))
+  const surface = document.querySelector("[data-toile-main]") as HTMLElement
+  vi.spyOn(surface, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 320, height: 320, right: 320, bottom: 320, x: 0, y: 0, toJSON() {} })
+  fireEvent.pointerDown(surface, { button: 0, clientX: 125, clientY: 65, pointerId: 1 })
+  fireEvent.pointerMove(surface, { clientX: 135, clientY: 65, pointerId: 1 })
+  fireEvent.pointerUp(surface, { pointerId: 1 })
+  expect(screen.getByRole("button", { name: "faire tourner l'animation" })).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: /^Défaire$/ }))
+  expect((screen.getByRole("button", { name: "Enregistrer ›" }) as HTMLButtonElement).disabled).toBe(true)
+  fireEvent.click(screen.getByRole("button", { name: /^Refaire$/ }))
+  fireEvent.click(screen.getByRole("button", { name: "Enregistrer ›" }))
+  await waitFor(() => expect(garder).toHaveBeenCalledOnce())
+  expect(disque.bande.prises[0].main_apres_placement).toBeUndefined()
+  expect(disque.bande.prises[2].main_apres_placement).toBeUndefined()
+  expect(disque.bande.prises[1].main_apres_placement?.opacite[0]).toMatchObject({ garde: false, points: [[12, 6], [13, 6]] })
+  expect(disque.bande.prises[1].identifiant).toBe("occurrence-1")
+  vue.unmount()
+  render(<EcranAtelierDeBande {...props} />)
+  fireEvent.change(await screen.findByLabelText("Outil de retouche"), { target: { value: "main" } })
+  fireEvent.click(document.querySelector('[data-image-de-la-bande="1"]')!)
+  expect(await screen.findByText(/l'opacité · 1 passage/)).toBeTruthy()
+  expect(props.onErreur).not.toHaveBeenCalled()
+})
+
+test("deux occurrences d’une même source gardent chacune leur retouche après réordre", () => {
+  const bande = fixture().bande
+  bande.prises = [{ numero: 4, clip: "", dx: 1, dy: 0, identifiant: "premiere" }, { numero: 4, clip: "", dx: 8, dy: 0, identifiant: "seconde" }]
+  const remontee = remonterLaBande(bande, bande.clip, [4, 4], ["seconde", "premiere"])
+  expect(remontee.prises.map((prise) => [prise.identifiant, prise.dx])).toEqual([["seconde", 8], ["premiere", 1]])
+  expect(remontee.chutier).toEqual([])
+})
+
+test("découper le rendu d’une frame revient au montage sans perdre ses changements", async () => {
+  const disque = fixture()
+  vi.spyOn(api, "ouvrirLaBande").mockResolvedValue(disque)
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  const asset = { identifiant: "frame-prelevee", empreinte: "abc", label: "Frame retouchée", largeur: 32, hauteur: 32, recette: RECETTE_VIDE } as Asset
+  const prelever = vi.spyOn(api, "preleverFrameDeBande").mockResolvedValue({ asset, doublon: null })
+  vi.spyOn(api, "decoupeProposee").mockResolvedValue({ boites: [[0, 0, 15, 31], [16, 0, 31, 31]] } as never)
+  const decouper = vi.spyOn(api, "decouper").mockResolvedValue({ decoupes: [asset, asset] } as never)
+  const garder = vi.spyOn(api, "corrigerLaBande").mockResolvedValue(disque.bande)
+  render(<EcranAtelierDeBande identifiant="bande-main" univers={UNIVERS_VIDE} traitement={traitement} onFermer={vi.fn()} onErreur={vi.fn()} />)
+  await screen.findByLabelText("Outil de retouche")
+  fireEvent.click(screen.getByRole("button", { name: "arrêter l'animation" }))
+  // Un changement préalable doit encore attendre l’enregistrement au retour.
+  ;(document.querySelector("[data-case-en-grand]") as HTMLElement).focus()
+  fireEvent.keyDown(window, { key: "ArrowRight" })
+  fireEvent.click(screen.getByRole("button", { name: "Découper cette frame" }))
+  await screen.findByRole("button", { name: /Découper en 2/ })
+  expect(prelever.mock.calls[0][2].prises[0].dx).toBe(4)
+  expect(screen.getByLabelText("Zoom de la découpe")).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: /Découper en 2/ }))
+  await screen.findByText("2 images ajoutées à la bibliothèque.")
+  expect(decouper).toHaveBeenCalledWith("frame-prelevee", [[0, 0, 15, 31], [16, 0, 31, 31]])
+  expect(garder).not.toHaveBeenCalled()
+  expect((screen.getByRole("button", { name: "Enregistrer ›" }) as HTMLButtonElement).disabled).toBe(false)
+})
+
+test("le montage réordonne par clavier et glissement, puis garde le classement explicite", async () => {
+  const bande = { ...fixture().bande, personnage: "heros", projet: "jeu", pose: "marche", direction: null }
+  bande.prises = [{ numero: 0, clip: "", dx: 1, dy: 0, identifiant: "premiere" }, { numero: 0, clip: "", dx: 8, dy: 0, identifiant: "seconde" }, { numero: 2, clip: "", dx: 0, dy: 0, identifiant: "troisieme" }]
+  vi.spyOn(api, "ouvrirLeMontage").mockResolvedValue({
+    clip: { identifiant: bande.clip, images: 3, personnage: "heros", pose: "marche", direction: null, mouvement: "marche", secondes: 1, montant_dit: "0 €" },
+    bandes: [], propositions: [], contact: { cote: 96, colonnes: 16, lignes: 1 }, fenetre: null,
+    prix: { clip: 0, bandes: 0, par_bande: 0, si_une_de_plus: 0 },
+  } as never)
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [] } as never)
+  vi.spyOn(api, "production").mockResolvedValue({ personnages: [
+    { identifiant: "heros", nom: "Le héros", cases: [{ pose: "marche", directions: [] }], plan: [{ identifiant: "marche", nom: "Marche" }] },
+    { identifiant: "nain", nom: "Le nain", cases: [{ pose: "repos", directions: [{ identifiant: "nord", nom: "Nord" }] }], plan: [{ identifiant: "repos", nom: "Repos" }] },
+  ] } as never)
+  const corriger = vi.spyOn(api, "corrigerLaBande").mockResolvedValue(bande)
+  const classer = vi.spyOn(api, "affecterLaBande").mockResolvedValue(bande)
+  const repris = vi.fn()
+  render(<EcranMontage clip={bande.clip} reprise={{ bande, onRepris: repris }} onFermer={vi.fn()} onErreur={vi.fn()} />)
+  await screen.findByLabelText("Personnage de l’animation")
+  const boutons = () => document.querySelectorAll('[aria-label="Ordre des frames retenues"] button')
+  fireEvent.keyDown(boutons()[1], { key: "ArrowLeft", altKey: true })
+  const dataTransfer = { setData: vi.fn(), effectAllowed: "" }
+  fireEvent.dragStart(boutons()[2], { dataTransfer })
+  fireEvent.dragOver(boutons()[0], { dataTransfer })
+  fireEvent.drop(boutons()[0], { dataTransfer })
+  fireEvent.change(screen.getByLabelText("Personnage de l’animation"), { target: { value: "nain" } })
+  fireEvent.change(screen.getByLabelText("Mouvement de l’animation"), { target: { value: "repos" } })
+  fireEvent.change(screen.getByLabelText("Direction de l’animation"), { target: { value: "nord" } })
+  fireEvent.click(screen.getByRole("button", { name: /Reprendre « marche »/ }))
+  await waitFor(() => expect(repris).toHaveBeenCalledOnce())
+  expect(corriger.mock.calls[0][1].prises?.map((prise) => [prise.identifiant, prise.dx])).toEqual([["troisieme", 0], ["seconde", 8], ["premiere", 1]])
+  expect(classer).toHaveBeenCalledWith(bande.identifiant, "repos", "nord", "nain")
+})

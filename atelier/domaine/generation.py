@@ -198,6 +198,9 @@ class Emplacement:
     duree_s: float = 0.0
     resultat: Resultat | None = None
     raison: str | None = None
+    # Une exception avant réception ne prouve pas que le fournisseur a refusé.
+    # Absent des anciens fichiers, et jamais déduit du texte d'une erreur.
+    acceptation_inconnue: bool = False
 
     # ── Ce qu'il faut pour une jauge **déterminée** ───────────────────────────
     #
@@ -238,6 +241,7 @@ class Emplacement:
             "raison": self.raison,
             "demarre_le": self.demarre_le,
             "duree_attendue_s": self.duree_attendue_s,
+            **({"acceptation_inconnue": True} if self.acceptation_inconnue else {}),
         }
 
     @staticmethod
@@ -257,6 +261,7 @@ class Emplacement:
             raison=d.get("raison"),
             demarre_le=d.get("demarre_le"),
             duree_attendue_s=d.get("duree_attendue_s", 0.0),
+            acceptation_inconnue=bool(d.get("acceptation_inconnue", False)),
         )
 
 

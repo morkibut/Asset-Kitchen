@@ -884,6 +884,34 @@ class ServiceGenerations:
         tache.add_done_callback(self._en_vol.discard)
         return generation
 
+    def demande_preparee(self, generation: Generation) -> Demande:
+        """Snapshot d'envoi pour un travail durable : texte et octets résolus ensemble."""
+        return self._demande_de(generation)
+
+    async def executer_preparee(self, identifiant: str, demande: Demande) -> Generation:
+        """Exécute la préparation gelée par un travail, sans recomposer l'univers.
+
+        Le travail possède sa réservation et son verrou durable. Une génération
+        déjà commencée n'est jamais resoumise par ce geste.
+        """
+        generation = self._base.lire(identifiant)
+        if generation is None:
+            raise GenerationInconnue(identifiant)
+        if any(e.demarre_le is not None or e.statut not in (Statut.EN_ATTENTE, Statut.INTERROMPUE)
+               for e in generation.emplacements):
+            return generation
+        modele = self._catalogue.modele(generation.modele)
+        manque = self._catalogue.grise(modele)
+        if manque:
+            raise SansCle(manque)
+        refus = modele.refus(demande)
+        if refus:
+            raise DemandeRefusee(refus)
+        for emplacement in generation.emplacements:
+            emplacement.statut = Statut.EN_ATTENTE
+        await self._executer(generation, modele, demande)
+        return self._base.lire(identifiant)
+
     async def relancer(self, identifiant: str, rang: int) -> Generation:
         """Relance **un seul** emplacement, sans réécrire le prompt ni repayer
         les autres (US-20, US-22).
@@ -1040,13 +1068,20 @@ class ServiceGenerations:
         fournisseur: PortFournisseur,
     ) -> None:
         emplacement.statut = Statut.EN_COURS
+        emplacement.acceptation_inconnue = False
         emplacement.demarre_le = time.time()
         emplacement.duree_attendue_s = self.attente_estimee(modele.identifiant)
         self._sauver(generation)
 
         depart = time.monotonic()
+        image = None
         try:
             image = await fournisseur.generer(modele, demande)
+            # Une image payée mais illisible reste une dépense, comme un clip.
+            # Le budget des travaux durables doit la voir avant le décodage.
+            emplacement.consomme = image.consomme
+            emplacement.unite = image.unite
+            self._sauver(generation, annoncer=False)
             mesure = mesurer(image.octets)
         except ErreurAtelier as erreur:
             # Un refus peut coûter : le fournisseur facture dès que l'appel a
@@ -1061,10 +1096,14 @@ class ServiceGenerations:
             )
             return
         except ValueError as erreur:  # image illisible
-            self._echouer(generation, emplacement, str(erreur), depart)
+            emplacement.acceptation_inconnue = image is None
+            self._echouer(generation, emplacement, str(erreur), depart,
+                          consomme=emplacement.consomme, unite=emplacement.unite)
             return
         except Exception as erreur:  # noqa: BLE001 — un raté ne tue jamais le lot
-            self._echouer(generation, emplacement, f"échec inattendu — {erreur}", depart)
+            emplacement.acceptation_inconnue = image is None
+            self._echouer(generation, emplacement, f"échec inattendu — {erreur}", depart,
+                          consomme=emplacement.consomme, unite=emplacement.unite)
             return
 
         chemin = self._fichiers.ecrire_brut(
@@ -2672,7 +2711,7 @@ class ServiceGenerations:
 
     # ── Enregistrement ───────────────────────────────────────────────────────
 
-    def _sauver(self, generation: Generation) -> None:
+    def _sauver(self, generation: Generation, *, annoncer: bool = True) -> None:
         """Au fil de l'eau, jamais à la fin — sinon un plantage perd ce qui est
         déjà payé (`docs/PIEGES.md`).
 
@@ -2688,7 +2727,8 @@ class ServiceGenerations:
         # rattrape et qui met l'invariant à l'envers.
         self._fichiers.ecrire_enregistrement(generation.identifiant, contenu)
         self._base.enregistrer(generation)
-        self._diffusion.publier("generation", contenu)
+        if annoncer:
+            self._diffusion.publier("generation", contenu)
 
     @staticmethod
     def _resolus(

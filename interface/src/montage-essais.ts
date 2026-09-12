@@ -2,6 +2,13 @@
 // `toBeDisabled`, `toHaveTextContent` et les autres viennent d'ici.
 import "@testing-library/jest-dom/vitest"
 
+// jsdom ne possède pas la couche modale native. Les essais montent le contenu ;
+// le focus, Échap et l’inertie de l’arrière-plan se vérifient au navigateur.
+if (!HTMLDialogElement.prototype.showModal) {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") }
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute("open") }
+}
+
 // ── Ce que jsdom n'a pas, et que le plan de la toile appelle ────────────────
 //
 // **Ce ne sont pas des doubles du produit, ce sont des trous du navigateur.**

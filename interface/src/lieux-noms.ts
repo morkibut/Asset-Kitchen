@@ -96,6 +96,10 @@ return (ou, _profondeur, dedans) => {
     case "univers":
     case "tableau-de-bord":
       return null
+    case "bibliotheque":
+      return "Les assets"
+    case "fabrications":
+      return "Fabrications"
 
     case "depenses":
       return "Les dépenses"
@@ -117,6 +121,10 @@ return (ou, _profondeur, dedans) => {
     // nom du jeu le précède, parce qu'on l'ouvre de partout.
     case "sortie":
       return "La sortie"
+    case "delegation":
+      return "L’agent"
+    case "travail":
+      return "La fabrication"
 
     // *Inspiration* et non *Univers* : ce ne sont pas les mêmes images, et le
     // produit ne les confond nulle part.

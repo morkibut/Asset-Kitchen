@@ -38,6 +38,7 @@ from typing import Any, Iterable
 
 from atelier.domaine.ambiance import CE_QU_ON_PREND, TOUT
 from atelier.domaine.direction import Direction
+from atelier.domaine.objectifs import ObjectifProduction
 from atelier.domaine.projet import CHAMPS_BIBLE
 from atelier.domaine.plan import Pose, plan_depuis_json
 
@@ -156,6 +157,9 @@ class Personnage:
 
     cree_le: float = field(default_factory=time.time)
 
+    # AU2 : None conserve le plan ancien ; sorties=[] demande explicitement rien.
+    objectif: ObjectifProduction | None = None
+
     # ── Ce qui se déduit ─────────────────────────────────────────────────────
 
     def prend_de(self, ambiance: str) -> str:
@@ -231,6 +235,7 @@ class Personnage:
             "concept_arts": list(self.concept_arts),
             "references_ecartees": list(self.references_ecartees),
             "cree_le": self.cree_le,
+            "objectif": self.objectif.en_json() if self.objectif is not None else None,
         }
 
     @staticmethod
@@ -273,6 +278,8 @@ class Personnage:
             concept_arts=tuple(_textes(d.get("concept_arts"))),
             references_ecartees=tuple(_textes(d.get("references_ecartees"))),
             cree_le=d.get("cree_le", 0.0),
+            objectif=(ObjectifProduction.depuis_json(d["objectif"])
+                      if d.get("objectif") is not None else None),
         )
 
 

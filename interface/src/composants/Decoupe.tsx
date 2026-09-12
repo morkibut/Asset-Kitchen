@@ -28,7 +28,7 @@
 // **Passé au papier en `C8`.** Montée depuis `Retouche.tsx`, qui est déjà du
 // carnet ; c'est ce fichier-ci qui ne l'était pas encore.
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   api,
   Refus,
@@ -41,15 +41,11 @@ import {
 } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
 import { PANNEAU } from "./Infobulle"
+import { SurfaceZoomable } from "./SurfaceZoomable"
 
 /** En dessous, un rectangle est un clic qui a glissé, pas une intention. En
  *  pixels de la planche — la même unité que tout le reste de cet écran. */
 const COTE_UTILE = 4
-
-/** Le padding de la zone qui porte la planche — `docs/DESIGN.md` § Spacing.
- *  Retiré de la place avant de calculer l'échelle : une planche qui remplirait
- *  la zone entière toucherait ses bords. */
-const PADDING_ZONE = 14
 
 const LIBELLES: Partial<Record<string, string>> = {
   auto: "zones opaques",
@@ -532,38 +528,8 @@ function Planche({
   onChoisir: (rang: number | null) => void
   onDessiner: (boite: Boite) => void
 }) {
-  const zone = useRef<HTMLElement>(null)
   const cadre = useRef<HTMLDivElement>(null)
   const [trace, setTrace] = useState<Boite | null>(null)
-  const [place, setPlace] = useState({ largeur: 0, hauteur: 0 })
-
-  // ── La taille du cadre, calculée et non déléguée au CSS ───────────────────
-  //
-  // `aspect-ratio` cède devant `max-height` sur une planche carrée : le
-  // navigateur donne une largeur, en déduit une hauteur, puis rabote la
-  // hauteur sans redéduire la largeur — le cadre ne serait plus l'image, et
-  // les rectangles, posés en pourcentage du cadre, se décaleraient de ce
-  // qu'ils désignent. On tient donc la mise à l'échelle nous-mêmes.
-  const mesurerPlace = useCallback(() => {
-    const vue = zone.current
-    if (!vue) return
-    setPlace({
-      largeur: vue.clientWidth - 2 * PADDING_ZONE,
-      hauteur: vue.clientHeight - 2 * PADDING_ZONE,
-    })
-  }, [])
-
-  useLayoutEffect(mesurerPlace, [mesurerPlace, vu.image])
-
-  useEffect(() => {
-    window.addEventListener("resize", mesurerPlace)
-    return () => window.removeEventListener("resize", mesurerPlace)
-  }, [mesurerPlace])
-
-  const facteur = Math.min(
-    (place.largeur || vu.largeur) / vu.largeur,
-    (place.hauteur || vu.hauteur) / vu.hauteur,
-  )
 
   const enPixels = (evenement: React.PointerEvent): [number, number] => {
     const boite = cadre.current!.getBoundingClientRect()
@@ -577,17 +543,10 @@ function Planche({
   const depart = useRef<[number, number] | null>(null)
 
   return (
-    <section
-      ref={zone}
-      className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-[14px]"
-    >
+    <SurfaceZoomable largeur={vu.largeur} hauteur={vu.hauteur} libelle="la découpe">
       <div
         ref={cadre}
-        className="damier-papier relative border border-trait select-none"
-        style={{
-          width: Math.max(1, Math.floor(vu.largeur * facteur)),
-          height: Math.max(1, Math.floor(vu.hauteur * facteur)),
-        }}
+        className="damier-papier relative h-full w-full select-none"
         onPointerDown={(evenement) => {
           if (evenement.button !== 0) return
           evenement.currentTarget.setPointerCapture(evenement.pointerId)
@@ -633,7 +592,7 @@ function Planche({
         ))}
         {trace && <Rectangle boite={trace} vu={vu} numero={boites.length + 1} choisi />}
       </div>
-    </section>
+    </SurfaceZoomable>
   )
 }
 

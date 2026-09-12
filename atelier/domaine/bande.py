@@ -38,7 +38,7 @@ from atelier.domaine.calque_anime import (
     Habillage,
     calages_depuis_json,
 )
-from atelier.domaine.recette import Recette
+from atelier.domaine.recette import Main, Recette
 from atelier.domaine.superposition import ReglagesGardes
 
 # ── Le sens de lecture ───────────────────────────────────────────────────────
@@ -191,6 +191,15 @@ class Prise:
     # chaque frame aurait pu changer doit le dire.
     recette: Recette | None = None
 
+    # AU15 : l'occurrence, pas le numéro source. Deux copies de la même frame
+    # ont des calques indépendants. Vide préserve le JSON historique jusqu'à
+    # l'attribution explicite par le montage, sans migration de tout le dépôt.
+    identifiant: str = ""
+
+    # AU4 : touches dans les coordonnées de la case affichée, après poussée.
+    # La Main historique de la recette reste avant poussée, sans migration.
+    main_apres_placement: Main | None = None
+
     @property
     def poussee(self) -> bool:
         """A-t-elle été corrigée ? Ce qui n'a pas bougé ne s'annonce pas."""
@@ -213,6 +222,10 @@ class Prise:
         # octet, et tout ce qui la relisait la relit encore.
         if self.recette is not None:
             rendu["recette"] = self.recette.en_json()
+        if self.identifiant:
+            rendu["identifiant"] = self.identifiant
+        if self.main_apres_placement is not None:
+            rendu["main_apres_placement"] = self.main_apres_placement.en_json()
         return rendu
 
     @staticmethod
@@ -231,6 +244,9 @@ class Prise:
             dx=int(d.get("dx", 0)),
             dy=int(d.get("dy", 0)),
             recette=Recette.depuis_json(d["recette"]) if d.get("recette") else None,
+            identifiant=str(d.get("identifiant") or ""),
+            main_apres_placement=Main.depuis_json(d["main_apres_placement"])
+            if isinstance(d.get("main_apres_placement"), dict) else None,
         )
 
 

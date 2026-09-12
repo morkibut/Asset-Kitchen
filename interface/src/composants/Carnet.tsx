@@ -332,6 +332,9 @@ export function Carnet({
   atelierMuet,
   surReessayer,
   cleAbsente,
+  surLesAssets,
+  surLesFabrications,
+  surLAgent,
 }: {
   jeu: string
   /** « 45 images · 12 poses sur 18 » — jamais un prix : on ne choisit pas un
@@ -406,6 +409,10 @@ export function Carnet({
   /** Aucune clé posée : un point rouille sur l'installation, et rien d'autre.
    *  Pas de bandeau, pas de fenêtre — le point suffit à dire où aller. */
   cleAbsente?: boolean
+  /** Les portes de l'atelier unifié gardent les anciennes familles accessibles. */
+  surLesAssets?: () => void
+  surLesFabrications?: () => void
+  surLAgent?: () => void
 }) {
   /** **Une seule ligne dépliée à la fois**, et c'est la règle n°4 du design.
    *  Un seul état la tient : en ouvrir une referme l'autre par construction,
@@ -426,6 +433,7 @@ export function Carnet({
       className="flex h-full w-[300px] shrink-0 flex-col border-r border-trait bg-papier-cote"
     >
       <div className="defile flex min-h-0 flex-1 flex-col overflow-y-auto">
+        {surLesAssets && <div className="border-b border-trait px-[14px] py-[14px] font-serif text-[25px] text-encre">Asset Kitchen</div>}
         {/* ── Le nom du jeu — deux cibles sur une ligne ───────────────────── */}
         {/* Le nom ramène au tableau de bord : **c'est le seul chemin de
             retour**, partout ailleurs on descend dans le jeu. Le chevron
@@ -488,6 +496,14 @@ export function Carnet({
           </div>
         )}
 
+        {surLesAssets && <>
+          <Ligne nom="Le jeu" ouverte={ouvert === "jeu"} onAller={surLeJeu} />
+          <Ligne nom="La toile de l'univers" compte={regles == null ? null : String(regles)} ouverte={ouvert === "univers"} onAller={surLesRegles} />
+          <Ligne nom="Les assets" ouverte={ouvert === "bibliotheque"} onAller={surLesAssets} />
+          <Ligne nom="La galerie" compte={String(images)} ouverte={ouvert === "galerie"} pastille={enRoute} dit={enRoute ? `La galerie · ${enRoute === 1 ? "1 image en route" : `${enRoute} images en route`}` : undefined} onAller={surLaGalerie} />
+          {surLesFabrications && <Ligne nom="Fabrications" ouverte={ouvert === "fabrications"} pastille={enRoute} onAller={surLesFabrications} />}
+          <Ligne nom="La sortie" ouverte={ouvert === "sortie"} onAller={surLaSortie} />
+        </>}
         {/* ── Ce qui s'applique à tout le jeu ─────────────────────────────── */}
         <EnTete enfants="Les règles du jeu" />
         {/* **Le parcours de `B14`, rouvert.** La planche du carnet le met ici,
@@ -501,12 +517,12 @@ export function Carnet({
           ouverte={ouvert === "regles"}
           onAller={surLesReglesDuJeu}
         />
-        <Ligne
+        {!surLesAssets && <Ligne
           nom="La toile de l'univers"
           compte={regles == null ? null : String(regles)}
           ouverte={ouvert === "univers"}
           onAller={surLesRegles}
-        />
+        />}
 
         {/* ── Ce que le jeu contient ──────────────────────────────────────── */}
         <EnTete enfants="Ce que le jeu contient" />
@@ -592,7 +608,8 @@ export function Carnet({
         ))}
 
         {/* ── Toutes les images ───────────────────────────────────────────── */}
-        <EnTete enfants="Toutes les images" />
+        <EnTete enfants={surLesFabrications ? "Fabriquer et livrer" : "Toutes les images"} />
+        {surLesFabrications && !surLesAssets && <Ligne nom="Fabrications" ouverte={ouvert === "fabrications"} pastille={enRoute} onAller={surLesFabrications} />}
         {/* **Demander une image, et c'est une ligne de plus que la planche**
             (`Navigation.dc.html` en compte dix). La planche dit « la barre pour
             faire quelque chose » ; mais la surface où l'on écrit ce qu'on veut
@@ -605,7 +622,7 @@ export function Carnet({
           ouverte={ouvert === "creer"}
           onAller={surLaCreation}
         />
-        <Ligne
+        {!surLesAssets && <Ligne
           nom="La galerie"
           compte={String(images)}
           ouverte={ouvert === "galerie"}
@@ -616,7 +633,7 @@ export function Carnet({
               : undefined
           }
           onAller={surLaGalerie}
-        />
+        />}
         <Ligne
           nom="Les dépenses"
           compte={dollars(depense)}
@@ -632,11 +649,12 @@ export function Carnet({
             La règle du carnet — ce qui est au jeu au-dessus, ce qui est à
             l'atelier en dessous — tranche donc contre la lettre de la planche,
             et le pied reste à trois boutons. */}
-        <Ligne
+        {!surLesAssets && <Ligne
           nom="La sortie"
           ouverte={ouvert === "sortie"}
           onAller={surLaSortie}
-        />
+        />}
+        {surLAgent && <Ligne nom="L’agent du jeu" onAller={surLAgent} />}
 
         <div className="h-[14px] shrink-0" />
       </div>

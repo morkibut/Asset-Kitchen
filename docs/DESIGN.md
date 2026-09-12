@@ -68,9 +68,10 @@ change une autre tranche.
 **Précision du 11 septembre 2026.** Le produit est une application desktop de fabrication
 d'assets pour un jeu développé avec un agent IA. L'auteur conserve l'identité graphique
 décidée et autorise de nouvelles compositions pour améliorer l'UX. Le comportement relève
-du PRD. La [maquette de l'atelier](maquettes-atelier-unifie/02-atelier.html) est une proposition
-interactive, avec données fictives et polices de repli si elles ne sont pas installées ;
-elle ne remplace pas les jetons ni le spécimen de ce document. Pas de déclinaison mobile.
+du PRD. La [maquette de l'atelier](maquettes-atelier-unifie/02-atelier.html), validée dans son
+ensemble le 12 septembre 2026, fait référence pour la composition et les interactions.
+Ses données fictives ne remplacent pas les services du produit ; les jetons et le spécimen
+de ce document restent la référence visuelle. Pas de déclinaison mobile.
 
 - **Quoi** : un atelier personnel de production d'assets 2D pour jeu vidéo. On définit
   l'univers d'un jeu une fois, puis on fabrique au cas par cas ses personnages, objets,

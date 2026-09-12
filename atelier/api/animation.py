@@ -778,6 +778,7 @@ class CorpsBande(CorpsApercuBande):
     sens: str = ""
     pose: str | None = None
     direction: str | None = None
+    personnage: str | None = None
 
 
 class CorpsCorrection(BaseModel):
@@ -818,11 +819,28 @@ def _prises(donnees: list[dict[str, Any]] | None) -> list[Prise] | None:
     return [Prise.depuis_json(d) for d in donnees]
 
 
+@routeur.post("/strips/{identifiant}/frames/{rang}/pick", status_code=201)
+async def prelever_une_frame_traitee(
+    requete: Request, identifiant: str, rang: int, corps: CorpsCorrection,
+) -> dict[str, Any]:
+    """Le rendu courant devient une image à découper, sans toucher à la bande."""
+    atelier = _atelier(requete)
+    pris = atelier.montage.prelevement_de_frame(
+        identifiant, rang, prises=_prises(corps.prises),
+        recette=Recette.depuis_json(corps.recette) if corps.recette is not None else None,
+    )
+    return atelier.generations.importer(
+        pris["octets"], pris["nom"], projet=pris["projet"],
+        traiter=False, filiation=pris["filiation"], forcer=True,
+    )
+
+
 class CorpsCase(BaseModel):
     """La case qu'une bande remplit — ou plus aucune, les deux vides."""
 
     pose: str | None = None
     direction: str | None = None
+    personnage: str | None = None
 
 
 class CorpsNom(BaseModel):
@@ -912,6 +930,7 @@ async def garder_une_bande(requete: Request, corps: CorpsBande) -> dict[str, Any
         recette=_recette(corps.recette),
         pose=corps.pose,
         direction=corps.direction,
+        personnage=(corps.personnage or "") if "personnage" in corps.model_fields_set else None,
     )
     return bande.en_json()
 
@@ -1120,7 +1139,8 @@ async def affecter_une_bande(
     elle ne disparaît pas.
     """
     bande = _atelier(requete).montage.affecter(
-        identifiant, corps.pose, corps.direction
+        identifiant, corps.pose, corps.direction,
+        personnage=(corps.personnage or "") if "personnage" in corps.model_fields_set else None,
     )
     return bande.en_json()
 

@@ -59,6 +59,7 @@ import {
   type Piece,
 } from "../api"
 import { imageAsset } from "./Apercu"
+import { CalquesDeLEmploi } from "./CalquesDeLEmploi"
 
 /** Ce que le titre écrit — **la règle vit dans `api.ts`**, pas ici.
  *
@@ -191,6 +192,7 @@ function Rangee({
 // ── L'écran ─────────────────────────────────────────────────────────────────
 
 export function Emploi({
+  projet,
   emploi,
   piece,
   emplacements,
@@ -201,6 +203,7 @@ export function Emploi({
   onLesAutresEmplois,
   onCalquesAnimes,
 }: {
+  projet?: string
   emploi: EmploiResolu
   piece: Piece
   emplacements: readonly EmplacementCorps[]
@@ -221,6 +224,7 @@ export function Emploi({
    *  à habiller. */
   onCalquesAnimes: () => void
 }) {
+  const [historique, setHistorique] = useState(false)
   const [nom, setNom] = useBrouillon(emploi.nom, emploi.identifiant)
   const [description, setDescription] = useBrouillon(
     emploi.description,
@@ -241,6 +245,11 @@ export function Emploi({
   const garderLeNom = () => {
     if (nom !== emploi.nom) onRegler({ nom })
   }
+
+  if (projet && porte && porteur !== null && !historique) return <CalquesDeLEmploi
+    key={`${projet}:${piece.identifiant}:${emploi.identifiant}`} projet={projet} emploi={emploi} piece={piece}
+    porteur={porteur} emplacements={emplacements} onRegler={onRegler}
+    onHistorique={() => setHistorique(true)} onLesAutresEmplois={onLesAutresEmplois} />
 
   return (
     <main
@@ -270,6 +279,7 @@ export function Emploi({
               Un calque se pose sur le personnage. Il ne le remplace pas et ne le
               modifie pas.
             </p>
+            {projet && porte && porteur !== null && <button className="mt-[8px] h-[30px] self-start rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle" onClick={() => setHistorique(false)}>Revenir aux calques par image et par frame</button>}
           </div>
           <button
             type="button"

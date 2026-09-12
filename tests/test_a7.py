@@ -174,13 +174,16 @@ def test_la_poussee_se_relit_sur_la_bande(client_video, clip, animateur):
     gardee = _garder(client_video, clip)
     identifiant = gardee["identifiant"]
 
-    client_video.put(
+    reponse = client_video.put(
         f"/api/strips/{identifiant}",
         json={"prises": [{"numero": 12, "dx": 2, "dy": -1}, {"numero": 14}]},
     )
     bande = client_video.get(f"/api/strips/{identifiant}").json()["bande"]
 
-    assert bande["prises"][0] == {"numero": 12, "clip": "", "dx": 2, "dy": -1}
+    assert reponse.status_code == 200
+    occurrence = reponse.json()["prises"][0]["identifiant"]
+    assert occurrence
+    assert bande["prises"][0] == {"numero": 12, "clip": "", "dx": 2, "dy": -1, "identifiant": occurrence}
     assert bande["prises"][1]["dx"] == 0
     assert bande["images"] == [12, 14], "les numéros restent lisibles tels quels"
 

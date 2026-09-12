@@ -658,7 +658,7 @@ export function ReglagesDuDetourage({
    *  planche déjà traitée. Les deux gestes qui visent un pixel s'absentent au
    *  lieu d'offrir un bouton qui ne fait rien, et la colonne dit ce qui est
    *  posé plutôt que de faire croire qu'on peut le poser d'ici. */
-  const sansSurface = asset === undefined
+  const sansSurface = onArmer === undefined
   /** Le catalogue des modèles de silhouette, tel que le serveur le rend (U13).
    *
    *  **Rattrapé en `B26`**, avec le catalogue lui-même : il ne vivait que dans
@@ -2599,7 +2599,7 @@ export function ReglagesDuContour({ recette, univers, mesures, regler, poser }: 
   )
 }
 
-function ReglagesDuRetournement({ recette, regler, poser }: Poste) {
+export function ReglagesDuRetournement({ recette, regler, poser }: Poste) {
   const retournement = recette.retournement ?? RETOURNEMENT_PAR_DEFAUT
   const posant = (partiel: Partial<Retournement>) =>
     void poser({ ...recette, retournement: { ...retournement, ...partiel } })
@@ -2807,7 +2807,7 @@ function RangeeDeCalque({
  *  eux, la surface qui reçoit le passage n'aurait rien à peindre — c'est
  *  l'autre moitié du même geste, et les deux moitiés se tiennent maintenant sur
  *  le même écran. */
-function ReglagesDeLaMain({
+export function ReglagesDeLaMain({
   recette,
   univers,
   mesures,
@@ -3047,16 +3047,33 @@ function ReglagesDeLaMain({
  * lui le curseur de diamètre serait un nombre abstrait. La forme suit celle du
  * pinceau, qui est carrée parce qu'on peint des pixels.
  */
+/** Le choix reste au-dessus du défilement des réglages. Les fabriques ont
+ * leurs propres écrans et ne figurent pas parmi les traitements d'une image. */
+export function SelecteurDeTable({ table, onTable }: { table: Table; onTable: (table: Table) => void }) {
+  return <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">
+    Outil de retouche
+    <select aria-label="Outil de retouche" value={table} onChange={(event) => onTable(event.target.value as Table)}
+      className="h-[34px] w-full rounded-7 border border-trait bg-carte px-[8px] text-[13px] text-encre">
+      {TABLES.filter((outil) => !outil.fabrique).map((outil) => <option key={outil.cle} value={outil.cle}>{NOM_DE_LA_TABLE[outil.cle]}</option>)}
+    </select>
+  </label>
+}
+
 export function ToileDeLaMain({
   asset,
   avant,
   etat,
   onPassage,
+  rendu,
+  onDebut,
 }: {
-  asset: Asset
+  asset: Pick<Asset, "identifiant" | "empreinte" | "label" | "largeur" | "hauteur" | "rendu_largeur" | "rendu_hauteur">
   avant: boolean
   etat: EtatMain
   onPassage: (trait: Trait) => void
+  /** Une frame de planche se peint dans la même surface qu'une image. */
+  rendu?: React.ReactNode
+  onDebut?: () => void
 }) {
   const [trace, setTrace] = useState<[number, number][] | null>(null)
   /** Le pixel visé — **et non la place du pointeur** (U11). Le curseur est le
@@ -3113,6 +3130,8 @@ export function ToileDeLaMain({
       className="relative h-full w-full cursor-none"
       onPointerDown={(evenement) => {
         if (evenement.button !== 0) return
+        evenement.stopPropagation()
+        onDebut?.()
         setTrace([point(evenement)])
         evenement.currentTarget.setPointerCapture(evenement.pointerId)
       }}
@@ -3133,7 +3152,7 @@ export function ToileDeLaMain({
         terminer()
       }}
     >
-      <img
+      {rendu ?? <img
         src={
           avant
             ? api.avant(asset.identifiant, asset.empreinte)
@@ -3143,7 +3162,7 @@ export function ToileDeLaMain({
         draggable={false}
         className="damier-papier h-full w-full object-contain select-none"
         style={{ imageRendering: "pixelated" }}
-      />
+      />}
 
       {/* Le passage en cours, à sa vraie largeur : elle vaut (2 × rayon + 1)
           pixels d'image, mise à l'échelle du cadre. Zoomer l'épaissit ; c'est
@@ -3207,10 +3226,12 @@ export function ToileDeLaMain({
  */
 export function PipetteSurImage({
   asset,
+  source,
   point,
   onPoint,
 }: {
-  asset: Asset
+  asset: Pick<Asset, "identifiant" | "empreinte" | "label" | "largeur" | "hauteur">
+  source?: string
   /** Le point déjà posé sur cette passe, marqué en creux — on vise à nouveau
    *  en voyant d'où l'on part. */
   point: [number, number] | null
@@ -3257,7 +3278,7 @@ export function PipetteSurImage({
       }}
     >
       <img
-        src={api.rendu(asset.identifiant, asset.empreinte, true)}
+        src={source ?? api.rendu(asset.identifiant, asset.empreinte, true)}
         alt={asset.label}
         draggable={false}
         className="damier-papier h-full w-full object-contain select-none"
@@ -3300,10 +3321,12 @@ export function PipetteSurImage({
  */
 export function TraceSurImage({
   asset,
+  source,
   trace,
   onTrace,
 }: {
-  asset: Asset
+  asset: Pick<Asset, "identifiant" | "empreinte" | "label" | "largeur" | "hauteur">
+  source?: string
   /** La forme déjà posée sur cette passe, montrée en creux — on entoure à
    *  nouveau en voyant ce qu'on remplace. */
   trace: [number, number][]
@@ -3361,7 +3384,7 @@ export function TraceSurImage({
           rendu porte le recadrage et la remise sur grille, qui déplacent tous
           les deux ce qu'on montre. */}
       <img
-        src={api.rendu(asset.identifiant, asset.empreinte, true)}
+        src={source ?? api.rendu(asset.identifiant, asset.empreinte, true)}
         alt={asset.label}
         draggable={false}
         className="damier-papier h-full w-full object-contain select-none"
@@ -3403,11 +3426,13 @@ export function TraceSurImage({
  */
 export function CadreDeRecadrage({
   asset,
+  source,
   boite,
   onBoite,
   obtenue,
 }: {
-  asset: Asset
+  asset: Pick<Asset, "identifiant" | "empreinte" | "label" | "largeur" | "hauteur">
+  source?: string
   boite: [number, number, number, number] | null
   onBoite: (boite: [number, number, number, number] | null) => void
   /** **Le rectangle réellement gardé, marge comprise** (U2) — mesuré par le
@@ -3480,7 +3505,7 @@ export function CadreDeRecadrage({
       }}
     >
       <img
-        src={api.rendu(asset.identifiant, asset.empreinte, true)}
+        src={source ?? api.rendu(asset.identifiant, asset.empreinte, true)}
         alt={asset.label}
         draggable={false}
         className="damier-papier h-full w-full object-contain select-none"
@@ -3596,8 +3621,10 @@ export function Retouche({
   decoupe,
   onErreur,
   onUnivers,
+  onAssocierEquipement,
 }: {
   asset: Asset
+  onAssocierEquipement?: () => void
   /** Les images voisines — les attitudes de la chose quand elle en a une, les
    *  voisines de la grille quand elle n'en a pas (`B24`, déménagé de
    *  `Tables.tsx` ; `B25` pour le second cas). **On passe à l'image voisine sans
@@ -4085,7 +4112,14 @@ export function Retouche({
             celui du domaine ; le lire autrement mentirait sur ce que l'image a
             subi. Aucune table n'est cachée — même indisponible, elle s'ouvre et
             porte sa raison à la place de ses réglages. */}
-        <div data-barre-des-tables className="flex flex-wrap items-center gap-[4px]">
+        <div className="flex flex-wrap items-center gap-[8px]">
+          <button type="button" onClick={() => setOuverte("decoupage")} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Découpe · plusieurs images</button>
+          <button type="button" onClick={() => setOuverte("superposition")} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Extraire un élément</button>
+          {onAssocierEquipement && <button type="button" onClick={onAssocierEquipement} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Associer à un équipement</button>}
+          {(ouverte === "decoupage" || ouverte === "superposition") && <button type="button" onClick={() => setOuverte("main")} className="h-[30px] px-[8px] text-[12.5px] text-signal">Revenir à la retouche</button>}
+        </div>
+        <details className="shrink-0 text-[12px] text-encre-3"><summary className="cursor-pointer">Toutes les tables et leur état</summary>
+        <div data-barre-des-tables className="flex flex-wrap items-center gap-[4px] pt-[8px]">
           {TABLES.map((t, rang) => {
             const etat = etatDe(t.cle, recette, traitement, mesures)
             const premiereFabrique = t.fabrique && !TABLES[rang - 1]?.fabrique
@@ -4123,7 +4157,7 @@ export function Retouche({
               </div>
             )
           })}
-        </div>
+        </div></details>
 
         {/* **La fabrique prend le cadre entier.** Elle ne pose rien sur
             l'image ouverte : elle en écrit d'autres, et le montrer entre une
@@ -4475,8 +4509,10 @@ export function Retouche({
           <aside
             data-reglages-de-la-table
             aria-label={`Les réglages de ${NOM_DE_LA_TABLE[ouverte]}`}
-            className="flex w-[380px] shrink-0 flex-col gap-[14px] overflow-y-auto rounded-8 bg-papier-cote p-[22px]"
+            className="flex w-[380px] min-h-0 shrink-0 flex-col gap-[14px] overflow-hidden rounded-8 bg-papier-cote p-[22px]"
           >
+            <SelecteurDeTable table={ouverte} onTable={setOuverte} />
+            <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
             <div className="flex items-start justify-between gap-[8px]">
               <div className="flex flex-col gap-[4px]">
                 <h2 className="font-serif text-[25px] leading-none text-encre">
@@ -4543,6 +4579,7 @@ export function Retouche({
                   et couper la connexion n'arrêterait pas la machine. Le dire
                   vaut mieux qu'un bouton qui aurait l'air de le faire. */}
               <Pourquoi texte="un calcul ne s'interrompt pas — 28 ms pour la chaîne, 1,3 s au pire pour un modèle ; ce qui se défait, c'est le réglage" />
+            </div>
             </div>
           </aside>
 

@@ -160,6 +160,7 @@ class CorpsPersonnage(BaseModel):
     # l'assistant. Il l'emporte sur la famille, qui n'est qu'une façon de le
     # choisir sans le nommer.
     type: str | None = None
+    objectif: dict[str, Any] | None = None
     projet: str | None = None
 
 
@@ -987,11 +988,33 @@ async def creer_personnage(requete: Request, corps: CorpsPersonnage) -> dict[str
         corps.description,
         famille=corps.famille or "",
         type=corps.type or "",
+        objectif=corps.objectif,
     )
     # **La forme complète, comme l'annonce du flux.** L'écran fond ce qui lui
     # arrive par les deux chemins avec le même code : une charge amputée de ses
     # cases y remplacerait un objet entier par un objet à trous.
     return {"personnage": atelier.production.en_charge(projet, personnage)}
+
+
+class CorpsObjectifPersonnage(BaseModel):
+    objectif: dict[str, Any]
+    projet: str | None = None
+
+
+@routeur.get("/characters/{identifiant}/objective")
+async def objectif_personnage(
+    requete: Request, identifiant: str, projet: str | None = Query(None),
+) -> dict[str, Any]:
+    return _atelier(requete).production.objectif_de(_projet(requete, projet), identifiant)
+
+
+@routeur.put("/characters/{identifiant}/objective")
+async def definir_objectif_personnage(
+    requete: Request, identifiant: str, corps: CorpsObjectifPersonnage,
+) -> dict[str, Any]:
+    return _atelier(requete).production.definir_objectif(
+        _projet(requete, corps.projet), identifiant, corps.objectif,
+    )
 
 
 @routeur.put("/characters/{identifiant}")

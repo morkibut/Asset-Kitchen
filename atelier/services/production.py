@@ -64,6 +64,7 @@ from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ProjetInconnu, ServiceBibliotheque
 from atelier.services.evenements import Diffusion
 from atelier.services.montre import de_quoi_montrer
+from atelier.services.objectifs import couverture, objectif_resolu, valider_objectif
 
 
 class PersonnageInconnu(ErreurAtelier):
@@ -1668,6 +1669,7 @@ class ServiceProduction:
         description: str = "",
         famille: str = "",
         type: str = "",
+        objectif: dict[str, Any] | None = None,
     ) -> Personnage:
         """Un nom, une description, et rien d'autre (US-115).
 
@@ -1704,8 +1706,44 @@ class ServiceProduction:
             description=description.strip(),
             type=type or (objet.univers.premier_type_de(famille) if famille else ""),
         )
+        if objectif is not None:
+            try:
+                personnage.objectif = valider_objectif(self, projet, personnage, objectif)
+            except ValueError as erreur:
+                raise ProductionRefusee(str(erreur)) from erreur
         self._sauver(personnage)
         return personnage
+
+    def definir_objectif(
+        self, projet: str, identifiant: str, objectif: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Déclarer les sorties utiles, sans génération ni modification du plan ancien."""
+        personnage = self.personnage(projet, identifiant)
+        try:
+            personnage.objectif = valider_objectif(self, projet, personnage, objectif)
+        except ValueError as erreur:
+            raise ProductionRefusee(str(erreur)) from erreur
+        self._sauver(personnage)
+        return self.objectif_de(projet, identifiant)
+
+    def objectif_de(self, projet: str, identifiant: str) -> dict[str, Any]:
+        """Même objectif et mêmes résultats pour l'interface et le MCP."""
+        personnage = self.personnage(projet, identifiant)
+        objectif = objectif_resolu(self, projet, personnage)
+        images = self._base.assets_du_personnage(
+            identifiant, projet=projet, inclure_ecartes=True,
+        )
+        bandes = self._base.bandes_du_personnage(identifiant, projet=projet)
+        return {
+            "personnage": identifiant,
+            "projet": projet,
+            "objectif": objectif.en_json(),
+            "origine": "explicite" if personnage.objectif is not None else "plan-existant",
+            "couverture": couverture(
+                self, projet, personnage, objectif,
+                [a.en_json() for a in images], [b.en_json() for b in bandes],
+            ),
+        }
 
     def regler_personnage(
         self,
@@ -2303,6 +2341,29 @@ class ServiceProduction:
 
         rendus: dict[str, dict[str, Any]] = {}
         for personnage in personnages:
+            if personnage.objectif is not None:
+                etat = self.objectif_de(projet, personnage.identifiant)["couverture"]
+                cases_demandees = [c for c in etat["cases"] if c["demande"]]
+                noms = dict.fromkeys(c["pose"] for c in cases_demandees)
+                par_pose = []
+                for pose in noms:
+                    cases_pose = [c for c in cases_demandees if c["pose"] == pose]
+                    par_pose.append({
+                        "identifiant": pose, "nom": cases_pose[0]["nom_pose"],
+                        "fait": sum(c["produit"] for c in cases_pose),
+                        "attendu": sum(c["demande"] for c in cases_pose),
+                    })
+                rendus[personnage.identifiant] = {
+                    "poses": {"fait": sum(p["fait"] >= p["attendu"] for p in par_pose),
+                              "attendu": len(par_pose)},
+                    "images": {"fait": etat["images"]["produit"],
+                               "attendu": etat["images"]["demande"]},
+                    "bandes": {"fait": etat["animations"]["produit"],
+                               "attendu": etat["animations"]["demande"]},
+                    "complet": not any(c["manquant"] for c in cases_demandees),
+                    **({"detail": par_pose} if detail else {}),
+                }
+                continue
             poses_faites = 0
             fait = attendu = 0
             anime_fait = anime_attendu = 0
@@ -2374,11 +2435,31 @@ class ServiceProduction:
         par_famille: dict[str, dict[str, int]] = {}
         manques: list[dict[str, Any]] = []
         couts_connus: dict[str, float | None] = {}
+        familles_objectifs: set[str] = set()
 
         for personnage in self.personnages(projet):
             famille = self.famille_de(projet, personnage)
             groupe = par_famille.setdefault(famille, {"compte": 0, "fait": 0, "total": 0})
             groupe["compte"] += 1
+            if personnage.objectif is not None:
+                familles_objectifs.add(famille)
+                etat = self.objectif_de(projet, personnage.identifiant)["couverture"]
+                for nature, nom in (("image", "images"), ("animation", "animations")):
+                    compte = etat[nom]
+                    groupe["fait"] += compte["produit"]
+                    groupe["total"] += compte["demande"]
+                    if compte["manquant"]:
+                        manques.append({
+                            "quantite": compte["manquant"],
+                            "phrase": f"« {personnage.nom} » : {compte['manquant']} {nom} à produire.",
+                            "famille": famille, "sujet": personnage.identifiant,
+                            "nature": nature,
+                            # Une demande n'a pas encore choisi de moyen de
+                            # fabrication. Son coût ne se déduit pas du tarif
+                            # historique des images fixes de cette famille.
+                            "cout_usd": 0.0, "cout_connu": False,
+                        })
+                continue
             for case in self.cases(projet, personnage):
                 demandees = int(case["demandees"])
                 fait = min(len(case["images"]), demandees)
@@ -2417,7 +2498,7 @@ class ServiceProduction:
                 "manque_texte": (
                     "rien n'est encore réclamé"
                     if g["total"] == 0
-                    else f"{g['fait']} poses faites sur {g['total']}."
+                    else f"{g['fait']} {'sorties produites' if cle in familles_objectifs else 'poses faites'} sur {g['total']}."
                 ),
             }
             for cle, g in par_famille.items()
@@ -2438,11 +2519,15 @@ class ServiceProduction:
             "familles": familles,
             "manques": principaux,
             "lot": {
-                "images": sum(m["quantite"] for m in manques),
+                "images": sum(m["quantite"] for m in manques if m.get("nature") != "animation"),
+                **({
+                    "animations": sum(m["quantite"] for m in manques if m.get("nature") == "animation"),
+                    "cout_connu": all(m.get("cout_connu", True) for m in manques),
+                } if familles_objectifs else {}),
                 # Une feuille par sujet en manque dans une famille — la même
                 # unité que la planche qui plie C1 : un appel par sujet, ses
                 # poses manquantes dedans.
-                "feuilles": len({(m["sujet"], m["famille"]) for m in manques}),
+                "feuilles": len({(m["sujet"], m["famille"]) for m in manques if m.get("nature") != "animation"}),
                 "cout_usd": round(sum(m["cout_usd"] for m in manques), 6),
             },
         }

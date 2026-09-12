@@ -50,6 +50,7 @@ import numpy as np
 
 from atelier.domaine.recette import (
     BAS,
+    Main,
     QUANTIFICATION,
     RECADRAGE,
     Recette,
@@ -64,6 +65,7 @@ from atelier.image.traitement import (
     composantes,
     detourer,
     queue,
+    retoucher,
 )
 
 
@@ -582,6 +584,7 @@ def assembler(
     poussees: Sequence[tuple[int, int]] | None = None,
     recettes: Sequence[Recette] | None = None,
     individuelles: Sequence[bool] | None = None,
+    mains_apres_placement: Sequence[Main | None] | None = None,
 ) -> Planche:
     """La planche de sprites de cette bande, dans l'ordre donné (A10).
 
@@ -630,6 +633,15 @@ def assembler(
         x = rang * largeur + (largeur - l) // 2
         y = hauteur - h
         planche[y : y + h, x : x + l] = image
+        if mains_apres_placement and rang < len(mains_apres_placement):
+            main = mains_apres_placement[rang]
+            if main is not None:
+                # La case entière, après la poussée bornée et son éventuelle
+                # marge : le pinceau vise le pixel affiché, pas celui du clip.
+                debut = rang * largeur
+                case = retoucher(planche[:, debut : debut + largeur].copy(), main)
+                planche[:, debut : debut + largeur] = case
+                rendus[rang] = case
 
     return Planche(
         octets=en_png(planche),

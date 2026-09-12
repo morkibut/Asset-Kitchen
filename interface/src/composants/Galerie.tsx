@@ -1230,6 +1230,8 @@ export function Galerie({
           {montageOuvert ? (
             <EcranMontage
               clip={montageOuvert}
+              personnages={personnages}
+              onBande={(id) => { poserLaRacine("codex"); ouvrirLAtelierDeBande(id) }}
               onFermer={() => setMontageOuvert(null)}
               onErreur={(raison) => setPanne(raison)}
             />

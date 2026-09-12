@@ -101,6 +101,7 @@ const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   ambiances: "Ambiances et couleurs",
   reglages: "L'installation",
   equipement: "Les équipements",
+  sortie: "Les livraisons",
 }
 
 // ── Le panneau des touches ────────────────────────────────────────────────

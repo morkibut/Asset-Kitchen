@@ -98,9 +98,59 @@ export type Explication = {
     | "ambiances"
     | "reglages"
     | "equipement"
+    | "sortie"
 }
 
 export const AIDE: Record<string, Explication> = {
+  "fabrication.relecture": {
+    nom: "La demande relue avant l’envoi",
+    quoi: "Le texte composé, les références, le fournisseur, le modèle et ses réglages se relisent ensemble avant de lancer une fabrication.",
+    change: "Modifier prépare une nouvelle version de la demande. Reprendre garde l’envoi précédent et son identifiant : un travail déjà accepté ne se paie pas une seconde fois.",
+    origine: "toi · demande conservée avec ses résultats",
+    ou: "clip",
+  },
+  "fabrication.file-locale": {
+    nom: "Le suivi des calculs locaux",
+    quoi: "La file ordonne les calculs de l’atelier et distingue un moteur disponible, occupé ou non vérifiable.",
+    change: "Annuler retire une attente avant son envoi. Reprendre retrouve le travail conservé. Les durées sont mesurées ; un chargement inconnu n’est pas annoncé comme un modèle déjà prêt.",
+    origine: "atelier · observation des moteurs et historique conservé sur cette machine",
+    ou: "clip",
+  },
+  "equipement.association-image": {
+    nom: "Le rôle d’une image d’équipement",
+    quoi: "Depuis la retouche, une image peut servir de référence, de personnage équipé à extraire ou de calque déjà transparent pour une cible précise.",
+    change: "L’association conserve l’image en bibliothèque. Seul un calque vérifié sur son personnage et sa frame peut remplir la cible ; une référence ne la remplit pas.",
+    origine: "toi · pièce commune, emploi du personnage et cible choisie",
+    ou: "equipement",
+  },
+  "agent.cadre-durable": {
+    nom: "Le cadre de délégation du jeu",
+    quoi: "Le jeu conserve les méthodes et les limites autorisées pour les demandes complètes de l’agent.",
+    change: "Avant chaque appel, l’atelier relit le cadre et réserve le budget partagé. Une fermeture ne remet pas ce total à zéro ; une acceptation externe inconnue conserve sa réservation.",
+    origine: "toi · cadre propre au jeu, distinct des anciens garde-fous de séance",
+    ou: "jeu",
+  },
+  "livraison-godot": {
+    nom: "Les versions livrées dans Godot",
+    quoi: "Une livraison conserve les animations choisies et les fichiers relus avant l’écriture.",
+    change: "Un nouveau favori ne remplace pas le jeu ; une nouvelle livraison remplace seulement les animations choisies, et signale un fichier modifié à la main.",
+    origine: "Ta sélection et le dossier Godot explicitement associé au jeu.",
+    ou: "sortie",
+  },
+  "assets-recherche": {
+    nom: "Rechercher dans les assets",
+    quoi: "La recherche porte sur les noms et descriptions de toutes les familles du jeu.",
+    change: "Le filtre est envoyé au serveur : les assets non encore affichés sont recherchés eux aussi. Ouvrir et organiser retrouve les collections et leur rangement.",
+    origine: "toi · bibliothèque du jeu",
+    ou: "codex",
+  },
+  "fabrications-etat": {
+    nom: "État des fabrications",
+    quoi: "Le journal réunit les demandes conservées et les appels encore en cours.",
+    change: "Le filtre À reprendre montre les échecs et les interruptions. Une demande terminée ouvre ses résultats ; un clip ouvre son montage sans commander une nouvelle vidéo.",
+    origine: "atelier · journal des appels",
+    ou: "clip",
+  },
   // ── L'univers — la bible ──────────────────────────────────────────────────
   //
   // Sept champs voisins dans le même bloc, tous du texte libre, et rien à
@@ -1874,6 +1924,40 @@ export const AIDE: Record<string, Explication> = {
     long: "Une bande se garde sous un nom, toujours : c'est la seule chose que l'écran exige.\n\nLa case qu'elle remplit, elle, est facultative. **Une bande sans case est un brouillon, et un brouillon ne bloque rien** — tu gardes d'abord, tu ranges ensuite, comme partout ailleurs dans l'atelier.",
   },
 
+  "bande.source": {
+    nom: "viser ou découper une frame",
+    ou: "tables",
+    quoi: "La pipette, le tracé du sujet et le rectangle visent l’image source ; la découpe prélève la frame retouchée.",
+    change: "Une visée corrige uniquement la frame choisie. Découper crée une image en bibliothèque, sans modifier ni enregistrer l’animation.",
+    origine: "toi · depuis l’atelier d’animation",
+    long: "La vue source possède son zoom et son déplacement : ses coordonnées restent celles du fichier original, avant réduction. La découpe part au contraire de la case finale, placement et Main compris. Après la découpe, Revenir à l’animation retrouve les réglages en cours. Les morceaux entrent dans la bibliothèque sans nouvel appel de génération.",
+  },
+
+  "bande.main": {
+    nom: "Retoucher une frame à la main",
+    ou: "sujet",
+    quoi: "Peindre ou gommer la frame affichée, avec son propre masque et ses calques de dessin.",
+    change: "Une seule frame. Le début du trait arrête la lecture sur l’image touchée ; les autres frames gardent leurs retouches.",
+    origine: "atelier de l’animation · Outil de retouche → La main",
+    long: "Les traits se posent après le placement de la frame : le pixel sous le pinceau est celui qui sera modifié, même si l’image a été déplacée. Le masque contrôle la transparence ; les calques permettent d’ajouter des couleurs, de les masquer ou de les renommer. Une recette nommée conserve ces retouches. Elles suivent leur occurrence lors d’un déplacement ou d’un passage au chutier. Remplacer la source de cette frame efface ses retouches, car les coordonnées ne désignent plus la même image. Enregistrer les conserve après fermeture et réouverture.",
+  },
+  "bande.historique": {
+    nom: "Défaire et refaire une correction",
+    ou: "sujet",
+    quoi: "Revenir sur les corrections de la session, puis les rétablir.",
+    change: "Le montage, les recettes, la Main, la cadence et la boucle. La lecture et le zoom ne créent pas d’étape dans cet historique.",
+    origine: "Défaire / Refaire · Ctrl + Z / Ctrl + Maj + Z · Ctrl + S pour enregistrer",
+    long: "Les changements restent des essais jusqu’à Enregistrer. L’historique permet de parcourir les quatre-vingts derniers états de cette session. Annuler revient au dernier état enregistré. À la réouverture, la bande reprend ses corrections enregistrées ; l’historique de gestes démarre une nouvelle session.",
+  },
+  "bande.destination": {
+    nom: "Classer une animation",
+    ou: "bande",
+    quoi: "Choisir le personnage, son mouvement et sa direction indépendamment du nom libre de l’animation.",
+    change: "La case où l’animation se retrouve. Son clip source, son montage et ses retouches restent conservés.",
+    origine: "montage vidéo · Classement de l’animation",
+    long: "Aucun personnage laisse un brouillon libre. Un personnage sans mouvement laisse un brouillon dans sa fiche. Les choix viennent du jeu et du personnage : une direction rangée n’est pas reproposée. Reclasser une animation ne régénère aucune image. Les équipements liés à l’ancien porteur ou à l’ancienne case demandent une nouvelle vérification.",
+  },
+
   "bande.cadre": {
     nom: "Le cadre de la bande",
     ou: "bande",
@@ -2077,6 +2161,15 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · proposé par le recalage",
     long:
       "Les touches sont dessinées sous chaque rail plutôt que listées dans une aide, et **elles sont aussi les boutons** : une seule chose à l'écran fait donc deux métiers — elle enseigne et elle agit. Un raccourci écrit dans une aide n'est jamais lu ; dessiné sous le réglage qu'il commande, il se voit au moment où on en a besoin. Maj multiplie le pas par dix.",
+  },
+
+  "superposition.main": {
+    nom: "retoucher le masque d’extraction",
+    ou: "equipement",
+    quoi: "Garder récupère les pixels du dessus aligné ; Retirer efface ceux que la comparaison a retenus à tort.",
+    change: "Les traits corrigent le masque après la différence. Les deux images sources restent intactes.",
+    origine: "toi · taille du pinceau réglable en pixels",
+    long: "Déplacer le dessus ajuste son placement par glissement. Rectangle borne la comparaison. Garder et Retirer montrent le masque en cours, avec l’empreinte du pinceau. Ctrl + molette zoome ; Espace + glisser déplace la vue. La bibliothèque permet de chercher toutes les images avec des filtres de collection et de favori. Rouvrir un résultat retrouve ses deux sources, ses réglages et ses traits enregistrés.",
   },
 
   "superposition.seuil": {

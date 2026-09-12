@@ -1,0 +1,171 @@
+import { useEffect, useRef, useState } from "react"
+import { api, dollars, Refus, type Asset, type Modele, type ModeleVideo, type Personnage } from "../api"
+import { travaux, type DemandeTravail, type Travail } from "../api-travaux"
+import { vignetteAsset } from "./Apercu"
+import { CadreDialogue } from "./CadreDialogue"
+
+const CHAMP = "h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle disabled:opacity-50"
+const BOUTON = `${CHAMP} hover:border-encre-3`
+// Les deux états du même bouton (relecture / lancement) sont exclusifs.
+const PRINCIPAL = "h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50"
+const ETATS: Record<Travail["etat"], string> = { prepare: "Prête à lancer", en_cours: "En cours", a_reprendre: "À reprendre", a_verifier: "À vérifier", externe_inconnu: "État à vérifier chez le fournisseur", termine: "Terminée", annule: "Annulée" }
+const ETAPES: Record<string, string> = { file_locale: "Calcul local", annule: "Annulée", reference: "Image de départ", reference_soumise: "Fabrication de l’image", video: "Vidéo", video_soumise: "Fabrication du clip", montage: "Extraction des frames", livraison: "Livraison Godot", termine: "Terminée" }
+const message = (e: unknown) => e instanceof Refus ? e.message : "Impossible de relire cette fabrication. Réessayez."
+const prix = (montant: number | null) => montant === null ? "coût inconnu" : dollars(montant)
+const nouvelle = (personnage = ""): DemandeTravail => ({ cle: crypto.randomUUID(), personnage, pose: "", direction: "", modele_video: "", prompt_video: "", secondes: 5, resolution: "480p", proportions: "1:1", nombre_images: 8, cadence: 8, sens: "boucle" })
+
+/** Une demande relue est immuable. Revenir en édition crée une nouvelle clé,
+ * tandis que la reprise conserve l'identifiant payé et ses références figées. */
+export function FabricationSuivie({ projet, personnages, onClip, onBande, onFermer, initiale }: {
+  projet: string; personnages: readonly Personnage[]; initiale?: Travail
+  onClip: (id: string) => void; onBande?: (id: string) => void; onFermer: () => void
+}) {
+  const [demande, setDemande] = useState<DemandeTravail>(initiale?.demande ?? nouvelle(personnages[0]?.identifiant))
+  const [travail, setTravail] = useState<Travail | null>(initiale ?? null)
+  const [edition, setEdition] = useState(!initiale)
+  const [erreur, setErreur] = useState("")
+  const [occupe, setOccupe] = useState(false)
+  const [modeles, setModeles] = useState<Modele[]>([])
+  const [videos, setVideos] = useState<ModeleVideo[]>([])
+  const [images, setImages] = useState<Asset[]>([])
+  const [recherche, setRecherche] = useState("")
+  const [favoris, setFavoris] = useState(false)
+  const [choix, setChoix] = useState<"depart" | "reference" | null>(null)
+  const [totalImages, setTotalImages] = useState(0)
+  const defilement = useRef<HTMLDivElement>(null)
+  const [plafondImages, setPlafondImages] = useState(48)
+  const [optionsVideo, setOptionsVideo] = useState(JSON.stringify(demande.options_video ?? {}, null, 2))
+  const [optionsImage, setOptionsImage] = useState(JSON.stringify(demande.options_image ?? {}, null, 2))
+  const personnage = personnages.find((p) => p.identifiant === demande.personnage)
+  const cases = personnage?.objectif?.sorties.filter((s) => s.nature === "animation" && s.quantite > 0)
+  const poses = personnage?.plan.filter((p) => !personnage.ecartees.includes(p.identifiant) && (!cases || cases.some((s) => s.pose === p.identifiant))) ?? []
+  const directions = personnage?.cases.find((c) => c.pose === demande.pose)?.directions.filter((d) => !cases || cases.some((s) => s.pose === demande.pose && s.direction === d.identifiant)) ?? []
+  const video = videos.find((m) => m.identifiant === demande.modele_video)
+  const image = modeles.find((m) => m.identifiant === demande.modele_image)
+  const changer = (champs: Partial<DemandeTravail>) => { setDemande((d) => ({ ...d, ...champs })); setErreur("") }
+  const choisirPose = (pose: string) => {
+    const direction = personnage?.cases.find((c) => c.pose === pose)?.directions.find((d) => !cases || cases.some((s) => s.pose === pose && s.direction === d.identifiant))?.identifiant ?? ""
+    changer({ pose, direction })
+  }
+  useEffect(() => { if (defilement.current) defilement.current.scrollTop = 0 }, [edition])
+
+  useEffect(() => {
+    if (!edition) return
+    let vivant = true
+    api.modeles(demande.proportions, demande.references_image?.length ?? 0, personnage?.type, demande.personnage)
+      .then((c) => { if (vivant) setModeles(c.modeles) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
+    return () => { vivant = false }
+  }, [edition, demande.proportions, demande.personnage, demande.references_image?.length, personnage?.type])
+  useEffect(() => {
+    if (!edition) return
+    let vivant = true
+    api.modelesVideo(demande.secondes, demande.resolution, demande.proportions)
+      .then((c) => { if (vivant) setVideos(c.modeles) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
+    return () => { vivant = false }
+  }, [edition, demande.secondes, demande.resolution, demande.proportions])
+  useEffect(() => {
+    if (!choix) return
+    let vivant = true
+    api.assets({ recherche, favoris, limite: plafondImages }).then((r) => { if (vivant) { setImages(r.assets); setTotalImages(r.total) } }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
+    return () => { vivant = false }
+  }, [choix, recherche, favoris, plafondImages])
+  useEffect(() => {
+    if (!travail || travail.etat !== "en_cours") return
+    let vivant = true
+    const intervalle = window.setInterval(() => { void travaux.lire(projet, travail.identifiant).then((t) => { if (vivant) setTravail(t) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) }) }, 2000)
+    return () => { vivant = false; window.clearInterval(intervalle) }
+  }, [projet, travail?.identifiant, travail?.etat])
+
+  async function relire() {
+    setOccupe(true); setErreur("")
+    try {
+      const d = { ...demande, options_video: JSON.parse(optionsVideo), options_image: JSON.parse(optionsImage) } as DemandeTravail
+      const t = await travaux.preparer(projet, d)
+      setDemande(t.demande); setTravail(t); setEdition(false)
+    } catch (e) { setErreur(e instanceof SyntaxError ? "Les paramètres avancés doivent être un objet JSON valide, par exemple {\"seed\": 42}." : message(e)) }
+    finally { setOccupe(false) }
+  }
+  async function lancer(reprise = false) {
+    if (!travail) return
+    setOccupe(true); setErreur("")
+    try { setTravail(await (reprise ? travaux.reprendre : travaux.demarrer)(projet, travail.identifiant)) }
+    catch (e) { setErreur(message(e)) }
+    finally { setOccupe(false) }
+  }
+  function modifier() {
+    if (!travail) return
+    setDemande({ ...travail.demande, cle: crypto.randomUUID(),
+      ...(travail.envoi_image ? { prompt_image: travail.envoi_image.prompt, repris_image: true } : {}) })
+    setOptionsImage(JSON.stringify(travail.demande.options_image ?? {}, null, 2))
+    setOptionsVideo(JSON.stringify(travail.demande.options_video ?? {}, null, 2))
+    setEdition(true); setErreur("")
+  }
+
+  return <CadreDialogue titre="Fabrication d’une animation" onFermer={onFermer} enfants={<section className="flex min-h-0 flex-1 flex-col bg-papier">
+    <header className="flex shrink-0 items-center justify-between gap-[14px] border-b border-trait p-[22px]"><div><h1 className="font-serif text-[38px] text-encre">{edition ? "Préparer une animation" : "Relire et suivre l’animation"}</h1><p className="mt-[4px] text-[13px] text-encre-3">Image de départ → clip vidéo → frames → animation{demande.livrer_provisoire ? " → Godot" : ""}</p></div><button className={BOUTON} onClick={onFermer}>Fermer</button></header>
+    <div ref={defilement} className="defile min-h-0 flex-1 overflow-y-auto p-[22px]">
+      {erreur && <p role="alert" className="mb-[14px] rounded-7 border border-trait-echec bg-fond-echec p-[14px] text-echec">{erreur}</p>}
+      {edition ? <div className="mx-auto max-w-[880px] space-y-[22px]">
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">1. Animation à créer</legend><div className="grid grid-cols-3 gap-[14px]">
+          <label className="flex flex-col gap-[4px] text-[12px]">Asset<select className={CHAMP} value={demande.personnage} onChange={(e) => changer({ personnage: e.target.value, pose: "", direction: "", reference_asset: null })}>{personnages.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
+          <label className="flex flex-col gap-[4px] text-[12px]">Mouvement<select className={CHAMP} value={demande.pose} onChange={(e) => choisirPose(e.target.value)}><option value="">Choisir…</option>{poses.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
+          <label className="flex flex-col gap-[4px] text-[12px]">Direction<select className={CHAMP} value={demande.direction} onChange={(e) => changer({ direction: e.target.value })}>{!directions.length && <option value="">Sans direction</option>}{directions.map((d) => <option key={d.identifiant} value={d.identifiant}>{d.nom}</option>)}</select></label>
+        </div>{!poses.length && <p className="mt-[14px] text-[13px] text-encre-3">Ajoutez d’abord une animation demandée dans « Objectif & règles » de cet asset.</p>}</fieldset>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">2. Image de départ</legend>
+          <p className="text-[13px] text-encre-3">La référence existante du personnage sera proposée à la relecture. Vous pouvez en choisir une autre ; si aucune n’existe, le modèle d’image la créera.</p>
+          <div className="mt-[14px] flex items-center gap-[14px]">{demande.reference_asset && <img alt="Image de départ choisie" src={api.vignette(demande.reference_asset, "", 128)} className="h-[128px] w-[128px] object-contain" />}<button className={BOUTON} onClick={() => setChoix("depart")}>Choisir dans la bibliothèque</button>{demande.reference_asset && <button className={BOUTON} onClick={() => changer({ reference_asset: null })}>Revenir à la proposition</button>}</div>
+          {!demande.reference_asset && <div className="mt-[14px] space-y-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Modèle pour créer la référence si elle manque<select className={CHAMP} value={demande.modele_image ?? ""} onChange={(e) => changer({ modele_image: e.target.value || null })}><option value="">Utiliser seulement une image existante</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.identifiant}{m.refus ? ` — ${m.refus}` : ""}</option>)}</select></label>
+          {demande.modele_image && <><label className="flex flex-col gap-[4px] text-[12px]">{demande.repris_image ? "Texte complet de l’image, édité pour cet envoi" : "Description de l’image à créer"}<textarea rows={3} value={demande.prompt_image ?? ""} onChange={(e) => changer({ prompt_image: e.target.value })} className="rounded-7 border border-contour bg-papier p-[14px] text-[13px]" /></label><label className="flex flex-col gap-[4px] text-[12px]">Réservation estimée pour l’image, en dollars (si son coût n’est pas encore mesuré)<input type="number" min={0} step="0.01" className={CHAMP} value={demande.plafond_image_usd ?? ""} onChange={(e) => changer({ plafond_image_usd: e.target.value === "" ? null : Number(e.target.value) })} /></label>
+          <div className="flex flex-wrap gap-[8px]">{(demande.references_image ?? []).map((id) => <button key={id} className="rounded-7 border border-contour p-[4px]" title="Retirer cette référence" onClick={() => changer({ references_image: demande.references_image?.filter((r) => r !== id) })}><img className="h-[54px] w-[54px] object-contain" src={api.vignette(id, "", 128)} alt="Référence jointe, cliquer pour retirer" /></button>)}<button className={BOUTON} onClick={() => setChoix("reference")}>Ajouter des références</button></div>
+          {travail?.references.filter((r) => r.asset && !(demande.references_image_ecartees ?? []).includes(r.asset)).map((r) => <div className="flex items-center gap-[8px]" key={r.nom}><img alt="Référence composée à la relecture" src={r.url} className="h-[54px] w-[54px] object-contain" /><button className={BOUTON} onClick={() => changer({ references_image_ecartees: [...(demande.references_image_ecartees ?? []), r.asset!] })}>Retirer de cet envoi</button></div>)}
+          <details><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres du modèle d’image</summary><p className="my-[8px] text-[12px] text-encre-3">Paramètres disponibles : {Object.keys(image?.options ?? {}).join(", ") || "aucun paramètre supplémentaire déclaré"}.</p><textarea aria-label="Paramètres d’image JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsImage} onChange={(e) => setOptionsImage(e.target.value)} /></details></> }</div>}
+        </fieldset>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">3. Mouvement et clip vidéo</legend>
+          <label className="flex flex-col gap-[4px] text-[12px]">Décrire l’animation<textarea rows={3} className="rounded-7 border border-contour p-[14px] text-[13px]" value={demande.prompt_video} onChange={(e) => changer({ prompt_video: e.target.value })} placeholder="Le personnage marche sur place, cycle régulier, caméra fixe…" /></label>
+          <div className="mt-[14px] grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Durée du clip<select className={CHAMP} value={demande.secondes} onChange={(e) => changer({ secondes: Number(e.target.value) })}>{[...new Set([demande.secondes, ...videos.flatMap((m) => m.durees)])].sort((a, b) => a - b).map((n) => <option key={n} value={n}>{n} s</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]">Résolution<select className={CHAMP} value={demande.resolution} onChange={(e) => changer({ resolution: e.target.value })}>{[...new Set([demande.resolution, ...videos.flatMap((m) => m.resolutions)])].map((v) => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]">Proportions<select className={CHAMP} value={demande.proportions} onChange={(e) => changer({ proportions: e.target.value })}>{[...new Set([demande.proportions, ...videos.flatMap((m) => m.proportions)])].map((v) => <option key={v}>{v}</option>)}</select></label></div>
+          <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">Fournisseur et modèle vidéo<select className={CHAMP} value={demande.modele_video} onChange={(e) => changer({ modele_video: e.target.value })}><option value="">Choisir un modèle…</option>{videos.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{m.identifiant}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>{video?.grise && <p className="mt-[8px] text-[13px] text-echec">{video.grise}</p>}
+          <details className="mt-[14px]"><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres avancés du workflow</summary><p className="my-[8px] text-[12px] text-encre-3">Réglages nommés du workflow, par exemple la seed. Le fournisseur vérifie les paramètres avant l’envoi.</p><textarea aria-label="Paramètres vidéo JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsVideo} onChange={(e) => setOptionsVideo(e.target.value)} /></details>
+        </fieldset>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">4. Animation à obtenir</legend><div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Frames à extraire<input className={CHAMP} type="number" min={1} max={64} value={demande.nombre_images} onChange={(e) => changer({ nombre_images: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Cadence (images/s)<input className={CHAMP} type="number" min={0.1} max={120} step={0.1} value={demande.cadence} onChange={(e) => changer({ cadence: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Lecture<select className={CHAMP} value={demande.sens} onChange={(e) => changer({ sens: e.target.value as DemandeTravail["sens"] })}><option value="boucle">En boucle</option><option value="aller-retour">Aller-retour</option></select></label></div><label className="mt-[14px] flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={!!demande.livrer_provisoire} onChange={(e) => changer({ livrer_provisoire: e.target.checked })} />Livrer automatiquement cette première version dans le projet Godot associé</label><p className="mt-[8px] text-[12px] text-encre-3">Le clip et les frames restent conservés. Le montage permet ensuite de choisir un passage, réordonner les frames et retoucher chaque image.</p></fieldset>
+      </div> : travail && <div className="mx-auto max-w-[880px] space-y-[22px]">
+        <div className="rounded-8 border border-trait bg-carte p-[22px]"><div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">{personnage?.nom ?? travail.demande.personnage}</h2><span role="status" className="text-[13px] text-encre-3">{ETATS[travail.etat]} · {ETAPES[travail.etape] ?? travail.etape}</span></div><p className="mt-[8px] text-[13px]">{personnage?.plan.find((p) => p.identifiant === travail.demande.pose)?.nom ?? travail.demande.pose} · {travail.demande.direction || "Sans direction"} · {travail.demande.nombre_images} frames à {travail.demande.cadence} i/s · {travail.objectif.largeur} × {travail.objectif.hauteur} px</p>{travail.raison && <p className="mt-[14px] text-[13px] text-echec">{travail.raison}</p>}</div>
+        <div className="grid grid-cols-2 gap-[22px]">
+          <article className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Image de départ</h2>{travail.entree_video ? <><img className="mt-[14px] h-[128px] w-full object-contain" src={travail.entree_video.url} alt="Image exacte envoyée à la vidéo" /><p className="mt-[8px] text-[12px] text-encre-3">Image conservée et préparée au format du clip.</p></> : <><p className="mesure mt-[14px] break-words text-[12px]">{travail.demande.modele_image}</p><p className="mt-[14px] whitespace-pre-wrap text-[13px]">{travail.envoi_image?.prompt ?? travail.demande.prompt_image}</p><p className="mt-[14px] text-[13px]">Estimation : {dollars(travail.annonce.image_usd)}</p></>}<div className="mt-[14px] flex flex-wrap gap-[8px]">{travail.references.map((r) => <img key={r.nom} src={r.url} alt="Référence exacte envoyée pour créer l’image" className="h-[54px] w-[54px] rounded-7 border border-trait object-contain" />)}</div></article>
+          <article className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Vidéo à fabriquer</h2><p className="mesure mt-[14px] break-words text-[12px]">{travail.demande.modele_video}</p><p className="mt-[14px] whitespace-pre-wrap text-[13px]">{travail.demande.prompt_video}</p><p className="mt-[14px] text-[13px]">1 clip · {travail.demande.secondes} s · {travail.demande.resolution} · {travail.demande.proportions}</p><p className="mt-[8px] text-[13px]">{travail.annonce.video_locale ? `Local · ${travail.annonce.temps_local ? `${Math.ceil(travail.annonce.temps_local.secondes)} s mesurées` : "temps non mesuré"}` : `Estimation vidéo : ${prix(travail.annonce.video.montant)}`}</p><dl className="mt-[14px] text-[12px] text-encre-3">{Object.entries(travail.demande.options_video ?? {}).map(([k, v]) => <div key={k} className="flex justify-between gap-[14px]"><dt>{k}</dt><dd>{String(v)}</dd></div>)}</dl></article>
+        </div><div className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">{travail.annonce.appels} appel{travail.annonce.appels > 1 ? "s" : ""} prévu{travail.annonce.appels > 1 ? "s" : ""}</h2><p className="mt-[8px] text-[14px]">Réservation totale : {dollars(travail.annonce.reservation_usd)}</p><p className="mt-[8px] text-[12px] text-encre-3">{travail.annonce.limite}</p>{travail.consommations.map((c, i) => <p key={i} className="mesure mt-[8px] text-[12px]">{c.modele} : {c.consomme} {c.unite || "usd"} consommé{c.consomme > 1 ? "s" : ""}</p>)}</div>
+        {travail.clip && <button className={BOUTON} onClick={() => onClip(travail.clip!)}>Ouvrir le clip et son montage</button>}{travail.bandes.map((id) => onBande && <button key={id} className={`${BOUTON} ml-[8px]`} onClick={() => onBande(id)}>Retoucher l’animation</button>)}{travail.livraison && <p className="mesure text-[13px]">Livraison terminée. Retrouvez les fichiers et la révision dans « La sortie ».</p>}
+      </div>}
+    </div>
+    <footer className="flex shrink-0 items-center justify-between gap-[14px] border-t border-trait bg-carte p-[14px]"><p className="text-[12px] text-encre-3">{edition ? "Rien ne part avant la relecture." : "La demande et ses résultats restent accessibles depuis Fabrications."}</p><div className="flex gap-[8px]">{edition ? <button disabled={occupe || !demande.pose || !video || !!video.grise || !demande.prompt_video.trim()} onClick={() => void relire()} className={PRINCIPAL}>{occupe ? "Préparation…" : "Relire les envois"}</button> : travail && <>{travail.etat === "prepare" && <><button className={BOUTON} onClick={modifier}>Modifier le texte et les images</button><button className={PRINCIPAL} disabled={occupe} onClick={() => void lancer()}>Lancer · {dollars(travail.annonce.reservation_usd)}</button></>}{["a_reprendre", "a_verifier"].includes(travail.etat) && <button className={BOUTON} disabled={occupe} onClick={() => void lancer(true)}>Reprendre ce travail</button>}{["termine", "annule"].includes(travail.etat) && <button className={BOUTON} onClick={modifier}>Préparer une nouvelle version</button>}</>}</div></footer>
+    {choix && <CadreDialogue titre="Choisir des images dans la bibliothèque" onFermer={() => setChoix(null)} enfants={<div className="flex min-h-0 flex-1 flex-col bg-papier p-[22px]"><header className="flex items-center justify-between"><h2 className="font-serif text-[38px]">{choix === "depart" ? "Choisir l’image de départ" : "Joindre des références"}</h2><button className={BOUTON} onClick={() => setChoix(null)}>Terminer le choix</button></header><div className="my-[22px] flex items-center gap-[14px]"><input type="search" aria-label="Rechercher une image" className={`${CHAMP} flex-1`} value={recherche} onChange={(e) => { setRecherche(e.target.value); setPlafondImages(48) }} /><label className="flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={favoris} onChange={(e) => setFavoris(e.target.checked)} />Retenues seulement</label><span className="text-[12px] text-encre-3">{totalImages} images</span></div><div className="defile flex min-h-0 flex-1 flex-wrap content-start gap-[14px] overflow-y-auto">{images.map((a) => <button key={a.identifiant} aria-pressed={choix === "depart" ? demande.reference_asset === a.identifiant : (demande.references_image ?? []).includes(a.identifiant)} className="w-[128px] rounded-8 border border-contour bg-carte p-[8px] aria-pressed:border-signal" onClick={() => { if (choix === "depart") { changer({ reference_asset: a.identifiant }); setChoix(null) } else changer({ references_image: [...new Set([...(demande.references_image ?? []), a.identifiant])] }) }}><img alt={a.label || "Image sans nom"} className="h-[128px] w-full object-contain" src={vignetteAsset(a, 128)} /><span className="mt-[4px] block truncate text-[12px]">{a.label || "Image sans nom"}</span></button>)}{images.length < totalImages && <button className={BOUTON} onClick={() => setPlafondImages((n) => n + 48)}>Afficher davantage d’images</button>}</div></div>} />}
+  </section>} />
+}
+
+export function SuiviDesTravaux({ projet, personnages, onClip, onBande }: { projet: string; personnages: readonly Personnage[]; onClip: (id: string) => void; onBande?: (id: string) => void }) {
+  const [liste, setListe] = useState<Travail[]>([])
+  const [ouvert, setOuvert] = useState<Travail | "nouveau" | null>(null)
+  const [erreur, setErreur] = useState("")
+  useEffect(() => {
+    let vivant = true
+    const lire = () => void travaux.lister(projet).then((r) => { if (vivant) setListe(r) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
+    lire(); const intervalle = window.setInterval(lire, 5000)
+    return () => { vivant = false; window.clearInterval(intervalle) }
+  }, [projet, ouvert])
+  return <section aria-label="Fabrications suivies" className="mt-[22px] rounded-8 border border-trait bg-carte p-[22px]"><div className="flex items-center justify-between gap-[14px]"><div><h2 className="font-serif text-[25px]">Créer une animation complète</h2><p className="mt-[8px] text-[13px] text-encre-3">Préparez l’image, le clip et les frames en une demande. Retrouvez chaque étape ici.</p></div><button className={BOUTON} disabled={!personnages.length} onClick={() => setOuvert("nouveau")}>Nouvelle animation</button></div>{erreur && <p role="alert" className="mt-[14px] text-echec">{erreur}</p>}<div className="mt-[14px] space-y-[8px]">{liste.map((t) => <button key={t.identifiant} className="flex w-full items-center justify-between gap-[14px] rounded-7 border border-trait p-[14px] text-left hover:border-contour" onClick={() => setOuvert(t)}><span className="text-[13px]">{personnages.find((p) => p.identifiant === t.demande.personnage)?.nom ?? t.demande.personnage} · {t.demande.pose} · {t.demande.direction || "Sans direction"}<small className="mt-[4px] block text-encre-3">{t.acteur === "agent" ? "Agent" : "Création manuelle"} · {new Date(t.cree_le * 1000).toLocaleString("fr-FR")}</small></span><span className="text-[12px] text-encre-3">{ETATS[t.etat]}</span></button>)}</div>{ouvert && <FabricationSuivie key={ouvert === "nouveau" ? "nouveau" : ouvert.identifiant} projet={projet} personnages={personnages} initiale={ouvert === "nouveau" ? undefined : ouvert} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} />}</section>
+}
+
+export function TravailConserve({ projet, identifiant, personnages, onClip, onBande, onFermer }: {
+  projet: string; identifiant: string; personnages: readonly Personnage[]
+  onClip: (id: string) => void; onBande: (id: string) => void; onFermer: () => void
+}) {
+  const [lu, setLu] = useState<Travail | null>(null)
+  const [erreur, setErreur] = useState("")
+  useEffect(() => {
+    let vivant = true
+    setLu(null); setErreur("")
+    travaux.lire(projet, identifiant).then((t) => { if (vivant) setLu(t) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
+    return () => { vivant = false }
+  }, [projet, identifiant])
+  if (!lu) return <main className="flex flex-1 flex-col gap-[14px] p-[22px]"><p role={erreur ? "alert" : "status"}>{erreur || "Lecture de la fabrication…"}</p><button className={BOUTON} onClick={onFermer}>Revenir</button></main>
+  return <FabricationSuivie key={lu.identifiant} projet={projet} personnages={personnages} initiale={lu} onClip={onClip} onBande={onBande} onFermer={onFermer} />
+}

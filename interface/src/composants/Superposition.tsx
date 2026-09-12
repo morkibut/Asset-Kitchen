@@ -30,8 +30,11 @@ import {
   type MesuresCalque,
   type OuvertureSuperposition,
   type Superposition,
+  type Trait,
 } from "../api"
 import { PANNEAU } from "./Infobulle"
+import { SurfaceZoomable } from "./SurfaceZoomable"
+import { BibliothequePourImage } from "./BibliothequePourImage"
 
 // ── Le petit vocabulaire de cet écran ───────────────────────────────────────
 
@@ -317,6 +320,10 @@ export function EcranSuperposition({
   const [masque, setMasque] = useState(false)
   const [choisir, setChoisir] = useState<"dessus" | "dessous" | null>(null)
   const [recalage, setRecalage] = useState(false)
+  const [fabrication, setFabrication] = useState(false)
+  const [outil, setOutil] = useState<"deplacer" | "rectangle" | "garder" | "retirer">("deplacer")
+  const [diametre, setDiametre] = useState(5)
+  const [vue, setVue] = useState<"travail" | "calque" | "resultat">("travail")
   const envol = useRef(0)
 
   // ── L'ouverture ───────────────────────────────────────────────────────────
@@ -367,6 +374,7 @@ export function EcranSuperposition({
     pose.dy,
     pose.seuil,
     pose.rectangle,
+    pose.main,
     // **Changer d'image du dessus change tout ce qui en découle** (G16).
     pose.dessus_arrivee,
   ])
@@ -377,6 +385,15 @@ export function EcranSuperposition({
   const dessous = ouverture?.dessous ?? null
   const dessus = ouverture?.dessus ?? asset
   const pret = Boolean(pose.dessus && pose.dessous)
+  const changerImages = async (haut: string, bas: string) => {
+    try {
+      const recu = await api.ouvrirSuperposition(haut, bas)
+      setOuverture(recu)
+      setPose(recu.pose)
+      setApercu(null)
+      setChoisir(null)
+    } catch (erreur) { onErreur(String(erreur)) }
+  }
 
   const recaler = async () => {
     if (!pret) return
@@ -392,12 +409,14 @@ export function EcranSuperposition({
   }
 
   const fabriquer = async () => {
+    if (fabrication) return
+    setFabrication(true)
     try {
       const { superpositions } = await api.fabriquerSuperposition(pose, sorties, garder)
       onFabrique?.(superpositions)
     } catch (erreur) {
       onErreur(String(erreur))
-    }
+    } finally { setFabrication(false) }
   }
 
   // **L'échelle est le seul réglage de l'outil qui abîme l'image** :
@@ -408,10 +427,10 @@ export function EcranSuperposition({
   return (
     <div
       data-superposition
-      className="grid min-h-0 min-w-0 flex-1 grid-cols-[380px_minmax(0,1fr)_380px] bg-papier"
+      className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_380px] grid-rows-[minmax(0,1fr)_auto] bg-papier"
     >
       {/* ── La colonne de gauche ─────────────────────────────────────────── */}
-      <aside {...PANNEAU} className="flex min-h-0 flex-col border-r border-trait bg-papier-cote">
+      <aside {...PANNEAU} className="col-start-2 row-span-2 row-start-1 flex min-h-0 flex-col border-l border-trait bg-papier-cote">
         <EnTete>superposition</EnTete>
         <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[8px]">
           {/* Les deux images. Le dessus se déplace, le dessous ne bouge pas. */}
@@ -441,7 +460,8 @@ export function EcranSuperposition({
             )}
             <button
               type="button"
-              onClick={() => poser({ dessus: pose.dessous, dessous: pose.dessus })}
+              disabled={!pret}
+              onClick={() => void changerImages(pose.dessous, pose.dessus)}
               className="mesure h-[22px] self-start text-[10.5px] text-encre-2 underline decoration-pointille underline-offset-2 hover:text-encre"
             >
               ↕ échanger
@@ -459,42 +479,6 @@ export function EcranSuperposition({
               </button>
             )}
           </div>
-
-          {choisir && (
-            <div className="flex flex-col gap-[4px] border-t border-trait pt-[8px]">
-              <p className="text-[11px] text-encre-2">
-                choisir {choisir === "dessus" ? "le dessus" : "le dessous"}
-              </p>
-              <div className="flex flex-wrap gap-[4px]">
-                {soeurs.map((soeur) => (
-                  <button
-                    key={soeur.identifiant}
-                    type="button"
-                    title={soeur.label}
-                    aria-label={`Prendre ${soeur.label} comme ${choisir}`}
-                    onClick={() => {
-                      poser({ [choisir]: soeur.identifiant } as Partial<Superposition>)
-                      setChoisir(null)
-                      void api
-                        .ouvrirSuperposition(
-                          choisir === "dessus" ? soeur.identifiant : pose.dessus,
-                          choisir === "dessus" ? pose.dessous : soeur.identifiant,
-                        )
-                        .then(setOuverture)
-                    }}
-                    className="rounded-5 border border-transparent p-[4px] hover:border-trait"
-                  >
-                    <img
-                      src={api.rendu(soeur.identifiant, soeur.empreinte)}
-                      alt={soeur.label}
-                      className="damier-papier h-[54px] w-[54px] object-contain"
-                      style={{ imageRendering: "pixelated" }}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* « Avant de caler » — l'état du détourage des deux images. */}
           {ouverture && (
@@ -627,8 +611,11 @@ export function EcranSuperposition({
               </button>
             )}
             {!pose.rectangle && (
-              <Pourquoi texte="aucun rectangle — glisse-en un sur l'image pour borner ce qui part" />
+              <Pourquoi texte="aucun rectangle — choisis Rectangle au-dessus de l'image pour borner ce qui part" />
             )}
+            <p className="text-[11px] text-encre-3">Garder récupère les pixels du dessus que la différence a manqués. Retirer efface les pixels indésirables du calque.</p>
+            <label className="flex items-center gap-[8px] text-[12px]">Taille du pinceau <input aria-label="Taille du pinceau d’extraction" type="range" min={1} max={63} step={2} value={diametre} onChange={(e) => setDiametre(Number(e.target.value))} className="min-w-0 flex-1" /><input aria-label="Taille du pinceau d’extraction, en pixels" type="number" min={1} max={63} step={2} value={diametre} onChange={(e) => setDiametre(Math.max(1, Math.min(63, Math.round(Number(e.target.value) / 2) * 2 - 1)))} className="w-[54px] rounded-5 border border-trait bg-carte p-[4px]" /></label>
+            <button type="button" disabled={!pose.main.length} onClick={() => poser({ main: pose.main.slice(0, -1) })} className="self-start text-[12px] disabled:text-eteint">Défaire le dernier trait ({pose.main.length})</button>
           </div>
 
           {/* Ce qu'on en sort. Les deux se cochent au lieu de s'exclure. */}
@@ -696,7 +683,7 @@ export function EcranSuperposition({
         <div className="flex shrink-0 flex-col border-t border-trait">
           <button
             type="button"
-            disabled={!pret || sorties.length === 0}
+            disabled={!pret || sorties.length === 0 || fabrication}
             onClick={() => void fabriquer()}
             className="h-[34px] bg-signal px-[14px] text-left text-[11.5px] text-encre-sur-signal transition-colors duration-120 hover:opacity-90 disabled:bg-carte disabled:text-eteint"
           >
@@ -713,8 +700,14 @@ export function EcranSuperposition({
       </aside>
 
       {/* ── Le travail ───────────────────────────────────────────────────── */}
-      <div className="flex min-h-0 min-w-0 flex-col">
-        <div className="flex min-h-0 flex-1 items-center justify-center p-[22px]">
+      <div className="col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col">
+        {choisir ? <BibliothequePourImage voisines={soeurs} onFermer={() => setChoisir(null)} onChoisir={(image) => void changerImages(choisir === "dessus" ? image.identifiant : pose.dessus, choisir === "dessous" ? image.identifiant : pose.dessous)} /> : <>
+        <div className="flex flex-wrap gap-[8px] border-b border-trait p-[8px]">
+          <Choix valeurs={["travail", "calque", "resultat"] as const} valeur={vue} libelles={{ travail: "Caler et retoucher", calque: "Calque seul", resultat: "Résultat" }} onChange={setVue} />
+          {vue === "travail" && <Choix valeurs={["deplacer", "rectangle", "garder", "retirer"] as const} valeur={outil} libelles={{ deplacer: "Déplacer le dessus", rectangle: "Rectangle", garder: "Garder", retirer: "Retirer" }} onChange={setOutil} />}
+        </div>
+        <SurfaceZoomable largeur={dessous?.rendu_largeur || dessous?.largeur || 1} hauteur={dessous?.rendu_hauteur || dessous?.hauteur || 1} libelle="l’extraction">
+        {vue === "travail" ?
           <CadreDuTravail
             dessous={dessous}
             dessus={dessus}
@@ -724,8 +717,13 @@ export function EcranSuperposition({
             opaciteDessous={opaciteDessous}
             opaciteDessus={opaciteDessus}
             onRectangle={(rectangle) => poser({ rectangle })}
+            outil={outil} rayon={(diametre - 1) / 2}
+            onDeplacer={(dx, dy) => poser({ dx, dy })}
+            onTrait={(trait) => setPose((ancienne) => ({ ...ancienne, main: [...ancienne.main, trait] }))}
+            calque={apercu?.calque}
           />
-        </div>
+        : apercu && <img src={vue === "calque" ? apercu.calque : apercu.aplat} alt={vue === "calque" ? "Calque agrandi" : "Résultat agrandi"} className="damier-papier h-full w-full object-contain" style={{ imageRendering: "pixelated", background: COULEUR_DE_FOND[fond] }} />}
+        </SurfaceZoomable></>}
         <div className="mesure flex h-[34px] shrink-0 items-center gap-[14px] border-t border-trait bg-papier-cote px-[14px] text-[10.5px] text-encre-4">
           <span className="whitespace-nowrap">
             × {pose.echelle.toFixed(3)} · {pose.dx >= 0 ? "+" : ""}
@@ -740,9 +738,10 @@ export function EcranSuperposition({
       </div>
 
       {/* ── Les deux rendus ──────────────────────────────────────────────── */}
-      <aside {...PANNEAU} className="flex min-h-0 flex-col border-l border-trait bg-papier-cote">
+      <aside {...PANNEAU} className="col-start-1 row-start-2 flex max-h-[300px] min-h-0 flex-col border-t border-trait bg-papier-cote">
         <EnTete>ce qui en sortira</EnTete>
-        <div className="defile flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto p-[8px]">
+        <div className="defile grid min-h-0 flex-1 grid-cols-2 gap-[8px] overflow-y-auto p-[8px]">
+          <div className="flex min-w-0 flex-col gap-[4px]">
           <p className="text-[11px] text-encre-2">le calque seul</p>
           <div
             className={COULEUR_DE_FOND[fond] ? "" : "damier-papier"}
@@ -761,7 +760,7 @@ export function EcranSuperposition({
           </div>
           <Choix valeurs={FONDS} valeur={fond} onChange={setFond} />
           <Pourquoi texte="un aplat vif fait sauter aux yeux les pixels oubliés — sur le damier ils se confondent" />
-
+          </div><div className="flex min-w-0 flex-col gap-[4px]">
           <div className="border-t border-trait pt-[8px]">
             <p className="text-[11px] text-encre-2">le résultat</p>
           </div>
@@ -785,6 +784,7 @@ export function EcranSuperposition({
             masquer le calque
           </button>
           <Pourquoi texte="l'avant/après — c'est ce qui dit si la pièce tient sur le corps" />
+          </div>
         </div>
       </aside>
     </div>
@@ -849,6 +849,7 @@ function CadreDuTravail({
   opaciteDessous,
   opaciteDessus,
   onRectangle,
+  outil, rayon, onDeplacer, onTrait, calque,
 }: {
   dessous: Asset | null
   dessus: Asset
@@ -860,8 +861,16 @@ function CadreDuTravail({
   opaciteDessous: number
   opaciteDessus: number
   onRectangle: (r: number[] | null) => void
+  outil: "deplacer" | "rectangle" | "garder" | "retirer"
+  rayon: number
+  onDeplacer: (dx: number, dy: number) => void
+  onTrait: (trait: Trait) => void
+  calque?: string
 }) {
   const [trace, setTrace] = useState<[number, number, number, number] | null>(null)
+  const [curseur, setCurseur] = useState<[number, number] | null>(null)
+  const [points, setPoints] = useState<[number, number][] | null>(null)
+  const drag = useRef<{ x: number; y: number; dx: number; dy: number } | null>(null)
   if (!dessous) {
     return (
       <p className="mesure text-[10.5px] text-encre-4">
@@ -884,20 +893,29 @@ function CadreDuTravail({
   return (
     <div
       data-cadre-superposition
-      style={{ aspectRatio: `${largeur} / ${hauteur}` }}
-      className="relative max-h-full max-w-full"
+      style={{ aspectRatio: `${largeur} / ${hauteur}`, cursor: outil === "deplacer" ? "move" : "crosshair", touchAction: "none" }}
+      className="relative h-full w-full"
       onPointerDown={(e) => {
         if (e.button !== 0) return
         const [x, y] = point(e)
-        setTrace([x, y, x, y])
+        if (outil === "rectangle") setTrace([x, y, x, y])
+        else if (outil === "deplacer") drag.current = { x: e.clientX, y: e.clientY, dx: pose.dx, dy: pose.dy }
+        else setPoints([[x, y]])
         e.currentTarget.setPointerCapture(e.pointerId)
       }}
       onPointerMove={(e) => {
-        if (!trace) return
         const [x, y] = point(e)
-        setTrace([trace[0], trace[1], x, y])
+        setCurseur([x, y])
+        if (drag.current) {
+          const boite = e.currentTarget.getBoundingClientRect()
+          onDeplacer(Math.max(-2048, Math.min(2048, drag.current.dx + Math.round((e.clientX - drag.current.x) * largeur / boite.width))), Math.max(-2048, Math.min(2048, drag.current.dy + Math.round((e.clientY - drag.current.y) * hauteur / boite.height))))
+        }
+        if (points && (points.at(-1)?.[0] !== x || points.at(-1)?.[1] !== y)) setPoints([...points, [x, y]])
+        if (trace) setTrace([trace[0], trace[1], x, y])
       }}
       onPointerUp={() => {
+        drag.current = null
+        if (points) { onTrait({ garde: outil === "garder", rayon, points, couleur: "" }); setPoints(null) }
         if (!trace) return
         const [x0, y0, x1, y1] = trace
         setTrace(null)
@@ -911,6 +929,8 @@ function CadreDuTravail({
         // retire au lieu d'en poser un d'un pixel que personne ne voulait.
         onRectangle(boite[2] - boite[0] < 3 || boite[3] - boite[1] < 3 ? null : boite)
       }}
+      onPointerLeave={() => setCurseur(null)}
+      onPointerCancel={() => { drag.current = null; setPoints(null); setTrace(null) }}
     >
       <img
         src={api.rendu(dessous.identifiant, dessous.empreinte)}
@@ -927,7 +947,7 @@ function CadreDuTravail({
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          opacity: opaciteDessus / 100,
+          opacity: (outil === "garder" || outil === "retirer") && calque ? 0 : opaciteDessus / 100,
           transform: `translate(${(pose.dx / largeur) * 100}%, ${(pose.dy / hauteur) * 100}%) scale(${pose.echelle})`,
         }}
       >
@@ -953,6 +973,7 @@ function CadreDuTravail({
           }
         />
       </div>
+      {(outil === "garder" || outil === "retirer") && calque && <img src={calque} alt="Masque en cours" className="pointer-events-none absolute inset-0 h-full w-full object-contain" style={{ imageRendering: "pixelated" }} />}
       {dessine && (
         <span
           aria-hidden
@@ -965,6 +986,8 @@ function CadreDuTravail({
           className="pointer-events-none absolute border-2 border-signal"
         />
       )}
+      {points && <svg aria-hidden viewBox={`0 0 ${largeur} ${hauteur}`} className="pointer-events-none absolute inset-0 h-full w-full"><polyline points={points.map(([x, y]) => `${x + .5},${y + .5}`).join(" ")} fill="none" stroke="var(--color-signal)" strokeOpacity={0.5} strokeWidth={rayon * 2 + 1} strokeLinecap="square" /></svg>}
+      {curseur && (outil === "garder" || outil === "retirer") && <span data-pinceau-extraction aria-hidden className="pointer-events-none absolute border border-signal" style={{ left: `${(curseur[0] - rayon) / largeur * 100}%`, top: `${(curseur[1] - rayon) / hauteur * 100}%`, width: `${(rayon * 2 + 1) / largeur * 100}%`, height: `${(rayon * 2 + 1) / hauteur * 100}%` }} />}
     </div>
   )
 }

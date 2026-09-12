@@ -1,11 +1,11 @@
 {
- "releve_le": 1789214772.745437,
+ "releve_le": 1789218335.6475186,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 167404,
+  "octets": 167578,
   "documents": {
    "AGENTS.md": {
     "octets": 36695,
@@ -104,61 +104,61 @@
     ]
    },
    "docs/PRD.md": {
-    "octets": 13287,
+    "octets": 13357,
     "titres": 9,
     "sections": [
      {
       "titre": "Asset Kitchen — PRD",
       "niveau": 1,
       "ligne": 1,
-      "octets": 13287
+      "octets": 13357
      },
      {
       "titre": "Problème",
       "niveau": 2,
-      "ligne": 8,
+      "ligne": 9,
       "octets": 1072
      },
      {
       "titre": "Solution",
       "niveau": 2,
-      "ligne": 26,
+      "ligne": 27,
       "octets": 5288
      },
      {
       "titre": "Utilisateur cible",
       "niveau": 2,
-      "ligne": 102,
+      "ligne": 103,
       "octets": 543
      },
      {
       "titre": "User Stories → `docs/user-stories.md`",
       "niveau": 2,
-      "ligne": 112,
+      "ligne": 113,
       "octets": 1422
      },
      {
       "titre": "Critères de succès → `docs/prd-criteres.md`",
       "niveau": 2,
-      "ligne": 131,
+      "ligne": 132,
       "octets": 2294
      },
      {
       "titre": "Hors périmètre → `docs/prd-hors-perimetre.md`",
       "niveau": 2,
-      "ligne": 163,
+      "ligne": 164,
       "octets": 668
      },
      {
       "titre": "Décisions d'implémentation → `docs/prd-decisions.md`",
       "niveau": 2,
-      "ligne": 175,
+      "ligne": 176,
       "octets": 1208
      },
      {
       "titre": "Notes complémentaires → `docs/prd-carnet.md`",
       "niveau": 2,
-      "ligne": 194,
+      "ligne": 195,
       "octets": 395
      }
     ]
@@ -242,20 +242,20 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 47866,
+    "octets": 47896,
     "titres": 21,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 47866
+      "octets": 47896
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 36,
-      "octets": 4317
+      "octets": 4311
      },
      {
       "titre": "Les invariants du produit",
@@ -374,14 +374,14 @@
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 27974,
+    "octets": 28048,
     "titres": 31,
     "sections": [
      {
       "titre": "Asset Kitchen — Design System",
       "niveau": 1,
       "ligne": 1,
-      "octets": 27477
+      "octets": 27551
      },
      {
       "titre": "Comment ce document a été obtenu",
@@ -399,168 +399,168 @@
       "titre": "Product Context",
       "niveau": 2,
       "ligne": 66,
-      "octets": 1333
+      "octets": 1407
      },
      {
       "titre": "Aesthetic Direction",
       "niveau": 2,
-      "ligne": 88,
+      "ligne": 89,
       "octets": 1933
      },
      {
       "titre": "Le principe unique dont tout découle",
       "niveau": 3,
-      "ligne": 97,
+      "ligne": 98,
       "octets": 1442
      },
      {
       "titre": "Color",
       "niveau": 2,
-      "ligne": 123,
+      "ligne": 124,
       "octets": 7086
      },
      {
       "titre": "Le papier",
       "niveau": 3,
-      "ligne": 131,
+      "ligne": 132,
       "octets": 990
      },
      {
       "titre": "Les traits",
       "niveau": 3,
-      "ligne": 148,
+      "ligne": 149,
       "octets": 467
      },
      {
       "titre": "Les encres",
       "niveau": 3,
-      "ligne": 160,
+      "ligne": 161,
       "octets": 926
      },
      {
       "titre": "Les trois signaux",
       "niveau": 3,
-      "ligne": 177,
+      "ligne": 178,
       "octets": 408
      },
      {
       "titre": "Un signal qui se pose est un trio, jamais une couleur seule",
       "niveau": 3,
-      "ligne": 188,
+      "ligne": 189,
       "octets": 1903
      },
      {
       "titre": "Mode sombre",
       "niveau": 3,
-      "ligne": 221,
+      "ligne": 222,
       "octets": 353
      },
      {
       "titre": "Deux trous, et ils sont réels",
       "niveau": 3,
-      "ligne": 228,
+      "ligne": 229,
       "octets": 1585
      },
      {
       "titre": "Typography",
       "niveau": 2,
-      "ligne": 252,
+      "ligne": 253,
       "octets": 2602
      },
      {
       "titre": "L'échelle — liste fermée",
       "niveau": 3,
-      "ligne": 269,
+      "ligne": 270,
       "octets": 1587
      },
      {
       "titre": "Spacing",
       "niveau": 2,
-      "ligne": 297,
+      "ligne": 298,
       "octets": 2468
      },
      {
       "titre": "Hauteurs de contrôle — liste fermée",
       "niveau": 3,
-      "ligne": 308,
+      "ligne": 309,
       "octets": 363
      },
      {
       "titre": "Largeurs de colonne — liste fermée",
       "niveau": 3,
-      "ligne": 317,
+      "ligne": 318,
       "octets": 1193
      },
      {
       "titre": "Largeurs de petit contrôle — liste fermée",
       "niveau": 3,
-      "ligne": 335,
+      "ligne": 336,
       "octets": 390
      },
      {
       "titre": "Layout",
       "niveau": 2,
-      "ligne": 344,
+      "ligne": 345,
       "octets": 1539
      },
      {
       "titre": "Les quatre présentations, et la cinquième est interdite",
       "niveau": 3,
-      "ligne": 356,
+      "ligne": 357,
       "octets": 589
      },
      {
       "titre": "Arrondis — liste fermée",
       "niveau": 3,
-      "ligne": 370,
+      "ligne": 371,
       "octets": 312
      },
      {
       "titre": "Les onze pièces",
       "niveau": 2,
-      "ligne": 380,
+      "ligne": 381,
       "octets": 864
      },
      {
       "titre": "Les six règles",
       "niveau": 2,
-      "ligne": 400,
+      "ligne": 401,
       "octets": 961
      },
      {
       "titre": "Motion",
       "niveau": 2,
-      "ligne": 419,
+      "ligne": 420,
       "octets": 565
      },
      {
       "titre": "L'écriture",
       "niveau": 2,
-      "ligne": 435,
+      "ligne": 436,
       "octets": 560
      },
      {
       "titre": "Ce que ce document ne tranche pas",
       "niveau": 2,
-      "ligne": 449,
+      "ligne": 450,
       "octets": 1880
      },
      {
       "titre": "Un défaut d'avant, fermé par construction",
       "niveau": 2,
-      "ligne": 477,
+      "ligne": 478,
       "octets": 1596
      },
      {
       "titre": "Motifs → `docs/design-motifs.md`",
       "niveau": 2,
-      "ligne": 503,
+      "ligne": 504,
       "octets": 39
      },
      {
       "titre": "Journal des décisions → `docs/design-decisions.md`",
       "niveau": 2,
-      "ligne": 505,
+      "ligne": 506,
       "octets": 57
      }
     ]
@@ -573,7 +573,7 @@
    "casses": []
   },
   "docs": {
-   "total": 1076,
+   "total": 1079,
    "casses": []
   }
  }

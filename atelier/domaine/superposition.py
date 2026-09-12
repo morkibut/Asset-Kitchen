@@ -76,7 +76,7 @@ class Superposition:
     Sur toute autre image, les deux sont le même fichier et le drapeau ne change
     rien (G16).
 
-    `main` porte les passages posés **sur le dessus, avant la comparaison**, et
+    `main` porte les passages posés **sur le masque, après la comparaison**, et
     la règle qui les range ici tient en une phrase : *si le réglage est vrai de
     l'image toute seule, il va dans la recette de l'image ; s'il n'est vrai que
     de cette superposition, il va dans la superposition*. Effacer trois pixels

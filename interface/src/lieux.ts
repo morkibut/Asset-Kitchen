@@ -74,11 +74,13 @@ import type { CibleDuClip } from "./composants/Clip"
  * `univers`, `codex` — restent tels quels ici : les renommer touchait soixante
  * emplois pour ne rien changer de ce que le produit fait.
  */
-export type Racine = "tableau-de-bord" | "galerie" | "univers" | "codex"
+export type Racine = "tableau-de-bord" | "bibliotheque" | "fabrications" | "galerie" | "univers" | "codex"
 
 export type Lieu =
   // Les racines.
   | { genre: "tableau-de-bord" }
+  | { genre: "bibliotheque"; famille?: string }
+  | { genre: "fabrications" }
   | { genre: "galerie" }
   | { genre: "univers" }
   | { genre: "codex" }
@@ -102,6 +104,8 @@ export type Lieu =
   // de *création*, lui, n'est pas ici — il prend la fenêtre entière, avant même
   // qu'un jeu soit ouvert, comme l'ouverture de `B4`.
   | { genre: "regles" }
+  | { genre: "delegation" }
+  | { genre: "travail"; travail: string }
   // L'installation de la machine (`B15`) — **le seul lieu qui ne parle d'aucun
   // jeu**. Les clés, ComfyUI, le dossier de travail : ce qu'on branche une fois
   // et qui vaut pour tous les jeux de cette machine.
@@ -227,7 +231,7 @@ export const PILE_INITIALE: readonly Lieu[] = [{ genre: "galerie" }]
  */
 export function racine(pile: readonly Lieu[]): Racine {
   const bas = pile[0]?.genre
-  return bas === "univers" || bas === "codex" || bas === "tableau-de-bord"
+  return bas === "univers" || bas === "codex" || bas === "tableau-de-bord" || bas === "bibliotheque" || bas === "fabrications"
     ? bas
     : "galerie"
 }
