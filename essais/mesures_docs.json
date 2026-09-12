@@ -1,381 +1,387 @@
 {
- "releve_le": 1789054545.8306808,
+ "releve_le": 1789204345.9246337,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 196535,
+  "octets": 167490,
   "documents": {
    "AGENTS.md": {
-    "octets": 35827,
-    "titres": 14,
+    "octets": 36695,
+    "titres": 15,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 35333
+      "octets": 36206
      },
      {
       "titre": "Où en est le dépôt → `docs/PLAN.md`",
       "niveau": 2,
       "ligne": 13,
-      "octets": 14721
+      "octets": 14794
      },
      {
       "titre": "Ce qu'il faut savoir avant de toucher au code — dix points, et pas un de plus",
       "niveau": 3,
-      "ligne": 29,
+      "ligne": 30,
       "octets": 9964
      },
      {
       "titre": "Ce qui est ouvert, et ce qui a été fermé devant",
       "niveau": 3,
-      "ligne": 144,
+      "ligne": 145,
       "octets": 2300
      },
      {
       "titre": "Deux risques qui restent, et une règle qui vient de l'usage",
       "niveau": 3,
-      "ligne": 174,
+      "ligne": 175,
       "octets": 1605
      },
      {
       "titre": "Lancer",
       "niveau": 2,
-      "ligne": 198,
+      "ligne": 199,
       "octets": 3994
      },
      {
       "titre": "Les documents et leur autorité",
       "niveau": 2,
-      "ligne": 263,
+      "ligne": 264,
       "octets": 3981
      },
      {
       "titre": "Les skills et leurs frontières",
       "niveau": 2,
-      "ligne": 322,
+      "ligne": 323,
       "octets": 1963
      },
      {
       "titre": "Où sont les choses → `docs/carte-du-depot.md`",
       "niveau": 2,
-      "ligne": 352,
+      "ligne": 353,
       "octets": 1663
      },
      {
       "titre": "Les projets voisins — les lire avant de réinventer",
       "niveau": 2,
-      "ligne": 369,
+      "ligne": 370,
       "octets": 1035
      },
      {
       "titre": "Règles durables",
       "niveau": 2,
-      "ligne": 386,
-      "octets": 3361
+      "ligne": 387,
+      "octets": 3529
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 429,
+      "ligne": 432,
       "octets": 631
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 440,
-      "octets": 2244
+      "ligne": 443,
+      "octets": 2249
+     },
+     {
+      "titre": "Avant de coder une tranche, vérifier son affectation",
+      "niveau": 2,
+      "ligne": 482,
+      "octets": 627
      },
      {
       "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
       "niveau": 2,
-      "ligne": 479,
+      "ligne": 491,
       "octets": 1087
      }
     ]
    },
    "docs/PRD.md": {
-    "octets": 22135,
+    "octets": 13100,
     "titres": 9,
     "sections": [
      {
       "titre": "Asset Kitchen — PRD",
       "niveau": 1,
       "ligne": 1,
-      "octets": 21823
+      "octets": 13100
      },
      {
       "titre": "Problème",
       "niveau": 2,
-      "ligne": 10,
-      "octets": 5349
+      "ligne": 8,
+      "octets": 1072
      },
      {
       "titre": "Solution",
       "niveau": 2,
-      "ligne": 83,
-      "octets": 11847
+      "ligne": 26,
+      "octets": 5288
      },
      {
       "titre": "Utilisateur cible",
       "niveau": 2,
-      "ligne": 238,
-      "octets": 961
+      "ligne": 102,
+      "octets": 543
      },
      {
       "titre": "User Stories → `docs/user-stories.md`",
       "niveau": 2,
-      "ligne": 254,
-      "octets": 1373
+      "ligne": 112,
+      "octets": 1235
      },
      {
       "titre": "Critères de succès → `docs/prd-criteres.md`",
       "niveau": 2,
-      "ligne": 273,
-      "octets": 449
+      "ligne": 129,
+      "octets": 2294
      },
      {
       "titre": "Hors périmètre → `docs/prd-hors-perimetre.md`",
       "niveau": 2,
-      "ligne": 284,
-      "octets": 501
+      "ligne": 161,
+      "octets": 668
      },
      {
       "titre": "Décisions d'implémentation → `docs/prd-decisions.md`",
       "niveau": 2,
-      "ligne": 295,
-      "octets": 677
+      "ligne": 173,
+      "octets": 1208
      },
      {
       "titre": "Notes complémentaires → `docs/prd-carnet.md`",
       "niveau": 2,
-      "ligne": 308,
-      "octets": 288
+      "ligne": 192,
+      "octets": 395
      }
     ]
    },
    "docs/ARCHITECTURE.md": {
-    "octets": 41464,
+    "octets": 41582,
     "titres": 12,
     "sections": [
      {
       "titre": "Asset Kitchen — Architecture",
       "niveau": 1,
       "ligne": 1,
-      "octets": 41014
+      "octets": 41142
      },
      {
       "titre": "1 · Ce que c'est",
       "niveau": 2,
       "ligne": 16,
-      "octets": 1104
+      "octets": 1299
      },
      {
       "titre": "2 · Ce que ce n'est pas",
       "niveau": 2,
-      "ligne": 34,
-      "octets": 703
+      "ligne": 36,
+      "octets": 769
      },
      {
       "titre": "3 · Décisions de cadrage",
       "niveau": 2,
-      "ligne": 46,
-      "octets": 8988
+      "ligne": 48,
+      "octets": 8697
      },
      {
       "titre": "4 · Architecture",
       "niveau": 2,
-      "ligne": 67,
+      "ligne": 69,
       "octets": 16495
      },
      {
       "titre": "Squelette du dépôt",
       "niveau": 3,
-      "ligne": 251,
+      "ligne": 253,
       "octets": 4241
      },
      {
       "titre": "4 bis · Fournisseur et modèles → `docs/archi-fournisseur.md`",
       "niveau": 2,
-      "ligne": 319,
+      "ligne": 321,
       "octets": 5409
      },
      {
       "titre": "5 · Modèle d'objets → `docs/archi-objets.md`",
       "niveau": 2,
-      "ligne": 382,
+      "ligne": 384,
       "octets": 539
      },
      {
       "titre": "6 à 10 · Les versions → `docs/archi-versions.md`",
       "niveau": 2,
-      "ligne": 393,
+      "ligne": 395,
       "octets": 1125
      },
      {
       "titre": "11 · Risques, et quand les lever → `docs/archi-risques.md`",
       "niveau": 2,
-      "ligne": 410,
+      "ligne": 412,
       "octets": 327
      },
      {
       "titre": "12 · Ce qu'on récupère",
       "niveau": 2,
-      "ligne": 419,
+      "ligne": 421,
       "octets": 2483
      },
      {
       "titre": "13 · Hors périmètre, et pourquoi",
       "niveau": 2,
-      "ligne": 434,
-      "octets": 3041
+      "ligne": 436,
+      "octets": 3199
      }
     ]
    },
    "docs/PLAN.md": {
-    "octets": 71082,
+    "octets": 48139,
     "titres": 21,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 70430
+      "octets": 48139
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
-      "ligne": 24,
-      "octets": 28416
+      "ligne": 38,
+      "octets": 4317
      },
      {
       "titre": "Les invariants du produit",
       "niveau": 2,
-      "ligne": 55,
-      "octets": 8102
+      "ligne": 70,
+      "octets": 8111
      },
      {
       "titre": "L'argent et l'appel",
       "niveau": 3,
-      "ligne": 61,
+      "ligne": 76,
       "octets": 1137
      },
      {
       "titre": "Ce qui décide, et ce qui refuse",
       "niveau": 3,
-      "ligne": 76,
+      "ligne": 91,
       "octets": 975
      },
      {
       "titre": "Le traitement des images",
       "niveau": 3,
-      "ligne": 86,
-      "octets": 953
+      "ligne": 101,
+      "octets": 962
      },
      {
       "titre": "Le rangement",
       "niveau": 3,
-      "ligne": 98,
+      "ligne": 113,
       "octets": 1043
      },
      {
       "titre": "Le personnage, la planche et le calque",
       "niveau": 3,
-      "ligne": 111,
+      "ligne": 126,
       "octets": 1013
      },
      {
       "titre": "Les fournisseurs",
       "niveau": 3,
-      "ligne": 124,
+      "ligne": 139,
       "octets": 723
      },
      {
       "titre": "L'écran",
       "niveau": 3,
-      "ligne": 135,
+      "ligne": 150,
       "octets": 1966
      },
      {
       "titre": "Couverture des user stories",
       "niveau": 2,
-      "ligne": 153,
+      "ligne": 168,
       "octets": 4427
      },
      {
       "titre": "L'ordre de ce qui reste, et les deux endroits où il se resserre",
       "niveau": 2,
-      "ligne": 213,
-      "octets": 9521
+      "ligne": 228,
+      "octets": 9797
      },
      {
       "titre": "Le détail des versions closes → `docs/archive/plan-r6-a-v3.02.md`",
       "niveau": 2,
-      "ligne": 379,
+      "ligne": 398,
       "octets": 366
      },
      {
       "titre": "Les tranches périmées par la V4 → `docs/archive/plan-perime-par-la-v4.md`",
       "niveau": 2,
-      "ligne": 387,
+      "ligne": 406,
       "octets": 529
      },
      {
       "titre": "V3.5 — Le dépliage généralisé",
       "niveau": 2,
-      "ligne": 397,
-      "octets": 6943
+      "ligne": 416,
+      "octets": 7125
      },
      {
       "titre": "P1 · La planche se garde, et son découpage se refait",
       "niveau": 3,
-      "ligne": 419,
+      "ligne": 441,
       "octets": 3419
      },
      {
       "titre": "P2 · Une planche pour plusieurs choses",
       "niveau": 3,
-      "ligne": 468,
+      "ligne": 490,
       "octets": 2296
      },
      {
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
-      "ligne": 508,
+      "ligne": 530,
       "octets": 10780
      },
      {
       "titre": "Le pantin — sorti de la V3 le 3 septembre 2026, arguments intacts",
       "niveau": 3,
-      "ligne": 523,
+      "ligne": 545,
       "octets": 6083
      },
      {
       "titre": "Les trois risques encore ouverts",
       "niveau": 3,
-      "ligne": 605,
+      "ligne": 627,
       "octets": 1772
      },
      {
       "titre": "Un risque qui est levé, et il faut le dire",
       "niveau": 3,
-      "ligne": 629,
+      "ligne": 651,
       "octets": 1926
      }
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 26027,
+    "octets": 27974,
     "titres": 31,
     "sections": [
      {
       "titre": "Asset Kitchen — Design System",
       "niveau": 1,
       "ligne": 1,
-      "octets": 26027
+      "octets": 27477
      },
      {
       "titre": "Comment ce document a été obtenu",
@@ -393,168 +399,168 @@
       "titre": "Product Context",
       "niveau": 2,
       "ligne": 66,
-      "octets": 776
+      "octets": 1333
      },
      {
       "titre": "Aesthetic Direction",
       "niveau": 2,
-      "ligne": 81,
+      "ligne": 88,
       "octets": 1933
      },
      {
       "titre": "Le principe unique dont tout découle",
       "niveau": 3,
-      "ligne": 90,
+      "ligne": 97,
       "octets": 1442
      },
      {
       "titre": "Color",
       "niveau": 2,
-      "ligne": 116,
-      "octets": 6193
+      "ligne": 123,
+      "octets": 7086
      },
      {
       "titre": "Le papier",
       "niveau": 3,
-      "ligne": 124,
+      "ligne": 131,
       "octets": 990
      },
      {
       "titre": "Les traits",
       "niveau": 3,
-      "ligne": 141,
+      "ligne": 148,
       "octets": 467
      },
      {
       "titre": "Les encres",
       "niveau": 3,
-      "ligne": 153,
+      "ligne": 160,
       "octets": 926
      },
      {
       "titre": "Les trois signaux",
       "niveau": 3,
-      "ligne": 170,
+      "ligne": 177,
       "octets": 408
      },
      {
       "titre": "Un signal qui se pose est un trio, jamais une couleur seule",
       "niveau": 3,
-      "ligne": 181,
+      "ligne": 188,
       "octets": 1903
      },
      {
       "titre": "Mode sombre",
       "niveau": 3,
-      "ligne": 214,
+      "ligne": 221,
       "octets": 353
      },
      {
       "titre": "Deux trous, et ils sont réels",
       "niveau": 3,
-      "ligne": 221,
-      "octets": 692
+      "ligne": 228,
+      "octets": 1585
      },
      {
       "titre": "Typography",
       "niveau": 2,
-      "ligne": 235,
+      "ligne": 252,
       "octets": 2602
      },
      {
       "titre": "L'échelle — liste fermée",
       "niveau": 3,
-      "ligne": 252,
+      "ligne": 269,
       "octets": 1587
      },
      {
       "titre": "Spacing",
       "niveau": 2,
-      "ligne": 280,
+      "ligne": 297,
       "octets": 2468
      },
      {
       "titre": "Hauteurs de contrôle — liste fermée",
       "niveau": 3,
-      "ligne": 291,
+      "ligne": 308,
       "octets": 363
      },
      {
       "titre": "Largeurs de colonne — liste fermée",
       "niveau": 3,
-      "ligne": 300,
+      "ligne": 317,
       "octets": 1193
      },
      {
       "titre": "Largeurs de petit contrôle — liste fermée",
       "niveau": 3,
-      "ligne": 318,
+      "ligne": 335,
       "octets": 390
      },
      {
       "titre": "Layout",
       "niveau": 2,
-      "ligne": 327,
+      "ligne": 344,
       "octets": 1539
      },
      {
       "titre": "Les quatre présentations, et la cinquième est interdite",
       "niveau": 3,
-      "ligne": 339,
+      "ligne": 356,
       "octets": 589
      },
      {
       "titre": "Arrondis — liste fermée",
       "niveau": 3,
-      "ligne": 353,
+      "ligne": 370,
       "octets": 312
      },
      {
       "titre": "Les onze pièces",
       "niveau": 2,
-      "ligne": 363,
+      "ligne": 380,
       "octets": 864
      },
      {
       "titre": "Les six règles",
       "niveau": 2,
-      "ligne": 383,
+      "ligne": 400,
       "octets": 961
      },
      {
       "titre": "Motion",
       "niveau": 2,
-      "ligne": 402,
+      "ligne": 419,
       "octets": 565
      },
      {
       "titre": "L'écriture",
       "niveau": 2,
-      "ligne": 418,
+      "ligne": 435,
       "octets": 560
      },
      {
       "titre": "Ce que ce document ne tranche pas",
       "niveau": 2,
-      "ligne": 432,
+      "ligne": 449,
       "octets": 1880
      },
      {
       "titre": "Un défaut d'avant, fermé par construction",
       "niveau": 2,
-      "ligne": 460,
+      "ligne": 477,
       "octets": 1596
      },
      {
       "titre": "Motifs → `docs/design-motifs.md`",
       "niveau": 2,
-      "ligne": 486,
+      "ligne": 503,
       "octets": 39
      },
      {
       "titre": "Journal des décisions → `docs/design-decisions.md`",
       "niveau": 2,
-      "ligne": 488,
+      "ligne": 505,
       "octets": 57
      }
     ]
@@ -563,11 +569,11 @@
  },
  "renvois": {
   "code": {
-   "total": 678,
+   "total": 682,
    "casses": []
   },
   "docs": {
-   "total": 1031,
+   "total": 1073,
    "casses": []
   }
  }
