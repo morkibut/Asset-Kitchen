@@ -192,6 +192,20 @@ dialog.wide-dialog { width:min(1080px,94vw); max-height:94vh }
 .picker-card[aria-pressed=true] { outline:2px solid var(--signal); background:var(--cote) }
 .picker-card strong,.picker-card small { overflow-wrap:anywhere }
 .review-references { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px }
+.eq-review-fields { border:0; padding:0; margin:0; min-width:0 }
+.eq-review-fields { display:grid; grid-template-columns:minmax(260px,.85fr) minmax(0,1.15fr); gap:14px; align-items:start }
+.eq-review-fields > section:first-child { grid-row:span 2 }
+.eq-review-fields .two { display:block }
+.eq-review-fields .surface { padding:18px; min-width:0 }
+.eq-review-fields p { margin:8px 0 }
+.eq-review-fields label { margin-bottom:10px }
+dialog:has(.eq-review-fields) footer { position:sticky; bottom:-30px; background:var(--papier); padding:14px 0; border-top:1px solid var(--contour) }
+.eq-review-fields:disabled input,.eq-review-fields:disabled select,.eq-review-fields:disabled textarea { opacity:1; color:var(--encre); background:var(--papier); border-color:transparent }
+.eq-review-fields:disabled button { display:none }
+.eq-review-fields textarea { min-height:120px }
+.eq-review-fields .surface h3 { margin-top:0 }
+.review-top { border-bottom:1px solid var(--contour); padding-bottom:14px }
+.eq-review-fields .eq-review-grid canvas { width:100%; max-width:288px; height:auto }
 .review-references article { width:130px; display:flex; flex-direction:column; gap:4px }
 .review-references img { width:112px; height:112px; object-fit:contain; image-rendering:pixelated; background:var(--cote) }
 .review-references span { font-size:12px }

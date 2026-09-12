@@ -275,3 +275,27 @@ Les essais navigateur détaillés sont consignés dans la
 [revue du 11 septembre](../revue-conformite-carnet-2026-09-11.md).
 Ils concernent uniquement les parcours de cette maquette. Les critères AU restent ouverts
 tant que les fonctionnalités correspondantes n’existent pas dans l’application réelle.
+# Retours du 12 septembre · 10 h 23
+
+L’emplacement d’un emploi se choisit dans une liste commune enrichissable : tête,
+visage, corps, dos, bras, mains, jambes et pieds. Les anciens libellés sont conservés
+dans cette liste. Ajouter un nom existant ne crée pas de doublon de casse.
+
+La relecture des images équipées s’ouvre en lecture, avec un bouton pour modifier
+l’envoi puis revenir à la lecture. Trois cadres séparent les réglages, le texte et
+les images envoyées. Les références supplémentaires sont communes à chaque appel ;
+les planches de base sont montrées séparément. Le lancement attend la fin de l’édition.
+Résolution et graine demandées sont conservées dans l’historique, mais le simulateur
+continue à rendre des exemples de 64 px, sans moteur IA.
+
+L’existant `Clip.tsx` distingue durée, proportions, résolution et nombre de clips,
+avec des capacités décidées par le catalogue. La fabrication libre vidéo du prototype
+expose ces quatre réglages et conserve un travail par clip. Les profils restent fictifs.
+Équiper des frames existantes ne refabrique pas un clip : durée et nombre de clips
+se règlent dans la fabrication vidéo, pas dans le pliage de ces frames.
+
+Vérification navigateur en session séparée : ajout « Épaules », création de l’emploi,
+lecture/édition de la consigne, passage à quatre cases par planche (six images,
+deux appels, 0,08 $ fictif), relecture de l’envoi après rechargement. Lot vidéo de
+deux clips, six secondes, 16:9, 720p : deux travaux distincts et paramètres relus
+après rechargement. Contrôle visuel de la fenêtre en deux colonnes.
