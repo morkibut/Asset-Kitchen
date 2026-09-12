@@ -321,7 +321,7 @@ une référence. Le résultat revient dans l'asset, prêt à produire un premier
 - [x] Les étapes lourdes déjà terminées se réutilisent ; chaque identifiant externe se conserve.
 - [x] Les prérequis, la pose technique nécessaire et l'état de la ressource GPU sont expliqués.
 - [x] L'échec ou la fermeture ne perd pas un modèle terminé et ne relance pas le pipeline entier.
-- [ ] L'intégration s'éprouve avec asset3d sans modifier automatiquement son environnement.
+- [x] L'intégration s'éprouve avec asset3d sans modifier automatiquement son environnement.
 
 ## AU11 · Un modèle, plusieurs mouvements et directions
 

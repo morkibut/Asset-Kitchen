@@ -111,12 +111,30 @@ class ServiceSources3D:
             if rendu.get(cle) is not None: provenance[cle] = rendu[cle]
         if rendu.get("corrections_historiques") and "rig.glb" in fichiers:
             provenance["rig_origine"] = "copie_du_travail"
+        # Le cadre (dimensions du canevas) d'un mouvement doit rester le même
+        # d'une direction à l'autre : c'est ce qui permet de les assembler
+        # dans la même planche sans qu'une direction paraisse plus grande ou
+        # décalée. asset3d ne renvoie pas l'échelle de caméra ni le pivot par
+        # son contrat HTTP ; seules les dimensions mesurées peuvent donc être
+        # comparées ici, sans GPU.
+        animation = provenance["reglages"].get("animation")
+        if direction:
+            for autre in self.lister(projet):
+                p = autre.get("provenance", {})
+                if (p.get("personnage") == externe and p.get("reglages", {}).get("animation") == animation
+                        and autre.get("direction") and autre["direction"] != direction
+                        and (autre["largeur"], autre["hauteur"]) != dimensions):
+                    raise Source3DRefusee(
+                        f"La direction « {direction} » mesure {dimensions[0]}×{dimensions[1]} px, alors que "
+                        f"« {autre['direction']} » du même modèle et du même mouvement mesure "
+                        f"{autre['largeur']}×{autre['hauteur']} px. Les directions d’un même mouvement doivent "
+                        "garder un cadre commun ; reprenez cette direction avec les mêmes réglages avant de l’importer.")
         source_id = empreinte(json.dumps({"projet": projet, "provenance": provenance, "personnage": personnage, "pose": pose, "direction": direction, "cadence": cadence}, sort_keys=True).encode())[:32]
         dossier = self._dossier(projet, source_id)
         with verrou(self.racine / ".import"):
             if (dossier / "source.json").exists(): return self.lire(projet, source_id)
             for nom, octets in donnees.items(): self.atelier.fichiers._poser(dossier / nom, octets)
-            source = {"identifiant": source_id, "projet": projet, "personnage": personnage, "nom": str(corps.get("nom") or f"{rendu.get('reglages', {}).get('animation', 'Rendu 3D')} · {direction or 'vue libre'}"), "origine": "asset3d", "provenance": provenance, "rendu": rendu, "fichiers": fichiers, "images": len(adresses), "largeur": dimensions[0], "hauteur": dimensions[1], "cadence": cadence, "cree_le": time.time(), "bandes": []}
+            source = {"identifiant": source_id, "projet": projet, "personnage": personnage, "pose": pose, "direction": direction, "nom": str(corps.get("nom") or f"{rendu.get('reglages', {}).get('animation', 'Rendu 3D')} · {direction or 'vue libre'}"), "origine": "asset3d", "provenance": provenance, "rendu": rendu, "fichiers": fichiers, "images": len(adresses), "largeur": dimensions[0], "hauteur": dimensions[1], "cadence": cadence, "cree_le": time.time(), "bandes": []}
             # Une séquence réutilise le montage des frames, sans feindre un
             # fichier vidéo. Sa nature est persistée sur la source du montage.
             generation_id = "3d-" + source_id
