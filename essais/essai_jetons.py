@@ -281,10 +281,19 @@ def sources() -> list[Path]:
     for chemin in sorted(SRC.rglob("*")):
         if chemin.suffix not in {".ts", ".tsx", ".css"}:
             continue
-        if chemin.name.endswith(".test.tsx") or chemin.name == "index.css":
+        if chemin.name.endswith((".test.tsx", ".test.ts")) or chemin.name == "index.css":
             continue
         trouves.append(chemin)
     return trouves
+
+
+# Compatibilité des bancs B0/B27 : leur inventaire est désormais calculé depuis
+# la règle C9. Aucun fichier neuf ne dépend d'un ajout à une liste blanche.
+LES_FICHIERS_DU_CARNET = tuple(
+    chemin.relative_to(RACINE).as_posix()
+    for chemin in sources()
+    if chemin.relative_to(RACINE).as_posix() not in LA_GEOMETRIE_D_AVANT
+)
 
 
 # ── Sens 1 — ce que le code écrit est-il déclaré ? ──────────────────────────

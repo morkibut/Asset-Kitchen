@@ -47,6 +47,10 @@ from essai_jetons import LES_FICHIERS_DU_CARNET  # noqa: E402
 # c'est la règle que `B27` se donne pour ne pas refaire l'erreur qu'il corrige.
 # Chacune dit ce qu'elle porte et pourquoi ce n'est pas un second écran.
 EXCEPTIONS: dict[str, str] = {
+    # La géométrie de la bulle reste ancienne, mais ses crochets et repères
+    # sont des pièces communes de l'aide, jamais une logique d'écran métier.
+    "interface/src/composants/Infobulle.tsx":
+        "placement et crochets de l'aide partagés par tous les écrans",
     # Le vocabulaire de la recette (`B26`) : des faits du domaine — la liste
     # des cibles, le nom d'un moteur, les deux crochets `useRecette` et
     # `useMesures` — pas un écran. Il vit d'ailleurs hors de `composants/`

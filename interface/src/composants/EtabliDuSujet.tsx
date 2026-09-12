@@ -141,8 +141,8 @@ export const animeesDemandees = (case_: Case | undefined): number =>
  *  que de laisser un vide passer pour un oubli. */
 const SANS_ATTITUDES = ["décor", "tuile"]
 
-export const posesTenues = (plan: Pose[], personnage: Personnage): Pose[] =>
-  plan.filter((p) => !personnage.ecartees.includes(p.identifiant))
+import { posesTenues } from "../production"
+export { posesTenues } from "../production"
 
 /** Les deux ordres d'une colonne de pièce (C4, US-152). */
 export type Ordre = "attitude" | "pire"

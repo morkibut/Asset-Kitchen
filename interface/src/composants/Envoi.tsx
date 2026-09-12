@@ -55,7 +55,7 @@ import { sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 /** Le tri de départ — **rien**. Il ne porte que des écarts, jamais un état
  *  complet : c'est ce qui fait qu'éteindre les trois lignes d'une ambiance
  *  rallume les textes du jeu d'eux-mêmes. */
-export const TRI_VIDE: Tri = { eteints: [], allumes: [], textes: {}, fond: null }
+export { TRI_VIDE } from "../envoi"
 
 /** Le nom français d'un groupe de lignes.
  *

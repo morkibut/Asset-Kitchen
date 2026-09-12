@@ -33,6 +33,8 @@ docs/recherche-video-locale/bancs/**/*.mp4
 __pycache__/
 donnees/
 .venv/
+.venv-codex/
+.cache/uv-codex/
 node_modules/
 interface/dist/
 *.pyc

@@ -23,7 +23,7 @@ import {
   type Emplacement,
 } from "./api"
 import { fondre } from "./flux"
-import { TRI_VIDE } from "./composants/Envoi"
+import { TRI_VIDE } from "./envoi"
 import type { EnVol } from "./composants/ChampPrompt"
 
 /** Le geste qu'un refus porte, quand il y a un endroit où aller. */

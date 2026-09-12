@@ -45,7 +45,7 @@ import {
 import { sujetAsset, useVisee } from "./Apercu"
 import { Bloc, Bouton, EnTetePanneau, Libelle, Raison, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
-import { posesTenues } from "./EtabliDuSujet"
+import { posesTenues } from "../production"
 import { MOTEUR, RESUME } from "../recette"
 
 /** Le modèle qui a produit une image, tel qu'il se lit (US-123).
