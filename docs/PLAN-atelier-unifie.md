@@ -81,6 +81,21 @@ ne ferment aucun critère de fidélité Godot, de génération réelle ou de sto
 5. **Une source 3D produit plusieurs animations et angles** — AU9 à AU11.
 6. **Le même atelier couvre les autres assets, puis tuiles et son** — AU12 à AU14.
 
+**Complément de maquette demandé le 12 septembre : sources vidéo et 3D.** Il prolonge
+US-521, US-522, US-526 et US-528, sans remplacer les preuves de production AU8 à AU11.
+
+- [x] La fabrication vidéo produit un clip source ; plage, échantillonnage, cadre et
+  pivot sont relus avant de créer la bande liée au personnage, mouvement et direction.
+- [x] La source 3D expose référence et consigne, modèle, squelette, mouvements, caméra,
+  style et rendus ; chaque étape conserve ses réglages après réouverture.
+- [x] La disponibilité du modèle ne signifie pas que son rig ou ses animations sont prêts.
+  Corriger une étape indique ce qui est à vérifier sans effacer les résultats antérieurs.
+- [x] L'aperçu réagit à la caméra, au mouvement et au style ; ses limites de simulation
+  sont explicites. Les frames produites rejoignent la retouche et la livraison communes.
+
+Preuves et limites : [essai des sources vidéo et 3D](releves/2026-09-12-sources-video-3d.md).
+Ces coches valident le parcours du prototype, sans clore AU8 à AU11.
+
 Ordre conseillé : AU1 → AU2 → AU3 → AU4 → AU5 → AU15 → AU16 → AU17 → AU6 → AU7 → AU8
 → AU9 → AU10 → AU11 → AU12 → AU13 → AU14. Les dépendances réelles sont indiquées par tranche.
 Les tuiles et le son restent en deuxième temps, conformément à la demande.

@@ -12,7 +12,7 @@ Les limites sont affichées sur les écrans concernés, pas seulement dans ce do
 
 Ouvrir l’HTML dans un navigateur desktop, ou le servir avec un serveur statique local depuis
 la racine du dépôt. Il utilise des feuilles CSS, des scripts voisins et des images locales,
-sans dépendance réseau. Le panneau **Essayer la maquette** propose huit parcours. Commencer par
+sans dépendance réseau. Le panneau **Essayer la maquette** propose dix parcours. Commencer par
 **Créer sans MCP**, puis **Corriger une animation** et **Composer un univers**.
 
 Pour les derniers retours : essayer **Une planche, plusieurs images** et **Un sac extrait
@@ -21,6 +21,12 @@ de table reste en haut du panneau droit ; **Calques** ouvre la composition sépa
 Pour les équipements complets, partir de **Personnage → Équipements** : créer une pièce,
 préparer ses calques dans son emploi, puis ouvrir **Combiner les équipements**. Employer
 la même pièce sur un autre héros permet d'essayer la séparation des adaptations.
+
+Pour les animations issues d'une source, ouvrir **Personnage → Sources & clips**.
+**Créer un clip vidéo** conduit à l'image de départ et à la relecture ; son résultat ouvre
+le clip source, puis **Choisir un passage et monter**. **Nouvelle source 3D** propose six
+étapes conservées : image, modèle, squelette, mouvements, caméra/style et rendus.
+Les exemples permettent d'essayer ces deux chemins sans fournisseur ni installation.
 
 Le bouton **Noter une remarque** garde le contexte de l’écran. Les remarques s’exportent
 en texte Markdown copiable depuis **Vos remarques**, avec téléchargement facultatif selon
@@ -39,10 +45,11 @@ le bandeau. Les tests de cette révision ont utilisé cette séance séparée de
 | Univers / toile | Ajouter note, image et îlot ; annoter ; déplacer et relier ; zoomer ; retrouver les positions ; mettre en réserve ; régler les îlots ; préparer un envoi depuis une sélection ou un îlot ; découper une image en cartes, original conservé | Extraction de palette, officialisation d'artwork, placement des grands lots et passage assisté vers les règles à compléter |
 | Bibliothèque | Liste/grille, recherche, filtres, tri et pagination ; ranger une sélection, créer, archiver et restaurer une collection ; galerie des résultats et regroupement des dérivés ; essai sur 602 assets et 24 collections | Performance du stockage réel et particularités de chaque famille à vérifier dans le produit |
 | Objectif | Fixe, animé ou mixte ; dossiers de mouvements et rangées de directions ; résultats fixes et animés distincts | Couverture partagée réelle avec API et MCP dans AU2 |
-| Création manuelle | Fiche vide → référence → demande d’animation → relecture entière → fabrication → résultat | Les générations sont simulées et réemploient des images d’exemple |
+| Création manuelle | Fiche vide → référence → demande d’animation → relecture entière → clip source → montage → retouche ; parcours 3D distinct accessible depuis la même fiche | Les générations sont simulées et réemploient des images d’exemple ; une vidéo reçue ne devient pas automatiquement une animation prête |
 | Référence / import | Importer PNG, JPEG, WebP dans le navigateur, limite de démonstration à 2 Mo | Pas de téléversement au serveur ; clip représenté par une séquence préparée |
 | Fabrications | Origine manuelle ou agent ; attente, résultat, interruption, échec, reprise explicite ; résultat en bibliothèque | Ni travail distant, ni facturation, ni ordonnanceur réel |
-| Montage | Lecture, cadence, boucle, choix et sélection multiple de frames, ordre, duplication, retrait, extraction fixe | Pas de décodage d’un clip importé ni de détection automatique des temps clés |
+| Clip source | Lecture de la séquence brute, déplacement frame par frame, consigne/références/paramètres conservés, nouvelle demande à partir de l'ancienne, accès aux animations déjà montées ; source et position retrouvées après fermeture | Cinq frames de démonstration, aucun nouveau fichier vidéo décodé ; la durée demandée au modèle est distincte de celle de l'exemple |
+| Montage | Marquer début/fin, plage temporelle ou numéros de frames, échantillonnage, ajout de clips, ordre par glisser-déposer/clavier, duplication/retrait, aller-retour et comparaison de boucle ; cadence, cadre commun mesuré/manuellement ajusté, pivot, mouvement et direction ; brouillon et retouches repris | Mesure locale des pixels opaques de l'exemple, pas détection sémantique des temps clés ; cadre en 64 px, aucun calcul pleine résolution ni export Godot vérifié |
 | Main | Peinture au pixel, gomme du calque actif, portée frame/sélection/animation, annuler/rétablir | Sélection géométrique, pipette et outils de peinture avancés à compléter |
 | Composition | Calques de peinture et d’image, ordre, duplication, nom, visibilité, verrouillage, opacité, déplacement d’image ; garder et rouvrir | Édition de formes, transformations avancées, fusion et suivi automatique sur une animation à compléter |
 | Recette | Miroir, marge, lumière, saturation et repères modifient l’aperçu ; recette nommée ; garder et rouvrir les réglages | Les filtres sont simplifiés. Les moteurs CPU actuels ne sont pas réécrits en JavaScript |
@@ -54,7 +61,7 @@ le bandeau. Les tests de cette révision ont utilisé cette séance séparée de
 | Tenues | Activer plusieurs équipements pendant la lecture, garder une combinaison et la rouvrir ; corps et calques séparés, aperçu des manques ; commandes de téléchargement PNG assemblé ou paquet JSON avec images | Téléchargements déclenchés, fichiers non inspectés ; aucun format final ni importeur Godot validé |
 | Livraison générale | Sélection, états nouveau/modifié/inchangé, aperçu animé, fichiers prévus et révisions ; historique avec instantanés ; décision de conflit fictif | Aucun fichier du jeu écrit ni SpriteFrames produit ; les téléchargements d'essai des équipements sont distincts de la preuve Godot AU1 |
 | Réglages | Règles de l’univers ; disponibilité indépendante des moteurs ; cadre de l’agent mémorisé et choix de méthode filtré | Pas de clé réelle ; profils de workflow descriptifs ; installations, quotas et états GPU à détailler |
-| Sources 3D | Modèle conservé → rig → demande de rendu ; plusieurs rendus d’une source | Parcours entièrement simulé, aucun appel à asset3d |
+| Sources 3D | Six étapes : image de départ, versions de modèle, squelette corrigé/contrôlé, mouvements attachés, caméra/style et rendus par mouvement/direction ; mannequin CPU manipulable, contrôles de dépendance, travaux simulés avec échec/reprise, réouverture des versions et retouche des frames produites | Le mannequin ne représente pas l'image jointe ; aucun modèle IA, rigging réel, lecture de maillage/FBX ou appel asset3d. Les fichiers 3D importés ne sont référencés que par leur nom ; les rendus locaux restent en 64 px |
 | Tuiles / son | Place dans la feuille de route annoncée | Ateliers spécialisés à concevoir plus tard, aucun faux outil annoncé comme prêt |
 
 Le prototype est donc **large et interactif, encore incomplet dans le détail des outils**.
@@ -77,7 +84,7 @@ avec le carnet, les lieux, la retouche et la recette du code actuel.
 | Galerie, Comparer, Grille, Essai | Bibliothèque et comparaison ; compléter grille de cohérence, essai animé et calibration |
 | Retouche, Main, atelier-main, atelier-detourer, atelier-recadrer, atelier-reduire, atelier-couleurs, atelier-nettoyer, atelier-contour, atelier-retourner | Éditeur commun ; les limites des tables avancées sont listées ci-dessus |
 | atelier-decoupe, atelier-difference, Emplois, Emploi | Découpe et extraction dédiées ; parcours d'équipement complet dans la maquette, de l'emploi aux calques et à la tenue. Le raccord au domaine existant et à B20 reste à construire |
-| Clips, Clip, Atelier-animation | Sources et montage ; compléter vidéo brute, plages temporelles et états de préparation |
+| Clips, Clip, Atelier-animation | Écran de clip source puis montage avec plages temporelles, cadre commun, pivot et reprise ; brancher ensuite le vrai décodage vidéo et les mesures du produit |
 | Envoi, Relecture | Préparation et écran entier de relecture, puis fabrications |
 | Sortie | Livraison ; confirmer le contrat réel dans Godot avant de figer le détail |
 | Installation, Depenses, Finesse | Réglages ; compléter installation, catalogue réel, barème et dimensions fines |
@@ -98,16 +105,17 @@ contrôles et de sauvegardes, puis tester son parcours de reprise.
 2. La fiche doit être orientée vers ce que le jeu attend. Sa matrice ne doit pas redevenir
    une liste obligatoire de poses et directions inutiles.
 3. Le manque de référence doit être expliqué **avant l’envoi**, avec une suite claire.
-   Une prochaine variante pourra proposer « préparer la référence puis animer » en un geste
-   supervisé, en montrant ses deux opérations et leurs coûts.
+   Le parcours conserve maintenant la demande d'animation pendant la préparation de sa
+   référence. Vérifier que ses deux opérations et leurs relectures restent compréhensibles.
 4. Une même table peut corriger une image ou une bande. La portée doit rester évidente,
    surtout quand une lecture était en cours. La maquette fige la frame au début du trait.
 5. Les réglages avancés méritent une place accessible sans rendre tous les écrans denses.
    Leur inventaire compte davantage que le nombre de boutons visibles.
 6. Favori et résultat livré sont deux choix. Vérifier que les libellés suffisent à le faire
    comprendre sans mode d’emploi.
-7. L’intégration 3D doit garder la source et proposer des rendus réutilisables ; elle ne doit
-   pas imposer de comprendre ComfyUI pour fabriquer un personnage.
+7. L’intégration 3D garde maintenant source, versions, squelette et mouvements séparés.
+   Éprouver les six étapes pour vérifier que les contrôles rassurent sans devenir une
+   succession mécanique de cases ; les adaptateurs réels restent à construire.
 8. Une découpe est une fabrication de nouvelles images ; elle ne doit pas être confondue
    avec le recadrage d’une image ou le choix des frames d’un clip. La relecture nomme les
    sorties et leur destination avant leur création.
@@ -125,6 +133,21 @@ une copie inchangée d’une planche du banc vidéo local du dépôt (cinq vues 
 fond fait partie de l’image ; ce n’est pas une preuve de détourage. Aucune génération IA n’a
 été lancée pour ce travail. La taille d’aperçu de la retouche est 64 px, quelle que soit la taille
 de sortie sélectionnée : cette différence est affichée dans la table Pixelisation.
+
+Le clip de démonstration lit ces cinq frames à huit images par seconde, soit **0,625 s**.
+Demander cinq ou six secondes au profil vidéo ne rallonge pas artificiellement cet exemple.
+Les marqueurs temporels et l'échantillonnage utilisent les frames disponibles ; la cadence
+choisie pour le jeu est indépendante. Le montage conserve une fenêtre commune, appliquée
+aux images et à leurs retouches, et un pivot affiché en repère. La mesure de silhouette
+cherche les pixels opaques des frames choisies ; elle ne détoure pas leur fond.
+
+L'aperçu 3D et ses sprites proviennent du même **mannequin dessiné sur CPU dans le navigateur**.
+Caméra, articulations simplifiées, mouvement, éclairage et style changent effectivement
+ses images. Cela ne mesure ni la reconstruction du personnage joint, ni sa déformation
+par un rig réel. La consigne prépare l'image en amont ; les profils de reconstruction
+repris d'asset3d sont présentés comme des entrées image. Les aperçus utilisent 64 × 64 px
+pour les sprites même si une autre taille est demandée. Aucun poids, modèle, maillage ou
+fichier d'animation n'est téléchargé ni chargé par un moteur 3D.
 
 La planche de découpe d’essai assemble quatre copies de la vignette. Le sac d’essai est
 une pièce dessinée en rectangles sur une copie du sprite de profil. Ce sont des supports
@@ -337,3 +360,31 @@ de version retenue. Elle distingue nouveau, modifié et inchangé ; le conflit f
 se résout avant l'envoi. L'historique conserve les pixels et réglages de l'ancienne
 version. Les anciennes entrées sans instantané le disent, sans reconstituer un passé fictif.
 Tout cela reste une simulation : la preuve d'un import Godot conforme appartient à AU1.
+
+## Extension des sources vidéo et 3D du 12 septembre
+
+Le **clip source** est un écran distinct de la fabrication et du montage. Il conserve
+l'envoi d'origine et les animations qui en sont issues. Le passage vers le montage reprend
+le mouvement et la direction demandés ; une reprise conserve ensuite les choix du brouillon.
+L'ordre, les occurrences dupliquées, la fenêtre commune, le pivot et la cadence survivent
+à la fermeture. La source reste disponible pour monter un autre passage.
+
+Le parcours **3D** conserve chaque étape et les versions précédentes. Préparer l'image,
+reconstruire le modèle, préparer le squelette et produire les rendus passent chacun par
+une relecture puis un travail simulé. Un échec garde les paramètres permettant une reprise.
+Attacher un mouvement à un squelette existant ne refait pas son rigging. Modifier ses
+corrections impose de revoir les mouvements concernés ; les sprites déjà rendus restent
+conservés avec leurs anciens réglages. Les versions de modèle se retrouvent dans la galerie.
+
+La caméra se règle par valeurs/curseurs et par manipulation de l'aperçu. Projection,
+orientation, cadrage, pivot, style et éclairage sont conservés pour un lot de directions.
+Le même dessin CPU sert à l'aperçu et aux frames rendues ; ces images entrent dans la fiche
+de l'asset, où les outils habituels de retouche et de jugement restent accessibles.
+Les noms des fichiers 3D/FBX importés sont conservés pour tester le parcours, sans lecture
+de leur contenu. La compatibilité réelle des rigs et la fidélité du rendu asset3d restent
+à éprouver lors du raccord au produit.
+
+Le [relevé des essais vidéo et 3D](../releves/2026-09-12-sources-video-3d.md) distingue
+les gestes vérifiés dans le navigateur des capacités encore simulées. Les tests de montage
+couvrent les retouches des copies, les temps de l'exemple, l'échantillonnage et la destination
+héritée du clip. Ils ne remplacent ni un décodage vidéo ni un export exploité dans Godot.

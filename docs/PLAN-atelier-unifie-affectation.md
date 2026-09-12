@@ -60,6 +60,14 @@ réutilisent leurs contrôles. Les preuves sont des essais navigateur, notamment
 rechargement et sur données nombreuses. L'affectation historique recommande Sonnet ; les
 agents de cette session utilisent le modèle disponible hérité, sans prétendre exécuter Sonnet.
 
+**Sources vidéo et 3D — préparation UX [MEDIUM], Sonnet, réflexion élevée.**
+Le montage, la relecture et la conservation des sources existent dans le prototype ;
+le parcours 3D est encore une fiche à trois actions. L'extension ajoute des états locaux,
+un aperçu géométrique CPU et des raccords aux mêmes résultats, sans API externe ni
+modification des installations. Les contrats de reprise de montage et de livraison
+restent à préserver. Les garanties sur les vrais maillages, rigs et rendus demeurent
+dans AU9–AU11 et leur affectation n'est pas abaissée par une maquette fonctionnelle.
+
 **Complément après validation de la simplicité de l'UI.** AU2, AU3 et AU4 sont renforcées
 par US-534 à US-536 : création sans MCP, toile et reprise complète des tables. Leurs
 étiquettes sont conservées : aucune réécriture de la toile ni nouveau schéma de retouche

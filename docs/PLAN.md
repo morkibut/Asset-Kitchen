@@ -11,7 +11,7 @@
 > Les équipements complets sont obligatoires : AU15–AU17, après AU5.
 > La consolidation autorisée le 12 septembre est éprouvée dans le prototype : reprise,
 > espace compact, bibliothèque, envois, équipements, toile et livraisons simulées.
-> L'essai de cette révision par l'auteur reste ouvert.
+> Vidéo et 3D sont aussi éprouvées : de la source aux sprites, avec reprises et réglages.
 > L'amendement RF est remplacé par cet ordre. La V4 reste le socle livré, avec les écarts
 > relevés dans la revue ; ni elle ni RF ne constituent une seconde file d'exécution.
 >

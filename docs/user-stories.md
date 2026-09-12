@@ -1032,3 +1032,20 @@ Ces précisions prolongent les stories ci-dessus, sans ajouter de famille d'outi
   transforme pas les autres notes en consignes ; les résultats déjà produits restent inchangés.
 - US-541 à US-544 : la couverture distingue les bases absentes des calques à préparer ;
   la relecture d'un équipement permet de vérifier son animation avant de valider ses frames.
+
+### Étapes vidéo et 3D demandées le 12 septembre
+
+- US-521 et US-536 : recevoir un clip ne remplit pas l'objectif d'animation. L'auteur
+  choisit son passage, la fréquence d'extraction, l'ordre des frames, le cadre commun
+  et le pivot, puis crée une bande associée au sujet, au mouvement et à la direction.
+  Il peut refaire le montage sans perdre le clip ni les corrections des frames conservées.
+- US-522 et US-528 : la préparation par image et consigne, le modèle, le squelette,
+  les mouvements, la caméra et le style sont des étapes consultables et reprenables.
+  La consigne n'est envoyée qu'aux méthodes qui savent la recevoir ; sa préparation
+  d'image est distincte de la construction du modèle à partir de cette image.
+- US-528 : plusieurs mouvements et vues utilisent la même source et son squelette.
+  Changer la caméra ou le style ne les refabrique pas. Corriger une étape indique
+  quels réglages ou rendus sont à vérifier et conserve les versions déjà produites.
+- US-523 : aperçu libre, rendu d'essai et résultat conservé portent leurs réglages
+  effectifs ; une durée demandée, un nombre de frames et une cadence de lecture
+  ne se confondent pas. Une piste absente ne devient pas une animation de poses répétées.

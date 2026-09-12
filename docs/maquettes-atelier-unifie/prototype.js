@@ -8,6 +8,7 @@
   const DIRECTIONS = ['Sud', 'Ouest', 'Est', 'Nord'];
   const TOOLS = ['Main', 'Détourage', 'Recadrage', 'Pixelisation', 'Couleurs', 'Nettoyage', 'Contour', 'Retourner'];
   const NAMES = {'equipment-frame':'Calque d’un équipement','equipment-compose':'Combiner les équipements',employment:'Emploi d’un équipement',gallery:'Galerie',montage:'Montage vidéo',home:'Le jeu', universe:'Univers & toile', library:'Les assets', subject:'Fiche de l’asset', editor:'Retouche', jobs:'Fabrications', delivery:'Livrer au jeu', settings:'Réglages', guide:'Essayer la maquette', compare:'Comparer', source:'Source 3D', remarks:'Vos remarques',slice:'Découper une image',extract:'Extraire un élément'};
+  Object.assign(NAMES,{'video-source':'Clip source',source3d:'Du modèle 3D aux sprites'});
   const clone = x => JSON.parse(JSON.stringify(x));
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const id = () => globalThis.crypto?.randomUUID?.() || `demo-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -32,7 +33,7 @@
   let draft=null, dirty=false, selectedFrames=[0], cursor=0, tool='Main', scope='frame', playing=null, undo=[], redo=[];
   let filter='', family='', favoriteOnly=false, canvasSelected=null, linkFrom=null, compareIds=[], inspector='retouch';
   let request=null, feedbackContext=null, confirmAction=null, messageTimer=null, storageWarned=false;
-  let finition=null;
+  let finition=null,sources3D=null;
   let compareTimer=null,compareElapsed=0;
   const $ = (selector,base=document) => base.querySelector(selector);
   const $$ = (selector,base=document) => [...base.querySelectorAll(selector)];
@@ -74,18 +75,19 @@
     if(!dialog.open) dialog.showModal();
     if(previousTitle!==$('#dialog-title')?.textContent)dialog.scrollTop=0;
   }
-  function stop() { clearInterval(playing); playing=null;clearInterval(compareTimer);compareTimer=null; }
+  function stop() { clearInterval(playing); playing=null;clearInterval(compareTimer);compareTimer=null;sources3D?.stop?.(); }
   function leave(action) {
     if(dirty){rememberWorkspace();save();confirmAction=action; modal('Quitter cette retouche ?', '<p>La version enregistrée reste intacte. Le brouillon contient vos dernières retouches et se retrouve après un rechargement.</p><p>Enregistrez la version maintenant, ou gardez uniquement le brouillon pour reprendre plus tard.</p>',button('Continuer à retoucher','close')+button('Abandonner les retouches','discard-leave')+button('Garder le brouillon et quitter','draft-leave')+button('Enregistrer et quitter','save-leave'));}
     else action();
   }
-  function navigate(target) {leave(()=>{stop();page=target;render();main.focus({preventScroll:true});});}
+  function navigate(target) {leave(()=>{stop();if(target==='source'&&sources3D){sources3D.ouvrir(subjectId);return;}page=target;render();main.focus({preventScroll:true});});}
   function restoreNavigation(nav){
     stop();subjectId=state.subjects.some(s=>s.id===nav?.subjectId)?nav.subjectId:state.subjects[0].id;
     tab=nav?.tab||workspace().tabs[subjectId]||'animations';settingsTab=nav?.settingsTab||'universe';resultId=nav?.resultId||null;
     compareIds=nav?.compareIds||[];page=nav?.page||'home';
+    if(page==='source'&&sources3D)page='source3d';
     // Ces ateliers gardent encore leur sélection dans une fermeture JavaScript.
-    if(!['home','universe','library','gallery','montage','subject','editor','jobs','delivery','settings','guide','compare','source','remarks'].includes(page)&&!parcours.canRestoreEquipment?.(page))page='subject';
+    if(!['home','universe','library','gallery','montage','video-source','source3d','subject','editor','jobs','delivery','settings','guide','compare','source','remarks'].includes(page)&&!parcours.canRestoreEquipment?.(page))page='subject';
     draft=null;dirty=false;
     if(page==='editor'){
       const saved=workspace().drafts[resultId],r=saved?.result||currentResult();
@@ -104,6 +106,7 @@
   let renderedPage=null;
   function render() {
     finition?.beforeRender();
+    sources3D?.beforeRender?.();
     if(renderedKey)workspace().scroll[renderedKey]={top:main.scrollTop,left:main.scrollLeft};
     const routeKey=viewKey();
     if(!restoringHistory&&navigationHistory.at(-1)?.key!==routeKey){navigationHistory.push({key:routeKey,nav:navigationState()});if(navigationHistory.length>30)navigationHistory.shift();navigationFuture.length=0;}
@@ -116,13 +119,13 @@
     document.body.classList.toggle('sidebar-collapsed',!!workspace().sidebarCollapsed);
     document.body.dataset.imageBackground=workspace().imageBackground||'neutre';
     document.documentElement.style.setProperty('--inspector-width',(workspace().inspectorWidth||320)+'px');
-    const pending=state.jobs.filter(j=>j.status==='En attente').length+(parcours.pendingJobs?.()||0);
+    const pending=state.jobs.filter(j=>j.status==='En attente').length+(parcours.pendingJobs?.()||0)+(sources3D?.pendingJobs?.()||0);
     $('#sidebar').innerHTML=`<div class="sidebar-heading"><div class="brand">Asset Kitchen</div>${button(workspace().sidebarCollapsed?'☰':'‹','toggle-sidebar',`aria-label="${workspace().sidebarCollapsed?'Déplier':'Replier'} la navigation" title="${workspace().sidebarCollapsed?'Déplier':'Replier'} la navigation"`)}</div><div class="game"><div class="label">Le jeu ouvert</div><h3>${esc(state.game.name)}</h3><small>Pixel art · ${state.game.size} px · ${state.subjects.length} assets</small></div>
       <nav aria-label="Atelier">${[['home','Le jeu'],['universe','Univers & toile'],['library','Les assets'],['gallery','Galerie'],['jobs',`Fabrications${pending?' · '+pending:''}`],['delivery','Livrer au jeu']].map(([p,n])=>go(n,p,page===p?'aria-current="page"':'')).join('')}</nav>
       ${parcours.sidebar()}<nav aria-label="Préférences">${go('Réglages', 'settings',page==='settings'?'aria-current="page"':'')}${go('Essayer la maquette','guide',page==='guide'?'aria-current="page"':'')}${go(`Vos remarques · ${state.remarks.filter(r=>!r.resolved).length}`,'remarks')}</nav>
       <div class="sidefoot">${button(`Brouillons · ${Object.keys(workspace().drafts).length+(parcours.montageDraftEntries?.().length||0)}`,'open-drafts')}<p class="small">Essais conservés dans ce navigateur.</p><a href="couverture.md">Couverture et limites</a><br><a href="../pistes-2026-09-04/carnet/Sommaire.html">Planches de référence</a></div>`;
     $$('#sidebar nav button[data-page]').forEach(b=>{b.title=b.textContent;b.dataset.short=({home:'Jeu',universe:'Toile',library:'Assets',gallery:'Galerie',jobs:'File',delivery:'Livrer',settings:'⚙',guide:'?',remarks:'Notes'})[b.dataset.page]||b.textContent.slice(0,3);});
-    const views={home,universe,library,subject,editor,jobs,delivery,settings,guide,compare,source,remarks,...ateliers.views,...parcours.views,...(finition?.views||{})};
+    const views={home,universe,library,subject,editor,jobs,delivery,settings,guide,compare,source,remarks,...ateliers.views,...parcours.views,...(finition?.views||{}),...(sources3D?.views||{})};
     main.innerHTML=`<div class="crumb"><div class="row">${button('←','workspace-back','aria-label="Écran précédent" title="Écran précédent · Alt + flèche gauche" '+(navigationHistory.length<2?'disabled':''))}${button('→','workspace-forward','aria-label="Écran suivant" title="Écran suivant · Alt + flèche droite" '+(!navigationFuture.length?'disabled':''))}<span>${esc(state.game.name)} / ${['subject','editor','source','compare'].includes(page)?esc(currentSubject().name)+' / ':''}${esc(NAMES[page])}</span></div><label>Fond des images <select id="image-background" aria-label="Fond des images">${option(['Gris neutre','Transparence'],workspace().imageBackground==='alpha'?'Transparence':'Gris neutre')}</select></label></div>${views[page]()}`;
     if(page==='editor') {
       if($('#tool-content'))$$('[name]', $('#tool-content')).forEach(el=>{const v=draft.recipe.settings[`${tool}:${el.name}`];if(v!==undefined&&!el.dataset.recipe&&!el.dataset.setting)el.value=v;});
@@ -135,6 +138,7 @@
     ateliers.afterRender(page);
     ergonomie.afterRender();
     parcours.afterRender();
+    sources3D?.afterRender?.();
     finition?.afterRender();
     if(page==='jobs')state.jobs.filter(j=>j.nextAnimation&&j.status==='Terminé').forEach(j=>{const anchor=$(`[data-action="job-open"][data-id="${j.id}"]`);anchor?.insertAdjacentHTML('afterend',button('Préparer l’animation avec cette référence','continue-animation',`data-id="${j.id}"`));});
     wireInspectorResize();
@@ -169,6 +173,7 @@
     return `<article class="surface asset-card"><div class="row between"><h3>${esc(r.title)}</h3><span class="tag">v${r.revision}</span></div><div class="sprite"><canvas class="result-preview" width="64" height="64" data-result-preview="${r.id}" aria-label="Aperçu de ${esc(r.title)}"></canvas></div><p class="small">${r.animated?r.frames.length+' frames · '+r.recipe.fps+' i/s':'Image fixe'} · ${esc(r.provenance)}</p><div class="row wrap">${button('Retoucher','edit-result',`data-id="${r.id}"`)}${button(r.favorite?'★ Favori':'☆ Favori','favorite',`data-id="${r.id}" aria-pressed="${r.favorite}"`)}${button(r.chosen?'Retenu pour le jeu':'Choisir pour le jeu','choose',`data-id="${r.id}" aria-pressed="${r.chosen}"`)}</div><div class="row wrap">${button('Comparer','compare-add',`data-id="${r.id}"`)}${r.montage?button('Reprendre le montage','mount-reopen',`data-id="${r.id}"`):''}${ateliers.resultActions(r)}${button('Écarter','discard-result',`data-id="${r.id}" class="quiet"`)}</div></article>`;
   }
   function subjectTab(s) {
+    if(tab==='sources'&&parcours.sourceSection)return parcours.sourceSection(s);
     if(tab==='animations')return ergonomie.animations(s,resultCard);
     if(tab==='equipment')return parcours.equipment(s,ergonomie.equipment(s));
     if(tab==='images') return `<div class="row between"><div><h2>Images fixes & références</h2><p>Portrait, illustration, objet ou pose isolée : ce sont des sorties à part entière.</p></div>${button('Fabriquer une image','request','data-kind="image"')}</div><div class="two">${s.results.filter(r=>!r.animated).map(resultCard).join('')}</div>`;
@@ -243,7 +248,15 @@
   function drawFrame(canvas,r,index,raw=false) {
     if(!canvas||!r)return;const ctx=canvas.getContext('2d');ctx.clearRect(0,0,64,64);ctx.imageSmoothingEnabled=false;
     const f=r.frames[Math.min(index,r.frames.length-1)],rec=raw?freshRecipe():r.recipe;
-    ctx.save();if(rec.flip){ctx.translate(64,0);ctx.scale(-1,1);}ctx.filter=`brightness(${rec.brightness}%) saturate(${rec.saturation}%)`;
+    ctx.save();if(rec.flip){ctx.translate(64,0);ctx.scale(-1,1);}
+    const frame=rec.commonFrame;
+    if(frame){
+      const width=Math.max(1,Number(frame.width)||64),height=Math.max(1,Number(frame.height)||64),factor=64/Math.max(width,height);
+      const x=Number(frame.x)||0,y=Number(frame.y)||0;
+      ctx.translate((64-width*factor)/2-x*factor,(64-height*factor)/2-y*factor);ctx.scale(factor,factor);
+      ctx.beginPath();ctx.rect(x,y,width,height);ctx.clip();
+    }
+    ctx.filter=`brightness(${rec.brightness}%) saturate(${rec.saturation}%)`;
     const inset=Number(rec.crop)||0;
     const fit=im=>{if(!im.complete||!im.naturalWidth)return;const factor=(64-2*inset)/Math.max(im.naturalWidth,im.naturalHeight),w=im.naturalWidth*factor,h=im.naturalHeight*factor;ctx.drawImage(im,(64-w)/2,(64-h)/2,w,h);};
     if(f.image)fit(cachedImage(f.image));
@@ -271,6 +284,11 @@
       const rect=canvas.getBoundingClientRect(),frames=targetFrames();const stroke={layer:active.id,colour:draft.recipe.colour,size:Number(draft.recipe.brush),erase:draft.recipe.erase,points:[]};
       frames.forEach(f=>f.strokes.push(clone(stroke)));canvas.setPointerCapture(e.pointerId);
       const point=ev=>{let x=Math.floor((ev.clientX-rect.left)/rect.width*64),y=Math.floor((ev.clientY-rect.top)/rect.height*64);if(draft.recipe.flip)x=63-x;
+        const frame=draft.recipe.commonFrame;
+        if(frame){const width=Math.max(1,Number(frame.width)||64),height=Math.max(1,Number(frame.height)||64),factor=64/Math.max(width,height);
+          x=Math.floor((x-(64-width*factor)/2)/factor+(Number(frame.x)||0));y=Math.floor((y-(64-height*factor)/2)/factor+(Number(frame.y)||0));
+          if(x<frame.x||x>=Number(frame.x)+width||y<frame.y||y>=Number(frame.y)+height)return;
+        }
         if(x<0||x>=64||y<0||y>=64)return;frames.forEach(f=>f.strokes[f.strokes.length-1].points.push({x,y}));changed();drawAll();};
       const end=()=>{canvas.removeEventListener('pointermove',point);canvas.removeEventListener('pointerup',end);canvas.removeEventListener('pointercancel',end);render();};
       point(e);canvas.addEventListener('pointermove',point);canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
@@ -283,7 +301,7 @@
     },1000/draft.recipe.fps);render();
   }
   function jobs() {
-    return heading('Fabrications','Les demandes manuelles et celles de l’agent se retrouvent au même endroit.',button('Fabriquer librement','free-create')+button('Simuler une demande de l’agent','agent-request'))+parcours.freeJobs()+
+    return heading('Fabrications','Les demandes manuelles et celles de l’agent se retrouvent au même endroit.',button('Fabriquer librement','free-create')+button('Simuler une demande de l’agent','agent-request'))+parcours.freeJobs()+(sources3D?.jobsSection?.()||'')+
       demo('Les boutons ci-dessous font avancer ou échouer des travaux fictifs. Rien n’est envoyé à un fournisseur et les montants affichés ne sont pas des tarifs.')+
       (state.jobs.length?state.jobs.slice().reverse().map(j=>`<section class="surface space"><div class="row between"><h2>${esc(j.title)}</h2><span class="tag">${esc(j.status)}</span></div><p>${esc(j.subjectName)} · ${esc(j.origin)} · ${esc(j.model||j.method)}</p><p class="small">${esc(j.brief)} · ${esc(j.estimate)}</p>${button('Relire l’envoi','job-details',`data-id="${j.id}"`)}<div class="bar"><span style="width:${j.status==='Terminé'?100:j.status==='En attente'?35:0}%"></span></div><div class="row wrap space">${j.status==='En attente'?button('Simuler le résultat','job-finish',`data-id="${j.id}"`)+button('Simuler un échec','job-fail',`data-id="${j.id}"`)+button('Interrompre','job-cancel',`data-id="${j.id}"`):j.status==='Terminé'?button('Voir le résultat','job-open',`data-id="${j.id}"`):button('Reprendre explicitement','job-retry',`data-id="${j.id}"`)}</div>${j.status==='Échec'?'<p class="error space">Le moteur est devenu indisponible. Aucune relance automatique ; les sources et réglages sont conservés.</p>':''}</section>`).join(''):`<div class="empty"><h2>Aucune fabrication en cours</h2><p>Créez un asset à la main ou essayez la demande d’un agent.</p>${go('Ouvrir les assets','library')}</div>`);
   }
@@ -305,15 +323,10 @@
     const rows=[...state.jobs.map(j=>({id:j.id,title:j.title,model:j.model||j.method,status:j.status,unit:j.method.startsWith('API')?'USD':null,amount:j.status==='Terminé'&&j.method.startsWith('API')&&j.cost!==null&&j.cost!==undefined&&Number.isFinite(Number(j.cost))?Number(j.cost):null,label:j.method.startsWith('API')&&j.status==='Terminé'&&(j.cost===null||j.cost===undefined)?'Montant non conservé dans cet ancien essai':j.estimate})),...(parcours.consumptionRows?.()||[])],usd=rows.filter(r=>r.unit==='USD'&&r.amount!==null).reduce((n,r)=>n+r.amount,0);
     return `<section class="surface"><h2>Consommations des essais</h2><p>Aucune dépense réelle. ${rows.length} travail(aux) normal, libre ou équipement.</p><div class="readout">Total documenté des appels terminés : ${usd.toFixed(2)} $ fictifs. Les montants non conservés et les durées locales non mesurées restent inconnus, exclus de ce total.</div><table class="matrix"><thead><tr><th>Demande</th><th>Modèle / état</th><th>Annonce ou consommation fictive</th></tr></thead><tbody>${rows.map(j=>`<tr><td>${esc(j.title)}</td><td>${esc(j.model)}<br><small>${esc(j.status)}</small></td><td>${j.unit==='USD'&&j.amount!==null?j.amount.toFixed(2)+' $ fictifs':esc(j.label||'Temps local non mesuré')}</td></tr>`).join('')}</tbody></table><p class="note">Les dollars, unités du fournisseur et temps local restent séparés. Aucun délai local n’est inventé ni multiplié par le nombre de clips.</p></section>`;
   }
-  function source() {
-    const s=currentSubject(), model=s.model3d;
-    return heading('Du modèle 3D aux sprites','Parcours futur avec asset3d : conserver une source, l’animer, puis choisir ses rendus.',go('Retour à l’asset','subject'))+
-      demo('Tout ce parcours 3D est simulé. Aucun modèle téléchargé, aucun rig calculé, aucun GPU utilisé.')+
-      `<div class="three"><section class="surface"><div class="label">01 · Source</div><h2>${model?'Modèle conservé':'Créer ou importer'}</h2><p>Texte, image ou fichier existant. La source ne disparaît pas après le rendu.</p>${button(model?'Remplacer l’exemple':'Simuler un modèle','create-model')}</section><section class="surface"><div class="label">02 · Animation</div><h2>${model?.rig?'Rig prêt':'Préparer le rig'}</h2><p>Choisir des mouvements adaptés au squelette, inspecter et reprendre.</p>${button('Simuler le rig','rig-model',model?'':'disabled')}</section><section class="surface"><div class="label">03 · Rendu</div><h2>Des vues réutilisables</h2><p>Changer caméra, mouvement ou lumière sans regénérer le personnage.</p>${button('Préparer des sprites','render-model',model?.rig?'':'disabled')}</section></div>${model?`<div class="surface space"><h2>Source conservée</h2><p>Modèle d’exemple · ${model.rig?'rig d’exemple associé':'rig à préparer'} · ${model.renders||0} rendus simulés</p><p class="small">Une sortie 3D doit rester reliée à la version de sa source et à ses réglages de rendu.</p></div>`:''}`;
-  }
+  function source() { return sources3D.views.source3d(); }
   const SCENARIOS=[['manual','library','Créer sans MCP','Créez un personnage, choisissez un mouvement, fabriquez une référence puis une animation simulée.'],['canvas','universe','Composer un univers','Ajoutez une note et un îlot, associez-les, déplacez l’îlot et rouvrez la toile.'],['retouch','subject','Corriger une animation','Ouvrez la marche du pèlerin, dupliquez une frame, peignez, changez la vitesse, gardez puis rouvrez.'],['deliver','delivery','Livrer et remplacer','Retenez un résultat, simulez une livraison, puis testez un conflit.'],['agent','jobs','Déléguer à l’agent','Simulez une demande, un échec et une reprise. Vérifiez que tout reste retrouvable.'],['local','settings','Choisir un moyen de fabrication','Rendez un moteur indisponible et vérifiez les choix proposés avant l’envoi.']];
   function guide() {return heading('Essayer avant de construire','Une visite par gestes. Cochez ce que vous avez essayé et notez ce qui vous gêne.')+
-    `<div class="two">${SCENARIOS.map(([key,target,title,desc])=>`<section class="surface"><h2>${title}</h2><p>${desc}</p><div class="row between">${go('Essayer',target)}<label><input type="checkbox" data-check="${key}" ${state.checks[key]?'checked':''}> Essayé</label></div></section>`).join('')}<section class="surface"><h2>Une planche, plusieurs images</h2><p>Chargez l’exemple, détectez les quatre zones, déplacez un cadre et nommez les sorties. Créez des images, des assets séparés ou une animation.</p>${button('Essayer la découpe','open-slice')}</section><section class="surface"><h2>Un sac extrait en calque</h2><p>Chargez l’exemple, proposez un alignement, corrigez le masque puis gardez le calque. Masquez-le dans la composition et reprenez son extraction depuis la bibliothèque.</p>${button('Essayer l’extraction','open-extract')}</section></div><section class="surface space"><h2>La limite de cette version</h2><p>La découpe, le calage, le masque peint et la composition se manipulent et se rouvrent. Les calculs sont simplifiés pour tester ces gestes.</p><p>Sélections avancées, calques qui suivent une animation, réglages complets des moteurs de retouche, installation détaillée, tuiles et son restent à compléter.</p><a href="couverture.md">Lire l’inventaire de couverture</a> · ${button('Exporter mes remarques','export-feedback')}</section>`;}
+    `<div class="two">${SCENARIOS.map(([key,target,title,desc])=>`<section class="surface"><h2>${title}</h2><p>${desc}</p><div class="row between">${go('Essayer',target)}<label><input type="checkbox" data-check="${key}" ${state.checks[key]?'checked':''}> Essayé</label></div></section>`).join('')}<section class="surface"><h2>Du clip aux sprites</h2><p>Préparez une vidéo, regardez le clip, choisissez un passage puis réglez les frames, le cadre et le pivot avant la retouche.</p>${button('Essayer le parcours vidéo','guide-video')}</section><section class="surface"><h2>Du modèle 3D aux sprites</h2><p>Préparez une image, contrôlez modèle et squelette, attachez un mouvement puis choisissez caméra, style et directions.</p>${button('Essayer le parcours 3D','guide-3d')}</section><section class="surface"><h2>Une planche, plusieurs images</h2><p>Chargez l’exemple, détectez les quatre zones, déplacez un cadre et nommez les sorties. Créez des images, des assets séparés ou une animation.</p>${button('Essayer la découpe','open-slice')}</section><section class="surface"><h2>Un sac extrait en calque</h2><p>Chargez l’exemple, proposez un alignement, corrigez le masque puis gardez le calque. Masquez-le dans la composition et reprenez son extraction depuis la bibliothèque.</p>${button('Essayer l’extraction','open-extract')}</section></div><section class="surface space"><h2>La limite de cette version</h2><p>La découpe, le calage, le masque peint et la composition se manipulent et se rouvrent. Les calculs sont simplifiés pour tester ces gestes.</p><p>Sélections avancées, calques qui suivent une animation, réglages complets des moteurs de retouche, installation détaillée, tuiles et son restent à compléter.</p><a href="couverture.md">Lire l’inventaire de couverture</a> · ${button('Exporter mes remarques','export-feedback')}</section>`;}
   function remarks() {const active=state.remarks.filter(r=>!r.resolved),done=state.remarks.filter(r=>r.resolved);const cards=(rows,resolved)=>rows.slice().reverse().map(r=>`<section class="surface space"><strong>${esc(r.context)}</strong><p>${esc(r.text)}</p>${button(resolved?'Remettre dans les remarques':'Marquer comme traitée',resolved?'reopen-remark':'resolve-remark',`data-id="${r.id}"`)}</section>`).join('');return heading('Vos remarques','Seules les remarques à traiter sont exportées.',button('Ajouter une remarque','feedback')+button('Exporter les remarques','export-feedback'))+(active.length?cards(active,false):'<p>Aucune remarque active.</p>')+`<details class="space"><summary>Historique · ${done.length} remarques traitées</summary>${cards(done,true)}</details><details class="space"><summary>Recommencer les essais</summary><p>Cette action efface les données de démonstration de ce navigateur. Exportez les remarques à conserver avant.</p>${button('Réinitialiser la démonstration','reset')}</details>`;}
   function compare() {
     const s=currentSubject();if(!compareIds[0]&&s.results[0])compareIds[0]=s.results[0].id;
@@ -341,7 +354,7 @@
     const choices=[['Local · workflow de démonstration',state.providers.local&&(!agent||state.policy.local),agent?'Moteur local indisponible ou non autorisé':'Moteur local indisponible'],['API · modèle de démonstration',state.providers.api&&(!agent||state.policy.paid&&state.policy.budget>=0.2),agent?'Connexion ou budget de l’agent insuffisant':'Connexion API indisponible']];
     if(request.method==='3D · rendu de démonstration')choices.unshift([request.method,!!s.model3d?.rig,'Rig à préparer']);
     const available=choices.filter(c=>c[1]);if(!available.some(c=>c[0]===request.method))request.method=available[0]?.[0]||'';
-    modal('Préparer une fabrication',`<p class="small">Origine : ${esc(request.origin)} · ${esc(s.name)}</p>${field('Que fabriquer ?',select('request-kind',['Animation','Image fixe'],request.kind==='image'?'Image fixe':'Animation'))}<div class="two">${field('Mouvement',select('request-movement',[...new Set([...s.movements,request.movement])],request.movement)+button('Ajouter un mouvement','request-add-movement'))}${field('Direction',select('request-direction',s.directions,request.direction))}</div>${field('Nom du résultat (facultatif)',input('request-title',request.title,'text','maxlength="100" placeholder="Par défaut : mouvement · direction"'))}${field('Description du résultat',`<textarea name="request-brief">${esc(request.brief)}</textarea>`)}${field('Moyen de fabrication',`<select name="request-method">${choices.map(([name,ready,reason])=>`<option value="${esc(name)}" ${name===request.method?'selected':''} ${ready?'':'disabled'}>${esc(name)}${ready?'':' — '+reason}</option>`).join('')}</select>`)}${ergonomie.requestSettings(request)}${request.kind==='animation'&&!request.method.startsWith('3D')?`<section class="readout"><strong>1 · Référence de départ ${hasReference?'prête à relire':'à préparer'} → 2 · Animation</strong><p class="small">${hasReference?'Le choix exact et toutes les images se relisent avant envoi.':'Votre mouvement et votre direction sont conservés pendant cette préparation. La référence technique ne change pas l’objectif de votre personnage.'}</p><div class="row wrap">${button('Choisir une référence','request-pick-reference')}${button('Importer une référence','request-import-reference')}${!hasReference?button('Fabriquer sa référence puis animer','request-make-reference'):''}</div></section>`:''}${request.technicalReference?'<p class="readout">Première étape : fabriquer une référence technique. Vous la verrez avant de reprendre l’animation conservée. Aucun clip ne part automatiquement.</p>':''}${demo('Les profils et coûts sont fictifs. Chaque étape demandant une fabrication possède sa propre relecture.')}`,button('Annuler','close')+button('Relire avant l’envoi','review-request',available.length&&(request.kind!=='animation'||hasReference||request.method.startsWith('3D'))?'':'disabled'));
+    modal('Préparer une fabrication',`<p class="small">Origine : ${esc(request.origin)} · ${esc(s.name)}</p>${field('Que fabriquer ?',select('request-kind',['Animation','Image fixe'],request.kind==='image'?'Image fixe':'Animation'))}<div class="two">${field('Mouvement',select('request-movement',[...new Set([...s.movements,request.movement])],request.movement)+button('Ajouter un mouvement','request-add-movement'))}${field('Direction',select('request-direction',s.directions,request.direction))}</div>${field('Nom du résultat (facultatif)',input('request-title',request.title,'text','maxlength="100" placeholder="Par défaut : mouvement · direction"'))}${field('Description du résultat',`<textarea name="request-brief">${esc(request.brief)}</textarea>`)}${field('Moyen de fabrication',`<select name="request-method">${choices.map(([name,ready,reason])=>`<option value="${esc(name)}" ${name===request.method?'selected':''} ${ready?'':'disabled'}>${esc(name)}${ready?'':' — '+reason}</option>`).join('')}</select>`)}${ergonomie.requestSettings(request)}${request.kind==='animation'&&!request.method.startsWith('3D')?`<section class="readout"><strong>1 · Référence de départ ${hasReference?'prête à relire':'à préparer'} → 2 · Clip → 3 · Frames et montage</strong><p class="small">${hasReference?'Le choix exact et toutes les images se relisent avant envoi.':'Votre mouvement et votre direction sont conservés pendant cette préparation. La référence technique ne change pas l’objectif de votre personnage.'}</p><div class="row wrap">${button('Choisir une référence','request-pick-reference')}${button('Importer une référence','request-import-reference')}${!hasReference?button('Fabriquer sa référence puis animer','request-make-reference'):''}</div></section>`:''}${request.technicalReference?'<p class="readout">Première étape : fabriquer une référence technique. Vous la verrez avant de reprendre l’animation conservée. Aucun clip ne part automatiquement.</p>':''}${request.kind==='animation'?`<p class="readout">Vous avez un modèle 3D, ou souhaitez en préparer un ? ${button('Animer depuis une source 3D…','request-source-3d')}</p>`:''}${demo('Les profils et coûts sont fictifs. Chaque étape demandant une fabrication possède sa propre relecture.')}`,button('Annuler','close')+button('Relire avant l’envoi','review-request',available.length&&(request.kind!=='animation'||hasReference||request.method.startsWith('3D'))?'':'disabled'));
   }
   function captureRequest() {
     request.kind=value('request-kind')==='Image fixe'?'image':'animation';request.movement=value('request-movement').trim();request.direction=value('request-direction');request.brief=value('request-brief');request.method=value('request-method');request.title=value('request-title').trim();ergonomie.captureRequestSettings(request);
@@ -363,6 +376,11 @@
   }
   function finishJob(job){
     const s=state.subjects.find(s=>s.id===job.subjectId);if(!s||job.status!=='En attente')return;
+    if(job.kind==='animation'&&!job.method.startsWith('3D')&&parcours.registerVideo){
+      const clip=parcours.registerVideo(clone(job),s.id);
+      job.resultId=clip.id;job.sourceVideo=true;job.status='Terminé';save();render();
+      toast('Clip source reçu. Ouvrez-le pour choisir la plage, extraire les frames puis monter l’animation.');return;
+    }
     const r=result(job.title,job.kind==='animation');r.movement=job.movement;r.direction=job.direction;r.provenance='Résultat simulé · '+job.method;r.request=clone(job);r.technicalReference=!!job.technicalReference;s.results.push(r);job.resultId=r.id;job.status='Terminé';if(job.method.startsWith('3D')&&s.model3d)s.model3d.renders=(s.model3d.renders||0)+1;save();render();
     if(job.nextAnimation){modal('Relire la référence avant de l’animer',`<p>${esc(s.name)} · l’animation ${esc(job.nextAnimation.movement)} · ${esc(job.nextAnimation.direction)} est conservée.</p><div class="sprite compare-preview"><canvas id="reference-ready" width="64" height="64" aria-label="Référence de départ fabriquée"></canvas></div><p>Cette image vous convient ? La prochaine étape prépare son animation, avec une nouvelle relecture avant chaque appel.</p>`,button('Revoir plus tard','close')+button('Utiliser cette référence et préparer l’animation','continue-animation',`data-id="${job.id}"`));drawFrame($('#reference-ready'),r,0);}
   }
@@ -393,12 +411,21 @@
   let parcours;
   const ergonomie=window.creerErgonomieMaquette({extraImages:()=>parcours?.extraImages()||[],state:()=>state,subject:currentSubject,request:()=>request,ateliers:()=>ateliers,
     esc,button,field,input,select,modal,save,render,toast,clone,drawFrame,
-    brush:key=>key==='pixels'?(tool==='Main'&&inspector==='retouch'?Number(draft?.recipe.brush):0):ateliers.brushSize()});
+    brush:key=>key==='pixels'?(tool==='Main'&&inspector==='retouch'?Number(draft?.recipe.brush)*(draft?.recipe.commonFrame?64/Math.max(1,Number(draft.recipe.commonFrame.width)||64,Number(draft.recipe.commonFrame.height)||64):1):0):ateliers.brushSize()});
   parcours=window.creerParcoursMaquette({state:()=>state,subject:currentSubject,page:()=>page,esc,button,field,input,select,heading,modal,save,render,toast,id,clone,result,drawFrame,image:IMAGE,navigate,
+    source3DEntry:s=>sources3D?.entry(s)||'',source3DGallery:()=>sources3D?.galleryItems?.()||[],source3DConsumption:()=>sources3D?.consumptionRows?.()||[],
+    open3D:(sid,key,initial)=>sources3D?.ouvrir(sid,key,initial),
+    open3DGallery:key=>sources3D?.openGallery(key),
     editorSnapshot:()=>draft?{r:clone(draft),index:cursor,subjectId}:null,saveEditor,
     picker:(...args)=>ergonomie.openPicker(...args),sourceImage:(r,index=0,options)=>renderFrameSource(r,index,options),
     request:requestForm,requestState:()=>request,
+    requestVideo:(sid,previous)=>leave(()=>{dialog.close();subjectId=sid;requestForm({kind:'animation'});if(previous){request={...clone(previous),kind:'animation',origin:'Vous, dans l’interface',count:previous.batchCount||previous.count||1,references:clone(previous.references||previous.refs||[]),brief:previous.brief||previous.prompt||'',method:previous.method||(previous.engine?.startsWith('API')?'API · modèle de démonstration':'Local · workflow de démonstration')};for(const key of ['id','resultId','sourceVideo','status','batchId'])delete request[key];showRequest();}}),
     openSubject:(sid,t='animations')=>leave(()=>{dialog.close();subjectId=sid;tab=t;stop();page='subject';render();}),
+    openResult:(sid,r)=>leave(()=>{dialog.close();subjectId=sid;tab=r.animated?'animations':'images';openEditor(r);})});
+  sources3D=window.creerSources3DMaquette?.({state:()=>state,page:()=>page,subject:currentSubject,esc,button,field,input,select,heading,modal,save,render,toast,id,clone,result,drawFrame,renderFrameSource,image:IMAGE,navigate,
+    setSubject:sid=>{subjectId=sid;},
+    picker:(...args)=>ergonomie.openPicker(...args),
+    openSubject:(sid,t='sources')=>leave(()=>{dialog.close();subjectId=sid;tab=t;stop();page='subject';render();}),
     openResult:(sid,r)=>leave(()=>{dialog.close();subjectId=sid;tab=r.animated?'animations':'images';openEditor(r);})});
   finition=window.creerFinitionMaquette?.({state:()=>state,page:()=>page,subject:currentSubject,esc,button,field,input,select,heading,modal,save,render,toast,id,clone,drawFrame,renderFrameSource,image:IMAGE,navigate,
     picker:(...args)=>ergonomie.openPicker(...args),
@@ -432,7 +459,7 @@
     'job-fail':el=>{state.jobs.find(j=>j.id===el.dataset.id).status='Échec';save();render();},
     'job-cancel':el=>{state.jobs.find(j=>j.id===el.dataset.id).status='Interrompu';save();render();},
     'job-retry':el=>{const j=state.jobs.find(j=>j.id===el.dataset.id);j.status='En attente';save();render();toast('Reprise explicite de la même demande fictive.');},
-    'job-open':el=>{const j=state.jobs.find(j=>j.id===el.dataset.id);subjectId=j.subjectId;const r=currentSubject().results.find(r=>r.id===j.resultId);if(r)openEditor(r);else toast('Ce résultat a été écarté de la bibliothèque.');},
+    'job-open':el=>{const j=state.jobs.find(j=>j.id===el.dataset.id);subjectId=j.subjectId;if(j.sourceVideo){parcours.openVideo(j.resultId,j.subjectId);return;}const r=currentSubject().results.find(r=>r.id===j.resultId);if(r)openEditor(r);else toast('Ce résultat a été écarté de la bibliothèque.');},
     'edit-result':el=>leave(()=>openEditor(currentSubject().results.find(r=>r.id===el.dataset.id))),
     favorite:el=>{const r=currentSubject().results.find(r=>r.id===el.dataset.id);r.favorite=!r.favorite;save();render();},
     choose:el=>{const r=currentSubject().results.find(r=>r.id===el.dataset.id);r.chosen=!r.chosen;save();render();},
@@ -478,9 +505,9 @@
     deliver:()=>{const items=state.subjects.flatMap(s=>s.results.filter(r=>r.chosen).map(r=>({subject:s.id,result:r.id,revision:r.revision})));if(!items.length)return;state.deliveries.push({id:id(),date:new Date().toISOString(),destination:state.destination,items});save();render();toast('Livraison simulée. Aucun fichier écrit dans le jeu.');},
     conflict:()=>modal('Un fichier a changé dans le jeu',`<p>Scénario d’essai : une ressource déjà livrée a été modifiée depuis Godot. L’atelier doit vous laisser choisir, en montrant ce qui diffère.</p><div class="readout">Version du jeu : modifiée à la main<br>Version de l’atelier : une nouvelle révision est prête</div>${demo('Le conflit est fictif ; aucune comparaison de fichiers n’est exécutée.')}`,button('Conserver le fichier du jeu','resolve-conflict','data-choice="Fichier du jeu conservé"')+button('Créer une copie à côté','resolve-conflict','data-choice="Copie séparée simulée"')),
     'resolve-conflict':el=>{dialog.close();toast(el.dataset.choice+' · aucune écriture réelle.');},
-    'create-model':()=>{currentSubject().model3d={id:id(),rig:false,renders:0};save();render();},
-    'rig-model':()=>{currentSubject().model3d.rig=true;save();render();},
-    'render-model':()=>requestForm({method:'3D · rendu de démonstration',movement:'Marche'}),
+    'guide-video':()=>{subjectId=state.subjects.find(s=>s.family==='Personnages')?.id||currentSubject().id;tab='sources';navigate('subject');},
+    'guide-3d':()=>sources3D.ouvrir(state.subjects.find(s=>s.family==='Personnages')?.id||currentSubject().id),
+    'request-source-3d':()=>{captureRequest();dialog.close();sources3D.ouvrir(subjectId,null,{movement:request.movement,direction:request.direction,prompt:request.brief,references:request.references});},
     feedback:()=>{feedbackContext=`${NAMES[page]}${page==='editor'?' / '+tool:''}`;modal('Noter une remarque',`<p class="small">Écran : ${esc(feedbackContext)}</p>${field('Type de remarque',select('feedback-kind',['Difficile à utiliser','Il manque quelque chose','Une idée','À conserver'],'Difficile à utiliser'))}${field('Ce que vous vouliez faire, et ce qui vous gêne', '<textarea name="feedback-text" placeholder="Ex. Je veux corriger trois frames, mais je ne vois pas lesquelles seront modifiées."></textarea>')}<p class="small">La note reste ici. Exportez-la pour me la transmettre ; elle n’est pas envoyée automatiquement.</p>`,button('Garder la remarque','save-feedback'));},
     'save-feedback':()=>{const text=value('feedback-text').trim();if(!text){toast('Écrivez votre remarque avant de la garder.');return;}state.remarks.push({id:id(),context:feedbackContext,kind:value('feedback-kind'),text,date:new Date().toISOString()});save();dialog.close();render();toast('Remarque gardée dans ce navigateur.');},
     'export-feedback':exportFeedback,
@@ -492,7 +519,7 @@
   document.addEventListener('click',async e=>{
     const el=e.target.closest('button');if(!el||el.disabled)return;
     if(el.dataset.page){navigate(el.dataset.page);return;}
-    const action=finition?.handlers[el.dataset.action]||parcours.handlers[el.dataset.action]||ergonomie.handlers[el.dataset.action]||handlers[el.dataset.action]||ateliers.handlers[el.dataset.action];if(action){try{await action(el,e);}catch(error){console.error(error);toast('Ce geste de la maquette a rencontré une erreur. Vous pouvez noter le parcours pour le corriger.');}}
+    const action=sources3D?.handlers[el.dataset.action]||finition?.handlers[el.dataset.action]||parcours.handlers[el.dataset.action]||ergonomie.handlers[el.dataset.action]||handlers[el.dataset.action]||ateliers.handlers[el.dataset.action];if(action){try{await action(el,e);}catch(error){console.error(error);toast('Ce geste de la maquette a rencontré une erreur. Vous pouvez noter le parcours pour le corriger.');}}
   });
   function updateRecipe(el) {
     stop();if(!el.dataset.editing){snapshot();el.dataset.editing='yes';}
@@ -501,6 +528,7 @@
   }
   document.addEventListener('change',e=>{
     const el=e.target;
+    if(sources3D?.change?.(el,false))return;
     if(finition?.change(el,false))return;
     if(el.dataset.compareSelect!==undefined){compareIds[Number(el.dataset.compareSelect)]=el.value;compareElapsed=0;render();return;}
     if(el.name==='request-kind'||el.name==='request-method'){captureRequest();showRequest();return;}
@@ -519,7 +547,7 @@
     else if(el.id==='local-ready'||el.id==='api-ready'){state.providers[el.id==='local-ready'?'local':'api']=el.checked;save();}
     else if(el.dataset.check){state.checks[el.dataset.check]=el.checked;save();}
   });
-  document.addEventListener('input',e=>{if(finition?.change(e.target,true))return;if(((e.target.dataset.parcours||e.target.name?.startsWith('mount-')||e.target.name?.startsWith('eq-')||e.target.dataset.eqSetting)&&parcours.change(e.target))||ergonomie.change(e.target,true)||ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
+  document.addEventListener('input',e=>{if(sources3D?.change?.(e.target,true)||finition?.change(e.target,true))return;if(((e.target.dataset.parcours||e.target.name?.startsWith('mount-')||e.target.name?.startsWith('eq-')||e.target.dataset.eqSetting)&&parcours.change(e.target))||ergonomie.change(e.target,true)||ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
   main.addEventListener('scroll',queueWorkspace,{passive:true});
   window.addEventListener('beforeunload',e=>{if(!saveWorkspace()&&dirty){e.preventDefault();e.returnValue='';}});
   window.addEventListener('pagehide',saveWorkspace);

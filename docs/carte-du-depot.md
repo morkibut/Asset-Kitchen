@@ -317,8 +317,19 @@ desktop élargi est `docs/maquettes-atelier-unifie/02-atelier.html`, accompagné
 de `docs/maquettes-atelier-unifie/prototype.js`, des ateliers dédiés dans
 `docs/maquettes-atelier-unifie/ateliers.js`, de l'ergonomie partagée (arborescence,
 bibliothèque visuelle et zoom) dans `docs/maquettes-atelier-unifie/ergonomie.js` et de
-ses parcours de collections, fabrication libre, galerie et montage dans
-`docs/maquettes-atelier-unifie/parcours.js`. Le parcours pièce → emplois → calques de
+ses parcours de collections, fabrication libre, galerie, clip source et montage dans
+`docs/maquettes-atelier-unifie/parcours.js`. Le clip garde sa demande et les animations
+qui en dérivent. Le montage conserve les identités des occurrences, le passage temporel
+et la recette `commonFrame` : fenêtre et pivot communs, appliqués dans le rendu partagé
+de `prototype.js` sans modifier la source. Le temps vient des frames disponibles, jamais
+de la durée demandée au fournisseur.
+`docs/maquettes-atelier-unifie/sources-3d.js` et `sources-3d.css` tiennent les six étapes
+image → modèle → squelette → mouvements → caméra/style → rendus. Le module conserve
+les versions, contrôles et demandes de travaux simulés ; il dessine sur CPU le même
+mannequin pour l'aperçu et les frames. Les modèles et fichiers FBX réels ne sont pas lus.
+Sa provenance relie chaque rendu à son modèle, son rig, son mouvement et ses réglages ;
+rouvrir une ancienne version ne remplace pas les sprites déjà produits.
+Le parcours pièce → emplois → calques de
 poses/directions/frames → tenues vit dans `docs/maquettes-atelier-unifie/equipements.js` :
 navigation, couverture, relecture, placements, versions et raccords à la galerie et aux
 fabrications. `docs/maquettes-atelier-unifie/equipements-rendu.js` tient le dessin local
@@ -334,7 +345,8 @@ Les cadres de couverture et de vérification animée des équipements utilisent
 `docs/maquettes-atelier-unifie/toile-livraison.js` raccorde la sélection créative à la
 relecture et simule les livraisons avec leurs fichiers et instantanés. Les occurrences
 du montage sont vérifiées par `essais/essai_montage_maquette.cjs` : une copie retouchée
-garde son identité après reprise et réordonnancement.
+garde son identité après reprise et réordonnancement ; plage et échantillonnage utilisent
+le temps de la source et la destination initiale reprend celle du clip.
 `essais/essai_livraison_maquette.cjs` vérifie les noms entre versions, les instantanés,
 la sélection après révision et la réserve des cartes.
 Le châssis conserve dans un espace de travail séparé le contexte et les brouillons :
