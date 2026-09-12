@@ -197,8 +197,8 @@ ou une frame, puis retrouver la liste avec la sélection conservée.
   1600 × 1000, sans imposer plusieurs arbres ni couper un contrôle par un volet.
 - [x] Aperçu à taille de jeu et zoom pixel ; durée, boucle et repère se jugent ensemble.
 - [x] Une correction pendant la lecture est conservée après fermeture et réouverture.
-- [ ] Les anciennes capacités de montage et de retouche ont toutes une porte identifiée.
-- [ ] L'inventaire des outils ci-dessous est détaillé contrôle par contrôle avant déplacement ;
+- [x] Les anciennes capacités de montage et de retouche ont toutes une porte identifiée.
+- [x] L'inventaire des outils ci-dessous est détaillé contrôle par contrôle avant déplacement ;
   chaque capacité a son accès, sa portée et une preuve d'usage. Une lacune bloque le retrait
   de l'ancien accès, pas seulement la clôture d'une future tranche.
 - [x] Les traitements d'une frame, d'une sélection et de toute la bande sont distingués ;
@@ -210,7 +210,7 @@ ou une frame, puis retrouver la liste avec la sélection conservée.
 - [x] Une planche se découpe par détection, grille ou rectangles manuels : relire les zones,
   nommer les sorties, créer plusieurs images et reprendre le découpage depuis sa source.
   Les découpes issues de la toile y restent ; la planche originale est conservée.
-- [ ] Extraire un élément permet de proposer un calage des parties communes, d'ajuster
+- [x] Extraire un élément permet de proposer un calage des parties communes, d'ajuster
   position, échelle et opacité, puis de garder ou retirer des pixels à la main. Refermer et
   rouvrir restitue sources, masque et composition ; la portée sur les frames reste explicite.
 - [x] Choisir une image ouvre une bibliothèque filtrable avec aperçus. Position et échelle

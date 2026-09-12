@@ -6,7 +6,7 @@ l’état du chantier reste dans [PLAN.md](PLAN.md). L’apparence fait foi dans
 
 | Capacité et contrôles | Accès réel | Portée et conservation | Preuve / limite |
 |---|---|---|---|
-| Détourage : passes, bord, pipette, sélection, modèles, palette, tolérance, seuil alpha, durcissement, masquage | Retouche → sélecteur Détourer ; animation → même panneau | Image ; réglage touché sur frame, sélection ou bande | Pipette et tracé raccordés sur le fichier source de la frame. Test de visée à coordonnées d’origine malgré une réduction de moitié à l’écran |
+| Détourage : passes, bord, pipette, sélection, modèles, palette, tolérance, seuil alpha, durcissement, masquage | Retouche → sélecteur Détourer ; animation → même panneau | Image ; réglage touché sur frame, sélection ou bande | Pipette et tracé raccordés sur le fichier source de la frame. Test de visée à coordonnées d’origine malgré une réduction de moitié à l’écran. Le seuil alpha n’a pas de curseur propre : c’est un défaut du produit (128), expliqué dans l’aide de la table (`interface/src/aide.ts`, `detourage.seuil_alpha`) plutôt qu’un réglage qu’on déplace — comme dans l’ancien accès |
 | Recadrage : marge, rectangle manuel, remise à zéro | Retouche → Recadrer ; animation → même panneau | Recette non destructive ; cadre commun de l’animation conservé | Rectangle traçable dans une vue source zoomable, distincte de la case finale ; retour à l’animation après le geste |
 | Pixelisation : taille, occupation, méthode, décalage | Retouche / animation → Pixéliser | Frame, sélection, bande selon le sélecteur de portée | Ancrage de bande dans « Animation · boucle, repère et fenêtre commune » |
 | Couleurs : palette, nombre, remplacements, tramage ; nettoyage : taches, bord ; contours ; retournement | Sélecteur de table fixe | Même chaîne CPU et mêmes recettes ; aucune copie du moteur dans l’UI | Retournement maintenant accessible aussi dans l’atelier d’animation |
@@ -22,7 +22,7 @@ l’état du chantier reste dans [PLAN.md](PLAN.md). L’apparence fait foi dans
 | Réordre des frames retenues du montage | Vignettes de sortie : glisser-déposer ; Alt + flèches | Chaque occurrence reste distincte, même avec deux numéros de source identiques | Nouveau test UI souris + clavier et test de correspondance des prises |
 | Nom et classement séparés | Montage → nom libre + Personnage / Mouvement / Direction | Destination validée dans le même jeu. Le clip, ses prises et ses retouches ne changent pas | 6 tests API : création, changement de sujet, réouverture, refus intacts et brouillon sans sujet. AU15 réévalue les calques liés à l’ancienne destination |
 | Découpe : détection, grille, rectangles, noms, créer plusieurs images, reprendre la source | Retouche → Découpe · plusieurs images ; ancien accès dans Toutes les tables ; toile existante | Image originale conservée ; sorties vers bibliothèque / toile selon origine | Prélèvement CPU de la case courante, placement et Main compris ; original intact, filiation bande/occurrence/clip. Découpe zoomable puis retour aux changements non enregistrés |
-| Extraction : choisir deux sources, calage automatique, déplacement direct, échelle, opacité, masque, sorties | Retouche → Extraire un élément ; ancien Superposer conservé | Sources et composition gérées par le service existant | Bibliothèque générale : recherche, collection, favoris et pagination. Déplacement direct, rectangle, pinceau garder/retirer avec empreinte ; travail/calque/résultat zoomables. Test API de relecture exacte des sources et du masque |
+| Extraction : choisir deux sources, calage automatique, déplacement direct, échelle, opacité, masque, sorties | Retouche → Extraire un élément ; ancien Superposer conservé | Une image d’entrée, une image de sortie neuve : aucune frame d’une bande n’est jamais réécrite par la fabrique elle-même, la portée ne peut donc pas s’étendre au-delà de l’asset ouvert | Bibliothèque générale : recherche, collection, favoris et pagination. Déplacement direct, rectangle, pinceau garder/retirer avec empreinte ; travail/calque/résultat zoomables. À l’ouverture, `EcranSuperposition` relit la pose via `api.ouvrirSuperposition` (`Superposition.tsx`) ; `tests/test_au4_surfaces.py::test_rouvrir_extraction_retrouve_sources_et_masque_exact` fabrique une extraction avec calage, échelle, rectangle et main non par défaut, la referme puis la rouvre par le service (`atelier.superposition.ouvrir`) et vérifie que la pose relue est identique et que l’aperçu rejoué produit le même calque, sans appel fournisseur supplémentaire |
 
 Les fabriques sont séparées des traitements dans le nouvel accès principal.
 Les essais de navigation vérifient aussi le retour de retouche vers la galerie
@@ -35,3 +35,34 @@ retrouve les rectangles corrigés sans les remplacer par une nouvelle détection
 « Toutes les tables et leur état » conserve les anciens chemins pendant la
 vérification de chaque atelier spécialisé. Aucune capacité ancienne n’a été
 retirée pour masquer un raccord restant.
+
+## Relecture croisée du 12 septembre 2026
+
+Une passe précédente avait écrit ce relevé sans le confronter au code ; cette
+passe-ci croise chaque ligne avec trois sources — le tableau des douze
+capacités de `PLAN-atelier-unifie.md` § « Comment fermer une tranche »,
+cette page, et l’écran réel — puis rouvre chaque preuve citée pour vérifier
+qu’elle porte bien l’assertion annoncée.
+
+Contrôles faits, avec leur porte dans le code : le pinceau de la main
+(`ReglagesDeLaMain`, `Retouche.tsx`), le chutier avec son retrait un par un
+(`viderDuChutier`, `auChutier`, `AtelierDeBande.tsx`), le classement d’une
+bande séparé de son nom (`/api/strips/{id}/case`, `atelier/services/montage.py`),
+le découpage d’une frame retouchée (`preleverFrameDeBande`,
+`atelier/services/montage.py::prelevement_de_frame`), le réordre des frames
+retenues au clavier et à la souris (`EcranMontage`, `Montage.tsx`), et les
+huit tables de retouche — détourage, recadrage, pixélisation, couleurs,
+nettoyage, contour, retournement, main — qui ont chacune leur fonction
+`ReglagesDe…` dans `Retouche.tsx`. Une seule imprécision trouvée, corrigée
+ci-dessus : le seuil alpha du détourage n’a pas de curseur propre, c’est un
+défaut du produit documenté dans l’aide, pas un réglage déplacé.
+
+Preuves rejouées pour cette passe : `npx vitest run
+src/composants/AtelierUnifieRetouche.test.tsx src/composants/Retouche.test.tsx`
+(105 essais, tous verts), `.venv/Scripts/python.exe -m pytest
+tests/test_au4_surfaces.py -q` (2 essais, tous verts) et `npx tsc --noEmit`
+(aucune erreur). L’essai `test_rouvrir_extraction_retrouve_sources_et_masque_exact`
+pose une extraction avec un calage, une échelle, un rectangle et un trait de
+main non par défaut, la referme, la rouvre par le service et vérifie que la
+pose relue et l’aperçu rejoué sont identiques à l’originale, sans appel
+fournisseur de plus.
