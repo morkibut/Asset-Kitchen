@@ -166,7 +166,7 @@ window.creerEquipementsMaquette = api => {
     'eq-slot-confirm':el=>{const name=val('eq-new-slot').trim();if(!name)return toast('Nommez cet emplacement.');const existing=slots().find(s=>s.toLocaleLowerCase()===name.toLocaleLowerCase()),chosen=existing||name;if(!existing){st().equipmentSlots??=[];st().equipmentSlots.push(name);}document.querySelectorAll('[name="eq-placement"],[name="eq-slot"]').forEach(selectEl=>{selectEl.innerHTML=slots().map(s=>`<option>${esc(s)}</option>`).join('');selectEl.value=chosen;});save();el.parentElement.remove();},
     'eq-review':review,
     'eq-review-remove':el=>{captureReview();batch.keys=batch.keys.filter(k=>k!==el.dataset.key);showReview();},
-    'eq-ref':()=>{captureReview();api.picker(({s,r})=>{batch.refs.push({name:s.name+' · '+r.title,url:api.sourceImage(r)});showReview();},()=>showReview());},
+    'eq-ref':()=>{captureReview();api.picker(async({s,r})=>{batch.refs.push({name:s.name+' · '+r.title,url:await api.sourceImage(r)});showReview();},()=>showReview());},
     'eq-ref-remove':el=>{captureReview();batch.refs.splice(Number(el.dataset.index),1);showReview();},
     'eq-generate':generateBatch,
     'eq-unfold':async el=>{const job=st().equipmentJobs.find(j=>j.id===el.dataset.id),e=st().employments.find(e=>e.id===job.employment);for(const sheet of job.sheets.filter(s=>!s.unfolded)){const im=new Image();im.src=sheet.returned;await im.decode();sheet.keys.forEach((key,i)=>{const l=e.layers[key];if(l?.jobId!==job.id)return;const c=document.createElement('canvas');c.width=c.height=64;c.getContext('2d').drawImage(im,(i%3)*64,Math.floor(i/3)*64,64,64,0,0,64,64);l.source=c.toDataURL();l.status='À extraire';});sheet.unfolded=true;}save();render();toast('Cases dépliées localement, sans appel supplémentaire.');},

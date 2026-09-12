@@ -5,6 +5,10 @@
 > 4 septembre. État du code examiné : `f843d15`, branche `codex/atelier-unifie`.
 > Ce document contient des constats et des **propositions à éprouver** ; il ne remplace
 > ni le PRD, ni DESIGN.md, ni le plan actif. Aucune correction produit n'est livrée par cet audit.
+>
+> Suite de l'audit : les [essais de consolidation du prototype](releves/2026-09-12-consolidation-prototype.md)
+> consignent les corrections éprouvées après ce relevé. Les constats ci-dessous décrivent
+> l'état examiné, pas une nouvelle liste de défauts à corriger sans relire ces preuves.
 
 ## À retenir en une minute
 

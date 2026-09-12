@@ -331,6 +331,12 @@ lecture/édition, le résumé d'envoi et les profils fictifs. La bibliothèque c
 le montage utilisent `docs/maquettes-atelier-unifie/consolidation-bibliotheque.css`.
 Les cadres de couverture et de vérification animée des équipements utilisent
 `docs/maquettes-atelier-unifie/consolidation-equipements.css`.
+`docs/maquettes-atelier-unifie/toile-livraison.js` raccorde la sélection créative à la
+relecture et simule les livraisons avec leurs fichiers et instantanés. Les occurrences
+du montage sont vérifiées par `essais/essai_montage_maquette.cjs` : une copie retouchée
+garde son identité après reprise et réordonnancement.
+`essais/essai_livraison_maquette.cjs` vérifie les noms entre versions, les instantanés,
+la sélection après révision et la réserve des cartes.
 Le châssis conserve dans un espace de travail séparé le contexte et les brouillons :
 une reprise de brouillon ne remplace jamais la version enregistrée du résultat.
 Le périmètre testable et ses limites sont dans

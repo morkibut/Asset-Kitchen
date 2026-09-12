@@ -32,6 +32,7 @@
   let draft=null, dirty=false, selectedFrames=[0], cursor=0, tool='Main', scope='frame', playing=null, undo=[], redo=[];
   let filter='', family='', favoriteOnly=false, canvasSelected=null, linkFrom=null, compareIds=[], inspector='retouch';
   let request=null, feedbackContext=null, confirmAction=null, messageTimer=null, storageWarned=false;
+  let finition=null;
   let compareTimer=null,compareElapsed=0;
   const $ = (selector,base=document) => base.querySelector(selector);
   const $$ = (selector,base=document) => [...base.querySelectorAll(selector)];
@@ -67,9 +68,11 @@
   const demo=text=>`<p class="demo">${text}</p>`;
   const heading=(title,description,actions='')=>`<div class="heading"><div><h1>${esc(title)}</h1><p class="muted">${description}</p></div><div class="row wrap">${actions}</div></div>`;
   function modal(title,body,actions='') {
-    dialog.classList.remove('wide-dialog');
+    const previousTitle=$('#dialog-title')?.textContent;
+    dialog.classList.remove('wide-dialog','review-dialog');
     dialog.innerHTML=`<div class="row between"><h2 id="dialog-title">${title}</h2>${button('Fermer','close','aria-label="Fermer la fenêtre"')}</div>${body}<footer>${actions}</footer>`;
     if(!dialog.open) dialog.showModal();
+    if(previousTitle!==$('#dialog-title')?.textContent)dialog.scrollTop=0;
   }
   function stop() { clearInterval(playing); playing=null;clearInterval(compareTimer);compareTimer=null; }
   function leave(action) {
@@ -82,7 +85,7 @@
     tab=nav?.tab||workspace().tabs[subjectId]||'animations';settingsTab=nav?.settingsTab||'universe';resultId=nav?.resultId||null;
     compareIds=nav?.compareIds||[];page=nav?.page||'home';
     // Ces ateliers gardent encore leur sélection dans une fermeture JavaScript.
-    if(!['home','universe','library','gallery','montage','subject','editor','jobs','delivery','settings','guide','compare','source','remarks'].includes(page))page='subject';
+    if(!['home','universe','library','gallery','montage','subject','editor','jobs','delivery','settings','guide','compare','source','remarks'].includes(page)&&!parcours.canRestoreEquipment?.(page))page='subject';
     draft=null;dirty=false;
     if(page==='editor'){
       const saved=workspace().drafts[resultId],r=saved?.result||currentResult();
@@ -100,6 +103,7 @@
   }
   let renderedPage=null;
   function render() {
+    finition?.beforeRender();
     if(renderedKey)workspace().scroll[renderedKey]={top:main.scrollTop,left:main.scrollLeft};
     const routeKey=viewKey();
     if(!restoringHistory&&navigationHistory.at(-1)?.key!==routeKey){navigationHistory.push({key:routeKey,nav:navigationState()});if(navigationHistory.length>30)navigationHistory.shift();navigationFuture.length=0;}
@@ -116,21 +120,22 @@
     $('#sidebar').innerHTML=`<div class="sidebar-heading"><div class="brand">Asset Kitchen</div>${button(workspace().sidebarCollapsed?'☰':'‹','toggle-sidebar',`aria-label="${workspace().sidebarCollapsed?'Déplier':'Replier'} la navigation" title="${workspace().sidebarCollapsed?'Déplier':'Replier'} la navigation"`)}</div><div class="game"><div class="label">Le jeu ouvert</div><h3>${esc(state.game.name)}</h3><small>Pixel art · ${state.game.size} px · ${state.subjects.length} assets</small></div>
       <nav aria-label="Atelier">${[['home','Le jeu'],['universe','Univers & toile'],['library','Les assets'],['gallery','Galerie'],['jobs',`Fabrications${pending?' · '+pending:''}`],['delivery','Livrer au jeu']].map(([p,n])=>go(n,p,page===p?'aria-current="page"':'')).join('')}</nav>
       ${parcours.sidebar()}<nav aria-label="Préférences">${go('Réglages', 'settings',page==='settings'?'aria-current="page"':'')}${go('Essayer la maquette','guide',page==='guide'?'aria-current="page"':'')}${go(`Vos remarques · ${state.remarks.filter(r=>!r.resolved).length}`,'remarks')}</nav>
-      <div class="sidefoot">${button(`Brouillons · ${Object.keys(workspace().drafts).length}`,'open-drafts')}<p class="small">Essais conservés dans ce navigateur.</p><a href="couverture.md">Couverture et limites</a><br><a href="../pistes-2026-09-04/carnet/Sommaire.html">Planches de référence</a></div>`;
+      <div class="sidefoot">${button(`Brouillons · ${Object.keys(workspace().drafts).length+(parcours.montageDraftEntries?.().length||0)}`,'open-drafts')}<p class="small">Essais conservés dans ce navigateur.</p><a href="couverture.md">Couverture et limites</a><br><a href="../pistes-2026-09-04/carnet/Sommaire.html">Planches de référence</a></div>`;
     $$('#sidebar nav button[data-page]').forEach(b=>{b.title=b.textContent;b.dataset.short=({home:'Jeu',universe:'Toile',library:'Assets',gallery:'Galerie',jobs:'File',delivery:'Livrer',settings:'⚙',guide:'?',remarks:'Notes'})[b.dataset.page]||b.textContent.slice(0,3);});
-    const views={home,universe,library,subject,editor,jobs,delivery,settings,guide,compare,source,remarks,...ateliers.views,...parcours.views};
+    const views={home,universe,library,subject,editor,jobs,delivery,settings,guide,compare,source,remarks,...ateliers.views,...parcours.views,...(finition?.views||{})};
     main.innerHTML=`<div class="crumb"><div class="row">${button('←','workspace-back','aria-label="Écran précédent" title="Écran précédent · Alt + flèche gauche" '+(navigationHistory.length<2?'disabled':''))}${button('→','workspace-forward','aria-label="Écran suivant" title="Écran suivant · Alt + flèche droite" '+(!navigationFuture.length?'disabled':''))}<span>${esc(state.game.name)} / ${['subject','editor','source','compare'].includes(page)?esc(currentSubject().name)+' / ':''}${esc(NAMES[page])}</span></div><label>Fond des images <select id="image-background" aria-label="Fond des images">${option(['Gris neutre','Transparence'],workspace().imageBackground==='alpha'?'Transparence':'Gris neutre')}</select></label></div>${views[page]()}`;
     if(page==='editor') {
       if($('#tool-content'))$$('[name]', $('#tool-content')).forEach(el=>{const v=draft.recipe.settings[`${tool}:${el.name}`];if(v!==undefined&&!el.dataset.recipe&&!el.dataset.setting)el.value=v;});
       if(!draft.animated){$$('[data-action="duplicate"],[data-action="move-frame"],[data-action="select-all"],[data-action="remove-frame"]').forEach(b=>b.disabled=true);if($('#scope'))$('#scope').disabled=true;}
       drawAll();
     }
-    if(page==='universe') wireCanvas();
+    if(page==='universe'&&!finition) wireCanvas();
     if(page==='compare') drawComparisons();
     drawResultPreviews();
     ateliers.afterRender(page);
     ergonomie.afterRender();
     parcours.afterRender();
+    finition?.afterRender();
     if(page==='jobs')state.jobs.filter(j=>j.nextAnimation&&j.status==='Terminé').forEach(j=>{const anchor=$(`[data-action="job-open"][data-id="${j.id}"]`);anchor?.insertAdjacentHTML('afterend',button('Préparer l’animation avec cette référence','continue-animation',`data-id="${j.id}"`));});
     wireInspectorResize();
     const scroll=workspace().scroll[routeKey];main.scrollTop=scroll?.top||0;main.scrollLeft=scroll?.left||0;
@@ -204,7 +209,7 @@
   }
   function editor() {
     if(!draft) return '<p>Aucun résultat ouvert.</p>'+go('Revenir aux assets','library');
-    return heading(draft.title,`${esc(currentSubject().name)} · version ${draft.revision} · <span id="dirty" class="${dirty?'dirty':''}">${dirty?'Brouillon retrouvé · version enregistrée intacte':'Version enregistrée'}</span>`,go('Retour à l’asset','subject')+button('Enregistrer les retouches','save-editor','title="Ctrl + S"')+button('Utiliser comme équipement…','eq-assign-image'))+
+    return heading(draft.title,`${esc(currentSubject().name)} · version ${draft.revision} · <span id="dirty" class="${dirty?'dirty':''}">${dirty?'Brouillon conservé · version enregistrée intacte':'Version enregistrée'}</span>`,go('Retour à l’asset','subject')+button('Enregistrer les retouches','save-editor','title="Ctrl + S"')+button('Utiliser comme équipement…','eq-assign-image'))+
       `<div class="editor"><section class="editor-document"><div class="toolbar editor-actions">${button('Annuler','undo',undo.length?'':'disabled')}${button('Rétablir','redo',redo.length?'':'disabled')}${button('Comparer à la source','compare-source')}</div><div class="sprite editor-preview ${draft.recipe.grid?'grid':''}"><canvas id="pixels" width="64" height="64" aria-label="Image à retoucher, peindre avec la souris"></canvas></div>
       <div class="editor-transport">${button(playing?'Pause':'Lire','play',draft.animated?'':'disabled')}<span class="small" id="frame-status">Frame ${cursor+1} / ${draft.frames.length}</span>${draft.animated?`<label>Cadence ${input('fps',draft.recipe.fps,'number','min="1" max="60" data-recipe="fps" aria-label="Cadence (images par seconde)"')} i/s</label><label><input type="checkbox" data-recipe="loop" ${draft.recipe.loop?'checked':''}> Boucler</label>`:''}</div><div class="timeline" aria-label="Frames" title="Clic : choisir · Ctrl + clic : sélection multiple">${draft.frames.map((f,i)=>`<button class="frame" data-action="frame" data-index="${i}" aria-label="Frame ${i+1}" aria-pressed="${selectedFrames.includes(i)}"><canvas width="64" height="64" data-frame="${i}"></canvas><span>${i+1}</span></button>`).join('')}</div>
       <div class="toolbar frame-actions">${button('Tout sélectionner','select-all')}${button('Dupliquer','duplicate')}${button('←','move-frame','data-delta="-1" aria-label="Avancer la frame" title="Avancer la frame"')}${button('→','move-frame','data-delta="1" aria-label="Reculer la frame" title="Reculer la frame"')}${button('Retirer','remove-frame',draft.frames.length>selectedFrames.length?'':'disabled')}${button('Extraire une image','extract-frame',draft.animated?'':'disabled')}</div></section>
@@ -225,7 +230,7 @@
     return '';
   }
   function genericRange(name,min,max,value) {const key=`${tool}:${name}`;return field(name,input(name,draft.recipe.settings[key]??value,'range',`min="${min}" max="${max}" data-setting="${esc(key)}"`));}
-  function openEditor(r) {if(!r)return;restoreNavigation({page:'editor',subjectId,tab:r.animated?'animations':'images',resultId:r.id});render();if(dirty)toast('Brouillon retrouvé. La version enregistrée reste intacte jusqu’à « Enregistrer les retouches ».');}
+  function openEditor(r) {if(!r)return;restoreNavigation({page:'editor',subjectId,tab:r.animated?'animations':'images',resultId:r.id,inspector,tool,scope});render();if(dirty)toast('Brouillon retrouvé. La version enregistrée reste intacte jusqu’à « Enregistrer les retouches ».');}
   function snapshot() {undo.push(clone(draft));if(undo.length>40)undo.shift();redo=[];}
   function changed() {dirty=true;const n=$('#dirty');if(n){n.textContent='Brouillon · version enregistrée intacte';n.className='dirty';}queueWorkspace();}
   function targetFrames() {return scope==='all'?draft.frames:scope==='selection'?selectedFrames.map(i=>draft.frames[i]):[draft.frames[cursor]];}
@@ -248,6 +253,13 @@
     if(!raw)ateliers.drawLayers(ctx,r,f,cachedImage);
     ctx.restore();
     if(rec.grid&&!raw){ctx.strokeStyle='#6d675e';ctx.globalAlpha=.4;ctx.lineWidth=.2;for(let p=8;p<64;p+=8){ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,64);ctx.moveTo(0,p);ctx.lineTo(64,p);ctx.stroke();}ctx.globalAlpha=1;}
+  }
+  async function renderFrameSource(r,index=0,{original=false}={}) {
+    const copy=clone(r),position=Math.max(0,Math.min(index,copy.frames.length-1)),f=copy.frames[position];
+    const images=[f.image?cachedImage(f.image):(copy.animated||copy.sourceAnimation)?spriteSheet:copy.image?cachedImage(copy.image):reference];
+    if(!original)for(const layer of copy.layers||[])if(layer.visible&&layer.kind==='image'&&(!layer.frameId||layer.frameId===f.id))images.push(cachedImage(layer.image));
+    await Promise.all([...new Set(images)].map(im=>im.complete&&im.naturalWidth?Promise.resolve():im.decode()));
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=64;drawFrame(canvas,copy,position,original);return canvas.toDataURL('image/png');
   }
   const imageCache=new Map();
   function cachedImage(url){if(!imageCache.has(url)){const im=new Image();im.onload=()=>{drawAll();drawResultPreviews();if(page==='compare')drawComparisons();};im.src=url;imageCache.set(url,im);}return imageCache.get(url);}
@@ -290,8 +302,8 @@
     if(settingsTab==='universe')return `<section class="surface"><h2>Règles communes</h2>${field('Nom du jeu',input('game-name',state.game.name))}${field('Description du monde',`<textarea name="game-description">${esc(state.game.description)}</textarea>`)}${field('Direction artistique',`<textarea name="game-style">${esc(state.game.style)}</textarea>`)}${field('Taille de référence',select('game-size',[32,48,64,96,128].map(String),String(state.game.size)))}${button('Garder les règles','save-game')}<p class="note">Les notes de la toile restent libres. Les assets héritent de ces règles ; les détails propres au sujet se lisent dans sa fiche.</p></section>`;
     if(settingsTab==='engines')return `<div class="two"><section class="surface"><h2>Fournisseur par API</h2><label class="row"><input id="api-ready" type="checkbox" ${state.providers.api?'checked':''}> Simuler une connexion disponible</label><p class="small space">Aucune clé demandée dans la maquette. Un fournisseur indisponible ne bloque pas les autres.</p></section><section class="surface"><h2>Moteurs locaux</h2><label class="row"><input id="local-ready" type="checkbox" ${state.providers.local?'checked':''}> Simuler un moteur local disponible</label><p class="small space">ComfyUI image, vidéo et asset3d apparaissent comme des capacités différentes.</p></section></div><section class="surface space"><h2>Profils de workflow</h2><table class="matrix"><thead><tr><th>Profil d’exemple</th><th>Entrée</th><th>Sortie</th></tr></thead><tbody><tr><td>Image locale · v1</td><td>Texte, références optionnelles</td><td>Images</td></tr><tr><td>Animation locale · v1</td><td>Image de départ obligatoire, mouvement</td><td>Clip</td></tr><tr><td>asset3d · rendu v1</td><td>Modèle, rig, mouvement, vues</td><td>Source 3D et frames</td></tr></tbody></table>${demo('Ces profils sont descriptifs. Import de workflow, validation des entrées, installation et gestion fine des ressources restent à maqueter à partir des adaptateurs réels.')}</section>`;
     if(settingsTab==='agent')return `<section class="surface"><h2>L’agent qui développe le jeu</h2><p>Le MCP lui permet de demander les assets pendant le développement Godot. Vous pouvez accomplir le même parcours dans l’interface sans le connecter.</p><div class="stack"><label><input name="policy-local" type="checkbox" ${state.policy.local?'checked':''}> Autoriser les méthodes locales disponibles</label><label><input name="policy-paid" type="checkbox" ${state.policy.paid?'checked':''}> Autoriser les appels payants dans une limite</label><label><input name="policy-provisional" type="checkbox" ${state.policy.provisional?'checked':''}> Permettre une livraison provisoire pour tester le jeu</label></div><div class="two">${field('Plafond fictif par demande ($)',input('policy-budget',state.policy.budget,'number','min="0" step="0.1"'))}${field('Nombre maximal de tentatives',input('policy-attempts',state.policy.attempts,'number','min="1" max="10"'))}</div>${button('Garder le cadre de l’agent','save-policy')}${demo('Les choix sont mémorisés et filtrent les méthodes du scénario agent. Le serveur MCP réel n’est pas contacté.')}</section>`;
-    const rows=[...state.jobs.map(j=>({id:j.id,title:j.title,model:j.model||j.method,status:j.status,unit:j.method.startsWith('API')?'USD':null,amount:j.status==='Terminé'&&j.method.startsWith('API')?Number(j.cost)||0:null,label:j.estimate})),...(parcours.consumptionRows?.()||[])],usd=rows.filter(r=>r.unit==='USD'&&r.amount!==null).reduce((n,r)=>n+r.amount,0);
-    return `<section class="surface"><h2>Consommations des essais</h2><p>Aucune dépense réelle. ${rows.length} travail(aux) normal, libre ou équipement.</p><div class="readout">Total des appels terminés : ${usd.toFixed(2)} $ fictifs · les durées locales non mesurées restent inconnues.</div><table class="matrix"><thead><tr><th>Demande</th><th>Modèle / état</th><th>Annonce ou consommation fictive</th></tr></thead><tbody>${rows.map(j=>`<tr><td>${esc(j.title)}</td><td>${esc(j.model)}<br><small>${esc(j.status)}</small></td><td>${j.unit==='USD'&&j.amount!==null?j.amount.toFixed(2)+' $ fictifs':esc(j.label||'Temps local non mesuré')}</td></tr>`).join('')}</tbody></table><p class="note">Les dollars, unités du fournisseur et temps local restent séparés. Aucun délai local n’est inventé ni multiplié par le nombre de clips.</p></section>`;
+    const rows=[...state.jobs.map(j=>({id:j.id,title:j.title,model:j.model||j.method,status:j.status,unit:j.method.startsWith('API')?'USD':null,amount:j.status==='Terminé'&&j.method.startsWith('API')&&j.cost!==null&&j.cost!==undefined&&Number.isFinite(Number(j.cost))?Number(j.cost):null,label:j.method.startsWith('API')&&j.status==='Terminé'&&(j.cost===null||j.cost===undefined)?'Montant non conservé dans cet ancien essai':j.estimate})),...(parcours.consumptionRows?.()||[])],usd=rows.filter(r=>r.unit==='USD'&&r.amount!==null).reduce((n,r)=>n+r.amount,0);
+    return `<section class="surface"><h2>Consommations des essais</h2><p>Aucune dépense réelle. ${rows.length} travail(aux) normal, libre ou équipement.</p><div class="readout">Total documenté des appels terminés : ${usd.toFixed(2)} $ fictifs. Les montants non conservés et les durées locales non mesurées restent inconnus, exclus de ce total.</div><table class="matrix"><thead><tr><th>Demande</th><th>Modèle / état</th><th>Annonce ou consommation fictive</th></tr></thead><tbody>${rows.map(j=>`<tr><td>${esc(j.title)}</td><td>${esc(j.model)}<br><small>${esc(j.status)}</small></td><td>${j.unit==='USD'&&j.amount!==null?j.amount.toFixed(2)+' $ fictifs':esc(j.label||'Temps local non mesuré')}</td></tr>`).join('')}</tbody></table><p class="note">Les dollars, unités du fournisseur et temps local restent séparés. Aucun délai local n’est inventé ni multiplié par le nombre de clips.</p></section>`;
   }
   function source() {
     const s=currentSubject(), model=s.model3d;
@@ -325,7 +337,7 @@
     showRequest();
   }
   function showRequest() {
-    const s=currentSubject(),agent=request.origin.startsWith('Agent'),hasReference=!!request.references?.length||!!s.image||s.results.some(r=>!r.animated&&!r.rejected);
+    const s=currentSubject(),agent=request.origin.startsWith('Agent'),hasReference=request.references!==undefined?!!request.references.length:!!s.image||s.results.some(r=>!r.animated&&!r.rejected);
     const choices=[['Local · workflow de démonstration',state.providers.local&&(!agent||state.policy.local),agent?'Moteur local indisponible ou non autorisé':'Moteur local indisponible'],['API · modèle de démonstration',state.providers.api&&(!agent||state.policy.paid&&state.policy.budget>=0.2),agent?'Connexion ou budget de l’agent insuffisant':'Connexion API indisponible']];
     if(request.method==='3D · rendu de démonstration')choices.unshift([request.method,!!s.model3d?.rig,'Rig à préparer']);
     const available=choices.filter(c=>c[1]);if(!available.some(c=>c[0]===request.method))request.method=available[0]?.[0]||'';
@@ -375,7 +387,7 @@
     modal('Remarques prêtes à transmettre',field('Texte à copier',`<textarea id="feedback-export" rows="14" readonly>${esc(text)}</textarea>`)+`<p class="small">Copiez ce texte dans notre conversation. Vous pouvez aussi le télécharger si votre navigateur le permet.</p>`,button('Tout sélectionner','select-feedback')+button('Télécharger le Markdown','download-feedback'));
   }
   const ateliers=window.creerAteliersMaquette({state:()=>state,subject:currentSubject,draft:()=>draft,result:currentResult,frame:()=>cursor,
-    id,clone,esc,button,field,input,select,option,heading,demo,modal,toast,save,render,snapshot,changed,openEditor,createResult:result,drawFrame,redraw:drawAll,
+    id,clone,esc,button,field,input,select,option,heading,demo,modal,toast,save,render,snapshot,changed,openEditor,createResult:result,drawFrame,renderFrameSource,redraw:drawAll,
     go:p=>leave(()=>{stop();page=p;render();}),leave:fn=>leave(()=>{stop();Promise.resolve(fn()).catch(error=>{console.error(error);toast('Cette source n’a pas pu être ouverte.');});}),setSubject:key=>{subjectId=key;},imagesTab:()=>{tab='images';},showLayers:()=>{inspector='layers';},
     open:p=>{stop();page=p;render();},image:IMAGE,pickFromLibrary:(callback)=>ergonomie.openPicker(callback)});
   let parcours;
@@ -384,15 +396,20 @@
     brush:key=>key==='pixels'?(tool==='Main'&&inspector==='retouch'?Number(draft?.recipe.brush):0):ateliers.brushSize()});
   parcours=window.creerParcoursMaquette({state:()=>state,subject:currentSubject,page:()=>page,esc,button,field,input,select,heading,modal,save,render,toast,id,clone,result,drawFrame,image:IMAGE,navigate,
     editorSnapshot:()=>draft?{r:clone(draft),index:cursor,subjectId}:null,saveEditor,
-    picker:(...args)=>ergonomie.openPicker(...args),sourceImage:r=>r.frames[0]?.image||r.image||IMAGE,
+    picker:(...args)=>ergonomie.openPicker(...args),sourceImage:(r,index=0,options)=>renderFrameSource(r,index,options),
     request:requestForm,requestState:()=>request,
     openSubject:(sid,t='animations')=>leave(()=>{dialog.close();subjectId=sid;tab=t;stop();page='subject';render();}),
     openResult:(sid,r)=>leave(()=>{dialog.close();subjectId=sid;tab=r.animated?'animations':'images';openEditor(r);})});
+  finition=window.creerFinitionMaquette?.({state:()=>state,page:()=>page,subject:currentSubject,esc,button,field,input,select,heading,modal,save,render,toast,id,clone,drawFrame,renderFrameSource,image:IMAGE,navigate,
+    picker:(...args)=>ergonomie.openPicker(...args),
+    prepareRequest:(sid,fields)=>{subjectId=sid;requestForm({kind:fields.kind||'image'});Object.assign(request,fields);showRequest();},
+    retouch:(sid,r,index=0)=>leave(()=>{dialog.close();subjectId=sid;openEditor(r);cursor=Math.min(index,r.frames.length-1);selectedFrames=[cursor];render();})});
   const handlers={
     close:()=>dialog.close(),
     'toggle-sidebar':()=>{workspace().sidebarCollapsed=!workspace().sidebarCollapsed;render();},
     'workspace-back':()=>historyMove(false),'workspace-forward':()=>historyMove(true),
-    'open-drafts':()=>modal('Retouches à reprendre',`<p>Ces brouillons sont distincts des versions enregistrées.</p>${Object.entries(workspace().drafts).map(([key,d])=>`<div class="line"><strong>${esc(state.subjects.find(s=>s.id===d.subjectId)?.name)} · ${esc(d.result.title)}</strong><p class="small">Dernière reprise : ${new Date(d.savedAt).toLocaleString('fr-FR')}</p>${button('Reprendre ce brouillon','resume-draft',`data-id="${key}"`)}</div>`).join('')||'<p>Aucun brouillon en attente.</p>'}`),
+    'open-drafts':()=>modal('Brouillons à reprendre',`<p>Ces retouches et montages sont distincts des versions enregistrées.</p><h3>Retouches</h3>${Object.entries(workspace().drafts).map(([key,d])=>`<div class="line"><strong>${esc(state.subjects.find(s=>s.id===d.subjectId)?.name)} · ${esc(d.result.title)}</strong><p class="small">Dernière reprise : ${new Date(d.savedAt).toLocaleString('fr-FR')}</p>${button('Reprendre cette retouche','resume-draft',`data-id="${key}"`)}</div>`).join('')||'<p>Aucune retouche en attente.</p>'}<h3 class="space">Montages</h3>${(parcours.montageDraftEntries?.()||[]).map(d=>`<div class="line"><strong>${esc(d.title)}</strong><p class="small">${esc(d.subjectName||'Rattachement à choisir')}</p>${button('Reprendre ce montage','resume-montage-draft',`data-id="${esc(d.id)}"`)}</div>`).join('')||'<p>Aucun montage en attente.</p>'}`),
+    'resume-montage-draft':el=>leave(()=>{dialog.close();parcours.openMontageDraft?.(el.dataset.id);}),
     'resume-draft':el=>leave(()=>{const d=workspace().drafts[el.dataset.id];if(!d)return;subjectId=d.subjectId;dialog.close();openEditor(d.result);}),
     'new-subject':()=>subjectForm(), 'edit-subject':()=>subjectForm(true),
     'create-subject':()=>{const name=value('subject-name').trim();if(!name){toast('Donnez un nom à l’asset.');return;}const s={id:id(),name,family:value('subject-family'),goal:value('subject-goal'),description:value('subject-description'),movements:['Repos','Marche'],directions:state.game.directions.slice(),results:[],equipment:[]};state.subjects.push(s);subjectId=s.id;tab=s.goal==='Images fixes'?'images':'animations';save();dialog.close();page='subject';render();},
@@ -470,12 +487,12 @@
     'select-feedback':()=>{$('#feedback-export').focus();$('#feedback-export').select();},
     'download-feedback':()=>{const blob=new Blob([$('#feedback-export').value],{type:'text/markdown;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='remarques-maquette-asset-kitchen.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Téléchargement demandé. Si le navigateur ne le propose pas, copiez le texte affiché.');},
     reset:()=>modal('Recommencer la démonstration ?', '<p>Les essais et remarques de cette maquette seront effacés de ce navigateur. Vos vrais projets ne sont jamais concernés.</p>',button('Annuler','close')+button('Réinitialiser les essais','confirm-reset')),
-    'confirm-reset':()=>{stop();state=seed();subjectId='pelerin';page='home';draft=null;dirty=false;compareIds=[];canvasSelected=null;linkFrom=null;save();dialog.close();render();}
+    'confirm-reset':()=>{stop();state=seed();subjectId='pelerin';page='home';tab='animations';resultId=null;draft=null;dirty=false;compareIds=[];canvasSelected=null;linkFrom=null;renderedKey=null;navigationHistory.length=0;navigationFuture.length=0;saveWorkspace();dialog.close();location.reload();}
   };
   document.addEventListener('click',async e=>{
     const el=e.target.closest('button');if(!el||el.disabled)return;
     if(el.dataset.page){navigate(el.dataset.page);return;}
-    const action=parcours.handlers[el.dataset.action]||ergonomie.handlers[el.dataset.action]||handlers[el.dataset.action]||ateliers.handlers[el.dataset.action];if(action){try{await action(el,e);}catch(error){console.error(error);toast('Ce geste de la maquette a rencontré une erreur. Vous pouvez noter le parcours pour le corriger.');}}
+    const action=finition?.handlers[el.dataset.action]||parcours.handlers[el.dataset.action]||ergonomie.handlers[el.dataset.action]||handlers[el.dataset.action]||ateliers.handlers[el.dataset.action];if(action){try{await action(el,e);}catch(error){console.error(error);toast('Ce geste de la maquette a rencontré une erreur. Vous pouvez noter le parcours pour le corriger.');}}
   });
   function updateRecipe(el) {
     stop();if(!el.dataset.editing){snapshot();el.dataset.editing='yes';}
@@ -484,6 +501,7 @@
   }
   document.addEventListener('change',e=>{
     const el=e.target;
+    if(finition?.change(el,false))return;
     if(el.dataset.compareSelect!==undefined){compareIds[Number(el.dataset.compareSelect)]=el.value;compareElapsed=0;render();return;}
     if(el.name==='request-kind'||el.name==='request-method'){captureRequest();showRequest();return;}
     if(el.id==='image-background'){workspace().imageBackground=el.value==='Transparence'?'alpha':'neutre';document.body.dataset.imageBackground=workspace().imageBackground;saveWorkspace();return;}
@@ -501,7 +519,7 @@
     else if(el.id==='local-ready'||el.id==='api-ready'){state.providers[el.id==='local-ready'?'local':'api']=el.checked;save();}
     else if(el.dataset.check){state.checks[el.dataset.check]=el.checked;save();}
   });
-  document.addEventListener('input',e=>{if(((e.target.dataset.parcours||e.target.name?.startsWith('mount-')||e.target.name?.startsWith('eq-')||e.target.dataset.eqSetting)&&parcours.change(e.target))||ergonomie.change(e.target,true)||ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
+  document.addEventListener('input',e=>{if(finition?.change(e.target,true))return;if(((e.target.dataset.parcours||e.target.name?.startsWith('mount-')||e.target.name?.startsWith('eq-')||e.target.dataset.eqSetting)&&parcours.change(e.target))||ergonomie.change(e.target,true)||ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
   main.addEventListener('scroll',queueWorkspace,{passive:true});
   window.addEventListener('beforeunload',e=>{if(!saveWorkspace()&&dirty){e.preventDefault();e.returnValue='';}});
   window.addEventListener('pagehide',saveWorkspace);

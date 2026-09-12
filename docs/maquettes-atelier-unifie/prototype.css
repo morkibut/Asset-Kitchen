@@ -343,3 +343,41 @@ body[data-image-background=alpha] .sprite,body[data-image-background=alpha] .zoo
 #inspector-resize { position:absolute; width:10px; top:0; bottom:0; left:-13px; cursor:col-resize; touch-action:none; border-left:2px solid transparent; z-index:3 }
 #inspector-resize:hover,#inspector-resize:focus { border-color:var(--muted) }
 @media (max-height:760px) { .editing .heading h1 { font-size:25px }.editing .heading { margin-bottom:8px }.editor-document .timeline { min-height:82px; max-height:92px }.editor-document .frame canvas { width:42px; height:42px }.inspector-content>.small { font-size:11px } }
+
+/* Toile : les notes restent du papier, les images gardent leur propre rendu. */
+.world-toolbar { margin:0 0 8px }.world-toolbar input[type=number] { width:68px }
+.world-toolbar input { border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:4px 8px }
+.world-selection { display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 0; border-top:1px solid var(--trait); margin-bottom:8px }
+.world-selection span { margin-right:auto; font-size:12px }.world-selection button { font-size:12px }
+.world-view { height:calc(100vh - 310px); min-height:320px; overscroll-behavior:contain; touch-action:none }
+.world-view.panning,.world-view.panning .canvas-card header,.world-view.panning .island-handle { cursor:grab }
+.island-title { display:flex; justify-content:space-between; align-items:start; padding:8px; gap:8px }
+.island-title>div { display:flex; flex-direction:column; gap:4px; flex-shrink:0 }.island-title button:not(.island-handle) { font-size:11px; padding:2px 8px; min-height:26px }
+.island-title .island-handle { flex:1; padding:0; font-size:23px }
+.world .canvas-card { background:var(--carte); padding:14px }
+.world .canvas-card img { image-rendering:auto; background:var(--pourtour) }
+.world .canvas-card label { display:flex; gap:4px; align-items:center }
+.world .canvas-card .row { gap:4px }.world .canvas-card .quiet { font-size:11px }
+.world .canvas-card p { max-height:130px; overflow:auto }
+.world-reserve-grid,.world-send-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px }
+.world-reserve-grid article,.world-send-cards label { display:flex; flex-direction:column; gap:8px; padding:14px; min-width:0 }
+.world-reserve-grid img,.world-send-cards img { width:100%; height:120px; object-fit:contain; image-rendering:auto; background:var(--pourtour) }
+.world-send-cards p { font-size:12px; max-height:130px; overflow:auto; white-space:pre-wrap; margin:0 }
+.world-send-cards label>span:last-child { margin-top:auto; font-size:12px }
+.world-reserve { margin:8px 0 }.world-reserve summary { padding:8px 0 }
+.world-reserve-grid p { font-size:12px }
+/* Livraison : nom stable, révision visible, choix explicite. */
+.delivery-destination { display:flex; justify-content:space-between; gap:22px; padding:14px }
+.delivery-destination p { margin:4px 0 0 }.delivery-destination details { margin:0; min-width:240px }
+.delivery-summary { display:flex; flex-wrap:wrap; gap:22px; padding:14px 0; align-items:center }
+.delivery-summary strong { margin-left:auto }
+.delivery-rows { display:grid; gap:8px }
+.delivery-row { display:grid; grid-template-columns:22px 96px minmax(0,1fr) 170px; gap:14px; align-items:start; padding:14px }
+.delivery-row>label { padding-top:12px }.delivery-thumb { min-height:96px; height:96px }.delivery-thumb canvas { width:80px; height:80px; image-rendering:pixelated }
+.delivery-description h3 { font-size:23px; margin:0 0 4px }.delivery-description p { margin:4px 0 }
+.delivery-description details { margin:8px 0 }.delivery-description .mono { font-size:11px; padding:2px 0 }
+.delivery-row-actions { display:grid; gap:8px }.delivery-row-actions button { font-size:12px; padding:4px 8px }
+.delivery-sendbar { display:flex; justify-content:space-between; align-items:center; gap:22px; position:sticky; bottom:-22px; background:var(--papier); padding:14px 0; border-top:1px solid var(--trait); margin-top:14px }
+.delivery-sendbar p { font-size:12px; margin:0; max-width:540px }.delivery-sendbar button { flex-shrink:0 }
+.delivery-large { min-height:270px }.delivery-large canvas { width:256px; height:256px; image-rendering:pixelated }
+@media (max-width:1250px) { .delivery-row { grid-template-columns:22px 80px minmax(0,1fr) 145px }.delivery-thumb { min-height:80px; height:80px }.delivery-summary { gap:14px } }

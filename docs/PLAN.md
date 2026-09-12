@@ -9,9 +9,9 @@
 > Les retours d'essai et leurs limites sont consignés dans la
 > [couverture du prototype](maquettes-atelier-unifie/couverture.md).
 > Les équipements complets sont obligatoires : AU15–AU17, après AU5.
-> Le 12 septembre, l'auteur autorise la consolidation autonome après la revue UX complète :
-> reprise du travail, espace compact, bibliothèque, envois et équipements. Cette préparation
-> est en cours ; ses vérifications restent distinctes des tranches de production.
+> La consolidation autorisée le 12 septembre est éprouvée dans le prototype : reprise,
+> espace compact, bibliothèque, envois, équipements, toile et livraisons simulées.
+> L'essai de cette révision par l'auteur reste ouvert.
 > L'amendement RF est remplacé par cet ordre. La V4 reste le socle livré, avec les écarts
 > relevés dans la revue ; ni elle ni RF ne constituent une seconde file d'exécution.
 >

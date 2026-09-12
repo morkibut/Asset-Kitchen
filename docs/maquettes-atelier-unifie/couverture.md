@@ -11,7 +11,7 @@ Les limites sont affichées sur les écrans concernés, pas seulement dans ce do
 ## Comment l’essayer
 
 Ouvrir l’HTML dans un navigateur desktop, ou le servir avec un serveur statique local depuis
-la racine du dépôt. Il utilise une feuille CSS, six scripts voisins et des images locales,
+la racine du dépôt. Il utilise des feuilles CSS, des scripts voisins et des images locales,
 sans dépendance réseau. Le panneau **Essayer la maquette** propose huit parcours. Commencer par
 **Créer sans MCP**, puis **Corriger une animation** et **Composer un univers**.
 
@@ -36,8 +36,8 @@ le bandeau. Les tests de cette révision ont utilisé cette séance séparée de
 | Zone | Manipulations effectives dans la maquette | Simulation ou détail encore absent |
 |---|---|---|
 | Jeu | Vue d’ensemble, accès à l’univers, assets, fabrications et livraison | Création de plusieurs jeux et premier lancement à détailler |
-| Univers / toile | Ajouter note, image et îlot ; annoter ; déplacer et relier ; zoomer ; retrouver les positions ; découper une image en cartes, original conservé | Extraction de palette, officialisation d'artwork, placement des grands lots et passage assisté vers les règles à compléter |
-| Bibliothèque | Créer un sujet, rechercher, filtrer par famille, créer et rouvrir une collection, y ranger une sélection ; galerie distincte de tous les résultats | Gestion complète des collections, tri fin et charge avec des centaines d'assets non vérifiés |
+| Univers / toile | Ajouter note, image et îlot ; annoter ; déplacer et relier ; zoomer ; retrouver les positions ; mettre en réserve ; régler les îlots ; préparer un envoi depuis une sélection ou un îlot ; découper une image en cartes, original conservé | Extraction de palette, officialisation d'artwork, placement des grands lots et passage assisté vers les règles à compléter |
+| Bibliothèque | Liste/grille, recherche, filtres, tri et pagination ; ranger une sélection, créer, archiver et restaurer une collection ; galerie des résultats et regroupement des dérivés ; essai sur 602 assets et 24 collections | Performance du stockage réel et particularités de chaque famille à vérifier dans le produit |
 | Objectif | Fixe, animé ou mixte ; dossiers de mouvements et rangées de directions ; résultats fixes et animés distincts | Couverture partagée réelle avec API et MCP dans AU2 |
 | Création manuelle | Fiche vide → référence → demande d’animation → relecture entière → fabrication → résultat | Les générations sont simulées et réemploient des images d’exemple |
 | Référence / import | Importer PNG, JPEG, WebP dans le navigateur, limite de démonstration à 2 Mo | Pas de téléversement au serveur ; clip représenté par une séquence préparée |
@@ -52,7 +52,7 @@ le bandeau. Les tests de cette révision ont utilisé cette séance séparée de
 | Comparer / juger | Comparer deux résultats ou source/retouche ; favori distinct du choix pour le jeu | Pas de comparaison synchronisée des animations complètes ni de grille de calibration |
 | Équipement / emplois | Pièce commune, emplois indépendants par personnage ; poses, directions et frames ; génération simulée ciblée ou groupée, extraction de pixels, validation des superpositions, placements et masques par frame, historique restaurable ; base modifiée signalée ; calques accessibles depuis la galerie | Dessins de démonstration et imports ramenés à 64 px ; aucun moteur IA ni migration des données du produit ; reprise complète après changement de base et grands volumes encore à éprouver |
 | Tenues | Activer plusieurs équipements pendant la lecture, garder une combinaison et la rouvrir ; corps et calques séparés, aperçu des manques ; commandes de téléchargement PNG assemblé ou paquet JSON avec images | Téléchargements déclenchés, fichiers non inspectés ; aucun format final ni importeur Godot validé |
-| Livraison générale | Choisir les résultats, destination proposée, aperçu des formats, historique par révision, conflit fictif | Aucun fichier du jeu écrit ni SpriteFrames produit ; les téléchargements d'essai des équipements sont distincts de la preuve Godot AU1 |
+| Livraison générale | Sélection, états nouveau/modifié/inchangé, aperçu animé, fichiers prévus et révisions ; historique avec instantanés ; décision de conflit fictif | Aucun fichier du jeu écrit ni SpriteFrames produit ; les téléchargements d'essai des équipements sont distincts de la preuve Godot AU1 |
 | Réglages | Règles de l’univers ; disponibilité indépendante des moteurs ; cadre de l’agent mémorisé et choix de méthode filtré | Pas de clé réelle ; profils de workflow descriptifs ; installations, quotas et états GPU à détailler |
 | Sources 3D | Modèle conservé → rig → demande de rendu ; plusieurs rendus d’une source | Parcours entièrement simulé, aucun appel à asset3d |
 | Tuiles / son | Place dans la feuille de route annoncée | Ateliers spécialisés à concevoir plus tard, aucun faux outil annoncé comme prêt |
@@ -85,7 +85,7 @@ avec le carnet, les lieux, la retouche et la recette du code actuel.
 | Navigation, Barre, Parcours, Vocabulaire, Systeme, Sommaire, l-atelier-en-carnet | Références transversales ; leurs fonctions se répartissent dans la navigation, les formulaires et le design conservé |
 | Tuiles | Périmètre futur maintenu, atelier à concevoir |
 
-La bibliothèque de mouvements, la gestion complète des collections, les règles de famille
+La bibliothèque de mouvements, les particularités des collections du produit, les règles de famille
 et les ateliers de carte restent à détailler. L'équipement a désormais son parcours complet
 de démonstration ; cela ne remplace pas les capacités du produit. Avant de remplacer une
 surface existante, compléter son inventaire de
@@ -322,3 +322,18 @@ et images non extraites sont exclus de la validation collective. Modifier une ba
 fait revenir son calque à revoir. Les réglages et l'historique de chaque frame restent
 conservés. Les [essais détaillés](../releves/2026-09-12-consolidation-prototype.md)
 précisent les parcours et les limites des preuves.
+
+La toile prépare ses références par sélection ou par îlot. Les notes restent décochées
+avant leur conversion explicite en consigne. Les images issues d'une retouche transmettent
+le rendu visible ; le choix de l'original est nommé séparément. La source brute est conservée.
+
+Le tiroir des brouillons rassemble retouches et montages. Chaque occurrence d'une frame
+dupliquée garde son identité lors d'une reprise du montage : ses corrections ne migrent
+pas vers l'original. Deux tests de contrat ferment, rouvrent et resauvegardent ces données.
+La remise à zéro a été essayée dans une séance jetable, sans toucher aux essais de l'auteur.
+
+La livraison retrouve ses noms de fichiers par cible, même après renommage ou changement
+de version retenue. Elle distingue nouveau, modifié et inchangé ; le conflit fictif
+se résout avant l'envoi. L'historique conserve les pixels et réglages de l'ancienne
+version. Les anciennes entrées sans instantané le disent, sans reconstituer un passé fictif.
+Tout cela reste une simulation : la preuve d'un import Godot conforme appartient à AU1.

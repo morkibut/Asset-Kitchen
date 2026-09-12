@@ -62,16 +62,17 @@ avec sa référence et son envoi relu. Leur raccord précède la vérification a
 
 Critères de consolidation, à éprouver dans le prototype avant leur raccord au produit :
 
-- [ ] Le brouillon et le contexte de retouche se retrouvent après fermeture, sans modifier l'original.
-- [ ] Image, contrôles de vue et timeline restent utilisables ensemble dans une fenêtre desktop.
-- [ ] Recherche, filtres, collections et regroupement des dérivés restent lisibles avec un catalogue chargé.
-- [ ] Les trois entrées de fabrication partagent la relecture, conservent les paramètres et annoncent leur portée.
-- [ ] Un équipement se vérifie en mouvement ; les bases absentes et les calques à revoir ne se disent pas prêts.
-- [ ] Les références choisies dans la toile se relisent avant l'envoi ; les notes libres restent hors de la demande.
-- [ ] Travaux et consommations ont les mêmes comptes ; la livraison montre les révisions et les fichiers prévus.
+- [x] Le brouillon et le contexte de retouche se retrouvent après fermeture, sans modifier l'original.
+- [x] Image, contrôles de vue et timeline restent utilisables ensemble dans une fenêtre desktop.
+- [x] Recherche, filtres, collections et regroupement des dérivés restent lisibles avec un catalogue chargé.
+- [x] Les trois entrées de fabrication partagent la relecture, conservent les paramètres et annoncent leur portée.
+- [x] Un équipement se vérifie en mouvement ; les bases absentes et les calques à revoir ne se disent pas prêts.
+- [x] Les références choisies dans la toile se relisent avant l'envoi ; les notes libres restent hors de la demande.
+- [x] Travaux et consommations ont les mêmes comptes ; la livraison montre les révisions et les fichiers prévus.
 
-Ces cases concernent la simulation interactive ; elles ne ferment aucun critère de fidélité
-Godot, de génération réelle ou de stockage du produit.
+Les [parcours vérifiés](releves/2026-09-12-consolidation-prototype.md) distinguent les
+gestes essayés de leurs limites. Ces cases concernent la simulation interactive ; elles
+ne ferment aucun critère de fidélité Godot, de génération réelle ou de stockage du produit.
 
 1. **Une animation existante arrive dans Godot via l'agent** — AU1.
 2. **L'auteur ou l'agent crée un personnage animé, avec les outils de correction complets** — AU2 à AU5.

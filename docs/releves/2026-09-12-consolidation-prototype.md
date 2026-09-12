@@ -101,6 +101,70 @@ Le raccord de contexte du lot suivant a été essayé par le parent : Sac de voy
 Marche / Sud, frame 3, position X=2 et zoom 700 %, puis rechargement. L'écran précis,
 la position et le zoom se retrouvent ; le calque modifié reste « À vérifier ».
 
+## Corrections trouvées par la revue croisée
+
+La revue de code a repéré trois pertes possibles : retouches d'une copie de frame
+réattribuées à l'original lors de la reprise du montage ; transfert d'une référence
+brute alors que le sélecteur montre son rendu ; réinitialisation gardant des modules
+liés à l'ancien état. Ces constats ont donné des correctifs ciblés.
+
+Les identités d'occurrences du montage sont maintenant stables. Deux tests de contrat
+dans `essais/essai_montage_maquette.cjs` ferment et rouvrent les données par JSON : copie
+retouchée puis déplacée et resauvegardée, ancien montage sans identités d'occurrences.
+Les deux passent ; les retouches de la copie restent distinctes de celles de l'original.
+
+Le parent a peint un carré rouille sur le visage d'une référence, enregistré puis
+comparé : la source reste sans marque, le rendu porte la marque. Après rechargement
+avec les scripts actualisés, ouvrir la découpe depuis cette retouche montre la marque.
+Choisir la même image dans la bibliothèque d'une fabrication libre puis relire l'envoi
+montre également la marque dans la référence effectivement jointe. Les originaux
+restent accessibles par un choix explicitement nommé.
+
+La réinitialisation a été exécutée depuis « Vos remarques » dans une troisième séance
+jetable. Après rechargement, la bibliothèque retrouve les deux assets initiaux, ses
+familles et ses commandes de collection ; aucune erreur JavaScript n'est relevée dans
+cette séance. Les séances de l'auteur et les autres données d'essai sont séparées.
+
+## Toile vers fabrication
+
+Le parent a élargi l'îlot « Ambiance des marais » à 680 pixels et rechargé la page :
+sa dimension est conservée. Préparer depuis cet îlot propose son image et sa note ;
+l'image est cochée, la note reste décochée. Choisir Le guetteur et une animation mène
+à la relecture commune : une référence obligatoire, provenance « Toile · Ambiance des
+marais », et aucune insertion de la note libre dans la consigne. Aucun travail lancé.
+
+Une note mise en réserve reste présente après rechargement. La reposer sur la toile
+retrouve son texte et la réserve revient à zéro. La revue du code a ensuite repéré
+que son appartenance et sa position étaient réinitialisées ; ce défaut a été corrigé.
+Le contrôle précis après correction utilise « Le voyageur » : îlot Ambiance des marais,
+X=330, Y=110 avant mise en réserve, puis mêmes valeurs dans « Annoter » après
+rechargement et restauration. Son texte est identique.
+
+Le cadrage automatique et la saisie du zoom ont été corrigés après l'essai visuel :
+« Tout cadrer » tient compte des cartes et îlots, puis la saisie à 100 % modifie
+l'échelle. Le déplacement direct de cette vue agrandie a été vérifié à l'écran.
+
+## Livraison et remplacement
+
+Deux résultats retenus sont livrés en simulation. Ils deviennent « Inchangé » et
+décochés. La marche du guetteur est ensuite enregistrée en v3 à 12 images/s, puis
+le personnage renommé « Le veilleur » : le résultat devient « Modifié », avec les
+mêmes chemins de fichiers sous `le-guetteur`. Une autre variante retenue de Marche /
+Sud du pèlerin devient elle aussi « Modifié » ; les noms de sa première livraison
+restent stables malgré son nouveau titre « Marche alternative ».
+
+Un conflit fictif sur cette cible propose conserver, copier ou remplacer. Le choix
+« Remplacer » puis la livraison des deux modifications ramènent les comptes à deux
+inchangés, zéro conflit et zéro sélection. L'historique de la première livraison
+retrouve « Le guetteur », v2, 11 images/s, ses cinq frames et ses anciens chemins.
+L'instantané n'a donc pas repris le nom ni la cadence de la version courante.
+
+Quatre contrats automatisés complètent cet essai dans `essais/essai_livraison_maquette.cjs` :
+changement de résultat retenu avec chemins stables et instantané indépendant ; sélection
+réévaluée après nouvelle révision ; ancien format relu ; réserve sans perte de placement.
+Avec les deux contrats du montage, les six passent. Les neuf scripts du prototype
+passent la vérification de syntaxe JavaScript.
+
 ## Portée des preuves
 
 Ces essais ne prouvent ni la fidélité des exports Godot, ni la qualité de génération,
