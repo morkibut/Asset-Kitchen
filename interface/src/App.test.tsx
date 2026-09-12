@@ -13277,7 +13277,9 @@ describe("le premier lancement", () => {
     const bibliotheque = await screen.findByRole("main", {
       name: "Les assets du jeu",
     })
-    fireEvent.click(within(bibliotheque).getByRole("button", { name: "Personnages" }))
+    fireEvent.click(
+      await within(bibliotheque).findByRole("button", { name: "Personnages" }),
+    )
     fireEvent.click(
       await within(bibliotheque).findByRole("button", { name: "Ouvrir et organiser" }),
     )
