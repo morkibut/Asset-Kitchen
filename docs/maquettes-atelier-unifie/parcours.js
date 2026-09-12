@@ -1,9 +1,27 @@
 /* Parcours de démonstration : collections, fabrication libre, équipements et montage.
    Aucun appel fournisseur. Les clips et modèles sont des exemples explicitement simulés. */
+// Chaque occurrence montée garde son identité, même si deux occurrences lisent la
+// même frame du clip. Les retouches et calques sont attachés à cette identité.
+window.creerSelectionMontage=(id,clone)=>{
+  function preparer(m,saved=null){
+    const used=new Set(),legacy=new Map();
+    if(saved)for(const [p,i] of (saved.montage?.selected||[]).entries()){if(!legacy.has(i))legacy.set(i,[]);legacy.get(i).push(saved.montage?.frameIds?.[p]||saved.frames[p]?.id);}
+    m.frameIds=m.selected.map((i,p)=>{let key=m.frameIds?.[p]||legacy.get(i)?.shift()||m.source.frames[i]?.id;if(!key||used.has(key))key=id();used.add(key);return key;});
+    m.frameCopies??={};return m;
+  }
+  function choisir(m,indices){preparer(m);const pool=new Map();m.selected.forEach((i,p)=>{if(!pool.has(i))pool.set(i,[]);pool.get(i).push(m.frameIds[p]);});m.frameIds=indices.map(i=>pool.get(i)?.shift()||id());m.selected=indices.slice();}
+  function deplacer(m,from,to){preparer(m);for(const key of ['selected','frameIds'])m[key].splice(to,0,m[key].splice(from,1)[0]);}
+  function dupliquer(m,p,previous=[]){preparer(m);const key=id(),old=m.frameIds[p],frame=previous.find(f=>f.id===old)||m.frameCopies[old]||m.source.frames[m.selected[p]];m.frameCopies[key]={...clone(frame),id:key};m.selected.splice(p+1,0,m.selected[p]);m.frameIds.splice(p+1,0,key);}
+  function retirer(m,p){preparer(m);m.selected.splice(p,1);m.frameIds.splice(p,1);}
+  function inverser(m){preparer(m);m.selected.reverse();m.frameIds.reverse();}
+  function frames(m,previous=[]){preparer(m);const byId=new Map(previous.map(f=>[f.id,f]));return m.selected.map((i,p)=>{const key=m.frameIds[p];return {...clone(byId.get(key)||m.frameCopies[key]||m.source.frames[i]),id:key};});}
+  return {preparer,choisir,deplacer,dupliquer,retirer,inverser,frames};
+};
 window.creerParcoursMaquette=api=>{
   'use strict';
   const {esc,button,field,input,select,heading,modal,save,render,toast,id,clone}=api;
   const st=api.state, $=s=>document.querySelector(s), val=n=>$(`[name="${n}"]`)?.value||'';
+  const selectionMontage=window.creerSelectionMontage(id,clone);
   const families=['Personnages','Monstres','Objets','Décors','Interface','Équipement'];
   st().employments??=[];
   for(const piece of st().subjects.filter(s=>s.owner))if(!st().employments.some(e=>e.piece===piece.id&&e.subject===piece.owner))st().employments.push({id:id(),piece:piece.id,subject:piece.owner,placement:'À préciser',front:true});
@@ -25,7 +43,10 @@ window.creerParcoursMaquette=api=>{
   function rememberBrowse(){Object.assign(browsing,{family,collection,query,pageIndex,assetView,assetSort,assetState,collectionQuery,galleryType,galleryQuery,gallerySubject,galleryRole,galleryJudgment,gallerySort,galleryPage,galleryFlat,openGroups:[...openGroups]});save();}
   function collectionUndo(c){st().collectionHistory.push({id:c.id,before:clone(c)});st().collectionHistory=st().collectionHistory.slice(-20);}
   function judgment(x){return x.equipmentStatus||(x.r.rejected?'Écarté':x.r.chosen?'Retenu':'Non jugé');}
-  function persistMontage(){if(!montage)return;const key=montage.sourceId+':'+(montage.repriseId||'new');st().montageDrafts[key]=clone(montage);st().lastMontageDraft=key;save();}
+  function montageSaved(m=montage){return m?.repriseId?st().subjects.find(s=>s.id===m.subjectId)?.results.find(r=>r.id===m.repriseId):null;}
+  function persistMontage(){if(!montage)return;selectionMontage.preparer(montage,montageSaved());const key=montage.sourceId+':'+(montage.repriseId||'new');st().montageDrafts[key]=clone(montage);st().lastMontageDraft=key;save();}
+  function montageDraftEntries(){return Object.entries(st().montageDrafts||{}).filter(([,m])=>m?.source?.frames?.length).map(([key,m])=>({id:key,title:m.name||'Montage sans nom',subjectName:st().subjects.find(s=>s.id===m.subjectId)?.name||'Asset à retrouver'}));}
+  function openMontageDraft(key){const saved=st().montageDrafts?.[key];if(!saved?.source?.frames?.length)return toast('Ce brouillon de montage n’est plus disponible.');montage=clone(saved);st().lastMontageDraft=key;save();$('#dialog').close();api.navigate('montage');}
   const equipmentResultsCache=new Map();
   function equipmentResults(){
     const results=[];
@@ -138,7 +159,7 @@ window.creerParcoursMaquette=api=>{
       <section class="surface montage-assignment"><h2>Rattachement</h2>${field('Nom de l’animation',input('mount-name',m.name))}${field('Personnage / asset',`<select name="mount-subject" ${m.repriseId?'disabled':''}>${st().subjects.map(s=>`<option value="${s.id}" ${s.id===m.subjectId?'selected':''}>${esc(s.name)}</option>`).join('')}</select>`)}${field('Mouvement / pose',select('mount-movement',target?.movements||[],m.movement))}${field('Direction de l’animation',select('mount-direction',target?.directions||[],m.direction))}${field('Cadence (images/s)',input('mount-fps',m.fps,'number','min="1" max="60"'))}<label><input name="mount-loop" type="checkbox" ${m.loop?'checked':''}> Boucler</label></section>
       <section class="surface montage-timeline"><div class="row between"><h2>Ordre de l’animation</h2><span>${m.selected.length} frames</span></div><div class="mount-strip ordered-frames">${m.selected.map((i,position)=>`<button draggable="true" data-action="mount-position" data-position="${position}" data-order-frame="${i}" data-order-position="${position}" aria-pressed="${position===m.cursor}" aria-label="Frame ${i+1}, position ${position+1}"><canvas width="64" height="64" data-mount-frame="${i}"></canvas><span>${position+1} · source ${i+1}</span></button>`).join('')}</div><div class="toolbar">${button('Dupliquer cette frame','mount-duplicate',m.selected.length?'':'disabled')}${button('Retirer cette frame','mount-remove',m.selected.length?'':'disabled')}${button('Inverser l’ordre','mount-reverse')}<small>Glisser pour déplacer · Alt + ← / → au clavier. Les frames retirées restent dans la source.</small></div></section></div>`;
   }
-  function moveFrame(from,to){if(from<0||to<0||from===to||to>=montage.selected.length)return;montage.selected.splice(to,0,montage.selected.splice(from,1)[0]);montage.cursor=to;render();document.querySelector('[data-order-position="'+to+'"]')?.focus();toast('Ordre des frames modifié.');}
+  function moveFrame(from,to){if(from<0||to<0||from===to||to>=montage.selected.length)return;selectionMontage.deplacer(montage,from,to);montage.cursor=to;render();document.querySelector('[data-order-position="'+to+'"]')?.focus();toast('Ordre des frames modifié.');}
   function wireOrder(){
     document.querySelectorAll('[data-order-position]').forEach(el=>{
       el.addEventListener('dragstart',e=>{draggedFrame=Number(el.dataset.orderPosition);e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(draggedFrame));el.classList.add('dragging');});
@@ -150,10 +171,11 @@ window.creerParcoursMaquette=api=>{
     });
   }
   let resumeMontage=false;
+  function montageResult(){const saved=montageSaved(),base=saved||montage.source;return {...base,frames:selectionMontage.frames(montage,saved?.frames),recipe:{...base.recipe,fps:montage.fps,loop:montage.loop}};}
   function startMontagePlayback(){
     clearInterval(playing);playing=null;if(!montage?.selected.length)return;
-    let i=montage.cursor||0;const control=$('[data-action="mount-play"]');if(control)control.textContent='Arrêter les aperçus';
-    playing=setInterval(()=>{if(api.page()!=='montage'||!$('#mount-preview')){clearInterval(playing);playing=null;return;}const f=montage.selected[i];api.drawFrame($('#mount-source'),montage.source,f);api.drawFrame($('#mount-preview'),montage.source,f);$('#mount-preview').dataset.playingFrame=String(i+1);montage.cursor=i;i++;if(i===montage.selected.length){if(montage.loop)i=0;else{clearInterval(playing);playing=null;if(control)control.textContent='Lire les aperçus';}}},1000/montage.fps);
+    let i=montage.cursor||0;const output=montageResult(),control=$('[data-action="mount-play"]');if(control)control.textContent='Arrêter les aperçus';
+    playing=setInterval(()=>{if(api.page()!=='montage'||!$('#mount-preview')){clearInterval(playing);playing=null;return;}const f=montage.selected[i];api.drawFrame($('#mount-source'),montage.source,f);api.drawFrame($('#mount-preview'),output,i);$('#mount-preview').dataset.playingFrame=String(i+1);montage.cursor=i;i++;if(i===montage.selected.length){if(montage.loop)i=0;else{clearInterval(playing);playing=null;if(control)control.textContent='Lire les aperçus';}}},1000/montage.fps);
   }
   function afterRender(){
     wireOrder();
@@ -161,8 +183,9 @@ window.creerParcoursMaquette=api=>{
     document.querySelectorAll('[data-result-preview]').forEach(c=>{const x=item(c.dataset.resultPreview);if(x){api.drawFrame(c,x.r,0);if(x.equipmentEmployment){const image=new Image();image.onload=()=>{if(c.isConnected)api.drawFrame(c,x.r,0);};image.src=x.r.frames[0].image;}}});
     if(api.page()==='montage'&&montage){
       const f=montage.selected[montage.cursor||0]??0;api.drawFrame($('#mount-source'),montage.source,f);
-      if(montage.selected.length)api.drawFrame($('#mount-preview'),montage.source,f);
+      const output=montageResult();if(montage.selected.length)api.drawFrame($('#mount-preview'),output,montage.cursor||0);
       document.querySelectorAll('[data-mount-frame]').forEach(c=>api.drawFrame(c,montage.source,Number(c.dataset.mountFrame)));
+      document.querySelectorAll('[data-order-position] canvas').forEach(c=>api.drawFrame(c,output,Number(c.closest('[data-order-position]').dataset.orderPosition)));
       if(resumeMontage)startMontagePlayback();
     }
     resumeMontage=false;
@@ -186,9 +209,9 @@ window.creerParcoursMaquette=api=>{
     'gallery-page':el=>{galleryPage+=Number(el.dataset.delta);rememberBrowse();render();},
     'seed-library':()=>{if(!new URLSearchParams(location.search).has('essai')||st().catalogueFixture)return;for(let i=0;i<600;i++){const f=families[i%families.length],r=api.result('Marche · Sud',i%2===0);r.chosen=i%3===0;r.rejected=i%7===0;if(r.rejected)r.chosen=false;st().subjects.push({id:id(),name:f+' exemple '+String(i+1).padStart(3,'0'),family:f,goal:i%2===0?'Animations':'Images fixes',description:'Exemple de volume, sans génération IA.',movements:['Repos','Marche'],directions:['Sud','Nord'],results:i%5===0?[]:[r],equipment:[]});}st().catalogueFixture=true;save();render();toast('600 exemples ajoutés uniquement à ce profil d’essai.');},
     'mount-position':el=>{montage.cursor=Number(el.dataset.position);persistMontage();render();},
-    'mount-duplicate':()=>{if(!montage.selected.length)return;const p=montage.cursor||0;montage.selected.splice(p+1,0,montage.selected[p]);montage.cursor=p+1;render();},
-    'mount-remove':()=>{montage.selected.splice(montage.cursor||0,1);render();},
-    'mount-range':()=>{const n=montage.source.frames.length,a=Math.max(1,Math.min(n,Number(montage.rangeStart)||1)),b=Math.max(a,Math.min(n,Number(montage.rangeEnd)||n)),step=Math.max(1,Math.min(30,Number(montage.sampleEvery)||1));montage.selected=Array.from({length:b-a+1},(_,i)=>i+a-1).filter((_,i)=>i%step===0);montage.cursor=0;render();},
+    'mount-duplicate':()=>{if(!montage.selected.length)return;const p=montage.cursor||0;selectionMontage.dupliquer(montage,p,montageSaved()?.frames);montage.cursor=p+1;render();},
+    'mount-remove':()=>{selectionMontage.retirer(montage,montage.cursor||0);render();},
+    'mount-range':()=>{const n=montage.source.frames.length,a=Math.max(1,Math.min(n,Number(montage.rangeStart)||1)),b=Math.max(a,Math.min(n,Number(montage.rangeEnd)||n)),step=Math.max(1,Math.min(30,Number(montage.sampleEvery)||1));selectionMontage.choisir(montage,Array.from({length:b-a+1},(_,i)=>i+a-1).filter((_,i)=>i%step===0));montage.cursor=0;render();},
     'mount-add-source':()=>{const clips=st().media.filter(r=>r.type==='Vidéo');modal('Ajouter un clip au montage',`<p>Les frames du clip choisi s’ajoutent au chutier. L’animation déjà sélectionnée reste intacte.</p><div class="gallery-flat">${clips.map(r=>`<article class="surface gallery-item">${preview({r,type:'Vidéo'})}<h3>${esc(r.title)}</h3><p>${r.frames.length} frames d’exemple</p>${button('Ajouter ce clip','mount-source-add',`data-id="${r.id}"`)}</article>`).join('')||'<p>Fabriquez d’abord une vidéo libre ou ouvrez le clip d’exemple du personnage.</p>'}</div>`);afterRender();},
     'mount-source-add':el=>{const x=item(el.dataset.id);if(!x)return;const frames=clone(x.r.frames);frames.forEach(f=>f.id=id());montage.source.frames.push(...frames);montage.source.title+=' + '+x.r.title;montage.rangeEnd=montage.source.frames.length;persistMontage();$('#dialog').close();render();toast('Clip ajouté aux sources du montage.');},
     'equipment-job-read':el=>{const j=(st().equipmentJobs||[]).find(j=>j.id===el.dataset.id);if(j)readEquipmentJob(j);},
@@ -212,7 +235,7 @@ window.creerParcoursMaquette=api=>{
     'seed-collections':()=>{if(!new URLSearchParams(location.search).has('essai')||st().catalogueCollectionsFixture)return;for(let i=0;i<24;i++){const f=i<18?'Personnages':families[1+(i-18)%5],members=st().subjects.filter(s=>s.family===f).slice((i%8)*4,(i%8)*4+4).map(s=>s.id);st().collections.push({id:id(),name:'Collection d’essai '+String(i+1).padStart(2,'0'),family:f,members});}st().catalogueCollectionsFixture=true;save();render();toast('24 collections ajoutées à ce profil d’essai, dont 18 dans Personnages.');},
     'clear-selection':()=>{picked.clear();render();},'asset-page':el=>{pageIndex+=Number(el.dataset.delta);rememberBrowse();render();},
     'free-create':()=>{free={title:'Nouvelle exploration',type:'Image',prompt:'',engine:'Local · démo',size:'512 × 512',seed:42,duration:5,universe:true,canvas:false,refs:[]};freeForm();},
-    'free-ref':()=>{captureFree();const resume=free.inReview?freeReview:freeForm;api.picker(({r})=>{free.refs.push({name:r.title,image:api.sourceImage(r),origin:'Jointe par vous'});resume();},resume);},
+    'free-ref':()=>{captureFree();const resume=free.inReview?freeReview:freeForm;api.picker(async({r})=>{free.refs.push({name:r.title,image:await api.sourceImage(r),origin:'Jointe par vous'});resume();},resume);},
     'free-ref-remove':el=>{captureFree();free.refs.splice(Number(el.dataset.index),1);free.inReview?freeReview():freeForm();},
     'free-review':()=>{captureFree();if(!free.title.trim()||!free.prompt.trim())return toast('Donnez un nom et un prompt à cette fabrication.');free.rules=free.universe?(free.rules??st().game.style):'';free.reviewEditing=false;freeReview();},
     'free-back':()=>{captureFree();freeForm();},'free-send':()=>{captureFree();const blocked=freeBlocked();if(blocked)return toast(blocked);if(free.reviewEditing)return toast('Terminez les modifications avant de lancer.');for(let i=0;i<free.count;i++)st().freeJobs.push({...clone(free),title:free.title+(free.type==='Vidéo'?' · clip '+(i+1):''),count:1,batchCount:free.count,batchEstimate:free.estimate,consumption:{amount:free.engine.startsWith('API')&&Number.isFinite(free.cost)?free.cost:null,unit:free.engine.startsWith('API')?'USD':null},cost:free.cost?free.cost.toFixed(2)+' $ fictifs par appel':'0 $ fournisseur · temps local non mesuré',id:id(),status:'En attente'});save();$('#dialog').close();api.navigate('jobs');},
@@ -226,16 +249,15 @@ window.creerParcoursMaquette=api=>{
     'sample-clip':()=>{const s=api.subject();let r=st().media.find(r=>r.sampleFor===s.id);if(!r){r=api.result('Clip de marche · exemple',true);Object.assign(r,{type:'Vidéo',sampleFor:s.id});st().media.push(r);save();}$('#dialog').close();openMontage(r.id,s.id);},
     'mount-media':el=>{$('#dialog').close();openMontage(el.dataset.id);},
     'mount-reopen':el=>{const s=api.subject(),r=s.results.find(r=>r.id===el.dataset.id);openMontage(r.montage.sourceId,s.id,r.id);},
-    'mount-frame':el=>{const i=Number(el.dataset.index);montage.selected=montage.selected.includes(i)?montage.selected.filter(x=>x!==i):[...montage.selected,i];render();},
-    'mount-all':()=>{montage.selected=montage.source.frames.map((_,i)=>i);render();},'mount-even':()=>{montage.selected=montage.source.frames.map((_,i)=>i).filter(i=>i%2===0);render();},'mount-reverse':()=>{montage.selected.reverse();render();},
+    'mount-frame':el=>{const i=Number(el.dataset.index);selectionMontage.choisir(montage,montage.selected.includes(i)?montage.selected.filter(x=>x!==i):[...montage.selected,i]);render();},
+    'mount-all':()=>{selectionMontage.choisir(montage,montage.source.frames.map((_,i)=>i));render();},'mount-even':()=>{selectionMontage.choisir(montage,montage.source.frames.map((_,i)=>i).filter(i=>i%2===0));render();},'mount-reverse':()=>{selectionMontage.inverser(montage);render();},
     'mount-play':()=>{if(playing){clearInterval(playing);playing=null;$('[data-action="mount-play"]').textContent='Lire les aperçus';persistMontage();return;}startMontagePlayback();},
     'mount-save':()=>{
       if(!montage.name.trim()||!montage.selected.length||!montage.movement||!montage.direction)return toast('Nommez la bande et gardez au moins une frame.');
       const s=st().subjects.find(s=>s.id===montage.subjectId);if(!s)return toast('Choisissez un asset disponible.');
       let r=montage.repriseId?s.results.find(r=>r.id===montage.repriseId):null;if(!r){r=api.result(montage.name,true);s.results.push(r);}r.title=montage.name;r.movement=montage.movement;r.direction=montage.direction;
-      const previous=new Map(r.frames.map(f=>[f.id,f])),seen=new Set();
-      r.frames=montage.selected.map(i=>{const source=montage.source.frames[i],frame=clone(previous.get(source.id)||source);if(seen.has(frame.id))frame.id=id();seen.add(frame.id);return frame;});
-      r.recipe.fps=montage.fps;r.recipe.loop=montage.loop;r.montage={sourceId:montage.sourceId,source:clone(montage.source),selected:montage.selected.slice(),settings:{rangeStart:montage.rangeStart,rangeEnd:montage.rangeEnd,sampleEvery:montage.sampleEvery}};
+      selectionMontage.preparer(montage,montage.repriseId?r:null);r.frames=selectionMontage.frames(montage,r.frames);
+      r.recipe.fps=montage.fps;r.recipe.loop=montage.loop;r.montage={sourceId:montage.sourceId,source:clone(montage.source),selected:montage.selected.slice(),frameIds:montage.frameIds.slice(),settings:{rangeStart:montage.rangeStart,rangeEnd:montage.rangeEnd,sampleEvery:montage.sampleEvery}};
       const key=montage.sourceId+':'+(montage.repriseId||'new');delete st().montageDrafts[key];if(st().lastMontageDraft===key)delete st().lastMontageDraft;montage=null;save();api.openResult(s.id,r);
     },
     'resolve-remark':el=>{const r=st().remarks.find(r=>r.id===el.dataset.id);if(r){r.resolved=true;save();render();}},
@@ -271,5 +293,5 @@ window.creerParcoursMaquette=api=>{
     return [...freeRows,...equipmentRows];
   }
   const equips=window.creerEquipementsMaquette(api);
-  return {extraImages:()=>equipmentResults().map(x=>({r:x.r,s:{id:x.equipmentPiece,name:x.equipmentOwner,family:'Équipement'}})),views:{library,gallery,montage:montageView,...equips.views},equipment:equips.equipment,pieceSheet:equips.pieceSheet,canRestoreEquipment:page=>equips.canRestore?.(page)??false,sidebar,freeJobs,pendingJobs,consumptionRows,handlers:{...handlers,...equips.handlers},change:el=>equips.change(el)||change(el),afterRender:()=>{afterRender();equips.afterRender();},beforeRender:()=>{beforeRender();equips.beforeRender();}};
+  return {extraImages:()=>equipmentResults().map(x=>({r:x.r,s:{id:x.equipmentPiece,name:x.equipmentOwner,family:'Équipement'}})),views:{library,gallery,montage:montageView,...equips.views},equipment:equips.equipment,pieceSheet:equips.pieceSheet,canRestoreEquipment:page=>equips.canRestore?.(page)??false,montageDraftEntries,openMontageDraft,sidebar,freeJobs,pendingJobs,consumptionRows,handlers:{...handlers,...equips.handlers},change:el=>equips.change(el)||change(el),afterRender:()=>{afterRender();equips.afterRender();},beforeRender:()=>{beforeRender();equips.beforeRender();}};
 };
