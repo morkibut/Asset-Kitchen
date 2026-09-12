@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { api } from "../api"
 import { equipements, type CouvertureEquipement, type TravailEquipement } from "../api-travaux-equipement"
 import { RelectureEquipement } from "./RelectureEquipement"
@@ -20,6 +20,9 @@ const t = { nature: "equipement", identifiant: "travail-1", projet: "marais", pi
 } as unknown as TravailEquipement
 
 beforeEach(() => {
+  // La sélection et la lecture vivent dans le stockage de séance : un essai qui
+  // en laisserait derrière lui déciderait de l'écran du suivant.
+  sessionStorage.clear()
   vi.spyOn(api, "modeles").mockResolvedValue({ modeles: [{ identifiant: "essai:image", references_max: 2, resolutions: ["1K", "2K"], options: { quality: { nom: "Qualité", genre: "choix", valeurs: ["low", "high"] } }, refus: null }] } as unknown as Awaited<ReturnType<typeof api.modeles>>)
   vi.spyOn(equipements, "preparer").mockImplementation(async (_c, demande) => ({ ...t, identifiant: "nouveau-travail", demande }))
   vi.spyOn(equipements, "demarrer").mockResolvedValue({ ...t, etat: "en_cours" })
@@ -129,4 +132,86 @@ test("les références communes de la pièce se voient et s’écartent avant la
   // Décocher ne touche pas la fiche de la pièce : aucun réglage n'est écrit.
   expect(envoye.references).toEqual([])
   expect(equipements.demarrer).not.toHaveBeenCalled()
+})
+
+// ── AU16 · fermer pendant la lecture, puis rouvrir ─────────────────────────
+//
+// La bande se lit avec ses calques posés (« Vérifier en animation »). Ce qui
+// doit revenir : la sélection, la bande choisie, la frame affichée, la lecture
+// elle-même, puis — relues du serveur — les sources et les corrections. Aucune
+// de ces valeurs n'est celle du départ, sinon l'essai ne prouverait rien.
+//
+// ⚠️ La cadence est ramenée à une image par seconde avant de lancer la
+// lecture : le minuteur battrait sinon pendant les assertions et la frame
+// retrouvée deviendrait une loterie.
+const varianteCorrigee = {
+  identifiant: "calque-2", cible: { nature: "frame" as const, resultat: "marche-1", prise: "occurrence-2" },
+  role: "calque" as const, source: "source-casque", source_fiche: { identifiant: "source-casque", label: "Le pèlerin casqué" },
+  revision: 3, placement: { dx: 11, dy: -2, echelle: 1.5, rotation: 0, opacite: 1, devant: false, ordre: 0 },
+  masques: { calque: [], corps: [], derriere: [{ garde: true, rayon: 2, points: [[30, 19]], couleur: "" }] },
+  extraction: null, historique: [], base: { cadre: { largeur: 64, hauteur: 64 }, repere: { x: 30, y: 61 }, pose: "marche", direction: "ouest" },
+  etat: "a-verifier" as const, raison: "", retenue: false, utilisable: false,
+}
+
+function couvertureAnimee() {
+  const frame = (n: number, etat: string, variante: unknown = null) => ({
+    cible: { nature: "frame" as const, resultat: "marche-1", prise: `occurrence-${n}` }, rang: n - 1,
+    pose: "marche", direction: "ouest", nom_bande: "Marche lente", etat, fabricable: etat === "absente",
+    raison: "", variante: variante ? varianteCorrigee.identifiant : null, variantes: variante ? [variante] : [],
+  })
+  const compteur = { bases_attendues: 1, bases_absentes: 0, bases_a_choisir: 0, images_connues: 3, absente: 1, "a-extraire": 1, "a-verifier": 1, prete: 0, "a-revoir": 0 }
+  return { piece: { identifiant: "casque", nom: "Casque" }, prete: false,
+    images: { ...compteur, bases_attendues: 0, images_connues: 0, absente: 0, "a-extraire": 0, "a-verifier": 0 },
+    animations: compteur, cibles: [],
+    cases: [{ identifiant: "marche", nature: "animation", nom_pose: "Marche", nom_direction: "Ouest", demandee: true, prete: false, versions: [
+      { resultat: "marche-1", nom: "Marche lente", choisie: true, etat: "retenue", cadence: 11, images: [
+        frame(1, "absente"), frame(2, "a-verifier", varianteCorrigee), frame(3, "a-extraire"),
+      ] },
+    ] }] } as unknown as CouvertureEquipement
+}
+
+test("fermer pendant la lecture puis rouvrir retrouve sélection, bande, frame, sources et corrections", async () => {
+  sessionStorage.clear()
+  vi.spyOn(equipements, "couverture").mockResolvedValue(couvertureAnimee())
+  const montage = render(<CouvertureDeLEmploi chemin={chemin} onCalque={vi.fn()} />)
+  const cases = await screen.findAllByRole("checkbox")
+  expect(cases).toHaveLength(3)
+  fireEvent.click(cases[1])
+  fireEvent.click(cases[2])
+  expect(screen.getByText("2 images sélectionnées")).toBeInTheDocument()
+  fireEvent.click(screen.getByRole("button", { name: "Vérifier en animation" }))
+  const lecture = screen.getByLabelText("Vérifier les calques en mouvement")
+  // La cadence de la bande est reprise du corps, puis ralentie à la main.
+  expect(screen.getByLabelText("Images par seconde")).toHaveValue(11)
+  fireEvent.change(screen.getByLabelText("Images par seconde"), { target: { value: "1" } })
+  fireEvent.click(screen.getByRole("button", { name: "Frame suivante" }))
+  fireEvent.click(screen.getByRole("button", { name: "Lire la bande" }))
+  expect(within(lecture).getByRole("status")).toHaveTextContent("Frame 2 / 3 · À vérifier")
+
+  montage.unmount()
+  render(<CouvertureDeLEmploi chemin={chemin} onCalque={vi.fn()} />)
+  const relue = await screen.findByLabelText("Vérifier les calques en mouvement")
+  // La lecture était en cours : elle l'est encore.
+  expect(within(relue).getByRole("button", { name: "Mettre en pause" })).toBeInTheDocument()
+  expect(screen.getByLabelText("Images par seconde")).toHaveValue(1)
+  expect(screen.getByLabelText("Bande ou image à vérifier")).toHaveValue("marche-1")
+  expect(within(relue).getByRole("status")).toHaveTextContent("Frame 2 / 3")
+  expect(within(relue).getByRole("button", { name: "Examiner la frame 2" })).toHaveAttribute("aria-pressed", "true")
+  expect(screen.getByText("2 images sélectionnées")).toBeInTheDocument()
+  // Les corrections et la source, relues du serveur, avec leurs vraies valeurs.
+  expect(within(relue).getByText(/décalé de 11, -2 px · à 150 % · sous le corps · une partie peinte/)).toBeInTheDocument()
+  expect(within(relue).getByText(/Le pèlerin casqué · calque transparent/)).toBeInTheDocument()
+})
+
+test("une image équipée seule se lit « à extraire », jamais comme une couverture remplie", async () => {
+  sessionStorage.clear()
+  vi.spyOn(equipements, "couverture").mockResolvedValue(couvertureAnimee())
+  render(<CouvertureDeLEmploi chemin={chemin} onCalque={vi.fn()} />)
+  fireEvent.click(await screen.findByRole("button", { name: "Vérifier en animation" }))
+  const lecture = screen.getByLabelText("Vérifier les calques en mouvement")
+  fireEvent.click(within(lecture).getByRole("button", { name: "Examiner la frame 3" }))
+  expect(within(lecture).getByRole("status")).toHaveTextContent("Frame 3 / 3 · À extraire")
+  expect(within(lecture).getByText("Corrections de cette frame : aucun calque sur cette frame.")).toBeInTheDocument()
+  // Un seul calque prêt annoncé : zéro, sur trois frames connues.
+  expect(screen.getByText("3 images connues · 0 calques prêts")).toBeInTheDocument()
 })

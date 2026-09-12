@@ -170,7 +170,14 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
           <Mesure nom="Rotation" valeur={brouillon.placement.rotation} min={-180} max={180} onChange={(v) => nombre("rotation", v)} />
           <Mesure nom="Opacité" valeur={brouillon.placement.opacite} min={0} max={1} pas={.01} onChange={(v) => nombre("opacite", v)} />
           <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Ordre par défaut<select aria-label="Ordre du calque" value={String(brouillon.placement.devant)} onChange={(e) => changer({ ...brouillon, placement: { ...brouillon.placement, devant: e.target.value === "true" } })} className={CONTROLE}><option value="true">Au-dessus du corps</option><option value="false">Sous le corps</option></select></label>
-          <p className="text-[12px] text-encre-3">Cet ordre concerne les images superposées, quelle que soit la caméra. En vue 3/4, peignez « passer cette partie dessous » pour cacher la lame derrière une main et garder sa pointe devant.</p>
+          {/* **L'ordre est celui des images, pas celui du regard.** La
+              composition ne lit jamais la direction de la base
+              (`atelier/image/calques_cibles.py`) : seuls `devant` et le masque
+              `derriere` décident, et ils appartiennent à cette variante — donc
+              à cette frame. Deux frames de la même bande peuvent ranger la même
+              pièce à l'envers l'une de l'autre. */}
+          <p className="text-[12px] leading-[1.45] text-encre-3">C’est l’ordre des images, pas la direction du regard : la direction de cette base ({variante.base.direction || "sans direction"}) ne change rien. Avec « Passer cette partie dessous » et « Ramener cette partie dessus », une partie de la pièce passe sous le personnage et le reste au-dessus — {variante.cible.nature === "frame" ? "sur cette frame seule" : "sur cette image seule"}.</p>
+          <p className="text-[11px] leading-[1.45] text-encre-4">{brouillon.masques.derriere.length ? `${brouillon.masques.derriere.length} passage${brouillon.masques.derriere.length > 1 ? "s" : ""} peint${brouillon.masques.derriere.length > 1 ? "s" : ""} ici : une partie de la pièce ne suit pas l’ordre par défaut.` : "Aucun passage peint ici : toute la pièce suit l’ordre par défaut."}</p>
           <Mesure nom="Ordre entre équipements" valeur={brouillon.placement.ordre} min={-1000} max={1000} onChange={(v) => nombre("ordre", v)} />
           <button disabled={attente || !sale} className={CONTROLE} onClick={() => void action(() => apiCalques.regler(chemin, variante.identifiant, variante.revision, brouillon))}>Enregistrer les corrections</button>
           <button disabled={attente || sale || calcul || variante.etat === "a-revoir"} className={`${CONTROLE} font-medium`} onClick={() => void action(() => apiCalques.valider(chemin, variante.identifiant, variante.revision))}>Vérifier et retenir cette variante</button>

@@ -379,3 +379,66 @@ describe("l'entête compte les emplois réels", () => {
     expect(screen.getByText(/3 façons de servir/)).toBeTruthy()
   })
 })
+
+// ── AU15 · la fiche de la pièce s'ouvre sur ses emplois ────────────────────
+//
+// Elle ouvrait sur sa référence commune, et les trois genres se suivaient dans
+// une seule liste. La fiche montre maintenant d'abord qui porte la pièce, puis
+// sépare les usages qui ne se posent sur personne — ce sont deux choses
+// différentes, et le service refuse d'ailleurs d'ouvrir l'atelier des cibles
+// à un emploi « à part » ou « en mise en scène ».
+describe("la fiche de la pièce présente d'abord ses emplois et leurs porteurs", () => {
+  /** L'ordre réel des blocs dans le document, pas celui du code. */
+  function ordreDesTitres(): string[] {
+    return [...document.querySelectorAll("[data-emplois] h2, [data-emplois] h3")]
+      .map((n) => n.textContent?.trim() ?? "")
+  }
+
+  test("les emplois passent avant la référence commune de la pièce", () => {
+    monter({
+      emplois: [
+        emploi({ identifiant: "e1", genre: "porte", porteur: "goliath", porteur_nom: "Le goliath" }),
+      ],
+    })
+
+    const titres = ordreDesTitres()
+    expect(titres.indexOf("Son emploi")).toBeGreaterThanOrEqual(0)
+    expect(titres.indexOf("Son emploi")).toBeLessThan(titres.indexOf("Son image de référence"))
+  })
+
+  test("les porteurs ont leur titre, les usages à part le leur", () => {
+    monter({
+      emplois: [
+        emploi({ identifiant: "e1", genre: "porte", porteur: "goliath", porteur_nom: "Le goliath" }),
+        emploi({ identifiant: "e2", genre: "a-part", nom: "Son icône d'inventaire" }),
+        emploi({ identifiant: "e3", genre: "porte", porteur: "minus", porteur_nom: "Le minus" }),
+        emploi({ identifiant: "e4", genre: "mise-en-scene" }),
+      ],
+    })
+
+    expect(screen.getByRole("heading", { name: "Ses 2 porteurs" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "À part et en mise en scène" })).toBeTruthy()
+    expect(screen.getByText(/ils n'ont pas de calque porté/i)).toBeTruthy()
+    // Les deux porteurs se suivent : les usages à part ne s'intercalent pas.
+    const lignes = [...document.querySelectorAll("[data-emploi]")].map((n) => n.getAttribute("data-emploi"))
+    expect(lignes).toEqual(["e1", "e3", "e2", "e4"])
+  })
+
+  test("sans usage à part, aucun titre vide n'est inventé", () => {
+    monter({
+      emplois: [
+        emploi({ identifiant: "e1", genre: "porte", porteur: "goliath", porteur_nom: "Le goliath" }),
+      ],
+    })
+
+    expect(screen.queryByRole("heading", { name: "À part et en mise en scène" })).toBeNull()
+    expect(document.querySelector("[data-emplois-portes]")?.textContent).toBe("Son porteur")
+  })
+
+  test("une pièce que personne ne porte n'annonce aucun porteur", () => {
+    monter({ emplois: [emploi({ identifiant: "e2", genre: "a-part" })] })
+
+    expect(document.querySelector("[data-emplois-portes]")).toBeNull()
+    expect(screen.getByRole("heading", { name: "À part et en mise en scène" })).toBeTruthy()
+  })
+})

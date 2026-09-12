@@ -9,7 +9,10 @@ export type CouvertureEquipement = {
   piece: Piece; images: Compte; animations: Compte; prete: boolean; cibles: CibleCouverte[]
   cases: { identifiant: string; nature: "image" | "animation"; pose: string; nom_pose: string; direction: string; nom_direction: string
     demandee: boolean; bases_attendues: number; bases_absentes: number; bases_a_choisir: number; raison: string; prete: boolean
-    versions: { resultat: string; nom: string; choisie: boolean; etat: string; a_confirmer: boolean; images: CibleCouverte[] }[] }[]
+    versions: { resultat: string; nom: string; choisie: boolean; etat: string; a_confirmer: boolean; images: CibleCouverte[]
+      /** La cadence de la bande de base, quand elle en a une : la lecture des
+       *  calques la reprend plutôt que d'en inventer une. */
+      cadence?: number | null; sens?: string | null }[] }[]
 }
 export type DemandeEquipement = {
   cle: string; modele: string; cibles?: CibleCalque[] | null; resultats?: string[] | null

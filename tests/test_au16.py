@@ -305,3 +305,29 @@ def test_source_equipee_puis_calque_corrige_et_retenu_changent_le_bon_etat(decor
     assert service.lire(*chemin)["images"]["a-verifier"] == 1
     assert not service.lire(*chemin)["prete"]
     assert calques.lire(*chemin, reference["identifiant"])["role"] == "reference"
+
+
+# ── Une image équipée seule ne remplit rien ────────────────────────────────
+#
+# Le chemin complet est source équipée → extraction → correction → retenue.
+# Tant que la source est seule, la cible reste « à extraire » : ni prête, ni
+# comptée dans la couverture. La source, elle, est conservée telle quelle.
+def test_une_image_equipee_seule_ne_remplit_pas_la_couverture(decor, atelier):
+    calques, chemin, p, corps, source = decor
+    objectif(atelier, chemin[0], p, [{"nature": "image", "pose": "repos", "direction": "", "quantite": 1}])
+    atelier.bibliotheque.marquer_favori([corps], True)
+    service = ServiceCouvertureEquipement(atelier)
+    equipee = calques.creer(*chemin, {"nature": "image", "resultat": corps}, source, "source-equipee")
+    vue = service.lire(*chemin)
+    assert vue["images"]["a-extraire"] == 1
+    assert vue["images"]["prete"] == 0
+    assert not vue["prete"]
+    assert not any(c["prete"] for c in vue["cases"] if c["demandee"])
+    # La source équipée reste ouvrable, avec son image d'origine conservée.
+    relue = calques.lire(*chemin, equipee["identifiant"])
+    assert relue["role"] == "source-equipee" and relue["source"] == source
+    assert relue["source_fiche"]["identifiant"] == source
+    # Et l'extraction suivie d'une retenue, elle, remplit la couverture.
+    extrait = calques.extraire(*chemin, equipee["identifiant"])
+    calques.valider(*chemin, extrait["identifiant"], 1)
+    assert service.lire(*chemin)["prete"]

@@ -334,6 +334,9 @@ function monter(
      *  défaut le rend vide — un poste qui ne montre pas le choix quand le
      *  serveur n'a rien répondu est la règle, pas l'exception. */
     traitement?: EtatTraitement
+    /** La porte vers l'association à un équipement (AU15). `undefined` quand
+     *  aucun jeu n'est ouvert : l'écran n'invente alors pas le bouton. */
+    onAssocierEquipement?: () => void
   } = {},
 ) {
   const { fetchDouble, appels } = construireDouble(
@@ -356,6 +359,7 @@ function monter(
       decoupe={surplus.decoupe ?? DECOUPE_STUB}
       onErreur={onErreur}
       onUnivers={onUnivers}
+      onAssocierEquipement={surplus.onAssocierEquipement}
     />,
   )
   const reouvrir = (nouveau: { asset: Asset; soeurs?: Asset[] }) =>
@@ -370,6 +374,7 @@ function monter(
         decoupe={surplus.decoupe ?? DECOUPE_STUB}
         onErreur={onErreur}
         onUnivers={onUnivers}
+        onAssocierEquipement={surplus.onAssocierEquipement}
       />,
     )
   return { onFermer, onSoeur, onErreur, onUnivers, appels, reouvrir }
@@ -2484,5 +2489,25 @@ describe("les six capacités rattrapées par B26", () => {
       await within(colonne()).findByRole("button", { name: "Prendre #8a5a2c" }),
     )
     await waitFor(() => expect(dernierePose(appels)?.contours?.couleur).toBe("#8a5a2c"))
+  })
+})
+
+// ── AU15 · la porte de la retouche vers un équipement ──────────────────────
+//
+// L'écran d'association existe et distingue déjà référence, personnage équipé
+// et calque transparent (`AssocierImageEquipement.tsx`, essayé dans
+// `CalquesCibles.test.tsx`). Ce qui n'était pas mesuré, c'est la porte : le
+// bouton de la retouche qui y mène, et son absence quand aucun jeu n'est ouvert.
+describe("associer le rendu à une pièce", () => {
+  test("le bouton mène à l'association, sans rien enregistrer d'autre", () => {
+    const onAssocierEquipement = vi.fn()
+    monter({ onAssocierEquipement })
+    fireEvent.click(screen.getByRole("button", { name: "Associer à un équipement" }))
+    expect(onAssocierEquipement).toHaveBeenCalledTimes(1)
+  })
+
+  test("sans jeu ouvert, la retouche n'invente pas cette porte", () => {
+    monter()
+    expect(screen.queryByRole("button", { name: "Associer à un équipement" })).toBeNull()
   })
 })

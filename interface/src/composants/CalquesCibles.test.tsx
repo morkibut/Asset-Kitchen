@@ -150,6 +150,48 @@ test("l'écran des calques nomme son porteur, y revient d'un clic, et garde ses 
   expect(screen.getByLabelText("Versions de cette cible")).toBeInTheDocument()
 })
 
+// ── AU15 · l'ordre des images, expliqué sans parler d'orientation ──────────
+//
+// Le contrat portait déjà la finesse : `placement.devant` pour l'ordre par
+// défaut, le masque `derriere` pour les morceaux qui passent sous le corps —
+// tous deux attachés à une variante, donc à une cible, donc à une frame. Ce qui
+// manquait était de le dire, et de remettre le réglage par défaut là où la
+// maquette le pose : dans les réglages de l'emploi.
+test("l'emploi explique l'ordre des images sans parler d'orientation, et le règle", async () => {
+  const onRegler = vi.fn()
+  render(<CalquesDeLEmploi projet="marais" emploi={emploi} piece={piece} porteur={personnage} emplacements={[]} onRegler={onRegler} onHistorique={vi.fn()} onLesAutresEmplois={vi.fn()} />)
+  await screen.findByRole("button", { name: /Marche lente · frame 1/ })
+  const ordre = screen.getByLabelText("Ordre des calques par défaut")
+  expect(ordre).toHaveValue("devant")
+  expect(screen.getByText(/l’ordre des images, pas la direction du regard/)).toBeInTheDocument()
+  // Le repli 3/4 nomme les deux pinceaux et dit que la correction est par frame.
+  const troisQuarts = screen.getByText("Et en vue de dessus à 3/4 ?")
+  expect(troisQuarts.parentElement!.textContent).toContain("Passer cette partie dessous")
+  expect(troisQuarts.parentElement!.textContent).toContain("Ramener cette partie dessus")
+  expect(troisQuarts.parentElement!.textContent).toContain("sur cette frame seule")
+  fireEvent.change(ordre, { target: { value: "derriere" } })
+  expect(onRegler).toHaveBeenCalledWith({ devant: false })
+})
+
+test("l'atelier du calque dit que la direction de la base ne change pas l'ordre", async () => {
+  render(<EditeurCalqueCible chemin={chemin} variante={variante} onGarde={vi.fn()} onSale={vi.fn()} />)
+  await screen.findByAltText("Aperçu du calque sur sa base")
+  expect(screen.getByText(/la direction de cette base \(ouest\) ne change rien/)).toBeInTheDocument()
+  expect(screen.getByText(/sur cette frame seule/)).toBeInTheDocument()
+  expect(screen.getByText("Aucun passage peint ici : toute la pièce suit l’ordre par défaut.")).toBeInTheDocument()
+  // Les deux pinceaux qui font passer une partie dessous et l'autre dessus.
+  expect(screen.getByRole("option", { name: "Passer cette partie dessous" })).toBeInTheDocument()
+  expect(screen.getByRole("option", { name: "Ramener cette partie dessus" })).toBeInTheDocument()
+})
+
+test("un passage peint sur cette frame se compte, et l'ordre par défaut reste lisible", async () => {
+  const peinte = { ...variante, masques: { calque: [], corps: [], derriere: [{ garde: true, rayon: 2, points: [[30, 19]], couleur: "" }] } } as VarianteCalque
+  render(<EditeurCalqueCible chemin={chemin} variante={peinte} onGarde={vi.fn()} onSale={vi.fn()} />)
+  await screen.findByAltText("Aperçu du calque sur sa base")
+  expect(screen.getByText("1 passage peint ici : une partie de la pièce ne suit pas l’ordre par défaut.")).toBeInTheDocument()
+  expect(screen.getByLabelText("Ordre du calque")).toHaveValue("true")
+})
+
 test("sans rappel de retour, l'écran n'invente aucun bouton vers le personnage", async () => {
   render(<CalquesDeLEmploi projet="marais" emploi={emploi} piece={piece} porteur={personnage} emplacements={[]} onRegler={vi.fn()} onHistorique={vi.fn()} onLesAutresEmplois={vi.fn()} />)
   await screen.findByRole("button", { name: /Marche lente · frame 1/ })

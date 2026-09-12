@@ -12,7 +12,7 @@ from atelier.api.calques_cibles import routeur
 from atelier.domaine.bande import Prise
 from atelier.domaine.calques_cibles import PlacementCalque
 from atelier.domaine.recette import Recette
-from atelier.image.calques_cibles import composer, png, rgba
+from atelier.image.calques_cibles import composer, couches, png, rgba
 from atelier.services import Atelier
 from atelier.services.calques_cibles import ServiceCalquesCibles
 from atelier.services.production import ProductionRefusee
@@ -234,3 +234,69 @@ def test_apercu_de_l_extraction_et_resultat_garde_sont_les_memes_sans_ecriture_a
     assert svc.apercu(*chemin, extraite["identifiant"], "calque") == prevision
     assert extraite["extraction"]["dx"] == 2
     assert svc.cibles(*chemin)["calques_retenus"] == 0
+
+
+# ── L'ordre des images, en vue 3/4 ──────────────────────────────────────────
+#
+# Le contrat porte déjà la finesse : `placement.devant` donne l'ordre par
+# défaut, et le masque `derriere` peint les morceaux qui passent sous le corps.
+# Ces deux réglages appartiennent à une variante, donc à une cible, donc à une
+# frame. Aucune direction n'entre nulle part dans la composition.
+
+
+def test_une_piece_passe_moitie_dessous_moitie_dessus_sur_une_seule_frame():
+    corps = np.zeros((8, 8, 4), dtype=np.uint8)
+    corps[2:6, 2:6] = (0, 0, 255, 255)
+    calque = np.zeros_like(corps)
+    calque[3, 1:7] = (255, 0, 0, 255)
+    # Une seule moitié peinte : la gauche passe sous le corps, la droite reste
+    # au-dessus — c'est le sac qui dépasse de la silhouette sans percer le torse.
+    moitie_gauche = {"derriere": [{"garde": True, "rayon": 1, "points": [[2, 3]]}]}
+    sous, _, dessus = couches(corps, calque, PlacementCalque(devant=True), moitie_gauche)
+    assert sous[3, 2, 3] == 255 and dessus[3, 2, 3] == 0
+    assert dessus[3, 5, 3] == 255 and sous[3, 5, 3] == 0
+    # L'ordre par défaut inversé range tout dessous, sans toucher au masque.
+    sous, _, dessus = couches(corps, calque, PlacementCalque(devant=False), moitie_gauche)
+    assert sous[3, 5, 3] == 255 and dessus[3, 5, 3] == 0
+    assert not dessus[:, :, 3].any()
+
+
+def test_deux_frames_de_la_meme_bande_gardent_chacune_son_ordre(decor, atelier):
+    svc, chemin, p, _, source = decor
+    _clip_ecrit(atelier)
+    _poser_une_bande(atelier, personnage=p, pose="repos")
+    frames = [c["cible"] for c in svc.cibles(*chemin)["cibles"] if c["cible"]["nature"] == "frame"]
+    assert len(frames) > 1
+    premiere = svc.creer(*chemin, frames[0], source, "source-equipee")
+    seconde = svc.creer(*chemin, frames[1], source, "source-equipee")
+    premiere = svc.regler(*chemin, premiere["identifiant"], 1, placement={"devant": True},
+                          masques={"derriere": [{"garde": True, "rayon": 2, "points": [[30, 19]]}]})
+    seconde = svc.regler(*chemin, seconde["identifiant"], 1, placement={"devant": False}, masques={"derriere": []})
+    relue, autre = svc.lire(*chemin, premiere["identifiant"]), svc.lire(*chemin, seconde["identifiant"])
+    assert relue["placement"]["devant"] is True and relue["masques"]["derriere"]
+    assert autre["placement"]["devant"] is False and autre["masques"]["derriere"] == []
+    assert relue["cible"]["prise"] != autre["cible"]["prise"]
+
+
+def test_le_meme_calque_sur_deux_directions_se_compose_a_l_identique(decor, atelier, client, tmp_path):
+    """L'ordre est celui des images, pas celui du regard : deux bases aux pixels
+    identiques et aux directions opposées rendent exactement la même image."""
+    svc, chemin, p, corps, source = decor
+    pixels = rgba(atelier.assets.octets(atelier.assets.lire(corps))[0])
+    est = importer(atelier, client, tmp_path, pixels, "corps-est")
+    ouest = importer(atelier, client, tmp_path, pixels, "corps-ouest")
+    for nom in ("Est", "Ouest"):
+        assert client.post("/api/characters/directions", json={"nom": nom}).status_code == 201
+    for identifiant, direction in ((est, "est"), (ouest, "ouest")):
+        reponse = client.put(f"/api/assets/{identifiant}/character",
+                             json={"personnage": p, "pose": "repos", "direction": direction})
+        assert reponse.status_code == 200, reponse.text
+    depart = svc.creer(*chemin, {"nature": "image", "resultat": est}, source, "source-equipee")
+    a = svc.extraire(*chemin, depart["identifiant"], reglage={"seuil": 8})
+    a = svc.regler(*chemin, a["identifiant"], 1, placement={"devant": True},
+                   masques={"derriere": [{"garde": True, "rayon": 2, "points": [[40, 18]]}]})
+    [b] = svc.reutiliser(*chemin, a["identifiant"], [{"nature": "image", "resultat": ouest}],
+                         copier_placement=True, copier_masques=True)
+    assert svc.lire(*chemin, a["identifiant"])["base"]["direction"] == "est"
+    assert svc.lire(*chemin, b["identifiant"])["base"]["direction"] == "ouest"
+    assert svc.apercu(*chemin, a["identifiant"]) == svc.apercu(*chemin, b["identifiant"])

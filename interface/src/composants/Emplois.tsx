@@ -295,7 +295,14 @@ export function Emplois({
     return porteurs.filter((p) => !pris.has(p.identifiant))
   }, [emplois, porteurs])
 
-  const portes = emplois.filter((e) => e.genre === "porte").length
+  // **Deux listes, jamais une seule.** Un emploi porté pose un calque sur un
+  // corps ; « à part » et « en mise en scène » n'en posent aucun, et les mêler
+  // ferait croire à des calques portés qui n'existent pas — le service refuse
+  // d'ailleurs de leur ouvrir l'atelier des cibles
+  // (`atelier/services/calques_cibles.py`, `_emploi`).
+  const portesListe = emplois.filter((e) => e.genre === "porte")
+  const sansPorteur = emplois.filter((e) => e.genre !== "porte")
+  const portes = portesListe.length
 
   const sousTitre =
     emplois.length === 0
@@ -333,24 +340,10 @@ export function Emplois({
           </button>
         </div>
 
-        {/* ── Sa description ────────────────────────────────────────────────
-            La planche pose ici une vignette ; il n'y en a pas, et c'est le
-            sujet même de l'écran : ce texte est tout ce que la pièce possède
-            en propre, et c'est lui qui part avec chacun de ses emplois. */}
-        {projet ? <ReferencePiece projet={projet} piece={piece} onChange={setPiece} /> : <section className="flex flex-col gap-[8px]">
-          <Intertitre>Son image de référence</Intertitre>
-          <p className="text-[12.5px] leading-[1.5] text-encre-2">
-            {piece.description.trim()
-              ? `« ${piece.description} »`
-              : "Aucune description encore."}
-          </p>
-          <p className="text-[11.5px] leading-[1.45] text-encre-4">
-            Une pièce n'a pas d'image à elle : ce texte part avec chaque emploi, et ce sont
-            les emplois qui portent les images.
-          </p>
-        </section>}
-
-        {/* ── Ses emplois ───────────────────────────────────────────────── */}
+        {/* ── Ses emplois, **avant tout le reste** ──────────────────────────
+            AU15 : la fiche d'une pièce s'ouvre sur ses emplois et sur qui les
+            porte. Sa référence commune passe après : elle décrit la pièce, elle
+            ne dit pas ce qu'on vient chercher ici. */}
         <section className="flex flex-col gap-[8px]">
           <div className="flex flex-wrap items-baseline justify-between gap-[8px]">
             <Intertitre>{titreDeLaListe}</Intertitre>
@@ -377,13 +370,42 @@ export function Emplois({
                 Personne ne s'en sert encore.
               </p>
             )}
-            {emplois.map((emploi) => projet && emploi.genre === "porte" && !emploi.orphelin ? <ResumeEmploi key={emploi.identifiant} projet={projet} piece={piece.identifiant} emploi={emploi} onOuvrir={() => onEmploi(emploi.identifiant)} /> : (
+            {/* ── D'abord les porteurs ────────────────────────────────────
+                Un emploi porté est le seul qui pose un calque sur un corps ;
+                c'est ce que la fiche montre en premier, avec le nom de qui
+                porte. Les deux autres genres suivent, sous leur propre titre :
+                ils comptent et se nomment, ils n'habillent personne. */}
+            {portesListe.length > 0 && (
+              <h3 data-emplois-portes className="px-[14px] pt-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+                {portesListe.length === 1 ? "Son porteur" : `Ses ${portesListe.length} porteurs`}
+              </h3>
+            )}
+            {portesListe.map((emploi) => projet && !emploi.orphelin ? <ResumeEmploi key={emploi.identifiant} projet={projet} piece={piece.identifiant} emploi={emploi} onOuvrir={() => onEmploi(emploi.identifiant)} /> : (
               <LigneDEmploi
                 key={emploi.identifiant}
                 emploi={emploi}
                 onOuvrir={() => onEmploi(emploi.identifiant)}
               />
             ))}
+
+            {sansPorteur.length > 0 && (
+              <>
+                <h3 data-emplois-sans-porteur className="px-[14px] pt-[14px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+                  À part et en mise en scène
+                </h3>
+                <p className="px-[14px] text-[11.5px] leading-[1.45] text-encre-4">
+                  Ces usages ne se posent sur personne : ils n'ont pas de calque porté, et
+                  leurs images restent comptées à part.
+                </p>
+                {sansPorteur.map((emploi) => (
+                  <LigneDEmploi
+                    key={emploi.identifiant}
+                    emploi={emploi}
+                    onOuvrir={() => onEmploi(emploi.identifiant)}
+                  />
+                ))}
+              </>
+            )}
 
             {ajoutOuvert ? (
               <AjoutDUnEmploi
@@ -407,6 +429,23 @@ export function Emplois({
             )}
           </div>
         </section>
+
+        {/* ── Sa description ────────────────────────────────────────────────
+            La planche pose ici une vignette ; il n'y en a pas, et c'est le
+            sujet même de l'écran : ce texte est tout ce que la pièce possède
+            en propre, et c'est lui qui part avec chacun de ses emplois. */}
+        {projet ? <ReferencePiece projet={projet} piece={piece} onChange={setPiece} /> : <section className="flex flex-col gap-[8px]">
+          <Intertitre>Son image de référence</Intertitre>
+          <p className="text-[12.5px] leading-[1.5] text-encre-2">
+            {piece.description.trim()
+              ? `« ${piece.description} »`
+              : "Aucune description encore."}
+          </p>
+          <p className="text-[11.5px] leading-[1.45] text-encre-4">
+            Une pièce n'a pas d'image à elle : ce texte part avec chaque emploi, et ce sont
+            les emplois qui portent les images.
+          </p>
+        </section>}
 
         {/* Le seul texte d'explication de l'écran, et il ne paraît que quand il
             a quelque chose à expliquer : deux porteurs ou plus. */}
