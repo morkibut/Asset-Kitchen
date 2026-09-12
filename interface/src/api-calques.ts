@@ -24,6 +24,7 @@ export const cleCible = (c: CibleCalque) => `${c.nature}:${c.resultat}:${c.prise
 export const ETAT_CALQUE: Record<VarianteCalque["etat"], string> = { reference: "Référence", "a-extraire": "À extraire", "a-verifier": "À vérifier", prete: "Vérifié", "a-revoir": "Base à revoir" }
 
 export const apiCalques = {
+  reglerPiece: (projet: string, piece: string, champs: { nom?: string; description?: string; references?: string[] }) => appeler<{ piece: Piece }>(`/characters/pieces/${encodeURIComponent(piece)}`, json("PUT", { ...champs, projet })),
   cibles: (c: CheminEmploi) => appeler<CiblesEmploi>(`${prefixe(c)}/targets`),
   imageCible: (c: CheminEmploi, cible: CibleCalque) => `/api${prefixe(c)}/targets/preview.png?${new URLSearchParams(cible)}`,
   creer: (c: CheminEmploi, cible: CibleCalque, source: string, role: RoleCalque) => appeler<VarianteCalque>(`${prefixe(c)}/layers`, json("POST", { cible, source, role })),
@@ -33,6 +34,7 @@ export const apiCalques = {
   aligner: (c: CheminEmploi, id: string) => appeler<ExtractionCalque>(`${couche(c, id)}/alignment`),
   valider: (c: CheminEmploi, id: string, revision: number) => appeler<VarianteCalque>(`${couche(c, id)}/validate`, json("POST", { revision })),
   adopter: (c: CheminEmploi, id: string, revision: number, cible: CibleCalque) => appeler<VarianteCalque>(`${couche(c, id)}/adopt`, json("POST", { revision, cible })),
+  reutiliser: (c: CheminEmploi, id: string, cibles: CibleCalque[], copier_placement: boolean, copier_masques: boolean) => appeler<VarianteCalque[]>(`${couche(c, id)}/reuse`, json("POST", { cibles, copier_placement, copier_masques })),
   image: (c: CheminEmploi, v: VarianteCalque, vue = "composition") => `/api${couche(c, v.identifiant)}/preview.png?vue=${vue}&revision=${v.revision}`,
   apercu: async (c: CheminEmploi, id: string, brouillon: BrouillonCalque, signal?: AbortSignal) => {
     const reponse = await fetch(`/api${couche(c, id)}/preview.png`, { ...json("POST", brouillon), headers: { "Content-Type": "application/json" }, signal })

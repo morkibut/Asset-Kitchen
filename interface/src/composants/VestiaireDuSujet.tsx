@@ -213,7 +213,7 @@ export function VestiaireDuSujet({
                 </button>
               </span>
               <span className="mesure text-[11px] text-encre-4">
-                {precis[sien.piece.identifiant]?.variantes.length ? `${precis[sien.piece.identifiant].calques_retenus} calques précis retenus` : `${emploi.fait} / ${emploi.attendu}`} ·{" "}
+                {precis[sien.piece.identifiant] ? `${precis[sien.piece.identifiant].calques_retenus} calques précis retenus · ${precis[sien.piece.identifiant].images_disponibles} cibles disponibles` : onEmploi ? "Lecture des calques…" : `${emploi.fait} / ${emploi.attendu}`} ·{" "}
                 {emploi.emplacement_nom || "sans emplacement"}
               </span>
             </div>

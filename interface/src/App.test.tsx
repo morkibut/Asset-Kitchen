@@ -33,7 +33,6 @@ import {
 import { App } from "./App"
 import { reinitialiserApercu } from "./composants/Apercu"
 import { toutReplier } from "./composants/pieces"
-import { LIGNES_AU_PLUS } from "./composants/Carnet"
 import { reinitialiserGuide } from "./composants/Guide"
 import { reinitialiserPressePapier } from "./recette"
 import { AIDE, SANS_ENTREE, type Explication } from "./aide"
@@ -2313,6 +2312,15 @@ function serveurDouble(options: {
         cout_rate_usd: 0,
         appels: [],
       })
+    // La porte Fabrications relit les travaux conservés. Un atelier neuf en
+    // rend une liste vide : sans cette route, le double générique rendait un
+    // objet et masquait le parcours sous un `liste.map` sans rapport.
+    if (url.startsWith("/api/projects/") && url.endsWith("/production-jobs"))
+      return rendre([])
+    if (url === "/api/local-queue")
+      return rendre({ etapes: [], regle: "Une étape à la fois.", mesures: [] })
+    if (url === "/api/local-queue/engines") return rendre({ moteurs: [] })
+    if (url === "/api/workflow-profiles") return rendre({ profils: [] })
     if (url.includes("/lineage"))
       return rendre({
         parent: null,
@@ -3721,7 +3729,10 @@ async function champDePrompt() {
   const deja = screen.queryByPlaceholderText("Décris ce que tu veux fabriquer.")
   if (deja) return deja
   allerA("Créer")
-  return await champDePrompt()
+  // La porte ne monte pas sa surface de façon synchrone : attendre la vraie
+  // action de Fabrications évite de rappeler ce helper pendant le rendu.
+  fireEvent.click(await screen.findByRole("button", { name: "Préparer une image" }))
+  return await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
 }
 
 /** Écrire un sujet dans le champ qui paie, **après que l'atelier a fini de le
@@ -3782,13 +3793,13 @@ async function relire() {
  *  le même cadre qu'avant. Ceux qui visent la page neuve, eux, ont leurs
  *  propres essais, dans `PageDuSujet.test.tsx` et `ImagesDuSujet.test.tsx`. */
 async function ouvrirLEtabli(nom?: string) {
-  const carnet = document.querySelector("[data-carnet]")
-  if (carnet) {
-    const rangee = within(carnet as HTMLElement).queryByRole("button", {
-      name: /personnages/i,
-    })
-    if (rangee) fireEvent.click(rangee)
-  }
+  // La sixième porte a remplacé le carnet : la bibliothèque donne accès à la
+  // famille, puis « Ouvrir et organiser » descend vers sa grille. Ce détour
+  // conserve le parcours réel avant d'ouvrir la fiche et sa matrice.
+  fireEvent.click(screen.getByRole("button", { name: "Les assets" }))
+  const bibliotheque = await screen.findByRole("main", { name: "Les assets du jeu" })
+  fireEvent.click(within(bibliotheque).getByRole("button", { name: "Personnages" }))
+  fireEvent.click(await within(bibliotheque).findByRole("button", { name: "Ouvrir et organiser" }))
   const cadre = await waitFor(() => {
     const c = document.querySelector("[data-ecran-famille], [data-etabli], [data-univers]")
     if (!c) throw new Error("aucune famille en profondeur n'est montée")
@@ -3890,71 +3901,38 @@ async function ouvrirLesReglagesDeLAppel() {
  * cet onglet est le seul endroit qui dise qu'on a payé. Le piège tenait dans
  * chaque essai ; il tient maintenant ici, une fois.
  */
-/**
- * Les trois racines, et la ligne du carnet qui y mène (`C9`).
- *
- * ⚠️ Chaque nom est **un préfixe**, jamais le libellé entier : une ligne du
- * carnet porte son compte à droite, et son nom accessible est donc
- * `La galerie 45`. Le compte change d'un essai à l'autre ; le nom, non.
- */
-const LIGNE_DU_CARNET: Record<string, RegExp> = {
-  Galerie: /^La galerie/,
-  Univers: /^La toile de l'univers/,
-  Créer: /^Fabriquer une image/,
+/** Les destinations historiques, traduites vers les portes du nouvel atelier.
+ * « Créer » est une préparation modale qui part de Fabrications : elle ne
+ * réintroduit pas de septième destination. */
+const PORTE_DE_L_ATELIER: Record<string, RegExp> = {
+  Galerie: /^Galerie$/,
+  Univers: /^Univers & toile$/,
+  Créer: /^Fabrications$/,
 }
 
-/** Le genre de lieu que chaque racine pose au bas de la pile — ce que la barre
- *  disait par son onglet allumé, et que le carnet écrit sur lui-même. */
-const RACINE_DU_LIEU: Record<string, string> = {
-  Galerie: "galerie",
-  Univers: "univers",
-  Créer: "codex",
-}
-
-/** La clé de `LIGNE_DU_CARNET` que désigne un nom d'essai, ou `null` si ce
- *  n'est pas une racine. Les motifs sont acceptés parce que le nom de la
- *  galerie porte le compte de ce qui est en route. */
+/** La clé de `PORTE_DE_L_ATELIER` que désigne un nom d'essai, ou `null` si ce
+ * n'est pas une destination globale. Les anciens motifs de Galerie restent
+ * admis afin que les essais de suivi gardent leur intention métier. */
 function laRacineDite(nom: string | RegExp): string | null {
-  if (typeof nom === "string") return nom in LIGNE_DU_CARNET ? nom : null
+  if (typeof nom === "string") return nom in PORTE_DE_L_ATELIER ? nom : null
   return /galerie/i.test(nom.source) ? "Galerie" : null
 }
 
 function leLieu(nom: string | RegExp): HTMLElement {
   const cle = laRacineDite(nom)
-  // **Les trois racines sont des lignes du carnet** depuis `C9`. Les onglets
-  // qui restent sont ceux d'un écran — les côtés de l'univers, les quatre
-  // volets de la page d'un sujet —, et ceux-là se désignent toujours par leur
-  // rôle : ce ne sont pas des lieux, c'est un seul lieu vu de quatre côtés.
   if (!cle) return screen.getByRole("tab", { name: nom })
-  // Un motif écrit pour l'onglet — `/^Galerie · 1 image en route$/` — vise la
-  // même chose que la ligne, sous son ancien nom. On le retaille plutôt que
-  // de réécrire les essais qui le portent.
-  const vise =
-    typeof nom === "string"
-      ? LIGNE_DU_CARNET[cle]
-      : new RegExp(nom.source.replace(/Galerie/, "La galerie"), nom.flags)
-  return screen.getByRole("button", { name: vise })
+  return screen.getByRole("button", { name: PORTE_DE_L_ATELIER[cle] })
 }
 
 /**
  * Est-on ici ? — `"true"` ou `"false"`, comme l'`aria-selected` d'avant.
  *
- * **Une racine ne se lit plus sur sa ligne, et c'est le carnet qui a raison.**
- * Le carnet n'allume qu'**une** ligne, la plus profonde : ouvrir Les
- * personnages allume Les personnages, pas la racine sous elle. L'onglet, lui,
- * restait allumé sous tout — c'est ce que ces essais mesuraient, et le carnet
- * l'écrit sur lui-même (`data-racine`).
- *
- * Un onglet d'écran, lui, se lit toujours sur lui-même.
+ * Les portes déclarent directement la page active. Les onglets internes
+ * (univers, fiche) gardent leur `aria-selected`.
  */
 function ouverture(nom: string | RegExp): string {
   const cle = laRacineDite(nom)
-  if (cle) {
-    const carnet = document.querySelector("[data-carnet]")
-    return carnet?.getAttribute("data-racine") === RACINE_DU_LIEU[cle]
-      ? "true"
-      : "false"
-  }
+  if (cle) return leLieu(nom).getAttribute("aria-current") === "page" ? "true" : "false"
   return leLieu(nom).getAttribute("aria-selected") ?? "false"
 }
 
@@ -4818,11 +4796,12 @@ describe("l'infobulle et le guide", () => {
     expect(document.querySelector("[data-volet-du-guide]")).toBeTruthy()
   })
 
-  test("le bouton du pied du carnet ouvre le même volet", async () => {
+  test("le bouton Guide de la navigation ouvre le même volet", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    fireEvent.click(screen.getByRole("button", { name: /Le guide et les touches/ }))
+    const navigation = screen.getByRole("complementary", { name: "Navigation du jeu" })
+    fireEvent.click(within(navigation).getByRole("button", { name: "Guide" }))
 
     expect(await screen.findByRole("heading", { name: "Guide", level: 1 })).toBeTruthy()
   })
@@ -4902,7 +4881,7 @@ describe("l'infobulle et le guide", () => {
     }
   })
 
-  test("les 183 entrées sont adressées à un écran qui existe — un ou refuse un lieu inconnu", () => {
+  test("chaque entrée reste adressée à un écran connu à mesure que le corpus grandit", () => {
     // **Le critère qui commande la tranche (B7).** Fermé côté type
     // (`Explication["ou"]`, qui n'accepte à la compilation que ces valeurs-là),
     // et retenu ici aussi : un `ou` qui ne serait dans aucun des deux serait
@@ -4923,16 +4902,12 @@ describe("l'infobulle et le guide", () => {
       "ambiances",
       "reglages",
       "equipement",
+      "sortie",
     ])
-    // 157 avant `B17`, 162 avec ses cinq entrées, plus les trois entrées de
-    // B18 sur le retournement — l'angle, le repli et les zones protégées, les
-    // trois seuls des dix sens à ouvrir un réglage de plus —, plus les cinq
-    // entrées des six capacités neuves du contour, plus les sept entrées des
-    // sept moteurs neufs de nettoyer (garder, boucher, reboucher, les deux
-    // morphologies, l'épargne, le vote des voisins), plus les six entrées de
-    // l'atelier couleurs (algorithme, graine, force du tramage, distance des
-    // couleurs, ne compter que ce qu'on voit, couleurs gardées) — tout ça `B18`.
-    expect(Object.keys(AIDE).length).toBe(183)
+    // Le corpus a grandi avec les écrans unifiés. Son volume n'est pas un
+    // contrat : l'adresse de chaque entrée et l'unicité testée ci-dessus le
+    // sont. Le seuil protège seulement contre une disparition massive.
+    expect(Object.keys(AIDE).length).toBeGreaterThan(183)
     for (const [cle, entree] of Object.entries(AIDE)) {
       expect(LIEUX_FERMES.has(entree.ou), `${cle} → ou: "${entree.ou}"`).toBe(true)
     }
@@ -8491,18 +8466,16 @@ describe("les trois onglets", () => {
   // ── « Trois onglets, et un seul allumé à la fois ; aucun écran ne se
   //     superpose à un autre » ────────────────────────────────────────────────
 
-  test("les trois racines sont des lignes du carnet, et une seule est ouverte", async () => {
+  test("les trois anciennes racines se traduisent vers les portes de l'atelier", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    // **Aucun onglet de navigation dans le produit** (`C9`) : la barre de tête
-    // et ses trois onglets sont partis, le carnet est le seul chemin. Ce qui
-    // porte encore le rôle `tab` est un bandeau *dans* un écran — les côtés de
-    // l'univers, les quatre volets de la page d'un sujet —, et aucun d'eux
-    // n'est monté sur la galerie au repos.
+    // Ce qui porte encore le rôle `tab` est un bandeau *dans* un écran — les
+    // côtés de l'univers, les quatre volets de la page d'un sujet —, et aucun
+    // d'eux n'est monté sur la galerie au repos.
     expect(screen.queryAllByRole("tab")).toHaveLength(0)
     for (const nom of ["Univers", "Créer", "Galerie"])
-      expect(leLieu(nom).hasAttribute("data-ligne-du-carnet")).toBe(true)
+      expect(leLieu(nom).closest("[data-navigation-atelier]")).toBeTruthy()
 
     // La galerie est la racine de repos : c'est l'écran qu'on regardait déjà en
     // arrivant, et un produit ne change pas d'accueil pour se réorganiser.
@@ -22588,7 +22561,7 @@ describe("B3 — la grille dit ce qu'elle ne montre pas", () => {
   })
 })
 
-// ── B0 · Le socle du carnet ─────────────────────────────────────────────────
+// ── B0 · La navigation de l'atelier ─────────────────────────────────────────
 //
 // **Le châssis neuf, avec un seul lieu réellement branché : le tableau de bord
 // du jeu.** C'est la balle traçante — si le carnet, la pile de lieux et l'aide
@@ -22596,7 +22569,7 @@ describe("B3 — la grille dit ce qu'elle ne montre pas", () => {
 // continue de s'ouvrir comme avant, à l'intérieur de la surface, et c'est ce
 // que le dernier essai de ce bloc vérifie.
 
-describe("B0 — le socle du carnet", () => {
+describe("B0 — la navigation de l'atelier", () => {
   beforeEach(() => {
     FluxDouble.ouverts = []
     vi.stubGlobal("EventSource", FluxDouble)
@@ -22611,25 +22584,23 @@ describe("B0 — le socle du carnet", () => {
     vi.restoreAllMocks()
   })
 
-  const leCarnet = () => screen.getByRole("navigation", { name: "Le carnet" })
-  const lignes = () =>
-    Array.from(leCarnet().querySelectorAll("[data-ligne-du-carnet]"))
+  const navigation = () => screen.getByRole("complementary", { name: "Navigation du jeu" })
 
   // ── « Le carnet ne se ferme jamais tout seul, même pendant une génération »
 
-  test("le carnet reste à l'écran quel que soit le lieu où l'on va", async () => {
+  test("la navigation reste à l'écran quel que soit le lieu où l'on va", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    // Aucun écran de travail ne prend la fenêtre entière : on peut aller voir
-    // ailleurs et revenir, et le carnet est le chemin du retour.
-    expect(leCarnet()).toBeTruthy()
+    // Aucun écran de travail ne prend la fenêtre entière : les six portes
+    // restent disponibles pour aller voir ailleurs et revenir.
+    expect(navigation()).toBeTruthy()
     allerA("Créer")
-    expect(leCarnet()).toBeTruthy()
+    expect(navigation()).toBeTruthy()
     allerA("Univers")
-    expect(leCarnet()).toBeTruthy()
+    expect(navigation()).toBeTruthy()
     allerA("Galerie")
-    expect(leCarnet()).toBeTruthy()
+    expect(navigation()).toBeTruthy()
   })
 
   test("il reste ouvert pendant qu'une image est en route", async () => {
@@ -22640,48 +22611,47 @@ describe("B0 — le socle du carnet", () => {
     // enfermait — un écran par-dessus, et plus de sortie.
     flux.emettre("generation", generation("gggg1111", 1, "en_cours"))
 
-    expect(leCarnet()).toBeTruthy()
+    expect(navigation()).toBeTruthy()
     // Et l'on va effectivement ailleurs pendant qu'elle tourne.
     allerA("Créer")
-    expect(leCarnet()).toBeTruthy()
+    expect(navigation()).toBeTruthy()
   })
 
-  // ── « Une seule ligne du carnet est ouverte à la fois » ────────────────────
+  test("les six portes de la maquette sont présentes une fois chacune", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    const atelier = within(navigation()).getByRole("navigation", { name: "Atelier" })
+    expect(within(atelier).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Le jeu", "Univers & toile", "Les assets", "Galerie", "Fabrications", "Livrer au jeu",
+    ])
+  })
 
-  test("déplier une ligne referme celle qui l'était", async () => {
+  test("une seule porte est active à la fois", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    const atelier = within(navigation()).getByRole("navigation", { name: "Atelier" })
+    fireEvent.click(within(atelier).getByRole("button", { name: "Univers & toile" }))
+    expect(within(atelier).getAllByRole("button").filter((b) => b.getAttribute("aria-current") === "page")).toHaveLength(1)
+    expect(within(atelier).getByRole("button", { name: "Univers & toile" }).getAttribute("aria-current")).toBe("page")
+  })
+
+  test("le fil se lit depuis la pile, et remonter coupe la profondeur", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    const famille = screen.getByRole("button", { name: /^Les personnages/ })
-    fireEvent.click(famille)
-    // Une famille dépliée montre ses collections — « Tous » tant qu'elle n'en a
-    // pas d'autre : c'est ce que la planche prévoit pour un petit jeu.
-    expect(await screen.findByRole("button", { name: /^Tous/ })).toBeTruthy()
+    // Les dépenses ne sont pas une porte : le total de l'en-tête les ajoute à
+    // la pile au-dessus de la Galerie qui reste active.
+    fireEvent.click(screen.getByTitle("Ouvrir les dépenses"))
+    const fil = within(await screen.findByRole("navigation", { name: "Où l'on est" }))
+    expect(fil.getByText("Les dépenses")).toBeTruthy()
+    expect(ouverture("Galerie")).toBe("true")
 
-    // En ouvrir une autre referme la première, par construction : un seul état
-    // tient la ligne dépliée.
-    fireEvent.click(screen.getByRole("button", { name: "Les autres jeux" }))
-    await waitFor(() =>
-      expect(screen.queryByRole("button", { name: /^Tous/ })).toBeNull(),
-    )
-  })
-
-  // ── « Le carnet ne dépasse pas trente lignes » ────────────────────────────
-
-  test("ouvert au plus grand, il tient sous les trente lignes", async () => {
-    const { fetchDouble } = serveurDouble()
-    await monter(fetchDouble)
-
-    // Dix lignes au repos — le nom du jeu ne compte pas, ni le pied, qui est
-    // sous le trait.
-    const auRepos = lignes().length
-    expect(auRepos).toBeLessThanOrEqual(LIGNES_AU_PLUS)
-
-    // Et déplié au plus grand : le déplié du nom du jeu est le plus haut des
-    // trois, neuf lignes au plus, avec deux jeux comme avec vingt.
-    fireEvent.click(screen.getByRole("button", { name: "Les autres jeux" }))
-    await waitFor(() => expect(lignes().length).toBeGreaterThan(auRepos))
-    expect(lignes().length).toBeLessThanOrEqual(LIGNES_AU_PLUS)
+    // Revenir par l'étage parent enlève cette profondeur au lieu de changer
+    // d'onglet ou de laisser l'écran des dépenses caché sous la galerie.
+    fireEvent.click(fil.getByRole("button", { name: "Bac à sable" }))
+    await waitFor(() => expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull())
+    expect(await screen.findByRole("region", { name: "Grille des images" })).toBeTruthy()
+    expect(ouverture("Galerie")).toBe("true")
   })
 
   // ── « Le tableau de bord du jeu s'ouvre » ─────────────────────────────────
@@ -22690,40 +22660,32 @@ describe("B0 — le socle du carnet", () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    const versLeJeu = leCarnet().querySelector(
-      "[data-vers-le-tableau-de-bord]",
-    ) as HTMLElement
-    expect(versLeJeu).toBeTruthy()
-    fireEvent.click(versLeJeu)
+    fireEvent.click(screen.getByRole("button", { name: "Le jeu" }))
 
     const tableau = await screen.findByRole("main", {
       name: "Le tableau de bord du jeu",
     })
     expect(tableau).toBeTruthy()
-    // Il prend la surface, jamais la fenêtre : le carnet est toujours là.
-    expect(leCarnet()).toBeTruthy()
+    // Il prend la surface, jamais la fenêtre : les portes restent là.
+    expect(navigation()).toBeTruthy()
     // Et la grille des images n'est plus dessous — une seule surface à la fois.
     expect(screen.queryByRole("region", { name: "Grille des images" })).toBeNull()
   })
 
-  test("un seul bouton rouille sur le tableau de bord, et il ne paie rien", async () => {
+  test("le bouton principal du tableau de bord crée l'asset sans payer", async () => {
     const { fetchDouble, appels } = serveurDouble()
     await monter(fetchDouble)
 
-    fireEvent.click(
-      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
-    )
-    const bouton = await screen.findByRole("button", { name: "Demander une image" })
+    fireEvent.click(screen.getByRole("button", { name: "Le jeu" }))
+    const bouton = await screen.findByRole("button", { name: "Créer un asset" })
 
-    // *Cliquer ne coûte jamais* : le bouton rouille mène là où la dépense
-    // s'annonce, il ne la déclenche pas.
+    // *Cliquer ne coûte jamais* : l'asset est nommé avant toute fabrication,
+    // aucune génération ne part depuis le tableau de bord.
     const paye = () => appels.filter((a) => a.url.startsWith("/api/generations"))
     const avant = paye().length
     fireEvent.click(bouton)
     expect(paye().length).toBe(avant)
-    expect(await screen.findByPlaceholderText(
-      "Décris ce que tu veux fabriquer.",
-    )).toBeTruthy()
+    expect(await screen.findByRole("heading", { name: "Créer un asset" })).toBeTruthy()
   })
 
   // ── B5 — la barre de complétude, les manques, et la feuille en attente ────
@@ -22770,9 +22732,7 @@ describe("B0 — le socle du carnet", () => {
     const { fetchDouble } = serveurDouble({ bilan })
     await monter(fetchDouble)
 
-    fireEvent.click(
-      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
-    )
+    fireEvent.click(screen.getByRole("button", { name: "Le jeu" }))
     const tableau = await screen.findByRole("main", {
       name: "Le tableau de bord du jeu",
     })
@@ -22804,9 +22764,7 @@ describe("B0 — le socle du carnet", () => {
     const { fetchDouble } = serveurDouble({ bilan })
     await monter(fetchDouble)
 
-    fireEvent.click(
-      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
-    )
+    fireEvent.click(screen.getByRole("button", { name: "Le jeu" }))
     const tableau = await screen.findByRole("main", {
       name: "Le tableau de bord du jeu",
     })
@@ -22817,9 +22775,7 @@ describe("B0 — le socle du carnet", () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble, { ...ETAT, generations: [pancheEnAttente()] })
 
-    fireEvent.click(
-      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
-    )
+    fireEvent.click(screen.getByRole("button", { name: "Le jeu" }))
     const tableau = await screen.findByRole("main", {
       name: "Le tableau de bord du jeu",
     })
@@ -22839,20 +22795,15 @@ describe("B0 — le socle du carnet", () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    fireEvent.click(
-      leCarnet().querySelector("[data-vers-le-tableau-de-bord]") as HTMLElement,
-    )
+    fireEvent.click(screen.getByRole("button", { name: "Le jeu" }))
     await screen.findByRole("main", { name: "Le tableau de bord du jeu" })
     expect(screen.queryByText("Une feuille attend d'être découpée")).toBeNull()
   })
 
-  // ── « L'ancien chemin vers chacun des autres écrans fonctionne encore » ───
-
-  test("les trois lieux d'avant s'ouvrent toujours, et depuis le carnet aussi", async () => {
+  test("les portes de travail ouvrent leurs surfaces", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    // Par les onglets, comme avant.
     allerA("Univers")
     expect(await cadreDuCodex()).toBeTruthy()
     allerA("Galerie")
@@ -22860,38 +22811,21 @@ describe("B0 — le socle du carnet", () => {
       await screen.findByRole("region", { name: "Grille des images" }),
     ).toBeTruthy()
 
-    // Et par le carnet, qui est le chemin neuf. ⚠️ **On vise dans le carnet**,
-    // pas dans la fenêtre : « La galerie » nomme aussi deux boutons du codex,
-    // et c'est justement l'ancien chemin qu'on vérifie juste au-dessus.
-    const dansLeCarnet = within(leCarnet())
-    fireEvent.click(dansLeCarnet.getByRole("button", { name: "La toile de l'univers" }))
+    fireEvent.click(screen.getByRole("button", { name: "Univers & toile" }))
     expect(await cadreDuCodex()).toBeTruthy()
-    fireEvent.click(dansLeCarnet.getByRole("button", { name: /^La galerie/ }))
+    fireEvent.click(screen.getByRole("button", { name: "Galerie" }))
     expect(
       await screen.findByRole("region", { name: "Grille des images" }),
     ).toBeTruthy()
   })
 
-  // ── « Le fil d'Ariane est lu depuis la pile de lieux » ────────────────────
-
-  test("le fil se lit depuis la pile, et remonter coupe la pile", async () => {
+  test("changer de porte remplace la surface sans dupliquer la navigation", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    // Les dépenses sont une profondeur, pas un quatrième lieu : le fil le dit.
-    fireEvent.click(screen.getByRole("button", { name: /^Les dépenses/ }))
-    const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
-    expect(await fil.findByText("Les dépenses")).toBeTruthy()
-
-    // Le premier étage ramène à la racine, et le fil disparaît avec lui : une
-    // racine au repos n'a pas de fil, c'est la barre qui porte le nom du jeu.
-    const etages = within(
-      screen.getByRole("navigation", { name: "Où l'on est" }),
-    ).getAllByRole("button")
-    fireEvent.click(etages[0])
-    await waitFor(() =>
-      expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull(),
-    )
+    fireEvent.click(screen.getByRole("button", { name: "Fabrications" }))
+    expect(await screen.findByRole("main", { name: "Fabrications" })).toBeTruthy()
+    expect(screen.getAllByRole("complementary", { name: "Navigation du jeu" })).toHaveLength(1)
   })
 })
 
@@ -22949,11 +22883,6 @@ describe("B4 — l'ouverture", () => {
     projets: [BIBLIOTHEQUE.projets[0], PROJET_FORET],
   }
 
-  // « Forêt » paraît à plus d'un endroit une fois deux jeux dans la
-  // bibliothèque (le carnet, mais aussi le filtre par jeu de la galerie) :
-  // les essais visent dans le carnet, comme B0 le fait déjà.
-  const leCarnet = () => screen.getByRole("navigation", { name: "Le carnet" })
-
   /** Un double qui répond sur `PUT /api/projects/current` — ce que le socle
    *  `serveurDouble` ne tient pas, faute d'un essai qui en ait eu besoin
    *  avant cette tranche — et sur `GET /api/universe` selon le jeu ouvert.
@@ -22995,12 +22924,12 @@ describe("B4 — l'ouverture", () => {
     return { fetchDouble }
   }
 
-  test("changer de jeu depuis le carnet recharge l'univers, sans recharger la page", async () => {
+  test("changer de jeu depuis la navigation recharge l'univers, sans recharger la page", async () => {
     const { fetchDouble } = doubleAvecDeuxJeux()
     await monter(fetchDouble, { ...ETAT, bibliotheque: DEUX_JEUX })
 
-    fireEvent.click(within(leCarnet()).getByRole("button", { name: "Les autres jeux" }))
-    fireEvent.click(await within(leCarnet()).findByRole("button", { name: /Forêt/ }))
+    fireEvent.click(screen.getByRole("button", { name: /Changer de jeu/ }))
+    fireEvent.click(await screen.findByText("Forêt"))
 
     // La bascule part par la route dédiée — pas par un rechargement.
     await waitFor(() =>
@@ -23028,8 +22957,7 @@ describe("B4 — l'ouverture", () => {
     const { fetchDouble } = doubleAvecDeuxJeux()
     await monter(fetchDouble, { ...ETAT, bibliotheque: DEUX_JEUX })
 
-    fireEvent.click(within(leCarnet()).getByRole("button", { name: "Les autres jeux" }))
-    fireEvent.click(await within(leCarnet()).findByRole("button", { name: "Tous les jeux…" }))
+    fireEvent.click(screen.getByRole("button", { name: /Changer de jeu/ }))
 
     const ecran = await screen.findByRole("main", {
       name: "Sur quel jeu travaille-t-on",

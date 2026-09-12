@@ -36,7 +36,9 @@ export function TableauDeBord({
   familles,
   feuilleEnAttente,
   surLaFamille,
+  surLeSujet,
   surDemanderUneImage,
+  surCreerUnAsset,
   surAllerDecouper,
   surLaToile,
   surLesAssets,
@@ -54,7 +56,10 @@ export function TableauDeBord({
    *  même `pliage.attend_un_choix` que la tuile de la galerie porte. */
   feuilleEnAttente: Generation | null
   surLaFamille: (cle: string) => void
+  /** Le bilan ne connaît pas de lieu : l'assemblage décide comment ouvrir ce sujet. */
+  surLeSujet?: (identifiant: string) => void
   surDemanderUneImage: () => void
+  surCreerUnAsset?: () => void
   /** Mène à l'écran où cette feuille se découpe — **la galerie**, qui montre
    *  déjà sa tuile en attente ; B5 n'ajoute aucun lieu de plus. */
   surAllerDecouper: () => void
@@ -64,20 +69,26 @@ export function TableauDeBord({
   surLivrer?: () => void
 }) {
   const [bilan, setBilan] = useState<BilanDuJeu | null>(null)
+  const [erreurDuBilan, setErreurDuBilan] = useState<string | null>(null)
+  const [relectureDuBilan, setRelectureDuBilan] = useState(0)
 
   useEffect(() => {
     let vivant = true
     setBilan(null)
+    setErreurDuBilan(null)
     api
       .bilanDuJeu()
       .then((recu) => vivant && setBilan(recu))
-      .catch(() => vivant && setBilan({ familles: [], manques: [], lot: { images: 0, feuilles: 0, cout_usd: 0 } }))
+      .catch((erreur: unknown) => {
+        if (!vivant) return
+        setErreurDuBilan(erreur instanceof Error ? erreur.message : "le bilan n’a pas pu être lu")
+      })
     return () => {
       vivant = false
     }
     // Rechargé à chaque jeu, pour ne jamais montrer le bilan du précédent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jeu])
+  }, [jeu, relectureDuBilan])
 
   const detailParFamille = new Map((bilan?.familles ?? []).map((f) => [f.cle, f]))
 
@@ -107,10 +118,10 @@ export function TableauDeBord({
             lui-même : il mène là où la dépense s'annonce. */}
         <button
           type="button"
-          onClick={surDemanderUneImage}
+          onClick={surCreerUnAsset ?? surDemanderUneImage}
           className="h-[34px] shrink-0 rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal transition-colors duration-120 hover:bg-echec"
         >
-          Demander une image
+          {surCreerUnAsset ? "Créer un asset" : "Demander une image"}
         </button>
       </div>
 
@@ -170,19 +181,51 @@ export function TableauDeBord({
           <h2 className="mesure mb-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
             Ce qui manque le plus
           </h2>
-          {bilan && bilan.manques.length === 0 ? (
+          {!bilan && !erreurDuBilan ? (
+            <p className="text-[12.5px] text-encre-3">Lecture du bilan…</p>
+          ) : erreurDuBilan ? (
+            <div role="alert" className="rounded-8 border border-echec bg-carte p-[14px] text-[12.5px] leading-[1.45] text-encre-2">
+              <p>Le bilan n’a pas pu être lu : {erreurDuBilan}.</p>
+              <button
+                type="button"
+                onClick={() => setRelectureDuBilan((nombre) => nombre + 1)}
+                className="mt-[8px] h-[30px] rounded-7 border border-contour px-[14px] text-[12px] text-encre transition-colors duration-120 hover:border-encre"
+              >
+                Relancer la lecture
+              </button>
+            </div>
+          ) : bilan?.manques.length === 0 ? (
             <p className="text-[12.5px] text-encre-3">
               rien ne manque, à ce qu'on a compté
             </p>
           ) : (
             <div className="rounded-8 border border-trait bg-carte p-[4px]">
               {(bilan?.manques ?? []).map((manque, rang) => (
-                <div
+                surLeSujet ? <button
+                  type="button"
+                  key={`${manque.sujet}-${manque.famille}-${rang}`}
+                  onClick={() => surLeSujet(manque.sujet)}
+                  aria-label={`Ouvrir ${manque.phrase}`}
+                  className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-[14px] rounded-5 p-[8px] text-left text-[12.5px] text-encre-2 transition-colors duration-120 hover:bg-trait-faible"
+                >
+                  <span className="mesure text-encre-3">
+                    {manque.quantite} {manque.nature === "animation" ? "animation" : "image fixe"}{manque.quantite > 1 ? "s" : ""}
+                  </span>
+                  <span className="truncate">{manque.phrase}</span>
+                  <span className="truncate text-encre-3">{manque.famille}</span>
+                  <span className="mesure text-right">
+                    {manque.cout_connu === false ? <span className="text-encre-4">à estimer</span> : manque.cout_usd > 0 ? (
+                      <span className="text-signal">{dollars(manque.cout_usd)}</span>
+                    ) : (
+                      <span className="text-encre-4">rien</span>
+                    )}
+                  </span>
+                </button> : <div
                   key={`${manque.sujet}-${manque.famille}-${rang}`}
                   className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-[14px] rounded-5 p-[8px] text-[12.5px] text-encre-2"
                 >
                   <span className="mesure text-encre-3">
-                    {manque.quantite} {manque.nature === "animation" ? "animation" : "pose"}{manque.quantite > 1 ? "s" : ""}
+                    {manque.quantite} {manque.nature === "animation" ? "animation" : "image fixe"}{manque.quantite > 1 ? "s" : ""}
                   </span>
                   <span className="truncate">{manque.phrase}</span>
                   <span className="truncate text-encre-3">{manque.famille}</span>

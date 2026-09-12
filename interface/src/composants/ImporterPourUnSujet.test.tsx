@@ -1,0 +1,54 @@
+import { afterEach, expect, it, vi } from "vitest"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { api, type Personnage, type Pose, type Asset } from "../api"
+import { ImporterPourUnSujet } from "./ImporterPourUnSujet"
+
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
+
+const image = { identifiant: "asset-1", projet: "jeu", generation: "g1", type_media: "image/png", largeur: 64, hauteur: 64 } as Asset
+const pose: Pose = { identifiant: "marche", nom: "Marche", images: 8, consigne: "walk", ecartees: [], images_avant: 0 }
+const personnage = { identifiant: "pelerin", projet: "jeu", nom: "Pèlerin", cases: [{ pose: "marche", directions: [{ identifiant: "sud", nom: "Sud" }] }], } as unknown as Personnage
+const plan = [pose]
+const monter = () => render(<ImporterPourUnSujet personnage={personnage} plan={plan} onFermer={vi.fn()} onChange={vi.fn()} onOuvrir={vi.fn()} />)
+const fichier = () => new File(["png"], "pelerin.png", { type: "image/png" })
+
+it("téléverse avant de classer et conserve l'image si le classement échoue", async () => {
+  const televerser = vi.spyOn(api, "televerser").mockResolvedValue({ asset: image, doublon: null })
+  const designer = vi.spyOn(api, "designer").mockRejectedValue(new Error("case indisponible"))
+  const onChange = vi.fn()
+  render(<ImporterPourUnSujet personnage={personnage} plan={plan} onFermer={vi.fn()} onChange={onChange} onOuvrir={vi.fn()} />)
+  fireEvent.change(screen.getByLabelText("Images à importer"), { target: { files: [fichier()] } })
+  await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("L’image est conservée dans la galerie"))
+  expect(televerser).toHaveBeenCalledOnce()
+  expect(designer).toHaveBeenCalledWith("asset-1", "pelerin", "marche", null)
+  expect(televerser.mock.invocationCallOrder[0]).toBeLessThan(designer.mock.invocationCallOrder[0])
+  expect(onChange).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: /Ranger dans Pèlerin/ }))
+  await waitFor(() => expect(designer).toHaveBeenCalledTimes(2))
+  expect(televerser).toHaveBeenCalledOnce()
+})
+
+it("ne reclasse un doublon qu'après un clic explicite", async () => {
+  const televerser = vi.spyOn(api, "televerser").mockResolvedValue({ asset: null, doublon: image })
+  const designer = vi.spyOn(api, "designer").mockResolvedValue(image)
+  monter()
+  fireEvent.change(screen.getByLabelText("Images à importer"), { target: { files: [fichier()] } })
+  await waitFor(() => expect(screen.getByText("Cette image existe déjà. Son classement est conservé.")).toBeTruthy())
+  expect(designer).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: /Ranger dans Pèlerin/ }))
+  await waitFor(() => expect(designer).toHaveBeenCalledWith("asset-1", "pelerin", "marche", null))
+  expect(televerser).toHaveBeenCalledOnce()
+})
+
+it("envoie tels quels le mouvement et la direction choisis", async () => {
+  const televerser = vi.spyOn(api, "televerser").mockResolvedValue({ asset: image, doublon: null })
+  const designer = vi.spyOn(api, "designer").mockResolvedValue(image)
+  const onChange = vi.fn()
+  render(<ImporterPourUnSujet personnage={personnage} plan={plan} onFermer={vi.fn()} onChange={onChange} onOuvrir={vi.fn()} />)
+  fireEvent.change(screen.getByLabelText("Ranger les images dans"), { target: { value: "marche" } })
+  fireEvent.change(screen.getByLabelText("Direction"), { target: { value: "sud" } })
+  fireEvent.change(screen.getByLabelText("Images à importer"), { target: { files: [fichier()] } })
+  await waitFor(() => expect(designer).toHaveBeenCalledWith("asset-1", "pelerin", "marche", "sud"))
+  expect(televerser).toHaveBeenCalledOnce()
+  expect(onChange).toHaveBeenCalledOnce()
+})

@@ -20,7 +20,7 @@ beforeEach(() => {
   vi.spyOn(travaux, "reprendre").mockResolvedValue({ ...t, etat: "en_cours" })
   vi.spyOn(travaux, "lire").mockResolvedValue({ ...t, etat: "termine" })
 })
-afterEach(() => { cleanup(); vi.restoreAllMocks() })
+afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks() })
 
 test("la relecture montre le texte composé et les octets figés sans lancer d’appel", () => {
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} initiale={t} onClip={() => {}} onFermer={() => {}} />)
@@ -55,6 +55,49 @@ test("la reprise d’un travail agent conserve son identifiant sans préparer de
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} initiale={{ ...t, acteur: "agent", etat: "a_reprendre" }} onClip={() => {}} onFermer={() => {}} />)
   fireEvent.click(screen.getByRole("button", { name: "Reprendre ce travail" }))
   await waitFor(() => expect(travaux.reprendre).toHaveBeenCalledWith("jeu", "travail-relu"))
+  expect(travaux.preparer).not.toHaveBeenCalled()
+  expect(travaux.demarrer).not.toHaveBeenCalled()
+})
+
+test("le profil vidéo choisi et les réglages du brouillon reviennent sans préparer ni lancer d’appel", async () => {
+  const props = { projet: "jeu", personnages: [personnage], modeleInitial: "Video:modele", onClip() {}, onFermer() {} }
+  const vue = render(<FabricationSuivie {...props} />)
+  await screen.findByRole("option", { name: /Video:modele ·/ })
+  expect(screen.getByLabelText("Fournisseur et modèle vidéo")).toHaveValue("Video:modele")
+  fireEvent.change(screen.getByLabelText("Mouvement"), { target: { value: "marche" } })
+  fireEvent.change(screen.getByLabelText("Décrire l’animation"), { target: { value: "Tourne sur place avec son casque rouge" } })
+  fireEvent.change(screen.getByLabelText("Durée du clip"), { target: { value: "10" } })
+  fireEvent.change(screen.getByLabelText("Paramètres vidéo JSON"), { target: { value: '{"seed":83}' } })
+  await screen.findByText("Brouillon conservé sur cet ordinateur.")
+  vue.unmount()
+  render(<FabricationSuivie {...props} />)
+  fireEvent.click(await screen.findByRole("button", { name: "Reprendre le brouillon" }))
+  expect(screen.getByLabelText("Décrire l’animation")).toHaveValue("Tourne sur place avec son casque rouge")
+  expect(screen.getByLabelText("Durée du clip")).toHaveValue("10")
+  expect(screen.getByLabelText("Paramètres vidéo JSON")).toHaveValue('{"seed":83}')
+  expect(travaux.preparer).not.toHaveBeenCalled()
+  expect(travaux.demarrer).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: "Relire les envois" }))
+  await waitFor(() => expect(travaux.preparer).toHaveBeenCalledOnce())
+  expect(vi.mocked(travaux.preparer).mock.calls[0][1]).toMatchObject({ modele_video: "Video:modele", secondes: 10, options_video: { seed: 83 } })
+  expect(travaux.demarrer).not.toHaveBeenCalled()
+})
+
+test("un profil vidéo disparu reste nommé avec sa raison et bloque la relecture", async () => {
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} modeleInitial="ComfyUI:profil-disparu" onClip={() => {}} onFermer={() => {}} />)
+  expect(await screen.findByText(/il n’est plus proposé par le catalogue/)).toBeTruthy()
+  expect(screen.getByLabelText("Fournisseur et modèle vidéo")).toHaveValue("ComfyUI:profil-disparu")
+  expect(screen.getByRole("button", { name: "Relire les envois" })).toBeDisabled()
+})
+
+test("la fabrication ouverte depuis une cible garde le personnage, le mouvement et sa cadence", async () => {
+  const cible = { ...personnage, identifiant: "sentinelle", nom: "Sentinelle", objectif: { sorties: [{ nature: "animation" as const, pose: "marche", direction: "sud", quantite: 1 }], largeur: 64, hauteur: 64, cadence: 11, boucle: true, repere: { x: 29, y: 64 } } }
+  render(<FabricationSuivie projet="jeu" personnages={[personnage, cible]} cibleInitiale={{ personnage: "sentinelle", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /Video:modele ·/ })
+  expect(screen.getByLabelText("Asset")).toHaveValue("sentinelle")
+  expect(screen.getByLabelText("Mouvement")).toHaveValue("marche")
+  expect(screen.getByLabelText("Direction")).toHaveValue("sud")
+  expect(screen.getByLabelText("Cadence (images/s)")).toHaveValue(11)
   expect(travaux.preparer).not.toHaveBeenCalled()
   expect(travaux.demarrer).not.toHaveBeenCalled()
 })

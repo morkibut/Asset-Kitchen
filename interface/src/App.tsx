@@ -72,24 +72,28 @@ import { Emplois } from "./composants/Emplois"
 import { Emploi } from "./composants/Emploi"
 import { CalquesAnimes } from "./composants/CalquesAnimes"
 import {
-  Carnet,
-  EQUIPEMENT,
   FAMILLES,
   NOM_DANS_LE_CARNET,
-  derniersJeux,
   type LigneDeFamille,
-  type LigneDePiece,
 } from "./composants/Carnet"
+import { NavigationAtelier } from "./composants/NavigationAtelier"
+import { ChoisirFabricationDuSujet } from "./composants/ChoisirFabricationDuSujet"
+import { ImporterPourUnSujet } from "./composants/ImporterPourUnSujet"
+import { Tuiles } from "./composants/Tuiles"
+import { AtelierSon } from "./composants/AtelierSon"
 import { EcranFamille } from "./composants/Famille"
 import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
 import { TableauDeBord } from "./composants/TableauDeBord"
 import { BibliothequeDesAssets } from "./composants/BibliothequeDesAssets"
+import { CreerUnAsset } from "./composants/CreerUnAsset"
 import { Fabrications } from "./composants/Fabrications"
 import { DelegationDuJeu } from "./composants/DelegationDuJeu"
-import { TravailConserve } from "./composants/FabricationSuivie"
+import { FabricationSuivie, TravailConserve } from "./composants/FabricationSuivie"
 import { Ouverture } from "./composants/Ouverture"
 import { Installation } from "./composants/Installation"
 import { Livraisons } from "./composants/Livraisons"
+import { Source3DConservee } from "./composants/Source3DConservee"
+import type { Source3D } from "./api-3d"
 import { PanneauAtelier, ReglesDuJeu } from "./composants/ReglesDuJeu"
 import {
   PILE_INITIALE,
@@ -107,11 +111,13 @@ import {
 import { EcranDepenses } from "./composants/Depenses"
 import { EcranEnvoi, TRI_VIDE } from "./composants/Envoi"
 import { PageDuSujet, type Onglet as OngletDuSujet } from "./composants/PageDuSujet"
+import { MemoireDuParcours, useEtatDuParcours, useEcrireDansLeParcours } from "./composants/MemoireDuParcours"
 import { GrilleDuJeu } from "./composants/GrilleDuJeu"
 import { Comparer } from "./composants/Comparer"
 import { Retouche } from "./composants/Retouche"
 import { AssocierImageEquipement } from "./composants/AssocierImageEquipement"
 import { CadreDialogue } from "./composants/CadreDialogue"
+import { BibliothequePourImage } from "./composants/BibliothequePourImage"
 // ── `C4` · la galerie est un fichier ────────────────────────────────────────
 // Elle était écrite en clair ici ; elle a désormais son fichier, comme les
 // vingt et un autres écrans du carnet. `App` n'en garde que ce que les autres
@@ -149,6 +155,11 @@ const BIBLIOTHEQUE_VIDE: Bibliotheque = {
 
 
 export function App() {
+  return <MemoireDuParcours><AtelierApp /></MemoireDuParcours>
+}
+
+function AtelierApp() {
+  const memoriserParcours = useEcrireDansLeParcours()
   const [etat, setEtat] = useState<Etat | null>(null)
   const [modeles, setModeles] = useState<Modele[]>([])
   const [catalogueRepli, setCatalogueRepli] = useState<Repli>({
@@ -432,6 +443,8 @@ export function App() {
   // les trois : c'est la barre du châssis qui rend les bascules, et elle ne
   // rend que celles de l'onglet où l'on est. Les deux mots uniques d'avant —
   // `arbre` et `réglages` — servaient les quatre écrans et mentaient sur trois.
+  const [navigationRepliee, setNavigationRepliee] = useState(false)
+  const [grilleARelire, setGrilleARelire] = useState(0)
   const [replies, setReplies] = useState<Record<string, boolean>>({
     arbre: false,
     reglages: false,
@@ -778,22 +791,21 @@ export function App() {
    *  Tenu ici parce que la cible du geste — une ligne du carnet — n'est pas dans
    *  l'écran d'où il part. */
   const [glisses, setGlisses] = useState<readonly string[] | null>(null)
-  const [arrivants, setArrivants] = useState<Record<string, number>>({})
   /** Un compteur, pas un drapeau : deux rangements de suite doivent relire deux
    *  fois, et un booléen déjà à vrai ne redéclencherait rien (le patron de
    *  `nommer`, E19). */
-  const [grilleARelire, setGrilleARelire] = useState(0)
   const [reglagesDeFamille, setReglagesDeFamille] = useState(false)
   /** « + Nouvelle collection », cliqué dans le carnet : c'est la grille qui sait
    *  demander le nom, et un compteur plutôt qu'un drapeau — deux clics de suite
    *  doivent rouvrir le champ deux fois (le patron de `nommer`, E19). */
-  const [creerUnGroupe, setCreerUnGroupe] = useState(0)
   /** Nommer une chose depuis le repos de l'onglet Créer (`C3`), sans passer
    *  par le carnet : le même geste que la grille d'une famille propose déjà
    *  (`Famille.tsx`), posé ici en un seul champ. Créée sans famille précisée,
    *  la chose tombe en "personnages" côté serveur (défaut de `POST
    *  /api/characters`), comme au repos de l'ancien codex. */
   const [nomDeLaCreationRapide, setNomDeLaCreationRapide] = useState("")
+  const [creationAssetOuverte, setCreationAssetOuverte] = useState<string | null>(null)
+  const [source3Douverte, setSource3Douverte] = useState<Source3D | null>(null)
   const [creationRapideEnCours, setCreationRapideEnCours] = useState(false)
   const creerRapidement = async () => {
     const propre = nomDeLaCreationRapide.trim()
@@ -811,30 +823,6 @@ export function App() {
     }
   }
 
-  /** Lâcher les sujets traînés dans un groupe du carnet.
-   *
-   *  **On range tout ce qu'on traîne, sans trier ce qui y est déjà** : ranger ce
-   *  qui est rangé est un geste sans effet côté serveur (`Collection.avec`), et
-   *  demander d'abord *lesquels y sont* coûterait un aller-retour pour éviter
-   *  des appels qui ne font rien. Le compte annoncé pendant le geste, lui, ne
-   *  compte que les arrivants — c'est la grille qui le calcule, elle a la
-   *  réponse sous la main. */
-  const deposerDansLaCollection = async (collection: string) => {
-    const sujets = glisses ?? []
-    setGlisses(null)
-    setArrivants({})
-    if (!sujets.length || !bibliotheque.courant) return
-    try {
-      let arbre = null
-      for (const sujet of sujets) {
-        arbre = await api.rangerSujet(collection, bibliotheque.courant, sujet)
-      }
-      if (arbre) setBibliotheque(arbre.bibliotheque)
-      setGrilleARelire((n) => n + 1)
-    } catch (erreur) {
-      echouer(erreur, "rangement refusé")
-    }
-  }
 
   const choseOuverteId = lieu(pile, "sujet")?.sujet ?? null
   const setChoseOuverte = (sujet: string | null) =>
@@ -946,24 +934,19 @@ export function App() {
    *  cette page depuis `B25`, et qu'une page démontée oublie son onglet :
    *  ouvrir une image de *Ses images* puis remonter d'un cran ramenait sur *Sa
    *  fiche*, ce qui n'est pas d'où l'on venait. */
-  const [ongletDuSujet, setOngletDuSujet] = useState<OngletDuSujet>("fiche")
+  const cleDuSujet = `sujet:${bibliotheque.courant}:${choseOuverteId}`
+  const [ongletDuSujet, setOngletDuSujet] = useEtatDuParcours<OngletDuSujet>(`${cleDuSujet}:onglet`, "fiche")
   /** **Sa matrice ouverte** — même raison, même remise à zéro : la
    *  superposition d'un calque part de là, et y revient. */
-  const [matriceDuSujet, setMatriceDuSujet] = useState(false)
+  const [matriceDuSujet, setMatriceDuSujet] = useEtatDuParcours(`${cleDuSujet}:matrice`, false)
   /** **La colonne ouverte de la matrice, et le panneau d'un calque** (`B27`) —
    *  montés au même cran que l'onglet et la matrice, pour la même raison
    *  laissée en aparté par `B27` : ouvrir *la différence* d'un calque puis
    *  remonter d'un cran ramenait sur la matrice, colonne au corps, panneau
    *  fermé — parce que ces deux états vivaient dans `EcranEtabli`, que la
    *  retouche démonte en prenant sa place. */
-  const [colonneDeLaMatrice, setColonneDeLaMatrice] = useState<string | null>(null)
-  const [calqueDuPanneau, setCalqueDuPanneau] = useState<string | null>(null)
-  useEffect(() => {
-    setOngletDuSujet("fiche")
-    setMatriceDuSujet(false)
-    setColonneDeLaMatrice(null)
-    setCalqueDuPanneau(null)
-  }, [choseOuverteId])
+  const [colonneDeLaMatrice, setColonneDeLaMatrice] = useEtatDuParcours<string | null>(`${cleDuSujet}:colonne`, null)
+  const [calqueDuPanneau, setCalqueDuPanneau] = useEtatDuParcours<string | null>(`${cleDuSujet}:calque`, null)
 
   /** Le sujet dont la grille du jeu, ou le comparateur, est ouvert — **relus
    *  dans la liste vivante**, pour la même raison que `choseOuverte`. */
@@ -1029,6 +1012,13 @@ export function App() {
 
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
+  const [preparationImageOuverte, setPreparationImageOuverte] = useState(false)
+  const [fabricationDuSujet, setFabricationDuSujet] = useState(false)
+  const [animationDuSujet, setAnimationDuSujet] = useState<{ personnage: string; pose: string; direction: string } | null>(null)
+  const [importDuSujet, setImportDuSujet] = useState(false)
+  const [tuilesOuvertes, setTuilesOuvertes] = useState(false)
+  const [sonsOuverts, setSonsOuverts] = useState<{ identifiant?: string } | null>(null)
+  const [referenceDePreparation, setReferenceDePreparation] = useState(false)
   const [promptNegatif, setPromptNegatif] = useState("")
   /** **Le champ porte le texte entier, et il part mot pour mot** (US-159).
    *
@@ -1362,7 +1352,7 @@ export function App() {
   // La signature d'un appel, la raison qui grise *Générer*, la fenêtre de
   // confirmation et le paiement vivent dans `paiement.ts`. `App` leur passe ce
   // qu'ils lisent, et leur reprend les cinq choses que l'écran montre.
-  const { enVol, fermerCeQuiPart, generer, payer, refus, serie } = usePaiement({
+  const { enVol, actualisationEnvoi, fermerCeQuiPart, generer, payer, refus, serie } = usePaiement({
     bibliotheque,
     cases,
     chantier,
@@ -1429,7 +1419,7 @@ export function App() {
   // ── Les gestes qui arment l'appel suivant (`C4`) ──────────────────────────
   const {
     ajouterUneReference,
-    armer,
+    armer: armerLaCible,
     garderLeTexte,
     reinjecter,
     reprendreReglages,
@@ -1452,7 +1442,9 @@ export function App() {
     setRepris,
     setTri,
     setVariations,
+    ouvrirPreparation: () => setPreparationImageOuverte(true),
   })
+  const armer = (...parametres: Parameters<typeof armerLaCible>) => void armerLaCible(...parametres)
   // ── L'écran ───────────────────────────────────────────────────────────────
 
   const redemanderCatalogue = async () => {
@@ -1494,7 +1486,7 @@ export function App() {
    *  qu'une ligne absente. Les terrains arrivent avec les tuiles, hors du
    *  périmètre de la V4. */
   const famillesDuCarnet: LigneDeFamille[] = FAMILLES.map((famille) => {
-    const compte = personnages.filter(
+    const compte = famille.cle === "equipement" ? pieces.length : personnages.filter(
       (p) => (p.famille ?? "personnages") === famille.cle,
     ).length
     return {
@@ -1504,21 +1496,6 @@ export function App() {
     }
   })
 
-  /** Les pièces que la ligne des équipements déplie (`B19`), avec le compte
-   *  de leurs emplois.
-   *
-   *  **Le compte vient du vestiaire résolu, jamais de `pieces`** : une pièce
-   *  d'avant la tranche n'a rien de déclaré dans son fichier, et compter ce
-   *  qu'il porte aurait écrit « aucun emploi » sous une épée que deux
-   *  personnages portent. Tant que le vestiaire n'est pas lu, la liste vient
-   *  quand même de `pieces` — la ligne existe, son compte suit. */
-  const piecesDuCarnet: LigneDePiece[] = pieces.map((piece) => ({
-    identifiant: piece.identifiant,
-    nom: piece.nom,
-    emplois:
-      vestiaireDuJeu?.pieces.find((p) => p.piece.identifiant === piece.identifiant)
-        ?.emplois.length ?? 0,
-  }))
 
   /** Les colonnes que l'écran actif peut replier, **nommées par lui**. La
    *  réserve n'a de bascule qu'en vue toile : sans elle il n'y a pas de
@@ -1530,11 +1507,6 @@ export function App() {
         // deux, la surface de repos n'en a plus aucune — elle ne porte que la
         // barre qui paie.
         []
-      : surface === "galerie"
-      ? // **Une seule colonne repliable depuis E4** : celle de l'arbre. Celle
-        // des réglages est partie avec ce qui paie, et une bascule pour une
-        // colonne absente mentirait sur ce que l'écran contient.
-        [{ cle: "arbre", nom: "arbre", repliee: replies.arbre }]
       : surface === "univers"
         ? // **La colonne de l'univers n'existe plus** (E7) : ses cinq réglages
           // ont un côté à eux, qui prend l'écran entier. Ne reste que la
@@ -1589,6 +1561,8 @@ export function App() {
    *  l'onglet Créer —, et se retire de tout écran incapable de dépenser. */
   const barreQuiPaie = (
     <BarreQuiPaie
+      presentation="preparation"
+      onChoisirReference={() => setReferenceDePreparation(true)}
       modeles={modeles}
       modele={modele}
       onChoisirModele={setModeleChoisi}
@@ -1603,7 +1577,7 @@ export function App() {
       onRetirerReinjection={(asset) =>
         setReinjections((deja) => deja.filter((r) => r.asset !== asset))
       }
-      onRoleReinjection={(asset, role) => reinjecter(asset, role)}
+      onRoleReinjection={(asset, role) => setReinjections((deja) => deja.map((r) => r.asset === asset ? { ...r, role } : r))}
       projetNom={projetCourant?.nom ?? null}
       univers={univers}
       echelle={echelle}
@@ -1665,7 +1639,7 @@ export function App() {
         setPrompt("")
         setProvenance(null)
       }}
-      onGenerer={generer}
+      onGenerer={() => generer(true)}
       /* **Le raccourci porte le même verrou** (U1). Quand la série est
          sautée, ce bouton-ci paie sans passer par l'écran de confirmation :
          il doit donc dire qu'il paie et refuser le second clic exactement
@@ -1790,127 +1764,27 @@ export function App() {
 
   return (
     <div className="flex h-full bg-papier">
-      {/* ── Le carnet — 300 px, à gauche, **jamais recouvert** ──────────────
-          C'est la première pièce du châssis de la V4, et la seule règle qu'elle
-          impose au reste tient en une phrase : *il ne se ferme jamais tout
-          seul*. Aucun écran de travail ne prend la fenêtre entière, même
-          pendant une génération — on peut aller voir ailleurs et revenir.
-
-          **Il double les chemins, il n'en retire aucun.** Les trois onglets
-          sont toujours là, avec leurs écrans, et chaque tranche de la V4 en
-          reprendra un. C'est ce qui permet aux 784 essais d'écran de continuer
-          de naviguer comme avant pendant que le carnet se construit. */}
-      <Carnet
-        jeu={projetCourant?.nom ?? "sans projet"}
-        seconde={
-          bibliotheque.projets.length === 0
-            ? "aucun jeu"
-            : `${projetCourant?.assets ?? 0} images`
-        }
-        familles={famillesDuCarnet}
-        collections={groupesDeLaFamille}
-        collectionOuverte={collectionOuverte}
-        piecesDuJeu={piecesDuCarnet}
-        pieceOuverte={pieceOuverte}
-        surUnePiece={(piece) => ouvrirLaPiece(piece)}
-        arrivants={arrivants}
-        regles={cartes.length || null}
-        // Les cinq lignes du monde qui portent vraiment un texte. Les deux
-        // autres — le rendu et la vue — ne se comptent pas : l'atelier les
-        // écrit lui-même, et un compte sur sept ferait croire qu'il en reste
-        // deux à taper (`B14`).
-        lignesEcrites={
-          univers.bible.filter(
-            (c) => c.texte.trim() && c.nom !== "rendu" && c.nom !== "vue",
-          ).length
-        }
-        images={projetCourant?.assets ?? 0}
-        // **La moitié du retour qui traverse les lieux.** Le bloc « en route »
-        // vit dans la barre de prompt, donc sur la surface où l'on a payé ; le
-        // carnet, lui, est rendu partout, et c'est loin du champ qu'on doute le
-        // plus. Cette pastille vivait dans l'onglet *Galerie* jusqu'à `C9`.
-        enRoute={enVol?.images ?? 0}
-        depense={
-          projetCourant ? projetCourant.total_usd : bibliotheque.sans_projet.total_usd
-        }
-        autresJeux={derniersJeux(bibliotheque.projets, bibliotheque.courant)}
-        ouvert={
-          // Une pièce ouverte allume la ligne des équipements — c'est elle
-          // qui la déplie, et le fil dit la suite (`B19`).
-          sortieOuverte
-            ? "sortie"
-            : depensesOuvertes
-            ? "depenses"
-            : reglesOuvertes
-            ? "regles"
-            : installationOuverte
-            ? "installation"
-            : pieceOuverte
-            ? EQUIPEMENT
-            : lieu(pile, "bibliotheque")?.famille === "equipement"
-            ? "equipement"
-            : surface === "bibliotheque"
-            ? "bibliotheque"
-            : surface === "fabrications"
-            ? "fabrications"
-            : tableauDeBord
-            ? "jeu"
-            : surface === "univers"
-                ? "univers"
-                : familleOuverte
-                  ? familleOuverte
-                  : surface === "codex"
-                    ? // **La surface de repos de « Créer »** (`C3`) — elle ne
-                      // nomme aucune famille, et c'est sa propre ligne du
-                      // carnet qui s'allume depuis `C9`.
-                      "creer"
-                    : "galerie"
-        }
-        racine={racine(pile)}
-        surLeJeu={() => setPile(poser("tableau-de-bord"))}
-        surLesAssets={() => allerA("bibliotheque")}
-        surLesFabrications={() => allerA("fabrications")}
-        surLAgent={() => setPile((p) => entrer(p, { genre: "delegation" }))}
-        surLaFamille={ouvrirLaFamille}
-        surLaCollection={(cle, collection) => {
-          if (familleOuverte !== cle) ouvrirLaFamille(cle)
-          setCollectionOuverte(collection)
-        }}
-        surNouvelleCollection={(cle) => {
-          if (familleOuverte !== cle) ouvrirLaFamille(cle)
-          setCreerUnGroupe((n) => n + 1)
-        }}
-        surDeposer={(collection) => void deposerDansLaCollection(collection)}
-        surLesRegles={() => allerA("univers")}
-        surLesReglesDuJeu={() => setReglesOuvertes(true)}
-        // **Demander une image** — la surface où l'on écrit ce qu'on veut
-        // fabriquer. Elle n'avait plus de porte du tout une fois l'onglet
-        // *Créer* tombé (`C9`), et une racine sans ligne dans le carnet est
-        // une racine injoignable.
-        surLaCreation={() => allerA("codex")}
-        surLaGalerie={() => allerA("galerie")}
-        surLesDepenses={() => {
+      <NavigationAtelier
+        jeu={projetCourant?.nom ?? "Sans projet"}
+        descriptionJeu={`${projetCourant?.assets ?? 0} images dans ce jeu`}
+        actif={installationOuverte || reglesOuvertes || reglagesOuverts ? "reglages" : sortieOuverte ? "livraison" : surface === "fabrications" || delegationOuverte ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
+        travauxEnCours={enVol?.images ?? 0}
+        replie={navigationRepliee}
+        onReplier={setNavigationRepliee}
+        onAller={(destination) => {
           setFente(null)
-          setDepensesOuvertes(true)
+          if (destination === "jeu") setPile(poser("tableau-de-bord"))
+          else if (destination === "assets") allerA("bibliotheque")
+          else if (destination === "univers") allerA("univers")
+          else if (destination === "galerie") allerA("galerie")
+          else if (destination === "fabrications") allerA("fabrications")
+          else if (destination === "livraison") setSortieOuverte(true)
+          else setInstallationOuverte(true)
         }}
-        surLaSortie={() => {
-          setFente(null)
-          setSortieOuverte(true)
-        }}
-        surUnAutreJeu={(identifiant) => void ouvrirJeu(identifiant)}
-        surTousLesJeux={() => setChoixDuJeu("jeux")}
-        surCommencerUnJeu={() => setChoixDuJeu("creer")}
-        surLaBarre={ouvrirBarre}
-        surLeGuide={() => ouvrirGuide()}
-        /* **Le pied du carnet ouvrait déjà le lieu neuf** (`B15`) ; `C1` a
-           basculé ici trois des cinq autres portes qui menaient encore à
-           `EcranReglages`. `D1` a fermé les deux dernières — les boutons
-           « Réglages » et l'état de la clé, tous deux dans la barre —, en
-           relogeant l'agent, le dossier, les mouvements et l'état de la clé
-           dans `PanneauAtelier` (`ReglesDuJeu.tsx`), en papier. */
-        surLInstallation={() => setInstallationOuverte(true)}
-        atelierMuet={!liaison}
-        cleAbsente={etat ? !etat.secrets.some((t) => t.pret) : false}
+        onChangerJeu={() => setChoixDuJeu("jeux")}
+        onGuide={() => ouvrirGuide()}
+        onRecherche={ouvrirBarre}
+        etatAtelier={!liaison ? "L’atelier ne répond pas" : undefined}
       />
 
       <div className="grid min-w-0 flex-1 grid-rows-[34px_minmax(0,1fr)_26px] bg-papier">
@@ -1919,6 +1793,7 @@ export function App() {
           portait en dehors des onglets ; les onglets, eux, sont partis avec
           elle : le carnet est le seul chemin. */}
       <EnTeteDeSurface
+        preferencesDansNavigation
         chemin={chemin}
         // **Le nom du jeu ne s'écrit qu'une fois dans la bande.** Déployé, le
         // fil le porte à son premier étage ; sans fil, c'est le total qui le
@@ -2069,6 +1944,9 @@ export function App() {
           toujours qu'un seul endroit d'où l'argent part. */}
       {envoiOuvert && (
         <EcranEnvoi
+          presentation="atelier"
+          actualisation={actualisationEnvoi}
+          reglages={{ proportions, variations: cases ? 1 : variations, options }}
           envoi={envoi}
           tri={tri}
           onTri={setTri}
@@ -2140,7 +2018,7 @@ export function App() {
           /* **Ajouter une référence sans refermer** (M5). Le geste vit dans la
              section des images jointes, là où l'on vient de voir qu'il en
              manquait une. */
-          onAjouterUneReference={() => setChoixDeReference(true)}
+          onAjouterUneReference={() => setReferenceDePreparation(true)}
         />
       )}
 
@@ -2226,7 +2104,7 @@ export function App() {
           Il prend la surface, jamais la fenêtre : le carnet reste à gauche. Il
           n'a pas de fil d'Ariane, parce qu'il est le haut du jeu — c'est de lui
           qu'on descend, et c'est vers lui qu'on remonte. */}
-      {surfaceDisponible && tableauDeBord && !depensesOuvertes && !envoiOuvert && !clipOuvert && (
+      {surfaceDisponible && tableauDeBord && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && (
         <TableauDeBord
           jeu={projetCourant?.nom ?? "sans projet"}
           images={projetCourant?.assets ?? 0}
@@ -2241,7 +2119,9 @@ export function App() {
             chantier.find((g) => g.pliage?.attend_un_choix === true) ?? null
           }
           surLaFamille={ouvrirLaFamille}
-          surDemanderUneImage={() => setPile(poser("codex"))}
+          surLeSujet={(id) => { memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "objectif"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
+          surDemanderUneImage={() => { setCible(null); setPreparationImageOuverte(true) }}
+          surCreerUnAsset={() => setCreationAssetOuverte("personnages")}
           // **La galerie montre déjà la tuile en attente** (elle en tient le
           // chantier) : B5 n'ouvre donc aucun lieu de plus, elle y ramène.
           surAllerDecouper={() => setPile(poser("galerie"))}
@@ -2252,18 +2132,24 @@ export function App() {
         />
       )}
 
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "bibliotheque" && (
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "bibliotheque" && (
         <BibliothequeDesAssets key={`${bibliotheque.courant}:${lieu(pile, "bibliotheque")?.famille ?? ""}`} familleInitiale={lieu(pile, "bibliotheque")?.famille} jeu={bibliotheque.courant ?? ""} pieces={pieces} personnages={personnages} rafraichi={grilleARelire}
+          onTuiles={() => setTuilesOuvertes(true)} onSons={() => setSonsOuverts({})}
           onOuvrir={(id) => { setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
-          onPiece={ouvrirLaPiece} onFamille={ouvrirLaFamille} onGalerie={() => allerA("galerie")} />
+          onPiece={ouvrirLaPiece} onFamille={ouvrirLaFamille} onGalerie={() => allerA("galerie")}
+          onCreer={(famille) => setCreationAssetOuverte(famille)} />
       )}
 
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && (
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && (
         <Fabrications projet={bibliotheque.courant} chantier={chantier} clips={clipsDuJeu} personnages={personnages}
-          onBande={(id) => setPile(entrer(poser("codex"), { genre: "bande", bande: id }))}
-          onCreer={() => allerA("codex")} onGalerie={() => allerA("galerie")}
+          onSon={(identifiant) => setSonsOuverts({ identifiant })}
+          onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))}
+          onToile={(id) => { if (bibliotheque.courant) void api.poserAssetSurToile(bibliotheque.courant, id).then(async () => { await relireTableau(); allerA("univers") }).catch((e) => echouer(e, "L’image n’a pas pu être posée sur la toile.")) }}
+          onCalqueEquipement={(piece, emploi, cible, variante) => setPile(entrer(entrer(poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))}
+          onBande={ouvrirLAtelierDeBande}
+          onCreer={() => { setCible(null); setPreparationImageOuverte(true) }} onGalerie={() => allerA("galerie")}
           onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))}
-          onSujet={(id) => { setOngletDuSujet("animations"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
+          onSujet={(id) => { memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "animations"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
           onDepenses={() => setDepensesOuvertes(true)} />
       )}
 
@@ -2272,7 +2158,7 @@ export function App() {
           n'est plus que la condition de son montage — la même qu'avant, aux
           mêmes mots. */}
       {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && surface === "galerie" &&
-        !imageDeLaRetouche && (
+        !imageDeLaRetouche && !bandeOuverte && (
         <Galerie
           g={galerie}
           bibliotheque={bibliotheque}
@@ -2282,6 +2168,8 @@ export function App() {
           setMontageOuvert={setMontageOuvert}
           ouvrirLAtelierDeBande={ouvrirLAtelierDeBande}
           ouvrirLaRetouche={ouvrirLaRetouche}
+          onSon={(identifiant) => setSonsOuverts({ identifiant })}
+          onSource3D={setSource3Douverte}
           personnages={personnages}
           plan={plan}
           reinjecter={reinjecter}
@@ -2304,7 +2192,7 @@ export function App() {
           existait parce que le côté Réglages avait besoin de savoir quelles
           façons de réduire cette machine-ci sait faire. Les deux côtés qui
           restent ne lisent que le tableau. */}
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "univers" && (
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "univers" && (
         <EcranUnivers
           cartes={cartes}
           liens={liens}
@@ -2342,7 +2230,7 @@ export function App() {
           deux écrans pour le même geste auraient été deux vérités sur ce qu'est
           une famille. Nommer une chose neuve se fait maintenant depuis cet
           écran lui-même — plus par un aller-retour vers le codex (`C3`). */}
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && familleOuverte && !choseOuverte && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && familleOuverte && !choseOuverte && !bandeOuverte && !imageDeLaRetouche && !sujetDeLaGrille && !sujetDuComparateur && !pieceOuverte && (
         <EcranFamille
           famille={familleOuverte}
           nom={NOM_DANS_LE_CARNET[familleOuverte] ?? familleOuverte}
@@ -2350,10 +2238,9 @@ export function App() {
           collection={collectionOuverte}
           glisses={glisses}
           rafraichi={grilleARelire}
-          creerUnGroupe={creerUnGroupe}
-          surGlisser={(sujets, combien) => {
+          creerUnGroupe={0}
+          surGlisser={(sujets) => {
             setGlisses(sujets)
-            setArrivants(combien ?? {})
           }}
           surGroupes={setGroupesDeLaFamille}
           // Le carnet compte les groupes ; un rangement fait dans la grille
@@ -2384,7 +2271,7 @@ export function App() {
           surface ne porte plus qu'elle, sans colonnes. */}
       {/* ⚠️ **Et pas non plus quand une pièce est ouverte** (`B19`) : la page
           d'une pièce se pose ici comme la grille d'une famille. */}
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && !bandeOuverte && !imageDeLaRetouche && !sujetDeLaGrille && !sujetDuComparateur && (
         <div
           data-codex
           className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-papier p-4"
@@ -2402,7 +2289,7 @@ export function App() {
             aria-label="Nom de la chose du jeu à créer"
             className="mesure h-[34px] w-full max-w-[380px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre outline-none"
           />
-          {barreQuiPaie}
+          <button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal" onClick={() => { setCible(null); setPreparationImageOuverte(true) }}>Fabriquer une image libre</button>
         </div>
       )}
 
@@ -2410,7 +2297,7 @@ export function App() {
           matrice pour la raison du montage : les deux ne peuvent pas être
           ouverts ensemble, on ne corrige pas une animation depuis un écran
           qui en montre douze. */}
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && bandeOuverte && etat ? (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && bandeOuverte && etat ? (
         montageDeLaBande ? (
         /* **Le montage rouvert sur cette animation** (V3.03.3). Il prend la
            place de l'atelier, comme l'atelier prend celle de la matrice : ce
@@ -2463,6 +2350,11 @@ export function App() {
            signatures : la page en sert la moitié et passe l'autre à la
            matrice. */
         <PageDuSujet
+          onFabriquer={() => setFabricationDuSujet(true)}
+          onImporter={() => setImportDuSujet(true)}
+          onDecouper={(id) => ouvrirLaRetouche(id, "decoupage")}
+          onExtraire={(id) => ouvrirLaRetouche(id, "superposition")}
+          onLivrer={() => setSortieOuverte(true)}
           ouvert={choseOuverte}
           plan={plan}
           // **L'onglet survit au montage de la retouche** (`B25`) : elle prend
@@ -2497,7 +2389,7 @@ export function App() {
             setClipOuvert({ personnage, pose, direction: direction ?? null })
           }
           onFente={setFente}
-          barreQuiPaie={barreQuiPaie}
+          barreQuiPaie={null}
           // **Une image de *Ses images* ouvre la retouche** (`B25`) — la même
           // porte que partout ailleurs. Elle menait à l'écran de l'ancien
           // châssis, monté en volet dans cette page-ci ; il ne reste plus rien
@@ -2588,13 +2480,13 @@ export function App() {
              non l'équipement du jeu entier. */
           vestiaire={vestiaireDuJeu}
           onPiece={(piece) => ouvrirLaPiece(piece)}
-          onEmploiEquipement={(piece, emploi) => setPile((p) => entrer(entrer(p, { genre: "piece", piece }), { genre: "emploi", piece, emploi }))}
+          onEmploiEquipement={(piece, emploi, cible, variante) => setPile((p) => entrer(entrer(p, { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))}
           onCreerPiece={(nom) => void donnerUnePiece(nom, choseOuverte.identifiant)}
           /* **Les deux rôles de la fiche d'une image** (`C4`) : elle est montée
              dans *Ses images* depuis que le produit n'a plus qu'un seul volet de
              fiche, et ces deux gestes-là sont les siens depuis toujours. */
           onReinjecter={reinjecter}
-          onReglages={(asset) => void reprendreReglages(asset)}
+          onReglages={(asset) => { void reprendreReglages(asset) }}
           onRetirerLEmploi={(piece, emploi) => void retirerUnEmploi(piece, emploi)}
         />
       )}
@@ -2736,6 +2628,7 @@ export function App() {
         pieceEtSesEmplois &&
         !emploiOuvert && (
           <Emplois
+            projet={bibliotheque.courant ?? undefined}
             pieceEtSesEmplois={pieceEtSesEmplois}
             porteurs={vestiaireDuJeu?.porteurs ?? []}
             onEmploi={(emploi) => ouvrirLEmploi(emploi)}
@@ -2767,6 +2660,7 @@ export function App() {
         !calquesAnimesLieu && (
           <Emploi
             projet={bibliotheque.courant ?? undefined}
+            cibleInitiale={emploiOuvertLieu?.cible} varianteInitiale={emploiOuvertLieu?.variante}
             emploi={emploiOuvert}
             piece={pieceEtSesEmplois.piece}
             emplacements={emplacements}
@@ -2901,8 +2795,25 @@ export function App() {
       )}
 
       {delegationOuverte && !travailOuvert && bibliotheque.courant && <main className="defile min-h-0 flex-1 overflow-y-auto bg-papier p-[30px]"><div className="mb-[14px] flex justify-end"><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setPile((p) => sortir(p, "delegation"))}>Revenir</button></div><DelegationDuJeu projet={bibliotheque.courant} onAtelier={() => setReglagesOuverts(true)} onTravail={(t) => setPile((p) => entrer(p, { genre: "travail", travail: t.identifiant }))} /></main>}
-      {travailOuvert && bibliotheque.courant && <TravailConserve projet={bibliotheque.courant} identifiant={travailOuvert} personnages={personnages} onFermer={() => setPile((p) => sortir(p, "travail"))} onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))} onBande={(id) => setPile(entrer(poser("codex"), { genre: "bande", bande: id }))} />}
+      {travailOuvert && bibliotheque.courant && <TravailConserve projet={bibliotheque.courant} identifiant={travailOuvert} personnages={personnages} onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))} onToile={async (id) => { await api.poserAssetSurToile(bibliotheque.courant!, id); await relireTableau(); allerA("univers") }} onCalqueEquipement={(piece, emploi, cible, variante) => setPile(entrer(entrer(poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))} onFermer={() => setPile((p) => sortir(p, "travail"))} onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))} onBande={(id) => setPile(entrer(poser("codex"), { genre: "bande", bande: id }))} onSon={(identifiant) => setSonsOuverts({ identifiant })} />}
 
+      {preparationImageOuverte && !envoiOuvert && <CadreDialogue titre="Préparer une image" format="preparation" onFermer={() => setPreparationImageOuverte(false)} enfants={<><header className="flex shrink-0 items-center justify-between gap-[22px] border-b border-trait px-[30px] py-[22px]"><div><h1 className="font-serif text-[25px]">Préparer une image</h1><p className="mt-[8px] text-[13px] text-encre-3">{personnageCible ? `${personnageCible.nom} · ${posesCible.map(p => p.nom).join(", ")}${cible?.direction ? ` · ${personnageCible.cases.flatMap(c => c.directions ?? []).find(d => d.identifiant === cible.direction)?.nom ?? cible.direction}` : ""}` : "Image libre"}</p></div><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setPreparationImageOuverte(false)}>Fermer</button></header>{barreQuiPaie}</>} />}
+      {creationAssetOuverte && <CreerUnAsset familleInitiale={creationAssetOuverte} onFermer={() => setCreationAssetOuverte(null)}
+        onPersonnage={(personnage) => {
+          fondrePersonnage(personnage)
+          memoriserParcours(`sujet:${personnage.projet}:${personnage.identifiant}:onglet`, "objectif")
+          setCreationAssetOuverte(null)
+          setPile(entrer(poser("codex"), { genre: "sujet", sujet: personnage.identifiant }))
+          void relireProduction().catch(e => echouer(e, "L’asset est créé ; sa liste n’a pas pu être actualisée."))
+        }}
+        onPiece={(piece) => {
+          setPieces(deja => [...deja.filter(p => p.identifiant !== piece.identifiant), piece])
+          setCreationAssetOuverte(null)
+          ouvrirLaPiece(piece.identifiant)
+          void relireProduction().catch(e => echouer(e, "L’équipement est créé ; sa liste n’a pas pu être actualisée."))
+        }} />}
+      {source3Douverte && <Source3DConservee source={source3Douverte} onFermer={() => setSource3Douverte(null)} onBande={(id) => { setSource3Douverte(null); ouvrirLAtelierDeBande(id) }} onPersonnage={(id) => { setSource3Douverte(null); memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "sources"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }} />}
+      {referenceDePreparation && <CadreDialogue titre="Choisir une référence" onFermer={() => setReferenceDePreparation(false)} enfants={<BibliothequePourImage onFermer={() => setReferenceDePreparation(false)} onChoisir={(asset) => { ajouterUneReference(asset.identifiant); setReferenceDePreparation(false) }} />} />}
       {imageAEquiper && bibliotheque.courant && <CadreDialogue titre="Associer cette image à un équipement" onFermer={() => setImageAEquiper(null)} enfants={<AssocierImageEquipement image={imageAEquiper} projet={bibliotheque.courant} onFermer={() => setImageAEquiper(null)} onAssocie={(piece, emploi) => { setImageAEquiper(null); setPile((p) => entrer(entrer(surface === "codex" ? sortir(p, "retouche") : poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi })) }} />} />}
 
       {reglagesOuverts && etat && (
@@ -2932,6 +2843,19 @@ export function App() {
           demande : on le tient une seconde au-dessus de ce qu'on faisait, on le
           referme, et on n'a rien quitté. Il ne porte pas de fente de refus,
           pour la même raison que le Guide : il ne demande rien au serveur. */}
+      {fabricationDuSujet && choseOuverte && <ChoisirFabricationDuSujet personnage={choseOuverte} plan={plan} onFermer={() => setFabricationDuSujet(false)} onImage={(pose, direction) => { setFabricationDuSujet(false); armer(choseOuverte, [pose], null, direction) }} onVideo={(pose, direction) => { setFabricationDuSujet(false); setAnimationDuSujet({ personnage: choseOuverte.identifiant, pose: pose.identifiant, direction: direction ?? "" }) }} on3D={() => { setFabricationDuSujet(false); setOngletDuSujet("sources") }} />}
+      {animationDuSujet && bibliotheque.courant && <FabricationSuivie projet={bibliotheque.courant} personnages={personnages} cibleInitiale={animationDuSujet}
+        onFermer={() => { setAnimationDuSujet(null); void relireProduction() }}
+        onClip={(id) => { setAnimationDuSujet(null); setPile(entrer(poser("galerie"), { genre: "montage", clip: id })) }}
+        onBande={(id) => { setAnimationDuSujet(null); ouvrirLAtelierDeBande(id) }} />}
+      {importDuSujet && choseOuverte && <ImporterPourUnSujet personnage={choseOuverte} plan={plan} onFermer={() => setImportDuSujet(false)} onChange={() => {
+        void relireProduction()
+        void relireEtat()
+        void api.arbre().then(setBibliotheque).catch(e => echouer(e, "L’image est importée ; les comptes du jeu n’ont pas pu être actualisés."))
+        setGrilleARelire(n => n + 1)
+      }} onOuvrir={(id) => { setImportDuSujet(false); ouvrirLaRetouche(id) }} />}
+      {tuilesOuvertes && bibliotheque.courant && <CadreDialogue titre="Les tuiles du jeu" onFermer={() => setTuilesOuvertes(false)} enfants={<><div className="flex justify-end border-b border-trait px-[22px] py-[8px]"><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setTuilesOuvertes(false)}>Revenir aux assets</button></div><Tuiles projet={bibliotheque.courant} onAsset={a => { setTuilesOuvertes(false); setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant })) }} onLivraisons={() => { setTuilesOuvertes(false); setSortieOuverte(true) }} /></>} />}
+      {sonsOuverts && bibliotheque.courant && <CadreDialogue titre="Les sons du jeu" onFermer={() => setSonsOuverts(null)} enfants={<AtelierSon projet={bibliotheque.courant} identifiantInitial={sonsOuverts.identifiant} onFermer={() => setSonsOuverts(null)} onLivraisons={() => { setSonsOuverts(null); setSortieOuverte(true) }} />} />}
       {apercu && <Apercu sujet={apercu} onFermer={fermerApercu} />}
       </div>
     </div>

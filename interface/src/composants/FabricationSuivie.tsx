@@ -1,8 +1,15 @@
+import { SuiviFabrication3D } from "./Fabrication3D"
 import { useEffect, useRef, useState } from "react"
 import { api, dollars, Refus, type Asset, type Modele, type ModeleVideo, type Personnage } from "../api"
-import { travaux, type DemandeTravail, type Travail } from "../api-travaux"
+import { travaux, type DemandeTravail, type Travail, type TravailSuivi } from "../api-travaux"
 import { vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
+import { RelectureEquipement } from "./RelectureEquipement"
+import { FabricationVideoLibre } from "./FabricationVideoLibre"
+import { FabricationAudio } from "./FabricationAudio"
+import { FabricationImageLocale } from "./WorkflowsLocaux"
+import type { CibleCalque } from "../api-calques"
+import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 
 const CHAMP = "h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle disabled:opacity-50"
 const BOUTON = `${CHAMP} hover:border-encre-3`
@@ -16,11 +23,24 @@ const nouvelle = (personnage = ""): DemandeTravail => ({ cle: crypto.randomUUID(
 
 /** Une demande relue est immuable. Revenir en édition crée une nouvelle clé,
  * tandis que la reprise conserve l'identifiant payé et ses références figées. */
-export function FabricationSuivie({ projet, personnages, onClip, onBande, onFermer, initiale }: {
-  projet: string; personnages: readonly Personnage[]; initiale?: Travail
+export function FabricationSuivie({ projet, personnages, onClip, onBande, onFermer, initiale, modeleInitial, cibleInitiale }: {
+  projet: string; personnages: readonly Personnage[]; initiale?: Travail; modeleInitial?: string
+  cibleInitiale?: { personnage: string; pose: string; direction: string }
   onClip: (id: string) => void; onBande?: (id: string) => void; onFermer: () => void
 }) {
-  const [demande, setDemande] = useState<DemandeTravail>(initiale?.demande ?? nouvelle(personnages[0]?.identifiant))
+  const [depart] = useState<DemandeTravail>(() => {
+    if (initiale) return initiale.demande
+    const sujet = personnages.find(p => p.identifiant === cibleInitiale?.personnage) ?? personnages[0]
+    const sortie = sujet?.objectif?.sorties.find(s => s.nature === "animation" && s.quantite > 0)
+    const pose = cibleInitiale?.pose ?? sortie?.pose ?? ""
+    const sortieDePose = sujet?.objectif?.sorties.find(s => s.nature === "animation" && s.pose === pose && s.quantite > 0)
+    return { ...nouvelle(sujet?.identifiant),
+      pose,
+      direction: cibleInitiale?.direction || sortieDePose?.direction || sujet?.cases.find(c => c.pose === pose)?.directions[0]?.identifiant || "",
+      cadence: sujet?.objectif?.cadence ?? 8,
+      modele_video: modeleInitial ?? "" }
+  })
+  const [demande, setDemande] = useState<DemandeTravail>(depart)
   const [travail, setTravail] = useState<Travail | null>(initiale ?? null)
   const [edition, setEdition] = useState(!initiale)
   const [erreur, setErreur] = useState("")
@@ -36,6 +56,14 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onFerm
   const [plafondImages, setPlafondImages] = useState(48)
   const [optionsVideo, setOptionsVideo] = useState(JSON.stringify(demande.options_video ?? {}, null, 2))
   const [optionsImage, setOptionsImage] = useState(JSON.stringify(demande.options_image ?? {}, null, 2))
+  const [videosLues, setVideosLues] = useState(false)
+  const brouillon = useBrouillonLocal({
+    cle: `fabrication-video:${projet}:${initiale?.identifiant ?? (cibleInitiale ? `${cibleInitiale.personnage}:${cibleInitiale.pose}:${cibleInitiale.direction}` : "nouvelle")}:${modeleInitial ?? "auto"}`, pret: edition,
+    reference: { demande: depart, optionsVideo: JSON.stringify(depart.options_video ?? {}, null, 2), optionsImage: JSON.stringify(depart.options_image ?? {}, null, 2) },
+    etat: { demande, optionsVideo, optionsImage },
+    signature: ({ demande: { cle: _cle, ...champs }, ...options }) => JSON.stringify({ demande: champs, ...options }),
+    appliquer: (recu) => { setDemande({ ...recu.demande, cle: crypto.randomUUID() }); setOptionsVideo(recu.optionsVideo); setOptionsImage(recu.optionsImage); setErreur("") },
+  })
   const personnage = personnages.find((p) => p.identifiant === demande.personnage)
   const cases = personnage?.objectif?.sorties.filter((s) => s.nature === "animation" && s.quantite > 0)
   const poses = personnage?.plan.filter((p) => !personnage.ecartees.includes(p.identifiant) && (!cases || cases.some((s) => s.pose === p.identifiant))) ?? []
@@ -60,7 +88,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onFerm
     if (!edition) return
     let vivant = true
     api.modelesVideo(demande.secondes, demande.resolution, demande.proportions)
-      .then((c) => { if (vivant) setVideos(c.modeles) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
+      .then((c) => { if (vivant) { setVideos(c.modeles); setVideosLues(true) } }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
     return () => { vivant = false }
   }, [edition, demande.secondes, demande.resolution, demande.proportions])
   useEffect(() => {
@@ -81,6 +109,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onFerm
     try {
       const d = { ...demande, options_video: JSON.parse(optionsVideo), options_image: JSON.parse(optionsImage) } as DemandeTravail
       const t = await travaux.preparer(projet, d)
+      brouillon.effacer()
       setDemande(t.demande); setTravail(t); setEdition(false)
     } catch (e) { setErreur(e instanceof SyntaxError ? "Les paramètres avancés doivent être un objet JSON valide, par exemple {\"seed\": 42}." : message(e)) }
     finally { setOccupe(false) }
@@ -106,6 +135,8 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onFerm
     <div ref={defilement} className="defile min-h-0 flex-1 overflow-y-auto p-[22px]">
       {erreur && <p role="alert" className="mb-[14px] rounded-7 border border-trait-echec bg-fond-echec p-[14px] text-echec">{erreur}</p>}
       {edition ? <div className="mx-auto max-w-[880px] space-y-[22px]">
+        <AvisBrouillon brouillon={brouillon} />
+        {demande.modele_video && videosLues && (!video || video.grise) && <p role="status" className="rounded-7 border border-trait-attention bg-fond-attention p-[14px] text-[13px]">Le modèle choisi « {demande.modele_video} » est indisponible : {video?.grise || "il n’est plus proposé par le catalogue"}. Modifiez les réglages du clip ou choisissez un autre modèle.</p>}
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">1. Animation à créer</legend><div className="grid grid-cols-3 gap-[14px]">
           <label className="flex flex-col gap-[4px] text-[12px]">Asset<select className={CHAMP} value={demande.personnage} onChange={(e) => changer({ personnage: e.target.value, pose: "", direction: "", reference_asset: null })}>{personnages.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
           <label className="flex flex-col gap-[4px] text-[12px]">Mouvement<select className={CHAMP} value={demande.pose} onChange={(e) => choisirPose(e.target.value)}><option value="">Choisir…</option>{poses.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
@@ -123,7 +154,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onFerm
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">3. Mouvement et clip vidéo</legend>
           <label className="flex flex-col gap-[4px] text-[12px]">Décrire l’animation<textarea rows={3} className="rounded-7 border border-contour p-[14px] text-[13px]" value={demande.prompt_video} onChange={(e) => changer({ prompt_video: e.target.value })} placeholder="Le personnage marche sur place, cycle régulier, caméra fixe…" /></label>
           <div className="mt-[14px] grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Durée du clip<select className={CHAMP} value={demande.secondes} onChange={(e) => changer({ secondes: Number(e.target.value) })}>{[...new Set([demande.secondes, ...videos.flatMap((m) => m.durees)])].sort((a, b) => a - b).map((n) => <option key={n} value={n}>{n} s</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]">Résolution<select className={CHAMP} value={demande.resolution} onChange={(e) => changer({ resolution: e.target.value })}>{[...new Set([demande.resolution, ...videos.flatMap((m) => m.resolutions)])].map((v) => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]">Proportions<select className={CHAMP} value={demande.proportions} onChange={(e) => changer({ proportions: e.target.value })}>{[...new Set([demande.proportions, ...videos.flatMap((m) => m.proportions)])].map((v) => <option key={v}>{v}</option>)}</select></label></div>
-          <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">Fournisseur et modèle vidéo<select className={CHAMP} value={demande.modele_video} onChange={(e) => changer({ modele_video: e.target.value })}><option value="">Choisir un modèle…</option>{videos.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{m.identifiant}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>{video?.grise && <p className="mt-[8px] text-[13px] text-echec">{video.grise}</p>}
+          <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">Fournisseur et modèle vidéo<select className={CHAMP} value={demande.modele_video} onChange={(e) => changer({ modele_video: e.target.value })}><option value="">Choisir un modèle…</option>{demande.modele_video && !video && <option value={demande.modele_video} disabled>{demande.modele_video} · {videosLues ? "indisponible" : "chargement…"}</option>}{videos.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{m.identifiant}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>
           <details className="mt-[14px]"><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres avancés du workflow</summary><p className="my-[8px] text-[12px] text-encre-3">Réglages nommés du workflow, par exemple la seed. Le fournisseur vérifie les paramètres avant l’envoi.</p><textarea aria-label="Paramètres vidéo JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsVideo} onChange={(e) => setOptionsVideo(e.target.value)} /></details>
         </fieldset>
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">4. Animation à obtenir</legend><div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Frames à extraire<input className={CHAMP} type="number" min={1} max={64} value={demande.nombre_images} onChange={(e) => changer({ nombre_images: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Cadence (images/s)<input className={CHAMP} type="number" min={0.1} max={120} step={0.1} value={demande.cadence} onChange={(e) => changer({ cadence: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Lecture<select className={CHAMP} value={demande.sens} onChange={(e) => changer({ sens: e.target.value as DemandeTravail["sens"] })}><option value="boucle">En boucle</option><option value="aller-retour">Aller-retour</option></select></label></div><label className="mt-[14px] flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={!!demande.livrer_provisoire} onChange={(e) => changer({ livrer_provisoire: e.target.checked })} />Livrer automatiquement cette première version dans le projet Godot associé</label><p className="mt-[8px] text-[12px] text-encre-3">Le clip et les frames restent conservés. Le montage permet ensuite de choisir un passage, réordonner les frames et retoucher chaque image.</p></fieldset>
@@ -141,9 +172,25 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onFerm
   </section>} />
 }
 
-export function SuiviDesTravaux({ projet, personnages, onClip, onBande }: { projet: string; personnages: readonly Personnage[]; onClip: (id: string) => void; onBande?: (id: string) => void }) {
-  const [liste, setListe] = useState<Travail[]>([])
-  const [ouvert, setOuvert] = useState<Travail | "nouveau" | null>(null)
+type OuvrirCalqueEquipement = (piece: string, emploi: string, cible: CibleCalque, variante?: string) => void
+
+function FenetreDuTravail({ travail, projet, personnages, onClip, onBande, onFermer, onCalqueEquipement, onAsset, onToile, onSon }: {
+  travail: TravailSuivi; projet: string; personnages: readonly Personnage[]
+  onClip: (id: string) => void; onBande?: (id: string) => void; onFermer: () => void; onCalqueEquipement?: OuvrirCalqueEquipement; onAsset?: (id: string) => void; onToile?: (id: string) => void; onSon?: (id: string) => void
+}) {
+  if (travail.nature === "audio") return <FabricationAudio projet={projet} identifiantInitial={travail.identifiant} onSon={onSon} onFermer={onFermer} />
+  if (travail.nature === "3d") return <SuiviFabrication3D initiale={travail} onFermer={onFermer} onBande={onBande} />
+  if (travail.nature === "equipement") return <RelectureEquipement chemin={{ projet, piece: travail.piece, emploi: travail.emploi }} initiale={travail} onFermer={onFermer} onCalque={onCalqueEquipement ? (c, v) => onCalqueEquipement(travail.piece, travail.emploi, c, v) : undefined} />
+  if (travail.nature === "video-libre") return <FabricationVideoLibre projet={projet} identifiantInitial={travail.identifiant} onClip={onClip} onFermer={onFermer} />
+  if (travail.nature === "image-locale") return <FabricationImageLocale projet={projet} identifiantInitial={travail.identifiant} onAsset={onAsset} onToile={onToile} onFermer={onFermer} />
+  return <FabricationSuivie projet={projet} personnages={personnages} initiale={travail} onClip={onClip} onBande={onBande} onFermer={onFermer} />
+}
+
+export function SuiviDesTravaux({ projet, personnages, onClip, onBande, onCalqueEquipement, onAsset, onToile, onSon }: {
+  projet: string; personnages: readonly Personnage[]; onClip: (id: string) => void; onBande?: (id: string) => void; onCalqueEquipement?: OuvrirCalqueEquipement; onAsset?: (id: string) => void; onToile?: (id: string) => void; onSon?: (id: string) => void
+}) {
+  const [liste, setListe] = useState<TravailSuivi[]>([])
+  const [ouvert, setOuvert] = useState<TravailSuivi | "nouveau" | null>(null)
   const [erreur, setErreur] = useState("")
   useEffect(() => {
     let vivant = true
@@ -151,21 +198,28 @@ export function SuiviDesTravaux({ projet, personnages, onClip, onBande }: { proj
     lire(); const intervalle = window.setInterval(lire, 5000)
     return () => { vivant = false; window.clearInterval(intervalle) }
   }, [projet, ouvert])
-  return <section aria-label="Fabrications suivies" className="mt-[22px] rounded-8 border border-trait bg-carte p-[22px]"><div className="flex items-center justify-between gap-[14px]"><div><h2 className="font-serif text-[25px]">Créer une animation complète</h2><p className="mt-[8px] text-[13px] text-encre-3">Préparez l’image, le clip et les frames en une demande. Retrouvez chaque étape ici.</p></div><button className={BOUTON} disabled={!personnages.length} onClick={() => setOuvert("nouveau")}>Nouvelle animation</button></div>{erreur && <p role="alert" className="mt-[14px] text-echec">{erreur}</p>}<div className="mt-[14px] space-y-[8px]">{liste.map((t) => <button key={t.identifiant} className="flex w-full items-center justify-between gap-[14px] rounded-7 border border-trait p-[14px] text-left hover:border-contour" onClick={() => setOuvert(t)}><span className="text-[13px]">{personnages.find((p) => p.identifiant === t.demande.personnage)?.nom ?? t.demande.personnage} · {t.demande.pose} · {t.demande.direction || "Sans direction"}<small className="mt-[4px] block text-encre-3">{t.acteur === "agent" ? "Agent" : "Création manuelle"} · {new Date(t.cree_le * 1000).toLocaleString("fr-FR")}</small></span><span className="text-[12px] text-encre-3">{ETATS[t.etat]}</span></button>)}</div>{ouvert && <FabricationSuivie key={ouvert === "nouveau" ? "nouveau" : ouvert.identifiant} projet={projet} personnages={personnages} initiale={ouvert === "nouveau" ? undefined : ouvert} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} />}</section>
+  return <section aria-label="Fabrications suivies" className="mt-[22px] rounded-8 border border-trait bg-carte p-[22px]">
+    <div className="flex items-center justify-between gap-[14px]"><div><h2 className="font-serif text-[25px]">Créer et suivre les fabrications</h2><p className="mt-[8px] text-[13px] text-encre-3">Images, clips, frames, équipements et sons : retrouvez chaque demande et ses résultats ici.</p></div><button className={BOUTON} disabled={!personnages.length} onClick={() => setOuvert("nouveau")}>Nouvelle animation</button></div>
+    {erreur && <p role="alert" className="mt-[14px] text-echec">{erreur}</p>}
+    <div className="mt-[14px] space-y-[8px]">{liste.map((t) => <button key={t.identifiant} className="flex w-full items-center justify-between gap-[14px] rounded-7 border border-trait p-[14px] text-left hover:border-contour" onClick={() => setOuvert(t)}>
+      <span className="text-[13px]">{t.nature === "audio" ? `Son · ${t.demande.nom || t.demande.prompt}` : t.nature === "3d" ? `3D · ${t.demande.nom || t.demande.personnage || t.modele} · ${t.etape}` : t.nature === "equipement" ? `${t.piece_fiche.nom} · ${personnages.find((p) => p.identifiant === t.personnage)?.nom ?? t.personnage} · ${t.annonce.images_ciblees} images équipées` : t.nature === "image-locale" ? `Image locale · ${t.demande.prompt}` : t.nature === "video-libre" ? `Vidéo libre · ${t.demande.prompt_video}` : `${personnages.find((p) => p.identifiant === t.demande.personnage)?.nom ?? t.demande.personnage} · ${t.demande.pose} · ${t.demande.direction || "Sans direction"}`}<small className="mt-[4px] block text-encre-3">{t.acteur === "agent" ? "Agent" : "Création manuelle"} · {new Date(t.cree_le * 1000).toLocaleString("fr-FR")}</small></span><span className="text-[12px] text-encre-3">{ETATS[t.etat]}</span>
+    </button>)}</div>
+    {ouvert === "nouveau" ? <FabricationSuivie projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} /> : ouvert && <FenetreDuTravail key={ouvert.identifiant} travail={ouvert} projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} onCalqueEquipement={onCalqueEquipement} onAsset={onAsset} onToile={onToile} onSon={onSon} />}
+  </section>
 }
 
-export function TravailConserve({ projet, identifiant, personnages, onClip, onBande, onFermer }: {
+export function TravailConserve({ projet, identifiant, personnages, onClip, onBande, onFermer, onCalqueEquipement, onAsset, onToile, onSon }: {
   projet: string; identifiant: string; personnages: readonly Personnage[]
-  onClip: (id: string) => void; onBande: (id: string) => void; onFermer: () => void
+  onClip: (id: string) => void; onBande: (id: string) => void; onFermer: () => void; onCalqueEquipement?: OuvrirCalqueEquipement; onAsset?: (id: string) => void; onToile?: (id: string) => void; onSon?: (id: string) => void
 }) {
-  const [lu, setLu] = useState<Travail | null>(null)
+  const [lu, setLu] = useState<TravailSuivi | null>(null)
   const [erreur, setErreur] = useState("")
   useEffect(() => {
     let vivant = true
     setLu(null); setErreur("")
-    travaux.lire(projet, identifiant).then((t) => { if (vivant) setLu(t) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
+    travaux.lireSuivi(projet, identifiant).then((t) => { if (vivant) setLu(t) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
     return () => { vivant = false }
   }, [projet, identifiant])
   if (!lu) return <main className="flex flex-1 flex-col gap-[14px] p-[22px]"><p role={erreur ? "alert" : "status"}>{erreur || "Lecture de la fabrication…"}</p><button className={BOUTON} onClick={onFermer}>Revenir</button></main>
-  return <FabricationSuivie key={lu.identifiant} projet={projet} personnages={personnages} initiale={lu} onClip={onClip} onBande={onBande} onFermer={onFermer} />
+  return <FenetreDuTravail key={lu.identifiant} travail={lu} projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onFermer={onFermer} onCalqueEquipement={onCalqueEquipement} onAsset={onAsset} onToile={onToile} onSon={onSon} />
 }

@@ -87,6 +87,9 @@ const GROUPES_DE_LA_PARTIE: Record<string, readonly string[]> = {
 }
 
 export function EcranEnvoi({
+  presentation = "historique",
+  reglages,
+  actualisation = false,
   envoi,
   tri,
   onTri,
@@ -102,6 +105,9 @@ export function EcranEnvoi({
   plancheJointe,
   onAjouterUneReference,
 }: {
+  presentation?: "historique" | "atelier"
+  actualisation?: boolean
+  reglages?: { proportions: string; variations: number; options: Record<string, string> }
   /** Ce que le serveur rend, `null` tant qu'il n'a pas répondu. L'écran dit
    *  alors qu'il ne sait pas encore, jamais un texte deviné. */
   envoi: Envoi | null
@@ -150,8 +156,11 @@ export function EcranEnvoi({
    *  seulement qu'on le demande, et l'atelier pose la grille par-dessus. */
   onAjouterUneReference: () => void
 }) {
+  const [edition, setEdition] = useState(false)
   useEffect(() => {
     const touche = (evenement: KeyboardEvent) => {
+      const cible = evenement.target
+      if (cible instanceof Element && cible.closest("dialog[open]")) return
       if (evenement.key === "Escape") onFermer()
     }
     window.addEventListener("keydown", touche)
@@ -190,6 +199,29 @@ export function EcranEnvoi({
   // milieu de l'écran range des *lignes* — celles qu'on éteint et qu'on corrige
   // — et non des paragraphes.
   const parties = envoi?.parties ?? []
+
+  if (presentation === "atelier") {
+    const bouton = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] disabled:opacity-50"
+    const prix = envoi?.prix.total == null ? "Coût inconnu" : quantite(envoi.prix.total, envoi.prix.mesure.unite)
+    return <main data-envoi aria-label="Relire avant envoi" className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier text-[13px]">
+      <header className="flex shrink-0 items-start justify-between gap-[22px] border-b border-trait px-[30px] py-[22px]"><div><h1 className="font-serif text-[38px]">Relire avant envoi</h1><p className="mt-[8px] text-encre-3">{edition ? "Les modifications s’appliquent à cet appel. L’univers reste inchangé." : "Voici les textes et les images qui seront transmis au modèle."}</p></div><div className="flex shrink-0 gap-[8px]"><button className={bouton} aria-pressed={edition} onClick={() => setEdition(v => !v)} disabled={enPaiement}>{edition ? "Terminer les modifications" : "Modifier l’envoi"}</button><button className={bouton} onClick={onFermer} disabled={enPaiement}>Revenir à la préparation</button></div></header>
+      {!envoi ? <p role="status" className="p-[30px] text-encre-3">Composition de l’envoi…</p> : <div className="defile min-h-0 flex-1 overflow-y-auto p-[30px]">
+        <section aria-label="Modèle et réglages de l’envoi" className="mb-[22px] grid grid-cols-3 gap-[22px] rounded-7 border border-trait bg-carte p-[22px]"><div><p className="text-encre-3">Modèle · fournisseur</p><p className="mt-[8px] font-medium">{envoi.modele.identifiant}</p></div><div><p className="text-encre-3">Résultat demandé</p><p className="mt-[8px]">{reglages?.proportions ?? "Format du modèle"} · {envoi.prix.appels} appel{envoi.prix.appels > 1 ? "s" : ""}{envoi.cases > 1 ? ` · ${envoi.cases} cases sur une planche` : ""}</p>{reglages && Object.entries(reglages.options).filter(([,v]) => v !== "").map(([k,v]) => <p key={k} className="mt-[4px] text-encre-3">{k} : {v}</p>)}</div><div><p className="text-encre-3">Consommation estimée</p><p className="mt-[8px] font-medium">{prix}</p><p className="mt-[4px] text-encre-3">{envoi.prix.mesure.appels ? `Mesurée sur ${envoi.prix.mesure.appels} appels précédents.` : "Aucune mesure disponible pour ce modèle."}</p></div></section>
+        <div className="grid grid-cols-[minmax(0,1fr)_300px] items-start gap-[22px]">
+          <div className="space-y-[22px]">
+            <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="mb-[14px] font-serif text-[25px]">Textes envoyés</h2>{edition ? <div className="space-y-[14px] [&_.mesure]:text-[12px]">{envoi.groupes.filter(g => envoi.lignes.some(l => l.groupe === g.clef)).map(g => <section key={g.clef}><h3 className="font-medium">{g.nom}</h3><ul>{envoi.lignes.filter(l => l.groupe === g.clef).map(l => <Ligne key={l.clef} ligne={l} onBasculer={() => basculer(l.clef, l.allumee)} onCorriger={t => corriger(l.clef, t)} onRemettre={() => remettre(l.clef)} onGarder={() => onGarder(l)} />)}</ul></section>)}</div> : <div className="space-y-[22px]">{parties.filter(p => p.texte.trim()).map(p => <section key={p.clef}><h3 className="mb-[8px] font-medium">{p.nom}</h3><p className="mesure whitespace-pre-wrap break-words rounded-7 border border-trait bg-papier p-[14px] text-[12px] leading-relaxed">{p.titre && `${p.titre}\n\n`}{p.texte}</p></section>)}{!envoi.texte && <p className="text-encre-3">Aucun texte à envoyer.</p>}</div>}{edition && <button className={`${bouton} mt-[14px]`} onClick={() => onReprendre(envoi.texte)} disabled={!envoi.texte}>Modifier le texte complet à la main</button>}</section>
+            <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="mb-[14px] font-serif text-[25px]">Fond et prompt négatif</h2>{edition ? <div className="[&_.mesure]:text-[12px]"><SectionFond fond={envoi.fond} onFond={couleur => onTri({ ...tri, fond: couleur })} /></div> : <><p>Fond : {envoi.fond.couleur || "aucun fond imposé"}</p><p className="mesure mt-[14px] whitespace-pre-wrap text-[12px] leading-relaxed">{envoi.fond.interdiction || "Aucune consigne négative."}</p></>}</section>
+            {envoi.retour.length > 0 && <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Traitements appliqués au retour · sur la machine</summary><ul className="mt-[14px] space-y-[8px]">{envoi.retour.map(r => <li key={r.nom}>{r.nom} · {r.detail}</li>)}</ul><p className="mt-[14px] text-encre-3">Les originaux sont conservés. Ces traitements se modifient dans la retouche.</p></details>}
+          </div>
+          <div className="space-y-[22px]">
+            <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Images envoyées</h2><p className="mt-[8px] text-encre-3">{envoi.images.partent ?? envoi.images.cochees} image{(envoi.images.partent ?? envoi.images.cochees) > 1 ? "s" : ""} · {envoi.images.places} places</p>{edition && <button className={`${bouton} mt-[14px]`} onClick={onAjouterUneReference}>Ajouter une référence</button>}<fieldset disabled={!edition || enPaiement} className="mt-[14px] [&_.mesure]:text-[12px]"><ul>{envoi.images.lignes.map(i => <LigneImage key={i.asset} image={i} places={envoi.images.places} onBasculer={() => onImage(i.asset, i.cochee)} />)}{envoi.images.jointe && <LigneJointe jointe={envoi.images.jointe} adresse={plancheJointe} />}</ul></fieldset>{!envoi.images.lignes.length && !envoi.images.jointe && !envoi.images.palette && <p className="mt-[14px] text-encre-3">Aucune image jointe.</p>}{envoi.images.palette > 0 && <p className="mt-[14px] text-encre-3">La palette du jeu est jointe en image.</p>}{envoi.images.avertissements.map(a => <p key={a.clef} className="mt-[14px] text-encre-attention">{a.texte}</p>)}</section>
+            {envoi.options.length > 0 && <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Consignes facultatives</h2><fieldset disabled={!edition || enPaiement} className="mt-[14px] [&_.mesure]:text-[12px]"><ul>{envoi.options.map(o => <LigneOption key={o.clef} option={o} onBasculer={() => basculer(o.clef, o.allumee)} />)}</ul></fieldset></section>}
+          </div>
+        </div>
+      </div>}
+      <footer className="flex shrink-0 items-center justify-between gap-[22px] border-t border-trait bg-carte px-[30px] py-[14px]"><div>{echec && <p role="alert" className="text-echec">{echec}</p>}{refus && <p className="text-echec">{refus}</p>}<p>{prix}{envoi?.prix.total !== null && envoi && " · estimation"}</p><p className="mt-[4px] text-encre-3">{actualisation ? "Actualisation des textes, des images et du coût…" : enPaiement ? "L’envoi est en cours." : "Aucun appel au modèle avant de lancer."}</p></div><button className="h-[42px] shrink-0 rounded-7 bg-signal px-[22px] text-encre-sur-signal disabled:opacity-50" disabled={!!refus || !envoi || enPaiement || actualisation} onClick={onPayer}>{enPaiement ? "Envoi en cours…" : envoi && estArgent(envoi.prix.mesure.unite) ? `Payer et lancer${envoi.prix.total != null ? ` · ${prix}` : ""}` : "Lancer la fabrication"}</button></footer>
+    </main>
+  }
 
   return (
     <div

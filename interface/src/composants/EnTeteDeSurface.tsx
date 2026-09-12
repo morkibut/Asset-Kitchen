@@ -249,6 +249,7 @@ export function EnTeteDeSurface({
   fente,
   onReglages,
   onGuide,
+  preferencesDansNavigation = false,
 }: {
   /** Vide sur une surface au repos ; rempli dès qu'on descend. */
   chemin: readonly Segment[]
@@ -272,6 +273,8 @@ export function EnTeteDeSurface({
   fente: Fente
   onReglages: () => void
   onGuide: () => void
+  /** Le châssis unifié porte déjà ces deux destinations dans sa navigation. */
+  preferencesDansNavigation?: boolean
 }) {
   return (
     <header className="flex h-[34px] items-center gap-[14px] border-b border-trait bg-papier-cote px-[14px]">
@@ -321,7 +324,7 @@ export function EnTeteDeSurface({
             qu'`Installation.tsx` ne reprend pas, parce que ce sont des
             réglages d'un jeu, pas de la machine. *Guide* ouvre le même guide
             que le pied. */}
-        <div className="flex shrink-0 items-center gap-[8px] border-l border-trait pl-[14px]">
+        {!preferencesDansNavigation && <div className="flex shrink-0 items-center gap-[8px] border-l border-trait pl-[14px]">
           <button
             type="button"
             onClick={onReglages}
@@ -336,7 +339,7 @@ export function EnTeteDeSurface({
           >
             Guide
           </button>
-        </div>
+        </div>}
       </div>
     </header>
   )

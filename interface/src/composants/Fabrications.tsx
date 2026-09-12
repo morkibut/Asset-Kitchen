@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from "react"
 import { api, Refus, type Appel, type Generation, type Personnage, type Statut } from "../api"
 import { SuiviDesTravaux } from "./FabricationSuivie"
+import { FabricationVideoLibre } from "./FabricationVideoLibre"
+import { FabricationAudio } from "./FabricationAudio"
 import { FileDesCalculsLocaux } from "./FileDesCalculsLocaux"
+import { FabricationImageLocale, ProfilsWorkflow } from "./WorkflowsLocaux"
+import { CadreDialogue } from "./CadreDialogue"
+import type { CibleCalque } from "../api-calques"
 
 const ETATS: Record<Statut, string> = { en_attente: "En attente", en_cours: "En cours", reussie: "Terminé", echouee: "Échec", interrompue: "Interrompu" }
 const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3"
 
 /** Le journal est relu sur disque, le chantier le complète pendant les appels.
  * Les identifiants les fusionnent : un même appel ne devient jamais deux lignes. */
-export function Fabrications({ projet, chantier, clips, personnages, onCreer, onGalerie, onClip, onBande, onSujet, onDepenses }: {
+export function Fabrications({ projet, chantier, clips, personnages, onCreer, onGalerie, onClip, onBande, onSujet, onDepenses, onAsset, onToile, onSon, onCalqueEquipement }: {
   projet: string | null
   chantier: readonly Generation[]
   clips: readonly Generation[]
@@ -19,6 +24,10 @@ export function Fabrications({ projet, chantier, clips, personnages, onCreer, on
   onBande?: (id: string) => void
   onSujet: (id: string) => void
   onDepenses: () => void
+  onAsset?: (id: string) => void
+  onToile?: (id: string) => void
+  onSon?: (id: string) => void
+  onCalqueEquipement?: (piece: string, emploi: string, cible: CibleCalque, variante?: string) => void
 }) {
   const [appels, setAppels] = useState<Appel[]>([])
   const [erreur, setErreur] = useState<string | null>(null)
@@ -26,6 +35,7 @@ export function Fabrications({ projet, chantier, clips, personnages, onCreer, on
   const [filtre, setFiltre] = useState("")
   const [recherche, setRecherche] = useState("")
   const [charge, setCharge] = useState(false)
+  const [workflow, setWorkflow] = useState<{ nature: "image" | "video" | "audio"; modele: string } | null>(null)
   const empreinte = chantier.map((g) => `${g.identifiant}:${g.statut}`).join("|")
   useEffect(() => {
     let vivant = true
@@ -43,12 +53,18 @@ export function Fabrications({ projet, chantier, clips, personnages, onCreer, on
 
   return <main aria-label="Fabrications" className="defile min-h-0 flex-1 overflow-y-auto bg-papier p-[30px]">
     <header className="flex items-start justify-between gap-[22px]"><div><h1 className="font-serif text-[38px] leading-[1.05] text-encre">Fabrications</h1><p className="mt-[8px] text-[14px] text-encre-3">Préparer une demande, suivre ce qui tourne et retrouver les résultats du jeu.</p></div><button onClick={onCreer} className="h-[34px] shrink-0 rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal hover:bg-echec">Nouvelle fabrication</button></header>
-    {projet && <SuiviDesTravaux projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} />}
+    {projet && <SuiviDesTravaux projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onCalqueEquipement={onCalqueEquipement} onAsset={onAsset} onToile={onToile} onSon={onSon} />}
     <FileDesCalculsLocaux projet={projet} />
     <section aria-label="Commencer une fabrication" className="mt-[22px] grid grid-cols-2 gap-[14px]">
       <div className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px] text-encre">Une image libre</h2><p className="mt-[8px] text-[13px] text-encre-3">Choisissez le modèle, écrivez votre demande et ajoutez les références. Vous relirez l’envoi avant de lancer.</p><button className={`${BOUTON} mt-[14px]`} onClick={onCreer}>Préparer une image</button></div>
       <div className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px] text-encre">Animer un asset</h2><p className="mt-[8px] text-[13px] text-encre-3">Partez de sa fiche pour choisir le mouvement, la direction et l’image de départ du clip.</p><label className="mt-[14px] flex items-center gap-[8px] text-[12px] text-encre-3">Asset<select aria-label="Asset à animer" defaultValue="" onChange={(e) => { if (e.target.value) onSujet(e.target.value) }} className={`${BOUTON} min-w-0 flex-1`}><option value="">Choisir un asset…</option>{personnages.map((p) => <option value={p.identifiant} key={p.identifiant}>{p.nom}</option>)}</select></label>{!personnages.length && <p className="mt-[8px] text-[12px] text-encre-3">Créez d’abord un personnage depuis les assets.</p>}</div>
     </section>
+    {projet && <div className="mt-[14px] rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Une vidéo libre</h2><p className="mt-[8px] text-[13px] text-encre-3">Choisissez ou fabriquez son image de départ, puis écrivez le mouvement. Vous pourrez classer ses frames dans un asset au montage.</p><button className={`${BOUTON} mt-[14px]`} onClick={() => setWorkflow({ nature: "video", modele: "" })}>Préparer une vidéo</button></div>}
+    {projet && <div className="mt-[14px] rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Un son</h2><p className="mt-[8px] text-[13px] text-encre-3">Décrivez un effet, une ambiance ou une musique. Le résultat rejoint l’atelier son pour l’écouter, le couper, régler sa boucle et le livrer dans Godot.</p><button className={`${BOUTON} mt-[14px]`} onClick={() => setWorkflow({ nature: "audio", modele: "" })}>Préparer un son</button></div>}
+    <details className="mt-[22px] rounded-8 border border-trait bg-papier-cote p-[22px]"><summary className="cursor-pointer text-[14px]">Mes méthodes locales · importer, vérifier ou choisir un workflow</summary><div className="mt-[22px]"><ProfilsWorkflow onAudio={projet ? (modele) => setWorkflow({ nature: "audio", modele }) : undefined} onImage={projet ? (modele) => setWorkflow({ nature: "image", modele }) : undefined} onVideo={projet ? (modele) => setWorkflow({ nature: "video", modele }) : undefined} /></div></details>
+    {projet && workflow?.nature === "audio" && <FabricationAudio projet={projet} modeleInitial={workflow.modele} onSon={onSon} onFermer={() => setWorkflow(null)} />}
+    {projet && workflow?.nature === "image" && <CadreDialogue titre="Fabriquer une image locale" onFermer={() => setWorkflow(null)} enfants={<div className="defile min-h-0 flex-1 overflow-y-auto p-[30px]"><FabricationImageLocale projet={projet} modeleInitial={workflow.modele} onAsset={onAsset} onToile={onToile} onFermer={() => setWorkflow(null)} /></div>} />}
+    {projet && workflow?.nature === "video" && <CadreDialogue titre="Fabriquer une vidéo libre" onFermer={() => setWorkflow(null)} enfants={<div className="defile min-h-0 flex-1 overflow-y-auto p-[30px]"><FabricationVideoLibre projet={projet} modeleInitial={workflow.modele} onClip={onClip} onFermer={() => setWorkflow(null)} /></div>} />}
     <div className="mt-[22px] flex items-end gap-[14px]"><label className="flex flex-1 flex-col gap-[4px] text-[12px] text-encre-3">Rechercher une fabrication<input type="search" value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder="Demande ou modèle…" className={BOUTON} /></label><label className="flex flex-col gap-[4px] text-[12px] text-encre-3">État<select value={filtre} onChange={(e) => setFiltre(e.target.value)} className={BOUTON}><option value="">Toutes</option><option value="actives">En attente ou en cours</option><option value="reussie">Terminées</option><option value="revoir">À reprendre</option></select></label><button className={BOUTON} onClick={() => setRelecture((n) => n + 1)}>Actualiser</button><button className={BOUTON} onClick={onDepenses}>Consommation</button></div>
     {erreur && <p role="alert" className="mt-[14px] rounded-7 border border-trait-echec bg-fond-echec p-[14px] text-echec">{erreur}</p>}
     {!charge && <p role="status" className="mt-[14px] text-[13px] text-encre-3">Lecture des fabrications…</p>}

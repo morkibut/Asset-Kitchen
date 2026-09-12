@@ -202,6 +202,8 @@ export function Emploi({
   onCalque,
   onLesAutresEmplois,
   onCalquesAnimes,
+  cibleInitiale,
+  varianteInitiale,
 }: {
   projet?: string
   emploi: EmploiResolu
@@ -223,6 +225,8 @@ export function Emploi({
    *  sur un emploi **porté** : sans porteur il n'y a ni pose, ni bande, ni rien
    *  à habiller. */
   onCalquesAnimes: () => void
+  cibleInitiale?: import("../api-calques").CibleCalque
+  varianteInitiale?: string
 }) {
   const [historique, setHistorique] = useState(false)
   const [nom, setNom] = useBrouillon(emploi.nom, emploi.identifiant)
@@ -249,6 +253,7 @@ export function Emploi({
   if (projet && porte && porteur !== null && !historique) return <CalquesDeLEmploi
     key={`${projet}:${piece.identifiant}:${emploi.identifiant}`} projet={projet} emploi={emploi} piece={piece}
     porteur={porteur} emplacements={emplacements} onRegler={onRegler}
+    cibleInitiale={cibleInitiale} varianteInitiale={varianteInitiale}
     onHistorique={() => setHistorique(true)} onLesAutresEmplois={onLesAutresEmplois} />
 
   return (

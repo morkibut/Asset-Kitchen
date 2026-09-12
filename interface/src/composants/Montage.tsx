@@ -46,6 +46,7 @@ import {
 } from "../api"
 import { remonterLaBande } from "./AtelierDeBande"
 import { Bouton, Curseur, Libelle, Raison, Segments } from "./pieces"
+import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 
 /** La hauteur du ruban, et la largeur d'une tranche. **Sept pixels**, comme la
  *  maquette : c'est ce qui fait tenir cent vingt images sans défilement, et
@@ -140,6 +141,21 @@ export function EcranMontage({
   const [pose, setPose] = useState<string | null>(null)
   const [direction, setDirection] = useState<string | null>(null)
   const [personnage, setPersonnage] = useState<string | null>(null)
+  const etatMontage = { occurrences, nom, cadence, sens, cadre, cadreMain, pose, direction, personnage }
+  const [referenceMontage, setReferenceMontage] = useState<typeof etatMontage | null>(null)
+  const brouillon = useBrouillonLocal({
+    cle: `montage:${clip}:${reprise?.bande.identifiant ?? "nouveau"}`, pret: montage !== null,
+    reference: referenceMontage ?? etatMontage, etat: etatMontage,
+    // Les nouvelles occurrences reçoivent des UUID à l’ouverture ; elles ne
+    // rendent pas à elles seules le contenu d’un même montage différent.
+    signature: (etat) => JSON.stringify({ ...etat, occurrences: etat.occurrences.map(({ identifiant: _id, ...prise }) => prise) }),
+    appliquer: (recu) => {
+      setReferenceMontage(referenceMontage ?? etatMontage)
+      setOccurrences(recu.occurrences); setNom(recu.nom); setCadence(recu.cadence); setSens(recu.sens)
+      setCadre(recu.cadre); setCadreMain(recu.cadreMain); setPose(recu.pose); setDirection(recu.direction); setPersonnage(recu.personnage)
+      ordreManuel.current = true
+    },
+  })
 
   // ── Ce que le serveur répond ──────────────────────────────────────────────
   // **La vidéo n'est pas montrée d'emblée**, et c'est un arbitrage : ce qu'on
@@ -274,10 +290,10 @@ export function EcranMontage({
     // rien à lui apprendre. C'est le même partage qu'au-dessus — *une bande a
     // le droit d'être plus lente que son mouvement*, et la reprise arriverait
     // ici après coup pour la ramener à la moyenne, sans un mot.
-    if (laReprise.current) return
+    if (laReprise.current || referenceMontage) return
     const nomme = mouvements.find((m) => m.identifiant === montage?.clip.mouvement)
     if (nomme?.cadence) setCadence(nomme.cadence)
-  }, [mouvements, montage?.clip.mouvement])
+  }, [mouvements, montage?.clip.mouvement, referenceMontage])
 
   useEffect(() => {
     let vivant = true
@@ -403,6 +419,7 @@ export function EcranMontage({
         personnage,
       })
       setBandes((deja) => [...deja, bande])
+      brouillon.effacer(); setReferenceMontage(etatMontage)
       // Le prix par bande vient de baisser : on redemande ce qui le porte
       // plutôt que de le recalculer ici, où il finirait par diverger.
       api.ouvrirLeMontage(clip).then((recu) => setMontage(recu)).catch(() => {})
@@ -436,6 +453,7 @@ export function EcranMontage({
       montageEnregistre = true
       if (personnage !== reprise.bande.personnage || pose !== reprise.bande.pose || direction !== reprise.bande.direction)
         await api.affecterLaBande(reprise.bande.identifiant, pose, direction, personnage)
+      brouillon.effacer()
       reprise.onRepris()
     } catch (erreur) {
       setRefus(
@@ -518,6 +536,10 @@ export function EcranMontage({
   return (
     <div
       data-montage
+      onChangeCapture={() => { if (!referenceMontage) setReferenceMontage(etatMontage) }}
+      onClickCapture={() => { if (!referenceMontage) setReferenceMontage(etatMontage) }}
+      onDragStartCapture={() => { if (!referenceMontage) setReferenceMontage(etatMontage) }}
+      onKeyDownCapture={() => { if (!referenceMontage) setReferenceMontage(etatMontage) }}
       className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_380px] bg-papier"
     >
       {/* ── Les deux boucles, la pellicule, ce qui est retenu ─────────────── */}
@@ -552,7 +574,7 @@ export function EcranMontage({
                 : "brut · fond compris"
             }
             geste={
-              <button
+              (!montage.clip.nature || montage.clip.nature === "video") && <button
                 type="button"
                 onClick={() => setEnVideo((avant) => !avant)}
                 title={
@@ -686,6 +708,7 @@ export function EcranMontage({
 
       {/* ── Ce qu'on garde ────────────────────────────────────────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-l border-trait p-4">
+        <AvisBrouillon brouillon={brouillon} />
         {/* **Ce qu'on remonte, dit une fois** (V3.03.3). Le nom n'est pas un
             champ ici : on ne baptise pas une animation qui en porte déjà un, et
             un champ qui n'écrirait rien serait un contrôle mort. */}
@@ -973,8 +996,7 @@ export function EcranMontage({
           )}
         </div>
         <p className="mesure text-[10px] leading-4 text-encre-4">
-          <b className="text-encre-3">Rien sur cet écran ne dépense.</b> Le clip
-          est payé. Découpez, recommencez, changez d'avis.
+          <b className="text-encre-3">Rien sur cet écran ne dépense.</b> {montage.clip.nature && montage.clip.nature !== "video" ? "Les frames originales sont conservées." : "Le clip est payé."} Découpez, recommencez, changez d'avis.
           {reprise && (
             <>
               {" "}

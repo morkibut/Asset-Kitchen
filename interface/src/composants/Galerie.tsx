@@ -41,13 +41,13 @@ import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { CRANS, ZOOMS, type Zoom } from "./pieces"
 import { useImport, type Import } from "./Import"
 import { Tuile, type Entree } from "./Tuile"
-import { Arbre } from "./Arbre"
 import { BarreOutils } from "./BarreOutils"
 import { CeQuiNEstPasEntre } from "./Import"
 import { EcranDepliage } from "./Depliage"
 import { EcranMontage } from "./Montage"
 import { Fiche } from "./Fiche"
 import { FicheDuClip } from "./FicheDuClip"
+import { GalerieMedias } from "./GalerieMedias"
 import type { Racine } from "../lieux"
 import type { Table } from "../recette"
 import type { Fente } from "./EnTeteDeSurface"
@@ -489,7 +489,6 @@ export function useGalerie({
   echouer,
   setPanne,
   setFente,
-  replies,
   vivant,
 }: CeQueLaGalerieLit) {
   /** La planche dont on choisit ce qu'on garde (R6) — **par identifiant, jamais
@@ -931,12 +930,11 @@ export function useGalerie({
     }
   }
 
-  // **Trois colonnes depuis E4** — `240px · 1fr · 380px` : où ça se range, la
-  // grille d'assets, la fiche d'une image. C'est l'ancien atelier **moins sa
-  // colonne de réglages de 300 px**, qui suit la barre qui paie : la galerie ne
-  // paie plus, donc elle n'a rien à régler avant de payer.
+  // La navigation de projets est globale depuis l'atelier unifié. La garder ici
+  // aurait laissé deux arbres pour le même jeu, dont un décalé de l'autre. Le
+  // rangement demeure dans la barre de sélection, au moment où une sélection
+  // existe réellement.
   const colonnes = [
-    `${replies.arbre ? 0 : 240}px`,
     "minmax(0,1fr)",
     `${fiche || ficheClip ? 380 : 0}px`,
   ].join(" ")
@@ -990,6 +988,7 @@ export function useGalerie({
     annuler,
     chargerLaSuiteGrille,
     clipEnFiche,
+    clips: clipsDuJeu,
     colonnes,
     depliage,
     entree,
@@ -1059,6 +1058,8 @@ export function Galerie({
   poserLaRacine,
   setPanne,
   univers,
+  onSon,
+  onSource3D,
 }: {
   g: EtatDeLaGalerie
   bibliotheque: Bibliotheque
@@ -1079,6 +1080,9 @@ export function Galerie({
   poserLaRacine: (prochaine: Racine) => void
   setPanne: React.Dispatch<React.SetStateAction<string | null>>
   univers: Univers
+  /** Portes optionnelles vers les ateliers ajoutés après la galerie historique. */
+  onSon?: (identifiant: string) => void
+  onSource3D?: (source: import("../api-3d").Source3D) => void
 }) {
   const {
     annulation,
@@ -1086,6 +1090,7 @@ export function Galerie({
     centre,
     chargerLaSuiteGrille,
     clipEnFiche,
+    clips,
     colonnes,
     entree,
     entrees,
@@ -1115,6 +1120,8 @@ export function Galerie({
     zoom,
     zoomRendu,
   } = g
+
+  const changerDeMedia = useCallback(() => setSelection([]), [setSelection])
 
   /* Quatre colonnes, largeurs absolues, et 220 ms sur la largeur quand
       l'une se replie ou que la fiche s'ouvre — la durée du § Motion pour
@@ -1164,17 +1171,6 @@ export function Galerie({
           transition: "grid-template-columns 220ms var(--ease-entree)",
         }}
       >
-        <div className="flex min-h-0 overflow-hidden">
-          <Arbre
-            bibliotheque={bibliotheque}
-            collection={filtre.collection}
-            onCollection={(collection) => setFiltre((f) => ({ ...f, collection }))}
-            onErreur={setPanne}
-            onRelancer={relancer}
-          />
-        </div>
-
-
         {/* `min-w-0` **et** `min-h-0` : une piste de grille en `minmax(0,1fr)`
             n'empêche pas son contenu de l'élargir — c'est l'élément posé dedans
             qui vaut `min-width: auto`, donc la largeur de ce qu'il contient. Une
@@ -1182,9 +1178,22 @@ export function Galerie({
             la droite, en-tête et pied compris. Constaté au navigateur le 27 août
             2026, à la première sélection. */}
         <section ref={centre} className="flex min-h-0 min-w-0 flex-col">
+          <GalerieMedias
+            filtre={filtre}
+            onRecherche={(recherche) => setFiltre((f) => ({ ...f, recherche }))}
+            entrees={entrees}
+            clips={clips}
+            projet={bibliotheque.courant}
+            onChanger={changerDeMedia}
+            onBande={ouvrirLAtelierDeBande}
+            onSon={onSon}
+            onSource3D={onSource3D}
+          >
+          {(sorte, videos) => <>
           <BarreOutils
             recherche={filtre.recherche}
             onRecherche={(recherche) => setFiltre((f) => ({ ...f, recherche }))}
+            sansRecherche
             favoris={filtre.favoris}
             onFavoris={(favoris) => setFiltre((f) => ({ ...f, favoris }))}
             famille={famille}
@@ -1231,7 +1240,7 @@ export function Galerie({
             <EcranMontage
               clip={montageOuvert}
               personnages={personnages}
-              onBande={(id) => { poserLaRacine("codex"); ouvrirLAtelierDeBande(id) }}
+              onBande={ouvrirLAtelierDeBande}
               onFermer={() => setMontageOuvert(null)}
               onErreur={(raison) => setPanne(raison)}
             />
@@ -1248,7 +1257,11 @@ export function Galerie({
             />
           ) : (
           <Grille
-            entrees={entrees}
+            entrees={
+              sorte === "videos"
+                ? videos
+                : entrees.filter((entree) => entree.sorte === "asset" || entree.generation.clip === null)
+            }
             selection={selection}
             filtre={filtre}
             zoom={zoomRendu}
@@ -1301,6 +1314,8 @@ export function Galerie({
               l'établi d'une chose du jeu
             </span>
           </div>
+          </>}
+          </GalerieMedias>
         </section>
 
         <div className="flex min-h-0 overflow-hidden">
@@ -1358,13 +1373,9 @@ export function Galerie({
                 setFicheClip(null)
                 setMontageOuvert(clipEnFiche.generation.identifiant)
               }}
-              /* **Une bande du clip s'ouvre dans l'atelier d'une animation**
-                 (A7). C'est un autre onglet : la matrice vit au codex, et seul
-                 `App` sait qu'il existe des onglets — comme le passage inverse,
-                 qu'`A12` tient déjà. */
+              /* La bande garde son chemin d'arrivée pour revenir au clip. */
               onOuvrirLaBande={(identifiant) => {
                 setFicheClip(null)
-                poserLaRacine("codex")
                 ouvrirLAtelierDeBande(identifiant)
               }}
               /* Le sprite de départ s'ouvre comme une image, **et sa fiche

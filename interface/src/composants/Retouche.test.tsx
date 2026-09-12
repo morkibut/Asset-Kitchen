@@ -346,7 +346,7 @@ function monter(
   const onErreur = vi.fn()
   const onUnivers = vi.fn()
   const rendu = render(
-    <Retouche
+    <Retouche enregistrementImmediat
       asset={surplus.asset ?? image({ recette: recetteDeTravail() })}
       soeurs={surplus.soeurs ?? []}
       univers={surplus.univers ?? univers()}
@@ -360,7 +360,7 @@ function monter(
   )
   const reouvrir = (nouveau: { asset: Asset; soeurs?: Asset[] }) =>
     rendu.rerender(
-      <Retouche
+      <Retouche enregistrementImmediat
         asset={nouveau.asset}
         soeurs={nouveau.soeurs ?? surplus.soeurs ?? []}
         univers={surplus.univers ?? univers()}
@@ -1157,7 +1157,7 @@ describe("la jauge", () => {
     )
     vi.stubGlobal("fetch", lente)
     render(
-      <Retouche
+      <Retouche enregistrementImmediat
         asset={image({ recette: recetteDeTravail() })}
         soeurs={[]}
         univers={univers()}
@@ -1201,7 +1201,7 @@ describe("la jauge", () => {
     )
     vi.stubGlobal("fetch", lente)
     render(
-      <Retouche
+      <Retouche enregistrementImmediat
         asset={image({ recette: recetteDeTravail() })}
         soeurs={[]}
         univers={univers()}
@@ -1344,7 +1344,7 @@ describe("on n'annule pas un calcul", () => {
   test("l'écran le dit, et n'offre aucun bouton qui aurait l'air de le faire", () => {
     monter()
     expect(
-      within(colonne()).getByText(/un calcul ne s'interrompt pas/i),
+      within(colonne()).getByText(/un calcul ne s[’']interrompt pas/i),
     ).toBeTruthy()
     expect(within(colonne()).queryByRole("button", { name: /Annuler/i })).toBeNull()
   })
@@ -1558,7 +1558,7 @@ describe("les quatre surfaces se posent depuis l'écran neuf", () => {
 
   test("les calques de la main se règlent ici, et l'opacité est le sol de la pile", async () => {
     const { appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "La main" }))
+    fireEvent.click(within(colonne()).getByRole("button", { name: "Calques" }))
 
     // Le sol ne se supprime ni ne se déplace : il n'a aucun de ces boutons.
     expect(within(colonne()).queryByRole("button", { name: "Supprimer l'opacité" })).toBeNull()

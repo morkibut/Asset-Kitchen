@@ -15,6 +15,19 @@ export function SurfaceZoomable({ largeur, hauteur, children, libelle = "la surf
   useEffect(() => {
     const noeud = vue.current
     if (!noeud) return
+    const molette = (e: WheelEvent) => {
+      if (!e.ctrlKey) return
+      e.preventDefault()
+      changer(facteur * (e.deltaY < 0 ? 1.2 : 1 / 1.2))
+    }
+    // React pose les événements wheel en passif : seul ce listener empêche
+    // le navigateur de zoomer aussi toute l’application.
+    noeud.addEventListener("wheel", molette, { passive: false })
+    return () => noeud.removeEventListener("wheel", molette)
+  }, [facteur])
+  useEffect(() => {
+    const noeud = vue.current
+    if (!noeud) return
     const mesurer = () => setTaille({ largeur: Math.max(1, noeud.clientWidth - 28), hauteur: Math.max(1, noeud.clientHeight - 28) })
     mesurer()
     const observateur = new ResizeObserver(mesurer)
@@ -41,7 +54,6 @@ export function SurfaceZoomable({ largeur, hauteur, children, libelle = "la surf
       <span className="text-[11px] text-encre-3">Ctrl + molette · Espace + glisser</span>
     </div>
     <div ref={vue} tabIndex={0} aria-label={`Vue de ${libelle}`} className="defile flex min-h-0 min-w-0 flex-1 overflow-auto p-[14px] outline-none"
-      onWheel={(e) => { if (e.ctrlKey) { e.preventDefault(); changer(facteur * (e.deltaY < 0 ? 1.2 : 1 / 1.2)) } }}
       onPointerDownCapture={(e) => {
         if (!espace && e.button !== 1) return
         e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId)

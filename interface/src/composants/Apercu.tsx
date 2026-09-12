@@ -127,21 +127,23 @@ export function BandeQuiTourne({
   bande,
   cote,
   titre,
+  joue = true,
 }: {
   bande: Bande
   /** Le côté de la vignette, en pixels d'écran. */
   cote: number
   titre?: string
+  joue?: boolean
 }) {
   const [pas, setPas] = useState(0)
   const compte = bande.compte
   const cadence = bande.cadence
 
   useEffect(() => {
-    if (compte < 2 || cadence <= 0) return
+    if (!joue || compte < 2 || cadence <= 0) return
     const minuteur = window.setInterval(() => setPas((p) => p + 1), 1000 / cadence)
     return () => window.clearInterval(minuteur)
-  }, [compte, cadence])
+  }, [compte, cadence, joue])
 
   // Sans planche calculée, il n'y a rien à montrer — et le dire vaut mieux
   // qu'un cadre vide qui passerait pour un chargement qui n'arrive pas.
@@ -157,7 +159,7 @@ export function BandeQuiTourne({
     )
   }
 
-  const rang = rangDeLaBande(pas, compte, bande.sens)
+  const rang = joue ? rangDeLaBande(pas, compte, bande.sens) : 0
     // Agrandir par un entier ; réduire si nécessaire pour montrer la frame
     // entière. Le cadre commun conserve le centre de toute l'animation.
     const ajuste = Math.min((cote - 2) / bande.case_hauteur, (cote - 2) / bande.case_largeur)

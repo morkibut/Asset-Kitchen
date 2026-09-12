@@ -10,14 +10,17 @@
 // de chaque essai une seconde suite d'écran. Voir `ImagesDuSujet.test.tsx`,
 // dont ce fichier reprend la structure au mot près pour les bandes.
 
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { useState } from "react"
+import { MemoireDuParcours } from "./MemoireDuParcours"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { AnimationsDuSujet, rangerLaLigne, rangeesDeLaCase } from "./AnimationsDuSujet"
-import { RECETTE_VIDE, type Bande, type Case, type Personnage, type Pose } from "../api"
+import { RECETTE_VIDE, type Bande, type Case, type ObjectifProduction, type Personnage, type Pose } from "../api"
 
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
   vi.unstubAllGlobals()
 })
 
@@ -164,7 +167,7 @@ function construireDouble() {
   return { fetchDouble, appels }
 }
 
-function monter(cases: Case[] = [CASE_SUD]) {
+function monter(cases: Case[] = [CASE_SUD], objectif?: ObjectifProduction) {
   const { fetchDouble, appels } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
@@ -172,12 +175,60 @@ function monter(cases: Case[] = [CASE_SUD]) {
     onOuvrirLaBande: vi.fn(),
     onErreur: vi.fn(),
   }
-  render(<AnimationsDuSujet personnage={personnage(cases)} plan={PLAN} {...rappels} />)
+  const sujet = personnage(cases)
+  sujet.objectif = objectif
+  render(<AnimationsDuSujet personnage={sujet} plan={PLAN} {...rappels} />)
   return { ...rappels, appels }
 }
 
 const rangee = (cle: string) =>
   document.querySelector(`[data-rangee="${cle}"]`) as HTMLElement
+
+test("la galerie retrouve ses filtres et son défilement au retour de retouche, sans volet imposé", () => {
+  const cases = [CASE_SUD, sienne({ pose: "marche", directions: [{ ...DIRECTION, identifiant: "nord", nom: "nord", bandes: [bande({ identifiant: "marche-nord", cree_le: 400, pose: "marche", direction: "nord" })] }] })]
+  function Parcours() {
+    const [retouche, setRetouche] = useState(false)
+    return retouche ? <button onClick={() => setRetouche(false)}>Retour au sujet</button> : <AnimationsDuSujet personnage={personnage(cases)} plan={PLAN} onAnimer={vi.fn()} onErreur={vi.fn()} onOuvrirLaBande={() => setRetouche(true)} />
+  }
+  render(<MemoireDuParcours><Parcours /></MemoireDuParcours>)
+  fireEvent.change(screen.getByLabelText("Mouvement de la galerie"), { target: { value: "marche" } })
+  fireEvent.change(screen.getByLabelText("Direction de la galerie"), { target: { value: "nord" } })
+  fireEvent.change(screen.getByLabelText("Jugement de la galerie"), { target: { value: "gardee" } })
+  expect(document.querySelectorAll("[data-carte-animation]")).toHaveLength(1)
+  const grille = screen.getByLabelText("Mouvement de la galerie").closest("section")!.parentElement!
+  const defile = grille.closest(".overflow-y-auto") as HTMLElement
+  defile.scrollTop = 456
+  fireEvent.scroll(defile)
+  fireEvent.click(screen.getByRole("button", { name: "Retoucher essai marche-nord" }))
+  fireEvent.click(screen.getByRole("button", { name: "Retour au sujet" }))
+  expect((screen.getByLabelText("Mouvement de la galerie") as HTMLSelectElement).value).toBe("marche")
+  expect((screen.getByLabelText("Direction de la galerie") as HTMLSelectElement).value).toBe("nord")
+  expect((screen.getByLabelText("Jugement de la galerie") as HTMLSelectElement).value).toBe("gardee")
+  expect(document.querySelectorAll("[data-carte-animation]")).toHaveLength(1)
+  expect((screen.getByLabelText("Mouvement de la galerie").closest(".overflow-y-auto") as HTMLElement).scrollTop).toBe(456)
+  expect(document.querySelector('[data-volet-de-la-bande]')).toBeNull()
+})
+
+test("une vignette joue au survol ou au focus, et reste immobile autrement", () => {
+  vi.useFakeTimers()
+  monter()
+  const vignette = within(rangee("repos/sud")).getByLabelText("essai a")
+  const frame = vignette.querySelector("[data-bande-qui-tourne] > span") as HTMLElement
+  const initial = frame.style.backgroundPosition
+  act(() => vi.advanceTimersByTime(125))
+  expect(frame.style.backgroundPosition).toBe(initial)
+  fireEvent.pointerEnter(vignette)
+  act(() => vi.advanceTimersByTime(125))
+  expect(frame.style.backgroundPosition).not.toBe(initial)
+  fireEvent.pointerLeave(vignette)
+  act(() => vi.advanceTimersByTime(125))
+  expect(frame.style.backgroundPosition).toBe(initial)
+  fireEvent.focus(vignette)
+  act(() => vi.advanceTimersByTime(125))
+  expect(frame.style.backgroundPosition).not.toBe(initial)
+  fireEvent.blur(vignette)
+  expect(frame.style.backgroundPosition).toBe(initial)
+})
 
 // ── Le rangement, sans écran ────────────────────────────────────────────────
 
@@ -232,6 +283,48 @@ describe("le rangement d'une rangée", () => {
 // ── L'écran ─────────────────────────────────────────────────────────────────
 
 describe("les rangées à l'écran", () => {
+  const objectifMarcheEst: ObjectifProduction = {
+    sorties: [{ nature: "animation", pose: "marche", direction: "est", quantite: 1 }],
+    largeur: 64, hauteur: 64, cadence: 8, boucle: true, repere: { x: 32, y: 64 },
+  }
+  const marcheEst = sienne({
+    pose: "marche",
+    directions: [
+      { ...DIRECTION, identifiant: "est", nom: "est", bandes: [] },
+      { ...DIRECTION, identifiant: "ouest", nom: "ouest", bandes: [] },
+    ],
+  })
+
+  test("un objectif marche-est seul ne transforme pas les autres poses ni directions en manques", () => {
+    monter([
+      sienne({ pose: "repos", directions: [{ ...DIRECTION, identifiant: "sud", nom: "sud", bandes: [] }] }),
+      marcheEst,
+    ], objectifMarcheEst)
+
+    expect(document.querySelector('[data-pose-de-rangement="repos"]')).toBeNull()
+    expect(document.querySelector('[data-rangee="marche/ouest"]')).toBeNull()
+    expect(rangee("marche/est")).toBeTruthy()
+    expect(within(rangee("marche/est")).getByText("aucun clip encore — à fabriquer")).toBeTruthy()
+    expect(screen.getAllByText("1 à fabriquer")).toHaveLength(1)
+  })
+
+  test("une bande ancienne hors objectif reste ouvrable et porte sa portée", () => {
+    const { onOuvrirLaBande } = monter([CASE_SUD, marcheEst], objectifMarcheEst)
+    const repos = document.querySelector('[data-pose-de-rangement="repos"]') as HTMLElement
+    expect(within(repos).getByText("hors objectif")).toBeTruthy()
+    fireEvent.click(within(repos).getByRole("button", { name: /repos/ }))
+    fireEvent.click(within(rangee("repos/sud")).getByLabelText(/essai b/))
+    fireEvent.click(screen.getByRole("button", { name: "L'ouvrir dans l'atelier" }))
+    expect(onOuvrirLaBande).toHaveBeenCalledWith("b")
+  })
+
+  test("sans objectif explicite, le plan historique reste entièrement parcourable", () => {
+    monter([CASE_SUD, marcheEst])
+    expect(document.querySelector('[data-pose-de-rangement="repos"]')).toBeTruthy()
+    expect(document.querySelector('[data-pose-de-rangement="marche"]')).toBeTruthy()
+    expect(screen.queryByText("hors objectif")).toBeNull()
+  })
+
   test("la première pose est dépliée, ses rangées portent leur direction et leur compte", () => {
     monter()
     const sud = rangee("repos/sud")
@@ -299,18 +392,18 @@ describe("les rangées à l'écran", () => {
     expect(within(rangee("repos/sud")).getByText("aucune retenue")).toBeTruthy()
   })
 
-  test("une seule bande sans retenue ne réclame rien : il n'y a rien à départager", () => {
+  test("une seule bande à juger garde une place explicite pour la retenue", () => {
     monter([
       sienne({
         pose: "repos",
         directions: [{ ...DIRECTION, identifiant: "sud", nom: "sud", bandes: [VIEILLE] }],
       }),
     ])
-    expect(screen.queryByText("aucune retenue")).toBeNull()
+    expect(screen.getByText("aucune retenue")).toBeTruthy()
   })
 })
 
-describe("les écartées, repliées derrière la flèche", () => {
+describe("les écartées, à droite et repliables", () => {
   const ecartee = bande({ identifiant: "e", cree_le: 150, supprime_le: 1_700 })
   const avecEcartee = sienne({
     pose: "repos",
@@ -327,25 +420,25 @@ describe("les écartées, repliées derrière la flèche", () => {
     ],
   })
 
-  test("une bande écartée ne paraît pas dans la piste, seulement derrière la flèche", () => {
+  test("une bande écartée paraît à droite des versions actives", () => {
     monter([avecEcartee])
     const sud = rangee("repos/sud")
-    expect(sud.querySelector('[data-vignette-de-bande="e"]')).toBeNull()
+    expect(Array.from(sud.querySelectorAll('[data-vignette-de-bande]')).map((v) => v.getAttribute('data-vignette-de-bande'))).toEqual(['b', 'e'])
     expect(within(sud).getByRole("button", { name: "1 écartée" })).toBeTruthy()
   })
 
-  test("un clic déplie la flèche, et montre l'écartée en transparence", () => {
+  test("la flèche masque puis retrouve les écartées", () => {
     monter([avecEcartee])
     const sud = rangee("repos/sud")
+    fireEvent.click(within(sud).getByRole("button", { name: "1 écartée" }))
     expect(sud.querySelector('[data-vignette-de-bande="e"]')).toBeNull()
-    fireEvent.click(within(sud).getByRole("button", { name: /écartée/ }))
+    fireEvent.click(within(sud).getByRole("button", { name: "1 écartée" }))
     expect(sud.querySelector('[data-vignette-de-bande="e"]')).toBeTruthy()
   })
 
   test("restaurer une écartée part à /api/strips/restore", async () => {
     const { appels } = monter([avecEcartee])
     const sud = rangee("repos/sud")
-    fireEvent.click(within(sud).getByRole("button", { name: /écartée/ }))
     fireEvent.click(within(sud).getByRole("button", { name: /restaurer/i }))
     await waitFor(() => expect(appels).toHaveLength(1))
     expect(appels[0].url).toBe("/api/strips/restore")
@@ -417,27 +510,43 @@ describe("les trois marques", () => {
 })
 
 describe("le volet de la bande", () => {
-  test("il ouvre sur la retenue de la pose dépliée, et la nomme", () => {
+  test("la liste reste pleine largeur ; un clic ouvre les détails, qui se referment", () => {
     monter()
+    expect(document.querySelector("[data-volet-de-la-bande]")).toBeNull()
+    fireEvent.click(within(rangee("repos/sud")).getByLabelText(/essai b/))
     const volet = document.querySelector("[data-volet-de-la-bande]") as HTMLElement
     expect(within(volet).getByText("L'animation retenue")).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "Fermer les détails" }))
+    expect(document.querySelector("[data-volet-de-la-bande]")).toBeNull()
   })
 
   test("choisir une gardée change le volet, qui cesse de dire « retenue »", () => {
     monter()
-    fireEvent.click(screen.getByLabelText(/essai a/))
+    fireEvent.click(within(rangee("repos/sud")).getByLabelText(/essai a/))
     const volet = document.querySelector("[data-volet-de-la-bande]") as HTMLElement
     expect(within(volet).getByText("L'animation choisie")).toBeTruthy()
   })
 
   test("« L'ouvrir dans l'atelier » part avec l'identifiant de la bande", () => {
     const { onOuvrirLaBande } = monter()
+    fireEvent.click(within(rangee("repos/sud")).getByLabelText(/essai b/))
     fireEvent.click(screen.getByRole("button", { name: "L'ouvrir dans l'atelier" }))
     expect(onOuvrirLaBande).toHaveBeenCalledWith("b")
+    expect(document.querySelector("[data-volet-de-la-bande]")).toBeNull()
+  })
+
+  test("un double clic ouvre directement la retouche et libère les détails", () => {
+    const { onOuvrirLaBande } = monter()
+    const vignette = within(rangee("repos/sud")).getByLabelText(/essai b/)
+    fireEvent.click(vignette)
+    fireEvent.doubleClick(vignette)
+    expect(onOuvrirLaBande).toHaveBeenCalledWith("b")
+    expect(document.querySelector("[data-volet-de-la-bande]")).toBeNull()
   })
 
   test("« En générer une variante » anime la pose et la direction de la bande choisie", () => {
     const { onAnimer } = monter()
+    fireEvent.click(within(rangee("repos/sud")).getByLabelText(/essai b/))
     fireEvent.click(screen.getByRole("button", { name: "En générer une variante" }))
     expect(onAnimer.mock.calls[0][1].identifiant).toBe("repos")
     expect(onAnimer.mock.calls[0][2]).toEqual({ identifiant: "sud", nom: "sud" })
@@ -445,16 +554,17 @@ describe("le volet de la bande", () => {
 
   test("« L'écarter » depuis le volet part au serveur, et promeut si c'était la retenue", async () => {
     const { appels } = monter()
+    fireEvent.click(within(rangee("repos/sud")).getByLabelText(/essai b/))
     const volet = document.querySelector("[data-volet-de-la-bande]") as HTMLElement
     fireEvent.click(within(volet).getByRole("button", { name: "L'écarter" }))
     await waitFor(() => expect(appels).toHaveLength(2))
     expect(appels[0].corps).toEqual({ identifiants: ["b"] })
   })
 
-  test("sans rien de choisi, le volet ne se referme pas — il se vide", () => {
+  test("sans animation, aucun volet vide ne réserve une colonne", () => {
     monter([sienne({ pose: "repos" })])
-    expect(document.querySelector("[data-volet-vide]")).toBeTruthy()
-    expect(screen.getByText(/Aucune de ses poses n'est animée/)).toBeTruthy()
+    expect(document.querySelector("aside")).toBeNull()
+    expect(screen.getByLabelText("Générer cette pose")).toBeTruthy()
   })
 })
 

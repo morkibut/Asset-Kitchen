@@ -1,8 +1,13 @@
 import { appeler, type AttenteVideo, type PrixVideo, type ObjectifProduction } from "./api"
+import type { TravailEquipement } from "./api-travaux-equipement"
+import type { TravailImageLocale } from "./api-workflows"
+import type { TravailVideoLibre } from "./api-video-libre"
+import type { Travail3D } from "./api-3d"
+import type { TravailAudio } from "./api-travaux-audio"
 
 export type CadreDelegation = {
   autoriser_local: boolean; autoriser_payant: boolean
-  modeles_image: string[]; modeles_video: string[]
+  modeles_image: string[]; modeles_video: string[]; modeles_3d?: string[]; modeles_audio?: string[]
   plafond_appels: number; plafond_usd: number; livraison_provisoire: boolean
   origine?: string
 }
@@ -17,6 +22,7 @@ export type DemandeTravail = {
   livrer_provisoire?: boolean; plafond_image_usd?: number | null
 }
 export type Travail = {
+  nature?: "animation"
   identifiant: string; projet: string; cle: string; acteur: "auteur" | "agent"
   etat: "prepare" | "en_cours" | "a_reprendre" | "a_verifier" | "externe_inconnu" | "termine" | "annule"
   etape_locale?: string | null
@@ -31,6 +37,7 @@ export type Travail = {
   consommations: { generation: string; modele: string; consomme: number; unite: string; cout_usd: number }[]
   raison?: string; prochaine_action: string; livraison?: string | null
 }
+export type TravailSuivi = Travail | TravailEquipement | TravailImageLocale | TravailVideoLibre | Travail3D | TravailAudio
 const chemin = (projet: string) => `/projects/${encodeURIComponent(projet)}`
 const travail = (projet: string, id: string) => `${chemin(projet)}/production-jobs/${encodeURIComponent(id)}`
 export const travaux = {
@@ -39,9 +46,10 @@ export const travaux = {
     const { origine: _origine, ...reglages } = cadre
     return appeler<CadreDelegation>(`${chemin(projet)}/delegation`, { method: "PUT", body: JSON.stringify(reglages) })
   },
-  lister: (projet: string) => appeler<Travail[]>(`${chemin(projet)}/production-jobs`),
+  lister: (projet: string) => appeler<TravailSuivi[]>(`${chemin(projet)}/production-jobs`),
   preparer: (projet: string, demande: DemandeTravail) => appeler<Travail>(`${chemin(projet)}/production-jobs/preview`, { method: "POST", body: JSON.stringify(demande) }),
   lire: (projet: string, id: string) => appeler<Travail>(travail(projet, id)),
+  lireSuivi: (projet: string, id: string) => appeler<TravailSuivi>(travail(projet, id)),
   demarrer: (projet: string, id: string) => appeler<Travail>(`${travail(projet, id)}/start`, { method: "POST" }),
   reprendre: (projet: string, id: string) => appeler<Travail>(`${travail(projet, id)}/resume`, { method: "POST" }),
 }

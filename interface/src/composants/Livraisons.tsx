@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { api, Refus, type ApercuLivraison, type Bande, type LivraisonGodot, type Personnage } from "../api"
 import { BandeQuiTourne } from "./Apercu"
 import { Sortie } from "./Sortie"
+import { ImagesALivrer } from "./ImagesALivrer"
 
 const champ = "rounded-7 border border-contour bg-carte px-[8px] py-[8px] text-[13px] text-encre"
 const bouton = "rounded-7 border border-contour px-[14px] py-[8px] text-[13px] text-encre-controle disabled:opacity-50"
@@ -26,6 +27,7 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
   const [sujets, setSujets] = useState<Personnage[]>([])
   const [sujetId, setSujetId] = useState("")
   const [choisies, setChoisies] = useState<string[]>([])
+  const [nature, setNature] = useState<"animation" | "image">("animation")
   const [boucles, setBoucles] = useState<Record<string, boolean>>({})
   const [dossier, setDossier] = useState("")
   const [sousDossier, setSousDossier] = useState("assets/asset-kitchen")
@@ -104,6 +106,8 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
         {!sujets.length && <option value="">Aucun asset créé</option>}
         {sujets.map(s => <option key={s.identifiant} value={s.identifiant}>{s.nom}</option>)}
       </select></label>
+      <div className="flex gap-[8px]" aria-label="Nature des versions"><button className={bouton} aria-pressed={nature === "animation"} onClick={() => { invalider(); setNature("animation") }}>Animations</button><button className={bouton} aria-pressed={nature === "image"} onClick={() => { invalider(); setNature("image") }}>Images fixes</button></div>
+      {nature === "image" ? sujetId && <ImagesALivrer key={sujetId} projet={projet} personnage={sujetId} associe={associe} onApercu={setApercu} onInvalider={invalider} onOccupation={setOccupe} /> : <>
       {!bandes.length && <p className="text-[13px] text-encre-3">Cet asset n’a pas encore d’animation. Crée ou importe un clip, puis garde une bande dans le montage.</p>}
       <div className="flex flex-col gap-[8px]">
         {bandes.map(b => <div key={b.identifiant} className="flex flex-wrap items-center gap-[14px] rounded-7 border border-trait p-[8px]">
@@ -117,12 +121,14 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
         <div className="flex gap-[14px]">{(["x", "y"] as const).map(axe => <label key={axe} className="text-[13px]">{axe.toUpperCase()} <input type="number" className={`${champ} w-[70px]`} value={pivot[axe]} onChange={e => { invalider(); setPivot(p => ({ ...p, [axe]: e.target.value })) }} /></label>)}</div>
       </details>
       <button className={`${bouton} self-start`} disabled={!associe || !choisies.length} onClick={prevoir}>Relire {choisies.length || "les"} animation{choisies.length !== 1 ? "s" : ""} à livrer</button>
+      </>}
     </fieldset>
     {apercu && <section className="flex flex-col gap-[14px] rounded-10 border border-trait bg-carte p-[14px]" aria-label="Fichiers relus">
       <h2 className="font-serif text-[25px]">3 · Ce qui va être écrit</h2>
       <p className="break-all text-[11.5px] text-encre-3">{apercu.dossier}</p>
       {apercu.pivot && <p className="text-[13px]">Repère relu : X {apercu.pivot.x} · Y {apercu.pivot.y} pixels.</p>}
-      <p className="text-[11.5px] text-encre-3">La scène du personnage garde la même adresse dans le jeu. Les anciennes révisions restent conservées.</p>
+      <p className="text-[11.5px] text-encre-3">La scène de l’asset garde la même adresse dans le jeu. Les anciennes révisions restent conservées.</p>
+      {apercu.ressource && <p className="break-all text-[12px] text-encre-3">Texture à utiliser directement : {apercu.ressource}</p>}
       <ul className="flex flex-col gap-[8px]">{apercu.fichiers.map(f => <li key={f.chemin} className="flex items-center justify-between gap-[14px] text-[12px]"><span className="min-w-0 break-all font-mono">{f.chemin}</span><span className="shrink-0 text-encre-3">{({ inchange: "inchangé", nouveau: "nouveau", remplace: "remplacé", conflit: "conflit" } as Record<string, string>)[f.etat] ?? f.etat} · {Math.ceil(f.octets / 1024)} ko</span></li>)}</ul>
       {apercu.conflits.map((c, i) => <p key={i} role="alert" className="text-[13px] text-echec">{c.chemin} — {c.raison}</p>)}
       <button className={`${bouton} self-start bg-signal text-encre-sur-signal`} disabled={occupe || !apercu.pret} onClick={() => agir(async () => {
@@ -134,11 +140,12 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
     </section>}
     {!!historique.length && <section aria-label="Livraisons conservées"><h2 className="font-serif text-[25px]">Les livraisons conservées</h2>
       <ul className="flex flex-col gap-[8px] pt-[8px]">{historique.map((l, i) => <li key={l.jeton || l.revision || i} className="rounded-7 border border-trait bg-carte p-[14px] text-[13px]">
-        <p>Révision {l.revision.slice(0, 8)} · {({ preparee: "À relire", en_cours: "En cours", interrompue: "Interrompue", terminee: "Livrée" })[l.etat ?? "preparee"]}</p>
+        <p>{l.nom ? `${l.nom} · ` : ""}{l.nature === "image" ? "Image fixe · " : ""}Révision {l.revision.slice(0, 8)} · {({ preparee: "À relire", en_cours: "En cours", interrompue: "Interrompue", terminee: "Livrée" })[l.etat ?? "preparee"]}</p>
         <p className="break-all text-[11.5px] text-encre-3">Scène à utiliser dans le jeu : {l.scene}</p>
         <button className={`${bouton} mt-[8px]`} disabled={occupe} onClick={() => agir(async () => {
           const lu = l.etat === "terminee" ? await api.reprendreLivraison(projet, l.jeton) : l
-          setSujetId(lu.personnage)
+          setSujetId(lu.personnage ?? "")
+          setNature(lu.nature === "image" ? "image" : "animation")
           setChoisies(lu.animations.map(a => a.bande || a.identifiant || "").filter(Boolean))
           setBoucles(Object.fromEntries(lu.animations.map(a => [a.bande || a.identifiant || "", a.boucle ?? true])))
           if (lu.pivot) setPivot({ x: String(lu.pivot.x), y: String(lu.pivot.y) })

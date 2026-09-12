@@ -42,6 +42,7 @@ import {
 import type { Fente } from "./EnTeteDeSurface"
 import { PANNEAU } from "./Infobulle"
 import { SurfaceZoomable } from "./SurfaceZoomable"
+import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 
 /** En dessous, un rectangle est un clic qui a glissé, pas une intention. En
  *  pixels de la planche — la même unité que tout le reste de cet écran. */
@@ -134,19 +135,36 @@ export function EcranDecoupe({
           quoi: "carte",
         }
 
+  const etatDecoupe = { mode, coteMin, colonnes, lignes, remplacer, boites }
+  const [origineDecoupe, setOrigineDecoupe] = useState<{ id: string; etat: typeof etatDecoupe } | null>(null)
+  const revisionProposition = useRef(0)
+  const propositionAignorer = useRef<string | null>(null)
+  const brouillon = useBrouillonLocal({
+    cle: `decoupe:${vu.quoi}:${vu.identifiant}`, pret: origineDecoupe?.id === vu.identifiant,
+    reference: origineDecoupe?.etat ?? etatDecoupe, etat: etatDecoupe,
+    appliquer: (recu) => {
+      revisionProposition.current += 1
+      propositionAignorer.current = JSON.stringify([vu.identifiant, recu.mode, recu.colonnes, recu.lignes, recu.coteMin])
+      setMode(recu.mode); setCoteMin(recu.coteMin); setColonnes(recu.colonnes); setLignes(recu.lignes); setRemplacer(recu.remplacer); setBoites(recu.boites); setChoisie(null)
+    },
+  })
+
   // ── La proposition ────────────────────────────────────────────────────────
   //
   // Elle se redemande à chaque cran de réglage, et **elle remplace la liste** :
   // c'est ce qu'un changement de mode veut dire.
   const famille = sujet.famille
   const proposer = useCallback(async () => {
+    const revision = ++revisionProposition.current
     const reglage = { mode, colonnes, lignes, cote_min: coteMin }
     try {
       const propose =
         famille === "planche"
           ? await api.decoupeProposee(vu.identifiant, reglage)
           : await api.decoupeDeCarteProposee(vu.identifiant, reglage)
+      if (revision !== revisionProposition.current) return
       setDetectee(propose)
+      setOrigineDecoupe((avant) => avant?.id === vu.identifiant ? avant : { id: vu.identifiant, etat: { mode, coteMin, colonnes, lignes, remplacer, boites: propose.boites } })
       setBoites(propose.boites)
       setChoisie(null)
       setRefus("")
@@ -157,7 +175,11 @@ export function EcranDecoupe({
   }, [famille, vu.identifiant, mode, colonnes, lignes, coteMin])
 
   useEffect(() => {
+    const signature = JSON.stringify([vu.identifiant, mode, colonnes, lignes, coteMin])
+    if (propositionAignorer.current === signature) return
+    propositionAignorer.current = null
     void proposer()
+    return () => { revisionProposition.current += 1 }
   }, [proposer])
 
   // ── Découper ──────────────────────────────────────────────────────────────
@@ -167,9 +189,11 @@ export function EcranDecoupe({
     try {
       if (sujet.famille === "planche") {
         const fait = await api.decouper(vu.identifiant, boites)
+        brouillon.effacer()
         sujet.onDecoupe(fait.decoupes)
       } else {
         const fait = await api.decouperCarte(vu.identifiant, boites, remplacer)
+        brouillon.effacer()
         sujet.onDecoupe(fait.morceaux)
       }
     } catch (erreur) {
@@ -210,6 +234,7 @@ export function EcranDecoupe({
 
   return (
     <div data-decoupe className="flex min-h-0 flex-1 flex-col bg-papier">
+      <AvisBrouillon brouillon={brouillon} />
       <div className="flex min-h-0 flex-1">
         <Planche
           vu={

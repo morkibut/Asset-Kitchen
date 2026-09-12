@@ -3,18 +3,20 @@ import { api, type EmplacementCorps, type EmploiResolu, type Personnage, type Pi
 import { apiCalques, cleCible, ETAT_CALQUE, type CiblesEmploi, type ImageCible, type VarianteCalque } from "../api-calques"
 import { ChoisirImageEquipement } from "./ChoisirImageEquipement"
 import { EditeurCalqueCible } from "./EditeurCalqueCible"
+import { CouvertureDeLEmploi } from "./CouvertureDeLEmploi"
 
 const CONTROLE = "h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle"
 
-export function CalquesDeLEmploi({ projet, emploi, piece, porteur, emplacements, onRegler, onHistorique, onLesAutresEmplois }: {
+export function CalquesDeLEmploi({ projet, emploi, piece, porteur, emplacements, onRegler, onHistorique, onLesAutresEmplois, cibleInitiale, varianteInitiale }: {
   projet: string; emploi: EmploiResolu; piece: Piece; porteur: Personnage; emplacements: readonly EmplacementCorps[]
   onRegler: (champs: { nom?: string; emplacement?: string; devant?: boolean; description?: string }) => void
   onHistorique: () => void; onLesAutresEmplois: () => void
+  cibleInitiale?: import("../api-calques").CibleCalque; varianteInitiale?: string
 }) {
   const chemin = useMemo(() => ({ projet, piece: piece.identifiant, emploi: emploi.identifiant }), [projet, piece.identifiant, emploi.identifiant])
   const [donnees, setDonnees] = useState<CiblesEmploi | null>(null)
-  const [cibleChoisie, setCibleChoisie] = useState("")
-  const [varianteChoisie, setVarianteChoisie] = useState("")
+  const [cibleChoisie, setCibleChoisie] = useState(cibleInitiale ? cleCible(cibleInitiale) : "")
+  const [varianteChoisie, setVarianteChoisie] = useState(varianteInitiale ?? "")
   const [choisirImage, setChoisirImage] = useState(false)
   const [sale, setSale] = useState(false)
   const [erreur, setErreur] = useState("")
@@ -25,6 +27,7 @@ export function CalquesDeLEmploi({ projet, emploi, piece, porteur, emplacements,
   const [nouvelEmplacement, setNouvelEmplacement] = useState("")
   const [ajoutEmplacement, setAjoutEmplacement] = useState(false)
   const [sauve, setSauve] = useState("")
+  const [couverture, setCouverture] = useState(false)
   useEffect(() => {
     let vivant = true
     apiCalques.cibles(chemin).then((r) => {
@@ -67,11 +70,11 @@ export function CalquesDeLEmploi({ projet, emploi, piece, porteur, emplacements,
   return <main aria-label={`${piece.nom} portée par ${porteur.nom}`} data-calques-cibles className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier">
     <header className="flex flex-wrap items-center justify-between gap-[14px] border-b border-trait px-[30px] py-[14px]">
       <div><h1 className="font-serif text-[38px] text-encre">{piece.nom} · {porteur.nom}</h1><p className="mt-[4px] text-[13px] text-encre-3">Un calque indépendant pour chaque image et chaque frame de ce personnage.</p></div>
-      <div className="flex flex-wrap gap-[8px]"><button className={CONTROLE} onClick={() => { if (autoriser()) onLesAutresEmplois() }}>Les autres emplois</button><button className={CONTROLE} onClick={() => { if (autoriser()) onHistorique() }}>Calques de pose historiques</button></div>
+      <div className="flex flex-wrap gap-[8px]"><button className={CONTROLE} onClick={() => { if (autoriser()) setCouverture(!couverture) }}>{couverture ? "Retoucher les calques" : "Couverture & fabrication"}</button><button className={CONTROLE} onClick={() => { if (autoriser()) onLesAutresEmplois() }}>Les autres emplois</button><button className={CONTROLE} onClick={() => { if (autoriser()) onHistorique() }}>Calques de pose historiques</button></div>
     </header>
     {erreur && <p role="alert" className="border-b border-trait px-[30px] py-[8px] text-[13px] text-echec">{erreur} <button className="underline" onClick={() => { if (!sale) { setErreur(""); setRafraichi((n) => n + 1) } }}>Relire</button></p>}
     {sauve && <p role="status" className="px-[30px] py-[8px] text-[12px] text-encre-3">{sauve}</p>}
-    <div className="flex min-h-0 flex-1">
+    {couverture ? <CouvertureDeLEmploi chemin={chemin} onCalque={(c, v) => { setCibleChoisie(cleCible(c)); setVarianteChoisie(v ?? ""); setChoisirImage(false); setCouverture(false); setRafraichi((n) => n + 1) }} /> : <div className="flex min-h-0 flex-1">
       <aside aria-label="Cibles de cet emploi" className="defile flex w-[300px] shrink-0 flex-col gap-[14px] overflow-y-auto border-r border-trait bg-papier-cote p-[14px]">
         <details><summary className="cursor-pointer text-[13px] text-encre">Emplacement de cet emploi</summary><div className="mt-[8px] flex flex-col gap-[8px]"><label className="text-[12px] text-encre-3">Emplacement<select aria-label="Emplacement de cet emploi" className={`${CONTROLE} mt-[4px] w-full`} value={emploi.emplacement} onChange={(e) => onRegler({ emplacement: e.target.value })}><option value="">Celui de la pièce</option>{toutesPlaces.map((p) => <option value={p.identifiant} key={p.identifiant}>{p.nom}</option>)}</select></label><button className={CONTROLE} onClick={() => setAjoutEmplacement(!ajoutEmplacement)}>Ajouter un emplacement au jeu</button>{ajoutEmplacement && <div className="flex flex-col gap-[8px]"><input aria-label="Nom du nouvel emplacement" className={CONTROLE} value={nouvelEmplacement} onChange={(e) => setNouvelEmplacement(e.target.value)} placeholder="Ex. main gauche" /><button className={CONTROLE} disabled={!nouvelEmplacement.trim()} onClick={() => void ajouterPlace()}>Créer cet emplacement</button></div>}<p className="text-[11px] text-encre-4">L’emplacement classe la pièce. La position exacte et les parties cachées se règlent sur chaque calque.</p></div></details>
         <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Résultats de base<select className={CONTROLE} aria-label="Nature des cibles" value={nature} onChange={(e) => setNature(e.target.value)}><option value="">Images et animations</option><option value="image">Images fixes</option><option value="frame">Frames d’animation</option></select></label>
@@ -92,6 +95,6 @@ export function CalquesDeLEmploi({ projet, emploi, piece, porteur, emplacements,
           : variante ? <EditeurCalqueCible key={`${variante.identifiant}:${variante.revision}`} chemin={chemin} variante={variante} cibles={donnees?.cibles} onGarde={garder} onSale={setSale} />
             : <div className="p-[30px]"><h2 className="font-serif text-[25px] text-encre">{selection ? "Le premier calque de cette image" : "Choisir une image du personnage"}</h2><p className="mt-[14px] max-w-prose text-[13px] leading-[1.5] text-encre-3">{selection ? "Importez le personnage équipé pour en extraire la pièce, ou associez un calque déjà transparent. La base reste conservée et chaque version se vérifie avant d’être retenue." : "La liste regroupe les résultats existants par mouvement et direction. Les calques de pose d’avant cet atelier restent accessibles par le bouton historique."}</p>{selection && <button className={`${CONTROLE} mt-[22px]`} onClick={() => setChoisirImage(true)}>Choisir une image dans la bibliothèque</button>}</div>}
       </div>
-    </div>
+    </div>}
   </main>
 }

@@ -399,8 +399,10 @@ describe("les trois marques", () => {
 const laFiche = () => document.querySelector("[data-panneau]") as HTMLElement
 
 describe("le volet de l'image", () => {
-  test("il ouvre sur la retenue de la pose dépliée, et la nomme", () => {
+  test("la liste garde sa largeur jusqu'au choix d'une image et après fermeture", () => {
     monter()
+    expect(laFiche()).toBeNull()
+    fireEvent.click(screen.getByLabelText("image b, la retenue"))
     expect(within(laFiche()).getByAltText("image b")).toBeTruthy()
     expect(within(laFiche()).getByText("gpt-image-2")).toBeTruthy()
     // De quelle case on parle — sans quoi le volet décrit « une image » et
@@ -408,6 +410,8 @@ describe("le volet de l'image", () => {
     expect(
       document.querySelector("[data-identite-de-l-image]")?.textContent,
     ).toContain("repos")
+    fireEvent.click(screen.getByLabelText("Fermer la fiche"))
+    expect(laFiche()).toBeNull()
   })
 
   test("choisir une gardée change le volet, qui suit l'image choisie", () => {
@@ -418,8 +422,19 @@ describe("le volet de l'image", () => {
 
   test("« La retoucher » ouvre l'image dans ses tables", () => {
     const { onOuvrirCase } = monter()
+    fireEvent.click(screen.getByLabelText("image b, la retenue"))
     fireEvent.click(screen.getByRole("button", { name: "La retoucher" }))
     expect(onOuvrirCase).toHaveBeenCalledWith("b")
+    expect(laFiche()).toBeNull()
+  })
+
+  test("un double clic ouvre la retouche de l'image sans garder le panneau", () => {
+    const { onOuvrirCase } = monter()
+    const vignette = screen.getByLabelText("image b, la retenue")
+    fireEvent.click(vignette)
+    fireEvent.doubleClick(vignette)
+    expect(onOuvrirCase).toHaveBeenCalledWith("b")
+    expect(laFiche()).toBeNull()
   })
 
   test("une image sans direction propose les angles du jeu, et un clic la range", async () => {
@@ -434,6 +449,7 @@ describe("le volet de l'image", () => {
         ],
       }),
     ])
+    fireEvent.click(screen.getByLabelText("image o, la retenue"))
     expect(screen.getByText("Sa direction est à confirmer")).toBeTruthy()
     fireEvent.click(screen.getByRole("button", { name: "nord" }))
     await waitFor(() => expect(appels).toHaveLength(1))
@@ -449,15 +465,14 @@ describe("le volet de l'image", () => {
 
   test("une image qui sait d'où elle regarde ne propose rien à confirmer", () => {
     monter()
+    fireEvent.click(screen.getByLabelText("image b, la retenue"))
     expect(screen.queryByText("Sa direction est à confirmer")).toBeNull()
   })
 
-  test("sans rien de choisi, le volet ne se referme pas — il se vide", () => {
-    // Un volet qui disparaît change la largeur de la surface, et la rangée
-    // qu'on lisait se déplace sous le pointeur.
+  test("sans image, aucun volet vide ne réserve une colonne", () => {
     monter([sienne({ pose: "repos" })])
-    expect(document.querySelector("[data-volet-vide]")).toBeTruthy()
-    expect(screen.getByText(/Aucune de ses poses n'a d'image/)).toBeTruthy()
+    expect(document.querySelector("aside")).toBeNull()
+    expect(screen.getByLabelText("Générer cette pose")).toBeTruthy()
   })
 })
 
@@ -509,6 +524,7 @@ describe("les calques", () => {
 
   test("l'image retenue montre ses calques à elle, pas ceux de sa pose", () => {
     monter([avecCalques])
+    fireEvent.click(screen.getByLabelText("image b, la retenue"))
     const section = document.querySelector("[data-calques-de-l-image]") as HTMLElement
     expect(within(section).getByText("le casque")).toBeTruthy()
     expect(section.querySelectorAll("img")).toHaveLength(1)

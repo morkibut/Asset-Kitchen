@@ -148,7 +148,7 @@ export type Lieu =
   // **Il porte les deux identifiants**, pas seulement le sien : un emploi
   // n'existe que sur sa pièce, et le retrouver en cherchant dans toutes les
   // pièces du jeu aurait demandé au fil de savoir des choses qu'il n'a pas.
-  | { genre: "emploi"; piece: string; emploi: string }
+  | { genre: "emploi"; piece: string; emploi: string; cible?: { nature: "image" | "frame"; resultat: string; prise: string }; variante?: string }
   // Les calques d'animation de cet emploi (`B20`) — *ses animations, image par
   // image*. Une profondeur sous l'emploi, et elle porte **le porteur en plus**
   // des deux identifiants de l'emploi.

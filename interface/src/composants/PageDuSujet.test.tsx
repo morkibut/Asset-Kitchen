@@ -8,10 +8,11 @@
 // pièce.
 
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { afterEach, describe, expect, test, vi } from "vitest"
+import { afterEach, expect, test, vi } from "vitest"
 
 import { PageDuSujet } from "./PageDuSujet"
 import {
+  api,
   RECETTE_VIDE,
   type Asset,
   type Case,
@@ -22,6 +23,7 @@ import {
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -163,7 +165,7 @@ function construireDouble() {
   return { fetchDouble, appels }
 }
 
-function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
+function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu", onLivrer?: () => void) {
   const { fetchDouble, appels } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
@@ -186,6 +188,10 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
     onPiece: vi.fn(),
     onCreerPiece: vi.fn(),
     onRetirerLEmploi: vi.fn(),
+    onFabriquer: vi.fn(),
+    onImporter: vi.fn(),
+    onDecouper: vi.fn(),
+    onExtraire: vi.fn(),
   }
   render(
     <PageDuSujet
@@ -200,6 +206,7 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
       pieces={[]}
       vestiaire={null}
       dossierJeu={dossierJeu}
+      onLivrer={onLivrer}
       barreQuiPaie={<div data-barre-qui-paie />}
       {...rappels}
     />,
@@ -209,358 +216,139 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu") {
 
 const onglet = (nom: string) => screen.getByRole("tab", { name: nom })
 
-// ── Les quatre onglets ──────────────────────────────────────────────────────
-
-describe("les quatre onglets", () => {
-  test("la page ouvre sur sa fiche, et porte le marqueur du lieu", () => {
-    monter()
-    expect(document.querySelector("[data-etabli]")).toBeTruthy()
-    expect(document.querySelector("[data-page-du-sujet]")).toBeTruthy()
-    expect(onglet("Sa fiche").getAttribute("aria-selected")).toBe("true")
-    expect(screen.getByRole("heading", { name: "Le pèlerin" })).toBeTruthy()
-  })
-
-  // Les deux onglets à venir sont dans la barre et cliquables : les cacher
-  // ferait croire que la page est finie. Ils disent qu'ils ne sont pas
-  // construits **sans nommer leur tranche** — `B11` et `B12` ne veulent rien
-  // dire à l'écran, et l'interface n'écrit de code de tranche nulle part
-  // ailleurs.
-  test("les quatre sont là, cliquables, et les quatre sont construits", () => {
-    monter()
-    for (const nom of ["Sa fiche", "Ses images", "Ses animations", "L'essai"])
-      expect(onglet(nom)).toBeTruthy()
-    // « Ses animations » est construit depuis B11 — voir
-    // `AnimationsDuSujet.test.tsx` pour son rangement.
-    fireEvent.click(onglet("Ses animations"))
-    expect(document.querySelector("[data-onglet-animations]")).toBeTruthy()
-    // Et « L'essai » depuis B12 — voir `EssaiDuSujet.test.tsx`. Le dernier des
-    // quatre à cesser d'être un mot sans écran.
-    fireEvent.click(onglet("L'essai"))
-    expect(document.querySelector("[data-onglet-essai]")).toBeTruthy()
-  })
-
-  test("la barre qui paie se retire sur L'essai, et sur lui seul", () => {
-    // Un seul bouton rouille par écran (`docs/DESIGN.md`) : *L'essai* porte sa
-    // propre porte vers la dépense, « Demander un clip ». Garder la barre en
-    // ferait deux, et le rouille cesserait de vouloir dire quelque chose.
-    monter()
-    expect(document.querySelector("[data-barre-qui-paie]")).toBeTruthy()
-    fireEvent.click(onglet("L'essai"))
-    expect(document.querySelector("[data-barre-qui-paie]")).toBeNull()
-    fireEvent.click(onglet("Ses images"))
-    expect(document.querySelector("[data-barre-qui-paie]")).toBeTruthy()
-  })
-
-  test("passer d'un onglet à l'autre ne redemande rien au serveur, aller et retour", async () => {
-    // Le critère de la tranche : le carnet ne bouge pas, et rien ne se
-    // recharge. L'onglet est un état de la page, pas un lieu de la pile.
-    //
-    // **Et le retour compte autant que l'aller** : la fiche se démonte en
-    // changeant d'onglet, et ses deux lectures repartaient à chaque retour tant
-    // qu'elles vivaient dedans. Elles sont tenues par la page.
-    const { appels } = monter()
-    await waitFor(() => expect(appels.length).toBeGreaterThan(0))
-    const apresLaFiche = appels.length
-    fireEvent.click(onglet("Ses images"))
-    fireEvent.click(onglet("Ses animations"))
-    fireEvent.click(onglet("Sa fiche"))
-    fireEvent.click(onglet("Ses images"))
-    fireEvent.click(onglet("Sa fiche"))
-    expect(appels).toHaveLength(apresLaFiche)
-    // Et ce qu'elles avaient lu est toujours là.
-    expect(screen.getByText("Les héros")).toBeTruthy()
-    expect(screen.getByText("il occupe 100 % de la hauteur")).toBeTruthy()
-  })
-
-  test("la barre qui paie reste au pied, quel que soit l'onglet", () => {
-    monter()
-    expect(document.querySelector("[data-barre-qui-paie]")).toBeTruthy()
-    fireEvent.click(onglet("Ses images"))
-    expect(document.querySelector("[data-barre-qui-paie]")).toBeTruthy()
-  })
-
-  test("l'onglet « Ses images » montre bien le rangement en rangées", () => {
-    monter()
-    fireEvent.click(onglet("Ses images"))
-    expect(document.querySelector("[data-onglet-images]")).toBeTruthy()
-    expect(document.querySelector('[data-pose-de-rangement="repos"]')).toBeTruthy()
-  })
-
-  test("l'onglet « Ses animations » montre bien le rangement en rangées (B11)", () => {
-    monter()
-    fireEvent.click(onglet("Ses animations"))
-    expect(document.querySelector("[data-onglet-animations]")).toBeTruthy()
-    expect(document.querySelector('[data-pose-de-rangement="repos"]')).toBeTruthy()
-  })
+test("la fiche validée ouvre sur cinq onglets, sans formulaire ni barre permanente", async () => {
+  monter()
+  expect(document.querySelector("[data-page-du-sujet]")).toBeTruthy()
+  expect(within(screen.getByRole("tablist", { name: "La page du sujet" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images fixes", "Sources & clips", "Équipement", "Objectif & règles"])
+  expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
+  expect(screen.queryByLabelText("Nom du sujet")).toBeNull()
+  expect(document.querySelector("[data-ce-qui-lui-manque]")).toBeNull()
+  expect(document.querySelector("[data-barre-qui-paie]")).toBeNull()
+  fireEvent.click(onglet("Images fixes"))
+  expect(document.querySelector("[data-onglet-images]")).toBeTruthy()
+  expect(document.querySelector("[data-barre-qui-paie]")).toBeNull()
+  expect(await screen.findByText("Les héros")).toBeTruthy()
 })
 
-// ── Sa fiche ────────────────────────────────────────────────────────────────
-
-describe("sa fiche", () => {
-  test("son nom s'écrit, son dossier se lit et ne s'écrit pas", () => {
-    monter()
-    expect(screen.getByLabelText("Nom du sujet")).toHaveProperty("value", "Le pèlerin")
-    expect(screen.getByText("le-pelerin")).toBeTruthy()
-    expect(screen.getByText(/Le dossier est fixé à la création/)).toBeTruthy()
-  })
-
-  test("renommer part au serveur en quittant le champ, et rien avant", async () => {
-    const { appels, onPersonnage } = monter()
-    const champ = screen.getByLabelText("Nom du sujet")
-    fireEvent.change(champ, { target: { value: "Le pénitent" } })
-    expect(appels.filter((a) => a.methode === "PUT")).toHaveLength(0)
-    fireEvent.blur(champ)
-    await waitFor(() => expect(onPersonnage).toHaveBeenCalled())
-    const pose = appels.find((a) => a.methode === "PUT")
-    expect(pose?.url).toBe("/api/characters/le-pelerin")
-    expect(pose?.corps).toEqual({ nom: "Le pénitent" })
-  })
-
-  test("un nom vidé revient à celui d'avant, sans rien envoyer", () => {
-    const { appels } = monter()
-    const champ = screen.getByLabelText("Nom du sujet")
-    fireEvent.change(champ, { target: { value: "   " } })
-    fireEvent.blur(champ)
-    expect(champ).toHaveProperty("value", "Le pèlerin")
-    expect(appels.filter((a) => a.methode === "PUT")).toHaveLength(0)
-  })
-
-  test("sa description part avec chaque génération, et le dit", async () => {
-    const { appels } = monter()
-    const champ = screen.getByLabelText("Description du sujet")
-    fireEvent.change(champ, { target: { value: "un pèlerin usé" } })
-    fireEvent.blur(champ)
-    await waitFor(() =>
-      expect(appels.some((a) => a.methode === "PUT")).toBe(true),
-    )
-    expect(appels.find((a) => a.methode === "PUT")?.corps).toEqual({
-      description: "un pèlerin usé",
-    })
-    expect(screen.getByText("elle part avec chaque génération")).toBeTruthy()
-  })
-
-  test("son image de référence est celle que le produit désignerait, et le dit", () => {
-    monter()
-    const portrait = document.querySelector("[data-portrait-du-sujet]") as HTMLElement
-    expect(within(portrait).getByAltText("image a")).toBeTruthy()
-    expect(screen.getByText(/la retenue de repos, sinon la plus récente/)).toBeTruthy()
-  })
-
-  test("« En choisir une autre » mène là où l'on retient — pas ailleurs", () => {
-    monter()
-    fireEvent.click(screen.getByRole("button", { name: "En choisir une autre" }))
-    expect(onglet("Ses images").getAttribute("aria-selected")).toBe("true")
-  })
-
-  test("sans une seule image, il n'y a pas de portrait, et ce n'est pas un manque", () => {
-    monter({ cases: [sienne({ pose: "repos" })] })
-    expect(screen.getByText("aucune image encore")).toBeTruthy()
-    expect(screen.queryByRole("button", { name: "En choisir une autre" })).toBeNull()
-  })
-
-  test("ses collections se lisent, se retirent et se rangent", async () => {
-    const { appels } = monter()
-    await screen.findByText("Les héros")
-    fireEvent.click(screen.getByLabelText("Retirer de Les héros"))
-    await waitFor(() =>
-      expect(appels.some((a) => a.methode === "DELETE")).toBe(true),
-    )
-    expect(appels.find((a) => a.methode === "DELETE")?.url).toBe(
-      "/api/collections/heros/members/le-marais/le-pelerin",
-    )
-  })
-
-  test("« + ranger » ne propose que les collections où il n'est pas déjà", async () => {
-    const { appels } = monter()
-    await screen.findByText("Les héros")
-    fireEvent.click(screen.getByRole("button", { name: "+ ranger" }))
-    expect(screen.getByRole("button", { name: "Les PNJ" })).toBeTruthy()
-    expect(screen.queryByRole("button", { name: "Les héros" })).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "Les PNJ" }))
-    await waitFor(() => expect(appels.some((a) => a.methode === "PUT")).toBe(true))
-    expect(appels.find((a) => a.methode === "PUT")?.corps).toEqual({
-      jeu: "le-marais",
-      sujet: "le-pelerin",
-    })
-  })
-
-  test("son type dit ce qu'il occupe, lu dans le barème du jeu", async () => {
-    monter()
-    expect(await screen.findByText("il occupe 100 % de la hauteur")).toBeTruthy()
-  })
-
-  test("« Ce qui existe de lui » compte les poses faites, les images et le reste", () => {
-    monter()
-    expect(screen.getByText("1 / 2")).toBeTruthy()
-    expect(screen.getByText("poses")).toBeTruthy()
-    expect(screen.getByText("image")).toBeTruthy()
-  })
-
-  // Trouvé au navigateur, sur l'atelier jetable de `B19` : après avoir retiré
-  // un porteur, la carte disait « 2 équipements portés » au-dessus d'un
-  // vestiaire qui n'en montrait qu'un. Elle comptait les pièces trouvées sur
-  // ses calques, et retirer un porteur ne supprime aucune image.
-  test("la carte des équipements compte ce qu'il porte, pas les pièces de ses calques", () => {
-    monter({
-      pieces: ["sac-de-voyage"],
-      cases: [
-        sienne({
-          pose: "repos",
-          images: [image({ identifiant: "a" })],
-          corps: "a",
-          calques: {
-            "sac-de-voyage": [image({ identifiant: "c1", piece: "sac-de-voyage" })],
-            epee: [image({ identifiant: "c2", piece: "epee" })],
-          },
-        }),
-        sienne({ pose: "marche" }),
-      ],
-    })
-    expect(screen.getByText("équipement porté")).toBeTruthy()
-    expect(screen.queryByText("équipements portés")).toBeNull()
-  })
-
-  test("un sujet qui ne porte rien affiche zéro, même avec des calques sur ses poses", () => {
-    monter({
-      pieces: [],
-      cases: [
-        sienne({
-          pose: "repos",
-          images: [image({ identifiant: "a" })],
-          corps: "a",
-          calques: { epee: [image({ identifiant: "c2", piece: "epee" })] },
-        }),
-        sienne({ pose: "marche" }),
-      ],
-    })
-    const mot = screen.getByText("équipement porté")
-    expect(mot.parentElement?.textContent).toContain("0")
-  })
+test("un objectif d’animation n’ajoute aucun manque d’image fixe au résumé", async () => {
+  const objectif = { sorties: [{ nature: "animation", pose: "marche", direction: "", quantite: 1 }], largeur: 64, hauteur: 64, cadence: 8, boucle: true, repere: { x: 32, y: 64 } } as const
+  vi.spyOn(api, "objectifPersonnage").mockResolvedValue({ objectif, couverture: {
+    images: { demande: 0, produit: 0, retenu: 0, manquant: 0, a_retenir: 0 },
+    animations: { demande: 1, produit: 0, retenu: 0, manquant: 1, a_retenir: 0 }, cases: [],
+  } } as never)
+  const livrer = vi.fn()
+  monter({ objectif: { ...objectif, sorties: objectif.sorties.map(s => ({ ...s })) } }, "", livrer)
+  const resume = screen.getByRole("region", { name: "Résumé de l’asset" })
+  expect(await within(resume).findByText(/0 \/ 1 animation retenue · 1 à fabriquer/)).toBeTruthy()
+  expect(within(resume).queryByText(/image fixe.*fabriquer/)).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "Livrer…" }))
+  expect(livrer).toHaveBeenCalledOnce()
 })
 
-// ── Ce qui lui manque ───────────────────────────────────────────────────────
-
-describe("ce qui lui manque", () => {
-  const manque = () => document.querySelector("[data-ce-qui-lui-manque]") as HTMLElement
-
-  test("une pose sans image se nomme, et son geste arme sans dépenser", () => {
-    const { onArmer, appels } = monter()
-    const avant = appels.length
-    expect(within(manque()).getByText("1 pose sans image")).toBeTruthy()
-    fireEvent.click(within(manque()).getByRole("button", { name: "Armer marche" }))
-    expect(onArmer.mock.calls[0][1][0].identifiant).toBe("marche")
-    expect(appels).toHaveLength(avant)
-  })
-
-  test("aucune animation propose d'en commencer une — la seule route qui existe", () => {
-    const { onAnimer } = monter()
-    fireEvent.click(
-      within(manque()).getByRole("button", { name: "Commencer une animation" }),
-    )
-    expect(onAnimer).toHaveBeenCalledTimes(1)
-    expect(onAnimer.mock.calls[0][1].identifiant).toBe("repos")
-  })
-
-  test("un sujet sans description le dit, et sans bouton : le champ est à gauche", () => {
-    monter({ description: "" })
-    expect(within(manque()).getByText("Aucune description")).toBeTruthy()
-    expect(within(manque()).queryByRole("button", { name: /description/i })).toBeNull()
-  })
-
-  test("le total dit ce qu'il compte, et ce qu'il ne compte pas", () => {
-    monter()
-    expect(within(manque()).getByText("Ce que ses images ont coûté")).toBeTruthy()
-    expect(within(manque()).getByText("$0.020")).toBeTruthy()
-    expect(within(manque()).getByText(/une génération ratée ne laisse aucune image/)).toBeTruthy()
-  })
-
-  test("sans dossier de jeu, l'export est éteint et sa raison est à côté", () => {
-    monter({}, "")
-    const bouton = within(manque()).getByRole("button", {
-      name: "L'exporter pour le moteur…",
-    })
-    expect(bouton).toHaveProperty("disabled", true)
-    expect(within(manque()).getByText(/aucun dossier de jeu/)).toBeTruthy()
-  })
-
-  test("l'export rend son compte de fichiers", async () => {
-    monter()
-    fireEvent.click(
-      within(manque()).getByRole("button", { name: "L'exporter pour le moteur…" }),
-    )
-    expect(await within(manque()).findByText(/4 fichiers posés/)).toBeTruthy()
-  })
-
-  test("le retirer du jeu part au serveur, et le rend marqué supprimé", async () => {
-    const { appels, onPersonnage } = monter()
-    fireEvent.click(within(manque()).getByRole("button", { name: "Le retirer du jeu" }))
-    await waitFor(() => expect(onPersonnage).toHaveBeenCalled())
-    expect(appels.some((a) => a.methode === "DELETE" && a.url.includes("le-pelerin"))).toBe(
-      true,
-    )
-    expect(onPersonnage.mock.calls[0][0].supprime).toBe(true)
-  })
-
-  test("aucune commande sans route derrière — dupliquer n'existe toujours pas", () => {
-    monter()
-    expect(screen.queryByRole("button", { name: /dupliquer/i })).toBeNull()
-  })
-
-  // **B13** — comparer a maintenant une route derrière : deux profondeurs de
-  // plus de cette page, ouvertes depuis son bandeau d'onglets.
-  test("la grille du jeu et comparer s'ouvrent depuis le bandeau d'onglets", () => {
-    const { onGrille, onComparer } = monter()
-    fireEvent.click(screen.getByRole("button", { name: "Voir la grille du jeu" }))
-    expect(onGrille).toHaveBeenCalledTimes(1)
-    fireEvent.click(screen.getByRole("button", { name: "Comparer ›" }))
-    expect(onComparer).toHaveBeenCalledTimes(1)
-  })
-
-  test("les deux liens se grisent, avec leur raison, sans aucune image", () => {
-    monter({
-      cases: [sienne({ pose: "repos" }), sienne({ pose: "marche" })],
-    })
-    const grille = screen.getByRole("button", { name: "Voir la grille du jeu" })
-    const comparer = screen.getByRole("button", { name: "Comparer ›" })
-    expect(grille).toBeDisabled()
-    expect(comparer).toBeDisabled()
-    expect(grille.title).toMatch(/aucune image/)
-  })
+test("un asset destiné aux images fixes ouvre directement ses images", () => {
+  monter({ objectif: { sorties: [{ nature: "image", pose: "repos", direction: "", quantite: 1 }], largeur: 32, hauteur: 48, cadence: 8, boucle: false, repere: { x: 16, y: 48 } } })
+  expect(onglet("Images fixes").getAttribute("aria-selected")).toBe("true")
 })
 
-// ── La porte de la matrice ──────────────────────────────────────────────────
+test("la description se modifie à la demande puis se garde en une seule fois", async () => {
+  const { onPersonnage } = monter()
+  const regler = vi.spyOn(api, "reglerPersonnage").mockResolvedValue({ personnage: sujet({ nom: "La pèlerine", description: "Manteau bleu" }) })
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog", { name: "La fiche de l’asset" })
+  fireEvent.change(within(dialogue).getByLabelText("Nom du sujet"), { target: { value: "La pèlerine" } })
+  fireEvent.change(within(dialogue).getByLabelText("Description du sujet"), { target: { value: "Manteau bleu" } })
+  fireEvent.blur(within(dialogue).getByLabelText("Description du sujet"))
+  expect(regler).not.toHaveBeenCalled()
+  fireEvent.click(within(dialogue).getByRole("button", { name: "Garder la fiche" }))
+  await waitFor(() => expect(onPersonnage).toHaveBeenCalledWith(expect.objectContaining({ nom: "La pèlerine", description: "Manteau bleu" })))
+  expect(regler).toHaveBeenCalledWith("le-pelerin", { nom: "La pèlerine", description: "Manteau bleu" })
+  expect(screen.queryByRole("dialog")).toBeNull()
+})
 
-describe("la matrice, devenue une profondeur", () => {
-  test("la fiche en porte la clé, et dit ce qui vit encore derrière", () => {
-    monter()
-    expect(document.querySelector("[data-porte-de-la-matrice]")).toBeTruthy()
-  })
+test("annuler abandonne le brouillon et rouvrir retrouve les valeurs conservées", () => {
+  monter()
+  const confirmer = vi.spyOn(window, "confirm").mockReturnValue(true)
+  const regler = vi.spyOn(api, "reglerPersonnage")
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  fireEvent.change(screen.getByLabelText("Nom du sujet"), { target: { value: "Brouillon" } })
+  fireEvent.click(screen.getByRole("button", { name: "Annuler" }))
+  expect(confirmer).toHaveBeenCalledOnce()
+  expect(regler).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  expect(screen.getByLabelText("Nom du sujet")).toHaveProperty("value", "Le pèlerin")
+})
 
-  test("l'ouvrir remplace la page, et le marqueur du lieu ne bouge pas", () => {
-    monter()
-    fireEvent.click(document.querySelector("[data-porte-de-la-matrice]") as HTMLElement)
-    expect(document.querySelector("[data-matrice]")).toBeTruthy()
-    // Les cinquante-sept essais d'écran qui visent `[data-etabli]` continuent
-    // de le trouver : c'est la page qui le porte, et elle contient la matrice.
-    expect(document.querySelector("[data-etabli]")).toBeTruthy()
-    expect(document.querySelector("[data-page-du-sujet]")).toBeNull()
-  })
+test("le formulaire refuse un nom vide et montre un échec sans jeter le brouillon", async () => {
+  const { onFente } = monter()
+  vi.spyOn(api, "reglerPersonnage").mockRejectedValue(new Error("Écriture refusée"))
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  fireEvent.change(screen.getByLabelText("Nom du sujet"), { target: { value: "  " } })
+  expect(screen.getByRole("button", { name: "Garder la fiche" })).toHaveProperty("disabled", true)
+  fireEvent.change(screen.getByLabelText("Nom du sujet"), { target: { value: "Nouveau" } })
+  fireEvent.click(screen.getByRole("button", { name: "Garder la fiche" }))
+  await waitFor(() => expect(onFente).toHaveBeenCalledWith(expect.objectContaining({ texte: "Écriture refusée" })))
+  expect(screen.getByLabelText("Nom du sujet")).toHaveProperty("value", "Nouveau")
+})
 
-  test("on en revient à sa page, sur la fiche", () => {
-    monter()
-    fireEvent.click(document.querySelector("[data-porte-de-la-matrice]") as HTMLElement)
-    fireEvent.click(screen.getByRole("button", { name: "‹ Sa page" }))
-    expect(document.querySelector("[data-page-du-sujet]")).toBeTruthy()
-    expect(onglet("Sa fiche").getAttribute("aria-selected")).toBe("true")
-  })
+test("la référence compacte mène à la rangée de ses images", () => {
+  monter()
+  const portrait = document.querySelector("[data-portrait-du-sujet]") as HTMLElement
+  expect(within(portrait).getByAltText("Référence de Le pèlerin")).toBeTruthy()
+  fireEvent.click(portrait)
+  expect(onglet("Images fixes").getAttribute("aria-selected")).toBe("true")
+})
 
-  test("« Ses animations » ne mène plus à la matrice — c'est son propre écran depuis B11", () => {
-    // Avant B11, l'onglet était un placeholder dont le seul geste possible
-    // était de fuir vers la matrice. Il a maintenant son propre rangement
-    // (`AnimationsDuSujet.tsx`), et cette porte de secours a disparu avec lui.
-    monter()
-    fireEvent.click(onglet("Ses animations"))
-    expect(screen.queryByRole("button", { name: "Ses cases, une par une ›" })).toBeNull()
-    expect(document.querySelector("[data-matrice]")).toBeNull()
-  })
+test("un asset sans source montre un état vide compact", () => {
+  monter({ cases: [sienne({ pose: "repos" })] })
+  expect(screen.getByText("Référence à créer")).toBeTruthy()
+})
+
+test("les collections se modifient depuis la fiche sans toucher aux règles", async () => {
+  const { appels } = monter()
+  await screen.findByText("Les héros")
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog")
+  const choisir = within(dialogue).getByLabelText("Ajouter à une collection")
+  expect(within(choisir).queryByRole("option", { name: "Les héros" })).toBeNull()
+  fireEvent.change(choisir, { target: { value: "pnj" } })
+  fireEvent.click(within(dialogue).getByRole("button", { name: "Ranger" }))
+  await waitFor(() => expect(appels.some(a => a.methode === "PUT" && a.url.includes("/collections/pnj"))).toBe(true))
+  fireEvent.click(within(dialogue).getByLabelText("Retirer de Les héros"))
+  await waitFor(() => expect(appels.some(a => a.methode === "DELETE" && a.url.includes("/collections/heros"))).toBe(true))
+})
+
+test("fabriquer, importer et les deux tables gardent leurs portes explicites", () => {
+  const rappels = monter()
+  fireEvent.click(screen.getByRole("button", { name: "Fabriquer…" }))
+  expect(rappels.onFabriquer).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole("button", { name: "Importer" }))
+  expect(rappels.onImporter).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole("button", { name: "Découper une image" }))
+  expect(rappels.onDecouper).toHaveBeenCalledWith("a")
+  fireEvent.click(screen.getByRole("button", { name: "Extraire un élément" }))
+  expect(rappels.onExtraire).toHaveBeenCalledWith("a")
+})
+
+test("les outils historiques restent accessibles et le test d’animation est une action", () => {
+  const { onComparer, onGrille } = monter()
+  fireEvent.click(screen.getByText("Autres outils"))
+  fireEvent.click(screen.getByRole("button", { name: "Comparer" }))
+  expect(onComparer).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole("button", { name: "Voir la grille du jeu" }))
+  expect(onGrille).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole("button", { name: "Tester les animations" }))
+  expect(document.querySelector("[data-onglet-essai]")).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "Retour aux animations" }))
+  expect(document.querySelector("[data-onglet-animations]")).toBeTruthy()
+})
+
+test("retirer l’asset reste disponible dans la modification de la fiche", async () => {
+  const { onPersonnage } = monter()
+  vi.spyOn(window, "confirm").mockReturnValue(true)
+  const retirer = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue({} as never)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  fireEvent.click(screen.getByText("Rangement et retrait du jeu"))
+  fireEvent.click(screen.getByRole("button", { name: "Le retirer du jeu" }))
+  await waitFor(() => expect(retirer).toHaveBeenCalledWith("le-pelerin"))
+  expect(onPersonnage).toHaveBeenCalledWith(expect.objectContaining({ supprime: true }))
 })

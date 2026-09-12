@@ -2,7 +2,7 @@ import { appeler } from "./api"
 
 export type EtapeLocale = {
   identifiant: string; cle: string; projet: string | null; acteur: "auteur" | "agent"
-  nature: "image" | "video" | "modele3d" | "rig" | "rendu3d"
+  nature: "image" | "video" | "modele3d" | "rig" | "rendu3d" | "audio"
   moteur: string; modele: string
   etat: "en_attente" | "en_cours" | "a_reprendre" | "externe_inconnu" | "termine" | "echoue" | "annule"
   travail_externe: string | null; raison: string; soumission_engagee: boolean

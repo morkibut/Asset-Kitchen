@@ -34,6 +34,7 @@ import {
 } from "../api"
 import { PANNEAU } from "./Infobulle"
 import { SurfaceZoomable } from "./SurfaceZoomable"
+import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 
 // ── Le petit vocabulaire de cet écran ───────────────────────────────────────
@@ -325,6 +326,16 @@ export function EcranSuperposition({
   const [diametre, setDiametre] = useState(5)
   const [vue, setVue] = useState<"travail" | "calque" | "resultat">("travail")
   const envol = useRef(0)
+  const [originePose, setOriginePose] = useState<{ id: string; pose: Superposition } | null>(null)
+  const brouillon = useBrouillonLocal({
+    cle: `extraction:${asset.identifiant}`, pret: originePose?.id === asset.identifiant,
+    reference: { pose: originePose?.pose ?? pose, sorties: ["calque"], garder: false }, etat: { pose, sorties, garder },
+    appliquer: async (recu) => {
+      const sources = await api.ouvrirSuperposition(recu.pose.dessus, recu.pose.dessous || undefined)
+      if (!sources.pose) throw new Error("Sources indisponibles")
+      setOuverture(sources); setPose(recu.pose); setSorties(recu.sorties); setGarder(recu.garder); setApercu(null)
+    },
+  })
 
   // ── L'ouverture ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -336,6 +347,7 @@ export function EcranSuperposition({
         // regarde donc la forme avant de s'y fier.
         if (!vivant || !recu?.pose) return
         setOuverture(recu)
+        setOriginePose({ id: asset.identifiant, pose: recu.pose })
         setPose(recu.pose)
       })
       .catch((erreur) => vivant && onErreur(String(erreur)))
@@ -413,6 +425,7 @@ export function EcranSuperposition({
     setFabrication(true)
     try {
       const { superpositions } = await api.fabriquerSuperposition(pose, sorties, garder)
+      brouillon.effacer()
       onFabrique?.(superpositions)
     } catch (erreur) {
       onErreur(String(erreur))
@@ -433,6 +446,7 @@ export function EcranSuperposition({
       <aside {...PANNEAU} className="col-start-2 row-span-2 row-start-1 flex min-h-0 flex-col border-l border-trait bg-papier-cote">
         <EnTete>superposition</EnTete>
         <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[8px]">
+          <AvisBrouillon brouillon={brouillon} />
           {/* Les deux images. Le dessus se déplace, le dessous ne bouge pas. */}
           <div className="flex flex-col gap-[4px]">
             <p className="text-[11px] text-encre-2">les deux images</p>

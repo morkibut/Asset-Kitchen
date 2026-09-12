@@ -14,9 +14,10 @@ export type FichierLivraison = {
   chemin: string; role: string; etat: string; empreinte: string; octets: number
 }
 export type ApercuLivraison = {
-  jeton: string; projet: string; personnage: string; revision: string
+  jeton: string; projet: string; personnage: string | null; revision: string
   dossier: string; fichiers: FichierLivraison[]; conflits: { chemin: string; raison: string }[]; pret: boolean
-  scene: string; sprite_frames: string; pivot?: { x: number; y: number }
+  scene: string; sprite_frames: string | null; pivot?: { x: number; y: number }
+  nature?: string; nom?: string; ressource?: string
   animations: { identifiant?: string; bande?: string; nom: string; cadence?: number; compte?: number; boucle?: boolean }[]
 }
 export type LivraisonGodot = ApercuLivraison & {
@@ -61,6 +62,9 @@ export type Modele = {
    *  d'un modèle soit complète sans aller ouvrir un fichier. */
   chez_lui: string
   references_max: number
+  references_min?: number
+  locale?: boolean
+  indisponible?: string | null
   proportions: string[]
   resolutions: string[]
   variations_max: number
@@ -709,6 +713,8 @@ export type AttenteVideo = {
 
 /** Un modèle vidéo au catalogue, tel que l'écran de commande le montre. */
 export type ModeleVideo = {
+  options?: Record<string, Option>
+  indisponible?: string | null
   identifiant: string
   nom: string
   fournisseur: string
@@ -831,6 +837,7 @@ export type ImageDeDepart = {
 /** Ce qu'une génération porte quand c'est un clip. Absent partout ailleurs —
  *  et c'est ce champ, jamais le nom du modèle, qui dit qu'un appel est vidéo. */
 export type Clip = {
+  nature?: "video" | "rendu3d" | "sequence"
   /** Le numéro du travail chez le fournisseur, écrit **avant** la première
    *  attente. Sans lui, un clip payé pendant qu'on fermait l'atelier est un
    *  clip qu'on repaie. */
@@ -1042,6 +1049,15 @@ export type Bande = {
   calage_garde: CalageGarde | null
 }
 
+/** La liste complète des animations conservées d'un jeu. Elle sert la galerie
+ * sans dépendre d'une association Godot ni de la liste, forcément partielle,
+ * des clips actuellement visibles. Le détail d'une bande reste lu à son ouverture
+ * ou pour sa vignette. */
+export type AnimationDeLivraison = Pick<Bande,
+  "identifiant" | "nom" | "personnage" | "pose" | "direction" | "compte" |
+  "cadence" | "sens" | "favori" | "case_largeur" | "case_hauteur"
+>
+
 /** Comment le calque suit le personnage — **deux façons, toutes deux gratuites**.
  *
  *  Ce qui les sépare est le temps de calcul : *tient* rejoue le recalage sur
@@ -1213,6 +1229,7 @@ export type AtelierDeBande = {
  *  quatre questions. */
 export type Montage = {
   clip: {
+    nature?: "video" | "rendu3d" | "sequence"
     identifiant: string
     images: number
     cadence: number
@@ -1974,6 +1991,7 @@ export type Piece = {
   emplacement: string
   portee: Portee
   concept_arts: string[]
+  references?: string[]
   /** **Ses emplois — et l'absence n'est pas le vide** (B19).
    *
    *  Absent : la pièce n'a *jamais rien déclaré*. C'est le cas de toutes celles
@@ -2572,6 +2590,9 @@ export type FamilleDuBilan = {
 export type ManqueDuBilan = {
   nature?: "image" | "animation"
   cout_connu?: boolean
+  /** Les cibles réunies dans cette ligne : le serveur les nomme pour que le
+   *  tableau mène à un sujet et ne répète pas une phrase vague par case. */
+  cibles?: { pose: string; direction: string; quantite: number }[]
   quantite: number
   phrase: string
   famille: string
@@ -4512,6 +4533,7 @@ export const api = {
   associerGodot: (projet: string, liaison: LiaisonGodot) => appeler<LiaisonGodot>(`/projects/${encodeURIComponent(projet)}/godot-link`, { method: "PUT", body: JSON.stringify(liaison) }),
   livraisonsGodot: (projet: string) => appeler<{ livraisons: LivraisonGodot[] }>(`/projects/${encodeURIComponent(projet)}/deliveries`),
   prevoirLivraison: (projet: string, choix: { personnage: string; bandes: string[]; pivot_x?: number; pivot_y?: number; boucles?: Record<string, boolean> }) => appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/preview`, { method: "POST", body: JSON.stringify(choix) }),
+  animationsDeLivraison: (projet: string) => appeler<AnimationDeLivraison[]>(`/projects/${encodeURIComponent(projet)}/delivery-animations`),
   livrerGodot: (projet: string, jeton: string) => appeler<LivraisonGodot>(`/projects/${encodeURIComponent(projet)}/deliveries`, { method: "POST", body: JSON.stringify({ jeton }) }),
   reprendreLivraison: (projet: string, jeton: string) => appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/${encodeURIComponent(jeton)}/preview`, { method: "POST" }),
   etat: () => appeler<Etat>("/status"),
@@ -4746,11 +4768,14 @@ export const api = {
   // Aucun de ces appels ne touche le réseau côté serveur, et aucun ne coûte un
   // centime : tout se passe sur le disque et le processeur de la machine.
 
-  poserRecette: (identifiant: string, recette: Recette) =>
-    appeler<Asset>(`/assets/${identifiant}/recipe`, {
+  poserRecette: (identifiant: string, recette: Recette, reinitialiser = false) =>
+    appeler<Asset>(`/assets/${identifiant}/recipe${reinitialiser ? "?reinitialiser=true" : ""}`, {
       method: "PUT",
       body: JSON.stringify(recette),
     }),
+
+  apercuRecette: (identifiant: string, recette: Recette, options: { voyageuse?: boolean; nom?: string; reinitialiser?: boolean } = {}) =>
+    appeler<{ recette: Recette; rendu: string; largeur: number; hauteur: number; mesures: TachesDeLAsset; laisse: string[] }>(`/assets/${encodeURIComponent(identifiant)}/recipe/preview`, { method: "POST", body: JSON.stringify({ recette, ...options }) }),
 
   revenirAuBrut: (identifiant: string) =>
     appeler<Asset>(`/assets/${identifiant}/reset`, { method: "POST" }),
@@ -5495,6 +5520,8 @@ export const api = {
       { method: "POST", body: octets, headers: {} },
     ),
 
+  poserAssetSurToile: (projet: string, asset: string) => appeler<{ carte: Carte; deja_presente: boolean }>(`/projects/${encodeURIComponent(projet)}/board/assets/${encodeURIComponent(asset)}`, { method: "POST" }),
+
   /** Coller une adresse — la carte paraît **avant** que l'image n'arrive. La
    *  route rend la main tout de suite ; l'issue arrive par le flux. */
   collerAdresse: (adresse: string) =>
@@ -5705,6 +5732,7 @@ export const api = {
        *  toute la famille. */
       collection?: string | null
       limite?: number
+      tri?: "nom" | "nom-desc" | "resultats"
     } = {},
   ) => {
     const parametres = new URLSearchParams()
@@ -5714,6 +5742,7 @@ export const api = {
       parametres.set("filtre", options.filtre)
     if (options.collection) parametres.set("collection", options.collection)
     if (options.limite) parametres.set("limite", String(options.limite))
+    if (options.tri) parametres.set("tri", options.tri)
     const suite = parametres.toString()
     return appeler<GrilleDeFamille>(
       `/characters/families/${encodeURIComponent(famille)}${suite ? `?${suite}` : ""}`,

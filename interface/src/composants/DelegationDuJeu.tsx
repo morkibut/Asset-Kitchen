@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
 import { api, dollars, Refus } from "../api"
-import { travaux, type CadreDelegation, type Travail } from "../api-travaux"
+import { travaux, type CadreDelegation, type TravailSuivi } from "../api-travaux"
 import { Libelle } from "./pieces"
 
 const CHAMP = "min-w-0 rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[13px] text-encre-controle"
 const BOUTON = `${CHAMP} hover:border-encre-3 disabled:opacity-50`
-const ETATS: Record<Travail["etat"], string> = {
+const ETATS: Record<TravailSuivi["etat"], string> = {
   prepare: "Préparée", en_cours: "En cours", a_reprendre: "À reprendre", a_verifier: "À vérifier",
   externe_inconnu: "Acceptation externe inconnue", termine: "Terminée", annule: "Annulée",
 }
@@ -13,13 +13,13 @@ type Methode = { identifiant: string; detail: string; indisponible?: string | nu
 const message = (erreur: unknown) => erreur instanceof Refus ? erreur.message : "Impossible de relire le cadre de ce jeu. Réessayez."
 
 export function DelegationDuJeu(props: {
-  projet: string; onAtelier: () => void; onTravail?: (travail: Travail) => void
+  projet: string; onAtelier: () => void; onTravail?: (travail: TravailSuivi) => void
 }) {
   return <CadreDuJeu key={props.projet} {...props} />
 }
 
 function CadreDuJeu({ projet, onAtelier, onTravail }: {
-  projet: string; onAtelier: () => void; onTravail?: (travail: Travail) => void
+  projet: string; onAtelier: () => void; onTravail?: (travail: TravailSuivi) => void
 }) {
   const [cadre, setCadre] = useState<CadreDelegation | null>(null)
   const [sauve, setSauve] = useState("")
@@ -27,7 +27,7 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
   const [videos, setVideos] = useState<Methode[]>([])
   const [choisirImages, setChoisirImages] = useState(false)
   const [choisirVideos, setChoisirVideos] = useState(false)
-  const [demandes, setDemandes] = useState<Travail[]>([])
+  const [demandes, setDemandes] = useState<TravailSuivi[]>([])
   const [erreur, setErreur] = useState("")
   const [catalogueAbsent, setCatalogueAbsent] = useState("")
   const [occupe, setOccupe] = useState(false)
@@ -111,7 +111,7 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
     </form>}
     <section className="rounded-8 border border-trait bg-carte p-[22px]" aria-label="Travaux de l’agent"><div className="flex items-center justify-between gap-[14px]"><h3 className="font-serif text-[25px]">Ce que l’agent a demandé</h3><button className={BOUTON} disabled={suiviOccupe} onClick={() => void actualiser()}>{suiviOccupe ? "Actualisation…" : "Actualiser le suivi"}</button></div>
       <p className="mt-[8px] text-[13px] text-encre-3">{demandes.length} demande{demandes.length > 1 ? "s" : ""} conservée{demandes.length > 1 ? "s" : ""} · {enCours} en cours ou à résoudre · {dollars(cout)} de dépenses reçues</p>
-      {!demandes.length ? <p className="mt-[14px] text-[13px] text-encre-3">Aucune demande complète de l’agent pour ce jeu. Vos fabrications manuelles restent dans le journal général.</p> : <ul className="mt-[14px] space-y-[14px]">{(toutVoir ? demandes : demandes.slice(0, 6)).map(t => <li key={t.identifiant} className="flex items-start justify-between gap-[14px] text-[13px]"><div><p>{t.demande.personnage} · {t.demande.pose} · {t.demande.direction || "toutes directions"}</p><p className="mt-[4px] text-[12px] text-encre-3">{ETATS[t.etat]} · {t.demande.modele_video}</p>{t.raison && <p className="mt-[4px] max-w-full text-[12px] text-echec">{t.raison}</p>}</div>{onTravail && <button className={`${BOUTON} shrink-0`} onClick={() => onTravail(t)}>Ouvrir la demande</button>}</li>)}</ul>}
+      {!demandes.length ? <p className="mt-[14px] text-[13px] text-encre-3">Aucune demande complète de l’agent pour ce jeu. Vos fabrications manuelles restent dans le journal général.</p> : <ul className="mt-[14px] space-y-[14px]">{(toutVoir ? demandes : demandes.slice(0, 6)).map(t => <li key={t.identifiant} className="flex items-start justify-between gap-[14px] text-[13px]"><div><p>{t.nature === "audio" ? `Son · ${t.demande.nom || t.demande.prompt}` : t.nature === "3d" ? `3D · ${t.demande.nom || t.demande.personnage || t.modele}` : t.nature === "equipement" ? `${t.piece_fiche.nom} · ${t.personnage} · ${t.annonce.images_ciblees} images` : t.nature === "image-locale" ? `Image locale · ${t.demande.prompt}` : t.nature === "video-libre" ? `Vidéo libre · ${t.demande.prompt_video}` : `${t.demande.personnage} · ${t.demande.pose} · ${t.demande.direction || "toutes directions"}`}</p><p className="mt-[4px] text-[12px] text-encre-3">{ETATS[t.etat]} · {t.nature === "3d" ? t.modele : t.nature === "equipement" || t.nature === "image-locale" || t.nature === "audio" ? t.demande.modele : t.demande.modele_video}</p>{t.raison && <p className="mt-[4px] max-w-full text-[12px] text-echec">{t.raison}</p>}</div>{onTravail && <button className={`${BOUTON} shrink-0`} onClick={() => onTravail(t)}>Ouvrir la demande</button>}</li>)}</ul>}
       {demandes.length > 6 && <button className={`${BOUTON} mt-[14px]`} onClick={() => setToutVoir(v => !v)}>{toutVoir ? "Voir seulement les plus récentes" : "Voir toutes les demandes"}</button>}
     </section>
     <footer className="text-[13px] text-encre-3"><p>Les clés de fournisseurs et les anciens garde-fous par séance restent dans les réglages de l’atelier. Ces derniers encadrent les anciens outils MCP d’image ; leur compteur est séparé de celui des demandes complètes ci-dessus.</p><button className={`${BOUTON} mt-[14px]`} onClick={onAtelier}>Clés et anciens garde-fous de séance</button></footer>

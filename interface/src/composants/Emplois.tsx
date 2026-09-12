@@ -45,7 +45,9 @@
  * gestes qui n'existent pas encore au contrat.
  */
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { ResumeEmploi } from "./ResumeEmploi"
+import { ReferencePiece } from "./ReferencePiece"
 import {
   libelleDEmploi,
   type EmploiResolu,
@@ -260,6 +262,7 @@ function AjoutDUnEmploi({
 
 export function Emplois({
   pieceEtSesEmplois,
+  projet,
   porteurs,
   onEmploi,
   onAjouterEmploi,
@@ -267,6 +270,7 @@ export function Emplois({
   onErreur,
 }: {
   pieceEtSesEmplois: PieceEtSesEmplois
+  projet?: string
   porteurs: readonly { identifiant: string; nom: string }[]
   onEmploi: (emploi: string) => void
   /** Ajouter un emploi. Le parent appelle l'API et relit ; l'écran n'appelle
@@ -277,7 +281,9 @@ export function Emplois({
 }) {
   const [ajoutOuvert, setAjoutOuvert] = useState(false)
 
-  const { piece, declare, emplois, fait, attendu } = pieceEtSesEmplois
+  const { declare, emplois, fait, attendu } = pieceEtSesEmplois
+  const [piece, setPiece] = useState(pieceEtSesEmplois.piece)
+  useEffect(() => setPiece(pieceEtSesEmplois.piece), [pieceEtSesEmplois.piece])
 
   // **On ne propose jamais quelqu'un qui la porte déjà** : deux emplois portés
   // pour un même porteur feraient deux colonnes d'images du même geste, et le
@@ -331,7 +337,7 @@ export function Emplois({
             La planche pose ici une vignette ; il n'y en a pas, et c'est le
             sujet même de l'écran : ce texte est tout ce que la pièce possède
             en propre, et c'est lui qui part avec chacun de ses emplois. */}
-        <section className="flex flex-col gap-[8px]">
+        {projet ? <ReferencePiece projet={projet} piece={piece} onChange={setPiece} /> : <section className="flex flex-col gap-[8px]">
           <Intertitre>Son image de référence</Intertitre>
           <p className="text-[12.5px] leading-[1.5] text-encre-2">
             {piece.description.trim()
@@ -342,16 +348,16 @@ export function Emplois({
             Une pièce n'a pas d'image à elle : ce texte part avec chaque emploi, et ce sont
             les emplois qui portent les images.
           </p>
-        </section>
+        </section>}
 
         {/* ── Ses emplois ───────────────────────────────────────────────── */}
         <section className="flex flex-col gap-[8px]">
           <div className="flex flex-wrap items-baseline justify-between gap-[8px]">
             <Intertitre>{titreDeLaListe}</Intertitre>
             <span data-compte-de-la-piece className="text-[12px] text-encre-3">
-              <span className="mesure">{fait}</span> images sur{" "}
+              {projet ? "Chaque emploi garde ses calques par mouvement, direction et frame." : <><span className="mesure">{fait}</span> images sur{" "}
               <span className="mesure">{attendu}</span> · l'emploi qu'on ouvre montre sa
-              matrice
+              matrice</>}
             </span>
           </div>
 
@@ -371,7 +377,7 @@ export function Emplois({
                 Personne ne s'en sert encore.
               </p>
             )}
-            {emplois.map((emploi) => (
+            {emplois.map((emploi) => projet && emploi.genre === "porte" && !emploi.orphelin ? <ResumeEmploi key={emploi.identifiant} projet={projet} piece={piece.identifiant} emploi={emploi} onOuvrir={() => onEmploi(emploi.identifiant)} /> : (
               <LigneDEmploi
                 key={emploi.identifiant}
                 emploi={emploi}

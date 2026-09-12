@@ -8,7 +8,7 @@
 //
 // Rien n'y change : mêmes états, même ordre, mêmes appels.
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   api,
   Refus,
@@ -134,6 +134,7 @@ export function usePaiement({
   univers,
   variations,
 }: CeQueLePaiementLit) {
+  const [actualisationEnvoi, setActualisationEnvoi] = useState(false)
   // **Ce qui fait qu'un appel est le même, et rien de plus** (M5).
   //
   // Ce que l'auteur **vise et écrit** : le texte, ce qu'il interdit, le modèle,
@@ -328,7 +329,7 @@ export function usePaiement({
     setChoixDeReference(false)
   }
 
-  const generer = () => {
+  const generer = (relire = false) => {
     if (refus || !modele) return
     // L'échec d'avant appartenait à l'appel d'avant.
     setEchecDuPaiement(null)
@@ -336,7 +337,7 @@ export function usePaiement({
     // visée, et `serieSautee` vaut `null` quand rien n'a été sauté : les
     // comparer sans ce garde-fou rendait vrai « rien saute rien », et l'écran
     // disparaissait pour toutes les générations libres.
-    if (serie !== null && serieSautee === serie) {
+    if (!relire && serie !== null && serieSautee === serie) {
       void payer()
       return
     }
@@ -356,6 +357,7 @@ export function usePaiement({
 
   const payer = async () => {
     if (refus || !modele) return
+    if (envoiOuvert && actualisationEnvoi) return
     // **Le verrou qui arrête le second clic** (U1). Lu et écrit dans le même
     // tour de boucle, avant tout `await` : c'est la seule façon d'arrêter deux
     // clics partis dans la même image de rendu, que le drapeau d'état
@@ -486,9 +488,11 @@ export function usePaiement({
     if (!envoiOuvert || !modele) {
       // Fenêtre fermée : la prochaine ouverture repart sans attendre.
       ouverture.current = true
+      setActualisationEnvoi(false)
       return
     }
     let vivant = true
+    setActualisationEnvoi(true)
     const attente = ouverture.current ? 0 : REPOS_FRAPPE
     ouverture.current = false
     const minuterie = window.setTimeout(() => {
@@ -518,10 +522,12 @@ export function usePaiement({
         .then((recu) => {
           if (!vivant) return
           setEnvoi(recu)
+          setActualisationEnvoi(false)
         })
         .catch((erreur) => {
           if (!vivant) return
           setEnvoi(null)
+          setActualisationEnvoi(false)
           echouer(erreur, "l'atelier ne dit pas ce qui partirait")
         })
     }, attente)
@@ -557,6 +563,7 @@ export function usePaiement({
 
   return {
     enVol,
+    actualisationEnvoi,
     fermerCeQuiPart,
     generer,
     payer,

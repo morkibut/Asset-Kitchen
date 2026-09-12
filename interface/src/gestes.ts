@@ -35,6 +35,8 @@ export type CeQueLesGestesLisent = {
   setCible: Pose_<CibleDeLAppel | null>
   setModeleChoisi: Pose_<string | null>
   poserLaRacine: (prochaine: Racine) => void
+  /** Ouvre l'écran de préparation après que les réglages ont fini d'être armés. */
+  ouvrirPreparation?: () => void
   setOptions: Pose_<Record<string, string>>
   setPrompt: Pose_<string>
   setPromptNegatif: Pose_<string>
@@ -56,6 +58,7 @@ export function useGestes({
   setCible,
   setModeleChoisi,
   poserLaRacine,
+  ouvrirPreparation,
   setOptions,
   setPrompt,
   setPromptNegatif,
@@ -176,6 +179,7 @@ export function useGestes({
     // et la barre qui paie est déjà sous la main : elle est au pied de
     // l'établi, à quelques pixels de la case qu'on vient d'armer. Jusqu'en E2
     // il fallait retourner à la galerie, seul endroit qui portait un champ.
+    if (ouvrirPreparation) ouvrirPreparation()
   }
 
 
@@ -193,7 +197,8 @@ export function useGestes({
       ...deja.filter((r) => r.asset !== asset),
       { asset, role },
     ])
-    poserLaRacine("codex")
+    if (ouvrirPreparation) ouvrirPreparation()
+    else poserLaRacine("codex")
   }
 
   /** **Échap referme le choix, et lui seul** (M5).
@@ -267,7 +272,8 @@ export function useGestes({
       )
       // Même règle que la réinjection : le texte repris se lit dans le champ,
       // et le champ n'est pas ici.
-      poserLaRacine("codex")
+      if (ouvrirPreparation) ouvrirPreparation()
+      else poserLaRacine("codex")
     } catch (erreur) {
       echouer(erreur, "réglages illisibles")
     }

@@ -95,6 +95,11 @@ import { imageAsset, sujetAsset, useVisee } from "./Apercu"
 // panne que cette tranche répare ailleurs.
 import { EchantillonDeHauteur, part, rectangleDeLImage, useEcoule } from "./pieces"
 import { EcranSuperposition } from "./Superposition"
+import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
+import { useEtatDuParcours } from "./MemoireDuParcours"
+import { useMainDuParcours } from "./MainDuParcours"
+import { useRetoucheBrouillon } from "./RetoucheBrouillon"
+import { CadreDialogue } from "./CadreDialogue"
 // **Le vocabulaire vient d'un module sans écran** (`B26`). Les listes fermées,
 // les fonctions pures et les trois crochets de la recette ne sont pas du
 // balisage : ce sont des faits du domaine, et une seconde définition d'un même
@@ -119,7 +124,6 @@ import {
   ZOOM_MIN,
   avecPassage,
   avecVeille,
-  borner,
   copierDansLePressePapier,
   debord,
   defautDeLaPasse,
@@ -135,7 +139,6 @@ import {
   rayonDe,
   sansLeDernier,
   uniteDuTrait,
-  useEtatMain,
   useMesures,
   useRecette,
   valeur,
@@ -2814,7 +2817,8 @@ export function ReglagesDeLaMain({
   regler,
   poser,
   etatMain,
-}: Poste & { etatMain: EtatMain }) {
+  section,
+}: Poste & { etatMain: EtatMain; section?: "calques" | "peinture" }) {
   const main = mainDe(recette)
   const { actif, choisir, sens, setSens, diametre, setDiametre, couleur, setCouleur } =
     etatMain
@@ -2848,7 +2852,7 @@ export function ReglagesDeLaMain({
           calques — et elle est *rangée* du dessous vers le dessus, qui est
           l'ordre d'application. Le renversement est écrit ici, et nulle part
           ailleurs. */}
-      <div className="flex flex-col gap-[4px]">
+      {section !== "peinture" && <div className="flex flex-col gap-[4px]">
         <Etiquette>les calques</Etiquette>
         <ul className="flex flex-col">
           {main.calques
@@ -2916,12 +2920,12 @@ export function ReglagesDeLaMain({
         >
           Un calque de dessin de plus
         </button>
-      </div>
+      </div>}
 
       {/* **Les deux crans changent de nom avec le calque actif.** C'est la même
           mécanique — un passage qui ajoute, un passage qui retire — et le cran
           allumé dit ce que le geste fera. */}
-      <Reglage nom="le sens">
+      {section !== "calques" && <><Reglage nom="le sens">
         <Choix
           valeurs={["ajoute", "retire"] as const}
           valeur={sens ? "ajoute" : "retire"}
@@ -3007,7 +3011,7 @@ export function ReglagesDeLaMain({
       </button>
       <Pourquoi
         texte={`${main.calques.length} calque${main.calques.length > 1 ? "s" : ""} · ${passagesDe(main)} passage${passagesDe(main) > 1 ? "s" : ""} — on repeint sur l'image, à gauche, et un passage de la main ne voyage pas`}
-      />
+      /></>}
     </div>
   )
 }
@@ -3610,7 +3614,7 @@ const CE_QUE_LA_SURFACE_DIT: Record<"main" | "pipette" | "trace" | "recadrage", 
 }
 
 export function Retouche({
-  asset,
+  asset: originale,
   soeurs,
   univers,
   traitement,
@@ -3622,8 +3626,11 @@ export function Retouche({
   onErreur,
   onUnivers,
   onAssocierEquipement,
+  enregistrementImmediat = false,
 }: {
   asset: Asset
+  /** Compatibilité des anciens bancs des tables ; l’application utilise le brouillon. */
+  enregistrementImmediat?: boolean
   onAssocierEquipement?: () => void
   /** Les images voisines — les attitudes de la chose quand elle en a une, les
    *  voisines de la grille quand elle n'en a pas (`B24`, déménagé de
@@ -3664,12 +3671,26 @@ export function Retouche({
    *  défaut du projet l'écrit. */
   onUnivers?: (univers: Univers) => void
 }) {
-  const { recette, setRecette, regler, poser, revenirAuBrut, enVol } = useRecette(
-    asset,
-    onErreur,
-  )
-  const mesures = useMesures(asset)
-  const [ouverte, setOuverte] = useState<Table>(tableDeLaPorte ?? "detourage")
+  const immediat = useRecette(originale, onErreur)
+  const session = useRetoucheBrouillon(originale, onErreur, !enregistrementImmediat)
+  const { recette, setRecette, regler, poser, revenirAuBrut, enVol } = enregistrementImmediat ? immediat : session
+  const apercu = enregistrementImmediat ? null : session.apercu
+  const asset = apercu ? { ...originale, rendu_largeur: apercu.largeur, rendu_hauteur: apercu.hauteur } : originale
+  const mesuresEnregistrees = useMesures(originale)
+  const mesures = apercu?.mesures ?? mesuresEnregistrees
+  const imageVisible = (brut = false) => brut ? imageAsset(originale, true) : apercu?.rendu ?? imageAsset(originale)
+  const [sortie, setSortie] = useState<(() => void) | null>(null)
+  const sortir = (action: () => void) => { if (!enregistrementImmediat && session.modifie) setSortie(() => action); else action() }
+  const [ouverte, setOuverte] = useEtatDuParcours<Table>(`retouche:${asset.projet ?? ""}:table`, tableDeLaPorte ?? "detourage")
+  const [panneau, setPanneau] = useEtatDuParcours<"retouche" | "calques">(`retouche:${asset.projet ?? ""}:panneau`, "retouche")
+  useEffect(() => { if (tableDeLaPorte) { setOuverte(tableDeLaPorte); setPanneau("retouche") } }, [tableDeLaPorte, setOuverte, setPanneau])
+  const [aAppliquer, setAAppliquer] = useState(false)
+  useEffect(() => setAAppliquer(false), [asset.identifiant])
+  const brouillonHistorique = useBrouillonLocal({
+    cle: `retouche:${asset.projet ?? ""}:${asset.identifiant}`, pret: enregistrementImmediat, reference: asset.recette, etat: recette,
+    appliquer: (suite) => { setRecette(suite); setAAppliquer(true) },
+  })
+  const brouillon = enregistrementImmediat ? brouillonHistorique : session.brouillon
   const [travail, setTravail] = useState<Travail>("rendu")
   const [temoin, setTemoin] = useState<Temoin>("aucun")
   const [opacite, setOpacite] = useState(50)
@@ -3692,7 +3713,7 @@ export function Retouche({
 
   // ── Les quatre surfaces à coordonnées (B23) ──────────────────────────────
 
-  const etatMain = useEtatMain(univers)
+  const etatMain = useMainDuParcours(`retouche:${asset.projet ?? ""}:${asset.identifiant}:main`, univers)
 
   /** La passe de détourage qui attend son geste dans l'image, ou `null`.
    *
@@ -3743,6 +3764,7 @@ export function Retouche({
   // du tableau d'inspiration, et deux piles d'annulation sur la même touche
   // seraient une pile de trop.
   useEffect(() => {
+    if (!enregistrementImmediat) return
     if (surface !== "main") return
     const ecouter = (evenement: KeyboardEvent) => {
       if (!(evenement.ctrlKey || evenement.metaKey) || evenement.key !== "z") return
@@ -3753,7 +3775,17 @@ export function Retouche({
     }
     window.addEventListener("keydown", ecouter)
     return () => window.removeEventListener("keydown", ecouter)
-  }, [surface, recette, etatMain.actif, poser])
+  }, [surface, recette, etatMain.actif, poser, enregistrementImmediat])
+  useEffect(() => {
+    if (enregistrementImmediat) return
+    const touches = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || (event.target as HTMLElement)?.matches("input,textarea,[contenteditable=true]")) return
+      if (event.key.toLowerCase() === "z") { event.preventDefault(); event.stopImmediatePropagation(); if (event.shiftKey) session.refaire(); else session.defaire() }
+      if (event.key.toLowerCase() === "s") { event.preventDefault(); void session.enregistrer() }
+    }
+    window.addEventListener("keydown", touches)
+    return () => window.removeEventListener("keydown", touches)
+  }, [session, enregistrementImmediat])
 
   // ── Le grossissement, libre entre 1 et 250 % (`B24`, U2 déménagée) ───────
   //
@@ -3792,9 +3824,10 @@ export function Retouche({
     return () => oeil.disconnect()
   }, [noeudCadre])
 
-  const [zoom, setZoom] = useState<ZoomTable>("ajuste")
+  const [zoom, setZoom] = useEtatDuParcours<ZoomTable>(`retouche:${asset.projet ?? ""}:${asset.identifiant}:zoom`, "ajuste")
+  const zoomMaximum = enregistrementImmediat ? ZOOM_MAX : 1600
+  const bornerZoom = (v: number) => Math.max(ZOOM_MIN, Math.min(zoomMaximum, Math.round(v)))
   // Changer d'image rouvre en ajusté, pour la même raison que la table.
-  useEffect(() => setZoom("ajuste"), [asset.identifiant])
 
   // **Le damier cède la place au fond choisi**, et seulement sur la table du
   // contour — c'est elle qui pose la question, les sept autres n'en ont pas
@@ -3832,7 +3865,7 @@ export function Retouche({
    *  multiples entiers appartient à ce qui *montre* une image, pas à ce qui
    *  la travaille. Deux images côte à côte se partagent la place, donc le
    *  témoin « à côté » compte double. */
-  const ajuste = borner(
+  const ajuste = bornerZoom(
     Math.min(
       dispo.largeur > 0
         ? dispo.largeur / (largeurVue * (temoin === "cote" ? 2 : 1))
@@ -3891,7 +3924,7 @@ export function Retouche({
       // réponde, assez peu pour qu'on s'arrête où l'on veut.
       const pas = evenement.deltaY < 0 ? 1.09 : 1 / 1.09
       setZoom((courant) =>
-        borner((courant === "ajuste" ? ajusteVu.current : courant) * pas),
+        bornerZoom((courant === "ajuste" ? ajusteVu.current : courant) * pas),
       )
     }
     noeudCadre.addEventListener("wheel", molette, { passive: false })
@@ -3999,6 +4032,7 @@ export function Retouche({
     onColler: () => {
       const copiee = lireLePressePapier()
       if (copiee === null) return
+      if (!enregistrementImmediat) { void session.coller(copiee); return }
       void api
         .collerRecette(asset.identifiant, copiee)
         .then(recevoirRecette)
@@ -4020,6 +4054,7 @@ export function Retouche({
         )
     },
     onAppliquer: (nom: string) => {
+      if (!enregistrementImmediat) { void session.appliquer(nom); return }
       void api
         .appliquerRecette(asset.identifiant, nom)
         .then(recevoirRecette)
@@ -4043,16 +4078,17 @@ export function Retouche({
       aria-label={`La retouche de ${asset.label}`}
       className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier"
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-hidden px-[30px] pt-[22px]">
+      <div className="atelier-image-unifie flex min-h-0 flex-1 flex-col gap-[14px] overflow-hidden p-[14px]">
         <div className="flex items-center gap-[8px]">
           <button
             type="button"
-            onClick={onFermer}
+            onClick={() => sortir(onFermer)}
             className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
           >
             ‹ {retour}
           </button>
-          <span className="min-w-0 truncate text-[12.5px] text-encre-3">{asset.label}</span>
+          <div className="min-w-0"><h1 className="truncate font-serif text-[25px] text-encre">{asset.label}</h1><p className="text-[12px] text-encre-3">La retouche · {enregistrementImmediat ? "réglages enregistrés au fil des gestes" : session.modifie ? "Brouillon · version enregistrée intacte" : "Version enregistrée"}</p></div>
+          {!enregistrementImmediat && <button type="button" disabled={!session.modifie || !session.valide || !!enVol || session.enregistre} onClick={() => void session.enregistrer()} className="ml-auto h-[34px] shrink-0 rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{session.enregistre ? "Enregistrement…" : "Enregistrer les retouches"}</button>}
 
           {/* **Les recettes vivent au bout du bandeau**, comme dans
               `Tables.tsx` : elles ont la portée de la recette entière, pas
@@ -4076,7 +4112,7 @@ export function Retouche({
               <PanneauDesRecettes
                 recette={recette}
                 nommees={recettes.nommees}
-                annonce={recettes.annonce}
+                annonce={enregistrementImmediat ? recettes.annonce : session.annonce}
                 aCopier={recettes.aCopier}
                 onFermer={() => setRecettesOuvertes(false)}
                 onLister={recettes.onLister}
@@ -4090,32 +4126,20 @@ export function Retouche({
           </div>
         </div>
 
-        <div className="flex items-end justify-between gap-[22px]">
-          <div className="flex flex-col gap-[4px]">
-            <h1 className="font-serif text-[38px] leading-[1.05] text-encre">La retouche</h1>
-            <p className="text-[13px] text-encre-2">
-              une suite d'étapes, toujours dans le même ordre — chacune se règle,
-              s'endort, et se rejoue sans rien coûter
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-[4px]">
-            <Etiquette>toute la chaîne</Etiquette>
-            <span className="font-serif text-[25px] leading-none text-encre-ok">gratuite</span>
-            <span className="text-[11px] text-encre-4">
-              rien ne sort de la machine, tout marche réseau coupé
-            </span>
-          </div>
-        </div>
-
         {/* ── La barre : huit tables, un trait, deux fabriques ─────────────
             **L'ordre vient de `TABLES`, et il n'est écrit qu'une fois.** C'est
             celui du domaine ; le lire autrement mentirait sur ce que l'image a
             subi. Aucune table n'est cachée — même indisponible, elle s'ouvre et
             porte sa raison à la place de ses réglages. */}
+        <AvisBrouillon brouillon={brouillon} />
+        {aAppliquer && <button type="button" onClick={async () => {
+          try { await api.poserRecette(asset.identifiant, recette); brouillon.effacer(); setAAppliquer(false) }
+          catch (e) { onErreur((e as Error).message) }
+        }} className="h-[34px] rounded-7 border border-signal px-[14px] text-[12px]">Appliquer les réglages repris à l’image</button>}
         <div className="flex flex-wrap items-center gap-[8px]">
-          <button type="button" onClick={() => setOuverte("decoupage")} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Découpe · plusieurs images</button>
-          <button type="button" onClick={() => setOuverte("superposition")} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Extraire un élément</button>
-          {onAssocierEquipement && <button type="button" onClick={onAssocierEquipement} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Associer à un équipement</button>}
+          <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("decoupage") })} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Découpe · plusieurs images</button>
+          <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("superposition") })} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Extraire un élément</button>
+          {onAssocierEquipement && <button type="button" onClick={() => sortir(onAssocierEquipement)} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Associer à un équipement</button>}
           {(ouverte === "decoupage" || ouverte === "superposition") && <button type="button" onClick={() => setOuverte("main")} className="h-[30px] px-[8px] text-[12.5px] text-signal">Revenir à la retouche</button>}
         </div>
         <details className="shrink-0 text-[12px] text-encre-3"><summary className="cursor-pointer">Toutes les tables et leur état</summary>
@@ -4137,7 +4161,11 @@ export function Retouche({
                   data-table={t.cle}
                   data-etat={etat}
                   aria-pressed={ouverte === t.cle}
-                  onClick={() => setOuverte(t.cle)}
+                  onClick={() => {
+                    const ouvrir = () => { setPanneau("retouche"); setOuverte(t.cle) }
+                    if (t.fabrique) sortir(ouvrir)
+                    else ouvrir()
+                  }}
                   // ⚠️ **Pas d'infobulle ici.** Vu au navigateur : un `title`
                   // sur un bouton devient son nom dans l'arbre
                   // d'accessibilité — la barre s'annonçait « Les bords vides
@@ -4177,14 +4205,11 @@ export function Retouche({
             />
           </div>
         ) : (
-        <div className="flex min-h-0 flex-1 gap-[22px] overflow-hidden pb-[22px]">
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] grid-rows-[minmax(0,1fr)_auto] gap-[14px] overflow-hidden">
           {/* ── L'image, et rien par-dessus ─────────────────────────────── */}
-          <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
+          <div className="col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col gap-[8px]">
+            {!enregistrementImmediat && <div className="flex gap-[8px]"><button type="button" disabled={!session.peutDefaire} onClick={session.defaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Défaire</button><button type="button" disabled={!session.peutRefaire} onClick={session.refaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Refaire</button>{!session.valide && !enVol && <button type="button" onClick={() => void poser(recette)} className="text-[12px] text-signal">Recalculer l’aperçu</button>}</div>}
             <div className="flex flex-wrap items-center justify-between gap-[8px]">
-              <span className="min-w-0 truncate text-[12.5px] text-encre-2">
-                {CE_QUE_LA_TABLE_FAIT[ouverte]}
-              </span>
-
               <div className="flex flex-wrap items-center gap-[8px]">
                 {/* ⚠️ **Un grossissement affiché est un grossissement
                     appliqué.** Vu au navigateur sur un jeu en dessin : l'écran
@@ -4197,7 +4222,7 @@ export function Retouche({
                     elle est posée, donc elle tient dans le cadre comme
                     l'image. */}
                 <div data-zoom className="flex items-center gap-[4px] rounded-8 bg-papier-cote p-[4px]">
-                  <CommandesDuZoom zoom={zoom} onZoom={setZoom} ajuste={ajuste} />
+                  <CommandesDuZoom zoom={zoom} onZoom={setZoom} ajuste={ajuste} maximum={zoomMaximum} />
                 </div>
 
                 {/* **« Sur », et « témoin » — deux questions, deux contrôles**
@@ -4290,7 +4315,7 @@ export function Retouche({
               ref={setNoeudCadre}
               data-scene-de-retouche
               style={montreUnFond ? { backgroundColor: FONDS_APERCU[fondApercu] as string } : undefined}
-              className="flex min-h-[300px] flex-1 overflow-auto rounded-8 bg-pourtour p-[22px]"
+              className="flex min-h-0 flex-1 overflow-auto rounded-8 border border-trait bg-pourtour p-[14px]"
             >
               {/* **`m-auto` sur la boîte, jamais `justify-center` sur le
                   cadre qui défile** (`B24`) : un contenu centré par
@@ -4311,7 +4336,7 @@ export function Retouche({
                 {temoin === "cote" && (
                   <figure className="flex min-w-0 flex-col items-center gap-[4px]">
                     <img
-                      src={imageAsset(asset, travail !== "brut")}
+                      src={imageVisible(travail !== "brut")}
                       alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
                       width={Math.max(
                         1,
@@ -4368,6 +4393,7 @@ export function Retouche({
                         asset={asset}
                         avant={travail === "brut"}
                         etat={etatMain}
+                        rendu={!enregistrementImmediat ? <img src={imageVisible(travail === "brut")} alt={asset.label} draggable={false} className="damier-papier h-full w-full select-none object-contain" style={{ imageRendering: "pixelated" }} /> : undefined}
                         onPassage={(trait) =>
                           void poser({
                             ...recette,
@@ -4459,7 +4485,7 @@ export function Retouche({
                     }}
                   >
                     <img
-                      src={imageAsset(asset, travail === "brut")}
+                      src={imageVisible(travail === "brut")}
                       alt={asset.label}
                       width={Math.max(1, Math.round(largeurVue * facteur))}
                       height={Math.max(1, Math.round(hauteurVue * facteur))}
@@ -4475,7 +4501,7 @@ export function Retouche({
                         le défaut que `Tables.tsx` a réparé en U2. */}
                     {temoin === "dessus" && (
                       <img
-                        src={imageAsset(asset, travail !== "brut")}
+                        src={imageVisible(travail !== "brut")}
                         alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
                         style={{ imageRendering: "pixelated", opacity: opacite / 100 }}
                         className="pointer-events-none absolute inset-0 h-full w-full object-contain"
@@ -4509,14 +4535,16 @@ export function Retouche({
           <aside
             data-reglages-de-la-table
             aria-label={`Les réglages de ${NOM_DE_LA_TABLE[ouverte]}`}
-            className="flex w-[380px] min-h-0 shrink-0 flex-col gap-[14px] overflow-hidden rounded-8 bg-papier-cote p-[22px]"
+            className="col-start-2 row-start-1 row-span-2 flex min-h-0 flex-col gap-[14px] overflow-hidden rounded-8 border border-trait bg-carte p-[14px]"
           >
-            <SelecteurDeTable table={ouverte} onTable={setOuverte} />
+            <h2 className="font-serif text-[25px] text-encre">Le résultat</h2>
+            <div className="flex gap-[4px] rounded-7 bg-papier-cote p-[4px]">{(["retouche", "calques"] as const).map((nom) => <button key={nom} type="button" aria-pressed={panneau === nom} onClick={() => { setPanneau(nom); if (nom === "calques") setOuverte("main") }} className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${panneau === nom ? "bg-carte text-encre" : "text-encre-3"}`}>{nom === "retouche" ? "Retouche" : "Calques"}</button>)}</div>
+            {panneau === "retouche" && <SelecteurDeTable table={ouverte} onTable={setOuverte} />}
             <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
             <div className="flex items-start justify-between gap-[8px]">
               <div className="flex flex-col gap-[4px]">
                 <h2 className="font-serif text-[25px] leading-none text-encre">
-                  {NOM_DE_LA_TABLE[ouverte]}
+                  {panneau === "calques" ? "Calques de l’image" : NOM_DE_LA_TABLE[ouverte]}
                 </h2>
                 <span className="mesure text-[10.5px] text-encre-4">
                   {CE_QUE_L_ETAT_DIT[etatDe(ouverte, recette, traitement, mesures)]}
@@ -4534,7 +4562,7 @@ export function Retouche({
               )}
             </div>
 
-            {raison !== null ? (
+            {panneau === "calques" ? <ReglagesDeLaMain {...poste} section="calques" /> : raison !== null ? (
               /* **Une table indisponible s'ouvre quand même**, et son panneau
                  porte la raison à la place de ses réglages. C'est la règle de
                  T1 déplacée, pas retirée : une pastille n'a pas la place d'une
@@ -4562,7 +4590,7 @@ export function Retouche({
             ) : ouverte === "retournement" ? (
               <ReglagesDuRetournement {...poste} />
             ) : ouverte === "main" ? (
-              <ReglagesDeLaMain {...poste} />
+              <ReglagesDeLaMain {...poste} section="peinture" />
             ) : null}
 
             <div className="mt-auto flex flex-col gap-[8px] border-t border-trait pt-[14px]">
@@ -4578,7 +4606,7 @@ export function Retouche({
                   synchrone, le calcul a lieu dans le gestionnaire de requête,
                   et couper la connexion n'arrêterait pas la machine. Le dire
                   vaut mieux qu'un bouton qui aurait l'air de le faire. */}
-              <Pourquoi texte="un calcul ne s'interrompt pas — 28 ms pour la chaîne, 1,3 s au pire pour un modèle ; ce qui se défait, c'est le réglage" />
+              <details className="text-[12px] text-encre-3"><summary className="cursor-pointer">Ce que fait cette table</summary><p className="pt-[8px]">{CE_QUE_LA_TABLE_FAIT[ouverte]} Chaque étape reste réversible, sans nouvel appel de génération. Un calcul ne s’interrompt pas : ce qui se défait, c’est le réglage.</p></details>
             </div>
             </div>
           </aside>
@@ -4590,16 +4618,16 @@ export function Retouche({
           <aside
             data-ses-soeurs
             aria-label="Ses sœurs"
-            className="flex w-[128px] shrink-0 flex-col gap-[8px] overflow-y-auto rounded-8 bg-papier-cote p-[14px]"
+            className="col-start-1 row-start-2 flex min-w-0 flex-col gap-[8px] rounded-8 border-t border-trait pt-[8px]"
           >
             <Etiquette>ses sœurs</Etiquette>
-            <div className="flex flex-wrap content-start gap-[6px]">
+            <div className="defile flex gap-[8px] overflow-x-auto">
               {soeurs.map((soeur) => (
                 <SoeurDuCarnet
                   key={soeur.identifiant}
                   asset={soeur}
                   courante={soeur.identifiant === asset.identifiant}
-                  onChoisir={() => onSoeur(soeur.identifiant)}
+                  onChoisir={() => sortir(() => onSoeur(soeur.identifiant))}
                 />
               ))}
               {soeurs.length === 0 && (
@@ -4610,6 +4638,7 @@ export function Retouche({
         </div>
         )}
       </div>
+      {sortie && <CadreDialogue titre="Quitter les retouches" format="preparation" onFermer={() => setSortie(null)} enfants={<section className="w-full max-w-[880px] rounded-8 border border-trait bg-papier p-[22px]"><h2 className="font-serif text-[25px]">Des retouches attendent</h2><p className="mt-[14px] text-[13px]">La version enregistrée reste intacte. Gardez le brouillon pour plus tard, ou enregistrez les retouches avant de continuer. La découpe, l’extraction et l’équipement utilisent la version enregistrée.</p><div className="mt-[22px] flex flex-wrap gap-[8px]"><button type="button" onClick={() => setSortie(null)} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Continuer à retoucher</button><button type="button" onClick={() => { const action = sortie; setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Garder le brouillon et continuer</button><button type="button" onClick={() => { const action = sortie; session.abandonner(); setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Abandonner les retouches</button><button type="button" disabled={!session.valide || !!enVol || session.enregistre} onClick={async () => { if (await session.enregistrer()) { const action = sortie; setSortie(null); action() } }} className="h-[34px] rounded-7 border border-signal bg-carte px-[14px] text-[12px] text-signal disabled:opacity-50">Enregistrer et continuer</button></div></section>} />}
     </main>
   )
 }
@@ -4657,19 +4686,23 @@ function CommandesDuZoom({
   zoom,
   onZoom,
   ajuste,
+  maximum = ZOOM_MAX,
 }: {
   zoom: ZoomTable
   onZoom: (zoom: ZoomTable) => void
   ajuste: number
+  maximum?: number
 }) {
   const effectif = zoom === "ajuste" ? ajuste : zoom
   const [ecrit, setEcrit] = useState<string | null>(null)
+  const bornerIci = (v: number) => Math.max(ZOOM_MIN, Math.min(maximum, Math.round(v)))
+  const arrets = [...ARRETS_ZOOM, 400, 600, 800, 1200, 1600].filter((v) => v <= maximum)
 
   const valider = (texte: string) => {
     setEcrit(null)
     const lu = Number.parseInt(texte.replace(/[^\d]/g, ""), 10)
     // **Hors bornes, on ramène — on ne refuse pas.**
-    if (Number.isFinite(lu)) onZoom(borner(lu))
+    if (Number.isFinite(lu)) onZoom(bornerIci(lu))
   }
 
   return (
@@ -4681,7 +4714,7 @@ function CommandesDuZoom({
         disabled={effectif <= ZOOM_MIN}
         onClick={() =>
           onZoom(
-            borner([...ARRETS_ZOOM].reverse().find((a) => a < effectif) ?? ZOOM_MIN),
+            bornerIci([...arrets].reverse().find((a) => a < effectif) ?? ZOOM_MIN),
           )
         }
         className="flex h-[26px] w-[26px] items-center justify-center rounded-7 text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint"
@@ -4707,8 +4740,8 @@ function CommandesDuZoom({
         type="button"
         aria-label="Approcher"
         title="Approcher"
-        disabled={effectif >= ZOOM_MAX}
-        onClick={() => onZoom(borner(ARRETS_ZOOM.find((a) => a > effectif) ?? ZOOM_MAX))}
+        disabled={effectif >= maximum}
+        onClick={() => onZoom(bornerIci(arrets.find((a) => a > effectif) ?? maximum))}
         className="flex h-[26px] w-[26px] items-center justify-center rounded-7 text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint"
       >
         +

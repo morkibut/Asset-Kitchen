@@ -11,6 +11,7 @@
 // de tout écran incapable de dépenser**. C'est ce qui donne à la galerie son
 // métier propre : on y juge, on n'y paie jamais.
 
+import { api } from "../api"
 import type {
   Asset,
   CompteReferences,
@@ -29,6 +30,8 @@ import { ChampPrompt, type EnVol } from "./ChampPrompt"
 import { CoutAttendu, PanneauReglages } from "./PanneauReglages"
 
 export function BarreQuiPaie({
+  presentation = "barre",
+  onChoisirReference,
   modeles,
   modele,
   onChoisirModele,
@@ -74,6 +77,8 @@ export function BarreQuiPaie({
   echec,
   enVol,
 }: {
+  presentation?: "barre" | "preparation"
+  onChoisirReference?: () => void
   modeles: Modele[]
   modele: Modele | null
   onChoisirModele: (identifiant: string) => void
@@ -132,6 +137,52 @@ export function BarreQuiPaie({
   // remet exactement où l'on était » (US-37) — et le registre est déjà
   // global, déjà remis à zéro par les essais, déjà abonné.
   const [reglagesOuverts, basculerReglages] = usePli("barre.reglages")
+
+  // La préparation reprend les mêmes états et le même chemin d’envoi. Elle
+  // s’ouvre sur demande ; aucun formulaire ne prend la place de l’asset.
+  if (presentation === "preparation") {
+    const champ = "min-h-[34px] w-full rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[13px]"
+    const reglerOption = (cle: string, valeur: string) => {
+      const prochaines = { ...options }
+      if (valeur === "") delete prochaines[cle]
+      else prochaines[cle] = valeur
+      onOptions(prochaines)
+    }
+    return <div className="flex min-h-0 flex-1 flex-col text-[13px]">
+      <div className="defile min-h-0 flex-1 space-y-[22px] overflow-y-auto px-[30px] py-[22px]">
+      <div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">Références jointes</h2>{onChoisirReference && <button type="button" className="h-[34px] rounded-7 border border-contour bg-carte px-[14px]" onClick={onChoisirReference}>Choisir dans la bibliothèque</button>}</div>
+      <section aria-label="Références jointes" className="rounded-7 border border-trait bg-carte p-[22px]">
+        {reinjections.length === 0 ? <p className="text-encre-3">Aucune image jointe à la main. Les références de l’univers et de l’asset seront visibles à la relecture.</p> : <div className="grid grid-cols-3 gap-[14px]">{reinjections.map(({ asset, role }, i) => <figure key={asset} className="min-w-0 space-y-[8px]">
+          <img src={api.fichier(asset)} alt={`Référence ${i + 1}`} className="damier-papier h-[128px] w-full rounded-7 object-contain" />
+          <select aria-label={`Rôle de la référence ${i + 1}`} className={champ} value={role} onChange={(e) => onRoleReinjection(asset, e.target.value as Role)}><option value="reference">Référence visuelle</option><option value="edition">Image à modifier</option><option value="style">Guide de style</option></select>
+          <button type="button" className="text-encre-3 hover:text-echec" onClick={() => onRetirerReinjection(asset)}>Retirer la référence {i + 1}</button>
+        </figure>)}</div>}
+      </section>
+      <section className="space-y-[8px]">
+        <label className="block font-medium" htmlFor="preparation-image-prompt">{repris ? "Texte complet à envoyer" : "Ce que tu veux fabriquer"}</label>
+        <textarea id="preparation-image-prompt" autoFocus rows={5} className={`${champ} resize-y leading-relaxed`} value={prompt} placeholder="Décris le sujet, son apparence et l’image attendue…" onChange={(e) => onPrompt(e.target.value)} onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !refus && !enPaiement) { e.preventDefault(); onGenerer() } }} />
+        {provenance && <p className="text-encre-3">{provenance} <button type="button" className="text-signal" onClick={onDefaireProvenance}>Effacer ce texte</button></p>}
+        {repris ? <p className="text-signal">Ce texte part mot pour mot. <button type="button" className="underline" onClick={onRendre}>Rétablir les consignes de l’univers</button></p> : <p className="text-encre-3">Le style du jeu et la cible complètent cette description. Tu pourras relire et modifier le texte complet avant l’envoi.</p>}
+      </section>
+      <section className="grid grid-cols-2 gap-[14px] rounded-7 border border-trait bg-carte p-[22px]">
+        <label className="col-span-2 space-y-[8px]"><span className="block font-medium">Modèle · fournisseur</span><select className={champ} value={modele?.identifiant ?? ""} onChange={(e) => onChoisirModele(e.target.value)}><option value="" disabled>Choisir un modèle</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.fournisseur} · {m.nom}{m.refus ? ` — ${m.refus}` : ""}</option>)}</select></label>
+        <label className="space-y-[8px]"><span className="block font-medium">Format de l’image</span><select className={champ} value={proportions} disabled={!modele} onChange={(e) => onProportions(e.target.value)}>{!modele?.proportions.includes(proportions) && <option value={proportions} disabled>{proportions} — indisponible</option>}{modele?.proportions.map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label className="space-y-[8px]"><span className="block font-medium">Variations</span><input type="number" className={champ} min={1} max={modele?.variations_max ?? 1} step={1} disabled={!!cases || !modele} value={cases ? 1 : variations} onChange={(e) => { const v = e.target.valueAsNumber; if (Number.isFinite(v)) onVariations(Math.max(1, Math.min(modele?.variations_max ?? 1, Math.floor(v)))) }} /></label>
+        {cases > 0 && <p className="col-span-2 text-encre-3">{cases} cases réunies sur une planche · un appel pour la planche.</p>}
+        {modele && Object.entries(modele.options).map(([cle, option]) => <label key={cle} className="space-y-[8px]"><span className="block font-medium">{option.nom}</span>{option.genre === "choix" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option>{option.valeurs.map((v) => <option key={v}>{v}</option>)}</select> : option.genre === "booleen" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option><option value="false">Désactivé</option><option value="true">Activé</option></select> : <input type="number" className={champ} min={option.minimum ?? undefined} max={option.maximum ?? undefined} value={options[cle] ?? ""} placeholder="Réglage du modèle" onChange={(e) => reglerOption(cle, e.target.value)} />}</label>)}
+      </section>
+      <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Prompt négatif{promptNegatif ? " · renseigné" : " · facultatif"}</summary><textarea aria-label="Prompt négatif" rows={2} className={`${champ} mt-[14px]`} value={promptNegatif} onChange={(e) => onPromptNegatif(e.target.value)} placeholder="Ce qui doit être évité…" /></details>
+      <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Réglages de l’univers et références héritées</summary><div className="mt-[14px]"><PanneauReglages modeles={modeles} choisi={modele} onChoisir={onChoisirModele} proportions={proportions} onProportions={onProportions} variations={variations} onVariations={onVariations} options={options} onOptions={onOptions} references={reinjections.length} projet={projetNom} univers={univers} echelle={echelle} onEchelle={onEchelle} compte={compteReferences} cout={cout} reserve={reserve} cases={cases} cible={personnageCible} ecarteesGeneration={ecarteesGeneration} onEcarterGeneration={onEcarterGeneration} onErreur={onErreur} /></div></details>
+      </div>
+      <footer className="shrink-0 space-y-[14px] border-t border-trait bg-carte px-[30px] py-[14px]">
+        <dl className="grid grid-cols-[auto_1fr] gap-x-[22px] gap-y-[8px]"><CoutAttendu cout={cout} cases={cases} variations={variations} unite={modele?.unite} reserve={reserve} /></dl>
+        {enVol && <p role="status" className="text-signal">{enVol.images} image{enVol.images > 1 ? "s" : ""} en cours de fabrication · Les résultats arrivent dans la galerie.</p>}
+        {echec && <p role="alert" className="text-echec">{echec}</p>}
+        {revers && <p className="text-encre-3">{revers.texte} <button type="button" className="text-signal" disabled={revers.enCours} onClick={revers.onReessayer}>Réessayer</button></p>}
+        <div className="flex items-center justify-between gap-[22px]"><p className="text-encre-3">{refus ?? "Tu reliras les textes, les images jointes et le coût avant de lancer."}{refus && onAller && ouAller && <> <button type="button" className="text-signal" onClick={onAller}>{ouAller}</button></>}</p><button type="button" disabled={!!refus || !!enPaiement} onClick={onGenerer} className="h-[42px] shrink-0 rounded-7 bg-signal px-[22px] text-encre-sur-signal disabled:opacity-50">{enPaiement ? "Envoi en cours…" : "Relire avant envoi"}</button></div>
+      </footer>
+    </div>
+  }
 
   return (
     <div className="flex shrink-0 flex-col">

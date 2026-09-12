@@ -56,6 +56,7 @@
 import { useCallback, useMemo, useState } from "react"
 import { api, type Bande, type Case, type Personnage, type Pose } from "../api"
 import { BandeQuiTourne } from "./Apercu"
+import { useEtatDuParcours, useScrollDuParcours } from "./MemoireDuParcours"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. */
 const COTE = 54
@@ -77,6 +78,10 @@ export type Rangee = {
   /** Ce que cette rangée porte, retenue et gardées — **les écartées n'y
    *  comptent pas**, comme une image supprimée ne compte plus dans sa case. */
   compte: number
+  /** Une sortie d'animation explicite vise cette direction. Ce n'est pas le
+   *  plan historique : lui reste visible seulement lorsqu'il conserve déjà
+   *  une bande. */
+  demandee?: boolean
 }
 
 /** La retenue, puis les gardées de la plus ancienne à la plus récente.
@@ -137,8 +142,11 @@ export function rangeesDeLaCase(sienne: Case): Rangee[] {
  *  l'attendent — ce compte n'existe pas côté serveur pour les animations, et
  *  l'inventer à l'écran aurait affiché un nombre que personne d'autre ne peut
  *  vérifier. */
-function ceQuiCloche(rangees: readonly Rangee[]): string | null {
-  if (rangees.every((r) => r.compte === 0)) return "rien"
+function ceQuiCloche(rangees: readonly Rangee[], objectifExplicite: boolean): string | null {
+  const manquantes = rangees.filter((r) => r.demandee && r.compte === 0).length
+  if (manquantes > 0)
+    return manquantes === 1 ? "1 à fabriquer" : `${manquantes} à fabriquer`
+  if (!objectifExplicite && rangees.every((r) => r.compte === 0)) return "rien"
   const aDepartager = rangees.filter((r) => r.compte > 1 && !r.retenue).length
   if (aDepartager > 0)
     return aDepartager === 1 ? "1 à départager" : `${aDepartager} à départager`
@@ -158,18 +166,26 @@ function VignetteDeBande({
   etat,
   choisie,
   onChoisir,
+  cote = COTE,
+  galerie = false,
 }: {
   bande: Bande
   etat: "retenue" | "gardee" | "ecartee"
   choisie: boolean
   onChoisir: () => void
+  cote?: number
+  galerie?: boolean
 }) {
+  const [survol, setSurvol] = useState(false)
+  const [focus, setFocus] = useState(false)
   return (
     <button
       type="button"
       onClick={onChoisir}
+      onPointerEnter={() => setSurvol(true)} onPointerLeave={() => setSurvol(false)}
+      onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
       aria-current={choisie}
-      aria-label={`${bande.nom || "une animation"}${etat === "retenue" ? ", la retenue" : ""}${etat === "ecartee" ? ", écartée" : ""}`}
+      aria-label={`${galerie ? "Retoucher " : ""}${bande.nom || "une animation"}${etat === "retenue" ? ", la retenue" : ""}${etat === "ecartee" ? ", écartée" : ""}`}
       data-vignette-de-bande={bande.identifiant}
       className={[
         "relative block shrink-0 overflow-hidden rounded-7",
@@ -178,7 +194,7 @@ function VignetteDeBande({
         choisie && etat !== "retenue" ? "ring-1 ring-encre-4" : "",
       ].join(" ")}
     >
-      <BandeQuiTourne bande={bande} cote={COTE} />
+      <BandeQuiTourne bande={bande} cote={cote} joue={survol || focus} />
     </button>
   )
 }
@@ -188,11 +204,13 @@ function VignetteDeBande({
  *  l'état courant se voie sans avoir à se rappeler ce que le clic ferait. */
 function Marques({
   retenue,
+  contexte = "",
   onRetenir,
   onGarder,
   onEcarter,
 }: {
   retenue: boolean
+  contexte?: string
   onRetenir: () => void
   onGarder: () => void
   onEcarter: () => void
@@ -205,7 +223,7 @@ function Marques({
         type="button"
         onClick={onRetenir}
         aria-pressed={retenue}
-        aria-label="La retenir"
+        aria-label={`La retenir${contexte}`}
         className={`${commun} border-r border-trait-faible ${
           retenue ? "bg-ok text-encre-sur-signal" : "text-eteint hover:text-encre"
         }`}
@@ -216,7 +234,7 @@ function Marques({
         type="button"
         onClick={onGarder}
         aria-pressed={!retenue}
-        aria-label="La garder seulement"
+        aria-label={`La garder seulement${contexte}`}
         className={`${commun} border-r border-trait-faible ${
           retenue ? "text-eteint hover:text-encre" : "bg-ligne-ouverte text-encre-controle"
         }`}
@@ -226,7 +244,7 @@ function Marques({
       <button
         type="button"
         onClick={onEcarter}
-        aria-label="L'écarter"
+        aria-label={`L'écarter${contexte}`}
         className={`${commun} text-eteint hover:text-echec`}
       >
         ⊘
@@ -268,6 +286,7 @@ function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string
 
 function LigneDeRangee({
   rangee,
+  cleMemoire,
   choisie,
   onChoisir,
   onRetenir,
@@ -277,6 +296,7 @@ function LigneDeRangee({
   onGenerer,
 }: {
   rangee: Rangee
+  cleMemoire: string
   choisie: string | null
   onChoisir: (bande: Bande) => void
   onRetenir: (bande: Bande, rangee: Rangee) => void
@@ -285,7 +305,7 @@ function LigneDeRangee({
   onRestaurer: (bande: Bande) => void
   onGenerer: (rangee: Rangee) => void
 }) {
-  const [ecarteesOuvertes, setEcarteesOuvertes] = useState(false)
+  const [ecarteesOuvertes, setEcarteesOuvertes] = useEtatDuParcours(`${cleMemoire}:ecartees`, true)
 
   const vignette = (bande: Bande, etat: "retenue" | "gardee") => (
     <span key={bande.identifiant} className="flex w-[54px] shrink-0 flex-col gap-[4px]">
@@ -326,7 +346,9 @@ function LigneDeRangee({
       <span className="min-w-0">
         {rangee.compte === 0 && rangee.ecartees.length === 0 ? (
           <span className="flex h-[54px] items-center text-[12px] text-eteint">
-            rien encore — aucun clip pour cette direction
+            {rangee.demandee
+              ? "aucun clip encore — à fabriquer"
+              : "rien encore — aucun clip pour cette direction"}
           </span>
         ) : (
           <span className="defile flex items-start gap-[8px] overflow-x-auto">
@@ -335,7 +357,7 @@ function LigneDeRangee({
             ) : (
               // **Le seul rouge de la rangée** : plusieurs bandes, et aucune
               // ne sort dans le jeu.
-              rangee.compte > 1 && (
+              rangee.compte > 0 && (
                 <span className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-7 border border-dashed border-trait-echec bg-fond-echec px-[4px] text-center text-[10.5px] leading-[1.2] text-echec">
                   aucune retenue
                 </span>
@@ -432,37 +454,59 @@ export function AnimationsDuSujet({
     [plan],
   )
 
-  const [poseOuverte, setPoseOuverte] = useState<string | null>(
-    personnage.cases[0]?.pose ?? null,
+  const objectifExplicite = personnage.objectif != null
+  const animationsDemandees = personnage.objectif?.sorties.filter(
+    (sortie) => sortie.nature === "animation" && sortie.quantite > 0,
+  ) ?? []
+  const cle = `animations:${personnage.projet}:${personnage.identifiant}`
+  const [poseOuverte, setPoseOuverte] = useEtatDuParcours<string | null>(
+    `${cle}:pose`,
+    animationsDemandees[0]?.pose ?? personnage.cases[0]?.pose ?? null,
   )
-  const [filtre, setFiltre] = useState<Filtre>("toutes")
-  const [choisie, setChoisie] = useState<string | null>(null)
+  const [filtre, setFiltre] = useEtatDuParcours<Filtre>(`${cle}:filtre`, "toutes")
+  const [choisie, setChoisie] = useEtatDuParcours<string | null>(`${cle}:choisie`, null)
+  const [galeriePose, setGaleriePose] = useEtatDuParcours(`${cle}:galerie-pose`, "")
+  const [galerieDirection, setGalerieDirection] = useEtatDuParcours(`${cle}:galerie-direction`, "")
+  const [galerieStatut, setGalerieStatut] = useEtatDuParcours(`${cle}:galerie-statut`, "")
+  const defilement = useScrollDuParcours(`${cle}:scroll`)
 
-  const parPose = useMemo(
-    () =>
-      personnage.cases.map((sienne) => ({
+  const parPose = useMemo(() => {
+    const estDemandee = (rangee: Rangee) => animationsDemandees.some(
+      (sortie) => sortie.pose === rangee.pose && sortie.direction === (rangee.direction ?? ""),
+    )
+    return personnage.cases
+      .map((sienne) => ({
         sienne,
         nom: nomDePose.get(sienne.pose) ?? sienne.pose,
-        rangees: rangeesDeLaCase(sienne),
-      })),
-    [personnage.cases, nomDePose],
-  )
+        rangees: rangeesDeLaCase(sienne)
+          .map((rangee) => ({ ...rangee, demandee: estDemandee(rangee) }))
+          // Une ligne sans sortie demandée reste utile uniquement si elle porte
+          // une bande ancienne, active ou écartée. La matrice historique ne se
+          // transforme donc pas en liste de fabrications à faire.
+          .filter((rangee) => !objectifExplicite || rangee.demandee || rangee.compte > 0 || rangee.ecartees.length > 0),
+      }))
+      .filter(({ rangees }) => rangees.length > 0)
+  }, [personnage.cases, nomDePose, animationsDemandees, objectifExplicite])
 
   const poses = parPose.filter(({ rangees }) => {
     if (filtre === "toutes") return true
     return rangees.some((r) => r.compte > 1 && !r.retenue)
   })
+  const galerie = parPose.flatMap(({ nom, rangees }) => rangees.flatMap((rangee) => [
+    ...(rangee.retenue ? [{ bande: rangee.retenue, statut: "retenue" as const, rangee, nom }] : []),
+    ...rangee.gardees.map((bande) => ({ bande, statut: "gardee" as const, rangee, nom })),
+    ...rangee.ecartees.map((bande) => ({ bande, statut: "ecartee" as const, rangee, nom })),
+  ]))
+  const galerieFiltree = galerie.filter((item) => (!galeriePose || item.rangee.pose === galeriePose) && (!galerieDirection || item.rangee.direction === galerieDirection) && (!galerieStatut || item.statut === galerieStatut))
+  const directionsGalerie = [...new Map(parPose.flatMap(({ rangees }) => rangees.filter((r) => r.direction).map((r) => [r.direction!, r.angle ?? r.nom] as const))).entries()]
 
-  /** La bande du volet — celle qu'on a choisie, sinon la retenue de la
-   *  première rangée ouverte. Relue dans les cases à chaque rendu, comme pour
+  /** La bande du volet, ouvert à la demande. Relue dans les cases à chaque rendu, comme pour
    *  les images : gardée en objet, elle serait celle d'avant le dernier
    *  changement de favori. */
   const bande = useMemo(() => {
-    const toutes = personnage.cases.flatMap((c) => [...c.bandes, ...c.bandes_ecartees])
+    const toutes = parPose.flatMap((p) => p.rangees.flatMap((r) => [...(r.retenue ? [r.retenue] : []), ...r.gardees, ...r.ecartees]))
     return (
       toutes.find((b) => b.identifiant === choisie) ??
-      parPose.find((p) => p.sienne.pose === poseOuverte)?.rangees.find((r) => r.retenue)
-        ?.retenue ??
       null
     )
   }, [personnage.cases, choisie, parPose, poseOuverte])
@@ -550,14 +594,18 @@ export function AnimationsDuSujet({
   )
 
   return (
-    <div data-onglet-animations className="flex min-h-0 flex-1 overflow-hidden">
+    <div data-onglet-animations className="flex min-h-0 flex-1 overflow-hidden" onDoubleClick={e => {
+      const cible = (e.target as HTMLElement).closest<HTMLElement>("[data-vignette-de-bande]")?.dataset.vignetteDeBande
+      if (cible) { setChoisie(null); onOuvrirLaBande(cible) }
+    }}>
       {/* `min-w-0` : sans lui, la surface pousse le volet hors de la fenêtre —
           voir la note d'`ImagesDuSujet.tsx`. */}
       <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] overflow-hidden">
         <div className="flex items-center justify-between gap-[14px]">
           <p className="text-[13px] text-encre-2">
-            Une rangée par direction — la retenue à gauche, les autres dans l'ordre où
-            elles ont été faites.
+            {objectifExplicite
+              ? "L’objectif montre les animations attendues. Les bandes déjà conservées hors objectif restent accessibles."
+              : "Une rangée par direction — la retenue à gauche, les versions à juger ensuite, les écartées à droite. Survolez pour lire."}
           </p>
           <div
             role="tablist"
@@ -589,7 +637,7 @@ export function AnimationsDuSujet({
           </div>
         </div>
 
-        <div className="defile flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto">
+        <div {...defilement} className="defile flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto">
           {poses.length === 0 && (
             <p className="text-[13px] text-encre-3">
               {personnage.cases.length === 0
@@ -600,7 +648,7 @@ export function AnimationsDuSujet({
           {poses.map(({ sienne, nom, rangees }) => {
             const ouverte = poseOuverte === sienne.pose
             const animations = rangees.reduce((somme, r) => somme + r.compte, 0)
-            const cloche = ceQuiCloche(rangees)
+            const cloche = ceQuiCloche(rangees, objectifExplicite)
             return (
               <div
                 key={sienne.pose}
@@ -629,6 +677,11 @@ export function AnimationsDuSujet({
                       </>
                     )}
                   </span>
+                  {objectifExplicite && rangees.every((rangee) => !rangee.demandee) && (
+                    <span className="rounded-5 border border-trait-attention bg-fond-attention px-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-attention">
+                      hors objectif
+                    </span>
+                  )}
                   {cloche && (
                     <span
                       className={[
@@ -647,6 +700,7 @@ export function AnimationsDuSujet({
                     {rangees.map((rangee) => (
                       <LigneDeRangee
                         key={rangee.cle}
+                        cleMemoire={`${cle}:${rangee.cle}`}
                         rangee={rangee}
                         choisie={bande?.identifiant ?? null}
                         onChoisir={(cible) => setChoisie(cible.identifiant)}
@@ -670,6 +724,25 @@ export function AnimationsDuSujet({
               </div>
             )
           })}
+          <section aria-label="Galerie des animations" className="mt-[22px] flex flex-col gap-[14px] border-t border-trait pt-[14px]">
+            <h2 className="font-serif text-[25px]">Galerie des animations</h2>
+            <div className="flex flex-wrap gap-[8px] text-[12px]">
+              <label>Mouvement / pose <select aria-label="Mouvement de la galerie" value={galeriePose} onChange={(e) => setGaleriePose(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option>{parPose.map((p) => <option key={p.sienne.pose} value={p.sienne.pose}>{p.nom}</option>)}</select></label>
+              <label>Direction <select aria-label="Direction de la galerie" value={galerieDirection} onChange={(e) => setGalerieDirection(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Toutes</option>{directionsGalerie.map(([id, nom]) => <option key={id} value={id}>{nom}</option>)}</select></label>
+              <label>Jugement <select aria-label="Jugement de la galerie" value={galerieStatut} onChange={(e) => setGalerieStatut(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option><option value="retenue">Retenue</option><option value="gardee">À juger</option><option value="ecartee">Écartée</option></select></label>
+            </div>
+            <p role="status" className="text-[12px] text-encre-3">{galerieFiltree.length} animation{galerieFiltree.length > 1 ? "s" : ""}</p>
+            <div className="grid grid-cols-2 gap-[14px]">
+              {galerieFiltree.map(({ bande: cible, statut, rangee, nom }) => <article key={cible.identifiant} data-carte-animation={cible.identifiant} className="flex min-w-0 flex-col gap-[8px] rounded-10 border border-trait bg-carte p-[14px]">
+                <div className="flex justify-center"><VignetteDeBande bande={cible} galerie cote={128} etat={statut} choisie={choisie === cible.identifiant} onChoisir={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} /></div>
+                <p className="truncate text-[13px]">{nom} · {rangee.angle ?? "sans direction"}</p>
+                <p className="text-[11px] text-encre-3">{statut === "gardee" ? "À juger" : statut === "retenue" ? "Retenue" : "Écartée"} · {cible.compte} frames · {cible.cadence} i/s</p>
+                {statut === "ecartee" ? <button type="button" onClick={() => void restaurer(cible)}>Remettre à juger</button> : <Marques contexte={` dans la galerie : ${cible.nom}`} retenue={statut === "retenue"} onRetenir={() => void retenir(cible, rangee)} onGarder={() => void garder(cible)} onEcarter={() => void ecarter(cible, rangee)} />}
+                <button type="button" onClick={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} className="rounded-7 border border-trait px-[8px] py-[4px] text-[12px]">Retoucher</button>
+              </article>)}
+            </div>
+            {galerieFiltree.length === 0 && <p className="text-[12px] text-encre-3">Aucune animation pour ces filtres.</p>}
+          </section>
         </div>
       </section>
 
@@ -680,6 +753,7 @@ export function AnimationsDuSujet({
           aria-label="L'animation choisie"
           className="volet flex w-[380px] shrink-0 flex-col gap-[14px] overflow-y-auto border-l border-trait bg-papier-cote p-[22px]"
         >
+          <button type="button" onClick={() => setChoisie(null)} className="h-[30px] self-end rounded-7 border border-contour bg-carte px-[14px] text-[13px]">Fermer les détails</button>
           <div className="flex items-baseline justify-between gap-[8px]">
             <span className="font-serif text-[25px] leading-[1.15] text-encre">
               {bande.favori ? "L'animation retenue" : "L'animation choisie"}
@@ -693,8 +767,7 @@ export function AnimationsDuSujet({
 
           <p className="text-[13px] text-encre-2">
             {personnage.nom}, {nomDePose.get(bande.pose ?? "") ?? "sans pose"}
-            {bande.direction ? `, vers ${bande.direction}` : ""} — c'est elle qui
-            sortirait dans le jeu.
+            {bande.direction ? `, vers ${bande.direction}` : ""} — {bande.supprime ? "version écartée" : bande.favori ? "retenue pour le jeu" : "version à juger"}.
           </p>
 
           <span className="flex h-[300px] items-center justify-center overflow-hidden rounded-8 bg-pourtour">
@@ -725,7 +798,7 @@ export function AnimationsDuSujet({
               <dd className="text-right">
                 <button
                   type="button"
-                  onClick={() => onOuvrirLaBande(bande.identifiant)}
+                  onClick={() => { setChoisie(null); onOuvrirLaBande(bande.identifiant) }}
                   className="text-encre-controle underline underline-offset-2 hover:text-encre"
                 >
                   le clip
@@ -754,7 +827,7 @@ export function AnimationsDuSujet({
           <div className="mt-auto flex flex-col gap-[8px]">
             <button
               type="button"
-              onClick={() => onOuvrirLaBande(bande.identifiant)}
+              onClick={() => { setChoisie(null); onOuvrirLaBande(bande.identifiant) }}
               className="h-[34px] rounded-7 bg-signal text-[13px] font-medium text-encre-sur-signal transition-colors duration-120 hover:opacity-90"
             >
               L'ouvrir dans l'atelier
@@ -792,20 +865,7 @@ export function AnimationsDuSujet({
             </p>
           </div>
         </aside>
-      ) : (
-        <aside
-          data-volet-vide
-          aria-label="L'animation choisie"
-          className="volet flex w-[380px] shrink-0 flex-col gap-[8px] border-l border-trait bg-papier-cote p-[22px]"
-        >
-          <p className="font-serif text-[25px] leading-[1.15] text-encre">Rien de choisi</p>
-          <p className="text-[13px] leading-[1.45] text-encre-2">
-            {parPose.every((p) => p.rangees.every((r) => r.compte === 0))
-              ? "Aucune de ses poses n'est animée. La case « + générer » d'une rangée ouvre l'écran qui commande un clip, sans rien dépenser ici."
-              : "Clique une vignette pour voir ce qu'elle porte et pour l'ouvrir dans l'atelier."}
-          </p>
-        </aside>
-      )}
+      ) : null}
     </div>
   )
 }

@@ -44,7 +44,8 @@
  * critère tenu par construction plutôt que par une position calculée.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo } from "react"
+import { useEtatDuParcours, useScrollDuParcours } from "./MemoireDuParcours"
 import {
   api,
   type Asset,
@@ -475,11 +476,11 @@ export function ImagesDuSujet({
   // que l'écran devienne illisible, et c'est la même règle que la ligne du
   // carnet. La première ouverte, parce qu'un écran replié en entier n'a rien à
   // montrer de ce qu'on vient chercher.
-  const [poseOuverte, setPoseOuverte] = useState<string | null>(
-    personnage.cases[0]?.pose ?? null,
-  )
-  const [filtre, setFiltre] = useState<Filtre>("toutes")
-  const [choisie, setChoisie] = useState<string | null>(null)
+  const cle = `images:${personnage.projet}:${personnage.identifiant}`
+  const [poseOuverte, setPoseOuverte] = useEtatDuParcours<string | null>(`${cle}:pose`, personnage.cases[0]?.pose ?? null)
+  const [filtre, setFiltre] = useEtatDuParcours<Filtre>(`${cle}:filtre`, "toutes")
+  const [choisie, setChoisie] = useEtatDuParcours<string | null>(`${cle}:choisie`, null)
+  const defilement = useScrollDuParcours(`${cle}:scroll`)
 
   const parPose = useMemo(
     () =>
@@ -498,8 +499,7 @@ export function ImagesDuSujet({
     return rangees.some((r) => r.aConfirmer)
   })
 
-  /** L'image du volet — celle qu'on a choisie, sinon la retenue de la première
-   *  rangée ouverte. **Relue dans les cases à chaque rendu** : gardée en objet,
+  /** Le volet ne s'ouvre qu'à la demande. L'image est relue dans les cases : gardée en objet,
    *  elle serait celle d'avant le dernier changement de favori. */
   const image = useMemo(() => {
     const toutes = personnage.cases.flatMap((c) => [
@@ -508,8 +508,6 @@ export function ImagesDuSujet({
     ])
     return (
       toutes.find((a) => a.identifiant === choisie) ??
-      parPose.find((p) => p.sienne.pose === poseOuverte)?.rangees.find((r) => r.retenue)
-        ?.retenue ??
       null
     )
   }, [personnage.cases, choisie, parPose, poseOuverte])
@@ -605,7 +603,10 @@ export function ImagesDuSujet({
     personnage.cases.find((c) => c.pose === pose)?.directions ?? []
 
   return (
-    <div data-onglet-images className="flex min-h-0 flex-1 overflow-hidden">
+    <div data-onglet-images className="flex min-h-0 flex-1 overflow-hidden" onDoubleClick={(e) => {
+      const cible = (e.target as HTMLElement).closest<HTMLElement>("[data-vignette-de-rangee]")?.dataset.vignetteDeRangee
+      if (cible) { setChoisie(null); onOuvrirCase(cible) }
+    }}>
       {/* ⚠️ `min-w-0` sur la surface, et c'est le volet qui en dépend. Une
           colonne de flex refuse par défaut de descendre sous la largeur de son
           contenu : sans lui, la surface poussait le volet de 380 px **hors de
@@ -649,7 +650,7 @@ export function ImagesDuSujet({
           </div>
         </div>
 
-        <div className="defile flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto">
+        <div {...defilement} className="defile flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto">
           {poses.length === 0 && (
             <p className="text-[13px] text-encre-3">
               {personnage.cases.length === 0
@@ -790,28 +791,11 @@ export function ImagesDuSujet({
             onEcarter([image.identifiant])
             setChoisie(null)
           }}
-          onRetoucher={() => onOuvrirCase(image.identifiant)}
+          onRetoucher={() => { setChoisie(null); onOuvrirCase(image.identifiant) }}
           onOuvrir={(identifiant) => setChoisie(identifiant)}
         />
       )}
 
-      {/* Le volet ne se referme pas, il se vide — sans quoi la surface change de
-          largeur à chaque pose ouverte, et la rangée qu'on lisait se déplace
-          sous le pointeur. */}
-      {!image && (
-        <aside
-          data-volet-vide
-          aria-label="L'image choisie"
-          className="volet flex w-[380px] shrink-0 flex-col gap-[8px] border-l border-trait bg-papier-cote p-[22px]"
-        >
-          <p className="font-serif text-[25px] leading-[1.15] text-encre">Rien de choisi</p>
-          <p className="text-[13px] leading-[1.45] text-encre-2">
-            {parPose.every((p) => p.rangees.every((r) => r.compte === 0))
-              ? "Aucune de ses poses n'a d'image. La case « + générer » d'une rangée remplit le prompt sans rien dépenser."
-              : "Clique une vignette pour voir ce qu'elle a coûté, ce qui est parti, et ce qu'elle porte."}
-          </p>
-        </aside>
-      )}
     </div>
   )
 }

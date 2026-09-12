@@ -4,7 +4,7 @@ import { api, RECETTE_VIDE, UNIVERS_VIDE, type Asset, type AtelierDeBande, type 
 import { EcranAtelierDeBande, remonterLaBande } from "./AtelierDeBande"
 import { EcranMontage } from "./Montage"
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 const traitement = { moteurs: [], silhouettes: [], reductions: [], recettes: [], quantification: { raison: null, note: "" } } as unknown as EtatTraitement
 function fixture(): AtelierDeBande {
@@ -66,6 +66,31 @@ test("deux occurrences d’une même source gardent chacune leur retouche après
   expect(remontee.chutier).toEqual([])
 })
 
+test("un brouillon de frame se reprend après fermeture sans écrire la bande avant confirmation", async () => {
+  const disque = fixture()
+  vi.spyOn(api, "ouvrirLaBande").mockResolvedValue(disque)
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  const garder = vi.spyOn(api, "corrigerLaBande").mockResolvedValue(disque.bande)
+  const props = { identifiant: "bande-main", univers: UNIVERS_VIDE, traitement, onFermer: vi.fn(), onErreur: vi.fn() }
+  const vue = render(<EcranAtelierDeBande {...props} />)
+  await screen.findByLabelText("Outil de retouche")
+  fireEvent.click(screen.getByRole("button", { name: "arrêter l'animation" }))
+  fireEvent.click(document.querySelector('[data-image-de-la-bande="2"]')!)
+  ;(document.querySelector("[data-case-en-grand]") as HTMLElement).focus()
+  fireEvent.keyDown(window, { key: "ArrowRight" })
+  await screen.findByText("Brouillon conservé sur cet ordinateur.")
+  expect(garder).not.toHaveBeenCalled()
+  vue.unmount()
+  render(<EcranAtelierDeBande {...props} />)
+  fireEvent.click(await screen.findByRole("button", { name: "Reprendre le brouillon" }))
+  expect(garder).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: "Enregistrer ›" }))
+  await waitFor(() => expect(garder).toHaveBeenCalledOnce())
+  expect(garder.mock.calls[0][1].prises?.map((p) => p.dx)).toEqual([3, 3, 4])
+  expect(garder.mock.calls[0][1].prises?.[2].identifiant).toBe("occurrence-2")
+})
+
 test("découper le rendu d’une frame revient au montage sans perdre ses changements", async () => {
   const disque = fixture()
   vi.spyOn(api, "ouvrirLaBande").mockResolvedValue(disque)
@@ -124,4 +149,35 @@ test("le montage réordonne par clavier et glissement, puis garde le classement 
   await waitFor(() => expect(repris).toHaveBeenCalledOnce())
   expect(corriger.mock.calls[0][1].prises?.map((prise) => [prise.identifiant, prise.dx])).toEqual([["troisieme", 0], ["seconde", 8], ["premiere", 1]])
   expect(classer).toHaveBeenCalledWith(bande.identifiant, "repos", "nord", "nain")
+})
+
+test("le montage retrouve son nom, sa vitesse et son ordre après fermeture sans fabriquer à la reprise", async () => {
+  const disque = fixture().bande
+  vi.spyOn(api, "ouvrirLeMontage").mockResolvedValue({
+    clip: { identifiant: disque.clip, images: 3, personnage: null, pose: null, direction: null, mouvement: "marche", secondes: 1, montant_dit: "0 €" },
+    bandes: [], propositions: [{ nom: "régulier", images: [0, 1, 2] }], contact: { cote: 96, colonnes: 16, lignes: 1 }, fenetre: null,
+    prix: { clip: 0, bandes: 0, par_bande: 0, si_une_de_plus: 0 },
+  } as never)
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [] } as never)
+  vi.spyOn(api, "production").mockResolvedValue({ personnages: [] } as never)
+  const garder = vi.spyOn(api, "garderLaBande").mockResolvedValue(disque)
+  const props = { clip: disque.clip, onFermer: vi.fn(), onErreur: vi.fn() }
+  const vue = render(<EcranMontage {...props} />)
+  fireEvent.change(await screen.findByLabelText("Le nom de l'animation"), { target: { value: "Attaque lourde" } })
+  fireEvent.change(screen.getByLabelText("Vitesse, en chiffres"), { target: { value: "13" } })
+  fireEvent.blur(screen.getByLabelText("Vitesse, en chiffres"))
+  const boutons = document.querySelectorAll('[aria-label="Ordre des frames retenues"] button')
+  fireEvent.keyDown(boutons[2], { key: "ArrowLeft", altKey: true })
+  await screen.findByText("Brouillon conservé sur cet ordinateur.")
+  vue.unmount()
+  render(<EcranMontage {...props} />)
+  const reprendre = await screen.findByRole("button", { name: "Reprendre le brouillon" })
+  expect((screen.getByLabelText("Le nom de l'animation") as HTMLInputElement).value).toBe("marche")
+  expect(screen.queryByText(/La version enregistrée a changé/)).toBeNull()
+  fireEvent.click(reprendre)
+  expect(garder).not.toHaveBeenCalled()
+  expect((screen.getByLabelText("Vitesse, en chiffres") as HTMLInputElement).value).toBe("13 images / s")
+  fireEvent.click(screen.getByRole("button", { name: /Garder « Attaque lourde »/ }))
+  await waitFor(() => expect(garder).toHaveBeenCalledOnce())
+  expect(garder.mock.calls[0][0]).toMatchObject({ nom: "Attaque lourde", cadence: 13, images: [0, 2, 1] })
 })

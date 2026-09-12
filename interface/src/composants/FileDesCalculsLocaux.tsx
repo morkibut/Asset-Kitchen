@@ -4,7 +4,7 @@ import { fileLocale, type EtapeLocale, type FileLocale, type MoteurLocal } from 
 
 const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle disabled:opacity-50"
 const ETATS: Record<EtapeLocale["etat"], string> = { en_attente: "En attente", en_cours: "Calcul en cours", a_reprendre: "Suivi à reprendre", externe_inconnu: "Envoi à vérifier", termine: "Terminé", echoue: "Échec", annule: "Annulé" }
-const NATURES: Record<EtapeLocale["nature"], string> = { image: "Image", video: "Vidéo", modele3d: "Modèle 3D", rig: "Rigging", rendu3d: "Rendu 3D" }
+const NATURES: Record<EtapeLocale["nature"], string> = { image: "Image", video: "Vidéo", modele3d: "Modèle 3D", rig: "Rigging", rendu3d: "Rendu 3D", audio: "Son" }
 const MOTEURS = { disponible: "Disponible", occupe: "Occupé", inconnu: "État inconnu" }
 const TEMPERATURE = { froid: "avec chargement du modèle", chaud: "modèle déjà chargé", inconnue: "chargement non connu" }
 const duree = (s: number) => s < 60 ? `${Math.round(s)} s` : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`

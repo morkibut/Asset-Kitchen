@@ -49,6 +49,7 @@ export function BarreOutils({
   onZoom,
   zoomsIndisponibles,
   zoomRendu,
+  sansRecherche = false,
 }: {
   recherche: string
   onRecherche: (v: string) => void
@@ -93,6 +94,8 @@ export function BarreOutils({
   /** Le cran auquel la grille rend vraiment. Il diffère du choisi quand celui-ci
    *  ne tient pas — et c'est alors qu'il faut le dire. */
   zoomRendu: Zoom
+  /** La galerie unifiée porte déjà sa recherche en tête ; ne pas la dupliquer. */
+  sansRecherche?: boolean
 }) {
   return (
     <div className="flex h-[34px] shrink-0 items-center gap-3 border-b border-trait bg-papier-cote px-4">
@@ -136,13 +139,13 @@ export function BarreOutils({
               ça, ouvrir une fiche — qui sélectionne — effacerait le filtre posé, et
               « se retrouver exactement où l'on était » (US-37) deviendrait faux
               sans que rien ne l'ait dit. */}
-          <input
+          {!sansRecherche && <input
             value={recherche}
             onChange={(e) => onRecherche(e.target.value)}
             placeholder="Chercher"
             aria-label="Chercher dans la bibliothèque"
             className="mesure h-[26px] w-40 min-w-18 shrink rounded-5 border border-trait bg-carte px-2 text-[11px] text-encre placeholder:text-encre-4"
-          />
+          />}
           {/* **Le filtre par famille, et sa dernière valeur** (E4). Il range la
               grille par ce que les images appartiennent — et il a **une valeur
               pour ce qui n'appartient à aucune chose du jeu**, parce que c'est un

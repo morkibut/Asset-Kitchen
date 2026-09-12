@@ -7,9 +7,10 @@ const CONTROLE = "h-[34px] rounded-7 border border-contour bg-carte px-[8px] tex
 
 /** Une image entre d’abord en bibliothèque. L’association précise conserve son
  * identité et son rôle ; importer un personnage équipé n’en fait pas un calque. */
-export function ChoisirImageEquipement({ onChoisir, onFermer }: {
+export function ChoisirImageEquipement({ onChoisir, onFermer, referenceSeulement = false }: {
   onChoisir: (asset: Asset, role: RoleCalque) => Promise<void>
   onFermer: () => void
+  referenceSeulement?: boolean
 }) {
   const [recherche, setRecherche] = useState("")
   const [favoris, setFavoris] = useState(false)
@@ -17,7 +18,7 @@ export function ChoisirImageEquipement({ onChoisir, onFermer }: {
   const [liste, setListe] = useState<Asset[]>([])
   const [total, setTotal] = useState(0)
   const [selection, setSelection] = useState<Asset | null>(null)
-  const [role, setRole] = useState<RoleCalque>("source-equipee")
+  const [role, setRole] = useState<RoleCalque>(referenceSeulement ? "reference" : "source-equipee")
   const [attente, setAttente] = useState(false)
   const [erreur, setErreur] = useState("")
   const [lecture, setLecture] = useState(false)
@@ -48,7 +49,7 @@ export function ChoisirImageEquipement({ onChoisir, onFermer }: {
     finally { setAttente(false) }
   }
   return <section aria-label="Choisir une image pour cet équipement" className="defile min-h-0 flex-1 overflow-y-auto p-[22px]">
-    <div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px] text-encre">Associer une image à cette cible</h2><button className={CONTROLE} onClick={onFermer} disabled={attente}>Fermer</button></div>
+    <div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px] text-encre">{referenceSeulement ? "Choisir la référence commune" : "Associer une image à cette cible"}</h2><button className={CONTROLE} onClick={onFermer} disabled={attente}>Fermer</button></div>
     <div className="mt-[14px] flex flex-wrap items-center gap-[14px]">
       <input type="search" aria-label="Rechercher une image" placeholder="Rechercher dans les images du jeu…" value={recherche} onChange={(e) => { setRecherche(e.target.value); setLimite(60) }} className={`${CONTROLE} min-w-0 flex-1`} />
       <label className="flex items-center gap-[8px] text-[13px] text-encre-3"><input type="checkbox" checked={favoris} onChange={(e) => setFavoris(e.target.checked)} />Favoris</label>
@@ -61,9 +62,9 @@ export function ChoisirImageEquipement({ onChoisir, onFermer }: {
     {total > limite && <button className={`${CONTROLE} mt-[14px]`} onClick={() => setLimite((n) => n + 60)}>Afficher les images suivantes</button>}
     {selection && <div className="mt-[22px] flex items-start gap-[14px] rounded-8 border border-contour bg-carte p-[14px]">
       <img src={imageAsset(selection)} alt={selection.label} className="damier-papier w-[128px] shrink-0 object-contain" />
-      <div className="flex min-w-0 flex-1 flex-col gap-[14px]"><label className="flex flex-col gap-[4px] text-[13px] text-encre">Cette image représente<select aria-label="Rôle de cette image" value={role} onChange={(e) => setRole(e.target.value as RoleCalque)} className={CONTROLE}><option value="source-equipee">Le personnage équipé — à extraire</option><option value="calque">Un calque transparent — déjà extrait</option><option value="reference">Une référence d’apparence</option></select></label>
+      <div className="flex min-w-0 flex-1 flex-col gap-[14px]">{!referenceSeulement && <label className="flex flex-col gap-[4px] text-[13px] text-encre">Cette image représente<select aria-label="Rôle de cette image" value={role} onChange={(e) => setRole(e.target.value as RoleCalque)} className={CONTROLE}><option value="source-equipee">Le personnage équipé — à extraire</option><option value="calque">Un calque transparent — déjà extrait</option><option value="reference">Une référence d’apparence</option></select></label>}
         <p className="text-[12px] text-encre-3">{role === "source-equipee" ? "Le personnage complet reste une source. L’extraction créera une nouvelle image transparente à vérifier." : role === "calque" ? "Le calque doit contenir uniquement l’équipement. Vérifiez sa superposition avant de le retenir." : "Cette image décrit la pièce ; elle ne remplit pas la cible et ne se superpose pas au personnage."}</p>
-        <button onClick={() => void associer()} disabled={attente} className={`${CONTROLE} self-start`}>{attente ? "Association…" : "Associer cette image"}</button>
+        <button onClick={() => void associer()} disabled={attente} className={`${CONTROLE} self-start`}>{attente ? "Association…" : referenceSeulement ? "Définir comme référence de la pièce" : "Associer cette image"}</button>
       </div>
     </div>}
   </section>

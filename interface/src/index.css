@@ -31,6 +31,9 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 @theme {
+  /* Maquette atelier unifié validée : le sommaire global reste compact. */
+  --spacing-navigation-atelier: 240px;
+  --spacing-navigation-repliee: 76px;
   /* ── Le papier — `docs/DESIGN.md` § Color, Le papier ──────────────────────── */
   --color-papier: #f7f3ec;
   --color-papier-cote: #f2ede4;
