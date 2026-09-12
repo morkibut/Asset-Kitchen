@@ -316,7 +316,7 @@ Les contrats nouveaux sont dans `docs/archi-atelier-unifie.md`. Le prototype de 
 desktop élargi est `docs/maquettes-atelier-unifie/02-atelier.html`, accompagné de son CSS,
 de `docs/maquettes-atelier-unifie/prototype.js`, des ateliers dédiés dans
 `docs/maquettes-atelier-unifie/ateliers.js`, de l'ergonomie partagée (arborescence,
-bibliothèque visuelle, relecture et zoom) dans `docs/maquettes-atelier-unifie/ergonomie.js` et de
+bibliothèque visuelle et zoom) dans `docs/maquettes-atelier-unifie/ergonomie.js` et de
 ses parcours de collections, fabrication libre, galerie et montage dans
 `docs/maquettes-atelier-unifie/parcours.js`. Le parcours pièce → emplois → calques de
 poses/directions/frames → tenues vit dans `docs/maquettes-atelier-unifie/equipements.js` :
@@ -326,6 +326,11 @@ des fixtures, l'extraction de pixels et le rendu Canvas des transformations, mas
 compositions en 64 × 64. `docs/maquettes-atelier-unifie/equipements-attribution.js` associe
 le rendu d'une retouche à une référence de pièce, une source équipée ou un calque ciblé,
 sans déplacer l'original ; aucun de ces modules ne pilote les moteurs du produit.
+`docs/maquettes-atelier-unifie/relecture.js` et `relecture.css` tiennent le cadre commun
+lecture/édition, le résumé d'envoi et les profils fictifs. La bibliothèque compacte et
+le montage utilisent `docs/maquettes-atelier-unifie/consolidation-bibliotheque.css`.
+Le châssis conserve dans un espace de travail séparé le contexte et les brouillons :
+une reprise de brouillon ne remplace jamais la version enregistrée du résultat.
 Le périmètre testable et ses limites sont dans
 `docs/maquettes-atelier-unifie/couverture.md` ; il ne fait aucun appel fournisseur.
 `01-parcours.html` garde la proposition initiale. La sauvegarde du prototype reste propre

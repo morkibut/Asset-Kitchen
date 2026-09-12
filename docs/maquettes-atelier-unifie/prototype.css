@@ -4,6 +4,7 @@
   --trait:#e2dbd0; --contour:#ddd5c8; --encre:#221f1b; --texte:#4e483f;
   --muted:#6d675e; --signal:#a8492c; --ok:#5c7a52; --echec:#8a3f33;
   --sur:#fff8f4; --damier1:#ece7dc; --damier2:#e4dfd4;
+  --pourtour:#6c6c6c; --inspector-width:320px;
 }
 * { box-sizing:border-box }
 body { margin:0; min-width:1100px; background:var(--papier); color:var(--encre); font:14px/1.55 'Instrument Sans',Arial,sans-serif }
@@ -286,3 +287,59 @@ dialog:has(.eq-review-fields) footer { position:sticky; bottom:-30px; background
 .eq-review-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px }
 .eq-review-grid figure { margin:0; font-size:12px }
 .eq-review-grid canvas { width:128px; height:128px; image-rendering:pixelated; background:var(--cote) }
+
+/* Châssis de travail desktop : la surface se déroule, les outils gardent leur place. */
+.layout { grid-template-columns:240px minmax(0,1fr); height:calc(100vh - 38px); min-height:0 }
+#sidebar { min-height:0; overflow:auto; padding:14px; gap:14px }
+.sidebar-heading { display:flex; justify-content:space-between; align-items:center; gap:8px }
+.sidebar-heading button { padding:4px 10px; flex-shrink:0 }
+.brand { font-size:23px }
+.game { padding:8px 0 }.game h3 { font-size:22px; margin:4px 0 }
+.sidefoot { padding-top:14px; font-size:12px }.sidefoot p { margin:8px 0 }
+main { overflow:auto; padding:14px 22px 22px; max-width:none }
+.crumb { display:flex; justify-content:space-between; gap:14px; align-items:center; margin-bottom:14px }
+.crumb .row { gap:8px; min-width:0 }.crumb .row span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.crumb button { min-height:28px; padding:2px 8px }.crumb label { display:flex; gap:8px; white-space:nowrap; align-items:center }
+.crumb select { padding:4px; background:var(--carte); border:1px solid var(--contour); border-radius:7px }
+.heading { gap:14px; margin-bottom:14px }.heading h1 { font-size:32px; margin-bottom:4px }.heading p { margin-bottom:0 }
+.heading>.row { gap:8px }.heading button { padding:4px 8px }
+.tabs { margin:14px 0; padding-bottom:8px }
+.sidebar-collapsed .layout { grid-template-columns:76px minmax(0,1fr) }
+.sidebar-collapsed #sidebar { padding:8px; gap:8px }
+.sidebar-collapsed .sidebar-heading { justify-content:center }
+.sidebar-collapsed .brand,.sidebar-collapsed .game,.sidebar-collapsed .library-tree,.sidebar-collapsed .sidefoot { display:none }
+.sidebar-collapsed #sidebar nav button[data-page] { font-size:0; padding:8px 4px; justify-content:center; min-height:38px }
+.sidebar-collapsed #sidebar nav button[data-page]::after { content:attr(data-short); font-size:11px }
+.sidebar-collapsed #sidebar nav:not([aria-label]) { display:none }
+.sidebar-collapsed #message { left:98px }
+.sprite,.zoom-viewport,.version-tile .thumbnail canvas,.thumbnail canvas,.eq-viewport,.eq-review-grid canvas,.eq-wear canvas,.eq-sources canvas,.eq-sources img,#mount-preview,#mount-source { background:var(--pourtour) }
+body[data-image-background=alpha] .sprite,body[data-image-background=alpha] .zoom-viewport,body[data-image-background=alpha] .thumbnail canvas,body[data-image-background=alpha] .eq-viewport,body[data-image-background=alpha] .eq-review-grid canvas,body[data-image-background=alpha] #mount-preview,body[data-image-background=alpha] #mount-source { background:repeating-conic-gradient(var(--damier1) 0% 25%,var(--damier2) 0% 50%) 0 0 / 28px 28px }
+.sprite.has-zoom { background:none }
+.judgment-buttons button { min-height:26px; height:26px; width:20px; font-size:12px }
+.editing main { padding:14px 22px; overflow:hidden }
+.editing .crumb { flex-shrink:0; margin-bottom:8px }
+.editing .heading { flex-shrink:0; margin-bottom:8px; align-items:center }
+.editing .heading h1 { font-size:28px }.editing .heading p { font-size:12px }
+.editing .heading>.row { max-width:440px; justify-content:flex-end }
+.editing .editor { grid-template-columns:minmax(0,1fr) var(--inspector-width); gap:14px; min-height:0 }
+.editing .editor>section.editor-document { padding:0; overflow:hidden; display:flex; flex-direction:column; gap:8px; min-height:0 }
+.editor-document>.toolbar { margin:0; flex-shrink:0; gap:8px }.editor-document button { padding:4px 8px; font-size:12px }
+.editing .editor-preview { min-height:120px; flex:1; display:flex; flex-direction:column; overflow:hidden }
+.editing .editor-preview .zoom-controls { flex-shrink:0; margin:0 0 8px; gap:4px }
+.editing .editor-preview .zoom-controls .small { display:none }
+.editing .editor-preview .zoom-controls input { width:60px; padding:4px 2px }
+.editing .editor-preview .zoom-viewport { height:auto; flex:1; min-height:0; border-radius:7px }
+.editor-transport { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex-shrink:0 }
+.editor-transport label { display:flex; align-items:center; gap:4px; font-size:12px }
+.editor-transport input[type=number] { width:54px; min-height:30px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:2px 4px }
+.editor-document .timeline { flex:0 0 auto; min-height:90px; max-height:108px; padding:4px 2px; margin:0 }
+.editor-document .frame { flex-basis:58px; padding:4px; background:var(--carte); gap:0 }
+.editor-document .frame canvas { background:var(--pourtour) }
+.editor-document .frame-actions { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px }
+.editor-document .frame-actions button { white-space:nowrap; flex-shrink:0 }
+.editor-inspector { position:relative }
+.inspector-head,.inspector-foot { padding:8px 14px }.inspector-head h2 { font-size:22px }.inspector-content { padding:0 14px 8px }
+.inspector-head .field { margin:8px 0 0; gap:4px }.inspector-content .field { gap:4px }
+#inspector-resize { position:absolute; width:10px; top:0; bottom:0; left:-13px; cursor:col-resize; touch-action:none; border-left:2px solid transparent; z-index:3 }
+#inspector-resize:hover,#inspector-resize:focus { border-color:var(--muted) }
+@media (max-height:760px) { .editing .heading h1 { font-size:25px }.editing .heading { margin-bottom:8px }.editor-document .timeline { min-height:82px; max-height:92px }.editor-document .frame canvas { width:42px; height:42px }.inspector-content>.small { font-size:11px } }

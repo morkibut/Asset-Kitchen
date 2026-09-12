@@ -1,0 +1,29 @@
+.review-common { display:grid; gap:14px }
+.review-common-heading { display:flex; align-items:center; justify-content:space-between; gap:22px }
+.review-common-heading p { margin:0; font-weight:600 }
+.review-common-heading button { flex-shrink:0 }
+.review-common-summary { display:grid; grid-template-columns:1.2fr .8fr 1.2fr; gap:14px; position:sticky; top:-30px; z-index:3; padding:14px; background:var(--cote); border:1px solid var(--contour); border-radius:8px }
+.review-common-summary small,.review-common-summary strong { display:block }
+.review-common-summary strong { overflow-wrap:anywhere }
+.review-common-fields { margin:0; padding:0; border:0; min-width:0; display:grid; grid-template-columns:1.15fr 1fr; gap:14px; align-items:start }
+.review-common-fields .surface { padding:14px }
+.review-common-fields .review-full { grid-column:1 / -1 }
+.review-common-fields h3 { font-size:22px; margin-bottom:14px }
+.review-common-fields textarea { min-height:95px; resize:vertical }
+.review-common-fields:disabled input,.review-common-fields:disabled textarea,.review-common-fields:disabled select { color:var(--encre); opacity:1; background:var(--papier); border-color:transparent }
+.review-common-fields:disabled button,.review-common-fields:disabled input[type=file],.review-common-fields:disabled .review-only-edit { display:none }
+.review-common-fields p { margin:0 0 8px }
+.review-common-fields label { margin:8px 0 }
+.review-settings { display:grid; grid-template-columns:1fr 1fr; gap:8px 14px }
+.review-common .review-references { grid-template-columns:repeat(auto-fill,minmax(120px,1fr)) }
+.review-common .review-references img { height:100px; width:100%; object-fit:contain; background:var(--papier) }
+.review-common .review-references small { display:block }
+.review-common .review-demo { margin:0 }
+.review-common-footer { display:flex; justify-content:space-between; align-items:center; gap:14px; width:100% }
+.review-common-footer>div { display:flex; gap:8px }
+dialog:has(.review-common) footer { position:sticky; bottom:-30px; z-index:4; padding:14px 0; margin-top:14px; background:var(--carte); border-top:1px solid var(--trait) }
+.review-blocked { padding:14px; border:1px solid var(--echec); color:var(--echec); border-radius:7px; background:var(--papier) }
+.picker-content { display:grid; grid-template-columns:minmax(0,1fr) 240px; gap:14px; align-items:start }
+.picker-detail { position:sticky; top:0; padding:14px; background:var(--papier); border:1px solid var(--trait); border-radius:8px }
+.picker-detail canvas { width:100%; height:auto; image-rendering:pixelated }
+.picker-detail p { margin:8px 0 }

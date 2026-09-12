@@ -27,19 +27,33 @@
   }
   let state;
   try { const saved=JSON.parse(localStorage.getItem(KEY)); state=saved?.version===1?saved:seed(); } catch {state=seed();}
+  const workspace=()=>{state.workspace??={};state.workspace.scroll??={};state.workspace.editors??={};state.workspace.drafts??={};state.workspace.tabs??={};return state.workspace;};
   let page='home', subjectId='pelerin', tab='animations', settingsTab='universe', resultId=null;
   let draft=null, dirty=false, selectedFrames=[0], cursor=0, tool='Main', scope='frame', playing=null, undo=[], redo=[];
   let filter='', family='', favoriteOnly=false, canvasSelected=null, linkFrom=null, compareIds=[], inspector='retouch';
   let request=null, feedbackContext=null, confirmAction=null, messageTimer=null, storageWarned=false;
+  let compareTimer=null,compareElapsed=0;
   const $ = (selector,base=document) => base.querySelector(selector);
   const $$ = (selector,base=document) => [...base.querySelectorAll(selector)];
   const main=$('#main'), dialog=$('#dialog');
+  let workspaceTimer=null,renderedKey=null,restoringHistory=false;
+  const navigationHistory=[],navigationFuture=[];
+  const navigationState=()=>({page,subjectId,tab,settingsTab,resultId,cursor,selectedFrames,tool,scope,inspector,compareIds});
+  const viewKey=()=>[page,subjectId,page==='subject'?tab:page==='settings'?settingsTab:page==='editor'?resultId:''].join(':');
+  function rememberWorkspace(){
+    const w=workspace();w.navigation=navigationState();w.tabs[subjectId]=tab;
+    if(draft&&resultId){w.editors[resultId]={cursor,selectedFrames:clone(selectedFrames),tool,scope,inspector};if(dirty)w.drafts[resultId]={subjectId,result:clone(draft),savedAt:new Date().toISOString()};}
+    if(renderedKey)w.scroll[renderedKey]={top:main.scrollTop,left:main.scrollLeft};
+  }
+  function saveWorkspace(){clearTimeout(workspaceTimer);rememberWorkspace();return save();}
+  function queueWorkspace(){clearTimeout(workspaceTimer);workspaceTimer=setTimeout(saveWorkspace,250);}
   const spriteSheet=new Image(); spriteSheet.src='marche-demo.png';
   const reference=new Image(); reference.src=IMAGE;
   spriteSheet.onload=()=>drawAll(); reference.onload=()=>drawAll();
   function save() {
-    try {localStorage.setItem(KEY,JSON.stringify(state,(key,value)=>key==='undo'?[]:value));}
+    try {localStorage.setItem(KEY,JSON.stringify(state,(key,value)=>key==='undo'?[]:value));return true;}
     catch {if(!storageWarned){storageWarned=true; toast('Stockage du navigateur indisponible ou plein : cette séance reste en mémoire. Exportez vos remarques avant de fermer.');}}
+    return false;
   }
   function toast(text) { $('#message').textContent=text; clearTimeout(messageTimer); messageTimer=setTimeout(()=>$('#message').textContent='',6500); }
   const currentSubject = () => state.subjects.find(s=>s.id===subjectId) || state.subjects[0];
@@ -57,26 +71,55 @@
     dialog.innerHTML=`<div class="row between"><h2 id="dialog-title">${title}</h2>${button('Fermer','close','aria-label="Fermer la fenêtre"')}</div>${body}<footer>${actions}</footer>`;
     if(!dialog.open) dialog.showModal();
   }
-  function stop() { clearInterval(playing); playing=null; }
+  function stop() { clearInterval(playing); playing=null;clearInterval(compareTimer);compareTimer=null; }
   function leave(action) {
-    if(dirty){confirmAction=action; modal('Garder les retouches ?', '<p>La version de démonstration ouverte a des modifications. Vous pourrez la rouvrir avec ses réglages.</p>',button('Continuer à retoucher','close')+button('Quitter sans garder','discard-leave')+button('Garder et continuer','save-leave'));}
+    if(dirty){rememberWorkspace();save();confirmAction=action; modal('Quitter cette retouche ?', '<p>La version enregistrée reste intacte. Le brouillon contient vos dernières retouches et se retrouve après un rechargement.</p><p>Enregistrez la version maintenant, ou gardez uniquement le brouillon pour reprendre plus tard.</p>',button('Continuer à retoucher','close')+button('Abandonner les retouches','discard-leave')+button('Garder le brouillon et quitter','draft-leave')+button('Enregistrer et quitter','save-leave'));}
     else action();
   }
   function navigate(target) {leave(()=>{stop();page=target;render();main.focus({preventScroll:true});});}
+  function restoreNavigation(nav){
+    stop();subjectId=state.subjects.some(s=>s.id===nav?.subjectId)?nav.subjectId:state.subjects[0].id;
+    tab=nav?.tab||workspace().tabs[subjectId]||'animations';settingsTab=nav?.settingsTab||'universe';resultId=nav?.resultId||null;
+    compareIds=nav?.compareIds||[];page=nav?.page||'home';
+    // Ces ateliers gardent encore leur sélection dans une fermeture JavaScript.
+    if(!['home','universe','library','gallery','montage','subject','editor','jobs','delivery','settings','guide','compare','source','remarks'].includes(page))page='subject';
+    draft=null;dirty=false;
+    if(page==='editor'){
+      const saved=workspace().drafts[resultId],r=saved?.result||currentResult();
+      if(!r){page='subject';return;}draft=clone(r);ateliers.ensureLayers(draft);dirty=!!saved;
+      const context=workspace().editors[resultId]||nav;cursor=Math.min(context?.cursor||0,draft.frames.length-1);selectedFrames=(context?.selectedFrames||[cursor]).filter(i=>i<draft.frames.length);if(!selectedFrames.length)selectedFrames=[cursor];
+      tool=TOOLS.includes(context?.tool)?context.tool:'Main';scope=context?.scope||'frame';inspector=context?.inspector||'retouch';undo=[];redo=[];
+    }
+  }
+  function historyMove(forward=false){leave(()=>{if(forward){const item=navigationFuture.pop();if(!item)return;navigationHistory.push(item);}else{if(navigationHistory.length<2)return;navigationFuture.push(navigationHistory.pop());}restoringHistory=true;restoreNavigation(navigationHistory.at(-1).nav);render();});}
+  function wireInspectorResize(){
+    const handle=$('#inspector-resize');if(!handle)return;
+    const apply=width=>{workspace().inspectorWidth=Math.max(260,Math.min(460,Math.round(width)));document.documentElement.style.setProperty('--inspector-width',workspace().inspectorWidth+'px');handle.setAttribute('aria-valuenow',workspace().inspectorWidth);};
+    handle.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();const start=e.clientX,width=workspace().inspectorWidth||320;handle.setPointerCapture(e.pointerId);const move=ev=>apply(width+start-ev.clientX),end=()=>{handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',end);handle.removeEventListener('pointercancel',end);saveWorkspace();};handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);});
+    handle.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home'].includes(e.key))return;e.preventDefault();apply(e.key==='Home'?320:(workspace().inspectorWidth||320)+(e.key==='ArrowLeft'?20:-20));saveWorkspace();});
+  }
   let renderedPage=null;
   function render() {
+    if(renderedKey)workspace().scroll[renderedKey]={top:main.scrollTop,left:main.scrollLeft};
+    const routeKey=viewKey();
+    if(!restoringHistory&&navigationHistory.at(-1)?.key!==routeKey){navigationHistory.push({key:routeKey,nav:navigationState()});if(navigationHistory.length>30)navigationHistory.shift();navigationFuture.length=0;}
+    restoringHistory=false;
     parcours.beforeRender();
     ergonomie.beforeRender();
     const pageChanged=renderedPage!==page;renderedPage=page;
     document.body.classList.toggle('editing',page==='editor');
     document.body.classList.toggle('working',page==='slice'||page==='extract');
-    const pending=state.jobs.filter(j=>j.status==='En attente').length;
-    $('#sidebar').innerHTML=`<div class="brand">Asset Kitchen</div><div class="game"><div class="label">Le jeu ouvert</div><h3>${esc(state.game.name)}</h3><small>Pixel art · ${state.game.size} px · ${state.subjects.length} assets</small></div>
+    document.body.classList.toggle('sidebar-collapsed',!!workspace().sidebarCollapsed);
+    document.body.dataset.imageBackground=workspace().imageBackground||'neutre';
+    document.documentElement.style.setProperty('--inspector-width',(workspace().inspectorWidth||320)+'px');
+    const pending=state.jobs.filter(j=>j.status==='En attente').length+(parcours.pendingJobs?.()||0);
+    $('#sidebar').innerHTML=`<div class="sidebar-heading"><div class="brand">Asset Kitchen</div>${button(workspace().sidebarCollapsed?'☰':'‹','toggle-sidebar',`aria-label="${workspace().sidebarCollapsed?'Déplier':'Replier'} la navigation" title="${workspace().sidebarCollapsed?'Déplier':'Replier'} la navigation"`)}</div><div class="game"><div class="label">Le jeu ouvert</div><h3>${esc(state.game.name)}</h3><small>Pixel art · ${state.game.size} px · ${state.subjects.length} assets</small></div>
       <nav aria-label="Atelier">${[['home','Le jeu'],['universe','Univers & toile'],['library','Les assets'],['gallery','Galerie'],['jobs',`Fabrications${pending?' · '+pending:''}`],['delivery','Livrer au jeu']].map(([p,n])=>go(n,p,page===p?'aria-current="page"':'')).join('')}</nav>
       ${parcours.sidebar()}<nav aria-label="Préférences">${go('Réglages', 'settings',page==='settings'?'aria-current="page"':'')}${go('Essayer la maquette','guide',page==='guide'?'aria-current="page"':'')}${go(`Vos remarques · ${state.remarks.filter(r=>!r.resolved).length}`,'remarks')}</nav>
-      <div class="sidefoot"><p class="small">Vos essais restent dans ce navigateur. Les images sont des exemples du dépôt. Polices de repli si absentes.</p><a href="couverture.md">Couverture et limites</a><br><a href="../pistes-2026-09-04/carnet/Sommaire.html">Planches de référence</a></div>`;
+      <div class="sidefoot">${button(`Brouillons · ${Object.keys(workspace().drafts).length}`,'open-drafts')}<p class="small">Essais conservés dans ce navigateur.</p><a href="couverture.md">Couverture et limites</a><br><a href="../pistes-2026-09-04/carnet/Sommaire.html">Planches de référence</a></div>`;
+    $$('#sidebar nav button[data-page]').forEach(b=>{b.title=b.textContent;b.dataset.short=({home:'Jeu',universe:'Toile',library:'Assets',gallery:'Galerie',jobs:'File',delivery:'Livrer',settings:'⚙',guide:'?',remarks:'Notes'})[b.dataset.page]||b.textContent.slice(0,3);});
     const views={home,universe,library,subject,editor,jobs,delivery,settings,guide,compare,source,remarks,...ateliers.views,...parcours.views};
-    main.innerHTML=`<div class="crumb">${esc(state.game.name)} / ${esc(NAMES[page])}</div>${views[page]()}`;
+    main.innerHTML=`<div class="crumb"><div class="row">${button('←','workspace-back','aria-label="Écran précédent" title="Écran précédent · Alt + flèche gauche" '+(navigationHistory.length<2?'disabled':''))}${button('→','workspace-forward','aria-label="Écran suivant" title="Écran suivant · Alt + flèche droite" '+(!navigationFuture.length?'disabled':''))}<span>${esc(state.game.name)} / ${['subject','editor','source','compare'].includes(page)?esc(currentSubject().name)+' / ':''}${esc(NAMES[page])}</span></div><label>Fond des images <select id="image-background" aria-label="Fond des images">${option(['Gris neutre','Transparence'],workspace().imageBackground==='alpha'?'Transparence':'Gris neutre')}</select></label></div>${views[page]()}`;
     if(page==='editor') {
       if($('#tool-content'))$$('[name]', $('#tool-content')).forEach(el=>{const v=draft.recipe.settings[`${tool}:${el.name}`];if(v!==undefined&&!el.dataset.recipe&&!el.dataset.setting)el.value=v;});
       if(!draft.animated){$$('[data-action="duplicate"],[data-action="move-frame"],[data-action="select-all"],[data-action="remove-frame"]').forEach(b=>b.disabled=true);if($('#scope'))$('#scope').disabled=true;}
@@ -88,7 +131,11 @@
     ateliers.afterRender(page);
     ergonomie.afterRender();
     parcours.afterRender();
-    if(pageChanged){window.scrollTo(0,0);main.scrollTop=0;}
+    if(page==='jobs')state.jobs.filter(j=>j.nextAnimation&&j.status==='Terminé').forEach(j=>{const anchor=$(`[data-action="job-open"][data-id="${j.id}"]`);anchor?.insertAdjacentHTML('afterend',button('Préparer l’animation avec cette référence','continue-animation',`data-id="${j.id}"`));});
+    wireInspectorResize();
+    const scroll=workspace().scroll[routeKey];main.scrollTop=scroll?.top||0;main.scrollLeft=scroll?.left||0;
+    if(pageChanged)window.scrollTo(0,0);
+    renderedKey=routeKey;rememberWorkspace();save();
   }
   function home() {
     const total=state.subjects.reduce((n,s)=>n+s.results.length,0), chosen=state.subjects.flatMap(s=>s.results).filter(r=>r.chosen).length;
@@ -157,15 +204,13 @@
   }
   function editor() {
     if(!draft) return '<p>Aucun résultat ouvert.</p>'+go('Revenir aux assets','library');
-    return heading(draft.title,`${esc(currentSubject().name)} · version ${draft.revision} · <span id="dirty" class="${dirty?'dirty':''}">${dirty?'Modifications à garder':'Version gardée'}</span>`,go('Retour à l’asset','subject')+button('Garder les retouches','save-editor')+button('Utiliser comme équipement…','eq-assign-image'))+
-      `<div class="editor"><section><div class="toolbar">${button(playing?'Pause':'Lire','play',draft.animated?'':'disabled')}${button('Annuler','undo',undo.length?'':'disabled')}${button('Rétablir','redo',redo.length?'':'disabled')}${button('Comparer à la source','compare-source')}</div><div class="sprite editor-preview ${draft.recipe.grid?'grid':''}"><canvas id="pixels" width="64" height="64" aria-label="Image à retoucher, peindre avec la souris"></canvas></div>
-      <p class="small" id="frame-status">Frame ${cursor+1} / ${draft.frames.length} · ${draft.animated?'clic : choisir · Ctrl ou ⌘ + clic : sélection multiple':'image fixe'}</p><div class="timeline" aria-label="Frames">${draft.frames.map((f,i)=>`<button class="frame" data-action="frame" data-index="${i}" aria-label="Frame ${i+1}" aria-pressed="${selectedFrames.includes(i)}"><canvas width="64" height="64" data-frame="${i}"></canvas><span>${i+1}</span></button>`).join('')}</div>
-      <div class="toolbar">${button('Tout sélectionner','select-all')}${button('Dupliquer','duplicate')}${button('← Avancer','move-frame','data-delta="-1"')}${button('Reculer →','move-frame','data-delta="1"')}${button('Retirer','remove-frame',draft.frames.length>selectedFrames.length?'':'disabled')}${button('Extraire une image','extract-frame',draft.animated?'':'disabled')}</div>
-      ${draft.animated?`<div class="two">${field('Vitesse (images/s)',input('fps',draft.recipe.fps,'number','min="1" max="60" data-recipe="fps"'))}<label class="row"><input type="checkbox" data-recipe="loop" ${draft.recipe.loop?'checked':''}> Boucler</label></div>`:''}
-      ${demo('Lecture, ordre des frames, peinture, annulation et sauvegarde fonctionnent. La séquence visuelle est un exemple. Les filtres sont des aperçus simplifiés, pas les moteurs de retouche de l’app.')}</section>
-      <section class="surface editor-inspector"><div class="inspector-head"><div class="row between"><h2>Le résultat</h2><div class="row">${button('Retouche','inspector','data-value="retouch" aria-pressed="'+(inspector==='retouch')+'"')}${button('Calques','inspector','data-value="layers" aria-pressed="'+(inspector==='layers')+'"')}</div></div>${inspector==='retouch'?field('Table de retouche',`<select id="table-select">${option(TOOLS,tool)}</select>`):'<p class="small">Les calques composent l’image. Ils restent indépendants des tables.</p>'}</div><div class="inspector-content">${inspector==='layers'?ateliers.layersPanel(draft):`
+    return heading(draft.title,`${esc(currentSubject().name)} · version ${draft.revision} · <span id="dirty" class="${dirty?'dirty':''}">${dirty?'Brouillon retrouvé · version enregistrée intacte':'Version enregistrée'}</span>`,go('Retour à l’asset','subject')+button('Enregistrer les retouches','save-editor','title="Ctrl + S"')+button('Utiliser comme équipement…','eq-assign-image'))+
+      `<div class="editor"><section class="editor-document"><div class="toolbar editor-actions">${button('Annuler','undo',undo.length?'':'disabled')}${button('Rétablir','redo',redo.length?'':'disabled')}${button('Comparer à la source','compare-source')}</div><div class="sprite editor-preview ${draft.recipe.grid?'grid':''}"><canvas id="pixels" width="64" height="64" aria-label="Image à retoucher, peindre avec la souris"></canvas></div>
+      <div class="editor-transport">${button(playing?'Pause':'Lire','play',draft.animated?'':'disabled')}<span class="small" id="frame-status">Frame ${cursor+1} / ${draft.frames.length}</span>${draft.animated?`<label>Cadence ${input('fps',draft.recipe.fps,'number','min="1" max="60" data-recipe="fps" aria-label="Cadence (images par seconde)"')} i/s</label><label><input type="checkbox" data-recipe="loop" ${draft.recipe.loop?'checked':''}> Boucler</label>`:''}</div><div class="timeline" aria-label="Frames" title="Clic : choisir · Ctrl + clic : sélection multiple">${draft.frames.map((f,i)=>`<button class="frame" data-action="frame" data-index="${i}" aria-label="Frame ${i+1}" aria-pressed="${selectedFrames.includes(i)}"><canvas width="64" height="64" data-frame="${i}"></canvas><span>${i+1}</span></button>`).join('')}</div>
+      <div class="toolbar frame-actions">${button('Tout sélectionner','select-all')}${button('Dupliquer','duplicate')}${button('←','move-frame','data-delta="-1" aria-label="Avancer la frame" title="Avancer la frame"')}${button('→','move-frame','data-delta="1" aria-label="Reculer la frame" title="Reculer la frame"')}${button('Retirer','remove-frame',draft.frames.length>selectedFrames.length?'':'disabled')}${button('Extraire une image','extract-frame',draft.animated?'':'disabled')}</div></section>
+      <section class="surface editor-inspector"><div id="inspector-resize" role="separator" tabindex="0" aria-label="Largeur du panneau de retouche" aria-orientation="vertical" aria-valuemin="260" aria-valuemax="460" aria-valuenow="${workspace().inspectorWidth||320}" title="Glisser pour ajuster · flèches au clavier"></div><div class="inspector-head"><div class="row between"><h2>Le résultat</h2><div class="row">${button('Retouche','inspector','data-value="retouch" aria-pressed="'+(inspector==='retouch')+'"')}${button('Calques','inspector','data-value="layers" aria-pressed="'+(inspector==='layers')+'"')}</div></div>${inspector==='retouch'?field('Table de retouche',`<select id="table-select">${option(TOOLS,tool)}</select>`):'<p class="small">Les calques composent l’image. Ils restent indépendants des tables.</p>'}</div><div class="inspector-content">${inspector==='layers'?ateliers.layersPanel(draft):`
       ${field('Appliquer les prochains gestes à',`<select id="scope">${option(['Cette frame','Les frames sélectionnées','Toute l’animation'],{frame:'Cette frame',selection:'Les frames sélectionnées',all:'Toute l’animation'}[scope])}</select>`)}<p class="small">La peinture suit cette portée. Vitesse, boucle et aperçu des filtres concernent le résultat entier dans cette version de la maquette.</p>
-      <div id="tool-content">${toolPanel()}</div><details><summary>Recettes réutilisables</summary><div class="row wrap space">${button('Nommer une recette','save-recipe')}${button('Réappliquer une recette','load-recipe')}</div></details>`}</div><div class="inspector-foot"><div class="label">Partir de cette ${draft.animated?'frame':'image'}</div><div class="row wrap">${button('Découper une image','open-slice','data-current="true"')}${button('Extraire un élément','open-extract','data-current="true"')}</div></div></section></div>`;
+      <div id="tool-content">${toolPanel()}</div><details><summary>Recettes réutilisables</summary><div class="row wrap space">${button('Nommer une recette','save-recipe')}${button('Réappliquer une recette','load-recipe')}</div></details><details><summary>Gestes & limites de la maquette</summary><p class="small">Ctrl + S : enregistrer · Ctrl + Z : annuler · Ctrl + clic : sélectionner plusieurs frames · molette : zoom · Espace + glisser : déplacer la vue.</p>${demo('Lecture, ordre des frames, peinture, annulation et brouillon fonctionnent. Les filtres sont des aperçus simplifiés ; leur portée réelle est indiquée dans chaque table.')}</details>`}</div><div class="inspector-foot"><div class="label">Partir de cette ${draft.animated?'frame':'image'}</div><div class="row wrap">${button('Découper une image','open-slice','data-current="true"')}${button('Extraire un élément','open-extract','data-current="true"')}</div></div></section></div>`;
   }
   const range=(label,key,min,max)=>field(`${label} · ${draft.recipe[key]}`,input(key,draft.recipe[key],'range',`min="${min}" max="${max}" data-recipe="${key}"`));
   function toolPanel() {
@@ -180,15 +225,15 @@
     return '';
   }
   function genericRange(name,min,max,value) {const key=`${tool}:${name}`;return field(name,input(name,draft.recipe.settings[key]??value,'range',`min="${min}" max="${max}" data-setting="${esc(key)}"`));}
-  function openEditor(r) {stop();resultId=r.id;draft=clone(r);ateliers.ensureLayers(draft);dirty=false;cursor=0;selectedFrames=[0];undo=[];redo=[];page='editor';render();}
+  function openEditor(r) {if(!r)return;restoreNavigation({page:'editor',subjectId,tab:r.animated?'animations':'images',resultId:r.id});render();if(dirty)toast('Brouillon retrouvé. La version enregistrée reste intacte jusqu’à « Enregistrer les retouches ».');}
   function snapshot() {undo.push(clone(draft));if(undo.length>40)undo.shift();redo=[];}
-  function changed() {dirty=true;const n=$('#dirty');if(n){n.textContent='Modifications à garder';n.className='dirty';}}
+  function changed() {dirty=true;const n=$('#dirty');if(n){n.textContent='Brouillon · version enregistrée intacte';n.className='dirty';}queueWorkspace();}
   function targetFrames() {return scope==='all'?draft.frames:scope==='selection'?selectedFrames.map(i=>draft.frames[i]):[draft.frames[cursor]];}
   function saveEditor() {
     if(!draft||!dirty)return;
     draft.revision+=1;draft.savedAt=new Date().toISOString();
     const s=currentSubject(),index=s.results.findIndex(r=>r.id===draft.id);if(index>=0)s.results[index]=clone(draft);
-    save();dirty=false;toast('Retouches gardées. Refermez puis rouvrez ce résultat pour les retrouver.');
+    dirty=false;delete workspace().drafts[draft.id];saveWorkspace();toast('Retouches enregistrées. Le résultat peut être refermé et rouvert.');
   }
   function drawFrame(canvas,r,index,raw=false) {
     if(!canvas||!r)return;const ctx=canvas.getContext('2d');ctx.clearRect(0,0,64,64);ctx.imageSmoothingEnabled=false;
@@ -245,7 +290,8 @@
     if(settingsTab==='universe')return `<section class="surface"><h2>Règles communes</h2>${field('Nom du jeu',input('game-name',state.game.name))}${field('Description du monde',`<textarea name="game-description">${esc(state.game.description)}</textarea>`)}${field('Direction artistique',`<textarea name="game-style">${esc(state.game.style)}</textarea>`)}${field('Taille de référence',select('game-size',[32,48,64,96,128].map(String),String(state.game.size)))}${button('Garder les règles','save-game')}<p class="note">Les notes de la toile restent libres. Les assets héritent de ces règles ; les détails propres au sujet se lisent dans sa fiche.</p></section>`;
     if(settingsTab==='engines')return `<div class="two"><section class="surface"><h2>Fournisseur par API</h2><label class="row"><input id="api-ready" type="checkbox" ${state.providers.api?'checked':''}> Simuler une connexion disponible</label><p class="small space">Aucune clé demandée dans la maquette. Un fournisseur indisponible ne bloque pas les autres.</p></section><section class="surface"><h2>Moteurs locaux</h2><label class="row"><input id="local-ready" type="checkbox" ${state.providers.local?'checked':''}> Simuler un moteur local disponible</label><p class="small space">ComfyUI image, vidéo et asset3d apparaissent comme des capacités différentes.</p></section></div><section class="surface space"><h2>Profils de workflow</h2><table class="matrix"><thead><tr><th>Profil d’exemple</th><th>Entrée</th><th>Sortie</th></tr></thead><tbody><tr><td>Image locale · v1</td><td>Texte, références optionnelles</td><td>Images</td></tr><tr><td>Animation locale · v1</td><td>Image de départ obligatoire, mouvement</td><td>Clip</td></tr><tr><td>asset3d · rendu v1</td><td>Modèle, rig, mouvement, vues</td><td>Source 3D et frames</td></tr></tbody></table>${demo('Ces profils sont descriptifs. Import de workflow, validation des entrées, installation et gestion fine des ressources restent à maqueter à partir des adaptateurs réels.')}</section>`;
     if(settingsTab==='agent')return `<section class="surface"><h2>L’agent qui développe le jeu</h2><p>Le MCP lui permet de demander les assets pendant le développement Godot. Vous pouvez accomplir le même parcours dans l’interface sans le connecter.</p><div class="stack"><label><input name="policy-local" type="checkbox" ${state.policy.local?'checked':''}> Autoriser les méthodes locales disponibles</label><label><input name="policy-paid" type="checkbox" ${state.policy.paid?'checked':''}> Autoriser les appels payants dans une limite</label><label><input name="policy-provisional" type="checkbox" ${state.policy.provisional?'checked':''}> Permettre une livraison provisoire pour tester le jeu</label></div><div class="two">${field('Plafond fictif par demande ($)',input('policy-budget',state.policy.budget,'number','min="0" step="0.1"'))}${field('Nombre maximal de tentatives',input('policy-attempts',state.policy.attempts,'number','min="1" max="10"'))}</div>${button('Garder le cadre de l’agent','save-policy')}${demo('Les choix sont mémorisés et filtrent les méthodes du scénario agent. Le serveur MCP réel n’est pas contacté.')}</section>`;
-    return `<section class="surface"><h2>Consommations des essais</h2><p>Aucune dépense réelle dans ce prototype.</p><table class="matrix"><thead><tr><th>Demande</th><th>Moyen</th><th>Annonce fictive</th></tr></thead><tbody>${state.jobs.map(j=>`<tr><td>${esc(j.title)}</td><td>${esc(j.method)}</td><td>${esc(j.estimate)}</td></tr>`).join('')}</tbody></table><p class="note">Les dollars, unités du fournisseur et temps local restent séparés. Aucune estimation locale n’est présentée comme une mesure de votre machine.</p></section>`;
+    const rows=[...state.jobs.map(j=>({id:j.id,title:j.title,model:j.model||j.method,status:j.status,unit:j.method.startsWith('API')?'USD':null,amount:j.status==='Terminé'&&j.method.startsWith('API')?Number(j.cost)||0:null,label:j.estimate})),...(parcours.consumptionRows?.()||[])],usd=rows.filter(r=>r.unit==='USD'&&r.amount!==null).reduce((n,r)=>n+r.amount,0);
+    return `<section class="surface"><h2>Consommations des essais</h2><p>Aucune dépense réelle. ${rows.length} travail(aux) normal, libre ou équipement.</p><div class="readout">Total des appels terminés : ${usd.toFixed(2)} $ fictifs · les durées locales non mesurées restent inconnues.</div><table class="matrix"><thead><tr><th>Demande</th><th>Modèle / état</th><th>Annonce ou consommation fictive</th></tr></thead><tbody>${rows.map(j=>`<tr><td>${esc(j.title)}</td><td>${esc(j.model)}<br><small>${esc(j.status)}</small></td><td>${j.unit==='USD'&&j.amount!==null?j.amount.toFixed(2)+' $ fictifs':esc(j.label||'Temps local non mesuré')}</td></tr>`).join('')}</tbody></table><p class="note">Les dollars, unités du fournisseur et temps local restent séparés. Aucun délai local n’est inventé ni multiplié par le nombre de clips.</p></section>`;
   }
   function source() {
     const s=currentSubject(), model=s.model3d;
@@ -258,12 +304,11 @@
     `<div class="two">${SCENARIOS.map(([key,target,title,desc])=>`<section class="surface"><h2>${title}</h2><p>${desc}</p><div class="row between">${go('Essayer',target)}<label><input type="checkbox" data-check="${key}" ${state.checks[key]?'checked':''}> Essayé</label></div></section>`).join('')}<section class="surface"><h2>Une planche, plusieurs images</h2><p>Chargez l’exemple, détectez les quatre zones, déplacez un cadre et nommez les sorties. Créez des images, des assets séparés ou une animation.</p>${button('Essayer la découpe','open-slice')}</section><section class="surface"><h2>Un sac extrait en calque</h2><p>Chargez l’exemple, proposez un alignement, corrigez le masque puis gardez le calque. Masquez-le dans la composition et reprenez son extraction depuis la bibliothèque.</p>${button('Essayer l’extraction','open-extract')}</section></div><section class="surface space"><h2>La limite de cette version</h2><p>La découpe, le calage, le masque peint et la composition se manipulent et se rouvrent. Les calculs sont simplifiés pour tester ces gestes.</p><p>Sélections avancées, calques qui suivent une animation, réglages complets des moteurs de retouche, installation détaillée, tuiles et son restent à compléter.</p><a href="couverture.md">Lire l’inventaire de couverture</a> · ${button('Exporter mes remarques','export-feedback')}</section>`;}
   function remarks() {const active=state.remarks.filter(r=>!r.resolved),done=state.remarks.filter(r=>r.resolved);const cards=(rows,resolved)=>rows.slice().reverse().map(r=>`<section class="surface space"><strong>${esc(r.context)}</strong><p>${esc(r.text)}</p>${button(resolved?'Remettre dans les remarques':'Marquer comme traitée',resolved?'reopen-remark':'resolve-remark',`data-id="${r.id}"`)}</section>`).join('');return heading('Vos remarques','Seules les remarques à traiter sont exportées.',button('Ajouter une remarque','feedback')+button('Exporter les remarques','export-feedback'))+(active.length?cards(active,false):'<p>Aucune remarque active.</p>')+`<details class="space"><summary>Historique · ${done.length} remarques traitées</summary>${cards(done,true)}</details><details class="space"><summary>Recommencer les essais</summary><p>Cette action efface les données de démonstration de ce navigateur. Exportez les remarques à conserver avant.</p>${button('Réinitialiser la démonstration','reset')}</details>`;}
   function compare() {
-    const s=currentSubject(),rs=compareIds.map(i=>s.results.find(r=>r.id===i)).filter(Boolean);
-    if(!rs.length&&s.results[0])rs.push(s.results[0]);
-    return heading('Comparer les versions','Regarder côte à côte ; choisir pour le jeu reste un geste explicite.',go('Retour à l’asset','subject'))+
-      `<div class="two">${rs.map(r=>`<section class="surface"><h2>${esc(r.title)} · v${r.revision}</h2><div class="sprite compare-preview"><canvas width="64" height="64" data-compare="${r.id}"></canvas></div><div class="row wrap space">${button('Retoucher','edit-result',`data-id="${r.id}"`)}${button(r.chosen?'Retenu':'Choisir pour le jeu','choose',`data-id="${r.id}"`)}</div></section>`).join('')}${rs.length===1?'<section class="surface"><h2>Ajouter une autre version</h2><p>Revenez à l’asset et appuyez sur « Comparer » sous un autre résultat.</p></section>':''}</div>`;
+    const s=currentSubject();if(!compareIds[0]&&s.results[0])compareIds[0]=s.results[0].id;
+    return heading('Comparer les versions','Choisissez A et B ici. La lecture partage le même temps, en respectant la cadence de chaque version.',go('Retour à l’asset','subject'))+
+      `<div class="toolbar">${button(compareTimer?'Pause synchronisée':'Lire ensemble','compare-play',compareIds.some(key=>s.results.find(r=>r.id===key)?.animated)?'':'disabled')}${button('Revenir au début','compare-start')}</div><div class="two">${[0,1].map(i=>{const r=s.results.find(r=>r.id===compareIds[i]);return `<section class="surface">${field('Version '+(i?'B':'A'),`<select data-compare-select="${i}"><option value="">Choisir un résultat</option>${s.results.map(x=>`<option value="${x.id}" ${x.id===compareIds[i]?'selected':''}>${esc(x.title)} · v${x.revision} · ${x.animated?'animation':'image'}</option>`).join('')}</select>`)}${r?`<div class="sprite compare-preview"><canvas width="64" height="64" data-compare="${r.id}"></canvas></div><p class="small space">${r.animated?r.frames.length+' frames · '+r.recipe.fps+' i/s · '+(r.recipe.loop?'boucle':'une fois'):'Image fixe'} · aperçu 64 × 64 px · ${r.chosen?'Retenu':r.rejected?'Écarté':'À juger'}</p><div class="row wrap">${button('Retoucher','edit-result',`data-id="${r.id}"`)}${button(r.chosen?'Retenu pour le jeu':'Choisir pour le jeu','choose',`data-id="${r.id}"`)}</div>`:'<div class="empty"><p>Choisissez une version à comparer. Les variantes écartées restent disponibles.</p></div>'}</section>`;}).join('')}</div>${demo('Les deux aperçus utilisent le même cadre de 64 px. Le pivot et le cadre commun définitifs appartiennent à la préparation réelle des sprites.')}`;
   }
-  function drawComparisons() {$$('[data-compare]').forEach(c=>drawFrame(c,currentSubject().results.find(r=>r.id===c.dataset.compare),0));}
+  function drawComparisons() {$$('[data-compare]').forEach(c=>{const r=currentSubject().results.find(r=>r.id===c.dataset.compare);if(!r)return;const step=Math.floor(compareElapsed*r.recipe.fps/1000);drawFrame(c,r,r.animated?(r.recipe.loop?step%r.frames.length:Math.min(step,r.frames.length-1)):0);});}
   function subjectForm(existing=false) {
     const s=existing?currentSubject():{name:'',family:'Personnages',goal:'Animations',description:''};
     modal(existing?'La fiche de l’asset':'Créer un asset',`${field('Nom',input('subject-name',s.name,'text','maxlength="80" placeholder="Ex. Gardienne du marais"'))}<div class="two">${field('Famille',select('subject-family',FAMILIES,s.family))}${field('Sorties souhaitées',select('subject-goal',['Animations','Images fixes','Images & animations'],s.goal))}</div>${field('Ce qui le caractérise',`<textarea name="subject-description">${esc(s.description)}</textarea>`)}<p class="small">Une animation peut demander une image de départ technique. Cela ne vous oblige pas à produire une collection de poses fixes.</p>`,button('Annuler','close')+button(existing?'Garder la fiche':'Créer et ouvrir',existing?'save-subject':'create-subject'));
@@ -275,29 +320,39 @@
   const checked=(name,base=dialog)=>$(`[name="${name}"]`,base)?.checked || false;
   function requestForm(attrs={},origin='Vous, dans l’interface') {
     const s=currentSubject();
-    request={origin,kind:attrs.kind||(s.goal==='Images fixes'?'image':'animation'),movement:attrs.movement||s.movements[0]||'Marche',direction:attrs.direction||s.directions[0]||'Sud',method:attrs.method||'',brief:s.description};
+    request={origin,kind:attrs.kind||(s.goal==='Images fixes'?'image':'animation'),movement:attrs.movement||s.movements[0]||'Marche',direction:attrs.direction||s.directions[0]||'Sud',method:attrs.method||'',brief:'',title:'',count:1,duration:5,ratio:'1:1',size:'720p'};
     if(s.owner){const owner=state.subjects.find(x=>x.id===s.owner),ref=owner?.results.find(r=>!r.animated);if(ref)request.references=[{name:owner.name,url:ref.image||owner.image||IMAGE,id:ref.id}];}
     showRequest();
   }
   function showRequest() {
-    const s=currentSubject(),agent=request.origin.startsWith('Agent'),hasReference=!!s.image||s.results.some(r=>!r.animated);
+    const s=currentSubject(),agent=request.origin.startsWith('Agent'),hasReference=!!request.references?.length||!!s.image||s.results.some(r=>!r.animated&&!r.rejected);
     const choices=[['Local · workflow de démonstration',state.providers.local&&(!agent||state.policy.local),agent?'Moteur local indisponible ou non autorisé':'Moteur local indisponible'],['API · modèle de démonstration',state.providers.api&&(!agent||state.policy.paid&&state.policy.budget>=0.2),agent?'Connexion ou budget de l’agent insuffisant':'Connexion API indisponible']];
     if(request.method==='3D · rendu de démonstration')choices.unshift([request.method,!!s.model3d?.rig,'Rig à préparer']);
     const available=choices.filter(c=>c[1]);if(!available.some(c=>c[0]===request.method))request.method=available[0]?.[0]||'';
-    modal('Préparer une fabrication',`<p class="small">Origine : ${esc(request.origin)} · ${esc(s.name)}</p>${field('Que fabriquer ?',select('request-kind',['Animation','Image fixe'],request.kind==='image'?'Image fixe':'Animation'))}<div class="two">${field('Mouvement / nom du résultat',input('request-movement',request.movement,'text','maxlength="80"'))}${field('Direction',select('request-direction',s.directions,request.direction))}</div>${field('Description du résultat',`<textarea name="request-brief">${esc(request.brief)}</textarea>`)}${field('Moyen de fabrication',`<select name="request-method">${choices.map(([name,ready,reason])=>`<option value="${esc(name)}" ${name===request.method?'selected':''} ${ready?'':'disabled'}>${esc(name)}${ready?'':' — '+reason}</option>`).join('')}</select>`)}<div class="readout">${hasReference?'Une référence du sujet accompagne la demande d’animation.':'Ce sujet n’a pas de référence. Commencez par importer ou fabriquer une image fixe ; elle servira au départ du clip.'}</div>${demo('Les moyens de fabrication sont des profils fictifs, pas un catalogue de modèles conseillé.')}`,button('Annuler','close')+button('Relire avant l’envoi','review-request',available.length?'':'disabled'));
+    modal('Préparer une fabrication',`<p class="small">Origine : ${esc(request.origin)} · ${esc(s.name)}</p>${field('Que fabriquer ?',select('request-kind',['Animation','Image fixe'],request.kind==='image'?'Image fixe':'Animation'))}<div class="two">${field('Mouvement',select('request-movement',[...new Set([...s.movements,request.movement])],request.movement)+button('Ajouter un mouvement','request-add-movement'))}${field('Direction',select('request-direction',s.directions,request.direction))}</div>${field('Nom du résultat (facultatif)',input('request-title',request.title,'text','maxlength="100" placeholder="Par défaut : mouvement · direction"'))}${field('Description du résultat',`<textarea name="request-brief">${esc(request.brief)}</textarea>`)}${field('Moyen de fabrication',`<select name="request-method">${choices.map(([name,ready,reason])=>`<option value="${esc(name)}" ${name===request.method?'selected':''} ${ready?'':'disabled'}>${esc(name)}${ready?'':' — '+reason}</option>`).join('')}</select>`)}${ergonomie.requestSettings(request)}${request.kind==='animation'&&!request.method.startsWith('3D')?`<section class="readout"><strong>1 · Référence de départ ${hasReference?'prête à relire':'à préparer'} → 2 · Animation</strong><p class="small">${hasReference?'Le choix exact et toutes les images se relisent avant envoi.':'Votre mouvement et votre direction sont conservés pendant cette préparation. La référence technique ne change pas l’objectif de votre personnage.'}</p><div class="row wrap">${button('Choisir une référence','request-pick-reference')}${button('Importer une référence','request-import-reference')}${!hasReference?button('Fabriquer sa référence puis animer','request-make-reference'):''}</div></section>`:''}${request.technicalReference?'<p class="readout">Première étape : fabriquer une référence technique. Vous la verrez avant de reprendre l’animation conservée. Aucun clip ne part automatiquement.</p>':''}${demo('Les profils et coûts sont fictifs. Chaque étape demandant une fabrication possède sa propre relecture.')}`,button('Annuler','close')+button('Relire avant l’envoi','review-request',available.length&&(request.kind!=='animation'||hasReference||request.method.startsWith('3D'))?'':'disabled'));
   }
   function captureRequest() {
-    request.kind=value('request-kind')==='Image fixe'?'image':'animation';request.movement=value('request-movement').trim();request.direction=value('request-direction');request.brief=value('request-brief');request.method=value('request-method');
+    request.kind=value('request-kind')==='Image fixe'?'image':'animation';request.movement=value('request-movement').trim();request.direction=value('request-direction');request.brief=value('request-brief');request.method=value('request-method');request.title=value('request-title').trim();ergonomie.captureRequestSettings(request);
   }
   function reviewRequest() {
     captureRequest();const s=currentSubject();if(!request.movement){toast('Donnez un nom au résultat ou au mouvement.');return;}
-    if(request.kind==='animation'&&!s.image&&!s.results.some(r=>!r.animated)&&!request.method.startsWith('3D')){toast('Une image de départ est nécessaire. Choisissez « Image fixe » pour préparer cette référence.');return;}
+    if(request.kind==='animation'&&!request.references?.length&&!s.image&&!s.results.some(r=>!r.animated&&!r.rejected)&&!request.method.startsWith('3D')){showRequest();return;}
     const local=!request.method.startsWith('API');request.estimate=local?'Temps local inconnu sur votre machine · exemple sans frais':'0,20 $ fictif · aucun appel payant';
     return ergonomie.review(request);
   }
   function sendRequest() {
     if(!ergonomie.validateRequest(request))return;
-    const s=currentSubject();state.jobs.push({...clone(request),id:id(),subjectId:s.id,subjectName:s.name,title:request.kind==='image'?request.movement:`${request.movement} · ${request.direction}`,status:'En attente',resultId:null});save();dialog.close();page='jobs';render();toast('Demande fictive ajoutée avec le modèle, les textes et les images relus.');
+    const s=currentSubject(),count=request.kind==='animation'?Math.max(1,Math.min(8,Number(request.count)||1)):1,batchId=id(),title=request.title||(request.kind==='image'?request.movement:`${request.movement} · ${request.direction}`);
+    for(let i=0;i<count;i++)state.jobs.push({...clone(request),id:id(),batchId,batchCount:count,batchTotalCost:request.totalCost,count:1,totalCost:request.cost,estimate:request.cost?`${Number(request.cost).toFixed(2)} $ fictif · cet appel`:'Sans frais fournisseur · temps local non mesuré',subjectId:s.id,subjectName:s.name,title:title+(count>1?` · clip ${i+1}`:''),status:'En attente',resultId:null});save();dialog.close();page='jobs';render();toast(`${count} demande(s) fictive(s) ajoutée(s), avec les réglages et références relus.`);
+  }
+  async function continueAnimation(job){
+    const s=state.subjects.find(s=>s.id===job.subjectId),r=s?.results.find(r=>r.id===job.resultId);if(!r||!job.nextAnimation)return;
+    subjectId=s.id;request={...clone(job.nextAnimation),references:[await ateliers.resultSource(r)]};delete state.pendingAnimations?.[s.id];save();showRequest();
+  }
+  function finishJob(job){
+    const s=state.subjects.find(s=>s.id===job.subjectId);if(!s||job.status!=='En attente')return;
+    const r=result(job.title,job.kind==='animation');r.movement=job.movement;r.direction=job.direction;r.provenance='Résultat simulé · '+job.method;r.request=clone(job);r.technicalReference=!!job.technicalReference;s.results.push(r);job.resultId=r.id;job.status='Terminé';if(job.method.startsWith('3D')&&s.model3d)s.model3d.renders=(s.model3d.renders||0)+1;save();render();
+    if(job.nextAnimation){modal('Relire la référence avant de l’animer',`<p>${esc(s.name)} · l’animation ${esc(job.nextAnimation.movement)} · ${esc(job.nextAnimation.direction)} est conservée.</p><div class="sprite compare-preview"><canvas id="reference-ready" width="64" height="64" aria-label="Référence de départ fabriquée"></canvas></div><p>Cette image vous convient ? La prochaine étape prépare son animation, avec une nouvelle relecture avant chaque appel.</p>`,button('Revoir plus tard','close')+button('Utiliser cette référence et préparer l’animation','continue-animation',`data-id="${job.id}"`));drawFrame($('#reference-ready'),r,0);}
   }
   function editCard(cardId) {
     const c=state.canvas.cards.find(c=>c.id===cardId);if(!c)return;canvasSelected=c.id;
@@ -331,21 +386,32 @@
     editorSnapshot:()=>draft?{r:clone(draft),index:cursor,subjectId}:null,saveEditor,
     picker:(...args)=>ergonomie.openPicker(...args),sourceImage:r=>r.frames[0]?.image||r.image||IMAGE,
     request:requestForm,requestState:()=>request,
-    openSubject:(sid,t='animations')=>{dialog.close();subjectId=sid;tab=t;navigate('subject');},
+    openSubject:(sid,t='animations')=>leave(()=>{dialog.close();subjectId=sid;tab=t;stop();page='subject';render();}),
     openResult:(sid,r)=>leave(()=>{dialog.close();subjectId=sid;tab=r.animated?'animations':'images';openEditor(r);})});
   const handlers={
     close:()=>dialog.close(),
+    'toggle-sidebar':()=>{workspace().sidebarCollapsed=!workspace().sidebarCollapsed;render();},
+    'workspace-back':()=>historyMove(false),'workspace-forward':()=>historyMove(true),
+    'open-drafts':()=>modal('Retouches à reprendre',`<p>Ces brouillons sont distincts des versions enregistrées.</p>${Object.entries(workspace().drafts).map(([key,d])=>`<div class="line"><strong>${esc(state.subjects.find(s=>s.id===d.subjectId)?.name)} · ${esc(d.result.title)}</strong><p class="small">Dernière reprise : ${new Date(d.savedAt).toLocaleString('fr-FR')}</p>${button('Reprendre ce brouillon','resume-draft',`data-id="${key}"`)}</div>`).join('')||'<p>Aucun brouillon en attente.</p>'}`),
+    'resume-draft':el=>leave(()=>{const d=workspace().drafts[el.dataset.id];if(!d)return;subjectId=d.subjectId;dialog.close();openEditor(d.result);}),
     'new-subject':()=>subjectForm(), 'edit-subject':()=>subjectForm(true),
     'create-subject':()=>{const name=value('subject-name').trim();if(!name){toast('Donnez un nom à l’asset.');return;}const s={id:id(),name,family:value('subject-family'),goal:value('subject-goal'),description:value('subject-description'),movements:['Repos','Marche'],directions:state.game.directions.slice(),results:[],equipment:[]};state.subjects.push(s);subjectId=s.id;tab=s.goal==='Images fixes'?'images':'animations';save();dialog.close();page='subject';render();},
     'save-subject':()=>{if(!value('subject-name').trim()){toast('Le nom ne peut pas être vide.');return;}Object.assign(currentSubject(),{name:value('subject-name').trim(),family:value('subject-family'),goal:value('subject-goal'),description:value('subject-description')});save();dialog.close();render();},
-    subject:el=>leave(()=>{subjectId=el.dataset.id;tab='animations';compareIds=[];stop();page='subject';render();}),
+    subject:el=>leave(()=>{subjectId=el.dataset.id;tab=workspace().tabs[subjectId]||'animations';compareIds=[];stop();page='subject';render();}),
     tab:el=>{tab=el.dataset.tab;render();},
     objectives:objectivesForm,
     'save-objectives':()=>{const m=[...new Set(value('movements').split(',').map(x=>x.trim()).filter(Boolean))].slice(0,12),d=$$('input[name="direction"]:checked',dialog).map(x=>x.value);if(!m.length||!d.length){toast('Gardez au moins un mouvement et une direction.');return;}Object.assign(currentSubject(),{movements:m,directions:d,goal:value('objective-goal')});save();dialog.close();render();},
     request:el=>requestForm(el.dataset),
+    'request-add-movement':()=>{captureRequest();modal('Ajouter un mouvement',field('Nom du mouvement',input('new-movement','','text','placeholder="Ex. Attaque lourde"')),button('Revenir','back-request')+button('Ajouter ce mouvement','request-save-movement'));},
+    'request-save-movement':()=>{const name=value('new-movement').trim();if(!name)return;const s=currentSubject();if(!s.movements.some(m=>m.toLocaleLowerCase()===name.toLocaleLowerCase()))s.movements.push(name);request.movement=s.movements.find(m=>m.toLocaleLowerCase()===name.toLocaleLowerCase());save();showRequest();},
+    'request-pick-reference':()=>{captureRequest();ergonomie.openPicker(async({r})=>{request.references=[await ateliers.resultSource(r)];showRequest();},showRequest);},
+    'request-import-reference':()=>{captureRequest();modal('Importer une référence de départ',field('Image (2 Mo maximum)','<input id="request-reference-file" type="file" accept="image/png,image/jpeg,image/webp">'),button('Revenir','back-request')+button('Importer et utiliser','request-read-reference'));},
+    'request-read-reference':async()=>{const source=await ateliers.readUpload('#request-reference-file');if(!source)return;const r=result(source.name||'Référence importée',false);r.image=source.url;r.provenance='Référence importée';r.technicalReference=true;currentSubject().results.push(r);request.references=[{...source,id:r.id}];save();showRequest();},
+    'request-make-reference':()=>{captureRequest();const animation=clone(request);state.pendingAnimations??={};state.pendingAnimations[subjectId]=animation;request={...clone(request),kind:'image',title:'Référence technique · '+currentSubject().name,technicalReference:true,nextAnimation:animation,count:1,size:'1024 × 1024',brief:'Référence complète du personnage, silhouette lisible. '+currentSubject().description};delete request.references;save();showRequest();},
+    'continue-animation':el=>continueAnimation(state.jobs.find(j=>j.id===el.dataset.id)),
     'agent-request':()=>requestForm({},'Agent MCP · développe le jeu'),
     'review-request':reviewRequest,'back-request':showRequest,'send-request':sendRequest,
-    'job-finish':el=>{const j=state.jobs.find(j=>j.id===el.dataset.id),s=state.subjects.find(s=>s.id===j.subjectId);if(j.status!=='En attente')return;const r=result(j.title,j.kind==='animation');r.movement=j.movement;r.direction=j.direction;r.provenance='Résultat simulé · '+j.method;r.request=clone(j);s.results.push(r);j.resultId=r.id;j.status='Terminé';if(j.method.startsWith('3D'))s.model3d.renders=(s.model3d.renders||0)+1;save();render();},
+    'job-finish':el=>finishJob(state.jobs.find(j=>j.id===el.dataset.id)),
     'job-fail':el=>{state.jobs.find(j=>j.id===el.dataset.id).status='Échec';save();render();},
     'job-cancel':el=>{state.jobs.find(j=>j.id===el.dataset.id).status='Interrompu';save();render();},
     'job-retry':el=>{const j=state.jobs.find(j=>j.id===el.dataset.id);j.status='En attente';save();render();toast('Reprise explicite de la même demande fictive.');},
@@ -354,10 +420,13 @@
     favorite:el=>{const r=currentSubject().results.find(r=>r.id===el.dataset.id);r.favorite=!r.favorite;save();render();},
     choose:el=>{const r=currentSubject().results.find(r=>r.id===el.dataset.id);r.chosen=!r.chosen;save();render();},
     'compare-add':el=>{if(!compareIds.includes(el.dataset.id))compareIds.push(el.dataset.id);compareIds=compareIds.slice(-2);page='compare';render();},
+    'compare-play':()=>{if(compareTimer){clearInterval(compareTimer);compareTimer=null;render();return;}compareTimer=setInterval(()=>{if(page!=='compare'){clearInterval(compareTimer);compareTimer=null;return;}compareElapsed+=100;drawComparisons();},100);render();},
+    'compare-start':()=>{compareElapsed=0;drawComparisons();},
     'compare-source':()=>{modal('Source et retouche ouverte',`<div class="two"><section><h3>Source conservée</h3><div class="sprite compare-preview"><canvas id="raw-preview" width="64" height="64"></canvas></div></section><section><h3>Avec les retouches</h3><div class="sprite compare-preview"><canvas id="edited-preview" width="64" height="64"></canvas></div></section></div>`);drawFrame($('#raw-preview'),draft,cursor,true);drawFrame($('#edited-preview'),draft,cursor);},
     'save-editor':()=>{saveEditor();render();},
     'save-leave':()=>{saveEditor();dialog.close();confirmAction?.();confirmAction=null;},
-    'discard-leave':()=>{dirty=false;draft=null;dialog.close();confirmAction?.();confirmAction=null;},
+    'draft-leave':()=>{saveWorkspace();dirty=false;draft=null;dialog.close();const next=confirmAction;confirmAction=null;next?.();},
+    'discard-leave':()=>{if(draft)delete workspace().drafts[draft.id];dirty=false;draft=null;save();dialog.close();const next=confirmAction;confirmAction=null;next?.();},
     tool:el=>{tool=el.dataset.tool;render();},
     inspector:el=>{inspector=el.dataset.value;render();},
     frame:(el,e)=>{stop();cursor=Number(el.dataset.index);if(e.ctrlKey||e.metaKey){selectedFrames=selectedFrames.includes(cursor)?selectedFrames.filter(i=>i!==cursor):[...selectedFrames,cursor];if(!selectedFrames.length)selectedFrames=[cursor];}else selectedFrames=[cursor];render();},
@@ -415,6 +484,9 @@
   }
   document.addEventListener('change',e=>{
     const el=e.target;
+    if(el.dataset.compareSelect!==undefined){compareIds[Number(el.dataset.compareSelect)]=el.value;compareElapsed=0;render();return;}
+    if(el.name==='request-kind'||el.name==='request-method'){captureRequest();showRequest();return;}
+    if(el.id==='image-background'){workspace().imageBackground=el.value==='Transparence'?'alpha':'neutre';document.body.dataset.imageBackground=workspace().imageBackground;saveWorkspace();return;}
     if(parcours.change(el))return;
     if(ergonomie.change(el,false))return;
     if(ateliers.change(el))return;
@@ -422,7 +494,7 @@
     if(el.dataset.recipe){updateRecipe(el);render();}
     else if(el.dataset.setting){snapshot();draft.recipe.settings[el.dataset.setting]=Number(el.value);changed();}
     else if(page==='editor'&&el.closest('#tool-content')&&el.name){snapshot();draft.recipe.settings[`${tool}:${el.name}`]=el.value;changed();}
-    else if(el.id==='scope'){scope={'Cette frame':'frame','Les frames sélectionnées':'selection','Toute l’animation':'all'}[el.value];}
+    else if(el.id==='scope'){scope={'Cette frame':'frame','Les frames sélectionnées':'selection','Toute l’animation':'all'}[el.value];queueWorkspace();}
     else if(el.id==='family'){family=el.value;render();}
     else if(el.id==='favorites'){favoriteOnly=el.checked;render();}
     else if(el.id==='canvas-zoom'){state.canvas.zoom=Number(el.value);save();render();}
@@ -430,8 +502,11 @@
     else if(el.dataset.check){state.checks[el.dataset.check]=el.checked;save();}
   });
   document.addEventListener('input',e=>{if(((e.target.dataset.parcours||e.target.name?.startsWith('mount-')||e.target.name?.startsWith('eq-')||e.target.dataset.eqSetting)&&parcours.change(e.target))||ergonomie.change(e.target,true)||ateliers.change(e.target,true))return;if(e.target.dataset.recipe)updateRecipe(e.target);else if(e.target.id==='search'){const start=e.target.selectionStart;filter=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(start,start);}});
-  window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+  main.addEventListener('scroll',queueWorkspace,{passive:true});
+  window.addEventListener('beforeunload',e=>{if(!saveWorkspace()&&dirty){e.preventDefault();e.returnValue='';}});
+  window.addEventListener('pagehide',saveWorkspace);
+  document.addEventListener('keydown',e=>{if(dialog.open||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;if(e.altKey&&['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();historyMove(e.key==='ArrowRight');}if(page==='editor'&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();saveEditor();render();}});
   document.addEventListener('keydown',e=>{if(page==='editor'&&!dialog.open&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();handlers[e.shiftKey?'redo':'undo']();}});
   if(testSession)$('.prototype span').textContent='SESSION D’ESSAI SÉPARÉE · données de démonstration · aucun appel IA ni accès au jeu';
-  save();render();
+  restoreNavigation(workspace().navigation);save();render();
 })();

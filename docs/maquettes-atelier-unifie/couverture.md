@@ -224,9 +224,10 @@ archivées ; le nettoyage ne supprime pas l'historique restaurable.
 - Personnage → Équipements → Créer une pièce et son emploi : prépare les cibles de ce
   personnage ; l'identité de la pièce pourra être reprise dans un autre emploi.
 - Navigation par familles, dont Monstres, et collections nommées ; recherche, sélection
-  multiple, ajout à une collection, renommage et pagination de 24 assets. La bibliothèque
-  organise les fiches ; la galerie rassemble les résultats. Aucun banc de charge avec
-  des centaines d'assets n'a encore été exécuté sur ce prototype.
+  multiple, rangement, renommage, retrait de membres et archivage restaurable. La liste
+  compacte et la grille conservent leurs filtres. La bibliothèque organise les fiches ;
+  la galerie rassemble les résultats. Le parcours a été essayé avec 602 assets et plus
+  de douze collections dans une même famille, dans un profil d'essai séparé.
 - Fabrications → Fabriquer librement : image, vidéo ou source 3D fictive ; prompt,
   résolution, graine, durée vidéo, références et règles de l'univers facultatives.
   Relecture avant mise en file, résultat en galerie et dépôt facultatif sur la toile.
@@ -243,8 +244,8 @@ archivées ; le nettoyage ne supprime pas l'historique restaurable.
 **Limites à ne pas confondre avec des écrans livrés dans le produit :** la vidéo est une
 séquence de cinq images d'exemple, sans décodage d'un nouveau fichier vidéo ; la 3D est
 une fiche simulée, sans maillage ni moteur. Les prix, modèles et paramètres sont fictifs.
-Le choix de centaines de frames, le recadrage commun réglable, les profils réels et la
-gestion complète des collections restent à raccorder aux capacités existantes du produit.
+Le choix de centaines de frames, le recadrage commun réglable, les profils réels et le
+rangement du prototype restent à raccorder aux capacités existantes du produit.
 Le brouillon de montage se conserve par clip et par bande reprise ; rouvrir le même
 parcours le retrouve. « Créer l'animation » reste nécessaire pour ajouter la bande à l'asset.
 
@@ -268,8 +269,10 @@ Position, échelle et opacité combinent curseur et valeur ; la variante se dép
 Le zoom commun aux tables, à la découpe et à l'extraction sépare déplacement de la vue et
 du calque. Le pinceau montre son empreinte à l'échelle. La question « Sur quelles images
 afficher cet élément ? » explique la portée et l'absence de suivi automatique du mouvement.
-Zoom, défilement et filtres restent des états de séance ; les images et réglages gardés
-restent dans le stockage propre à la maquette.
+Le zoom, les dossiers ouverts, les filtres et le contexte de retouche se conservent dans
+le stockage de la maquette. Les brouillons y restent distincts des versions enregistrées ;
+une réouverture les retrouve sans devoir modifier l'original. La pile annuler/rétablir
+reste propre à la séance.
 
 Les essais navigateur détaillés sont consignés dans la
 [revue du 11 septembre](../revue-conformite-carnet-2026-09-11.md).
