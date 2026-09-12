@@ -89,6 +89,9 @@ class Modele:
     resolutions: tuple[str, ...] = ()
     variations_max: int = 1
     options: Mapping[str, Option] = field(default_factory=dict)
+    references_min: int = 0
+    locale: bool = False
+    indisponible: str | None = None
 
     @property
     def envoi(self) -> str:
@@ -106,6 +109,10 @@ class Modele:
         voit avant d'être choisi (`docs/archive/plan-versions-tenues.md`, T1).
         """
         nombre = len(demande.references)
+        if self.indisponible:
+            return self.indisponible
+        if nombre < self.references_min:
+            return f"demande au moins {self.references_min} image(s) de référence"
         if nombre > self.references_max:
             if self.references_max == 0:
                 return "n'accepte aucune image de référence"
@@ -194,6 +201,7 @@ def _option_depuis_json(d: dict[str, Any]) -> Option:
 
 def modele_en_json(modele: Modele) -> dict[str, Any]:
     return {
+        **({"locale": True, "references_min": modele.references_min, "indisponible": modele.indisponible} if modele.locale else {}),
         "identifiant": modele.identifiant,
         "nom": modele.nom,
         "fournisseur": modele.fournisseur,
@@ -220,4 +228,6 @@ def modele_depuis_json(d: dict[str, Any]) -> Modele:
         resolutions=tuple(d.get("resolutions", ())),
         variations_max=d.get("variations_max", 1),
         options={n: _option_depuis_json(o) for n, o in (d.get("options") or {}).items()},
+        references_min=d.get("references_min", 0), locale=d.get("locale", False),
+        indisponible=d.get("indisponible"),
     )

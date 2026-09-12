@@ -35,6 +35,11 @@ def annuler(requete: Request, projet: str, piece: str, emploi: str, identifiant:
     return service(requete).annuler(projet, piece, emploi, identifiant)
 
 
+@routeur.get("/jobs/{identifiant}/retours/{rang}")
+def retour(requete: Request, projet: str, piece: str, emploi: str, identifiant: str, rang: int):
+    return Response(service(requete).fichier(projet, piece, emploi, identifiant, "retours", rang), media_type="image/png")
+
+
 @routeur.post("/jobs/{identifiant}/sheets/{appel}/confirm")
 def confirmer(requete: Request, projet: str, piece: str, emploi: str, identifiant: str, appel: int):
     return service(requete).confirmer_decoupe(projet, piece, emploi, identifiant, appel)

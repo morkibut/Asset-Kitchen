@@ -175,7 +175,9 @@ HAUTEURS = {34, 30, 26, 22, 54}
 # c'est bien une largeur fixe que le produit écrit, donc elle se déclare.
 # `128` est entrée avec B24 : la colonne « ses sœurs » de `Retouche.tsx`, une
 # vignette de large et rien d'autre — ni 300 ni 380 ne lui conviennent.
-LARGEURS = {300, 380, 880, 128}
+# AU atelier unifié : les deux largeurs du sommaire validé sont déclarées
+# dans DESIGN et nommées dans index.css ; ce n’est pas une exemption de fichier.
+LARGEURS = {300, 380, 880, 128, 240, 76}
 # § Spacing — largeurs de petit contrôle. `70` est entrée avec B24 : la
 # mollette d'opacité du témoin « par-dessus » de `Retouche.tsx`, un curseur
 # qu'on tire au doigt et qui doit rester assez long pour se régler sans

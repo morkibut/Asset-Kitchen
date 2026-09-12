@@ -1177,16 +1177,28 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 
     from atelier.mcp.livraison import installer_outils_livraison
     installer_outils_livraison(serveur, atelier, _refus_lisible)
+    from atelier.mcp.livraison_images import installer_outils_livraison_images
+    installer_outils_livraison_images(serveur, atelier, _refus_lisible)
+    from atelier.mcp.tuiles import installer_outils_tuiles
+    installer_outils_tuiles(serveur, atelier, _refus_lisible)
     from atelier.mcp.objectifs import installer_outils_objectifs
     installer_outils_objectifs(serveur, atelier, _refus_lisible, _projet_ouvert, _personnage)
     from atelier.mcp.travaux import installer_outils_travaux
     installer_outils_travaux(serveur, atelier, _refus_lisible)
     from atelier.mcp.file_locale import installer_outils_file_locale
     installer_outils_file_locale(serveur, atelier, _refus_lisible)
+    from atelier.mcp.workflows import installer_outils_workflow
+    installer_outils_workflow(serveur, atelier, _refus_lisible)
     from atelier.mcp.calques_cibles import installer_calques_cibles
     installer_calques_cibles(serveur, atelier, _refus_lisible)
     from atelier.mcp.travaux_equipement import installer_travaux_equipement
     installer_travaux_equipement(serveur, atelier, _refus_lisible)
+    from atelier.mcp.tenues import installer_tenues
+    installer_tenues(serveur, atelier, _refus_lisible)
+    from atelier.mcp.sons import installer_sons
+    installer_sons(serveur, atelier, _refus_lisible)
+    from atelier.mcp.sources_3d import installer_sources_3d
+    installer_sources_3d(serveur, atelier, _refus_lisible)
     return serveur
 
 

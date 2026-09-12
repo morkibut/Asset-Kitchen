@@ -22,7 +22,9 @@ jamais l'interface, qui affiche la phrase qu'elle reçoit :
 from __future__ import annotations
 
 import time
+import base64
 from dataclasses import replace
+from contextvars import ContextVar
 from typing import Any
 
 import numpy as np
@@ -150,6 +152,7 @@ POCHES_MONTREES = 8
 # reste en coûte 28 : le garder évite de le refaire à chaque cran de curseur.
 # Quatre suffit — on retouche un asset à la fois, deux au plus en comparant.
 DETOURAGES_GARDES = 4
+_BROUILLON_RECETTE: ContextVar[bool] = ContextVar("brouillon_recette", default=False)
 
 
 class RecetteRefusee(ErreurAtelier):
@@ -408,6 +411,9 @@ class ServiceAssets:
         remplissage par plages n'a rien à faire là.
         """
         asset = self._trouver(identifiant)
+        return self._taches_de(asset, plafond)
+
+    def _taches_de(self, asset: Asset, plafond: int = 200) -> dict[str, Any]:
         # Avant les bords : la liste doit montrer ce que le seuil va effacer, et
         # une liste prise après lui aurait déjà perdu ce qu'elle décrit.
         avant_les_bords = replace(
@@ -1085,6 +1091,48 @@ class ServiceAssets:
 
     # ── Poser une recette ────────────────────────────────────────────────────
 
+    def apercu_recette(
+        self, identifiant: str, recette: Recette, *, voyageuse: bool = False,
+        nom: str | None = None, reinitialiser: bool = False,
+    ) -> dict[str, Any]:
+        """Rejouer un brouillon sans écrire l’asset ni son cache durable.
+
+        La copie passe dans les mêmes mesures et le même rendu que l’enregistrement.
+        Les seules écritures sont les petits caches de calcul en mémoire.
+        """
+        asset = self._trouver(identifiant)
+        laisse: tuple[str, ...] = ()
+        if nom is not None:
+            recettes = self.recettes()
+            if nom not in recettes:
+                raise RecetteRefusee(f"aucune recette nommée « {nom} »")
+            recette, laisse = voyage(recettes[nom])
+            recette = replace(recette, nom=nom)
+        elif voyageuse:
+            recette, laisse = voyage(recette.sans_nom())
+        recette = self._places_de(asset, recette, reinitialiser=reinitialiser)
+        self._verifier(recette, asset.projet)
+        copie = replace(asset, recette=recette)
+        marque = _BROUILLON_RECETTE.set(True)
+        try:
+            rendu = self._calculer(copie)
+            mesures = self._taches_de(copie)
+        finally:
+            _BROUILLON_RECETTE.reset(marque)
+        return {
+            "recette": recette.en_json(), "largeur": rendu.largeur,
+            "hauteur": rendu.hauteur,
+            "rendu": "data:image/png;base64," + base64.b64encode(rendu.octets).decode("ascii"),
+            "mesures": mesures, "laisse": list(laisse),
+        }
+
+    @staticmethod
+    def _places_de(asset: Asset, recette: Recette, *, reinitialiser: bool = False) -> Recette:
+        return replace(
+            recette, difference=None if reinitialiser else asset.recette.difference,
+            passes=moteurs_suivis(asset.recette.passes, recette.passes),
+        )
+
     def poser_recette(self, identifiant: str, recette: Recette) -> Asset:
         """Le geste de la tranche. Vérifie, applique, épingle, annonce.
 
@@ -1105,7 +1153,7 @@ class ServiceAssets:
         self.sauver(asset)
         return asset
 
-    def poser_les_places(self, identifiant: str, recette: Recette) -> Asset:
+    def poser_les_places(self, identifiant: str, recette: Recette, *, reinitialiser: bool = False) -> Asset:
         """Les places de la recette, **sans toucher à la différence** (E5).
 
         C'est le geste de l'écran, et le seul que l'écran sache faire : la
@@ -1135,13 +1183,11 @@ class ServiceAssets:
         un choix ne se réécrit pas.
         """
         asset = self._trouver(identifiant)
+        if reinitialiser and recette.vide:
+            return self.revenir_au_brut(identifiant)
         return self.poser_recette(
             identifiant,
-            replace(
-                recette,
-                difference=asset.recette.difference,
-                passes=moteurs_suivis(asset.recette.passes, recette.passes),
-            ),
+            self._places_de(asset, recette, reinitialiser=reinitialiser),
         )
 
     def revenir_au_brut(self, identifiant: str) -> Asset:
@@ -1399,7 +1445,10 @@ class ServiceAssets:
         base = self.lire(difference.base)
         if base is None:
             return rgba
-        octets, _ = self.octets(base)
+        if _BROUILLON_RECETTE.get():
+            octets = self._calculer(base).octets
+        else:
+            octets, _ = self.octets(base)
         corps = avec_alpha(octets)
         if corps.shape[:2] != rgba.shape[:2]:
             return rgba
@@ -1467,9 +1516,6 @@ class ServiceAssets:
         for rang, passe in enumerate(recette.passes, start=1):
             if passe.moteur not in MOTEURS:
                 raise RecetteRefusee(f"passe {rang} : moteur inconnu « {passe.moteur} »")
-            raison = raison_moteur(passe.moteur)
-            if raison is not None:
-                raise RecetteRefusee(f"passe {rang} : {raison}")
             # **Un modèle inconnu du catalogue est refusé en le nommant** (U13),
             # comme une portée inconnue. Un modèle *pas encore descendu*, lui,
             # passe : il se rapatrie au premier rendu, et l'écran l'annonce
@@ -1479,6 +1525,11 @@ class ServiceAssets:
                     f"passe {rang} : modèle de silhouette inconnu "
                     f"« {passe.modele} »"
                 )
+            # L'identité précède la disponibilité : installer le moteur ne
+            # réparerait pas un nom inconnu, même sur une machine sans rembg.
+            raison = raison_moteur(passe.moteur)
+            if raison is not None:
+                raise RecetteRefusee(f"passe {rang} : {raison}")
             if not 0 <= passe.tolerance <= 255:
                 raise RecetteRefusee(f"passe {rang} : la tolérance va de 0 à 255")
             if not 0 <= passe.seuil_alpha <= 255:

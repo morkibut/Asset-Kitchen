@@ -1589,6 +1589,7 @@ class ServiceProduction:
         limite: int = 120,
         filtre: str = TOUS_LES_SUJETS,
         seulement: Collection[str] | None = None,
+        tri: str = "",
     ) -> dict[str, Any]:
         """Une famille du jeu, paginée, chaque sujet portant déjà son compte
         de complétude (B9.2), et les comptes de ses trois filtres (B9.6).
@@ -1651,6 +1652,12 @@ class ServiceProduction:
         # de plus pour un découpage que la boucle a déjà fait.
         comptes = self.comptes(projet, de_la_famille, detail=True)
         retenus = [p for p in de_la_famille if _retient(filtre, p, comptes)]
+        if tri not in {"", "nom", "nom-desc", "resultats"}:
+            raise ProductionRefusee("Choisissez un tri par nom ou par nombre de résultats.")
+        if tri:
+            retenus.sort(key=lambda p: p.nom.casefold(), reverse=tri == "nom-desc")
+            if tri == "resultats":
+                retenus.sort(key=lambda p: comptes[p.identifiant]["images"]["fait"] + comptes[p.identifiant]["bandes"]["fait"], reverse=True)
         page = retenus[:limite]
         return {
             "personnages": page,
@@ -2427,15 +2434,51 @@ class ServiceProduction:
         reçoit déjà `ServiceProduction`, jamais l'inverse.
 
         **Le coût d'un manque est une mesure, pas un tarif** (même garde que
-        `cout_attendu`) : celui du modèle par défaut de sa famille, faute de
-        quoi personne n'a encore payé sur cette machine et le manque compte
-        pour `$0` — la seule valeur qu'on puisse annoncer sans l'inventer.
+        `cout_attendu`) : celui du modèle par défaut de sa famille. Faute de
+        mesure, le zéro technique voyage avec `cout_connu: False` : il ne veut
+        jamais dire que fabriquer serait gratuit.
+
+        **Une ligne est un sujet et une nature, jamais une case.** Le tableau
+        de bord doit mener à la chose qui manque ; lui renvoyer six fois « le
+        pèlerin n'a pas une pose » cache précisément les poses et directions à
+        reprendre. Les cibles restent donc dans la réponse, groupées, mais
+        chacune garde son nom pour que la phrase soit actionnable.
         """
         objet = self._exiger(projet)
         par_famille: dict[str, dict[str, int]] = {}
-        manques: list[dict[str, Any]] = []
+        groupes_de_manques: dict[tuple[str, str], dict[str, Any]] = {}
         couts_connus: dict[str, float | None] = {}
         familles_objectifs: set[str] = set()
+
+        def ajouter_manque(
+            personnage: Personnage,
+            famille: str,
+            nature: str,
+            quantite: int,
+            pose: str,
+            direction: str,
+            objectif_explicite: bool = False,
+        ) -> None:
+            """Accrocher une cible à la seule ligne de son sujet et de sa nature."""
+            if quantite <= 0:
+                return
+            cle = (personnage.identifiant, nature)
+            groupe = groupes_de_manques.setdefault(
+                cle,
+                {
+                    "quantite": 0,
+                    "famille": famille,
+                    "sujet": personnage.identifiant,
+                    "nom_sujet": personnage.nom,
+                    "nature": nature,
+                    "objectif_explicite": objectif_explicite,
+                    "cibles": [],
+                },
+            )
+            groupe["quantite"] += quantite
+            groupe["cibles"].append(
+                {"pose": pose, "direction": direction, "quantite": quantite}
+            )
 
         for personnage in self.personnages(projet):
             famille = self.famille_de(projet, personnage)
@@ -2444,49 +2487,82 @@ class ServiceProduction:
             if personnage.objectif is not None:
                 familles_objectifs.add(famille)
                 etat = self.objectif_de(projet, personnage.identifiant)["couverture"]
-                for nature, nom in (("image", "images"), ("animation", "animations")):
-                    compte = etat[nom]
+                for nature, cle_de_compte in (("image", "images"), ("animation", "animations")):
+                    compte = etat[cle_de_compte]
                     groupe["fait"] += compte["produit"]
                     groupe["total"] += compte["demande"]
-                    if compte["manquant"]:
-                        manques.append({
-                            "quantite": compte["manquant"],
-                            "phrase": f"« {personnage.nom} » : {compte['manquant']} {nom} à produire.",
-                            "famille": famille, "sujet": personnage.identifiant,
-                            "nature": nature,
-                            # Une demande n'a pas encore choisi de moyen de
-                            # fabrication. Son coût ne se déduit pas du tarif
-                            # historique des images fixes de cette famille.
-                            "cout_usd": 0.0, "cout_connu": False,
-                        })
+                    for case in etat["cases"]:
+                        if case["nature"] != nature:
+                            continue
+                        ajouter_manque(
+                            personnage, famille, nature, int(case["manquant"]),
+                            str(case["nom_pose"]), str(case["nom_direction"]), True,
+                        )
                 continue
+            poses = {p.identifiant: p.nom for p in self.plan_de(projet, personnage)}
             for case in self.cases(projet, personnage):
                 demandees = int(case["demandees"])
                 fait = min(len(case["images"]), demandees)
                 groupe["fait"] += fait
                 groupe["total"] += demandees
-                manque = demandees - fait
-                if manque <= 0:
-                    continue
+                directions = case["directions"]
+                if directions:
+                    for direction in directions:
+                        ajouter_manque(
+                            personnage, famille, "image",
+                            int(direction["demandees"]) - len(direction["images"]),
+                            poses.get(case["pose"], case["pose"]), str(direction["nom"]),
+                        )
+                        ajouter_manque(
+                            personnage, famille, "animation",
+                            1 - len(direction["bandes"]),
+                            poses.get(case["pose"], case["pose"]), str(direction["nom"]),
+                        )
+                else:
+                    ajouter_manque(
+                        personnage, famille, "image", demandees - fait,
+                        poses.get(case["pose"], case["pose"]), "",
+                    )
+                    ajouter_manque(
+                        personnage, famille, "animation",
+                        int(case["bandes_demandees"]) - len(case["bandes"]),
+                        poses.get(case["pose"], case["pose"]), "",
+                    )
+
+        manques: list[dict[str, Any]] = []
+        for manque in groupes_de_manques.values():
+            nature = manque["nature"]
+            quantite = manque["quantite"]
+            cibles = manque.pop("cibles")
+            objectif_explicite = manque.pop("objectif_explicite")
+            def nommer_cible(cible: dict[str, Any]) -> str:
+                direction = f" vers {cible['direction']}" if cible["direction"] else ""
+                return f"{cible['pose']}{direction} ({cible['quantite']})"
+
+            details = ", ".join(nommer_cible(cible) for cible in cibles)
+            nom = "image fixe" if nature == "image" else "animation"
+            manque["phrase"] = (
+                f"« {manque.pop('nom_sujet')} » : {quantite} {nom}"
+                f"{'s' if quantite > 1 else ''} à produire — {details}."
+            )
+            if nature == "image" and not objectif_explicite:
+                famille = manque["famille"]
                 if famille not in couts_connus:
                     modele = objet.univers.modele(famille)
                     couts_connus[famille] = (
-                        generations.cout_attendu(modele, images=1)
-                        if modele
-                        else None
+                        generations.cout_attendu(modele, images=1) if modele else None
                     )
                 cout_image = couts_connus[famille]
-                cout = round(cout_image * manque, 6) if cout_image else 0.0
-                pluriel = "s" if manque > 1 else ""
-                manques.append(
-                    {
-                        "quantite": manque,
-                        "phrase": f"« {personnage.nom} » n'a pas {manque} pose{pluriel}.",
-                        "famille": famille,
-                        "sujet": personnage.identifiant,
-                        "cout_usd": cout,
-                    }
-                )
+                manque["cout_usd"] = round(cout_image * quantite, 6) if cout_image is not None else 0.0
+                manque["cout_connu"] = cout_image is not None
+            else:
+                # Une cible explicite et toute animation attendent le procédé
+                # choisi par l'auteur : les rapprocher d'un prix d'image serait
+                # une estimation inventée.
+                manque["cout_usd"] = 0.0
+                manque["cout_connu"] = False
+            manque["cibles"] = cibles
+            manques.append(manque)
 
         familles = [
             {
@@ -2504,16 +2580,17 @@ class ServiceProduction:
             for cle, g in par_famille.items()
         ]
 
-        # **Le coût décroissant décide de l'ordre** — le manque le plus cher
-        # d'abord, comme la planche l'écrit. Une ligne à `$0` peut fermer la
-        # liste plutôt que d'en être écartée : *un manque gratuit reste un
-        # manque*, et le taire suggérerait qu'il n'y en a pas.
-        manques.sort(key=lambda m: m["cout_usd"], reverse=True)
+        # **Le coût mesuré décide de l'ordre**, puis le volume lorsqu'il reste
+        # inconnu : l'absence de mesure ne se déguise jamais en gratuité.
+        manques.sort(
+            key=lambda m: (m["cout_connu"], m["cout_usd"], m["quantite"]),
+            reverse=True,
+        )
         principaux = manques[:6]
-        if not any(m["cout_usd"] == 0 for m in principaux):
-            gratuit = next((m for m in manques[6:] if m["cout_usd"] == 0), None)
-            if gratuit is not None:
-                principaux = [*principaux, gratuit]
+        if not any(m["cout_connu"] is False for m in principaux):
+            inconnu = next((m for m in manques[6:] if m["cout_connu"] is False), None)
+            if inconnu is not None:
+                principaux = [*principaux, inconnu]
 
         return {
             "familles": familles,
@@ -2522,8 +2599,8 @@ class ServiceProduction:
                 "images": sum(m["quantite"] for m in manques if m.get("nature") != "animation"),
                 **({
                     "animations": sum(m["quantite"] for m in manques if m.get("nature") == "animation"),
-                    "cout_connu": all(m.get("cout_connu", True) for m in manques),
-                } if familles_objectifs else {}),
+                    "cout_connu": all(m["cout_connu"] for m in manques),
+                } if manques else {}),
                 # Une feuille par sujet en manque dans une famille — la même
                 # unité que la planche qui plie C1 : un appel par sujet, ses
                 # poses manquantes dedans.

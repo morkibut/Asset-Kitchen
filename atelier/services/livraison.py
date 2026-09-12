@@ -325,6 +325,54 @@ class ServiceLivraison:
             _poser(dossier / "preparations" / f"{jeton}.json", _json(preparation))
             return self._vue(preparation)
 
+    @_erreurs_disque
+    def preparer_paquet(self, projet: str, personnage: str | None, cible: str,
+                        manifeste: dict[str, Any], contenus: dict[str, bytes], *,
+                        scene: str, sprite_frames: str | None = None,
+                        ressource: str | None = None) -> dict[str, Any]:
+        """Paquet CPU interne déjà composé, publié avec les garanties d'AU1.
+
+        La cible sépare tenue/couches/assemblé de la livraison du corps. Ce
+        geste ne reçoit ni chemin absolu ni octets depuis une route HTTP.
+        """
+        dossier = self._dossier(projet)
+        if personnage is not None:
+            self._production.personnage(projet, personnage)
+        if not contenus or scene not in contenus or (sprite_frames is None and ressource is None) or any(n is not None and n not in contenus for n in (sprite_frames, ressource)):
+            raise LivraisonRefusee("Le paquet doit contenir sa scène et les ressources qu’elle utilise.")
+        for nom, contenu in contenus.items():
+            if _relatif(nom) != nom or not isinstance(contenu, bytes):
+                raise LivraisonRefusee("Un fichier du paquet est invalide.")
+        with _verrou(dossier / ".verrou"):
+            association = self._associe(projet)
+            cible_livraison = _cle(cible)
+            precedente = _lire(dossier / "cibles" / f"{cible_livraison}.json", {})
+            if precedente.get("association") != association:
+                precedente = {}
+            empreintes = {nom: self._blob(octets) for nom, octets in contenus.items()}
+            revision = _empreinte(_json({"manifeste": manifeste, "octets": empreintes}))[:24]
+            racine = f"{association['sous_dossier']}/{_cle(projet)}/{cible_livraison}"
+            version = f"{racine}/revisions/{revision}"
+            fichiers = [{"chemin": f"{version}/{nom}", "role": "composition" if nom == 'composition.json' else "Aseprite" if nom.endswith('.json') and manifeste.get("nature") not in {"image", "tuiles", "son", "audio"} else "ressource Godot" if nom.endswith(('.tres', '.tscn', '.gd', '.gdshader')) else "image" if nom.endswith('.png') else "provenance",
+                         "empreinte": empreintes[nom], "octets": len(octets)} for nom, octets in contenus.items()]
+            scene_stable = f"{racine}/personnage.tscn"
+            scene_octets = _scene_stable(f"{version}/{scene}").encode("utf-8")
+            fichiers.append({"chemin": scene_stable, "role": "scène stable", "empreinte": self._blob(scene_octets), "octets": len(scene_octets)})
+            fiche = {**manifeste, "atelier": "Asset Kitchen", "format": 1,
+                     "projet": projet, "personnage": personnage, "cible_livraison": cible_livraison,
+                     "revision": revision, "association": association, "scene": scene_stable,
+                     "sprite_frames": f"{version}/{sprite_frames}" if sprite_frames else None, "fichiers": list(fichiers)}
+            if ressource:
+                fiche["ressource"] = f"{version}/{ressource}"
+            octets_manifeste = _json(fiche)
+            fichiers.append({"chemin": f"{racine}/livraison.json", "role": "manifeste", "empreinte": self._blob(octets_manifeste), "octets": len(octets_manifeste)})
+            jeton = uuid.uuid4().hex
+            preparation = {**fiche, "jeton": jeton, "fichiers": fichiers, "etat": "preparee",
+                           "prepare_le": time.time(), "base": precedente.get("jeton"), "ecrits": []}
+            self._examiner(preparation, precedente.get("possedes", {}))
+            _poser(dossier / "preparations" / f"{jeton}.json", _json(preparation))
+            return self._vue(preparation)
+
     def _examiner(self, preparation: dict[str, Any], possedes: dict[str, str],
                   *, reprise: bool = False) -> None:
         racine = Path(preparation["association"]["dossier"])
@@ -354,8 +402,8 @@ class ServiceLivraison:
                 if k not in ("intentions", "possedes", "ecrits")} | {
                     "dossier": preparation["association"]["dossier"],
                     "scene": "res://" + preparation["scene"],
-                    "sprite_frames": "res://" + preparation["sprite_frames"],
-                }
+                    "sprite_frames": "res://" + preparation["sprite_frames"] if preparation.get("sprite_frames") else None,
+                } | ({"ressource": "res://" + preparation["ressource"]} if preparation.get("ressource") else {})
 
     @_erreurs_disque
     def livrer(self, projet: str, jeton: str) -> dict[str, Any]:
@@ -371,7 +419,7 @@ class ServiceLivraison:
                 return self._vue(preparation)
             if self._associe(projet) != preparation["association"]:
                 raise LivraisonRefusee("Le dossier associé a changé. Relire la livraison pour ce dossier.")
-            chemin_cible = dossier / "cibles" / f"{_cle(preparation['personnage'])}.json"
+            chemin_cible = dossier / "cibles" / f"{preparation.get('cible_livraison') or _cle(preparation['personnage'])}.json"
             precedente = _lire(chemin_cible, {})
             # La scène, le manifeste et la cible ont pu être publiés, puis le
             # processus fermé avant la dernière écriture du journal de réponse.
@@ -438,7 +486,7 @@ class ServiceLivraison:
                 raise LivraisonRefusee("Choisir une livraison terminée pour en reprendre la révision.")
             if self._associe(projet) != ancienne["association"]:
                 raise LivraisonRefusee("Cette révision appartient à un autre dossier Godot. Réassocier ce dossier avant de la reprendre.")
-            presente = _lire(dossier / "cibles" / f"{_cle(ancienne['personnage'])}.json", {})
+            presente = _lire(dossier / "cibles" / f"{ancienne.get('cible_livraison') or _cle(ancienne['personnage'])}.json", {})
             preparation = copy.deepcopy(ancienne)
             for cle in ("livre_le", "possedes", "intentions", "raison"):
                 preparation.pop(cle, None)

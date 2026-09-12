@@ -296,6 +296,7 @@ class CorpsReglagePiece(BaseModel):
     emplacement: str | None = None
     portee: Literal["contenue", "agrandit"] | None = None
     concept_arts: list[str] | None = None
+    references: list[str] | None = None
     projet: str | None = None
 
 
@@ -848,6 +849,7 @@ async def grille_de_famille(
     collection: str = Query(""),
     projet: str | None = Query(None),
     limite: int = Query(120, ge=1, le=1000),
+    tri: str = Query(""),
 ) -> dict[str, Any]:
     """La grille d'une famille, paginée — chaque sujet porte déjà son compte
     de complétude (B9.1) et ses collections (B9.3).
@@ -896,6 +898,7 @@ async def grille_de_famille(
         limite=limite,
         filtre=filtre,
         seulement=seulement,
+        tri=tri,
     )
     identifiants = [p.identifiant for p in page["personnages"]]
     collections = atelier.base.collections_par_sujet(vise, identifiants)
@@ -1244,6 +1247,7 @@ async def regler_piece(
         emplacement=corps.emplacement,
         portee=corps.portee,
         concept_arts=corps.concept_arts,
+        references=corps.references,
     )
     return _avec_vestiaire(atelier, projet, "piece", piece)
 

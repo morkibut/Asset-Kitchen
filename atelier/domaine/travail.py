@@ -24,7 +24,7 @@ DEFAUTS = {
 }
 
 
-def demande_normalisee(brute: dict[str, Any]) -> dict[str, Any]:
+def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> dict[str, Any]:
     if not isinstance(brute, dict):
         raise TravailRefuse("Une fabrication doit contenir des réglages nommés.")
     obligatoires = {"cle", "personnage", "pose", "direction", "modele_video", "prompt_video"}
@@ -32,6 +32,13 @@ def demande_normalisee(brute: dict[str, Any]) -> dict[str, Any]:
     if inconnus:
         raise TravailRefuse("Réglage de fabrication inconnu : " + ", ".join(sorted(inconnus)))
     demande = {**DEFAUTS, **brute}
+    if source_libre:
+        if any(brute.get(nom) for nom in ("personnage", "pose", "direction")):
+            raise TravailRefuse("Une vidéo libre se classe dans un asset au montage ; laisser son personnage, sa pose et sa direction vides.")
+        if demande["livrer_provisoire"]:
+            raise TravailRefuse("Une vidéo libre doit être montée et classée avant sa livraison dans Godot.")
+        obligatoires -= {"personnage", "pose", "direction"}
+        demande.update(personnage=None, pose=None, direction=None)
     for nom in obligatoires:
         if not isinstance(demande.get(nom), str) or (nom != "direction" and not demande[nom].strip()):
             raise TravailRefuse(f"Préciser « {nom} » avant de préparer l'animation.")
@@ -72,7 +79,7 @@ def demande_normalisee(brute: dict[str, Any]) -> dict[str, Any]:
 
 def cadre_valide(brut: dict[str, Any]) -> dict[str, Any]:
     defauts = {"autoriser_local": True, "autoriser_payant": False, "modeles_image": [],
-               "modeles_video": [], "plafond_appels": 20, "plafond_usd": 0.0,
+               "modeles_video": [], "modeles_3d": [], "modeles_audio": [], "plafond_appels": 20, "plafond_usd": 0.0,
                "livraison_provisoire": False}
     if set(brut) - set(defauts):
         raise TravailRefuse("Le cadre contient un réglage inconnu.")
@@ -80,7 +87,7 @@ def cadre_valide(brut: dict[str, Any]) -> dict[str, Any]:
     for cle in ("autoriser_local", "autoriser_payant", "livraison_provisoire"):
         if not isinstance(cadre[cle], bool):
             raise TravailRefuse(f"« {cle} » doit être activé ou désactivé.")
-    for cle in ("modeles_image", "modeles_video"):
+    for cle in ("modeles_image", "modeles_video", "modeles_3d", "modeles_audio"):
         if not isinstance(cadre[cle], list) or any(not isinstance(v, str) for v in cadre[cle]):
             raise TravailRefuse("Les méthodes autorisées doivent être une liste de noms fournisseur:modèle.")
     if isinstance(cadre["plafond_appels"], bool) or not isinstance(cadre["plafond_appels"], int) or cadre["plafond_appels"] < 0:

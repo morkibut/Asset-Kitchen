@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Mapping
+from atelier.domaine.catalogue import Option
 
 # La durée d'un clip, en secondes, quand personne n'en demande une autre.
 # **Cinq et pas quatre** : quatre secondes suffisent à un cycle de marche seul,
@@ -327,6 +328,8 @@ class ModeleVideo:
     # payant, où rien de tel n'a été mesuré.
     duree_conseillee: int = 0
     raison_de_la_duree: str = ""
+    options: Mapping[str, Option] = field(default_factory=dict)
+    indisponible: str | None = None
 
     @property
     def de_la_maison(self) -> bool:
@@ -460,6 +463,12 @@ class ModeleVideo:
         Côté image, le tarif ne conditionne rien — l'appel dure quelques
         secondes et se lit après coup ; ici il se fait attendre deux minutes.
         """
+        if self.indisponible:
+            return self.indisponible
+        if self.options:
+            for nom, valeur in demande.options.items():
+                if nom not in self.options or not self.options[nom].accepte(valeur):
+                    return f"n'accepte pas le réglage {nom} = {valeur}"
         if not self.accepte_une_image:
             return "n'anime pas une image, il ne part que d'un texte"
         if not demande.a_son_entree:
@@ -568,6 +577,8 @@ class Clip:
     # fiche d'un clip ne pouvait pas dire *de quoi* il était parti. Vide pour
     # les clips d'avant ce champ, et c'est la vérité — ils ne le savaient pas.
     depart: str = ""
+    # Une séquence native de rendu 3D garde son alpha ; ce n’est pas un MP4.
+    nature: str = "video"
 
     @property
     def montant_dit(self) -> str:
@@ -579,6 +590,8 @@ class Clip:
         qui prendrait l'une pour l'autre renoncerait à des clips qu'il pouvait
         s'offrir.
         """
+        if self.nature != "video":
+            return "source importée — aucun nouvel appel"
         if self.montant_relu:
             return "montant relu chez le fournisseur"
         return (
@@ -594,6 +607,7 @@ class Clip:
     def en_json(self) -> dict[str, Any]:
         return {
             "travail": self.travail,
+            **({"nature": self.nature} if self.nature != "video" else {}),
             "secondes": self.secondes,
             "proportions": self.proportions,
             "resolution": self.resolution,
@@ -618,6 +632,7 @@ class Clip:
         if not d:
             return None
         return Clip(
+            nature=d.get("nature", "video"),
             travail=d.get("travail", ""),
             secondes=int(d.get("secondes", SECONDES_DEFAUT)),
             proportions=d.get("proportions", PROPORTIONS_DEFAUT),

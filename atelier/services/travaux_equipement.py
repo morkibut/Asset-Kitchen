@@ -62,6 +62,7 @@ class ServiceTravauxEquipement(ServiceTravaux):
             if any(cle_cible(c) not in disponibles for c in selection):
                 raise TravailRefuse("Une cible n'appartient plus à cet emploi.")
             modele = self.a.catalogue.modele(d["modele"])
+            locale = self.a.generations.methode_locale(d["modele"])
             manque = self.a.catalogue.grise(modele)
             if manque:
                 raise TravailRefuse(manque)
@@ -99,14 +100,18 @@ class ServiceTravauxEquipement(ServiceTravaux):
                     projet=projet, provenance=acteur, forcer=True)["asset"]["identifiant"]
                 refs = [Reinjection(asset=feuille_asset, role=EDITION),
                         *[Reinjection(asset=r) for r in d["references"]],
+                        *[Reinjection(asset=r, role=STYLE) for r in objet.references if r not in d["references"] and r not in d["references_ecartees"]],
                         *[Reinjection(asset=r, origine=CARTE, role=STYLE) for r in objet.concept_arts
                           if r not in d["references_ecartees"]]]
                 texte = d["prompt"] or " · ".join(p for p in (objet.description or objet.nom, lien.description) if p)
                 if not d["repris"]:
                     texte += "\n\n" + consignes(pliage)
+                texte_corrige = d["textes_appels"].get(str(numero))
+                if texte_corrige is not None:
+                    texte = texte_corrige
                 generation, _, deja = self.a.generations.preparer(d["modele"], Demande(prompt=texte,
                     prompt_negatif=d["prompt_negatif"], proportions=d["proportions"], resolution=d["resolution"],
-                    options=d["options"], echelle=personnage.type, repris=d["repris"]),
+                    options=d["options"], echelle=personnage.type, repris=d["repris"] or texte_corrige is not None),
                     identifiant=f"{identifiant}-image-{numero}-{empreinte[:8]}", projet=projet,
                     provenance=acteur, references=refs, references_ecartees=d["references_ecartees"],
                     tri=Tri.depuis_json(d["tri"]))
@@ -121,8 +126,8 @@ class ServiceTravauxEquipement(ServiceTravaux):
                         "reference": generation.references[i].en_json() if i < len(generation.references) else None,
                         "url": self._url(projet, piece, emploi, identifiant, "references", numero, i)})
                 unite = self.a.catalogue.unite_de(d["modele"])
-                prix = self.a.generations.cout_attendu(d["modele"], len(fichiers))
-                reservation = d["reservation_par_appel_usd"] if d["reservation_par_appel_usd"] is not None else prix
+                prix = 0.0 if locale else self.a.generations.cout_attendu(d["modele"], len(fichiers))
+                reservation = 0.0 if locale else d["reservation_par_appel_usd"] if d["reservation_par_appel_usd"] is not None else prix
                 if unite in (None, USD) and reservation is None:
                     raise TravailRefuse("Le coût d'un appel n'est pas encore mesuré : indiquer une réservation par appel avant la relecture.")
                 reservation = float(reservation or 0) if unite in (None, USD) else 0.0
@@ -131,11 +136,12 @@ class ServiceTravauxEquipement(ServiceTravaux):
                     "cibles": indexes, "pliage": pliage.en_json(), "planche_asset": feuille_asset,
                     "snapshot": snapshot.resume(), "references": fichiers, "hors_plafond": [r.en_json() for r in generation.hors_plafond],
                     "soumis": False, "etat": "prepare", "reservation_usd": reservation,
-                    "consommation_annoncee": {"montant": prix, "unite": unite, "mesuree": prix is not None}})
+                    "consommation_annoncee": {"montant": prix, "unite": unite, "mesuree": prix is not None},
+                    "temps_local": self.a.generations.annonce_locale(d["modele"], snapshot) if locale else None})
             travail["annonce"] = {"images_ciblees": len(selection), "planches": len(travail["appels"]),
                 "appels": len(travail["appels"]), "reservation_usd": sum(a["reservation_usd"] for a in travail["appels"]),
-                "methodes": [{"nature": "image", "modele": modele.identifiant, "locale": False,
-                              "payante": unite in (None, USD)}],
+                "methodes": [{"nature": "image", "modele": modele.identifiant, "locale": locale,
+                              "payante": not locale and unite in (None, USD)}],
                 "limite": "Une planche coûte un appel, indépendamment de ses cases. L'estimation ne plafonne pas la facturation réelle.",
                 "origine": "Les images déjà rendues, y compris depuis une vidéo ou un modèle 3D, suivent le même pliage 2D. Une graine vidéo identique ne garantit pas le même mouvement."}
             self._garder(travail)
@@ -148,6 +154,14 @@ class ServiceTravauxEquipement(ServiceTravaux):
 
     def fichier(self, projet, piece, emploi, identifiant, genre, rang, reference=None):
         t = self._brut_emploi(projet, piece, emploi, identifiant)
+        if genre == "retours":
+            if not 0 <= rang < len(t["appels"]):
+                raise TravailRefuse("Cette planche n'appartient pas à l'envoi.")
+            generation = self.a.base.lire(t["appels"][rang]["generation"])
+            resultat = generation.emplacements[0].resultat if generation else None
+            if resultat is None:
+                raise TravailRefuse("La planche n'est pas encore arrivée.")
+            return png(rgba(self.a.fichiers.lire(resultat.fichier)))
         try:
             fiche = t["cibles"][rang] if genre == "bases" else t["appels"][rang]["references"][reference]
         except (IndexError, TypeError):
@@ -211,6 +225,11 @@ class ServiceTravauxEquipement(ServiceTravaux):
                     generation = self.a.base.lire(appel["generation"])
                     if generation is None:
                         raise TravailRefuse("La préparation de cette planche manque sur le disque.")
+                    if (generation.statut != Statut.REUSSIE and appel["soumis"] and reprise
+                            and self.a.generations.methode_locale(generation.modele)
+                            and self.a.generations.etape_locale(generation.identifiant)):
+                        await self.a.generations.suivre_locale(generation.identifiant)
+                        generation = self.a.base.lire(generation.identifiant)
                     if generation.statut != Statut.REUSSIE:
                         if appel["soumis"]:
                             # Aucune nouvelle dépense : même un retour d'erreur doit
@@ -247,6 +266,7 @@ class ServiceTravauxEquipement(ServiceTravaux):
                             self._garder(t)
                             continue
                     t["etape"] = "depliage"
+                    appel["retour_url"] = self._url(projet, t["piece"], t["emploi"], identifiant, "retours", appel["numero"])
                     try:
                         self._deplier(t, appel, generation)
                         appel["etat"] = "termine"

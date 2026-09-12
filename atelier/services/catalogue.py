@@ -217,7 +217,7 @@ class ServiceCatalogue:
 
     def grise(self, modele: Modele) -> str | None:
         """La même chose, pour un modèle seul — le chemin du refus de génération."""
-        return self.grises().get(modele.fournisseur)
+        return modele.indisponible or self.grises().get(modele.fournisseur)
 
     def unite_de(self, identifiant: str) -> str | None:
         """Dans quelle unité le fournisseur de ce modèle-là compte (F2).

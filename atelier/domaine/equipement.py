@@ -319,6 +319,10 @@ class Piece:
     # les mêmes octets, sans une clé de plus.
     emplois: tuple["Emploi", ...] | None = None
 
+    # AU16 : références de nomenclature communes aux emplois ; champ ajouté
+    # après les champs historiques pour préserver les constructeurs positionnels.
+    references: tuple[str, ...] = ()
+
     @property
     def agrandit(self) -> bool:
         return self.portee == AGRANDIT
@@ -350,6 +354,8 @@ class Piece:
             "portee": self.portee,
             "concept_arts": list(self.concept_arts),
         }
+        if self.references:
+            rendu["references"] = list(self.references)
         # **La clé n'apparaît que si elle a été déclarée** — voir le champ.
         if self.emplois is not None:
             rendu["emplois"] = [e.en_json() for e in self.emplois]
@@ -371,6 +377,7 @@ class Piece:
             concept_arts=tuple(
                 c for c in (d.get("concept_arts") or ()) if isinstance(c, str) and c
             ),
+            references=tuple(c for c in (d.get("references") or ()) if isinstance(c, str) and c),
             # `is None` et non `or` : une liste vide est une déclaration, pas une
             # absence, et le motif `lu or DEFAUT` effacerait la différence.
             emplois=None if emplois is None else emplois_depuis_json(emplois),

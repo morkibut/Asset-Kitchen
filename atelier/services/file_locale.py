@@ -50,7 +50,7 @@ class ServiceFileLocale:
         self._taches: dict[str, asyncio.Task] = {}
 
     def inscrire_executeur(self, nature: str, executer: Executeur) -> None:
-        if nature not in ("image", "video", "modele3d", "rig", "rendu3d"):
+        if nature not in ("image", "video", "modele3d", "rig", "rendu3d", "audio"):
             raise ValueError("nature de calcul local inconnue")
         self._executeurs[nature] = executer
 

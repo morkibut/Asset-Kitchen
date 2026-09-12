@@ -115,6 +115,27 @@ def test_les_manques_sont_triés_par_coût_et_totalisés(client, double):
     assert bilan["lot"]["cout_usd"] >= manque["cout_usd"]
 
 
+def test_les_manques_sont_groupes_par_sujet_nature_et_cibles(client):
+    """Le bilan ne répète plus une phrase aveugle par case. Même sans objectif
+    explicite, les directions et les deux calques restent lisibles, et une
+    absence de mesure ne se transforme jamais en gratuité."""
+    assert client.put("/api/universe", json={"vue": "vue-dessus-34"}).status_code == 200
+    personnage, plan = _personnage(client, "Le pèlerin", poses=2)
+
+    bilan = client.get("/api/dashboard").json()
+    lignes = [m for m in bilan["manques"] if m["sujet"] == personnage]
+
+    assert {m["nature"] for m in lignes} == {"image", "animation"}
+    assert len(lignes) == 2
+    images = next(m for m in lignes if m["nature"] == "image")
+    assert images["quantite"] == len(plan) * 4
+    assert len(images["cibles"]) == len(plan) * 4
+    assert "vers sud" in images["phrase"]
+    assert images["cout_usd"] == 0.0
+    assert images["cout_connu"] is False
+    assert bilan["lot"]["cout_connu"] is False
+
+
 def test_rien_ne_manque_annonce_un_lot_vide(client):
     """Aucun personnage, donc aucune famille peuplée et aucun manque : le lot
     est à zéro plutôt que d'inventer une ligne."""

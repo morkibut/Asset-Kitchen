@@ -33,6 +33,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+
 RACINE = Path(__file__).resolve().parents[1]
 SOURCES = RACINE / "interface" / "src"
 
@@ -60,7 +62,16 @@ def _fichiers_de_l_interface() -> list[Path]:
 #: et un `L'étape 1` en tête de bloc — que cet essai a tous laissés passer, alors
 #: qu'il en refusait huit autres dans les mêmes fichiers. La forme qui compte est
 #: le mot suivi du chiffre ; la casse et ce qui précède ne sont que du décor.
-NUMERO_D_ETAPE = re.compile(r"étape\s+\d+", re.IGNORECASE)
+NUMERO_D_ETAPE = re.compile(r"étape\s*\d+\b", re.IGNORECASE)
+
+
+@pytest.mark.parametrize("texte,interdit", [
+    ("l'étape 4", True), ("Étape 12 · Son allure", True),
+    ("étape3", True), ("étape3 bis", True),
+    ("Préparer une étape 3D", False), ("Étape 3D à préparer", False), ("étape3D", False),
+])
+def test_un_numero_d_etape_ne_se_confond_pas_avec_le_type_de_fabrication(texte, interdit):
+    assert bool(NUMERO_D_ETAPE.search(texte)) is interdit
 
 
 def test_aucun_numero_d_etape_n_est_ecrit_a_la_main():
@@ -112,7 +123,7 @@ def test_la_barre_d_attente_ne_cite_plus_un_endroit_qu_elle_a_quitte():
     """*« Une retouche dans la fiche porte la même barre »* — la retouche a
     quitté la fiche pour les tables le 31 août 2026, en `E4`.
     """
-    source = (SOURCES / "composants" / "chassis.tsx").read_text(encoding="utf-8")
+    source = (SOURCES / "composants" / "pieces.tsx").read_text(encoding="utf-8")
     assert "une retouche **dans les\n * tables**" in source
 
 

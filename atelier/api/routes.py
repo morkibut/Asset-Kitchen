@@ -1339,6 +1339,13 @@ class CorpsRecette(BaseModel):
         return Recette.depuis_json(self.model_dump())
 
 
+class CorpsApercuRecette(BaseModel):
+    recette: CorpsRecette
+    voyageuse: bool = False
+    nom: str | None = None
+    reinitialiser: bool = False
+
+
 class CorpsImport(BaseModel):
     """Un fichier local, nommé par son chemin.
 
@@ -1494,7 +1501,8 @@ async def taches_de_asset(
 
 @routeur.put("/assets/{identifiant}/recipe")
 async def poser_recette(
-    requete: Request, identifiant: str, corps: CorpsRecette
+    requete: Request, identifiant: str, corps: CorpsRecette,
+    reinitialiser: bool = Query(False),
 ) -> dict[str, Any]:
     """Le geste de la tranche. Le rendu est recalculé avant de répondre.
 
@@ -1503,8 +1511,17 @@ async def poser_recette(
     se compte en dizaines de millisecondes — le détourage déjà fait est gardé,
     seule la queue de la recette est refaite.
     """
-    asset = _atelier(requete).assets.poser_les_places(identifiant, corps.en_recette())
+    asset = _atelier(requete).assets.poser_les_places(identifiant, corps.en_recette(), reinitialiser=reinitialiser)
     return asset.en_json()
+
+
+@routeur.post("/assets/{identifiant}/recipe/preview")
+async def apercu_recette(requete: Request, identifiant: str, corps: CorpsApercuRecette) -> dict[str, Any]:
+    """Aperçu du brouillon : aucune recette, image ou événement enregistré."""
+    return _atelier(requete).assets.apercu_recette(
+        identifiant, corps.recette.en_recette(), voyageuse=corps.voyageuse,
+        nom=corps.nom, reinitialiser=corps.reinitialiser,
+    )
 
 
 @routeur.post("/assets/{identifiant}/reset")

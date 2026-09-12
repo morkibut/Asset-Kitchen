@@ -189,6 +189,7 @@ class ServiceMontage:
                 "hauteur": hauteur,
                 "secondes": round(len(images) / cadence, 2) if cadence else 0.0,
                 "commande_secondes": clip.secondes,
+                **({"nature": clip.nature} if clip.nature != "video" else {}),
                 "montant_dit": clip.montant_dit,
                 "consomme": generation.consomme,
                 "unite": generation.unite,
@@ -228,6 +229,8 @@ class ServiceMontage:
         retombe sur la recette que le projet applique à ce qui entre, ce qui est
         la bonne réponse par défaut et non un pis-aller.
         """
+        if generation.clip and generation.clip.nature != "video":
+            return Recette()
         if not generation.projet:
             return Recette()
         objet = self._base.lire_projet(generation.projet)

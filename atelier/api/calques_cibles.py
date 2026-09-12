@@ -31,6 +31,12 @@ class CorpsAdoption(CorpsRevision):
     cible: dict[str, Any]
 
 
+class CorpsReemploi(BaseModel):
+    cibles: list[dict[str, Any]]
+    copier_placement: bool = True
+    copier_masques: bool = False
+
+
 class CorpsApercu(BaseModel):
     vue: Literal["composition", "base", "source", "calque"] = "composition"
     placement: dict[str, Any] | None = None
@@ -83,6 +89,12 @@ async def valider(requete: Request, projet: str, piece: str, emploi: str, identi
 @routeur.get("/layers/{identifiant}/alignment")
 async def aligner(requete: Request, projet: str, piece: str, emploi: str, identifiant: str):
     return service(requete).aligner(projet, piece, emploi, identifiant)
+
+
+@routeur.post("/layers/{identifiant}/reuse", status_code=201)
+async def reutiliser(requete: Request, projet: str, piece: str, emploi: str, identifiant: str, corps: CorpsReemploi):
+    return service(requete).reutiliser(projet, piece, emploi, identifiant, corps.cibles,
+        copier_placement=corps.copier_placement, copier_masques=corps.copier_masques)
 
 
 @routeur.post("/layers/{identifiant}/adopt")

@@ -395,6 +395,11 @@ async def coller(
     }
 
 
+@routeur.post("/projects/{projet}/board/assets/{asset}")
+async def poser_asset(requete: Request, projet: str, asset: str) -> dict[str, Any]:
+    return _atelier(requete).univers.poser_asset(projet, asset)
+
+
 @routeur.post("/board/url", status_code=201)
 async def coller_adresse(requete: Request, corps: CorpsAdresse) -> dict[str, Any]:
     """Coller une adresse — la carte paraît **avant** que l'image n'arrive (US-42).

@@ -96,6 +96,11 @@ class ServiceCalquesCibles:
 
     def _base_cible(self, projet, piece, emploi, cible: CibleCalque, *, identifier=False):
         personnage, _, _ = self._emploi(projet, piece, emploi)
+        return self._base_personnage(projet, personnage.identifiant, cible, identifier=identifier)
+
+    def _base_personnage(self, projet, personnage, cible: CibleCalque, *, identifier=False):
+        """Le même corps sert un emploi et une tenue sans aucune pièce."""
+        personnage = self.production.personnage(projet, personnage)
         if cible.nature == "image":
             source = self.assets.lire(cible.resultat)
             if source is None or source.projet != projet or source.personnage != personnage.identifiant or not source.pose or source.piece:
@@ -296,6 +301,38 @@ class ServiceCalquesCibles:
             self.depot.ecrire(self.depot.dossier(projet, piece, emploi) / "choix.json", choix)
             self._annoncer(brut)
             return self.lire(projet, piece, emploi, identifiant)
+
+    def reutiliser(self, projet, piece, emploi, identifiant, cibles, *, copier_placement=True, copier_masques=False):
+        """Réemploi explicitement demandé : nouvelles variantes, aucune élection implicite."""
+        with self.verrou:
+            source = self._brut(projet, piece, emploi, identifiant)
+            if source["role"] != "calque":
+                raise ProductionRefusee("le réemploi demande un calque transparent, pas une image équipée")
+            if not isinstance(cibles, list) or not cibles:
+                raise ProductionRefusee("choisissez les cibles du réemploi")
+            try:
+                visees = [CibleCalque.depuis_json(c) for c in cibles]
+            except (ValueError, TypeError, AttributeError) as erreur:
+                raise ProductionRefusee("les cibles du réemploi doivent désigner des images ou frames précises") from erreur
+            if len({empreinte(c.en_json()) for c in visees}) != len(visees):
+                raise ProductionRefusee("une cible ne peut pas figurer deux fois dans le réemploi")
+            bases = [self._base_cible(projet, piece, emploi, c, identifier=True) for c in visees]
+            calque = (self._chemin(projet, piece, emploi, identifiant) / "calque.png").read_bytes()
+            nouvelles = []
+            for cible, (octets, base) in zip(visees, bases):
+                v = self.accueillir_source_preparee(projet, piece, emploi, cible.en_json(),
+                    source.get("calque_asset") or source["source"], octets, base, role="calque", source_png=calque)
+                brut = self._brut(projet, piece, emploi, v["identifiant"])
+                brut["reemploi"] = {"variante": identifiant, "revision": source["revision"],
+                                    "placement": copier_placement, "masques": copier_masques}
+                if copier_placement:
+                    brut["placement"] = deepcopy(source["placement"])
+                if copier_masques:
+                    brut["masques"] = deepcopy(source["masques"])
+                self.depot.ecrire(self._chemin(projet, piece, emploi, v["identifiant"]) / "variante.json", brut)
+                self._annoncer(brut)
+                nouvelles.append(self.lire(projet, piece, emploi, v["identifiant"]))
+            return nouvelles
 
     def adopter(self, projet, piece, emploi, identifiant, revision: int, cible: dict):
         with self.verrou:

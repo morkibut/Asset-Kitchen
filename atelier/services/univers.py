@@ -211,6 +211,23 @@ class ServiceUnivers:
 
     # ── Coller ───────────────────────────────────────────────────────────────
 
+    def poser_asset(self, projet: str, identifiant: str) -> dict[str, Any]:
+        """Une copie de ce rendu sur la toile ; le lien et l’original restent."""
+        self._exige(projet)
+        asset = self._assets.lire(identifiant)
+        if asset is None or asset.projet != projet:
+            raise CarteRefusee("Cette image n’appartient pas au jeu choisi.")
+        octets, _ = self._assets.octets(asset)
+        resultat = self.coller_image(projet, octets, nom=identifiant, source=f"asset:{identifiant}")
+        carte = self.carte(projet, (resultat["carte"] or resultat["doublon"])["identifiant"])
+        # Un doublon déjà disposé garde sa place. Une nouvelle carte se pose
+        # à côté des existantes, visible dès l’arrivée dans la toile.
+        if carte.position is None:
+            autres = [c for c in self.cartes(projet) if c.position is not None]
+            carte.position = (max((c.position[0] + (c.largeur_libre or 240) for c in autres), default=-30) + 30, 0)
+            self._sauver(carte)
+        return {"carte": carte.en_json(), "deja_presente": resultat["doublon"] is not None}
+
     def coller_image(
         self,
         projet: str,

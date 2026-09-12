@@ -10,7 +10,7 @@ def normaliser(brut):
     defauts = {"cibles": None, "resultats": None, "methode": "planches", "cases_par_planche": 4,
         "prompt": "", "prompt_negatif": "", "repris": False, "resolution": None,
         "proportions": "1:1", "options": {}, "references": [], "references_ecartees": [],
-        "tri": None, "reservation_par_appel_usd": None, "occupation": .75}
+        "tri": None, "reservation_par_appel_usd": None, "occupation": .75, "textes_appels": {}}
     if not isinstance(brut, dict) or set(brut) - set(defauts) - {"cle", "modele"}:
         raise TravailRefuse("Réglage de fabrication d'équipement inconnu.")
     d = {**defauts, **brut}
@@ -37,6 +37,8 @@ def normaliser(brut):
             raise TravailRefuse(f"{nom} doit être du texte.")
     if not isinstance(d["repris"], bool) or not isinstance(d["options"], dict):
         raise TravailRefuse("Le mode d'édition et les options sont invalides.")
+    if not isinstance(d["textes_appels"], dict) or any(not str(k).isdigit() or not isinstance(v, str) or not v.strip() for k, v in d["textes_appels"].items()):
+        raise TravailRefuse("Chaque correction de texte doit désigner un numéro d'appel et un texte non vide.")
     for nom in ("references", "references_ecartees", "resultats"):
         if d[nom] is None and nom == "resultats":
             continue

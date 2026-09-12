@@ -7,6 +7,12 @@ def installer_calques_cibles(serveur, atelier, refus):
         return {"barre": {"titre": titre, "phrase": "Ouvre les calques de l'emploi d'un équipement.",
             "verbe": "équiper", "paiement": "gratuit", "ou": "equipements", "route": "", "besoins": ["personnages"]}}
 
+    @serveur.tool(name="edit_equipment_definition", meta=meta("Définir l'apparence commune d'un équipement"), description="Edit a shared equipment definition: name, appearance description and permanent library image references. These references are shared by its character employments and shown in production review. Does not turn a reference into a wearable layer or submit any generation.")
+    @refus
+    async def edit_equipment_definition(project: str, piece: str, name: str | None = None,
+                                         description: str | None = None, references: list[str] | None = None) -> dict[str, Any]:
+        return atelier.equipement.regler_piece(project, piece, nom=name, description=description, references=references).en_json()
+
     @serveur.tool(name="list_equipment_targets", meta=meta("Voir les images à équiper"), description="List an equipment use's exact image and animation frame targets, variants and preserved historical pose layers. Free and offline.")
     @refus
     async def list_equipment_targets(project: str, piece: str, employment: str) -> dict[str, Any]:
@@ -43,3 +49,13 @@ def installer_calques_cibles(serveur, atelier, refus):
     @refus
     async def validate_equipment_layer(project: str, piece: str, employment: str, layer: str, revision: int) -> dict[str, Any]:
         return atelier.calques_cibles.valider(project, piece, employment, layer, revision)
+
+    @serveur.tool(name="reuse_equipment_layer", meta=meta("Réemployer un calque sur une sélection"), description=
+        "Explicitly reuse a transparent equipment layer on selected targets of the same character use. "
+        "Creates independent variants, optionally copies placement and masks; never retains them automatically. "
+        "Previous corrections and chosen layers remain unchanged. Each copied frame requires inspection.")
+    @refus
+    async def reuse_equipment_layer(project: str, piece: str, employment: str, layer: str, targets: list[dict[str, Any]],
+                                   copy_placement: bool = True, copy_masks: bool = False) -> list[dict[str, Any]]:
+        return atelier.calques_cibles.reutiliser(project, piece, employment, layer, targets,
+            copier_placement=copy_placement, copier_masques=copy_masks)

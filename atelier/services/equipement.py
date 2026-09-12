@@ -332,6 +332,7 @@ class ServiceEquipement:
         emplacement: str | None = None,
         portee: str | None = None,
         concept_arts: Sequence[str] | None = None,
+        references: Sequence[str] | None = None,
     ) -> Piece:
         """Tout ce qui se règle sur une pièce, **en un seul geste** — même raison
         qu'un personnage : les champs se remplissent ensemble à l'écran, et un
@@ -344,6 +345,12 @@ class ServiceEquipement:
         """
         objet = self._exiger(projet)
         courante = self._exiger_piece(objet, identifiant)
+
+        if references is not None:
+            for identifiant_image in references:
+                image = self._assets.lire(identifiant_image)
+                if image is None or image.supprime or image.projet != projet:
+                    raise ProductionRefusee("La référence de la pièce doit être une image disponible dans ce jeu.")
 
         propre = courante.nom if nom is None else nom.strip()
         if not propre:
@@ -385,6 +392,7 @@ class ServiceEquipement:
             # l'annonce. Un essai de `tests/test_b19.py` renomme une pièce qui
             # porte trois emplois et vérifie qu'ils sont toujours là.
             emplois=courante.emplois,
+            references=courante.references if references is None else tuple(dict.fromkeys(references)),
         )
         objet.pieces = tuple(
             reglee if p.identifiant == courante.identifiant else p for p in objet.pieces

@@ -60,10 +60,21 @@ from atelier.services.calques_animes import HabillageRefuse, ServiceCalquesAnime
 from atelier.services.montage import ServiceMontage
 from atelier.services.sortie import ServiceSortie, SortieRefusee
 from atelier.services.livraison import ServiceLivraison
+from atelier.services.livraison_images import ServiceLivraisonImages
+from atelier.services.tuiles import ServiceTuiles
+from atelier.services.sons import ServiceSons
 from atelier.services.travaux import ServiceTravaux
 from atelier.services.file_locale import ServiceFileLocale
+from atelier.services.profils_workflow import ServiceProfilsWorkflow
+from atelier.services.travaux_workflow import ServiceTravauxWorkflow
+from atelier.fournisseur.workflow import MoteurWorkflow, AnimateurWorkflow
+from atelier.fournisseur.workflow_image import FournisseurWorkflowImage
 from atelier.services.calques_cibles import ServiceCalquesCibles
 from atelier.services.travaux_equipement import ServiceTravauxEquipement
+from atelier.services.tenues import ServiceTenues
+from atelier.services.sources_3d import ServiceSources3D
+from atelier.services.travaux_3d import ServiceTravaux3D
+from atelier.services.travaux_audio import ServiceTravauxAudio
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import ChoixAttendu, CompteFaux, ServicePliage
@@ -244,6 +255,12 @@ class Atelier:
         self.fichiers = Fichiers(racine)
         self.fichiers.preparer()
         self.base = Base(self.fichiers.base)
+        self.diffusion = Diffusion()
+        self.file_locale = ServiceFileLocale(self.fichiers, self.diffusion)
+        self.profils_workflow = ServiceProfilsWorkflow(self.fichiers, self.diffusion,
+            lambda: MoteurWorkflow(adresse_comfy(BASE_PAR_DEFAUT)))
+        self.fournisseur_workflow_image = FournisseurWorkflowImage(self.profils_workflow, self.file_locale,
+            self.profils_workflow.fabrique_moteur)
         # **Deux entrées pour une seule liste, et la seconde est celle de F1.**
         # `fabrique_fournisseur` au singulier monte un atelier sur un fournisseur
         # unique : c'est ce que font tous les essais du dépôt, et ça décrit
@@ -252,15 +269,13 @@ class Atelier:
         # besoin pour jouer deux fournisseurs à la fois.
         self.fournisseurs = Fournisseurs(
             fabriques_fournisseurs
-            or ([fabrique_fournisseur] if fabrique_fournisseur else FOURNISSEURS)
+            or ([fabrique_fournisseur] if fabrique_fournisseur else [*FOURNISSEURS, lambda: self.fournisseur_workflow_image])
         )
         self.fabrique_fournisseur = fabrique_fournisseur
         # **Une seule diffusion pour tout l'atelier.** Un abonné voit passer
         # l'avancement d'une génération, le retour du catalogue et le rangement
         # de la bibliothèque sur le même flux : c'est ce qui permet à
         # l'interface de n'ouvrir qu'une liaison.
-        self.diffusion = Diffusion()
-        self.file_locale = ServiceFileLocale(self.fichiers, self.diffusion)
         self.catalogue = ServiceCatalogue(
             self.fournisseurs, self.fichiers, self.diffusion
         )
@@ -441,7 +456,8 @@ class Atelier:
             self.base,
             self.fichiers,
             fabriques_animateurs
-            or ([fabrique_animateur] if fabrique_animateur else ANIMATEURS),
+            or ([fabrique_animateur] if fabrique_animateur else [*ANIMATEURS,
+                lambda: AnimateurWorkflow(self.profils_workflow, self.fichiers, adresse_comfy(BASE_PAR_DEFAUT))]),
             self.diffusion,
             file_locale=self.file_locale,
         )
@@ -531,12 +547,21 @@ class Atelier:
             self.base, self.fichiers, self.export, self.production, self.diffusion,
         )
         self.travaux = ServiceTravaux(self)
+        self.livraison_images = ServiceLivraisonImages(self)
+        self.tuiles = ServiceTuiles(self)
+        self.sons = ServiceSons(self)
         self.animation.avant_soumission_locale = self.travaux.autoriser_generation_locale
+        self.fournisseur_workflow_image.avant_soumission = lambda identifiant: self.travaux.autoriser_generation_image_locale(self.base.lire(identifiant))
+        self.travaux_workflow = ServiceTravauxWorkflow(self)
         self.calques_cibles = ServiceCalquesCibles(
             self.base, self.fichiers, self.production, self.equipement,
             self.assets, self.montage, self.bibliotheque, self.diffusion,
         )
         self.travaux_equipement = ServiceTravauxEquipement(self)
+        self.tenues = ServiceTenues(self)
+        self.sources_3d = ServiceSources3D(self)
+        self.travaux_3d = ServiceTravaux3D(self)
+        self.travaux_audio = ServiceTravauxAudio(self)
         self.sortie = ServiceSortie(
             self.base,
             self.fichiers,

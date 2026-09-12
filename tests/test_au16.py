@@ -22,6 +22,30 @@ def demande(corps, **options):
 
 
 @pytest.mark.asyncio
+async def test_reference_commune_piece_se_relit_et_part_exactement_dans_envoi(decor, atelier, client, double, tmp_path):
+    from atelier.domaine.equipement import Piece
+    _, chemin, _, corps, source = decor
+    ancien = Piece("piece", "Pièce").en_json()
+    assert "references" not in ancien
+    assert Piece.depuis_json(ancien).en_json() == ancien
+    r = client.put(f"/api/characters/pieces/{chemin[1]}", json={"projet": chemin[0], "references": [source], "description": "Acier et plume bleue"})
+    assert r.status_code == 200, r.text
+    assert r.json()["piece"]["references"] == [source]
+    atelier.equipement.regler_piece(chemin[0], chemin[1], nom="Épée partagée")
+    autre = Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double, fabrique_animateur=lambda: AnimateurMuet())
+    with TestClient(creer_application(autre)):
+        relue = autre.calques_cibles._emploi(*chemin)[1]
+        assert relue.references == (source,)
+        t = await autre.travaux_equipement.preparer(*chemin, demande(corps))
+        assert any(r["reference"]["asset"] == source for r in t["appels"][0]["references"])
+        assert "Acier et plume bleue" in t["appels"][0]["snapshot"]["prompt"]
+        avant = t["appels"][0]["references"]
+        autre.equipement.regler_piece(chemin[0], chemin[1], references=[])
+        assert (await autre.travaux_equipement.preparer(*chemin, demande(corps)))["appels"][0]["references"] == avant
+    assert double.appels == 0
+
+
+@pytest.mark.asyncio
 async def test_envoi_reouvert_fige_textes_references_bases_et_parametres(decor, atelier, double, tmp_path):
     _, chemin, _, corps, source = decor
     svc = ServiceTravauxEquipement(atelier)
@@ -147,6 +171,82 @@ async def test_acceptation_incertaine_ne_resoumet_jamais_la_planche(decor, ateli
     with pytest.raises(TravailRefuse, match="inconnue"):
         await atelier.travaux.demarrer(chemin[0], t["identifiant"], reprise=True)
     assert double.appels == 0
+
+
+@pytest.mark.asyncio
+async def test_annulation_apres_interruption_garde_la_reservation_incertaine(decor, atelier):
+    _, chemin, _, corps, _ = decor
+    svc = ServiceTravauxEquipement(atelier)
+    t = await svc.preparer(*chemin, demande(corps), "agent")
+    brut = svc._brut(chemin[0], t["identifiant"])
+    brut.update(etat="en_cours", reserve={"usd": .12, "appels": 1})
+    brut["appels"][0]["soumis"] = True
+    svc._garder(brut)
+    relu = svc.annuler(*chemin, t["identifiant"], "agent")
+    assert relu["etat"] == "externe_inconnu"
+    assert svc._brut(chemin[0], t["identifiant"])["reserve"] == {"usd": .12, "appels": 1}
+
+
+@pytest.mark.asyncio
+async def test_arret_pendant_premier_appel_conserve_son_retour_et_ne_soumet_pas_les_suivants(decor, atelier, double):
+    _, chemin, p, _, _ = decor
+    _clip_ecrit(atelier)
+    _poser_une_bande(atelier, personnage=p, pose="repos")
+    svc = ServiceTravauxEquipement(atelier)
+    cibles = [c["cible"] for c in atelier.calques_cibles.cibles(*chemin)["cibles"] if c["cible"]["nature"] == "frame"]
+    t = await svc.preparer(*chemin, demande("", cibles=cibles, methode="images"))
+    def repondre(d):
+        svc.annuler(*chemin, t["identifiant"])
+        return d.references[0]
+    double.repondre = repondre
+    await atelier.travaux.demarrer(chemin[0], t["identifiant"])
+    await atelier.travaux.attendre_tout()
+    relu = svc.lire(chemin[0], t["identifiant"])
+    assert relu["etat"] == "annule"
+    assert double.appels == 1
+    assert len(relu["variantes"]) == 1
+    assert relu["consommations"][0]["cout_usd"] > 0
+    assert svc.fichier(*chemin, t["identifiant"], "retours", 0).startswith(b"\x89PNG")
+
+
+@pytest.mark.asyncio
+async def test_texte_final_corrige_ne_recoit_pas_une_seconde_composition(decor, atelier, double):
+    _, chemin, _, corps, _ = decor
+    svc = ServiceTravauxEquipement(atelier)
+    t = await svc.preparer(*chemin, demande(corps, textes_appels={"0": "Un casque modifié, garder les poses"}))
+    assert t["appels"][0]["snapshot"]["prompt"] == "Un casque modifié, garder les poses"
+    assert double.appels == 0
+
+
+def test_routes_et_couverture_sont_branchees_sur_le_meme_emploi(decor, client):
+    _, chemin, _, corps, _ = decor
+    prefixe = "/api/projects/{}/equipment/{}/uses/{}".format(*chemin)
+    assert client.get(prefixe + "/coverage").status_code == 200
+    t = client.post(prefixe + "/jobs/preview", json=demande(corps)).json()
+    assert t["nature"] == "equipement"
+    assert client.get(t["cibles"][0]["url"]).headers["content-type"] == "image/png"
+    assert client.get(t["appels"][0]["references"][0]["url"]).status_code == 200
+    assert client.post(prefixe + f"/jobs/{t['identifiant']}/cancel").json()["etat"] == "annule"
+
+
+def test_reemploi_sur_selection_copie_les_corrections_sans_lier_les_frames_ni_retenir(decor, atelier):
+    calques, chemin, p, corps, source = decor
+    equipee = calques.creer(*chemin, {"nature": "image", "resultat": corps}, source, "source-equipee")
+    v = calques.extraire(*chemin, equipee["identifiant"])
+    masque = {"corps": [{"garde": False, "rayon": 2, "points": [[24, 10]]}]}
+    v = calques.regler(*chemin, v["identifiant"], v["revision"], placement={"dx": 7, "echelle": 1.2}, masques=masque)
+    calques.valider(*chemin, v["identifiant"], v["revision"])
+    _clip_ecrit(atelier)
+    _poser_une_bande(atelier, personnage=p, pose="repos")
+    cibles = [c["cible"] for c in calques.cibles(*chemin)["cibles"] if c["cible"]["nature"] == "frame"]
+    copies = calques.reutiliser(*chemin, v["identifiant"], cibles[:2], copier_placement=True, copier_masques=True)
+    assert len(copies) == 2
+    assert all(c["etat"] == "a-verifier" and not c["retenue"] for c in copies)
+    assert all(c["masques"]["corps"] == v["masques"]["corps"] for c in copies)
+    calques.regler(*chemin, copies[0]["identifiant"], 1, placement={"dx": -3}, masques={"corps": []})
+    assert calques.lire(*chemin, copies[1]["identifiant"])["placement"]["dx"] == 7
+    assert calques.lire(*chemin, copies[1]["identifiant"])["masques"]["corps"]
+    assert calques.lire(*chemin, v["identifiant"])["utilisable"]
 
 
 def objectif(atelier, projet, personnage, sorties):

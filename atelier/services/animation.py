@@ -849,6 +849,8 @@ def _resolus(modele: ModeleVideo, demande: DemandeClip) -> dict[str, Any]:
 
 def _modele_en_json(modele: ModeleVideo) -> dict[str, Any]:
     return {
+        **({"indisponible": modele.indisponible} if modele.indisponible else {}),
+        **({"options": {n: {"nom": o.nom, "genre": o.genre, "valeurs": list(o.valeurs), "minimum": o.minimum, "maximum": o.maximum} for n, o in modele.options.items()}} if modele.options else {}),
         "identifiant": modele.identifiant,
         "nom": modele.nom,
         "fournisseur": modele.fournisseur,

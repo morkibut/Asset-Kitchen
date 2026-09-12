@@ -21,11 +21,20 @@ from atelier.api.gestes import routeur as routeur_gestes
 from atelier.api.production import routeur as routeur_production
 from atelier.api.sortie import routeur as routeur_sortie
 from atelier.api.livraison import routeur as routeur_livraison
+from atelier.api.livraison_images import routeur as routeur_livraison_images
+from atelier.api.tuiles import routeur as routeur_tuiles
+from atelier.api.sons import routeur as routeur_sons
+from atelier.domaine.tuiles import TuilesRefusees
 from atelier.api.travaux import routeur as routeur_travaux
 from atelier.api.file_locale import routeur as routeur_file_locale
+from atelier.api.workflows import routeur as routeur_workflows
+from atelier.domaine.workflow import WorkflowRefuse
 from atelier.services.file_locale import FileLocaleRefusee
 from atelier.api.calques_cibles import routeur as routeur_calques_cibles
 from atelier.api.travaux_equipement import routeur as routeur_travaux_equipement
+from atelier.api.tenues import routeur as routeur_tenues
+from atelier.api.sources_3d import routeur as routeur_sources_3d
+from atelier.fournisseur.asset3d import Source3DRefusee
 from atelier.api.routes import routeur
 from atelier.api.univers import routeur as routeur_univers
 from mcp.server.transport_security import TransportSecuritySettings
@@ -82,6 +91,8 @@ from atelier.services.generation import ImportRefuse
 # Le code HTTP de chaque refus du produit. La raison, elle, est toujours la
 # même phrase en français — c'est elle que l'interface affiche.
 CODES = {
+    WorkflowRefuse: 409,
+    TuilesRefusees: 409,
     SansCle: 409,
     DemandeRefusee: 409,
     ModeleInconnu: 404,
@@ -118,6 +129,7 @@ CODES = {
     SortieRefusee: 409,
     LivraisonRefusee: 409,
     TravailRefuse: 409,
+    Source3DRefusee: 409,
     FileLocaleRefusee: 409,
     PersonnageInconnu: 404,
     PoseInconnue: 404,
@@ -224,10 +236,16 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # écrit, et qu'est-ce qui a changé depuis la dernière fois ?*
     application.include_router(routeur_sortie, prefix="/api")
     application.include_router(routeur_livraison, prefix="/api")
+    application.include_router(routeur_livraison_images, prefix="/api")
+    application.include_router(routeur_tuiles, prefix="/api")
+    application.include_router(routeur_sons, prefix="/api")
     application.include_router(routeur_travaux, prefix="/api")
     application.include_router(routeur_file_locale, prefix="/api")
+    application.include_router(routeur_workflows, prefix="/api")
     application.include_router(routeur_calques_cibles, prefix="/api")
     application.include_router(routeur_travaux_equipement, prefix="/api")
+    application.include_router(routeur_tenues, prefix="/api")
+    application.include_router(routeur_sources_3d, prefix="/api")
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

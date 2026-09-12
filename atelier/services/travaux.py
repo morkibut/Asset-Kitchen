@@ -68,7 +68,7 @@ class ServiceTravaux:
         self.a = atelier
         self.racine = atelier.fichiers.racine / "travaux"
         self._taches: dict[str, asyncio.Task] = {}
-        self._executants = {}
+        self._executants = {"video-libre": self._executer}
 
     def inscrire_executant(self, nature: str, executer) -> None:
         """Un suivi et un budget communs, même quand la fabrication n'est pas une vidéo."""
@@ -122,7 +122,7 @@ class ServiceTravaux:
         return travail
 
     def _consommations(self, travail: dict[str, Any]) -> list[dict[str, Any]]:
-        retour = []
+        retour = list(travail.get("consommations_locales", []))
         identifiants = [travail.get("generation_image"), travail.get("clip"),
                        *travail.get("generations_images", [])]
         for identifiant in dict.fromkeys(i for i in identifiants if i):
@@ -135,7 +135,7 @@ class ServiceTravaux:
 
     def lire(self, projet: str, identifiant: str) -> dict[str, Any]:
         travail = self._brut(projet, identifiant)
-        retour = {k: v for k, v in travail.items() if k not in ("snapshot_image", "reserve", "demarrage_recu")}
+        retour = {k: v for k, v in travail.items() if k not in ("snapshot_image", "envoi_3d", "reserve", "demarrage_recu")}
         retour["consommations"] = self._consommations(travail)
         retour["envoi_image"] = travail.get("snapshot_image")
         actif = identifiant in self._taches and not self._taches[identifiant].done()
@@ -146,14 +146,18 @@ class ServiceTravaux:
             "demarrer" if retour["etat"] == "prepare" else
             "reprendre" if retour["etat"] in ("a_reprendre", "a_verifier") else
             "verifier_chez_le_fournisseur" if retour["etat"] == "externe_inconnu" else "attendre")
+        if retour["etat"] == "termine" and retour.get("nature") == "video-libre":
+            retour["prochaine_action"] = "monter_et_classer"
+        if retour.get("nature") == "audio" and retour.get("son"):
+            retour["prochaine_action"] = "ecouter_et_retoucher"
         return retour
 
     def lister(self, projet: str) -> list[dict[str, Any]]:
         return sorted([self.lire(projet, p.parent.name) for p in self._projet(projet).glob("*/travail.json")],
                       key=lambda t: t["cree_le"], reverse=True)
 
-    async def preparer(self, projet: str, brute: dict[str, Any], acteur: str = AUTEUR) -> dict[str, Any]:
-        demande = demande_normalisee(brute)
+    async def preparer(self, projet: str, brute: dict[str, Any], acteur: str = AUTEUR, *, source_libre: bool = False) -> dict[str, Any]:
+        demande = demande_normalisee(brute, source_libre=source_libre)
         if acteur not in (AUTEUR, AGENT):
             raise TravailRefuse("L'origine de la demande doit être auteur ou agent.")
         identifiant = _hash((projet + "\0" + demande["cle"]).encode())[:32]
@@ -171,17 +175,18 @@ class ServiceTravaux:
                 if existant["empreinte"] != empreinte:
                     raise TravailRefuse("Cette clé a déjà une autre demande.")
                 return self.lire(projet, identifiant)
-            personnage = self.a.production.personnage(projet, demande["personnage"])
-            objectif = self.a.production.objectif_de(projet, personnage.identifiant)["objectif"]
-            if not any(s["nature"] == "animation" and s["pose"] == demande["pose"] and
+            personnage = None if source_libre else self.a.production.personnage(projet, demande["personnage"])
+            objectif = None if source_libre else self.a.production.objectif_de(projet, personnage.identifiant)["objectif"]
+            if objectif is not None and not any(s["nature"] == "animation" and s["pose"] == demande["pose"] and
                        s["direction"] == demande["direction"] and s["quantite"] for s in objectif["sorties"]):
                 raise TravailRefuse("Cette animation n'est pas demandée dans l'objectif du personnage.")
             # La recette est conservée maintenant, comme les références : une
             # palette changée pendant l'attente ne repeint pas le travail relu.
             recette = self.a.montage.recette_du_jeu(Generation(identifiant="preparation", modele="",
-                demande={}, parametres_resolus={}, projet=projet, personnage=personnage.identifiant))
-            recette = replace(recette, grille=replace(recette.grille, cible=objectif["largeur"]) if recette.grille else Grille(cible=objectif["largeur"]))
-            if objectif["largeur"] != objectif["hauteur"]:
+                demande={}, parametres_resolus={}, projet=projet, personnage=personnage.identifiant if personnage else None))
+            if objectif:
+                recette = replace(recette, grille=replace(recette.grille, cible=objectif["largeur"]) if recette.grille else Grille(cible=objectif["largeur"]))
+            if objectif and objectif["largeur"] != objectif["hauteur"]:
                 raise TravailRefuse("Le montage actuel produit des cases carrées. Régler un objectif carré avant la fabrication.")
             travail = {"identifiant": identifiant, "cle": demande["cle"], "projet": projet,
                        "acteur": acteur, "empreinte": empreinte, "etat": "prepare", "etape": "reference",
@@ -189,7 +194,9 @@ class ServiceTravaux:
                        "generation_image": None, "clip": None, "bandes": [], "livraison": None,
                        "references": [], "recette": recette.en_json(), "objectif": objectif,
                        "appels_engages": 0, "reserve": None, "demarrage_recu": False}
-            if not travail["reference_asset"]:
+            if source_libre:
+                travail["nature"] = "video-libre"
+            if personnage and not travail["reference_asset"]:
                 choix = self.a.production.image_de_depart(projet, personnage.identifiant, demande["pose"], demande["direction"])
                 travail["reference_asset"] = (choix.get("asset") or {}).get("identifiant")
                 travail["reference_reutilisee"] = bool(travail["reference_asset"])
@@ -198,14 +205,16 @@ class ServiceTravaux:
                 self._reference(travail, travail["reference_asset"])
             else:
                 if not demande["modele_image"]:
-                    raise TravailRefuse("Ce personnage n'a pas d'image de référence. Choisir un modèle d'image ou importer sa référence.")
-                texte = demande["prompt_image"].strip() or personnage.description or personnage.nom
+                    raise TravailRefuse("Choisir une image de départ ou un modèle d'image pour fabriquer la référence.")
+                texte = demande["prompt_image"].strip() or (personnage.description or personnage.nom if personnage else "")
+                if not texte:
+                    raise TravailRefuse("Décrire l'image de départ à fabriquer avant de demander la vidéo.")
                 generation, _, _ = self.a.generations.preparer(demande["modele_image"], Demande(
                     prompt=texte, prompt_negatif=demande["prompt_negatif_image"],
                     proportions=demande["proportions_image"], resolution=demande["resolution_image"],
-                    options=demande["options_image"], echelle=personnage.type, repris=demande["repris_image"]),
+                    options=demande["options_image"], echelle=personnage.type if personnage else "", repris=demande["repris_image"]),
                     identifiant=identifiant + "-reference-" + empreinte[:8], projet=projet,
-                    personnage=personnage.identifiant, pose=demande["pose"], direction=demande["direction"], provenance=acteur,
+                    personnage=personnage.identifiant if personnage else None, pose=demande["pose"], direction=demande["direction"], provenance=acteur,
                     references_ecartees=demande["references_image_ecartees"],
                     references=[Reinjection(asset=r) for r in demande["references_image"]])
                 snapshot = self.a.generations.demande_preparee(generation)
@@ -219,7 +228,7 @@ class ServiceTravaux:
                         "asset": generation.references[rang].asset if rang < len(generation.references) else None,
                         "url": f"/api/projects/{projet}/production-jobs/{identifiant}/references/{rang}"})
                 unite = self.a.catalogue.unite_de(demande["modele_image"])
-                if unite == USD or unite is None:
+                if not self.a.generations.methode_locale(demande["modele_image"]) and (unite == USD or unite is None):
                     mesure = self.a.generations.cout_attendu(demande["modele_image"], len(snapshot.references))
                     prix_image = demande["plafond_image_usd"] if demande["plafond_image_usd"] is not None else mesure
                     if prix_image is None:
@@ -232,6 +241,7 @@ class ServiceTravaux:
             prix_video = self.a.animation.annonce(modele, video)
             attente = self.a.animation.attente(modele, video)
             travail["annonce"] = {"image_usd": prix_image, "video": prix_video.en_json(),
+                "image_locale": bool(travail["generation_image"] and self.a.generations.methode_locale(demande["modele_image"])),
                 "temps_local": attente.en_json() if attente else None,
                 "reservation_usd": prix_image + (prix_video.montant or 0),
                 "appels": 1 + int(bool(travail["generation_image"])),
@@ -264,6 +274,8 @@ class ServiceTravaux:
             return
         cadre = self.cadre(travail["projet"])
         d, annonce = travail["demande"], travail["annonce"]
+        if annonce.get("image_locale") and not cadre["autoriser_local"]:
+            raise TravailRefuse("Le cadre de l'agent n'autorise pas la référence locale.")
         methodes = annonce.get("methodes")
         if methodes is not None:
             for methode in methodes:
@@ -271,7 +283,7 @@ class ServiceTravaux:
                     raise TravailRefuse("Le cadre de l'agent n'autorise pas cette fabrication locale.")
                 if methode["payante"] and not cadre["autoriser_payant"]:
                     raise TravailRefuse("Le cadre de l'agent n'autorise pas cette méthode payante.")
-                permises = cadre["modeles_" + methode["nature"]]
+                permises = cadre.get("modeles_" + methode["nature"], [])
                 if permises and methode["modele"] not in permises:
                     raise TravailRefuse(f"« {methode['modele']} » n'est pas une méthode autorisée à l'agent.")
         elif annonce["video_locale"] and not cadre["autoriser_local"]:
@@ -375,6 +387,18 @@ class ServiceTravaux:
                     generation = self.a.base.lire(travail["generation_image"])
                     if not generation:
                         raise TravailRefuse("La préparation de référence manque sur le disque.")
+                    locale_image = self.a.generations.etape_locale(generation.identifiant)
+                    if locale_image and generation.statut != Statut.REUSSIE:
+                        travail["etape_locale"] = locale_image["identifiant"]
+                        self._garder(travail)
+                        if locale_image["etat"] == "externe_inconnu":
+                            travail.update(etat="externe_inconnu", raison=locale_image["raison"])
+                            self._garder(travail)
+                            return
+                        await self.a.generations.suivre_locale(generation.identifiant)
+                        generation = self.a.base.lire(generation.identifiant)
+                        if self._reference_locale_inachevee(travail, generation):
+                            return
                     if travail["etape"] == "reference_soumise" and generation.statut != Statut.REUSSIE:
                         travail["etat"] = "externe_inconnu"
                         travail["raison"] = "La référence a peut-être été facturée, mais aucun résultat certain n'est conservé."
@@ -399,6 +423,8 @@ class ServiceTravaux:
                             options=snapshot["options"], references=tuple(refs), repris=True))
                         generation = self.a.base.lire(generation.identifiant)
                     if generation.statut != Statut.REUSSIE:
+                        if self._reference_locale_inachevee(travail, generation):
+                            return
                         if any(e.acceptation_inconnue for e in generation.emplacements):
                             travail["etat"] = "externe_inconnu"
                             travail["raison"] = "La réponse de référence a été perdue ; son acceptation reste inconnue. Vérifier chez le fournisseur avant toute autre demande."
@@ -462,6 +488,10 @@ class ServiceTravaux:
                     travail["raison"] = clip.clip.extraction_refus or clip.emplacements[0].raison or "Le clip reste à récupérer."
                     self._garder(travail)
                     return
+                if travail.get("nature") == "video-libre":
+                    travail.update(etat="termine", etape="clip", reserve=None, raison="Le clip est dans la galerie. Le montage permet de le classer et d'en tirer une animation.")
+                    self._garder(travail)
+                    return
                 travail["etape"] = "montage"
                 self._garder(travail)
                 n = min(d["nombre_images"], clip.clip.images)
@@ -498,6 +528,37 @@ class ServiceTravaux:
             travail["raison"] = str(erreur)
             # Une erreur peut avoir consommé ; les appels incertains gardent
             # leurs réservations jusqu'à une résolution explicite.
+            self._garder(travail)
+
+    def _reference_locale_inachevee(self, travail: dict[str, Any], generation: Generation) -> bool:
+        if generation.statut == Statut.REUSSIE:
+            return False
+        locale = self.a.generations.etape_locale(generation.identifiant)
+        if not locale:
+            return False
+        travail["etape_locale"] = locale["identifiant"]
+        travail["etat"] = "externe_inconnu" if locale["etat"] == "externe_inconnu" else "annule" if locale["etat"] == "annule" else "a_verifier"
+        travail["raison"] = locale.get("raison") or "L’image locale reste à récupérer ou à vérifier. Le calcul conservé ne sera pas recommandé."
+        if locale["etat"] == "annule":
+            travail["reserve"] = None
+            travail["appels_engages"] = max(0, travail["appels_engages"] - 1)
+        self._garder(travail)
+        return True
+
+    def autoriser_generation_image_locale(self, generation: Generation) -> None:
+        if generation.provenance != AGENT:
+            return
+        if not generation.projet:
+            raise TravailRefuse("Une génération locale de l'agent doit appartenir à un travail et à un jeu.")
+        with _verrou(self._projet(generation.projet) / ".budget"):
+            candidats = [t for t in self.lister(generation.projet)
+                if generation.identifiant in [t.get("generation_image"), *t.get("generations_images", [])]]
+            if len(candidats) != 1:
+                raise TravailRefuse("Cette image locale de l'agent n'appartient pas à une demande durable autorisée.")
+            travail = self._brut(generation.projet, candidats[0]["identifiant"])
+            if travail["etat"] == "annule" or (self._dossier(generation.projet, travail["identifiant"]) / "arret.json").exists():
+                raise TravailRefuse("Cette demande a été annulée avant le calcul local.")
+            self._autoriser(travail)
             self._garder(travail)
 
     def reference(self, projet: str, identifiant: str, rang: int | None = None) -> bytes:

@@ -888,6 +888,43 @@ class ServiceGenerations:
         """Snapshot d'envoi pour un travail durable : texte et octets résolus ensemble."""
         return self._demande_de(generation)
 
+    def methode_locale(self, modele: str) -> bool:
+        return self._catalogue.modele(modele).locale
+
+    def etape_locale(self, identifiant: str, rang: int = 0):
+        generation = self._base.lire(identifiant)
+        if not generation:
+            return None
+        fournisseur = self._fournisseurs.de((generation.modele or "").split(":", 1)[0])
+        geste = getattr(fournisseur, "etape", None)
+        return geste(identifiant, rang) if geste else None
+
+    def annonce_locale(self, modele: str, demande: Demande | None = None):
+        if not self.methode_locale(modele):
+            return None
+        fournisseur = self._fournisseurs.de(self._catalogue.modele(modele).fournisseur)
+        mesures = [m for m in fournisseur.file_locale.mesures() if m["modele"] == modele]
+        return {"cout_usd": 0.0, "nature": "local", "mesures": mesures,
+            "raison": "Durée non encore mesurée pour ce workflow." if not mesures else "Durées des calculs déjà terminés, sans multiplier le chargement initial."}
+
+    async def suivre_locale(self, identifiant: str) -> Generation:
+        generation = self._base.lire(identifiant)
+        if generation is None:
+            raise GenerationInconnue(identifiant)
+        modele = self._catalogue.modele(generation.modele)
+        fournisseur = self._fournisseurs.de(modele.fournisseur)
+        suivre = getattr(fournisseur, "recuperer_suivi", None)
+        if suivre is None:
+            raise DemandeRefusee("Cette génération n'a pas de suivi local récupérable.")
+        for emplacement in generation.emplacements:
+            if emplacement.statut == Statut.REUSSIE:
+                continue
+            # Le fournisseur refuse si aucune étape durable n'existe : ce
+            # geste ne reconstruit jamais un envoi à partir des réglages actuels.
+            image = await suivre(identifiant, emplacement.rang)
+            await self._executer_emplacement(generation, emplacement, modele, Demande(prompt="reprise"), fournisseur, image_recue=image)
+        return self._base.lire(identifiant)
+
     async def executer_preparee(self, identifiant: str, demande: Demande) -> Generation:
         """Exécute la préparation gelée par un travail, sans recomposer l'univers.
 
@@ -1073,6 +1110,7 @@ class ServiceGenerations:
         modele: Modele,
         demande: Demande,
         fournisseur: PortFournisseur,
+        image_recue=None,
     ) -> None:
         emplacement.statut = Statut.EN_COURS
         emplacement.acceptation_inconnue = False
@@ -1083,7 +1121,12 @@ class ServiceGenerations:
         depart = time.monotonic()
         image = None
         try:
-            image = await fournisseur.generer(modele, demande)
+            if image_recue is not None:
+                image = image_recue
+            elif hasattr(fournisseur, "generer_suivi"):
+                image = await fournisseur.generer_suivi(modele, demande, generation, emplacement.rang)
+            else:
+                image = await fournisseur.generer(modele, demande)
             # Une image payée mais illisible reste une dépense, comme un clip.
             # Le budget des travaux durables doit la voir avant le décodage.
             emplacement.consomme = image.consomme
