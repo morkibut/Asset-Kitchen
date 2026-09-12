@@ -135,6 +135,30 @@ le travail ; ils doivent être redécoupés avant codage, surtout les deux derni
 
 ## Règles d'exécution
 
+### Modèles exécutables dans Codex — accord de l'auteur du 12 septembre
+
+L'auteur demande désormais de déléguer les morceaux simples aux modèles GPT plus légers.
+Les étiquettes historiques ci-dessus sont conservées ; cette correspondance remplace leurs
+noms de modèles pour les prochaines missions. GPT-5.3 Codex Spark n'est pas proposé par
+l'outil de sous-agents de cette session : aucun lancement Spark n'est donc annoncé.
+
+| Morceau à prendre | Classement conservé ou affiné | Modèle exécuté · réflexion |
+|---|---|---|
+| Reports mécaniques, libellés et raccords de composants aux routes déjà vérifiées | VERY-EASY / EASY | GPT-5.6 Luna · faible ou moyenne |
+| Parcours d'écran avec contexte à conserver et essais d'interaction | MEDIUM | GPT-5.6 Terra · élevée |
+| Contrat de données, dépense, reprise incertaine, écriture dans le jeu | HARD et points durs extraits | Modèle principal · élevée |
+| Revue finale entre services, interface réelle et maquette approuvée | Relecture transversale | Modèle principal |
+
+Mesure avant les raccords suivants : création d'asset et son possèdent déjà composants,
+routes et services ; il reste trois portes d'interface à relier. La préparation d'image
+existe également : les anciens gestes de réinjection doivent ouvrir son nouveau dialogue
+en conservant la page, sans modifier le contrat d'envoi. Ces raccords descendent en EASY.
+La mise à jour asynchrone de l'envoi et l'interdiction de payer une prévisualisation périmée
+restent un point dur séparé, relu par le modèle principal.
+
+Les missions déjà lancées terminent leur vérification ; la correspondance s'applique dès
+la mission suivante, sans relancer un travail terminé ni multiplier les copies de contexte.
+
 Relevé du 11 septembre à 23 h 53 : AU15 reprend la liste des trois genres d'emploi
 déjà présente en B19 et précise l'association depuis la retouche et l'occultation partielle.
 AU16 réutilise le pliage/dépliage C3 plutôt qu'un appel imposé par frame ; il distingue
