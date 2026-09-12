@@ -1857,3 +1857,15 @@ la prochaine réécriture retrouvera.
   tourne dans un sous-processus avec délai externe. Trouvé le 12 septembre 2026 dans la passe
   serveur complète, sur le parcours MCP d'équipement de `C5` ; preuve dans
   `tests/test_attente_generations.py`.
+- **Le module `wave` refuse un WAV que ffmpeg vient d'écrire.** `atelier/audio/traitement.py`
+  demandait à ffmpeg (`imageio_ffmpeg` 7.1) un PCM 32 bits, puis relisait la sortie avec le
+  module `wave` de la bibliothèque standard. Ce ffmpeg écrit ce PCM en
+  `WAVE_FORMAT_EXTENSIBLE` (étiquette de format 65534, octets 20-21 de l'en-tête) plutôt qu'en
+  `WAVE_FORMAT_PCM` (étiquette 1) ; `wave` ne connaît que la seconde et lève `wave.Error:
+  unknown format: 65534` sur un fichier par ailleurs valide — tout import audio était refusé.
+  ⚠️ **Un module de la bibliothèque standard peut être plus strict que l'outil externe qui
+  l'alimente ; les deux évoluent séparément.** Remplacé par un lecteur RIFF minimal
+  (`_lire_wav_pcm`) qui accepte les étiquettes 1 et 65534 (sous-format PCM) et lit canaux,
+  fréquence et largeur dans le fichier rendu, jamais dans la commande ffmpeg. Trouvé et payé
+  le 12 septembre 2026 sur `AU14` ; preuve dans
+  `tests/test_au14_sons.py::test_wav_format_extensible_se_decode_comme_pcm`.

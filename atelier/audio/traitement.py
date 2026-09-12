@@ -34,16 +34,51 @@ def _ffmpeg(arguments, entree=None):
     return execution.stdout
 
 
+_SOUS_FORMAT_PCM = bytes.fromhex("0100000000001000800000aa00389b71")
+
+
+def _lire_wav_pcm(donnees: bytes):
+    # ffmpeg (imageio_ffmpeg 7.1) écrit le PCM 32 bits en WAVE_FORMAT_EXTENSIBLE
+    # (étiquette 65534) plutôt qu'en WAVE_FORMAT_PCM (étiquette 1) : le module
+    # `wave` de la bibliothèque standard refuse cette étiquette. Les dimensions
+    # mesurées ici viennent du fichier rendu, jamais de la ligne de commande.
+    if donnees[:4] != b"RIFF" or donnees[8:12] != b"WAVE":
+        raise ValueError("en-tête RIFF/WAVE absent")
+    position, fin = 12, len(donnees)
+    fmt = None
+    while position + 8 <= fin:
+        identifiant, taille = donnees[position:position + 4], int.from_bytes(donnees[position + 4:position + 8], "little")
+        corps = donnees[position + 8:position + 8 + taille]
+        if identifiant == b"fmt ":
+            if len(corps) < 16:
+                raise ValueError("bloc fmt tronqué")
+            etiquette = int.from_bytes(corps[0:2], "little")
+            canaux = int.from_bytes(corps[2:4], "little")
+            taux = int.from_bytes(corps[4:8], "little")
+            largeur = int.from_bytes(corps[14:16], "little") // 8
+            if etiquette == 65534:
+                if len(corps) < 40 or corps[24:40] != _SOUS_FORMAT_PCM:
+                    raise ValueError("sous-format WAVE_FORMAT_EXTENSIBLE non PCM")
+            elif etiquette != 1:
+                raise ValueError(f"étiquette de format {etiquette} non gérée")
+            fmt = (canaux, taux, largeur)
+        elif identifiant == b"data":
+            if fmt is None:
+                raise ValueError("bloc data avant le bloc fmt")
+            canaux, taux, largeur = fmt
+            return canaux, taux, largeur, corps
+        position += 8 + taille + (taille & 1)
+    raise ValueError("bloc data absent")
+
+
 def decoder(source: Path):
     # Le plafond borne l'expansion d'un fichier comprimé. Il ne devient jamais
     # une coupe silencieuse : une source plus longue reste à vérifier.
     wav = _ffmpeg(["-i", str(source), "-map", "0:a:0", "-vn", "-t", "601",
         "-acodec", "pcm_s32le", "-fflags", "+bitexact", "-flags:a", "+bitexact", "-f", "wav", "pipe:1"])
     try:
-        with wave.open(io.BytesIO(wav), "rb") as fichier:
-            canaux, taux, largeur = fichier.getnchannels(), fichier.getframerate(), fichier.getsampwidth()
-            contenu = fichier.readframes(fichier.getnframes())
-    except (wave.Error, EOFError) as erreur:
+        canaux, taux, largeur, contenu = _lire_wav_pcm(wav)
+    except (ValueError, IndexError) as erreur:
         raise SonRefuse("Le décodeur n'a pas rendu un signal PCM lisible.") from erreur
     if canaux not in (1, 2):
         raise SonRefuse("Cette source comporte plus de deux canaux. Importez une version mono ou stéréo ; aucun mixage n'est imposé.")

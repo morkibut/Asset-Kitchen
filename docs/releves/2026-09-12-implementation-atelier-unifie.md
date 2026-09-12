@@ -106,10 +106,18 @@ extraction automatique sur toutes les silhouettes réelles.
 
 Le son possède import, écoute, forme d'onde, découpe temporelle, fondus, normalisation,
 fréquence de sortie, boucle et versions. Les 28 vérifications serveur audio/MCP et les
-10 vérifications UI audio/délégation ont passé. Godot lit le fichier corrigé via
-AudioStreamPlayer. Les workflows audio partagent le registre durable et la file locale ;
-leurs graines, paramètres et références se rouvrent. Le moteur ComfyUI des tests est doublé.
-Les fichiers silencieux ou invalides restent acquis avec leur raison, sans être dits prêts.
+10 vérifications UI audio/délégation avaient passé au moment de ce relevé. **Mise à jour du
+12 septembre 2026, mesurée à nouveau sur cette machine :** `imageio_ffmpeg` a livré une
+version 7.1 qui rend le PCM 32 bits en `WAVE_FORMAT_EXTENSIBLE` plutôt qu'en
+`WAVE_FORMAT_PCM` ; le module `wave` de la bibliothèque standard refusait cette étiquette et
+les dix essais serveur audio (`tests/test_au14_sons.py`, `tests/test_au14_generation.py`)
+échouaient, aucun fichier ne s'important plus. Corrigé par un lecteur RIFF minimal qui accepte
+les deux étiquettes (voir `docs/PIEGES.md`) ; les treize essais serveur de ces deux fichiers,
+dont un nouveau qui verrouille cette étiquette-là, passent à nouveau. Le comptage UI n'a pas
+été rejoué ici. Godot lit le fichier corrigé via AudioStreamPlayer. Les workflows audio
+partagent le registre durable et la file locale ; leurs graines, paramètres et références se
+rouvrent. Le moteur ComfyUI des tests est doublé. Les fichiers silencieux ou invalides restent
+acquis avec leur raison, sans être dits prêts.
 
 ## Sources locales et 3D : ce qui est établi
 

@@ -7,7 +7,7 @@ import wave
 import numpy as np
 import pytest
 
-from atelier.audio.traitement import encoder, _ffmpeg
+from atelier.audio.traitement import encoder, _ffmpeg, _lire_wav_pcm
 from atelier.domaine.son import SonRefuse
 from atelier.services import Atelier
 from tests.test_au1 import GODOT
@@ -119,6 +119,26 @@ def test_import_comprime_preserve_deux_canaux(audio, format, codec):
     son = atelier.sons.importer_octets(projet, octets, nom="Source." + format)
     assert son["pret"] and son["mesures"]["canaux"] == 2
     assert atelier.sons.source(projet, son["identifiant"]).read_bytes() == octets
+
+
+def test_wav_format_extensible_se_decode_comme_pcm():
+    # ffmpeg 7.1 (imageio_ffmpeg) rend le PCM 32 bits en WAVE_FORMAT_EXTENSIBLE
+    # (étiquette 65534, sous-format PCM) plutôt qu'en WAVE_FORMAT_PCM (étiquette 1).
+    # Cet essai verrouille la lecture de cette étiquette-là ; sans lui, une
+    # nouvelle version de ffmpeg pourrait recasser l'import sans le dire.
+    canaux, taux, largeur_octets = 2, 48000, 4
+    trame = np.column_stack((np.full(10, .5), np.full(10, -.25)))
+    donnees = (trame * 2147483647).astype("<i4").tobytes()
+    fmt = (65534).to_bytes(2, "little") + canaux.to_bytes(2, "little") + taux.to_bytes(4, "little") \
+        + (taux * canaux * largeur_octets).to_bytes(4, "little") + (canaux * largeur_octets).to_bytes(2, "little") \
+        + (largeur_octets * 8).to_bytes(2, "little") + (22).to_bytes(2, "little") + (largeur_octets * 8).to_bytes(2, "little") \
+        + canaux.to_bytes(4, "little") + bytes.fromhex("0100000000001000800000aa00389b71")
+    wav = b"RIFF" + (4 + 8 + len(fmt) + 8 + len(donnees)).to_bytes(4, "little") + b"WAVE" \
+        + b"fmt " + len(fmt).to_bytes(4, "little") + fmt \
+        + b"data" + len(donnees).to_bytes(4, "little") + donnees
+    canaux_lus, taux_lu, largeur_lue, contenu = _lire_wav_pcm(wav)
+    assert (canaux_lus, taux_lu, largeur_lue) == (canaux, taux, largeur_octets)
+    assert contenu == donnees
 
 
 @pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
