@@ -917,6 +917,23 @@ export function useGalerie({
     }
   }
 
+  /** Poser un asset déjà produit sur la toile de l'univers, tel quel — **sans
+   *  nouvelle fabrication** (US-540). La route existe déjà côté serveur
+   *  (`api.poserAssetSurToile`, déjà branchée depuis l'écran Fabrications) ;
+   *  la galerie l'emploie pour la même chose, sur une fiche d'asset. */
+  const poserSurLaToile = async (asset: string) => {
+    if (!bibliotheque.courant) return
+    try {
+      const { deja_presente } = await api.poserAssetSurToile(bibliotheque.courant, asset)
+      setFente({
+        ton: "ok",
+        texte: deja_presente ? "Déjà posée sur la toile." : "Posée sur la toile.",
+      })
+    } catch (erreur) {
+      echouer(erreur, "l'image n'a pas pu être posée sur la toile")
+    }
+  }
+
   const ranger = async (rangement: {
     projet?: string | null
     collection?: string | null
@@ -1006,6 +1023,7 @@ export function useGalerie({
     ouverte,
     ouvrir,
     plancheAChoisir,
+    poserSurLaToile,
     ranger,
     relancer,
     relireGrille,
@@ -1106,6 +1124,7 @@ export function Galerie({
     ouverte,
     ouvrir,
     plancheAChoisir,
+    poserSurLaToile,
     ranger,
     relancer,
     selection,
@@ -1351,6 +1370,11 @@ export function Galerie({
               // n'appartenant à aucune chose du jeu, et l'écran sait les ouvrir
               // depuis cette tranche.
               onRetoucher={() => ouvrirLaRetouche(ouverte.identifiant)}
+              onPoserSurLaToile={
+                bibliotheque.courant
+                  ? () => void poserSurLaToile(ouverte.identifiant)
+                  : undefined
+              }
               onOuvrir={(identifiant) => setSelection([identifiant])}
             />
           )}

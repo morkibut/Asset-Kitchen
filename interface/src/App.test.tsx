@@ -2317,6 +2317,18 @@ function serveurDouble(options: {
     // objet et masquait le parcours sous un `liste.map` sans rapport.
     if (url.startsWith("/api/projects/") && url.endsWith("/production-jobs"))
       return rendre([])
+    // **Poser un asset déjà produit sur la toile, sans nouvelle fabrication**
+    // (US-540). Le double range la carte comme le vrai serveur la rangerait :
+    // en réserve — ni groupe ni place — puisque c'est à l'auteur de la classer.
+    if (url.includes("/board/assets/") && init?.method === "POST") {
+      const asset = decodeURIComponent(url.slice(url.lastIndexOf("/") + 1))
+      const deja = etat.cartes.find((c) => c.source === asset)
+      if (deja) return rendre({ carte: deja, deja_presente: true })
+      const carte = carteImage(`depuis-asset-${asset}`, { source: asset })
+      etat.cartes = [carte, ...etat.cartes]
+      FluxDouble.ouverts.at(-1)?.emettre("carte", carte)
+      return rendre({ carte, deja_presente: false })
+    }
     if (url === "/api/local-queue")
       return rendre({ etapes: [], regle: "Une étape à la fois.", mesures: [] })
     if (url === "/api/local-queue/engines") return rendre({ moteurs: [] })
@@ -5523,6 +5535,57 @@ describe("l'agent, vu de l'atelier", () => {
     pointe: false,
     cree_le: 1_787_800_300,
   }
+
+  test("fermer l'univers puis le rouvrir retrouve images, note, îlot et lien à la même place", async () => {
+    // Critère AU2 : « L'univers garde un accès direct à sa toile existante :
+    // images, textes, notes, îlots et liens ; modifier une composition puis la
+    // rouvrir retrouve son contenu et sa disposition. » L'écran ne tient rien
+    // lui-même — ni la place d'une carte, ni le nom d'un îlot, ni un lien — donc
+    // « rouvrir » n'est jamais qu'un remontage sur ce que le disque dit encore.
+    // Les cinq objets du critère sont ici à la fois : deux images groupées (donc
+    // un îlot), une note et un lien entre les deux images.
+    doublerLaGrille(160)
+    const cartes = [
+      carteImage("m1", { groupe: "marais", position: [40, 20] }),
+      carteImage("m2", { groupe: "marais", position: [240, 20] }),
+      carteImage("note", { genre: "texte", texte: "trois pierres, pas quatre", position: [40, 320] }),
+    ]
+    const { fetchDouble } = serveurDouble({
+      cartes,
+      liens: [{ ...LIEN, mot: "vient de" }],
+    })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    const noeud = (id: string) =>
+      document.querySelector(`.react-flow__node[data-id="${id}"]`) as HTMLElement | null
+
+    await waitFor(() => expect(noeud("m1")).toBeTruthy())
+    expect(await screen.findByText("trois pierres, pas quatre")).toBeTruthy()
+    expect(await screen.findByRole("button", { name: "marais" })).toBeTruthy()
+    expect(await screen.findByRole("button", { name: "vient de" })).toBeTruthy()
+
+    // La disposition, prise avant de fermer : ce que la librairie a rendu à
+    // partir de la position de chaque carte.
+    const avant = {
+      m1: noeud("m1")!.style.transform,
+      m2: noeud("m2")!.style.transform,
+      note: noeud("note")!.style.transform,
+    }
+    expect(avant.m1).not.toBe("")
+
+    // Fermer l'écran — ici, quitter vers un autre onglet — puis le rouvrir.
+    allerA("Galerie")
+    await ouvrirLaToile()
+
+    await waitFor(() => expect(noeud("m1")).toBeTruthy())
+    expect(noeud("m1")!.style.transform).toBe(avant.m1)
+    expect(noeud("m2")!.style.transform).toBe(avant.m2)
+    expect(noeud("note")!.style.transform).toBe(avant.note)
+    expect(await screen.findByText("trois pierres, pas quatre")).toBeTruthy()
+    expect(await screen.findByRole("button", { name: "marais" })).toBeTruthy()
+    expect(await screen.findByRole("button", { name: "vient de" })).toBeTruthy()
+  })
 
   test("une note s'écrit à même la toile, et c'est une carte texte", async () => {
     // « Créée là où elle s'applique plutôt qu'au bout d'une liste » (US-110).

@@ -90,6 +90,7 @@ export function Fiche({
   onSupprimer,
   onOuvrirLEtabli,
   onRetoucher,
+  onPoserSurLaToile,
   onOuvrir,
   identite,
   directionsAConfirmer,
@@ -127,6 +128,11 @@ export function Fiche({
    *  l'écran où l'on se trouve ne mène nulle part. */
   onOuvrirLEtabli?: () => void
   onRetoucher: () => void
+  /** Poser cette image, telle quelle, sur la toile de l'univers — **sans
+   *  nouvelle fabrication** (US-540). Absent sur les écrans qui n'ont pas de
+   *  projet ouvert ou pas de toile à côté d'eux : la même règle que les deux
+   *  portes ci-dessous, plutôt qu'un bouton grisé sans jeu ouvert. */
+  onPoserSurLaToile?: () => void
   /** Remonter ou descendre la filiation sans quitter le panneau. */
   onOuvrir: (identifiant: string) => void
   // ── `C4` · ce que le volet d'`ImagesDuSujet` savait faire ────────────────
@@ -385,6 +391,14 @@ export function Fiche({
               partout ailleurs — *Ses images*, le comparateur —, et deux noms
               pour un seul écran se lisent comme deux écrans. */}
           <Bouton onClick={onRetoucher} enfants="La retoucher" />
+          {/* **Réutiliser sans refabriquer** (US-540). La toile range des
+              inspirations, pas des sorties de générateur : ce bouton pose donc
+              l'image reçue telle quelle, en réserve, sans passer par un moteur.
+              Absent quand aucun projet n'est ouvert — la même règle que les
+              deux portes au-dessus. */}
+          {onPoserSurLaToile && (
+            <Bouton onClick={onPoserSurLaToile} enfants="Poser sur la toile" />
+          )}
           {/* **Les deux gestes de la case** (`C4`, relogés du volet
               d'`ImagesDuSujet`). Redemander la même case, et écarter celle-ci.
               Ils n'existent que là où l'on sait de quelle case on parle. */}

@@ -138,16 +138,16 @@ les mouvements et directions utiles, importe une référence et voit ce qui rest
 - [x] Une référence ne remplit pas une animation ; « non demandé » ne compte pas comme manquant.
 - [x] UI et MCP lisent le même objectif et la même couverture, même après redémarrage.
 - [x] Un ancien personnage rouvre son plan, ses images, bandes et équipements sans perte.
-- [ ] L'univers garde un accès direct à sa toile existante : images, textes, notes, îlots
+- [x] L'univers garde un accès direct à sa toile existante : images, textes, notes, îlots
   et liens ; modifier une composition puis la rouvrir retrouve son contenu et sa disposition.
-- [ ] Créer un sujet et lui donner un objectif depuis l'interface ne demande aucun agent.
+- [x] Créer un sujet et lui donner un objectif depuis l'interface ne demande aucun agent.
 - [x] Les animations se parcourent par mouvement puis direction, comme des dossiers ;
   les vignettes séparent versions retenues, à juger et écartées. Le survol joue toute la
   bande centrée. La galerie conserve les filtres mouvement, direction et jugement.
-- [ ] Les équipements associés montrent un aperçu identifiable.
+- [x] Les équipements associés montrent un aperçu identifiable.
 - [x] Les familles et collections existantes restent accessibles dans la navigation ;
   rechercher, ranger une sélection et rouvrir une collection conserve son contenu (US-538).
-- [ ] Créer un équipement depuis le personnage conserve ce lien et propose sa référence
+- [x] Créer un équipement depuis le personnage conserve ce lien et propose sa référence
   dans l'envoi ; les variantes et le retour au personnage restent accessibles (US-537).
   L'accès existant reste disponible jusqu'à la reprise complète de ce parcours en AU15–AU17.
 - [ ] La galerie distingue les résultats des fiches d'assets : filtres par média et

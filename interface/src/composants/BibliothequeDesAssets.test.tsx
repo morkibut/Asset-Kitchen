@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from "vitest"
 import { useState } from "react"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { BibliothequeDesAssets } from "./BibliothequeDesAssets"
-import { api, type GrilleDeFamille, type SujetDeLaGrille } from "../api"
+import { api, type GrilleDeFamille, type Piece, type SujetDeLaGrille } from "../api"
 import { MemoireDuParcours } from "./MemoireDuParcours"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
@@ -37,6 +37,48 @@ it('garde les échecs de rangement sélectionnés après une réussite partielle
     expect(screen.getByRole('checkbox', { name: 'Sélectionner Beta' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Sélectionner Alpha' })).not.toBeChecked()
   })
+})
+
+it('un équipement associé montre un aperçu identifiable, ou dit qu’il reste à créer', async () => {
+  // Critère AU2 : « Les équipements associés montrent un aperçu identifiable. »
+  // Cette liste existait déjà (`apercusDesPieces`), mais rien ne la
+  // vérifiait — les essais du fichier passent tous `pieces: []`.
+  vi.spyOn(api, 'familleDeSujets').mockImplementation(async () => grille([]))
+  const heaume: Piece = {
+    identifiant: 'heaume',
+    nom: 'Le heaume',
+    description: '',
+    emplacement: '',
+    portee: 'contenue',
+    concept_arts: ['carte-du-heaume'],
+  }
+  const sac: Piece = {
+    identifiant: 'sac',
+    nom: 'Le sac',
+    description: '',
+    emplacement: '',
+    portee: 'contenue',
+    concept_arts: [],
+  }
+  render(<BibliothequeDesAssets {...props()} pieces={[heaume, sac]} />)
+
+  const nav = within(screen.getByRole('navigation', { name: 'Familles et collections' }))
+  fireEvent.click(nav.getByRole('button', { name: /Équipement/ }))
+
+  // Une pièce qui a un concept art montre son image, identifiable par son
+  // adresse — la même que celle de la fiche de la carte.
+  const ligneHeaume = (await screen.findByText('Le heaume')).closest('li')!
+  // `alt=""` retire l'image de l'arbre d'accessibilité (c'est voulu, la
+  // légende voisine porte déjà le nom) : on la retrouve par sa balise.
+  expect(ligneHeaume.querySelector('img')?.getAttribute('src')).toBe(
+    api.imageCarte('carte-du-heaume', ''),
+  )
+
+  // Une pièce sans aucun retenu ni concept art le dit, plutôt que de
+  // montrer un cadre vide sans explication.
+  const ligneSac = screen.getByText('Le sac').closest('li')!
+  expect(within(ligneSac).getByText('À créer')).toBeTruthy()
+  expect(ligneSac.querySelector('img')).toBeNull()
 })
 
 it('retrouve la collection, la recherche et la vue après retour depuis une fiche', async () => {
