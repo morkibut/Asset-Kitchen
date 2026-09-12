@@ -191,6 +191,7 @@ function monter({
   const onCalque = vi.fn()
   const onLesAutresEmplois = vi.fn()
   const onCalquesAnimes = vi.fn()
+  const onPorteur = vi.fn()
   render(
     <Emploi
       emploi={emploiDe(emploi)}
@@ -201,10 +202,11 @@ function monter({
       onRetirer={onRetirer}
       onCalque={onCalque}
       onLesAutresEmplois={onLesAutresEmplois}
+      onPorteur={onPorteur}
       onCalquesAnimes={onCalquesAnimes}
     />,
   )
-  return { onRegler, onRetirer, onCalque, onLesAutresEmplois, onCalquesAnimes }
+  return { onRegler, onRetirer, onCalque, onLesAutresEmplois, onCalquesAnimes, onPorteur }
 }
 
 const rangees = () => document.querySelectorAll("[data-rangee-de-pose]")
@@ -479,5 +481,32 @@ describe("le volet", () => {
     expect(
       within(volet).getByText("Ces réglages valent pour toutes les poses à la fois."),
     ).toBeTruthy()
+  })
+})
+
+// ── Le retour au personnage (US-537, AU2) ───────────────────────────────────
+//
+// Une pièce nommée depuis la fiche de qui la porte descend jusqu'à ses calques ;
+// le chemin inverse doit rester ouvert, et il ne peut pas reposer sur la pile —
+// un emploi ouvert depuis la galerie ou depuis un travail conservé n'a pas son
+// porteur sous lui. D'où un bouton, sur les deux vues de l'écran.
+
+describe("revenir au personnage qui porte", () => {
+  test("le bouton nomme le porteur et remonte `onPorteur`", () => {
+    const { onPorteur } = monter()
+    fireEvent.click(screen.getByRole("button", { name: "Revenir à Le goliath" }))
+    expect(onPorteur).toHaveBeenCalledTimes(1)
+  })
+
+  test("un emploi dont le porteur n'est plus dans le jeu n'offre nulle part où revenir", () => {
+    monter({ porteur: null })
+    expect(screen.queryByRole("button", { name: /^Revenir à/ })).toBeNull()
+  })
+
+  test("il ne remplace pas l'accès aux autres emplois de la pièce", () => {
+    const { onLesAutresEmplois, onPorteur } = monter()
+    fireEvent.click(screen.getByRole("button", { name: /Les autres emplois de Épée/ }))
+    expect(onLesAutresEmplois).toHaveBeenCalledTimes(1)
+    expect(onPorteur).not.toHaveBeenCalled()
   })
 })

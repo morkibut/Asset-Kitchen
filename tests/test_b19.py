@@ -369,6 +369,50 @@ def test_une_piece_creee_depuis_une_fiche_est_attribuee_d_emblee(client):
     assert epee["emplois"][0]["identifiant"] == f"{PORTE}-{goliath['identifiant']}"
 
 
+def test_le_lien_d_une_piece_creee_depuis_une_fiche_survit_a_la_reouverture(
+    client, atelier, tmp_path, double
+):
+    """**Le lien est durable, pas une réponse de création** (AU2, US-537).
+
+    Le critère du plan de l'atelier unifié porte sur la conservation du lien,
+    pas sur son écriture : il se mesure donc sur un **second graphe de
+    services** monté sur les mêmes fichiers, bibliothèque reconstruite, sans
+    rien réinjecter de ce que la création avait rendu. Les deux sens comptent —
+    la pièce nomme son porteur, et le personnage voit la pièce qu'il porte.
+    """
+    from atelier.api.app import creer_application
+    from atelier.services import Atelier
+    from fastapi.testclient import TestClient
+    from tests.conftest import AnimateurMuet
+
+    goliath = _creer(client, "Le goliath")
+    epee = _piece(
+        client,
+        "Epée",
+        porteur=goliath["identifiant"],
+        description="Acier noir, garde en bois clair",
+    )
+
+    autre = Atelier(
+        racine=tmp_path,
+        fabrique_fournisseur=lambda: double,
+        fabrique_animateur=lambda: AnimateurMuet(),
+    )
+    with TestClient(creer_application(autre)) as rouvert:
+        assert rouvert.post("/api/library/rebuild").status_code == 200
+        relue = _emplois(rouvert)[epee["identifiant"]]
+        assert relue["piece"]["description"] == "Acier noir, garde en bois clair"
+        assert [e["porteur"] for e in relue["emplois"]] == [goliath["identifiant"]]
+        assert relue["emplois"][0]["genre"] == PORTE
+        assert relue["emplois"][0]["identifiant"] == f"{PORTE}-{goliath['identifiant']}"
+        # L'autre sens : la fiche du porteur n'a pas perdu sa pièce.
+        assert _choses(rouvert)[goliath["identifiant"]]["pieces"] == [
+            epee["identifiant"]
+        ]
+
+    assert double.appels == 0
+
+
 def test_une_piece_ne_naît_pas_sur_une_chose_qui_ne_porte_rien(client):
     """**Une pièce se pose sur un corps, jamais sur rien** — c'est déjà le refus
     de C3 au moment de plier, et E15 le dit à l'écran depuis. Le refus tombe

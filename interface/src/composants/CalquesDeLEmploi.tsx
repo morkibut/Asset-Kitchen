@@ -7,10 +7,13 @@ import { CouvertureDeLEmploi } from "./CouvertureDeLEmploi"
 
 const CONTROLE = "h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle"
 
-export function CalquesDeLEmploi({ projet, emploi, piece, porteur, emplacements, onRegler, onHistorique, onLesAutresEmplois, cibleInitiale, varianteInitiale }: {
+export function CalquesDeLEmploi({ projet, emploi, piece, porteur, emplacements, onRegler, onHistorique, onLesAutresEmplois, onPorteur, cibleInitiale, varianteInitiale }: {
   projet: string; emploi: EmploiResolu; piece: Piece; porteur: Personnage; emplacements: readonly EmplacementCorps[]
   onRegler: (champs: { nom?: string; emplacement?: string; devant?: boolean; description?: string }) => void
   onHistorique: () => void; onLesAutresEmplois: () => void
+  /** **Revenir au personnage qui porte** — la pièce a pu être nommée depuis sa
+   *  fiche, et ce chemin-là doit rester ouvert dans les deux sens (US-537). */
+  onPorteur?: () => void
   cibleInitiale?: import("../api-calques").CibleCalque; varianteInitiale?: string
 }) {
   const chemin = useMemo(() => ({ projet, piece: piece.identifiant, emploi: emploi.identifiant }), [projet, piece.identifiant, emploi.identifiant])
@@ -70,7 +73,7 @@ export function CalquesDeLEmploi({ projet, emploi, piece, porteur, emplacements,
   return <main aria-label={`${piece.nom} portée par ${porteur.nom}`} data-calques-cibles className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier">
     <header className="flex flex-wrap items-center justify-between gap-[14px] border-b border-trait px-[30px] py-[14px]">
       <div><h1 className="font-serif text-[38px] text-encre">{piece.nom} · {porteur.nom}</h1><p className="mt-[4px] text-[13px] text-encre-3">Un calque indépendant pour chaque image et chaque frame de ce personnage.</p></div>
-      <div className="flex flex-wrap gap-[8px]"><button className={CONTROLE} onClick={() => { if (autoriser()) setCouverture(!couverture) }}>{couverture ? "Retoucher les calques" : "Couverture & fabrication"}</button><button className={CONTROLE} onClick={() => { if (autoriser()) onLesAutresEmplois() }}>Les autres emplois</button><button className={CONTROLE} onClick={() => { if (autoriser()) onHistorique() }}>Calques de pose historiques</button></div>
+      <div className="flex flex-wrap gap-[8px]"><button className={CONTROLE} onClick={() => { if (autoriser()) setCouverture(!couverture) }}>{couverture ? "Retoucher les calques" : "Couverture & fabrication"}</button>{onPorteur && <button className={CONTROLE} onClick={() => { if (autoriser()) onPorteur() }}>Revenir à {porteur.nom}</button>}<button className={CONTROLE} onClick={() => { if (autoriser()) onLesAutresEmplois() }}>Les autres emplois</button><button className={CONTROLE} onClick={() => { if (autoriser()) onHistorique() }}>Calques de pose historiques</button></div>
     </header>
     {erreur && <p role="alert" className="border-b border-trait px-[30px] py-[8px] text-[13px] text-echec">{erreur} <button className="underline" onClick={() => { if (!sale) { setErreur(""); setRafraichi((n) => n + 1) } }}>Relire</button></p>}
     {sauve && <p role="status" className="px-[30px] py-[8px] text-[12px] text-encre-3">{sauve}</p>}

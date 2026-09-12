@@ -97,3 +97,36 @@ test("le suivi général rouvre une demande d’équipement sans lire les champs
   expect(screen.queryByText("Nom du personnage")).not.toBeInTheDocument()
   expect(equipements.demarrer).not.toHaveBeenCalled()
 })
+
+// ── US-537 · la référence de la pièce, annoncée avant l'envoi ───────────────
+//
+// Le serveur joint les références communes de la pièce de lui-même
+// (`atelier/services/travaux_equipement.py`, rôle `style`). L'écran ne les
+// montrait qu'après la préparation : l'auteur lisait « 0 référence » sur une
+// pièce qui en envoyait deux, et ne le découvrait qu'une fois le texte composé.
+test("les références communes de la pièce se voient et s’écartent avant la préparation", async () => {
+  const compteur = { bases_attendues: 1, bases_absentes: 0, bases_a_choisir: 0, images_connues: 1, absente: 1, "a-extraire": 0, "a-verifier": 0, prete: 0, "a-revoir": 0 }
+  const vue = { piece: { identifiant: "casque", nom: "Casque", references: ["ref-commune-1", "ref-commune-2"] },
+    images: { ...compteur, bases_attendues: 0, images_connues: 0, absente: 0 },
+    animations: compteur, cases: [
+      { identifiant: "marche", nature: "animation", nom_pose: "Marche", nom_direction: "Ouest", demandee: true, versions: [{ resultat: "marche-1", nom: "Marche lente", choisie: true, etat: "retenue", images: [{ cible, rang: 0, etat: "absente", fabricable: true, variante: null }] }] },
+    ] } as unknown as CouvertureEquipement
+  vi.spyOn(equipements, "couverture").mockResolvedValue(vue)
+  vi.spyOn(api, "lireAsset").mockImplementation(async (identifiant) => ({ identifiant, label: `Vue de ${identifiant}`, empreinte: identifiant } as Awaited<ReturnType<typeof api.lireAsset>>))
+  render(<CouvertureDeLEmploi chemin={chemin} onCalque={vi.fn()} />)
+  fireEvent.click(await screen.findByRole("button", { name: "Fabriquer les 1 manques" }))
+  expect(await screen.findByText("Références communes de Casque (2)")).toBeInTheDocument()
+  // La vignette vient de la fiche relue, non d'un identifiant affiché brut.
+  expect(await screen.findByAltText("Vue de ref-commune-1")).toBeInTheDocument()
+  // Et les références ajoutées à cet envoi restent un compte distinct.
+  expect(screen.getByText("Références ajoutées à cet envoi (0)")).toBeInTheDocument()
+  fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: "essai:image" } })
+  fireEvent.click(screen.getByRole("checkbox", { name: "Référence commune 2" }))
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant envoi" }))
+  await waitFor(() => expect(equipements.preparer).toHaveBeenCalledOnce())
+  const envoye = vi.mocked(equipements.preparer).mock.calls[0][1]
+  expect(envoye.references_ecartees).toEqual(["ref-commune-2"])
+  // Décocher ne touche pas la fiche de la pièce : aucun réglage n'est écrit.
+  expect(envoye.references).toEqual([])
+  expect(equipements.demarrer).not.toHaveBeenCalled()
+})

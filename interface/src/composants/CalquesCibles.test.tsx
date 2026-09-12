@@ -132,3 +132,26 @@ test("la bibliothèque affiche des vignettes, filtre les favoris et garde le rô
   fireEvent.click(screen.getByRole("button", { name: "Associer cette image" }))
   await waitFor(() => expect(choisir).toHaveBeenCalledWith(image, "calque"))
 })
+
+// ── US-537 · le retour au personnage, et les variantes qui restent ──────────
+//
+// Une pièce nommée depuis la fiche de qui la porte descend jusqu'ici ; le
+// chemin inverse ne peut pas reposer sur la pile de navigation, puisque cet
+// écran s'ouvre aussi depuis la galerie et depuis un travail conservé.
+test("l'écran des calques nomme son porteur, y revient d'un clic, et garde ses variantes", async () => {
+  const onPorteur = vi.fn()
+  render(<CalquesDeLEmploi projet="marais" emploi={emploi} piece={piece} porteur={personnage} emplacements={[]} onRegler={vi.fn()} onHistorique={vi.fn()} onLesAutresEmplois={vi.fn()} onPorteur={onPorteur} />)
+  await screen.findByRole("button", { name: /Marche lente · frame 1/ })
+  // Les versions de la cible restent atteignables : choisir une variante ne
+  // supprime pas les autres (US-541), et le retour ne les cache pas.
+  expect(within(screen.getByLabelText("Versions de cette cible")).getAllByRole("button")).toHaveLength(1)
+  fireEvent.click(screen.getByRole("button", { name: "Revenir à Le pèlerin" }))
+  expect(onPorteur).toHaveBeenCalledTimes(1)
+  expect(screen.getByLabelText("Versions de cette cible")).toBeInTheDocument()
+})
+
+test("sans rappel de retour, l'écran n'invente aucun bouton vers le personnage", async () => {
+  render(<CalquesDeLEmploi projet="marais" emploi={emploi} piece={piece} porteur={personnage} emplacements={[]} onRegler={vi.fn()} onHistorique={vi.fn()} onLesAutresEmplois={vi.fn()} />)
+  await screen.findByRole("button", { name: /Marche lente · frame 1/ })
+  expect(screen.queryByRole("button", { name: /^Revenir à/ })).toBeNull()
+})

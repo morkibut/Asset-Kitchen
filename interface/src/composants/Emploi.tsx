@@ -201,6 +201,7 @@ export function Emploi({
   onRetirer,
   onCalque,
   onLesAutresEmplois,
+  onPorteur,
   onCalquesAnimes,
   cibleInitiale,
   varianteInitiale,
@@ -221,6 +222,11 @@ export function Emploi({
   onRetirer: () => void
   onCalque: (asset: string) => void
   onLesAutresEmplois: () => void
+  /** **Revenir à la page du personnage qui porte** — une pièce nommée depuis sa
+   *  fiche garde ce lien, et le chemin du retour reste ouvert quel que soit
+   *  l'endroit d'où l'emploi a été ouvert (US-537). `undefined` sur un emploi
+   *  qui ne porte personne : il n'y a alors pas de page où revenir. */
+  onPorteur?: () => void
   /** Ouvrir *ses animations, image par image* (`B20`). Le bouton ne paraît que
    *  sur un emploi **porté** : sans porteur il n'y a ni pose, ni bande, ni rien
    *  à habiller. */
@@ -253,7 +259,7 @@ export function Emploi({
   if (projet && porte && porteur !== null && !historique) return <CalquesDeLEmploi
     key={`${projet}:${piece.identifiant}:${emploi.identifiant}`} projet={projet} emploi={emploi} piece={piece}
     porteur={porteur} emplacements={emplacements} onRegler={onRegler}
-    cibleInitiale={cibleInitiale} varianteInitiale={varianteInitiale}
+    cibleInitiale={cibleInitiale} varianteInitiale={varianteInitiale} onPorteur={onPorteur}
     onHistorique={() => setHistorique(true)} onLesAutresEmplois={onLesAutresEmplois} />
 
   return (
@@ -286,13 +292,24 @@ export function Emploi({
             </p>
             {projet && porte && porteur !== null && <button className="mt-[8px] h-[30px] self-start rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle" onClick={() => setHistorique(false)}>Revenir aux calques par image et par frame</button>}
           </div>
-          <button
-            type="button"
-            onClick={onLesAutresEmplois}
-            className="h-[30px] shrink-0 rounded-7 px-[14px] text-[13px] text-encre-3 transition-colors duration-120 hover:text-encre"
-          >
-            Les autres emplois de {piece.nom} ›
-          </button>
+          <div className="flex shrink-0 items-center gap-[8px]">
+            {onPorteur && porteur !== null && (
+              <button
+                type="button"
+                onClick={onPorteur}
+                className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle transition-colors duration-120 hover:border-encre-3"
+              >
+                Revenir à {porteur.nom}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onLesAutresEmplois}
+              className="h-[30px] shrink-0 rounded-7 px-[14px] text-[13px] text-encre-3 transition-colors duration-120 hover:text-encre"
+            >
+              Les autres emplois de {piece.nom} ›
+            </button>
+          </div>
         </div>
 
         {/* ── La matrice — une colonne de poses, jamais une grille ──────── */}

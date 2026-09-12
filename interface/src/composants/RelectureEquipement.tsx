@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { api, dollars, type Asset, type Modele } from "../api"
+import { api, dollars, type Asset, type Modele, type Piece } from "../api"
 import { apiCalques, type CheminEmploi, type CibleCalque } from "../api-calques"
 import { equipements, type DemandeEquipement, type OuvrirCalque, type TravailEquipement } from "../api-travaux-equipement"
 import { vignetteAsset } from "./Apercu"
@@ -13,8 +13,13 @@ const montant = (n: number | null, unite: string | null) => n === null ? "Consom
 
 /** La relecture est l'envoi enregistré ; rééditer crée une nouvelle demande.
  * Fermer le dialogue ne ferme pas le suivi du serveur. */
-export function RelectureEquipement({ chemin, initiale, cibles, nomPiece, onFermer, onCalque }: {
+export function RelectureEquipement({ chemin, initiale, cibles, nomPiece, piece, onFermer, onCalque }: {
   chemin: CheminEmploi; initiale?: TravailEquipement; cibles?: CibleCalque[]; nomPiece?: string
+  /** La pièce commune telle que la couverture l'a lue. Elle sert à **montrer
+   *  ses références avant l'envoi** : le serveur les joint de lui-même
+   *  (`atelier/services/travaux_equipement.py`), et l'écran ne les proposait
+   *  qu'après la préparation — soit une fois le texte déjà composé. */
+  piece?: Piece
   onFermer: () => void; onCalque?: OuvrirCalque
 }) {
   const [travail, setTravail] = useState<TravailEquipement | null>(initiale ?? null)
@@ -30,9 +35,26 @@ export function RelectureEquipement({ chemin, initiale, cibles, nomPiece, onFerm
   const [erreur, setErreur] = useState("")
   const [occupe, setOccupe] = useState(false)
   const [annulation, setAnnulation] = useState(false)
+  const [fichesCommunes, setFichesCommunes] = useState<Asset[]>([])
   const modele = modeles.find((m) => m.identifiant === demande.modele)
   const changer = (champs: Partial<DemandeEquipement>) => { setDemande((d) => ({ ...d, ...champs })); setErreur("") }
   const refs = demande.references ?? []
+  const ecartees = demande.references_ecartees ?? []
+  // **Les références de la pièce, telles qu'elles partiront.** `piece_fiche`
+  // les porte dès qu'un travail existe ; avant lui, la couverture les passe.
+  // Sans cette liste l'écran annonçait « 0 référence » sur une pièce qui en
+  // joignait deux, et l'auteur ne le découvrait qu'après la préparation.
+  const communes = (travail?.piece_fiche.references ?? piece?.references ?? []) as readonly string[]
+  const cleCommunes = communes.join("|")
+  useEffect(() => {
+    if (!edition || !cleCommunes) return
+    let vivant = true
+    Promise.all(cleCommunes.split("|").map((id) => api.lireAsset(id)))
+      .then((r) => { if (vivant) setFichesCommunes(r) })
+      // La vignette peut manquer ; l'identifiant et la case suffisent à décider.
+      .catch(() => { /* la liste reste sans vignette */ })
+    return () => { vivant = false }
+  }, [edition, cleCommunes])
   useEffect(() => {
     if (!edition) return
     let vivant = true
@@ -90,7 +112,15 @@ export function RelectureEquipement({ chemin, initiale, cibles, nomPiece, onFerm
           <label className="mt-[14px] flex flex-col gap-[4px] text-[13px]">À éviter<input className={CHAMP} value={demande.prompt_negatif ?? ""} onChange={(e) => changer({ prompt_negatif: e.target.value })} /></label>
           <label className="mt-[14px] flex flex-col gap-[4px] text-[13px]">Réservation par appel en dollars<input className={CHAMP} type="number" min="0" step="0.01" placeholder="Utiliser le coût mesuré" value={demande.reservation_par_appel_usd ?? ""} onChange={(e) => changer({ reservation_par_appel_usd: e.target.value === "" ? null : Number(e.target.value) })} /></label><p className="mt-[4px] text-[11px] text-encre-3">Nécessaire au premier appel payant si aucun coût n’est encore mesuré. Ce montant réserve un budget ; il ne plafonne pas la facture du fournisseur.</p>
           {travail && <section className="mt-[22px]"><h3 className="text-[13px]">Images de la relecture précédente</h3><p className="mt-[4px] text-[12px] text-encre-3">Décochez une référence pour la retirer du prochain envoi. Chaque planche de bases reste obligatoire.</p><div className="mt-[8px] flex flex-wrap gap-[14px]">{Array.from(new Map(travail.appels.flatMap((a) => a.references).filter((r) => r.reference && r.reference.role !== "edition").map((r) => [r.reference!.asset, r])).values()).map((r, i) => { const id = r.reference!.asset; return <label key={id} className="w-[128px] text-[12px]"><img src={r.url} alt={`Référence modifiable ${i + 1}`} className="damier-papier h-[128px] w-full object-contain" /><span className="mt-[8px] flex items-center gap-[8px]"><input type="checkbox" aria-label={`Référence ${i + 1}`} checked={!(demande.references_ecartees ?? []).includes(id)} onChange={(e) => changer({ references_ecartees: e.target.checked ? (demande.references_ecartees ?? []).filter((v) => v !== id) : [...(demande.references_ecartees ?? []), id], references: e.target.checked ? (travail.demande.references ?? []).includes(id) ? [...new Set([...refs, id])] : refs : refs.filter((v) => v !== id) })} />Référence {i + 1}</span></label> })}</div></section>}
-          <h3 className="mt-[22px] text-[13px]">Références de la pièce ({refs.length})</h3><div className="mt-[8px] flex flex-wrap gap-[8px]">{refs.map((id, i) => <button key={id} className={CHAMP} onClick={() => changer({ references: refs.filter((r) => r !== id) })}>Retirer la référence {i + 1}</button>)}<button className={CHAMP} onClick={() => setChercher(!chercher)}>Choisir des références avec aperçu</button></div>
+          {communes.length > 0 && <section className="mt-[22px]"><h3 className="text-[13px]">Références communes de {nomPiece ?? travail?.piece_fiche.nom ?? "la pièce"} ({communes.length})</h3><p className="mt-[4px] text-[12px] text-encre-3">Elles partent avec cet envoi, en plus de la planche de bases. Décocher n’en retire aucune de la fiche de la pièce.</p><div className="mt-[8px] flex flex-wrap gap-[14px]">{communes.map((id, i) => {
+            const fiche = fichesCommunes.find((a) => a.identifiant === id)
+            return <label key={id} className="w-[128px] text-[12px]">{fiche
+              ? <img src={vignetteAsset(fiche, 128)} alt={fiche.label || `Référence commune ${i + 1}`} className="damier-papier h-[128px] w-full object-contain" />
+              : <span className="damier-papier flex h-[128px] w-full items-center justify-center px-[8px] text-center text-[11px] text-encre-3">Vignette non relue</span>}
+              <span className="mt-[8px] flex items-center gap-[8px]"><input type="checkbox" aria-label={`Référence commune ${i + 1}`} checked={!ecartees.includes(id)} onChange={(e) => changer({ references_ecartees: e.target.checked ? ecartees.filter((v) => v !== id) : [...new Set([...ecartees, id])] })} />{fiche?.label || `Référence commune ${i + 1}`}</span>
+            </label>
+          })}</div></section>}
+          <h3 className="mt-[22px] text-[13px]">Références ajoutées à cet envoi ({refs.length})</h3><div className="mt-[8px] flex flex-wrap gap-[8px]">{refs.map((id, i) => <button key={id} className={CHAMP} onClick={() => changer({ references: refs.filter((r) => r !== id) })}>Retirer la référence {i + 1}</button>)}<button className={CHAMP} onClick={() => setChercher(!chercher)}>Choisir des références avec aperçu</button></div>
           {chercher && <div className="mt-[14px] rounded-7 border border-trait bg-papier p-[14px]"><input aria-label="Rechercher une référence" className={`${CHAMP} w-full`} value={recherche} onChange={(e) => { setRecherche(e.target.value); setLimite(48) }} /><label className="mt-[8px] flex items-center gap-[8px] text-[12px]"><input type="checkbox" checked={favoris} onChange={(e) => setFavoris(e.target.checked)} />Favorites seulement</label><div className="mt-[14px] grid grid-cols-3 gap-[8px]">{images.map((a) => <button key={a.identifiant} aria-pressed={refs.includes(a.identifiant)} className={`rounded-7 border p-[8px] text-left ${refs.includes(a.identifiant) ? "border-signal bg-ligne-ouverte" : "border-trait bg-carte"}`} onClick={() => changer({ references: refs.includes(a.identifiant) ? refs.filter((r) => r !== a.identifiant) : [...refs, a.identifiant] })}><img src={vignetteAsset(a, 108)} alt={a.label} className="damier-papier h-[54px] w-full object-contain" /><span className="mt-[4px] block truncate text-[11px]">{a.label}</span></button>)}</div>{total > images.length && <button className={`${CHAMP} mt-[8px]`} onClick={() => setLimite(limite + 48)}>Afficher plus d’images</button>}</div>}
         </section>
       </div> : travail && <>

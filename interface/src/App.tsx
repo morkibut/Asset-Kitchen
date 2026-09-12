@@ -2692,6 +2692,25 @@ function AtelierApp() {
               ouvrirLaRetouche(asset)
             }}
             onLesAutresEmplois={() => ouvrirLEmploi(null)}
+            /* **Le retour au personnage, dans les deux sens** (US-537). Une
+               pièce nommée depuis la fiche de qui la porte descend jusqu'à ses
+               calques ; sans ce geste, remonter demandait de repasser par le
+               codex — et l'emploi ouvert depuis la galerie ou depuis un travail
+               conservé n'a même pas son porteur sous lui dans la pile. On pose
+               donc la page du sujet à la racine, sur son onglet Équipement :
+               c'est là que son vestiaire se lit. */
+            onPorteur={
+              emploiOuvert.porteur && personnages.some((p) => p.identifiant === emploiOuvert.porteur)
+                ? () => {
+                    const qui = emploiOuvert.porteur
+                    memoriserParcours(
+                      `sujet:${bibliotheque.courant}:${qui}:onglet`,
+                      "equipement",
+                    )
+                    setPile(entrer(poser("codex"), { genre: "sujet", sujet: qui }))
+                  }
+                : undefined
+            }
             /* **Seulement sur un emploi porté** : un emploi qui ne porte
                personne n'a pas d'animation à habiller — il n'a ni pose, ni
                calque, seulement une description. L'écran d'`Emploi` décide de
