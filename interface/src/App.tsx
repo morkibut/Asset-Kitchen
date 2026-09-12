@@ -359,6 +359,14 @@ function AtelierApp() {
    */
   const allerA = (prochaine: Racine) => {
     fermerCeQuiPart()
+    // ⚠️ **Le choix d'une référence sortait avec, et il ne sortait plus.**
+    //     `fermerCeQuiPart` referme l'ancienne grille (`choixDeReference`) ;
+    //     le cadre de dialogue qui l'a remplacée vit dans un état à lui, et
+    //     personne ne le refermait. Partir par une porte laissait donc une
+    //     fenêtre modale posée sur l'écran d'à côté, devant un appel qui
+    //     n'avait rien demandé — très exactement ce que la sortie par l'onglet
+    //     existe pour éviter.
+    setReferenceDePreparation(false)
     setFente(null)
     poserLaRacine(prochaine)
   }
@@ -1975,7 +1983,10 @@ function AtelierApp() {
              il ne grise pas le bouton : ce qu'on veut faire d'un appel raté est
              le refaire. */
           echec={echecDuPaiement}
-          onFermer={fermerCeQuiPart}
+          onFermer={() => {
+            setReferenceDePreparation(false)
+            fermerCeQuiPart()
+          }}
           onGarder={(ligne) => void garderLeTexte(ligne)}
           onSauter={
             serie === null

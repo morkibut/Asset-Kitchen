@@ -26,6 +26,7 @@ import type {
 import { usePli } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { Cible, Reinjections } from "./Galerie"
+import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { ChampPrompt, type EnVol } from "./ChampPrompt"
 import { CoutAttendu, PanneauReglages } from "./PanneauReglages"
 
@@ -152,11 +153,7 @@ export function BarreQuiPaie({
       <div className="defile min-h-0 flex-1 space-y-[22px] overflow-y-auto px-[30px] py-[22px]">
       <div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">Références jointes</h2>{onChoisirReference && <button type="button" className="h-[34px] rounded-7 border border-contour bg-carte px-[14px]" onClick={onChoisirReference}>Choisir dans la bibliothèque</button>}</div>
       <section aria-label="Références jointes" className="rounded-7 border border-trait bg-carte p-[22px]">
-        {reinjections.length === 0 ? <p className="text-encre-3">Aucune image jointe à la main. Les références de l’univers et de l’asset seront visibles à la relecture.</p> : <div className="grid grid-cols-3 gap-[14px]">{reinjections.map(({ asset, role }, i) => <figure key={asset} className="min-w-0 space-y-[8px]">
-          <img src={api.fichier(asset)} alt={`Référence ${i + 1}`} className="damier-papier h-[128px] w-full rounded-7 object-contain" />
-          <select aria-label={`Rôle de la référence ${i + 1}`} className={champ} value={role} onChange={(e) => onRoleReinjection(asset, e.target.value as Role)}><option value="reference">Référence visuelle</option><option value="edition">Image à modifier</option><option value="style">Guide de style</option></select>
-          <button type="button" className="text-encre-3 hover:text-echec" onClick={() => onRetirerReinjection(asset)}>Retirer la référence {i + 1}</button>
-        </figure>)}</div>}
+        {reinjections.length === 0 ? <p className="text-encre-3">Aucune image jointe à la main. Les références de l’univers et de l’asset seront visibles à la relecture.</p> : <div className="grid grid-cols-3 gap-[14px]">{reinjections.map(({ asset, role }, i) => <ReferenceJointe key={asset} asset={asset} role={role} rang={i + 1} connu={grille.find((a) => a.identifiant === asset)} champ={champ} onRole={onRoleReinjection} onRetirer={onRetirerReinjection} />)}</div>}
       </section>
       <section className="space-y-[8px]">
         <label className="block font-medium" htmlFor="preparation-image-prompt">{repris ? "Texte complet à envoyer" : "Ce que tu veux fabriquer"}</label>
@@ -312,5 +309,39 @@ export function BarreQuiPaie({
         enVol={enVol}
       />
     </div>
+  )
+}
+
+/** Une image jointe à la main, dans le guichet.
+ *
+ *  **Deux choses lui reviennent de la bande « Repart avec »**, et elles avaient
+ *  été perdues en passant de la barre à l'écran :
+ *
+ *  - **l'adresse de la vignette, pas le fichier entier.** Corrigé une première
+ *    fois le 31 août 2026 en même temps que la grille : un cadre de 128 px ne
+ *    demande pas deux mégaoctets, et le cran de la grille au repos est déjà
+ *    dans le cache du navigateur — la section ne coûte alors rien ;
+ *  - **la visée de la barre d'espace.** Ce que le pointeur vise reste le
+ *    fichier entier : ouvrir une référence en grand est exactement le geste de
+ *    compter ses pixels avant de l'envoyer.
+ *
+ *  Un asset que la grille ne connaît pas — joint depuis un autre jeu, ou pas
+ *  encore relu — garde son fichier comme image et n'a rien à viser. */
+function ReferenceJointe({ asset, role, rang, connu, champ, onRole, onRetirer }: {
+  asset: string
+  role: Role
+  rang: number
+  connu: Asset | undefined
+  champ: string
+  onRole: (asset: string, role: Role) => void
+  onRetirer: (asset: string) => void
+}) {
+  const visee = useVisee(connu ? sujetAsset(connu) : null)
+  return (
+    <figure className="min-w-0 space-y-[8px]" onPointerEnter={visee.entrer} onPointerLeave={visee.sortir}>
+      <img src={connu ? vignetteAsset(connu, 256) : api.fichier(asset)} alt={`Référence ${rang}`} className="damier-papier h-[128px] w-full rounded-7 object-contain" />
+      <select aria-label={`Rôle de la référence ${rang}`} className={champ} value={role} onChange={(e) => onRole(asset, e.target.value as Role)}><option value="reference">Référence visuelle</option><option value="edition">Image à modifier</option><option value="style">Guide de style</option></select>
+      <button type="button" className="text-encre-3 hover:text-echec" onClick={() => onRetirer(asset)}>Retirer la référence {rang}</button>
+    </figure>
   )
 }

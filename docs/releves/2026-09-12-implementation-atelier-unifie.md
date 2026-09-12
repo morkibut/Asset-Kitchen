@@ -160,4 +160,31 @@ Il n'existe donc pas de rapport unique disant que toute la suite serveur a pass�
 Les preuves sont dans `essais/resultats` : `regression-serveur-reste-20260912.log`,
 `attente-generations-c5.xml`, `regression-g1-final.xml`, `regression-u13-final.xml`.
 Python 3.12.14, pytest 9.1.1, pytest-asyncio 1.4.0 et MCP 2.2 ont servi à ces vérifications.
-La migration du grand fichier de tests de navigation React reste distincte de ces résultats.
+## Le grand fichier de tests de navigation React
+
+Il est à niveau. `interface/src/App.test.tsx` — 623 essais au départ — en
+comptait 227 en échec avant cette passe, pour 396 réussites : aucun n'accusait
+un défaut du produit, tous cherchaient des mots, des boutons et des chemins que
+la refonte des écrans avait déplacés. `npx vitest run src/App.test.tsx` rend
+maintenant **612 réussites et 12 essais en attente sur 624** — un de plus qu'au
+départ, l'essai des avertissements ayant été coupé en deux pour garder la moitié
+de sa garantie qui tient encore.
+
+Les douze en attente ne sont pas des essais réécrits ni supprimés : ils portent
+chacun un `test.skip` et le commentaire qui nomme la capacité manquante, et ils
+repartiront tels quels le jour où elle revient. Ces capacités — sept, dont
+quatre autour de l'écran de confirmation et de la barre qui paie — sont
+inventoriées dans [releve-au4-outils.md](../releve-au4-outils.md),
+§ « Capacités encore ouvertes ».
+
+Quatre défauts réels du produit ont été trouvés en chemin et réparés à la cause :
+l'onglet Images de la galerie masquait toute génération dont le champ `clip`
+était absent plutôt que `null` (`Galerie.tsx`) ; l'onglet Vidéos ignorait la
+liste du chantier et ne montrait donc pas un clip qui venait d'être payé
+(`GalerieMedias.tsx`) ; les références jointes du guichet avaient perdu la
+vignette réduite et l'aperçu à la barre d'espace (`BarreQuiPaie.tsx`) ; et le
+choix d'une référence, devenu un cadre de dialogue, n'était refermé par aucune
+des sorties de l'écran de confirmation — partir par une porte laissait une
+fenêtre modale posée sur l'écran d'à côté (`App.tsx`).
+
+`npx tsc --noEmit` reste sans erreur.

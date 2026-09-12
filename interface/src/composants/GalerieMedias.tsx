@@ -28,6 +28,7 @@ const PAR_PAGE = 24
 export function GalerieMedias({
   filtre,
   onRecherche,
+  entrees,
   clips,
   projet,
   onChanger,
@@ -61,7 +62,29 @@ export function GalerieMedias({
   const [etatLecture, setEtatLecture] = useState<"en-cours" | "pret" | "erreur">("pret")
   const [mediaLu, setMediaLu] = useState<SorteDeMedia | null>(null)
 
-  const clipsVivants = useMemo(() => clips.filter((clip) => !clip.clip?.jete), [clips])
+  /** Les clips que l'onglet Vidéos montre — **les gardés et ceux qui viennent
+   *  d'arriver**.
+   *
+   *  Deux listes se rejoignent ici, et il en manquait une. Les clips relus du
+   *  dépôt (`clips`) ne passent pas par `/assets` : une recherche sur les
+   *  images ne doit donc jamais les faire disparaître des autres médias. Mais
+   *  un clip **qui vient d'être payé** n'est encore que dans le chantier, que
+   *  `entrees` porte : sans lui, on regardait son clip ne pas arriver, et il ne
+   *  paraissait qu'au rechargement suivant. Le chantier l'emporte à la même
+   *  clé — il en tient la version la plus fraîche —, et un clip jeté s'en va
+   *  des deux côtés. */
+  const clipsVivants = useMemo(() => {
+    const parIdentifiant = new Map<string, Generation>()
+    for (const clip of clips) if (!clip.clip?.jete) parIdentifiant.set(clip.identifiant, clip)
+    for (const entree of entrees) {
+      if (entree.sorte === "asset") continue
+      const generation = entree.generation
+      if (!generation.clip) continue
+      if (generation.clip.jete) parIdentifiant.delete(generation.identifiant)
+      else parIdentifiant.set(generation.identifiant, generation)
+    }
+    return [...parIdentifiant.values()]
+  }, [clips, entrees])
 
   const dernierChoix = useRef({ cleMemoire, sorte, recherche: filtre.recherche.trim() })
   useEffect(() => {

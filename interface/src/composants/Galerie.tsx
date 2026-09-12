@@ -1202,6 +1202,7 @@ export function Galerie({
             onRecherche={(recherche) => setFiltre((f) => ({ ...f, recherche }))}
             entrees={entrees}
             clips={clips}
+            /* Voir `clipsVivants` : les deux listes se rejoignent là-bas. */
             projet={bibliotheque.courant}
             onChanger={changerDeMedia}
             onBande={ouvrirLAtelierDeBande}
@@ -1279,7 +1280,14 @@ export function Galerie({
             entrees={
               sorte === "videos"
                 ? videos
-                : entrees.filter((entree) => entree.sorte === "asset" || entree.generation.clip === null)
+                : // **`!clip` et non `clip === null`** : le champ est déclaré
+                  // facultatif (`Generation.clip?`), le serveur l'écrit à
+                  // `null` mais rien n'oblige un producteur d'événement à le
+                  // faire — et un champ absent faisait alors disparaître de
+                  // l'onglet Images *toutes* les générations, pas seulement les
+                  // clips : l'emplacement en cours, l'échec qui porte sa
+                  // raison, la planche qui attend un regard.
+                  entrees.filter((entree) => entree.sorte === "asset" || !entree.generation.clip)
             }
             selection={selection}
             filtre={filtre}
