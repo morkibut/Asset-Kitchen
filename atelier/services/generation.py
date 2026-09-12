@@ -1039,7 +1039,14 @@ class ServiceGenerations:
         """Jusqu'à ce que plus rien ne tourne. Pour les essais et les scripts —
         l'écran, lui, écoute le flux et n'attend jamais."""
         while self._en_vol:
-            await asyncio.gather(*tuple(self._en_vol), return_exceptions=True)
+            taches = tuple(self._en_vol)
+            await asyncio.gather(*taches, return_exceptions=True)
+            # Sur des tâches déjà finies, gather peut rendre sans céder la
+            # main. Leur callback de retrait attend encore ce tour de boucle :
+            # compter uniquement sur lui transforme alors l'attente en boucle
+            # CPU infinie. Ne retirer que ce qui vient réellement de finir ;
+            # une tâche ajoutée entre-temps devra aussi être attendue.
+            self._en_vol.difference_update(t for t in taches if t.done())
 
     # ── L'exécution ──────────────────────────────────────────────────────────
 

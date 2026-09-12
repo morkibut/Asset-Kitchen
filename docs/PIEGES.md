@@ -1847,3 +1847,13 @@ la prochaine réécriture retrouvera.
   copie && mv` sous Git Bash pour une coupe, qui travaille en octets et ne décode rien. La
   parade quand c'est déjà arrivé : `git checkout -- <fichier>` et refaire, plutôt que corriger
   les accents un à un. Payé le 9 septembre 2026, en `B23`.
+- **Attendre une tâche déjà finie peut empêcher son nettoyage.** `attendre_tout` bouclait
+  sur un ensemble dont le retrait dépendait d'un callback de fin. Sur Python 3.12, `gather`
+  peut rendre immédiatement pour une tâche terminée : le callback reste en attente pendant
+  que la boucle consomme le processeur. Les images et calques étaient déjà écrits, donc le
+  journal de génération annonçait une réussite et cachait le défaut. Retirer explicitement
+  les tâches terminées après l'attente suffit, sans oublier celles ajoutées entre-temps.
+  **Un délai asyncio ne borne pas une boucle qui ne rend jamais la main** : la contre-épreuve
+  tourne dans un sous-processus avec délai externe. Trouvé le 12 septembre 2026 dans la passe
+  serveur complète, sur le parcours MCP d'équipement de `C5` ; preuve dans
+  `tests/test_attente_generations.py`.
