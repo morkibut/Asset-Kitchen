@@ -1012,3 +1012,23 @@ d'images, de planches et d'appels et permet le regroupement avant découpe local
 images issues d'une vidéo ou d'un rendu 3D restent réutilisables. Reprendre une graine
 n'est pas une promesse de mouvement identique. L'ordre des calques explique ce qui cache
 quoi à l'écran et permet une pièce partiellement sous le personnage, même en vue 3/4.
+
+### Consolidation autorisée le 12 septembre après la revue UX
+
+Ces précisions prolongent les stories ci-dessus, sans ajouter de famille d'outil :
+
+- US-524 et US-536 : une correction non enregistrée reste récupérable ; changer de lieu
+  puis revenir retrouve l'asset, la version et la frame. La portée réelle du geste reste visible.
+- US-538 et US-540 : liste compacte, filtres et classement se retrouvent après fermeture ;
+  les résultats dérivés peuvent se regrouper sans qu'aucun disparaisse de la galerie.
+  Retirer un asset d'une collection ne supprime ni l'asset ni ses résultats.
+- US-521, US-522 et US-539 : l'envoi se relit de la même manière quel que soit son point
+  de départ ; créer la référence préalable conserve la demande d'animation initiale.
+  Les paramètres proposés dépendent du moyen choisi et le total annoncé reste près de l'action.
+- US-526 : compte des travaux et consommations incluent les fabrications libres et celles
+  d'équipements. Récupérer un résultat, reprendre son traitement et relancer sa fabrication
+  sont des actions distinctes.
+- US-535 : choisir les références d'un îlot pour une fabrication reste explicite et ne
+  transforme pas les autres notes en consignes ; les résultats déjà produits restent inchangés.
+- US-541 à US-544 : la couverture distingue les bases absentes des calques à préparer ;
+  la relecture d'un équipement permet de vérifier son animation avant de valider ses frames.

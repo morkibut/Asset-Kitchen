@@ -50,6 +50,16 @@ et les essais sont des parcours de navigateur. Le raccord aux vrais outils se cl
 AU2 à AU4 ; le prototype ne paie pas à lui seul leur point dur. L'ajout de cette préparation
 ne reclasse aucune des quatorze tranches initiales ; les ajouts AU15–AU17 sont classés séparément.
 
+**Consolidation du 12 septembre — même préparation UX MEDIUM, réflexion élevée.**
+Mesure : le châssis et l'état vivent dans deux fichiers, le rangement et les travaux dans
+un module de parcours, et les envois dans trois chemins distincts ; les équipements ont
+déjà leurs cibles, masques et historique. Les ajouts portent sur leur raccord interactif,
+la sauvegarde locale de démonstration et les contrôles communs, sans fournisseur ni migration
+serveur. Trois parcours indépendants se parallélisent, puis les équipements et la toile
+réutilisent leurs contrôles. Les preuves sont des essais navigateur, notamment après
+rechargement et sur données nombreuses. L'affectation historique recommande Sonnet ; les
+agents de cette session utilisent le modèle disponible hérité, sans prétendre exécuter Sonnet.
+
 **Complément après validation de la simplicité de l'UI.** AU2, AU3 et AU4 sont renforcées
 par US-534 à US-536 : création sans MCP, toile et reprise complète des tables. Leurs
 étiquettes sont conservées : aucune réécriture de la toile ni nouveau schéma de retouche

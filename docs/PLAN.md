@@ -6,14 +6,12 @@
 > n'est encore implémentée**. Étape immédiate : essayer les parcours de la maquette et compléter
 > les outils avant de remplacer les écrans concernés. Le premier développement reste **AU1**,
 > l'export d'une animation existante.
-> Retours intégrés dans la préparation UX : tables en sélecteur, composition séparée,
-> découpe et extraction manipulables. L'auteur a essayé les six parcours le 11 septembre ;
-> ses retours de 21 h 49 sont intégrés (arborescence, relecture, aperçus, calage et zoom).
-> La nouvelle itération reste à essayer ; cela ne valide aucune tranche de production.
-> Complément de 22 h 28 : équipements contextualisés, collections, galerie, fabrication
-> libre et montage de clip sont maquettés ; les preuves et limites restent dans la couverture.
-> La précision suivante rend le parcours équipement complet obligatoire dans la maquette :
-> son implémentation est découpée en AU15–AU17, après AU5 ; le report de 22 h 56 est annulé.
+> Les retours d'essai et leurs limites sont consignés dans la
+> [couverture du prototype](maquettes-atelier-unifie/couverture.md).
+> Les équipements complets sont obligatoires : AU15–AU17, après AU5.
+> Le 12 septembre, l'auteur autorise la consolidation autonome après la revue UX complète :
+> reprise du travail, espace compact, bibliothèque, envois et équipements. Cette préparation
+> est en cours ; ses vérifications restent distinctes des tranches de production.
 > L'amendement RF est remplacé par cet ordre. La V4 reste le socle livré, avec les écarts
 > relevés dans la revue ; ni elle ni RF ne constituent une seconde file d'exécution.
 >

@@ -53,6 +53,26 @@ Critères de passage à l'implémentation des écrans concernés :
 La preuve technique AU1 reste le premier développement ; elle peut éclairer la maquette
 de livraison. Les générations simulées ne constituent jamais une preuve d'intégration.
 
+**Consolidation UX autorisée le 12 septembre.** La [revue comparative](revue-ux-complete-2026-09-12.md)
+alimente cette préparation, sans ouvrir de seconde file de production. Les trois premiers
+parcours se travaillent en parallèle : reprendre une retouche dans un espace compact,
+retrouver et ranger un résultat dans une bibliothèque chargée, préparer une fabrication
+avec sa référence et son envoi relu. Leur raccord précède la vérification animée des
+équipements, les liens de la toile vers l'envoi et la relecture des livraisons simulées.
+
+Critères de consolidation, à éprouver dans le prototype avant leur raccord au produit :
+
+- [ ] Le brouillon et le contexte de retouche se retrouvent après fermeture, sans modifier l'original.
+- [ ] Image, contrôles de vue et timeline restent utilisables ensemble dans une fenêtre desktop.
+- [ ] Recherche, filtres, collections et regroupement des dérivés restent lisibles avec un catalogue chargé.
+- [ ] Les trois entrées de fabrication partagent la relecture, conservent les paramètres et annoncent leur portée.
+- [ ] Un équipement se vérifie en mouvement ; les bases absentes et les calques à revoir ne se disent pas prêts.
+- [ ] Les références choisies dans la toile se relisent avant l'envoi ; les notes libres restent hors de la demande.
+- [ ] Travaux et consommations ont les mêmes comptes ; la livraison montre les révisions et les fichiers prévus.
+
+Ces cases concernent la simulation interactive ; elles ne ferment aucun critère de fidélité
+Godot, de génération réelle ou de stockage du produit.
+
 1. **Une animation existante arrive dans Godot via l'agent** — AU1.
 2. **L'auteur ou l'agent crée un personnage animé, avec les outils de correction complets** — AU2 à AU5.
 3. **Les équipements adaptés aux héros se combinent sans nouvelle génération** — AU15 à AU17.

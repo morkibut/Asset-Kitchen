@@ -123,6 +123,8 @@ collections, la fabrication libre et la galerie de tous les résultats réutilis
 US-541 à US-544 complètent les emplois d'équipement : couverture, correction par frame,
 combinaisons et reprise après modification de l'animation.
 US-545 relie une image déjà retouchée à un équipement sans perdre sa source.
+Les précisions de consolidation du 12 septembre dans ce même document de stories portent
+sur la reprise du travail, le rangement volumineux, l'envoi commun et la vérification animée.
 En cas de conflit, le présent cadrage prévaut ;
 les anciennes stories ne sont pas supprimées comme si elles n'avaient jamais été livrées.
 
