@@ -10658,6 +10658,41 @@ describe("la galerie dégraissée", () => {
     expect(fil.getByText("Le nain")).toBeTruthy()
   })
 
+  // ── « Ouvrir un résultat depuis la galerie, et le reposer sur la toile sans
+  //     nouvelle fabrication » (US-540) ────────────────────────────────────────
+  //
+  // **C'est cet essai-ci qui a trouvé le défaut** : la sélection posée par le
+  // clic était effacée au rendu suivant, et la fiche ne s'ouvrait donc jamais —
+  // ni depuis la galerie, ni ailleurs. Il tient les deux bouts du parcours :
+  // la tuile ouvre bien la fiche de *ce* résultat, et le geste de la fiche
+  // pose l'image telle quelle. Aucun appel de génération ne part : c'est
+  // l'invariant du produit, et il se compte plutôt qu'il ne se raconte.
+
+  test("une tuile ouvre sa fiche, et la fiche pose l'image sur la toile sans fabriquer", async () => {
+    const image = asset("aaaa1111-0", "un tonneau")
+    const double = await ouvrirLaFiche(image)
+
+    // La fiche est bien celle de la tuile cliquée, et pas d'un voisin.
+    const fiche = within(
+      screen.getByLabelText("Fermer la fiche").closest("aside") as HTMLElement,
+    )
+    expect(fiche.getAllByText("un tonneau").length).toBeGreaterThan(0)
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Poser sur la toile" }),
+    )
+    expect(await screen.findByText("Posée sur la toile.")).toBeTruthy()
+
+    // La carte est rangée en réserve par la route de la toile — et **rien** n'a
+    // été fabriqué pour ça.
+    expect(
+      double.appels.filter(({ url }) => url.includes("/board/assets/")),
+    ).toHaveLength(1)
+    expect(
+      double.appels.filter(({ url }) => url.endsWith("/api/generations")),
+    ).toHaveLength(0)
+  })
+
   // ── « Une image sans chose du jeu propose de la rattacher, et le
   //     rattachement se défait » ─────────────────────────────────────────────
 

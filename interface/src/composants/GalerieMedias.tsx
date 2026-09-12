@@ -69,7 +69,14 @@ export function GalerieMedias({
     const choix = dernierChoix.current
     if (choix.cleMemoire === cleMemoire && (choix.sorte !== sorte || choix.recherche !== recherche)) setPage(0)
     dernierChoix.current = { cleMemoire, sorte, recherche }
-    onChanger(sorte)
+    // **`onChanger` ne part que quand le média change vraiment.** Il était
+    // appelé à chaque passage de l'effet, donc aussi quand seule la clé de
+    // mémoire changeait — et elle change toute seule au premier rendu utile :
+    // `galerie:sans-projet` devient `galerie:<jeu>` dès que le jeu ouvert
+    // arrive. Galerie s'en sert pour vider la sélection ; la sélection posée
+    // par un clic sur une tuile était donc effacée au rendu suivant, et la
+    // fiche — qui *est* la sélection quand elle vaut un — ne s'ouvrait jamais.
+    if (choix.sorte !== sorte) onChanger(sorte)
   }, [cleMemoire, filtre.recherche, onChanger, setPage, sorte])
 
   useEffect(() => {

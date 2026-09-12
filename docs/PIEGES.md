@@ -1869,3 +1869,16 @@ la prochaine réécriture retrouvera.
   fréquence et largeur dans le fichier rendu, jamais dans la commande ffmpeg. Trouvé et payé
   le 12 septembre 2026 sur `AU14` ; preuve dans
   `tests/test_au14_sons.py::test_wav_format_extensible_se_decode_comme_pcm`.
+- **Un rappel « ça a changé » appelé à chaque passage de l'effet, et la sélection repart à vide.**
+  `GalerieMedias.tsx` appelait `onChanger(sorte)` sans condition dans un effet dont les
+  dépendances portent aussi la clé de mémoire du parcours — et cette clé change toute seule
+  au premier rendu utile : `galerie:sans-projet` devient `galerie:<jeu>` dès que le jeu ouvert
+  arrive. Côté `Galerie.tsx`, `onChanger` vide la sélection ; la fiche d'une image *étant* la
+  sélection quand elle vaut un (`const fiche = selection.length === 1 ? selection[0] : null`),
+  aucun clic sur une tuile n'ouvrait plus de fiche — `setSelection` partait, puis l'effet la
+  remettait à `[]` au rendu suivant. ⚠️ **Un rappel nommé « quelque chose a changé » doit
+  comparer avant d'appeler** : ses dépendances d'effet contiennent toujours plus que la chose
+  qu'il annonce. Le garde existait déjà juste au-dessus, pour remettre la pagination à zéro —
+  il n'avait pas été étendu à `onChanger`. Trouvé le 12 septembre 2026 sur `AU2` ; preuve dans
+  `interface/src/App.test.tsx` § « une tuile ouvre sa fiche, et la fiche pose l'image sur la
+  toile sans fabriquer ».

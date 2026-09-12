@@ -150,7 +150,7 @@ les mouvements et directions utiles, importe une référence et voit ce qui rest
 - [x] Créer un équipement depuis le personnage conserve ce lien et propose sa référence
   dans l'envoi ; les variantes et le retour au personnage restent accessibles (US-537).
   L'accès existant reste disponible jusqu'à la reprise complète de ce parcours en AU15–AU17.
-- [ ] La galerie distingue les résultats des fiches d'assets : filtres par média et
+- [x] La galerie distingue les résultats des fiches d'assets : filtres par média et
   rattachement, ouverture et réutilisation sur la toile sans nouvelle fabrication (US-540).
 
 ## AU3 · De la demande de l'agent à une nouvelle animation
@@ -406,11 +406,11 @@ ne demande aucun fournisseur et pose le contrat réutilisé par les deux tranche
   sa source. Déplacement direct, valeurs et ordre devant ou derrière le corps se rouvrent.
 - [x] Les masques d'occultation et l'ordre des couches permettent de corriger ce qui passe
   devant ou derrière ; l'original du corps et les autres emplois ne sont jamais modifiés.
-- [ ] En vue 3/4, l'ordre des images est expliqué indépendamment de l'orientation ; une
+- [x] En vue 3/4, l'ordre des images est expliqué indépendamment de l'orientation ; une
   partie d'une pièce peut passer sous le personnage et une autre au-dessus, par frame.
-- [ ] Depuis la retouche, associer le rendu à une pièce distingue référence, personnage
+- [x] Depuis la retouche, associer le rendu à une pièce distingue référence, personnage
   équipé à extraire et calque transparent ; la cible est explicite et la source conservée.
-- [ ] La fiche de la pièce présente d'abord ses emplois et leurs porteurs ; les usages
+- [x] La fiche de la pièce présente d'abord ses emplois et leurs porteurs ; les usages
   à part ou en mise en scène restent distincts des calques portés, comme dans l'existant.
 - [x] Retenir une variante ne détruit pas les autres ; une image équipée contenant le corps
   complet ne devient pas un calque superposable par simple changement d'étiquette.
@@ -454,7 +454,7 @@ peut contrôler la bande en lecture. L'agent suit la même fabrication bornée q
   signifie proposition de placement, jamais promesse de qualité ni validation de toute la bande.
 - [x] Réordonner conserve l'identité des frames et leurs placements ; ajout, remplacement ou
   changement de version signale les cibles à compléter ou revoir sans perdre les anciens calques.
-- [ ] Fermer pendant la lecture puis rouvrir retrouve sélection, sources et corrections
+- [x] Fermer pendant la lecture puis rouvrir retrouve sélection, sources et corrections
   avec des valeurs différentes des défauts ; une image équipée seule ne remplit pas la couverture.
 
 ## AU17 · Les tenues se combinent et arrivent dans Godot
