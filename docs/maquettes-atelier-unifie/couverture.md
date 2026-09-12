@@ -302,3 +302,23 @@ lecture/édition de la consigne, passage à quatre cases par planche (six images
 deux appels, 0,08 $ fictif), relecture de l’envoi après rechargement. Lot vidéo de
 deux clips, six secondes, 16:9, 720p : deux travaux distincts et paramètres relus
 après rechargement. Contrôle visuel de la fenêtre en deux colonnes.
+
+## Consolidation du 12 septembre après la revue complète
+
+Les fabrications normale, libre et d'équipement utilisent le même cadre de relecture :
+lecture/édition, références et origines, textes et paramètres, résumé modèle/appels/coût.
+Les profils restent fictifs. Le dépassement des références jointes bloque l'envoi ;
+la fusion automatique des nombreuses références d'univers et leur liste hors plafond
+ne sont pas simulées comme un vrai catalogue.
+
+Un emploi distingue désormais ses calques sur les frames existantes des bases encore
+absentes dans l'objectif du personnage. Une couverture 6/6 ne cache donc pas sept
+animations encore à fabriquer. Les réglages d'emplacement et de superposition sont
+repliables ; le travail commence par les images à préparer ou à vérifier.
+
+La vérification collective lit la bande avec ses calques extraits. On peut signaler
+une frame, l'ouvrir directement et la corriger ; les signalements, bases modifiées
+et images non extraites sont exclus de la validation collective. Modifier une base
+fait revenir son calque à revoir. Les réglages et l'historique de chaque frame restent
+conservés. Les [essais détaillés](../releves/2026-09-12-consolidation-prototype.md)
+précisent les parcours et les limites des preuves.

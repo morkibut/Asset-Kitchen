@@ -83,6 +83,24 @@ la lecture laisse le lecteur utilisable. Créer et retoucher, revenir à l'asset
 reprendre le montage et recharger conserve la bande. L'image et la timeline ont été
 contrôlées ensemble à 1280 × 720.
 
+## Équipements
+
+L'agent équipements a vérifié le sac : six images, pliage en quatre et deux cases,
+deux appels annoncés à 0,08 dollar fictif, dépliage, extraction, lecture des cinq frames.
+Signaler la frame 3 l'exclut de la validation collective. Ouvrir cette frame, régler sa
+position, la valider puis activer le sac dans la combinaison laisse l'animation jouable.
+Retoucher la première frame du personnage fait passer la couverture de 6/6 à 5/6 et
+signale la base modifiée ; la validation du groupe l'exclut.
+
+La relecture historique après rechargement retrouve le texte d'univers modifié,
+les six bases, les deux appels, la graine 42 et la résolution demandée. Le parent a
+également parcouru fabrication, dépliage, extraction et validation animée avec le
+profil local, puis contrôlé visuellement les cadres de relecture et de vérification.
+
+Le raccord de contexte du lot suivant a été essayé par le parent : Sac de voyage,
+Marche / Sud, frame 3, position X=2 et zoom 700 %, puis rechargement. L'écran précis,
+la position et le zoom se retrouvent ; le calque modifié reste « À vérifier ».
+
 ## Portée des preuves
 
 Ces essais ne prouvent ni la fidélité des exports Godot, ni la qualité de génération,

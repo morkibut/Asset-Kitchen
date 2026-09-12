@@ -329,6 +329,8 @@ sans déplacer l'original ; aucun de ces modules ne pilote les moteurs du produi
 `docs/maquettes-atelier-unifie/relecture.js` et `relecture.css` tiennent le cadre commun
 lecture/édition, le résumé d'envoi et les profils fictifs. La bibliothèque compacte et
 le montage utilisent `docs/maquettes-atelier-unifie/consolidation-bibliotheque.css`.
+Les cadres de couverture et de vérification animée des équipements utilisent
+`docs/maquettes-atelier-unifie/consolidation-equipements.css`.
 Le châssis conserve dans un espace de travail séparé le contexte et les brouillons :
 une reprise de brouillon ne remplace jamais la version enregistrée du résultat.
 Le périmètre testable et ses limites sont dans
