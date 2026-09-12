@@ -13,7 +13,7 @@ l’état du chantier reste dans [PLAN.md](PLAN.md). L’apparence fait foi dans
 | Main : transparence, pinceau, gomme, diamètre, couleur, calques, ordre, visibilité, nom, suppression, dernier passage | Retouche → La main ; animation → La main | Une seule frame. Nouvelle Main finale après placement ; ancienne Main de recette inchangée | `AtelierUnifieRetouche.test.tsx` : trait pendant lecture, frame visible, coordonnées, voisins inchangés, défaire/refaire, sauvegarde puis réouverture. `test_au4_main.py` : pixels, compatibilité, cache reconstruit |
 | Zoom, déplacement de la vue, empreinte du pinceau | Image : barre + molette existantes ; frame : facteur, ajuster, Ctrl + molette, Espace + glisser / bouton central | Vue seulement ; aucun changement de recette | Ajustement mesuré dans l’espace réellement disponible. Empreinte carrée mise à l’échelle. Validation 1280×800 / 1600×1000 confiée à la QA globale |
 | Recettes nommées, appliquer, copier/coller, sauvegarder une recette | Image : menu Recettes ; bande : recettes enregistrées | Un réglage voyage, les traits de Main ne voyagent pas | Corrigé : une recette nommée sur toute la bande conserve aussi les Main individuelles historiques |
-| Défaire, refaire, annuler, enregistrer | En-tête fixe de l’animation ; Ctrl Z, Ctrl Maj Z / Ctrl Y, Ctrl S | 80 états de session ; montage, recettes, Main, cadence et sens. Annuler revient au dernier enregistrement | Test UI réel de fermeture/réouverture. La conservation des brouillons non enregistrés lors d’une navigation extérieure reste un raccord global |
+| Défaire, refaire, annuler, enregistrer | En-tête fixe de l’animation ; Ctrl Z, Ctrl Maj Z / Ctrl Y, Ctrl S | 80 états de session ; montage, recettes, Main, cadence et sens. Annuler revient au dernier enregistrement | Test UI de fermeture/réouverture. Brouillon non enregistré conservé séparément sur cet ordinateur, repris ou abandonné explicitement ; aucun enregistrement ni appel IA lors de la reprise |
 | Sélection : simple, Ctrl, Maj, toutes, une seule | Timeline basse de l’animation | Une coordonnée de pinceau ne s’applique jamais en lot | Portée explicite Frame / Sélection / Animation entière ; différences de recettes restent indiquées |
 | Réordre, duplication, retrait, insertion depuis chutier, vider le chutier, chercher dans le clip | Timeline et Chutier dépliable | Occurrences entières, recette et Main comprises. Copie : nouvel UUID | Identifiant conservé au déplacement ; boutons de déplacement existants maintenus |
 | Poussée X/Y, remettre droit, changer de source, pelure d’oignon | Panneau droit → Position, source et pelure d’oignon | Frame choisie. Remplacer sa source remet recette et Main finale à zéro | Explication existante de la perte des réglages ; geste fait pendant lecture couvert par tests A7 |
@@ -25,6 +25,13 @@ l’état du chantier reste dans [PLAN.md](PLAN.md). L’apparence fait foi dans
 | Extraction : choisir deux sources, calage automatique, déplacement direct, échelle, opacité, masque, sorties | Retouche → Extraire un élément ; ancien Superposer conservé | Sources et composition gérées par le service existant | Bibliothèque générale : recherche, collection, favoris et pagination. Déplacement direct, rectangle, pinceau garder/retirer avec empreinte ; travail/calque/résultat zoomables. Test API de relecture exacte des sources et du masque |
 
 Les fabriques sont séparées des traitements dans le nouvel accès principal.
+Les essais de navigation vérifient aussi le retour de retouche vers la galerie
+filtrée, la vignette choisie et le défilement du sujet. Les brouillons du montage
+conservent son nom, sa cadence et l’ordre des occurrences ; ceux de la fabrication
+vidéo conservent le prompt, les références, le modèle et les paramètres avant
+relecture. Un profil vidéo retiré reste nommé avec la raison de son indisponibilité.
+L’extraction retrouve aussi ses deux sources, son calage et son masque ; la découpe
+retrouve les rectangles corrigés sans les remplacer par une nouvelle détection.
 « Toutes les tables et leur état » conserve les anciens chemins pendant la
 vérification de chaque atelier spécialisé. Aucune capacité ancienne n’a été
 retirée pour masquer un raccord restant.

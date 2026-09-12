@@ -3,8 +3,7 @@
 > **PRD source** : `docs/PRD.md`. **Ordre actif depuis le 11 septembre 2026** :
 > [atelier unifié](PLAN-atelier-unifie.md), de la demande MCP de l'agent au sprite utilisé dans Godot.
 > **L'auteur a validé toute la maquette interactive le 12 septembre 2026 et demandé son
-> implémentation complète en autonomie.** **AU1 est vérifiée**, y compris dans Godot réel.
-> AU2–AU4 et AU15 sont en intégration ; la file locale AU6 se construit.
+> implémentation complète en autonomie.** La progression courante est au tableau ci-dessous.
 > Les critères de production restent ouverts jusqu'à leur vérification dans le produit.
 > Les retours d'essai et leurs limites sont consignés dans la
 > [couverture du prototype](maquettes-atelier-unifie/couverture.md).
@@ -53,8 +52,8 @@ construisant** dans `docs/status/etat.md`, ses **critères cochés** dans
 | **V2.5**, **V3.01**, **V3.03**, **V3.1** | Quatre blocs ouverts quand la V4 est entrée. Ce qui y a été livré tient : le relevé `N1`, le tiroir qui relit ce qui part, les trois quarts de l'atelier d'une animation aux tables, `G1` et `G16` | **périmés par le carnet** — les écrans qu'ils réparaient sont redessinés, donc le reste ne se reprend pas tel quel. ⚠️ Les quatorze tranches `G` de la V3.1 nomment des défauts réels, et **se relisent avant de clore la V4** | `archive/plan-perime-par-la-v4.md` |
 | **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **non ouverte** | ci-dessous |
 | **V4** — le carnet | Refonte déjà largement livrée ; sa conformité et ses parcours restent à corriger | **socle conservé, suite réorientée vers AU** ; les cases historiques ne sont pas décochées | `docs/PLAN-carnet.md` ; détail du relevé antérieur dans `docs/archive/etat-carnet-2026-09-10.md` |
-| **V5**, **V6** | Tuiles et son | **différés, cadrage initial en AU13/AU14**, à détailler avant exécution | `docs/PLAN-atelier-unifie.md` |
-| **Atelier unifié** — AU1 à AU17 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **AU1 vérifiée ; AU2–AU4/AU15 en intégration, AU6 en construction** | `docs/PLAN-atelier-unifie.md` |
+| **V5**, **V6** | Tuiles et son | **en construction dans AU13/AU14** | `docs/PLAN-atelier-unifie.md` |
+| **Atelier unifié** — AU1 à AU17 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **Interface remplacée, validation en cours.** Navigation, fiche, bibliothèque, galerie multimédia, préparation et ateliers raccordés ; build réussi. Les 65 % annoncés auparavant surévaluaient les services. Livraisons, tuiles, tenues et audio éprouvés dans Godot ; génération locale testée avec moteurs doublés, qualité 3D réelle non vérifiée. Migration des tests de navigation et revue des parcours encore ouvertes. | `docs/PLAN-atelier-unifie.md` |
 
 **226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 874 essais de
 serveur et 1 168 d'écran** tiennent le dépôt — comptés le 10 septembre 2026, et **aucun ne coûte

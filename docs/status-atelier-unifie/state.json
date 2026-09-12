@@ -1,0 +1,6224 @@
+{
+  "schema": 1,
+  "project": {
+    "name": "Asset Kitchen — PRD",
+    "item_word": "éléments"
+  },
+  "config": {
+    "out_dir": "docs/status-atelier-unifie"
+  },
+  "detected": {
+    "items": [
+      {
+        "id": "V3.5",
+        "type": "epic",
+        "parent": null,
+        "title": "Le dépliage généralisé",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 0,
+        "blocked_by": null
+      },
+      {
+        "id": "P1",
+        "type": "epic",
+        "parent": null,
+        "title": "La planche se garde, et son découpage se refait",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 10
+        },
+        "source": "plan",
+        "order": 1,
+        "blocked_by": null
+      },
+      {
+        "id": "P1.1",
+        "type": "check",
+        "parent": "P1",
+        "title": "**Le premier dépliage reste automatique** : une planche qui revient bien ne demande aucun geste, ni avant ni après",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 2
+      },
+      {
+        "id": "P1.2",
+        "type": "check",
+        "parent": "P1",
+        "title": "**La géométrie s'écrit sur le pliage** au lieu d'être déduite du nombre de cases — sans quoi changer la formule redécouperait les planches anciennes de travers",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 3
+      },
+      {
+        "id": "P1.3",
+        "type": "check",
+        "parent": "P1",
+        "title": "Refaire un dépliage est un geste que l'auteur demande, et il repart des coupes proposées",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 4
+      },
+      {
+        "id": "P1.4",
+        "type": "check",
+        "parent": "P1",
+        "title": "Une coupe se déplace, s'ajoute et se retire à la main avant de valider un dépliage refait",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 5
+      },
+      {
+        "id": "P1.5",
+        "type": "check",
+        "parent": "P1",
+        "title": "Une planche se déplie plusieurs fois ; les dépliages coexistent sans se marcher dessus",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 6
+      },
+      {
+        "id": "P1.6",
+        "type": "check",
+        "parent": "P1",
+        "title": "Chaque image dit sa planche et son dépliage d'origine, et se remonte jusqu'à eux",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 7
+      },
+      {
+        "id": "P1.7",
+        "type": "check",
+        "parent": "P1",
+        "title": "Supprimer un dépliage n'emporte ni la planche ni les autres dépliages",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 8
+      },
+      {
+        "id": "P1.8",
+        "type": "check",
+        "parent": "P1",
+        "title": "Supprimer la planche demande confirmation et dit combien d'images en dépendent",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 9
+      },
+      {
+        "id": "P1.9",
+        "type": "check",
+        "parent": "P1",
+        "title": "Une planche reçue mais non dépliée à la fermeture se déplie seule au redémarrage, comme depuis `C2`",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 10
+      },
+      {
+        "id": "P1.10",
+        "type": "check",
+        "parent": "P1",
+        "title": "Aucun appel au fournisseur : déplier une planche déjà là marche réseau coupé",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 11
+      },
+      {
+        "id": "P2",
+        "type": "epic",
+        "parent": null,
+        "title": "Une planche pour plusieurs choses",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 12,
+        "blocked_by": "P1."
+      },
+      {
+        "id": "P2.1",
+        "type": "check",
+        "parent": "P2",
+        "title": "Une planche peut porter **plusieurs choses différentes du jeu**, et la demande dit d'avance ce que chaque case contient",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 13
+      },
+      {
+        "id": "P2.2",
+        "type": "check",
+        "parent": "P2",
+        "title": "Le découpage range chaque morceau à la place que la demande annonçait",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 14
+      },
+      {
+        "id": "P2.3",
+        "type": "check",
+        "parent": "P2",
+        "title": "Une case dont le sujet n'est pas celui annoncé **se signale** au lieu de se ranger de travers",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 15
+      },
+      {
+        "id": "P2.4",
+        "type": "check",
+        "parent": "P2",
+        "title": "Le prix par sujet s'affiche avant l'envoi, à côté du prix de la planche",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 16
+      },
+      {
+        "id": "P2.5",
+        "type": "check",
+        "parent": "P2",
+        "title": "L'ancienne règle continue de s'appliquer aux planches qui ne portent pas cette liste",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 17
+      },
+      {
+        "id": "P2.6",
+        "type": "check",
+        "parent": "P2",
+        "title": "Refaire le découpage d'une telle planche marche comme en `P1`",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 18
+      },
+      {
+        "id": "AU1",
+        "type": "epic",
+        "parent": null,
+        "title": "Une animation existante arrive dans Godot",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 4,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 19,
+        "blocked_by": null
+      },
+      {
+        "id": "AU1.1",
+        "type": "check",
+        "parent": "AU1",
+        "title": "Une demande MCP retrouve et exporte une animation existante sans appel fournisseur.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 20
+      },
+      {
+        "id": "AU1.2",
+        "type": "check",
+        "parent": "AU1",
+        "title": "Le résultat renvoie les fichiers, leurs rôles et les paramètres nécessaires ; Godot",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 21
+      },
+      {
+        "id": "AU1.3",
+        "type": "check",
+        "parent": "AU1",
+        "title": "Relancer l'export ne remplace aucun fichier inconnu ; un dossier invalide est expliqué.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 22
+      },
+      {
+        "id": "AU1.4",
+        "type": "check",
+        "parent": "AU1",
+        "title": "Une scène de démonstration s'ouvre réellement dans Godot ; son absence sur la machine",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 23
+      },
+      {
+        "id": "AU2",
+        "type": "epic",
+        "parent": null,
+        "title": "Le personnage porte les animations utiles au jeu",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 11
+        },
+        "source": "plan",
+        "order": 24,
+        "blocked_by": "AU1."
+      },
+      {
+        "id": "AU2.1",
+        "type": "check",
+        "parent": "AU2",
+        "title": "Une marche dans une direction peut être le seul objectif ; aucune pose fixe n'est exigée.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 25
+      },
+      {
+        "id": "AU2.2",
+        "type": "check",
+        "parent": "AU2",
+        "title": "Une référence ne remplit pas une animation ; « non demandé » ne compte pas comme manquant.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 26
+      },
+      {
+        "id": "AU2.3",
+        "type": "check",
+        "parent": "AU2",
+        "title": "UI et MCP lisent le même objectif et la même couverture, même après redémarrage.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 27
+      },
+      {
+        "id": "AU2.4",
+        "type": "check",
+        "parent": "AU2",
+        "title": "Un ancien personnage rouvre son plan, ses images, bandes et équipements sans perte.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 28
+      },
+      {
+        "id": "AU2.5",
+        "type": "check",
+        "parent": "AU2",
+        "title": "L'univers garde un accès direct à sa toile existante : images, textes, notes, îlots",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 29
+      },
+      {
+        "id": "AU2.6",
+        "type": "check",
+        "parent": "AU2",
+        "title": "Créer un sujet et lui donner un objectif depuis l'interface ne demande aucun agent.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 30
+      },
+      {
+        "id": "AU2.7",
+        "type": "check",
+        "parent": "AU2",
+        "title": "Les animations se parcourent par mouvement puis direction, comme des dossiers ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 31
+      },
+      {
+        "id": "AU2.8",
+        "type": "check",
+        "parent": "AU2",
+        "title": "Les équipements associés montrent un aperçu identifiable.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 32
+      },
+      {
+        "id": "AU2.9",
+        "type": "check",
+        "parent": "AU2",
+        "title": "Les familles et collections existantes restent accessibles dans la navigation ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 33
+      },
+      {
+        "id": "AU2.10",
+        "type": "check",
+        "parent": "AU2",
+        "title": "Créer un équipement depuis le personnage conserve ce lien et propose sa référence",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 34
+      },
+      {
+        "id": "AU2.11",
+        "type": "check",
+        "parent": "AU2",
+        "title": "La galerie distingue les résultats des fiches d'assets : filtres par média et",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 35
+      },
+      {
+        "id": "AU3",
+        "type": "epic",
+        "parent": null,
+        "title": "De la demande de l'agent à une nouvelle animation",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 8
+        },
+        "source": "plan",
+        "order": 36,
+        "blocked_by": "AU2."
+      },
+      {
+        "id": "AU3.1",
+        "type": "check",
+        "parent": "AU3",
+        "title": "Chemin complet depuis un personnage vide, avec moteur doublé et stockage réel jetable.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 37
+      },
+      {
+        "id": "AU3.2",
+        "type": "check",
+        "parent": "AU3",
+        "title": "Le même chemin s'effectue entièrement depuis l'interface sans client MCP connecté,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 38
+      },
+      {
+        "id": "AU3.3",
+        "type": "check",
+        "parent": "AU3",
+        "title": "La méthode doit accepter les références nécessaires ; le cadre de l'agent est relu",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 39
+      },
+      {
+        "id": "AU3.4",
+        "type": "check",
+        "parent": "AU3",
+        "title": "Répéter la clé de demande retrouve le travail ; une fermeture après soumission ne",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 40
+      },
+      {
+        "id": "AU3.5",
+        "type": "check",
+        "parent": "AU3",
+        "title": "L'agent reçoit une attente bornée puis un résultat exploitable ; l'UI montre le même état.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 41
+      },
+      {
+        "id": "AU3.6",
+        "type": "check",
+        "parent": "AU3",
+        "title": "La livraison provisoire autorisée n'exige pas une intervention humaine à chaque image.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 42
+      },
+      {
+        "id": "AU3.7",
+        "type": "check",
+        "parent": "AU3",
+        "title": "La relecture montre le fournisseur et le modèle, le coût annoncé et les références",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 43
+      },
+      {
+        "id": "AU3.8",
+        "type": "check",
+        "parent": "AU3",
+        "title": "Une fabrication libre d'image ou de vidéo ne demande aucun asset : paramètres,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 44
+      },
+      {
+        "id": "AU4",
+        "type": "epic",
+        "parent": null,
+        "title": "Juger et corriger l'animation sans perdre le contexte",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 14
+        },
+        "source": "plan",
+        "order": 45,
+        "blocked_by": "AU3."
+      },
+      {
+        "id": "AU4.1",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Les actions principales restent visibles dans des fenêtres desktop de 1280 × 800 et",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 46
+      },
+      {
+        "id": "AU4.2",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Aperçu à taille de jeu et zoom pixel ; durée, boucle et repère se jugent ensemble.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 47
+      },
+      {
+        "id": "AU4.3",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Une correction pendant la lecture est conservée après fermeture et réouverture.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 48
+      },
+      {
+        "id": "AU4.4",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Les anciennes capacités de montage et de retouche ont toutes une porte identifiée.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 49
+      },
+      {
+        "id": "AU4.5",
+        "type": "check",
+        "parent": "AU4",
+        "title": "L'inventaire des outils ci-dessous est détaillé contrôle par contrôle avant déplacement ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 50
+      },
+      {
+        "id": "AU4.6",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Les traitements d'une frame, d'une sélection et de toute la bande sont distingués ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 51
+      },
+      {
+        "id": "AU4.7",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Réglages avancés, recettes nommées, calques, annulation et réouverture sont repris ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 52
+      },
+      {
+        "id": "AU4.8",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Le choix d'une table reste accessible pendant le défilement de ses réglages ; la",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 53
+      },
+      {
+        "id": "AU4.9",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Une planche se découpe par détection, grille ou rectangles manuels : relire les zones,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 54
+      },
+      {
+        "id": "AU4.10",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Extraire un élément permet de proposer un calage des parties communes, d'ajuster",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 55
+      },
+      {
+        "id": "AU4.11",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Choisir une image ouvre une bibliothèque filtrable avec aperçus. Position et échelle",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 56
+      },
+      {
+        "id": "AU4.12",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Toutes les tables permettent zoom et déplacement de la vue, distincts du déplacement",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 57
+      },
+      {
+        "id": "AU4.13",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Depuis un clip, choisir les frames, leur ordre, cadence et boucle permet de créer",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 58
+      },
+      {
+        "id": "AU4.14",
+        "type": "check",
+        "parent": "AU4",
+        "title": "Le nom libre de la bande ne détermine pas son classement : personnage, mouvement",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 59
+      },
+      {
+        "id": "AU5",
+        "type": "epic",
+        "parent": null,
+        "title": "La révision remplace le bon asset dans Godot",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 60,
+        "blocked_by": "AU4."
+      },
+      {
+        "id": "AU5.1",
+        "type": "check",
+        "parent": "AU5",
+        "title": "Remplacer une marche conserve le repos et les autres directions ; les choix d'export",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 61
+      },
+      {
+        "id": "AU5.2",
+        "type": "check",
+        "parent": "AU5",
+        "title": "Une modification manuelle dans le dossier du jeu produit un conflit lisible.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 62
+      },
+      {
+        "id": "AU5.3",
+        "type": "check",
+        "parent": "AU5",
+        "title": "Une livraison interrompue n'est pas annoncée terminée ; la précédente reste récupérable.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 63
+      },
+      {
+        "id": "AU5.4",
+        "type": "check",
+        "parent": "AU5",
+        "title": "Godot recharge la bonne version ; l'export conserve strictement le descriptif Aseprite.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 64
+      },
+      {
+        "id": "AU6",
+        "type": "epic",
+        "parent": null,
+        "title": "Plusieurs demandes locales, un travail suivi",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 65,
+        "blocked_by": "AU3."
+      },
+      {
+        "id": "AU6.1",
+        "type": "check",
+        "parent": "AU6",
+        "title": "Les étapes GPU appartenant à l'atelier s'ordonnent sans chevauchement involontaire.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 66
+      },
+      {
+        "id": "AU6.2",
+        "type": "check",
+        "parent": "AU6",
+        "title": "Aucun verrou interne n'est présenté comme une garantie sur les travaux d'une autre app.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 67
+      },
+      {
+        "id": "AU6.3",
+        "type": "check",
+        "parent": "AU6",
+        "title": "Annuler vise seulement le travail possédé ; une annulation indisponible est dite telle.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 68
+      },
+      {
+        "id": "AU6.4",
+        "type": "check",
+        "parent": "AU6",
+        "title": "Reprise après redémarrage, résultat partiel et erreur d'un élément ne refont pas les autres.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 69
+      },
+      {
+        "id": "AU6.5",
+        "type": "check",
+        "parent": "AU6",
+        "title": "Durées mesurées à froid et à chaud restent distinctes ; le total d'un lot n'est pas",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 70
+      },
+      {
+        "id": "AU7",
+        "type": "epic",
+        "parent": null,
+        "title": "Une image par un workflow local nommé",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 71,
+        "blocked_by": "AU6."
+      },
+      {
+        "id": "AU7.1",
+        "type": "check",
+        "parent": "AU7",
+        "title": "Le catalogue expose les paramètres utiles et les capacités de références réelles.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 72
+      },
+      {
+        "id": "AU7.2",
+        "type": "check",
+        "parent": "AU7",
+        "title": "Le workflow et sa version voyagent avec le résultat ; une sortie inattendue est refusée",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 73
+      },
+      {
+        "id": "AU7.3",
+        "type": "check",
+        "parent": "AU7",
+        "title": "UI et agent suivent le même parcours ; les anciens moteurs restent disponibles.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 74
+      },
+      {
+        "id": "AU7.4",
+        "type": "check",
+        "parent": "AU7",
+        "title": "Une installation manquante est expliquée ; aucun paquet ni poids n'est installé implicitement.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 75
+      },
+      {
+        "id": "AU8",
+        "type": "epic",
+        "parent": null,
+        "title": "Une vidéo par un workflow local choisi",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 76,
+        "blocked_by": "AU7."
+      },
+      {
+        "id": "AU8.1",
+        "type": "check",
+        "parent": "AU8",
+        "title": "L'image de départ obligatoire reste obligatoire ; aucun repli ne la retire.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 77
+      },
+      {
+        "id": "AU8.2",
+        "type": "check",
+        "parent": "AU8",
+        "title": "Un profil nouvellement configuré se vérifie, se lance et se rouvre avec sa version.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 78
+      },
+      {
+        "id": "AU8.3",
+        "type": "check",
+        "parent": "AU8",
+        "title": "Le travail aboutit à une bande exportable et pas seulement à un fichier vidéo isolé.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 79
+      },
+      {
+        "id": "AU9",
+        "type": "epic",
+        "parent": null,
+        "title": "Un rendu asset3d existant devient une animation du jeu",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 80,
+        "blocked_by": "AU5."
+      },
+      {
+        "id": "AU9.1",
+        "type": "check",
+        "parent": "AU9",
+        "title": "L'animation garde le lien vers le personnage, le rendu et les réglages d'origine.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 81
+      },
+      {
+        "id": "AU9.2",
+        "type": "check",
+        "parent": "AU9",
+        "title": "Le résultat importé reste consultable après arrêt du serveur 3D.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 82
+      },
+      {
+        "id": "AU9.3",
+        "type": "check",
+        "parent": "AU9",
+        "title": "Une API incompatible ou un fichier manquant produit une raison précise.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 83
+      },
+      {
+        "id": "AU10",
+        "type": "epic",
+        "parent": null,
+        "title": "Une source 3D se fabrique depuis le personnage",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 84,
+        "blocked_by": "AU6, AU9."
+      },
+      {
+        "id": "AU10.1",
+        "type": "check",
+        "parent": "AU10",
+        "title": "Les étapes lourdes déjà terminées se réutilisent ; chaque identifiant externe se conserve.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 85
+      },
+      {
+        "id": "AU10.2",
+        "type": "check",
+        "parent": "AU10",
+        "title": "Les prérequis, la pose technique nécessaire et l'état de la ressource GPU sont expliqués.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 86
+      },
+      {
+        "id": "AU10.3",
+        "type": "check",
+        "parent": "AU10",
+        "title": "L'échec ou la fermeture ne perd pas un modèle terminé et ne relance pas le pipeline entier.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 87
+      },
+      {
+        "id": "AU10.4",
+        "type": "check",
+        "parent": "AU10",
+        "title": "L'intégration s'éprouve avec asset3d sans modifier automatiquement son environnement.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 88
+      },
+      {
+        "id": "AU11",
+        "type": "epic",
+        "parent": null,
+        "title": "Un modèle, plusieurs mouvements et directions",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 89,
+        "blocked_by": "AU10."
+      },
+      {
+        "id": "AU11.1",
+        "type": "check",
+        "parent": "AU11",
+        "title": "Un nouvel angle ou mouvement ne refabrique ni le modèle ni un squelette déjà réutilisable.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 90
+      },
+      {
+        "id": "AU11.2",
+        "type": "check",
+        "parent": "AU11",
+        "title": "Le rendu conserve cadre, pivot et dimensions cohérents entre les directions demandées.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 91
+      },
+      {
+        "id": "AU11.3",
+        "type": "check",
+        "parent": "AU11",
+        "title": "Les corrections du squelette réellement utilisées sont identifiées ; un ancien rendu",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 92
+      },
+      {
+        "id": "AU12",
+        "type": "epic",
+        "parent": null,
+        "title": "Les autres assets suivent le même parcours",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 93,
+        "blocked_by": "AU5, AU7."
+      },
+      {
+        "id": "AU12.1",
+        "type": "check",
+        "parent": "AU12",
+        "title": "Un coffre animé n'exige aucun rig de personnage ; un portrait n'exige aucune animation.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 94
+      },
+      {
+        "id": "AU12.2",
+        "type": "check",
+        "parent": "AU12",
+        "title": "Les réglages visuels hérités et leurs dérogations se lisent avant fabrication.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 95
+      },
+      {
+        "id": "AU12.3",
+        "type": "check",
+        "parent": "AU12",
+        "title": "Les résultats se retrouvent, se corrigent et s'exportent par les mêmes portes.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 96
+      },
+      {
+        "id": "AU13",
+        "type": "epic",
+        "parent": null,
+        "title": "Des tuiles qui se raccordent dans Godot",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 97,
+        "blocked_by": "AU12."
+      },
+      {
+        "id": "AU13.1",
+        "type": "check",
+        "parent": "AU13",
+        "title": "Produire, juger les raccords, corriger et exporter un ensemble choisi avec l'agent.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 98
+      },
+      {
+        "id": "AU13.2",
+        "type": "check",
+        "parent": "AU13",
+        "title": "Une carte réelle vérifie bords, coins, transparence et dimensions ; une tuile isolée ne suffit pas.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 99
+      },
+      {
+        "id": "AU13.3",
+        "type": "check",
+        "parent": "AU13",
+        "title": "L'export porte les relations utiles au jeu et ne se limite pas à un dossier de PNG.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 100
+      },
+      {
+        "id": "AU14",
+        "type": "epic",
+        "parent": null,
+        "title": "Des sons cohérents avec l'univers",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 101,
+        "blocked_by": "AU12."
+      },
+      {
+        "id": "AU14.1",
+        "type": "check",
+        "parent": "AU14",
+        "title": "Écouter, choisir une version et vérifier durée, niveau et boucle si demandée.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 102
+      },
+      {
+        "id": "AU14.2",
+        "type": "check",
+        "parent": "AU14",
+        "title": "Un fichier silencieux ou invalide n'est pas annoncé comme un résultat prêt.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 103
+      },
+      {
+        "id": "AU14.3",
+        "type": "check",
+        "parent": "AU14",
+        "title": "Le jeu lit le fichier exporté ; les travaux audio partagent le cadre et la file locale.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 104
+      },
+      {
+        "id": "AU15",
+        "type": "epic",
+        "parent": null,
+        "title": "Un équipement a son premier calque sur un personnage",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 10
+        },
+        "source": "plan",
+        "order": 105,
+        "blocked_by": "AU4."
+      },
+      {
+        "id": "AU15.1",
+        "type": "check",
+        "parent": "AU15",
+        "title": "La même pièce possède des emplois distincts chez l'humain, le nain et le mutant ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 106
+      },
+      {
+        "id": "AU15.2",
+        "type": "check",
+        "parent": "AU15",
+        "title": "Le calque vise un résultat de base précis : pose fixe et direction, ou bande,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 107
+      },
+      {
+        "id": "AU15.3",
+        "type": "check",
+        "parent": "AU15",
+        "title": "Extraire conserve base, variante, masque et réglages ; un calque importé garde aussi",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 108
+      },
+      {
+        "id": "AU15.4",
+        "type": "check",
+        "parent": "AU15",
+        "title": "Les masques d'occultation et l'ordre des couches permettent de corriger ce qui passe",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 109
+      },
+      {
+        "id": "AU15.5",
+        "type": "check",
+        "parent": "AU15",
+        "title": "En vue 3/4, l'ordre des images est expliqué indépendamment de l'orientation ; une",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 110
+      },
+      {
+        "id": "AU15.6",
+        "type": "check",
+        "parent": "AU15",
+        "title": "Depuis la retouche, associer le rendu à une pièce distingue référence, personnage",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 111
+      },
+      {
+        "id": "AU15.7",
+        "type": "check",
+        "parent": "AU15",
+        "title": "La fiche de la pièce présente d'abord ses emplois et leurs porteurs ; les usages",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 112
+      },
+      {
+        "id": "AU15.8",
+        "type": "check",
+        "parent": "AU15",
+        "title": "Retenir une variante ne détruit pas les autres ; une image équipée contenant le corps",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 113
+      },
+      {
+        "id": "AU15.9",
+        "type": "check",
+        "parent": "AU15",
+        "title": "UI et MCP lisent la même relation pièce → emploi → cible et le même état enregistré.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 114
+      },
+      {
+        "id": "AU15.10",
+        "type": "check",
+        "parent": "AU15",
+        "title": "La compatibilité conserve les calques de pose historiques et B20 : TIENT recale chaque",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 115
+      },
+      {
+        "id": "AU16",
+        "type": "epic",
+        "parent": null,
+        "title": "Toutes les poses et frames utiles portent leur équipement",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 9
+        },
+        "source": "plan",
+        "order": 116,
+        "blocked_by": "AU15, AU3."
+      },
+      {
+        "id": "AU16.1",
+        "type": "check",
+        "parent": "AU16",
+        "title": "Couverture fixe et animée restent distinctes : absente, à extraire, à vérifier,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 117
+      },
+      {
+        "id": "AU16.2",
+        "type": "check",
+        "parent": "AU16",
+        "title": "La relecture nomme les cibles et montre leurs corps de base, les références de la pièce,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 118
+      },
+      {
+        "id": "AU16.3",
+        "type": "check",
+        "parent": "AU16",
+        "title": "La relecture distingue images ciblées, planches et appels : le pliage existant est",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 119
+      },
+      {
+        "id": "AU16.4",
+        "type": "check",
+        "parent": "AU16",
+        "title": "Le chemin image par image annonce son nombre d'appels distinct. Une modification du",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 120
+      },
+      {
+        "id": "AU16.5",
+        "type": "check",
+        "parent": "AU16",
+        "title": "Une reprise ne refabrique pas les cibles terminées et n'écrase pas une variante retenue ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 121
+      },
+      {
+        "id": "AU16.6",
+        "type": "check",
+        "parent": "AU16",
+        "title": "Une correction manuelle de masque ou de placement s'applique à la portée choisie ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 122
+      },
+      {
+        "id": "AU16.7",
+        "type": "check",
+        "parent": "AU16",
+        "title": "Les réemplois du même calque restent explicites et contrôlables ; « automatique »",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 123
+      },
+      {
+        "id": "AU16.8",
+        "type": "check",
+        "parent": "AU16",
+        "title": "Réordonner conserve l'identité des frames et leurs placements ; ajout, remplacement ou",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 124
+      },
+      {
+        "id": "AU16.9",
+        "type": "check",
+        "parent": "AU16",
+        "title": "Fermer pendant la lecture puis rouvrir retrouve sélection, sources et corrections",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 125
+      },
+      {
+        "id": "AU17",
+        "type": "epic",
+        "parent": null,
+        "title": "Les tenues se combinent et arrivent dans Godot",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 126,
+        "blocked_by": "AU16, AU5."
+      },
+      {
+        "id": "AU17.1",
+        "type": "check",
+        "parent": "AU17",
+        "title": "Les huit combinaisons de trois pièces, corps seul compris, se prévisualisent sans",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 127
+      },
+      {
+        "id": "AU17.2",
+        "type": "check",
+        "parent": "AU17",
+        "title": "Ordre devant ou derrière le corps, masques et priorités se voient en lecture et se",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 128
+      },
+      {
+        "id": "AU17.3",
+        "type": "check",
+        "parent": "AU17",
+        "title": "Une frame manquante ou à revoir reste visible et empêche d'annoncer la tenue prête ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 129
+      },
+      {
+        "id": "AU17.4",
+        "type": "check",
+        "parent": "AU17",
+        "title": "Les couches exportées partagent cadre, pivot, ordre, cadence et boucle avec le corps ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 130
+      },
+      {
+        "id": "AU17.5",
+        "type": "check",
+        "parent": "AU17",
+        "title": "La sortie assemblée correspond à l'aperçu. Les descriptifs Aseprite restent inchangés ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 131
+      },
+      {
+        "id": "AU17.6",
+        "type": "check",
+        "parent": "AU17",
+        "title": "L'auteur et l'agent peuvent retrouver une tenue, exporter ses couches ou sa composition",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-atelier-unifie.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 132
+      },
+      {
+        "id": "D0",
+        "type": "epic",
+        "parent": null,
+        "title": "Le système de design réécrit",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 133,
+        "blocked_by": null
+      },
+      {
+        "id": "B1",
+        "type": "epic",
+        "parent": null,
+        "title": "Le miroir",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 134,
+        "blocked_by": null
+      },
+      {
+        "id": "B2",
+        "type": "epic",
+        "parent": null,
+        "title": "Les clips payés qui attendent",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 135,
+        "blocked_by": null
+      },
+      {
+        "id": "B3",
+        "type": "epic",
+        "parent": null,
+        "title": "Les huit états",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 136,
+        "blocked_by": null
+      },
+      {
+        "id": "B0",
+        "type": "epic",
+        "parent": null,
+        "title": "Le socle du carnet",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 137,
+        "blocked_by": null
+      },
+      {
+        "id": "B4",
+        "type": "epic",
+        "parent": null,
+        "title": "L'ouverture",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 138,
+        "blocked_by": null
+      },
+      {
+        "id": "B5",
+        "type": "epic",
+        "parent": null,
+        "title": "Le tableau de bord du jeu",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 139,
+        "blocked_by": "B0, B4 — tenue le 6 septembre 2026."
+      },
+      {
+        "id": "B6",
+        "type": "epic",
+        "parent": null,
+        "title": "La barre",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 140,
+        "blocked_by": null
+      },
+      {
+        "id": "B7",
+        "type": "epic",
+        "parent": null,
+        "title": "Le guide en volet, et les touches",
+        "status": "done",
+        "status_raw": "tenue le 6 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 141,
+        "blocked_by": "B0 — tenue le 6 septembre 2026."
+      },
+      {
+        "id": "B8",
+        "type": "epic",
+        "parent": null,
+        "title": "La collection devient un vrai groupe",
+        "status": "done",
+        "status_raw": "tenue le 7 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 142,
+        "blocked_by": null
+      },
+      {
+        "id": "B8.1",
+        "type": "check",
+        "parent": "B8",
+        "title": "Un sujet se range dans deux collections et reste dans les deux. *Tenu par `B8.4` :",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 143
+      },
+      {
+        "id": "B8.2",
+        "type": "check",
+        "parent": "B8",
+        "title": "Retirer une collection ne perd aucun sujet : ils redeviennent sans collection. *Tenu par",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 144
+      },
+      {
+        "id": "B8.3",
+        "type": "check",
+        "parent": "B8",
+        "title": "L'index se reconstruit du disque et retrouve les mêmes adhésions — les fichiers font",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 145
+      },
+      {
+        "id": "B8.4",
+        "type": "check",
+        "parent": "B8",
+        "title": "La recherche rend **deux groupes** : les sujets par leur nom et leur description, les",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 146
+      },
+      {
+        "id": "B8.5",
+        "type": "check",
+        "parent": "B8",
+        "title": "Une collection ne range que des **sujets**. Le filtre `collection` de la galerie devient",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 147
+      },
+      {
+        "id": "B8.6",
+        "type": "check",
+        "parent": "B8",
+        "title": "Les collections déjà écrites sur le disque se relisent sans perte. *Tenu par `B8.1` :",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 148
+      },
+      {
+        "id": "B9",
+        "type": "epic",
+        "parent": null,
+        "title": "La grille d'une famille",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 149,
+        "blocked_by": "B0, B8"
+      },
+      {
+        "id": "B9.1",
+        "type": "check",
+        "parent": "B9",
+        "title": "La grille tient 250 sujets sans ralentir : elle défile, elle ne recalcule pas ses",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 150
+      },
+      {
+        "id": "B9.2",
+        "type": "check",
+        "parent": "B9",
+        "title": "Faire glisser une sélection sur une collection montre le compte projeté avant le lâcher.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 151
+      },
+      {
+        "id": "B9.3",
+        "type": "check",
+        "parent": "B9",
+        "title": "Les filtres portent leur compte, et « incomplets » se dérive de ce que la nature attend.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 152
+      },
+      {
+        "id": "B9.4",
+        "type": "check",
+        "parent": "B9",
+        "title": "Le panneau des réglages de famille écrit dans le modèle existant, sans nouvelle table.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 153
+      },
+      {
+        "id": "B9.5",
+        "type": "check",
+        "parent": "B9",
+        "title": "Une seule grille d'assets dans tout le produit — celle-ci n'en est pas une seconde : elle",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 154
+      },
+      {
+        "id": "B10",
+        "type": "epic",
+        "parent": null,
+        "title": "La page d'un sujet",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 155,
+        "blocked_by": "B0, B9"
+      },
+      {
+        "id": "B10.1",
+        "type": "check",
+        "parent": "B10",
+        "title": "La retenue est toujours en tête, quelle que soit sa date ; les gardées suivent en ordre",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 156
+      },
+      {
+        "id": "B10.2",
+        "type": "check",
+        "parent": "B10",
+        "title": "Retenir une image en démote une autre, et l'écart n'efface rien. — ⚠️ **la démotion se",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 157
+      },
+      {
+        "id": "B10.3",
+        "type": "check",
+        "parent": "B10",
+        "title": "Une direction vide se lit « à confirmer » et jamais « sud » ; un clic confirme. — le clic",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 158
+      },
+      {
+        "id": "B10.4",
+        "type": "check",
+        "parent": "B10",
+        "title": "La case « + générer » ne défile jamais. — troisième colonne de la grille, hors de la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 159
+      },
+      {
+        "id": "B10.5",
+        "type": "check",
+        "parent": "B10",
+        "title": "Les calques d'une image sont ceux de cette image, pas ceux de la pose — changer la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 160
+      },
+      {
+        "id": "B10.6",
+        "type": "check",
+        "parent": "B10",
+        "title": "Passer d'un onglet à l'autre ne recharge pas le carnet. — l'onglet est un état de la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 161
+      },
+      {
+        "id": "B11",
+        "type": "epic",
+        "parent": null,
+        "title": "Ses animations, et le départage",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 162,
+        "blocked_by": "B10 — tenue."
+      },
+      {
+        "id": "B11.1",
+        "type": "check",
+        "parent": "B11",
+        "title": "Une seule bande est retenue par case (pose × direction), et retenir bascule en un geste.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 163
+      },
+      {
+        "id": "B11.2",
+        "type": "check",
+        "parent": "B11",
+        "title": "Écarter une bande ne la détruit pas : elle passe derrière la flèche, et la plus récente",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 164
+      },
+      {
+        "id": "B11.3",
+        "type": "check",
+        "parent": "B11",
+        "title": "Le tri par pose, direction et date ne demande aucune donnée nouvelle. — `cree_le`",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 165
+      },
+      {
+        "id": "B11.4",
+        "type": "check",
+        "parent": "B11",
+        "title": "« À départager » est le seul rouge de l'écran. — même règle qu'`ImagesDuSujet.tsx` :",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 166
+      },
+      {
+        "id": "B11.5",
+        "type": "check",
+        "parent": "B11",
+        "title": "Écarter une bande ne perd pas les retouches par frame qui lui sont attachées. — seul",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 167
+      },
+      {
+        "id": "B12",
+        "type": "epic",
+        "parent": null,
+        "title": "L'essai",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 4,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 168,
+        "blocked_by": "B10, B11 — tenues."
+      },
+      {
+        "id": "B12.1",
+        "type": "check",
+        "parent": "B12",
+        "title": "Le personnage se pilote au clavier, et la vitesse jouée est celle qui sortira à l'export.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 169
+      },
+      {
+        "id": "B12.2",
+        "type": "check",
+        "parent": "B12",
+        "title": "Une animation qui manque le dit et laisse le personnage au repos — il ne joue jamais une",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 170
+      },
+      {
+        "id": "B12.3",
+        "type": "check",
+        "parent": "B12",
+        "title": "Le bouton « demander un clip » part d'ici pré-rempli avec la pose et la direction, et son",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 171
+      },
+      {
+        "id": "B12.4",
+        "type": "check",
+        "parent": "B12",
+        "title": "La scène se règle sans rien fabriquer et sans rien payer. *Fond (gris neutre, clair,",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 172
+      },
+      {
+        "id": "B13",
+        "type": "epic",
+        "parent": null,
+        "title": "La grille du jeu, et comparer",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 173,
+        "blocked_by": "B10"
+      },
+      {
+        "id": "B13.1",
+        "type": "check",
+        "parent": "B13",
+        "title": "Le zoom est entier et rien d'autre : ×1, ×2, ×4, ×8. *Les deux écrans partagent le",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 174
+      },
+      {
+        "id": "B13.2",
+        "type": "check",
+        "parent": "B13",
+        "title": "Le plafond d'occupation affiché est celui que la taille de case permet vraiment.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 175
+      },
+      {
+        "id": "B13.3",
+        "type": "check",
+        "parent": "B13",
+        "title": "Comparer deux sujets ne coûte rien et ne modifie rien. *`Comparer.tsx` ne prend que",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 176
+      },
+      {
+        "id": "B13.4",
+        "type": "check",
+        "parent": "B13",
+        "title": "Un écart hors norme porte l'action qui le corrige, avec son prix quand elle en a un.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 177
+      },
+      {
+        "id": "B13.5",
+        "type": "check",
+        "parent": "B13",
+        "title": "Choisir deux fois le même sujet bascule en comparaison de deux de ses images.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 178
+      },
+      {
+        "id": "B14",
+        "type": "epic",
+        "parent": null,
+        "title": "Les règles du jeu, en quatre étapes",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 7,
+          "total": 7
+        },
+        "source": "plan",
+        "order": 179,
+        "blocked_by": "B0 — tenue."
+      },
+      {
+        "id": "B14.1",
+        "type": "check",
+        "parent": "B14",
+        "title": "Chacune des quatre étapes se saute, et le jeu se crée sans en régler une seule. *Vérifié",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 180
+      },
+      {
+        "id": "B14.2",
+        "type": "check",
+        "parent": "B14",
+        "title": "L'écran montre le texte de caméra exact qui partira au modèle. *Il ne le recompose pas :",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 181
+      },
+      {
+        "id": "B14.3",
+        "type": "check",
+        "parent": "B14",
+        "title": "Sans vue choisie, rien n'est écrit et l'écran le dit — le modèle décide seul. *Et le",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 182
+      },
+      {
+        "id": "B14.4",
+        "type": "check",
+        "parent": "B14",
+        "title": "Deux des trois doublons de consigne disparaissent, et un essai le mesure sur un envoi",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 183
+      },
+      {
+        "id": "B14.5",
+        "type": "check",
+        "parent": "B14",
+        "title": "Deux jeux ne peuvent plus porter le même nom sans avertissement. *Un avertissement, pas",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 184
+      },
+      {
+        "id": "B14.6",
+        "type": "check",
+        "parent": "B14",
+        "title": "Le dossier reste figé au nom de création, même si le nom change ensuite. *Acquis depuis",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 185
+      },
+      {
+        "id": "B14.7",
+        "type": "check",
+        "parent": "B14",
+        "title": "Le parcours rouvert écrit dans les mêmes réglages que le parcours de création. *Tenu par",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 186
+      },
+      {
+        "id": "B15",
+        "type": "epic",
+        "parent": null,
+        "title": "L'installation",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 187,
+        "blocked_by": "B0 — tenue."
+      },
+      {
+        "id": "B15.1",
+        "type": "check",
+        "parent": "B15",
+        "title": "La clé se pose depuis l'écran, et le bouton de vérification annonce le nombre de modèles",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 188
+      },
+      {
+        "id": "B15.2",
+        "type": "check",
+        "parent": "B15",
+        "title": "Retirer une clé grise les modèles de ce fournisseur-là, et n'efface ni image ni dépense.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 189
+      },
+      {
+        "id": "B15.3",
+        "type": "check",
+        "parent": "B15",
+        "title": "Un fournisseur injoignable grise ses modèles à lui, jamais ceux d'un autre. *Acquis depuis",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 190
+      },
+      {
+        "id": "B15.4",
+        "type": "check",
+        "parent": "B15",
+        "title": "ComfyUI se détecte, son adresse se change, et le téléchargement des poids reprend après",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 191
+      },
+      {
+        "id": "B15.5",
+        "type": "check",
+        "parent": "B15",
+        "title": "Le dossier de travail se choisit, et l'écran dit ce qui s'y range. *Choisir **écrit une",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 192
+      },
+      {
+        "id": "B15.6",
+        "type": "check",
+        "parent": "B15",
+        "title": "Sur une machine où rien n'a été déposé, une image arrive quand même. *Acquis depuis `F1`",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 193
+      },
+      {
+        "id": "B16",
+        "type": "epic",
+        "parent": null,
+        "title": "Les tables dans la grammaire du carnet",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 194,
+        "blocked_by": "B0"
+      },
+      {
+        "id": "B16.1",
+        "type": "check",
+        "parent": "B16",
+        "title": "Les sept tables et les deux fabriques sont à l'écran, aucune n'est cachée. — **huit**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 195
+      },
+      {
+        "id": "B16.2",
+        "type": "check",
+        "parent": "B16",
+        "title": "Un réglage grisé porte sa raison écrite à côté, et le geste qui le débloque.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 196
+      },
+      {
+        "id": "B16.3",
+        "type": "check",
+        "parent": "B16",
+        "title": "Une jauge apparaît pendant un calcul de plus de 240 ms, et jamais avant.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 197
+      },
+      {
+        "id": "B16.4",
+        "type": "check",
+        "parent": "B16",
+        "title": "Un jeu en style dessin peut poser une retouche à 1 024 et à 2 048. — la route **et** la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 198
+      },
+      {
+        "id": "B16.5",
+        "type": "check",
+        "parent": "B16",
+        "title": "Les six contradictions sont tranchées, chacune par un essai.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 199
+      },
+      {
+        "id": "B16.6",
+        "type": "check",
+        "parent": "B16",
+        "title": "Une place s'éteint sans se vider ; une coordonnée ne voyage toujours pas.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 200
+      },
+      {
+        "id": "B17",
+        "type": "epic",
+        "parent": null,
+        "title": "Les moteurs qui remplacent une génération",
+        "status": "done",
+        "status_raw": "tenue le 10 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 201,
+        "blocked_by": "B1 — c'est B1 qui pose la règle « une place neuve ne change pas l'empreinte »."
+      },
+      {
+        "id": "B17.1",
+        "type": "check",
+        "parent": "B17",
+        "title": "Un fichier exporté ne porte plus de magenta sous ses pixels transparents. *Le lit de",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 202
+      },
+      {
+        "id": "B17.2",
+        "type": "check",
+        "parent": "B17",
+        "title": "Une cape change de couleur sans une génération, et la silhouette est identique à",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 203
+      },
+      {
+        "id": "B17.3",
+        "type": "check",
+        "parent": "B17",
+        "title": "Les quatre curseurs se posent avant la quantification, et un essai le vérifie sur",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 204
+      },
+      {
+        "id": "B17.4",
+        "type": "check",
+        "parent": "B17",
+        "title": "Les recettes existantes rendent la même empreinte qu'avant. *Les 61 recettes du corpus figé",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 205
+      },
+      {
+        "id": "B17.5",
+        "type": "check",
+        "parent": "B17",
+        "title": "Chaque moteur neuf est mesuré : temps de calcul, et ce qu'il épargne. *Sur une case de",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 206
+      },
+      {
+        "id": "B18",
+        "type": "epic",
+        "parent": null,
+        "title": "Le reste des moteurs",
+        "status": "done",
+        "status_raw": "tenue le 8 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 3,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 207,
+        "blocked_by": "B16, B17"
+      },
+      {
+        "id": "B18.1",
+        "type": "check",
+        "parent": "B18",
+        "title": "Chaque atelier livré porte tous ses moteurs à l'écran, et aucun n'est en dur dans le code",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 208
+      },
+      {
+        "id": "B18.2",
+        "type": "check",
+        "parent": "B18",
+        "title": "Trois réglages figés dans le code de la réduction sortent enfin à l'écran. *Non tenu, voir",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 209
+      },
+      {
+        "id": "B18.3",
+        "type": "check",
+        "parent": "B18",
+        "title": "Chaque moteur neuf porte sa mesure de temps, et l'écran l'annonce quand elle dépasse",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 210
+      },
+      {
+        "id": "B18.4",
+        "type": "check",
+        "parent": "B18",
+        "title": "Les 1 347 essais de serveur passent sans modification. *Chiffre d'une version antérieure du",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 211
+      },
+      {
+        "id": "B19",
+        "type": "epic",
+        "parent": null,
+        "title": "Le vestiaire",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 212,
+        "blocked_by": "B10"
+      },
+      {
+        "id": "B19.1",
+        "type": "check",
+        "parent": "B19",
+        "title": "Une pièce créée depuis la fiche d'un personnage lui est attribuée d'emblée.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 213
+      },
+      {
+        "id": "B19.2",
+        "type": "check",
+        "parent": "B19",
+        "title": "Une pièce ne porte personne par défaut. *Nommée hors d'une fiche, elle naît **déclarée",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 214
+      },
+      {
+        "id": "B19.3",
+        "type": "check",
+        "parent": "B19",
+        "title": "Les emplacements de corps restent au jeu, jamais au personnage. *Acquis par construction",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 215
+      },
+      {
+        "id": "B19.4",
+        "type": "check",
+        "parent": "B19",
+        "title": "Les pièces déjà écrites sur le disque se relisent sans perte et sans porteur. *Trois",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 216
+      },
+      {
+        "id": "B19.5",
+        "type": "check",
+        "parent": "B19",
+        "title": "Un calque reste solidaire de sa pose — l'invariant de `C3` tient. *La matrice d'un emploi",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 217
+      },
+      {
+        "id": "B19.6",
+        "type": "check",
+        "parent": "B19",
+        "title": "Les 19 entrées du guide rangées sous `fabriques` trouvent leur écran. *Les **17** entrées",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 218
+      },
+      {
+        "id": "B20",
+        "type": "epic",
+        "parent": null,
+        "title": "Les calques d'animation",
+        "status": "done",
+        "status_raw": "tenue le 10 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 4,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 219,
+        "blocked_by": "B11, B19"
+      },
+      {
+        "id": "B20.1",
+        "type": "check",
+        "parent": "B20",
+        "title": "Une bande porte sa pièce, et une case sans animation du personnage reste vide sans",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 220
+      },
+      {
+        "id": "B20.2",
+        "type": "check",
+        "parent": "B20",
+        "title": "L'écran distingue « le calque tient » (recalé image par image) de « le calque glisse »",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 221
+      },
+      {
+        "id": "B20.3",
+        "type": "check",
+        "parent": "B20",
+        "title": "Le recalage ne coûte rien et ne rappelle aucun fournisseur. *Vérifiable plutôt",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 222
+      },
+      {
+        "id": "B20.4",
+        "type": "check",
+        "parent": "B20",
+        "title": "Un calage gardé à la main se réutilise sur la pièce suivante. *`ReglagesGardes` (`M1`)",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 223
+      },
+      {
+        "id": "B21",
+        "type": "epic",
+        "parent": null,
+        "title": "La sortie",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 224,
+        "blocked_by": "B10, B11"
+      },
+      {
+        "id": "B21.1",
+        "type": "check",
+        "parent": "B21",
+        "title": "L'arbre des fichiers se lit avant d'écrire, avec le compte et le poids total.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 225
+      },
+      {
+        "id": "B21.2",
+        "type": "check",
+        "parent": "B21",
+        "title": "Chaque fichier est marqué nouveau, remplacé ou inchangé face à la sortie précédente.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 226
+      },
+      {
+        "id": "B21.3",
+        "type": "check",
+        "parent": "B21",
+        "title": "Les quatre modes de collision existent, et « remplacer » en est un.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 227
+      },
+      {
+        "id": "B21.4",
+        "type": "check",
+        "parent": "B21",
+        "title": "Un panneau dit ce qui n'est pas prêt : sujets sans image, personnages à direction unique,",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 228
+      },
+      {
+        "id": "B21.5",
+        "type": "check",
+        "parent": "B21",
+        "title": "La sortie reste gratuite et fonctionne réseau coupé.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 229
+      },
+      {
+        "id": "B21.6",
+        "type": "check",
+        "parent": "B21",
+        "title": "Le format Aseprite ne gagne aucune clé de notre cru.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 230
+      },
+      {
+        "id": "B22",
+        "type": "epic",
+        "parent": null,
+        "title": "La galerie connaît les clips",
+        "status": "done",
+        "status_raw": "tenue le 8 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 231,
+        "blocked_by": "B0, B3 — tenues le 6 septembre 2026."
+      },
+      {
+        "id": "B22.1",
+        "type": "check",
+        "parent": "B22",
+        "title": "Un clip reste dans la galerie après la fermeture de son lot.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 232
+      },
+      {
+        "id": "B22.2",
+        "type": "check",
+        "parent": "B22",
+        "title": "Ouvrir la galerie ne télécharge aucune vidéo — seule la couverture arrive.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 233
+      },
+      {
+        "id": "B22.3",
+        "type": "check",
+        "parent": "B22",
+        "title": "Le survol joue les frames en boucle, sans son, et revient à la première en sortant.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 234
+      },
+      {
+        "id": "B22.4",
+        "type": "check",
+        "parent": "B22",
+        "title": "Un filtre « clips » existe, distinct des six familles.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 235
+      },
+      {
+        "id": "B22.5",
+        "type": "check",
+        "parent": "B22",
+        "title": "La grille ne ralentit pas quand le jeu porte cent clips.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 236
+      },
+      {
+        "id": "B23",
+        "type": "epic",
+        "parent": null,
+        "title": "Les trois surfaces déménagent",
+        "status": "done",
+        "status_raw": "tenue le 9 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 237,
+        "blocked_by": "B16, B18 — les moteurs que ces surfaces règlent doivent exister avant d'avoir un"
+      },
+      {
+        "id": "B23.1",
+        "type": "check",
+        "parent": "B23",
+        "title": "Les quatre surfaces se posent depuis `Retouche.tsx` seul, et le rendu servi change.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 238
+      },
+      {
+        "id": "B23.2",
+        "type": "check",
+        "parent": "B23",
+        "title": "Un pixel visé à la pipette dans l'écran neuf et dans l'ancien donne la **même**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 239
+      },
+      {
+        "id": "B23.3",
+        "type": "check",
+        "parent": "B23",
+        "title": "Plus aucune phrase de `Retouche.tsx` ne renvoie à `Places.tsx` ni à « l'ancien",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 240
+      },
+      {
+        "id": "B23.4",
+        "type": "check",
+        "parent": "B23",
+        "title": "L'angle, le repli et les zones protégées se règlent dans l'écran neuf, et les dix",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 241
+      },
+      {
+        "id": "B23.5",
+        "type": "check",
+        "parent": "B23",
+        "title": "Les 61 recettes du corpus figé de `B1` gardent leur empreinte au caractère près :",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 242
+      },
+      {
+        "id": "B23.6",
+        "type": "check",
+        "parent": "B23",
+        "title": "`essais/essai_jetons.py` reste vert — les surfaces sont dans `Retouche.tsx`, déjà",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 243
+      },
+      {
+        "id": "B24",
+        "type": "epic",
+        "parent": null,
+        "title": "Ce qui restait dans les murs",
+        "status": "done",
+        "status_raw": "tenue le 9 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 244,
+        "blocked_by": "B16 — elle ne dépend pas de B23 : les deux se tiennent en parallèle."
+      },
+      {
+        "id": "B24.1",
+        "type": "check",
+        "parent": "B24",
+        "title": "Passer d'une sœur à l'autre ne referme pas la table ouverte, et la barre des huit",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 245
+      },
+      {
+        "id": "B24.2",
+        "type": "check",
+        "parent": "B24",
+        "title": "Copier une recette sur une image, la coller sur une autre, la nommer, la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 246
+      },
+      {
+        "id": "B24.3",
+        "type": "check",
+        "parent": "B24",
+        "title": "Promouvoir un détourage écrit bien dans l'univers, et la portée est **choisie**.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 247
+      },
+      {
+        "id": "B24.4",
+        "type": "check",
+        "parent": "B24",
+        "title": "Les deux fabriques ouvrent la découpe et la différence **sans repasser par",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 248
+      },
+      {
+        "id": "B24.5",
+        "type": "check",
+        "parent": "B24",
+        "title": "Une image de 2 048 px se regarde entièrement, et le pour cent affiché est le pour",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 249
+      },
+      {
+        "id": "B24.6",
+        "type": "check",
+        "parent": "B24",
+        "title": "`Retouche.test.tsx` monte de 30 essais à 59, et aucun n'est le doublon",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 250
+      },
+      {
+        "id": "B25",
+        "type": "epic",
+        "parent": null,
+        "title": "Une seule porte",
+        "status": "done",
+        "status_raw": "tenue le 9 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 251,
+        "blocked_by": "B23, B24 — on ne re-câble pas une porte vers un écran qui perd un geste en chemin."
+      },
+      {
+        "id": "B25.1",
+        "type": "check",
+        "parent": "B25",
+        "title": "Les six portes ouvrent `Retouche.tsx`, et `EcranTables` n'est plus monté nulle part",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 252
+      },
+      {
+        "id": "B25.2",
+        "type": "check",
+        "parent": "B25",
+        "title": "Une image de la galerie **sans chose du jeu** s'ouvre en retouche, avec ses voisines",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 253
+      },
+      {
+        "id": "B25.3",
+        "type": "check",
+        "parent": "B25",
+        "title": "La pile de lieux ne porte plus qu'un genre pour cet écran, et remonter d'un cran",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 254
+      },
+      {
+        "id": "B25.4",
+        "type": "check",
+        "parent": "B25",
+        "title": "Ouvrir la différence depuis un calque ouvre la retouche **sur la fabrique**, en un",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 255
+      },
+      {
+        "id": "B25.5",
+        "type": "check",
+        "parent": "B25",
+        "title": "Les 148 essais des douze blocs d'`App.test.tsx` qui montent l'ancien écran passent,",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 256
+      },
+      {
+        "id": "B26",
+        "type": "epic",
+        "parent": null,
+        "title": "L'ancien châssis sort de la retouche",
+        "status": "done",
+        "status_raw": "tenue le 9 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 257,
+        "blocked_by": "B25"
+      },
+      {
+        "id": "B26.1",
+        "type": "check",
+        "parent": "B26",
+        "title": "`interface/src/composants/Places.tsx` et `Tables.tsx` n'existent plus, et",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 258
+      },
+      {
+        "id": "B26.2",
+        "type": "check",
+        "parent": "B26",
+        "title": "Aucun fichier de `interface/src/` n'importe plus l'un des deux — au grep.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 259
+      },
+      {
+        "id": "B26.3",
+        "type": "check",
+        "parent": "B26",
+        "title": "L'atelier d'une animation règle les **mêmes** moteurs que la retouche, ceux de",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 260
+      },
+      {
+        "id": "B26.4",
+        "type": "check",
+        "parent": "B26",
+        "title": "Les essais Python qui lisent ces fichiers comme du texte sont repointés et",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 261
+      },
+      {
+        "id": "B26.5",
+        "type": "check",
+        "parent": "B26",
+        "title": "La suite d'écran passe entière, et `App.test.tsx` a perdu ses `[data-tables]`.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 262
+      },
+      {
+        "id": "B26.6",
+        "type": "check",
+        "parent": "B26",
+        "title": "Les 61 recettes du corpus figé de `B1` gardent leur empreinte : aucune ligne de",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 263
+      },
+      {
+        "id": "B27",
+        "type": "epic",
+        "parent": null,
+        "title": "Les garde-fous rattrapent la refonte",
+        "status": "done",
+        "status_raw": "tenue le 9 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 5,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 264,
+        "blocked_by": "B26"
+      },
+      {
+        "id": "B27.1",
+        "type": "check",
+        "parent": "B27",
+        "title": "`py essais/essai_jetons.py` passe — **oui**. Son compte de fichiers du carnet",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 265
+      },
+      {
+        "id": "B27.2",
+        "type": "check",
+        "parent": "B27",
+        "title": "Aucune phrase du dépôt ne dit plus que l'écran de la retouche est doublé : vérifié au",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 266
+      },
+      {
+        "id": "B27.3",
+        "type": "check",
+        "parent": "B27",
+        "title": "Le garde-fou d'import (`essais/essai_imports.py`) refuse une régression fabriquée",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 267
+      },
+      {
+        "id": "B27.4",
+        "type": "check",
+        "parent": "B27",
+        "title": "`py essais/essai_docs.py` passe, et le grep sur le dépôt entier ne trouve plus les six",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 268
+      },
+      {
+        "id": "B27.5",
+        "type": "check",
+        "parent": "B27",
+        "title": "Les deux secondes implémentations sont traitées : `BlocPasse` retiré,",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 269
+      },
+      {
+        "id": "B27.6",
+        "type": "check",
+        "parent": "B27",
+        "title": "Les seize lignes de *Ce que le déménagement laisse derrière* sont tranchées une par",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 270
+      },
+      {
+        "id": "C1",
+        "type": "epic",
+        "parent": null,
+        "title": "Le compteur de sortie, et les cinq portes des réglages",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 271,
+        "blocked_by": null
+      },
+      {
+        "id": "C1.1",
+        "type": "check",
+        "parent": "C1",
+        "title": "`py essais/essai_jetons.py` imprime le compte des fichiers anciens, et il diminue.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 272
+      },
+      {
+        "id": "C1.2",
+        "type": "check",
+        "parent": "C1",
+        "title": "Aucune porte du produit n'ouvre `EcranReglages` ; les trois fichiers sont partis.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 273
+      },
+      {
+        "id": "C1.3",
+        "type": "check",
+        "parent": "C1",
+        "title": "Tout réglage qui vivait dans les trois fichiers a un endroit dans `Installation.tsx`, ou",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 274
+      },
+      {
+        "id": "C2",
+        "type": "epic",
+        "parent": null,
+        "title": "L'univers s'efface",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 3,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 275,
+        "blocked_by": "C1"
+      },
+      {
+        "id": "C2.1",
+        "type": "check",
+        "parent": "C2",
+        "title": "La ligne *Les règles du jeu* du carnet n'ouvre plus `EcranUnivers` — elle ouvrait déjà",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 276
+      },
+      {
+        "id": "C2.2",
+        "type": "check",
+        "parent": "C2",
+        "title": "Un seul écran règle chaque réglage de l'univers. `Assistant.tsx` et `ReglesDuJeu.tsx`",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 277
+      },
+      {
+        "id": "C2.3",
+        "type": "check",
+        "parent": "C2",
+        "title": "Les douze étapes de l'assistant sont relevées une par une en tête de",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 278
+      },
+      {
+        "id": "C3",
+        "type": "epic",
+        "parent": null,
+        "title": "Le codex s'efface",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 2,
+          "total": 2
+        },
+        "source": "plan",
+        "order": 279,
+        "blocked_by": "C1"
+      },
+      {
+        "id": "C3.1",
+        "type": "check",
+        "parent": "C3",
+        "title": "L'onglet *Codex* n'existe plus, `Codex.tsx` est parti. ⚠️ Sa **surface de repos** est",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 280
+      },
+      {
+        "id": "C3.2",
+        "type": "check",
+        "parent": "C3",
+        "title": "Créer une pièce d'équipement se fait depuis un écran du carnet, et un essai le montre.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 281
+      },
+      {
+        "id": "C4",
+        "type": "epic",
+        "parent": null,
+        "title": "La galerie passe au papier",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 3,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 282,
+        "blocked_by": "C1"
+      },
+      {
+        "id": "C4.1",
+        "type": "check",
+        "parent": "C4",
+        "title": "La galerie est un fichier, pas une partie d'`App.tsx`.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 283
+      },
+      {
+        "id": "C4.2",
+        "type": "check",
+        "parent": "C4",
+        "title": "Un seul volet de fiche d'image dans tout le produit.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 284
+      },
+      {
+        "id": "C4.3",
+        "type": "check",
+        "parent": "C4",
+        "title": "`App.tsx` passe sous 3 000 lignes.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 285
+      },
+      {
+        "id": "C5",
+        "type": "epic",
+        "parent": null,
+        "title": "L'envoi, le clip, le montage",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 2,
+          "total": 2
+        },
+        "source": "plan",
+        "order": 286,
+        "blocked_by": "C4"
+      },
+      {
+        "id": "C5.1",
+        "type": "check",
+        "parent": "C5",
+        "title": "Les quatre fichiers sont en papier ou partis.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 287
+      },
+      {
+        "id": "C5.2",
+        "type": "check",
+        "parent": "C5",
+        "title": "Le sort d'un clip écarté est tranché, écrit, et tenu par un essai.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 288
+      },
+      {
+        "id": "C6",
+        "type": "epic",
+        "parent": null,
+        "title": "L'établi d'un sujet",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 2,
+          "total": 2
+        },
+        "source": "plan",
+        "order": 289,
+        "blocked_by": "C3"
+      },
+      {
+        "id": "C6.1",
+        "type": "check",
+        "parent": "C6",
+        "title": "Les quatre onglets d'un sujet sont en papier, celui-là compris.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 290
+      },
+      {
+        "id": "C6.2",
+        "type": "check",
+        "parent": "C6",
+        "title": "`Personnages.tsx` est parti — renommé `EtabliDuSujet.tsx`, jetons migrés.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 291
+      },
+      {
+        "id": "C7",
+        "type": "epic",
+        "parent": null,
+        "title": "L'atelier d'une animation",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 1,
+          "total": 1
+        },
+        "source": "plan",
+        "order": 292,
+        "blocked_by": "C5"
+      },
+      {
+        "id": "C7.1",
+        "type": "check",
+        "parent": "C7",
+        "title": "L'atelier d'une animation est en papier, et il règle les mêmes moteurs qu'avant.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 293
+      },
+      {
+        "id": "C8",
+        "type": "epic",
+        "parent": null,
+        "title": "Les dépenses, la découpe, la différence",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 1
+        },
+        "source": "plan",
+        "order": 294,
+        "blocked_by": "C4"
+      },
+      {
+        "id": "C8.1",
+        "type": "check",
+        "parent": "C8",
+        "title": "Aucun écran ancien n'est plus monté depuis un écran du carnet.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 295
+      },
+      {
+        "id": "C9",
+        "type": "epic",
+        "parent": null,
+        "title": "La barre tombe",
+        "status": "in_progress",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 4,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 296,
+        "blocked_by": "C2, C3, C4, C5, C6, C7, C8 — toutes."
+      },
+      {
+        "id": "C9.1",
+        "type": "check",
+        "parent": "C9",
+        "title": "Aucun onglet dans le produit. Le carnet est le seul chemin. `BarreChassis.tsx` est",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 297
+      },
+      {
+        "id": "C9.2",
+        "type": "check",
+        "parent": "C9",
+        "title": "`grep -r \"ancien-\" interface/src` ne rend rien. Les quatre jetons sont renommés",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 298
+      },
+      {
+        "id": "C9.3",
+        "type": "check",
+        "parent": "C9",
+        "title": "`essais/essai_jetons.py` ne connaît plus de liste blanche, et passe.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 299
+      },
+      {
+        "id": "C9.4",
+        "type": "check",
+        "parent": "C9",
+        "title": "Les 1 168 essais passent, dont les 620 d'`App.test.tsx`. **Trois assertions de",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 300
+      },
+      {
+        "id": "C9.5",
+        "type": "check",
+        "parent": "C9",
+        "title": "**Vérifié au navigateur, sur un second atelier** : aucun écran sombre nulle part.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 301
+      },
+      {
+        "id": "D1",
+        "type": "epic",
+        "parent": null,
+        "title": "Les cinq portes des réglages, la dernière",
+        "status": "done",
+        "status_raw": "tenue le 10 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 302,
+        "blocked_by": null
+      },
+      {
+        "id": "D2",
+        "type": "epic",
+        "parent": null,
+        "title": "L'inspiration de l'univers",
+        "status": "done",
+        "status_raw": "tenue le 11 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 303,
+        "blocked_by": null
+      },
+      {
+        "id": "D3",
+        "type": "epic",
+        "parent": null,
+        "title": "La galerie, dessinée",
+        "status": "done",
+        "status_raw": "tenue le 11 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 304,
+        "blocked_by": null
+      },
+      {
+        "id": "D4",
+        "type": "epic",
+        "parent": null,
+        "title": "Les outils de la galerie",
+        "status": "done",
+        "status_raw": "tenue le 11 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 305,
+        "blocked_by": "D3 — voir la note de partage de fichiers ci-dessus."
+      },
+      {
+        "id": "D5",
+        "type": "epic",
+        "parent": null,
+        "title": "Le repos de l'onglet Créer",
+        "status": "done",
+        "status_raw": "tenue le 11 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 306,
+        "blocked_by": null
+      },
+      {
+        "id": "D6",
+        "type": "epic",
+        "parent": null,
+        "title": "Le dernier châssis tombe",
+        "status": "done",
+        "status_raw": "tenue le 11 septembre 2026",
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 8
+        },
+        "source": "plan",
+        "order": 307,
+        "blocked_by": "D1, D2, D3, D4, D5 — toutes."
+      },
+      {
+        "id": "D6.1",
+        "type": "check",
+        "parent": "D6",
+        "title": "Les états de référence concernés sont identifiés ; chaque écart est corrigé ou nommé",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 308
+      },
+      {
+        "id": "D6.2",
+        "type": "check",
+        "parent": "D6",
+        "title": "Comparaison rendue au format du dessin, puis usage à 1280 × 720 et 1440 × 900 : actions",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 309
+      },
+      {
+        "id": "D6.3",
+        "type": "check",
+        "parent": "D6",
+        "title": "Une capture et un scénario datés identifient la même version, les mêmes données et les",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 310
+      },
+      {
+        "id": "D6.4",
+        "type": "check",
+        "parent": "D6",
+        "title": "Les données de recette comprennent un cas vide, un cas chargé et un refus pertinent.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 311
+      },
+      {
+        "id": "D6.5",
+        "type": "check",
+        "parent": "D6",
+        "title": "Un objet modifié est fermé puis rouvert avec des réglages différents des défauts.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 312
+      },
+      {
+        "id": "D6.6",
+        "type": "check",
+        "parent": "D6",
+        "title": "Les capacités serveur concernées ont chacune une porte visible depuis le parcours,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 313
+      },
+      {
+        "id": "D6.7",
+        "type": "check",
+        "parent": "D6",
+        "title": "Les essais métier pertinents passent ; les essais DOM sont adaptés aux nouveaux gestes",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 314
+      },
+      {
+        "id": "D6.8",
+        "type": "check",
+        "parent": "D6",
+        "title": "Le garde-fou des jetons reste tenu, la dette de géométrie des surfaces traitées est",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 315
+      },
+      {
+        "id": "RF0",
+        "type": "epic",
+        "parent": null,
+        "title": "Ouvrir la bonne version et retrouver le dessin de référence",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 316,
+        "blocked_by": null
+      },
+      {
+        "id": "RF0.1",
+        "type": "check",
+        "parent": "RF0",
+        "title": "Le lancement normal et la recette servent la même révision d'interface et une API",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 317
+      },
+      {
+        "id": "RF0.2",
+        "type": "check",
+        "parent": "RF0",
+        "title": "Instrument Serif, Instrument Sans et IBM Plex Mono sont effectivement chargées depuis",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 318
+      },
+      {
+        "id": "RF0.3",
+        "type": "check",
+        "parent": "RF0",
+        "title": "Ouvrir un jeu existant et commencer sans jeu conduisent aux états prévus, avec le titre,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 319
+      },
+      {
+        "id": "RF0.4",
+        "type": "check",
+        "parent": "RF0",
+        "title": "Le jeu de recette contient images, sujet, clip, bande et recette particulière sans",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 320
+      },
+      {
+        "id": "RF0.5",
+        "type": "check",
+        "parent": "RF0",
+        "title": "Le premier couple dessin / application est consigné ; les problèmes d'environnement",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 321
+      },
+      {
+        "id": "RF1",
+        "type": "epic",
+        "parent": null,
+        "title": "Retrouver, choisir et corriger depuis la galerie",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 322,
+        "blocked_by": null
+      },
+      {
+        "id": "RF1.1",
+        "type": "check",
+        "parent": "RF1",
+        "title": "Aucun arbre de projets / collections supplémentaire ne double le carnet dans la galerie ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 323
+      },
+      {
+        "id": "RF1.2",
+        "type": "check",
+        "parent": "RF1",
+        "title": "Titre, phrase de rôle, import, sortie, filtres comptés et bande de sélection suivent la",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 324
+      },
+      {
+        "id": "RF1.3",
+        "type": "check",
+        "parent": "RF1",
+        "title": "Rechercher, vider un filtre sans résultat et sélectionner deux images fonctionnent ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 325
+      },
+      {
+        "id": "RF1.4",
+        "type": "check",
+        "parent": "RF1",
+        "title": "Une sélection de clips, d'images ou mixte indique les actions possibles et la raison des",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 326
+      },
+      {
+        "id": "RF1.5",
+        "type": "check",
+        "parent": "RF1",
+        "title": "La fiche présente identité, traitements et accès au travail avant les détails avancés ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 327
+      },
+      {
+        "id": "RF1.6",
+        "type": "check",
+        "parent": "RF1",
+        "title": "Un aller-retour en retouche restitue le filtre, la sélection et la position utile de la",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 328
+      },
+      {
+        "id": "RF2",
+        "type": "epic",
+        "parent": null,
+        "title": "Du sujet à son image, sans perdre la demande",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 329,
+        "blocked_by": null
+      },
+      {
+        "id": "RF2.1",
+        "type": "check",
+        "parent": "RF2",
+        "title": "Jeu vide et famille fournie montrent le geste de création et les comptes attendus ; une",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 330
+      },
+      {
+        "id": "RF2.2",
+        "type": "check",
+        "parent": "RF2",
+        "title": "Page et images du sujet distinguent clairement description, case vide, essais et image",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 331
+      },
+      {
+        "id": "RF2.3",
+        "type": "check",
+        "parent": "RF2",
+        "title": "La demande et les paramètres sont disposés suivant les maquettes, avec les tailles",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 332
+      },
+      {
+        "id": "RF2.4",
+        "type": "check",
+        "parent": "RF2",
+        "title": "Ouvrir puis annuler l'envoi conserve le brouillon, sa cible et les références choisies.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 333
+      },
+      {
+        "id": "RF2.5",
+        "type": "check",
+        "parent": "RF2",
+        "title": "La confirmation utilise la résolution réelle : prix ou temps, plafonds et références",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 334
+      },
+      {
+        "id": "RF2.6",
+        "type": "check",
+        "parent": "RF2",
+        "title": "Succès et échec reviennent dans le contexte du sujet ; une reprise ne crée pas une",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 335
+      },
+      {
+        "id": "RF3",
+        "type": "epic",
+        "parent": null,
+        "title": "Retoucher une image et poursuivre sa série",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 336,
+        "blocked_by": null
+      },
+      {
+        "id": "RF3.1",
+        "type": "check",
+        "parent": "RF3",
+        "title": "La chaîne, les fabriques, l'image et les réglages retrouvent leurs zones de référence ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 337
+      },
+      {
+        "id": "RF3.2",
+        "type": "check",
+        "parent": "RF3",
+        "title": "Les textes visibles aident à choisir effet, disponibilité et durée ; les relevés",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 338
+      },
+      {
+        "id": "RF3.3",
+        "type": "check",
+        "parent": "RF3",
+        "title": "Le nom de la série dit si l'on parcourt une sélection ou les images d'un sujet ; passer",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 339
+      },
+      {
+        "id": "RF3.4",
+        "type": "check",
+        "parent": "RF3",
+        "title": "Brut, rendu, comparaison, ajustement et zoom restent compréhensibles ; cadre, pipette",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 340
+      },
+      {
+        "id": "RF3.5",
+        "type": "check",
+        "parent": "RF3",
+        "title": "Réglage en veille, réglage vidé, défaire et recette nommée gardent leurs effets distincts ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 341
+      },
+      {
+        "id": "RF3.6",
+        "type": "check",
+        "parent": "RF3",
+        "title": "À 1280 × 720, image, réglages et navigation restent accessibles sans colonne inutile ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 342
+      },
+      {
+        "id": "RF4",
+        "type": "epic",
+        "parent": null,
+        "title": "Du clip à une bande que l'on peut reprendre",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 343,
+        "blocked_by": null
+      },
+      {
+        "id": "RF4.1",
+        "type": "check",
+        "parent": "RF4",
+        "title": "Commande, choix du clip et montage ont leurs hiérarchies prévues ; ruban, réserve,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 344
+      },
+      {
+        "id": "RF4.2",
+        "type": "check",
+        "parent": "RF4",
+        "title": "Ouvrir un clip payé ou revenir à son montage ne le commande jamais à nouveau ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 345
+      },
+      {
+        "id": "RF4.3",
+        "type": "check",
+        "parent": "RF4",
+        "title": "Une frame retirée ou retouchée conserve le sort et la filiation déjà décidés ; aucun",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 346
+      },
+      {
+        "id": "RF4.4",
+        "type": "check",
+        "parent": "RF4",
+        "title": "La manipulation de frame est testée **pendant la lecture**, puis la bande est fermée",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 347
+      },
+      {
+        "id": "RF4.5",
+        "type": "check",
+        "parent": "RF4",
+        "title": "Le contexte du sujet et la séparation images fixes / animations survivent au retour ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 348
+      },
+      {
+        "id": "RF4.6",
+        "type": "check",
+        "parent": "RF4",
+        "title": "Gratuité, coût inconnu et temps local restent distincts ; les preuves utilisent des",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 349
+      },
+      {
+        "id": "RF5",
+        "type": "epic",
+        "parent": null,
+        "title": "Poser un équipement et corriger son calque",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 350,
+        "blocked_by": null
+      },
+      {
+        "id": "RF5.1",
+        "type": "check",
+        "parent": "RF5",
+        "title": "Pièce, emploi, porteur, pose et direction restent identifiables à chaque étape ; les",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 351
+      },
+      {
+        "id": "RF5.2",
+        "type": "check",
+        "parent": "RF5",
+        "title": "Les zones d'image, de réglage et de résultat reprennent les dessins, avec des contrôles",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 352
+      },
+      {
+        "id": "RF5.3",
+        "type": "check",
+        "parent": "RF5",
+        "title": "Le calage se fait en regardant le résultat ; le calque et ses réglages particuliers se",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 353
+      },
+      {
+        "id": "RF5.4",
+        "type": "check",
+        "parent": "RF5",
+        "title": "Une découpe donne accès aux images produites et à leur rattachement ; revenir à la",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 354
+      },
+      {
+        "id": "RF5.5",
+        "type": "check",
+        "parent": "RF5",
+        "title": "La sortie d'un outil revient à l'emploi ou à l'image de départ ; les références et",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 355
+      },
+      {
+        "id": "RF6",
+        "type": "epic",
+        "parent": null,
+        "title": "Régler le jeu et revenir au travail",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 356,
+        "blocked_by": null
+      },
+      {
+        "id": "RF6.1",
+        "type": "check",
+        "parent": "RF6",
+        "title": "Chaque réglage visible annonce sa portée : atelier, jeu, famille ou image ; aucune",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 357
+      },
+      {
+        "id": "RF6.2",
+        "type": "check",
+        "parent": "RF6",
+        "title": "Les fonctions encore portées par un panneau secondaire sont relogées avant son retrait ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 358
+      },
+      {
+        "id": "RF6.3",
+        "type": "check",
+        "parent": "RF6",
+        "title": "Une modification de défaut est relue dans l'écran appelant sans recharge manuelle ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 359
+      },
+      {
+        "id": "RF6.4",
+        "type": "check",
+        "parent": "RF6",
+        "title": "La toile garde image, réserve et menu d'îlot selon la planche ; les réglages ne reprennent",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 360
+      },
+      {
+        "id": "RF6.5",
+        "type": "check",
+        "parent": "RF6",
+        "title": "Guide et barre amènent au même lieu que le carnet ; les libellés suivent le vocabulaire",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 361
+      },
+      {
+        "id": "RF6.6",
+        "type": "check",
+        "parent": "RF6",
+        "title": "Retour au sujet ou à la retouche conserve le contexte utile ; les essais d'installation",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 362
+      },
+      {
+        "id": "RF7",
+        "type": "epic",
+        "parent": null,
+        "title": "Livrer les images choisies et comprendre ce qui est sorti",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 12
+        },
+        "source": "plan",
+        "order": 363,
+        "blocked_by": null
+      },
+      {
+        "id": "RF7.1",
+        "type": "check",
+        "parent": "RF7",
+        "title": "La porte distingue sélection, sujet et ensemble du jeu ; le lot présenté correspond",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 364
+      },
+      {
+        "id": "RF7.2",
+        "type": "check",
+        "parent": "RF7",
+        "title": "La disposition suit la maquette ; destination, rangement, collisions et moteur restent",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 365
+      },
+      {
+        "id": "RF7.3",
+        "type": "check",
+        "parent": "RF7",
+        "title": "Prévisualiser n'écrit rien ; confirmer écrit exactement ce qui a été annoncé, dans un",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 366
+      },
+      {
+        "id": "RF7.4",
+        "type": "check",
+        "parent": "RF7",
+        "title": "Une seconde sortie distingue ajout, remplacement et fichier étranger ; la fermeture et",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 367
+      },
+      {
+        "id": "RF7.5",
+        "type": "check",
+        "parent": "RF7",
+        "title": "Le bilan donne le prochain geste et l'accès au résultat ; le journal distingue argent,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 368
+      },
+      {
+        "id": "RF7.6",
+        "type": "check",
+        "parent": "RF7",
+        "title": "Le gabarit de nommage et le choix de dossier font l'objet d'une décision explicite de",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 369
+      },
+      {
+        "id": "RF7.7",
+        "type": "check",
+        "parent": "RF7",
+        "title": "Rejouer « ouvrir → sujet → image → correction → sortie » et « sujet → clip → bande →",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 370
+      },
+      {
+        "id": "RF7.8",
+        "type": "check",
+        "parent": "RF7",
+        "title": "Chaque état d'écran retenu du sommaire a une preuve, une adaptation nommée ou un hors",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 371
+      },
+      {
+        "id": "RF7.9",
+        "type": "check",
+        "parent": "RF7",
+        "title": "Les exemptions de géométrie restantes sont justifiées par leur nature non visuelle,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 372
+      },
+      {
+        "id": "RF7.10",
+        "type": "check",
+        "parent": "RF7",
+        "title": "Les récits historiques du plan sont rangés dans leurs documents propriétaires, sans",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 373
+      },
+      {
+        "id": "RF7.11",
+        "type": "check",
+        "parent": "RF7",
+        "title": "Le tableau de `docs/PLAN.md` est mis à jour, les critères tenus vont dans le suivi V4",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 374
+      },
+      {
+        "id": "RF7.12",
+        "type": "check",
+        "parent": "RF7",
+        "title": "L'auteur a pu juger les comparaisons et utiliser les parcours. Une validation technique",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-carnet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 375
+      }
+    ],
+    "sources": [
+      "claude-mastery (docs/PLAN.md, docs/PLAN-atelier-unifie-affectation.md, docs/PLAN-atelier-unifie.md, docs/PLAN-carnet-affectation.md, docs/PLAN-carnet.md)"
+    ],
+    "artifacts": [
+      {
+        "label": "Brief / PRD",
+        "path": "docs/PRD.md",
+        "present": true,
+        "detail": ""
+      },
+      {
+        "label": "Plan de phases",
+        "path": "docs/PLAN.md",
+        "present": true,
+        "detail": ""
+      },
+      {
+        "label": "Design system",
+        "path": "docs/DESIGN.md",
+        "present": true,
+        "detail": ""
+      },
+      {
+        "label": "Architecture",
+        "path": "docs/architecture.md",
+        "present": true,
+        "detail": ""
+      },
+      {
+        "label": "PRD shardé",
+        "path": "docs/prd",
+        "present": false,
+        "detail": ""
+      },
+      {
+        "label": "Stories",
+        "path": "docs/stories",
+        "present": false,
+        "detail": ""
+      },
+      {
+        "label": "Portes QA",
+        "path": "docs/qa/gates",
+        "present": false,
+        "detail": ""
+      },
+      {
+        "label": "Config BMAD",
+        "path": ".bmad-core/core-config.yaml",
+        "present": false,
+        "detail": ""
+      }
+    ],
+    "scanned_at": "2026-09-12"
+  },
+  "manual": {
+    "items": []
+  },
+  "overrides": {},
+  "notes": [],
+  "milestones": [],
+  "activity": [
+    {
+      "hash": "0c9f67e",
+      "date": "2026-09-12",
+      "text": "feat: integrer le socle atelier, fabrications suivies, calques et livraison Godot"
+    },
+    {
+      "hash": "c89538a",
+      "date": "2026-09-12",
+      "text": "chore: restaurer les contrôles de compatibilité du carnet"
+    },
+    {
+      "hash": "2437b1f",
+      "date": "2026-09-12",
+      "text": "feat(maquette): completer les parcours video et source 3D"
+    },
+    {
+      "hash": "f1d0a6b",
+      "date": "2026-09-12",
+      "text": "Relie la toile aux fabrications et fiabilise les livraisons simulées"
+    },
+    {
+      "hash": "8719330",
+      "date": "2026-09-12",
+      "text": "Préserve les retouches des copies de frames au remontage"
+    },
+    {
+      "hash": "389d175",
+      "date": "2026-09-12",
+      "text": "Clarifie la couverture et la vérification animée des équipements"
+    },
+    {
+      "hash": "6291220",
+      "date": "2026-09-12",
+      "text": "Consolide la reprise, la bibliothèque et les envois du prototype"
+    },
+    {
+      "hash": "6f512ee",
+      "date": "2026-09-12",
+      "text": "Cadre la consolidation UX du prototype"
+    },
+    {
+      "hash": "1321d64",
+      "date": "2026-09-12",
+      "text": "Documente la revue UX complète de l’atelier"
+    },
+    {
+      "hash": "f843d15",
+      "date": "2026-09-12",
+      "text": "Clarifie la relecture des envois et les emplacements"
+    },
+    {
+      "hash": "8c5ce74",
+      "date": "2026-09-12",
+      "text": "Clarifie les emplois et reprend le pliage des équipements"
+    },
+    {
+      "hash": "f2f8edc",
+      "date": "2026-09-11",
+      "text": "Maquette les équipements complets et leurs combinaisons"
+    }
+  ]
+}

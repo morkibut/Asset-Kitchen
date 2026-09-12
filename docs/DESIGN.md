@@ -317,11 +317,16 @@ chaque côté.
 
 ### Largeurs de colonne — liste fermée
 
-**300** le carnet (fixe, toujours là) · **380** le volet (fixe, se ferme, ne se rétrécit
+**240** la navigation de l’atelier unifié, **76** quand l’auteur la replie ·
+**300** le carnet historique · **380** le volet (fixe, se ferme, ne se rétrécit
 jamais) · **880** la barre (un plafond, pas une largeur : elle se centre et rétrécit sous
 lui) · **128** ses sœurs (fixe, une vignette de front) · la surface prend le reste.
 
-La troisième est entrée avec `B6`, relevée sur `Barre.dc.html`. Ce n'est pas une colonne : la
+Les dimensions 240/76 reprennent le châssis desktop approuvé le 12 septembre 2026.
+Le repli reste explicite, sans être déclenché par l’ouverture d’un outil ; ses jetons sont
+`--spacing-navigation-atelier` et `--spacing-navigation-repliee`.
+
+Le plafond de 880 est entré avec `B6`, relevé sur `Barre.dc.html`. Ce n'est pas une colonne : la
 barre se pose **par-dessus** les deux autres et ne partage la grille avec personne. Elle est
 dans cette liste parce que c'est la seule largeur fixe que le produit écrive en dehors du
 châssis, et qu'une valeur non déclarée est une valeur qu'on réinventera un peu différente au

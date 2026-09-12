@@ -45,6 +45,7 @@
 | `docs/design-decisions.md` | le design | on rouvre une décision d'apparence |
 | `docs/PIEGES.md` | — | avant de toucher un terrain déjà miné, ou sur renvoi du code |
 | `docs/releve-usage.md` | — | on cherche ce qu'une séance d'usage a trouvé et qui n'est **pas encore** cadré ni planifié |
+| `docs/releve-pixel-engine.md` | — | on touche au montage local, aux consignes de mouvement, à la palette d'une bande, à la cadence d'un clip ou à la quantification — ce qui a été **mesuré** chez le fournisseur commun de SpriteCook et consorts, les sept reprises classées par gain, et ce que portent les quatre dépôts voisins. **Il ne fait foi sur rien** : il garde ce qui a été relevé ailleurs, et chaque affirmation porte sa source |
 | **`docs/bilan-v3.md`** | le plan | **on ouvre une tranche de la V2.3 ou de la V3** — les conclusions chiffrées des trois bancs payés, ce que le relevé d'outillage a rapporté, les trois défauts que le code porte aujourd'hui, et **ce qui est mort et ne doit pas se reproposer**. Il remplace la lecture des sept documents préparatoires |
 | `docs/v3-animation.md` | — | on veut les trois bancs planche par planche, avec les notes de l'auteur et les tableaux complets. **Le bilan suffit dans presque tous les cas** |
 | `docs/releve-outillage.md` | — | on veut le relevé d'outillage entier — sources, licences, ce qui est écarté et pourquoi. **Le bilan en donne les conclusions** |
