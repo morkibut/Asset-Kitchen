@@ -476,7 +476,7 @@ faire**.
 - [ ] Ce qui est ajouté paraît immédiatement dans la matrice et dans la fabrication.
 - [ ] Écrire un nom crée la chose, sur-le-champ, sans formulaire et sans rien payer.
 
-## RP14 · La découpe se règle
+## RP14 · La découpe se règle  ✅ **close le 13 septembre 2026**
 
 **Bloquée par** : rien.
 
@@ -492,7 +492,7 @@ avant de créer. Une découpe ratée se refait en entier.
 - [x] Les sorties se relisent avant d'être créées.
 - [x] La source est conservée, et la découpe se reprend depuis un résultat.
 
-## RP15 · Le cadre du montage se règle, ou ne se propose plus
+## RP15 · Le cadre du montage se règle, ou ne se propose plus  ✅ **close le 13 septembre 2026**
 
 **Bloquée par** : rien.
 
