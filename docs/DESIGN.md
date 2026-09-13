@@ -440,7 +440,12 @@ Quatre durées, et une absence. Rien d'autre n'entre.
 
 ## L'écriture
 
-Le vocabulaire fermé de `Vocabulaire.dc.html` s'applique partout : écrans, menus, guide,
+**Il fait foi sur les mots, et la maquette ne le révise pas.** Remonté du dossier des pistes le
+13 septembre 2026 : un document qui gouverne ne vit pas dans `archive/`. La maquette de
+l'atelier unifié écrit *asset* à plusieurs endroits ; la liste noire ci-dessous l'interdit, et
+c'est elle qui l'emporte — voir `docs/PLAN-remise-a-plat.md` § *Les trois décisions*.
+
+Le vocabulaire fermé de `docs/vocabulaire.html` s'applique partout : écrans, menus, guide,
 messages d'erreur. Un mot de la liste noire ne s'écrit pas, et ce qui n'a pas de mot dans la
 liste ne se dit pas — c'est la liste qu'on modifie d'abord, pas l'écran.
 

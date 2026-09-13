@@ -50,10 +50,21 @@ c'est tout. Le désordre est côté écran.
 Prises le 13 septembre 2026 en autonomie, et écrites ici pour qu'on ne les rejoue pas à chaque
 tranche.
 
-### 1. La maquette fait foi sur l'ossature et le vocabulaire ; le produit fait foi sur la profondeur
+### 1. La maquette fait foi sur l'ossature ; le produit fait foi sur la profondeur ; `docs/vocabulaire.html` fait foi sur les mots
 
 Là où la maquette est plus simple que le produit, **c'est la maquette qui gagne** : le nombre
-de portes, le nom de chaque porte, l'endroit où un geste se trouve, le mot écrit sur un bouton.
+de portes, l'endroit où un geste se trouve, ce qui s'ouvre en cliquant quoi.
+
+⚠️ **Mais pas sur les mots.** Le produit a déjà un vocabulaire fermé, et `docs/DESIGN.md` dit
+qu'il s'applique partout — écrans, menus, guide, messages d'erreur. Il tient une liste noire, et
+`asset` y figure : on écrit *un sujet* ou *une image*, selon ce qu'on désigne. La maquette écrit
+pourtant *asset* à plusieurs endroits, et le produit aussi. **Les deux ont tort, et c'est le
+vocabulaire qui tranche.** Il porte ses raisons, et deux exceptions gardées — `prompt` et
+`frame`, parce que leur traduction est plus longue et moins claire.
+
+*Ce document vivait dans le dossier des pistes du 4 septembre, descendu en archive le matin
+même. Un document qui gouverne ne vit pas dans `archive/` : il est remonté à `docs/vocabulaire.html`
+le 13 septembre 2026, et `docs/DESIGN.md` le nomme désormais par son chemin.*
 
 Là où le produit fait plus que la maquette, **c'est le produit qui gagne** : l'atelier d'une
 animation, le calibrage, la planche de poses, les tuiles, les sons, l'aide, la barre de gestes.
@@ -74,6 +85,11 @@ la maquette nomme. L'autre chemin disparaît le jour où le premier tient tout, 
 Les 80 désaccords de nom ne se corrigent pas en une passe. Ceux de l'ossature — les portes, les
 onglets, les titres d'écran — se ferment d'un coup, parce qu'ils ne bougeront plus. Les autres
 se ferment **dans la tranche qui touche leur écran**, sinon on renomme deux fois.
+
+**Et on ne renomme pas d'après la maquette : d'après `docs/vocabulaire.html`.** C'est la
+décision 1. Quand ni la maquette ni le produit n'emploient le mot juste, c'est le vocabulaire
+qui donne le mot, et s'il n'en a pas, **c'est lui qu'on modifie d'abord, pas l'écran** — sa
+propre règle le dit.
 
 ---
 
@@ -188,18 +204,46 @@ chaque écran, et le mot de chaque retour en arrière.
 Les autres — les libellés à l'intérieur d'un écran — se ferment dans la tranche qui touche cet
 écran. C'est la décision 3.
 
+**Le mot juste vient de `docs/vocabulaire.html`, pas de la maquette.** Quatre désaccords sont
+déjà tranchés par la liste noire, et ils ne se rediscutent pas :
+
+| Ce que la maquette et le produit écrivent | Ce qui s'écrit |
+|---|---|
+| *asset* | **un sujet** quand on désigne la chose, **une image** quand on désigne le fichier |
+| *chose du jeu* | **un sujet** — le mot a servi, il ne sert plus |
+| *projet* | **un jeu** |
+| *appel*, *requête* | **une génération** |
+
+Et deux règles d'usage du même document : **on dit la famille quand on peut** — *Ajouter un
+personnage*, pas *Ajouter un sujet* ; le mot *sujet* ne sort que lorsqu'on mélange les familles.
+**Les familles restent au pluriel** dans la colonne et dans les menus.
+
+Trois désaccords ne sont tranchés par personne et se décident ici, une fois :
+
+1. **L'écran de livraison porte quatre noms** — *Livrer au jeu*, *La sortie*, *Les livraisons*,
+   et un composant qui s'appelle encore autrement. Un seul reste.
+2. **La table de retouche se conjugue** — *Détourer* contre *Détourage*. Un nom ou un verbe,
+   mais le même pour les huit.
+3. **Le champ du modèle porte huit noms** — et *Moyen de fabrication* est déjà pris ailleurs,
+   pour autre chose. Ce nom-là se règle avec RP4, qui réunit les huit fenêtres ; RP3 ne fait que
+   l'inscrire dans la liste.
+
 ### Critères d'acceptation
 
-- [ ] Les portes de la colonne portent les mots de la maquette, et le compte des portes est
-  celui de la maquette.
-- [ ] Les onglets de la fiche d'un sujet portent les mots de la maquette, et leur nombre est
-  celui de la maquette.
+- [ ] Aucun mot de la liste noire de `docs/vocabulaire.html` ne paraît plus dans un libellé
+  d'ossature — porte, onglet, titre d'écran, fil d'Ariane, retour en arrière.
+- [ ] Les portes de la colonne sont celles de la maquette, en nombre et en ordre, avec les mots
+  du vocabulaire.
+- [ ] Les onglets de la fiche d'un sujet sont ceux de la maquette, en nombre et en ordre.
 - [ ] Chaque titre d'écran est le mot par lequel on y entre : on ne clique pas *Livrer au jeu*
-  pour arriver sur *Exporter des fichiers*.
+  pour arriver sur *La sortie*.
+- [ ] Les trois désaccords non tranchés ci-dessus le sont, et la décision est écrite dans
+  `docs/vocabulaire.html` — c'est lui qu'on modifie d'abord, pas l'écran.
 - [ ] La liste des désaccords restants est écrite, écran par écran, et chaque tranche d'après
   ferme les siens.
-- [ ] Un essai tient la liste fermée des noms de portes et d'onglets, comme les listes fermées
-  du design tiennent les tailles.
+- [ ] Un essai tient la liste fermée des noms de portes, d'onglets et de titres, comme les
+  listes fermées du design tiennent les tailles. Il lit `docs/vocabulaire.html`, il ne recopie
+  pas ses mots.
 
 ---
 

@@ -212,7 +212,7 @@ def test_tout_outil_livré_porte_sa_fiche(atelier):
 
     Il ne refuse pas l'outil — la barre le montrerait quand même. Il refuse
     qu'on **livre** un outil sans l'avoir nommé en français, ce qui est un autre
-    manquement : la liste noire de `Vocabulaire.dc.html` vaut aussi ici.
+    manquement : la liste noire de `docs/vocabulaire.html` vaut aussi ici.
     """
 
     application = creer_application(atelier)

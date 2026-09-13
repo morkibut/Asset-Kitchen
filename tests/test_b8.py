@@ -2,7 +2,7 @@
 """Les critères d'acceptation de B8.1, B8.2, B8.3, B8.4 et B8.5.
 
 **Planches** : `docs/archive/pistes-2026-09-04/carnet/Famille.dc.html`,
-`Vocabulaire.dc.html`.
+`docs/vocabulaire.html`.
 
 B8 fait de la collection un vrai groupe : un **sujet** y appartient, il peut
 appartenir à plusieurs collections à la fois, et l'y ranger ne le retire

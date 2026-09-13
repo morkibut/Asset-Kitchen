@@ -106,7 +106,7 @@ d'acceptation de chacune.
   confondent jamais, et aucun écran n'en invente une septième.
 - **Clip** = la vidéo revenue d'une génération. **Frame** = une image du clip, qui se souvient
   d'où elle vient. **Bande** = le montage gardé.
-- La liste noire de `Vocabulaire.dc.html` s'applique partout : écrans, menus, guide,
+- La liste noire de `docs/vocabulaire.html` s'applique partout : écrans, menus, guide,
   messages d'erreur. Deux exceptions gardées : *prompt* et *frame*.
 
 ### Le modèle de données
@@ -332,7 +332,7 @@ avant d'être annoncé. Détail, verdicts des six critères et ce qui reste ouve
 
 ## B8 · La collection devient un vrai groupe — **tenue le 7 septembre 2026**
 
-**Planches** : `Famille.dc.html`, `Vocabulaire.dc.html`
+**Planches** : `Famille.dc.html`, `docs/vocabulaire.html`
 
 **Six morceaux sont écrits.** `B8.1` a posé le modèle de l'adhésion — la collection
 porte ses membres, un membre est le couple `(jeu, sujet)` —, et les cinq essais qui parlaient de

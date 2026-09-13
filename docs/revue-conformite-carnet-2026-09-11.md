@@ -192,7 +192,7 @@ et les mouvements, alors que les règles du jeu et l'installation ont leurs écr
 **Friction :** le texte recommande des destinations que l'auteur doit traduire. Le libellé
 « Réglages » ne dit ni sa portée ni ce qui le distingue des règles du jeu.
 
-**Proposition :** revoir les libellés et les chemins avec `Vocabulaire.dc.html` et
+**Proposition :** revoir les libellés et les chemins avec `docs/vocabulaire.html` et
 `Navigation.dc.html`, puis reloger chaque réglage selon sa portée déjà décidée. La conservation
 de toutes les chaînes des anciens tests n'est pas un objectif lorsqu'elles contredisent le design.
 

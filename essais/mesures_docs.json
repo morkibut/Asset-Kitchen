@@ -1,11 +1,11 @@
 {
- "releve_le": 1789297037.2370045,
+ "releve_le": 1789297776.33252,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 161481,
+  "octets": 162263,
   "documents": {
    "AGENTS.md": {
     "octets": 36898,
@@ -242,20 +242,20 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 41261,
+    "octets": 41641,
     "titres": 22,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 41261
+      "octets": 41641
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 39,
-      "octets": 6801
+      "octets": 7181
      },
      {
       "titre": "Ce que la remise à plat a mesuré, le 13 septembre 2026",
@@ -380,14 +380,14 @@
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 28375,
+    "octets": 28777,
     "titres": 31,
     "sections": [
      {
       "titre": "Asset Kitchen — Design System",
       "niveau": 1,
       "ligne": 1,
-      "octets": 27884
+      "octets": 28261
      },
      {
       "titre": "Comment ce document a été obtenu",
@@ -543,30 +543,30 @@
       "titre": "L'écriture",
       "niveau": 2,
       "ligne": 441,
-      "octets": 560
+      "octets": 937
      },
      {
       "titre": "Ce que ce document ne tranche pas",
       "niveau": 2,
-      "ligne": 455,
+      "ligne": 460,
       "octets": 1880
      },
      {
       "titre": "Un défaut d'avant, fermé par construction",
       "niveau": 2,
-      "ligne": 483,
+      "ligne": 488,
       "octets": 1596
      },
      {
       "titre": "Motifs → `docs/design-motifs.md`",
       "niveau": 2,
-      "ligne": 509,
+      "ligne": 514,
       "octets": 39
      },
      {
       "titre": "Journal des décisions → `docs/design-decisions.md`",
       "niveau": 2,
-      "ligne": 511,
+      "ligne": 516,
       "octets": 57
      }
     ]
@@ -575,11 +575,11 @@
  },
  "renvois": {
   "code": {
-   "total": 679,
+   "total": 681,
    "casses": []
   },
   "docs": {
-   "total": 1223,
+   "total": 1239,
    "casses": []
   }
  }
