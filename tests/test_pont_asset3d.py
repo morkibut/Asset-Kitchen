@@ -307,7 +307,15 @@ def test_executeur_natif_separe_sans_gpu_et_sans_ecriture_chez_le_voisin(tmp_pat
     if not (source / "serveur" / "main.py").is_file():
         pytest.skip("Le projet asset3d voisin n’est pas présent sur cette machine.")
     donnees = tmp_path / "natif"
-    n = charger_asset3d(source, donnees)
+    # Même garde que dans `tests/test_au10_environnement.py` : le voisin peut
+    # être cloné à côté sans que son propre environnement soit installé ici.
+    try:
+        n = charger_asset3d(source, donnees)
+    except ModuleNotFoundError as manque:
+        pytest.skip(
+            "Le voisin asset3d est présent, mais son environnement n’est pas"
+            f" installé ici — il lui manque « {manque.name} »."
+        )
     monkeypatch.setattr(n.main, "executeur", n.executeur.Executeur())
     programme = tmp_path / "programme.py"
     programme.write_text("# jamais exécuté", encoding="utf-8")

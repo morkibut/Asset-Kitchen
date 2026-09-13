@@ -67,7 +67,19 @@ def test_charger_le_pont_ne_touche_a_aucun_fichier_du_voisin(tmp_path, monkeypat
     caches_avant = _caches()
     from atelier.pont_asset3d import charger_asset3d
     donnees = tmp_path / "donnees-pont"
-    natif = charger_asset3d(SOURCE, donnees)
+    # Le voisin est là, mais son environnement Python peut ne pas l'être : ses
+    # modules importent des paquets **à lui** — `cv2` par exemple —, que ce
+    # dépôt n'installe pas et ne doit pas installer, puisque c'est précisément
+    # la frontière que cet essai vérifie. Un essai sauté avec sa raison est un
+    # verdict ; une exception d'import ressemble à une régression et n'en est
+    # pas une.
+    try:
+        natif = charger_asset3d(SOURCE, donnees)
+    except ModuleNotFoundError as manque:
+        pytest.skip(
+            "Le voisin asset3d est présent, mais son environnement n’est pas"
+            f" installé ici — il lui manque « {manque.name} »."
+        )
     apres = _empreinte_arbre(SOURCE)
     caches_apres = _caches()
 
