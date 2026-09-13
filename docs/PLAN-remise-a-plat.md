@@ -20,6 +20,8 @@
 > | [**l'écart**](releves/2026-09-13-ecart-maquette-produit.md) | **le croisement des deux premiers, geste par geste.** C'est lui qui commande ce plan |
 > | [les documents](releves/2026-09-13-etat-des-docs.md) | ce qui fait foi, ce qui est périmé, ce qui est descendu en archive |
 
+> **Quel modèle sur quelle tranche** : [PLAN-remise-a-plat-affectation.md](PLAN-remise-a-plat-affectation.md).
+
 ---
 
 ## Le vrai état, en chiffres

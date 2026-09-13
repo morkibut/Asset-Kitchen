@@ -16,6 +16,7 @@
 |---|---|---|
 | **`docs/PLAN-remise-a-plat.md`** | le plan | **on remet d'aplomb sur la maquette validée ce qui existe déjà** — le ménage, les quatre doublons, les manques, et les deux décisions à trancher. Ouvert le 13 septembre 2026, il passe devant l'atelier unifié quand les deux touchent le même écran |
 | `docs/PLAN-atelier-unifie.md` | le plan | on ouvre une tranche du chantier actif : demande MCP de l'agent, animation, Godot, puis moteurs locaux et 3D |
+| `docs/PLAN-remise-a-plat-affectation.md` | le plan | on choisit le modèle et les points durs de la prochaine tranche RP |
 | `docs/PLAN-atelier-unifie-affectation.md` | le plan | on choisit le modèle et les points durs de la prochaine tranche AU |
 | `docs/archi-atelier-unifie.md` | l'architecture | on construit un contrat de demande, de travail, de source, d'intégration locale ou de livraison Godot |
 | `docs/maquettes-atelier-unifie/02-atelier.html`, `docs/maquettes-atelier-unifie/couverture.md` | le design, proposition | on essaie la toile, la création manuelle, la retouche et la livraison ; inventaire des gestes interactifs, simulations et détails manquants. `01-parcours.html` garde la première proposition |
