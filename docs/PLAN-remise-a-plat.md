@@ -469,11 +469,11 @@ avant de créer. Une découpe ratée se refait en entier.
 
 ### Critères d'acceptation
 
-- [ ] Une zone se nomme, se garde ou s'écarte, et ses coordonnées se règlent au clavier.
-- [ ] Une zone s'ajoute, une zone se déplace, une zone se redimensionne.
-- [ ] Le dernier geste se défait.
-- [ ] Les sorties se relisent avant d'être créées.
-- [ ] La source est conservée, et la découpe se reprend depuis un résultat.
+- [x] Une zone se nomme, se garde ou s'écarte, et ses coordonnées se règlent au clavier.
+- [x] Une zone s'ajoute, une zone se déplace, une zone se redimensionne.
+- [x] Le dernier geste se défait.
+- [x] Les sorties se relisent avant d'être créées.
+- [x] La source est conservée, et la découpe se reprend depuis un résultat.
 
 ## RP15 · Le cadre du montage se règle, ou ne se propose plus
 

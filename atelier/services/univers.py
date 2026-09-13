@@ -665,6 +665,7 @@ class ServiceUnivers:
         boites: Iterable[Boite],
         *,
         remplacer: bool = False,
+        noms: Iterable[str | None] | None = None,
     ) -> dict[str, Any]:
         """Chaque rectangle devient une carte du même tableau.
 
@@ -697,10 +698,16 @@ class ServiceUnivers:
                 "prendre la place de l'originale demande un seul rectangle"
             )
 
+        noms_recus = list(noms) if noms is not None else []
         nees: list[Carte] = []
-        for taillee in decouper(octets, rectangles):
+        for numero, taillee in enumerate(decouper(octets, rectangles), start=1):
             mesure = mesurer(taillee)
             neuve = uuid.uuid4().hex[:16]
+            # **Ce que l'écran a laissé nommer, jamais l'inverse.** Ignoré par
+            # `remplacer` : ce morceau-là hérite de la note de l'originale, pas
+            # d'un nom saisi pour une des zones du réglage manuel.
+            nom = noms_recus[numero - 1] if numero - 1 < len(noms_recus) else None
+            nom = nom.strip() if isinstance(nom, str) else None
             fille = Carte(
                 identifiant=neuve,
                 projet=projet,
@@ -711,6 +718,7 @@ class ServiceUnivers:
                 largeur=mesure.largeur,
                 hauteur=mesure.hauteur,
                 type_media=mesure.type_media,
+                note=nom or "",
                 octets=mesure.octets,
                 fichier=self._fichiers.ecrire_octets_carte(
                     projet, neuve, taillee, extension(mesure.type_media)

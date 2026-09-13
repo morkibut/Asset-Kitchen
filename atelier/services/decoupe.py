@@ -218,7 +218,13 @@ class ServiceDecoupe:
 
     # ── Découper ─────────────────────────────────────────────────────────────
 
-    def decouper(self, identifiant: str, boites: Iterable[Boite]) -> dict[str, Any]:
+    def decouper(
+        self,
+        identifiant: str,
+        boites: Iterable[Boite],
+        *,
+        noms: Iterable[str | None] | None = None,
+    ) -> dict[str, Any]:
         """Chaque rectangle devient un asset, filié sur la planche (US-72, US-74).
 
         L'ordre reçu est l'ordre gardé : c'est celui que l'auteur a sous les yeux
@@ -229,9 +235,15 @@ class ServiceDecoupe:
         appel : ce sont des images neuves qui doivent apparaître dans la grille,
         et elles sont bornées à soixante-quatre — très en deçà du seuil à partir
         duquel un balayage doit se taire et n'annoncer qu'à la fin.
+
+        **`noms` porte ce que l'écran a laissé l'auteur écrire, jamais l'inverse**
+        (« l'auteur déclare, l'application enregistre »). Aligné aux rectangles,
+        un nom vide ou absent reprend le numéro par défaut — c'est le seul cas où
+        l'écran n'a rien à dire de plus qu'un rang.
         """
         planche = self._exiger(identifiant)
         rectangles = self._verifier(planche, boites)
+        noms_recus = list(noms) if noms is not None else []
 
         morceaux = decouper(self._fichiers.lire(planche.brut), rectangles)
         rang = self._premier_rang_libre(planche.generation)
@@ -244,6 +256,8 @@ class ServiceDecoupe:
             chemin = self._fichiers.ecrire_brut(
                 planche.generation, rang, octets, ".png"
             )
+            nom = noms_recus[numero - 1] if numero - 1 < len(noms_recus) else None
+            nom = nom.strip() if isinstance(nom, str) else None
             nees.append(
                 self._assets.accueillir(
                     Asset(
@@ -254,7 +268,7 @@ class ServiceDecoupe:
                         largeur=mesure.largeur,
                         hauteur=mesure.hauteur,
                         type_media=mesure.type_media,
-                        label=_label(planche.label, numero, total),
+                        label=nom or _label(planche.label, numero, total),
                         recette=_recette_heritee(planche),
                         # **L'épingle voyage avec la recette qu'elle protège.**
                         # Hériter d'une recette réglée à la main sans hériter de

@@ -97,6 +97,7 @@ test("reprendre une découpe conserve ses rectangles corrigés au lieu de relanc
   expect(screen.getByRole("button", { name: "grille fixe" })).toHaveAttribute("aria-pressed", "true")
   expect(screen.queryByLabelText("Retirer le rectangle 2")).toBeNull()
   expect(api.decoupeProposee).toHaveBeenCalledTimes(3)
-  fireEvent.click(screen.getByRole("button", { name: /Découper en 1/ }))
+  fireEvent.click(screen.getByRole("button", { name: /Relire 1 sortie/ }))
+  fireEvent.click(await screen.findByRole("button", { name: "Créer ces résultats" }))
   await waitFor(() => expect(decouper).toHaveBeenCalledWith("planche", [boites[0]]))
 })

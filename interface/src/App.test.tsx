@@ -4773,15 +4773,17 @@ describe("le slicer et le zoom de la grille", () => {
     expect(
       screen.getByRole("button", { name: "Découper" }).getAttribute("aria-pressed"),
     ).toBe("true")
-    expect(screen.getByText("2 rectangles")).toBeTruthy()
-    expect(screen.getByRole("button", { name: "Découper en 2 assets" })).toBeTruthy()
+    expect(screen.getByText("2 zones")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Relire 2 sorties" })).toBeTruthy()
 
     // **Corriger n'a pas besoin de convaincre la détection.** On retire un
     // rectangle, et ce qui partira suit — c'est la liste de l'auteur qui compte.
     fireEvent.click(screen.getByRole("button", { name: "Retirer le rectangle 2" }))
-    expect(screen.getByRole("button", { name: "Découper en 1 asset" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Relire 1 sortie" })).toBeTruthy()
 
-    fireEvent.click(screen.getByRole("button", { name: "Découper en 1 asset" }))
+    // La relecture montre ce qui va sortir avant de créer quoi que ce soit.
+    fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Créer ces résultats" }))
 
     // Ce qui est parti est **la liste corrigée**, pas la proposition.
     await waitFor(() => {
@@ -4801,7 +4803,7 @@ describe("le slicer et le zoom de la grille", () => {
       await screen.findByText("le détourage n'a rien laissé d'opaque — corrige à la main"),
     ).toBeTruthy()
     // Grisé **avec sa raison**, jamais proposé puis refusé.
-    expect(screen.getByRole("button", { name: /^Découper en 0/ })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /^Relire 0/ })).toBeDisabled()
     expect(screen.getByText("aucun rectangle — il n'y a rien à découper")).toBeTruthy()
   })
 
@@ -18374,13 +18376,14 @@ describe("découper une carte du tableau", () => {
     await ouvrirLeMenu()
     fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))
 
-    // Les deux rectangles proposés sont là avant qu'on ait touché un réglage —
-    // et le mot compte : ce ne sont pas des assets.
+    // Les deux rectangles proposés sont là avant qu'on ait touché un réglage.
     expect(
-      await screen.findByRole("button", { name: "Découper en 2 cartes" }),
+      await screen.findByRole("button", { name: "Relire 2 sorties" }),
     ).toBeTruthy()
 
-    fireEvent.click(screen.getByRole("button", { name: "Découper en 2 cartes" }))
+    // La relecture montre ce qui va sortir avant de créer quoi que ce soit.
+    fireEvent.click(screen.getByRole("button", { name: "Relire 2 sorties" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Créer ces résultats" }))
 
     await waitFor(() => {
       const envoi = appels.find(
@@ -18411,7 +18414,7 @@ describe("découper une carte du tableau", () => {
     await monter(fetchDouble)
     await ouvrirLeMenu()
     fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))
-    await screen.findByRole("button", { name: "Découper en 2 cartes" })
+    await screen.findByRole("button", { name: "Relire 2 sorties" })
 
     expect(screen.queryByText(/prend la place de l'originale/)).toBeNull()
 
@@ -18427,7 +18430,8 @@ describe("découper une carte du tableau", () => {
     fireEvent.click(bascule)
     expect(bascule.getAttribute("aria-pressed")).toBe("true")
 
-    fireEvent.click(screen.getByRole("button", { name: "Découper en 1 carte" }))
+    fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Créer ces résultats" }))
     await waitFor(() => {
       const envoi = appels.find(
         (a) => a.url === `/api/board/${CARTE}/slices` && a.corps,

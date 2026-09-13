@@ -41,7 +41,7 @@ test("les rectangles dessinés partent en animation, et mènent à son atelier",
 
 test("sans seconde sortie, l'écran ne propose que de découper en images", async () => {
   poser(undefined)
-  await screen.findByRole("button", { name: "Découper en 4 assets" })
+  await screen.findByRole("button", { name: "Relire 4 sorties" })
   expect(screen.queryByRole("button", { name: /En faire une animation/ })).toBeNull()
 })
 

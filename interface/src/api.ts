@@ -5051,10 +5051,12 @@ export const api = {
     return appeler<Proposition>(`/assets/${identifiant}/slices?${parametres}`)
   },
 
-  decouper: (identifiant: string, boites: Boite[]) =>
+  /** `noms`, alignés aux boîtes, ne partent que si l'auteur en a écrit un —
+   *  un nom vide reprend le libellé numéroté que le serveur sait déjà faire. */
+  decouper: (identifiant: string, boites: Boite[], noms?: (string | null)[]) =>
     appeler<{ planche: string; decoupes: Asset[] }>(`/assets/${identifiant}/slices`, {
       method: "POST",
-      body: JSON.stringify({ boites }),
+      body: JSON.stringify(noms ? { boites, noms } : { boites }),
     }),
 
   // ── Le miroir — la troisième fabrique (B1) ─────────────────────────────────
@@ -5716,7 +5718,7 @@ export const api = {
    *  recadrage : le morceau prend tout ce qui faisait l'originale, et
    *  l'originale s'en va. Rend l'univers avec, parce que remplacer un artwork
    *  officiel refait la palette. */
-  decouperCarte: (carte: string, boites: Boite[], remplacer = false) =>
+  decouperCarte: (carte: string, boites: Boite[], remplacer = false, noms?: (string | null)[]) =>
     appeler<{
       carte: string
       morceaux: Carte[]
@@ -5724,7 +5726,7 @@ export const api = {
       univers: Univers
     }>(`/board/${carte}/slices`, {
       method: "POST",
-      body: JSON.stringify({ boites, remplacer }),
+      body: JSON.stringify(noms ? { boites, remplacer, noms } : { boites, remplacer }),
     }),
 
   /** Quelle part de cette carte nourrit la palette du jeu. */

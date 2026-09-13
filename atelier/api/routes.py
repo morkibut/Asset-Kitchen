@@ -1695,6 +1695,9 @@ class CorpsDecoupe(BaseModel):
     """
 
     boites: list[list[int]] = Field(default_factory=list)
+    # Alignés aux boîtes. Un nom vide ou l'absence de liste reprend le libellé
+    # numéroté par défaut — l'écran ne les envoie que si l'auteur en a écrit un.
+    noms: list[str | None] = Field(default_factory=list)
 
 
 @routeur.get("/assets/{identifiant}/slices")
@@ -1718,7 +1721,7 @@ async def decouper(
 ) -> dict[str, Any]:
     """Une planche de huit devient huit assets, chacun filié (US-72, US-74)."""
     boites = [tuple(b) for b in corps.boites]  # type: ignore[misc]
-    return _atelier(requete).decoupe.decouper(identifiant, boites)
+    return _atelier(requete).decoupe.decouper(identifiant, boites, noms=corps.noms)
 
 
 # ── Le miroir ────────────────────────────────────────────────────────────────

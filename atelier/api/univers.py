@@ -185,6 +185,9 @@ class CorpsDecoupeCarte(BaseModel):
     # endroit du produit où découper efface quelque chose ; un défaut à vrai en
     # ferait le comportement ordinaire.
     remplacer: bool = False
+    # Alignés aux boîtes. Un nom vide ou l'absence de liste laisse la note du
+    # morceau vide — l'écran ne les envoie que si l'auteur en a écrit un.
+    noms: list[str | None] = Field(default_factory=list)
     projet: str | None = None
 
 
@@ -591,7 +594,7 @@ async def decouper_carte(
     identifiant = _projet(requete, corps.projet)
     boites = [tuple(b) for b in corps.boites]  # type: ignore[misc]
     return atelier.univers.decouper_carte(
-        identifiant, carte, boites, remplacer=corps.remplacer
+        identifiant, carte, boites, remplacer=corps.remplacer, noms=corps.noms
     )
 
 

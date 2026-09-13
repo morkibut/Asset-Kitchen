@@ -51,6 +51,21 @@ import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
  *  pixels de la planche — la même unité que tout le reste de cet écran. */
 const COTE_UTILE = 4
 
+/** En dessous, un côté réglé au clavier ou tiré par son coin ne désigne plus
+ *  rien de découpable — la même borne que le serveur (`ServiceDecoupe.
+ *  COTE_UTILE`), pour ne jamais proposer une taille qu'il refuserait. */
+const COTE_MIN_REGLE = 2
+
+/** **Une zone, pas un rectangle brut.** Le rectangle est ce que le serveur
+ *  découpe ; `nom` et `garder` n'existent que sur cet écran — l'auteur les
+ *  règle avant d'envoyer, ils ne voyagent que dans la liste qu'il a validée
+ *  (`decouper`/`decouperCarte` prennent `noms`, alignés aux boîtes gardées).
+ *  Un nom vide laisse le serveur reprendre son libellé numéroté. */
+type Zone = { boite: Boite; nom: string; garder: boolean }
+
+const zonesDepuis = (boites: Boite[]): Zone[] =>
+  boites.map((boite) => ({ boite, nom: "", garder: true }))
+
 const LIBELLES: Partial<Record<string, string>> = {
   auto: "zones opaques",
   grille: "grille fixe",
@@ -114,11 +129,37 @@ export function EcranDecoupe({
   const [lecture, setLecture] = useState<LectureDePalette | null>(null)
   const [magenta, setMagenta] = useState(false)
 
-  const [boites, setBoites] = useState<Boite[]>([])
+  const [zones, setZones] = useState<Zone[]>([])
   const [detectee, setDetectee] = useState<Decoupable | null>(null)
   const [choisie, setChoisie] = useState<number | null>(null)
   const setRefus = (texte: string) => onFente(texte ? { ton: "echec", texte } : null)
   const [enCours, setEnCours] = useState(false)
+  /** **Le dernier geste se défait.** Une pile d'états entiers, plutôt qu'un
+   *  journal d'actions : plus simple, et c'est toujours l'état d'avant le
+   *  dernier tracé, ajout, retrait, déplacement ou redimensionnement qui
+   *  revient — jamais un geste plus ancien. Bornée pour ne pas grossir sans
+   *  fin sur une longue séance de réglage. */
+  const [historique, setHistorique] = useState<Zone[][]>([])
+  const memoriser = () => setHistorique((h) => [...h.slice(-19), zones])
+  const annulerLeDernierReglage = () => {
+    if (historique.length === 0) return
+    setZones(historique[historique.length - 1])
+    setHistorique((h) => h.slice(0, -1))
+    setChoisie(null)
+  }
+  /** Une session d'édition continue (un champ qu'on tape) ne mémorise qu'une
+   *  fois, à la prise de focus — sans quoi chaque frappe mangerait un cran
+   *  d'annulation. */
+  const sessionEdition = useRef<string | null>(null)
+  const commencerEdition = (cle: string) => {
+    if (sessionEdition.current === cle) return
+    sessionEdition.current = cle
+    memoriser()
+  }
+  /** Ce qui part réellement : une zone écartée ne sort ni en image, ni en
+   *  animation. C'est la même liste, filtrée une fois. */
+  const gardees = zones.filter((z) => z.garder)
+  const [relecture, setRelecture] = useState(false)
 
   /** L'image à découper, ses mesures et son nom — quelle que soit sa famille.
    *
@@ -143,7 +184,59 @@ export function EcranDecoupe({
           quoi: "carte",
         }
 
-  const etatDecoupe = { mode, coteMin, colonnes, lignes, remplacer, boites }
+  // ── Ce que l'auteur fait à une zone ─────────────────────────────────────────
+  //
+  // Six gestes, et chacun mémorise avant de changer la liste — c'est ce qui
+  // rend « le dernier geste se défait » vrai pour n'importe lequel des six.
+
+  const ajouterZone = (boite: Boite) => {
+    memoriser()
+    setZones((z) => [...z, { boite, nom: "", garder: true }])
+    setChoisie(zones.length)
+  }
+  const retirerZone = (rang: number) => {
+    memoriser()
+    setZones((z) => z.filter((_, i) => i !== rang))
+    setChoisie(null)
+  }
+  const deplacerZone = (rang: number, boite: Boite) => {
+    setZones((z) => z.map((zone, i) => (i === rang ? { ...zone, boite } : zone)))
+  }
+  const redimensionnerZone = (rang: number, boite: Boite) => {
+    setZones((z) => z.map((zone, i) => (i === rang ? { ...zone, boite } : zone)))
+  }
+  const renommerZone = (rang: number, nom: string) => {
+    setZones((z) => z.map((zone, i) => (i === rang ? { ...zone, nom } : zone)))
+  }
+  const basculerGarder = (rang: number) => {
+    memoriser()
+    setZones((z) => z.map((zone, i) => (i === rang ? { ...zone, garder: !zone.garder } : zone)))
+  }
+  const reglerCoordonnee = (rang: number, champ: "x" | "y" | "largeur" | "hauteur", valeur: number) => {
+    setZones((z) => z.map((zone, i) => {
+      if (i !== rang) return zone
+      const [x0, y0, x1, y1] = zone.boite
+      const largeurZone = x1 - x0 + 1
+      const hauteurZone = y1 - y0 + 1
+      let boite: Boite
+      if (champ === "x") {
+        const nx0 = Math.max(0, Math.min(vu.largeur - largeurZone, Math.round(valeur)))
+        boite = [nx0, y0, nx0 + largeurZone - 1, y1]
+      } else if (champ === "y") {
+        const ny0 = Math.max(0, Math.min(vu.hauteur - hauteurZone, Math.round(valeur)))
+        boite = [x0, ny0, x1, ny0 + hauteurZone - 1]
+      } else if (champ === "largeur") {
+        const nl = Math.max(COTE_MIN_REGLE, Math.min(vu.largeur - x0, Math.round(valeur)))
+        boite = [x0, y0, x0 + nl - 1, y1]
+      } else {
+        const nh = Math.max(COTE_MIN_REGLE, Math.min(vu.hauteur - y0, Math.round(valeur)))
+        boite = [x0, y0, x1, y0 + nh - 1]
+      }
+      return { ...zone, boite }
+    }))
+  }
+
+  const etatDecoupe = { mode, coteMin, colonnes, lignes, remplacer, zones }
   const [origineDecoupe, setOrigineDecoupe] = useState<{ id: string; etat: typeof etatDecoupe } | null>(null)
   const revisionProposition = useRef(0)
   const propositionAignorer = useRef<string | null>(null)
@@ -153,7 +246,13 @@ export function EcranDecoupe({
     appliquer: (recu) => {
       revisionProposition.current += 1
       propositionAignorer.current = JSON.stringify([vu.identifiant, recu.mode, recu.colonnes, recu.lignes, recu.coteMin])
-      setMode(recu.mode); setCoteMin(recu.coteMin); setColonnes(recu.colonnes); setLignes(recu.lignes); setRemplacer(recu.remplacer); setBoites(recu.boites); setChoisie(null)
+      // Un brouillon plus ancien portait des rectangles nus, sans nom ni case
+      // « garder » : relu ici, jamais perdu pour autant.
+      const zonesRecues: Zone[] = Array.isArray((recu as { zones?: Zone[] }).zones)
+        ? (recu as { zones: Zone[] }).zones
+        : zonesDepuis((recu as unknown as { boites: Boite[] }).boites ?? [])
+      setMode(recu.mode); setCoteMin(recu.coteMin); setColonnes(recu.colonnes); setLignes(recu.lignes)
+      setRemplacer(recu.remplacer); setZones(zonesRecues); setChoisie(null); setHistorique([])
     },
   })
 
@@ -172,9 +271,11 @@ export function EcranDecoupe({
           : await api.decoupeDeCarteProposee(vu.identifiant, reglage)
       if (revision !== revisionProposition.current) return
       setDetectee(propose)
-      setOrigineDecoupe((avant) => avant?.id === vu.identifiant ? avant : { id: vu.identifiant, etat: { mode, coteMin, colonnes, lignes, remplacer, boites: propose.boites } })
-      setBoites(propose.boites)
+      const zonesProposees = zonesDepuis(propose.boites)
+      setOrigineDecoupe((avant) => avant?.id === vu.identifiant ? avant : { id: vu.identifiant, etat: { mode, coteMin, colonnes, lignes, remplacer, zones: zonesProposees } })
+      setZones(zonesProposees)
       setChoisie(null)
+      setHistorique([])
       setRefus("")
     } catch (erreur) {
       setRefus(erreur instanceof Refus ? erreur.message : "découpe illisible")
@@ -191,17 +292,31 @@ export function EcranDecoupe({
   }, [proposer])
 
   // ── Découper ──────────────────────────────────────────────────────────────
+  //
+  // **Ce qui part est ce que la relecture vient de montrer** : les zones
+  // gardées, dans leur ordre, avec le nom que l'auteur leur a donné — un nom
+  // vide laisse le serveur reprendre son libellé numéroté (`docs/DESIGN.md`
+  // « l'auteur déclare, l'application enregistre »).
 
   const decouper = async () => {
+    const boitesEnvoyees = gardees.map((z) => z.boite)
+    const noms = gardees.map((z) => z.nom.trim() || null)
+    const unNomEcrit = noms.some((n) => n !== null)
     setEnCours(true)
     try {
       if (sujet.famille === "planche") {
-        const fait = await api.decouper(vu.identifiant, boites)
+        const fait = unNomEcrit
+          ? await api.decouper(vu.identifiant, boitesEnvoyees, noms)
+          : await api.decouper(vu.identifiant, boitesEnvoyees)
         brouillon.effacer()
+        setRelecture(false)
         sujet.onDecoupe(fait.decoupes)
       } else {
-        const fait = await api.decouperCarte(vu.identifiant, boites, remplacer)
+        const fait = unNomEcrit
+          ? await api.decouperCarte(vu.identifiant, boitesEnvoyees, remplacer, noms)
+          : await api.decouperCarte(vu.identifiant, boitesEnvoyees, remplacer)
         brouillon.effacer()
+        setRelecture(false)
         sujet.onDecoupe(fait.morceaux)
       }
     } catch (erreur) {
@@ -298,7 +413,7 @@ export function EcranDecoupe({
     if (sujet.famille !== "planche" || !sujet.onAnimer) return
     setEnCours(true)
     try {
-      const fait = await api.animerUneFeuille(vu.identifiant, boites, {
+      const fait = await api.animerUneFeuille(vu.identifiant, gardees.map((z) => z.boite), {
         nom: vu.alt,
         directions: parLigne ? directionsDuJeu.map((d) => d.identifiant) : null,
         // **La chaîne vide dit « aucun », et ce n'est pas la même chose que
@@ -317,18 +432,23 @@ export function EcranDecoupe({
     }
   }
 
-  // La touche Suppr retire le rectangle choisi.
+  // La touche Suppr retire le rectangle choisi. Échap referme d'abord la
+  // relecture si elle est ouverte — c'est elle que l'auteur regarde alors,
+  // pas l'écran entier.
   useEffect(() => {
     const touche = (evenement: KeyboardEvent) => {
-      if (evenement.key === "Escape") return onFermer()
+      if (evenement.key === "Escape") {
+        if (relecture) { setRelecture(false); return }
+        return onFermer()
+      }
       if (choisie === null) return
       if (evenement.key !== "Delete" && evenement.key !== "Backspace") return
-      setBoites((liste) => liste.filter((_, i) => i !== choisie))
-      setChoisie(null)
+      retirerZone(choisie)
     }
     window.addEventListener("keydown", touche)
     return () => window.removeEventListener("keydown", touche)
-  }, [choisie, onFermer])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choisie, onFermer, relecture, zones])
 
   // **Demandée d'entrée, et une seule fois.** Ne concerne que les cartes.
   const carte = sujet.famille === "carte" ? sujet.carte : null
@@ -344,7 +464,7 @@ export function EcranDecoupe({
     }
   }, [carte?.identifiant])
 
-  const corrigee = detectee !== null && !memesBoites(boites, detectee.boites)
+  const corrigee = detectee !== null && !memesBoites(zones.map((z) => z.boite), detectee.boites)
 
   return (
     <div data-decoupe className="flex min-h-0 flex-1 flex-col bg-papier">
@@ -356,13 +476,13 @@ export function EcranDecoupe({
               ? { ...vu, image: api.apercuDeLaLecture(carte.identifiant, carte.empreinte) }
               : vu
           }
-          boites={boites}
+          zones={zones}
           choisie={choisie}
           onChoisir={setChoisie}
-          onDessiner={(boite) => {
-            setBoites((liste) => [...liste, boite])
-            setChoisie(boites.length)
-          }}
+          onDessiner={ajouterZone}
+          onDeplacer={deplacerZone}
+          onRedimensionner={redimensionnerZone}
+          onDebutGeste={memoriser}
         />
 
         <aside
@@ -471,26 +591,79 @@ export function EcranDecoupe({
               <span>
                 {corrigee
                   ? "corrigé à la main — changer un réglage relancera la détection"
-                  : "glisse sur l'image pour ajouter un rectangle, clique pour en choisir un"}
+                  : "glisse pour ajouter un rectangle ; glisse-le pour le déplacer, son coin bas-droit pour le redimensionner"}
               </span>
             </p>
 
-            <ListeBoites
-              boites={boites}
+            <div className="flex items-center gap-[8px]">
+              <button
+                type="button"
+                onClick={() => ajouterZone([0, 0, Math.min(63, vu.largeur - 1), Math.min(63, vu.hauteur - 1)])}
+                className="h-[26px] rounded-7 border border-trait px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+              >
+                + Zone
+              </button>
+              <button
+                type="button"
+                disabled={historique.length === 0}
+                onClick={annulerLeDernierReglage}
+                className="h-[26px] rounded-7 border border-trait px-[8px] text-[12px] text-encre-3 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:text-eteint"
+              >
+                Annuler le dernier réglage
+              </button>
+            </div>
+
+            <ListeZones
+              zones={zones}
               choisie={choisie}
               onChoisir={setChoisie}
-              onRetirer={(rang) => {
-                setBoites((liste) => liste.filter((_, i) => i !== rang))
-                setChoisie(null)
-              }}
+              onRetirer={retirerZone}
+              onRenommer={renommerZone}
+              onCommencerEdition={(rang) => commencerEdition(`nom-${rang}`)}
+              onBasculerGarder={basculerGarder}
             />
+
+            {choisie !== null && zones[choisie] && (
+              <div className="flex flex-col gap-[8px] border-t border-trait pt-[8px]">
+                <p className="text-[11px] text-encre-2">Zone sélectionnée</p>
+                <div className="grid grid-cols-2 gap-[8px]">
+                  <ChampNombre
+                    libelle="X" valeur={zones[choisie].boite[0]}
+                    onFocus={() => commencerEdition(`x-${choisie}`)}
+                    onChange={(v) => reglerCoordonnee(choisie, "x", v)}
+                  />
+                  <ChampNombre
+                    libelle="Y" valeur={zones[choisie].boite[1]}
+                    onFocus={() => commencerEdition(`y-${choisie}`)}
+                    onChange={(v) => reglerCoordonnee(choisie, "y", v)}
+                  />
+                  <ChampNombre
+                    libelle="Largeur" valeur={zones[choisie].boite[2] - zones[choisie].boite[0] + 1}
+                    onFocus={() => commencerEdition(`largeur-${choisie}`)}
+                    onChange={(v) => reglerCoordonnee(choisie, "largeur", v)}
+                  />
+                  <ChampNombre
+                    libelle="Hauteur" valeur={zones[choisie].boite[3] - zones[choisie].boite[1] + 1}
+                    onFocus={() => commencerEdition(`hauteur-${choisie}`)}
+                    onChange={(v) => reglerCoordonnee(choisie, "hauteur", v)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => retirerZone(choisie)}
+                  className="h-[26px] rounded-7 border border-trait px-[8px] text-[12px] text-encre-3 transition-colors duration-120 hover:border-echec hover:text-echec"
+                >
+                  Retirer cette zone
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-[4px] border-t border-trait p-[8px]">
             {/* **Recadrer, c'est découper en un seul rectangle.** Proposée
-                seulement quand il n'y a qu'un rectangle : à plusieurs la
+                seulement quand il n'y a qu'un rectangle gardée : à plusieurs la
                 question n'a pas de réponse. */}
-            {sujet.famille === "carte" && boites.length === 1 && (
+            {sujet.famille === "carte" && gardees.length === 1 && (
               <button
                 type="button"
                 aria-pressed={remplacer}
@@ -510,18 +683,17 @@ export function EcranDecoupe({
             <div className="flex items-center gap-[8px]">
               <button
                 type="button"
-                disabled={boites.length === 0 || enCours}
-                onClick={() => void decouper()}
-                className="h-[34px] rounded-7 bg-signal px-[14px] text-[13px] text-encre-sur-signal transition-colors duration-120 hover:opacity-90 disabled:bg-carte disabled:text-eteint"
+                disabled={gardees.length === 0 || enCours}
+                onClick={() => setRelecture(true)}
+                className="h-[34px] rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-carte disabled:text-eteint"
               >
-                {enCours
-                  ? "…"
-                  : `Découper en ${boites.length} ${vu.quoi}${boites.length > 1 ? "s" : ""}`}
+                {`Relire ${gardees.length} sortie${gardees.length > 1 ? "s" : ""}`}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  setBoites([])
+                  if (zones.length > 0) memoriser()
+                  setZones([])
                   setChoisie(null)
                 }}
                 className="mesure ml-auto text-[10.5px] text-encre-3 hover:text-encre-2"
@@ -529,7 +701,10 @@ export function EcranDecoupe({
                 Tout retirer
               </button>
             </div>
-            {boites.length === 0 && <Pourquoi texte="aucun rectangle — il n'y a rien à découper" />}
+            {zones.length === 0 && <Pourquoi texte="aucun rectangle — il n'y a rien à découper" />}
+            {zones.length > 0 && gardees.length === 0 && (
+              <Pourquoi texte="aucune zone gardée — coche « garder » sur au moins une" />
+            )}
             {/* **La seconde sortie** (`AU19`) : les mêmes rectangles, joués au
                 lieu d'être rangés. Sous le bouton principal et non à côté — on
                 découpe le plus souvent en images, et l'animation est le geste
@@ -591,7 +766,7 @@ export function EcranDecoupe({
                 )}
                 <button
                   type="button"
-                  disabled={boites.length === 0 || enCours}
+                  disabled={gardees.length === 0 || enCours}
                   onClick={() => void animer()}
                   className="h-[34px] rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-carte disabled:text-eteint"
                 >
@@ -599,20 +774,34 @@ export function EcranDecoupe({
                     ? "…"
                     : parLigne
                       ? `En faire ${lignes} animations`
-                      : `En faire une animation de ${boites.length} images`}
+                      : `En faire une animation de ${gardees.length} images`}
                 </button>
-                {boites.length > 0 && (
+                {gardees.length > 0 && (
                   <Pourquoi texte="les cases deviennent les images de l'animation, dans l'ordre où elles sont numérotées — son atelier s'ouvre ensuite pour la régler" />
                 )}
               </div>
             )}
             {/* Ce que les morceaux deviennent, dit avant de cliquer. */}
-            {sujet.famille === "carte" && boites.length > 0 && !remplacer && (
+            {sujet.famille === "carte" && gardees.length > 0 && !remplacer && (
               <Pourquoi texte="les morceaux arrivent dans la réserve, non promus — l'originale reste où elle est" />
             )}
           </div>
         </aside>
       </div>
+
+      {relecture && (
+        <FenetreRelecture
+          zones={gardees}
+          destination={
+            sujet.famille === "carte"
+              ? remplacer ? "remplace l'originale" : "la réserve"
+              : "Images du sujet"
+          }
+          enCours={enCours}
+          onFermer={() => setRelecture(false)}
+          onConfirmer={() => void decouper()}
+        />
+      )}
     </div>
   )
 }
@@ -640,6 +829,28 @@ function Champ({ libelle, children }: { libelle: string; children: React.ReactNo
       <p className="text-[11px] text-encre-2">{libelle}</p>
       {children}
     </div>
+  )
+}
+
+/** Une zone se règle au clavier — X, Y, Largeur, Hauteur, quatre champs
+ *  identiques. `onFocus` ouvre une session d'annulation : les touches qui
+ *  suivent, jusqu'au prochain champ, ne mémorisent qu'une fois. */
+function ChampNombre({
+  libelle, valeur, onFocus, onChange,
+}: {
+  libelle: string; valeur: number; onFocus: () => void; onChange: (v: number) => void
+}) {
+  return (
+    <label className="flex flex-col gap-[4px] text-[11px] text-encre-2">
+      {libelle}
+      <input
+        type="number"
+        value={valeur}
+        onFocus={onFocus}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre"
+      />
+    </label>
   )
 }
 
@@ -722,6 +933,12 @@ function Glissiere({
 
 // ── La planche, et les rectangles dessus ────────────────────────────────────
 
+/** Le geste en cours sur la planche — un seul à la fois, celui que le doigt
+ *  ou la souris tient depuis le dernier appui. */
+type Geste =
+  | { type: "dessiner"; depart: [number, number] }
+  | { type: "deplacer" | "redimensionner"; rang: number; depart: [number, number]; boiteDepart: Boite }
+
 /**
  * L'image **brute**, à sa taille d'affichage, et les rectangles par-dessus.
  *
@@ -729,22 +946,35 @@ function Glissiere({
  * L'image est mise à l'échelle pour tenir dans la place disponible ; tout ce
  * qui sort d'ici est reconverti tout de suite, sans quoi une fenêtre
  * redimensionnée déplacerait des rectangles déjà posés.
+ *
+ * **Trois gestes, une seule surface.** Poser le doigt sur la poignée d'une
+ * zone la redimensionne, le poser sur son corps la déplace, le poser ailleurs
+ * trace un nouveau rectangle — départagés au clic, sur ce qui est vraiment
+ * sous le pointeur (`data-poignee`/`data-zone`), jamais sur une coordonnée
+ * recalculée à côté qui finirait par s'en écarter.
  */
 function Planche({
   vu,
-  boites,
+  zones,
   choisie,
   onChoisir,
   onDessiner,
+  onDeplacer,
+  onRedimensionner,
+  onDebutGeste,
 }: {
   vu: { largeur: number; hauteur: number; alt: string; image: string }
-  boites: Boite[]
+  zones: Zone[]
   choisie: number | null
   onChoisir: (rang: number | null) => void
   onDessiner: (boite: Boite) => void
+  onDeplacer: (rang: number, boite: Boite) => void
+  onRedimensionner: (rang: number, boite: Boite) => void
+  onDebutGeste: () => void
 }) {
   const cadre = useRef<HTMLDivElement>(null)
   const [trace, setTrace] = useState<Boite | null>(null)
+  const geste = useRef<Geste | null>(null)
 
   const enPixels = (evenement: React.PointerEvent): [number, number] => {
     const boite = cadre.current!.getBoundingClientRect()
@@ -755,33 +985,56 @@ function Planche({
     ]
   }
 
-  const depart = useRef<[number, number] | null>(null)
-
   return (
     <SurfaceZoomable largeur={vu.largeur} hauteur={vu.hauteur} libelle="la découpe">
       <div
         ref={cadre}
+        data-planche-decoupe
         className="damier-papier relative h-full w-full select-none"
         onPointerDown={(evenement) => {
           if (evenement.button !== 0) return
+          const cible = evenement.target as HTMLElement
+          const poignee = cible.closest("[data-poignee]")
+          const corps = cible.closest("[data-zone]")
+          const point = enPixels(evenement)
           evenement.currentTarget.setPointerCapture(evenement.pointerId)
-          depart.current = enPixels(evenement)
-          setTrace(null)
+          if (poignee) {
+            const rang = Number(poignee.getAttribute("data-poignee"))
+            onDebutGeste()
+            geste.current = { type: "redimensionner", rang, depart: point, boiteDepart: zones[rang].boite }
+            onChoisir(rang)
+          } else if (corps) {
+            const rang = Number(corps.getAttribute("data-zone"))
+            onDebutGeste()
+            geste.current = { type: "deplacer", rang, depart: point, boiteDepart: zones[rang].boite }
+            onChoisir(rang)
+          } else {
+            geste.current = { type: "dessiner", depart: point }
+            setTrace(null)
+          }
         }}
         onPointerMove={(evenement) => {
-          if (!depart.current) return
-          setTrace(entre(depart.current, enPixels(evenement)))
+          const g = geste.current
+          if (!g) return
+          const point = enPixels(evenement)
+          if (g.type === "dessiner") { setTrace(entre(g.depart, point)); return }
+          if (g.type === "deplacer") {
+            onDeplacer(g.rang, decaler(g.boiteDepart, point[0] - g.depart[0], point[1] - g.depart[1], vu))
+            return
+          }
+          onRedimensionner(g.rang, redimensionnerBoite(g.boiteDepart, point[0], point[1], vu))
         }}
         onPointerUp={(evenement) => {
-          const debut = depart.current
-          depart.current = null
+          const g = geste.current
+          geste.current = null
+          if (!g) return
+          if (g.type !== "dessiner") { setTrace(null); return }
           setTrace(null)
-          if (!debut) return
-          const boite = entre(debut, enPixels(evenement))
+          const boite = entre(g.depart, enPixels(evenement))
           // Un clic n'est pas un rectangle : sous quatre pixels de côté, c'est
-          // le geste « je choisis » ou « je désélectionne ».
+          // le geste « je désélectionne ».
           if (boite[2] - boite[0] < COTE_UTILE || boite[3] - boite[1] < COTE_UTILE) {
-            if (evenement.target === evenement.currentTarget) onChoisir(null)
+            onChoisir(null)
             return
           }
           onDessiner(boite)
@@ -795,54 +1048,55 @@ function Planche({
           style={{ imageRendering: "pixelated" }}
         />
 
-        {boites.map((boite, rang) => (
+        {zones.map((zone, rang) => (
           <Rectangle
             key={rang}
-            boite={boite}
+            rang={rang}
+            boite={zone.boite}
             vu={vu}
             numero={rang + 1}
             choisi={rang === choisie}
-            onChoisir={() => onChoisir(rang)}
+            garder={zone.garder}
           />
         ))}
-        {trace && <Rectangle boite={trace} vu={vu} numero={boites.length + 1} choisi />}
+        {trace && <Rectangle boite={trace} vu={vu} numero={zones.length + 1} choisi garder />}
       </div>
     </SurfaceZoomable>
   )
 }
 
-/** Un rectangle sur la planche. Le numéro est un fait mesuré, donc en mono. */
+/** Un rectangle sur la planche. Le numéro est un fait mesuré, donc en mono.
+ *  Une zone écartée s'efface aux trois quarts — elle reste lisible, sans
+ *  prétendre qu'elle partira. */
 function Rectangle({
+  rang,
   boite,
   vu,
   numero,
   choisi,
-  onChoisir,
+  garder,
 }: {
+  rang?: number
   boite: Boite
   vu: { largeur: number; hauteur: number }
   numero: number
   choisi: boolean
-  onChoisir?: () => void
+  garder: boolean
 }) {
   const [x0, y0, x1, y1] = boite
   return (
-    <button
-      type="button"
-      tabIndex={onChoisir ? 0 : -1}
-      onPointerUp={(evenement) => {
-        if (!onChoisir) return
-        evenement.stopPropagation()
-        onChoisir()
-      }}
+    <div
+      data-zone={rang !== undefined ? rang : undefined}
       style={{
         left: `${(x0 / vu.largeur) * 100}%`,
         top: `${(y0 / vu.hauteur) * 100}%`,
         width: `${((x1 - x0 + 1) / vu.largeur) * 100}%`,
         height: `${((y1 - y0 + 1) / vu.hauteur) * 100}%`,
+        opacity: garder ? 1 : 0.35,
       }}
       className={[
-        "absolute block border transition-colors duration-120",
+        "absolute border transition-colors duration-120",
+        rang !== undefined ? "cursor-move" : "",
         choisi
           ? "border-2 border-signal shadow-[0_0_0_2px_var(--color-carte)]"
           : "border-signal/70 hover:border-signal",
@@ -851,7 +1105,14 @@ function Rectangle({
       <span className="mesure absolute top-0 left-0 bg-encre px-[4px] text-[10.5px] leading-[13px] text-papier">
         {numero}
       </span>
-    </button>
+      {rang !== undefined && (
+        <span
+          data-poignee={rang}
+          aria-hidden
+          className="absolute -right-[4px] -bottom-[4px] h-[8px] w-[8px] cursor-nwse-resize border border-papier bg-encre"
+        />
+      )}
+    </div>
   )
 }
 
@@ -859,44 +1120,61 @@ function Rectangle({
 
 /** Ce qui sortira, et dans quel ordre. La liste **est** la numérotation posée
  *  sur l'image : le serveur garde cet ordre — le réordonner de son côté ferait
- *  mentir les numéros au moment du clic. */
-function ListeBoites({
-  boites,
+ *  mentir les numéros au moment du clic. Une zone se garde ou s'écarte, se
+ *  renomme, et se règle (« Régler » l'ouvre au clavier, ci-dessous). */
+function ListeZones({
+  zones,
   choisie,
   onChoisir,
   onRetirer,
+  onRenommer,
+  onCommencerEdition,
+  onBasculerGarder,
 }: {
-  boites: Boite[]
+  zones: Zone[]
   choisie: number | null
   onChoisir: (rang: number) => void
   onRetirer: (rang: number) => void
+  onRenommer: (rang: number, nom: string) => void
+  onCommencerEdition: (rang: number) => void
+  onBasculerGarder: (rang: number) => void
 }) {
-  if (boites.length === 0) return null
+  if (zones.length === 0) return null
   return (
     <div className="flex flex-col gap-[2px] border-t border-trait pt-[8px]">
       <p className="text-[11px] text-encre-2">
-        {boites.length} rectangle{boites.length > 1 ? "s" : ""}
+        {zones.length} zone{zones.length > 1 ? "s" : ""}
       </p>
-      {boites.map((boite, rang) => (
+      {zones.map((zone, rang) => (
         <div
           key={rang}
           className={[
-            "mesure flex items-center gap-[8px] rounded-5 px-[4px] text-[10.5px]",
+            "mesure flex items-center gap-[6px] rounded-5 px-[4px] py-[4px] text-[10.5px]",
             rang === choisie ? "bg-ligne-ouverte text-encre" : "text-encre-3",
           ].join(" ")}
         >
           <button
             type="button"
-            onClick={() => onChoisir(rang)}
-            className="flex flex-1 items-center gap-[8px] text-left hover:text-encre-2"
+            aria-pressed={zone.garder}
+            aria-label={`Garder la zone ${rang + 1}`}
+            onClick={() => onBasculerGarder(rang)}
+            className="shrink-0"
           >
-            <span className="w-[14px] shrink-0">{rang + 1}</span>
-            <span>
-              {boite[2] - boite[0] + 1}×{boite[3] - boite[1] + 1}
-            </span>
-            <span className="text-encre-3">
-              @ {boite[0]},{boite[1]}
-            </span>
+            <Case cochee={zone.garder} />
+          </button>
+          <input
+            aria-label={`Nom de la zone ${rang + 1}`}
+            value={zone.nom}
+            placeholder={`Image ${rang + 1}`}
+            onFocus={() => onCommencerEdition(rang)}
+            onChange={(e) => onRenommer(rang, e.target.value)}
+            className="h-[22px] min-w-0 flex-1 rounded-5 border border-transparent bg-transparent px-[4px] text-[10.5px] text-encre hover:border-trait focus:border-encre-4 focus:bg-carte focus:outline-none"
+          />
+          <span className="shrink-0 text-encre-3">
+            {zone.boite[2] - zone.boite[0] + 1}×{zone.boite[3] - zone.boite[1] + 1}
+          </span>
+          <button type="button" onClick={() => onChoisir(rang)} className="shrink-0 hover:text-encre">
+            Régler
           </button>
           <button
             type="button"
@@ -912,6 +1190,75 @@ function ListeBoites({
   )
 }
 
+// ── La relecture, avant de créer ─────────────────────────────────────────────
+
+/** **Ce que l'auteur voit avant de payer un clic irréversible** : chaque
+ *  sortie, son nom et sa taille. Fermer revient aux zones sans rien créer ;
+ *  seul « Créer ces résultats » écrit quelque chose. */
+function FenetreRelecture({
+  zones,
+  destination,
+  enCours,
+  onFermer,
+  onConfirmer,
+}: {
+  zones: Zone[]
+  destination: string
+  enCours: boolean
+  onFermer: () => void
+  onConfirmer: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-papier/85" onMouseDown={onFermer} role="presentation">
+      <div
+        role="dialog"
+        aria-label="Créer les images découpées"
+        className="volet mx-auto mt-[9%] flex max-h-[80vh] w-[380px] max-w-full flex-col overflow-hidden rounded-10 border border-contour bg-carte"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <header className="flex shrink-0 items-baseline gap-[14px] border-b border-trait px-[22px] py-[14px]">
+          <h1 className="font-serif text-[25px] leading-none text-encre">Créer les images découpées</h1>
+        </header>
+        <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[22px]">
+          <p className="text-[12px] text-encre-2">
+            {zones.length} sortie{zones.length > 1 ? "s" : ""} · {destination}. L'original reste disponible.
+          </p>
+          <ul className="flex flex-col gap-[8px]">
+            {zones.map((zone, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between gap-[8px] rounded-5 border border-trait px-[8px] py-[4px]"
+              >
+                <span className="text-[12.5px] text-encre">{zone.nom.trim() || `Image ${i + 1}`}</span>
+                <span className="mesure text-[10.5px] text-encre-3">
+                  {zone.boite[2] - zone.boite[0] + 1} × {zone.boite[3] - zone.boite[1] + 1} px
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex shrink-0 items-center gap-[8px] border-t border-trait p-[8px]">
+          <button
+            type="button"
+            onClick={onFermer}
+            className="h-[34px] rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-papier"
+          >
+            Revenir aux zones
+          </button>
+          <button
+            type="button"
+            disabled={enCours}
+            onClick={onConfirmer}
+            className="ml-auto h-[34px] rounded-7 bg-signal px-[14px] text-[13px] text-encre-sur-signal transition-colors duration-120 hover:opacity-90 disabled:bg-carte disabled:text-eteint"
+          >
+            {enCours ? "…" : "Créer ces résultats"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Outils ──────────────────────────────────────────────────────────────────
 
 const borner = (valeur: number, taille: number) => Math.max(0, Math.min(taille - 1, valeur))
@@ -922,6 +1269,25 @@ const entre = (a: [number, number], b: [number, number]): Boite => [
   Math.max(a[0], b[0]),
   Math.max(a[1], b[1]),
 ]
+
+/** Translater un rectangle sans changer sa taille, borné à l'image — un
+ *  déplacement qui sortirait du cadre glisse le long du bord plutôt que de
+ *  disparaître. */
+const decaler = (boite: Boite, dx: number, dy: number, vu: { largeur: number; hauteur: number }): Boite => {
+  const largeur = boite[2] - boite[0]
+  const hauteur = boite[3] - boite[1]
+  const x0 = Math.max(0, Math.min(vu.largeur - 1 - largeur, boite[0] + dx))
+  const y0 = Math.max(0, Math.min(vu.hauteur - 1 - hauteur, boite[1] + dy))
+  return [x0, y0, x0 + largeur, y0 + hauteur]
+}
+
+/** Le coin haut-gauche ne bouge pas : c'est le coin bas-droit qui règle la
+ *  taille, borné pour ne jamais repasser sous le côté utile. */
+const redimensionnerBoite = (boite: Boite, x: number, y: number, vu: { largeur: number; hauteur: number }): Boite => {
+  const x1 = Math.max(boite[0] + COTE_UTILE - 1, Math.min(vu.largeur - 1, x))
+  const y1 = Math.max(boite[1] + COTE_UTILE - 1, Math.min(vu.hauteur - 1, y))
+  return [boite[0], boite[1], x1, y1]
+}
 
 const memesBoites = (a: Boite[], b: Boite[]) =>
   a.length === b.length && a.every((boite, i) => boite.every((v, j) => v === b[i][j]))
