@@ -74,6 +74,7 @@ export function BarreQuiPaie({
   provenance,
   onDefaireProvenance,
   onGenerer,
+  sautLaRelecture = false,
   enPaiement,
   echec,
   enVol,
@@ -129,6 +130,11 @@ export function BarreQuiPaie({
   provenance: string | null
   onDefaireProvenance: () => void
   onGenerer: () => void
+  /** **La série en cours a été sautée** : ce bouton-ci paie directement, sans
+   *  l'écran de relecture. Le guichet cesse alors de promettre une relecture
+   *  qui n'aura pas lieu — le bouton, lui, ne change pas de nom : c'est le même
+   *  geste, avec un écran de moins. */
+  sautLaRelecture?: boolean
   enPaiement?: boolean
   echec?: string | null
   enVol?: EnVol | null
@@ -176,7 +182,7 @@ export function BarreQuiPaie({
         {enVol && <p role="status" className="text-signal">{enVol.images} image{enVol.images > 1 ? "s" : ""} en cours de fabrication · Les résultats arrivent dans la galerie.</p>}
         {echec && <p role="alert" className="text-echec">{echec}</p>}
         {revers && <p className="text-encre-3">{revers.texte} <button type="button" className="text-signal" disabled={revers.enCours} onClick={revers.onReessayer}>Réessayer</button></p>}
-        <div className="flex items-center justify-between gap-[22px]"><p className="text-encre-3">{refus ?? "Tu reliras les textes, les images jointes et le coût avant de lancer."}{refus && onAller && ouAller && <> <button type="button" className="text-signal" onClick={onAller}>{ouAller}</button></>}</p><button type="button" disabled={!!refus || !!enPaiement} onClick={onGenerer} className="h-[42px] shrink-0 rounded-7 bg-signal px-[22px] text-encre-sur-signal disabled:opacity-50">{enPaiement ? "Envoi en cours…" : "Relire avant envoi"}</button></div>
+        <div className="flex items-center justify-between gap-[22px]"><p className="text-encre-3">{refus ?? (sautLaRelecture ? "Cette série saute la relecture : le bouton paie directement." : "Tu reliras les textes, les images jointes et le coût avant de lancer.")}{refus && onAller && ouAller && <> <button type="button" className="text-signal" onClick={onAller}>{ouAller}</button></>}</p><button type="button" disabled={!!refus || !!enPaiement} onClick={onGenerer} className="h-[42px] shrink-0 rounded-7 bg-signal px-[22px] text-encre-sur-signal disabled:opacity-50">{enPaiement ? "Envoi en cours…" : "Relire avant envoi"}</button></div>
       </footer>
     </div>
   }

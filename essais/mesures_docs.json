@@ -1,11 +1,11 @@
 {
- "releve_le": 1789253731.020876,
+ "releve_le": 1789263887.1628568,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 168742,
+  "octets": 168299,
   "documents": {
    "AGENTS.md": {
     "octets": 36695,
@@ -242,20 +242,20 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 48741,
+    "octets": 48298,
     "titres": 21,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 48073
+      "octets": 48298
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 32,
-      "octets": 4856
+      "octets": 5081
      },
      {
       "titre": "Les invariants du produit",
@@ -569,11 +569,11 @@
  },
  "renvois": {
   "code": {
-   "total": 679,
+   "total": 680,
    "casses": []
   },
   "docs": {
-   "total": 1085,
+   "total": 1088,
    "casses": []
   }
  }

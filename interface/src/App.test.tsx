@@ -14879,17 +14879,7 @@ describe("l'écran de confirmation", () => {
   // ── « Une case saute l'écran pour la série en cours et se remet à chaque
   //     nouvelle série ; aucun réglage ne l'éteint définitivement » ────────────
 
-  // ⚠️ **EN ATTENTE — capacité manquante : sauter l'écran de confirmation
-  //     pour la série en cours.** Le câblage existe encore des deux côtés
-  //     — `App.tsx` passe `onSauter`, `paiement.ts` garde `serieSautee` et son
-  //     raccourci —, mais les deux bouts ne se rejoignent plus : *Relire avant
-  //     envoi* n'offre nulle part la case, et le seul bouton qui paie, celui du
-  //     guichet, appelle `generer(true)` — le `relire` forcé désarme le saut
-  //     avant même de le consulter. Le guichet l'écrit d'ailleurs en toutes
-  //     lettres : « Tu reliras les textes, les images jointes et le coût avant
-  //     de lancer. » Remettre la case sans rouvrir le chemin serait une case
-  //     qui ne fait rien ; l'essai attend donc que la capacité revienne.
-  test.skip("la case cochée saute l'écran pour la suite de la série", async () => {
+  test("la case cochée saute l'écran pour la suite de la série", async () => {
     // **Relire dix fois la même chose est une punition** quand on refait dix
     // fois la même image. La case existe pour ça, et pour ça seulement — donc
     // seulement là où il y a une série, c'est-à-dire une case armée.
@@ -14919,17 +14909,7 @@ describe("l'écran de confirmation", () => {
     expect(document.querySelector("[data-envoi]")).toBeNull()
   })
 
-  // ⚠️ **EN ATTENTE — capacité manquante : sauter l'écran de confirmation
-  //     pour la série en cours.** Le câblage existe encore des deux côtés
-  //     — `App.tsx` passe `onSauter`, `paiement.ts` garde `serieSautee` et son
-  //     raccourci —, mais les deux bouts ne se rejoignent plus : *Relire avant
-  //     envoi* n'offre nulle part la case, et le seul bouton qui paie, celui du
-  //     guichet, appelle `generer(true)` — le `relire` forcé désarme le saut
-  //     avant même de le consulter. Le guichet l'écrit d'ailleurs en toutes
-  //     lettres : « Tu reliras les textes, les images jointes et le coût avant
-  //     de lancer. » Remettre la case sans rouvrir le chemin serait une case
-  //     qui ne fait rien ; l'essai attend donc que la capacité revienne.
-  test.skip("changer de sujet remet l'écran — il n'y a pas de case « pour toujours »", async () => {
+  test("changer de sujet remet l'écran — il n'y a pas de case « pour toujours »", async () => {
     // **On la cocherait le premier jour**, quand on ne sait pas encore qu'on en
     // aura besoin. Elle ne vaut donc que pour la série en cours.
     const { ecran, appels } = await ouvrirUneSerie()
@@ -14950,17 +14930,7 @@ describe("l'écran de confirmation", () => {
     expect(appels.filter((a) => a.url === "/api/generations" && a.corps)).toHaveLength(1)
   })
 
-  // ⚠️ **EN ATTENTE — capacité manquante : sauter l'écran de confirmation
-  //     pour la série en cours.** Le câblage existe encore des deux côtés
-  //     — `App.tsx` passe `onSauter`, `paiement.ts` garde `serieSautee` et son
-  //     raccourci —, mais les deux bouts ne se rejoignent plus : *Relire avant
-  //     envoi* n'offre nulle part la case, et le seul bouton qui paie, celui du
-  //     guichet, appelle `generer(true)` — le `relire` forcé désarme le saut
-  //     avant même de le consulter. Le guichet l'écrit d'ailleurs en toutes
-  //     lettres : « Tu reliras les textes, les images jointes et le coût avant
-  //     de lancer. » Remettre la case sans rouvrir le chemin serait une case
-  //     qui ne fait rien ; l'essai attend donc que la capacité revienne.
-  test.skip("l'écran dit lui-même qu'aucune case ne l'éteint pour toujours", async () => {
+  test("l'écran dit lui-même qu'aucune case ne l'éteint pour toujours", async () => {
     const { ecran } = await ouvrirUneSerie()
 
     expect(ecran.getByText(/Il n'y a pas de case « pour toujours »/)).toBeTruthy()
@@ -16104,17 +16074,7 @@ describe("l'argent ne part qu'une fois", () => {
 
   // ── « Le raccourci qui paie sans passer par l'écran porte le même verrou » ─
 
-  // ⚠️ **EN ATTENTE — capacité manquante : sauter l'écran de confirmation
-  //     pour la série en cours.** Le câblage existe encore des deux côtés
-  //     — `App.tsx` passe `onSauter`, `paiement.ts` garde `serieSautee` et son
-  //     raccourci —, mais les deux bouts ne se rejoignent plus : *Relire avant
-  //     envoi* n'offre nulle part la case, et le seul bouton qui paie, celui du
-  //     guichet, appelle `generer(true)` — le `relire` forcé désarme le saut
-  //     avant même de le consulter. Le guichet l'écrit d'ailleurs en toutes
-  //     lettres : « Tu reliras les textes, les images jointes et le coût avant
-  //     de lancer. » Remettre la case sans rouvrir le chemin serait une case
-  //     qui ne fait rien ; l'essai attend donc que la capacité revienne.
-  test.skip("le raccourci d'une série sautée porte le même verrou", async () => {
+  test("le raccourci d'une série sautée porte le même verrou", async () => {
     // **Il paie directement**, sans écran entre le bouton et la dépense : le
     // verrou doit donc être là aussi, sinon on aurait réparé la moitié du
     // chemin et laissé l'autre ouverte.

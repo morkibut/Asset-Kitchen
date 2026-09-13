@@ -1651,7 +1651,17 @@ function AtelierApp() {
         setPrompt("")
         setProvenance(null)
       }}
-      onGenerer={() => generer(true)}
+      /* **Il consulte le saut, il ne le désarme pas.** `generer(true)` forçait
+         la relecture : la case « ne plus me le montrer pour cette série » était
+         alors une case qui ne faisait rien, puisque le seul bouton qui paie
+         reprenait l'écran avant même de la lire. Sans l'argument, `generer`
+         retrouve sa règle — l'écran s'ouvre, sauf pour la série qu'on vient de
+         sauter, et seulement pour celle-là. */
+      onGenerer={() => generer()}
+      /* **Ce bouton-ci paie directement quand la série est sautée**, et le
+         guichet doit alors cesser de promettre une relecture qui n'aura pas
+         lieu. */
+      sautLaRelecture={serie !== null && serieSautee === serie}
       /* **Le raccourci porte le même verrou** (U1). Quand la série est
          sautée, ce bouton-ci paie sans passer par l'écran de confirmation :
          il doit donc dire qu'il paie et refuser le second clic exactement
