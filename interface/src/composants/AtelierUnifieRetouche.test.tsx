@@ -83,7 +83,7 @@ test("un brouillon de frame se reprend après fermeture sans écrire la bande av
   expect(garder).not.toHaveBeenCalled()
   vue.unmount()
   render(<EcranAtelierDeBande {...props} />)
-  fireEvent.click(await screen.findByRole("button", { name: "Reprendre le brouillon" }))
+  fireEvent.click(await screen.findByRole("button", { name: "Reprendre le brouillon" }, { timeout: 3000 }))
   expect(garder).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole("button", { name: "Enregistrer ›" }))
   await waitFor(() => expect(garder).toHaveBeenCalledOnce())

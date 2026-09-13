@@ -3991,7 +3991,10 @@ async function ouvrirLEtabli(nom?: string) {
   // conserve le parcours réel avant d'ouvrir la fiche et sa matrice.
   fireEvent.click(screen.getByRole("button", { name: "Les assets" }))
   const bibliotheque = await screen.findByRole("main", { name: "Les assets du jeu" })
-  fireEvent.click(within(bibliotheque).getByRole("button", { name: "Personnages" }))
+  // Le nom accessible du bouton porte aussi le compte de la famille dès que la
+  // grille a répondu (« Personnages 1 ») : une chaîne exacte gagne la course
+  // tant que le compte n'est pas encore arrivé, et la perd sous charge.
+  fireEvent.click(await within(bibliotheque).findByRole("button", { name: /^Personnages/ }))
   fireEvent.click(await within(bibliotheque).findByRole("button", { name: "Ouvrir et organiser" }))
   const cadre = await waitFor(() => {
     const c = document.querySelector("[data-ecran-famille], [data-etabli], [data-univers]")
@@ -13303,8 +13306,11 @@ describe("le premier lancement", () => {
     const bibliotheque = await screen.findByRole("main", {
       name: "Les assets du jeu",
     })
+    // Le nom accessible du bouton porte aussi le compte de la famille dès que
+    // la grille a répondu (« Personnages 0 ») : une chaîne exacte gagne la
+    // course tant que le compte n'est pas encore arrivé, et la perd sous charge.
     fireEvent.click(
-      await within(bibliotheque).findByRole("button", { name: "Personnages" }),
+      await within(bibliotheque).findByRole("button", { name: /^Personnages/ }),
     )
     fireEvent.click(
       await within(bibliotheque).findByRole("button", { name: "Ouvrir et organiser" }),
