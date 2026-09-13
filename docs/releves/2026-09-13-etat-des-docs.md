@@ -191,47 +191,57 @@ compté ici.)*
 | `docs/archive/recherche-llm-local/` (6 fichiers) | 1,4 Mo | 2026-09-03 | 3 fichiers | À archiver | Étude de faisabilité conclue : la machine peut, le résultat n'est pas assez bon. Rien à construire dessus |
 | `docs/archive/recherche-video-locale/` (15 fichiers) | 24,1 Mo | 2026-09-12 | 7 fichiers | À archiver | Le dossier le plus lourd de `docs/` — bancs d'images et de vidéos. Ses conclusions sont déjà remontées dans `docs/releve-pixel-engine.md` |
 
-## Ce qu'on propose de déplacer
+## Ce qui a été déplacé le 13 septembre 2026
 
-- `docs/archive/PLAN-carnet-affectation.md` → `docs/archive/` — affectation d'un plan dont l'exécution
-  active s'est arrêtée le 11 septembre 2026.
-- `docs/archive/v3-animation.md` → `docs/archive/` — détail des trois bancs de la V3 ; `docs/bilan-v3.md`
-  en donne les conclusions et suffit dans presque tous les cas.
-- `docs/archive/design-preview-refonte.html` → `docs/archive/` — proposition remplacée par
-  `docs/design-preview.html`, gardée comme trace de la décision qui l'a suivie.
-- `docs/archive/design-preview-propositions.html` → `docs/archive/` — quatre formes explorées avant la
-  refonte, citées par aucun document.
-- `docs/archive/audit-design-post-v21.html` → `docs/archive/` — audit d'une interface remplacée ; garder
-  la trace pour les trois fichiers de code qui la citent encore comme preuve d'une mesure.
-- `docs/archive/maquette-atelier.html` → `docs/archive/` — maquette pré-atelier-unifié, déjà classée
-  « jamais d'office » par `docs/README.md`.
-- `docs/archive/vocabulaire-a-fermer.md` → `docs/archive/` — proposition soumise le 4 septembre ; la
-  décision de vocabulaire est prise depuis.
-- `docs/archive/v21-arbitrages.md` → `docs/archive/` — arbitrages d'une version entièrement tenue.
-- `docs/archive/questions-du-lot-U.md` → `docs/archive/` — questions d'un lot clos, reprises par l'usage
-  depuis.
-- `docs/archive/releve-fournisseurs.md` → `docs/archive/` — recommande un fournisseur retiré par
-  l'auteur le 8 septembre 2026.
-- `docs/archive/vignettes-vues.md` → `docs/archive/` — consignes pour un écran de `maquettes-v2.1/` qui
-  n'existe plus.
-- `docs/archive/maquettes-v2.1/` → `docs/archive/maquettes-v2.1/` — interface remplacée deux fois ; 2,5 Mo.
-- `docs/archive/maquettes-v2.4/` → `docs/archive/maquettes-v2.4/` — écran déjà construit depuis le
-  4 septembre.
-- `docs/archive/maquettes-v3/` → `docs/archive/maquettes-v3/` — interface remplacée deux fois ; 2,6 Mo.
-- `docs/archive/pistes-2026-09-04/` → `docs/archive/pistes-2026-09-04/` — source devenue le carnet livré ;
-  7,5 Mo, le second dossier le plus lourd de `docs/`.
-- `docs/archive/diagrams/` → `docs/archive/diagrams/` — déjà « jamais d'office » selon `docs/README.md` ;
-  1,0 Mo.
-- `docs/archive/analyse-pre-v3/` → `docs/archive/analyse-pre-v3/` — non cité, absent de l'index ; 98 Ko.
-- `docs/archive/recherche-llm-local/` → `docs/archive/recherche-llm-local/` — étude conclue, rien à
-  construire dessus ; 1,4 Mo.
-- `docs/archive/recherche-video-locale/` → `docs/archive/recherche-video-locale/` — conclusions déjà
-  reprises dans `docs/releve-pixel-engine.md` ; 24,1 Mo, le dossier le plus lourd du dépôt.
-- `docs/archive/status-atelier-unifie/` → à supprimer plutôt qu'à archiver — instantané d'un outil de
-  tableau de bord, généré avant AU18-AU20, sans lien depuis aucun document. Rien à en garder
-  puisque `docs/status/etat.md` porte déjà le vrai journal.
+**Écrit d'abord comme une proposition, puis exécuté le jour même.** Onze fichiers et neuf
+dossiers sont descendus dans `docs/archive/`, par un script qui ne fait que déplacer — aucun mot
+n'a changé. Le banc des documents a ensuite nommé les 222 renvois que la descente cassait, et
+510 adresses ont été réécrites pour les réparer.
 
-**Deux corrections de texte, pas des déplacements** : la phrase de `docs/README.md` sur
-`docs/archive/maquettes-v2.4/` (« attend l'arbitrage ») est fausse depuis le 4 septembre et mérite d'être
-réécrite ; `docs/README.md` ne mentionne nulle part `docs/remarques.md` ni `docs/remarques/`, à
-ajouter à l'index.
+*Les adresses ci-dessous sont celles d'arrivée : le script qui a redirigé les renvois a réécrit
+ce document comme tous les autres.*
+
+| Ce qui est descendu | Pourquoi |
+|---|---|
+| `archive/PLAN-carnet-affectation.md` | affectation d'un plan dont l'exécution active s'est arrêtée le 11 septembre 2026 |
+| `archive/v3-animation.md` | détail des trois bancs de la V3 ; `docs/bilan-v3.md` en donne les conclusions |
+| `archive/design-preview-refonte.html` | proposition remplacée par `docs/design-preview.html` |
+| `archive/design-preview-propositions.html` | quatre formes explorées avant la refonte, citées par aucun document |
+| `archive/audit-design-post-v21.html` | audit d'une interface remplacée ; la trace reste pour trois fichiers de code qui la citent |
+| `archive/maquette-atelier.html` | maquette pré-atelier-unifié, déjà classée « jamais d'office » |
+| `archive/vocabulaire-a-fermer.md` | proposition du 4 septembre ; la décision de vocabulaire est prise depuis |
+| `archive/v21-arbitrages.md` | arbitrages d'une version entièrement tenue |
+| `archive/questions-du-lot-U.md` | questions d'un lot clos, reprises par l'usage depuis |
+| `archive/releve-fournisseurs.md` | recommande un fournisseur retiré par l'auteur le 8 septembre 2026 |
+| `archive/vignettes-vues.md` | consignes pour un écran des maquettes V2.1, qui n'existe plus |
+| `archive/maquettes-v2.1/` | interface remplacée deux fois ; 2,5 Mo |
+| `archive/maquettes-v2.4/` | écran déjà construit depuis le 4 septembre |
+| `archive/maquettes-v3/` | interface remplacée deux fois ; 2,6 Mo |
+| `archive/pistes-2026-09-04/` | source devenue le carnet livré ; 7,5 Mo |
+| `archive/diagrams/` | déjà « jamais d'office » ; 1,0 Mo |
+| `archive/analyse-pre-v3/` | non cité, absent de l'index ; 98 Ko |
+| `archive/recherche-llm-local/` | étude conclue, rien à construire dessus ; 1,4 Mo |
+| `archive/recherche-video-locale/` | conclusions reprises dans `docs/releve-pixel-engine.md` ; 24,1 Mo |
+| `archive/status-atelier-unifie/` | instantané d'un tableau de bord, généré avant AU18-AU20 |
+
+**Une seule suppression proposée, refusée.** `status-atelier-unifie/` était proposé à la
+suppression plutôt qu'à l'archivage. Il descend comme les autres : un instantané ne gêne
+personne dans `archive/`, et on ne détruit pas ce qu'on peut ranger.
+
+### ⚠️ Ce qui est ressorti de l'archive, le jour même
+
+**`Vocabulaire.dc.html`**, un fichier du dossier des pistes, est remonté à
+`docs/vocabulaire.html`. Il porte le vocabulaire fermé du produit — un mot par chose, la liste
+noire de ce qu'on n'écrit pas —, `docs/DESIGN.md` dit qu'il s'applique partout, et deux essais
+de serveur le citent comme autorité.
+
+**Ce relevé ne l'avait pas vu, et le banc des renvois non plus.** Il n'avait pas cherché lequel
+des fichiers d'un dossier lourd était cité par un document d'autorité ; et tous les renvois vers
+lui ont continué de tomber juste après la descente, parce qu'**un renvoi valide ne dit rien de
+l'autorité de sa cible**. C'est le contrôle qui manque à ce genre de descente, et il vaut pour
+la prochaine.
+
+**Deux corrections de texte, faites en même temps** : la phrase de `docs/README.md` sur les
+maquettes V2.4 (« attend l'arbitrage ») était fausse depuis le 4 septembre — l'écran est
+construit — ; et `docs/README.md` ne mentionnait nulle part `docs/remarques.md` ni
+`docs/remarques/`, désormais à l'index.
