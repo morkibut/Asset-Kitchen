@@ -6864,18 +6864,14 @@ describe("l'écran des personnages", () => {
     })
   })
 
-  // ⚠️ **EN ATTENTE — capacité manquante : retirer une attitude d'un lot armé,
-  //     et désarmer le lot, depuis le guichet.**
-  //
-  //     La bande « Pour » de la barre qui paie portait un « × » par attitude et
-  //     un « tout retirer » (`Cible`, `composants/Galerie.tsx`). L'écran
-  //     *Préparer une image* nomme la cible sous son titre — donc on la voit —
-  //     mais n'offre aucun des deux gestes : `onRetirerPose` et `onDesarmer`
-  //     sont passés à `BarreQuiPaie` et ignorés par sa branche `preparation`.
-  //     Corriger un lot demande aujourd'hui de fermer le guichet et de
-  //     recocher les cases. Aucun autre écran ne reprend le geste ; l'essai
-  //     attend qu'il revienne plutôt que de disparaître avec lui.
-  test.skip("une attitude se retire du lot sans le défaire", async () => {
+  // **Un lot se corrige sans se défaire.** La bande « Pour » — `Cible`,
+  // `composants/Galerie.tsx` — est montée sous le titre du guichet *Préparer
+  // une image* : un « × » par attitude, et un « tout retirer » dès qu'il y en a
+  // deux. Ce sont **deux gestes différents**, et c'est tout l'objet de l'essai :
+  // retirer une attitude laisse le lot armé avec ce qui reste dedans ; désarmer
+  // éteint la cible entière. Sans le premier, corriger un lot demandait de
+  // fermer le guichet et de recocher les cases une à une.
+  test("une attitude se retire du lot sans le défaire", async () => {
     const { ecran } = await ouvrir({
       personnages: [personnage("Le nain", { description: "un forgeron" })],
     })
@@ -15747,23 +15743,22 @@ describe("l'écran de confirmation", () => {
     await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
   })
 
-  // ⚠️ **EN ATTENTE — capacité manquante : regarder une image en grand avant
-  //     de la choisir comme référence.** Le choix d'une référence est passé au
-  //     cadre de dialogue commun (`BibliothequePourImage`), qui n'a pas
-  //     l'aperçu à la barre d'espace de l'ancienne grille : on choisit sur une
-  //     vignette de 128 px, sans pouvoir l'ouvrir. La pile des trois surfaces
-  //     — aperçu, grille, confirmation — n'a donc plus d'étage du haut.
-  test.skip("l'aperçu passe avant la grille, et la grille avant la confirmation", async () => {
+  // **On regarde une image en grand avant de la choisir.** Le choix d'une
+  // référence se fait dans le cadre de dialogue commun
+  // (`BibliothequePourImage`), et ses tuiles portent la visée du reste du
+  // produit : le pointeur vise, Espace ouvre. Sans elle, on choisissait sur une
+  // vignette de 128 px sans pouvoir l'ouvrir.
+  test("l'aperçu passe avant la grille, et la grille avant la confirmation", async () => {
     // **Trois surfaces empilées, et Échap n'en prend qu'une à la fois.** On
     // regarde une image en grand *avant* de la choisir : c'est l'aperçu qui
     // sert à ça, et il doit donc se refermer le premier.
     const { ecran } = await ouvrir({ assets: [asset("tonneau-0", "un tonneau")] })
     fireEvent.click(ecran.getByRole("button", { name: "Ajouter une référence" }))
-    const choix = document.querySelector("[data-choix-reference]") as HTMLElement
+    // La grille de choix est le cadre de dialogue du produit — c'est par son
+    // nom qu'on la tient, comme les deux essais au-dessus.
+    const choix = await screen.findByRole("dialog", { name: "Choisir une référence" })
 
-    const tuile = await within(choix).findByRole("button", {
-      name: "Ouvrir la fiche",
-    })
+    const tuile = (await within(choix).findAllByRole("button", { name: /^Choisir / }))[0]
     fireEvent.pointerOver(tuile)
     fireEvent.keyDown(window, { key: " ", code: "Space" })
     expect(screen.getByRole("dialog", { name: "Aperçu" })).toBeTruthy()
@@ -15773,7 +15768,7 @@ describe("l'écran de confirmation", () => {
       expect(screen.queryByRole("dialog", { name: "Aperçu" })).toBeNull(),
     )
     // La grille est encore là — l'aperçu seul est parti.
-    expect(document.querySelector("[data-choix-reference]")).toBeTruthy()
+    expect(screen.getByRole("dialog", { name: "Choisir une référence" })).toBeTruthy()
     expect(document.querySelector("[data-envoi]")).toBeTruthy()
   })
 

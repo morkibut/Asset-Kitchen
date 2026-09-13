@@ -75,6 +75,7 @@ export function Cible({
   poses,
   onRetirer,
   onDesarmer,
+  presentation = "barre",
 }: {
   /** **Relus dans les listes vivantes**, jamais gardés au moment de l'armement :
    *  un personnage supprimé ou une pose retirée du plan font disparaître la
@@ -85,11 +86,23 @@ export function Cible({
   poses: Pose[]
   onRetirer: (pose: Pose) => void
   onDesarmer: () => void
+  /** Où la bande est posée. **Les deux gestes sont les mêmes des deux côtés** —
+   *  seul le cadre change : un liseré collé sous les réglages dans la barre, un
+   *  bloc de la grille du guichet dans l'écran *Préparer une image*, qui compte
+   *  ses marges en 14 et ses coins en `rounded-7`. Deux composants auraient fini
+   *  par n'avoir plus les mêmes libellés, donc plus le même geste. */
+  presentation?: "barre" | "preparation"
 }) {
   if (!personnage || poses.length === 0) return null
   const lot = poses.length >= 2
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-trait bg-carte px-4 pt-3">
+    <div
+      className={
+        presentation === "preparation"
+          ? "flex flex-wrap items-center gap-[8px] rounded-7 border border-trait bg-carte p-[14px]"
+          : "flex flex-wrap items-center gap-2 border-b border-trait bg-carte px-4 pt-3"
+      }
+    >
       <span className="mesure text-[10.5px] tracking-[.14em] text-encre-4 uppercase">
         Pour
       </span>

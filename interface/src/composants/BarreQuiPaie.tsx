@@ -157,6 +157,17 @@ export function BarreQuiPaie({
     }
     return <div className="flex min-h-0 flex-1 flex-col text-[13px]">
       <div className="defile min-h-0 flex-1 space-y-[22px] overflow-y-auto px-[30px] py-[22px]">
+      {/* **Ce qui part, et de quoi le corriger** — la bande « Pour » de la
+          barre qui paie, montée ici sous le titre qui la nomme. L'écran disait
+          déjà pour quelles cases l'appel partait ; il n'offrait ni le « × »
+          d'une attitude ni le « tout retirer », si bien que corriger un lot
+          demandait de fermer le guichet et de recocher les cases une à une.
+
+          **Retirer une attitude n'est pas désarmer** : le premier geste laisse
+          le lot armé avec ce qui reste dedans, le second éteint la cible
+          entière. Deux gestes, deux boutons — et c'est la même règle que
+          partout ailleurs, éteindre n'est pas vider. */}
+      <Cible personnage={personnageCible} poses={posesCible} onRetirer={onRetirerPose} onDesarmer={onDesarmer} presentation="preparation" />
       <div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">Références jointes</h2>{onChoisirReference && <button type="button" className="h-[34px] rounded-7 border border-contour bg-carte px-[14px]" onClick={onChoisirReference}>Choisir dans la bibliothèque</button>}</div>
       <section aria-label="Références jointes" className="rounded-7 border border-trait bg-carte p-[22px]">
         {reinjections.length === 0 ? <p className="text-encre-3">Aucune image jointe à la main. Les références de l’univers et de l’asset seront visibles à la relecture.</p> : <div className="grid grid-cols-3 gap-[14px]">{reinjections.map(({ asset, role }, i) => <ReferenceJointe key={asset} asset={asset} role={role} rang={i + 1} connu={grille.find((a) => a.identifiant === asset)} champ={champ} onRole={onRoleReinjection} onRetirer={onRetirerReinjection} />)}</div>}

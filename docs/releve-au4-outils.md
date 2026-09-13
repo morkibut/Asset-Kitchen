@@ -34,8 +34,9 @@ L’extraction retrouve aussi ses deux sources, son calage et son masque ; la d�
 retrouve les rectangles corrigés sans les remplacer par une nouvelle détection.
 « Toutes les tables et leur état » conserve les anciens chemins pendant la
 vérification de chaque atelier spécialisé. Aucune capacité ancienne n’a été
-retirée pour masquer un raccord restant — et celles qui manquent encore sont
-nommées une à une plus bas, § « Capacités encore ouvertes ».
+retirée pour masquer un raccord restant — et les sept que la refonte avait fait
+disparaître sont toutes revenues : le § « Rendues depuis » les nomme une à une,
+avec ce qui les prouve.
 
 ## Relecture croisée du 12 septembre 2026
 
@@ -67,26 +68,18 @@ pose une extraction avec un calage, une échelle, un rectangle et un trait de
 main non par défaut, la referme, la rouvre par le service et vérifie que la
 pose relue et l’aperçu rejoué sont identiques à l’originale, sans appel
 fournisseur de plus.
-## Capacités encore ouvertes, relevées le 12 septembre 2026 — deux restantes au 13 septembre
+## Capacités encore ouvertes — aucune au 13 septembre 2026
 
-La remise à niveau de `interface/src/App.test.tsx` a servi de peigne : chaque
-essai qui ne passait plus a été rangé dans l'un de deux cas — l'écran a changé
-de mots, ou la capacité a disparu. Sept étaient du second cas ; les deux qui
-suivent le sont encore, les cinq autres sont passées plus bas, § « Rendues depuis ». Elles
-ne sont donc **pas** des essais réécrits : ce sont des trous, et le plan
-(`docs/PLAN-atelier-unifie.md`, § « Ce qui doit être repris au fil du parcours »)
-demande qu'un trou soit nommé plutôt que refermé en silence. Les essais qui les
-portaient restent écrits, en `test.skip`, chacun sous le commentaire qui dit ce
-qui manque : ils repartiront tels quels le jour où la capacité revient.
+La remise à niveau de `interface/src/App.test.tsx` avait servi de peigne : chaque
+essai qui ne passait plus était rangé dans l'un de deux cas — l'écran a changé
+de mots, ou la capacité a disparu. Sept étaient du second cas. **Les sept sont
+rendues au 13 septembre 2026 ; plus aucune capacité de la refonte n'est en
+attente**, et `interface/src/App.test.tsx` ne porte plus un seul `test.skip`.
 
-| Capacité perdue | Où elle vivait | Ce qu'on ne peut plus faire | Essais en attente |
-| --- | --- | --- | --- |
-| Retirer une attitude d'un lot armé, ou désarmer la cible | Bande « Pour » de la barre qui paie (`Cible`, `Galerie.tsx`) | Corriger un lot demande de fermer le guichet et de recocher les cases. `onRetirerPose` et `onDesarmer` sont passés à `BarreQuiPaie` et ignorés par sa branche `preparation` | `une attitude se retire du lot sans le défaire` |
-| Regarder une référence en grand avant de la choisir | Grille de choix posée dans l'ancien écran de confirmation, aperçu à la barre d'espace | Le choix passe par `BibliothequePourImage` : on choisit sur une vignette de 128 px, sans pouvoir l'ouvrir | `l'aperçu passe avant la grille, et la grille avant la confirmation` |
-
-Aucune de ces lignes n'a été refermée en réécrivant son essai : réécrire un
-essai est ce qu'on fait quand l'écran a changé de mots, pas quand le geste a
-disparu.
+Le § « Rendues depuis » ci-dessous reste : c'est la mémoire de ce qui a été perdu
+puis retrouvé, et il dit pour chaque capacité par quoi elle est prouvée. Aucune
+de ces lignes n'a été refermée en réécrivant son essai : réécrire un essai est
+ce qu'on fait quand l'écran a changé de mots, pas quand le geste a disparu.
 
 ## Rendues depuis
 
@@ -197,3 +190,52 @@ le total`, `l'avertissement est écrit sur la ligne fautive, avec ses chiffres`,
 58 fichiers, 1 305 essais verts, 2 en attente, trois passages sans un rouge ;
 `npx tsc --noEmit` propre ; `pytest tests/test_b0.py -q` : 113 verts (les écarts
 posés — 4, 8, 22 — et les hauteurs sont ceux des listes fermées de `DESIGN.md`).
+
+**Retirer une attitude d'un lot armé, ou désarmer la cible — rendue le
+13 septembre 2026.** La bande « Pour » de la barre qui paie (`Cible`,
+`composants/Galerie.tsx`) est montée dans l'écran *Préparer une image*, en tête
+du corps du guichet, sous le titre qui nomme déjà la cible. Le composant est le
+même des deux côtés — un « × » par attitude, un « tout retirer » dès qu'il y en
+a deux — et il prend une présentation : liseré collé sous les réglages dans la
+barre, bloc `rounded-7` de 14 px de marge dans le guichet. Écrire une seconde
+bande aurait fini par donner deux libellés au même geste.
+
+**Deux gestes, pas un.** Retirer une attitude laisse le lot armé avec ce qui
+reste dedans ; désarmer éteint la cible entière. C'est ce que l'essai mesure, et
+c'est la même règle que partout ailleurs — éteindre n'est pas vider. Le titre du
+guichet, lui, ne bouge pas : il continue de nommer la cible en clair, et les
+gestes vivent juste en dessous.
+
+Preuve : l'essai est ressorti d'attente et passe tel qu'il était écrit — `une
+attitude se retire du lot sans le défaire`. Rien n'a été passé au serveur : les
+deux rappels `onRetirerPose` et `onDesarmer` existaient déjà et étaient
+simplement ignorés par la branche `preparation` de `BarreQuiPaie.tsx`.
+
+**Regarder une référence en grand avant de la choisir — rendue le 13 septembre
+2026.** Les tuiles de `BibliothequePourImage.tsx` portent la visée du reste du
+produit — `useVisee` et `sujetAsset` d'`Apercu.tsx`, les mêmes aides que les
+références jointes du guichet : le pointeur vise, la barre d'espace ouvre
+l'image en grand, Échap referme l'aperçu **seul**. La grille de choix reste
+posée dessous, et la fenêtre de confirmation derrière elle : trois surfaces
+empilées, une pression, une surface. Aucune seconde visée n'a été écrite ; la
+tuile garde l'image qu'elle affichait, et c'est l'aperçu qui demande le fichier
+entier, parce que compter les pixels d'une référence avant de l'envoyer est
+exactement ce à quoi il sert.
+
+**Un essai avait encodé l'absence de la capacité comme une garantie.** Il tenait
+la grille par `[data-choix-reference]` et sa tuile par *Ouvrir la fiche* — les
+deux noms de l'ancienne grille posée dans l'écran de confirmation, disparue avec
+la refonte. Son chemin passe maintenant par le cadre de dialogue « Choisir une
+référence » et ses tuiles *Choisir …*, comme les deux essais voisins ; sa
+garantie n'a pas bougé d'un mot. Le commentaire qui annonçait la capacité
+manquante est remplacé par la vraie règle.
+
+Preuve : l'essai est ressorti d'attente et passe — `l'aperçu passe avant la
+grille, et la grille avant la confirmation`. Aucun appel payant sur ce chemin :
+choisir une image, et l'ouvrir en grand, n'a jamais rien dépensé.
+
+Preuves des deux capacités ci-dessus : `npx vitest run` — 58 fichiers,
+**1 307 essais verts, zéro en attente**, trois passages sans un rouge ;
+`npx tsc --noEmit` propre ; `pytest tests/test_b0.py -q` : 113 verts (les marges
+posées — 8, 14 — et la vignette de 128 px sont celles des listes fermées de
+`DESIGN.md`).

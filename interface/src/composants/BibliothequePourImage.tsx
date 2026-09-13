@@ -1,5 +1,28 @@
 import { useEffect, useState } from "react"
 import { api, type Asset, type Collection } from "../api"
+import { sujetAsset, useVisee } from "./Apercu"
+
+/**
+ * Une image de la grille de choix.
+ *
+ * **Elle se regarde en grand avant d'être choisie** : le pointeur la vise, la
+ * barre d'espace l'ouvre, Échap referme l'aperçu seul et laisse la grille — et
+ * la fenêtre qui a demandé la référence — exactement où elles étaient. C'est la
+ * visée du reste du produit (`useVisee`, `Apercu.tsx`), pas une seconde : une
+ * vignette de 128 px ne suffit pas à décider ce qu'on va payer, et le geste
+ * existait déjà dans l'ancienne grille.
+ *
+ * La tuile garde l'image qu'elle affichait ; **l'aperçu, lui, vise le fichier
+ * entier** (`sujetAsset`), parce que le moment où l'on veut les pixels vrais
+ * est exactement celui où l'on ouvre.
+ */
+function TuileDeChoix({ asset, onChoisir }: { asset: Asset; onChoisir: (asset: Asset) => void }) {
+  const visee = useVisee(sujetAsset(asset))
+  return <button type="button" aria-label={`Choisir ${asset.label}`} onClick={() => onChoisir(asset)} onPointerEnter={visee.entrer} onPointerLeave={visee.sortir} className="flex flex-col rounded-7 border border-trait bg-carte p-[8px] text-left hover:border-signal">
+    <img src={api.rendu(asset.identifiant, asset.empreinte)} alt="" className="damier-papier h-[128px] w-full object-contain" style={{ imageRendering: "pixelated" }} />
+    <span className="mt-[8px] w-full truncate text-[12px]">{asset.label}</span><span className="mesure text-[11px] text-encre-3">{asset.rendu_largeur || asset.largeur} × {asset.rendu_hauteur || asset.hauteur}</span>
+  </button>
+}
 
 /** Choisir une image dans toute la bibliothèque, sans modifier son classement. */
 export function BibliothequePourImage({ voisines = [], onChoisir, onFermer }: {
@@ -32,10 +55,7 @@ export function BibliothequePourImage({ voisines = [], onChoisir, onFermer }: {
     {erreur && <p role="alert" className="text-echec">{erreur}</p>}
     <p role="status" className="text-[12px] text-encre-3">{attente ? "Chargement…" : `${total} image${total > 1 ? "s" : ""}`}</p>
     <div className="defile grid min-h-0 grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-[8px] overflow-auto">
-      {images.map((asset) => <button key={asset.identifiant} type="button" aria-label={`Choisir ${asset.label}`} onClick={() => onChoisir(asset)} className="flex flex-col rounded-7 border border-trait bg-carte p-[8px] text-left hover:border-signal">
-        <img src={api.rendu(asset.identifiant, asset.empreinte)} alt="" className="damier-papier h-[128px] w-full object-contain" style={{ imageRendering: "pixelated" }} />
-        <span className="mt-[8px] w-full truncate text-[12px]">{asset.label}</span><span className="mesure text-[11px] text-encre-3">{asset.rendu_largeur || asset.largeur} × {asset.rendu_hauteur || asset.hauteur}</span>
-      </button>)}
+      {images.map((asset) => <TuileDeChoix key={asset.identifiant} asset={asset} onChoisir={onChoisir} />)}
     </div>
     {!attente && images.length < total && <button type="button" onClick={() => setLimite((n) => n + 60)}>Afficher les suivantes</button>}
     {!attente && images.length === 0 && <p>Aucune image ne correspond à ces filtres.</p>}
