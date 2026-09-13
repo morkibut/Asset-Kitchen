@@ -23,7 +23,7 @@ Relevé fait sur la branche `feat/remise-a-plat-de-l-interface`, sans modifier u
 | Tenus en partie | **22** sur 26 (32 sur 39) |
 | Absents du produit | **4** sur 26 (6 sur 39) |
 | Écrans du produit absents de la maquette | **30** |
-| Désaccords de nom relevés | **plus de 50** |
+| Désaccords de nom relevés | **80** |
 
 Les quatre écrans absents : **Clip source**, **Comparer les versions**, **Essayer avant de construire**,
 **Vos remarques**. Les deux surfaces absentes : **Bandeau de maquette**, **Brouillons à reprendre**.
@@ -1086,7 +1086,7 @@ porte les quatre règles du jeu.
 ## Les désaccords de nom
 
 Un libellé qui ne colle pas est un défaut à part entière : l'auteur cherche le mot de la maquette et ne le
-trouve pas. Voici ce qui a été relevé, groupé par nature du désaccord.
+trouve pas. Quatre-vingts ont été relevés ; les voici, groupés par nature du désaccord.
 
 ### A. Un même lieu, plusieurs noms dans le produit
 
