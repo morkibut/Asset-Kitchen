@@ -11,6 +11,52 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP · L'ouverture de la remise à plat — 13 septembre 2026
+
+**Née d'une phrase de l'auteur** : *« c'est quand même encore pas mal le bordel l'interface…
+j'ai des écrans que je pensais qui avaient été remplacés ou disparu depuis l'intégration de la
+nouvelle maquette. Je ne sais même pas s'ils marchent et s'ils sont en double ou pas. »*
+
+Cinq relevés ont été faits le même jour, chacun sans rien modifier : la maquette validée, les
+écrans du code, le serveur, l'écart entre les deux premiers, et l'état des documents.
+
+### Ce que les relevés ont appris, et qui vaut au-delà d'eux
+
+**1. « Validée » et « implémentée » s'étaient confondues dans le plan.** Le plan disait que
+l'auteur avait validé la maquette le 12 septembre et demandé son implémentation complète ; la
+ligne suivante laissait croire que c'était fait. Mesure : **zéro écran sur vingt-six tenu de
+bout en bout**, vingt-deux tenus en partie, quatre absents. Une validation est une décision, pas
+une livraison, et un plan qui met les deux dans la même phrase ment sans qu'un mot soit faux.
+
+**2. Le produit n'est pas en retard sur la maquette : il est à côté.** Trente écrans du produit
+n'existent pas dans la maquette, et la plupart sont à garder — l'atelier d'une animation, le
+calibrage, la planche de poses, les tuiles, les sons, l'aide, la barre de gestes. Sur chaque
+écran il manque deux ou trois gestes, il en ajoute cinq, et il les nomme autrement. **Quatre-
+vingts désaccords de nom** : c'est cette dérive-là qui fait le désordre, pas un manque de
+travail. D'où la règle posée en tête du plan : la maquette fait foi sur l'ossature et le
+vocabulaire, le produit sur la profondeur.
+
+**3. Un écran mort peut être le seul à porter une capacité.** L'écran de délégation de l'agent
+n'est monté nulle part, et le relevé le classait donc mort. Il est pourtant le **seul** du
+produit qui règle ce que l'agent a le droit de dépenser — plafond d'appels, plafond en argent,
+droit de payer, modèles autorisés. Le panneau vivant montre bien « l'agent », mais pas le même
+objet. **Le retirer aurait retiré le seul frein à la dépense d'un agent automatique.** C'est ce
+qui a fait monter RP2 en `[HARD]` : une tranche qui touche à l'argent l'est, quelle que soit sa
+taille.
+
+**4. Un essai qui échoue pour l'environnement du voisin ressemble à une régression.** Deux
+essais prouvent que le pont n'écrit rien chez le projet voisin. Ils savaient sauter quand le
+voisin est absent, pas quand il est présent sans son environnement — ses modules importent un
+paquet à lui. Ils tombaient donc en erreur d'import. Un essai doit rendre un verdict, pas une
+exception : ils sautent maintenant en disant quel paquet manque.
+
+**5. Une descente de documents se mesure par ses renvois, pas par ses octets.** Vingt entrées
+descendues en archive ont cassé deux cent vingt-deux renvois ; cinq cent dix adresses ont été
+réécrites pour les réparer. Le script de redirection nomme forcément les anciennes adresses —
+c'est son travail —, et le banc des documents le comptait donc en faux cassés : il le saute
+désormais, sinon chaque descente laisse derrière elle autant de faux qu'elle a déplacé de
+fichiers.
+
 ## AU · AU20 — ce qui entre par une fiche y reste — 13 septembre 2026
 
 **Tranche née d'un usage, le jour même où AU18 et AU19 ont été closes.** L'auteur importe une
