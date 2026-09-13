@@ -69,7 +69,7 @@
  * | 10a · Le modèle de chaque famille | `ReglagesDeFamille.tsx`, table 3b |
  * | 10b · `modele_planche` et `modele_edition` | **retirés.** Deux surcharges pour deux gestes rares — un lot d'attitudes qui part, un corps qui se retouche. Sans elles le catalogue décide, ce qui est déjà la règle écrite partout ailleurs (« le catalogue décide du reste »), et la fiche de chaque image dit quel modèle a servi. Un troisième endroit qui règle un modèle aurait été le défaut que cette tranche répare |
  * | 11 · Le détourage de départ | `Retouche.tsx` — il y pose le défaut de la nature *et* celui de la famille, depuis la passe qu'on vient de régler sur une vraie image |
- * | 12 · Les fournisseurs (le tiroir des clés) | `Installation.tsx`, étape « Les images » ; le tiroir lui-même vit maintenant dans `PanneauAtelier`, plus bas dans ce fichier (`D1`) |
+ * | 12 · Les fournisseurs (le tiroir des clés) | `Installation.tsx`, étape « Les images » ; le tiroir lui-même est `BlocSecrets`, plus bas dans ce fichier, monté par l'onglet *Moteurs & workflows* de `Reglages.tsx` (`RP2`) |
  *
  * Et deux choses qui n'étaient pas des étapes :
  *
@@ -124,8 +124,6 @@ import {
 } from "../api"
 import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./pieces"
 import { nomDuModele } from "./Fiche"
-import { BlocMouvements } from "./Mouvements"
-import { PANNEAU } from "./Infobulle"
 
 // ── Les quatre étapes ────────────────────────────────────────────────────────
 
@@ -980,29 +978,30 @@ function ReglesDAilleurs({ univers }: { univers: Univers }) {
   )
 }
 
-// ── L'atelier — l'agent, le dossier, les mouvements, la clé (D1) ────────────
+// ── L'atelier — l'agent, le dossier, la clé (D1, rangés par RP2) ───────────
 //
 // `EcranReglages.tsx` (433 lignes) et `Secrets.tsx` (184 lignes) sont partis
 // avec `D1` : les deux boutons qui les ouvraient encore — « Réglages » et
 // l'état de la clé, tous deux dans la barre — menaient à un panneau écrit sur
 // l'ancien châssis sombre, dernier des cinq que `C1` n'avait pas basculé.
+// `D1` les avait relogés dans `PanneauAtelier`, une fenêtre posée par-dessus
+// le carnet.
 //
-// **La décision de la tranche, tranchée ici** : ces trois réglages sont d'un
-// jeu, pas de la machine — le cadre de l'agent qui code, le dossier où il
-// pose ses fichiers, le vocabulaire des mouvements — et ils ne rejoignent
-// donc pas `Installation.tsx`, le seul lieu qui ne parle d'aucun jeu. Aucune
-// planche du dossier de conception ne les dessine ; la lecture la plus simple
-// à vérifier est de les poser ici, dans le fichier qui porte déjà les
-// réglages d'un jeu — en papier, pas en écran de plus : le même panneau
-// posé par-dessus, mot pour mot, recoloré.
-//
-// **`BlocMouvements` ne bouge pas** : il est déjà en papier depuis `C7`
-// (`Mouvements.tsx`), et ce panneau se contente de le monter.
+// **`RP2` a dissous cette fenêtre.** La maquette validée ne connaît qu'une
+// porte vers les réglages, et elle a quatre onglets ; deux d'entre eux
+// reprennent mot pour mot les blocs ci-dessous — *Moteurs & workflows* prend
+// « Les fournisseurs », *Agent MCP* prend « L'agent » et « Les dossiers ».
+// C'est pour ça qu'ils s'exportent : `Reglages.tsx` les monte, et personne
+// d'autre. Le seul chemin vers eux passe désormais par le mot « Réglages ».
 
 /** Le titre d'un bloc de l'atelier — la même forme que celle de
  *  `Mouvements.tsx`, recopiée pour la même raison qu'elle donne : un détail de
- *  mise en page privé à ce panneau n'a pas à devenir une pièce du châssis. */
-function TitreDeLAtelier({ children }: { children: ReactNode }) {
+ *  mise en page privé à ces blocs-là n'a pas à devenir une pièce du châssis.
+ *
+ *  Il s'exporte depuis `RP2` pour la seule raison qui vaille : les blocs
+ *  qu'il coiffe sont montés par `Reglages.tsx`, qui en pose un de plus à côté
+ *  d'eux. Deux titres de même rang écrits deux fois divergeraient. */
+export function TitreDeLAtelier({ children }: { children: ReactNode }) {
   return (
     <h3 className="mt-[34px] mb-[14px] border-b border-trait pb-[8px] text-[10.5px] uppercase tracking-[.14em] text-encre-3">
       {children}
@@ -1041,7 +1040,7 @@ function Interrupteur({
 
 // ── Le tiroir à secrets, et l'état de la clé ────────────────────────────────
 
-function BlocSecrets({
+export function BlocSecrets({
   tiroirs,
   onDeposee,
 }: {
@@ -1185,7 +1184,7 @@ function UnePlace({
 
 // ── L'agent ─────────────────────────────────────────────────────────────────
 
-function BlocAgent({
+export function BlocAgent({
   agent,
   modeles,
   onAgent,
@@ -1351,7 +1350,7 @@ function ChoixDuGratuit({
 
 // ── Les dossiers ────────────────────────────────────────────────────────────
 
-function BlocDossiers({
+export function BlocDossiers({
   agent,
   onAgent,
 }: {
@@ -1391,66 +1390,6 @@ function BlocDossiers({
       </div>
       <Raison texte={refus} />
     </>
-  )
-}
-
-/**
- * Le panneau posé par-dessus le carnet — **le même que celui d'`EcranReglages.tsx`,
- * recoloré en papier**, ouvert par les deux derniers chemins de la barre :
- * le bouton « Réglages » et l'état de la clé.
- */
-export function PanneauAtelier({
-  tiroirs,
-  agent,
-  modeles,
-  onDeposee,
-  onAgent,
-  onFermer,
-}: {
-  tiroirs: Tiroir[]
-  agent: EtatAgent
-  modeles: Modele[]
-  onDeposee: () => void
-  onAgent: (agent: EtatAgent) => void
-  onFermer: () => void
-}) {
-  useEffect(() => {
-    const surTouche = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onFermer()
-    }
-    window.addEventListener("keydown", surTouche)
-    return () => window.removeEventListener("keydown", surTouche)
-  }, [onFermer])
-
-  return (
-    <div
-      data-reglages
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-papier/85 py-[34px]"
-      onClick={onFermer}
-    >
-      <section
-        onClick={(e) => e.stopPropagation()}
-        {...PANNEAU}
-        // **Déclaré comme une fenêtre posée par-dessus.** Sans ces trois
-        // mots, un lecteur d'écran continue d'annoncer la page du dessous
-        // comme si elle était encore atteignable.
-        role="dialog"
-        aria-modal="true"
-        aria-label="Réglages"
-        className="w-[380px] rounded-8 border border-contour bg-carte p-[22px]"
-      >
-        <h2 className="font-serif text-[25px] leading-tight text-encre">Réglages</h2>
-
-        <BlocSecrets tiroirs={tiroirs} onDeposee={() => onDeposee()} />
-        <BlocAgent agent={agent} modeles={modeles} onAgent={onAgent} />
-        <BlocDossiers agent={agent} onAgent={onAgent} />
-        <BlocMouvements />
-
-        <div className="mt-[22px] flex justify-end">
-          <Bouton onClick={onFermer} enfants="Fermer — Échap" />
-        </div>
-      </section>
-    </div>
   )
 }
 
@@ -1720,13 +1659,19 @@ export function ReglesDuJeu({
               : "Le même parcours, rouvert. On clique l'étape qu'on veut reprendre."}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onFerme}
-          className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
-        >
-          Fermer
-        </button>
+        {/* **Une seule sortie par écran** : en réglages, cet écran est le
+            premier onglet de `Reglages.tsx`, dont la barre d'onglets porte
+            déjà le bouton de sortie et annonce Échap. Deux boutons côte à
+            côte qui font la même chose se lisent comme une panne. */}
+        {mode === "creation" && (
+          <button
+            type="button"
+            onClick={onFerme}
+            className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
+          >
+            Fermer
+          </button>
+        )}
       </header>
 
       <nav

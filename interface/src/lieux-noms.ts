@@ -104,11 +104,15 @@ return (ou, _profondeur, dedans) => {
     case "depenses":
       return "Les dépenses"
 
-    // Les règles du jeu (`B14`) — **un nom, pas deux**. Les quatre étapes ne
-    // sont pas des étages : on ne les descend pas, on les choisit, et un fil
-    // qui les annoncerait ferait croire à une profondeur qui n'existe pas.
+    // Les réglages (`B14`, à quatre onglets depuis `RP2`) — **un nom, pas
+    // deux**. Ni les quatre étapes du jeu ni les quatre onglets ne sont des
+    // étages : on ne les descend pas, on les choisit, et un fil qui les
+    // annoncerait ferait croire à une profondeur qui n'existe pas.
+    //
+    // Le mot est celui de la porte, comme partout ailleurs : on ne clique pas
+    // *Réglages* pour arriver sur autre chose.
     case "regles":
-      return "Les règles du jeu"
+      return "Réglages"
 
     // L'installation (`B15`) — **un nom, pas quatre**, exactement pour la
     // raison ci-dessus. Et le nom du jeu la précède quand même dans le fil :
@@ -121,8 +125,6 @@ return (ou, _profondeur, dedans) => {
     // nom du jeu le précède, parce qu'on l'ouvre de partout.
     case "sortie":
       return "La sortie"
-    case "delegation":
-      return "L’agent"
     case "travail":
       return "La fabrication"
 

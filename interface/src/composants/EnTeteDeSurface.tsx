@@ -318,12 +318,10 @@ export function EnTeteDeSurface({
             d'interrogation, et ce sont les mots qui restent (B-5).
 
             ⚠️ **Ils doublent deux lignes du pied du carnet, et c'est
-            provisoire.** *Réglages* ouvre `PanneauAtelier` (`D1`,
-            `ReglesDuJeu.tsx`), qui porte les garde-fous de l'agent, le
-            dossier du jeu, les mouvements et l'état de la clé — ce
-            qu'`Installation.tsx` ne reprend pas, parce que ce sont des
-            réglages d'un jeu, pas de la machine. *Guide* ouvre le même guide
-            que le pied. */}
+            provisoire.** Depuis `RP2`, *Réglages* ouvre exactement le même
+            écran que la porte de la colonne — les quatre onglets de
+            `Reglages.tsx` : il n'y a plus qu'une porte vers les réglages.
+            *Guide* ouvre le même guide que le pied. */}
         {!preferencesDansNavigation && <div className="flex shrink-0 items-center gap-[8px] border-l border-trait pl-[14px]">
           <button
             type="button"

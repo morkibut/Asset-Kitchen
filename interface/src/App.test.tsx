@@ -2403,6 +2403,27 @@ function serveurDouble(options: {
     // objet et masquait le parcours sous un `liste.map` sans rapport.
     if (url.startsWith("/api/projects/") && url.endsWith("/production-jobs"))
       return rendre([])
+    // **Le cadre de délégation d'un jeu** (`RP2`) — ce qui borne la dépense
+    // d'un agent automatique. L'onglet *Agent MCP* le lit dès qu'il s'ouvre.
+    // Un atelier neuf n'en a jamais posé : le serveur rend celui qu'il déduit
+    // des garde-fous de séance, appels et argent à zéro.
+    //
+    // **L'écriture rend le cadre entier**, comme le vrai serveur : l'écran
+    // repart de ce qui revient, il ne rejoue pas ce qu'il vient d'envoyer.
+    if (url.startsWith("/api/projects/") && url.endsWith("/delegation")) {
+      const defaut = {
+        autoriser_local: true,
+        autoriser_payant: false,
+        modeles_image: [] as string[],
+        modeles_video: [] as string[],
+        plafond_appels: 0,
+        plafond_usd: 0,
+        livraison_provisoire: false,
+      }
+      if (init?.method === "PUT")
+        return rendre({ ...defaut, ...(corps as object), origine: "explicite" })
+      return rendre({ ...defaut, origine: "garde-fous-existants" })
+    }
     // **Poser un asset déjà produit sur la toile, sans nouvelle fabrication**
     // (US-540). Le double range la carte comme le vrai serveur la rangerait :
     // en réserve — ni groupe ni place — puisque c'est à l'auteur de la classer.
@@ -4113,22 +4134,23 @@ async function ouvrirLesReglagesDeLAppel() {
   }
 }
 
-/** Le panneau de l'atelier — fournisseurs, agent, mouvements, dossiers.
+/** Les blocs de l'atelier — fournisseurs, agent, dossiers, mouvements.
  *
- *  **Un écran s'est glissé devant lui** (`B15`) : la porte *Réglages* de la
- *  navigation ouvre désormais l'écran d'installation, qui range les
- *  fournisseurs, le disque et les jeux de la machine ; les garde-fous de
- *  l'agent et la bibliothèque de mouvements sont derrière son dernier bouton.
- *  Le panneau, lui, n'a pas bougé — ni ses titres, ni ses réglages, ni son
- *  Échap. Les essais qui le visent passent donc par ici plutôt que de réécrire
- *  deux clics chacun. */
-async function ouvrirLePanneauDeLAtelier() {
+ *  **La fenêtre qui les portait a été dissoute** (`RP2`) : le mot *Réglages*
+ *  ouvre l'écran à quatre onglets de la maquette, et les quatre blocs y sont
+ *  rangés — « Les fournisseurs » sous *Moteurs & workflows*, les trois autres
+ *  sous *Agent MCP*. Les essais qui les visent passent donc par ici plutôt que
+ *  de réécrire deux clics chacun.
+ *
+ *  ⚠️ **Ce sont les seuls deux clics qui y mènent**, et c'est le sujet de la
+ *  tranche : avant elle, la porte *Réglages* ouvrait l'installation de la
+ *  machine, et ni les quatre règles du jeu ni le cadre de délégation n'avaient
+ *  de chemin. */
+async function ouvrirLePanneauDeLAtelier(
+  onglet: "Moteurs & workflows" | "Agent MCP" = "Agent MCP",
+) {
   fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
-  fireEvent.click(
-    await screen.findByRole("button", {
-      name: "Les garde-fous de l'agent et les mouvements",
-    }),
-  )
+  fireEvent.click(await screen.findByRole("button", { name: onglet }))
 }
 
 /**
@@ -5330,22 +5352,24 @@ describe("l'agent, vu de l'atelier", () => {
   // s'annonce nulle part et qu'on ne devine pas. Le Guide et la vitrine
   // ferment sur Échap et l'écrivent sur leur bouton de sortie : c'est une règle
   // du produit, et ce panneau-ci était l'un des deux qui ne la tenaient pas.
+  //
+  // `RP2` a remplacé la fenêtre par un écran à quatre onglets. La règle ne
+  // change pas : Échap referme, et le bouton de sortie le dit.
 
-  test("Échap ferme les Réglages, et le panneau se déclare comme une fenêtre", async () => {
+  test("Échap ferme les Réglages, et la sortie annonce le raccourci", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
     await ouvrirLePanneauDeLAtelier()
-    const panneau = await screen.findByRole("dialog", { name: "Réglages" })
-
-    // Déclaré par-dessus : sans ces mots, un lecteur d'écran continue
-    // d'annoncer la page du dessous comme si elle était atteignable.
-    expect(panneau.getAttribute("aria-modal")).toBe("true")
-    expect(screen.getByRole("button", { name: "Fermer — Échap" })).toBeTruthy()
+    expect(
+      await screen.findByRole("button", { name: "Fermer les réglages — Échap" }),
+    ).toBeTruthy()
 
     fireEvent.keyDown(window, { key: "Escape" })
     await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "Réglages" })).toBeNull(),
+      expect(
+        screen.queryByRole("button", { name: "Fermer les réglages — Échap" }),
+      ).toBeNull(),
     )
   })
 
@@ -5353,13 +5377,17 @@ describe("l'agent, vu de l'atelier", () => {
     const { fetchDouble, appels } = serveurDouble()
     await monter(fetchDouble)
 
-    await ouvrirLePanneauDeLAtelier()
-
-    // Les trois blocs, dans un seul panneau (US-96).
+    // **Un seul écran, deux de ses quatre onglets** (US-96, rangé par `RP2`) :
+    // les clés sont là où l'on branche les moteurs, les garde-fous là où l'on
+    // borne l'agent. Ce que la tranche garantit est qu'aucun des trois blocs
+    // n'a de porte à lui.
+    await ouvrirLePanneauDeLAtelier("Moteurs & workflows")
     expect(
       await screen.findByRole("heading", { name: "Les fournisseurs" }),
     ).toBeTruthy()
-    expect(screen.getByRole("heading", { name: "L'agent" })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Agent MCP" }))
+    expect(await screen.findByRole("heading", { name: "L'agent" })).toBeTruthy()
     expect(screen.getByRole("heading", { name: "Les dossiers" })).toBeTruthy()
 
     // Éteindre un garde-fou n'envoie **que lui** : ce qui n'est pas dit ne
@@ -17970,6 +17998,130 @@ describe("ce qu'un appel consomme", () => {
 // champ unique. Le relevé du 31 août a trouvé un fournisseur qui en demande
 // deux, et un formulaire à un champ l'aurait découvert en F4, au pire moment.
 
+// ── RP2 · Rendre les quatre règles du jeu ───────────────────────────────────
+//
+// **Deux écrans existaient et ne s'ouvraient plus.** Les quatre réglages qui
+// partent dans chaque demande d'image — le nom du jeu, son allure, sa vue, son
+// monde — ne se réglaient qu'à la création. Et le cadre qui borne la dépense
+// d'un agent automatique — plafond d'appels, plafond en argent, droit de payer,
+// modèles autorisés — n'avait aucune porte : **rien ne la bornait depuis
+// l'écran.** Le mot *Réglages* de la colonne, lui, ouvrait la machine.
+//
+// Ces essais tiennent la porte, pas les écrans : chacun d'eux a déjà les siens.
+
+describe("RP2 · une seule porte vers les réglages", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  test("« Réglages » ouvre quatre onglets, et le premier rouvre les quatre règles", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+
+    // Les quatre onglets de la maquette, dans son ordre.
+    for (const nom of [
+      "Univers",
+      "Moteurs & workflows",
+      "Agent MCP",
+      "Consommations",
+    ])
+      expect(await screen.findByRole("button", { name: nom })).toBeTruthy()
+
+    // Et l'onglet ouvert est le premier : les quatre questions du jeu, celles
+    // qui partent avec chaque demande d'image. C'est le même écran qu'à la
+    // création, dans son autre mode — elles ne sont écrites qu'une fois.
+    expect(
+      await screen.findByRole("heading", { name: "Les règles de ce jeu" }),
+    ).toBeTruthy()
+    for (const etape of ["Son nom", "Son allure", "Sa vue", "Son monde"])
+      expect(
+        screen.getAllByRole("button", { name: new RegExp(etape) }).length,
+      ).toBeGreaterThan(0)
+  })
+
+  test("l'onglet Agent MCP rouvre le cadre de délégation, et ce qu'on y pose part", async () => {
+    const { fetchDouble, appels } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Agent MCP" }))
+
+    // Les cinq bornes de l'agent, et elles ne sont nulle part ailleurs.
+    expect(
+      await screen.findByRole("spinbutton", { name: "Nombre total d’appels autorisés" }),
+    ).toBeTruthy()
+    expect(
+      screen.getByRole("spinbutton", { name: "Budget total en dollars" }),
+    ).toBeTruthy()
+    expect(
+      screen.getByRole("checkbox", { name: /Autoriser les appels payants/ }),
+    ).toBeTruthy()
+    expect(
+      screen.getByRole("checkbox", { name: /Autoriser la vidéo locale/ }),
+    ).toBeTruthy()
+    // Les modèles autorisés, par type de résultat.
+    expect(screen.getByRole("combobox", { name: "Image de référence" })).toBeTruthy()
+    expect(screen.getByRole("combobox", { name: "Clip vidéo" })).toBeTruthy()
+
+    // **Ce qui est réglé là part vraiment**, et rien d'autre ne part avec.
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Budget total en dollars" }),
+      { target: { value: "2.5" } },
+    )
+    fireEvent.click(
+      screen.getByRole("button", { name: "Enregistrer le cadre du jeu" }),
+    )
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url.endsWith("/delegation") &&
+            (a.corps as { plafond_usd?: number } | undefined)?.plafond_usd === 2.5,
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("les deux autres onglets mènent aux écrans qui existaient déjà", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+
+    // *Moteurs & workflows* — les clés, la porte de la machine, les méthodes
+    // locales. L'installation garde son écran : on y va, on en revient.
+    fireEvent.click(await screen.findByRole("button", { name: "Moteurs & workflows" }))
+    expect(
+      await screen.findByRole("heading", { name: "Les fournisseurs" }),
+    ).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "Les workflows locaux" })).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir l'installation" }))
+    expect(
+      await screen.findByRole("heading", { name: "L'installation" }),
+    ).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "Fermer" }))
+    expect(
+      await screen.findByRole("heading", { name: "Les fournisseurs" }),
+    ).toBeTruthy()
+
+    // *Consommations* — l'écran des dépenses, tel quel.
+    fireEvent.click(screen.getByRole("button", { name: "Consommations" }))
+    await waitFor(() => expect(document.querySelector("[data-depenses]")).toBeTruthy())
+  })
+})
+
 describe("les clés au pluriel", () => {
   beforeEach(() => {
     FluxDouble.ouverts = []
@@ -18016,7 +18168,7 @@ describe("les clés au pluriel", () => {
   const ouvrirLesReglages = async (secrets: Tiroir[] = ETAT.secrets) => {
     const double = serveurDouble({ secrets })
     await monter(double.fetchDouble, { ...ETAT, secrets })
-    await ouvrirLePanneauDeLAtelier()
+    await ouvrirLePanneauDeLAtelier("Moteurs & workflows")
     await screen.findByRole("heading", { name: "Les fournisseurs" })
     return double
   }

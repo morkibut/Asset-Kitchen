@@ -86,14 +86,14 @@ import { TableauDeBord } from "./composants/TableauDeBord"
 import { BibliothequeDesAssets } from "./composants/BibliothequeDesAssets"
 import { CreerUnAsset } from "./composants/CreerUnAsset"
 import { Fabrications } from "./composants/Fabrications"
-import { DelegationDuJeu } from "./composants/DelegationDuJeu"
 import { FabricationSuivie, TravailConserve } from "./composants/FabricationSuivie"
 import { Ouverture } from "./composants/Ouverture"
 import { Installation } from "./composants/Installation"
 import { Livraisons } from "./composants/Livraisons"
 import { Source3DConservee } from "./composants/Source3DConservee"
 import type { Source3D } from "./api-3d"
-import { PanneauAtelier, ReglesDuJeu } from "./composants/ReglesDuJeu"
+import { ReglesDuJeu } from "./composants/ReglesDuJeu"
+import { Reglages, type OngletDesReglages } from "./composants/Reglages"
 import {
   PILE_INITIALE,
   dans,
@@ -209,7 +209,15 @@ function AtelierApp() {
   // confirmation.
   const [echecDuPaiement, setEchecDuPaiement] = useState<string | null>(null)
   const [liaison, setLiaison] = useState(true)
-  const [reglagesOuverts, setReglagesOuverts] = useState(false)
+  /** Quel onglet des réglages est ouvert (`RP2`).
+   *
+   *  **Un état de l'écran, jamais un lieu** — la règle écrite en tête de
+   *  `lieux.ts` : on ne descend pas dans un onglet, on le choisit, et un fil
+   *  d'Ariane qui les annoncerait ferait croire à une profondeur qui n'existe
+   *  pas. C'est déjà ce que font les quatre étapes des règles du jeu et les
+   *  quatre de l'installation. */
+  const [ongletDesReglages, setOngletDesReglages] =
+    useState<OngletDesReglages>("univers")
   const [relecture, setRelecture] = useState(false)
 
   // ── Les trois onglets (E1) ────────────────────────────────────────────────
@@ -261,14 +269,30 @@ function AtelierApp() {
    *  revient qu'au rafraîchissement suivant. */
   const [creeParLeParcours, setCreeParLeParcours] = useState<string | null>(null)
 
-  /** Les règles du jeu, rouvertes (`B14`) — **une profondeur, pas une racine**.
+  /** Les réglages (`B14`, devenus les quatre onglets de la maquette en `RP2`)
+   *  — **une profondeur, pas une racine**.
    *
-   *  Le carnet visible à côté est ce qui la distingue du parcours de création :
-   *  on règle un jeu qui tourne, on ne le fabrique pas. Les quatre étapes sont
-   *  un état de l'écran, jamais quatre lieux (`interface/src/lieux.ts`). */
+   *  Le carnet visible à côté est ce qui les distingue du parcours de création :
+   *  on règle un jeu qui tourne, on ne le fabrique pas. Les quatre onglets sont
+   *  un état de l'écran, jamais quatre lieux (`interface/src/lieux.ts`).
+   *
+   *  **C'est maintenant la seule porte vers les réglages** : le mot de la
+   *  colonne, le bouton de la bande et l'état de la clé ouvrent tous les trois
+   *  cet écran-ci. */
   const reglesOuvertes = dans(pile, "regles")
   const setReglesOuvertes = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "regles" }) : sortir(p, "regles")))
+  /** Ouvrir les réglages sur l'onglet que le geste désigne. Sans onglet dit,
+   *  celui qu'on regardait la dernière fois.
+   *
+   *  **La sortie se referme devant eux.** Les deux se posent sur n'importe
+   *  quelle racine ; laissées empilées, celle qui perd la chaîne de gardes
+   *  resterait ouverte sans rien montrer, et le fil annoncerait un étage qu'on
+   *  n'a pas descendu. */
+  const ouvrirLesReglages = (onglet?: OngletDesReglages) => {
+    if (onglet) setOngletDesReglages(onglet)
+    setPile((p) => entrer(sortir(p, "sortie"), { genre: "regles" }))
+  }
 
   /** L'installation de la machine (`B15`) — **le seul lieu qui ne parle d'aucun
    *  jeu**. Les clés, ComfyUI, le dossier de travail : ce qu'on branche une fois
@@ -277,13 +301,12 @@ function AtelierApp() {
    *
    *  ⚠️ **Trois réglages n'ont jamais rejoint ce lieu-ci** : les garde-fous
    *  de l'agent, le dossier du jeu et la bibliothèque de mouvements, que
-   *  `B15` ne reprend pas — ils sont d'un jeu, pas de la machine. `C1` a
-   *  basculé trois des cinq portes de l'ancien `EcranReglages.tsx` sur ce
-   *  lieu-ci ; `D1` a fermé les deux dernières, retiré `EcranReglages.tsx` et
-   *  `Secrets.tsx` pour de bon, et relogé les quatre blocs — agent, dossier,
-   *  mouvements, état de la clé — en papier dans `PanneauAtelier`
-   *  (`ReglesDuJeu.tsx`), ouvert par les boutons « Réglages » et l'état de la
-   *  clé de la barre. */
+   *  `B15` ne reprend pas — ils sont d'un jeu, pas de la machine. `D1` les
+   *  avait relogés dans une fenêtre posée par-dessus le carnet ; `RP2` a
+   *  dissous cette fenêtre dans l'onglet *Agent MCP* des réglages, et
+   *  l'installation s'ouvre désormais depuis l'onglet *Moteurs & workflows*.
+   *  Elle reste un lieu à part, parce qu'elle se déroule aussi toute seule au
+   *  premier lancement. */
   const installationOuverte = dans(pile, "installation")
   const setInstallationOuverte = (ouvert: boolean) =>
     setPile((p) =>
@@ -296,7 +319,8 @@ function AtelierApp() {
    *  l'installation. Ce qui la distingue de la dernière : elle appartient au
    *  jeu — son dossier est gardé avec lui, et son lot est fait de ses sujets. */
   const sortieOuverte = dans(pile, "sortie")
-  const delegationOuverte = dans(pile, "delegation")
+  /** Une demande complète de l'agent, ouverte depuis le cadre de délégation —
+   *  l'onglet *Agent MCP* des réglages. */
   const travailOuvert = lieu(pile, "travail")?.travail
   const setSortieOuverte = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "sortie" }) : sortir(p, "sortie")))
@@ -610,7 +634,7 @@ function AtelierApp() {
   const envoiOuvert = dans(pile, "envoi")
   // Une profondeur de réglages ou de livraison occupe la surface centrale.
   // Sa racine reste dans le fil, elle ne monte pas un second écran dessous.
-  const surfaceDisponible = !reglesOuvertes && !installationOuverte && !sortieOuverte && !delegationOuverte && !travailOuvert
+  const surfaceDisponible = !reglesOuvertes && !installationOuverte && !sortieOuverte && !travailOuvert
   const setEnvoiOuvert = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "envoi" }) : sortir(p, "envoi")))
   const [envoi, setEnvoi] = useState<Envoi | null>(null)
@@ -1073,7 +1097,7 @@ function AtelierApp() {
   // champs de `Fiche.tsx`. Ces quatre-là sont **enfin joints à leur écran** :
   // ils étaient adressés à l'image ouverte dans la page d'un sujet, où aucun
   // des quatre ne paraît, alors qu'ils vivent dans le panneau de la galerie.
-  const ecranDuGuide: Explication["ou"] | null = reglagesOuverts
+  const ecranDuGuide: Explication["ou"] | null = reglesOuvertes
     ? "reglages"
     : depensesOuvertes
       ? "depenses"
@@ -1711,7 +1735,14 @@ function AtelierApp() {
           tourVu.current = true
           setTourAOuvrir(false)
         }}
-        onLesAutresReglages={() => setReglagesOuverts(true)}
+        // **Le tour prend la fenêtre entière** : on en sort avant d'ouvrir
+        // l'écran qui porte les garde-fous, sinon il resterait dessous sans
+        // que rien ne le montre.
+        onLesAutresReglages={() => {
+          tourVu.current = true
+          setTourAOuvrir(false)
+          ouvrirLesReglages("agent")
+        }}
       />
     )
   }
@@ -1768,7 +1799,7 @@ function AtelierApp() {
       <NavigationAtelier
         jeu={projetCourant?.nom ?? "Sans projet"}
         descriptionJeu={`${projetCourant?.assets ?? 0} images dans ce jeu`}
-        actif={installationOuverte || reglesOuvertes || reglagesOuverts ? "reglages" : sortieOuverte ? "livraison" : surface === "fabrications" || delegationOuverte ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
+        actif={installationOuverte || reglesOuvertes ? "reglages" : sortieOuverte ? "livraison" : surface === "fabrications" ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
         travauxEnCours={enVol?.images ?? 0}
         replie={navigationRepliee}
         onReplier={setNavigationRepliee}
@@ -1779,8 +1810,16 @@ function AtelierApp() {
           else if (destination === "univers") allerA("univers")
           else if (destination === "galerie") allerA("galerie")
           else if (destination === "fabrications") allerA("fabrications")
-          else if (destination === "livraison") setSortieOuverte(true)
-          else setInstallationOuverte(true)
+          // Et symétriquement : les réglages et la machine se referment devant
+          // la sortie, sinon la porte ne mènerait nulle part.
+          else if (destination === "livraison")
+            setPile((p) =>
+              entrer(sortir(sortir(p, "installation"), "regles"), { genre: "sortie" }),
+            )
+          // **Le mot *Réglages* ouvre les réglages** (`RP2`). Il ouvrait
+          // l'installation de la machine — les clés, ComfyUI, le dossier de
+          // travail —, et les quatre règles du jeu n'avaient plus de porte.
+          else ouvrirLesReglages()
         }}
         onChangerJeu={() => setChoixDuJeu("jeux")}
         onGuide={() => ouvrirGuide()}
@@ -1813,15 +1852,14 @@ function AtelierApp() {
         // d'accord. **Avec quoi on peut produire** (F3), et non plus ce qui
         // manque.
         tiroirs={etat?.secrets ?? null}
-        onReglagesCle={() => setReglagesOuverts(true)}
+        // La clé manque : on arrive là où on la dépose, pas ailleurs.
+        onReglagesCle={() => ouvrirLesReglages("moteurs")}
         bascules={depensesOuvertes ? [] : bascules}
         onBasculer={(cle) => setReplies((r) => ({ ...r, [cle]: !r[cle] }))}
         fente={fente}
-        // **Ce bouton-ci ouvre `PanneauAtelier`** (`D1`, `ReglesDuJeu.tsx`) :
-        // les garde-fous de l'agent, le dossier du jeu et les mouvements —
-        // ce qu'`Installation.tsx` ne reprend pas, parce que ce sont des
-        // réglages d'un jeu, pas de la machine.
-        onReglages={() => setReglagesOuverts(true)}
+        // **Le même écran que la porte de la colonne** (`RP2`) : il n'y a plus
+        // qu'une seule porte vers les réglages.
+        onReglages={() => ouvrirLesReglages()}
         onGuide={() => ouvrirGuide()}
       />
 
@@ -1844,25 +1882,47 @@ function AtelierApp() {
         />
       )}
 
-      {/* ── Les règles du jeu, rouvertes (`B14`) ────────────────────────────
-          **Le même parcours qu'à la création, et les mêmes écritures.** Ce qui
-          change est ce qui l'entoure : ici le carnet reste visible, parce qu'on
-          règle un jeu qui tourne au lieu d'en fabriquer un.
+      {/* ── Les réglages, en quatre onglets (`B14`, rangés par `RP2`) ───────
+          **La seule porte vers les réglages**, et son premier onglet est le
+          parcours de création du jeu dans son autre mode — les quatre
+          questions qui partent dans chaque demande d'image ne sont écrites
+          qu'une fois.
 
           Il prend la même ligne de grille que les dépenses, et la même chaîne
           de gardes : il n'appartient à aucune des quatre racines — les règles
-          sont celles du jeu, et on les rouvre d'où qu'on vienne. */}
-      {reglesOuvertes && !depensesOuvertes && !envoiOuvert && !clipOuvert && (
-        <ReglesDuJeu
-          mode="reglages"
-          nomDuJeu={projetCourant?.nom ?? ""}
-          dossierDuJeu={bibliotheque.courant}
-          onCree={() => undefined}
-          onRenomme={() => void rafraichirLArbre()}
-          onFerme={() => setReglesOuvertes(false)}
-          onErreur={setPanne}
-        />
-      )}
+          sont celles du jeu, et on les rouvre d'où qu'on vienne. Une demande de
+          l'agent ouverte depuis l'onglet *Agent MCP* passe devant, comme
+          l'installation ouverte depuis *Moteurs & workflows*. */}
+      {reglesOuvertes &&
+        !installationOuverte &&
+        !travailOuvert &&
+        !depensesOuvertes &&
+        !envoiOuvert &&
+        !clipOuvert && (
+          <Reglages
+            onglet={ongletDesReglages}
+            onOnglet={setOngletDesReglages}
+            nomDuJeu={projetCourant?.nom ?? ""}
+            dossierDuJeu={bibliotheque.courant}
+            tiroirs={etat?.secrets ?? null}
+            agent={etat?.agent ?? null}
+            modeles={modeles}
+            onDeposee={() => {
+              void api.etat().then(setEtat).catch(() => undefined)
+              void relireCatalogue()
+            }}
+            // **Ce que le serveur vient de rendre, posé tel quel.** Le PUT rend
+            // le cadre entier et sa consommation ; recalculer l'un des deux ici
+            // ferait deux vérités sur le même chiffre — et l'événement `agent`
+            // arrive de toute façon derrière.
+            onAgent={(agent) => setEtat((e) => (e ? { ...e, agent } : e))}
+            onRenomme={() => void rafraichirLArbre()}
+            onInstallation={() => setInstallationOuverte(true)}
+            onTravail={(travail) => setPile((p) => entrer(p, { genre: "travail", travail }))}
+            onFerme={() => setReglesOuvertes(false)}
+            onErreur={setPanne}
+          />
+        )}
 
       {/* ── L'installation de la machine (`B15`) ────────────────────────────
           **Le même écran que le tour de première ouverture, et les mêmes
@@ -1870,11 +1930,10 @@ function AtelierApp() {
           ce qui l'entoure : ici le carnet reste visible, parce qu'on revient
           régler une machine qui tourne.
 
-          Même ligne de grille et même chaîne de gardes que les règles : elle
-          n'appartient à aucune des quatre racines, et on la rouvre d'où qu'on
-          vienne. */}
+          Même ligne de grille que les réglages, et elle passe devant eux :
+          l'onglet *Moteurs & workflows* y mène, et la refermer y ramène. */}
       {installationOuverte &&
-        !reglesOuvertes &&
+        !travailOuvert &&
         !depensesOuvertes &&
         !envoiOuvert &&
         !clipOuvert && (
@@ -1884,7 +1943,12 @@ function AtelierApp() {
             modeles={modeles}
             onTiroirs={() => void api.etat().then(setEtat).catch(() => undefined)}
             onFerme={() => setInstallationOuverte(false)}
-            onLesAutresReglages={() => setReglagesOuverts(true)}
+            // Les garde-fous de l'agent et les mouvements ont leur onglet
+            // depuis `RP2` ; ce bouton y mène, en refermant la machine.
+            onLesAutresReglages={() => {
+              setInstallationOuverte(false)
+              ouvrirLesReglages("agent")
+            }}
           />
         )}
 
@@ -2751,7 +2815,6 @@ function AtelierApp() {
         />
       )}
 
-      {delegationOuverte && !travailOuvert && bibliotheque.courant && <main className="defile min-h-0 flex-1 overflow-y-auto bg-papier p-[30px]"><div className="mb-[14px] flex justify-end"><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setPile((p) => sortir(p, "delegation"))}>Revenir</button></div><DelegationDuJeu projet={bibliotheque.courant} onAtelier={() => setReglagesOuverts(true)} onTravail={(t) => setPile((p) => entrer(p, { genre: "travail", travail: t.identifiant }))} /></main>}
       {travailOuvert && bibliotheque.courant && <TravailConserve projet={bibliotheque.courant} identifiant={travailOuvert} personnages={personnages} onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))} onToile={async (id) => { await api.poserAssetSurToile(bibliotheque.courant!, id); await relireTableau(); allerA("univers") }} onCalqueEquipement={(piece, emploi, cible, variante) => setPile(entrer(entrer(poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))} onFermer={() => setPile((p) => sortir(p, "travail"))} onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))} onBande={(id) => setPile(entrer(poser("codex"), { genre: "bande", bande: id }))} onSon={(identifiant) => setSonsOuverts({ identifiant })} />}
 
       {preparationImageOuverte && !envoiOuvert && <CadreDialogue titre="Préparer une image" format="preparation" onFermer={() => setPreparationImageOuverte(false)} enfants={<><header className="flex shrink-0 items-center justify-between gap-[22px] border-b border-trait px-[30px] py-[22px]"><div><h1 className="font-serif text-[25px]">Préparer une image</h1><p className="mt-[8px] text-[13px] text-encre-3">{personnageCible ? `${personnageCible.nom} · ${posesCible.map(p => p.nom).join(", ")}${cible?.direction ? ` · ${personnageCible.cases.flatMap(c => c.directions ?? []).find(d => d.identifiant === cible.direction)?.nom ?? cible.direction}` : ""}` : "Image libre"}</p></div><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setPreparationImageOuverte(false)}>Fermer</button></header>{barreQuiPaie}</>} />}
@@ -2772,28 +2835,6 @@ function AtelierApp() {
       {source3Douverte && <Source3DConservee source={source3Douverte} onFermer={() => setSource3Douverte(null)} onBande={(id) => { setSource3Douverte(null); ouvrirLAtelierDeBande(id) }} onPersonnage={(id) => { setSource3Douverte(null); memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "sources"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }} />}
       {referenceDePreparation && <CadreDialogue titre="Choisir une référence" onFermer={() => setReferenceDePreparation(false)} enfants={<BibliothequePourImage onFermer={() => setReferenceDePreparation(false)} onChoisir={(asset) => { ajouterUneReference(asset.identifiant); setReferenceDePreparation(false) }} />} />}
       {imageAEquiper && bibliotheque.courant && <CadreDialogue titre="Associer cette image à un équipement" onFermer={() => setImageAEquiper(null)} enfants={<AssocierImageEquipement image={imageAEquiper} projet={bibliotheque.courant} onFermer={() => setImageAEquiper(null)} onAssocie={(piece, emploi) => { setImageAEquiper(null); setPile((p) => entrer(entrer(surface === "codex" ? sortir(p, "retouche") : poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi })) }} />} />}
-
-      {reglagesOuverts && etat && (
-        <PanneauAtelier
-          tiroirs={etat.secrets}
-          agent={etat.agent}
-          // **Le catalogue entier, filtré par l'écran** (F6). Le garde-fou du
-          // modèle d'exploration ne propose que des gratuits, et c'est lui qui
-          // porte cette règle : la filtrer ici en ferait deux endroits à tenir
-          // d'accord.
-          modeles={modeles}
-          onDeposee={async () => {
-            setEtat(await api.etat().catch(() => etat))
-            await relireCatalogue()
-          }}
-          // **Ce que le serveur vient de rendre, posé tel quel.** Le PUT rend
-          // le cadre entier et sa consommation ; recalculer l'un des deux ici
-          // ferait deux vérités sur le même chiffre — et l'événement `agent`
-          // arrive de toute façon derrière.
-          onAgent={(agent) => setEtat((e) => (e ? { ...e, agent } : e))}
-          onFermer={() => setReglagesOuverts(false)}
-        />
-      )}
 
       {/* **L'aperçu couvre tout, y compris les écrans qui couvrent l'atelier**
           — c'est le seul du produit dans ce cas, et c'est ce que son geste

@@ -480,6 +480,14 @@
         "essais/atelier_jetable_au20.py"
       ],
       "port": 8504
+    },
+    {
+      "name": "atelier-jetable-rp2",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_rp2.py"
+      ],
+      "port": 8505
     }
   ]
 }

@@ -34,9 +34,9 @@
  * - `depliage`, `ficheClip` — **la colonne de droite de la galerie.** Ils ne
  *   sont même plus dans `App.tsx` : `C4` les a descendus dans `Galerie.tsx`,
  *   où ils appartiennent.
- * - `reglagesDeFamille`, `reglagesOuverts` — **deux fenêtres posées sur
- *   l'écran où l'on est.** La seconde ouvre `PanneauAtelier` (`D1`,
- *   `ReglesDuJeu.tsx`) — un panneau posé par-dessus, pas un étage du fil.
+ * - `reglagesDeFamille` — **une fenêtre posée sur l'écran où l'on est**, pas
+ *   un étage du fil. (`reglagesOuverts` l'accompagnait ; `RP2` a dissous le
+ *   panneau qu'il ouvrait dans les quatre onglets du lieu `regles`.)
  * - `reglagesOuvertsDansLaBarre` — **un repli**, tenu par `usePli` et gardé
  *   d'une séance à l'autre. Un repli n'est pas un étage.
  * - `matriceDuSujet` — **un volet de la page d'un sujet**, comme
@@ -94,17 +94,24 @@ export type Lieu =
   // vers la même famille n'atterriraient pas au même endroit — c'est ce qui
   // arrivait avant, la pile disant `codex` et un `useState` disant laquelle.
   | { genre: "famille"; famille: string }
-  // Les règles du jeu (`B14`) — **le parcours de création, rouvert**. Elle ne
-  // porte aucune charge : les quatre étapes sont un état de l'écran, pas
-  // quatre lieux (§ *Ce qui n'est pas un lieu*, en tête de ce fichier), et
-  // l'étape ouverte se choisit d'un clic sans qu'on ait descendu un étage.
+  // Les réglages (`B14`, à quatre onglets depuis `RP2`) — **la seule porte
+  // vers eux**, et son premier onglet est le parcours de création rouvert.
+  // Elle ne porte aucune charge : ni les quatre onglets ni les quatre étapes
+  // ne sont des lieux (§ *Ce qui n'est pas un lieu*, en tête de ce fichier) —
+  // on ne les descend pas, on les choisit d'un clic.
   //
   // **Elle se pose sur n'importe quelle racine**, comme `depenses` : les règles
   // sont celles du jeu ouvert, et on les rouvre d'où qu'on vienne. Le parcours
   // de *création*, lui, n'est pas ici — il prend la fenêtre entière, avant même
   // qu'un jeu soit ouvert, comme l'ouverture de `B4`.
   | { genre: "regles" }
-  | { genre: "delegation" }
+  // Une demande complète de l'agent, ouverte depuis son cadre — l'onglet
+  // *Agent MCP* des réglages. **Elle se pose par-dessus eux** : on y descend
+  // pour lire ce qu'un travail a demandé, et on remonte aux réglages.
+  //
+  // ⚠️ Le genre `delegation` qui la précédait est parti avec `RP2` : rien ne
+  // l'écrivait jamais, parce que le cadre de délégation n'avait aucune porte.
+  // Il en a une maintenant, et c'est un onglet — pas un lieu.
   | { genre: "travail"; travail: string }
   // L'installation de la machine (`B15`) — **le seul lieu qui ne parle d'aucun
   // jeu**. Les clés, ComfyUI, le dossier de travail : ce qu'on branche une fois

@@ -158,7 +158,7 @@ refusé.
 - [x] Les deux suites passent, et le nombre d'essais baisse exactement du nombre d'essais
   orphelins retirés.
 
-## RP2 · Rendre les quatre règles du jeu
+## RP2 · Rendre les quatre règles du jeu  ✅ **close le 13 septembre 2026**
 
 **Bloquée par** : rien.
 
@@ -180,18 +180,35 @@ l'image, la vidéo, la 3D et le son. Il n'est monté nulle part. *Agent MCP* est
 
 ### Critères d'acceptation
 
-- [ ] *Réglages* ouvre un écran à onglets, et le premier onglet rouvre les quatre questions du
+- [x] *Réglages* ouvre un écran à onglets, et le premier onglet rouvre les quatre questions du
   jeu.
-- [ ] Ce qui est modifié là repart dans la demande suivante, et l'écran le montre avant de
-  payer.
-- [ ] L'écran de création du jeu et celui des réglages restent le même écran dans deux modes ;
+- [x] Ce qui est modifié là repart dans la demande suivante, et l'écran le montre avant de
+  payer. — vérifié au navigateur, de bout en bout : une ligne écrite dans l'onglet *Univers*
+  se relit mot pour mot sous `CONTEXT` / `World:` dans *Relire avant envoi*, avant le bouton
+  qui paie. Rien n'a été lancé.
+- [x] L'écran de création du jeu et celui des réglages restent le même écran dans deux modes ;
   on ne réécrit pas les quatre questions deux fois.
 - [ ] L'onglet *Agent MCP* rouvre le cadre de délégation : plafond d'appels, plafond en argent,
   droit de payer, droit d'appeler la machine, et modèles autorisés par type de résultat.
-- [ ] Ce qui est réglé là borne réellement l'agent, et un essai le prouve en le laissant
-  dépasser.
-- [ ] Les deux autres onglets mènent aux écrans qui existent déjà — les moteurs et workflows
+  ⚠️ **Décoché pour un mot : par type de résultat.** L'onglet rouvre bien le cadre, et les
+  quatre premières bornes s'y règlent et s'y enregistrent ; mais l'écran ne choisit les modèles
+  que pour l'image et pour le clip vidéo. Le cadre garde `modeles_3d` et `modeles_audio`, et
+  **aucun écran ne les a jamais montrés** : c'est un manque à construire, pas une capacité
+  perdue ici — et le construire aurait été réécrire un écran que la tranche devait seulement
+  ranger.
+- [x] Ce qui est réglé là borne réellement l'agent, et un essai le prouve en le laissant
+  dépasser. — `tests/test_au3.py`, qui pose un plafond puis voit l'atelier refuser sur
+  *budget* ; l'écran, lui, écrit ce cadre par son seul chemin d'écriture, et un essai d'écran
+  le prouve depuis la porte *Réglages*.
+- [x] Les deux autres onglets mènent aux écrans qui existent déjà — les moteurs et workflows
   locaux, les dépenses — sans les réécrire.
+
+**Ce que la tranche a rangé, sans rien réécrire.** `PanneauAtelier` — la fenêtre posée sur le
+carnet — est dissoute : « Les fournisseurs » vit sous *Moteurs & workflows*, « L'agent », « Les
+dossiers » et « Les mouvements » sous *Agent MCP*. Le lieu `delegation`, que rien n'écrivait
+jamais, part avec elle : le cadre de délégation est un onglet, pas un étage. Et les mouvements
+restent où ils étaient faute de place dans la maquette ; `RP13` les mènera à l'onglet qui dit ce
+qu'il faut produire.
 
 ## RP3 · Fermer le vocabulaire de l'ossature
 

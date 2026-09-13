@@ -48,11 +48,16 @@
  * ce que le catalogue lui sert.
  *
  * **Ce que cet écran ne reprend pas** : les garde-fous de l'agent et la
- * bibliothèque de mouvements, qui vivent dans `PanneauAtelier` (`D1`,
- * `ReglesDuJeu.tsx`) — ce sont des réglages d'un jeu, pas de la machine. Un
- * lien nommé y mène depuis le pied — le retirer aurait rendu l'agent
- * injoignable, ce qui est exactement la branche morte que `lieux.ts` raconte
- * dans son en-tête.
+ * bibliothèque de mouvements, qui vivent depuis `RP2` dans l'onglet *Agent
+ * MCP* de `Reglages.tsx` — ce sont des réglages d'un jeu, pas de la machine.
+ * Le lien nommé du pied y mène ; le retirer rendrait l'agent injoignable,
+ * ce qui est exactement la branche morte que `lieux.ts` raconte dans son
+ * en-tête.
+ *
+ * **Et cet écran garde le sien de lieu**, alors que `RP2` a rangé tous les
+ * autres réglages sous quatre onglets : c'est le seul qui ne parle d'aucun
+ * jeu, et il se déroule aussi tout seul au premier lancement. L'onglet
+ * *Moteurs & workflows* y mène, et l'on en revient là.
  */
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
