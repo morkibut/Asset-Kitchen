@@ -112,7 +112,12 @@ def test_lancement_reel_en_sous_processus_a_blanc():
             [sys.executable, str(DEPOT / "essais" / "essai_au13_generation_reelle.py"),
              "--a-blanc", "--tirages", "1"],
             cwd=DEPOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
-            timeout=120,
+            # Deux minutes suffisent quand cet essai tourne seul, jamais quand
+            # toute la suite tourne avec lui : un interpréteur neuf qui remonte
+            # FastAPI et l'atelier prend son temps sur une machine chargée. Le
+            # plafond est large parce que ce qu'on mesure ici est le script qui
+            # va au bout et ne dépense rien, pas sa vitesse de démarrage.
+            timeout=600,
         )
         assert lance.returncode == 0, lance.stdout + lance.stderr
         assert "Dépensé (doit être nul) : $0.0000" in lance.stdout
