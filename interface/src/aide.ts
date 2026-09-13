@@ -2389,6 +2389,17 @@ export const AIDE: Record<string, Explication> = {
       "Avec les colonnes, décide du nombre de découpes proposées. Une case vide donne quand même un rectangle : la grille fixe ne saute rien, et c'est ce qui la rend prévisible. Retire-le à la main si tu n'en veux pas.",
     origine: "toi · défaut 2",
   },
+
+  "decoupe.animation": {
+    nom: "en faire une animation",
+    ou: "equipement",
+    quoi: "Les mêmes rectangles, mais les cases deviennent les images d'une animation au lieu d'images séparées.",
+    change:
+      "Elles sont jouées dans l'ordre où elles sont numérotées, à 8 images par seconde, et l'atelier de l'animation s'ouvre juste après pour la régler. Rien n'est dépensé : l'image a été payée une fois, à son entrée.",
+    origine: "toi",
+    long:
+      "Une feuille à plusieurs lignes est le plus souvent un jeu de directions : une ligne par direction. Quand la grille en a autant que le jeu, « une animation par ligne » les range chacune dans la sienne, de haut en bas. L'animation n'est rangée sur aucun mouvement en sortant d'ici — on garde d'abord, on range ensuite, depuis son atelier.",
+  },
 }
 
 /**

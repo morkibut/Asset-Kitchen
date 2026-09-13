@@ -52,3 +52,30 @@ it("envoie tels quels le mouvement et la direction choisis", async () => {
   expect(televerser).toHaveBeenCalledOnce()
   expect(onChange).toHaveBeenCalledOnce()
 })
+
+it("arrive pointé sur la case d'où on l'a ouvert", () => {
+  render(<ImporterPourUnSujet personnage={personnage} plan={plan} poseInitiale="marche" directionInitiale="sud" onFermer={vi.fn()} onChange={vi.fn()} onOuvrir={vi.fn()} />)
+  expect(screen.getByLabelText("Ranger les images dans")).toHaveProperty("value", "marche")
+  expect(screen.getByLabelText("Direction")).toHaveProperty("value", "sud")
+})
+
+it("reprend une image de la bibliothèque sans la téléverser une seconde fois", async () => {
+  const televerser = vi.spyOn(api, "televerser")
+  const designer = vi.spyOn(api, "designer").mockResolvedValue(image)
+  vi.spyOn(api, "arbre").mockResolvedValue({ collections: [] } as never)
+  vi.spyOn(api, "assets").mockResolvedValue({ assets: [{ ...image, label: "Vieux croquis" }], total: 1 } as never)
+  const onChange = vi.fn()
+  render(<ImporterPourUnSujet personnage={personnage} plan={plan} poseInitiale="marche" directionInitiale="sud" onFermer={vi.fn()} onChange={onChange} onOuvrir={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Reprendre une image de la bibliothèque" }))
+  fireEvent.click(await screen.findByRole("button", { name: "Choisir Vieux croquis" }))
+  await waitFor(() => expect(designer).toHaveBeenCalledWith("asset-1", "pelerin", "marche", "sud"))
+  expect(televerser).not.toHaveBeenCalled()
+  expect(onChange).toHaveBeenCalledOnce()
+  expect(screen.getByText("Image de la bibliothèque, rangée ici.")).toBeTruthy()
+})
+
+it("ne propose pas la bibliothèque tant qu'aucune case n'est visée", () => {
+  monter()
+  fireEvent.change(screen.getByLabelText("Ranger les images dans"), { target: { value: "" } })
+  expect(screen.getByRole("button", { name: "Reprendre une image de la bibliothèque" })).toHaveProperty("disabled", true)
+})

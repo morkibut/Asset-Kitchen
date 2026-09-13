@@ -493,6 +493,22 @@ button:disabled {
   flex-shrink: 0;
 }
 
+/* Un volet qui reste en vue pendant qu'on descend la page d'un sujet. Depuis
+   que cette page ne fait qu'un seul bloc qui défile, le détail de ce qu'on
+   vient de choisir partait vers le haut avec le reste, et il fallait remonter
+   pour le relire.
+
+   Les 60 px sont le bandeau du fil d'Ariane (34) et la barre d'état du bas
+   (26) : ce qui reste de la fenêtre est exactement la hauteur où la page
+   défile. Le volet ne peut donc jamais dépasser par le bas — et s'il a plus à
+   dire que cette hauteur, c'est lui qui défile, pour lui seul. */
+.volet-colle {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: calc(100vh - 60px);
+}
+
 /* Le menu d'une carte du tableau — `docs/design-motifs.md` § Le menu d'une carte.
    Il paraît **sans clic**, donc sans geste qui dise qu'on l'a demandé : les
    80 ms de fondu sont ce qui le fait lire comme une chose venue se poser

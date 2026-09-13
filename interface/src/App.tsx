@@ -1023,7 +1023,10 @@ function AtelierApp() {
   const [preparationImageOuverte, setPreparationImageOuverte] = useState(false)
   const [fabricationDuSujet, setFabricationDuSujet] = useState(false)
   const [animationDuSujet, setAnimationDuSujet] = useState<{ personnage: string; pose: string; direction: string } | null>(null)
-  const [importDuSujet, setImportDuSujet] = useState(false)
+  // **L'import vise une case, ou n'en vise aucune.** Ouvert par le bouton du
+  // haut il ne sait rien ; ouvert depuis une rangée vide d'*Images fixes* ou
+  // depuis « Fabriquer… », il arrive déjà pointé sur la pose qu'on regardait.
+  const [importDuSujet, setImportDuSujet] = useState<{ pose?: string; direction?: string } | null>(null)
   const [tuilesOuvertes, setTuilesOuvertes] = useState(false)
   const [sonsOuverts, setSonsOuverts] = useState<{ identifiant?: string } | null>(null)
   const [referenceDePreparation, setReferenceDePreparation] = useState(false)
@@ -1277,6 +1280,7 @@ function AtelierApp() {
     relireEtat,
     relireLeVestiaire,
     relireLesCalquesAnimes,
+    relireClipsDuJeu,
     relireProduction,
     relireTableau,
   } = useRelectures({
@@ -2362,7 +2366,7 @@ function AtelierApp() {
            matrice. */
         <PageDuSujet
           onFabriquer={() => setFabricationDuSujet(true)}
-          onImporter={() => setImportDuSujet(true)}
+          onImporter={(cible) => setImportDuSujet(cible ?? {})}
           onDecouper={(id) => ouvrirLaRetouche(id, "decoupage")}
           onExtraire={(id) => ouvrirLaRetouche(id, "superposition")}
           onLivrer={() => setSortieOuverte(true)}
@@ -2373,6 +2377,7 @@ function AtelierApp() {
           onglet={ongletDuSujet}
           onOnglet={setOngletDuSujet}
           clips={clipsDuJeu}
+          onClipsChange={() => void relireClipsDuJeu()}
           onObjectifChange={() => void relireProduction()}
           matrice={matriceDuSujet}
           onMatriceOuverte={setMatriceDuSujet}
@@ -2570,6 +2575,16 @@ function AtelierApp() {
                 onDecoupe: (decoupes) => {
                   fermerLaFabrique()
                   if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
+                },
+                // **La seconde sortie mène là où l'auteur voulait aller**
+                // (`AU19`) : l'atelier de l'animation qu'on vient de monter,
+                // où elle tourne, se règle et se range sur un mouvement. Ici
+                // ouvrir la première n'est pas décider à sa place — quatre
+                // directions montées d'un geste sont une seule animation vue
+                // de quatre côtés, et c'est la même qu'il vient de dessiner.
+                onAnimer: (bandes) => {
+                  fermerLaFabrique()
+                  if (bandes.length > 0) ouvrirLAtelierDeBande(bandes[0].identifiant)
                 },
               }}
               onFermer={fermerLaFabrique}
@@ -2873,17 +2888,18 @@ function AtelierApp() {
           demande : on le tient une seconde au-dessus de ce qu'on faisait, on le
           referme, et on n'a rien quitté. Il ne porte pas de fente de refus,
           pour la même raison que le Guide : il ne demande rien au serveur. */}
-      {fabricationDuSujet && choseOuverte && <ChoisirFabricationDuSujet personnage={choseOuverte} plan={plan} onFermer={() => setFabricationDuSujet(false)} onImage={(pose, direction) => { setFabricationDuSujet(false); armer(choseOuverte, [pose], null, direction) }} onVideo={(pose, direction) => { setFabricationDuSujet(false); setAnimationDuSujet({ personnage: choseOuverte.identifiant, pose: pose.identifiant, direction: direction ?? "" }) }} on3D={() => { setFabricationDuSujet(false); setOngletDuSujet("sources") }} />}
+      {fabricationDuSujet && choseOuverte && <ChoisirFabricationDuSujet personnage={choseOuverte} plan={plan} onFermer={() => setFabricationDuSujet(false)} onImage={(pose, direction) => { setFabricationDuSujet(false); armer(choseOuverte, [pose], null, direction) }} onVideo={(pose, direction) => { setFabricationDuSujet(false); setAnimationDuSujet({ personnage: choseOuverte.identifiant, pose: pose.identifiant, direction: direction ?? "" }) }} on3D={() => { setFabricationDuSujet(false); setOngletDuSujet("sources") }} onImporter={(pose, direction) => { setFabricationDuSujet(false); setImportDuSujet({ pose: pose?.identifiant, direction }) }} />}
       {animationDuSujet && bibliotheque.courant && <FabricationSuivie projet={bibliotheque.courant} personnages={personnages} cibleInitiale={animationDuSujet}
         onFermer={() => { setAnimationDuSujet(null); void relireProduction() }}
         onClip={(id) => { setAnimationDuSujet(null); setPile(entrer(poser("galerie"), { genre: "montage", clip: id })) }}
-        onBande={(id) => { setAnimationDuSujet(null); ouvrirLAtelierDeBande(id) }} />}
-      {importDuSujet && choseOuverte && <ImporterPourUnSujet personnage={choseOuverte} plan={plan} onFermer={() => setImportDuSujet(false)} onChange={() => {
+        onBande={(id) => { setAnimationDuSujet(null); ouvrirLAtelierDeBande(id) }}
+        onLivraisons={() => { setAnimationDuSujet(null); setSortieOuverte(true) }} />}
+      {importDuSujet && choseOuverte && <ImporterPourUnSujet personnage={choseOuverte} plan={plan} poseInitiale={importDuSujet.pose} directionInitiale={importDuSujet.direction} onFermer={() => setImportDuSujet(null)} onChange={() => {
         void relireProduction()
         void relireEtat()
         void api.arbre().then(setBibliotheque).catch(e => echouer(e, "L’image est importée ; les comptes du jeu n’ont pas pu être actualisés."))
         setGrilleARelire(n => n + 1)
-      }} onOuvrir={(id) => { setImportDuSujet(false); ouvrirLaRetouche(id) }} />}
+      }} onOuvrir={(id) => { setImportDuSujet(null); ouvrirLaRetouche(id) }} />}
       {tuilesOuvertes && bibliotheque.courant && <CadreDialogue titre="Les tuiles du jeu" onFermer={() => setTuilesOuvertes(false)} enfants={<><div className="flex justify-end border-b border-trait px-[22px] py-[8px]"><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setTuilesOuvertes(false)}>Revenir aux assets</button></div><Tuiles projet={bibliotheque.courant} onAsset={a => { setTuilesOuvertes(false); setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant })) }} onLivraisons={() => { setTuilesOuvertes(false); setSortieOuverte(true) }} /></>} />}
       {sonsOuverts && bibliotheque.courant && <CadreDialogue titre="Les sons du jeu" onFermer={() => setSonsOuverts(null)} enfants={<AtelierSon projet={bibliotheque.courant} identifiantInitial={sonsOuverts.identifiant} onFermer={() => setSonsOuverts(null)} onLivraisons={() => { setSonsOuverts(null); setSortieOuverte(true) }} />} />}
       {apercu && <Apercu sujet={apercu} onFermer={fermerApercu} />}

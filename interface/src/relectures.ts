@@ -274,6 +274,7 @@ export function useRelectures({
 
   return {
     fondrePersonnage,
+    relireClipsDuJeu,
     projetDeLUnivers,
     relireEtat,
     relireLeVestiaire,

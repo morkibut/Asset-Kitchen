@@ -184,7 +184,10 @@ function monter(cases: Case[] = [CASE_SUD], objectif?: ObjectifProduction) {
 const rangee = (cle: string) =>
   document.querySelector(`[data-rangee="${cle}"]`) as HTMLElement
 
-test("la galerie retrouve ses filtres et son défilement au retour de retouche, sans volet imposé", () => {
+// **Le défilement ne se retient plus ici** : depuis que la page du sujet ne
+// fait qu'un seul bloc qui défile, c'est elle qui garde la position, et
+// `PageDuSujet.test.tsx` l'essaie. Il reste ici les filtres et le volet.
+test("la galerie retrouve ses filtres au retour de retouche, sans volet imposé", () => {
   const cases = [CASE_SUD, sienne({ pose: "marche", directions: [{ ...DIRECTION, identifiant: "nord", nom: "nord", bandes: [bande({ identifiant: "marche-nord", cree_le: 400, pose: "marche", direction: "nord" })] }] })]
   function Parcours() {
     const [retouche, setRetouche] = useState(false)
@@ -195,17 +198,12 @@ test("la galerie retrouve ses filtres et son défilement au retour de retouche, 
   fireEvent.change(screen.getByLabelText("Direction de la galerie"), { target: { value: "nord" } })
   fireEvent.change(screen.getByLabelText("Jugement de la galerie"), { target: { value: "gardee" } })
   expect(document.querySelectorAll("[data-carte-animation]")).toHaveLength(1)
-  const grille = screen.getByLabelText("Mouvement de la galerie").closest("section")!.parentElement!
-  const defile = grille.closest(".overflow-y-auto") as HTMLElement
-  defile.scrollTop = 456
-  fireEvent.scroll(defile)
   fireEvent.click(screen.getByRole("button", { name: "Retoucher essai marche-nord" }))
   fireEvent.click(screen.getByRole("button", { name: "Retour au sujet" }))
   expect((screen.getByLabelText("Mouvement de la galerie") as HTMLSelectElement).value).toBe("marche")
   expect((screen.getByLabelText("Direction de la galerie") as HTMLSelectElement).value).toBe("nord")
   expect((screen.getByLabelText("Jugement de la galerie") as HTMLSelectElement).value).toBe("gardee")
   expect(document.querySelectorAll("[data-carte-animation]")).toHaveLength(1)
-  expect((screen.getByLabelText("Mouvement de la galerie").closest(".overflow-y-auto") as HTMLElement).scrollTop).toBe(456)
   expect(document.querySelector('[data-volet-de-la-bande]')).toBeNull()
 })
 

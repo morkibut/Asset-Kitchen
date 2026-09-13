@@ -33,9 +33,11 @@ import {
   api,
   Refus,
   type Asset,
+  type Bande,
   type Boite,
   type Carte,
   type Decoupable,
+  type Direction,
   type LectureDePalette,
   type ModeDecoupe,
 } from "../api"
@@ -74,6 +76,11 @@ export type SujetDecoupe =
       /** Ce que la découpe a produit — fermer sur la première découpe, ouverte
        *  dans sa fiche. */
       onDecoupe: (decoupes: Asset[]) => void
+      /** **La seconde sortie de l'écran** (`AU19`) : les mêmes rectangles, mais
+       *  les cases deviennent les images d'une animation au lieu de douze
+       *  images séparées. Absente, le bouton ne paraît pas — une carte ne
+       *  s'anime pas. */
+      onAnimer?: (bandes: Bande[]) => void
     }
   | {
       famille: "carte"
@@ -198,6 +205,59 @@ export function EcranDecoupe({
       }
     } catch (erreur) {
       setRefus(erreur instanceof Refus ? erreur.message : "découpe refusée")
+    } finally {
+      setEnCours(false)
+    }
+  }
+
+  // ── En faire une animation ────────────────────────────────────────────────
+  //
+  // **La seconde sortie, et elle part des mêmes rectangles** (`AU19`). Ce qui
+  // change est ce qu'ils deviennent : les images d'une animation, dans l'ordre
+  // où on les voit, au lieu de douze images séparées dans la galerie.
+  //
+  // **Elle ne demande ni personnage ni mouvement**, et c'est la règle du
+  // produit : *on garde d'abord, on range ensuite*. L'animation se range sur sa
+  // case depuis son atelier, qui s'ouvre juste après — poser la question ici
+  // alourdirait le geste au moment où l'on découpe pour voir.
+  // **Les directions sont demandées ici, et à personne d'autre.** Elles ne
+  // vivent ni dans l'univers ni dans le plan de poses, et les faire descendre
+  // depuis le châssis aurait traversé trois écrans pour une case à cocher.
+  const [directionsDuJeu, setDirectionsDuJeu] = useState<Direction[]>([])
+  const animable = sujet.famille === "planche" && Boolean(sujet.onAnimer)
+  useEffect(() => {
+    if (!animable) return
+    let vivant = true
+    void api
+      .directions()
+      .then((lues) => vivant && setDirectionsDuJeu(lues.directions))
+      .catch(() => undefined)
+    return () => {
+      vivant = false
+    }
+  }, [animable])
+  /** Proposée seulement quand la grille a exactement autant de lignes que le
+   *  jeu a de directions : c'est la feuille à quatre directions, et hors de ce
+   *  cas le partage serait une supposition. */
+  const parLignePossible =
+    mode === "grille" && lignes > 1 && directionsDuJeu.length === lignes
+  const [parLigne, setParLigne] = useState(false)
+  useEffect(() => {
+    if (!parLignePossible) setParLigne(false)
+  }, [parLignePossible])
+
+  const animer = async () => {
+    if (sujet.famille !== "planche" || !sujet.onAnimer) return
+    setEnCours(true)
+    try {
+      const fait = await api.animerUneFeuille(vu.identifiant, boites, {
+        nom: vu.alt,
+        directions: parLigne ? directionsDuJeu.map((d) => d.identifiant) : null,
+      })
+      brouillon.effacer()
+      sujet.onAnimer(fait.bandes)
+    } catch (erreur) {
+      setRefus(erreur instanceof Refus ? erreur.message : "animation refusée")
     } finally {
       setEnCours(false)
     }
@@ -416,6 +476,46 @@ export function EcranDecoupe({
               </button>
             </div>
             {boites.length === 0 && <Pourquoi texte="aucun rectangle — il n'y a rien à découper" />}
+            {/* **La seconde sortie** (`AU19`) : les mêmes rectangles, joués au
+                lieu d'être rangés. Sous le bouton principal et non à côté — on
+                découpe le plus souvent en images, et l'animation est le geste
+                du jour où la feuille en est une. */}
+            {sujet.famille === "planche" && sujet.onAnimer && (
+              <div className="mt-[8px] flex flex-col gap-[4px] border-t border-trait pt-[8px]">
+                {parLignePossible && (
+                  <button
+                    type="button"
+                    aria-pressed={parLigne}
+                    onClick={() => setParLigne(!parLigne)}
+                    className="flex items-start gap-[8px] text-left text-[11px] text-encre-2 hover:text-encre"
+                  >
+                    <Case cochee={parLigne} />
+                    <span>
+                      une animation par ligne
+                      <span className="mesure block text-[10.5px] text-encre-4">
+                        {directionsDuJeu.map((d) => d.nom).join(", ")} — dans cet ordre,
+                        de haut en bas
+                      </span>
+                    </span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={boites.length === 0 || enCours}
+                  onClick={() => void animer()}
+                  className="h-[34px] rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-carte disabled:text-eteint"
+                >
+                  {enCours
+                    ? "…"
+                    : parLigne
+                      ? `En faire ${lignes} animations`
+                      : `En faire une animation de ${boites.length} images`}
+                </button>
+                {boites.length > 0 && (
+                  <Pourquoi texte="les cases deviennent les images de l'animation, dans l'ordre où elles sont numérotées — son atelier s'ouvre ensuite pour la régler et la ranger sur un mouvement" />
+                )}
+              </div>
+            )}
             {/* Ce que les morceaux deviennent, dit avant de cliquer. */}
             {sujet.famille === "carte" && boites.length > 0 && !remplacer && (
               <Pourquoi texte="les morceaux arrivent dans la réserve, non promus — l'originale reste où elle est" />

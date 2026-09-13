@@ -5586,6 +5586,32 @@ describe("l'agent, vu de l'atelier", () => {
     expect(reserve.querySelectorAll("article")).toHaveLength(2)
   })
 
+  test("un clip posé sur la toile s'y rejoue, avec sa première image en affiche", async () => {
+    // **AU18.** La carte ne garde aucune copie de la vidéo : elle porte la
+    // vignette du clip, et son lecteur va chercher le fichier là où il vit —
+    // c'est ce que dit `source`, et c'est la seule chose qui la distingue
+    // d'une carte image à l'écran.
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({
+      cartes: [
+        carteImage("clip-pose", {
+          genre: "video",
+          source: "clip:video-1",
+          position: [600, 400],
+          type_media: "image/png",
+        }),
+      ],
+    })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    const lecteur = await screen.findByLabelText("clip:video-1")
+    expect(lecteur.tagName).toBe("VIDEO")
+    expect(lecteur).toHaveAttribute("src", "/api/clips/video-1/video")
+    // L'affiche est la vignette de la carte, servie par la route des cartes.
+    expect(lecteur.getAttribute("poster")).toContain("/api/board/clip-pose/image")
+  })
+
   test("côté Inspiration, aucun réglage n'est posé au-dessus du tableau", async () => {
     // **La règle a changé de forme sans changer de fond, en E7.** Elle disait
     // « les réglages restent visibles pendant qu'on compose », et la colonne de

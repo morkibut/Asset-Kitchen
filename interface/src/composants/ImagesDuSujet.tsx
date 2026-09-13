@@ -45,7 +45,7 @@
  */
 
 import { useCallback, useEffect, useMemo } from "react"
-import { useEtatDuParcours, useScrollDuParcours } from "./MemoireDuParcours"
+import { useEtatDuParcours } from "./MemoireDuParcours"
 import {
   api,
   type Asset,
@@ -296,6 +296,9 @@ const heure = (quand: number) =>
     minute: "2-digit",
   })
 
+const CASE_VIDE =
+  "flex h-[54px] w-[54px] shrink-0 flex-col items-center justify-center gap-[4px] rounded-7 border border-dashed border-pointille text-encre-4 transition-colors duration-120 hover:border-contour hover:text-encre-2"
+
 function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string }) {
   return (
     <button
@@ -303,12 +306,34 @@ function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string
       onClick={onArmer}
       aria-label={`Générer ${quoi}`}
       data-case-de-generation
-      className="flex h-[54px] w-[54px] shrink-0 flex-col items-center justify-center gap-[4px] rounded-7 border border-dashed border-pointille text-encre-4 transition-colors duration-120 hover:border-contour hover:text-encre-2"
+      className={CASE_VIDE}
     >
       <span aria-hidden className="text-[15px] leading-none">
         +
       </span>
       <span className="text-[10.5px] leading-none">générer</span>
+    </button>
+  )
+}
+
+/** **Le pendant gratuit de la case de génération.** Une rangée n'offrait qu'un
+ *  geste, et ce geste-là coûtait : un sujet dont on a déjà l'image sur le
+ *  disque n'avait d'autre chemin que de la refabriquer. Elle vise la même
+ *  case que sa voisine — même pose, même angle. */
+function CaseDImport({ onImporter, quoi }: { onImporter: () => void; quoi: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onImporter}
+      aria-label={`Importer une image pour ${quoi}`}
+      title="Une image que tu as déjà — sur le disque, ou dans la bibliothèque du jeu."
+      data-case-d-import
+      className={CASE_VIDE}
+    >
+      <span aria-hidden className="text-[15px] leading-none">
+        ↥
+      </span>
+      <span className="text-[10.5px] leading-none">importer</span>
     </button>
   )
 }
@@ -323,6 +348,7 @@ function LigneDeRangee({
   onGarder,
   onEcarter,
   onGenerer,
+  onImporter,
 }: {
   rangee: Rangee
   choisie: string | null
@@ -331,6 +357,7 @@ function LigneDeRangee({
   onGarder: (image: Asset) => void
   onEcarter: (image: Asset) => void
   onGenerer: (rangee: Rangee) => void
+  onImporter?: (rangee: Rangee) => void
 }) {
   const vignette = (image: Asset, etat: "retenue" | "gardee") => (
     <span key={image.identifiant} className="flex w-[54px] shrink-0 flex-col gap-[4px]">
@@ -359,7 +386,7 @@ function LigneDeRangee({
   return (
     <div
       data-rangee={rangee.cle}
-      className="grid grid-cols-[54px_minmax(0,1fr)_54px] items-start gap-[8px] border-t border-trait-faible py-[8px]"
+      className="grid grid-cols-[54px_minmax(0,1fr)_auto] items-start gap-[8px] border-t border-trait-faible py-[8px]"
     >
       <span className="flex flex-col gap-[4px] pt-[14px]">
         <span
@@ -405,10 +432,18 @@ function LigneDeRangee({
           quand la rangée déborde. Elle vise l'**angle**, même quand la rangée
           s'intitule « à confirmer » : c'est bien cette direction-là qu'on
           remplit. */}
-      <CaseDeGeneration
-        onArmer={() => onGenerer(rangee)}
-        quoi={rangee.angle ?? "cette pose"}
-      />
+      <span className="flex shrink-0 gap-[8px]">
+        {onImporter && (
+          <CaseDImport
+            onImporter={() => onImporter(rangee)}
+            quoi={rangee.angle ?? "cette pose"}
+          />
+        )}
+        <CaseDeGeneration
+          onArmer={() => onGenerer(rangee)}
+          quoi={rangee.angle ?? "cette pose"}
+        />
+      </span>
     </div>
   )
 }
@@ -428,6 +463,7 @@ export function ImagesDuSujet({
   onArmer,
   onOuvrirCase,
   onRegardee,
+  onImporter,
   onEcarter,
   onReinjecter,
   onReglages,
@@ -456,6 +492,11 @@ export function ImagesDuSujet({
    *  des onglets, et il n'a aucun autre moyen de savoir laquelle des douze est
    *  sous les yeux. Optionnelle : cet onglet se rend seul dans ses essais. */
   onRegardee?: (identifiant: string | null) => void
+  /** **La rangée a un second geste, et il est gratuit** : poser dans cette
+   *  case-là une image qu'on a déjà. Sans ce rappel, la case d'import ne
+   *  paraît pas — cet onglet se rend seul dans ses essais, et un bouton qui
+   *  n'ouvre rien vaut moins que pas de bouton. */
+  onImporter?: (cible: { pose: string; direction?: string }) => void
   /** **Écarter passe par `App`**, comme dans la matrice d'avant : c'est lui qui
    *  rend le bandeau « la rendre », et un second chemin de mise à l'écart aurait
    *  été un second endroit d'où l'on jette sans pouvoir défaire. */
@@ -480,7 +521,6 @@ export function ImagesDuSujet({
   const [poseOuverte, setPoseOuverte] = useEtatDuParcours<string | null>(`${cle}:pose`, personnage.cases[0]?.pose ?? null)
   const [filtre, setFiltre] = useEtatDuParcours<Filtre>(`${cle}:filtre`, "toutes")
   const [choisie, setChoisie] = useEtatDuParcours<string | null>(`${cle}:choisie`, null)
-  const defilement = useScrollDuParcours(`${cle}:scroll`)
 
   const parPose = useMemo(
     () =>
@@ -603,7 +643,7 @@ export function ImagesDuSujet({
     personnage.cases.find((c) => c.pose === pose)?.directions ?? []
 
   return (
-    <div data-onglet-images className="flex min-h-0 flex-1 overflow-hidden" onDoubleClick={(e) => {
+    <div data-onglet-images className="flex items-start" onDoubleClick={(e) => {
       const cible = (e.target as HTMLElement).closest<HTMLElement>("[data-vignette-de-rangee]")?.dataset.vignetteDeRangee
       if (cible) { setChoisie(null); onOuvrirCase(cible) }
     }}>
@@ -613,7 +653,7 @@ export function ImagesDuSujet({
           la fenêtre** dès qu'elle se resserrait, et le détail de l'image se
           coupait à droite. Vu au navigateur, à 1000 px de large — jamais par un
           essai d'écran, qui n'a pas de largeur. `docs/PIEGES.md`. */}
-      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] overflow-hidden">
+      <section className="flex min-w-0 flex-1 flex-col gap-[14px]">
         <div className="flex items-center justify-between gap-[14px]">
           <p className="text-[13px] text-encre-2">
             Une rangée par direction — la retenue à gauche, les autres dans l'ordre où
@@ -650,7 +690,7 @@ export function ImagesDuSujet({
           </div>
         </div>
 
-        <div {...defilement} className="defile flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto">
+        <div className="flex flex-col gap-[8px]">
           {poses.length === 0 && (
             <p className="text-[13px] text-encre-3">
               {personnage.cases.length === 0
@@ -711,6 +751,10 @@ export function ImagesDuSujet({
                           const pose = poseDe(sa.pose)
                           if (pose) onArmer(personnage, [pose], null, sa.direction)
                         }}
+                        onImporter={
+                          onImporter &&
+                          ((sa) => onImporter({ pose: sa.pose, direction: sa.direction ?? undefined }))
+                        }
                       />
                     ))}
                   </div>
@@ -764,7 +808,13 @@ export function ImagesDuSujet({
 
           ⚠️ **Une porte en moins, et c'est voulu** : *Reprendre dans l'établi*
           n'est pas passé, parce que cette page **est** l'établi. */}
+      {/* **La fiche reste en vue pendant qu'on descend la liste** (`.volet-colle`)
+          — sinon elle partait vers le haut avec le reste dès qu'on cherchait une
+          autre image plus bas, et il fallait remonter pour la relire. Le
+          `overflow-hidden` du cadre borne la fiche, dont le corps sait défiler
+          pour son compte quand elle a plus à dire que la fenêtre. */}
       {image && (
+        <div className="volet-colle flex overflow-hidden">
         <Fiche
           asset={image}
           univers={univers}
@@ -794,6 +844,7 @@ export function ImagesDuSujet({
           onRetoucher={() => { setChoisie(null); onOuvrirCase(image.identifiant) }}
           onOuvrir={(identifiant) => setChoisie(identifiant)}
         />
+        </div>
       )}
 
     </div>

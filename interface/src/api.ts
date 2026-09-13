@@ -837,7 +837,7 @@ export type ImageDeDepart = {
 /** Ce qu'une génération porte quand c'est un clip. Absent partout ailleurs —
  *  et c'est ce champ, jamais le nom du modèle, qui dit qu'un appel est vidéo. */
 export type Clip = {
-  nature?: "video" | "rendu3d" | "sequence"
+  nature?: "video" | "rendu3d" | "sequence" | "importe"
   /** Le numéro du travail chez le fournisseur, écrit **avant** la première
    *  attente. Sans lui, un clip payé pendant qu'on fermait l'atelier est un
    *  clip qu'on repaie. */
@@ -1229,7 +1229,7 @@ export type AtelierDeBande = {
  *  quatre questions. */
 export type Montage = {
   clip: {
-    nature?: "video" | "rendu3d" | "sequence"
+    nature?: "video" | "rendu3d" | "sequence" | "importe"
     identifiant: string
     images: number
     cadence: number
@@ -2998,7 +2998,7 @@ export type Vitrine = {
 export type Carte = {
   identifiant: string
   projet: string
-  genre: "image" | "texte"
+  genre: "image" | "texte" | "video"
   texte: string
   /** `attente` tant que l'image d'une adresse n'est pas arrivée, `echouee` si
    *  elle n'arrive pas — et la carte garde alors son adresse et sa raison. */
@@ -5236,6 +5236,80 @@ export const api = {
         (projet ? `&projet=${encodeURIComponent(projet)}` : ""),
     ),
 
+  /** Une vidéo qui vient d'ailleurs entre comme clip. **Rien n'est dépensé.**
+   *
+   *  Même forme que `televerser` pour une image, et pour la même raison : les
+   *  octets sont le corps de la requête, une vidéo par appel, et l'un des deux
+   *  champs rendus est toujours nul. Un doublon **n'est pas un refus** — il
+   *  porte le clip existant, et rappeler avec `forcer` fait entrer quand même.
+   *
+   *  Ce qui revient est un clip ordinaire : il se rejoue, on y taille des
+   *  bandes, on en prélève des images. Rien de tout cela n'a eu besoin d'être
+   *  réécrit pour lui. */
+  importerClip: (
+    octets: Blob,
+    {
+      nom = "",
+      personnage = null,
+      pose = null,
+      direction = null,
+      forcer = false,
+    }: {
+      nom?: string
+      personnage?: string | null
+      pose?: string | null
+      direction?: string | null
+      forcer?: boolean
+    } = {},
+  ) =>
+    appeler<{ clip: Generation | null; doublon: Generation | null }>(
+      `/clips/import?nom=${encodeURIComponent(
+        nom || (octets instanceof File ? octets.name : ""),
+      )}&forcer=${forcer}` +
+        (personnage ? `&personnage=${encodeURIComponent(personnage)}` : "") +
+        (pose ? `&pose=${encodeURIComponent(pose)}` : "") +
+        (direction ? `&direction=${encodeURIComponent(direction)}` : ""),
+      { method: "POST", body: octets, headers: {} },
+    ),
+
+  /** **Une feuille de sprites montée en animation** (`AU19`).
+   *
+   *  Les cases deviennent les images d'un clip, et une bande en est gardée —
+   *  prête à se ranger sur un mouvement et une direction. **Rien n'est
+   *  dépensé** : l'image a été payée une fois, à son entrée.
+   *
+   *  `directions` fait une bande par ligne de la feuille, dans l'ordre des
+   *  lignes. Vide, toute la feuille fait une seule animation. */
+  animerUneFeuille: (
+    feuille: string,
+    boites: Boite[],
+    {
+      nom = "",
+      personnage = null,
+      pose = null,
+      direction = null,
+      directions = null,
+    }: {
+      nom?: string
+      personnage?: string | null
+      pose?: string | null
+      direction?: string | null
+      directions?: string[] | null
+    } = {},
+  ) =>
+    appeler<{ clip: Generation; bandes: Bande[] }>("/clips/sheet", {
+      method: "POST",
+      body: JSON.stringify({
+        feuille,
+        boites,
+        nom,
+        personnage,
+        pose,
+        direction,
+        directions,
+      }),
+    }),
+
   /** Ceux qui sont payés — ou peut-être payés — et attendent un geste. **La
    *  liste ne récupère rien** : elle dit ce qu'il y a à récupérer. */
   clipsEnSouffrance: () => appeler<{ clips: Generation[] }>("/clips/pending"),
@@ -5518,6 +5592,15 @@ export const api = {
     appeler<{ carte: Carte | null; doublon: Carte | null }>(
       `/board/paste?nom=${encodeURIComponent(nom)}&forcer=${forcer}`,
       { method: "POST", body: octets, headers: {} },
+    ),
+
+  /** Un clip du jeu paraît sur la toile, **et il s'y rejoue**. La carte porte
+   *  sa première image et pointe vers son fichier ; rien n'est recopié. Vaut
+   *  pour une vidéo importée comme pour un clip payé. */
+  poserClipSurToile: (projet: string, clip: string) =>
+    appeler<{ carte: Carte; deja_presente: boolean }>(
+      `/projects/${encodeURIComponent(projet)}/board/clips/${encodeURIComponent(clip)}`,
+      { method: "POST" },
     ),
 
   poserAssetSurToile: (projet: string, asset: string) => appeler<{ carte: Carte; deja_presente: boolean }>(`/projects/${encodeURIComponent(projet)}/board/assets/${encodeURIComponent(asset)}`, { method: "POST" }),

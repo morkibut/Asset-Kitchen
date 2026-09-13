@@ -12,6 +12,7 @@ import { TenuesDuSujet } from "./TenuesDuSujet"
 import { ObjectifDuSujet } from "./ObjectifDuSujet"
 import { SourcesDuSujet } from "./SourcesDuSujet"
 import { FicheDuSujet } from "./FicheDuSujet"
+import { useScrollDuParcours } from "./MemoireDuParcours"
 
 export type Onglet = "fiche" | "images" | "animations" | "sources" | "equipement" | "objectif" | "essai"
 const ONGLETS: readonly { clef: Onglet; nom: string }[] = [
@@ -117,10 +118,15 @@ export function PageDuSujet(proprietes: {
   calque?: string | null
   onCalque?: (identifiant: string | null) => void
   clips?: readonly Generation[]
+  /** Une vidéo vient d'entrer : la liste des clips est à relire. */
+  onClipsChange?: () => void
   onObjectifChange?: () => void
   onLivrer?: () => void
   onFabriquer?: () => void
-  onImporter?: () => void
+  /** **Une case peut être visée** : ouvert depuis une rangée vide d'*Images
+   *  fixes*, l'import arrive pointé sur cette pose-là. Sans cible, il s'ouvre
+   *  sur la première pose du sujet, comme le bouton du haut. */
+  onImporter?: (cible?: { pose: string; direction?: string }) => void
   onDecouper?: (asset: string) => void
   onExtraire?: (asset: string) => void
 }) {
@@ -133,6 +139,10 @@ export function PageDuSujet(proprietes: {
     setOngletTenuIci(choisi)
     proprietes.onOnglet?.(choisi)
   }
+  // **La position du défilement se retient ici**, parce que c'est ici qu'on
+  // défile depuis qu'il n'y a plus qu'un bloc. Une position par onglet et par
+  // sujet : revenir d'une retouche rend la page où on l'avait laissée.
+  const defilement = useScrollDuParcours(`${onglet}:${ouvert.projet}:${ouvert.identifiant}`)
   // **B13** — la grille du jeu et comparer n'ont rien à montrer sans une
   // image. Les deux liens se grisent avec leur raison plutôt que de
   // disparaître, comme partout ailleurs dans ce fichier.
@@ -272,7 +282,12 @@ export function PageDuSujet(proprietes: {
 
   return (
     <main data-etabli data-page-du-sujet aria-label={`La page de ${ouvert.nom}`} className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier">
-      <div className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-hidden px-[30px] pt-[22px]">
+      {/* **Un seul défilement pour toute la page** — le titre, la fiche, les
+          onglets et la liste descendent ensemble. Avant, le haut restait figé
+          et seule la liste bougeait : on lisait ses animations par une fente de
+          quatre cents pixels. Les onglets sont donc de simples blocs en flux,
+          sans hauteur à eux, et c'est ce conteneur-ci qui garde la position. */}
+      <div {...defilement} className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto px-[30px] pt-[22px] pb-[22px]">
         <header className="flex shrink-0 items-start justify-between gap-[22px]">
           <div><h1 className="font-serif text-[38px] leading-[1.05] text-encre">{ouvert.nom}</h1><p className="mt-[8px] text-[13px] text-encre-3">{ouvert.type || ouvert.famille} · {ouvert.objectif ? ouvert.objectif.sorties.some(s => s.nature === "animation" && s.quantite > 0) ? ouvert.objectif.sorties.some(s => s.nature === "image" && s.quantite > 0) ? "Images & animations" : "Animations" : "Images fixes" : "Images & animations"}</p></div>
           <div className="flex shrink-0 flex-wrap items-center gap-[8px]">
@@ -313,6 +328,7 @@ export function PageDuSujet(proprietes: {
 
         {onglet === "images" && <ImagesDuSujet personnage={ouvert} plan={sienPlan} pieces={proprietes.pieces} personnages={proprietes.personnages}
           univers={proprietes.univers} onArmer={proprietes.onArmer} onOuvrirCase={proprietes.onOuvrirCase} onRegardee={setRegardee}
+          onImporter={proprietes.onImporter}
           onEcarter={proprietes.onSupprimer} onReinjecter={proprietes.onReinjecter} onReglages={proprietes.onReglages} onErreur={echouer} />}
 
         {onglet === "animations" && <AnimationsDuSujet personnage={ouvert} plan={sienPlan} onAnimer={proprietes.onAnimer}
@@ -322,11 +338,12 @@ export function PageDuSujet(proprietes: {
           onAnimer={proprietes.onAnimer} onAnimations={() => setOnglet("animations")} />}
 
         {onglet === "sources" && <SourcesDuSujet onBande={proprietes.onOuvrirLaBande} personnage={ouvert} clips={proprietes.clips ?? []}
+          onClipsChange={proprietes.onClipsChange} onErreur={echouer}
           onMontage={proprietes.onMonterLaBande} onAnimer={(pose, direction) => proprietes.onAnimer(ouvert, pose, direction)} />}
-        {onglet === "equipement" && <div className="defile min-h-0 flex-1 overflow-y-auto pb-[22px]"><VestiaireDuSujet personnage={ouvert}
+        {onglet === "equipement" && <div><VestiaireDuSujet personnage={ouvert}
           vestiaire={proprietes.vestiaire} onPiece={proprietes.onPiece} onEmploi={proprietes.onEmploiEquipement} onCreerPiece={proprietes.onCreerPiece}
           onRetirerLEmploi={proprietes.onRetirerLEmploi} /><TenuesDuSujet personnage={ouvert} vestiaire={proprietes.vestiaire} onEmploi={proprietes.onEmploiEquipement} onLivraisons={proprietes.onLivrer} /></div>}
-        {onglet === "objectif" && <div className="defile min-h-0 flex-1 overflow-y-auto pb-[22px]"><ObjectifDuSujet personnage={ouvert} projet={ouvert.projet} onChange={proprietes.onObjectifChange} /></div>}
+        {onglet === "objectif" && <div><ObjectifDuSujet personnage={ouvert} projet={ouvert.projet} onChange={proprietes.onObjectifChange} /></div>}
       </div>
     </main>
   )

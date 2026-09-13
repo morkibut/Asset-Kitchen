@@ -56,7 +56,7 @@
 import { useCallback, useMemo, useState } from "react"
 import { api, type Bande, type Case, type Personnage, type Pose } from "../api"
 import { BandeQuiTourne } from "./Apercu"
-import { useEtatDuParcours, useScrollDuParcours } from "./MemoireDuParcours"
+import { useEtatDuParcours } from "./MemoireDuParcours"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. */
 const COTE = 54
@@ -468,7 +468,6 @@ export function AnimationsDuSujet({
   const [galeriePose, setGaleriePose] = useEtatDuParcours(`${cle}:galerie-pose`, "")
   const [galerieDirection, setGalerieDirection] = useEtatDuParcours(`${cle}:galerie-direction`, "")
   const [galerieStatut, setGalerieStatut] = useEtatDuParcours(`${cle}:galerie-statut`, "")
-  const defilement = useScrollDuParcours(`${cle}:scroll`)
 
   const parPose = useMemo(() => {
     const estDemandee = (rangee: Rangee) => animationsDemandees.some(
@@ -594,13 +593,13 @@ export function AnimationsDuSujet({
   )
 
   return (
-    <div data-onglet-animations className="flex min-h-0 flex-1 overflow-hidden" onDoubleClick={e => {
+    <div data-onglet-animations className="flex items-start" onDoubleClick={e => {
       const cible = (e.target as HTMLElement).closest<HTMLElement>("[data-vignette-de-bande]")?.dataset.vignetteDeBande
       if (cible) { setChoisie(null); onOuvrirLaBande(cible) }
     }}>
       {/* `min-w-0` : sans lui, la surface pousse le volet hors de la fenêtre —
           voir la note d'`ImagesDuSujet.tsx`. */}
-      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] overflow-hidden">
+      <section className="flex min-w-0 flex-1 flex-col gap-[14px]">
         <div className="flex items-center justify-between gap-[14px]">
           <p className="text-[13px] text-encre-2">
             {objectifExplicite
@@ -637,7 +636,7 @@ export function AnimationsDuSujet({
           </div>
         </div>
 
-        <div {...defilement} className="defile flex min-h-0 flex-1 flex-col gap-[8px] overflow-y-auto">
+        <div className="flex flex-col gap-[8px]">
           {poses.length === 0 && (
             <p className="text-[13px] text-encre-3">
               {personnage.cases.length === 0
@@ -751,7 +750,7 @@ export function AnimationsDuSujet({
         <aside
           data-volet-de-la-bande
           aria-label="L'animation choisie"
-          className="volet flex w-[380px] shrink-0 flex-col gap-[14px] overflow-y-auto border-l border-trait bg-papier-cote p-[22px]"
+          className="volet volet-colle defile flex w-[380px] shrink-0 flex-col gap-[14px] overflow-y-auto border-l border-trait bg-papier-cote p-[22px]"
         >
           <button type="button" onClick={() => setChoisie(null)} className="h-[30px] self-end rounded-7 border border-contour bg-carte px-[14px] text-[13px]">Fermer les détails</button>
           <div className="flex items-baseline justify-between gap-[8px]">

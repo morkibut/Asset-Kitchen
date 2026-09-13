@@ -10,6 +10,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 
+import { MemoireDuParcours } from "./MemoireDuParcours"
 import { PageDuSujet } from "./PageDuSujet"
 import {
   api,
@@ -165,7 +166,7 @@ function construireDouble() {
   return { fetchDouble, appels }
 }
 
-function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu", onLivrer?: () => void) {
+function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu", onLivrer?: () => void, avecMemoire = false) {
   const { fetchDouble, appels } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
@@ -193,7 +194,7 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu", onLivr
     onDecouper: vi.fn(),
     onExtraire: vi.fn(),
   }
-  render(
+  const page = (
     <PageDuSujet
       ouvert={sujet(surplus)}
       plan={PLAN}
@@ -209,8 +210,12 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu", onLivr
       onLivrer={onLivrer}
       barreQuiPaie={<div data-barre-qui-paie />}
       {...rappels}
-    />,
+    />
   )
+  // **La mémoire du parcours n'est montée qu'à la demande** : elle ne sert
+  // qu'aux essais du défilement, et l'installer partout ferait fuir l'état
+  // d'un essai dans le suivant.
+  render(avecMemoire ? <MemoireDuParcours>{page}</MemoireDuParcours> : page)
   return { ...rappels, appels }
 }
 
@@ -351,4 +356,36 @@ test("retirer l’asset reste disponible dans la modification de la fiche", asyn
   fireEvent.click(screen.getByRole("button", { name: "Le retirer du jeu" }))
   await waitFor(() => expect(retirer).toHaveBeenCalledWith("le-pelerin"))
   expect(onPersonnage).toHaveBeenCalledWith(expect.objectContaining({ supprime: true }))
+})
+
+// ── Un seul bloc qui défile ─────────────────────────────────────────────────
+//
+// Le titre, la fiche, les onglets et la liste descendent ensemble. Avant, le
+// haut restait figé et seule la liste bougeait : on lisait ses animations par
+// une fente de quatre cents pixels. Aucun onglet ne monte donc plus sa propre
+// boîte à défilement, et c'est la page qui retient où on en était.
+
+test("le titre et la fiche défilent avec la liste, dans le même bloc", () => {
+  monter()
+  const liste = document.querySelector("[data-onglet-animations]") as HTMLElement
+  const defileur = liste.closest(".overflow-y-auto") as HTMLElement
+  expect(defileur).toBeTruthy()
+  expect(defileur.contains(screen.getByRole("heading", { name: "Le pèlerin" }))).toBe(true)
+  // Rien entre la liste et ce bloc-là ne défile pour son compte.
+  expect(liste.classList.contains("overflow-y-auto")).toBe(false)
+  expect(liste.querySelector(":scope > section.overflow-y-auto")).toBeNull()
+})
+
+test("chaque onglet retrouve la position où on l'avait laissé", () => {
+  monter(undefined, undefined, undefined, true)
+  const defileur = (document.querySelector("[data-onglet-animations]") as HTMLElement).closest(".overflow-y-auto") as HTMLElement
+  defileur.scrollTop = 456
+  fireEvent.scroll(defileur)
+  fireEvent.click(onglet("Images fixes"))
+  defileur.scrollTop = 120
+  fireEvent.scroll(defileur)
+  fireEvent.click(onglet("Animations"))
+  expect(defileur.scrollTop).toBe(456)
+  fireEvent.click(onglet("Images fixes"))
+  expect(defileur.scrollTop).toBe(120)
 })

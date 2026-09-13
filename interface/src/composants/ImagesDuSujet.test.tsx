@@ -174,7 +174,7 @@ function construireDouble() {
   return { fetchDouble, appels }
 }
 
-function monter(cases: Case[] = [CASE_SUD]) {
+function monter(cases: Case[] = [CASE_SUD], sansImport = false) {
   const { fetchDouble, appels } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
@@ -184,6 +184,7 @@ function monter(cases: Case[] = [CASE_SUD]) {
     onReinjecter: vi.fn(),
     onReglages: vi.fn(),
     onErreur: vi.fn(),
+    onImporter: vi.fn(),
   }
   // **Le volet de cet onglet est la fiche du produit depuis `C4`** : il n'y a
   // plus qu'un volet de fiche d'image, et c'est `Fiche.tsx`. Elle lit deux
@@ -199,6 +200,7 @@ function monter(cases: Case[] = [CASE_SUD]) {
       personnages={[personnage(cases)]}
       univers={UNIVERS_VIDE}
       {...rappels}
+      onImporter={sansImport ? undefined : rappels.onImporter}
     />,
   )
   return { ...rappels, appels }
@@ -497,6 +499,30 @@ describe("ce que la case à générer vise", () => {
     const { onArmer } = monter([sienne({ pose: "repos", images: [VIEILLE] })])
     fireEvent.click(screen.getByLabelText("Générer cette pose"))
     expect(onArmer.mock.calls[0][3]).toBeNull()
+  })
+})
+
+describe("la case à importer, à côté de celle qui coûte", () => {
+  test("une direction vide offre les deux gestes, et l'import ne dépense rien", () => {
+    const { onImporter, onArmer, appels } = monter()
+    const nord = rangee("repos/nord")
+    expect(within(nord).getByLabelText("Générer nord")).toBeTruthy()
+    fireEvent.click(within(nord).getByLabelText("Importer une image pour nord"))
+    expect(onImporter).toHaveBeenCalledWith({ pose: "repos", direction: "nord" })
+    expect(onArmer).not.toHaveBeenCalled()
+    expect(appels).toHaveLength(0)
+  })
+
+  test("une pose sans direction déclarée importe « cette pose », et sans angle", () => {
+    const { onImporter } = monter([sienne({ pose: "repos", images: [VIEILLE] })])
+    fireEvent.click(screen.getByLabelText("Importer une image pour cette pose"))
+    expect(onImporter).toHaveBeenCalledWith({ pose: "repos", direction: undefined })
+  })
+
+  test("sans rappel d'import, aucune case d'import ne paraît", () => {
+    monter([CASE_SUD], true)
+    expect(document.querySelector("[data-case-de-generation]")).toBeTruthy()
+    expect(document.querySelector("[data-case-d-import]")).toBeNull()
   })
 })
 

@@ -3,9 +3,14 @@ import type { Personnage, Pose } from "../api"
 import { CadreDialogue } from "./CadreDialogue"
 const CHAMP = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]"
 
-export function ChoisirFabricationDuSujet({ personnage, plan, onFermer, onImage, onVideo, on3D }: {
+/** **Trois portes payantes, et une quatrième qui ne l'est pas.** Les trois
+ *  premières commandent au fournisseur ; `onImporter` pose dans la même case
+ *  une image qu'on a déjà. Sans elle, un sujet dont on tient le dessin sur le
+ *  disque n'avait ici d'autre issue que de le refabriquer. */
+export function ChoisirFabricationDuSujet({ personnage, plan, onFermer, onImage, onVideo, on3D, onImporter }: {
   personnage: Personnage; plan: Pose[]; onFermer: () => void;
   onImage: (pose: Pose, direction?: string) => void; onVideo: (pose: Pose, direction?: string) => void; on3D: (pose?: Pose, direction?: string) => void
+  onImporter?: (pose?: Pose, direction?: string) => void
 }) {
   const objectifsAnimes = personnage.objectif?.sorties.filter(s => s.nature === "animation" && s.quantite > 0) ?? []
   const posesHistoriques = plan.filter(p => personnage.cases.some(c => c.pose === p.identifiant))
@@ -29,6 +34,7 @@ export function ChoisirFabricationDuSujet({ personnage, plan, onFermer, onImage,
       { nom: "Une animation depuis une vidéo", detail: `Choisir l’image de départ, le modèle et le mouvement, puis monter le clip en frames${cible}.`, clic: () => choisie && onVideo(choisie, direction || undefined), indisponible: !choisie },
       { nom: "Une image fixe", detail: `Fabriquer une référence, une pose ou une illustration avec le modèle de ton choix${cible}.`, clic: () => choisie && onImage(choisie, direction || undefined), indisponible: !choisie },
       { nom: "Un modèle 3D et ses animations", detail: `Créer le modèle, préparer son squelette, choisir un mouvement, la caméra et le rendu des sprites${cible}.`, clic: () => on3D(choisie, direction || undefined), indisponible: false },
+      ...(onImporter ? [{ nom: "Une image que tu as déjà", detail: `Poser un fichier du disque, ou reprendre une image de la bibliothèque du jeu${cible}. Rien n’est envoyé, rien n’est payé.`, clic: () => onImporter(choisie, direction || undefined), indisponible: false }] : []),
     ].map(m => <button key={m.nom} disabled={m.indisponible} onClick={m.clic} className="block w-full rounded-7 border border-contour bg-carte p-[22px] text-left hover:border-signal disabled:opacity-50"><span className="font-serif text-[25px]">{m.nom}</span><span className="mt-[8px] block text-[13px] text-encre-3">{m.detail}</span></button>)}</div>
     {!choisie && <p className="text-[13px] text-encre-3">Ajoute d’abord une pose ou un mouvement dans Objectif & règles pour y ranger les images et animations.</p>}
   </div>} />

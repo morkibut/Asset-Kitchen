@@ -995,6 +995,27 @@ export function CarteTuile({
           >
             {carte.texte}
           </p>
+        ) : carte.genre === "video" ? (
+          /* **Une carte vidéo se rejoue sur place** (`AU18`). Le fichier vit
+             chez son clip : la carte ne porte que sa première image, servie ici
+             en affiche pendant que rien ne joue. `preload="metadata"` va
+             chercher la durée et rien de plus — une toile de trente cartes ne
+             doit pas rapatrier trente vidéos pour se dessiner. */
+          <video
+            controls
+            preload="metadata"
+            poster={api.imageCarte(carte.identifiant, carte.empreinte)}
+            src={api.videoDuClip(carte.source.replace(/^clip:/, ""))}
+            aria-label={carte.note || carte.source || "clip posé sur la toile"}
+            /* **Le clic sur les commandes ne doit pas ouvrir la fiche.** La
+               carte entière est un bouton ; sans ça, appuyer sur *lire*
+               ouvrirait la carte au lieu de lancer la vidéo. */
+            onClick={(evenement) => evenement.stopPropagation()}
+            className={[
+              "w-full bg-pourtour object-contain",
+              plan ? "h-full" : "aspect-square",
+            ].join(" ")}
+          />
         ) : carte.montrable ? (
           <img
             src={api.imageCarte(carte.identifiant, carte.empreinte)}

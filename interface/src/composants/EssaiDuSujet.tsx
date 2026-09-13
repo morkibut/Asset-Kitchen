@@ -482,10 +482,10 @@ export function EssaiDuSujet({
     fond === "jeu" && univers.fond ? { background: univers.fond } : undefined
 
   return (
-    <div data-onglet-essai className="flex min-h-0 flex-1 overflow-hidden">
+    <div data-onglet-essai className="flex items-start">
       {/* `min-w-0` : sans lui, la scène pousse le volet hors de la fenêtre —
           la même note qu'`ImagesDuSujet.tsx`. */}
-      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] overflow-hidden">
+      <section className="flex min-w-0 flex-1 flex-col gap-[14px]">
         <div className="flex items-center justify-between gap-[14px]">
           <p className="text-[13px] text-encre-2">
             À la taille du jeu, piloté au clavier. La vitesse jouée ici est celle qui
@@ -679,7 +679,7 @@ export function EssaiDuSujet({
       <aside
         data-volet-de-l-essai
         aria-label="Ce qu'il fait, et la scène"
-        className="volet flex w-[380px] shrink-0 flex-col gap-[14px] overflow-y-auto border-l border-trait bg-papier-cote p-[22px]"
+        className="volet volet-colle defile flex w-[380px] shrink-0 flex-col gap-[14px] overflow-y-auto border-l border-trait bg-papier-cote p-[22px]"
       >
         <div
           role="tablist"

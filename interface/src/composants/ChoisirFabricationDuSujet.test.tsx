@@ -44,6 +44,18 @@ test("la fabrication privilégie l’animation visée et transmet pose et direct
   expect(on3D).toHaveBeenCalledWith(plan[1], "est")
 })
 
+test("une quatrième porte pose une image qu’on a déjà, sur la même case", () => {
+  const onImporter = vi.fn()
+  render(<ChoisirFabricationDuSujet personnage={sujet(objectif)} plan={plan} onFermer={vi.fn()} onImage={vi.fn()} onVideo={vi.fn()} on3D={vi.fn()} onImporter={onImporter} />)
+  fireEvent.click(screen.getByRole("button", { name: /une image que tu as déjà/i }))
+  expect(onImporter).toHaveBeenCalledWith(plan[1], "est")
+})
+
+test("sans rappel d’import, le dialogue n’offre que les trois portes payantes", () => {
+  render(<ChoisirFabricationDuSujet personnage={sujet(objectif)} plan={plan} onFermer={vi.fn()} onImage={vi.fn()} onVideo={vi.fn()} on3D={vi.fn()} />)
+  expect(screen.queryByRole("button", { name: /une image que tu as déjà/i })).toBeNull()
+})
+
 test("sans objectif, le dialogue reprend la première pose historique", () => {
   render(<ChoisirFabricationDuSujet personnage={sujet()} plan={plan} onFermer={vi.fn()} onImage={vi.fn()} onVideo={vi.fn()} on3D={vi.fn()} />)
   expect((screen.getByLabelText("Mouvement ou pose") as HTMLSelectElement).value).toBe("repos")
