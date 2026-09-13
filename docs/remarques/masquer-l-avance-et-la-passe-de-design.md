@@ -28,7 +28,7 @@ ouvert.
 
 ### a) ⚠️ La grosse passe de design a déjà eu lieu — sur le papier
 
-**`docs/audit-design-post-v21.html`, 31 août 2026.** Un audit complet du produit, écrit en clair,
+**`docs/archive/audit-design-post-v21.html`, 31 août 2026.** Un audit complet du produit, écrit en clair,
 qui relève **quatorze défauts** classés par ce qu'ils coûtent à l'usage :
 
 > le zoom absent des tables · les chiffres trop petits et trop pâles · le document de l'univers
@@ -200,4 +200,4 @@ devra dire comment elle décide — ou assumer le pari par écrit.*
   qui commencerait ailleurs referait ce travail.**
 - **`G8`** — l'accueil s'ouvre sur chaque jeu neuf. L'audit note que l'assistant de démarrage est
   *« le plus gros manque restant »* de son propre examen.
-- **`docs/audit-design-post-v21.html`** — quatorze défauts, jamais entrés au plan.
+- **`docs/archive/audit-design-post-v21.html`** — quatorze défauts, jamais entrés au plan.

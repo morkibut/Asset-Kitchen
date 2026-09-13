@@ -974,7 +974,7 @@ PIXELOE = "pixeloe"
 # cible demandée. C'est le manque que la planche place devant tous les
 # autres : *« le pas et l'endroit où il commence sont mesurés depuis le
 # 3 septembre et affichés à l'écran, et rien ne s'en sert »*
-# (`docs/pistes-2026-09-04/carnet/atelier-reduire.dc.html`).
+# (`docs/archive/pistes-2026-09-04/carnet/atelier-reduire.dc.html`).
 #
 # **`dominante` et `mediane` n'inventent aucune couleur non plus**, chacune à
 # sa manière : la première reprend l'esprit du vote en deux temps mais peint
@@ -1548,7 +1548,7 @@ LISSAGE_MAX = 3
 GRAIN_MAX = 8
 
 
-# ── Les six moteurs de B18 (`docs/pistes-2026-09-04/carnet/atelier-nettoyer.dc.html`) ──
+# ── Les six moteurs de B18 (`docs/archive/pistes-2026-09-04/carnet/atelier-nettoyer.dc.html`) ──
 #
 # **Le compte de la planche se contredisait trois fois** — douze en préambule
 # (celui des *réglages*, pas des moteurs), onze dans le réglage « méthode »

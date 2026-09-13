@@ -180,7 +180,7 @@ Cinq règles qui tiennent l'ensemble :
    d'état à porter dans la recette. C'est ce critère qui a sorti le calque par
    différence de la recette : il nomme deux images en entrée et il en produit une
    troisième, ce qu'aucune place de recette ne fait
-   (`docs/v21-arbitrages.md` A-18).
+   (`docs/archive/v21-arbitrages.md` A-18).
 
    **Le détourage par défaut ne demande aucun modèle**, et c'est une mesure, pas
    un principe : un remplissage depuis le bord — un pixel n'est du fond que s'il

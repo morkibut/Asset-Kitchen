@@ -1,6 +1,6 @@
 // Commander un clip — l'écran où l'animation se paie (A9, V3).
 //
-// C'est le premier moment de `docs/maquettes-v3/01-du-sprite-a-la-bande.html` :
+// C'est le premier moment de `docs/archive/maquettes-v3/01-du-sprite-a-la-bande.html` :
 // à gauche l'image de départ et le mouvement, au milieu ce qu'on va recevoir et
 // dans quel format, à droite les modèles avec leur prix et le bouton qui porte
 // le montant. **Rien ne part tant qu'on n'a pas appuyé sur le bouton du tiroir.**

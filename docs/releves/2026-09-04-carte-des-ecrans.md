@@ -1554,12 +1554,12 @@ L'auteur a raison, et il est en dessous de la réalité. La barre de génératio
 **FORT — L'argument qui a justifié de garder le panneau — « aucun autre écran ne choisit un modèle » — n'est plus vrai dans le code.**
 
 - *Le chiffre* : 3 endroits de plus : un modèle par famille, un modèle de planche, un modèle d'édition
-- *La preuve* : interface/src/composants/Assistant.tsx:2722-2820, étape « Les IA à utiliser » de l'assistant de l'Univers : une liste déroulante de modèle par famille (ligne 2754, univers.modeles[famille]) plus deux listes pour modele_planche et modele_edition (lignes 2793-2794). L'argument est écrit dans docs/v21-arbitrages.md:472-476 (A-25) et repris en B-18, docs/v21-arbitrages.md:807-808.
+- *La preuve* : interface/src/composants/Assistant.tsx:2722-2820, étape « Les IA à utiliser » de l'assistant de l'Univers : une liste déroulante de modèle par famille (ligne 2754, univers.modeles[famille]) plus deux listes pour modele_planche et modele_edition (lignes 2793-2794). L'argument est écrit dans docs/archive/v21-arbitrages.md:472-476 (A-25) et repris en B-18, docs/archive/v21-arbitrages.md:807-808.
 
 **MOYEN — Ce que dit docs/DESIGN.md n'est pas ce que la mission lui prête : la largeur de 300 px n'y est pas condamnée, elle y est reconduite.**
 
 - *Le chiffre* : 3 largeurs fermées : 380, 300, 240
-- *La preuve* : docs/DESIGN.md:534-536 : « Largeurs de colonne — la liste est fermée aussi. 380 · 300 · 240, reconduites. » La promesse de disparition vient d'ailleurs et elle est datée : docs/v21-arbitrages.md:458-486 (A-25, 31 août 2026) et docs/v21-arbitrages.md:799-816 (B-18), qui disent que la colonne devait partir le jour où l'héritage et l'écran de confirmation existeraient. Les deux existent depuis le 31 août ; la colonne est toujours là, repliée dans la barre.
+- *La preuve* : docs/DESIGN.md:534-536 : « Largeurs de colonne — la liste est fermée aussi. 380 · 300 · 240, reconduites. » La promesse de disparition vient d'ailleurs et elle est datée : docs/archive/v21-arbitrages.md:458-486 (A-25, 31 août 2026) et docs/archive/v21-arbitrages.md:799-816 (B-18), qui disent que la colonne devait partir le jour où l'héritage et l'écran de confirmation existeraient. Les deux existent depuis le 31 août ; la colonne est toujours là, repliée dans la barre.
 
 **BLOQUANT — L'invariant « un seul endroit d'où l'argent part par écran » n'est pas tenu : la Galerie déclare n'en avoir aucun et en a deux.**
 
@@ -1627,7 +1627,7 @@ L'auteur a raison, et le défaut est plus grossier qu'il ne le croit. Dans ce pa
 - La première ligne ne compte aucune image. `tenues` (ligne 798) est le résultat de `posesTenues`, qui filtre simplement les poses que la chose a rangées (Personnages.tsx lignes 99-100). Elle dit donc « 6 sur 6 » et se met au vert dès que la chose n'a rien rangé — ce qui est le cas des six choses du jeu ouvert.
 - La seconde ligne est verte en dur. À la ligne 857 le code écrit `complet` tout seul, ce qui vaut « vrai » définitivement, et sa valeur est `${pieces.length} sur ${pieces.length}` (ligne 856) — le même nombre des deux côtés, littéralement. Aucun état du monde ne peut changer cette ligne.
 - Le titre de la section, « Ce qu'elle réclame », ne prévient pas que ces deux chiffres parlent de la définition de la chose et non de son travail fait. Quatre lignes plus bas, sous « Ce qui manque », le même vert veut dire l'inverse.
-- La maquette du codex prévoyait quatre lignes ici — poses du type, poses ajoutées sur elle, directions, pièces d'équipement (docs/maquettes-v2.1/05-codex.html, lignes 467 à 471). Le code n'en dessine que deux : la ligne des poses ajoutées et celle des directions n'existent nulle part.
+- La maquette du codex prévoyait quatre lignes ici — poses du type, poses ajoutées sur elle, directions, pièces d'équipement (docs/archive/maquettes-v2.1/05-codex.html, lignes 467 à 471). Le code n'en dessine que deux : la ligne des poses ajoutées et celle des directions n'existent nulle part.
 
 #### « Ce qui manque » — le bas de la même colonne
 
@@ -1763,7 +1763,7 @@ L'auteur a raison, et le défaut est plus grossier qu'il ne le croit. Dans ce pa
 **MOYEN — La maquette de conception prévoyait quatre lignes dans ce bloc ; le code n'en dessine que deux, et l'une des deux manquantes est celle qui aurait donné un sens au vert.**
 
 - *Le chiffre* : 2 lignes sur 4 réalisées
-- *La preuve* : docs/maquettes-v2.1/05-codex.html lignes 467 à 471 : « poses du type personnage · 6 sur 6 », « poses ajoutées sur lui · aucune », « directions · 4 sur 4 », « pièces d'équipement · 2 sur 2 ». Le même document, ligne 865, écrit noir sur blanc que le produit « ne peut rien dire des pièces d'équipement — toutes celles du vestiaire lui sont proposées ». La ligne verte en dur est donc la trace d'une fonction annoncée et jamais construite.
+- *La preuve* : docs/archive/maquettes-v2.1/05-codex.html lignes 467 à 471 : « poses du type personnage · 6 sur 6 », « poses ajoutées sur lui · aucune », « directions · 4 sur 4 », « pièces d'équipement · 2 sur 2 ». Le même document, ligne 865, écrit noir sur blanc que le produit « ne peut rien dire des pièces d'équipement — toutes celles du vestiaire lui sont proposées ». La ligne verte en dur est donc la trace d'une fonction annoncée et jamais construite.
 
 **FAIBLE — Le titre de la section jumelle dans la fiche est resté celui d'avant : il dit « le jeu » là où la liste affichée est celle du type de la chose.**
 

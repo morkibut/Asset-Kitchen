@@ -41,12 +41,12 @@ Cinq de ces documents se lisent au démarrage d'une session (`AGENTS.md`, `PRD.m
 
 ### Le coin du calque — construit, mais l'index dit encore le contraire
 
-- **`docs/README.md`** dit : la maquette `docs/maquettes-v2.4/01-le-coin-du-calque.html`
+- **`docs/README.md`** dit : la maquette `docs/archive/maquettes-v2.4/01-le-coin-du-calque.html`
   « **attend l'arbitrage de l'auteur** — la tranche qui bâtira l'écran ne s'écrit pas avant. »
 - **`docs/PLAN.md`** dit : la V2.4 (`M1` à `M7`, dont « le coin où l'on fabrique un calque se
   redessine ») est **close depuis le 4 septembre 2026, sept critères sur sept**.
 - **Lequel a raison** : `docs/PLAN.md`. Vérifié dans `docs/archive/plan-r6-a-v3.02.md`, ligne
-  1334 : le critère de la tranche `M1` — « la maquette existe dans `docs/maquettes-v2.4/`,
+  1334 : le critère de la tranche `M1` — « la maquette existe dans `docs/archive/maquettes-v2.4/`,
   ouvrable seule, sans serveur » — est coché, et la tranche est marquée « livrée le 4 septembre
   2026 ». L'écran existe. **`docs/README.md` n'a pas été corrigé après coup**, alors qu'il porte
   lui-même la date du 13 septembre — ce n'est pas une vieille copie oubliée, c'est une phrase
@@ -68,7 +68,7 @@ Cinq de ces documents se lisent au démarrage d'une session (`AGENTS.md`, `PRD.m
 ### Deux tableaux de bord d'avancement, aucun des deux à jour
 
 - **`docs/status/index.html`** (titre : « Asset Kitchen — avancement ») et
-  **`docs/status-atelier-unifie/index.html`** (titre : « Asset Kitchen — PRD — avancement »)
+  **`docs/archive/status-atelier-unifie/index.html`** (titre : « Asset Kitchen — PRD — avancement »)
   sont deux sorties du même outil de tableau de bord, générées à deux moments différents.
 - Aucun document d'autorité ne renvoie vers l'un ou l'autre pour dire lequel regarder, et le
   second ne connaît pas `AU18` à `AU20` : il a été généré avant leur clôture.
@@ -81,8 +81,8 @@ Cinq de ces documents se lisent au démarrage d'une session (`AGENTS.md`, `PRD.m
 ## Les interfaces qui n'existent plus
 
 Cinq documents décrivent un écran que le code ne montre plus, remplacé depuis par l'atelier
-unifié (et, avant lui, par le carnet) : `docs/maquette-atelier.html`, `docs/maquettes-v2.1/`
-(26 maquettes), `docs/maquettes-v2.4/`, `docs/maquettes-v3/` et `docs/audit-design-post-v21.html`.
+unifié (et, avant lui, par le carnet) : `docs/archive/maquette-atelier.html`, `docs/archive/maquettes-v2.1/`
+(26 maquettes), `docs/archive/maquettes-v2.4/`, `docs/archive/maquettes-v3/` et `docs/archive/audit-design-post-v21.html`.
 Aucun n'est faux au sens où il mentirait sur ce qu'il montre — chacun date correctement de son
 époque — mais aucun ne doit plus servir à construire un écran aujourd'hui. Trois d'entre eux
 sont encore cités par du code ou des tests comme preuve d'une mesure passée (voir l'inventaire) :
@@ -109,14 +109,14 @@ compté ici.)*
 | `docs/PLAN-atelier-unifie.md` | 44 Ko | 2026-09-13 | 16 fichiers | Vivant | Le détail du chantier actif, AU1 à AU20 |
 | `docs/PLAN-atelier-unifie-affectation.md` | 16 Ko | 2026-09-12 | 5 fichiers | Vivant, incomplet | S'arrête à AU17 alors qu'AU18-AU20 sont closes — voir contradictions |
 | `docs/PLAN-carnet.md` | 223 Ko | 2026-09-11 | 33 fichiers | Vivant | Historique : sert à vérifier une capacité déjà livrée. L'ordre actif est ailleurs |
-| `docs/PLAN-carnet-affectation.md` | 28 Ko | 2026-09-11 | 4 fichiers | À archiver | Affectation d'un plan dont l'exécution active s'est arrêtée le 11 septembre |
+| `docs/archive/PLAN-carnet-affectation.md` | 28 Ko | 2026-09-11 | 4 fichiers | À archiver | Affectation d'un plan dont l'exécution active s'est arrêtée le 11 septembre |
 | `docs/bilan-v3.md` | 29 Ko | 2026-09-03 | 29 fichiers | Vivant | Remplace la lecture des sept documents préparatoires de la V3 |
-| `docs/v3-animation.md` | 42 Ko | 2026-09-03 | 12 fichiers | À archiver | Détail planche par planche des trois bancs ; le bilan suffit dans presque tous les cas |
+| `docs/archive/v3-animation.md` | 42 Ko | 2026-09-03 | 12 fichiers | À archiver | Détail planche par planche des trois bancs ; le bilan suffit dans presque tous les cas |
 | `docs/cadrage-fil-et-3d.md` | 14 Ko | 2026-09-08 | 1 fichier | Vivant | Préparation pour après la V4 ; rien construit encore, mais toujours valable |
 | `docs/archive/` (17 fichiers) | 894 Ko | 2026-09-11 | 97 fichiers | Vivant | Le dossier d'archive joue son rôle : versions tenues, études closes, plans périmés |
 | `docs/tranches/` (27 fichiers) | 696 Ko | 2026-09-11 | 39 fichiers | Vivant | Critères d'acceptation par tranche — T1 à V4.md |
 | `docs/status/` (`etat.md` + 2 fichiers) | 570 Ko | 2026-09-13 | 22 fichiers | Vivant | `etat.md` est le journal qui fait foi ; les 2 autres fichiers sont un tableau de bord — voir doublon |
-| `docs/status-atelier-unifie/` (2 fichiers) | 305 Ko | 2026-09-12 | 1 fichier | Doublon | Second tableau de bord, généré avant AU18-AU20, sans lien depuis aucun document d'autorité |
+| `docs/archive/status-atelier-unifie/` (2 fichiers) | 305 Ko | 2026-09-12 | 1 fichier | Doublon | Second tableau de bord, généré avant AU18-AU20, sans lien depuis aucun document d'autorité |
 
 ### L'architecture et ses annexes
 
@@ -136,11 +136,11 @@ compté ici.)*
 | `docs/design-decisions.md` | 141 Ko | 2026-09-06 | 20 fichiers | Vivant | Journal des décisions d'apparence, daté et chiffré |
 | `docs/design-motifs.md` | 125 Ko | 2026-09-06 | 42 fichiers | Vivant | À quoi ressemble chaque écran |
 | `docs/design-preview.html` | 30 Ko | 2026-09-06 | 9 fichiers | Vivant | Le spécimen vivant actuel — annexe officielle du skill `/design` |
-| `docs/design-preview-refonte.html` | 59 Ko | 2026-09-04 | 3 fichiers | À archiver | La proposition qui a précédé le système actuel ; gardée comme trace de décision |
-| `docs/design-preview-propositions.html` | 19 Ko | 2026-08-29 | 0 fichier | À archiver | Quatre formes explorées avant la refonte ; personne ne la cite |
-| `docs/audit-design-post-v21.html` | 68 Ko | 2026-08-31 | 7 fichiers | À archiver | Audit de l'interface V2.1 « telle qu'elle tournait » — interface remplacée depuis. Cité par du code comme preuve d'une mesure passée |
-| `docs/maquette-atelier.html` | 57 Ko | 2026-08-26 | 7 fichiers | À archiver | Maquette pré-atelier-unifié. `docs/README.md` le classe déjà « jamais d'office » |
-| `docs/vocabulaire-a-fermer.md` | 18 Ko | 2026-09-06 | 2 fichiers | À archiver | Proposition de vocabulaire soumise à validation le 4 septembre ; la décision est prise depuis |
+| `docs/archive/design-preview-refonte.html` | 59 Ko | 2026-09-04 | 3 fichiers | À archiver | La proposition qui a précédé le système actuel ; gardée comme trace de décision |
+| `docs/archive/design-preview-propositions.html` | 19 Ko | 2026-08-29 | 0 fichier | À archiver | Quatre formes explorées avant la refonte ; personne ne la cite |
+| `docs/archive/audit-design-post-v21.html` | 68 Ko | 2026-08-31 | 7 fichiers | À archiver | Audit de l'interface V2.1 « telle qu'elle tournait » — interface remplacée depuis. Cité par du code comme preuve d'une mesure passée |
+| `docs/archive/maquette-atelier.html` | 57 Ko | 2026-08-26 | 7 fichiers | À archiver | Maquette pré-atelier-unifié. `docs/README.md` le classe déjà « jamais d'office » |
+| `docs/archive/vocabulaire-a-fermer.md` | 18 Ko | 2026-09-06 | 2 fichiers | À archiver | Proposition de vocabulaire soumise à validation le 4 septembre ; la décision est prise depuis |
 | `docs/etiquettes-livrees.md` | 11 Ko | 2026-09-01 | 5 fichiers | Vivant | Catalogue des 70 étiquettes de champs livrées avec l'atelier |
 
 ### Le PRD et ses annexes
@@ -163,75 +163,75 @@ compté ici.)*
 | `docs/releve-pixel-engine.md` | 23 Ko | 2026-09-12 | 1 fichier | Vivant | Ce qui a été mesuré chez le fournisseur commun de SpriteCook |
 | `docs/releve-usage.md` | 29 Ko | 2026-09-03 | 14 fichiers | Vivant | Ce qui n'est pas encore cadré ni planifié |
 | `docs/releve-au4-outils.md` | 21 Ko | 2026-09-12 | 1 fichier | Vivant | Inventaire des accès conservés pour AU4, daté du 12 septembre |
-| `docs/releve-fournisseurs.md` | 25 Ko | 2026-08-31 | 12 fichiers | Périmé | Recommande Cloudflare comme fournisseur principal ; retiré par l'auteur le 8 septembre |
+| `docs/archive/releve-fournisseurs.md` | 25 Ko | 2026-08-31 | 12 fichiers | Périmé | Recommande Cloudflare comme fournisseur principal ; retiré par l'auteur le 8 septembre |
 | `docs/revue-conformite-carnet-2026-09-11.md` | 49 Ko | 2026-09-12 | 4 fichiers | Vivant | Écarts maquettes / code du carnet |
 | `docs/revue-ux-complete-2026-09-12.md` | 36 Ko | 2026-09-12 | 3 fichiers | Vivant | Comparaison prototype / interface réelle / anciennes planches |
 | `docs/releves/` (10 fichiers dont un README) | 762 Ko | 2026-09-13 | 8 fichiers | Vivant | Notes datées mesurant le produit tel qu'il est, sans opinion |
 | `docs/remarques.md` + `docs/remarques/` (22 fichiers) | 30 Ko + 364 Ko | 2026-09-04 | 6 + 12 fichiers | Vivant | Journal de remarques d'usage. Absent de l'index `docs/README.md` — à y ajouter |
-| `docs/v21-arbitrages.md` | 49 Ko | 2026-08-31 | 16 fichiers | À archiver | Arbitrages d'une version (V2.1) entièrement tenue ; ne fait foi sur rien par construction |
-| `docs/questions-du-lot-U.md` | 17 Ko | 2026-09-01 | 4 fichiers | À archiver | Questions ouvertes du lot U, clos depuis et repris par l'usage |
-| `docs/vignettes-vues.md` | 31 Ko | 2026-09-01 | 3 fichiers | Périmé | Consignes pour un écran de `maquettes-v2.1/` qui n'existe plus |
+| `docs/archive/v21-arbitrages.md` | 49 Ko | 2026-08-31 | 16 fichiers | À archiver | Arbitrages d'une version (V2.1) entièrement tenue ; ne fait foi sur rien par construction |
+| `docs/archive/questions-du-lot-U.md` | 17 Ko | 2026-09-01 | 4 fichiers | À archiver | Questions ouvertes du lot U, clos depuis et repris par l'usage |
+| `docs/archive/vignettes-vues.md` | 31 Ko | 2026-09-01 | 3 fichiers | Périmé | Consignes pour un écran de `maquettes-v2.1/` qui n'existe plus |
 
 ### Les maquettes et les pistes
 
 | Document | Poids | Dernière touche | Cité par | Verdict | Pourquoi |
 |---|---|---|---|---|---|
 | `docs/maquettes-atelier-unifie/` (19 fichiers) | 544 Ko | 2026-09-12 | 4 fichiers | Vivant | Le design actuel, en proposition — toile, retouche, livraison |
-| `docs/maquettes-v2.1/` (37 fichiers) | 2,5 Mo | 2026-09-03 | 28 fichiers | À archiver | Interface remplacée deux fois depuis (carnet, puis atelier unifié). Encore citée pour les critères déjà tenus |
-| `docs/maquettes-v2.4/` (1 fichier) | 42 Ko | 2026-09-04 | 4 fichiers | À archiver | L'écran qu'elle proposait est construit depuis le 4 septembre — voir contradictions |
-| `docs/maquettes-v3/` (1 fichier) | 2,6 Mo | 2026-09-03 | 6 fichiers | À archiver | Interface V3, remplacée par le carnet puis l'atelier unifié |
-| `docs/pistes-2026-09-04/` (65 fichiers) | 7,5 Mo | 2026-09-06 | 57 fichiers | À archiver | Les planches d'exploration devenues la V4 (le carnet). Le carnet livré fait foi ; ce dossier garde la trace de l'origine |
-| `docs/diagrams/` (6 fichiers) | 1,0 Mo | 2026-09-03 | 1 fichier | À archiver | Deux schémas Excalidraw. `docs/README.md` le classe déjà « jamais d'office » |
-| `docs/analyse pre-v3/` (1 fichier) | 98 Ko | 2026-09-03 | 0 fichier | À archiver | Audit pré-V3, non cité, absent de l'index |
+| `docs/archive/maquettes-v2.1/` (37 fichiers) | 2,5 Mo | 2026-09-03 | 28 fichiers | À archiver | Interface remplacée deux fois depuis (carnet, puis atelier unifié). Encore citée pour les critères déjà tenus |
+| `docs/archive/maquettes-v2.4/` (1 fichier) | 42 Ko | 2026-09-04 | 4 fichiers | À archiver | L'écran qu'elle proposait est construit depuis le 4 septembre — voir contradictions |
+| `docs/archive/maquettes-v3/` (1 fichier) | 2,6 Mo | 2026-09-03 | 6 fichiers | À archiver | Interface V3, remplacée par le carnet puis l'atelier unifié |
+| `docs/archive/pistes-2026-09-04/` (65 fichiers) | 7,5 Mo | 2026-09-06 | 57 fichiers | À archiver | Les planches d'exploration devenues la V4 (le carnet). Le carnet livré fait foi ; ce dossier garde la trace de l'origine |
+| `docs/archive/diagrams/` (6 fichiers) | 1,0 Mo | 2026-09-03 | 1 fichier | À archiver | Deux schémas Excalidraw. `docs/README.md` le classe déjà « jamais d'office » |
+| `docs/archive/analyse-pre-v3/` (1 fichier) | 98 Ko | 2026-09-03 | 0 fichier | À archiver | Audit pré-V3, non cité, absent de l'index |
 
 ### Les recherches latérales
 
 | Document | Poids | Dernière touche | Cité par | Verdict | Pourquoi |
 |---|---|---|---|---|---|
-| `docs/recherche-llm-local/` (6 fichiers) | 1,4 Mo | 2026-09-03 | 3 fichiers | À archiver | Étude de faisabilité conclue : la machine peut, le résultat n'est pas assez bon. Rien à construire dessus |
-| `docs/recherche-video-locale/` (15 fichiers) | 24,1 Mo | 2026-09-12 | 7 fichiers | À archiver | Le dossier le plus lourd de `docs/` — bancs d'images et de vidéos. Ses conclusions sont déjà remontées dans `docs/releve-pixel-engine.md` |
+| `docs/archive/recherche-llm-local/` (6 fichiers) | 1,4 Mo | 2026-09-03 | 3 fichiers | À archiver | Étude de faisabilité conclue : la machine peut, le résultat n'est pas assez bon. Rien à construire dessus |
+| `docs/archive/recherche-video-locale/` (15 fichiers) | 24,1 Mo | 2026-09-12 | 7 fichiers | À archiver | Le dossier le plus lourd de `docs/` — bancs d'images et de vidéos. Ses conclusions sont déjà remontées dans `docs/releve-pixel-engine.md` |
 
 ## Ce qu'on propose de déplacer
 
-- `docs/PLAN-carnet-affectation.md` → `docs/archive/` — affectation d'un plan dont l'exécution
+- `docs/archive/PLAN-carnet-affectation.md` → `docs/archive/` — affectation d'un plan dont l'exécution
   active s'est arrêtée le 11 septembre 2026.
-- `docs/v3-animation.md` → `docs/archive/` — détail des trois bancs de la V3 ; `docs/bilan-v3.md`
+- `docs/archive/v3-animation.md` → `docs/archive/` — détail des trois bancs de la V3 ; `docs/bilan-v3.md`
   en donne les conclusions et suffit dans presque tous les cas.
-- `docs/design-preview-refonte.html` → `docs/archive/` — proposition remplacée par
+- `docs/archive/design-preview-refonte.html` → `docs/archive/` — proposition remplacée par
   `docs/design-preview.html`, gardée comme trace de la décision qui l'a suivie.
-- `docs/design-preview-propositions.html` → `docs/archive/` — quatre formes explorées avant la
+- `docs/archive/design-preview-propositions.html` → `docs/archive/` — quatre formes explorées avant la
   refonte, citées par aucun document.
-- `docs/audit-design-post-v21.html` → `docs/archive/` — audit d'une interface remplacée ; garder
+- `docs/archive/audit-design-post-v21.html` → `docs/archive/` — audit d'une interface remplacée ; garder
   la trace pour les trois fichiers de code qui la citent encore comme preuve d'une mesure.
-- `docs/maquette-atelier.html` → `docs/archive/` — maquette pré-atelier-unifié, déjà classée
+- `docs/archive/maquette-atelier.html` → `docs/archive/` — maquette pré-atelier-unifié, déjà classée
   « jamais d'office » par `docs/README.md`.
-- `docs/vocabulaire-a-fermer.md` → `docs/archive/` — proposition soumise le 4 septembre ; la
+- `docs/archive/vocabulaire-a-fermer.md` → `docs/archive/` — proposition soumise le 4 septembre ; la
   décision de vocabulaire est prise depuis.
-- `docs/v21-arbitrages.md` → `docs/archive/` — arbitrages d'une version entièrement tenue.
-- `docs/questions-du-lot-U.md` → `docs/archive/` — questions d'un lot clos, reprises par l'usage
+- `docs/archive/v21-arbitrages.md` → `docs/archive/` — arbitrages d'une version entièrement tenue.
+- `docs/archive/questions-du-lot-U.md` → `docs/archive/` — questions d'un lot clos, reprises par l'usage
   depuis.
-- `docs/releve-fournisseurs.md` → `docs/archive/` — recommande un fournisseur retiré par
+- `docs/archive/releve-fournisseurs.md` → `docs/archive/` — recommande un fournisseur retiré par
   l'auteur le 8 septembre 2026.
-- `docs/vignettes-vues.md` → `docs/archive/` — consignes pour un écran de `maquettes-v2.1/` qui
+- `docs/archive/vignettes-vues.md` → `docs/archive/` — consignes pour un écran de `maquettes-v2.1/` qui
   n'existe plus.
-- `docs/maquettes-v2.1/` → `docs/archive/maquettes-v2.1/` — interface remplacée deux fois ; 2,5 Mo.
-- `docs/maquettes-v2.4/` → `docs/archive/maquettes-v2.4/` — écran déjà construit depuis le
+- `docs/archive/maquettes-v2.1/` → `docs/archive/maquettes-v2.1/` — interface remplacée deux fois ; 2,5 Mo.
+- `docs/archive/maquettes-v2.4/` → `docs/archive/maquettes-v2.4/` — écran déjà construit depuis le
   4 septembre.
-- `docs/maquettes-v3/` → `docs/archive/maquettes-v3/` — interface remplacée deux fois ; 2,6 Mo.
-- `docs/pistes-2026-09-04/` → `docs/archive/pistes-2026-09-04/` — source devenue le carnet livré ;
+- `docs/archive/maquettes-v3/` → `docs/archive/maquettes-v3/` — interface remplacée deux fois ; 2,6 Mo.
+- `docs/archive/pistes-2026-09-04/` → `docs/archive/pistes-2026-09-04/` — source devenue le carnet livré ;
   7,5 Mo, le second dossier le plus lourd de `docs/`.
-- `docs/diagrams/` → `docs/archive/diagrams/` — déjà « jamais d'office » selon `docs/README.md` ;
+- `docs/archive/diagrams/` → `docs/archive/diagrams/` — déjà « jamais d'office » selon `docs/README.md` ;
   1,0 Mo.
-- `docs/analyse pre-v3/` → `docs/archive/analyse-pre-v3/` — non cité, absent de l'index ; 98 Ko.
-- `docs/recherche-llm-local/` → `docs/archive/recherche-llm-local/` — étude conclue, rien à
+- `docs/archive/analyse-pre-v3/` → `docs/archive/analyse-pre-v3/` — non cité, absent de l'index ; 98 Ko.
+- `docs/archive/recherche-llm-local/` → `docs/archive/recherche-llm-local/` — étude conclue, rien à
   construire dessus ; 1,4 Mo.
-- `docs/recherche-video-locale/` → `docs/archive/recherche-video-locale/` — conclusions déjà
+- `docs/archive/recherche-video-locale/` → `docs/archive/recherche-video-locale/` — conclusions déjà
   reprises dans `docs/releve-pixel-engine.md` ; 24,1 Mo, le dossier le plus lourd du dépôt.
-- `docs/status-atelier-unifie/` → à supprimer plutôt qu'à archiver — instantané d'un outil de
+- `docs/archive/status-atelier-unifie/` → à supprimer plutôt qu'à archiver — instantané d'un outil de
   tableau de bord, généré avant AU18-AU20, sans lien depuis aucun document. Rien à en garder
   puisque `docs/status/etat.md` porte déjà le vrai journal.
 
 **Deux corrections de texte, pas des déplacements** : la phrase de `docs/README.md` sur
-`docs/maquettes-v2.4/` (« attend l'arbitrage ») est fausse depuis le 4 septembre et mérite d'être
+`docs/archive/maquettes-v2.4/` (« attend l'arbitrage ») est fausse depuis le 4 septembre et mérite d'être
 réécrite ; `docs/README.md` ne mentionne nulle part `docs/remarques.md` ni `docs/remarques/`, à
 ajouter à l'index.

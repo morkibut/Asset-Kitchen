@@ -121,7 +121,7 @@ pour mot, que *« c'est la case qui fait que deux frames d'un même personnage s
 lieu de flotter »*.
 
 C'est très exactement le défaut que le banc d'animation avait mesuré sans savoir d'où il venait
-(`docs/v3-animation.md` § *Les étapes d'une bande se recadrent ensemble*). **On a maintenant la
+(`docs/archive/v3-animation.md` § *Les étapes d'une bande se recadrent ensemble*). **On a maintenant la
 ligne.** Le code connaît d'ailleurs la dérive *horizontale* — un commentaire la décrit et offre
 un décalage manuel pour la rattraper — mais **pas la dérive d'échelle**, qui est la fatale.
 

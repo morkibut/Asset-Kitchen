@@ -3,7 +3,7 @@
  * droite) quand on ouvre « Les personnages », « Les objets », « Les décors » ou
  * « L'interface » depuis le carnet.
  *
- * `docs/pistes-2026-09-04/carnet/Famille.dc.html`. Le carnet (300px, à gauche)
+ * `docs/archive/pistes-2026-09-04/carnet/Famille.dc.html`. Le carnet (300px, à gauche)
  * et ses cibles de dépôt propres appartiennent à `Carnet.tsx` — branché par
  * ailleurs — et ne sont **pas** dans ce fichier ; le volet (380px, à droite)
  * l'est, lui, parce que c'est ici qu'on sait ce qui est choisi.
@@ -152,7 +152,7 @@ function Onglet({
 
 /** La vignette d'un sujet — un cadre `bg-pourtour`, une image en `lazy` par
  *  dessus, ou rien quand `vignette` est `null` : **jamais l'image entière**,
- *  seulement la réduite (`docs/audit-design-post-v21.html` défaut n° 06). */
+ *  seulement la réduite (`docs/archive/audit-design-post-v21.html` défaut n° 06). */
 function Vignette({
   sujet,
   cote,

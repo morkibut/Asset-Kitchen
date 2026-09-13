@@ -10,7 +10,7 @@ rien ; deux images côte à côte montrent tout.
 
 ## La règle que ce script respecte
 
-`docs/vignettes-vues.md` la pose pour les dix-sept vignettes déjà là : **même
+`docs/archive/vignettes-vues.md` la pose pour les dix-sept vignettes déjà là : **même
 sujet, même palette, même cadrage — seule la question posée change d'une image à
 l'autre**. Sans quoi on ne compare plus le style, on compare deux dessins.
 

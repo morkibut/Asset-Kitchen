@@ -2,7 +2,7 @@
 """Les critères d'acceptation de E0 — la dette du chantier des maquettes.
 
 E0 ne porte aucune user story : elle solde trois choses fausses que le chantier
-de `docs/maquettes-v2.1/` a trouvées en lisant le code pour mesurer. Deux
+de `docs/archive/maquettes-v2.1/` a trouvées en lisant le code pour mesurer. Deux
 vivent dans l'interface et se vérifient là-bas ; la troisième est ici.
 
 **Ce fichier existe parce qu'un commentaire corrigé ne se garde pas tout seul.**

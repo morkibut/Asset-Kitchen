@@ -55,7 +55,7 @@ from atelier.services.evenements import Diffusion
 # on code. Il vaut désormais la totalité — *une séance de code entière ne fait
 # plus bouger le total en argent*, et c'est le critère qui juge la tranche.
 #
-# **Le nom est celui du seul modèle gratuit mesuré** (`docs/releve-fournisseurs.md`,
+# **Le nom est celui du seul modèle gratuit mesuré** (`docs/archive/releve-fournisseurs.md`,
 # palier sans compte de Pollinations). S'il disparaissait du catalogue, l'agent
 # ne retombe pas sur le modèle le plus cher : `_connu` cherche d'abord un autre
 # gratuit — voir sa docstring.

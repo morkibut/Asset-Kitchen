@@ -2,7 +2,7 @@
  * Les emplois d'une pièce — B19. **Une pièce d'équipement, et les façons dont
  * elle sert.**
  *
- * `docs/pistes-2026-09-04/carnet/Emplois.dc.html`. C'est la surface centrale du
+ * `docs/archive/pistes-2026-09-04/carnet/Emplois.dc.html`. C'est la surface centrale du
  * genre `"piece"` de `interface/src/lieux.ts` — un genre à part de `"sujet"`,
  * et il le fallait : une pièce n'a ni pose, ni direction, ni case, et le produit
  * interdit d'en générer une image sur fond vide. Sous elle, le genre `"emploi"`

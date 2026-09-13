@@ -8,7 +8,7 @@
 > Le tableau d'état
 > reste exclusivement dans `docs/PLAN.md` ; les étapes historiques ne sont pas décochées.
 >
-> **Source** : les planches de `docs/pistes-2026-09-04/carnet/`, relevées une par une le
+> **Source** : les planches de `docs/archive/pistes-2026-09-04/carnet/`, relevées une par une le
 > 6 septembre 2026 — elles étaient 43 ce jour-là. Leur autorité décrivait la refonte du
 > 6 septembre. **Le 11 septembre l'auteur autorise des maquettes différentes pour améliorer
 > l'UX**, en conservant le design décidé. L'usage fait foi dans le PRD actuel.
@@ -1060,13 +1060,13 @@ l'écran dans `interface/src/composants/Retouche.tsx::ReglagesDuContour` et
   gratuit) — décision prise pour la fluidité, documentée ici plutôt que devinée en relisant le
   diff.
 
-⚠️ **Nettoyer, le compte tranché.** La planche (`docs/pistes-2026-09-04/carnet/
+⚠️ **Nettoyer, le compte tranché.** La planche (`docs/archive/pistes-2026-09-04/carnet/
 atelier-nettoyer.dc.html`) se contredisait trois fois sur le compte des moteurs : douze en
 préambule (c'est en fait le compte des *réglages*, douze aussi, pas celui des moteurs), onze
 dans le réglage « méthode » (le total, existants compris), neuf dans le détail des cartes
 « Les moteurs » (`— 2 sont là, 9 restent à ajouter`). **Le compte du détail a été retenu** —
 c'est le seul qui corresponde à des cartes réellement décrites une par une plutôt qu'à une
-phrase de synthèse, et c'est celui que `docs/PLAN-carnet-affectation.md` portait déjà.
+phrase de synthèse, et c'est celui que `docs/archive/PLAN-carnet-affectation.md` portait déjà.
 
 **Et en relisant le code avant d'écrire une ligne, deux des neuf se sont révélées déjà
 posées.** « Médiane des couleurs » est `Bords.grain_min` et « Décrocher les pixels de coin »
@@ -2744,7 +2744,7 @@ lui, deux fiches écrites en parallèle se contredisent sans que personne ne le 
 - **L'auteur travaille dans le dépôt pendant la séance.** Avant de diagnostiquer un écart,
   vérifier qu'il ne vient pas de son édition en cours.
 
-**Quel modèle sur quelle tranche** : `docs/PLAN-carnet-affectation.md` classe les tranches —
+**Quel modèle sur quelle tranche** : `docs/archive/PLAN-carnet-affectation.md` classe les tranches —
 les 29 de `D0` à `B27`, les 9 de `C1` à `C9`, et les 6 de `D1` à `D6` — de `[VERY-EASY]` à
 `[VERY-HARD]`, avec les
 morceaux qui montent ou descendent d'un cran.

@@ -2,7 +2,7 @@
 """B18 · Détourer — les cinq moteurs neufs, prouvés sur de vraies images.
 
 Cinq réglages manquaient à l'atelier Détourer (`docs/PLAN-carnet.md` § B18,
-`docs/pistes-2026-09-04/carnet/atelier-detourer.dc.html`) :
+`docs/archive/pistes-2026-09-04/carnet/atelier-detourer.dc.html`) :
 
 1. **la couleur déclarée du jeu** — `detourer_bord(..., cible=...)` ;
 2. **la teinte plutôt que la valeur** — `detourer_bord`/`detourer_couleur(...,

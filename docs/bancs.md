@@ -34,7 +34,7 @@ py essais/essai_pollinations.py      l'adaptateur du fournisseur sans clé, cont
 py essais/maquette_v3.py             les images de la maquette de la V3, refaites depuis un clip
                                      déjà payé. GRATUIT — rien ne part chez un fournisseur. Il
                                      écrit ses planches dans
-                                     `docs/maquettes-v3/01-du-sprite-a-la-bande.html`, qui reste
+                                     `docs/archive/maquettes-v3/01-du-sprite-a-la-bande.html`, qui reste
                                      un fichier qu'on ouvre d'un double-clic. La page se fige
                                      par `?fige` ou la barre d'espace : sans ça elle ne se
                                      laisse pas photographier (`docs/PIEGES.md`)

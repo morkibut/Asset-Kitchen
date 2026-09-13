@@ -1,7 +1,7 @@
 /**
  * L'ouverture — sur quel jeu travaille-t-on (B4).
  *
- * `docs/pistes-2026-09-04/carnet/Ouverture.dc.html`. Le premier écran de
+ * `docs/archive/pistes-2026-09-04/carnet/Ouverture.dc.html`. Le premier écran de
  * l'atelier, et **le seul où aucun jeu n'est ouvert** : une carte par jeu, ce
  * qu'il contient, ce qu'il a coûté, quand on l'a touché. Comme le parcours de
  * création, elle prend la fenêtre entière — le carnet n'a rien à montrer tant

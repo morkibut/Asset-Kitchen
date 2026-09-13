@@ -262,8 +262,8 @@ dans `docs/tranches/<code>.md`.
 
 ## La V2.1 — la refonte de l'interface
 
-*Écrites le 31 août 2026, à partir du dossier `docs/maquettes-v2.1/`. Ce qui a dû être
-arbitré en les écrivant vit dans `docs/v21-arbitrages.md`.*
+*Écrites le 31 août 2026, à partir du dossier `docs/archive/maquettes-v2.1/`. Ce qui a dû être
+arbitré en les écrivant vit dans `docs/archive/v21-arbitrages.md`.*
 
 ### Trois lieux au lieu de sept surfaces
 
@@ -506,7 +506,7 @@ faire est **à relever avant de construire** — voir `docs/PLAN.md`, § F0.*
 
 ### ~~Un fournisseur qui répond en deux temps~~
 
-*Sans objet depuis le relevé du 31 août 2026 (`docs/releve-fournisseurs.md`) : aucun des
+*Sans objet depuis le relevé du 31 août 2026 (`docs/archive/releve-fournisseurs.md`) : aucun des
 fournisseurs retenus ne répond en deux temps. Les deux stories sont gardées telles quelles —
 elles redeviendront vraies le jour où un fournisseur de cette forme entrera — et **aucune
 tranche ne les porte**.*

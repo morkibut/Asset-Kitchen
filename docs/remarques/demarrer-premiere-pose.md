@@ -51,7 +51,7 @@ code se contente de la sélectionner dans la colonne de droite.
 - `interface/src/composants/Guide.tsx:236-240` — « le tonneau entre dans la liste sur-le-champ,
   et son établi s'ouvre »
 - `interface/src/composants/Codex.tsx:566-575` — le code appelle `onChoisir`, jamais `onOuvrir`
-- `docs/maquettes-v2.1/05-codex.html:561` et `31-le-premier-lancement.html:485` — même promesse
+- `docs/archive/maquettes-v2.1/05-codex.html:561` et `31-le-premier-lancement.html:485` — même promesse
 - `docs/user-stories.md:287` — **US-189** demande qu'un clic sur une case vide remplisse le
   prompt. Elle est **comptée comme livrée**, et le geste n'existe pas.
 
@@ -200,7 +200,7 @@ isolée avait fait perdre.
 
 *Pourquoi cette addition était nécessaire* : une planche n'achète pas seulement un prix, elle
 achète la cohérence — *« les cases sortent à la même échelle et dans le même style, puisqu'elles
-ont été peintes ensemble »* (`docs/maquettes-v2.1/08-planche-de-pose.html:938`). Casser la
+ont été peintes ensemble »* (`docs/archive/maquettes-v2.1/08-planche-de-pose.html:938`). Casser la
 planche en 1 + 5 sans référence aurait donné une première image qui ne ressemble pas aux cinq
 autres, c'est-à-dire le défaut exact que l'écran de calibrage existe pour rattraper.
 
@@ -212,7 +212,7 @@ rejeter et tout repayer au prix plein — le seul refus automatique du produit.
 **Les pistes B et C sont retenues — 3 septembre 2026.**
 
 **B — la ligne d'une pose vide devient elle-même le bouton.** Elle n'a demandé aucun arbitrage :
-c'est littéralement ce que dessine `docs/maquettes-v2.1/02-etabli-personnage.html` et ce que
+c'est littéralement ce que dessine `docs/archive/maquettes-v2.1/02-etabli-personnage.html` et ce que
 demande **US-189**, comptée comme livrée alors que le geste n'existe pas. La cible passe d'un
 lien de 10 px large d'environ 70 pixels à toute la largeur de la ligne, sur ses 52 px de haut.
 Le geste se borne à **la zone vide** d'une ligne : sur une ligne à moitié pleine, les vignettes

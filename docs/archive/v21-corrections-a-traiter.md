@@ -1,7 +1,7 @@
 # V2.1 — les corrections à traiter dans le dossier des maquettes
 
 > Écrit le 31 août 2026, après une relecture croisée des vingt-six fichiers de
-> `docs/maquettes-v2.1/` — les vingt-cinq maquettes et leur sommaire — confrontés
+> `docs/archive/maquettes-v2.1/` — les vingt-cinq maquettes et leur sommaire — confrontés
 > les uns aux autres, puis aux documents d'autorité du dépôt.
 >
 > **Ce document ne fait autorité sur rien, et ne tranche rien.** Il tient la
@@ -1764,8 +1764,8 @@ entre elles — et c'est précisément pourquoi ce document existe.
 ---
 
 *Écrit le 31 août 2026 · relecture croisée des vingt-six fichiers de
-`docs/maquettes-v2.1/`, puis confrontation à `docs/PRD.md`,
-`docs/ARCHITECTURE.md`, `docs/DESIGN.md` et `docs/v21-arbitrages.md`.
+`docs/archive/maquettes-v2.1/`, puis confrontation à `docs/PRD.md`,
+`docs/ARCHITECTURE.md`, `docs/DESIGN.md` et `docs/archive/v21-arbitrages.md`.
 Aucune maquette n'a été modifiée en écrivant ce document.*
 
 *Traité le même jour, dans l'ordre du document, section par section. **Les

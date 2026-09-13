@@ -34,7 +34,7 @@ vide de sens :
   choisit `premier_type_de`, pas un identifiant de type recopié à la main.
 - **Une complétude étalée** — 90 sujets à 6/6, 15 à 5/6, 25 à 3/6, 60 à 1/6,
   70 à 0/6 — dans l'esprit des proportions de la planche
-  (`docs/pistes-2026-09-04/carnet/Famille.dc.html` : 31 incomplets sur 54,
+  (`docs/archive/pistes-2026-09-04/carnet/Famille.dc.html` : 31 incomplets sur 54,
   57 % ; ici 170 sur 260, 65 % — un peu plus creusé, pour que le montage
   tienne sous 90 secondes malgré le nombre d'images : voir le commentaire de
   `COMPTES_DE_POSES`).

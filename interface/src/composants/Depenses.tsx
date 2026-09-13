@@ -11,14 +11,14 @@
 //
 // **Trois colonnes, `300px · 1fr · 380px`.** Ranger à gauche, lire au milieu,
 // détailler à droite — la forme du carnet et de la galerie, réemployée pour ce
-// qu'elle sait faire (`docs/maquettes-v2.1/30-les-depenses.html`).
+// qu'elle sait faire (`docs/archive/maquettes-v2.1/30-les-depenses.html`).
 //
 // **Ce n'est pas une grille d'assets, et une seule chose le garantit** : aucune
 // vignette dans la liste. Une par ligne ferait de cet écran une seconde galerie,
 // et la galerie fait déjà ça mieux — l'image est à droite, pour l'appel qu'on a
 // choisi. Les filtres, eux, y sont : ils portent sur des **appels**, pas sur des
 // images, et chacun répond à une question qu'on se pose vraiment devant une
-// facture. C'est l'arbitrage A-24 de `docs/v21-arbitrages.md`, pris en
+// facture. C'est l'arbitrage A-24 de `docs/archive/v21-arbitrages.md`, pris en
 // construisant : le document du produit disait le contraire, et c'est lui qui a
 // été corrigé.
 //

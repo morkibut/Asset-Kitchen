@@ -49,7 +49,7 @@ from socle_essais import PROJET, fenetre_commune, prelever  # noqa: E402
 
 CLIP = RACINE / "resultats_video/seed20mini-repos-marche/clip1"
 ENTREE = RACINE / "resultats_video/entree-480x480.png"
-PAGE = DEPOT / "docs/maquettes-v3/01-du-sprite-a-la-bande.html"
+PAGE = DEPOT / "docs/archive/maquettes-v3/01-du-sprite-a-la-bande.html"
 
 # La tolérance du détourage par le bord, celle du montage des essais. C'est le
 # seul réglage de la recette que la page ne peut pas rejouer : il travaille sur

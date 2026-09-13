@@ -1,7 +1,7 @@
 /**
  * Le carnet — la colonne de gauche, 300 px, **jamais recouverte**.
  *
- * `docs/pistes-2026-09-04/carnet/Navigation.dc.html`. Il remplace les trois
+ * `docs/archive/pistes-2026-09-04/carnet/Navigation.dc.html`. Il remplace les trois
  * onglets : le sommaire du jeu, toujours à l'écran, même pendant une
  * génération. On n'est jamais à plus de deux clics d'où que ce soit, et jamais
  * coincé.

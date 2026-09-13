@@ -260,12 +260,12 @@ l'explication du calibrage y dort depuis le 30 août 2026 sans qu'aucun écran n
 
 **Ce que ces deux tranches ne changent pas.** Ni ce que la fiche contient, ni ce que le
 calibrage calcule ou écrit. Ces deux questions restent tranchées par leurs premiers dessins —
-`docs/maquettes-v2.1/07bis-fiche-entite.html` et `docs/maquettes-v2.1/20-outil-calibrage.html`,
+`docs/archive/maquettes-v2.1/07bis-fiche-entite.html` et `docs/archive/maquettes-v2.1/20-outil-calibrage.html`,
 qui restent vrais. **Ce qui change est comment ces écrans se lisent.** Aucun appel payant, aucun
 changement de ce qui part au fournisseur, aucune donnée nouvelle sur le disque.
 
-**Les maquettes sont écrites et validées** — `docs/maquettes-v2.1/07ter-la-fiche-repensee.html`
-et `docs/maquettes-v2.1/20bis-le-calibrage-repense.html`. Elles portent l'écran dessiné aux
+**Les maquettes sont écrites et validées** — `docs/archive/maquettes-v2.1/07ter-la-fiche-repensee.html`
+et `docs/archive/maquettes-v2.1/20bis-le-calibrage-repense.html`. Elles portent l'écran dessiné aux
 polices et aux couleurs du produit, ses annotations numérotées, et **le texte complet des dix
 entrées de recueil à écrire**, prêtes à poser.
 
@@ -1288,7 +1288,7 @@ rendent donc toutes le calque d'avant la tranche, au pixel près, ce que le banc
 *Aucune US neuve — une maquette n'a pas d'utilisateur qui la demande ; c'est le cas d'`E0`, `F0` et
 `A0`*
 
-> **Elle est dans `docs/maquettes-v2.4/01-le-coin-du-calque.html`**, et elle s'ouvre d'un
+> **Elle est dans `docs/archive/maquettes-v2.4/01-le-coin-du-calque.html`**, et elle s'ouvre d'un
 > double-clic. **Elle attend l'arbitrage de l'auteur** : ce qu'elle tranche fait foi pour la
 > tranche qui bâtira l'écran, et cette tranche-là ne s'écrit pas avant.
 
@@ -1331,7 +1331,7 @@ organisé cette partie du workflow »*.
 
 **Critères d'acceptation**
 
-- [x] La maquette existe dans `docs/maquettes-v2.4/`, ouvrable seule, sans serveur
+- [x] La maquette existe dans `docs/archive/maquettes-v2.4/`, ouvrable seule, sans serveur
 - [x] Elle montre le parcours entier — entrer, choisir, caler, grossir, retoucher, fabriquer — et
       dit d'où l'on y entre
 - [x] Elle tranche ce que devient la carte d'un vêtement, et l'écrit
@@ -2079,7 +2079,7 @@ le même jour par six essais neufs — **48 appels de planche et 18 clips, 2,29 
 **recadrée le 3 septembre 2026 sur demande de l'auteur**. Le recadrage ne change pas le chemin,
 il change le périmètre : **la version ne fait plus qu'une chose, animer.** Tout ce qui suit
 s'appuie sur `docs/bilan-v3.md` pour les planches, sur `essais/verdict-essais.json` pour la
-refonte, et sur `docs/recherche-video-locale/` pour le moteur de la maison.*
+refonte, et sur `docs/archive/recherche-video-locale/` pour le moteur de la maison.*
 
 **Ce que la V3 fait, en une phrase.** On part d'une image du personnage, on demande une petite
 vidéo — sur la carte graphique de la maison, ou chez un fournisseur quand on n'a pas la patience
@@ -2499,7 +2499,7 @@ seconde, soit au **jeton vidéo** — hauteur × largeur × images par seconde �
 relit donc chez le fournisseur au moment de proposer, jamais dans le code, et **la formule
 s'affiche à côté du montant** : un prix sans sa formule n'est pas vérifiable.
 
-**L'écran, et il est déjà dessiné.** Les deux premiers moments de `docs/maquettes-v3/01-du-sprite-a-la-bande.html` :
+**L'écran, et il est déjà dessiné.** Les deux premiers moments de `docs/archive/maquettes-v3/01-du-sprite-a-la-bande.html` :
 *Commander* — l'image de départ à gauche, le mouvement au milieu, les modèles et leur prix à
 droite, le bouton qui porte le montant — et *Attendre* — le clip en cours, ce qu'il a coûté, et
 la certitude que rien ne se perd si l'atelier ferme.
@@ -2589,7 +2589,7 @@ transitions nommées et un retour à la même pose neutre entre deux actions, re
 les tirages** — c'est la différence de nature avec la planche.
 
 **L'écran existe déjà en maquette, et elle est vivante** :
-`docs/maquettes-v3/01-du-sprite-a-la-bande.html`, troisième moment. La bande de droite y est
+`docs/archive/maquettes-v3/01-du-sprite-a-la-bande.html`, troisième moment. La bande de droite y est
 calculée pour de vrai par la chaîne de l'atelier, et changer un réglage la refait sous les yeux.
 **C'est elle qui fait foi sur la disposition** ; ce qui suit dit pourquoi chaque zone existe.
 
@@ -2733,7 +2733,7 @@ matrice, que cette échelle devient la question.
 **Ce qui est mesuré, et sur quoi la tranche s'appuie.** RTX 3080 Laptop, 8 Go, bridée à 100 W.
 Wan 2.2 image→vidéo, quatorze milliards de paramètres en version compressée, plus un greffon
 entraîné sur des sprites et un greffon d'accélération. Tout sous licence Apache 2.0 — utilisable
-dans un jeu vendu depuis la France. Le détail vit dans `docs/recherche-video-locale/`.
+dans un jeu vendu depuis la France. Le détail vit dans `docs/archive/recherche-video-locale/`.
 
 | Ce qui est mesuré | Le local | Le clip payé qui a marché |
 |---|---|---|

@@ -211,7 +211,7 @@
         "http.server",
         "8933",
         "--directory",
-        "docs/pistes-2026-09-04/carnet"
+        "docs/archive/pistes-2026-09-04/carnet"
       ],
       "port": 8933
     },

@@ -2,7 +2,7 @@
 """`B18` · l'atelier Découpe — le troisième mode, « les gouttières ».
 
 Un troisième moteur pour la fabrique « Découper » (`docs/PLAN-carnet.md` § B18,
-`docs/pistes-2026-09-04/carnet/atelier-decoupe.dc.html`) : ni « zones opaques »
+`docs/archive/pistes-2026-09-04/carnet/atelier-decoupe.dc.html`) : ni « zones opaques »
 (qui a besoin d'un alpha déjà détouré) ni « grille fixe » (qui coupe en parts
 égales sans rien regarder) ne savent lire une feuille opaque de bord à bord —
 le cas le plus courant d'une planche rendue par un modèle. « Les gouttières »

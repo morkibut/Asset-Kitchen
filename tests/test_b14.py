@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """B14 — les règles du jeu : la vue et le rendu ne se disent plus deux fois.
 
-**Planche** : `docs/pistes-2026-09-04/carnet/Nouveau-jeu.dc.html`, bloquée par
+**Planche** : `docs/archive/pistes-2026-09-04/carnet/Nouveau-jeu.dc.html`, bloquée par
 `B0`.
 
 Le parcours en quatre étapes est un écran ; ce fichier ne mesure que ce qui le

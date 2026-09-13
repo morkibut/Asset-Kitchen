@@ -1,6 +1,6 @@
 // Le montage — l'écran où un clip payé devient plusieurs bandes (A10, V3).
 //
-// C'est le troisième moment de `docs/maquettes-v3/01-du-sprite-a-la-bande.html`,
+// C'est le troisième moment de `docs/archive/maquettes-v3/01-du-sprite-a-la-bande.html`,
 // et **le cœur de la version**. Tout le reste amène ici : `A6` écrit le
 // mouvement, `A9` commande le clip et l'attend, `A2` sait recadrer plusieurs
 // images sur une seule fenêtre. Cet écran-ci est celui qui rend le clip utile.

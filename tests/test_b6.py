@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de B6 — la barre.
 
-**Planches** : `docs/pistes-2026-09-04/carnet/Barre.dc.html`,
+**Planches** : `docs/archive/pistes-2026-09-04/carnet/Barre.dc.html`,
 `Navigation.dc.html`, `Parcours.dc.html`.
 
 Cinq critères, et les cinq portent sur `GET /api/actions` — parce que c'est là

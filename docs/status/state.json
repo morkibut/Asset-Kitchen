@@ -3625,7 +3625,7 @@
       }
     ],
     "sources": [
-      "claude-mastery (docs/PLAN.md, docs/PLAN-atelier-unifie-affectation.md, docs/PLAN-atelier-unifie.md, docs/PLAN-carnet-affectation.md, docs/PLAN-carnet.md)"
+      "claude-mastery (docs/PLAN.md, docs/PLAN-atelier-unifie-affectation.md, docs/PLAN-atelier-unifie.md, docs/archive/PLAN-carnet-affectation.md, docs/PLAN-carnet.md)"
     ],
     "artifacts": [
       {
@@ -4214,7 +4214,7 @@
     {
       "id": "n8",
       "level": "win",
-      "text": "Les treize reprises d'usage U1 à U13 sont tenues depuis le 1er septembre 2026 : quatre-vingt-sept critères, tous cochés. Ce qui a été tranché seul en les construisant attend l'auteur dans docs/questions-du-lot-U.md — quinze choix, écrits pour être lus sans rien savoir du code.",
+      "text": "Les treize reprises d'usage U1 à U13 sont tenues depuis le 1er septembre 2026 : quatre-vingt-sept critères, tous cochés. Ce qui a été tranché seul en les construisant attend l'auteur dans docs/archive/questions-du-lot-U.md — quinze choix, écrits pour être lus sans rien savoir du code.",
       "date": "2026-09-01",
       "scope": "global",
       "scope_label": null

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """B18 — Retourner : les neuf moteurs neufs, au-dessus du miroir de B1.
 
-`docs/pistes-2026-09-04/carnet/atelier-retourner.dc.html` en dessine dix — un
+`docs/archive/pistes-2026-09-04/carnet/atelier-retourner.dc.html` en dessine dix — un
 seul, le miroir gauche-droite, était livré par `B1`. Les neuf autres :
 
     haut-bas, quart de tour à droite, quart de tour à gauche, demi-tour,

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ce que la barre propose — **la liste des outils, et rien qui la double** (B6).
 
-`docs/pistes-2026-09-04/carnet/Barre.dc.html` porte la promesse en trois mots :
+`docs/archive/pistes-2026-09-04/carnet/Barre.dc.html` porte la promesse en trois mots :
 *« La liste se remplit toute seule. »* Une action ajoutée au serveur paraît dans
 la barre sans qu'on dessine un bouton, parce que la liste servie ici **est** la
 liste des outils MCP — la même que celle de l'agent qui code le jeu, lue au même

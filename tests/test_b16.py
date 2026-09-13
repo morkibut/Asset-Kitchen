@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """B16 — les six contradictions tranchées, et le plafond qui tombe.
 
-**Planches** : `docs/pistes-2026-09-04/carnet/Retouche.dc.html` et les dix
+**Planches** : `docs/archive/pistes-2026-09-04/carnet/Retouche.dc.html` et les dix
 `atelier-*.dc.html`. Bloquée par `B0`.
 
 Cette tranche n'ajoute **aucun moteur** — c'est le périmètre de `B17` et `B18`.

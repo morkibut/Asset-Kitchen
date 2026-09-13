@@ -5,7 +5,7 @@
 celle-ci en prend deux et en fabrique une troisième. C'est ce qui la range à
 droite du trait de la barre, avec le découpage, et c'est ce qui l'a sortie de la
 recette : une place de recette ne nomme jamais un second asset
-(`docs/ARCHITECTURE.md` §4 ; `docs/v21-arbitrages.md` A-18).
+(`docs/ARCHITECTURE.md` §4 ; `docs/archive/v21-arbitrages.md` A-18).
 
 **Ce service n'appelle jamais le fournisseur, et c'est tout son intérêt.** Les
 deux images sont déjà payées ; changer le calage, le seuil ou le rectangle coûte

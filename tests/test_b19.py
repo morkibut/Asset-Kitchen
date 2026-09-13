@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """B19 — le vestiaire : la relation qui manquait entre une pièce et un porteur.
 
-**Planches** : `docs/pistes-2026-09-04/carnet/Emplois.dc.html`, `Emploi.dc.html`,
+**Planches** : `docs/archive/pistes-2026-09-04/carnet/Emplois.dc.html`, `Emploi.dc.html`,
 `Main.dc.html`. Bloquée par `B10`, tenue ; elle débloque `B20`.
 
 Avant cette tranche, une pièce d'équipement n'appartenait à personne : elle était

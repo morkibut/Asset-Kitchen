@@ -430,7 +430,7 @@ un vocabulaire d'actions figé qui vaut d'être copié.
 
 | Le fichier | Ce qu'il porte |
 |---|---|
-| `docs/v3-animation.md` | Les trois bancs, planche par planche, avec les notes de l'auteur et les tableaux complets |
+| `docs/archive/v3-animation.md` | Les trois bancs, planche par planche, avec les notes de l'auteur et les tableaux complets |
 | `docs/releve-outillage.md` | Le relevé d'outillage entier — sources, licences, ce qui est écarté et pourquoi |
 | `essais/rapport-animation.html` | Les 117 premières planches, animées, avec les boutons de notation |
 | `essais/rapport-arbitrage.html` | Les 39 planches du dernier banc, et le tableau qui se recalcule à mesure qu'on note |

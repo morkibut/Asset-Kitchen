@@ -2658,7 +2658,7 @@ demandes en tout — une à l'ouverture, une une fois la frappe posée.
 ## M2 — le coin du calque, dessiné avant d'être bâti — 4 septembre 2026
 
 **Une maquette qui ne construit rien, et c'est son critère.** Elle est là pour trancher, pas pour
-livrer : `docs/maquettes-v2.4/01-le-coin-du-calque.html` s'ouvre d'un double-clic, sans serveur,
+livrer : `docs/archive/maquettes-v2.4/01-le-coin-du-calque.html` s'ouvre d'un double-clic, sans serveur,
 et **aucun fichier de l'interface ni du serveur n'a été touché** par la tranche. Ses croquis sont
 dessinés à la main en HTML, aux couleurs et aux dimensions du produit ; rien n'y est calculé.
 

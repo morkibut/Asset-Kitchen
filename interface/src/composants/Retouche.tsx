@@ -1,7 +1,7 @@
 /**
  * La retouche — B16. **La chaîne entière, rangée dans la grammaire du carnet.**
  *
- * `docs/pistes-2026-09-04/carnet/Retouche.dc.html` et les dix
+ * `docs/archive/pistes-2026-09-04/carnet/Retouche.dc.html` et les dix
  * `atelier-*.dc.html`. Une profondeur de plus de la page d'un sujet
  * (`interface/src/lieux.ts`, genre `"tables"`), atteinte depuis une image.
  *

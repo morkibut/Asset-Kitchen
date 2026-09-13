@@ -13,7 +13,7 @@
 //
 // **L'invariant a été amendé le 1ᵉʳ septembre 2026 (U9), et il l'est aux trois
 // endroits où il vit** — ici, dans `docs/carte-du-depot.md` et dans
-// `docs/maquettes-v2.1/08bis-ecran-de-confirmation.html`. Corrigé à un seul, il
+// `docs/archive/maquettes-v2.1/08bis-ecran-de-confirmation.html`. Corrigé à un seul, il
 // serait devenu une contradiction. Il disait *sans coupure et sans résumé*, et
 // la séance a montré la limite : le texte réellement employé dans ce dépôt fait
 // plus de mille deux cents caractères, et un écran qu'on doit parcourir d'un
@@ -1117,7 +1117,7 @@ function Ligne({
  *  et il se referme. Ce n'est pas une troncature muette — c'est un pli qu'on
  *  ouvre. La phrase d'origine est réécrite aux trois endroits où elle vit : ici,
  *  dans `docs/carte-du-depot.md` et dans
- *  `docs/maquettes-v2.1/08bis-ecran-de-confirmation.html`.
+ *  `docs/archive/maquettes-v2.1/08bis-ecran-de-confirmation.html`.
  */
 const LONG = 320
 

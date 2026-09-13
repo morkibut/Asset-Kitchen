@@ -589,7 +589,7 @@ avec le moteur de la maison.** *Idée de l'auteur, 3 septembre 2026, notée dans
 
 Fabriquer une image d'asset en local n'a jamais donné de résultat gardable — c'est pour ça que
 les images passent par des modèles payants. Mais `A11` établit qu'**animer** en local marche et
-ne coûte rien (`docs/recherche-video-locale/rapport.md`). Or une machine qui sait animer un
+ne coûte rien (`docs/archive/recherche-video-locale/rapport.md`). Or une machine qui sait animer un
 sprite sait produire des images de ce sprite **sous un autre angle ou dans une autre attitude** :
 on demanderait un clip — *tourne-toi*, *meurs*, *lève le bras* —, et l'on irait y **prélever la
 case** qui convient. Un clip de dix secondes qui enchaîne plusieurs mouvements donnerait, en
@@ -611,12 +611,12 @@ et la tranche ne l'a pas tranchée : elle s'est construite sur un clip d'essai �
 sans une seconde de carte graphique. La réponse viendra de l'usage.
 
 **Et seize questions de la V2.1 restent ouvertes**, chacune avec ce qui manque pour y répondre
-et l'étape où elle se pose : `docs/v21-arbitrages.md` § B. Aucune n'empêche d'ouvrir l'étape qui
+et l'étape où elle se pose : `docs/archive/v21-arbitrages.md` § B. Aucune n'empêche d'ouvrir l'étape qui
 la porte — ce sont des questions qui se tranchent **à l'usage**, et c'est délibéré : les
 trancher d'avance, c'est décider sans mesure.
 
 **Quinze choix tranchés seuls pendant le lot U attendent l'auteur** dans
-`docs/questions-du-lot-U.md`.
+`docs/archive/questions-du-lot-U.md`.
 
 ### Les trois risques encore ouverts
 

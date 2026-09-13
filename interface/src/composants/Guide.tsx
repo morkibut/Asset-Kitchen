@@ -1,7 +1,7 @@
 /**
  * Le guide — un volet depuis `B7`, plus un écran.
  *
- * `docs/pistes-2026-09-04/carnet/Guide.dc.html`. Avant cette tranche, ouvrir
+ * `docs/archive/pistes-2026-09-04/carnet/Guide.dc.html`. Avant cette tranche, ouvrir
  * le guide recouvrait tout l'atelier et montrait les 157 entrées du corpus à
  * la file, groupées par les neuf écrans de la V1 — dont six avaient disparu
  * depuis longtemps. **Il montre maintenant ce qui concerne l'écran ouvert,

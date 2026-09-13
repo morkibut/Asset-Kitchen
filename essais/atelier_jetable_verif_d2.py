@@ -13,7 +13,7 @@ au papier du carnet, et les **dix teintes d'îlot** ont été refaites : elles
 étaient claires sur un fond presque noir, elles sont maintenant plus sombres que
 le papier, toutes les dix à 4,6 : 1 sur `--color-papier`.
 
-La planche qui fait foi est `docs/pistes-2026-09-04/carnet/Toile.dc.html`.
+La planche qui fait foi est `docs/archive/pistes-2026-09-04/carnet/Toile.dc.html`.
 
 ## Comment le lancer
 

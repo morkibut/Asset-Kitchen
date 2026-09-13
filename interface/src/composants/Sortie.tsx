@@ -1,7 +1,7 @@
 /**
  * La sortie — **un seul écran, et il dit ce qu'il va écrire avant de l'écrire**.
  *
- * `docs/pistes-2026-09-04/carnet/Sortie.dc.html`. Il remplace quatre boutons
+ * `docs/archive/pistes-2026-09-04/carnet/Sortie.dc.html`. Il remplace quatre boutons
  * posés à quatre endroits : exporter une sélection de la galerie, exporter un
  * personnage, exporter ses animations, exporter une bande. Aucun des quatre ne
  * disait quels fichiers allaient sortir, et aucun ne savait ce qu'il avait

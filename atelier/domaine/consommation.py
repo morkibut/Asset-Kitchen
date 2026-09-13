@@ -34,7 +34,7 @@ USD = "usd"
 
 #: Celle de Pollinations, mesurée le 31 août 2026 : **un jeton par image**,
 #: annoncé dans l'en-tête `x-usage-total-tokens` de chaque réponse
-#: (`docs/releve-fournisseurs.md` § Fiche 1). C'est le premier fournisseur du
+#: (`docs/archive/releve-fournisseurs.md` § Fiche 1). C'est le premier fournisseur du
 #: produit qui ne compte pas en argent.
 JETON = "jeton"
 

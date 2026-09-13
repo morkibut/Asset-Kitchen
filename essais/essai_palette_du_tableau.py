@@ -2,7 +2,7 @@
 """Le banc de la palette lue sur le tableau d'inspiration.
 
 Écrit le 1er septembre 2026 pour la maquette
-`docs/maquettes-v2.1/06bis-decouper-une-carte.html`, qui **cite ses chiffres**.
+`docs/archive/maquettes-v2.1/06bis-decouper-une-carte.html`, qui **cite ses chiffres**.
 Il existe parce que la demande de l'auteur reposait sur une crainte — *le fond
 d'un artwork entre dans ma palette* — et qu'une crainte se vérifie avant de se
 réparer.

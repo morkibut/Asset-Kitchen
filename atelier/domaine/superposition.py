@@ -7,7 +7,7 @@ seconde image pour rendre quoi que ce soit. La place `Difference` portait le
 champ `base` — l'identifiant d'un autre asset —, et c'est ce qui la rendait
 grisée sur presque toute la bibliothèque : il n'y a pas de différence à régler
 tant qu'on n'a pas dit *par rapport à quoi*
-(`docs/ARCHITECTURE.md` §4, règle 4 ; `docs/v21-arbitrages.md` A-18).
+(`docs/ARCHITECTURE.md` §4, règle 4 ; `docs/archive/v21-arbitrages.md` A-18).
 
 Elle rejoint donc le découpage, à droite du trait de la barre des tables. À
 gauche, les huit places qui règlent l'image courante ; à droite, les deux gestes

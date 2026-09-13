@@ -2,7 +2,7 @@
 // réglages qui valent pour toutes à la fois, et le retrait.
 //
 // ⚠️ **Le premier `describe` est celui qui compte le plus.** La planche
-// `docs/pistes-2026-09-04/carnet/Emploi.dc.html` dessine une grille de 6 × 4 —
+// `docs/archive/pistes-2026-09-04/carnet/Emploi.dc.html` dessine une grille de 6 × 4 —
 // « vingt-quatre calques : six poses, quatre directions ». Le dépôt ne range
 // pas les calques comme ça : `atelier/services/equipement.py` fait une case par
 // **pose** (`corps()`, `plier()`), et `atelier/services/production.py`

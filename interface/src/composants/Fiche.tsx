@@ -8,10 +8,10 @@
 // — le jugement (favori, suppression), la filiation, et la réinjection dans ses
 // quatre rôles. Aucune rubrique n'y est arrivée vide : montrer du cadrage au
 // lieu de servir le geste est le reproche qui a fait écarter
-// `docs/maquette-atelier.html`.
+// `docs/archive/maquette-atelier.html`.
 //
 // **Portée au papier le 11 septembre 2026 (`D3`)**, d'après la colonne de
-// droite de `docs/pistes-2026-09-04/carnet/Galerie.dc.html`. Rien n'y a changé
+// droite de `docs/archive/pistes-2026-09-04/carnet/Galerie.dc.html`. Rien n'y a changé
 // de contenu ni de structure : les jetons, les tailles, les arrondis et les
 // durées seulement — et le vocabulaire papier de `pieces.tsx` pour `Bloc`,
 // `Bouton`, `Libelle`, `Raison`, `Segments` et `EnTetePanneau`. *(Il s'obtenait

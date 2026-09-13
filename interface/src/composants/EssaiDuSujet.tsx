@@ -1,7 +1,7 @@
 /**
  * L'essai — B12. **Le personnage joué au clavier, à la taille du jeu.**
  *
- * `docs/pistes-2026-09-04/carnet/Essai.dc.html`. Le quatrième onglet de la page
+ * `docs/archive/pistes-2026-09-04/carnet/Essai.dc.html`. Le quatrième onglet de la page
  * d'un sujet, et le seul endroit du produit où quelque chose bouge parce qu'on
  * appuie sur une touche.
  *

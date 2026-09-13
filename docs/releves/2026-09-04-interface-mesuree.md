@@ -619,7 +619,7 @@ Onze des quatorze défauts sont réparés dans le code, et chacun se prouve à u
 
 **FAIBLE — L'audit n'a pas encore gagné, en tête, la ligne qui dit où il en est et à quelle date — c'est l'un des critères d'acceptation de N1, et il porte sur un document, pas sur l'interface. Je ne l'ai pas écrit : ce relevé est en lecture seule. L'encadré actuel de l'audit date du 31 août 2026 au soir et ne dit rien du 4 septembre.**
 
-- *La preuve* : docs/audit-design-post-v21.html, section « Où en est ce document — corrigé le 31 août 2026, le soir » ; docs/PLAN.md:2221 (le critère)
+- *La preuve* : docs/archive/audit-design-post-v21.html, section « Où en est ce document — corrigé le 31 août 2026, le soir » ; docs/PLAN.md:2221 (le critère)
 
 ### Ce qui marche aujourd’hui, et qu’une refonte perdrait
 
@@ -1861,7 +1861,7 @@ de ce que dit `docs/DESIGN.md` vient de ces deux lectures-là, pas du brief.*
 
 **2. La piste « ambre sourd » et la piste « ambre haut » sont mot pour mot la maquette écartée le 26 août 2026, et l'essai a déjà été payé.**
 
-*Pourquoi ça compte* — Le document nomme le fichier — `docs/maquette-atelier.html`, châssis ambre sur charbon — et donne la raison du refus : la peinture au pixel de fantasy sature déjà les verts, les bruns et les ors, donc un châssis chaud entre en concurrence directe avec ce qu'on lui demande de juger. Le brief connaît l'argument (il l'écrit lui-même dans le risque de sa première piste, « à vérifier avec un sprite de terre cuite à l'écran ») mais le traite comme une vérification à faire, alors qu'elle a été faite et tranchée. Rouvrir une décision est légitime ; la rouvrir sans savoir qu'elle a coûté une maquette entière ne l'est pas.
+*Pourquoi ça compte* — Le document nomme le fichier — `docs/archive/maquette-atelier.html`, châssis ambre sur charbon — et donne la raison du refus : la peinture au pixel de fantasy sature déjà les verts, les bruns et les ors, donc un châssis chaud entre en concurrence directe avec ce qu'on lui demande de juger. Le brief connaît l'argument (il l'écrit lui-même dans le risque de sa première piste, « à vérifier avec un sprite de terre cuite à l'écran ») mais le traite comme une vérification à faire, alors qu'elle a été faite et tranchée. Rouvrir une décision est légitime ; la rouvrir sans savoir qu'elle a coûté une maquette entière ne l'est pas.
 
 *Ce qu’il fallait ajouter* — Dire explicitement que la piste ambre rouvre la décision du 26 août, et ce qu'on apporte de neuf par rapport à l'essai qui l'avait fermée. Le brief a bien un élément neuf et il ne le met pas en avant : la séparation du châssis et du pourtour de l'image. C'est le seul argument qui permette de rouvrir honnêtement.
 

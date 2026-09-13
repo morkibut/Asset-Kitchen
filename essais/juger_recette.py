@@ -250,7 +250,7 @@ def main() -> None:
                 secondes=paye.get("secondes"),
             )
             # **Le compte propose, il ne refuse pas** — c'est la conclusion 3 de
-            # `docs/v3-animation.md`, appliquée à son propre banc. Une planche qui
+            # `docs/archive/v3-animation.md`, appliquée à son propre banc. Une planche qui
             # porte au moins ce qu'on a demandé est exploitable ; le surplus
             # s'écarte à la main.
             # **Découpable ou non, et c'est une question à part.** Une planche

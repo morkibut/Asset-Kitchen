@@ -12,7 +12,7 @@ l'agent, et la relecture de ce qui a été écrit avant la V2.2.
 
 **Un fournisseur avec plafond est monté ici, et nulle part ailleurs.** Aucun des
 deux fournisseurs du produit n'en annonce un : Pollinations limite une cadence,
-Cloudflare n'expose pas la sienne (`docs/releve-fournisseurs.md`). Les trois
+Cloudflare n'expose pas la sienne (`docs/archive/releve-fournisseurs.md`). Les trois
 critères qui parlent de *ce qui reste* se vérifient donc sur un double — et
 c'est écrit dans l'arbitrage de la tranche, plutôt que d'être découvert en
 ouvrant F4.

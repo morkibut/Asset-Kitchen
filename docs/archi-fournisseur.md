@@ -29,7 +29,7 @@ L'adaptateur OpenRouter (`https://openrouter.ai/api/v1`), **qui a été le seul 
 Relevé du 26 août 2026, recompté le 27 : **48 modèles image, 11 fournisseurs**
 (`essais/couverture.json`). Ce que ce paragraphe décrit reste vrai de lui, et Pollinations —
 le second, arrivé le 1<sup>er</sup> septembre 2026 — a sa fiche dans
-`docs/releve-fournisseurs.md`.
+`docs/archive/releve-fournisseurs.md`.
 
 **Le catalogue décide, jamais une liste en dur.** `GET /api/v1/images/models` est relu au
 démarrage : il donne par modèle le plafond de références, les résolutions, les paramètres

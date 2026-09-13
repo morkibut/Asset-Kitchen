@@ -586,7 +586,7 @@ la prochaine réécriture retrouvera.
 
 - **Le banc du corpus ne lit que des titres Markdown : un « § » qui vise une maquette HTML est
   cassé par construction.** `essais/essai_docs.py` bâtit la liste des sections d'un document en
-  cherchant des lignes qui commencent par `#` ; une maquette de `docs/maquettes-v2.1/` n'en a
+  cherchant des lignes qui commencent par `#` ; une maquette de `docs/archive/maquettes-v2.1/` n'en a
   aucune, donc **zéro section**, donc tout renvoi qui nomme une de ces maquettes *puis* un
   signe § et un titre ne résout jamais — quel que soit le titre visé, et même si le `<h2>`
   existe mot pour mot. (L'exemple n'est pas écrit ici tel quel : il se casserait à son tour,
@@ -595,7 +595,7 @@ la prochaine réécriture retrouvera.
   cherche le bon titre au lieu de comprendre qu'il n'y en a aucun. Le geste qui répare est de
   **nommer le fichier sans `§`** et de laisser la phrase dire ce qu'on y cherche —
   `atelier/domaine/vue.py` le fait déjà. Payé trois fois en écrivant E10, le 31 août 2026 ;
-  un quatrième cas dort dans `docs/vignettes-vues.md`, qui n'est pas versionné.
+  un quatrième cas dort dans `docs/archive/vignettes-vues.md`, qui n'est pas versionné.
 
 - **Deux médianes calculées à deux endroits annoncent deux prix pour le même appel, et rien ne
   le signale.** L'écran de la planche lisait le banc versionné du dépôt ; la barre qui paie,
@@ -794,7 +794,7 @@ la prochaine réécriture retrouvera.
   regarde pas son propre curseur : on sait où l'on clique. Le geste qui répare tient en une
   règle dans `interface/src/index.css` ; **la leçon générale est qu'une montée de version
   majeure d'une bibliothèque de style se relit sur ses *retraits*, pas seulement sur ses
-  ajouts.** Payé par l'audit de design du 31 août 2026 (`docs/audit-design-post-v21.html`).
+  ajouts.** Payé par l'audit de design du 31 août 2026 (`docs/archive/audit-design-post-v21.html`).
 
 - **Un `getBoundingClientRect` ne sait pas qu'un élément est rogné, et fait passer un
   débordement pour un recouvrement.** En mesurant la barre d'outils de la galerie, deux groupes

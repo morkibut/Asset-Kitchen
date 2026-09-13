@@ -9374,7 +9374,7 @@ describe("l'écran des dépenses", () => {
     // **C'est l'absence de vignette qui tient la règle**, pas l'absence de
     // filtre : une vignette par ligne ferait de cet écran une seconde galerie,
     // et la galerie fait déjà ça mieux. Les filtres, eux, portent sur des
-    // appels et non sur des images (A-24 de `docs/v21-arbitrages.md`).
+    // appels et non sur des images (A-24 de `docs/archive/v21-arbitrages.md`).
     const liste = ecran.getAllByRole("button", { name: /balthazar/ })
     for (const ligne of liste) expect(ligne.querySelector("img")).toBeNull()
 
@@ -11498,7 +11498,7 @@ describe("le contour et la main", () => {
     // pas un casque vu de dos : un calque est solidaire de sa pose, et c'est le
     // pliage qui divise son prix. La maquette de la superposition rouvrait cette
     // promesse ; le sommaire du chantier la marque « à reprendre », et aucune
-    // mesure ne la soutient (`docs/v21-arbitrages.md` A-12).
+    // mesure ne la soutient (`docs/archive/v21-arbitrages.md` A-12).
     const { cadre } = await ouvrirLaFabrique()
 
     expect(cadre.queryByText(/autre pose/i)).toBeNull()

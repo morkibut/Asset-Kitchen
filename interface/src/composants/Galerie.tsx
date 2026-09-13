@@ -4,7 +4,7 @@
 // cible, les réinjections et la barre d'état y tenaient quatre cents lignes au
 // milieu de six mille, et le carnet renvoyait vers elles sans qu'aucun fichier
 // ne porte son nom. Elle est désormais un écran comme les vingt et un autres du
-// carnet — un fichier, une planche (`docs/pistes-2026-09-04/carnet/Galerie.dc.html`).
+// carnet — un fichier, une planche (`docs/archive/pistes-2026-09-04/carnet/Galerie.dc.html`).
 //
 // **Et elle est dessinée sur cette planche depuis `D3`** (11 septembre 2026).
 // `C4` l'avait sortie d'`App.tsx` sans y toucher : elle est passée au papier ce
@@ -1061,7 +1061,7 @@ export function useGalerie({
 // ── `C4` · l'écran de la galerie ────────────────────────────────────────────
 //
 // Trois colonnes : où ça se range, la grille, la fiche d'une image — la planche
-// `docs/pistes-2026-09-04/carnet/Galerie.dc.html`. Elle était écrite en clair
+// `docs/archive/pistes-2026-09-04/carnet/Galerie.dc.html`. Elle était écrite en clair
 // dans `App.tsx` ; elle est un écran, comme les vingt et un autres du carnet.
 //
 // Ce qu'elle tient lui vient de `useGalerie`, en un seul objet ; le reste — le

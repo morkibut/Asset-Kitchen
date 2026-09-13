@@ -1,7 +1,7 @@
 /**
  * Le vestiaire d'un sujet — **ce qu'il porte, en images** (`B19`).
  *
- * La planche `docs/pistes-2026-09-04/carnet/Main.dc.html` le range dans ses
+ * La planche `docs/archive/pistes-2026-09-04/carnet/Main.dc.html` le range dans ses
  * trois manques, sous *Le vestiaire — choisir qui porte quoi* : « Une liste
  * par personnage, cochée pièce par pièce. Décocher ne supprime rien : les
  * calques déjà faits restent sur le disque. »

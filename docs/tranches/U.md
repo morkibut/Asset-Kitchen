@@ -1262,7 +1262,7 @@ l'autre doit suivre.
 
 ---
 
-## Ce qui a été tranché seul, et reste à confirmer → `docs/questions-du-lot-U.md`
+## Ce qui a été tranché seul, et reste à confirmer → `docs/archive/questions-du-lot-U.md`
 
 **Quinze choix, écrits pour être lus sans rien savoir du code.** Construire les treize étapes
 a demandé de choisir une quinzaine de fois entre deux comportements possibles, là où les

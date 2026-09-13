@@ -34,7 +34,7 @@ analyse mesurée, maquette, propositions, puis développement.*
   la palette quand on promeut l'image en artwork officiel.
 
   **Fait le 1<sup>er</sup> septembre 2026.** Maquette
-  `docs/maquettes-v2.1/06bis-decouper-une-carte.html`, construite le jour même. Le menu d'une
+  `docs/archive/maquettes-v2.1/06bis-decouper-une-carte.html`, construite le jour même. Le menu d'une
   carte gagne *Découper ›*, qui ouvre l'écran de découpe sur elle ; ses morceaux sont des
   cartes du même tableau, qui arrivent en réserve, non promues. Recadrer est la même découpe à
   un seul rectangle, avec une case — décochée — qui fait hériter le morceau de tout ce qui
@@ -341,7 +341,7 @@ portée de la tranche qui traitera les couleurs.
   modèles payants, GPT Image 2 en tête. Mais la V3, celle qui est en cours, fait autre chose :
   elle **anime** un sprite en fabriquant une petite vidéo, et cette vidéo-là, elle, tourne
   gratuitement sur la carte graphique de la maison — le banc du 3 septembre l'a établi
-  (`docs/recherche-video-locale/rapport.md`, tranche `A11` du plan).
+  (`docs/archive/recherche-video-locale/rapport.md`, tranche `A11` du plan).
 
   **L'idée.** Si la machine sait animer un sprite gratuitement, elle sait produire des images de
   ce sprite **sous un autre angle ou dans une autre attitude**. Alors on n'aurait plus besoin de

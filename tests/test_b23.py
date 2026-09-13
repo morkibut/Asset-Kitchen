@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """B23 — les trois surfaces déménagent.
 
-**Planches** : `docs/pistes-2026-09-04/carnet/Retouche.dc.html` et les quatre
+**Planches** : `docs/archive/pistes-2026-09-04/carnet/Retouche.dc.html` et les quatre
 `atelier-*.dc.html` de la tranche. Bloquée par `B16` et `B18`.
 
 `B16` avait décidé, en connaissance de cause, que l'écran neuf doublerait

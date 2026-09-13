@@ -21,7 +21,7 @@ donc sans univers pour contraindre l'image — et un atelier neuf n'a nulle part
 premier prompt. L'assistant de démarrage est **l'écran des réglages d'un jeu, en dix étapes
 au lieu d'une bande de 1 843 px** ; il se saute, il se rouvre, et rien n'attend qu'on le
 finisse. Ce que l'exclusion visait — un tunnel qui empêche d'entrer — reste écarté, et
-c'est ce qui reste écrit. Voir `docs/v21-arbitrages.md` A-9 et A-10.
+c'est ce qui reste écrit. Voir `docs/archive/v21-arbitrages.md` A-9 et A-10.
 
 **Écran large uniquement** — tranché par `docs/prd-decisions.md`, construit
 par `docs/archi-versions.md` §6.2. La seule chose que ce document ajoute est la conséquence
@@ -51,7 +51,7 @@ deux ont été retirés, et remplacés par des mots. Ce document n'a donc rien g
 vocabulaire ; il a gagné des **listes fermées** — cinq hauteurs, trois largeurs — là où il
 n'avait qu'un tableau ouvert.
 
-**Ce qui est écarté, et pourquoi** — la maquette `docs/maquette-atelier.html` du 26 août 2026 :
+**Ce qui est écarté, et pourquoi** — la maquette `docs/archive/maquette-atelier.html` du 26 août 2026 :
 châssis ambre sur charbon (entre en concurrence avec le pixel art, qui sature déjà les ors et les
 bruns), `system-ui` en display et en body (aucune décision typographique), et un châssis qui
 exhibe le cadrage au lieu de servir le geste.
@@ -175,7 +175,7 @@ l'absence bloquerait — il porte le grisé, la méta et la raison, tous redonda
 marque. Toute information nécessaire est en `--texte-2` ou au-dessus.
 
 **La règle a été enfreinte à deux endroits, et corrigés le 31 août 2026** — trouvés par l'audit
-de `docs/audit-design-post-v21.html`, qui n'a rien reproché à la règle et tout à son
+de `docs/archive/audit-design-post-v21.html`, qui n'a rien reproché à la règle et tout à son
 application. Les deux cas se ressemblent : une information *non redondante* écrite dans le gris
 réservé à ce qui l'est.
 
@@ -353,7 +353,7 @@ lui-même, bordure et garde intérieure comprises. **C'est donc bien un changeme
 et il s'obtient en écrivant l'interligne au lieu de l'hériter : deux lignes à 19 px, plus
 8 px de garde en haut et en bas, plus le trait, font exactement 56, là où l'interligne
 détendu du produit (1,625, soit 22 px) en faisait 62. La valeur des maquettes est retenue —
-c'est la règle de la V2.1 — mais **la raison invoquée en A-16 de `docs/v21-arbitrages.md`
+c'est la règle de la V2.1 — mais **la raison invoquée en A-16 de `docs/archive/v21-arbitrages.md`
 était fausse, exactement comme celle de B-9**, et pour la même cause : une maquette a
 supposé le code au lieu de le lire. Le bouton et le champ, eux, **changent aussi
 réellement** — de 32 px à 34. La maquette qui a posé la
@@ -362,7 +362,7 @@ elle ne l'était pas, le code est à 32 px partout. La décision reste celle de 
 que 34 est la valeur que les vingt-six écrans ont dessinée et qu'un produit ne peut pas
 porter deux hauteurs de bouton — mais **la raison invoquée était fausse, et le coût est réel** :
 tous les boutons et tous les champs du produit. La question est rouverte en toutes lettres
-dans `docs/v21-arbitrages.md` B-9, et c'est là qu'elle se tranche, pas ici.
+dans `docs/archive/v21-arbitrages.md` B-9, et c'est là qu'elle se tranche, pas ici.
 
 Gouttière de grille d'assets : 9 px. Padding de panneau : 8 px. Padding de zone centrale : 16 px.
 
@@ -392,7 +392,7 @@ des trois, ou la question remonte ici.
 - **Grid de l'Univers** : l'onglet a **trois côtés — Inspiration, Réglages, Ambiances — et un seul est allumé.** Le côté allumé prend tout l'écran sous une barre de 38 px qui porte les trois mots. *Inspiration* : le tableau prend toute la largeur, et **en vue à la main une colonne de 380 px paraît à droite** — la réserve. *Réglages* et *Ambiances* : `240px · minmax(0,1fr)` — la liste des étapes ou des ambiances, puis ce qui est ouvert.
 - **Ce que l'onglet Univers gagne à ces trois côtés, et c'est mesuré** : la bande de réglages faisait **1 843 px de haut dans 646 px visibles** — 2,9 écrans — et une étape seule tient dedans. Le tableau passe de la moitié de la largeur à la totalité, et la première image d'inspiration remonte de **4 161 px de défilement à 712**.
 - **Une colonne de 380 se replie par choix**, partout où il y en a une (US-97) : même bascule dans la barre de tête, même case de grille qui tombe à zéro, mêmes 160 ms. Elle sert à trois endroits — les deux colonnes de l'établi, et la réserve de la toile. Repliées, la toile ou l'image en grand tiennent la largeur de l'écran, qui est la ressource du produit. **Replier n'est pas fermer** : le panneau reste monté, et la réserve garde ses 380 px sous une case qui les rogne, parce que c'est cette grille-là que l'aimant de la largeur libre mesure. La bascule de la réserve ne paraît **qu'en vue à la main** — sans elle il n'y a pas de colonne, et une bascule pour une colonne absente mentirait sur ce que l'écran contient. Ajouté le 28 août 2026, à l'usage ; réécrit le 31 août avec la V2.1, où l'Univers n'a plus qu'une seule 380.
-- **La colonne de 240 px porte deux choses, et c'est le même sujet vu de deux hauteurs** : où ça se range (les familles du codex, les projets et collections) et ce que ça coûte (le total du projet ouvert). **Elle ne porte plus le journal des appels ratés** — retiré le 31 août 2026 : il ne montrait qu'un cas sur trois, et mesuré, c'était celui qui n'a **jamais rien coûté**. Ce qui le remplace est un écran entier, *les dépenses*, où tous les appels payés se lisent du plus récent au plus ancien avec ce que chacun a donné. La raison d'origine ne bouge pas — *il faut pouvoir expliquer une facture* — c'est la portée qui était trop étroite. Voir `docs/v21-arbitrages.md` A-3.
+- **La colonne de 240 px porte deux choses, et c'est le même sujet vu de deux hauteurs** : où ça se range (les familles du codex, les projets et collections) et ce que ça coûte (le total du projet ouvert). **Elle ne porte plus le journal des appels ratés** — retiré le 31 août 2026 : il ne montrait qu'un cas sur trois, et mesuré, c'était celui qui n'a **jamais rien coûté**. Ce qui le remplace est un écran entier, *les dépenses*, où tous les appels payés se lisent du plus récent au plus ancien avec ce que chacun a donné. La raison d'origine ne bouge pas — *il faut pouvoir expliquer une facture* — c'est la portée qui était trop étroite. Voir `docs/archive/v21-arbitrages.md` A-3.
 - **Le total de la barre de tête dit toujours de quoi il est le total**, et il est cliquable : il ouvre les dépenses. `ce jeu $2,140` — jamais un montant nu. La raison tient en une phrase : *un montant affiché est une question posée*, et un chiffre qui laisse deviner sa portée finit par être lu comme le total de tout, ce qu'il n'est pas — l'atelier en compte un second, celui de toutes les séances, qui vit sur l'écran des dépenses. Ajouté le 31 août 2026 (A-4).
 - **Max content width** : **aucune**, à une exception nommée. L'écran large est la ressource du produit, on la dépense, et la grille d'assets remplit ce qui reste. L'exception est la colonne de prose de l'écran Guide, bornée à **540 px** — mesuré au navigateur le 31 août 2026, **70 signes par ligne** à la taille de texte du Guide : la règle a été écrite pour la chose qui *gagne* à s'étaler, et la prose est la seule matière du produit qui perde à recevoir de la largeur (§ L'écran Guide). **La borne s'écrit en `em`, jamais en `ch`**, et cette phrase disait « bornée à 72 caractères » jusqu'au 31 août 2026, ce qui invitait à l'implémenter en `max-width: 72ch`. **Le `em` est celui de la prose, et il a fallu l'écrire pour qu'il le soit** : `36em` posé sur un bloc qui hérite les 13 px du corps rend 468 px, soit 61 signes — un cinquième de trop court, dans le sens que personne ne regarde, puisqu'une colonne trop étroite ne se remarque pas, elle fatigue. Mesuré en écrivant E20, et corrigé le même jour. Un `ch` vaut la largeur du **chiffre zéro**, l'un des signes les plus larges de la police, et non celle d'une lettre moyenne : mesuré, une colonne de `72ch` tient **112 signes** de prose ordinaire — une fois et demie ce que la règle demande, quelle que soit la taille du texte, puisque les deux grandissent ensemble. **Elle a un second locataire depuis le 31 août 2026, et un seul** : la carte de texte du tableau d'inspiration, quand on l'ouvre en grand. La visionneuse était écrite pour une image ; ouvrir une note de trois paragraphes sur 1 600 px la rend illisible pour la raison exacte qui borne le Guide. Elle défile, comme le Guide. Aucune autre surface n'a le droit de s'en réclamer — et les deux qui l'ont ont la même matière, de la prose, ce qui est le critère d'admission et pas une coïncidence.
 - **Grille d'assets** : `repeat(auto-fill, minmax(128px, 1fr))`, gouttière 9 px. Zoom 1× / 2× / 4× — le cran donne la **largeur minimale d'une tuile** : 128, 256, 512. Un niveau indisponible à la largeur courante est **grisé, pas caché**.

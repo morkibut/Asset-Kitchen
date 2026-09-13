@@ -71,7 +71,7 @@ def _barre(
 ) -> dict[str, Any]:
     """La fiche que **la barre** lit sur un outil — et rien d'autre (B6).
 
-    `docs/pistes-2026-09-04/carnet/Barre.dc.html` : *« Elle affiche les actions
+    `docs/archive/pistes-2026-09-04/carnet/Barre.dc.html` : *« Elle affiche les actions
     que le serveur sait faire — les mêmes que celles de l'agent. »* Pour que ce
     soit vrai à la lettre, la liste de la barre **est** la liste des outils, et
     ce que la barre a besoin de savoir en plus voyage avec l'outil, dans son

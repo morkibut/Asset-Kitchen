@@ -292,7 +292,7 @@ après l'autre, séparées comme le sont déjà les désignateurs entre eux.
 - [`App.test.tsx:4496`](../../interface/src/App.test.tsx#L4496) et
   [`:4502`](../../interface/src/App.test.tsx#L4502) cherchent le texte *« Artwork officiel »* à
   l'écran.
-- [`docs/maquettes-v2.1/06bis-decouper-une-carte.html:225`](../maquettes-v2.1/06bis-decouper-une-carte.html)
+- [`docs/archive/maquettes-v2.1/06bis-decouper-une-carte.html:225`](../maquettes-v2.1/06bis-decouper-une-carte.html)
   décrit *Concept art de* comme *« à quel personnage elle se rattache »* — vague, et à reprendre
   avec le nouveau nom. La ligne voisine, sur l'artwork officiel, dit déjà juste : *« elle part avec
   les générations, et sa couleur entre dans la palette »*.

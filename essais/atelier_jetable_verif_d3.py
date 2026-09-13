@@ -9,7 +9,7 @@ et son atelier à lui ne bouge pas d'un pixel.
 
 `Galerie.tsx`, `Tuile.tsx`, `Fiche.tsx` et `BarreEtat.tsx` sont passés de
 l'ancien châssis chaud et sombre au papier du carnet, sur le dessin de
-`docs/pistes-2026-09-04/carnet/Galerie.dc.html`.
+`docs/archive/pistes-2026-09-04/carnet/Galerie.dc.html`.
 
 ## Comment le lancer
 
@@ -46,7 +46,7 @@ au pèlerin.
 
 Et le point de comparaison, côte à côte :
 
-    .venv/Scripts/python.exe -m http.server 8933 --directory docs/pistes-2026-09-04/carnet
+    .venv/Scripts/python.exe -m http.server 8933 --directory docs/archive/pistes-2026-09-04/carnet
     → http://127.0.0.1:8933/Galerie.dc.html
 """
 
@@ -206,7 +206,7 @@ def principal() -> int:
     print("  → Ctrl-clic sur une seconde : deux liserés, aucun décalage")
     print("  → le pied : une seule bande, la phrase à droite")
     print("  La planche, à côté :")
-    print("    python -m http.server 8933 --directory docs/pistes-2026-09-04/carnet")
+    print("    python -m http.server 8933 --directory docs/archive/pistes-2026-09-04/carnet")
     print("    http://127.0.0.1:8933/Galerie.dc.html")
     print("  Ctrl-C pour arrêter. Le dossier jetable peut être effacé après.")
     print()

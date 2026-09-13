@@ -1,7 +1,7 @@
 /**
  * Les calques d'animation d'un emploi — B20. **Ses animations, image par image.**
  *
- * `docs/pistes-2026-09-04/carnet/Emploi.dc.html`, la vue que la planche marquait
+ * `docs/archive/pistes-2026-09-04/carnet/Emploi.dc.html`, la vue que la planche marquait
  * elle-même « à construire » et renvoyait à cette tranche. Une profondeur de plus
  * que la page d'un emploi, et elle ne fabrique rien : le calque existe, les
  * images du clip existent, et ce qu'on pose entre les deux est un calcul qui

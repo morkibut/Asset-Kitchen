@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Le banc des deux dernières places de la recette — quantification et bords.
 
-Écrit le 30 août 2026 pour les maquettes `docs/maquettes-v2.1/14-table-quantification.html`
+Écrit le 30 août 2026 pour les maquettes `docs/archive/maquettes-v2.1/14-table-quantification.html`
 et `15-table-bords.html`, qui **citent ses chiffres**. Il existe pour qu'on puisse
 les refaire : une maquette qui affirme une mesure sans banc pour la rejouer devient
 invérifiable au premier doute.
@@ -12,7 +12,7 @@ aucun appel n'est fait. Le seul coût est du temps de calcul.
 
 Neuf questions, dans cet ordre — **les deux dernières ajoutées le 31 août 2026**,
 avant d'écrire l'étape E11 du plan. Elles portent sur les deux curseurs de fusion
-d'une palette, décrits dans `docs/maquettes-v2.1/07-ambiances-et-couleurs.html`
+d'une palette, décrits dans `docs/archive/maquettes-v2.1/07-ambiances-et-couleurs.html`
 au paragraphe « Une palette n'est pas une liste, c'est une recette ». Elles
 existent parce que la question n° 1 de ce banc a déjà trouvé un réglage qui ne
 faisait rien. Un curseur qui ne changerait rien se grise avec sa raison ; ce banc
@@ -178,7 +178,7 @@ def titre(numero: str, texte: str) -> None:
 #
 # **Rien de tout ceci n'existe encore dans le produit**, et c'est le sujet : on
 # mesure avant d'écrire. Les trois fonctions ci-dessous sont la lecture littérale
-# de `docs/maquettes-v2.1/07-ambiances-et-couleurs.html`, au paragraphe « Une
+# de `docs/archive/maquettes-v2.1/07-ambiances-et-couleurs.html`, au paragraphe « Une
 # palette n'est pas une liste, c'est une recette », et elles n'ont pas d'autre
 # ambition — si le banc dit qu'un curseur est inerte, c'est cette lecture-là qui
 # est en cause autant que le curseur, et il faudra le dire.

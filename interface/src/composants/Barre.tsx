@@ -1,7 +1,7 @@
 /**
  * La barre — **on l'appelle au clavier, elle ne paie jamais** (B6).
  *
- * `docs/pistes-2026-09-04/carnet/Barre.dc.html`. Deux choses, et pas une
+ * `docs/archive/pistes-2026-09-04/carnet/Barre.dc.html`. Deux choses, et pas une
  * troisième : *chercher un sujet*, et *lancer un geste qui n'est nulle part à
  * l'écran*. La troisième zone du châssis — par-dessus le carnet et la surface,
  * jamais à côté d'eux.

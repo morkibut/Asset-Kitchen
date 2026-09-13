@@ -2,7 +2,7 @@
  * La grille du jeu — B13. **Le sujet posé sur les cases du moteur, avec ses
  * voisins étiquetés de leur occupation.**
  *
- * `docs/pistes-2026-09-04/carnet/Grille.dc.html`. Une profondeur de plus de la
+ * `docs/archive/pistes-2026-09-04/carnet/Grille.dc.html`. Une profondeur de plus de la
  * page d'un sujet (`interface/src/lieux.ts`, genre `"grille"`), ouverte depuis
  * son bandeau d'onglets — exactement comme la matrice l'était déjà avant
  * `B10`.

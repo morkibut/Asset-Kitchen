@@ -521,7 +521,7 @@ pas seulement documenté le produit, il a servi une troisième fois de détecteu
 ### Le propos d'une section s'écrit sous son titre
 
 *Décidé le 3 septembre 2026, avec l'auteur, en construisant `R8`. La mesure qui l'a tranché
-est au § 05 de `docs/maquettes-v2.1/07ter-la-fiche-repensee.html`.*
+est au § 05 de `docs/archive/maquettes-v2.1/07ter-la-fiche-repensee.html`.*
 
 **Une phrase à demeure sous le titre d'une section, qui dit à quoi la section sert — et
 cette ligne est *lue dans le recueil*, jamais retapée dans l'écran.** C'est
@@ -1419,7 +1419,7 @@ pendant qu'on règle.
 > l'outil, et *témoin* `aucun · à côté · par-dessus`, qui ne porte jamais rien. Les quatre
 > modes n'existent plus, donc la phrase ne les compte plus. **Une comparaison ne retire jamais
 > un geste ; elle pose un témoin à côté** — le dessin est dans
-> `docs/maquettes-v2.1/03bis-comparer-sans-lacher-l-outil.html`.
+> `docs/archive/maquettes-v2.1/03bis-comparer-sans-lacher-l-outil.html`.
 
 **La surface n'existe que pendant le geste, et le geste se termine.** Elle remplace l'image
 seulement quand la table concernée est ouverte, et pour la pipette seulement quand une passe

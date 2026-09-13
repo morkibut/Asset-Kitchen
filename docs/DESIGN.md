@@ -1,6 +1,6 @@
 # Asset Kitchen — Design System
 
-> **Réécrit le 6 septembre 2026, d'après les planches de `docs/pistes-2026-09-04/carnet/`.**
+> **Réécrit le 6 septembre 2026, d'après les planches de `docs/archive/pistes-2026-09-04/carnet/`.**
 > L'auteur a tranché le même jour : *les maquettes font foi*. Ce document ne décide donc
 > presque rien — il **relève** ce que les planches emploient déjà, et il ferme les listes.
 >

@@ -2,7 +2,7 @@
  * Un emploi d'une pièce — B19, *le vestiaire*. **La page d'une façon de servir**
  * : « Portée par Le goliath », « À part », « En scène ».
  *
- * `docs/pistes-2026-09-04/carnet/Emploi.dc.html`. Une profondeur de plus que la
+ * `docs/archive/pistes-2026-09-04/carnet/Emploi.dc.html`. Une profondeur de plus que la
  * page d'une pièce, ouverte depuis la liste de ses emplois — et elle ne fabrique
  * rien : elle montre les calques déjà là et règle **comment** ils se posent.
  *

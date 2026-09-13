@@ -8,7 +8,7 @@
 > Il croise l'idée avec ce que le dépôt sait déjà — les huit vues et leurs directions
 > (`atelier/domaine/vue.py`), le mécanisme des images de référence
 > (`atelier/domaine/generation.py`), le relevé des fournisseurs gratuits
-> (`docs/releve-fournisseurs.md`), le hors-périmètre du produit (`docs/PRD.md`) et la piste
+> (`docs/archive/releve-fournisseurs.md`), le hors-périmètre du produit (`docs/PRD.md`) et la piste
 > observée pour l'animation (`docs/archi-versions.md` § 8).
 
 ---

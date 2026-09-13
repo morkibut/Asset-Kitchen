@@ -1,7 +1,7 @@
 /**
  * Ses animations — B11, l'onglet qui range les bandes comme B10 range les images.
  *
- * `docs/pistes-2026-09-04/carnet/Animations.dc.html`. Une ligne dépliable par pose,
+ * `docs/archive/pistes-2026-09-04/carnet/Animations.dc.html`. Une ligne dépliable par pose,
  * une rangée par direction dedans, **la retenue en tête** puis les gardées de la
  * plus ancienne à la plus récente — au mot près le rangement d'`ImagesDuSujet.tsx`,
  * pour les bandes plutôt que pour les images.

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de B9.1 — le compte groupé par sujet.
 
-**Planche** : `docs/pistes-2026-09-04/carnet/Famille.dc.html`.
+**Planche** : `docs/archive/pistes-2026-09-04/carnet/Famille.dc.html`.
 
 La grille d'une famille montre deux cents cartes, et chacune porte un petit
 « 4 poses sur 6 ». Le produit savait déjà répondre à cette question — c'est

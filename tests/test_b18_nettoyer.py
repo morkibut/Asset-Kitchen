@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères de B18 pour l'atelier **Nettoyer** — le reste des moteurs.
 
-**Le compte de la planche se contredisait trois fois** (`docs/pistes-2026-09-04/
+**Le compte de la planche se contredisait trois fois** (`docs/archive/pistes-2026-09-04/
 carnet/atelier-nettoyer.dc.html`) : douze en préambule (celui des *réglages*,
 pas des moteurs — la section « Les réglages » de la planche en compte
 effectivement douze), onze dans le réglage « méthode » (le total, existants

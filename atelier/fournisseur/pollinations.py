@@ -4,7 +4,7 @@
 Arrivé en F1 (`docs/archive/plan-versions-tenues.md` § V2.2). C'est lui qui rend vraie la phrase *la
 première image ne demande plus rien* : sans compte, sans clé, sans carte, on
 écrit un sujet et une image arrive. Il ne sert qu'au brouillon, et le relevé du
-31 août 2026 dit pourquoi — `docs/releve-fournisseurs.md` § Fiche 1.
+31 août 2026 dit pourquoi — `docs/archive/releve-fournisseurs.md` § Fiche 1.
 
 **Trois défauts mesurés, et chacun est traité ici et nulle part ailleurs.**
 
@@ -66,7 +66,7 @@ DELAI_CATALOGUE = 30.0
 DELAI_APPEL = 300.0
 
 # **Ce que le palier sans compte impose, et ce qu'il n'impose pas** — mesuré le
-# 31 août 2026 (`docs/releve-fournisseurs.md` § Fiche 1). Sa limite est une
+# 31 août 2026 (`docs/archive/releve-fournisseurs.md` § Fiche 1). Sa limite est une
 # **cadence**, un appel toutes les quinze secondes, et non un quota : il n'y a
 # aucune réserve à épuiser, donc aucun « il vous reste N » à afficher. C'est le
 # constat le plus utile du relevé pour F2, et il vaut d'être écrit ici : un
@@ -116,7 +116,7 @@ class Pollinations:
         fournisseur n'a pas de quota**. Déclarer un plafond ici — les 150 jetons
         par jour qu'on lit ailleurs, par exemple — reviendrait à écrire dans le
         produit un chiffre qui appartient à une autre interface que celle-ci
-        (`docs/releve-fournisseurs.md` § Fiche 3 : la même confusion a failli
+        (`docs/archive/releve-fournisseurs.md` § Fiche 3 : la même confusion a failli
         faire entrer Leonardo). Sans plafond, il n'y a pas de « ce qui reste » :
         il y a « ce qui est parti », compté ici, et l'écran le dit.
 

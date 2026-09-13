@@ -21,7 +21,7 @@ cases d'une feuille opaque de bord à bord — le cas le plus courant d'une
 planche rendue par un modèle, que ni les zones opaques (qui n'y verraient
 qu'une seule tache) ni la grille fixe (qui coupe au mauvais endroit dès que les
 cases ne sont pas parfaitement régulières) ne savent lire (`B18`,
-`docs/pistes-2026-09-04/carnet/atelier-decoupe.dc.html`). Aucun des trois n'est
+`docs/archive/pistes-2026-09-04/carnet/atelier-decoupe.dc.html`). Aucun des trois n'est
 un repli d'un autre : chacun répond à une planche d'une nature différente, et
 c'est l'auteur qui sait laquelle il a (US-73).
 

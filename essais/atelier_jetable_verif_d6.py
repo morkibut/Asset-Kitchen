@@ -89,7 +89,7 @@ pixels de rouille — le rouille reste au bouton qui dépense, un seul par écra
 
 Et le point de comparaison des mots du vocabulaire papier, à côté :
 
-    .venv/Scripts/python.exe -m http.server 8933 --directory docs/pistes-2026-09-04/carnet
+    .venv/Scripts/python.exe -m http.server 8933 --directory docs/archive/pistes-2026-09-04/carnet
 """
 
 from __future__ import annotations

@@ -3771,7 +3771,7 @@ def detourer_meme_passe(
 ) -> tuple[np.ndarray, ...]:
     """Le même geste, rejoué **verbatim** sur chaque frame voisine (B18).
 
-    **« Le même point, la même forme entourée »** (`docs/pistes-2026-09-04/
+    **« Le même point, la même forme entourée »** (`docs/archive/pistes-2026-09-04/
     carnet/atelier-detourer.dc.html`) — et c'est tout le sens de cette fonction
     par rapport à `voyage` (`atelier/domaine/recette.py`) : coller une recette
     d'une image à l'autre en retire le point et la forme entourée, parce

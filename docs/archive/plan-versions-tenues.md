@@ -413,10 +413,10 @@ donc un cache, et un cache se recalcule.
 ## V2.1 — L'interface refaite
 
 *Vingt-et-une étapes, décidées le 31 août 2026.* Elles viennent du chantier de maquettes de
-`docs/maquettes-v2.1/` : vingt-six écrans dessinés, quarante-et-une décisions prises,
+`docs/archive/maquettes-v2.1/` : vingt-six écrans dessinés, quarante-et-une décisions prises,
 vingt-cinq arbitrages tranchés en autonomie — dont deux pris en construisant — et
 dix-sept questions laissées ouvertes, dont une déjà répondue par un banc gratuit —
-`docs/v21-arbitrages.md` les tient toutes, et ne fait foi sur rien.
+`docs/archive/v21-arbitrages.md` les tient toutes, et ne fait foi sur rien.
 
 **Ce qui a déclenché le chantier est une mesure, pas une envie.** Le produit fabriquait bien
 et se laissait mal conduire : dix-sept appels payés sur vingt-huit sont partis **sans une
@@ -474,7 +474,7 @@ surface qui les aurait ferait une seconde grille, et la règle serait morte.
 Il ne l'était pas : le produit refusait aussi de produire un calque quand une pièce qui
 agrandit revenait à une autre échelle. Ce refus tombe — l'échelle au retour **informe et
 n'empêche jamais de garder**. C'était une contradiction interne du document du produit, et
-c'est la seconde moitié qui l'emporte (`docs/v21-arbitrages.md` A-11).
+c'est la seconde moitié qui l'emporte (`docs/archive/v21-arbitrages.md` A-11).
 
 **3 · « Le corps naît dans l'atelier et nulle part ailleurs » devient « une seule barre de
 saisie, deux lieux qui paient ».** L'intention d'origine — pas d'écran de création avec son
@@ -996,7 +996,7 @@ troisième fois** : reposer un calque sur une autre pose. Un casque vu de face n
 casque vu de dos ; un calque est solidaire de sa pose, et c'est le pliage qui divise son prix.
 La maquette de la superposition rouvrait cette promesse ; le sommaire du chantier la marque
 lui-même « à reprendre » et écrit qu'aucune mesure ne la soutient
-(`docs/v21-arbitrages.md` A-12).
+(`docs/archive/v21-arbitrages.md` A-12).
 
 #### Critères d'acceptation → `docs/tranches/V2.1.md`
 

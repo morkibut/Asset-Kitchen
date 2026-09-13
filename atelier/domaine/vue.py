@@ -19,7 +19,7 @@ générations du projet, dont six planches d'équipement où elle **contredisait
 consigne de l'appel** — on demandait une pièce posée à plat, et la bible
 réclamait quatre orientations. Elle ne manque pas, parce que chaque image dit
 déjà elle-même la direction qu'elle montre, case par case — c'est une décision
-du codex, reportée ici (`docs/maquettes-v2.1/05-codex.html`).
+du codex, reportée ici (`docs/archive/maquettes-v2.1/05-codex.html`).
 """
 
 from __future__ import annotations
@@ -127,7 +127,7 @@ class Vue:
 
 # Les quatre points cardinaux, chacun avec le repère qui le situe pour un
 # lecteur — **dans l'ordre sud · nord · est · ouest**, qui est celui de la
-# matrice, d'après la maquette du codex (`docs/maquettes-v2.1/05-codex.html`).
+# matrice, d'après la maquette du codex (`docs/archive/maquettes-v2.1/05-codex.html`).
 # Le sud vient en premier partout, parce que c'est là que se rangent les images
 # faites avant la déclaration : « la première direction » doit être la même pour
 # tout le monde.

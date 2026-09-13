@@ -993,7 +993,7 @@ différentes* — et le second cas est bien plus fréquent.
 
 **Tout classement de cette page qui s'appuie sur la forme est donc à jeter**, y compris celui
 de la manche 3 juste au-dessus. Les classements refaits sur les notes sont dans
-`docs/v3-animation.md` ; les animations tournent, avec leur note, dans
+`docs/archive/v3-animation.md` ; les animations tournent, avec leur note, dans
 `essais/rapport-animation.html`.
 
 ## Ce que les notes disent
@@ -1027,4 +1027,4 @@ En revanche **le guide de marche dessiné par le programme ne fait rien à huit 
 bonnes sur 8 avec lui, 3 sur 7 sans lui.
 
 **Trois branches de huit tirages, environ soixante-quinze centimes, trancheraient les deux
-pistes.** Le détail est dans `docs/v3-animation.md`.
+pistes.** Le détail est dans `docs/archive/v3-animation.md`.

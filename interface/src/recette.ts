@@ -54,7 +54,7 @@ import {
  *  n'avait donc aucun outil pour appliquer sa propre taille** — le réglage du
  *  projet nommait une case que la table ne savait pas poser. Signalé par
  *  l'auteur le 31 août 2026, et déjà arbitré dans le croquis de l'écran
- *  (`docs/maquettes-v2.1/13-table-grille.html`, première annotation).
+ *  (`docs/archive/maquettes-v2.1/13-table-grille.html`, première annotation).
  *
  *  Les deux listes sont tenues ensemble par `tests/test_e8.py` : elles disent le
  *  même fait, et deux listes pour un fait finissent toujours par diverger — la

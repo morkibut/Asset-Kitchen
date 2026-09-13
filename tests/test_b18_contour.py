@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Les six capacités neuves de `Contour` (B18) — `docs/pistes-2026-09-04/carnet/atelier-contour.dc.html`.
+"""Les six capacités neuves de `Contour` (B18) — `docs/archive/pistes-2026-09-04/carnet/atelier-contour.dc.html`.
 
 La table portait un procédé (le trait de bord, retracé) et quatre réglages.
 Six capacités manquaient, listées dans la planche sous « ce que le trait ne

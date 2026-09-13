@@ -30,7 +30,7 @@ avait appris, et ce défaut-là n'est écrit dans aucune documentation.
 
 Sortie : ce journal, et `essais/fournisseurs.json` — à côté de `couverture.json`,
 qui tient le même rôle pour OpenRouter. La fiche écrite, avec le verdict par
-fournisseur, vit dans `docs/releve-fournisseurs.md`.
+fournisseur, vit dans `docs/archive/releve-fournisseurs.md`.
 
 **Ce qui manque sans clé se dit, et ne se devine pas.** Leonardo demande un
 identifiant ; sans lui, l'essai écrit ce qu'il n'a pas pu mesurer plutôt que
@@ -39,7 +39,7 @@ de recopier une documentation. Le nom attendu est dans `.env.example`.
 **Cloudflare a été retiré du produit le 8 septembre 2026** — l'auteur ne
 souhaite plus l'utiliser ni l'intégrer (`docs/tranches/V2.2.md` § F4). Ce
 fichier ne l'interroge plus ; les mesures qu'il en avait faites le 31 août
-restent dans `docs/releve-fournisseurs.md` et `essais/fournisseurs.json`,
+restent dans `docs/archive/releve-fournisseurs.md` et `essais/fournisseurs.json`,
 telles quelles.
 """
 
@@ -255,7 +255,7 @@ def principal() -> int:
         etat = "mesuré" if fiche.get("cle_presente") else "non mesuré, clé absente"
         print(f"  {fiche['fournisseur']:26} {etat}")
     print(f"\n  Relevé écrit : {SORTIE}")
-    print("  Fiche et verdict : docs/releve-fournisseurs.md")
+    print("  Fiche et verdict : docs/archive/releve-fournisseurs.md")
     return 0
 
 

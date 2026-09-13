@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """B20 — les calques d'animation : le calque d'une pose, reposé image par image.
 
-**Planche** : `docs/pistes-2026-09-04/carnet/Emploi.dc.html`. Bloquée par `B11`
+**Planche** : `docs/archive/pistes-2026-09-04/carnet/Emploi.dc.html`. Bloquée par `B11`
 et `B19`, tenues toutes les deux.
 
 C'est le seul chemin pour qu'un personnage équipé bouge, et il ne demande aucune

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Découper une carte du tableau, et voir ce que la palette y lit.
 
-Ce que la maquette `docs/maquettes-v2.1/06bis-decouper-une-carte.html` décide, et
+Ce que la maquette `docs/archive/maquettes-v2.1/06bis-decouper-une-carte.html` décide, et
 que le serveur doit tenir. Deux choses sont mesurées ici, et une troisième ne
 l'est pas.
 

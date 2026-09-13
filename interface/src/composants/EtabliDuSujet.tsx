@@ -2711,7 +2711,7 @@ function SousLigneDirection({
       {/* **Le compte d'un cycle, dans une seule case** — et non une jauge : une
           jauge porte le nom d'un ensemble, ce compte-ci porte le nom d'une
           direction — c'est écrit dans la maquette de l'établi,
-          `docs/maquettes-v2.1/02-etabli-personnage.html`. */}
+          `docs/archive/maquettes-v2.1/02-etabli-personnage.html`. */}
       <span
         className={[
           "mesure shrink-0 text-[9.5px]",

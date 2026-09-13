@@ -1,7 +1,7 @@
 /**
  * Le tableau de bord du jeu — **le seul lieu que `B0` branche vraiment.**
  *
- * `docs/pistes-2026-09-04/carnet/Accueil.dc.html`. C'est la balle traçante de
+ * `docs/archive/pistes-2026-09-04/carnet/Accueil.dc.html`. C'est la balle traçante de
  * la tranche : si le carnet, la pile de lieux et l'aide de navigation des
  * essais tiennent sur un lieu, ils tiendront sur vingt.
  *

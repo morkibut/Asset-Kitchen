@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Essai de recette — vingt-neuf façons de demander la même marche.
 
-**Ce que le banc des modèles avait établi** (`docs/v3-animation.md`) : le modèle
+**Ce que le banc des modèles avait établi** (`docs/archive/v3-animation.md`) : le modèle
 tient le personnage, aucun modèle ne produit un cycle de façon fiable, et
 `openai/gpt-image-2` est le meilleur rapport. Ce qui restait ouvert, c'est
 **pourquoi** : le modèle, ou la façon de demander ?

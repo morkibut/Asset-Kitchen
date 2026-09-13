@@ -14,7 +14,7 @@
 // remplace. C'est ce qui rend vraie, sans machinerie, la phrase du design.
 //
 // **Dessinée sur le papier depuis `D3`** (11 septembre 2026), d'après
-// `docs/pistes-2026-09-04/carnet/Galerie.dc.html` :
+// `docs/archive/pistes-2026-09-04/carnet/Galerie.dc.html` :
 //
 // - **arrondi 5**, celui que la planche donne à toutes ses vignettes. Le châssis
 //   sombre tenait le rayon 0 — « le bord de la tuile et le bord du sprite sont

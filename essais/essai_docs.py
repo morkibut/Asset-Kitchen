@@ -86,6 +86,12 @@ REPERE = ("le 6 septembre 2026, avant la troisième descente", 609_876)
 CODE = ("atelier", "interface/src", "tests", "essais")
 SUFFIXES_CODE = {".py", ".ts", ".tsx", ".css"}
 
+# Les scripts d'une descente nomment les **anciennes** adresses : c'est leur
+# travail, et les rediriger effacerait la trace de ce qui a bougé. Le banc les
+# saute, sinon chaque descente laisse derrière elle autant de faux cassés qu'elle
+# a déplacé de fichiers.
+CODE_QUI_NOMME_L_ANCIEN = {"rediriger_renvois_20260913.py"}
+
 # Un renvoi s'écrit de deux façons dans ce dépôt : avec son chemin, ou par son
 # seul nom entre accents graves quand le contexte le rend évident. La seconde
 # est majoritairement le fait des documents entre eux, et il y en a soixante :
@@ -328,6 +334,8 @@ def fichiers_de_code() -> list[Path]:
         for chemin in sorted((RACINE / dossier).rglob("*")):
             if chemin.is_file() and chemin.suffix in SUFFIXES_CODE:
                 if "__pycache__" in chemin.parts or "node_modules" in chemin.parts:
+                    continue
+                if chemin.name in CODE_QUI_NOMME_L_ANCIEN:
                     continue
                 trouves.append(chemin)
     return trouves

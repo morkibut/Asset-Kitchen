@@ -58,7 +58,7 @@ il n'est pas peuplé par ce script — sa lecture est vérifiée par
 
 Et le point de comparaison des mots du vocabulaire papier, à côté :
 
-    .venv/Scripts/python.exe -m http.server 8933 --directory docs/pistes-2026-09-04/carnet
+    .venv/Scripts/python.exe -m http.server 8933 --directory docs/archive/pistes-2026-09-04/carnet
     → http://127.0.0.1:8933/Galerie.dc.html
 """
 
@@ -219,7 +219,7 @@ def principal() -> int:
     print("    réimporte la même image pour voir le doublon")
     print("  → plus aucun fond presque-noir sur toute cette surface")
     print("  Le vocabulaire du papier, à côté :")
-    print("    python -m http.server 8933 --directory docs/pistes-2026-09-04/carnet")
+    print("    python -m http.server 8933 --directory docs/archive/pistes-2026-09-04/carnet")
     print("    http://127.0.0.1:8933/Galerie.dc.html")
     print("  Ctrl-C pour arrêter. Le dossier jetable peut être effacé après.")
     print()

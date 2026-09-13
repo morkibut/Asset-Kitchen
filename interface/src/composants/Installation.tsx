@@ -1,7 +1,7 @@
 /**
  * L'installation de la machine, en quatre étapes — B15.
  *
- * `docs/pistes-2026-09-04/carnet/Installation.dc.html`. Ce qu'on branche une
+ * `docs/archive/pistes-2026-09-04/carnet/Installation.dc.html`. Ce qu'on branche une
  * fois sur cette machine et qui n'appartient à aucun jeu : le compte et la clé,
  * ComfyUI, le dossier de travail. **Aucune des trois n'est obligatoire** —
  * l'atelier s'ouvre sans rien de tout ça et fabrique des images gratuitement,

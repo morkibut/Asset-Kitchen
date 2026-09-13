@@ -3,7 +3,7 @@
 > **Réécrit de zéro le 4 septembre 2026**, sur demande de l'auteur, après douze relevés du code et
 > de l'état de l'art. Ce document fait foi sur **l'apparence** — et sur rien d'autre. Ce que fait un
 > écran est tranché par `docs/PRD.md` ; comment c'est construit, par `docs/ARCHITECTURE.md`.
-> Spécimen vivant : `docs/design-preview-refonte.html`.
+> Spécimen vivant : `docs/archive/design-preview-refonte.html`.
 >
 > **Le système d'avant est archivé tel quel dans `docs/archive/DESIGN-avant-refonte-2026-09-04.md`**,
 > et il n'est pas périmé pour autant : **c'est encore lui qui tourne dans le code**. Tant que la
@@ -158,7 +158,7 @@ où la même promesse était inscrite a été notée comme *une contradiction en
 
 **Aucune valeur n'a été choisie à l'œil.** Chacune est le résultat d'une recherche sur sa clarté, à
 teinte et saturation fixées, jusqu'à atteindre sa cible de contraste. Le script est
-`docs/design-preview-refonte.html` (il recalcule tout dans la page) ; la méthode est décrite
+`docs/archive/design-preview-refonte.html` (il recalcule tout dans la page) ; la méthode est décrite
 au § Comment ces valeurs ont été obtenues.
 
 **Tous les contrastes sont mesurés sur `--fond-2` `#48413C`** — le fond le plus clair sur lequel du
@@ -662,7 +662,7 @@ faites restent »*, *« l'image part à la corbeille — le pied de l'écran pro
 qui arrive : **elles sont le modèle, pas la cible.** La distinction est nette et elle se teste —
 *qui fait quoi, dans cette phrase ?* Si la question n'a pas de réponse, la phrase est à réécrire.
 
-Le vocabulaire fermé — un mot par geste — vit dans **`docs/vocabulaire-a-fermer.md`**.
+Le vocabulaire fermé — un mot par geste — vit dans **`docs/archive/vocabulaire-a-fermer.md`**.
 
 ---
 
@@ -697,7 +697,7 @@ OKLCH, avec réduction automatique de la saturation quand la couleur sort de la 
 Les contrastes sont donnés **deux fois** : en rapport classique (WCAG 2.1) et en **contraste
 réellement perçu (APCA W3 0.1.9)**. Le second fait foi ; le premier n'est gardé que comme filet.
 
-**La page `docs/design-preview-refonte.html` recalcule tout dans le navigateur**, sur les valeurs
+**La page `docs/archive/design-preview-refonte.html` recalcule tout dans le navigateur**, sur les valeurs
 réellement appliquées : le tableau de vérification qu'elle affiche n'est pas recopié, il est mesuré à
 l'ouverture. **Elle porte aussi les quatre profondeurs de fond** — `ombre · bois · sable · lin` — et
 c'est ainsi que la profondeur a été tranchée : en regardant, pas en discutant. `bois` est retenue.

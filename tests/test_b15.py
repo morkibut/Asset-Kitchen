@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """B15 — l'installation : ce qu'on branche une fois sur cette machine.
 
-**Planche** : `docs/pistes-2026-09-04/carnet/Installation.dc.html`, bloquée par
+**Planche** : `docs/archive/pistes-2026-09-04/carnet/Installation.dc.html`, bloquée par
 `B0`. C'est la seule tranche du plan qui pose un secret **et** qui écrit sur le
 disque de quelqu'un, et ce fichier est écrit pour ça.
 

@@ -1,11 +1,11 @@
 {
- "releve_le": 1789288786.8640878,
+ "releve_le": 1789294123.9896352,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 168630,
+  "octets": 168670,
   "documents": {
    "AGENTS.md": {
     "octets": 36695,
@@ -164,14 +164,14 @@
     ]
    },
    "docs/ARCHITECTURE.md": {
-    "octets": 41582,
+    "octets": 41590,
     "titres": 12,
     "sections": [
      {
       "titre": "Asset Kitchen — Architecture",
       "niveau": 1,
       "ligne": 1,
-      "octets": 41142
+      "octets": 41150
      },
      {
       "titre": "1 · Ce que c'est",
@@ -195,7 +195,7 @@
       "titre": "4 · Architecture",
       "niveau": 2,
       "ligne": 69,
-      "octets": 16495
+      "octets": 16503
      },
      {
       "titre": "Squelette du dépôt",
@@ -242,14 +242,14 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 48629,
+    "octets": 48653,
     "titres": 21,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 48629
+      "octets": 48653
      },
      {
       "titre": "Où en est le dépôt",
@@ -351,13 +351,13 @@
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
       "ligne": 524,
-      "octets": 10780
+      "octets": 10804
      },
      {
       "titre": "Le pantin — sorti de la V3 le 3 septembre 2026, arguments intacts",
       "niveau": 3,
       "ligne": 539,
-      "octets": 6083
+      "octets": 6107
      },
      {
       "titre": "Les trois risques encore ouverts",
@@ -374,14 +374,14 @@
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 28367,
+    "octets": 28375,
     "titres": 31,
     "sections": [
      {
       "titre": "Asset Kitchen — Design System",
       "niveau": 1,
       "ligne": 1,
-      "octets": 27876
+      "octets": 27884
      },
      {
       "titre": "Comment ce document a été obtenu",
@@ -573,7 +573,7 @@
    "casses": []
   },
   "docs": {
-   "total": 1094,
+   "total": 1197,
    "casses": []
   }
  }

@@ -16,7 +16,7 @@
 > **Rien n'y a été mesuré.** Le dépôt a été lu, jamais exécuté ; aucune de leurs images n'a été
 > payée. Tout ce qui suit est de la lecture de code, et c'est dit. Les deux chiffres de cette
 > note qui ne viennent pas de là — le prix d'une planche, le taux de bonnes — viennent de nos
-> propres bancs (`docs/v3-animation.md`) et sont marqués comme tels.
+> propres bancs (`docs/archive/v3-animation.md`) et sont marqués comme tels.
 
 ---
 
@@ -29,7 +29,7 @@ même d'être regardés, et ils tombent de deux côtés opposés : **la table pa
 déjà tenue ici, et mieux** — c'est le barème d'échelles arrivé en T4 —, tandis que **faire
 relire par un modèle l'image qui vient d'être produite est une piste neuve**. Cette seconde
 vise exactement le chiffre le plus dur de la V3 : *onze bonnes planches sur cent onze, notées
-une par une à la main* (`docs/v3-animation.md`).
+une par une à la main* (`docs/archive/v3-animation.md`).
 
 ---
 
@@ -123,7 +123,7 @@ déclaré, une réponse forcée — mais avec **l'image dans la demande**.
 ### Ce que ça viserait ici, et pourquoi maintenant
 
 Pas les rôles de gameplay : l'atelier fabrique des images, il ne fait pas tourner un jeu. Ce
-que ça viserait est le seul chiffre dur de la V3 (`docs/v3-animation.md`) :
+que ça viserait est le seul chiffre dur de la V3 (`docs/archive/v3-animation.md`) :
 
 - **onze bonnes planches sur cent onze**, neuf seulement dont le produit sache faire quelque
   chose — une sur douze ;
@@ -179,10 +179,10 @@ elles-mêmes, sur des planches déjà produites et déjà jugées par l'œil qui
 
 Une relecture n'est utile que si elle coûte **franchement moins cher qu'une planche de plus**.
 L'arithmétique se fait sur nos propres chiffres : $0,237 pour huit planches `gpt-image-2`, soit
-**environ trois centimes la planche** (`docs/v3-animation.md`). Une lecture qui approcherait ce
+**environ trois centimes la planche** (`docs/archive/v3-animation.md`). Une lecture qui approcherait ce
 prix serait absurde — à trois centimes, mieux vaut commander une planche de plus que lire
 celles qu'on a. **Le prix réel se prend dans le catalogue au moment du banc**, jamais supposé
-ici : `docs/releve-fournisseurs.md` est l'endroit où il se relève.
+ici : `docs/archive/releve-fournisseurs.md` est l'endroit où il se relève.
 
 ### Où ça n'a pas le droit de vivre
 
@@ -223,7 +223,7 @@ parle que de ce qui ne se compte pas.
   ([`download-manager.js:188`](https://github.com/RhythrosaLabs/gameforge-ai/blob/a81cdca9235c3f685c602a2379cdf5ce5beb7700/download-manager.js#L188)) —
   un OBJ humanoïde écrit en dur dans le code, plus une image du sujet « en vue isométrique ».
   Aucun maillage n'est jamais reconstruit. À noter parce que la V3 garde une piste 3D bien
-  réelle, elle (`docs/releve-fournisseurs.md` § *Hors relevé · Meshy*) : c'est le contre-exemple
+  réelle, elle (`docs/archive/releve-fournisseurs.md` § *Hors relevé · Meshy*) : c'est le contre-exemple
   de ce qu'elle ne doit pas être.
 
 *Une chose est bien faite chez eux et ne nous apprend rien parce qu'on la fait déjà : trois

@@ -129,7 +129,7 @@ le modèle propose, l'auteur lit et envoie — et non un obstacle.
 
 ## Ce que la mesure dit déjà du modèle de texte
 
-`docs/recherche-llm-local/rapport.md`, 3 septembre 2026 : quatorze modèles éprouvés sur cette
+`docs/archive/recherche-llm-local/rapport.md`, 3 septembre 2026 : quatorze modèles éprouvés sur cette
 machine, environ 2 300 appels, avec pour corrigé les 70 étiquettes écrites à la main par
 l'auteur.
 

@@ -11,7 +11,7 @@
 > reconstruction locale de SpriteCook — entre le 11 et le 13 septembre 2026 : **46 essais** sur la
 > même machine et le même sprite de référence, avec la même graine. Ils ne viennent **pas** de la
 > chaîne de cet atelier. Le rapport de faisabilité du 3 septembre
-> (`docs/recherche-video-locale/rapport.md`) mesurait autre chose — 832 × 480 — et ses durées ne
+> (`docs/archive/recherche-video-locale/rapport.md`) mesurait autre chose — 832 × 480 — et ses durées ne
 > sont donc pas comparables aux durées ci-dessous, qui sont toutes en 512 × 512.
 >
 > **Couverture.** Les personnages seulement. Les objets et les tuiles suivront, dans ce même

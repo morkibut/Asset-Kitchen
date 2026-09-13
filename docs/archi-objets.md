@@ -79,11 +79,11 @@ parce que ça vaut pour tout le modèle et pas pour la toile** : *l'îlot est le
 
 ### Ce que la V2.1 ajoute au modèle
 
-*Écrit le 31 août 2026, en reportant `docs/maquettes-v2.1/`.* **Quatre entités neuves et
+*Écrit le 31 août 2026, en reportant `docs/archive/maquettes-v2.1/`.* **Quatre entités neuves et
 cinq champs**, et la barre reste celle du §5 : une étiquette sur un objet existant aurait
 suffi partout où elle suffit, et chacune des quatre est là parce qu'elle ne suffisait pas.
 La quatrième — la **direction** — a été posée *en construisant*, et le tableau ci-dessous dit
-pourquoi. Le détail des arbitrages est dans `docs/v21-arbitrages.md`.
+pourquoi. Le détail des arbitrages est dans `docs/archive/v21-arbitrages.md`.
 
 | Entité | Contenu | Note |
 |---|---|---|

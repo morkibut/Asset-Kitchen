@@ -3,7 +3,7 @@
 //
 // Elle naît avec la bibliothèque (T3). L'afficher plus tôt aurait montré du
 // cadrage au lieu de servir le geste — c'est exactement ce qui a fait écarter
-// `docs/maquette-atelier.html`.
+// `docs/archive/maquette-atelier.html`.
 //
 // Elle porte trois choses, et c'est le même sujet vu de trois hauteurs : **où
 // ça se range** (projets, collections), **ce que ça coûte** (le total du projet

@@ -181,7 +181,7 @@ seule :
   par le nombre de cases, et le bruit du contour n'est pas le même d'une case à l'autre : ce
   qui passait pour une imperfection sur un sprite immobile devient un grésillement que l'œil
   suit. Un défaut fixe est un défaut ; un défaut animé est un défaut *qu'on regarde*.
-- **`ronger` ne se règle pas case par case dans une bande.** `docs/v3-animation.md` établit que
+- **`ronger` ne se règle pas case par case dans une bande.** `docs/archive/v3-animation.md` établit que
   les étapes d'une bande se recadrent sur une **boîte commune**, sans quoi le balancement est
   détruit. Un durcissement réglé à la main image par image — ce que la docstring de `ronger`
   propose explicitement — rendrait N silhouettes de tailles différentes dans la même bande. Le

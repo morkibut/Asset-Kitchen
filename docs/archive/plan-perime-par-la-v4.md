@@ -40,7 +40,7 @@ son outil assommant a raison sur le ressenti, quelle que soit la thèse. **Cette
 ### ⚠️ Pourquoi elle commence par un relevé et non par un dessin
 
 **Une passe de design a déjà eu lieu, et personne ne sait où elle en est.**
-`docs/audit-design-post-v21.html`, daté du 31 août 2026, relève **quatorze défauts** classés par ce
+`docs/archive/audit-design-post-v21.html`, daté du 31 août 2026, relève **quatorze défauts** classés par ce
 qu'ils coûtent à l'usage. Il est cité par `docs/DESIGN.md` et par `docs/PIEGES.md`. **Il n'est cité
 nulle part dans ce plan** — zéro occurrence avant aujourd'hui. Ses quatorze défauts ne sont jamais
 devenus une liste de travaux.

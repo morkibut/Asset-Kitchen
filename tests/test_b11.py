@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """B11 — `favori`, `rang`, `supprime_le` sur une bande, et le départage à l'écran.
 
-**Planche** : `docs/pistes-2026-09-04/carnet/Animations.dc.html`, bloquée par `B10`.
+**Planche** : `docs/archive/pistes-2026-09-04/carnet/Animations.dc.html`, bloquée par `B10`.
 
 Le rangement de *Ses animations* est le report de trois colonnes qui existent
 sur `Asset` depuis `T3` — `favori`, `rang`, `supprime_le` — sur `Bande`, qui ne

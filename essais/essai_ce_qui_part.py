@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Le banc de l'univers — ce que le projet pose, et ce qui part vraiment.
 
-Écrit le 30 août 2026 pour la maquette `docs/maquettes-v2.1/06-univers.html`, qui
+Écrit le 30 août 2026 pour la maquette `docs/archive/maquettes-v2.1/06-univers.html`, qui
 **cite ses chiffres**. Il existe pour qu'on puisse les refaire : une maquette qui
 affirme une mesure sans banc pour la rejouer devient invérifiable au premier doute.
 

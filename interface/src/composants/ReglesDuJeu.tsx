@@ -1,7 +1,7 @@
 /**
  * Les règles du jeu, en quatre étapes — B14.
  *
- * `docs/pistes-2026-09-04/carnet/Nouveau-jeu.dc.html`. Le nom, l'allure, la vue,
+ * `docs/archive/pistes-2026-09-04/carnet/Nouveau-jeu.dc.html`. Le nom, l'allure, la vue,
  * le monde : **ce parcours ne demande que ce qui part avec chaque demande
  * d'image, ou ce qui décide de la façon dont l'image est fabriquée.** C'est le
  * critère d'entrée de l'auteur, et il exclut tout le reste — la palette, les

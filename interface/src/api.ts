@@ -2009,7 +2009,7 @@ export type Portee = "contenue" | "agrandit"
 
 // ── Les emplois d'une pièce (B19) ───────────────────────────────────────────
 //
-// `docs/pistes-2026-09-04/carnet/Emplois.dc.html`. Un **emploi** est une façon
+// `docs/archive/pistes-2026-09-04/carnet/Emplois.dc.html`. Un **emploi** est une façon
 // dont une pièce sert : l'épée portée par trois personnages, posée au sol,
 // plantée dans un rocher, son icône d'inventaire. C'est le lien qui manquait au
 // modèle — avant `B19`, une pièce n'appartenait à personne.

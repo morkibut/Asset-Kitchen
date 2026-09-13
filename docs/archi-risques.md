@@ -41,7 +41,7 @@ geste, pas le chiffre.
 seconde fois.** La maquette de la superposition proposait de reposer un calque sur une autre
 pose ; le sommaire du dossier la marque lui-même « à reprendre » et écrit qu'aucune mesure ne
 soutient sa phrase. La décision de la V2.1 est donc de **ne rien changer ici**
-(`docs/v21-arbitrages.md` A-12) — et c'est l'un des quatre seuls endroits où une maquette
+(`docs/archive/v21-arbitrages.md` A-12) — et c'est l'un des quatre seuls endroits où une maquette
 n'a pas gagné. Le fait mérite d'être noté : une promesse retirée pour une raison écrite se
 réécrit toute seule dès qu'on redessine l'écran qui la portait. **Ce paragraphe est la
 défense ; il est là pour être lu la prochaine fois.**

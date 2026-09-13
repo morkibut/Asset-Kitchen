@@ -1,7 +1,7 @@
 /**
  * Ses images — B10, l'onglet qui remplace la matrice de l'établi.
  *
- * `docs/pistes-2026-09-04/carnet/Images.dc.html`. Une ligne dépliable par pose,
+ * `docs/archive/pistes-2026-09-04/carnet/Images.dc.html`. Une ligne dépliable par pose,
  * une rangée par direction dedans, **la retenue en tête** puis les gardées de la
  * plus ancienne à la plus récente.
  *

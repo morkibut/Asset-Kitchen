@@ -2,7 +2,7 @@
  * Comparer — B13. **Deux sujets côte à côte, même pose, même fond, même
  * zoom, avec l'écart chiffré et l'action qui le corrige.**
  *
- * `docs/pistes-2026-09-04/carnet/Comparer.dc.html`. Une profondeur de plus de
+ * `docs/archive/pistes-2026-09-04/carnet/Comparer.dc.html`. Une profondeur de plus de
  * la page d'un sujet (`interface/src/lieux.ts`, genre `"comparer"`), ouverte
  * depuis son bandeau d'onglets, à côté de *Voir la grille du jeu*.
  *

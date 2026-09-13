@@ -9,7 +9,7 @@ D2 :
 1. **sur les carrés du modèle** — réduit sur la grille que `retrouver_grille`
    (D2/D4) a *réellement* mesurée sur l'image reçue, phase comprise, au lieu
    d'un pas décrété par la seule division de la taille. C'est le manque que
-   `docs/pistes-2026-09-04/carnet/atelier-reduire.dc.html` place devant tous
+   `docs/archive/pistes-2026-09-04/carnet/atelier-reduire.dc.html` place devant tous
    les autres : *« le pas et l'endroit où il commence sont mesurés depuis le
    3 septembre et affichés à l'écran, et rien ne s'en sert »*.
 2. **couleur dominante de case** — la couleur exacte la plus fréquente d'une

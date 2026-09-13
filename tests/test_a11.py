@@ -17,7 +17,7 @@ d'autre.
 ## Ce que ces essais ne mesurent pas, et ne peuvent pas mesurer
 
 Que le clip qui sort soit beau. Ça s'est mesuré le 3 septembre 2026 en faisant
-tourner la vraie carte, et c'est écrit dans `docs/recherche-video-locale/`. ⚠️ Le
+tourner la vraie carte, et c'est écrit dans `docs/archive/recherche-video-locale/`. ⚠️ Le
 rapport y dit une chose qu'aucun essai ne remplacera : *plus le clip est long,
 plus la bande se dégrade, et aucune mesure automatique ne le voit — seul l'œil la
 voit.* C'est la troisième fois que ce dépôt le constate.

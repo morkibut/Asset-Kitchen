@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ce que l'audit de design a trouvé côté serveur, et qui ne doit pas revenir.
 
-`docs/audit-design-post-v21.html`, mené le 31 août 2026 sur l'atelier en
+`docs/archive/audit-design-post-v21.html`, mené le 31 août 2026 sur l'atelier en
 fonctionnement. Douze de ses quatorze défauts vivent dans l'interface et leurs
 critères sont dans `interface/src/App.test.tsx`, seul endroit du dépôt où
 l'interface est montée et pilotée. **Un seul touchait au serveur** — celui de

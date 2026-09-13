@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de B5 — le tableau de bord du jeu.
 
-**Planche** : `docs/pistes-2026-09-04/carnet/Accueil.dc.html`.
+**Planche** : `docs/archive/pistes-2026-09-04/carnet/Accueil.dc.html`.
 
 Un test par morceau du bilan que `GET /api/dashboard` sert :
 - la complétude par famille (E12 — seules les poses fabricables maintenant

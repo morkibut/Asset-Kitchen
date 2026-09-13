@@ -1,7 +1,7 @@
 /**
  * Les réglages de la famille — un volet par-dessus l'écran d'une famille (B9.7).
  *
- * `docs/pistes-2026-09-04/carnet/Famille.dc.html`, bloc « Les trois tables, sur
+ * `docs/archive/pistes-2026-09-04/carnet/Famille.dc.html`, bloc « Les trois tables, sur
  * la famille ». Trois choses s'y règlent : quelles natures existent dans cette
  * famille et ce que chacune réclame comme poses, quels emplacements de corps
  * porte le jeu, et quel modèle sert de défaut à cette famille.

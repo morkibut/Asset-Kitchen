@@ -77,7 +77,7 @@ def test_la_table_grille_propose_les_memes_tailles_que_l_assistant():
 
     L'essai lit la source de l'écran plutôt que de recopier les nombres :
     une troisième copie de la même liste serait précisément la panne qu'on ferme
-    ici. Le croquis de l'écran (`docs/maquettes-v2.1/13-table-grille.html`,
+    ici. Le croquis de l'écran (`docs/archive/maquettes-v2.1/13-table-grille.html`,
     première annotation) porte le même arbitrage.
     """
     ecrit = re.search(
