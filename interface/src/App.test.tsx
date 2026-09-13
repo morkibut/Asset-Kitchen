@@ -3927,7 +3927,7 @@ async function ecrireLeSujet(texte: string) {
  *  confirmation s'intercale, et c'est son bouton qui appelle. Les essais qui
  *  regardent ce qui part traversent donc les deux, comme l'auteur. */
 async function payer() {
-  fireEvent.click(screen.getByRole("button", { name: BOUTON_DE_RELECTURE }))
+  fireEvent.click(ceQuiLance())
   const bouton = (await screen.findByRole("button", {
     name: /^Payer et lancer/,
   })) as HTMLButtonElement
@@ -3945,9 +3945,35 @@ async function payer() {
  *  d'état restent rendues derrière, et une assertion posée sur tout le document
  *  les trouverait. */
 async function relire() {
-  fireEvent.click(screen.getByRole("button", { name: BOUTON_DE_RELECTURE }))
+  fireEvent.click(ceQuiLance())
   await screen.findByRole("button", { name: /^Payer et lancer/ })
   return within(document.querySelector("[data-envoi]") as HTMLElement)
+}
+
+/** Le contrôle du guichet qui lance un envoi — **et il change de place, jamais
+ *  de métier**.
+ *
+ *  Au repos, c'est le bouton *Relire avant envoi*. Pendant qu'un lot est en
+ *  route, l'état de ce qui part a pris sa place — c'est toute la capacité du
+ *  31 août 2026 : la chose qu'on recliquerait est devenue la chose qui dit que
+ *  ça marche — et le geste redescend dans la fente, en lien *Générer encore*.
+ *
+ *  **Les deux font exactement la même chose**, et c'est pourquoi une seule
+ *  fonction les rend : ils ouvrent l'écran de relecture, ou paient directement
+ *  quand la série est sautée. Un essai qui viserait le bouton par son nom
+ *  pendant qu'un lot est en route ne mesurerait plus sa garantie, il mesurerait
+ *  l'absence du bloc. */
+function ceQuiLance() {
+  return (
+    screen.queryByRole("button", { name: BOUTON_DE_RELECTURE }) ??
+    screen.getByRole("button", { name: /^Générer encore/ })
+  )
+}
+
+/** Le même contrôle, **attendu** : le guichet met un rendu à s'ouvrir après
+ *  qu'une case vient d'être armée. */
+async function attendreCeQuiLance() {
+  return await waitFor(() => ceQuiLance())
 }
 
 /** Passer *Relire avant envoi* en modification.
@@ -14902,7 +14928,7 @@ describe("l'écran de confirmation", () => {
     await ecrireLeSujet("un forgeron nain")
 
     // Le second envoi ne passe plus par l'écran : un clic, une dépense.
-    fireEvent.click(screen.getByRole("button", { name: BOUTON_DE_RELECTURE }))
+    fireEvent.click(ceQuiLance())
     await waitFor(() =>
       expect(appels.filter((a) => a.url === "/api/generations" && a.corps)).toHaveLength(2),
     )
@@ -14924,7 +14950,7 @@ describe("l'écran de confirmation", () => {
     const etabli = await ouvrirLEtabli("Le nain")
     fireEvent.click(etabli.getByRole("button", { name: "Fabriquer marche" }))
     await ecrireLeSujet("un forgeron")
-    fireEvent.click(screen.getByRole("button", { name: BOUTON_DE_RELECTURE }))
+    fireEvent.click(ceQuiLance())
 
     await screen.findByRole("button", { name: /^Payer et lancer/ })
     expect(appels.filter((a) => a.url === "/api/generations" && a.corps)).toHaveLength(1)
@@ -15094,7 +15120,7 @@ describe("l'écran de confirmation", () => {
     const suivant = (await champDePrompt()) as HTMLTextAreaElement
     fireEvent.change(suivant, { target: { value: "un petit voyageur, de dos" } })
     await waitFor(() => expect(suivant.value).toBe("un petit voyageur, de dos"))
-    fireEvent.click(screen.getByRole("button", { name: BOUTON_DE_RELECTURE }))
+    fireEvent.click(ceQuiLance())
 
     expect(
       await screen.findByRole("button", { name: /^Payer et lancer/ }),
@@ -15104,22 +15130,7 @@ describe("l'écran de confirmation", () => {
     ).toHaveLength(1)
   })
 
-  // ⚠️ **EN ATTENTE — capacité manquante : le bouton qui paie ne devient pas
-  //     l'état de ce qu'il a payé, et le lien « Générer encore » n'existe
-  //     plus.**
-  //
-  //     Trois choses tenaient ensemble au pied de la barre qui paie
-  //     (`ChampPrompt.tsx`, bloc `EnRoute`) : le bouton était **remplacé** par
-  //     un bloc de 34 px qui disait combien d'images partaient et depuis quand,
-  //     jauge comprise ; *Générer* redescendait dans la fente en lien
-  //     *Générer encore* ; et la fente n'avait jamais deux locataires.
-  //     L'écran *Préparer une image* garde le compte — « N images en cours de
-  //     fabrication » —, mais **le bouton ne bouge pas** : il reste plein,
-  //     disponible, identique, ce qui est très exactement le défaut que le bloc
-  //     avait été écrit pour réparer le 31 août 2026. Il n'y a ni jauge, ni
-  //     temps écoulé, ni lien de relance. `ChampPrompt.tsx` n'est plus monté
-  //     par aucun écran du produit.
-  test.skip("le bouton qui paie devient l'état de ce qu'il a payé", async () => {
+  test("le bouton qui paie devient l'état de ce qu'il a payé", async () => {
     // **Le cœur du remède**, écrit sur le second signalement de l'auteur : la
     // ligne posée dans la fente ne suffisait pas, parce que le bouton, lui, ne
     // changeait pas. On cliquait *Générer*, et *Générer* revenait identique,
@@ -15134,7 +15145,11 @@ describe("l'écran de confirmation", () => {
     await waitFor(() => expect(champ.value).toBe("un petit voyageur, de face"))
 
     // Avant de payer : le bouton plein, et la fente à son locataire ordinaire.
-    expect(screen.getByRole("button", { name: /^Générer$/ })).toBeTruthy()
+    // **Le bouton s'appelle *Relire avant envoi* depuis l'atelier unifié** — il
+    // s'appelait *Générer* le jour où cet essai a été écrit, et c'est le seul
+    // mot qui a changé : la garantie tenue est qu'un bouton plein existe avant,
+    // et qu'il est remplacé ensuite par l'état de ce qui part.
+    expect(screen.getByRole("button", { name: BOUTON_DE_RELECTURE })).toBeTruthy()
     expect(screen.getByText("Ctrl + Entrée")).toBeTruthy()
 
     fireEvent.click(screen.getByRole("button", { name: BOUTON_DE_RELECTURE }))
@@ -15144,18 +15159,16 @@ describe("l'écran de confirmation", () => {
     const enRoute = await screen.findByRole("status")
     expect(enRoute.textContent).toContain("1 image en route")
 
-    // **Générer n'est plus un bouton plein** : il est descendu dans la fente,
+    // **Le bouton plein n'est plus là** : le geste est descendu dans la fente,
     // en lien. Il reste à portée — on a le droit de lancer une seconde série —
     // mais il a cessé d'être ce qui saute aux yeux.
-    expect(screen.queryByRole("button", { name: /^Générer$/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: BOUTON_DE_RELECTURE })).toBeNull()
     expect(screen.getByRole("button", { name: /^Générer encore/ })).toBeTruthy()
     // **Jamais deux locataires à la fois** — la règle de la fente.
     expect(screen.queryByText("Ctrl + Entrée")).toBeNull()
   })
 
-  // ⚠️ **EN ATTENTE — même capacité manquante que l'essai précédent** : sans
-  //     le lien « Générer encore », il n'y a plus de geste à éprouver ici.
-  test.skip("le lien Générer encore relance vraiment, et repasse par l'écran", async () => {
+  test("le lien Générer encore relance vraiment, et repasse par l'écran", async () => {
     // Le bloc en route ne doit rien fermer : lancer une seconde série pendant
     // que la première court reste possible, et reste payant — donc il repasse
     // par l'écran qui fait relire.
@@ -15179,10 +15192,7 @@ describe("l'écran de confirmation", () => {
     ).toHaveLength(1)
   })
 
-  // ⚠️ **EN ATTENTE — même capacité manquante** : la fente du bouton qui paie
-  //     et son lien de relance n'existent pas dans le guichet, donc la règle
-  //     « jamais deux locataires, et le refus l'emporte » n'a plus d'objet.
-  test.skip("un refus l'emporte sur le lien, même pendant qu'un lot est en route", async () => {
+  test("un refus l'emporte sur le lien, même pendant qu'un lot est en route", async () => {
     // La règle de la fente ne plie pas : quand rien ne peut partir, un lien
     // `Générer encore` mentirait sur le geste disponible. Le bloc au-dessus
     // continue de dire ce qui est en route — les deux ne disent pas la même
@@ -16092,12 +16102,15 @@ describe("l'argent ne part qu'une fois", () => {
     await double.repondre()
     await waitFor(() => expect(partis(double.fetchDouble)).toHaveLength(1))
 
-    // On réarme la même case : l'écran se saute, et le bouton du guichet paie
-    // directement. **Le guichet garde son bouton** — il n'est plus remplacé par
-    // l'état de ce qui part —, et c'est lui qui porte le verrou.
+    // On réarme la même case : l'écran se saute, et le geste du guichet paie
+    // directement. **Ce geste change de place quand un lot est en route** — le
+    // bloc d'état prend celle du bouton, et le lien *Générer encore* le reçoit
+    // dans la fente —, mais il ne change pas de métier : c'est lui qui porte le
+    // verrou, où qu'il soit. Viser le bouton par son nom mesurerait l'absence
+    // du bloc, pas le verrou.
     const encore = await ouvrirLEtabli("Le nain")
     fireEvent.click(encore.getByRole("button", { name: "Fabriquer repos" }))
-    const bouton = await screen.findByRole("button", { name: BOUTON_DE_RELECTURE })
+    const bouton = await attendreCeQuiLance()
     act(() => {
       bouton.dispatchEvent(new MouseEvent("click", { bubbles: true }))
       bouton.dispatchEvent(new MouseEvent("click", { bubbles: true }))

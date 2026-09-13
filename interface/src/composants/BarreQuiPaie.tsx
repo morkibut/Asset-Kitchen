@@ -27,7 +27,7 @@ import { usePli } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { Cible, Reinjections } from "./Galerie"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
-import { ChampPrompt, type EnVol } from "./ChampPrompt"
+import { ChampPrompt, EnRoute, type EnVol } from "./ChampPrompt"
 import { CoutAttendu, PanneauReglages } from "./PanneauReglages"
 
 export function BarreQuiPaie({
@@ -179,10 +179,42 @@ export function BarreQuiPaie({
       </div>
       <footer className="shrink-0 space-y-[14px] border-t border-trait bg-carte px-[30px] py-[14px]">
         <dl className="grid grid-cols-[auto_1fr] gap-x-[22px] gap-y-[8px]"><CoutAttendu cout={cout} cases={cases} variations={variations} unite={modele?.unite} reserve={reserve} /></dl>
-        {enVol && <p role="status" className="text-signal">{enVol.images} image{enVol.images > 1 ? "s" : ""} en cours de fabrication · Les résultats arrivent dans la galerie.</p>}
         {echec && <p role="alert" className="text-echec">{echec}</p>}
         {revers && <p className="text-encre-3">{revers.texte} <button type="button" className="text-signal" disabled={revers.enCours} onClick={revers.onReessayer}>Réessayer</button></p>}
-        <div className="flex items-center justify-between gap-[22px]"><p className="text-encre-3">{refus ?? (sautLaRelecture ? "Cette série saute la relecture : le bouton paie directement." : "Tu reliras les textes, les images jointes et le coût avant de lancer.")}{refus && onAller && ouAller && <> <button type="button" className="text-signal" onClick={onAller}>{ouAller}</button></>}</p><button type="button" disabled={!!refus || !!enPaiement} onClick={onGenerer} className="h-[42px] shrink-0 rounded-7 bg-signal px-[22px] text-encre-sur-signal disabled:opacity-50">{enPaiement ? "Envoi en cours…" : "Relire avant envoi"}</button></div>
+        <div className="flex items-center justify-between gap-[22px]">
+          <p className="text-encre-3">{refus ?? (sautLaRelecture ? "Cette série saute la relecture : le bouton paie directement." : "Tu reliras les textes, les images jointes et le coût avant de lancer.")}{refus && onAller && ouAller && <> <button type="button" className="text-signal" onClick={onAller}>{ouAller}</button></>}</p>
+          <div className="flex shrink-0 flex-col items-end gap-[4px]">
+            {/* **Tant que quelque chose est en route, l'état prend la place du
+                bouton**, et c'est l'inversion qui répare le défaut du 31 août
+                2026 : un bouton qui revient identique, plein, disponible, dit
+                « il ne s'est rien passé » plus fort que n'importe quelle ligne
+                d'en dessous ne dit le contraire. La chose qu'on recliquerait
+                devient donc la chose qui dit que ça marche — mêmes 34 px, le
+                compte, le temps écoulé et la jauge. Voir `EnRoute`, dans
+                `ChampPrompt.tsx`. */}
+            {enVol && enVol.images > 0 ? (
+              <EnRoute {...enVol} />
+            ) : (
+              <button type="button" disabled={!!refus || !!enPaiement} onClick={onGenerer} className="h-[42px] shrink-0 rounded-7 bg-signal px-[22px] text-encre-sur-signal disabled:opacity-50">{enPaiement ? "Envoi en cours…" : "Relire avant envoi"}</button>
+            )}
+            {/* La fente, **jamais deux locataires à la fois**. Le geste ne
+                disparaît pas pendant qu'un lot est en route — lancer une
+                seconde série sans attendre la première est permis, et reste un
+                geste de l'auteur : rien ne se relance tout seul. Il cesse
+                seulement d'être ce qui saute aux yeux.
+
+                **Et le refus l'emporte** : quand rien ne peut partir, un lien
+                *Générer encore* mentirait sur le geste disponible — la raison
+                est déjà écrite à gauche, avec son geste. Le bloc au-dessus, lui,
+                continue de dire ce qui est en route : c'est un fait, pas une
+                promesse, et les deux ne se disputent pas la même place. */}
+            {refus || echec ? null : enVol && enVol.images > 0 ? (
+              <button type="button" disabled={!!enPaiement} onClick={onGenerer} className="mesure text-[10px] text-signal hover:opacity-70 disabled:cursor-not-allowed disabled:text-encre-4">{enPaiement ? "envoi en cours…" : "Générer encore ›"}</button>
+            ) : (
+              <p className="mesure text-[10px] text-encre-4">Ctrl + Entrée</p>
+            )}
+          </div>
+        </div>
       </footer>
     </div>
   }

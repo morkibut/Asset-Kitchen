@@ -74,7 +74,7 @@ export type EnVol = {
  * qu'un lot est en route, le repli du prompt négatif est le contrôle le moins
  * pressé de la rangée.
  */
-function EnRoute({ images, demarreLe, attendue }: EnVol) {
+export function EnRoute({ images, demarreLe, attendue }: EnVol) {
   const ecoule = useEcoule(demarreLe)
 
   return (

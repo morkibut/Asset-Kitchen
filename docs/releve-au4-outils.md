@@ -67,12 +67,12 @@ pose une extraction avec un calage, une échelle, un rectangle et un trait de
 main non par défaut, la referme, la rouvre par le service et vérifie que la
 pose relue et l’aperçu rejoué sont identiques à l’originale, sans appel
 fournisseur de plus.
-## Capacités encore ouvertes, relevées le 12 septembre 2026 — six restantes au 13 septembre
+## Capacités encore ouvertes, relevées le 12 septembre 2026 — cinq restantes au 13 septembre
 
 La remise à niveau de `interface/src/App.test.tsx` a servi de peigne : chaque
 essai qui ne passait plus a été rangé dans l'un de deux cas — l'écran a changé
-de mots, ou la capacité a disparu. Sept étaient du second cas ; les six qui
-suivent le sont encore, la septième est passée plus bas, § « Rendues depuis ». Elles
+de mots, ou la capacité a disparu. Sept étaient du second cas ; les cinq qui
+suivent le sont encore, les deux autres sont passées plus bas, § « Rendues depuis ». Elles
 ne sont donc **pas** des essais réécrits : ce sont des trous, et le plan
 (`docs/PLAN-atelier-unifie.md`, § « Ce qui doit être repris au fil du parcours »)
 demande qu'un trou soit nommé plutôt que refermé en silence. Les essais qui les
@@ -82,7 +82,6 @@ qui manque : ils repartiront tels quels le jour où la capacité revient.
 | Capacité perdue | Où elle vivait | Ce qu'on ne peut plus faire | Essais en attente |
 | --- | --- | --- | --- |
 | Retirer une attitude d'un lot armé, ou désarmer la cible | Bande « Pour » de la barre qui paie (`Cible`, `Galerie.tsx`) | Corriger un lot demande de fermer le guichet et de recocher les cases. `onRetirerPose` et `onDesarmer` sont passés à `BarreQuiPaie` et ignorés par sa branche `preparation` | `une attitude se retire du lot sans le défaire` |
-| La fente d'état du bouton qui paie : compte, jauge, temps écoulé, lien *Générer encore* | `ChampPrompt.tsx`, bloc `EnRoute` — plus monté par aucun écran | *Préparer une image* garde le compte des images en route mais le bouton ne bouge pas : ni jauge, ni temps écoulé, ni relance depuis la fente | `le bouton qui paie devient l'état de ce qu'il a payé`, `le lien Générer encore relance vraiment, et repasse par l'écran`, `un refus l'emporte sur le lien, même pendant qu'un lot est en route` |
 | La part du prix que pèse un groupe de lignes | En-tête de groupe de l'ancien écran de confirmation — « 1 cochée · $0,0080 · des $0,0143 » | *Relire avant envoi* montre le total et le pas de chaque image ; la part d'un groupe se soustrait à la main | `l'en-tête des images dit ce que les cases cochées pèsent dans le total` |
 | Le compte des avertissements à côté du prix | Colonne de droite de l'ancien écran de confirmation | On ne sait plus qu'il y a un avertissement sans descendre jusqu'à la ligne qui le porte. `envoi.avertissements` n'est rendu nulle part ; seuls ceux des images le sont | `l'avertissement est écrit sur la ligne fautive, avec ses chiffres` (sa moitié encore vraie tourne à côté, sous un autre nom) |
 | Le détail de la mesure du prix, et la mise en garde qui l'accompagne | Sous le bouton qui paie, ancien écran de confirmation | *Relire avant envoi* garde « Mesurée sur N appels précédents » ; le pas mesuré d'une image jointe et « une moyenne n'est le prix de personne » (T1, E13) ne se lisent plus | `le prix porte sa mesure à côté de lui, jamais fondue dedans` |
@@ -113,24 +112,44 @@ d'une série sautée porte le même verrou`. `npx vitest run` : 58 fichiers,
 1 300 essais verts, 8 en attente ; `npx tsc --noEmit` propre ;
 `pytest tests/test_b0.py -q` : 113 verts.
 
-## Ce qui bloque la fente d'état du bouton qui paie
+**La fente d'état du bouton qui paie — rendue le 13 septembre 2026.** Le bloc
+`EnRoute` de `ChampPrompt.tsx` — 34 px, le compte, le temps écoulé et la jauge
+au bord bas — est exporté et monté par le pied du guichet
+(`BarreQuiPaie.tsx`, présentation `preparation`). Pendant qu'un lot est en
+route il **prend la place** du bouton *Relire avant envoi*, et le geste
+redescend dans la fente, en lien *Générer encore ›*. La fente n'a jamais deux
+locataires : *Ctrl + Entrée* au repos, *Générer encore* pendant qu'un lot court,
+rien quand une raison de refus ou un échec est écrit à côté — un refus
+l'emporte toujours, et le bloc au-dessus continue de dire ce qui est en route.
+La ligne « N images en cours de fabrication · Les résultats arrivent dans la
+galerie » disparaît : c'est ce que le bloc dit mieux, et la pastille de la
+navigation porte déjà la moitié qui traverse les écrans. Rien n'est relancé
+tout seul : *Générer encore* est un clic de l'auteur, et il repasse par l'écran
+de relecture comme le bouton qu'il remplace.
 
-La capacité reste ouverte, et pas faute de code : le bloc `EnRoute` de
-`ChampPrompt.tsx` est intact. Ce qui manque est une décision, et les essais en
-attente la posent malgré eux, en se contredisant.
+**Le nom du bouton, tranché.** Il reste *Relire avant envoi* : il est écrit
+ainsi dans le produit et de nombreux essais verts s'y appuient. L'essai `le
+bouton qui paie devient l'état de ce qu'il a payé` visait encore *Générer*, le
+nom que ce bouton portait le 31 août 2026 ; la remise à niveau avait changé son
+clic sans changer l'assertion au-dessus. Corrigé : la garantie qu'il tient —
+*un bouton plein existe avant, il est remplacé ensuite par l'état de ce qui
+part* — est vérifiée mot pour mot.
 
-- `le bouton qui paie devient l'état de ce qu'il a payé` demande, dans le
-  guichet, un bouton nommé exactement **Générer** — celui que le bloc remplace
-  — *en plus* du bouton **Relire avant envoi** qu'il clique juste après ;
-- `le raccourci d'une série sautée porte le même verrou`, lui, écrit l'inverse :
-  « le guichet garde son bouton — il n'est plus remplacé par l'état de ce qui
-  part ». Vérifié en le faisant : remplacer *Relire avant envoi* par le bloc
-  casse cet essai-là et deux autres qui étaient verts.
+**Trois essais avaient encodé l'absence de la capacité comme une garantie**, et
+deux autres avec eux : ils cliquaient *Relire avant envoi* **pendant qu'un lot
+est en route**, là où le bloc occupe désormais cette place. Leur chemin passe
+maintenant par la fente, leur garantie n'a pas bougé — le verrou du double clic
+vaut aussi sur le lien, un saut ne déborde pas sur un autre sujet, deux demandes
+identiques font deux appels. Un seul point de passage l'écrit une fois pour
+toutes, l'aide `ceQuiLance()` : le bouton s'il est là, le lien sinon. Le
+commentaire « le guichet garde son bouton — il n'est plus remplacé par l'état de
+ce qui part » décrivait l'état dégradé du produit, pas une règle voulue : il est
+remplacé par la vraie règle.
 
-La question à trancher tient en une phrase : **le seul bouton du guichet
-s'appelle-t-il *Générer*, et c'est lui que le bloc en route remplace — ou
-garde-t-il son nom *Relire avant envoi*, auquel cas l'essai doit dire ce nom-là
-où il dit encore *Générer*, et le bloc prend sa place ?** Les deux autres essais
-de la même capacité — `le lien Générer encore relance vraiment` et `un refus
-l'emporte sur le lien` — passent dès que le bloc remplace le bouton, quel que
-soit son nom : ils n'attendent que cette réponse.
+Preuve : les trois essais sont ressortis d'attente et passent — `le bouton qui
+paie devient l'état de ce qu'il a payé`, `le lien Générer encore relance
+vraiment, et repasse par l'écran`, `un refus l'emporte sur le lien, même pendant
+qu'un lot est en route`. `npx vitest run` : 58 fichiers, 1 303 essais verts,
+5 en attente, trois passages sans un rouge ; `npx tsc --noEmit` propre ;
+`pytest tests/test_b0.py -q` : 113 verts (le bloc fait 34 px, une hauteur de la
+liste fermée de `DESIGN.md`).
