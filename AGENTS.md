@@ -17,8 +17,10 @@ Il tenait ici aussi jusqu'au 6 septembre 2026 : deux documents répondaient à l
 ce que la règle *une question, un document* interdit plus bas. La mise à jour de fin de tranche
 se fait donc désormais à **un seul endroit**.
 
-Le chantier actif est indiqué uniquement dans `docs/PLAN.md` ; depuis le 11 septembre 2026,
-son détail est dans `docs/PLAN-atelier-unifie.md`. La V4 reste le socle existant et ses
+Les chantiers actifs sont indiqués uniquement dans `docs/PLAN.md`. Ils sont **deux depuis le
+13 septembre 2026** : `docs/PLAN-atelier-unifie.md` ajoute des capacités,
+`docs/PLAN-remise-a-plat.md` remet d'aplomb sur la maquette validée ce qui existe déjà — et
+celui-ci passe devant quand les deux touchent le même écran. La V4 reste le socle existant et ses
 critères historiques dans `docs/tranches/V4.md`. Ce qu'une tranche a appris en se
 construisant est dans `docs/status/etat.md` ; ses critères cochés dans `docs/tranches/<code>.md`.
 Rien de tout ça ne se lit pour ouvrir une tranche neuve.

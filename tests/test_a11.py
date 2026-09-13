@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """A11 — le moteur de la maison, et le prix qui tombe à zéro.
 
-Les critères de `docs/PLAN.md` § A11. **Aucun n'appelle un vrai ComfyUI, et
+Les critères de `docs/archive/plan-r6-a-v3.02.md` § A11. **Aucun n'appelle un vrai ComfyUI, et
 aucun ne fait tourner une carte graphique** : ComfyUI est une application tierce,
 on ne peut ni la démarrer dans un essai, ni compter sur sa présence.
 

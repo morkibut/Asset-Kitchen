@@ -1,9 +1,14 @@
 # Plan : Asset Kitchen — ce qui reste à construire
 
-> **PRD source** : `docs/PRD.md`. **Ordre actif depuis le 11 septembre 2026** :
-> [atelier unifié](PLAN-atelier-unifie.md), de la demande MCP de l'agent au sprite utilisé dans Godot.
+> **PRD source** : `docs/PRD.md`. **Deux chantiers avancent depuis le 13 septembre 2026** :
+> [l'atelier unifié](PLAN-atelier-unifie.md) ajoute des capacités, de la demande MCP de l'agent
+> au sprite utilisé dans Godot ; [la remise à plat](PLAN-remise-a-plat.md) remet d'aplomb sur la
+> maquette validée ce qui existe déjà. **La remise à plat passe devant** quand les deux touchent
+> le même écran : ajouter une capacité à un écran en double, c'est la devoir deux fois.
+>
 > **L'auteur a validé toute la maquette interactive le 12 septembre 2026 et demandé son
-> implémentation complète en autonomie.** La progression courante est au tableau ci-dessous.
+> implémentation complète en autonomie.** ⚠️ **Validée ne veut pas dire implémentée** : le relevé
+> du 13 septembre mesure 0 écran sur 26 tenu de bout en bout. Le détail est au tableau ci-dessous.
 > Les critères de production restent ouverts jusqu'à leur vérification dans le produit.
 > Les retours d'essai et leurs limites sont consignés dans la
 > [couverture du prototype](maquettes-atelier-unifie/couverture.md).
@@ -16,7 +21,9 @@
 > `docs/ARCHITECTURE.md`, à quoi ça ressemble dans `docs/DESIGN.md`, ce que ça doit faire dans
 > `docs/PRD.md`, ce sur quoi on s'est déjà cassé les dents dans `docs/PIEGES.md`.
 >
-> **Dégraissé deux fois.** Le 2 septembre 2026, le détail des cinq premières versions livrées
+> **Dégraissé trois fois.** Le 13 septembre 2026, l'ordre historique est descendu à son tour —
+> cent soixante-dix lignes qui se disaient elles-mêmes remplacées depuis le 11 septembre.
+> Le 2 septembre 2026, le détail des cinq premières versions livrées
 > est descendu dans `docs/archive/plan-versions-tenues.md`. Le 6 septembre, le plan était
 > remonté à **386 Ko dont 340 racontaient du travail fini ou périmé**, et il s'ouvre à chaque
 > séance : `R6` à `V3.1` sont descendues à leur tour, dans deux fichiers selon leur sort — ce
@@ -31,8 +38,8 @@
 
 ## Où en est le dépôt
 
-**Le chantier actif est l'atelier unifié.** Ce tableau donne le sort de chacun et rien de
-plus. Le détail vit ailleurs, toujours au même endroit : ce qu'une tranche a **appris en se
+**Deux chantiers sont actifs : l'atelier unifié et la remise à plat.** Ce tableau donne le sort
+de chacun et rien de plus. Le détail vit ailleurs, toujours au même endroit : ce qu'une tranche a **appris en se
 construisant** dans `docs/status/etat.md`, ses **critères cochés** dans
 `docs/tranches/<code>.md`, son **plan** dans le fichier que la dernière colonne désigne.
 
@@ -53,11 +60,29 @@ construisant** dans `docs/status/etat.md`, ses **critères cochés** dans
 | **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **non ouverte** | ci-dessous |
 | **V4** — le carnet | Refonte déjà largement livrée ; sa conformité et ses parcours restent à corriger | **socle conservé, suite réorientée vers AU** ; les cases historiques ne sont pas décochées | `docs/PLAN-carnet.md` ; détail du relevé antérieur dans `docs/archive/etat-carnet-2026-09-10.md` |
 | **V5**, **V6** | Tuiles et son | **en construction dans AU13/AU14** | `docs/PLAN-atelier-unifie.md` |
-| **Atelier unifié** — AU1 à AU19 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **Interface remplacée, validation en cours.** Navigation, fiche, bibliothèque, galerie multimédia, préparation et ateliers raccordés ; build réussi. Les 65 % annoncés auparavant surévaluaient les services. Livraisons, tuiles, tenues et audio éprouvés dans Godot ; génération locale testée avec moteurs doublés, qualité 3D réelle non vérifiée. Migration des tests de navigation et revue des parcours encore ouvertes. **AU18 close le 13 septembre 2026** : une vidéo du disque entre comme clip — images tirées à l'entrée, montage, prélèvement et rejeu sur la toile —, et les frames d'un rendu asset3d importé redeviennent lisibles. **AU19 close le 13 septembre 2026** : une feuille de sprites découpée devient un clip et ses bandes — une par ligne quand les lignes sont les directions du jeu —, sans encodage vidéo, donc sans perdre la transparence. **AU20 close le 13 septembre 2026** : ce qui entre par une fiche y reste — le jeu et le sujet se remplissent tous les deux, un sujet sans case est un état légitime, et un onglet *Pas encore rangé* montre ce qui attend. Elle répare le trou qu'AU18 et AU19 avaient laissé le matin même, et retourne deux de leurs décisions. | `docs/PLAN-atelier-unifie.md` |
+| **Atelier unifié** — AU1 à AU20 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **Interface remplacée, validation en cours.** Navigation, fiche, bibliothèque, galerie multimédia, préparation et ateliers raccordés ; build réussi. Les 65 % annoncés auparavant surévaluaient les services. Livraisons, tuiles, tenues et audio éprouvés dans Godot ; génération locale testée avec moteurs doublés, qualité 3D réelle non vérifiée. Migration des tests de navigation et revue des parcours encore ouvertes. **AU18 close le 13 septembre 2026** : une vidéo du disque entre comme clip — images tirées à l'entrée, montage, prélèvement et rejeu sur la toile —, et les frames d'un rendu asset3d importé redeviennent lisibles. **AU19 close le 13 septembre 2026** : une feuille de sprites découpée devient un clip et ses bandes — une par ligne quand les lignes sont les directions du jeu —, sans encodage vidéo, donc sans perdre la transparence. **AU20 close le 13 septembre 2026** : ce qui entre par une fiche y reste — le jeu et le sujet se remplissent tous les deux, un sujet sans case est un état légitime, et un onglet *Pas encore rangé* montre ce qui attend. Elle répare le trou qu'AU18 et AU19 avaient laissé le matin même, et retourne deux de leurs décisions. | `docs/PLAN-atelier-unifie.md` |
+| **Remise à plat** — RP1 à RP18 | Remettre d'aplomb sur la maquette validée ce qui existe déjà : le ménage, les doublons, les manques, les deux décisions | **ouverte le 13 septembre 2026**, aucune tranche faite | `docs/PLAN-remise-a-plat.md` |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 874 essais de
-serveur et 1 168 d'écran** tiennent le dépôt — comptés le 10 septembre 2026, et **aucun ne coûte
-un centime**.
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 2 668 essais de
+serveur et 1 310 d'écran** tiennent le dépôt — recomptés le 13 septembre 2026, et **aucun ne
+coûte un centime**.
+
+### Ce que la remise à plat a mesuré, le 13 septembre 2026
+
+**Cinq relevés ont été faits le même jour**, et ils corrigent ce que la ligne « atelier unifié »
+laissait croire. La maquette a bien été validée le 12 septembre ; **elle n'est pas implémentée**.
+
+| Ce qu'on croyait | Ce qui est mesuré |
+|---|---|
+| la maquette est en place | **0 écran sur 26 tenu de bout en bout** — 22 en partie, 4 absents |
+| les anciens écrans ont disparu | **30 écrans du produit** n'existent pas dans la maquette, et la plupart sont à garder |
+| il y a peut-être des doublons | **4 paires d'écrans** font le même travail, et l'auteur atteint les deux côtés |
+| certains écrans ne marchent plus | **2 fichiers morts**, 1 écran mort dans un fichier vivant, 7 morceaux morts |
+| — | **80 désaccords de nom** entre la maquette et le produit |
+
+Le serveur, lui, n'a aucun module mort : neuf routes sans écran et trois portes en double, c'est
+tout. Le désordre est côté écran. Les preuves vivent dans les cinq relevés du 13 septembre
+2026, listés en tête de `docs/PLAN-remise-a-plat.md`.
 
 ---
 
@@ -219,173 +244,12 @@ F0 : c'est un relevé, et un relevé n'a pas d'utilisateur qui le demande.
 
 ---
 
-## L'ordre de ce qui reste, et les deux endroits où il se resserre
+## L'ordre historique → `docs/archive/ordre-historique-jusqu-au-10-septembre.md`
 
-> **Ordre historique jusqu'au 10 septembre 2026.** Le 11 septembre, la demande de l'auteur
-> le remplace par les tranches AU dans [le plan de l'atelier unifié](PLAN-atelier-unifie.md).
-> Les dépendances ci-dessous expliquent l'existant ; elles ne commandent plus la suite.
-
-```
-R6  ✔ close le 3 septembre 2026 — hors version
- │
- ▼
-V2.3  ┌ D1  le réglage de départ  ✔ close ┐  ✅ close, cinq sur cinq,
-      ├ D2  la réduction ✔ · la grille ✔ │  le 3 septembre 2026
-      ├ D3  le fond              ✔ close  │  D3 n'a pas coûté de banc :
-      ├ D4  les moteurs, le contour ✔     │  deux mesures l'ont remplacé
-      └ D5  les tailles          ✔ close  ┘  D4 attendait D2, qui était close
- │
- ▼
-V2.4  ┌ M1  le découpage du coin ✔ close   ┐  ✅ close, sept sur sept, ouverte
-      │ M2  la maquette du coin ✔ dessinée │  et close le 4 septembre 2026.
-      │ M3  l'écran ne fige plus ✔ close   │  M2 dessine, les autres réparent,
-      │ M4  la planche dit vrai ✔ close    │  et aucune n'en bloquait une autre.
-      │ M5  la référence retrouvée ✔ close │  La tranche qui bâtit l'écran de
-      │ M6  laquelle part      ✔ close     │  M2 ne s'écrit qu'après elle.
-      └ M7  le détourage complet ✔ close   ┘
-           ▲ M5 après M4, qui refait la
-             liste où son geste se pose    M3, M4 et M5 sont le même écran,
-                                           pris par trois bouts : ce qu'il
-                                           fait, ce qu'il dit, ce qu'il perd.
-                                           M4 seule change ce qui part au
-                                           modèle, et le plan l'écrit.
-
-                                           M6 est ailleurs : la matrice de la
-                                           fiche, où aucune des cinq n'entre.
-                                           Close le jour où elle est née — la
-                                           règle existait, seul l'écran
-                                           manquait.
- │
- ▼
-V2.5    N1  l'audit de design repris        ouverte le 4 septembre 2026.
-                                            N1 est un relevé : il ne touche
-        N2… ne s'écrit qu'après N1          aucun écran, et il bloque tout
-                                            le reste de la version.
- │
- ▼
-V3    A6  le mouvement, dit une fois pour toutes
-       │                                     A2  le cadre qui ne dérive pas
-       ▼                                      │   n'attend rien et n'est attendue
-      A9  commander un clip, et l'attendre    │   que par A10 : à faire quand on
-       │   ← close le 4 septembre 2026        │   veut, de front avec A6 ou A9
-       │                                      │
-       │                                      │
-       ├──► A11  le moteur de la maison       │
-       │         ← close le 4 septembre 2026  │
-       ▼         c'est lui qui rend A12 tenable
-      A10 le montage — le cœur de la version ◄┘
-       │   ← close le 4 septembre 2026
-       ├──► A12  toutes les poses, en animation   ← l'objectif de la version
-       │         ← close le 4 septembre 2026
-       ├──► A13  l'image attrapée au vol
-       │         ← close le 4 septembre 2026
-       ├──► A4   la bande sort de l'atelier       ← la version devient livrable
-       │         ← close le 4 septembre 2026
-       ├──► A5   le contour qui ne bout pas       (D2 l'attendait, elle est close)
-       │         ← close le 4 septembre 2026
-       └──► A7   reprendre une image sans refaire la bande
-                 ← close le 5 septembre 2026 — la dernière de la version
-
-      A0  clos le 2 septembre 2026 — son verdict est plus haut
-
- │
- ▼
-V3.01  ① le tiroir de la commande        ✔ close le 5 septembre 2026
-       ② la liste des modèles se plie    à construire
-
- │
- ▼
-V3.02  ① la fiche d'un clip — la galerie s'ouvre au clic    ✔ close le 5 septembre 2026
-
- │
- ▼
-V3.03  l'atelier d'une animation au niveau des tables       ouverte, 3 closes sur 4
-       ① le montage redevient brut, chaque frame a sa recette  ✔ close
-       ② les tables sur une sélection  ✔ close
-       ③ la bande se monte au clip  ✔ close
-       ④ la main sur une frame
-
- │
- ▼
-V3.1  ① G1   les phrases devenues fausses  ✔ close ┐  quinze tranches, et
-                                                    │  aucune n'en bloque une
-      ② G2   la barre d'attente revient             │  autre. L'ordre des
-        G3   les 23 explications s'accrochent       │  familles est celui de
-        G4   les curseurs posent au relâchement     │  la thèse, pas une
-        G5   le geste qu'on ne trouve pas           │  contrainte : on peut
-                                                    │  entamer par ④ si
-      ③ G6   le menu ne sort plus de l'écran ──┐    │  l'usage le réclame
-        G7   l'écran de l'univers se refait ◄──┘    │
-        G8   l'accueil s'ouvre sur chaque jeu neuf  │  G6 est jetée par G7,
-                                                    │  et c'est assumé
-      ④ G9   démarrer la première pose              │
-        G10  le zoom des tables monte               │  G11 est le seul point
-        G11  éteindre un type d'objet               │  qui touche au disque
-        G12  une recette sur plusieurs images       │
-                                                    │  G13-G15 s'arbitrent
-        G13  le modèle « lourd » ne détoure rien    │  avant d'être
-        G14  le calage effacé en silence            │  construites
-        G15  aucune couleur réduite, sans le dire   ┘
-
-      ⑤ G16  ce qui est revenu du modèle se voit ✔ close le 3 sept. 2026,
-             et se reprend à la main               prise hors tour : elle est
-                                                   passée devant la V2.3 et la
-                                                   V3, sans rien déplacer
- │
- ▼
-V3.5  P1  la planche se garde, son découpage se refait   ← ex-A1, sortie de la V3
-       │
-       ▼
-      P2  une planche pour plusieurs choses
-
-R7  le texte en trois parties  ✔ close le 3 septembre 2026 — hors version
-R8  la fiche d'une chose       ✔ close le 3 septembre 2026 — hors version
-R9  le calibrage               ✔ close le 3 septembre 2026 — hors version
-```
-
-**Deux resserrements, et ils ne sont pas négociables.**
-
-1. **La V2.3 passe entièrement avant la V3**, et le passage à la vidéo rend cette règle **plus
-   contraignante, pas moins**. Le geste principal de la V3 est *découper plusieurs bandes dans un
-   clip*, et l'écran de montage montre en direct la bande **passée par la chaîne du produit** :
-   détourage, grille, palette. Un traitement qu'il faut refaire à la main sur chaque image
-   transforme ce geste en corvée, et une bande mal ramenée sur sa grille n'est **pas jugeable du
-   tout**. *Tranché avec l'auteur le 2 septembre 2026.*
-2. **La V3 ne s'ouvre pas avant que la V2 serve pour de vrai** — même règle que la V2, qui n'a
-   commencé qu'une fois la V1 tenue.
-
-*Le troisième resserrement — `R6` d'abord — est levé : elle est close depuis le 3 septembre 2026.*
-
-**La V3.1 n'en ajoute aucun, et c'est délibéré.** Elle répare ce qui existe : aucune de ses quinze
-tranches n'attend une autre, et aucune ne bloque la V3.5. Sa place après la V3 vient de l'objectif —
-l'animation d'abord —, pas d'une dépendance. *Si une gêne devient insupportable à l'usage, sa
-tranche se prend seule, sans rien déplacer.* Les deux seuls liens internes sont écrits dans le
-diagramme : `G6` disparaît avec `G7`, et `G12` réclame une réparation avant elle.
-
-**Le critère de découpage ne bouge pas**, celui des cinq versions précédentes, mot pour mot :
-*chaque tranche est utilisable à sa livraison, et on ne passe à la suivante que lorsque la
-précédente sert vraiment.*
-
-> ⚠️ **Une exception assumée, et la seule de la version — refermée le 4 septembre 2026.** `A9` a
-> eu **son serveur écrit avant son écran**, et pendant cet intervalle la tranche n'était
-> démontrable que par ses essais. C'était le bon ordre — le port asynchrone et l'écriture de la
-> dépense sont ce qui pouvait faire perdre de l'argent, et il valait mieux les tenir d'abord.
->
-> **Et l'intervalle a coûté ce qu'un intervalle coûte.** Les trois défauts trouvés en posant
-> l'écran étaient dans le serveur, et deux d'entre eux étaient graves — l'atelier ne redémarrait
-> plus, la galerie était vide au rechargement. Aucun essai ne pouvait les voir : ils montent un
-> atelier neuf et ne le rouvrent jamais. **Écrire un serveur sans écran, c'est écrire sans le
-> seul endroit d'où l'on voit ce qu'il fait.**
-
-**Et un critère de plus, propre à la V3 : chaque tranche rend une animation plus facile ou moins
-chère à obtenir.** C'est l'ordre dans lequel elles sont rangées. `A6` et `A2` préparent le
-terrain, `A9` et `A10` fabriquent la première animation, **`A11` en amène le prix à zéro**, `A12`
-la répète sur toute la matrice, et les quatre dernières la rendent bonne et sortable.
-
-**`A11` ne remplace aucune des autres**, elle change l'échelle : un moteur gratuit ne dispense ni
-de recadrer d'un seul tenant, ni de découper, ni de faire sortir. Ce qu'il change, c'est que
-*lancer plusieurs clips et garder le bon* cesse d'être un arbitrage de dépense — et sans ça,
-couvrir vingt-quatre cases se compte en dollars à chaque essai raté.
+Cent soixante-dix lignes qui racontaient dans quel ordre l'existant a été construit, de `R6`
+à la V3.1. Elles se disaient elles-mêmes remplacées depuis le 11 septembre 2026, et ce
+document s'ouvre à chaque séance. **On les ouvre quand on veut savoir pourquoi une tranche
+ancienne attendait une autre** — jamais pour décider de la suite.
 
 ---
 
