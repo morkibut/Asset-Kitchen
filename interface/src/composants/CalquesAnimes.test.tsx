@@ -74,6 +74,7 @@ function habillee(surplus: Partial<Bande> = {}): Bande {
       hauteur: 24,
       mot: "",
     },
+    pivot: null,
     recette: {} as Bande["recette"],
     projet: "le-marais",
     personnage: "le-goliath",

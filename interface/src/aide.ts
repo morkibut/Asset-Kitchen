@@ -2089,6 +2089,16 @@ export const AIDE: Record<string, Explication> = {
     long: "Sans cadre commun, chaque image se recadre sur sa propre silhouette. Un bras tendu agrandit la silhouette, donc réduit tout le personnage : mesuré sur un vrai clip, **il grandit de dix pour cent en se mettant à marcher**.\n\nUne fenêtre par bande cale les images *d'une* bande entre elles ; il faut une fenêtre par clip pour caler *les bandes* entre elles. C'est pourquoi « du clip » est le choix par défaut.\n\nLes deux autres existent quand même : un cadrage automatique se trompe parfois, et une bande où le personnage quitte le champ a besoin du sien.",
   },
 
+  "bande.pivot": {
+    nom: "Le pivot de l'animation",
+    ou: "bande",
+    quoi: "Le point de la case sur lequel le sprite s'aligne dans le jeu.",
+    change:
+      "L'endroit où ton personnage touche le sol dans le moteur — décalé, il flotte ou s'enfonce. Sans réglage, l'animation garde le repère déjà déclaré pour ce mouvement.",
+    origine: "le repère du mouvement · posé à la main si besoin",
+    long: "Deux champs, et ils se règlent ensemble : vider l'un efface aussi l'autre, parce qu'un point n'a pas qu'une coordonnée. Le laisser vide n'est pas un oubli — c'est l'animation qui suit son mouvement, comme toutes celles qui n'ont jamais touché ce champ.",
+  },
+
   "bande.recette": {
     nom: "La recette du découpage",
     // **Le codex, plus la galerie** : depuis la V3.03, le montage ne règle

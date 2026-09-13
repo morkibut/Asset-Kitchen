@@ -53,6 +53,7 @@ function bande(surplus: Partial<Bande> & { identifiant: string }): Bande {
       hauteur: 48,
       mot: "pris sur le clip entier",
     },
+    pivot: null,
     recette: RECETTE_VIDE,
     projet: "le-marais",
     personnage: "le-pelerin",

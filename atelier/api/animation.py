@@ -893,6 +893,9 @@ class CorpsBande(CorpsApercuBande):
     nom: str = ""
     cadence: float = 0.0
     sens: str = ""
+    # **Le repère posé à la main dans le montage** (RP15). Absent ou `None` :
+    # l'auteur n'y a pas touché, la livraison garde son propre calcul.
+    pivot: dict[str, Any] | None = None
     pose: str | None = None
     direction: str | None = None
     personnage: str | None = None
@@ -1044,6 +1047,7 @@ async def garder_une_bande(requete: Request, corps: CorpsBande) -> dict[str, Any
         cadence=corps.cadence or CADENCE_DE_BANDE,
         sens=corps.sens or BOUCLE,
         cadre=Cadre.depuis_json(corps.cadre),
+        pivot=corps.pivot,
         recette=_recette(corps.recette),
         pose=corps.pose,
         direction=corps.direction,

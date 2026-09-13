@@ -1000,6 +1000,10 @@ export type Bande = {
   cadence: number
   sens: "boucle" | "aller-retour"
   cadre: Cadre
+  /** Le point sur lequel le sprite s'aligne dans le jeu, réglé à la main dans
+   *  le montage (RP15). `null` : rien n'a été posé, le jeu retombe sur son
+   *  propre repère — celui de l'objectif du personnage. */
+  pivot: { x: number; y: number } | null
   recette: Recette
   projet: string | null
   personnage: string | null
@@ -5451,6 +5455,8 @@ export const api = {
     sens?: string
     recette?: Recette | null
     cadre?: CadrePose | null
+    /** Absent ou `null` : pas de repère posé à la main, le jeu garde le sien. */
+    pivot?: { x: number; y: number } | null
     pose?: string | null
     direction?: string | null
   }) =>

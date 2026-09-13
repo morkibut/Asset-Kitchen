@@ -491,11 +491,11 @@ AU11, et la maquette les demande.
 
 ### Critères d'acceptation
 
-- [ ] Quatre champs règlent le cadre — gauche, haut, largeur, hauteur.
-- [ ] Deux champs règlent le pivot.
-- [ ] Ce qui est réglé à la main survit à la mesure automatique, et l'écran dit lequel des deux
+- [x] Quatre champs règlent le cadre — gauche, haut, largeur, hauteur.
+- [x] Deux champs règlent le pivot.
+- [x] Ce qui est réglé à la main survit à la mesure automatique, et l'écran dit lequel des deux
   fait foi.
-- [ ] Le cadre réglé est celui qui sort à l'export.
+- [x] Le cadre réglé est celui qui sort à l'export.
 
 ## RP16 · Savoir ce qu'on a laissé en plan
 

@@ -1221,6 +1221,7 @@ function bandeRendue(nom: string, images: number[], prises?: Prise[]): Bande {
     cadence: 8,
     sens: "boucle",
     cadre: APERCU_RENDU.cadre,
+    pivot: null,
     recette: MONTAGE_RENDU.recette_du_jeu,
     projet: "jeu-1",
     personnage: "chose-1",
@@ -19699,25 +19700,35 @@ describe("A10 — découper un clip en bandes", () => {
     ).toBeTruthy()
   })
 
-  // ── « Le cadrage se reprend à la main » ───────────────────────────────────
+  // ── « Le cadre se règle à la main, ou ne se propose plus » (RP15) ─────────
 
   /** **À la main veut dire à la main**, pas *noté et sans effet*.
    *
-   *  Le montage a gardé les trois choix et dit lequel est en usage ; le
-   *  rectangle, lui, se dessine dans l'atelier d'une animation (V3.03) — le
-   *  montage envoie seulement **son mot et sa fenêtre en vigueur**, semée de la
-   *  mesure du clip. Le geste qui le réglerait n'a plus d'écran ici, et le
-   *  choix ne ment plus : c'est l'atelier qui le reprend. */
-  test("« à la main » reste un choix du montage, et la fenêtre du clip s'y sème", async () => {
+   *  Avant RP15, choisir *à la main* semait le rectangle du clip et
+   *  n'offrait ensuite aucun moyen de le corriger : le choix promettait un
+   *  réglage qu'aucun contrôle ne tenait. Les quatre champs sont ce qui
+   *  manquait — et le mot « du clip » disparaît dès qu'on passe à la main,
+   *  pour ne pas dire deux choses à la fois. */
+  test("« à la main » sème la fenêtre du clip, et quatre champs la corrigent au clavier", async () => {
     const { panneau, appels } = await ouvrirLeMontage()
 
     fireEvent.click(panneau.getByRole("button", { name: "à la main" }))
 
-    // **Aucun cadre n'est dessiné ici** — le montage est brut, et le rectangle
-    // vit dans l'atelier d'une animation.
-    expect(document.querySelector("[data-cadre-a-la-main]")).toBeNull()
-    // Ce que la bande gardera porte son choix à la main, avec la fenêtre du
-    // clip semée : c'est ce que l'atelier reprendra.
+    // Semé sur la fenêtre du clip, comme avant RP15 — mais réglable.
+    expect(panneau.getByLabelText("Gauche du cadre, en pixels")).toHaveValue(0)
+    expect(panneau.getByLabelText("Haut du cadre, en pixels")).toHaveValue(0)
+    expect(panneau.getByLabelText("Largeur du cadre, en pixels")).toHaveValue(246)
+    expect(panneau.getByLabelText("Hauteur du cadre, en pixels")).toHaveValue(381)
+    // La phrase du clip ne paraît plus : elle ne décrit pas ce cadre-ci.
+    expect(panneau.queryByText(/pris sur le clip entier/)).toBeNull()
+
+    fireEvent.change(panneau.getByLabelText("Largeur du cadre, en pixels"), {
+      target: { value: "300" },
+    })
+    fireEvent.change(panneau.getByLabelText("Gauche du cadre, en pixels"), {
+      target: { value: "10" },
+    })
+
     fireEvent.change(panneau.getByLabelText("Le nom de l'animation"), {
       target: { value: "marche" },
     })
@@ -19726,14 +19737,93 @@ describe("A10 — découper un clip en bandes", () => {
       const parti = appels
         .filter((a) => a.url === "/api/strips")
         .at(-1)?.corps as { cadre?: Record<string, number | string> } | undefined
-      expect(parti?.cadre?.choix).toBe("main")
+      // Gauche déplacé à 10 en gardant la largeur qu'on venait de poser (300) :
+      // droite suit à 309. C'est ce rectangle-ci, et pas un aperçu, qui part.
+      expect(parti?.cadre).toEqual({
+        choix: "main", gauche: 10, sommet: 0, droite: 309, bas: 380,
+      })
     })
   })
 
-  /** **Le montage ne dessine plus le cadre** (V3.03) — le test qui vérifiait
-   *  que tirer un bord redimensionne plutôt que déplace est parti avec lui.
-   *  Le geste vit dans l'atelier d'une animation, qui est le seul endroit où
-   *  un rectangle se dessine et se règle. */
+  /** **La mesure automatique ne doit pas effacer un réglage à la main**
+   *  (RP15, critère d'acceptation) : remesurer rafraîchit la fenêtre du clip
+   *  pour les choix « du clip » et « de la bande », mais le rectangle posé à
+   *  la main reste celui qui sortira, et l'écran continue de le dire. */
+  test("remesurer le clip ne touche pas au rectangle posé à la main", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+
+    fireEvent.click(panneau.getByRole("button", { name: "à la main" }))
+    fireEvent.change(panneau.getByLabelText("Largeur du cadre, en pixels"), {
+      target: { value: "500" },
+    })
+    expect(panneau.getByLabelText("Largeur du cadre, en pixels")).toHaveValue(500)
+
+    fireEvent.click(await panneau.findByText(/reprendre le cadre sur tout le clip/))
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/montage/clip-a/frame")).toBe(true),
+    )
+
+    // La remesure a répondu, mais le champ posé à la main n'en a pas bougé —
+    // c'est le critère de la tranche : la mesure automatique ne l'efface pas.
+    expect(panneau.getByLabelText("Largeur du cadre, en pixels")).toHaveValue(500)
+    expect(panneau.getByText(/C'est ce rectangle qui sort à l'export/)).toBeTruthy()
+
+    fireEvent.change(panneau.getByLabelText("Le nom de l'animation"), {
+      target: { value: "marche" },
+    })
+    fireEvent.click(panneau.getByRole("button", { name: /Garder « marche »/ }))
+    await waitFor(() => {
+      const parti = appels
+        .filter((a) => a.url === "/api/strips")
+        .at(-1)?.corps as { cadre?: Record<string, number | string> } | undefined
+      expect(parti?.cadre).toEqual({
+        choix: "main", gauche: 0, sommet: 0, droite: 499, bas: 380,
+      })
+    })
+  })
+
+  // ── « Deux champs règlent le pivot » (RP15) ───────────────────────────────
+
+  test("le pivot ne part pas tant que l'auteur n'y a pas touché", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+
+    expect(panneau.getByLabelText("Pivot horizontal, en pixels")).toHaveValue(null)
+    expect(panneau.getByText(/l'animation garde le repère de son mouvement/)).toBeTruthy()
+
+    fireEvent.change(panneau.getByLabelText("Le nom de l'animation"), {
+      target: { value: "marche" },
+    })
+    fireEvent.click(panneau.getByRole("button", { name: /Garder « marche »/ }))
+    await waitFor(() => {
+      const parti = appels
+        .filter((a) => a.url === "/api/strips")
+        .at(-1)?.corps as { pivot?: unknown } | undefined
+      expect(parti?.pivot).toBeNull()
+    })
+  })
+
+  test("réglé à la main, le pivot part avec la demande de bande", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+
+    fireEvent.change(panneau.getByLabelText("Pivot horizontal, en pixels"), {
+      target: { value: "12" },
+    })
+    fireEvent.change(panneau.getByLabelText("Pivot vertical, en pixels"), {
+      target: { value: "60" },
+    })
+    expect(panneau.getByText(/posé à la main — gardé avec cette animation/)).toBeTruthy()
+
+    fireEvent.change(panneau.getByLabelText("Le nom de l'animation"), {
+      target: { value: "marche" },
+    })
+    fireEvent.click(panneau.getByRole("button", { name: /Garder « marche »/ }))
+    await waitFor(() => {
+      const parti = appels
+        .filter((a) => a.url === "/api/strips")
+        .at(-1)?.corps as { pivot?: { x: number; y: number } } | undefined
+      expect(parti?.pivot).toEqual({ x: 12, y: 60 })
+    })
+  })
 
   // ── Ce que seul le navigateur avait vu ────────────────────────────────────
 

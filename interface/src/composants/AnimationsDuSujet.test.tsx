@@ -47,6 +47,7 @@ function bande(surplus: Partial<Bande> & { identifiant: string; cree_le: number 
       hauteur: 24,
       mot: "pris sur le clip entier",
     },
+    pivot: null,
     recette: RECETTE_VIDE,
     projet: "le-marais",
     personnage: "pelerin",

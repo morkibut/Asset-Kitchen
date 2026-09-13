@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 import time
 import uuid
 from dataclasses import replace
@@ -415,6 +416,7 @@ class ServiceMontage:
         cadence: float = CADENCE_PAR_DEFAUT,
         sens: str = BOUCLE,
         cadre: Cadre | None = None,
+        pivot: dict[str, float] | None = None,
         recette: Recette | None = None,
         pose: str | None = None,
         direction: str | None = None,
@@ -447,6 +449,19 @@ class ServiceMontage:
             raise ErreurAtelier("une cadence nulle serait une bande qui ne tourne pas")
         if sens not in SENS:
             raise ErreurAtelier(f"sens inconnu : {sens}")
+        # **Même borne que le pivot d'une tenue** (`atelier/domaine/tenue.py`) :
+        # c'est le même point, posé sur une bande plutôt que sur un habillage,
+        # et deux bornes pour la même mesure finiraient par ne plus dire la
+        # même chose.
+        if pivot is not None and (
+            not isinstance(pivot, dict)
+            or set(pivot) != {"x", "y"}
+            or any(
+                isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or abs(v) > 8192
+                for v in pivot.values()
+            )
+        ):
+            raise ErreurAtelier("le pivot demande deux coordonnées finies en pixels, entre −8192 et 8192")
 
         recette = recette if recette is not None else self.recette_du_jeu(generation)
         cadre = cadre or Cadre()
@@ -467,6 +482,7 @@ class ServiceMontage:
             cadence=float(cadence),
             sens=sens,
             cadre=self._cadre_pose(cadre, fenetre),
+            pivot={"x": float(pivot["x"]), "y": float(pivot["y"])} if pivot else None,
             recette=recette,
             projet=generation.projet,
             personnage=cible,

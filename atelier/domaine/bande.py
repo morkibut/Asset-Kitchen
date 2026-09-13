@@ -301,6 +301,13 @@ class Bande:
     sens: str = BOUCLE
     cadre: Cadre = field(default_factory=Cadre)
 
+    # **Le point d'ancrage posé à la main dans le montage** (RP15) —
+    # `{"x": .., "y": ..}` en pixels de la case, ou `None` quand l'auteur n'y a
+    # pas touché. Il ne se déduit de rien ici : la livraison sait déjà calculer
+    # un repère par défaut à partir de l'objectif de la pose, et ce champ ne le
+    # remplace pas, il permet seulement de l'écarter animation par animation.
+    pivot: dict[str, float] | None = None
+
     # Ce qui a été fait aux images. **Elle part de celle du jeu** et s'en écarte
     # si l'auteur le veut ; ce qui s'en écarte est écrit en clair à l'écran, à
     # côté du chiffre changé. La règle du 3 septembre 2026 : *la recette du jeu
@@ -495,6 +502,7 @@ class Bande:
             "cadence": self.cadence,
             "sens": self.sens,
             "cadre": self.cadre.en_json(),
+            "pivot": self.pivot,
             "recette": self.recette.en_json(),
             "projet": self.projet,
             "personnage": self.personnage,
@@ -545,6 +553,9 @@ class Bande:
             cadence=float(d.get("cadence") or CADENCE_PAR_DEFAUT),
             sens=sens if sens in SENS else BOUCLE,
             cadre=Cadre.depuis_json(d.get("cadre")),
+            # Absent pour toute bande d'avant RP15 : pas de repère à la main,
+            # ce qu'elle a toujours été avant que ce champ n'existe.
+            pivot=(dict(d["pivot"]) if isinstance(d.get("pivot"), dict) else None),
             recette=Recette.depuis_json(d.get("recette") or {}),
             projet=d.get("projet") or None,
             personnage=d.get("personnage") or None,

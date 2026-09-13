@@ -136,12 +136,17 @@ export function EcranMontage({
     droite: number
     bas: number
   } | null>(null)
+  /** Le point d'ancrage posé à la main (RP15), `null` tant que l'auteur n'y a
+   *  pas touché. **Rien n'est envoyé dans ce cas** : un défaut affiché à
+   *  l'écran n'est pas un choix de l'auteur, et le jeu garde alors le sien —
+   *  le repère de l'objectif de la pose. */
+  const [pivotMain, setPivotMain] = useState<{ x: number; y: number } | null>(null)
   /** `null` veut dire **celle du jeu**, et c'est le cas courant : une bande
    *  gardée sans y toucher n'a aucun écart à afficher. */
   const [pose, setPose] = useState<string | null>(null)
   const [direction, setDirection] = useState<string | null>(null)
   const [personnage, setPersonnage] = useState<string | null>(null)
-  const etatMontage = { occurrences, nom, cadence, sens, cadre, cadreMain, pose, direction, personnage }
+  const etatMontage = { occurrences, nom, cadence, sens, cadre, cadreMain, pivotMain, pose, direction, personnage }
   const [referenceMontage, setReferenceMontage] = useState<typeof etatMontage | null>(null)
   const brouillon = useBrouillonLocal({
     cle: `montage:${clip}:${reprise?.bande.identifiant ?? "nouveau"}`, pret: montage !== null,
@@ -152,7 +157,7 @@ export function EcranMontage({
     appliquer: (recu) => {
       setReferenceMontage(referenceMontage ?? etatMontage)
       setOccurrences(recu.occurrences); setNom(recu.nom); setCadence(recu.cadence); setSens(recu.sens)
-      setCadre(recu.cadre); setCadreMain(recu.cadreMain); setPose(recu.pose); setDirection(recu.direction); setPersonnage(recu.personnage)
+      setCadre(recu.cadre); setCadreMain(recu.cadreMain); setPivotMain(recu.pivotMain); setPose(recu.pose); setDirection(recu.direction); setPersonnage(recu.personnage)
       ordreManuel.current = true
     },
   })
@@ -414,6 +419,10 @@ export function EcranMontage({
           cadre === "main" && cadreMain
             ? { choix: cadre, ...cadreMain }
             : { choix: cadre },
+        // Absent tant que l'auteur n'a pas touché aux champs : un défaut
+        // affiché à l'écran n'est pas un réglage, et l'envoyer effacerait le
+        // repère que la livraison sait déjà calculer.
+        pivot: pivotMain,
         pose,
         direction,
         personnage,
@@ -825,9 +834,12 @@ export function EcranMontage({
           onChange={(choisi) => {
             // **Passer à la main sème le rectangle en vigueur.** L'auteur y va
             // pour élargir un cadre qui tombe mal, pas pour recommencer un
-            // cadrage que la machine venait de faire correctement.
-            if (choisi === "main" && montage?.fenetre && !cadreMain) {
-              const { gauche, sommet, droite, bas } = montage.fenetre
+            // cadrage que la machine venait de faire correctement. Le clip
+            // entier sert de départ quand rien n'a encore été mesuré — sans
+            // quoi le premier passage à « à la main » n'aurait rien à montrer.
+            if (choisi === "main" && !cadreMain) {
+              const { gauche, sommet, droite, bas } =
+                montage.fenetre ?? { gauche: 0, sommet: 0, droite: montage.clip.largeur - 1, bas: montage.clip.hauteur - 1 }
               setCadreMain({ gauche, sommet, droite, bas })
             }
             setCadre(choisi)
@@ -837,10 +849,14 @@ export function EcranMontage({
         )}
         {!reprise && (
           <>
-            <p className="mesure text-[10px] leading-4 text-encre-4">
-              pris sur le clip entier — toutes ses bandes ont la même assise
-            </p>
-            {montage?.fenetre && (
+            {cadre !== "main" && (
+              <p className="mesure text-[10px] leading-4 text-encre-4">
+                {cadre === "clip"
+                  ? "pris sur le clip entier — toutes ses bandes ont la même assise"
+                  : "pris sur cette bande seule — elle ne s'accorde plus aux autres"}
+              </p>
+            )}
+            {montage.fenetre && cadre !== "main" && (
               <p className="mesure text-[10px] text-encre-3">
                 {montage.fenetre.largeur} × {montage.fenetre.hauteur}, pris sur{" "}
                 {montage.fenetre.images}{" "}
@@ -848,10 +864,86 @@ export function EcranMontage({
               </p>
             )}
             {cadre === "main" && cadreMain && (
-              <p className="mesure text-[10px] leading-4 text-encre-4">
-                le rectangle se posera au montage de la bande — l'atelier d'une
-                animation le reprendra.
-              </p>
+              <>
+                {/* **Ce qui fait foi, dit en clair** (RP15) : le rectangle posé
+                    ici est celui que la bande gardera, quoi que la mesure
+                    automatique refasse par ailleurs — elle ne l'efface pas. */}
+                <p className="mesure text-[10px] leading-4 text-encre-4">
+                  posé à la main — ni le clip ni la bande n'en décident. C'est ce
+                  rectangle qui sort à l'export ; remesurer le clip ci-dessous ne
+                  le change pas.
+                </p>
+                <div className="grid grid-cols-2 gap-[8px]">
+                  <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">
+                    Gauche
+                    <input
+                      aria-label="Gauche du cadre, en pixels"
+                      type="number"
+                      min={-8192}
+                      max={8192}
+                      step={1}
+                      value={cadreMain.gauche}
+                      onChange={(evenement) => {
+                        const gauche = Math.round(Number(evenement.target.value))
+                        if (!Number.isFinite(gauche)) return
+                        setCadreMain((avant) => avant && { ...avant, gauche, droite: gauche + (avant.droite - avant.gauche) })
+                      }}
+                      className="h-[34px] w-full rounded-7 border border-trait bg-carte px-[8px] text-encre"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">
+                    Haut
+                    <input
+                      aria-label="Haut du cadre, en pixels"
+                      type="number"
+                      min={-8192}
+                      max={8192}
+                      step={1}
+                      value={cadreMain.sommet}
+                      onChange={(evenement) => {
+                        const sommet = Math.round(Number(evenement.target.value))
+                        if (!Number.isFinite(sommet)) return
+                        setCadreMain((avant) => avant && { ...avant, sommet, bas: sommet + (avant.bas - avant.sommet) })
+                      }}
+                      className="h-[34px] w-full rounded-7 border border-trait bg-carte px-[8px] text-encre"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">
+                    Largeur
+                    <input
+                      aria-label="Largeur du cadre, en pixels"
+                      type="number"
+                      min={1}
+                      max={8192}
+                      step={1}
+                      value={cadreMain.droite - cadreMain.gauche + 1}
+                      onChange={(evenement) => {
+                        const largeur = Math.round(Number(evenement.target.value))
+                        if (!Number.isFinite(largeur) || largeur < 1) return
+                        setCadreMain((avant) => avant && { ...avant, droite: avant.gauche + largeur - 1 })
+                      }}
+                      className="h-[34px] w-full rounded-7 border border-trait bg-carte px-[8px] text-encre"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">
+                    Hauteur
+                    <input
+                      aria-label="Hauteur du cadre, en pixels"
+                      type="number"
+                      min={1}
+                      max={8192}
+                      step={1}
+                      value={cadreMain.bas - cadreMain.sommet + 1}
+                      onChange={(evenement) => {
+                        const hauteur = Math.round(Number(evenement.target.value))
+                        if (!Number.isFinite(hauteur) || hauteur < 1) return
+                        setCadreMain((avant) => avant && { ...avant, bas: avant.sommet + hauteur - 1 })
+                      }}
+                      className="h-[34px] w-full rounded-7 border border-trait bg-carte px-[8px] text-encre"
+                    />
+                  </label>
+                </div>
+              </>
             )}
             <button
               type="button"
@@ -867,7 +959,59 @@ export function EcranMontage({
               Il remesure les {montage.clip.images} images une par une : comptez
               une vingtaine de secondes sur un clip de cinq secondes. C'est pour
               ça que c'est un bouton et pas un automatisme.
+              {cadre === "main" && " Le rectangle posé à la main ci-dessus n'en bouge pas."}
             </p>
+
+            <div className="mt-2 border-t border-trait pt-3">
+              <Libelle aide="bande.pivot">le pivot — le point d’ancrage dans le jeu</Libelle>
+            </div>
+            <div className="flex flex-col gap-[8px]">
+              <div className="grid grid-cols-2 gap-[8px]">
+                <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">
+                  Horizontal
+                  <input
+                    aria-label="Pivot horizontal, en pixels"
+                    type="number"
+                    min={-8192}
+                    max={8192}
+                    step="any"
+                    placeholder="défaut du jeu"
+                    value={pivotMain?.x ?? ""}
+                    onChange={(evenement) => {
+                      const texte = evenement.target.value
+                      if (texte === "") { setPivotMain(null); return }
+                      const x = Number(texte)
+                      if (Number.isFinite(x)) setPivotMain((avant) => ({ x, y: avant?.y ?? 0 }))
+                    }}
+                    className="h-[34px] w-full rounded-7 border border-trait bg-carte px-[8px] text-encre"
+                  />
+                </label>
+                <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">
+                  Vertical
+                  <input
+                    aria-label="Pivot vertical, en pixels"
+                    type="number"
+                    min={-8192}
+                    max={8192}
+                    step="any"
+                    placeholder="défaut du jeu"
+                    value={pivotMain?.y ?? ""}
+                    onChange={(evenement) => {
+                      const texte = evenement.target.value
+                      if (texte === "") { setPivotMain(null); return }
+                      const y = Number(texte)
+                      if (Number.isFinite(y)) setPivotMain((avant) => ({ x: avant?.x ?? 0, y }))
+                    }}
+                    className="h-[34px] w-full rounded-7 border border-trait bg-carte px-[8px] text-encre"
+                  />
+                </label>
+              </div>
+              <p className="mesure text-[10px] leading-4 text-encre-4">
+                {pivotMain
+                  ? "posé à la main — gardé avec cette animation."
+                  : "sans réglage — l'animation garde le repère de son mouvement."}
+              </p>
+            </div>
           </>
         )}
 
