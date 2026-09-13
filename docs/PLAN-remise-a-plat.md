@@ -100,7 +100,7 @@ Temps 4 — les décisions       RP17 · RP18
 
 # Temps 1 — Le ménage
 
-## RP1 · Retirer ce qui est mort, garder ce qui n'a pas de remplaçant
+## RP1 · Retirer ce qui est mort, garder ce qui n'a pas de remplaçant  ✅ **close le 13 septembre 2026**
 
 **Bloquée par** : rien. **Elle bloque** : rien, mais elle rend tout le reste lisible.
 
@@ -129,16 +129,17 @@ refusé.
 
 ### Critères d'acceptation
 
-- [ ] Le fichier de la colonne de gauche d'avant est retiré, et le composant du carnet aussi —
+- [x] Le fichier de la colonne de gauche d'avant est retiré, et le composant du carnet aussi —
   ses constantes, elles, restent : cinq écrans vivants les emploient.
-- [ ] Les morceaux morts logés dans des fichiers vivants sont retirés sans toucher au reste du
+- [x] Les morceaux morts logés dans des fichiers vivants sont retirés sans toucher au reste du
   fichier : la grille de référence écrite dans l'écran principal, les deux composants jamais
-  montés de l'établi, l'emballage d'un travail conservé, et le second nom de l'atelier des sons.
-- [ ] L'écran de l'agent et le mode *réglages* des règles du jeu **ne sont pas retirés** : ils
-  attendent RP2.
-- [ ] Le champ de nouvelle collection d'une famille **n'est pas retiré** : il attend RP7.
-- [ ] Aucun essai ne teste plus un écran injoignable.
-- [ ] Les deux suites passent, et le nombre d'essais baisse exactement du nombre d'essais
+  montés de l'établi, et le second nom de l'atelier des sons.
+- [x] L'écran de l'agent et le mode *réglages* des règles du jeu **ne sont pas retirés** : ils
+  attendent RP2. **L'emballage d'un travail conservé non plus** : il n'est mort que parce que
+  l'écran de l'agent l'est, et il revivra avec lui.
+- [x] Le champ de nouvelle collection d'une famille **n'est pas retiré** : il attend RP7.
+- [x] Aucun essai ne teste plus un écran injoignable.
+- [x] Les deux suites passent, et le nombre d'essais baisse exactement du nombre d'essais
   orphelins retirés.
 
 ## RP2 · Rendre les quatre règles du jeu
