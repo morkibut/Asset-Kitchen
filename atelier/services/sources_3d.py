@@ -140,7 +140,7 @@ class ServiceSources3D:
             generation_id = "3d-" + source_id
             generation = Generation(identifiant=generation_id, modele="asset3d:" + str(rendu.get("reglages", {}).get("moteur_3d", "rendu")), demande={"prompt": source["nom"], "source3d": provenance}, parametres_resolus=rendu.get("reglages", {}), projet=projet, personnage=personnage, pose=pose, direction=direction, provenance=acteur, emplacements=[Emplacement(rang=0, statut=Statut.REUSSIE, unite="secondes")], clip=Clip(images=len(adresses), cadence=cadence, secondes=max(1, round(len(adresses)/cadence)), prix_annonce=0, prix_formule="Import d’un rendu existant · aucun calcul", nature="rendu3d"))
             d = self.atelier.fichiers.dossier_images_clip(generation_id, 0)
-            for rang in range(len(adresses)): self.atelier.fichiers._poser(d / f"{rang:06d}.png", donnees[f"frame-{rang:04d}.png"])
+            for rang in range(len(adresses)): self.atelier.fichiers._poser(d / f"{rang:04d}.png", donnees[f"frame-{rang:04d}.png"])
             self.atelier.fichiers.ecrire_enregistrement(generation_id, generation.en_json())
             self.atelier.base.enregistrer(generation)
             bande = self.atelier.montage.garder(generation_id, source["nom"], list(range(len(adresses))), cadence=cadence, sens=str(corps.get("sens") or "boucle"), cadre=Cadre(choix="main", gauche=0, sommet=0, droite=dimensions[0]-1, bas=dimensions[1]-1), recette=Recette(), personnage=personnage or "", pose=pose, direction=direction, identifiant_bande=source_id[:12])

@@ -136,6 +136,14 @@ GPU de l'auteur n'a pas été vérifiée.** AU10 et AU11 gardent cette preuve ou
 
 ## Parcours manuels supplémentaires
 
+Le chemin manuel complet est désormais tenu par un essai plutôt que par une séance de
+navigateur : `tests/test_au3_manuel.py` va du personnage vide aux fichiers `.tscn` et
+`.png` écrits dans un projet Godot jetable, en n'utilisant que les routes de l'interface,
+et vérifie qu'aucune session MCP n'a été ouverte pendant ce temps. Le second essai du même
+fichier tient la garantie d'attribution : après une fabrication manuelle payée, le
+compteur de séance de l'agent est toujours à zéro, aucune génération ne porte sa
+provenance, et son cadre de délégation lui laisse encore la totalité de ses deux appels.
+
 Dans le navigateur de test, création de « Le garde de contrôle », puis import d'un PNG
 transparent vers marche / est : l'image apparaît sur la bonne ligne du personnage.
 La création de « La sentinelle de contrôle » ouvre directement Objectif & règles ;

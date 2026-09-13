@@ -4952,3 +4952,28 @@ le gabarit, remesuré à zéro partout. Et le guide a rendu un second écart, da
 sa colonne de prose fait **468 px et 72 signes**, pas les « 504 px / 74 signes » que
 `docs/DESIGN.md` annonçait — l'écran avait raison, le document a été corrigé. Les deux sont
 dans `docs/PIEGES.md`.
+
+**AU19 — les deux moitiés ne se touchaient pas, et le pont tenait en un service.** Le produit
+savait découper une feuille (en images fixes, sans ordre) et savait animer (à partir d'une
+vidéo seulement) : une image d'animation ne sait désigner qu'un numéro de frame dans un clip,
+jamais une image de la bibliothèque. **Rien n'a été changé à cette règle** — c'est la feuille
+qui est devenue un clip, comme une vidéo importée en `AU18` et comme une séquence asset3d
+depuis `AU9`. Conséquence directe : le montage, la pellicule, le prélèvement, la fiche,
+l'affectation à une case et l'export n'ont pas bougé d'une ligne, et le seul écran touché est
+celui de la découpe, qui gagne une seconde sortie.
+
+**Ce que le contournement coûtait, et qui a décidé de la forme.** Passer par une vidéo aurait
+marché — et aurait perdu la couche alpha, sur des sprites dont c'est le bien le plus précieux.
+Découper la feuille écrit des PNG dans le dossier d'images du clip : aucun encodage sur le
+chemin, donc rien à reperdre. Un essai le verrouille au pixel.
+
+**Deux défauts trouvés par les essais avant l'écran.** La direction choisie au-dessus du
+bouton était ignorée quand aucune ligne n'était nommée — le partage en parts la remplaçait
+par rien. Et le refus d'une feuille inconnue parlait un second vocabulaire au lieu de celui de
+la bibliothèque ; c'est `AssetInconnu` qui le dit, comme partout ailleurs.
+
+**Une feuille à plusieurs lignes est un jeu de directions**, et c'est la forme courante : la
+case *une animation par ligne* ne paraît que si la grille a exactement autant de lignes que le
+jeu a de directions. Au-delà, le partage serait une supposition, et un partage inégal est
+refusé plutôt qu'arrondi — treize cases sur quatre directions veut dire que la feuille n'est
+pas celle qu'on croit.

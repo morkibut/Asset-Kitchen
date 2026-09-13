@@ -400,6 +400,16 @@ async def poser_asset(requete: Request, projet: str, asset: str) -> dict[str, An
     return _atelier(requete).univers.poser_asset(projet, asset)
 
 
+@routeur.post("/projects/{projet}/board/clips/{clip}", status_code=201)
+async def poser_clip(requete: Request, projet: str, clip: str) -> dict[str, Any]:
+    """Un clip du jeu paraît sur la toile, et il s'y rejoue.
+
+    La carte porte la première image du clip et pointe vers son fichier ; rien
+    n'est recopié. Vaut pour une vidéo importée comme pour un clip payé.
+    """
+    return _atelier(requete).univers.poser_clip(projet, clip)
+
+
 @routeur.post("/board/url", status_code=201)
 async def coller_adresse(requete: Request, corps: CorpsAdresse) -> dict[str, Any]:
     """Coller une adresse — la carte paraît **avant** que l'image n'arrive (US-42).

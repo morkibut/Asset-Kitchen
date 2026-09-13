@@ -516,6 +516,91 @@ async def rendre_des_clips(requete: Request, corps: CorpsClips) -> dict[str, Any
     return {"clips": [g.en_json() for g in rendus]}
 
 
+@routeur.post("/clips/import", status_code=201)
+async def importer_un_clip(
+    requete: Request,
+    nom: str = "",
+    projet: str | None = None,
+    personnage: str | None = None,
+    pose: str | None = None,
+    direction: str | None = None,
+    forcer: bool = False,
+) -> dict[str, Any]:
+    """Faire entrer une vidéo **depuis l'écran**, et elle devient un clip.
+
+    **Les octets sont le corps de la requête, bruts** — la décision de
+    `POST /assets/upload` reconduite telle quelle, et pour sa raison : un
+    `multipart` demanderait `python-multipart`, une dépendance d'exécution de
+    plus pour transporter ce qu'un `POST` transporte déjà.
+
+    **Une vidéo par appel**, comme une image par appel : deux fichiers déposés
+    font deux réponses, donc un clip et un refus qui nomme le fichier, plutôt
+    qu'une réponse partielle qu'il faudrait inventer.
+
+    Rend `{"clip": …, "doublon": …}`, dont l'un est toujours nul — la forme de
+    l'import d'image, et pour la même raison : un doublon n'est pas un refus, et
+    rappeler avec `forcer` fait entrer quand même.
+    """
+    return _atelier(requete).animation.importer(
+        await requete.body(),
+        nom,
+        projet=projet,
+        personnage=personnage,
+        pose=pose,
+        direction=direction,
+        forcer=forcer,
+    )
+
+
+class CorpsFeuille(BaseModel):
+    """Ce qu'il faut pour qu'une feuille de sprites devienne une animation (`AU19`).
+
+    **La feuille est une image de la bibliothèque**, et les rectangles sont ceux
+    de l'atelier de découpe — `[x0, y0, x1, y1]` en pixels de l'image brute,
+    inclusifs aux deux bouts, la forme du dépôt. Une seconde convention de
+    rectangle se confondrait un jour avec la première sur un pixel de bord.
+    """
+
+    feuille: str
+    boites: list[list[int]]
+    nom: str = ""
+    personnage: str | None = None
+    pose: str | None = None
+    direction: str | None = None
+    # **Une bande par direction nommée, dans l'ordre des lignes.** C'est la
+    # forme courante d'une feuille de ce jeu : quatre lignes, une par direction.
+    # Vide, la feuille entière fait une seule animation.
+    directions: list[str] | None = None
+    cadence: float = CADENCE_DE_BANDE
+    sens: str = BOUCLE
+
+
+# ⚠️ **« sheet » sans « from- » devant, et ce n'est pas un caprice** : le banc
+# des jetons lit `from-<mot>` comme un utilitaire de dégradé Tailwind, et une
+# route nommée `/clips/from-sheet` faisait donc échouer le garde-fou des
+# couleurs sur un jeton `sheet` qui n'existe pas. Le banc a raison de ne pas
+# savoir lire une URL ; c'est à l'URL de ne pas ressembler à une classe.
+@routeur.post("/clips/sheet", status_code=201)
+async def animer_une_feuille(requete: Request, corps: CorpsFeuille) -> dict[str, Any]:
+    """Une feuille découpée devient un clip et ses bandes. **Rien n'est dépensé.**
+
+    L'image a été payée une fois, à son entrée ; la découper en cases ne
+    rappelle personne. Rend `{"clip": …, "bandes": [ … ]}` — le clip pour la
+    galerie et la fiche, les bandes pour la matrice du personnage.
+    """
+    return _atelier(requete).planche_animee.animer(
+        corps.feuille,
+        [tuple(int(c) for c in boite) for boite in corps.boites],
+        nom=corps.nom,
+        personnage=corps.personnage,
+        pose=corps.pose,
+        direction=corps.direction,
+        directions=corps.directions,
+        cadence=corps.cadence,
+        sens=corps.sens,
+    )
+
+
 @routeur.get("/clips")
 async def liste_clips(
     requete: Request,
@@ -641,6 +726,27 @@ def _plage_demandee(entete: str, taille: int) -> tuple[int | None, int]:
     return debut, min(fin, taille - 1)
 
 
+def _frame_du_clip(dossier: Path, numero: int) -> Path:
+    """Le fichier d'une image du clip, **quel que soit son nombre de chiffres**.
+
+    ⚠️ Le dépôt a écrit ces images de deux façons. Le décodeur les numérote sur
+    quatre chiffres (`atelier/image/clip.py`) ; l'import d'un rendu asset3d les
+    écrivait sur six (`services/sources_3d.py`), et ces routes-ci ne lisaient que
+    les premières — une séquence 3D importée n'a donc jamais pu servir ni une
+    frame ni sa couverture, alors que son montage, lui, marchait : il parcourt le
+    dossier au lieu de nommer le fichier.
+
+    L'import écrit désormais sur quatre chiffres comme tout le reste. Les six
+    restent lus : ce qui est déjà sur le disque n'a pas à être réécrit pour
+    redevenir visible.
+    """
+    for chiffres in (4, 6):
+        fichier = dossier / f"{numero:0{chiffres}d}.png"
+        if fichier.is_file():
+            return fichier
+    return dossier / f"{numero:04d}.png"
+
+
 @routeur.get("/clips/{identifiant}/frames/{numero}")
 async def image_du_clip(requete: Request, identifiant: str, numero: int) -> Response:
     """Une image prélevée dans le clip, par son numéro.
@@ -652,7 +758,7 @@ async def image_du_clip(requete: Request, identifiant: str, numero: int) -> Resp
     generation = _clip(requete, identifiant)
     atelier = _atelier(requete)
     dossier: Path = atelier.fichiers.dossier_images_clip(identifiant, 0)
-    fichier = dossier / f"{numero:04d}.png"
+    fichier = _frame_du_clip(dossier, numero)
     if not fichier.is_file():
         refus = generation.clip.extraction_refus
         raise ErreurAtelier(
@@ -681,7 +787,7 @@ async def couverture_du_clip(
     generation = _clip(requete, identifiant)
     atelier = _atelier(requete)
     dossier: Path = atelier.fichiers.dossier_images_clip(identifiant, 0)
-    fichier = dossier / "0000.png"
+    fichier = _frame_du_clip(dossier, 0)
     if not fichier.is_file():
         refus = generation.clip.extraction_refus
         raise ErreurAtelier(refus or "ce clip ne porte aucune image")

@@ -60,6 +60,7 @@ from atelier.services.bibliotheque import (
 )
 from atelier.services.agent import DepotRefuse, PlafondAtteint
 from atelier.services.decoupe import DecoupeRefusee
+from atelier.services.planche_animee import PlancheAnimeeRefusee
 from atelier.services.equipement import EmploiInconnu
 from atelier.services.miroir import MiroirRefuse
 from atelier.services.ambiances import AmbianceRefusee
@@ -112,6 +113,7 @@ CODES = {
     LienRefuse: 409,
     UniversRefuse: 409,
     DecoupeRefusee: 409,
+    PlancheAnimeeRefusee: 409,
     # Il n'y a pas de case où ranger le miroir. 409 et non 400 : la demande est
     # bien formée, c'est l'état de l'image qui s'y oppose.
     MiroirRefuse: 409,

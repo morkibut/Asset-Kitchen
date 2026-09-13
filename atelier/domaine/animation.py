@@ -590,6 +590,12 @@ class Clip:
         qui prendrait l'une pour l'autre renoncerait à des clips qu'il pouvait
         s'offrir.
         """
+        if self.nature == "planche":
+            # **La feuille dit qu'elle est une feuille** (`AU19`). *Source
+            # importée* serait vrai et inutile : l'auteur qui relit sa galerie
+            # six mois plus tard cherche de quoi cette animation est née, et la
+            # réponse est une image de sa bibliothèque, pas un fichier d'ailleurs.
+            return "feuille découpée — aucun nouvel appel"
         if self.nature != "video":
             return "source importée — aucun nouvel appel"
         if self.montant_relu:

@@ -48,6 +48,7 @@ from atelier.domaine.carte import (
     TAILLES,
     TEXTE,
     TOUS,
+    VIDEO,
     Carte,
 )
 from atelier.domaine.erreurs import ErreurAtelier
@@ -228,6 +229,53 @@ class ServiceUnivers:
             self._sauver(carte)
         return {"carte": carte.en_json(), "deja_presente": resultat["doublon"] is not None}
 
+    def poser_clip(self, projet: str, clip: str) -> dict[str, Any]:
+        """Un clip du jeu paraît sur la toile, **et il s'y rejoue**.
+
+        **La carte ne garde pas de copie de la vidéo.** Elle porte la première
+        image du clip — sa vignette, servie par la route d'image des cartes comme
+        n'importe quelle autre — et sa `source` dit de quel clip il s'agit. Le
+        lecteur va chercher le fichier là où il vit déjà. Copier les octets
+        aurait doublé sur le disque ce qu'un clip d'une minute pèse, et surtout
+        aurait créé une seconde vérité : jeter le clip aurait laissé sur la toile
+        une carte qui joue une vidéo que le journal des dépenses ne connaît plus.
+
+        Marche pour une vidéo importée comme pour un clip payé : à ce niveau, la
+        différence ne se voit pas, et c'est le but.
+        """
+        self._exige(projet)
+        # Une commande de clip **est** une génération : elle se relit comme telle,
+        # et le dépôt suffit — pas besoin de dépendre du service d'animation.
+        generation = self._base.lire(clip)
+        if generation is None or generation.clip is None:
+            raise CarteRefusee("Ce clip n’existe pas dans l’atelier.")
+        if generation.projet is not None and generation.projet != projet:
+            raise CarteRefusee("Ce clip n’appartient pas au jeu choisi.")
+        couverture = self._fichiers.dossier_images_clip(clip, 0) / "0000.png"
+        if not couverture.is_file():
+            raise CarteRefusee(
+                generation.clip.extraction_refus
+                or "Les images de ce clip n’ont pas été tirées : il n’a rien à montrer."
+            )
+        resultat = self.coller_image(
+            projet,
+            couverture.read_bytes(),
+            nom=clip,
+            source=f"clip:{clip}",
+            genre=VIDEO,
+            # **Deux clips qui commencent par la même image restent deux cartes.**
+            # L'empreinte est celle de la vignette, pas celle de la vidéo : sans
+            # ce `forcer`, poser le second rendrait la carte du premier, qui
+            # rejouerait le mauvais fichier.
+            forcer=True,
+        )
+        carte = self.carte(projet, resultat["carte"]["identifiant"])
+        if carte.position is None:
+            autres = [c for c in self.cartes(projet) if c.position is not None]
+            carte.position = (max((c.position[0] + (c.largeur_libre or 240) for c in autres), default=-30) + 30, 0)
+            self._sauver(carte)
+        return {"carte": carte.en_json(), "deja_presente": False}
+
     def coller_image(
         self,
         projet: str,
@@ -236,6 +284,7 @@ class ServiceUnivers:
         nom: str = "",
         source: str = "",
         forcer: bool = False,
+        genre: str = IMAGE,
     ) -> dict[str, Any]:
         """Des octets deviennent une carte image — ou un refus, ou un doublon.
 
@@ -271,7 +320,10 @@ class ServiceUnivers:
         carte = Carte(
             identifiant=identifiant,
             projet=projet,
-            genre=IMAGE,
+            # **Les octets sont ceux d'une image dans les deux cas.** Une carte
+            # vidéo les reçoit de la première frame de son clip : ce qui change
+            # est ce que la carte *est*, pas ce qu'on vient de mesurer.
+            genre=genre,
             statut=PRETE,
             source=source.strip(),
             empreinte=empreinte,

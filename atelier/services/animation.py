@@ -27,6 +27,8 @@ endroits qui comptent l'argent ait à apprendre qu'il existe des vidéos.
 from __future__ import annotations
 
 import asyncio
+import shutil
+import tempfile
 import time
 import uuid
 from pathlib import Path
@@ -58,6 +60,8 @@ from atelier.domaine.generation import (
 )
 from atelier.fournisseur.port import PortAnimateur
 from atelier.image import clip as decodeur
+from atelier.image.mesures import empreinte_de
+from atelier.services.generation import ImportRefuse
 from atelier.services.evenements import Diffusion
 from atelier.services.fournisseurs import indisponible_de
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu
@@ -72,6 +76,27 @@ CADENCE_ATTENTE = 5.0
 # continue de se fabriquer chez le fournisseur et sera facturé, et le numéro du
 # travail permet d'aller le chercher. Mesuré au pire à 301 s le 2 septembre 2026.
 ATTENTE_MAX = 900.0
+
+# Le « modèle » d'une vidéo qui n'a appelé personne — le pendant exact d'`IMPORT`
+# pour une image (`services/generation.py`). Un mot du produit, que le catalogue
+# ne déclare pas et ne déclarera jamais : il dit que ce clip n'a rien coûté et
+# qu'il ne se relance pas.
+IMPORT_VIDEO = "video-importee"
+
+# Ce qu'un conteneur porte comme type de média, par son extension. **Lu sur le
+# nom, jamais deviné sur les octets** : c'est le décodeur qui dit si le fichier
+# est lisible, et il le dit sur le contenu quelques lignes plus loin. Ce
+# tableau-ci ne sert qu'à écrire le bon type sur le disque, pour que le lecteur
+# du navigateur sache quoi faire du fichier qu'on lui sert.
+TYPES_VIDEO = {
+    ".mp4": "video/mp4",
+    ".m4v": "video/mp4",
+    ".webm": "video/webm",
+    ".mov": "video/quicktime",
+    ".mkv": "video/x-matroska",
+    ".avi": "video/x-msvideo",
+    ".gif": "image/gif",
+}
 
 
 class ServiceAnimation:
@@ -552,6 +577,154 @@ class ServiceAnimation:
         await self._encaisser(generation)
         return generation
 
+    # ── Une vidéo qui vient d'ailleurs ───────────────────────────────────────
+
+    def importer(
+        self,
+        octets: bytes,
+        nom: str,
+        *,
+        projet: str | None = None,
+        personnage: str | None = None,
+        pose: str | None = None,
+        direction: str | None = None,
+        provenance: str = AUTEUR,
+        forcer: bool = False,
+    ) -> dict[str, Any]:
+        """Un fichier vidéo devient un clip du jeu. **Aucun appel, aucun coût.**
+
+        **Le seul endroit du dépôt qui fasse entrer une vidéo**, sur le modèle
+        exact de `ServiceGenerations.importer` pour une image : l'écran et
+        l'agent passent tous les deux par ici, et c'est ce qui garde vraie la
+        phrase « ce que l'agent peut faire, l'écran le peut aussi ».
+
+        **Ce qui entre est un clip, pas une nouvelle sorte d'objet**, et c'est la
+        décision de la tranche. Un clip payé porte déjà tout ce dont une vidéo
+        importée a besoin : un fichier brut qu'on rejoue, des images tirées une
+        fois pour toutes, un montage qui y taille des bandes, une fiche, et un
+        prélèvement d'image qui entre en bibliothèque. Inventer un second objet
+        aurait dédoublé les six écrans qui savent déjà lire celui-ci.
+
+        **Sa nature dit d'où il vient** — `importe`, comme `rendu3d` le dit d'une
+        séquence venue d'asset3d. C'est ce champ, et non le prix à zéro, qui
+        permet à la fiche d'écrire *source importée — aucun nouvel appel* plutôt
+        qu'un montant relu chez un fournisseur qui n'a jamais été appelé.
+
+        ⚠️ **Un fichier illisible est refusé, et rien n'est gardé.** C'est la
+        seule divergence avec un clip payé, et elle tient à l'argent : un clip
+        payé dont l'extraction échoue reste un clip payé — on garde le fichier,
+        on écrit pourquoi les images manquent. Ici rien n'a été dépensé, donc un
+        fichier qu'on ne sait pas lire n'a aucune raison de rester sur le disque
+        ni d'encombrer la liste des sources.
+        """
+        propre = nom.strip() or "la vidéo importée"
+        if not octets:
+            raise ImportRefuse(f"« {propre} » est vide")
+        # **Le décodeur manquant est un fait de l'installation, pas un mauvais
+        # fichier**, et sa phrase est déjà écrite en français pour être affichée
+        # telle quelle. La dire ici évite de refuser « ce n'est pas une vidéo »
+        # sur un fichier parfaitement valable.
+        manque = decodeur.indisponible()
+        if manque:
+            raise ImportRefuse(manque)
+
+        empreinte = empreinte_de(octets)
+        if not forcer:
+            deja = self._deja_importe(projet, empreinte)
+            if deja is not None:
+                return {"clip": None, "doublon": deja.en_json()}
+
+        identifiant = uuid.uuid4().hex[:12]
+        type_media = _type_media_de(propre)
+        dossier = self._fichiers.dossier_images_clip(identifiant, 0)
+        # **Le fichier est décodé depuis un dossier de passage, jamais depuis le
+        # dépôt** — et ce détour est la condition du critère « un import refusé
+        # ne laisse rien ». Mesuré sous Windows : quand le lecteur ne trouve pas
+        # de décodeur pour ces octets-là, il **garde le fichier ouvert**, et le
+        # dossier qui le contient devient alors impossible à effacer. Écrit dans
+        # le dépôt, il y resterait ; écrit ici, il reste dans le dossier
+        # temporaire du système, où il ne gêne personne.
+        passage = Path(tempfile.mkdtemp(prefix="clip-importe-"))
+        try:
+            source = passage / f"source{_extension(type_media)}"
+            source.write_bytes(octets)
+            try:
+                mesure = decodeur.extraire(source, dossier)
+            except ValueError:
+                # Le dossier d'images, lui, n'a aucun fichier ouvert : ce sont
+                # des PNG refermés à l'écriture. Il s'efface donc vraiment.
+                shutil.rmtree(dossier.parent, ignore_errors=True)
+                # **Le message du lecteur ne franchit pas cette ligne**, comme
+                # celui de Pillow au-dessus de `ServiceGenerations.importer`.
+                # Mesuré à l'écran le 13 septembre 2026 : il est en anglais et
+                # il nomme le **dossier de passage** du serveur — *Could not
+                # find a backend to open C:\\…\\clip-importe-6x3qdcf6\\source.bin* —,
+                # c'est-à-dire un chemin qui n'existe déjà plus quand l'auteur
+                # le lit. Ce qui compte, et que le PRD demande, c'est **quel**
+                # fichier pose problème.
+                raise ImportRefuse(f"« {propre} » n'est pas une vidéo lisible") from None
+        finally:
+            shutil.rmtree(passage, ignore_errors=True)
+
+        chemin = self._fichiers.ecrire_brut(
+            identifiant, 0, octets, _extension(type_media)
+        )
+        generation = Generation(
+            identifiant=identifiant,
+            modele=IMPORT_VIDEO,
+            # `empreinte` porte le doublon et `source` le nom du fichier, comme
+            # pour une image importée : les deux vivent dans le `generation.json`
+            # et survivent donc à l'effacement de l'index.
+            demande={
+                "prompt": nom,
+                "source": nom,
+                "empreinte": empreinte,
+                "secondes": max(1, round(mesure.images / (mesure.cadence or 1))),
+            },
+            parametres_resolus={"modele": IMPORT_VIDEO, "source": nom},
+            emplacements=[
+                Emplacement(
+                    rang=0,
+                    statut=Statut.REUSSIE,
+                    unite="secondes",
+                    resultat=Resultat(
+                        fichier=chemin,
+                        largeur=mesure.largeur,
+                        hauteur=mesure.hauteur,
+                        type_media=type_media,
+                        octets=len(octets),
+                    ),
+                )
+            ],
+            cree_le=time.time(),
+            projet=projet,
+            personnage=personnage,
+            pose=pose,
+            direction=direction,
+            provenance=provenance,
+            clip=Clip(
+                nature="importe",
+                images=mesure.images,
+                cadence=mesure.cadence,
+                secondes=max(1, round(mesure.images / (mesure.cadence or 1))),
+                prix_annonce=0,
+                prix_formule="Vidéo importée · aucun appel",
+            ),
+        )
+        self._sauver(generation)
+        return {"clip": generation.en_json(), "doublon": None}
+
+    def _deja_importe(self, projet: str | None, empreinte: str) -> Generation | None:
+        """La vidéo importée qui porte déjà ces octets-là, ou rien.
+
+        Même portée et même critère qu'un import d'image : **dans ce projet**, et
+        **sur les octets**. Deux vidéos visuellement proches sont deux vidéos.
+        """
+        for generation in self._base.generations_du_modele(IMPORT_VIDEO, projet):
+            if generation.demande.get("empreinte") == empreinte:
+                return generation
+        return None
+
     # ── Garder celui-là, jeter les autres — un seul geste ────────────────────
 
     def garder(self, garde: str, jette: Iterable[str]) -> dict[str, Any]:
@@ -883,7 +1056,27 @@ def _modele_en_json(modele: ModeleVideo) -> dict[str, Any]:
 
 
 def _extension(type_media: str | None) -> str:
-    return {"video/mp4": ".mp4", "video/webm": ".webm"}.get(type_media or "", ".bin")
+    """L'extension à donner au fichier brut, d'après son type de média.
+
+    `.bin` pour un type inconnu, et c'est voulu : le fichier est gardé tel qu'il
+    est arrivé, sans qu'on lui prête une extension qu'on ne sait pas justifier.
+    """
+    for fin, type_connu in TYPES_VIDEO.items():
+        if type_connu == type_media:
+            return fin
+    return ".bin"
+
+
+def _type_media_de(nom: str) -> str:
+    """Le type de média d'un fichier importé, lu sur son nom.
+
+    Inconnu, le fichier part quand même chez le décodeur — c'est **lui** qui dit
+    si les octets sont une vidéo, et il le fera avant qu'aucun clip n'existe. Ce
+    qui s'écrit alors est le type générique : mieux vaut un lecteur qui refuse un
+    fichier que le produit dise ne pas connaître, qu'un `video/mp4` inventé sur
+    une extension qui disait autre chose.
+    """
+    return TYPES_VIDEO.get(Path(nom).suffix.lower(), "application/octet-stream")
 
 
 def _date_de(instant: float) -> str:

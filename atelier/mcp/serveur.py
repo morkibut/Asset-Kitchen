@@ -40,6 +40,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
 from atelier.domaine.asset import Asset
+from atelier.domaine.bande import BOUCLE, CADENCE_PAR_DEFAUT as CADENCE_DE_BANDE
 from atelier.domaine.consommation import ICI, Reserve
 from atelier.domaine.demande import Demande
 from atelier.domaine.erreurs import ErreurAtelier
@@ -466,6 +467,56 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         }
 
     @serveur.tool(
+        name="import_clip",
+        meta=_barre(
+            verbe="creer",
+            titre="Importer une vidéo du disque",
+            phrase="Elle entre comme clip, et ses images sont tirées à l’entrée.",
+            ou="galerie",
+        ),
+        title="Import a local video",
+        description=(
+            "Bring a local video file (mp4, webm, mov, mkv, avi) into the "
+            "project as a clip — its frames are extracted on entry, so it can "
+            "immediately be montaged into animation strips, have single frames "
+            "picked into the library, and be played back. Optionally file it "
+            "under a character, pose and direction. If the same file is already "
+            "in the project, nothing is imported and the existing clip is "
+            "returned as `doublon` — call again with force=true to import it "
+            "anyway. Costs nothing, calls no provider and works offline."
+        ),
+    )
+    @_refus_lisible
+    async def import_clip(
+        file_path: str,
+        project: str | None = None,
+        character: str | None = None,
+        pose: str | None = None,
+        direction: str | None = None,
+        force: bool = False,
+    ) -> dict[str, Any]:
+        """**Le pendant exact d’`import_asset`, et pour la même raison.**
+
+        « L’écran et l’outil MCP passent par le même service : aucun geste que
+        l’un a et l’autre pas. » Une porte d’entrée qui n’existerait que
+        dans l’écran ferait de l’agent un utilisateur de seconde classe sur le
+        seul geste de la tranche.
+        """
+        chemin = Path(file_path).expanduser()
+        if not chemin.is_file():
+            raise ErreurAtelier(f"aucun fichier « {chemin} »")
+        return atelier.animation.importer(
+            chemin.read_bytes(),
+            chemin.name,
+            projet=_projet(atelier, project),
+            personnage=character,
+            pose=pose,
+            direction=direction,
+            provenance=AGENT,
+            forcer=force,
+        )
+
+    @serveur.tool(
         name="edit_asset",
         meta=_barre(
             verbe="travailler",
@@ -597,6 +648,72 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "slices": [
                 _asset_en_json(atelier, Asset.depuis_json(a))
                 for a in faites.get("decoupes", [])
+            ],
+        }
+
+    @serveur.tool(
+        name="animate_sheet",
+        meta=_barre(
+            verbe="travailler",
+            titre="Monter une feuille en animation",
+            phrase="Une feuille reçue devient une animation du personnage.",
+            ou="galerie",
+            besoins=("images",),
+        ),
+        title="Turn a sprite sheet into an animation",
+        description=(
+            "Turn a multi-sprite sheet into an animation: its cells become the "
+            "frames of a clip, and a strip is kept from them, ready to be "
+            "placed on a character's movement and direction. Boxes are "
+            "[x0, y0, x1, y1] in the raw image's pixels, inclusive on both "
+            "ends, **in playing order** — call `slice_asset` without `boxes` "
+            "to get them proposed. Naming `directions` makes one strip per "
+            "row, in row order. Free, offline, and no video encoding: "
+            "transparency is preserved."
+        ),
+    )
+    @_refus_lisible
+    async def animate_sheet(
+        asset_id: str,
+        boxes: list[list[int]],
+        name: str = "",
+        character: str | None = None,
+        pose: str | None = None,
+        direction: str | None = None,
+        directions: list[str] | None = None,
+        fps: float = CADENCE_DE_BANDE,
+        loop: str = BOUCLE,
+    ) -> dict[str, Any]:
+        """**Ce que l'écran peut faire, l'agent le peut aussi** — et par la même porte.
+
+        Aucune logique ici : le service découpe, écrit le clip et taille les
+        bandes. L'outil traduit des mots anglais en mots du produit, et rien
+        d'autre.
+        """
+        fait = atelier.planche_animee.animer(
+            asset_id,
+            [tuple(int(c) for c in boite) for boite in boxes],
+            nom=name,
+            personnage=character,
+            pose=pose,
+            direction=direction,
+            directions=directions,
+            cadence=fps,
+            sens=loop,
+            acteur=AGENT,
+        )
+        return {
+            "clip": fait["clip"]["identifiant"],
+            "frames": fait["clip"]["clip"]["images"],
+            "strips": [
+                {
+                    "id": bande["identifiant"],
+                    "name": bande["nom"],
+                    "frames": [prise["numero"] for prise in bande["prises"]],
+                    "pose": bande["pose"],
+                    "direction": bande["direction"],
+                }
+                for bande in fait["bandes"]
             ],
         }
 

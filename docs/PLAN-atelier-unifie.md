@@ -167,8 +167,13 @@ L'auteur voit la demande, sa source, ses réglages et son état dans le personna
 ### Critères d'acceptation
 
 - [x] Chemin complet depuis un personnage vide, avec moteur doublé et stockage réel jetable.
-- [ ] Le même chemin s'effectue entièrement depuis l'interface sans client MCP connecté,
+- [x] Le même chemin s'effectue entièrement depuis l'interface sans client MCP connecté,
   jusqu'à l'export ; une demande manuelle n'est pas attribuée à l'agent.
+  Preuve : `tests/test_au3_manuel.py`. Le premier essai crée le personnage vide, son
+  objectif, sa référence, son clip, sa bande et ses fichiers Godot par la seule API de
+  l'interface, sans qu'aucune session MCP ne soit ouverte. Le second montre que le geste
+  manuel n'entre ni dans le compteur de séance de l'agent, ni dans les plafonds du cadre
+  de délégation, qui refusent toujours l'agent au bon moment.
 - [x] La méthode doit accepter les références nécessaires ; le cadre de l'agent est relu
   avant soumission et deux demandes concurrentes ne contournent pas ses plafonds.
 - [x] Répéter la clé de demande retrouve le travail ; une fermeture après soumission ne
@@ -482,6 +487,113 @@ pour les combiner dans le jeu, ou les sprites assemblés de la tenue choisie.
   composition et provenance vont dans le manifeste séparé, selon le contrat de livraison d'AU1.
 - [x] L'auteur et l'agent peuvent retrouver une tenue, exporter ses couches ou sa composition
   et remplacer la bonne livraison sans modifier les autres animations ni les emplois d'un autre héros.
+
+## AU18 · Une vidéo qui vient d'ailleurs entre dans le jeu
+
+**Relevé d'usage du 13 septembre 2026.** **Bloquée par** : rien — AU3 et AU9 ont déjà livré
+tout ce qui est en aval.
+
+### Ce qu'on livre
+
+Une vidéo du disque — un clip filmé, un rendu sorti d'ailleurs, une capture — entre dans
+l'atelier et devient **un clip comme un autre** : ses images sont tirées à l'entrée, on y
+taille des bandes, on en prélève des images, et elle se pose sur la toile où elle se rejoue.
+Rien n'est dépensé, et rien n'est recopié.
+
+**Pourquoi un clip et pas un objet neuf.** Tout ce qui vient après existait déjà et ne
+demandait qu'une porte d'entrée : le montage, la pellicule, le prélèvement d'image, la fiche,
+le rejeu. Inventer une seconde sorte d'objet aurait dédoublé six écrans pour un fichier qui
+se comporte exactement comme un clip payé.
+
+### Critères d'acceptation
+
+- [x] Une vidéo importée devient un clip du jeu, rangé sur le personnage, le mouvement et la
+  direction choisis ; elle ne dépense rien et sa fiche dit *source importée — aucun nouvel appel*.
+- [x] Ses images sont tirées à l'entrée, une fois : frames, couverture et montage marchent
+  sans rien redécoder.
+- [x] Un fichier qui n'est pas une vidéo lisible est refusé en français **en nommant le
+  fichier**, et ne laisse rien sur le disque — rien n'a été payé, rien n'a à être conservé.
+- [x] Le même fichier deux fois se signale comme doublon sans refuser ; `forcer` le fait
+  entrer quand même. Même forme que l'import d'une image.
+- [x] Un clip se pose sur la toile et s'y rejoue. La carte porte sa première image et pointe
+  vers son fichier ; aucune copie de la vidéo n'est écrite.
+- [x] Deux clips qui commencent par la même image font deux cartes distinctes.
+- [x] Le clip importé se relit entier après effacement de l'index : son `generation.json`
+  porte tout.
+
+### Défaut voisin réparé au passage
+
+Les images d'un rendu asset3d importé étaient écrites sur **six** chiffres quand le décodeur
+en écrit **quatre**, et les routes de frame et de couverture ne lisaient que les quatre. Une
+séquence 3D importée n'a donc jamais pu montrer une image — alors que son montage, lui,
+marchait : il parcourt le dossier au lieu de nommer le fichier. L'import écrit désormais sur
+quatre chiffres, et **les six restent lus** : rien de ce qui est sur le disque n'a à être
+renommé pour redevenir visible.
+
+## AU19 · Une feuille de sprites qui vient d'ailleurs devient une animation
+
+**Relevé d'usage du 13 septembre 2026.** L'auteur importe une feuille de douze cases — un
+champignon qui marche — et cherche comment la monter en animation. **Le geste n'existe pas.**
+**Bloquée par** : rien — AU18 vient de livrer la porte d'entrée voisine, et tout l'aval est en
+place depuis A10.
+
+### Ce qu'on livre
+
+Une feuille de sprites devient **un clip comme un autre** : ses cases sont ses images, on y
+taille des bandes, et une bande se range sur un mouvement et une direction du personnage.
+Rien n'est dépensé, et la transparence des cases est conservée intacte.
+
+**Ce que le produit savait, et ce qui manquait.** Il savait découper une feuille — en *images
+fixes*, sans ordre et sans suite. Il savait fabriquer une animation — mais seulement en
+partant d'une **vidéo**. Les deux moitiés ne se touchaient pas : une image d'animation ne sait
+désigner qu'un numéro de frame dans un clip, jamais une image de la bibliothèque. L'auteur qui
+importait une feuille n'avait donc aucun chemin, et le seul contournement passait par une
+vidéo — c'est-à-dire par la perte de la couche alpha, sur des sprites dont c'est justement le
+plus précieux.
+
+**Pourquoi un clip, et pas une nouvelle sorte d'objet.** C'est le raisonnement d'AU18,
+reconduit sans changer un mot : le montage, la pellicule, le prélèvement d'image, la fiche,
+l'affectation à une case et l'export existent déjà et n'attendaient qu'une porte. Un clip
+*est* un dossier d'images numérotées ; une feuille découpée aussi. La séquence d'un rendu
+asset3d entre déjà par là — `nature: rendu3d` —, et le montage sait depuis ce jour-là qu'un
+clip n'a pas toujours de fichier vidéo derrière lui. La feuille prend une nature de plus,
+`planche`, et rien d'autre ne bouge.
+
+**Ce qui coupe est ce qui coupait déjà.** Les rectangles sont ceux de l'atelier de découpe —
+grille fixe, zones opaques ou tracés à la main —, dans la forme du dépôt, avec la même
+vérification. La détection ne décide toujours de rien : l'auteur voit, corrige, et ce qui part
+est sa liste, dans son ordre. **La marge d'élargissement est nulle ici**, seule différence
+avec la découpe en images : deux cases de tailles inégales feraient une animation qui tressaute.
+
+**Une feuille à plusieurs lignes est un jeu de directions.** C'est la forme courante et c'est
+celle de ce jeu-ci : quatre lignes, une par direction. Un appel fait donc **un clip et autant
+de bandes que de lignes**, chacune affectée à sa direction ; sans directions nommées, la
+feuille entière fait une seule animation.
+
+**Ce que ça ne fait pas.** Les cases n'entrent pas dans la bibliothèque comme douze images :
+ce qui est demandé est une animation, et douze demi-images sans ordre encombreraient la
+galerie sans servir. Découper en images reste le geste voisin, inchangé.
+
+### Critères d'acceptation
+
+- [x] Une feuille de la bibliothèque et ses rectangles deviennent un clip du jeu, rangé sur le
+  personnage, le mouvement et la direction choisis ; rien n'est dépensé et sa fiche dit
+  *feuille découpée — aucun nouvel appel*.
+- [x] Les cases sont écrites une fois comme images du clip, dans l'ordre reçu ; montage,
+  pellicule et prélèvement marchent sans rien redécouper.
+- [x] La transparence d'une case survit entière — aucune conversion vidéo sur le chemin.
+- [x] Une bande naît du même geste, à la cadence par défaut, cadrée sur la case entière, et
+  elle apparaît dans la matrice du personnage à sa case mouvement × direction.
+- [x] Plusieurs lignes et autant de directions nommées font autant de bandes, dans l'ordre des
+  lignes, sur le même clip.
+- [x] Un rectangle hors de l'image, trop petit, ou une feuille inconnue sont refusés en
+  français, et rien n'est écrit sur le disque.
+- [x] L'écran de découpe porte la seconde sortie — *en faire une animation* — à côté de celle
+  qui fabrique des images, avec le mouvement et la direction sous les yeux.
+- [x] L'agent le fait aussi : un outil MCP prend la feuille et ses rectangles, et rend le clip
+  et ses bandes. Ce que l'écran peut faire, l'agent le peut aussi.
+- [x] Le clip issu d'une feuille se relit entier après effacement de l'index : son
+  `generation.json` porte tout.
 
 ## Comment fermer une tranche
 

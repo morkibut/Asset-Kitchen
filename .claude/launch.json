@@ -41,6 +41,14 @@
       "port": 8422
     },
     {
+      "name": "atelier-jetable-au19",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_au19.py"
+      ],
+      "port": 8423
+    },
+    {
       "name": "rapports",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [
@@ -456,6 +464,14 @@
         "essais/atelier_jetable_verif_d6.py"
       ],
       "port": 8502
+    },
+    {
+      "name": "atelier-jetable-reference-importee",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_reference_importee.py"
+      ],
+      "port": 8503
     }
   ]
 }

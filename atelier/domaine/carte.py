@@ -58,7 +58,14 @@ from atelier.domaine.teinte import AUCUNE, teinte_valide
 
 IMAGE = "image"
 TEXTE = "texte"
-GENRES = (IMAGE, TEXTE)
+# **Une carte vidéo montre un clip du jeu, elle n'en garde pas une copie.** Son
+# `fichier` est la première image du clip — c'est ce qui lui donne une vignette
+# sans que la grille, la palette ou la découpe aient à connaître les vidéos —, et
+# sa `source` porte `clip:<identifiant>`, d'où le lecteur tire le fichier à
+# rejouer. Copier la vidéo aurait fait deux fichiers pour un seul clip, et le
+# jour où l'un est jeté l'autre aurait menti.
+VIDEO = "video"
+GENRES = (IMAGE, TEXTE, VIDEO)
 
 # Une carte image venue d'une adresse traverse trois états, et un seul est un
 # échec. Une carte collée depuis des octets naît directement `prete`.

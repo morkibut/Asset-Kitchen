@@ -76,6 +76,7 @@ from atelier.services.sources_3d import ServiceSources3D
 from atelier.services.travaux_3d import ServiceTravaux3D
 from atelier.services.travaux_audio import ServiceTravauxAudio
 from atelier.services.planche import PlancheRefusee, ServicePlanche
+from atelier.services.planche_animee import ServicePlancheAnimee
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import ChoixAttendu, CompteFaux, ServicePliage
 from atelier.services.production import (
@@ -489,6 +490,13 @@ class Atelier:
             self.montage,
             self.production,
         )
+        # **La feuille de sprites, montée juste après le montage** (`AU19`) : ce
+        # qu'elle fabrique est un clip et ses bandes, donc elle ne peut pas
+        # naître avant celui qui taille les bandes. Comme le montage, elle ne
+        # tient ni catalogue, ni fournisseur, ni animateur — découper une image
+        # déjà payée ne demande rien à personne, et c'est ce qui autorise la
+        # phrase de son bouton : *rien ici ne dépense*.
+        self.planche_animee = ServicePlancheAnimee(self)
         self.planche = ServicePlanche(self.production, self.generations)
         # **Ce qui part, monté après elle** (E14) : l'écran qui s'intercale
         # entre le bouton et la dépense. Comme la planche, il ne compose rien et
