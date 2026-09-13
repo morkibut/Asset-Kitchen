@@ -108,10 +108,20 @@ Quatre écrans et sept morceaux sont morts, chacun prouvé par une recherche dan
 [la carte des écrans du code](releves/2026-09-13-carte-des-ecrans-du-code.md) § *Les écrans
 morts*. Ils font croire que le produit contient des choses qu'il ne contient pas.
 
-**Deux d'entre eux portent une capacité que la maquette réclame, et ne partent donc pas seuls** :
-le mode *réglages* de `ReglesDuJeu` part avec RP2, et le cadre de l'agent que portait
-`DelegationDuJeu` est relevé avant retrait — s'il n'est nulle part ailleurs, il devient une
-tranche à lui.
+**Deux d'entre eux ne partent pas : ils portent une capacité qui n'existe nulle part ailleurs.**
+Le point dur a été tranché le 13 septembre 2026, avant d'ouvrir la tranche.
+
+- **L'écran mort de l'agent reste**, et RP2 le rebranche. C'est le **seul** écran du produit qui
+  lise et règle le cadre de délégation — ce que l'agent a le droit de dépenser, combien d'appels
+  il peut faire, et quels modèles il peut employer pour l'image, la vidéo, la 3D et le son.
+  Le panneau vivant de l'atelier montre bien *l'agent*, mais pas le même objet : il montre le
+  plafond et le modèle du garde-fou, pas la liste des modèles autorisés. **Supprimer cet écran,
+  c'est retirer à l'auteur le seul endroit d'où il borne la dépense de l'agent.**
+- **Le mode *réglages* des règles du jeu reste** et part avec RP2, pour la même raison.
+
+**Une seule chose a l'air morte et ne l'est que par accident** : le champ qui crée une collection
+depuis la grille d'une famille. Il mourra encore après RP1 ; c'est RP7 qui le rallume. On n'y
+touche pas ici.
 
 **Le doute le plus coûteux est levé et ne coûte rien** : le journal des appels ratés n'est pas
 perdu. L'écran des dépenses le remplace et distingue trois issues — gardé, payé pour rien,
@@ -119,13 +129,15 @@ refusé.
 
 ### Critères d'acceptation
 
-- [ ] Les deux fichiers entièrement morts sont retirés, et leurs essais avec eux.
+- [ ] Le fichier de la colonne de gauche d'avant est retiré, et le composant du carnet aussi —
+  ses constantes, elles, restent : cinq écrans vivants les emploient.
 - [ ] Les morceaux morts logés dans des fichiers vivants sont retirés sans toucher au reste du
-  fichier.
-- [ ] Aucun essai ne teste plus un écran injoignable ; les essais qui testaient un mode mort et
-  un mode vivant ne gardent que le vivant.
-- [ ] Ce qui est retiré et qui n'a pas de remplaçant est nommé dans ce plan avant de partir,
-  jamais après.
+  fichier : la grille de référence écrite dans l'écran principal, les deux composants jamais
+  montés de l'établi, l'emballage d'un travail conservé, et le second nom de l'atelier des sons.
+- [ ] L'écran de l'agent et le mode *réglages* des règles du jeu **ne sont pas retirés** : ils
+  attendent RP2.
+- [ ] Le champ de nouvelle collection d'une famille **n'est pas retiré** : il attend RP7.
+- [ ] Aucun essai ne teste plus un écran injoignable.
 - [ ] Les deux suites passent, et le nombre d'essais baisse exactement du nombre d'essais
   orphelins retirés.
 
@@ -144,6 +156,11 @@ confort.
 **Où les mettre** : la maquette tranche déjà. Ses *Réglages* ont quatre onglets — Univers,
 Moteurs & workflows, Agent MCP, Consommations. Le premier est exactement cet écran.
 
+**Et le troisième onglet rend un second écran mort.** L'écran de délégation est le seul du
+produit qui règle **ce que l'agent a le droit de dépenser** : le plafond en appels, le plafond
+en argent, s'il peut payer, s'il peut appeler la machine, et quels modèles il peut employer pour
+l'image, la vidéo, la 3D et le son. Il n'est monté nulle part. *Agent MCP* est sa place.
+
 ### Critères d'acceptation
 
 - [ ] *Réglages* ouvre un écran à onglets, et le premier onglet rouvre les quatre questions du
@@ -152,8 +169,12 @@ Moteurs & workflows, Agent MCP, Consommations. Le premier est exactement cet éc
   payer.
 - [ ] L'écran de création du jeu et celui des réglages restent le même écran dans deux modes ;
   on ne réécrit pas les quatre questions deux fois.
-- [ ] Les trois autres onglets mènent aux écrans qui existent déjà — l'installation, les
-  workflows locaux, les dépenses — sans les réécrire.
+- [ ] L'onglet *Agent MCP* rouvre le cadre de délégation : plafond d'appels, plafond en argent,
+  droit de payer, droit d'appeler la machine, et modèles autorisés par type de résultat.
+- [ ] Ce qui est réglé là borne réellement l'agent, et un essai le prouve en le laissant
+  dépasser.
+- [ ] Les deux autres onglets mènent aux écrans qui existent déjà — les moteurs et workflows
+  locaux, les dépenses — sans les réécrire.
 
 ## RP3 · Fermer le vocabulaire de l'ossature
 

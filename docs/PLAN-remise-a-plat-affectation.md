@@ -47,7 +47,7 @@ ligne-là qu'il faut ouvrir.
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
 | **RP1** · Retirer ce qui est mort | `[EASY]` | chaque mort est déjà prouvé, fichier et ligne, par le relevé des écrans — il reste à retirer et à faire passer les suites |
-| **RP2** · Rendre les quatre règles du jeu | `[MEDIUM]` | l'écran existe et ses 25 essais aussi ; ce qui est neuf est la coque à onglets qui réunit quatre écrans déjà écrits |
+| **RP2** · Rendre les quatre règles du jeu | `[HARD]` | la coque à onglets est mécanique, mais l'onglet *Agent MCP* rebranche le seul écran qui **borne la dépense de l'agent** — plafond en appels, plafond en argent, droit de payer |
 | **RP3** · Fermer le vocabulaire de l'ossature | `[MEDIUM]` | renommer est mécanique, mais la liste fermée qui l'empêche de redériver est une règle neuve |
 | **RP4** · Une seule préparation, une seule relecture | `[VERY-HARD]` | huit fenêtres et l'aiguillage, plus de 5 000 lignes, quatre types de résultat, l'argent — et la grande suite d'écran doit passer sans qu'une assertion bouge |
 | **RP5** · Un seul écran d'import sur une fiche | `[MEDIUM]` | deux petits fichiers, mais la règle de ce qui est demandé et quand est neuve, et six essais la verrouillent |
@@ -65,10 +65,12 @@ ligne-là qu'il faut ouvrir.
 | **RP17** · Une seule porte pour sortir un personnage | `[HARD]` | elle écrit dans le dossier du jeu et retire des routes que l'agent peut emprunter |
 | **RP18** · Les neuf routes sans écran | `[MEDIUM]` | neuf décisions séparées, chacune petite ; c'est la décision qui est le travail, pas l'écriture |
 
-**Compte** : 1 `[VERY-HARD]`, 4 `[HARD]`, 10 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 1 `[VERY-HARD]`, 5 `[HARD]`, 9 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
 
-Cinq tranches sur dix-huit sont en `[HARD]` ou au-dessus — sous le tiers, la grille n'a pas été
-appliquée trop généreusement.
+Six tranches sur dix-huit sont en `[HARD]` ou au-dessus — pile un tiers. RP2 y est montée après
+coup : en tranchant le point dur de RP1, on a découvert que l'onglet *Agent MCP* rebranche le
+seul écran qui borne la dépense de l'agent. Une tranche qui touche à l'argent est `[HARD]`,
+quelle que soit sa taille.
 
 ---
 
@@ -76,7 +78,7 @@ appliquée trop généreusement.
 
 | Dans | Le morceau | Traité en |
 |---|---|---|
-| **RP1** `[EASY]` | Décider si le cadre de l'agent que portait l'écran mort a un remplaçant ailleurs, ou s'il devient une tranche | Opus, réflexion moyenne |
+| ~~**RP1**~~ | ~~Décider si le cadre de l'agent que portait l'écran mort a un remplaçant ailleurs~~ | **tranché le 13 septembre 2026, avant d'ouvrir la tranche** : il n'en a pas, il ne part pas, et RP2 le rebranche |
 | **RP3** `[MEDIUM]` | Écrire la liste fermée des noms — c'est elle que toutes les tranches d'après héritent | Opus, réflexion moyenne |
 | **RP5** `[MEDIUM]` | Décider quand la pose et la direction se demandent, et quand elles se déduisent | Opus, réflexion moyenne |
 | **RP11** `[MEDIUM]` | Le contrat de tri et de regroupement sur la route de la grille unique, qui sert aussi l'agent | Opus, réflexion moyenne |
