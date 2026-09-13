@@ -19,7 +19,7 @@ function contexte(): CeQueLePaiementLit {
     modele: { identifiant: "Essai:image", nom: "Image", refus: null, options: {} }, panne: null,
     options: {}, ouverture: { current: true }, posesCible: [{ identifiant: "marche", nom: "Marche" }],
     prompt: "Pèlerin en marche", promptNegatif: "", proportions: "1:1", reinjections: [], repris: false,
-    serieSautee: "pelerin|marche|", setChoixDeReference: vi.fn(), setEchecDuPaiement: vi.fn(),
+    serieSautee: "pelerin|marche|", setEchecDuPaiement: vi.fn(),
     tri: TRI_VIDE, setTri: vi.fn(), triDe: null, setTriDe: vi.fn(), univers: {}, variations: 1,
   } as unknown as CeQueLePaiementLit
 }

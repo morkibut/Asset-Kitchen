@@ -71,5 +71,3 @@ export function AtelierSon({ projet, identifiantInitial, onFermer, onLivraisons 
     </>}
   </section>
 }
-
-export const SonsDuJeu = AtelierSon

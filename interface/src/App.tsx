@@ -64,7 +64,6 @@ import {
   type Fente,
   type Segment,
 } from "./composants/EnTeteDeSurface"
-import { Libelle } from "./composants/pieces"
 import { BarreQuiPaie } from "./composants/BarreQuiPaie"
 import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
@@ -130,7 +129,7 @@ import { useRelectures } from "./relectures"
 import { usePaiement } from "./paiement"
 import { nommerLeLieu } from "./lieux-noms"
 import { BarreEtat, type Repli } from "./composants/BarreEtat"
-import { Galerie, Grille, useGalerie } from "./composants/Galerie"
+import { Galerie, useGalerie } from "./composants/Galerie"
 // ⚠️ **`EcranTables` n'est plus monté nulle part** (`B25`) : les six portes de
 // la retouche mènent toutes à `Retouche.tsx`. Il ne reste de ce fichier que le
 // type de la table qu'une porte demande — il s'en ira avec lui en `B26`.
@@ -360,8 +359,7 @@ function AtelierApp() {
   const allerA = (prochaine: Racine) => {
     fermerCeQuiPart()
     // ⚠️ **Le choix d'une référence sortait avec, et il ne sortait plus.**
-    //     `fermerCeQuiPart` referme l'ancienne grille (`choixDeReference`) ;
-    //     le cadre de dialogue qui l'a remplacée vit dans un état à lui, et
+    //     Le cadre de dialogue qui le porte vit dans un état à lui, et
     //     personne ne le refermait. Partir par une porte laissait donc une
     //     fenêtre modale posée sur l'écran d'à côté, devant un appel qui
     //     n'avait rien demandé — très exactement ce que la sortie par l'onglet
@@ -524,23 +522,17 @@ function AtelierApp() {
     vivant,
   })
   const {
-    entree,
-    entrees,
     fiche,
     ficheClip,
     filtre,
     grille,
     mesurerCentre,
-    relancer,
     relireGrille,
     rendre,
     selection,
-    setDepliage,
-    setFiltre,
     setGrille,
     setSelection,
     supprimer,
-    zoomRendu,
   } = galerie
   // **Le vestiaire du projet** (C3) — l'autre axe de la même matrice, tenu ici
   // pour la raison du plan : un seul endroit écoute le flux, pour toute la vie
@@ -651,16 +643,6 @@ function AtelierApp() {
   //
   // `null` veut dire « aucune correction en réserve ».
   const [triDe, setTriDe] = useState<string | null>(null)
-  // **La grille du produit, ouverte par-dessus la fenêtre de confirmation**
-  // (M5). Dans cette fenêtre on pouvait *décocher* une image jointe ; on ne
-  // pouvait jamais en ajouter une — et c'est pourtant le seul endroit du produit
-  // qui montre lesquelles partent, donc le seul où l'on s'aperçoit qu'il en
-  // manque une.
-  const choixDeReference = dans(pile, "reference")
-  const setChoixDeReference = (ouvert: boolean) =>
-    setPile((p) =>
-      ouvert ? entrer(p, { genre: "reference" }) : sortir(p, "reference"),
-    )
   // **La série qu'on a choisi de ne plus relire.** Une chose et une pose : dès
   // qu'on change de l'une ou de l'autre, l'écran revient. Il n'existe aucune
   // case « pour toujours » — on la cocherait le premier jour, quand on ne sait
@@ -1396,7 +1378,6 @@ function AtelierApp() {
     reinjections,
     repris,
     serieSautee,
-    setChoixDeReference,
     setEchecDuPaiement,
     tri,
     setTri,
@@ -1437,11 +1418,9 @@ function AtelierApp() {
     reprendreReglages,
   } = useGestes({
     bibliotheque,
-    choixDeReference,
     cible,
     echouer,
     relireProduction,
-    setChoixDeReference,
     setCible,
     setModeleChoisi,
     poserLaRacine,
@@ -2045,84 +2024,6 @@ function AtelierApp() {
              manquait une. */
           onAjouterUneReference={() => setReferenceDePreparation(true)}
         />
-      )}
-
-      {/* ── Choisir une image de référence, par-dessus la confirmation ──────
-          **C'est la grille du produit, réemployée telle quelle.** L'invariant
-          dit *une seule grille d'assets dans tout l'atelier* : celle qui s'ouvre
-          ici **est** celle-là, avec ses tuiles, son dépôt de fichier et son
-          filtre. En dessiner une neuvième aurait été une neuvième façon de
-          choisir une image.
-
-          **Elle se pose par-dessus, elle ne remplace pas.** La fenêtre de
-          confirmation reste montée derrière — c'est ce qui fait que les
-          corrections en cours ne bougent pas d'un caractère pendant l'ajout, et
-          c'est tout le sujet de la tranche.
-
-          Sous l'aperçu, jamais au-dessus : on regarde une image en grand
-          **avant** de la choisir, et l'aperçu est ce qui sert à ça. */}
-      {envoiOuvert && choixDeReference && (
-        <div
-          data-choix-reference
-          role="dialog"
-          aria-label="Choisir une image de référence"
-          /* **Dans le cadre, pas par-dessus le cadre.** La barre du châssis en
-             haut et la barre d'état en bas appartiennent au produit entier et
-             ne s'effacent nulle part — la fenêtre de confirmation elle-même les
-             laisse. Une surface qui les recouvrirait dirait qu'on a quitté
-             l'atelier, alors qu'on est au milieu d'un geste. */
-          className="fixed inset-x-0 bottom-[26px] top-[44px] z-40 flex flex-col bg-papier"
-        >
-          <div className="flex items-baseline gap-3 border-b border-trait px-4 py-3">
-            <Libelle>choisir une image de référence</Libelle>
-            <span className="mesure text-[9.5px] leading-4 text-encre-4">
-              elle entre en <span className="text-encre-3">référence</span> —
-              *le même sujet, déjà dessiné* — et rien de ce que tu viens de
-              corriger ne bouge. Aucun appel ne part d'ici.
-            </span>
-            {/* **Le seul réglage de cette surface, et c'est celui de la
-                galerie** : la recherche du filtre, la même. Sans elle, choisir
-                dans une bibliothèque de deux cents images reviendrait à faire
-                défiler ; avec un second filtre à elle, la surface cesserait
-                d'être la grille du produit. */}
-            <input
-              value={filtre.recherche}
-              onChange={(e) =>
-                setFiltre((f) => ({ ...f, recherche: e.target.value }))
-              }
-              aria-label="Chercher une image à joindre"
-              placeholder="Chercher"
-              className="mesure ml-auto h-[24px] w-[220px] rounded-[2px] border border-contour bg-carte px-2 text-[10px] text-encre placeholder:text-eteint"
-            />
-            <button
-              type="button"
-              onClick={() => setChoixDeReference(false)}
-              title="Échap revient à ce qui part"
-              className="mesure px-1 text-[10px] text-encre-4 hover:text-encre"
-            >
-              ‹ revenir
-            </button>
-          </div>
-          <Grille
-            entrees={entrees}
-            selection={selection}
-            filtre={filtre}
-            zoom={zoomRendu}
-            entree={entree}
-            onRelancer={relancer}
-            onChoisir={(generation, rang) => setDepliage({ generation, rang })}
-            /* **Un clic choisit, il n'ouvre pas de fiche.** C'est le seul
-               endroit où la grille sert à désigner plutôt qu'à juger, et une
-               entrée qui n'est pas encore une image n'a rien à joindre : le
-               clic ne fait alors rien, plutôt que de joindre un identifiant
-               d'emplacement que le serveur ne saurait pas relire. */
-            onOuvrir={(identifiant) => {
-              if (grille.some((a) => a.identifiant === identifiant))
-                ajouterUneReference(identifiant)
-            }}
-            onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
-          />
-        </div>
       )}
 
       {/* ── Le tableau de bord du jeu — le seul lieu que `B0` branche ──────

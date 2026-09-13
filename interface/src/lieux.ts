@@ -201,7 +201,6 @@ export type Lieu =
   | { genre: "bande"; bande: string }
   | { genre: "montage-de-bande"; bande: Bande }
   | { genre: "envoi" }
-  | { genre: "reference" }
 
 export type Genre = Lieu["genre"]
 

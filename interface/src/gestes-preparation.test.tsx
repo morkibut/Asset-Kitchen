@@ -7,9 +7,9 @@ afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 function contexte(ouvrirPreparation: ReturnType<typeof vi.fn>) {
   return {
-    bibliotheque: { courant: "jeu" }, choixDeReference: false, cible: null,
+    bibliotheque: { courant: "jeu" }, cible: null,
     echouer: vi.fn(), relireProduction: vi.fn(async () => {}),
-    setChoixDeReference: vi.fn(), setCible: vi.fn(), setModeleChoisi: vi.fn(),
+    setCible: vi.fn(), setModeleChoisi: vi.fn(),
     poserLaRacine: vi.fn(), ouvrirPreparation, setOptions: vi.fn(),
     setPrompt: vi.fn(), setPromptNegatif: vi.fn(), setProportions: vi.fn(),
     setProvenance: vi.fn(), setReinjections: vi.fn(), setRepris: vi.fn(),

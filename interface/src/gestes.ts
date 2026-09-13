@@ -7,7 +7,6 @@
 //
 // Ils vivaient en clair dans `App.tsx` ; `C4` les en sort avec la galerie.
 
-import { useEffect } from "react"
 import {
   api,
   type Asset,
@@ -27,11 +26,9 @@ type Pose_<T> = React.Dispatch<React.SetStateAction<T>>
 
 export type CeQueLesGestesLisent = {
   bibliotheque: Bibliotheque
-  choixDeReference: boolean
   cible: CibleDeLAppel | null
   echouer: (erreur: unknown, defaut: string) => void
   relireProduction: () => Promise<void>
-  setChoixDeReference: (ouvert: boolean) => void
   setCible: Pose_<CibleDeLAppel | null>
   setModeleChoisi: Pose_<string | null>
   poserLaRacine: (prochaine: Racine) => void
@@ -50,11 +47,9 @@ export type CeQueLesGestesLisent = {
 
 export function useGestes({
   bibliotheque,
-  choixDeReference,
   cible,
   echouer,
   relireProduction,
-  setChoixDeReference,
   setCible,
   setModeleChoisi,
   poserLaRacine,
@@ -201,31 +196,6 @@ export function useGestes({
     else poserLaRacine("codex")
   }
 
-  /** **Échap referme le choix, et lui seul** (M5).
-   *
-   *  La fenêtre de confirmation écoute Échap pour se fermer, et elle reste
-   *  montée derrière : sans ce garde, une seule pression aurait refermé les
-   *  deux, ramenant l'auteur au prompt alors qu'il renonçait seulement à
-   *  joindre une image. En capture, et il arrête ce qu'il consomme.
-   *
-   *  ⚠️ **Et il rend la main à ce qui est encore au-dessus.** L'aperçu écoute
-   *  Échap de la même façon, sur la même fenêtre : *arrêter la propagation* ne
-   *  suffit pas entre deux écouteurs posés sur le même endroit — les deux se
-   *  déclenchent, et une seule pression refermait l'image en grand **et** la
-   *  grille. La marque qu'il laisse, elle, se voit : une touche déjà consommée
-   *  ne se reprend pas. On regarde une image en grand avant de la choisir ; ce
-   *  qu'on referme d'abord est donc l'image. */
-  useEffect(() => {
-    if (!choixDeReference) return
-    const touche = (evenement: KeyboardEvent) => {
-      if (evenement.key !== "Escape" || evenement.defaultPrevented) return
-      evenement.stopPropagation()
-      setChoixDeReference(false)
-    }
-    window.addEventListener("keydown", touche, true)
-    return () => window.removeEventListener("keydown", touche, true)
-  }, [choixDeReference])
-
   /** **Ajouter une référence sans quitter la fenêtre de confirmation** (M5).
    *
    *  C'est `reinjecter` **moins le changement d'onglet**, et l'écart tient à la
@@ -245,7 +215,6 @@ export function useGestes({
       ...deja.filter((r) => r.asset !== asset),
       { asset, role: "reference" as Role },
     ])
-    setChoixDeReference(false)
   }
 
   /** Le quatrième rôle : reprendre les réglages, sans envoyer d'image.

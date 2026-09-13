@@ -83,7 +83,6 @@ export type CeQueLePaiementLit = {
   reinjections: Reinjection[]
   repris: boolean
   serieSautee: string | null
-  setChoixDeReference: (ouvert: boolean) => void
   setEchecDuPaiement: Pose_<string | null>
   tri: Tri
   setTri: Pose_<Tri>
@@ -125,7 +124,6 @@ export function usePaiement({
   reinjections,
   repris,
   serieSautee,
-  setChoixDeReference,
   setEchecDuPaiement,
   tri,
   setTri,
@@ -317,16 +315,10 @@ export function usePaiement({
     return intention.current.identifiant
   }
 
-  /** Refermer la fenêtre de confirmation, **et ce qui s'est posé par-dessus**
-   *  (M5).
-   *
-   *  Le choix d'une référence est un état de cette fenêtre-là, pas du produit :
-   *  le laisser derrière rouvrirait la grille à la prochaine ouverture, devant
-   *  un appel qui n'a rien demandé. Les quatre façons de sortir passent donc
-   *  ici — le bouton, Échap, l'onglet, et reprendre le texte à la main. */
+  /** Refermer la fenêtre de confirmation — le bouton, Échap, l'onglet, et
+   *  reprendre le texte à la main y passent tous. */
   const fermerCeQuiPart = () => {
     setEnvoiOuvert(false)
-    setChoixDeReference(false)
   }
 
   const generer = (relire = false) => {

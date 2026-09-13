@@ -199,7 +199,6 @@ return (ou, _profondeur, dedans) => {
     // sont pas un endroit où l'on est descendu, ils sont ce qui se passe.
     case "clip":
     case "envoi":
-    case "reference":
     case "montage":
     case "bande":
     case "montage-de-bande":
