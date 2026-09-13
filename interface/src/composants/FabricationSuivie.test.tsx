@@ -101,3 +101,19 @@ test("la fabrication ouverte depuis une cible garde le personnage, le mouvement 
   expect(travaux.preparer).not.toHaveBeenCalled()
   expect(travaux.demarrer).not.toHaveBeenCalled()
 })
+
+test("une bande obtenue à la main mène à l’écran de la sortie sans relancer d’appel", async () => {
+  const sortie = vi.fn()
+  const fini = { ...t, etat: "termine", etape: "termine", clip: "clip-1", bandes: ["bande-1"], reference_asset: "image-1" } as unknown as Travail
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} initiale={fini} onClip={() => {}} onLivraisons={sortie} onFermer={() => {}} />)
+  fireEvent.click(screen.getByRole("button", { name: "Livrer dans le jeu" }))
+  expect(sortie).toHaveBeenCalledOnce()
+  expect(travaux.preparer).not.toHaveBeenCalled()
+  expect(travaux.demarrer).not.toHaveBeenCalled()
+})
+
+test("sans écran de sortie branché, aucune porte de livraison n’est promise", () => {
+  const fini = { ...t, etat: "termine", etape: "termine", clip: "clip-1", bandes: ["bande-1"] } as unknown as Travail
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} initiale={fini} onClip={() => {}} onFermer={() => {}} />)
+  expect(screen.queryByRole("button", { name: /Livrer dans le jeu/ })).toBeNull()
+})
