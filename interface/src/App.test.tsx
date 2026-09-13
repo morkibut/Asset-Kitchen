@@ -14784,14 +14784,10 @@ describe("l'écran de confirmation", () => {
   // ── « L'en-tête du groupe dit ce que les cases cochées pèsent dans le total
   //     de l'appel » ──────────────────────────────────────────────────────────
 
-  // ⚠️ **EN ATTENTE — capacité manquante : la part du prix que pèse un
-  //     groupe.** L'ancien écran de confirmation portait, dans l'en-tête de
-  //     chaque groupe, ce que ses lignes cochées pesaient dans le total
-  //     — « 1 cochée · $0,0080 · des $0,0143 ». *Relire avant envoi* ne
-  //     montre plus que le total (« Consommation estimée ») et le pas de
-  //     chaque image, ligne par ligne : la part d'un groupe ne se lit nulle
-  //     part, il faut la soustraire soi-même. Aucun autre écran ne la reprend.
-  test.skip("l'en-tête des images dit ce que les cases cochées pèsent dans le total", async () => {
+  // **Le groupe s'appelle « Images envoyées » depuis la refonte** ; la
+  // garantie, elle, n'a pas bougé : son en-tête dit ce que ses lignes cochées
+  // pèsent dans le total de l'appel.
+  test("l'en-tête des images dit ce que les cases cochées pèsent dans le total", async () => {
     // **Une part, pas un nombre nu** : « $0,0080 » seul ne dit pas s'il s'agit de
     // la moitié de l'appel ou d'un vingtième.
     const { ecran } = await ouvrir({ envoi: ENVOI })
@@ -14799,7 +14795,7 @@ describe("l'écran de confirmation", () => {
     // **Dans l'en-tête du groupe**, et pas ailleurs sur l'écran : la mesure du
     // pas d'une image jointe porte le même nombre, et ce n'est pas la même
     // phrase.
-    const entete = ecran.getByText("les images jointes").parentElement as HTMLElement
+    const entete = ecran.getByText("Images envoyées").parentElement as HTMLElement
     expect(within(entete).getByText(/1 cochée/)).toBeTruthy()
     expect(within(entete).getByText("$0,0080")).toBeTruthy()
     expect(within(entete).getByText(/des \$0,0143/)).toBeTruthy()
@@ -14808,25 +14804,11 @@ describe("l'écran de confirmation", () => {
   // ── « Un avertissement s'écrit sur la ligne fautive, avec des chiffres,
   //     jamais en bandeau » ───────────────────────────────────────────────────
 
-  test("l'avertissement est écrit sur la ligne fautive, pas en bandeau", async () => {
-    // La moitié de la garantie qui tient encore : l'avertissement vit *dans* la
-    // ligne fautive, avec ses chiffres, et pas au-dessus de l'écran.
-    const { ecran } = await ouvrir({ envoi: ENVOI })
-
-    const dit = ecran.getByText(/le texte annonce 64 px, la case en impose 32/)
-    const ligne = dit.closest("li") as HTMLElement
-    expect(within(ligne).getByText("attitude")).toBeTruthy()
-  })
-
-  // ⚠️ **EN ATTENTE — capacité manquante : le compte des avertissements à
-  //     côté du prix.** L'ancien écran reprenait, près du bouton qui paie,
-  //     « N avertissements — non bloquants, écrits sur la ligne concernée » :
-  //     on savait qu'il y en avait sans être descendu jusqu'à eux.
-  //     *Relire avant envoi* ne rend que `envoi.images.avertissements` ; le
-  //     compte de `envoi.avertissements` n'est affiché nulle part. L'essai
-  //     reste écrit tel quel, prêt à repartir dès que le compte revient ;
-  //     l'essai ci-dessus garde la moitié qui tient encore.
-  test.skip("l'avertissement est écrit sur la ligne fautive, avec ses chiffres", async () => {
+  // **La moitié de cette garantie tournait un temps à côté**, sous le nom
+  // « … pas en bandeau », pendant que le compte manquait. Le compte est revenu
+  // près du bouton qui paie : l'essai entier reprend, et le demi-essai s'en va
+  // — deux essais pour une garantie finissent par se contredire.
+  test("l'avertissement est écrit sur la ligne fautive, avec ses chiffres", async () => {
     // **Un bandeau dirait « attention » et laisserait chercher où.** La ligne dit
     // laquelle, et le bouton pour la corriger est déjà à côté.
     const { ecran } = await ouvrir({ envoi: ENVOI })
@@ -14964,15 +14946,11 @@ describe("l'écran de confirmation", () => {
 
   // ── Le prix, et la mesure qui le porte ──────────────────────────────────
 
-  // ⚠️ **EN ATTENTE — capacité manquante : le détail de la mesure du prix.**
-  //     L'ancien écran écrivait, sous le bouton, sur combien d'appels payés le
-  //     prix est mesuré, ce que chaque image jointe y ajoute — mesuré à part,
-  //     sur ses propres appels — et la phrase qui empêche de lire une moyenne
-  //     comme un tarif (« une moyenne n'est le prix de personne », T1/E13).
-  //     *Relire avant envoi* ne garde que « Mesurée sur N appels précédents ».
-  //     Le pas d'une image jointe et la mise en garde ne se lisent plus nulle
-  //     part dans le produit.
-  test.skip("le prix porte sa mesure à côté de lui, jamais fondue dedans", async () => {
+  // **La mesure vit sous le prix, dans la carte « Consommation estimée »** :
+  // sur combien d'appels payés il est mesuré, ce que chaque image jointe y
+  // ajoute — mesuré à part, sur ses propres appels — et la phrase qui empêche
+  // de lire une moyenne comme un tarif (T1/E13).
+  test("le prix porte sa mesure à côté de lui, jamais fondue dedans", async () => {
     // **Une mesure, jamais un tarif** (T1), et E13 y a ajouté sa moitié : une
     // moyenne n'est le prix de personne. Le pas d'une image jointe est mesuré à
     // part, sur ses propres appels.

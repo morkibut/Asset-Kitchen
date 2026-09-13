@@ -67,12 +67,12 @@ pose une extraction avec un calage, une échelle, un rectangle et un trait de
 main non par défaut, la referme, la rouvre par le service et vérifie que la
 pose relue et l’aperçu rejoué sont identiques à l’originale, sans appel
 fournisseur de plus.
-## Capacités encore ouvertes, relevées le 12 septembre 2026 — cinq restantes au 13 septembre
+## Capacités encore ouvertes, relevées le 12 septembre 2026 — deux restantes au 13 septembre
 
 La remise à niveau de `interface/src/App.test.tsx` a servi de peigne : chaque
 essai qui ne passait plus a été rangé dans l'un de deux cas — l'écran a changé
-de mots, ou la capacité a disparu. Sept étaient du second cas ; les cinq qui
-suivent le sont encore, les deux autres sont passées plus bas, § « Rendues depuis ». Elles
+de mots, ou la capacité a disparu. Sept étaient du second cas ; les deux qui
+suivent le sont encore, les cinq autres sont passées plus bas, § « Rendues depuis ». Elles
 ne sont donc **pas** des essais réécrits : ce sont des trous, et le plan
 (`docs/PLAN-atelier-unifie.md`, § « Ce qui doit être repris au fil du parcours »)
 demande qu'un trou soit nommé plutôt que refermé en silence. Les essais qui les
@@ -82,9 +82,6 @@ qui manque : ils repartiront tels quels le jour où la capacité revient.
 | Capacité perdue | Où elle vivait | Ce qu'on ne peut plus faire | Essais en attente |
 | --- | --- | --- | --- |
 | Retirer une attitude d'un lot armé, ou désarmer la cible | Bande « Pour » de la barre qui paie (`Cible`, `Galerie.tsx`) | Corriger un lot demande de fermer le guichet et de recocher les cases. `onRetirerPose` et `onDesarmer` sont passés à `BarreQuiPaie` et ignorés par sa branche `preparation` | `une attitude se retire du lot sans le défaire` |
-| La part du prix que pèse un groupe de lignes | En-tête de groupe de l'ancien écran de confirmation — « 1 cochée · $0,0080 · des $0,0143 » | *Relire avant envoi* montre le total et le pas de chaque image ; la part d'un groupe se soustrait à la main | `l'en-tête des images dit ce que les cases cochées pèsent dans le total` |
-| Le compte des avertissements à côté du prix | Colonne de droite de l'ancien écran de confirmation | On ne sait plus qu'il y a un avertissement sans descendre jusqu'à la ligne qui le porte. `envoi.avertissements` n'est rendu nulle part ; seuls ceux des images le sont | `l'avertissement est écrit sur la ligne fautive, avec ses chiffres` (sa moitié encore vraie tourne à côté, sous un autre nom) |
-| Le détail de la mesure du prix, et la mise en garde qui l'accompagne | Sous le bouton qui paie, ancien écran de confirmation | *Relire avant envoi* garde « Mesurée sur N appels précédents » ; le pas mesuré d'une image jointe et « une moyenne n'est le prix de personne » (T1, E13) ne se lisent plus | `le prix porte sa mesure à côté de lui, jamais fondue dedans` |
 | Regarder une référence en grand avant de la choisir | Grille de choix posée dans l'ancien écran de confirmation, aperçu à la barre d'espace | Le choix passe par `BibliothequePourImage` : on choisit sur une vignette de 128 px, sans pouvoir l'ouvrir | `l'aperçu passe avant la grille, et la grille avant la confirmation` |
 
 Aucune de ces lignes n'a été refermée en réécrivant son essai : réécrire un
@@ -153,3 +150,50 @@ qu'un lot est en route`. `npx vitest run` : 58 fichiers, 1 303 essais verts,
 5 en attente, trois passages sans un rouge ; `npx tsc --noEmit` propre ;
 `pytest tests/test_b0.py -q` : 113 verts (le bloc fait 34 px, une hauteur de la
 liste fermée de `DESIGN.md`).
+
+**Ce que le prix dit de lui-même sur *Relire avant envoi* — rendu le
+13 septembre 2026.** Trois capacités du même écran, et **rien à recalculer** :
+le serveur rendait déjà tout (`atelier/services/envoi.py`) — `prix.images`, la
+part des images cochées dans le total ; `prix.mesure` entière, avec `base`,
+`sur_base`, `par_image` et `sur_jointes` ; `avertissements`, où les
+avertissements des lignes et ceux du bloc d'images sont **déjà réunis**. Il ne
+manquait que l'affichage, et il est écrit dans la branche `atelier` de
+`Envoi.tsx`, aux trois endroits où chaque chiffre se lit :
+
+- **La part du prix que pèse le groupe des images.** Sous le compte du bloc
+  *Images envoyées* : « 1 cochée · $0,0080 des $0,0143 ». Une part, jamais un
+  nombre nu — « $0,0080 » seul ne dit pas si c'est la moitié de l'appel ou un
+  vingtième. La ligne ne paraît pas là où le fournisseur ne facture pas : elle
+  ne s'écrit jamais « $0,0000 », qui se lirait *sans limite*.
+- **Le compte des avertissements, au pied de l'écran, à côté du prix.** « 1
+  avertissement — non bloquant, écrit là où il porte. » On sait qu'il y en a
+  sans être descendu jusqu'à lui, et chacun reste écrit sur sa ligne, jamais en
+  bandeau. Le compte est celui de `envoi.avertissements`, lignes et images
+  mêlées comme le serveur les rend : l'écran compte, il ne recompose pas.
+- **Le détail de la mesure, sous le prix, dans la carte *Consommation
+  estimée*.** Sur combien d'appels payés il est mesuré, ce qu'a coûté un appel
+  sans image jointe, ce que chaque image jointe y ajoute — mesuré à part, sur
+  ses propres appels — et la phrase qui empêche de lire une moyenne comme un
+  tarif : « une moyenne n'est le prix de personne : elle ne tombera juste sur
+  aucun appel donné » (T1, E13). Le cas où le pas n'est pas mesurable le dit
+  aussi, plutôt que de l'inventer, et le modèle qui n'a rien facturé ici garde
+  « Aucune mesure disponible pour ce modèle » — zéro n'est pas une mesure.
+
+**Un essai avait encodé l'absence de la capacité comme une garantie**, et un
+autre la coupait en deux. Le premier cherchait l'en-tête des images sous son nom
+d'avant la refonte, « les images jointes » ; son chemin passe maintenant par
+*Images envoyées*, sa garantie n'a pas bougé. Le second, `l'avertissement est
+écrit sur la ligne fautive, pas en bandeau`, tenait la moitié qui survivait
+pendant que le compte manquait : le compte revenu, l'essai entier reprend et le
+demi-essai est retiré — deux essais pour une garantie finissent par se
+contredire. Le bouton qui paie perd au passage le point médian de son libellé
+(« Payer et lancer $0,0143 ») : c'est le nom que l'essai lui donne, et le prix y
+est une suite du verbe, pas une seconde étiquette.
+
+Preuve : les trois essais sont ressortis d'attente et passent tels qu'ils
+étaient écrits — `l'en-tête des images dit ce que les cases cochées pèsent dans
+le total`, `l'avertissement est écrit sur la ligne fautive, avec ses chiffres`,
+`le prix porte sa mesure à côté de lui, jamais fondue dedans`. `npx vitest run` :
+58 fichiers, 1 305 essais verts, 2 en attente, trois passages sans un rouge ;
+`npx tsc --noEmit` propre ; `pytest tests/test_b0.py -q` : 113 verts (les écarts
+posés — 4, 8, 22 — et les hauteurs sont ceux des listes fermées de `DESIGN.md`).
