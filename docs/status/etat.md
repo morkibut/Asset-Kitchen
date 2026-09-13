@@ -50,7 +50,22 @@ voisin est absent, pas quand il est présent sans son environnement — ses modu
 paquet à lui. Ils tombaient donc en erreur d'import. Un essai doit rendre un verdict, pas une
 exception : ils sautent maintenant en disant quel paquet manque.
 
-**5. Une descente de documents se mesure par ses renvois, pas par ses octets.** Vingt entrées
+**5 bis. Une descente peut archiver un document qui gouverne encore, et le banc ne le voit
+pas.** Le vocabulaire fermé du produit vivait dans le dossier des pistes du 4 septembre ; il
+est descendu avec lui, et tous les renvois vers lui ont continué de tomber juste — un renvoi
+valide ne dit rien de l'autorité de sa cible. Il est remonté à `docs/vocabulaire.html` le jour
+même. **Ce qui l'a rattrapé n'est pas un essai : c'est d'avoir voulu écrire la liste des noms
+et d'être allé voir ce qui existait déjà.** La règle qui en sort : avant d'archiver un dossier
+entier, chercher lequel de ses fichiers est cité par un document d'autorité — ici `DESIGN.md` —
+et le sortir du lot.
+
+**5 ter. Et il contredisait une décision écrite le matin même.** Le plan de remise à plat
+donnait à la maquette le dernier mot sur le vocabulaire. La maquette écrit *asset*, et la liste
+noire l'interdit depuis le carnet. La décision est corrigée : la maquette fait foi sur
+l'ossature, le produit sur la profondeur, le vocabulaire sur les mots. **Une décision prise en
+autonomie se vérifie contre les documents d'autorité avant d'être appliquée**, pas après.
+
+**5 quater. Une descente de documents se mesure par ses renvois, pas par ses octets.** Vingt entrées
 descendues en archive ont cassé deux cent vingt-deux renvois ; cinq cent dix adresses ont été
 réécrites pour les réparer. Le script de redirection nomme forcément les anciennes adresses —
 c'est son travail —, et le banc des documents le comptait donc en faux cassés : il le saute
