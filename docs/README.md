@@ -59,5 +59,6 @@
 | `docs/releves/2026-09-13-carte-des-ecrans-du-code.md` | — | on veut savoir si un écran est atteignable, mort ou en double avant d'y toucher |
 | `docs/releves/2026-09-13-carte-du-serveur.md` | l'architecture | on veut les routes, les outils de l'agent, et ce que plus personne n'appelle |
 | `docs/releves/2026-09-13-etat-des-docs.md` | — | on veut savoir quel document dit vrai, et lequel a été descendu dans `archive/` le 13 septembre 2026 |
+| `docs/releves/2026-09-12-audit-des-cinq-chantiers.md` | — | on se demande si un autre dépôt de la machine fait déjà ce qu'on s'apprête à écrire — cinq dépôts lus, ce qu'on leur prend et ce qu'on leur laisse. *Remonté de `Claude outputs/` le 13 septembre 2026* |
 | `docs/design-preview.html`, `docs/archive/diagrams/`, `docs/archive/maquette-atelier.html` | — | jamais d'office |
 
