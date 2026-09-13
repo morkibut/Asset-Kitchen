@@ -12,7 +12,7 @@ essais/rapport-animation.html
 # les images payées et les clips ; seuls leurs `mesures.json` reviennent dans
 # Git, par l'exception ci-dessous. Les rapports incrustent les images en base64
 # et pèsent des dizaines de mégaoctets ; ils se refont d'une commande.
-essais/resultats_*/
+essais/resultats_*/*
 !essais/resultats_*/mesures.json
 essais/rapport-references-nommees.html
 essais/rapport-taille-reference.html

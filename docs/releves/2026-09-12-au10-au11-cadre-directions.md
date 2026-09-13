@@ -90,3 +90,77 @@ interdit de faire automatiquement.
 Tant que ce point n'est pas rejoué avec un vrai GPU, la seconde puce du
 critère AU11 reste décochée dans `docs/PLAN-atelier-unifie.md` ; seule la
 comparaison des dimensions y est acquise.
+
+## Le mode d'emploi de la mesure (13 septembre 2026)
+
+Ce qui manquait pour clore AU11 est une carte graphique, pas du code. Cette
+tranche n'a pas de carte graphique non plus — elle n'a donc **rien fermé** —
+mais elle écrit le script qui fait la mesure décrite plus haut à la place de
+l'auteur, pour qu'il n'ait qu'une commande à lancer et un texte à lire, sans
+avoir à comprendre le pont vers asset3d ni son contrat HTTP.
+
+**Ce que fait ce script.** Il fabrique, via l'atelier, un petit personnage 3D
+chez asset3d, un squelette, puis un rendu de sa marche dans trois directions
+(nord, est, sud). Il regarde ensuite les images obtenues et mesure deux
+choses sur les pixels reçus : la taille du personnage à l'écran, et la
+position de ses pieds dans l'image. Si ces deux mesures se ressemblent d'une
+direction à l'autre, le cadrage est cohérent. Si l'une des trois directions
+donne un personnage nettement plus petit, plus grand, ou avec les pieds
+ailleurs dans l'image, le script le dit et chiffre l'écart.
+
+**Ce que ça coûte.** Rien en argent : l'image de départ est un petit dessin
+fabriqué par le script lui-même (pas une photo ni une image générée), et
+aucun appel n'est fait à un service payant à aucune étape. Le seul coût est
+le temps de calcul sur la carte graphique de l'auteur et l'électricité que ça
+consomme — le script l'annonce avant de commencer et demande de taper « oui »
+pour continuer ; il ne lance rien sans cet accord. Comptez, en tâtonnant sur
+une machine qu'on n'a pas encore mesurée, quelque chose comme 15 à 40 minutes
+pour les trois rendus (le modèle et le squelette ne se calculent qu'une fois,
+les rendus suivants sont plus rapides).
+
+**Avant de lancer un vrai calcul**, il est prudent de vérifier que le script
+lui-même n'est pas cassé, sans rien payer ni rien attendre — une répétition à
+blanc, qui ne parle à personne :
+
+    .venv\Scripts\python.exe essais/essai_au11_cadre_directions.py --repetition
+
+Cette commande affiche en toutes lettres « aucun rendu réel, ceci est une
+répétition », déroule le même parcours avec une doublure qui invente des
+images cohérentes, et se termine en quelques secondes sur un verdict
+« COHÉRENT ». Si elle échoue ou plante, la mesure réelle ne marchera pas non
+plus — inutile de solliciter le GPU avant de corriger ça.
+
+**Pour la mesure réelle**, il faut d'abord qu'asset3d tourne sur la machine
+(c'est l'installation voisine, avec sa propre carte graphique et son propre
+lancement — ce script ne la démarre pas). Une fois asset3d lancé :
+
+    .venv\Scripts\python.exe essais/essai_au11_cadre_directions.py
+
+Le script vérifie l'adresse (par défaut `http://127.0.0.1:8000` ; `--adresse`
+pour une autre), affiche l'annonce de coût ci-dessus, attend le « oui », puis
+affiche sa progression étape par étape (modèle, squelette, rendu de chaque
+direction). À la fin, il imprime un tableau — une ligne par direction, avec la
+taille du personnage en pixels et la position de ses pieds — suivi d'un
+verdict :
+
+- **COHÉRENT** : les trois directions se ressemblent d'assez près. Cela ne
+  ferme pas encore AU11 tout seul (le critère demande une lecture humaine du
+  résultat), mais donne une base solide pour cocher la seconde puce du plan
+  — à faire à la main, avec ce relevé en référence, pas automatiquement par
+  ce script.
+- **INCOHÉRENT** : le script donne la ou les directions en cause et l'écart
+  chiffré (par exemple « la taille apparente varie de 18 % entre "est" et
+  "nord" »). C'est la confirmation du risque décrit plus haut — le calcul de
+  cadrage d'asset3d dépend de la caméra de chaque direction. La correction se
+  ferait alors dans le projet voisin (`asset3d/blender/rendu.py`), pas dans ce
+  dépôt : voir la puce 4 des « gestes à faire » ci-dessus.
+
+Dans les deux cas, le résultat détaillé reste sur le disque dans
+`essais/resultats_au11_cadre/mesures.json` (ce fichier-là revient dans Git ;
+les images de rendu, non — voir `.gitignore`), et peut être relu plus tard sans
+relancer le calcul.
+
+**Ce que ce relevé ne fait toujours pas** : cocher la seconde puce d'AU11 dans
+`docs/PLAN-atelier-unifie.md`. Elle reste à cocher par l'auteur, après avoir lu
+un vrai verdict — pas par cette tranche, qui n'a pas pu produire ce verdict
+faute de GPU.
