@@ -104,6 +104,23 @@ class ServicePlancheAnimee:
             # phrases différentes pour le même fait selon l'écran qui demande.
             raise AssetInconnu(feuille)
 
+        # **Ce qui naît d'une feuille appartient à qui la feuille appartient**
+        # (`AU20`). Le jeu l'a toujours fait — `projet=asset.projet`, plus bas —
+        # et le sujet, lui, ne le faisait pas : une planche découpée sur la
+        # fiche d'un personnage rendait une animation sans personnage, donc
+        # invisible sur la fiche d'où on venait tout juste de la tirer. C'est le
+        # trou mesuré le 13 septembre 2026, à l'identique de l'import.
+        #
+        # **Ce que l'appel dit l'emporte**, dans les deux sens : nommer un autre
+        # sujet le range ailleurs, et une chaîne vide dit « aucun » — c'est ce
+        # que l'écran envoie quand l'auteur choisit de ne rien rattacher.
+        if personnage is None:
+            personnage = asset.personnage
+            if pose is None:
+                pose = asset.pose
+        personnage = personnage or None
+        pose = pose or None
+
         rectangles = verifier_boites(boites, asset.largeur, asset.hauteur, quoi="feuille")
         parts = self._parts(len(rectangles), directions, direction)
         if cadence <= 0:

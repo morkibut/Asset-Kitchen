@@ -167,16 +167,50 @@ export function useSurvol(epingle: boolean) {
 export type Doublon = { nom: string; carte: Carte }
 
 export function useCollage({
+  projet,
   onErreur,
   onRafraichir,
 }: {
+  /** **Le jeu où la carte se pose** — nécessaire depuis qu'une vidéo peut
+   *  arriver ici : `poserClipSurToile` le nomme, là où `collerImage` le
+   *  déduisait du jeu ouvert côté serveur. */
+  projet: string
   onErreur: (raison: string) => void
   onRafraichir: () => void
 }) {
   const [doublon, setDoublon] = useState<Doublon | null>(null)
 
+  /** **Une vidéo posée sur la toile y arrive comme une carte qui se rejoue**
+   *  (`AU21`). Elle était refusée — *« … n'est pas une image »* —, et le refus
+   *  disait vrai sans être utile : la toile *sait* porter une vidéo depuis
+   *  `AU18`, mais seulement par le bouton *Poser sur la toile* de la fiche d'un
+   *  clip. Poser le fichier directement était le geste évident, et c'était le
+   *  seul qui ne marchait pas.
+   *
+   *  Deux temps, et c'est la chaîne qui existe déjà : le fichier devient un
+   *  clip du jeu — ses images tirées à l'entrée, rien de dépensé —, puis ce
+   *  clip paraît sur la toile. La carte ne porte pas de copie de la vidéo :
+   *  elle montre sa première image et pointe vers le fichier du clip. */
+  const VIDEO = /\.(mp4|webm|mov|mkv|avi|m4v)$/i
+
+  const collerVideo = async (fichier: File) => {
+    const recu = await api.importerClip(fichier, { nom: fichier.name })
+    const clip = recu.clip ?? recu.doublon
+    // **Un doublon n'est pas un refus, et il se pose quand même** : la vidéo
+    // est déjà entrée une fois, ce que l'auteur demande ici est de la voir sur
+    // la toile. La refuser au motif qu'elle existe serait le défaut d'AU18 à
+    // l'identique — un « déjà là » sans rien à montrer.
+    if (!clip) throw new Error("cette vidéo n’a pas pu entrer")
+    await api.poserClipSurToile(projet, clip.identifiant)
+  }
+
   const collerFichier = async (fichier: File, forcer = false) => {
     try {
+      if (fichier.type.startsWith("video/") || VIDEO.test(fichier.name)) {
+        await collerVideo(fichier)
+        onRafraichir()
+        return
+      }
       const rendue = await api.collerImage(fichier, fichier.name || "l'image collée", forcer)
       if (rendue.doublon) setDoublon({ nom: fichier.name, carte: rendue.doublon })
       else onRafraichir()

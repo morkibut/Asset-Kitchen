@@ -2219,6 +2219,7 @@ function AtelierApp() {
           restent ne lisent que le tableau. */}
       {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "univers" && (
         <EcranUnivers
+          projet={bibliotheque.courant ?? ""}
           cartes={cartes}
           liens={liens}
           teintes={teintes}
@@ -2898,7 +2899,7 @@ function AtelierApp() {
           demande : on le tient une seconde au-dessus de ce qu'on faisait, on le
           referme, et on n'a rien quitté. Il ne porte pas de fente de refus,
           pour la même raison que le Guide : il ne demande rien au serveur. */}
-      {fabricationDuSujet && choseOuverte && <ChoisirFabricationDuSujet personnage={choseOuverte} plan={plan} onFermer={() => setFabricationDuSujet(false)} onImage={(pose, direction) => { setFabricationDuSujet(false); armer(choseOuverte, [pose], null, direction) }} onVideo={(pose, direction) => { setFabricationDuSujet(false); setAnimationDuSujet({ personnage: choseOuverte.identifiant, pose: pose.identifiant, direction: direction ?? "" }) }} on3D={() => { setFabricationDuSujet(false); setOngletDuSujet("sources") }} onImporter={(pose, direction) => { setFabricationDuSujet(false); setImportDuSujet({ pose: pose?.identifiant, direction }) }} />}
+      {fabricationDuSujet && choseOuverte && <ChoisirFabricationDuSujet personnage={choseOuverte} plan={plan} onFermer={() => setFabricationDuSujet(false)} onImage={(pose, direction) => { setFabricationDuSujet(false); armer(choseOuverte, [pose], null, direction) }} onVideo={(pose, direction) => { setFabricationDuSujet(false); setAnimationDuSujet({ personnage: choseOuverte.identifiant, pose: pose.identifiant, direction: direction ?? "" }) }} on3D={() => { setFabricationDuSujet(false); setOngletDuSujet("sources") }} />}
       {animationDuSujet && bibliotheque.courant && <FabricationSuivie projet={bibliotheque.courant} personnages={personnages} cibleInitiale={animationDuSujet}
         onFermer={() => { setAnimationDuSujet(null); void relireProduction() }}
         onClip={(id) => { setAnimationDuSujet(null); setPile(entrer(poser("galerie"), { genre: "montage", clip: id })) }}

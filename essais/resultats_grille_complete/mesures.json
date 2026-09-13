@@ -1,0 +1,63 @@
+{
+ "B-4x2-carre": {
+  "_variante": {
+   "titre": "Quatre sur deux, canevas carré",
+   "propos": "le gabarit du produit pour une grille 4×2 sur son canevas carré — des cases hautes ; la consigne de grille passe à « 4 columns and 2 rows », rien d'autre ne change",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · style · 478×727",
+    "Image 2 · style · 930×655",
+    "Image 3 · reference · 64×64",
+    "Image 4 · gabarit · 1024×1024"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\na hooded traveller, seen from the side;\ndeep teal hooded cloak covering the head and falling down the back;\nochre long coat closed by a brown leather belt;\nbrown leather backpack with a rolled bedroll strapped on top;\nbrown boots; a lit lantern hanging from the near hand\n\nRender this as a sprite sheet of 8 sprites of the SAME subject. Exactly 4 columns and 2 rows, 8 cells total, one single sprite per cell, evenly spaced on a regular grid, every sprite the same height, all standing on the same baseline. The cells, in reading order, show: 1. walk cycle, frame 1 of 8: contact, left foot forward, facing right, side view; 2. walk cycle, frame 2 of 8: down, weight on left foot, facing right, side view; 3. walk cycle, frame 3 of 8: passing, right leg swinging through, facing right, side view; 4. walk cycle, frame 4 of 8: up, left leg straight, body highest, facing right, side view; 5. walk cycle, frame 5 of 8: contact, right foot forward, facing right, side view; 6. walk cycle, frame 6 of 8: down, weight on right foot, facing right, side view; 7. walk cycle, frame 7 of 8: passing, left leg swinging through, facing right, side view; 8. walk cycle, frame 8 of 8: up, right leg straight, body highest, facing right, side view. It must be the same subject in every cell: same colors, same outfit, same proportions, same size, same style. Plain flat light gray background, no cell borders, no grid lines, no text, no numbers, no frames, no ground shadow. The attached layout image shows 8 empty cells. Draw one sprite inside each cell, keeping the cells at their positions and sizes. Do NOT draw the cell outlines in your image — the background must stay one plain flat light gray, with no visible cell borders and no separating lines."
+  },
+  "jet2": {
+   "cout_usd": 0.02843,
+   "unite": "usd",
+   "consomme": 0.02843,
+   "secondes": 20.1,
+   "octets": 985133
+  },
+  "jet1": {
+   "cout_usd": 0.02843,
+   "unite": "usd",
+   "consomme": 0.02843,
+   "secondes": 20.3,
+   "octets": 1053329
+  }
+ },
+ "C-4x2-3sur2": {
+  "_variante": {
+   "titre": "Quatre sur deux, format 3:2",
+   "propos": "le même gabarit redessiné sur 1024×683 avec les constantes du produit, et le format 3:2 demandé au modèle ; même texte que B",
+   "proportions": "3:2",
+   "images": [
+    "Image 1 · style · 478×727",
+    "Image 2 · style · 930×655",
+    "Image 3 · reference · 64×64",
+    "Image 4 · gabarit · 1024×683"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\na hooded traveller, seen from the side;\ndeep teal hooded cloak covering the head and falling down the back;\nochre long coat closed by a brown leather belt;\nbrown leather backpack with a rolled bedroll strapped on top;\nbrown boots; a lit lantern hanging from the near hand\n\nRender this as a sprite sheet of 8 sprites of the SAME subject. Exactly 4 columns and 2 rows, 8 cells total, one single sprite per cell, evenly spaced on a regular grid, every sprite the same height, all standing on the same baseline. The cells, in reading order, show: 1. walk cycle, frame 1 of 8: contact, left foot forward, facing right, side view; 2. walk cycle, frame 2 of 8: down, weight on left foot, facing right, side view; 3. walk cycle, frame 3 of 8: passing, right leg swinging through, facing right, side view; 4. walk cycle, frame 4 of 8: up, left leg straight, body highest, facing right, side view; 5. walk cycle, frame 5 of 8: contact, right foot forward, facing right, side view; 6. walk cycle, frame 6 of 8: down, weight on right foot, facing right, side view; 7. walk cycle, frame 7 of 8: passing, left leg swinging through, facing right, side view; 8. walk cycle, frame 8 of 8: up, right leg straight, body highest, facing right, side view. It must be the same subject in every cell: same colors, same outfit, same proportions, same size, same style. Plain flat light gray background, no cell borders, no grid lines, no text, no numbers, no frames, no ground shadow. The attached layout image shows 8 empty cells. Draw one sprite inside each cell, keeping the cells at their positions and sizes. Do NOT draw the cell outlines in your image — the background must stay one plain flat light gray, with no visible cell borders and no separating lines."
+  },
+  "jet2": {
+   "cout_usd": 0.02473,
+   "unite": "usd",
+   "consomme": 0.02473,
+   "secondes": 16.6,
+   "octets": 1386877
+  },
+  "jet1": {
+   "cout_usd": 0.02473,
+   "unite": "usd",
+   "consomme": 0.02473,
+   "secondes": 20.1,
+   "octets": 1392176
+  }
+ },
+ "_seance": {
+  "date": "2026-09-02",
+  "dernier_lancement": "2026-09-02T19:55:35",
+  "modele": "openai/gpt-image-2"
+ }
+}

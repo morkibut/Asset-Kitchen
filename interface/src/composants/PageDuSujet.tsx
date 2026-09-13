@@ -11,14 +11,22 @@ import { VestiaireDuSujet } from "./VestiaireDuSujet"
 import { TenuesDuSujet } from "./TenuesDuSujet"
 import { ObjectifDuSujet } from "./ObjectifDuSujet"
 import { SourcesDuSujet } from "./SourcesDuSujet"
+import { EnAttenteDuSujet } from "./EnAttenteDuSujet"
+import { ImporterIntelligemment } from "./ImporterIntelligemment"
 import { FicheDuSujet } from "./FicheDuSujet"
 import { useScrollDuParcours } from "./MemoireDuParcours"
 
-export type Onglet = "fiche" | "images" | "animations" | "sources" | "equipement" | "objectif" | "essai"
+export type Onglet = "fiche" | "images" | "animations" | "sources" | "attente" | "equipement" | "objectif" | "essai"
+// **« Pas encore rangé » est entre les sources et l'équipement, et sa place dit
+// ce qu'il est** (`AU20`) : le dernier des trois onglets qui montrent *ce qui
+// existe pour ce sujet*, avant ceux qui décrivent ce qu'il doit devenir. Les
+// trois premiers montrent des cases pleines ; celui-ci montre ce qui n'a pas
+// encore de case, et sans lui ce qui n'est rangé nulle part n'est nulle part.
 const ONGLETS: readonly { clef: Onglet; nom: string }[] = [
   { clef: "animations", nom: "Animations" },
   { clef: "images", nom: "Images fixes" },
   { clef: "sources", nom: "Sources & clips" },
+  { clef: "attente", nom: "Pas encore rangé" },
   { clef: "equipement", nom: "Équipement" },
   { clef: "objectif", nom: "Objectif & règles" },
 ]
@@ -291,7 +299,20 @@ export function PageDuSujet(proprietes: {
         <header className="flex shrink-0 items-start justify-between gap-[22px]">
           <div><h1 className="font-serif text-[38px] leading-[1.05] text-encre">{ouvert.nom}</h1><p className="mt-[8px] text-[13px] text-encre-3">{ouvert.type || ouvert.famille} · {ouvert.objectif ? ouvert.objectif.sorties.some(s => s.nature === "animation" && s.quantite > 0) ? ouvert.objectif.sorties.some(s => s.nature === "image" && s.quantite > 0) ? "Images & animations" : "Animations" : "Images fixes" : "Images & animations"}</p></div>
           <div className="flex shrink-0 flex-wrap items-center gap-[8px]">
-            <button className={BOUTON} onClick={() => proprietes.onImporter ? proprietes.onImporter() : setOnglet("sources")}>Importer</button>
+            {/* **Deux boutons, et la ligne entre eux est claire** (`AU21`) :
+                *Importer…* prend un fichier qu'on a déjà et **devine ce que
+                c'est** — vidéo, planche, image —, *Fabriquer…* commande au
+                fournisseur et coûte de l'argent.
+
+                Le découpage d'avant passait par la question *quel mouvement,
+                quelle direction ?* posée à tout le monde, y compris pour une
+                vidéo — à qui ça ne veut rien dire : une vidéo devient un clip,
+                et c'est la bande qu'on y taille qui se range sur un mouvement.
+                Une question qui n'a pas de sens pour un tiers des cas n'est pas
+                une question, c'est un péage. */}
+            <ImporterIntelligemment personnage={ouvert} classe={BOUTON}
+              onDecouper={proprietes.onDecouper} onMonter={proprietes.onMonterLaBande}
+              onChange={() => { setRange(n => n + 1); proprietes.onClipsChange?.() }} onErreur={echouer} />
             <button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal" onClick={() => {
               if (proprietes.onFabriquer) proprietes.onFabriquer()
               else { const pose = sienPlan.find(p => !ouvert.ecartees.includes(p.identifiant)); if (pose) onglet === "animations" ? proprietes.onAnimer(ouvert, pose) : proprietes.onArmer(ouvert, [pose]); else setOnglet("objectif") }
@@ -340,6 +361,9 @@ export function PageDuSujet(proprietes: {
         {onglet === "sources" && <SourcesDuSujet onBande={proprietes.onOuvrirLaBande} personnage={ouvert} clips={proprietes.clips ?? []}
           onClipsChange={proprietes.onClipsChange} onErreur={echouer}
           onMontage={proprietes.onMonterLaBande} onAnimer={(pose, direction) => proprietes.onAnimer(ouvert, pose, direction)} />}
+        {onglet === "attente" && <EnAttenteDuSujet personnage={ouvert} plan={sienPlan}
+          onOuvrir={proprietes.onOuvrirCase}
+          onChange={() => setRange(n => n + 1)} onErreur={echouer} />}
         {onglet === "equipement" && <div><VestiaireDuSujet personnage={ouvert}
           vestiaire={proprietes.vestiaire} onPiece={proprietes.onPiece} onEmploi={proprietes.onEmploiEquipement} onCreerPiece={proprietes.onCreerPiece}
           onRetirerLEmploi={proprietes.onRetirerLEmploi} /><TenuesDuSujet personnage={ouvert} vestiaire={proprietes.vestiaire} onEmploi={proprietes.onEmploiEquipement} onLivraisons={proprietes.onLivrer} /></div>}

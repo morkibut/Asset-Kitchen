@@ -74,8 +74,20 @@ it("reprend une image de la bibliothèque sans la téléverser une seconde fois"
   expect(screen.getByText("Image de la bibliothèque, rangée ici.")).toBeTruthy()
 })
 
-it("ne propose pas la bibliothèque tant qu'aucune case n'est visée", () => {
+// **Décision retournée en `AU20`.** Cet essai vérifiait l'inverse : sans case
+// visée, la bibliothèque était grisée — « reprendre une image, c'est la ranger
+// dans une case ». Mais sans case visée, l'import ne rattachait alors *rien du
+// tout*, et l'image quittait la fiche. Depuis, « aucun mouvement » range quand
+// même l'image sur le sujet, et le geste est donc légitime dans les deux cas.
+it("range sur le sujet même sans mouvement choisi, et la bibliothèque reste ouverte", async () => {
+  const designer = vi.spyOn(api, "designer").mockResolvedValue({ ...image, personnage: "pelerin", pose: null } as never)
+  const televerser = vi.spyOn(api, "televerser").mockResolvedValue({ asset: image, doublon: null } as never)
   monter()
   fireEvent.change(screen.getByLabelText("Ranger les images dans"), { target: { value: "" } })
-  expect(screen.getByRole("button", { name: "Reprendre une image de la bibliothèque" })).toHaveProperty("disabled", true)
+  expect(screen.getByRole("button", { name: "Reprendre une image de la bibliothèque" })).toHaveProperty("disabled", false)
+  fireEvent.change(screen.getByLabelText("Images à importer"), {
+    target: { files: [new File(["x"], "croquis.png", { type: "image/png" })] },
+  })
+  await waitFor(() => expect(televerser).toHaveBeenCalled())
+  await waitFor(() => expect(designer).toHaveBeenCalledWith("asset-1", "pelerin", null, null))
 })

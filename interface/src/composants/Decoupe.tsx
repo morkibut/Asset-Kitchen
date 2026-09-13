@@ -40,6 +40,7 @@ import {
   type Direction,
   type LectureDePalette,
   type ModeDecoupe,
+  type Production,
 } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
 import { PANNEAU } from "./Infobulle"
@@ -216,10 +217,20 @@ export function EcranDecoupe({
   // change est ce qu'ils deviennent : les images d'une animation, dans l'ordre
   // où on les voit, au lieu de douze images séparées dans la galerie.
   //
-  // **Elle ne demande ni personnage ni mouvement**, et c'est la règle du
-  // produit : *on garde d'abord, on range ensuite*. L'animation se range sur sa
-  // case depuis son atelier, qui s'ouvre juste après — poser la question ici
-  // alourdirait le geste au moment où l'on découpe pour voir.
+  // ⚠️ **Elle demande le sujet et le mouvement depuis `AU20`, et c'est une
+  // décision retournée.** `AU19` avait tranché l'inverse — *on garde d'abord,
+  // on range ensuite*, la question posée plus tard dans l'atelier de
+  // l'animation — au motif que demander ici alourdirait le geste. Mesuré à
+  // l'usage le 13 septembre 2026 : ce qui n'est rangé nulle part **n'est nulle
+  // part**. Une planche découpée sur la fiche d'un personnage rendait une
+  // animation sans personnage, que la fiche ne montrait donc pas, et l'auteur
+  // la voyait disparaître au moment même où il venait de la faire.
+  //
+  // Le geste reste léger parce que la réponse est **déjà remplie** : la feuille
+  // porte son sujet et sa case quand elle est entrée par une fiche, et les deux
+  // listes ne font que le montrer. On les change, ou on répond « à ranger plus
+  // tard » — mais on ne le fait plus sans le savoir.
+  //
   // **Les directions sont demandées ici, et à personne d'autre.** Elles ne
   // vivent ni dans l'univers ni dans le plan de poses, et les faire descendre
   // depuis le châssis aurait traversé trois écrans pour une case à cocher.
@@ -236,6 +247,43 @@ export function EcranDecoupe({
       vivant = false
     }
   }, [animable])
+  /** **À qui l'animation appartiendra, et sur quel mouvement** (`AU20`).
+   *
+   *  Le défaut vient de la feuille elle-même : découper la planche d'un
+   *  personnage rend l'animation de ce personnage-là, ce qui est vrai neuf fois
+   *  sur dix et se corrige d'un clic la dixième. Le serveur tient la même règle
+   *  pour l'agent (`ServicePlancheAnimee.animer`) ; ces deux listes ne font que
+   *  la rendre visible — et modifiable — avant qu'on clique. */
+  const planche = sujet.famille === "planche" ? sujet.planche : null
+  const [production, setProduction] = useState<Production | null>(null)
+  const [sujetVise, setSujetVise] = useState(planche?.personnage ?? "")
+  const [poseVisee, setPoseVisee] = useState(planche?.pose ?? "")
+  useEffect(() => {
+    if (!animable) return
+    let vivant = true
+    void api
+      .production()
+      .then((lue) => vivant && setProduction(lue))
+      .catch(() => undefined)
+    return () => {
+      vivant = false
+    }
+  }, [animable])
+  const personnageVise = production?.personnages.find((p) => p.identifiant === sujetVise) ?? null
+  /** Les mouvements que ce sujet-là tient — jamais tout le plan du jeu : une
+   *  case qu'il a écartée n'est pas une case où quelque chose peut se ranger. */
+  const posesDuSujet =
+    personnageVise && production
+      ? production.plan.filter((p) => personnageVise.cases.some((c) => c.pose === p.identifiant))
+      : []
+  // Changer de sujet rend la case caduque : la pose d'un personnage n'est pas
+  // celle d'un autre, et la garder rangerait l'animation dans une case que le
+  // nouveau sujet ne tient peut-être pas.
+  useEffect(() => {
+    if (poseVisee && !posesDuSujet.some((p) => p.identifiant === poseVisee)) setPoseVisee("")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sujetVise, production])
+
   /** Proposée seulement quand la grille a exactement autant de lignes que le
    *  jeu a de directions : c'est la feuille à quatre directions, et hors de ce
    *  cas le partage serait une supposition. */
@@ -253,6 +301,12 @@ export function EcranDecoupe({
       const fait = await api.animerUneFeuille(vu.identifiant, boites, {
         nom: vu.alt,
         directions: parLigne ? directionsDuJeu.map((d) => d.identifiant) : null,
+        // **La chaîne vide dit « aucun », et ce n'est pas la même chose que
+        // l'absence** : sans réponse, le serveur reprend le sujet de la
+        // feuille, ce qui est justement ce qu'on vient de laisser l'auteur
+        // corriger. Ce qui est affiché est donc ce qui part.
+        personnage: sujetVise,
+        pose: sujetVise ? poseVisee : "",
       })
       brouillon.effacer()
       sujet.onAnimer(fait.bandes)
@@ -482,6 +536,42 @@ export function EcranDecoupe({
                 du jour où la feuille en est une. */}
             {sujet.famille === "planche" && sujet.onAnimer && (
               <div className="mt-[8px] flex flex-col gap-[4px] border-t border-trait pt-[8px]">
+                {/* **À quoi elle se rattache, demandé avant de cliquer**
+                    (`AU20`). Deux lignes, déjà remplies : ce n'est pas un
+                    formulaire, c'est ce qui va se passer, écrit là où on le
+                    lit. */}
+                <label className="flex flex-col gap-[4px] text-[11px] text-encre-2">
+                  Animation de
+                  <select
+                    value={sujetVise}
+                    onChange={(e) => setSujetVise(e.target.value)}
+                    className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre"
+                  >
+                    <option value="">Personne — elle ira dans la galerie du jeu</option>
+                    {production?.personnages.map((p) => (
+                      <option key={p.identifiant} value={p.identifiant}>
+                        {p.nom}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {sujetVise && (
+                  <label className="flex flex-col gap-[4px] text-[11px] text-encre-2">
+                    Mouvement
+                    <select
+                      value={poseVisee}
+                      onChange={(e) => setPoseVisee(e.target.value)}
+                      className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre"
+                    >
+                      <option value="">À ranger plus tard — elle attendra sur la fiche</option>
+                      {posesDuSujet.map((p) => (
+                        <option key={p.identifiant} value={p.identifiant}>
+                          {p.nom}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 {parLignePossible && (
                   <button
                     type="button"
@@ -512,7 +602,7 @@ export function EcranDecoupe({
                       : `En faire une animation de ${boites.length} images`}
                 </button>
                 {boites.length > 0 && (
-                  <Pourquoi texte="les cases deviennent les images de l'animation, dans l'ordre où elles sont numérotées — son atelier s'ouvre ensuite pour la régler et la ranger sur un mouvement" />
+                  <Pourquoi texte="les cases deviennent les images de l'animation, dans l'ordre où elles sont numérotées — son atelier s'ouvre ensuite pour la régler" />
                 )}
               </div>
             )}

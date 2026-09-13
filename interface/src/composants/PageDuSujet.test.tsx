@@ -221,10 +221,14 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu", onLivr
 
 const onglet = (nom: string) => screen.getByRole("tab", { name: nom })
 
-test("la fiche validée ouvre sur cinq onglets, sans formulaire ni barre permanente", async () => {
+// **Six onglets depuis `AU20`** : « Pas encore rangé » s'est intercalé après
+// les sources. Les trois premiers montrent des cases pleines ; celui-là montre
+// ce qui appartient au sujet **sans** case — et sans lui, ce qui n'est rangé
+// nulle part n'était nulle part.
+test("la fiche validée ouvre sur six onglets, sans formulaire ni barre permanente", async () => {
   monter()
   expect(document.querySelector("[data-page-du-sujet]")).toBeTruthy()
-  expect(within(screen.getByRole("tablist", { name: "La page du sujet" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images fixes", "Sources & clips", "Équipement", "Objectif & règles"])
+  expect(within(screen.getByRole("tablist", { name: "La page du sujet" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images fixes", "Sources & clips", "Pas encore rangé", "Équipement", "Objectif & règles"])
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(screen.queryByLabelText("Nom du sujet")).toBeNull()
   expect(document.querySelector("[data-ce-qui-lui-manque]")).toBeNull()
@@ -322,12 +326,14 @@ test("les collections se modifient depuis la fiche sans toucher aux règles", as
   await waitFor(() => expect(appels.some(a => a.methode === "DELETE" && a.url.includes("/collections/heros"))).toBe(true))
 })
 
-test("fabriquer, importer et les deux tables gardent leurs portes explicites", () => {
+// **Deux portes, et la ligne entre elles est l'argent** (`AU21`) : *Importer…*
+// prend un fichier du disque et devine ce que c'est ; *Fabriquer…* commande au
+// fournisseur, et c'est le seul des deux qui pose une case avant d'agir.
+test("importer et fabriquer sont deux portes, et les deux tables gardent les leurs", () => {
   const rappels = monter()
   fireEvent.click(screen.getByRole("button", { name: "Fabriquer…" }))
   expect(rappels.onFabriquer).toHaveBeenCalledOnce()
-  fireEvent.click(screen.getByRole("button", { name: "Importer" }))
-  expect(rappels.onImporter).toHaveBeenCalledOnce()
+  expect(screen.getByLabelText("Fichier à importer")).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: "Découper une image" }))
   expect(rappels.onDecouper).toHaveBeenCalledWith("a")
   fireEvent.click(screen.getByRole("button", { name: "Extraire un élément" }))

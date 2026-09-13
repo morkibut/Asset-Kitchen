@@ -1046,6 +1046,21 @@ async def regler_personnage(
     return {"personnage": atelier.production.en_charge(projet, personnage)}
 
 
+@routeur.get("/characters/{identifiant}/unplaced")
+async def en_attente(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Ce qui est à ce sujet sans occuper de case — images et clips (`AU20`).
+
+    **Après `/characters/{identifiant}` dans ce fichier n'aurait rien changé** :
+    le segment `unplaced` est en troisième position, donc aucune route à deux
+    segments ne se le dispute. C'est la même prudence que pour `slots`, écrite
+    ici pour qu'on n'ait pas à la redécouvrir.
+    """
+    atelier = _atelier(requete)
+    return atelier.production.en_attente(_projet(requete, projet), identifiant)
+
+
 @routeur.delete("/characters/{identifiant}")
 async def supprimer_personnage(
     requete: Request, identifiant: str, projet: str | None = Query(None)

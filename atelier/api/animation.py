@@ -540,11 +540,22 @@ async def importer_un_clip(
     Rend `{"clip": …, "doublon": …}`, dont l'un est toujours nul — la forme de
     l'import d'image, et pour la même raison : un doublon n'est pas un refus, et
     rappeler avec `forcer` fait entrer quand même.
+
+    ⚠️ **Le jeu ouvert est le défaut, et l'omettre était un trou.** Mesuré sur
+    l'atelier de l'auteur le 13 septembre 2026 : l'écran n'envoie pas de
+    `projet`, le clip naissait donc à `projet = None`, et toutes les listes
+    scopent sur un jeu — `GET /clips?projet=…` la première. La vidéo entrait,
+    n'apparaissait nulle part, et le contrôle de doublon, lui, la retrouvait :
+    *« … était déjà là »* à chaque nouvelle tentative, sur une vidéo
+    introuvable. Le défaut est ici et non dans le service, comme dans
+    `production.py` : un agent nomme toujours son projet, et le service doit
+    pouvoir refuser un projet manquant plutôt que d'en inventer un.
     """
-    return _atelier(requete).animation.importer(
+    atelier = _atelier(requete)
+    return atelier.animation.importer(
         await requete.body(),
         nom,
-        projet=projet,
+        projet=projet or atelier.bibliotheque.courant or None,
         personnage=personnage,
         pose=pose,
         direction=direction,

@@ -30,9 +30,15 @@ export function ImporterPourUnSujet({ personnage, plan, onFermer, onChange, onOu
   const [occupe, setOccupe] = useState(false)
   const [bibliotheque, setBibliotheque] = useState(false)
   const directions = personnage.cases.find(c => c.pose === pose)?.directions ?? []
+  /** **Toujours au sujet, même sans mouvement** (`AU20`).
+   *
+   *  Sans pose, ce rattachement ne se faisait pas du tout : l'image entrait
+   *  dans la bibliothèque du jeu et quittait la fiche où on venait de la faire
+   *  entrer. Le mouvement se choisit plus tard, dans « Pas encore rangé » ;
+   *  l'appartenance au sujet, elle, se décide au moment où l'on importe *pour
+   *  lui*, et c'est le seul moment où on la connaît à coup sûr. */
   async function rattacher(asset: Asset) {
-    if (!pose) return asset
-    return api.designer(asset.identifiant, personnage.identifiant, pose, direction || null)
+    return api.designer(asset.identifiant, personnage.identifiant, pose || null, direction || null)
   }
   async function importer(fichiers: File[]) {
     if (occupe) return
@@ -69,10 +75,10 @@ export function ImporterPourUnSujet({ personnage, plan, onFermer, onChange, onOu
   return <CadreDialogue titre={`Importer pour ${personnage.nom}`} format="preparation" onFermer={onFermer} enfants={<>
     <header className="flex shrink-0 items-center justify-between gap-[22px] border-b border-trait p-[22px]"><div><h1 className="font-serif text-[25px]">Importer des images</h1><p className="mt-[8px] text-[13px] text-encre-3">{personnage.nom} · Les originaux restent conservés.</p></div><button className={CHAMP} onClick={onFermer}>Fermer</button></header>
     <div className="defile min-h-0 space-y-[22px] overflow-y-auto p-[22px] text-[13px]">
-      <div className="grid grid-cols-2 gap-[14px]"><label className="flex flex-col gap-[8px]">Ranger les images dans<select className={CHAMP} disabled={occupe} value={pose} onChange={e => { setPose(e.target.value); setDirection("") }}><option value="">Galerie du jeu, sans mouvement</option>{poses.map(p => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>{pose && directions.length > 0 && <label className="flex flex-col gap-[8px]">Direction<select className={CHAMP} disabled={occupe} value={direction} onChange={e => setDirection(e.target.value)}><option value="">À préciser ensuite</option>{directions.map(d => <option key={d.identifiant} value={d.identifiant}>{d.nom}</option>)}</select></label>}</div>
+      <div className="grid grid-cols-2 gap-[14px]"><label className="flex flex-col gap-[8px]">Ranger les images dans<select className={CHAMP} disabled={occupe} value={pose} onChange={e => { setPose(e.target.value); setDirection("") }}><option value="">{personnage.nom}, sans mouvement encore</option>{poses.map(p => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>{pose && directions.length > 0 && <label className="flex flex-col gap-[8px]">Direction<select className={CHAMP} disabled={occupe} value={direction} onChange={e => setDirection(e.target.value)}><option value="">À préciser ensuite</option>{directions.map(d => <option key={d.identifiant} value={d.identifiant}>{d.nom}</option>)}</select></label>}</div>
       <label className={`${CHAMP} flex min-h-[128px] cursor-pointer flex-col items-center justify-center gap-[14px] border-dashed`} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void importer([...e.dataTransfer.files]) }}><span>{occupe ? "Import en cours…" : "Choisir des images ou les déposer ici"}</span><input type="file" accept="image/*" multiple disabled={occupe} aria-label="Images à importer" onChange={e => { void importer([...(e.target.files ?? [])]); e.target.value = "" }} /></label>
       <div className="flex flex-wrap items-center gap-[14px]">
-        <button className={CHAMP} disabled={occupe || !pose} title={pose ? undefined : "Choisis d’abord une pose : reprendre une image de la bibliothèque, c’est la ranger dans une case."} onClick={() => setBibliotheque(true)}>Reprendre une image de la bibliothèque</button>
+        <button className={CHAMP} disabled={occupe} onClick={() => setBibliotheque(true)}>Reprendre une image de la bibliothèque</button>
         <span className="text-encre-3">Elle n’est pas recopiée, ni refabriquée : elle est simplement rangée ici.</span>
       </div>
       <p className="text-encre-3">Une planche de plusieurs sprites s’importe entière : ouvre ensuite « Découper une image ». Pour une vidéo ou un modèle 3D, utilise Sources & clips.</p>

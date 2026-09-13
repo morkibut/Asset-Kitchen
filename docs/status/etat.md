@@ -11,6 +11,56 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## AU · AU20 — ce qui entre par une fiche y reste — 13 septembre 2026
+
+**Tranche née d'un usage, le jour même où AU18 et AU19 ont été closes.** L'auteur importe une
+vidéo sur une fiche : *« … était déjà là »*, sur un fichier qu'il ne trouve nulle part. Il
+découpe une planche en animation : elle disparaît.
+
+### Trois portes, un seul défaut, et deux moitiés complémentaires
+
+Le relevé en base a fait tomber le diagnostic d'un coup, parce qu'il tenait dans un tableau :
+
+| Ce qui entre | `projet` | `personnage` |
+|---|---|---|
+| Image importée (23 cas) | rempli | **jamais** |
+| Vidéo importée (1 cas) | **jamais** | rempli |
+| Feuille découpée (2 cas) | rempli | **jamais** |
+
+Chaque porte remplissait la moitié du rattachement, et pas la même. Comme toutes les listes du
+produit scopent sur l'un **ou** sur l'autre, une moitié manquante suffit à rendre invisible ce
+qu'on vient de faire entrer.
+
+⚠️ **Le contrôle de doublon, lui, cherchait au même endroit que l'écriture** — `projet IS
+NULL` des deux côtés. Il retrouvait donc systématiquement l'orpheline : *« était déjà là »* sur
+un objet introuvable, à chaque nouvelle tentative. Un défaut d'écriture s'était déguisé en
+défaut de lecture, et c'est ce qui rendait le symptôme incompréhensible pour l'auteur.
+
+### Ce que la tranche a appris, et qui vaut au-delà d'elle
+
+**1. Un critère se vérifie par le chemin de l'auteur, pas par la capacité qui le rend
+possible.** AU19 cochait *« rangé sur le personnage, le mouvement et la direction choisis »* :
+la route `/clips/sheet` les acceptait bel et bien, et `EcranDecoupe` ne les envoyait jamais.
+Le critère était vrai côté serveur et faux à l'écran. C'est le genre de trou qu'un essai de
+service ne voit pas, et qu'un clic voit tout de suite.
+
+**2. « Ranger plus tard » n'est une règle de produit que s'il existe un endroit où voir ce qui
+n'est pas rangé.** AU19 avait délibérément choisi de ne rien demander au moment de découper —
+*on garde d'abord, on range ensuite* — et c'était défendable ; mais rien ne montrait les
+non-rangés, donc *plus tard* voulait dire *perdu*. Les deux décisions vont ensemble ou aucune
+ne tient.
+
+**3. La table permettait déjà ce que la porte interdisait.** `designer()` refusait *« une
+image se désigne par un personnage **et** une pose »* alors que des dizaines d'assets portaient
+déjà un `personnage` sans `pose`. Chercher dans les données avant de conclure a transformé une
+refonte supposée en une branche de quatre lignes.
+
+**4. Un défaut de rattachement se répare sans rien deviner, ou presque.** Le jeu d'un clip se
+**lit** sur son sujet — un sujet n'appartient qu'à un jeu. Le sujet d'une animation, lui, ne se
+déduit que du jeu quand ce jeu n'a qu'un sujet : c'est probable, pas certain, et le script de
+rattrapage (`essais/reparer_rattachements_au20.py`) sépare les deux — la déduction sûre par
+défaut, l'autre derrière un drapeau.
+
 ## V4 · B12 — l'essai — 10 septembre 2026
 
 **Le quatrième onglet de la page d'un sujet, et le seul endroit du produit où quelque chose

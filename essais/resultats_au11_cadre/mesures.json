@@ -1,0 +1,49 @@
+{
+  "adresse_asset3d": "http://127.0.0.1:8000",
+  "date": "2026-09-13T05:14:46",
+  "directions": [
+    "nord",
+    "est",
+    "sud"
+  ],
+  "mesures": {
+    "est": {
+      "hauteur_apparente_px": 61,
+      "hauteur_canevas": 96,
+      "largeur_apparente_px": 29,
+      "largeur_canevas": 64,
+      "pivot_x_frac": 0.5078,
+      "pivot_y_frac": 0.9271,
+      "source": "cc31a3efa4ce320e6d009cbe4610f16f",
+      "vide": false
+    },
+    "nord": {
+      "hauteur_apparente_px": 61,
+      "hauteur_canevas": 96,
+      "largeur_apparente_px": 29,
+      "largeur_canevas": 64,
+      "pivot_x_frac": 0.5078,
+      "pivot_y_frac": 0.9271,
+      "source": "a18a28bde3fb0576c2aca037c2a6c761",
+      "vide": false
+    },
+    "sud": {
+      "hauteur_apparente_px": 61,
+      "hauteur_canevas": 96,
+      "largeur_apparente_px": 29,
+      "largeur_canevas": 64,
+      "pivot_x_frac": 0.5078,
+      "pivot_y_frac": 0.9271,
+      "source": "c44b662982d7b8a8c348a2c784ba0c3b",
+      "vide": false
+    }
+  },
+  "mode": "repetition",
+  "pose": "marche",
+  "verdict": {
+    "coherent": true,
+    "ecart_hauteur_pct": 0.0,
+    "ecart_pivot_fraction": 0.0,
+    "raisons": []
+  }
+}

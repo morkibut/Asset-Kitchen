@@ -3092,8 +3092,20 @@ class ServiceProduction:
         méthode ne fait que dire où il va.
 
         Les deux vides ensemble retirent la désignation : l'image reste dans la
-        bibliothèque, sa case redevient vide. Un seul des deux est un refus —
-        une pose sans personnage ne désigne rien.
+        bibliothèque, sa case redevient vide. Une pose sans personnage reste un
+        refus — elle ne désigne rien.
+
+        ⚠️ **Un personnage sans pose est légitime depuis `AU20`, et c'est une
+        correction.** Ce geste-là refusait *« une image se désigne par un
+        personnage **et** une pose »*, et l'écran n'avait donc aucun moyen de
+        dire « cette image est à ce sujet, je ne sais pas encore dans quelle
+        case ». Tout ce qui entrait par une fiche sans qu'on choisisse un
+        mouvement — un import, une planche, un clip — retombait dans la
+        bibliothèque du jeu, et **disparaissait de la fiche où on venait de le
+        faire entrer**. La table le permettait déjà (des assets portent un
+        `personnage` et pas de `pose`) ; c'est cette porte-ci qui l'interdisait.
+        Ranger plus tard est un geste ; perdre ce qu'on vient d'importer n'en
+        est pas un.
         """
         objet = self._assets.lire(asset)
         if objet is None:
@@ -3116,10 +3128,18 @@ class ServiceProduction:
             objet.pose = None
             objet.direction = None
             objet.personnage_supprime = False
-        elif personnage is None or pose is None:
-            raise ProductionRefusee(
-                "une image se désigne par un personnage **et** une pose"
-            )
+        elif personnage is None:
+            raise ProductionRefusee("une pose sans personnage ne désigne rien")
+        elif pose is None:
+            # **Rattachée au sujet, sans case encore** (`AU20`). Le personnage
+            # est vérifié comme il le serait par `viser` — un onglet resté
+            # ouvert pendant qu'on supprimait un sujet enverrait sinon une
+            # image chez un disparu — mais aucune pose n'est exigée : c'est
+            # exactement l'état que la fiche montre dans « Pas encore rangé ».
+            objet.personnage = self.personnage(projet, personnage).identifiant
+            objet.pose = None
+            objet.direction = None
+            objet.personnage_supprime = False
         else:
             vise, visee = self.viser(projet, personnage, pose, direction)
             objet.personnage = vise.identifiant
@@ -3133,6 +3153,69 @@ class ServiceProduction:
 
         self._assets.sauver(objet)
         return objet
+
+    # ── Ce qui est à lui sans être rangé ─────────────────────────────────────
+
+    def en_attente(self, projet: str, personnage: str) -> dict[str, Any]:
+        """Ce qui appartient à ce sujet **sans occuper de case** (`AU20`).
+
+        **Écrite pour une seule question, et elle décide de sa forme** : *qu'ai-je
+        fait entrer ici que je n'ai pas encore rangé ?* La matrice répond à
+        l'autre question — *quelles cases sont pleines* — et les deux ensembles
+        sont disjoints par construction : une image rangée a une pose, celles-ci
+        n'en ont pas.
+
+        ⚠️ **Sans cette liste, ce qui n'est pas rangé n'existe pas.** C'est le
+        défaut mesuré le 13 septembre 2026 : la fiche ne montrait que des cases,
+        donc tout ce qui entrait sans case — une planche importée, une vidéo,
+        une animation découpée — quittait l'écran à l'instant où on venait de le
+        faire. Le produit n'a jamais voulu qu'on range au moment d'importer ; il
+        faut donc un endroit où ce qui attend se voit, sinon « ranger plus
+        tard » veut dire « perdre ».
+
+        Les images, les clips et les animations ensemble, parce que la question
+        ne fait pas la différence : l'auteur cherche *ce qu'il a fait entrer*,
+        pas *ce qui est rangé dans telle table*.
+        """
+        vise = self.personnage(projet, personnage)
+        images = [
+            a.en_json()
+            for a in self._base.assets_du_personnage(vise.identifiant, projet=projet)
+            if a.pose is None and not a.piece
+        ]
+        # **Le jeu des clips est celui du sujet, et le sans-jeu compte aussi** —
+        # la règle exacte d'`assets_du_personnage` juste au-dessus, et pour sa
+        # raison : un clip entré avant que le rattachement au jeu soit réparé
+        # porte bien ce sujet-là, et l'écarter d'ici le rendrait introuvable une
+        # seconde fois.
+        clips = [
+            g
+            for lot in (
+                self._base.generations_du_projet(projet, 500),
+                self._base.generations_du_projet(None, 500),
+            )
+            for g in lot
+            if g.clip is not None
+            and not g.clip.jete
+            and g.personnage == vise.identifiant
+            and not g.pose
+        ]
+        # **Un clip dont on a déjà tiré des bandes n'attend plus** : ce qui
+        # attend alors, c'est la bande, et elle est juste en dessous. Les deux
+        # ensemble diraient deux fois la même chose à ranger, et ranger l'une
+        # laisserait l'autre à l'écran — c'est-à-dire un écran qui ment.
+        clips = [g for g in clips if not self._base.bandes_du_clip(g.identifiant)]
+        animations = [
+            b.en_json()
+            for b in self._base.bandes_du_personnage(vise.identifiant, projet=projet)
+            if not b.pose
+        ]
+        return {
+            "personnage": vise.identifiant,
+            "images": images,
+            "clips": [g.en_json() for g in clips],
+            "animations": animations,
+        }
 
     # ── Ce que l'écran lit d'un coup ─────────────────────────────────────────
 

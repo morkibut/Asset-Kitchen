@@ -1,0 +1,87 @@
+{
+ "prep": {
+  "_variante": {
+   "titre": "Temps 1 — la prep",
+   "propos": "un appel d'image seule : le sprite promu en 256 px (taille retenue par E2), les lignes de bible du témoin et une seule ligne de demande — le personnage de profil, en pose de contact",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · reference · 256×256"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\nThe same character, seen from the side as in the game's camera, standing in the contact pose of a walk cycle (front foot forward and planted, back foot behind, arms opposite to legs), full body, single isolated sprite, plain background."
+  },
+  "jet2": {
+   "cout_usd": 0.008678,
+   "unite": "usd",
+   "consomme": 0.008678,
+   "secondes": 13.3,
+   "octets": 843491
+  },
+  "jet4": {
+   "cout_usd": 0.008678,
+   "unite": "usd",
+   "consomme": 0.008678,
+   "secondes": 13.6,
+   "octets": 872978
+  },
+  "jet1": {
+   "cout_usd": 0.008678,
+   "unite": "usd",
+   "consomme": 0.008678,
+   "secondes": 14.8,
+   "octets": 881588
+  },
+  "jet3": {
+   "cout_usd": 0.008678,
+   "unite": "usd",
+   "consomme": 0.008678,
+   "secondes": 20.6,
+   "octets": 879092
+  }
+ },
+ "_seance": {
+  "date": "2026-09-02",
+  "dernier_lancement": "2026-09-02T19:21:20",
+  "modele": "openai/gpt-image-2"
+ },
+ "B-prep": {
+  "_variante": {
+   "titre": "La planche depuis la prep",
+   "propos": "la prep choisie (jet2) remplace le sprite promu de face en rôle reference ; artwork, gabarit et texte identiques au témoin",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · style · 479×742",
+    "Image 2 · reference · 1024×1024",
+    "Image 3 · gabarit · 1024×1024"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\na hooded traveller, seen from the side;\ndeep teal hooded cloak covering the head and falling down the back;\nochre long coat closed by a brown leather belt;\nbrown leather backpack with a rolled bedroll strapped on top;\nbrown boots; a lit lantern hanging from the near hand\n\nRender this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite per cell, evenly spaced on a regular grid, every sprite the same height, all standing on the same baseline. The cells, in reading order, show: 1. walk cycle, frame 1 of 8: contact, left foot forward, facing right, side view; 2. walk cycle, frame 2 of 8: down, weight on left foot, facing right, side view; 3. walk cycle, frame 3 of 8: passing, right leg swinging through, facing right, side view; 4. walk cycle, frame 4 of 8: up, left leg straight, body highest, facing right, side view; 5. walk cycle, frame 5 of 8: contact, right foot forward, facing right, side view; 6. walk cycle, frame 6 of 8: down, weight on right foot, facing right, side view; 7. walk cycle, frame 7 of 8: passing, left leg swinging through, facing right, side view; 8. walk cycle, frame 8 of 8: up, right leg straight, body highest, facing right, side view. It must be the same subject in every cell: same colors, same outfit, same proportions, same size, same style. Plain flat light gray background, no cell borders, no grid lines, no text, no numbers, no frames, no ground shadow. The attached layout image shows 8 empty cells. Draw one sprite inside each cell, keeping the cells at their positions and sizes. Do NOT draw the cell outlines in your image — the background must stay one plain flat light gray, with no visible cell borders and no separating lines."
+  },
+  "jet2": {
+   "cout_usd": 0.03035,
+   "unite": "usd",
+   "consomme": 0.03035,
+   "secondes": 16.6,
+   "octets": 991117
+  },
+  "jet1": {
+   "cout_usd": 0.03035,
+   "unite": "usd",
+   "consomme": 0.03035,
+   "secondes": 18.0,
+   "octets": 1020943
+  },
+  "jet4": {
+   "cout_usd": 0.03035,
+   "unite": "usd",
+   "consomme": 0.03035,
+   "secondes": 18.4,
+   "octets": 991671
+  },
+  "jet3": {
+   "cout_usd": 0.03035,
+   "unite": "usd",
+   "consomme": 0.03035,
+   "secondes": 20.4,
+   "octets": 1004813
+  }
+ }
+}

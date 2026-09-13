@@ -1,0 +1,194 @@
+{
+ "tour1": {
+  "_tour": {
+   "forme": "silhouette",
+   "ordre": "pose-puis-sprite",
+   "texte": "Image 1 is a pose guide: redraw it as the character shown in Image 2, in exactly this pose and these proportions of limbs — same body position, same foot placement. Image 2 gives the identity: colours, outfit, face, drawing style. Single isolated sprite, plain background.",
+   "poses": "contact,passage",
+   "correctif": "premier tour",
+   "attendu": "Le modele redessine Michel dans la pose exacte du guide : contact (jambes ecartees, pied avant pose) et passage (jambes croisees, pied arriere leve), de profil vers la droite, en 64x64 agrandi, sans que la tenue ni les couleurs changent.",
+   "peut_rater": "Le guide baton n'a pas les proportions de Michel (tete ronde, tronc long) : le modele peut dessiner la silhouette elle-meme, ou garder Michel en pose idle en ignorant le guide, ou suivre la pose mais allonger les jambes et perdre le style.",
+   "taille_px": 256
+  },
+  "_variante": {
+   "titre": "Tour 1",
+   "propos": "passage — phase 0.250 du cycle",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · edition · 512×512",
+    "Image 2 · reference · 256×256"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\nImage 1 is a pose guide: redraw it as the character shown in Image 2, in exactly this pose and these proportions of limbs — same body position, same foot placement. Image 2 gives the identity: colours, outfit, face, drawing style. Single isolated sprite, plain background."
+  },
+  "jet1": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 13.0,
+   "octets": 833372
+  },
+  "jet2": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 15.1,
+   "octets": 812605
+  }
+ },
+ "_seance": {
+  "date": "2026-09-02",
+  "dernier_lancement": "2026-09-02T20:53:59",
+  "modele": "openai/gpt-image-2"
+ },
+ "bande": {
+  "_tour": {
+   "forme": "silhouette",
+   "ordre": "pose-puis-sprite",
+   "texte": "Image 1 is a pose guide: redraw it as the character shown in Image 2, in exactly this pose and these proportions of limbs — same body position, same foot placement. Image 2 gives the identity: colours, outfit, face, drawing style. Single isolated sprite, plain background.",
+   "poses": "contact,passage",
+   "correctif": "aucun",
+   "attendu": "Huit poses obeissantes, une par instant du cycle, du meme Michel, que le socle cale pieds sur la meme ligne : une marche lisible a 125 ms, comparable au temoin.",
+   "peut_rater": "Chaque appel est independant : la taille, la longueur des jambes ou la place de la lanterne peuvent varier d'un instant a l'autre et faire trembler la bande ; une pose peut retomber en idle.",
+   "taille_px": 256
+  },
+  "_variante": {
+   "titre": "La bande",
+   "propos": "etape8 — phase 0.875 du cycle",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · edition · 512×512",
+    "Image 2 · reference · 256×256"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\nImage 1 is a pose guide: redraw it as the character shown in Image 2, in exactly this pose and these proportions of limbs — same body position, same foot placement. Image 2 gives the identity: colours, outfit, face, drawing style. Single isolated sprite, plain background."
+  },
+  "jet4": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 15.0,
+   "octets": 823702
+  },
+  "jet2": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 15.9,
+   "octets": 808872
+  },
+  "jet1": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 16.2,
+   "octets": 820187
+  },
+  "jet3": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 16.5,
+   "octets": 810286
+  },
+  "jet5": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 12.8,
+   "octets": 809462
+  },
+  "jet7": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 13.4,
+   "octets": 779782
+  },
+  "jet6": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 14.9,
+   "octets": 799975
+  },
+  "jet8": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 14.5,
+   "octets": 812905
+  }
+ },
+ "tour2": {
+  "_tour": {
+   "forme": "proportionnee",
+   "ordre": "pose-puis-sprite",
+   "texte": "Image 1 is a pose guide: redraw it as the character shown in Image 2, in exactly this pose and these proportions of limbs — same body position, same foot placement. Image 2 gives the identity: colours, outfit, face, drawing style. Single isolated sprite, plain background.",
+   "poses": "contact,passage",
+   "correctif": "forme",
+   "attendu": "Michel dans la pose du guide, contact puis passage, avec SES jambes courtes et sa grande capuche : le guide a maintenant ses proportions, le modele n'a plus de raison d'allonger les jambes.",
+   "peut_rater": "Le guide a une tete enorme et un tronc etroit : le modele peut grossir la capuche ou amincir le manteau ; ou dessiner la masse noire elle-meme ; ou ignorer la pose parce que les jambes courtes se lisent moins bien.",
+   "taille_px": 256
+  },
+  "_variante": {
+   "titre": "Tour 2",
+   "propos": "passage — phase 0.250 du cycle",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · edition · 512×512",
+    "Image 2 · reference · 256×256"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\nImage 1 is a pose guide: redraw it as the character shown in Image 2, in exactly this pose and these proportions of limbs — same body position, same foot placement. Image 2 gives the identity: colours, outfit, face, drawing style. Single isolated sprite, plain background."
+  },
+  "jet1": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 12.3,
+   "octets": 790105
+  },
+  "jet2": {
+   "cout_usd": 0.016925,
+   "unite": "usd",
+   "consomme": 0.016925,
+   "secondes": 13.4,
+   "octets": 776194
+  }
+ },
+ "tour3": {
+  "_tour": {
+   "forme": "silhouette",
+   "ordre": "pose-puis-sprite",
+   "texte": "Image 1 is a pose guide: a generic stick figure. Copy ONLY its pose from it — the angle of each limb, which foot is forward, which foot is on the ground. Ignore its body: its height, its build, the length of its limbs and the size of its head are NOT the character's. Image 2 is the character: keep its own body proportions, silhouette, colours, outfit and drawing style exactly as they are. Draw the character of Image 2 standing in the pose of Image 1. Single isolated sprite, plain background.",
+   "poses": "contact,passage",
+   "correctif": "texte",
+   "depuis": "tour1",
+   "attendu": "Michel dans la pose du guide d'adulte, mais avec SES proportions a lui : jambes courtes, grande capuche, manteau long. Le guide ne donne plus que les angles et le pied au sol ; le corps vient de l'image du personnage. Meme guide qu'au tour 1 : seul le texte change.",
+   "peut_rater": "Le modele peut continuer a copier la carrure du guide malgre l'interdiction ; ou, a force de lui dire d'ignorer le corps du guide, relacher la pose et retomber en idle ; ou dessiner le bonhomme baton lui-meme.",
+   "taille_px": 256
+  },
+  "_variante": {
+   "titre": "Tour 3",
+   "propos": "passage — phase 0.250 du cycle",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · edition · 512×512",
+    "Image 2 · reference · 256×256"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\nImage 1 is a pose guide: a generic stick figure. Copy ONLY its pose from it — the angle of each limb, which foot is forward, which foot is on the ground. Ignore its body: its height, its build, the length of its limbs and the size of its head are NOT the character's. Image 2 is the character: keep its own body proportions, silhouette, colours, outfit and drawing style exactly as they are. Draw the character of Image 2 standing in the pose of Image 1. Single isolated sprite, plain background."
+  },
+  "jet1": {
+   "cout_usd": 0.017195,
+   "unite": "usd",
+   "consomme": 0.017195,
+   "secondes": 12.5,
+   "octets": 826673
+  },
+  "jet2": {
+   "cout_usd": 0.017195,
+   "unite": "usd",
+   "consomme": 0.017195,
+   "secondes": 16.3,
+   "octets": 797047
+  }
+ }
+}

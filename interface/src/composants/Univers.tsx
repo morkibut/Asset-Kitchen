@@ -64,7 +64,11 @@ export function EcranUnivers({
   onCibleVue,
   carteDecoupee,
   onDecouperCarte,
+  projet,
 }: {
+  /** **Le jeu ouvert** — nécessaire depuis qu'une vidéo posée sur la toile
+   *  passe par `poserClipSurToile`, qui le nomme dans son chemin. */
+  projet: string
   /** Le tableau, tenu par `App` — comme la grille et l'arbre. **Un seul endroit
    *  écoute le flux**, pour toute la vie de l'onglet : un second abonnement
    *  ouvert à l'ouverture de cet écran-ci se rebrancherait à chaque aller-retour
@@ -125,7 +129,7 @@ export function EcranUnivers({
   // « L'écran ne se dédouble pas, c'est la même matière regardée autrement » :
   // le collage est donc branché **ici**, au-dessus des deux. Deux surfaces qui
   // l'installeraient chacune feraient deux cartes pour un seul Ctrl+V.
-  const collage = useCollage({ onErreur: setRefus, onRafraichir: onRelire })
+  const collage = useCollage({ projet, onErreur: setRefus, onRafraichir: onRelire })
 
   // La grille de la réserve, mesurée pour donner ses trois crans à l'aimant de
   // la largeur libre. Une seule mesure, trois déclencheurs.

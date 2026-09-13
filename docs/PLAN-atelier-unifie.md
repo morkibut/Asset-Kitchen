@@ -595,6 +595,79 @@ galerie sans servir. Découper en images reste le geste voisin, inchangé.
 - [x] Le clip issu d'une feuille se relit entier après effacement de l'index : son
   `generation.json` porte tout.
 
+## AU20 · Ce qui entre par une fiche reste sur cette fiche
+
+**Relevé d'usage du 13 septembre 2026**, le jour même où AU18 et AU19 ont été closes.
+L'auteur importe une vidéo sur une fiche : *« champy marche est.mp4 » était déjà là* — sur un
+fichier qu'il ne trouve nulle part. Il importe une planche, la découpe en animation : elle
+disparaît. **Bloquée par** : rien.
+
+### Le défaut, et pourquoi il a trois visages
+
+Trois portes d'entrée, et chacune ne remplissait que **la moitié** du rattachement — jamais la
+même moitié. Mesuré dans l'atelier de l'auteur :
+
+| Ce qui entre | `projet` | `personnage` |
+|---|---|---|
+| Image importée (23 cas) | rempli | **jamais** |
+| Vidéo importée (1 cas) | **jamais** | rempli |
+| Feuille découpée en animation (2 cas) | rempli | **jamais** |
+
+Et toutes les listes du produit scopent sur l'un ou sur l'autre. Une moitié manquante suffit
+donc à rendre invisible ce qu'on vient de faire entrer — la vidéo n'apparaissait nulle part,
+et le contrôle de doublon, lui, la retrouvait : *« était déjà là »* à chaque tentative, sur un
+objet introuvable. Le défaut n'était pas la moitié manquante ; c'était qu'aucun écran ne
+montrait ce qui n'a pas de case.
+
+⚠️ **Deux décisions d'AU19 sont retournées ici, et c'est l'usage qui a tranché.**
+
+1. *« Une image se désigne par un personnage **et** une pose »* — donc l'écran n'avait aucun
+   moyen de dire *cette image est à ce sujet, je ne sais pas encore où*. Un personnage sans
+   pose est désormais un état légitime. La table le permettait déjà ; c'est la porte qui
+   l'interdisait.
+2. *« La découpe ne demande ni personnage ni mouvement : on garde d'abord, on range
+   ensuite »* — vrai tant qu'il existe un endroit où voir ce qui n'est pas rangé. Il n'en
+   existait pas : *ranger plus tard* voulait dire *perdre*. La découpe demande maintenant, avec
+   la réponse déjà remplie par la feuille.
+
+**Le critère d'AU19 disait vrai et l'écran ne le tenait pas.** *« Rangé sur le personnage, le
+mouvement et la direction choisis »* était coché sur la capacité du serveur — la route
+`/clips/sheet` les acceptait — alors qu'`EcranDecoupe` ne les envoyait jamais. C'est la leçon
+de la tranche : un critère se vérifie **par le chemin qu'emprunte l'auteur**, pas par la
+capacité qui le rend possible.
+
+### Ce qu'on livre
+
+- **Le jeu ouvert est le défaut de l'import de clip**, dans la route, comme partout ailleurs.
+- **Un sujet sans case est un rattachement valable**, et l'import « sans mouvement » range sur
+  le sujet au lieu de ne rien ranger.
+- **Ce qui naît d'une feuille appartient à qui la feuille appartient**, côté serveur — donc
+  pour l'agent aussi —, et l'écran de découpe le montre et le laisse corriger avant de cliquer.
+- **Un onglet « Pas encore rangé »** sur la fiche : images, clips et animations qui sont à ce
+  sujet sans occuper de case, et le geste pour les ranger sans changer d'écran.
+- **Une seule porte d'entrée sur la fiche** : *Ajouter…*, qui réunit générer, importer une
+  image, reprendre de la galerie, la 3D et la vidéo du disque. Il y en avait deux, dont l'une
+  cachait l'autre.
+- **Un script de rattrapage** pour les ateliers réels — `essais/reparer_rattachements_au20.py`,
+  à blanc par défaut.
+
+### Critères d'acceptation
+
+- [x] Une vidéo importée depuis une fiche appartient au jeu ouvert, et paraît dans la liste des
+  clips de ce jeu.
+- [x] Une image peut appartenir à un sujet sans occuper de case ; une pose sans personnage
+  reste un refus, et les deux vides retirent toujours la désignation.
+- [x] Un import « sans mouvement » depuis une fiche range l'image sur le sujet de la fiche.
+- [x] Une feuille découpée hérite du sujet et de la case de la feuille ; l'appel garde le
+  dernier mot, et une chaîne vide dit *aucun*.
+- [x] L'écran de découpe montre le sujet et le mouvement visés, déjà remplis, et ce qui est
+  affiché est ce qui part.
+- [x] La fiche porte un onglet qui montre ce qui est à elle sans case — images, clips et
+  animations —, et ranger depuis cet onglet l'en fait sortir.
+- [x] Un clip dont on a déjà tiré des bandes n'y figure pas : c'est la bande qui attend.
+- [x] Un atelier existant se rattrape sans perte, et le script ne devine rien sans qu'on le lui
+  demande.
+
 ## Comment fermer une tranche
 
 ### Ce qui doit être repris au fil du parcours

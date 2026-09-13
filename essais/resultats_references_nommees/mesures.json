@@ -1,0 +1,201 @@
+{
+ "B-nommees": {
+  "_variante": {
+   "titre": "Les références nommées (1ʳᵉ séance)",
+   "propos": "une ligne par image jointe, à la place de la phrase générique — 0 bonne sur 4 à la première séance",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · style · 479×742",
+    "Image 2 · reference · 64×64",
+    "Image 3 · gabarit · 1024×1024"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\na hooded traveller, seen from the side;\ndeep teal hooded cloak covering the head and falling down the back;\nochre long coat closed by a brown leather belt;\nbrown leather backpack with a rolled bedroll strapped on top;\nbrown boots; a lit lantern hanging from the near hand\n\nRender this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite per cell, evenly spaced on a regular grid, every sprite the same height, all standing on the same baseline. The cells, in reading order, show: 1. walk cycle, frame 1 of 8: contact, left foot forward, facing right, side view; 2. walk cycle, frame 2 of 8: down, weight on left foot, facing right, side view; 3. walk cycle, frame 3 of 8: passing, right leg swinging through, facing right, side view; 4. walk cycle, frame 4 of 8: up, left leg straight, body highest, facing right, side view; 5. walk cycle, frame 5 of 8: contact, right foot forward, facing right, side view; 6. walk cycle, frame 6 of 8: down, weight on right foot, facing right, side view; 7. walk cycle, frame 7 of 8: passing, left leg swinging through, facing right, side view; 8. walk cycle, frame 8 of 8: up, right leg straight, body highest, facing right, side view. It must be the same subject in every cell: same colors, same outfit, same proportions, same size, same style. Plain flat light gray background, no cell borders, no grid lines, no text, no numbers, no frames, no ground shadow. The attached layout image shows 8 empty cells. Draw one sprite inside each cell, keeping the cells at their positions and sizes. Do NOT draw the cell outlines in your image — the background must stay one plain flat light gray, with no visible cell borders and no separating lines.\n\nImage 1 — STYLE REFERENCE (an official artwork of this game): follow its colours, outfit, proportions and drawing style. Do NOT copy its pose, its camera angle or its layout.\nImage 2 — THE SAME CHARACTER, already drawn in the game's camera: keep it recognisably the same character in every cell.\nImage 3 — EMPTY LAYOUT GRID: 8 cells. Draw exactly one sprite per cell, one instant of the motion per cell, in reading order. Do NOT draw the grid lines."
+  },
+  "jet3": {
+   "cout_usd": 0.022811,
+   "unite": "usd",
+   "consomme": 0.022811,
+   "secondes": 16.4,
+   "octets": 986224
+  },
+  "jet2": {
+   "cout_usd": 0.022811,
+   "unite": "usd",
+   "consomme": 0.022811,
+   "secondes": 17.5,
+   "octets": 981022
+  },
+  "jet4": {
+   "cout_usd": 0.022811,
+   "unite": "usd",
+   "consomme": 0.022811,
+   "secondes": 22.4,
+   "octets": 968692
+  },
+  "jet1": {
+   "cout_usd": 0.022811,
+   "unite": "usd",
+   "consomme": 0.022811,
+   "secondes": 23.6,
+   "octets": 966827
+  }
+ },
+ "C-rangees": {
+  "_variante": {
+   "titre": "Trois titres posés sur le même texte (1ʳᵉ séance)",
+   "propos": "B, puis trois titres sans qu'un mot change — 0 bonne sur 4 à la première séance",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · style · 479×742",
+    "Image 2 · reference · 64×64",
+    "Image 3 · gabarit · 1024×1024"
+   ],
+   "texte": "CONTEXT\n\nWorld: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\nREFERENCES\n\nImage 1 — STYLE REFERENCE (an official artwork of this game): follow its colours, outfit, proportions and drawing style. Do NOT copy its pose, its camera angle or its layout.\nImage 2 — THE SAME CHARACTER, already drawn in the game's camera: keep it recognisably the same character in every cell.\nImage 3 — EMPTY LAYOUT GRID: 8 cells. Draw exactly one sprite per cell, one instant of the motion per cell, in reading order. Do NOT draw the grid lines.\n\nREQUEST\n\na hooded traveller, seen from the side;\ndeep teal hooded cloak covering the head and falling down the back;\nochre long coat closed by a brown leather belt;\nbrown leather backpack with a rolled bedroll strapped on top;\nbrown boots; a lit lantern hanging from the near hand\n\nRender this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite per cell, evenly spaced on a regular grid, every sprite the same height, all standing on the same baseline. The cells, in reading order, show: 1. walk cycle, frame 1 of 8: contact, left foot forward, facing right, side view; 2. walk cycle, frame 2 of 8: down, weight on left foot, facing right, side view; 3. walk cycle, frame 3 of 8: passing, right leg swinging through, facing right, side view; 4. walk cycle, frame 4 of 8: up, left leg straight, body highest, facing right, side view; 5. walk cycle, frame 5 of 8: contact, right foot forward, facing right, side view; 6. walk cycle, frame 6 of 8: down, weight on right foot, facing right, side view; 7. walk cycle, frame 7 of 8: passing, left leg swinging through, facing right, side view; 8. walk cycle, frame 8 of 8: up, right leg straight, body highest, facing right, side view. It must be the same subject in every cell: same colors, same outfit, same proportions, same size, same style. Plain flat light gray background, no cell borders, no grid lines, no text, no numbers, no frames, no ground shadow. The attached layout image shows 8 empty cells. Draw one sprite inside each cell, keeping the cells at their positions and sizes. Do NOT draw the cell outlines in your image — the background must stay one plain flat light gray, with no visible cell borders and no separating lines."
+  },
+  "jet1": {
+   "cout_usd": 0.022851,
+   "unite": "usd",
+   "consomme": 0.022851,
+   "secondes": 18.4,
+   "octets": 984303
+  },
+  "jet2": {
+   "cout_usd": 0.022851,
+   "unite": "usd",
+   "consomme": 0.022851,
+   "secondes": 19.7,
+   "octets": 982419
+  },
+  "jet4": {
+   "cout_usd": 0.022851,
+   "unite": "usd",
+   "consomme": 0.022851,
+   "secondes": 16.4,
+   "octets": 972985
+  },
+  "jet3": {
+   "cout_usd": 0.022851,
+   "unite": "usd",
+   "consomme": 0.022851,
+   "secondes": 18.0,
+   "octets": 1015645
+  }
+ },
+ "_seance": {
+  "date": "2026-09-02",
+  "dernier_lancement": "2026-09-02T19:39:45",
+  "modele": "openai/gpt-image-2"
+ },
+ "A2-temoin-art": {
+  "_variante": {
+   "titre": "Le témoin, avec les artworks du jour",
+   "propos": "le texte du produit tel quel, les deux artworks officiels (24bd0b1129ae4ba5, 399b17300cda4fae) devant le sprite promu et le gabarit — le point de comparaison des variantes neuves, puisque les images ont changé",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · style · 478×727",
+    "Image 2 · style · 930×655",
+    "Image 3 · reference · 64×64",
+    "Image 4 · gabarit · 1024×1024"
+   ],
+   "texte": "World: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\na hooded traveller, seen from the side;\ndeep teal hooded cloak covering the head and falling down the back;\nochre long coat closed by a brown leather belt;\nbrown leather backpack with a rolled bedroll strapped on top;\nbrown boots; a lit lantern hanging from the near hand\n\nRender this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite per cell, evenly spaced on a regular grid, every sprite the same height, all standing on the same baseline. The cells, in reading order, show: 1. walk cycle, frame 1 of 8: contact, left foot forward, facing right, side view; 2. walk cycle, frame 2 of 8: down, weight on left foot, facing right, side view; 3. walk cycle, frame 3 of 8: passing, right leg swinging through, facing right, side view; 4. walk cycle, frame 4 of 8: up, left leg straight, body highest, facing right, side view; 5. walk cycle, frame 5 of 8: contact, right foot forward, facing right, side view; 6. walk cycle, frame 6 of 8: down, weight on right foot, facing right, side view; 7. walk cycle, frame 7 of 8: passing, left leg swinging through, facing right, side view; 8. walk cycle, frame 8 of 8: up, right leg straight, body highest, facing right, side view. It must be the same subject in every cell: same colors, same outfit, same proportions, same size, same style. Plain flat light gray background, no cell borders, no grid lines, no text, no numbers, no frames, no ground shadow. The attached layout image shows 8 empty cells. Draw one sprite inside each cell, keeping the cells at their positions and sizes. Do NOT draw the cell outlines in your image — the background must stay one plain flat light gray, with no visible cell borders and no separating lines."
+  },
+  "jet2": {
+   "cout_usd": 0.02843,
+   "unite": "usd",
+   "consomme": 0.02843,
+   "secondes": 18.7,
+   "octets": 977218
+  },
+  "jet1": {
+   "cout_usd": 0.02843,
+   "unite": "usd",
+   "consomme": 0.02843,
+   "secondes": 20.5,
+   "octets": 1010579
+  }
+ },
+ "R1-range-art": {
+  "_variante": {
+   "titre": "Rangé et dégraissé",
+   "propos": "sept sections, la vue dite une fois, chaque instant réduit à ce qui le distingue, la case vide expliquée, les exclusions regroupées — aucun fait nouveau",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · style · 478×727",
+    "Image 2 · style · 930×655",
+    "Image 3 · reference · 64×64",
+    "Image 4 · gabarit · 1024×1024"
+   ],
+   "texte": "ART DIRECTION\nWorld: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\nCHARACTER\na hooded traveller, seen from the side;\ndeep teal hooded cloak covering the head and falling down the back;\nochre long coat closed by a brown leather belt;\nbrown leather backpack with a rolled bedroll strapped on top;\nbrown boots; a lit lantern hanging from the near hand\n\nREFERENCES\nImage 1 — STYLE REFERENCE (an official artwork of this game): follow its colours, outfit, proportions and drawing style. Do NOT copy its pose, its camera angle or its layout.\nImage 2 — STYLE REFERENCE (an official artwork of this game): follow its colours, outfit, proportions and drawing style. Do NOT copy its pose, its camera angle or its layout.\nImage 3 — THE SAME CHARACTER, already drawn in the game's camera: keep it recognisably the same character in every cell.\nImage 4 — EMPTY LAYOUT GRID: 8 cells. Draw exactly one sprite per cell, one instant of the motion per cell, in reading order. Do NOT draw the grid lines.\n\nLAYOUT\nA sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total: the ninth position stays empty. One single sprite per cell, evenly spaced on a regular grid, every sprite the same height, all standing on the same baseline. The attached layout image shows the 8 empty cells: keep the cells at their positions and sizes.\n\nFRAMES — walk cycle, facing right, side view, one instant per cell, in reading order\n1. contact, left foot forward\n2. down, weight on left foot\n3. passing, right leg swinging through\n4. up, left leg straight, body highest\n5. contact, right foot forward\n6. down, weight on right foot\n7. passing, left leg swinging through\n8. up, right leg straight, body highest\n\nCONSISTENCY\nIt must be the same subject in every cell: same colors, same outfit, same proportions, same size, same style.\n\nEXCLUSIONS\nPlain flat light gray background over the whole image. No cell borders, no grid lines, no separating lines, no text, no numbers, no frames, no ground shadow."
+  },
+  "jet1": {
+   "cout_usd": 0.02851,
+   "unite": "usd",
+   "consomme": 0.02851,
+   "secondes": 21.6,
+   "octets": 1009606
+  },
+  "jet2": {
+   "cout_usd": 0.02851,
+   "unite": "usd",
+   "consomme": 0.02851,
+   "secondes": 23.8,
+   "octets": 1039668
+  }
+ },
+ "R2-priorite-art": {
+  "_variante": {
+   "titre": "Rangé, plus la priorité des images",
+   "propos": "R1, plus une phrase : si les images se contredisent, le sprite décide de l'identité, les artworks du style, la grille de la place",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · style · 478×727",
+    "Image 2 · style · 930×655",
+    "Image 3 · reference · 64×64",
+    "Image 4 · gabarit · 1024×1024"
+   ],
+   "texte": "ART DIRECTION\nWorld: a quiet medieval fantasy world of long roads, forests and cold nights\nEra: early middle ages, mail and spears, before gunpowder\nRendering technique: 2D pixel art on a 64x64 grid\nLine and shading: solid black outline, one pixel wide\nView and framing: side view, orthographic, full-body character centered\nTechnical constraints: single isolated sprite on a flat background, strict 64x64 px tile snap\n\nCHARACTER\na hooded traveller, seen from the side;\ndeep teal hooded cloak covering the head and falling down the back;\nochre long coat closed by a brown leather belt;\nbrown leather backpack with a rolled bedroll strapped on top;\nbrown boots; a lit lantern hanging from the near hand\n\nREFERENCES\nImage 1 — STYLE REFERENCE (an official artwork of this game): follow its colours, outfit, proportions and drawing style. Do NOT copy its pose, its camera angle or its layout.\nImage 2 — STYLE REFERENCE (an official artwork of this game): follow its colours, outfit, proportions and drawing style. Do NOT copy its pose, its camera angle or its layout.\nImage 3 — THE SAME CHARACTER, already drawn in the game's camera: keep it recognisably the same character in every cell.\nImage 4 — EMPTY LAYOUT GRID: 8 cells. Draw exactly one sprite per cell, one instant of the motion per cell, in reading order. Do NOT draw the grid lines.\nIf the references disagree: Image 3 decides who the character is, Images 1 and 2 decide the colours and the drawing style, Image 4 decides where each sprite goes. Do not mix their roles.\n\nLAYOUT\nA sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total: the ninth position stays empty. One single sprite per cell, evenly spaced on a regular grid, every sprite the same height, all standing on the same baseline. The attached layout image shows the 8 empty cells: keep the cells at their positions and sizes.\n\nFRAMES — walk cycle, facing right, side view, one instant per cell, in reading order\n1. contact, left foot forward\n2. down, weight on left foot\n3. passing, right leg swinging through\n4. up, left leg straight, body highest\n5. contact, right foot forward\n6. down, weight on right foot\n7. passing, left leg swinging through\n8. up, right leg straight, body highest\n\nCONSISTENCY\nIt must be the same subject in every cell: same colors, same outfit, same proportions, same size, same style.\n\nEXCLUSIONS\nPlain flat light gray background over the whole image. No cell borders, no grid lines, no separating lines, no text, no numbers, no frames, no ground shadow."
+  },
+  "jet1": {
+   "cout_usd": 0.028725,
+   "unite": "usd",
+   "consomme": 0.028725,
+   "secondes": 20.1,
+   "octets": 1059992
+  },
+  "jet2": {
+   "cout_usd": 0.028725,
+   "unite": "usd",
+   "consomme": 0.028725,
+   "secondes": 18.8,
+   "octets": 1033113
+  }
+ },
+ "IA-reecrit-art": {
+  "_variante": {
+   "titre": "Entièrement réécrit par l'IA",
+   "propos": "le prompt réécrit de bout en bout d'après les trois relectures, images nommées et priorisées, verrous sur la lanterne et la capuche — même canevas, mêmes huit instants",
+   "proportions": "1:1",
+   "images": [
+    "Image 1 · style · 478×727",
+    "Image 2 · style · 930×655",
+    "Image 3 · reference · 64×64",
+    "Image 4 · gabarit · 1024×1024"
+   ],
+   "texte": "CRITICAL\n- Exactly 8 sprites, one per cell of the attached layout grid; the unused ninth position stays empty.\n- The same character in all 8 cells: same silhouette, proportions, size, colours, outfit and equipment.\n- Strict side view, orthographic, facing right, full body, feet on the same baseline in every cell.\n- One plain flat light gray background over the whole image: no visible grid, borders or lines.\n\nART DIRECTION\nWorld: a quiet medieval fantasy world of long roads, forests and cold nights.\nEra: early middle ages, mail and spears, before gunpowder.\nRendering: 2D pixel art, crisp blocky pixels, solid black outline one pixel wide, flat shading.\nCamera: side view, orthographic, the character facing right.\n\nCHARACTER — a hooded traveller\n- deep teal hooded cloak covering the head and falling down the back\n- ochre long coat closed by a brown leather belt\n- brown leather backpack with a rolled bedroll strapped on top\n- brown boots\n- a lit lantern hanging from the near hand\n\nREFERENCES (priority if they conflict: 1 > 2 > 3)\n1. Image 3 — the character, already drawn in the game's camera: the identity to keep.\n2. Images 1 and 2 — official artworks: the colours, outfit and drawing style to follow. Do not copy their pose, camera angle, scenery or layout.\n3. Image 4 — empty layout grid: the 8 cells to fill, at their exact positions and sizes.\n\nSPRITE SHEET\n8 sprites on the attached 3×3 layout: 8 cells used in reading order, the last position empty. One sprite per cell, centred in its cell, the same height in every cell, feet on the cell's baseline.\n\nANIMATION — walk cycle, one instant per cell\n1. contact, left foot forward\n2. down, weight on left foot\n3. passing, right leg swinging through\n4. up, left leg straight, body highest\n5. contact, right foot forward\n6. down, weight on right foot\n7. passing, left leg swinging through\n8. up, right leg straight, body highest\n\nCONSISTENCY\nThe lantern stays in the same hand and barely swings. The hood keeps the same silhouette; only the lower cloak may sway with the stride. Nothing else changes between cells except the pose of the legs and arms.\n\nEXCLUSIONS\nNo cell borders, no grid lines, no separating lines, no text, no numbers, no labels, no frames, no ground shadow, no scenery, no extra characters."
+  },
+  "jet1": {
+   "cout_usd": 0.028475,
+   "unite": "usd",
+   "consomme": 0.028475,
+   "secondes": 18.8,
+   "octets": 1031369
+  },
+  "jet2": {
+   "cout_usd": 0.028475,
+   "unite": "usd",
+   "consomme": 0.028475,
+   "secondes": 21.3,
+   "octets": 1026442
+  }
+ }
+}

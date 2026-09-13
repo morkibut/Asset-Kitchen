@@ -5793,6 +5793,25 @@ export const api = {
 
   production: () => appeler<Production>("/characters"),
 
+  /** Ce qui est à ce sujet **sans occuper de case** (`AU20`) — images, clips et
+   *  animations dans une seule réponse.
+   *
+   *  L'auteur cherche *ce qu'il a fait entrer sur cette fiche*, et cette
+   *  question-là ne distingue pas une image d'un clip. Trois appels l'auraient
+   *  forcée à le faire, et auraient rendu possible l'instant où les images sont
+   *  arrivées mais pas les animations — c'est-à-dire un « rien en attente »
+   *  affiché sur une fiche qui en a. */
+  enAttenteDuSujet: (personnage: string, projet?: string | null) =>
+    appeler<{
+      personnage: string
+      images: Asset[]
+      clips: Generation[]
+      animations: Bande[]
+    }>(
+      `/characters/${encodeURIComponent(personnage)}/unplaced` +
+        (projet ? `?projet=${encodeURIComponent(projet)}` : ""),
+    ),
+
   /** La grille d'une famille, paginée (B9.2, B9.3, B9.6).
    *
    *  **Une page, pas une fenêtre glissante** : `limite` grandit d'un appel à

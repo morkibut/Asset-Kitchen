@@ -44,16 +44,16 @@ test("la fabrication privilégie l’animation visée et transmet pose et direct
   expect(on3D).toHaveBeenCalledWith(plan[1], "est")
 })
 
-test("une quatrième porte pose une image qu’on a déjà, sur la même case", () => {
-  const onImporter = vi.fn()
-  render(<ChoisirFabricationDuSujet personnage={sujet(objectif)} plan={plan} onFermer={vi.fn()} onImage={vi.fn()} onVideo={vi.fn()} on3D={vi.fn()} onImporter={onImporter} />)
-  fireEvent.click(screen.getByRole("button", { name: /une image que tu as déjà/i }))
-  expect(onImporter).toHaveBeenCalledWith(plan[1], "est")
-})
-
-test("sans rappel d’import, le dialogue n’offre que les trois portes payantes", () => {
+// **Les portes d'import sont sorties en `AU21`.** Cet écran commence par
+// demander *quel mouvement, quelle direction ?* — une question qui a un sens
+// quand on va payer pour remplir une case, et aucun quand on pose un fichier
+// qu'on a déjà. Ce qui entre du disque passe par « Importer… », qui regarde le
+// fichier et enchaîne seul.
+test("le dialogue n’offre que les trois portes payantes", () => {
   render(<ChoisirFabricationDuSujet personnage={sujet(objectif)} plan={plan} onFermer={vi.fn()} onImage={vi.fn()} onVideo={vi.fn()} on3D={vi.fn()} />)
   expect(screen.queryByRole("button", { name: /une image que tu as déjà/i })).toBeNull()
+  expect(screen.queryByRole("button", { name: /une vidéo que tu as déjà/i })).toBeNull()
+  expect(screen.getAllByRole("button", { name: /^une |^un /i })).toHaveLength(3)
 })
 
 test("sans objectif, le dialogue reprend la première pose historique", () => {
