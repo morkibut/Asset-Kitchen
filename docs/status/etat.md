@@ -39,7 +39,11 @@ référence d'une fiche ne se choisit pas (`RP19`) ; une animation retournée au
 pas s'enregistrer comme la marche de l'autre côté — il manque *Enregistrer sous* (`RP20`) ;
 et huit images découpées sur la toile ne peuvent pas devenir une animation, parce que le
 geste *Animer* de la découpe n'est offert qu'à une planche de la bibliothèque, jamais à une
-carte de la toile (`RP21`). Le chemin d'`AU19` existait ; il n'avait qu'une porte.
+carte de la toile (`RP21`). Le chemin d'`AU19` existait ; il n'avait qu'une porte. Puis un
+quatrième, le même soir : dans l'atelier d'une animation, un *sens* choisi ne se déclique
+pas, aucune table ne se remet à zéro, l'aperçu attend *Enregistrer* pour montrer la recette,
+et la section *Position, source et pelure d'oignon* n'explique rien (`RP22`). L'établi d'une
+image sait faire les trois premiers ; l'atelier ne les a pas repris.
 
 **Et un rangement de plus dans `docs/README.md`** : sept annexes n'y étaient pas —
 le cadrage du fil et de la 3D, les étiquettes livrées, l'inventaire d'`AU4`, quatre relevés

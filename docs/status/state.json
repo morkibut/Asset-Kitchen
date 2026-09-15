@@ -5166,6 +5166,119 @@
         },
         "source": "plan",
         "order": 318
+      },
+      {
+        "id": "RP22",
+        "type": "epic",
+        "parent": null,
+        "title": "Une table se défait, se remet à zéro, et se voit avant d'enregistrer",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 319,
+        "blocked_by": null
+      },
+      {
+        "id": "RP22.1",
+        "type": "check",
+        "parent": "RP22",
+        "title": "Dans l'atelier d'une animation, cliquer un *sens* déjà choisi le retire ; la recette",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 320
+      },
+      {
+        "id": "RP22.2",
+        "type": "check",
+        "parent": "RP22",
+        "title": "Chaque table de l'atelier d'une animation a la bascule *L'endormir / La réveiller* de",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 321
+      },
+      {
+        "id": "RP22.3",
+        "type": "check",
+        "parent": "RP22",
+        "title": "L'aperçu se refait à chaque geste sur la recette, retournement compris ; un essai le",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 322
+      },
+      {
+        "id": "RP22.4",
+        "type": "check",
+        "parent": "RP22",
+        "title": "La section *Position, source et pelure d'oignon* porte un titre qui dit ses trois",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 323
+      },
+      {
+        "id": "RP22.5",
+        "type": "check",
+        "parent": "RP22",
+        "title": "Les mêmes mots pour les mêmes gestes sur l'établi d'une image et dans l'atelier d'une",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 324
+      },
+      {
+        "id": "RP22.6",
+        "type": "check",
+        "parent": "RP22",
+        "title": "Aucun de ces gestes n'écrit sur le disque avant *Enregistrer*, et *Défaire* les reprend.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 325
       }
     ],
     "sources": [
@@ -5831,6 +5944,11 @@
   "milestones": [],
   "activity": [
     {
+      "hash": "9783269",
+      "date": "2026-09-15",
+      "text": "DÃ©graisser le plan et les docs, et nommer trois manques venus de l'usage"
+    },
+    {
       "hash": "cd943e4",
       "date": "2026-09-13",
       "text": "Clore RP14 et RP15 au tableau d'Ã©tat, et rafraÃ®chir l'avancement"
@@ -5884,11 +6002,6 @@
       "hash": "47dd330",
       "date": "2026-09-13",
       "text": "Verser au journal ce que les cinq relevÃ©s ont appris"
-    },
-    {
-      "hash": "ac33845",
-      "date": "2026-09-13",
-      "text": "RP1 : trancher le point dur avant d'ouvrir la tranche â€” l'Ã©cran de l'agent ne part pas"
     }
   ]
 }

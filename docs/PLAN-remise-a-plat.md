@@ -108,8 +108,8 @@ Temps 2 — les doublons        RP4 · RP5 · RP6 · RP7 · RP8
 Temps 3 — les manques         RP9 · RP10 · RP11 · RP12 · RP13 · RP14 · RP15 · RP16
    │      les dix écarts qui coûtent le plus, dans l'ordre du relevé
    │
-   │                          RP19 · RP20 · RP21
-   │      trois manques que l'auteur a nommés en se servant du produit, le 15 septembre 2026 —
+   │                          RP19 · RP20 · RP21 · RP22
+   │      quatre manques que l'auteur a nommés en se servant du produit, le 15 septembre 2026 —
    │      ils ne dépendent d'aucun doublon et se prennent dès que RP3 est close
    ▼
 Temps 4 — les décisions       RP17 · RP18
@@ -595,7 +595,7 @@ fait croire à une capacité qui n'existe pas pour l'auteur.
 
 # Temps 3 bis — Ce que l'usage a nommé le 15 septembre 2026
 
-Trois manques que l'auteur a trouvés en se servant du produit, et qu'aucun relevé n'avait vus :
+Quatre manques que l'auteur a trouvés en se servant du produit, et qu'aucun relevé n'avait vus :
 un relevé compare le produit à la maquette, et la maquette ne les dessinait pas non plus. Ils
 suivent la règle de tout ce plan — un seul écran par travail — et n'attendent aucun doublon :
 ils se prennent dès que RP3 est close, avant ou après le temps 2, selon ce qui est libre.
@@ -711,6 +711,48 @@ du produit depuis `E1` — l'établi est une profondeur, pas un lieu de plus.
   conservée, comme en `AU19`.
 - [ ] Les huit images restent en bibliothèque après le montage ; en faire une bande ne les
   consomme pas.
+
+## RP22 · Une table se défait, se remet à zéro, et se voit avant d'enregistrer
+
+**Bloquée par** : rien. **Elle s'appuie sur** : l'invariant du lot U — *une place s'éteint
+sans se vider : éteindre et vider ne sont pas le même geste* — et sur `G3` — *une explication
+écrite pour un réglage est atteignable depuis ce réglage*.
+
+L'auteur ouvre une animation dans l'atelier, clique *miroir gauche-droite*, et ne peut plus
+le décliquer : les choix d'un *sens* sont une liste où l'on choisit, jamais où l'on renonce.
+Sur l'établi d'une image, chaque table a sa bascule *L'endormir / La réveiller* ; dans
+l'atelier d'une animation, cette bascule n'est pas sous la main, et aucun geste ne remet une
+table à zéro. Et le résultat de la retouche n'est visible qu'après *Enregistrer*, alors que
+le code prétend refaire l'aperçu à chaque geste — ce qu'il fait pour les prises et la
+position, pas pour la recette qu'on vient de toucher. Enfin la section *Position, source et
+pelure d'oignon* ne dit ni ce qu'elle fait ni comment on s'en sert.
+
+Ce qui se livre, dans l'atelier d'une animation comme sur l'établi d'une image :
+
+- **un choix se déclique** : cliquer le *sens* déjà choisi le retire, et la recette ne porte
+  plus de retournement ;
+- **une table s'éteint et se vide, en deux gestes distincts**, avec les mots de l'établi ;
+  *remettre à zéro* vide la table et la laisse allumée ;
+- **l'aperçu montre la recette avant d'enregistrer**, retournement compris — *Enregistrer*
+  écrit, il ne révèle pas ;
+- **la section de la frame dit ce qu'elle fait** : elle se renomme d'après ses trois gestes —
+  déplacer l'image dans son cadre, la remplacer par une autre image du clip ou d'un clip
+  voisin, voir la précédente en transparence — et chaque geste porte son explication lue dans
+  le recueil, jamais retapée.
+
+### Critères d'acceptation
+
+- [ ] Dans l'atelier d'une animation, cliquer un *sens* déjà choisi le retire ; la recette
+  n'en porte plus, et l'aperçu le montre sans enregistrer.
+- [ ] Chaque table de l'atelier d'une animation a la bascule *L'endormir / La réveiller* de
+  l'établi, et un geste *Remettre à zéro* qui vide la table sans l'éteindre.
+- [ ] L'aperçu se refait à chaque geste sur la recette, retournement compris ; un essai le
+  tient en comparant l'aperçu avant *Enregistrer* au rendu après.
+- [ ] La section *Position, source et pelure d'oignon* porte un titre qui dit ses trois
+  gestes, et chacun a une explication atteignable depuis lui, lue dans le recueil.
+- [ ] Les mêmes mots pour les mêmes gestes sur l'établi d'une image et dans l'atelier d'une
+  animation — `docs/vocabulaire.html` les fixe.
+- [ ] Aucun de ces gestes n'écrit sur le disque avant *Enregistrer*, et *Défaire* les reprend.
 
 ---
 
