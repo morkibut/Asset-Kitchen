@@ -104,6 +104,11 @@ export type SujetDecoupe =
       /** Les morceaux, qui arrivent dans la réserve. Rien à ouvrir : ils ne
        *  sont pas promus, et promouvoir reste un geste. */
       onDecoupe: (morceaux: Carte[]) => void
+      /** **La seconde sortie de l'écran, ici aussi** (`RP21`) : les mêmes
+       *  rectangles, sur une carte plutôt que sur une planche de la
+       *  bibliothèque. Absente, le bouton ne paraît pas — même règle que côté
+       *  planche. */
+      onAnimer?: (bandes: Bande[]) => void
     }
 
 export function EcranDecoupe({
@@ -350,7 +355,11 @@ export function EcranDecoupe({
   // vivent ni dans l'univers ni dans le plan de poses, et les faire descendre
   // depuis le châssis aurait traversé trois écrans pour une case à cocher.
   const [directionsDuJeu, setDirectionsDuJeu] = useState<Direction[]>([])
-  const animable = sujet.famille === "planche" && Boolean(sujet.onAnimer)
+  /** **La même condition pour les deux familles** (`RP21`) : une carte de la
+   *  toile offre *Animer* aux mêmes conditions qu'une planche de la
+   *  bibliothèque — c'est `onAnimer` qui porte la décision, jamais la
+   *  famille du sujet. */
+  const animable = Boolean(sujet.onAnimer)
   useEffect(() => {
     if (!animable) return
     let vivant = true
@@ -410,10 +419,15 @@ export function EcranDecoupe({
   }, [parLignePossible])
 
   const animer = async () => {
-    if (sujet.famille !== "planche" || !sujet.onAnimer) return
+    if (!sujet.onAnimer) return
+    const onAnimer = sujet.onAnimer
     setEnCours(true)
     try {
-      const fait = await api.animerUneFeuille(vu.identifiant, gardees.map((z) => z.boite), {
+      const source =
+        sujet.famille === "planche"
+          ? { feuille: vu.identifiant }
+          : { carte: vu.identifiant, projet: sujet.carte.projet }
+      const fait = await api.animerUneFeuille(source, gardees.map((z) => z.boite), {
         nom: vu.alt,
         directions: parLigne ? directionsDuJeu.map((d) => d.identifiant) : null,
         // **La chaîne vide dit « aucun », et ce n'est pas la même chose que
@@ -424,7 +438,7 @@ export function EcranDecoupe({
         pose: sujetVise ? poseVisee : "",
       })
       brouillon.effacer()
-      sujet.onAnimer(fait.bandes)
+      onAnimer(fait.bandes)
     } catch (erreur) {
       setRefus(erreur instanceof Refus ? erreur.message : "animation refusée")
     } finally {
@@ -705,11 +719,12 @@ export function EcranDecoupe({
             {zones.length > 0 && gardees.length === 0 && (
               <Pourquoi texte="aucune zone gardée — coche « garder » sur au moins une" />
             )}
-            {/* **La seconde sortie** (`AU19`) : les mêmes rectangles, joués au
-                lieu d'être rangés. Sous le bouton principal et non à côté — on
-                découpe le plus souvent en images, et l'animation est le geste
-                du jour où la feuille en est une. */}
-            {sujet.famille === "planche" && sujet.onAnimer && (
+            {/* **La seconde sortie** (`AU19`, ouverte à une carte en `RP21`) :
+                les mêmes rectangles, joués au lieu d'être rangés. Sous le
+                bouton principal et non à côté — on découpe le plus souvent en
+                images, et l'animation est le geste du jour où l'image en est
+                une. */}
+            {animable && (
               <div className="mt-[8px] flex flex-col gap-[4px] border-t border-trait pt-[8px]">
                 {/* **À quoi elle se rattache, demandé avant de cliquer**
                     (`AU20`). Deux lignes, déjà remplies : ce n'est pas un

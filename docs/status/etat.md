@@ -11,6 +11,33 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP21 · Une planche découpée sur la toile devient une animation — 16 septembre 2026
+
+**Les deux chemins finissent au même endroit, et c'était le vrai travail.** `ServicePlancheAnimee`
+n'avait qu'une entrée — une feuille de la bibliothèque — parce qu'une carte de la toile est un
+objet structurellement différent (pas de `personnage`/`pose`, vit sous un projet via
+`ServiceUnivers`, pas `ServiceAssets`). Une petite forme commune (`_Source` : identifiant, label,
+dimensions, octets, et *quoi* — feuille ou carte) a suffi pour que tout le reste — vérifier les
+rectangles, découper, créer le clip et ses bandes — cesse de savoir d'où l'image vient. Aucun
+second service n'a été ouvert ; un essai compare les deux entrées au pixel.
+
+**Le chemin inverse n'a inventé aucune sélection.** La galerie (`Galerie.tsx`) porte déjà la
+seule sélection multiple du produit (US-31, pour ranger et exporter) ; *En faire une animation*
+en est un troisième usage, pas un nouvel écran. Le service (`ServicePlancheAnimee.assembler`)
+prend les octets **rendus** de chaque image (jamais le brut — le même principe qu'ailleurs),
+range chaque frame dans l'ordre de la sélection, et écrit sa filiation dans
+`Generation.demande["images"]`.
+
+**Le sujet, la pose et la direction se préremplissent, ou se choisissent — jamais les deux à
+la fois.** Trois listes s'accordent quand la sélection s'accorde, comme `AU20` le fait déjà pour
+le sujet et la pose d'une feuille découpée ; sinon elles restent vides et se répondent à la main.
+Une sélection qui mélange deux sujets est refusée deux fois — le bouton se grise avec sa raison
+(`raisonAssemblage`, côté écran), et le serveur refuse quand même si on le contourne : deux bouts
+d'une seule règle, jamais deux règles.
+
+**Une route neuve, nommée par précaution.** `/clips/from-selection` aurait heurté l'utilitaire
+Tailwind `from-*` (dégradés) sur le premier segment ; la route s'appelle `/clips/assemble`.
+
 ## RP6 · Une seule grille de choix d'image — 15 septembre 2026
 
 **Une fusion, pas un choix entre les deux.** `BibliothequePourImage.tsx` portait déjà la

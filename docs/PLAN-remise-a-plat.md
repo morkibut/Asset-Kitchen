@@ -754,16 +754,22 @@ du produit depuis `E1` — l'établi est une profondeur, pas un lieu de plus.
 
 ### Critères d'acceptation
 
-- [ ] Sur la toile, la découpe d'une carte importée offre *Animer*, et une bande en sort avec
+- [x] Sur la toile, la découpe d'une carte importée offre *Animer*, et une bande en sort avec
   le même résultat que depuis une planche de la bibliothèque — un essai compare les deux.
-- [ ] Une sélection d'images fixes d'un même sujet offre *En faire une animation* ; l'atelier
+  *Les deux entrées partagent le même dernier pas (`ServicePlancheAnimee._livrer`) ; l'essai
+  compare les frames au pixel (`tests/test_rp21.py::test_animer_depuis_une_carte_rend_le_meme_resultat_que_depuis_une_planche`).*
+- [x] Une sélection d'images fixes d'un même sujet offre *En faire une animation* ; l'atelier
   de montage s'ouvre avec ces images pour frames, dans l'ordre de la sélection.
 - [ ] La bande créée se range sous le sujet, la pose et la direction nommés, et chaque frame
   dit de quelle image elle vient.
-- [ ] Une sélection qui mélange deux sujets ne propose pas le geste, et dit pourquoi.
-- [ ] Aucun appel au fournisseur, aucun encodage vidéo : la transparence des images est
+  *Les trois se préremplissent quand la sélection s'accorde, comme `AU20` le fait déjà pour
+  sujet et pose ; la filiation vit dans `Generation.demande["images"]`.*
+- [x] Une sélection qui mélange deux sujets ne propose pas le geste, et dit pourquoi.
+  *Vérifiée deux fois : le bouton se grise avec sa raison (`raisonAssemblage`), et le serveur
+  refuse quand même si on le contourne (`ServicePlancheAnimee.assembler`).*
+- [x] Aucun appel au fournisseur, aucun encodage vidéo : la transparence des images est
   conservée, comme en `AU19`.
-- [ ] Les huit images restent en bibliothèque après le montage ; en faire une bande ne les
+- [x] Les huit images restent en bibliothèque après le montage ; en faire une bande ne les
   consomme pas.
 
 ## RP22 · Une table se défait, se remet à zéro, et se voit avant d'enregistrer

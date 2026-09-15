@@ -596,6 +596,12 @@ class Clip:
             # six mois plus tard cherche de quoi cette animation est née, et la
             # réponse est une image de sa bibliothèque, pas un fichier d'ailleurs.
             return "feuille découpée — aucun nouvel appel"
+        if self.nature == "assemblage":
+            # **`RP21`, chemin 2** : ces frames ne viennent ni d'une feuille
+            # découpée ni d'un fichier importé, mais d'une sélection d'images
+            # déjà en bibliothèque. Une phrase à elle, pour la même raison que
+            # celle de la feuille juste au-dessus.
+            return "images assemblées — aucun nouvel appel"
         if self.nature != "video":
             return "source importée — aucun nouvel appel"
         if self.montant_relu:

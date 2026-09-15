@@ -33,6 +33,7 @@ import { useRef, useState, type ReactNode } from "react"
 import {
   api,
   Refus,
+  type Bande,
   type Carte,
   type Fabrique,
   type Lien,
@@ -64,6 +65,7 @@ export function EcranUnivers({
   onCibleVue,
   carteDecoupee,
   onDecouperCarte,
+  onAnimerCarte,
   projet,
 }: {
   /** **Le jeu ouvert** — nécessaire depuis qu'une vidéo posée sur la toile
@@ -115,6 +117,10 @@ export function EcranUnivers({
    *  tableau. */
   carteDecoupee: Carte | null
   onDecouperCarte: (carte: Carte | null) => void
+  /** **La seconde sortie de la découpe d'une carte** (`RP21`) : la bande qui
+   *  vient de naître. Absente, le bouton *Animer* ne paraît pas dans l'écran
+   *  de découpe — même règle que pour une planche de la bibliothèque. */
+  onAnimerCarte?: (bandes: Bande[]) => void
 }) {
   const [choisie, setChoisir] = useState<string | null>(null)
 
@@ -218,6 +224,16 @@ export function EcranUnivers({
                 onDecouperCarte(null)
                 onRelire()
               },
+              // **La seconde sortie mène là où l'auteur voulait aller**
+              // (`RP21`, à l'identique d'`AU19` côté planche) : l'atelier de
+              // l'animation qu'on vient de monter, où elle tourne, se règle
+              // et se range sur un sujet.
+              onAnimer: onAnimerCarte
+                ? (bandes) => {
+                    onDecouperCarte(null)
+                    onAnimerCarte(bandes)
+                  }
+                : undefined,
             }}
             onFermer={() => onDecouperCarte(null)}
             onFente={onFente}

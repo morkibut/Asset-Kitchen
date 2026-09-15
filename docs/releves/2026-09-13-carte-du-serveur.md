@@ -216,7 +216,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /characters/{id}/strips/export | Toutes les animations d'un personnage, en une archive | Oui | — |
 | PUT /references | Décoche une référence, pour un personnage ou tout le projet | Oui | — |
 
-### Les mouvements, clips, le montage, les bandes (`animation.py`, 44 routes)
+### Les mouvements, clips, le montage, les bandes (`animation.py`, 45 routes depuis RP21)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
@@ -235,7 +235,8 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /clips/keep | Garde un clip, écarte les autres | Oui | — |
 | POST /clips/restore | Remontre ce qu'on avait écarté | Oui | — |
 | POST /clips/import | Une vidéo qui vient d'ailleurs entre comme clip | Oui | import_clip |
-| POST /clips/sheet | Une feuille de sprites montée en animation | Oui | animate_sheet |
+| POST /clips/sheet | Une feuille de sprites montée en animation — ou, depuis RP21, une carte de la toile à la place de la feuille | Oui | animate_sheet (feuille seulement) |
+| POST /clips/assemble | RP21 — une sélection d'images fixes déjà en bibliothèque devient une bande, sans découpe | Oui | — |
 | GET /clips | Les clips gardés d'un jeu | Oui | — |
 | GET /clips/pending | Les clips payés ou peut-être payés, en attente d'un geste | Oui | — |
 | POST /clips/{id}/recover | Rapatrie un clip déjà payé | Oui | — |

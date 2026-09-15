@@ -2212,6 +2212,11 @@ function AtelierApp() {
           // à la place du tableau.
           carteDecoupee={carteDecoupee}
           onDecouperCarte={setCarteDecoupee}
+          // **Une carte découpée en animation ouvre son atelier** (`RP21`),
+          // la même porte que depuis la découpe d'une planche.
+          onAnimerCarte={(bandes) => {
+            if (bandes.length > 0) ouvrirLAtelierDeBande(bandes[0].identifiant)
+          }}
         />
       )}
 

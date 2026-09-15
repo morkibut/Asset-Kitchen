@@ -5287,7 +5287,7 @@ export const api = {
       { method: "POST", body: octets, headers: {} },
     ),
 
-  /** **Une feuille de sprites montée en animation** (`AU19`).
+  /** **Une image découpée montée en animation** (`AU19`, `RP21`).
    *
    *  Les cases deviennent les images d'un clip, et une bande en est gardée —
    *  prête à se ranger sur un mouvement et une direction. **Rien n'est
@@ -5296,7 +5296,7 @@ export const api = {
    *  `directions` fait une bande par ligne de la feuille, dans l'ordre des
    *  lignes. Vide, toute la feuille fait une seule animation. */
   animerUneFeuille: (
-    feuille: string,
+    source: { feuille: string } | { carte: string; projet: string },
     boites: Boite[],
     {
       nom = "",
@@ -5315,7 +5315,9 @@ export const api = {
     appeler<{ clip: Generation; bandes: Bande[] }>("/clips/sheet", {
       method: "POST",
       body: JSON.stringify({
-        feuille,
+        ...("feuille" in source
+          ? { feuille: source.feuille }
+          : { carte: source.carte, projet: source.projet }),
         boites,
         nom,
         personnage,
@@ -5414,6 +5416,11 @@ export const api = {
    *  ⚠️ Ça n'existait pas : le produit savait garder une animation et **pas la
    *  rouvrir**. La vignette de la matrice remontait au clip, donc l'écran
    *  repartait des réglages du jeu, et corriger une virgule demandait de tout
+   *  `source` désigne l'image de départ — une planche de la bibliothèque, ou
+   *  une carte de la toile (`RP21`) : les deux offrent le même geste, aux
+   *  mêmes conditions, et c'est cette union qui le dit plutôt que deux
+   *  fonctions.
+   *
    *  refaire de mémoire. Sa planche part avec, en `data:` — un écran qui
    *  s'ouvre en tournant déjà n'a pas le temps de poser deux questions. */
   ouvrirLaBande: (identifiant: string) =>
@@ -5446,6 +5453,30 @@ export const api = {
   /** La fenêtre d'une animation gardée, remesurée **sur ses images à elle** (A7).
    *
    *  Pas sur celles du clip : une bande peut prendre ses images dans deux
+  /** **Une sélection d'images fixes devient une animation** (`RP21`,
+   *  chemin 2). Les images entrent telles quelles, dans l'ordre de la
+   *  sélection ; aucune n'est consommée, aucune ne se dépense, aucun encodage
+   *  vidéo. Le sujet, la pose et la direction se préremplissent côté serveur
+   *  quand toutes les images choisies s'accordent sur l'un d'eux. */
+  assemblerAnimation: (
+    images: string[],
+    {
+      nom = "",
+      personnage = null,
+      pose = null,
+      direction = null,
+    }: {
+      nom?: string
+      personnage?: string | null
+      pose?: string | null
+      direction?: string | null
+    } = {},
+  ) =>
+    appeler<{ clip: Generation; bandes: Bande[] }>("/clips/assemble", {
+      method: "POST",
+      body: JSON.stringify({ images, nom, personnage, pose, direction }),
+    }),
+
    *  clips, et elle n'a alors de fenêtre dans ni l'un ni l'autre. Le rectangle
    *  et la planche sont refaits dans le même geste — jamais l'un sans l'autre.
    *

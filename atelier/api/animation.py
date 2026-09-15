@@ -564,15 +564,21 @@ async def importer_un_clip(
 
 
 class CorpsFeuille(BaseModel):
-    """Ce qu'il faut pour qu'une feuille de sprites devienne une animation (`AU19`).
+    """Ce qu'il faut pour qu'une image devienne une animation (`AU19`, `RP21`).
 
-    **La feuille est une image de la bibliothèque**, et les rectangles sont ceux
-    de l'atelier de découpe — `[x0, y0, x1, y1]` en pixels de l'image brute,
-    inclusifs aux deux bouts, la forme du dépôt. Une seconde convention de
-    rectangle se confondrait un jour avec la première sur un pixel de bord.
+    **La feuille est une image de la bibliothèque, la carte une image de la
+    toile — l'une des deux, jamais les deux** (`RP21`). Les rectangles sont
+    ceux de l'atelier de découpe — `[x0, y0, x1, y1]` en pixels de l'image
+    brute, inclusifs aux deux bouts, la forme du dépôt. Une seconde convention
+    de rectangle se confondrait un jour avec la première sur un pixel de bord.
     """
 
-    feuille: str
+    feuille: str | None = None
+    # **`RP21`** : la seconde porte d'entrée, une carte du tableau
+    # d'inspiration — `projet` omis reprend le jeu ouvert, la même règle que
+    # partout ailleurs sur cette famille de routes (`_projet`, `api/univers.py`).
+    carte: str | None = None
+    projet: str | None = None
     boites: list[list[int]]
     nom: str = ""
     personnage: str | None = None
@@ -593,20 +599,66 @@ class CorpsFeuille(BaseModel):
 # savoir lire une URL ; c'est à l'URL de ne pas ressembler à une classe.
 @routeur.post("/clips/sheet", status_code=201)
 async def animer_une_feuille(requete: Request, corps: CorpsFeuille) -> dict[str, Any]:
-    """Une feuille découpée devient un clip et ses bandes. **Rien n'est dépensé.**
+    """Une image découpée devient un clip et ses bandes. **Rien n'est dépensé.**
 
     L'image a été payée une fois, à son entrée ; la découper en cases ne
     rappelle personne. Rend `{"clip": …, "bandes": [ … ]}` — le clip pour la
     galerie et la fiche, les bandes pour la matrice du personnage.
+
+    **Depuis une planche de la bibliothèque, ou une carte de la toile**
+    (`RP21`) : `feuille` désigne l'une, `carte` l'autre, jamais les deux — le
+    service le refuse sinon.
     """
     return _atelier(requete).planche_animee.animer(
         corps.feuille,
         [tuple(int(c) for c in boite) for boite in corps.boites],
+        carte=corps.carte,
+        projet=corps.projet,
         nom=corps.nom,
         personnage=corps.personnage,
         pose=corps.pose,
         direction=corps.direction,
         directions=corps.directions,
+        cadence=corps.cadence,
+        sens=corps.sens,
+    )
+
+
+class CorpsAssemblage(BaseModel):
+    """Ce qu'il faut pour qu'une sélection d'images fixes devienne une
+    animation (`RP21`, chemin 2).
+
+    **`images` porte l'ordre de la sélection**, celui que la galerie montrait
+    quand l'auteur a cliqué — c'est cet ordre-là qui devient celui des frames,
+    jamais un tri refait ici. Le sujet, la pose et la direction sont
+    facultatifs : absents, le service les préremplit quand toutes les images
+    s'accordent sur l'un d'eux ; une chaîne vide dit « aucun ».
+    """
+
+    images: list[str]
+    nom: str = ""
+    personnage: str | None = None
+    pose: str | None = None
+    direction: str | None = None
+    cadence: float = CADENCE_DE_BANDE
+    sens: str = BOUCLE
+
+
+@routeur.post("/clips/assemble", status_code=201)
+async def assembler_une_selection(requete: Request, corps: CorpsAssemblage) -> dict[str, Any]:
+    """Une sélection d'images fixes devient un clip et sa bande (`RP21`).
+
+    **Rien n'est dépensé, et aucun encodage vidéo** : les images choisies
+    entrent telles quelles, dans l'ordre de la sélection — le même geste
+    qu'`animer_une_feuille` un cran plus loin, sur des images qui n'ont jamais
+    partagé une planche.
+    """
+    return _atelier(requete).planche_animee.assembler(
+        corps.images,
+        nom=corps.nom,
+        personnage=corps.personnage,
+        pose=corps.pose,
+        direction=corps.direction,
         cadence=corps.cadence,
         sens=corps.sens,
     )

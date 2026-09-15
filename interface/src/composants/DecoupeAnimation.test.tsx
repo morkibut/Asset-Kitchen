@@ -1,16 +1,19 @@
 // AU19 · La seconde sortie de l'atelier de découpe : en faire une animation.
+// RP21 · La même sortie, ouverte à une carte de la toile.
 //
 // Ce qui est vérifié ici est **le geste**, pas le découpage : les mêmes
 // rectangles partent, et ce qui revient mène à l'atelier de l'animation.
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
-import { api, RECETTE_VIDE, type Asset, type Bande } from "../api"
+import { api, RECETTE_VIDE, type Asset, type Bande, type Carte } from "../api"
 import { EcranDecoupe } from "./Decoupe"
 
 afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks() })
 
 const feuille = () => ({ identifiant: "feuille", label: "Marche", empreinte: "e", largeur: 96, hauteur: 48, recette: RECETTE_VIDE } as Asset)
+const carte = () =>
+  ({ identifiant: "carte", projet: "jeu", note: "Marche", empreinte: "e", largeur: 96, hauteur: 48, officiel: false } as Carte)
 const BOITES = [[0, 0, 23, 23], [24, 0, 47, 23], [0, 24, 23, 47], [24, 24, 47, 47]]
 
 function poser(onAnimer?: (bandes: Bande[]) => void) {
@@ -23,6 +26,18 @@ function poser(onAnimer?: (bandes: Bande[]) => void) {
   } as never)
   render(<EcranDecoupe
     sujet={{ famille: "planche", planche: feuille(), onDecoupe: vi.fn(), onAnimer }}
+    onFermer={vi.fn()} onFente={vi.fn()} />)
+  return animer
+}
+
+function poserCarte(onAnimer?: (bandes: Bande[]) => void) {
+  vi.spyOn(api, "decoupeDeCarteProposee").mockResolvedValue({ boites: BOITES } as never)
+  vi.spyOn(api, "directions").mockResolvedValue({ directions: [] } as never)
+  const animer = vi.spyOn(api, "animerUneFeuille").mockResolvedValue({
+    clip: { identifiant: "clip" }, bandes: [{ identifiant: "bande" }],
+  } as never)
+  render(<EcranDecoupe
+    sujet={{ famille: "carte", carte: carte(), onDecoupe: vi.fn(), onAnimer }}
     onFermer={vi.fn()} onFente={vi.fn()} />)
   return animer
 }
@@ -59,4 +74,24 @@ test("une ligne par direction n'est proposée que quand la grille en a autant qu
   fireEvent.click(screen.getByRole("button", { name: "En faire 2 animations" }))
   await waitFor(() => expect(animer).toHaveBeenCalledOnce())
   expect(animer.mock.calls[0][2]).toMatchObject({ directions: ["sud", "nord"] })
+})
+
+// ── RP21 · La même sortie, offerte sur une carte de la toile ────────────────
+
+test("une carte offre aussi Animer, aux mêmes conditions qu'une planche", async () => {
+  const ouvrir = vi.fn()
+  const animer = poserCarte(ouvrir)
+  fireEvent.click(await screen.findByRole("button", { name: "En faire une animation de 4 images" }))
+  await waitFor(() => expect(animer).toHaveBeenCalledOnce())
+  // **La source dit d'où vient l'image** : une carte, pas une feuille — et
+  // c'est elle qui décide de la route et du service que le serveur emploie.
+  expect(animer.mock.calls[0][0]).toEqual({ carte: "carte", projet: "jeu" })
+  expect(animer.mock.calls[0][1]).toEqual(BOITES)
+  expect(ouvrir).toHaveBeenCalledWith([{ identifiant: "bande" }])
+})
+
+test("sans onAnimer, une carte ne propose pas non plus le geste", async () => {
+  poserCarte(undefined)
+  await screen.findByRole("button", { name: "Relire 4 sorties" })
+  expect(screen.queryByRole("button", { name: /En faire une animation/ })).toBeNull()
 })

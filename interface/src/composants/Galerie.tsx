@@ -38,6 +38,7 @@ import {
   type Role,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
+import { FenetreAssembler, raisonAssemblage } from "./AssemblerAnimation"
 import { CRANS, ZOOMS, type Zoom } from "./pieces"
 import { useImport, type Import } from "./Import"
 import { Tuile, type Entree } from "./Tuile"
@@ -1155,6 +1156,17 @@ export function Galerie({
 
   const changerDeMedia = useCallback(() => setSelection([]), [setSelection])
 
+  // ── En faire une animation (`RP21`, chemin 2) ─────────────────────────────
+  //
+  // **La sélection existe déjà** (US-31) : ce geste en est un troisième
+  // usage, à côté de ranger et exporter. Rien de neuf n'est inventé sur la
+  // grille elle-même.
+  const imagesSelectionnees = selection
+    .map((identifiant) => grille.find((a) => a.identifiant === identifiant))
+    .filter((a): a is Asset => a != null)
+  const raisonAnimer = raisonAssemblage(imagesSelectionnees, selection.length)
+  const [assemblerOuvert, setAssemblerOuvert] = useState(false)
+
   /* Quatre colonnes, largeurs absolues, et 220 ms sur la largeur quand
       l'une se replie ou que la fiche s'ouvre — la durée du § Motion pour
       « un volet entre ou sort », depuis `D3` : 160 ms n'était dans aucune
@@ -1239,6 +1251,8 @@ export function Galerie({
             onFavori={(favori) => void marquerFavori(selection, favori)}
             onSupprimer={() => void supprimer(selection)}
             onVider={() => setSelection([])}
+            onAnimer={() => setAssemblerOuvert(true)}
+            raisonAnimer={raisonAnimer}
             entree={entree}
             onExporter={() => void exporter()}
             exportEnCours={exportEnCours}
@@ -1429,6 +1443,19 @@ export function Galerie({
               onOuvrir={(identifiant) => {
                 setFicheClip(null)
                 setSelection([identifiant])
+              }}
+            />
+          )}
+          {assemblerOuvert && (
+            <FenetreAssembler
+              images={imagesSelectionnees}
+              personnages={personnages}
+              plan={plan}
+              onFermer={() => setAssemblerOuvert(false)}
+              onFait={(bandes) => {
+                setAssemblerOuvert(false)
+                setSelection([])
+                if (bandes.length > 0) ouvrirLAtelierDeBande(bandes[0].identifiant)
               }}
             />
           )}

@@ -39,6 +39,8 @@ export function BarreOutils({
   onFavori,
   onSupprimer,
   onVider,
+  onAnimer,
+  raisonAnimer,
   onExporter,
   exportEnCours,
   entree,
@@ -68,6 +70,14 @@ export function BarreOutils({
   onFavori: (favori: boolean) => void
   onSupprimer: () => void
   onVider: () => void
+  /** **En faire une animation** (`RP21`, chemin 2). Un geste de plus sur la
+   *  sélection, à côté de Favori et Supprimer — jamais un écran séparé, la
+   *  sélection est déjà celle qui compte. */
+  onAnimer: () => void
+  /** Pourquoi le geste ne se propose pas — grisé, jamais caché, avec sa
+   *  raison à côté (`docs/design-motifs.md` § Le grisé porte sa raison). `null`
+   *  quand la sélection s'y prête. */
+  raisonAnimer: string | null
   /** L'export (US-76). **Permanent**, contrairement aux trois précédents :
    *  c'est le seul geste de sélection que le produit doive montrer *grisé*
    *  quand il n'y a rien à faire (US-77), et un contrôle caché n'apprend
@@ -251,6 +261,16 @@ export function BarreOutils({
               className="mesure h-[26px] shrink-0 px-1 text-[10.5px] text-encre-2 hover:text-echec"
             >
               Supprimer
+            </button>
+            <button
+              type="button"
+              onClick={onAnimer}
+              disabled={raisonAnimer !== null}
+              title={raisonAnimer ?? undefined}
+              aria-label="En faire une animation"
+              className="mesure h-[26px] shrink-0 px-1 text-[10.5px] text-encre-2 hover:text-signal disabled:text-encre-4 disabled:hover:text-encre-4"
+            >
+              En faire une animation
             </button>
             <button
               type="button"
