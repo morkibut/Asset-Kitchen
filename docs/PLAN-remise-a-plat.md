@@ -826,7 +826,7 @@ filet, l'autre avec, et rien ne dit lequel préférer.
   disponibles ou sont retirées explicitement, jamais laissées de côté sans le dire.
 - [ ] Rien n'est écrasé sans que la comparaison l'ait annoncé.
 
-## RP18 · Les neuf routes sans écran
+## RP18 · Les neuf routes sans écran  ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien.
 
@@ -846,10 +846,20 @@ fait croire à une capacité qui n'existe pas pour l'auteur.
 
 ### Critères d'acceptation
 
-- [ ] Chacune des neuf routes a reçu une décision écrite : construite, ou retirée.
-- [ ] Aucune route retirée n'emportait une capacité que l'agent emprunte.
-- [ ] Les essais des routes retirées partent avec elles.
-- [ ] Le relevé du serveur est mis à jour, et le compte des routes y redescend d'autant.
+- [x] Chacune des neuf routes a reçu une décision écrite : construite, ou retirée.
+      *Le tableau ci-dessus. Quatre retirées, cinq construites, dont deux qui l'étaient déjà.*
+- [x] Aucune route retirée n'emportait une capacité que l'agent emprunte.
+      *Aucune des quatre n'avait d'outil MCP, et aucune n'était appelée par un service que le
+      MCP emploie. `tests/test_rp18.py` vérifie en plus qu'aucun outil neuf n'est né : chercher
+      un sujet est un argument de `list_characters`, pas un onzième verbe dans la barre.*
+- [x] Les essais des routes retirées partent avec elles.
+      *Cinq essais des jeux de réglages (`tests/test_c2.py`) et un du calage à la main
+      (`tests/test_b20.py`), remplacés par un essai qui vérifie que les adresses ne répondent
+      plus — sans quoi une route retirée pourrait revenir sans que rien ne tombe.*
+- [x] Le relevé du serveur est mis à jour, et le compte des routes y redescend d'autant.
+      *318 → 314 routes. Les quatre retirées sont rayées avec leur date, les cinq construites
+      perdent leur mention* sans emprunteur *, et les deux qui l'étaient déjà portent la preuve
+      qui manquait.*
 
 ---
 
@@ -962,6 +972,27 @@ la même image brute.
   (`atelier/domaine/enregistrement.py`). Le retour ne s'écrit pas : une image dérivée porte
   aussi son `parent`, donc `GET /assets/{id}/lineage` la retrouve, et une bande dérivée se
   retrouve en lisant les bandes. La filiation se lit, elle ne se tient pas en double.*
+### Les neuf décisions
+
+| La route | Ce qu'elle promet | L'emprunteur qu'elle aurait | Décision | Pourquoi |
+|---|---|---|---|---|
+| `GET /presets` | Relire les jeux de réglages nommés (US-134) | l'écran d'envoi | **retirée** | *Reprendre les réglages*, sur la fiche d'une image de la galerie, repose déjà les réglages de l'appel qui l'a fabriquée : une image sous les yeux vaut mieux qu'un nom à retenir. |
+| `PUT /presets/{nom}` | Garder sous un nom ce qui part et comment | l'écran d'envoi | **retirée** | Même geste, même raison : le second chemin existe et personne n'a construit celui-ci en trois versions du produit. |
+| `DELETE /presets/{nom}` | Oublier un jeu de réglages | l'écran d'envoi | **retirée** | On n'oublie pas ce qu'on n'a jamais pu enregistrer. |
+| `GET /characters/search` | Chercher un sujet par son nom ou sa description dans tout le jeu, sur l'index | **l'agent** | **construite** | La barre cherche déjà les sujets en mémoire, sur la liste entière que `GET /characters` lui donne ; l'agent, lui, lisait tout le casting pour en trouver un. `list_characters` prend un terme `search` et le passe au service existant. |
+| `POST /clips/models/refresh` | Redemander le catalogue vidéo aux fournisseurs | l'écran du clip | **construite** | Le pendant image se redemande d'un clic depuis toujours ; côté vidéo, une liste vide se lisait jusqu'à la fermeture de l'atelier. Un bouton, là où la panne est écrite. |
+| `DELETE /strips/{id}/layer/align` | Défaire un calage posé à la main sur une animation | l'écran des calques animés | **retirée** | Aucun écran ne pose de calage à la main sur une bande — `POST .../layer/align` n'a pour client qu'un appel d'`api.ts` qu'aucun composant n'emploie. Une annulation qu'aucun geste ne peut atteindre n'annule rien. |
+| `GET /strips/{id}/layer/preview` | Voir les images d'une animation, calque posé, sans rien écrire | l'écran des calques animés | **construite** | *Ses animations, image par image* annonçait « huit calculs » et ne montrait pas un pixel ; US-542 demande de **voir le placement exact**. Un bouton *Regarder les images* par rangée habillée. |
+| `GET /projects/{p}/production-jobs/{id}/references/{rang}` | L'image de référence exacte envoyée par un travail | l'écran d'une fabrication suivie | **construite** — elle l'était déjà | Le relevé s'est trompé : l'écran la rend, mais par l'adresse que le serveur lui donne dans la charge du travail (`travail.references[].url`), jamais écrite en clair dans `api.ts`. Une recherche par chaîne ne pouvait pas la voir. |
+| `GET .../production-jobs/{id}/video-reference` | L'image de départ exacte envoyée à la vidéo | le même écran | **construite** — elle l'était déjà | Même cause, même preuve : `travail.entree_video.url` est rendue par *Fabrication suivie* et par *Fabrication libre*. |
+
+**Ce que la tranche a appris, et qui vaut pour tout relevé suivant.** *Une route dont l'adresse
+est composée par le serveur ne se trouve par aucune recherche dans l'interface.* Deux des neuf
+n'étaient pas orphelines : le serveur écrit leur adresse dans la charge qu'il rend, et l'écran
+affiche `url` sans jamais nommer la route. Chercher une chaîne dans `interface/src/` trouve les
+routes que l'écran connaît ; il faut chercher **aussi** les adresses que le serveur fabrique —
+`grep -rn '"url": f"/api' atelier/` en nomme quatre, et les quatre sont affichées.
+
 - [x] La nouvelle case n'est pas retenue pour le jeu ; la retenir est un second geste.
 - [x] Aucun appel au fournisseur ; le geste marche réseau coupé, et un essai le tient.
   *Compté sur le double, comme en `C1` et en `B21` : le service n'importe ni catalogue, ni

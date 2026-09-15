@@ -6,9 +6,9 @@ Ce relevé décrit ce que le serveur (`atelier/`) sait faire : ses routes HTTP, 
 
 | | Nombre |
 |---|---|
-| Routes HTTP | 314 |
-| Outils MCP | 85 |
-| Routes que l'interface n'appelle pas | 9 (+ `/health`, à part — voir plus bas) |
+| Routes HTTP | **314** *(318 avant `RP18`, le 16 septembre 2026)* |
+| Outils MCP | 87 *(inchangé : `RP18` a ajouté un argument, pas un outil)* |
+| Routes que l'interface n'appelle pas | **0** (+ `/health`, à part — voir plus bas) |
 | Doublons de capacité | 3 |
 | Modules plus importés (services/ + domaine/) | 0 |
 
@@ -24,7 +24,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 
 ## Les routes
 
-### Le cœur : état, clé, installation, catalogue, générations, assets, recettes (`routes.py`, 61 routes)
+### Le cœur : état, clé, installation, catalogue, générations, assets, recettes (`routes.py`, 58 routes depuis RP18)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
@@ -85,9 +85,9 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | GET /recipes | Les recettes nommées, enregistrées par l'auteur | Oui | — |
 | PUT /recipes/{nom} | Enregistre une recette sous un nom | Oui | — |
 | DELETE /recipes/{nom} | Oublie une recette nommée | Oui | — |
-| GET /presets | Les jeux de réglages de génération nommés | **Non** | — |
-| PUT /presets/{nom} | Enregistre un jeu de réglages sous un nom | **Non** | — |
-| DELETE /presets/{nom} | Oublie un jeu de réglages | **Non** | — |
+| ~~GET /presets~~ | ~~Les jeux de réglages de génération nommés~~ | **retirée le 16 septembre 2026** (`RP18`) | — |
+| ~~PUT /presets/{nom}~~ | ~~Enregistre un jeu de réglages sous un nom~~ | **retirée le 16 septembre 2026** (`RP18`) | — |
+| ~~DELETE /presets/{nom}~~ | ~~Oublie un jeu de réglages~~ | **retirée le 16 septembre 2026** (`RP18`) | — |
 
 ### La bibliothèque (`bibliotheque.py`, 18 routes)
 
@@ -184,7 +184,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | GET /characters/types | Les poses attendues par type d'objet, et d'où la liste vient | Oui | — |
 | PUT /characters/types/{type}/poses | Écrit la liste de poses d'un type | Oui | — |
 | DELETE /characters/types/{type}/poses | Le type revient à la liste proposée par défaut | Oui | — |
-| GET /characters/search | Cherche un sujet par nom ou description, dans tout le projet | **Non** | — |
+| GET /characters/search | Cherche un sujet par nom ou description, dans tout le projet | Non — la barre cherche en mémoire | `list_characters(search=…)`, depuis `RP18` |
 | GET /characters/families/{famille} | La grille d'une famille de sujets, paginée | Oui | — |
 | GET /characters | Le plan de poses et les personnages du jeu | Oui | — |
 | GET /dashboard | La complétude par famille, ce qui manque le plus, le prix du lot | Oui | — |
@@ -216,7 +216,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /characters/{id}/strips/export | Toutes les animations d'un personnage, en une archive | Oui | — |
 | PUT /references | Décoche une référence, pour un personnage ou tout le projet | Oui | — |
 
-### Les mouvements, clips, le montage, les bandes (`animation.py`, 45 routes depuis RP21)
+### Les mouvements, clips, le montage, les bandes (`animation.py`, 44 routes depuis RP18)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
@@ -227,7 +227,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | DELETE /movements/{id} | Retire un mouvement de la liste | Oui | — |
 | POST /movements/{id}/show | Remontre un mouvement masqué | Oui | — |
 | GET /clips/models | Les modèles vidéo et le prix du jour pour ce réglage | Oui | — |
-| POST /clips/models/refresh | Redemande le catalogue vidéo aux fournisseurs | **Non** | — |
+| POST /clips/models/refresh | Redemande le catalogue vidéo aux fournisseurs | Oui — écran du clip, quand la liste est vide (`RP18`) | — |
 | GET /clips/engine | Ce que le moteur vidéo de la maison peut faire aujourd'hui | Oui | — |
 | POST /clips/engine/download | Rapatrie les fichiers manquants au moteur de la maison | Oui | — |
 | POST /clips | Commande un lot de clips payants | Oui | — (voir doublons : même moteur que les travaux de production) |
@@ -258,8 +258,8 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /strips/{id}/layer | Pose le calque d'une pièce sur chaque image d'une animation | Oui | — |
 | PUT /strips/{id}/layer | Règle un calque animé (il tient, ou il glisse) | Oui | — |
 | POST /strips/{id}/layer/align | Cale un calque animé à la main, et garde le réglage | Oui | — |
-| DELETE /strips/{id}/layer/align | Oublie le calage d'un calque animé | **Non** | — |
-| GET /strips/{id}/layer/preview | Aperçu d'un calque animé | **Non** | — |
+| ~~DELETE /strips/{id}/layer/align~~ | ~~Oublie le calage d'un calque animé~~ | **retirée le 16 septembre 2026** (`RP18`) | — |
+| GET /strips/{id}/layer/preview | Aperçu d'un calque animé | Oui — écran *Ses animations, image par image* (`RP18`) | — |
 | DELETE /strips/{id}/layer | L'habillage s'en va, le corps et le calque restent | Oui | — |
 | PUT /strips/{id}/case | La case du plan que cette bande remplit — ou plus aucune | Oui | — |
 | PUT /strips/{id}/name | Renomme une bande | Oui | — |
@@ -355,8 +355,8 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST .../production-jobs/{id}/start | Lance un travail préparé | Oui | request_character_animation |
 | POST .../production-jobs/{id}/resume | Reprend un travail interrompu | Oui | resume_animation_production |
 | GET .../production-jobs/{id} | Suit l'état d'un travail (avec attente optionnelle) | Oui | get_animation_production |
-| GET .../production-jobs/{id}/references/{rang} | Une image de référence utilisée par ce travail | **Non** | — |
-| GET .../production-jobs/{id}/video-reference | L'image de départ d'une vidéo en cours | **Non** | — |
+| GET .../production-jobs/{id}/references/{rang} | Une image de référence utilisée par ce travail | Oui — *Fabrication suivie* la rend par l'adresse que le serveur lui donne | — |
+| GET .../production-jobs/{id}/video-reference | L'image de départ d'une vidéo en cours | Oui — *Fabrication suivie* et *Fabrication libre*, même chemin | — |
 | GET .../equipment/{piece}/uses/{emploi}/coverage | Ce qui manque à un emploi d'équipement | Oui | get_equipment_coverage |
 | POST .../equipment/.../jobs/preview | Prépare la fabrication des images équipées | Oui | preview_equipment_production |
 | GET .../equipment/.../jobs/{id}/bases/{rang} | L'image de base d'un appel d'équipement | Oui | — |
@@ -420,7 +420,6 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /projects/{p}/3d/import | Copie un rendu 3D existant dans ce jeu | Oui | import_asset3d_render |
 | GET /projects/{p}/3d/sources/{s}/files/{nom} | Un fichier d'une source 3D copiée | Oui | — |
 
-## Les outils de l'agent Godot
 ### Enregistrer sous — un rendu devient une autre case (`enregistrer_sous.py`, 4 routes depuis RP20)
 
 Deux par calque, et la coupure est celle du miroir : ce qui ne crée rien se redemande à chaque ouverture de fenêtre, ce qui crée un objet ne se redemande jamais. La proposition est un `POST` et non un `GET` parce qu'elle emporte **la recette en cours**, celle que l'écran tient et qui n'est pas forcément enregistrée.
@@ -432,8 +431,9 @@ Deux par calque, et la coupure est celle du miroir : ce qui ne crée rien se red
 | POST /strips/{id}/save-as/preview | La même proposition, pour une animation | Oui | preview_save_render_as |
 | POST /strips/{id}/save-as | Chaque frame rendue devient un clip neuf et sa bande | Oui | save_render_as |
 
+## Les outils de l'agent Godot
 
-85 outils, exposés par le serveur MCP monté dans le même programme que l'API HTTP (`atelier/mcp/serveur.py` + 12 fichiers `atelier/mcp/*.py`). Chaque outil déclare lui-même, dans sa fiche, l'écran de l'atelier qui offre la même capacité (`"ou": "..."` dans le code) — c'est cette déclaration, et pas une supposition, qui remplit la colonne ci-dessous.
+87 outils, exposés par le serveur MCP monté dans le même programme que l'API HTTP (`atelier/mcp/serveur.py` + 12 fichiers `atelier/mcp/*.py`). Chaque outil déclare lui-même, dans sa fiche, l'écran de l'atelier qui offre la même capacité (`"ou": "..."` dans le code) — c'est cette déclaration, et pas une supposition, qui remplit la colonne ci-dessous.
 
 ### Générer, retrouver, retoucher (21 outils, `atelier/mcp/serveur.py`)
 
@@ -451,7 +451,7 @@ Deux par calque, et la coupure est celle du miroir : ce qui ne crée rien se red
 | slice_asset | Découpe une image en plusieurs assets | Oui — écran galerie |
 | animate_sheet | Monte une feuille de sprites en clip et en bandes | Oui — écran galerie |
 | export_assets | Exporte une sélection en archive ZIP | Oui — écran galerie |
-| list_characters | Liste les personnages/objets d'un jeu — et, depuis `RP19`, l'**image de référence** de chacun, en lecture seule : aucun outil ne la choisit | Oui — codex |
+| list_characters | Liste les personnages/objets d'un jeu — et, depuis `RP19`, l'**image de référence** de chacun, en lecture seule : aucun outil ne la choisit. Depuis `RP18`, un terme `search` restreint la liste aux sujets dont le nom ou la description répond, par `GET /characters/search` | Oui — codex |
 | add_pose | Ajoute une pose au plan du projet | Oui — univers |
 | generate_pose | Génère une planche remplissant une ou plusieurs poses | Ouvre l'écran d'envoi |
 | equip_character | Associe une pièce d'équipement à un personnage | Oui — codex |
@@ -529,8 +529,10 @@ Deux par calque, et la coupure est celle du miroir : ce qui ne crée rien se red
 | prepare_workflow_image | Prépare une image locale, sans la soumettre | Oui — fabrications |
 | prepare_free_video | Prépare un clip libre (sans personnage ni pose) | Oui — fabrications |
 | prepare_audio | Prépare un bruitage local, sans le lancer | Oui — fabrications |
+| preview_save_render_as | Dit où le rendu courant se rangerait, sans rien créer | Oui — ici |
+| save_render_as | Garde le rendu courant sous une autre pose ou direction | Oui — ici |
 
-Remarque : les fiches déclarent une correspondance d'écran pour les **85** outils — aucun outil MCP n'est orphelin de l'écran. C'est l'inverse (des routes HTTP sans outil MCP) qui existe, et c'est attendu : l'agent travaille par gestes complets (« équipe ce personnage »), l'écran doit aussi savoir dessiner une vignette ou déplacer un curseur — deux choses qu'un agent de code n'a pas à faire.
+Remarque : les fiches déclarent une correspondance d'écran pour les **87** outils — aucun outil MCP n'est orphelin de l'écran. C'est l'inverse (des routes HTTP sans outil MCP) qui existe, et c'est attendu : l'agent travaille par gestes complets (« équipe ce personnage »), l'écran doit aussi savoir dessiner une vignette ou déplacer un curseur — deux choses qu'un agent de code n'a pas à faire.
 
 ## Les doublons de capacité
 
@@ -554,18 +556,33 @@ Remarque : les fiches déclarent une correspondance d'écran pour les **85** out
 
 ## Ce que plus personne n'appelle
 
-Neuf routes HTTP ne sont appelées ni par l'interface (recherche complète dans `interface/src/api.ts`, les douze `interface/src/api-*.ts`, et le reste de `interface/src/`) ni par aucun script de `essais/`, et n'ont pas d'outil MCP équivalent :
+**Plus aucune, depuis `RP18` le 16 septembre 2026.** Les neuf que ce relevé nommait ont chacune
+reçu une décision : quatre sont parties, trois ont reçu leur emprunteur, et **deux n'étaient pas
+orphelines** — c'est la méthode du relevé qui les avait manquées. Le détail de chaque décision
+et sa raison vivent dans `docs/PLAN-remise-a-plat.md`, § RP18, *Les neuf décisions*.
 
-- `GET /presets`, `PUT /presets/{nom}`, `DELETE /presets/{nom}` — les « jeux de réglages » nommés de génération (US-134). Le code le dit lui-même : c'est *« le quatrième rôle d'une réinjection, déclaré en T1 et resté vide depuis »* (`atelier/services/generation.py`, méthode `reglages`). La route existe et fonctionne ; l'écran qui l'utiliserait n'a jamais été construit.
-  Preuve : `grep -rn "presets\|reglages()" interface/src` ne trouve aucun appel à cette route.
-- `GET /characters/search` — cherche un sujet par nom ou description dans tout le projet (B8.5), au-delà d'une seule famille.
-  Preuve : `grep -rn "characters/search" interface/src essais` ne trouve rien.
-- `POST /clips/models/refresh` — redemande le catalogue vidéo. Le pendant image (`POST /models/refresh`) est bien appelé par l'écran ; celui-ci ne l'est pas.
-  Preuve : `grep -rn "clips/models/refresh" interface/src` ne trouve rien.
-- `DELETE /strips/{id}/layer/align` et `GET /strips/{id}/layer/preview` — oublier le calage d'un calque animé, et en voir l'aperçu. Le geste de calage lui-même (`POST .../layer/align`) est bien appelé ; défaire et prévisualiser ne le sont pas. Testés côté serveur (`tests/test_b20.py`), jamais depuis l'écran.
-  Preuve : `grep -n "layer/align\|layer/preview" atelier/api/animation.py` montre les trois routes ; seule la première apparaît dans `interface/src/api.ts`.
-- `GET /projects/{p}/production-jobs/{id}/references/{rang}` et `.../video-reference` — l'image de référence ou l'image de départ d'un travail de production en cours. Testées côté serveur, jamais appelées depuis l'écran.
-  Preuve : `grep -rn "production-jobs.*references\|video-reference" interface/src essais` ne trouve rien.
+⚠️ **Et voici la faute de méthode, parce qu'elle se refera.** La colonne « appelée par
+l'interface ? » a été remplie par une recherche de chaînes dans `interface/src/`. Or une adresse
+que **le serveur compose et met dans sa réponse** n'apparaît nulle part dans l'interface : l'écran
+affiche `quelque_chose.url`, sans jamais nommer la route. C'était le cas de
+`.../production-jobs/{id}/references/{rang}` et de `.../video-reference`, toutes deux rendues par
+*Fabrication suivie* depuis le premier jour. La recherche à faire en plus tient en une ligne, et
+elle nomme aujourd'hui quatre écritures, toutes affichées :
+
+```
+grep -rn '"url": f"/api' atelier/
+```
+
+Ce qui est parti, et sa date :
+
+- `GET /presets`, `PUT /presets/{nom}`, `DELETE /presets/{nom}` — **retirées le 16 septembre 2026**. Les « jeux de réglages » nommés (US-134) : la route existait et fonctionnait, l'écran n'a jamais été construit, et ce qu'elle promettait est fait par *Reprendre les réglages* sur la fiche d'une image de la galerie (`interface/src/gestes.ts`).
+- `DELETE /strips/{id}/layer/align` — **retirée le 16 septembre 2026**. Défaire un calage posé à la main sur une bande, alors qu'aucun écran n'en pose : `POST .../layer/align` n'a de client qu'un appel d'`api.ts` qu'aucun composant n'emploie. Elle reviendra avec l'écran qui posera le calage.
+
+Ce qui a reçu son emprunteur le même jour :
+
+- `GET /characters/search` — l'agent, par `list_characters(search=…)`. La barre, elle, cherche les sujets sur la liste entière que `GET /characters` lui donne : côté écran, la route ne trouverait rien de plus et ferait un aller-retour par frappe.
+- `POST /clips/models/refresh` — l'écran du clip, quand la liste des modèles vidéo est vide, à l'endroit même où la panne est écrite.
+- `GET /strips/{id}/layer/preview` — l'écran *Ses animations, image par image*, qui annonçait « huit calculs » et ne montrait pas un pixel.
 
 À part : `GET /health` n'est pas appelée par l'interface non plus, mais ce n'est pas un candidat « plus servie » — elle est utilisée par le lanceur de l'atelier (`atelier/__main__.py`) pour savoir quand le serveur a fini de démarrer, et testée dans `tests/test_lanceur.py`.
 

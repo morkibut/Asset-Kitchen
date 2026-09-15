@@ -5404,6 +5404,20 @@ export const api = {
       direction = null,
       forcer = false,
     }: {
+  /** Redemander le catalogue vidéo aux fournisseurs — **le pendant exact de
+   *  `rafraichirCatalogue`**, et il ne dépense rien : on demande à un
+   *  fournisseur la liste de ce qu'il vend, pas une image.
+   *
+   *  Branché le 16 septembre 2026 (`RP18`). La route existait depuis `A9` et
+   *  personne ne l'appelait : une liste vidéo vide se lisait jusqu'à ce qu'on
+   *  ferme l'atelier, alors que la même panne côté image se répare d'un clic.
+   *  Le prix du jour n'est pas dans ce retour — il se recalcule par réglage —,
+   *  donc l'appelant relit `modelesVideo` derrière. */
+  rafraichirCatalogueVideo: () =>
+    appeler<Omit<BaseModelesVideo, "demande">>("/clips/models/refresh", {
+      method: "POST",
+    }),
+
       nom?: string
       personnage?: string | null
       pose?: string | null
@@ -6586,6 +6600,19 @@ export const api = {
 
   /** Les directions de ce jeu, et d'où la liste lui vient. */
   directions: () => appeler<DirectionsDuJeu>("/characters/directions"),
+  /** Les images d'une animation habillée, **le calque posé dessus**, et rien
+   *  n'est écrit sur le disque.
+   *
+   *  Branchée le 16 septembre 2026 (`RP18`). La route existait depuis `B20` et
+   *  aucun écran ne l'appelait : *Ses animations, image par image* annonçait
+   *  « huit calculs » et ne montrait pas un pixel. Les images reviennent en
+   *  `data:` — un aperçu n'existe nulle part, et lui donner une adresse
+   *  obligerait à ranger un brouillon, donc à le nettoyer. */
+  apercuDuCalqueAnime: (habillee: string) =>
+    appeler<{ bande: Bande; images: string[]; calque: string }>(
+      `/strips/${encodeURIComponent(habillee)}/layer/preview`,
+    ),
+
 
   /** Une direction de plus. **Nommer, c'est créer**, et rien ne coûte. */
   ajouterDirection: (nom: string, consigne = "") =>

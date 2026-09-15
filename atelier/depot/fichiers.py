@@ -6,7 +6,6 @@
     ├─ atelier.json               le projet courant, et rien d'autre
     ├─ catalogue.json             la dernière photo du catalogue, datée
     ├─ recettes.json              les recettes nommées (US-66)
-    ├─ prereglages.json           les jeux de réglages nommés (US-134)
     ├─ etiquettes.json            la base d'étiquettes, partagée par tous les jeux (E8)
     ├─ mouvements.json            la bibliothèque de mouvements, partagée aussi (A6)
     ├─ collections.json           les collections, avec leur projet éventuel
@@ -72,7 +71,6 @@ class Fichiers:
         self.projets = self.racine / "projets"
         self.catalogue = self.racine / "catalogue.json"
         self.recettes = self.racine / "recettes.json"
-        self.prereglages = self.racine / "prereglages.json"
         self.etiquettes = self.racine / "etiquettes.json"
         # La bibliothèque de mouvements (A6). **À la racine, comme les
         # étiquettes et pour la même raison** : un mouvement appartient à
@@ -344,19 +342,10 @@ class Fichiers:
         lu = self._lire_json(self.mouvements)
         return lu if isinstance(lu, list) else []
 
-    def ecrire_prereglages(self, contenu: dict[str, Any]) -> None:
-        self._ecrire_json(self.prereglages, contenu)
-
-    def lire_prereglages(self) -> dict[str, Any]:
-        """Les jeux de réglages nommés (US-134).
-
-        **Un fichier à part de `recettes.json`**, et ce n'est pas de la
-        symétrie : une recette dit ce qu'on fait à une image *déjà payée*, un
-        jeu de réglages dit ce qui part *avant* de payer. Les mêler aurait fait
-        un fichier dont la moitié des entrées ne s'appliquent jamais à l'autre
-        moitié des gestes.
-        """
-        return self._lire_json(self.prereglages) or {}
+    # `prereglages.json` — les jeux de réglages nommés (US-134) — est retiré le
+    # 16 septembre 2026 avec ses trois routes (`RP18`) : rien ne l'écrivait
+    # depuis un écran. Un fichier déjà posé sur le disque d'un auteur n'est plus
+    # lu, et rien ne l'efface.
 
     # ── Projets, collections, et le projet courant ───────────────────────────
 

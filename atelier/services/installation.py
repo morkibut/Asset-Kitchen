@@ -54,6 +54,9 @@ CE_QUE_L_ATELIER_RANGE = (
     "collections.json",
     "etiquettes.json",
     "mouvements.json",
+    # L'atelier n'écrit plus `prereglages.json` depuis `RP18` (16 septembre
+    # 2026), mais un dossier de travail d'avant ce jour le porte encore : il
+    # reste ici, où la question est *qu'est-ce qu'on trouve dans ce dossier*.
     "prereglages.json",
     "recettes.json",
     "agent.json",

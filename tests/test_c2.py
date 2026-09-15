@@ -691,64 +691,17 @@ def test_deplier_ne_demande_jamais_le_fournisseur(client, atelier, double):
     asyncio.run(asyncio.sleep(0))
 
 
-# ── « Ce qui part en référence et les réglages d'une génération s'enregistrent
-#     sous un nom, et se rappellent d'un geste sur un autre personnage »
-#     (US-134) ────────────────────────────────────────────────────────────────
+# ── Les jeux de réglages nommés (US-134) sont partis le 16 septembre 2026 ───
+#
+# `RP18` a retiré les trois routes `/api/presets` et les cinq essais qui les
+# tenaient. Ce qu'elles promettaient est fait par *Reprendre les réglages*,
+# depuis la fiche d'une image de la galerie : la génération qui l'a fabriquée
+# est relue, et ses réglages reviennent dans le générateur. Un essai de plus
+# vérifie ici qu'aucune des trois adresses ne répond encore.
 
 
-def test_un_jeu_de_reglages_s_enregistre_et_se_rappelle(client):
-    """Le **quatrième rôle** d'une réinjection, déclaré en T1 et resté vide
-    depuis : le seul des quatre qui n'envoie aucune image."""
-    reponse = client.put(
-        "/api/presets/mes-nains",
-        json={
-            "modele": MODELE,
-            "proportions": "1:1",
-            "options": {"quality": "high"},
-            "echelle": "personnage",
-            "references": [{"asset": "une-planche", "role": "style"}],
-            "references_ecartees": ["une-carte"],
-        },
-    )
-    assert reponse.status_code == 200, reponse.text
-
-    rappele = client.get("/api/presets").json()["reglages"]["mes-nains"]
-    assert rappele["modele"] == MODELE
-    assert rappele["options"] == {"quality": "high"}
-    assert rappele["references"] == [{"asset": "une-planche", "role": "style"}]
-    assert rappele["references_ecartees"] == ["une-carte"]
-
-
-def test_un_jeu_de_reglages_ne_porte_jamais_le_personnage(client):
-    """C'est toute la promesse du geste : *se rappeler sur un autre personnage*.
-    Un jeu qui porterait le personnage ne se rejouerait que sur lui."""
-    client.put("/api/presets/mes-nains", json={"modele": MODELE})
-    rappele = client.get("/api/presets").json()["reglages"]["mes-nains"]
-    assert "personnage" not in rappele
-    assert "poses" not in rappele
-    assert "prompt" not in rappele
-
-
-def test_un_jeu_de_reglages_sans_nom_se_refuse(client):
-    reponse = client.put("/api/presets/%20", json={"modele": MODELE})
-    assert reponse.status_code == 409, reponse.text
-
-
-def test_un_jeu_de_reglages_s_oublie(client):
-    client.put("/api/presets/jetable", json={"modele": MODELE})
-    reponse = client.delete("/api/presets/jetable")
-    assert reponse.status_code == 200, reponse.text
-    assert reponse.json()["reglages"] == {}
-
-
-def test_les_jeux_de_reglages_ne_demandent_jamais_le_fournisseur(client, double):
-    """Enregistrer et rappeler des réglages ne sort pas — et un modèle disparu
-    du catalogue se grise **au moment de générer**, avec sa raison, pas à
-    l'enregistrement : un second endroit qui juge une demande finirait par ne
-    plus dire la même chose que le premier."""
-    avant = double.appels
-    client.put("/api/presets/hors-ligne", json={"modele": "un/modele-disparu"})
-    assert client.get("/api/presets").json()["reglages"]["hors-ligne"]["modele"] == (
-        "un/modele-disparu"
-    )
-    assert double.appels == avant
+def test_les_jeux_de_reglages_nommes_n_existent_plus(client):
+    """Trois routes retirées, et rien ne les remplace à cette adresse."""
+    assert client.get("/api/presets").status_code == 404
+    assert client.put("/api/presets/mes-nains", json={}).status_code >= 400
+    assert client.delete("/api/presets/mes-nains").status_code >= 400

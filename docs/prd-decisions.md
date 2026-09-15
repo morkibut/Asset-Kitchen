@@ -299,3 +299,13 @@ que l'auteur a joint ne cède jamais. Le prix est qu'un fichier du jeu qu'on gar
 chaque livraison — c'est le bon prix : rien n'a changé, donc la question est la même. Et une
 décision est attachée à l'empreinte du fichier qu'elle a vu : ce qui s'écrit dans le jeu est
 exactement ce que la relecture annonçait, sans quoi « décider » ne voudrait rien dire.
+### La décision de RP18 — 16 septembre 2026
+
+**On rejoue les réglages d'une image, pas ceux d'un nom.** Le produit a longtemps porté les deux
+promesses en même temps : garder sous un nom ce qui part et comment (US-134), et reprendre les
+réglages de l'appel qui a fabriqué une image de la bibliothèque. Seule la seconde a été
+construite, et c'est elle qu'on garde. La raison est ce que l'auteur a sous les yeux au moment
+où il veut refaire quelque chose : une image qui lui plaît, pas un nom qu'il aurait dû penser à
+écrire avant d'en avoir envie. Le prix est qu'il faut posséder un résultat pour en rejouer les
+réglages — c'est le bon prix : refaire *comme celle-là* est la demande réelle, et *comme le jeu
+de réglages « mes nains »* ne l'a jamais été en trois versions du produit.

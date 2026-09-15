@@ -15,10 +15,20 @@
 // Elle se dit, elle ne se compte pas — annoncer un trou que personne ne peut
 // combler ferait passer un travail impossible pour un travail en retard.
 //
-// Aucun appel serveur : l'écran ne reçoit que des props, comme `Emploi`.
+// Un seul appel serveur, et il ne change rien : *Regarder les images* (`RP18`)
+// demande l'aperçu des images habillées. Les trois gestes, eux, remontent
+// toujours — ils changent la matrice, et c'est ce qui oblige à la relire.
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react"
 import { afterEach, describe, expect, test, vi } from "vitest"
+
+import { api } from "../api"
 
 import {
   CalquesAnimes,
@@ -418,5 +428,113 @@ describe("le vide dit une phrase et un geste, rien d'autre", () => {
     fireEvent.click(screen.getByRole("button", { name: /Revenir aux calques/ }))
 
     expect(onRevenirALEmploi).toHaveBeenCalled()
+  })
+})
+
+// ── Regarder les images habillées (`RP18`) ─────────────────────────────────
+//
+// **L'écran annonçait « huit calculs » et ne montrait pas un pixel.** La route
+// qui compose les images existait depuis `B20` et personne ne l'appelait ; un
+// compte de calculs ne dit pas si le casque est sur la tête.
+
+describe("regarder les images habillées", () => {
+  const habilleeUne = () =>
+    matriceDe({
+      rangees: [rangee({ etat: "habille", habillee: habillee() })],
+      fait: 1,
+    })
+
+  const bouton = () =>
+    document.querySelector(
+      '[data-regarder-les-images="marche-sud"]',
+    ) as HTMLButtonElement
+
+  test("le geste demande les images de cette bande-là, et les montre", async () => {
+    const demande = vi
+      .spyOn(api, "apercuDuCalqueAnime")
+      .mockResolvedValue({
+        bande: habillee(),
+        calque: "data:image/png;base64,calque",
+        images: ["data:image/png;base64,une", "data:image/png;base64,deux"],
+      } as Awaited<ReturnType<typeof api.apercuDuCalqueAnime>>)
+    render(
+      <CalquesAnimes
+        matrice={habilleeUne()}
+        onPoser={vi.fn()}
+        onBasculer={vi.fn()}
+        onRetirer={vi.fn()}
+        onRevenirALEmploi={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(bouton())
+
+    await waitFor(() =>
+      expect(
+        document.querySelectorAll('[data-images-habillees="marche-sud"] img'),
+      ).toHaveLength(2),
+    )
+    expect(demande).toHaveBeenCalledWith("habillee-1")
+    demande.mockRestore()
+  })
+
+  test("un second clic les referme, et rien n'est redemandé pour ça", async () => {
+    // Refermer est un geste de lecture : il ne vaut pas un aller-retour.
+    const demande = vi.spyOn(api, "apercuDuCalqueAnime").mockResolvedValue({
+      bande: habillee(),
+      calque: "data:image/png;base64,calque",
+      images: ["data:image/png;base64,une"],
+    } as Awaited<ReturnType<typeof api.apercuDuCalqueAnime>>)
+    render(
+      <CalquesAnimes
+        matrice={habilleeUne()}
+        onPoser={vi.fn()}
+        onBasculer={vi.fn()}
+        onRetirer={vi.fn()}
+        onRevenirALEmploi={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(bouton())
+    await waitFor(() => expect(bouton().textContent).toContain("Fermer"))
+    fireEvent.click(bouton())
+
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-images-habillees="marche-sud"]'),
+      ).toBeNull(),
+    )
+    expect(demande).toHaveBeenCalledTimes(1)
+    demande.mockRestore()
+  })
+
+  test("une rangée non habillée n'offre pas le geste", () => {
+    // Il n'y a rien à composer : le calque n'est posé nulle part.
+    monter({ rangees: [rangee()] })
+
+    expect(bouton()).toBeNull()
+  })
+
+  test("un refus se dit à l'écran, et rien ne s'ouvre", async () => {
+    const demande = vi
+      .spyOn(api, "apercuDuCalqueAnime")
+      .mockRejectedValue(new Error("le calque n'est plus là"))
+    render(
+      <CalquesAnimes
+        matrice={habilleeUne()}
+        onPoser={vi.fn()}
+        onBasculer={vi.fn()}
+        onRetirer={vi.fn()}
+        onRevenirALEmploi={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(bouton())
+
+    await waitFor(() =>
+      expect(screen.getByText("le calque n'est plus là")).toBeTruthy(),
+    )
+    expect(document.querySelector('[data-images-habillees="marche-sud"]')).toBeNull()
+    demande.mockRestore()
   })
 })

@@ -562,20 +562,9 @@ def test_un_calage_a_la_main_peut_ne_pas_etre_garde(atelier, decor):
     assert atelier.montage.bande(decor["bande"].identifiant).calage_garde is None
 
 
-def test_oublier_le_calage_rend_la_main_au_recalage(atelier, decor):
-    """Tout ce que le produit devine se défait d'un clic ; ce que l'auteur pose
-    aussi."""
-    habillee = atelier.calques_animes.habiller(
-        decor["bande"].identifiant, decor["piece"], TIENT
-    )
-    atelier.calques_animes.caler_a_la_main(
-        habillee["identifiant"], echelle=2.0, dx=11, dy=11
-    )
-
-    rendue = atelier.calques_animes.oublier_le_calage(habillee["identifiant"])
-
-    assert rendue["habillage"]["a_la_main"] is False
-    assert {(c["dx"], c["dy"]) for c in rendue["calages"]} != {(11, 11)}
+# `test_oublier_le_calage_rend_la_main_au_recalage` est parti le 16 septembre
+# 2026 avec `oublier_le_calage` et sa route (`RP18`). Aucun écran ne pose de
+# calage à la main sur une bande : l'annulation n'avait aucun geste d'où partir.
 
 
 # ── 5. L'invariant de C3 : un calque reste solidaire de sa pose ────────────
@@ -715,8 +704,11 @@ def test_la_route_de_la_matrice_repond(client, atelier, decor):
 
 
 def test_les_routes_du_calque_anime_font_le_tour(client, decor):
-    """Poser, régler, caler, oublier le calage, retirer — le geste entier par
-    la porte que l'écran emprunte."""
+    """Poser, régler, caler, retirer — le geste entier par la porte que l'écran
+    emprunte.
+
+    *Défaire* le calage à la main est parti le 16 septembre 2026 (`RP18`) : rien
+    n'en pose depuis un écran, donc rien n'en défaisait."""
     bande = decor["bande"].identifiant
 
     pose = client.post(
@@ -739,12 +731,7 @@ def test_les_routes_du_calque_anime_font_le_tour(client, decor):
     assert cale.status_code == 200, cale.text
     assert cale.json()["habillage"]["a_la_main"] is True
 
-    assert (
-        client.delete(f"/api/strips/{habillee}/layer/align").json()["habillage"][
-            "a_la_main"
-        ]
-        is False
-    )
+    assert client.delete(f"/api/strips/{habillee}/layer/align").status_code == 405
     assert client.delete(f"/api/strips/{habillee}/layer").status_code == 200
 
 

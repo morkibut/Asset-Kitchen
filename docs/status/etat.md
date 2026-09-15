@@ -11,6 +11,34 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP18 · Les neuf routes sans écran — 16 septembre 2026
+
+**Deux des neuf n'étaient pas orphelines, et c'est la méthode du relevé qui les avait
+manquées.** Le relevé remplissait sa colonne *appelée par l'interface ?* en cherchant l'adresse
+de la route dans `interface/src/`. Or le serveur **compose** certaines adresses et les met dans
+la charge qu'il rend : l'écran d'une fabrication suivie affiche `travail.entree_video.url` et
+`travail.references[].url` sans jamais nommer la route. Aucune recherche de chaîne ne peut les
+voir. La recherche qui manquait tient en une ligne — `grep -rn '"url": f"/api' atelier/` —, elle
+nomme quatre écritures, et les quatre sont affichées.
+
+**Quatre routes retirées, et aucune ne perdait une capacité.** Les trois adresses des jeux de
+réglages nommés partent parce que l'autre chemin existait déjà et a toujours été le seul
+emprunté : *Reprendre les réglages* relit la génération d'une image de la bibliothèque et repose
+ses réglages dans le générateur. Une image sous les yeux est un meilleur point de départ qu'un
+nom à retenir — et c'est sans doute pourquoi l'écran des noms n'a jamais été construit.
+
+**La quatrième retirée dit quelque chose sur la façon de compter.** *Défaire un calage posé à la
+main* sur une animation semblait tenue par son pendant `POST`, réputé appelé. Il ne l'est pas :
+son seul client est une fonction d'`api.ts` qu'aucun composant n'emploie. Compter un appel dans
+`api.ts` comme un emprunteur donne donc un faux positif exactement comme le serveur composant une
+adresse donne un faux négatif — **la même faute, dans les deux sens**.
+
+**Et une route sans écran cachait un écran sans image.** *Ses animations, image par image*
+annonçait « le calque a été recalé sur chacune des huit images · huit calculs » et ne montrait
+pas un pixel, alors que la route qui compose ces images existait depuis `B20`. Un compte de
+calculs ne dit pas si le casque est sur la tête. Elle est branchée sur un bouton par rangée
+habillée.
+
 ## RP22 · Une table se défait, se remet à zéro, et se voit avant d'enregistrer — 16 septembre 2026
 
 **L'aperçu n'était pas cassé, le bouton mentait sur son propre état.** `retournement ?? DÉFAUT`

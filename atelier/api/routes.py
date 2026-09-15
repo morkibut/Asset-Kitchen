@@ -1967,7 +1967,7 @@ async def oublier_recette(requete: Request, nom: str) -> dict[str, Any]:
     return {"recettes": {n: r.en_json() for n, r in recettes.items()}}
 
 
-# ── Les jeux de réglages nommés ──────────────────────────────────────────────
+# ── Les jeux de réglages nommés : retirés le 16 septembre 2026 (RP18) ────────
 #
 # Trois routes — `GET`, `PUT` et `DELETE /presets/{nom}` — ont porté US-134
 # pendant toute la vie du produit sans qu'un seul écran les appelle. Ce qu'elles

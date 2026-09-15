@@ -48,6 +48,12 @@ class Statut(str, Enum):
 # rien : il repeuple le générateur avec les paramètres d'une génération passée,
 # et ne laisse donc aucune trace dans celle qui part.
 #
+# ⚠️ **Le quatrième se désigne par une image, jamais par un nom** (`RP18`,
+# 16 septembre 2026). *Reprendre les réglages*, sur la fiche d'une image de la
+# bibliothèque, relit la génération qui l'a fabriquée et repose ses paramètres.
+# Les jeux de réglages nommés, qui promettaient la même chose sous un nom, sont
+# partis : ils n'ont jamais eu d'écran.
+#
 # **Deux de ces trois rôles partent par le même tuyau**, parce que le contrat du
 # fournisseur n'a qu'un seul champ d'images d'entrée. Ce qui les distingue est
 # donc écrit ici, et nulle part chez l'adaptateur :

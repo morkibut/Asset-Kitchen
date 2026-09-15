@@ -1289,60 +1289,14 @@ class ServiceGenerations:
             options=demande.get("options", {}),
         )
 
-    # ── Les jeux de réglages nommés ──────────────────────────────────────────
-
-    def reglages(self) -> dict[str, Any]:
-        """Les jeux de réglages enregistrés (US-134).
-
-        « Enregistrer sous un nom ce qui part en référence et les réglages d'une
-        génération, afin de rejouer la même recette sur un autre personnage sans
-        la reconstituer. » C'est le **quatrième rôle** d'une réinjection, déclaré
-        en T1 et resté vide depuis : *jeu de réglages* — le seul des quatre qui
-        n'envoie aucune image, et qui repeuple le générateur au lieu de partir
-        avec l'appel (`atelier/domaine/generation.py` § Les rôles).
-        """
-        return self._fichiers.lire_prereglages()
-
-    def nommer_reglages(self, nom: str, contenu: dict[str, Any]) -> dict[str, Any]:
-        """Ce qui part et comment, sous un nom — **et rien de qui**.
-
-        Le personnage, ses poses et le prompt n'y sont pas, et c'est toute la
-        promesse : *se rappeler d'un geste sur un autre personnage*. Un jeu de
-        réglages qui porterait le personnage serait un jeu de réglages qu'on ne
-        pourrait rejouer que sur lui.
-
-        **Rien n'est validé ici**, et c'est délibéré : un modèle qui a disparu
-        du catalogue, un asset supprimé depuis, une option qu'un modèle ne
-        déclare plus — tout cela se grise **au moment de générer**, avec sa
-        raison, exactement comme si l'auteur venait de le choisir à la main. Un
-        refus à l'enregistrement aurait fait un second endroit qui juge une
-        demande, et il aurait fini par ne plus dire la même chose que le premier.
-        """
-        propre = nom.strip()
-        if not propre:
-            raise DemandeRefusee("un jeu de réglages a besoin d'un nom")
-        enregistres = self._fichiers.lire_prereglages()
-        enregistres[propre] = {
-            "modele": contenu.get("modele", ""),
-            "proportions": contenu.get("proportions", "1:1"),
-            "resolution": contenu.get("resolution"),
-            "options": dict(contenu.get("options") or {}),
-            "echelle": contenu.get("echelle", ""),
-            "references": [
-                {"asset": r.get("asset", ""), "role": r.get("role", "reference")}
-                for r in (contenu.get("references") or [])
-                if r.get("asset")
-            ],
-            "references_ecartees": list(contenu.get("references_ecartees") or []),
-        }
-        self._fichiers.ecrire_prereglages(enregistres)
-        return self.reglages()
-
-    def oublier_reglages(self, nom: str) -> dict[str, Any]:
-        enregistres = self._fichiers.lire_prereglages()
-        enregistres.pop(nom, None)
-        self._fichiers.ecrire_prereglages(enregistres)
-        return self.reglages()
+    # ── Les jeux de réglages nommés : retirés le 16 septembre 2026 (RP18) ────
+    #
+    # `reglages`, `nommer_reglages` et `oublier_reglages` gardaient sous un nom
+    # ce qui part et comment (US-134). Aucun écran ne les a jamais appelés, et
+    # le geste que l'auteur emploie à la place existe : *Reprendre les réglages*
+    # relit la génération d'une image de la bibliothèque et repose ses réglages
+    # dans le générateur. Le point de départ est alors une image qu'on a sous
+    # les yeux, au lieu d'un nom à se rappeler.
 
     # ── Le lot ───────────────────────────────────────────────────────────────
 
@@ -2379,13 +2333,6 @@ class ServiceGenerations:
         le fait n'est utile qu'à moitié : chaque ligne dit d'où elle vient, et
         si quelque chose l'écarte, à quelle portée. Le total, lui, ne compte que
         ce qui part vraiment — c'est lui qui décide du grisé du modèle.
-        # **Sixième provenance depuis `RP9`** : une carte que l'auteur a prise
-        # sur la toile, pour cet appel-ci. Elle se reconnaît à ce qu'elle est
-        # **dans ce que l'appelant a nommé** — les trois autres sources de
-        # cartes, elles, sont posées par l'application. Sans ce test, une carte
-        # choisie à la main se lisait « artwork officiel », c'est-à-dire le
-        # contraire de ce qui vient de se passer.
-        de_la_toile = {r.asset for r in manuelles if r.origine == CARTE}
         """
         artworks = self._artworks(echelle, projet)
         concepts = self._concepts(projet, personnage, piece)
@@ -2432,6 +2379,13 @@ class ServiceGenerations:
         # un concept art épinglé sur la chose : la corriger là-bas la corrige
         # pour tout ce qui s'en sert, et c'est ce que le mot doit dire.
         siennes = set(r.asset for r in de_lambiance)
+        # **Sixième provenance depuis `RP9`** : une carte que l'auteur a prise
+        # sur la toile, pour cet appel-ci. Elle se reconnaît à ce qu'elle est
+        # **dans ce que l'appelant a nommé** — les trois autres sources de
+        # cartes, elles, sont posées par l'application. Sans ce test, une carte
+        # choisie à la main se lisait « artwork officiel », c'est-à-dire le
+        # contraire de ce qui vient de se passer.
+        de_la_toile = {r.asset for r in manuelles if r.origine == CARTE}
 
         lignes = [
             {

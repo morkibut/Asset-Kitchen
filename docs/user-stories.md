@@ -193,7 +193,7 @@ dans `docs/tranches/<code>.md`.
 - **US-131** — En tant qu'auteur, je veux qu'un lot dont le compte d'images ne tombe pas juste soit refusé et relançable, afin qu'une planche incomplète n'entre jamais silencieusement dans mon plan.
 - **US-132** — En tant qu'auteur, je veux reprendre un lot interrompu sans repayer ce qui est déjà arrivé, afin qu'une coupure ne me coûte que ce qu'elle a coûté.
 - **US-133** — En tant qu'auteur, je veux régénérer une pose seule à l'intérieur d'un lot déjà reçu, afin de rattraper une case ratée sans refaire la planche entière.
-- **US-134** — En tant qu'auteur, je veux enregistrer sous un nom ce qui part en référence et les réglages d'une génération, afin de rejouer la même recette sur un autre personnage sans la reconstituer.
+- **US-134** — En tant qu'auteur, je veux enregistrer sous un nom ce qui part en référence et les réglages d'une génération, afin de rejouer la même recette sur un autre personnage sans la reconstituer. *Tenue autrement depuis `RP18`, le 16 septembre 2026 : ce qu'on rejoue est l'appel qui a fabriqué **une image** de la bibliothèque — *Reprendre les réglages*, sur sa fiche —, et non un jeu de réglages qu'il aurait fallu nommer avant d'en avoir envie. Les trois routes du nom sont retirées ; la raison est dans `docs/prd-decisions.md`.*
 - **US-135** — En tant qu'auteur, je veux être prévenu quand deux poses d'un même lot se ressemblent trop, sans que le lot soit refusé pour autant, afin de relancer la case qui n'apporte rien plutôt que de la découvrir au montage.
 
 ### La pièce et le calque

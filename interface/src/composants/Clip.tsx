@@ -153,6 +153,10 @@ export function EcranClip({
   const [mouvements, setMouvements] = useState<Mouvement[]>([])
   const [mouvement, setMouvement] = useState<string | null>(null)
   const [catalogue, setCatalogue] = useState<BaseModelesVideo | null>(null)
+  /** Vrai pendant qu'on redemande la liste des modèles vidéo aux fournisseurs
+   *  (`RP18`). Il ne dit pas *ça travaille* pour faire joli : sans lui, un
+   *  second clic repart avant que le premier soit revenu. */
+  const [redemande, setRedemande] = useState(false)
 
   // ── Le filtre de la liste (V3.01.2) ──────────────────────────────────────
   //
@@ -291,6 +295,32 @@ export function EcranClip({
   }, [secondes, resolution, proportions])
 
   useEffect(relireLeCatalogue, [relireLeCatalogue])
+
+  /** Redemander la liste des modèles vidéo aux fournisseurs (`RP18`).
+   *
+   *  **Deux appels, et l'ordre compte** : le premier va chercher la liste chez
+   *  les fournisseurs, le second la relit *avec la demande en cours* — durée,
+   *  résolution, format —, sans quoi les prix affichés seraient ceux d'aucun
+   *  réglage. C'est exactement ce que fait déjà le côté image.
+   *
+   *  **Rien ne se dépense ici** : on demande à un fournisseur la liste de ce
+   *  qu'il vend, pas une image. */
+  const redemanderLeCatalogue = async () => {
+    setRedemande(true)
+    setRefus(null)
+    try {
+      await api.rafraichirCatalogueVideo()
+      relireLeCatalogue()
+    } catch (erreur) {
+      setRefus(
+        erreur instanceof Error
+          ? erreur.message
+          : "les fournisseurs n'ont pas répondu",
+      )
+    } finally {
+      setRedemande(false)
+    }
+  }
 
   const choisi = catalogue?.modeles.find((m) => m.identifiant === modele) ?? null
   const texte = mouvements.find((m) => m.identifiant === mouvement)?.texte ?? ""
@@ -656,7 +686,26 @@ export function EcranClip({
         </button>
 
         {catalogue?.modeles.length === 0 && (
-          <Raison texte={catalogue.raison ?? catalogue.manque ?? "aucun modèle vidéo"} />
+          <>
+            <Raison
+              texte={catalogue.raison ?? catalogue.manque ?? "aucun modèle vidéo"}
+            />
+            {/* **Le bouton est là où la panne se lit** (`RP18`), et il ne
+                dépense pas : on redemande la liste de ce qui se vend, pas une
+                image. Le côté image a ce geste depuis toujours ; la liste
+                vidéo, elle, restait vide jusqu'à la fermeture de l'atelier. */}
+            <button
+              type="button"
+              data-redemander-le-catalogue-video
+              disabled={redemande}
+              onClick={() => void redemanderLeCatalogue()}
+              className="mesure mt-2 self-start rounded-[2px] border border-trait bg-carte px-2 py-1.5 text-[10px] text-encre-3 hover:border-contour hover:text-encre disabled:text-encre-4"
+            >
+              {redemande
+                ? "on redemande aux fournisseurs…"
+                : "redemander le catalogue · gratuit"}
+            </button>
+          </>
         )}
 
         {modelesVisibles.length === 0 && catalogue !== null && (

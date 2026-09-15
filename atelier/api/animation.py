@@ -1278,19 +1278,22 @@ async def caler_un_calque_anime(
     )
 
 
-@routeur.delete("/strips/{identifiant}/layer/align")
-async def oublier_le_calage_dun_calque_anime(
-    requete: Request, identifiant: str
-) -> dict[str, Any]:
-    """Défaire le calage à la main — le recalage reprend la main."""
-    return _atelier(requete).calques_animes.oublier_le_calage(identifiant)
+# `DELETE /strips/{identifiant}/layer/align` — défaire le calage à la main — est
+# retirée le 16 septembre 2026 (`RP18`). Un calage à la main ne se pose depuis
+# aucun écran : `POST .../layer/align` n'a de client que le bandeau d'appels de
+# l'interface, qu'aucun composant n'emploie. Une annulation qu'aucun geste ne
+# peut atteindre n'annule rien. Elle reviendra avec l'écran qui posera le calage.
 
 
 @routeur.get("/strips/{identifiant}/layer/preview")
 async def apercu_dun_calque_anime(
     requete: Request, identifiant: str
 ) -> dict[str, Any]:
-    """Les images habillées, **sans rien écrire sur le disque**."""
+    """Les images habillées, **sans rien écrire sur le disque**.
+
+    Empruntée par *Ses animations, image par image* depuis `RP18` : l'écran
+    montrait un compte d'images et pas une seule image.
+    """
     return _atelier(requete).calques_animes.apercu(identifiant)
 
 

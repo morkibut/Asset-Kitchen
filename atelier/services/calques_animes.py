@@ -269,20 +269,9 @@ class ServiceCalquesAnimes:
             self._montage.enregistrer(nue)
         return self._en_json(rendue)
 
-    def oublier_le_calage(self, identifiant: str) -> dict[str, Any]:
-        """Défaire le calage à la main — **le recalage reprend la main**.
-
-        Tout ce que le produit devine se défait d'un clic ; ce que l'auteur pose
-        aussi. La bande nue garde ses nombres : les oublier ici ne les retire
-        pas de la pièce suivante, qui ne les a pas demandés.
-        """
-        habillee = self._exiger_habillee(identifiant)
-        ancien = habillee.habillage
-        assert ancien is not None  # tenu par `_exiger_habillee`
-        habillage = Habillage(piece=ancien.piece, tenue=ancien.tenue, main=None)
-        nue = self._nue_de(habillee)
-        calque = self._exiger_calque(nue, ancien.piece)
-        return self._en_json(self._recomposer(nue, calque, habillage, sur=habillee))
+    # `oublier_le_calage` est retiré le 16 septembre 2026 (`RP18`), avec sa route
+    # `DELETE /strips/{id}/layer/align` : aucun écran ne pose de calage à la
+    # main sur une bande, donc aucun n'avait à en défaire un.
 
     def deshabiller(self, identifiant: str) -> dict[str, Any]:
         """La bande habillée s'en va ; **le corps et le calque restent**.

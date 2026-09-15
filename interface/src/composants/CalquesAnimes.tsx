@@ -37,7 +37,10 @@
  * comme il ne dépense pas, il n'est pas rouille : *cliquer ne coûte jamais*.
  */
 
+import { useState } from "react"
+
 import {
+  api,
   type CalageParImage,
   type MatriceDesCalquesAnimes,
   type RangeeDeCalqueAnime,
@@ -118,11 +121,22 @@ function Rangee({
   onPoser,
   onBasculer,
   onRetirer,
+  onRegarder,
+  apercu,
+  enCours,
 }: {
   rangee: RangeeDeCalqueAnime
   onPoser: (bande: string, tenue: TenueDuCalque) => void
   onBasculer: (habillee: string, tenue: TenueDuCalque) => void
   onRetirer: (habillee: string) => void
+  /** Demander — ou refermer — les images habillées de cette rangée. */
+  onRegarder: (habillee: string) => void
+  /** Les images de **cette** rangée, ou `null` quand elles ne sont pas
+   *  demandées. Une seule rangée est ouverte à la fois : deux bandes ouvertes
+   *  côte à côte tiendraient seize images en mémoire pour une comparaison que
+   *  personne n'a demandée. */
+  apercu: readonly string[] | null
+  enCours: boolean
 }) {
   const habillee = rangee.habillee
   const tenue: TenueDuCalque = habillee?.habillage?.tenue ?? "tient"
@@ -186,6 +200,23 @@ function Rangee({
                   ? "le faire glisser"
                   : "le faire tenir image par image"}
               </button>
+              {/* **Regarder ne coûte rien et n'écrit rien** : les images
+                  reviennent calculées, et repartent quand on referme. C'est le
+                  seul endroit de l'écran où le calage se juge — un compte de
+                  calculs ne dit pas si le casque est sur la tête. */}
+              <button
+                type="button"
+                data-regarder-les-images={cle}
+                aria-expanded={apercu !== null}
+                onClick={() => onRegarder(habillee.identifiant)}
+                className="h-[26px] rounded-7 border border-contour bg-carte px-[8px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
+              >
+                {enCours
+                  ? "on compose…"
+                  : apercu !== null
+                    ? "Fermer les images"
+                    : "Regarder les images"}
+              </button>
               <button
                 type="button"
                 data-retirer-le-calque={cle}
@@ -203,6 +234,22 @@ function Rangee({
             {detailDeLaRangee(rangee)}
             {habillee?.habillage?.a_la_main ? " Le calage a été posé à la main." : ""}
           </p>
+        ) : null}
+
+        {apercu !== null ? (
+          <div
+            data-images-habillees={cle}
+            className="defile mt-[4px] flex gap-[8px] overflow-x-auto pb-[4px]"
+          >
+            {apercu.map((image, rang) => (
+              <img
+                key={rang}
+                src={image}
+                alt={`${rangee.pose_nom} habillé · image ${rang + 1}`}
+                className="damier-papier h-[128px] w-[128px] shrink-0 rounded-7 border border-trait object-contain"
+              />
+            ))}
+          </div>
         ) : null}
 
         {/* **Le manque n'a pas de couleur** — un trait fin, et rien d'autre. */}
@@ -235,6 +282,41 @@ export function CalquesAnimes({
   onRetirer: (habillee: string) => void
   onRevenirALEmploi: () => void
 }) {
+  // ── Regarder les images habillées (`RP18`) ────────────────────────────────
+  //
+  // **L'appel se fait ici et ne remonte pas**, contrairement aux trois gestes
+  // au-dessus. La raison est celle qui les avait fait remonter : un geste
+  // change la matrice, donc il faut la relire, et deux relectures ne rendent
+  // pas le même instant. Regarder ne change rien — ni sur le disque, ni dans la
+  // matrice —, il n'y a donc rien à relire et rien à tenir d'accord.
+  const [ouverte, setOuverte] = useState<string | null>(null)
+  const [images, setImages] = useState<readonly string[] | null>(null)
+  const [enCours, setEnCours] = useState<string | null>(null)
+  const [refus, setRefus] = useState<string | null>(null)
+
+  const regarder = async (habillee: string) => {
+    if (ouverte === habillee) {
+      setOuverte(null)
+      setImages(null)
+      return
+    }
+    setEnCours(habillee)
+    setRefus(null)
+    try {
+      const recu = await api.apercuDuCalqueAnime(habillee)
+      setOuverte(habillee)
+      setImages(recu.images)
+    } catch (erreur) {
+      setOuverte(null)
+      setImages(null)
+      setRefus(
+        erreur instanceof Error ? erreur.message : "les images n'ont pas pu être composées",
+      )
+    } finally {
+      setEnCours(null)
+    }
+  }
+
   return (
     <main
       data-calques-animes
@@ -289,10 +371,25 @@ export function CalquesAnimes({
                 onPoser={onPoser}
                 onBasculer={onBasculer}
                 onRetirer={onRetirer}
+                onRegarder={(habillee) => void regarder(habillee)}
+                apercu={
+                  rangee.habillee !== null && rangee.habillee.identifiant === ouverte
+                    ? images
+                    : null
+                }
+                enCours={
+                  rangee.habillee !== null && rangee.habillee.identifiant === enCours
+                }
               />
             ))
           )}
         </div>
+
+        {refus !== null ? (
+          <p data-refus-de-l-apercu className="pb-[14px] text-[12.5px] text-encre-3">
+            {refus}
+          </p>
+        ) : null}
       </section>
 
       {/* ── Ce que le recalage fait, et ce qu'il ne coûte pas ──────────────── */}

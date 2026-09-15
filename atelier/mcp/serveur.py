@@ -831,12 +831,17 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "a direction. Each character also carries `reference_image`: the "
             "one still image that says what the subject looks like, picked by "
             "the author. It is read-only here — there is no tool to set it. "
+            "Pass `search` to keep only the subjects whose name or description "
+            "match it: on a game with hundreds of subjects, that is how you "
+            "find one without reading the whole cast. "
             "Call this before generating: an empty slot is what "
             "needs an image, a filled one does not. Free and offline."
         ),
     )
     @_refus_lisible
-    async def list_characters(project: str | None = None) -> dict[str, Any]:
+    async def list_characters(
+        project: str | None = None, search: str = ""
+    ) -> dict[str, Any]:
         """La matrice, dite à l'agent — **et rien n'est recalculé ici**.
 
         « Cette pose est remplie » a une seule écriture dans le produit, celle
@@ -849,9 +854,21 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         # **Les cases, lues une fois par sujet** (RP19). L'image de référence
         # retombe dessus quand l'auteur n'en a choisi aucune ; les relire pour
         # elle paierait le même parcours deux fois.
+        sujets = atelier.production.personnages(projet)
+        if search.strip():
+            # **La recherche est celle du serveur, pas une d'ici** (RP18) :
+            # `rechercher_personnages` lit l'index sur le nom et la description,
+            # la même colonne que la grille d'une famille interroge. Refiltrer
+            # les noms ici aurait fait une seconde règle de recherche, qui
+            # finirait par ne plus dire la même chose que la première.
+            retenus = {
+                p.identifiant
+                for p in atelier.production.rechercher_personnages(projet, search)
+            }
+            sujets = [p for p in sujets if p.identifiant in retenus]
         cases_par_sujet = [
             (personnage, atelier.production.cases(projet, personnage))
-            for personnage in atelier.production.personnages(projet)
+            for personnage in sujets
         ]
         return {
             "project": projet,
@@ -1362,6 +1379,8 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
     installer_sons(serveur, atelier, _refus_lisible)
     from atelier.mcp.sources_3d import installer_sources_3d
     installer_sources_3d(serveur, atelier, _refus_lisible)
+    from atelier.mcp.enregistrer_sous import installer_enregistrer_sous
+    installer_enregistrer_sous(serveur, atelier, _refus_lisible)
     return serveur
 
 
@@ -1389,8 +1408,6 @@ def _reserve(reserve: "Reserve | None") -> dict[str, Any] | None:
         "unit": reserve.unite,
         "used": reserve.consomme,
         "allowance": reserve.plafond,
-    from atelier.mcp.enregistrer_sous import installer_enregistrer_sous
-    installer_enregistrer_sous(serveur, atelier, _refus_lisible)
         "remaining": reserve.reste,
         "counted": "here" if reserve.source == ICI else "provider",
         "renews": reserve.renouvellement or None,
