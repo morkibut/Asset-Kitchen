@@ -764,6 +764,40 @@ class ServiceMontage:
             },
         }
 
+    def rendu_des_frames(
+        self, identifiant: str, *,
+        prises: Sequence[Prise] | None = None, recette: Recette | None = None,
+    ) -> dict[str, Any]:
+        """**Toutes** les frames rendues, dans l'ordre — et rien n'est écrit (RP20).
+
+        C'est `prelevement_de_frame` à l'échelle de la bande entière, et c'est
+        pour ça que ce n'est pas une boucle chez l'appelant : la planche coûte
+        le détourage de chaque image, et la refaire une fois par frame la
+        paierait huit fois pour une marche.
+
+        La chaîne est celle de l'aperçu — recettes individuelles, placement,
+        Main finale —, donc *ce qui est enregistré est exactement ce que
+        l'écran montrait*, par construction et non par discipline.
+        """
+        bande = self.bande(identifiant)
+        courante = replace(
+            bande,
+            prises=list(prises) if prises is not None else bande.prises,
+            recette=recette if recette is not None else bande.recette,
+        )
+        planche = self._planche_de(courante)
+        pixels = en_rgba(planche.octets)
+        cote = planche.case_largeur
+        return {
+            "bande": courante,
+            "images": [
+                en_png(pixels[:, rang * cote : (rang + 1) * cote])
+                for rang in range(len(courante.prises))
+            ],
+            "case_largeur": planche.case_largeur,
+            "case_hauteur": planche.case_hauteur,
+        }
+
     def planche(self, identifiant: str) -> bytes:
         """La planche de sprites de cette bande, **recalculée si le cache a sauté**.
 

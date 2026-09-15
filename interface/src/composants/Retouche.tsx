@@ -100,6 +100,7 @@ import { useEtatDuParcours } from "./MemoireDuParcours"
 import { useMainDuParcours } from "./MainDuParcours"
 import { useRetoucheBrouillon } from "./RetoucheBrouillon"
 import { CadreDialogue } from "./CadreDialogue"
+import { EnregistrerSous, raisonDEnregistrerSous } from "./EnregistrerSous"
 // **Le vocabulaire vient d'un module sans écran** (`B26`). Les listes fermées,
 // les fonctions pures et les trois crochets de la recette ne sont pas du
 // balisage : ce sont des faits du domaine, et une seconde définition d'un même
@@ -3680,6 +3681,10 @@ export function Retouche({
   const mesures = apercu?.mesures ?? mesuresEnregistrees
   const imageVisible = (brut = false) => brut ? imageAsset(originale, true) : apercu?.rendu ?? imageAsset(originale)
   const [sortie, setSortie] = useState<(() => void) | null>(null)
+  // **Enregistrer sous** (`RP20`) — la fenêtre qui demande la case d'arrivée.
+  // La raison se lit **avant** le clic : un bouton grisé sans phrase est un
+  // bouton cassé (`docs/DESIGN.md`).
+  const [enregistrerSous, setEnregistrerSous] = useState(false)
   const sortir = (action: () => void) => { if (!enregistrementImmediat && session.modifie) setSortie(() => action); else action() }
   const [ouverte, setOuverte] = useEtatDuParcours<Table>(`retouche:${asset.projet ?? ""}:table`, tableDeLaPorte ?? "detourage")
   const [panneau, setPanneau] = useEtatDuParcours<"retouche" | "calques">(`retouche:${asset.projet ?? ""}:panneau`, "retouche")
@@ -4089,6 +4094,11 @@ export function Retouche({
           </button>
           <div className="min-w-0"><h1 className="truncate font-serif text-[25px] text-encre">{asset.label}</h1><p className="text-[12px] text-encre-3">La retouche · {enregistrementImmediat ? "réglages enregistrés au fil des gestes" : session.modifie ? "Brouillon · version enregistrée intacte" : "Version enregistrée"}</p></div>
           {!enregistrementImmediat && <button type="button" disabled={!session.modifie || !session.valide || !!enVol || session.enregistre} onClick={() => void session.enregistrer()} className="ml-auto h-[34px] shrink-0 rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{session.enregistre ? "Enregistrement…" : "Enregistrer les retouches"}</button>}
+          {/* **Enregistrer sous…, à côté d’Enregistrer** (`RP20`). Grisé
+              avec sa raison tant qu’aucune retouche n’est appliquée : sans
+              recette, le geste rangerait la même image dans une seconde
+              case. */}
+          <button type="button" title={raisonDEnregistrerSous(recette) ?? "Le résultat devient une autre pose ou direction"} disabled={!!raisonDEnregistrerSous(recette)} onClick={() => setEnregistrerSous(true)} className="h-[34px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle disabled:opacity-50">Enregistrer sous…</button>
 
           {/* **Les recettes vivent au bout du bandeau**, comme dans
               `Tables.tsx` : elles ont la portée de la recette entière, pas
@@ -4638,6 +4648,7 @@ export function Retouche({
         </div>
         )}
       </div>
+      {enregistrerSous && <EnregistrerSous quoi="image" identifiant={originale.identifiant} recette={recette} onFermer={() => setEnregistrerSous(false)} />}
       {sortie && <CadreDialogue titre="Quitter les retouches" format="preparation" onFermer={() => setSortie(null)} enfants={<section className="w-full max-w-[880px] rounded-8 border border-trait bg-papier p-[22px]"><h2 className="font-serif text-[25px]">Des retouches attendent</h2><p className="mt-[14px] text-[13px]">La version enregistrée reste intacte. Gardez le brouillon pour plus tard, ou enregistrez les retouches avant de continuer. La découpe, l’extraction et l’équipement utilisent la version enregistrée.</p><div className="mt-[22px] flex flex-wrap gap-[8px]"><button type="button" onClick={() => setSortie(null)} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Continuer à retoucher</button><button type="button" onClick={() => { const action = sortie; setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Garder le brouillon et continuer</button><button type="button" onClick={() => { const action = sortie; session.abandonner(); setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Abandonner les retouches</button><button type="button" disabled={!session.valide || !!enVol || session.enregistre} onClick={async () => { if (await session.enregistrer()) { const action = sortie; setSortie(null); action() } }} className="h-[34px] rounded-7 border border-signal bg-carte px-[14px] text-[12px] text-signal disabled:opacity-50">Enregistrer et continuer</button></div></section>} />}
     </main>
   )

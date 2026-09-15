@@ -41,6 +41,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from atelier.domaine.consommation import USD, argent
+from atelier.domaine.enregistrement import Origine
 from atelier.domaine.equipement import MesuresCalque
 from atelier.domaine.pliage import MesuresLot
 from atelier.domaine.recette import Recette
@@ -226,6 +227,17 @@ class Asset:
     parent: str | None = None
     favori: bool = False
 
+    # ── D'où elle vient quand elle a été *enregistrée sous* (RP20) ───────────
+    #
+    # **Le parent ne suffisait plus ici.** Une découpe et un miroir gardent la
+    # recette de leur parent : on peut donc lire ce qui leur a été fait. Une
+    # image enregistrée sous une autre case a une recette **vide** — son brut
+    # *est* le rendu —, et sans ce champ rien ne dirait plus ce qui avait été
+    # appliqué. `parent` reste écrit à côté : c'est lui qui fait que
+    # `Base.enfants` retrouve le dérivé depuis l'original, sans qu'aucune liste
+    # soit tenue là-bas (`atelier/domaine/enregistrement.py`).
+    origine: "Origine | None" = None
+
     # **Un fait acquis à l'instant où le parent part**, pas une déduction refaite
     # à chaque affichage. Supprimer un parent touche déjà ses enfants — il faut
     # les annoncer pour que leur pastille paraisse —, donc marquer ne coûte rien
@@ -312,6 +324,7 @@ class Asset:
             "personnage_supprime": self.personnage_supprime,
             "projet": self.projet,
             "parent": self.parent,
+            "origine": self.origine.en_json() if self.origine else None,
             "parent_supprime": self.parent_supprime,
             "favori": self.favori,
             "supprime_le": self.supprime_le,
@@ -378,6 +391,7 @@ class Asset:
             personnage_supprime=d.get("personnage_supprime", False),
             projet=d.get("projet"),
             parent=d.get("parent"),
+            origine=Origine.depuis_json(d.get("origine")),
             parent_supprime=d.get("parent_supprime", False),
             favori=d.get("favori", False),
             supprime_le=d.get("supprime_le"),

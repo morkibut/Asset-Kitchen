@@ -1034,6 +1034,9 @@ export type Bande = {
    *  refaire ce calcul à chaque écran. */
   supprime: boolean
   /** **La pièce que cette animation porte** (B20), ou `null` pour le corps nu.
+  /** D'où elle vient quand elle a été *enregistrée sous* une autre case
+   *  (`RP20`) — le pendant exact d'`Asset.origine`. */
+  origine?: OrigineDuRendu | null
    *
    *  C'est le champ qui manquait au rangement : une bande portait le projet, le
    *  personnage, la pose et la direction, et rien ne pouvait dire *celle-ci est
@@ -1859,6 +1862,10 @@ export type Asset = {
    *  ici — deux empreintes calculées à deux endroits finiraient par diverger. */
   empreinte: string
 }
+  /** D'où elle vient quand elle a été *enregistrée sous* une autre case
+   *  (`RP20`). Sa recette est vide — son brut **est** le rendu —, donc c'est le
+   *  seul endroit qui dise encore ce qui lui a été appliqué. */
+  origine?: OrigineDuRendu | null
 
 /** Ce qu'un lot plié a mesuré sur une de ses cases (C2, US-135).
  *
@@ -3828,6 +3835,86 @@ export type PropositionDeCarte = Decoupable & {
  *  l'image entière. Écrire « 0 % » serait alors faux au sens exactement
  *  inverse de ce qui se passe. */
 export type LectureDePalette = {
+/** Une entrée d'une des trois listes de la fenêtre *Enregistrer sous…* — un
+ *  sujet, une pose, une direction. Le nom se lit, l'identifiant s'envoie. */
+export type CaseNommee = { identifiant: string; nom: string }
+
+/** D'où vient ce qui a été **enregistré sous** une autre case (`RP20`) —
+ *  l'original et la recette employée.
+ *
+ *  Vide pour tout ce qui n'est pas né de ce geste, c'est-à-dire pour l'immense
+ *  majorité des images et des animations. La recette est gardée entière plutôt
+ *  que résumée : la question qu'on se pose six mois plus tard est *qu'est-ce
+ *  qui a été fait à cette image*, et l'original a pu changer depuis. */
+export type OrigineDuRendu = {
+  source: string
+  nature: "image" | "animation"
+  recette: Recette
+  /** La case **de départ** — celle d'arrivée est déjà sur l'objet. */
+  direction: string
+  miroir: boolean
+  le: number
+}
+
+/** Où le rendu courant irait se ranger, et pourquoi le geste est fermé quand il
+ *  l'est (`RP20`).
+ *
+ *  `direction` est **la proposition** : la direction au miroir quand la recette
+ *  porte un miroir gauche-droite, la case de l'original sinon. `raison` est la
+ *  phrase à écrire **avant** le clic — sans retouche appliquée, enregistrer
+ *  sous rangerait la même image dans une seconde case. Les deux ne sont jamais
+ *  remplies ensemble.
+ *
+ *  **Les trois listes viennent du serveur, jamais d'un calcul d'écran** : les
+ *  poses sont celles de ce sujet-là (E9) et les directions celles du jeu, deux
+ *  règles que l'écran ne saurait pas rejouer sans diverger. */
+export type EnregistrementPropose = {
+  quoi: "image" | "animation"
+  source: string
+  projet: string | null
+  sujet: string | null
+  pose: string | null
+  direction: string | null
+  direction_depart: string | null
+  miroir: boolean
+  nom: string
+  raison: string | null
+  sujets: CaseNommee[]
+  poses: CaseNommee[]
+  directions: CaseNommee[]
+  derives: {
+    identifiant: string
+    nom: string
+    pose: string | null
+    direction: string | null
+  }[]
+}
+
+/** La case d'arrivée, telle que la fenêtre l'envoie. **Absent et vide ne
+ *  veulent pas dire la même chose** : un champ absent reprend la proposition du
+ *  serveur, une chaîne vide retire la case. */
+export type EnregistrerSous = {
+  recette?: Recette | null
+  sujet?: string | null
+  pose?: string | null
+  direction?: string | null
+  nom?: string | null
+  prises?: Prise[]
+}
+
+/** Ce qui revient du geste. `range` est la phrase que l'écran affiche après
+ *  coup — *où le résultat est rangé* —, écrite par le serveur pour la raison de
+ *  toutes les autres : un second vocabulaire finirait par ne plus dire la même
+ *  chose que le premier. */
+export type EnregistrementFait = {
+  quoi: "image" | "animation"
+  source: string
+  range: string
+  asset?: Asset
+  bande?: Bande
+  clip?: string
+}
+
   carte: string
   part: number
   entiere: boolean
@@ -5173,6 +5260,40 @@ export const api = {
   // lisent, rangent ou rendent, et aucune ne rappelle le fournisseur : même
   // `rendreClips`, qui remontre un clip écarté, ne fait que défaire une marque
   // sur le disque.
+
+  // ── Enregistrer sous — un rendu devient une autre case (`RP20`) ───────────
+  //
+  // **Quatre appels, deux par calque, et la même coupure que le miroir** : ce
+  // qui ne crée rien se redemande à chaque ouverture de fenêtre, ce qui crée un
+  // objet ne se redemande jamais.
+  //
+  // La proposition est un `POST` parce qu'elle emporte **la recette en cours**,
+  // celle que l'écran tient et qui n'est pas forcément enregistrée : c'est tout
+  // l'intérêt du geste, et une recette ne tient pas dans une adresse.
+
+  enregistrementProposePourImage: (identifiant: string, recette: Recette | null) =>
+    appeler<EnregistrementPropose>(`/assets/${identifiant}/save-as/preview`, {
+      method: "POST",
+      body: JSON.stringify({ recette }),
+    }),
+
+  enregistrerImageSous: (identifiant: string, corps: EnregistrerSous) =>
+    appeler<EnregistrementFait>(`/assets/${identifiant}/save-as`, {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
+
+  enregistrementProposePourBande: (identifiant: string, recette: Recette | null) =>
+    appeler<EnregistrementPropose>(`/strips/${identifiant}/save-as/preview`, {
+      method: "POST",
+      body: JSON.stringify({ recette }),
+    }),
+
+  enregistrerBandeSous: (identifiant: string, corps: EnregistrerSous) =>
+    appeler<EnregistrementFait>(`/strips/${identifiant}/save-as`, {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
 
   /** Les modèles vidéo et **le prix du jour pour ce réglage-là**.
    *

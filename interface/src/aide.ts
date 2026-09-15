@@ -1762,6 +1762,25 @@ export const AIDE: Record<string, Explication> = {
       "**La direction proposée vient du serveur, jamais d'un calcul de l'écran.** Les directions d'un jeu sont libres et se renomment : deviner qu'un mot français en désigne un autre serait exactement la déduction que le produit refuse ailleurs. Quand l'atelier ne connaît pas la direction de l'image, le champ reste vide et attend la tienne.\n\n**Il y a deux directions qu'un miroir gauche-droite ne fabrique pas** : le sud et le nord, qui se rendent eux-mêmes. Un miroir ne peut montrer que ce qui est déjà dessiné — on ne voit jamais le dos d'un personnage qui nous fait face. Le geste se grise alors, avec sa raison, avant le clic : ces directions-là se génèrent.",
   },
 
+  // ── Enregistrer sous (`RP20`) ─────────────────────────────────────────────
+  //
+  // **Une entrée, pas trois.** Le sujet, la pose et la direction de la fenêtre
+  // sont la même question posée en trois champs : *où ça va*. Trois entrées
+  // auraient répété la même phrase, et la règle du guide est qu'une entrée
+  // décrit un réglage — celui-ci en est un seul.
+
+  "enregistrer-sous.case": {
+    nom: "où le résultat se range",
+    ou: "tables",
+    quoi: "La pose et la direction sous lesquelles le résultat de la retouche vient se poser. Ce qui naît est une image — ou une animation — neuve : ses pixels sont ceux que tu as sous les yeux, et sa retouche repart de zéro.",
+    change:
+      "Rien à la génération, et rien à l'original : ni sa retouche, ni son rendu ne bougent. La nouvelle case n'est pas retenue pour le jeu — la retenir est un second geste.",
+    origine:
+      "l'atelier propose la case de l'image · la direction au miroir quand la retouche en porte un · toi dès que tu choisis",
+    long:
+      "**Ce n'est pas le miroir de la table du retournement, et les deux se ressemblent.** Là-bas, l'image neuve garde les pixels d'origine et c'est sa *recette* qui la retourne : retirer la place la redresse. Ici le retournement est cuit dans les pixels, et la recette repart vide — parce que la nouvelle case a sa vie à elle, qu'on va la retoucher, et que deux recettes posées sur la même image brute finiraient par se contredire.\n\n**Ce n'est pas non plus dupliquer** : la copie porterait la retouche, celle-ci porte le résultat. Le geste ne demande rien à personne et ne coûte rien.",
+  },
+
   // ── La huitième place : la main ───────────────────────────────────────────
   //
   // **C'est la seule table qui n'applique aucune règle**, et c'est exactement

@@ -25,6 +25,36 @@ ne se perdent pas pendant qu'on déclare la ligne ou la colonne qui manque.
 lien — et l'onglet qu'elle nommait ne savait pas encore le faire. Les deux corrections vont
 ensemble : le texte est devenu un bouton, et l'onglet qu'il vise sait maintenant répondre.
 
+## RP20 · Enregistrer sous — un rendu devient une autre pose ou direction — 16 septembre 2026
+
+**Ce que la tranche a appris tient dans une distinction qu'on croyait déjà faite.** Le produit
+avait déjà une façon de ranger un miroir dans une autre direction : `B1`. Elle ne pouvait pas
+servir ici, et pour une raison qui ne se voit qu'en écrivant le code. Le miroir de `B1` garde le
+**brut du parent** et met le retournement dans la *recette* — retirer la place redresse l'image,
+et c'est exactement ce qu'on veut d'un miroir. *Enregistrer sous* fait l'inverse : le rendu
+devient le **brut**, et la recette repart vide. Les deux gestes se ressemblent à l'écran et sont
+opposés dans le fichier. La phrase qui tranche était déjà dans le plan : *deux recettes posées
+sur la même image brute finiraient par diverger*.
+
+**Le champ qui manquait est celui que la recette vide emporte.** Une découpe et un miroir
+gardent la recette de leur parent : on peut donc lire ce qui leur a été fait. Ici la recette est
+vide, et sans un champ de plus, plus rien ne dirait ce qui avait été appliqué. `Origine` porte
+l'original et la **recette entière** — pas son empreinte : la question qu'on se pose six mois
+plus tard est *qu'est-ce qui a été fait à cette image*, et l'original a pu changer depuis.
+**Le retour, lui, ne s'est pas écrit** : `parent` était déjà là, donc `GET /assets/{id}/lineage`
+retrouve le dérivé sans qu'aucune liste soit tenue sur l'original. Même mécanique que *une case
+est pleine parce qu'une image la porte*.
+
+**Le geste d'une animation a demandé un clip neuf, et ce n'était pas prévu.** Une bande tire ses
+images du dossier de son clip *par leur numéro*. Poser les frames rendues dans ce dossier-là
+aurait décalé les numéros de **toutes** les bandes déjà taillées dedans — un défaut qui ne se
+serait vu qu'en rouvrant une autre animation du même clip, longtemps après. Le clip neuf coûte
+un dossier et rien d'autre : sa fiche dit « aucun appel ».
+
+**Et un chiffre a décidé d'une méthode.** `prelevement_de_frame` savait déjà rendre *une* frame ;
+l'appeler huit fois aurait refait la planche huit fois, donc payé le détourage huit fois pour
+une marche. `rendu_des_frames` calcule la planche **une** fois et la tranche.
+
 ## RP21 · Une planche découpée sur la toile devient une animation — 16 septembre 2026
 
 **Les deux chemins finissent au même endroit, et c'était le vrai travail.** `ServicePlancheAnimee`

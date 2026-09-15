@@ -420,6 +420,17 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | GET /projects/{p}/3d/sources/{s}/files/{nom} | Un fichier d'une source 3D copiée | Oui | — |
 
 ## Les outils de l'agent Godot
+### Enregistrer sous — un rendu devient une autre case (`enregistrer_sous.py`, 4 routes depuis RP20)
+
+Deux par calque, et la coupure est celle du miroir : ce qui ne crée rien se redemande à chaque ouverture de fenêtre, ce qui crée un objet ne se redemande jamais. La proposition est un `POST` et non un `GET` parce qu'elle emporte **la recette en cours**, celle que l'écran tient et qui n'est pas forcément enregistrée.
+
+| Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
+|---|---|---|---|
+| POST /assets/{id}/save-as/preview | Propose la case d'arrivée d'une image, sans rien écrire | Oui | preview_save_render_as |
+| POST /assets/{id}/save-as | Le rendu devient une image neuve, dans une autre case | Oui | save_render_as |
+| POST /strips/{id}/save-as/preview | La même proposition, pour une animation | Oui | preview_save_render_as |
+| POST /strips/{id}/save-as | Chaque frame rendue devient un clip neuf et sa bande | Oui | save_render_as |
+
 
 85 outils, exposés par le serveur MCP monté dans le même programme que l'API HTTP (`atelier/mcp/serveur.py` + 12 fichiers `atelier/mcp/*.py`). Chaque outil déclare lui-même, dans sa fiche, l'écran de l'atelier qui offre la même capacité (`"ou": "..."` dans le code) — c'est cette déclaration, et pas une supposition, qui remplit la colonne ci-dessous.
 

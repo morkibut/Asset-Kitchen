@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from atelier.api.animation import routeur as routeur_animation
 from atelier.api.bibliotheque import routeur as routeur_bibliotheque
+from atelier.api.enregistrer_sous import routeur as routeur_enregistrer_sous
 from atelier.api.gestes import routeur as routeur_gestes
 from atelier.api.production import routeur as routeur_production
 from atelier.api.sortie import routeur as routeur_sortie
@@ -63,6 +64,7 @@ from atelier.services.decoupe import DecoupeRefusee
 from atelier.services.planche_animee import PlancheAnimeeRefusee
 from atelier.services.equipement import EmploiInconnu
 from atelier.services.miroir import MiroirRefuse
+from atelier.services.enregistrer_sous import EnregistrementRefuse
 from atelier.services.ambiances import AmbianceRefusee
 from atelier.services.calibrage import CalibrageRefuse
 from atelier.services.envoi import EnvoiRefuse
@@ -117,6 +119,10 @@ CODES = {
     # Il n'y a pas de case où ranger le miroir. 409 et non 400 : la demande est
     # bien formée, c'est l'état de l'image qui s'y oppose.
     MiroirRefuse: 409,
+    # **Le même code, et la même raison** (`RP20`) : sans retouche appliquée, ou
+    # sans case où ranger le résultat, la demande est bien formée et c'est
+    # l'état de l'image qui s'y oppose.
+    EnregistrementRefuse: 409,
     EtiquetteRefusee: 409,
     MouvementRefuse: 409,
     AmbianceRefusee: 409,
@@ -248,6 +254,11 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     application.include_router(routeur_travaux_equipement, prefix="/api")
     application.include_router(routeur_tenues, prefix="/api")
     application.include_router(routeur_sources_3d, prefix="/api")
+    # **Enregistrer sous** (`RP20`) : un rendu devient une autre pose ou une
+    # autre direction. Son propre module parce qu'il vaut pour les deux calques
+    # — les images et les animations — et qu'il n'appartient donc ni à la
+    # bibliothèque ni à l'animation.
+    application.include_router(routeur_enregistrer_sous, prefix="/api")
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

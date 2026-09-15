@@ -52,6 +52,7 @@ import { SourceDeFrame } from "./SourceDeFrame"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { useEtatDuParcours } from "./MemoireDuParcours"
 import { useMainDuParcours } from "./MainDuParcours"
+import { EnregistrerSous, raisonDEnregistrerSous } from "./EnregistrerSous"
 // **Les six postes viennent de la retouche** (`B26`). L'atelier d'une animation
 // montait jusqu'ici les six panneaux de l'ancien châssis ; celui-ci s'en va, et
 // refaire cet écran-là n'était pas dans le périmètre du déménagement. Il gagne
@@ -380,6 +381,10 @@ export function EcranAtelierDeBande({
   const [passeArmee, setPasseArmee] = useState<number | null>(null)
   const [rectangleSource, setRectangleSource] = useState(false)
   const [decoupe, setDecoupe] = useState<Asset | null>(null)
+  /** **Enregistrer sous** (`RP20`) — la fenêtre qui demande la case d'arrivée.
+   *  Elle emporte le ruban tel qu'il est sous les doigts : une image retirée ou
+   *  dupliquée doit l'être dans ce qui sort. */
+  const [enregistrerSous, setEnregistrerSous] = useState(false)
   const [preleve, setPreleve] = useState(false)
   const [messageDecoupe, setMessageDecoupe] = useState("")
   const etatMain = useMainDuParcours(`bande:${identifiant}:main`, univers)
@@ -1191,7 +1196,7 @@ export function EcranAtelierDeBande({
     >
       <header className="col-span-2 flex min-w-0 items-center justify-between gap-[22px]">
         <div className="min-w-0"><h1 className="truncate font-serif text-[25px] text-encre">{bande.nom}</h1><p className="mt-[4px] text-[12px] text-encre-3">Animation · {compte} frames · {change ? "Brouillon de retouche" : "Version enregistrée"}</p></div>
-        <div className="flex shrink-0 items-center gap-[8px]"><button type="button" onClick={onFermer} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle">‹ fermer</button><button type="button" onClick={() => void enregistrer()} disabled={!change || enregistre} className="h-[34px] rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{enregistre ? "on enregistre…" : "Enregistrer ›"}</button></div>
+        <div className="flex shrink-0 items-center gap-[8px]"><button type="button" onClick={onFermer} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle">‹ fermer</button><button type="button" onClick={() => void enregistrer()} disabled={!change || enregistre} className="h-[34px] rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{enregistre ? "on enregistre…" : "Enregistrer ›"}</button><button type="button" title={raisonDEnregistrerSous(recette) ?? "Le résultat devient une autre pose ou direction"} disabled={!!raisonDEnregistrerSous(recette)} onClick={() => { setJoue(false); setEnregistrerSous(true) }} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle disabled:opacity-50">Enregistrer sous…</button></div>
       </header>
       {/* ── Les tables de la frame choisie ───────────────────────────────── */}
       <aside
@@ -1509,6 +1514,19 @@ export function EcranAtelierDeBande({
           />
         </div></details>
       </aside>
+      {/* **La fenêtre d'Enregistrer sous…** (`RP20`). Elle emporte la recette et
+          le ruban en cours : ce qui sort est ce que l'écran montre, y compris
+          avant d'avoir enregistré. */}
+      {enregistrerSous && (
+        <EnregistrerSous
+          quoi="animation"
+          identifiant={bande.identifiant}
+          recette={recette}
+          prises={prises}
+          onFermer={() => setEnregistrerSous(false)}
+          onFait={() => onChangee?.()}
+        />
+      )}
     </div>
   )
 }

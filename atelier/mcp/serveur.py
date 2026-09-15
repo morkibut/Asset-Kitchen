@@ -1361,6 +1361,8 @@ def _reserve(reserve: "Reserve | None") -> dict[str, Any] | None:
         "unit": reserve.unite,
         "used": reserve.consomme,
         "allowance": reserve.plafond,
+    from atelier.mcp.enregistrer_sous import installer_enregistrer_sous
+    installer_enregistrer_sous(serveur, atelier, _refus_lisible)
         "remaining": reserve.reste,
         "counted": "here" if reserve.source == ICI else "provider",
         "renews": reserve.renouvellement or None,

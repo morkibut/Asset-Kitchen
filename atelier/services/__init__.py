@@ -46,6 +46,10 @@ from atelier.services.bibliotheque import (
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.reserves import ServiceReserves
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
+from atelier.services.enregistrer_sous import (
+    EnregistrementRefuse,
+    ServiceEnregistrerSous,
+)
 from atelier.services.miroir import MiroirRefuse, ServiceMiroir
 from atelier.services.etiquettes import EtiquetteRefusee, ServiceEtiquettes
 from atelier.services.mouvements import MouvementRefuse, ServiceMouvements
@@ -131,6 +135,8 @@ __all__ = [
     "ServiceBibliotheque",
     "ServiceCatalogue",
     "ServiceDecoupe",
+    "EnregistrementRefuse",
+    "ServiceEnregistrerSous",
     "MiroirRefuse",
     "ServiceMiroir",
     "ServiceAnimation",
@@ -497,6 +503,12 @@ class Atelier:
         # déjà payée ne demande rien à personne, et c'est ce qui autorise la
         # phrase de son bouton : *rien ici ne dépense*.
         self.planche_animee = ServicePlancheAnimee(self)
+        # **Enregistrer sous, monté juste après le montage** (`RP20`) : il lui
+        # faut celui qui rend les frames d'une bande, et celui qui fait naître
+        # un asset. Comme eux, il ne tient ni catalogue, ni fournisseur, ni
+        # animateur — un rendu déjà calculé ne demande rien à personne, et c'est
+        # ce qui autorise la phrase de sa fenêtre : *aucun appel*.
+        self.enregistrer_sous = ServiceEnregistrerSous(self)
         self.planche = ServicePlanche(self.production, self.generations)
         # **Ce qui part, monté après elle** (E14) : l'écran qui s'intercale
         # entre le bouton et la dépense. Comme la planche, il ne compose rien et

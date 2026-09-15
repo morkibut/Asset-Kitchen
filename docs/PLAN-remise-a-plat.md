@@ -771,7 +771,7 @@ montrer un trou.
   *`list_characters` porte `reference_image`, **résolu** — le choix de l'auteur, sinon le
   repli. Aucun outil neuf : un essai vérifie qu'aucun nom d'outil ne parle de référence.*
 
-## RP20 · Enregistrer sous — une image ou une animation modifiée devient une autre pose ou direction
+## RP20 · Enregistrer sous — une image ou une animation modifiée devient une autre pose ou direction ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien. **Elle s'appuie sur** : l'invariant *le traitement est non destructif*
 (`T2`) et sur ce que le domaine sait déjà — la direction au miroir d'une direction existe.
@@ -809,11 +809,23 @@ la même image brute.
   vide ; l'original garde sa recette et son rendu, vérifié à l'octet.
 - [ ] Pour une animation, la nouvelle bande a le même nombre de frames et la même cadence, et
   chaque frame est le rendu de la frame d'origine.
-- [ ] Le nouvel asset dit son origine — original et recette —, et la fiche de l'original le
+  *Les frames sortent d'un seul calcul de planche (`ServiceMontage.rendu_des_frames`) et non
+  d'une boucle : refaire la planche par frame paierait le détourage huit fois pour une marche.
+  Elles entrent dans un **clip neuf** — les poser dans celui de l'original décalerait les
+  numéros de toutes les bandes déjà taillées dedans.*
+- [x] Le nouvel asset dit son origine — original et recette —, et la fiche de l'original le
   liste parmi ses dérivés.
-- [ ] La nouvelle case n'est pas retenue pour le jeu ; la retenir est un second geste.
-- [ ] Aucun appel au fournisseur ; le geste marche réseau coupé, et un essai le tient.
-- [ ] L'agent dispose du même geste par l'outil MCP correspondant, avec les mêmes règles.
+  *`Origine` porte l'original, la recette **entière** et la direction de départ
+  (`atelier/domaine/enregistrement.py`). Le retour ne s'écrit pas : une image dérivée porte
+  aussi son `parent`, donc `GET /assets/{id}/lineage` la retrouve, et une bande dérivée se
+  retrouve en lisant les bandes. La filiation se lit, elle ne se tient pas en double.*
+- [x] La nouvelle case n'est pas retenue pour le jeu ; la retenir est un second geste.
+- [x] Aucun appel au fournisseur ; le geste marche réseau coupé, et un essai le tient.
+  *Compté sur le double, comme en `C1` et en `B21` : le service n'importe ni catalogue, ni
+  fournisseur, ni animateur.*
+- [x] L'agent dispose du même geste par l'outil MCP correspondant, avec les mêmes règles.
+  *`save_render_as` et `preview_save_render_as`, tous deux sur `kind: image | animation`. Ils
+  appellent le même service et refusent avec la même phrase — un essai le vérifie.*
 
 ## RP21 · Une planche découpée sur la toile devient une animation
 

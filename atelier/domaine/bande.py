@@ -38,6 +38,7 @@ from atelier.domaine.calque_anime import (
     Habillage,
     calages_depuis_json,
 )
+from atelier.domaine.enregistrement import Origine
 from atelier.domaine.recette import Main, Recette
 from atelier.domaine.superposition import ReglagesGardes
 
@@ -385,6 +386,13 @@ class Bande:
     # qu'à l'écran *Ses animations*, qui départage comme la matrice le fait déjà
     # pour les images (`docs/PIEGES.md`).
     favori: bool = False
+    # **D'où elle vient quand elle a été *enregistrée sous* une autre case**
+    # (RP20). Sa recette est vide et ses images sont déjà rendues : sans ce
+    # champ, rien ne dirait plus ce qui avait été appliqué, ni de quelle
+    # animation elle est sortie (`atelier/domaine/enregistrement.py`). Absent
+    # pour toute bande d'avant `RP20`, et c'est la vérité : rien ne l'a
+    # engendrée ainsi.
+    origine: Origine | None = None
     # `rang` — un départage de plus quand deux bandes partagent la même seconde
     # de création, comme sur un asset. **Aucun geste de ce dépôt ne le règle
     # encore** : une bande n'a pas d'emplacement d'où le tirer, contrairement à
@@ -527,6 +535,7 @@ class Bande:
             "secondes": self.secondes,
             "brouillon": self.brouillon,
             "favori": self.favori,
+            "origine": self.origine.en_json() if self.origine else None,
             "rang": self.rang,
             "supprime_le": self.supprime_le,
             "supprime": self.supprime,
@@ -578,6 +587,7 @@ class Bande:
             # neutre, pas écartée — l'état d'une bande telle qu'elle a toujours
             # été avant que ces trois champs n'existent.
             favori=bool(d.get("favori", False)),
+            origine=Origine.depuis_json(d.get("origine")),
             rang=int(d.get("rang", 0)),
             supprime_le=d.get("supprime_le"),
         )
