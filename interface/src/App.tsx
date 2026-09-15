@@ -2640,6 +2640,10 @@ function AtelierApp() {
             porteurs={vestiaireDuJeu?.porteurs ?? []}
             onEmploi={(emploi) => ouvrirLEmploi(emploi)}
             onAjouterEmploi={(corps) =>
+          // **« La retoucher », du côté des animations** (RP12). L'atelier est
+          // plus profond que Comparer, donc l'ouvrir referme la comparaison de
+          // lui-même — le même geste que pour une image.
+          onOuvrirLaBande={ouvrirLAtelierDeBande}
               void ajouterUnEmploi(pieceEtSesEmplois.piece.identifiant, corps)
             }
             onRetirerLaPiece={() =>

@@ -562,7 +562,7 @@ jamais avec les images qui en sortent.
 - [ ] Une planche et ses dérivés se regroupent, et le groupe se déplie.
 - [ ] La galerie reste lisible avec plusieurs centaines de résultats, et un essai le mesure.
 
-## RP12 · Comparer deux versions d'une même animation
+## RP12 · Comparer deux versions d'une même animation  ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien.
 
@@ -574,10 +574,22 @@ C'est un écran absent, pas un écran incomplet.
 
 ### Critères d'acceptation
 
-- [ ] Deux versions d'un même résultat se lisent côte à côte, sur le même temps.
-- [ ] Chacune tourne à sa propre cadence, et la cadence lue est celle qui sortira à l'export.
-- [ ] *Choisir pour le jeu* existe de chaque côté.
-- [ ] Le favori reste distinct du choix pour le jeu.
+- [x] Deux versions d'un même résultat se lisent côte à côte, sur le même temps. *Le troisième
+  mode de `Comparer.tsx` : mouvement et direction fixés, deux animations de la même case, une
+  seule horloge — `rangSurLeTempsCommun` la lit pour chaque côté.*
+- [x] Chacune tourne à sa propre cadence, et la cadence lue est celle qui sortira à l'export.
+  *Le temps d'une image est `dureeImageMs(cadence)`, le nombre que le descriptif d'export
+  écrit (`tests/test_b12.py` tient les deux d'accord) — pas `1000 ÷ cadence`.*
+- [x] *Choisir pour le jeu* existe de chaque côté. *Il retient l'animation et éteint ses sœurs
+  de la même rangée, comme *Ses animations* le fait déjà.*
+- [x] Le favori reste distinct du choix pour le jeu. *Une animation n'a pas d'étoile : son
+  `favori` **est** le choix pour le jeu (`B11`). L'écran n'écrit donc que `/strips/favorite`,
+  jamais le favori d'une image — et comparer deux images continue de n'écrire rien du tout.*
+
+**Les mots fermés avec l'écran**, d'après
+[les désaccords restants](releves/2026-09-15-desaccords-restants.md) § *Onglet Animations* :
+*À juger · Retenue · Écartée* devient **Non jugé · Retenu · Écarté**, et le bouton qui disait
+*Effacer la bande* dit **Effacer l'animation**, comme son voisin.
 
 ## RP13 · Déclarer un mouvement et une direction là où on les regarde  ✅ **close le 16 septembre 2026**
 
@@ -709,6 +721,35 @@ fait croire à une capacité qui n'existe pas pour l'auteur.
 - [ ] Le relevé du serveur est mis à jour, et le compte des routes y redescend d'autant.
 
 ---
+### La règle
+
+**Le temps est commun, les cadences ne le sont pas.** L'écran ne tient qu'un seul nombre : les
+millisecondes écoulées depuis le début de la lecture. Chaque côté en tire son image tout seul —
+`pas = ⌊temps ÷ temps d'une image⌋`, puis la place dans son cycle —, sans jamais regarder
+l'autre. Aucune des deux ne donne le tempo : c'est l'horloge qui le donne, et les deux sont
+toujours au même instant.
+
+**Image par image, le pas commun est le plus court des deux temps d'image.** La plus rapide
+change donc d'image pendant que la plus lente tient la sienne. C'est la seule valeur de pas qui
+ne saute aucune image, d'aucun des deux côtés.
+
+**Boucle contre aller-retour : rien ne se convertit.** Chacune parcourt son cycle depuis la même
+origine — autant de crans qu'elle a d'images en boucle, deux fois moins deux en aller-retour. Les
+deux ne sont en phase qu'au départ, et *Remettre au début* est le seul geste qui les y ramène.
+Ré-encoder l'aller-retour en boucle pour « aligner » les deux ferait regarder une animation que
+l'export n'écrit nulle part.
+
+**Rien de tout ça ne change ce qui sort.** La cadence, le sens et le temps d'une image se lisent
+sur l'animation et ne s'écrivent jamais ici ; le temps d'une image est celui du serveur au
+millième près (`dureeImageMs`, le double exact de `duree_en_ms`, `B12`), donc le nombre affiché
+est celui que le descriptif d'export porte. Le ralenti est un ralenti d'affichage : il multiplie
+l'horloge commune, pas la cadence. Le seul geste de cet écran qui écrive est *Choisir pour le
+jeu*, et il ne change que **laquelle** sort — jamais comment elle joue.
+
+**Sa raison** : deux animations qu'on départage doivent être vues telles qu'elles seront dans le
+jeu. Une horloge par côté les laisse dériver, et le jugement dépend alors du moment où on
+regarde ; une cadence imposée aux deux fait juger une animation qui n'existe pas.
+
 
 # Temps 3 bis — Ce que l'usage a nommé le 15 septembre 2026
 

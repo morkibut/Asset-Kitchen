@@ -154,6 +154,10 @@ export function PageDuSujet(proprietes: {
   // **B13** — la grille du jeu et comparer n'ont rien à montrer sans une
   // image. Les deux liens se grisent avec leur raison plutôt que de
   // disparaître, comme partout ailleurs dans ce fichier.
+  // **Comparer sait aussi lire deux animations depuis RP12**, donc une seule
+  // image ne suffit plus à décider si la porte s'ouvre : un sujet qui n'a que
+  // des animations a bel et bien quelque chose à comparer.
+  const auMoinsUneAnimation = ouvert.cases.some((c) => c.bandes.length > 0)
   const auMoinsUneImage = ouvert.cases.some((c) => c.images.length > 0)
   // La matrice, profondeur suivante de cette page — voir l'en-tête du fichier.
   const [matriceTenueIci, setMatriceTenueIci] = useState(false)
@@ -343,7 +347,7 @@ export function PageDuSujet(proprietes: {
             <summary className={`${BOUTON} flex cursor-pointer items-center`}>Autres outils</summary>
             <div className="absolute right-0 z-20 mt-[8px] flex w-[300px] flex-col gap-[8px] rounded-8 border border-contour bg-carte p-[14px]">
               <button className={BOUTON} onClick={proprietes.onGrille} disabled={!auMoinsUneImage} title={!auMoinsUneImage ? "Aucune image encore à poser sur la grille." : undefined}>Voir la grille du jeu</button>
-              <button className={BOUTON} onClick={proprietes.onComparer} disabled={!auMoinsUneImage} title={!auMoinsUneImage ? "Aucune image encore à comparer." : undefined}>Comparer</button>
+              <button className={BOUTON} onClick={proprietes.onComparer} disabled={!auMoinsUneImage && !auMoinsUneAnimation} title={!auMoinsUneImage && !auMoinsUneAnimation ? "Ni image ni animation encore à comparer." : undefined}>Comparer</button>
               <button className={BOUTON} disabled={!auMoinsUneImage || !proprietes.onRetoucher} onClick={() => proprietes.onRetoucher?.(regardee)}>Retoucher l’image</button>
               <button data-porte-de-la-matrice className={BOUTON} onClick={() => setMatriceOuverte(true)}>Cases, planches et calibrage</button>
             </div>

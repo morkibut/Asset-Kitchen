@@ -11,6 +11,33 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP12 · Comparer deux versions d'une même animation — 16 septembre 2026
+
+**La règle du temps commun a été écrite avant la première ligne de code, et elle a évité un
+écran juste à l'œil et faux à la mesure.** Le réflexe est de faire tourner deux animations côte
+à côte avec un métronome chacune : elles paraissent d'accord la première seconde, puis dérivent,
+et ce qu'on juge dépend alors du moment où on regarde. L'écran ne tient donc qu'un nombre — les
+millisecondes écoulées — et chaque côté en tire son image tout seul. Aucune des deux ne donne le
+tempo.
+
+**Le point qui ne se devine pas : le cran « image par image » est le plus court des deux temps
+d'image.** Plus long, il ferait sauter des images du côté rapide — celles qu'on est précisément
+venu regarder. Plus court, il ne montrerait rien de neuf. C'est donc la plus rapide qui change
+d'image pendant que la plus lente tient la sienne, et ça se voit à l'écran.
+
+**Et le temps d'une image est `dureeImageMs`, pas `1000 / cadence`.** C'est la leçon de `B12`,
+reprise ici : les trois lecteurs d'avant divisent la seconde, et le descriptif d'export, lui,
+écrit un entier arrondi une seule fois. À 16 images par seconde l'écart est d'une milliseconde —
+62 contre 63 — et il suffit à faire juger un rythme que rien ne livre. L'écran affiche donc le
+nombre du fichier, et un essai le tient.
+
+**Un seul geste écrit, et l'écran le dit.** *Choisir pour le jeu* retient une animation et éteint
+ses sœurs ; il ne change que laquelle sort, jamais comment elle joue. Une animation n'ayant pas
+d'étoile à part — son `favori` **est** le choix pour le jeu depuis `B11` —, la question « le
+favori reste-t-il distinct du choix pour le jeu ? » se répond par où l'écran écrit :
+`/strips/favorite`, et jamais le favori d'une image. Comparer deux images continue de n'écrire
+rien du tout.
+
 ## RP13 · Déclarer un mouvement et une direction là où on les regarde — 16 septembre 2026
 
 **Les deux routes existaient déjà, sans écran.** `api.ajouterPose` et `api.ajouterDirection`

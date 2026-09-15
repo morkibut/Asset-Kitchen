@@ -728,14 +728,14 @@ export function AnimationsDuSujet({
             <div className="flex flex-wrap gap-[8px] text-[12px]">
               <label>Mouvement / pose <select aria-label="Mouvement de la galerie" value={galeriePose} onChange={(e) => setGaleriePose(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option>{parPose.map((p) => <option key={p.sienne.pose} value={p.sienne.pose}>{p.nom}</option>)}</select></label>
               <label>Direction <select aria-label="Direction de la galerie" value={galerieDirection} onChange={(e) => setGalerieDirection(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Toutes</option>{directionsGalerie.map(([id, nom]) => <option key={id} value={id}>{nom}</option>)}</select></label>
-              <label>Jugement <select aria-label="Jugement de la galerie" value={galerieStatut} onChange={(e) => setGalerieStatut(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option><option value="retenue">Retenue</option><option value="gardee">À juger</option><option value="ecartee">Écartée</option></select></label>
+              <label>Jugement <select aria-label="Jugement de la galerie" value={galerieStatut} onChange={(e) => setGalerieStatut(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option><option value="retenue">Retenu</option><option value="gardee">Non jugé</option><option value="ecartee">Écarté</option></select></label>
             </div>
             <p role="status" className="text-[12px] text-encre-3">{galerieFiltree.length} animation{galerieFiltree.length > 1 ? "s" : ""}</p>
             <div className="grid grid-cols-2 gap-[14px]">
               {galerieFiltree.map(({ bande: cible, statut, rangee, nom }) => <article key={cible.identifiant} data-carte-animation={cible.identifiant} className="flex min-w-0 flex-col gap-[8px] rounded-10 border border-trait bg-carte p-[14px]">
                 <div className="flex justify-center"><VignetteDeBande bande={cible} galerie cote={128} etat={statut} choisie={choisie === cible.identifiant} onChoisir={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} /></div>
                 <p className="truncate text-[13px]">{nom} · {rangee.angle ?? "sans direction"}</p>
-                <p className="text-[11px] text-encre-3">{statut === "gardee" ? "À juger" : statut === "retenue" ? "Retenue" : "Écartée"} · {cible.compte} frames · {cible.cadence} i/s</p>
+                <p className="text-[11px] text-encre-3">{statut === "gardee" ? "Non jugé" : statut === "retenue" ? "Retenu" : "Écarté"} · {cible.compte} frames · {cible.cadence} i/s</p>
                 {statut === "ecartee" ? <button type="button" onClick={() => void restaurer(cible)}>Remettre à juger</button> : <Marques contexte={` dans la galerie : ${cible.nom}`} retenue={statut === "retenue"} onRetenir={() => void retenir(cible, rangee)} onGarder={() => void garder(cible)} onEcarter={() => void ecarter(cible, rangee)} />}
                 <button type="button" onClick={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} className="rounded-7 border border-trait px-[8px] py-[4px] text-[12px]">Retoucher</button>
               </article>)}

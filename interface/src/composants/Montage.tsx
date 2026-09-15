@@ -1075,7 +1075,7 @@ export function EcranMontage({
                   <button
                     type="button"
                     onClick={() => void oublier(bande.identifiant)}
-                    aria-label={`Effacer la bande ${bande.nom}`}
+                    aria-label={`Effacer l'animation ${bande.nom}`}
                     className="mesure text-[10px] text-encre-4 hover:text-signal"
                   >
                     ×
