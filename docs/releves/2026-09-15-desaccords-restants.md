@@ -170,11 +170,11 @@ collection.*
 ~~| Revenir au travail | `BibliothequePourImage.tsx:49` | **‹ suivi du nom de l'écran d'où l'on vient** |~~
 ~~| Afficher les suivantes | `BibliothequePourImage.tsx:60` | **Suivant** — avec **Précédent** en regard |~~
 
-## Importer pour un sujet — **RP5**
+## Importer pour un sujet — **RP5** ✅ fermé le 15 septembre 2026
 
-| Aujourd'hui | Où | Le mot |
-|---|---|---|
-| Importer des images / Importer… | `ImporterPourUnSujet.tsx:76`, `ImporterIntelligemment.tsx:122` | **Importer…** — un seul écran après la fusion, donc un seul mot |
+~~| Aujourd'hui | Où | Le mot |~~
+~~|---|---|---|~~
+~~| Importer des images / Importer… | `ImporterPourUnSujet.tsx:76`, `ImporterIntelligemment.tsx:122` | **Importer…** — un seul écran après la fusion, donc un seul mot |~~
 
 ---
 

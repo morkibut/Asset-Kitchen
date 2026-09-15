@@ -373,11 +373,16 @@ test("les collections se modifient depuis la fiche sans toucher aux règles", as
 // **Deux portes, et la ligne entre elles est l'argent** (`AU21`) : *Importer…*
 // prend un fichier du disque et devine ce que c'est ; *Fabriquer…* commande au
 // fournisseur, et c'est le seul des deux qui pose une case avant d'agir.
+//
+// Depuis `RP5`, *Importer…* du bandeau ouvre **la même fenêtre** que la rangée
+// vide d'« Images fixes », et il l'ouvre **sans case** : c'est là toute la
+// différence entre les deux portes du même écran.
 test("importer et fabriquer sont deux portes, et les deux tables gardent les leurs", () => {
   const rappels = monter()
   fireEvent.click(screen.getByRole("button", { name: "Fabriquer…" }))
   expect(rappels.onFabriquer).toHaveBeenCalledOnce()
-  expect(screen.getByLabelText("Fichier à importer")).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "Importer…" }))
+  expect(rappels.onImporter).toHaveBeenCalledWith()
   fireEvent.click(screen.getByRole("button", { name: "Découper une image" }))
   expect(rappels.onDecouper).toHaveBeenCalledWith("a")
   fireEvent.click(screen.getByRole("button", { name: "Extraire un élément" }))

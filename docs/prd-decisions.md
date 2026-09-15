@@ -277,3 +277,15 @@ deux moteurs sur les images déjà là, et ce qu'ils rendent côte à côte sur 
 difficiles. Le produit ne calcule aucune note de qualité par moteur — écartée pour la raison
 qui l'écarte déjà pour les modèles : elle se juge à l'usage, sur des images qu'on voulait de
 toute façon.
+### La décision de RP5 — 15 septembre 2026
+
+**À l'import, la case se déduit du clic et de rien d'autre.** Ce qui entre sur la fiche d'un
+sujet prend la case d'où l'on a cliqué *Importer*, quand on a cliqué dans une case. Le nom du
+fichier ne la déduit pas, l'onglet ouvert non plus, et rien ne la demande avant de savoir ce
+qu'on donne. Une vidéo et une planche n'en prennent aucune : elles ouvrent le montage et la
+découpe, et ce sont la bande et les morceaux qui se rangent. Quand il n'y a pas de case, ce qui
+entre est quand même rattaché au sujet et paraît dans *Pas encore rangé* ; le choix est offert
+après, jamais exigé. La raison est la même que celle qui fait exister *Pas encore rangé* : une
+case est prise dès qu'une image la porte, donc une case devinée de travers **cache ce qui
+manque** — et une image sans case, elle, se voit.
+

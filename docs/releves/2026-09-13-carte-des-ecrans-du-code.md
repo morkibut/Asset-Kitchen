@@ -268,15 +268,10 @@ Voir *Les écrans morts*.
 - **Ce qu'il fait** : suit une demande jusqu'à son résultat.
 - **Fichier** : `interface/src/composants/FabricationSuivie.tsx`
 
-### ImporterIntelligemment — « Importer… »
-- **On y arrive par** : page d'un sujet → *Importer…* (en haut à droite).
-- **Ce qu'il fait** : prend un fichier, devine ce que c'est (vidéo, planche, image) et enchaîne sur la suite.
-- **Fichier** : `interface/src/composants/ImporterIntelligemment.tsx`
-
-### ImporterPourUnSujet — l'autre import
-- **On y arrive par** : page d'un sujet → onglet *Images fixes* → une rangée vide → *Importer*.
-- **Ce qu'il fait** : importe un ou plusieurs fichiers en demandant d'abord la pose et la direction.
-- **Attention** : il fait le même travail qu'`ImporterIntelligemment`. Voir *Les doublons*.
+### ImporterPourUnSujet — « Importer… »
+- **On y arrive par** : page d'un sujet → *Importer…* (en haut à droite) ; **ou** onglet *Images fixes* → une rangée vide → *Importer*. Les deux ouvrent la même fenêtre ; la rangée vide lui passe sa case, le bandeau n'en passe aucune.
+- **Ce qu'il fait** : accepte un ou plusieurs fichiers, ou une image déjà en bibliothèque. Il devine ce qu'on lui donne — vidéo, planche, image — et enchaîne sur la suite : le montage, la découpe, ou rien. Il ne demande jamais la case avant ; elle vient du clic, ou elle s'offre après.
+- **RP5 (15 septembre 2026)** : c'est la fusion de cet écran et de l'ancien `ImporterIntelligemment.tsx`, qui a disparu — c'était un second import pour un sujet faisant le même travail. Voir *Les doublons*.
 - **Fichier** : `interface/src/composants/ImporterPourUnSujet.tsx`
 
 ### BibliothequePourImage — « Choisir une image »
@@ -439,7 +434,8 @@ Ils ne s'ouvrent pas seuls : ils vivent dans un des écrans ci-dessus. Tous sont
 
 ## Les doublons
 
-### ImporterIntelligemment et ImporterPourUnSujet font le même travail
+### ImporterIntelligemment et ImporterPourUnSujet font le même travail — **résolu par `RP5`, le 15 septembre 2026**
+- **Ce qui reste** : `ImporterPourUnSujet.tsx` seul, ouvert par les deux portes. `ImporterIntelligemment.tsx` **a été retiré** ; sa règle, elle, a gagné — on ne demande rien avant de savoir ce qu'on donne. La suite du relevé décrit l'état d'avant.
 - **Ce que fait `ImporterIntelligemment`** : un seul bouton *Importer…*, en haut de la page d'un sujet. Il prend le fichier, regarde ce que c'est — vidéo, planche, image —, l'importe, le rattache au sujet, puis ouvre la suite qui convient : le montage pour une vidéo, la découpe pour une planche, rien pour une image simple. Il ne pose aucune question.
 - **Ce que fait `ImporterPourUnSujet`** : une fenêtre qui demande **d'abord** la pose et la direction, puis accepte un ou plusieurs fichiers, ou une image déjà en bibliothèque. Il les téléverse et les range dans la case choisie.
 - **Ce qui les sépare vraiment** : la question posée avant. Le second demande la pose et la direction avant de savoir ce qu'on lui donne — la question qu'`AU21` a explicitement retirée du premier parce qu'elle ne veut rien dire pour une vidéo. Le second sait en revanche reprendre une image déjà en bibliothèque, et il accepte plusieurs fichiers d'un coup ; le premier ne sait faire ni l'un ni l'autre. Les deux appellent `api.designer` pour rattacher au sujet.

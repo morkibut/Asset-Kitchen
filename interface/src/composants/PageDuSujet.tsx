@@ -309,10 +309,13 @@ export function PageDuSujet(proprietes: {
                 vidéo — à qui ça ne veut rien dire : une vidéo devient un clip,
                 et c'est la bande qu'on y taille qui se range sur un mouvement.
                 Une question qui n'a pas de sens pour un tiers des cas n'est pas
-                une question, c'est un péage. */}
-            <ImporterIntelligemment personnage={ouvert} classe={BOUTON}
-              onDecouper={proprietes.onDecouper} onMonter={proprietes.onMonterLaBande}
-              onChange={() => { setRange(n => n + 1); proprietes.onClipsChange?.() }} onErreur={echouer} />
+                une question, c'est un péage.
+
+                **Depuis `RP5`, les deux portes de l'import n'en font plus
+                qu'une** : ce bouton et la rangée vide d'« Images fixes »
+                ouvrent la même fenêtre, et c'est elle qui devine. La rangée
+                vide lui passe sa case ; le bandeau n'en passe aucune. */}
+            {proprietes.onImporter && <button className={BOUTON} onClick={() => proprietes.onImporter?.()}>Importer…</button>}
             <button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal" onClick={() => {
               if (proprietes.onFabriquer) proprietes.onFabriquer()
               else { const pose = sienPlan.find(p => !ouvert.ecartees.includes(p.identifiant)); if (pose) onglet === "animations" ? proprietes.onAnimer(ouvert, pose) : proprietes.onArmer(ouvert, [pose]); else setOnglet("objectif") }

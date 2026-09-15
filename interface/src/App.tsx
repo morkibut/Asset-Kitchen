@@ -2858,7 +2858,12 @@ function AtelierApp() {
         void relireEtat()
         void api.arbre().then(setBibliotheque).catch(e => echouer(e, "L’image est importée ; les comptes du jeu n’ont pas pu être actualisés."))
         setGrilleARelire(n => n + 1)
-      }} onOuvrir={(id) => { setImportDuSujet(null); ouvrirLaRetouche(id) }} />}
+      }} onOuvrir={(id) => { setImportDuSujet(null); ouvrirLaRetouche(id) }}
+        /* **La suite qui convient** (`RP5`) : une planche mène à la découpe, une
+           vidéo au montage. Les deux rappels sont ceux que la page du sujet
+           donnait déjà à l'autre import, aux mêmes signatures. */
+        onDecouper={(id) => { setImportDuSujet(null); ouvrirLaRetouche(id, "decoupage") }}
+        onMonter={(clip) => { setImportDuSujet(null); poserLaRacine("galerie"); setMontageOuvert(clip) }} />}
       {tuilesOuvertes && bibliotheque.courant && <CadreDialogue titre="Les tuiles du jeu" onFermer={() => setTuilesOuvertes(false)} enfants={<><div className="flex justify-end border-b border-trait px-[22px] py-[8px]"><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setTuilesOuvertes(false)}>Revenir aux assets</button></div><Tuiles projet={bibliotheque.courant} onAsset={a => { setTuilesOuvertes(false); setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant })) }} onLivraisons={() => { setTuilesOuvertes(false); setSortieOuverte(true) }} /></>} />}
       {sonsOuverts && bibliotheque.courant && <CadreDialogue titre="Les sons du jeu" onFermer={() => setSonsOuverts(null)} enfants={<AtelierSon projet={bibliotheque.courant} identifiantInitial={sonsOuverts.identifiant} onFermer={() => setSonsOuverts(null)} onLivraisons={() => { setSonsOuverts(null); setSortieOuverte(true) }} />} />}
       {apercu && <Apercu sujet={apercu} onFermer={fermerApercu} />}
@@ -2867,3 +2872,6 @@ function AtelierApp() {
   )
 }
 
+        // **Une vidéo entre ici aussi depuis `RP5`** : sans cette relecture,
+        // le clip qui vient d'entrer n'existe pour aucun autre écran.
+        void relireClipsDuJeu()

@@ -300,7 +300,7 @@ emprunte.
   la fenêtre unique.
 - [ ] Les deux lieux d'où l'argent part restent deux, et pas trois.
 
-## RP5 · Un seul écran d'import sur une fiche
+## RP5 · Un seul écran d'import sur une fiche ✅ **close le 15 septembre 2026**
 
 **Bloquée par** : RP3.
 
@@ -316,14 +316,101 @@ de l'onglet des images fixes.
 vidéo. **Ce qu'il doit apprendre** : reprendre une image de la bibliothèque, et accepter
 plusieurs fichiers.
 
+### La règle
+
+*Écrite le 15 septembre 2026, avant la première ligne de code.*
+
+**Rien ne se demande avant de savoir ce qu'on donne.** Le fichier entre, se rattache au sujet,
+et c'est seulement après qu'une case peut se poser. C'est `AU21`, et la raison n'a pas changé :
+la question *quel mouvement, quelle direction ?* ne veut rien dire pour une vidéo, et une
+question qui n'a pas de sens dans un cas sur trois n'est pas une question, c'est un péage.
+
+**La case se déduit d'un seul endroit : le clic.** Entré par une rangée vide d'*Images fixes*,
+ce qui entre va dans cette case-là, sans la redemander. Rien d'autre ne la déduit — ni le nom du
+fichier, ni l'onglet ouvert. La raison est dans le point 8quater d'`AGENTS.md` : *une case est
+prise dès qu'une image la porte*, donc une case devinée de travers est prise, et une case prise
+**cache ce qui manque**. Une image sans case, elle, se voit dans *Pas encore rangé*. Entre se
+tromper en silence et ne pas savoir à voix haute, on ne sait pas à voix haute.
+
+**Deux natures sur trois n'ont pas de case du tout, et c'est le fichier qui le dit.** Une vidéo
+devient un clip et ouvre le montage ; une planche — deux cases détectées ou plus — ouvre la
+découpe. Dans ces deux cas la case visée est **laissée de côté**, et l'écran le dit : ranger une
+planche entière dans *marche · sud* remplirait la case avec ce qui n'est pas une image de marche,
+et une vidéo ne se range jamais — c'est la bande qu'on y taille qui prend une case.
+
+**Quand il ne sait pas, il range quand même** (`AU20`). L'image est rattachée au sujet sans case,
+elle paraît dans *Pas encore rangé*, et rien n'est refusé. Le choix de la case est alors **offert
+après coup**, sur la ligne de ce qui vient d'entrer — offert, jamais exigé.
+
+**Ce qui se montre, et quand.** Le choix de la case n'est à l'écran que lorsqu'il y a une case à
+montrer : celle qu'on a désignée du doigt en ouvrant, ou celle qu'il reste à donner à ce qui vient
+d'entrer. Depuis le bandeau, avant le premier fichier, il n'y a donc aucun réglage — seulement la
+zone où déposer.
+
+**Le détourage passe avant le rangement, et c'est un changement d'ordre assumé.** L'écran
+d'avant rattachait d'abord et regardait ensuite si c'était une planche ; il aurait donc rangé la
+planche dans la case visée avant de savoir que c'en était une. La détection est donc remontée
+d'un cran, et elle reste **sans promesse** : si elle échoue, on n'en tient pas compte et le
+rattachement se fait quand même. Ce qui est entré est sur la fiche dans tous les cas.
+
+### Les gestes des deux côtés
+
+Nommés avant de commencer, cochés après vérification. *Repris* veut dire : retrouvé tel quel dans
+l'écran unique.
+
+**Le bouton du bandeau — `ImporterIntelligemment`**
+
+- [x] Prendre un fichier du disque.
+- [x] Reconnaître une vidéo à son type ou à son extension.
+- [x] Une vidéo entre comme clip du sujet, sans case.
+- [x] Une vidéo déjà entrée est signalée en doublon, et son montage s'ouvre quand même.
+- [x] Ouvrir le montage sur le clip qui vient d'entrer.
+- [x] Une image entre puis est rattachée au sujet — jamais l'inverse.
+- [x] Détecter les cases d'une image ; deux ou plus, c'est une planche.
+- [x] Ouvrir la découpe sur la planche qui vient d'entrer.
+- [x] Une détection qui échoue ne perd rien.
+- [x] Dire ce qui s'est passé en une phrase, avec le nombre de cases ou d'images.
+- [x] Refuser un second fichier pendant l'import en cours.
+- [x] Écrire l'erreur. *Remplacé : elle s'écrit sur la ligne du fichier, et non plus dans le
+  bandeau de la page — la fenêtre est modale, le bandeau serait dessous.*
+- [x] Prévenir la page que quelque chose a changé.
+
+**La rangée vide — `ImporterPourUnSujet`**
+
+- [x] Une fenêtre, qui s'ouvre et se ferme.
+- [x] Choisir la pose où ranger, ou *sans mouvement encore*. *Déplacé après l'entrée, sauf quand
+  on arrive d'une case.*
+- [x] Choisir la direction, ou *à préciser ensuite*. *Idem.*
+- [x] Arriver pointé sur la case d'où l'on a cliqué.
+- [x] Accepter plusieurs fichiers d'un coup.
+- [x] Déposer des fichiers sur la zone.
+- [x] Téléverser puis rattacher, dans cet ordre, et conserver l'image quand le rangement échoue.
+- [x] Reprendre une image de la bibliothèque, sans la recopier.
+- [x] Signaler un doublon et ne le ranger qu'après un clic explicite.
+- [x] Ranger après coup une entrée en doublon ou en échec.
+- [x] Montrer la vignette de chaque entrée et son état.
+- [x] Ouvrir l'image entrée.
+- [x] Rattacher au sujet même sans mouvement (`AU20`).
+- [x] Dire que les originaux restent conservés.
+- [x] Dire où passer pour une vidéo. *Remplacé : l'écran la prend lui-même et ouvre le montage.
+  Le renvoi vers* Sources & clips *n'a plus d'objet.*
+
 ### Critères d'acceptation
 
-- [ ] Un seul écran d'import pour un sujet, atteint depuis le bandeau **et** depuis une rangée
+- [x] Un seul écran d'import pour un sujet, atteint depuis le bandeau **et** depuis une rangée
   vide.
-- [ ] Entrer par une rangée vide range dans cette case-là, sans reposer la question.
-- [ ] L'import accepte plusieurs fichiers, et une image déjà en bibliothèque.
-- [ ] Une vidéo et une planche ouvrent toujours la suite qui convient.
-- [ ] Ce qui entre sans case reste visible dans *Pas encore rangé*.
+  *`ImporterIntelligemment.tsx` est retiré. La page du sujet appelle `onImporter()` sans case,
+  la rangée vide l'appelle avec la sienne, et `App.tsx` monte la même fenêtre dans les deux cas.
+  Vérifié aux essais d'écran des deux côtés, pas au navigateur.*
+- [x] Entrer par une rangée vide range dans cette case-là, sans reposer la question.
+- [x] L'import accepte plusieurs fichiers, et une image déjà en bibliothèque.
+  *Et un lot n'enchaîne pas de lui-même sur le montage ou la découpe : le bouton reste sur la
+  ligne. Partir au deuxième fichier abandonnerait les suivants.*
+- [x] Une vidéo et une planche ouvrent toujours la suite qui convient.
+  *Et ni l'une ni l'autre ne prend la case visée — c'est la règle du haut.*
+- [x] Ce qui entre sans case reste visible dans *Pas encore rangé*.
+  *Le rattachement au sujet se fait toujours ; seule la case manque. L'écran le dit sur la ligne
+  du fichier, et le choix est offert là.*
 
 ## RP6 · Une seule grille de choix d'image ✅ **close le 15 septembre 2026**
 

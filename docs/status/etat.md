@@ -52,6 +52,32 @@ d'une seule règle, jamais deux règles.
 **Une route neuve, nommée par précaution.** `/clips/from-selection` aurait heurté l'utilitaire
 Tailwind `from-*` (dégradés) sur le premier segment ; la route s'appelle `/clips/assemble`.
 
+## RP5 · Un seul écran d'import sur une fiche — 15 septembre 2026
+
+**La fenêtre reste, la règle de l'autre gagne.** Des deux imports, celui qui était déjà une
+fenêtre — `ImporterPourUnSujet.tsx` — est celui qui survit, parce qu'il était déjà monté par les
+deux portes et qu'il portait déjà les gestes coûteux à réécrire : plusieurs fichiers, le
+glisser-déposer, la reprise d'une image de la bibliothèque, la ligne de résultat par fichier.
+C'est en revanche la règle d'`ImporterIntelligemment.tsx` qui l'emporte, et ce fichier-là est
+retiré : **on ne demande rien avant de savoir ce qu'on donne** (`AU21`).
+
+**La règle neuve, en une phrase : la case se déduit du clic, jamais d'autre chose.** Entré par
+une rangée vide d'*Images fixes*, ce qui entre va dans cette case ; depuis le bandeau, il n'y a
+pas de case, et il n'y a pas non plus de réglage à l'écran tant que rien n'est entré. Ni le nom
+du fichier ni l'onglet ouvert ne devinent quoi que ce soit — *une case est prise dès qu'une image
+la porte*, donc une case devinée de travers **cache ce qui manque**, alors qu'une image sans case
+se voit dans *Pas encore rangé*. Une vidéo et une planche n'ont de case d'aucune façon : elles
+ouvrent le montage et la découpe, et la case visée est laissée de côté.
+
+**Un changement d'ordre assumé, et c'est le seul risque de la tranche.** L'écran d'avant
+rattachait puis regardait si c'était une planche ; il aurait donc rangé la planche dans la case
+visée avant de le savoir. La détection est remontée d'un cran, et elle reste sans promesse : si
+elle échoue, on n'en tient pas compte et le rattachement se fait quand même.
+
+**Et un lot n'enchaîne pas.** La suite ne s'ouvre d'elle-même que pour un fichier seul : partir
+au montage au deuxième fichier d'un dépôt de six abandonnerait les quatre suivants. Le bouton
+*Ouvrir le montage* / *Ouvrir la découpe* reste sur la ligne, donc rien n'est perdu.
+
 ## RP6 · Une seule grille de choix d'image — 15 septembre 2026
 
 **Une fusion, pas un choix entre les deux.** `BibliothequePourImage.tsx` portait déjà la
