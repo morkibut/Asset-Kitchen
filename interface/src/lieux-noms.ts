@@ -97,7 +97,7 @@ return (ou, _profondeur, dedans) => {
     case "tableau-de-bord":
       return null
     case "bibliotheque":
-      return "Les assets"
+      return "Les sujets"
     case "fabrications":
       return "Fabrications"
 
@@ -124,7 +124,7 @@ return (ou, _profondeur, dedans) => {
     // La sortie (`B21`) — même règle que les trois au-dessus : un nom, et le
     // nom du jeu le précède, parce qu'on l'ouvre de partout.
     case "sortie":
-      return "La sortie"
+      return "Livrer au jeu"
     case "travail":
       return "La fabrication"
 

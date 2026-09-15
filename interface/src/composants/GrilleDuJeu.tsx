@@ -118,7 +118,7 @@ export function GrilleDuJeu({
             onClick={onFermer}
             className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
           >
-            ‹ Sa page
+            ‹ {personnage.nom}
           </button>
           <span className="text-[12.5px] text-encre-3">{personnage.nom}</span>
         </div>

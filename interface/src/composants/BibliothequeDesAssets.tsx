@@ -87,9 +87,9 @@ export function BibliothequeDesAssets({ jeu, pieces, personnages = [], familleIn
   }
   const ligneCollection = (g: GroupeDeRangement, f: string) => <button type="button" key={g.identifiant} onClick={() => choisirFamille(f, g.identifiant)} onDragOver={ev => { if (ev.dataTransfer.types.includes("application/x-asset-kitchen-library-subjects")) ev.preventDefault() }} onDrop={ev => deposer(ev, g.identifiant)} aria-current={collection === g.identifiant && famille === f ? "page" : undefined} className={`flex min-h-[30px] w-full items-center justify-between gap-[8px] rounded-5 px-[8px] text-left text-[12px] hover:bg-papier-cote ${collection === g.identifiant && famille === f ? "bg-ligne-ouverte" : ""}`}><span className="truncate">{g.nom}</span><span className="mesure text-[11px] text-encre-3">{g.sujets}</span></button>
 
-  return <main aria-label="Les assets du jeu" data-bibliotheque-assets className="flex min-h-0 flex-1 flex-col overflow-hidden bg-papier">
+  return <main aria-label="Les sujets du jeu" data-bibliotheque-assets className="flex min-h-0 flex-1 flex-col overflow-hidden bg-papier">
     <header className="flex shrink-0 flex-wrap items-start justify-between gap-[14px] px-[22px] pt-[22px] pb-[14px]">
-      <div><h1 className="font-serif text-[38px] leading-tight text-encre">Les assets</h1><p className="mt-[4px] text-[13px] text-encre-3">Les choses du jeu, rangées par famille et collection.</p></div>
+      <div><h1 className="font-serif text-[38px] leading-tight text-encre">Les sujets</h1><p className="mt-[4px] text-[13px] text-encre-3">Les choses du jeu, rangées par famille et collection.</p></div>
       <div className="flex flex-wrap gap-[8px]"><button className={BOUTON} onClick={() => onCreer ? onCreer(famille || "personnages") : onFamille(famille || "personnages")}>Créer un asset</button><button className={BOUTON} onClick={() => setNomCollection("")}>Nouvelle collection</button></div>
     </header>
     <div className="flex min-h-0 flex-1 gap-[22px] px-[22px] pb-[22px]">

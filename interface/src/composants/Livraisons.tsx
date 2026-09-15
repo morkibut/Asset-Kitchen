@@ -83,7 +83,7 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
   return <section className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[30px]" aria-label="Livraison Godot">
     <header className="flex items-start justify-between gap-[14px]">
       <div><h1 className="font-serif text-[38px] text-encre">Livrer au jeu</h1><p className="text-[13px] text-encre-3">Choisis les versions, relis les fichiers, puis retrouve-les dans Godot.</p></div>
-      <button className={bouton} onClick={onFerme}>Retour à l’atelier</button>
+      <button className={bouton} onClick={onFerme}>‹ Livrer au jeu</button>
     </header>
     {erreur && <p role="alert" className="rounded-7 border border-trait-echec bg-fond-echec p-[14px] text-echec">{erreur}</p>}
     {message && <p role="status" className="rounded-7 border border-trait-ok bg-fond-ok p-[14px] text-encre-ok">{message}</p>}

@@ -335,7 +335,7 @@ export function Sortie({
       {/* ── À gauche — les cinq blocs, et le bouton ────────────────────── */}
       <div className="defile flex w-[380px] shrink-0 flex-col overflow-y-auto">
         <h1 className="font-serif text-[38px] leading-[1.1] text-encre">
-          La sortie
+          Livrer au jeu
         </h1>
         <p className="pt-[8px] text-[13px] leading-[1.5] text-encre-2">
           Ce qui sort du jeu, où ça va, et ce qui a changé depuis la dernière

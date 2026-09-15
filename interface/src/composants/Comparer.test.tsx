@@ -311,7 +311,7 @@ describe("ça ne modifie rien", () => {
 describe("les portes", () => {
   test("‹ Sa page ferme l'écran, Voir la grille du jeu l'ouvre", () => {
     const { onFermer, onGrille } = monter()
-    fireEvent.click(screen.getByRole("button", { name: "‹ Sa page" }))
+    fireEvent.click(screen.getByRole("button", { name: "‹ Le pèlerin" }))
     expect(onFermer).toHaveBeenCalledTimes(1)
     fireEvent.click(screen.getByRole("button", { name: "Voir la grille du jeu" }))
     expect(onGrille).toHaveBeenCalledTimes(1)

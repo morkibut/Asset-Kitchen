@@ -11,6 +11,14 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP3 · Le vocabulaire de l'ossature est fermé — 15 septembre 2026
+
+**Seize écarts de nom fermés en une passe.** Une porte : « Les assets » → « Les sujets ». Deux entrées du fil d'Ariane. Six noms d'écran dans le guide. Deux titres écrits en toutes lettres. Cinq retours en arrière portaient le mauvais mot ou la mauvaise forme. `essai_vocabulaire.py` les a nommés ligne par ligne — fichier, lieu, mot trouvé, mot attendu —, et chacun a été corrigé à l'endroit où il était écrit.
+
+**Huit essais d'écran ont changé le mot cherché.** Les tests qui cherchaient `getByRole("button", { name: "Les assets" })` cherchent maintenant `"Les sujets"`  ; ceux qui cherchaient `"‹ Sa page"` cherchent maintenant le nom du personnage mis en contexte (`"‹ Le pèlerin"`, `"‹ Animations"`). La logique des essais n'a pas changé, seulement le mot qui est cherché.
+
+**Le relevé des désaccords restants** — soixante-quatre mots qui ne s'accordent pas encore — reste dans `docs/releves/2026-09-15-desaccords-restants.md`, écran par écran. Chaque tranche qui touche un écran ferme les siens. La liste noire à appliquer (`asset` → `sujet` ou `image`, `composant` → `sujet`, `projet` → `jeu`, `appel` ou `requête` → `génération`) vaut pour toutes. Les trois désaccords non tranchés par la règle sont décidés : l'écran de livraison s'appelle « Livrer au jeu » et rien d'autre ; la table s'appelle « Détourage » et les sept autres de même ; le champ du modèle attend RP4.
+
 ## Le quatrième dégraissage, et trois manques nommés par l'usage — 15 septembre 2026
 
 **Ce qui est descendu, sans qu'un mot change.** Le plan gardait encore cent six lignes de V3

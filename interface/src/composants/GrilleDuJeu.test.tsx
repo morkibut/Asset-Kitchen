@@ -213,7 +213,7 @@ describe("les voisins", () => {
 describe("les portes", () => {
   test("‹ Sa page ferme l'écran", () => {
     const { onFermer } = monter()
-    fireEvent.click(screen.getByRole("button", { name: "‹ Sa page" }))
+    fireEvent.click(screen.getByRole("button", { name: "‹ Le pèlerin" }))
     expect(onFermer).toHaveBeenCalledTimes(1)
   })
 

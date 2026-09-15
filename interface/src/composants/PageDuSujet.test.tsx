@@ -349,7 +349,7 @@ test("les outils historiques restent accessibles et le test d’animation est un
   expect(onGrille).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole("button", { name: "Tester les animations" }))
   expect(document.querySelector("[data-onglet-essai]")).toBeTruthy()
-  fireEvent.click(screen.getByRole("button", { name: "Retour aux animations" }))
+  fireEvent.click(screen.getByRole("button", { name: "‹ Animations" }))
   expect(document.querySelector("[data-onglet-animations]")).toBeTruthy()
 })
 

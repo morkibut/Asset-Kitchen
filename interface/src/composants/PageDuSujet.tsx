@@ -271,7 +271,7 @@ export function PageDuSujet(proprietes: {
             onClick={() => setMatriceOuverte(false)}
             className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
           >
-            ‹ Sa page
+            ‹ {proprietes.ouvert.nom}
           </button>
           <span className="text-[12.5px] text-encre-3">
             Ses cases — le vestiaire, les planches, le calibrage et les animations
@@ -334,7 +334,7 @@ export function PageDuSujet(proprietes: {
             {proprietes.onDecouper && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images fixes."} onClick={() => imageCible && proprietes.onDecouper?.(imageCible)}>Découper une image</button>}
             {proprietes.onExtraire && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images fixes."} onClick={() => imageCible && proprietes.onExtraire?.(imageCible)}>Extraire un élément</button>}
             {onglet === "animations" && <button className={BOUTON} onClick={() => setOnglet("essai")}>Tester les animations</button>}
-            {onglet === "essai" && <button className={BOUTON} onClick={() => setOnglet("animations")}>Retour aux animations</button>}
+            {onglet === "essai" && <button className={BOUTON} onClick={() => setOnglet("animations")}>‹ Animations</button>}
           </div>
           <details className="relative">
             <summary className={`${BOUTON} flex cursor-pointer items-center`}>Autres outils</summary>

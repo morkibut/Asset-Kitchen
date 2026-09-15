@@ -86,22 +86,22 @@ export function reinitialiserGuide() {
  *  membre à `Explication["ou"]` sans l'ajouter ici est une erreur de type,
  *  pas un oubli silencieux. */
 const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
-  "tableau-de-bord": "Le tableau de bord",
-  codex: "Le codex",
+  "tableau-de-bord": "Le jeu",
+  codex: "Les sujets",
   sujet: "La fiche d'un sujet",
-  galerie: "La galerie",
+  galerie: "Galerie",
   case: "La fiche d'une image",
   clip: "Un clip",
   bande: "Une animation",
   montage: "Le montage d'un clip",
   tables: "Les tables",
   depenses: "Les dépenses",
-  inspiration: "Inspiration",
-  jeu: "Réglages du jeu",
+  inspiration: "Univers & toile",
+  jeu: "Réglages",
   ambiances: "Ambiances et couleurs",
   reglages: "L'installation",
   equipement: "Les équipements",
-  sortie: "Les livraisons",
+  sortie: "Livrer au jeu",
 }
 
 // ── Le panneau des touches ────────────────────────────────────────────────

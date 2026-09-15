@@ -4037,8 +4037,8 @@ async function ouvrirLEtabli(nom?: string) {
   // La sixième porte a remplacé le carnet : la bibliothèque donne accès à la
   // famille, puis « Ouvrir et organiser » descend vers sa grille. Ce détour
   // conserve le parcours réel avant d'ouvrir la fiche et sa matrice.
-  fireEvent.click(screen.getByRole("button", { name: "Les assets" }))
-  const bibliotheque = await screen.findByRole("main", { name: "Les assets du jeu" })
+  fireEvent.click(screen.getByRole("button", { name: "Les sujets" }))
+  const bibliotheque = await screen.findByRole("main", { name: "Les sujets du jeu" })
   // Le nom accessible du bouton porte aussi le compte de la famille dès que la
   // grille a répondu (« Personnages 1 ») : une chaîne exacte gagne la course
   // tant que le compte n'est pas encore arrivé, et la perd sous charge.
@@ -10713,7 +10713,7 @@ describe("le châssis des tables", () => {
     expect(ouverture("Créer")).toBe("false")
     expect(
       within(screen.getByRole("navigation", { name: "Atelier" }))
-        .getByRole("button", { name: "Les assets" })
+        .getByRole("button", { name: "Les sujets" })
         .getAttribute("aria-current"),
     ).toBe("page")
   })
@@ -11059,7 +11059,7 @@ describe("la galerie dégraissée", () => {
     await waitFor(() =>
       expect(
         within(screen.getByRole("navigation", { name: "Atelier" }))
-          .getByRole("button", { name: "Les assets" })
+          .getByRole("button", { name: "Les sujets" })
           .getAttribute("aria-current"),
       ).toBe("page"),
     )
@@ -13355,9 +13355,9 @@ describe("le premier lancement", () => {
     // **Nommer une chose se fait dans sa famille**, où la bibliothèque mène en
     // deux clics — aucune question posée, aucun formulaire, et le champ est
     // vide et actif au bout.
-    fireEvent.click(screen.getByRole("button", { name: "Les assets" }))
+    fireEvent.click(screen.getByRole("button", { name: "Les sujets" }))
     const bibliotheque = await screen.findByRole("main", {
-      name: "Les assets du jeu",
+      name: "Les sujets du jeu",
     })
     // Le nom accessible du bouton porte aussi le compte de la famille dès que
     // la grille a répondu (« Personnages 0 ») : une chaîne exacte gagne la
@@ -23530,7 +23530,7 @@ describe("B0 — la navigation de l'atelier", () => {
     await monter(fetchDouble)
     const atelier = within(navigation()).getByRole("navigation", { name: "Atelier" })
     expect(within(atelier).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
-      "Le jeu", "Univers & toile", "Les assets", "Galerie", "Fabrications", "Livrer au jeu",
+      "Le jeu", "Univers & toile", "Les sujets", "Galerie", "Fabrications", "Livrer au jeu",
     ])
   })
 

@@ -214,7 +214,7 @@ jamais, part avec elle : le cadre de délégation est un onglet, pas un étage. 
 restent où ils étaient faute de place dans la maquette ; `RP13` les mènera à l'onglet qui dit ce
 qu'il faut produire.
 
-## RP3 · Fermer le vocabulaire de l'ossature
+## RP3 · Fermer le vocabulaire de l'ossature ✅ **close le 15 septembre 2026**
 
 **Bloquée par** : rien. **Elle bloque** : rien, mais chaque tranche d'après s'appuie dessus.
 
@@ -251,18 +251,18 @@ Trois désaccords ne sont tranchés par personne et se décident ici, une fois :
 
 ### Critères d'acceptation
 
-- [ ] Aucun mot de la liste noire de `docs/vocabulaire.html` ne paraît plus dans un libellé
+- [x] Aucun mot de la liste noire de `docs/vocabulaire.html` ne paraît plus dans un libellé
   d'ossature — porte, onglet, titre d'écran, fil d'Ariane, retour en arrière.
-- [ ] Les portes de la colonne sont celles de la maquette, en nombre et en ordre, avec les mots
+- [x] Les portes de la colonne sont celles de la maquette, en nombre et en ordre, avec les mots
   du vocabulaire.
-- [ ] Les onglets de la fiche d'un sujet sont ceux de la maquette, en nombre et en ordre.
-- [ ] Chaque titre d'écran est le mot par lequel on y entre : on ne clique pas *Livrer au jeu*
+- [x] Les onglets de la fiche d'un sujet sont ceux de la maquette, en nombre et en ordre.
+- [x] Chaque titre d'écran est le mot par lequel on y entre : on ne clique pas *Livrer au jeu*
   pour arriver sur *La sortie*.
-- [ ] Les trois désaccords non tranchés ci-dessus le sont, et la décision est écrite dans
+- [x] Les trois désaccords non tranchés ci-dessus le sont, et la décision est écrite dans
   `docs/vocabulaire.html` — c'est lui qu'on modifie d'abord, pas l'écran.
-- [ ] La liste des désaccords restants est écrite, écran par écran, et chaque tranche d'après
+- [x] La liste des désaccords restants est écrite, écran par écran, et chaque tranche d'après
   ferme les siens.
-- [ ] Un essai tient la liste fermée des noms de portes, d'onglets et de titres, comme les
+- [x] Un essai tient la liste fermée des noms de portes, d'onglets et de titres, comme les
   listes fermées du design tiennent les tailles. Il lit `docs/vocabulaire.html`, il ne recopie
   pas ses mots.
 
