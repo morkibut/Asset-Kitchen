@@ -65,7 +65,6 @@ import { BandeQuiTourne, sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
 import { Bouton, Libelle, Segments, ZoneTexte } from "./pieces"
 import { PANNEAU } from "./Infobulle"
-import { FicheDeLaChose } from "./FicheChose"
 import { EcranCalibrage } from "./Calibrage"
 import { EcranPlanche } from "./Planche"
 import { EcranVitrine } from "./Vitrine"
@@ -310,35 +309,30 @@ export function EcranEtabli({
   calque: string | null
   onCalque: (identifiant: string | null) => void
 }) {
-  // **La fiche ouverte, ou non.** De l'écran et non du serveur : ouvrir une
-  // fiche ne change pas le jeu, et l'enregistrer en ferait un état à remettre
-  // d'accord avec la chose ouverte à chaque changement d'onglet.
-  const [ficheOuverte, setFicheOuverte] = useState(false)
-  // **La vitrine, troisième plein cadre du même endroit** (E16). Elle ne
-  // fabrique rien et ne modifie rien : comme la fiche, elle retire la barre qui
-  // paie, et Échap rend l'établi.
+  // **La vitrine, un premier plein cadre du même endroit** (E16). Elle ne
+  // fabrique rien et ne modifie rien : elle retire la barre qui paie, et
+  // Échap rend l'établi.
   const [vitrineOuverte, setVitrineOuverte] = useState(false)
-  // **Le calibrage, quatrième plein cadre du même endroit** (E17). Il n'est pas
-  // dans la barre des tables, et c'est une décision : une table décrit l'image
-  // ouverte, celui-ci travaille sur *toutes* les poses à la fois et écrit dans
-  // chacune. Le mettre dans la barre voudrait dire que la barre de l'image A
-  // porte un outil qui modifie les images B, C et D.
+  // **Le calibrage, un second plein cadre du même endroit** (E17). Il n'est
+  // pas dans la barre des tables, et c'est une décision : une table décrit
+  // l'image ouverte, celui-ci travaille sur *toutes* les poses à la fois et
+  // écrit dans chacune. Le mettre dans la barre voudrait dire que la barre de
+  // l'image A porte un outil qui modifie les images B, C et D.
   const [calibrageOuvert, setCalibrageOuvert] = useState(false)
-  // **La planche, cinquième plein cadre — et le seul qui garde la barre qui
-  // paie** (E13). Les quatre autres règlent, jugent ou recalculent : aucun ne
-  // dépense. Celui-ci, si, et c'est même tout ce qu'il fait — on y entre pour
-  // voir ce qu'on achète avant de payer.
+  // **La planche, un troisième plein cadre — et le seul qui garde la barre
+  // qui paie** (E13). Les deux autres règlent, jugent ou recalculent : aucun
+  // ne dépense. Celui-ci, si, et c'est même tout ce qu'il fait — on y entre
+  // pour voir ce qu'on achète avant de payer.
   //
   // Il retient **la pose**, pas un booléen : on change de pose en cliquant dans
   // sa matrice, sans refermer, et une planche est toujours la planche *d'une*
   // pose.
   const [planchePose, setPlanchePose] = useState<string | null>(null)
 
-  // Changer de chose referme la fiche : elle décrit celle qu'on regardait, et
-  // la garder ouverte sur la suivante ferait croire qu'on a réglé l'une en
-  // réglant l'autre.
+  // Changer de chose referme ces trois plein cadres : ils décrivent celle
+  // qu'on regardait, et les garder ouverts sur la suivante ferait croire
+  // qu'on a réglé l'une en réglant l'autre.
   useEffect(() => {
-    setFicheOuverte(false)
     setVitrineOuverte(false)
     setCalibrageOuvert(false)
     setPlanchePose(null)
@@ -390,10 +384,9 @@ export function EcranEtabli({
           atteint par deux montages est un écran dont les deux conditions
           finissent par ne plus dire la même chose.
 
-          **La fiche, elle, reste en plein cadre** (E12) : c'est la profondeur
-          suivante du même endroit, et elle emprunte le mécanisme qui existait
-          plutôt que d'en inventer un. Comme l'outil d'avant, elle fait
-          disparaître la barre qui paie — régler ne se paie pas. */}
+          **La fiche longue est partie d'ici** (RP8) : elle fusionne désormais
+          dans la fiche courte, ouverte depuis la page du sujet, un cran
+          au-dessus — « sa fiche › » n'a donc plus d'objet ici. */}
       {(planchePose ? (
           <EcranPlanche
             personnage={ouvert}
@@ -431,28 +424,6 @@ export function EcranEtabli({
             onFermer={() => setVitrineOuverte(false)}
             onErreur={echouer}
           />
-        ) : ficheOuverte ? (
-          <FicheDeLaChose
-            personnage={ouvert}
-            plan={ouvert.plan ?? plan}
-            onPersonnage={onPersonnage}
-            onFermer={() => setFicheOuverte(false)}
-            onVitrine={() => {
-              // On passe de la fiche à la vitrine sans repasser par l'établi :
-              // c'est la même profondeur, et refermer pour rouvrir aurait fait
-              // perdre l'endroit où l'on était.
-              setFicheOuverte(false)
-              setVitrineOuverte(true)
-            }}
-            // **Et de la fiche au calibrage, pour la même raison** (R8) : c'est
-            // sur la fiche qu'on voit qu'une pose sort du lot, et la même
-            // profondeur ne se referme pas pour se rouvrir.
-            onCalibrage={() => {
-              setFicheOuverte(false)
-              setCalibrageOuvert(true)
-            }}
-            onErreur={echouer}
-          />
         ) : (
       <div className="flex min-h-0 flex-1">
         <Fiche
@@ -472,7 +443,6 @@ export function EcranEtabli({
           onPersonnage={onPersonnage}
           onArmer={onArmer}
           onAnimer={onAnimer}
-          onFiche={() => setFicheOuverte(true)}
           onVitrine={() => setVitrineOuverte(true)}
           onCalibrage={() => setCalibrageOuvert(true)}
           onPlanche={setPlanchePose}
@@ -512,12 +482,12 @@ export function EcranEtabli({
           référence n'appelle personne, et un écran incapable de dépenser ne
           porte pas le champ qui dépense. `App` la retire déjà pour l'outil,
           qu'il tient ; celle-ci se décide ici, où la fiche vit. */}
-      {/* **La planche est la seule des cinq profondeurs à garder la barre qui
+      {/* **La planche est la seule des trois profondeurs à garder la barre qui
           paie** (E13) : c'est le seul endroit du produit où l'on regarde ce
           qu'on achète *avant* de payer, et l'écarter de la barre aurait obligé
           à remonter d'un cran pour dépenser — c'est-à-dire à perdre de vue ce
           qu'on venait de regarder. */}
-      {ficheOuverte || vitrineOuverte || calibrageOuvert ? null : barreQuiPaie}
+      {vitrineOuverte || calibrageOuvert ? null : barreQuiPaie}
     </div>
   )
 }
@@ -538,7 +508,6 @@ function Fiche({
   onPersonnage,
   onArmer,
   onAnimer,
-  onFiche,
   onVitrine,
   onCalibrage,
   onPlanche,
@@ -570,10 +539,7 @@ function Fiche({
     pose: Pose,
     direction?: { identifiant: string; nom: string } | null,
   ) => void
-  /** Descendre d'un cran : la fiche plein cadre (E12). Elle vit dans l'établi
-   *  parce que c'est de là qu'on y entre et qu'on y revient. */
-  onFiche: () => void
-  /** Et la vitrine (E16), qui montre ce qu'on regardait — ici, une chose et
+  /** La vitrine (E16), qui montre ce qu'on regardait — ici, une chose et
    *  toutes ses poses à la même échelle. */
   onVitrine: () => void
   /** Et le calibrage (E17), qui les empile dans la même case. */
@@ -624,7 +590,6 @@ function Fiche({
         <Identite
           personnage={personnage}
           onPersonnage={onPersonnage}
-          onFiche={onFiche}
           onVitrine={onVitrine}
           onCalibrage={onCalibrage}
           onErreur={onErreur}
@@ -850,16 +815,13 @@ function Onglet({
 function Identite({
   personnage,
   onPersonnage,
-  onFiche,
   onVitrine,
   onCalibrage,
   onErreur,
 }: {
   personnage: Personnage
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
-  /** Descendre d'un cran : la fiche plein cadre (E12). */
-  onFiche: () => void
-  /** Et la vitrine (E16). */
+  /** La vitrine (E16). */
   onVitrine: () => void
   /** Et le calibrage (E17). */
   onCalibrage: () => void
@@ -942,17 +904,9 @@ function Identite({
         className="w-full min-w-0 rounded-[2px] border border-transparent bg-transparent px-1 text-[15px] leading-none text-encre hover:border-trait focus:border-contour focus:bg-papier-cote"
       />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        {/* **Un clic sur « sa fiche » ouvre l'écran plein cadre** (E12). Le
-            geste est celui de la maquette : on descend d'un cran depuis
-            l'établi, et Échap ramène à l'endroit exact d'où l'on venait. */}
-        <button
-          type="button"
-          onClick={onFiche}
-          title="ce qu'elle est, ce qui l'habille, ses images de référence — rien de tout ça ne coûte"
-          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
-        >
-          sa fiche ›
-        </button>
+        {/* **« sa fiche › » est parti d'ici** (RP8) : la fiche longue fusionne
+            désormais dans la fiche courte, ouverte depuis la page du sujet —
+            un cran au-dessus, plus un menu qui parle de calibrage. */}
         {/* **La vitrine montre ce qu'on regardait** (E16) : ouverte d'ici, ce
             sont toutes les poses de cette chose, à la même échelle — c'est comme
             ça qu'une pose sortie d'un quart plus petite se voit. */}

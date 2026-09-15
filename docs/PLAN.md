@@ -140,7 +140,7 @@ blanc, et la révision figure ici à la place de l'ancienne règle.
 | L'invariant | Depuis |
 |---|---|
 | Les fichiers font foi, la base est un index reconstructible | T3 |
-| **Une seule grille d'assets dans tout le produit** — la matrice d'une chose, la réserve, les dépenses et **la colonne des sœurs** n'en sont pas : ni recherche, ni filtres, ni sélection multiple | T3, *reformulé en E1, **amendé en `G12`** : la colonne des sœurs est une quatrième surface, et elle porte une sélection parce qu'elle est l'ensemble déjà sous les yeux* |
+| **Une seule grille d'assets dans tout le produit** — la matrice d'une chose, la réserve, les dépenses et **la colonne des sœurs** n'en sont pas : ni recherche, ni filtres, ni sélection multiple | T3, *reformulé en E1, **amendé en `G12`** : la colonne des sœurs est une quatrième surface, et elle porte une sélection parce qu'elle est l'ensemble déjà sous les yeux ; **la toile est la cinquième, amendée en `RP9` pour la même raison*** |
 | Tout ce qui ne demande pas le fournisseur fonctionne **réseau coupé** | T3, reconduit partout |
 | Écrire un nom crée la chose, sur-le-champ, sans formulaire et sans rien payer | C1, généralisé en E2 |
 | Une case est prise dès qu'une image la porte, pas parce que l'image est bonne | E2 |

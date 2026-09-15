@@ -12,6 +12,7 @@ import { afterEach, expect, test, vi } from "vitest"
 
 import { MemoireDuParcours } from "./MemoireDuParcours"
 import { PageDuSujet } from "./PageDuSujet"
+import { AIDE } from "../aide"
 import {
   api,
   RECETTE_VIDE,
@@ -128,6 +129,29 @@ const UNIVERS = {
   },
 }
 
+// **Les deux réglages que seule la fiche longue portait** (RP8), avec des
+// réponses par défaut vides : les essais qui n'en parlent pas ouvrent quand
+// même le dialogue sans qu'un habillage ou des références mal formés le
+// fassent planter.
+const HABILLAGE_VIDE = {
+  personnage: "le-pelerin",
+  champs: [],
+  ambiance: null,
+  prend: "",
+  cible_px: 0,
+  desaccord: [],
+  palette: null,
+  poses_ici: 0,
+  de_l_ambiance: 0,
+}
+
+const REFERENCES_VIDES = {
+  personnage: "le-pelerin",
+  lignes: [],
+  propositions: [],
+  disponibles: 0,
+}
+
 const FAMILLE = {
   personnages: [
     {
@@ -161,6 +185,9 @@ function construireDouble() {
     if (url.startsWith("/api/characters/families/")) return rendre(FAMILLE)
     if (url.startsWith("/api/characters/le-pelerin/export"))
       return rendre({ compte: 4, dossier: "D:/jeu", chemins: [] })
+    if (/\/characters\/[^/]+\/style$/.test(url)) return rendre(HABILLAGE_VIDE)
+    if (/\/characters\/[^/]+\/references$/.test(url) && (init?.method ?? "GET") === "GET")
+      return rendre(REFERENCES_VIDES)
     return rendre({})
   })
   return { fetchDouble, appels }
@@ -228,7 +255,7 @@ const onglet = (nom: string) => screen.getByRole("tab", { name: nom })
 test("la fiche validée ouvre sur six onglets, sans formulaire ni barre permanente", async () => {
   monter()
   expect(document.querySelector("[data-page-du-sujet]")).toBeTruthy()
-  expect(within(screen.getByRole("tablist", { name: "La page du sujet" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images fixes", "Sources & clips", "Pas encore rangé", "Équipement", "Objectif & règles"])
+  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images fixes", "Sources & clips", "Pas encore rangé", "Équipement", "Objectif & règles"])
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(screen.queryByLabelText("Nom du sujet")).toBeNull()
   expect(document.querySelector("[data-ce-qui-lui-manque]")).toBeNull()
@@ -247,7 +274,7 @@ test("un objectif d’animation n’ajoute aucun manque d’image fixe au résum
   } } as never)
   const livrer = vi.fn()
   monter({ objectif: { ...objectif, sorties: objectif.sorties.map(s => ({ ...s })) } }, "", livrer)
-  const resume = screen.getByRole("region", { name: "Résumé de l’asset" })
+  const resume = screen.getByRole("region", { name: "Résumé du sujet" })
   expect(await within(resume).findByText(/0 \/ 1 animation retenue · 1 à fabriquer/)).toBeTruthy()
   expect(within(resume).queryByText(/image fixe.*fabriquer/)).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "Livrer…" }))
@@ -263,7 +290,7 @@ test("la description se modifie à la demande puis se garde en une seule fois", 
   const { onPersonnage } = monter()
   const regler = vi.spyOn(api, "reglerPersonnage").mockResolvedValue({ personnage: sujet({ nom: "La pèlerine", description: "Manteau bleu" }) })
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
-  const dialogue = screen.getByRole("dialog", { name: "La fiche de l’asset" })
+  const dialogue = screen.getByRole("dialog", { name: "La fiche du sujet" })
   fireEvent.change(within(dialogue).getByLabelText("Nom du sujet"), { target: { value: "La pèlerine" } })
   fireEvent.change(within(dialogue).getByLabelText("Description du sujet"), { target: { value: "Manteau bleu" } })
   fireEvent.blur(within(dialogue).getByLabelText("Description du sujet"))
@@ -368,6 +395,142 @@ test("les collections se modifient depuis la fiche sans toucher aux règles", as
   await waitFor(() => expect(appels.some(a => a.methode === "PUT" && a.url.includes("/collections/pnj"))).toBe(true))
   fireEvent.click(within(dialogue).getByLabelText("Retirer de Les héros"))
   await waitFor(() => expect(appels.some(a => a.methode === "DELETE" && a.url.includes("/collections/heros"))).toBe(true))
+})
+
+// ── RP8 · Les trois réglages que seule la fiche longue portait ─────────────
+//
+// Le signalement se réglait déjà ici (« Description du sujet », ci-dessus) ;
+// les sept textes de style et les images de référence n'existaient que sous
+// « Cases, planches et calibrage » → « Sa fiche ›» — trois clics, dont un menu
+// qui ne parle pas d'eux. Ils sont maintenant dans le même dialogue.
+
+test("le portrait et le nom ne sont pas écrits deux fois quand la fiche s'ouvre", () => {
+  monter()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  expect(screen.getAllByRole("heading", { name: "Le pèlerin" })).toHaveLength(1)
+  expect(document.querySelectorAll("[data-portrait-du-sujet]")).toHaveLength(1)
+})
+
+test("les trois réglages sont visibles avec leur aide, lue dans le recueil", () => {
+  monter()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog")
+  for (const clef of ["codex.chose.sujet", "codex.chose.habillage", "codex.chose.exemples"]) {
+    const entree = AIDE[clef]
+    expect(within(dialogue).getByText(entree.nom)).toBeTruthy()
+    expect(within(dialogue).getByText(entree.quoi)).toBeTruthy()
+  }
+})
+
+test("un texte de style se règle depuis la fiche, et son origine se lit sans clic", async () => {
+  const monde = { nom: "monde", texte: "des collines arides", origine: "jeu" as const, remplace: "", ambiance: "", ouvert: true, annonce: [] }
+  vi.spyOn(api, "habillage").mockResolvedValue({ ...HABILLAGE_VIDE, champs: [monde] })
+  const { appels } = monter()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog")
+  const zone = await within(dialogue).findByLabelText("monde")
+  expect(within(dialogue).getByText("du jeu", { exact: true })).toBeTruthy()
+  fireEvent.change(zone, { target: { value: "des salles de forge" } })
+  fireEvent.blur(zone)
+  await waitFor(() =>
+    expect(
+      appels.some(
+        (a) =>
+          a.methode === "PUT" &&
+          a.url === "/api/characters/le-pelerin" &&
+          (a.corps as { textes?: Record<string, string> } | undefined)?.textes?.monde === "des salles de forge",
+      ),
+    ).toBe(true),
+  )
+})
+
+test("une image d'exemple proposée se retient d'un clic", async () => {
+  const proposition = {
+    reference: "img-1",
+    genre: "asset" as const,
+    provenance: "le corps retenu de repos",
+    detail: "",
+    ecartee: false,
+    montre: { sorte: "asset" as const, asset: image({ identifiant: "img-1" }) },
+  }
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue({ ...REFERENCES_VIDES, propositions: [proposition] })
+  const promouvoir = vi
+    .spyOn(api, "promouvoirReference")
+    .mockResolvedValue({ personnage: sujet(), references: { ...REFERENCES_VIDES, lignes: [proposition] } })
+  monter()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog")
+  fireEvent.click(await within(dialogue).findByRole("button", { name: /^retenir/ }))
+  await waitFor(() => expect(promouvoir).toHaveBeenCalledWith("le-pelerin", "img-1", true))
+})
+
+test("sans référence d'exemple, la fiche dit ce que ça coûte", async () => {
+  monter()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog")
+  expect(await within(dialogue).findByText(/Dix-sept appels payés sur vingt-huit/)).toBeTruthy()
+})
+
+test("éteindre un texte de style écrit un refus, et rallumer le défait", async () => {
+  const monde = { nom: "monde", texte: "des collines arides", origine: "jeu" as const, remplace: "", ambiance: "", ouvert: true, annonce: [] }
+  // **Une réponse par appel** : la première sert l'ouverture de la fiche, la
+  // seconde la relecture qui suit l'extinction, la troisième celle qui suit
+  // le rallumage — trois lectures, jamais recalculées ici mais bien relues au
+  // serveur, comme le reste des réglages de cette fiche.
+  vi.spyOn(api, "habillage")
+    .mockResolvedValueOnce({ ...HABILLAGE_VIDE, champs: [monde] })
+    .mockResolvedValueOnce({ ...HABILLAGE_VIDE, champs: [{ ...monde, origine: "eteint" as const }] })
+    .mockResolvedValueOnce({ ...HABILLAGE_VIDE, champs: [monde] })
+  const { appels } = monter()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog")
+  fireEvent.click(await within(dialogue).findByRole("button", { name: "éteindre" }))
+  await waitFor(() =>
+    expect(
+      appels.some(
+        (a) => a.methode === "PUT" && a.url === "/api/characters/le-pelerin" && (a.corps as { eteindre?: string })?.eteindre === "monde",
+      ),
+    ).toBe(true),
+  )
+  fireEvent.click(await within(dialogue).findByRole("button", { name: "rallumer" }))
+  await waitFor(() =>
+    expect(
+      appels.some(
+        (a) => a.methode === "PUT" && a.url === "/api/characters/le-pelerin" && (a.corps as { rallumer?: string })?.rallumer === "monde",
+      ),
+    ).toBe(true),
+  )
+})
+
+test("un texte de style écrit ici montre en dessous, barré, celui qu'il remplace", async () => {
+  const vue = { nom: "vue", texte: "flat orthographic icon", origine: "ici" as const, remplace: "3/4 top-down", ambiance: "", ouvert: true, annonce: [] }
+  vi.spyOn(api, "habillage").mockResolvedValue({ ...HABILLAGE_VIDE, champs: [vue] })
+  monter()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog")
+  await within(dialogue).findByLabelText("vue et cadrage")
+  expect(within(dialogue).getByText("3/4 top-down")).toBeTruthy()
+})
+
+test("le désaccord entre la grille annoncée et celle qui s'applique se voit", async () => {
+  vi.spyOn(api, "habillage").mockResolvedValue({ ...HABILLAGE_VIDE, cible_px: 128, desaccord: ["rendu"] })
+  monter()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog")
+  expect(await within(dialogue).findByText("128 px de grille")).toBeTruthy()
+  expect(within(dialogue).getByText(/annonce une autre grille dans le texte qui part/)).toBeTruthy()
+})
+
+test("une image d'exemple disparue laisse sa ligne, sans vignette", async () => {
+  const ligne = { reference: "partie-1", genre: "asset" as const, provenance: "une image promue", detail: "", ecartee: false, montre: null }
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue({ ...REFERENCES_VIDES, lignes: [ligne] })
+  monter()
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const dialogue = screen.getByRole("dialog")
+  await within(dialogue).findByText("une image promue")
+  const vignettes = within(dialogue).getByText("une image promue").closest("li")?.querySelectorAll("[data-vignette-exemple]")
+  expect(vignettes).toHaveLength(1)
+  expect(vignettes?.[0].querySelector("img")).toBeNull()
 })
 
 // **Deux portes, et la ligne entre elles est l'argent** (`AU21`) : *Importer…*

@@ -1353,7 +1353,7 @@ class ServiceProduction:
         reprend ce repli **sans erreur** : c'est ce que le critère demande.
 
         ⚠️ **L'écran tient la même règle de son côté** (`portraitDe`,
-        `interface/src/composants/FicheChose.tsx`), parce qu'il a déjà les cases
+        `interface/src/composants/FicheDuSujet.tsx`), parce qu'il a déjà les cases
         sous la main et qu'un aller-retour pour désigner une image qu'il affiche
         déjà serait un aller-retour de trop. Ce n'est pas une seconde vérité
         neuve : l'écran reprenait déjà le départage du serveur au mot.

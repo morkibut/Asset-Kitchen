@@ -128,10 +128,13 @@ return (ou, _profondeur, dedans) => {
     case "travail":
       return "La fabrication"
 
-    // *Inspiration* et non *Univers* : ce ne sont pas les mêmes images, et le
-    // produit ne les confond nulle part.
+    // **Le mot de la porte, et une carte est un étage sous lui** (`RP9`, relevé
+    // des désaccords du 15 septembre 2026). Il disait *Inspiration*, qui est le
+    // nom d'un **côté** de l'onglet et non celui du lieu : le fil d'Ariane
+    // nomme des lieux, et le lieu s'appelle *Univers & toile* dans la liste
+    // fermée de `docs/vocabulaire.html`.
     case "carte":
-      return ["Inspiration", ou.carte.groupe || ou.carte.identifiant, "Découpage"]
+      return ["Univers & toile", ou.carte.groupe || ou.carte.identifiant, "Découpage"]
 
     case "sujet": {
       const chose = personnages.find((p) => p.identifiant === ou.sujet)

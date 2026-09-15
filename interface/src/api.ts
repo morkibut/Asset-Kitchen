@@ -2321,7 +2321,7 @@ export type Personnage = {
    *  sujet ressemble. Absente par défaut ; l'identifiant d'une image fixe du
    *  sujet quand l'auteur en a choisi une.
    *
-   *  ⚠️ **Elle ne se résout pas ici** : `portraitDe` (`FicheChose.tsx`) la
+   *  ⚠️ **Elle ne se résout pas ici** : `portraitDe` (`FicheDuSujet.tsx`) la
    *  cherche parmi les images du sujet et retombe sur le choix du produit
    *  quand elle ne désigne plus rien — supprimée, écartée, rattachée ailleurs.
    *  Facultative : un serveur d'avant la tranche ne l'envoie pas. */

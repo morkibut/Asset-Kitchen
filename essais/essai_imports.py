@@ -71,14 +71,16 @@ EXCEPTIONS: dict[str, str] = {
     "interface/src/composants/Apercu.tsx":
         "fonctions pures de lecture d'image, même rôle que chassis.tsx",
     # Dette assumée, pas cachée. `comptes` et `portraitDe` sont deux fonctions
-    # pures de la fiche d'une chose du jeu, empruntées par deux écrans du
-    # carnet (`PageDuSujet.tsx`, `GrilleDuJeu.tsx`) sans être passées par un
-    # module de vocabulaire. Les extraire est un vrai travail, hors du
-    # périmètre de `B27` — qui traite le déménagement de la retouche, pas la
-    # fiche d'une chose. Le dire ici vaut mieux que de le laisser filer sous
-    # un garde-fou qui se tairait.
-    "interface/src/composants/FicheChose.tsx":
-        "deux fonctions pures empruntées, dette notée et non traitée par B27",
+    # pures de la fiche d'un sujet, empruntées par deux écrans du carnet
+    # (`PageDuSujet.tsx`, `GrilleDuJeu.tsx`) sans être passées par un module de
+    # vocabulaire. `RP8` a fondu `FicheChose.tsx` dans `FicheDuSujet.tsx` sans
+    # les extraire : la dette migre avec le code qui la porte, le nom du
+    # fichier suit — comme dans `LA_GEOMETRIE_D_AVANT` d'`essai_jetons.py`. Les
+    # extraire reste un vrai travail, hors du périmètre de `RP8`, qui fond deux
+    # écrans, pas un vocabulaire. Le dire ici vaut mieux que de le laisser
+    # filer sous un garde-fou qui se tairait.
+    "interface/src/composants/FicheDuSujet.tsx":
+        "deux fonctions pures empruntées, dette notée et non traitée par RP8",
 }
 
 # ── Lire un import relatif, sans construire un compilateur TypeScript ───────

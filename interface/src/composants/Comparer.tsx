@@ -111,7 +111,7 @@ function imagesDeLaPose(personnage: Personnage, poseId: string): Asset[] {
 }
 
 /** La retenue, sinon la plus récente — la même règle que `portraitDe`
- *  (`FicheChose.tsx`), reprise pour une pose choisie plutôt que déduite. */
+ *  (`FicheDuSujet.tsx`), reprise pour une pose choisie plutôt que déduite. */
 function imageDeReference(images: Asset[]): Asset | null {
   if (!images.length) return null
   const favori = images.find((i) => i.favori)

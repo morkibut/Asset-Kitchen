@@ -1,8 +1,7 @@
-/** Fiche de l’asset : résumé compact, résultats et réglages sur demande. */
+/** La page d'un sujet : sa fiche, ses onglets, la porte de sa matrice. */
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { api, Refus, type Collection, type Echelle, type GroupeDeRangement, type Asset, type Personnage, type Piece, type Pose, type Role, type EmplacementCorps, type Univers, type VestiaireDuJeu, type Generation } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
-import { portraitDe } from "./FicheChose"
 import { EcranEtabli } from "./EtabliDuSujet"
 import { ImagesDuSujet } from "./ImagesDuSujet"
 import { AnimationsDuSujet } from "./AnimationsDuSujet"
@@ -12,8 +11,7 @@ import { TenuesDuSujet } from "./TenuesDuSujet"
 import { ObjectifDuSujet } from "./ObjectifDuSujet"
 import { SourcesDuSujet } from "./SourcesDuSujet"
 import { EnAttenteDuSujet } from "./EnAttenteDuSujet"
-import { ImporterIntelligemment } from "./ImporterIntelligemment"
-import { FicheDuSujet } from "./FicheDuSujet"
+import { FicheDuSujet, portraitDe } from "./FicheDuSujet"
 import { useScrollDuParcours } from "./MemoireDuParcours"
 
 export type Onglet = "fiche" | "images" | "animations" | "sources" | "attente" | "equipement" | "objectif" | "essai"
@@ -154,11 +152,11 @@ export function PageDuSujet(proprietes: {
   // **B13** — la grille du jeu et comparer n'ont rien à montrer sans une
   // image. Les deux liens se grisent avec leur raison plutôt que de
   // disparaître, comme partout ailleurs dans ce fichier.
+  const auMoinsUneImage = ouvert.cases.some((c) => c.images.length > 0)
   // **Comparer sait aussi lire deux animations depuis RP12**, donc une seule
   // image ne suffit plus à décider si la porte s'ouvre : un sujet qui n'a que
   // des animations a bel et bien quelque chose à comparer.
   const auMoinsUneAnimation = ouvert.cases.some((c) => c.bandes.length > 0)
-  const auMoinsUneImage = ouvert.cases.some((c) => c.images.length > 0)
   // La matrice, profondeur suivante de cette page — voir l'en-tête du fichier.
   const [matriceTenueIci, setMatriceTenueIci] = useState(false)
   const matriceOuverte = proprietes.matrice ?? matriceTenueIci
@@ -332,7 +330,7 @@ export function PageDuSujet(proprietes: {
           onRange={() => setRange(n => n + 1)} onPersonnage={proprietes.onPersonnage} onErreur={echouer}
           onImages={() => setOnglet("images")} onObjectif={() => setOnglet("objectif")} />
 
-        <nav role="tablist" aria-label="La page du sujet" className="flex shrink-0 flex-wrap gap-[4px] border-b border-trait pb-[8px]">
+        <nav role="tablist" aria-label="Les onglets de sa fiche" className="flex shrink-0 flex-wrap gap-[4px] border-b border-trait pb-[8px]">
           {ONGLETS.filter(({ clef }) => clef !== "equipement" || ouvert.equipable).map(({ clef, nom }) => <button key={clef} type="button" role="tab" aria-selected={onglet === clef} onClick={() => setOnglet(clef)} className={`h-[34px] rounded-7 px-[14px] text-[13px] transition-colors duration-120 ${onglet === clef ? "bg-encre text-papier" : "text-encre-3 hover:bg-papier-cote hover:text-encre"}`}>{nom}</button>)}
         </nav>
 

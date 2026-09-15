@@ -141,7 +141,9 @@ LA_GEOMETRIE_D_AVANT = (
     "interface/src/composants/Clip.tsx",
     "interface/src/composants/Envoi.tsx",
     "interface/src/composants/EtabliDuSujet.tsx",
-    "interface/src/composants/FicheChose.tsx",
+    # `RP8` fond `FicheChose.tsx` dans `FicheDuSujet.tsx` — la géométrie
+    # d'avant migre avec le code qui la porte, le nom du fichier suit.
+    "interface/src/composants/FicheDuSujet.tsx",
     "interface/src/composants/Montage.tsx",
     "interface/src/composants/Mouvements.tsx",
     "interface/src/composants/Planche.tsx",

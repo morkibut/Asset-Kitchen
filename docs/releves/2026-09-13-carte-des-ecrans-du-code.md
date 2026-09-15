@@ -204,14 +204,9 @@ Voir *Les écrans morts*.
 - **Fichier** : `interface/src/composants/Calibrage.tsx`
 
 ### EcranVitrine — la vitrine
-- **On y arrive par** : la matrice, la fiche longue, ou une planche.
+- **On y arrive par** : la matrice, ou une planche.
 - **Ce qu'il fait** : montre les images retenues du sujet.
 - **Fichier** : `interface/src/composants/Vitrine.tsx`
-
-### FicheDeLaChose — la fiche longue d'un sujet
-- **On y arrive par** : la matrice du sujet → *Sa fiche*.
-- **Ce qu'il fait** : cinq sections sur une page — le sujet, son habillage, ses textes de style, ses références, son calibrage.
-- **Fichier** : `interface/src/composants/FicheChose.tsx`
 
 ### Retouche — « La retouche »
 - **On y arrive par** : la fiche d'une image dans la galerie ; une image d'*Images fixes* ; *Autres outils → Retoucher l'image* ; le comparateur ; un calque depuis la page d'un emploi ; une image depuis les Fabrications, les tuiles ou la barre de recherche.
@@ -457,12 +452,13 @@ Ils ne s'ouvrent pas seuls : ils vivent dans un des écrans ci-dessus. Tous sont
 - **Et il y en avait un troisième** : la grille *Choisir une image de référence* écrite dans `App.tsx`, qui est morte (voir plus haut).
 - **Fichiers** : `interface/src/composants/BibliothequePourImage.tsx`, `interface/src/composants/ChoisirImageEquipement.tsx`
 
-### FicheDuSujet et FicheDeLaChose font le même travail
-- **Ce que fait `FicheDuSujet`** : le bloc en haut de la page d'un sujet. Portrait, nom, description, collections, compte d'images retenues, et un mode édition qui écrit `api.reglerPersonnage`.
-- **Ce que fait `FicheDeLaChose`** : une page entière, en cinq sections qui défilent — le sujet (nom, description, signalement), son habillage, ses textes de style, ses images de référence, son calibrage — avec un sommaire à gauche et le portrait en tête. Elle écrit elle aussi `api.reglerPersonnage`.
-- **Ce qui les sépare vraiment** : la longue porte trois choses que la courte n'a pas — le signalement qui part dans chaque prompt, les textes de style, et les images de référence du sujet. Le portrait, le nom et la description sont écrits deux fois, avec deux mises en page différentes.
-- **Lequel l'auteur atteint** : **les deux**, mais pas au même prix. La courte s'ouvre avec la page du sujet. La longue demande trois clics : *Autres outils* → *Cases, planches et calibrage* → *Sa fiche* — ce qui fait que les trois réglages qu'elle est seule à porter sont enterrés sous un menu qui parle de calibrage.
-- **Fichiers** : `interface/src/composants/FicheDuSujet.tsx`, `interface/src/composants/FicheChose.tsx`
+### FicheDuSujet et FicheDeLaChose font le même travail — **résolu par `RP8`, le 16 septembre 2026**
+- **Ce qui reste** : `FicheDuSujet.tsx` seul, ouvert en un clic depuis la page du sujet. `FicheChose.tsx` **a été retiré** ; son dialogue « Modifier la fiche » porte désormais aussi le signalement, les sept textes de style et les images de référence, chacun avec l'aide lue dans `interface/src/aide.ts`. La suite du relevé décrit l'état d'avant.
+- **Ce que faisait `FicheDuSujet`** : le bloc en haut de la page d'un sujet. Portrait, nom, description, collections, compte d'images retenues, et un mode édition qui écrit `api.reglerPersonnage`.
+- **Ce que faisait `FicheDeLaChose`** : une page entière, en cinq sections qui défilent — le sujet (nom, description, signalement), son habillage, ses textes de style, ses images de référence, son calibrage — avec un sommaire à gauche et le portrait en tête. Elle écrivait elle aussi `api.reglerPersonnage`.
+- **Ce qui les séparait vraiment** : la longue portait trois choses que la courte n'avait pas — le signalement qui part dans chaque prompt, les textes de style, et les images de référence du sujet. Le portrait, le nom et la description étaient écrits deux fois, avec deux mises en page différentes. Deux de ses cinq sections n'ont pas suivi la fusion : « ce que le jeu réclame » et « ce qui est fait » redisaient en lecture seule les onglets *Objectif & règles*, *Images fixes* et *Animations* de la même page ; le lien vers le calibrage et celui vers la vitrine restent des gestes directs de la matrice, inchangés.
+- **Lequel l'auteur atteignait** : **les deux**, mais pas au même prix. La courte s'ouvrait avec la page du sujet. La longue demandait trois clics : *Autres outils* → *Cases, planches et calibrage* → *Sa fiche* — ce qui faisait que les trois réglages qu'elle était seule à porter étaient enterrés sous un menu qui parle de calibrage.
+- **Fichiers** : `interface/src/composants/FicheDuSujet.tsx` (reste), `interface/src/composants/FicheChose.tsx` (retiré).
 
 ## Les douteux
 

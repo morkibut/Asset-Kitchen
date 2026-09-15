@@ -420,6 +420,36 @@ Deux grilles choisissent une image, et une troisième était morte. La grille, l
 favoris et la pagination sont écrits deux fois. Ce qui les sépare : le filtre par collection et
 l'aperçu en grand d'un côté, le rôle demandé après le choix et l'import de fichier de l'autre.
 
+### Les gestes des deux côtés
+
+`BibliothequePourImage.tsx` (« Choisir une référence ») :
+
+- [x] Chercher par texte, filtrer par collection, filtrer par favoris.
+- [x] Pagination (« Afficher les suivantes »).
+- [x] L'aperçu en grand : le pointeur vise, la barre d'espace ouvre.
+- [x] Reçoit des images voisines déjà connues (`voisines`), utilisé par la Superposition.
+- [x] Un clic choisit l'image tout de suite, sans étape de confirmation.
+- [x] Montée à neuf endroits : *Ce qui part*, Fabriquer en 3D, Vidéo libre, Les tuiles (deux
+  fois), Workflows locaux, Importer des images, Superposition.
+
+`ChoisirImageEquipement.tsx` (choisir une image pour un équipement) :
+
+- [x] Chercher par texte, filtrer par favoris.
+- [x] Pagination (« Afficher les images suivantes »).
+- [x] Importer un fichier depuis le disque.
+- [x] Un clic sélectionne l'image, puis demande son rôle — corps équipé, calque, ou référence —
+  avant de confirmer.
+- [x] Un mode *référence seulement* : le rôle est fixé, aucun sélecteur ne se montre.
+- [x] Montée à deux endroits : les calques d'un emploi, la référence commune d'une pièce.
+
+**La fusion.** `BibliothequePourImage.tsx` porte désormais tous ces gestes ; `ChoisirImageEquipement.tsx`
+a disparu et ses deux montages lisent la grille unique avec `role="choix"` ou `role="reference"`.
+Sans rôle demandé, le clic choisit tout de suite, comme avant ; avec un rôle demandé, il ouvre le
+même temps de relecture qu'avant. Au passage, deux mots de
+[`docs/releves/2026-09-15-desaccords-restants.md`](releves/2026-09-15-desaccords-restants.md)
+§ RP6 se ferment : le bouton de fermeture porte désormais `‹ ` suivi du nom de l'écran d'où l'on
+vient, et la pagination porte *Suivant* / *Précédent* au lieu d'« Afficher les suivantes ».
+
 ### Critères d'acceptation
 
 - [x] Une seule grille de choix d'image dans tout le produit.
@@ -454,22 +484,81 @@ du carnet ; cette tranche le rend vrai.
 - [ ] Les réglages d'une famille restent atteignables depuis la famille.
 - [ ] La vue *Les poses* n'est pas perdue.
 
-## RP8 · Une seule fiche de sujet
+## RP8 · Une seule fiche de sujet ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : RP3.
 
-La fiche courte s'ouvre avec la page du sujet. La fiche longue demande trois clics, dont un menu
-qui parle de calibrage — et elle est seule à porter trois réglages : le signalement qui part dans
-chaque demande, les textes de style, et les images de référence du sujet.
+La fiche courte s'ouvrait avec la page du sujet. La fiche longue demandait trois clics, dont un
+menu qui parle de calibrage — et elle était seule à porter trois réglages : le signalement qui
+part dans chaque demande, les textes de style, et les images de référence du sujet.
 
-Trois réglages qui partent au modèle, enterrés sous un menu qui parle d'autre chose.
+Trois réglages qui partaient au modèle, enterrés sous un menu qui parle d'autre chose.
+
+**Ce qui gagne** : la fiche courte (`FicheDuSujet.tsx`), parce qu'elle est atteinte du premier
+clic — c'est la décision 2 du plan, *un seul écran qui sait tout ce que les deux savaient*. La
+fiche longue (`FicheChose.tsx`) fond dedans, et le fichier part.
+
+### Les gestes des deux côtés
+
+Nommés avant de commencer, cochés après vérification. *Fusionné* veut dire : retrouvé tel quel
+dans l'écran unique. *Repris ailleurs* veut dire : la même information existe déjà, à un clic,
+sur un onglet de la même page — la redire dans la fiche aurait fait deux endroits à tenir
+d'accord pour la même chose.
+
+**`FicheDuSujet.tsx` — la fiche courte, ouverte avec la page du sujet**
+
+- [x] Le portrait (image, ou l'animation retenue qui tourne au survol).
+- [x] Le résumé : description, nombre de résultats, nombre de retenus pour le jeu, collections.
+- [x] Le bouton « Modifier la fiche ».
+- [x] La ligne d'objectif (couverture images/animations, « Revoir » ou « Définir l'objectif »).
+- [x] Éditer le nom.
+- [x] Éditer la description (le signalement).
+- [x] Avertir avant de fermer un brouillon non enregistré.
+- [x] Ranger et retirer d'une collection, en créer le rangement.
+- [x] Retirer le sujet du jeu.
+
+**`FicheChose.tsx` — la fiche longue, ouverte depuis la matrice → « Sa fiche ›» (3 clics)**
+
+- [x] Un sommaire qui suit le défilement, sur cinq sections. *Sans objet : le dialogue tient
+  maintenant en une page courte, sans sommaire à faire suivre.*
+- [x] Le bandeau d'identité — portrait, nom, résumé. *Retiré, pas fusionné : la page du sujet
+  montre déjà tout ça derrière le dialogue. Le redire aurait laissé « le portrait, le nom et la
+  description écrits deux fois » — exactement le défaut que ce critère interdit.*
+- [x] Section « Ce qu'il est » (signalement). *Fusionnée avec le champ « Description du sujet »
+  qui l'écrivait déjà, sous l'intitulé et le propos lus dans `codex.chose.sujet`.*
+- [x] Section « Ce qui l'habille » (sept textes de style, origine, éteindre/rallumer, désaccord
+  de grille, palette). *Fusionnée, verbatim.*
+- [x] Section « Ses images d'exemple » (retenues, proposées, promotion d'un clic). *Fusionnée,
+  verbatim.*
+- [x] Section « Ce que le jeu réclame » (poses tenues et rangées). *Repris ailleurs : l'onglet
+  « Objectif & règles » de la même page, qui en plus permet de le régler — la fiche ne le lisait
+  qu'en lecture seule.*
+- [x] Section « Ce qui est fait » (vignettes des cases remplies). *Repris ailleurs : les onglets
+  « Images fixes » et « Animations » de la même page.*
+- [x] Lien vers le calibrage. *Repris ailleurs : le geste direct « le calibrage › » de la matrice,
+  jamais retiré.*
+- [x] Lien vers la vitrine. *Repris ailleurs : le geste direct « la vitrine › » de la matrice,
+  jamais retiré.*
+- [x] Fermeture par Échap ou par un bouton. *Reprise sous une autre forme : le dialogue se ferme
+  par le mécanisme standard du produit (Annuler / Fermer), qu'il partageait déjà avec la fiche
+  courte.*
 
 ### Critères d'acceptation
 
-- [ ] Une seule fiche de sujet, atteinte en ouvrant le sujet.
-- [ ] Le signalement, les textes de style et les images de référence s'y règlent.
-- [ ] Le portrait, le nom et la description ne sont plus écrits deux fois.
-- [ ] Ce que la fiche règle et qui part au modèle se relit avant de payer.
+- [x] Une seule fiche de sujet, atteinte en ouvrant le sujet. *`FicheChose.tsx` est retiré ;
+  `FicheDuSujet.tsx` porte tout, et son résumé est monté par `PageDuSujet.tsx`, qui s'ouvre en
+  cliquant le sujet.*
+- [x] Le signalement, les textes de style et les images de référence s'y règlent. *Vérifié aux
+  essais d'écran de `PageDuSujet.test.tsx` : édition du signalement, d'un texte de style avec son
+  origine, extinction et rallumage d'un texte, désaccord de grille, promotion d'une image
+  proposée — tous passent par le même dialogue « Modifier la fiche ».*
+- [x] Le portrait, le nom et la description ne sont plus écrits deux fois. *Un essai dédié compte
+  un seul `<h1>` au nom du sujet et un seul portrait dans le DOM pendant que la fiche est
+  ouverte.*
+- [x] Ce que la fiche règle et qui part au modèle se relit avant de payer. *Inchangé par cette
+  tranche : le signalement et les textes de style s'écrivent sur le même `personnage` que la
+  résolution en trois couches (`atelier/domaine/envoi.py`) lit déjà pour composer le texte relu
+  avant l'envoi — seul l'écran qui les règle a changé, jamais le chemin qui les lit.*
 
 ---
 
@@ -481,12 +570,58 @@ ordre.
 ## RP9 · La toile donne du travail ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : RP4 — elle débouche sur la fenêtre de préparation unique.
+*Prise avant elle, et sans l'attendre* : le lot est donné à la préparation qui
+existe, et le jour où `RP4` n'en fait plus qu'une, le chemin ne change pas de
+forme — il change de destination.
 
 L'auteur pose des références et des notes sur la toile, et il ne peut rien en faire. Il n'y a pas
 de sélection multiple : une seule carte à la fois. Ce qui tombe avec : mettre un lot en réserve,
 effacer une sélection, et fabriquer depuis une sélection.
 
 La toile est l'outil de conception du projet. Aujourd'hui elle ne mène nulle part.
+
+### Ce que porte la sélection
+
+*Écrit avant la première ligne de code, le 16 septembre 2026.*
+
+**La sélection est une liste d'identifiants de cartes, et elle ne quitte pas l'onglet.** Elle
+vit dans l'écran Univers, à côté de la carte choisie, et rien ne s'en écrit sur le disque. La
+raison est l'invariant du lot U : *une coordonnée ne voyage pas*. Un cadre tiré sur le plan
+est une région, et une région dépend du zoom, du cadrage et de la taille de la fenêtre ; ce
+qui en sort et qui, lui, a un sens ailleurs, ce sont **les cartes**.
+
+**Choisir une carte est la sélection à un.** C'est déjà la grammaire de la galerie, où la
+fiche d'une image *est* la sélection quand elle vaut un. Une carte sélectionnée porte donc
+l'anneau `--signal`, le seul du produit, et rien de plus — mais **elle perd son menu dès
+qu'elles sont plusieurs** : un menu règle une carte, et ce qu'on fait de plusieurs se lit
+au-dessus de la toile. Ctrl (ou ⌘) et un clic ajoute ou retire, comme dans la galerie. Pas de
+Maj : sur un plan il n'y a pas d'ordre, donc pas d'étendue.
+
+**Ce qui disparaît sort tout seul.** La liste ne se nettoie jamais : ce qui est sélectionné
+est ce que la toile montre **et** que l'auteur a coché, donc une carte supprimée ou renvoyée
+en réserve n'est plus sélectionnée sans qu'une ligne de code s'en occupe. Une carte
+**déplacée** y reste : déplacer n'est pas choisir.
+
+**Une carte part en guide de style, jamais autrement.** C'est déjà la règle des artworks
+(`atelier/services/univers.py`, `references`) : la bibliothèque ne connaît pas les cartes,
+donc aucune filiation ne peut en descendre, et une carte en source d'édition donnerait un
+parent que rien à l'écran ne saurait montrer.
+
+**Les notes sont à part, et c'est le « sans qu'on le dise ».** Les images de la sélection
+partent cochées d'avance ; les notes ne partent pas, à moins d'une case cochée à côté du
+geste, et elles s'ajoutent alors en consigne au bas du texte — **dans la seule barre de
+saisie du produit**, où on les relit avant de payer. Le geste ouvre la préparation qui existe
+déjà : *deux lieux qui paient* (E2) restent deux.
+
+**Et la fenêtre « Choisir ce qui part de la toile » de la maquette n'est pas construite
+ici** : de ses quatre décisions, trois — l'asset visé, *Image fixe* ou *Animation*, le
+modèle — appartiennent à la fenêtre unique de `RP4`, et les reconstruire d'avance ferait deux
+endroits à défaire. La quatrième, *quelles cartes et les notes avec ou non*, est la seule qui
+soit de la toile : elle reste là où la sélection vit.
+
+**Pourquoi la toile porte une sélection.** Même amendement que `G12` pour la colonne des
+sœurs : elle est **l'ensemble déjà sous les yeux**. L'invariant du rangement est complété en
+ce sens.
 
 ### Critères d'acceptation
 
@@ -510,18 +645,13 @@ sur le champ qui en fait un, *Supprimer* là où l'on supprimait sous le mot *Re
 ## RP10 · La livraison décide au lieu de bloquer ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien.
-### Les gestes des deux côtés
 
 Un conflit de fichier arrête tout : l'écran écrit la raison en rouge et éteint le bouton. La
 maquette proposait trois décisions par conflit — conserver, copier à côté, remplacer.
 
-- [x] Chercher par texte, filtrer par collection, filtrer par favoris.
-- [x] Pagination (« Afficher les suivantes »).
-- [x] L'aperçu en grand : le pointeur vise, la barre d'espace ouvre.
-- [x] Reçoit des images voisines déjà connues (`voisines`), utilisé par la Superposition.
-- [x] Un clic choisit l'image tout de suite, sans étape de confirmation.
-- [x] Montée à neuf endroits : *Ce qui part*, Fabriquer en 3D, Vidéo libre, Les tuiles (deux
-  fois), Workflows locaux, Importer des images, Superposition.
+S'y ajoutent trois manques : pas de *Tout sélectionner*, pas de case par fichier, et **un
+brouillon non enregistré part sans avertir**. Les tuiles et les sons ont déjà ce garde-fou ; la
+livraison ne l'a pas.
 
 ### La forme de la décision
 
@@ -534,6 +664,10 @@ rien à cet endroit ; *copier à côté* — l'atelier écrit son fichier sous l
 `<nom>.copie-atelier.<extension>`, celui du jeu ne bouge pas ; *remplacer* — l'atelier écrit
 par-dessus, et le fichier devient sien.
 
+**Où elle s'écrit** : dans le journal de la préparation, `donnees/livraisons/<jeu>/preparations/
+<jeton>.json`, jamais dans le dossier du jeu. Le dossier du jeu ne reçoit que des fichiers.
+*Sa raison* : l'auteur déclare, l'application enregistre — une décision est une déclaration, et
+elle vit avec la préparation qu'elle concerne, pas chez le voisin qu'elle vise.
 
 **Elle est attachée à ce que l'auteur a vu.** La décision garde l'empreinte du fichier du jeu au
 moment où elle a été prise. Si ce fichier change ensuite, elle ne vaut plus et le conflit
@@ -579,6 +713,53 @@ texte, on filtre par famille et par favori. **Pas de tri** — l'ordre est figé
 décroissante. Pas de filtre par rôle, pas de filtre par jugement, et une planche ne se voit
 jamais avec les images qui en sortent.
 
+### Le contrat de la route
+
+**Tout se décide sur `GET /api/v1/assets`, et rien à l'écran.** *Sa raison* : « la recherche
+doit porter sur toute la bibliothèque, pas sur les deux cents images qu'un navigateur a en
+mémoire ». Trier une page déjà coupée trierait deux cents images sur cinq cents, et l'auteur
+croirait voir la plus ancienne de la bibliothèque. **Le même paramétrage sert l'écran et
+l'agent** — `list_assets` prend les mêmes valeurs, aux mêmes noms de valeur ; le MCP n'a
+aucune logique propre.
+
+**Un tri — `tri`, trois valeurs.** `recent` (défaut, l'ordre d'aujourd'hui), `ancien`, `nom`.
+Ce sont les trois de la maquette et il n'y en a pas d'autres : *favori* est déjà un filtre, et
+*sujet* est déjà la liste des familles. Un nom vide passe après les autres — sinon trier par
+nom mettrait en tête les images qui n'en ont pas.
+
+**Deux filtres, chacun sur un axe, et les deux se cumulent.**
+
+*`role`, ce que l'image est* : `tous` (défaut) · `origine`, d'autres images en sont sorties ·
+`derivee`, elle est sortie d'une autre · `calque`, elle se pose par-dessus une autre ·
+`equipement`, elle montre une pièce · `seule`, ni l'un ni l'autre. **Quatre se lisent sur
+l'image, la cinquième se lit sur ce qui en descend** — une image ne sait pas d'avance qu'on la
+découpera, donc `origine` est la seule que l'index ne peut pas écrire à la naissance. Quand
+plusieurs conviennent, l'ordre est fixe et écrit une fois : calque, puis équipement, puis
+dérivée, puis seule.
+
+*`jugement`, ce que l'auteur en a décidé* : `tous` (défaut) · `favori` · `non-juge`. **Il n'y
+en a pas d'autre, et c'est le produit qui le dit** : « juger, c'est marquer favori ou
+supprimer », et un supprimé n'est plus dans la bibliothèque. La maquette en dessine huit ;
+cinq — *prêt*, *à vérifier*, *à extraire*, *à déplier* — nomment des états de fabrication que
+l'image ne porte pas, et les inventer ferait afficher un jugement que personne n'a posé.
+`favoris=true` reste accepté à la porte pour les appelants d'avant, et il dit exactement
+`jugement=favori` : une seule condition est écrite, dans `_conditions_assets`.
+
+**Le regroupement — `groupe`, un algorithme nommé.** `regrouper_par_origine`
+(`atelier/domaine/galerie.py`) : chaque image remonte sa filiation tant que son parent est
+**dans la page** ; la première qui n'en a plus est l'origine du groupe. Les groupes sortent
+dans l'ordre du tri, et les dérivés dans le même ordre sous leur origine. La réponse gagne
+`groupes` — une entrée par origine, avec la liste de ses dérivés — et `assets` reste plate,
+dans l'ordre groupé : ce qui ne lit pas `groupes` continue de marcher.
+
+**Le plafond compte des images, jamais des groupes**, et le regroupement ne change ni le
+filtre, ni le tri, ni la limite. *Sa raison* : le plafond de la grille est le seul du produit,
+et un second — « seize groupes » — aurait fait dire deux choses à `total`. Un groupe replié
+compte donc **ce qu'il montre**, jamais un total qu'il n'a pas compté.
+
+**Ce que la route ne regroupe pas** : un clip, une source 3D, une animation. Ce ne sont pas
+des images, ils ne sont pas dans cette table, et l'écran les tient déjà à part.
+
 ### Critères d'acceptation
 
 - [x] Le tri se choisit, et le choix se retrouve après fermeture. *`tri` sur la route, les
@@ -606,51 +787,35 @@ pour un axe sont deux mots pour la même chose. Au passage, `sans chose du jeu` 
 **Bloquée par** : rien.
 
 L'écran de comparaison compare deux sujets, ou deux images d'un même sujet, et il mesure leurs
-### Ce que porte la sélection
-
-*Écrit avant la première ligne de code, le 16 septembre 2026.*
-
-**La sélection est une liste d'identifiants de cartes, et elle ne quitte pas l'onglet.** Elle
-vit dans l'écran Univers, à côté de la carte choisie, et rien ne s'en écrit sur le disque. La
-raison est l'invariant du lot U : *une coordonnée ne voyage pas*. Un cadre tiré sur le plan
-est une région, et une région dépend du zoom, du cadrage et de la taille de la fenêtre ; ce
-qui en sort et qui, lui, a un sens ailleurs, ce sont **les cartes**.
-
-**Choisir une carte est la sélection à un.** C'est déjà la grammaire de la galerie, où la
-fiche d'une image *est* la sélection quand elle vaut un. Une carte sélectionnée porte donc
-l'anneau `--signal`, le seul du produit, et rien de plus — mais **elle perd son menu dès
-qu'elles sont plusieurs** : un menu règle une carte, et ce qu'on fait de plusieurs se lit
-au-dessus de la toile. Ctrl (ou ⌘) et un clic ajoute ou retire, comme dans la galerie. Pas de
-Maj : sur un plan il n'y a pas d'ordre, donc pas d'étendue.
-
-**Ce qui disparaît sort tout seul.** La liste ne se nettoie jamais : ce qui est sélectionné
-est ce que la toile montre **et** que l'auteur a coché, donc une carte supprimée ou renvoyée
-en réserve n'est plus sélectionnée sans qu'une ligne de code s'en occupe. Une carte
-**déplacée** y reste : déplacer n'est pas choisir.
-
-**Une carte part en guide de style, jamais autrement.** C'est déjà la règle des artworks
-(`atelier/services/univers.py`, `references`) : la bibliothèque ne connaît pas les cartes,
-donc aucune filiation ne peut en descendre, et une carte en source d'édition donnerait un
-parent que rien à l'écran ne saurait montrer.
-
-**Les notes sont à part, et c'est le « sans qu'on le dise ».** Les images de la sélection
-partent cochées d'avance ; les notes ne partent pas, à moins d'une case cochée à côté du
-geste, et elles s'ajoutent alors en consigne au bas du texte — **dans la seule barre de
-saisie du produit**, où on les relit avant de payer. Le geste ouvre la préparation qui existe
-déjà : *deux lieux qui paient* (E2) restent deux.
-
-**Et la fenêtre « Choisir ce qui part de la toile » de la maquette n'est pas construite
-ici** : de ses quatre décisions, trois — l'asset visé, *Image fixe* ou *Animation*, le
-modèle — appartiennent à la fenêtre unique de `RP4`, et les reconstruire d'avance ferait deux
-endroits à défaire. La quatrième, *quelles cartes et les notes avec ou non*, est la seule qui
-soit de la toile : elle reste là où la sélection vit.
-
-**Pourquoi la toile porte une sélection.** Même amendement que `G12` pour la colonne des
-sœurs : elle est **l'ensemble déjà sous les yeux**. L'invariant du rangement est complété en
-ce sens.
-
 tailles. Il ne lit aucune animation. L'auteur qui a trois versions d'une marche ne peut pas les
 regarder tourner côte à côte pour choisir.
+
+C'est un écran absent, pas un écran incomplet.
+
+### La règle
+
+**Le temps est commun, les cadences ne le sont pas.** L'écran ne tient qu'un seul nombre : les
+millisecondes écoulées depuis le début de la lecture. Chaque côté en tire son image tout seul —
+`pas = ⌊temps ÷ temps d'une image⌋`, puis la place dans son cycle —, sans jamais regarder
+l'autre. Aucune des deux ne donne le tempo : c'est l'horloge qui le donne, et les deux sont
+toujours au même instant.
+
+**Image par image, le pas commun est le plus court des deux temps d'image.** La plus rapide
+change donc d'image pendant que la plus lente tient la sienne. C'est la seule valeur de pas qui
+ne saute aucune image, d'aucun des deux côtés.
+
+**Boucle contre aller-retour : rien ne se convertit.** Chacune parcourt son cycle depuis la même
+origine — autant de crans qu'elle a d'images en boucle, deux fois moins deux en aller-retour. Les
+deux ne sont en phase qu'au départ, et *Remettre au début* est le seul geste qui les y ramène.
+Ré-encoder l'aller-retour en boucle pour « aligner » les deux ferait regarder une animation que
+l'export n'écrit nulle part.
+
+**Rien de tout ça ne change ce qui sort.** La cadence, le sens et le temps d'une image se lisent
+sur l'animation et ne s'écrivent jamais ici ; le temps d'une image est celui du serveur au
+millième près (`dureeImageMs`, le double exact de `duree_en_ms`, `B12`), donc le nombre affiché
+est celui que le descriptif d'export porte. Le ralenti est un ralenti d'affichage : il multiplie
+l'horloge commune, pas la cadence. Le seul geste de cet écran qui écrive est *Choisir pour le
+jeu*, et il ne change que **laquelle** sort — jamais comment elle joue.
 
 **Sa raison** : deux animations qu'on départage doivent être vues telles qu'elles seront dans le
 jeu. Une horloge par côté les laisse dériver, et le jugement dépend alors du moment où on
@@ -730,53 +895,6 @@ AU11, et la maquette les demande.
 - [x] Ce qui est réglé à la main survit à la mesure automatique, et l'écran dit lequel des deux
   fait foi.
 - [x] Le cadre réglé est celui qui sort à l'export.
-### Le contrat de la route
-
-**Tout se décide sur `GET /api/v1/assets`, et rien à l'écran.** *Sa raison* : « la recherche
-doit porter sur toute la bibliothèque, pas sur les deux cents images qu'un navigateur a en
-mémoire ». Trier une page déjà coupée trierait deux cents images sur cinq cents, et l'auteur
-croirait voir la plus ancienne de la bibliothèque. **Le même paramétrage sert l'écran et
-l'agent** — `list_assets` prend les mêmes valeurs, aux mêmes noms de valeur ; le MCP n'a
-aucune logique propre.
-
-**Un tri — `tri`, trois valeurs.** `recent` (défaut, l'ordre d'aujourd'hui), `ancien`, `nom`.
-Ce sont les trois de la maquette et il n'y en a pas d'autres : *favori* est déjà un filtre, et
-*sujet* est déjà la liste des familles. Un nom vide passe après les autres — sinon trier par
-nom mettrait en tête les images qui n'en ont pas.
-
-**Deux filtres, chacun sur un axe, et les deux se cumulent.**
-
-*`role`, ce que l'image est* : `tous` (défaut) · `origine`, d'autres images en sont sorties ·
-`derivee`, elle est sortie d'une autre · `calque`, elle se pose par-dessus une autre ·
-`equipement`, elle montre une pièce · `seule`, ni l'un ni l'autre. **Quatre se lisent sur
-l'image, la cinquième se lit sur ce qui en descend** — une image ne sait pas d'avance qu'on la
-découpera, donc `origine` est la seule que l'index ne peut pas écrire à la naissance. Quand
-plusieurs conviennent, l'ordre est fixe et écrit une fois : calque, puis équipement, puis
-dérivée, puis seule.
-
-*`jugement`, ce que l'auteur en a décidé* : `tous` (défaut) · `favori` · `non-juge`. **Il n'y
-en a pas d'autre, et c'est le produit qui le dit** : « juger, c'est marquer favori ou
-supprimer », et un supprimé n'est plus dans la bibliothèque. La maquette en dessine huit ;
-cinq — *prêt*, *à vérifier*, *à extraire*, *à déplier* — nomment des états de fabrication que
-l'image ne porte pas, et les inventer ferait afficher un jugement que personne n'a posé.
-`favoris=true` reste accepté à la porte pour les appelants d'avant, et il dit exactement
-`jugement=favori` : une seule condition est écrite, dans `_conditions_assets`.
-
-**Le regroupement — `groupe`, un algorithme nommé.** `regrouper_par_origine`
-(`atelier/domaine/galerie.py`) : chaque image remonte sa filiation tant que son parent est
-**dans la page** ; la première qui n'en a plus est l'origine du groupe. Les groupes sortent
-dans l'ordre du tri, et les dérivés dans le même ordre sous leur origine. La réponse gagne
-`groupes` — une entrée par origine, avec la liste de ses dérivés — et `assets` reste plate,
-dans l'ordre groupé : ce qui ne lit pas `groupes` continue de marcher.
-
-**Le plafond compte des images, jamais des groupes**, et le regroupement ne change ni le
-filtre, ni le tri, ni la limite. *Sa raison* : le plafond de la grille est le seul du produit,
-et un second — « seize groupes » — aurait fait dire deux choses à `total`. Un groupe replié
-compte donc **ce qu'il montre**, jamais un total qu'il n'a pas compté.
-
-**Ce que la route ne regroupe pas** : un clip, une source 3D, une animation. Ce ne sont pas
-des images, ils ne sont pas dans cette table, et l'écran les tient déjà à part.
-
 
 ## RP16 · Savoir ce qu'on a laissé en plan
 
@@ -843,6 +961,27 @@ pour l'agent. Elles fonctionnent, elles sont testées, et personne ne les emprun
 Chacune se tranche séparément : **soit on construit l'écran qui l'emprunte, soit on retire la
 route.** Une route sans emprunteur n'est pas neutre : elle se teste, elle se maintient, et elle
 fait croire à une capacité qui n'existe pas pour l'auteur.
+
+### Les neuf décisions
+
+| La route | Ce qu'elle promet | L'emprunteur qu'elle aurait | Décision | Pourquoi |
+|---|---|---|---|---|
+| `GET /presets` | Relire les jeux de réglages nommés (US-134) | l'écran d'envoi | **retirée** | *Reprendre les réglages*, sur la fiche d'une image de la galerie, repose déjà les réglages de l'appel qui l'a fabriquée : une image sous les yeux vaut mieux qu'un nom à retenir. |
+| `PUT /presets/{nom}` | Garder sous un nom ce qui part et comment | l'écran d'envoi | **retirée** | Même geste, même raison : le second chemin existe et personne n'a construit celui-ci en trois versions du produit. |
+| `DELETE /presets/{nom}` | Oublier un jeu de réglages | l'écran d'envoi | **retirée** | On n'oublie pas ce qu'on n'a jamais pu enregistrer. |
+| `GET /characters/search` | Chercher un sujet par son nom ou sa description dans tout le jeu, sur l'index | **l'agent** | **construite** | La barre cherche déjà les sujets en mémoire, sur la liste entière que `GET /characters` lui donne ; l'agent, lui, lisait tout le casting pour en trouver un. `list_characters` prend un terme `search` et le passe au service existant. |
+| `POST /clips/models/refresh` | Redemander le catalogue vidéo aux fournisseurs | l'écran du clip | **construite** | Le pendant image se redemande d'un clic depuis toujours ; côté vidéo, une liste vide se lisait jusqu'à la fermeture de l'atelier. Un bouton, là où la panne est écrite. |
+| `DELETE /strips/{id}/layer/align` | Défaire un calage posé à la main sur une animation | l'écran des calques animés | **retirée** | Aucun écran ne pose de calage à la main sur une bande — `POST .../layer/align` n'a pour client qu'un appel d'`api.ts` qu'aucun composant n'emploie. Une annulation qu'aucun geste ne peut atteindre n'annule rien. |
+| `GET /strips/{id}/layer/preview` | Voir les images d'une animation, calque posé, sans rien écrire | l'écran des calques animés | **construite** | *Ses animations, image par image* annonçait « huit calculs » et ne montrait pas un pixel ; US-542 demande de **voir le placement exact**. Un bouton *Regarder les images* par rangée habillée. |
+| `GET /projects/{p}/production-jobs/{id}/references/{rang}` | L'image de référence exacte envoyée par un travail | l'écran d'une fabrication suivie | **construite** — elle l'était déjà | Le relevé s'est trompé : l'écran la rend, mais par l'adresse que le serveur lui donne dans la charge du travail (`travail.references[].url`), jamais écrite en clair dans `api.ts`. Une recherche par chaîne ne pouvait pas la voir. |
+| `GET .../production-jobs/{id}/video-reference` | L'image de départ exacte envoyée à la vidéo | le même écran | **construite** — elle l'était déjà | Même cause, même preuve : `travail.entree_video.url` est rendue par *Fabrication suivie* et par *Fabrication libre*. |
+
+**Ce que la tranche a appris, et qui vaut pour tout relevé suivant.** *Une route dont l'adresse
+est composée par le serveur ne se trouve par aucune recherche dans l'interface.* Deux des neuf
+n'étaient pas orphelines : le serveur écrit leur adresse dans la charge qu'il rend, et l'écran
+affiche `url` sans jamais nommer la route. Chercher une chaîne dans `interface/src/` trouve les
+routes que l'écran connaît ; il faut chercher **aussi** les adresses que le serveur fabrique —
+`grep -rn '"url": f"/api' atelier/` en nomme quatre, et les quatre sont affichées.
 
 ### Critères d'acceptation
 
@@ -954,13 +1093,24 @@ la même image brute.
 
 ### Critères d'acceptation
 
-- [ ] Depuis l'atelier d'une image et depuis l'atelier d'une animation, un geste *Enregistrer
+- [x] Depuis l'atelier d'une image et depuis l'atelier d'une animation, un geste *Enregistrer
   sous* est disponible dès qu'une recette est appliquée, et grisé avec sa raison sinon.
-- [ ] L'écran demande le sujet, la pose et la direction d'arrivée, préremplis ; avec un miroir
+  *La raison est écrite une fois, dans `interface/src/composants/EnregistrerSous.tsx`, et les
+  deux ateliers la lisent : la même liste de places que `Recette.vide`, sans quoi le bouton
+  serait vivant devant un serveur qui refuse. Les essais d'écran la mesurent **des deux côtés
+  du seuil** — grisé sans retouche, offert avec.*
+- [x] L'écran demande le sujet, la pose et la direction d'arrivée, préremplis ; avec un miroir
   dans la recette, la direction proposée est celle au miroir.
-- [ ] Le nouvel asset entre en bibliothèque avec le rendu pour image brute et une recette
+  *La proposition est un `POST`, pas un `GET` : elle emporte **la recette en cours**, celle que
+  l'écran tient et qui n'est pas forcément enregistrée. C'est tout l'intérêt du geste, et une
+  recette ne tient pas dans une adresse. Le miroir compté est le seul qui change de direction —
+  `gauche-droite` —, jamais un quart de tour, qui ne se range dans aucune case connue.*
+- [x] Le nouvel asset entre en bibliothèque avec le rendu pour image brute et une recette
   vide ; l'original garde sa recette et son rendu, vérifié à l'octet.
-- [ ] Pour une animation, la nouvelle bande a le même nombre de frames et la même cadence, et
+  *Le rendu passe par `apercu_recette`, le seul chemin qui ne pose aucun cache durable. L'essai
+  relève l'empreinte de **tous** les fichiers du dossier de la génération avant et après :
+  comparer la seule recette laisserait passer un rendu réécrit.*
+- [x] Pour une animation, la nouvelle bande a le même nombre de frames et la même cadence, et
   chaque frame est le rendu de la frame d'origine.
   *Les frames sortent d'un seul calcul de planche (`ServiceMontage.rendu_des_frames`) et non
   d'une boucle : refaire la planche par frame paierait le détourage huit fois pour une marche.
@@ -972,27 +1122,6 @@ la même image brute.
   (`atelier/domaine/enregistrement.py`). Le retour ne s'écrit pas : une image dérivée porte
   aussi son `parent`, donc `GET /assets/{id}/lineage` la retrouve, et une bande dérivée se
   retrouve en lisant les bandes. La filiation se lit, elle ne se tient pas en double.*
-### Les neuf décisions
-
-| La route | Ce qu'elle promet | L'emprunteur qu'elle aurait | Décision | Pourquoi |
-|---|---|---|---|---|
-| `GET /presets` | Relire les jeux de réglages nommés (US-134) | l'écran d'envoi | **retirée** | *Reprendre les réglages*, sur la fiche d'une image de la galerie, repose déjà les réglages de l'appel qui l'a fabriquée : une image sous les yeux vaut mieux qu'un nom à retenir. |
-| `PUT /presets/{nom}` | Garder sous un nom ce qui part et comment | l'écran d'envoi | **retirée** | Même geste, même raison : le second chemin existe et personne n'a construit celui-ci en trois versions du produit. |
-| `DELETE /presets/{nom}` | Oublier un jeu de réglages | l'écran d'envoi | **retirée** | On n'oublie pas ce qu'on n'a jamais pu enregistrer. |
-| `GET /characters/search` | Chercher un sujet par son nom ou sa description dans tout le jeu, sur l'index | **l'agent** | **construite** | La barre cherche déjà les sujets en mémoire, sur la liste entière que `GET /characters` lui donne ; l'agent, lui, lisait tout le casting pour en trouver un. `list_characters` prend un terme `search` et le passe au service existant. |
-| `POST /clips/models/refresh` | Redemander le catalogue vidéo aux fournisseurs | l'écran du clip | **construite** | Le pendant image se redemande d'un clic depuis toujours ; côté vidéo, une liste vide se lisait jusqu'à la fermeture de l'atelier. Un bouton, là où la panne est écrite. |
-| `DELETE /strips/{id}/layer/align` | Défaire un calage posé à la main sur une animation | l'écran des calques animés | **retirée** | Aucun écran ne pose de calage à la main sur une bande — `POST .../layer/align` n'a pour client qu'un appel d'`api.ts` qu'aucun composant n'emploie. Une annulation qu'aucun geste ne peut atteindre n'annule rien. |
-| `GET /strips/{id}/layer/preview` | Voir les images d'une animation, calque posé, sans rien écrire | l'écran des calques animés | **construite** | *Ses animations, image par image* annonçait « huit calculs » et ne montrait pas un pixel ; US-542 demande de **voir le placement exact**. Un bouton *Regarder les images* par rangée habillée. |
-| `GET /projects/{p}/production-jobs/{id}/references/{rang}` | L'image de référence exacte envoyée par un travail | l'écran d'une fabrication suivie | **construite** — elle l'était déjà | Le relevé s'est trompé : l'écran la rend, mais par l'adresse que le serveur lui donne dans la charge du travail (`travail.references[].url`), jamais écrite en clair dans `api.ts`. Une recherche par chaîne ne pouvait pas la voir. |
-| `GET .../production-jobs/{id}/video-reference` | L'image de départ exacte envoyée à la vidéo | le même écran | **construite** — elle l'était déjà | Même cause, même preuve : `travail.entree_video.url` est rendue par *Fabrication suivie* et par *Fabrication libre*. |
-
-**Ce que la tranche a appris, et qui vaut pour tout relevé suivant.** *Une route dont l'adresse
-est composée par le serveur ne se trouve par aucune recherche dans l'interface.* Deux des neuf
-n'étaient pas orphelines : le serveur écrit leur adresse dans la charge qu'il rend, et l'écran
-affiche `url` sans jamais nommer la route. Chercher une chaîne dans `interface/src/` trouve les
-routes que l'écran connaît ; il faut chercher **aussi** les adresses que le serveur fabrique —
-`grep -rn '"url": f"/api' atelier/` en nomme quatre, et les quatre sont affichées.
-
 - [x] La nouvelle case n'est pas retenue pour le jeu ; la retenir est un second geste.
 - [x] Aucun appel au fournisseur ; le geste marche réseau coupé, et un essai le tient.
   *Compté sur le double, comme en `C1` et en `B21` : le service n'importe ni catalogue, ni
@@ -1033,7 +1162,9 @@ du produit depuis `E1` — l'établi est une profondeur, pas un lieu de plus.
   compare les frames au pixel (`tests/test_rp21.py::test_animer_depuis_une_carte_rend_le_meme_resultat_que_depuis_une_planche`).*
 - [x] Une sélection d'images fixes d'un même sujet offre *En faire une animation* ; l'atelier
   de montage s'ouvre avec ces images pour frames, dans l'ordre de la sélection.
-- [ ] La bande créée se range sous le sujet, la pose et la direction nommés, et chaque frame
+  *Le geste vit dans la seule grille à sélection multiple du produit (`Galerie.tsx`, US-31) —
+  aucun second écran de sélection n'a été ouvert.*
+- [x] La bande créée se range sous le sujet, la pose et la direction nommés, et chaque frame
   dit de quelle image elle vient.
   *Les trois se préremplissent quand la sélection s'accorde, comme `AU20` le fait déjà pour
   sujet et pose ; la filiation vit dans `Generation.demande["images"]`.*
@@ -1073,19 +1204,26 @@ Ce qui se livre, dans l'atelier d'une animation comme sur l'établi d'une image 
   voisin, voir la précédente en transparence — et chaque geste porte son explication lue dans
   le recueil, jamais retapée.
 
+### Ce qui bloquait l'aperçu
+
+L'aperçu se refaisait déjà bien à chaque geste — mesuré sur le serveur et sur l'écran, hors
+enregistrement. Le blocage était l'affichage du sens choisi : `retournement ?? DÉFAUT` montrait
+toujours un cran pressé, même place vide, si bien qu'un premier clic semblait ne rien changer.
+Réparé avec le déclique du critère suivant : les deux venaient de la même cause.
+
 ### Critères d'acceptation
 
-- [ ] Dans l'atelier d'une animation, cliquer un *sens* déjà choisi le retire ; la recette
+- [x] Dans l'atelier d'une animation, cliquer un *sens* déjà choisi le retire ; la recette
   n'en porte plus, et l'aperçu le montre sans enregistrer.
 - [x] Chaque table de l'atelier d'une animation a la bascule *L'endormir / La réveiller* de
   l'établi, et un geste *Remettre à zéro* qui vide la table sans l'éteindre.
-- [ ] L'aperçu se refait à chaque geste sur la recette, retournement compris ; un essai le
+- [x] L'aperçu se refait à chaque geste sur la recette, retournement compris ; un essai le
   tient en comparant l'aperçu avant *Enregistrer* au rendu après.
 - [x] La section *Position, source et pelure d'oignon* porte un titre qui dit ses trois
   gestes, et chacun a une explication atteignable depuis lui, lue dans le recueil.
-- [ ] Les mêmes mots pour les mêmes gestes sur l'établi d'une image et dans l'atelier d'une
+- [x] Les mêmes mots pour les mêmes gestes sur l'établi d'une image et dans l'atelier d'une
   animation — `docs/vocabulaire.html` les fixe.
-- [ ] Aucun de ces gestes n'écrit sur le disque avant *Enregistrer*, et *Défaire* les reprend.
+- [x] Aucun de ces gestes n'écrit sur le disque avant *Enregistrer*, et *Défaire* les reprend.
 
 ---
 
@@ -1114,10 +1252,3 @@ existant n'est pas finie.
 Pour ce plan, une règle de plus, parce que c'est son sujet : **une tranche qui fusionne deux
 écrans nomme, avant de commencer, la liste des gestes des deux côtés, et coche cette liste à la
 fin.** Une capacité perdue dans une fusion ne se voit pas ; elle se retrouve six mois plus tard.
-### Ce qui bloquait l'aperçu
-
-L'aperçu se refaisait déjà bien à chaque geste — mesuré sur le serveur et sur l'écran, hors
-enregistrement. Le blocage était l'affichage du sens choisi : `retournement ?? DÉFAUT` montrait
-toujours un cran pressé, même place vide, si bien qu'un premier clic semblait ne rien changer.
-Réparé avec le déclique du critère suivant : les deux venaient de la même cause.
-

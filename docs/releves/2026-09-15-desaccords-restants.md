@@ -32,7 +32,10 @@ de la colonne de gauche qui fait foi, pas la ligne.
 
 ## ~~Univers & toile~~ — **RP9, fait le 16 septembre 2026**
 
-| Aujourd'hui | Où | Le mot |
+~~Les quatre mots sont corrigés, et les cinq assertions qui les nommaient
+suivent.~~
+
+| ~~Aujourd'hui~~ | ~~Où~~ | ~~Le mot~~ |
 |---|---|---|
 | ~~Inspiration (fil d'Ariane d'une carte)~~ | ~~`lieux-noms.ts:134`~~ | ~~**Univers & toile** — c'est le mot de la porte, et une carte est un étage sous lui~~ |
 | ~~de ce paquet~~ | ~~`Toile.tsx:2353`, `:2367`~~ | ~~**de cet îlot** — le même menu dit déjà *Teinte de l'îlot* (`:2323`)~~ |
@@ -93,14 +96,14 @@ de la colonne de gauche qui fait foi, pas la ligne.
 vrai dossier sur le disque, et `dossier` n'est sur la liste noire que lorsqu'il désigne une
 collection.*
 
-## La fiche d'un sujet — **RP8**
+## La fiche d'un sujet — **RP8, fait le 16 septembre 2026**
 
 | Aujourd'hui | Où | Le mot |
 |---|---|---|
-| La fiche de l'asset | `FicheDuSujet.tsx:68`, `:69` | **La fiche du sujet** |
-| Résumé de l'asset | `FicheDuSujet.tsx:58` | **Résumé du sujet** — le même écran dit déjà *Nom du sujet* en `:71` |
-| La page du sujet (nom du groupe d'onglets) | `PageDuSujet.tsx:328` | **Les onglets de sa fiche** — l'écran s'appelle du nom du sujet, pas *La page du sujet* |
-| Cases, planches et calibrage | `PageDuSujet.tsx:345` | à renommer d'après ce que l'écran fait, une fois la fiche longue fondue dedans |
+| ~~La fiche de l'asset~~ | `FicheDuSujet.tsx` | **La fiche du sujet** — *Appliqué en `RP8`.* |
+| ~~Résumé de l'asset~~ | `FicheDuSujet.tsx` | **Résumé du sujet** — le même écran dit déjà *Nom du sujet*. *Appliqué en `RP8`.* |
+| ~~La page du sujet (nom du groupe d'onglets)~~ | `PageDuSujet.tsx` | **Les onglets de sa fiche** — l'écran s'appelle du nom du sujet, pas *La page du sujet*. *Appliqué en `RP8`.* |
+| Cases, planches et calibrage | `PageDuSujet.tsx:345` | **sans objet** — la fiche longue fondue dedans ne s'était jamais lue dans ce nom ; ce que le bouton ouvre encore — cases, planches, calibrage — est ce qu'il dit toujours. *Tranché en `RP8`.* |
 
 ## Onglet Animations — **RP12**
 

@@ -36,7 +36,7 @@ import {
   type Univers,
 } from "../api"
 import { imageAsset } from "./Apercu"
-import { portraitDe } from "./FicheChose"
+import { portraitDe } from "./FicheDuSujet"
 
 /** Des multiples entiers, et rien d'autre — la même règle que `Vitrine.tsx`,
  *  pour la même raison : un sprite agrandi d'une fois et demie fabrique des

@@ -53,6 +53,29 @@ quels.** `L'endormir / La réveiller` et `Remettre à zéro` sont les mêmes com
 côtés — les poser dans l'atelier a suffi à leur donner l'historique de *Défaire* qui existait
 déjà pour tout le reste, sans code neuf pour l'annulation.
 
+## RP8 · Une seule fiche de sujet — 16 septembre 2026
+
+**Le doublon ne portait pas les mêmes gestes, et c'est ce qui le rendait coûteux à fermer.** La
+fiche courte s'ouvrait avec la page du sujet et réglait le nom, la description et les
+collections ; la fiche longue, cachée sous « Cases, planches et calibrage » → « Sa fiche ›»,
+réglait en plus le signalement, les sept textes de style et les images de référence — trois
+réglages qui partent pourtant dans chaque demande d'image. Fermer le doublon a donc voulu dire
+fusionner deux dialogues qui ne se recouvraient qu'à moitié, pas choisir entre deux écrans
+identiques.
+
+**Deux sections de la fiche longue n'ont pas suivi, et ce n'est pas une perte.** « Ce que le jeu
+réclame » et « ce qui est fait », pose par pose, redisaient en lecture seule ce que l'onglet
+*Objectif & règles* et les onglets *Images fixes* / *Animations* montrent déjà sur la même page,
+à un clic du dialogue. Les redire dans la fiche aurait fait deux endroits à tenir d'accord pour
+la même information — exactement la dérive que ce plan cherche à fermer, pas à en ouvrir une
+nouvelle.
+
+**Le critère qui a le plus servi** : « le portrait, le nom et la description ne sont plus écrits
+deux fois ». Les deux écrans avaient chacun leur propre bandeau d'identité ; le fusionner sans y
+penser aurait recréé la duplication en la déplaçant d'un cran. La fiche longue a donc perdu son
+bandeau — la page du sujet le montre déjà, juste derrière le dialogue —, et un essai compte
+explicitement un seul portrait et un seul nom pendant que la fiche est ouverte.
+
 ## RP11 · La galerie se trie, se filtre et se regroupe — 16 septembre 2026
 
 **Le point dur n'était pas *où trier*, c'était *quelles valeurs existent*.** Trier côté serveur
@@ -284,7 +307,7 @@ passe un (`role="choix"` ou `role="reference"`) — sans lui, un clic choisit l'
 suite, exactement comme avant. `ChoisirImageEquipement.tsx` a disparu ; ses deux montages (les
 calques d'un emploi, la référence commune d'une pièce) lisent désormais la grille unique.
 
-**Deux mots fermés au passage**, d'après `docs/releves/2026-09-15-desaccords-restants.md` § RP6 :
+**Deux mots fermés au passage**, d'après `docs/releves/2026-09-15-desaccords-restants.md` § *Choisir dans la bibliothèque* :
 le bouton de fermeture porte `‹ ` suivi du nom de l'écran d'où l'on vient, et la pagination porte
 *Suivant* / *Précédent* au lieu d'« Afficher les suivantes ».
 

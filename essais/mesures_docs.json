@@ -1,11 +1,11 @@
 {
- "releve_le": 1789508258.5059214,
+ "releve_le": 1789516279.3552053,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 153558,
+  "octets": 154606,
   "documents": {
    "AGENTS.md": {
     "octets": 35208,
@@ -236,20 +236,20 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 34626,
+    "octets": 35674,
     "titres": 20,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 34626
+      "octets": 35237
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 44,
-      "octets": 7357
+      "octets": 7895
      },
      {
       "titre": "Ce que la remise à plat a mesuré, le 13 septembre 2026",
@@ -261,7 +261,7 @@
       "titre": "Les invariants du produit",
       "niveau": 2,
       "ligne": 95,
-      "octets": 8111
+      "octets": 8184
      },
      {
       "titre": "L'argent et l'appel",
@@ -285,7 +285,7 @@
       "titre": "Le rangement",
       "niveau": 3,
       "ligne": 138,
-      "octets": 1043
+      "octets": 1116
      },
      {
       "titre": "Le personnage, la planche et le calque",
@@ -557,11 +557,19 @@
  },
  "renvois": {
   "code": {
-   "total": 697,
-   "casses": []
+   "total": 718,
+   "casses": [
+    {
+     "source": "interface/src/composants/BarreOutils.tsx",
+     "ligne": 100,
+     "cible": "docs/vocabulaire.html",
+     "ancre": "Un mot, une chose interdit. */ jugement: Jugement onJugement: (jugement: Jugement) => void /** Poser chaque image sous l",
+     "raison": "aucun titre de docs/vocabulaire.html ne répond à « un mot »"
+    }
+   ]
   },
   "docs": {
-   "total": 1286,
+   "total": 1293,
    "casses": []
   }
  }

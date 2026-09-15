@@ -277,6 +277,7 @@ deux moteurs sur les images déjà là, et ce qu'ils rendent côte à côte sur 
 difficiles. Le produit ne calcule aucune note de qualité par moteur — écartée pour la raison
 qui l'écarte déjà pour les modèles : elle se juge à l'usage, sur des images qu'on voulait de
 toute façon.
+
 ### La décision de RP5 — 15 septembre 2026
 
 **À l'import, la case se déduit du clic et de rien d'autre.** Ce qui entre sur la fiche d'un
@@ -299,6 +300,7 @@ que l'auteur a joint ne cède jamais. Le prix est qu'un fichier du jeu qu'on gar
 chaque livraison — c'est le bon prix : rien n'a changé, donc la question est la même. Et une
 décision est attachée à l'empreinte du fichier qu'elle a vu : ce qui s'écrit dans le jeu est
 exactement ce que la relecture annonçait, sans quoi « décider » ne voudrait rien dire.
+
 ### La décision de RP18 — 16 septembre 2026
 
 **On rejoue les réglages d'une image, pas ceux d'un nom.** Le produit a longtemps porté les deux
