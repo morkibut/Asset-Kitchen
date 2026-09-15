@@ -2379,6 +2379,13 @@ class ServiceGenerations:
         le fait n'est utile qu'à moitié : chaque ligne dit d'où elle vient, et
         si quelque chose l'écarte, à quelle portée. Le total, lui, ne compte que
         ce qui part vraiment — c'est lui qui décide du grisé du modèle.
+        # **Sixième provenance depuis `RP9`** : une carte que l'auteur a prise
+        # sur la toile, pour cet appel-ci. Elle se reconnaît à ce qu'elle est
+        # **dans ce que l'appelant a nommé** — les trois autres sources de
+        # cartes, elles, sont posées par l'application. Sans ce test, une carte
+        # choisie à la main se lisait « artwork officiel », c'est-à-dire le
+        # contraire de ce qui vient de se passer.
+        de_la_toile = {r.asset for r in manuelles if r.origine == CARTE}
         """
         artworks = self._artworks(echelle, projet)
         concepts = self._concepts(projet, personnage, piece)
@@ -2432,10 +2439,12 @@ class ServiceGenerations:
                 "role": r.role,
                 "origine": r.origine,
                 # **La provenance, nommée** (US-127) : « comprendre pourquoi elle
-                # part avant de décider de la retirer ». Cinq sources, cinq
+                # part avant de décider de la retirer ». Six sources, six
                 # phrases, et jamais un mot que l'écran devrait interpréter.
                 "provenance": (
-                    "image de son ambiance"
+                    "carte de la toile"
+                    if r.origine == CARTE and r.asset in de_la_toile
+                    else "image de son ambiance"
                     if r.asset in siennes
                     else "concept art"
                     if r.origine == CARTE and r.asset in designes
@@ -2505,7 +2514,13 @@ class ServiceGenerations:
             # inventer la phrase qui manque.
             "role_joint": role_joint,
             "palette": bande,
-            "manuelles": sum(1 for l in retenues if l["origine"] != CARTE),
+            # **Posée à la main**, et une carte de la toile l'est depuis `RP9` :
+            # le test ne peut donc plus être « ce n'est pas une carte ».
+            "manuelles": sum(
+                1
+                for l in retenues
+                if l["origine"] != CARTE or l["asset"] in de_la_toile
+            ),
             "artworks": sum(
                 1 for l in retenues if l["provenance"] == "artwork officiel"
             ),
