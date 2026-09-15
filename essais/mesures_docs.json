@@ -1,5 +1,5 @@
 {
- "releve_le": 1789516279.3552053,
+ "releve_le": 1789516725.6297889,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
@@ -557,16 +557,8 @@
  },
  "renvois": {
   "code": {
-   "total": 718,
-   "casses": [
-    {
-     "source": "interface/src/composants/BarreOutils.tsx",
-     "ligne": 100,
-     "cible": "docs/vocabulaire.html",
-     "ancre": "Un mot, une chose interdit. */ jugement: Jugement onJugement: (jugement: Jugement) => void /** Poser chaque image sous l",
-     "raison": "aucun titre de docs/vocabulaire.html ne répond à « un mot »"
-    }
-   ]
+   "total": 719,
+   "casses": []
   },
   "docs": {
    "total": 1293,

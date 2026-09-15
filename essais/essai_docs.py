@@ -101,6 +101,9 @@ RENVOI = re.compile(
     r"|(?<=`)[A-Za-z0-9_-]+\.(?:md|html)(?=`)"
 )
 TITRE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
+# Le même titre dans une page HTML — « <h2 class="tt">Quatre règles</h2> » :
+# `docs/vocabulaire.html` fait autorité depuis RP3, et le code y renvoie par §.
+TITRE_HTML = re.compile(r"<h([1-6])\b[^>]*>(.*?)</h\1>")
 # Un intertitre gras — « **Ce qui entre par la main.** Le collage devine… ».
 # Les documents s'en servent comme d'un niveau de plus, et un renvoi les vise
 # au même titre qu'un `##` : ils comptent donc comme ancres.
@@ -183,6 +186,10 @@ class Document:
             if (trouve := TITRE.match(ligne.rstrip("\n"))) is not None:
                 self.sections.append(
                     Section(len(trouve.group(1)), trouve.group(2), numero)
+                )
+            elif chemin.suffix == ".html" and (trouve := TITRE_HTML.search(ligne)) is not None:
+                self.sections.append(
+                    Section(int(trouve.group(1)), re.sub(r"<[^>]+>", "", trouve.group(2)), numero)
                 )
             elif (trouve := INTERTITRE.match(ligne)) is not None:
                 self.intertitres.append(Section(9, trouve.group(1), numero))

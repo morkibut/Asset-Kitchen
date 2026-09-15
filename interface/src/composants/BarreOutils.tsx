@@ -97,7 +97,7 @@ export function BarreOutils({
   onRole: (role: RoleDeGalerie) => void
   /** Ce que l'auteur en a décidé — le second. **Il a mangé le bouton
    *  *Favoris*** : deux contrôles pour une seule question, c'est exactement ce
-   *  que `docs/vocabulaire.html` § Un mot, une chose interdit. */
+   *  que `docs/vocabulaire.html` § Quatre règles, « un mot, une chose », interdit. */
   jugement: Jugement
   onJugement: (jugement: Jugement) => void
   /** Poser chaque image sous l'origine de sa filiation. */
