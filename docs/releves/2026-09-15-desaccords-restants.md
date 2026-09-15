@@ -30,14 +30,14 @@ de la colonne de gauche qui fait foi, pas la ligne.
 | Parcourir les assets | `TableauDeBord.tsx:130` | **Parcourir les sujets** |
 | Choisissez une chose du jeu | `TableauDeBord.tsx:130` | **Choisissez un sujet** — *chose* est sur la liste noire |
 
-## Univers & toile — **RP9**
+## ~~Univers & toile~~ — **RP9, fait le 16 septembre 2026**
 
 | Aujourd'hui | Où | Le mot |
 |---|---|---|
-| Inspiration (fil d'Ariane d'une carte) | `lieux-noms.ts:134` | **Univers & toile** — c'est le mot de la porte, et une carte est un étage sous lui |
-| de ce paquet | `Toile.tsx:2353`, `:2367` | **de cet îlot** — le même menu dit déjà *Teinte de l'îlot* (`:2323`) |
-| Groupe (le champ qui crée un îlot) | `Tableau.tsx:1439` | **Îlot** |
-| Retirer (qui supprime la carte) | `Tableau.tsx:1664` | **Supprimer** — *Retirer* est le mot d'un rangement, pas d'une suppression |
+| ~~Inspiration (fil d'Ariane d'une carte)~~ | ~~`lieux-noms.ts:134`~~ | ~~**Univers & toile** — c'est le mot de la porte, et une carte est un étage sous lui~~ |
+| ~~de ce paquet~~ | ~~`Toile.tsx:2353`, `:2367`~~ | ~~**de cet îlot** — le même menu dit déjà *Teinte de l'îlot* (`:2323`)~~ |
+| ~~Groupe (le champ qui crée un îlot)~~ | ~~`Tableau.tsx:1439`~~ | ~~**Îlot**~~ |
+| ~~Retirer (qui supprime la carte)~~ | ~~`Tableau.tsx:1664`~~ | ~~**Supprimer** — *Retirer* est le mot d'un rangement, pas d'une suppression~~ |
 
 ## Les sujets — **RP7**
 

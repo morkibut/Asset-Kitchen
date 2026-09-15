@@ -6229,6 +6229,163 @@ describe("l'agent, vu de l'atelier", () => {
     expect(carte().getAttribute("style")).not.toContain("border-color")
   })
 
+  // ── RP9 : la toile donne du travail ───────────────────────────────────────
+  //
+  // L'arithmétique de la sélection — ce qui en sort quand une carte disparaît,
+  // ce qu'un lot emporte, ce qui partirait — vit dans `composants/Toile.test.tsx`,
+  // où elle est pure. Ce qui se vérifie **ici** est ce que la sélection *fait* :
+  // l'anneau, le menu qui se retire, les trois gestes, et la préparation qui
+  // s'ouvre avec les cartes cochées d'avance.
+
+  /** Les cartes posées sur le plan, et elles seules. **La réserve en rend
+   *  d'autres, avec le même nom accessible** : une requête posée sur tout le
+   *  document les compterait ensemble, et l'essai prouverait autre chose. */
+  const plan = () => document.querySelector("[data-plan]") as HTMLElement
+  const cartesDuPlan = () =>
+    within(plan()).getAllByRole("button", { name: "Ouvrir la carte" })
+  const anneaux = () => plan().querySelectorAll("[data-choisie]")
+
+  test("Ctrl et un clic font un lot, et un lot n'ouvre le menu d'aucune carte", async () => {
+    // **Choisir une carte est la sélection à un**, et c'est déjà la grammaire
+    // de la galerie. L'anneau ne change donc pas de sens : il dit *celle-ci est
+    // choisie*, et plusieurs choisies font un lot. Ce qui se retire, c'est le
+    // menu — il règle **une** carte, et ce qu'on fait de plusieurs se lit
+    // au-dessus de la toile.
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: compose9() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+    await waitFor(() => expect(cartesDuPlan()).toHaveLength(2))
+
+    fireEvent.click(cartesDuPlan()[0])
+    await waitFor(() => expect(anneaux()).toHaveLength(1))
+    // Une seule : son menu est ouvert, comme avant la sélection.
+    expect(screen.getByText("Îlot")).toBeTruthy()
+
+    fireEvent.click(cartesDuPlan()[1], { ctrlKey: true })
+    await waitFor(() => expect(anneaux()).toHaveLength(2))
+    expect(screen.getByText("2 choisies")).toBeTruthy()
+    expect(screen.queryByText("Îlot")).toBeNull()
+
+    // Et *Effacer la sélection* rend tout — sans rien supprimer : le voisin
+    // qui supprime s'appelle *Retirer*, et il vit dans le menu d'une carte.
+    fireEvent.click(screen.getByRole("button", { name: "Effacer la sélection" }))
+    await waitFor(() => expect(anneaux()).toHaveLength(0))
+    expect(screen.queryByText("2 choisies")).toBeNull()
+  })
+
+  test("« Mettre en réserve » renvoie tout le lot, et un seul Ctrl+Z le repose", async () => {
+    // **Un lot est un geste, donc une entrée de pile** — le même argument que
+    // pour un îlot déplacé : deux cartes renvoyées d'un clic demanderaient
+    // sinon deux Ctrl+Z, c'est-à-dire le contraire de ce que la pile promet.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({ cartes: compose9() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+    await waitFor(() => expect(cartesDuPlan()).toHaveLength(2))
+
+    fireEvent.click(cartesDuPlan()[0])
+    fireEvent.click(cartesDuPlan()[1], { ctrlKey: true })
+    await waitFor(() => expect(anneaux()).toHaveLength(2))
+
+    const ecritures = (carte: string) =>
+      appels.filter((a) => a.url === `/api/board/${carte}` && a.corps)
+
+    fireEvent.click(screen.getByRole("button", { name: "Mettre en réserve" }))
+    await waitFor(() => expect(ecritures("m1")).toHaveLength(1))
+    await waitFor(() => expect(ecritures("m2")).toHaveLength(1))
+    expect(ecritures("m1")[0].corps).toEqual({ groupe: "", position: [] })
+    expect(ecritures("m2")[0].corps).toEqual({ groupe: "", position: [] })
+    // Les trois attendent ensemble, et la sélection est retombée avec elles :
+    // ce qui a été rangé n'est plus l'ensemble sous les yeux.
+    await waitFor(() => expect(screen.getByText("3 à classer")).toBeTruthy())
+    expect(screen.queryByText("2 choisies")).toBeNull()
+
+    // **Un seul** Ctrl+Z, et les deux reviennent où elles étaient.
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true })
+    await waitFor(() => expect(ecritures("m1")).toHaveLength(2))
+    await waitFor(() => expect(ecritures("m2")).toHaveLength(2))
+    expect(ecritures("m1")[1].corps).toEqual({ groupe: "marais", position: [0, 0] })
+    expect(ecritures("m2")[1].corps).toEqual({ groupe: "marais", position: [200, 0] })
+    await waitFor(() => expect(screen.getByText("1 à classer")).toBeTruthy())
+  })
+
+  /** Une image et une note, toutes deux posées sur le plan. */
+  const composeAvecUneNote = () => [
+    carteImage("m1", { groupe: "marais", position: [0, 0] }),
+    carteImage("note", {
+      genre: "texte",
+      texte: "des tons de tourbe",
+      position: [400, 0],
+    }),
+  ]
+
+  const choisirLesDeux = async () => {
+    fireEvent.click(within(plan()).getByRole("button", { name: "Ouvrir la carte" }))
+    fireEvent.click(within(plan()).getByRole("button", { name: "Ouvrir la note" }), {
+      ctrlKey: true,
+    })
+    await waitFor(() => expect(anneaux()).toHaveLength(2))
+  }
+
+  test("« Fabriquer depuis la sélection » ouvre la préparation, images cochées, notes non", async () => {
+    // **Les deux moitiés du critère, ensemble** : l'image de la carte est déjà
+    // jointe quand la fenêtre s'ouvre, et le texte de la note n'est nulle part
+    // — on ne l'a pas dit.
+    //
+    // **Et rien ne paie ici** : le geste ouvre la préparation qui existe, pas
+    // un troisième endroit d'où l'argent part (E2).
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: composeAvecUneNote() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+    await choisirLesDeux()
+    expect(screen.getByText("joindre 1 note")).toBeTruthy()
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Fabriquer depuis la sélection" }),
+    )
+
+    const bande = await screen.findByRole("region", { name: "Références jointes" })
+    const vignettes = bande.querySelectorAll("img")
+    expect(vignettes).toHaveLength(1)
+    // **L'image vient de la route des cartes**, pas de celle des assets : une
+    // carte n'est pas dans la bibliothèque, et lui demander une vignette
+    // d'asset ferait un trou là où l'auteur croit avoir joint quelque chose.
+    expect(vignettes[0].getAttribute("src")).toContain("/api/board/m1/image")
+    // **Et elle ne se met pas en source d'édition** : la filiation qui en
+    // descendrait n'aurait nulle part où s'écrire. Le rôle n'est pas grisé, il
+    // n'est pas proposé.
+    const roles = [...bande.querySelectorAll("option")].map((o) => o.textContent)
+    expect(roles).not.toContain("Image à modifier")
+
+    expect(
+      (screen.getByPlaceholderText(PLACEHOLDER_DU_PROMPT) as HTMLTextAreaElement).value,
+    ).not.toContain("des tons de tourbe")
+  })
+
+  test("une note ne part en consigne que si la case le dit", async () => {
+    // L'autre bout du même critère. La case est tout ce qui reste de la fenêtre
+    // « Choisir ce qui part de la toile » : ses trois autres décisions — l'asset
+    // visé, le type de résultat, le modèle — appartiennent à la fenêtre unique
+    // de RP4, et les reconstruire ici ferait deux endroits à défaire.
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: composeAvecUneNote() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+    await choisirLesDeux()
+
+    fireEvent.click(screen.getByText("joindre 1 note").querySelector("input")!)
+    fireEvent.click(
+      screen.getByRole("button", { name: "Fabriquer depuis la sélection" }),
+    )
+
+    const champ = (await screen.findByPlaceholderText(
+      PLACEHOLDER_DU_PROMPT,
+    )) as HTMLTextAreaElement
+    expect(champ.value).toContain("des tons de tourbe")
+  })
+
   test("les dix teintes sont les seules, et elles ne renvoient à aucun token sémantique", () => {
     // « Les teintes sont les seules disponibles, et aucune ne se confond avec
     // une couleur sémantique du produit — **vérifié à côté d'une carte en
@@ -12112,476 +12269,21 @@ describe("les palettes et les ambiances", () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// E12 · La fiche d'une chose du jeu
+// E12 · La fiche d'une chose du jeu — fondue dans la fiche courte par RP8
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// **Ce qui se mesure ici** : ce que l'écran montre. Les trois colonnes et les
-// cinq blocs, l'origine lisible sans clic à côté de chaque texte, le texte
-// remplacé montré barré en dessous, le désaccord entre la grille annoncée et
-// celle qui s'applique, la promotion d'une image en référence permanente, la
-// matrice qui répond pendant qu'on règle, et la barre qui paie qui se retire.
-// Ce qui se calcule — les trois couches, l'empreinte, ce que le fichier garde —
-// vit dans `tests/test_e12.py`.
-
-describe("la fiche d'une chose du jeu", () => {
-  beforeEach(() => {
-    FluxDouble.ouverts = []
-    vi.stubGlobal("EventSource", FluxDouble)
-    doublerLaMesure()
-    toutReplier()
-    reinitialiserApercu()
-  })
-
-  afterEach(() => {
-    cleanup()
-    vi.unstubAllGlobals()
-    vi.restoreAllMocks()
-  })
-
-  /** Les cinq parties, **nommées par le recueil** (R8) : l'écran ne les nomme
-   *  plus lui-même, et l'essai les lit là où l'écran les lit. */
-  const NOMS_DES_PARTIES = [
-    "codex.chose.sujet",
-    "codex.chose.habillage",
-    "codex.chose.exemples",
-    "codex.chose.poses",
-    "codex.chose.faites",
-  ].map((clef) => AIDE[clef].nom)
-
-  /** L'établi d'une chose, puis sa fiche — les deux crans de la maquette. */
-  const ouvrirLaFiche = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
-    const double = serveurDouble({
-      personnages: [personnage("Balthazar")],
-      ...options,
-    })
-    await monter(double.fetchDouble)
-    const etabli = await ouvrirLEtabli("Balthazar")
-    fireEvent.click(await etabli.findByRole("button", { name: "sa fiche ›" }))
-    const cadre = await waitFor(() => {
-      const fiche = document.querySelector("[data-fiche]")
-      if (!fiche) throw new Error("la fiche ne s'est pas ouverte")
-      return fiche as HTMLElement
-    })
-    return { ...double, fiche: within(cadre) }
-  }
-
-  // ── « L'écran rassemble l'identité, l'équipement, les références… » ────────
-
-  test("les cinq parties se lisent sans un clic, et le sommaire y mène", async () => {
-    // **Elles étaient cinq onglets** (R8) : pour savoir si une chose était bien
-    // réglée, il fallait cliquer cinq fois et se souvenir. Ce sont cinq
-    // sections d'une seule page, et la colonne de gauche en est le sommaire.
-    const { fiche } = await ouvrirLaFiche()
-
-    for (const nom of NOMS_DES_PARTIES) {
-      // Le titre de la section — présent d'emblée, sans qu'on ait rien ouvert.
-      expect(fiche.getByRole("button", { name: nom })).toBeTruthy()
-      // Et la ligne du sommaire qui y mène, qui porte un nom distinct.
-      expect(fiche.getByRole("button", { name: `Aller à ${nom}` })).toBeTruthy()
-    }
-    // **La matrice reste affichée à droite** : c'est la seule raison pour
-    // laquelle la fiche garde une colonne de 380 px au lieu de s'étaler.
-    expect(fiche.getByRole("button", { name: "Sa matrice" })).toBeTruthy()
-  })
-
-  test("chaque partie porte son propos sous son titre, lu dans le recueil", async () => {
-    // **Le troisième rendu du corpus** (R8) : la même entrée sert la bulle au
-    // survol, le Guide, et cette ligne-ci écrite à demeure. Rien n'est retapé
-    // dans l'écran — l'essai le vérifie en comparant au recueil, mot pour mot.
-    const { fiche } = await ouvrirLaFiche()
-
-    for (const clef of [
-      "codex.chose.sujet",
-      "codex.chose.habillage",
-      "codex.chose.exemples",
-      "codex.chose.poses",
-      "codex.chose.faites",
-      "codex.chose.matrice",
-    ]) {
-      const entree = AIDE[clef]
-      expect(entree).toBeTruthy()
-      expect(fiche.getByText(entree.quoi)).toBeTruthy()
-      // Le titre aussi vient de l'entrée : renommer une partie se fait dans le
-      // recueil, et le sommaire comme la section suivent.
-      expect(fiche.getByRole("button", { name: entree.nom })).toBeTruthy()
-    }
-  })
-
-  test("la fiche montre la chose, et porte son nom sur sa surface", async () => {
-    // **Elle n'en montrait rien** : pas une image, et le nom ne vivait que dans
-    // le fil du châssis. On ne savait pas de qui c'était la fiche.
-    const { fiche } = await ouvrirLaFiche()
-
-    expect(fiche.getByRole("heading", { name: "Balthazar" })).toBeTruthy()
-    expect(
-      document.querySelector("[data-fiche] [data-portrait]"),
-    ).toBeTruthy()
-  })
-
-  test("les images faites remplacent le grand chiffre, et un vide occupe la même place", async () => {
-    // **Le grand chiffre à empattements enfreignait deux règles à la fois** :
-    // une mesure s'écrit dans la police des mesures, et un compte déjà écrit
-    // ailleurs n'a pas besoin de trente-deux pixels. Ce qui le remplace est ce
-    // qu'on venait voir : les images.
-    //
-    // **Une case vide occupe la même place qu'une case pleine** — le manque
-    // prend autant de place que le fait, sinon on ne le voit plus.
-    const { fiche } = await ouvrirLaFiche({
-      personnages: [
-        personnage("Balthazar", {
-          cases: PLAN.map((p, rang) => ({
-            pose: p.identifiant,
-            demandees: p.images,
-            images: rang === 0 ? [asset("balthazar-corps")] : [],
-            ...VIDE_C3,
-          })),
-        }),
-      ],
-    })
-
-    const cases = Array.from(
-      document.querySelectorAll("[data-fiche] [data-case-faite]"),
-    )
-    expect(cases).toHaveLength(PLAN.length)
-    // Une seule porte une image ; les cinq autres sont là quand même, à la
-    // même taille, en pointillé.
-    expect(cases.filter((c) => c.querySelector("img"))).toHaveLength(1)
-    expect(cases.filter((c) => c.className.includes("border-dashed"))).toHaveLength(
-      PLAN.length - 1,
-    )
-    // Et l'étiquette de chaque case est le nom de sa pose : on sait laquelle
-    // manque sans compter les positions.
-    for (const pose of PLAN) {
-      expect(fiche.getAllByText(pose.nom).length).toBeGreaterThan(0)
-    }
-  })
-
-  test("aucune mesure n'est écrite dans la police à empattements", async () => {
-    // `docs/DESIGN.md` § Typography, règle 2 : « Toute mesure est en JetBrains
-    // Mono, partout. » La fiche écrivait le compte des cases en serif 32 px.
-    // **Le serif revient au nom**, qui n'est pas une mesure.
-    await ouvrirLaFiche()
-
-    const serif = Array.from(
-      document.querySelectorAll("[data-fiche] .font-serif"),
-    )
-    expect(serif).toHaveLength(1)
-    expect(serif[0].textContent).toBe("Balthazar")
-    expect(serif[0].textContent).not.toMatch(/\d/)
-  })
-
-  test("le nom d'un réglage n'est pas écrit dans le gris le plus sourd", async () => {
-    // `docs/DESIGN.md` § Color : `--encre-4` porte le grisé, la méta et la
-    // raison — trois choses qu'autre chose redit ailleurs. **Rien ne redit le
-    // nom d'un champ de style**, il n'est donc pas un grisé.
-    const { fiche } = await ouvrirLaFiche()
-
-    const nom = await fiche.findByText("monde")
-    expect(nom.className).toContain("text-encre-3")
-    expect(nom.className).not.toContain("text-encre-4")
-  })
-
-  test("le compte des cases est calculé une fois, et tout ce qui l'écrit s'accorde", async () => {
-    // **Il était écrit trois fois — et deux des trois ne comptaient pas
-    // pareil** : l'un portait sur toutes les cases du plan, rangées comprises,
-    // l'autre sur les seules poses tenues. Une chose dont on avait rangé deux
-    // poses se lisait donc « sur 6 » à un endroit et « sur 4 » à l'autre.
-    //
-    // Le très gros chiffre du milieu est parti — c'est l'essai de la police à
-    // empattements qui le tient. Les trois écritures qui restent sont chacune à
-    // sa place — l'identité, la section, le tableau —, plus l'état du sommaire,
-    // et **toutes lisent le même calcul**.
-    const { fiche } = await ouvrirLaFiche({
-      personnages: [personnage("Balthazar", { ecartees: ["mort", "degats"] })],
-    })
-
-    // Quatre poses tenues, deux rangées, aucune image faite : le piège est
-    // qu'un compte pris sur le plan entier dirait « sur 6 ».
-    expect(fiche.getAllByText(/0 case sur 4/)).toHaveLength(2)
-    expect(fiche.getByRole("button", { name: /Aller à Ce qui est fait/ }).textContent)
-      .toContain("0 sur 4")
-    // Et le tableau écrit les rangées **à côté**, jamais fondues dedans : une
-    // jauge pleine obtenue en rangeant doit se lire comme telle.
-    expect(fiche.getByText("0 / 4 · 2 rangées")).toBeTruthy()
-  })
-
-  test("aucun résumé du sommaire ne se coupe au milieu d'un mot", async () => {
-    // **« 7 champs · 0 de son ambi… »** : un résumé tronqué ne résume plus
-    // rien. Un sommaire dit où aller, il ne résume pas ce qu'on y trouvera.
-    const { fiche } = await ouvrirLaFiche()
-
-    const etatDe = (nom: string) =>
-      fiche
-        .getByRole("button", { name: `Aller à ${nom}` })
-        .textContent!.replace(nom, "")
-        .trim()
-
-    // Un « … » est un compte qui n'est pas encore revenu du serveur, pas un
-    // résumé coupé : on attend qu'ils soient tous lus avant de les mesurer.
-    await waitFor(() => {
-      for (const nom of NOMS_DES_PARTIES) {
-        if (etatDe(nom) === "…") throw new Error(`« ${nom} » compte encore`)
-      }
-    })
-
-    for (const nom of NOMS_DES_PARTIES) {
-      // Un mot ou deux, jamais une phrase : trois mots seraient déjà un résumé,
-      // et un résumé de 240 px se coupe.
-      expect(etatDe(nom).split(/\s+/).filter(Boolean).length).toBeLessThanOrEqual(3)
-    }
-  })
-
-  test("la fente des refus ne porte plus une seule explication", async () => {
-    // **Le produit a une place réservée pour dire pourquoi un bouton est
-    // éteint** : une ligne grise sous le contrôle, précédée d'un tiret. La
-    // fiche y écrivait ses explications — elles avaient donc l'air
-    // d'avertissements, et l'œil apprenait à les sauter.
-    const { fiche } = await ouvrirLaFiche()
-
-    // Le motif de la fente est ce tiret de 8 px. Aucun dans la fiche.
-    expect(
-      document.querySelectorAll("[data-fiche] span.h-px.w-2"),
-    ).toHaveLength(0)
-    // Et ce qui s'y écrivait est maintenant le propos, lu dans le recueil.
-    expect(fiche.getByText(AIDE["codex.chose.matrice"].quoi)).toBeTruthy()
-  })
-
-  test("la barre qui paie se retire quand la fiche s'ouvre", async () => {
-    // Régler, ranger, désigner une référence n'appelle personne — et un écran
-    // incapable de dépenser ne porte pas le champ qui dépense.
-    await ouvrirLaFiche()
-
-    expect(
-      screen.queryByPlaceholderText("Décris ce que tu veux fabriquer."),
-    ).toBeNull()
-  })
-
-  test("Échap rend l'établi, à l'endroit exact d'où l'on venait", async () => {
-    await ouvrirLaFiche()
-
-    fireEvent.keyDown(window, { key: "Escape" })
-
-    await waitFor(() =>
-      expect(document.querySelector("[data-fiche]")).toBeNull(),
-    )
-    expect(document.querySelector("[data-etabli]")).toBeTruthy()
-  })
-
-  // ── « Chaque texte porte son origine parmi les cinq » ──────────────────────
-
-  test("chaque texte porte son origine, et elle se lit sans clic", async () => {
-    const { fiche } = await ouvrirLaFiche({
-      univers: {
-        ...UNIVERS,
-        bible: UNIVERS.bible.map((c) =>
-          c.nom === "monde" ? { ...c, texte: "des salles de forge" } : c,
-        ),
-      },
-    })
-
-
-    expect(await fiche.findByLabelText("monde")).toBeTruthy()
-    // Le cas ordinaire, et il se dit : rien n'a été changé pour cette chose-là.
-    expect(fiche.getAllByText(/du jeu/).length).toBeGreaterThan(0)
-  })
-
-  test("un texte écrit ici montre en dessous, barré, celui qu'il remplace", async () => {
-    const { fiche, fetchDouble } = await ouvrirLaFiche({
-      univers: {
-        ...UNIVERS,
-        bible: UNIVERS.bible.map((c) =>
-          c.nom === "vue" ? { ...c, texte: "3/4 top-down" } : c,
-        ),
-      },
-    })
-
-    const champ = await fiche.findByLabelText("vue et cadrage")
-    fireEvent.change(champ, { target: { value: "flat orthographic icon" } })
-    fireEvent.blur(champ)
-
-    await waitFor(() =>
-      expect(
-        fetchDouble.mock.calls.some(
-          ([url, init]) =>
-            String(url) === "/api/characters/balthazar" &&
-            String((init as RequestInit)?.body).includes("flat orthographic icon"),
-        ),
-      ).toBe(true),
-    )
-    // **On doit pouvoir lire ce à quoi on a renoncé sans aller le chercher** :
-    // l'écran garde la place du texte remplacé, barrée, sous celui qui gagne.
-    expect(fiche.getByLabelText("vue et cadrage")).toBeTruthy()
-  })
-
-  test("éteindre un texte écrit un refus, et rallumer le défait", async () => {
-    const { fiche, fetchDouble } = await ouvrirLaFiche()
-
-    const eteindre = (await fiche.findAllByRole("button", { name: "éteindre" }))[0]
-    fireEvent.click(eteindre)
-
-    await waitFor(() =>
-      expect(
-        fetchDouble.mock.calls.some(([, init]) =>
-          String((init as RequestInit)?.body ?? "").includes("eteindre"),
-        ),
-      ).toBe(true),
-    )
-  })
-
-  test("un texte éteint montre ce qui serait parti, et se rallume d'un clic", async () => {
-    // **Un refus écrit se défait d'un clic** — sinon il serait indistinguable
-    // d'un oubli, donc impossible à défaire.
-    const { fiche } = await ouvrirLaFiche({
-      personnages: [personnage("Balthazar", { eteints: ["technique"] })],
-    })
-
-
-    expect(await fiche.findByRole("button", { name: "rallumer" })).toBeTruthy()
-    // Un seul champ éteint : l'origine est écrite à côté de son nom, et elle
-    // ne paraît que là.
-    expect(fiche.getAllByText(/éteint/).length).toBe(1)
-  })
-
-  // ── « La valeur imposée par le projet se lit sous le texte qui part » ──────
-
-  test("le désaccord entre la grille annoncée et celle qui s'applique se voit", async () => {
-    // **Mesuré sur le vrai projet** : la bible disait 64x64 en toutes lettres
-    // pendant que le projet imposait 128, et aucun écran ne mettait les deux
-    // côte à côte.
-    const { fiche } = await ouvrirLaFiche({
-      univers: {
-        ...UNIVERS,
-        cible_px: 128,
-        bible: UNIVERS.bible.map((c) =>
-          c.nom === "rendu" ? { ...c, texte: "2D pixel art on a 64x64 grid" } : c,
-        ),
-      },
-    })
-
-
-    expect(await fiche.findByText("128 px de grille")).toBeTruthy()
-    expect(fiche.getByText(/annonce une autre grille dans le texte qui part/)).toBeTruthy()
-  })
-
-  // ── « Une image déjà fabriquée se promeut en référence permanente » ────────
-
-  test("l'atelier propose le corps retenu, et une proposition se retient d'un clic", async () => {
-    const corps = asset("corps-1")
-    const { fiche, fetchDouble } = await ouvrirLaFiche({
-      personnages: [
-        personnage("Balthazar", {
-          cases: PLAN.map((p) => ({
-            pose: p.identifiant,
-            demandees: p.images,
-            images: p.identifiant === "repos" ? [corps] : [],
-            ...VIDE_C3,
-            corps: p.identifiant === "repos" ? corps.identifiant : null,
-          })),
-        }),
-      ],
-    })
-
-
-    // **Il propose, il ne décide pas** — et la provenance est écrite dessous.
-    expect(await fiche.findByText(/le corps retenu de/)).toBeTruthy()
-    // **Le geste nomme l'image sur laquelle il porte** (R8) : les lignes se
-    // ressemblent, et « retenir » seul ne dirait pas laquelle.
-    fireEvent.click(await fiche.findByRole("button", { name: /^retenir le corps retenu de/ }))
-
-    await waitFor(() =>
-      expect(
-        fetchDouble.mock.calls.some(
-          ([url, init]) =>
-            String(url) === "/api/characters/balthazar/references" &&
-            String((init as RequestInit)?.method) === "PUT",
-        ),
-      ).toBe(true),
-    )
-    // Une proposition acceptée cesse d'être une proposition, et devient une
-    // ligne de la liste.
-    expect(await fiche.findByText("image promue")).toBeTruthy()
-  })
-
-  test("chaque image d'exemple porte sa vignette, retenue comme proposée", async () => {
-    // **On retenait ou on retirait une image sans la voir** (R8) : la ligne ne
-    // portait que du texte — une provenance, un détail, un geste —, et deux
-    // images de la même chose s'y écrivaient avec les mêmes mots. Retenir une
-    // image d'exemple est pourtant le geste le plus visuel de la fiche.
-    const corps = asset("corps-1")
-    const deja = asset("deja-0")
-    const { fiche } = await ouvrirLaFiche({
-      assets: [deja],
-      personnages: [
-        personnage("Balthazar", {
-          references: [deja.identifiant],
-          cases: PLAN.map((p) => ({
-            pose: p.identifiant,
-            demandees: p.images,
-            images: p.identifiant === "repos" ? [corps] : [],
-            ...VIDE_C3,
-            corps: p.identifiant === "repos" ? corps.identifiant : null,
-          })),
-        }),
-      ],
-    })
-
-    // Une retenue, et une proposée — les deux se jugent en regardant, et les
-    // deux passent par la même ligne.
-    await fiche.findByText("image promue")
-    await fiche.findByText(/le corps retenu de/)
-    const vignettes = Array.from(
-      document.querySelectorAll("[data-fiche] [data-vignette-exemple]"),
-    )
-    expect(vignettes).toHaveLength(2)
-    for (const vignette of vignettes) {
-      expect(vignette.querySelector("img")).toBeTruthy()
-    }
-  })
-
-  test("une image d'exemple disparue laisse sa ligne, sans vignette", async () => {
-    // **`null`, jamais une erreur** : une référence peut nommer une image
-    // effacée depuis. La ligne reste — elle dit ce qui partirait —, elle n'a
-    // simplement rien à montrer, et la case damier reste à sa place pour que
-    // la liste ne se déforme pas.
-    const { fiche } = await ouvrirLaFiche({
-      personnages: [
-        personnage("Balthazar", { references: ["une-image-effacee-0"] }),
-      ],
-    })
-
-    await fiche.findByText("image promue")
-    const vignettes = Array.from(
-      document.querySelectorAll("[data-fiche] [data-vignette-exemple]"),
-    )
-    expect(vignettes).toHaveLength(1)
-    expect(vignettes[0].querySelector("img")).toBeNull()
-  })
-
-  test("sans référence, la fiche dit ce que ça coûte", async () => {
-    const { fiche } = await ouvrirLaFiche()
-
-
-    expect(
-      await fiche.findByText(/Dix-sept appels payés sur vingt-huit/),
-    ).toBeTruthy()
-  })
-
-  // ── « Une jauge ne compte que ce qu'on peut fabriquer maintenant » ─────────
-
-  test("la matrice ne compte pas comme faite une pose qu'on a rangée", async () => {
-    // **Le piège** : ranger fait monter la jauge sans qu'une image ait été
-    // fabriquée. Ce qui le tient est que le compte des rangées est écrit à
-    // côté, jamais fondu dedans.
-    const { fiche } = await ouvrirLaFiche({
-      personnages: [personnage("Balthazar", { ecartees: ["mort", "degats"] })],
-    })
-
-    expect((await fiche.findAllByText(/2 rangées/)).length).toBeGreaterThan(0)
-    // Les quatre poses tenues sont là ; les deux rangées ne comptent ni comme
-    // faites ni comme manquantes — elles sont comptées à côté.
-    expect(fiche.getAllByText("0 / 1").length).toBe(4)
-  })
-})
+// **La fiche longue vivait ici**, ouverte depuis la matrice par « sa fiche › ».
+// RP8 la fond dans la fiche courte de `PageDuSujet.tsx`, atteinte en ouvrant le
+// sujet plutôt que sous « Cases, planches et calibrage » : ses essais vivent
+// donc maintenant dans `PageDuSujet.test.tsx`, à côté de ceux de la fiche
+// courte, plutôt qu'ici à côté de ceux de la matrice — les monter aux deux
+// endroits ferait dire deux choses du même écran. Deux parties n'ont pas
+// suivi — « ce que le jeu réclame » et « ce qui est fait », pose par pose — et
+// c'est délibéré : elles redisaient l'onglet *Objectif & règles* et les
+// onglets *Images fixes* / *Animations* de la même page, à un clic d'ici. Le
+// calibrage et la vitrine restent des gestes directs de la matrice, ci-dessous.
+// Ce qui se calcule côté serveur — les trois couches, l'empreinte, ce que le
+// fichier garde — vit toujours dans `tests/test_e12.py`.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // E15 · Le codex généralisé — les cinq familles
@@ -13573,31 +13275,10 @@ describe("la vitrine", () => {
   // ⚠️ **« voir tout le monde en grand » est parti avec `Codex.tsx` (`C3`)** :
   // c'était un bouton de sa colonne des choses (`ListeDesChoses`), sans
   // équivalent dans `Famille.tsx` — à rouvrir si le besoin s'en fait sentir.
-  // Reste la porte depuis une fiche, ci-dessous.
-
-  test("la fiche ouvre la vitrine sur les poses de cette chose", async () => {
-    const double = serveurDouble({ personnages: [avecUneImage("Balthazar")] })
-    await monter(double.fetchDouble)
-    const etabli = await ouvrirLEtabli("Balthazar")
-    fireEvent.click(await etabli.findByRole("button", { name: "sa fiche ›" }))
-    const fiche = within(
-      await waitFor(() => {
-        const trouvee = document.querySelector("[data-fiche]")
-        if (!trouvee) throw new Error("la fiche ne s'est pas ouverte")
-        return trouvee as HTMLElement
-      }),
-    )
-
-    // **La porte est en tête, à côté du portrait** (R8) : c'est là qu'on est
-    // quand on se demande à quoi la chose ressemble vraiment.
-    fireEvent.click(await fiche.findByRole("button", { name: "la voir en grand ›" }))
-
-    // On passe de la fiche à la vitrine sans repasser par l'établi.
-    await waitFor(() =>
-      expect(document.querySelector("[data-vitrine]")).toBeTruthy(),
-    )
-    expect(document.querySelector("[data-fiche]")).toBeNull()
-  })
+  // ⚠️ **La porte depuis la fiche est partie avec elle** (RP8) : la fiche
+  // longue qui la portait a fusionné dans la fiche courte de la page du
+  // sujet, qui ne l'a jamais portée. La vitrine reste atteignable par son
+  // propre geste direct sur la matrice — « la vitrine › », ci-dessous.
 
   test("Échap ferme la vitrine et rend l'établi", async () => {
     await ouvrirDepuisLEtabli()
@@ -17321,7 +17002,7 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
   test("faire une palette dit ce qui a été créé, et mène à l'objet", async () => {
     const { appels } = await ouvrirLeMenuDeLIlot()
 
-    fireEvent.click(bouton(/faire une palette de ce paquet/))
+    fireEvent.click(bouton(/faire une palette de cet îlot/))
 
     const dit = await waitFor(() => {
       const trouve = document.querySelector("[data-fabrique-faite]")
@@ -17346,7 +17027,7 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
   test("faire une ambiance fait de même, et l'ambiance porte la palette du paquet", async () => {
     const { appels, etat } = await ouvrirLeMenuDeLIlot()
 
-    fireEvent.click(bouton(/faire une ambiance de ce paquet/))
+    fireEvent.click(bouton(/faire une ambiance de cet îlot/))
 
     const dit = await waitFor(() => {
       const trouve = document.querySelector("[data-fabrique-faite]")
@@ -17376,7 +17057,7 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
     expect(bandeDeLIlot()).toContain("2 cartes")
     expect(bandeDeLIlot()).not.toContain("2 cartes · palette")
 
-    fireEvent.click(bouton(/faire une palette de ce paquet/))
+    fireEvent.click(bouton(/faire une palette de cet îlot/))
 
     await waitFor(() => expect(bandeDeLIlot()).toContain("2 cartes · palette"))
   })
@@ -17415,7 +17096,7 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
 
     // Le bouton **le dit avant qu'on clique** plutôt que de s'excuser après.
     const ouvrir = await screen.findByRole("button", { name: /ouvrir sa palette/ })
-    expect(screen.queryByRole("button", { name: /faire une palette de ce paquet/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: /faire une palette de cet îlot/ })).toBeNull()
 
     const avant = appels.filter((a) => a.url === "/api/palettes").length
     fireEvent.click(ouvrir)
@@ -17465,7 +17146,7 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
     // pointeur » — exactement ce que fait la touche Entrée.
     fireEvent.click(bandeau)
 
-    fireEvent.click(bouton(/faire une palette de ce paquet/))
+    fireEvent.click(bouton(/faire une palette de cet îlot/))
 
     expect(await screen.findByText(/existe déjà dans ce jeu/)).toBeTruthy()
     expect(document.querySelector("[data-fabrique-faite]")).toBeNull()
@@ -18493,12 +18174,12 @@ describe("découper une carte du tableau", () => {
     // **Et il a son étage dans le fil d'Ariane**, comme la découpe d'une planche
     // depuis la galerie. Sans lui, *Échap* serait la seule sortie d'un écran
     // plein cadre.
-    expect(fil().textContent).toContain("Inspiration")
+    expect(fil().textContent).toContain("Univers & toile")
     expect(fil().textContent).toContain("trouvailles")
     expect(fil().textContent).toContain("Découpage")
 
-    // Chaque segment ramène à son étage : *Inspiration* rend le tableau.
-    fireEvent.click(within(fil()).getByRole("button", { name: "Inspiration" }))
+    // Chaque segment ramène à son étage : *Univers & toile* rend le tableau.
+    fireEvent.click(within(fil()).getByRole("button", { name: "Univers & toile" }))
     await waitFor(() => expect(ecran()).toBeNull())
     expect(screen.getByRole("button", { name: "Ouvrir la carte" })).toBeTruthy()
   })
@@ -18513,7 +18194,7 @@ describe("découper une carte du tableau", () => {
     await monter(fetchDouble)
     await ouvrirLeMenu("Ouvrir la note")
 
-    expect(await screen.findByRole("button", { name: "Retirer" })).toBeTruthy()
+    expect(await screen.findByRole("button", { name: "Supprimer" })).toBeTruthy()
     expect(screen.queryByRole("button", { name: "Découper ›" })).toBeNull()
   })
 

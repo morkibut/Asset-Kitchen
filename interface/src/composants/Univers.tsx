@@ -43,7 +43,17 @@ import {
 import type { Fente } from "./EnTeteDeSurface"
 import { DECOUPER, Reserve, Tableau, useCollage, type Vue } from "./Tableau"
 import { EcranDecoupe } from "./Decoupe"
-import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
+import {
+  GestesDeLaSelection,
+  Toile,
+  basculerLaSelection,
+  cequiPartDeLaToile,
+  ilotPerdu,
+  ilotsPerdusParLeLot,
+  selectionVive,
+  useCrans,
+  type Geste,
+} from "./Toile"
 import { CoteAmbiancesEtCouleurs, type CibleAmbiances } from "./Ambiances"
 
 
@@ -66,6 +76,7 @@ export function EcranUnivers({
   carteDecoupee,
   onDecouperCarte,
   onAnimerCarte,
+  onFabriquerDepuisLaToile,
   projet,
 }: {
   /** **Le jeu ouvert** — nécessaire depuis qu'une vidéo posée sur la toile
@@ -117,12 +128,63 @@ export function EcranUnivers({
    *  tableau. */
   carteDecoupee: Carte | null
   onDecouperCarte: (carte: Carte | null) => void
+  /** **Ce que la sélection de la toile donne à faire** (`RP9`) : les cartes
+   *  choisies deviennent les références de la prochaine demande d'image, et
+   *  les notes la consigne qui l'accompagne — si l'auteur l'a dit.
+   *
+   *  **C'est `App` qui ouvre**, parce que la préparation est la sienne : la
+   *  toile ne fabrique pas un second endroit où l'argent part, elle donne son
+   *  lot à celui qui existe (E2). */
+  onFabriquerDepuisLaToile?: (cartes: string[], notes: string[]) => void
   /** **La seconde sortie de la découpe d'une carte** (`RP21`) : la bande qui
    *  vient de naître. Absente, le bouton *Animer* ne paraît pas dans l'écran
    *  de découpe — même règle que pour une planche de la bibliothèque. */
   onAnimerCarte?: (bandes: Bande[]) => void
 }) {
   const [choisie, setChoisir] = useState<string | null>(null)
+
+  // ── La sélection de la toile (`RP9`) ─────────────────────────────────────
+  //
+  // **Elle vit ici, à côté de la carte choisie, et elle meurt avec l'écran** —
+  // la même raison que la pile d'annulation : ce n'est pas un état du projet,
+  // c'est ce que la main est en train de faire. Rien ne s'en écrit : *une
+  // coordonnée ne voyage pas* (lot U), et ce qui a un sens ailleurs, ce sont
+  // les cartes, pas la région qu'on a entourée.
+  //
+  // **Et la toile porte une sélection pour la raison de `G12`** : elle est
+  // l'ensemble déjà sous les yeux. L'invariant *une seule grille d'assets… ni
+  // sélection multiple* est amendé en ce sens dans `docs/PLAN.md`.
+  const [selection, setSelection] = useState<string[]>([])
+  const [avecLesNotes, setAvecLesNotes] = useState(false)
+
+  // Lue au travers de ce que la toile montre : une carte supprimée ou renvoyée
+  // en réserve sort d'elle-même, sans code de ménage.
+  const vive = selectionVive(cartes, selection)
+  const lot = cequiPartDeLaToile(cartes, selection)
+
+  /** Poser la sélection, et rien d'autre ne la pose.
+   *
+   *  **Vidée, elle rend aussi la case des notes** : *sans qu'on le dise* vaut
+   *  pour chaque lot, et une case restée cochée ferait partir en consigne les
+   *  notes du lot **suivant**, que personne n'a regardées. */
+  const poserLaSelection = (suivante: string[]) => {
+    setSelection(suivante)
+    setChoisir(suivante.length === 1 ? suivante[0] : null)
+    if (!suivante.length) setAvecLesNotes(false)
+  }
+
+  /** Le clic sur une carte du plan. Ctrl ou ⌘ ajoute ; sinon il remplace. La
+   *  carte choisie **est** la sélection quand elle vaut un — la grammaire de la
+   *  galerie, et la seule du produit. */
+  const choisirSurLaToile = (identifiant: string | null, multiple = false) =>
+    poserLaSelection(basculerLaSelection(vive, identifiant, multiple))
+
+  /** Le clic dans la grille ou la réserve : il n'y a pas de lot là-bas, et il
+   *  n'en reste pas un derrière soi. */
+  const choisirDansLaColonne = (identifiant: string | null) => {
+    poserLaSelection([])
+    setChoisir(identifiant)
+  }
 
   /** **Le refus se pose où le geste a eu lieu**, et il y va par la fente du
    *  châssis. Cet écran écrit dans la bande du haut, comme avant ; ce qui a
@@ -170,6 +232,45 @@ export function EcranUnivers({
     void api
       .reglerCarte(identifiant, { groupe: "", position: [] })
       .catch((e) => setRefus(e instanceof Refus ? e.message : "la carte n'a pas pu revenir"))
+  }
+
+  // ── Les trois gestes du lot (`RP9`) ──────────────────────────────────────
+
+  /** **Mettre la sélection en réserve.** C'est `rendre`, pour plusieurs — et
+   *  *une* entrée de pile, comme un îlot déplacé : cinq cartes renvoyées d'un
+   *  clic se défont d'un Ctrl+Z. Les îlots vidés se comptent sur le lot entier,
+   *  jamais carte par carte.
+   *
+   *  La sélection s'efface avec le geste : ce qui a été rangé n'est plus sur la
+   *  toile, donc plus dans un ensemble qui est celui de ce qu'on a sous les
+   *  yeux. */
+  const mettreLeLotEnReserve = () => {
+    const partantes = cartes.filter((c) => vive.includes(c.identifiant))
+    if (!partantes.length) return
+    pile.current.push({
+      genre: "lot-rendu",
+      cartes: partantes.map((c) => ({
+        carte: c.identifiant,
+        avant: { groupe: c.groupe, position: c.position ?? [] },
+      })),
+      ilots: ilotsPerdusParLeLot(vive, cartes, liens, teintes),
+    })
+    poserLaSelection([])
+    for (const carte of partantes) {
+      void api
+        .reglerCarte(carte.identifiant, { groupe: "", position: [] })
+        .catch((e) =>
+          setRefus(e instanceof Refus ? e.message : "la carte n'a pas pu revenir"),
+        )
+    }
+  }
+
+  /** **Fabriquer depuis la sélection.** Rien ne part d'ici : le lot est donné à
+   *  la préparation, qui est le seul endroit où l'argent part de ce côté du
+   *  produit (E2). Les notes n'y vont que si la case le dit. */
+  const fabriquerDepuisLeLot = () => {
+    if (!onFabriquerDepuisLaToile) return
+    onFabriquerDepuisLaToile(lot.images, avecLesNotes ? lot.notes : [])
   }
 
   // Les colonnes du côté Inspiration : `1fr` en grille, `1fr · 380px` en toile,
@@ -267,7 +368,7 @@ export function EcranUnivers({
                   vue={vue}
                   onVue={onVue}
                   choisie={choisie}
-                  onChoisir={setChoisir}
+                  onChoisir={choisirDansLaColonne}
                   onErreur={setRefus}
                   collage={collage}
                   cotes={<Cotes cote={cote} onCote={onCote} />}
@@ -281,7 +382,19 @@ export function EcranUnivers({
                   vue={vue}
                   onVue={onVue}
                   choisie={choisie}
-                  onChoisir={setChoisir}
+                  onChoisir={choisirSurLaToile}
+                  selection={vive}
+                  gestes={
+                    <GestesDeLaSelection
+                      choisies={vive.length}
+                      notes={lot.notes.length}
+                      avecLesNotes={avecLesNotes}
+                      onAvecLesNotes={setAvecLesNotes}
+                      onFabriquer={fabriquerDepuisLeLot}
+                      onReserve={mettreLeLotEnReserve}
+                      onEffacer={() => poserLaSelection([])}
+                    />
+                  }
                   onErreur={setRefus}
                   collage={collage}
                   crans={crans}
@@ -300,7 +413,7 @@ export function EcranUnivers({
                   cartes={cartes}
                   personnages={personnages}
                   choisie={choisie}
-                  onChoisir={setChoisir}
+                  onChoisir={choisirDansLaColonne}
                   onErreur={setRefus}
                   collage={collage}
                   cadre={grilleReserve}

@@ -695,10 +695,17 @@ export function BarreTableau({
   onVue,
   onNote,
   debut,
+  selection,
 }: {
   cartes: Carte[]
   vue: Vue
   onVue: (vue: Vue) => void
+  /** **Ce que la sélection de la toile donne à faire** (`RP9`), compté et
+   *  suivi de ses gestes. Il se pose ici parce que la maquette compte la
+   *  sélection *au-dessus de la toile* : un lot se regarde d'au-dessus, alors
+   *  qu'une carte se règle dans son menu. Rien en vue grille — la sélection
+   *  est celle du plan, pas de la grille. */
+  selection?: ReactNode
   /** Ce qui se pose **avant** le nom de la surface — les trois côtés de
    *  l'onglet Univers depuis E7. Deux bandes empilées au-dessus du tableau en
    *  auraient fait trois avec celle du châssis, et la maquette n'en dessine
@@ -745,6 +752,7 @@ export function BarreTableau({
           élargit la colonne, puis la page — et pousse hors de l'écran ce qui est
           ancré à droite. */}
       <div className="ml-auto flex shrink-0 items-center gap-3">
+        {selection}
         {/* **À gauche du segment *Vue*, en bouton compact de 26 px.** Le `+`
             est celui de l'arbre — l'un des trois glyphes du produit, et pas un
             quatrième : ce bouton en réemploie un, il n'en ouvre pas. */}
@@ -877,8 +885,10 @@ export function CarteTuile({
   carte,
   personnages,
   choisie,
-  survolee,
+  selectionnee = false,
+  menu = true,
   plan = false,
+  survolee,
   glissable = false,
   onSurvol,
   onChoisir,
@@ -888,17 +898,32 @@ export function CarteTuile({
   personnages: Personnage[]
   /** Épinglée par un clic : son menu ne s'efface plus au survol perdu. */
   choisie: boolean
-  /** Le pointeur s'est reposé dessus assez longtemps. */
-  survolee: boolean
+  /** **Dans la sélection de la toile** (`RP9`). *Choisir une carte est la
+   *  sélection à un* — c'est déjà la grammaire de la galerie —, donc les deux
+   *  états portent **le même anneau**, le seul du produit : il ne veut dire
+   *  qu'une chose, *celle-ci est choisie*, et plusieurs cartes choisies sont
+   *  une sélection. */
+  selectionnee?: boolean
+  /** Faux quand la sélection en tient plusieurs : un menu règle **une** carte,
+   *  et ce qu'on fait de plusieurs se lit au-dessus de la toile. Sans ce
+   *  garde-fou, le survol ouvrirait le menu d'une seule au milieu d'un lot
+   *  qu'on vient de composer. */
+  menu?: boolean
   /** Posée sur la toile plutôt que dans la grille. */
   plan?: boolean
+  /** Le pointeur s'est reposé dessus assez longtemps. */
+  survolee: boolean
   /** Tirable vers la toile — vrai dans la réserve seulement. */
   glissable?: boolean
   onSurvol: (dedans: boolean) => void
-  onChoisir: () => void
+  /** L'événement voyage depuis `RP9` : Ctrl (ou ⌘) ajoute à la sélection au
+   *  lieu de la remplacer, comme dans la galerie. */
+  onChoisir: (evenement?: React.MouseEvent) => void
   onErreur: (raison: string) => void
 }) {
-  const ouvert = choisie || survolee
+  // L'anneau dit *choisie*, et une sélection est plusieurs choisies.
+  const marquee = choisie || selectionnee
+  const ouvert = menu && (choisie || survolee)
   // **La teinte d'une note colore sa surface, jamais une marque posée dessus**
   // (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md` § Les dix teintes de
   // rangement, discipline n°2). Le fond à 8 %, sous
@@ -946,6 +971,10 @@ export function CarteTuile({
   )
   return (
     <article
+      /* **Le marqueur de l'anneau, pour qu'un essai puisse le compter.** Même
+         grammaire que `data-ilot` et `data-reserve` : ce que l'œil voit et que
+         nul rôle ARIA ne nomme se marque, il ne se devine pas. */
+      data-choisie={marquee || undefined}
       style={{
         ...(plan
           ? { width: "100%", height: "100%" }
@@ -959,7 +988,7 @@ export function CarteTuile({
               // saturation, qui reste plafonnée à 30 % — c'est elle seule qui
               // sépare un rangement d'un état.
               background: `color-mix(in srgb, ${couleur} 16%, var(--color-carte))`,
-              ...(choisie ? {} : { borderColor: couleur }),
+              ...(marquee ? {} : { borderColor: couleur }),
             }
           : {}),
       }}
@@ -976,7 +1005,7 @@ export function CarteTuile({
         // les voisines, donc il doit pouvoir sortir de la carte. Le rognage des
         // coins descend sur l'image, qui est la seule chose à rogner.
         "relative flex flex-col rounded-5 border bg-carte transition-colors duration-[120ms]",
-        choisie ? "border-signal shadow-[0_0_0_2px_var(--color-signal)]" : "border-trait",
+        marquee ? "border-signal shadow-[0_0_0_2px_var(--color-signal)]" : "border-trait",
         // La carte ouverte passe devant ses voisines, et devant le menu d'une
         // autre qui serait en train de s'effacer.
         ouvert ? "z-20" : "z-0",
@@ -1436,7 +1465,13 @@ function Reglages({
           ni porter une explication — c'est exactement ce qui a rendu `groupe`
           incomprehensible. */}
       <div className="flex flex-col gap-1">
-        <Libelle aide="carte.groupe">Groupe</Libelle>
+        {/* **Îlot, et non *Groupe*** (`RP9`, relevé des désaccords du
+            15 septembre 2026). C'est le champ qui fait paraître un îlot, et
+            l'écran à côté n'a jamais dit *groupe* : il dessine des îlots, les
+            nomme, les teinte. Le mot du code reste `groupe` — c'est ce que le
+            serveur écrit sur une carte —, et c'est très exactement la
+            distinction que `docs/vocabulaire.html` tient. */}
+        <Libelle aide="carte.groupe">Îlot</Libelle>
         <input
           value={groupe}
           placeholder="aucun"
@@ -1661,7 +1696,11 @@ function Reglages({
           }
           className="mesure ml-auto text-[10.5px] text-encre-4 hover:text-echec"
         >
-          Retirer
+          {/* **Supprimer, et non *Retirer*** (`RP9`) : *retirer* est le mot
+              d'un rangement — la carte irait en réserve —, et ce bouton-ci
+              efface la carte. Le geste qui range s'appelle *Mettre en
+              réserve*, au-dessus de la toile. */}
+          Supprimer
         </button>
       </div>
     </div>

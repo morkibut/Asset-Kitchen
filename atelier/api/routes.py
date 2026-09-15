@@ -643,9 +643,14 @@ class CorpsReinjection(BaseModel):
 
     asset: str
     role: Literal["reference", "edition", "style"] = "reference"
-    # L'origine n'est pas dans ce corps : une réinjection posée à la main vient
-    # toujours de la bibliothèque. Les cartes du tableau, elles, ne se
-    # sélectionnent jamais — c'est l'application qui les ajoute (US-51).
+    # **L'origine est entrée dans ce corps avec `RP9`**, et le défaut ne bouge
+    # pas : une réinjection posée à la main vient de la bibliothèque, sauf à
+    # dire le contraire. Ce qui a changé est que les cartes du tableau **se
+    # sélectionnent** — la toile en fait un lot et le donne à la préparation —,
+    # alors qu'elles n'entraient jusque-là que par la main de l'application
+    # (US-51). Une carte ne part qu'en guide de style : la bibliothèque ne les
+    # connaît pas, donc aucune filiation ne peut en descendre.
+    origine: Literal["asset", "carte"] = "asset"
 
 
 class CorpsGeneration(BaseModel):
@@ -745,7 +750,8 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         # défaut vit là-bas pour que le MCP de T7 en hérite sans le réécrire.
         projet=corps.projet,
         references=[
-            Reinjection(asset=r.asset, role=r.role) for r in corps.references
+            Reinjection(asset=r.asset, role=r.role, origine=r.origine)
+            for r in corps.references
         ],
         personnage=corps.personnage,
         pose=corps.pose,
@@ -874,7 +880,8 @@ async def envoi(requete: Request, corps: CorpsEnvoi) -> dict[str, Any]:
         directions=corps.directions,
         piece=corps.piece or None,
         references=[
-            Reinjection(asset=r.asset, role=r.role) for r in corps.references
+            Reinjection(asset=r.asset, role=r.role, origine=r.origine)
+            for r in corps.references
         ],
         references_ecartees=corps.references_ecartees,
         variations=corps.variations,
@@ -1948,51 +1955,13 @@ async def oublier_recette(requete: Request, nom: str) -> dict[str, Any]:
 
 # ── Les jeux de réglages nommés ──────────────────────────────────────────────
 #
-# **Le quatrième rôle d'une réinjection**, déclaré en T1 et resté vide depuis
-# (US-12). Le seul des quatre qui n'envoie aucune image : il repeuple le
-# générateur au lieu de partir avec l'appel.
-#
-# Un jeu de sa propre route, et pas un champ de plus sur `/recipes` : une recette
-# dit ce qu'on fait à une image **déjà payée**, un jeu de réglages dit ce qui part
-# **avant** de payer. Deux moments, deux questions, deux adresses.
-
-
-class CorpsReglages(BaseModel):
-    """Ce qui part, et comment — **jamais pour qui** (US-134).
-
-    Ni personnage, ni pose, ni prompt : c'est toute la promesse du geste, *se
-    rappeler d'un geste sur un autre personnage*. Un jeu qui porterait le
-    personnage serait un jeu qu'on ne pourrait rejouer que sur lui.
-    """
-
-    modele: str = ""
-    proportions: str = "1:1"
-    resolution: str | None = None
-    options: dict[str, Any] = Field(default_factory=dict)
-    echelle: str = ""
-    references: list[CorpsReinjection] = Field(default_factory=list)
-    references_ecartees: list[str] = Field(default_factory=list)
-
-
-@routeur.get("/presets")
-async def liste_reglages(requete: Request) -> dict[str, Any]:
-    return {"reglages": _atelier(requete).generations.reglages()}
-
-
-@routeur.put("/presets/{nom}")
-async def nommer_reglages(
-    requete: Request, nom: str, corps: CorpsReglages
-) -> dict[str, Any]:
-    return {
-        "reglages": _atelier(requete).generations.nommer_reglages(
-            nom, corps.model_dump()
-        )
-    }
-
-
-@routeur.delete("/presets/{nom}")
-async def oublier_reglages(requete: Request, nom: str) -> dict[str, Any]:
-    return {"reglages": _atelier(requete).generations.oublier_reglages(nom)}
+# Trois routes — `GET`, `PUT` et `DELETE /presets/{nom}` — ont porté US-134
+# pendant toute la vie du produit sans qu'un seul écran les appelle. Ce qu'elles
+# promettaient — *rejouer la recette d'un appel sur un autre personnage* — est
+# fait ailleurs, et l'est depuis longtemps : *Reprendre les réglages*, sur la
+# fiche d'une image de la galerie, repeuple le générateur avec les réglages de
+# l'appel qui l'a fabriquée (`interface/src/gestes.ts`, `reprendreReglages`).
+# Une image déjà obtenue est un meilleur point de départ qu'un nom à retenir.
 
 
 def _asset(requete: Request, identifiant: str) -> Asset:

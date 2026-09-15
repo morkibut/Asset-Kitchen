@@ -2217,6 +2217,29 @@ function AtelierApp() {
           onAnimerCarte={(bandes) => {
             if (bandes.length > 0) ouvrirLAtelierDeBande(bandes[0].identifiant)
           }}
+          // **La toile donne du travail** (`RP9`). Les cartes choisies entrent
+          // en références de la prochaine demande — **en guide de style, et
+          // jamais autrement** : la bibliothèque ne connaît pas les cartes,
+          // donc aucune filiation ne peut en descendre. Les notes, si l'auteur
+          // l'a dit, s'ajoutent en consigne au bas du texte.
+          //
+          // **Aucune troisième place ne paie** (E2) : le geste ouvre la
+          // préparation qui existe, et rien ne part avant qu'on y ait relu ce
+          // qui part.
+          onFabriquerDepuisLaToile={(cartesChoisies, notes) => {
+            setCible(null)
+            setReinjections((deja) => [
+              ...deja.filter((r) => !cartesChoisies.includes(r.asset)),
+              ...cartesChoisies.map((carte) => ({
+                asset: carte,
+                role: "style" as const,
+                origine: "carte" as const,
+              })),
+            ])
+            if (notes.length)
+              setPrompt((texte) => [texte.trim(), ...notes].filter(Boolean).join("\n"))
+            setPreparationImageOuverte(true)
+          }}
         />
       )}
 

@@ -631,15 +631,41 @@ export function ilotPerdu(
   if (!nom) return undefined
   const reste = cartes.some((c) => c.identifiant !== sortante.identifiant && c.groupe === nom)
   if (reste) return undefined
-  return {
-    nom,
-    teinte: teintes[nom] ?? "",
-    liens: liens.filter(
-      (un) =>
-        (un.de.genre === "ilot" && un.de.valeur === nom) ||
-        (un.vers.genre === "ilot" && un.vers.valeur === nom),
-    ),
-  }
+  return { nom, teinte: teintes[nom] ?? "", liens: liensDeLIlot(nom, liens) }
+}
+
+/** Les traits qui aboutissent à un îlot. **Une seule définition**, parce que
+ *  deux gestes la demandent — une carte qui sort, et un lot qui part. */
+function liensDeLIlot(nom: string, liens: Lien[]): Lien[] {
+  return liens.filter(
+    (un) =>
+      (un.de.genre === "ilot" && un.de.valeur === nom) ||
+      (un.vers.genre === "ilot" && un.vers.valeur === nom),
+  )
+}
+
+/** Les îlots qu'un **lot** emporte en partant (`RP9`).
+ *
+ *  Ce n'est pas `ilotPerdu` répété : cinq cartes du même groupe, prises une à
+ *  une, laissent chacune quatre survivantes et ne perdent donc rien — alors que
+ *  le lot entier vide le groupe. La question se pose sur le lot, pas sur la
+ *  carte, et c'est le même piège que le compte d'un îlot pendant un glissement.
+ *
+ *  **Pure, et exportée pour ça** : c'est de l'arithmétique, et elle se vérifie
+ *  sans écran. */
+export function ilotsPerdusParLeLot(
+  partantes: readonly string[],
+  cartes: Carte[],
+  liens: Lien[],
+  teintes: Record<string, Teinte>,
+): IlotPerdu[] {
+  const lot = new Set(partantes)
+  const noms = new Set(
+    cartes.filter((c) => lot.has(c.identifiant) && c.groupe).map((c) => c.groupe),
+  )
+  return [...noms]
+    .filter((nom) => !cartes.some((c) => !lot.has(c.identifiant) && c.groupe === nom))
+    .map((nom) => ({ nom, teinte: teintes[nom] ?? "", liens: liensDeLIlot(nom, liens) }))
 }
 
 /**
@@ -716,8 +742,158 @@ export type Geste =
    *  Le disque en garde une de plus qu'avant le geste ; l'œil, lui, retrouve
    *  exactement ce qu'il avait. */
   | { genre: "ilot-deplace"; groupe: string; avant: Record<string, [number, number]> }
+  /** **Un lot mis en réserve est *un* geste, et donc *une* entrée** (`RP9`) —
+   *  le même argument que pour l'îlot déplacé : cinq cartes renvoyées d'un clic
+   *  demanderaient sinon cinq Ctrl+Z, c'est-à-dire le contraire de ce que la
+   *  pile promet. Elle décrit des gestes, pas des écritures.
+   *
+   *  `ilots` porte ce que le lot a vidé, calculé sur le lot entier et non carte
+   *  par carte : cinq cartes d'un même groupe, prises séparément, ne perdent
+   *  jamais leur îlot. */
+  | {
+      genre: "lot-rendu"
+      cartes: { carte: string; avant: Parameters<typeof api.reglerCarte>[1] }[]
+      ilots: IlotPerdu[]
+    }
   | { genre: "lien-cree"; lien: string }
   | { genre: "lien-coupe"; lien: Lien }
+
+// ── Ce que porte la sélection (`RP9`) ───────────────────────────────────────
+//
+// **Une liste d'identifiants de cartes, et rien d'autre ne voyage.** Un cadre
+// tiré sur le plan est une région, et une région dépend du zoom, du cadrage et
+// de la taille de la fenêtre : *une coordonnée ne voyage pas* (lot U). Ce qui
+// en sort et qui a un sens ailleurs, ce sont les cartes.
+//
+// **Elle ne se nettoie jamais.** Ce qui est sélectionné est ce que la toile
+// montre **et** que l'auteur a choisi — les deux, à chaque lecture. Une carte
+// supprimée ou renvoyée en réserve sort donc de la sélection sans qu'une ligne
+// de code s'en occupe ; une carte **déplacée** y reste, parce que déplacer
+// n'est pas choisir.
+
+/** Ce qui reste choisi : les identifiants encore posés sur le plan, dans
+ *  l'ordre où l'auteur les a pris. */
+export function selectionVive(
+  cartes: readonly Carte[],
+  selection: readonly string[],
+): string[] {
+  const posees = new Set(
+    cartes.filter((c) => !c.en_reserve).map((c) => c.identifiant),
+  )
+  return selection.filter((identifiant) => posees.has(identifiant))
+}
+
+/** Le clic, et ce qu'il fait de la sélection.
+ *
+ *  **Ctrl (ou ⌘) ajoute ou retire, un clic nu remplace** — c'est déjà la
+ *  grammaire de la galerie, et c'est la seule du produit. Pas de Maj : sur un
+ *  plan il n'y a pas d'ordre, donc pas d'étendue à couvrir. Recliquer la carte
+ *  seule la lâche, ce que le clic faisait déjà avant la sélection. */
+export function basculerLaSelection(
+  selection: readonly string[],
+  identifiant: string | null,
+  multiple: boolean,
+): string[] {
+  if (identifiant === null) return []
+  if (!multiple)
+    return selection.length === 1 && selection[0] === identifiant
+      ? []
+      : [identifiant]
+  return selection.includes(identifiant)
+    ? selection.filter((autre) => autre !== identifiant)
+    : [...selection, identifiant]
+}
+
+/** Ce que la sélection donnerait à la préparation : les images d'un côté, les
+ *  textes des notes de l'autre.
+ *
+ *  **Les deux ne se mêlent pas, et c'est tout le critère** : les images partent
+ *  cochées d'avance, les notes ne partent pas sans qu'on le dise. Une carte
+ *  dont l'image n'est pas arrivée n'entre pas — joindre une adresse qui n'a
+ *  rien rendu ferait payer un appel à qui il manque exactement ça. */
+export function cequiPartDeLaToile(
+  cartes: readonly Carte[],
+  selection: readonly string[],
+): { images: string[]; notes: string[] } {
+  const parIdentifiant = new Map(cartes.map((c) => [c.identifiant, c]))
+  const images: string[] = []
+  const notes: string[] = []
+  for (const identifiant of selectionVive(cartes, selection)) {
+    const carte = parIdentifiant.get(identifiant)
+    if (!carte) continue
+    if (carte.genre === "texte") {
+      if (carte.texte.trim()) notes.push(carte.texte.trim())
+    } else if (carte.statut === "prete") {
+      images.push(carte.identifiant)
+    }
+  }
+  return { images, notes }
+}
+
+/** Les trois gestes du lot, **au-dessus de la toile** (`RP9`).
+ *
+ * La maquette compte la sélection au-dessus du plan, et c'est le bon endroit :
+ * un lot se regarde d'au-dessus, alors qu'une carte se règle dans son menu. Les
+ * boutons reprennent la forme de `+ note`, à trois pas d'eux dans la même barre
+ * — 26 px, `rounded-7`, contour et papier de carte : aucune mesure neuve.
+ *
+ * **La case des notes est tout ce qui reste de la fenêtre « Choisir ce qui part
+ * de la toile ».** Des quatre décisions que la maquette y prend, trois — l'asset
+ * visé, *Image fixe* ou *Animation*, le modèle — appartiennent à la fenêtre
+ * unique de `RP4` ; les reconstruire ici ferait deux endroits à défaire. La
+ * quatrième — *les notes partent-elles ?* — est la seule qui soit de la toile,
+ * et elle reste là où la sélection vit.
+ */
+export function GestesDeLaSelection({
+  choisies,
+  notes,
+  avecLesNotes,
+  onAvecLesNotes,
+  onFabriquer,
+  onReserve,
+  onEffacer,
+}: {
+  /** Combien de cartes sont choisies — images et notes ensemble. */
+  choisies: number
+  /** Combien de notes en font partie. Zéro, la case ne paraît pas : il n'y a
+   *  rien à joindre, et une case morte est pire qu'une case absente. */
+  notes: number
+  avecLesNotes: boolean
+  onAvecLesNotes: (avec: boolean) => void
+  onFabriquer: () => void
+  onReserve: () => void
+  onEffacer: () => void
+}) {
+  if (choisies === 0) return null
+  const bouton =
+    "mesure flex h-[26px] items-center rounded-7 border border-contour bg-carte px-2 text-[11.5px] text-encre transition-colors duration-[120ms] hover:bg-papier-cote"
+  return (
+    <div data-selection className="flex shrink-0 items-center gap-2">
+      <span className="mesure shrink-0 text-[10.5px] text-signal">
+        {choisies} choisie{choisies > 1 ? "s" : ""}
+      </span>
+      {notes > 0 && (
+        <label className="mesure flex shrink-0 items-center gap-1 text-[10.5px] text-encre-3">
+          <input
+            type="checkbox"
+            checked={avecLesNotes}
+            onChange={(evenement) => onAvecLesNotes(evenement.target.checked)}
+          />
+          joindre {notes} note{notes > 1 ? "s" : ""}
+        </label>
+      )}
+      <button type="button" onClick={onFabriquer} className={bouton}>
+        Fabriquer depuis la sélection
+      </button>
+      <button type="button" onClick={onReserve} className={bouton}>
+        Mettre en réserve
+      </button>
+      <button type="button" onClick={onEffacer} className={bouton}>
+        Effacer la sélection
+      </button>
+    </div>
+  )
+}
 
 // ── Ce que les nœuds ont besoin de savoir ───────────────────────────────────
 //
@@ -729,6 +905,10 @@ export type Geste =
 
 type Cadre = {
   choisie: string | null
+  /** Les cartes du lot (`RP9`). *Choisir une carte est la sélection à un* :
+   *  quand elle en tient une, c'est `choisie` ; au-delà, plus rien n'est
+   *  « choisi » et chaque carte du lot porte le même anneau. */
+  selection: readonly string[]
   survolee: string | null
   /** Ce qui est épinglé et **n'est pas une carte** — le pavé d'un lien, le menu
    *  d'un îlot. Séparé de `choisie`, qui reste la carte choisie et voyage
@@ -755,7 +935,9 @@ type Cadre = {
    *  que la librairie croit avoir mesurée. Voir `AreteLien`. */
   tailleDe: (id: string) => { l: number; h: number } | null
   onSurvol: (cle: string, dedans: boolean) => void
-  onChoisir: (identifiant: string | null) => void
+  /** Le clic sur une carte du plan. `multiple` est vrai avec Ctrl ou ⌘, et
+   *  c'est la seule chose que le nœud a besoin de savoir de la sélection. */
+  onChoisir: (identifiant: string | null, multiple?: boolean) => void
   onEpingler: (cle: string | null) => void
   onErreur: (raison: string) => void
   onLargeur: (carte: Carte, largeur: number) => void
@@ -811,7 +993,14 @@ type Parametres = {
   vue: Vue
   onVue: (vue: Vue) => void
   choisie: string | null
-  onChoisir: (identifiant: string | null) => void
+  onChoisir: (identifiant: string | null, multiple?: boolean) => void
+  /** **La sélection de la toile** (`RP9`) — déjà réduite à ce que le plan
+   *  montre par `selectionVive`, et tenue par l'écran Univers parce qu'elle
+   *  meurt avec lui, comme la pile d'annulation. */
+  selection: readonly string[]
+  /** Les trois gestes du lot, à poser au-dessus de la toile. Rendus par
+   *  l'écran Univers, qui est le seul à savoir ouvrir une préparation. */
+  gestes?: ReactNode
   onErreur: (raison: string) => void
   collage: ReturnType<typeof useCollage>
   crans: Crans | null
@@ -852,6 +1041,8 @@ function Plan({
   onVue,
   choisie,
   onChoisir,
+  selection,
+  gestes,
   onErreur,
   collage,
   crans,
@@ -1565,6 +1756,18 @@ function Plan({
         await api.deplacerIlot(geste.groupe, geste.avant)
         return
       }
+      if (geste.genre === "lot-rendu") {
+        // **Les groupes d'abord, les îlots ensuite** — le même ordre que pour
+        // une carte seule, et pour la même raison : le serveur refuse à juste
+        // titre un trait vers un îlot qui n'existe pas encore.
+        for (const une of geste.cartes) await api.reglerCarte(une.carte, une.avant)
+        for (const ilot of geste.ilots) {
+          if (ilot.teinte) await api.teinterIlot(ilot.nom, ilot.teinte)
+          for (const un of ilot.liens)
+            await api.lier(un.de, un.vers, { mot: un.mot, pointe: un.pointe })
+        }
+        return
+      }
       if (geste.genre === "lien-coupe") {
         const { de, vers, mot, pointe } = geste.lien
         const repose = await api.lier(de, vers, { mot, pointe })
@@ -1601,6 +1804,7 @@ function Plan({
   const cadre = useMemo<Cadre>(
     () => ({
       choisie,
+      selection,
       survolee,
       epingle,
       crans,
@@ -1679,6 +1883,7 @@ function Plan({
     }),
     [
       choisie,
+      selection,
       personnages,
       survolee,
       epingle,
@@ -1744,6 +1949,7 @@ function Plan({
         vue={vue}
         onVue={onVue}
         debut={cotes}
+        selection={gestes}
         onNote={() => {
           if (!crans || !plan.current) return
           const place = plan.current.getBoundingClientRect()
@@ -2350,7 +2556,7 @@ function NoeudIlot({ data }: NodeProps) {
                 }
                 className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-left text-[10.5px] text-encre-3 hover:text-signal"
               >
-                {fait?.palette ? "ouvrir sa palette ›" : "faire une palette de ce paquet"}
+                {fait?.palette ? "ouvrir sa palette ›" : "faire une palette de cet îlot"}
               </button>
               <button
                 type="button"
@@ -2364,7 +2570,7 @@ function NoeudIlot({ data }: NodeProps) {
               >
                 {fait?.ambiance
                   ? "ouvrir son ambiance ›"
-                  : "faire une ambiance de ce paquet"}
+                  : "faire une ambiance de cet îlot"}
               </button>
 
               {/* **Le compte rendu se lit là où l'on a cliqué**, avec le chemin
@@ -2471,10 +2677,18 @@ function NoeudCarte({ data }: NodeProps) {
         personnages={cadre.personnages}
         plan
         choisie={carte.identifiant === cadre.choisie}
+        /* **Le lot porte le même anneau que la carte choisie**, et il perd le
+           menu : un menu règle une carte, et ce qu'on fait de plusieurs se lit
+           au-dessus de la toile (`RP9`). */
+        selectionnee={cadre.selection.includes(carte.identifiant)}
+        menu={cadre.selection.length < 2}
         survolee={cleCarte(carte.identifiant) === cadre.survolee}
         onSurvol={(dedans) => cadre.onSurvol(cleCarte(carte.identifiant), dedans)}
-        onChoisir={() =>
-          cadre.onChoisir(carte.identifiant === cadre.choisie ? null : carte.identifiant)
+        onChoisir={(evenement) =>
+          cadre.onChoisir(
+            carte.identifiant,
+            Boolean(evenement?.ctrlKey || evenement?.metaKey),
+          )
         }
         onErreur={cadre.onErreur}
       />

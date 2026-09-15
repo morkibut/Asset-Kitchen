@@ -170,7 +170,7 @@ export function BarreQuiPaie({
       <Cible personnage={personnageCible} poses={posesCible} onRetirer={onRetirerPose} onDesarmer={onDesarmer} presentation="preparation" />
       <div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">Références jointes</h2>{onChoisirReference && <button type="button" className="h-[34px] rounded-7 border border-contour bg-carte px-[14px]" onClick={onChoisirReference}>Choisir dans la bibliothèque</button>}</div>
       <section aria-label="Références jointes" className="rounded-7 border border-trait bg-carte p-[22px]">
-        {reinjections.length === 0 ? <p className="text-encre-3">Aucune image jointe à la main. Les références de l’univers et de l’asset seront visibles à la relecture.</p> : <div className="grid grid-cols-3 gap-[14px]">{reinjections.map(({ asset, role }, i) => <ReferenceJointe key={asset} asset={asset} role={role} rang={i + 1} connu={grille.find((a) => a.identifiant === asset)} champ={champ} onRole={onRoleReinjection} onRetirer={onRetirerReinjection} />)}</div>}
+        {reinjections.length === 0 ? <p className="text-encre-3">Aucune image jointe à la main. Les références de l’univers et de l’asset seront visibles à la relecture.</p> : <div className="grid grid-cols-3 gap-[14px]">{reinjections.map(({ asset, role, origine }, i) => <ReferenceJointe key={asset} asset={asset} role={role} origine={origine ?? "asset"} rang={i + 1} connu={grille.find((a) => a.identifiant === asset)} champ={champ} onRole={onRoleReinjection} onRetirer={onRetirerReinjection} />)}</div>}
       </section>
       <section className="space-y-[8px]">
         <label className="block font-medium" htmlFor="preparation-image-prompt">{repris ? "Texte complet à envoyer" : "Ce que tu veux fabriquer"}</label>
@@ -376,9 +376,17 @@ export function BarreQuiPaie({
  *
  *  Un asset que la grille ne connaît pas — joint depuis un autre jeu, ou pas
  *  encore relu — garde son fichier comme image et n'a rien à viser. */
-function ReferenceJointe({ asset, role, rang, connu, champ, onRole, onRetirer }: {
+/** Une image jointe à la main, et **elle vient de deux familles depuis `RP9`**.
+ *
+ *  Une carte de la toile n'est pas un asset : son image se sert par la route du
+ *  tableau, et **elle ne se met pas en source d'édition** — la bibliothèque ne
+ *  connaît pas les cartes, donc la filiation qui descendrait d'elle n'aurait
+ *  nulle part où s'écrire. Le rôle n'est pas grisé, il n'est pas proposé :
+ *  *ne pas proposer ce qu'on refusera*. */
+function ReferenceJointe({ asset, role, origine, rang, connu, champ, onRole, onRetirer }: {
   asset: string
   role: Role
+  origine: "asset" | "carte"
   rang: number
   connu: Asset | undefined
   champ: string
@@ -386,10 +394,11 @@ function ReferenceJointe({ asset, role, rang, connu, champ, onRole, onRetirer }:
   onRetirer: (asset: string) => void
 }) {
   const visee = useVisee(connu ? sujetAsset(connu) : null)
+  const carte = origine === "carte"
   return (
     <figure className="min-w-0 space-y-[8px]" onPointerEnter={visee.entrer} onPointerLeave={visee.sortir}>
-      <img src={connu ? vignetteAsset(connu, 256) : api.fichier(asset)} alt={`Référence ${rang}`} className="damier-papier h-[128px] w-full rounded-7 object-contain" />
-      <select aria-label={`Rôle de la référence ${rang}`} className={champ} value={role} onChange={(e) => onRole(asset, e.target.value as Role)}><option value="reference">Référence visuelle</option><option value="edition">Image à modifier</option><option value="style">Guide de style</option></select>
+      <img src={carte ? api.imageCarte(asset, "") : connu ? vignetteAsset(connu, 256) : api.fichier(asset)} alt={`Référence ${rang}`} className="damier-papier h-[128px] w-full rounded-7 object-contain" />
+      <select aria-label={`Rôle de la référence ${rang}`} className={champ} value={role} onChange={(e) => onRole(asset, e.target.value as Role)}><option value="reference">Référence visuelle</option>{!carte && <option value="edition">Image à modifier</option>}<option value="style">Guide de style</option></select>
       <button type="button" className="text-encre-3 hover:text-echec" onClick={() => onRetirer(asset)}>Retirer la référence {rang}</button>
     </figure>
   )

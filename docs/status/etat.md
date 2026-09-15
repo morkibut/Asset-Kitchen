@@ -11,6 +11,41 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP9 · La toile donne du travail — 16 septembre 2026
+
+**La question du point dur n'était pas *comment sélectionner*, c'était *que devient la carte
+choisie*.** La réponse a été trouvée en relisant la galerie plutôt qu'en inventant : là-bas,
+la fiche d'une image **est** la sélection quand elle vaut un. Appliquée à la toile, elle ferme
+trois questions d'un coup — l'anneau ne change pas de sens, il n'y a pas de second marqueur à
+dessiner, et ce que la carte perd quand elles sont plusieurs se lit tout seul : son menu, qui
+règle une carte.
+
+**La sélection ne se nettoie jamais, et c'est ce qui la rend juste.** Elle est lue au travers
+de ce que la toile montre : une carte supprimée ou renvoyée en réserve en sort sans qu'une
+ligne de code s'en occupe. Une carte déplacée y reste — déplacer n'est pas choisir. Écrit
+comme une règle, ça se vérifie sans écran ; écrit comme du ménage, ça se serait cassé au
+premier message du flux.
+
+**Le piège payé : un lot ne perd pas les mêmes îlots que ses cartes une à une.** Cinq cartes
+d'un même groupe, prises séparément, laissent chacune quatre survivantes et ne perdent donc
+rien ; le lot entier vide le groupe, avec sa teinte et ses traits. `ilotPerdu` répété aurait
+donné la bonne réponse à la mauvaise question, et Ctrl+Z aurait fait reparaître un îlot nu.
+La fonction du lot est à côté, et un essai tient les deux réponses l'une contre l'autre.
+
+**Le serveur a changé d'un champ, et c'était un contrat.** `origine` n'était pas dans le corps
+d'une référence, avec sa raison écrite : *les cartes du tableau ne se sélectionnent jamais —
+c'est l'application qui les ajoute*. C'est très exactement ce que la tranche défait. Une carte
+posée à la main part donc en **guide de style**, jamais autrement — la bibliothèque ne connaît
+pas les cartes, donc aucune filiation ne peut en descendre —, et elle se nomme *carte de la
+toile* dans la liste de ce qui part : ni artwork, ni concept art, puisque rien n'a été promu.
+
+**Ce qui n'a pas été construit, et pourquoi.** La maquette dessine une fenêtre *Choisir ce qui
+part de la toile*. Elle y prend quatre décisions ; trois — l'asset visé, *Image fixe* ou
+*Animation*, le modèle — appartiennent à la fenêtre unique de `RP4`, et les reconstruire
+d'avance aurait fait deux endroits à défaire. La quatrième — *les notes partent-elles ?* — est
+la seule qui soit de la toile, et elle est restée là où la sélection vit, en une case à côté
+du geste.
+
 ## RP10 · La livraison décide au lieu de bloquer — 16 septembre 2026
 
 **Ce qui bloquait n'était pas l'écran, c'était une ligne du serveur** : `prêt = aucun conflit`.

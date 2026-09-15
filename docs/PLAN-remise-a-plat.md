@@ -478,7 +478,7 @@ Trois réglages qui partent au modèle, enterrés sous un menu qui parle d'autre
 Les huit écarts qui restent parmi les dix que le relevé classe comme les plus coûteux, dans son
 ordre.
 
-## RP9 · La toile donne du travail
+## RP9 · La toile donne du travail ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : RP4 — elle débouche sur la fenêtre de préparation unique.
 
@@ -490,11 +490,22 @@ La toile est l'outil de conception du projet. Aujourd'hui elle ne mène nulle pa
 
 ### Critères d'acceptation
 
-- [ ] Plusieurs cartes se sélectionnent sur la toile.
-- [ ] Une sélection se met en réserve, et s'efface, d'un geste.
-- [ ] *Fabriquer depuis la sélection* ouvre la préparation avec les images cochées d'avance.
-- [ ] Les notes libres de la toile ne partent pas dans la demande sans qu'on le dise.
-- [ ] Les positions et la réserve se retrouvent après fermeture.
+- [x] Plusieurs cartes se sélectionnent sur la toile. — Ctrl (ou ⌘) et un clic, comme dans la
+  galerie ; l'anneau de la carte choisie dit le lot, et le lot retire le menu d'une carte.
+- [x] Une sélection se met en réserve, et s'efface, d'un geste. — et le lot est **une** entrée
+  de pile : un seul Ctrl+Z repose les deux cartes, avec l'îlot qu'elles avaient vidé.
+- [x] *Fabriquer depuis la sélection* ouvre la préparation avec les images cochées d'avance. —
+  en guide de style, par la seule barre de saisie du produit ; l'image vient de la route des
+  cartes, et le rôle *source d'édition* ne lui est pas proposé.
+- [x] Les notes libres de la toile ne partent pas dans la demande sans qu'on le dise. — une
+  case à côté du geste, et elle ne paraît que s'il y a des notes.
+- [x] Les positions et la réserve se retrouvent après fermeture. — inchangé, et l'essai d'`AU2`
+  le tient toujours : la sélection ne s'écrit nulle part, le reste passe par les mêmes routes.
+
+Les quatre désaccords de nom de l'écran sont corrigés en même temps, et le tableau du
+[relevé du 15 septembre](releves/2026-09-15-desaccords-restants.md) § *Univers & toile* est
+rayé : *Univers & toile* dans le fil d'une carte, *de cet îlot* dans le menu d'un îlot, *Îlot*
+sur le champ qui en fait un, *Supprimer* là où l'on supprimait sous le mot *Retirer*.
 
 ## RP10 · La livraison décide au lieu de bloquer ✅ **close le 16 septembre 2026**
 
@@ -580,6 +591,49 @@ jamais avec les images qui en sortent.
 **Bloquée par** : rien.
 
 L'écran de comparaison compare deux sujets, ou deux images d'un même sujet, et il mesure leurs
+### Ce que porte la sélection
+
+*Écrit avant la première ligne de code, le 16 septembre 2026.*
+
+**La sélection est une liste d'identifiants de cartes, et elle ne quitte pas l'onglet.** Elle
+vit dans l'écran Univers, à côté de la carte choisie, et rien ne s'en écrit sur le disque. La
+raison est l'invariant du lot U : *une coordonnée ne voyage pas*. Un cadre tiré sur le plan
+est une région, et une région dépend du zoom, du cadrage et de la taille de la fenêtre ; ce
+qui en sort et qui, lui, a un sens ailleurs, ce sont **les cartes**.
+
+**Choisir une carte est la sélection à un.** C'est déjà la grammaire de la galerie, où la
+fiche d'une image *est* la sélection quand elle vaut un. Une carte sélectionnée porte donc
+l'anneau `--signal`, le seul du produit, et rien de plus — mais **elle perd son menu dès
+qu'elles sont plusieurs** : un menu règle une carte, et ce qu'on fait de plusieurs se lit
+au-dessus de la toile. Ctrl (ou ⌘) et un clic ajoute ou retire, comme dans la galerie. Pas de
+Maj : sur un plan il n'y a pas d'ordre, donc pas d'étendue.
+
+**Ce qui disparaît sort tout seul.** La liste ne se nettoie jamais : ce qui est sélectionné
+est ce que la toile montre **et** que l'auteur a coché, donc une carte supprimée ou renvoyée
+en réserve n'est plus sélectionnée sans qu'une ligne de code s'en occupe. Une carte
+**déplacée** y reste : déplacer n'est pas choisir.
+
+**Une carte part en guide de style, jamais autrement.** C'est déjà la règle des artworks
+(`atelier/services/univers.py`, `references`) : la bibliothèque ne connaît pas les cartes,
+donc aucune filiation ne peut en descendre, et une carte en source d'édition donnerait un
+parent que rien à l'écran ne saurait montrer.
+
+**Les notes sont à part, et c'est le « sans qu'on le dise ».** Les images de la sélection
+partent cochées d'avance ; les notes ne partent pas, à moins d'une case cochée à côté du
+geste, et elles s'ajoutent alors en consigne au bas du texte — **dans la seule barre de
+saisie du produit**, où on les relit avant de payer. Le geste ouvre la préparation qui existe
+déjà : *deux lieux qui paient* (E2) restent deux.
+
+**Et la fenêtre « Choisir ce qui part de la toile » de la maquette n'est pas construite
+ici** : de ses quatre décisions, trois — l'asset visé, *Image fixe* ou *Animation*, le
+modèle — appartiennent à la fenêtre unique de `RP4`, et les reconstruire d'avance ferait deux
+endroits à défaire. La quatrième, *quelles cartes et les notes avec ou non*, est la seule qui
+soit de la toile : elle reste là où la sélection vit.
+
+**Pourquoi la toile porte une sélection.** Même amendement que `G12` pour la colonne des
+sœurs : elle est **l'ensemble déjà sous les yeux**. L'invariant du rangement est complété en
+ce sens.
+
 tailles. Il ne lit aucune animation. L'auteur qui a trois versions d'une marche ne peut pas les
 regarder tourner côte à côte pour choisir.
 

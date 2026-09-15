@@ -25,14 +25,18 @@ import type { Carte, Lien, Teinte } from "../api"
 import {
   aimanter,
   ancrer,
+  basculerLaSelection,
   carteSous,
+  cequiPartDeLaToile,
   classer,
   disposer,
   ilotPerdu,
   ilotSous,
   ilotsDe,
+  ilotsPerdusParLeLot,
   menaceDe,
   placeLibre,
+  selectionVive,
   type Crans,
 } from "./Toile"
 
@@ -546,5 +550,166 @@ describe("ce qu'un glissement en cours menace", () => {
     const libre = carte("libre", { position: [10, 10] })
     expect(menaceDe(libre, "marais", [libre], traits, teintes)).toBeNull()
     expect(menaceDe(libre, "", [libre], traits, teintes)).toBeNull()
+  })
+})
+
+// ── RP9 : ce que porte la sélection ─────────────────────────────────────────
+//
+// La sélection est une liste d'identifiants, et **rien d'autre ne voyage** : ce
+// qui suit est toute l'arithmétique qui en découle, et elle se vérifie sans
+// écran. Ce que la sélection *fait* — l'anneau, les trois boutons, la
+// préparation qui s'ouvre — se vérifie dans `App.test.tsx`.
+
+describe("ce qui reste choisi", () => {
+  test("une carte supprimée sort de la sélection d'elle-même", () => {
+    // Rien ne nettoie la liste : ce qui est sélectionné est ce que la toile
+    // montre **et** que l'auteur a choisi, lu à chaque fois.
+    const une = carte("une", { position: [0, 0] })
+    expect(selectionVive([une], ["une", "partie"])).toEqual(["une"])
+  })
+
+  test("une carte renvoyée en réserve sort par la même règle", () => {
+    // Elle existe toujours, mais la toile ne la montre plus — donc elle n'est
+    // plus dans l'ensemble qui est sous les yeux.
+    const rangee = carte("rangee")
+    expect(rangee.en_reserve).toBe(true)
+    expect(selectionVive([rangee], ["rangee"])).toEqual([])
+  })
+
+  test("une carte déplacée y reste : déplacer n'est pas choisir", () => {
+    const bougee = carte("bougee", { position: [900, 900] })
+    expect(selectionVive([bougee], ["bougee"])).toEqual(["bougee"])
+  })
+
+  test("l'ordre est celui où l'auteur les a prises", () => {
+    const une = carte("une", { position: [0, 0] })
+    const deux = carte("deux", { position: [200, 0] })
+    expect(selectionVive([une, deux], ["deux", "une"])).toEqual(["deux", "une"])
+  })
+})
+
+describe("le clic, et ce qu'il fait de la sélection", () => {
+  test("un clic nu remplace", () => {
+    expect(basculerLaSelection(["une", "deux"], "trois", false)).toEqual(["trois"])
+  })
+
+  test("recliquer la carte seule la lâche", () => {
+    // Le clic faisait déjà ça avant la sélection, et il continue.
+    expect(basculerLaSelection(["une"], "une", false)).toEqual([])
+  })
+
+  test("recliquer une carte d'un lot ramène le lot à elle", () => {
+    // Pas un lâcher : elle n'était pas seule, donc le clic nu *remplace*.
+    expect(basculerLaSelection(["une", "deux"], "une", false)).toEqual(["une"])
+  })
+
+  test("Ctrl ajoute, puis retire", () => {
+    const deux = basculerLaSelection(["une"], "deux", true)
+    expect(deux).toEqual(["une", "deux"])
+    expect(basculerLaSelection(deux, "une", true)).toEqual(["deux"])
+  })
+
+  test("le plan nu efface tout, avec ou sans modificateur", () => {
+    expect(basculerLaSelection(["une", "deux"], null, false)).toEqual([])
+    expect(basculerLaSelection(["une", "deux"], null, true)).toEqual([])
+  })
+})
+
+describe("ce que la sélection donnerait à la préparation", () => {
+  test("les images d'un côté, les notes de l'autre", () => {
+    // **Tout le critère tient là** : les deux ne se mêlent pas, donc l'écran
+    // peut joindre les unes d'avance et pas les autres.
+    const image = carte("image", { position: [0, 0] })
+    const note = carte("note", {
+      genre: "texte",
+      texte: "des tons de tourbe",
+      position: [200, 0],
+    })
+    expect(cequiPartDeLaToile([image, note], ["image", "note"])).toEqual({
+      images: ["image"],
+      notes: ["des tons de tourbe"],
+    })
+  })
+
+  test("une image qui n'est pas arrivée n'entre pas", () => {
+    // Joindre une adresse qui n'a rien rendu ferait payer un appel à qui il
+    // manque exactement ça.
+    const attente = carte("attente", {
+      statut: "attente",
+      montrable: false,
+      position: [0, 0],
+    })
+    const echouee = carte("echouee", { statut: "echouee", position: [200, 0] })
+    expect(
+      cequiPartDeLaToile([attente, echouee], ["attente", "echouee"]).images,
+    ).toEqual([])
+  })
+
+  test("un clip posé sur la toile part comme une image", () => {
+    // Sa vignette est la première image du clip, servie par la route des
+    // cartes : du point de vue de ce qui part, c'est une image.
+    const clip = carte("clip", {
+      genre: "video",
+      source: "clip:video-1",
+      position: [0, 0],
+    })
+    expect(cequiPartDeLaToile([clip], ["clip"]).images).toEqual(["clip"])
+  })
+
+  test("une note vide ne devient pas une consigne vide", () => {
+    const blanche = carte("blanche", { genre: "texte", texte: "   ", position: [0, 0] })
+    expect(cequiPartDeLaToile([blanche], ["blanche"]).notes).toEqual([])
+  })
+
+  test("ce que la toile ne montre plus ne part pas", () => {
+    const rangee = carte("rangee")
+    expect(cequiPartDeLaToile([rangee], ["rangee"])).toEqual({
+      images: [],
+      notes: [],
+    })
+  })
+})
+
+describe("ce qu'un lot emporte en partant", () => {
+  // **Ce n'est pas `ilotPerdu` répété**, et c'est la raison d'être de la
+  // fonction : cinq cartes du même groupe, prises une à une, laissent chacune
+  // quatre survivantes et ne perdent donc rien — alors que le lot vide le
+  // groupe.
+  const teintes: Record<string, Teinte> = { marais: "lichen", nord: "prune" }
+  const traits = [lien("l1", surCarte("dehors"), surIlot("marais"))]
+
+  test("le lot qui vide un groupe emporte sa teinte et ses traits", () => {
+    const une = carte("une", { groupe: "marais", position: [0, 0] })
+    const deux = carte("deux", { groupe: "marais", position: [200, 0] })
+    expect(ilotsPerdusParLeLot(["une", "deux"], [une, deux], traits, teintes)).toEqual([
+      { nom: "marais", teinte: "lichen", liens: traits },
+    ])
+  })
+
+  test("une carte par carte, le même lot ne perdrait rien", () => {
+    // La preuve du piège, écrite : c'est la même toile, et la réponse change
+    // selon qu'on pose la question sur la carte ou sur le lot.
+    const une = carte("une", { groupe: "marais", position: [0, 0] })
+    const deux = carte("deux", { groupe: "marais", position: [200, 0] })
+    expect(ilotPerdu(une, [une, deux], traits, teintes)).toBeUndefined()
+    expect(ilotPerdu(deux, [une, deux], traits, teintes)).toBeUndefined()
+  })
+
+  test("un groupe qui garde un membre hors du lot survit", () => {
+    const une = carte("une", { groupe: "marais", position: [0, 0] })
+    const deux = carte("deux", { groupe: "marais", position: [200, 0] })
+    expect(ilotsPerdusParLeLot(["une"], [une, deux], traits, teintes)).toEqual([])
+  })
+
+  test("deux groupes vidés d'un coup en font deux", () => {
+    const une = carte("une", { groupe: "marais", position: [0, 0] })
+    const deux = carte("deux", { groupe: "nord", position: [500, 0] })
+    const perdus = ilotsPerdusParLeLot(["une", "deux"], [une, deux], traits, teintes)
+    expect(perdus.map((i) => i.nom).sort()).toEqual(["marais", "nord"])
+  })
+
+  test("des cartes sans groupe ne perdent aucun îlot", () => {
+    const libre = carte("libre", { position: [10, 10] })
+    expect(ilotsPerdusParLeLot(["libre"], [libre], traits, teintes)).toEqual([])
   })
 })
