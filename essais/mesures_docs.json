@@ -1,21 +1,21 @@
 {
- "releve_le": 1789506768.3578284,
+ "releve_le": 1789507549.2560415,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 152918,
+  "octets": 153558,
   "documents": {
    "AGENTS.md": {
-    "octets": 34568,
+    "octets": 35208,
     "titres": 14,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 34090
+      "octets": 34722
      },
      {
       "titre": "Où en est le dépôt → `docs/PLAN.md`",
@@ -39,60 +39,60 @@
       "titre": "Lancer",
       "niveau": 2,
       "ligne": 171,
-      "octets": 3994
+      "octets": 4626
      },
      {
       "titre": "Les documents et leur autorité",
       "niveau": 2,
-      "ligne": 236,
+      "ligne": 244,
       "octets": 3981
      },
      {
       "titre": "Les skills et leurs frontières",
       "niveau": 2,
-      "ligne": 295,
+      "ligne": 303,
       "octets": 1963
      },
      {
       "titre": "Où sont les choses → `docs/carte-du-depot.md`",
       "niveau": 2,
-      "ligne": 325,
+      "ligne": 333,
       "octets": 1663
      },
      {
       "titre": "Les projets voisins — les lire avant de réinventer",
       "niveau": 2,
-      "ligne": 342,
+      "ligne": 350,
       "octets": 1035
      },
      {
       "titre": "Règles durables",
       "niveau": 2,
-      "ligne": 359,
+      "ligne": 367,
       "octets": 3529
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 404,
+      "ligne": 412,
       "octets": 631
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 415,
+      "ligne": 423,
       "octets": 2249
      },
      {
       "titre": "Avant de coder une tranche, vérifier son affectation",
       "niveau": 2,
-      "ligne": 454,
+      "ligne": 462,
       "octets": 627
      },
      {
       "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
       "niveau": 2,
-      "ligne": 463,
+      "ligne": 471,
       "octets": 1087
      }
     ]
@@ -557,11 +557,11 @@
  },
  "renvois": {
   "code": {
-   "total": 683,
+   "total": 695,
    "casses": []
   },
   "docs": {
-   "total": 1281,
+   "total": 1286,
    "casses": []
   }
  }

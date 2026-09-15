@@ -201,6 +201,14 @@ py essais/essai_jetons.py            le système de design **dans les deux sens*
                                      elle rend un compte, parce qu'un jeton
                                      inemployé est soit une pièce pas encore
                                      dessinée, soit un jeton mort
+py essais/essai_vocabulaire.py       les mots de l'ossature contre la **liste
+                                     fermée** de `docs/vocabulaire.html` — portes
+                                     du carnet, onglets de la fiche d'un sujet,
+                                     titre de chaque écran, forme d'un retour.
+                                     Il **lit** le document et ne recopie pas
+                                     ses mots : changer un mot là-bas suffit.
+                                     Chaque écart se nomme en entier — fichier,
+                                     ligne, mot trouvé, mot attendu
 py essais/essai_imports.py           le garde-fou d'import : un fichier du carnet
                                      n'emprunte aucune fonction, constante ni crochet à
                                      un écran hors carnet — monter un composant reste
