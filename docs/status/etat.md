@@ -11,6 +11,40 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## Le quatrième dégraissage, et trois manques nommés par l'usage — 15 septembre 2026
+
+**Ce qui est descendu, sans qu'un mot change.** Le plan gardait encore cent six lignes de V3
+sous *Ce que ce plan ne couvre pas* — le pantin 2D, la piste des poses par le moteur de la
+maison, le risque levé de la recette d'animation — et `AGENTS.md` racontait le même ordre sur
+trente lignes qui disaient *« la V3.03 est celle qui reste à finir »*, alors que la V3.03 est
+périmée par le carnet depuis dix jours. Tout est dans
+`docs/archive/ordre-historique-jusqu-au-10-septembre.md`. Le corpus de démarrage est passé de
+159,7 à 149,3 Ko, et `essai_docs.py` n'a nommé aucun renvoi cassé — les 1 958 tombent juste.
+
+**Le tableau de bord mentait sur `C9`, et c'est le plan du carnet qui le faisait mentir.**
+Il annonçait 4 sur 65 ; `C9` n'a que cinq critères. Les soixante autres étaient ceux de
+l'amendement RF, déclaré remplacé le 11 septembre et resté dans `docs/PLAN-carnet.md` sous le
+dernier titre de tranche — le scanner lit les cases jusqu'au titre suivant, et il n'y en avait
+pas. L'amendement est en archive (`plan-carnet-amendement-rf.md`), `C9` est à 4 sur 5, et le
+global passe de 16 % à 62 % **sans qu'une ligne de code change** : c'est le chiffre honnête,
+l'autre comptait un bloc mort.
+
+**Trois restes du carnet constatés tenus.** `C1` et `C8` demandaient ce que le bloc `D` a
+fait le 11 septembre ; personne n'était revenu cocher. Le seul reste ouvert du carnet est la
+vérification au navigateur de `C9` — aucun écran sombre nulle part.
+
+**Trois manques que l'auteur a nommés en se servant du produit**, et qu'aucun relevé n'avait
+vus parce qu'un relevé compare à la maquette, et la maquette ne les dessinait pas : l'image de
+référence d'une fiche ne se choisit pas (`RP19`) ; une animation retournée au miroir ne peut
+pas s'enregistrer comme la marche de l'autre côté — il manque *Enregistrer sous* (`RP20`) ;
+et huit images découpées sur la toile ne peuvent pas devenir une animation, parce que le
+geste *Animer* de la découpe n'est offert qu'à une planche de la bibliothèque, jamais à une
+carte de la toile (`RP21`). Le chemin d'`AU19` existait ; il n'avait qu'une porte.
+
+**Et un rangement de plus dans `docs/README.md`** : sept annexes n'y étaient pas —
+le cadrage du fil et de la 3D, les étiquettes livrées, l'inventaire d'`AU4`, quatre relevés
+de septembre, et la photo du tableau de bord.
+
 ## RP · L'ouverture de la remise à plat — 13 septembre 2026
 
 **Née d'une phrase de l'auteur** : *« c'est quand même encore pas mal le bordel l'interface…

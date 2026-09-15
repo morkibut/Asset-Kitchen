@@ -45,8 +45,12 @@ Critères de passage à l'implémentation des écrans concernés :
 - [x] L'auteur peut essayer un équipement depuis sa pièce et son emploi jusqu'aux calques
   de poses, directions et frames, puis combiner plusieurs équipements ; un simple inventaire
   de préparations sans extraction, placement ni composition ne couvre pas ce parcours.
-- [ ] Chaque écran à remplacer possède un inventaire des fonctions actuelles reprises ; les
+- [x] Chaque écran à remplacer possède un inventaire des fonctions actuelles reprises ; les
   détails manquants de la maquette sont complétés avant de fermer sa porte actuelle.
+  *Tenu le 13 septembre 2026 par les relevés de la remise à plat — la
+  [carte des écrans du code](releves/2026-09-13-carte-des-ecrans-du-code.md) et le
+  [relevé d'écart](releves/2026-09-13-ecart-maquette-produit.md), écran par écran, geste par
+  geste. Constaté le 15 septembre.*
 - [ ] Les arbitrages de comportement sont reportés dans le PRD, ceux d'apparence dans le
   design, et les impacts de séquencement dans le plan, sans recopier les mêmes décisions.
 

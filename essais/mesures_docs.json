@@ -1,27 +1,27 @@
 {
- "releve_le": 1789303308.6474898,
+ "releve_le": 1789506566.185205,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 163516,
+  "octets": 152834,
   "documents": {
    "AGENTS.md": {
-    "octets": 36898,
-    "titres": 15,
+    "octets": 34568,
+    "titres": 14,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 36390
+      "octets": 34090
      },
      {
       "titre": "Où en est le dépôt → `docs/PLAN.md`",
       "niveau": 2,
       "ligne": 13,
-      "octets": 14978
+      "octets": 12678
      },
      {
       "titre": "Ce qu'il faut savoir avant de toucher au code — dix points, et pas un de plus",
@@ -30,75 +30,69 @@
       "octets": 9964
      },
      {
-      "titre": "Ce qui est ouvert, et ce qui a été fermé devant",
-      "niveau": 3,
-      "ligne": 147,
-      "octets": 2300
-     },
-     {
       "titre": "Deux risques qui restent, et une règle qui vient de l'usage",
       "niveau": 3,
-      "ligne": 177,
+      "ligne": 147,
       "octets": 1605
      },
      {
       "titre": "Lancer",
       "niveau": 2,
-      "ligne": 201,
+      "ligne": 171,
       "octets": 3994
      },
      {
       "titre": "Les documents et leur autorité",
       "niveau": 2,
-      "ligne": 266,
+      "ligne": 236,
       "octets": 3981
      },
      {
       "titre": "Les skills et leurs frontières",
       "niveau": 2,
-      "ligne": 325,
+      "ligne": 295,
       "octets": 1963
      },
      {
       "titre": "Où sont les choses → `docs/carte-du-depot.md`",
       "niveau": 2,
-      "ligne": 355,
+      "ligne": 325,
       "octets": 1663
      },
      {
       "titre": "Les projets voisins — les lire avant de réinventer",
       "niveau": 2,
-      "ligne": 372,
+      "ligne": 342,
       "octets": 1035
      },
      {
       "titre": "Règles durables",
       "niveau": 2,
-      "ligne": 389,
+      "ligne": 359,
       "octets": 3529
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 434,
+      "ligne": 404,
       "octets": 631
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 445,
+      "ligne": 415,
       "octets": 2249
      },
      {
       "titre": "Avant de coder une tranche, vérifier son affectation",
       "niveau": 2,
-      "ligne": 484,
+      "ligne": 454,
       "octets": 627
      },
      {
       "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
       "niveau": 2,
-      "ligne": 493,
+      "ligne": 463,
       "octets": 1087
      }
     ]
@@ -242,140 +236,128 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 42894,
-    "titres": 22,
+    "octets": 34542,
+    "titres": 20,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 42894
+      "octets": 34542
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
-      "ligne": 39,
-      "octets": 8434
+      "ligne": 44,
+      "octets": 7273
      },
      {
       "titre": "Ce que la remise à plat a mesuré, le 13 septembre 2026",
       "niveau": 3,
-      "ligne": 70,
+      "ligne": 76,
       "octets": 1110
      },
      {
       "titre": "Les invariants du produit",
       "niveau": 2,
-      "ligne": 89,
+      "ligne": 95,
       "octets": 8111
      },
      {
       "titre": "L'argent et l'appel",
       "niveau": 3,
-      "ligne": 95,
+      "ligne": 101,
       "octets": 1137
      },
      {
       "titre": "Ce qui décide, et ce qui refuse",
       "niveau": 3,
-      "ligne": 110,
+      "ligne": 116,
       "octets": 975
      },
      {
       "titre": "Le traitement des images",
       "niveau": 3,
-      "ligne": 120,
+      "ligne": 126,
       "octets": 962
      },
      {
       "titre": "Le rangement",
       "niveau": 3,
-      "ligne": 132,
+      "ligne": 138,
       "octets": 1043
      },
      {
       "titre": "Le personnage, la planche et le calque",
       "niveau": 3,
-      "ligne": 145,
+      "ligne": 151,
       "octets": 1013
      },
      {
       "titre": "Les fournisseurs",
       "niveau": 3,
-      "ligne": 158,
+      "ligne": 164,
       "octets": 723
      },
      {
       "titre": "L'écran",
       "niveau": 3,
-      "ligne": 169,
+      "ligne": 175,
       "octets": 1966
      },
      {
       "titre": "Couverture des user stories",
       "niveau": 2,
-      "ligne": 187,
+      "ligne": 193,
       "octets": 4427
      },
      {
       "titre": "L'ordre historique → `docs/archive/ordre-historique-jusqu-au-10-septembre.md`",
       "niveau": 2,
-      "ligne": 247,
+      "ligne": 253,
       "octets": 437
      },
      {
       "titre": "Le détail des versions closes → `docs/archive/plan-r6-a-v3.02.md`",
       "niveau": 2,
-      "ligne": 256,
+      "ligne": 262,
       "octets": 366
      },
      {
       "titre": "Les tranches périmées par la V4 → `docs/archive/plan-perime-par-la-v4.md`",
       "niveau": 2,
-      "ligne": 264,
+      "ligne": 270,
       "octets": 529
      },
      {
       "titre": "V3.5 — Le dépliage généralisé",
       "niveau": 2,
-      "ligne": 274,
+      "ligne": 280,
       "octets": 7125
      },
      {
       "titre": "P1 · La planche se garde, et son découpage se refait",
       "niveau": 3,
-      "ligne": 299,
+      "ligne": 305,
       "octets": 3419
      },
      {
       "titre": "P2 · Une planche pour plusieurs choses",
       "niveau": 3,
-      "ligne": 348,
+      "ligne": 354,
       "octets": 2296
      },
      {
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
-      "ligne": 388,
-      "octets": 10804
-     },
-     {
-      "titre": "Le pantin — sorti de la V3 le 3 septembre 2026, arguments intacts",
-      "niveau": 3,
-      "ligne": 403,
-      "octets": 6107
+      "ligne": 394,
+      "octets": 3172
      },
      {
       "titre": "Les trois risques encore ouverts",
       "niveau": 3,
-      "ligne": 485,
+      "ligne": 414,
       "octets": 1772
-     },
-     {
-      "titre": "Un risque qui est levé, et il faut le dire",
-      "niveau": 3,
-      "ligne": 509,
-      "octets": 1926
      }
     ]
    },
@@ -579,7 +561,7 @@
    "casses": []
   },
   "docs": {
-   "total": 1229,
+   "total": 1275,
    "casses": []
   }
  }

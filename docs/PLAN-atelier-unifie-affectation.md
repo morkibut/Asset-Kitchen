@@ -40,7 +40,7 @@ animations 32, retouche 100. Le nombre de cas exécutés peut différer avec le 
 Ces nombres décrivent des points d'intégration inspectés, pas un chiffrage exact des futurs
 fichiers modifiés. Tuiles et son sont des estimations provisoires à réévaluer avant exécution.
 
-## Les 17 tranches
+## Les 20 tranches
 
 **Préparation UX hors tranches de production — [MEDIUM], Sonnet, réflexion élevée.**
 Le premier prototype avait une navigation et des données fictives sans sauvegarde ; le
@@ -107,8 +107,11 @@ démonstration ne valide pas un nouveau moteur d'extraction ni un suivi de calqu
 | AU15 · Premier calque d'emploi | HARD | Étend l'identité des calques aux cibles de direction et de frame sans réinterpréter les données de pose existantes. |
 | AU16 · Couverture de l'emploi | MEDIUM | Applique les cibles établies par AU15 aux fabrications suivies, à la couverture et aux corrections par sélection. |
 | AU17 · Tenues et livraison | MEDIUM | Compose les emplois définis par AU15 et réutilise le contrat de livraison d'AU1 pour les couches synchronisées. |
+| AU18 · Une vidéo qui vient d'ailleurs | MEDIUM | Une route neuve d'import et le tirage des images à l'entrée ; le montage, le prélèvement et le rejeu existent déjà. *Classée après coup, le 15 septembre 2026 — la tranche était close le 13.* |
+| AU19 · Une feuille de sprites qui vient d'ailleurs | MEDIUM | Une règle neuve — une bande par ligne quand les lignes sont les directions — sur la découpe et la bande déjà là ; sans encodage vidéo. *Classée après coup, le 15 septembre 2026.* |
+| AU20 · Ce qui entre par une fiche y reste | HARD | Change ce qu'un sujet porte — un sujet sans case devient un état légitime — et retourne deux décisions d'AU18 et AU19. *Classée après coup, le 15 septembre 2026.* |
 
-**Compte** : 7 HARD, 10 MEDIUM, aucun VERY-HARD/EASY/VERY-EASY.
+**Compte** : 8 HARD, 12 MEDIUM, aucun VERY-HARD/EASY/VERY-EASY.
 Le seuil indicatif d'un tiers a été revu : cinq HARD posent les contrats persistants du
 nouveau parcours et deux couvrent des médias non livrés. Les masquer en MEDIUM minorerait
 le travail ; ils doivent être redécoupés avant codage, surtout les deux derniers.

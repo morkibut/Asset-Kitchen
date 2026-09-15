@@ -107,6 +107,10 @@ Temps 2 — les doublons        RP4 · RP5 · RP6 · RP7 · RP8
    ▼
 Temps 3 — les manques         RP9 · RP10 · RP11 · RP12 · RP13 · RP14 · RP15 · RP16
    │      les dix écarts qui coûtent le plus, dans l'ordre du relevé
+   │
+   │                          RP19 · RP20 · RP21
+   │      trois manques que l'auteur a nommés en se servant du produit, le 15 septembre 2026 —
+   │      ils ne dépendent d'aucun doublon et se prennent dès que RP3 est close
    ▼
 Temps 4 — les décisions       RP17 · RP18
           ce qui demande de trancher, pas d'écrire
@@ -586,6 +590,127 @@ fait croire à une capacité qui n'existe pas pour l'auteur.
 - [ ] Aucune route retirée n'emportait une capacité que l'agent emprunte.
 - [ ] Les essais des routes retirées partent avec elles.
 - [ ] Le relevé du serveur est mis à jour, et le compte des routes y redescend d'autant.
+
+---
+
+# Temps 3 bis — Ce que l'usage a nommé le 15 septembre 2026
+
+Trois manques que l'auteur a trouvés en se servant du produit, et qu'aucun relevé n'avait vus :
+un relevé compare le produit à la maquette, et la maquette ne les dessinait pas non plus. Ils
+suivent la règle de tout ce plan — un seul écran par travail — et n'attendent aucun doublon :
+ils se prennent dès que RP3 est close, avant ou après le temps 2, selon ce qui est libre.
+
+## RP19 · L'image de référence d'une fiche se choisit
+
+**Bloquée par** : rien.
+
+La fiche d'un personnage montre une image en grand, en haut, à côté de sa description. C'est
+elle que l'auteur voit en premier, et c'est elle qui dit *« voilà Champy »*. Aujourd'hui, elle
+est choisie par le produit et l'auteur n'a pas la main dessus.
+
+Ce qui manque est un geste, pas un écran : sur n'importe quelle image fixe du sujet, *En faire
+l'image de référence*. La fiche la montre, le serveur la retient, et elle survit à la
+fermeture. Une image retirée de la bibliothèque cesse d'être la référence, et la fiche retombe
+sur le choix du produit — sans rien casser et sans rien demander.
+
+**Ce qui est distinct, et doit le rester** : l'*artwork officiel* d'un jeu sert à la palette
+et part avec les demandes ; l'*image retenue* d'une case est celle qui part dans le jeu.
+L'image de référence d'une fiche n'est ni l'un ni l'autre — c'est un portrait, et en choisir
+un ne change ni la palette, ni ce qui est livré.
+
+### Critères d'acceptation
+
+- [ ] Depuis une image fixe du sujet, un geste en fait l'image de référence de la fiche, et la
+  fiche la montre aussitôt.
+- [ ] Le choix survit à la fermeture et à la réouverture du jeu ; il est écrit dans le dossier
+  du sujet, pas dans le navigateur.
+- [ ] Une fiche sans choix montre ce qu'elle montrait avant, et rien d'autre ne change.
+- [ ] Choisir une image de référence ne promeut aucun artwork officiel, ne retient aucune case,
+  et n'appelle jamais le fournisseur.
+- [ ] Supprimer l'image de référence ramène la fiche au choix du produit, sans message d'erreur.
+- [ ] L'agent peut lire quelle image est la référence d'un sujet ; il ne peut pas la choisir.
+
+## RP20 · Enregistrer sous — une image ou une animation modifiée devient une autre pose ou direction
+
+**Bloquée par** : rien. **Elle s'appuie sur** : l'invariant *le traitement est non destructif*
+(`T2`) et sur ce que le domaine sait déjà — la direction au miroir d'une direction existe.
+
+L'auteur ouvre l'animation *marche vers l'est* dans l'atelier, lui applique le miroir, et
+obtient une marche vers l'ouest sous ses yeux. Il ne peut pas la garder : la recette décrit
+*cette* animation, et l'enregistrer la changerait de sens sans lui donner de nouvelle case.
+Il manque le geste **Enregistrer sous** — le résultat devient une nouvelle image ou une
+nouvelle animation, rangée sous une autre pose ou une autre direction du même sujet.
+
+Ce que le geste fait, et ne fait pas :
+
+- il **crée** un nouvel asset dont l'image brute est le rendu actuel, avec une recette vide —
+  l'original garde sa recette, intacte, et son rendu ne bouge pas ;
+- il **propose** la case d'arrivée : quand la recette porte un miroir, la direction proposée
+  est la direction au miroir de l'original ; sinon la même case, à corriger ;
+- il **écrit la filiation** : le nouvel asset dit de quel original et de quelle recette il
+  vient, et l'original sait qu'il a été enregistré sous ;
+- il vaut pour une **image** comme pour une **animation** — dans ce cas chaque frame est
+  rendue, et la bande garde sa cadence ;
+- il ne paie rien, n'appelle rien, marche réseau coupé.
+
+**Ce que ce n'est pas.** Ce n'est pas *retenir* : la nouvelle case n'est pas retenue pour le
+jeu tant que l'auteur ne le dit pas. Et ce n'est pas *dupliquer* au sens d'une copie à
+l'identique : la copie porte le rendu, pas la recette — sinon deux recettes divergeraient sur
+la même image brute.
+
+### Critères d'acceptation
+
+- [ ] Depuis l'atelier d'une image et depuis l'atelier d'une animation, un geste *Enregistrer
+  sous* est disponible dès qu'une recette est appliquée, et grisé avec sa raison sinon.
+- [ ] L'écran demande le sujet, la pose et la direction d'arrivée, préremplis ; avec un miroir
+  dans la recette, la direction proposée est celle au miroir.
+- [ ] Le nouvel asset entre en bibliothèque avec le rendu pour image brute et une recette
+  vide ; l'original garde sa recette et son rendu, vérifié à l'octet.
+- [ ] Pour une animation, la nouvelle bande a le même nombre de frames et la même cadence, et
+  chaque frame est le rendu de la frame d'origine.
+- [ ] Le nouvel asset dit son origine — original et recette —, et la fiche de l'original le
+  liste parmi ses dérivés.
+- [ ] La nouvelle case n'est pas retenue pour le jeu ; la retenir est un second geste.
+- [ ] Aucun appel au fournisseur ; le geste marche réseau coupé, et un essai le tient.
+- [ ] L'agent dispose du même geste par l'outil MCP correspondant, avec les mêmes règles.
+
+## RP21 · Une planche découpée sur la toile devient une animation
+
+**Bloquée par** : rien. **Elle s'appuie sur** : `AU19` — une feuille de sprites découpée
+devient un clip et ses bandes — et `RP14` — la découpe se règle.
+
+L'auteur pose sur la toile de l'univers une planche qui contient les huit images d'une marche,
+la découpe, et obtient huit images séparées. Il ne peut pas en faire une animation : le geste
+*Animer* de la découpe n'est offert qu'à une planche de la bibliothèque, jamais à une carte de la
+toile, et rien ensuite ne permet de reprendre huit images pour en faire une bande. Le chemin
+d'`AU19` existe ; il n'a qu'une porte, et ce n'est pas celle par laquelle l'auteur passe.
+
+Ce qui se livre :
+
+- **la découpe d'une carte de la toile offre *Animer*** aux mêmes conditions qu'une planche de
+  la bibliothèque — sujet, pose, direction, et une bande par ligne quand les lignes sont les
+  directions du jeu ;
+- **et le chemin inverse** : depuis une sélection d'images fixes d'un même sujet — celles qu'une
+  découpe vient de créer, ou n'importe lesquelles —, *En faire une animation* ouvre l'atelier
+  de montage avec ces images pour frames, dans l'ordre de la sélection, et la bande se range
+  sous la pose et la direction que l'auteur nomme.
+
+La toile n'apprend rien de neuf : elle mène à l'atelier qui sait déjà faire. C'est la règle
+du produit depuis `E1` — l'établi est une profondeur, pas un lieu de plus.
+
+### Critères d'acceptation
+
+- [ ] Sur la toile, la découpe d'une carte importée offre *Animer*, et une bande en sort avec
+  le même résultat que depuis une planche de la bibliothèque — un essai compare les deux.
+- [ ] Une sélection d'images fixes d'un même sujet offre *En faire une animation* ; l'atelier
+  de montage s'ouvre avec ces images pour frames, dans l'ordre de la sélection.
+- [ ] La bande créée se range sous le sujet, la pose et la direction nommés, et chaque frame
+  dit de quelle image elle vient.
+- [ ] Une sélection qui mélange deux sujets ne propose pas le geste, et dit pourquoi.
+- [ ] Aucun appel au fournisseur, aucun encodage vidéo : la transparence des images est
+  conservée, comme en `AU19`.
+- [ ] Les huit images restent en bibliothèque après le montage ; en faire une bande ne les
+  consomme pas.
 
 ---
 

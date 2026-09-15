@@ -21,7 +21,12 @@
 > `docs/ARCHITECTURE.md`, à quoi ça ressemble dans `docs/DESIGN.md`, ce que ça doit faire dans
 > `docs/PRD.md`, ce sur quoi on s'est déjà cassé les dents dans `docs/PIEGES.md`.
 >
-> **Dégraissé trois fois.** Le 13 septembre 2026, l'ordre historique est descendu à son tour —
+> **Dégraissé quatre fois.** Le 15 septembre 2026, ce que le plan gardait encore de la V3 —
+> le pantin, la piste des poses par le moteur de la maison, le risque levé de la recette — est
+> descendu dans `docs/archive/ordre-historique-jusqu-au-10-septembre.md`, avec la section
+> d'`AGENTS.md` qui racontait le même ordre ; et l'amendement RF, remplacé depuis le
+> 11 septembre, a quitté `docs/PLAN-carnet.md` pour `docs/archive/plan-carnet-amendement-rf.md`.
+> Le 13 septembre 2026, l'ordre historique est descendu à son tour —
 > cent soixante-dix lignes qui se disaient elles-mêmes remplacées depuis le 11 septembre.
 > Le 2 septembre 2026, le détail des cinq premières versions livrées
 > est descendu dans `docs/archive/plan-versions-tenues.md`. Le 6 septembre, le plan était
@@ -40,8 +45,9 @@
 
 **Deux chantiers sont actifs : l'atelier unifié et la remise à plat.** Ce tableau donne le sort
 de chacun et rien de plus. Le détail vit ailleurs, toujours au même endroit : ce qu'une tranche a **appris en se
-construisant** dans `docs/status/etat.md`, ses **critères cochés** dans
-`docs/tranches/<code>.md`, son **plan** dans le fichier que la dernière colonne désigne.
+construisant** dans `docs/status/etat.md`, ses **critères cochés** dans le fichier que la
+dernière colonne désigne — `docs/tranches/<code>.md` pour les versions tenues jusqu'à la V4,
+le plan du chantier lui-même pour `AU` et `RP`.
 
 | Bloc | Ce qu'il a apporté | Sort | Où lire le plan |
 |---|---|---|---|
@@ -57,11 +63,11 @@ construisant** dans `docs/status/etat.md`, ses **critères cochés** dans
 | **V3** — `A0` à `A13` | L'animation **par la vidéo et le découpage** : un clip payé devient plusieurs bandes et l'écran dit ce que chacune a coûté ; le même clip se refait **gratuitement** sur la carte de la maison ; la matrice d'un personnage se lit sur deux calques ; une bande sort en planche de sprites | **close le 5 septembre 2026** | idem |
 | **V3.02** | Le clip a une fiche, comme une image | **close le 5 septembre 2026** | idem |
 | **V2.5**, **V3.01**, **V3.03**, **V3.1** | Quatre blocs ouverts quand la V4 est entrée. Ce qui y a été livré tient : le relevé `N1`, le tiroir qui relit ce qui part, les trois quarts de l'atelier d'une animation aux tables, `G1` et `G16` | **périmés par le carnet** — les écrans qu'ils réparaient sont redessinés, donc le reste ne se reprend pas tel quel. ⚠️ Les quatorze tranches `G` de la V3.1 nomment des défauts réels, et **se relisent avant de clore la V4** | `archive/plan-perime-par-la-v4.md` |
-| **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **non ouverte** | ci-dessous |
-| **V4** — le carnet | Refonte déjà largement livrée ; sa conformité et ses parcours restent à corriger | **socle conservé, suite réorientée vers AU** ; les cases historiques ne sont pas décochées | `docs/PLAN-carnet.md` ; détail du relevé antérieur dans `docs/archive/etat-carnet-2026-09-10.md` |
+| **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **non ouverte** — elle n'est dans aucun des deux chantiers actifs ; elle se prend **après la remise à plat**, quand la grille d'assets et la découpe sont uniques | ci-dessous |
+| **V4** — le carnet | Refonte déjà largement livrée ; sa conformité et ses parcours restent à corriger | **socle conservé, suite réorientée vers AU** ; les cases historiques ne sont pas décochées. Le 15 septembre 2026, les restes de `C1` et `C8` sont constatés tenus par le bloc `D` ; il ne reste ouverte que la vérification au navigateur de `C9`. L'amendement RF est en archive | `docs/PLAN-carnet.md` ; détail du relevé antérieur dans `docs/archive/etat-carnet-2026-09-10.md` |
 | **V5**, **V6** | Tuiles et son | **en construction dans AU13/AU14** | `docs/PLAN-atelier-unifie.md` |
-| **Atelier unifié** — AU1 à AU20 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **Interface remplacée, validation en cours.** Navigation, fiche, bibliothèque, galerie multimédia, préparation et ateliers raccordés ; build réussi. Les 65 % annoncés auparavant surévaluaient les services. Livraisons, tuiles, tenues et audio éprouvés dans Godot ; génération locale testée avec moteurs doublés, qualité 3D réelle non vérifiée. Migration des tests de navigation et revue des parcours encore ouvertes. **AU18 close le 13 septembre 2026** : une vidéo du disque entre comme clip — images tirées à l'entrée, montage, prélèvement et rejeu sur la toile —, et les frames d'un rendu asset3d importé redeviennent lisibles. **AU19 close le 13 septembre 2026** : une feuille de sprites découpée devient un clip et ses bandes — une par ligne quand les lignes sont les directions du jeu —, sans encodage vidéo, donc sans perdre la transparence. **AU20 close le 13 septembre 2026** : ce qui entre par une fiche y reste — le jeu et le sujet se remplissent tous les deux, un sujet sans case est un état légitime, et un onglet *Pas encore rangé* montre ce qui attend. Elle répare le trou qu'AU18 et AU19 avaient laissé le matin même, et retourne deux de leurs décisions. | `docs/PLAN-atelier-unifie.md` |
-| **Remise à plat** — RP1 à RP18 | Remettre d'aplomb sur la maquette validée ce qui existe déjà : le ménage, les doublons, les manques, les deux décisions | **ouverte le 13 septembre 2026**. **RP1 close le même jour** : 1 971 lignes de code mort retirées — l'ancienne colonne de gauche, le composant du carnet, une grille de référence injoignable, deux composants jamais montés de l'établi et un alias. Trois morts restent en place exprès : l'écran qui borne la dépense de l'agent et le mode *réglages* des règles du jeu attendent RP2, le champ de nouvelle collection attend RP7. **RP2 close le même jour** : le mot *Réglages* ouvrait la machine, il ouvre les quatre onglets de la maquette — Univers · Moteurs & workflows · Agent MCP · Consommations. Les deux écrans que RP1 avait gardés vivent dedans : les quatre règles qui partent dans chaque demande d'image, et le cadre qui borne la dépense de l'agent — plafond d'appels, plafond en argent, droit de payer, droit d'appeler la machine, modèles autorisés pour l'image et pour la vidéo — ceux de la 3D et du son restent à construire, et le seul critère laissé ouvert le dit. Rien n'a été réécrit : les écrans ont été rangés, la fenêtre des réglages dissoute, et il n'y a plus qu'une porte. **RP14 close le même jour** : les zones d'une découpe se nomment, se gardent ou s'écartent, se règlent au clavier, s'ajoutent, se déplacent, se redimensionnent, le dernier geste se défait — et les sorties se relisent avant d'être créées, ce qu'aucune découpe ne permettait. **RP15 close le même jour** : le montage proposait de régler le cadre « à la main » sans qu'aucun contrôle ne le modifie ; quatre champs le règlent, deux règlent le pivot, et l'écran dit lequel de la mesure ou de la main fait foi. **Quatre tranches sur dix-huit** | `docs/PLAN-remise-a-plat.md` |
+| **Atelier unifié** — AU1 à AU20 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **dix-huit tranches sur vingt pleines** — les trois dernières, `AU18` à `AU20`, closes le 13 septembre 2026. Restent **deux critères**, pas deux tranches : `AU11` — le rendu 3D garde cadre, pivot et dimensions d'une direction à l'autre — et `AU13` — produire, juger, corriger et exporter un jeu de tuiles *avec l'agent*. Et une case de préparation : reporter les arbitrages dans le PRD, le design et le plan. ⚠️ Livrée n'est pas éprouvée : la qualité 3D réelle n'est pas vérifiée, et le relevé du 13 septembre mesure 0 écran sur 26 tenu de bout en bout — c'est le travail de la remise à plat | `docs/PLAN-atelier-unifie.md` |
+| **Remise à plat** — RP1 à RP21 | Remettre d'aplomb sur la maquette validée ce qui existe déjà : le ménage, les doublons, les manques, les deux décisions — et, depuis le 15 septembre 2026, trois manques de plus que l'usage a nommés : l'image de référence d'une fiche se choisit, une image ou une animation modifiée s'enregistre sous une autre pose ou direction, et une planche découpée sur la toile devient une animation | **ouverte le 13 septembre 2026 — quatre tranches sur vingt-et-une closes**, toutes le même jour : `RP1` le code mort, `RP2` les quatre onglets des réglages et le cadre qui borne l'agent, `RP14` la découpe qui se règle, `RP15` le cadre du montage qui se règle. Ce que chacune a livré est écrit sous son titre dans le plan du chantier. Un critère de `RP2` reste ouvert : le cadre de l'agent ne borne pas encore la 3D ni le son | `docs/PLAN-remise-a-plat.md` |
 
 **226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 2 668 essais de
 serveur et 1 310 d'écran** tiennent le dépôt — recomptés le 13 septembre 2026, et **aucun ne
@@ -400,87 +406,10 @@ enregistre ses quatre décisions, les quatre invariants à lever, et les deux re
 décident du découpage. Le fil passe avant le pantin 3D : c'est lui qui construit la brique
 image→image dont le 3D dépend.
 
-### Le pantin — sorti de la V3 le 3 septembre 2026, arguments intacts
-
-*Ex-`A8`, 6 US (401–406), aucune ligne écrite. **Tranché par l'auteur** : la V3 ne fait qu'une
-chose, animer par la vidéo, et le pantin est une seconde façon de faire la même chose.*
-
-> ⚠️ **Il revient en 3D, et sa limite fatale tombe avec.** Ce qui l'a écarté est écrit trois
-> paragraphes plus bas : *« il ne fait bouger que ce qui est déjà dessiné »* — pas de demi-tour,
-> pas de main qui se retourne. Un maillage riggé fait les trois, et le prototype `asset3d`
-> mesure 2 min 17 pour le maillage et 8 s pour le squelette, sur cette machine et sans un
-> centime. **La suite est cadrée dans `docs/cadrage-fil-et-3d.md`** ; ce qui est écrit
-> ci-dessous garde sa valeur de constat sur le pantin 2D, qui, lui, ne se reprend pas.
-
-**Ce que c'était.** On obtient les pièces d'un personnage à partir d'une de ses images, l'atelier
-y pose un squelette tout seul, on applique un mouvement de la bibliothèque, et l'on obtient une
-bande **sans payer un seul appel**. Les pixels de chaque image sont ceux du sprite d'origine,
-déplacés : le personnage ne peut donc pas changer de taille d'une image à l'autre, et il n'y a
-plus de tirage.
-
-**Pourquoi il sort, et ce n'est pas parce qu'il est mauvais.** Il était la finale de la version
-tant qu'il était **le seul moyen d'animer sans payer**. `A11` l'est aussi, sur la même machine,
-sans squelette, sans maillage et sans découpage en pièces. Ce qui reste en propre au pantin :
-**la même bande redemandée revient identique à l'octet**, et **une animation de plus ne coûte
-rien du tout, pas même deux minutes d'attente**. C'est vrai, et ça ne vaut pas six chantiers dans
-une version dont l'objectif est d'animer par la vidéo.
-
-**Ce qu'il faudrait savoir avant de le reposer**, et les deux questions ne coûtent rien : *un
-membre plié survit-il à la réduction en pixels ?* et *à quelle amplitude le pantin casse-t-il ?*
-La seconde peut supprimer la moitié du travail — si une marche et une attaque de profil passent
-sans découvrir de zone cachée, toute la décomposition en pièces devient facultative.
-
-**Et trois choses acquises qu'il ne faut pas reperdre.** L'ordre des opérations est décidé —
-**déformer en grand format, pixeliser à la fin** —, trois preuves indépendantes le disent, et le
-problème n'est pas la rotation mais **quantifier la géométrie trop tôt**. Le dépôt de référence
-libre est **archivé depuis septembre 2025** : on recopie l'algorithme, on n'en fait pas une
-dépendance. Et le squelette a un **format éprouvé à reprendre** — seize articulations, trois
-champs chacune (`docs/bilan-v3.md` § 4). *Ce qu'il ne remplacera jamais, et c'était écrit
-d'avance : il ne fait bouger que ce qui est déjà dessiné. Une marche de profil, oui ; un
-demi-tour, une main qui se retourne, un visage qui change d'expression, non.*
-
-**Et une version d'édition viendra, sans rang fixé.** Le dessin à la main reste jusque-là ce
-qu'il est : un pinceau d'un seul pixel. *Tranché par l'auteur le 2 septembre 2026 — « on ne les
-fait pas, il y aura plus tard une version avec éditeur. »* Le trait droit, le rectangle, le pot
-de peinture et la symétrie avaient été proposés comme un ajout léger à la table de retouche ; ils
-sont **écartés du plan actuel**, et pour une raison qui vaut d'être gardée : chacun paraît petit
-isolé, et les prendre un par un fabriquerait un demi-éditeur que personne n'aurait décidé.
-**Aucune tranche du plan ne présuppose leur existence.**
-
-**Et une piste ouverte par la V3 elle-même, à essayer après elle : fabriquer les poses fixes
-avec le moteur de la maison.** *Idée de l'auteur, 3 septembre 2026, notée dans
-`docs/remarques/journal.md`.*
-
-Fabriquer une image d'asset en local n'a jamais donné de résultat gardable — c'est pour ça que
-les images passent par des modèles payants. Mais `A11` établit qu'**animer** en local marche et
-ne coûte rien (`docs/archive/recherche-video-locale/rapport.md`). Or une machine qui sait animer un
-sprite sait produire des images de ce sprite **sous un autre angle ou dans une autre attitude** :
-on demanderait un clip — *tourne-toi*, *meurs*, *lève le bras* —, et l'on irait y **prélever la
-case** qui convient. Un clip de dix secondes qui enchaîne plusieurs mouvements donnerait, en
-théorie, plusieurs poses pour un seul temps de calcul.
-
-**C'est lent — dix à trente minutes le clip sur une carte de 8 Go — et c'est précisément le
-point** : sur ce sujet, le seul chiffre qui compte est que ce soit gratuit. Le payant ne coûte
-pas cher au clip, il coûte de **devoir compter**.
-
-**Ce qui n'est pas acquis, et qui décidera** : une case tirée d'une vidéo est-elle assez nette et
-assez fidèle au personnage pour tenir comme pose officielle, là où l'animation pardonne le flou
-parce que ça défile ? C'est la question que le banc animé n'a pas eu à poser. **Aucune tranche du
-plan ne présuppose la réponse**, et l'ouvrir demande que le moteur de la maison existe et ait
-servi. **Sa moitié utilisable est devenue une tranche, et elle est livrée** : depuis le
-4 septembre 2026, `A13` donne le geste pour attraper une image d'un clip et la faire entrer en
-bibliothèque, traitée par la chaîne du jeu et avec sa filiation. ⚠️ **Ce qui reste ouvert n'est
-plus le geste, c'est la qualité** — une case tirée d'une vidéo tient-elle comme pose officielle —,
-et la tranche ne l'a pas tranchée : elle s'est construite sur un clip d'essai écrit à la main,
-sans une seconde de carte graphique. La réponse viendra de l'usage.
-
-**Et seize questions de la V2.1 restent ouvertes**, chacune avec ce qui manque pour y répondre
-et l'étape où elle se pose : `docs/archive/v21-arbitrages.md` § B. Aucune n'empêche d'ouvrir l'étape qui
-la porte — ce sont des questions qui se tranchent **à l'usage**, et c'est délibéré : les
-trancher d'avance, c'est décider sans mesure.
-
-**Quinze choix tranchés seuls pendant le lot U attendent l'auteur** dans
-`docs/archive/questions-du-lot-U.md`.
+**Ce que la V3 avait écarté ou laissé ouvert → `docs/archive/ordre-historique-jusqu-au-10-septembre.md`.**
+Le pantin 2D et ses arguments, les outils de dessin remis à une version d'édition, la piste des
+poses fixes par le moteur de la maison, et le risque de la recette d'animation — levé, réponse
+négative, 141 planches et 6,03 $. Descendus le 15 septembre 2026 ; rien n'y est à faire.
 
 ### Les trois risques encore ouverts
 
@@ -506,27 +435,3 @@ Aucune tranche ne les présuppose.
   même et peut inverser le classement des modèles par coût. Le pliage tire dans l'autre sens. À
   surveiller dès les premières séances réelles.
 
-### Un risque qui est levé, et il faut le dire
-
-**La recette d'animation** était le risque de la V3. **Il est levé, et la réponse est
-négative** : trois bancs payés les 1ᵉʳ et 2 septembre 2026 — 141 planches, 6,03 $ —, puis six
-essais de plus le 2 au soir — 2,29 $ —, toutes les planches notées une par une par l'auteur.
-**La façon de demander est épuisée comme levier**, y compris en rangeant le texte au lieu de le
-récrire, et le texte du produit ne bouge pas.
-
-**Mais le risque chiffré qui en découlait a changé de forme, et c'est le fait de la journée.**
-*Une bonne planche sur dix* était le prix d'une version bâtie sur la planche. La V3 n'est plus
-bâtie dessus : elle commande un clip et le découpe. **Le risque n'est donc plus le taux, c'est
-l'ignorance** — combien de clips pour une bande utilisable, personne ne le sait. **`A10` le
-mesure sans banc supplémentaire** : son écran affiche le prix par bande de chaque clip et le voit
-baisser à chaque bande gardée, si bien que le chiffre se prend à l'usage. Tout est dans
-`docs/bilan-v3.md` pour les planches, et dans `essais/verdict-essais.json` pour la refonte.
-
-**Et un second risque s'ouvre avec le recadrage, qu'il faut nommer** : *une seule direction a été
-essayée.* Tous les clips mesurés partent du profil, et l'objectif de la version est d'animer
-**toutes** les cases d'une matrice — donc aussi la face et le dos. Rien ne dit ce qu'un modèle
-vidéo fait d'un sprite vu de face. **`A12` a livré l'endroit d'où on le verra, et pas la réponse** :
-la matrice se lit désormais case par case sur son calque animé — *pas encore animée vers est,
-ouest* s'y écrit —, mais la tranche s'est construite sans une seconde de carte graphique. ⚠️ **Le
-risque reste entier**, et c'est délibéré : la question ne se mesure qu'en couvrant une matrice à
-l'usage, pas en tirant un clip de plus ni en écrivant un écran.

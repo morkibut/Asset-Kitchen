@@ -64,13 +64,17 @@ ligne-là qu'il faut ouvrir.
 | **RP16** · Savoir ce qu'on a laissé en plan | `[MEDIUM]` | rassembler des brouillons écrits par écran demande un index, et le compteur de la colonne compte aujourd'hui une seule famille |
 | **RP17** · Une seule porte pour sortir un personnage | `[HARD]` | elle écrit dans le dossier du jeu et retire des routes que l'agent peut emprunter |
 | **RP18** · Les neuf routes sans écran | `[MEDIUM]` | neuf décisions séparées, chacune petite ; c'est la décision qui est le travail, pas l'écriture |
+| **RP19** · L'image de référence d'une fiche se choisit | `[HARD]` | un champ de plus sur le sujet, écrit dans son dossier — une forme de données change —, et la règle qui le distingue de l'artwork officiel et de l'image retenue ; l'écran, lui, descend d'un cran |
+| **RP20** · Enregistrer sous | `[HARD]` | crée un asset sur le disque à partir d'un rendu, écrit une filiation neuve, vaut pour l'image et pour la bande, et ouvre un outil à l'agent |
+| **RP21** · Une planche découpée sur la toile devient une animation | `[MEDIUM]` | la route qui anime une feuille existe ; il reste à l'ouvrir aux cartes de la toile et à écrire le chemin sélection → montage, une route neuve |
 
-**Compte** : 1 `[VERY-HARD]`, 5 `[HARD]`, 9 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 1 `[VERY-HARD]`, 7 `[HARD]`, 10 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
 
-Six tranches sur dix-huit sont en `[HARD]` ou au-dessus — pile un tiers. RP2 y est montée après
-coup : en tranchant le point dur de RP1, on a découvert que l'onglet *Agent MCP* rebranche le
-seul écran qui borne la dépense de l'agent. Une tranche qui touche à l'argent est `[HARD]`,
-quelle que soit sa taille.
+Huit tranches sur vingt-et-une sont en `[HARD]` ou au-dessus — un peu plus d'un tiers. RP2 y
+est montée après coup : en tranchant le point dur de RP1, on a découvert que l'onglet *Agent MCP*
+rebranche le seul écran qui borne la dépense de l'agent. Une tranche qui touche à l'argent est
+`[HARD]`, quelle que soit sa taille. RP19 et RP20, ajoutées le 15 septembre 2026, y sont pour
+la même raison de forme : elles écrivent une donnée neuve dans le dossier du jeu.
 
 ---
 
@@ -101,6 +105,8 @@ quelle que soit sa taille.
 | **RP17** `[HARD]` | Retirer les routes et leurs essais, une fois la porte unique décidée et éprouvée | Sonnet, réflexion faible |
 | **RP2** `[MEDIUM]` | Brancher les trois autres onglets sur les écrans qui existent déjà | Sonnet, réflexion faible |
 | **RP3** `[MEDIUM]` | Appliquer la liste fermée écran par écran, une fois qu'elle est écrite | Haiku 4.5, réflexion faible |
+| **RP19** `[HARD]` | Le geste sur l'image et l'affichage sur la fiche, une fois le champ et sa route écrits | Sonnet, réflexion faible |
+| **RP20** `[HARD]` | L'écran qui demande la case d'arrivée, et le bouton dans les deux ateliers, une fois la route et la filiation écrites | Sonnet, réflexion faible |
 
 ---
 

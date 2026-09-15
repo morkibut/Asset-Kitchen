@@ -2598,12 +2598,12 @@
         "type": "epic",
         "parent": null,
         "title": "Le compteur de sortie, et les cinq portes des réglages",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
+          "done": 3,
           "total": 3
         },
         "source": "plan",
@@ -2615,7 +2615,7 @@
         "type": "check",
         "parent": "C1",
         "title": "`py essais/essai_jetons.py` imprime le compte des fichiers anciens, et il diminue.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -2631,7 +2631,7 @@
         "type": "check",
         "parent": "C1",
         "title": "Aucune porte du produit n'ouvre `EcranReglages` ; les trois fichiers sont partis.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -2647,7 +2647,7 @@
         "type": "check",
         "parent": "C1",
         "title": "Tout réglage qui vivait dans les trois fichiers a un endroit dans `Installation.tsx`, ou",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -2973,12 +2973,12 @@
         "type": "epic",
         "parent": null,
         "title": "Les dépenses, la découpe, la différence",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
         "checks": {
-          "done": 0,
+          "done": 1,
           "total": 1
         },
         "source": "plan",
@@ -2990,7 +2990,7 @@
         "type": "check",
         "parent": "C8",
         "title": "Aucun écran ancien n'est plus monté depuis un écran du carnet.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-carnet.md",
@@ -3012,7 +3012,7 @@
         "path": "docs/PLAN-carnet.md",
         "checks": {
           "done": 4,
-          "total": 65
+          "total": 5
         },
         "source": "plan",
         "order": 185,
@@ -3099,966 +3099,6 @@
         "order": 190
       },
       {
-        "id": "C9.6",
-        "type": "check",
-        "parent": "C9",
-        "title": "Les états de référence concernés sont identifiés ; chaque écart est corrigé ou nommé",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 191
-      },
-      {
-        "id": "C9.7",
-        "type": "check",
-        "parent": "C9",
-        "title": "Comparaison rendue au format du dessin, puis usage à 1280 × 720 et 1440 × 900 : actions",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 192
-      },
-      {
-        "id": "C9.8",
-        "type": "check",
-        "parent": "C9",
-        "title": "Une capture et un scénario datés identifient la même version, les mêmes données et les",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 193
-      },
-      {
-        "id": "C9.9",
-        "type": "check",
-        "parent": "C9",
-        "title": "Les données de recette comprennent un cas vide, un cas chargé et un refus pertinent.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 194
-      },
-      {
-        "id": "C9.10",
-        "type": "check",
-        "parent": "C9",
-        "title": "Un objet modifié est fermé puis rouvert avec des réglages différents des défauts.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 195
-      },
-      {
-        "id": "C9.11",
-        "type": "check",
-        "parent": "C9",
-        "title": "Les capacités serveur concernées ont chacune une porte visible depuis le parcours,",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 196
-      },
-      {
-        "id": "C9.12",
-        "type": "check",
-        "parent": "C9",
-        "title": "Les essais métier pertinents passent ; les essais DOM sont adaptés aux nouveaux gestes",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 197
-      },
-      {
-        "id": "C9.13",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le garde-fou des jetons reste tenu, la dette de géométrie des surfaces traitées est",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 198
-      },
-      {
-        "id": "C9.14",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le lancement normal et la recette servent la même révision d'interface et une API",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 199
-      },
-      {
-        "id": "C9.15",
-        "type": "check",
-        "parent": "C9",
-        "title": "Instrument Serif, Instrument Sans et IBM Plex Mono sont effectivement chargées depuis",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 200
-      },
-      {
-        "id": "C9.16",
-        "type": "check",
-        "parent": "C9",
-        "title": "Ouvrir un jeu existant et commencer sans jeu conduisent aux états prévus, avec le titre,",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 201
-      },
-      {
-        "id": "C9.17",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le jeu de recette contient images, sujet, clip, bande et recette particulière sans",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 202
-      },
-      {
-        "id": "C9.18",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le premier couple dessin / application est consigné ; les problèmes d'environnement",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 203
-      },
-      {
-        "id": "C9.19",
-        "type": "check",
-        "parent": "C9",
-        "title": "Aucun arbre de projets / collections supplémentaire ne double le carnet dans la galerie ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 204
-      },
-      {
-        "id": "C9.20",
-        "type": "check",
-        "parent": "C9",
-        "title": "Titre, phrase de rôle, import, sortie, filtres comptés et bande de sélection suivent la",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 205
-      },
-      {
-        "id": "C9.21",
-        "type": "check",
-        "parent": "C9",
-        "title": "Rechercher, vider un filtre sans résultat et sélectionner deux images fonctionnent ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 206
-      },
-      {
-        "id": "C9.22",
-        "type": "check",
-        "parent": "C9",
-        "title": "Une sélection de clips, d'images ou mixte indique les actions possibles et la raison des",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 207
-      },
-      {
-        "id": "C9.23",
-        "type": "check",
-        "parent": "C9",
-        "title": "La fiche présente identité, traitements et accès au travail avant les détails avancés ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 208
-      },
-      {
-        "id": "C9.24",
-        "type": "check",
-        "parent": "C9",
-        "title": "Un aller-retour en retouche restitue le filtre, la sélection et la position utile de la",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 209
-      },
-      {
-        "id": "C9.25",
-        "type": "check",
-        "parent": "C9",
-        "title": "Jeu vide et famille fournie montrent le geste de création et les comptes attendus ; une",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 210
-      },
-      {
-        "id": "C9.26",
-        "type": "check",
-        "parent": "C9",
-        "title": "Page et images du sujet distinguent clairement description, case vide, essais et image",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 211
-      },
-      {
-        "id": "C9.27",
-        "type": "check",
-        "parent": "C9",
-        "title": "La demande et les paramètres sont disposés suivant les maquettes, avec les tailles",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 212
-      },
-      {
-        "id": "C9.28",
-        "type": "check",
-        "parent": "C9",
-        "title": "Ouvrir puis annuler l'envoi conserve le brouillon, sa cible et les références choisies.",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 213
-      },
-      {
-        "id": "C9.29",
-        "type": "check",
-        "parent": "C9",
-        "title": "La confirmation utilise la résolution réelle : prix ou temps, plafonds et références",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 214
-      },
-      {
-        "id": "C9.30",
-        "type": "check",
-        "parent": "C9",
-        "title": "Succès et échec reviennent dans le contexte du sujet ; une reprise ne crée pas une",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 215
-      },
-      {
-        "id": "C9.31",
-        "type": "check",
-        "parent": "C9",
-        "title": "La chaîne, les fabriques, l'image et les réglages retrouvent leurs zones de référence ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 216
-      },
-      {
-        "id": "C9.32",
-        "type": "check",
-        "parent": "C9",
-        "title": "Les textes visibles aident à choisir effet, disponibilité et durée ; les relevés",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 217
-      },
-      {
-        "id": "C9.33",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le nom de la série dit si l'on parcourt une sélection ou les images d'un sujet ; passer",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 218
-      },
-      {
-        "id": "C9.34",
-        "type": "check",
-        "parent": "C9",
-        "title": "Brut, rendu, comparaison, ajustement et zoom restent compréhensibles ; cadre, pipette",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 219
-      },
-      {
-        "id": "C9.35",
-        "type": "check",
-        "parent": "C9",
-        "title": "Réglage en veille, réglage vidé, défaire et recette nommée gardent leurs effets distincts ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 220
-      },
-      {
-        "id": "C9.36",
-        "type": "check",
-        "parent": "C9",
-        "title": "À 1280 × 720, image, réglages et navigation restent accessibles sans colonne inutile ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 221
-      },
-      {
-        "id": "C9.37",
-        "type": "check",
-        "parent": "C9",
-        "title": "Commande, choix du clip et montage ont leurs hiérarchies prévues ; ruban, réserve,",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 222
-      },
-      {
-        "id": "C9.38",
-        "type": "check",
-        "parent": "C9",
-        "title": "Ouvrir un clip payé ou revenir à son montage ne le commande jamais à nouveau ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 223
-      },
-      {
-        "id": "C9.39",
-        "type": "check",
-        "parent": "C9",
-        "title": "Une frame retirée ou retouchée conserve le sort et la filiation déjà décidés ; aucun",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 224
-      },
-      {
-        "id": "C9.40",
-        "type": "check",
-        "parent": "C9",
-        "title": "La manipulation de frame est testée **pendant la lecture**, puis la bande est fermée",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 225
-      },
-      {
-        "id": "C9.41",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le contexte du sujet et la séparation images fixes / animations survivent au retour ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 226
-      },
-      {
-        "id": "C9.42",
-        "type": "check",
-        "parent": "C9",
-        "title": "Gratuité, coût inconnu et temps local restent distincts ; les preuves utilisent des",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 227
-      },
-      {
-        "id": "C9.43",
-        "type": "check",
-        "parent": "C9",
-        "title": "Pièce, emploi, porteur, pose et direction restent identifiables à chaque étape ; les",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 228
-      },
-      {
-        "id": "C9.44",
-        "type": "check",
-        "parent": "C9",
-        "title": "Les zones d'image, de réglage et de résultat reprennent les dessins, avec des contrôles",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 229
-      },
-      {
-        "id": "C9.45",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le calage se fait en regardant le résultat ; le calque et ses réglages particuliers se",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 230
-      },
-      {
-        "id": "C9.46",
-        "type": "check",
-        "parent": "C9",
-        "title": "Une découpe donne accès aux images produites et à leur rattachement ; revenir à la",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 231
-      },
-      {
-        "id": "C9.47",
-        "type": "check",
-        "parent": "C9",
-        "title": "La sortie d'un outil revient à l'emploi ou à l'image de départ ; les références et",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 232
-      },
-      {
-        "id": "C9.48",
-        "type": "check",
-        "parent": "C9",
-        "title": "Chaque réglage visible annonce sa portée : atelier, jeu, famille ou image ; aucune",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 233
-      },
-      {
-        "id": "C9.49",
-        "type": "check",
-        "parent": "C9",
-        "title": "Les fonctions encore portées par un panneau secondaire sont relogées avant son retrait ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 234
-      },
-      {
-        "id": "C9.50",
-        "type": "check",
-        "parent": "C9",
-        "title": "Une modification de défaut est relue dans l'écran appelant sans recharge manuelle ;",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 235
-      },
-      {
-        "id": "C9.51",
-        "type": "check",
-        "parent": "C9",
-        "title": "La toile garde image, réserve et menu d'îlot selon la planche ; les réglages ne reprennent",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 236
-      },
-      {
-        "id": "C9.52",
-        "type": "check",
-        "parent": "C9",
-        "title": "Guide et barre amènent au même lieu que le carnet ; les libellés suivent le vocabulaire",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 237
-      },
-      {
-        "id": "C9.53",
-        "type": "check",
-        "parent": "C9",
-        "title": "Retour au sujet ou à la retouche conserve le contexte utile ; les essais d'installation",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 238
-      },
-      {
-        "id": "C9.54",
-        "type": "check",
-        "parent": "C9",
-        "title": "La porte distingue sélection, sujet et ensemble du jeu ; le lot présenté correspond",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 239
-      },
-      {
-        "id": "C9.55",
-        "type": "check",
-        "parent": "C9",
-        "title": "La disposition suit la maquette ; destination, rangement, collisions et moteur restent",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 240
-      },
-      {
-        "id": "C9.56",
-        "type": "check",
-        "parent": "C9",
-        "title": "Prévisualiser n'écrit rien ; confirmer écrit exactement ce qui a été annoncé, dans un",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 241
-      },
-      {
-        "id": "C9.57",
-        "type": "check",
-        "parent": "C9",
-        "title": "Une seconde sortie distingue ajout, remplacement et fichier étranger ; la fermeture et",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 242
-      },
-      {
-        "id": "C9.58",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le bilan donne le prochain geste et l'accès au résultat ; le journal distingue argent,",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 243
-      },
-      {
-        "id": "C9.59",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le gabarit de nommage et le choix de dossier font l'objet d'une décision explicite de",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 244
-      },
-      {
-        "id": "C9.60",
-        "type": "check",
-        "parent": "C9",
-        "title": "Rejouer « ouvrir → sujet → image → correction → sortie » et « sujet → clip → bande →",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 245
-      },
-      {
-        "id": "C9.61",
-        "type": "check",
-        "parent": "C9",
-        "title": "Chaque état d'écran retenu du sommaire a une preuve, une adaptation nommée ou un hors",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 246
-      },
-      {
-        "id": "C9.62",
-        "type": "check",
-        "parent": "C9",
-        "title": "Les exemptions de géométrie restantes sont justifiées par leur nature non visuelle,",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 247
-      },
-      {
-        "id": "C9.63",
-        "type": "check",
-        "parent": "C9",
-        "title": "Les récits historiques du plan sont rangés dans leurs documents propriétaires, sans",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 248
-      },
-      {
-        "id": "C9.64",
-        "type": "check",
-        "parent": "C9",
-        "title": "Le tableau de `docs/PLAN.md` est mis à jour, les critères tenus vont dans le suivi V4",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 249
-      },
-      {
-        "id": "C9.65",
-        "type": "check",
-        "parent": "C9",
-        "title": "L'auteur a pu juger les comparaisons et utiliser les parcours. Une validation technique",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN-carnet.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 250
-      },
-      {
         "id": "RP1",
         "type": "epic",
         "parent": null,
@@ -4072,7 +3112,7 @@
           "total": 6
         },
         "source": "plan",
-        "order": 251,
+        "order": 191,
         "blocked_by": null
       },
       {
@@ -4089,7 +3129,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 252
+        "order": 192
       },
       {
         "id": "RP1.2",
@@ -4105,7 +3145,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 253
+        "order": 193
       },
       {
         "id": "RP1.3",
@@ -4121,7 +3161,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 254
+        "order": 194
       },
       {
         "id": "RP1.4",
@@ -4137,7 +3177,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 255
+        "order": 195
       },
       {
         "id": "RP1.5",
@@ -4153,7 +3193,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 256
+        "order": 196
       },
       {
         "id": "RP1.6",
@@ -4169,7 +3209,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 257
+        "order": 197
       },
       {
         "id": "RP2",
@@ -4185,7 +3225,7 @@
           "total": 6
         },
         "source": "plan",
-        "order": 258,
+        "order": 198,
         "blocked_by": null
       },
       {
@@ -4202,7 +3242,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 259
+        "order": 199
       },
       {
         "id": "RP2.2",
@@ -4218,7 +3258,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 260
+        "order": 200
       },
       {
         "id": "RP2.3",
@@ -4234,7 +3274,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 261
+        "order": 201
       },
       {
         "id": "RP2.4",
@@ -4250,7 +3290,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 262
+        "order": 202
       },
       {
         "id": "RP2.5",
@@ -4266,7 +3306,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 263
+        "order": 203
       },
       {
         "id": "RP2.6",
@@ -4282,7 +3322,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 264
+        "order": 204
       },
       {
         "id": "RP3",
@@ -4298,7 +3338,7 @@
           "total": 7
         },
         "source": "plan",
-        "order": 265,
+        "order": 205,
         "blocked_by": null
       },
       {
@@ -4315,7 +3355,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 266
+        "order": 206
       },
       {
         "id": "RP3.2",
@@ -4331,7 +3371,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 267
+        "order": 207
       },
       {
         "id": "RP3.3",
@@ -4347,7 +3387,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 268
+        "order": 208
       },
       {
         "id": "RP3.4",
@@ -4363,7 +3403,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 269
+        "order": 209
       },
       {
         "id": "RP3.5",
@@ -4379,7 +3419,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 270
+        "order": 210
       },
       {
         "id": "RP3.6",
@@ -4395,7 +3435,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 271
+        "order": 211
       },
       {
         "id": "RP3.7",
@@ -4411,7 +3451,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 272
+        "order": 212
       },
       {
         "id": "RP4",
@@ -4427,7 +3467,7 @@
           "total": 6
         },
         "source": "plan",
-        "order": 273,
+        "order": 213,
         "blocked_by": null
       },
       {
@@ -4444,7 +3484,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 274
+        "order": 214
       },
       {
         "id": "RP4.2",
@@ -4460,7 +3500,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 275
+        "order": 215
       },
       {
         "id": "RP4.3",
@@ -4476,7 +3516,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 276
+        "order": 216
       },
       {
         "id": "RP4.4",
@@ -4492,7 +3532,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 277
+        "order": 217
       },
       {
         "id": "RP4.5",
@@ -4508,7 +3548,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 278
+        "order": 218
       },
       {
         "id": "RP4.6",
@@ -4524,7 +3564,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 279
+        "order": 219
       },
       {
         "id": "RP5",
@@ -4540,7 +3580,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 280,
+        "order": 220,
         "blocked_by": "RP3."
       },
       {
@@ -4557,7 +3597,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 281
+        "order": 221
       },
       {
         "id": "RP5.2",
@@ -4573,7 +3613,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 282
+        "order": 222
       },
       {
         "id": "RP5.3",
@@ -4589,7 +3629,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 283
+        "order": 223
       },
       {
         "id": "RP5.4",
@@ -4605,7 +3645,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 284
+        "order": 224
       },
       {
         "id": "RP5.5",
@@ -4621,7 +3661,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 285
+        "order": 225
       },
       {
         "id": "RP6",
@@ -4637,7 +3677,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 286,
+        "order": 226,
         "blocked_by": "RP3."
       },
       {
@@ -4654,7 +3694,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 287
+        "order": 227
       },
       {
         "id": "RP6.2",
@@ -4670,7 +3710,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 288
+        "order": 228
       },
       {
         "id": "RP6.3",
@@ -4686,7 +3726,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 289
+        "order": 229
       },
       {
         "id": "RP6.4",
@@ -4702,7 +3742,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 290
+        "order": 230
       },
       {
         "id": "RP7",
@@ -4718,7 +3758,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 291,
+        "order": 231,
         "blocked_by": "RP3, RP6."
       },
       {
@@ -4735,7 +3775,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 292
+        "order": 232
       },
       {
         "id": "RP7.2",
@@ -4751,7 +3791,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 293
+        "order": 233
       },
       {
         "id": "RP7.3",
@@ -4767,7 +3807,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 294
+        "order": 234
       },
       {
         "id": "RP7.4",
@@ -4783,7 +3823,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 295
+        "order": 235
       },
       {
         "id": "RP7.5",
@@ -4799,7 +3839,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 296
+        "order": 236
       },
       {
         "id": "RP8",
@@ -4815,7 +3855,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 297,
+        "order": 237,
         "blocked_by": "RP3."
       },
       {
@@ -4832,7 +3872,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 298
+        "order": 238
       },
       {
         "id": "RP8.2",
@@ -4848,7 +3888,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 299
+        "order": 239
       },
       {
         "id": "RP8.3",
@@ -4864,7 +3904,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 300
+        "order": 240
       },
       {
         "id": "RP8.4",
@@ -4880,7 +3920,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 301
+        "order": 241
       },
       {
         "id": "RP9",
@@ -4896,7 +3936,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 302,
+        "order": 242,
         "blocked_by": "RP4 — elle débouche sur la fenêtre de préparation unique."
       },
       {
@@ -4913,7 +3953,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 303
+        "order": 243
       },
       {
         "id": "RP9.2",
@@ -4929,7 +3969,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 304
+        "order": 244
       },
       {
         "id": "RP9.3",
@@ -4945,7 +3985,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 305
+        "order": 245
       },
       {
         "id": "RP9.4",
@@ -4961,7 +4001,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 306
+        "order": 246
       },
       {
         "id": "RP9.5",
@@ -4977,7 +4017,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 307
+        "order": 247
       },
       {
         "id": "RP10",
@@ -4993,7 +4033,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 308,
+        "order": 248,
         "blocked_by": null
       },
       {
@@ -5010,7 +4050,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 309
+        "order": 249
       },
       {
         "id": "RP10.2",
@@ -5026,7 +4066,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 310
+        "order": 250
       },
       {
         "id": "RP10.3",
@@ -5042,7 +4082,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 311
+        "order": 251
       },
       {
         "id": "RP10.4",
@@ -5058,7 +4098,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 312
+        "order": 252
       },
       {
         "id": "RP10.5",
@@ -5074,7 +4114,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 313
+        "order": 253
       },
       {
         "id": "RP11",
@@ -5090,7 +4130,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 314,
+        "order": 254,
         "blocked_by": "RP3."
       },
       {
@@ -5107,7 +4147,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 315
+        "order": 255
       },
       {
         "id": "RP11.2",
@@ -5123,7 +4163,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 316
+        "order": 256
       },
       {
         "id": "RP11.3",
@@ -5139,7 +4179,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 317
+        "order": 257
       },
       {
         "id": "RP11.4",
@@ -5155,7 +4195,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 318
+        "order": 258
       },
       {
         "id": "RP12",
@@ -5171,7 +4211,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 319,
+        "order": 259,
         "blocked_by": null
       },
       {
@@ -5188,7 +4228,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 320
+        "order": 260
       },
       {
         "id": "RP12.2",
@@ -5204,7 +4244,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 321
+        "order": 261
       },
       {
         "id": "RP12.3",
@@ -5220,7 +4260,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 322
+        "order": 262
       },
       {
         "id": "RP12.4",
@@ -5236,7 +4276,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 323
+        "order": 263
       },
       {
         "id": "RP13",
@@ -5252,7 +4292,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 324,
+        "order": 264,
         "blocked_by": "RP3."
       },
       {
@@ -5269,7 +4309,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 325
+        "order": 265
       },
       {
         "id": "RP13.2",
@@ -5285,7 +4325,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 326
+        "order": 266
       },
       {
         "id": "RP13.3",
@@ -5301,7 +4341,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 327
+        "order": 267
       },
       {
         "id": "RP13.4",
@@ -5317,7 +4357,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 328
+        "order": 268
       },
       {
         "id": "RP14",
@@ -5333,7 +4373,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 329,
+        "order": 269,
         "blocked_by": null
       },
       {
@@ -5350,7 +4390,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 330
+        "order": 270
       },
       {
         "id": "RP14.2",
@@ -5366,7 +4406,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 331
+        "order": 271
       },
       {
         "id": "RP14.3",
@@ -5382,7 +4422,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 332
+        "order": 272
       },
       {
         "id": "RP14.4",
@@ -5398,7 +4438,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 333
+        "order": 273
       },
       {
         "id": "RP14.5",
@@ -5414,7 +4454,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 334
+        "order": 274
       },
       {
         "id": "RP15",
@@ -5430,7 +4470,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 335,
+        "order": 275,
         "blocked_by": null
       },
       {
@@ -5447,7 +4487,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 336
+        "order": 276
       },
       {
         "id": "RP15.2",
@@ -5463,7 +4503,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 337
+        "order": 277
       },
       {
         "id": "RP15.3",
@@ -5479,7 +4519,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 338
+        "order": 278
       },
       {
         "id": "RP15.4",
@@ -5495,7 +4535,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 339
+        "order": 279
       },
       {
         "id": "RP16",
@@ -5511,7 +4551,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 340,
+        "order": 280,
         "blocked_by": null
       },
       {
@@ -5528,7 +4568,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 341
+        "order": 281
       },
       {
         "id": "RP16.2",
@@ -5544,7 +4584,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 342
+        "order": 282
       },
       {
         "id": "RP16.3",
@@ -5560,7 +4600,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 343
+        "order": 283
       },
       {
         "id": "RP16.4",
@@ -5576,7 +4616,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 344
+        "order": 284
       },
       {
         "id": "RP17",
@@ -5592,7 +4632,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 345,
+        "order": 285,
         "blocked_by": null
       },
       {
@@ -5609,7 +4649,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 346
+        "order": 286
       },
       {
         "id": "RP17.2",
@@ -5625,7 +4665,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 347
+        "order": 287
       },
       {
         "id": "RP17.3",
@@ -5641,7 +4681,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 348
+        "order": 288
       },
       {
         "id": "RP17.4",
@@ -5657,7 +4697,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 349
+        "order": 289
       },
       {
         "id": "RP17.5",
@@ -5673,7 +4713,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 350
+        "order": 290
       },
       {
         "id": "RP18",
@@ -5689,7 +4729,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 351,
+        "order": 291,
         "blocked_by": null
       },
       {
@@ -5706,7 +4746,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 352
+        "order": 292
       },
       {
         "id": "RP18.2",
@@ -5722,7 +4762,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 353
+        "order": 293
       },
       {
         "id": "RP18.3",
@@ -5738,7 +4778,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 354
+        "order": 294
       },
       {
         "id": "RP18.4",
@@ -5754,7 +4794,378 @@
           "total": 0
         },
         "source": "plan",
-        "order": 355
+        "order": 295
+      },
+      {
+        "id": "RP19",
+        "type": "epic",
+        "parent": null,
+        "title": "L'image de référence d'une fiche se choisit",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 296,
+        "blocked_by": null
+      },
+      {
+        "id": "RP19.1",
+        "type": "check",
+        "parent": "RP19",
+        "title": "Depuis une image fixe du sujet, un geste en fait l'image de référence de la fiche, et la",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 297
+      },
+      {
+        "id": "RP19.2",
+        "type": "check",
+        "parent": "RP19",
+        "title": "Le choix survit à la fermeture et à la réouverture du jeu ; il est écrit dans le dossier",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 298
+      },
+      {
+        "id": "RP19.3",
+        "type": "check",
+        "parent": "RP19",
+        "title": "Une fiche sans choix montre ce qu'elle montrait avant, et rien d'autre ne change.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 299
+      },
+      {
+        "id": "RP19.4",
+        "type": "check",
+        "parent": "RP19",
+        "title": "Choisir une image de référence ne promeut aucun artwork officiel, ne retient aucune case,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 300
+      },
+      {
+        "id": "RP19.5",
+        "type": "check",
+        "parent": "RP19",
+        "title": "Supprimer l'image de référence ramène la fiche au choix du produit, sans message d'erreur.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 301
+      },
+      {
+        "id": "RP19.6",
+        "type": "check",
+        "parent": "RP19",
+        "title": "L'agent peut lire quelle image est la référence d'un sujet ; il ne peut pas la choisir.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 302
+      },
+      {
+        "id": "RP20",
+        "type": "epic",
+        "parent": null,
+        "title": "Enregistrer sous — une image ou une animation modifiée devient une autre pose ou direction",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 8
+        },
+        "source": "plan",
+        "order": 303,
+        "blocked_by": null
+      },
+      {
+        "id": "RP20.1",
+        "type": "check",
+        "parent": "RP20",
+        "title": "Depuis l'atelier d'une image et depuis l'atelier d'une animation, un geste *Enregistrer",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 304
+      },
+      {
+        "id": "RP20.2",
+        "type": "check",
+        "parent": "RP20",
+        "title": "L'écran demande le sujet, la pose et la direction d'arrivée, préremplis ; avec un miroir",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 305
+      },
+      {
+        "id": "RP20.3",
+        "type": "check",
+        "parent": "RP20",
+        "title": "Le nouvel asset entre en bibliothèque avec le rendu pour image brute et une recette",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 306
+      },
+      {
+        "id": "RP20.4",
+        "type": "check",
+        "parent": "RP20",
+        "title": "Pour une animation, la nouvelle bande a le même nombre de frames et la même cadence, et",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 307
+      },
+      {
+        "id": "RP20.5",
+        "type": "check",
+        "parent": "RP20",
+        "title": "Le nouvel asset dit son origine — original et recette —, et la fiche de l'original le",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 308
+      },
+      {
+        "id": "RP20.6",
+        "type": "check",
+        "parent": "RP20",
+        "title": "La nouvelle case n'est pas retenue pour le jeu ; la retenir est un second geste.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 309
+      },
+      {
+        "id": "RP20.7",
+        "type": "check",
+        "parent": "RP20",
+        "title": "Aucun appel au fournisseur ; le geste marche réseau coupé, et un essai le tient.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 310
+      },
+      {
+        "id": "RP20.8",
+        "type": "check",
+        "parent": "RP20",
+        "title": "L'agent dispose du même geste par l'outil MCP correspondant, avec les mêmes règles.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 311
+      },
+      {
+        "id": "RP21",
+        "type": "epic",
+        "parent": null,
+        "title": "Une planche découpée sur la toile devient une animation",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 312,
+        "blocked_by": null
+      },
+      {
+        "id": "RP21.1",
+        "type": "check",
+        "parent": "RP21",
+        "title": "Sur la toile, la découpe d'une carte importée offre *Animer*, et une bande en sort avec",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 313
+      },
+      {
+        "id": "RP21.2",
+        "type": "check",
+        "parent": "RP21",
+        "title": "Une sélection d'images fixes d'un même sujet offre *En faire une animation* ; l'atelier",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 314
+      },
+      {
+        "id": "RP21.3",
+        "type": "check",
+        "parent": "RP21",
+        "title": "La bande créée se range sous le sujet, la pose et la direction nommés, et chaque frame",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 315
+      },
+      {
+        "id": "RP21.4",
+        "type": "check",
+        "parent": "RP21",
+        "title": "Une sélection qui mélange deux sujets ne propose pas le geste, et dit pourquoi.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 316
+      },
+      {
+        "id": "RP21.5",
+        "type": "check",
+        "parent": "RP21",
+        "title": "Aucun appel au fournisseur, aucun encodage vidéo : la transparence des images est",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 317
+      },
+      {
+        "id": "RP21.6",
+        "type": "check",
+        "parent": "RP21",
+        "title": "Les huit images restent en bibliothèque après le montage ; en faire une bande ne les",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 318
       }
     ],
     "sources": [
@@ -5810,7 +5221,7 @@
         "detail": ""
       }
     ],
-    "scanned_at": "2026-09-13"
+    "scanned_at": "2026-09-15"
   },
   "manual": {
     "items": [
@@ -6420,6 +5831,11 @@
   "milestones": [],
   "activity": [
     {
+      "hash": "cd943e4",
+      "date": "2026-09-13",
+      "text": "Clore RP14 et RP15 au tableau d'Ã©tat, et rafraÃ®chir l'avancement"
+    },
+    {
       "hash": "a16ebe4",
       "date": "2026-09-13",
       "text": "RP2: rendre les quatre rÃ¨gles du jeu, et le cadre qui borne l'agent"
@@ -6473,11 +5889,6 @@
       "hash": "ac33845",
       "date": "2026-09-13",
       "text": "RP1 : trancher le point dur avant d'ouvrir la tranche â€” l'Ã©cran de l'agent ne part pas"
-    },
-    {
-      "hash": "3813380",
-      "date": "2026-09-13",
-      "text": "Affecter les dix-huit tranches de la remise Ã  plat"
     }
   ]
 }

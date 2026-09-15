@@ -144,36 +144,6 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
    l'écart entre deux tailles de planche** — donc l'écran ne montre **aucun** prix par nombre de
    cases : un prix d'appel, multiplié par le nombre d'appels que chaque choix demande.
 
-### Ce qui est ouvert, et ce qui a été fermé devant
-
-**La V3 est close, et trois versions nées de son usage l'ont remplacée** — `V3.01`, `V3.02` et
-`V3.03`, ouvertes le 5 septembre 2026 le jour même où `A7` fermait la V3. Elles ne sont pas un
-cadrage : chacune vient d'une séance où l'auteur s'est servi de ce qui venait d'être livré.
-**`V3.03` est celle qui reste à finir** — l'édition d'une animation devient l'édition d'images,
-et il en manque **la main** : retoucher une frame au pixel, comme sur une image de l'établi.
-
-Les deux choses qui passaient devant la V3 sont closes depuis le 3 septembre 2026, et le tableau
-plus haut le dit : les quatre reprises hors version `R6` à `R9`, et la **V2.3** entière — un
-réglage de départ par nature d'image, la vraie taille de bloc retrouvée, le fond devenu réglage
-du jeu, une liste ouverte de moteurs de détourage, et le rendu qu'on voit avant de payer.
-
-**L'ordre avait changé avec la méthode, et ça ne se lit plus qu'ici.** Tant que la V3 achetait
-des planches, elle attendait la V2.3 : son geste principal était de juger une planche en une
-seconde, et une image mal traitée n'est pas jugeable. Elle achète maintenant des clips vidéo
-qu'elle découpe, et `A9` — le clip entre dans l'atelier — ne dépendait d'aucune tranche. **Elle
-est donc partie la première.** `A10`, l'éditeur de montage, attendait la V2.3 parce qu'il montre
-une image traitée : **il ne l'attend plus.**
-
-**Ce qu'il faut savoir avant d'ouvrir une tranche de la V3 tient dans deux documents.**
-`docs/PLAN.md` ouvre sur le cadrage refondu de la V3 et le verdict de ses cinq chemins ; `docs/bilan-v3.md`
-garde les trois bancs de planches — **141 planches, 6,03 $** — qui ont tué la méthode
-précédente. Trois conclusions commandent tout : **une bonne planche d'animation sur dix**, ce
-qui interdit de bâtir un produit sur *« on commande une planche, on la corrige »* ; **la façon
-de demander est épuisée comme levier**, mesuré sur trente-et-un réglages puis six de plus, donc
-le texte du produit ne bouge pas ; et **ce qui est payé est détruit avant d'être vu**, parce que
-le recadrage prend chaque étape sur sa propre boîte — ce défaut-là vaut pour un clip autant que
-pour une planche, et c'est `A2` qui le répare.
-
 ### Deux risques qui restent, et une règle qui vient de l'usage
 
 **Le risque de méthode de la V2 est ailleurs qu'on ne croyait.** L'appel payant à risque a été

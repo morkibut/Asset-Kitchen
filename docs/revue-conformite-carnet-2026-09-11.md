@@ -6,7 +6,8 @@
 > ont été interrompues et ne servent pas de base à ce rapport.
 >
 > Ce document conserve les constats et les propositions, **pas un second plan ni un tableau
-> d'avancement**. Le découpage proposé est dans [PLAN-carnet.md](PLAN-carnet.md#amendement-rf--conformité-aux-maquettes-et-parcours).
+> d'avancement**. Le découpage proposé — l'amendement RF, remplacé par l'atelier unifié le
+> 11 septembre 2026 — est en archive : [plan-carnet-amendement-rf.md](archive/plan-carnet-amendement-rf.md).
 
 ## Conclusion
 
