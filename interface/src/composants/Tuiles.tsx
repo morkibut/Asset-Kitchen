@@ -62,7 +62,7 @@ function NouvelEnsemble({ projet, onGarder, onFermer }: { projet: string; onGard
       <div className="flex flex-wrap gap-[14px]">{([['taille', 'Taille de tuile'], ['marge', 'Marge extérieure'], ['espacement', 'Espacement']] as const).map(([cle, titre]) => <label key={cle} className="flex flex-col gap-[4px]">{titre} · px<input type="number" className={`${CHAMP} w-[128px]`} min={cle === 'taille' ? 2 : 0} max={cle === 'taille' ? 512 : cle === 'marge' ? 1024 : 256} value={grille[cle]} onChange={e => setGrille(g => ({ ...g, [cle]: Number(e.target.value) }))} /></label>)}</div>
       <button disabled={!image || !nom.trim()} className={BOUTON} onClick={() => void agir(async () => { if (image) onGarder(await tuiles.creer(projet, { nom, image: image.identifiant, grille })) })}>Créer l’ensemble</button><button className={BOUTON} onClick={onFermer}>Fermer</button>
     </fieldset>
-    {bibliotheque && <BibliothequePourImage onChoisir={choisir} onFermer={() => setBibliotheque(false)} />}
+    {bibliotheque && <BibliothequePourImage retour="Les tuiles" onChoisir={choisir} onFermer={() => setBibliotheque(false)} />}
     {fabriquer && <FabricationImageLocale projet={projet} onAsset={id => void agir(async () => choisir(await api.lireAsset(id)))} onFermer={() => setFabriquer(false)} />}
   </div>
 }
@@ -131,6 +131,6 @@ function EditeurTuiles({ ensemble: e, onGarder, onAsset, onLivraisons }: { ensem
         {livraison && <div className="mt-[14px] rounded-7 border border-contour p-[14px]"><h3 className="font-serif text-[25px]">Relire les fichiers</h3><p className="break-all text-[12px]">{livraison.dossier}</p><ul className="my-[8px] space-y-[4px] text-[12px]">{livraison.fichiers.map(f => <li key={f.chemin} className="break-all">{f.role} · {f.etat}<br />{f.chemin}</li>)}</ul>{livraison.conflits.map(c => <p key={c.chemin} className="text-[12px] text-echec">{c.chemin} : {c.raison}</p>)}{publie ? <p role="status" className="break-all text-[13px]">Livraison terminée. Ouvrez {livraison.scene} dans Godot.</p> : <button className={BOUTON} disabled={occupe || !livraison.pret} onClick={() => void agir(async () => { await api.livrerGodot(e.projet, livraison.jeton); setPublie(true) })}>Déposer ces fichiers dans Godot</button>}</div>}
       </section>
     </div>
-    {bibliotheque && <BibliothequePourImage onFermer={() => setBibliotheque(false)} onChoisir={a => { if (a.projet !== e.projet) { setErreur('Choisissez une image de ce jeu.'); return }; changerCellule({ correction: a.identifiant }); setBibliotheque(false) }} />}
+    {bibliotheque && <BibliothequePourImage retour="Les tuiles" onFermer={() => setBibliotheque(false)} onChoisir={a => { if (a.projet !== e.projet) { setErreur('Choisissez une image de ce jeu.'); return }; changerCellule({ correction: a.identifiant }); setBibliotheque(false) }} />}
   </div>
 }

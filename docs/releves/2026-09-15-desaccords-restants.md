@@ -163,12 +163,12 @@ collection.*
 | Découper en N asset(s) | `Decoupe.tsx:517` | **Découper en N sujets** — *asset* est sur la liste noire |
 | Revenir aux zones | `Decoupe.tsx:1246` | **‹ Les zones** |
 
-## Choisir dans la bibliothèque — **RP6**
+## Choisir dans la bibliothèque — **RP6** ✅ fermé le 15 septembre 2026
 
-| Aujourd'hui | Où | Le mot |
-|---|---|---|
-| Revenir au travail | `BibliothequePourImage.tsx:49` | **‹ suivi du nom de l'écran d'où l'on vient** |
-| Afficher les suivantes | `BibliothequePourImage.tsx:60` | **Suivant** — avec **Précédent** en regard |
+~~| Aujourd'hui | Où | Le mot |~~
+~~|---|---|---|~~
+~~| Revenir au travail | `BibliothequePourImage.tsx:49` | **‹ suivi du nom de l'écran d'où l'on vient** |~~
+~~| Afficher les suivantes | `BibliothequePourImage.tsx:60` | **Suivant** — avec **Précédent** en regard |~~
 
 ## Importer pour un sujet — **RP5**
 

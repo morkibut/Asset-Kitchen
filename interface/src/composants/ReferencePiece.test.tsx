@@ -11,6 +11,7 @@ const image = { identifiant: "ref", label: "Épée sur fond neutre", type_media:
 beforeEach(() => {
   vi.spyOn(api, "lireAsset").mockResolvedValue(image)
   vi.spyOn(api, "assets").mockResolvedValue({ assets: [image], total: 1 } as Awaited<ReturnType<typeof api.assets>>)
+  vi.spyOn(api, "arbre").mockResolvedValue({ collections: [] } as never)
   vi.spyOn(apiCalques, "reglerPiece").mockImplementation(async (_p, _id, champs) => ({ piece: { ...piece, ...champs } }))
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
@@ -20,7 +21,7 @@ test("une référence commune se voit et le choix n’impose aucun rôle de calq
   render(<ReferencePiece projet="marais" piece={piece} onChange={changer} />)
   expect(await screen.findByAltText("Épée sur fond neutre")).toBeInTheDocument()
   fireEvent.click(screen.getByRole("button", { name: "Choisir ou importer une référence" }))
-  fireEvent.click(await screen.findByRole("button", { name: "Épée sur fond neutre" }))
+  fireEvent.click(await screen.findByRole("button", { name: "Choisir Épée sur fond neutre" }))
   expect(screen.queryByRole("combobox", { name: "Rôle de cette image" })).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole("button", { name: "Définir comme référence de la pièce" }))
   await waitFor(() => expect(apiCalques.reglerPiece).toHaveBeenCalledWith("marais", "epee", { references: ["ref"] }))

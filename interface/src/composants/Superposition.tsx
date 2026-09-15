@@ -715,7 +715,7 @@ export function EcranSuperposition({
 
       {/* ── Le travail ───────────────────────────────────────────────────── */}
       <div className="col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col">
-        {choisir ? <BibliothequePourImage voisines={soeurs} onFermer={() => setChoisir(null)} onChoisir={(image) => void changerImages(choisir === "dessus" ? image.identifiant : pose.dessus, choisir === "dessous" ? image.identifiant : pose.dessous)} /> : <>
+        {choisir ? <BibliothequePourImage retour="Superposition" voisines={soeurs} onFermer={() => setChoisir(null)} onChoisir={(image) => void changerImages(choisir === "dessus" ? image.identifiant : pose.dessus, choisir === "dessous" ? image.identifiant : pose.dessous)} /> : <>
         <div className="flex flex-wrap gap-[8px] border-b border-trait p-[8px]">
           <Choix valeurs={["travail", "calque", "resultat"] as const} valeur={vue} libelles={{ travail: "Caler et retoucher", calque: "Calque seul", resultat: "Résultat" }} onChange={setVue} />
           {vue === "travail" && <Choix valeurs={["deplacer", "rectangle", "garder", "retirer"] as const} valeur={outil} libelles={{ deplacer: "Déplacer le dessus", rectangle: "Rectangle", garder: "Garder", retirer: "Retirer" }} onChange={setOutil} />}

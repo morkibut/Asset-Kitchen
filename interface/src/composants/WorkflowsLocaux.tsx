@@ -119,7 +119,7 @@ export function FabricationImageLocale({ projet, identifiantInitial, modeleIniti
   async function action(geste: () => Promise<TravailImageLocale>) { setOccupe(true); setErreur(""); try { const t = await geste(); setTravail(t); setEdition(false) } catch (e) { setErreur(message(e)) } finally { setOccupe(false) } }
   const refs = demande.references || []
   const bloque = !profil ? "Choisissez un workflow image." : !diagnostic?.disponible ? "Vérifiez les prérequis du workflow." : refs.length !== profil.references_min ? `Ce workflow demande exactement ${profil.references_min} référence(s).` : !demande.prompt.trim() ? "Décrivez l’image à fabriquer." : ""
-  if (bibliotheque) return <BibliothequePourImage onFermer={() => setBibliotheque(false)} onChoisir={a => { changer({ references: [...refs, a.identifiant] }); setBibliotheque(false) }} />
+  if (bibliotheque) return <BibliothequePourImage retour="Workflows locaux" onFermer={() => setBibliotheque(false)} onChoisir={a => { changer({ references: [...refs, a.identifiant] }); setBibliotheque(false) }} />
   return <section aria-label="Fabriquer une image locale" className="space-y-[22px] p-[22px] text-encre">
     <header className="flex items-start justify-between gap-[14px]"><div><h2 className="font-serif text-[38px]">Fabriquer une image locale</h2><p className="mt-[8px] text-[13px] text-encre-3">Le résultat rejoint la galerie et reste disponible pour vos assets et votre univers.</p></div>{onFermer && <button className={BOUTON} onClick={onFermer}>Fermer</button>}</header>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}<AvisBrouillon brouillon={brouillon} />

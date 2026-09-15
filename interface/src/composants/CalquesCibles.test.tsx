@@ -5,7 +5,7 @@ import { apiCalques, type CiblesEmploi, type VarianteCalque } from "../api-calqu
 import { CalquesDeLEmploi } from "./CalquesDeLEmploi"
 import { EditeurCalqueCible } from "./EditeurCalqueCible"
 import { AssocierImageEquipement } from "./AssocierImageEquipement"
-import { ChoisirImageEquipement } from "./ChoisirImageEquipement"
+import { BibliothequePourImage } from "./BibliothequePourImage"
 
 const chemin = { projet: "marais", piece: "epee", emploi: "porte-pelerin" }
 const image = { identifiant: "source", label: "Épée sur le pèlerin", projet: "marais", type_media: "image/png", largeur: 64, hauteur: 64, rendu_largeur: 64, rendu_hauteur: 64, recette: RECETTE_VIDE, empreinte: "source-1" } as Asset
@@ -120,13 +120,14 @@ test("la retouche exige une pièce, son emploi, une frame précise et un rôle e
 })
 
 test("la bibliothèque affiche des vignettes, filtre les favoris et garde le rôle choisi", async () => {
+  vi.spyOn(api, "arbre").mockResolvedValue({ collections: [] } as never)
   const assets = vi.spyOn(api, "assets").mockResolvedValue({ assets: [image], total: 1 })
   const choisir = vi.fn().mockResolvedValue(undefined)
-  render(<ChoisirImageEquipement onChoisir={choisir} onFermer={vi.fn()} />)
-  const bouton = await screen.findByRole("button", { name: "Épée sur le pèlerin" })
+  render(<BibliothequePourImage retour="Épée divine" role="choix" onChoisir={choisir} onFermer={vi.fn()} />)
+  const bouton = await screen.findByRole("button", { name: "Choisir Épée sur le pèlerin" })
   expect(within(bouton).getByRole("presentation")).toHaveAttribute("src", expect.stringContaining("source"))
   fireEvent.click(screen.getByLabelText("Favoris"))
-  await waitFor(() => expect(assets).toHaveBeenLastCalledWith({ recherche: "", favoris: true, limite: 60 }))
+  await waitFor(() => expect(assets).toHaveBeenLastCalledWith({ recherche: "", collection: null, favoris: true, limite: 60 }))
   fireEvent.click(bouton)
   fireEvent.change(screen.getByLabelText("Rôle de cette image"), { target: { value: "calque" } })
   fireEvent.click(screen.getByRole("button", { name: "Associer cette image" }))

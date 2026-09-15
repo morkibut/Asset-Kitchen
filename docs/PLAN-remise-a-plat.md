@@ -325,7 +325,7 @@ plusieurs fichiers.
 - [ ] Une vidéo et une planche ouvrent toujours la suite qui convient.
 - [ ] Ce qui entre sans case reste visible dans *Pas encore rangé*.
 
-## RP6 · Une seule grille de choix d'image
+## RP6 · Une seule grille de choix d'image ✅ **close le 15 septembre 2026**
 
 **Bloquée par** : RP3.
 
@@ -335,11 +335,11 @@ l'aperçu en grand d'un côté, le rôle demandé après le choix et l'import de
 
 ### Critères d'acceptation
 
-- [ ] Une seule grille de choix d'image dans tout le produit.
-- [ ] Elle porte le filtre par collection, l'aperçu en grand, l'import de fichier, et le rôle
+- [x] Une seule grille de choix d'image dans tout le produit.
+- [x] Elle porte le filtre par collection, l'aperçu en grand, l'import de fichier, et le rôle
   quand celui qui l'ouvre en demande un.
-- [ ] Le rôle ne se demande que là où il a un sens.
-- [ ] L'invariant tient : cette grille n'est pas *la* grille d'assets du produit, et elle n'a ni
+- [x] Le rôle ne se demande que là où il a un sens.
+- [x] L'invariant tient : cette grille n'est pas *la* grille d'assets du produit, et elle n'a ni
   filtres multiples ni sélection multiple.
 
 ## RP7 · Une seule grille d'assets
@@ -412,6 +412,36 @@ La toile est l'outil de conception du projet. Aujourd'hui elle ne mène nulle pa
 ## RP10 · La livraison décide au lieu de bloquer
 
 **Bloquée par** : rien.
+### Les gestes des deux côtés
+
+`BibliothequePourImage.tsx` (« Choisir une référence ») :
+
+- [x] Chercher par texte, filtrer par collection, filtrer par favoris.
+- [x] Pagination (« Afficher les suivantes »).
+- [x] L'aperçu en grand : le pointeur vise, la barre d'espace ouvre.
+- [x] Reçoit des images voisines déjà connues (`voisines`), utilisé par la Superposition.
+- [x] Un clic choisit l'image tout de suite, sans étape de confirmation.
+- [x] Montée à neuf endroits : *Ce qui part*, Fabriquer en 3D, Vidéo libre, Les tuiles (deux
+  fois), Workflows locaux, Importer des images, Superposition.
+
+`ChoisirImageEquipement.tsx` (choisir une image pour un équipement) :
+
+- [x] Chercher par texte, filtrer par favoris.
+- [x] Pagination (« Afficher les images suivantes »).
+- [x] Importer un fichier depuis le disque.
+- [x] Un clic sélectionne l'image, puis demande son rôle — corps équipé, calque, ou référence —
+  avant de confirmer.
+- [x] Un mode *référence seulement* : le rôle est fixé, aucun sélecteur ne se montre.
+- [x] Montée à deux endroits : les calques d'un emploi, la référence commune d'une pièce.
+
+**La fusion.** `BibliothequePourImage.tsx` porte désormais tous ces gestes ; `ChoisirImageEquipement.tsx`
+a disparu et ses deux montages lisent la grille unique avec `role="choix"` ou `role="reference"`.
+Sans rôle demandé, le clic choisit tout de suite, comme avant ; avec un rôle demandé, il ouvre le
+même temps de relecture qu'avant. Au passage, deux mots de
+[`docs/releves/2026-09-15-desaccords-restants.md`](releves/2026-09-15-desaccords-restants.md)
+§ RP6 se ferment : le bouton de fermeture porte désormais `‹ ` suivi du nom de l'écran d'où l'on
+vient, et la pagination porte *Suivant* / *Précédent* au lieu d'« Afficher les suivantes ».
+
 
 Un conflit de fichier arrête tout : l'écran écrit la raison en rouge et éteint le bouton. La
 maquette proposait trois décisions par conflit — conserver, copier à côté, remplacer.

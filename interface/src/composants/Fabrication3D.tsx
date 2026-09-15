@@ -84,7 +84,7 @@ export function Parcours3D({ personnage, onBande }: { personnage: Personnage; on
       {catalogue && d.etape === "rendu" && <CameraDeRendu3D catalogue={catalogue} demande={d} onChanger={changer} />}
       <button className={CHAMP} disabled={occupe || correctionsEnCours || !catalogue || (d.etape === "modele_3d" ? !d.reference_asset : !d.personnage_externe)} onClick={() => void preparer()}>Relire cette étape avant de lancer</button>
     </div>}
-    {choix && <CadreDialogue titre="Image de départ du modèle 3D" onFermer={() => setChoix(false)} enfants={<BibliothequePourImage onChoisir={(a) => { changer({ reference_asset: a.identifiant, personnage_externe: undefined }); setChoix(false) }} onFermer={() => setChoix(false)} />} />}
+    {choix && <CadreDialogue titre="Image de départ du modèle 3D" onFermer={() => setChoix(false)} enfants={<BibliothequePourImage retour="Fabriquer en 3D" onChoisir={(a) => { changer({ reference_asset: a.identifiant, personnage_externe: undefined }); setChoix(false) }} onFermer={() => setChoix(false)} />} />}
     {travail && <SuiviFabrication3D initiale={travail} onFermer={() => { setTravail(null); void relire() }} onBande={onBande} onSuite={(t) => { changer({ etape: t.etape === "modele_3d" ? "rig" : "rendu", personnage_externe: t.resultat_3d?.personnage, reglages: {} }); setTravail(null); void consulter() }} />}
   </section>
 }

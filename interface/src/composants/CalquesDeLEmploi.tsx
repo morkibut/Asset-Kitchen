@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { api, type EmplacementCorps, type EmploiResolu, type Personnage, type Piece } from "../api"
 import { apiCalques, cleCible, ETAT_CALQUE, type CiblesEmploi, type ImageCible, type VarianteCalque } from "../api-calques"
-import { ChoisirImageEquipement } from "./ChoisirImageEquipement"
+import { BibliothequePourImage } from "./BibliothequePourImage"
 import { EditeurCalqueCible } from "./EditeurCalqueCible"
 import { CouvertureDeLEmploi } from "./CouvertureDeLEmploi"
 
@@ -104,7 +104,7 @@ export function CalquesDeLEmploi({ projet, emploi, piece, porteur, emplacements,
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {(selection || variante) && <div className="flex flex-wrap items-center gap-[8px] border-b border-trait p-[14px]"><span className="min-w-0 flex-1 text-[13px] text-encre">{noms.get(selection?.pose ?? variante?.base.pose ?? "") ?? selection?.pose ?? variante?.base.pose} · {selection?.direction || variante?.base.direction || "sans direction"}{selection?.cible.nature === "frame" ? ` · frame ${(selection.rang ?? 0) + 1}` : ""}</span>{selection && <button className={CONTROLE} onClick={() => { if (autoriser()) setChoisirImage(true) }}>Associer ou importer une image</button>}</div>}
         {variantes.length > 0 && <div aria-label="Versions de cette cible" className="defile flex shrink-0 gap-[8px] overflow-x-auto border-b border-trait p-[14px]">{variantes.map((v) => <button key={v.identifiant} aria-pressed={variante?.identifiant === v.identifiant && !choisirImage} onClick={() => { if (autoriser()) { setVarianteChoisie(v.identifiant); setChoisirImage(false) } }} className={`flex w-[128px] shrink-0 flex-col gap-[4px] rounded-7 border p-[8px] text-left ${variante?.identifiant === v.identifiant && !choisirImage ? "border-signal bg-ligne-ouverte" : "border-trait bg-carte"}`}><img src={apiCalques.image(chemin, v)} alt="" loading="lazy" className="damier-papier h-[54px] w-full object-contain" /><span className="text-[11px] text-encre">{ETAT_CALQUE[v.etat]}{v.retenue ? " · retenue" : ""}</span></button>)}</div>}
-        {choisirImage && selection ? <ChoisirImageEquipement onFermer={() => setChoisirImage(false)} onChoisir={async (asset, role) => garder(await apiCalques.creer(chemin, selection.cible, asset.identifiant, role))} />
+        {choisirImage && selection ? <BibliothequePourImage retour={piece.nom} role="choix" onFermer={() => setChoisirImage(false)} onChoisir={async (asset, role) => garder(await apiCalques.creer(chemin, selection.cible, asset.identifiant, role!))} />
           : variante ? <EditeurCalqueCible key={`${variante.identifiant}:${variante.revision}`} chemin={chemin} variante={variante} cibles={donnees?.cibles} onGarde={garder} onSale={setSale} />
             : <div className="p-[30px]"><h2 className="font-serif text-[25px] text-encre">{selection ? "Le premier calque de cette image" : "Choisir une image du personnage"}</h2><p className="mt-[14px] max-w-prose text-[13px] leading-[1.5] text-encre-3">{selection ? "Importez le personnage équipé pour en extraire la pièce, ou associez un calque déjà transparent. La base reste conservée et chaque version se vérifie avant d’être retenue." : "La liste regroupe les résultats existants par mouvement et direction. Les calques de pose d’avant cet atelier restent accessibles par le bouton historique."}</p>{selection && <button className={`${CONTROLE} mt-[22px]`} onClick={() => setChoisirImage(true)}>Choisir une image dans la bibliothèque</button>}</div>}
       </div>

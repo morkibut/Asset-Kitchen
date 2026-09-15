@@ -11,6 +11,20 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP6 · Une seule grille de choix d'image — 15 septembre 2026
+
+**Une fusion, pas un choix entre les deux.** `BibliothequePourImage.tsx` portait déjà la
+recherche, le filtre par collection, les favoris, la pagination et l'aperçu en grand ;
+`ChoisirImageEquipement.tsx` portait en plus l'import de fichier et le rôle demandé après le
+choix. La grille unique porte tout ça, et le rôle ne se demande que quand celui qui l'ouvre en
+passe un (`role="choix"` ou `role="reference"`) — sans lui, un clic choisit l'image tout de
+suite, exactement comme avant. `ChoisirImageEquipement.tsx` a disparu ; ses deux montages (les
+calques d'un emploi, la référence commune d'une pièce) lisent désormais la grille unique.
+
+**Deux mots fermés au passage**, d'après `docs/releves/2026-09-15-desaccords-restants.md` § RP6 :
+le bouton de fermeture porte `‹ ` suivi du nom de l'écran d'où l'on vient, et la pagination porte
+*Suivant* / *Précédent* au lieu d'« Afficher les suivantes ».
+
 ## RP19 · L'image de référence d'une fiche se choisit — 15 septembre 2026
 
 **Ce que la tranche a appris tient dans la forme du repli.** Le critère *« supprimer l'image de

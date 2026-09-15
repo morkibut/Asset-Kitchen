@@ -94,7 +94,7 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
     setFabriquerImage(!travail.demande.reference_asset && !!travail.demande.modele_image); setEdition(true)
   }
   const bloque = !demande.reference_asset && !fabriquerImage ? "Choisissez ou importez une image de départ." : fabriquerImage && (!image || image.refus) ? image?.refus || "Choisissez le modèle qui créera l’image de départ." : fabriquerImage && !demande.prompt_image?.trim() ? "Décrivez l’image de départ." : !video || video.grise ? video?.grise || "Choisissez un modèle vidéo compatible avec le format." : !demande.prompt_video.trim() ? "Décrivez le mouvement à filmer." : ""
-  if (choix) return <BibliothequePourImage onFermer={() => setChoix(null)} onChoisir={a => {
+  if (choix) return <BibliothequePourImage retour="Vidéo libre" onFermer={() => setChoix(null)} onChoisir={a => {
     if (a.projet !== projet) { setErreur("Choisissez une image du jeu ouvert."); setChoix(null); return }
     changer(choix === "depart" ? { reference_asset: a.identifiant, modele_image: null } : { references_image: [...refs, a.identifiant] })
     if (choix === "depart") setFabriquerImage(false)

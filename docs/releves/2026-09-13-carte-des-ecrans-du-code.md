@@ -279,16 +279,11 @@ Voir *Les écrans morts*.
 - **Attention** : il fait le même travail qu'`ImporterIntelligemment`. Voir *Les doublons*.
 - **Fichier** : `interface/src/composants/ImporterPourUnSujet.tsx`
 
-### BibliothequePourImage — « Choisir une référence »
-- **On y arrive par** : *Choisir une référence* dans la barre qui paie ; *Ajouter une référence* dans l'écran de ce qui part ; et depuis les fabrications locales, les tuiles, la vidéo libre, la 3D.
-- **Ce qu'il fait** : choisit une image déjà en bibliothèque, sans la recopier.
+### BibliothequePourImage — « Choisir une image »
+- **On y arrive par** : *Choisir une référence* dans la barre qui paie ; *Ajouter une référence* dans l'écran de ce qui part ; depuis les fabrications locales, les tuiles, la vidéo libre, la 3D ; la page d'un emploi → une cible de calque → *Choisir une image* ; et la référence d'une pièce.
+- **Ce qu'il fait** : choisit une image déjà en bibliothèque, sans la recopier, ou en importe une nouvelle depuis le disque. Là où celui qui l'ouvre a besoin d'un rôle — corps équipé, calque, ou référence —, un temps de relecture le demande avant de confirmer.
+- **RP6 (15 septembre 2026)** : c'est la fusion de cet écran et de l'ancien `ChoisirImageEquipement.tsx`, qui a disparu — c'était une seconde grille de choix d'image faisant le même travail. Voir *Les doublons*.
 - **Fichier** : `interface/src/composants/BibliothequePourImage.tsx`
-
-### ChoisirImageEquipement — choisir une image pour un équipement
-- **On y arrive par** : la page d'un emploi → une cible de calque → *Choisir une image* ; ou la référence d'une pièce.
-- **Ce qu'il fait** : choisit une image et dit son rôle — corps équipé, calque, ou référence.
-- **Attention** : c'est une seconde grille de choix d'image. Voir *Les doublons*.
-- **Fichier** : `interface/src/composants/ChoisirImageEquipement.tsx`
 
 ### CreerUnAsset — créer un asset
 - **On y arrive par** : *Créer un asset* depuis le tableau de bord ; ou *Créer* dans *Les assets*.

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { api, type Asset, type Piece } from "../api"
 import { apiCalques } from "../api-calques"
 import { vignetteAsset } from "./Apercu"
-import { ChoisirImageEquipement } from "./ChoisirImageEquipement"
+import { BibliothequePourImage } from "./BibliothequePourImage"
 
 const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle disabled:opacity-50"
 
@@ -30,6 +30,6 @@ export function ReferencePiece({ projet, piece, onChange }: { projet: string; pi
     {edition ? <div className="mt-[14px]"><textarea aria-label="Description de la pièce" className="min-h-[128px] w-full rounded-7 border border-contour bg-carte p-[14px] text-[13px]" value={description} onChange={e => setDescription(e.target.value)} /><button className={`${BOUTON} mt-[8px]`} disabled={occupe} onClick={() => void modifier({ description })}>Conserver la description</button></div> : <p className="mt-[14px] text-[13px]">{piece.description || "Décrivez sa matière, sa silhouette et ses détails reconnaissables."}</p>}
     <div className="mt-[14px] flex flex-wrap items-start gap-[14px]">{references.map(a => <figure key={a.identifiant} className="w-[128px]"><img className="damier-papier h-[128px] w-full object-contain" src={vignetteAsset(a, 128)} alt={a.label || "Référence de la pièce"} /><figcaption className="mt-[4px] text-[12px]">{a.label}</figcaption><button className="mt-[8px] text-[12px] underline" disabled={occupe} onClick={() => void modifier({ references: (piece.references ?? []).filter(id => id !== a.identifiant) })}>Retirer cette référence</button></figure>)}<button className={BOUTON} onClick={() => setChoisir(true)}>Choisir ou importer une référence</button></div>
     {!references.length && <p className="mt-[8px] text-[12px] text-encre-3">Aucune image de référence commune. Vous pouvez utiliser un dessin, une image importée ou un résultat de Fabrications.</p>}
-    {choisir && <ChoisirImageEquipement referenceSeulement onFermer={() => setChoisir(false)} onChoisir={async a => modifier({ references: [...new Set([...(piece.references ?? []), a.identifiant])] })} />}
+    {choisir && <BibliothequePourImage retour={piece.nom} role="reference" onFermer={() => setChoisir(false)} onChoisir={async a => modifier({ references: [...new Set([...(piece.references ?? []), a.identifiant])] })} />}
   </section>
 }

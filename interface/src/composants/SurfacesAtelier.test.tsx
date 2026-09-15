@@ -38,7 +38,7 @@ test("la bibliothèque cherche au-delà des voisines et combine les filtres", as
   vi.spyOn(api, "arbre").mockResolvedValue({ collections: [{ identifiant: "objets", nom: "Objets" }] } as never)
   const charger = vi.spyOn(api, "assets").mockResolvedValue({ assets: [image("casque")], total: 1 })
   const choisir = vi.fn()
-  render(<BibliothequePourImage voisines={[image("corps")]} onChoisir={choisir} onFermer={vi.fn()} />)
+  render(<BibliothequePourImage retour="Superposition" voisines={[image("corps")]} onChoisir={choisir} onFermer={vi.fn()} />)
   await screen.findByRole("button", { name: "Choisir casque" })
   fireEvent.change(screen.getByLabelText("Rechercher une image"), { target: { value: "casque" } })
   fireEvent.change(screen.getByLabelText("Collection des images"), { target: { value: "objets" } })
