@@ -1882,3 +1882,18 @@ la prochaine réécriture retrouvera.
   il n'avait pas été étendu à `onChanger`. Trouvé le 12 septembre 2026 sur `AU2` ; preuve dans
   `interface/src/App.test.tsx` § « une tuile ouvre sa fiche, et la fiche pose l'image sur la
   toile sans fabriquer ».
+- **Un `?? DÉFAUT` posé pour le calcul se voit aussi dans l'affichage, et ment sur l'état vide.**
+  `ReglagesDuRetournement` lisait `recette.retournement ?? RETOURNEMENT_PAR_DEFAUT` pour calculer
+  la table — nécessaire, un retournement n'a pas de valeur neutre. Le même `retournement` servait
+  aussi à dire au cran de la liste lequel est pressé : la place vide (`null`) affichait donc
+  « miroir gauche-droite » sélectionné comme si l'auteur l'avait posé. Deux défauts de ça : aucun
+  clic ne pouvait jamais montrer un cran « rien de choisi », et le premier clic sur le sens déjà
+  affiché ne changeait rien à l'écran alors qu'il venait d'allumer la place pour de vrai — lu par
+  l'auteur comme « l'aperçu ne suit pas la recette », alors que l'aperçu suivait très exactement.
+  ⚠️ **Un secours écrit pour calculer une valeur dérivée n'est pas forcément le bon secours pour
+  dire ce qui est affiché** : la question « que vaut ce champ s'il fallait agir » et la question
+  « ce champ est-il posé » ont deux réponses différentes, et un seul `??` ne peut pas répondre
+  aux deux. La colonne calculée (`retournement`) et la valeur brute (`recette.retournement`,
+  ou `null`) doivent rester deux variables distinctes dans le composant. Trouvé le 16 septembre
+  2026 sur `RP22` ; preuve dans `interface/src/composants/Retouche.test.tsx` § « le retournement
+  se déclique, et la table s'endort et se vide comme les autres ».

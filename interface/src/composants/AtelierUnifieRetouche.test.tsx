@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 import { api, RECETTE_VIDE, UNIVERS_VIDE, type Asset, type AtelierDeBande, type Bande, type EtatTraitement } from "../api"
+import { AIDE } from "../aide"
 import { EcranAtelierDeBande, remonterLaBande } from "./AtelierDeBande"
 import { EcranMontage } from "./Montage"
 
@@ -181,4 +182,104 @@ test("le montage retrouve son nom, sa vitesse et son ordre après fermeture sans
   fireEvent.click(screen.getByRole("button", { name: /Garder « Attaque lourde »/ }))
   await waitFor(() => expect(garder).toHaveBeenCalledOnce())
   expect(garder.mock.calls[0][0]).toMatchObject({ nom: "Attaque lourde", cadence: 13, images: [0, 2, 1] })
+})
+
+// ── RP22 · une table se défait, se remet à zéro, et se voit avant d'enregistrer ──
+//
+// Quatre défauts trouvés à l'usage : un sens du retournement qui ne se
+// décliquait jamais, aucune bascule ni remise à zéro dans l'atelier d'une
+// animation, un aperçu qui ne semblait suivre le retournement qu'après avoir
+// enregistré, et une section de la frame sans titre ni aide.
+
+test("RP22 — un sens déjà choisi se déclique, et l'aperçu porte le retournement avant tout Enregistrer", async () => {
+  const disque = fixture()
+  vi.spyOn(api, "ouvrirLaBande").mockResolvedValue(disque)
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  const apercu = vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  const garder = vi.spyOn(api, "corrigerLaBande")
+  const props = { identifiant: "bande-main", univers: UNIVERS_VIDE, traitement, onFermer: vi.fn(), onErreur: vi.fn() }
+  render(<EcranAtelierDeBande {...props} />)
+  fireEvent.click(await screen.findByRole("button", { name: "arrêter l'animation" }))
+  fireEvent.change(await screen.findByLabelText("Outil de retouche"), { target: { value: "retournement" } })
+  const bouton = await screen.findByRole("button", { name: "miroir gauche-droite" })
+
+  // Rien n'est posé au départ : le cran ne se montre pas pressé pour une
+  // place vide — la panne trouvée par l'auteur, qui l'empêchait de voir la
+  // différence entre « rien » et « déjà choisi ».
+  expect(bouton.getAttribute("aria-pressed")).toBe("false")
+
+  fireEvent.click(bouton)
+  expect(bouton.getAttribute("aria-pressed")).toBe("true")
+  await waitFor(() => {
+    const dernier = apercu.mock.calls.at(-1)?.[0] as { prises: { recette?: { retournement: unknown } | null }[] }
+    expect(dernier.prises[0].recette?.retournement).toEqual({ sens: "gauche-droite" })
+  })
+
+  // Le second clic sur le même cran le retire : la recette n'en porte plus,
+  // et l'aperçu suit — sans qu'on ait touché « Enregistrer ».
+  fireEvent.click(bouton)
+  expect(bouton.getAttribute("aria-pressed")).toBe("false")
+  await waitFor(() => {
+    const dernier = apercu.mock.calls.at(-1)?.[0] as { prises: { recette?: { retournement: unknown } | null }[] }
+    expect(dernier.prises[0].recette?.retournement ?? null).toBeNull()
+  })
+
+  expect(garder).not.toHaveBeenCalled()
+})
+
+test("RP22 — l'atelier d'une animation endort, réveille et vide une table, et Défaire reprend les deux gestes", async () => {
+  const disque = fixture()
+  disque.bande.recette = { ...RECETTE_VIDE, retournement: { sens: "gauche-droite" } } as never
+  vi.spyOn(api, "ouvrirLaBande").mockResolvedValue(disque)
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  const props = { identifiant: "bande-main", univers: UNIVERS_VIDE, traitement, onFermer: vi.fn(), onErreur: vi.fn() }
+  render(<EcranAtelierDeBande {...props} />)
+  fireEvent.click(await screen.findByRole("button", { name: "arrêter l'animation" }))
+  fireEvent.change(await screen.findByLabelText("Outil de retouche"), { target: { value: "retournement" } })
+  await screen.findByRole("button", { name: "miroir gauche-droite" })
+
+  // La bascule de l'établi, posée contre la même table.
+  const endormir = screen.getByRole("button", { name: "L'endormir" })
+  fireEvent.click(endormir)
+  expect(await screen.findByRole("button", { name: "La réveiller" })).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "Défaire" }))
+  expect(await screen.findByRole("button", { name: "L'endormir" })).toBeTruthy()
+
+  // Remettre à zéro vide la table sans l'éteindre : le sens ne reste plus
+  // choisi, et un second Défaire le ramène.
+  fireEvent.click(screen.getByRole("button", { name: "Remettre à zéro" }))
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "miroir gauche-droite" }).getAttribute("aria-pressed")).toBe("false"),
+  )
+  fireEvent.click(screen.getByRole("button", { name: "Défaire" }))
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "miroir gauche-droite" }).getAttribute("aria-pressed")).toBe("true"),
+  )
+})
+
+test("RP22 — la section de la frame dit ses trois gestes, chacun avec son aide lue dans le recueil", async () => {
+  const disque = fixture()
+  vi.spyOn(api, "ouvrirLaBande").mockResolvedValue(disque)
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  const props = { identifiant: "bande-main", univers: UNIVERS_VIDE, traitement, onFermer: vi.fn(), onErreur: vi.fn() }
+  render(<EcranAtelierDeBande {...props} />)
+  fireEvent.click(await screen.findByRole("button", { name: "arrêter l'animation" }))
+
+  // Le titre dit ce que la section fait — plus de « Position, source et
+  // pelure d'oignon », qui ne le disait pas.
+  expect(await screen.findByText("Déplacer, remplacer, voir en transparence")).toBeTruthy()
+
+  for (const [libelle, cle] of [
+    ["Déplacer", "bande.position"],
+    ["Remplacer", "bande.remplacer"],
+    ["Comparer", "bande.pelure"],
+  ] as const) {
+    const bouton = screen.getByRole("button", { name: libelle })
+    fireEvent.click(bouton)
+    const bulle = await screen.findByRole("tooltip")
+    expect(bulle.textContent).toContain(AIDE[cle].quoi)
+    fireEvent.click(bouton) // dépingle, pour ne pas gêner le bouton suivant
+  }
 })

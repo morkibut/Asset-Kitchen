@@ -2118,6 +2118,40 @@ export const AIDE: Record<string, Explication> = {
     origine: "Défaire / Refaire · Ctrl + Z / Ctrl + Maj + Z · Ctrl + S pour enregistrer",
     long: "Les changements restent des essais jusqu’à Enregistrer. L’historique permet de parcourir les quatre-vingts derniers états de cette session. Annuler revient au dernier état enregistré. À la réouverture, la bande reprend ses corrections enregistrées ; un brouillon non enregistré peut être repris explicitement. L’historique de gestes démarre une nouvelle session.",
   },
+  // ── Les trois gestes de la frame — RP22, la section « Position, source et
+  //    pelure d'oignon » ne disait ni ce qu'elle faisait ni comment s'en
+  //    servir. Trois entrées plutôt qu'une : chaque geste a la sienne, comme
+  //    le veut G3, au lieu d'une phrase unique qui aurait mélangé trois choses
+  //    différentes.
+  "bande.position": {
+    nom: "Déplacer une image dans son cadre",
+    ou: "bande",
+    quoi: "Les flèches du clavier poussent l'image choisie d'un pixel du sprite ; avec Majuscule, de cinq.",
+    change:
+      "Cette image-là seule, dans sa case. Rien d'autre ne bouge, et rien n'est écrit avant Enregistrer.",
+    origine: "toi · atelier de l'animation",
+    long: "Aux bords, les flèches cessent d'avoir un effet plutôt que de rogner l'image : une correction qui mangerait un bras ne se verrait pas ici, et se découvrirait dans le jeu. « Remettre cette image droite » efface la poussée et revient à zéro, sans toucher aux autres images de l'animation.",
+  },
+
+  "bande.remplacer": {
+    nom: "Remplacer la source d'une frame",
+    ou: "bande",
+    quoi: "Choisir une autre image du même clip, ou d'un clip voisin du même personnage, pour la case choisie.",
+    change:
+      "Rien n'est payé : le clip est déjà réglé, et il porte déjà toutes ses images. Une recette posée en regardant l'ancienne image ne suit pas — elle désignait un endroit qui n'existe pas forcément au même endroit sur la nouvelle.",
+    origine: "toi · le clip et ses voisins",
+    long: "La liste des clips ne montre que ceux du même personnage : un clip d'ailleurs donnerait une animation où le sujet change au milieu. Elle ne paraît pas s'il n'y en a qu'un — un menu à un seul choix n'est pas un choix.",
+  },
+
+  "bande.pelure": {
+    nom: "Voir l'image précédente en transparence",
+    ou: "bande",
+    quoi: "Superposer l'image d'avant à celle qu'on règle, avec un curseur d'opacité.",
+    change: "Rien à l'animation : c'est un repère pour l'œil, jamais enregistré.",
+    origine: "toi · les images voisines de l'animation",
+    long: "C'est ce qui permet de juger un déplacement au lieu de le deviner : à zéro pour cent, rien ne se voit ; monté, l'image d'avant apparaît en fondu derrière celle qu'on corrige.",
+  },
+
   "atelier.brouillon": {
     nom: "Reprendre des réglages non enregistrés",
     ou: "bande",

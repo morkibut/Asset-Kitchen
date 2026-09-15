@@ -1014,7 +1014,7 @@ du produit depuis `E1` — l'établi est une profondeur, pas un lieu de plus.
 - [x] Les huit images restent en bibliothèque après le montage ; en faire une bande ne les
   consomme pas.
 
-## RP22 · Une table se défait, se remet à zéro, et se voit avant d'enregistrer
+## RP22 · Une table se défait, se remet à zéro, et se voit avant d'enregistrer ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien. **Elle s'appuie sur** : l'invariant du lot U — *une place s'éteint
 sans se vider : éteindre et vider ne sont pas le même geste* — et sur `G3` — *une explication
@@ -1046,11 +1046,11 @@ Ce qui se livre, dans l'atelier d'une animation comme sur l'établi d'une image 
 
 - [ ] Dans l'atelier d'une animation, cliquer un *sens* déjà choisi le retire ; la recette
   n'en porte plus, et l'aperçu le montre sans enregistrer.
-- [ ] Chaque table de l'atelier d'une animation a la bascule *L'endormir / La réveiller* de
+- [x] Chaque table de l'atelier d'une animation a la bascule *L'endormir / La réveiller* de
   l'établi, et un geste *Remettre à zéro* qui vide la table sans l'éteindre.
 - [ ] L'aperçu se refait à chaque geste sur la recette, retournement compris ; un essai le
   tient en comparant l'aperçu avant *Enregistrer* au rendu après.
-- [ ] La section *Position, source et pelure d'oignon* porte un titre qui dit ses trois
+- [x] La section *Position, source et pelure d'oignon* porte un titre qui dit ses trois
   gestes, et chacun a une explication atteignable depuis lui, lue dans le recueil.
 - [ ] Les mêmes mots pour les mêmes gestes sur l'établi d'une image et dans l'atelier d'une
   animation — `docs/vocabulaire.html` les fixe.
@@ -1083,3 +1083,10 @@ existant n'est pas finie.
 Pour ce plan, une règle de plus, parce que c'est son sujet : **une tranche qui fusionne deux
 écrans nomme, avant de commencer, la liste des gestes des deux côtés, et coche cette liste à la
 fin.** Une capacité perdue dans une fusion ne se voit pas ; elle se retrouve six mois plus tard.
+### Ce qui bloquait l'aperçu
+
+L'aperçu se refaisait déjà bien à chaque geste — mesuré sur le serveur et sur l'écran, hors
+enregistrement. Le blocage était l'affichage du sens choisi : `retournement ?? DÉFAUT` montrait
+toujours un cran pressé, même place vide, si bien qu'un premier clic semblait ne rien changer.
+Réparé avec le déclique du critère suivant : les deux venaient de la même cause.
+

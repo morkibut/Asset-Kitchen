@@ -45,7 +45,7 @@ import {
 import { rangDeLaBande } from "./Apercu"
 import { Curseur, EnTetePanneau, Libelle } from "./pieces"
 import { PANNEAU } from "./Infobulle"
-import { avecPassage, mainDe, OPACITE, type Table } from "../recette"
+import { avecPassage, avecVeille, dort, mainDe, OPACITE, placeDe, videe, type Table } from "../recette"
 import { useHistoriqueDeBande, type EtatDeBande } from "./historiqueDeBande"
 import { EcranDecoupe } from "./Decoupe"
 import { SourceDeFrame } from "./SourceDeFrame"
@@ -59,6 +59,7 @@ import { EnregistrerSous, raisonDEnregistrerSous } from "./EnregistrerSous"
 // au passage les moteurs de `B17` et `B18`, qui n'étaient jamais arrivés dans
 // l'ancien panneau — c'est un gain de la tranche, pas un dommage collatéral.
 import {
+  Interrupteur,
   ReglagesDeLaGrille,
   ReglagesDesCouleurs,
   ReglagesDuContour,
@@ -67,6 +68,7 @@ import {
   ReglagesDuRecadrage,
   ReglagesDeLaMain,
   ReglagesDuRetournement,
+  RemettreAZero,
   SelecteurDeTable,
   ToileDeLaMain,
   type Poste,
@@ -1208,6 +1210,22 @@ export function EcranAtelierDeBande({
 
         <AvisBrouillon brouillon={brouillon} />
         {panneau === "retouche" && <SelecteurDeTable table={table} onTable={(suivante) => { setTable(suivante); setPasseArmee(null); setRectangleSource(false); if (suivante === "main") setSelection([choisie]) }} />}
+        {/* **La bascule et la remise à zéro de l'établi, posées contre la
+            même table** (RP22) : avant, ni l'une ni l'autre n'existaient ici,
+            et un réglage raté sur une frame ne se rattrapait qu'en refermant
+            l'atelier sans enregistrer. Absentes pour les deux fabriques —
+            elles n'ont pas de place dans la recette. */}
+        {panneau === "retouche" && poste && placeDe(table) !== null && (
+          <div className="flex shrink-0 items-center gap-[8px]">
+            <RemettreAZero onClick={() => void poste!.poser(videe(poste!.recette, table))} />
+            <Interrupteur
+              endormie={dort(poste.recette, table)}
+              onBasculer={() =>
+                void poste!.poser(avecVeille(poste!.recette, table, !dort(poste!.recette, table)))
+              }
+            />
+          </div>
+        )}
         <div className="order-last flex shrink-0 flex-wrap gap-[8px] border-t border-trait pt-[14px] text-[12px]">
           <button type="button" disabled={preleve} onClick={async () => {
             setJoue(false); setCourante(rang); setPreleve(true)
@@ -1290,8 +1308,13 @@ export function EcranAtelierDeBande({
         </div>}
         {table === "retournement" && poste && <ReglagesDuRetournement {...poste} />}
 
+        {/* **Le titre dit les trois gestes, plus le mot qui les nommait mal**
+            (RP22) : « Position, source et pelure d'oignon » ne disait ni ce
+            que la section faisait ni comment s'en servir — trois mots de
+            jargon sans un verbe. Les trois verbes du plan, dans l'ordre où ils
+            paraissent dessous. */}
         <details className="border-t border-trait pt-[14px]">
-          <summary className="cursor-pointer text-[13px] text-encre-2">Position, source et pelure d’oignon</summary>
+          <summary className="cursor-pointer text-[13px] text-encre-2">Déplacer, remplacer, voir en transparence</summary>
           <CorrectionDeLImage prise={prises[choisie]} clipDeLaBande={bande.clip} imagesParClip={recu.images_par_clip}
             voisins={recu.clips_voisins} melangee={bande.melangee} pelure={pelure} onPelure={setPelure} onRemplacer={remplacer} onRemettreDroit={remettreDroit} />
         </details>
@@ -1675,24 +1698,32 @@ function CorrectionDeLImage({
         </span>
       </div>
 
+      {/* **Le premier geste : déplacer l'image dans son cadre** (RP22). */}
+      <Libelle aide="bande.position">Déplacer</Libelle>
       <p className="text-[12px] leading-relaxed text-encre-3">
         Poussée de <b className="text-encre-2">{prise.dx}</b> horizontalement et{" "}
         <b className="text-encre-2">{prise.dy}</b> verticalement, en pixels du
         sprite. Aux bords, les flèches <b className="text-encre-2">cessent
         d'avoir un effet</b> plutôt que de rogner l'image.
       </p>
+      {(prise.dx !== 0 || prise.dy !== 0) && (
+        <button
+          type="button"
+          onClick={onRemettreDroit}
+          className="mesure self-start border border-trait px-2 py-1 text-[10px] text-encre-3 hover:text-signal"
+        >
+          remettre cette image droite
+        </button>
+      )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {(prise.dx !== 0 || prise.dy !== 0) && (
-          <button
-            type="button"
-            onClick={onRemettreDroit}
-            className="mesure border border-trait px-2 py-1 text-[10px] text-encre-3 hover:text-signal"
-          >
-            remettre cette image droite
-          </button>
-        )}
-        {combien > 0 && (
+      {/* **Le deuxième geste : la remplacer par une autre image du clip ou
+          d'un clip voisin** (RP22). Voisin seulement : un clip d'ailleurs
+          donnerait une animation où le sujet change au milieu, et la liste ne
+          paraît pas s'il n'y en a qu'un — un menu à un seul choix n'est pas un
+          choix. */}
+      {combien > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <Libelle aide="bande.remplacer">Remplacer</Libelle>
           <label className="mesure flex items-center gap-1.5 text-[10px] text-encre-3">
             la remplacer par l'image
             <input
@@ -1708,68 +1739,65 @@ function CorrectionDeLImage({
             />
             <span>sur {combien}</span>
           </label>
-        )}
-      </div>
-
-      {/* **Aller la chercher dans un autre clip** — ce qui reste de l'ancienne
-          `A3`. Quand deux clips sont chacun bons à moitié, on prend une image
-          dans l'un et une dans l'autre. La liste ne montre que les clips du
-          **même personnage** : un clip d'ailleurs donnerait une animation où le
-          sujet change au milieu. Elle ne paraît pas quand il n'y a qu'un clip —
-          un menu à un seul choix n'est pas un choix. */}
-      {voisins.length > 1 && (
-        <label className="mesure flex flex-wrap items-center gap-1.5 text-[10px] text-encre-3">
-          la prendre dans
-          <select
-            value={venue}
-            onChange={(evenement) => {
-              const choisi = evenement.target.value
-              const combienLa =
-                voisins.find((c) => c.identifiant === choisi)?.images ?? 0
-              // Le numéro est borné sur le clip d'arrivée : l'image 40 d'un clip
-              // de cinquante n'existe pas dans un clip de vingt, et le serveur
-              // refuserait la correction entière.
-              onRemplacer(
-                Math.min(prise.numero, Math.max(0, combienLa - 1)),
-                choisi === clipDeLaBande ? "" : choisi,
-              )
-            }}
-            aria-label="prendre cette image dans un autre clip"
-            className="border border-trait bg-carte px-1 py-0.5 text-encre"
-          >
-            {voisins.map((clip) => (
-              <option key={clip.identifiant} value={clip.identifiant}>
-                {/* **Le repère court avec le mouvement**, et pas seulement le
-                    mouvement : deux tirages de la même marche portent le même
-                    mot, et la liste les rendrait indiscernables. C'est le même
-                    repère que la vignette écrit à côté de l'image. */}
-                {clip.mouvement || "clip"} · {clip.identifiant.slice(0, 8)} —{" "}
-                {clip.images} images
-                {clip.identifiant === clipDeLaBande ? " · celui de l'animation" : ""}
-              </option>
-            ))}
-          </select>
-          <span>· le clip est payé, en reprendre une image ne coûte rien</span>
-        </label>
+          {voisins.length > 1 && (
+            <label className="mesure flex flex-wrap items-center gap-1.5 text-[10px] text-encre-3">
+              la prendre dans
+              <select
+                value={venue}
+                onChange={(evenement) => {
+                  const choisi = evenement.target.value
+                  const combienLa =
+                    voisins.find((c) => c.identifiant === choisi)?.images ?? 0
+                  // Le numéro est borné sur le clip d'arrivée : l'image 40 d'un
+                  // clip de cinquante n'existe pas dans un clip de vingt, et le
+                  // serveur refuserait la correction entière.
+                  onRemplacer(
+                    Math.min(prise.numero, Math.max(0, combienLa - 1)),
+                    choisi === clipDeLaBande ? "" : choisi,
+                  )
+                }}
+                aria-label="prendre cette image dans un autre clip"
+                className="border border-trait bg-carte px-1 py-0.5 text-encre"
+              >
+                {voisins.map((clip) => (
+                  <option key={clip.identifiant} value={clip.identifiant}>
+                    {/* **Le repère court avec le mouvement**, et pas seulement
+                        le mouvement : deux tirages de la même marche portent
+                        le même mot, et la liste les rendrait indiscernables.
+                        C'est le même repère que la vignette écrit à côté de
+                        l'image. */}
+                    {clip.mouvement || "clip"} · {clip.identifiant.slice(0, 8)} —{" "}
+                    {clip.images} images
+                    {clip.identifiant === clipDeLaBande ? " · celui de l'animation" : ""}
+                  </option>
+                ))}
+              </select>
+              <span>· le clip est payé, en reprendre une image ne coûte rien</span>
+            </label>
+          )}
+          {/* ⚠️ **Ce que remplacer coûte, dit avant de remplacer** (V3.03.3).
+              Une recette individuelle a été posée en regardant cette
+              image-là : un point de pipette, un cadre tracé, un passage de la
+              main désignent un endroit qui n'est pas au même endroit sur
+              l'image d'à côté. Elle ne suit donc pas — et *rien ne se réécrit
+              en silence* veut dire que l'écran le dit **avant**, sous le
+              contrôle qui le fera. */}
+          {prise.recette && (
+            <p
+              data-recette-perdue-au-remplacement
+              className="mesure text-[10px] leading-4 text-signal"
+            >
+              Cette image a <b className="text-encre-2">sa recette à elle</b> :
+              la remplacer la rend à la recette de l'animation. C'est une
+              autre image, et un réglage posé en regardant celle-ci
+              mentirait dessus.
+            </p>
+          )}
+        </div>
       )}
 
-      {/* ⚠️ **Ce que remplacer coûte, dit avant de remplacer** (V3.03.3). Une
-          recette individuelle a été posée en regardant cette image-là : un
-          point de pipette, un cadre tracé, un passage de la main désignent un
-          endroit qui n'est pas au même endroit sur l'image d'à côté. Elle ne
-          suit donc pas — et *rien ne se réécrit en silence* veut dire que
-          l'écran le dit **avant**, sous le contrôle qui le fera. */}
-      {prise.recette && (
-        <p
-          data-recette-perdue-au-remplacement
-          className="mesure text-[10px] leading-4 text-signal"
-        >
-          Cette image a <b className="text-encre-2">sa recette à elle</b> : la
-          remplacer la rend à la recette de l'animation. C'est une autre image,
-          et un réglage posé en regardant celle-ci mentirait dessus.
-        </p>
-      )}
-
+      {/* **Le troisième geste : voir la précédente en transparence** (RP22). */}
+      <Libelle aide="bande.pelure">Comparer</Libelle>
       <Curseur
         libelle="L'image d'avant, en transparence"
         valeur={pelure}

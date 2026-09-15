@@ -11,6 +11,20 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP22 · Une table se défait, se remet à zéro, et se voit avant d'enregistrer — 16 septembre 2026
+
+**L'aperçu n'était pas cassé, le bouton mentait sur son propre état.** `retournement ?? DÉFAUT`
+faisait toujours paraître un sens pressé, même la place vide — mesuré côté serveur et côté écran,
+le retournement de chaque frame partait bien dans l'aperçu à chaque geste, avant tout
+enregistrement. Ce que l'auteur prenait pour un aperçu figé était un cran qui ne pouvait ni se
+déclencher pour de vrai à l'œil, ni se décliquer : cliquer le sens déjà affiché reposait la même
+valeur, sans rien montrer de neuf.
+
+**Deux gestes de l'établi manquaient à l'atelier d'une animation, et ils s'exportent tels
+quels.** `L'endormir / La réveiller` et `Remettre à zéro` sont les mêmes composants des deux
+côtés — les poser dans l'atelier a suffi à leur donner l'historique de *Défaire* qui existait
+déjà pour tout le reste, sans code neuf pour l'annulation.
+
 ## RP11 · La galerie se trie, se filtre et se regroupe — 16 septembre 2026
 
 **Le point dur n'était pas *où trier*, c'était *quelles valeurs existent*.** Trier côté serveur

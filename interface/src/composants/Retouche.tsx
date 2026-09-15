@@ -143,6 +143,7 @@ import {
   useMesures,
   useRecette,
   valeur,
+  videe,
   type EtatMain,
   type Table,
   type ZoomTable,
@@ -410,7 +411,10 @@ function Choix<T extends string | number>({
   onChange,
 }: {
   valeurs: readonly T[]
-  valeur: T
+  // **`null` veut dire aucun choix posé** (RP22) : la seule liste où renoncer
+  // a un sens est celle du retournement, et un cran qui resterait toujours
+  // affiché pressé quand la place est vide interdirait de le voir s'éteindre.
+  valeur: T | null
   libelles?: Partial<Record<T, string>>
   eteints?: Partial<Record<T, string>>
   onChange: (v: T) => void
@@ -573,8 +577,11 @@ function Glissiere({
 }
 
 /** L'interrupteur de la veille. **Éteindre n'est pas vider** (invariant du lot
- *  U) : les réglages restent écrits et se retrouvent tels quels au réveil. */
-function Interrupteur({
+ *  U) : les réglages restent écrits et se retrouvent tels quels au réveil.
+ *
+ *  **Exportée pour l'atelier d'une animation** (RP22) : la bascule de
+ *  l'établi, posée contre la même table, et pas une seconde écrite à côté. */
+export function Interrupteur({
   endormie,
   onBasculer,
 }: {
@@ -590,6 +597,24 @@ function Interrupteur({
       className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-3 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
     >
       {endormie ? "La réveiller" : "L'endormir"}
+    </button>
+  )
+}
+
+/** Vider une table sans l'éteindre — le second geste de la veille (RP22).
+ *
+ *  **Elle vide, elle n'endort pas** : posée à côté de `Interrupteur`, jamais à
+ *  sa place, parce que les deux gestes ne s'annulent pas l'un l'autre — une
+ *  table vidée continue d'agir (sur rien), une table endormie garde son
+ *  contenu et cesse d'agir. */
+export function RemettreAZero({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-3 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+    >
+      Remettre à zéro
     </button>
   )
 }
@@ -2604,7 +2629,12 @@ export function ReglagesDuContour({ recette, univers, mesures, regler, poser }: 
 }
 
 export function ReglagesDuRetournement({ recette, regler, poser }: Poste) {
-  const retournement = recette.retournement ?? RETOURNEMENT_PAR_DEFAUT
+  // **`actif` est `null` tant que rien n'est posé** — à ne pas confondre avec
+  // `retournement`, la valeur affichée sous les réglages secondaires (angle,
+  // moitié, zones), qui retombe sur le défaut pour rester calculable même
+  // quand la table est vide.
+  const actif = recette.retournement
+  const retournement = actif ?? RETOURNEMENT_PAR_DEFAUT
   const posant = (partiel: Partial<Retournement>) =>
     void poser({ ...recette, retournement: { ...retournement, ...partiel } })
   const reglant = (partiel: Partial<Retournement>) =>
@@ -2612,13 +2642,24 @@ export function ReglagesDuRetournement({ recette, regler, poser }: Poste) {
   const zones = retournement.zones_protegees ?? []
   return (
     <div className="flex flex-col gap-[14px]">
-      {/* **Les dix sens depuis `B18`.** */}
+      {/* **Les dix sens depuis `B18`, et un choix qui se déclique** (RP22) :
+          avant, le cran affiché restait pressé même la table vide — un
+          « miroir gauche-droite » qu'on ne pouvait jamais voir s'éteindre, et
+          reposer le même sens ne changeait donc jamais rien à l'écran. Cliquer
+          le sens déjà posé vide la table entière au lieu de la reposer à
+          l'identique : c'est la seule place où un cran de la liste *est* la
+          place, l'éteindre revient à la vider. */}
       <Reglage nom="sens">
         <Choix
           valeurs={SENS_LIVRES}
-          valeur={retournement.sens}
+          valeur={actif?.sens ?? null}
           libelles={SENS_DU_RETOURNEMENT}
-          onChange={(sens) => posant({ sens })}
+          onChange={(sens) =>
+            void poser({
+              ...recette,
+              retournement: actif?.sens === sens ? null : { ...retournement, sens },
+            })
+          }
         />
       </Reglage>
 
@@ -4561,14 +4602,18 @@ export function Retouche({
                   {resume ? ` · ${resume}` : ""}
                 </span>
               </div>
-              {/* **Une place s'éteint sans se vider** : l'interrupteur ne
-                  paraît que là où il y a une place à éteindre — les deux
-                  fabriques n'en ont pas. */}
+              {/* **Une place s'éteint sans se vider, et se vide sans
+                  s'éteindre** (RP22) : les deux gestes ne paraissent que là où
+                  il y a une place à éteindre ou à vider — les deux fabriques
+                  n'en ont pas. */}
               {place !== null && raison === null && (
-                <Interrupteur
-                  endormie={endormie}
-                  onBasculer={() => void poser(avecVeille(recette, ouverte, !endormie))}
-                />
+                <div className="flex shrink-0 items-center gap-[8px]">
+                  <RemettreAZero onClick={() => void poser(videe(recette, ouverte))} />
+                  <Interrupteur
+                    endormie={endormie}
+                    onBasculer={() => void poser(avecVeille(recette, ouverte, !endormie))}
+                  />
+                </div>
               )}
             </div>
 

@@ -696,6 +696,39 @@ export function avecVeille(recette: Recette, table: Table, dort: boolean): Recet
     veille: (dort ? [...restantes, place] : restantes).sort(),
   }
 }
+
+/** La même recette, cette place-ci vidée — remise à rien, la table reste
+ *  éveillée (RP22).
+ *
+ *  **Vider n'est pas éteindre**, et c'est l'exact envers de `avecVeille` :
+ *  l'interrupteur garde le contenu et coupe l'effet, *Remettre à zéro* efface
+ *  le contenu et laisse la table prête à reprendre un réglage. Les deux
+ *  gestes ne se remplacent pas l'un l'autre — l'invariant du lot U le dit pour
+ *  l'établi, et l'atelier d'une animation le doit autant. */
+export function videe(recette: Recette, table: Table): Recette {
+  switch (placeDe(table)) {
+    case "detourage":
+      return { ...recette, passes: [] }
+    case "difference":
+      return { ...recette, difference: null }
+    case "recadrage":
+      return { ...recette, recadrage: null }
+    case "grille":
+      return { ...recette, grille: null }
+    case "quantification":
+      return { ...recette, quantification: null }
+    case "bords":
+      return { ...recette, bords: null }
+    case "contours":
+      return { ...recette, contours: null }
+    case "retournement":
+      return { ...recette, retournement: null }
+    case "main":
+      return { ...recette, main: null }
+    default:
+      return recette
+  }
+}
 // ── Le presse-papier de la séance ───────────────────────────────────────────
 
 // **Le presse-papiers vit hors de React, et c'est délibéré.** Copier sur une

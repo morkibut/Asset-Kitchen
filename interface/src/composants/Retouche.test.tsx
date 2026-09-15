@@ -1626,6 +1626,61 @@ describe("les trois réglages du retournement se règlent dans l'écran neuf", (
   })
 })
 
+// ── RP22 · un sens se déclique, une table s'endort et se vide ──────────────
+
+describe("le retournement se déclique, et la table s'endort et se vide comme les autres", () => {
+  const ouvrir = (sens: string) => {
+    const rendu = monter({
+      asset: image({
+        recette: recetteDeTravail({ retournement: { sens } } as unknown as Partial<Recette>),
+      }),
+    })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Retourner" }))
+    return rendu
+  }
+
+  test("cliquer le sens déjà posé retire tout le retournement", async () => {
+    const { appels } = ouvrir("gauche-droite")
+    const bouton = within(colonne()).getByRole("button", { name: "miroir gauche-droite" })
+    expect(bouton.getAttribute("aria-pressed")).toBe("true")
+
+    fireEvent.click(bouton)
+
+    expect(bouton.getAttribute("aria-pressed")).toBe("false")
+    await waitFor(() => {
+      expect(dernierePose(appels)?.retournement).toBeFalsy()
+    })
+  })
+
+  test("une place sans retournement ne montre aucun sens pressé", async () => {
+    monter({ asset: image({ recette: recetteDeTravail({ retournement: null }) }) })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Retourner" }))
+    const bouton = await within(colonne()).findByRole("button", { name: "miroir gauche-droite" })
+    // **La panne trouvée par l'auteur** : le cran restait pressé même la
+    // table vide, si bien qu'un premier clic ne semblait rien changer.
+    expect(bouton.getAttribute("aria-pressed")).toBe("false")
+  })
+
+  test("L'endormir puis Remettre à zéro se posent contre la table du retournement, comme sur les sept autres", async () => {
+    const { appels } = ouvrir("haut-bas")
+    within(colonne()).getByRole("button", { name: "miroir haut-bas" })
+
+    fireEvent.click(within(colonne()).getByRole("button", { name: "L'endormir" }))
+    expect(within(colonne()).getByRole("button", { name: "La réveiller" })).toBeTruthy()
+    await waitFor(() => {
+      expect(dernierePose(appels)?.veille).toContain("retournement")
+    })
+
+    fireEvent.click(within(colonne()).getByRole("button", { name: "Remettre à zéro" }))
+    await waitFor(() => {
+      expect(dernierePose(appels)?.retournement).toBeFalsy()
+    })
+    // **Vider n'endort pas** (invariant du lot U) : la bascule reste sur
+    // « La réveiller », posée juste à côté du geste qui vient de vider.
+    expect(within(colonne()).getByRole("button", { name: "La réveiller" })).toBeTruthy()
+  })
+})
+
 describe("le nettoyage part de zéro", () => {
   test("sans place posée, le seuil affiché est zéro et rien n'est annoncé effacé", async () => {
     monter()
