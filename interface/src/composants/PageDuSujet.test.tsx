@@ -312,6 +312,50 @@ test("un asset sans source montre un état vide compact", () => {
   expect(screen.getByText("Référence à créer")).toBeTruthy()
 })
 
+// ── L'image de référence de la fiche (RP19) ─────────────────────────────────
+//
+// **L'en-tête montre le portrait que l'auteur a choisi**, et retombe sur le
+// choix du produit dès que ce choix ne désigne plus rien — supprimé, écarté,
+// rattaché ailleurs. Le repli est tenu par construction : le choix est cherché
+// parmi les images que la fiche a déjà sous la main.
+
+const portraitMontre = () =>
+  (
+    document
+      .querySelector("[data-portrait-du-sujet]")
+      ?.querySelector("img") as HTMLImageElement | null
+  )?.src ?? ""
+
+test("l'en-tête montre l'image de référence choisie, pas celle du produit", () => {
+  monter({
+    cases: [
+      sienne({
+        pose: "repos",
+        images: [image({ identifiant: "a" }), image({ identifiant: "b" })],
+        corps: "a",
+      }),
+    ],
+    image_de_reference: "b",
+  })
+  expect(portraitMontre()).toContain("/assets/b/")
+})
+
+test("une image de référence qui ne désigne plus rien rend la fiche au choix du produit", () => {
+  // L'image « partie » n'est plus dans les cases — c'est très exactement ce
+  // que le serveur renvoie après une suppression. Aucune erreur, aucun trou :
+  // la fiche montre ce qu'elle montrait avant qu'on choisisse.
+  monter({
+    cases: [sienne({ pose: "repos", images: [image({ identifiant: "a" })], corps: "a" })],
+    image_de_reference: "partie",
+  })
+  expect(portraitMontre()).toContain("/assets/a/")
+})
+
+test("sans choix, l'en-tête montre exactement ce qu'il montrait avant la tranche", () => {
+  monter()
+  expect(portraitMontre()).toContain("/assets/a/")
+})
+
 test("les collections se modifient depuis la fiche sans toucher aux règles", async () => {
   const { appels } = monter()
   await screen.findByText("Les héros")

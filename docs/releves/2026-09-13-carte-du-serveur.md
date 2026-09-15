@@ -178,6 +178,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | GET /characters/{id}/style | Les textes qui habillent une chose, et d'où chacun vient | Oui | — |
 | GET /characters/{id}/references | Les images de référence disponibles pour une chose | Oui | — |
 | PUT /characters/{id}/references | Fait d'une image une référence permanente, ou cesse de l'être | Oui | — |
+| PUT /characters/{id}/reference-image | Choisit l'**image de référence** de la fiche d'un sujet — `asset: null` la retire (`RP19`) | Oui | `list_characters`, en lecture seule |
 | GET /characters/showcase | La vitrine du jeu entier : fonds, taille commune | Oui | — |
 | GET /characters/{id}/showcase | La vitrine d'une chose | Oui | — |
 | GET /characters/types | Les poses attendues par type d'objet, et d'où la liste vient | Oui | — |
@@ -437,7 +438,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | slice_asset | Découpe une image en plusieurs assets | Oui — écran galerie |
 | animate_sheet | Monte une feuille de sprites en clip et en bandes | Oui — écran galerie |
 | export_assets | Exporte une sélection en archive ZIP | Oui — écran galerie |
-| list_characters | Liste les personnages/objets d'un jeu | Oui — codex |
+| list_characters | Liste les personnages/objets d'un jeu — et, depuis `RP19`, l'**image de référence** de chacun, en lecture seule : aucun outil ne la choisit | Oui — codex |
 | add_pose | Ajoute une pose au plan du projet | Oui — univers |
 | generate_pose | Génère une planche remplissant une ou plusieurs poses | Ouvre l'écran d'envoi |
 | equip_character | Associe une pièce d'équipement à un personnage | Oui — codex |

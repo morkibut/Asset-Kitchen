@@ -113,6 +113,28 @@ class Personnage:
     # références depuis T4.
     references: tuple[str, ...] = ()
 
+    # ── L'image de référence de sa fiche (RP19) ─────────────────────────────
+    #
+    # **Celle qui dit à quoi le sujet ressemble** (`docs/vocabulaire.html`), et
+    # rien d'autre. C'est le portrait montré en grand en haut de sa fiche ; il
+    # n'y en a qu'un à la fois, et il est **absent par défaut** — une chose
+    # neuve n'a rien choisi, et la fiche retombe alors sur le choix du produit.
+    #
+    # ⚠️ **Trois choses se ressemblent et ne font pas le même métier.**
+    # L'*artwork officiel* est un champ de la carte du tableau
+    # (`atelier/domaine/carte.py`) : il sert la palette et part avec les
+    # demandes. L'*image retenue* d'une case est celle qui part dans le jeu
+    # (`favori` sur l'asset). Celle-ci ne fait ni l'un ni l'autre : en choisir
+    # une ne promeut rien, ne retient rien, et n'envoie rien nulle part.
+    # Elle ne se confond pas non plus avec `references` juste au-dessus, qui est
+    # une **liste** d'images repartant avec chaque appel.
+    #
+    # **Un identifiant d'asset, jamais une copie** — comme `references` et
+    # `concept_arts`. Une image supprimée laisse donc un identifiant qui ne
+    # désigne plus rien : ce n'est pas un trou à réparer, c'est le repli, et la
+    # fiche reprend le choix du produit sans rien dire.
+    image_de_reference: str = ""
+
     # ── Les directions que cette chose ne tient pas, pose par pose (E10) ─────
     #
     # **La portée étroite des deux** : *ce dragon-là n'attaque que vers le sud*.
@@ -226,6 +248,7 @@ class Personnage:
             "textes": dict(self.textes),
             "eteints": list(self.eteints),
             "references": list(self.references),
+            "image_de_reference": self.image_de_reference,
             "hors_calibrage": list(self.hors_calibrage),
             "directions_ecartees": {
                 pose: list(directions)
@@ -261,6 +284,9 @@ class Personnage:
                 nom for nom in (d.get("eteints") or ()) if nom in CHAMPS_BIBLE
             ),
             references=tuple(_textes(d.get("references"))),
+            # **Absente par défaut** (RP19) : un fichier écrit avant la tranche
+            # n'a pas la clé, et la chaîne vide dit « rien n'a été choisi ».
+            image_de_reference=str(d.get("image_de_reference") or ""),
             hors_calibrage=tuple(_textes(d.get("hors_calibrage"))),
             directions_ecartees={
                 str(pose): tuple(_textes(rangees))

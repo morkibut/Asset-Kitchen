@@ -468,6 +468,7 @@ export function ImagesDuSujet({
   onReinjecter,
   onReglages,
   onErreur,
+  onPersonnage,
 }: {
   personnage: Personnage
   /** Ce que cette chose-là réclame — sa liste, pas celle du jeu (E9). */
@@ -507,6 +508,11 @@ export function ImagesDuSujet({
   onReinjecter: (asset: string, role: Role) => void
   onReglages: (asset: Asset) => void
   onErreur: (erreur: unknown, defaut: string) => void
+  /** **Le sujet, relu après un geste qui l'écrit** (RP19) : choisir l'image de
+   *  référence change la fiche du haut de la page, et elle doit changer
+   *  aussitôt. Facultatif — cet onglet se rend seul dans ses essais, et le
+   *  geste se grise alors comme les autres. */
+  onPersonnage?: (personnage: Personnage) => void
 }) {
   const nomDePose = useMemo(
     () => new Map(plan.map((p) => [p.identifiant, p.nom])),
@@ -637,6 +643,26 @@ export function ImagesDuSujet({
       }
     },
     [personnage.identifiant, onErreur],
+  )
+
+  /** En faire — ou ne plus en faire — l'image de référence de la fiche (RP19).
+   *
+   *  **Rien n'est promu, rien n'est retenu, rien n'est payé** : c'est un
+   *  portrait. La réponse porte le sujet entier, et on le remonte d'un cran
+   *  pour que l'en-tête de la page le montre sans qu'on recharge. */
+  const referencer = useCallback(
+    async (cible: Asset, faire: boolean) => {
+      try {
+        const rendu = await api.poserImageDeReference(
+          personnage.identifiant,
+          faire ? cible.identifiant : null,
+        )
+        onPersonnage?.(rendu.personnage)
+      } catch (erreur) {
+        onErreur(erreur, "l'image de référence a été refusée")
+      }
+    },
+    [personnage.identifiant, onPersonnage, onErreur],
   )
 
   const directionsDe = (pose: string) =>
@@ -833,6 +859,14 @@ export function ImagesDuSujet({
             onEcarter([image.identifiant])
             setChoisie(null)
           }}
+          onReference={
+            // **Le portrait de la fiche** (RP19) — seulement sur un corps du
+            // sujet : un calque n'est pas une image de lui, c'est une
+            // différence posée sur l'une d'elles, et le serveur le refuse
+            // aussi.
+            image.piece ? undefined : (faire) => void referencer(image, faire)
+          }
+          estLaReference={personnage.image_de_reference === image.identifiant}
           onFermer={() => setChoisie(null)}
           onErreur={(raison) => onErreur(raison, raison)}
           onReinjecter={(role) => onReinjecter(image.identifiant, role)}

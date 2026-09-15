@@ -678,6 +678,18 @@ class CorpsPromotion(BaseModel):
     projet: str | None = None
 
 
+class CorpsImageDeReference(BaseModel):
+    """L'image de référence d'une fiche — **une seule route, `null` la retire**
+    (RP19).
+
+    Poser et retirer sont le même geste, et deux routes qui font l'une le
+    contraire de l'autre finissent par ne plus se contredire qu'à moitié.
+    """
+
+    asset: str | None = None
+    projet: str | None = None
+
+
 @routeur.get("/characters/{identifiant}/style")
 async def habillage(
     requete: Request, identifiant: str, projet: str | None = Query(None)
@@ -726,6 +738,31 @@ async def promouvoir_reference(
     return {
         "personnage": atelier.production.en_charge(vise, personnage),
         "references": atelier.production.references_de(vise, identifiant),
+    }
+
+
+@routeur.put("/characters/{identifiant}/reference-image")
+async def poser_image_de_reference(
+    requete: Request, identifiant: str, corps: CorpsImageDeReference
+) -> dict[str, Any]:
+    """Choisir l'image de référence de la fiche d'un sujet — `asset: null` la retire.
+
+    **C'est un portrait, et rien d'autre** : aucun artwork n'est promu, aucune
+    case n'est retenue, le fournisseur n'est jamais appelé. Une image qui n'est
+    pas une image fixe de ce sujet est refusée avec sa raison.
+
+    La réponse porte le sujet **entier** — même forme que toutes les autres
+    routes qui le rendent (`docs/PIEGES.md`) — et l'image de référence
+    **résolue**, qui est le repli quand le choix ne désigne plus rien.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    personnage = atelier.production.poser_image_de_reference(
+        vise, identifiant, corps.asset
+    )
+    return {
+        "personnage": atelier.production.en_charge(vise, personnage),
+        "image_de_reference": atelier.production.image_de_reference(vise, personnage),
     }
 
 

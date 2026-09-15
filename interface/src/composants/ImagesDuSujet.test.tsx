@@ -97,7 +97,7 @@ const PLAN: Pose[] = [
   { identifiant: "marche", nom: "marche", images: 1, consigne: "", ecartees: [], images_avant: 0 },
 ]
 
-function personnage(cases: Case[]): Personnage {
+function personnage(cases: Case[], surplus: Partial<Personnage> = {}): Personnage {
   return {
     identifiant: "pelerin",
     projet: "le-marais",
@@ -121,6 +121,7 @@ function personnage(cases: Case[]): Personnage {
     hors_calibrage: [],
     famille: "personnages",
     equipable: true,
+    ...surplus,
   }
 }
 
@@ -168,13 +169,29 @@ function construireDouble() {
         ? { parent: null, enfants: [], soeurs: [] }
         : url.endsWith("/imposed")
           ? { impose: null, echelle: "", nature: "" }
-          : {}
+          : url.endsWith("/reference-image")
+            ? // **RP19** — la route rend le sujet **entier**, comme toutes
+              // celles qui le rendent. Le double en dit autant : un double
+              // qui en saurait moins que le serveur ferait croire l'écran
+              // amputé (`docs/PIEGES.md`).
+              {
+                personnage: personnage([CASE_SUD], {
+                  image_de_reference:
+                    (JSON.parse(String(init?.body ?? "{}")).asset as string) ?? "",
+                }),
+                image_de_reference: JSON.parse(String(init?.body ?? "{}")).asset,
+              }
+            : {}
     return { ok: true, status: 200, json: async () => charge } as Response
   })
   return { fetchDouble, appels }
 }
 
-function monter(cases: Case[] = [CASE_SUD], sansImport = false) {
+function monter(
+  cases: Case[] = [CASE_SUD],
+  sansImport = false,
+  surplusSujet: Partial<Personnage> = {},
+) {
   const { fetchDouble, appels } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
@@ -185,6 +202,9 @@ function monter(cases: Case[] = [CASE_SUD], sansImport = false) {
     onReglages: vi.fn(),
     onErreur: vi.fn(),
     onImporter: vi.fn(),
+    // **RP19** — le sujet, relu après un geste qui l'écrit : choisir l'image
+    // de référence change l'en-tête de la page, un cran au-dessus.
+    onPersonnage: vi.fn(),
   }
   // **Le volet de cet onglet est la fiche du produit depuis `C4`** : il n'y a
   // plus qu'un volet de fiche d'image, et c'est `Fiche.tsx`. Elle lit deux
@@ -192,12 +212,12 @@ function monter(cases: Case[] = [CASE_SUD], sansImport = false) {
   // de qui l'image est le corps, et l'univers du jeu.
   render(
     <ImagesDuSujet
-      personnage={personnage(cases)}
+      personnage={personnage(cases, surplusSujet)}
       plan={PLAN}
       pieces={[
         { identifiant: "casque", nom: "le casque", emplacement: "tete", cree_le: 0 } as never,
       ]}
-      personnages={[personnage(cases)]}
+      personnages={[personnage(cases, surplusSujet)]}
       univers={UNIVERS_VIDE}
       {...rappels}
       onImporter={sansImport ? undefined : rappels.onImporter}
@@ -618,5 +638,66 @@ describe("les trois filtres", () => {
     monter([CASE_SUD])
     fireEvent.click(screen.getByRole("tab", { name: "à confirmer" }))
     expect(screen.getByText("Rien de ce genre-là dans ses poses.")).toBeTruthy()
+  })
+})
+
+// ── L'image de référence de la fiche (RP19) ─────────────────────────────────
+//
+// **Un portrait, pas une retenue et pas une promotion.** Le geste vit sur le
+// volet de l'image, à côté des deux autres gestes de la case, et il n'appelle
+// qu'une route — celle qui écrit le sujet.
+
+describe("l'image de référence de la fiche", () => {
+  const GESTE = "En faire l'image de référence"
+
+  test("le geste est offert sur une image fixe du sujet, et n'écrit qu'une route", async () => {
+    const { appels, onPersonnage } = monter()
+    fireEvent.click(screen.getByLabelText("image a"))
+    fireEvent.click(screen.getByRole("button", { name: GESTE }))
+    await waitFor(() => expect(appels).toHaveLength(1))
+    expect(appels[0].url).toBe("/api/characters/pelerin/reference-image")
+    expect(appels[0].methode).toBe("PUT")
+    expect(appels[0].corps).toEqual({ asset: "a" })
+    // **Le sujet remonte d'un cran** : c'est ce qui fait que l'en-tête de la
+    // page montre le portrait sans qu'on recharge.
+    await waitFor(() =>
+      expect(onPersonnage).toHaveBeenCalledWith(
+        expect.objectContaining({ image_de_reference: "a" }),
+      ),
+    )
+  })
+
+  test("sur celle qui l'est déjà, le geste est grisé et porte sa raison", () => {
+    monter([CASE_SUD], false, { image_de_reference: "a" })
+    fireEvent.click(screen.getByLabelText("image a"))
+    expect(screen.getByRole("button", { name: GESTE })).toHaveProperty("disabled", true)
+    expect(
+      screen.getByText("c'est déjà l'image de référence de ce sujet"),
+    ).toBeTruthy()
+  })
+
+  test("le geste inverse la retire, et n'en désigne aucune autre", async () => {
+    const { appels } = monter([CASE_SUD], false, { image_de_reference: "a" })
+    fireEvent.click(screen.getByLabelText("image a"))
+    fireEvent.click(screen.getByRole("button", { name: "Ne plus en faire la référence" }))
+    await waitFor(() => expect(appels).toHaveLength(1))
+    expect(appels[0].corps).toEqual({ asset: null })
+  })
+
+  test("une autre image que la référence garde son geste actif", () => {
+    monter([CASE_SUD], false, { image_de_reference: "a" })
+    fireEvent.click(screen.getByLabelText("image c"))
+    expect(screen.getByRole("button", { name: GESTE })).toHaveProperty("disabled", false)
+    expect(screen.queryByRole("button", { name: "Ne plus en faire la référence" })).toBeNull()
+  })
+
+  test("le geste ne retient rien et ne promeut rien — une seule route part", async () => {
+    const { appels, onEcarter } = monter()
+    fireEvent.click(screen.getByLabelText("image a"))
+    fireEvent.click(screen.getByRole("button", { name: GESTE }))
+    await waitFor(() => expect(appels).toHaveLength(1))
+    expect(appels.some((a) => a.url.includes("/favorite"))).toBe(false)
+    expect(appels.some((a) => a.url.endsWith("/references"))).toBe(false)
+    expect(onEcarter).not.toHaveBeenCalled()
   })
 })

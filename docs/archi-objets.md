@@ -200,6 +200,16 @@ troisième corrige le frottement le plus cher du dépôt : dix-sept appels payé
 avec **tous** les appels de sa chose, ce qui la distingue d'une réinjection posée pour un
 appel ; le compte des références le dit en toutes lettres, sans quoi on décocherait en aveugle.
 
+*Écrit en faisant RP19, le 15 septembre 2026.* La chose du jeu gagne **un champ de plus** :
+**son image de référence** — l'identifiant d'une de ses images fixes, celle qui dit à quoi
+elle ressemble et que sa fiche montre en grand. Absente par défaut, et **ce n'est ni un
+artwork officiel ni une image retenue** : l'artwork officiel est un champ de la carte et sert
+la palette, l'image retenue d'une case est celle qui part dans le jeu, celle-ci n'est qu'un
+portrait. Elle ne se confond pas non plus avec les images promues juste au-dessus, qui sont
+une **liste** repartant avec chaque appel : ici, une seule à la fois. **Un identifiant, jamais
+une copie** — donc une image supprimée laisse un identifiant qui ne désigne plus rien, et
+c'est voulu : la lecture retombe alors sur le choix du produit, sans erreur et sans réparation.
+
 **Le personnage se généralise en entité**, ce qui était annoncé comme le seul de ces
 changements à toucher du code existant en profondeur. *Corrigé en le faisant, le 31 août
 2026* : il n'a touché aucun modèle. Les familles *Décors*, *Objets* et *Interface* avaient

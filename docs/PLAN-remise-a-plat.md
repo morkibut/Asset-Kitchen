@@ -600,7 +600,7 @@ un relevé compare le produit à la maquette, et la maquette ne les dessinait pa
 suivent la règle de tout ce plan — un seul écran par travail — et n'attendent aucun doublon :
 ils se prennent dès que RP3 est close, avant ou après le temps 2, selon ce qui est libre.
 
-## RP19 · L'image de référence d'une fiche se choisit
+## RP19 · L'image de référence d'une fiche se choisit  ✅ **close le 15 septembre 2026**
 
 **Bloquée par** : rien.
 
@@ -618,17 +618,41 @@ et part avec les demandes ; l'*image retenue* d'une case est celle qui part dans
 L'image de référence d'une fiche n'est ni l'un ni l'autre — c'est un portrait, et en choisir
 un ne change ni la palette, ni ce qui est livré.
 
+**Ce qui a été posé.** Un champ sur le sujet, `image_de_reference`, écrit dans son fichier —
+l'index le relit sans rien à migrer. Une route, `PUT /characters/{id}/reference-image`, où
+`asset: null` retire : poser et retirer sont le même geste. Le geste vit sur le volet d'*Images
+fixes*, avec les deux autres gestes de la case. L'agent le lit dans `list_characters` ; aucun
+outil ne l'écrit.
+
+**Et le repli n'est pas un rattrapage, c'est la forme du champ.** Le choix est un identifiant,
+jamais une copie : on le cherche parmi les images fixes du sujet, et s'il n'y est plus — image
+supprimée, écartée, rattachée ailleurs, devenue un calque — la règle d'avant reprend la main.
+Il n'y a donc rien à nettoyer quand une image part, et aucun chemin où l'écran pourrait
+montrer un trou.
+
 ### Critères d'acceptation
 
-- [ ] Depuis une image fixe du sujet, un geste en fait l'image de référence de la fiche, et la
+- [x] Depuis une image fixe du sujet, un geste en fait l'image de référence de la fiche, et la
   fiche la montre aussitôt.
-- [ ] Le choix survit à la fermeture et à la réouverture du jeu ; il est écrit dans le dossier
+  *Le geste vit sur le volet de l'image, à côté des deux autres gestes de la case, et il est
+  grisé avec sa raison sur celle qui l'est déjà. « Aussitôt » tient parce que la route rend le
+  sujet entier et que l'onglet le remonte d'un cran : rien n'est rechargé. Vérifié aux essais
+  d'écran, pas au navigateur.*
+- [x] Le choix survit à la fermeture et à la réouverture du jeu ; il est écrit dans le dossier
   du sujet, pas dans le navigateur.
-- [ ] Une fiche sans choix montre ce qu'elle montrait avant, et rien d'autre ne change.
-- [ ] Choisir une image de référence ne promeut aucun artwork officiel, ne retient aucune case,
+  *Un essai relit le JSON de `donnees/projets/<jeu>/personnages/` et y trouve le champ ; un
+  autre efface l'index et le reconstruit.*
+- [x] Une fiche sans choix montre ce qu'elle montrait avant, et rien d'autre ne change.
+- [x] Choisir une image de référence ne promeut aucun artwork officiel, ne retient aucune case,
   et n'appelle jamais le fournisseur.
-- [ ] Supprimer l'image de référence ramène la fiche au choix du produit, sans message d'erreur.
-- [ ] L'agent peut lire quelle image est la référence d'un sujet ; il ne peut pas la choisir.
+- [x] Supprimer l'image de référence ramène la fiche au choix du produit, sans message d'erreur.
+  *Le repli est tenu par construction des deux côtés : l'écran cherche le choix parmi les
+  images que la fiche a déjà, le serveur le revalide avant de le rendre. Une image écartée,
+  rattachée ailleurs ou devenue un calque cesse donc d'être la référence sans qu'on efface
+  quoi que ce soit — le champ garde son identifiant, et il ne désigne plus rien.*
+- [x] L'agent peut lire quelle image est la référence d'un sujet ; il ne peut pas la choisir.
+  *`list_characters` porte `reference_image`, **résolu** — le choix de l'auteur, sinon le
+  repli. Aucun outil neuf : un essai vérifie qu'aucun nom d'outil ne parle de référence.*
 
 ## RP20 · Enregistrer sous — une image ou une animation modifiée devient une autre pose ou direction
 

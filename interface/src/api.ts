@@ -2302,6 +2302,15 @@ export type Personnage = {
   eteints: string[]
   /** Les images fabriquées qu'elle a promues en référence permanente. */
   references: string[]
+  /** **L'image de référence de sa fiche** (RP19) — celle qui dit à quoi le
+   *  sujet ressemble. Absente par défaut ; l'identifiant d'une image fixe du
+   *  sujet quand l'auteur en a choisi une.
+   *
+   *  ⚠️ **Elle ne se résout pas ici** : `portraitDe` (`FicheChose.tsx`) la
+   *  cherche parmi les images du sujet et retombe sur le choix du produit
+   *  quand elle ne désigne plus rien — supprimée, écartée, rattachée ailleurs.
+   *  Facultative : un serveur d'avant la tranche ne l'envoie pas. */
+  image_de_reference?: string
   /** Ce qu'elle s'est ajouté pour elle seule. Elles viennent après celles du
    *  type, jamais mêlées. */
   ajoutees: Pose[]
@@ -6106,6 +6115,20 @@ export const api = {
    *  deux compositions à deux endroits auraient fini par demander deux choses
    *  différentes pour la même case.
    *
+  /** **L'image de référence de sa fiche** (RP19) — celle qui dit à quoi le
+   *  sujet ressemble, montrée en grand en haut de sa page. `null` la retire, et
+   *  la fiche retombe alors sur le choix du produit.
+   *
+   *  Ce n'est ni un artwork officiel — qui sert la palette et part avec les
+   *  demandes —, ni l'image retenue d'une case — qui part dans le jeu. C'est un
+   *  portrait : la choisir ne promeut rien, ne retient rien, et n'appelle
+   *  jamais le fournisseur. */
+  poserImageDeReference: (personnage: string, asset: string | null) =>
+    appeler<{ personnage: Personnage; image_de_reference: string }>(
+      `/characters/${personnage}/reference-image`,
+      { method: "PUT", body: JSON.stringify({ asset }) },
+    ),
+
    *  **Depuis E14, c'est le signalement seul.** La consigne de l'attitude et
    *  celle de l'angle sont ajoutées par le composeur du prompt, où elles font
    *  leur propre ligne avec leur propre origine : le champ porte ce qu'on

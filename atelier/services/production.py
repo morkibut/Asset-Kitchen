@@ -1287,6 +1287,97 @@ class ServiceProduction:
         self._sauver(personnage)
         return personnage
 
+    # ── L'image de référence d'une fiche (RP19) ──────────────────────────────
+    #
+    # **Ce n'est ni un artwork officiel, ni une image retenue.** L'artwork
+    # officiel est un champ de la carte du tableau : il sert la palette et part
+    # avec les demandes. L'image retenue d'une case est celle qui part dans le
+    # jeu. Celle-ci est un **portrait** : la choisir ne promeut rien, ne retient
+    # rien, n'appelle personne, et ne change pas d'un iota ce qui est livré.
+
+    def poser_image_de_reference(
+        self, projet: str, identifiant: str, asset: str | None
+    ) -> Personnage:
+        """Cette image **est** le portrait de la fiche — ou plus rien ne l'est.
+
+        `None` et la chaîne vide retirent le choix : la fiche retombe alors sur
+        le choix du produit, qui est ce qu'elle montrait avant qu'on choisisse.
+        Retirer et choisir sont donc le même geste, avec ou sans image, plutôt
+        que deux routes qui auraient pu se contredire.
+
+        **Trois refus, chacun avec sa raison**, parce que le produit n'accepte
+        pas en silence ce qu'il ne saura pas montrer : une image qui n'est pas à
+        ce sujet, un calque — qui n'est pas une image du sujet mais une
+        différence posée sur l'une d'elles —, et une image écartée de la
+        bibliothèque, qui ne paraît nulle part dans *Images fixes*.
+        """
+        personnage = self.personnage(projet, identifiant)
+        if not asset:
+            personnage.image_de_reference = ""
+            self._sauver(personnage)
+            return personnage
+
+        objet = self._assets.lire(asset)
+        if objet is None:
+            raise AssetInconnu(asset)
+        if objet.piece:
+            raise ProductionRefusee(
+                "un calque n'est pas une image de ce sujet — c'est une "
+                "différence posée sur l'une d'elles"
+            )
+        if objet.personnage != identifiant or (objet.projet or "") != projet:
+            raise ProductionRefusee(
+                f"cette image n'est pas une image fixe de « {personnage.nom} »"
+            )
+        if objet.supprime_le is not None:
+            raise ProductionRefusee(
+                "cette image est écartée de la bibliothèque — la rendre d'abord"
+            )
+
+        personnage.image_de_reference = asset
+        self._sauver(personnage)
+        return personnage
+
+    def image_de_reference(
+        self,
+        projet: str,
+        personnage: Personnage,
+        cases: Sequence[dict[str, Any]] | None = None,
+    ) -> str:
+        """Le portrait de cette fiche, **résolu** — le choix, sinon le repli.
+
+        **Le repli est le choix du produit, et c'est le même qu'avant la
+        tranche** : le corps retenu de la première case faite, dans l'ordre du
+        plan de la chose. Une image désignée puis supprimée, écartée, rattachée
+        ailleurs ou devenue un calque ne désigne donc plus rien, et la fiche
+        reprend ce repli **sans erreur** : c'est ce que le critère demande.
+
+        ⚠️ **L'écran tient la même règle de son côté** (`portraitDe`,
+        `interface/src/composants/FicheChose.tsx`), parce qu'il a déjà les cases
+        sous la main et qu'un aller-retour pour désigner une image qu'il affiche
+        déjà serait un aller-retour de trop. Ce n'est pas une seconde vérité
+        neuve : l'écran reprenait déjà le départage du serveur au mot.
+
+        `cases` se passe quand l'appelant vient de les calculer — l'outil de
+        l'agent les lit pour la matrice, et les relire ici les paierait deux
+        fois.
+        """
+        choisie = personnage.image_de_reference
+        if choisie:
+            objet = self._assets.lire(choisie)
+            if (
+                objet is not None
+                and not objet.piece
+                and objet.supprime_le is None
+                and objet.personnage == personnage.identifiant
+                and (objet.projet or "") == projet
+            ):
+                return choisie
+        for case in cases if cases is not None else self.cases(projet, personnage):
+            if case["corps"]:
+                return str(case["corps"])
+        return ""
+
     # ── La vitrine (E16) ─────────────────────────────────────────────────────
 
     def vitrine(self, projet: str, identifiant: str = "") -> dict[str, Any]:

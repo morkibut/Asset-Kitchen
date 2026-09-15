@@ -350,6 +350,7 @@ export function PageDuSujet(proprietes: {
         {onglet === "images" && <ImagesDuSujet personnage={ouvert} plan={sienPlan} pieces={proprietes.pieces} personnages={proprietes.personnages}
           univers={proprietes.univers} onArmer={proprietes.onArmer} onOuvrirCase={proprietes.onOuvrirCase} onRegardee={setRegardee}
           onImporter={proprietes.onImporter}
+          onPersonnage={proprietes.onPersonnage}
           onEcarter={proprietes.onSupprimer} onReinjecter={proprietes.onReinjecter} onReglages={proprietes.onReglages} onErreur={echouer} />}
 
         {onglet === "animations" && <AnimationsDuSujet personnage={ouvert} plan={sienPlan} onAnimer={proprietes.onAnimer}

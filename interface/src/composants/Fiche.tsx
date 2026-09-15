@@ -97,6 +97,8 @@ export function Fiche({
   onDirection,
   onVariante,
   onEcarter,
+  onReference,
+  estLaReference = false,
 }: {
   asset: Asset
   /** Le plan du jeu et ses personnages, pour désigner cette image comme le
@@ -158,6 +160,17 @@ export function Fiche({
   /** **Écarter est un jugement, pas un effacement.** Le geste passe par le
    *  parent, qui est le seul à porter le bandeau *la rendre*. */
   onEcarter?: () => void
+  /** **En faire l'image de référence du sujet** (RP19) — le portrait montré en
+   *  grand en haut de sa page. Absent partout où l'on ne sait pas de quel sujet
+   *  on parle : sur la galerie, la même image n'a pas de fiche à orner.
+   *
+   *  Ce n'est ni promouvoir en référence permanente — ça, c'est la liste qui
+   *  repart avec chaque appel —, ni retenir la case pour le jeu. Rien ne part,
+   *  rien n'est payé. */
+  onReference?: (faire: boolean) => void
+  /** Celle-ci **est** déjà la référence : le geste se grise avec sa raison, et
+   *  le geste inverse paraît à côté. */
+  estLaReference?: boolean
 }) {
   const [montrerBrut, setMontrerBrut] = useState(false)
   /** La génération de cette image, **lue une fois pour la fiche entière** (U8) :
@@ -404,6 +417,32 @@ export function Fiche({
               Ils n'existent que là où l'on sait de quelle case on parle. */}
           {onVariante && (
             <Bouton onClick={onVariante} enfants="En générer une variante" />
+          )}
+          {/* **Le portrait de la fiche** (RP19). Grisé avec sa raison sur celle
+              qui l'est déjà — le produit n'offre jamais un geste qui ne ferait
+              rien —, et le geste inverse paraît en dessous, de la même forme
+              discrète que *L'écarter* : défaire un choix n'est pas aussi lourd
+              que le faire. */}
+          {onReference && (
+            <>
+              <Bouton
+                inactif={estLaReference}
+                onClick={() => onReference(true)}
+                enfants="En faire l'image de référence"
+              />
+              {estLaReference && (
+                <>
+                  <Raison texte="c'est déjà l'image de référence de ce sujet" />
+                  <button
+                    type="button"
+                    onClick={() => onReference(false)}
+                    className="mesure mt-1 text-[10.5px] text-encre-controle hover:text-encre"
+                  >
+                    Ne plus en faire la référence
+                  </button>
+                </>
+              )}
+            </>
           )}
           {onEcarter && (
             <>

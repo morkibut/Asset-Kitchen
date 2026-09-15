@@ -11,6 +11,33 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP19 · L'image de référence d'une fiche se choisit — 15 septembre 2026
+
+**Ce que la tranche a appris tient dans la forme du repli.** Le critère *« supprimer l'image de
+référence ramène la fiche au choix du produit, sans message d'erreur »* se lisait comme du
+travail : écouter la suppression, balayer les sujets, effacer le champ. Il n'en a demandé aucun.
+Le champ porte un **identifiant**, jamais une copie, et on le cherche parmi les images fixes du
+sujet au moment de l'afficher : une image supprimée n'y est plus, donc la règle d'avant reprend
+la main toute seule. **Il n'y a ni cascade à écrire, ni état à remettre d'accord avec le
+disque** — la même mécanique que *une case est pleine parce qu'une image la porte*.
+
+**Le mot était déjà tranché, et c'est ce qui a évité une troisième notion.** Trois choses du
+produit se ressemblent : l'*artwork officiel* d'une carte, qui sert la palette ; l'*image
+retenue* d'une case, qui part dans le jeu ; et la **liste** d'images promues en référence
+permanente, qui repart avec chaque appel. `docs/vocabulaire.html` définissait déjà *l'image de
+référence* au singulier — *« celle qui dit à quoi le sujet ressemble ; il n'y en a qu'une à la
+fois »* —, donc rien à inventer : le champ s'appelle comme le mot.
+
+**La règle de résolution existe des deux côtés, et ce n'est pas neuf.** L'écran reprenait déjà
+le départage du serveur au mot (`portraitDe` : le favori d'abord, sinon la plus récente). La
+tranche pose le choix devant, de chaque côté, plutôt qu'un aller-retour pour désigner une image
+que l'écran a déjà sous la main.
+
+**Et l'agent lit sans pouvoir choisir.** `list_characters` porte `reference_image`, résolu ;
+aucun outil ne l'écrit, et un essai le vérifie sur les noms d'outils. Ce n'est pas de la
+prudence : à quoi une chose du jeu ressemble est un jugement de l'auteur, pas une décision
+d'agent.
+
 ## RP3 · Le vocabulaire de l'ossature est fermé — 15 septembre 2026
 
 **Seize écarts de nom fermés en une passe.** Une porte : « Les assets » → « Les sujets ». Deux entrées du fil d'Ariane. Six noms d'écran dans le guide. Deux titres écrits en toutes lettres. Cinq retours en arrière portaient le mauvais mot ou la mauvaise forme. `essai_vocabulaire.py` les a nommés ligne par ligne — fichier, lieu, mot trouvé, mot attendu —, et chacun a été corrigé à l'endroit où il était écrit.

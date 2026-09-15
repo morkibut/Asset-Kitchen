@@ -114,12 +114,26 @@ export function comptes(personnage: Personnage, plan: Pose[]) {
  *  **Rien n'est fabriqué, rien n'est payé.** Sans aucune image faite, il n'y a
  *  pas de portrait — et c'est un état qui se constate, pas un manque à réparer :
  *  une chose neuve n'a rien à montrer d'elle-même, et une case vide le dit mieux
- *  qu'un dessin d'attente. */
+ *  qu'un dessin d'attente.
+ *
+ *  **Et depuis RP19, l'auteur peut le choisir** : `image_de_reference` désigne
+ *  une image fixe du sujet, et elle passe devant. Le choix est cherché parmi
+ *  les images que la fiche a déjà sous la main — donc une image supprimée,
+ *  écartée ou rattachée ailleurs ne s'y trouve plus, et la règle du dessous
+ *  reprend la main **sans erreur et sans rien demander**. C'est le repli du
+ *  critère, et il est tenu par construction plutôt que par un test. */
 export function portraitDe(personnage: Personnage, plan: Pose[]): {
   asset: Asset
   pose: string
 } | null {
   const { cases, tenues } = comptes(personnage, plan)
+  if (personnage.image_de_reference)
+    for (const pose of tenues) {
+      const choisie = (cases[pose.identifiant]?.images ?? []).find(
+        (i) => i.identifiant === personnage.image_de_reference,
+      )
+      if (choisie) return { asset: choisie, pose: pose.nom }
+    }
   for (const pose of tenues) {
     const images = cases[pose.identifiant]?.images ?? []
     if (!images.length) continue

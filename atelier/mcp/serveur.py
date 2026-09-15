@@ -800,7 +800,10 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "equipment are already layered on. Also returns the project's "
             "wardrobe — equipment slots in wearing order, and the pieces that "
             "go in them — and the game's directions, since a slot is a pose in "
-            "a direction. Call this before generating: an empty slot is what "
+            "a direction. Each character also carries `reference_image`: the "
+            "one still image that says what the subject looks like, picked by "
+            "the author. It is read-only here — there is no tool to set it. "
+            "Call this before generating: an empty slot is what "
             "needs an image, a filled one does not. Free and offline."
         ),
     )
@@ -815,6 +818,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         """
         projet = _projet_ouvert(atelier, project)
         vestiaire = atelier.equipement.vestiaire(projet)
+        # **Les cases, lues une fois par sujet** (RP19). L'image de référence
+        # retombe dessus quand l'auteur n'en a choisi aucune ; les relire pour
+        # elle paierait le même parcours deux fois.
+        cases_par_sujet = [
+            (personnage, atelier.production.cases(projet, personnage))
+            for personnage in atelier.production.personnages(projet)
+        ]
         return {
             "project": projet,
             "poses": [
@@ -863,6 +873,14 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     "wearable": atelier.production.porte_de_lequipement(
                         projet, personnage
                     ),
+                    # **L'agent lit le portrait, il ne le choisit pas** (RP19).
+                    # C'est un jugement de l'auteur sur ce à quoi sa chose
+                    # ressemble ; un outil pour l'écrire en ferait une décision
+                    # d'agent. `null` quand le sujet n'a encore aucune image.
+                    "reference_image": atelier.production.image_de_reference(
+                        projet, personnage, cases
+                    )
+                    or None,
                     "poses": [
                         {
                             "pose": case["pose"],
@@ -885,10 +903,10 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                                 for piece, liste in case["calques"].items()
                             },
                         }
-                        for case in atelier.production.cases(projet, personnage)
+                        for case in cases
                     ],
                 }
-                for personnage in atelier.production.personnages(projet)
+                for personnage, cases in cases_par_sujet
             ],
         }
 
