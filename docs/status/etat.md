@@ -11,6 +11,20 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP13 · Déclarer un mouvement et une direction là où on les regarde — 16 septembre 2026
+
+**Les deux routes existaient déjà, sans écran.** `api.ajouterPose` et `api.ajouterDirection`
+(E9, E10) étaient écrites et testées côté serveur, mais aucun composant ne les appelait :
+« nommer, c'est créer, et rien ne coûte » restait vrai en théorie et invisible à l'écran.
+L'onglet *Objectif & règles* les branche maintenant, en édition, à côté des cases qu'on coche —
+et il ne touche qu'à `lecture` en retour, jamais à `brouillon`, pour que les cases déjà cochées
+ne se perdent pas pendant qu'on déclare la ligne ou la colonne qui manque.
+
+**Le renvoi de la fenêtre de fabrication ne pointait vers rien.** Le texte nommait déjà
+« Objectif & règles » quand la liste de mouvements est vide, mais c'était une phrase, pas un
+lien — et l'onglet qu'elle nommait ne savait pas encore le faire. Les deux corrections vont
+ensemble : le texte est devenu un bouton, et l'onglet qu'il vise sait maintenant répondre.
+
 ## RP21 · Une planche découpée sur la toile devient une animation — 16 septembre 2026
 
 **Les deux chemins finissent au même endroit, et c'était le vrai travail.** `ServicePlancheAnimee`

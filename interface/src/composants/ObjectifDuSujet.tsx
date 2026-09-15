@@ -73,6 +73,33 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
     finally { setTravaille(false) }
   }
 
+  /** **Un mouvement de plus au plan du jeu** (RP13). La route existe depuis
+   *  E9 (`api.ajouterPose`) — elle ne coûte rien et ne sert qu'à cette chose
+   *  ; ce qui manquait était de la brancher ici, là où on regarde ce qu'il
+   *  faut produire. On ne touche qu'à `lecture` : le brouillon en cours, avec
+   *  ses cases déjà cochées, ne bouge pas. */
+  async function ajouterMouvement(nom: string) {
+    setErreur("")
+    try {
+      await api.ajouterPose(nom)
+      setLecture(await api.objectifPersonnage(personnage.identifiant, projet))
+      onChange?.()
+    } catch (e) { setErreur((e as Error).message) }
+  }
+
+  /** **Une direction de plus, pour tout le jeu** (RP13, E10). Déclarée depuis
+   *  une rangée parce que c'est là qu'elle manque à l'œil, mais
+   *  `api.ajouterDirection` vaut pour toutes les poses — une case vide paraît
+   *  chez chacune. */
+  async function ajouterDirection(nom: string) {
+    setErreur("")
+    try {
+      await api.ajouterDirection(nom)
+      setLecture(await api.objectifPersonnage(personnage.identifiant, projet))
+      onChange?.()
+    } catch (e) { setErreur((e as Error).message) }
+  }
+
   if (!lecture || !brouillon) return <section aria-label="Objectif du personnage">
     {erreur ? <p role="alert" className="text-echec">{erreur}</p> : <p role="status">Lecture de l’objectif…</p>}
   </section>
@@ -84,7 +111,7 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
   return <section aria-labelledby="objectif-titre" className="space-y-[22px]">
     <div className="flex items-start justify-between gap-[22px]">
       <div>
-        <h2 id="objectif-titre" className="font-serif text-[25px] text-encre">Ce qu’il faut pour le jeu</h2>
+        <h2 id="objectif-titre" className="font-serif text-[25px] text-encre">Ce qui doit exister dans le jeu</h2>
         <p className="mt-[8px] text-[13px] text-encre-4">Choisissez les mouvements et les directions utiles. Une référence aide à fabriquer ; elle ne remplace pas une animation.</p>
       </div>
       {!edition && <button type="button" className={bouton} onClick={() => { setEdition(true); setMessage("") }}>Modifier l’objectif</button>}
@@ -121,6 +148,7 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
         <button type="button" className={bouton} onClick={() => regler({ sorties: [] })}>Ne rien demander</button>
         <span className="text-[12px] text-encre-4">{demande} sortie{demande > 1 ? "s" : ""} demandée{demande > 1 ? "s" : ""}</span>
       </div>
+      <AjoutDeMouvement onAjouter={ajouterMouvement} />
       <div className="space-y-[8px]">
         {mouvements.map((m) => <details key={m.id} open={brouillon.sorties.some((s) => s.pose === m.id)} className="rounded-10 border border-contour bg-carte p-[14px]">
           <summary className="cursor-pointer font-serif text-[25px] text-encre">{m.nom}</summary>
@@ -138,6 +166,7 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
                 </label>
               </div>
             })}
+            <AjoutDeDirection mouvement={m.nom} onAjouter={ajouterDirection} />
           </div>
         </details>)}
       </div>
@@ -166,4 +195,58 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
     {message && <p role="status" className="text-[13px] text-encre-3">{message}</p>}
   </section>
+}
+
+/** **Un mouvement de plus** (RP13) : le champ crée en validant, comme
+ *  l'attitude de la matrice (`EtabliDuSujet.tsx`, `AjoutDePose`) — sans
+ *  formulaire, sans rien payer. */
+function AjoutDeMouvement({ onAjouter }: { onAjouter: (nom: string) => void }) {
+  const [nom, setNom] = useState("")
+  const valider = () => {
+    const propre = nom.trim()
+    if (!propre) return
+    onAjouter(propre)
+    setNom("")
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-[8px]">
+      <input
+        value={nom}
+        onChange={(e) => setNom(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); valider() } }}
+        placeholder="un mouvement de plus…"
+        aria-label="Ajouter un mouvement"
+        className={`${champ} flex-1`}
+      />
+      <button type="button" className={bouton} onClick={valider}>Ajouter</button>
+      <span className="text-[12px] text-encre-4">crée une rangée vide — rien n’est fabriqué</span>
+    </div>
+  )
+}
+
+/** **Une direction manquante, déclarée depuis la rangée où elle manque**
+ *  (RP13) — mais `api.ajouterDirection` vaut pour tout le jeu : la case
+ *  vide paraît chez chaque mouvement, pas seulement celui-ci. */
+function AjoutDeDirection({ mouvement, onAjouter }: { mouvement: string; onAjouter: (nom: string) => void }) {
+  const [nom, setNom] = useState("")
+  const valider = () => {
+    const propre = nom.trim()
+    if (!propre) return
+    onAjouter(propre)
+    setNom("")
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-[8px] border-t border-contour pt-[8px]">
+      <input
+        value={nom}
+        onChange={(e) => setNom(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); valider() } }}
+        placeholder="une direction manquante…"
+        aria-label={`${mouvement} · ajouter une direction`}
+        className={`${champ} flex-1`}
+      />
+      <button type="button" className={bouton} onClick={valider}>Ajouter</button>
+      <span className="text-[12px] text-encre-4">vaut pour tout le jeu — rien n’est fabriqué</span>
+    </div>
+  )
 }

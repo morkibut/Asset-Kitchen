@@ -15,9 +15,14 @@ const CHAMP = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-
  *
  *  La ligne entre les deux boutons de la fiche est celle-là, et elle se dit en
  *  un mot : **ici on paie**. */
-export function ChoisirFabricationDuSujet({ personnage, plan, onFermer, onImage, onVideo, on3D }: {
+export function ChoisirFabricationDuSujet({ personnage, plan, onFermer, onImage, onVideo, on3D, onObjectif }: {
   personnage: Personnage; plan: Pose[]; onFermer: () => void;
   onImage: (pose: Pose, direction?: string) => void; onVideo: (pose: Pose, direction?: string) => void; on3D: (pose?: Pose, direction?: string) => void
+  /** **Le renvoi vers l'endroit qui sait déclarer un mouvement** (RP13) —
+   *  jusque-là ce texte nommait « Objectif & règles » sans que rien n'y
+   *  mène, et cet onglet ne savait pas non plus le faire : deux écrans qui
+   *  ne savaient pas, l'un le disant. */
+  onObjectif?: () => void
 }) {
   const objectifsAnimes = personnage.objectif?.sorties.filter(s => s.nature === "animation" && s.quantite > 0) ?? []
   const posesHistoriques = plan.filter(p => personnage.cases.some(c => c.pose === p.identifiant))
@@ -42,6 +47,8 @@ export function ChoisirFabricationDuSujet({ personnage, plan, onFermer, onImage,
       { nom: "Une image fixe", detail: `Fabriquer une référence, une pose ou une illustration avec le modèle de ton choix${cible}.`, clic: () => choisie && onImage(choisie, direction || undefined), indisponible: !choisie },
       { nom: "Un modèle 3D et ses animations", detail: `Créer le modèle, préparer son squelette, choisir un mouvement, la caméra et le rendu des sprites${cible}.`, clic: () => on3D(choisie, direction || undefined), indisponible: false },
     ].map(m => <button key={m.nom} disabled={m.indisponible} onClick={m.clic} className="block w-full rounded-7 border border-contour bg-carte p-[22px] text-left hover:border-signal disabled:opacity-50"><span className="font-serif text-[25px]">{m.nom}</span><span className="mt-[8px] block text-[13px] text-encre-3">{m.detail}</span></button>)}</div>
-    {!choisie && <p className="text-[13px] text-encre-3">Ajoute d’abord une pose ou un mouvement dans Objectif & règles pour y ranger les images et animations.</p>}
+    {!choisie && <p className="text-[13px] text-encre-3">Ajoute d’abord une pose ou un mouvement {onObjectif
+      ? <button type="button" className="underline hover:text-encre" onClick={onObjectif}>dans Objectif & règles</button>
+      : "dans Objectif & règles"} pour y ranger les images et animations.</p>}
   </div>} />
 }

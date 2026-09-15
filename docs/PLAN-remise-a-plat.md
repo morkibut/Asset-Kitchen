@@ -492,7 +492,7 @@ C'est un écran absent, pas un écran incomplet.
 - [ ] *Choisir pour le jeu* existe de chaque côté.
 - [ ] Le favori reste distinct du choix pour le jeu.
 
-## RP13 · Déclarer un mouvement et une direction là où on les regarde
+## RP13 · Déclarer un mouvement et une direction là où on les regarde  ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : RP3.
 
@@ -505,10 +505,10 @@ faire**.
 
 ### Critères d'acceptation
 
-- [ ] Un mouvement et une direction s'ajoutent depuis l'onglet qui dit ce qu'il faut produire.
-- [ ] Le renvoi de la fenêtre de fabrication mène à l'endroit qui sait le faire.
-- [ ] Ce qui est ajouté paraît immédiatement dans la matrice et dans la fabrication.
-- [ ] Écrire un nom crée la chose, sur-le-champ, sans formulaire et sans rien payer.
+- [x] Un mouvement et une direction s'ajoutent depuis l'onglet qui dit ce qu'il faut produire.
+- [x] Le renvoi de la fenêtre de fabrication mène à l'endroit qui sait le faire.
+- [x] Ce qui est ajouté paraît immédiatement dans la matrice et dans la fabrication.
+- [x] Écrire un nom crée la chose, sur-le-champ, sans formulaire et sans rien payer.
 
 ## RP14 · La découpe se règle  ✅ **close le 13 septembre 2026**
 

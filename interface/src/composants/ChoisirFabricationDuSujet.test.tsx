@@ -60,3 +60,15 @@ test("sans objectif, le dialogue reprend la première pose historique", () => {
   render(<ChoisirFabricationDuSujet personnage={sujet()} plan={plan} onFermer={vi.fn()} onImage={vi.fn()} onVideo={vi.fn()} on3D={vi.fn()} />)
   expect((screen.getByLabelText("Mouvement ou pose") as HTMLSelectElement).value).toBe("repos")
 })
+
+// **RP13** — quand le plan est vide, le renvoi vers « Objectif & règles » ne
+// pointait vers rien de cliquable, et cet onglet ne savait pas non plus
+// déclarer un mouvement. Les deux sont corrigés ensemble : le lien mène
+// maintenant à l'endroit qui sait le faire.
+test("liste vide : le renvoi vers Objectif & règles y mène vraiment", () => {
+  const onObjectif = vi.fn()
+  const onFermer = vi.fn()
+  render(<ChoisirFabricationDuSujet personnage={sujet()} plan={[]} onFermer={onFermer} onImage={vi.fn()} onVideo={vi.fn()} on3D={vi.fn()} onObjectif={onObjectif} />)
+  fireEvent.click(screen.getByRole("button", { name: "dans Objectif & règles" }))
+  expect(onObjectif).toHaveBeenCalled()
+})
