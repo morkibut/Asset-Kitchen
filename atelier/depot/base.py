@@ -33,13 +33,39 @@ from typing import Any, Iterable, Iterator, Sequence
 
 from atelier.domaine.asset import Asset
 from atelier.domaine.bande import Bande
+from atelier.domaine.galerie import (
+    JUGEMENT_PAR_DEFAUT,
+    ROLE_PAR_DEFAUT,
+    ROLES_ECRITS,
+    TRI_PAR_DEFAUT,
+    role_de,
+)
+
+# ── L'ordre de la grille — un `ORDER BY` par tri, écrit une fois (RP11) ──────
+#
+# **Le lot reste groupé, et dans l'ordre de ses emplacements**, dans les trois :
+# les variations d'une même génération partagent leur date, et sans le rang pour
+# départager, SQLite les rendrait dans un ordre indéterminé — deux rendus de la
+# même grille ne se ressembleraient pas.
+#
+# **Un nom vide passe après les autres.** Beaucoup d'images n'en portent pas ;
+# sans `label = ''` en tête de clause, « Nom A → Z » mettrait en premier
+# exactement celles qui n'ont pas de nom. `NOCASE` parce qu'on lit une liste, pas
+# une table ASCII — il ne déplie pas les accents, et c'est assumé : la colonne
+# qui les déplie porte aussi la pose et la direction, donc elle trierait sur
+# autre chose que le nom.
+_ORDRES = {
+    "recent": "cree_le DESC, rang ASC",
+    "ancien": "cree_le ASC, rang ASC",
+    "nom": "(label = '') ASC, label COLLATE NOCASE ASC, cree_le DESC, rang ASC",
+}
 from atelier.domaine.generation import Generation
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.projet import Collection, Projet
 
 # Change à chaque évolution du schéma. L'index est alors jeté et refait depuis
 # les fichiers : c'est le geste normal, pas un incident.
-VERSION = 12
+VERSION = 13
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS generations (
@@ -84,6 +110,14 @@ CREATE TABLE IF NOT EXISTS assets (
     -- d'équipement. Compter sans elle ferait paraître un casque comme un corps.
     pose        TEXT,
     piece       TEXT,
+    -- **Ce que l'image est, en un mot** (RP11). Écrite depuis l'objet comme
+    -- toutes ses voisines, par `atelier/domaine/galerie.py:role_de`, qui est
+    -- le seul endroit qui décide — une règle recopiée en SQL serait une
+    -- seconde vérité, et la galerie rangerait un calque d'équipement ailleurs
+    -- que la matrice. Le sixième rôle, `origine`, n'est pas ici : il parle de
+    -- ce qui **descend** de l'image, et une image ne sait pas d'avance qu'on
+    -- la découpera.
+    role        TEXT NOT NULL DEFAULT 'seule',
     favori      INTEGER NOT NULL DEFAULT 0,
     epingle     INTEGER NOT NULL DEFAULT 0,
     supprime_le REAL,
@@ -573,9 +607,9 @@ class Base:
                 """
                 INSERT INTO assets
                     (identifiant, generation, rang, label, recherche, cree_le,
-                     projet, parent, personnage, pose, piece, favori, epingle,
-                     supprime_le, contenu)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     projet, parent, personnage, pose, piece, role, favori,
+                     epingle, supprime_le, contenu)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(identifiant) DO UPDATE SET
                     label = excluded.label,
                     recherche = excluded.recherche,
@@ -591,6 +625,7 @@ class Base:
                     personnage = excluded.personnage,
                     pose = excluded.pose,
                     piece = excluded.piece,
+                    role = excluded.role,
                     favori = excluded.favori,
                     epingle = excluded.epingle,
                     supprime_le = excluded.supprime_le,
@@ -612,6 +647,7 @@ class Base:
                     asset.personnage,
                     asset.pose,
                     asset.piece,
+                    role_de(asset),
                     int(asset.favori),
                     int(asset.epingle),
                     asset.supprime_le,
@@ -637,6 +673,8 @@ class Base:
         favoris: bool,
         recherche: str,
         supprimes: bool,
+        role: str = ROLE_PAR_DEFAUT,
+        jugement: str = JUGEMENT_PAR_DEFAUT,
     ) -> tuple[list[str], list[Any]]:
         """Le filtre de la grille, bâti une seule fois.
 
@@ -660,7 +698,16 @@ class Base:
         que ses images trouvent, sans qu'aucune image n'ait été réécrite pour
         ça — c'est le sens même d'un index qui se reconstruit du sujet, pas
         d'un sujet copié dans l'image (`docs/tranches/V4.md` § B8.5).
+
+        **`role` et `jugement` sont les deux filtres de RP11**, et ils se
+        cumulent avec tout le reste. `favoris=True` n'est pas une troisième
+        condition : il **dit** `jugement="favori"`, et c'est pourquoi il est
+        replié dessus dès la première ligne — un des deux serait sinon la
+        seconde vérité sur la même question. Il reste accepté pour les
+        appelants d'avant la tranche.
         """
+        if favoris:
+            jugement = "favori"
         conditions = ["supprime_le IS NOT NULL" if supprimes else "supprime_le IS NULL"]
         arguments: list[Any] = []
         if sans_projet:
@@ -675,8 +722,22 @@ class Base:
                 "AND cm.sujet = assets.personnage)"
             )
             arguments.append(collection)
-        if favoris:
+        if jugement == "favori":
             conditions.append("favori = 1")
+        elif jugement == "non-juge":
+            conditions.append("favori = 0")
+        # **`origine` se lit sur ce qui descend, les autres sur la ligne.** Une
+        # image ne sait pas d'avance qu'on la découpera : le seul rôle que
+        # `role_de` ne peut pas écrire à la naissance est celui-là, et il se
+        # pose donc ici, sur l'index `assets_par_parent`.
+        if role == "origine":
+            conditions.append(
+                "EXISTS (SELECT 1 FROM assets d WHERE d.parent = assets.identifiant "
+                "AND d.supprime_le IS NULL)"
+            )
+        elif role in ROLES_ECRITS:
+            conditions.append("role = ?")
+            arguments.append(role)
         if recherche.strip():
             terme = "%" + normaliser(recherche.strip()) + "%"
             conditions.append(
@@ -699,8 +760,12 @@ class Base:
         recherche: str = "",
         limite: int = 200,
         supprimes: bool = False,
+        role: str = ROLE_PAR_DEFAUT,
+        jugement: str = JUGEMENT_PAR_DEFAUT,
+        tri: str = TRI_PAR_DEFAUT,
     ) -> list[Asset]:
-        """La bibliothèque, filtrée. **Une seule requête pour tout le produit.**
+        """La bibliothèque, filtrée et triée. **Une seule requête pour tout le
+        produit.**
 
         « La grille sous le prompt et la grille qui sert à organiser sont la
         même » (`docs/archive/plan-versions-tenues.md`, T3) : il n'existe donc qu'un seul endroit qui
@@ -710,6 +775,10 @@ class Base:
 
         Un asset supprimé est **hors bibliothèque** tant que son annulation
         court : il ne se compte pas, ne se cherche pas, ne se filtre pas.
+
+        **Le tri est ici, pas à l'écran** (RP11). Trier la page déjà coupée
+        trierait deux cents images sur cinq cents, et l'auteur croirait voir la
+        plus ancienne de la bibliothèque.
         """
         conditions, arguments = self._conditions_assets(
             projet=projet,
@@ -718,18 +787,17 @@ class Base:
             favoris=favoris,
             recherche=recherche,
             supprimes=supprimes,
+            role=role,
+            jugement=jugement,
         )
 
         with self._connexion() as connexion:
             lignes = connexion.execute(
                 "SELECT contenu FROM assets WHERE "
                 + " AND ".join(conditions)
-                # **Le lot reste groupé, et dans l'ordre de ses emplacements.**
-                # Les variations d'une même génération partagent leur date ;
-                # sans le rang pour départager, SQLite les rendrait dans un
-                # ordre indéterminé, et deux rendus de la même grille ne se
-                # ressembleraient pas.
-                + " ORDER BY cree_le DESC, rang ASC LIMIT ?",
+                + " ORDER BY "
+                + _ORDRES.get(tri, _ORDRES[TRI_PAR_DEFAUT])
+                + " LIMIT ?",
                 (*arguments, limite),
             ).fetchall()
         return [Asset.depuis_json(json.loads(l["contenu"])) for l in lignes]
@@ -743,6 +811,8 @@ class Base:
         favoris: bool = False,
         recherche: str = "",
         supprimes: bool = False,
+        role: str = ROLE_PAR_DEFAUT,
+        jugement: str = JUGEMENT_PAR_DEFAUT,
     ) -> int:
         """Combien la grille tiendrait sans son plafond (B3).
 
@@ -757,6 +827,8 @@ class Base:
             favoris=favoris,
             recherche=recherche,
             supprimes=supprimes,
+            role=role,
+            jugement=jugement,
         )
         with self._connexion() as connexion:
             ligne = connexion.execute(

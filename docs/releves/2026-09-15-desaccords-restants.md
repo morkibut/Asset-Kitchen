@@ -56,7 +56,7 @@ de la colonne de gauche qui fait foi, pas la ligne.
 
 | Aujourd'hui | Où | Le mot |
 |---|---|---|
-| sans chose du jeu | `BarreOutils.tsx:170` | **sans sujet** — *chose* est sur la liste noire |
+| ~~sans chose du jeu~~ | `BarreOutils.tsx` | ✅ **sans sujet** — fermé par RP11, le 16 septembre 2026 |
 | Rechercher dans les résultats | `GalerieMedias.tsx:161` | **Rechercher un résultat** |
 | Modèles 3D · Vidéos | `GalerieMedias.tsx:21-22` | **3D · Vidéo** — les autres onglets du même sélecteur sont au singulier |
 | Ouvrir la fiche | `Tuile.tsx:248` | **Ouvrir le résultat** |

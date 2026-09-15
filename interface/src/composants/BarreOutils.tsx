@@ -18,17 +18,49 @@
 // aux listes fermées de `docs/DESIGN.md`.
 
 import { useEffect, useState } from "react"
-import type { Collection, Projet } from "../api"
+import type { Collection, Jugement, Projet, RoleDeGalerie, TriDeGalerie } from "../api"
 import { LIBELLES_ZOOM, Segments, ZOOMS, type Zoom } from "./pieces"
 import { Importer, type Import } from "./Import"
 
 export type Annulation = { identifiants: string[]; expireLe: number }
 
+/** Les libellés des trois listes fermées de RP11 — les mots de la maquette
+ *  pour le tri, les mots de `docs/vocabulaire.html` pour le reste. Ils vivent
+ *  ici parce que c'est le seul écran qui les montre ; leurs **valeurs**, elles,
+ *  sont celles de la route et de l'agent (`api.ts`, `TRIS_DE_GALERIE` /
+ *  `ROLES_DE_GALERIE` / `JUGEMENTS`). */
+const LIBELLES_TRI: Record<TriDeGalerie, string> = {
+  recent: "plus récents",
+  ancien: "plus anciens",
+  nom: "nom A → Z",
+}
+
+const LIBELLES_ROLE: Record<RoleDeGalerie, string> = {
+  tous: "tous les rôles",
+  origine: "origines",
+  derivee: "dérivées",
+  calque: "calques",
+  equipement: "équipements",
+  seule: "images seules",
+}
+
+const LIBELLES_JUGEMENT: Record<Jugement, string> = {
+  tous: "jugés ou non",
+  favori: "favoris",
+  "non-juge": "non jugés",
+}
+
 export function BarreOutils({
   recherche,
   onRecherche,
-  favoris,
-  onFavoris,
+  tri,
+  onTri,
+  role,
+  onRole,
+  jugement,
+  onJugement,
+  groupe,
+  onGroupe,
   famille,
   onFamille,
   collection,
@@ -55,8 +87,22 @@ export function BarreOutils({
 }: {
   recherche: string
   onRecherche: (v: string) => void
-  favoris: boolean
-  onFavoris: (v: boolean) => void
+  /** L'ordre de la grille (RP11). Il est **choisi ici et appliqué par le
+   *  serveur** : trier la page déjà coupée trierait deux cents images sur cinq
+   *  cents, et l'auteur croirait voir la plus ancienne de la bibliothèque. */
+  tri: TriDeGalerie
+  onTri: (tri: TriDeGalerie) => void
+  /** Ce qu'une image est — le premier des deux filtres de RP11. */
+  role: RoleDeGalerie
+  onRole: (role: RoleDeGalerie) => void
+  /** Ce que l'auteur en a décidé — le second. **Il a mangé le bouton
+   *  *Favoris*** : deux contrôles pour une seule question, c'est exactement ce
+   *  que `docs/vocabulaire.html` § Un mot, une chose interdit. */
+  jugement: Jugement
+  onJugement: (jugement: Jugement) => void
+  /** Poser chaque image sous l'origine de sa filiation. */
+  groupe: boolean
+  onGroupe: (groupe: boolean) => void
   /** La famille qu'on regarde, `""` pour toutes, `"aucune"` pour ce qui
    *  n'appartient à aucune chose du jeu, `"clips"` pour eux seuls — un clip
    *  n'ayant lui-même aucune famille (B22). */
@@ -177,7 +223,7 @@ export function BarreOutils({
             <option value="decors">décors</option>
             <option value="objets">objets</option>
             <option value="interface">interface</option>
-            <option value="aucune">sans chose du jeu</option>
+            <option value="aucune">sans sujet</option>
             {/* **Distinct des familles, pas une septième** (B22) : un clip
                 n'appartient à aucune chose du jeu, il vient d'une animation.
                 Le séparer par une ligne creuse le dit sans un second contrôle,
@@ -189,22 +235,76 @@ export function BarreOutils({
             </option>
             <option value="clips">clips</option>
           </select>
+          {/* **Les deux filtres de RP11, dans la forme du filtre voisin** : même
+              hauteur, même largeur, même arrondi, mêmes jetons. Ils ne portent
+              aucune taille neuve — un écran qui en réclamerait une est un écran
+              mal découpé (`docs/DESIGN.md`).
+
+              **Le jugement remplace le bouton *Favoris*.** Il en disait la
+              moitié : *favoris*, et rien pour *ce que je n'ai pas encore jugé*,
+              qui est justement la question de l'écran d'ouverture. Deux
+              contrôles pour un seul axe, c'était aussi deux mots pour la même
+              chose. */}
+          <select
+            value={role}
+            onChange={(e) => onRole(e.target.value as RoleDeGalerie)}
+            aria-label="Ne montrer qu'un rôle"
+            className="mesure h-[26px] w-40 min-w-26 shrink rounded-5 border border-trait bg-carte px-1 text-[11px] text-encre-2"
+          >
+            {(Object.keys(LIBELLES_ROLE) as RoleDeGalerie[]).map((valeur) => (
+              <option key={valeur} value={valeur}>
+                {LIBELLES_ROLE[valeur]}
+              </option>
+            ))}
+          </select>
+          <select
+            value={jugement}
+            onChange={(e) => onJugement(e.target.value as Jugement)}
+            aria-label="Ne montrer qu'un jugement"
+            className="mesure h-[26px] w-40 min-w-26 shrink rounded-5 border border-trait bg-carte px-1 text-[11px] text-encre-2"
+          >
+            {(Object.keys(LIBELLES_JUGEMENT) as Jugement[]).map((valeur) => (
+              <option key={valeur} value={valeur}>
+                {LIBELLES_JUGEMENT[valeur]}
+              </option>
+            ))}
+          </select>
+          {/* **Le tri est une liste, pas des segments** : trois valeurs dont
+              l'une est deux fois plus longue que les autres, et la barre fait
+              34 px — des segments auraient poussé les gestes de la sélection
+              hors du cadre, ce qui est nommément le défaut mesuré le 31 août
+              2026 quelques lignes plus haut. */}
+          <select
+            value={tri}
+            onChange={(e) => onTri(e.target.value as TriDeGalerie)}
+            aria-label="Trier la grille"
+            className="mesure h-[26px] w-40 min-w-26 shrink rounded-5 border border-trait bg-carte px-1 text-[11px] text-encre-2"
+          >
+            {(Object.keys(LIBELLES_TRI) as TriDeGalerie[]).map((valeur) => (
+              <option key={valeur} value={valeur}>
+                {LIBELLES_TRI[valeur]}
+              </option>
+            ))}
+          </select>
+          {/* Le regroupement reste une bascule : il n'a que deux états, et
+              c'est la forme qu'avait déjà *Favoris* à cette place. */}
           <button
             type="button"
-            onClick={() => onFavoris(!favoris)}
+            onClick={() => onGroupe(!groupe)}
+            aria-pressed={groupe}
             className={[
               "mesure h-[26px] shrink-0 rounded-7 border px-2 text-[11px] transition-colors duration-120",
-              favoris
+              groupe
                 ? "border-signal bg-ligne-ouverte text-signal"
                 : "border-trait bg-carte text-encre-2 hover:bg-papier-cote",
             ].join(" ")}
           >
-            Favoris
+            Regrouper
           </button>
           <span className="mesure shrink-0 text-[10.5px] text-encre-4">
             {compte} image{compte > 1 ? "s" : ""}
           </span>
-  
+
           {/* **Le zoom de la grille**, dans la fente qui existe déjà : aucune
               hauteur neuve sur une barre de 34 px. Trois crans, les mêmes que les
               vignettes du tableau — un seul vocabulaire de taille dans tout le

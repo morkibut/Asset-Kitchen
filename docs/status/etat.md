@@ -11,6 +11,45 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP11 · La galerie se trie, se filtre et se regroupe — 16 septembre 2026
+
+**Le point dur n'était pas *où trier*, c'était *quelles valeurs existent*.** Trier côté serveur
+était écrit d'avance dans la route — *la recherche doit porter sur toute la bibliothèque, pas
+sur les deux cents images qu'un navigateur a en mémoire* —, et le tri, les filtres et le
+regroupement tombent sous la même phrase. Ce qui se décidait, c'était le contenu des trois
+listes fermées. La maquette en dessinait huit rôles et huit jugements ; il en reste cinq et
+deux, et le tri en a gardé trois.
+
+**Un jugement que l'image ne porte pas ne s'affiche pas.** Cinq des huit valeurs de la
+maquette — *prêt*, *à vérifier*, *à extraire*, *à déplier* — nomment des états de fabrication
+qu'aucun champ ne connaît. Les inventer aurait fait afficher un jugement que personne n'a
+posé. Le produit dit lui-même ce qu'il sait : « juger, c'est marquer favori ou supprimer », et
+un supprimé n'est plus dans la bibliothèque — deux états, donc, et le filtre les rend tous les
+deux. **Il a mangé le bouton *Favoris*** : il en disait la moitié.
+
+**Le seul rôle que l'index ne peut pas écrire est celui qui parle des enfants.** Quatre se
+lisent sur l'image à sa naissance et s'écrivent dans une colonne ; `origine` — « d'autres
+images en sont sorties » — ne se sait qu'après coup, parce qu'une image ne sait pas d'avance
+qu'on la découpera. Il reste donc un `EXISTS` en SQL, sur l'index de filiation qui existait
+déjà. Un essai le prouve en découpant *après* : la planche change de rôle sans avoir été
+réécrite.
+
+**Un groupe prend la place de son membre le mieux classé, et c'est ce qui le rend utile.** La
+feuille est vieille, ses cases viennent d'être coupées : classer le groupe sur la feuille
+l'enverrait au fond de la grille à la seconde même où l'on découpe. La règle vaut pour les
+trois tris — « le mieux placé de ceux qu'il porte » — et elle tient en une ligne.
+
+**Le plafond compte des images, jamais des groupes.** La maquette proposait « seize groupes ou
+vingt-quatre résultats » : deux plafonds, donc deux sens pour `total`, et le pied de la grille
+aurait dit une chose que la grille ne montrait pas. Un groupe replié compte **ce qu'il
+montre**, et rien d'autre.
+
+**Ce que l'écran a dû défaire pour que le serveur serve à quelque chose.** La galerie
+re-triait par date tout ce qu'elle assemblait — assets, clips, emplacements en cours. Tant que
+la route n'avait qu'un ordre, c'était invisible ; le jour où elle en a eu quatre, ça les
+annulait tous. Ce qui n'est pas encore une image reste en tête, le reste garde l'ordre du
+serveur.
+
 ## RP9 · La toile donne du travail — 16 septembre 2026
 
 **La question du point dur n'était pas *comment sélectionner*, c'était *que devient la carte

@@ -1066,6 +1066,51 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · défaut 0",
   },
 
+  // ── Ce que la galerie choisit de sa grille (RP11) ─────────────────────────
+  //
+  // Quatre réglages, quatre entrées — « une entrée décrit un réglage, pas un
+  // écran ». Ils sont ensemble parce qu'ils se règlent côte à côte, et chacun
+  // dit surtout **ce qu'il ne fait pas** : c'est là que se logent les
+  // malentendus d'une barre de filtres.
+
+  "galerie.tri": {
+    nom: "l'ordre de la grille",
+    ou: "galerie",
+    quoi: "Plus récents, plus anciens, ou par nom. Le choix se retrouve à la prochaine ouverture.",
+    change:
+      "L'ordre de toute la bibliothèque, pas celui de la page. Le tri est fait par le serveur : sans ça, il ne trierait que les deux cents images déjà chargées, et « la plus ancienne » serait la plus ancienne des deux cents.",
+    origine: "toi · défaut plus récents",
+    long:
+      "Par nom, ce qui n'a pas de nom passe après le reste. Beaucoup d'images n'en portent pas — le nom vient du prompt ou du fichier importé —, et les mettre en tête reviendrait à ouvrir la liste par ce qu'elle a de moins lisible.",
+  },
+
+  "galerie.role": {
+    nom: "le rôle",
+    ou: "galerie",
+    quoi: "Ce qu'une image est dans l'atelier : une origine, une dérivée, un calque, un équipement, ou rien de tout ça.",
+    change:
+      "Ce que la grille montre. Une **origine** est une image dont d'autres sont sorties — une feuille découpée, une image dont on a tiré un miroir ; une **dérivée** est l'inverse. Ce filtre ne dit rien du sujet ni de la pose : ça, c'est la liste des familles juste à côté.",
+    origine: "l'image elle-même",
+  },
+
+  "galerie.jugement": {
+    nom: "le jugement",
+    ou: "galerie",
+    quoi: "Les favoris, ou ce qui ne l'est pas encore.",
+    change:
+      "Ce que la grille montre. Il n'y a que deux états parce que juger, ici, c'est marquer favori ou supprimer — et un supprimé n'est plus dans la bibliothèque. *Non jugés* est la question de cet écran : qu'est-ce que je n'ai pas encore regardé ?",
+    origine: "toi, quand tu marques une image",
+  },
+
+  "galerie.regroupement": {
+    nom: "regrouper",
+    ou: "galerie",
+    quoi: "Pose chaque image sous celle d'où elle vient : une feuille et ses cases tiennent une seule place.",
+    change:
+      "La place que prend la grille, jamais ce qu'elle contient. Un groupe replié compte ce qu'il montre, et un clic le déplie — rien n'est redemandé au serveur, tout est déjà là. Une image dont l'origine ne répond pas au filtre reste seule, à sa place : regrouper ne fait venir personne.",
+    origine: "la filiation des images",
+  },
+
   "fiche.recette": {
     nom: "Sa recette",
     ou: "galerie",

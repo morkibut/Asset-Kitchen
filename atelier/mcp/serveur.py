@@ -298,7 +298,14 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         description=(
             "Search the library. Use this before generating — reusing an "
             "existing asset costs nothing, generating costs money. Returns "
-            "labels, sizes and file paths."
+            "labels, sizes and file paths. Same sort, filters and grouping as "
+            "the gallery screen: sort is 'recent' (default), 'ancien' or "
+            "'nom'; role is 'tous' (default), 'origine' (other images came out "
+            "of it), 'derivee' (it came out of another), 'calque', "
+            "'equipement' or 'seule'; judgement is 'tous' (default), 'favori' "
+            "or 'non-juge'; group=true nests each image under the origin of "
+            "its lineage and adds a 'groups' list of {origin, derived}. "
+            "'total' counts images matching the filter, never groups."
         ),
     )
     @_refus_lisible
@@ -307,20 +314,41 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         project: str | None = None,
         favorites: bool = False,
         limit: int = 50,
+        sort: str = "recent",
+        role: str = "tous",
+        judgement: str = "tous",
+        group: bool = False,
     ) -> dict[str, Any]:
         # `project` absent veut dire « le projet ouvert », comme partout ; le
         # mot-clé `all` traverse les projets, parce qu'un agent qui cherche une
         # épée ne sait pas dans quel univers elle a été rangée.
         tous = (project or "").lower() == "all"
         cible = None if tous else _projet(atelier, project)
-        trouves = atelier.bibliotheque.chercher(
+        # **Le même service que la route, aux mêmes valeurs** (RP11) : les noms
+        # des paramètres sont en anglais parce qu'un modèle les lit, les valeurs
+        # sont celles du contrat parce qu'un agent et un auteur doivent pouvoir
+        # parler de la même grille. Le MCP n'a aucune logique propre.
+        grille = atelier.bibliotheque.grille(
             projet=cible,
             sans_projet=False,
             favoris=favorites,
             recherche=search,
             limite=max(1, min(int(limit), 200)),
+            tri=sort,
+            role=role,
+            jugement=judgement,
+            groupe=group,
         )
-        return {"assets": [_asset_en_json(atelier, a) for a in trouves]}
+        reponse: dict[str, Any] = {
+            "assets": [_asset_en_json(atelier, a) for a in grille["assets"]],
+            "total": grille["total"],
+        }
+        if "groupes" in grille:
+            reponse["groups"] = [
+                {"origin": g["origine"], "derived": g["derives"]}
+                for g in grille["groupes"]
+            ]
+        return reponse
 
     @serveur.tool(
         name="get_asset",

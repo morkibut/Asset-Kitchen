@@ -35,6 +35,16 @@ from atelier.domaine.asset import Asset
 from atelier.domaine.bande import Bande
 from atelier.domaine.consommation import est_argent
 from atelier.domaine.erreurs import ErreurAtelier
+from atelier.domaine.galerie import (
+    JUGEMENT_PAR_DEFAUT,
+    ROLE_PAR_DEFAUT,
+    TRI_PAR_DEFAUT,
+    jugement_valide,
+    ordonner_par_groupe,
+    regrouper_par_origine,
+    role_valide,
+    tri_valide,
+)
 from atelier.domaine.generation import Generation, Statut
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.projet import (
@@ -536,8 +546,16 @@ class ServiceBibliotheque:
         favoris: bool = False,
         recherche: str = "",
         limite: int = PAR_DEFAUT,
+        role: str = ROLE_PAR_DEFAUT,
+        jugement: str = JUGEMENT_PAR_DEFAUT,
+        tri: str = TRI_PAR_DEFAUT,
     ) -> list[Asset]:
-        """La grille. **La seule** — celle du prompt et celle qui range."""
+        """La grille. **La seule** — celle du prompt et celle qui range.
+
+        Le tri et les deux filtres de RP11 passent par ici sans être relus : les
+        valeurs sont refermées à la porte (`tri_valide`, `role_valide`,
+        `jugement_valide`), une fois, là où elles entrent.
+        """
         return self._base.assets(
             projet=projet,
             sans_projet=sans_projet,
@@ -545,6 +563,9 @@ class ServiceBibliotheque:
             favoris=favoris,
             recherche=recherche,
             limite=limite,
+            role=role,
+            jugement=jugement,
+            tri=tri,
         )
 
     def compter(
@@ -555,6 +576,8 @@ class ServiceBibliotheque:
         collection: str | None = None,
         favoris: bool = False,
         recherche: str = "",
+        role: str = ROLE_PAR_DEFAUT,
+        jugement: str = JUGEMENT_PAR_DEFAUT,
     ) -> int:
         """Ce que `chercher` rendrait sans sa limite (B3) — voir `compter_assets`."""
         return self._base.compter_assets(
@@ -563,7 +586,57 @@ class ServiceBibliotheque:
             collection=collection,
             favoris=favoris,
             recherche=recherche,
+            role=role,
+            jugement=jugement,
         )
+
+    def grille(
+        self,
+        *,
+        projet: str | None = None,
+        sans_projet: bool = False,
+        collection: str | None = None,
+        favoris: bool = False,
+        recherche: str = "",
+        limite: int = PAR_DEFAUT,
+        role: str = ROLE_PAR_DEFAUT,
+        jugement: str = JUGEMENT_PAR_DEFAUT,
+        tri: str = TRI_PAR_DEFAUT,
+        groupe: bool = False,
+    ) -> dict[str, Any]:
+        """La grille entière : ce qu'elle montre, ce qu'elle cache, ses groupes.
+
+        **Un seul endroit compose la réponse de la grille** (RP11) — la route et
+        l'outil MCP l'appellent tous les deux, et « ce que l'agent peut faire,
+        l'écran le peut aussi » reste vrai dans les deux sens.
+
+        `groupes` n'est là que si on l'a demandé : sans regroupement, une liste
+        d'une entrée par image ne dirait rien et pèserait une ligne par tuile.
+
+        **Rend les assets tels quels, pas leur JSON** : la route les met en
+        forme pour un navigateur, le MCP pour un agent, et les deux mises en
+        forme ne sont pas la même — celle du MCP ajoute le chemin du fichier.
+        """
+        filtre = dict(
+            projet=projet,
+            sans_projet=sans_projet,
+            collection=collection,
+            favoris=favoris,
+            recherche=recherche,
+            role=role_valide(role),
+            jugement=jugement_valide(jugement),
+        )
+        assets = self.chercher(limite=limite, tri=tri_valide(tri), **filtre)
+        # **Le total, pas seulement les 200 montrées** (B3) : même filtre, sans
+        # le plafond — et le plafond compte des images, jamais des groupes, pour
+        # que ce nombre-ci reste le seul du produit.
+        reponse: dict[str, Any] = {"total": self.compter(**filtre)}
+        if groupe:
+            groupes = regrouper_par_origine(assets)
+            assets = ordonner_par_groupe(assets, groupes)
+            reponse["groupes"] = groupes
+        reponse["assets"] = assets
+        return reponse
 
     def grille_courante(self, limite: int = PAR_DEFAUT) -> list[Asset]:
         """Ce que la grille montre sans qu'on ait rien filtré : le projet ouvert.

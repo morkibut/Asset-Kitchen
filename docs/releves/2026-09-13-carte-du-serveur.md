@@ -58,7 +58,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | GET /generations/{id}/slots/{rang}/download | Télécharge l'image en PNG | Oui | — |
 | POST /assets/import | Fait entrer un fichier local (chemin disque) comme asset | Oui | import_asset (même service — voir doublons) |
 | POST /assets/upload | Fait entrer une image envoyée par le navigateur | Oui | — (mêmes octets, même service que ci-dessus) |
-| GET /assets | La grille de la bibliothèque, filtres et recherche | Oui | list_assets |
+| GET /assets | La grille de la bibliothèque, filtres et recherche. **Depuis RP11** : `tri` (`recent` · `ancien` · `nom`), `role` (`tous` · `origine` · `derivee` · `calque` · `equipement` · `seule`), `jugement` (`tous` · `favori` · `non-juge`) et `groupe`, qui ajoute `groupes` à la réponse. Une valeur hors liste retombe sur le défaut. `favoris=true` dit exactement `jugement=favori` | Oui | list_assets — mêmes valeurs, aux noms anglais `sort` · `role` · `judgement` · `group` |
 | GET /assets/{id} | La fiche d'un asset | Oui | get_asset |
 | GET /assets/{id}/imposed | Ce que le projet impose à cette image (taille, palette) | Oui | — |
 | GET /assets/{id}/spots | Les zones mesurées sur l'image, pour le découpage | Oui | — |

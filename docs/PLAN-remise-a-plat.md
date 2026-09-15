@@ -570,7 +570,7 @@ livraison refuse comme avant.
   bibliothèque peut bouger pendant qu'on décide : la préparation garde sa cadence, son ordre et
   son temps d'image, et ce sont eux qui s'écrivent.*
 
-## RP11 · La galerie se trie, se filtre et se regroupe
+## RP11 · La galerie se trie, se filtre et se regroupe ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : RP3.
 
@@ -581,10 +581,25 @@ jamais avec les images qui en sortent.
 
 ### Critères d'acceptation
 
-- [ ] Le tri se choisit, et le choix se retrouve après fermeture.
-- [ ] Le filtre par rôle et le filtre par jugement existent.
-- [ ] Une planche et ses dérivés se regroupent, et le groupe se déplie.
-- [ ] La galerie reste lisible avec plusieurs centaines de résultats, et un essai le mesure.
+- [x] Le tri se choisit, et le choix se retrouve après fermeture. *`tri` sur la route, les
+  trois valeurs de la maquette ; l'écran garde son choix dans `asset-kitchen:galerie:v1`.*
+- [x] Le filtre par rôle et le filtre par jugement existent. *`role` et `jugement`, côté
+  serveur, cumulables, et `list_assets` les expose aux mêmes valeurs.*
+- [x] Une planche et ses dérivés se regroupent, et le groupe se déplie. *`groupe=true`,
+  `regrouper_par_origine` ; un groupe replié montre son origine et compte ses dérivés.*
+- [x] La galerie reste lisible avec plusieurs centaines de résultats, et un essai le mesure.
+  *`test_rp11.py` monte cinq cents images, dont une feuille de soixante cases : la grille
+  repliée rend 441 tuiles au lieu de 500, en une requête. Et le même essai vérifie que le tri
+  porte sur les cinq cents et non sur la page — avec un plafond de dix, le plus ancien de la
+  bibliothèque est en tête.*
+
+**Ce qui a dû bouger à l'écran pour que la route serve.** La galerie re-triait par date tout
+ce qu'elle assemblait — images, clips, emplacements en cours. Tant que la route n'avait qu'un
+ordre, ça revenait au même ; avec quatre, ça les annulait tous. Ce qui n'est pas encore une
+image reste en tête, le reste garde l'ordre du serveur. Et le bouton *Favoris* de la barre
+d'outils a disparu dans le filtre par jugement : il en disait la moitié, et deux contrôles
+pour un axe sont deux mots pour la même chose. Au passage, `sans chose du jeu` devient
+`sans sujet` — un mot de la liste noire, dans le fichier que la tranche touchait déjà.
 
 ## RP12 · Comparer deux versions d'une même animation  ✅ **close le 16 septembre 2026**
 
@@ -637,7 +652,9 @@ ce sens.
 tailles. Il ne lit aucune animation. L'auteur qui a trois versions d'une marche ne peut pas les
 regarder tourner côte à côte pour choisir.
 
-C'est un écran absent, pas un écran incomplet.
+**Sa raison** : deux animations qu'on départage doivent être vues telles qu'elles seront dans le
+jeu. Une horloge par côté les laisse dériver, et le jugement dépend alors du moment où on
+regarde ; une cadence imposée aux deux fait juger une animation qui n'existe pas.
 
 ### Critères d'acceptation
 
@@ -713,6 +730,53 @@ AU11, et la maquette les demande.
 - [x] Ce qui est réglé à la main survit à la mesure automatique, et l'écran dit lequel des deux
   fait foi.
 - [x] Le cadre réglé est celui qui sort à l'export.
+### Le contrat de la route
+
+**Tout se décide sur `GET /api/v1/assets`, et rien à l'écran.** *Sa raison* : « la recherche
+doit porter sur toute la bibliothèque, pas sur les deux cents images qu'un navigateur a en
+mémoire ». Trier une page déjà coupée trierait deux cents images sur cinq cents, et l'auteur
+croirait voir la plus ancienne de la bibliothèque. **Le même paramétrage sert l'écran et
+l'agent** — `list_assets` prend les mêmes valeurs, aux mêmes noms de valeur ; le MCP n'a
+aucune logique propre.
+
+**Un tri — `tri`, trois valeurs.** `recent` (défaut, l'ordre d'aujourd'hui), `ancien`, `nom`.
+Ce sont les trois de la maquette et il n'y en a pas d'autres : *favori* est déjà un filtre, et
+*sujet* est déjà la liste des familles. Un nom vide passe après les autres — sinon trier par
+nom mettrait en tête les images qui n'en ont pas.
+
+**Deux filtres, chacun sur un axe, et les deux se cumulent.**
+
+*`role`, ce que l'image est* : `tous` (défaut) · `origine`, d'autres images en sont sorties ·
+`derivee`, elle est sortie d'une autre · `calque`, elle se pose par-dessus une autre ·
+`equipement`, elle montre une pièce · `seule`, ni l'un ni l'autre. **Quatre se lisent sur
+l'image, la cinquième se lit sur ce qui en descend** — une image ne sait pas d'avance qu'on la
+découpera, donc `origine` est la seule que l'index ne peut pas écrire à la naissance. Quand
+plusieurs conviennent, l'ordre est fixe et écrit une fois : calque, puis équipement, puis
+dérivée, puis seule.
+
+*`jugement`, ce que l'auteur en a décidé* : `tous` (défaut) · `favori` · `non-juge`. **Il n'y
+en a pas d'autre, et c'est le produit qui le dit** : « juger, c'est marquer favori ou
+supprimer », et un supprimé n'est plus dans la bibliothèque. La maquette en dessine huit ;
+cinq — *prêt*, *à vérifier*, *à extraire*, *à déplier* — nomment des états de fabrication que
+l'image ne porte pas, et les inventer ferait afficher un jugement que personne n'a posé.
+`favoris=true` reste accepté à la porte pour les appelants d'avant, et il dit exactement
+`jugement=favori` : une seule condition est écrite, dans `_conditions_assets`.
+
+**Le regroupement — `groupe`, un algorithme nommé.** `regrouper_par_origine`
+(`atelier/domaine/galerie.py`) : chaque image remonte sa filiation tant que son parent est
+**dans la page** ; la première qui n'en a plus est l'origine du groupe. Les groupes sortent
+dans l'ordre du tri, et les dérivés dans le même ordre sous leur origine. La réponse gagne
+`groupes` — une entrée par origine, avec la liste de ses dérivés — et `assets` reste plate,
+dans l'ordre groupé : ce qui ne lit pas `groupes` continue de marcher.
+
+**Le plafond compte des images, jamais des groupes**, et le regroupement ne change ni le
+filtre, ni le tri, ni la limite. *Sa raison* : le plafond de la grille est le seul du produit,
+et un second — « seize groupes » — aurait fait dire deux choses à `total`. Un groupe replié
+compte donc **ce qu'il montre**, jamais un total qu'il n'a pas compté.
+
+**Ce que la route ne regroupe pas** : un clip, une source 3D, une animation. Ce ne sont pas
+des images, ils ne sont pas dans cette table, et l'écran les tient déjà à part.
+
 
 ## RP16 · Savoir ce qu'on a laissé en plan
 
@@ -788,35 +852,6 @@ fait croire à une capacité qui n'existe pas pour l'auteur.
 - [ ] Le relevé du serveur est mis à jour, et le compte des routes y redescend d'autant.
 
 ---
-### La règle
-
-**Le temps est commun, les cadences ne le sont pas.** L'écran ne tient qu'un seul nombre : les
-millisecondes écoulées depuis le début de la lecture. Chaque côté en tire son image tout seul —
-`pas = ⌊temps ÷ temps d'une image⌋`, puis la place dans son cycle —, sans jamais regarder
-l'autre. Aucune des deux ne donne le tempo : c'est l'horloge qui le donne, et les deux sont
-toujours au même instant.
-
-**Image par image, le pas commun est le plus court des deux temps d'image.** La plus rapide
-change donc d'image pendant que la plus lente tient la sienne. C'est la seule valeur de pas qui
-ne saute aucune image, d'aucun des deux côtés.
-
-**Boucle contre aller-retour : rien ne se convertit.** Chacune parcourt son cycle depuis la même
-origine — autant de crans qu'elle a d'images en boucle, deux fois moins deux en aller-retour. Les
-deux ne sont en phase qu'au départ, et *Remettre au début* est le seul geste qui les y ramène.
-Ré-encoder l'aller-retour en boucle pour « aligner » les deux ferait regarder une animation que
-l'export n'écrit nulle part.
-
-**Rien de tout ça ne change ce qui sort.** La cadence, le sens et le temps d'une image se lisent
-sur l'animation et ne s'écrivent jamais ici ; le temps d'une image est celui du serveur au
-millième près (`dureeImageMs`, le double exact de `duree_en_ms`, `B12`), donc le nombre affiché
-est celui que le descriptif d'export porte. Le ralenti est un ralenti d'affichage : il multiplie
-l'horloge commune, pas la cadence. Le seul geste de cet écran qui écrive est *Choisir pour le
-jeu*, et il ne change que **laquelle** sort — jamais comment elle joue.
-
-**Sa raison** : deux animations qu'on départage doivent être vues telles qu'elles seront dans le
-jeu. Une horloge par côté les laisse dériver, et le jugement dépend alors du moment où on
-regarde ; une cadence imposée aux deux fait juger une animation qui n'existe pas.
-
 
 # Temps 3 bis — Ce que l'usage a nommé le 15 septembre 2026
 

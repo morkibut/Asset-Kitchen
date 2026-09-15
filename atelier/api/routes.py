@@ -1440,8 +1440,13 @@ async def liste_assets(
     favoris: bool = Query(False),
     recherche: str = Query(""),
     limite: int = Query(200, ge=1, le=1000),
+    tri: str = Query("recent"),
+    role: str = Query("tous"),
+    jugement: str = Query("tous"),
+    groupe: bool = Query(False),
 ) -> dict[str, Any]:
-    """La bibliothèque, filtrée. **La seule grille du produit** (US-31).
+    """La bibliothèque, filtrée, triée et regroupée. **La seule grille du
+    produit** (US-31).
 
     Sans aucun paramètre, c'est la grille du projet ouvert — exactement ce que
     le premier message du flux a déjà servi. `tous` regarde par-dessus les
@@ -1450,25 +1455,34 @@ async def liste_assets(
 
     Le filtrage est **ici** et non à l'écran : la recherche doit porter sur
     toute la bibliothèque, pas sur les deux cents assets qu'un navigateur a en
-    mémoire. C'est aussi ce qui fera que le MCP de T7 verra exactement ce que
-    l'écran voit.
+    mémoire. C'est aussi ce qui fait que le MCP voit exactement ce que l'écran
+    voit.
+
+    **Et le tri, les deux filtres et le regroupement le sont pour la même
+    raison** (RP11). `tri` vaut `recent` · `ancien` · `nom` ; `role` vaut
+    `tous` · `origine` · `derivee` · `calque` · `equipement` · `seule` ;
+    `jugement` vaut `tous` · `favori` · `non-juge` ; `groupe` pose chaque image
+    sous l'origine de sa filiation et ajoute `groupes` à la réponse. Une valeur
+    hors liste retombe sur le défaut au lieu de refuser : c'est un réglage de
+    coup d'œil, et une grille vide serait un refus que rien n'expliquerait.
+    Le contrat entier est dans `docs/PLAN-remise-a-plat.md` § RP11.
     """
     bibliotheque = _atelier(requete).bibliotheque
     if not tous and projet is None and not sans_projet and collection is None:
         projet, sans_projet = bibliotheque.courant, bibliotheque.courant is None
-    filtre = dict(
+    grille = bibliotheque.grille(
         projet=None if tous else projet,
         sans_projet=sans_projet and not tous,
         collection=collection,
         favoris=favoris,
         recherche=recherche,
+        limite=limite,
+        tri=tri,
+        role=role,
+        jugement=jugement,
+        groupe=groupe,
     )
-    assets = bibliotheque.chercher(limite=limite, **filtre)
-    # **Le total, pas seulement les 200 montrées** (B3) : sans lui, la grille
-    # s'arrêtait en silence et l'auteur croyait avoir tout vu. Même filtre,
-    # sans le plafond — voir `compter_assets`.
-    total = bibliotheque.compter(**filtre)
-    return {"assets": [a.en_json() for a in assets], "total": total}
+    return {**grille, "assets": [a.en_json() for a in grille["assets"]]}
 
 
 @routeur.get("/assets/{identifiant}")

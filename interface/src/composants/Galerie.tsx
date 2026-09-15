@@ -26,11 +26,18 @@ import {
   filtreActif,
   FILTRE_VIDE,
   poserLeFichier,
+  vueRestreint,
+  JUGEMENTS,
+  ROLES_DE_GALERIE,
+  TRIS_DE_GALERIE,
+  VUE_PAR_DEFAUT,
   type Asset,
   type Bibliotheque,
   type Etat,
   type Filtre,
   type Generation,
+  type GroupeDeGalerie,
+  type VueDeLaGalerie,
   type Personnage,
   type Univers,
   type Pose,
@@ -263,6 +270,8 @@ export function Grille({
   filtre,
   zoom,
   entree,
+  groupes,
+  vueRestreinte = false,
   onRelancer,
   onChoisir,
   onOuvrir,
@@ -274,6 +283,15 @@ export function Grille({
   entrees: Entree[]
   selection: string[]
   filtre: Filtre
+  /** Les groupes que le serveur a formés (RP11), ou rien si l'on ne regroupe
+   *  pas. Replié, un groupe montre son origine et **compte ce qu'il montre** :
+   *  ses dérivés sont dans la page, et il ne prétend jamais à un total qu'il
+   *  n'a pas compté. */
+  groupes?: GroupeDeGalerie[]
+  /** Un des deux filtres de la vue écarte-t-il des images ? Il compte comme un
+   *  filtre pour l'état vide : sans lui, un rôle sans résultat rendrait « Rien
+   *  n'est encore sorti d'ici. Écris. » sur une bibliothèque pleine. */
+  vueRestreinte?: boolean
   /** Le cran **rendu**, pas le cran choisi : à une largeur où le choix ne tient
    *  pas, la grille rend le plus grand qui tienne, et la barre d'outils le dit. */
   zoom: Zoom
@@ -305,12 +323,32 @@ export function Grille({
     (fichier) => void entree.entrer(fichier),
     () => {},
   )
+  // **Les groupes se déplient un par un, et l'écran est seul à le savoir.**
+  // Déplier ne redemande rien au serveur : les dérivés sont déjà dans la page,
+  // c'est tout l'intérêt d'avoir groupé côté serveur — le pli est une affaire
+  // de place à l'écran, pas de données.
+  const [deplies, setDeplies] = useState<string[]>([])
+  const derivesDe = useMemo(() => {
+    const table = new Map<string, string[]>()
+    for (const groupe of groupes ?? []) table.set(groupe.origine, groupe.derives)
+    return table
+  }, [groupes])
+  const replies = useMemo(() => {
+    if (!groupes) return new Set<string>()
+    const caches = new Set<string>()
+    for (const groupe of groupes)
+      if (!deplies.includes(groupe.origine))
+        for (const derive of groupe.derives) caches.add(derive)
+    return caches
+  }, [groupes, deplies])
+  const montrees = groupes ? entrees.filter((e) => !replies.has(e.cle)) : entrees
+
   // **Deux états vides, et ce ne sont pas les mêmes** (US-34, US-35). Une
   // bibliothèque vide invite à écrire ; un filtre sans résultat est une impasse,
   // et une impasse doit porter le geste qui en sort — sinon la grille est muette
   // au moment précis où elle devrait aider.
   if (entrees.length === 0) {
-    return filtreActif(filtre) ? (
+    return filtreActif(filtre) || vueRestreinte ? (
       <div
         {...depot.props}
         {...NOMMEE}
@@ -352,9 +390,20 @@ export function Grille({
           gridTemplateColumns: `repeat(auto-fill, minmax(${CRANS[zoom]}px, 1fr))`,
         }}
       >
-        {entrees.map((entree) => (
-          <Tuile
+        {montrees.map((entree) => (
+          <CaseDeGrille
             key={entree.cle}
+            derives={derivesDe.get(entree.cle)?.length ?? 0}
+            deplie={deplies.includes(entree.cle)}
+            onPlier={() =>
+              setDeplies((ouverts) =>
+                ouverts.includes(entree.cle)
+                  ? ouverts.filter((c) => c !== entree.cle)
+                  : [...ouverts, entree.cle],
+              )
+            }
+          >
+          <Tuile
             entree={entree}
             selectionnee={selection.includes(entree.cle)}
             // **Deux tailles servies, pas trois, et jamais la largeur rendue.**
@@ -378,8 +427,48 @@ export function Grille({
             onDecouperLeClip={onDecouperLeClip}
             onOuvrirLeClip={onOuvrirLeClip}
           />
+          </CaseDeGrille>
         ))}
       </div>
+    </div>
+  )
+}
+
+/** Une case de la grille — la tuile, et le pli de son groupe quand elle en
+ *  ouvre un (RP11).
+ *
+ *  **Le pli se pose sous la tuile, jamais dessus.** La grille est la seule
+ *  surface du produit où l'on juge : un badge posé sur l'image cacherait ce
+ *  qu'on est en train de regarder. La ligne fait la hauteur d'une mesure, dans
+ *  la forme des autres fentes du produit — mono 10,5 px, `--signal` pour le
+ *  geste — et elle n'existe que pour les cases qui ont quelque chose dessous.
+ *
+ *  **Le compte est celui de ce qui est montré**, pas un total réclamé au
+ *  serveur : les dérivés sont dans la page, ils se comptent, et une grille qui
+ *  annoncerait « 12 dérivés » en n'en tenant que 6 mentirait en silence. */
+function CaseDeGrille({
+  derives,
+  deplie,
+  onPlier,
+  children,
+}: {
+  derives: number
+  deplie: boolean
+  onPlier: () => void
+  children: React.ReactNode
+}) {
+  if (derives === 0) return <>{children}</>
+  return (
+    <div className="flex flex-col gap-1">
+      {children}
+      <button
+        type="button"
+        onClick={onPlier}
+        aria-expanded={deplie}
+        className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
+      >
+        {derives} dérivé{derives > 1 ? "s" : ""} {deplie ? "‹" : "›"}
+      </button>
     </div>
   )
 }
@@ -456,6 +545,35 @@ const GOUTTIERE = 14
 // s'additionnerait à la première page.
 const TAILLE_PAGE_GRILLE = 200
 
+// **Là où la galerie garde sa façon de regarder** (RP11). Même préfixe que le
+// brouillon local, même numéro de version dans la clé : une forme qui change
+// n'écrase pas ce que l'ancienne avait écrit, elle repart du défaut.
+const VUE_GARDEE = "asset-kitchen:galerie:v1"
+
+/** Ce que la galerie avait choisi la dernière fois — le tri, les deux filtres
+ *  et le regroupement.
+ *
+ *  **Chaque valeur est relue contre sa liste fermée**, jamais reprise telle
+ *  quelle : ce qui est écrit là vient du disque d'un navigateur, et une valeur
+ *  d'une version d'avant enverrait un `tri=` que la route ne connaît pas. Le
+ *  serveur retomberait sur son défaut sans rien dire, et le contrôle à l'écran
+ *  afficherait autre chose que ce que la grille montre. */
+function vueGardee(): VueDeLaGalerie {
+  try {
+    const garde = JSON.parse(localStorage.getItem(VUE_GARDEE) ?? "{}")
+    return {
+      tri: TRIS_DE_GALERIE.includes(garde.tri) ? garde.tri : VUE_PAR_DEFAUT.tri,
+      role: ROLES_DE_GALERIE.includes(garde.role) ? garde.role : VUE_PAR_DEFAUT.role,
+      jugement: JUGEMENTS.includes(garde.jugement)
+        ? garde.jugement
+        : VUE_PAR_DEFAUT.jugement,
+      groupe: garde.groupe === true,
+    }
+  } catch {
+    return VUE_PAR_DEFAUT
+  }
+}
+
 /**
  * Un cran tient-il à cette largeur ?
  *
@@ -523,7 +641,17 @@ export function useGalerie({
   const [totalGrille, setTotalGrille] = useState<number | null>(null)
   const [limiteGrille, setLimiteGrille] = useState(TAILLE_PAGE_GRILLE)
 
+  /** Les groupes que le serveur a formés, ou rien tant qu'on ne regroupe pas
+   *  (RP11). Ils arrivent avec la grille et dans son ordre. */
+  const [groupes, setGroupes] = useState<GroupeDeGalerie[] | undefined>(undefined)
+
   const [filtre, setFiltre] = useState<Filtre>(FILTRE_VIDE)
+  /** Le tri, les deux filtres et le regroupement — **retrouvés à
+   *  l'ouverture** (RP11). C'est un critère de la tranche : on revient dans la
+   *  galerie comme on l'a laissée. Le filtre et la recherche, eux, ne se
+   *  gardent pas : ils répondent à une question du moment, pas à une façon de
+   *  regarder. */
+  const [vue, setVue] = useState<VueDeLaGalerie>(vueGardee)
   /** La famille qu'on regarde dans la galerie, `""` pour toutes, `"aucune"`
    *  pour ce qui n'appartient à aucune chose du jeu (E4), `"clips"` pour eux
    *  seuls — distinct des familles, parce qu'un clip n'en a aucune (B22). */
@@ -618,29 +746,44 @@ export function useGalerie({
 
   const relireGrille = useCallback(async () => {
     try {
-      const { assets, total } = await api.assets({
+      const { assets, total, groupes } = await api.assets({
         ...filtre,
+        ...vue,
         sansProjet: bibliotheque.courant === null,
         limite: limiteGrille,
       })
       setGrille(assets)
       setTotalGrille(total)
+      setGroupes(groupes)
     } catch (erreur) {
       echouer(erreur, "la bibliothèque ne répond pas")
     }
-  }, [filtre, bibliotheque.courant, limiteGrille])
+  }, [filtre, vue, bibliotheque.courant, limiteGrille])
 
   useEffect(() => {
     void relireGrille()
   }, [relireGrille])
 
+  // **Ce qu'on a choisi de la grille se retrouve après fermeture** (RP11), et
+  // seulement ça : un tri, deux filtres, un regroupement. Le `try` est celui du
+  // brouillon local — un navigateur peut refuser d'écrire, et une galerie qui
+  // ne s'ouvre pas pour ça serait un prix absurde.
+  useEffect(() => {
+    try {
+      localStorage.setItem(VUE_GARDEE, JSON.stringify(vue))
+    } catch {
+      /* rien à faire : la vue vaudra le défaut à la prochaine ouverture */
+    }
+  }, [vue])
+
   // **Changer de filtre repart de la première page** (B3) : sans ça, une
   // recherche neuve hériterait du plafond agrandi par « Charger la suite »
   // sur la recherche précédente, et montrerait quatre cents images d'un
-  // sujet qui n'en a que huit.
+  // sujet qui n'en a que huit. **Changer de tri aussi**, et pour la même
+  // raison : c'est une autre page, pas la même agrandie.
   useEffect(() => {
     setLimiteGrille(TAILLE_PAGE_GRILLE)
-  }, [filtre, bibliotheque.courant])
+  }, [filtre, vue, bibliotheque.courant])
 
   const chargerLaSuiteGrille = () =>
     setLimiteGrille((limite) => limite + TAILLE_PAGE_GRILLE)
@@ -653,8 +796,20 @@ export function useGalerie({
   const clipsSeuls = famille === "clips"
 
   const entrees = useMemo<Entree[]>(() => {
+    // **Ce qui n'est pas encore une image, puis les images dans l'ordre du
+    // serveur** (RP11). Avant la tranche, tout était re-trié ici par date : ça
+    // revenait au même tant que la route n'avait qu'un ordre, et ça défaisait
+    // le tri et le regroupement dès qu'elle en a eu quatre. Le chantier et les
+    // clips restent en tête — ils viennent d'arriver, ils sont par définition
+    // les plus récents, et le serveur ne les connaît pas.
+    const enCours = new Map<string, Entree>()
     const parCle = new Map<string, Entree>()
-    if (!filtreActif(filtre)) {
+    // **Les deux filtres de la vue écartent le chantier comme le filtre le
+    // fait** (RP11) : c'est ce que le bouton *Favoris* faisait avant d'être
+    // mangé par le jugement, et la raison n'a pas changé — un lot qui n'est pas
+    // encore arrivé n'a ni rôle ni jugement. Le tri et le regroupement, eux, ne
+    // retirent rien : ils rangent.
+    if (!filtreActif(filtre) && !vueRestreint(vue)) {
       // **Les clips gardés, relus depuis le dépôt** (B22), avant le chantier
       // pour que celui-ci les recouvre à la même clé s'il en tient une
       // version plus fraîche — encore en cours, ou pas encore départagée. Un
@@ -666,7 +821,7 @@ export function useGalerie({
           const emplacement = generation.emplacements[0]
           const rang = emplacement?.rang ?? 0
           const cle = `${generation.identifiant}-${rang}`
-          parCle.set(cle, {
+          enCours.set(cle, {
             cle,
             date: generation.cree_le,
             rang,
@@ -712,7 +867,7 @@ export function useGalerie({
         for (const emplacement of generation.emplacements) {
           if (emplacement.statut === "reussie" && !attend && !clip) continue
           const cle = `${generation.identifiant}-${emplacement.rang}`
-          parCle.set(cle, {
+          enCours.set(cle, {
             cle,
             date: generation.cree_le,
             rang: emplacement.rang,
@@ -748,10 +903,14 @@ export function useGalerie({
         })
       }
     }
-    return [...parCle.values()].sort(
-      (a, b) => b.date - a.date || a.rang - b.rang,
-    )
-  }, [chantier, clipsDuJeu, grille, filtre, famille, clipsSeuls, bibliotheque.courant])
+    // **Un asset remplace l'emplacement qui l'attendait** : à la même clé, et
+    // il passe alors dans le bloc des images — l'attente est finie, elle n'a
+    // plus à tenir la tête de la grille.
+    const attendent = [...enCours.values()]
+      .filter((e) => !parCle.has(e.cle))
+      .sort((a, b) => b.date - a.date || a.rang - b.rang)
+    return [...attendent, ...parCle.values()]
+  }, [chantier, clipsDuJeu, grille, filtre, vue, famille, clipsSeuls, bibliotheque.courant])
 
   /** La planche ouverte, relue dans le chantier — la seule vérité (R6).
    *
@@ -1031,6 +1190,7 @@ export function useGalerie({
     filtre,
     garderLeClip,
     grille,
+    groupes,
     indisponibles,
     marquerFavori,
     mesurerCentre,
@@ -1049,9 +1209,11 @@ export function useGalerie({
     setFiltre,
     setGrille,
     setSelection,
+    setVue,
     setZoom,
     supprimer,
     totalGrille,
+    vue,
     zoom,
     zoomRendu,
     centre,
@@ -1132,6 +1294,7 @@ export function Galerie({
     filtre,
     garderLeClip,
     grille,
+    groupes,
     indisponibles,
     marquerFavori,
     mesurerCentre,
@@ -1147,9 +1310,11 @@ export function Galerie({
     setFicheClip,
     setFiltre,
     setSelection,
+    setVue,
     setZoom,
     supprimer,
     totalGrille,
+    vue,
     zoom,
     zoomRendu,
   } = g
@@ -1239,8 +1404,14 @@ export function Galerie({
             recherche={filtre.recherche}
             onRecherche={(recherche) => setFiltre((f) => ({ ...f, recherche }))}
             sansRecherche
-            favoris={filtre.favoris}
-            onFavoris={(favoris) => setFiltre((f) => ({ ...f, favoris }))}
+            tri={vue.tri}
+            onTri={(tri) => setVue((v) => ({ ...v, tri }))}
+            role={vue.role}
+            onRole={(role) => setVue((v) => ({ ...v, role }))}
+            jugement={vue.jugement}
+            onJugement={(jugement) => setVue((v) => ({ ...v, jugement }))}
+            groupe={vue.groupe}
+            onGroupe={(groupe) => setVue((v) => ({ ...v, groupe }))}
             famille={famille}
             onFamille={setFamille}
             collection={filtre.collection}
@@ -1320,10 +1491,23 @@ export function Galerie({
             filtre={filtre}
             zoom={zoomRendu}
             entree={entree}
+            /* **Les groupes ne valent que pour l'onglet des images** : les
+               vidéos sont des clips, pas des images de la bibliothèque, et
+               aucune filiation ne les relie. */
+            groupes={sorte === "videos" ? undefined : groupes}
+            vueRestreinte={vueRestreint(vue)}
             onRelancer={relancer}
             onChoisir={(generation, rang) => setDepliage({ generation, rang })}
             onOuvrir={ouvrir}
-            onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
+            /* **Tout ce qui écarte s'en va d'un geste** : le filtre *et* les
+               deux de la vue. Ne rendre que le premier laisserait l'impasse
+               ouverte, et le bouton qui promet d'en sortir n'en sortirait
+               pas. Le tri et le regroupement restent : ils n'y sont pour
+               rien. */
+            onRetirerFiltre={() => {
+              setFiltre(FILTRE_VIDE)
+              setVue((v) => ({ ...v, role: "tous", jugement: "tous" }))
+            }}
             onGarderLeClip={garderLeClip}
             onDecouperLeClip={setMontageOuvert}
             onOuvrirLeClip={setFicheClip}
